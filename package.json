@@ -1,0 +1,16 @@
+{
+  "name": "grooveshark",
+  "description": "A client for the Grooveshark JSON-RPC API.",
+  "version": "0.0.1",
+  "author": "Tim Smart",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/Tim-Smart/node-grooveshark.git"
+  },
+  "engine": [ "node >=0.1.103" ],
+  "dependencies": {
+    "parallel": ">=0.1.2",
+    "uuid": ">=0.0.1"
+  },
+  "main": "lib/grooveshark"
+}
