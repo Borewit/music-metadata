@@ -15,4 +15,7 @@ console.log(id3_3v1.getTags());
 id3_3v2.parse();
 console.log(id3_3v2.get('title'));
 
-console.log(id3_4.getTags());
+id3_4.parse();
+console.log(id3_4.get('composer'));
+
+fs.writeFile('test', id3_4.get('picture').data);
