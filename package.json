@@ -1,16 +1,11 @@
 {
-  "name": "grooveshark",
-  "description": "A client for the Grooveshark JSON-RPC API.",
+  "name": "id3",
+  "description": "A ID3 library for node, using pure Javascript.",
   "version": "0.0.1",
   "author": "Tim Smart",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/Tim-Smart/node-grooveshark.git"
-  },
-  "engine": [ "node >=0.1.103" ],
+  "engine": [ "node >=0.2.0" ],
   "dependencies": {
-    "parallel": ">=0.1.2",
-    "uuid": ">=0.0.1"
+    "strtok": ">=0.1.0"
   },
-  "main": "lib/grooveshark"
+  "main": "lib/id3"
 }
