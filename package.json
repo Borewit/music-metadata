@@ -1,7 +1,7 @@
 {
   "name": "id3",
   "description": "A ID3 library for node, using pure Javascript.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Tim Smart",
   "engine": [ "node >=0.2.0" ],
   "dependencies": {
