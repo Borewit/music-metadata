@@ -1,15 +1,35 @@
-var assert = require('assert'),
-    id3 = require('../lib/id3'),
+var id3 = require('../lib/id3'),
     fs  = require('fs');
 
-var audioFile = fs.readFileSync('sample3v1.mp3');
-var id3v1 = new id3(audioFile);
-
+var id3v1 = new id3(fs.readFileSync('sample3v1.mp3'));
 id3v1.parse();
 
-assert.equal(id3v1.get('title'),'Blood Sugar', 'title is not correct');
-assert.equal(id3v1.get('artist'),'Pendulum', 'artist is not correct');
-assert.equal(id3v1.get('album'),'Blood Sugar (Single)', 'album is not correct');
-assert.equal(id3v1.get('comment'),'abcdefg', 'comment is not correct');
-assert.equal(id3v1.get('genre'),'Electronic', 'genre is not correct');
-assert.equal(id3v1.get('year'),'2007', 'year is not correct');
+exports.title = function(test){
+    test.equal(id3v1.get('title'),'Blood Sugar', 'title is not correct');
+    test.done();
+}
+
+exports.artist = function(test){
+    test.equal(id3v1.get('artist'),'Pendulum', 'artist is not correct');
+    test.done();
+}
+
+exports.album = function(test){
+    test.equal(id3v1.get('album'),'Blood Sugar (Single)', 'album is not correct');
+    test.done();
+}
+
+exports.comment = function(test){
+    test.equal(id3v1.get('comment'),'abcdefg', 'comment is not correct');
+    test.done();
+}
+
+exports.genre = function(test){
+    test.equal(id3v1.get('genre'),'Electronic', 'genre is not correct');
+    test.done();
+}
+
+exports.year = function(test){
+    test.equal(id3v1.get('year'),'2007', 'year is not correct');
+    test.done();
+}
