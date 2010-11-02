@@ -1,7 +1,7 @@
-var id3 = require('../lib/id3'),
+var id3 = require('../lib'),
     fs  = require('fs');
 
-var id3v1 = new id3(fs.readFileSync('sample3v1.mp3'));
+var id3v1 = new id3(fs.readFileSync('samples/id3v1.mp3'));
 id3v1.parse();
 
 exports.title = function(test){

@@ -1,57 +1,64 @@
-var id3 = require('../lib/id3'),
-    fs  = require('fs');
+var id4 = require('../lib/id4'),
+          testCase = require('nodeunit').testCase;
 
-var id4 = new id3(fs.readFileSync('sample4.m4a'));
-id4.parse();
-
-exports.artist = function(test){
-    test.equal(id4.get('artist'),'The Prodigy', 'artist is not correct');
-    test.done();
-}
-
-exports.albumartist = function(test){
-    test.equal(id4.get('albumartist'),'Pendulum','album artist is not correct');
-    test.done();
-}
-
-exports.title = function(test){
-    test.equal(id4.get('title'),'Voodoo People (Pendulum Remix)', 'title is not correct');
-    test.done();
-}
-
-exports.year = function(test){
-    test.equal(id4.get('year'),2005, 'year is not correct');
-    test.done();
-}
-
-exports.composer = function(test){
-    test.equal(id4.get('composer'), 'Liam Howlett', 'composer is not correct');
-    test.done();
-}
-
-exports.track = function(test){
-    test.equal(id4.get('track').num, 1, 'track number is not correct');
-    test.equal(id4.get('track').of, 1, 'track total is not correct');
-    test.done();
-}
-
-exports.disk = function(test){
-    test.equal(id4.get('disk').num,1, 'disk number is not correct');
-    test.equal(id4.get('disk').of,1, 'disk total is not correct');
-    test.done();
-}
-
-exports.picture = function(test){
-    test.equal(id4.get('picture').data.length,196450, 'picture is not the same size');
-    test.done();
-}
-
-exports.genre = function(test){
-    test.equal(id4.get('genre'),'Electronic', 'genre is not correct');
-    test.done();
-}
-
-exports.comment = function(test){
-    test.equal(id4.get('comment'),'(Pendulum Remix)', 'comment is not correct');
-    test.done();
-}
+module.exports = testCase({
+    setUp: function(){
+        this.id3 = new id4(require('fs').createReadStream('samples/id4.m4a'));
+		this.executor = function(frameName, expected, test, deep){
+			test.expect(1);
+			this.id3.on(frameName, function(result){
+				(deep) ? test.deepEqual(result, expected) : test.equal(result, expected);
+				test.done();
+			});
+			this.id3.parse();
+		};
+    },
+	'trkn': function(test){
+		this.executor('trkn', [1,0], test, true);
+    },
+	'disk': function(test){
+		this.executor('disk', [1,1], test, true);
+    },
+    'tmpo': function(test){
+        this.executor('tmpo', 0, test);
+    },
+    'gnre': function(test){
+		this.executor('gnre', 'Electronic', test);
+    },
+    'stik': function(test){
+        this.executor('stik', 256, test);
+    },
+    '©alb': function(test){
+		this.executor('©alb', 'Voodoo People', test);
+    },
+    '©ART': function(test){
+		this.executor('©ART', 'The Prodigy', test);
+    },
+    'aART': function(test){
+		this.executor('aART', 'Pendulum', test);
+    },
+    '©cmt': function(test){
+        this.executor('©cmt', '(Pendulum Remix)', test);
+    },
+    '©wrt': function(test){
+		this.executor('©wrt', 'Liam Howlett', test);
+    },
+    '©nam': function(test){
+		this.executor('©nam', 'Voodoo People (Pendulum Remix)', test);
+    },
+    '©too': function(test){
+		this.executor('©too', 'Lavf52.36.0', test);
+    },
+    '©day': function(test){
+		this.executor('©day', 2005, test);
+    },
+    'covr': function(test){
+        test.expect(2);
+        this.id3.on('covr', function(result){
+            test.equal(result.format, 'image/jpeg');
+            test.equal(result.data.length, 196450);     
+            test.done();
+        });
+        this.id3.parse();
+    }
+});
