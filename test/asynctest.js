@@ -1,0 +1,69 @@
+var strtok = require('strtok'),
+      fs = require('fs'),
+	  id4 = require('../lib/id4'),
+	  id3v2 = require('../lib/id3v2.js'),
+	  id3 = require('../lib'),
+	  genres = require('../lib/common.js').GENRES;
+	  
+//var stream = fs.createReadStream('sample4.m4a');
+//var testid3 = new id4(stream);
+
+
+var testid3v23 = new id3v2(fs.createReadStream('./samples/id3v2.4.mp3'));
+
+testid3v23.on('APIC', function(result){
+    //console.log(result);
+});
+
+testid3v23.parse();
+
+
+//testid3.on('covr', function(result){
+	//console.log(result);
+    //var output = fs.createWriteStream('myfile.jpg');
+    //output.write(result.data);
+    //output.end();
+//});
+// testid3.on('�alb', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('�day', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('trkn', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('gnre', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('disk', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('�nam', function(result){
+    // console.log('faggle');
+	// console.log(result);
+// });
+
+// testid3.on('�cmt', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('©wrt', function(result){
+    // console.log('wuuuurt');
+	// console.log(result);
+// });
+
+// testid3.on('aART', function(result){
+	// console.log(result);
+// });
+
+// testid3.on('�ART', function(result){
+	// console.log(result);
+// });
+
+//testid3.parse();
