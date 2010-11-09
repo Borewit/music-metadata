@@ -1,4 +1,4 @@
-var id4 = require('../lib/id4'),
+ï»¿var id4 = require('../lib/id4'),
       testCase = require('nodeunit').testCase;
 
 module.exports = testCase({
@@ -28,29 +28,29 @@ module.exports = testCase({
     'stik': function(test){
         this.executor('stik', 256, test);
     },
-    '©alb': function(test){
-		this.executor('©alb', 'Voodoo People', test);
+    'Â©alb': function(test){
+		this.executor('Â©alb', 'Voodoo People', test);
     },
-    '©ART': function(test){
-		this.executor('©ART', 'The Prodigy', test);
+    'Â©ART': function(test){
+		this.executor('Â©ART', 'The Prodigy', test);
     },
     'aART': function(test){
 		this.executor('aART', 'Pendulum', test);
     },
-    '©cmt': function(test){
-        this.executor('©cmt', '(Pendulum Remix)', test);
+    'Â©cmt': function(test){
+        this.executor('Â©cmt', '(Pendulum Remix)', test);
     },
-    '©wrt': function(test){
-		this.executor('©wrt', 'Liam Howlett', test);
+    'Â©wrt': function(test){
+		this.executor('Â©wrt', 'Liam Howlett', test);
     },
-    '©nam': function(test){
-		this.executor('©nam', 'Voodoo People (Pendulum Remix)', test);
+    'Â©nam': function(test){
+		this.executor('Â©nam', 'Voodoo People (Pendulum Remix)', test);
     },
-    '©too': function(test){
-		this.executor('©too', 'Lavf52.36.0', test);
+    'Â©too': function(test){
+		this.executor('Â©too', 'Lavf52.36.0', test);
     },
-    '©day': function(test){
-		this.executor('©day', 2005, test);
+    'Â©day': function(test){
+		this.executor('Â©day', 2005, test);
     },
     'covr': function(test){
         test.expect(2);
