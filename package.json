@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "id3",
   "description": "A ID3 library for node, using pure Javascript.",
   "version": "0.0.2",

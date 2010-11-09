@@ -1,5 +1,5 @@
-var id3 = require('../lib/id3v2'),
-          testCase = require('nodeunit').testCase;
+﻿var id3 = require('../lib/id3v2'),
+      testCase = require('nodeunit').testCase;
 
 module.exports = testCase({
     setUp: function(){
@@ -83,5 +83,4 @@ module.exports = testCase({
         });
         this.id3.parse();
     }
-});    
-
+});

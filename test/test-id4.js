@@ -1,5 +1,5 @@
 var id4 = require('../lib/id4'),
-          testCase = require('nodeunit').testCase;
+      testCase = require('nodeunit').testCase;
 
 module.exports = testCase({
     setUp: function(){

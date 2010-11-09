@@ -1,29 +1,45 @@
-var strtok = require('strtok'),
+﻿var strtok = require('strtok'),
       fs = require('fs'),
 	  id4 = require('../lib/id4'),
-	  id3v2 = require('../lib/id3v2.js'),
-	  id3 = require('../lib'),
-	  genres = require('../lib/common.js').GENRES;
+	  id3v2 = require('../lib/id3v2'),
+	  ID3File = require('../lib/index'),
+	  genres = require('../lib/common').GENRES;
 	  
 //var stream = fs.createReadStream('sample4.m4a');
 //var testid3 = new id4(stream);
 
-
-var testid3v23 = new id3v2(fs.createReadStream('./samples/id3v2.4.mp3'));
-
-testid3v23.on('APIC', function(result){
-    //console.log(result);
-});
-
-testid3v23.parse();
+//var stream = require('fs').createReadStream('./samples/id4.m4a');
 
 
-//testid3.on('covr', function(result){
-	//console.log(result);
-    //var output = fs.createWriteStream('myfile.jpg');
-    //output.write(result.data);
-    //output.end();
-//});
+var tst = new ID3File(require('fs').createReadStream('./samples/id4.m4a'));
+tst.on('artist', function(result){
+  console.log(result);
+})
+
+tst.on('genre', function(result){
+  console.log(result);
+})
+
+tst.parse();
+
+//var id3z = new require('../lib/index.js').ID3File();
+
+
+// var testid3v23 = new id3v2(fs.createReadStream('./samples/id3v2.3.mp3'));
+
+// testid3v23.on('TALB', function(result){
+    // console.log(result);
+// });
+
+// testid3v23.parse();
+
+
+// testid3.on('covr', function(result){
+	// console.log(result);
+    // var output = fs.createWriteStream('myfile.jpg');
+    // output.write(result.data);
+    // output.end();
+// });
 // testid3.on('�alb', function(result){
 	// console.log(result);
 // });
@@ -65,5 +81,3 @@ testid3v23.parse();
 // testid3.on('�ART', function(result){
 	// console.log(result);
 // });
-
-//testid3.parse();
