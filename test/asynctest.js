@@ -1,9 +1,16 @@
-﻿var strtok = require('strtok'),
+var strtok = require('strtok'),
       fs = require('fs'),
 	  id4 = require('../lib/id4'),
 	  id3v2 = require('../lib/id3v2'),
 	  ID3File = require('../lib/index'),
 	  genres = require('../lib/common').GENRES;
+      
+      
+var Nodelint = require('Nodelint');
+
+Nodelint('test-id3v1.js', function(e, results){
+    console.log(results);
+})
 	  
 //var stream = fs.createReadStream('sample4.m4a');
 //var testid3 = new id4(stream);
@@ -18,6 +25,11 @@ tst.on('artist', function(result){
 
 tst.on('genre', function(result){
   console.log(result);
+  
+})
+
+tst.on('metadata', function(result){
+    console.log(result);
 })
 
 tst.parse();

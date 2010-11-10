@@ -1,4 +1,4 @@
-﻿var id3 = require('../lib/id3v2'),
+var id3 = require('../lib/id3v2'),
       testCase = require('nodeunit').testCase;
 
 module.exports = testCase({

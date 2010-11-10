@@ -1,4 +1,4 @@
-﻿var id3 = require('../lib/id3v1'),
+var id3 = require('../lib/id3v1'),
       fs = require('fs');
 
 var id3v1 = new id3(fs.readFileSync('samples/id3v1.mp3'));
