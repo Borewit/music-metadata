@@ -4,20 +4,24 @@ var id3 = require('../lib/index'),
 module.exports = testCase({
     setUp: function(){
         this.id3 = new id3(require('fs').createReadStream('samples/id3v2.3.mp3'));
-		this.executor = function(frameName, expected, test, deep){
-			test.expect(1);
-			this.id3.on(frameName, function(result){
-				(deep) ? test.deepEqual(result, expected) : test.equal(result, expected);
-				test.done();
-			});
-			this.id3.parse();
-		};
+        this.executor = function(frameName, expected, test, deep){
+            test.expect(1);
+            this.id3.on(frameName, function(result){
+                if(deep){
+                    test.deepEqual(result, expected);
+                }else{
+                    test.equal(result, expected);
+                }
+                test.done();
+            });
+            this.id3.parse();
+        };
     },
-	'album': function(test){
-		this.executor('album', 'Friday Night Lights [Original Movie Soundtrack]', test);
+    'album': function(test){
+        this.executor('album', 'Friday Night Lights [Original Movie Soundtrack]', test);
     },
-	'artist': function(test){
-		this.executor('artist', 'Explosions In The Sky/Another/And Another', test);
+    'artist': function(test){
+        this.executor('artist', 'Explosions In The Sky/Another/And Another', test);
     },
     'albumartist': function(test){
         this.executor('albumartist', 'Soundtrack', test);

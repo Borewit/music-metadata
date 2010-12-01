@@ -4,53 +4,57 @@ var id4 = require('../lib/id4'),
 module.exports = testCase({
     setUp: function(){
         this.id3 = new id4(require('fs').createReadStream('samples/id4.m4a'));
-		this.executor = function(frameName, expected, test, deep){
-			test.expect(1);
-			this.id3.on(frameName, function(result){
-				(deep) ? test.deepEqual(result, expected) : test.equal(result, expected);
-				test.done();
-			});
-			this.id3.parse();
-		};
+        this.executor = function(frameName, expected, test, deep){
+            test.expect(1);
+            this.id3.on(frameName, function(result){
+                if(deep){
+                    test.deepEqual(result, expected);
+                }else{
+                    test.equal(result, expected);
+                }
+                test.done();
+            });
+            this.id3.parse();
+        };
     },
-	'trkn': function(test){
-		this.executor('trkn', [1,0], test, true);
+    'trkn': function(test){
+        this.executor('trkn', [1,0], test, true);
     },
-	'disk': function(test){
-		this.executor('disk', [1,1], test, true);
+    'disk': function(test){
+        this.executor('disk', [1,1], test, true);
     },
     'tmpo': function(test){
         this.executor('tmpo', 0, test);
     },
     'gnre': function(test){
-		this.executor('gnre', 'Electronic', test);
+        this.executor('gnre', 'Electronic', test);
     },
     'stik': function(test){
         this.executor('stik', 256, test);
     },
     '©alb': function(test){
-		this.executor('©alb', 'Voodoo People', test);
+        this.executor('©alb', 'Voodoo People', test);
     },
     '©ART': function(test){
-		this.executor('©ART', 'The Prodigy', test);
+        this.executor('©ART', 'The Prodigy', test);
     },
     'aART': function(test){
-		this.executor('aART', 'Pendulum', test);
+        this.executor('aART', 'Pendulum', test);
     },
     '©cmt': function(test){
         this.executor('©cmt', '(Pendulum Remix)', test);
     },
     '©wrt': function(test){
-		this.executor('©wrt', 'Liam Howlett', test);
+        this.executor('©wrt', 'Liam Howlett', test);
     },
     '©nam': function(test){
-		this.executor('©nam', 'Voodoo People (Pendulum Remix)', test);
+        this.executor('©nam', 'Voodoo People (Pendulum Remix)', test);
     },
     '©too': function(test){
-		this.executor('©too', 'Lavf52.36.0', test);
+        this.executor('©too', 'Lavf52.36.0', test);
     },
     '©day': function(test){
-		this.executor('©day', 2005, test);
+        this.executor('©day', 2005, test);
     },
     'covr': function(test){
         test.expect(2);

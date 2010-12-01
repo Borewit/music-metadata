@@ -1,36 +1,20 @@
 var strtok = require('strtok'),
-      fs = require('fs'),
-	  id4 = require('../lib/id4'),
-	  id3v2 = require('../lib/id3v2'),
-	  ID3File = require('../lib/index'),
-	  genres = require('../lib/common').GENRES;
+    fs = require('fs'),
+    id4 = require('../lib/id4'),
+    id3v2 = require('../lib/id3v2'),
+    ID3File = require('../lib/index'),
+    genres = require('../lib/common').GENRES;
       
-      
-var Nodelint = require('Nodelint');
 
-Nodelint('test-id3v1.js', function(e, results){
-    console.log(results);
-})
-	  
-//var stream = fs.createReadStream('sample4.m4a');
-//var testid3 = new id4(stream);
+var tst = new id4(require('fs').createReadStream('./samples/id4.m4a'));
 
-//var stream = require('fs').createReadStream('./samples/id4.m4a');
-
-
-var tst = new ID3File(require('fs').createReadStream('./samples/id4.m4a'));
-tst.on('artist', function(result){
-  console.log(result);
-})
-
-tst.on('genre', function(result){
-  console.log(result);
-  
-})
-
-tst.on('metadata', function(result){
+tst.on('©alb', function(result){
     console.log(result);
-})
+});
+
+tst.on('aART', function(result){
+    console.log(result);
+});
 
 tst.parse();
 

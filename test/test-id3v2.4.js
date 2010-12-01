@@ -4,20 +4,24 @@ var id3 = require('../lib/id3v2'),
 module.exports = testCase({
     setUp: function(){
         this.id3 = new id3(require('fs').createReadStream('samples/id3v2.4.mp3'));
-		this.executor = function(frameName, expected, test, deep){
-			test.expect(1);
-			this.id3.on(frameName, function(result){
-				(deep) ? test.deepEqual(result, expected) : test.equal(result, expected);
-				test.done();
-			});
-			this.id3.parse();
-		};
+        this.executor = function(frameName, expected, test, deep){
+            test.expect(1);
+            this.id3.on(frameName, function(result){
+                if(deep){
+                    test.deepEqual(result, expected);
+                }else{
+                    test.equal(result, expected);
+                }
+                test.done();
+            });
+            this.id3.parse();
+        };
     },
-	'TALB': function(test){
-		this.executor('TALB', 'Friday Night Lights [Original Movie Soundtrack]', test);
+    'TALB': function(test){
+        this.executor('TALB', 'Friday Night Lights [Original Movie Soundtrack]', test);
     },
-	'TPE1': function(test){
-		this.executor('TPE1', ['Explo','ions','nodejsftws'], test, true);
+    'TPE1': function(test){
+        this.executor('TPE1', ['Explo','ions','nodejsftws'], test, true);
     },
     'TPE2': function(test){
         this.executor('TPE2', 'Soundtrack', test);
@@ -47,7 +51,7 @@ module.exports = testCase({
             test.equal(result.type, 'Cover (front)');
             test.equal(result.description, '');
             test.equal(result.data.length, 80938);
-            test.done()
+            test.done();
         });
         this.id3.parse();
     }

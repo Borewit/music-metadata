@@ -4,20 +4,20 @@ var id3 = require('../lib/id3v2'),
 module.exports = testCase({
     setUp: function(){
         this.id3 = new id3(require('fs').createReadStream('samples/id3v2.2.mp3'));
-		this.executor = function(frameName, expected, test){
-			test.expect(1);
-			this.id3.on(frameName, function(result){
-				test.equal(result, expected);
-				test.done();
-			});
-			this.id3.parse();
-		};
+        this.executor = function(frameName, expected, test){
+            test.expect(1);
+            this.id3.on(frameName, function(result){
+                test.equal(result, expected);
+                test.done();
+            });
+            this.id3.parse();
+        };
     },
-	'TP1': function(test){
-		this.executor('TP1', 'Shiny Toy Guns', test);
+    'TP1': function(test){
+        this.executor('TP1', 'Shiny Toy Guns', test);
     },
-	'TRK': function(test){
-		this.executor('TRK', '1/11', test);
+    'TRK': function(test){
+        this.executor('TRK', '1/11', test);
     },
     'TYE': function(test){
         this.executor('TYE', 2006, test);
@@ -26,13 +26,13 @@ module.exports = testCase({
         this.executor('TEN', 'iTunes v7.0.2.16', test);
     },
     'TCO': function(test){
-		this.executor('TCO', 'Alternative', test);
+        this.executor('TCO', 'Alternative', test);
     },
     'TAL': function(test){
         this.executor('TAL', 'We Are Pilots', test);
     },
     'TT2': function(test){
-		this.executor('TT2', 'You Are The One', test);
+        this.executor('TT2', 'You Are The One', test);
     },
     'PIC': function(test){
         test.expect(4);
