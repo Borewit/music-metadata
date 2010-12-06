@@ -4,11 +4,11 @@ var strtok = require('strtok'),
     id3v2 = require('../lib/id3v2'),
     ID3File = require('../lib/index'),
     genres = require('../lib/common').GENRES;
-      
+        
 
-var tst = new id4(require('fs').createReadStream('./samples/id4.m4a'));
+var tst = new id3v2(require('fs').createReadStream('./samples/id3v2.2.mp3'));
 
-tst.on('©alb', function(result){
+tst.on('TP1', function(result){
     console.log(result);
 });
 

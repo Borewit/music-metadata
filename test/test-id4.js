@@ -2,7 +2,7 @@ var id4 = require('../lib/id4'),
       testCase = require('nodeunit').testCase;
 
 module.exports = testCase({
-    setUp: function(){
+    setUp: function(cb){
         this.id3 = new id4(require('fs').createReadStream('samples/id4.m4a'));
         this.executor = function(frameName, expected, test, deep){
             test.expect(1);
@@ -16,6 +16,7 @@ module.exports = testCase({
             });
             this.id3.parse();
         };
+        cb();
     },
     'trkn': function(test){
         this.executor('trkn', [1,0], test, true);

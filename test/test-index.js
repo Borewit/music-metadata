@@ -2,7 +2,7 @@ var id3 = require('../lib/index'),
     testCase = require('nodeunit').testCase;
 
 module.exports = testCase({
-    setUp: function(){
+    setUp: function(cb){
         this.id3 = new id3(require('fs').createReadStream('samples/id3v2.3.mp3'));
         this.executor = function(frameName, expected, test, deep){
             test.expect(1);
@@ -16,6 +16,7 @@ module.exports = testCase({
             });
             this.id3.parse();
         };
+        cb();
     },
     'album': function(test){
         this.executor('album', 'Friday Night Lights [Original Movie Soundtrack]', test);
