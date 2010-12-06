@@ -12,6 +12,11 @@ if('©' == '©'){
     console.log("haggis");
 }
 
+var copyright = new Buffer(2);
+copyright[1] = 0xA9;
+
+console.log(copyright.toString());
+
 //console.log('©'.charCodeAt());
 
 tst.on('TP1', function(result){

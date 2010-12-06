@@ -57,9 +57,17 @@ module.exports = testCase({
         this.id3.parse();
     },
     'metadata': function(test){
-        test.expect(2);
+        test.expect(9);
         this.id3.on('metadata', function(result){
+            test.equal(result.title, 'Home');
             test.equal(result.albumartist, 'Soundtrack');
+            test.equal(result.artist, 'Explosions In The Sky/Another/And Another');
+            test.equal(result.album, 'Friday Night Lights [Original Movie Soundtrack]');
+            test.equal(result.disk, '1/1');
+            test.equal(result.genre, 'Soundtrack');
+            test.equal(result.track, 5);
+            test.equal(result.year, 2004);
+            test.ok(result.picture);
             test.done();
         });
         this.id3.parse();
