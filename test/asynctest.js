@@ -6,14 +6,24 @@ var strtok = require('strtok'),
     genres = require('../lib/common').GENRES;
         
 
-var tst = new id3v2(require('fs').createReadStream('./samples/id3v2.2.mp3'));
+var tst = new id4(require('fs').createReadStream('./samples/id4.m4a'));
+
+if('©' == '©'){
+    console.log("haggis");
+}
+
+//console.log('©'.charCodeAt());
 
 tst.on('TP1', function(result){
     console.log(result);
 });
 
-tst.on('aART', function(result){
-    console.log(result);
+tst.on('©wrt', function(result){
+    console.log('HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHA');
+});
+
+tst.on('trkn', function(result){
+    console.log('HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHA');
 });
 
 tst.parse();
