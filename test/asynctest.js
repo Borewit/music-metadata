@@ -5,15 +5,15 @@ var stream = fs.createReadStream('./samples/id4.m4a');
 var tst = new midy(stream);
 
 stream.on('data', function(result){
-    console.log(result.length);
+    //console.log(result.length);
 });
 
 tst.on('tmpo', function(result){
-    console.log(result);
+    //console.log(result);
 });
 
 tst.on('done', function(result){
-    stream.destroy();
+    //stream.destroy();
 });
 
 tst.on('metadata', function(result) {
