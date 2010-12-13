@@ -1,6 +1,6 @@
 var strtok = require('strtok'),
     fs = require('fs'),
-    id4 = require('../lib/id4'),
+    id4 = require('../lib/index'),
     id3v2 = require('../lib/id3v2'),
     ID3File = require('../lib/index'),
     genres = require('../lib/common').GENRES;
@@ -8,27 +8,19 @@ var strtok = require('strtok'),
 
 var tst = new id4(require('fs').createReadStream('./samples/id4.m4a'));
 
-if('©' == '©'){
-    console.log("haggis");
-}
+// if('©' == '©'){
+    // console.log("haggis");
+// }
 
-var copyright = new Buffer(2);
-copyright[1] = 0xA9;
+// var copyright = new Buffer(2);
+// copyright[1] = 0xA9;
 
-console.log(copyright.toString());
+// console.log(copyright.toString());
 
 //console.log('©'.charCodeAt());
 
-tst.on('TP1', function(result){
+tst.on('metadata', function(result) {
     console.log(result);
-});
-
-tst.on('©wrt', function(result){
-    console.log('HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHA');
-});
-
-tst.on('trkn', function(result){
-    console.log('HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHA');
 });
 
 tst.parse();
