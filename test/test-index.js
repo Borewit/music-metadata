@@ -57,7 +57,7 @@ module.exports = testCase({
         this.id3.parse();
     },
     'metadata': function(test){
-        test.expect(9);
+        test.expect(8);
         this.id3.on('metadata', function(result){
             test.equal(result.title, 'Home');
             test.equal(result.albumartist, 'Soundtrack');
@@ -67,7 +67,6 @@ module.exports = testCase({
             test.equal(result.genre, 'Soundtrack');
             test.equal(result.track, 5);
             test.equal(result.year, 2004);
-            test.ok(result.picture);
             test.done();
         });
         this.id3.parse();
