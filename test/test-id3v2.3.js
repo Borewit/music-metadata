@@ -2,7 +2,7 @@ var id3v2 = require('../lib/id3v2'),
       fs = require('fs');
 
 exports['id3v2.3'] = function(test) {
-    test.numAssertions = 14;
+    test.numAssertions = 13;
     
     var id3 = new id3v2(fs.createReadStream('samples/id3v2.3.mp3'));
     
@@ -52,15 +52,8 @@ exports['id3v2.3'] = function(test) {
     // TODO: test/impl for TXXX
     
     id3.on('done', function(result){
-        test.ok(true);
-    });
-    
-    //TODO: implement id3.on('done') everywhere so we don't have to wait a long time for the test
-    //can't use stream.on('end') because this could occur before the test has chance to capture
-    //all tests
-    setTimeout(function() {
         test.finish();
-    },1000);
+    });
     
     id3.parse();
 };
