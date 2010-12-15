@@ -1,74 +1,79 @@
-var id3 = require('../lib/index'),
-    testCase = require('nodeunit').testCase;
+var index = require('../lib/index'),
+    fs    = require('fs');
+    
+var id3 = new index(fs.createReadStream('samples/id3v2.3.mp3'));
+    
+exports['index'] = function(test) {
+    test.numAssertions = 22;
+    
+    id3.on('album', function(result){
+        test.equal(result, 'Friday Night Lights [Original Movie Soundtrack]', 'album failed');  
+    });
+    
+    id3.on('artist', function(result){
+        test.equal(result, 'Explosions In The Sky/Another/And Another', 'artist failed');  
+    });
+    
+    id3.on('albumartist', function(result){
+        test.equal(result, 'Soundtrack', 'albumartist failed');  
+    });
+    
+    id3.on('composer', function(result){
+        test.equal(result, 'Explosions in the Sky', 'composer failed');  
+    });
+    
+    id3.on('disk', function(result){
+        test.equal(result, '1/1', 'composer failed');  
+    });
+    
+    id3.on('genre', function(result){
+        test.equal(result, 'Soundtrack', 'genre failed');  
+    });
+    
+    id3.on('title', function(result){
+        test.equal(result, 'Home', 'title failed');  
+    });
+    
+    id3.on('track', function(result){
+        test.equal(result, 5, 'track failed');  
+    });
+    
+    id3.on('year', function(result){
+        test.equal(result, 2004, 'year failed');  
+    });
+    
+    id3.on('picture', function(result){
+        test.equal(result.format, 'image/jpg', 'picture format failed');
+        test.equal(result.type, 'Cover (front)', 'picture type failed');
+        test.equal(result.description, '', 'picture description failed');
+        test.equal(result.data.length, 80938, 'picture length failed');   
+    });
+    
+    id3.on('metadata', function(result){
+        test.equal(result.title, 'Home', 'metadata title failed');
+        test.equal(result.albumartist, 'Soundtrack', 'metadata albumartist failed');
+        test.equal(result.artist, 'Explosions In The Sky/Another/And Another', 'metadata artist failed');
+        test.equal(result.album, 'Friday Night Lights [Original Movie Soundtrack]', 'metadata album failed');
+        test.equal(result.disk, '1/1', 'metdata disk failed');
+        test.equal(result.genre, 'Soundtrack', 'metadata genre failed');
+        test.equal(result.track, 5, 'metadata track failed');
+        test.equal(result.year, 2004, 'metadata year failed');
+    });
+    
+    id3.on('done', function(result){
+        test.ok(true);
+    });
+    
+    //TODO: implement id3.on('done') everywhere so we don't have to wait a long time for the test
+    //can't use stream.on('end') because this could occur before the test has chance to capture
+    //all tests
+    setTimeout(function() {
+        test.finish();
+    },1000);
 
-module.exports = testCase({
-    setUp: function(cb){
-        this.id3 = new id3(require('fs').createReadStream('samples/id3v2.3.mp3'));
-        this.executor = function(frameName, expected, test, deep){
-            test.expect(1);
-            this.id3.on(frameName, function(result){
-                if(deep){
-                    test.deepEqual(result, expected);
-                }else{
-                    test.equal(result, expected);
-                }
-                test.done();
-            });
-            this.id3.parse();
-        };
-        cb();
-    },
-    'album': function(test){
-        this.executor('album', 'Friday Night Lights [Original Movie Soundtrack]', test);
-    },
-    'artist': function(test){
-        this.executor('artist', 'Explosions In The Sky/Another/And Another', test);
-    },
-    'albumartist': function(test){
-        this.executor('albumartist', 'Soundtrack', test);
-    },
-    'composer': function(test){
-        this.executor('composer', 'Explosions in the Sky', test);
-    },
-    'disk': function(test){
-        this.executor('disk', '1/1', test);
-    },
-    'genre': function(test){
-        this.executor('genre', 'Soundtrack', test);
-    },
-    'title': function(test){
-        this.executor('title', 'Home', test);
-    },
-    'track': function(test){
-        this.executor('track', 5, test);
-    },
-    'year': function(test){
-        this.executor('year', 2004, test);
-    },
-    'picture': function(test){
-        test.expect(4);
-        this.id3.on('picture', function(result){
-            test.equal(result.format, 'image/jpg');
-            test.equal(result.type, 'Cover (front)');
-            test.equal(result.description, '');
-            test.equal(result.data.length, 80938);
-            test.done();
-        });
-        this.id3.parse();
-    },
-    'metadata': function(test){
-        test.expect(8);
-        this.id3.on('metadata', function(result){
-            test.equal(result.title, 'Home');
-            test.equal(result.albumartist, 'Soundtrack');
-            test.equal(result.artist, 'Explosions In The Sky/Another/And Another');
-            test.equal(result.album, 'Friday Night Lights [Original Movie Soundtrack]');
-            test.equal(result.disk, '1/1');
-            test.equal(result.genre, 'Soundtrack');
-            test.equal(result.track, 5);
-            test.equal(result.year, 2004);
-            test.done();
-        });
-        this.id3.parse();
-    }
-});
+    id3.parse();
+};
+
+if (module == require.main) {
+  require('async_testing').run(__filename, process.ARGV);
+}
