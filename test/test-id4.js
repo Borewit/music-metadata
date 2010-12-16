@@ -60,7 +60,7 @@ exports['id4'] = function(test) {
     
     id3.on('covr', function(result){
         test.equal(result.format, 'image/jpeg');
-        test.equal(result.data.length, 196450);     
+        test.equal(result.data.length, 196450);
     });
  
     id3.on('done', function(){
