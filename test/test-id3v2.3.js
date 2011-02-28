@@ -1,10 +1,21 @@
-var id3v2 = require('../lib/id3v2'),
+var id3v2 = require('../lib/index'),
       fs = require('fs');
 
 exports['id3v2.3'] = function(test) {
-    test.numAssertions = 13;
+    test.numAssertions = 21;
     
     var id3 = new id3v2(fs.createReadStream('samples/id3v2.3.mp3'));
+    
+    id3.on('metadata', function(result){
+        test.equal(result.title, 'Home');
+        test.equal(result.artist, 'Explosions In The Sky/Another/And Another');
+        test.equal(result.albumartist, 'Soundtrack');
+        test.equal(result.album, 'Friday Night Lights [Original Movie Soundtrack]');
+        test.equal(result.year, 2004);
+        test.equal(result.track, 5);
+        test.equal(result.disk, '1/1');
+        test.equal(result.genre, 'Soundtrack');
+    });
     
     id3.on('TALB', function(result){
         test.equal(result, 'Friday Night Lights [Original Movie Soundtrack]', 'TALB failed');

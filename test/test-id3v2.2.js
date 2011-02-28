@@ -1,10 +1,19 @@
-var id3v2 = require('../lib/id3v2'),
+var id3v2 = require('../lib/index'),
       fs = require('fs');
       
 exports['id3v2.2'] = function(test){
-    test.numAssertions = 26;
+    test.numAssertions = 32;
     
     var id3 = new id3v2(fs.createReadStream('samples/id3v2.2.mp3'));
+    
+    id3.on('metadata', function(result){
+        test.equal(result.title, 'You Are The One');
+        test.equal(result.artist, 'Shiny Toy Guns');
+        test.equal(result.album, 'We Are Pilots');
+        test.equal(result.year, 2006);
+        test.equal(result.track, '1/11');
+        test.equal(result.genre, 'Alternative');
+    });
     
     id3.on('TP1', function(result){
         test.equal(result, 'Shiny Toy Guns', 'TP1 failed');

@@ -3,4 +3,6 @@ Update the index so it converts all metadata to a 'standard' e.g. any text field
 e.g. 'Artist/Artist2/Artist3' should be converted to ['Artist','Artist2','Artist3']. track / disk no's should be
 standardised too
 
+Should be able to parse PRIV frames
+
 Allow users calling code from a utf-8 / 16 encoded .js file to watch for events with a symbol in the name.
