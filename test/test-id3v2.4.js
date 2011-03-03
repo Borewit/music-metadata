@@ -43,9 +43,10 @@ exports['id3v2.4'] = function(test) {
     });
     
     id3.on('APIC', function(result){
+        //console.log(result.data);
         test.equal(result.format, 'image/jpg');
         test.equal(result.type, 'Cover (front)');
-        test.equal(result.description, '');
+        test.equal(result.description, 'some description');
         test.equal(result.data.length, 80938);
     });
    
