@@ -1,54 +1,57 @@
 var id3 = require('../lib/index'),
-      fs = require('fs');
+      fs = require('fs'),
+      assert = require('assert'),
+      testsRan = 0;
+      
+var parser = new id3(fs.createReadStream('samples/id3v1.mp3'));
 
-exports['id3v1.1'] = function(test) {
-    test.numAssertions = 13;
-    var parser = new id3(fs.createReadStream('samples/id3v1.mp3'));
-    
-    parser.on('title', function(result) {
-        test.equal(result, 'Blood Sugar', 'title is not correct')
-    });
+parser.on('metadata', function(result) {
+    assert.equal(result.title, 'Blood Sugar');
+    assert.equal(result.artist, 'Pendulum');
+    assert.equal(result.album, 'Blood Sugar (Single)');
+    assert.equal(result.year, 2007);
+    assert.equal(result.track, 1);
+    assert.equal(result.genre, 'Electronic');
+    testsRan += 6;
+});
 
-    parser.on('artist', function(result) {
-        test.equal(result, 'Pendulum', 'artist is not correct');
-    });
+parser.on('title', function(result) {
+    assert.equal(result, 'Blood Sugar');
+    testsRan++;
+});
 
-    parser.on('album', function(result) {
-        test.equal(result, 'Blood Sugar (Single)', 'album is not correct');
-    });
+parser.on('artist', function(result) {
+    assert.equal(result, 'Pendulum');
+    testsRan++;
+});
 
-    parser.on('year', function(result) {
-        test.equal(result,'2007', 'year is not correct');
-    });
+parser.on('album', function(result) {
+    assert.equal(result, 'Blood Sugar (Single)');
+    testsRan++;
+});
 
-    parser.on('comment', function(result) {
-        test.equal(result, 'abcdefg', 'comment is not correct');
-    });
+parser.on('year', function(result) {
+    assert.equal(result,'2007');
+    testsRan++;
+});
 
-    parser.on('track', function(result) {
-        test.equal(result, 1, 'track is not correct');
-    });
+parser.on('comment', function(result) {
+    assert.equal(result, 'abcdefg');
+    testsRan++;
+});
 
-    parser.on('genre', function(result) {
-        test.equal(result,'Electronic', 'genre is not correct');
-    });
-    
-    parser.on('done', function(){
-        test.finish();
-    });
+parser.on('track', function(result) {
+    assert.equal(result, 1);
+    testsRan++;
+});
 
-    parser.on('metadata', function(result) {
-        test.equal(result.title, 'Blood Sugar');
-        test.equal(result.artist, 'Pendulum');
-        test.equal(result.album, 'Blood Sugar (Single)');
-        test.equal(result.year, 2007);
-        test.equal(result.track, 1);
-        test.equal(result.genre, 'Electronic');
-    });
+parser.on('genre', function(result) {
+    assert.equal(result,'Electronic');
+    testsRan++;
+});
 
-    parser.parse();  
-};
+parser.on('done', function(result) {
+    assert.equal(testsRan, 13);
+});
 
-if (module == require.main) {
-  require('async_testing').run(__filename, process.ARGV);
-}
+parser.parse();

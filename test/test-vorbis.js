@@ -4,8 +4,6 @@ var vb = require('../lib/vorbis'),
 exports['vorbis'] = function(test) { 
     test.numAssertions = 13;
     
-    var vorbis = new vb(fs.createReadStream('samples/vorbis.ogg'));
-    
     vorbis.on('TRACKTOTAL', function(result){
         test.equal(result, 12, 'TRACKTOTAL failed');
     });
@@ -65,15 +63,15 @@ exports['vorbis'] = function(test) {
     });
     
     vorbis.on('METADATA_BLOCK_PICTURE', function(result){
-        test.equal(result.format, 'Cover (front)', 'METADATA_BLOCK_PICTURE format failed');
+        test.equal(result.format, 'Cover (back)', 'METADATA_BLOCK_PICTURE format failed');
         test.equal(result.type, 'image/jpeg', 'METADATA_BLOCK_PICTURE type failed');
+        test.equal(result.description, 'little willy', 'METADATA_BLOCK_PICTURE description failed');
         
         fs.writeFileSync('test.jpg', result.data);
         
         test.equal(result.data.length, 30966);
         
-        
-        
+          
         test.finish();
     });
     

@@ -1,86 +1,95 @@
-var id4 = require('../lib/index'),
-      fs = require('fs');
-      
-exports['id4'] = function(test) {
-    test.numAssertions = 23;
-    
-    var id3 = new id4(fs.createReadStream('samples/id4.m4a'));
-    
-    id3.on('metadata', function(result){
-        test.equal(result.title, 'Voodoo People (Pendulum Remix)');
-        test.equal(result.artist, 'The Prodigy');
-        test.equal(result.albumartist, 'Pendulum');
-        test.equal(result.album, 'Voodoo People');
-        test.equal(result.year, 2005);
-        test.deepEqual(result.track, [1,0]);
-        test.deepEqual(result.disk, [1,1]);
-        test.equal(result.genre, 'Electronic');
-    });
-    
-    id3.on('trkn', function(result){
-        test.deepEqual(result, [1,0], 'trkn failed');
-    });
-    
-    id3.on('disk', function(result){
-        test.deepEqual(result, [1,1], 'disk failed');
-    });
-    
-    id3.on('tmpo', function(result){
-        test.equal(result, 0, 'tmpo failed');
-    });
-    
-    id3.on('gnre', function(result){
-        test.equal(result, 'Electronic', 'gnre failed');
-    });
-    
-    id3.on('stik', function(result){
-        test.equal(result, 256, 'stik failed');
-    });
-    
-    id3.on('©alb', function(result){
-        test.equal(result, 'Voodoo People', '©alb failed');
-    });
-    
-    id3.on('©ART', function(result){
-        test.equal(result, 'The Prodigy', '©ART failed');
-    });
-    
-    id3.on('aART', function(result){
-        test.equal(result, 'Pendulum', 'aART failed');
-    });
-    
-    id3.on('©cmt', function(result){
-        test.equal(result, '(Pendulum Remix)', '©cmt failed');
-    });
-    
-    id3.on('©wrt', function(result){
-        test.equal(result, 'Liam Howlett', '©wrt failed');
-    });
-    
-    id3.on('©nam', function(result){
-        test.equal(result, 'Voodoo People (Pendulum Remix)', '©nam failed');
-    });
-    
-    id3.on('©too', function(result){
-        test.equal(result, 'Lavf52.36.0', '©too failed');
-    });
-    
-    id3.on('©day', function(result){
-        test.equal(result, 2005, '©day failed');
-    });
-    
-    id3.on('covr', function(result){
-        test.equal(result.format, 'image/jpeg');
-        test.equal(result.data.length, 196450);
-    });
- 
-    id3.on('done', function(){
-        test.finish();
-    });
-    
-    id3.parse();
-};
+var id3 = require('../lib/index'),
+      fs = require('fs'),
+      assert = require('assert'),
+      testsRan = 0;
+        
+var parser = new id3(fs.createReadStream('samples/id4.m4a'));
 
-if (module == require.main) {
-  require('async_testing').run(__filename, process.ARGV);
-}
+parser.on('metadata', function(result){
+    assert.equal(result.title, 'Voodoo People (Pendulum Remix)');
+    assert.equal(result.artist, 'The Prodigy');
+    assert.equal(result.albumartist, 'Pendulum');
+    assert.equal(result.album, 'Voodoo People');
+    assert.equal(result.year, 2005);
+    assert.deepEqual(result.track, [1,0]);
+    assert.deepEqual(result.disk, [1,1]);
+    assert.equal(result.genre, 'Electronic');
+    testsRan += 8;
+});
+
+parser.on('trkn', function(result){
+    assert.deepEqual(result, [1,0]);
+    testsRan++;
+});
+
+parser.on('disk', function(result){
+    assert.deepEqual(result, [1,1]);
+    testsRan++;
+});
+
+parser.on('tmpo', function(result){
+    assert.equal(result, 0);
+    testsRan++;
+});
+
+parser.on('gnre', function(result){
+    assert.equal(result, 'Electronic');
+    testsRan++;
+});
+
+parser.on('stik', function(result){
+    assert.equal(result, 256);
+    testsRan++;
+});
+
+parser.on('©alb', function(result){
+    assert.equal(result, 'Voodoo People');
+    testsRan++;
+});
+
+parser.on('©ART', function(result){
+    assert.equal(result, 'The Prodigy');
+    testsRan++;
+});
+
+parser.on('aART', function(result){
+    assert.equal(result, 'Pendulum');
+    testsRan++;
+});
+
+parser.on('©cmt', function(result){
+    assert.equal(result, '(Pendulum Remix)');
+    testsRan++;
+});
+
+parser.on('©wrt', function(result){
+    assert.equal(result, 'Liam Howlett');
+    testsRan++;
+});
+
+parser.on('©nam', function(result){
+    assert.equal(result, 'Voodoo People (Pendulum Remix)');
+    testsRan++;
+});
+
+parser.on('©too', function(result){
+    assert.equal(result, 'Lavf52.36.0');
+    testsRan++;
+});
+
+parser.on('©day', function(result){
+    assert.equal(result, 2005);
+    testsRan++;
+});
+
+parser.on('covr', function(result){
+    assert.equal(result.format, 'image/jpeg');
+    assert.equal(result.data.length, 196450);
+    testsRan += 2;
+});
+
+parser.on('done', function(){
+    assert.equal(testsRan, 23);
+});
+
+parser.parse();

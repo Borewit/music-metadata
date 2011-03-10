@@ -1,8 +1,9 @@
 Update the index so it converts all metadata to a 'standard' e.g. any text field should be an array
-
 e.g. 'Artist/Artist2/Artist3' should be converted to ['Artist','Artist2','Artist3']. track / disk no's should be
 standardised too
 
 Should be able to parse PRIV frames
 
 Allow users calling code from a utf-8 / 16 encoded .js file to watch for events with a symbol in the name.
+
+(id3) Disconnect from the stream once we have read to the end of the id3 header. Use the header size to determine when to stop reading.

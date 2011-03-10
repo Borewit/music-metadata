@@ -1,6 +1,19 @@
 if (module == require.main) {
-  var tests = ['test-deunsync.js', 'test-id3v1.1.js', 'test-id3v2.2.js',
-               'test-id3v2.3.js', 'test-id3v2.4.js', 'test-id4.js'];
-               
-  require('async_testing').run(tests, process.ARGV);
+    var exec = require('child_process').exec;
+    var tests = ['test-deunsync.js', 'test-id3v1.1.js', 'test-id3v2.2.js',
+                   'test-id3v2.3.js', 'test-id3v2.4.js', 'test-id4.js'];
+                   
+    for(var i in tests){
+        exec(process.execPath + ' ' + tests[i], 
+          function (error, stdout, stderr) {
+            if(stdout.length > 0){
+                console.log(stdout);
+            }
+
+            if (error !== null) {
+              console.log('exec error: ' + error);
+            }
+        });
+    }
 }
+
