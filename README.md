@@ -27,11 +27,13 @@ This will output the standard music metadata:
 
     { artist: 'Spor',
       album: 'Nightlife, Vol 5.',
-      albumartist: 'Andy C',
+      albumartist: ['Andy C', 'Spor'],
       title: 'Stronger',
       year: 2010,
       track: [1,44],
       disk: [1,2] }
+      
+Values can either be a String or an Array
       
 If you just want the artist - listen for the artist event:
 
