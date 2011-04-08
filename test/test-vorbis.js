@@ -1,85 +1,107 @@
-var vb = require('../lib/vorbis'),
-    fs = require('fs');
+var vorbis = require('../lib/index'),
+    fs = require('fs'),
+    assert = require('assert'),
+    testsRan = 0;
       
-exports['vorbis'] = function(test) { 
-    test.numAssertions = 13;
-    
-    vorbis.on('TRACKTOTAL', function(result){
-        test.equal(result, 12, 'TRACKTOTAL failed');
-    });
-    
-    vorbis.on('ALBUM', function(result){
-        test.equal(result, 'Nevermind', 'ALBUM failed');
-    });
-    
-    vorbis.on('ARTIST', function(result){
-        test.equal(result, 'Nirvana', 'ARTIST failed');
-    });
-    
-    var comCounter = 0;
-    vorbis.on('COMMENT', function(result){
-        switch(comCounter){
-            case 0:
-                test.equal(result, 'Nirvana\'s Greatest Album', 'COMMENT 1 failed');
-                break;
-            case 1:
-                test.equal(result, 'And their greatest song', 'COMMENT 2 failed');
-                break;
-        }
-        comCounter++;
-    });
-    
-    var genCounter = 0;
-    vorbis.on('GENRE', function(result){
-        switch(genCounter){
-            case 0:
-                test.equal(result, 'Grunge', 'GENRE 1 failed');
-                break;
-            case 1:
-                test.equal(result, 'Alternative', 'GENRE 2 failed');
-                break;
-        }
-        genCounter++;
-    });
-    
-    vorbis.on('TITLE', function(result){
-        test.equal(result, 'In Bloom', 'TITLE failed');
-    });
-    
-    vorbis.on('ALBUMARTIST', function(result){
-        test.equal(result, 'Nirvana', 'ALBUMARTIST failed');
-    });
-    
-    vorbis.on('DISCNUMBER', function(result){
-        test.equal(result, '1', 'DISCNUMBER failed');
-    });
-    
-    vorbis.on('DATE', function(result){
-        test.equal(result, '1991', 'DATE failed');
-    });
-    
-    vorbis.on('TRACKNUMBER', function(result){
-        test.equal(result, '1', 'DISCNUMBER failed');
-    });
-    
-    vorbis.on('METADATA_BLOCK_PICTURE', function(result){
-        test.equal(result.format, 'Cover (back)', 'METADATA_BLOCK_PICTURE format failed');
-        test.equal(result.type, 'image/jpeg', 'METADATA_BLOCK_PICTURE type failed');
-        test.equal(result.description, 'little willy', 'METADATA_BLOCK_PICTURE description failed');
-        
-        fs.writeFileSync('test.jpg', result.data);
-        
-        test.equal(result.data.length, 30966);
-        
-          
-        test.finish();
-    });
-    
-    
-    
-    vorbis.parse();
-}
+var parser = new vorbis(fs.createReadStream('samples/vorbis.ogg'));
 
-if (module == require.main) {
-  require('async_testing').run(__filename, process.ARGV);
-}
+parser.on('metadata', function(result) {
+    assert.equal(result.title, 'In Bloom');
+    assert.equal(result.artist, 'Nirvana');
+    assert.equal(result.album, 'Nevermind');
+    assert.equal(result.year, 1991);
+    assert.equal(result.track, 1);
+    assert.deepEqual(result.genre, ['Grunge', 'Alternative']);
+    testsRan += 6;
+});
+
+parser.on('TRACKTOTAL', function(result) {
+    assert.equal(result, 12);
+    testsRan++;
+});
+    
+parser.on('ALBUM', function(result) {
+    assert.equal(result, 'Nevermind');
+    testsRan++;
+});
+
+parser.on('ARTIST', function(result) {
+    assert.equal(result, 'Nirvana');
+    testsRan++
+});
+
+var comCounter = 0;
+parser.on('COMMENT', function(result) {
+    switch(comCounter) {
+        case 0:
+            assert.equal(result, 'Nirvana\'s Greatest Album');
+            testsRan++;
+            break;
+        case 1:
+            assert.equal(result, 'And their greatest song');
+            testsRan++;
+            break;
+    }
+    comCounter++;
+});
+
+var genCounter = 0;
+parser.on('GENRE', function(result) {
+    switch(genCounter) {
+        case 0:
+            assert.equal(result, 'Grunge');
+            testsRan++;
+            break;
+        case 1:
+            assert.equal(result, 'Alternative');
+            testsRan++;
+            break;
+    }
+    genCounter++;
+});
+
+parser.on('TITLE', function(result) {
+    assert.equal(result, 'In Bloom');
+    testsRan++;
+});
+
+parser.on('ALBUMARTIST', function(result) {
+    assert.equal(result, 'Nirvana');
+    testsRan++;
+    
+});
+
+parser.on('DISCNUMBER', function(result) {
+    assert.equal(result, '1');
+    testsRan++;
+});
+
+parser.on('DATE', function(result) {
+    assert.equal(result, '1991');
+    testsRan++;
+});
+
+parser.on('TRACKNUMBER', function(result) {
+    assert.equal(result, '1');
+    testsRan++;
+});
+
+parser.on('METADATA_BLOCK_PICTURE', function(result) {
+    assert.equal(result.format, 'Cover (back)');
+    assert.equal(result.type, 'image/jpeg');
+    assert.equal(result.description, 'little willy');
+    
+    //test exact contents too
+    assert.equal(result.data.length, 30966);
+    assert.equal(result.data[0], 255);
+    assert.equal(result.data[1], 216);
+    assert.equal(result.data[result.data.length - 1], 217);
+    assert.equal(result.data[result.data.length - 2], 255);
+    testsRan+= 8;
+});
+
+parser.on('done', function(result) {
+    assert.equal(testsRan, 26);
+});
+  
+parser.parse();
