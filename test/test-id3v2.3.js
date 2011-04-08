@@ -7,12 +7,12 @@ var parser = new id3(fs.createReadStream('samples/id3v2.3.mp3'));
 
 parser.on('metadata', function(result){
     assert.equal(result.title, 'Home');
-    assert.equal(result.artist, 'Explosions In The Sky/Another/And Another');
+    assert.deepEqual(result.artist, ['Explosions In The Sky', 'Another', 'And Another']);
     assert.equal(result.albumartist, 'Soundtrack');
     assert.equal(result.album, 'Friday Night Lights [Original Movie Soundtrack]');
     assert.equal(result.year, 2004);
     assert.equal(result.track, 5);
-    assert.equal(result.disk, '1/1');
+    assert.deepEqual(result.disk, [1, 1]);
     assert.equal(result.genre, 'Soundtrack');
     testsRan += 8;
 });
@@ -75,3 +75,5 @@ parser.on('APIC', function(result){
 parser.on('done', function(result){
     assert.equal(testsRan, 21);
 });
+
+parser.parse();

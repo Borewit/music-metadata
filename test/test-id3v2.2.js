@@ -10,7 +10,7 @@ parser.on('metadata', function(result){
     assert.equal(result.artist, 'Shiny Toy Guns');
     assert.equal(result.album, 'We Are Pilots');
     assert.equal(result.year, 2006);
-    assert.equal(result.track, '1/11');
+    assert.deepEqual(result.track, [1, 11]);
     assert.equal(result.genre, 'Alternative');
     testsRan += 6;
 });

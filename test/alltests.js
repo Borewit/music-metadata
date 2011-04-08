@@ -17,6 +17,6 @@ if (module == require.main) {
         });
     }
 
-	console.log('If there isnt any error messages from assert all tests have passed');
+	console.log('If there aren\'t any error messages from assert all tests have passed');
 }
 
