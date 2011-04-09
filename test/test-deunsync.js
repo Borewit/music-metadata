@@ -9,3 +9,5 @@ var sample = [0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00];
 
 assert.deepEqual(expected, common.removeUnsyncBytes(sample));
 assert.deepEqual(expected, new Buffer(common.removeUnsyncBytes(sample)));
+
+console.log(__filename + ' ran ' + 2 + ' tests');

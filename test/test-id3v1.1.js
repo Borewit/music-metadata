@@ -52,6 +52,7 @@ parser.on('genre', function(result) {
 
 parser.on('done', function(result) {
     assert.equal(testsRan, 13);
+    console.log(__filename + ' ran ' + testsRan + ' tests');
 });
 
 parser.parse();

@@ -98,6 +98,7 @@ parser.on('COM', function(result){
 
 parser.on('done', function(){
     assert.equal(testsRan, 32);
+    console.log(__filename + ' ran ' + testsRan + ' tests');
 });
 
 parser.parse();

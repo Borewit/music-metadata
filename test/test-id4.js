@@ -90,6 +90,7 @@ parser.on('covr', function(result){
 
 parser.on('done', function(){
     assert.equal(testsRan, 23);
+    console.log(__filename + ' ran ' + testsRan + ' tests');
 });
 
 parser.parse();
