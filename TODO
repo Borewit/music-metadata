@@ -6,6 +6,6 @@ Allow users calling code from a utf-8 / 16 encoded .js file to watch for events 
 
 vorbis - use TRACKTOTAL as the second part of the track for the metadata, same with disc
 
-vorbis - do we have a composer?
-
 work out what the minimum required version of nodejs
+
+tests have to be executed inside the test folder from bash
