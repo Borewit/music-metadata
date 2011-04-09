@@ -1,7 +1,7 @@
 var id3 = require('../lib/index'),
-      fs = require('fs'),
-      assert = require('assert'),
-      testsRan = 0;
+    fs = require('fs'),
+    assert = require('assert'),
+    testsRan = 0;
         
 var parser = new id3(fs.createReadStream('samples/id3v2.4.mp3'));
 
@@ -69,8 +69,6 @@ parser.on('APIC', function(result){
     assert.equal(result.data.length, 80938);
     testsRan += 4;
 });
-
-// TODO: test/impl for TXXX
 
 parser.on('done', function(result){
     assert.equal(testsRan, 21);

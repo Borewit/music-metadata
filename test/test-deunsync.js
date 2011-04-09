@@ -1,5 +1,5 @@
 var common = require('../lib/common'),
-      assert = require('assert');
+    assert = require('assert');
     
 //testing that we can deunsync data correctly
 //it shouldn't matter if it's a buffer or not
