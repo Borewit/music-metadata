@@ -5,7 +5,7 @@ if (module == require.main) {
                  'test-id3v2.3.js', 'test-id3v2.4.js', 'test-id4.js', 
                  'test-vorbis.js'];
                    
-    for (var i in tests) {
+    for (var i=0; i < tests.length; i++) {
         var test = spawn(process.execPath, [tests[i]]);
         
         test.stdout.on('data', function(data) {
