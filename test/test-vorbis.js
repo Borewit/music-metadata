@@ -104,5 +104,3 @@ parser.on('done', function(result) {
     assert.equal(testsRan, 26);
     console.log(__filename + ' ran ' + testsRan + ' tests');
 });
-  
-parser.parse();
