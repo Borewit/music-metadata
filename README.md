@@ -1,13 +1,17 @@
 Installation
 ------------
-
 Install via npm:
 
 npm install musicmetadata
 
+
+Supports
+-----------------
+mp3 (1.1, 2.2, 2.3, 2.4), m4a and ogg(vorbis)
+
+
 API
 -----------------
-
     var fs = require('fs');
     var musicmetadata = require('musicmetadata');
     
@@ -18,9 +22,6 @@ API
     parser.on('metadata', function(result) {
         console.log(result);
     });
-    
-    //start the parser
-    parser.parse();
 
 
 This will output the standard music metadata:

@@ -9,5 +9,3 @@ vorbis - use TRACKTOTAL as the second part of the track for the metadata, same w
 vorbis - do we have a composer?
 
 work out what the minimum required version of nodejs
-
-do we need to call parser.parse?
