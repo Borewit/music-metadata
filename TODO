@@ -12,3 +12,6 @@ genre is defaulting to an array for one value
 
 any errors that occur while parsing should be caught and available
 to the user through an event
+
+
+should done only be emitted when parsing has finished successfully and not when theres an error?
