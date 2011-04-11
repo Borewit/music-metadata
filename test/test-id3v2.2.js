@@ -3,7 +3,7 @@ var id3 = require('../lib/index'),
     assert = require('assert'),
     testsRan = 0;
         
-var parser = new id3(fs.createReadStream('samples/id3v2.2.mp3'));
+var parser = new id3(fs.createReadStream(require('path').join(__dirname, 'samples/id3v2.2.mp3')));
 
 parser.on('metadata', function(result) {
   assert.equal(result.title, 'You Are The One');

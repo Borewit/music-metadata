@@ -3,7 +3,7 @@ var vorbis = require('../lib/index'),
     assert = require('assert'),
     testsRan = 0;
       
-var parser = new vorbis(fs.createReadStream('samples/vorbis.ogg'));
+var parser = new vorbis(fs.createReadStream(require('path').join(__dirname, 'samples/vorbis.ogg')));
 
 parser.on('metadata', function(result) {
   assert.equal(result.title, 'In Bloom');

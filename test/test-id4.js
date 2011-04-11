@@ -3,7 +3,7 @@ var id3 = require('../lib/index'),
     assert = require('assert'),
     testsRan = 0;
         
-var parser = new id3(fs.createReadStream('samples/id4.m4a'));
+var parser = new id3(fs.createReadStream(require('path').join(__dirname, 'samples/id4.m4a')));
 
 parser.on('metadata', function(result) {
   assert.equal(result.title, 'Voodoo People (Pendulum Remix)');

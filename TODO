@@ -2,13 +2,9 @@ Should be able to parse PRIV frames
 
 Allow users calling code from a utf-8 / 16 encoded .js file to watch for events with a symbol in the name.
 
-(id3) Disconnect from the stream once we have read to the end of the id3 header. Use the header size to determine when to stop reading.
-
 vorbis - use TRACKTOTAL as the second part of the track for the metadata, same with disc
 
 work out what the minimum required version of nodejs
-
-tests have to be executed inside the test folder from bash
 
 should we automatically close the file once parsing has finished?
 
