@@ -20,7 +20,7 @@ API
     
     //listen for the metadata event
     parser.on('metadata', function(result) {
-        console.log(result);
+      console.log(result);
     });
 
 
@@ -39,5 +39,18 @@ Values can be: string, int or array
 If you just want the artist - listen for the artist event:
 
     parser.on('artist', function(result) {
-        console.log(result);
+      console.log(result);
+    });
+    
+You can also listen for the 'done' event, this will be raised when parsing has finished or an error has occured. This could be
+used to disconnect from the stream as soon as parsing has finished, saving bandwith.
+
+    parser.on('done', function() { 
+      stream.destroy();
+    });
+    
+Use the 'error' event to listen for errors that occured while parsing.
+
+    parser.on('error', function(error) { 
+      console.log(error.message);
     });
