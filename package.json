@@ -1,7 +1,7 @@
 {
   "name": "musicmetadata",
   "description": "Music metadata library for node, using pure Javascript.",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Lee Treveil",
   "engine": [ "node >=0.3.1" ],
   "dependencies": {

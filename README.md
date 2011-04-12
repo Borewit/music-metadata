@@ -7,7 +7,7 @@ npm install musicmetadata
 
 Supports
 -----------------
-mp3 (1.1, 2.2, 2.3, 2.4), m4a and ogg(vorbis)
+mp3 (1.1, 2.2, 2.3, 2.4), m4a(mp4) and ogg(vorbis)
 
 
 API
@@ -49,7 +49,7 @@ used to disconnect from the stream as soon as parsing has finished, saving bandw
       stream.destroy();
     });
     
-Use the 'error' event to listen for errors that occured while parsing.
+Use the 'error' event to listen for errors that occured during parsing.
 
     parser.on('error', function(error) { 
       console.log(error.message);
