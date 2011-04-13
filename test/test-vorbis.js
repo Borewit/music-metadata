@@ -15,7 +15,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.track[0], 1);
   assert.strictEqual(result.track[1], 0);
   assert.strictEqual(result.disk[0], 1);
-  assert.strictEqual(result.disk[1], 0);
+  assert.strictEqual(result.disk[1], 1);
   assert.deepEqual(result.genre, ['Grunge', 'Alternative']);
   testsRan += 10;
 });
@@ -53,7 +53,7 @@ parser.on('track', function(result) {
 
 parser.on('disk', function(result) {
   assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 0);
+  assert.strictEqual(result[1], 1);
   testsRan+=2
 });
 

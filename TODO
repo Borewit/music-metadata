@@ -10,8 +10,6 @@ should we automatically close the file once parsing has finished?
 
 should done only be emitted when parsing has finished successfully and not when theres an error?
 
-genre should be defaulting to 1/1
-
 need to test having more than one picture in a vorbis
 
-need to resize the ogg vorbis sample to remove all the audio data
+need to resize the ogg vorbis sample and remove all the audio data
