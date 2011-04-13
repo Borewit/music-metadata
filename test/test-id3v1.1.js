@@ -2,55 +2,58 @@ var id3 = require('../lib/index'),
     fs = require('fs'),
     assert = require('assert'),
     testsRan = 0;
-      
-var parser = new id3(fs.createReadStream(require('path').join(__dirname, 'samples/id3v1.mp3')));
+
+var sample = require('path').join(__dirname, 'samples/id3v1.mp3');
+var parser = new id3(fs.createReadStream(sample));
 
 parser.on('metadata', function(result) {
-  assert.equal(result.title, 'Blood Sugar');
-  assert.equal(result.artist, 'Pendulum');
-  assert.equal(result.album, 'Blood Sugar (Single)');
-  assert.equal(result.year, 2007);
-  assert.equal(result.track, 1);
-  assert.equal(result.genre, 'Electronic');
-  testsRan += 6;
+  assert.strictEqual(result.title, 'Blood Sugar');
+  assert.deepEqual(result.artist, ['Pendulum']);
+  assert.strictEqual(result.album, 'Blood Sugar (Single)');
+  assert.strictEqual(result.year, 2007);
+  assert.strictEqual(result.track[0], 1);
+  assert.strictEqual(result.track[1], 0);
+  assert.deepEqual(result.genre, ['Electronic']);
+  testsRan += 7;
 });
 
 parser.on('title', function(result) {
-  assert.equal(result, 'Blood Sugar');
+  assert.strictEqual(result, 'Blood Sugar');
   testsRan++;
 });
 
 parser.on('artist', function(result) {
-  assert.equal(result, 'Pendulum');
+  assert.deepEqual(result, ['Pendulum']);
   testsRan++;
 });
 
 parser.on('album', function(result) {
-  assert.equal(result, 'Blood Sugar (Single)');
+  assert.strictEqual(result, 'Blood Sugar (Single)');
   testsRan++;
 });
 
 parser.on('year', function(result) {
-  assert.equal(result,'2007');
-  testsRan++;
-});
-
-parser.on('comment', function(result) {
-  assert.equal(result, 'abcdefg');
+  assert.strictEqual(result, 2007);
   testsRan++;
 });
 
 parser.on('track', function(result) {
-  assert.equal(result, 1);
-  testsRan++;
+  assert.strictEqual(result[0], 1);
+  assert.strictEqual(result[1], 0);
+  testsRan+=2;
 });
 
 parser.on('genre', function(result) {
-  assert.equal(result,'Electronic');
+  assert.deepEqual(result, ['Electronic']);
+  testsRan++;
+});
+
+parser.on('comment', function(result) {
+  assert.strictEqual(result, 'abcdefg');
   testsRan++;
 });
 
 parser.on('done', function(result) {
-  assert.equal(testsRan, 13);
+  assert.equal(testsRan, 15);
   console.log(__filename + ' ran ' + testsRan + ' tests');
 });

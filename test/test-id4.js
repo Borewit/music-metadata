@@ -3,92 +3,132 @@ var id3 = require('../lib/index'),
     assert = require('assert'),
     testsRan = 0;
         
-var parser = new id3(fs.createReadStream(require('path').join(__dirname, 'samples/id4.m4a')));
+var sample = require('path').join(__dirname, 'samples/id4.m4a');
+var parser = new id3(fs.createReadStream(sample));
 
 parser.on('metadata', function(result) {
-  assert.equal(result.title, 'Voodoo People (Pendulum Remix)');
-  assert.equal(result.artist, 'The Prodigy');
-  assert.equal(result.albumartist, 'Pendulum');
-  assert.equal(result.album, 'Voodoo People');
-  assert.equal(result.year, 2005);
-  assert.deepEqual(result.track, [1,0]);
-  assert.deepEqual(result.disk, [1,1]);
-  assert.equal(result.genre, 'Electronic');
-  testsRan += 8;
+  assert.strictEqual(result.title, 'Voodoo People (Pendulum Remix)');
+  assert.deepEqual(result.artist, ['The Prodigy']);
+  assert.deepEqual(result.albumartist, ['Pendulum']);
+  assert.strictEqual(result.album, 'Voodoo People');
+  assert.strictEqual(result.year, 2005);
+  assert.strictEqual(result.track[0], 1);
+  assert.strictEqual(result.track[1], 0);
+  assert.strictEqual(result.disk[0], 1);
+  assert.strictEqual(result.disk[1], 1);
+  assert.deepEqual(result.genre, ['Electronic']);
+  testsRan += 10;
 });
 
-parser.on('trkn', function(result) {
-  assert.deepEqual(result, [1,0]);
+parser.on('title', function(result) {
+  assert.strictEqual(result, 'Voodoo People (Pendulum Remix)');
   testsRan++;
 });
 
+parser.on('artist', function(result) {
+  assert.deepEqual(result, ['The Prodigy']);
+  testsRan++;
+});
+
+parser.on('albumartist', function(result) {
+  assert.deepEqual(result, ['Pendulum']);
+  testsRan++;
+});
+
+parser.on('album', function(result) {
+  assert.strictEqual(result, 'Voodoo People');
+  testsRan++;
+});
+
+parser.on('year', function(result) {
+  assert.strictEqual(result, 2005);
+  testsRan++;
+});
+
+parser.on('track', function(result) {
+  assert.strictEqual(result[0], 1);
+  assert.strictEqual(result[1], 0);
+  testsRan+=2;
+});
+
 parser.on('disk', function(result) {
-  assert.deepEqual(result, [1,1]);
+  assert.strictEqual(result[0], 1);
+  assert.strictEqual(result[1], 1);
+  testsRan+=2;
+});
+
+parser.on('genre', function(result) {
+  assert.deepEqual(result, ['Electronic']);
+  testsRan++;
+});
+
+parser.on('trkn', function(result) {
+  assert.strictEqual(result, '1/0');
   testsRan++;
 });
 
 parser.on('tmpo', function(result) {
-  assert.equal(result, 0);
+  assert.strictEqual(result, 0);
   testsRan++;
 });
 
 parser.on('gnre', function(result) {
-  assert.equal(result, 'Electronic');
+  assert.strictEqual(result, 'Electronic');
   testsRan++;
 });
 
 parser.on('stik', function(result) {
-  assert.equal(result, 256);
+  assert.strictEqual(result, 256);
   testsRan++;
 });
 
 parser.on('©alb', function(result) {
-  assert.equal(result, 'Voodoo People');
+  assert.strictEqual(result, 'Voodoo People');
   testsRan++;
 });
 
 parser.on('©ART', function(result) {
-  assert.equal(result, 'The Prodigy');
+  assert.strictEqual(result, 'The Prodigy');
   testsRan++;
 });
 
 parser.on('aART', function(result) {
-  assert.equal(result, 'Pendulum');
+  assert.strictEqual(result, 'Pendulum');
   testsRan++;
 });
 
 parser.on('©cmt', function(result) {
-  assert.equal(result, '(Pendulum Remix)');
+  assert.strictEqual(result, '(Pendulum Remix)');
   testsRan++;
 });
 
 parser.on('©wrt', function(result) {
-  assert.equal(result, 'Liam Howlett');
+  assert.strictEqual(result, 'Liam Howlett');
   testsRan++;
 });
 
 parser.on('©nam', function(result) {
-  assert.equal(result, 'Voodoo People (Pendulum Remix)');
+  assert.strictEqual(result, 'Voodoo People (Pendulum Remix)');
   testsRan++;
 });
 
 parser.on('©too', function(result) {
-  assert.equal(result, 'Lavf52.36.0');
+  assert.strictEqual(result, 'Lavf52.36.0');
   testsRan++;
 });
 
 parser.on('©day', function(result) {
-  assert.equal(result, 2005);
+  assert.strictEqual(result, '2005');
   testsRan++;
 });
 
 parser.on('covr', function(result) {
-  assert.equal(result.format, 'image/jpeg');
-  assert.equal(result.data.length, 196450);
+  assert.strictEqual(result.format, 'image/jpeg');
+  assert.strictEqual(result.data.length, 196450);
   testsRan += 2;
 });
 
 parser.on('done', function() {
-  assert.equal(testsRan, 23);
+  assert.equal(testsRan, 34);
   console.log(__filename + ' ran ' + testsRan + ' tests');
 });
