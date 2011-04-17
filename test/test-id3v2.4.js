@@ -16,7 +16,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.track[1], 0);
   assert.strictEqual(result.disk[0], 1);
   assert.strictEqual(result.disk[1], 1);
-  assert.deepEqual(result.genre, ['Soundtrack']);
+  assert.deepEqual(result.genre, ['Soundtrack', 'OST']);
   testsRan += 10;
 });
 
@@ -26,12 +26,12 @@ parser.on('title', function(result) {
 });
 
 parser.on('artist', function(result) {
-  assert.deepEqual(result, ['Explo','ions','nodejsftws']);
+  assert.strictEqual(result, 'Explo/ions/nodejsftws');
   testsRan++;
 });
 
 parser.on('albumartist', function(result) {
-  assert.deepEqual(result, ['Soundtrack']);
+  assert.strictEqual(result, 'Soundtrack');
   testsRan++;
 });
 
@@ -41,24 +41,22 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2004);
+  assert.strictEqual(result, '2004');
   testsRan++;
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result[0], 5);
-  assert.strictEqual(result[1], 0);
-  testsRan+=2;
+  assert.strictEqual(result, '5');
+  testsRan++;
 });
 
 parser.on('disk', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 1);
-  testsRan+=2;
+  assert.strictEqual(result, '1/1');
+  testsRan++;
 });
 
 parser.on('genre', function(result) {
-  assert.deepEqual(result, ['Soundtrack']);
+  assert.strictEqual(result, 'Soundtrack/OST');
   testsRan++;;
 });
 
@@ -88,7 +86,7 @@ parser.on('TPOS', function(result) {
 });
 
 parser.on('TCON', function(result) {
-  assert.strictEqual(result, 'Soundtrack');
+  assert.strictEqual(result, 'Soundtrack/OST');
   testsRan++;
 });
 
@@ -116,6 +114,6 @@ parser.on('APIC', function(result) {
 });
 
 parser.on('done', function(result) {
-  assert.equal(testsRan, 33);
+  assert.equal(testsRan, 31);
   console.log(__filename + ' ran ' + testsRan + ' tests');
 });

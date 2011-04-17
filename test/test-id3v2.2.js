@@ -23,7 +23,7 @@ parser.on('title', function(result) {
 });
 
 parser.on('artist', function(result) {
-  assert.deepEqual(result, ['Shiny Toy Guns']);
+  assert.deepEqual(result, 'Shiny Toy Guns');
   testsRan++;
 });
 
@@ -33,18 +33,17 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2006);
+  assert.strictEqual(result, '2006');
   testsRan++;
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 11);
+  assert.strictEqual(result, '1/11');
   testsRan+=2;
 });
 
 parser.on('genre', function(result) {
-  assert.deepEqual(result, ['Alternative']);
+  assert.strictEqual(result, 'Alternative');
   testsRan++;
 });
 

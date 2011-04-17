@@ -26,12 +26,12 @@ parser.on('title', function(result) {
 });
 
 parser.on('artist', function(result) {
-  assert.deepEqual(result, ['The Prodigy']);
+  assert.strictEqual(result, 'The Prodigy');
   testsRan++;
 });
 
 parser.on('albumartist', function(result) {
-  assert.deepEqual(result, ['Pendulum']);
+  assert.strictEqual(result, 'Pendulum');
   testsRan++;
 });
 
@@ -41,24 +41,22 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2005);
+  assert.strictEqual(result, '2005');
   testsRan++;
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 0);
-  testsRan+=2;
+  assert.strictEqual(result, '1/0');
+  testsRan++;
 });
 
 parser.on('disk', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 1);
-  testsRan+=2;
+  assert.strictEqual(result, '1/1');
+  testsRan++;
 });
 
 parser.on('genre', function(result) {
-  assert.deepEqual(result, ['Electronic']);
+  assert.strictEqual(result, 'Electronic');
   testsRan++;
 });
 
@@ -129,6 +127,6 @@ parser.on('covr', function(result) {
 });
 
 parser.on('done', function() {
-  assert.equal(testsRan, 34);
+  assert.equal(testsRan, 32);
   console.log(__filename + ' ran ' + testsRan + ' tests');
 });

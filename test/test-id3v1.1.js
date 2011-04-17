@@ -9,12 +9,14 @@ var parser = new id3(fs.createReadStream(sample));
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'Blood Sugar');
   assert.deepEqual(result.artist, ['Pendulum']);
+  //we can't do assert.strictEqual(result.albumartist, []); :(
+  assert.strictEqual(result.albumartist[0], undefined);
   assert.strictEqual(result.album, 'Blood Sugar (Single)');
   assert.strictEqual(result.year, 2007);
   assert.strictEqual(result.track[0], 1);
   assert.strictEqual(result.track[1], 0);
   assert.deepEqual(result.genre, ['Electronic']);
-  testsRan += 7;
+  testsRan += 8;
 });
 
 parser.on('title', function(result) {
@@ -23,7 +25,7 @@ parser.on('title', function(result) {
 });
 
 parser.on('artist', function(result) {
-  assert.deepEqual(result, ['Pendulum']);
+  assert.strictEqual(result, 'Pendulum');
   testsRan++;
 });
 
@@ -33,18 +35,17 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2007);
+  assert.strictEqual(result, '2007');
   testsRan++;
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 0);
-  testsRan+=2;
+  assert.strictEqual(result, 1);
+  testsRan++;
 });
 
 parser.on('genre', function(result) {
-  assert.deepEqual(result, ['Electronic']);
+  assert.deepEqual(result, 'Electronic');
   testsRan++;
 });
 

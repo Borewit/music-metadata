@@ -26,12 +26,12 @@ parser.on('title', function(result) {
 });
 
 parser.on('artist', function(result) {
-  assert.deepEqual(result, ['Nirvana']);
+  assert.strictEqual(result, 'Nirvana');
   testsRan++;
 });
 
 parser.on('albumartist', function(result) {
-  assert.deepEqual(result, ['Nirvana']);
+  assert.strictEqual(result, 'Nirvana');
   testsRan++;
 });
 
@@ -41,31 +41,29 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 1991);
+  assert.strictEqual(result, '1991');
   testsRan++;
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 0);
-  testsRan+=2;
+  assert.strictEqual(result, '1');
+  testsRan++;
 });
 
 parser.on('disk', function(result) {
-  assert.strictEqual(result[0], 1);
-  assert.strictEqual(result[1], 1);
-  testsRan+=2
+  assert.strictEqual(result, '1');
+  testsRan++;
 });
 
 var genAliasCounter = 0;
 parser.on('genre', function(result) {
   switch(genAliasCounter) {
     case 0:
-      assert.deepEqual(result, ['Grunge']);
+      assert.strictEqual(result, 'Grunge');
       testsRan++;
       break;
     case 1:
-      assert.deepEqual(result, ['Grunge', 'Alternative']);
+      assert.strictEqual(result, 'Alternative');
       testsRan++;
       break;
   }
@@ -157,6 +155,6 @@ parser.on('METADATA_BLOCK_PICTURE', function(result) {
 });
 
 parser.on('done', function(result) {
-  assert.equal(testsRan, 41);
+  assert.equal(testsRan, 39);
   console.log(__filename + ' ran ' + testsRan + ' tests');
 });

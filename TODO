@@ -13,3 +13,5 @@ should done only be emitted when parsing has finished successfully and not when 
 need to test having more than one picture in a vorbis
 
 need to resize the ogg vorbis sample and remove all the audio data
+
+if cleanup doesn't work it should always return the original value
