@@ -2,16 +2,14 @@ Should be able to parse PRIV frames
 
 Allow users calling code from a utf-8 / 16 encoded .js file to watch for events with a symbol in the name.
 
-vorbis - use TRACKTOTAL as the second part of the track for the metadata, same with disc
-
-work out what the minimum required version of nodejs
+work out what the minimum required version of nodejs is
 
 should we automatically close the file once parsing has finished?
 
 should done only be emitted when parsing has finished successfully and not when theres an error?
 
-need to test having more than one picture in a vorbis
-
 need to resize the ogg vorbis sample and remove all the audio data
 
 if cleanup doesn't work it should always return the original value
+
+support for flac

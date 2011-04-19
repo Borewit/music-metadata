@@ -13,7 +13,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.album, 'Nevermind');
   assert.strictEqual(result.year, 1991);
   assert.strictEqual(result.track[0], 1);
-  assert.strictEqual(result.track[1], 0);
+  assert.strictEqual(result.track[1], 12);
   assert.strictEqual(result.disk[0], 1);
   assert.strictEqual(result.disk[1], 1);
   assert.deepEqual(result.genre, ['Grunge', 'Alternative']);
