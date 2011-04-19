@@ -1,5 +1,8 @@
 var common = require('../lib/common'),
-    assert = require('assert');
+    assert = require('assert'),
+    testHelper = require('./testHelper');
+    
+var testHelper = new testHelper(2, __filename);
     
 //testing that we can deunsync data correctly
 //it shouldn't matter if it's a buffer or not
@@ -9,5 +12,4 @@ var sample = [0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00];
 
 assert.deepEqual(expected, common.removeUnsyncBytes(sample));
 assert.deepEqual(expected, new Buffer(common.removeUnsyncBytes(sample)));
-
-console.log(__filename + ' ran ' + 2 + ' tests');
+testHelper.ranTests(2);

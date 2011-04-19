@@ -1,10 +1,12 @@
 var vorbis = require('../lib/index'),
     fs = require('fs'),
     assert = require('assert'),
-    testsRan = 0;
+    testHelper = require('./testHelper');
       
 var sample = require('path').join(__dirname, 'samples/vorbis.ogg');
 var parser = new vorbis(fs.createReadStream(sample));
+
+var testHelper = new testHelper(40, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'In Bloom');
@@ -17,42 +19,42 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.disk[0], 1);
   assert.strictEqual(result.disk[1], 1);
   assert.deepEqual(result.genre, ['Grunge', 'Alternative']);
-  testsRan += 10;
+  testHelper.ranTests(10);
 });
 
 parser.on('title', function(result) {
   assert.strictEqual(result, 'In Bloom');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('artist', function(result) {
   assert.strictEqual(result, 'Nirvana');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('albumartist', function(result) {
   assert.strictEqual(result, 'Nirvana');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('album', function(result) {
   assert.strictEqual(result, 'Nevermind');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('year', function(result) {
   assert.strictEqual(result, '1991');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('track', function(result) {
   assert.strictEqual(result, '1');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('disk', function(result) {
   assert.strictEqual(result, '1');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 var genAliasCounter = 0;
@@ -60,11 +62,11 @@ parser.on('genre', function(result) {
   switch(genAliasCounter) {
     case 0:
       assert.strictEqual(result, 'Grunge');
-      testsRan++;
+      testHelper.ranTests(1);
       break;
     case 1:
       assert.strictEqual(result, 'Alternative');
-      testsRan++;
+      testHelper.ranTests(1);
       break;
   }
   genAliasCounter++;
@@ -72,17 +74,17 @@ parser.on('genre', function(result) {
 
 parser.on('TRACKTOTAL', function(result) {
   assert.strictEqual(result, '12');
-  testsRan++;
+  testHelper.ranTests(1);
 });
     
 parser.on('ALBUM', function(result) {
   assert.strictEqual(result, 'Nevermind');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('ARTIST', function(result) {
   assert.strictEqual(result, 'Nirvana');
-  testsRan++
+  testHelper.ranTests(1)
 });
 
 var comCounter = 0;
@@ -90,11 +92,11 @@ parser.on('COMMENT', function(result) {
   switch(comCounter) {
     case 0:
       assert.strictEqual(result, 'Nirvana\'s Greatest Album');
-      testsRan++;
+      testHelper.ranTests(1);
       break;
     case 1:
       assert.strictEqual(result, 'And their greatest song');
-      testsRan++;
+      testHelper.ranTests(1);
       break;
   }
   comCounter++;
@@ -105,11 +107,11 @@ parser.on('GENRE', function(result) {
   switch(genCounter) {
     case 0:
       assert.strictEqual(result, 'Grunge');
-      testsRan++;
+      testHelper.ranTests(1);
       break;
     case 1:
       assert.strictEqual(result, 'Alternative');
-      testsRan++;
+      testHelper.ranTests(1);
       break;
   }
   genCounter++;
@@ -117,27 +119,27 @@ parser.on('GENRE', function(result) {
 
 parser.on('TITLE', function(result) {
   assert.strictEqual(result, 'In Bloom');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('ALBUMARTIST', function(result) {
   assert.strictEqual(result, 'Nirvana');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('DISCNUMBER', function(result) {
   assert.strictEqual(result, '1');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('DATE', function(result) {
   assert.strictEqual(result, '1991');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('TRACKNUMBER', function(result) {
   assert.strictEqual(result, '1');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('METADATA_BLOCK_PICTURE', function(result) {
@@ -151,10 +153,9 @@ parser.on('METADATA_BLOCK_PICTURE', function(result) {
   assert.strictEqual(result.data[1], 216);
   assert.strictEqual(result.data[result.data.length - 1], 217);
   assert.strictEqual(result.data[result.data.length - 2], 255);
-  testsRan+=8;
+  testHelper.ranTests(8);
 });
 
 parser.on('done', function(result) {
-  assert.equal(testsRan, 39);
-  console.log(__filename + ' ran ' + testsRan + ' tests');
+  testHelper.ranTests(1);
 });

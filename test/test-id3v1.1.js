@@ -1,10 +1,12 @@
 var id3 = require('../lib/index'),
     fs = require('fs'),
     assert = require('assert'),
-    testsRan = 0;
+    testHelper = require('./testHelper');
 
 var sample = require('path').join(__dirname, 'samples/id3v1.mp3');
 var parser = new id3(fs.createReadStream(sample));
+
+var testHelper = new testHelper(16, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'Blood Sugar');
@@ -16,45 +18,44 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.track[0], 1);
   assert.strictEqual(result.track[1], 0);
   assert.deepEqual(result.genre, ['Electronic']);
-  testsRan += 8;
+  testHelper.ranTests(8);
 });
 
 parser.on('title', function(result) {
   assert.strictEqual(result, 'Blood Sugar');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('artist', function(result) {
   assert.strictEqual(result, 'Pendulum');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('album', function(result) {
   assert.strictEqual(result, 'Blood Sugar (Single)');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('year', function(result) {
   assert.strictEqual(result, '2007');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('track', function(result) {
   assert.strictEqual(result, 1);
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('genre', function(result) {
   assert.deepEqual(result, 'Electronic');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('comment', function(result) {
   assert.strictEqual(result, 'abcdefg');
-  testsRan++;
+  testHelper.ranTests(1);
 });
 
 parser.on('done', function(result) {
-  assert.equal(testsRan, 15);
-  console.log(__filename + ' ran ' + testsRan + ' tests');
+  testHelper.ranTests(1);
 });
