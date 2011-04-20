@@ -6,7 +6,7 @@ var id3 = require('../lib/index'),
 var sample = require('path').join(__dirname, 'samples/id4.m4a');
 var parser = new id3(fs.createReadStream(sample));
 
-var testHelper = new testHelper(33, __filename);
+var testHelper = new testHelper(37, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'Voodoo People (Pendulum Remix)');
@@ -19,7 +19,9 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.disk[0], 1);
   assert.strictEqual(result.disk[1], 1);
   assert.deepEqual(result.genre, ['Electronic']);
-  testHelper.ranTests(10);
+  assert.strictEqual(result.picture.format, 'jpg');
+  assert.strictEqual(result.picture.data.length, 196450);
+  testHelper.ranTests(12);
 });
 
 parser.on('title', function(result) {
@@ -60,6 +62,12 @@ parser.on('disk', function(result) {
 parser.on('genre', function(result) {
   assert.strictEqual(result, 'Electronic');
   testHelper.ranTests(1);
+});
+
+parser.on('picture', function(result) {
+  assert.strictEqual(result.format, 'image/jpeg');
+  assert.strictEqual(result.data.length, 196450);
+  testHelper.ranTests(2);
 });
 
 parser.on('trkn', function(result) {

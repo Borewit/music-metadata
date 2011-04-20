@@ -26,30 +26,30 @@ API
 
 This will output the standard music metadata:
 
-    { artist: 'Spor',
-      album: 'Nightlife, Vol 5.',
-      albumartist: ['Andy C', 'Spor'],
-      title: 'Stronger',
-      year: 2010,
-      track: [1, 44],
-      disk: [1, 2] }
-      
-Values can be: string, int or array
-      
+    { artist : 'Spor',
+      album : 'Nightlife, Vol 5.',
+      albumartist : ['Andy C', 'Spor'],
+      title : 'Stronger',
+      year : 2010,
+      track : [1, 44],
+      disk : [1, 2],
+ 	  picture: { format : 'jpg', data : <Buffer> }
+	}
+        
 If you just want the artist - listen for the artist event:
 
     parser.on('artist', function(result) {
       console.log(result);
     });
     
-You can also listen for the 'done' event, this will be raised when parsing has finished or an error has occured. This could be
-used to disconnect from the stream as soon as parsing has finished, saving bandwith.
+You can also listen for the 'done' event, this will be raised when parsing has finished or an error has occurred. This could be
+used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
 
     parser.on('done', function() { 
       stream.destroy();
     });
     
-Use the 'error' event to listen for errors that occured during parsing.
+Use the 'error' event to listen for errors that occurred while parsing.
 
     parser.on('error', function(error) { 
       console.log(error.message);

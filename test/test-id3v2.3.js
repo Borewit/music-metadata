@@ -6,7 +6,7 @@ var id3 = require('../lib/index'),
 var sample = require('path').join(__dirname, 'samples/id3v2.3.mp3');
 var parser = new id3(fs.createReadStream(sample));
 
-var testHelper = new testHelper(32, __filename);
+var testHelper = new testHelper(38, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'Home');
@@ -19,7 +19,9 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.disk[0], 1);
   assert.strictEqual(result.disk[1], 1);
   assert.deepEqual(result.genre, ['Soundtrack']);
-  testHelper.ranTests(10);
+  assert.strictEqual(result.picture.format, 'jpg');
+  assert.strictEqual(result.picture.data.length, 80938);
+  testHelper.ranTests(12);
 });
 
 parser.on('title', function(result) {
@@ -60,6 +62,14 @@ parser.on('disk', function(result) {
 parser.on('genre', function(result) {
   assert.strictEqual(result, 'Soundtrack');
   testHelper.ranTests(1)
+});
+
+parser.on('picture', function(result) {
+  assert.strictEqual(result.format, 'image/jpg');
+  assert.strictEqual(result.type, 'Cover (front)');
+  assert.strictEqual(result.description, '');
+  assert.strictEqual(result.data.length, 80938);
+  testHelper.ranTests(4);
 });
 
 parser.on('TALB', function(result) {

@@ -6,7 +6,7 @@ var id3 = require('../lib/index'),
 var sample = require('path').join(__dirname, 'samples/id3v2.2.mp3');
 var parser = new id3(fs.createReadStream(sample));
 
-var testHelper = new testHelper(40, __filename);
+var testHelper = new testHelper(46, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'You Are The One');
@@ -16,7 +16,9 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.track[0], 1);
   assert.strictEqual(result.track[1], 11);
   assert.deepEqual(result.genre, ['Alternative']);
-  testHelper.ranTests(7);
+  assert.strictEqual(result.picture.format, 'jpg');
+  assert.strictEqual(result.picture.data.length, 99738);
+  testHelper.ranTests(9);
 });
 
 parser.on('title', function(result) {
@@ -47,6 +49,14 @@ parser.on('track', function(result) {
 parser.on('genre', function(result) {
   assert.strictEqual(result, 'Alternative');
   testHelper.ranTests(1);
+});
+
+parser.on('picture', function(result) {
+  assert.strictEqual(result.format, 'JPG');
+  assert.strictEqual(result.type, 'Other');
+  assert.strictEqual(result.description, '');
+  assert.strictEqual(result.data.length, 99738);
+  testHelper.ranTests(4);
 });
 
 parser.on('TP1', function(result) {

@@ -6,7 +6,7 @@ var vorbis = require('../lib/index'),
 var sample = require('path').join(__dirname, 'samples/vorbis.ogg');
 var parser = new vorbis(fs.createReadStream(sample));
 
-var testHelper = new testHelper(40, __filename);
+var testHelper = new testHelper(46, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'In Bloom');
@@ -19,7 +19,9 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.disk[0], 1);
   assert.strictEqual(result.disk[1], 1);
   assert.deepEqual(result.genre, ['Grunge', 'Alternative']);
-  testHelper.ranTests(10);
+  assert.strictEqual(result.picture.format, 'jpg');
+  assert.strictEqual(result.picture.data.length, 30966);
+  testHelper.ranTests(12);
 });
 
 parser.on('title', function(result) {
@@ -70,6 +72,14 @@ parser.on('genre', function(result) {
       break;
   }
   genAliasCounter++;
+});
+
+parser.on('picture', function(result) {
+  assert.strictEqual(result.format, 'image/jpeg');
+  assert.strictEqual(result.type, 'Cover (back)');
+  assert.strictEqual(result.description, 'little willy');
+  assert.strictEqual(result.data.length, 30966);
+  testHelper.ranTests(4);
 });
 
 parser.on('TRACKTOTAL', function(result) {
@@ -143,8 +153,8 @@ parser.on('TRACKNUMBER', function(result) {
 });
 
 parser.on('METADATA_BLOCK_PICTURE', function(result) {
-  assert.strictEqual(result.format, 'Cover (back)');
-  assert.strictEqual(result.type, 'image/jpeg');
+  assert.strictEqual(result.format, 'image/jpeg');
+  assert.strictEqual(result.type, 'Cover (back)');
   assert.strictEqual(result.description, 'little willy');
   
   //test exact contents too
