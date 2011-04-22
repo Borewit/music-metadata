@@ -4,7 +4,8 @@ if (module == require.main) {
     
   var tests = ['test-genres.js', 'test-deunsync.js', 'test-metadataleak.js',
                'test-id3v1.1.js', 'test-id3v2.2.js', 'test-id3v2.3.js', 
-               'test-id3v2.4.js', 'test-id4.js', 'test-vorbis.js'];
+               'test-id3v2.4.js', 'test-id4.js', 'test-vorbis.js',
+               'test-unknownencoding.js'];
                
   for (var i=0; i < tests.length; i++) {
     var fullPath = path.join(__dirname, tests[i]);
