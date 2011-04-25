@@ -1,5 +1,5 @@
 var fs = require('fs'),
-    mm = require('musicmetadata'),
+    mm = require('../lib/index'),
     assert = require('assert'),
     testHelper = require('./testHelper');
     

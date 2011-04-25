@@ -4,6 +4,7 @@ var TestHelper = module.exports =  function(expected, fileName) {
   this.fileName = fileName;
   this.expected = expected;
   this.testsRan = 0;
+  this.ranTests(0); //do a check now
 }
 
 TestHelper.prototype.ranTests = function(testsRan) {
