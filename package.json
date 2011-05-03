@@ -3,9 +3,10 @@
   "description": "Music metadata library for node, using pure Javascript.",
   "version": "0.1.0",
   "author": "Lee Treveil",
-  "engine": [ "node >=0.3.1" ],
   "dependencies": {
-    "strtok": ">=0.1.0"
+    "strtok" :  "*"
   },
-  "main": "lib"
+  "main": "lib",
+  "scripts":
+    { "test": "node test/alltests.js" }
 }
