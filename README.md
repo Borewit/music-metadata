@@ -54,3 +54,13 @@ Use the 'error' event to listen for errors that occurred while parsing.
     parser.on('error', function(error) { 
       console.log(error.message);
     });
+    
+## Changelog
+
+### v0.1.1
+
+* Better utf-16 handling
+* Now reads iso-8859-1 encoded id3 frames correctly
+* Artwork is now part of the 'metadata' event
+
+[Commits](https://github.com/leetreveil/node-musicmetadata/compare/0.1.0...0.1.1)
