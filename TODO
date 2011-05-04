@@ -10,11 +10,7 @@ should done only be emitted when parsing has finished successfully and not when 
 
 if cleanup doesn't work it should always return the original value
 
-support for flac
-
 not all the tests are executing on cygwin
-
-should we pass an error as part of the done event?
 
 support multiple artworks
 

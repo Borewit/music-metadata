@@ -56,6 +56,7 @@ parser.on('comment', function(result) {
   testHelper.ranTests(1);
 });
 
-parser.on('done', function(result) {
+parser.on('done', function(err) {
+  if (err) throw err;
   testHelper.ranTests(1);
 });

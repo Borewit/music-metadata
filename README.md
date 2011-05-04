@@ -45,16 +45,12 @@ If you just want the artist - listen for the artist event:
 You can also listen for the 'done' event, this will be raised when parsing has finished or an error has occurred. This could be
 used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
 
-    parser.on('done', function() { 
+    parser.on('done', function(err) {
+	  if (err) throw err;	
       stream.destroy();
     });
     
-Use the 'error' event to listen for errors that occurred while parsing.
 
-    parser.on('error', function(error) { 
-      console.log(error.message);
-    });
-    
 ## Changelog
 
 ### v0.1.1

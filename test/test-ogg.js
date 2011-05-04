@@ -166,6 +166,7 @@ parser.on('METADATA_BLOCK_PICTURE', function(result) {
   testHelper.ranTests(8);
 });
 
-parser.on('done', function(result) {
+parser.on('done', function(err) {
+  if (err) throw err;
   testHelper.ranTests(1);
 });

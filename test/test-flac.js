@@ -90,6 +90,7 @@ parser.on('METADATA_BLOCK_PICTURE', function(result) {
   testHelper.ranTests(2);
 });
 
-parser.on('done', function(result) {
+parser.on('done', function(err) {
+  if (err) throw err;
   testHelper.ranTests(1);
 });

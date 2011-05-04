@@ -136,6 +136,7 @@ parser.on('covr', function(result) {
   testHelper.ranTests(2);
 });
 
-parser.on('done', function() {
+parser.on('done', function(err) {
+  if (err) throw err;
   testHelper.ranTests(1);
 });

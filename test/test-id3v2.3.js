@@ -125,6 +125,7 @@ parser.on('APIC', function(result) {
   testHelper.ranTests(4);
 });
 
-parser.on('done', function(result) {
+parser.on('done', function(err) {
+  if (err) throw err;
   testHelper.ranTests(1);
 });

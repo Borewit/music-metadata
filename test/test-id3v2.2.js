@@ -142,6 +142,7 @@ parser.on('COM', function(result) {
   comCounter++;    
 });
 
-parser.on('done', function() {
+parser.on('done', function(err) {
+  if (err) throw err;
   testHelper.ranTests(1);
 });
