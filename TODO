@@ -11,3 +11,16 @@ should done only be emitted when parsing has finished successfully and not when 
 if cleanup doesn't work it should always return the original value
 
 support for flac
+
+not all the tests are executing on cygwin
+
+should we pass an error as part of the done event?
+
+support multiple artworks
+
+to make sure that the aliased events are the same as the metadata event we should emit
+when the done event is raised
+
+track and disk total should default to 0 if its not known
+
+track and disk total should be num 1 of 2 and not an array

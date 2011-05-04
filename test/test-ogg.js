@@ -1,10 +1,10 @@
-var vorbis = require('../lib/index'),
+var mm = require('../lib/index'),
     fs = require('fs'),
     assert = require('assert'),
     testHelper = require('./testHelper');
       
-var sample = require('path').join(__dirname, 'samples/vorbis.ogg');
-var parser = new vorbis(fs.createReadStream(sample));
+var sample = require('path').join(__dirname, 'samples/oggy.ogg');
+var parser = new mm(fs.createReadStream(sample));
 
 var testHelper = new testHelper(46, __filename);
 
