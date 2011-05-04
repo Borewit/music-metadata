@@ -15,8 +15,8 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.albumartist[0], undefined);
   assert.strictEqual(result.album, 'Blood Sugar (Single)');
   assert.strictEqual(result.year, 2007);
-  assert.strictEqual(result.track[0], 1);
-  assert.strictEqual(result.track[1], 0);
+  assert.strictEqual(result.track.no, 1);
+  assert.strictEqual(result.track.of, 0);
   assert.deepEqual(result.genre, ['Electronic']);
   testHelper.ranTests(8);
 });

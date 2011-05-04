@@ -14,10 +14,10 @@ parser.on('metadata', function(result) {
   assert.deepEqual(result.albumartist, ['Nirvana']);
   assert.strictEqual(result.album, 'Nevermind');
   assert.strictEqual(result.year, 1991);
-  assert.strictEqual(result.track[0], 1);
-  assert.strictEqual(result.track[1], 12);
-  assert.strictEqual(result.disk[0], 1);
-  assert.strictEqual(result.disk[1], 0);
+  assert.strictEqual(result.track.no, 1);
+  assert.strictEqual(result.track.of, 12);
+  assert.strictEqual(result.disk.no, 1);
+  assert.strictEqual(result.disk.of, 0);
   assert.deepEqual(result.genre, ['Grunge', 'Alternative']);
   assert.strictEqual(result.picture.format, 'jpg');
   assert.strictEqual(result.picture.data.length, 30966);

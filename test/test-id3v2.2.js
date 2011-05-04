@@ -13,8 +13,8 @@ parser.on('metadata', function(result) {
   assert.deepEqual(result.artist, ['Shiny Toy Guns']);
   assert.strictEqual(result.album, 'We Are Pilots');
   assert.strictEqual(result.year, 2006);
-  assert.strictEqual(result.track[0], 1);
-  assert.strictEqual(result.track[1], 11);
+  assert.strictEqual(result.track.no, 1);
+  assert.strictEqual(result.track.of, 11);
   assert.deepEqual(result.genre, ['Alternative']);
   assert.strictEqual(result.picture.format, 'jpg');
   assert.strictEqual(result.picture.data.length, 99738);

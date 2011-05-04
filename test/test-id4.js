@@ -14,10 +14,10 @@ parser.on('metadata', function(result) {
   assert.deepEqual(result.albumartist, ['Pendulum']);
   assert.strictEqual(result.album, 'Voodoo People');
   assert.strictEqual(result.year, 2005);
-  assert.strictEqual(result.track[0], 1);
-  assert.strictEqual(result.track[1], 0);
-  assert.strictEqual(result.disk[0], 1);
-  assert.strictEqual(result.disk[1], 1);
+  assert.strictEqual(result.track.no, 1);
+  assert.strictEqual(result.track.of, 0);
+  assert.strictEqual(result.disk.no, 1);
+  assert.strictEqual(result.disk.of, 1);
   assert.deepEqual(result.genre, ['Electronic']);
   assert.strictEqual(result.picture.format, 'jpg');
   assert.strictEqual(result.picture.data.length, 196450);

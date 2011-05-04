@@ -14,8 +14,8 @@ parser.on('metadata', function(result) {
   assert.deepEqual(result.albumartist, ['Benga']);
   assert.strictEqual(result.album, 'Phaze One');
   assert.strictEqual(result.year, 2010);
-  assert.strictEqual(result.track[0], 4);
-  assert.strictEqual(result.track[1], 8);
+  assert.strictEqual(result.track.no, 4);
+  assert.strictEqual(result.track.of, 8);
   assert.deepEqual(result.genre, ['Dubstep']);
   assert.strictEqual(result.picture.format, 'jpg');
   assert.strictEqual(result.picture.data.length, 6761);

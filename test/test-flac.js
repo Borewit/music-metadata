@@ -14,10 +14,10 @@ parser.on('metadata', function(result) {
   assert.deepEqual(result.albumartist, []);
   assert.strictEqual(result.album, 'Congratulations');
   assert.strictEqual(result.year, 2010);
-  assert.strictEqual(result.track[0], 7);
-  assert.strictEqual(result.track[1], 0);
-  assert.strictEqual(result.disk[0], 0);
-  assert.strictEqual(result.disk[1], 0);
+  assert.strictEqual(result.track.no, 7);
+  assert.strictEqual(result.track.of, 0);
+  assert.strictEqual(result.disk.no, 0);
+  assert.strictEqual(result.disk.of, 0);
   assert.deepEqual(result.genre, ['Alt. Rock']);
   assert.strictEqual(result.picture.format, 'jpg');
   assert.strictEqual(result.picture.data.length, 175668);

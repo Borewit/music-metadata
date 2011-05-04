@@ -31,9 +31,9 @@ This will output the standard music metadata:
       albumartist : ['Andy C', 'Spor'],
       title : 'Stronger',
       year : 2010,
-      track : [1, 44],
-      disk : [1, 2],
- 	  picture: { format : 'jpg', data : <Buffer> }
+      track : { no : 1, of : 44 },
+      disk : { no : 1, of : 2 },
+ 	  picture : { format : 'jpg', data : <Buffer> }
 	}
         
 If you just want the artist - listen for the artist event:
