@@ -17,7 +17,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.track[0], 7);
   assert.strictEqual(result.track[1], 0);
   assert.strictEqual(result.disk[0], 0);
-  assert.strictEqual(result.disk[1], 1);
+  assert.strictEqual(result.disk[1], 0);
   assert.deepEqual(result.genre, ['Alt. Rock']);
   assert.strictEqual(result.picture.format, 'jpg');
   assert.strictEqual(result.picture.data.length, 175668);
