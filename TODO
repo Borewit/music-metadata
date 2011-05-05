@@ -16,7 +16,3 @@ support multiple artworks
 
 to make sure that the aliased events are the same as the metadata event we should emit
 when the done event is raised
-
-track and disk total should default to 0 if its not known
-
-track and disk total should be num 1 of 2 and not an array

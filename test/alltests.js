@@ -11,7 +11,13 @@ if (module == require.main) {
   for (var i=0; i < tests.length; i++) {
     var fullPath = path.join(__dirname, tests[i]);
     var test = spawn(process.execPath, [fullPath]);
-    test.stdout.pipe(process.stdout);
-    test.stderr.pipe(process.stderr);
+
+    test.stdout.on('data', function(data) {
+      process.stdout.write(data.toString());
+    });
+    
+    test.stderr.on('data', function(data) {
+      process.stderr.write(data.toString());
+    }); 
   }
 }
