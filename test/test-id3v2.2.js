@@ -3,31 +3,31 @@ var id3 = require('../lib/index'),
     assert = require('assert'),
     testHelper = require('./testHelper');
 
+var testHelper = new testHelper(45, __filename);
 var sample = require('path').join(__dirname, 'samples/id3v2.2.mp3');
 var parser = new id3(fs.createReadStream(sample));
 
-var testHelper = new testHelper(46, __filename);
-
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'You Are The One');
-  assert.deepEqual(result.artist, ['Shiny Toy Guns']);
+  assert.strictEqual(result.artist[0], 'Shiny Toy Guns');
   assert.strictEqual(result.album, 'We Are Pilots');
   assert.strictEqual(result.year, 2006);
   assert.strictEqual(result.track.no, 1);
   assert.strictEqual(result.track.of, 11);
-  assert.deepEqual(result.genre, ['Alternative']);
-  assert.strictEqual(result.picture.format, 'jpg');
-  assert.strictEqual(result.picture.data.length, 99738);
+  assert.strictEqual(result.genre[0], 'Alternative');
+  assert.strictEqual(result.picture[0].format, 'jpg');
+  assert.strictEqual(result.picture[0].data.length, 99738);
   testHelper.ranTests(9);
 });
 
+//Aliased tests
 parser.on('title', function(result) {
   assert.strictEqual(result, 'You Are The One');
   testHelper.ranTests(1);
 });
 
 parser.on('artist', function(result) {
-  assert.deepEqual(result, 'Shiny Toy Guns');
+  assert.deepEqual(result[0], 'Shiny Toy Guns');
   testHelper.ranTests(1);
 });
 
@@ -37,28 +37,28 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, '2006');
+  assert.strictEqual(result, 2006);
   testHelper.ranTests(1);
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result, '1/11');
-  testHelper.ranTests(1);
+  assert.strictEqual(result.no, 1);
+  assert.strictEqual(result.of, 11);
+  testHelper.ranTests(2);
 });
 
 parser.on('genre', function(result) {
-  assert.strictEqual(result, 'Alternative');
+  assert.strictEqual(result[0], 'Alternative');
   testHelper.ranTests(1);
 });
 
 parser.on('picture', function(result) {
-  assert.strictEqual(result.format, 'JPG');
-  assert.strictEqual(result.type, 'Other');
-  assert.strictEqual(result.description, '');
-  assert.strictEqual(result.data.length, 99738);
-  testHelper.ranTests(4);
+  assert.strictEqual(result[0].format, 'jpg');
+  assert.strictEqual(result[0].data.length, 99738);
+  testHelper.ranTests(2);
 });
 
+//Raw tests
 parser.on('TP1', function(result) {
   assert.strictEqual(result, 'Shiny Toy Guns');
   testHelper.ranTests(1);

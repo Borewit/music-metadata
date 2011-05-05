@@ -6,13 +6,6 @@ work out what the minimum required version of nodejs is
 
 should we automatically close the file once parsing has finished?
 
-should done only be emitted when parsing has finished successfully and not when theres an error?
-
 if cleanup doesn't work it should always return the original value
 
-not all the tests are executing on cygwin
-
-support multiple artworks
-
-to make sure that the aliased events are the same as the metadata event we should emit
-when the done event is raised
+implement strictDeepEqual?

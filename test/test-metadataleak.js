@@ -11,7 +11,7 @@ for (var i=0; i < 3; i++) {
   
   parser.on('metadata', function(result) {
     //we are testing that the metadata object is not being shared across parsers
-    assert.deepEqual(result.artist, ['Pendulum']);
+    assert.strictEqual(result.artist[0], 'Pendulum');
     testHelper.ranTests(1);
   });
 }

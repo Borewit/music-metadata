@@ -3,10 +3,9 @@ var fs = require('fs'),
     assert = require('assert'),
     testHelper = require('./testHelper');
     
+var testHelper = new testHelper(1, __filename);
 var sample = require('path').join(__dirname, 'samples/bug-non ascii chars.mp3');
 var parser = new mm(fs.createReadStream(sample));
-
-var testHelper = new testHelper(1, __filename);
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.artist[0], 'Janelle Monáe');
