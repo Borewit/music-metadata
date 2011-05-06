@@ -12,16 +12,18 @@ mp3 (1.1, 2.2, 2.3, 2.4), m4a(mp4), vorbis (ogg, flac)
 
 API
 -----------------
-    var fs = require('fs'),
-        musicmetadata = require('musicmetadata');
-    
-    //create a new parser from a node ReadStream
-    var parser = new musicmetadata(fs.createReadStream('sample.mp3'));
-    
-    //listen for the metadata event
-    parser.on('metadata', function(result) {
-      console.log(result);
-    });
+```javascript
+var fs = require('fs'),
+    musicmetadata = require('musicmetadata');
+
+//create a new parser from a node ReadStream
+var parser = new musicmetadata(fs.createReadStream('sample.mp3'));
+
+//listen for the metadata event
+parser.on('metadata', function(result) {
+  console.log(result);
+});
+```
 
 
 This will output the standard music metadata:
