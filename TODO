@@ -9,3 +9,5 @@ should we automatically close the file once parsing has finished?
 if cleanup doesn't work it should always return the original value
 
 implement strictDeepEqual?
+
+test that multiple artworks work
