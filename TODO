@@ -4,10 +4,10 @@ Allow users calling code from a utf-8 / 16 encoded .js file to watch for events 
 
 work out what the minimum required version of nodejs is
 
-should we automatically close the file once parsing has finished?
-
 if cleanup doesn't work it should always return the original value
 
 implement strictDeepEqual?
 
 test that multiple artworks work
+
+need more tests / more complicated files

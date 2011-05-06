@@ -3,7 +3,7 @@ var id3 = require('../lib/index'),
     assert = require('assert'),
     testHelper = require('./testHelper');
         
-var testHelper = new testHelper(41, __filename);
+var testHelper = new testHelper(47, __filename);
 var sample = require('path').join(__dirname, 'samples/id4.m4a');
 var parser = new id3(fs.createReadStream(sample));
 
@@ -14,13 +14,15 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.album, 'Voodoo People');
   assert.strictEqual(result.year, 2005);
   assert.strictEqual(result.track.no, 1);
-  assert.strictEqual(result.track.of, 0);
+  assert.strictEqual(result.track.of, 12);
   assert.strictEqual(result.disk.no, 1);
   assert.strictEqual(result.disk.of, 1);
   assert.strictEqual(result.genre[0], 'Electronic');
   assert.strictEqual(result.picture[0].format, 'jpg');
   assert.strictEqual(result.picture[0].data.length, 196450);
-  testHelper.ranTests(12);
+  assert.strictEqual(result.picture[1].format, 'jpg');
+  assert.strictEqual(result.picture[1].data.length, 196450);
+  testHelper.ranTests(14);
 });
 
 //Aliased tests
@@ -51,7 +53,7 @@ parser.on('year', function(result) {
 
 parser.on('track', function(result) {
   assert.strictEqual(result.no, 1);
-  assert.strictEqual(result.of, 0);
+  assert.strictEqual(result.of, 12);
   testHelper.ranTests(2);
 });
 
@@ -69,7 +71,9 @@ parser.on('genre', function(result) {
 parser.on('picture', function(result) {
   assert.strictEqual(result[0].format, 'jpg');
   assert.strictEqual(result[0].data.length, 196450);
-  testHelper.ranTests(2);
+  assert.strictEqual(result[1].format, 'jpg');
+  assert.strictEqual(result[1].data.length, 196450);
+  testHelper.ranTests(4);
 });
 
 parser.on('comment', function(result) {
@@ -84,7 +88,7 @@ parser.on('composer', function(result) {
 
 //Raw tests
 parser.on('trkn', function(result) {
-  assert.strictEqual(result, '1/0');
+  assert.strictEqual(result, '1/12');
   testHelper.ranTests(1);
 });
 
@@ -143,6 +147,7 @@ parser.on('©day', function(result) {
   testHelper.ranTests(1);
 });
 
+//raised twice (exact same content)
 parser.on('covr', function(result) {
   assert.strictEqual(result.format, 'image/jpeg');
   assert.strictEqual(result.data.length, 196450);
