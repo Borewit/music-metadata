@@ -1,8 +1,8 @@
-var assert = require('assert'),
+var assert = require('./assert-ext'),
     parseGenre = require('../lib/common').parseGenre,
     testHelper = require('./testHelper');
 
-var testHelper = new testHelper(8, __filename);
+testHelper.expected = 8;
 
 var simple = 'Electronic';
 assert.strictEqual(parseGenre(simple), 'Electronic');
@@ -27,8 +27,6 @@ assert.strictEqual(parseGenre(keywords), 'RX/CR');
 
 var newSplit = ('RX/CR');
 assert.strictEqual(parseGenre(newSplit), 'RX/CR');
-
-testHelper.ranTests(8);
 
 
 

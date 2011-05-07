@@ -1,30 +1,36 @@
-var path = require('path');
+var path = require('path'),
+    assert = require('./assert-ext');
 
-var TestHelper = module.exports =  function(expected, fileName) {
-  this.fileName = fileName;
-  this.expected = expected;
-  this.testsRan = 0;
-  this.ranTests(0); //do a check now
-}
+var fileName = module.parent.filename;
+var expected = 0;
+var testsRan = 0;
+var timeout;
 
-TestHelper.prototype.ranTests = function(testsRan) {
-  this.testsRan += testsRan;
-  clearTimeout(this.timeout);
+this.__defineSetter__('expected', function(val) {
+    expected = val;
+});
+
+assert.on('ranTest', function() {
+  ranTests(1);
+});
+
+function ranTests(ran) {
+  testsRan += ran;
+  clearTimeout(timeout);
   
-  var self = this;
-  this.timeout = setTimeout(function() {
-    self.report();
+  timeout = setTimeout(function() {
+    report();
   }, 500);
 }
+ranTests(0); //do a check now (incase no tests are ran)
 
-TestHelper.prototype.report = function() {
-  var self = this;
+function report() {
   function color(text) {
-    return (self.testsRan === self.expected) ? '\033[32m' + text + '\033[0m' //green
-                                             : '\033[31m' + text + '\033[0m'; //red
+    return (testsRan === expected) ? '\033[32m' + text + '\033[0m' //green
+                                   : '\033[31m' + text + '\033[0m'; //red
   }
   
   //report results
-  console.log('%s ran %s out of %s tests', path.basename(self.fileName), 
-    color(self.testsRan), color(self.expected));
+  console.log('%s ran %s out of %s tests', path.basename(fileName), 
+    color(testsRan), color(expected));
 }
