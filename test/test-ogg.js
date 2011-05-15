@@ -13,7 +13,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.artist[0], 'Nirvana');
   assert.strictEqual(result.albumartist[0], 'Nirvana');
   assert.strictEqual(result.album, 'Nevermind');
-  assert.strictEqual(result.year, 1991);
+  assert.strictEqual(result.year, '1991');
   assert.strictEqual(result.track.no, 1);
   assert.strictEqual(result.track.of, 12);
   assert.strictEqual(result.disk.no, 1);
@@ -42,7 +42,7 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 1991);
+  assert.strictEqual(result, '1991');
 });
 
 parser.on('track', function(result) {

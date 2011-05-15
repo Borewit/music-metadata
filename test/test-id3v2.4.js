@@ -15,7 +15,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.artist[2], 'nodejsftws');
   assert.strictEqual(result.albumartist[0], 'Soundtrack');
   assert.strictEqual(result.album, 'Friday Night Lights [Original Movie Soundtrack]');
-  assert.strictEqual(result.year, 2004);
+  assert.strictEqual(result.year, '2004');
   assert.strictEqual(result.track.no, 5);
   assert.strictEqual(result.track.of, 0);
   assert.strictEqual(result.disk.no, 1);
@@ -46,7 +46,7 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2004);
+  assert.strictEqual(result, '2004');
 });
 
 parser.on('track', function(result) {

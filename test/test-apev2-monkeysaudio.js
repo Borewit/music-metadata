@@ -14,7 +14,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.artist[1], 'Chris Cornell');
   assert.strictEqual(result.albumartist[0], 'Audioslave');
   assert.strictEqual(result.album, 'Audioslave');
-  assert.strictEqual(result.year, 2002);
+  assert.strictEqual(result.year, '2002');
   assert.strictEqual(result.genre[0], 'Alternative');
   assert.strictEqual(result.picture[0].format, 'jpg');
   assert.strictEqual(result.picture[0].data.length, 48658);
@@ -41,7 +41,7 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2002);
+  assert.strictEqual(result, '2002');
 });
 
 parser.on('genre', function(result) {

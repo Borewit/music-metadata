@@ -13,7 +13,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.artist[0], 'Benga');
   assert.strictEqual(result.albumartist[0], 'Benga');
   assert.strictEqual(result.album, 'Phaze One');
-  assert.strictEqual(result.year, 2010);
+  assert.strictEqual(result.year, '2010');
   assert.strictEqual(result.track.no, 4);
   assert.strictEqual(result.track.of, 8);
   assert.strictEqual(result.genre[0], 'Dubstep');

@@ -12,7 +12,7 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'You Are The One');
   assert.strictEqual(result.artist[0], 'Shiny Toy Guns');
   assert.strictEqual(result.album, 'We Are Pilots');
-  assert.strictEqual(result.year, 2006);
+  assert.strictEqual(result.year, '2006');
   assert.strictEqual(result.track.no, 1);
   assert.strictEqual(result.track.of, 11);
   assert.strictEqual(result.genre[0], 'Alternative');
@@ -34,7 +34,7 @@ parser.on('album', function(result) {
 });
 
 parser.on('year', function(result) {
-  assert.strictEqual(result, 2006);
+  assert.strictEqual(result, '2006');
 });
 
 parser.on('track', function(result) {
