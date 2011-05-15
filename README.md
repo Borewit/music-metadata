@@ -63,11 +63,11 @@ if (err) throw err;
 
 ### v0.1.2
 
-Fixed id3v1.1 implementation
-Implemented multiple artwork support (id4)
-Added flac support
+* Fixed id3v1.1 implementation
+* Implemented multiple artwork support (id4)
+* Added flac support
 
-[Commits](https://github.com/leetreveil/node-musicmetadata/compare/0.1.0...0.1.2)
+[Commits](https://github.com/leetreveil/node-musicmetadata/compare/0.1.1...0.1.2)
 
 ### v0.1.1
 
