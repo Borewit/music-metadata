@@ -11,5 +11,3 @@ implement strictDeepEqual?
 test that multiple artworks work
 
 need more tests / more complicated files
-
-we aren't handling files coming off the network correctly

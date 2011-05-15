@@ -3,7 +3,7 @@ var id3 = require('../lib/index'),
     testy = require('testy'),
     assert = testy.assert;
         
-testy.expected = 44;
+testy.expected = 52;
 
 var sample = require('path').join(__dirname, 'samples/id3v2.4.mp3');
 var parser = new id3(fs.createReadStream(sample));
@@ -24,6 +24,8 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.genre[1], 'OST');
   assert.strictEqual(result.picture[0].format, 'jpg');
   assert.strictEqual(result.picture[0].data.length, 80938);
+  assert.strictEqual(result.picture[1].format, 'jpg');
+  assert.strictEqual(result.picture[1].data.length, 80938);
 });
 
 //Aliased tests
@@ -67,6 +69,8 @@ parser.on('genre', function(result) {
 parser.on('picture', function(result) {
   assert.strictEqual(result[0].format, 'jpg');
   assert.strictEqual(result[0].data.length, 80938);
+  assert.strictEqual(result[1].format, 'jpg');
+  assert.strictEqual(result[1].data.length, 80938);
 });
 
 //Raw tests
@@ -106,11 +110,21 @@ parser.on('TDRC', function(result) {
   assert.strictEqual(result, '2004');
 });
 
+var apicCounter = 0;
 parser.on('APIC', function(result) {
-  assert.strictEqual(result.format, 'image/jpg');
-  assert.strictEqual(result.type, 'Cover (front)');
-  assert.strictEqual(result.description, 'some description');
-  assert.strictEqual(result.data.length, 80938);
+  if (apicCounter === 0) {
+    assert.strictEqual(result.format, 'image/jpg');
+    assert.strictEqual(result.type, 'Cover (front)');
+    assert.strictEqual(result.description, 'some description');
+    assert.strictEqual(result.data.length, 80938);
+  }
+  if (apicCounter === 1) {
+    assert.strictEqual(result.format, 'image/jpeg');
+    assert.strictEqual(result.type, 'Cover (back)');
+    assert.strictEqual(result.description, 'back');
+    assert.strictEqual(result.data.length, 80938);
+  }
+  apicCounter++;
 });
 
 parser.on('done', function(err) {
