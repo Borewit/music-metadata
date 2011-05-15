@@ -1,9 +1,10 @@
 var mm = require('../lib/index'),
     fs = require('fs'),
-    assert = require('./assert-ext'),
-    testHelper = require('./testHelper');
+    testy = require('testy'),
+    assert = testy.assert;
       
-testHelper.expected = 36;
+testy.expected = 36;
+
 var sample = require('path').join(__dirname, 'samples/flac.flac');
 var parser = new mm(fs.createReadStream(sample));
 
@@ -92,4 +93,5 @@ parser.on('METADATA_BLOCK_PICTURE', function(result) {
 parser.on('done', function(err) {
   if (err) throw err;
   assert.ok(true);
+  testy.finish();
 });

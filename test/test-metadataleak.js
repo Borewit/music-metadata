@@ -1,9 +1,9 @@
 var fs = require('fs'),
     mm = require('../lib/index'),
-    assert = require('./assert-ext'),
-    testHelper = require('./testHelper');
+    testy = require('testy'),
+    assert = testy.assert;
     
-testHelper.expected = 3;
+testy.expected = 3;
 
 for (var i=0; i < 3; i++) {
   var sample = require('path').join(__dirname, 'samples/id3v1.mp3');

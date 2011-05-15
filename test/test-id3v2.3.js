@@ -1,9 +1,9 @@
 var id3 = require('../lib/index'),
     fs = require('fs'),
-    assert = require('./assert-ext'),
-    testHelper = require('./testHelper');
+    testy = require('testy'),
+    assert = testy.assert;
     
-testHelper.expected = 42;
+testy.expected = 42;
 var sample = require('path').join(__dirname, 'samples/id3v2.3.mp3');
 var parser = new id3(fs.createReadStream(sample));
 
@@ -113,4 +113,5 @@ parser.on('APIC', function(result) {
 parser.on('done', function(err) {
   if (err) throw err;
   assert.ok(true);
+  testy.finish();
 });

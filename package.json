@@ -4,9 +4,19 @@
   "version": "0.1.1",
   "author": "Lee Treveil",
   "dependencies": {
-    "strtok" :  "*"
+    "strtok": "*",
+    "testy": "*"
   },
   "main": "lib",
-  "scripts":
-    { "test": "node test/alltests.js" }
+  "scripts": {
+    "test": "node test/alltests.js"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/leetreveil/node-musicmetadata.git"
+  }
 }
