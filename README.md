@@ -53,7 +53,7 @@ used to disconnect from the stream as soon as parsing has finished, saving bandw
 
 ```javascript
 parser.on('done', function(err) {
-if (err) throw err;	
+  if (err) throw err;	
   stream.destroy();
 });
 ```
