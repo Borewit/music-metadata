@@ -6,7 +6,7 @@ var id3 = require('../lib/index'),
 testy.expected = 17;
 
 var sample = require('path').join(__dirname, 'samples/id3v1.mp3');
-var parser = new id3(fs.createReadStream(sample));
+var parser = new id3(fs.createReadStream(sample, { bufferSize: 10 }));
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, 'Blood Sugar');
