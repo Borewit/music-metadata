@@ -11,3 +11,9 @@ implement strictDeepEqual?
 test that multiple artworks work
 
 need more tests / more complicated files
+
+id3v1 we shouldn't need to buffer the entire file, especially if the buffer size is bigger than 128bytes
+
+improve deunsync code from O(n^2) to O(n)
+
+we should uppercase inside the alias lookup to make matching easier
