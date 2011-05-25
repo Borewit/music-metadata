@@ -1,4 +1,4 @@
-var id3 = require('../lib/index'),
+﻿var id3 = require('../lib/index'),
     fs = require('fs'),
     testy = require('testy'),
     assert = testy.assert;

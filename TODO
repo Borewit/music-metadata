@@ -11,3 +11,5 @@ implement strictDeepEqual?
 test that multiple artworks work
 
 need more tests / more complicated files
+
+add the required version of node testy to package.json

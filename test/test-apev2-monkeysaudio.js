@@ -3,21 +3,20 @@ var mm = require('../lib/index'),
     testy = require('testy'),
     assert = testy.assert;
 
-testy.expected = 34;
+testy.expected = 32;
 
 var sample = require('path').join(__dirname, 'samples/monkeysaudio.ape');
 var parser = new mm(fs.createReadStream(sample));
 
 parser.on('metadata', function(result) {
   assert.strictEqual(result.title, '07. Shadow On The Sun');
-  assert.strictEqual(result.artist[0], 'Audioslave');
-  assert.strictEqual(result.artist[1], 'Chris Cornell');
-  assert.strictEqual(result.albumartist[0], 'Audioslave');
+  assert.deepEqual(result.artist, ['Audioslave', 'Chris Cornell']);
+  assert.deepEqual(result.albumartist, ['Audioslave']);
   assert.strictEqual(result.album, 'Audioslave');
   assert.strictEqual(result.year, '2002');
-  assert.strictEqual(result.genre[0], 'Alternative');
-  assert.strictEqual(result.track.no, 7);
-  assert.strictEqual(result.disk.no, 3);
+  assert.deepEqual(result.genre, ['Alternative']);
+  assert.deepEqual(result.track, { no : 7, of : 0 });
+  assert.deepEqual(result.disk, { no : 3, of : 0 });
   assert.strictEqual(result.picture[0].format, 'jpg');
   assert.strictEqual(result.picture[0].data.length, 48658);
   assert.strictEqual(result.picture[1].format, 'jpg');
@@ -30,12 +29,11 @@ parser.on('title', function(result) {
 });
 
 parser.on('artist', function(result) {
-  assert.strictEqual(result[0], 'Audioslave');
-  assert.strictEqual(result[1], 'Chris Cornell');
+  assert.deepEqual(result, ['Audioslave', 'Chris Cornell']);
 });
 
 parser.on('albumartist', function(result) {
-  assert.strictEqual(result[0], 'Audioslave');
+  assert.deepEqual(result, ['Audioslave']);
 });
 
 parser.on('album', function(result) {
@@ -43,11 +41,11 @@ parser.on('album', function(result) {
 });
 
 parser.on('track', function(result) {
-  assert.strictEqual(result.no, 7);
+  assert.deepEqual(result, { no : 7, of : 0 });
 });
 
 parser.on('disk', function(result) {
-  assert.strictEqual(result.no, 3);
+  assert.deepEqual(result, { no : 3, of : 0 });
 });
 
 parser.on('year', function(result) {
@@ -55,7 +53,7 @@ parser.on('year', function(result) {
 });
 
 parser.on('genre', function(result) {
-  assert.strictEqual(result[0], 'Alternative');
+  assert.deepEqual(result, ['Alternative']);
 });
 
 parser.on('picture', function(result) {
@@ -66,7 +64,7 @@ parser.on('picture', function(result) {
 });
 
 parser.on('comment', function(result) {
-  assert.strictEqual(result[0], 'This is a sample ape file');
+  assert.deepEqual(result, ['This is a sample ape file']);
 });
 
 //Raw tests
