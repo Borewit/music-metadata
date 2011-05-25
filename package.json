@@ -4,8 +4,8 @@
   "version": "0.1.2",
   "author": "Lee Treveil",
   "dependencies": {
-    "strtok": "*",
-    "testy": "*"
+    "strtok": "0.1.1",
+    "testy": "0.0.1"
   },
   "main": "lib",
   "scripts": {
