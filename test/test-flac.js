@@ -1,6 +1,6 @@
 var mm = require('../lib/index'),
     fs = require('fs'),
-    testy = require('testy'),
+    testy = require('testy')(),
     assert = testy.assert;
       
 testy.expected = 36;

@@ -1,5 +1,5 @@
 var common = require('../lib/common'),
-    testy = require('testy'),
+    testy = require('testy')(),
     assert = testy.assert;
     
 testy.expected = 1;

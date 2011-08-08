@@ -5,13 +5,14 @@
   "author": "Lee Treveil",
   "dependencies": {
     "strtok": "0.1.1",
-    "testy": "0.0.1"
   },
   "main": "lib",
   "scripts": {
     "test": "node test/alltests.js"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "testy": "0.0.2"
+  },
   "engines": {
     "node": "*"
   },

@@ -1,5 +1,5 @@
 var parseGenre = require('../lib/common').parseGenre,
-    testy = require('testy'),
+    testy = require('testy')(),
     assert = testy.assert;
 
 testy.expected = 8;
