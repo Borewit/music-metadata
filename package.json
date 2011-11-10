@@ -11,7 +11,7 @@
     "test": "node test/alltests.js"
   },
   "devDependencies": {
-    "testy": "0.0.2"
+    "testy": ">=0.0.2"
   },
   "engines": {
     "node": "*"
