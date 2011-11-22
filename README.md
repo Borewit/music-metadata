@@ -2,6 +2,8 @@ Installation
 ------------
 Install via npm:
 
+[![Build Status](https://secure.travis-ci.org/leetreveil/node-musicmetadata.png)](http://travis-ci.org/leetreveil/node-musicmetadata)
+
 npm install musicmetadata
 
 
