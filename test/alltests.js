@@ -7,7 +7,7 @@ if (module == require.main) {
                'test-id3v1.1.js', 'test-id3v2.2.js', 'test-id3v2.3.js', 
                'test-id3v2.4.js', 'test-id4.js', 'test-ogg.js',
                'test-unknownencoding.js', 'test-nonasciichars.js',
-               'test-flac.js'];
+               'test-flac.js', 'test-utf16bom-encoding.js'];
                
   for (var i=0; i < tests.length; i++) {
     var test = tests[i];
