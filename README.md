@@ -33,12 +33,12 @@ This will output the standard music metadata:
 ```javascript
 { artist : 'Spor',
   album : 'Nightlife, Vol 5.',
-  albumartist : ['Andy C', 'Spor'],
+  albumartist : [ 'Andy C', 'Spor' ],
   title : 'Stronger',
   year : '2010',
   track : { no : 1, of : 44 },
   disk : { no : 1, of : 2 },
-  picture : { format : 'jpg', data : <Buffer> }
+  picture : [ { format : 'jpg', data : <Buffer> } ]
 }
 ```
         
