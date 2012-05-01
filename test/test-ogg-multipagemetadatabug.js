@@ -28,5 +28,4 @@ parser.on('done', function(err) {
   if (err) throw err;
   stream.destroy();
   assert.ok(true);
-  testy.finish();
 });

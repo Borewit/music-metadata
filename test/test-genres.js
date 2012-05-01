@@ -28,8 +28,6 @@ assert.strictEqual(parseGenre(keywords), 'RX/CR');
 var newSplit = ('RX/CR');
 assert.strictEqual(parseGenre(newSplit), 'RX/CR');
 
-testy.finish();
-
 
 
 

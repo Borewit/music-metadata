@@ -130,5 +130,4 @@ parser.on('APIC', function(result) {
 parser.on('done', function(err) {
   if (err) throw err;
   assert.ok(true);
-  testy.finish();
 });

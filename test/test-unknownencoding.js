@@ -19,5 +19,4 @@ parser.on('metadata', function(result) {
   assert.strictEqual(result.genre[0], 'Dubstep');
   assert.strictEqual(result.picture[0].format, 'jpg');
   assert.strictEqual(result.picture[0].data.length, 6761);
-  testy.finish();
 });
