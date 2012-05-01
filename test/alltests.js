@@ -8,7 +8,8 @@ if (module == require.main) {
                'test-id3v2.4.js', 'test-id4.js', 'test-ogg.js',
                'test-unknownencoding.js', 'test-nonasciichars.js',
                'test-flac.js', 'test-utf16bom-encoding.js',
-               'test-ogg-multipagemetadatabug.js'];
+               'test-ogg-multipagemetadatabug.js',
+               'test-apev2-monkeysaudio.js'];
                
   for (var i=0; i < tests.length; i++) {
     var test = tests[i];
