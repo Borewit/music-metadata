@@ -10,7 +10,9 @@ if (module == require.main) {
                'test-flac.js', 'test-utf16bom-encoding.js',
                'test-ogg-multipagemetadatabug.js',
                'test-apev2-monkeysaudio.js'];
-               
+  
+  var passedTests = 0;
+  
   for (var i=0; i < tests.length; i++) {
     var test = tests[i];
     var testProcess = spawn(process.execPath, [path.join(__dirname, test)]);
@@ -21,6 +23,14 @@ if (module == require.main) {
     
     testProcess.stderr.on('data', function(data) {
       process.stderr.write(data.toString());
+    });
+    
+    testProcess.on('exit', function () {
+      passedTests++;   
     }); 
   }
+  
+  process.once('exit', function () {
+    process.exit((passedTests === tests.length) ? 0 : 1);
+  });
 }
