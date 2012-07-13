@@ -25,8 +25,8 @@ if (module == require.main) {
       process.stderr.write(data.toString());
     });
     
-    testProcess.on('exit', function () {
-      passedTests++;   
+    testProcess.on('exit', function (code, signal) {
+      if (code === 0) passedTests++;
     }); 
   }
   
