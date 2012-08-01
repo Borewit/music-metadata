@@ -4,7 +4,9 @@ Installation
 ------------
 Install via npm:
 
+```
 npm install musicmetadata
+```
 
 
 Supports
