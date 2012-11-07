@@ -51,6 +51,14 @@ parser.on('artist', function(result) {
   console.log(result);
 });
 ```
+
+You can also listen for custom metadata types that are not part of the standard metadata as defined above. For example if you wanted to read the TLEN frame from a id3v2.x file you can do this:
+
+```javascript
+parser.on('TLEN', function(result) {
+  console.log(result);
+});
+```
     
 You can also listen for the 'done' event, this will be raised when parsing has finished or an error has occurred. This could be
 used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
