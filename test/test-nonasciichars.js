@@ -1,7 +1,7 @@
-var fs = require('fs'),
-    mm = require('../lib/index'),
-    testy = require('testy')(),
-    assert = testy.assert;
+var fs     = require('fs');
+var mm     = require('../lib/index');
+var testy  = require('testy')();
+var assert = testy.assert;
     
 testy.expected = 1;
 

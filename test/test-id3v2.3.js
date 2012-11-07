@@ -1,9 +1,10 @@
-var id3 = require('../lib/index'),
-    fs = require('fs'),
-    testy = require('testy')(),
-    assert = testy.assert;
+var id3    = require('../lib/index');
+var fs     = require('fs');
+var testy  = require('testy')();
+var assert = testy.assert;
     
 testy.expected = 42;
+
 var sample = require('path').join(__dirname, 'samples/id3v2.3.mp3');
 var parser = new id3(fs.createReadStream(sample));
 

@@ -1,6 +1,6 @@
-var common = require('../lib/common'),
-    testy = require('testy')(),
-    assert = testy.assert;
+var common = require('../lib/common');
+var testy  = require('testy')();
+var assert = testy.assert;
     
 testy.expected = 1;
     
