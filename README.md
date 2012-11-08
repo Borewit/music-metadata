@@ -60,7 +60,7 @@ parser.on('TLEN', function(result) {
 });
 ```
     
-You can also listen for the 'done' event, this will be raised when parsing has finished or an error has occurred. This could be
+The ``done``` event will be raised when parsing has finished or an error has occurred. This could be
 used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
 
 ```javascript
