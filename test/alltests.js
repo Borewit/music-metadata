@@ -9,7 +9,8 @@ if (module == require.main) {
                'test-unknownencoding.js', 'test-nonasciichars.js',
                'test-flac.js', 'test-utf16bom-encoding.js',
                'test-ogg-multipagemetadatabug.js',
-               'test-apev2-monkeysaudio.js'];
+               'test-apev2-monkeysaudio.js',
+               'test-regress-GH-14.js'];
   
   var passedTests = 0;
   
