@@ -17,14 +17,14 @@ mp3 (1.1, 2.2, 2.3, 2.4), m4a(mp4), vorbis (ogg, flac)
 API
 -----------------
 ```javascript
-var fs = require('fs'),
-    musicmetadata = require('musicmetadata');
+var fs = require('fs');
+var mm = require('musicmetadata');
 
 //create a new parser from a node ReadStream
-var parser = new musicmetadata(fs.createReadStream('sample.mp3'));
+var parser = new mm(fs.createReadStream('sample.mp3'));
 
 //listen for the metadata event
-parser.on('metadata', function(result) {
+parser.on('metadata', function (result) {
   console.log(result);
 });
 ```
@@ -43,11 +43,11 @@ This will output the standard music metadata:
   picture : [ { format : 'jpg', data : <Buffer> } ]
 }
 ```
-        
+
 If you just want the artist - listen for the artist event:
 
 ```javascript
-parser.on('artist', function(result) {
+parser.on('artist', function (result) {
   console.log(result);
 });
 ```
@@ -55,7 +55,7 @@ parser.on('artist', function(result) {
 You can also listen for custom metadata types that are not part of the standard metadata as defined above. For example if you wanted to read the TLEN frame from a id3v2.x file you can do this:
 
 ```javascript
-parser.on('TLEN', function(result) {
+parser.on('TLEN', function (result) {
   console.log(result);
 });
 ```
@@ -64,27 +64,21 @@ The ```done``` event will be raised when parsing has finished or an error has oc
 used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
 
 ```javascript
-parser.on('done', function(err) {
-  if (err) throw err;	
+parser.on('done', function (err) {
+  if (err) throw err;
   stream.destroy();
 });
 ```
-    
 
-## Changelog
+Licence
+-----------------
 
-### v0.1.2
+(The MIT License)
 
-* Fixed id3v1.1 implementation
-* Implemented multiple artwork support (id4)
-* Added flac support
+Copyright (c) 2013 Lee Treveil <leetreveil@gmail.com>
 
-[Commits](https://github.com/leetreveil/node-musicmetadata/compare/0.1.1...0.1.2)
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-### v0.1.1
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-* Better utf-16 handling
-* Now reads iso-8859-1 encoded id3 frames correctly
-* Artwork is now part of the 'metadata' event
-
-[Commits](https://github.com/leetreveil/node-musicmetadata/compare/0.1.0...0.1.1)
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
