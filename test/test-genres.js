@@ -1,29 +1,19 @@
 var parseGenre = require('../lib/common').parseGenre;
-var testy      = require('testy')();
-var assert     = testy.assert;
+var test       = require('tap').test;
 
-testy.expected = 8;
-
-var simple = 'Electronic';
-assert.strictEqual(parseGenre(simple), 'Electronic');
-
-var separated = 'Electronic/Rock';
-assert.strictEqual(parseGenre(separated), 'Electronic/Rock');
-
-var singleIndexed = '(0)';
-assert.strictEqual(parseGenre(singleIndexed), 'Blues');
-
-var indexed = '(0)(1)(2)';
-assert.strictEqual(parseGenre(indexed), 'Blues/Classic Rock/Country');
-
-var refined = '(4)Eurodisco';
-assert.strictEqual(parseGenre(refined), 'Disco/Eurodisco');
-
-var refinedPlus = '(4)Eurodisco(0)Mopey';
-assert.strictEqual(parseGenre(refinedPlus), 'Disco/Eurodisco/Blues/Mopey');
-
-var keywords = ('(RX)(CR)');
-assert.strictEqual(parseGenre(keywords), 'RX/CR');
-
-var newSplit = ('RX/CR');
-assert.strictEqual(parseGenre(newSplit), 'RX/CR');
+test('should be able to parse genres', function (t) {
+  var tests = {
+    'Electronic'                  : 'Electronic',
+    'Electronic/Rock'             : 'Electronic/Rock',
+    '(0)'                         : 'Blues',
+    '(0)(1)(2)'                   : 'Blues/Classic Rock/Country',
+    '(4)Eurodisco'                : 'Disco/Eurodisco',
+    '(4)Eurodisco(0)Mopey'        : 'Disco/Eurodisco/Blues/Mopey',
+    '(RX)(CR)'                    : 'RX/CR',
+    'RX/CR'                       : 'RX/CR'
+  }
+  for (var test in tests) {
+    t.strictEqual(parseGenre(test), tests[test], test);
+  }
+  t.end();
+});

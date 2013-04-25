@@ -1,117 +1,98 @@
+var path   = require('path');
 var id3    = require('../lib/index');
 var fs     = require('fs');
-var testy  = require('testy')();
-var assert = testy.assert;
-    
-testy.expected = 42;
+var test   = require('tap').test;
 
-var sample = require('path').join(__dirname, 'samples/id3v2.3.mp3');
-var parser = new id3(fs.createReadStream(sample));
+test('id3v2.3', function (t) {
+  t.plan(41);
 
-parser.on('metadata', function(result) {
-  assert.strictEqual(result.title, 'Home');
-  assert.strictEqual(result.artist[0], 'Explosions In The Sky');
-  assert.strictEqual(result.artist[1], 'Another');
-  assert.strictEqual(result.artist[2], 'And Another');
-  assert.strictEqual(result.albumartist[0], 'Soundtrack');
-  assert.strictEqual(result.album, 'Friday Night Lights [Original Movie Soundtrack]');
-  assert.strictEqual(result.year, '2004');
-  assert.strictEqual(result.track.no, 5);
-  assert.strictEqual(result.track.of, 0);
-  assert.strictEqual(result.disk.no, 1);
-  assert.strictEqual(result.disk.of, 1);
-  assert.strictEqual(result.genre[0], 'Soundtrack');
-  assert.strictEqual(result.picture[0].format, 'jpg');
-  assert.strictEqual(result.picture[0].data.length, 80938);
-});
-
-//Aliased tests
-parser.on('title', function(result) {
-  assert.strictEqual(result, 'Home');
-});
-
-parser.on('artist', function(result) {
-  assert.strictEqual(result[0], 'Explosions In The Sky');
-  assert.strictEqual(result[1], 'Another');
-  assert.strictEqual(result[2], 'And Another');
-});
-
-parser.on('albumartist', function(result) {
-  assert.strictEqual(result[0], 'Soundtrack');
-});
-
-parser.on('album', function(result) {
-  assert.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]');
-});
-
-parser.on('year', function(result) {
-  assert.strictEqual(result, '2004');
-});
-
-parser.on('track', function(result) {
-  assert.strictEqual(result.no, 5);
-  assert.strictEqual(result.of, 0);
-});
-
-parser.on('disk', function(result) {
-  assert.strictEqual(result.no, 1);
-  assert.strictEqual(result.of, 1);
-});
-
-parser.on('genre', function(result) {
-  assert.strictEqual(result[0], 'Soundtrack');
-});
-
-parser.on('picture', function(result) {
-  assert.strictEqual(result[0].format, 'jpg');
-  assert.strictEqual(result[0].data.length, 80938);
-});
-
-//Raw tests
-parser.on('TALB', function(result) {
-  assert.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]');
-});
-
-parser.on('TPE1', function(result) {
-  assert.strictEqual(result, 'Explosions In The Sky/Another/And Another');
-});
-
-parser.on('TPE2', function(result) {
-  assert.strictEqual(result, 'Soundtrack');
-});
-
-parser.on('TCOM', function(result) {
-  assert.strictEqual(result, 'Explosions in the Sky');
-});
-
-parser.on('TPOS', function(result) {
-  assert.strictEqual(result, '1/1');
-});
-
-parser.on('TCON', function(result) {
-  assert.strictEqual(result, 'Soundtrack');
-});
-
-parser.on('TIT2', function(result) {
-  assert.strictEqual(result, 'Home');
-});
-
-parser.on('TRCK', function(result) {
-  assert.strictEqual(result, '5');
-});
-
-parser.on('TYER', function(result) {
-  assert.strictEqual(result, '2004');
-});
-
-parser.on('APIC', function(result) {
-  assert.strictEqual(result.format, 'image/jpg');
-  assert.strictEqual(result.type, 'Cover (front)');
-  assert.strictEqual(result.description, '');
-  assert.strictEqual(result.data.length, 80938);
-});
-
-parser.on('done', function(err) {
-  if (err) throw err;
-  assert.ok(true);
+  var sample = path.join(__dirname, 'samples/id3v2.3.mp3');
+  new id3(fs.createReadStream(sample))
+    .on('metadata', function (result) {
+      t.strictEqual(result.title, 'Home', 'title');
+      t.strictEqual(result.artist[0], 'Explosions In The Sky', 'artist 0');
+      t.strictEqual(result.artist[1], 'Another', 'artist 1');
+      t.strictEqual(result.artist[2], 'And Another', 'artist 2');
+      t.strictEqual(result.albumartist[0], 'Soundtrack', 'albumartist');
+      t.strictEqual(result.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album');
+      t.strictEqual(result.year, '2004', 'year');
+      t.strictEqual(result.track.no, 5, 'track no');
+      t.strictEqual(result.track.of, 0, 'track of');
+      t.strictEqual(result.disk.no, 1, 'disk no');
+      t.strictEqual(result.disk.of, 1, 'disk of');
+      t.strictEqual(result.genre[0], 'Soundtrack', 'genre');
+      t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(result.picture[0].data.length, 80938, 'picture length');
+    })
+    // aliased tests
+    .on('title', function (result) {
+      t.strictEqual(result, 'Home', 'aliased title');
+    })
+    .on('artist', function (result) {
+      t.strictEqual(result[0], 'Explosions In The Sky', 'aliased artist 0');
+      t.strictEqual(result[1], 'Another', 'aliased artist 1');
+      t.strictEqual(result[2], 'And Another', 'aliased artist 2');
+    })
+    .on('albumartist', function (result) {
+      t.strictEqual(result[0], 'Soundtrack', 'aliased albumartist');
+    })
+    .on('album', function (result) {
+      t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'aliased album');
+    })
+    .on('year', function (result) {
+      t.strictEqual(result, '2004', 'aliased year');
+    })
+    .on('track', function (result) {
+      t.strictEqual(result.no, 5, 'aliased track no');
+      t.strictEqual(result.of, 0, 'aliased track of');
+    })
+    .on('disk', function (result) {
+      t.strictEqual(result.no, 1, 'aliased disk no');
+      t.strictEqual(result.of, 1, 'aliased disk of');
+    })
+    .on('genre', function (result) {
+      t.strictEqual(result[0], 'Soundtrack', 'aliased genre');
+    })
+    .on('picture', function (result) {
+      t.strictEqual(result[0].format, 'jpg', 'aliased picture format');
+      t.strictEqual(result[0].data.length, 80938, 'aliased picture length');
+    })
+    // raw tests
+    .on('TALB', function (result) {
+      t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'raw TALB');
+    })
+    .on('TPE1', function (result) {
+      t.strictEqual(result, 'Explosions In The Sky/Another/And Another', 'raw TPE1');
+    })
+    .on('TPE2', function (result) {
+      t.strictEqual(result, 'Soundtrack', 'raw TPE2');
+    })
+    .on('TCOM', function (result) {
+      t.strictEqual(result, 'Explosions in the Sky', 'raw TCOM');
+    })
+    .on('TPOS', function (result) {
+      t.strictEqual(result, '1/1', 'raw TPOS');
+    })
+    .on('TCON', function (result) {
+      t.strictEqual(result, 'Soundtrack', 'raw TCON');
+    })
+    .on('TIT2', function (result) {
+      t.strictEqual(result, 'Home', 'raw TIT2');
+    })
+    .on('TRCK', function (result) {
+      t.strictEqual(result, '5', 'raw TRCK');
+    })
+    .on('TYER', function (result) {
+      t.strictEqual(result, '2004', 'raw TYER');
+    })
+    .on('APIC', function (result) {
+      t.strictEqual(result.format, 'image/jpg', 'raw APIC format');
+      t.strictEqual(result.type, 'Cover (front)', 'raw APIC type');
+      t.strictEqual(result.description, '', 'raw APIC description');
+      t.strictEqual(result.data.length, 80938, 'raw APIC length');
+    })
+    .on('done', function (err) {
+      if (err) throw err;
+      t.end();
+    });
 });

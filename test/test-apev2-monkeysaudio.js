@@ -1,92 +1,79 @@
-var mm     = require('../lib/index');
+var path   = require('path');
 var fs     = require('fs');
-var testy  = require('testy')();
-var assert = testy.assert;
+var mm     = require('../lib/index');
+var test   = require('tap').test;
 
-testy.expected = 32;
+test('monkeysaudio (.ape)', function (t) {
+  t.plan(31);
 
-var sample = require('path').join(__dirname, 'samples/monkeysaudio.ape');
-var parser = new mm(fs.createReadStream(sample));
-
-parser.on('metadata', function(result) {
-  assert.strictEqual(result.title, '07. Shadow On The Sun');
-  assert.deepEqual(result.artist, ['Audioslave', 'Chris Cornell']);
-  assert.deepEqual(result.albumartist, ['Audioslave']);
-  assert.strictEqual(result.album, 'Audioslave');
-  assert.strictEqual(result.year, '2002');
-  assert.deepEqual(result.genre, ['Alternative']);
-  assert.deepEqual(result.track, { no : 7, of : 0 });
-  assert.deepEqual(result.disk, { no : 3, of : 0 });
-  assert.strictEqual(result.picture[0].format, 'jpg');
-  assert.strictEqual(result.picture[0].data.length, 48658);
-  assert.strictEqual(result.picture[1].format, 'jpg');
-  assert.strictEqual(result.picture[1].data.length, 48658);
+  var sample = path.join(__dirname, 'samples/monkeysaudio.ape');
+  new mm(fs.createReadStream(sample))
+    .on('metadata', function (result) {
+      t.strictEqual(result.title, '07. Shadow On The Sun', 'title');
+      t.deepEqual(result.artist, ['Audioslave', 'Chris Cornell'], 'artist');
+      t.deepEqual(result.albumartist, ['Audioslave'], 'albumartist');
+      t.strictEqual(result.album, 'Audioslave', 'album');
+      t.strictEqual(result.year, '2002', 'year');
+      t.deepEqual(result.genre, ['Alternative'], 'genre');
+      t.deepEqual(result.track, { no : 7, of : 0 }, 'track');
+      t.deepEqual(result.disk, { no : 3, of : 0 }, 'disk');
+      t.strictEqual(result.picture[0].format, 'jpg', 'picture 0 format');
+      t.strictEqual(result.picture[0].data.length, 48658, 'picture 0 length');
+      t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format');
+      t.strictEqual(result.picture[1].data.length, 48658, 'picture 1 length');
+    })
+    // aliased tests
+    .on('title', function (result) {
+      t.strictEqual(result, '07. Shadow On The Sun', 'aliased title');
+    })
+    .on('artist', function (result) {
+      t.deepEqual(result, ['Audioslave', 'Chris Cornell'], 'aliased artist');
+    })
+    .on('albumartist', function (result) {
+      t.deepEqual(result, ['Audioslave'], 'aliased albumartist');
+    })
+    .on('album', function (result) {
+      t.strictEqual(result, 'Audioslave', 'aliased album');
+    })
+    .on('track', function (result) {
+      t.deepEqual(result, { no : 7, of : 0 }, 'aliased track');
+    })
+    .on('disk', function (result) {
+      t.deepEqual(result, { no : 3, of : 0 }, 'aliased disk');
+    })
+    .on('year', function (result) {
+      t.strictEqual(result, '2002', 'aliased year');
+    })
+    .on('genre', function (result) {
+      t.deepEqual(result, ['Alternative'], 'aliased genre');
+    })
+    .on('picture', function (result) {
+      t.strictEqual(result[0].format, 'jpg', 'aliased picture 0 format');
+      t.strictEqual(result[0].data.length, 48658, 'aliased picture 0 length');
+      t.strictEqual(result[1].format, 'jpg', 'aliased picture 1 format');
+      t.strictEqual(result[1].data.length, 48658, 'aliased picture 1 length');
+    })
+    .on('comment', function (result) {
+      t.deepEqual(result, ['This is a sample ape file'], 'aliased comment');
+    })
+    // raw tests
+    .on('ENSEMBLE', function (result) {
+      t.strictEqual(result, 'Audioslave', 'raw ensemble');
+    })
+    .on('Artist', function (result) {
+      t.strictEqual(result, 'Audioslave/Chris Cornell', 'raw artist');
+    })
+    .on('Cover Art (Front)', function (result) {
+      t.strictEqual(result.description, 'Cover Art (Front).jpg', 'raw cover art (front) description');
+      t.strictEqual(result.data.length, 48658, 'raw cover art (front) length');
+    })
+    .on('Cover Art (Back)', function (result) {
+      t.strictEqual(result.description, 'Cover Art (Back).jpg', 'raw cover art (back) description');
+      t.strictEqual(result.data.length, 48658, 'raw cover art (back) length');
+    })
+    .on('done', function (err) {
+      if (err) throw err;
+      t.end();
+    });
 });
 
-//Aliased tests
-parser.on('title', function(result) {
-  assert.strictEqual(result, '07. Shadow On The Sun');
-});
-
-parser.on('artist', function(result) {
-  assert.deepEqual(result, ['Audioslave', 'Chris Cornell']);
-});
-
-parser.on('albumartist', function(result) {
-  assert.deepEqual(result, ['Audioslave']);
-});
-
-parser.on('album', function(result) {
-  assert.strictEqual(result, 'Audioslave');
-});
-
-parser.on('track', function(result) {
-  assert.deepEqual(result, { no : 7, of : 0 });
-});
-
-parser.on('disk', function(result) {
-  assert.deepEqual(result, { no : 3, of : 0 });
-});
-
-parser.on('year', function(result) {
-  assert.strictEqual(result, '2002');
-});
-
-parser.on('genre', function(result) {
-  assert.deepEqual(result, ['Alternative']);
-});
-
-parser.on('picture', function(result) {
-  assert.strictEqual(result[0].format, 'jpg');
-  assert.strictEqual(result[0].data.length, 48658);
-  assert.strictEqual(result[1].format, 'jpg');
-  assert.strictEqual(result[1].data.length, 48658);
-});
-
-parser.on('comment', function(result) {
-  assert.deepEqual(result, ['This is a sample ape file']);
-});
-
-//Raw tests
-parser.on('ENSEMBLE', function(result) {
-  assert.strictEqual(result, 'Audioslave');
-});
-
-parser.on('Artist', function(result) {
-  assert.strictEqual(result, 'Audioslave/Chris Cornell');
-});
-
-parser.on('Cover Art (Front)', function(result) {
-  assert.strictEqual(result.description, 'Cover Art (Front).jpg');
-  assert.strictEqual(result.data.length, 48658);
-});
-
-parser.on('Cover Art (Back)', function(result) {
-  assert.strictEqual(result.description, 'Cover Art (Back).jpg');
-  assert.strictEqual(result.data.length, 48658);
-});
-
-parser.on('done', function(err) {
-  if (err) throw err;
-  assert.ok(true);
-});
