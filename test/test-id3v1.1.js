@@ -1,54 +1,45 @@
-var id3    = require('../lib/index');
+var path   = require('path');
 var fs     = require('fs');
-var testy  = require('testy')();
-var assert = testy.assert;
+var id3    = require('../lib/index');
+var test   = require('tap').test;
 
-testy.expected = 17;
-
-var sample = require('path').join(__dirname, 'samples/id3v1.mp3');
-var parser = new id3(fs.createReadStream(sample));
-
-parser.on('metadata', function(result) {
-  assert.strictEqual(result.title, 'Blood Sugar');
-  assert.strictEqual(result.artist[0], 'Pendulum');
-  assert.strictEqual(result.albumartist.length, 0);
-  assert.strictEqual(result.album, 'Blood Sugar (Single)');
-  assert.strictEqual(result.year, '2007');
-  assert.strictEqual(result.track.no, 1);
-  assert.strictEqual(result.track.of, 0);
-  assert.strictEqual(result.genre[0], 'Electronic');
-});
-
-parser.on('title', function(result) {
-  assert.strictEqual(result, 'Blood Sugar');
-});
-
-parser.on('artist', function(result) {
-  assert.strictEqual(result[0], 'Pendulum');
-});
-
-parser.on('album', function(result) {
-  assert.strictEqual(result, 'Blood Sugar (Single)');
-});
-
-parser.on('year', function(result) {
-  assert.strictEqual(result, '2007');
-});
-
-parser.on('track', function(result) {
-  assert.strictEqual(result.no, 1);
-  assert.strictEqual(result.of, 0);
-});
-
-parser.on('genre', function(result) {
-  assert.strictEqual(result[0], 'Electronic');
-});
-
-parser.on('comment', function(result) {
-  assert.strictEqual(result[0], 'abcdefg');
-});
-
-parser.on('done', function(err) {
-  if (err) throw err;
-  assert.ok(true);
+test('id3v1.1', function (t) {
+  t.plan(16);
+  new id3(fs.createReadStream(path.join(__dirname, 'samples/id3v1.mp3')))
+    .on('metadata', function (result) {
+      t.strictEqual(result.title, 'Blood Sugar', 'title');
+      t.strictEqual(result.artist[0], 'Pendulum', 'artist');
+      t.strictEqual(result.albumartist.length, 0, 'albumartist length');
+      t.strictEqual(result.album, 'Blood Sugar (Single)', 'album');
+      t.strictEqual(result.year, '2007', 'year');
+      t.strictEqual(result.track.no, 1, 'track no');
+      t.strictEqual(result.track.of, 0, 'track of');
+      t.strictEqual(result.genre[0], 'Electronic', 'genre');
+    })
+    .on('title', function (result) {
+      t.strictEqual(result, 'Blood Sugar', 'title');
+    })
+    .on('artist', function (result) {
+      t.strictEqual(result[0], 'Pendulum', 'artist');
+    })
+    .on('album', function (result) {
+      t.strictEqual(result, 'Blood Sugar (Single)', 'album');
+    })
+    .on('year', function (result) {
+      t.strictEqual(result, '2007', 'year');
+    })
+    .on('track', function (result) {
+      t.strictEqual(result.no, 1, 'track no');
+      t.strictEqual(result.of, 0, 'track of');
+    })
+    .on('genre', function (result) {
+      t.strictEqual(result[0], 'Electronic', 'genre');
+    })
+    .on('comment', function (result) {
+      t.strictEqual(result[0], 'abcdefg', 'comment');
+    })
+    .on('done', function (err) {
+      if (err) throw err;
+      t.end();
+    });
 });

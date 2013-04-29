@@ -1,96 +1,82 @@
-var mm     = require('../lib/index');
+var path   = require('path');
 var fs     = require('fs');
-var testy  = require('testy')();
-var assert = testy.assert;
-      
-testy.expected = 36;
+var mm     = require('../lib/index');
+var test   = require('tap').test;
 
-var sample = require('path').join(__dirname, 'samples/flac.flac');
-var parser = new mm(fs.createReadStream(sample));
-
-parser.on('metadata', function(result) {
-  assert.strictEqual(result.title, 'Brian Eno');
-  assert.strictEqual(result.artist[0], 'MGMT');
-  assert.strictEqual(result.albumartist.length, 0);
-  assert.strictEqual(result.album, 'Congratulations');
-  assert.strictEqual(result.year, '2010');
-  assert.strictEqual(result.track.no, 7);
-  assert.strictEqual(result.track.of, 0);
-  assert.strictEqual(result.disk.no, 0);
-  assert.strictEqual(result.disk.of, 0);
-  assert.strictEqual(result.genre[0], 'Alt. Rock');
-  assert.strictEqual(result.picture[0].format, 'jpg');
-  assert.strictEqual(result.picture[0].data.length, 175668);
+test('flac', function (t) {
+  t.plan(35);
+  var sample = path.join(__dirname, 'samples/flac.flac');
+  new mm(fs.createReadStream(sample))
+    .on('metadata', function (result) {
+      t.strictEqual(result.title, 'Brian Eno', 'title');
+      t.strictEqual(result.artist[0], 'MGMT', 'artist');
+      t.strictEqual(result.albumartist.length, 0, 'albumartist length');
+      t.strictEqual(result.album, 'Congratulations', 'album');
+      t.strictEqual(result.year, '2010', 'year');
+      t.strictEqual(result.track.no, 7, 'track no');
+      t.strictEqual(result.track.of, 0, 'track of');
+      t.strictEqual(result.disk.no, 0, 'disk no');
+      t.strictEqual(result.disk.of, 0, 'disk of');
+      t.strictEqual(result.genre[0], 'Alt. Rock', 'genre');
+      t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(result.picture[0].data.length, 175668, 'picture length');
+    })
+    // aliased tests
+    .on('title', function (result) {
+      t.strictEqual(result, 'Brian Eno', 'aliased title');
+    })
+    .on('artist', function (result) {
+      t.strictEqual(result[0], 'MGMT', 'aliased artist');
+    })
+    .on('year', function (result) {
+      t.strictEqual(result, '2010', 'aliased year');
+    })
+    .on('track', function (result) {
+      t.strictEqual(result.no, 7, 'aliased track no');
+      t.strictEqual(result.of, 0, 'aliased track of');
+    })
+    .on('genre', function (result) {
+      t.strictEqual(result[0], 'Alt. Rock', 'aliased genre');
+    })
+    .on('picture', function (result) {
+      t.strictEqual(result[0].format, 'jpg', 'aliased picture format');
+      t.strictEqual(result[0].data.length, 175668, 'aliased picture length');
+    })
+    .on('comment', function (result) {
+      t.strictEqual(result[0], 'EAC-Secure Mode', 'aliased comment');
+    })
+    // raw tests
+    .on('TITLE', function (result) {
+      t.strictEqual(result, 'Brian Eno', 'raw TITLE');
+    })
+    .on('ARTIST', function (result) {
+      t.strictEqual(result, 'MGMT', 'raw ARTIST');
+    })
+    .on('DATE', function (result) {
+      t.strictEqual(result, '2010', 'raw DATE');
+    })
+    .on('TRACKNUMBER', function (result) {
+      t.strictEqual(result, '07', 'raw TRACKNUMBER');
+    })
+    .on('GENRE', function (result) {
+      t.strictEqual(result, 'Alt. Rock', 'raw GENRE');
+    })
+    .on('COMMENT', function (result) {
+      t.strictEqual(result, 'EAC-Secure Mode', 'raw COMMENT');
+    })
+    .on('METADATA_BLOCK_PICTURE', function (result) {
+      t.strictEqual(result.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTURE type');
+      t.strictEqual(result.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format');
+      t.strictEqual(result.description, '', 'raw METADATA_BLOCK_PICTURE description');
+      t.strictEqual(result.width, 450, 'raw METADATA_BLOCK_PICTURE width');
+      t.strictEqual(result.height, 450, 'raw METADATA_BLOCK_PICTURE height');
+      t.strictEqual(result.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth');
+      t.strictEqual(result.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color');
+      t.strictEqual(result.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
+    })
+    .on('done', function (err) {
+      if (err) throw err;
+      t.end();
+    })
 });
 
-//Aliased tests
-parser.on('title', function(result) {
-  assert.strictEqual(result, 'Brian Eno');
-});
-
-parser.on('artist', function(result) {
-  assert.strictEqual(result[0], 'MGMT');
-});
-
-parser.on('year', function(result) {
-  assert.strictEqual(result, '2010');
-});
-
-parser.on('track', function(result) {
-  assert.strictEqual(result.no, 7);
-  assert.strictEqual(result.of, 0);
-});
-
-parser.on('genre', function(result) {
-  assert.strictEqual(result[0], 'Alt. Rock');
-});
-
-parser.on('picture', function(result) {
-  assert.strictEqual(result[0].format, 'jpg');
-  assert.strictEqual(result[0].data.length, 175668);
-});
-
-parser.on('comment', function(result) {
-  assert.strictEqual(result[0], 'EAC-Secure Mode');
-});
-
-//Raw tests
-parser.on('TITLE', function(result) {
-  assert.strictEqual(result, 'Brian Eno');
-});
-
-parser.on('ARTIST', function(result) {
-  assert.strictEqual(result, 'MGMT');
-});
-
-parser.on('DATE', function(result) {
-  assert.strictEqual(result, '2010');
-});
-
-parser.on('TRACKNUMBER', function(result) {
-  assert.strictEqual(result, '07');
-});
-
-parser.on('GENRE', function(result) {
-  assert.strictEqual(result, 'Alt. Rock');
-});
-
-parser.on('COMMENT', function(result) {
-  assert.strictEqual(result, 'EAC-Secure Mode');
-});
-
-parser.on('METADATA_BLOCK_PICTURE', function(result) {
-  assert.strictEqual(result.type, 'Cover (front)');
-  assert.strictEqual(result.format, 'image/jpeg');
-  assert.strictEqual(result.description, '');
-  assert.strictEqual(result.width, 450);
-  assert.strictEqual(result.height, 450);
-  assert.strictEqual(result.colour_depth, 24);
-  assert.strictEqual(result.indexed_color, 0);
-  assert.strictEqual(result.data.length, 175668);
-});
-
-parser.on('done', function(err) {
-  if (err) throw err;
-  assert.ok(true);
-});

@@ -8,10 +8,10 @@
   },
   "main": "lib",
   "scripts": {
-    "test": "node test/alltests.js"
+    "test": "tap test/test-*"
   },
   "devDependencies": {
-    "testy": "0.0.5"
+    "tap": "~0.4.1"
   },
   "engines": {
     "node": "*"

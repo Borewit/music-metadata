@@ -1,30 +1,29 @@
+var path   = require('path');
 var mm     = require('../lib/index');
 var fs     = require('fs');
-var testy  = require('testy')();
-var assert = testy.assert;
+var test   = require('tap').test;
 
-testy.expected = 13;
-      
-var sample = require('path').join(__dirname, 'samples/ogg-multipagemetadata-bug.ogg');
-var stream = fs.createReadStream(sample);
-var parser = new mm(stream);
-
-parser.on('metadata', function(result) {
-  assert.strictEqual(result.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)');
-  assert.strictEqual(result.artist[0], 'Break The Noize & The Autobots');
-  assert.strictEqual(result.albumartist[0], 'Modestep');
-  assert.strictEqual(result.album, 'To The Stars');
-  assert.strictEqual(result.year, '2011-01-01');
-  assert.strictEqual(result.track.no, 2);
-  assert.strictEqual(result.track.of, 5);
-  assert.strictEqual(result.disk.no, 1);
-  assert.strictEqual(result.disk.of, 1);
-  assert.strictEqual(result.genre[0], 'Dubstep');
-  assert.strictEqual(result.picture[0].format, 'jpg');
-  assert.strictEqual(result.picture[0].data.length, 207439);
-});
-
-parser.on('done', function(err) {
-  if (err) throw err;
-  assert.ok(true);
+test('ogg-multipage-metadata-bug', function (t) {
+  t.plan(12);
+  var sample = path.join(__dirname, 'samples/ogg-multipagemetadata-bug.ogg');
+  var stream = fs.createReadStream(sample);
+  new mm(stream)
+    .on('metadata', function (result) {
+      t.strictEqual(result.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
+      t.strictEqual(result.artist[0], 'Break The Noize & The Autobots', 'artist');
+      t.strictEqual(result.albumartist[0], 'Modestep', 'albumartist');
+      t.strictEqual(result.album, 'To The Stars', 'album');
+      t.strictEqual(result.year, '2011-01-01', 'year');
+      t.strictEqual(result.track.no, 2, 'track no');
+      t.strictEqual(result.track.of, 5, 'track of');
+      t.strictEqual(result.disk.no, 1, 'disk no');
+      t.strictEqual(result.disk.of, 1, 'disk of');
+      t.strictEqual(result.genre[0], 'Dubstep', 'genre');
+      t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(result.picture[0].data.length, 207439, 'picture length');
+    })
+    .on('done', function (err) {
+      if (err) throw err;
+      t.end();
+    });
 });

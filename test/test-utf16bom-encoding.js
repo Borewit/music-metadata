@@ -1,25 +1,28 @@
 var id3    = require('../lib/index');
 var fs     = require('fs');
-var testy  = require('testy')();
-var assert = testy.assert;
+var test   = require('tap').test;
 
-testy.expected = 9;
+test('should read utf16bom encoded metadata correctly', function (t) {
+  t.plan(8);
 
-var sample = require('path').join(__dirname, 'samples/bug-utf16bom-encoding.mp3');
-var parser = new id3(fs.createReadStream(sample));
+  var sample = require('path').join(__dirname, 'samples/bug-utf16bom-encoding.mp3');
+  new id3(fs.createReadStream(sample))
+    .on('metadata', function (result) {
+      t.equal(result.title, 'It\'s All Over You Know', 'title');
+      t.equal(result.artist[0], 'The Apers', 'artist');
+      t.equal(result.albumartist[0], 'The Apers', 'albumartist');
+      t.equal(result.album, 'Reanimate My Heart', 'album');
+      t.equal(result.year, '2007', 'year');
+      t.equal(result.track.no, 1, 'track no');
+      t.equal(result.track.of, 0, 'track of');
+      t.equal(result.genre[0], 'Punk Rock', 'genre');
+    })
+    .on('done', function (err) {
+      if (err) throw err;
+      t.end();
+    });
 
-parser.on('metadata', function(result) {
-  assert.strictEqual(result.title, 'It\'s All Over You Know');
-  assert.strictEqual(result.artist[0], 'The Apers');
-  assert.strictEqual(result.albumartist[0], 'The Apers');
-  assert.strictEqual(result.album, 'Reanimate My Heart');
-  assert.strictEqual(result.year, '2007');
-  assert.strictEqual(result.track.no, 1);
-  assert.strictEqual(result.track.of, 0);
-  assert.strictEqual(result.genre[0], 'Punk Rock');
 });
 
-parser.on('done', function(err) {
-  if (err) throw err;
-  assert.ok(true);
-});
+
+
