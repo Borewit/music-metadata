@@ -1,11 +1,12 @@
 {
   "name": "musicmetadata",
-  "description": "Music metadata library for node, using pure Javascript.",
+  "description": "Streaming music metadata library for node, using pure Javascript.",
   "version": "0.2.3",
   "author": "Lee Treveil",
   "dependencies": {
     "strtok": "0.1.1"
   },
+  "keywords": ["id3", "id3v1", "id3v2", "m4a", "mp4", "vorbis", "ogg", "flac", "tags", "tag"],
   "main": "lib",
   "scripts": {
     "test": "tap test/test-*"
