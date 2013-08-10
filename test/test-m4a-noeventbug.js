@@ -12,6 +12,6 @@ test('no events m4a', function(t) {
       t.strictEqual(result.title, '');
     })
     .on('done', function(err) {
-      t.ok(err == null);
+      t.equal(err.message, "Unexpected end of stream");
     })
 });
