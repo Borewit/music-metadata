@@ -33,7 +33,7 @@ parser.on('metadata', function (result) {
 This will output the standard music metadata:
 
 ```javascript
-{ artist : 'Spor',
+{ artist : ['Spor'],
   album : 'Nightlife, Vol 5.',
   albumartist : [ 'Andy C', 'Spor' ],
   title : 'Stronger',
