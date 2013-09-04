@@ -4,7 +4,8 @@
   "version": "0.2.4",
   "author": "Lee Treveil",
   "dependencies": {
-    "strtok": "0.1.1"
+    "buffer-equal": "0.0.0",
+    "strtok2": "~1.0.0"
   },
   "keywords": [
     "id3",
@@ -15,6 +16,9 @@
     "vorbis",
     "ogg",
     "flac",
+    "asf",
+    "wma",
+    "wmv",
     "tags",
     "tag"
   ],

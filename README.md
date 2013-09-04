@@ -11,7 +11,10 @@ npm install musicmetadata
 
 Supports
 -----------------
-mp3 (1.1, 2.2, 2.3, 2.4), m4a(mp4), vorbis (ogg, flac)
+* mp3 (1.1, 2.2, 2.3, 2.4)
+* m4a (mp4)
+* vorbis (ogg, flac)
+* asf (wma, wmv)
 
 
 API
