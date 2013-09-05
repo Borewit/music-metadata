@@ -8,7 +8,7 @@ test('asf', function (t) {
   var sample = path.join(__dirname, 'samples/asf.wma');
   new mm(fs.createReadStream(sample))
     .on('metadata', function (result) {
-      t.strictEqual(result.title, "Don't Bring Me Down", 'title');
+      t.strictEqual(result.title, 'Don\'t Bring Me Down', 'title');
       t.strictEqual(result.artist[0], 'Electric Light Orchestra', 'artist');
       t.strictEqual(result.albumartist[0], 'Electric Light Orchestra', 'albumartist');
       t.strictEqual(result.album, 'Discovery', 'album');
@@ -53,7 +53,7 @@ test('asf', function (t) {
       t.strictEqual(result, '-4.7 dB')
     })
     .on('done', function(err) {
-      t.ok(err == null, "error should be null");
+      t.ok(err == null, 'error should be null');
       t.end();
     })
 })
