@@ -24,7 +24,7 @@
   ],
   "main": "lib",
   "scripts": {
-    "test": "tap test/test-*"
+    "test": "[ -d 'test/' ] && tap test/test-* || echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.'"
   },
   "devDependencies": {
     "tap": "~0.4.1"
