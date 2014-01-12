@@ -1,6 +1,6 @@
 [![Build Status](https://secure.travis-ci.org/leetreveil/node-musicmetadata.png)](http://travis-ci.org/leetreveil/node-musicmetadata)
 
-Streaming music metadata parser for node, written in pure Javascript
+Streaming music metadata parser for node, written in pure Javascript.
 
 Installation
 ------------
