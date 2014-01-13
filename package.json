@@ -34,8 +34,8 @@
   "testling": {
     "files": "test/test-js-*.js",
     "browsers": {
-      "ff": [ 12, 13 ],
-      "chrome": [ 20 ],
+      "ff": [ 25 ],
+      "chrome": [ 31 ],
       "safari": [ 5.1 ]
     }
   },
