@@ -1,5 +1,5 @@
 var parseGenre = require('../lib/common').parseGenre;
-var test       = require('tap').test;
+var test       = require('tape');
 
 test('should be able to parse genres', function (t) {
   var tests = {

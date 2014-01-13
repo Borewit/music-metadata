@@ -1,7 +1,7 @@
 var path   = require('path');
 var fs     = require('fs');
 var mm     = require('../lib');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('should be able to read id3v2 files with extended headers', function (t) {
   t.plan(2);

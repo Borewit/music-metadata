@@ -1,7 +1,7 @@
 var path   = require('path');
 var fs     = require('fs');
 var mm     = require('../lib/index');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('nonasciichars', function (t) {
   t.plan(1);

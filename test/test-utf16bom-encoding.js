@@ -1,6 +1,6 @@
 var id3    = require('../lib/index');
 var fs     = require('fs');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('should read utf16bom encoded metadata correctly', function (t) {
   t.plan(8);

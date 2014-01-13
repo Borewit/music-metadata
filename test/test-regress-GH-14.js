@@ -1,5 +1,5 @@
 var common = require('../lib/common');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('should be able to detect ftypmp42 as a valid mp4 header type', function (t) {
   var buf = new Buffer(12);

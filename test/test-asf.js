@@ -1,7 +1,7 @@
 var path   = require('path');
 var mm     = require('..');
 var fs     = require('fs');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('asf', function (t) {
   t.plan(22);

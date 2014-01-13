@@ -1,5 +1,5 @@
 var readUInt64LE = require('../lib/common').readUInt64LE;
-var test = require('tap').test;
+var test = require('tape');
 
 test('readUInt64LE', function (t) {
   var tests = [

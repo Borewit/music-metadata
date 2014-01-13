@@ -1,7 +1,7 @@
 var path   = require('path');
 var fs     = require('fs');
 var Mmd    = require('../');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('invalid "Date" frame should not cause crash', function(t) {
   t.plan(7);

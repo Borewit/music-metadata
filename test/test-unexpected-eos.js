@@ -1,7 +1,7 @@
 var path   = require('path');
 var fs     = require('fs');
 var mm     = require('../lib/index');
-var test   = require('tap').test;
+var test   = require('tape');
 var events = require('events');
 var common = require('../lib/common');
 

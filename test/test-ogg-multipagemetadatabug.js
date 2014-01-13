@@ -1,7 +1,7 @@
 var path   = require('path');
 var mm     = require('../lib/index');
 var fs     = require('fs');
-var test   = require('tap').test;
+var test   = require('tape');
 
 test('ogg-multipage-metadata-bug', function (t) {
   t.plan(12);
