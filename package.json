@@ -5,7 +5,9 @@
   "author": "Lee Treveil",
   "dependencies": {
     "buffer-equal": "0.0.0",
-    "strtok2": "~1.0.0"
+    "strtok2": "~1.0.0",
+    "filereader-stream": "0.0.1",
+    "through": "~2.3.4"
   },
   "keywords": [
     "id3",
@@ -24,15 +26,13 @@
   ],
   "main": "lib",
   "scripts": {
-    "test": "[ -d 'test/' ] && tap test/test-* || echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.'"
+    "test": "[ -d 'test/' ] && tape test/test-*.js || echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.'"
   },
   "devDependencies": {
-    "tape": "~2.3.2",
-    "filereader-stream": "0.0.1",
-    "through": "~2.3.4"
+    "tape": "~2.3.2"
   },
   "testling": {
-    "files": "test/test-js-*.js",
+    "files": "test/test-js-*.js test/js-*.js",
     "browsers": {
       "ff": [ 25 ],
       "chrome": [ 31 ],
