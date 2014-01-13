@@ -15,6 +15,15 @@ test('should be able to detect ftypmp42 as a valid mp4 header type', function (t
   buf[9]  = '0x70' // p
   buf[10] = '0x34' // 4
   buf[11] = '0x32' // 2
-  t.equal(common.detectMediaType(buf), 'id4', 'type');
+
+  var types = [
+    {
+      buf: new Buffer('ftypmp42'),
+      tag: require('../lib/id4'),
+      offset: 4,
+    }
+  ]
+
+  t.equal(common.getParserForMediaType(types, buf), require('../lib/id4'), 'type');
   t.end();
 });
