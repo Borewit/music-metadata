@@ -27,7 +27,9 @@
     "test": "[ -d 'test/' ] && tap test/test-* || echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.'"
   },
   "devDependencies": {
-    "tap": "~0.4.1"
+    "tap": "~0.4.1",
+    "filereader-stream": "0.0.1",
+    "through": "~2.3.4"
   },
   "engines": {
     "node": "*"
