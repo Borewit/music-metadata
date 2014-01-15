@@ -33,7 +33,7 @@
     "tape": "~2.3.2"
   },
   "testling": {
-    "files": "test/test-js-*.js test/js-*.js",
+    "files": ["test/test-js-*.js", "test/js-*.js"],
     "browsers": {
       "ff": [
         25
