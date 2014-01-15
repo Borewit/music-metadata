@@ -1,6 +1,8 @@
 [![Build Status](https://secure.travis-ci.org/leetreveil/node-musicmetadata.png)](http://travis-ci.org/leetreveil/node-musicmetadata)
 
-Streaming music metadata parser for node, written in pure Javascript.
+[![browser support](https://ci.testling.com/leetreveil/node-musicmetadata.png)](https://ci.testling.com/leetreveil/node-musicmetadata)
+
+Streaming music metadata parser for node and the browser, written in pure Javascript.
 
 Installation
 ------------
@@ -9,6 +11,17 @@ Install via npm:
 ```
 npm install musicmetadata
 ```
+
+And a few more steps if your in the browser:
+
+```
+npm install -g browserify
+browserify example/main.js -o example/bundle.js
+```
+
+Open example/index.html and drop an audio file in to see the output!
+
+
 
 
 Supports
