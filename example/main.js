@@ -2,7 +2,7 @@ var drop = require('drag-and-drop-files');
 var musicmetadata = require('../lib');
 
 drop(document, function (files) {
-  var mm = new musicmetadata(files[0])
+  var mm = musicmetadata(files[0])
 
   mm.on('metadata', function (result) {
     var picture = result.picture[0];

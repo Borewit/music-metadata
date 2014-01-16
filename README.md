@@ -39,7 +39,7 @@ var fs = require('fs');
 var mm = require('musicmetadata');
 
 // create a new parser from a node ReadStream
-var parser = new mm(fs.createReadStream('sample.mp3'));
+var parser = mm(fs.createReadStream('sample.mp3'));
 
 // listen for the metadata event
 parser.on('metadata', function (result) {

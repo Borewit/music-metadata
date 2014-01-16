@@ -8,7 +8,7 @@ test('ogg', function (t) {
   var comCounter = 0;
   var genCounter = 0;
   var sample = path.join(__dirname, 'samples/oggy.ogg');
-  new mm(fs.createReadStream(sample))
+  mm(fs.createReadStream(sample))
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'In Bloom', 'title');
       t.strictEqual(result.artist[0], 'Nirvana', 'artist');
