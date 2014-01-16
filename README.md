@@ -1,6 +1,6 @@
-[![Build Status](https://secure.travis-ci.org/leetreveil/node-musicmetadata.png)](http://travis-ci.org/leetreveil/node-musicmetadata)
+[![Build Status](https://secure.travis-ci.org/leetreveil/musicmetadata.png)](http://travis-ci.org/leetreveil/musicmetadata)
 
-[![browser support](https://ci.testling.com/leetreveil/node-musicmetadata.png)](https://ci.testling.com/leetreveil/node-musicmetadata)
+[![browser support](https://ci.testling.com/leetreveil/musicmetadata.png)](https://ci.testling.com/leetreveil/musicmetadata)
 
 Streaming music metadata parser for node and the browser, written in pure Javascript.
 
