@@ -1,6 +1,6 @@
 {
   "name": "musicmetadata",
-  "description": "Streaming music metadata parser for node and the browser, written in pure Javascript.",
+  "description": "Streaming music metadata parser for node and the browser.",
   "version": "0.2.7",
   "author": "Lee Treveil",
   "dependencies": {
