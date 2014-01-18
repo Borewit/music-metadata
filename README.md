@@ -2,7 +2,7 @@
 
 [![browser support](https://ci.testling.com/leetreveil/musicmetadata.png)](https://ci.testling.com/leetreveil/musicmetadata)
 
-Streaming music metadata parser for node and the browser, written in pure Javascript.
+Streaming music metadata parser for node and the browser.
 
 Installation
 ------------
