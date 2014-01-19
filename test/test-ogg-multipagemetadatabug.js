@@ -21,6 +21,7 @@ test('ogg-multipage-metadata-bug', function (t) {
       t.strictEqual(result.genre[0], 'Dubstep', 'genre');
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 207439, 'picture length');
+      t.end();
     })
     .on('done', function (err) {
       if (err) throw err;

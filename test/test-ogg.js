@@ -116,5 +116,6 @@ test('ogg', function (t) {
     })
     .on('done', function (err) {
       if (err) throw err;
-    });
+      t.end();
+    })
 });
