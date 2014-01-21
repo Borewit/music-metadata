@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('tape');
 
 test('ogg', function (t) {
-  t.plan(46);
+  t.plan(48);
   var comCounter = 0;
   var genCounter = 0;
   var sample = path.join(__dirname, 'samples/oggy.ogg');
@@ -23,6 +23,10 @@ test('ogg', function (t) {
       t.strictEqual(result.genre[1], 'Alternative', 'genre 1');
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 30966, 'picture length');
+      t.strictEqual(result.duration, 0, 'metadata duration');
+    })
+    .on('duration', function (result) {
+      t.strictEqual(result, 0, 'duration');
     })
     // aliased tests
     .on('title', function (result) {

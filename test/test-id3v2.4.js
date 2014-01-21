@@ -4,7 +4,7 @@ var id3    = require('../lib/index');
 var test   = require('tape');
 
 test('id3v2.4', function (t) {
-  t.plan(52);
+  t.plan(53);
 
   var apicCounter = 0;
   var sample = path.join(__dirname, 'samples/id3v2.4.mp3');
@@ -27,6 +27,7 @@ test('id3v2.4', function (t) {
       t.strictEqual(result.picture[0].data.length, 80938, 'picture 0 length');
       t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format');
       t.strictEqual(result.picture[1].data.length, 80938, 'picture 1 length');
+      t.strictEqual(result.duration, 1, 'metadata duration');
     })
     .on('duration', function (result) {
       t.strictEqual(result, 1, 'duration');

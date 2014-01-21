@@ -17,7 +17,8 @@ test('should be able to read id3v2 files with extended headers', function (t) {
           track: { no: 0, of: 0 },
           genre: [],
           disk: { no: 0, of: 0 },
-          picture: {}
+          picture: {},
+          duration: 0
         }
         // additional check because deepEqual is not strict
         t.strictEqual(result.year, expected.year, "year");

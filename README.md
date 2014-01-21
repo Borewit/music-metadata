@@ -58,7 +58,8 @@ This will output the standard music metadata:
   year : '2010',
   track : { no : 1, of : 44 },
   disk : { no : 1, of : 2 },
-  picture : [ { format : 'jpg', data : <Buffer> } ]
+  picture : [ { format : 'jpg', data : <Buffer> } ],
+  duration : 302 // in seconds
 }
 ```
 

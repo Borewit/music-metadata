@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('tape');
 
 test('id3v2.3', function (t) {
-  t.plan(42);
+  t.plan(43);
 
   var sample = path.join(__dirname, 'samples/id3v2.3.mp3');
   new id3(fs.createReadStream(sample))
@@ -23,6 +23,7 @@ test('id3v2.3', function (t) {
       t.strictEqual(result.genre[0], 'Soundtrack', 'genre');
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 80938, 'picture length');
+      t.strictEqual(result.duration, 1, 'metadata duration');
     })
     .on('duration', function (result) {
       t.strictEqual(result, 1, 'duration');
