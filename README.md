@@ -71,7 +71,7 @@ parser.on('artist', function (result) {
 });
 ```
 
-You can also listen for custom metadata types that are not part of the standard metadata as defined above. For example if you wanted to read the TLEN frame from a id3v2.x file you can do this:
+You can also listen for custom metadata types that are not part of the standard metadata as defined above. For example if you wanted to read the `TLEN` frame from a id3v2.x file you can do this:
 
 ```javascript
 parser.on('TLEN', function (result) {
