@@ -7,7 +7,7 @@ test('id4', function (t) {
   t.plan(48);
 
   var sample = path.join(__dirname, 'samples/id4.m4a');
-  new id3(fs.createReadStream(sample))
+  new id3(fs.createReadStream(sample), { duration: true })
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Voodoo People (Pendulum Remix)', 'title');
       t.strictEqual(result.artist[0], 'The Prodigy', 'artist');

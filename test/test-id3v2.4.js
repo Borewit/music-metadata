@@ -8,7 +8,7 @@ test('id3v2.4', function (t) {
 
   var apicCounter = 0;
   var sample = path.join(__dirname, 'samples/id3v2.4.mp3');
-  new id3(fs.createReadStream(sample))
+  new id3(fs.createReadStream(sample), {'duration': true})
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Home', 'title');
       t.strictEqual(result.artist[0], 'Explo', 'artist 0');
