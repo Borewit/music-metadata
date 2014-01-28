@@ -18,14 +18,14 @@ test('should return error when we unexpectedly hit the end of the stream', funct
 
   headers.forEach(function (header) {
     var mockFile = new events.EventEmitter();
-      new mm(mockFile)
+    new mm(mockFile)
       .on('metadata', function (result) {
         t.notOk(true, 'this should never be hit');
       })
       .on('done', function (err) {
         t.equal(err.message, 'Unexpected end of stream');
       })
-      mockFile.emit('data', header);
-      mockFile.emit('close');
+    mockFile.emit('data', header);
+    mockFile.emit('close');
   })
 });

@@ -9,7 +9,8 @@ test('ogg-multipage-metadata-bug', function (t) {
   var stream = fs.createReadStream(sample);
   new mm(stream)
     .on('metadata', function (result) {
-      t.strictEqual(result.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
+      t.strictEqual(result.title,
+        'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
       t.strictEqual(result.artist[0], 'Break The Noize & The Autobots', 'artist');
       t.strictEqual(result.albumartist[0], 'Modestep', 'albumartist');
       t.strictEqual(result.album, 'To The Stars', 'album');

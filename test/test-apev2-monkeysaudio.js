@@ -64,7 +64,8 @@ test('monkeysaudio (.ape)', function (t) {
       t.strictEqual(result, 'Audioslave/Chris Cornell', 'raw artist');
     })
     .on('Cover Art (Front)', function (result) {
-      t.strictEqual(result.description, 'Cover Art (Front).jpg', 'raw cover art (front) description');
+      t.strictEqual(result.description,
+        'Cover Art (Front).jpg', 'raw cover art (front) description');
       t.strictEqual(result.data.length, 48658, 'raw cover art (front) length');
     })
     .on('Cover Art (Back)', function (result) {

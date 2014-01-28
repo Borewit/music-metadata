@@ -16,6 +16,6 @@ test('invalid "Date" frame should not cause crash', function(t) {
       t.strictEqual(result.genre[0], 'Progressive Rock', 'genre');
     })
     .on('done', function(err) {
-      t.ok(err == null);
+      t.ok(err === undefined);
     })
 });
