@@ -42,17 +42,11 @@
       "test/test-js-*.js",
       "test/js-*.js"
     ],
-    "browsers": {
-      "ff": [
-        25
-      ],
-      "chrome": [
-        31
-      ],
-      "safari": [
-        5.1
-      ]
-    }
+    "browsers": [
+      "firefox/latest",
+      "chrome/latest",
+      "safari/latest"
+    ]
   },
   "engines": {
     "node": "*"
