@@ -18,7 +18,7 @@ Or with [bower](http://bower.io) if you're in the browser:
 bower install musicmetadata
 ```
 
-If you're old'skool you can also download the latest tar ball from https://github.com/leetreveil/musicmetadata/releases.
+If you're old'skool you can download the latest tar ball from https://github.com/leetreveil/musicmetadata/releases.
 
 
 Supports
