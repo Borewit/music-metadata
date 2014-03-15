@@ -1,0 +1,26 @@
+{
+  "name": "musicmetadata",
+  "version": "0.3.3",
+  "homepage": "https://github.com/leetreveil/node-musicmetadata",
+  "authors": [
+    "Lee Treveil <leetreveil@gmail.com>"
+  ],
+  "description": "Streaming music metadata parser for node and the browser.",
+  "main": "dist/musicmetadata.js",
+  "keywords": [
+    "id3",
+    "music",
+    "tag",
+    "audio",
+    "mp3",
+    "wma"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

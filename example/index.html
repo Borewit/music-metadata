@@ -3,7 +3,50 @@
 <head>
   <meta charset="utf-8">
   <title>node-musicmetadata browser example</title>
-  <script src="./bundle.js"></script>
+  <script src="../dist/musicmetadata.js"></script>
+  <script type="text/javascript">
+    // https://github.com/mikolalysenko/drag-and-drop-files
+    "use strict"
+
+    function handleDrop(callback, event) {
+      event.stopPropagation()
+      event.preventDefault()
+      callback(Array.prototype.slice.call(event.dataTransfer.files))
+    }
+
+    function killEvent(e) {
+      e.stopPropagation()
+      e.preventDefault()
+      return false
+    }
+
+    function addDragDropListener(element, callback) {
+      element.addEventListener("dragenter", killEvent, false)
+      element.addEventListener("dragover", killEvent, false)
+      element.addEventListener("drop", handleDrop.bind(undefined, callback), false)
+    }
+
+
+    addDragDropListener(document, function (files) {
+      var mm = musicmetadata(files[0])
+
+      mm.on('metadata', function (result) {
+        console.log(result);
+        if (result.picture.length > 0) {
+          var picture = result.picture[0];
+          var url = URL.createObjectURL(new Blob([picture.data], {'type': 'image/' + picture.format}));
+          var image = document.getElementById('myimg');
+          image.src = url;
+        }
+        var div = document.getElementById('info');
+        div.innerText = JSON.stringify(result, undefined, 2);
+      })
+      mm.on('done', function (err) {
+        if (err) throw err;
+      })
+    });
+  </script>
+
 </head>
 
 <body>
