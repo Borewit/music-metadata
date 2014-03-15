@@ -1,6 +1,6 @@
 {
   "name": "musicmetadata",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "homepage": "https://github.com/leetreveil/node-musicmetadata",
   "authors": [
     "Lee Treveil <leetreveil@gmail.com>"
@@ -21,6 +21,9 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+    "lib",
+    "example",
+    "package.json"
   ]
 }
