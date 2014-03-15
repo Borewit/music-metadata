@@ -6,22 +6,19 @@ Streaming music metadata parser for node and the browser.
 
 Installation
 ------------
-Install via npm:
+Install via [npm](http://npmjs.org):
 
 ```
 npm install musicmetadata
 ```
 
-And a few more steps if your in the browser:
+Or with [bower](http://bower.io) if you're in the browser:
 
 ```
-npm install -g browserify
-browserify example/main.js -o example/bundle.js
+bower install musicmetadata
 ```
 
-Open example/index.html and drop an audio file in to see the output!
-
-
+If you're old'skool you can also download the latest tar ball from https://github.com/leetreveil/musicmetadata/releases.
 
 
 Supports
@@ -83,7 +80,7 @@ parser.on('TLEN', function (result) {
   console.log(result);
 });
 ```
-    
+
 The ```done``` event will be raised when parsing has finished or an error has occurred. This could be
 used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
 
@@ -99,7 +96,7 @@ Licence
 
 (The MIT License)
 
-Copyright (c) 2013 Lee Treveil <leetreveil@gmail.com>
+Copyright (c) 2014 Lee Treveil <leetreveil@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
