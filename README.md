@@ -44,16 +44,6 @@ parser.on('metadata', function (result) {
 });
 ```
 
-You can also read the duration; reading the duration may be slow so only set this if you need to.
-```javascript
-var parser = mm(fs.createReadStream('sample.mp3'), { duration: true });
-```
-
-Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
-```javascript
-var parser = mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 });
-```
-
 This will output the standard music metadata:
 
 ```javascript
@@ -93,6 +83,16 @@ parser.on('done', function (err) {
   if (err) throw err;
   stream.destroy();
 });
+```
+
+You can also read the duration; reading the duration may be slow so only set this if you need to.
+```javascript
+var parser = mm(fs.createReadStream('sample.mp3'), { duration: true });
+```
+
+Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
+```javascript
+var parser = mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 });
 ```
 
 Licence
