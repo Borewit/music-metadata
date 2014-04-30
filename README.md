@@ -49,6 +49,10 @@ You can also read the duration; reading the duration may be slow so only set thi
 var parser = mm(fs.createReadStream('sample.mp3'), { duration: true });
 ```
 
+Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
+```javascript
+var parser = mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 });
+```
 
 This will output the standard music metadata:
 
