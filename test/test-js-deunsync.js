@@ -1,6 +1,6 @@
 var common = require('../lib/common');
 var bufferEqual = require('buffer-equal');
-var test   = require('tape');
+var test   = require('prova');
 
 test('should be able to remove unsync bytes from buffer', function (t) {
   var expected = new Buffer([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);

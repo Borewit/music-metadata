@@ -29,11 +29,11 @@
   "main": "lib",
   "scripts": {
     "pretest": "jshint lib/*.js test/*.js",
-    "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || tap test/test-*.js"
+    "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || prova test/test-*.js",
+    "test-browser": "prova test/test-js-* test/js-*.js -b"
   },
   "devDependencies": {
-    "tape": "~2.3.2",
-    "tap": "~0.4.8",
+    "prova": "~1.9.0",
     "jshint": "~2.4.3"
   },
   "testling": {

@@ -1,7 +1,7 @@
 var path   = require('path');
 var mm     = require('../lib/index');
 var fs     = require('fs');
-var test   = require('tape');
+var test   = require('prova');
 
 test('ogg', function (t) {
   t.plan(48);

@@ -2,7 +2,7 @@ var path    = require('path');
 var fs      = require('fs');
 var through = require('through');
 var mm      = require('../lib/index');
-var test    = require('tape');
+var test    = require('prova');
 
 test('nonfilestream', function (t) {
   t.plan(1);

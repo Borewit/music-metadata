@@ -1,5 +1,5 @@
 var common = require('../lib/common');
-var test = require('tape');
+var test = require('prova');
 
 // should throw error if version != [1,2,2.5]
 // should throw error if layer != [1,2,3]

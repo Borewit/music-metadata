@@ -1,7 +1,7 @@
 var path   = require('path');
 var mm     = require('../lib/index');
 var fs     = require('fs');
-var test   = require('tape');
+var test   = require('prova');
 
 test('ogg-multipage-metadata-bug', function (t) {
   t.plan(12);
@@ -23,7 +23,7 @@ test('ogg-multipage-metadata-bug', function (t) {
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 207439, 'picture length');
     })
-    .on('done', function (err) {
+    .once('done', function (err) {
       if (err) throw err;
       t.end();
     });

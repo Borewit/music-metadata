@@ -1,7 +1,7 @@
 var fs   = require('fs');
 var path = require('path');
 var mm   = require('../lib/index');
-var test = require('tape');
+var test = require('prova');
 
 test('should be able to read metadata with unknown encoding', function (t) {
   t.plan(10);

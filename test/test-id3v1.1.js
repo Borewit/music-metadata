@@ -1,7 +1,7 @@
 var path   = require('path');
 var fs     = require('fs');
 var id3    = require('../lib/index');
-var test   = require('tape');
+var test   = require('prova');
 
 test('id3v1.1', function (t) {
   t.plan(16);

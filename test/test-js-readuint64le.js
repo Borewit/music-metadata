@@ -1,5 +1,5 @@
 var readUInt64LE = require('../lib/common').readUInt64LE;
-var test = require('tape');
+var test = require('prova');
 
 test('readUInt64LE', function (t) {
   var tests = [

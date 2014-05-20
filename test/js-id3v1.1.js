@@ -1,7 +1,7 @@
 var path   = require('path');
 var fs     = require('fs');
 var mm    = require('../lib/index');
-var test   = require('tape');
+var test   = require('prova');
 
 // var u8 = new Uint8Array([84, 65, 71]);
 

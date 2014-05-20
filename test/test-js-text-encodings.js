@@ -1,5 +1,5 @@
 var common = require('../lib/common');
-var test   = require('tape');
+var test   = require('prova');
 
 test('should be able to parse UTF-16BE string with BOM', function (t) {
   var expected = '2007';

@@ -1,5 +1,5 @@
 var stripNulls = require('../lib/common').stripNulls;
-var test = require('tape');
+var test = require('prova');
 
 test('readUInt64LE', function (t) {
   var tests = [
