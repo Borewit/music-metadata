@@ -1,6 +1,6 @@
 var path   = require('path');
 var fs     = require('fs');
-var mm    = require('../lib/index');
+var mm     = require('../lib/browser');
 var test   = require('prova');
 
 // var u8 = new Uint8Array([84, 65, 71]);

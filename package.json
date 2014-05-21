@@ -27,6 +27,7 @@
     "tag"
   ],
   "main": "lib",
+  "browser": "lib/browser",
   "scripts": {
     "pretest": "jshint lib/*.js test/*.js",
     "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || prova test/test-*.js",
