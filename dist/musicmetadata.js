@@ -4919,7 +4919,34 @@ function parseWordAttr(buf) {
 }
 
 }).call(this,_dereq_("buffer").Buffer)
-},{"./common":22,"buffer":5,"buffer-equal":31,"events":8,"fs":1,"strtok2":37,"util":20}],22:[function(_dereq_,module,exports){
+},{"./common":23,"buffer":5,"buffer-equal":32,"events":8,"fs":1,"strtok2":38,"util":20}],22:[function(_dereq_,module,exports){
+(function (process){
+var readStream = _dereq_('filereader-stream')
+var through = _dereq_('through')
+var musicmetadata = _dereq_('./index')
+
+
+module.exports = function (stream, opts) {
+  return musicmetadata(wrapFileWithStream(stream), opts)
+}
+
+function wrapFileWithStream (file) {
+  if (file instanceof FileList) {
+    throw new Error('You have passed a FileList object but we expected a File');
+  }
+  if (!(file instanceof File || file instanceof Blob)) {
+    throw new Error('You must provide a valid File or Blob object');
+  }
+  var stream = through(null, null, {autoDestroy: false});
+  stream.fileSize = function (cb) {
+    process.nextTick(function () {
+      cb(file.size);
+    })
+  }
+  return readStream(file).pipe(stream);
+}
+}).call(this,_dereq_("/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"./index":29,"/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"filereader-stream":36,"through":39}],23:[function(_dereq_,module,exports){
 (function (Buffer){
 var strtok = _dereq_('strtok2');
 var bufferEqual = _dereq_('buffer-equal');
@@ -5261,7 +5288,7 @@ exports.samplingRateCalculator = function (bits, mpegVersion) {
 }
 
 }).call(this,_dereq_("buffer").Buffer)
-},{"./id3v1":24,"buffer":5,"buffer-equal":31,"deep-equal":32,"strtok2":37}],23:[function(_dereq_,module,exports){
+},{"./id3v1":25,"buffer":5,"buffer-equal":32,"deep-equal":33,"strtok2":38}],24:[function(_dereq_,module,exports){
 var strtok = _dereq_('strtok2');
 var common = _dereq_('./common');
 
@@ -5375,7 +5402,7 @@ var startState = {
   }
 }
 
-},{"./common":22,"strtok2":37}],24:[function(_dereq_,module,exports){
+},{"./common":23,"strtok2":38}],25:[function(_dereq_,module,exports){
 var util = _dereq_('util');
 var common = _dereq_('./common');
 
@@ -5417,7 +5444,7 @@ module.exports = function (stream, callback, done) {
   });
 }
 
-},{"./common":22,"util":20}],25:[function(_dereq_,module,exports){
+},{"./common":23,"util":20}],26:[function(_dereq_,module,exports){
 var strtok = _dereq_('strtok2');
 var parser = _dereq_('./id3v2_frames');
 var common = _dereq_('./common');
@@ -5749,7 +5776,7 @@ function calcSlotSize (layer) {
   if (layer === 3) return 1;
 }
 
-},{"./common":22,"./id3v2_frames":26,"deep-equal":32,"node-bitarray":36,"strtok2":37}],26:[function(_dereq_,module,exports){
+},{"./common":23,"./id3v2_frames":27,"deep-equal":33,"node-bitarray":37,"strtok2":38}],27:[function(_dereq_,module,exports){
 var Buffer       = _dereq_('buffer').Buffer;
 var strtok       = _dereq_('strtok2');
 var common       = _dereq_('./common');
@@ -5865,7 +5892,7 @@ function getTextEncoding(byte) {
   }
 }
 
-},{"./common":22,"buffer":5,"strtok2":37}],27:[function(_dereq_,module,exports){
+},{"./common":23,"buffer":5,"strtok2":38}],28:[function(_dereq_,module,exports){
 var strtok = _dereq_('strtok2');
 var common = _dereq_('./common');
 
@@ -6001,60 +6028,44 @@ var TYPES = {
 
 var CONTAINER_ATOMS = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
 
-},{"./common":22,"strtok2":37}],28:[function(_dereq_,module,exports){
+},{"./common":23,"strtok2":38}],29:[function(_dereq_,module,exports){
 (function (process,Buffer){
 var util = _dereq_('util');
 var events = _dereq_('events');
 var common = _dereq_('./common');
 var strtok = _dereq_('strtok2');
-var readStream = _dereq_('filereader-stream');
-var through = _dereq_('through')
 var fs = _dereq_('fs')
-
-function wrapFileWithStream (file) {
-  if (file instanceof FileList) {
-    throw new Error('You have passed a FileList object but we expected a File');
-  }
-  if (!(file instanceof File || file instanceof Blob)) {
-    throw new Error('You must provide a valid File or Blob object');
-  }
-  var stream = through(null, null, {autoDestroy: false});
-  stream.fileSize = function (cb) {
-    process.nextTick(function () {
-      cb(file.size);
-    })
-  }
-  return readStream(file).pipe(stream);
-}
 
 var MusicMetadata = module.exports = function (stream, opts) {
   if (!(this instanceof MusicMetadata)) return new MusicMetadata(stream, opts);
   opts = opts || {};
-  if (process.browser) {
-    this.stream = wrapFileWithStream(stream);
-  } else {
-    // TODO: handle non file streams, e.g. http request
-    stream.fileSize = function (cb) {
+  var self = this;
+
+  stream.fileSize = function (cb) {
+    if (stream.hasOwnProperty('path')) {
       fs.stat(stream.path, function (err, stats) {
         if (err) throw err;
         cb(stats.size);
-      })
+      });
+    } else if (opts.fileSize) {
+      process.nextTick(function() {
+        cb(opts.fileSize);
+      });
+    } else if (opts.duration) {
+      self.emit(
+        'done',
+        Error('for non file streams, specify the size of the stream with a fileSize option'));
     }
-    this.stream = stream;
   }
-  events.EventEmitter.call(this);
-  this.parse(opts);
-};
 
-util.inherits(MusicMetadata, events.EventEmitter);
+  this.stream = stream;
 
-MusicMetadata.prototype.parse = function (opts) {
   this.metadata = {
     title: '',
     artist: [],
     albumartist: [],
     album: '',
-    year: "",
+    year: '',
     track: { no: 0, of: 0 },
     genre: [],
     disk: { no: 0, of: 0 },
@@ -6064,7 +6075,6 @@ MusicMetadata.prototype.parse = function (opts) {
 
   this.aliased = {};
 
-  var self = this;
   this.stream.once('data', function (result) {
     var parser = common.getParserForMediaType(headerTypes, result);
     parser(self.stream, self.readEvent.bind(self), done,
@@ -6085,7 +6095,11 @@ MusicMetadata.prototype.parse = function (opts) {
     self.readEvent('done', exception);
     return strtok.DONE;
   }
-};
+
+  events.EventEmitter.call(this);
+}
+
+util.inherits(MusicMetadata, events.EventEmitter);
 
 MusicMetadata.prototype.readEvent = function (event, value) {
   // We only emit aliased events once the 'done' event has been raised,
@@ -6278,7 +6292,7 @@ var MAPPINGS = [
 ];
 
 }).call(this,_dereq_("/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),_dereq_("buffer").Buffer)
-},{"./asf":21,"./common":22,"./flac":23,"./id3v2":25,"./id4":27,"./monkeysaudio":29,"./ogg":30,"/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"buffer":5,"events":8,"filereader-stream":35,"fs":1,"strtok2":37,"through":38,"util":20}],29:[function(_dereq_,module,exports){
+},{"./asf":21,"./common":23,"./flac":24,"./id3v2":26,"./id4":28,"./monkeysaudio":30,"./ogg":31,"/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"buffer":5,"events":8,"fs":1,"strtok2":38,"util":20}],30:[function(_dereq_,module,exports){
 (function (Buffer){
 var common = _dereq_('./common');
 var strtok = _dereq_('strtok2');
@@ -6346,7 +6360,7 @@ module.exports = function (stream, callback, done) {
 }
 
 }).call(this,_dereq_("buffer").Buffer)
-},{"./common":22,"buffer":5,"strtok2":37}],30:[function(_dereq_,module,exports){
+},{"./common":23,"buffer":5,"strtok2":38}],31:[function(_dereq_,module,exports){
 (function (Buffer){
 var fs = _dereq_('fs');
 var util = _dereq_('util');
@@ -6495,7 +6509,7 @@ module.exports = function (stream, callback, done, readDuration) {
 }
 
 }).call(this,_dereq_("buffer").Buffer)
-},{"./common":22,"buffer":5,"events":8,"fs":1,"strtok2":37,"util":20}],31:[function(_dereq_,module,exports){
+},{"./common":23,"buffer":5,"events":8,"fs":1,"strtok2":38,"util":20}],32:[function(_dereq_,module,exports){
 var Buffer = _dereq_('buffer').Buffer; // for use with browserify
 
 module.exports = function (a, b) {
@@ -6510,7 +6524,7 @@ module.exports = function (a, b) {
     return true;
 };
 
-},{"buffer":5}],32:[function(_dereq_,module,exports){
+},{"buffer":5}],33:[function(_dereq_,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = _dereq_('./lib/keys.js');
 var isArguments = _dereq_('./lib/is_arguments.js');
@@ -6587,7 +6601,7 @@ function objEquiv(a, b, opts) {
   return true;
 }
 
-},{"./lib/is_arguments.js":33,"./lib/keys.js":34}],33:[function(_dereq_,module,exports){
+},{"./lib/is_arguments.js":34,"./lib/keys.js":35}],34:[function(_dereq_,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -6609,7 +6623,7 @@ function unsupported(object){
     false;
 };
 
-},{}],34:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -6620,7 +6634,7 @@ function shim (obj) {
   return keys;
 }
 
-},{}],35:[function(_dereq_,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 (function (Buffer){
 module.exports = FileStream;
 
@@ -6681,7 +6695,7 @@ FileStream.prototype.pipe = function pipe(dest, options) {
 };
 
 }).call(this,_dereq_("buffer").Buffer)
-},{"buffer":5}],36:[function(_dereq_,module,exports){
+},{"buffer":5}],37:[function(_dereq_,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -7316,7 +7330,7 @@ methods.forEach(function(method) {
 module.exports = BitArray
 
 }).call(this,_dereq_("buffer").Buffer)
-},{"buffer":5}],37:[function(_dereq_,module,exports){
+},{"buffer":5}],38:[function(_dereq_,module,exports){
 // A fast streaming parser library.
 
 var assert = _dereq_('assert');
@@ -7742,7 +7756,7 @@ var parse = function(s, cb) {
 };
 exports.parse = parse;
 
-},{"assert":2,"buffer":5}],38:[function(_dereq_,module,exports){
+},{"assert":2,"buffer":5}],39:[function(_dereq_,module,exports){
 (function (process){
 var Stream = _dereq_('stream')
 
@@ -7854,6 +7868,6 @@ function through (write, end, opts) {
 
 
 }).call(this,_dereq_("/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"stream":12}]},{},[28])
-(28)
+},{"/Users/leetreveil/.npm-packages/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"stream":12}]},{},[22])
+(22)
 });
