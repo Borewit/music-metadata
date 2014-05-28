@@ -1,6 +1,6 @@
-[![Build Status](https://secure.travis-ci.org/leetreveil/musicmetadata.png)](http://travis-ci.org/leetreveil/musicmetadata) [![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url]
 
-[![browser support](https://ci.testling.com/leetreveil/musicmetadata.png)](https://ci.testling.com/leetreveil/musicmetadata)
+[![browser support][testling-image]][testling-url]
 
 Streaming music metadata parser for node and the browser.
 
@@ -107,7 +107,13 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-[npm-url]: https://npmjs.org/package/musicmetadata
-[npm-image]: https://badge.fury.io/js/musicmetadata.png
-
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[npm-url]: https://npmjs.org/package/musicmetadata
+[npm-image]: https://badge.fury.io/js/musicmetadata.svg
+
+[travis-url]: https://npmjs.org/package/musicmetadata
+[travis-image]: https://api.travis-ci.org/leetreveil/musicmetadata.svg?branch=master
+
+[testling-url]: https://ci.testling.com/leetreveil/musicmetadata
+[testling-image]: https://ci.testling.com/leetreveil/musicmetadata.png
