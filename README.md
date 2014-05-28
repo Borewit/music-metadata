@@ -1,4 +1,4 @@
-[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![npm downloads][npm-downloads-image]][npm-url]
 
 [![browser support][testling-image]][testling-url]
 
@@ -111,6 +111,7 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 [npm-url]: https://npmjs.org/package/musicmetadata
 [npm-image]: https://badge.fury.io/js/musicmetadata.svg
+[npm-downloads-image]: http://img.shields.io/npm/dm/musicmetadata.svg
 
 [travis-url]: https://npmjs.org/package/musicmetadata
 [travis-image]: https://api.travis-ci.org/leetreveil/musicmetadata.svg?branch=master
