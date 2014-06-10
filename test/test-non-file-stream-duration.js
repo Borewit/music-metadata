@@ -15,10 +15,12 @@ test('nonfilestream', function (t) {
   var nonFileStream = through(
     function write(data) { this.queue(data); },
     function end() { this.queue(null); });
-  fs.createReadStream(sample).pipe(nonFileStream);
+  var fileStream = fs.createReadStream(sample, { autoClose: false });
+  fileStream.pipe(nonFileStream);
 
   new mm(nonFileStream, { duration: true, fileSize: 47889 })
     .on('metadata', function (result) {
+      fileStream.destroy();
       t.equal(result.duration, 1);
       t.end();
     });
