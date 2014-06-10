@@ -1,4 +1,3 @@
-/* TODO: Update this test once we have a way to make it pass
 var path   = require('path');
 var stream = require('stream');
 var mm     = require('..');
@@ -15,4 +14,3 @@ test('audio-frame-header-bug', function (t) {
       t.end();
     })
 });
-*/
