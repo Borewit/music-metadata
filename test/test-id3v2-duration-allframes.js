@@ -7,7 +7,8 @@ test('id3v2-duration-allframes', function (t) {
   t.plan(3);
 
   var sample = path.join(__dirname, 'samples/id3v2-duration-allframes.mp3');
-  new id3(fs.createReadStream(sample), {'duration': true})
+  var stream = fs.createReadStream(sample, { autoClose: false });
+  new id3(stream, {'duration': true})
     .on('metadata', function (result) {
       t.deepEqual(result,
         { title: 'Turkish Rondo',
@@ -26,6 +27,7 @@ test('id3v2-duration-allframes', function (t) {
     })
     .on('done', function (err) {
       if (err) throw err;
+      stream.destroy();
       t.ok(true, 'done called');
     });
 })
