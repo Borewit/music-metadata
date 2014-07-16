@@ -113,7 +113,7 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 [npm-image]: https://badge.fury.io/js/musicmetadata.svg
 [npm-downloads-image]: http://img.shields.io/npm/dm/musicmetadata.svg
 
-[travis-url]: https://npmjs.org/package/musicmetadata
+[travis-url]: https://travis-ci.org/leetreveil/musicmetadata
 [travis-image]: https://api.travis-ci.org/leetreveil/musicmetadata.svg?branch=master
 
 [testling-url]: https://ci.testling.com/leetreveil/musicmetadata
