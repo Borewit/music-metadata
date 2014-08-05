@@ -3,6 +3,7 @@ var fs     = require('fs');
 var mm     = require('../lib/index');
 var test   = require('prova');
 var events = require('events');
+var through = require('through')
 var common = require('../lib/common');
 
 var headers = [
@@ -17,7 +18,7 @@ test('should return error when we unexpectedly hit the end of the stream', funct
   t.plan(headers.length);
 
   headers.forEach(function (header) {
-    var mockFile = new events.EventEmitter();
+    var mockFile = through();
     new mm(mockFile)
       .on('metadata', function (result) {
         t.notOk(true, 'this should never be hit');
