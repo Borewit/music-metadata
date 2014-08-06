@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('prova');
 
 test('asf', function (t) {
-  t.plan(22);
+  t.plan(24);
   var sample = path.join(__dirname, 'samples/asf.wma');
   new mm(fs.createReadStream(sample))
     .on('metadata', function (result) {
@@ -18,6 +18,7 @@ test('asf', function (t) {
       t.strictEqual(result.disk.no, 0, 'disk no');
       t.strictEqual(result.disk.of, 0, 'disk of');
       t.strictEqual(result.genre[0], 'Rock', 'genre 0');
+      t.strictEqual(result.duration, 245, 'duration');
     })
     // aliased tests
     .on('title', function (result) {
@@ -41,6 +42,9 @@ test('asf', function (t) {
     })
     .on('genre', function (result) {
       t.strictEqual(result[0], 'Rock', 'aliased genre');
+    })
+    .on('duration', function (result) {
+      t.strictEqual(result, 245, 'aliased duration');
     })
     // raw tests
     .on('WM/AlbumTitle', function (result) {
