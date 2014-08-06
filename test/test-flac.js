@@ -4,7 +4,7 @@ var mm     = require('../lib/index');
 var test   = require('prova');
 
 test('flac', function (t) {
-  t.plan(35);
+  t.plan(37);
   var sample = path.join(__dirname, 'samples/flac.flac');
   new mm(fs.createReadStream(sample))
     .on('metadata', function (result) {
@@ -20,6 +20,7 @@ test('flac', function (t) {
       t.strictEqual(result.genre[0], 'Alt. Rock', 'genre');
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 175668, 'picture length');
+      t.strictEqual(result.duration, 272, 'duration');
     })
     // aliased tests
     .on('title', function (result) {
@@ -44,6 +45,9 @@ test('flac', function (t) {
     })
     .on('comment', function (result) {
       t.strictEqual(result[0], 'EAC-Secure Mode', 'aliased comment');
+    })
+    .on('duration', function (result) {
+      t.strictEqual(result, 272, 'aliased duration');
     })
     // raw tests
     .on('TITLE', function (result) {
