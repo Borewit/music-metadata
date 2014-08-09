@@ -10,7 +10,7 @@ test('audio-frame-header-bug', function (t) {
   var readStream = fs.createReadStream(sample);
   new mm(readStream, { duration: true })
     .on('metadata', function (result) {
-      t.strictEqual(result.duration, 202);
+      t.strictEqual(result.duration, 201);
       t.end();
     })
 });
