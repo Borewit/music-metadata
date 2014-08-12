@@ -10,7 +10,7 @@
     "through": "~2.3.4",
     "node-bitarray": "0.0.2",
     "deep-equal": "~0.1.2",
-    "int53": "0.2.3",
+    "int53": "0.2.3"
   },
   "keywords": [
     "id3",
