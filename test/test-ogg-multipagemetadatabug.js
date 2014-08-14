@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('prova');
 
 test('ogg-multipage-metadata-bug', function (t) {
-  t.plan(12);
+  t.plan(13);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/ogg-multipagemetadata-bug.ogg')])
@@ -27,7 +27,7 @@ test('ogg-multipage-metadata-bug', function (t) {
       t.strictEqual(result.picture[0].data.length, 207439, 'picture length');
     })
     .once('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     });
 });

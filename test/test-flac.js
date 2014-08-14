@@ -4,7 +4,7 @@ var mm     = require('..');
 var test   = require('prova');
 
 test('flac', function (t) {
-  t.plan(37);
+  t.plan(38);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
@@ -83,7 +83,7 @@ test('flac', function (t) {
       t.strictEqual(result.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     })
 });

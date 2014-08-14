@@ -4,7 +4,7 @@ var id3    = require('..');
 var test   = require('prova');
 
 test('id3v2.4', function (t) {
-  t.plan(53);
+  t.plan(54);
   var apicCounter = 0;
 
   var sample = (process.browser) ?
@@ -115,6 +115,7 @@ test('id3v2.4', function (t) {
       apicCounter++;
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
+      t.end();
     });
 })

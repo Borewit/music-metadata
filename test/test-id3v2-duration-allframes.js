@@ -4,7 +4,7 @@ var id3    = require('..');
 var test   = require('prova');
 
 test('id3v2-duration-allframes', function (t) {
-  t.plan(4);
+  t.plan(3);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2-duration-allframes.mp3')])
@@ -28,7 +28,7 @@ test('id3v2-duration-allframes', function (t) {
       t.strictEqual(result, 1, 'duration');
     })
     .on('done', function (err) {
-      t.error(err)
-      t.ok(true, 'done called');
+      t.error(err);
+      t.end();
     });
 })

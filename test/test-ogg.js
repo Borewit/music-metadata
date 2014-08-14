@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('prova');
 
 test('ogg', function (t) {
-  t.plan(48);
+  t.plan(49);
   var comCounter = 0;
   var genCounter = 0;
 
@@ -123,7 +123,7 @@ test('ogg', function (t) {
       t.strictEqual(result.data[result.data.length - 2], 255, 'raw METADATA_BLOCK_PICTURE data -2');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     })
 });

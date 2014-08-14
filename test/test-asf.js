@@ -61,7 +61,7 @@ test('asf', function (t) {
       t.strictEqual(result, '-4.7 dB')
     })
     .on('done', function(err) {
-      t.ok(err === undefined, 'error should be null');
+      t.error(err);
       t.end();
     })
 })

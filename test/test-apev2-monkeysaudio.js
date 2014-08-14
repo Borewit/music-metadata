@@ -4,7 +4,7 @@ var mm     = require('..');
 var test   = require('prova');
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(31);
+  t.plan(32);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/monkeysaudio.ape')])
@@ -76,7 +76,7 @@ test('monkeysaudio (.ape)', function (t) {
       t.strictEqual(result.data.length, 48658, 'raw cover art (back) length');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     });
 });

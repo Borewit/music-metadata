@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('prova');
 
 test('id3v2.3', function (t) {
-  t.plan(43);
+  t.plan(44);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
@@ -99,7 +99,7 @@ test('id3v2.3', function (t) {
       t.strictEqual(result.data.length, 80938, 'raw APIC length');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     });
 });

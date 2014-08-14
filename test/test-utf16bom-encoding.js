@@ -4,7 +4,7 @@ var path   = require('path');
 var test   = require('prova');
 
 test('should read utf16bom encoded metadata correctly', function (t) {
-  t.plan(8);
+  t.plan(9);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/bug-utf16bom-encoding.mp3')])
@@ -22,7 +22,7 @@ test('should read utf16bom encoded metadata correctly', function (t) {
       t.equal(result.genre[0], 'Punk Rock', 'genre');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     });
 

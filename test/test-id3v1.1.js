@@ -4,7 +4,7 @@ var id3    = require('..');
 var test   = require('prova');
 
 test('id3v1.1', function (t) {
-  t.plan(16);
+  t.plan(17);
 
   var sample = (process.browser) ?
   new Blob([fs.readFileSync(__dirname + '/samples/id3v1.mp3')])
@@ -44,7 +44,7 @@ test('id3v1.1', function (t) {
       t.strictEqual(result[0], 'abcdefg', 'comment');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
       t.end();
     });
 });

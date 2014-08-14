@@ -4,7 +4,7 @@ var id3    = require('..');
 var test   = require('prova');
 
 test('id3v2.2', function (t) {
-  t.plan(44);
+  t.plan(45);
   var comCounter = 0;
 
   var sample = (process.browser) ?
@@ -113,6 +113,7 @@ test('id3v2.2', function (t) {
       comCounter++;
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err);
+      t.end();
     });
 });
