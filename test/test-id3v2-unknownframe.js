@@ -1,12 +1,16 @@
 var path   = require('path');
 var fs     = require('fs');
-var Mmd    = require('../');
+var Mmd    = require('..');
 var test   = require('prova');
 
 test('invalid "Date" frame should not cause crash', function(t) {
   t.plan(7);
-  var sample = path.join(__dirname, 'samples/bug-id3v2-unknownframe.mp3');
-  new Mmd(fs.createReadStream(sample))
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/bug-id3v2-unknownframe.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/bug-id3v2-unknownframe.mp3'))
+
+  new Mmd(sample)
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'One', 'title');
       t.strictEqual(result.artist[0], 'Coheed And Cambria', 'artist');

@@ -1,13 +1,16 @@
 var path   = require('path');
-var id3    = require('../lib/index');
+var id3    = require('..');
 var fs     = require('fs');
 var test   = require('prova');
 
 test('id3v2.3', function (t) {
   t.plan(43);
 
-  var sample = path.join(__dirname, 'samples/id3v2.3.mp3');
-  new id3(fs.createReadStream(sample), {duration : true})
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/id3v2.3.mp3'))
+
+  new id3(sample, {duration : true})
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Home', 'title');
       t.strictEqual(result.artist[0], 'Explosions In The Sky', 'artist 0');

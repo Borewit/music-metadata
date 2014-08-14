@@ -1,14 +1,17 @@
 var path   = require('path');
 var fs     = require('fs');
-var id3    = require('../lib/index');
+var id3    = require('..');
 var test   = require('prova');
 
 test('id3v2.4', function (t) {
   t.plan(53);
-
   var apicCounter = 0;
-  var sample = path.join(__dirname, 'samples/id3v2.4.mp3');
-  new id3(fs.createReadStream(sample), {'duration': true})
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/id3v2.4.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/id3v2.4.mp3'))
+
+  new id3(sample, {'duration': true})
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Home', 'title');
       t.strictEqual(result.artist[0], 'Explo', 'artist 0');

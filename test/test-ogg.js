@@ -1,5 +1,5 @@
 var path   = require('path');
-var mm     = require('../lib/index');
+var mm     = require('..');
 var fs     = require('fs');
 var test   = require('prova');
 
@@ -7,8 +7,12 @@ test('ogg', function (t) {
   t.plan(48);
   var comCounter = 0;
   var genCounter = 0;
-  var sample = path.join(__dirname, 'samples/oggy.ogg');
-  mm(fs.createReadStream(sample), { duration: true })
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/oggy.ogg')])
+    : fs.createReadStream(path.join(__dirname, '/samples/oggy.ogg'))
+
+  mm(sample, { duration: true })
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'In Bloom', 'title');
       t.strictEqual(result.artist[0], 'Nirvana', 'artist');

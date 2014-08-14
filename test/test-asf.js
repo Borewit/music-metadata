@@ -5,8 +5,12 @@ var test   = require('prova');
 
 test('asf', function (t) {
   t.plan(24);
-  var sample = path.join(__dirname, 'samples/asf.wma');
-  new mm(fs.createReadStream(sample))
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/asf.wma')])
+    : fs.createReadStream(path.join(__dirname, '/samples/asf.wma'))
+
+  new mm(sample)
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Don\'t Bring Me Down', 'title');
       t.strictEqual(result.artist[0], 'Electric Light Orchestra', 'artist');

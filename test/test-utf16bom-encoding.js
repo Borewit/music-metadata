@@ -1,12 +1,16 @@
-var id3    = require('../lib/index');
+var id3    = require('..');
 var fs     = require('fs');
+var path   = require('path');
 var test   = require('prova');
 
 test('should read utf16bom encoded metadata correctly', function (t) {
   t.plan(8);
 
-  var sample = require('path').join(__dirname, 'samples/bug-utf16bom-encoding.mp3');
-  new id3(fs.createReadStream(sample))
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/bug-utf16bom-encoding.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/bug-utf16bom-encoding.mp3'))
+
+  new id3(sample)
     .on('metadata', function (result) {
       t.equal(result.title, 'It\'s All Over You Know', 'title');
       t.equal(result.artist[0], 'The Apers', 'artist');

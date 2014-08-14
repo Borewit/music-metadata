@@ -1,7 +1,7 @@
 var path    = require('path');
 var fs      = require('fs');
 var through = require('through');
-var mm      = require('../lib/index');
+var mm      = require('..');
 var test    = require('prova');
 
 /* TODO: fix this test. There's a weird race condition when running the full

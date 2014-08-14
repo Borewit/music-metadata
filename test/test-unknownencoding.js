@@ -1,13 +1,16 @@
 var fs   = require('fs');
 var path = require('path');
-var mm   = require('../lib/index');
+var mm   = require('..');
 var test = require('prova');
 
 test('should be able to read metadata with unknown encoding', function (t) {
   t.plan(10);
 
-  var sample = path.join(__dirname, 'samples/bug-unkown encoding.mp3');
-  new mm(fs.createReadStream(sample))
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/bug-unkown encoding.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/bug-unkown encoding.mp3'))
+
+  new mm(sample)
     .on('metadata', function (result) {
       t.equal(result.title, '808', 'title');
       t.equal(result.artist[0], 'Benga', 'artist');

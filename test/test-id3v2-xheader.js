@@ -1,12 +1,16 @@
 var path   = require('path');
 var fs     = require('fs');
-var mm     = require('../lib');
+var mm     = require('..');
 var test   = require('prova');
 
 test('should be able to read id3v2 files with extended headers', function (t) {
   t.plan(2);
-  var sample = path.join(__dirname, 'samples/id3v2-xheader.mp3');
-  new mm(fs.createReadStream(sample))
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/id3v2-xheader.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/id3v2-xheader.mp3'))
+
+  new mm(sample)
     .on('metadata', function (result) {
       var expected = {
         title: 'title',

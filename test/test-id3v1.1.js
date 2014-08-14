@@ -1,11 +1,16 @@
 var path   = require('path');
 var fs     = require('fs');
-var id3    = require('../lib/index');
+var id3    = require('..');
 var test   = require('prova');
 
 test('id3v1.1', function (t) {
   t.plan(16);
-  new id3(fs.createReadStream(path.join(__dirname, 'samples/id3v1.mp3')))
+
+  var sample = (process.browser) ?
+  new Blob([fs.readFileSync(__dirname + '/samples/id3v1.mp3')])
+  : fs.createReadStream(path.join(__dirname, 'samples/id3v1.mp3'))
+
+  new id3(sample)
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Blood Sugar', 'title');
       t.strictEqual(result.artist[0], 'Pendulum', 'artist');

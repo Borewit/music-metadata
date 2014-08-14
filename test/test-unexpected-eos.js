@@ -1,6 +1,6 @@
 var path   = require('path');
 var fs     = require('fs');
-var mm     = require('../lib/index');
+var mm     = require('..');
 var test   = require('prova');
 var events = require('events');
 var through = require('through')

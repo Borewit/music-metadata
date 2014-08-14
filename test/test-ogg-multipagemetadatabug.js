@@ -1,13 +1,16 @@
 var path   = require('path');
-var mm     = require('../lib/index');
+var mm     = require('..');
 var fs     = require('fs');
 var test   = require('prova');
 
 test('ogg-multipage-metadata-bug', function (t) {
   t.plan(12);
-  var sample = path.join(__dirname, 'samples/ogg-multipagemetadata-bug.ogg');
-  var stream = fs.createReadStream(sample);
-  new mm(stream)
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/ogg-multipagemetadata-bug.ogg')])
+    : fs.createReadStream(path.join(__dirname, '/samples/ogg-multipagemetadata-bug.ogg'))
+
+  new mm(sample)
     .on('metadata', function (result) {
       t.strictEqual(result.title,
         'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');

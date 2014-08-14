@@ -1,12 +1,16 @@
 var path   = require('path');
 var fs     = require('fs');
-var mm     = require('../lib/index');
+var mm     = require('..');
 var test   = require('prova');
 
 test('flac', function (t) {
   t.plan(37);
-  var sample = path.join(__dirname, 'samples/flac.flac');
-  new mm(fs.createReadStream(sample))
+
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
+    : fs.createReadStream(path.join(__dirname, '/samples/flac.flac'))
+
+  new mm(sample)
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Brian Eno', 'title');
       t.strictEqual(result.artist[0], 'MGMT', 'artist');

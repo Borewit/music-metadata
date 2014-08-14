@@ -1,14 +1,16 @@
 var path   = require('path');
 var fs     = require('fs');
-var id3    = require('../lib/index');
+var id3    = require('..');
 var test   = require('prova');
 
 test('id3v2-duration-allframes', function (t) {
-  t.plan(3);
+  t.plan(4);
 
-  var sample = path.join(__dirname, 'samples/id3v2-duration-allframes.mp3');
-  var stream = fs.createReadStream(sample);
-  new id3(stream, {'duration': true})
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/id3v2-duration-allframes.mp3')])
+    : fs.createReadStream(path.join(__dirname, '/samples/id3v2-duration-allframes.mp3'))
+
+  new id3(sample, {'duration': true})
     .on('metadata', function (result) {
       t.deepEqual(result,
         { title: 'Turkish Rondo',
@@ -26,7 +28,7 @@ test('id3v2-duration-allframes', function (t) {
       t.strictEqual(result, 1, 'duration');
     })
     .on('done', function (err) {
-      if (err) throw err;
+      t.error(err)
       t.ok(true, 'done called');
     });
 })

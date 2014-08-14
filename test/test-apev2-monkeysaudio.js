@@ -1,13 +1,16 @@
 var path   = require('path');
 var fs     = require('fs');
-var mm     = require('../lib/index');
+var mm     = require('..');
 var test   = require('prova');
 
 test('monkeysaudio (.ape)', function (t) {
   t.plan(31);
 
-  var sample = path.join(__dirname, 'samples/monkeysaudio.ape');
-  new mm(fs.createReadStream(sample))
+  var sample = (process.browser) ?
+    new Blob([fs.readFileSync(__dirname + '/samples/monkeysaudio.ape')])
+    : fs.createReadStream(path.join(__dirname, '/samples/monkeysaudio.ape'))
+
+  new mm(sample)
     .on('metadata', function (result) {
       t.strictEqual(result.title, '07. Shadow On The Sun', 'title');
       t.deepEqual(result.artist, ['Audioslave', 'Chris Cornell'], 'artist');
