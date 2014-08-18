@@ -1,7 +1,5 @@
 [![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![npm downloads][npm-downloads-image]][npm-url]
 
-[![browser support][testling-image]][testling-url]
-
 Streaming music metadata parser for node and the browser.
 
 Installation
@@ -115,6 +113,3 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 [travis-url]: https://travis-ci.org/leetreveil/musicmetadata
 [travis-image]: https://api.travis-ci.org/leetreveil/musicmetadata.svg?branch=master
-
-[testling-url]: https://ci.testling.com/leetreveil/musicmetadata
-[testling-image]: https://ci.testling.com/leetreveil/musicmetadata.png
