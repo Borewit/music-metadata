@@ -4,7 +4,8 @@ var mm     = require('..');
 var test   = require('prova');
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(32);
+  t.plan(33);
+  var artistCounter = 0;
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/monkeysaudio.ape')])
@@ -64,7 +65,13 @@ test('monkeysaudio (.ape)', function (t) {
       t.strictEqual(result, 'Audioslave', 'raw ensemble');
     })
     .on('Artist', function (result) {
-      t.strictEqual(result, 'Audioslave/Chris Cornell', 'raw artist');
+      if (artistCounter === 0) {
+        t.strictEqual(result, 'Audioslave', 'raw artist 0');
+      }
+      if (artistCounter === 1) {
+        t.strictEqual(result, 'Chris Cornell', 'raw artist 1');
+      }
+      artistCounter++;
     })
     .on('Cover Art (Front)', function (result) {
       t.strictEqual(result.description,
