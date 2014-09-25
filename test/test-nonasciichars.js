@@ -12,7 +12,8 @@ test('nonasciichars', function (t) {
 
   new mm(sample)
     .on('metadata', function (result) {
-      t.strictEqual(result.artist[0], 'Janelle Monáe', 'artist');
+      t.strictEqual(result.artist[0],
+        'Janelle Monáe/Roman Gianarthur/Nate Wonder/Roman Gianarthur', 'artist');
       t.end();
     });
 });

@@ -4,7 +4,7 @@ var fs     = require('fs');
 var test   = require('prova');
 
 test('id3v2.3', function (t) {
-  t.plan(44);
+  t.plan(40);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
@@ -13,9 +13,7 @@ test('id3v2.3', function (t) {
   new id3(sample, {duration : true})
     .on('metadata', function (result) {
       t.strictEqual(result.title, 'Home', 'title');
-      t.strictEqual(result.artist[0], 'Explosions In The Sky', 'artist 0');
-      t.strictEqual(result.artist[1], 'Another', 'artist 1');
-      t.strictEqual(result.artist[2], 'And Another', 'artist 2');
+      t.strictEqual(result.artist[0], 'Explosions In The Sky/Another/And Another', 'artist');
       t.strictEqual(result.albumartist[0], 'Soundtrack', 'albumartist');
       t.strictEqual(result.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album');
       t.strictEqual(result.year, '2004', 'year');
@@ -36,9 +34,7 @@ test('id3v2.3', function (t) {
       t.strictEqual(result, 'Home', 'aliased title');
     })
     .on('artist', function (result) {
-      t.strictEqual(result[0], 'Explosions In The Sky', 'aliased artist 0');
-      t.strictEqual(result[1], 'Another', 'aliased artist 1');
-      t.strictEqual(result[2], 'And Another', 'aliased artist 2');
+      t.strictEqual(result[0], 'Explosions In The Sky/Another/And Another', 'aliased artist 0');
     })
     .on('albumartist', function (result) {
       t.strictEqual(result[0], 'Soundtrack', 'aliased albumartist');
