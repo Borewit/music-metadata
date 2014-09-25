@@ -4,8 +4,10 @@ var id3    = require('..');
 var test   = require('prova');
 
 test('id3v2.4', function (t) {
-  t.plan(54);
+  t.plan(57);
   var apicCounter = 0;
+  var tconCounter = 0;
+  var tpe1Counter = 0;
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2.4.mp3')])
@@ -76,7 +78,16 @@ test('id3v2.4', function (t) {
       t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'raw TALB');
     })
     .on('TPE1', function (result) {
-      t.strictEqual(result, 'Explo/ions/nodejsftws', 'raw TPE1');
+      if (tpe1Counter === 0) {
+        t.strictEqual(result, 'Explo', 'raw TPE1 0');
+      }
+      if (tpe1Counter === 1) {
+        t.strictEqual(result, 'ions', 'raw TPE1 1');
+      }
+      if (tpe1Counter === 2) {
+        t.strictEqual(result, 'nodejsftws', 'raw TPE1 2');
+      }
+      tpe1Counter++;
     })
     .on('TPE2', function (result) {
       t.strictEqual(result, 'Soundtrack', 'raw TPE2');
@@ -88,7 +99,13 @@ test('id3v2.4', function (t) {
       t.strictEqual(result, '1/1', 'raw TPOS');
     })
     .on('TCON', function (result) {
-      t.strictEqual(result, 'Soundtrack/OST', 'raw TCON');
+      if (tconCounter === 0) {
+        t.strictEqual(result, 'Soundtrack', 'raw TCON 0');
+      }
+      if (tconCounter === 1) {
+        t.strictEqual(result, 'OST', 'raw TCON 1');
+      }
+      tconCounter++;
     })
     .on('TIT2', function (result) {
       t.strictEqual(result, 'Home', 'raw TIT2');
