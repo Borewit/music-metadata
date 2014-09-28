@@ -1,7 +1,7 @@
 {
   "name": "musicmetadata",
   "description": "Streaming music metadata parser for node and the browser.",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "author": "Lee Treveil",
   "dependencies": {
     "buffer-equal": "0.0.0",
