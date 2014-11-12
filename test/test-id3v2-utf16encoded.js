@@ -13,7 +13,6 @@ test('id3v2.4', function (t) {
 
   new id3(sample)
     .on('metadata', function (result) {
-      console.log(result)
       t.strictEqual(result.title, 'Redial (Feat. LeafRunner and Nowacking)', 'title')
       t.strictEqual(result.artist[0], 'YourEnigma', 'artist 0')
       t.strictEqual(result.year, '2014', 'year')
