@@ -22,7 +22,7 @@ test('id3v2.4', function (t) {
     })
     .on('COMM', function (result) {
       t.strictEqual(result.language, 'eng')
-      t.strictEqual(result.short_description, '')
+      t.strictEqual(result.description, '')
       t.strictEqual(result.text, 'Visit http://yourenigma.bandcamp.com')
     })
     .on('done', function (err) {

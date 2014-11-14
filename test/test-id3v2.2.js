@@ -76,36 +76,36 @@ test('id3v2.2', function (t) {
       t.strictEqual(result.data.length, 99738, 'raw PIC length'); 
     })
     .on('ULT', function (result) {
-      t.strictEqual(result.descriptor, '', 'raw ULT descriptor');
+      t.strictEqual(result.description, '', 'raw ULT descriptor');
       t.strictEqual(result.language, 'eng', 'raw ULT language');
       //skipping testing exact contents, bit naughty
-      t.strictEqual(result.text.length, 832, 'raw ULT text length');
+      t.strictEqual(result.text.length, 831, 'raw ULT text length');
     })
     //there are 3 comment frames in this file so we need to t all 3 events
     .on('COM', function (result) {
       switch (comCounter) {
         case 0:
           t.strictEqual(result.language, 'eng', 'raw COM 0 language');
-          t.strictEqual(result.short_description, 'iTunPGAP', 'raw COM 0 description');
+          t.strictEqual(result.description, 'iTunPGAP', 'raw COM 0 description');
           t.strictEqual(result.text, '0', 'raw COM 0 text');
           break;
         case 1:
           t.strictEqual(result.language, 'eng', 'raw COM 1 language');
-          t.strictEqual(result.short_description, 'iTunNORM', 'raw COM 1 description');
-          var expected = '0000299C 0000291D 0000DBE0 0000D6BA ' + 
+          t.strictEqual(result.description, 'iTunNORM', 'raw COM 1 description');
+          var expected = ' 0000299C 0000291D 0000DBE0 0000D6BA ' + 
             '0003C378 0003C2C1 0000902A 00008F1B 00012FC6 00015FBC';
           t.strictEqual(result.text, expected, 'raw COM 1 text');
           break;
         case 2:
           t.strictEqual(result.language, 'eng', 'raw COM 2 language');
-          t.strictEqual(result.short_description, 'iTunSMPB', 'raw COM 2 description');
-          expected = '00000000 00000210 00000AD4 0000000000B6499C 00000000 ' +
+          t.strictEqual(result.description, 'iTunSMPB', 'raw COM 2 description');
+          expected = ' 00000000 00000210 00000AD4 0000000000B6499C 00000000 ' +
             '006327AD 00000000 00000000 00000000 00000000 00000000 00000000';
           t.strictEqual(result.text, expected, 'raw COM 2 text');
           break;
         case 3:
           t.strictEqual(result.language, 'eng', 'raw COM 3 language');
-          t.strictEqual(result.short_description, 'iTunes_CDDB_IDs', 'raw COM 3 description');
+          t.strictEqual(result.description, 'iTunes_CDDB_IDs', 'raw COM 3 description');
           t.strictEqual(result.text,
             '11+3ABC77F16B8A2F0F1E1A1EBAB868A98F+8210091', 'raw COM 3 text');
           break;
