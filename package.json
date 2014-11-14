@@ -4,8 +4,7 @@
   "version": "0.5.2",
   "author": "Lee Treveil",
   "dependencies": {
-    "buffer-equal": "0.0.0",
-    "deep-equal": "~0.1.2",
+    "deep-equal": "0.2.1",
     "filereader-stream": "0.0.1",
     "node-bitarray": "0.0.2",
     "strtok2": "~1.0.0",

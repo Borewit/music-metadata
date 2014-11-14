@@ -2,7 +2,6 @@ var path = require('path');
 var fs = require('fs');
 var id3 = require('..');
 var test = require('prova');
-var bufferEqual = require('buffer-equal');
 
 test('id3v2.4', function (t) {
   t.plan(10);
@@ -18,8 +17,7 @@ test('id3v2.4', function (t) {
       t.strictEqual(result.year, '2014', 'year')
       t.strictEqual(result.picture[0].format, 'jpg', 'picture 0 format')
       t.strictEqual(result.picture[0].data.length, 214219, 'picture 0 length')
-      t.ok(
-        bufferEqual(result.picture[0].data.slice(0, 2), new Buffer([0xFF, 0xD8])),
+      t.deepEqual(result.picture[0].data.slice(0, 2), new Buffer([0xFF, 0xD8]),
         'picture 0 JFIF magic header')
     })
     .on('COMM', function (result) {
