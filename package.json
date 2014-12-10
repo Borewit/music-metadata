@@ -5,7 +5,7 @@
   "author": "Lee Treveil",
   "dependencies": {
     "deep-equal": "0.2.1",
-    "filereader-stream": "0.0.1",
+    "filereader-stream": "0.1.1",
     "iconv-lite": "^0.4.4",
     "node-bitarray": "0.0.2",
     "strtok2": "~1.0.0",
@@ -36,8 +36,8 @@
     "dist": "browserify lib/browser.js --standalone 'musicmetadata' -o dist/musicmetadata.js"
   },
   "devDependencies": {
-    "prova": "~1.9.0",
-    "jshint": "~2.4.3",
+    "prova": "~2.1.1",
+    "jshint": "~2.5.10",
     "brfs": "1.2.0"
   },
   "testling": {
