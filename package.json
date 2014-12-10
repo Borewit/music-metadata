@@ -56,12 +56,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/leetreveil/node-musicmetadata.git"
+    "url": "git://github.com/leetreveil/musicmetadata.git"
   },
   "jshintConfig": {
     "asi": true,
     "node": true,
     "maxlen": 100,
     "indent": 2
-  }
+  },
+  "license": "MIT"
 }
