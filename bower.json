@@ -1,6 +1,6 @@
 {
   "name": "musicmetadata",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "homepage": "https://github.com/leetreveil/node-musicmetadata",
   "authors": [
     "Lee Treveil <leetreveil@gmail.com>"
