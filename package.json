@@ -5,7 +5,7 @@
   "author": "Lee Treveil",
   "dependencies": {
     "deep-equal": "0.2.1",
-    "filereader-stream": "0.1.1",
+    "filereader-stream": "^0.2.0",
     "iconv-lite": "^0.4.4",
     "node-bitarray": "0.0.2",
     "strtok2": "~1.0.0",
