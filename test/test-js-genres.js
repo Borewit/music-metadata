@@ -10,6 +10,7 @@ test('should be able to parse genres', function (t) {
     '(4)Eurodisco'                : 'Disco/Eurodisco',
     '(4)Eurodisco(0)Mopey'        : 'Disco/Eurodisco/Blues/Mopey',
     '(RX)(CR)'                    : 'RX/CR',
+    '1stuff'                      : '1stuff',
     'RX/CR'                       : 'RX/CR'
   }
   for (var test in tests) {
