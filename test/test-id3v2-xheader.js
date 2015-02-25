@@ -10,8 +10,8 @@ test('should be able to read id3v2 files with extended headers', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2-xheader.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2-xheader.mp3'))
 
-  new mm(sample)
-    .on('metadata', function (result) {
+  new mm(sample, function (err, result) {
+      t.error(err);
       var expected = {
         title: 'title',
         artist: [],
@@ -27,9 +27,6 @@ test('should be able to read id3v2 files with extended headers', function (t) {
       // additional check because deepEqual is not strict
       t.strictEqual(result.year, expected.year, "year");
       t.deepEqual(result, expected, 'metadata');
-    })
-    .on('done', function (err) {
-      t.error(err);
       t.end();
     })
 })

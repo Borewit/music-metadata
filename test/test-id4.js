@@ -10,8 +10,8 @@ test('id4', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/id4.m4a')])
     : fs.createReadStream(path.join(__dirname, '/samples/id4.m4a'))
 
-  new id3(sample, { duration: true })
-    .on('metadata', function (result) {
+  new id3(sample, { duration: true }, function (err, result) {
+      t.error(err);
       t.strictEqual(result.title, 'Voodoo People (Pendulum Remix)', 'title');
       t.strictEqual(result.artist[0], 'The Prodigy', 'artist');
       t.strictEqual(result.albumartist[0], 'Pendulum', 'albumartist');
@@ -27,6 +27,7 @@ test('id4', function (t) {
       t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format');
       t.strictEqual(result.picture[1].data.length, 196450, 'picture 1 length');
       t.strictEqual(result.duration, 2, 'metadata duration');
+      t.end();
     })
     .on('duration', function (result) {
       t.strictEqual(result, 2, 'duration');
@@ -112,8 +113,4 @@ test('id4', function (t) {
       t.strictEqual(result.format, 'image/jpeg', 'raw covr format (asserted twice)');
       t.strictEqual(result.data.length, 196450, 'raw covr length (asserted twice)');
     })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
-    });
 });

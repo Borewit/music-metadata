@@ -10,21 +10,21 @@ test('asf', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/asf.wma')])
     : fs.createReadStream(path.join(__dirname, '/samples/asf.wma'))
 
-  new mm(sample)
-    .on('metadata', function (result) {
-      t.strictEqual(result.title, 'Don\'t Bring Me Down', 'title');
-      t.strictEqual(result.artist[0], 'Electric Light Orchestra', 'artist');
-      t.strictEqual(result.albumartist[0], 'Electric Light Orchestra', 'albumartist');
-      t.strictEqual(result.album, 'Discovery', 'album');
-      t.strictEqual(result.year, '2001', 'year');
-      t.strictEqual(result.track.no, 9, 'track no');
-      t.strictEqual(result.track.of, 0, 'track of');
-      t.strictEqual(result.disk.no, 0, 'disk no');
-      t.strictEqual(result.disk.of, 0, 'disk of');
-      t.strictEqual(result.genre[0], 'Rock', 'genre 0');
-      t.strictEqual(result.duration, 245, 'duration');
-    })
-    // aliased tests
+  new mm(sample, function (err, result) {
+    t.error(err);
+    t.strictEqual(result.title, 'Don\'t Bring Me Down', 'title');
+    t.strictEqual(result.artist[0], 'Electric Light Orchestra', 'artist');
+    t.strictEqual(result.albumartist[0], 'Electric Light Orchestra', 'albumartist');
+    t.strictEqual(result.album, 'Discovery', 'album');
+    t.strictEqual(result.year, '2001', 'year');
+    t.strictEqual(result.track.no, 9, 'track no');
+    t.strictEqual(result.track.of, 0, 'track of');
+    t.strictEqual(result.disk.no, 0, 'disk no');
+    t.strictEqual(result.disk.of, 0, 'disk of');
+    t.strictEqual(result.genre[0], 'Rock', 'genre 0');
+    t.strictEqual(result.duration, 245, 'duration');
+    t.end();
+  }) // aliased tests
     .on('title', function (result) {
       t.strictEqual(result, 'Don\'t Bring Me Down');
     })
@@ -59,9 +59,5 @@ test('asf', function (t) {
     })
     .on('REPLAYGAIN_TRACK_GAIN', function (result) {
       t.strictEqual(result, '-4.7 dB')
-    })
-    .on('done', function(err) {
-      t.error(err);
-      t.end();
     })
 })

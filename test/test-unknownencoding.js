@@ -4,14 +4,14 @@ var mm   = require('..');
 var test = require('prova');
 
 test('should be able to read metadata with unknown encoding', function (t) {
-  t.plan(10);
+  t.plan(11);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/bug-unkown encoding.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/bug-unkown encoding.mp3'))
 
-  new mm(sample)
-    .on('metadata', function (result) {
+  new mm(sample, function (err, result) {
+      t.error(err);
       t.equal(result.title, '808', 'title');
       t.equal(result.artist[0], 'Benga', 'artist');
       t.equal(result.albumartist[0], 'Benga', 'albumartist');

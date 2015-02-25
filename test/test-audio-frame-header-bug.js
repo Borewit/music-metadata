@@ -11,8 +11,7 @@ test('audio-frame-header-bug', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/audio-frame-header-bug.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/audio-frame-header-bug.mp3'))
 
-  new mm(sample, { duration: true })
-    .on('metadata', function (result) {
+  new mm(sample, { duration: true }, function (err, result) {
       t.strictEqual(result.duration, 201);
       t.end();
     })

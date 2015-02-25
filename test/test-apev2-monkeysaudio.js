@@ -11,8 +11,8 @@ test('monkeysaudio (.ape)', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/monkeysaudio.ape')])
     : fs.createReadStream(path.join(__dirname, '/samples/monkeysaudio.ape'))
 
-  new mm(sample)
-    .on('metadata', function (result) {
+  new mm(sample, function (err, result) {
+      t.error(err);
       t.strictEqual(result.title, '07. Shadow On The Sun', 'title');
       t.deepEqual(result.artist, ['Audioslave', 'Chris Cornell'], 'artist');
       t.deepEqual(result.albumartist, ['Audioslave'], 'albumartist');
@@ -25,6 +25,7 @@ test('monkeysaudio (.ape)', function (t) {
       t.strictEqual(result.picture[0].data.length, 48658, 'picture 0 length');
       t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format');
       t.strictEqual(result.picture[1].data.length, 48658, 'picture 1 length');
+      t.end();
     })
     // aliased tests
     .on('title', function (result) {
@@ -82,9 +83,5 @@ test('monkeysaudio (.ape)', function (t) {
       t.strictEqual(result.description, 'Cover Art (Back).jpg', 'raw cover art (back) description');
       t.strictEqual(result.data.length, 48658, 'raw cover art (back) length');
     })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
-    });
 });
 

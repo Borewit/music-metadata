@@ -4,14 +4,14 @@ var mm     = require('..');
 var test   = require('prova');
 
 test('nonasciichars', function (t) {
-  t.plan(1);
+  t.plan(2);
 
   var sample = (process.browser) ?
     new Blob([fs.readFileSync(__dirname + '/samples/bug-non ascii chars.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/bug-non ascii chars.mp3'))
 
-  new mm(sample)
-    .on('metadata', function (result) {
+  new mm(sample, function (err, result) {
+      t.error(err);
       t.strictEqual(result.artist[0],
         'Janelle Monáe/Roman Gianarthur/Nate Wonder/Roman Gianarthur', 'artist');
       t.end();

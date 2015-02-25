@@ -19,11 +19,7 @@ test('should return error when we unexpectedly hit the end of the stream', funct
 
   headers.forEach(function (header) {
     var mockFile = through();
-    new mm(mockFile)
-      .on('metadata', function (result) {
-        t.notOk(true, 'this should never be hit');
-      })
-      .on('done', function (err) {
+    new mm(mockFile, function (err, result) {
         t.equal(err.message, 'Unexpected end of stream');
       })
     mockFile.emit('data', header);

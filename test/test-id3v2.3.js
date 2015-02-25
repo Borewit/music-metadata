@@ -10,8 +10,8 @@ test('id3v2.3', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.3.mp3'))
 
-  new id3(sample, {duration : true})
-    .on('metadata', function (result) {
+  new id3(sample, {duration : true}, function (err, result) {
+      t.error(err);
       t.strictEqual(result.title, 'Home', 'title');
       t.strictEqual(result.artist[0], 'Explosions In The Sky/Another/And Another', 'artist');
       t.strictEqual(result.albumartist[0], 'Soundtrack', 'albumartist');
@@ -25,6 +25,7 @@ test('id3v2.3', function (t) {
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 80938, 'picture length');
       t.strictEqual(result.duration, 1, 'metadata duration');
+      t.end();
     })
     .on('duration', function (result) {
       t.strictEqual(result, 1, 'duration');
@@ -94,8 +95,4 @@ test('id3v2.3', function (t) {
       t.strictEqual(result.description, '', 'raw APIC description');
       t.strictEqual(result.data.length, 80938, 'raw APIC length');
     })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
-    });
 });

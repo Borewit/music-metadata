@@ -10,8 +10,7 @@ test('error handling', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/Simpsons01x01.m4a')])
     : fs.createReadStream(path.join(__dirname, '/samples/Simpsons01x01.m4a'))
 
-  new mm(sample)
-    .on('done', function(err) {
+  new mm(sample, function (err) {
       t.error(err);
       t.end();
     });

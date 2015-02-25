@@ -10,8 +10,8 @@ test('flac', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
     : fs.createReadStream(path.join(__dirname, '/samples/flac.flac'))
 
-  new mm(sample)
-    .on('metadata', function (result) {
+  new mm(sample, function (err, result) {
+      t.error(err);
       t.strictEqual(result.title, 'Brian Eno', 'title');
       t.strictEqual(result.artist[0], 'MGMT', 'artist');
       t.strictEqual(result.albumartist.length, 0, 'albumartist length');
@@ -25,6 +25,7 @@ test('flac', function (t) {
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 175668, 'picture length');
       t.strictEqual(result.duration, 272, 'duration');
+      t.end();
     })
     // aliased tests
     .on('title', function (result) {
@@ -81,10 +82,6 @@ test('flac', function (t) {
       t.strictEqual(result.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth');
       t.strictEqual(result.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color');
       t.strictEqual(result.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
-    })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
     })
 });
 

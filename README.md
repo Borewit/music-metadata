@@ -34,11 +34,9 @@ var fs = require('fs');
 var mm = require('musicmetadata');
 
 // create a new parser from a node ReadStream
-var parser = mm(fs.createReadStream('sample.mp3'));
-
-// listen for the metadata event
-parser.on('metadata', function (result) {
-  console.log(result);
+var parser = mm(fs.createReadStream('sample.mp3'), function (err, metadata) {
+  if (err) throw err;
+  console.log(metadata);
 });
 ```
 
@@ -58,15 +56,7 @@ This will output the standard music metadata:
 }
 ```
 
-If you just want the artist - listen for the artist event:
-
-```javascript
-parser.on('artist', function (result) {
-  console.log(result);
-});
-```
-
-You can also listen for custom metadata types that are not part of the standard metadata as defined above. For example if you wanted to read the `TLEN` frame from a id3v2.x file you can do this:
+`musicmetadata` also emits all metadata it discovers during parsing. For example if you wanted to read the `TLEN` frame from an id3v2.x file you can do this:
 
 ```javascript
 parser.on('TLEN', function (result) {
@@ -74,24 +64,19 @@ parser.on('TLEN', function (result) {
 });
 ```
 
-The ```done``` event will be raised when parsing has finished or an error has occurred. This could be
-used to disconnect from the stream as soon as parsing has finished, saving bandwidth.
-
+You can also read the duration; to calculate the duration `musicmetadata` may need to parse the entire file
+so only enable this if you need the functionality.
 ```javascript
-parser.on('done', function (err) {
-  if (err) throw err;
-  stream.destroy();
+var parser = mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
+  
 });
-```
-
-You can also read the duration; reading the duration may be slow so only set this if you need to.
-```javascript
-var parser = mm(fs.createReadStream('sample.mp3'), { duration: true });
 ```
 
 Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
 ```javascript
-var parser = mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 });
+var parser = mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 }, function (err, metadata) {
+  
+});
 ```
 
 Licence
@@ -99,7 +84,7 @@ Licence
 
 (The MIT License)
 
-Copyright (c) 2014 Lee Treveil <leetreveil@gmail.com>
+Copyright (c) 2015 Lee Treveil <leetreveil@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

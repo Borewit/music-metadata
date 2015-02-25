@@ -11,8 +11,8 @@ test('id3v2.2', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/id3v2.2.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.2.mp3'))
 
-  new id3(sample)
-    .on('metadata', function (result) {
+  new id3(sample, function (err, result) {
+      t.error(err);
       t.strictEqual(result.title, 'You Are The One', 'title');
       t.strictEqual(result.artist[0], 'Shiny Toy Guns', 'artist');
       t.strictEqual(result.album, 'We Are Pilots', 'album');
@@ -22,6 +22,7 @@ test('id3v2.2', function (t) {
       t.strictEqual(result.genre[0], 'Alternative', 'genre');
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 99738, 'picture length');
+      t.end();
     })
     // aliased tests
     .on('title', function (result) {
@@ -112,8 +113,4 @@ test('id3v2.2', function (t) {
       }
       comCounter++;
     })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
-    });
 });

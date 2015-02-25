@@ -10,7 +10,10 @@ test('id3v2.4', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/29 - Dominator.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/29 - Dominator.mp3'))
 
-  new id3(sample)
+  new id3(sample, function (err) {
+    t.error(err);
+    t.end();
+  })
     .on('UFID', function (result) {
       t.deepEqual(result, {
         'owner_identifier': 'http://musicbrainz.org',
@@ -20,8 +23,4 @@ test('id3v2.4', function (t) {
           0x61])
       }, 'UFID');
     })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
-    });
 })

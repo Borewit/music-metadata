@@ -12,8 +12,8 @@ test('ogg', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/oggy.ogg')])
     : fs.createReadStream(path.join(__dirname, '/samples/oggy.ogg'))
 
-  mm(sample, { duration: true })
-    .on('metadata', function (result) {
+  mm(sample, { duration: true }, function (err, result) {
+      t.error(err);
       t.strictEqual(result.title, 'In Bloom', 'title');
       t.strictEqual(result.artist[0], 'Nirvana', 'artist');
       t.strictEqual(result.albumartist[0], 'Nirvana', 'albumartist');
@@ -28,6 +28,7 @@ test('ogg', function (t) {
       t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
       t.strictEqual(result.picture[0].data.length, 30966, 'picture length');
       t.strictEqual(result.duration, 0, 'metadata duration');
+      t.end();
     })
     .on('duration', function (result) {
       t.strictEqual(result, 0, 'duration');
@@ -121,9 +122,5 @@ test('ogg', function (t) {
       t.strictEqual(result.data[1], 216, 'raw METADATA_BLOCK_PICTURE data 1');
       t.strictEqual(result.data[result.data.length - 1], 217, 'raw METADATA_BLOCK_PICTURE data -1');
       t.strictEqual(result.data[result.data.length - 2], 255, 'raw METADATA_BLOCK_PICTURE data -2');
-    })
-    .on('done', function (err) {
-      t.error(err);
-      t.end();
     })
 });

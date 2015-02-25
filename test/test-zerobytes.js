@@ -10,8 +10,7 @@ test('zero bytes', function (t) {
     new Blob([fs.readFileSync(__dirname + '/samples/zerobytes')])
     : fs.createReadStream(path.join(__dirname, '/samples/zerobytes'))
 
-  new id3(sample)
-    .on('done', function (err) {
+  new id3(sample, function (err) {
       t.equal(err.message, 'Could not read any data from this stream');
       t.end();
     })
