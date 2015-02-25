@@ -5456,8 +5456,8 @@ var musicmetadata = require('./index')
 var Stream = require('stream').Stream;
 
 
-module.exports = function (stream, opts) {
-  return musicmetadata(wrapFileWithStream(stream), opts)
+module.exports = function (stream, opts, callback) {
+  return musicmetadata(wrapFileWithStream(stream), opts, callback)
 }
 
 function wrapFileWithStream (file) {
@@ -6594,8 +6594,12 @@ var strtok = require('strtok2');
 var through = require('through')
 var fs = require('fs')
 
-var MusicMetadata = module.exports = function (stream, opts) {
-  opts = opts || {};
+var MusicMetadata = module.exports = function (stream, opts, callback) {
+  if (typeof opts === 'function') {
+    callback = opts
+    opts = {}
+  }
+
   var emitter = new events.EventEmitter();
 
   var fsize = function (cb) {
@@ -6690,13 +6694,7 @@ var MusicMetadata = module.exports = function (stream, opts) {
       }
     }
 
-    // don't emit the metadata event if nothing
-    // ever gets added to the metadata object
-    if (Object.keys(aliased).length > 0) {
-      emitter.emit('metadata', metadata);
-    }
-
-    emitter.emit('done', exception);
+    callback(exception, metadata)
     return strtok.DONE;
   }
 
