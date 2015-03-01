@@ -82,7 +82,7 @@ test('id4', function (t) {
       t.strictEqual(result, 'Electronic', 'raw gnre');
     })
     .on('stik', function (result) {
-      t.strictEqual(result, 256, 'raw stik');
+      t.strictEqual(result, 1, 'raw stik');
     })
     .on('©alb', function (result) {
       t.strictEqual(result, 'Voodoo People', 'raw ©alb');
