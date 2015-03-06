@@ -28,9 +28,8 @@
 
 
     addDragDropListener(document, function (files) {
-      var mm = musicmetadata(files[0])
-
-      mm.on('metadata', function (result) {
+      var mm = musicmetadata(files[0], function (err, result) {
+        if (err) throw err;
         console.log(result);
         if (result.picture.length > 0) {
           var picture = result.picture[0];
@@ -40,9 +39,6 @@
         }
         var div = document.getElementById('info');
         div.innerText = JSON.stringify(result, undefined, 2);
-      })
-      mm.on('done', function (err) {
-        if (err) throw err;
       })
     });
   </script>
