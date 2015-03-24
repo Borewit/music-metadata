@@ -30,7 +30,7 @@
   "main": "lib",
   "browser": "lib/browser",
   "scripts": {
-    "pretest": "jshint lib/*.js test/*.js",
+    "pretest": "standard && jshint lib/*.js test/*.js",
     "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || prova test/test-*.js",
     "test-browser": "prova -t brfs test/test-*.js -b",
     "dist": "browserify lib/browser.js --standalone 'musicmetadata' -o dist/musicmetadata.js"
@@ -38,7 +38,8 @@
   "devDependencies": {
     "prova": "~2.1.1",
     "jshint": "~2.5.10",
-    "brfs": "1.2.0"
+    "brfs": "1.2.0",
+    "standard": "^3.0.0"
   },
   "testling": {
     "files": [
@@ -64,5 +65,10 @@
     "maxlen": 100,
     "indent": 2
   },
-  "license": "MIT"
+  "license": "MIT",
+  "standard": {
+    "ignore": [
+      "**/dist/**"
+    ]
+  }
 }

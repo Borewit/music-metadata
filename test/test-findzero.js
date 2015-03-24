@@ -1,7 +1,7 @@
-var common = require('../lib/common');
-var test = require('prova');
+var common = require('../lib/common')
+var test = require('prova')
 
-var findZero = common.findZero;
+var findZero = common.findZero
 
 test('find terminator in ascii encoded string', function (t) {
   var buf = new Buffer([0xFF, 0xFF, 0xFF, 0x00])
@@ -20,7 +20,6 @@ test('return offset to end if nothing is found', function (t) {
   t.equal(findZero(buf, 0, buf.length, 'ascii'), buf.length)
   t.end()
 })
-
 
 test('find terminator in utf16le encoded string', function (t) {
   var buf = new Buffer([0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x00, 0x00])

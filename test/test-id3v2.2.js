@@ -1,116 +1,116 @@
-var path   = require('path');
-var fs     = require('fs');
-var id3    = require('..');
-var test   = require('prova');
+var path = require('path')
+var fs = require('fs')
+var id3 = require('..')
+var test = require('prova')
 
 test('id3v2.2', function (t) {
-  t.plan(45);
-  var comCounter = 0;
+  t.plan(45)
+  var comCounter = 0
 
   var sample = (process.browser) ?
-    new Blob([fs.readFileSync(__dirname + '/samples/id3v2.2.mp3')])
+    new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.2.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.2.mp3'))
 
-  new id3(sample, function (err, result) {
-      t.error(err);
-      t.strictEqual(result.title, 'You Are The One', 'title');
-      t.strictEqual(result.artist[0], 'Shiny Toy Guns', 'artist');
-      t.strictEqual(result.album, 'We Are Pilots', 'album');
-      t.strictEqual(result.year, '2006', 'year');
-      t.strictEqual(result.track.no, 1, 'track no');
-      t.strictEqual(result.track.of, 11, 'track of');
-      t.strictEqual(result.genre[0], 'Alternative', 'genre');
-      t.strictEqual(result.picture[0].format, 'jpg', 'picture format');
-      t.strictEqual(result.picture[0].data.length, 99738, 'picture length');
-      t.end();
-    })
+  id3(sample, function (err, result) {
+    t.error(err)
+    t.strictEqual(result.title, 'You Are The One', 'title')
+    t.strictEqual(result.artist[0], 'Shiny Toy Guns', 'artist')
+    t.strictEqual(result.album, 'We Are Pilots', 'album')
+    t.strictEqual(result.year, '2006', 'year')
+    t.strictEqual(result.track.no, 1, 'track no')
+    t.strictEqual(result.track.of, 11, 'track of')
+    t.strictEqual(result.genre[0], 'Alternative', 'genre')
+    t.strictEqual(result.picture[0].format, 'jpg', 'picture format')
+    t.strictEqual(result.picture[0].data.length, 99738, 'picture length')
+    t.end()
+  })
     // aliased tests
     .on('title', function (result) {
-      t.strictEqual(result, 'You Are The One', 'aliased title');
+      t.strictEqual(result, 'You Are The One', 'aliased title')
     })
     .on('artist', function (result) {
-      t.deepEqual(result[0], 'Shiny Toy Guns', 'aliased artist');
+      t.deepEqual(result[0], 'Shiny Toy Guns', 'aliased artist')
     })
     .on('album', function (result) {
-      t.strictEqual(result, 'We Are Pilots', 'aliased album');
+      t.strictEqual(result, 'We Are Pilots', 'aliased album')
     })
     .on('year', function (result) {
-      t.strictEqual(result, '2006', 'aliased year');
+      t.strictEqual(result, '2006', 'aliased year')
     })
     .on('track', function (result) {
-      t.strictEqual(result.no, 1, 'aliased track no');
-      t.strictEqual(result.of, 11, 'aliased track of');
+      t.strictEqual(result.no, 1, 'aliased track no')
+      t.strictEqual(result.of, 11, 'aliased track of')
     })
     .on('genre', function (result) {
-      t.strictEqual(result[0], 'Alternative', 'aliased genre');
+      t.strictEqual(result[0], 'Alternative', 'aliased genre')
     })
     .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'aliased picture format');
-      t.strictEqual(result[0].data.length, 99738, 'aliased picture length');
+      t.strictEqual(result[0].format, 'jpg', 'aliased picture format')
+      t.strictEqual(result[0].data.length, 99738, 'aliased picture length')
     })
     // raw tests
     .on('TP1', function (result) {
-      t.strictEqual(result, 'Shiny Toy Guns', 'raw TP1');
+      t.strictEqual(result, 'Shiny Toy Guns', 'raw TP1')
     })
     .on('TRK', function (result) {
-      t.strictEqual(result, '1/11', 'raw TRK');
+      t.strictEqual(result, '1/11', 'raw TRK')
     })
     .on('TYE', function (result) {
-      t.strictEqual(result, '2006', 'raw TYE');
+      t.strictEqual(result, '2006', 'raw TYE')
     })
     .on('TEN', function (result) {
-      t.strictEqual(result, 'iTunes v7.0.2.16', 'raw TEN');
+      t.strictEqual(result, 'iTunes v7.0.2.16', 'raw TEN')
     })
     .on('TCO', function (result) {
-      t.strictEqual(result, '(20)', 'raw TCO'); //Alternative
+      t.strictEqual(result, '(20)', 'raw TCO') // Alternative
     })
     .on('TAL', function (result) {
-      t.strictEqual(result, 'We Are Pilots', 'raw TAL');
+      t.strictEqual(result, 'We Are Pilots', 'raw TAL')
     })
     .on('TT2', function (result) {
-      t.strictEqual(result, 'You Are The One', 'raw TT2');
+      t.strictEqual(result, 'You Are The One', 'raw TT2')
     })
     .on('PIC', function (result) {
-      t.strictEqual(result.format, 'JPG', 'raw PIC format');
-      t.strictEqual(result.type, 'Other', 'raw PIC type');
-      t.strictEqual(result.description, '', 'raw PIC description');
-      t.strictEqual(result.data.length, 99738, 'raw PIC length'); 
+      t.strictEqual(result.format, 'JPG', 'raw PIC format')
+      t.strictEqual(result.type, 'Other', 'raw PIC type')
+      t.strictEqual(result.description, '', 'raw PIC description')
+      t.strictEqual(result.data.length, 99738, 'raw PIC length')
     })
     .on('ULT', function (result) {
-      t.strictEqual(result.description, '', 'raw ULT descriptor');
-      t.strictEqual(result.language, 'eng', 'raw ULT language');
-      //skipping testing exact contents, bit naughty
-      t.strictEqual(result.text.length, 831, 'raw ULT text length');
+      t.strictEqual(result.description, '', 'raw ULT descriptor')
+      t.strictEqual(result.language, 'eng', 'raw ULT language')
+      // skipping testing exact contents, bit naughty
+      t.strictEqual(result.text.length, 831, 'raw ULT text length')
     })
-    //there are 3 comment frames in this file so we need to t all 3 events
+    // there are 3 comment frames in this file so we need to t all 3 events
     .on('COM', function (result) {
       switch (comCounter) {
         case 0:
-          t.strictEqual(result.language, 'eng', 'raw COM 0 language');
-          t.strictEqual(result.description, 'iTunPGAP', 'raw COM 0 description');
-          t.strictEqual(result.text, '0', 'raw COM 0 text');
-          break;
+          t.strictEqual(result.language, 'eng', 'raw COM 0 language')
+          t.strictEqual(result.description, 'iTunPGAP', 'raw COM 0 description')
+          t.strictEqual(result.text, '0', 'raw COM 0 text')
+          break
         case 1:
-          t.strictEqual(result.language, 'eng', 'raw COM 1 language');
-          t.strictEqual(result.description, 'iTunNORM', 'raw COM 1 description');
-          var expected = ' 0000299C 0000291D 0000DBE0 0000D6BA ' + 
-            '0003C378 0003C2C1 0000902A 00008F1B 00012FC6 00015FBC';
-          t.strictEqual(result.text, expected, 'raw COM 1 text');
-          break;
+          t.strictEqual(result.language, 'eng', 'raw COM 1 language')
+          t.strictEqual(result.description, 'iTunNORM', 'raw COM 1 description')
+          var expected = ' 0000299C 0000291D 0000DBE0 0000D6BA ' +
+          '0003C378 0003C2C1 0000902A 00008F1B 00012FC6 00015FBC'
+          t.strictEqual(result.text, expected, 'raw COM 1 text')
+          break
         case 2:
-          t.strictEqual(result.language, 'eng', 'raw COM 2 language');
-          t.strictEqual(result.description, 'iTunSMPB', 'raw COM 2 description');
+          t.strictEqual(result.language, 'eng', 'raw COM 2 language')
+          t.strictEqual(result.description, 'iTunSMPB', 'raw COM 2 description')
           expected = ' 00000000 00000210 00000AD4 0000000000B6499C 00000000 ' +
-            '006327AD 00000000 00000000 00000000 00000000 00000000 00000000';
-          t.strictEqual(result.text, expected, 'raw COM 2 text');
-          break;
+          '006327AD 00000000 00000000 00000000 00000000 00000000 00000000'
+          t.strictEqual(result.text, expected, 'raw COM 2 text')
+          break
         case 3:
-          t.strictEqual(result.language, 'eng', 'raw COM 3 language');
-          t.strictEqual(result.description, 'iTunes_CDDB_IDs', 'raw COM 3 description');
+          t.strictEqual(result.language, 'eng', 'raw COM 3 language')
+          t.strictEqual(result.description, 'iTunes_CDDB_IDs', 'raw COM 3 description')
           t.strictEqual(result.text,
-            '11+3ABC77F16B8A2F0F1E1A1EBAB868A98F+8210091', 'raw COM 3 text');
-          break;
+            '11+3ABC77F16B8A2F0F1E1A1EBAB868A98F+8210091', 'raw COM 3 text')
+          break
       }
-      comCounter++;
+      comCounter++
     })
-});
+})
