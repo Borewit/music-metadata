@@ -6184,7 +6184,9 @@ function parseMetadata (data, header, done) {
     var frameDataBytes = data.slice(offset, offset += frameHeader.length);
     var frameData = readFrameData(frameDataBytes, frameHeader, header.major);
     for (var pos in frameData) {
-      frames.push([frameHeader.id, frameData[pos]])
+      if (frameData.hasOwnProperty(pos)) {
+        frames.push([frameHeader.id, frameData[pos]])
+      }
     }
   }
   return frames;
@@ -6556,14 +6558,14 @@ function processMetaAtom (data, atomName, atomLength) {
 
       case 'uint8':
         if (atomName === 'gnre') {
-          var genreInt = strtok.UINT16_BE.get(data, 4);
+          var genreInt = strtok.UINT8.get(data, 5);
           return common.GENRES[genreInt - 1];
         }
         if (atomName === 'trkn' || atomName === 'disk') {
           return data[7] + '/' + data[9];
         }
 
-        return strtok.UINT16_BE.get(data, 4);
+        return strtok.UINT8.get(data, 4);
 
       case 'jpeg':
       case 'png':
@@ -6694,7 +6696,9 @@ var MusicMetadata = module.exports = function (stream, opts, callback) {
       }
     }
 
-    callback(exception, metadata)
+    if (callback) {
+      callback(exception, metadata)
+    }
     return strtok.DONE;
   }
 
