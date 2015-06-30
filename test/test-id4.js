@@ -26,11 +26,11 @@ test('id4', function (t) {
     t.strictEqual(result.picture[0].data.length, 196450, 'picture 0 length')
     t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format')
     t.strictEqual(result.picture[1].data.length, 196450, 'picture 1 length')
-    t.strictEqual(result.duration, 2, 'metadata duration')
+    t.strictEqual(result.duration, 2.2058956916099772, 'metadata duration')
     t.end()
   })
     .on('duration', function (result) {
-      t.strictEqual(result, 2, 'duration')
+      t.strictEqual(result, 2.2058956916099772, 'duration')
     })
     // aliased tests
     .on('title', function (result) {

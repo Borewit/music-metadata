@@ -22,7 +22,7 @@ test('asf', function (t) {
     t.strictEqual(result.disk.no, 0, 'disk no')
     t.strictEqual(result.disk.of, 0, 'disk of')
     t.strictEqual(result.genre[0], 'Rock', 'genre 0')
-    t.strictEqual(result.duration, 245, 'duration')
+    t.strictEqual(result.duration, 244.885, 'duration')
     t.end()
   }) // aliased tests
     .on('title', function (result) {
@@ -48,7 +48,7 @@ test('asf', function (t) {
       t.strictEqual(result[0], 'Rock', 'aliased genre')
     })
     .on('duration', function (result) {
-      t.strictEqual(result, 245, 'aliased duration')
+      t.strictEqual(result, 244.885, 'aliased duration')
     })
     // raw tests
     .on('WM/AlbumTitle', function (result) {

@@ -24,7 +24,7 @@ test('flac', function (t) {
     t.strictEqual(result.genre[0], 'Alt. Rock', 'genre')
     t.strictEqual(result.picture[0].format, 'jpg', 'picture format')
     t.strictEqual(result.picture[0].data.length, 175668, 'picture length')
-    t.strictEqual(result.duration, 272, 'duration')
+    t.strictEqual(result.duration, 271.7733333333333, 'duration')
     t.end()
   })
     // aliased tests
@@ -52,7 +52,7 @@ test('flac', function (t) {
       t.strictEqual(result[0], 'EAC-Secure Mode', 'aliased comment')
     })
     .on('duration', function (result) {
-      t.strictEqual(result, 272, 'aliased duration')
+      t.strictEqual(result, 271.7733333333333, 'aliased duration')
     })
     // raw tests
     .on('TITLE', function (result) {
