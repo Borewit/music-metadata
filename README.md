@@ -47,7 +47,7 @@ This will output the standard music metadata:
   disk : { no : 1, of : 2 },
   genre : ['Drum & Bass'],
   picture : [ { format : 'jpg', data : <Buffer> } ],
-  duration : 302 // in seconds
+  duration : 302.41 // in seconds
 }
 ```
 
