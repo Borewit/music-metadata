@@ -5533,7 +5533,7 @@ exports.readVorbisPicture = function (buffer) {
   picture.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4)
 
   var picDataLen = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.data = buffer.slice(offset += 4, offset + picDataLen)
+  picture.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen))
 
   return picture
 }
@@ -6404,6 +6404,7 @@ function getNullTerminatorLength (enc) {
 }
 
 },{"./common":30,"buffer":4,"strtok2":45}],35:[function(require,module,exports){
+(function (Buffer){
 'use strict'
 var strtok = require('strtok2')
 var common = require('./common')
@@ -6528,7 +6529,7 @@ function processMetaAtom (data, atomName, atomLength) {
       case 'png':
         return {
           format: 'image/' + type,
-          data: data.slice(4)
+          data: new Buffer(data.slice(4))
         }
     }
   }
@@ -6544,7 +6545,8 @@ var TYPES = {
 
 var CONTAINER_ATOMS = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia']
 
-},{"./common":30,"strtok2":45}],36:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"./common":30,"buffer":4,"strtok2":45}],36:[function(require,module,exports){
 (function (process,Buffer){
 'use strict'
 var events = require('events')
@@ -6859,7 +6861,7 @@ module.exports = function (stream, callback, done) {
 
           var picture = {
             description: description,
-            data: picData.slice(off)
+            data: new Buffer(picData.slice(off))
           }
 
           offset += size
