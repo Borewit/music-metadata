@@ -62,14 +62,14 @@ parser.on('TLEN', function (result) {
 You can also read the duration; to calculate the duration `musicmetadata` may need to parse the entire file
 so only enable this if you need the functionality.
 ```javascript
-var parser = mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
+mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
   
 });
 ```
 
 Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
 ```javascript
-var parser = mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 }, function (err, metadata) {
+mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 }, function (err, metadata) {
   
 });
 ```
