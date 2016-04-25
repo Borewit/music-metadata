@@ -1,5 +1,5 @@
 var common = require('../lib/common')
-var test = require('prova')
+var test = require('tape')
 
 var findZero = common.findZero
 

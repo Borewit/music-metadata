@@ -1,5 +1,5 @@
 var mm = require('..')
-var test = require('prova')
+var test = require('tape')
 var through = require('through')
 var common = require('../lib/common')
 

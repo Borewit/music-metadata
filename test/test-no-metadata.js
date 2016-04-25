@@ -1,7 +1,7 @@
 var path = require('path')
 var fs = require('fs')
 var id3 = require('..')
-var test = require('prova')
+var test = require('tape')
 
 test("shouldn't raise metadata event for files that can't be parsed", function (t) {
   t.plan(1)

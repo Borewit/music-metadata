@@ -2,7 +2,7 @@
 // var fs = require('fs')
 // var through = require('through')
 // var mm = require('..')
-// var test = require('prova')
+// var test = require('tape')
 
 /* TODO: fix this test. There's a weird race condition when running the full
   test suite that causes this test only to fail. If we remove the

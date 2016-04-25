@@ -1,7 +1,7 @@
 var path = require('path')
 var fs = require('fs')
 var mm = require('..')
-var test = require('prova')
+var test = require('tape')
 
 test('should be able to read id3v2 files with extended headers', function (t) {
   t.plan(3)

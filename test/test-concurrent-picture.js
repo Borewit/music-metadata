@@ -1,6 +1,6 @@
 var mm = require('..')
 var fs = require('fs')
-var test = require('prova')
+var test = require('tape')
 
 test('concurrent-picture', function (t) {
   t.plan(6)

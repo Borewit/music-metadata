@@ -1,7 +1,7 @@
 var path = require('path')
 var id3 = require('..')
 var fs = require('fs')
-var test = require('prova')
+var test = require('tape')
 
 test('id3v2.3', function (t) {
   t.plan(40)

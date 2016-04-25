@@ -1,7 +1,7 @@
 var path = require('path')
 var fs = require('fs')
 var id3 = require('..')
-var test = require('prova')
+var test = require('tape')
 
 test('mp3 cbr calculation', function (t) {
   t.plan(2)

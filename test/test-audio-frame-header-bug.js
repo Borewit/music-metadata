@@ -1,7 +1,7 @@
 var path = require('path')
 var mm = require('..')
 var fs = require('fs')
-var test = require('prova')
+var test = require('tape')
 
 test('audio-frame-header-bug', function (t) {
   t.plan(2)

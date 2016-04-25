@@ -1,5 +1,5 @@
 var common = require('../lib/common')
-var test = require('prova')
+var test = require('tape')
 
 test('should be able to detect ftypmp42 as a valid mp4 header type', function (t) {
   var buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32])

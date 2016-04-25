@@ -1,7 +1,7 @@
 var path = require('path')
 var fs = require('fs')
 var mm = require('..')
-var test = require('prova')
+var test = require('tape')
 
 test('error handling', function (t) {
   t.plan(1)

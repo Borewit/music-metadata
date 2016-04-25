@@ -1,7 +1,7 @@
 var id3 = require('..')
 var fs = require('fs')
 var path = require('path')
-var test = require('prova')
+var test = require('tape')
 
 test('should read utf16bom encoded metadata correctly', function (t) {
   t.plan(9)
