@@ -6,6 +6,7 @@
   "dependencies": {
     "deep-equal": "0.2.1",
     "filereader-stream": "^0.2.0",
+    "is-stream": "^1.1.0",
     "strtok2": "~1.0.0",
     "sum-component": "^0.1.1",
     "through": "~2.3.4"
