@@ -1,6 +1,1921 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.musicmetadata = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function (Buffer){
+'use strict'
+var strtok = require('strtok2')
+var common = require('./common')
+var equal = require('deep-equal')
 
-},{}],2:[function(require,module,exports){
+var decodeString = common.decodeString
+
+module.exports = function (stream, callback, done) {
+  var currentState = startState
+
+  strtok.parse(stream, function (v, cb) {
+    currentState = currentState.parse(callback, v, done)
+    return currentState.getExpectedType()
+  })
+}
+
+var startState = {
+  parse: function (callback) {
+    return idState
+  }
+}
+
+var finishedState = {
+  parse: function (callback) {
+    return this
+  },
+  getExpectedType: function () {
+    return strtok.DONE
+  }
+}
+
+var idState = {
+  parse: function (callback, data, done) {
+    if (!equal(common.asfGuidBuf, data)) {
+      done(new Error('expected asf header but was not found'))
+      return finishedState
+    }
+    return headerDataState
+  },
+  getExpectedType: function () {
+    return new strtok.BufferType(common.asfGuidBuf.length)
+  }
+}
+
+function ReadObjectState (size, objectCount) {
+  this.size = size
+  this.objectCount = objectCount
+}
+
+ReadObjectState.prototype.parse = function (callback, data, done) {
+  var guid = data.slice(0, 16)
+  var size = readUInt64LE(data, 16)
+  var State = stateByGuid(guid) || IgnoreObjectState
+  this.objectCount -= 1
+  this.size -= size
+  var nextState = (this.objectCount <= 0) ? finishedState : this
+  return new State(nextState, size - 24)
+}
+
+ReadObjectState.prototype.getExpectedType = function () {
+  return new strtok.BufferType(24)
+}
+
+var headerDataState = {
+  parse: function (callback, data, done) {
+    var size = readUInt64LE(data, 0)
+    var objectCount = data.readUInt32LE(8)
+    return new ReadObjectState(size, objectCount)
+  },
+  getExpectedType: function () {
+    // 8 bytes size
+    // 4 bytes object count
+    // 2 bytes ignore
+    return new strtok.BufferType(14)
+  }
+}
+
+function IgnoreObjectState (nextState, size) {
+  this.nextState = nextState
+  this.size = size
+}
+
+IgnoreObjectState.prototype.parse = function (callback, data, done) {
+  if (this.nextState === finishedState) done()
+  return this.nextState
+}
+
+IgnoreObjectState.prototype.getExpectedType = function () {
+  return new strtok.IgnoreType(this.size)
+}
+
+function ContentDescriptionObjectState (nextState, size) {
+  this.nextState = nextState
+  this.size = size
+}
+
+var contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating']
+ContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
+  var lengths = [
+    data.readUInt16LE(0),
+    data.readUInt16LE(2),
+    data.readUInt16LE(4),
+    data.readUInt16LE(6),
+    data.readUInt16LE(8)
+  ]
+  var pos = 10
+  for (var i = 0; i < contentDescTags.length; i += 1) {
+    var tagName = contentDescTags[i]
+    var length = lengths[i]
+    var end = pos + length
+    if (length > 0) {
+      var value = parseUnicodeAttr(data.slice(pos, end))
+      callback(tagName, value)
+    }
+    pos = end
+  }
+  if (this.nextState === finishedState) done()
+  return this.nextState
+}
+
+ContentDescriptionObjectState.prototype.getExpectedType = function () {
+  return new strtok.BufferType(this.size)
+}
+
+ContentDescriptionObjectState.guid = new Buffer([
+  0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+])
+
+function ExtendedContentDescriptionObjectState (nextState, size) {
+  this.nextState = nextState
+  this.size = size
+}
+
+var attributeParsers = [
+  parseUnicodeAttr,
+  parseByteArrayAttr,
+  parseBoolAttr,
+  parseDWordAttr,
+  parseQWordAttr,
+  parseWordAttr,
+  parseByteArrayAttr
+]
+
+ExtendedContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
+  var attrCount = data.readUInt16LE(0)
+  var pos = 2
+  for (var i = 0; i < attrCount; i += 1) {
+    var nameLen = data.readUInt16LE(pos)
+    pos += 2
+    var name = parseUnicodeAttr(data.slice(pos, pos + nameLen))
+    pos += nameLen
+    var valueType = data.readUInt16LE(pos)
+    pos += 2
+    var valueLen = data.readUInt16LE(pos)
+    pos += 2
+    var value = data.slice(pos, pos + valueLen)
+    pos += valueLen
+    var parseAttr = attributeParsers[valueType]
+    if (!parseAttr) {
+      done(new Error('unexpected value type: ' + valueType))
+      return finishedState
+    }
+    var attr = parseAttr(value)
+    callback(name, attr)
+  }
+  if (this.nextState === finishedState) done()
+  return this.nextState
+}
+
+ExtendedContentDescriptionObjectState.prototype.getExpectedType = function () {
+  return new strtok.BufferType(this.size)
+}
+
+ExtendedContentDescriptionObjectState.guid = new Buffer([
+  0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
+  0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
+])
+
+function FilePropertiesObject (nextState, size) {
+  this.nextState = nextState
+  this.size = size
+}
+
+FilePropertiesObject.prototype.parse = function (callback, data, done) {
+  // in miliseconds
+  var playDuration = parseQWordAttr(data.slice(40, 48)) / 10000
+  callback('duration', playDuration / 1000)
+
+  if (this.nextState === finishedState) done()
+  return this.nextState
+}
+
+FilePropertiesObject.prototype.getExpectedType = function () {
+  return new strtok.BufferType(this.size)
+}
+
+FilePropertiesObject.guid = new Buffer([
+  0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
+  0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
+])
+
+var guidStates = [
+  FilePropertiesObject,
+  ContentDescriptionObjectState,
+  ExtendedContentDescriptionObjectState
+]
+function stateByGuid (guidBuf) {
+  for (var i = 0; i < guidStates.length; i += 1) {
+    var GuidState = guidStates[i]
+    if (equal(GuidState.guid, guidBuf)) return GuidState
+  }
+  return null
+}
+
+function parseUnicodeAttr (buf) {
+  return common.stripNulls(decodeString(buf, 'utf16le'))
+}
+
+function parseByteArrayAttr (buf) {
+  var newBuf = new Buffer(buf.length)
+  buf.copy(newBuf)
+  return newBuf
+}
+
+function parseBoolAttr (buf) {
+  return parseDWordAttr(buf) === 1
+}
+
+function parseDWordAttr (buf) {
+  return buf.readUInt32LE(0)
+}
+
+function parseQWordAttr (buf) {
+  return readUInt64LE(buf, 0)
+}
+
+function parseWordAttr (buf) {
+  return buf.readUInt16LE(0)
+}
+
+function readUInt64LE (buffer, offset) {
+  var high = buffer.slice(offset, offset + 4).readUInt32LE(0)
+  var low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0)
+  var maxuint32 = Math.pow(2, 32)
+  return ((low * maxuint32) + (high >>> 0))
+}
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"buffer":16,"deep-equal":42,"strtok2":48}],2:[function(require,module,exports){
+(function (process,Buffer){
+'use strict'
+/*jslint browser: true*/
+var readStream = require('filereader-stream')
+var through = require('through')
+var musicmetadata = require('./index')
+var isStream = require('is-stream')
+
+module.exports = function (stream, opts, callback) {
+  var wrappedStream = wrapFileWithStream(stream)
+
+  if (typeof opts === 'function') {
+    callback = opts
+    opts = {}
+  }
+
+  if (opts.autoClose) {
+    return musicmetadata(wrappedStream.dest, opts, function () {
+      // Once we have our meta data we abort stream file reader
+      wrappedStream.abort()
+
+      callback.apply(null, arguments)
+    })
+  }
+
+  return musicmetadata(wrappedStream.dest, opts, callback)
+}
+
+function wrapFileWithStream (file) {
+  var
+    streamFileReader,
+    stream = through(function write (data) {
+    if (data.length > 0) this.queue(data)
+  }, null, {autoDestroy: false})
+
+  if (file instanceof window.ArrayBuffer) {
+    return wrapArrayBufferWithStream(file, stream)
+  }
+
+  stream.fileSize = function (cb) {
+    process.nextTick(function () {
+      cb(file.size)
+    })
+  }
+
+  if (isStream(file)) {
+    return file.pipe(stream)
+  }
+  if (file instanceof window.FileList) {
+    throw new Error('You have passed a FileList object but we expected a File')
+  }
+  if (!(file instanceof window.File || file instanceof window.Blob)) {
+    throw new Error('You must provide a valid File or Blob object')
+  }
+
+  streamFileReader = readStream(file)
+  streamFileReader.pipe(stream)
+
+  return streamFileReader
+}
+
+function wrapArrayBufferWithStream (arrayBuffer, throughStream) {
+  throughStream.fileSize = function (cb) {
+    process.nextTick(function () {
+      cb(arrayBuffer.byteLength)
+    })
+  }
+
+  process.nextTick(function () {
+    throughStream.write(new Buffer(new Uint8Array(arrayBuffer)))
+    throughStream.end()
+  })
+
+  return throughStream
+}
+
+}).call(this,require('_process'),require("buffer").Buffer)
+},{"./index":9,"_process":23,"buffer":16,"filereader-stream":45,"is-stream":47,"through":52}],3:[function(require,module,exports){
+(function (Buffer){
+'use strict'
+var strtok = require('strtok2')
+var equal = require('deep-equal')
+var windows1252decoder = require('./windows1252decoder')
+
+var asfGuidBuf = new Buffer([
+  0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+])
+exports.asfGuidBuf = asfGuidBuf
+
+exports.getParserForMediaType = function (types, header) {
+  for (var i = 0; i < types.length; i += 1) {
+    var type = types[i]
+    var offset = type.offset || 0
+    if (header.length >= offset + type.buf.length &&
+      equal(header.slice(offset, offset + type.buf.length), type.buf)) {
+      return type.tag
+    }
+  }
+  // default to id3v1.1 if we cannot detect any other tags
+  return require('./id3v1')
+}
+
+exports.streamOnRealEnd = function (stream, callback) {
+  stream.on('end', done)
+  stream.on('close', done)
+  function done () {
+    stream.removeListener('end', done)
+    stream.removeListener('close', done)
+    callback()
+  }
+}
+
+exports.readVorbisPicture = function (buffer) {
+  var picture = {}
+  var offset = 0
+
+  picture.type = PICTURE_TYPE[strtok.UINT32_BE.get(buffer, 0)]
+
+  var mimeLen = strtok.UINT32_BE.get(buffer, offset += 4)
+  picture.format = buffer.toString('utf-8', offset += 4, offset + mimeLen)
+
+  var descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen)
+  picture.description = buffer.toString('utf-8', offset += 4, offset + descLen)
+
+  picture.width = strtok.UINT32_BE.get(buffer, offset += descLen)
+  picture.height = strtok.UINT32_BE.get(buffer, offset += 4)
+  picture.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4)
+  picture.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4)
+
+  var picDataLen = strtok.UINT32_BE.get(buffer, offset += 4)
+  picture.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen))
+
+  return picture
+}
+
+exports.removeUnsyncBytes = function (buffer) {
+  var readI = 0
+  var writeI = 0
+  while (readI < buffer.length - 1) {
+    if (readI !== writeI) {
+      buffer[writeI] = buffer[readI]
+    }
+    readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1
+    writeI++
+  }
+  if (readI < buffer.length) {
+    buffer[writeI++] = buffer[readI++]
+  }
+  return buffer.slice(0, writeI)
+}
+
+exports.findZero = function (buffer, start, end, encoding) {
+  var i = start
+  if (encoding === 'utf16') {
+    while (buffer[i] !== 0 || buffer[i + 1] !== 0) {
+      if (i >= end) return end
+      i += 2
+    }
+    return i
+  } else {
+    while (buffer[i] !== 0) {
+      if (i >= end) return end
+      i++
+    }
+    return i
+  }
+}
+
+function swapBytes (buffer) {
+  var l = buffer.length
+  if (l & 0x01) {
+    throw new Error('Buffer length must be even')
+  }
+  for (var i = 0; i < l; i += 2) {
+    var a = buffer[i]
+    buffer[i] = buffer[i + 1]
+    buffer[i + 1] = a
+  }
+  return buffer
+}
+
+var readUTF16String = exports.readUTF16String = function (buffer) {
+  var offset = 0
+  if (buffer[0] === 0xFE && buffer[1] === 0xFF) { // big endian
+    buffer = swapBytes(buffer)
+    offset = 2
+  } else if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
+    offset = 2
+  }
+  return buffer.toString('ucs2', offset)
+}
+
+exports.decodeString = function (buffer, encoding) {
+  // annoying workaround for a double BOM issue
+  // https://github.com/leetreveil/musicmetadata/issues/84
+  if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {
+    buffer = buffer.slice(2)
+  }
+
+  if (encoding === 'utf16le' || encoding === 'utf16') {
+    return readUTF16String(buffer)
+  } else if (encoding === 'utf8') {
+    return buffer.toString('utf8')
+  } else if (encoding === 'iso-8859-1') {
+    return windows1252decoder(buffer)
+  }
+
+  throw Error(encoding + ' encoding is not supported!')
+}
+
+exports.parseGenre = function (origVal) {
+  // match everything inside parentheses
+  var split = origVal.trim().split(/\((.*?)\)/g)
+    .filter(function (val) { return val !== '' })
+
+  var array = []
+  for (var i = 0; i < split.length; i++) {
+    var cur = split[i]
+    if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
+      cur = GENRES[cur]
+    }
+    array.push(cur)
+  }
+
+  return array
+    .filter(function (val) { return val !== undefined })
+    .join('/')
+}
+
+exports.stripNulls = function (str) {
+  str = str.replace(/^\x00+/g, '')
+  str = str.replace(/\x00+$/g, '')
+  return str
+}
+
+exports.strtokUINT24_BE = {
+  len: 3,
+  get: function (buf, off) {
+    return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2]
+  }
+}
+
+exports.strtokBITSET = {
+  len: 1,
+  get: function (buf, off, bit) {
+    return (buf[off] & (1 << bit)) !== 0
+  }
+}
+
+exports.strtokINT32SYNCSAFE = {
+  len: 4,
+  get: function (buf, off) {
+    return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
+        ((buf[off + 1]) << 14) | ((buf[off]) << 21)
+  }
+}
+
+var PICTURE_TYPE = exports.PICTURE_TYPE = [
+  'Other',
+  "32x32 pixels 'file icon' (PNG only)",
+  'Other file icon',
+  'Cover (front)',
+  'Cover (back)',
+  'Leaflet page',
+  'Media (e.g. lable side of CD)',
+  'Lead artist/lead performer/soloist',
+  'Artist/performer',
+  'Conductor',
+  'Band/Orchestra',
+  'Composer',
+  'Lyricist/text writer',
+  'Recording Location',
+  'During recording',
+  'During performance',
+  'Movie/video screen capture',
+  'A bright coloured fish',
+  'Illustration',
+  'Band/artist logotype',
+  'Publisher/Studio logotype'
+]
+
+var GENRES = exports.GENRES = [
+  'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
+  'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
+  'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
+  'Euro-Techno', 'Ambient', 'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance',
+  'Classical', 'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel', 'Noise',
+  'Alt. Rock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative', 'Instrumental Pop',
+  'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave', 'Techno-Industrial',
+  'Electronic', 'Pop-Folk', 'Eurodance', 'Dream', 'Southern Rock', 'Comedy', 'Cult',
+  'Gangsta Rap', 'Top 40', 'Christian Rap', 'Pop/Funk', 'Jungle', 'Native American',
+  'Cabaret', 'New Wave', 'Psychedelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
+  'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll', 'Hard Rock',
+  'Folk', 'Folk/Rock', 'National Folk', 'Swing', 'Fast-Fusion', 'Bebob', 'Latin', 'Revival',
+  'Celtic', 'Bluegrass', 'Avantgarde', 'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock',
+  'Symphonic Rock', 'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
+  'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony', 'Booty Bass', 'Primus',
+  'Porn Groove', 'Satire', 'Slow Jam', 'Club', 'Tango', 'Samba', 'Folklore',
+  'Ballad', 'Power Ballad', 'Rhythmic Soul', 'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo',
+  'A Cappella', 'Euro-House', 'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House',
+  'Hardcore', 'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
+  'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover', 'Contemporary Christian',
+  'Christian Rock', 'Merengue', 'Salsa', 'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
+  'Abstract', 'Art Rock', 'Baroque', 'Bhangra', 'Big Beat', 'Breakbeat', 'Chillout',
+  'Downtempo', 'Dub', 'EBM', 'Eclectic', 'Electro', 'Electroclash', 'Emo', 'Experimental',
+  'Garage', 'Global', 'IDM', 'Illbient', 'Industro-Goth', 'Jam Band', 'Krautrock',
+  'Leftfield', 'Lounge', 'Math Rock', 'New Romantic', 'Nu-Breakz', 'Post-Punk', 'Post-Rock',
+  'Psytrance', 'Shoegaze', 'Space Rock', 'Trop Rock', 'World Music', 'Neoclassical', 'Audiobook',
+  'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
+  'Garage Rock', 'Psybient'
+]
+
+}).call(this,require("buffer").Buffer)
+},{"./id3v1":5,"./windows1252decoder":12,"buffer":16,"deep-equal":42,"strtok2":48}],4:[function(require,module,exports){
+'use strict'
+var strtok = require('strtok2')
+var common = require('./common')
+
+module.exports = function (stream, callback, done) {
+  var currentState = startState
+
+  strtok.parse(stream, function (v, cb) {
+    currentState = currentState.parse(callback, v, done)
+    return currentState.getExpectedType()
+  })
+}
+
+var DataDecoder = function (data) {
+  this.data = data
+  this.offset = 0
+}
+
+DataDecoder.prototype.readInt32 = function () {
+  var value = strtok.UINT32_LE.get(this.data, this.offset)
+  this.offset += 4
+  return value
+}
+
+DataDecoder.prototype.readStringUtf8 = function () {
+  var len = this.readInt32()
+  var value = this.data.toString('utf8', this.offset, this.offset + len)
+  this.offset += len
+  return value
+}
+
+var finishedState = {
+  parse: function (callback) {
+    return this
+  },
+  getExpectedType: function () {
+    return strtok.DONE
+  }
+}
+
+var BlockDataState = function (type, length, nextStateFactory) {
+  this.type = type
+  this.length = length
+  this.nextStateFactory = nextStateFactory
+}
+
+BlockDataState.prototype.parse = function (callback, data) {
+  if (this.type === 4) {
+    var decoder = new DataDecoder(data)
+    decoder.readStringUtf8() // vendor (skip)
+    var commentListLength = decoder.readInt32()
+    var comment
+    var split
+    var i
+
+    for (i = 0; i < commentListLength; i++) {
+      comment = decoder.readStringUtf8()
+      split = comment.split('=')
+      callback(split[0].toUpperCase(), split[1])
+    }
+  } else if (this.type === 6) {
+    var picture = common.readVorbisPicture(data)
+    callback('METADATA_BLOCK_PICTURE', picture)
+  } else if (this.type === 0) { // METADATA_BLOCK_STREAMINFO
+    if (data.length < 34) return // invalid streaminfo
+    var sampleRate = common.strtokUINT24_BE.get(data, 10) >> 4
+    var totalSamples = data.readUInt32BE(14)
+    var duration = totalSamples / sampleRate
+    callback('duration', duration)
+  }
+
+  return this.nextStateFactory()
+}
+
+BlockDataState.prototype.getExpectedType = function () {
+  return new strtok.BufferType(this.length)
+}
+
+var blockHeaderState = {
+  parse: function (callback, data, done) {
+    var header = {
+      lastBlock: (data[0] & 0x80) === 0x80,
+      type: data[0] & 0x7f,
+      length: common.strtokUINT24_BE.get(data, 1)
+    }
+    var followingStateFactory = header.lastBlock ? function () {
+      done()
+      return finishedState
+    } : function () {
+      return blockHeaderState
+    }
+
+    return new BlockDataState(header.type, header.length, followingStateFactory)
+  },
+  getExpectedType: function () {
+    return new strtok.BufferType(4)
+  }
+}
+
+var idState = {
+  parse: function (callback, data, done) {
+    if (data.toString() !== 'fLaC') {
+      done(new Error('expected flac header but was not found'))
+    }
+    return blockHeaderState
+  },
+  getExpectedType: function () {
+    return new strtok.BufferType(4)
+  }
+}
+
+var startState = {
+  parse: function (callback) {
+    return idState
+  },
+  getExpectedType: function () {
+    return strtok.DONE
+  }
+}
+
+},{"./common":3,"strtok2":48}],5:[function(require,module,exports){
+'use strict'
+var common = require('./common')
+
+module.exports = function (stream, callback, done) {
+  var endData = null
+  stream.on('data', function (data) {
+    endData = data
+  })
+  common.streamOnRealEnd(stream, function () {
+    var offset = endData.length - 128
+    var header = endData.toString('ascii', offset, offset += 3)
+    if (header !== 'TAG') {
+      return done(new Error('Could not find metadata header'))
+    }
+
+    var title = endData.toString('ascii', offset, offset += 30)
+    callback('title', title.trim().replace(/\x00/g, ''))
+
+    var artist = endData.toString('ascii', offset, offset += 30)
+    callback('artist', artist.trim().replace(/\x00/g, ''))
+
+    var album = endData.toString('ascii', offset, offset += 30)
+    callback('album', album.trim().replace(/\x00/g, ''))
+
+    var year = endData.toString('ascii', offset, offset += 4)
+    callback('year', year.trim().replace(/\x00/g, ''))
+
+    var comment = endData.toString('ascii', offset, offset += 28)
+    callback('comment', comment.trim().replace(/\x00/g, ''))
+
+    var track = endData[endData.length - 2]
+    callback('track', track)
+
+    if (endData[endData.length - 1] in common.GENRES) {
+      var genre = common.GENRES[endData[endData.length - 1]]
+      callback('genre', genre)
+    }
+    return done()
+  })
+}
+
+},{"./common":3}],6:[function(require,module,exports){
+(function (Buffer){
+'use strict'
+var strtok = require('strtok2')
+var parser = require('./id3v2_frames')
+var common = require('./common')
+
+module.exports = function (stream, callback, done, readDuration, fileSize) {
+  var frameCount = 0
+  var audioFrameHeader
+  var bitrates = []
+
+  strtok.parse(stream, function (v, cb) {
+    if (v === undefined) {
+      cb.state = 0
+      return new strtok.BufferType(10)
+    }
+
+    switch (cb.state) {
+      case 0: // header
+        if (v.toString('ascii', 0, 3) !== 'ID3') {
+          return done(new Error('expected id3 header but was not found'))
+        }
+        cb.id3Header = {
+          version: '2.' + v[3] + '.' + v[4],
+          major: v[3],
+          unsync: common.strtokBITSET.get(v, 5, 7),
+          xheader: common.strtokBITSET.get(v, 5, 6),
+          xindicator: common.strtokBITSET.get(v, 5, 5),
+          footer: common.strtokBITSET.get(v, 5, 4),
+          size: common.strtokINT32SYNCSAFE.get(v, 6)
+        }
+        cb.state = 1
+        return new strtok.BufferType(cb.id3Header.size)
+
+      case 1: // id3 data
+        parseMetadata(v, cb.id3Header, done).map(function (obj) {
+          callback.apply(this, obj)
+        })
+        if (readDuration) {
+          cb.state = 2
+          return new strtok.BufferType(4)
+        }
+        return done()
+
+      case 1.5:
+        var shiftedBuffer = new Buffer(4)
+        cb.frameFragment.copy(shiftedBuffer, 0, 1)
+        v.copy(shiftedBuffer, 3)
+        v = shiftedBuffer
+        cb.state = 2
+
+      /* falls through */
+      case 2: // audio frame header
+
+        // we have found the id3 tag at the end of the file, ignore
+        if (v.slice(0, 3).toString() === 'TAG') {
+          return strtok.DONE
+        }
+
+        // first 11 bits should all be set (frame sync)
+        if ((v[0] === 0xFF && (v[1] & 0xE0) === 0xE0) !== true) {
+          // keep scanning for frame header, id3 tag may
+          // have some padding (0x00) at the end
+          return seekFirstAudioFrame(done)
+        }
+
+        var header = {
+          'version': readMpegVersion(v[1]),
+          'layer': readLayer(v[1]),
+          'protection': !(v[1] & 0x1),
+          'padding': !!((v[2] & 0x02) >> 1),
+          'mode': readMode(v[3])
+        }
+
+        if (isNaN(header.version) || isNaN(header.layer)) {
+          return seekFirstAudioFrame(done)
+        }
+
+        // mp3 files are only found in MPEG1/2 Layer 3
+        if ((header.version !== 1 && header.version !== 2) || header.layer !== 3) {
+          return seekFirstAudioFrame(done)
+        }
+
+        header.samples_per_frame = calcSamplesPerFrame(
+          header.version, header.layer)
+
+        header.bitrate = id3BitrateCalculator(v[2], header.version, header.layer)
+        if (isNaN(header.bitrate)) {
+          return seekFirstAudioFrame(done)
+        }
+
+        header.sample_rate = samplingRateCalculator(v[2], header.version)
+        if (isNaN(header.sample_rate)) {
+          return seekFirstAudioFrame(done)
+        }
+
+        header.slot_size = calcSlotSize(header.layer)
+
+        header.sideinfo_length = calculateSideInfoLength(
+          header.layer, header.mode, header.version)
+
+        var bps = header.samples_per_frame / 8.0
+        var fsize = (bps * (header.bitrate * 1000) / header.sample_rate) +
+          ((header.padding) ? header.slot_size : 0)
+        header.frame_size = Math.floor(fsize)
+
+        audioFrameHeader = header
+        frameCount++
+        bitrates.push(header.bitrate)
+
+        // xtra header only exists in first frame
+        if (frameCount === 1) {
+          cb.offset = header.sideinfo_length
+          cb.state = 3
+          return new strtok.BufferType(header.sideinfo_length)
+        }
+
+        // the stream is CBR if the first 3 frame bitrates are the same
+        if (readDuration && fileSize && frameCount === 3 && areAllSame(bitrates)) {
+          fileSize(function (size) {
+            // subtract non audio stream data from duration calculation
+            size = size - cb.id3Header.size
+            var kbps = (header.bitrate * 1000) / 8
+            callback('duration', size / kbps)
+            cb(done())
+          })
+          return strtok.DEFER
+        }
+
+        // once we know the file is VBR attach listener to end of
+        // stream so we can do the duration calculation when we
+        // have counted all the frames
+        if (readDuration && frameCount === 4) {
+          stream.once('end', function () {
+            callback('duration', calcDuration(frameCount,
+              header.samples_per_frame, header.sample_rate))
+            done()
+          })
+        }
+
+        cb.state = 5
+        return new strtok.IgnoreType(header.frame_size - 4)
+
+      case 3: // side information
+        cb.offset += 12
+        cb.state = 4
+        return new strtok.BufferType(12)
+
+      case 4: // xtra / info header
+        cb.state = 5
+        var frameDataLeft = audioFrameHeader.frame_size - 4 - cb.offset
+
+        var id = v.toString('ascii', 0, 4)
+        if (id !== 'Xtra' && id !== 'Info' && id !== 'Xing') {
+          return new strtok.IgnoreType(frameDataLeft)
+        }
+
+        // frames field is not present
+        if ((v[7] & 0x01) !== 1) {
+          return new strtok.IgnoreType(frameDataLeft)
+        }
+
+        var numFrames = v.readUInt32BE(8)
+        var ah = audioFrameHeader
+        callback('duration', calcDuration(numFrames, ah.samples_per_frame, ah.sample_rate))
+        return done()
+
+      case 5: // skip frame data
+        cb.state = 2
+        return new strtok.BufferType(4)
+    }
+
+    function seekFirstAudioFrame (done) {
+      if (frameCount) {
+        return done(new Error('expected frame header but was not found'))
+      }
+
+      cb.frameFragment = v
+      cb.state = 1.5
+      return new strtok.BufferType(1)
+    }
+  })
+}
+
+function areAllSame (array) {
+  var first = array[0]
+  return array.every(function (element) {
+    return element === first
+  })
+}
+
+function calcDuration (numFrames, samplesPerFrame, sampleRate) {
+  return Math.round(numFrames * (samplesPerFrame / sampleRate))
+}
+
+function parseMetadata (data, header, done) {
+  var offset = 0
+  var frames = []
+
+  if (header.xheader) {
+    offset += data.readUInt32BE(0)
+  }
+
+  while (true) {
+    if (offset === data.length) break
+    var frameHeaderBytes = data.slice(offset, offset += getFrameHeaderLength(header.major, done))
+    var frameHeader = readFrameHeader(frameHeaderBytes, header.major)
+
+    // Last frame. Check first char is a letter, bit of defensive programming
+    if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
+      break
+    }
+
+    var frameDataBytes = data.slice(offset, offset += frameHeader.length)
+    var frameData = readFrameData(frameDataBytes, frameHeader, header.major)
+    for (var pos in frameData) {
+      if (frameData.hasOwnProperty(pos)) {
+        frames.push([frameHeader.id, frameData[pos]])
+      }
+    }
+  }
+  return frames
+}
+
+function readFrameData (v, frameHeader, majorVer) {
+  switch (majorVer) {
+    case 2:
+      return parser.readData(v, frameHeader.id, null, majorVer)
+    case 3:
+    case 4:
+      if (frameHeader.flags.format.unsync) {
+        v = common.removeUnsyncBytes(v)
+      }
+      if (frameHeader.flags.format.data_length_indicator) {
+        v = v.slice(4, v.length)
+      }
+      return parser.readData(v, frameHeader.id, frameHeader.flags, majorVer)
+  }
+}
+
+function readFrameHeader (v, majorVer) {
+  var header = {}
+  switch (majorVer) {
+    case 2:
+      header.id = v.toString('ascii', 0, 3)
+      header.length = common.strtokUINT24_BE.get(v, 3, 6)
+    break
+    case 3:
+      header.id = v.toString('ascii', 0, 4)
+      header.length = strtok.UINT32_BE.get(v, 4, 8)
+      header.flags = readFrameFlags(v.slice(8, 10))
+    break
+    case 4:
+      header.id = v.toString('ascii', 0, 4)
+      header.length = common.strtokINT32SYNCSAFE.get(v, 4, 8)
+      header.flags = readFrameFlags(v.slice(8, 10))
+    break
+  }
+  return header
+}
+
+function getFrameHeaderLength (majorVer, done) {
+  switch (majorVer) {
+    case 2:
+      return 6
+    case 3:
+    case 4:
+      return 10
+    default:
+      return done(new Error('header version is incorrect'))
+  }
+}
+
+function readFrameFlags (b) {
+  return {
+    status: {
+      tag_alter_preservation: common.strtokBITSET.get(b, 0, 6),
+      file_alter_preservation: common.strtokBITSET.get(b, 0, 5),
+      read_only: common.strtokBITSET.get(b, 0, 4)
+    },
+    format: {
+      grouping_identity: common.strtokBITSET.get(b, 1, 7),
+      compression: common.strtokBITSET.get(b, 1, 3),
+      encryption: common.strtokBITSET.get(b, 1, 2),
+      unsync: common.strtokBITSET.get(b, 1, 1),
+      data_length_indicator: common.strtokBITSET.get(b, 1, 0)
+    }
+  }
+}
+
+function readMpegVersion (byte) {
+  var bits = (byte & 0x18) >> 3
+
+  if (bits === 0x00) {
+    return 2.5
+  } else if (bits === 0x01) {
+    return 'reserved'
+  } else if (bits === 0x02) {
+    return 2
+  } else if (bits === 0x03) {
+    return 1
+  }
+}
+
+function readLayer (byte) {
+  var bits = (byte & 0x6) >> 1
+
+  if (bits === 0x00) {
+    return 'reserved'
+  } else if (bits === 0x01) {
+    return 3
+  } else if (bits === 0x02) {
+    return 2
+  } else if (bits === 0x03) {
+    return 1
+  }
+}
+
+function readMode (byte) {
+  var bits = (byte & 0xC0) >> 6
+  if (bits === 0x00) {
+    return 'stereo'
+  } else if (bits === 0x01) {
+    return 'joint_stereo'
+  } else if (bits === 0x02) {
+    return 'dual_channel'
+  } else if (bits === 0x03) {
+    return 'mono'
+  }
+}
+
+function calcSamplesPerFrame (version, layer) {
+  if (layer === 1) return 384
+  if (layer === 2) return 1152
+  if (layer === 3 && version === 1) return 1152
+  if (layer === 3 && (version === 2 || version === 2.5)) return 576
+}
+
+function calculateSideInfoLength (layer, mode, version) {
+  if (layer !== 3) return 2
+  if (['stereo', 'joint_stereo', 'dual_channel'].indexOf(mode) >= 0) {
+    if (version === 1) {
+      return 32
+    } else if (version === 2 || version === 2.5) {
+      return 17
+    }
+  } else if (mode === 'mono') {
+    if (version === 1) {
+      return 17
+    } else if (version === 2 || version === 2.5) {
+      return 9
+    }
+  }
+}
+
+function calcSlotSize (layer) {
+  if (layer === 0) return 'reserved'
+  if (layer === 1) return 4
+  if (layer === 2) return 1
+  if (layer === 3) return 1
+}
+
+// [bits][mpegversion + layer] = bitrate
+var bitrate_index = {
+    0x01: {'11': 32, '12': 32, '13': 32, '21': 32, '22': 8, '23': 8},
+    0x02: {'11': 64, '12': 48, '13': 40, '21': 48, '22': 16, '23': 16},
+    0x03: {'11': 96, '12': 56, '13': 48, '21': 56, '22': 24, '23': 24},
+    0x04: {'11': 128, '12': 64, '13': 56, '21': 64, '22': 32, '23': 32},
+    0x05: {'11': 160, '12': 80, '13': 64, '21': 80, '22': 40, '23': 40},
+    0x06: {'11': 192, '12': 96, '13': 80, '21': 96, '22': 48, '23': 48},
+    0x07: {'11': 224, '12': 112, '13': 96, '21': 112, '22': 56, '23': 56},
+    0x08: {'11': 256, '12': 128, '13': 112, '21': 128, '22': 64, '23': 64},
+    0x09: {'11': 288, '12': 160, '13': 128, '21': 144, '22': 80, '23': 80},
+    0x0A: {'11': 320, '12': 192, '13': 160, '21': 160, '22': 96, '23': 96},
+    0x0B: {'11': 352, '12': 224, '13': 192, '21': 176, '22': 112, '23': 112},
+    0x0C: {'11': 384, '12': 256, '13': 224, '21': 192, '22': 128, '23': 128},
+    0x0D: {'11': 416, '12': 320, '13': 256, '21': 224, '22': 144, '23': 144},
+    0x0E: {'11': 448, '12': 384, '13': 320, '21': 256, '22': 160, '23': 160}
+  }
+
+function id3BitrateCalculator (byte, mpegVersion, layer) {
+  var bits = (byte & 0xF0) >> 4
+  if (bits === 0x00) return 'free'
+  if (bits === 0x0F) return 'reserved'
+  return bitrate_index[bits][mpegVersion.toString() + layer]
+}
+
+// [version][bits] == sampling rate
+var sampling_rate_freq_index = {
+    1: {0x00: 44100, 0x01: 48000, 0x02: 32000},
+    2: {0x00: 22050, 0x01: 24000, 0x02: 16000},
+    2.5: {0x00: 11025, 0x01: 12000, 0x02: 8000}
+}
+
+function samplingRateCalculator (byte, version) {
+  var bits = (byte & 0xC) >> 2
+  if (bits === 0x03) return 'reserved'
+  return sampling_rate_freq_index[version][bits]
+}
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"./id3v2_frames":7,"buffer":16,"strtok2":48}],7:[function(require,module,exports){
+'use strict'
+var Buffer = require('buffer').Buffer
+var strtok = require('strtok2')
+var common = require('./common')
+var findZero = common.findZero
+var decodeString = common.decodeString
+
+exports.readData = function readData (b, type, flags, major) {
+  var encoding = getTextEncoding(b[0])
+  var length = b.length
+  var offset = 0
+  var output = []
+  var nullTerminatorLength = getNullTerminatorLength(encoding)
+  var fzero
+
+  if (type[0] === 'T') {
+    type = 'T*'
+  }
+
+  switch (type) {
+    case 'T*':
+      var text = decodeString(b.slice(1), encoding).replace(/\x00+$/, '')
+      // id3v2.4 defines that multiple T* values are separated by 0x00
+      output = text.split(/\x00/g)
+      break
+
+    case 'PIC':
+    case 'APIC':
+      var pic = {}
+
+      offset += 1
+
+      switch (major) {
+        case 2:
+          pic.format = decodeString(b.slice(offset, offset + 3), encoding)
+          offset += 3
+          break
+        case 3:
+        case 4:
+          var enc = 'iso-8859-1'
+          fzero = findZero(b, offset, length, enc)
+          pic.format = decodeString(b.slice(offset, fzero), enc)
+          offset = fzero + 1
+          break
+      }
+
+      pic.type = common.PICTURE_TYPE[b[offset]]
+      offset += 1
+
+      fzero = findZero(b, offset, length, encoding)
+      pic.description = decodeString(b.slice(offset, fzero), encoding)
+      offset = fzero + nullTerminatorLength
+
+      pic.data = new Buffer(b.slice(offset, length))
+      output = [pic]
+      break
+
+    case 'CNT':
+    case 'PCNT':
+      output = [strtok.UINT32_BE.get(b, 0)]
+      break
+
+    case 'ULT':
+    case 'USLT':
+    case 'COM':
+    case 'COMM':
+      var out = {}
+
+      offset += 1
+
+      out.language = decodeString(b.slice(offset, offset + 3), 'iso-8859-1')
+      offset += 3
+
+      fzero = findZero(b, offset, length, encoding)
+      out.description = decodeString(b.slice(offset, fzero), encoding)
+      offset = fzero + nullTerminatorLength
+
+      out.text = decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '')
+
+      output = [out]
+      break
+
+    case 'UFID':
+      var ufid = {}
+
+      fzero = findZero(b, offset, length, encoding)
+      ufid.owner_identifier = decodeString(b.slice(offset, fzero), encoding)
+      offset = fzero + nullTerminatorLength
+
+      ufid.identifier = b.slice(offset, length)
+      output = [ufid]
+      break
+  }
+
+  return output
+}
+
+function getTextEncoding (byte) {
+  switch (byte) {
+    case 0x00:
+      return 'iso-8859-1' // binary
+    case 0x01:
+    case 0x02:
+      return 'utf16' // 01 = with bom, 02 = without bom
+    case 0x03:
+      return 'utf8'
+    default:
+      return 'utf8'
+  }
+}
+
+function getNullTerminatorLength (enc) {
+  switch (enc) {
+    case 'utf16':
+      return 2
+    default:
+      return 1
+  }
+}
+
+},{"./common":3,"buffer":16,"strtok2":48}],8:[function(require,module,exports){
+(function (Buffer){
+'use strict'
+var strtok = require('strtok2')
+var common = require('./common')
+
+module.exports = function (stream, callback, done, readDuration) {
+  strtok.parse(stream, function (v, cb) {
+    // the very first thing we expect to see is the first atom's length
+    if (!v) {
+      cb.metaAtomsTotalLength = 0
+      cb.state = 0
+      return strtok.UINT32_BE
+    }
+
+    switch (cb.state) {
+      case -1: // skip
+        cb.state = 0
+        return strtok.UINT32_BE
+
+      case 0: // atom length
+        cb.atomLength = v
+        cb.state++
+        return new strtok.BufferType(4)
+
+      case 1: // atom name
+        v = v.toString('binary')
+        cb.atomName = v
+
+        // meta has 4 bytes padding at the start (skip)
+        if (v === 'meta') {
+          cb.state = -1
+          return new strtok.IgnoreType(4)
+        }
+
+        if (readDuration) {
+          if (v === 'mdhd') {
+            cb.state = 3
+            return new strtok.BufferType(cb.atomLength - 8)
+          }
+        }
+
+        if (!~CONTAINER_ATOMS.indexOf(v)) {
+          if (cb.atomContainer === 'ilst') {
+            cb.state = 2
+            return new strtok.BufferType(cb.atomLength - 8)
+          }
+          cb.state = -1
+          return new strtok.IgnoreType(cb.atomLength - 8)
+        }
+
+        // dig into container atoms
+        cb.atomContainer = v
+        cb.atomContainerLength = cb.atomLength
+        cb.state--
+        return strtok.UINT32_BE
+
+      case 2: // ilst atom
+        cb.metaAtomsTotalLength += cb.atomLength
+        var result = processMetaAtom(v, cb.atomName, cb.atomLength - 8)
+        if (result.length > 0) {
+          for (var i = 0; i < result.length; i++) {
+            callback(cb.atomName, result[i])
+          }
+        }
+
+        // we can stop processing atoms once we get to the end of the ilst atom
+        if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
+          return done()
+        }
+
+        cb.state = 0
+        return strtok.UINT32_BE
+
+      case 3: // mdhd atom
+        // TODO: support version 1
+        var sampleRate = v.readUInt32BE(12)
+        var duration = v.readUInt32BE(16)
+        callback('duration', duration / sampleRate)
+        cb.state = 0
+        return strtok.UINT32_BE
+    }
+
+    // if we ever get this this point something bad has happened
+    return done(new Error('error parsing'))
+  })
+}
+
+function processMetaAtom (data, atomName, atomLength) {
+  var result = []
+  var offset = 0
+
+  // ignore proprietary iTunes atoms (for now)
+  if (atomName === '----') return result
+
+  while (offset < atomLength) {
+    var length = strtok.UINT32_BE.get(data, offset)
+    var type = TYPES[strtok.UINT32_BE.get(data, offset + 8)]
+
+    var content = processMetaDataAtom(data.slice(offset + 12, offset + length), type, atomName)
+
+    result.push(content)
+    offset += length
+  }
+
+  return result
+
+  function processMetaDataAtom (data, type, atomName) {
+    switch (type) {
+      case 'text':
+        return data.toString('utf8', 4)
+
+      case 'uint8':
+        if (atomName === 'gnre') {
+          var genreInt = strtok.UINT8.get(data, 5)
+          return common.GENRES[genreInt - 1]
+        }
+        if (atomName === 'trkn' || atomName === 'disk') {
+          return data[7] + '/' + data[9]
+        }
+
+        return strtok.UINT8.get(data, 4)
+
+      case 'jpeg':
+      case 'png':
+        return {
+          format: 'image/' + type,
+          data: new Buffer(data.slice(4))
+        }
+    }
+  }
+}
+
+var TYPES = {
+  '0': 'uint8',
+  '1': 'text',
+  '13': 'jpeg',
+  '14': 'png',
+  '21': 'uint8'
+}
+
+var CONTAINER_ATOMS = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia']
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"buffer":16,"strtok2":48}],9:[function(require,module,exports){
+(function (process,Buffer){
+'use strict'
+var events = require('events')
+var common = require('./common')
+var strtok = require('strtok2')
+var through = require('through')
+var fs = require('fs')
+
+module.exports = function (stream, opts, callback) {
+  if (typeof opts === 'function') {
+    callback = opts
+    opts = {}
+  }
+
+  var emitter = new events.EventEmitter()
+
+  var fsize = function (cb) {
+    if (opts.fileSize) {
+      process.nextTick(function () {
+        cb(opts.fileSize)
+      })
+    } else if (stream.hasOwnProperty('path')) {
+      fs.stat(stream.path, function (err, stats) {
+        if (err) throw err
+        cb(stats.size)
+      })
+    } else if (stream.hasOwnProperty('fileSize')) {
+      stream.fileSize(cb)
+    } else if (opts.duration) {
+      emitter.emit(
+        'done',
+        new Error('for non file streams, specify the size of the stream with a fileSize option'))
+    }
+  }
+
+  // pipe to an internal stream so we aren't messing
+  // with the stream passed to us by our users
+  var istream = stream.pipe(through(null, null, {autoDestroy: false}))
+
+  var metadata = {
+    title: '',
+    artist: [],
+    albumartist: [],
+    album: '',
+    year: '',
+    track: { no: 0, of: 0 },
+    genre: [],
+    disk: { no: 0, of: 0 },
+    picture: [],
+    duration: 0
+  }
+
+  var aliased = {}
+
+  var hasReadData = false
+  istream.once('data', function (result) {
+    hasReadData = true
+    var parser = common.getParserForMediaType(headerTypes, result)
+    parser(istream, function (event, value) {
+      if (value === null) return
+      var alias = lookupAlias(event)
+      // emit original event & value
+      if (event !== alias) {
+        emitter.emit(event, value)
+      }
+      buildAliases(alias, event, value, aliased)
+    }, done, opts.hasOwnProperty('duration'), fsize)
+    // re-emitting the first data chunk so the
+    // parser picks the stream up from the start
+    istream.emit('data', result)
+  })
+
+  istream.on('end', function () {
+    if (!hasReadData) {
+      done(new Error('Could not read any data from this stream'))
+    }
+  })
+
+  istream.on('close', onClose)
+
+  function onClose () {
+    done(new Error('Unexpected end of stream'))
+  }
+
+  function done (exception) {
+    istream.removeListener('close', onClose)
+
+    // We only emit aliased events once the 'done' event has been raised,
+    // this is because an alias like 'artist' could have values split
+    // over many data chunks.
+    for (var _alias in aliased) {
+      if (aliased.hasOwnProperty(_alias)) {
+        var val
+        if (_alias === 'title' || _alias === 'album' ||
+          _alias === 'year' || _alias === 'duration') {
+          val = aliased[_alias][0]
+        } else {
+          val = aliased[_alias]
+        }
+
+        emitter.emit(_alias, val)
+
+        if (metadata.hasOwnProperty(_alias)) {
+          metadata[_alias] = val
+        }
+      }
+    }
+
+    if (callback) {
+      callback(exception, metadata)
+    }
+    return strtok.DONE
+  }
+
+  return emitter
+}
+
+function buildAliases (alias, event, value, aliased) {
+  // we need to do something special for these events
+  var cleaned
+  if (event === 'TRACKTOTAL' || event === 'DISCTOTAL') {
+    var evt
+    if (event === 'TRACKTOTAL') evt = 'track'
+    if (event === 'DISCTOTAL') evt = 'disk'
+
+    cleaned = parseInt(value, 10)
+    if (isNaN(cleaned)) cleaned = 0
+    if (!aliased.hasOwnProperty(evt)) {
+      aliased[evt] = { no: 0, of: cleaned }
+    } else {
+      aliased[evt].of = cleaned
+    }
+  }
+
+  // if the event has been aliased then we need to clean it before
+  // it is emitted to the user. e.g. genre (20) -> Electronic
+  if (alias) {
+    cleaned = value
+    if (alias === 'genre') cleaned = common.parseGenre(value)
+    if (alias === 'picture') cleaned = cleanupPicture(value)
+
+    if (alias === 'track' || alias === 'disk') {
+      cleaned = cleanupTrack(value)
+
+      if (aliased[alias]) {
+        aliased[alias].no = cleaned.no
+        return
+      } else {
+        aliased[alias] = cleaned
+        return
+      }
+    }
+
+    // if we haven't previously seen this tag then
+    // initialize it to an array, ready for values to be entered
+    if (!aliased.hasOwnProperty(alias)) {
+      aliased[alias] = []
+    }
+
+    if (cleaned.constructor === Array) {
+      aliased[alias] = cleaned
+    } else {
+      aliased[alias].push(cleaned)
+    }
+  }
+}
+
+function lookupAlias (event) {
+  // mappings for common metadata types(id3v2.3, id3v2.2, id4, vorbis, APEv2)
+  var mappings = [
+    ['title', 'TIT2', 'TT2', '©nam', 'TITLE', 'Title'],
+    ['artist', 'TPE1', 'TP1', '©ART', 'ARTIST', 'Author'],
+    ['albumartist', 'TPE2', 'TP2', 'aART', 'ALBUMARTIST', 'ENSEMBLE', 'WM/AlbumArtist'],
+    ['album', 'TALB', 'TAL', '©alb', 'ALBUM', 'WM/AlbumTitle'],
+    ['year', 'TDRC', 'TYER', 'TYE', '©day', 'DATE', 'Year', 'WM/Year'],
+    ['comment', 'COMM', 'COM', '©cmt', 'COMMENT'],
+    ['track', 'TRCK', 'TRK', 'trkn', 'TRACKNUMBER', 'Track', 'WM/TrackNumber'],
+    ['disk', 'TPOS', 'TPA', 'disk', 'DISCNUMBER', 'Disk'],
+    ['genre', 'TCON', 'TCO', '©gen', 'gnre', 'GENRE', 'WM/Genre'],
+    ['picture', 'APIC', 'PIC', 'covr', 'METADATA_BLOCK_PICTURE', 'Cover Art (Front)',
+    'Cover Art (Back)'],
+    ['composer', 'TCOM', 'TCM', '©wrt', 'COMPOSER'],
+    ['duration']
+  ]
+
+  return mappings.reduce(function (a, b) {
+    if (a !== undefined) return a
+
+    var hasAlias = b.map(function (val) {
+      return val.toUpperCase()
+    }).indexOf(event.toUpperCase())
+
+    if (hasAlias > -1) {
+      return b[0]
+    }
+  }, undefined)
+}
+
+// TODO: a string of 1of1 would fail to be converted
+// converts 1/10 to no : 1, of : 10
+// or 1 to no : 1, of : 0
+function cleanupTrack (origVal) {
+  var split = origVal.toString().split('/')
+  return {
+    no: parseInt(split[0], 10) || 0,
+    of: parseInt(split[1], 10) || 0
+  }
+}
+
+function cleanupPicture (picture) {
+  var newFormat
+  if (picture.format) {
+    var split = picture.format.toLowerCase().split('/')
+    newFormat = (split.length > 1) ? split[1] : split[0]
+    if (newFormat === 'jpeg') newFormat = 'jpg'
+  } else {
+    newFormat = 'jpg'
+  }
+  return { format: newFormat, data: picture.data }
+}
+
+var headerTypes = [
+  {
+    buf: common.asfGuidBuf,
+    tag: require('./asf')
+  },
+  {
+    buf: new Buffer('ID3'),
+    tag: require('./id3v2')
+  },
+  {
+    buf: new Buffer('ftypM4A'),
+    tag: require('./id4'),
+    offset: 4
+  },
+  {
+    buf: new Buffer('ftypmp42'),
+    tag: require('./id4'),
+    offset: 4
+  },
+  {
+    buf: new Buffer('OggS'),
+    tag: require('./ogg')
+  },
+  {
+    buf: new Buffer('fLaC'),
+    tag: require('./flac')
+  },
+  {
+    buf: new Buffer('MAC'),
+    tag: require('./monkeysaudio')
+  }
+]
+
+}).call(this,require('_process'),require("buffer").Buffer)
+},{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":11,"_process":23,"buffer":16,"events":20,"fs":13,"strtok2":48,"through":52}],10:[function(require,module,exports){
+(function (Buffer){
+'use strict'
+var common = require('./common')
+var strtok = require('strtok2')
+
+module.exports = function (stream, callback, done) {
+  var bufs = []
+
+  // TODO: need to be able to parse the tag if its at the start of the file
+  stream.on('data', function (data) {
+    bufs.push(data)
+  })
+
+  common.streamOnRealEnd(stream, function () {
+    var buffer = Buffer.concat(bufs)
+    var offset = buffer.length - 32
+
+    if (buffer.toString('utf8', offset, offset += 8) !== 'APETAGEX') {
+      done(new Error("expected APE header but wasn't found"))
+    }
+
+    var footer = {
+      version: strtok.UINT32_LE.get(buffer, offset, offset + 4),
+      size: strtok.UINT32_LE.get(buffer, offset + 4, offset + 8),
+      count: strtok.UINT32_LE.get(buffer, offset + 8, offset + 12)
+    }
+
+    // go 'back' to where the 'tags' start
+    offset = buffer.length - footer.size
+
+    for (var i = 0; i < footer.count; i++) {
+      var size = strtok.UINT32_LE.get(buffer, offset, offset += 4)
+      var flags = strtok.UINT32_LE.get(buffer, offset, offset += 4)
+      var kind = (flags & 6) >> 1
+
+      var zero = common.findZero(buffer, offset, buffer.length)
+      var key = buffer.toString('ascii', offset, zero)
+      offset = zero + 1
+
+      if (kind === 0) { // utf-8 textstring
+        var value = buffer.toString('utf8', offset, offset += size)
+        var values = value.split(/\x00/g)
+
+        /*jshint loopfunc:true */
+        values.forEach(function (val) {
+          callback(key, val)
+        })
+      } else if (kind === 1) { // binary (probably artwork)
+        if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
+          var picData = buffer.slice(offset, offset + size)
+
+          var off = 0
+          zero = common.findZero(picData, off, picData.length)
+          var description = picData.toString('utf8', off, zero)
+          off = zero + 1
+
+          var picture = {
+            description: description,
+            data: new Buffer(picData.slice(off))
+          }
+
+          offset += size
+          callback(key, picture)
+        }
+      }
+    }
+    return done()
+  })
+}
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"buffer":16,"strtok2":48}],11:[function(require,module,exports){
+(function (Buffer){
+'use strict'
+var events = require('events')
+var strtok = require('strtok2')
+var common = require('./common')
+var sum = require('sum-component')
+
+module.exports = function (stream, callback, done, readDuration) {
+  var innerStream = new events.EventEmitter()
+
+  var pageLength = 0
+  var sampleRate = 0
+  var header
+  var stop = false
+
+  stream.on('end', function () {
+    if (readDuration) {
+      callback('duration', header.pcm_sample_pos / sampleRate)
+      done()
+    }
+  })
+
+  // top level parser that handles the parsing of pages
+  strtok.parse(stream, function (v, cb) {
+    if (!v) {
+      cb.state = 0
+      return new strtok.BufferType(27)
+    }
+
+    if (stop) {
+      return done()
+    }
+
+    switch (cb.state) {
+      case 0: // header
+        header = {
+          type: v.toString('ascii', 0, 4),
+          version: v[4],
+          packet_flag: v[5],
+          pcm_sample_pos: (v.readUInt32LE(10) << 32) + v.readUInt32LE(6),
+          stream_serial_num: strtok.UINT32_LE.get(v, 14),
+          page_number: strtok.UINT32_LE.get(v, 18),
+          check_sum: strtok.UINT32_LE.get(v, 22),
+          segments: v[26]
+        }
+        if (header.type !== 'OggS') {
+          return done(new Error('expected ogg header but was not found'))
+        }
+        cb.pageNumber = header.page_number
+        cb.state++
+        return new strtok.BufferType(header.segments)
+
+      case 1: // segments
+        pageLength = sum(v)
+        cb.state++
+        return new strtok.BufferType(pageLength)
+
+      case 2: // page data
+        innerStream.emit('data', new Buffer(v))
+        cb.state = 0
+        return new strtok.BufferType(27)
+    }
+  })
+
+  // Second level parser that handles the parsing of metadata.
+  // The top level parser emits data that this parser should
+  // handle.
+  strtok.parse(innerStream, function (v, cb) {
+    if (!v) {
+      cb.commentsRead = 0
+      cb.state = 0
+      return new strtok.BufferType(7)
+    }
+
+    switch (cb.state) {
+      case 0: // type
+        if (v.toString() === '\x01vorbis') {
+          cb.state = 6
+          return new strtok.BufferType(23)
+        } else if (v.toString() === '\x03vorbis') {
+          cb.state++
+          return strtok.UINT32_LE
+        } else {
+          return done(new Error('expected vorbis header but found something else'))
+        }
+      break
+
+      case 1: // vendor length
+        cb.state++
+        return new strtok.BufferType(v)
+
+      case 2: // vendor string
+        cb.state++
+        return new strtok.BufferType(4)
+
+      case 3: // user comment list length
+        cb.commentsLength = v.readUInt32LE(0)
+        // no metadata, stop parsing
+        if (cb.commentsLength === 0) return strtok.DONE
+        cb.state++
+        return strtok.UINT32_LE
+
+      case 4: // comment length
+        cb.state++
+        return new strtok.BufferType(v)
+
+      case 5: // comment
+        cb.commentsRead++
+        v = v.toString()
+        var idx = v.indexOf('=')
+        var key = v.slice(0, idx).toUpperCase()
+        var value = v.slice(idx + 1)
+
+        if (key === 'METADATA_BLOCK_PICTURE') {
+          value = common.readVorbisPicture(new Buffer(value, 'base64'))
+        }
+
+        callback(key, value)
+
+        if (cb.commentsRead === cb.commentsLength) {
+          // if we don't want to read the duration
+          // then tell the parent stream to stop
+          stop = !readDuration
+          return strtok.DONE
+        }
+
+        cb.state-- // back to comment length
+        return strtok.UINT32_LE
+
+      case 6: // vorbis info
+        var info = {
+          'version': v.readUInt32LE(0),
+          'channel_mode': v.readUInt8(4),
+          'sample_rate': v.readUInt32LE(5),
+          'bitrate_nominal': v.readUInt32LE(13)
+        }
+        sampleRate = info.sample_rate
+        cb.state = 0
+        return new strtok.BufferType(7)
+    }
+  })
+}
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"buffer":16,"events":20,"strtok2":48,"sum-component":49}],12:[function(require,module,exports){
+var windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
+8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
+8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
+169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
+201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
+217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
+248, 249, 250, 251, 252, 253, 254, 255]
+
+function inRange (a, min, max) {
+  return min <= a && a <= max
+}
+
+function codePointToString (cp) {
+  if (cp <= 0xFFFF) {
+    return String.fromCharCode(cp)
+  } else {
+    cp -= 0x10000
+    return String.fromCharCode((cp >> 10) + 0xD800, (cp & 0x3FF) + 0xDC00)
+  }
+}
+
+function singleByteDecoder (bite, index) {
+  if (inRange(bite, 0x00, 0x7F)) {
+    return bite
+  }
+
+  var code_point = index[bite - 0x80]
+  if (code_point === null) {
+    throw Error('invaliding encoding')
+  }
+
+  return code_point
+}
+
+module.exports = function (buffer) {
+  var str = ''
+  for (var i = 0; i < buffer.length; i++) {
+    str += codePointToString(singleByteDecoder(buffer[i], windows1252))
+  }
+  return str
+}
+
+},{}],13:[function(require,module,exports){
+
+},{}],14:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -361,9 +2276,9 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":29}],3:[function(require,module,exports){
-arguments[4][1][0].apply(exports,arguments)
-},{"dup":1}],4:[function(require,module,exports){
+},{"util/":41}],15:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],16:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -2078,7 +3993,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":5,"ieee754":6,"isarray":7}],5:[function(require,module,exports){
+},{"base64-js":17,"ieee754":18,"isarray":19}],17:[function(require,module,exports){
 'use strict'
 
 exports.toByteArray = toByteArray
@@ -2189,7 +4104,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],6:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -2275,14 +4190,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],7:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],8:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -2582,7 +4497,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],9:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -2607,7 +4522,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],10:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -2626,7 +4541,7 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],11:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -2719,10 +4634,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],12:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":13}],13:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25}],25:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -2798,7 +4713,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":15,"./_stream_writable":17,"core-util-is":18,"inherits":9,"process-nextick-args":20}],14:[function(require,module,exports){
+},{"./_stream_readable":27,"./_stream_writable":29,"core-util-is":30,"inherits":21,"process-nextick-args":32}],26:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -2825,7 +4740,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":16,"core-util-is":18,"inherits":9}],15:[function(require,module,exports){
+},{"./_stream_transform":28,"core-util-is":30,"inherits":21}],27:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -3708,7 +5623,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":13,"_process":11,"buffer":4,"core-util-is":18,"events":8,"inherits":9,"isarray":19,"process-nextick-args":20,"string_decoder/":27,"util":3}],16:[function(require,module,exports){
+},{"./_stream_duplex":25,"_process":23,"buffer":16,"core-util-is":30,"events":20,"inherits":21,"isarray":31,"process-nextick-args":32,"string_decoder/":39,"util":15}],28:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -3889,7 +5804,8 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":13,"core-util-is":18,"inherits":9}],17:[function(require,module,exports){
+},{"./_stream_duplex":25,"core-util-is":30,"inherits":21}],29:[function(require,module,exports){
+(function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
@@ -3903,7 +5819,7 @@ var processNextTick = require('process-nextick-args');
 /*</replacement>*/
 
 /*<replacement>*/
-var asyncWrite = !true ? setImmediate : processNextTick;
+var asyncWrite = !process.browser && ['v0.10', 'v0.9.'].indexOf(process.version.slice(0, 5)) > -1 ? setImmediate : processNextTick;
 /*</replacement>*/
 
 /*<replacement>*/
@@ -4406,7 +6322,8 @@ function CorkedRequest(state) {
     }
   };
 }
-},{"./_stream_duplex":13,"buffer":4,"core-util-is":18,"events":8,"inherits":9,"process-nextick-args":20,"util-deprecate":21}],18:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"./_stream_duplex":25,"_process":23,"buffer":16,"core-util-is":30,"events":20,"inherits":21,"process-nextick-args":32,"util-deprecate":33}],30:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4517,9 +6434,9 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../insert-module-globals/node_modules/is-buffer/index.js")})
-},{"../../../../insert-module-globals/node_modules/is-buffer/index.js":10}],19:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],20:[function(require,module,exports){
+},{"../../../../insert-module-globals/node_modules/is-buffer/index.js":22}],31:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19}],32:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -4543,7 +6460,7 @@ function nextTick(fn) {
 }
 
 }).call(this,require('_process'))
-},{"_process":11}],21:[function(require,module,exports){
+},{"_process":23}],33:[function(require,module,exports){
 (function (global){
 
 /**
@@ -4614,10 +6531,11 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],22:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":14}],23:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":26}],35:[function(require,module,exports){
+(function (process){
 var Stream = (function (){
   try {
     return require('st' + 'ream'); // hack to fix a circular dependency issue when used with browserify
@@ -4631,19 +6549,18 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-// inline-process-browser and unreachable-branch-transform make sure this is
-// removed in browserify builds
-if (!true) {
-  module.exports = require('stream');
+if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
+  module.exports = Stream;
 }
 
-},{"./lib/_stream_duplex.js":13,"./lib/_stream_passthrough.js":14,"./lib/_stream_readable.js":15,"./lib/_stream_transform.js":16,"./lib/_stream_writable.js":17,"stream":26}],24:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"./lib/_stream_duplex.js":25,"./lib/_stream_passthrough.js":26,"./lib/_stream_readable.js":27,"./lib/_stream_transform.js":28,"./lib/_stream_writable.js":29,"_process":23}],36:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":16}],25:[function(require,module,exports){
+},{"./lib/_stream_transform.js":28}],37:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":17}],26:[function(require,module,exports){
+},{"./lib/_stream_writable.js":29}],38:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4772,7 +6689,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":8,"inherits":9,"readable-stream/duplex.js":12,"readable-stream/passthrough.js":22,"readable-stream/readable.js":23,"readable-stream/transform.js":24,"readable-stream/writable.js":25}],27:[function(require,module,exports){
+},{"events":20,"inherits":21,"readable-stream/duplex.js":24,"readable-stream/passthrough.js":34,"readable-stream/readable.js":35,"readable-stream/transform.js":36,"readable-stream/writable.js":37}],39:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4995,14 +6912,14 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":4}],28:[function(require,module,exports){
+},{"buffer":16}],40:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],29:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5592,1918 +7509,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":28,"_process":11,"inherits":9}],30:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var common = require('./common')
-var equal = require('deep-equal')
-
-var decodeString = common.decodeString
-
-module.exports = function (stream, callback, done) {
-  var currentState = startState
-
-  strtok.parse(stream, function (v, cb) {
-    currentState = currentState.parse(callback, v, done)
-    return currentState.getExpectedType()
-  })
-}
-
-var startState = {
-  parse: function (callback) {
-    return idState
-  }
-}
-
-var finishedState = {
-  parse: function (callback) {
-    return this
-  },
-  getExpectedType: function () {
-    return strtok.DONE
-  }
-}
-
-var idState = {
-  parse: function (callback, data, done) {
-    if (!equal(common.asfGuidBuf, data)) {
-      done(new Error('expected asf header but was not found'))
-      return finishedState
-    }
-    return headerDataState
-  },
-  getExpectedType: function () {
-    return new strtok.BufferType(common.asfGuidBuf.length)
-  }
-}
-
-function ReadObjectState (size, objectCount) {
-  this.size = size
-  this.objectCount = objectCount
-}
-
-ReadObjectState.prototype.parse = function (callback, data, done) {
-  var guid = data.slice(0, 16)
-  var size = readUInt64LE(data, 16)
-  var State = stateByGuid(guid) || IgnoreObjectState
-  this.objectCount -= 1
-  this.size -= size
-  var nextState = (this.objectCount <= 0) ? finishedState : this
-  return new State(nextState, size - 24)
-}
-
-ReadObjectState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(24)
-}
-
-var headerDataState = {
-  parse: function (callback, data, done) {
-    var size = readUInt64LE(data, 0)
-    var objectCount = data.readUInt32LE(8)
-    return new ReadObjectState(size, objectCount)
-  },
-  getExpectedType: function () {
-    // 8 bytes size
-    // 4 bytes object count
-    // 2 bytes ignore
-    return new strtok.BufferType(14)
-  }
-}
-
-function IgnoreObjectState (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-IgnoreObjectState.prototype.parse = function (callback, data, done) {
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-IgnoreObjectState.prototype.getExpectedType = function () {
-  return new strtok.IgnoreType(this.size)
-}
-
-function ContentDescriptionObjectState (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-var contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating']
-ContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
-  var lengths = [
-    data.readUInt16LE(0),
-    data.readUInt16LE(2),
-    data.readUInt16LE(4),
-    data.readUInt16LE(6),
-    data.readUInt16LE(8)
-  ]
-  var pos = 10
-  for (var i = 0; i < contentDescTags.length; i += 1) {
-    var tagName = contentDescTags[i]
-    var length = lengths[i]
-    var end = pos + length
-    if (length > 0) {
-      var value = parseUnicodeAttr(data.slice(pos, end))
-      callback(tagName, value)
-    }
-    pos = end
-  }
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-ContentDescriptionObjectState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.size)
-}
-
-ContentDescriptionObjectState.guid = new Buffer([
-  0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-])
-
-function ExtendedContentDescriptionObjectState (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-var attributeParsers = [
-  parseUnicodeAttr,
-  parseByteArrayAttr,
-  parseBoolAttr,
-  parseDWordAttr,
-  parseQWordAttr,
-  parseWordAttr,
-  parseByteArrayAttr
-]
-
-ExtendedContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
-  var attrCount = data.readUInt16LE(0)
-  var pos = 2
-  for (var i = 0; i < attrCount; i += 1) {
-    var nameLen = data.readUInt16LE(pos)
-    pos += 2
-    var name = parseUnicodeAttr(data.slice(pos, pos + nameLen))
-    pos += nameLen
-    var valueType = data.readUInt16LE(pos)
-    pos += 2
-    var valueLen = data.readUInt16LE(pos)
-    pos += 2
-    var value = data.slice(pos, pos + valueLen)
-    pos += valueLen
-    var parseAttr = attributeParsers[valueType]
-    if (!parseAttr) {
-      done(new Error('unexpected value type: ' + valueType))
-      return finishedState
-    }
-    var attr = parseAttr(value)
-    callback(name, attr)
-  }
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-ExtendedContentDescriptionObjectState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.size)
-}
-
-ExtendedContentDescriptionObjectState.guid = new Buffer([
-  0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
-  0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
-])
-
-function FilePropertiesObject (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-FilePropertiesObject.prototype.parse = function (callback, data, done) {
-  // in miliseconds
-  var playDuration = parseQWordAttr(data.slice(40, 48)) / 10000
-  callback('duration', playDuration / 1000)
-
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-FilePropertiesObject.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.size)
-}
-
-FilePropertiesObject.guid = new Buffer([
-  0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
-  0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
-])
-
-var guidStates = [
-  FilePropertiesObject,
-  ContentDescriptionObjectState,
-  ExtendedContentDescriptionObjectState
-]
-function stateByGuid (guidBuf) {
-  for (var i = 0; i < guidStates.length; i += 1) {
-    var GuidState = guidStates[i]
-    if (equal(GuidState.guid, guidBuf)) return GuidState
-  }
-  return null
-}
-
-function parseUnicodeAttr (buf) {
-  return common.stripNulls(decodeString(buf, 'utf16le'))
-}
-
-function parseByteArrayAttr (buf) {
-  var newBuf = new Buffer(buf.length)
-  buf.copy(newBuf)
-  return newBuf
-}
-
-function parseBoolAttr (buf) {
-  return parseDWordAttr(buf) === 1
-}
-
-function parseDWordAttr (buf) {
-  return buf.readUInt32LE(0)
-}
-
-function parseQWordAttr (buf) {
-  return readUInt64LE(buf, 0)
-}
-
-function parseWordAttr (buf) {
-  return buf.readUInt16LE(0)
-}
-
-function readUInt64LE (buffer, offset) {
-  var high = buffer.slice(offset, offset + 4).readUInt32LE(0)
-  var low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0)
-  var maxuint32 = Math.pow(2, 32)
-  return ((low * maxuint32) + (high >>> 0))
-}
-
-}).call(this,require("buffer").Buffer)
-},{"./common":32,"buffer":4,"deep-equal":42,"strtok2":47}],31:[function(require,module,exports){
-(function (process,Buffer){
-'use strict'
-/*jslint browser: true*/
-var readStream = require('filereader-stream')
-var through = require('through')
-var musicmetadata = require('./index')
-var Stream = require('stream').Stream
-
-module.exports = function (stream, opts, callback) {
-  var wrappedStram = wrapFileWithStream(stream);
-
-  if (typeof opts === 'function') {
-    callback = opts
-    opts = {}
-  }
-
-  return musicmetadata(wrappedStram.dest, opts, function (){
-    // Once we have our meta data we abort stream file reader
-    wrappedStram.abort()
-
-    callback.apply(null, arguments)
-  });
-}
-
-function wrapFileWithStream (file) {
-  var
-    streamFileReader,
-    stream = through(function write (data) {
-    if (data.length > 0) this.queue(data)
-  }, null, {autoDestroy: false})
-
-  if (file instanceof window.ArrayBuffer) {
-    return wrapArrayBufferWithStream(file, stream)
-  }
-
-  stream.fileSize = function (cb) {
-    process.nextTick(function () {
-      cb(file.size)
-    })
-  }
-
-  if (file instanceof Stream) {
-    return file.pipe(stream)
-  }
-  if (file instanceof window.FileList) {
-    throw new Error('You have passed a FileList object but we expected a File')
-  }
-  if (!(file instanceof window.File || file instanceof window.Blob)) {
-    throw new Error('You must provide a valid File or Blob object')
-  }
-
-  streamFileReader = readStream(file)
-  streamFileReader.pipe(stream)
-
-  return streamFileReader
-}
-
-function wrapArrayBufferWithStream (arrayBuffer, throughStream) {
-  throughStream.fileSize = function (cb) {
-    process.nextTick(function () {
-      cb(arrayBuffer.byteLength)
-    })
-  }
-
-  process.nextTick(function () {
-    throughStream.write(new Buffer(new Uint8Array(arrayBuffer)))
-    throughStream.end()
-  })
-
-  return throughStream
-}
-
-}).call(this,require('_process'),require("buffer").Buffer)
-},{"./index":38,"_process":11,"buffer":4,"filereader-stream":45,"stream":26,"through":51}],32:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var equal = require('deep-equal')
-var windows1252decoder = require('./windows1252decoder')
-
-var asfGuidBuf = new Buffer([
-  0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-])
-exports.asfGuidBuf = asfGuidBuf
-
-exports.getParserForMediaType = function (types, header) {
-  for (var i = 0; i < types.length; i += 1) {
-    var type = types[i]
-    var offset = type.offset || 0
-    if (header.length >= offset + type.buf.length &&
-      equal(header.slice(offset, offset + type.buf.length), type.buf)) {
-      return type.tag
-    }
-  }
-  // default to id3v1.1 if we cannot detect any other tags
-  return require('./id3v1')
-}
-
-exports.streamOnRealEnd = function (stream, callback) {
-  stream.on('end', done)
-  stream.on('close', done)
-  function done () {
-    stream.removeListener('end', done)
-    stream.removeListener('close', done)
-    callback()
-  }
-}
-
-exports.readVorbisPicture = function (buffer) {
-  var picture = {}
-  var offset = 0
-
-  picture.type = PICTURE_TYPE[strtok.UINT32_BE.get(buffer, 0)]
-
-  var mimeLen = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.format = buffer.toString('utf-8', offset += 4, offset + mimeLen)
-
-  var descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen)
-  picture.description = buffer.toString('utf-8', offset += 4, offset + descLen)
-
-  picture.width = strtok.UINT32_BE.get(buffer, offset += descLen)
-  picture.height = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4)
-
-  var picDataLen = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen))
-
-  return picture
-}
-
-exports.removeUnsyncBytes = function (buffer) {
-  var readI = 0
-  var writeI = 0
-  while (readI < buffer.length - 1) {
-    if (readI !== writeI) {
-      buffer[writeI] = buffer[readI]
-    }
-    readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1
-    writeI++
-  }
-  if (readI < buffer.length) {
-    buffer[writeI++] = buffer[readI++]
-  }
-  return buffer.slice(0, writeI)
-}
-
-exports.findZero = function (buffer, start, end, encoding) {
-  var i = start
-  if (encoding === 'utf16') {
-    while (buffer[i] !== 0 || buffer[i + 1] !== 0) {
-      if (i >= end) return end
-      i += 2
-    }
-    return i
-  } else {
-    while (buffer[i] !== 0) {
-      if (i >= end) return end
-      i++
-    }
-    return i
-  }
-}
-
-function swapBytes (buffer) {
-  var l = buffer.length
-  if (l & 0x01) {
-    throw new Error('Buffer length must be even')
-  }
-  for (var i = 0; i < l; i += 2) {
-    var a = buffer[i]
-    buffer[i] = buffer[i + 1]
-    buffer[i + 1] = a
-  }
-  return buffer
-}
-
-var readUTF16String = exports.readUTF16String = function (buffer) {
-  var offset = 0
-  if (buffer[0] === 0xFE && buffer[1] === 0xFF) { // big endian
-    buffer = swapBytes(buffer)
-    offset = 2
-  } else if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
-    offset = 2
-  }
-  return buffer.toString('ucs2', offset)
-}
-
-exports.decodeString = function (buffer, encoding) {
-  // annoying workaround for a double BOM issue
-  // https://github.com/leetreveil/musicmetadata/issues/84
-  if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {
-    buffer = buffer.slice(2)
-  }
-
-  if (encoding === 'utf16le' || encoding === 'utf16') {
-    return readUTF16String(buffer)
-  } else if (encoding === 'utf8') {
-    return buffer.toString('utf8')
-  } else if (encoding === 'iso-8859-1') {
-    return windows1252decoder(buffer)
-  }
-
-  throw Error(encoding + ' encoding is not supported!')
-}
-
-exports.parseGenre = function (origVal) {
-  // match everything inside parentheses
-  var split = origVal.trim().split(/\((.*?)\)/g)
-    .filter(function (val) { return val !== '' })
-
-  var array = []
-  for (var i = 0; i < split.length; i++) {
-    var cur = split[i]
-    if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
-      cur = GENRES[cur]
-    }
-    array.push(cur)
-  }
-
-  return array
-    .filter(function (val) { return val !== undefined })
-    .join('/')
-}
-
-exports.stripNulls = function (str) {
-  str = str.replace(/^\x00+/g, '')
-  str = str.replace(/\x00+$/g, '')
-  return str
-}
-
-exports.strtokUINT24_BE = {
-  len: 3,
-  get: function (buf, off) {
-    return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2]
-  }
-}
-
-exports.strtokBITSET = {
-  len: 1,
-  get: function (buf, off, bit) {
-    return (buf[off] & (1 << bit)) !== 0
-  }
-}
-
-exports.strtokINT32SYNCSAFE = {
-  len: 4,
-  get: function (buf, off) {
-    return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
-        ((buf[off + 1]) << 14) | ((buf[off]) << 21)
-  }
-}
-
-var PICTURE_TYPE = exports.PICTURE_TYPE = [
-  'Other',
-  "32x32 pixels 'file icon' (PNG only)",
-  'Other file icon',
-  'Cover (front)',
-  'Cover (back)',
-  'Leaflet page',
-  'Media (e.g. lable side of CD)',
-  'Lead artist/lead performer/soloist',
-  'Artist/performer',
-  'Conductor',
-  'Band/Orchestra',
-  'Composer',
-  'Lyricist/text writer',
-  'Recording Location',
-  'During recording',
-  'During performance',
-  'Movie/video screen capture',
-  'A bright coloured fish',
-  'Illustration',
-  'Band/artist logotype',
-  'Publisher/Studio logotype'
-]
-
-var GENRES = exports.GENRES = [
-  'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
-  'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
-  'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
-  'Euro-Techno', 'Ambient', 'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance',
-  'Classical', 'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel', 'Noise',
-  'Alt. Rock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative', 'Instrumental Pop',
-  'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave', 'Techno-Industrial',
-  'Electronic', 'Pop-Folk', 'Eurodance', 'Dream', 'Southern Rock', 'Comedy', 'Cult',
-  'Gangsta Rap', 'Top 40', 'Christian Rap', 'Pop/Funk', 'Jungle', 'Native American',
-  'Cabaret', 'New Wave', 'Psychedelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
-  'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll', 'Hard Rock',
-  'Folk', 'Folk/Rock', 'National Folk', 'Swing', 'Fast-Fusion', 'Bebob', 'Latin', 'Revival',
-  'Celtic', 'Bluegrass', 'Avantgarde', 'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock',
-  'Symphonic Rock', 'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
-  'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony', 'Booty Bass', 'Primus',
-  'Porn Groove', 'Satire', 'Slow Jam', 'Club', 'Tango', 'Samba', 'Folklore',
-  'Ballad', 'Power Ballad', 'Rhythmic Soul', 'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo',
-  'A Cappella', 'Euro-House', 'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House',
-  'Hardcore', 'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
-  'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover', 'Contemporary Christian',
-  'Christian Rock', 'Merengue', 'Salsa', 'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
-  'Abstract', 'Art Rock', 'Baroque', 'Bhangra', 'Big Beat', 'Breakbeat', 'Chillout',
-  'Downtempo', 'Dub', 'EBM', 'Eclectic', 'Electro', 'Electroclash', 'Emo', 'Experimental',
-  'Garage', 'Global', 'IDM', 'Illbient', 'Industro-Goth', 'Jam Band', 'Krautrock',
-  'Leftfield', 'Lounge', 'Math Rock', 'New Romantic', 'Nu-Breakz', 'Post-Punk', 'Post-Rock',
-  'Psytrance', 'Shoegaze', 'Space Rock', 'Trop Rock', 'World Music', 'Neoclassical', 'Audiobook',
-  'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
-  'Garage Rock', 'Psybient'
-]
-
-}).call(this,require("buffer").Buffer)
-},{"./id3v1":34,"./windows1252decoder":41,"buffer":4,"deep-equal":42,"strtok2":47}],33:[function(require,module,exports){
-'use strict'
-var strtok = require('strtok2')
-var common = require('./common')
-
-module.exports = function (stream, callback, done) {
-  var currentState = startState
-
-  strtok.parse(stream, function (v, cb) {
-    currentState = currentState.parse(callback, v, done)
-    return currentState.getExpectedType()
-  })
-}
-
-var DataDecoder = function (data) {
-  this.data = data
-  this.offset = 0
-}
-
-DataDecoder.prototype.readInt32 = function () {
-  var value = strtok.UINT32_LE.get(this.data, this.offset)
-  this.offset += 4
-  return value
-}
-
-DataDecoder.prototype.readStringUtf8 = function () {
-  var len = this.readInt32()
-  var value = this.data.toString('utf8', this.offset, this.offset + len)
-  this.offset += len
-  return value
-}
-
-var finishedState = {
-  parse: function (callback) {
-    return this
-  },
-  getExpectedType: function () {
-    return strtok.DONE
-  }
-}
-
-var BlockDataState = function (type, length, nextStateFactory) {
-  this.type = type
-  this.length = length
-  this.nextStateFactory = nextStateFactory
-}
-
-BlockDataState.prototype.parse = function (callback, data) {
-  if (this.type === 4) {
-    var decoder = new DataDecoder(data)
-    decoder.readStringUtf8() // vendor (skip)
-    var commentListLength = decoder.readInt32()
-    var comment
-    var split
-    var i
-
-    for (i = 0; i < commentListLength; i++) {
-      comment = decoder.readStringUtf8()
-      split = comment.split('=')
-      callback(split[0].toUpperCase(), split[1])
-    }
-  } else if (this.type === 6) {
-    var picture = common.readVorbisPicture(data)
-    callback('METADATA_BLOCK_PICTURE', picture)
-  } else if (this.type === 0) { // METADATA_BLOCK_STREAMINFO
-    if (data.length < 34) return // invalid streaminfo
-    var sampleRate = common.strtokUINT24_BE.get(data, 10) >> 4
-    var totalSamples = data.readUInt32BE(14)
-    var duration = totalSamples / sampleRate
-    callback('duration', duration)
-  }
-
-  return this.nextStateFactory()
-}
-
-BlockDataState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.length)
-}
-
-var blockHeaderState = {
-  parse: function (callback, data, done) {
-    var header = {
-      lastBlock: (data[0] & 0x80) === 0x80,
-      type: data[0] & 0x7f,
-      length: common.strtokUINT24_BE.get(data, 1)
-    }
-    var followingStateFactory = header.lastBlock ? function () {
-      done()
-      return finishedState
-    } : function () {
-      return blockHeaderState
-    }
-
-    return new BlockDataState(header.type, header.length, followingStateFactory)
-  },
-  getExpectedType: function () {
-    return new strtok.BufferType(4)
-  }
-}
-
-var idState = {
-  parse: function (callback, data, done) {
-    if (data.toString() !== 'fLaC') {
-      done(new Error('expected flac header but was not found'))
-    }
-    return blockHeaderState
-  },
-  getExpectedType: function () {
-    return new strtok.BufferType(4)
-  }
-}
-
-var startState = {
-  parse: function (callback) {
-    return idState
-  },
-  getExpectedType: function () {
-    return strtok.DONE
-  }
-}
-
-},{"./common":32,"strtok2":47}],34:[function(require,module,exports){
-'use strict'
-var common = require('./common')
-
-module.exports = function (stream, callback, done) {
-  var endData = null
-  stream.on('data', function (data) {
-    endData = data
-  })
-  common.streamOnRealEnd(stream, function () {
-    var offset = endData.length - 128
-    var header = endData.toString('ascii', offset, offset += 3)
-    if (header !== 'TAG') {
-      return done(new Error('Could not find metadata header'))
-    }
-
-    var title = endData.toString('ascii', offset, offset += 30)
-    callback('title', title.trim().replace(/\x00/g, ''))
-
-    var artist = endData.toString('ascii', offset, offset += 30)
-    callback('artist', artist.trim().replace(/\x00/g, ''))
-
-    var album = endData.toString('ascii', offset, offset += 30)
-    callback('album', album.trim().replace(/\x00/g, ''))
-
-    var year = endData.toString('ascii', offset, offset += 4)
-    callback('year', year.trim().replace(/\x00/g, ''))
-
-    var comment = endData.toString('ascii', offset, offset += 28)
-    callback('comment', comment.trim().replace(/\x00/g, ''))
-
-    var track = endData[endData.length - 2]
-    callback('track', track)
-
-    if (endData[endData.length - 1] in common.GENRES) {
-      var genre = common.GENRES[endData[endData.length - 1]]
-      callback('genre', genre)
-    }
-    return done()
-  })
-}
-
-},{"./common":32}],35:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var parser = require('./id3v2_frames')
-var common = require('./common')
-
-module.exports = function (stream, callback, done, readDuration, fileSize) {
-  var frameCount = 0
-  var audioFrameHeader
-  var bitrates = []
-
-  strtok.parse(stream, function (v, cb) {
-    if (v === undefined) {
-      cb.state = 0
-      return new strtok.BufferType(10)
-    }
-
-    switch (cb.state) {
-      case 0: // header
-        if (v.toString('ascii', 0, 3) !== 'ID3') {
-          return done(new Error('expected id3 header but was not found'))
-        }
-        cb.id3Header = {
-          version: '2.' + v[3] + '.' + v[4],
-          major: v[3],
-          unsync: common.strtokBITSET.get(v, 5, 7),
-          xheader: common.strtokBITSET.get(v, 5, 6),
-          xindicator: common.strtokBITSET.get(v, 5, 5),
-          footer: common.strtokBITSET.get(v, 5, 4),
-          size: common.strtokINT32SYNCSAFE.get(v, 6)
-        }
-        cb.state = 1
-        return new strtok.BufferType(cb.id3Header.size)
-
-      case 1: // id3 data
-        parseMetadata(v, cb.id3Header, done).map(function (obj) {
-          callback.apply(this, obj)
-        })
-        if (readDuration) {
-          cb.state = 2
-          return new strtok.BufferType(4)
-        }
-        return done()
-
-      case 1.5:
-        var shiftedBuffer = new Buffer(4)
-        cb.frameFragment.copy(shiftedBuffer, 0, 1)
-        v.copy(shiftedBuffer, 3)
-        v = shiftedBuffer
-        cb.state = 2
-
-      /* falls through */
-      case 2: // audio frame header
-
-        // we have found the id3 tag at the end of the file, ignore
-        if (v.slice(0, 3).toString() === 'TAG') {
-          return strtok.DONE
-        }
-
-        // first 11 bits should all be set (frame sync)
-        if ((v[0] === 0xFF && (v[1] & 0xE0) === 0xE0) !== true) {
-          // keep scanning for frame header, id3 tag may
-          // have some padding (0x00) at the end
-          return seekFirstAudioFrame(done)
-        }
-
-        var header = {
-          'version': readMpegVersion(v[1]),
-          'layer': readLayer(v[1]),
-          'protection': !(v[1] & 0x1),
-          'padding': !!((v[2] & 0x02) >> 1),
-          'mode': readMode(v[3])
-        }
-
-        if (isNaN(header.version) || isNaN(header.layer)) {
-          return seekFirstAudioFrame(done)
-        }
-
-        // mp3 files are only found in MPEG1/2 Layer 3
-        if ((header.version !== 1 && header.version !== 2) || header.layer !== 3) {
-          return seekFirstAudioFrame(done)
-        }
-
-        header.samples_per_frame = calcSamplesPerFrame(
-          header.version, header.layer)
-
-        header.bitrate = id3BitrateCalculator(v[2], header.version, header.layer)
-        if (isNaN(header.bitrate)) {
-          return seekFirstAudioFrame(done)
-        }
-
-        header.sample_rate = samplingRateCalculator(v[2], header.version)
-        if (isNaN(header.sample_rate)) {
-          return seekFirstAudioFrame(done)
-        }
-
-        header.slot_size = calcSlotSize(header.layer)
-
-        header.sideinfo_length = calculateSideInfoLength(
-          header.layer, header.mode, header.version)
-
-        var bps = header.samples_per_frame / 8.0
-        var fsize = (bps * (header.bitrate * 1000) / header.sample_rate) +
-          ((header.padding) ? header.slot_size : 0)
-        header.frame_size = Math.floor(fsize)
-
-        audioFrameHeader = header
-        frameCount++
-        bitrates.push(header.bitrate)
-
-        // xtra header only exists in first frame
-        if (frameCount === 1) {
-          cb.offset = header.sideinfo_length
-          cb.state = 3
-          return new strtok.BufferType(header.sideinfo_length)
-        }
-
-        // the stream is CBR if the first 3 frame bitrates are the same
-        if (readDuration && fileSize && frameCount === 3 && areAllSame(bitrates)) {
-          fileSize(function (size) {
-            // subtract non audio stream data from duration calculation
-            size = size - cb.id3Header.size
-            var kbps = (header.bitrate * 1000) / 8
-            callback('duration', size / kbps)
-            cb(done())
-          })
-          return strtok.DEFER
-        }
-
-        // once we know the file is VBR attach listener to end of
-        // stream so we can do the duration calculation when we
-        // have counted all the frames
-        if (readDuration && frameCount === 4) {
-          stream.once('end', function () {
-            callback('duration', calcDuration(frameCount,
-              header.samples_per_frame, header.sample_rate))
-            done()
-          })
-        }
-
-        cb.state = 5
-        return new strtok.IgnoreType(header.frame_size - 4)
-
-      case 3: // side information
-        cb.offset += 12
-        cb.state = 4
-        return new strtok.BufferType(12)
-
-      case 4: // xtra / info header
-        cb.state = 5
-        var frameDataLeft = audioFrameHeader.frame_size - 4 - cb.offset
-
-        var id = v.toString('ascii', 0, 4)
-        if (id !== 'Xtra' && id !== 'Info' && id !== 'Xing') {
-          return new strtok.IgnoreType(frameDataLeft)
-        }
-
-        // frames field is not present
-        if ((v[7] & 0x01) !== 1) {
-          return new strtok.IgnoreType(frameDataLeft)
-        }
-
-        var numFrames = v.readUInt32BE(8)
-        var ah = audioFrameHeader
-        callback('duration', calcDuration(numFrames, ah.samples_per_frame, ah.sample_rate))
-        return done()
-
-      case 5: // skip frame data
-        cb.state = 2
-        return new strtok.BufferType(4)
-    }
-
-    function seekFirstAudioFrame (done) {
-      if (frameCount) {
-        return done(new Error('expected frame header but was not found'))
-      }
-
-      cb.frameFragment = v
-      cb.state = 1.5
-      return new strtok.BufferType(1)
-    }
-  })
-}
-
-function areAllSame (array) {
-  var first = array[0]
-  return array.every(function (element) {
-    return element === first
-  })
-}
-
-function calcDuration (numFrames, samplesPerFrame, sampleRate) {
-  return Math.round(numFrames * (samplesPerFrame / sampleRate))
-}
-
-function parseMetadata (data, header, done) {
-  var offset = 0
-  var frames = []
-
-  if (header.xheader) {
-    offset += data.readUInt32BE(0)
-  }
-
-  while (true) {
-    if (offset === data.length) break
-    var frameHeaderBytes = data.slice(offset, offset += getFrameHeaderLength(header.major, done))
-    var frameHeader = readFrameHeader(frameHeaderBytes, header.major)
-
-    // Last frame. Check first char is a letter, bit of defensive programming
-    if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
-      break
-    }
-
-    var frameDataBytes = data.slice(offset, offset += frameHeader.length)
-    var frameData = readFrameData(frameDataBytes, frameHeader, header.major)
-    for (var pos in frameData) {
-      if (frameData.hasOwnProperty(pos)) {
-        frames.push([frameHeader.id, frameData[pos]])
-      }
-    }
-  }
-  return frames
-}
-
-function readFrameData (v, frameHeader, majorVer) {
-  switch (majorVer) {
-    case 2:
-      return parser.readData(v, frameHeader.id, null, majorVer)
-    case 3:
-    case 4:
-      if (frameHeader.flags.format.unsync) {
-        v = common.removeUnsyncBytes(v)
-      }
-      if (frameHeader.flags.format.data_length_indicator) {
-        v = v.slice(4, v.length)
-      }
-      return parser.readData(v, frameHeader.id, frameHeader.flags, majorVer)
-  }
-}
-
-function readFrameHeader (v, majorVer) {
-  var header = {}
-  switch (majorVer) {
-    case 2:
-      header.id = v.toString('ascii', 0, 3)
-      header.length = common.strtokUINT24_BE.get(v, 3, 6)
-    break
-    case 3:
-      header.id = v.toString('ascii', 0, 4)
-      header.length = strtok.UINT32_BE.get(v, 4, 8)
-      header.flags = readFrameFlags(v.slice(8, 10))
-    break
-    case 4:
-      header.id = v.toString('ascii', 0, 4)
-      header.length = common.strtokINT32SYNCSAFE.get(v, 4, 8)
-      header.flags = readFrameFlags(v.slice(8, 10))
-    break
-  }
-  return header
-}
-
-function getFrameHeaderLength (majorVer, done) {
-  switch (majorVer) {
-    case 2:
-      return 6
-    case 3:
-    case 4:
-      return 10
-    default:
-      return done(new Error('header version is incorrect'))
-  }
-}
-
-function readFrameFlags (b) {
-  return {
-    status: {
-      tag_alter_preservation: common.strtokBITSET.get(b, 0, 6),
-      file_alter_preservation: common.strtokBITSET.get(b, 0, 5),
-      read_only: common.strtokBITSET.get(b, 0, 4)
-    },
-    format: {
-      grouping_identity: common.strtokBITSET.get(b, 1, 7),
-      compression: common.strtokBITSET.get(b, 1, 3),
-      encryption: common.strtokBITSET.get(b, 1, 2),
-      unsync: common.strtokBITSET.get(b, 1, 1),
-      data_length_indicator: common.strtokBITSET.get(b, 1, 0)
-    }
-  }
-}
-
-function readMpegVersion (byte) {
-  var bits = (byte & 0x18) >> 3
-
-  if (bits === 0x00) {
-    return 2.5
-  } else if (bits === 0x01) {
-    return 'reserved'
-  } else if (bits === 0x02) {
-    return 2
-  } else if (bits === 0x03) {
-    return 1
-  }
-}
-
-function readLayer (byte) {
-  var bits = (byte & 0x6) >> 1
-
-  if (bits === 0x00) {
-    return 'reserved'
-  } else if (bits === 0x01) {
-    return 3
-  } else if (bits === 0x02) {
-    return 2
-  } else if (bits === 0x03) {
-    return 1
-  }
-}
-
-function readMode (byte) {
-  var bits = (byte & 0xC0) >> 6
-  if (bits === 0x00) {
-    return 'stereo'
-  } else if (bits === 0x01) {
-    return 'joint_stereo'
-  } else if (bits === 0x02) {
-    return 'dual_channel'
-  } else if (bits === 0x03) {
-    return 'mono'
-  }
-}
-
-function calcSamplesPerFrame (version, layer) {
-  if (layer === 1) return 384
-  if (layer === 2) return 1152
-  if (layer === 3 && version === 1) return 1152
-  if (layer === 3 && (version === 2 || version === 2.5)) return 576
-}
-
-function calculateSideInfoLength (layer, mode, version) {
-  if (layer !== 3) return 2
-  if (['stereo', 'joint_stereo', 'dual_channel'].indexOf(mode) >= 0) {
-    if (version === 1) {
-      return 32
-    } else if (version === 2 || version === 2.5) {
-      return 17
-    }
-  } else if (mode === 'mono') {
-    if (version === 1) {
-      return 17
-    } else if (version === 2 || version === 2.5) {
-      return 9
-    }
-  }
-}
-
-function calcSlotSize (layer) {
-  if (layer === 0) return 'reserved'
-  if (layer === 1) return 4
-  if (layer === 2) return 1
-  if (layer === 3) return 1
-}
-
-// [bits][mpegversion + layer] = bitrate
-var bitrate_index = {
-    0x01: {'11': 32, '12': 32, '13': 32, '21': 32, '22': 8, '23': 8},
-    0x02: {'11': 64, '12': 48, '13': 40, '21': 48, '22': 16, '23': 16},
-    0x03: {'11': 96, '12': 56, '13': 48, '21': 56, '22': 24, '23': 24},
-    0x04: {'11': 128, '12': 64, '13': 56, '21': 64, '22': 32, '23': 32},
-    0x05: {'11': 160, '12': 80, '13': 64, '21': 80, '22': 40, '23': 40},
-    0x06: {'11': 192, '12': 96, '13': 80, '21': 96, '22': 48, '23': 48},
-    0x07: {'11': 224, '12': 112, '13': 96, '21': 112, '22': 56, '23': 56},
-    0x08: {'11': 256, '12': 128, '13': 112, '21': 128, '22': 64, '23': 64},
-    0x09: {'11': 288, '12': 160, '13': 128, '21': 144, '22': 80, '23': 80},
-    0x0A: {'11': 320, '12': 192, '13': 160, '21': 160, '22': 96, '23': 96},
-    0x0B: {'11': 352, '12': 224, '13': 192, '21': 176, '22': 112, '23': 112},
-    0x0C: {'11': 384, '12': 256, '13': 224, '21': 192, '22': 128, '23': 128},
-    0x0D: {'11': 416, '12': 320, '13': 256, '21': 224, '22': 144, '23': 144},
-    0x0E: {'11': 448, '12': 384, '13': 320, '21': 256, '22': 160, '23': 160}
-  }
-
-function id3BitrateCalculator (byte, mpegVersion, layer) {
-  var bits = (byte & 0xF0) >> 4
-  if (bits === 0x00) return 'free'
-  if (bits === 0x0F) return 'reserved'
-  return bitrate_index[bits][mpegVersion.toString() + layer]
-}
-
-// [version][bits] == sampling rate
-var sampling_rate_freq_index = {
-    1: {0x00: 44100, 0x01: 48000, 0x02: 32000},
-    2: {0x00: 22050, 0x01: 24000, 0x02: 16000},
-    2.5: {0x00: 11025, 0x01: 12000, 0x02: 8000}
-}
-
-function samplingRateCalculator (byte, version) {
-  var bits = (byte & 0xC) >> 2
-  if (bits === 0x03) return 'reserved'
-  return sampling_rate_freq_index[version][bits]
-}
-
-}).call(this,require("buffer").Buffer)
-},{"./common":32,"./id3v2_frames":36,"buffer":4,"strtok2":47}],36:[function(require,module,exports){
-'use strict'
-var Buffer = require('buffer').Buffer
-var strtok = require('strtok2')
-var common = require('./common')
-var findZero = common.findZero
-var decodeString = common.decodeString
-
-exports.readData = function readData (b, type, flags, major) {
-  var encoding = getTextEncoding(b[0])
-  var length = b.length
-  var offset = 0
-  var output = []
-  var nullTerminatorLength = getNullTerminatorLength(encoding)
-  var fzero
-
-  if (type[0] === 'T') {
-    type = 'T*'
-  }
-
-  switch (type) {
-    case 'T*':
-      var text = decodeString(b.slice(1), encoding).replace(/\x00+$/, '')
-      // id3v2.4 defines that multiple T* values are separated by 0x00
-      output = text.split(/\x00/g)
-      break
-
-    case 'PIC':
-    case 'APIC':
-      var pic = {}
-
-      offset += 1
-
-      switch (major) {
-        case 2:
-          pic.format = decodeString(b.slice(offset, offset + 3), encoding)
-          offset += 3
-          break
-        case 3:
-        case 4:
-          var enc = 'iso-8859-1'
-          fzero = findZero(b, offset, length, enc)
-          pic.format = decodeString(b.slice(offset, fzero), enc)
-          offset = fzero + 1
-          break
-      }
-
-      pic.type = common.PICTURE_TYPE[b[offset]]
-      offset += 1
-
-      fzero = findZero(b, offset, length, encoding)
-      pic.description = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
-
-      pic.data = new Buffer(b.slice(offset, length))
-      output = [pic]
-      break
-
-    case 'CNT':
-    case 'PCNT':
-      output = [strtok.UINT32_BE.get(b, 0)]
-      break
-
-    case 'ULT':
-    case 'USLT':
-    case 'COM':
-    case 'COMM':
-      var out = {}
-
-      offset += 1
-
-      out.language = decodeString(b.slice(offset, offset + 3), 'iso-8859-1')
-      offset += 3
-
-      fzero = findZero(b, offset, length, encoding)
-      out.description = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
-
-      out.text = decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '')
-
-      output = [out]
-      break
-
-    case 'UFID':
-      var ufid = {}
-
-      fzero = findZero(b, offset, length, encoding)
-      ufid.owner_identifier = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
-
-      ufid.identifier = b.slice(offset, length)
-      output = [ufid]
-      break
-  }
-
-  return output
-}
-
-function getTextEncoding (byte) {
-  switch (byte) {
-    case 0x00:
-      return 'iso-8859-1' // binary
-    case 0x01:
-    case 0x02:
-      return 'utf16' // 01 = with bom, 02 = without bom
-    case 0x03:
-      return 'utf8'
-    default:
-      return 'utf8'
-  }
-}
-
-function getNullTerminatorLength (enc) {
-  switch (enc) {
-    case 'utf16':
-      return 2
-    default:
-      return 1
-  }
-}
-
-},{"./common":32,"buffer":4,"strtok2":47}],37:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var common = require('./common')
-
-module.exports = function (stream, callback, done, readDuration) {
-  strtok.parse(stream, function (v, cb) {
-    // the very first thing we expect to see is the first atom's length
-    if (!v) {
-      cb.metaAtomsTotalLength = 0
-      cb.state = 0
-      return strtok.UINT32_BE
-    }
-
-    switch (cb.state) {
-      case -1: // skip
-        cb.state = 0
-        return strtok.UINT32_BE
-
-      case 0: // atom length
-        cb.atomLength = v
-        cb.state++
-        return new strtok.BufferType(4)
-
-      case 1: // atom name
-        v = v.toString('binary')
-        cb.atomName = v
-
-        // meta has 4 bytes padding at the start (skip)
-        if (v === 'meta') {
-          cb.state = -1
-          return new strtok.IgnoreType(4)
-        }
-
-        if (readDuration) {
-          if (v === 'mdhd') {
-            cb.state = 3
-            return new strtok.BufferType(cb.atomLength - 8)
-          }
-        }
-
-        if (!~CONTAINER_ATOMS.indexOf(v)) {
-          if (cb.atomContainer === 'ilst') {
-            cb.state = 2
-            return new strtok.BufferType(cb.atomLength - 8)
-          }
-          cb.state = -1
-          return new strtok.IgnoreType(cb.atomLength - 8)
-        }
-
-        // dig into container atoms
-        cb.atomContainer = v
-        cb.atomContainerLength = cb.atomLength
-        cb.state--
-        return strtok.UINT32_BE
-
-      case 2: // ilst atom
-        cb.metaAtomsTotalLength += cb.atomLength
-        var result = processMetaAtom(v, cb.atomName, cb.atomLength - 8)
-        if (result.length > 0) {
-          for (var i = 0; i < result.length; i++) {
-            callback(cb.atomName, result[i])
-          }
-        }
-
-        // we can stop processing atoms once we get to the end of the ilst atom
-        if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
-          return done()
-        }
-
-        cb.state = 0
-        return strtok.UINT32_BE
-
-      case 3: // mdhd atom
-        // TODO: support version 1
-        var sampleRate = v.readUInt32BE(12)
-        var duration = v.readUInt32BE(16)
-        callback('duration', duration / sampleRate)
-        cb.state = 0
-        return strtok.UINT32_BE
-    }
-
-    // if we ever get this this point something bad has happened
-    return done(new Error('error parsing'))
-  })
-}
-
-function processMetaAtom (data, atomName, atomLength) {
-  var result = []
-  var offset = 0
-
-  // ignore proprietary iTunes atoms (for now)
-  if (atomName === '----') return result
-
-  while (offset < atomLength) {
-    var length = strtok.UINT32_BE.get(data, offset)
-    var type = TYPES[strtok.UINT32_BE.get(data, offset + 8)]
-
-    var content = processMetaDataAtom(data.slice(offset + 12, offset + length), type, atomName)
-
-    result.push(content)
-    offset += length
-  }
-
-  return result
-
-  function processMetaDataAtom (data, type, atomName) {
-    switch (type) {
-      case 'text':
-        return data.toString('utf8', 4)
-
-      case 'uint8':
-        if (atomName === 'gnre') {
-          var genreInt = strtok.UINT8.get(data, 5)
-          return common.GENRES[genreInt - 1]
-        }
-        if (atomName === 'trkn' || atomName === 'disk') {
-          return data[7] + '/' + data[9]
-        }
-
-        return strtok.UINT8.get(data, 4)
-
-      case 'jpeg':
-      case 'png':
-        return {
-          format: 'image/' + type,
-          data: new Buffer(data.slice(4))
-        }
-    }
-  }
-}
-
-var TYPES = {
-  '0': 'uint8',
-  '1': 'text',
-  '13': 'jpeg',
-  '14': 'png',
-  '21': 'uint8'
-}
-
-var CONTAINER_ATOMS = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia']
-
-}).call(this,require("buffer").Buffer)
-},{"./common":32,"buffer":4,"strtok2":47}],38:[function(require,module,exports){
-(function (process,Buffer){
-'use strict'
-var events = require('events')
-var common = require('./common')
-var strtok = require('strtok2')
-var through = require('through')
-var fs = require('fs')
-
-module.exports = function (stream, opts, callback) {
-  if (typeof opts === 'function') {
-    callback = opts
-    opts = {}
-  }
-
-  var emitter = new events.EventEmitter()
-
-  var fsize = function (cb) {
-    if (opts.fileSize) {
-      process.nextTick(function () {
-        cb(opts.fileSize)
-      })
-    } else if (stream.hasOwnProperty('path')) {
-      fs.stat(stream.path, function (err, stats) {
-        if (err) throw err
-        cb(stats.size)
-      })
-    } else if (stream.hasOwnProperty('fileSize')) {
-      stream.fileSize(cb)
-    } else if (opts.duration) {
-      emitter.emit(
-        'done',
-        new Error('for non file streams, specify the size of the stream with a fileSize option'))
-    }
-  }
-
-  // pipe to an internal stream so we aren't messing
-  // with the stream passed to us by our users
-  var istream = stream.pipe(through(null, null, {autoDestroy: false}))
-
-  var metadata = {
-    title: '',
-    artist: [],
-    albumartist: [],
-    album: '',
-    year: '',
-    track: { no: 0, of: 0 },
-    genre: [],
-    disk: { no: 0, of: 0 },
-    picture: [],
-    duration: 0
-  }
-
-  var aliased = {}
-
-  var hasReadData = false
-  istream.once('data', function (result) {
-    hasReadData = true
-    var parser = common.getParserForMediaType(headerTypes, result)
-    parser(istream, function (event, value) {
-      if (value === null) return
-      var alias = lookupAlias(event)
-      // emit original event & value
-      if (event !== alias) {
-        emitter.emit(event, value)
-      }
-      buildAliases(alias, event, value, aliased)
-    }, done, opts.hasOwnProperty('duration'), fsize)
-    // re-emitting the first data chunk so the
-    // parser picks the stream up from the start
-    istream.emit('data', result)
-  })
-
-  istream.on('end', function () {
-    if (!hasReadData) {
-      done(new Error('Could not read any data from this stream'))
-    }
-  })
-
-  istream.on('close', onClose)
-
-  function onClose () {
-    done(new Error('Unexpected end of stream'))
-  }
-
-  function done (exception) {
-    istream.removeListener('close', onClose)
-
-    // We only emit aliased events once the 'done' event has been raised,
-    // this is because an alias like 'artist' could have values split
-    // over many data chunks.
-    for (var _alias in aliased) {
-      if (aliased.hasOwnProperty(_alias)) {
-        var val
-        if (_alias === 'title' || _alias === 'album' ||
-          _alias === 'year' || _alias === 'duration') {
-          val = aliased[_alias][0]
-        } else {
-          val = aliased[_alias]
-        }
-
-        emitter.emit(_alias, val)
-
-        if (metadata.hasOwnProperty(_alias)) {
-          metadata[_alias] = val
-        }
-      }
-    }
-
-    if (callback) {
-      callback(exception, metadata)
-    }
-    return strtok.DONE
-  }
-
-  return emitter
-}
-
-function buildAliases (alias, event, value, aliased) {
-  // we need to do something special for these events
-  var cleaned
-  if (event === 'TRACKTOTAL' || event === 'DISCTOTAL') {
-    var evt
-    if (event === 'TRACKTOTAL') evt = 'track'
-    if (event === 'DISCTOTAL') evt = 'disk'
-
-    cleaned = parseInt(value, 10)
-    if (isNaN(cleaned)) cleaned = 0
-    if (!aliased.hasOwnProperty(evt)) {
-      aliased[evt] = { no: 0, of: cleaned }
-    } else {
-      aliased[evt].of = cleaned
-    }
-  }
-
-  // if the event has been aliased then we need to clean it before
-  // it is emitted to the user. e.g. genre (20) -> Electronic
-  if (alias) {
-    cleaned = value
-    if (alias === 'genre') cleaned = common.parseGenre(value)
-    if (alias === 'picture') cleaned = cleanupPicture(value)
-
-    if (alias === 'track' || alias === 'disk') {
-      cleaned = cleanupTrack(value)
-
-      if (aliased[alias]) {
-        aliased[alias].no = cleaned.no
-        return
-      } else {
-        aliased[alias] = cleaned
-        return
-      }
-    }
-
-    // if we haven't previously seen this tag then
-    // initialize it to an array, ready for values to be entered
-    if (!aliased.hasOwnProperty(alias)) {
-      aliased[alias] = []
-    }
-
-    if (cleaned.constructor === Array) {
-      aliased[alias] = cleaned
-    } else {
-      aliased[alias].push(cleaned)
-    }
-  }
-}
-
-function lookupAlias (event) {
-  // mappings for common metadata types(id3v2.3, id3v2.2, id4, vorbis, APEv2)
-  var mappings = [
-    ['title', 'TIT2', 'TT2', '©nam', 'TITLE', 'Title'],
-    ['artist', 'TPE1', 'TP1', '©ART', 'ARTIST', 'Author'],
-    ['albumartist', 'TPE2', 'TP2', 'aART', 'ALBUMARTIST', 'ENSEMBLE', 'WM/AlbumArtist'],
-    ['album', 'TALB', 'TAL', '©alb', 'ALBUM', 'WM/AlbumTitle'],
-    ['year', 'TDRC', 'TYER', 'TYE', '©day', 'DATE', 'Year', 'WM/Year'],
-    ['comment', 'COMM', 'COM', '©cmt', 'COMMENT'],
-    ['track', 'TRCK', 'TRK', 'trkn', 'TRACKNUMBER', 'Track', 'WM/TrackNumber'],
-    ['disk', 'TPOS', 'TPA', 'disk', 'DISCNUMBER', 'Disk'],
-    ['genre', 'TCON', 'TCO', '©gen', 'gnre', 'GENRE', 'WM/Genre'],
-    ['picture', 'APIC', 'PIC', 'covr', 'METADATA_BLOCK_PICTURE', 'Cover Art (Front)',
-    'Cover Art (Back)'],
-    ['composer', 'TCOM', 'TCM', '©wrt', 'COMPOSER'],
-    ['duration']
-  ]
-
-  return mappings.reduce(function (a, b) {
-    if (a !== undefined) return a
-
-    var hasAlias = b.map(function (val) {
-      return val.toUpperCase()
-    }).indexOf(event.toUpperCase())
-
-    if (hasAlias > -1) {
-      return b[0]
-    }
-  }, undefined)
-}
-
-// TODO: a string of 1of1 would fail to be converted
-// converts 1/10 to no : 1, of : 10
-// or 1 to no : 1, of : 0
-function cleanupTrack (origVal) {
-  var split = origVal.toString().split('/')
-  return {
-    no: parseInt(split[0], 10) || 0,
-    of: parseInt(split[1], 10) || 0
-  }
-}
-
-function cleanupPicture (picture) {
-  var newFormat
-  if (picture.format) {
-    var split = picture.format.toLowerCase().split('/')
-    newFormat = (split.length > 1) ? split[1] : split[0]
-    if (newFormat === 'jpeg') newFormat = 'jpg'
-  } else {
-    newFormat = 'jpg'
-  }
-  return { format: newFormat, data: picture.data }
-}
-
-var headerTypes = [
-  {
-    buf: common.asfGuidBuf,
-    tag: require('./asf')
-  },
-  {
-    buf: new Buffer('ID3'),
-    tag: require('./id3v2')
-  },
-  {
-    buf: new Buffer('ftypM4A'),
-    tag: require('./id4'),
-    offset: 4
-  },
-  {
-    buf: new Buffer('ftypmp42'),
-    tag: require('./id4'),
-    offset: 4
-  },
-  {
-    buf: new Buffer('OggS'),
-    tag: require('./ogg')
-  },
-  {
-    buf: new Buffer('fLaC'),
-    tag: require('./flac')
-  },
-  {
-    buf: new Buffer('MAC'),
-    tag: require('./monkeysaudio')
-  }
-]
-
-}).call(this,require('_process'),require("buffer").Buffer)
-},{"./asf":30,"./common":32,"./flac":33,"./id3v2":35,"./id4":37,"./monkeysaudio":39,"./ogg":40,"_process":11,"buffer":4,"events":8,"fs":1,"strtok2":47,"through":51}],39:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var common = require('./common')
-var strtok = require('strtok2')
-
-module.exports = function (stream, callback, done) {
-  var bufs = []
-
-  // TODO: need to be able to parse the tag if its at the start of the file
-  stream.on('data', function (data) {
-    bufs.push(data)
-  })
-
-  common.streamOnRealEnd(stream, function () {
-    var buffer = Buffer.concat(bufs)
-    var offset = buffer.length - 32
-
-    if (buffer.toString('utf8', offset, offset += 8) !== 'APETAGEX') {
-      done(new Error("expected APE header but wasn't found"))
-    }
-
-    var footer = {
-      version: strtok.UINT32_LE.get(buffer, offset, offset + 4),
-      size: strtok.UINT32_LE.get(buffer, offset + 4, offset + 8),
-      count: strtok.UINT32_LE.get(buffer, offset + 8, offset + 12)
-    }
-
-    // go 'back' to where the 'tags' start
-    offset = buffer.length - footer.size
-
-    for (var i = 0; i < footer.count; i++) {
-      var size = strtok.UINT32_LE.get(buffer, offset, offset += 4)
-      var flags = strtok.UINT32_LE.get(buffer, offset, offset += 4)
-      var kind = (flags & 6) >> 1
-
-      var zero = common.findZero(buffer, offset, buffer.length)
-      var key = buffer.toString('ascii', offset, zero)
-      offset = zero + 1
-
-      if (kind === 0) { // utf-8 textstring
-        var value = buffer.toString('utf8', offset, offset += size)
-        var values = value.split(/\x00/g)
-
-        /*jshint loopfunc:true */
-        values.forEach(function (val) {
-          callback(key, val)
-        })
-      } else if (kind === 1) { // binary (probably artwork)
-        if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
-          var picData = buffer.slice(offset, offset + size)
-
-          var off = 0
-          zero = common.findZero(picData, off, picData.length)
-          var description = picData.toString('utf8', off, zero)
-          off = zero + 1
-
-          var picture = {
-            description: description,
-            data: new Buffer(picData.slice(off))
-          }
-
-          offset += size
-          callback(key, picture)
-        }
-      }
-    }
-    return done()
-  })
-}
-
-}).call(this,require("buffer").Buffer)
-},{"./common":32,"buffer":4,"strtok2":47}],40:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var events = require('events')
-var strtok = require('strtok2')
-var common = require('./common')
-var sum = require('sum-component')
-
-module.exports = function (stream, callback, done, readDuration) {
-  var innerStream = new events.EventEmitter()
-
-  var pageLength = 0
-  var sampleRate = 0
-  var header
-  var stop = false
-
-  stream.on('end', function () {
-    if (readDuration) {
-      callback('duration', header.pcm_sample_pos / sampleRate)
-      done()
-    }
-  })
-
-  // top level parser that handles the parsing of pages
-  strtok.parse(stream, function (v, cb) {
-    if (!v) {
-      cb.state = 0
-      return new strtok.BufferType(27)
-    }
-
-    if (stop) {
-      return done()
-    }
-
-    switch (cb.state) {
-      case 0: // header
-        header = {
-          type: v.toString('ascii', 0, 4),
-          version: v[4],
-          packet_flag: v[5],
-          pcm_sample_pos: (v.readUInt32LE(10) << 32) + v.readUInt32LE(6),
-          stream_serial_num: strtok.UINT32_LE.get(v, 14),
-          page_number: strtok.UINT32_LE.get(v, 18),
-          check_sum: strtok.UINT32_LE.get(v, 22),
-          segments: v[26]
-        }
-        if (header.type !== 'OggS') {
-          return done(new Error('expected ogg header but was not found'))
-        }
-        cb.pageNumber = header.page_number
-        cb.state++
-        return new strtok.BufferType(header.segments)
-
-      case 1: // segments
-        pageLength = sum(v)
-        cb.state++
-        return new strtok.BufferType(pageLength)
-
-      case 2: // page data
-        innerStream.emit('data', new Buffer(v))
-        cb.state = 0
-        return new strtok.BufferType(27)
-    }
-  })
-
-  // Second level parser that handles the parsing of metadata.
-  // The top level parser emits data that this parser should
-  // handle.
-  strtok.parse(innerStream, function (v, cb) {
-    if (!v) {
-      cb.commentsRead = 0
-      cb.state = 0
-      return new strtok.BufferType(7)
-    }
-
-    switch (cb.state) {
-      case 0: // type
-        if (v.toString() === '\x01vorbis') {
-          cb.state = 6
-          return new strtok.BufferType(23)
-        } else if (v.toString() === '\x03vorbis') {
-          cb.state++
-          return strtok.UINT32_LE
-        } else {
-          return done(new Error('expected vorbis header but found something else'))
-        }
-      break
-
-      case 1: // vendor length
-        cb.state++
-        return new strtok.BufferType(v)
-
-      case 2: // vendor string
-        cb.state++
-        return new strtok.BufferType(4)
-
-      case 3: // user comment list length
-        cb.commentsLength = v.readUInt32LE(0)
-        // no metadata, stop parsing
-        if (cb.commentsLength === 0) return strtok.DONE
-        cb.state++
-        return strtok.UINT32_LE
-
-      case 4: // comment length
-        cb.state++
-        return new strtok.BufferType(v)
-
-      case 5: // comment
-        cb.commentsRead++
-        v = v.toString()
-        var idx = v.indexOf('=')
-        var key = v.slice(0, idx).toUpperCase()
-        var value = v.slice(idx + 1)
-
-        if (key === 'METADATA_BLOCK_PICTURE') {
-          value = common.readVorbisPicture(new Buffer(value, 'base64'))
-        }
-
-        callback(key, value)
-
-        if (cb.commentsRead === cb.commentsLength) {
-          // if we don't want to read the duration
-          // then tell the parent stream to stop
-          stop = !readDuration
-          return strtok.DONE
-        }
-
-        cb.state-- // back to comment length
-        return strtok.UINT32_LE
-
-      case 6: // vorbis info
-        var info = {
-          'version': v.readUInt32LE(0),
-          'channel_mode': v.readUInt8(4),
-          'sample_rate': v.readUInt32LE(5),
-          'bitrate_nominal': v.readUInt32LE(13)
-        }
-        sampleRate = info.sample_rate
-        cb.state = 0
-        return new strtok.BufferType(7)
-    }
-  })
-}
-
-}).call(this,require("buffer").Buffer)
-},{"./common":32,"buffer":4,"events":8,"strtok2":47,"sum-component":48}],41:[function(require,module,exports){
-var windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
-8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
-8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
-169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
-185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
-217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
-233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
-248, 249, 250, 251, 252, 253, 254, 255]
-
-function inRange (a, min, max) {
-  return min <= a && a <= max
-}
-
-function codePointToString (cp) {
-  if (cp <= 0xFFFF) {
-    return String.fromCharCode(cp)
-  } else {
-    cp -= 0x10000
-    return String.fromCharCode((cp >> 10) + 0xD800, (cp & 0x3FF) + 0xDC00)
-  }
-}
-
-function singleByteDecoder (bite, index) {
-  if (inRange(bite, 0x00, 0x7F)) {
-    return bite
-  }
-
-  var code_point = index[bite - 0x80]
-  if (code_point === null) {
-    throw Error('invaliding encoding')
-  }
-
-  return code_point
-}
-
-module.exports = function (buffer) {
-  var str = ''
-  for (var i = 0; i < buffer.length; i++) {
-    str += codePointToString(singleByteDecoder(buffer[i], windows1252))
-  }
-  return str
-}
-
-},{}],42:[function(require,module,exports){
+},{"./support/isBuffer":40,"_process":23,"inherits":21}],42:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -7730,7 +7736,7 @@ FileStream.prototype.abort = function() {
 
 inherits(FileStream, EventEmitter)
 }).call(this,require("buffer").Buffer)
-},{"buffer":4,"events":8,"inherits":46}],46:[function(require,module,exports){
+},{"buffer":16,"events":20,"inherits":46}],46:[function(require,module,exports){
 module.exports = inherits
 
 function inherits (c, p, proto) {
@@ -7762,6 +7768,29 @@ function inherits (c, p, proto) {
 //new Child
 
 },{}],47:[function(require,module,exports){
+'use strict';
+
+var isStream = module.exports = function (stream) {
+	return stream !== null && typeof stream === 'object' && typeof stream.pipe === 'function';
+};
+
+isStream.writable = function (stream) {
+	return isStream(stream) && stream.writable !== false && typeof stream._write === 'function' && typeof stream._writableState === 'object';
+};
+
+isStream.readable = function (stream) {
+	return isStream(stream) && stream.readable !== false && typeof stream._read === 'function' && typeof stream._readableState === 'object';
+};
+
+isStream.duplex = function (stream) {
+	return isStream.writable(stream) && isStream.readable(stream);
+};
+
+isStream.transform = function (stream) {
+	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
+};
+
+},{}],48:[function(require,module,exports){
 // A fast streaming parser library.
 
 var assert = require('assert');
@@ -8187,7 +8216,7 @@ var parse = function(s, cb) {
 };
 exports.parse = parse;
 
-},{"assert":2,"buffer":4}],48:[function(require,module,exports){
+},{"assert":14,"buffer":16}],49:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -8225,7 +8254,7 @@ module.exports = function(arr, fn){
   return sum;
 };
 
-},{"to-function":49}],49:[function(require,module,exports){
+},{"to-function":50}],50:[function(require,module,exports){
 
 /**
  * Module Dependencies
@@ -8379,7 +8408,7 @@ function stripNested (prop, str, val) {
   });
 }
 
-},{"component-props":50,"props":50}],50:[function(require,module,exports){
+},{"component-props":51,"props":51}],51:[function(require,module,exports){
 /**
  * Global Names
  */
@@ -8466,7 +8495,7 @@ function prefixed(str) {
   };
 }
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -8578,5 +8607,5 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":11,"stream":26}]},{},[31])(31)
+},{"_process":23,"stream":38}]},{},[2])(2)
 });
