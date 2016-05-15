@@ -22,7 +22,7 @@ test('id3v2-duration-allframes', function (t) {
         genre: [ 'Classical' ],
         disk: { no: 0, of: 0 },
         picture: {},
-      duration: 1.48928125 })
+        duration: 1.48928125 })
     t.end()
   })
     .on('duration', function (result) {
