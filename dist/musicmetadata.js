@@ -259,29 +259,11 @@ var musicmetadata = require('./index')
 var isStream = require('is-stream')
 
 module.exports = function (stream, opts, callback) {
-  var wrappedStream = wrapFileWithStream(stream)
-
-  if (typeof opts === 'function') {
-    callback = opts
-    opts = {}
-  }
-
-  if (opts.autoClose) {
-    return musicmetadata(wrappedStream.dest, opts, function () {
-      // Once we have our meta data we abort stream file reader
-      wrappedStream.abort()
-
-      callback.apply(null, arguments)
-    })
-  }
-
-  return musicmetadata(wrappedStream.dest, opts, callback)
+  return musicmetadata(wrapFileWithStream(stream), opts, callback)
 }
 
 function wrapFileWithStream (file) {
-  var
-    streamFileReader,
-    stream = through(function write (data) {
+  var stream = through(function write (data) {
     if (data.length > 0) this.queue(data)
   }, null, {autoDestroy: false})
 
@@ -305,10 +287,7 @@ function wrapFileWithStream (file) {
     throw new Error('You must provide a valid File or Blob object')
   }
 
-  streamFileReader = readStream(file)
-  streamFileReader.pipe(stream)
-
-  return streamFileReader
+  return readStream(file).pipe(stream)
 }
 
 function wrapArrayBufferWithStream (arrayBuffer, throughStream) {
