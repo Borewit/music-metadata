@@ -51,6 +51,15 @@ This will output the standard music metadata:
 }
 ```
 
+Note, the stream is not closed by default. To prevent leaks, you must close it yourself:
+```javascript
+var readableStream = fs.createReadStream('sample.mp3');
+var parser = mm(readableStream, function (err, metadata) {
+  if (err) throw err;
+  readableStream.close();
+});
+```
+
 `musicmetadata` also emits all metadata it discovers during parsing. For example if you wanted to read the `TLEN` frame from an id3v2.x file you can do this:
 
 ```javascript
@@ -63,14 +72,14 @@ You can also read the duration; to calculate the duration `musicmetadata` may ne
 so only enable this if you need the functionality.
 ```javascript
 mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
-  
+
 });
 ```
 
 Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
 ```javascript
 mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 }, function (err, metadata) {
-  
+
 });
 ```
 
@@ -79,7 +88,7 @@ Licence
 
 (The MIT License)
 
-Copyright (c) 2015 Lee Treveil <leetreveil@gmail.com>
+Copyright (c) 2016 Lee Treveil <leetreveil@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
