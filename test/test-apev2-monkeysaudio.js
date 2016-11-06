@@ -4,7 +4,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(32) // -1 due to missing albumartist
+  t.plan(33) // -1 due to missing albumartist
   var artistCounter = 0
 
   var sample = (process.browser) ?
@@ -13,22 +13,22 @@ test('monkeysaudio (.ape)', function (t) {
 
   mm(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.title, '07. Shadow On The Sun', 'title')
-    t.deepEqual(result.artist, ['Audioslave', 'Chris Cornell'], 'artist')
+    t.strictEqual(result.common.title, '07. Shadow On The Sun', 'title')
+    t.deepEqual(result.common.artist, ['Audioslave', 'Chris Cornell'], 'artist')
     // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
-    t.deepEqual(result.albumartist, [], 'albumartist')
-    t.strictEqual(result.album, 'Audioslave', 'album')
-    t.strictEqual(result.year, '2002', 'year')
-    t.deepEqual(result.genre, ['Alternative'], 'genre')
-    t.deepEqual(result.track, { no: 7, of: 0 }, 'track')
-    t.deepEqual(result.disk, { no: 3, of: 0 }, 'disk')
-    t.strictEqual(result.picture[0].format, 'jpg', 'picture 0 format')
-    t.strictEqual(result.picture[0].data.length, 48658, 'picture 0 length')
-    t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format')
-    t.strictEqual(result.picture[1].data.length, 48658, 'picture 1 length')
+    t.deepEqual(result.common.albumartist, [], 'albumartist')
+    t.strictEqual(result.common.album, 'Audioslave', 'album')
+    t.strictEqual(result.common.year, '2002', 'year')
+    t.deepEqual(result.common.genre, ['Alternative'], 'genre')
+    t.deepEqual(result.common.track, { no: 7, of: 0 }, 'track')
+    t.deepEqual(result.common.disk, { no: 3, of: 0 }, 'disk')
+    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
+    t.strictEqual(result.common.picture[0].data.length, 48658, 'picture 0 length')
+    t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')
+    t.strictEqual(result.common.picture[1].data.length, 48658, 'picture 1 length')
     t.end()
   })
-    // aliased tests
+  // aliased tests
     .on('title', function (result) {
       t.strictEqual(result, '07. Shadow On The Sun', 'aliased title')
     })

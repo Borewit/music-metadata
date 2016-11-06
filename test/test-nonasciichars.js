@@ -12,7 +12,7 @@ test('nonasciichars', function (t) {
 
   mm(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.artist[0],
+    t.strictEqual(result.common.artist[0],
       'Janelle Monáe/Roman Gianarthur/Nate Wonder/Roman Gianarthur', 'artist')
     t.end()
   })

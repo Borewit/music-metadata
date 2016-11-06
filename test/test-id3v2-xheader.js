@@ -25,8 +25,8 @@ test('should be able to read id3v2 files with extended headers', function (t) {
       duration: 0
     }
     // additional check because deepEqual is not strict
-    t.strictEqual(result.year, expected.year, 'year')
-    t.deepEqual(result, expected, 'metadata')
+    t.strictEqual(result.common.year, expected.year, 'year')
+    t.deepEqual(result.common, expected, 'metadata')
     t.end()
   })
 })

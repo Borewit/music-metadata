@@ -12,9 +12,10 @@ test('id3v2-duration-allframes', function (t) {
 
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
-    t.deepEqual(result,
+    t.deepEqual(result.common,
       { title: 'Turkish Rondo',
         artist: [ 'Aubrey Hilliard' ],
+        composer: [ 'Mozart' ],
         albumartist: [],
         album: 'Piano Classics',
         year: '0',

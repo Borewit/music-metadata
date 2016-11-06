@@ -12,7 +12,7 @@ test('mp3 cbr calculation', function (t) {
 
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
-    t.strictEqual(result.duration, 373.329375, 'duration')
+    t.strictEqual(result.common.duration, 373.329375, 'duration')
     t.end()
   })
 })

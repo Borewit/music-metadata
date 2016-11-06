@@ -12,12 +12,12 @@ test('invalid "Date" frame should not cause crash', function (t) {
 
   Mmd(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.title, 'One', 'title')
-    t.strictEqual(result.artist[0], 'Coheed And Cambria', 'artist')
-    t.strictEqual(result.album, 'Year Of The Black Rainbow', 'album')
-    t.strictEqual(result.year, '2010', 'year')
-    t.strictEqual(result.track.no, 1, 'track no')
-    t.strictEqual(result.genre[0], 'Progressive Rock', 'genre')
+    t.strictEqual(result.common.title, 'One', 'title')
+    t.strictEqual(result.common.artist[0], 'Coheed And Cambria', 'artist')
+    t.strictEqual(result.common.album, 'Year Of The Black Rainbow', 'album')
+    t.strictEqual(result.common.year, '2010', 'year')
+    t.strictEqual(result.common.track.no, 1, 'track no')
+    t.strictEqual(result.common.genre[0], 'Progressive Rock', 'genre')
     t.end()
   })
 })
