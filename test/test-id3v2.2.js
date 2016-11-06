@@ -12,7 +12,7 @@ test('id3v2.2', function (t) {
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.2.mp3'))
 
   id3(sample, function (err, result) {
-    t.error(err)
+    t.error(err, 'no error')
     t.strictEqual(result.title, 'You Are The One', 'title')
     t.strictEqual(result.artist[0], 'Shiny Toy Guns', 'artist')
     t.strictEqual(result.album, 'We Are Pilots', 'album')
@@ -29,7 +29,7 @@ test('id3v2.2', function (t) {
       t.strictEqual(result, 'You Are The One', 'aliased title')
     })
     .on('artist', function (result) {
-      t.deepEqual(result[0], 'Shiny Toy Guns', 'aliased artist')
+      t.deepEqual(result, ['Shiny Toy Guns'], 'aliased artist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'We Are Pilots', 'aliased album')
@@ -38,11 +38,13 @@ test('id3v2.2', function (t) {
       t.strictEqual(result, '2006', 'aliased year')
     })
     .on('track', function (result) {
-      t.strictEqual(result.no, 1, 'aliased track no')
-      t.strictEqual(result.of, 11, 'aliased track of')
+      t.deepEqual(result, {no: 1, of: 11}, 'aliased track no')
     })
     .on('genre', function (result) {
-      t.strictEqual(result[0], 'Alternative', 'aliased genre')
+      t.deepEqual(result, ['Alternative'], 'aliased genre')
+    })
+    .on('encodedby', function (result) {
+      t.deepEqual(result, ['iTunes v7.0.2.16'], 'aliased encodedby')
     })
     .on('picture', function (result) {
       t.strictEqual(result[0].format, 'jpg', 'aliased picture format')

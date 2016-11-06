@@ -6,19 +6,19 @@ var mm = require('..')
 var test = require('tape')
 
 test('flac', function (t) {
-  t.plan(51)
+  t.plan(57)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/MusicBrainz-Picard-tags.flac')])
     : fs.createReadStream(path.join(__dirname, '/samples/MusicBrainz-Picard-tags.flac'))
 
-  mm(sample, function (err, result) {
+  var parser = mm(sample, function (err, result) {
     t.error(err)
     t.strictEqual(result.title, 'Brian Eno', 'title')
     t.strictEqual(result.artist[0], 'MGMT', 'artist')
     t.strictEqual(result.albumartist.length, 1, 'albumartist length')
     t.strictEqual(result.album, 'Oracular Spectacular / Congratulations', 'album')
-    t.strictEqual(result.year, '2011-09-11', 'originalyear') // ToDo: 'year' should actually be mapped to date
+    t.strictEqual(result.year, '2011-09-11', 'year') // ToDo: 'year' should actually be mapped to date
     t.strictEqual(result.track.no, 7, 'track no')
     t.strictEqual(result.track.of, 9, 'track of')
     t.strictEqual(result.disk.no, 2, 'disk no')
@@ -31,34 +31,47 @@ test('flac', function (t) {
     t.end()
   })
 
-  // aliased tests
-    .on('title', function (result) {
-      t.strictEqual(result, 'Brian Eno', 'aliased title')
+  var commonEventTags = {
+    'title': 'Brian Eno',
+    'artist': ['MGMT'],
+    'albumartist': ['MGMT'],
+    'album': 'Oracular Spectacular / Congratulations',
+    'track': {no: 7, of: 9},
+    'disk': {no: 2, of: 2},
+    'discsubtitle': ['Cogratulations'],
+    'date': ['2011-09-11'],
+    'year': '2011-09-11', // ToDo: backward compatibility
+    'releasecountry': ['XE'],
+    'asin': ['B0055U9LNC'],
+    'barcode': ['886979357723'],
+    'label': ['Sony Music'],
+    'catalognumber': ['88697935772'],
+    'originalyear': ['2011'],
+    'originaldate': ['2011-09-11'],
+    'releasestatus': ['official'],
+    'releasetype': ['album', 'compilation'],
+    'comment': ['EAC-Secure Mode'],
+    'genre': ['Alt. Rock'],
+    'duration': 271.7733333333333,
+    'musicbrainz_albumid': ['6032dfc4-8880-4fea-b1c0-aaee52e1113c'],
+    'musicbrainz_recordingid': ['b0c1d984-ba93-4167-880a-ac02255bf9e7'],
+    'musicbrainz_albumartistid': ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
+    'musicbrainz_artistid': ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
+    'musicbrainz_releasegroupid': ['9a3237f4-c2a5-467f-9a8e-fe1d247ff520'],
+    'musicbrainz_trackid': ['0f53f7a3-89df-4069-9357-d04252239b6d']
+  }
+
+  Object.keys(commonEventTags).forEach(function (tagKey) {
+    parser.on(tagKey, function (result) {
+      t.deepEqual(result, commonEventTags[tagKey], 'aliased ' + tagKey)
     })
-    .on('artist', function (result) {
-      t.strictEqual(result[0], 'MGMT', 'aliased artist')
-    })
-    .on('year', function (result) {
-      // ToDo: 'year' should actually be mapped to date
-      t.strictEqual(result, '2011-09-11', 'aliased year')
-    })
-    .on('track', function (result) {
-      t.strictEqual(result.no, 7, 'aliased track no')
-      t.strictEqual(result.of, 9, 'aliased track of (total)')
-    })
-    .on('genre', function (result) {
-      t.strictEqual(result[0], 'Alt. Rock', 'aliased genre')
-    })
-    .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'aliased picture format')
-      t.strictEqual(result[0].data.length, 175668, 'aliased picture length')
-    })
-    .on('comment', function (result) {
-      t.strictEqual(result[0], 'EAC-Secure Mode', 'aliased comment')
-    })
-    .on('duration', function (result) {
-      t.strictEqual(result, 271.7733333333333, 'aliased duration')
-    })
+  })
+
+  parser.on('picture', function (result) {
+    t.strictEqual(result[0].format, 'jpg', 'aliased picture format')
+    t.strictEqual(result[0].data.length, 175668, 'aliased picture length')
+  })
+
     // raw tests
     .on('TITLE', function (result) {
       t.strictEqual(result, 'Brian Eno', 'raw TITLE')
@@ -88,51 +101,5 @@ test('flac', function (t) {
       t.strictEqual(result.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color')
       t.strictEqual(result.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length')
     })
-    /* Test MusicBrainz / Picard tags */
-    .on('date', function (result) {
-      t.strictEqual(result[0], '2011-09-11', 'aliased date') // ToDo: not called
-    })
-    .on('releasecountry', function (result) {
-      t.strictEqual(result[0], 'XE', 'aliased releasecountry')
-    })
-    .on('asin', function (result) {
-      t.strictEqual(result[0], 'B0055U9LNC', 'aliased asin')
-    })
-    .on('musicbrainz_albumid', function (result) {
-      t.strictEqual(result[0], '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'aliased musicbrainz_albumid')
-    })
-    .on('musicbrainz_recordingid', function (result) {
-      t.strictEqual(result[0], 'b0c1d984-ba93-4167-880a-ac02255bf9e7', 'aliased musicbrainz_recordingid')
-    })
-    .on('musicbrainz_albumartistid', function (result) {
-      t.strictEqual(result[0], 'c485632c-b784-4ee9-8ea1-c5fb365681fc', 'aliased musicbrainz_albumartistid')
-    })
-    .on('musicbrainz_artistid', function (result) {
-      t.strictEqual(result[0], 'c485632c-b784-4ee9-8ea1-c5fb365681fc', 'aliased musicbrainz_artistid')
-    })
-    .on('musicbrainz_releasegroupid', function (result) {
-      t.strictEqual(result[0], '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'aliased musicbrainz_releasegroupid')
-    })
-    .on('musicbrainz_trackid', function (result) {
-      t.strictEqual(result[0], '0f53f7a3-89df-4069-9357-d04252239b6d', 'aliased musicbrainz_trackid')
-    })
-    .on('label', function (result) {
-      t.strictEqual(result[0], 'Sony Music', 'aliased label')
-    })
-    .on('barcode', function (result) {
-      t.strictEqual(result[0], '886979357723', 'aliased barcode')
-    })
-    .on('originalyear', function (result) {
-      t.strictEqual(result[0], '2011', 'aliased originalyear')
-    })
-    .on('originaldate', function (result) {
-      t.strictEqual(result[0], '2011-09-11', 'aliased originaldate')
-    })
-    .on('releasestatus', function (result) {
-      t.strictEqual(result[0], 'official', 'aliased releasestatus')
-    })
-    .on('releasetype', function (result) {
 
-      t.strictEqual(result.length, 2, 'aliased releasetype: 2 items')
-    })
 })

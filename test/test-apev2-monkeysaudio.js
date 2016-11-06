@@ -4,7 +4,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(33)
+  t.plan(32) // -1 due to missing albumartist
   var artistCounter = 0
 
   var sample = (process.browser) ?
@@ -36,7 +36,8 @@ test('monkeysaudio (.ape)', function (t) {
       t.deepEqual(result, ['Audioslave', 'Chris Cornell'], 'aliased artist')
     })
     .on('albumartist', function (result) {
-      // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
+      // Used to be ['Audioslave'],
+      // but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
       t.deepEqual(result, [], 'aliased albumartist')
     })
     .on('album', function (result) {
