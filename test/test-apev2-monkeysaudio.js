@@ -15,7 +15,8 @@ test('monkeysaudio (.ape)', function (t) {
     t.error(err)
     t.strictEqual(result.title, '07. Shadow On The Sun', 'title')
     t.deepEqual(result.artist, ['Audioslave', 'Chris Cornell'], 'artist')
-    t.deepEqual(result.albumartist, ['Audioslave'], 'albumartist')
+    // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
+    t.deepEqual(result.albumartist, [], 'albumartist')
     t.strictEqual(result.album, 'Audioslave', 'album')
     t.strictEqual(result.year, '2002', 'year')
     t.deepEqual(result.genre, ['Alternative'], 'genre')
@@ -35,7 +36,8 @@ test('monkeysaudio (.ape)', function (t) {
       t.deepEqual(result, ['Audioslave', 'Chris Cornell'], 'aliased artist')
     })
     .on('albumartist', function (result) {
-      t.deepEqual(result, ['Audioslave'], 'aliased albumartist')
+      // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
+      t.deepEqual(result, [], 'aliased albumartist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'Audioslave', 'aliased album')
