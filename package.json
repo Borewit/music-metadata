@@ -23,7 +23,9 @@
     "wma",
     "wmv",
     "tags",
-    "tag"
+    "tag",
+    "Picard",
+    "MusicBrainz"
   ],
   "main": "lib",
   "browser": "lib/browser",
