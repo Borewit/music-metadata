@@ -4,7 +4,7 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id3v2.2', function (t) {
-  t.plan(47)
+  t.plan(46)
   var comCounter = 0
 
   var sample = (process.browser) ?

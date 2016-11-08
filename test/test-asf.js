@@ -4,7 +4,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('asf', function (t) {
-  t.plan(23)
+  t.plan(22)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/asf.wma')])

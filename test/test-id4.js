@@ -4,7 +4,7 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id4', function (t) {
-  t.plan(50)
+  t.plan(49)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id4.m4a')])
