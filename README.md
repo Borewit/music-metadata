@@ -29,7 +29,7 @@ var fs = require('fs');
 var mm = require('musicmetadata');
 
 // create a new parser from a node ReadStream
-var parser = mm(fs.createReadStream('sample.mp3'), function (err, metadata) {
+var parser = mm(fs.createReadStream('sample.mp3'), {native=true, duration=true}function (err, metadata) {
   if (err) throw err;
   console.log(metadata);
 });
@@ -54,7 +54,7 @@ This will output the standard music metadata:
      picture : [ { format : 'jpg', data : <Buffer> } ],
      duration : 302.41 // in seconds,
   },
-  'id3v2.4':
+  'id3v2.4': // as a result of 'native=true'
   {
      TPE1 : ['Spor'],
      TALB : 'Nightlife, Vol 5.',
