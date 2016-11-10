@@ -1,10 +1,12 @@
+/* jshint maxlen: 110 */
+
 var path = require('path')
 var fs = require('fs')
 var id3 = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
-  t.plan(57)
+  t.plan(58)
   var apicCounter = 0
   var tconCounter = 0
   var tpe1Counter = 0
@@ -116,6 +118,9 @@ test('id3v2.4', function (t) {
     })
     .on('TDRC', function (result) {
       t.strictEqual(result, '2004', 'raw TDRC')
+    })
+    .on('TXXX', function (result) {
+      t.deepEqual(result, {description: 'PERFORMER', text: 'Explosions In The Sky'}, 'TXXX:PERFORMER')
     })
     .on('APIC', function (result) {
       if (apicCounter === 0) {

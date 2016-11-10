@@ -1,10 +1,12 @@
+/* jshint maxlen: 110 */
+
 var path = require('path')
 var id3 = require('..')
 var fs = require('fs')
 var test = require('tape')
 
 test('id3v2.3', function (t) {
-  t.plan(40)
+  t.plan(41)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
@@ -88,6 +90,9 @@ test('id3v2.3', function (t) {
     })
     .on('TYER', function (result) {
       t.strictEqual(result, '2004', 'raw TYER')
+    })
+    .on('TXXX', function (result) {
+      t.deepEqual(result, {description: 'PERFORMER', text: 'Explosions In The Sky'}, 'TXXX:PERFORMER')
     })
     .on('APIC', function (result) {
       t.strictEqual(result.format, 'image/jpg', 'raw APIC format')
