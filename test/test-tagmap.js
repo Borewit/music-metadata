@@ -12,11 +12,9 @@ test('tagmap', function (t) {
     for (var type in tagmap.mappings) {
       var typeMap = tagmap.mappings[type]
       for (var tag in typeMap) {
-        for (var i = 0; i < typeMap[tag].length; ++i) {
-          var commonType = typeMap[tag][i]
-          if (!tagmap.common.hasOwnProperty(commonType)) {
-            throw 'Unknown common type in mapping ' + type + '.' + tag + '[' + i + '] => ' + commonType
-          }
+        var commonType = typeMap[tag]
+        if (!tagmap.common.hasOwnProperty(commonType)) {
+          throw 'Unknown common type in mapping ' + type + '.' + tag + ' => ' + commonType
         }
       }
     }
