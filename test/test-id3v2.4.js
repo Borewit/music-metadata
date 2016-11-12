@@ -6,10 +6,11 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
-  t.plan(58)
+  t.plan(60)
   var apicCounter = 0
   var tconCounter = 0
   var tpe1Counter = 0
+  var privCounter = 0
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.4.mp3')])
@@ -121,6 +122,21 @@ test('id3v2.4', function (t) {
     })
     .on('TXXX', function (result) {
       t.deepEqual(result, {description: 'PERFORMER', text: 'Explosions In The Sky'}, 'TXXX:PERFORMER')
+    })
+    .on('PRIV', function (result) {
+      switch (privCounter) {
+        case 0:
+          t.deepEqual(result, {owner_identifier: 'PeakValue',
+            data: new Buffer([8, 0, 0, 0])}, 'PRIV:PeakValue')
+          break
+        case 1:
+          t.strictEqual(result.owner_identifier, 'AverageLevel', 'PRIV:AverageValue')
+          break
+      }
+
+      // t.deepEqual(result.owner_identifier,
+      // {owner_identifier: 'PeakValue', data: 'Explosions In The Sky'}, )
+      ++privCounter
     })
     .on('APIC', function (result) {
       if (apicCounter === 0) {
