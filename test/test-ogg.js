@@ -4,7 +4,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('ogg', function (t) {
-  t.plan(49)
+  t.plan(50)
   var comCounter = 0
   var genCounter = 0
 
@@ -14,6 +14,11 @@ test('ogg', function (t) {
 
   mm(sample, { duration: true }, function (err, result) {
     t.error(err)
+    t.strictEqual(result.format.tag_type, 'vorbis', 'format.tag_type')
+    t.strictEqual(result.format.duration, 0, 'format.duration')
+    t.strictEqual(result.format.sample_rate, 44100, 'format.sample-rate = 44.1 kHz')
+    // t.strictEqual(result.format.bitrate, 128000, 'bitrate = 128 kbit/sec')
+
     t.strictEqual(result.common.title, 'In Bloom', 'title')
     t.strictEqual(result.common.artist[0], 'Nirvana', 'artist')
     t.strictEqual(result.common.albumartist[0], 'Nirvana', 'albumartist')
@@ -23,11 +28,9 @@ test('ogg', function (t) {
     t.strictEqual(result.common.track.of, 12, 'track of')
     t.strictEqual(result.common.disk.no, 1, 'disk no')
     t.strictEqual(result.common.disk.of, 0, 'disk of')
-    t.strictEqual(result.common.genre[0], 'Grunge', 'genre 0')
-    t.strictEqual(result.common.genre[1], 'Alternative', 'genre 1')
+    t.deepEqual(result.common.genre, ['Grunge', 'Alternative'], 'genre')
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
     t.strictEqual(result.common.picture[0].data.length, 30966, 'picture length')
-    t.strictEqual(result.common.duration, 0, 'metadata duration')
     t.end()
   })
     .on('duration', function (result) {

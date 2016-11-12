@@ -6,7 +6,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('id3v2.3', function (t) {
-  t.plan(41)
+  t.plan(44)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
@@ -14,6 +14,12 @@ test('id3v2.3', function (t) {
 
   id3(sample, {duration: true}, function (err, result) {
     t.error(err)
+
+    t.strictEqual(result.format.tag_type, 'id3v2.3', 'format.tag_type')
+    t.strictEqual(result.format.sample_rate, 44100, 'format.sample-rate = 44.1 kHz')
+    t.strictEqual(result.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
+    t.strictEqual(result.format.duration, 1, 'format.duration')
+
     t.strictEqual(result.common.title, 'Home', 'title')
     t.strictEqual(result.common.artist[0], 'Explosions In The Sky/Another/And Another', 'artist')
     t.strictEqual(result.common.albumartist[0], 'Soundtrack', 'albumartist')
@@ -26,7 +32,6 @@ test('id3v2.3', function (t) {
     t.strictEqual(result.common.genre[0], 'Soundtrack', 'genre')
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
     t.strictEqual(result.common.picture[0].data.length, 80938, 'picture length')
-    t.strictEqual(result.common.duration, 1, 'metadata duration')
     t.end()
   })
     .on('duration', function (result) {

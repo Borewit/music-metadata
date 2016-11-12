@@ -6,7 +6,7 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
-  t.plan(60)
+  t.plan(63)
   var apicCounter = 0
   var tconCounter = 0
   var tpe1Counter = 0
@@ -18,6 +18,12 @@ test('id3v2.4', function (t) {
 
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
+
+    t.strictEqual(result.format.tag_type, 'id3v2.4', 'tag_type')
+    t.strictEqual(result.format.duration, 1, 'format.duration')
+    t.strictEqual(result.format.sample_rate, 44100, 'sample-rate = 44.1 kHz')
+    t.strictEqual(result.format.bitrate, 128000, 'bitrate = 128 kbit/sec')
+
     t.strictEqual(result.common.title, 'Home', 'title')
     t.strictEqual(result.common.artist[0], 'Explo', 'artist 0')
     t.strictEqual(result.common.artist[1], 'ions', 'artist 1')
@@ -35,7 +41,6 @@ test('id3v2.4', function (t) {
     t.strictEqual(result.common.picture[0].data.length, 80938, 'picture 0 length')
     t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')
     t.strictEqual(result.common.picture[1].data.length, 80938, 'picture 1 length')
-    t.strictEqual(result.common.duration, 1, 'metadata duration')
     t.end()
   })
     .on('duration', function (result) {

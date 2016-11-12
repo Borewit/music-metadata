@@ -12,6 +12,8 @@ test('asf', function (t) {
 
   mm(sample, function (err, result) {
     t.error(err)
+    t.strictEqual(result.format.duration, 244.885, 'duration')
+
     t.strictEqual(result.common.title, "Don't Bring Me Down", 'title')
     t.deepEqual(result.common.artist, ['Electric Light Orchestra'], 'artist')
     t.deepEqual(result.common.albumartist, ['Electric Light Orchestra'], 'albumartist')
@@ -20,7 +22,6 @@ test('asf', function (t) {
     t.deepEqual(result.common.track, {no: 9, of: 0}, 'track 9/0')
     t.deepEqual(result.common.disk, {no: 0, of: 0}, 'disk 0/0')
     t.deepEqual(result.common.genre, ['Rock'], 'genre')
-    t.strictEqual(result.common.duration, 244.885, 'duration')
     t.end()
   }) // aliased tests
     .on('title', function (result) {

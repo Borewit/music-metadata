@@ -4,7 +4,7 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id3v2-duration-allframes', function (t) {
-  t.plan(3)
+  t.plan(4)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2-duration-allframes.mp3')])
@@ -12,6 +12,8 @@ test('id3v2-duration-allframes', function (t) {
 
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
+    t.strictEqual(result.format.duration, 1.48928125, 'duration')
+
     t.deepEqual(result.common,
       { title: 'Turkish Rondo',
         artist: [ 'Aubrey Hilliard' ],
@@ -22,8 +24,8 @@ test('id3v2-duration-allframes', function (t) {
         track: { no: 1, of: 0 },
         genre: [ 'Classical' ],
         disk: { no: 0, of: 0 },
-        picture: {},
-        duration: 1.48928125 })
+        picture: {}
+      })
     t.end()
   })
     .on('duration', function (result) {

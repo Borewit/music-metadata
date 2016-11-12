@@ -189,7 +189,7 @@ function FilePropertiesObject (nextState, size) {
 FilePropertiesObject.prototype.parse = function (callback, data, done) {
   // in miliseconds
   var playDuration = parseQWordAttr(data.slice(40, 48)) / 10000
-  callback(type, 'duration', playDuration / 1000)
+  callback('format', 'duration', playDuration / 1000)
 
   if (this.nextState === finishedState) done()
   return this.nextState
@@ -251,7 +251,7 @@ function readUInt64LE (buffer, offset) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":18,"deep-equal":21,"strtok2":47}],2:[function(require,module,exports){
+},{"./common":3,"buffer":19,"deep-equal":22,"strtok2":48}],2:[function(require,module,exports){
 (function (process,Buffer){
 'use strict'
 /*jslint browser: true*/
@@ -308,7 +308,7 @@ function wrapArrayBufferWithStream (arrayBuffer, throughStream) {
 }
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./index":9,"_process":32,"buffer":18,"filereader-stream":25,"is-stream":30,"through":48}],3:[function(require,module,exports){
+},{"./index":9,"_process":33,"buffer":19,"filereader-stream":26,"is-stream":31,"through":49}],3:[function(require,module,exports){
 (function (Buffer){
 'use strict'
 var strtok = require('strtok2')
@@ -554,7 +554,7 @@ var GENRES = exports.GENRES = [
 ]
 
 }).call(this,require("buffer").Buffer)
-},{"./id3v1":5,"./windows1252decoder":12,"buffer":18,"deep-equal":21,"strtok2":47}],4:[function(require,module,exports){
+},{"./id3v1":5,"./windows1252decoder":13,"buffer":19,"deep-equal":22,"strtok2":48}],4:[function(require,module,exports){
 'use strict'
 var strtok = require('strtok2')
 var common = require('./common')
@@ -565,9 +565,7 @@ module.exports = function (stream, callback, done) {
   var currentState = startState
 
   strtok.parse(stream, function (v, cb) {
-    currentState = currentState.parse(function (tag, value) {
-      callback(type, tag, value)
-    }, v, done)
+    currentState = currentState.parse(callback, v, done)
     return currentState.getExpectedType()
   })
 }
@@ -617,17 +615,19 @@ BlockDataState.prototype.parse = function (callback, data) {
     for (i = 0; i < commentListLength; i++) {
       comment = decoder.readStringUtf8()
       split = comment.split('=')
-      callback(split[0].toUpperCase(), split[1])
+      callback(type, split[0].toUpperCase(), split[1])
     }
   } else if (this.type === 6) {
     var picture = common.readVorbisPicture(data)
-    callback('METADATA_BLOCK_PICTURE', picture)
+    callback(type, 'METADATA_BLOCK_PICTURE', picture)
   } else if (this.type === 0) { // METADATA_BLOCK_STREAMINFO
     if (data.length < 34) return // invalid streaminfo
     var sampleRate = common.strtokUINT24_BE.get(data, 10) >> 4
     var totalSamples = data.readUInt32BE(14)
     var duration = totalSamples / sampleRate
-    callback('duration', duration)
+    callback('format', 'tag_type', type)
+    callback('format', 'sample_rate', sampleRate)
+    callback('format', 'duration', duration)
   }
 
   return this.nextStateFactory()
@@ -679,7 +679,7 @@ var startState = {
   }
 }
 
-},{"./common":3,"strtok2":47}],5:[function(require,module,exports){
+},{"./common":3,"strtok2":48}],5:[function(require,module,exports){
 'use strict'
 var common = require('./common')
 
@@ -724,6 +724,7 @@ module.exports = function (stream, callback, done) {
 
 },{"./common":3}],6:[function(require,module,exports){
 (function (Buffer){
+/* jshint maxlen: 120 */
 'use strict'
 var strtok = require('strtok2')
 var parser = require('./id3v2_frames')
@@ -821,6 +822,10 @@ module.exports = function (stream, callback, done, readDuration, fileSize) {
           return seekFirstAudioFrame(done)
         }
 
+        callback('format', 'tag_type', type)
+        callback('format', 'bitrate', header.bitrate * 1000)
+        callback('format', 'sample_rate', header.sample_rate)
+
         header.slot_size = calcSlotSize(header.layer)
 
         header.sideinfo_length = calculateSideInfoLength(
@@ -848,7 +853,7 @@ module.exports = function (stream, callback, done, readDuration, fileSize) {
             // subtract non audio stream data from duration calculation
             size = size - cb.id3Header.size
             var kbps = (header.bitrate * 1000) / 8
-            callback(type, 'duration', size / kbps)
+            callback('format', 'duration', size / kbps)
             cb(done())
           })
           return strtok.DEFER
@@ -859,7 +864,7 @@ module.exports = function (stream, callback, done, readDuration, fileSize) {
         // have counted all the frames
         if (readDuration && frameCount === 4) {
           stream.once('end', function () {
-            callback(type, 'duration', calcDuration(frameCount,
+            callback('format', 'duration', calcDuration(frameCount,
               header.samples_per_frame, header.sample_rate))
             done()
           })
@@ -889,7 +894,7 @@ module.exports = function (stream, callback, done, readDuration, fileSize) {
 
         var numFrames = v.readUInt32BE(8)
         var ah = audioFrameHeader
-        callback(type, 'duration', calcDuration(numFrames, ah.samples_per_frame, ah.sample_rate))
+        callback('format', 'duration', calcDuration(numFrames, ah.samples_per_frame, ah.sample_rate))
         return done()
 
       case 5: // skip frame data
@@ -1127,7 +1132,7 @@ function samplingRateCalculator (byte, version) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"./id3v2_frames":7,"buffer":18,"strtok2":47}],7:[function(require,module,exports){
+},{"./common":3,"./id3v2_frames":7,"buffer":19,"strtok2":48}],7:[function(require,module,exports){
 'use strict'
 var Buffer = require('buffer').Buffer
 var strtok = require('strtok2')
@@ -1142,16 +1147,20 @@ exports.readData = function readData (b, type, flags, major) {
   var output = []
   var nullTerminatorLength = getNullTerminatorLength(encoding)
   var fzero
+  var out = {}
 
-  if (type[0] === 'T') {
-    type = 'T*'
-  }
-
-  switch (type) {
-    case 'T*':
+  switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
+    case 'T*': // 4.2.1. Text information frames - details
       var text = decodeString(b.slice(1), encoding).replace(/\x00+$/, '')
       // id3v2.4 defines that multiple T* values are separated by 0x00
       output = text.split(/\x00/g)
+      break
+
+    case 'TXXX':
+      output = readIdentifierAndData(b, offset + 1, length, encoding)
+      output = [{
+        description: output.id,
+        text: decodeString(output.data, encoding).replace(/\x00+$/, '') }]
       break
 
     case 'PIC':
@@ -1210,7 +1219,6 @@ exports.readData = function readData (b, type, flags, major) {
     case 'USLT':
     case 'COM':
     case 'COMM':
-      var out = {}
 
       offset += 1
 
@@ -1227,18 +1235,27 @@ exports.readData = function readData (b, type, flags, major) {
       break
 
     case 'UFID':
-      var ufid = {}
+      output = readIdentifierAndData(b, offset, length, 'iso-8859-1')
+      output = [{owner_identifier: output.id, identifier: output.data }]
 
-      fzero = findZero(b, offset, length, encoding)
-      ufid.owner_identifier = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
+      break
 
-      ufid.identifier = b.slice(offset, length)
-      output = [ufid]
+    case 'PRIV': // private frame
+      output = readIdentifierAndData(b, offset, length, 'iso-8859-1')
+      output = [{owner_identifier: output.id, data: output.data }]
       break
   }
 
   return output
+}
+
+function readIdentifierAndData (b, offset, length, encoding) {
+  var fzero = findZero(b, offset, length, encoding)
+
+  var id = decodeString(b.slice(offset, fzero), encoding)
+  offset = fzero + getNullTerminatorLength(encoding)
+
+  return {id: id, data: b.slice(offset, length)}
 }
 
 function getTextEncoding (byte) {
@@ -1264,7 +1281,7 @@ function getNullTerminatorLength (enc) {
   }
 }
 
-},{"./common":3,"buffer":18,"strtok2":47}],8:[function(require,module,exports){
+},{"./common":3,"buffer":19,"strtok2":48}],8:[function(require,module,exports){
 (function (Buffer){
 'use strict'
 var strtok = require('strtok2')
@@ -1343,7 +1360,7 @@ module.exports = function (stream, callback, done, readDuration) {
         // TODO: support version 1
         var sampleRate = v.readUInt32BE(12)
         var duration = v.readUInt32BE(16)
-        callback(type, 'duration', duration / sampleRate)
+        callback('format', 'duration', duration / sampleRate)
         cb.state = 0
         return strtok.UINT32_BE
     }
@@ -1409,7 +1426,7 @@ var TYPES = {
 var CONTAINER_ATOMS = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia']
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":18,"strtok2":47}],9:[function(require,module,exports){
+},{"./common":3,"buffer":19,"strtok2":48}],9:[function(require,module,exports){
 (function (process,Buffer){
 /* jshint maxlen: 300 */
 'use strict'
@@ -1418,7 +1435,16 @@ var common = require('./common')
 var strtok = require('strtok2')
 var through = require('through')
 var fs = require('fs')
+var tagmap = require('./tagmap')
 
+/**
+ * @param stream
+ * @param opts
+ *   .filesize=true  Return filesize
+ *   .native=true    Will return original header in result
+ * @param callback
+ * @returns {*|EventEmitter}
+ */
 module.exports = function (stream, opts, callback) {
   if (typeof opts === 'function') {
     callback = opts
@@ -1450,6 +1476,9 @@ module.exports = function (stream, opts, callback) {
   // with the stream passed to us by our users
   var istream = stream.pipe(through(null, null, { autoDestroy: false }))
 
+  /**
+   * Default present metadata properties
+   */
   var metadata = {
     common: {
       title: '',
@@ -1460,114 +1489,12 @@ module.exports = function (stream, opts, callback) {
       track: { no: 0, of: 0 },
       genre: [],
       disk: { no: 0, of: 0 },
-      picture: [],
+      picture: []
+    },
+    format: {
       duration: 0
     }
   }
-
-  var commonTags =
-  {
-    duration: { singleton: true },
-    year: { singleton: true },
-    // track & disk are pre-stored as singletons
-    track: { singleton: false },
-    disk: { singleton: false },
-
-    title: { singleton: true },
-    artist: { singleton: false },
-    albumartist: { singleton: false },
-    album: { singleton: true },
-    date: { singleton: true },
-    originaldate: { singleton: true },
-    originalyear: { singleton: true },
-    comment: { singleton: false },
-    genre: { singleton: false },
-    picture: { singleton: false },
-    composer: { singleton: false },
-    lyrics: { singleton: false },
-    albumsort: { singleton: true },
-    titlesort: { singleton: true },
-    work: { singleton: true },
-    artistsort: { singleton: false },
-    albumartistsort: { singleton: false },
-    composersort: { singleton: false },
-    lyricist: { singleton: false },
-    writer: { singleton: false },
-    conductor: { singleton: false },
-    remixer: { singleton: false },
-    arranger: { singleton: false },
-    engineer: { singleton: false },
-    producer: { singleton: false },
-    djmixer: { singleton: false },
-    mixer: { singleton: false },
-    label: { singleton: true },
-    grouping: { singleton: true },
-    subtitle: { singleton: true },
-    discsubtitle: { singleton: true },
-    totaltracks: { singleton: true },
-    totaldiscs: { singleton: true },
-    compilation: { singleton: true },
-    _rating: { singleton: true },
-    bpm: { singleton: true },
-    mood: { singleton: true },
-    media: { singleton: true },
-    catalognumber: { singleton: true },
-    show: { singleton: true },
-    showsort: { singleton: true },
-    podcast: { singleton: true },
-    podcasturl: { singleton: true },
-    releasestatus: { singleton: true },
-    releasetype: { singleton: false },
-    releasecountry: { singleton: true },
-    script: { singleton: true },
-    language: { singleton: true },
-    copyright: { singleton: true },
-    license: { singleton: true },
-    encodedby: { singleton: true },
-    encodersettings: { singleton: true },
-    gapless: { singleton: true },
-    barcode: { singleton: true },
-    isrc: { singleton: true },
-    asin: { singleton: true },
-    musicbrainz_recordingid: { singleton: true },
-    musicbrainz_trackid: { singleton: true },
-    musicbrainz_albumid: { singleton: true },
-    musicbrainz_artistid: { singleton: false },
-    musicbrainz_albumartistid: { singleton: false },
-    musicbrainz_releasegroupid: { singleton: true },
-    musicbrainz_workid: { singleton: true },
-    musicbrainz_trmid: { singleton: true },
-    musicbrainz_discid: { singleton: true },
-    acoustid_id: { singleton: true },
-    acoustid_fingerprint: { singleton: true },
-    musicip_puid: { singleton: true },
-    musicip_fingerprint: { singleton: true },
-    website: { singleton: true }
-  }
-
-  /**
-   * Find out if native tag can be safely flatten is a singleton
-   * @param the aliases found for the native tag
-   * @returns {boolean} true if it can be stored as a singleton
-   */
-  function isSingleton (aliases) {
-    if (aliases !== undefined) {
-      for (var i = 0; i < aliases.length; ++i) {
-        var info = commonTags.hasOwnProperty(aliases[i])
-        if (info !== undefined) {
-          if (!info.singleton) {
-            return false
-          }
-        } else {
-          throw new Error('Common type not registered: ' + aliases[i])
-        }
-      }
-      return true
-    }
-    return false
-  }
-
-  var aliased = {}
 
   var hasReadData = false
   istream.once('data', function (result) {
@@ -1575,31 +1502,31 @@ module.exports = function (stream, opts, callback) {
     var parser = common.getParserForMediaType(headerTypes, result)
     parser(istream, function (type, tag, value) {
       if (value === null) return
-      if (!metadata.hasOwnProperty(type)) {
-        metadata[ type ] = {} // Register new header type
-      }
-      var aliases = getCommonName(type, tag)
-      if (aliases !== undefined) {
-        if (aliases.indexOf(tag) === -1) {
-          // emit original event & value
-          emitter.emit(tag, value)
-        }
-        aliases.forEach(function (alias) {
-          // emit original event & value
-          buildAliases(alias, tag, value, aliased)
-        })
+
+      if (type === 'format') {
+        metadata.format[tag] = value
       } else {
-        // emit original event & value
+        setCommonTags(metadata.common, type, tag, value)
+      }
+
+      // Send native event, unless it's native name is the same as a common name
+      if (!tagmap.common.hasOwnProperty(tag)) {
         emitter.emit(tag, value)
       }
-      // Store native tag
-      if (isSingleton(aliases)) {
-        metadata[type][tag] = value
-      } else {
-        if (metadata[type].hasOwnProperty(tag)) {
-          metadata[type][tag].push(value)
+
+      if (opts.native) {
+        if (!metadata.hasOwnProperty(type)) {
+          metadata[ type ] = {} // Register new native header type
+        }
+
+        if (tagmap.isNativeSingleton(type, tag)) {
+          metadata[type][tag] = value
         } else {
-          metadata[type][tag] = [value]
+          if (metadata[type].hasOwnProperty(tag)) {
+            metadata[type][tag].push(value)
+          } else {
+            metadata[type][tag] = [value]
+          }
         }
       }
     }, done, opts.hasOwnProperty('duration'), fsize)
@@ -1626,25 +1553,9 @@ module.exports = function (stream, opts, callback) {
     // We only emit aliased events once the 'done' event has been raised,
     // this is because an alias like 'artist' could have values split
     // over many data chunks.
-    for (var _alias in aliased) {
-      if (aliased.hasOwnProperty(_alias)) {
-        // Can we assume common tag '_alias' is a singleton?
-        var isSingleton = commonTags.hasOwnProperty(_alias) && commonTags[_alias].singleton
-        if (isSingleton && aliased[ _alias ].length > 1) {
-          console.log('Warning: multiple entries for singleton-tag: ' + _alias)
-        }
-
-        // Check if _alias is a singleton and if so store a singleton
-        var val = isSingleton ? aliased[_alias][0] : aliased[_alias]
-
-        if (isSingleton && _alias === 'date' && !metadata.hasOwnProperty('year')) {
-          metadata.common.year = val.substr(0, 4)
-          emitter.emit('year', metadata.common.year)
-        }
-
-        emitter.emit(_alias, val)
-
-        metadata.common[ _alias ] = val
+    for (var _alias in metadata.common) {
+      if (metadata.common.hasOwnProperty(_alias)) {
+        emitter.emit(_alias, metadata.common[_alias])
       }
     }
 
@@ -1657,483 +1568,101 @@ module.exports = function (stream, opts, callback) {
   return emitter
 }
 
-function buildAliases (alias, event, value, aliased) {
+function toIntOrZero (str) {
+  var cleaned = parseInt(str, 10)
+  return isNaN(cleaned) ? 0 : cleaned
+}
 
-  // we need to do something special for these events
-  var cleaned
-  if (event === 'TRACKTOTAL' || event === 'TOTALTRACKS' ||
-    event === 'DISCTOTAL' || events === 'TOTALDISCS') {
-    var evt
-    if (event === 'TRACKTOTAL' || event === 'TOTALTRACKS') evt = 'track'
-    if (event === 'DISCTOTAL' || event === 'TOTALDISCS') evt = 'disk'
+/**
+ * Process and set common tags
+ * @param comTags Target metadata to wrote common tags to
+ * @param type    Native type e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+ * @param tag     Native tag
+ * @param value   Native tag value
+ */
 
-    cleaned = parseInt(value, 10)
-    if (isNaN(cleaned)) cleaned = 0
-    if (!aliased.hasOwnProperty(evt)) {
-      aliased[ evt ] = { no: 0, of: cleaned }
-    } else {
-      aliased[ evt ].of = cleaned
-    }
+function setCommonTags (comTags, type, tag, value) {
+
+  switch (type) {
+    case 'vorbis':
+      switch (tag) {
+
+        case 'TRACKTOTAL':
+        case 'TOTALTRACKS': // rare tag
+          comTags.track.of = toIntOrZero(value)
+          return
+
+        case 'DISCTOTAL':
+        case 'TOTALDISCS': // rare tag
+          comTags.disk.of = toIntOrZero(value)
+          return
+      }
+      break
+
+    case 'id3v2.3':
+    case 'id3v2.4':
+      switch (tag) {
+
+        case 'TXXX':
+          tag += ':' + value.description
+          value = value.text
+          break
+
+        case 'UFID': // decode MusicBrainz Recording Id
+          if (value.owner_identifier === 'http://musicbrainz.org') {
+            tag += ':' + value.owner_identifier
+            value = common.decodeString(value.identifier, 'iso-8859-1')
+          }
+          break
+
+      }
+      break
   }
 
-  // if the event has been aliased then we need to clean it before
-  // it is emitted to the user. e.g. genre (20) -> Electronic
+  // Convert native tag event to common (aliased) event
+  var alias = tagmap.getCommonName(type, tag)
+
   if (alias) {
-    cleaned = value
-    if (alias === 'genre') cleaned = common.parseGenre(value)
-    if (alias === 'picture') cleaned = cleanupPicture(value)
+    // Common tag (alias) found
 
-    if (alias === 'track' || alias === 'disk') {
-      cleaned = cleanupTrack(value)
+    // check if we need to do something special with common tag
+    // if the event has been aliased then we need to clean it before
+    // it is emitted to the user. e.g. genre (20) -> Electronic
+    switch (alias) {
+      case 'genre':
+        value = common.parseGenre(value)
+        break
 
-      if (aliased[ alias ]) {
-        aliased[ alias ].no = cleaned.no
+      case 'picture':
+        value = cleanupPicture(value)
+        break
+
+      case 'track':
+      case 'disk':
+        var of = comTags[alias].of // store of value, maybe maybe overwritten
+        comTags[alias] = cleanupTrack(value)
+        comTags[alias].of = Math.max(of, comTags[alias].of)
         return
+
+      case 'date':
+        // ToDo: be more strict on 'YYYY...'
+        // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
+        comTags.year = value.substr(0, 4)
+        break
+    }
+
+    if (tagmap.isSingleton(alias)) {
+      comTags[alias] = value
+    } else {
+      if (comTags.hasOwnProperty(alias)) {
+        comTags[alias].push(value)
       } else {
-        aliased[ alias ] = cleaned
-        return
+        // if we haven't previously seen this tag then
+        // initialize it to an array, ready for values to be entered
+        comTags[alias] = [value]
       }
     }
-
-    // if we haven't previously seen this tag then
-    // initialize it to an array, ready for values to be entered
-    if (!aliased.hasOwnProperty(alias)) {
-      aliased[ alias ] = []
-    }
-
-    if (cleaned.constructor === Array) {
-      aliased[ alias ] = cleaned
-    } else {
-      aliased[ alias ].push(cleaned)
-    }
   }
-}
-
-var mappings =
-{
-  vorbis: {
-    'duration': [ 'duration' ],
-
-    'TITLE': [ 'title' ],
-    'ARTIST': [ 'artist' ],
-    'ALBUMARTIST': [ 'albumartist' ],
-    'ALBUM': [ 'album' ],
-    'DATE': [ 'date' ],
-    'ORIGINALDATE': [ 'originaldate' ],
-    'ORIGINALYEAR': [ 'originalyear' ],
-    'COMMENT': [ 'comment' ],
-    'TRACKNUMBER': [ 'track' ],
-    'DISCNUMBER': [ 'disk' ],
-    'GENRE': [ 'genre' ],
-    'METADATA_BLOCK_PICTURE': [ 'picture' ],
-    'COMPOSER': [ 'composer' ],
-    'LYRICS': [ 'lyrics' ],
-    'ALBUMSORT': [ 'albumsort' ],
-    'TITLESORT': [ 'titlesort' ],
-    'WORK': [ 'work' ],
-    'ARTISTSORT': [ 'artistsort' ],
-    'ALBUMARTISTSORT': [ 'albumartistsort' ],
-    'COMPOSERSORT': [ 'composersort' ],
-    'LYRICIST': [ 'lyricist' ],
-    'WRITER': [ 'writer' ],
-    'CONDUCTOR': [ 'conductor' ],
-    'PERFORMER=artist (instrument)': [ 'performer:instrument' ], // ToDo
-    'REMIXER': [ 'remixer' ],
-    'ARRANGER': [ 'arranger' ],
-    'ENGINEER': [ 'engineer' ],
-    'PRODUCER': [ 'producer' ],
-    'DJMIXER': [ 'djmixer' ],
-    'MIXER': [ 'mixer' ],
-    'LABEL': [ 'label' ],
-    'GROUPING': [ 'grouping' ],
-    'SUBTITLE': [ 'subtitle' ],
-    'DISCSUBTITLE': [ 'discsubtitle' ],
-    'TRACKTOTAL': [ 'totaltracks' ],
-    'DISCTOTAL': [ 'totaldiscs' ],
-    'COMPILATION': [ 'compilation' ],
-    'RATING:user@email': [ '_rating' ],
-    'BPM': [ 'bpm' ],
-    'MOOD': [ 'mood' ],
-    'MEDIA': [ 'media' ],
-    'CATALOGNUMBER': [ 'catalognumber' ],
-    'RELEASESTATUS': [ 'releasestatus' ],
-    'RELEASETYPE': [ 'releasetype' ],
-    'RELEASECOUNTRY': [ 'releasecountry' ],
-    'SCRIPT': [ 'script' ],
-    'LANGUAGE': [ 'language' ],
-    'COPYRIGHT': [ 'copyright' ],
-    'LICENSE': [ 'license' ],
-    'ENCODEDBY': [ 'encodedby' ],
-    'ENCODERSETTINGS': [ 'encodersettings' ],
-    'BARCODE': [ 'barcode' ],
-    'ISRC': [ 'isrc' ],
-    'ASIN': [ 'asin' ],
-    'MUSICBRAINZ_TRACKID': [ 'musicbrainz_recordingid' ],
-    'MUSICBRAINZ_RELEASETRACKID': [ 'musicbrainz_trackid' ],
-    'MUSICBRAINZ_ALBUMID': [ 'musicbrainz_albumid' ],
-    'MUSICBRAINZ_ARTISTID': [ 'musicbrainz_artistid' ],
-    'MUSICBRAINZ_ALBUMARTISTID': [ 'musicbrainz_albumartistid' ],
-    'MUSICBRAINZ_RELEASEGROUPID': [ 'musicbrainz_releasegroupid' ],
-    'MUSICBRAINZ_WORKID': [ 'musicbrainz_workid' ],
-    'MUSICBRAINZ_TRMID': [ 'musicbrainz_trmid' ],
-    'MUSICBRAINZ_DISCID': [ 'musicbrainz_discid' ],
-    'ACOUSTID_ID': [ 'acoustid_id' ],
-    'ACOUSTID_FINGERPRINT': [ 'acoustid_fingerprint' ],
-    'MUSICIP_PUID': [ 'musicip_puid' ],
-    'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': [ 'musicip_fingerprint' ], // ToDo
-    'WEBSITE': [ 'website' ]
-
-  },
-  'id3v1.1': {
-    'title': [ 'title' ],
-    'artist': [ 'artist' ],
-    'album': [ 'album' ],
-    'year': [ 'year' ],
-    'comment': [ 'comment' ],
-    'track': [ 'track' ],
-    'genre': [ 'genre' ]
-  },
-  'id3v2.2': {
-    'TT2': [ 'title' ],
-    'TP1': [ 'artist' ],
-    'TP2': [ 'albumartist' ],
-    'TAL': [ 'album' ],
-    'TYE': [ 'date', 'year' ],
-    'COM': [ 'comment' ],
-    'TRK': [ 'track' ],
-    'TPA': [ 'disk' ],
-    'TCO': [ 'genre' ],
-    'PIC': [ 'picture' ],
-    'TCM': [ 'composer' ],
-
-    'TOR': [ 'originaldate' ],
-    'TOT': [ 'work' ],
-    'TXT': [ 'lyricist' ],
-    'TP3': [ 'conductor' ],
-    'TPB': [ 'label' ],
-    'TT1': [ 'grouping' ],
-    'TT3': [ 'subtitle' ],
-    'TLA': [ 'language' ],
-    'TCR': [ 'copyright' ],
-    'WCP': [ 'license' ],
-    'TEN': [ 'encodedby' ],
-    'TSS': [ 'encodersettings' ],
-    'WAR': [ 'website' ]
-  },
-  'id3v2.4': {
-    // special
-    'duration': [ 'duration' ],
-
-    // id3v2.3
-    'TIT2': [ 'title' ],
-    'TPE1': [ 'artist' ],
-    'TPE2': [ 'albumartist' ],
-    'TALB': [ 'album' ],
-    'TDRV': [ 'date' ], // [ 'date', 'year' ] ToDo: improve 'year' mapping
-    'TORY': [ 'originaldate' ],
-    'COMM:description': [ 'comment' ],
-    'TRCK': [ 'track' ],
-    'TPOS': [ 'disk' ],
-    'TCON': [ 'genre' ],
-    'APIC': [ 'picture' ],
-    'TCOM': [ 'composer' ],
-    'USLT:description': [ 'lyrics' ],
-    'TSOA': [ 'albumsort' ],
-    'TSOT': [ 'titlesort' ],
-    'TOAL': [ 'work' ],
-    'TSOP': [ 'artistsort' ],
-    'TSO2': [ 'albumartistsort' ],
-    'TSOC': [ 'composersort' ],
-    'TEXT': [ 'lyricist' ],
-    'TXXX:Writer': [ 'writer' ],
-    'TPE3': [ 'conductor' ],
-    'IPLS:instrument': [ 'performer:instrument' ],
-    'TPE4': [ 'remixer' ],
-    'IPLS:arranger': [ 'arranger' ],
-    'IPLS:engineer': [ 'engineer' ],
-    'IPLS:producer': [ 'producer' ],
-    'IPLS:DJ-mix': [ 'djmixer' ],
-    'IPLS:mix': [ 'mixer' ],
-    'TPUB': [ 'label' ],
-    'TIT1': [ 'grouping' ],
-    'TIT3': [ 'subtitle' ],
-    // 'TRCK': ['totaltracks'],
-    // 'TPOS': ['totaldiscs'],
-    'TCMP': [ 'compilation' ],
-    'POPM': [ '_rating' ],
-    'TBPM': [ 'bpm' ],
-    'TMED': [ 'media' ],
-    'TXXX:CATALOGNUMBER': [ 'catalognumber' ],
-    'TXXX:MusicBrainz Album Status': [ 'releasestatus' ],
-    'TXXX:MusicBrainz Album Type': [ 'releasetype' ],
-    'TXXX:MusicBrainz Album Release Country': [ 'releasecountry' ],
-    'TXXX:SCRIPT': [ 'script' ],
-    'TLAN': [ 'language' ],
-    'TCOP': [ 'copyright' ],
-    'WCOP': [ 'license' ],
-    'TENC': [ 'encodedby' ],
-    'TSSE': [ 'encodersettings' ],
-    'TXXX:BARCODE': [ 'barcode' ],
-    'TSRC': [ 'isrc' ],
-    'TXXX:ASIN': [ 'asin' ],
-    'UFID:http://musicbrainz.org': [ 'musicbrainz_recordingid' ],
-    'TXXX:MusicBrainz Release Track Id': [ 'musicbrainz_trackid' ],
-    'TXXX:MusicBrainz Album Id': [ 'musicbrainz_albumid' ],
-    'TXXX:MusicBrainz Artist Id': [ 'musicbrainz_artistid' ],
-    'TXXX:MusicBrainz Album Artist Id': [ 'musicbrainz_albumartistid' ],
-    'TXXX:MusicBrainz Release Group Id': [ 'musicbrainz_releasegroupid' ],
-    'TXXX:MusicBrainz Work Id': [ 'musicbrainz_workid' ],
-    'TXXX:MusicBrainz TRM Id': [ 'musicbrainz_trmid' ],
-    'TXXX:MusicBrainz Disc Id': [ 'musicbrainz_discid' ],
-    'TXXX:Acoustid Id': [ 'acoustid_id' ],
-    'TXXX:Acoustid Fingerprint': [ 'acoustid_fingerprint' ],
-    'TXXX:MusicIP PUID': [ 'musicip_puid' ],
-    'TXXX:MusicMagic Fingerprint': [ 'musicip_fingerprint' ],
-    'WOAR': [ 'website' ],
-
-    // id3v2.4
-    'TDRC': [ 'year' ], // backwards compatibility: coming from original code
-    'TYER': [ 'year' ], // ToDo: improve 'year' mapping
-    'TDOR': [ 'originaldate' ],
-    'TMCL:instrument': [ 'performer:instrument' ],
-    'TIPL:arranger': [ 'arranger' ],
-    'TIPL:engineer': [ 'engineer' ],
-    'TIPL:producer': [ 'producer' ],
-    'TIPL:DJ-mix': [ 'djmixer' ],
-    'TIPL:mix': [ 'mixer' ],
-    'TMOO': [ 'mood' ],
-
-    // additional mappings:
-    'SYLT': [ 'lyrics' ]
-
-  },
-  // ToDo: capitalization tricky
-  'APEv2': {
-    // special
-    'duration': [ 'duration' ],
-    // MusicBrainz tag mappings:
-    'Title': [ 'title' ],
-    'Artist': [ 'artist' ],
-    'Album Artist': [ 'albumartist' ],
-    'Album': [ 'album' ],
-    'Year': [ 'date', 'year' ], // ToDo: improve 'year' mapping
-    'ORIGINALYEAR': [ 'originalyear' ],
-    'Comment': [ 'comment' ],
-    'Track': [ 'track' ],
-    'Disc': [ 'disk' ],
-    'DISCNUMBER': [ 'disk' ], // ToDo: backwards compatibility, valid tag?
-    'Genre': [ 'genre' ],
-    'Cover Art (Front)': [ 'picture' ],
-    'Cover Art (Back)': [ 'picture' ],
-    'Composer': [ 'composer' ],
-    'Lyrics': [ 'lyrics' ],
-    'ALBUMSORT': [ 'albumsort' ],
-    'TITLESORT': [ 'titlesort' ],
-    'WORK': [ 'work' ],
-    'ARTISTSORT': [ 'artistsort' ],
-    'ALBUMARTISTSORT': [ 'albumartistsort' ],
-    'COMPOSERSORT': [ 'composersort' ],
-    'Lyricist': [ 'lyricist' ],
-    'Writer': [ 'writer' ],
-    'Conductor': [ 'conductor' ],
-    'Performer=artist (instrument)': [ 'performer:instrument' ],
-    'MixArtist': [ 'remixer' ],
-    'Arranger': [ 'arranger' ],
-    'Engineer': [ 'engineer' ],
-    'Producer': [ 'producer' ],
-    'DJMixer': [ 'djmixer' ],
-    'Mixer': [ 'mixer' ],
-    'Label': [ 'label' ],
-    'Grouping': [ 'grouping' ],
-    'Subtitle': [ 'subtitle' ],
-    'DiscSubtitle': [ 'discsubtitle' ],
-    'Compilation': [ 'compilation' ],
-    'BPM': [ 'bpm' ],
-    'Mood': [ 'mood' ],
-    'Media': [ 'media' ],
-    'CatalogNumber': [ 'catalognumber' ],
-    'MUSICBRAINZ_ALBUMSTATUS': [ 'releasestatus' ],
-    'MUSICBRAINZ_ALBUMTYPE': [ 'releasetype' ],
-    'RELEASECOUNTRY': [ 'releasecountry' ],
-    'Script': [ 'script' ],
-    'Language': [ 'language' ],
-    'Copyright': [ 'copyright' ],
-    'LICENSE': [ 'license' ],
-    'EncodedBy': [ 'encodedby' ],
-    'EncoderSettings': [ 'encodersettings' ],
-    'Barcode': [ 'barcode' ],
-    'ISRC': [ 'isrc' ],
-    'ASIN': [ 'asin' ],
-    'MUSICBRAINZ_TRACKID': [ 'musicbrainz_recordingid' ],
-    'MUSICBRAINZ_RELEASETRACKID': [ 'musicbrainz_trackid' ],
-    'MUSICBRAINZ_ALBUMID': [ 'musicbrainz_albumid' ],
-    'MUSICBRAINZ_ARTISTID': [ 'musicbrainz_artistid' ],
-    'MUSICBRAINZ_ALBUMARTISTID': [ 'musicbrainz_albumartistid' ],
-    'MUSICBRAINZ_RELEASEGROUPID': [ 'musicbrainz_releasegroupid' ],
-    'MUSICBRAINZ_WORKID': [ 'musicbrainz_workid' ],
-    'MUSICBRAINZ_TRMID': [ 'musicbrainz_trmid' ],
-    'MUSICBRAINZ_DISCID': [ 'musicbrainz_discid' ],
-    'ACOUSTID_ID': [ 'acoustid_id' ],
-    'ACOUSTID_FINGERPRINT': [ 'acoustid_fingerprint' ],
-    'MUSICIP_PUID': [ 'musicip_puid' ],
-    'Weblink': [ 'website' ]
-  },
-  // ToDo: capitalization tricky
-  'asf': {
-    // special
-    'duration': [ 'duration' ],
-    // MusicBrainz tag mappings:
-    'Title': [ 'title' ],
-    'Author': [ 'artist' ],
-    'WM/AlbumArtist': [ 'albumartist' ],
-    'WM/AlbumTitle': [ 'album' ],
-    'WM/Year': [ 'date', 'year' ],
-    'WM/OriginalReleaseTime': [ 'originaldate' ],
-    'WM/OriginalReleaseYear': [ 'originalyear' ],
-    'Description': [ 'comment' ],
-    'WM/TrackNumber': [ 'track' ],
-    'WM/PartOfSet': [ 'disk' ],
-    'WM/Genre': [ 'genre' ],
-    'WM/Composer': [ 'composer' ],
-    'WM/Lyrics': [ 'lyrics' ],
-    'WM/AlbumSortOrder': [ 'albumsort' ],
-    'WM/TitleSortOrder': [ 'titlesort' ],
-    'WM/ArtistSortOrder': [ 'artistsort' ],
-    'WM/AlbumArtistSortOrder': [ 'albumartistsort' ],
-    'WM/ComposerSortOrder': [ 'composersort' ],
-    'WM/Writer': [ 'lyricist' ],
-    'WM/Conductor': [ 'conductor' ],
-    'WM/ModifiedBy': [ 'remixer' ],
-    'WM/Engineer': [ 'engineer' ],
-    'WM/Producer': [ 'producer' ],
-    'WM/DJMixer': [ 'djmixer' ],
-    'WM/Mixer': [ 'mixer' ],
-    'WM/Publisher': [ 'label' ],
-    'WM/ContentGroupDescription': [ 'grouping' ],
-    'WM/SubTitle': [ 'subtitle' ],
-    'WM/SetSubTitle': [ 'discsubtitle' ],
-    // 'WM/PartOfSet': ['totaldiscs'],
-    'WM/IsCompilation': [ 'compilation' ],
-    'WM/SharedUserRating': [ '_rating' ],
-    'WM/BeatsPerMinute': [ 'bpm' ],
-    'WM/Mood': [ 'mood' ],
-    'WM/Media': [ 'media' ],
-    'WM/CatalogNo': [ 'catalognumber' ],
-    'MusicBrainz/Album Status': [ 'releasestatus' ],
-    'MusicBrainz/Album Type': [ 'releasetype' ],
-    'MusicBrainz/Album Release Country': [ 'releasecountry' ],
-    'WM/Script': [ 'script' ],
-    'WM/Language': [ 'language' ],
-    'Copyright': [ 'copyright' ],
-    'LICENSE': [ 'license' ],
-    'WM/EncodedBy': [ 'encodedby' ],
-    'WM/EncodingSettings': [ 'encodersettings' ],
-    'WM/Barcode': [ 'barcode' ],
-    'WM/ISRC': [ 'isrc' ],
-    'MusicBrainz/Track Id': [ 'musicbrainz_recordingid' ],
-    'MusicBrainz/Release Track Id': [ 'musicbrainz_trackid' ],
-    'MusicBrainz/Album Id': [ 'musicbrainz_albumid' ],
-    'MusicBrainz/Artist Id': [ 'musicbrainz_artistid' ],
-    'MusicBrainz/Album Artist Id': [ 'musicbrainz_albumartistid' ],
-    'MusicBrainz/Release Group Id': [ 'musicbrainz_releasegroupid' ],
-    'MusicBrainz/Work Id': [ 'musicbrainz_workid' ],
-    'MusicBrainz/TRM Id': [ 'musicbrainz_trmid' ],
-    'MusicBrainz/Disc Id': [ 'musicbrainz_discid' ],
-    'Acoustid/Id': [ 'acoustid_id' ],
-    'Acoustid/Fingerprint': [ 'acoustid_fingerprint' ],
-    'MusicIP/PUID': [ 'musicip_puid' ]
-  },
-  m4a: {
-    'duration': [ 'duration' ],
-
-    '©nam': [ 'title' ],
-    '©ART': [ 'artist' ],
-    'aART': [ 'albumartist' ],
-    '©alb': [ 'album' ],
-    '©day': [ 'date', 'year' ], // ToDo: review this mapping
-    '©cmt': [ 'comment' ],
-    'trkn': [ 'track', 'totaltracks' ],
-    'disk': [ 'disk', 'totaldiscs' ],
-    '©gen': [ 'genre' ],
-    'covr': [ 'picture' ],
-    '©wrt': [ 'composer' ],
-    '©lyr': [ 'lyrics' ],
-    'soal': [ 'albumsort' ],
-    'sonm': [ 'titlesort' ],
-    'soar': [ 'artistsort' ],
-    'soaa': [ 'albumartistsort' ],
-    'soco': [ 'composersort' ],
-    '----:com.apple.iTunes:LYRICIST': [ 'lyricist' ],
-    '----:com.apple.iTunes:CONDUCTOR': [ 'conductor' ],
-    '----:com.apple.iTunes:REMIXER': [ 'remixer' ],
-    '----:com.apple.iTunes:ENGINEER': [ 'engineer' ],
-    '----:com.apple.iTunes:PRODUCER': [ 'producer' ],
-    '----:com.apple.iTunes:DJMIXER': [ 'djmixer' ],
-    '----:com.apple.iTunes:MIXER': [ 'mixer' ],
-    '----:com.apple.iTunes:LABEL': [ 'label' ],
-    '©grp': [ 'grouping' ],
-    '----:com.apple.iTunes:SUBTITLE': [ 'subtitle' ],
-    '----:com.apple.iTunes:DISCSUBTITLE': [ 'discsubtitle' ],
-    'cpil': [ 'compilation' ],
-    'tmpo': [ 'bpm' ],
-    '----:com.apple.iTunes:MOOD': [ 'mood' ],
-    '----:com.apple.iTunes:MEDIA': [ 'media' ],
-    '----:com.apple.iTunes:CATALOGNUMBER': [ 'catalognumber' ],
-    'tvsh': [ 'show' ],
-    'sosn': [ 'showsort' ],
-    'pcst': [ 'podcast' ],
-    'purl': [ 'podcasturl' ],
-    '----:com.apple.iTunes:MusicBrainz Album Status': [ 'releasestatus' ],
-    '----:com.apple.iTunes:MusicBrainz Album Type': [ 'releasetype' ],
-    '----:com.apple.iTunes:MusicBrainz Album Release Country': [ 'releasecountry' ],
-    '----:com.apple.iTunes:SCRIPT': [ 'script' ],
-    '----:com.apple.iTunes:LANGUAGE': [ 'language' ],
-    'cprt': [ 'copyright' ],
-    '----:com.apple.iTunes:LICENSE': [ 'license' ],
-    '©too': [ 'encodedby' ],
-    'pgap': [ 'gapless' ],
-    '----:com.apple.iTunes:BARCODE': [ 'barcode' ],
-    '----:com.apple.iTunes:ISRC': [ 'isrc' ],
-    '----:com.apple.iTunes:ASIN': [ 'asin' ],
-    '----:com.apple.iTunes:MusicBrainz Track Id': [ 'musicbrainz_recordingid' ],
-    '----:com.apple.iTunes:MusicBrainz Release Track Id': [ 'musicbrainz_trackid' ],
-    '----:com.apple.iTunes:MusicBrainz Album Id': [ 'musicbrainz_albumid' ],
-    '----:com.apple.iTunes:MusicBrainz Artist Id': [ 'musicbrainz_artistid' ],
-    '----:com.apple.iTunes:MusicBrainz Album Artist Id': [ 'musicbrainz_albumartistid' ],
-    '----:com.apple.iTunes:MusicBrainz Release Group Id': [ 'musicbrainz_releasegroupid' ],
-    '----:com.apple.iTunes:MusicBrainz Work Id': [ 'musicbrainz_workid' ],
-    '----:com.apple.iTunes:MusicBrainz TRM Id': [ 'musicbrainz_trmid' ],
-    '----:com.apple.iTunes:MusicBrainz Disc Id': [ 'musicbrainz_discid' ],
-    '----:com.apple.iTunes:Acoustid Id': [ 'acoustid_id' ],
-    '----:com.apple.iTunes:Acoustid Fingerprint': [ 'acoustid_fingerprint' ],
-    '----:com.apple.iTunes:MusicIP PUID': [ 'musicip_puid' ],
-    '----:com.apple.iTunes:fingerprint': [ 'musicip_fingerprint' ],
-    // Additional mappings:
-    'gnre': [ 'genre' ] // ToDo: check mapping
-  }
-}
-
-function capitalizeAttributes (obj) {
-  var newObj = {}
-  for (var key in obj) {
-    newObj[ key.toUpperCase() ] = obj[ key ]
-  }
-  return newObj
-}
-
-// Normalize (post-process) common tag mappings
-
-// capitalize 'APEv2' tags for relax matching
-mappings.APEv2 = capitalizeAttributes(mappings.APEv2)
-
-// 'id3v2.3' & 'id3v2.4' are combined
-mappings[ 'id3v2.3' ] = mappings[ 'id3v2.4' ]
-
-function getCommonName (type, tag) {
-  if (!mappings.hasOwnProperty(type)) {
-    throw new Error('Illegal header type: ' + type)
-  }
-  return mappings[ type ][ type === 'APEv2' ? tag.toUpperCase() : tag ]
 }
 
 // TODO: a string of 1of1 would fail to be converted
@@ -2193,7 +1722,7 @@ var headerTypes = [
 ]
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":11,"_process":32,"buffer":18,"events":24,"fs":16,"strtok2":47,"through":48}],10:[function(require,module,exports){
+},{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":11,"./tagmap":12,"_process":33,"buffer":19,"events":25,"fs":17,"strtok2":48,"through":49}],10:[function(require,module,exports){
 (function (Buffer){
 'use strict'
 var common = require('./common')
@@ -2266,7 +1795,7 @@ module.exports = function (stream, callback, done) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":18,"strtok2":47}],11:[function(require,module,exports){
+},{"./common":3,"buffer":19,"strtok2":48}],11:[function(require,module,exports){
 (function (Buffer){
 'use strict'
 var events = require('events')
@@ -2285,8 +1814,10 @@ module.exports = function (stream, callback, done, readDuration) {
   var stop = false
 
   stream.on('end', function () {
+    callback('format', 'tag_type', type)
+    callback('format', 'sample_rate', sampleRate)
     if (readDuration) {
-      callback(type, 'duration', header.pcm_sample_pos / sampleRate)
+      callback('format', 'duration', header.pcm_sample_pos / sampleRate)
       done()
     }
   })
@@ -2413,7 +1944,545 @@ module.exports = function (stream, callback, done, readDuration) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":18,"events":24,"strtok2":47}],12:[function(require,module,exports){
+},{"./common":3,"buffer":19,"events":25,"strtok2":48}],12:[function(require,module,exports){
+'use strict'
+/**
+ * tagmap maps native meta tags to generic common types
+ */
+module.exports = (function () {
+
+  var self = {}
+
+  self.common =
+  {
+    year: { singleton: true },
+    track: { singleton: true },
+    disk: { singleton: true },
+
+    title: { singleton: true },
+    artist: { singleton: false },
+    albumartist: { singleton: false },
+    album: { singleton: true },
+    date: { singleton: true },
+    originaldate: { singleton: true },
+    originalyear: { singleton: true },
+    comment: { singleton: false },
+    genre: { singleton: false },
+    picture: { singleton: false },
+    composer: { singleton: false },
+    lyrics: { singleton: false },
+    albumsort: { singleton: true },
+    titlesort: { singleton: true },
+    work: { singleton: true },
+    artistsort: { singleton: false },
+    albumartistsort: { singleton: false },
+    composersort: { singleton: false },
+    lyricist: { singleton: false },
+    writer: { singleton: false },
+    conductor: { singleton: false },
+    remixer: { singleton: false },
+    arranger: { singleton: false },
+    engineer: { singleton: false },
+    producer: { singleton: false },
+    djmixer: { singleton: false },
+    mixer: { singleton: false },
+    label: { singleton: true },
+    grouping: { singleton: true },
+    subtitle: { singleton: true },
+    discsubtitle: { singleton: true },
+    totaltracks: { singleton: true },
+    totaldiscs: { singleton: true },
+    compilation: { singleton: true },
+    _rating: { singleton: true },
+    bpm: { singleton: true },
+    mood: { singleton: true },
+    media: { singleton: true },
+    catalognumber: { singleton: true },
+    show: { singleton: true },
+    showsort: { singleton: true },
+    podcast: { singleton: true },
+    podcasturl: { singleton: true },
+    releasestatus: { singleton: true },
+    releasetype: { singleton: false },
+    releasecountry: { singleton: true },
+    script: { singleton: true },
+    language: { singleton: true },
+    copyright: { singleton: true },
+    license: { singleton: true },
+    encodedby: { singleton: true },
+    encodersettings: { singleton: true },
+    gapless: { singleton: true },
+    barcode: { singleton: true },
+    isrc: { singleton: true },
+    asin: { singleton: true },
+    musicbrainz_recordingid: { singleton: true },
+    musicbrainz_trackid: { singleton: true },
+    musicbrainz_albumid: { singleton: true },
+    musicbrainz_artistid: { singleton: false },
+    musicbrainz_albumartistid: { singleton: false },
+    musicbrainz_releasegroupid: { singleton: true },
+    musicbrainz_workid: { singleton: true },
+    musicbrainz_trmid: { singleton: true },
+    musicbrainz_discid: { singleton: true },
+    acoustid_id: { singleton: true },
+    acoustid_fingerprint: { singleton: true },
+    musicip_puid: { singleton: true },
+    musicip_fingerprint: { singleton: true },
+    website: { singleton: true },
+    'performer:instrument': { singleton: false }
+  }
+
+  /**
+   * Mapping from native header format to one or possibly more 'common' entries
+   * The common entries aim to read the same information from different media files
+   * independent of the underlying format
+   */
+  self.mappings = {
+    vorbis: {
+      'TITLE': 'title',
+      'ARTIST': 'artist',
+      'ALBUMARTIST': 'albumartist',
+      'ALBUM': 'album',
+      'DATE': 'date',
+      'ORIGINALDATE': 'originaldate',
+      'ORIGINALYEAR': 'originalyear',
+      'COMMENT': 'comment',
+      'TRACKNUMBER': 'track',
+      'DISCNUMBER': 'disk',
+      'GENRE': 'genre',
+      'METADATA_BLOCK_PICTURE': 'picture',
+      'COMPOSER': 'composer',
+      'LYRICS': 'lyrics',
+      'ALBUMSORT': 'albumsort',
+      'TITLESORT': 'titlesort',
+      'WORK': 'work',
+      'ARTISTSORT': 'artistsort',
+      'ALBUMARTISTSORT': 'albumartistsort',
+      'COMPOSERSORT': 'composersort',
+      'LYRICIST': 'lyricist',
+      'WRITER': 'writer',
+      'CONDUCTOR': 'conductor',
+      'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
+      'REMIXER': 'remixer',
+      'ARRANGER': 'arranger',
+      'ENGINEER': 'engineer',
+      'PRODUCER': 'producer',
+      'DJMIXER': 'djmixer',
+      'MIXER': 'mixer',
+      'LABEL': 'label',
+      'GROUPING': 'grouping',
+      'SUBTITLE': 'subtitle',
+      'DISCSUBTITLE': 'discsubtitle',
+      'TRACKTOTAL': 'totaltracks',
+      'DISCTOTAL': 'totaldiscs',
+      'COMPILATION': 'compilation',
+      'RATING:user@email': '_rating',
+      'BPM': 'bpm',
+      'MOOD': 'mood',
+      'MEDIA': 'media',
+      'CATALOGNUMBER': 'catalognumber',
+      'RELEASESTATUS': 'releasestatus',
+      'RELEASETYPE': 'releasetype',
+      'RELEASECOUNTRY': 'releasecountry',
+      'SCRIPT': 'script',
+      'LANGUAGE': 'language',
+      'COPYRIGHT': 'copyright',
+      'LICENSE': 'license',
+      'ENCODEDBY': 'encodedby',
+      'ENCODERSETTINGS': 'encodersettings',
+      'BARCODE': 'barcode',
+      'ISRC': 'isrc',
+      'ASIN': 'asin',
+      'MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',
+      'MUSICBRAINZ_RELEASETRACKID': 'musicbrainz_trackid',
+      'MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
+      'MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
+      'MUSICBRAINZ_ALBUMARTISTID': 'musicbrainz_albumartistid',
+      'MUSICBRAINZ_RELEASEGROUPID': 'musicbrainz_releasegroupid',
+      'MUSICBRAINZ_WORKID': 'musicbrainz_workid',
+      'MUSICBRAINZ_TRMID': 'musicbrainz_trmid',
+      'MUSICBRAINZ_DISCID': 'musicbrainz_discid',
+      'ACOUSTID_ID': 'acoustid_id',
+      'ACOUSTID_FINGERPRINT': 'acoustid_fingerprint',
+      'MUSICIP_PUID': 'musicip_puid',
+      'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
+      'WEBSITE': 'website'
+
+    },
+    'id3v1.1': {
+      'title': 'title',
+      'artist': 'artist',
+      'album': 'album',
+      'year': 'year',
+      'comment': 'comment',
+      'track': 'track',
+      'genre': 'genre'
+    },
+    'id3v2.2': {
+      'TT2': 'title',
+      'TP1': 'artist',
+      'TP2': 'albumartist',
+      'TAL': 'album',
+      'TYE': 'year',
+      'COM': 'comment',
+      'TRK': 'track',
+      'TPA': 'disk',
+      'TCO': 'genre',
+      'PIC': 'picture',
+      'TCM': 'composer',
+
+      'TOR': 'originaldate',
+      'TOT': 'work',
+      'TXT': 'lyricist',
+      'TP3': 'conductor',
+      'TPB': 'label',
+      'TT1': 'grouping',
+      'TT3': 'subtitle',
+      'TLA': 'language',
+      'TCR': 'copyright',
+      'WCP': 'license',
+      'TEN': 'encodedby',
+      'TSS': 'encodersettings',
+      'WAR': 'website'
+    },
+    'id3v2.4': {
+      // id3v2.3
+      'TIT2': 'title',
+      'TPE1': 'artist',
+      'TPE2': 'albumartist',
+      'TALB': 'album',
+      'TDRV': 'date', // [ 'date', 'year' ] ToDo: improve 'year' mapping
+      'TORY': 'originaldate',
+      'COMM:description': 'comment',
+      'TRCK': 'track',
+      'TPOS': 'disk',
+      'TCON': 'genre',
+      'APIC': 'picture',
+      'TCOM': 'composer',
+      'USLT:description': 'lyrics',
+      'TSOA': 'albumsort',
+      'TSOT': 'titlesort',
+      'TOAL': 'work',
+      'TSOP': 'artistsort',
+      'TSO2': 'albumartistsort',
+      'TSOC': 'composersort',
+      'TEXT': 'lyricist',
+      'TXXX:Writer': 'writer',
+      'TPE3': 'conductor',
+      'IPLS:instrument': 'performer:instrument',
+      'TPE4': 'remixer',
+      'IPLS:arranger': 'arranger',
+      'IPLS:engineer': 'engineer',
+      'IPLS:producer': 'producer',
+      'IPLS:DJ-mix': 'djmixer',
+      'IPLS:mix': 'mixer',
+      'TPUB': 'label',
+      'TIT1': 'grouping',
+      'TIT3': 'subtitle',
+      // 'TRCK': 'totaltracks',
+      // 'TPOS': 'totaldiscs',
+      'TCMP': 'compilation',
+      'POPM': '_rating',
+      'TBPM': 'bpm',
+      'TMED': 'media',
+      'TXXX:CATALOGNUMBER': 'catalognumber',
+      'TXXX:MusicBrainz Album Status': 'releasestatus',
+      'TXXX:MusicBrainz Album Type': 'releasetype',
+      'TXXX:MusicBrainz Album Release Country': 'releasecountry',
+      'TXXX:SCRIPT': 'script',
+      'TLAN': 'language',
+      'TCOP': 'copyright',
+      'WCOP': 'license',
+      'TENC': 'encodedby',
+      'TSSE': 'encodersettings',
+      'TXXX:BARCODE': 'barcode',
+      'TSRC': 'isrc',
+      'TXXX:ASIN': 'asin',
+      'UFID:http://musicbrainz.org': 'musicbrainz_recordingid',
+      'TXXX:MusicBrainz Release Track Id': 'musicbrainz_trackid',
+      'TXXX:MusicBrainz Album Id': 'musicbrainz_albumid',
+      'TXXX:MusicBrainz Artist Id': 'musicbrainz_artistid',
+      'TXXX:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+      'TXXX:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
+      'TXXX:MusicBrainz Work Id': 'musicbrainz_workid',
+      'TXXX:MusicBrainz TRM Id': 'musicbrainz_trmid',
+      'TXXX:MusicBrainz Disc Id': 'musicbrainz_discid',
+      'TXXX:Acoustid Id': 'acoustid_id',
+      'TXXX:Acoustid Fingerprint': 'acoustid_fingerprint',
+      'TXXX:MusicIP PUID': 'musicip_puid',
+      'TXXX:MusicMagic Fingerprint': 'musicip_fingerprint',
+      'WOAR': 'website',
+
+      // id3v2.4
+      'TDRC': 'date', // date YYYY-MM-DD
+      'TYER': 'year',
+      'TDOR': 'originaldate',
+      'TMCL:instrument': 'performer:instrument',
+      'TIPL:arranger': 'arranger',
+      'TIPL:engineer': 'engineer',
+      'TIPL:producer': 'producer',
+      'TIPL:DJ-mix': 'djmixer',
+      'TIPL:mix': 'mixer',
+      'TMOO': 'mood',
+
+      // additional mappings:
+      'SYLT': 'lyrics'
+
+    },
+    // ToDo: capitalization tricky
+    'APEv2': {
+      // MusicBrainz tag mappings:
+      'Title': 'title',
+      'Artist': 'artist',
+      'Album Artist': 'albumartist',
+      'Album': 'album',
+      'Year': 'year',
+      'ORIGINALYEAR': 'originalyear',
+      'Comment': 'comment',
+      'Track': 'track',
+      'Disc': 'disk',
+      'DISCNUMBER': 'disk', // ToDo: backwards compatibility, valid tag?
+      'Genre': 'genre',
+      'Cover Art (Front)': 'picture',
+      'Cover Art (Back)': 'picture',
+      'Composer': 'composer',
+      'Lyrics': 'lyrics',
+      'ALBUMSORT': 'albumsort',
+      'TITLESORT': 'titlesort',
+      'WORK': 'work',
+      'ARTISTSORT': 'artistsort',
+      'ALBUMARTISTSORT': 'albumartistsort',
+      'COMPOSERSORT': 'composersort',
+      'Lyricist': 'lyricist',
+      'Writer': 'writer',
+      'Conductor': 'conductor',
+      'Performer=artist (instrument)': 'performer:instrument',
+      'MixArtist': 'remixer',
+      'Arranger': 'arranger',
+      'Engineer': 'engineer',
+      'Producer': 'producer',
+      'DJMixer': 'djmixer',
+      'Mixer': 'mixer',
+      'Label': 'label',
+      'Grouping': 'grouping',
+      'Subtitle': 'subtitle',
+      'DiscSubtitle': 'discsubtitle',
+      'Compilation': 'compilation',
+      'BPM': 'bpm',
+      'Mood': 'mood',
+      'Media': 'media',
+      'CatalogNumber': 'catalognumber',
+      'MUSICBRAINZ_ALBUMSTATUS': 'releasestatus',
+      'MUSICBRAINZ_ALBUMTYPE': 'releasetype',
+      'RELEASECOUNTRY': 'releasecountry',
+      'Script': 'script',
+      'Language': 'language',
+      'Copyright': 'copyright',
+      'LICENSE': 'license',
+      'EncodedBy': 'encodedby',
+      'EncoderSettings': 'encodersettings',
+      'Barcode': 'barcode',
+      'ISRC': 'isrc',
+      'ASIN': 'asin',
+      'MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',
+      'MUSICBRAINZ_RELEASETRACKID': 'musicbrainz_trackid',
+      'MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
+      'MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
+      'MUSICBRAINZ_ALBUMARTISTID': 'musicbrainz_albumartistid',
+      'MUSICBRAINZ_RELEASEGROUPID': 'musicbrainz_releasegroupid',
+      'MUSICBRAINZ_WORKID': 'musicbrainz_workid',
+      'MUSICBRAINZ_TRMID': 'musicbrainz_trmid',
+      'MUSICBRAINZ_DISCID': 'musicbrainz_discid',
+      'ACOUSTID_ID': 'acoustid_id',
+      'ACOUSTID_FINGERPRINT': 'acoustid_fingerprint',
+      'MUSICIP_PUID': 'musicip_puid',
+      'Weblink': 'website'
+    },
+    // ToDo: capitalization tricky
+    'asf': {
+      // MusicBrainz tag mappings:
+      'Title': 'title',
+      'Author': 'artist',
+      'WM/AlbumArtist': 'albumartist',
+      'WM/AlbumTitle': 'album',
+      'WM/Year': 'year',
+      'WM/OriginalReleaseTime': 'originaldate',
+      'WM/OriginalReleaseYear': 'originalyear',
+      'Description': 'comment',
+      'WM/TrackNumber': 'track',
+      'WM/PartOfSet': 'disk',
+      'WM/Genre': 'genre',
+      'WM/Composer': 'composer',
+      'WM/Lyrics': 'lyrics',
+      'WM/AlbumSortOrder': 'albumsort',
+      'WM/TitleSortOrder': 'titlesort',
+      'WM/ArtistSortOrder': 'artistsort',
+      'WM/AlbumArtistSortOrder': 'albumartistsort',
+      'WM/ComposerSortOrder': 'composersort',
+      'WM/Writer': 'lyricist',
+      'WM/Conductor': 'conductor',
+      'WM/ModifiedBy': 'remixer',
+      'WM/Engineer': 'engineer',
+      'WM/Producer': 'producer',
+      'WM/DJMixer': 'djmixer',
+      'WM/Mixer': 'mixer',
+      'WM/Publisher': 'label',
+      'WM/ContentGroupDescription': 'grouping',
+      'WM/SubTitle': 'subtitle',
+      'WM/SetSubTitle': 'discsubtitle',
+      // 'WM/PartOfSet': 'totaldiscs',
+      'WM/IsCompilation': 'compilation',
+      'WM/SharedUserRating': '_rating',
+      'WM/BeatsPerMinute': 'bpm',
+      'WM/Mood': 'mood',
+      'WM/Media': 'media',
+      'WM/CatalogNo': 'catalognumber',
+      'MusicBrainz/Album Status': 'releasestatus',
+      'MusicBrainz/Album Type': 'releasetype',
+      'MusicBrainz/Album Release Country': 'releasecountry',
+      'WM/Script': 'script',
+      'WM/Language': 'language',
+      'Copyright': 'copyright',
+      'LICENSE': 'license',
+      'WM/EncodedBy': 'encodedby',
+      'WM/EncodingSettings': 'encodersettings',
+      'WM/Barcode': 'barcode',
+      'WM/ISRC': 'isrc',
+      'MusicBrainz/Track Id': 'musicbrainz_recordingid',
+      'MusicBrainz/Release Track Id': 'musicbrainz_trackid',
+      'MusicBrainz/Album Id': 'musicbrainz_albumid',
+      'MusicBrainz/Artist Id': 'musicbrainz_artistid',
+      'MusicBrainz/Album Artist Id': 'musicbrainz_albumartistid',
+      'MusicBrainz/Release Group Id': 'musicbrainz_releasegroupid',
+      'MusicBrainz/Work Id': 'musicbrainz_workid',
+      'MusicBrainz/TRM Id': 'musicbrainz_trmid',
+      'MusicBrainz/Disc Id': 'musicbrainz_discid',
+      'Acoustid/Id': 'acoustid_id',
+      'Acoustid/Fingerprint': 'acoustid_fingerprint',
+      'MusicIP/PUID': 'musicip_puid'
+    },
+    m4a: {
+      '©nam': 'title',
+      '©ART': 'artist',
+      'aART': 'albumartist',
+      '©alb': 'album',
+      '©day': 'date',
+      '©cmt': 'comment',
+      'trkn': 'track',
+      'disk': 'disk',
+      '©gen': 'genre',
+      'covr': 'picture',
+      '©wrt': 'composer',
+      '©lyr': 'lyrics',
+      'soal': 'albumsort',
+      'sonm': 'titlesort',
+      'soar': 'artistsort',
+      'soaa': 'albumartistsort',
+      'soco': 'composersort',
+      '----:com.apple.iTunes:LYRICIST': 'lyricist',
+      '----:com.apple.iTunes:CONDUCTOR': 'conductor',
+      '----:com.apple.iTunes:REMIXER': 'remixer',
+      '----:com.apple.iTunes:ENGINEER': 'engineer',
+      '----:com.apple.iTunes:PRODUCER': 'producer',
+      '----:com.apple.iTunes:DJMIXER': 'djmixer',
+      '----:com.apple.iTunes:MIXER': 'mixer',
+      '----:com.apple.iTunes:LABEL': 'label',
+      '©grp': 'grouping',
+      '----:com.apple.iTunes:SUBTITLE': 'subtitle',
+      '----:com.apple.iTunes:DISCSUBTITLE': 'discsubtitle',
+      'cpil': 'compilation',
+      'tmpo': 'bpm',
+      '----:com.apple.iTunes:MOOD': 'mood',
+      '----:com.apple.iTunes:MEDIA': 'media',
+      '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
+      'tvsh': 'show',
+      'sosn': 'showsort',
+      'pcst': 'podcast',
+      'purl': 'podcasturl',
+      '----:com.apple.iTunes:MusicBrainz Album Status': 'releasestatus',
+      '----:com.apple.iTunes:MusicBrainz Album Type': 'releasetype',
+      '----:com.apple.iTunes:MusicBrainz Album Release Country': 'releasecountry',
+      '----:com.apple.iTunes:SCRIPT': 'script',
+      '----:com.apple.iTunes:LANGUAGE': 'language',
+      'cprt': 'copyright',
+      '----:com.apple.iTunes:LICENSE': 'license',
+      '©too': 'encodedby',
+      'pgap': 'gapless',
+      '----:com.apple.iTunes:BARCODE': 'barcode',
+      '----:com.apple.iTunes:ISRC': 'isrc',
+      '----:com.apple.iTunes:ASIN': 'asin',
+      '----:com.apple.iTunes:MusicBrainz Track Id': 'musicbrainz_recordingid',
+      '----:com.apple.iTunes:MusicBrainz Release Track Id': 'musicbrainz_trackid',
+      '----:com.apple.iTunes:MusicBrainz Album Id': 'musicbrainz_albumid',
+      '----:com.apple.iTunes:MusicBrainz Artist Id': 'musicbrainz_artistid',
+      '----:com.apple.iTunes:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+      '----:com.apple.iTunes:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
+      '----:com.apple.iTunes:MusicBrainz Work Id': 'musicbrainz_workid',
+      '----:com.apple.iTunes:MusicBrainz TRM Id': 'musicbrainz_trmid',
+      '----:com.apple.iTunes:MusicBrainz Disc Id': 'musicbrainz_discid',
+      '----:com.apple.iTunes:Acoustid Id': 'acoustid_id',
+      '----:com.apple.iTunes:Acoustid Fingerprint': 'acoustid_fingerprint',
+      '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
+      '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
+      // Additional mappings:
+      'gnre': 'genre' // ToDo: check mapping
+    }
+  }
+
+  /**
+   * @param alias Name of common tag
+   * @returns {boolean|*} true if given alias is mapped as a singleton, otherwise false
+   */
+
+  self.isSingleton = function (alias) {
+    return this.common.hasOwnProperty(alias) && this.common[alias].singleton
+  }
+
+  /**
+   * Test if native tag type is a singleton
+   * @param type e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+   * @param  tag Native tag name, e.g. 'TITLE'
+   * @returns {boolean} true is we can safely assume that it is a  singleton
+   */
+  self.isNativeSingleton = function (type, tag) {
+    if (type === 'format') {
+      return true
+    }
+    var alias = self.getCommonName(type, tag)
+    return alias && self.common[alias].singleton
+  }
+
+  self.capitalizeAttributes = function (obj) {
+    var newObj = {}
+    for (var key in obj) {
+      newObj[key.toUpperCase()] = obj[key]
+    }
+    return newObj
+  }
+
+  /**
+   * @type Native header type: e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'vorbis'
+   * @tag  Native header tag
+   * @return common tag name (alias)
+   */
+  self.getCommonName = function (type, tag) {
+    if (!self.mappings.hasOwnProperty(type)) {
+      throw new Error('Illegal header type: ' + type)
+    }
+    return self.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag]
+  }
+
+  // Normalize (post-process) common tag mappings
+  // capitalize 'APEv2' tags for case insensitive tag matching
+  self.mappings.APEv2 = self.capitalizeAttributes(self.mappings.APEv2)
+
+  // 'id3v2.3' & 'id3v2.4' are combined
+  self.mappings['id3v2.3'] = self.mappings['id3v2.4']
+
+  return self
+}())
+
+},{}],13:[function(require,module,exports){
 var windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
 8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
 8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
@@ -2458,7 +2527,7 @@ module.exports = function (buffer) {
   return str
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -2819,7 +2888,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":52}],14:[function(require,module,exports){
+},{"util/":53}],15:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2935,11 +3004,11 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],15:[function(require,module,exports){
-
 },{}],16:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],17:[function(require,module,exports){
+
+},{}],17:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16}],18:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3051,7 +3120,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":18}],18:[function(require,module,exports){
+},{"buffer":19}],19:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -4844,14 +4913,14 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":14,"ieee754":27,"isarray":19}],19:[function(require,module,exports){
+},{"base64-js":15,"ieee754":28,"isarray":20}],20:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4962,7 +5031,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":29}],21:[function(require,module,exports){
+},{"../../is-buffer/index.js":30}],22:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -5058,7 +5127,7 @@ function objEquiv(a, b, opts) {
   return true;
 }
 
-},{"./lib/is_arguments.js":22,"./lib/keys.js":23}],22:[function(require,module,exports){
+},{"./lib/is_arguments.js":23,"./lib/keys.js":24}],23:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -5080,7 +5149,7 @@ function unsupported(object){
     false;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -5091,7 +5160,7 @@ function shim (obj) {
   return keys;
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5395,7 +5464,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (Buffer){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
@@ -5493,7 +5562,7 @@ FileStream.prototype.abort = function() {
 
 inherits(FileStream, EventEmitter)
 }).call(this,require("buffer").Buffer)
-},{"buffer":18,"events":24,"inherits":26}],26:[function(require,module,exports){
+},{"buffer":19,"events":25,"inherits":27}],27:[function(require,module,exports){
 module.exports = inherits
 
 function inherits (c, p, proto) {
@@ -5524,7 +5593,7 @@ function inherits (c, p, proto) {
 //inherits(Child, Parent)
 //new Child
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -5610,7 +5679,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -5635,7 +5704,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -5658,7 +5727,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 var isStream = module.exports = function (stream) {
@@ -5681,7 +5750,7 @@ isStream.transform = function (stream) {
 	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -5728,7 +5797,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":32}],32:[function(require,module,exports){
+},{"_process":33}],33:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5910,7 +5979,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6039,12 +6108,12 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":24,"inherits":28,"readable-stream/duplex.js":35,"readable-stream/passthrough.js":42,"readable-stream/readable.js":43,"readable-stream/transform.js":44,"readable-stream/writable.js":45}],34:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],35:[function(require,module,exports){
+},{"events":25,"inherits":29,"readable-stream/duplex.js":36,"readable-stream/passthrough.js":43,"readable-stream/readable.js":44,"readable-stream/transform.js":45,"readable-stream/writable.js":46}],35:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],36:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":36}],36:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":37}],37:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -6120,7 +6189,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":38,"./_stream_writable":40,"core-util-is":20,"inherits":28,"process-nextick-args":31}],37:[function(require,module,exports){
+},{"./_stream_readable":39,"./_stream_writable":41,"core-util-is":21,"inherits":29,"process-nextick-args":32}],38:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -6147,7 +6216,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":39,"core-util-is":20,"inherits":28}],38:[function(require,module,exports){
+},{"./_stream_transform":40,"core-util-is":21,"inherits":29}],39:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -7087,7 +7156,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":36,"./internal/streams/BufferList":41,"_process":32,"buffer":18,"buffer-shims":17,"core-util-is":20,"events":24,"inherits":28,"isarray":34,"process-nextick-args":31,"string_decoder/":46,"util":15}],39:[function(require,module,exports){
+},{"./_stream_duplex":37,"./internal/streams/BufferList":42,"_process":33,"buffer":19,"buffer-shims":18,"core-util-is":21,"events":25,"inherits":29,"isarray":35,"process-nextick-args":32,"string_decoder/":47,"util":16}],40:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -7268,7 +7337,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":36,"core-util-is":20,"inherits":28}],40:[function(require,module,exports){
+},{"./_stream_duplex":37,"core-util-is":21,"inherits":29}],41:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -7797,7 +7866,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":36,"_process":32,"buffer":18,"buffer-shims":17,"core-util-is":20,"events":24,"inherits":28,"process-nextick-args":31,"util-deprecate":49}],41:[function(require,module,exports){
+},{"./_stream_duplex":37,"_process":33,"buffer":19,"buffer-shims":18,"core-util-is":21,"events":25,"inherits":29,"process-nextick-args":32,"util-deprecate":50}],42:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -7862,10 +7931,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":18,"buffer-shims":17}],42:[function(require,module,exports){
+},{"buffer":19,"buffer-shims":18}],43:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":37}],43:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":38}],44:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -7885,13 +7954,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":36,"./lib/_stream_passthrough.js":37,"./lib/_stream_readable.js":38,"./lib/_stream_transform.js":39,"./lib/_stream_writable.js":40,"_process":32}],44:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":37,"./lib/_stream_passthrough.js":38,"./lib/_stream_readable.js":39,"./lib/_stream_transform.js":40,"./lib/_stream_writable.js":41,"_process":33}],45:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":39}],45:[function(require,module,exports){
+},{"./lib/_stream_transform.js":40}],46:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":40}],46:[function(require,module,exports){
+},{"./lib/_stream_writable.js":41}],47:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8114,7 +8183,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":18}],47:[function(require,module,exports){
+},{"buffer":19}],48:[function(require,module,exports){
 // A fast streaming parser library.
 
 var assert = require('assert');
@@ -8540,7 +8609,7 @@ var parse = function(s, cb) {
 };
 exports.parse = parse;
 
-},{"assert":13,"buffer":18}],48:[function(require,module,exports){
+},{"assert":14,"buffer":19}],49:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -8652,7 +8721,7 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":32,"stream":33}],49:[function(require,module,exports){
+},{"_process":33,"stream":34}],50:[function(require,module,exports){
 (function (global){
 
 /**
@@ -8723,16 +8792,16 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],50:[function(require,module,exports){
-arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],51:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
+arguments[4][29][0].apply(exports,arguments)
+},{"dup":29}],52:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9322,5 +9391,5 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":51,"_process":32,"inherits":50}]},{},[2])(2)
+},{"./support/isBuffer":52,"_process":33,"inherits":51}]},{},[2])(2)
 });

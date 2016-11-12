@@ -4,7 +4,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('flac', function (t) {
-  t.plan(38)
+  t.plan(40)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
@@ -12,6 +12,10 @@ test('flac', function (t) {
 
   mm(sample, function (err, result) {
     t.error(err)
+    t.strictEqual(result.format.tag_type, 'vorbis', 'tag_type')
+    t.strictEqual(result.format.sample_rate, 44100, 'sample-rate = 44.1 kHz')
+    t.strictEqual(result.format.duration, 271.7733333333333, 'duration')
+
     t.strictEqual(result.common.title, 'Brian Eno', 'title')
     t.strictEqual(result.common.artist[0], 'MGMT', 'artist')
     t.strictEqual(result.common.albumartist.length, 0, 'albumartist length')
@@ -24,7 +28,6 @@ test('flac', function (t) {
     t.strictEqual(result.common.genre[0], 'Alt. Rock', 'genre')
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
     t.strictEqual(result.common.picture[0].data.length, 175668, 'picture length')
-    t.strictEqual(result.common.duration, 271.7733333333333, 'duration')
     t.end()
   })
     // aliased tests

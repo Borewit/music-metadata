@@ -12,7 +12,7 @@ test('audio-frame-header-bug', function (t) {
 
   mm(sample, { duration: true }, function (err, result) {
     t.error(err)
-    t.strictEqual(result.common.duration, 200.59591666666665)
+    t.strictEqual(result.format.duration, 200.59591666666665)
     t.end()
   })
 })

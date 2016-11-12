@@ -15,6 +15,9 @@ test('MusicBrainz tags with id3v2.4', function (t) {
 
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
+
+    t.deepEqual(result.format.duration, 1, 'format.duration')
+
     t.deepEqual(result.common.title, 'Home', 'title')
     t.deepEqual(result.common.artist, ['Explosions in the Sky'], 'artist 0')
     t.deepEqual(result.common.albumartist, ['Explosions in the Sky'], 'albumartist')
@@ -26,7 +29,6 @@ test('MusicBrainz tags with id3v2.4', function (t) {
     t.deepEqual(result.common.genre, ['Soundtrack', 'OST'], 'genre')
     t.deepEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
     t.deepEqual(result.common.picture[0].data.length, 75818, 'picture 0 length')
-    t.deepEqual(result.common.duration, 1, 'metadata duration')
 
     t.deepEqual(result.common.isrc, 'USUG10400421', 'ISRC')
     t.deepEqual(result.common.catalognumber, 'B0003663-02', 'catalognumber')

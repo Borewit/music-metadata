@@ -12,6 +12,10 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
     new window.Blob([ fs.readFileSync(__dirname + '/samples/MusicBrainz-Picard-tags.flac') ])
     : fs.createReadStream(path.join(__dirname, '/samples/MusicBrainz-Picard-tags.flac'))
 
+  function checkFormat (format) {
+    t.deepEqual(format.duration, 271.7733333333333, 'format.duration')
+  }
+
   function checkCommonTags (common) {
     // Compare expectedCommonTags with result.common
     t.deepEqual(common.title, 'Brian Eno', 'common: tagtitle')
@@ -41,7 +45,6 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
     t.deepEqual(common.musicbrainz_releasegroupid, '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'common: musicbrainz_releasegroupid')
     t.deepEqual(common.musicbrainz_trackid, '0f53f7a3-89df-4069-9357-d04252239b6d', 'common: musicbrainz_trackid')
 
-    t.deepEqual(common.duration, 271.7733333333333, 'common: duration')
     t.deepEqual(common.picture[ 0 ].format, 'jpg', 'picture format')
     t.deepEqual(common.picture[ 0 ].data.length, 175668, 'picture length')
   }
@@ -50,8 +53,8 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
   mm(sample, function (err, result) {
     t.error(err)
     t.ok(!result.hasOwnProperty('vorbis'), 'should NOT include native Vorbis tags')
+    checkFormat(result.format)
     checkCommonTags(result.common)
-
   })
 
     .on('picture', function (result) {

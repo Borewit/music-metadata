@@ -12,6 +12,9 @@ test('id4', function (t) {
 
   id3(sample, { duration: true }, function (err, result) {
     t.error(err)
+
+    t.strictEqual(result.format.duration, 2.2058956916099772, 'format.duration')
+
     t.strictEqual(result.common.title, 'Voodoo People (Pendulum Remix)', 'title')
     t.strictEqual(result.common.artist[0], 'The Prodigy', 'artist')
     t.strictEqual(result.common.albumartist[0], 'Pendulum', 'albumartist')
@@ -26,7 +29,6 @@ test('id4', function (t) {
     t.strictEqual(result.common.picture[0].data.length, 196450, 'picture 0 length')
     t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')
     t.strictEqual(result.common.picture[1].data.length, 196450, 'picture 1 length')
-    t.strictEqual(result.common.duration, 2.2058956916099772, 'metadata duration')
     t.end()
   })
     .on('duration', function (result) {
