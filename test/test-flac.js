@@ -4,7 +4,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('flac', function (t) {
-  t.plan(40)
+  t.plan(41)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
@@ -12,6 +12,8 @@ test('flac', function (t) {
 
   mm(sample, function (err, result) {
     t.error(err)
+    t.strictEqual(result.vorbis, undefined, 'Native metadata not requested')
+
     t.strictEqual(result.format.tag_type, 'vorbis', 'tag_type')
     t.strictEqual(result.format.sample_rate, 44100, 'sample-rate = 44.1 kHz')
     t.strictEqual(result.format.duration, 271.7733333333333, 'duration')

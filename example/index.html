@@ -79,11 +79,9 @@
 
     <div ng-if="native">
       <h4>Native metadata</h4>
-      <div ng-repeat="(tag, value) in native">
-        <div class="row">
-          <div class="col-lg-3">{{ tag }}</div>
-          <div class="col-lg-7">{{ value }}</div>
-        </div>
+      <div class="row" ng-repeat="(tag, value) in native">
+        <div class="col-lg-3">{{ tag }}</div>
+        <div class="col-lg-7">{{ value }}</div>
       </div>
     </div>
 
