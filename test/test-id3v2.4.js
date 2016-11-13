@@ -6,7 +6,7 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
-  t.plan(63)
+  t.plan(60)
   var apicCounter = 0
   var tconCounter = 0
   var tpe1Counter = 0
@@ -19,24 +19,21 @@ test('id3v2.4', function (t) {
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
 
-    t.strictEqual(result.format.tag_type, 'id3v2.4', 'tag_type')
+    t.strictEqual(result.format.tagType, 'id3v2.4', 'tagType')
     t.strictEqual(result.format.duration, 1, 'format.duration')
-    t.strictEqual(result.format.sample_rate, 44100, 'sample-rate = 44.1 kHz')
+    t.strictEqual(result.format.sampleRate, 44100, 'sampleRate = 44.1 kHz')
     t.strictEqual(result.format.bitrate, 128000, 'bitrate = 128 kbit/sec')
 
     t.strictEqual(result.common.title, 'Home', 'title')
-    t.strictEqual(result.common.artist[0], 'Explo', 'artist 0')
-    t.strictEqual(result.common.artist[1], 'ions', 'artist 1')
-    t.strictEqual(result.common.artist[2], 'nodejsftws', 'artist 2')
-    t.strictEqual(result.common.albumartist[0], 'Soundtrack', 'albumartist')
+    t.deepEqual(result.common.artist, ['Explo', 'ions', 'nodejsftws'], 'artists')
+    t.deepEqual(result.common.albumartist, ['Soundtrack'], 'albumartist')
     t.strictEqual(result.common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album')
     t.strictEqual(result.common.year, '2004', 'year')
     t.strictEqual(result.common.track.no, 5, 'track no')
     t.strictEqual(result.common.track.of, 0, 'track of')
     t.strictEqual(result.common.disk.no, 1, 'disk no')
     t.strictEqual(result.common.disk.of, 1, 'disk of')
-    t.strictEqual(result.common.genre[0], 'Soundtrack', 'genre 0')
-    t.strictEqual(result.common.genre[1], 'OST', 'genre 1')
+    t.deepEqual(result.common.genre, ['Soundtrack', 'OST'], 'genres')
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
     t.strictEqual(result.common.picture[0].data.length, 80938, 'picture 0 length')
     t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')

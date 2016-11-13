@@ -6,32 +6,42 @@ var fs = require('fs')
 var test = require('tape')
 
 test('id3v2.3', function (t) {
-  t.plan(44)
+  t.plan(45)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.3.mp3'))
 
+  function checkFormat (format) {
+    t.strictEqual(format.tagType, 'id3v2.3', 'format.tag_type')
+    t.strictEqual(format.duration, 1, 'format.duration')
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
+    t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
+    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')
+  }
+
+  function checkCommon (common) {
+    t.strictEqual(common.title, 'Home', 'title')
+    t.strictEqual(common.artist[0], 'Explosions In The Sky/Another/And Another', 'artist')
+    t.strictEqual(common.albumartist[0], 'Soundtrack', 'albumartist')
+    t.strictEqual(common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album')
+    t.strictEqual(common.year, '2004', 'year')
+    t.strictEqual(common.track.no, 5, 'track no')
+    t.strictEqual(common.track.of, 0, 'track of')
+    t.strictEqual(common.disk.no, 1, 'disk no')
+    t.strictEqual(common.disk.of, 1, 'disk of')
+    t.strictEqual(common.genre[0], 'Soundtrack', 'genre')
+    t.strictEqual(common.picture[0].format, 'jpg', 'picture format')
+    t.strictEqual(common.picture[0].data.length, 80938, 'picture length')
+  }
+
   id3(sample, {duration: true}, function (err, result) {
     t.error(err)
 
-    t.strictEqual(result.format.tag_type, 'id3v2.3', 'format.tag_type')
-    t.strictEqual(result.format.sample_rate, 44100, 'format.sample-rate = 44.1 kHz')
-    t.strictEqual(result.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
-    t.strictEqual(result.format.duration, 1, 'format.duration')
+    checkFormat(result.format)
 
-    t.strictEqual(result.common.title, 'Home', 'title')
-    t.strictEqual(result.common.artist[0], 'Explosions In The Sky/Another/And Another', 'artist')
-    t.strictEqual(result.common.albumartist[0], 'Soundtrack', 'albumartist')
-    t.strictEqual(result.common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album')
-    t.strictEqual(result.common.year, '2004', 'year')
-    t.strictEqual(result.common.track.no, 5, 'track no')
-    t.strictEqual(result.common.track.of, 0, 'track of')
-    t.strictEqual(result.common.disk.no, 1, 'disk no')
-    t.strictEqual(result.common.disk.of, 1, 'disk of')
-    t.strictEqual(result.common.genre[0], 'Soundtrack', 'genre')
-    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
-    t.strictEqual(result.common.picture[0].data.length, 80938, 'picture length')
+    checkCommon(result.common)
+
     t.end()
   })
     .on('duration', function (result) {

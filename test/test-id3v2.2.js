@@ -13,6 +13,7 @@ test('id3v2.2', function (t) {
 
   id3(sample, function (err, result) {
     t.error(err, 'no error')
+
     t.strictEqual(result.common.title, 'You Are The One', 'title')
     t.strictEqual(result.common.artist[0], 'Shiny Toy Guns', 'artist')
     t.strictEqual(result.common.album, 'We Are Pilots', 'album')

@@ -476,6 +476,29 @@ exports.stripNulls = function (str) {
   return str
 }
 
+/**
+ * Read bit-aligned number start from buffer
+ * @param buf Byte buffer
+ * @param off Starting offset in bits
+ * @param len Length of number in bits
+ * @return {number} decoded bit aligned number
+ */
+exports.getBitAllignedNumber = function (buf, off, len) {
+  var byteOff = ~~(off / 8)
+  var bitOff = off % 8
+  var value = buf[byteOff]
+  value &= 0xff >> bitOff
+  var bitsRead = 8 - bitOff
+  var bitsLeft = len - bitsRead
+  if (bitsLeft < 0) {
+    value >>= (8 - bitOff - len)
+  } else if (bitsLeft > 0) {
+    value <<= bitsLeft
+    value |= exports.getBitAllignedNumber(buf, off + bitsRead, bitsLeft)
+  }
+  return value
+}
+
 exports.strtokUINT24_BE = {
   len: 3,
   get: function (buf, off) {
@@ -622,11 +645,16 @@ BlockDataState.prototype.parse = function (callback, data) {
     callback(type, 'METADATA_BLOCK_PICTURE', picture)
   } else if (this.type === 0) { // METADATA_BLOCK_STREAMINFO
     if (data.length < 34) return // invalid streaminfo
+    // Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
     var sampleRate = common.strtokUINT24_BE.get(data, 10) >> 4
+    var channels = common.getBitAllignedNumber(data, 100, 3) + 1
+    var bitsPerSample = common.getBitAllignedNumber(data, 103, 5) + 1
     var totalSamples = data.readUInt32BE(14)
     var duration = totalSamples / sampleRate
-    callback('format', 'tag_type', type)
-    callback('format', 'sample_rate', sampleRate)
+    callback('format', 'numberOfChannels', channels)
+    callback('format', 'bitsPerSample', bitsPerSample)
+    callback('format', 'tagType', type)
+    callback('format', 'sampleRate', sampleRate)
     callback('format', 'duration', duration)
   }
 
@@ -695,6 +723,8 @@ module.exports = function (stream, callback, done) {
     if (header !== 'TAG') {
       return done(new Error('Could not find metadata header'))
     }
+
+    callback('format', 'tagType', type)
 
     var title = endData.toString('ascii', offset, offset += 30)
     callback(type, 'title', title.trim().replace(/\x00/g, ''))
@@ -822,9 +852,10 @@ module.exports = function (stream, callback, done, readDuration, fileSize) {
           return seekFirstAudioFrame(done)
         }
 
-        callback('format', 'tag_type', type)
+        callback('format', 'tagType', type)
         callback('format', 'bitrate', header.bitrate * 1000)
-        callback('format', 'sample_rate', header.sample_rate)
+        callback('format', 'sampleRate', header.sample_rate)
+        callback('format', 'numberOfChannels', header.mode === 'mono' ? 1 : 2)
 
         header.slot_size = calcSlotSize(header.layer)
 
@@ -1809,15 +1840,17 @@ module.exports = function (stream, callback, done, readDuration) {
   var innerStream = new events.EventEmitter()
 
   var pageLength = 0
-  var sampleRate = 0
+  var formatInfo
   var header
   var stop = false
 
   stream.on('end', function () {
-    callback('format', 'tag_type', type)
-    callback('format', 'sample_rate', sampleRate)
+    callback('format', 'tagType', type)
+    callback('format', 'sampleRate', formatInfo.sampleRate)
+    callback('format', 'bitrate', formatInfo.bitrateNominal)
+    callback('format', 'numberOfChannels', formatInfo.channelMode)
     if (readDuration) {
-      callback('format', 'duration', header.pcm_sample_pos / sampleRate)
+      callback('format', 'duration', header.pcm_sample_pos / formatInfo.sampleRate)
       done()
     }
   })
@@ -1930,13 +1963,14 @@ module.exports = function (stream, callback, done, readDuration) {
         return strtok.UINT32_LE
 
       case 6: // vorbis info
-        var info = {
+        formatInfo = {
           'version': v.readUInt32LE(0),
-          'channel_mode': v.readUInt8(4),
-          'sample_rate': v.readUInt32LE(5),
-          'bitrate_nominal': v.readUInt32LE(13)
+          'channelMode': v.readUInt8(4),
+          'sampleRate': v.readUInt32LE(5),
+          'bitrateMax': v.readUInt32LE(9),
+          'bitrateNominal': v.readUInt32LE(13),
+          'bitrateMin': v.readUInt32LE(17)
         }
-        sampleRate = info.sample_rate
         cb.state = 0
         return new strtok.BufferType(7)
     }

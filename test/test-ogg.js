@@ -4,7 +4,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('ogg', function (t) {
-  t.plan(50)
+  t.plan(52)
   var comCounter = 0
   var genCounter = 0
 
@@ -14,10 +14,11 @@ test('ogg', function (t) {
 
   mm(sample, { duration: true }, function (err, result) {
     t.error(err)
-    t.strictEqual(result.format.tag_type, 'vorbis', 'format.tag_type')
-    t.strictEqual(result.format.duration, 0, 'format.duration')
-    t.strictEqual(result.format.sample_rate, 44100, 'format.sample-rate = 44.1 kHz')
-    // t.strictEqual(result.format.bitrate, 128000, 'bitrate = 128 kbit/sec')
+    t.strictEqual(result.format.tagType, 'vorbis', 'format.tagType')
+    t.strictEqual(result.format.duration, 0, 'format.duration = 0 sec')
+    t.strictEqual(result.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
+    t.strictEqual(result.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)')
+    t.strictEqual(result.format.bitrate, 64000, 'bitrate = 64 kbit/sec')
 
     t.strictEqual(result.common.title, 'In Bloom', 'title')
     t.strictEqual(result.common.artist[0], 'Nirvana', 'artist')

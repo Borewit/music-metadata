@@ -4,32 +4,41 @@ var mm = require('..')
 var test = require('tape')
 
 test('flac', function (t) {
-  t.plan(41)
+  t.plan(43)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
     : fs.createReadStream(path.join(__dirname, '/samples/flac.flac'))
 
-  mm(sample, function (err, result) {
+  function checkFormat (format) {
+    t.strictEqual(format.tagType, 'vorbis', 'format.tag_type')
+    t.strictEqual(format.duration, 271.7733333333333, 'format.duration')
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
+    t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bit')
+    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')
+  }
+
+  function checkCommon (common) {
+    t.strictEqual(common.title, 'Brian Eno', 'title')
+    t.deepEqual(common.artist, ['MGMT'], 'artist')
+    t.strictEqual(common.albumartist.length, 0, 'albumartist length')
+    t.strictEqual(common.album, 'Congratulations', 'album')
+    t.strictEqual(common.year, '2010', 'year')
+    t.strictEqual(common.track.no, 7, 'track no')
+    t.strictEqual(common.track.of, 0, 'track of')
+    t.strictEqual(common.disk.no, 0, 'disk no')
+    t.strictEqual(common.disk.of, 0, 'disk of')
+    t.strictEqual(common.genre[0], 'Alt. Rock', 'genre')
+    t.strictEqual(common.picture[0].format, 'jpg', 'picture format')
+    t.strictEqual(common.picture[0].data.length, 175668, 'picture length')
+  }
+
+  mm(sample, function (err, metadata) {
     t.error(err)
-    t.strictEqual(result.vorbis, undefined, 'Native metadata not requested')
 
-    t.strictEqual(result.format.tag_type, 'vorbis', 'tag_type')
-    t.strictEqual(result.format.sample_rate, 44100, 'sample-rate = 44.1 kHz')
-    t.strictEqual(result.format.duration, 271.7733333333333, 'duration')
-
-    t.strictEqual(result.common.title, 'Brian Eno', 'title')
-    t.strictEqual(result.common.artist[0], 'MGMT', 'artist')
-    t.strictEqual(result.common.albumartist.length, 0, 'albumartist length')
-    t.strictEqual(result.common.album, 'Congratulations', 'album')
-    t.strictEqual(result.common.year, '2010', 'year')
-    t.strictEqual(result.common.track.no, 7, 'track no')
-    t.strictEqual(result.common.track.of, 0, 'track of')
-    t.strictEqual(result.common.disk.no, 0, 'disk no')
-    t.strictEqual(result.common.disk.of, 0, 'disk of')
-    t.strictEqual(result.common.genre[0], 'Alt. Rock', 'genre')
-    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
-    t.strictEqual(result.common.picture[0].data.length, 175668, 'picture length')
+    checkFormat(metadata.format)
+    checkCommon(metadata.common)
+    t.strictEqual(metadata.vorbis, undefined, 'Native metadata not requested')
     t.end()
   })
     // aliased tests

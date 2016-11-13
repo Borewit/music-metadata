@@ -6,7 +6,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('MusicBrains/Picard tags in FLAC', function (t) {
-  t.plan(77)
+  t.plan(80)
 
   var sample = (process.browser) ?
     new window.Blob([ fs.readFileSync(__dirname + '/samples/MusicBrainz-Picard-tags.flac') ])
@@ -14,6 +14,9 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
 
   function checkFormat (format) {
     t.deepEqual(format.duration, 271.7733333333333, 'format.duration')
+    t.deepEqual(format.sampleRate, 44100, 'format.sampleRate')
+    t.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
+    t.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels')
   }
 
   function checkCommonTags (common) {
