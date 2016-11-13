@@ -20,6 +20,19 @@
     <h3>{{ file.name }}</h3>
 
     <div ng-if="metadata">
+        <h4>Format</h4>
+        <div class="row" ng-repeat="(tag, value) in metadata.format">
+            <div class="col-lg-3">{{ tag }}</div>
+            <div ng-switch on="tag">
+                <div ng-switch-when="duration">
+                    <div class="col-lg-7">{{ value | secondsToTime }}</div>
+                </div>
+                <div ng-switch-default>
+                    <div class="col-lg-7">{{ value }}</div>
+                </div>
+             </div>
+        </div>
+
       <h4>Common metadata</h4>
       <div ng-repeat="(tag, value) in metadata.common">
         <div ng-switch on="tag">
@@ -35,9 +48,6 @@
             <div class="row">
               <div class="col-lg-3">{{ tag }}</div>
               <div ng-switch on="tag">
-                  <div ng-switch-when="duration">
-                    <div class="col-lg-7">{{ value }}</div>
-                  </div>
                   <div ng-switch-when="musicbrainz_albumid">
                     <div class="col-lg-7"><a target="_blank" href="https://musicbrainz.org/release/{{ value }}">MusicBrainz</a></div>
                   </div>
@@ -56,9 +66,6 @@
                   <div ng-switch-when="musicbrainz_albumartistid">
                     <div class="col-lg-7"><span ng-repeat="artistid in value"><span ng-if="!$first">, =</span><a target="_blank" href="https://musicbrainz.org/artist/{{ artistid }}">MusicBrainz</a></span></div>
                   </div>
-                   <div ng-switch-when="duration">
-                      <div class="col-lg-7">{{ value | secondsToTime }}</div>
-                   </div>
                   <div ng-switch-default>
                     <div class="col-lg-7">{{ value }}</div>
                   </div>
@@ -67,6 +74,7 @@
           </div>
         </div>
       </div>
+
     </div>
 
     <div ng-if="native">
@@ -158,7 +166,7 @@
           return URL.createObjectURL(new Blob([picture.data], { 'type': 'image/' + picture.format }));
         }
 
-        musicmetadata(file, function (err, metadata) {
+        musicmetadata(file, {native: true}, function (err, metadata) {
           if (err) {
             $log.error('Error: %s', err)
             throw err;
@@ -171,11 +179,7 @@
               $scope.metadata.common.picture[i].url = self.getImageData($scope.metadata.common.picture[i])
             }
           }
-          for(var i in $scope.metadata) {
-            if($scope.metadata[i] != 'common' && $scope.metadata[i] != 'format') {
-              $scope.native = $scope.metadata[i];
-            }
-          }
+          $scope.native = $scope.metadata[$scope.metadata.format.tag_type];
 
           $scope.$apply()
           /*
