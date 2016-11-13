@@ -7,7 +7,7 @@ Installation
 Install via [npm](http://npmjs.org):
 
 ```
-npm install npm install git+https://github.com/Borewit/musicmetadata.git#MusicBrainz
+npm install git+https://github.com/Borewit/musicmetadata.git#MusicBrainz
 ```
 
 You can also download a pre packaged browser release from `dist/musicmetadata.js`.
