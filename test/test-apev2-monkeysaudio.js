@@ -4,7 +4,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(33) // -1 due to missing albumartist
+  t.plan(34)
   var artistCounter = 0
 
   var sample = (process.browser) ?
@@ -28,7 +28,10 @@ test('monkeysaudio (.ape)', function (t) {
     t.strictEqual(result.common.picture[1].data.length, 48658, 'picture 1 length')
     t.end()
   })
-  // aliased tests
+    // aliased tests
+    .on('duration', function (result) {
+      t.strictEqual(result, 1.2134240362811792, 'duration')
+    })
     .on('title', function (result) {
       t.strictEqual(result, '07. Shadow On The Sun', 'aliased title')
     })
@@ -38,7 +41,7 @@ test('monkeysaudio (.ape)', function (t) {
     .on('albumartist', function (result) {
       // Used to be ['Audioslave'],
       // but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
-      t.deepEqual(result, [], 'aliased albumartist')
+      t.deepEqual(result, ['Audioslave'], 'aliased albumartist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'Audioslave', 'aliased album')
