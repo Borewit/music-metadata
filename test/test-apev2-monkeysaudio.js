@@ -4,7 +4,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(33)
+  t.plan(34)
   var artistCounter = 0
 
   var sample = (process.browser) ?
@@ -28,6 +28,9 @@ test('monkeysaudio (.ape)', function (t) {
     t.end()
   })
     // aliased tests
+    .on('duration', function (result) {
+      t.strictEqual(result, 1.2134240362811792, 'duration')
+    })
     .on('title', function (result) {
       t.strictEqual(result, '07. Shadow On The Sun', 'aliased title')
     })
