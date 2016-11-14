@@ -4,15 +4,26 @@ var mm = require('..')
 var test = require('tape')
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(34)
+  t.plan(39)
   var artistCounter = 0
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/monkeysaudio.ape')])
     : fs.createReadStream(path.join(__dirname, '/samples/monkeysaudio.ape'))
 
+  function checkFormat (format) {
+    t.strictEqual(format.tagType, 'APEv2', 'format.tag_type')
+    t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]')
+    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')
+    t.strictEqual(format.duration, 1.2134240362811792, 'duration [sec]')
+  }
+
   mm(sample, function (err, result) {
     t.error(err)
+
+    checkFormat(result.format)
+
     t.strictEqual(result.common.title, '07. Shadow On The Sun', 'title')
     t.deepEqual(result.common.artist, ['Audioslave', 'Chris Cornell'], 'artist')
     // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
@@ -41,7 +52,7 @@ test('monkeysaudio (.ape)', function (t) {
     .on('albumartist', function (result) {
       // Used to be ['Audioslave'],
       // but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
-      t.deepEqual(result, ['Audioslave'], 'aliased albumartist')
+      t.deepEqual(result, [], 'aliased albumartist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'Audioslave', 'aliased album')
