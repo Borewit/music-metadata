@@ -4,7 +4,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('asf', function (t) {
-  t.plan(24)
+  t.plan(22)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/asf.wma')])
@@ -12,17 +12,16 @@ test('asf', function (t) {
 
   mm(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.title, "Don't Bring Me Down", 'title')
-    t.strictEqual(result.artist[0], 'Electric Light Orchestra', 'artist')
-    t.strictEqual(result.albumartist[0], 'Electric Light Orchestra', 'albumartist')
-    t.strictEqual(result.album, 'Discovery', 'album')
-    t.strictEqual(result.year, '2001', 'year')
-    t.strictEqual(result.track.no, 9, 'track no')
-    t.strictEqual(result.track.of, 0, 'track of')
-    t.strictEqual(result.disk.no, 0, 'disk no')
-    t.strictEqual(result.disk.of, 0, 'disk of')
-    t.strictEqual(result.genre[0], 'Rock', 'genre 0')
-    t.strictEqual(result.duration, 244.885, 'duration')
+    t.strictEqual(result.format.duration, 244.885, 'duration')
+
+    t.strictEqual(result.common.title, "Don't Bring Me Down", 'title')
+    t.deepEqual(result.common.artist, ['Electric Light Orchestra'], 'artist')
+    t.deepEqual(result.common.albumartist, ['Electric Light Orchestra'], 'albumartist')
+    t.strictEqual(result.common.album, 'Discovery', 'album')
+    t.strictEqual(result.common.year, '2001', 'year')
+    t.deepEqual(result.common.track, {no: 9, of: 0}, 'track 9/0')
+    t.deepEqual(result.common.disk, {no: 0, of: 0}, 'disk 0/0')
+    t.deepEqual(result.common.genre, ['Rock'], 'genre')
     t.end()
   }) // aliased tests
     .on('title', function (result) {

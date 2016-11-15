@@ -4,7 +4,7 @@ var id3 = require('..')
 var test = require('tape')
 
 test('id3v2.2', function (t) {
-  t.plan(45)
+  t.plan(46)
   var comCounter = 0
 
   var sample = (process.browser) ?
@@ -12,16 +12,19 @@ test('id3v2.2', function (t) {
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.2.mp3'))
 
   id3(sample, function (err, result) {
-    t.error(err)
-    t.strictEqual(result.title, 'You Are The One', 'title')
-    t.strictEqual(result.artist[0], 'Shiny Toy Guns', 'artist')
-    t.strictEqual(result.album, 'We Are Pilots', 'album')
-    t.strictEqual(result.year, '2006', 'year')
-    t.strictEqual(result.track.no, 1, 'track no')
-    t.strictEqual(result.track.of, 11, 'track of')
-    t.strictEqual(result.genre[0], 'Alternative', 'genre')
-    t.strictEqual(result.picture[0].format, 'jpg', 'picture format')
-    t.strictEqual(result.picture[0].data.length, 99738, 'picture length')
+    t.error(err, 'no error')
+
+    t.strictEqual(result.common.title, 'You Are The One', 'title')
+    t.strictEqual(result.common.artist[0], 'Shiny Toy Guns', 'artist')
+    t.strictEqual(result.common.album, 'We Are Pilots', 'album')
+    t.strictEqual(result.common.year, '2006', 'year')
+    t.strictEqual(result.common.track.no, 1, 'track no')
+    t.strictEqual(result.common.track.of, 11, 'track of')
+    t.deepEqual(result.common.genre, ['Alternative'], 'genre')
+    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
+    t.strictEqual(result.common.picture[0].data.length, 99738, 'picture length')
+    t.strictEqual(result.common.comment.length, 4, 'Number of Expected comment fields')
+
     t.end()
   })
     // aliased tests
@@ -29,7 +32,7 @@ test('id3v2.2', function (t) {
       t.strictEqual(result, 'You Are The One', 'aliased title')
     })
     .on('artist', function (result) {
-      t.deepEqual(result[0], 'Shiny Toy Guns', 'aliased artist')
+      t.deepEqual(result, ['Shiny Toy Guns'], 'aliased artist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'We Are Pilots', 'aliased album')
@@ -38,11 +41,13 @@ test('id3v2.2', function (t) {
       t.strictEqual(result, '2006', 'aliased year')
     })
     .on('track', function (result) {
-      t.strictEqual(result.no, 1, 'aliased track no')
-      t.strictEqual(result.of, 11, 'aliased track of')
+      t.deepEqual(result, {no: 1, of: 11}, 'aliased track no')
     })
     .on('genre', function (result) {
-      t.strictEqual(result[0], 'Alternative', 'aliased genre')
+      t.deepEqual(result, ['Alternative'], 'aliased genre')
+    })
+    .on('encodedby', function (result) {
+      t.deepEqual(result, 'iTunes v7.0.2.16', 'aliased encodedby')
     })
     .on('picture', function (result) {
       t.strictEqual(result[0].format, 'jpg', 'aliased picture format')

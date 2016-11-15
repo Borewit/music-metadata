@@ -4,30 +4,45 @@ var mm = require('..')
 var test = require('tape')
 
 test('monkeysaudio (.ape)', function (t) {
-  t.plan(33)
+  t.plan(39)
   var artistCounter = 0
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/monkeysaudio.ape')])
     : fs.createReadStream(path.join(__dirname, '/samples/monkeysaudio.ape'))
 
+  function checkFormat (format) {
+    t.strictEqual(format.tagType, 'APEv2', 'format.tag_type')
+    t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]')
+    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')
+    t.strictEqual(format.duration, 1.2134240362811792, 'duration [sec]')
+  }
+
   mm(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.title, '07. Shadow On The Sun', 'title')
-    t.deepEqual(result.artist, ['Audioslave', 'Chris Cornell'], 'artist')
-    t.deepEqual(result.albumartist, ['Audioslave'], 'albumartist')
-    t.strictEqual(result.album, 'Audioslave', 'album')
-    t.strictEqual(result.year, '2002', 'year')
-    t.deepEqual(result.genre, ['Alternative'], 'genre')
-    t.deepEqual(result.track, { no: 7, of: 0 }, 'track')
-    t.deepEqual(result.disk, { no: 3, of: 0 }, 'disk')
-    t.strictEqual(result.picture[0].format, 'jpg', 'picture 0 format')
-    t.strictEqual(result.picture[0].data.length, 48658, 'picture 0 length')
-    t.strictEqual(result.picture[1].format, 'jpg', 'picture 1 format')
-    t.strictEqual(result.picture[1].data.length, 48658, 'picture 1 length')
+
+    checkFormat(result.format)
+
+    t.strictEqual(result.common.title, '07. Shadow On The Sun', 'title')
+    t.deepEqual(result.common.artist, ['Audioslave', 'Chris Cornell'], 'artist')
+    // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
+    t.deepEqual(result.common.albumartist, [], 'albumartist')
+    t.strictEqual(result.common.album, 'Audioslave', 'album')
+    t.strictEqual(result.common.year, '2002', 'year')
+    t.deepEqual(result.common.genre, ['Alternative'], 'genre')
+    t.deepEqual(result.common.track, { no: 7, of: 0 }, 'track')
+    t.deepEqual(result.common.disk, { no: 3, of: 0 }, 'disk')
+    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
+    t.strictEqual(result.common.picture[0].data.length, 48658, 'picture 0 length')
+    t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')
+    t.strictEqual(result.common.picture[1].data.length, 48658, 'picture 1 length')
     t.end()
   })
     // aliased tests
+    .on('duration', function (result) {
+      t.strictEqual(result, 1.2134240362811792, 'duration')
+    })
     .on('title', function (result) {
       t.strictEqual(result, '07. Shadow On The Sun', 'aliased title')
     })
@@ -35,7 +50,9 @@ test('monkeysaudio (.ape)', function (t) {
       t.deepEqual(result, ['Audioslave', 'Chris Cornell'], 'aliased artist')
     })
     .on('albumartist', function (result) {
-      t.deepEqual(result, ['Audioslave'], 'aliased albumartist')
+      // Used to be ['Audioslave'],
+      // but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
+      t.deepEqual(result, [], 'aliased albumartist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'Audioslave', 'aliased album')

@@ -4,7 +4,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('ogg', function (t) {
-  t.plan(49)
+  t.plan(52)
   var comCounter = 0
   var genCounter = 0
 
@@ -14,20 +14,24 @@ test('ogg', function (t) {
 
   mm(sample, { duration: true }, function (err, result) {
     t.error(err)
-    t.strictEqual(result.title, 'In Bloom', 'title')
-    t.strictEqual(result.artist[0], 'Nirvana', 'artist')
-    t.strictEqual(result.albumartist[0], 'Nirvana', 'albumartist')
-    t.strictEqual(result.album, 'Nevermind', 'album')
-    t.strictEqual(result.year, '1991', 'year')
-    t.strictEqual(result.track.no, 1, 'track no')
-    t.strictEqual(result.track.of, 12, 'track of')
-    t.strictEqual(result.disk.no, 1, 'disk no')
-    t.strictEqual(result.disk.of, 0, 'disk of')
-    t.strictEqual(result.genre[0], 'Grunge', 'genre 0')
-    t.strictEqual(result.genre[1], 'Alternative', 'genre 1')
-    t.strictEqual(result.picture[0].format, 'jpg', 'picture format')
-    t.strictEqual(result.picture[0].data.length, 30966, 'picture length')
-    t.strictEqual(result.duration, 0, 'metadata duration')
+    t.strictEqual(result.format.tagType, 'vorbis', 'format.tagType')
+    t.strictEqual(result.format.duration, 0, 'format.duration = 0 sec')
+    t.strictEqual(result.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
+    t.strictEqual(result.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)')
+    t.strictEqual(result.format.bitrate, 64000, 'bitrate = 64 kbit/sec')
+
+    t.strictEqual(result.common.title, 'In Bloom', 'title')
+    t.strictEqual(result.common.artist[0], 'Nirvana', 'artist')
+    t.strictEqual(result.common.albumartist[0], 'Nirvana', 'albumartist')
+    t.strictEqual(result.common.album, 'Nevermind', 'album')
+    t.strictEqual(result.common.year, '1991', 'year')
+    t.strictEqual(result.common.track.no, 1, 'track no')
+    t.strictEqual(result.common.track.of, 12, 'track of')
+    t.strictEqual(result.common.disk.no, 1, 'disk no')
+    t.strictEqual(result.common.disk.of, 0, 'disk of')
+    t.deepEqual(result.common.genre, ['Grunge', 'Alternative'], 'genre')
+    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
+    t.strictEqual(result.common.picture[0].data.length, 30966, 'picture length')
     t.end()
   })
     .on('duration', function (result) {

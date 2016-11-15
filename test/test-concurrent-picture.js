@@ -10,7 +10,7 @@ test('concurrent-picture', function (t) {
       t.error(err)
       fs.readFile(file + '.jpg', function (err, data) {
         t.error(err)
-        t.deepEqual(result.picture[0].data, data)
+        t.deepEqual(result.common.picture[0].data, data)
       })
     })
   })

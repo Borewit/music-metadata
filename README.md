@@ -7,7 +7,7 @@ Installation
 Install via [npm](http://npmjs.org):
 
 ```
-npm install musicmetadata
+npm install git+https://github.com/Borewit/musicmetadata.git#MusicBrainz
 ```
 
 You can also download a pre packaged browser release from `dist/musicmetadata.js`.
@@ -29,7 +29,7 @@ var fs = require('fs');
 var mm = require('musicmetadata');
 
 // create a new parser from a node ReadStream
-var parser = mm(fs.createReadStream('sample.mp3'), function (err, metadata) {
+var parser = mm(fs.createReadStream('sample.mp3'), {native=true, duration=true}function (err, metadata) {
   if (err) throw err;
   console.log(metadata);
 });
@@ -38,16 +38,36 @@ var parser = mm(fs.createReadStream('sample.mp3'), function (err, metadata) {
 This will output the standard music metadata:
 
 ```javascript
-{ artist : ['Spor'],
-  album : 'Nightlife, Vol 5.',
-  albumartist : [ 'Andy C', 'Spor' ],
-  title : 'Stronger',
-  year : '2010',
-  track : { no : 1, of : 44 },
-  disk : { no : 1, of : 2 },
-  genre : ['Drum & Bass'],
-  picture : [ { format : 'jpg', data : <Buffer> } ],
-  duration : 302.41 // in seconds
+{
+  common:
+  {
+     artist : ['Spor'],
+     album : 'Nightlife, Vol 5.',
+     albumartist : [ 'Andy C', 'Spor' ],
+     title : 'Stronger',
+     year : '2010',
+     track : { no : 1, of : 44 },
+     disk : { no : 1, of : 2 },
+     genre : ['Drum & Bass'],
+     label: 'RAM Records',
+     musicbrainz_albumid: 'a6da0420-f7ec-4b47-9e5a-9b0f33eeb8f2',
+     picture : [ { format : 'jpg', data : <Buffer> } ],
+     duration : 302.41 // in seconds,
+  },
+  'id3v2.4': // as a result of 'native=true'
+  {
+     TPE1 : ['Spor'],
+     TALB : 'Nightlife, Vol 5.',
+     TPE2 : [ 'Andy C', 'Spor' ],
+     TIT2 : 'Stronger',
+     TYER : '2010',
+     TRCK : '1/44',
+     TPOS : '1/2',
+     TCON : ['Drum & Bass'],
+     TPUB : 'RAM Records',
+     'TXXX:MusicBrainz Album Id': 'a6da0420-f7ec-4b47-9e5a-9b0f33eeb8f2'
+     ...
+  }
 }
 ```
 

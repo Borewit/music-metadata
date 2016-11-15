@@ -12,12 +12,12 @@ test('id3v2.4', function (t) {
 
   id3(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.title, 'Redial (Feat. LeafRunner and Nowacking)', 'title')
-    t.strictEqual(result.artist[0], 'YourEnigma', 'artist 0')
-    t.strictEqual(result.year, '2014', 'year')
-    t.strictEqual(result.picture[0].format, 'jpg', 'picture 0 format')
-    t.strictEqual(result.picture[0].data.length, 214219, 'picture 0 length')
-    t.deepEqual(result.picture[0].data.slice(0, 2), new Buffer([0xFF, 0xD8]),
+    t.strictEqual(result.common.title, 'Redial (Feat. LeafRunner and Nowacking)', 'title')
+    t.strictEqual(result.common.artist[0], 'YourEnigma', 'artist 0')
+    t.strictEqual(result.common.year, '2014', 'year')
+    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
+    t.strictEqual(result.common.picture[0].data.length, 214219, 'picture 0 length')
+    t.deepEqual(result.common.picture[0].data.slice(0, 2), new Buffer([0xFF, 0xD8]),
       'picture 0 JFIF magic header')
     t.end()
   })
