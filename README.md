@@ -7,10 +7,10 @@ Installation
 Install via [npm](http://npmjs.org):
 
 ```
-npm install git+https://github.com/Borewit/musicmetadata.git#MusicBrainz
+npm install git+https://github.com/Borewit/music-metadata.git
 ```
 
-You can also download a pre packaged browser release from `dist/musicmetadata.js`.
+You can also download a pre packaged browser release from `dist/music-metadata.js`.
 See `example/index.html` for usage.
 
 
@@ -20,13 +20,14 @@ Supports
 * m4a (mp4)
 * vorbis (ogg, flac)
 * asf (wma, wmv)
+* MonkeyAudio, APEv2 (ape)
 
 
 API
 -----------------
 ```javascript
 var fs = require('fs');
-var mm = require('musicmetadata');
+var mm = require('music-metadata');
 
 // create a new parser from a node ReadStream
 var parser = mm(fs.createReadStream('sample.mp3'), {native=true, duration=true}function (err, metadata) {
@@ -39,6 +40,14 @@ This will output the standard music metadata:
 
 ```javascript
 {
+  format:
+  {
+     duration : 302.41 // in seconds,
+     bitrate: 44100,
+     bitsPerSample: 16,
+     tagType, 'id3v2.3',
+     numberOfChannels: 2
+  }
   common:
   {
      artist : ['Spor'],
@@ -51,8 +60,7 @@ This will output the standard music metadata:
      genre : ['Drum & Bass'],
      label: 'RAM Records',
      musicbrainz_albumid: 'a6da0420-f7ec-4b47-9e5a-9b0f33eeb8f2',
-     picture : [ { format : 'jpg', data : <Buffer> } ],
-     duration : 302.41 // in seconds,
+     picture : [ { format : 'jpg', data : <Buffer> } ]
   },
   'id3v2.4': // as a result of 'native=true'
   {
@@ -80,7 +88,7 @@ var parser = mm(readableStream, function (err, metadata) {
 });
 ```
 
-`musicmetadata` also emits all metadata it discovers during parsing. For example if you wanted to read the `TLEN` frame from an id3v2.x file you can do this:
+`music-metadata` also emits all metadata it discovers during parsing. For example if you wanted to read the `TLEN` frame from an id3v2.x file you can do this:
 
 ```javascript
 parser.on('TLEN', function (result) {
@@ -88,7 +96,7 @@ parser.on('TLEN', function (result) {
 });
 ```
 
-You can also read the duration; to calculate the duration `musicmetadata` may need to parse the entire file
+You can also read the duration; to calculate the duration `music-metadata` may need to parse the entire file
 so only enable this if you need the functionality.
 ```javascript
 mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
@@ -108,7 +116,9 @@ Licence
 
 (The MIT License)
 
-Copyright (c) 2016 Lee Treveil <leetreveil@gmail.com>
+Copyright (c) 2016 Borewit
+
+Based on [musicmetadata] (https://github.com/leetreveil/musicmetadata/) written by Lee Treveil <leetreveil@gmail.com> and many others.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -116,9 +126,4 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[npm-url]: https://npmjs.org/package/musicmetadata
-[npm-image]: https://badge.fury.io/js/musicmetadata.svg
-[npm-downloads-image]: http://img.shields.io/npm/dm/musicmetadata.svg
-
-[travis-url]: https://travis-ci.org/leetreveil/musicmetadata
-[travis-image]: https://api.travis-ci.org/leetreveil/musicmetadata.svg?branch=master
+[npm-url]: https://npmjs.org/package/music-metadata
