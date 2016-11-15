@@ -7,7 +7,7 @@ Installation
 Install via [npm](http://npmjs.org):
 
 ```
-npm install git+https://github.com/Borewit/music-metadata.git
+npm install music-metadata
 ```
 
 You can also download a pre packaged browser release from `dist/music-metadata.js`.
@@ -45,7 +45,7 @@ This will output the standard music metadata:
      duration : 302.41 // in seconds,
      bitrate: 44100,
      bitsPerSample: 16,
-     tagType, 'id3v2.3',
+     tagType, 'id3v2.4',
      numberOfChannels: 2
   }
   common:
