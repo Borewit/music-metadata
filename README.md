@@ -30,7 +30,7 @@ var fs = require('fs');
 var mm = require('music-metadata');
 
 // create a new parser from a node ReadStream
-var parser = mm(fs.createReadStream('04. Lungs.flac'), {native=true, duration=true}function (err, metadata) {
+var parser = mm(fs.createReadStream('04. Lungs.flac'), {native=true, duration=true}, function (err, metadata) {
   if (err) throw err;
   console.log(metadata);
 });
@@ -135,9 +135,7 @@ This will output the following music metadata:
         "indexed_color": 0,
         "data": {
           "type": "Buffer",
-          "data": [
-            "..."
-          ]
+          "data": ["..."]
         }
       }
     ]
