@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>music-metadata browser example</title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+  <script src="../dist/music-metadata.js"></script>
+  <script src="drop_media_file.js"></script>
+</head>
+
+<body>
+<div class="container" ng-app="MusicMetaDataExample" ng-controller="DropAudioController">
+  <h1>music-metadata example</h1>
+
+  <drag-and-drop on-drop-files="handleDropFiles">
+    <h4>Please drag and drop an audio media file here</h4>
+  </drag-and-drop>
+
+  <div ng-if="file">
+    <h3>file: {{ file.name }}</h3>
+    <div ng-if="metadata">
+      <h4>Format</h4>
+      <div class="row" ng-repeat="(tag, value) in metadata.format">
+        <div class="col-lg-3">{{ tag }}</div>
+        <div ng-switch on="tag">
+          <div ng-switch-when="duration">
+            <div class="col-lg-7">{{ value | secondsToTime }}</div>
+          </div>
+          <div ng-switch-default>
+            <div class="col-lg-7">{{ value }}</div>
+          </div>
+        </div>
+      </div>
+
+      <h4>Common metadata</h4>
+      <div ng-repeat="(tag, value) in metadata.common">
+        <div ng-switch on="tag">
+
+          <div ng-switch-when="picture">
+            <div class="row" ng-repeat="picture in value">
+              <div class="col-lg-3">{{ tag }}</div>
+              <div class="col-lg-7"><img data-ng-src="{{ picture.url }}"/></div>
+            </div>
+          </div>
+
+          <div ng-switch-default>
+            <div class="row">
+              <div class="col-lg-3">{{ tag }}</div>
+              <div ng-switch on="tag">
+                <div ng-switch-when="musicbrainz_albumid">
+                  <div class="col-lg-7"><a target="_blank" href="https://musicbrainz.org/release/{{ value }}">MusicBrainz</a>
+                  </div>
+                </div>
+                <div ng-switch-when="musicbrainz_recordingid">
+                  <div class="col-lg-7"><a target="_blank" href="https://musicbrainz.org/recording/{{ value }}">MusicBrainz</a>
+                  </div>
+                </div>
+                <div ng-switch-when="musicbrainz_trackid">
+                  <div class="col-lg-7"><a target="_blank" href="https://musicbrainz.org/track/{{ value }}">MusicBrainz</a>
+                  </div>
+                </div>
+                <div ng-switch-when="musicbrainz_releasegroupid">
+                  <div class="col-lg-7"><a target="_blank" href="https://musicbrainz.org/release-group/{{ value }}">MusicBrainz</a>
+                  </div>
+                </div>
+                <div ng-switch-when="musicbrainz_artistid">
+                  <div class="col-lg-7"><span ng-repeat="artistid in value"><span ng-if="!$first">, =</span><a target="_blank" href="https://musicbrainz.org/artist/{{ artistid }}">MusicBrainz</a></span>
+                  </div>
+                </div>
+                <div ng-switch-when="musicbrainz_albumartistid">
+                  <div class="col-lg-7"><span ng-repeat="artistid in value"><span ng-if="!$first">, =</span><a target="_blank" href="https://musicbrainz.org/artist/{{ artistid }}">MusicBrainz</a></span>
+                  </div>
+                </div>
+                <div ng-switch-default>
+                  <div class="col-lg-7">
+                    <span ng-if="isArray(value)">
+                      <span ng-repeat="item in value"><span ng-if="!$first">, =</span>{{ item }}</span>
+                    </span>
+                    <span ng-if="!isArray(value)">{{ value }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div ng-if="native">
+      <h4>Native metadata</h4>
+      <div class="row" ng-repeat="(tag, value) in native">
+        <div class="col-lg-3">{{ tag }}</div>
+        <div class="col-lg-7">
+          <span ng-if="isArray(value)">
+            <span ng-repeat="item in value"><span ng-if="!$first">, =</span>{{ item }}</span>
+          </span>
+          <span ng-if="!isArray(value)">{{ value }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+
