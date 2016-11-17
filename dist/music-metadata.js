@@ -754,7 +754,6 @@ module.exports = function (stream, callback, done) {
 
 },{"./common":3}],6:[function(require,module,exports){
 (function (Buffer){
-/* jshint maxlen: 120 */
 'use strict'
 var strtok = require('strtok2')
 var parser = require('./id3v2_frames')
@@ -1758,74 +1757,184 @@ var headerTypes = [
 'use strict'
 var common = require('./common')
 var strtok = require('strtok2')
-var type = 'APEv2'
+var type = 'APEv2' // ToDo: version should be made dynamic, APE may also contain ID3
+
+var ape = {}
+
+/**
+ * APETag version history / supported formats
+ *
+ *  1.0 (1000) - Original APE tag spec.  Fully supported by this code.
+ *  2.0 (2000) - Refined APE tag spec (better streaming support, UTF encoding). Fully supported by this code.
+ *
+ *  Notes:
+ *  - also supports reading of ID3v1.1 tags
+ *  - all saving done in the APE Tag format using CURRENT_APE_TAG_VERSION
+ *
+ * APE File Format Overview: (pieces in order -- only valid for the latest version APE files)
+ *
+ * JUNK - any amount of "junk" before the APE_DESCRIPTOR (so people that put ID3v2 tags on the files aren't hosed)
+ * APE_DESCRIPTOR - defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
+ * APE_HEADER - describes all of the necessary information about the APE file
+ * SEEK TABLE - the table that represents seek offsets [optional]
+ * HEADER DATA - the pre-audio data from the original file [optional]
+ * APE FRAMES - the actual compressed audio (broken into frames for seekability)
+ * TERMINATING DATA - the post-audio data from the original file [optional]
+ * TAG - describes all the properties of the file [optional]
+ */
 
 module.exports = function (stream, callback, done) {
-  var ApeDescriptor = {
-    len: 44,
-
-    get: function (buf, off) {
-      return {
-        ID: new strtok.StringType(4, 'ascii').get(buf, off),
-        version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
-        descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
-        headerDataBytes: strtok.UINT32_LE.get(buf, off + 12),
-        APEFrameDataBytes: strtok.UINT32_LE.get(buf, off + 16),
-        APEFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 20),
-        terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 24),
-        fileMD5: new strtok.BufferType(16).get(buf, 28)
-      }
-    }
-  }
-
-  // headerDataBytes = 24
-
-  var ApeHeader = {
-    len: 24,
-
-    get: function (buf, off) {
-      return {
-        compressionLevel: strtok.UINT16_LE.get(buf, off),
-        formatFlags: strtok.UINT16_LE.get(buf, off + 2),
-        blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
-        finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
-        totalFrames: strtok.UINT32_LE.get(buf, off + 12),
-        bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
-        channel: strtok.UINT16_LE.get(buf, off + 18),
-        sampleRate: strtok.UINT32_LE.get(buf, off + 20)
-      }
-    }
-  }
 
   strtok.parse(stream, function (v, cb) {
     if (v === undefined) {
-      cb.state = 0
-      return ApeDescriptor
+      cb.state = 'descriptor'
+      return Ape.descriptor
     }
 
     switch (cb.state) {
-      case 0:
+      case 'descriptor':
         if (v.ID !== 'MAC ') {
-          throw new Error('Expected MAC on beginning of file')
+          throw new Error('Expected MAC on beginning of file') // ToDo: strip/parse JUNK
         }
-        cb.state = 1
-        return new strtok.BufferType(v.descriptorBytes - 44)
+        ape.descriptor = v
+        var lenExp = v.descriptorBytes - ape.descriptor.len
+        if (lenExp > 0) {
+          cb.state = 'descriptorExpansion'
+          return new strtok.IgnoreType(lenExp)
+        } else {
+          cb.state = 'header'
+          return Ape.header
+        }
+        cb.state = 'descriptorExpansion'
+        return new strtok.IgnoreType(lenExp)
 
-      case 1:
-        cb.state = 2
-        return ApeHeader
+      case 'descriptorExpansion':
+        cb.state = 'header'
+        return Ape.header
 
-      case 2:
+      case 'header':
+        ape.header = v
         callback('format', 'tagType', type)
         callback('format', 'bitsPerSample', v.bitsPerSample)
         callback('format', 'sampleRate', v.sampleRate)
         callback('format', 'numberOfChannels', v.channel)
         callback('format', 'duration', calculateDuration(v))
-        return -1
-    }
-  })
+        var forwardBytes = ape.descriptor.seekTableBytes + ape.descriptor.headerDataBytes +
+          ape.descriptor.apeFrameDataBytes + ape.descriptor.terminatingDataBytes
+        cb.state = 'skipData'
+        return new strtok.IgnoreType(forwardBytes)
 
-  return readMetadata(stream, callback, done)
+      case 'skipData':
+        cb.state = 'tagFooter'
+        return Ape.tagFooter
+
+      case 'tagFooter':
+        if (v.ID !== 'APETAGEX') {
+          done(new Error('Expected footer to start with APETAGEX '))
+        }
+        ape.footer = v
+        cb.state = 'tagField'
+        return Ape.tagField(v)
+
+      case 'tagField':
+        parseTags(ape.footer, v, callback)
+        done()
+        break
+
+      default:
+        done(new Error('Illegal state: ' + cb.state))
+    }
+    return 0
+  })
+}
+
+var Ape = {
+
+  /**
+   * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
+   */
+  descriptor: {
+    len: 52,
+
+    get: function (buf, off) {
+      return {
+        // should equal 'MAC '
+        ID: new strtok.StringType(4, 'ascii').get(buf, off),
+        // version number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
+        version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
+        // the number of descriptor bytes (allows later expansion of this header)
+        descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
+        // the number of header APE_HEADER bytes
+        headerBytes: strtok.UINT32_LE.get(buf, off + 12),
+        // the number of header APE_HEADER bytes
+        seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
+        // the number of header data bytes (from original file)
+        headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
+        // the number of bytes of APE frame data
+        apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
+        // the high order number of APE frame data bytes
+        apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
+        // the terminating data of the file (not including tag data)
+        terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
+        // the MD5 hash of the file (see notes for usage... it's a littly tricky)
+        fileMD5: new strtok.BufferType(16).get(buf, off + 36)
+      }
+    }
+  },
+
+  /**
+   * APE_HEADER: describes all of the necessary information about the APE file
+   */
+  header: {
+    len: 24,
+
+    get: function (buf, off) {
+      return {
+        // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
+        compressionLevel: strtok.UINT16_LE.get(buf, off),
+        // any format flags (for future use)
+        formatFlags: strtok.UINT16_LE.get(buf, off + 2),
+        // the number of audio blocks in one frame
+        blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
+        // the number of audio blocks in the final frame
+        finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
+        // the total number of frames
+        totalFrames: strtok.UINT32_LE.get(buf, off + 12),
+        // the bits per sample (typically 16)
+        bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
+        // the number of channels (1 or 2)
+        channel: strtok.UINT16_LE.get(buf, off + 18),
+        // the sample rate (typically 44100)
+        sampleRate: strtok.UINT32_LE.get(buf, off + 20)
+      }
+    }
+  },
+
+  /**
+   * TAG: describes all the properties of the file [optional]
+   */
+  tagFooter: {
+    len: 32,
+
+    get: function (buf, off) {
+      return {
+        // should equal 'APETAGEX'
+        ID: new strtok.StringType(8, 'ascii').get(buf, off),
+        // equals CURRENT_APE_TAG_VERSION
+        version: strtok.UINT32_LE.get(buf, off + 8),
+        // the complete size of the tag, including this footer (excludes header)
+        size: strtok.UINT32_LE.get(buf, off + 12),
+        // the number of fields in the tag
+        fields: strtok.UINT32_LE.get(buf, off + 16),
+        // reserved for later use (must be zero)
+        reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
+      }
+    }
+  },
+
+  tagField: function (footer) {
+    return new strtok.BufferType(footer.size - Ape.tagFooter.len)
+  }
 }
 
 /**
@@ -1839,41 +1948,19 @@ function calculateDuration (ah) {
   return duration / ah.sampleRate
 }
 
-function readMetadata (stream, callback, done) {
-  var bufs = []
+function parseTags (footer, buffer, callback) {
+  var offset = 0
 
-  // TODO: need to be able to parse the tag if its at the start of the file
-  stream.on('data', function (data) {
-    bufs.push(data)
-  })
+  for (var i = 0; i < footer.fields; i++) {
+    var size = strtok.UINT32_LE.get(buffer, offset, offset += 4)
+    var flags = parseTagFlags(strtok.UINT32_LE.get(buffer, offset, offset += 4))
 
-  common.streamOnRealEnd(stream, function () {
-    var buffer = Buffer.concat(bufs)
-    var offset = buffer.length - 32
+    var zero = common.findZero(buffer, offset, buffer.length)
+    var key = buffer.toString('ascii', offset, zero)
+    offset = zero + 1
 
-    if (buffer.toString('utf8', offset, offset += 8) !== 'APETAGEX') {
-      done(new Error("expected APE header but wasn't found"))
-    }
-
-    var footer = {
-      version: strtok.UINT32_LE.get(buffer, offset, offset + 4),
-      size: strtok.UINT32_LE.get(buffer, offset + 4, offset + 8),
-      count: strtok.UINT32_LE.get(buffer, offset + 8, offset + 12)
-    }
-
-    // go 'back' to where the 'tags' start
-    offset = buffer.length - footer.size
-
-    for (var i = 0; i < footer.count; i++) {
-      var size = strtok.UINT32_LE.get(buffer, offset, offset += 4)
-      var flags = strtok.UINT32_LE.get(buffer, offset, offset += 4)
-      var kind = (flags & 6) >> 1
-
-      var zero = common.findZero(buffer, offset, buffer.length)
-      var key = buffer.toString('ascii', offset, zero)
-      offset = zero + 1
-
-      if (kind === 0) { // utf-8 textstring
+    switch (flags.dataType) {
+      case 'text_utf8': { // utf-8 textstring
         var value = buffer.toString('utf8', offset, offset += size)
         var values = value.split(/\x00/g)
 
@@ -1881,7 +1968,9 @@ function readMetadata (stream, callback, done) {
         values.forEach(function (val) {
           callback(type, key, val)
         })
-      } else if (kind === 1) { // binary (probably artwork)
+      }
+        break
+      case 'binary': { // binary (probably artwork)
         if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
           var picData = buffer.slice(offset, offset + size)
 
@@ -1899,9 +1988,33 @@ function readMetadata (stream, callback, done) {
           callback(type, key, picture)
         }
       }
+        break
     }
-    return done()
-  })
+  }
+}
+
+function parseTagFlags (flags) {
+  return {
+    containsHeader: isBitSet(flags, 31),
+    containsFooter: isBitSet(flags, 30),
+    isHeader: isBitSet(flags, 31),
+    readOnly: isBitSet(flags, 0),
+    dataType: getDataType((flags & 6) >> 1)
+  }
+}
+
+function getDataType (type) {
+  var types = ['text_utf8', 'binary', 'external_info', 'reserved']
+  return types[type]
+}
+
+/**
+ * @param num {number}
+ * @param bit 0 is least significant bit (LSB)
+ * @return {boolean} true if bit is 1; otherwise false
+ */
+function isBitSet (num, bit) {
+  return (num & 1 << bit) !== 0
 }
 
 }).call(this,require("buffer").Buffer)
