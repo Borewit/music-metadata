@@ -67,7 +67,7 @@
   "jshintConfig": {
     "asi": true,
     "node": true,
-    "maxlen": 100,
+    "maxlen": 120,
     "indent": 2
   },
   "license": "MIT",
