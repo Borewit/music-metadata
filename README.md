@@ -20,8 +20,7 @@ Supports
 * m4a (mp4)
 * vorbis (ogg, flac)
 * asf (wma, wmv)
-* MonkeyAudio, APEv2 (ape)
-
+* ape (MonkeyAudio)
 
 API
 -----------------
@@ -40,102 +39,102 @@ This will output the following music metadata:
 
 ```javascript
 {
-  "common": {
-    "title": "Lungs",
-    "artist": ["I Have A Tribe"],
-    "albumartist": ["I Have A Tribe"],
-    "album": "No Countries",
-    "year": "2015",
-    "track": {"no": 4, "of": 5},
-    "genre": ["Pop Rock"],
-    "disk": {"no": 1, "of": 1},
-    "picture": [
+  common: {
+    title: 'Lungs',
+    artist: ['I Have A Tribe'],
+    albumartist: ['I Have A Tribe'],
+    album: 'No Countries',
+    year: '2015',
+    track: {no: 4, of: 5},
+    genre: ['Pop Rock'],
+    disk: {'no: 1, 'of: 1},
+    picture: [
       {
-        "format": "jpg",
-        "data": {
-          "type": "Buffer",
-          "data": ["..."]
+        format: 'jpg',
+        data: {
+          type: 'Buffer',
+          data: ['...']
         }
       }
     ],
-    "grouping": "Rock",
-    "copyright": "2015 Grönland Records",
-    "releasecountry": "DE",
-    "label": "Grönland Records",
-    "musicbrainz_albumartistid": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "date": "2015-10-16",
-    "musicbrainz_trackid": "ed040a93-1f95-4f91-8c41-359f5a6e7770",
-    "albumartistsort": ["I Have a Tribe"],
-    "originaldate": "2015-10-16",
-    "script": "Latn",
-    "musicbrainz_albumid": "4f54e938-89b4-4ee8-b282-74964f1e23bb",
-    "releasestatus": "official",
-    "acoustid_id": "5c94b20e-be79-4f6d-9800-d4caf8bc2a76",
-    "catalognumber": "DAGRON153",
-    "musicbrainz_artistid": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "media": "Digital Media",
-    "releasetype": ["ep"],
-    "originalyear": "2015",
-    "musicbrainz_releasegroupid": "9c288627-be99-490e-9d3e-e6b135e9b8dd",
-    "musicbrainz_recordingid": "a1a9ede1-219b-464c-9520-d9fd1debf933",
-    "artistsort": ["I Have a Tribe"]
+    grouping: 'Rock',
+    copyright: '2015 Grönland Records',
+    releasecountry: 'DE',
+    label: 'Grönland Records',
+    musicbrainz_albumartistid: ['d8e73ae6-9884-4061-a056-c686b3375c9d'],
+    date: '2015-10-16',
+    musicbrainz_trackid: 'ed040a93-1f95-4f91-8c41-359f5a6e7770',
+    albumartistsort: ['I Have a Tribe'],
+    originaldate: '2015-10-16',
+    script: 'Latn',
+    musicbrainz_albumid: '4f54e938-89b4-4ee8-b282-74964f1e23bb',
+    releasestatus: 'official',
+    acoustid_id: '5c94b20e-be79-4f6d-9800-d4caf8bc2a76',
+    catalognumber: 'DAGRON153',
+    musicbrainz_artistid: ['d8e73ae6-9884-4061-a056-c686b3375c9d'],
+    media': 'Digital Media',
+    releasetype: ['ep'],
+    originalyear: '2015',
+    musicbrainz_releasegroupid: '9c288627-be99-490e-9d3e-e6b135e9b8dd',
+    musicbrainz_recordingid: 'a1a9ede1-219b-464c-9520-d9fd1debf933',
+    artistsort: ['I Have a Tribe']
   },
 
-  "format": {
-    "duration": 266.56,
-    "numberOfChannels": 2,
-    "bitsPerSample": 16,
-    "tagType": "vorbis",
-    "sampleRate": 44100
+  format: {
+    duration: 266.56,
+    numberOfChannels: 2,
+    bitsPerSample: 16,
+    tagType: 'vorbis',
+    sampleRate: 44100
   },
 
-  "vorbis": {
-    "GROUPING": "Rock",
-    "COPYRIGHT": "2015 Grönland Records",
-    "GENRE": ["Pop Rock"],
-    "DESCRIPTION": ["Interprètes : I Have A Tribe, Main Artist; Patrick O'Laoghaire, Composer, Lyricist; Copyright Control\r\nLabel : Grönland Records - GoodToGo\r\n"],
-    "TITLE": "Lungs",
-    "RELEASECOUNTRY": "DE",
-    "TOTALDISCS": ["1"],
-    "LABEL": "Grönland Records",
-    "TOTALTRACKS": ["5"],
-    "MUSICBRAINZ_ALBUMARTISTID": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "DATE": "2015-10-16",
-    "DISCNUMBER": "1",
-    "TRACKTOTAL": "5",
-    "MUSICBRAINZ_RELEASETRACKID": "ed040a93-1f95-4f91-8c41-359f5a6e7770",
-    "ALBUMARTISTSORT": ["I Have a Tribe"],
-    "ORIGINALDATE": "2015-10-16",
-    "SCRIPT": "Latn",
-    "MUSICBRAINZ_ALBUMID": "4f54e938-89b4-4ee8-b282-74964f1e23bb",
-    "RELEASESTATUS": "official",
-    "ALBUMARTIST": ["I Have A Tribe"],
-    "ACOUSTID_ID": "5c94b20e-be79-4f6d-9800-d4caf8bc2a76",
-    "CATALOGNUMBER": "DAGRON153",
-    "ALBUM": "No Countries",
-    "MUSICBRAINZ_ARTISTID": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "MEDIA": "Digital Media",
-    "RELEASETYPE": ["ep"],
-    "ORIGINALYEAR": "2015",
-    "ARTIST": ["I Have A Tribe"],
-    "DISCTOTAL": "1",
-    "MUSICBRAINZ_RELEASEGROUPID": "9c288627-be99-490e-9d3e-e6b135e9b8dd",
-    "MUSICBRAINZ_TRACKID": "a1a9ede1-219b-464c-9520-d9fd1debf933",
-    "ARTISTSORT": ["I Have a Tribe"],
-    "ARTISTS": ["I Have A Tribe"],
-    "TRACKNUMBER": "4",
-    "METADATA_BLOCK_PICTURE": [
+  vorbis: {
+    GROUPING: 'Rock',
+    COPYRIGHT: '2015 Grönland Records',
+    GENRE: ['Pop Rock'],
+    DESCRIPTION: ['Interprètes : I Have A Tribe, Main Artist; Patrick O'Laoghaire, Composer, Lyricist; Copyright Control\r\nLabel : Grönland Records - GoodToGo\r\n'],
+    TITLE: 'Lungs',
+    RELEASECOUNTRY: 'DE',
+    TOTALDISCS: ['1'],
+    LABEL: 'Grönland Records',
+    TOTALTRACKS: ['5'],
+    MUSICBRAINZ_ALBUMARTISTID: ['d8e73ae6-9884-4061-a056-c686b3375c9d'],
+    DATE: '2015-10-16',
+    DISCNUMBER: '1',
+    TRACKTOTAL: '5',
+    MUSICBRAINZ_RELEASETRACKID: 'ed040a93-1f95-4f91-8c41-359f5a6e7770',
+    ALBUMARTISTSORT: ['I Have a Tribe'],
+    ORIGINALDATE: '2015-10-16',
+    SCRIPT: 'Latn',
+    MUSICBRAINZ_ALBUMID: '4f54e938-89b4-4ee8-b282-74964f1e23bb',
+    RELEASESTATUS: 'official',
+    ALBUMARTIST: ['I Have A Tribe'],
+    ACOUSTID_ID: '5c94b20e-be79-4f6d-9800-d4caf8bc2a76',
+    CATALOGNUMBER: 'DAGRON153',
+    ALBUM: 'No Countries',
+    MUSICBRAINZ_ARTISTID: ['d8e73ae6-9884-4061-a056-c686b3375c9d'],
+    MEDIA: 'Digital Media',
+    RELEASETYPE: ['ep'],
+    ORIGINALYEAR: '2015',
+    ARTIST: ['I Have A Tribe'],
+    DISCTOTAL: '1',
+    MUSICBRAINZ_RELEASEGROUPID: '9c288627-be99-490e-9d3e-e6b135e9b8dd',
+    MUSICBRAINZ_TRACKID: 'a1a9ede1-219b-464c-9520-d9fd1debf933',
+    ARTISTSORT: ['I Have a Tribe'],
+    ARTISTS: ['I Have A Tribe'],
+    TRACKNUMBER: '4',
+    METADATA_BLOCK_PICTURE: [
       {
-        "type": "Cover (front)",
-        "format": "image/jpeg",
-        "description": "Official cover included in digital release",
-        "width": 0,
-        "height": 0,
-        "colour_depth": 0,
-        "indexed_color": 0,
-        "data": {
-          "type": "Buffer",
-          "data": ["..."]
+        type: 'Cover (front)',
+        format: 'image/jpeg',
+        description: 'Official cover included in digital release',
+        width: 0,
+        height: 0,
+        colour_depth: 0,
+        indexed_color: 0,
+        data: {
+          type: 'Buffer',
+          data: ['...']
         }
       }
     ]
@@ -182,7 +181,7 @@ Licence
 
 Copyright (c) 2016 Borewit
 
-Based on [musicmetadata] (https://github.com/leetreveil/musicmetadata/) written by Lee Treveil <leetreveil@gmail.com> and many others.
+Based on [musicmetadata](https://github.com/leetreveil/musicmetadata/) written by Lee Treveil <leetreveil@gmail.com> and many others.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
