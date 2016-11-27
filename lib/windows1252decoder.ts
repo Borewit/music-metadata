@@ -1,4 +1,4 @@
-class Windows1292Decoder {
+export class Windows1292Decoder {
 
   public static decode (buffer: Uint8Array): string {
     let str = ''

@@ -33,7 +33,8 @@
   "main": "lib",
   "browser": "lib/browser",
   "scripts": {
-    "pretest": "echo 'Compiling TypeScript...' && tsc && echo 'TypeScript analysis...' && tslint --format=verbose 'lib/**/*.ts'",
+    "postinstall": "typings install",
+    "pretest": "echo 'Compiling TypeScript...' && tsc && echo 'TypeScript analysis...' && tslint --format=verbose 'lib/**/*.ts' --exclude=lib/**/*d.ts",
     "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || tape test/test-*.js",
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
     "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js"

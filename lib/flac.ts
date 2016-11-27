@@ -13,7 +13,7 @@ interface IState {
   getExpectedType ()
 }
 
-export class FlacParser implements IStreamParser {
+class FlacParser implements IStreamParser {
 
   public static headerType: HeaderType = 'vorbis'
 

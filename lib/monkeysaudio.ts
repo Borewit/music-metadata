@@ -53,7 +53,7 @@ type Descriptor = {
 /**
  * APE_HEADER: describes all of the necessary information about the APE file
  */
-export type Header = {
+type Header = {
   // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
   compressionLevel: number,
   // any format flags (for future use)
@@ -72,7 +72,7 @@ export type Header = {
   sampleRate: number
 }
 
-export type Footer = {
+type Footer = {
   // should equal 'APETAGEX'
   ID: string,
   // equals CURRENT_APE_TAG_VERSION
@@ -85,7 +85,7 @@ export type Footer = {
   reserved: number[] // ToDo: what is this???
 }
 
-export type TagFlags = {
+type TagFlags = {
   containsHeader: boolean,
   containsFooter: boolean,
   isHeader: boolean,
@@ -93,14 +93,14 @@ export type TagFlags = {
   dataType: DataType
 }
 
-export enum DataType {
+enum DataType {
   text_utf8 = 0,
   binary = 1,
   external_info = 2,
   reserved = 3
 }
 
-export class Structure {
+class Structure {
   /**
    * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
    */
@@ -214,7 +214,7 @@ type ApeInfo = {
   footer?: Footer
 }
 
-export class ApeParser implements IStreamParser {
+class ApeParser implements IStreamParser {
 
   public static getInstance(): ApeParser {
     return new ApeParser()

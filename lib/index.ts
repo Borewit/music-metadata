@@ -92,16 +92,32 @@ export interface ICommonTagsResult {
   'performer:instrument'?: string[],
 }
 
-interface IResult {
-  common: ICommonTagsResult,
-  format: {
-    type?: HeaderType, // ToDo: make mandatory
-    duration?: number,
-    bitrate?
-  }
+export interface IFormat {
+  type?: HeaderType, // ToDo: make mandatory
+  /**
+   * Duration in seconds
+   */
+  duration?: number,
+  /**
+   * Number bits per second of encoded audio file
+   */
+  bitrate?: number,
+  /**
+   * Sampling rate in Samples per second (S/s)
+   */
+  sampleRate?: number,
+  /**
+   * Audio bit depth
+   */
+  bitsPerSample?: number
 }
 
-interface IOptions {
+export interface IResult {
+  common: ICommonTagsResult,
+  format: IFormat
+}
+
+export interface IOptions {
   path?: string,
   fileSize?: string,
   native?: boolean,
