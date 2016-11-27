@@ -44,6 +44,7 @@
     "browserify": "^13.0.0",
     "tape": "^4.5.1",
     "testling": "^1.7.1",
+    "tslint": "^4.0.2",
     "typings": "^2.0.0"
   },
   "testling": {
