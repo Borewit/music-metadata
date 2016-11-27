@@ -11,7 +11,7 @@ npm install music-metadata
 ```
 
 You can also download a pre packaged browser release from `dist/music-metadata.js`.
-See `example/index.html` for usage.
+See `example/drop_media_file.html` for usage.
 
 
 Supports
@@ -30,7 +30,7 @@ var fs = require('fs');
 var mm = require('music-metadata');
 
 // create a new parser from a node ReadStream
-var parser = mm(fs.createReadStream('04. Lungs.flac'), {native=true, duration=true}, function (err, metadata) {
+var parser = mm(fs.createReadStream('04. Lungs.flac'), {native: true, duration: true}, function (err, metadata) {
   if (err) throw err;
   console.log(metadata);
 });
@@ -85,7 +85,7 @@ This will output the following music metadata:
     "duration": 266.56,
     "numberOfChannels": 2,
     "bitsPerSample": 16,
-    "tagType": "vorbis",
+    "headerType": "vorbis",
     "sampleRate": 44100
   },
 

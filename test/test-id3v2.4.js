@@ -19,7 +19,7 @@ test('id3v2.4', function (t) {
   id3(sample, {'duration': true}, function (err, result) {
     t.error(err)
 
-    t.strictEqual(result.format.tagType, 'id3v2.4', 'tagType')
+    t.strictEqual(result.format.headerType, 'id3v2.4', 'tagType')
     t.strictEqual(result.format.duration, 1, 'format.duration')
     t.strictEqual(result.format.sampleRate, 44100, 'sampleRate = 44.1 kHz')
     t.strictEqual(result.format.bitrate, 128000, 'bitrate = 128 kbit/sec')
@@ -143,13 +143,13 @@ test('id3v2.4', function (t) {
     .on('APIC', function (result) {
       if (apicCounter === 0) {
         t.strictEqual(result.format, 'image/jpg', 'raw APIC 0 format')
-        t.strictEqual(result.type, 'Cover (front)', 'raw APIC 0 type')
+        t.strictEqual(result.type, 'Cover (front)', 'raw APIC 0 headerType')
         t.strictEqual(result.description, 'some description', 'raw APIC 0 description')
         t.strictEqual(result.data.length, 80938, 'raw APIC 0 length')
       }
       if (apicCounter === 1) {
         t.strictEqual(result.format, 'image/jpeg', 'raw APIC 1 format')
-        t.strictEqual(result.type, 'Cover (back)', 'raw APIC 1 type')
+        t.strictEqual(result.type, 'Cover (back)', 'raw APIC 1 headerType')
         t.strictEqual(result.description, 'back', 'raw APIC 1 description')
         t.strictEqual(result.data.length, 80938, 'raw APIC 1 length')
       }

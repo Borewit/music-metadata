@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "sourceMap":  true,
+    "inlineSources": true,
+    "moduleResolution": "node",
+    "allowJs": false,
+    "target": "es5"
+  },
+  "include": [
+    "lib/**/*.ts",
+    "typings/globals/**/*.d.ts",
+    "typings/custom/*.d.ts"
+  ]
+}
+

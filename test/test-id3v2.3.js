@@ -13,7 +13,7 @@ test('id3v2.3', function (t) {
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.3.mp3'))
 
   function checkFormat (format) {
-    t.strictEqual(format.tagType, 'id3v2.3', 'format.tag_type')
+    t.strictEqual(format.headerType, 'id3v2.3', 'format.tag_type')
     t.strictEqual(format.duration, 1, 'format.duration')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
@@ -111,7 +111,7 @@ test('id3v2.3', function (t) {
     })
     .on('APIC', function (result) {
       t.strictEqual(result.format, 'image/jpg', 'raw APIC format')
-      t.strictEqual(result.type, 'Cover (front)', 'raw APIC type')
+      t.strictEqual(result.type, 'Cover (front)', 'raw APIC headerType')
       t.strictEqual(result.description, '', 'raw APIC description')
       t.strictEqual(result.data.length, 80938, 'raw APIC length')
     })

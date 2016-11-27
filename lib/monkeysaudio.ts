@@ -1,9 +1,9 @@
 'use strict'
-var common = require('./common')
-var strtok = require('strtok2')
-var type = 'APEv2' // ToDo: version should be made dynamic, APE may also contain ID3
 
-var ape = {}
+import * as strtok from 'strtok2'
+import common from './common'
+import {IStreamParser, TagCallback} from './parser'
+import {HeaderType} from './tagmap'
 
 /**
  * APETag version history / supported formats
@@ -27,80 +27,87 @@ var ape = {}
  * TAG - describes all the properties of the file [optional]
  */
 
-module.exports = function (stream, callback, done) {
-
-  strtok.parse(stream, function (v, cb) {
-    if (v === undefined) {
-      cb.state = 'descriptor'
-      return Ape.descriptor
-    }
-
-    switch (cb.state) {
-      case 'descriptor':
-        if (v.ID !== 'MAC ') {
-          throw new Error('Expected MAC on beginning of file') // ToDo: strip/parse JUNK
-        }
-        ape.descriptor = v
-        var lenExp = v.descriptorBytes - ape.descriptor.len
-        if (lenExp > 0) {
-          cb.state = 'descriptorExpansion'
-          return new strtok.IgnoreType(lenExp)
-        } else {
-          cb.state = 'header'
-          return Ape.header
-        }
-        cb.state = 'descriptorExpansion'
-        return new strtok.IgnoreType(lenExp)
-
-      case 'descriptorExpansion':
-        cb.state = 'header'
-        return Ape.header
-
-      case 'header':
-        ape.header = v
-        callback('format', 'tagType', type)
-        callback('format', 'bitsPerSample', v.bitsPerSample)
-        callback('format', 'sampleRate', v.sampleRate)
-        callback('format', 'numberOfChannels', v.channel)
-        callback('format', 'duration', calculateDuration(v))
-        var forwardBytes = ape.descriptor.seekTableBytes + ape.descriptor.headerDataBytes +
-          ape.descriptor.apeFrameDataBytes + ape.descriptor.terminatingDataBytes
-        cb.state = 'skipData'
-        return new strtok.IgnoreType(forwardBytes)
-
-      case 'skipData':
-        cb.state = 'tagFooter'
-        return Ape.tagFooter
-
-      case 'tagFooter':
-        if (v.ID !== 'APETAGEX') {
-          done(new Error('Expected footer to start with APETAGEX '))
-        }
-        ape.footer = v
-        cb.state = 'tagField'
-        return Ape.tagField(v)
-
-      case 'tagField':
-        parseTags(ape.footer, v, callback)
-        done()
-        break
-
-      default:
-        done(new Error('Illegal state: ' + cb.state))
-    }
-    return 0
-  })
+type Descriptor = {
+  // should equal 'MAC '
+  ID: string,
+  // version number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
+  version: number,
+  // the number of descriptor bytes (allows later expansion of this header)
+  descriptorBytes: number,
+  // the number of header APE_HEADER bytes
+  headerBytes: number,
+  // the number of header APE_HEADER bytes
+  seekTableBytes: number,
+  // the number of header data bytes (from original file)
+  headerDataBytes: number,
+  // the number of bytes of APE frame data
+  apeFrameDataBytes: number,
+  // the high order number of APE frame data bytes
+  apeFrameDataBytesHigh: number,
+  // the terminating data of the file (not including tag data)
+  terminatingDataBytes: number,
+  // the MD5 hash of the file (see notes for usage... it's a littly tricky)
+  fileMD5: number[]
 }
 
-var Ape = {
+/**
+ * APE_HEADER: describes all of the necessary information about the APE file
+ */
+export type Header = {
+  // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
+  compressionLevel: number,
+  // any format flags (for future use)
+  formatFlags: number,
+  // the number of audio blocks in one frame
+  blocksPerFrame: number,
+  // the number of audio blocks in the final frame
+  finalFrameBlocks: number,
+  // the total number of frames
+  totalFrames: number,
+  // the bits per sample (typically 16)
+  bitsPerSample: number,
+  // the number of channels (1 or 2)
+  channel: number,
+  // the sample rate (typically 44100)
+  sampleRate: number
+}
 
+export type Footer = {
+  // should equal 'APETAGEX'
+  ID: string,
+  // equals CURRENT_APE_TAG_VERSION
+  version: number,
+  // the complete size of the tag, including this footer (excludes header)
+  size: number,
+  // the number of fields in the tag
+  fields: number,
+  // reserved for later use (must be zero)
+  reserved: number[] // ToDo: what is this???
+}
+
+export type TagFlags = {
+  containsHeader: boolean,
+  containsFooter: boolean,
+  isHeader: boolean,
+  readOnly: boolean,
+  dataType: DataType
+}
+
+export enum DataType {
+  text_utf8 = 0,
+  binary = 1,
+  external_info = 2,
+  reserved = 3
+}
+
+export class Structure {
   /**
    * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
    */
-  descriptor: {
+  public static DescriptorParser = {
     len: 52,
 
-    get: function (buf, off) {
+    get: (buf, off) => {
       return {
         // should equal 'MAC '
         ID: new strtok.StringType(4, 'ascii').get(buf, off),
@@ -124,15 +131,15 @@ var Ape = {
         fileMD5: new strtok.BufferType(16).get(buf, off + 36)
       }
     }
-  },
+  }
 
   /**
    * APE_HEADER: describes all of the necessary information about the APE file
    */
-  header: {
+  public static Header = {
     len: 24,
 
-    get: function (buf, off) {
+    get: (buf, off) => {
       return {
         // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
         compressionLevel: strtok.UINT16_LE.get(buf, off),
@@ -152,15 +159,15 @@ var Ape = {
         sampleRate: strtok.UINT32_LE.get(buf, off + 20)
       }
     }
-  },
+  }
 
   /**
    * TAG: describes all the properties of the file [optional]
    */
-  tagFooter: {
+  public static TagFooter = {
     len: 32,
 
-    get: function (buf, off) {
+    get: (buf, off) => {
       return {
         // should equal 'APETAGEX'
         ID: new strtok.StringType(8, 'ascii').get(buf, off),
@@ -174,89 +181,172 @@ var Ape = {
         reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
       }
     }
-  },
-
-  tagField: function (footer) {
-    return new strtok.BufferType(footer.size - Ape.tagFooter.len)
   }
+
+  public static TagField = (footer) => {
+    return new strtok.BufferType(footer.size - Structure.TagFooter.len)
+  }
+
+  public static parseTagFlags(flags): TagFlags {
+    return {
+      containsHeader: Structure.isBitSet(flags, 31),
+      containsFooter: Structure.isBitSet(flags, 30),
+      isHeader: Structure.isBitSet(flags, 31),
+      readOnly: Structure.isBitSet(flags, 0),
+      dataType: (flags & 6) >> 1
+    }
+  }
+
+  /**
+   * @param num {number}
+   * @param bit 0 is least significant bit (LSB)
+   * @return {boolean} true if bit is 1; otherwise false
+   */
+  public static isBitSet(num, bit): boolean {
+    return (num & 1 << bit) !== 0
+  }
+
 }
 
-/**
- * Calculate the media file duration
- * @param ah ApeHeader
- * @return {number} duration in seconds
- */
-function calculateDuration (ah) {
-  var duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0
-  duration += ah.finalFrameBlocks
-  return duration / ah.sampleRate
+type ApeInfo = {
+  descriptor?: Descriptor,
+  header?: Header,
+  footer?: Footer
 }
 
-function parseTags (footer, buffer, callback) {
-  var offset = 0
+export class ApeParser implements IStreamParser {
 
-  for (var i = 0; i < footer.fields; i++) {
-    var size = strtok.UINT32_LE.get(buffer, offset, offset += 4)
-    var flags = parseTagFlags(strtok.UINT32_LE.get(buffer, offset, offset += 4))
+  public static getInstance(): ApeParser {
+    return new ApeParser()
+  }
+  /**
+   * Calculate the media file duration
+   * @param ah ApeHeader
+   * @return {number} duration in seconds
+   */
+  public static calculateDuration(ah: Header): number {
+    let duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0
+    duration += ah.finalFrameBlocks
+    return duration / ah.sampleRate
+  }
 
-    var zero = common.findZero(buffer, offset, buffer.length)
-    var key = buffer.toString('ascii', offset, zero)
-    offset = zero + 1
+  private type: HeaderType = 'APEv2' // ToDo: version should be made dynamic, APE may also contain ID3
 
-    switch (flags.dataType) {
-      case 'text_utf8': { // utf-8 textstring
-        var value = buffer.toString('utf8', offset, offset += size)
-        var values = value.split(/\x00/g)
+  private ape: ApeInfo = {}
 
-        /*jshint loopfunc:true */
-        values.forEach(function (val) {
-          callback(type, key, val)
-        })
+  public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
+
+    strtok.parse(stream, (v, cb) => {
+      if (v === undefined) {
+        cb.state = 'descriptor'
+        return Structure.DescriptorParser
       }
-        break
-      case 'binary': { // binary (probably artwork)
-        if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
-          var picData = buffer.slice(offset, offset + size)
 
-          var off = 0
-          zero = common.findZero(picData, off, picData.length)
-          var description = picData.toString('utf8', off, zero)
-          off = zero + 1
-
-          var picture = {
-            description: description,
-            data: new Buffer(picData.slice(off))
+      switch (cb.state) {
+        case 'descriptor':
+          if (v.ID !== 'MAC ') {
+            throw new Error('Expected MAC on beginning of file') // ToDo: strip/parse JUNK
+          }
+          this.ape.descriptor = v
+          let lenExp = v.descriptorBytes - Structure.DescriptorParser.len
+          if (lenExp > 0) {
+            cb.state = 'descriptorExpansion'
+            return new strtok.IgnoreType(lenExp)
+          } else {
+            cb.state = 'header'
+            return Structure.Header
           }
 
-          offset += size
-          callback(type, key, picture)
-        }
+        case 'descriptorExpansion':
+          cb.state = 'header'
+          return Structure.Header
+
+        case 'header':
+          this.ape.header = v
+          callback('format', 'headerType', this.type)
+          callback('format', 'bitsPerSample', v.bitsPerSample)
+          callback('format', 'sampleRate', v.sampleRate)
+          callback('format', 'numberOfChannels', v.channel)
+          callback('format', 'duration', ApeParser.calculateDuration(v))
+          let forwardBytes = this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
+            this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
+          cb.state = 'skipData'
+          return new strtok.IgnoreType(forwardBytes)
+
+        case 'skipData':
+          cb.state = 'tagFooter'
+          return Structure.TagFooter
+
+        case 'tagFooter':
+          if (v.ID !== 'APETAGEX') {
+            done(new Error('Expected footer to start with APETAGEX '))
+          }
+          this.ape.footer = v
+          cb.state = 'tagField'
+          return Structure.TagField(v)
+
+        case 'tagField':
+          this.parseTags(this.ape.footer, v, callback)
+          done()
+          break
+
+        default:
+          done(new Error('Illegal state: ' + cb.state))
       }
-        break
+      return 0
+    })
+  };
+
+  private parseTags(footer: Footer, buffer: Buffer, callback) {
+    let offset = 0
+
+    for (let i = 0; i < footer.fields; i++) {
+      let size = strtok.UINT32_LE.get(buffer, offset)
+      offset += 4
+      let flags = Structure.parseTagFlags(strtok.UINT32_LE.get(buffer, offset))
+      offset += 4
+
+      let zero = common.findZero(buffer, offset, buffer.length)
+      let key = buffer.toString('ascii', offset, zero)
+      offset = zero + 1
+
+      switch (flags.dataType) {
+        case DataType.text_utf8: { // utf-8 textstring
+          let value = buffer.toString('utf8', offset, offset += size)
+          let values = value.split(/\x00/g)
+
+          /*jshint loopfunc:true */
+          for (let val of values) {
+            callback(this.type, key, val)
+          }
+        }
+          break
+
+        case DataType.binary: { // binary (probably artwork)
+          if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
+            let picData = buffer.slice(offset, offset + size)
+
+            let off = 0
+            zero = common.findZero(picData, off, picData.length)
+            let description = picData.toString('utf8', off, zero)
+            off = zero + 1
+
+            let picture = {
+              description,
+              data: new Buffer(picData.slice(off))
+            }
+
+            offset += size
+            callback(this.type, key, picture)
+          }
+        }
+          break
+
+        default:
+          throw new Error('Unexpected data-type: ' + flags.dataType)
+      }
     }
   }
 }
 
-function parseTagFlags (flags) {
-  return {
-    containsHeader: isBitSet(flags, 31),
-    containsFooter: isBitSet(flags, 30),
-    isHeader: isBitSet(flags, 31),
-    readOnly: isBitSet(flags, 0),
-    dataType: getDataType((flags & 6) >> 1)
-  }
-}
-
-function getDataType (type) {
-  var types = ['text_utf8', 'binary', 'external_info', 'reserved']
-  return types[type]
-}
-
-/**
- * @param num {number}
- * @param bit 0 is least significant bit (LSB)
- * @return {boolean} true if bit is 1; otherwise false
- */
-function isBitSet (num, bit) {
-  return (num & 1 << bit) !== 0
-}
+module.exports = ApeParser.getInstance()

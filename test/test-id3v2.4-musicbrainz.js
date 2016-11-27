@@ -111,7 +111,7 @@ test('MusicBrainz tags with id3v2.4', function (t) {
     })
     .on('APIC', function (result) {
       t.deepEqual(result.format, 'image/jpeg', 'raw APIC 0 format')
-      t.deepEqual(result.type, 'Cover (front)', 'raw APIC 0 type')
+      t.deepEqual(result.type, 'Cover (front)', 'raw APIC 0 headerType')
       t.deepEqual(result.description, '', 'raw APIC 0 description')
       t.deepEqual(result.data.length, 75818, 'raw APIC 0 length')
     })

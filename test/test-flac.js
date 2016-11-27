@@ -11,7 +11,7 @@ test('flac', function (t) {
     : fs.createReadStream(path.join(__dirname, '/samples/flac.flac'))
 
   function checkFormat (format) {
-    t.strictEqual(format.tagType, 'vorbis', 'format.tag_type')
+    t.strictEqual(format.headerType, 'vorbis', 'format.tag_type')
     t.strictEqual(format.duration, 271.7733333333333, 'format.duration')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bit')
@@ -28,7 +28,7 @@ test('flac', function (t) {
     t.strictEqual(common.track.of, 0, 'track of')
     t.strictEqual(common.disk.no, 0, 'disk no')
     t.strictEqual(common.disk.of, 0, 'disk of')
-    t.strictEqual(common.genre[0], 'Alt. Rock', 'genre')
+    t.deepEqual(common.genre, ['Alt. Rock'], 'genre')
     t.strictEqual(common.picture[0].format, 'jpg', 'picture format')
     t.strictEqual(common.picture[0].data.length, 175668, 'picture length')
   }
@@ -88,7 +88,7 @@ test('flac', function (t) {
       t.strictEqual(result, 'EAC-Secure Mode', 'raw COMMENT')
     })
     .on('METADATA_BLOCK_PICTURE', function (result) {
-      t.strictEqual(result.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTURE type')
+      t.strictEqual(result.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype')
       t.strictEqual(result.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format')
       t.strictEqual(result.description, '', 'raw METADATA_BLOCK_PICTURE description')
       t.strictEqual(result.width, 450, 'raw METADATA_BLOCK_PICTURE width')

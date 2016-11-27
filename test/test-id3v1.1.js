@@ -1,3 +1,4 @@
+
 var path = require('path')
 var fs = require('fs')
 var id3 = require('..')
@@ -11,7 +12,7 @@ test('id3v1.1', function (t) {
     : fs.createReadStream(path.join(__dirname, 'samples/id3v1.mp3'))
 
   function checkFormat (format) {
-    t.strictEqual(format.tagType, 'id3v1.1', 'format.tag_type')
+    t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type')
   }
 
   id3(sample, function (err, result) {
@@ -52,3 +53,7 @@ test('id3v1.1', function (t) {
       t.strictEqual(result[0], 'abcdefg', 'comment')
     })
 })
+
+module.exports = (stream, opts, callback) => {
+  return new Id3v1Parser.parse(stream, opts, callback)
+}

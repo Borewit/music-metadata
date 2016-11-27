@@ -85,7 +85,7 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
       t.strictEqual(result, 'EAC-Secure Mode', 'raw COMMENT')
     })
     .on('METADATA_BLOCK_PICTURE', function (result) {
-      t.strictEqual(result.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTURE type')
+      t.strictEqual(result.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTURE headerType')
       t.strictEqual(result.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format')
       t.strictEqual(result.description, '', 'raw METADATA_BLOCK_PICTURE description')
       t.strictEqual(result.width, 450, 'raw METADATA_BLOCK_PICTURE width')

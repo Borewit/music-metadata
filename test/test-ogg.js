@@ -14,7 +14,7 @@ test('ogg', function (t) {
 
   mm(sample, { duration: true }, function (err, result) {
     t.error(err)
-    t.strictEqual(result.format.tagType, 'vorbis', 'format.tagType')
+    t.strictEqual(result.format.headerType, 'vorbis', 'format.tagType')
     t.strictEqual(result.format.duration, 0, 'format.duration = 0 sec')
     t.strictEqual(result.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(result.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)')
@@ -118,7 +118,7 @@ test('ogg', function (t) {
     })
     .on('METADATA_BLOCK_PICTURE', function (result) {
       t.strictEqual(result.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format')
-      t.strictEqual(result.type, 'Cover (back)', 'raw METADATA_BLOCK_PICTURE type')
+      t.strictEqual(result.type, 'Cover (back)', 'raw METADATA_BLOCK_PICTURE headerType')
       t.strictEqual(result.description, 'little willy', 'raw METADATA_BLOCK_PICTURE description')
       // test exact contents too
       t.strictEqual(result.data.length, 30966, 'raw METADATA_BLOCK_PICTURE length')

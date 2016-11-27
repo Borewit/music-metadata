@@ -1,4 +1,4 @@
-var common = require('../lib/common')
+var common = require('../lib/common').default
 var test = require('tape')
 
 test('should be able to remove unsync bytes from buffer', function (t) {

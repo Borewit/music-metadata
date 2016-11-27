@@ -1,7 +1,7 @@
 var mm = require('..')
 var test = require('tape')
 var through = require('through')
-var common = require('../lib/common')
+var common = require('../lib/common').default
 
 var headers = [
   new Buffer([0x4F, 0x67, 0x67, 0x53]), // ogg

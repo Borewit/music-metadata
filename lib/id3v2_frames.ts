@@ -1,147 +1,171 @@
-'use strict'
-var Buffer = require('buffer').Buffer
-var strtok = require('strtok2')
-var common = require('./common')
-var findZero = common.findZero
-var decodeString = common.decodeString
+import * as strtok from 'strtok2'
+import common from './common'
+import vorbis from './vorbis'
 
-exports.readData = function readData (b, type, flags, major) {
-  var encoding = getTextEncoding(b[0])
-  var length = b.length
-  var offset = 0
-  var output = []
-  var nullTerminatorLength = getNullTerminatorLength(encoding)
-  var fzero
-  var out = {}
+interface IOut {
+  language?: string,
+  description?: string,
+  text?: string,
+}
 
-  switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
-    case 'T*': // 4.2.1. Text information frames - details
-      var text = decodeString(b.slice(1), encoding).replace(/\x00+$/, '')
-      // id3v2.4 defines that multiple T* values are separated by 0x00
-      output = text.split(/\x00/g)
-      break
+interface IPicture {
+  type?: string,
+  description?: string
+  format?: string,
+  data?: Uint8Array
+}
 
-    case 'TXXX':
-      output = readIdentifierAndData(b, offset + 1, length, encoding)
-      output = [{
-        description: output.id,
-        text: decodeString(output.data, encoding).replace(/\x00+$/, '') }]
-      break
+export default class FrameParser {
 
-    case 'PIC':
-    case 'APIC':
-      var pic = {}
+  public static readData(b, type, flags, major) {
+    let encoding = FrameParser.getTextEncoding(b[0])
+    let length = b.length
+    let offset = 0
+    let output: any = [] // ToDo
+    let nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding)
+    let fzero: number
+    let out: IOut = {}
 
-      offset += 1
+    switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
+      case 'T*': // 4.2.1. Text information frames - details
+        let text = common.decodeString(b.slice(1), encoding).replace(/\x00+$/, '')
+        // id3v2.4 defines that multiple T* values are separated by 0x00
+        output = text.split(/\x00/g)
+        break
 
-      switch (major) {
-        case 2:
-          pic.format = decodeString(b.slice(offset, offset + 3), encoding)
-          offset += 3
-          break
-        case 3:
-        case 4:
-          var enc = 'iso-8859-1'
-          fzero = findZero(b, offset, length, enc)
-          pic.format = decodeString(b.slice(offset, fzero), enc)
-          offset = fzero + 1
-          break
-      }
+      case 'TXXX':
+        output = FrameParser.readIdentifierAndData(b, offset + 1, length, encoding)
+        output = [{
+          description: output.id,
+          text: common.decodeString(output.data, encoding).replace(/\x00+$/, '')
+        }]
+        break
 
-      pic.type = common.PICTURE_TYPE[b[offset]]
-      offset += 1
+      case 'PIC':
+      case 'APIC':
+        let pic: IPicture = {}
 
-      fzero = findZero(b, offset, length, encoding)
-      pic.description = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
+        offset += 1
 
-      pic.data = new Buffer(b.slice(offset, length))
-      output = [pic]
-      break
+        switch (major) {
+          case 2:
+            pic.format = common.decodeString(b.slice(offset, offset + 3), encoding)
+            offset += 3
+            break
+          case 3:
+          case 4:
+            let enc = 'iso-8859-1'
+            fzero = common.findZero(b, offset, length, enc)
+            pic.format = common.decodeString(b.slice(offset, fzero), enc)
+            offset = fzero + 1
+            break
 
-    case 'CNT':
-    case 'PCNT':
-      output = [strtok.UINT32_BE.get(b, 0)]
-      break
+          default:
+            throw new Error('Warning: unexpected major version: ' + major)
+        }
 
-    case 'SYLT':
-      // skip text encoding (1 byte),
-      //      language (3 bytes),
-      //      time stamp format (1 byte),
-      //      content type (1 byte),
-      //      content descriptor (1 byte)
-      offset += 7
+        pic.type = vorbis.getPictureType(b[offset])
+        offset += 1
 
-      output = []
-      while (offset < length) {
-        var txt = b.slice(offset, offset = findZero(b, offset, length, encoding))
-        offset += 5 // push offset forward one +  4 byte timestamp
-        output.push(decodeString(txt, encoding))
-      }
-      break
+        fzero = common.findZero(b, offset, length, encoding)
+        pic.description = common.decodeString(b.slice(offset, fzero), encoding)
+        offset = fzero + nullTerminatorLength
 
-    case 'ULT':
-    case 'USLT':
-    case 'COM':
-    case 'COMM':
+        pic.data = new Buffer(b.slice(offset, length))
+        output = [pic]
+        break
 
-      offset += 1
+      case 'CNT':
+      case 'PCNT':
+        output = [strtok.UINT32_BE.get(b, 0)]
+        break
 
-      out.language = decodeString(b.slice(offset, offset + 3), 'iso-8859-1')
-      offset += 3
+      case 'SYLT':
+        // skip text encoding (1 byte),
+        //      language (3 bytes),
+        //      time stamp format (1 byte),
+        //      content headerType (1 byte),
+        //      content descriptor (1 byte)
+        offset += 7
 
-      fzero = findZero(b, offset, length, encoding)
-      out.description = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
+        output = []
+        while (offset < length) {
+          let txt = b.slice(offset, offset = common.findZero(b, offset, length, encoding))
+          offset += 5 // push offset forward one +  4 byte timestamp
+          output.push(common.decodeString(txt, encoding))
+        }
+        break
 
-      out.text = decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '')
+      case 'ULT':
+      case 'USLT':
+      case 'COM':
+      case 'COMM':
 
-      output = [out]
-      break
+        offset += 1
 
-    case 'UFID':
-      output = readIdentifierAndData(b, offset, length, 'iso-8859-1')
-      output = [{owner_identifier: output.id, identifier: output.data }]
+        out.language = common.decodeString(b.slice(offset, offset + 3), 'iso-8859-1')
+        offset += 3
 
-      break
+        fzero = common.findZero(b, offset, length, encoding)
+        out.description = common.decodeString(b.slice(offset, fzero), encoding)
+        offset = fzero + nullTerminatorLength
 
-    case 'PRIV': // private frame
-      output = readIdentifierAndData(b, offset, length, 'iso-8859-1')
-      output = [{owner_identifier: output.id, data: output.data }]
-      break
+        out.text = common.decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '')
+
+        output = [out]
+        break
+
+      case 'UFID':
+        output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1')
+        output = [{owner_identifier: output.id, identifier: output.data}]
+
+        break
+
+      case 'PRIV': // private frame
+        output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1')
+        output = [{owner_identifier: output.id, data: output.data}]
+        break
+
+      default:
+        // ToDO? console.log('Warning: unsupported id3v2-frame-type: ' + type)
+        break
+    }
+
+    return output
   }
 
-  return output
-}
+  private static readIdentifierAndData(b, offset, length, encoding): {id: string, data: Uint8Array} {
+    let fzero = common.findZero(b, offset, length, encoding)
 
-function readIdentifierAndData (b, offset, length, encoding) {
-  var fzero = findZero(b, offset, length, encoding)
+    let id = common.decodeString(b.slice(offset, fzero), encoding)
+    offset = fzero + FrameParser.getNullTerminatorLength(encoding)
 
-  var id = decodeString(b.slice(offset, fzero), encoding)
-  offset = fzero + getNullTerminatorLength(encoding)
-
-  return {id: id, data: b.slice(offset, length)}
-}
-
-function getTextEncoding (byte) {
-  switch (byte) {
-    case 0x00:
-      return 'iso-8859-1' // binary
-    case 0x01:
-    case 0x02:
-      return 'utf16' // 01 = with bom, 02 = without bom
-    case 0x03:
-      return 'utf8'
-    default:
-      return 'utf8'
+    return {id, data: b.slice(offset, length)}
   }
+
+  private static getTextEncoding(byte): string {
+    switch (byte) {
+      case 0x00:
+        return 'iso-8859-1' // binary
+      case 0x01:
+      case 0x02:
+        return 'utf16' // 01 = with bom, 02 = without bom
+      case 0x03:
+        return 'utf8'
+      default:
+        return 'utf8'
+    }
+  }
+
+  private static getNullTerminatorLength(enc) {
+    switch (enc) {
+      case 'utf16':
+        return 2
+      default:
+        return 1
+    }
+  }
+
 }
 
-function getNullTerminatorLength (enc) {
-  switch (enc) {
-    case 'utf16':
-      return 2
-    default:
-      return 1
-  }
-}
+// exports.readData = function readData (b, type, flags, major) {

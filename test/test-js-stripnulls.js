@@ -1,4 +1,4 @@
-var stripNulls = require('../lib/common').stripNulls
+var stripNulls = require('../lib/common').default.stripNulls
 var test = require('tape')
 
 test('readUInt64LE', function (t) {

@@ -12,7 +12,7 @@ test('monkeysaudio (.ape)', function (t) {
     : fs.createReadStream(path.join(__dirname, '/samples/monkeysaudio.ape'))
 
   function checkFormat (format) {
-    t.strictEqual(format.tagType, 'APEv2', 'format.tag_type')
+    t.strictEqual(format.headerType, 'APEv2', 'format.tag_type')
     t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]')
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')

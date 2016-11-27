@@ -33,17 +33,15 @@
   "main": "lib",
   "browser": "lib/browser",
   "scripts": {
-    "pretest": "standard && jshint lib/*.js test/*.js",
+    "pretest": "echo 'Compiling TypeScript...' && tsc && echo 'TypeScript analysis...' && tslint --format=verbose 'lib/**/*.ts'",
     "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || tape test/test-*.js",
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
     "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js"
   },
   "devDependencies": {
-    "tape": "^4.5.1",
-    "jshint": "~2.5.10",
     "brfs": "1.2.0",
-    "standard": "^3.0.0",
     "browserify": "^13.0.0",
+    "tape": "^4.5.1",
     "testling": "^1.7.1"
   },
   "testling": {
@@ -72,11 +70,17 @@
   },
   "license": "MIT",
   "standard": {
-    "ignore": ["**/dist/**", "**/example/**"],
-    "globals": ["musicMetadata", "angular", "URL"]
+    "ignore": [
+      "**/dist/**",
+      "**/example/**"
+    ],
+    "globals": [
+      "musicMetadata",
+      "angular",
+      "URL"
+    ]
   },
-  "bugs":{
-    "url" : "https://github.com/Borewit/music-metadata/issues"
+  "bugs": {
+    "url": "https://github.com/Borewit/music-metadata/issues"
   }
-
 }
