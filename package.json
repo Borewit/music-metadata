@@ -31,21 +31,28 @@
     "MonkeyAudio"
   ],
   "main": "lib",
+  "typings": "lib/index.d.ts",
   "browser": "lib/browser",
   "scripts": {
     "postinstall": "typings install",
-    "pretest": "echo 'Compiling TypeScript...' && tsc && echo 'TypeScript analysis...' && tslint --format=verbose 'lib/**/*.ts' --exclude=lib/**/*d.ts",
+    "compile": "echo 'Compiling TypeScript...' && tsc",
+    "lint": "echo 'TypeScript analysis...' && tslint --format=verbose 'lib/**/*.ts' --exclude=lib/**/*d.ts",
     "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || tape test/test-*.js",
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
-    "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js"
+    "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js",
+    "verify": "npm-run-all compile lint test"
   },
   "devDependencies": {
     "brfs": "1.2.0",
     "browserify": "^13.0.0",
+    "npm-run-all": "^3.1.1",
     "tape": "^4.5.1",
     "testling": "^1.7.1",
-    "tslint": ">=3.15.1",
-    "typings": ">=1.8.0"
+    "tslint": "^4.0.2",
+    "typescript": "2.0.10"
+  },
+  "peerDependencies": {
+    "typescript": ">=2.0.0"
   },
   "testling": {
     "files": [
