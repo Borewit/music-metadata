@@ -13,7 +13,7 @@ test('MusicBrainz tags with id3v2.4', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.4-musicbrainz.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.4-musicbrainz.mp3'))
 
-  id3(sample, {'duration': true}, function (err, result) {
+  id3(sample, {duration: true, native: true}, function (err, result) {
     t.error(err)
 
     t.deepEqual(result.format.duration, 1, 'format.duration')
@@ -114,5 +114,8 @@ test('MusicBrainz tags with id3v2.4', function (t) {
       t.deepEqual(result.type, 'Cover (front)', 'raw APIC 0 headerType')
       t.deepEqual(result.description, '', 'raw APIC 0 description')
       t.deepEqual(result.data.length, 75818, 'raw APIC 0 length')
+    })
+    .on('TSSE', function (result) {
+      t.deepEqual(result, 'image/jpeg', 'raw APIC 0 format')
     })
 })

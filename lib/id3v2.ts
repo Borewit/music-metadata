@@ -26,7 +26,8 @@ interface IFormatInfo {
   slot_size?: number | string,
   sample_rate?: number,
   sideinfo_length?: number,
-  frame_size?: number
+  frame_size?: number,
+  codecProfile?: string
 
 }
 
@@ -59,6 +60,53 @@ enum State {
   xtra_info_header = 4,
   skip_frame_data = 5
 
+}
+
+class Structure {
+
+  /**
+   * Info Tag
+   * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
+   */
+  public static InfoTag = {
+    len: 140,
+
+    get: (buf, off) => {
+      return {
+        // 4 bytes for Header Tag
+        headerTag: new strtok.StringType(4, 'ascii').get(buf, off),
+        // 4 bytes for HeaderFlags
+        headerFlags: new strtok.BufferType(4).get(buf, off + 4),
+
+        // 100 bytes for entry (NUMTOCENTRIES)
+        // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
+        // FRAME SIZE
+        // frameSize: strtok.UINT32_BE.get(buf, off + 108),
+
+        numFrames: strtok.UINT32_BE.get(buf, off + 8),
+
+        numToCentries: new strtok.BufferType(100).get(buf, off + 108),
+
+        // the number of header APE_HEADER bytes
+        streamSize: strtok.UINT32_BE.get(buf, off + 112),
+        // the number of header data bytes (from original file)
+        vbrScale: strtok.UINT32_BE.get(buf, off + 116),
+
+        /**
+         * LAME Tag, extends the Xing header format
+         * First added in LAME 3.12 for VBR
+         * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
+         */
+
+        //  Initial LAME info, e.g.: LAME3.99r
+        encoder: new strtok.StringType(9, 'ascii').get(buf, off + 120),
+        //  Info Tag
+        infoTag: strtok.UINT8.get(buf, off + 129) >> 4,
+        // VBR method
+        vbrMethod: strtok.UINT8.get(buf, off + 129) & 0xf
+      }
+    }
+  }
 }
 
 class Id3v2Parser implements IStreamParser {
@@ -231,6 +279,10 @@ class Id3v2Parser implements IStreamParser {
     return Id3v2Parser.sampling_rate_freq_index[version][bits]
   }
 
+  private static getVbrCodecProfile(vbrScale: number): string {
+    return 'V' + (100 - vbrScale) / 10
+  }
+
   private state: State = State.header
   private frameCount: number
   private frameFragment: Buffer
@@ -391,25 +443,36 @@ class Id3v2Parser implements IStreamParser {
         case State.side_information: // side information
           offset += 12
           self.state = State.xtra_info_header
-          return new strtok.BufferType(12)
+          return Structure.InfoTag
 
         case State.xtra_info_header: // xtra / info header
           self.state = State.skip_frame_data
-          let frameDataLeft: number = audioFrameHeader.frame_size - 4 - offset
+          let frameDataLeft = audioFrameHeader.frame_size - 132 - offset
 
-          let id = v.toString('ascii', 0, 4)
-          if (id !== 'Xtra' && id !== 'Info' && id !== 'Xing') {
-            return new strtok.IgnoreType(frameDataLeft)
+          switch (v.headerTag) {
+            case 'Info':
+              header.codecProfile = 'CBR'
+              break
+            case 'Xing':
+              header.codecProfile = Id3v2Parser.getVbrCodecProfile(v.vbrScale)
+              break
+            case 'Xtra':
+              // ToDo: ???
+              break
+            default:
+              return new strtok.IgnoreType(frameDataLeft)
           }
+
+          callback('format', 'encoder', v.encoder)
+          callback('format', 'codecProfile', header.codecProfile)
 
           // frames field is not present
-          if ((v[7] & 0x01) !== 1) {
+          if ((v.headerFlags[3] & 0x01) !== 1) {
             return new strtok.IgnoreType(frameDataLeft)
           }
 
-          let numFrames = v.readUInt32BE(8)
           let ah = audioFrameHeader
-          callback('format', 'duration', Id3v2Parser.calcDuration(numFrames, ah.samples_per_frame, ah.sample_rate))
+          callback('format', 'duration', Id3v2Parser.calcDuration(v.numFrames, ah.samples_per_frame, ah.sample_rate))
           return done()
 
         case State.skip_frame_data: // skip frame data

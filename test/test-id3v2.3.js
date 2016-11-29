@@ -6,7 +6,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('id3v2.3', function (t) {
-  t.plan(45)
+  t.plan(47)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
@@ -18,6 +18,8 @@ test('id3v2.3', function (t) {
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')
+    t.strictEqual(format.encoder, 'LAME3.98r', 'format.encoder')
+    t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile')
   }
 
   function checkCommon (common) {
