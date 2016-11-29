@@ -33,7 +33,7 @@ export default class Common {
 
   public static strtokUINT32_LE = {
     len : 4,
-    get : function(buf, off) {
+    get :(buf, off) => {
       // Shifting the MSB by 24 directly causes it to go negative if its
       // last bit is high, so we instead shift by 23 and multiply by 2.
       // Also, using binary OR to count the MSB if its last bit is high
