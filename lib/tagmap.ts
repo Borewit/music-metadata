@@ -11,7 +11,8 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'albuma
   'isrc' | 'asin' | 'musicbrainz_recordingid' | 'musicbrainz_trackid' | 'musicbrainz_albumid' |
   'musicbrainz_artistid' | 'musicbrainz_albumartistid' | 'musicbrainz_releasegroupid' |
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
-  'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument'
+  'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
+  'peakLevel' | 'averageLevel'
 
 export interface INativeTagMap {
   [index: string]: CommonTag
@@ -133,7 +134,9 @@ export default class TagMap {
     musicip_puid: {singleton: true},
     musicip_fingerprint: {singleton: true},
     website: {singleton: true},
-    'performer:instrument': {singleton: false}
+    'performer:instrument': {singleton: false},
+    averageLevel: {singleton: true},
+    peakLevel: {singleton: true}
   }
 
   /**
@@ -331,7 +334,11 @@ export default class TagMap {
     TMOO: 'mood',
 
     // additional mappings:
-    SYLT: 'lyrics'
+    SYLT: 'lyrics',
+
+    // Windows Media Player
+    'PRIV:AverageLevel' : 'averageLevel',
+    'PRIV:PeakLevel' : 'peakLevel'
   }
   // ToDo: capitalization tricky
   private static ape: INativeTagMap = {

@@ -90,6 +90,8 @@ export interface ICommonTagsResult {
   musicip_fingerprint?: string,
   website?: string,
   'performer:instrument'?: string[],
+  averageLevel?: number,
+  peakLevel?: number
 }
 
 export interface IFormat {
@@ -109,7 +111,15 @@ export interface IFormat {
   /**
    * Audio bit depth
    */
-  bitsPerSample?: number
+  bitsPerSample?: number,
+  /**
+   * Encoder name, e.g.:
+   */
+  encoder?: string,
+  /**
+   * Codec profile
+   */
+  codecProfile?: string
 }
 
 export interface IResult {
@@ -334,6 +344,19 @@ export class MusicMetadataParser {
             if (value.owner_identifier === 'http://musicbrainz.org') {
               tag += ':' + value.owner_identifier
               value = common.decodeString(value.identifier, 'iso-8859-1')
+            }
+            break
+
+          case 'PRIV':
+            switch (value.owner_identifier) {
+              // decode Windows Media Player
+              case 'AverageLevel':
+              case 'PeakValue':
+                tag += ':' + value.owner_identifier
+                value = common.strtokUINT32_LE.get(value.data, 0)
+                break
+              default:
+              // Unknown PRIV owner-identifier
             }
             break
 
