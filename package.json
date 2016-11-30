@@ -30,9 +30,13 @@
     "ape",
     "MonkeyAudio"
   ],
-  "main": "lib",
-  "typings": "lib/index.d.ts",
+  "main": "lib/index.js",
+  "typings": "lib/index",
   "browser": "lib/browser",
+  "files": [
+    "lib/",
+    "dist/"
+  ],
   "scripts": {
     "postinstall": "typings install",
     "compile": "echo 'Compiling TypeScript...' && tsc",
@@ -49,7 +53,8 @@
     "tape": "^4.5.1",
     "testling": "^1.7.1",
     "tslint": "^4.0.2",
-    "typings": "2.0.0"
+    "typings": "2.0.0",
+    "typescript": "^2.0.3"
   },
   "testling": {
     "files": [

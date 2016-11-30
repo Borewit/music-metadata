@@ -2,15 +2,16 @@
   "compilerOptions": {
     "sourceMap":  true,
     "inlineSources": true,
+    "module": "commonjs",
     "moduleResolution": "node",
     "allowJs": false,
     "target": "es5",
-    "declaration": true
+    "declaration": true,
+    "outDir": "lib/"
   },
   "include": [
-    "lib/**/*.ts",
-    "typings/globals/**/*.d.ts",
-    "typings/custom/*.d.ts"
+    "src/**/*.ts",
+    "typings/**/*.d.ts"
   ]
 }
 
