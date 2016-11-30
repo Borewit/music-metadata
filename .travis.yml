@@ -4,6 +4,7 @@ node_js:
  - "6"
  - "7"
 install:
- - npm install
+- npm install
+- typings install
 script:
- - npm run verify
+- npm run verify
