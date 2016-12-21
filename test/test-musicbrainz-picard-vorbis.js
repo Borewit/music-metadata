@@ -6,7 +6,7 @@ var mm = require('..')
 var test = require('tape')
 
 test('MusicBrains/Picard tags in FLAC', function (t) {
-  t.plan(80)
+  t.plan(82)
 
   var sample = (process.browser) ?
     new window.Blob([ fs.readFileSync(__dirname + '/samples/MusicBrainz-Picard-tags.flac') ])
@@ -21,39 +21,40 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
 
   function checkCommonTags (common) {
     // Compare expectedCommonTags with result.common
-    t.deepEqual(common.title, 'Brian Eno', 'common: tagtitle')
-    t.deepEqual(common.artist, [ 'MGMT' ], 'common: artist')
-    t.deepEqual(common.albumartist, [ 'MGMT' ], 'common: albumartist')
-    t.deepEqual(common.album, 'Oracular Spectacular / Congratulations', 'common: album')
-    t.deepEqual(common.track, { no: 7, of: 9 }, 'common: track')
-    t.deepEqual(common.disk, { no: 2, of: 2 }, 'common: disk')
-    t.deepEqual(common.discsubtitle, 'Cogratulations', 'common: discsubtitle')
-    t.deepEqual(common.date, '2011-09-11', 'common: date')
-    t.deepEqual(common.year, '2011', 'common: year')
-    t.deepEqual(common.releasecountry, 'XE', 'common: releasecountry')
-    t.deepEqual(common.asin, 'B0055U9LNC', 'common: asin')
-    t.deepEqual(common.barcode, '886979357723', 'common: barcode')
-    t.deepEqual(common.label, 'Sony Music', 'common: label')
-    t.deepEqual(common.catalognumber, '88697935772', 'common: catalognumber')
-    t.deepEqual(common.originalyear, '2011', 'common: originalyear')
-    t.deepEqual(common.originaldate, '2011-09-11', 'common: originaldate')
-    t.deepEqual(common.releasestatus, 'official', 'common: releasestatus')
-    t.deepEqual(common.releasetype, [ 'album', 'compilation' ], 'common: releasetype')
-    t.deepEqual(common.comment, ['EAC-Secure Mode'], 'common: comment')
-    t.deepEqual(common.genre, ['Alt. Rock'], 'common: genre')
-    t.deepEqual(common.musicbrainz_albumid, '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'common: musicbrainz_albumid')
-    t.deepEqual(common.musicbrainz_recordingid, 'b0c1d984-ba93-4167-880a-ac02255bf9e7', 'common: musicbrainz_recordingid')
-    t.deepEqual(common.musicbrainz_albumartistid, [ 'c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'common: musicbrainz_albumartistid')
-    t.deepEqual(common.musicbrainz_artistid, [ 'c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'common: musicbrainz_artistid')
-    t.deepEqual(common.musicbrainz_releasegroupid, '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'common: musicbrainz_releasegroupid')
-    t.deepEqual(common.musicbrainz_trackid, '0f53f7a3-89df-4069-9357-d04252239b6d', 'common: musicbrainz_trackid')
+    t.deepEqual(common.title, 'Brian Eno', 'common.tagtitle')
+    t.deepEqual(common.artist, 'MGMT', 'common.artist')
+    t.deepEqual(common.artists, ['MGMT'], 'common.artist')
+    t.deepEqual(common.albumartist, 'MGMT', 'common.albumartist')
+    t.deepEqual(common.album, 'Oracular Spectacular / Congratulations', 'common.album')
+    t.deepEqual(common.track, { no: 7, of: 9 }, 'common.track')
+    t.deepEqual(common.disk, { no: 2, of: 2 }, 'common.disk')
+    t.deepEqual(common.discsubtitle, 'Cogratulations', 'common.discsubtitle')
+    t.deepEqual(common.date, '2011-09-11', 'common.date')
+    t.deepEqual(common.year, 2011, 'common.year')
+    t.deepEqual(common.releasecountry, 'XE', 'common.releasecountry')
+    t.deepEqual(common.asin, 'B0055U9LNC', 'common.asin')
+    t.deepEqual(common.barcode, '886979357723', 'common.barcode')
+    t.deepEqual(common.label, 'Sony Music', 'common.label')
+    t.deepEqual(common.catalognumber, '88697935772', 'common.catalognumber')
+    t.deepEqual(common.originalyear, 2011, 'common.originalyear')
+    t.deepEqual(common.originaldate, '2011-09-11', 'common.originaldate')
+    t.deepEqual(common.releasestatus, 'official', 'common.releasestatus')
+    t.deepEqual(common.releasetype, [ 'album', 'compilation' ], 'common.releasetype')
+    t.deepEqual(common.comment, ['EAC-Secure Mode'], 'common.comment')
+    t.deepEqual(common.genre, ['Alt. Rock'], 'common.genre')
+    t.deepEqual(common.musicbrainz_albumid, '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'common.musicbrainz_albumid')
+    t.deepEqual(common.musicbrainz_recordingid, 'b0c1d984-ba93-4167-880a-ac02255bf9e7', 'common.musicbrainz_recordingid')
+    t.deepEqual(common.musicbrainz_albumartistid, [ 'c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'common.musicbrainz_albumartistid')
+    t.deepEqual(common.musicbrainz_artistid, [ 'c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'common.musicbrainz_artistid')
+    t.deepEqual(common.musicbrainz_releasegroupid, '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'common.musicbrainz_releasegroupid')
+    t.deepEqual(common.musicbrainz_trackid, '0f53f7a3-89df-4069-9357-d04252239b6d', 'common.musicbrainz_trackid')
 
     t.deepEqual(common.picture[ 0 ].format, 'jpg', 'picture format')
     t.deepEqual(common.picture[ 0 ].data.length, 175668, 'picture length')
   }
 
   // Run with default options
-  mm(sample, function (err, result) {
+  mm.parseStream(sample, function (err, result) {
     t.error(err)
     t.ok(!result.hasOwnProperty('vorbis'), 'should NOT include native Vorbis tags')
     checkFormat(result.format)
@@ -97,10 +98,11 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
 
   function checkNativeTags (vorbis) {
     // Compare expectedCommonTags with result.vorbis
-    t.deepEqual(vorbis.TITLE, 'Brian Eno', 'vorbis: .TITLE')
-    t.deepEqual(vorbis.ARTIST, [ 'MGMT' ], 'vorbis: artist')
-    t.deepEqual(vorbis.ALBUMARTIST, [ 'MGMT' ], 'vorbis: albumartist')
-    t.deepEqual(vorbis.ALBUM, 'Oracular Spectacular / Congratulations', 'vorbis: album')
+    t.strictEqual(vorbis.TITLE, 'Brian Eno', 'vorbis: .TITLE')
+    t.strictEqual(vorbis.ARTIST, 'MGMT', 'vorbis: artist')
+    t.deepEqual(vorbis.ARTISTS, ['MGMT'], 'vorbis: artist')
+    t.strictEqual(vorbis.ALBUMARTIST, 'MGMT', 'vorbis: albumartist')
+    t.strictEqual(vorbis.ALBUM, 'Oracular Spectacular / Congratulations', 'vorbis: album')
     t.deepEqual(vorbis.TRACKNUMBER, '7', 'vorbis: TRACK')
     t.deepEqual(vorbis.TRACKTOTAL, '9', 'vorbis: TRACKTOTAL')
     t.deepEqual(vorbis.DISCNUMBER, '2', 'vorbis: DISCNUMBER')
@@ -130,7 +132,7 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
   }
 
   // Run once more, now include native tags
-  mm(sample, {native: true }, function (err, result) {
+  mm.parseStream(sample, {native: true }, function (err, result) {
     t.error(err)
     t.ok(result.hasOwnProperty('common'), 'should include common tags')
     t.ok(result.hasOwnProperty('vorbis'), 'should include native Vorbis tags')

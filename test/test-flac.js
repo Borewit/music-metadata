@@ -4,13 +4,14 @@ var mm = require('..')
 var test = require('tape')
 
 test('flac', function (t) {
-  t.plan(43)
+  t.plan(41)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
     : fs.createReadStream(path.join(__dirname, '/samples/flac.flac'))
 
   function checkFormat (format) {
+    t.strictEqual(format.dataformat, 'flac', 'format.tag_type')
     t.strictEqual(format.headerType, 'vorbis', 'format.tag_type')
     t.strictEqual(format.duration, 271.7733333333333, 'format.duration')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
@@ -19,21 +20,19 @@ test('flac', function (t) {
   }
 
   function checkCommon (common) {
-    t.strictEqual(common.title, 'Brian Eno', 'title')
-    t.deepEqual(common.artist, ['MGMT'], 'artist')
-    t.strictEqual(common.albumartist.length, 0, 'albumartist length')
-    t.strictEqual(common.album, 'Congratulations', 'album')
-    t.strictEqual(common.year, '2010', 'year')
-    t.strictEqual(common.track.no, 7, 'track no')
-    t.strictEqual(common.track.of, 0, 'track of')
-    t.strictEqual(common.disk.no, 0, 'disk no')
-    t.strictEqual(common.disk.of, 0, 'disk of')
+    t.strictEqual(common.title, 'Brian Eno', 'common.title')
+    t.deepEqual(common.artists, ['MGMT'], 'common.artist')
+    t.strictEqual(common.albumartist, undefined, 'common.albumartist')
+    t.strictEqual(common.album, 'Congratulations', 'common.album')
+    t.strictEqual(common.year, 2010, 'common.year')
+    t.deepEqual(common.track, {no: 7, of: null}, 'common.track')
+    t.deepEqual(common.disk, {no: null, of: null}, 'common.disk')
     t.deepEqual(common.genre, ['Alt. Rock'], 'genre')
-    t.strictEqual(common.picture[0].format, 'jpg', 'picture format')
-    t.strictEqual(common.picture[0].data.length, 175668, 'picture length')
+    t.strictEqual(common.picture[0].format, 'jpg', 'common.picture format')
+    t.strictEqual(common.picture[0].data.length, 175668, 'common.picture length')
   }
 
-  mm(sample, function (err, metadata) {
+  mm.parseStream(sample, function (err, metadata) {
     t.error(err)
 
     checkFormat(metadata.format)
@@ -43,30 +42,29 @@ test('flac', function (t) {
   })
     // aliased tests
     .on('title', function (result) {
-      t.strictEqual(result, 'Brian Eno', 'aliased title')
+      t.strictEqual(result, 'Brian Eno', 'common.title')
     })
     .on('artist', function (result) {
-      t.strictEqual(result[0], 'MGMT', 'aliased artist')
+      t.strictEqual(result, 'MGMT', 'common.artist')
     })
     .on('year', function (result) {
-      t.strictEqual(result, '2010', 'aliased year')
+      t.strictEqual(result, 2010, 'common.year')
     })
     .on('track', function (result) {
-      t.strictEqual(result.no, 7, 'aliased track no')
-      t.strictEqual(result.of, 0, 'aliased track of')
+      t.deepEqual(result, {no: 7, of: null}, 'common.track')
     })
     .on('genre', function (result) {
-      t.strictEqual(result[0], 'Alt. Rock', 'aliased genre')
+      t.deepEqual(result, ['Alt. Rock'], 'common.genre')
     })
     .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'aliased picture format')
-      t.strictEqual(result[0].data.length, 175668, 'aliased picture length')
+      t.strictEqual(result[0].format, 'jpg', 'common.picture format')
+      t.strictEqual(result[0].data.length, 175668, 'common.picture length')
     })
     .on('comment', function (result) {
-      t.strictEqual(result[0], 'EAC-Secure Mode', 'aliased comment')
+      t.strictEqual(result[0], 'EAC-Secure Mode', 'common.comment')
     })
     .on('duration', function (result) {
-      t.strictEqual(result, 271.7733333333333, 'aliased duration')
+      t.strictEqual(result, 271.7733333333333, 'common.duration')
     })
     // raw tests
     .on('TITLE', function (result) {

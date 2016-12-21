@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('id3v2.2', function (t) {
@@ -11,13 +11,13 @@ test('id3v2.2', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.2.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.2.mp3'))
 
-  id3(sample, function (err, result) {
+  mm.parseStream(sample, function (err, result) {
     t.error(err, 'no error')
 
     t.strictEqual(result.common.title, 'You Are The One', 'title')
-    t.strictEqual(result.common.artist[0], 'Shiny Toy Guns', 'artist')
+    t.strictEqual(result.common.artist, 'Shiny Toy Guns', 'artist')
     t.strictEqual(result.common.album, 'We Are Pilots', 'album')
-    t.strictEqual(result.common.year, '2006', 'year')
+    t.strictEqual(result.common.year, 2006, 'year')
     t.strictEqual(result.common.track.no, 1, 'track no')
     t.strictEqual(result.common.track.of, 11, 'track of')
     t.deepEqual(result.common.genre, ['Alternative'], 'genre')
@@ -32,13 +32,13 @@ test('id3v2.2', function (t) {
       t.strictEqual(result, 'You Are The One', 'aliased title')
     })
     .on('artist', function (result) {
-      t.deepEqual(result, ['Shiny Toy Guns'], 'aliased artist')
+      t.deepEqual(result, 'Shiny Toy Guns', 'aliased artist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'We Are Pilots', 'aliased album')
     })
     .on('year', function (result) {
-      t.strictEqual(result, '2006', 'aliased year')
+      t.strictEqual(result, 2006, 'aliased year')
     })
     .on('track', function (result) {
       t.deepEqual(result, {no: 1, of: 11}, 'aliased track no')

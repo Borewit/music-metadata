@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('id4', function (t) {
@@ -10,16 +10,16 @@ test('id4', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/id4.m4a')])
     : fs.createReadStream(path.join(__dirname, '/samples/id4.m4a'))
 
-  id3(sample, { duration: true }, function (err, result) {
+  mm.parseStream(sample, { duration: true }, function (err, result) {
     t.error(err)
 
     t.strictEqual(result.format.duration, 2.2058956916099772, 'format.duration')
 
     t.strictEqual(result.common.title, 'Voodoo People (Pendulum Remix)', 'title')
-    t.strictEqual(result.common.artist[0], 'The Prodigy', 'artist')
-    t.strictEqual(result.common.albumartist[0], 'Pendulum', 'albumartist')
+    t.strictEqual(result.common.artist, 'The Prodigy', 'artist')
+    t.strictEqual(result.common.albumartist, 'Pendulum', 'albumartist')
     t.strictEqual(result.common.album, 'Voodoo People', 'album')
-    t.strictEqual(result.common.year, '2005', 'year')
+    t.strictEqual(result.common.year, 2005, 'year')
     t.strictEqual(result.common.track.no, 1, 'track no')
     t.strictEqual(result.common.track.of, 12, 'track of')
     t.strictEqual(result.common.disk.no, 1, 'disk no')
@@ -39,16 +39,16 @@ test('id4', function (t) {
       t.strictEqual(result, 'Voodoo People (Pendulum Remix)', 'aliased title')
     })
     .on('artist', function (result) {
-      t.strictEqual(result[0], 'The Prodigy', 'aliased artist')
+      t.strictEqual(result, 'The Prodigy', 'aliased artist')
     })
     .on('albumartist', function (result) {
-      t.strictEqual(result[0], 'Pendulum', 'aliased albumartist')
+      t.strictEqual(result, 'Pendulum', 'aliased albumartist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'Voodoo People', 'aliased album')
     })
     .on('year', function (result) {
-      t.strictEqual(result, '2005', 'aliased year')
+      t.strictEqual(result, 2005, 'aliased year')
     })
     .on('track', function (result) {
       t.strictEqual(result.no, 1, 'aliased track no')

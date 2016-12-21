@@ -1,41 +1,44 @@
 /* jshint maxlen: 300 */
-'use strict'
-import * as events from 'events'
-import * as fs from 'fs'
-import * as strtok from 'strtok2'
-import * as through from 'through'
-import common from './common'
-import {IStreamParser} from './parser'
-import TagMap from './tagmap'
-import {HeaderType} from './tagmap'
-import EventEmitter = NodeJS.EventEmitter
+'use strict';
+import * as events from 'events';
+import * as fs from 'fs';
+import * as strtok from 'strtok2';
+import * as through from 'through';
+import common from './common';
+import {IStreamParser} from './parser';
+import TagMap from './tagmap';
+import {HeaderType} from './tagmap';
+import EventEmitter = NodeJS.EventEmitter;
+import {ReadStream} from 'fs';
+import ReadableStream = NodeJS.ReadableStream;
 
 export interface IPicture {
   format: string,
-  data: Uint8Array
+  data: Uint8Array;
 }
 
 export interface ICommonTagsResult {
-  track: { no?: number, of?: number },
-  disk: { no?: number, of?: number },
-  year?: string,
+  track: { no: number, of: number },
+  disk: { no: number, of: number },
+  year?: number,
   title?: string,
-  artist?: string[]
-  albumartist: string[]
+  artist?: string, // ToDo: string[] is only used internal
+  artists?: string[],
+  albumartist?: string,
   album?: string,
   date?: string,
   originaldate?: string,
-  originalyear?: string,
+  originalyear?: number,
   comment?: string,
-  genre?: string[]
-  picture?: IPicture[]
-  composer?: string[]
+  genre?: string[];
+  picture?: IPicture[];
+  composer?: string[];
   lyrics?: string[],
   albumsort?: string,
   titlesort?: string,
   work?: string,
-  artistsort?: string[],
-  albumartistsort?: string[],
+  artistsort?: string,
+  albumartistsort?: string,
   composersort?: string[],
   lyricist?: string[],
   writer?: string[],
@@ -91,53 +94,76 @@ export interface ICommonTagsResult {
   website?: string,
   'performer:instrument'?: string[],
   averageLevel?: number,
-  peakLevel?: number
+  peakLevel?: number;
 }
 
 export interface IFormat {
+
+  dataformat?: string, // ToDo: make mandatory
+
   type?: HeaderType, // ToDo: make mandatory
+
   /**
    * Duration in seconds
    */
   duration?: number,
+
   /**
    * Number bits per second of encoded audio file
    */
   bitrate?: number,
+
   /**
    * Sampling rate in Samples per second (S/s)
    */
   sampleRate?: number,
+
   /**
    * Audio bit depth
    */
   bitsPerSample?: number,
+
   /**
    * Encoder name, e.g.:
    */
   encoder?: string,
+
   /**
    * Codec profile
    */
-  codecProfile?: string
+  codecProfile?: string,
+
+  lossless?: boolean,
+
+  /**
+   * Number of audio channels
+   */
+  numberOfChannels?: number,
 }
 
 export interface IResult {
   common: ICommonTagsResult,
-  format: IFormat
+  format: IFormat;
+}
+
+export interface ICallbackType { (error?: Error, result?: IResult): void;
 }
 
 export interface IOptions {
   path?: string,
   fileSize?: string,
   native?: boolean,
-  duration?: boolean
+  duration?: boolean;
 }
 
-export class MusicMetadataParser {
+export interface IFileSize {
+  fileSize?: ( {(size: number): void} );
+}
+
+class MusicMetadataParser {
 
   public static getInstance(): MusicMetadataParser {
-    return new MusicMetadataParser()
+    return new MusicMetadataParser();
   }
 
   private static headerTypes = [
@@ -171,14 +197,14 @@ export class MusicMetadataParser {
       buf: new Buffer('MAC'),
       tag: require('./monkeysaudio')
     }
-  ]
+  ];
 
-  private static toIntOrZero(str: string): number {
-    let cleaned = parseInt(str, 10)
-    return isNaN(cleaned) ? 0 : cleaned
+  private static toIntOrNull(str: string): number {
+    let cleaned = parseInt(str, 10);
+    return isNaN(cleaned) ? null : cleaned;
   }
 
-  private tagMap = new TagMap()
+  private tagMap = new TagMap();
 
   /**
    * @param stream
@@ -188,121 +214,153 @@ export class MusicMetadataParser {
    * @param callback
    * @returns {EventEmitter}
    */
-  public parse(stream, opts: IOptions, callback): EventEmitter {
+  public parse(stream: ReadableStream | ReadStream, opts: IOptions, callback: ICallbackType): EventEmitter {
     if (typeof opts === 'function') {
-      callback = opts
-      opts = {}
+      callback = (<ICallbackType> opts);
+      opts = {};
     }
 
-    let emitter = new events.EventEmitter()
+    let emitter = new events.EventEmitter();
 
     let fsize = (cb) => {
       if (opts.fileSize) {
-        process.nextTick( () => {
-          cb(opts.fileSize)
-        })
-      } else if (stream.hasOwnProperty('path')) {
-        fs.stat(stream.path, (err, stats) => {
-          if (err) throw err
-          cb(stats.size)
-        })
-      } else if (stream.hasOwnProperty('fileSize')) {
-        stream.fileSize(cb)
+        process.nextTick(() => {
+          cb(opts.fileSize);
+        });
+      } else if ((<ReadStream> stream).path) {
+        fs.stat((<ReadStream> stream).path, (err, stats) => {
+          if (err) throw err;
+          cb(stats.size);
+        });
+      } else if ((<IFileSize> stream).fileSize) {
+        (<IFileSize> stream).fileSize(cb);
       } else if (opts.duration) {
-        emitter.emit('done', new Error('for non file streams, specify the size of the stream with a fileSize option'))
+        emitter.emit('done', new Error('for non file streams, specify the size of the stream with a fileSize option'));
       }
-    }
+    };
 
     // pipe to an internal stream so we aren't messing
     // with the stream passed to us by our users
-    let istream = stream.pipe(through(null, null, {autoDestroy: false}))
+    let istream = stream.pipe(through(null, null, {autoDestroy: false}));
 
     /**
      * Default present metadata properties
      */
     let metadata: IResult = {
       common: {
-        albumartist: [],
-        track: {no: 0, of: 0},
-        disk: {no: 0, of: 0}
+        artists: [],
+        track: {no: null, of: null},
+        disk: {no: null, of: null}
       },
       format: {
-        duration: 0
+        duration: null
+      }
+    };
+
+    let isDone = false;
+    let hasReadData = false;
+    let streamParser: IStreamParser;
+    let self = this;
+
+    function tagCallback(headerType, tag, value) {
+      if (value === null) return;
+
+      if (headerType === 'format') {
+        metadata.format[tag] = value;
+      } else {
+        self.setCommonTags(metadata.common, <HeaderType> headerType, tag, value);
+      }
+
+      // Send native event, unless it's native name is the same as a common name
+      if (!TagMap.isCommonTag(tag)) {
+        emitter.emit(tag, value);
+      }
+
+      if (opts.native) {
+        if (!metadata.hasOwnProperty(headerType)) {
+          metadata[headerType] = {}; // Register new native header headerType
+        }
+
+        if (self.tagMap.isNativeSingleton(headerType, tag)) {
+          metadata[headerType][tag] = value;
+        } else {
+          (metadata[headerType][tag] = metadata[headerType][tag] ? metadata[headerType][tag] : []).push(value);
+        }
       }
     }
 
-    let self = this
-
-    let hasReadData = false
     istream.once('data', (result) => {
-      hasReadData = true
-      let streamParser: IStreamParser = common.getParserForMediaType(MusicMetadataParser.headerTypes, result)
+      hasReadData = true;
+      streamParser = common.getParserForMediaType(MusicMetadataParser.headerTypes, result);
       streamParser.parse(istream, (headerType, tag, value) => {
-        if (value === null) return
-
-        if (headerType === 'format') {
-          metadata.format[tag] = value
-        } else {
-          this.setCommonTags(metadata.common, <HeaderType> headerType, tag, value)
-        }
-
-        // Send native event, unless it's native name is the same as a common name
-        if (!TagMap.isCommonTag(tag)) {
-          emitter.emit(tag, value)
-        }
-
-        if (opts.native) {
-          if (!metadata.hasOwnProperty(headerType)) {
-            metadata[headerType] = {} // Register new native header headerType
-          }
-
-          if (this.tagMap.isNativeSingleton(headerType, tag)) {
-            metadata[headerType][tag] = value
-          } else {
-            if (metadata[headerType].hasOwnProperty(tag)) {
-              metadata[headerType][tag].push(value)
-            } else {
-              metadata[headerType][tag] = [value]
-            }
-          }
-        }
-      }, done, opts.duration, fsize)
+        tagCallback(headerType, tag, value);
+      }, done, opts.duration, fsize);
       // re-emitting the first data chunk so the
       // parser picks the stream up from the start
-      istream.emit('data', result)
-    })
+      istream.emit('data', result);
+    });
 
-    istream.on('end', () => {
+    istream.once('end', () => {
       if (!hasReadData) {
-        done(new Error('Could not read any data from this stream'))
+        done(new Error('Could not read any data from this stream'));
+      } else {
+        if (!isDone) {
+          isDone = true;
+          // Ensure the parsers 'end' handlers is executed first
+          if (streamParser && streamParser.end) {
+            streamParser.end(tagCallback, done);
+          } else done();
+        }
       }
-    })
 
-    istream.on('close', onClose)
+    });
+
+    istream.on('close', onClose);
 
     function onClose() {
-      done(new Error('Unexpected end of stream'))
+      done(new Error('Unexpected end of stream'));
     }
 
-    function done(exception) {
-      istream.removeListener('close', onClose)
+    function done(exception?: Error) {
+      isDone = true;
 
-      // We only emit aliased events once the 'done' event has been raised,
-      // this is because an alias like 'artist' could have values split
-      // over many data chunks.
-      for (let _alias in metadata.common) {
-        if ( metadata.common.hasOwnProperty(_alias) ) {
-          emitter.emit(_alias, metadata.common[_alias])
+      istream.removeListener('close', onClose);
+
+      /**
+       * If MusicBrainz defined artists, the artist may be a single combined field,
+       * otherwise artist may contain multiple artists.
+       */
+      if (metadata.common.artists && metadata.common.artists.length > 0) {
+        metadata.common.artist = metadata.common.artist[0];
+      } else {
+        if (metadata.common.artist) {
+          metadata.common.artists = <any> metadata.common.artist;
+          if (metadata.common.artist.length > 1) {
+            delete metadata.common.artist;
+          } else {
+            metadata.common.artist = metadata.common.artist[0];
+          }
+        }
+      }
+
+      if (!exception) {
+        // We only emit aliased events once the 'done' event has been raised,
+        // this is because an alias like 'artist' could have values split
+        // over many data chunks.
+        for (let _alias in metadata.common) {
+          if (metadata.common.hasOwnProperty(_alias)) {
+            emitter.emit(_alias, metadata.common[_alias]);
+          }
         }
       }
 
       if (callback) {
-        callback(exception, metadata)
+        callback(exception, metadata);
       }
-      return strtok.DONE
+      return strtok.DONE;
     }
 
-    return emitter
+    return emitter;
   }
 
   /**
@@ -315,61 +373,64 @@ export class MusicMetadataParser {
   private setCommonTags(comTags, type: HeaderType, tag: string, value: any) {
 
     switch (type) {
-      case 'vorbis':
-        switch (tag) {
+      /*
+       case 'vorbis':
+       switch (tag) {
 
-          case 'TRACKTOTAL':
-          case 'TOTALTRACKS': // rare tag
-            comTags.track.of = MusicMetadataParser.toIntOrZero(value)
-            return
+       case 'TRACKTOTAL':
+       case 'TOTALTRACKS': // rare tag
+       comTags.track.of = MusicMetadataParser.toIntOrNull(value)
+       return
 
-          case 'DISCTOTAL':
-          case 'TOTALDISCS': // rare tag
-            comTags.disk.of = MusicMetadataParser.toIntOrZero(value)
-            return
-          default:
-        }
-        break
+       case 'DISCTOTAL':
+       case 'TOTALDISCS': // rare tag
+       comTags.disk.of = MusicMetadataParser.toIntOrNull(value)
+       return
+       default:
+       }
+       break
+       */
 
       case 'id3v2.3':
       case 'id3v2.4':
         switch (tag) {
 
-          case 'TXXX':
-            tag += ':' + value.description
-            value = value.text
-            break
+          /*
+           case 'TXXX':
+           tag += ':' + value.description
+           value = value.text
+           break*/
 
           case 'UFID': // decode MusicBrainz Recording Id
             if (value.owner_identifier === 'http://musicbrainz.org') {
-              tag += ':' + value.owner_identifier
-              value = common.decodeString(value.identifier, 'iso-8859-1')
+              tag += ':' + value.owner_identifier;
+              value = common.decodeString(value.identifier, 'iso-8859-1');
             }
-            break
+            break;
 
           case 'PRIV':
             switch (value.owner_identifier) {
               // decode Windows Media Player
               case 'AverageLevel':
               case 'PeakValue':
-                tag += ':' + value.owner_identifier
-                value = common.strtokUINT32_LE.get(value.data, 0)
-                break
+                tag += ':' + value.owner_identifier;
+                value = common.strtokUINT32_LE.get(value.data, 0);
+                break;
               default:
               // Unknown PRIV owner-identifier
             }
-            break
+            break;
 
           default:
-            // nothing to do
+          // nothing to do
         }
-        break
+        break;
       default:
-        // nothing to do
+      // nothing to do
     }
 
     // Convert native tag event to common (aliased) event
-    let alias = this.tagMap.getCommonName(type, tag)
+    let alias = this.tagMap.getCommonName(type, tag);
 
     if (alias) {
       // Common tag (alias) found
@@ -379,39 +440,52 @@ export class MusicMetadataParser {
       // it is emitted to the user. e.g. genre (20) -> Electronic
       switch (alias) {
         case 'genre':
-          value = common.parseGenre(value)
-          break
+          value = common.parseGenre(value);
+          break;
 
         case 'picture':
-          value = this.cleanupPicture(value)
-          break
+          value = this.cleanupPicture(value);
+          break;
+
+        case 'totaltracks':
+          comTags.track.of = MusicMetadataParser.toIntOrNull(value);
+          return;
+
+        case 'totaldiscs':
+          comTags.disk.of = MusicMetadataParser.toIntOrNull(value);
+          return;
 
         case 'track':
         case 'disk':
-          let of = comTags[alias].of // store of value, maybe maybe overwritten
-          comTags[alias] = this.cleanupTrack(value)
-          comTags[alias].of = Math.max(of, comTags[alias].of)
-          return
+          let of = comTags[alias].of; // store of value, maybe maybe overwritten
+          comTags[alias] = this.cleanupTrack(value);
+          comTags[alias].of = of != null ? of : comTags[alias].of;
+          return;
+
+        case 'year':
+        case 'originalyear':
+          value = parseInt(value, 10);
+          break;
 
         case 'date':
           // ToDo: be more strict on 'YYYY...'
           // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
-          comTags.year = value.substr(0, 4)
-          break
+          comTags.year = parseInt(value.substr(0, 4), 10);
+          break;
 
         default:
-          // nothing to do
+        // nothing to do
       }
 
-      if (TagMap.isSingleton(alias)) {
-        comTags[alias] = value
+      if (alias !== 'artist' && TagMap.isSingleton(alias)) {
+        comTags[alias] = value;
       } else {
         if (comTags.hasOwnProperty(alias)) {
-          comTags[alias].push(value)
+          comTags[alias].push(value);
         } else {
           // if we haven't previously seen this tag then
           // initialize it to an array, ready for values to be entered
-          comTags[alias] = [value]
+          comTags[alias] = [value];
         }
       }
     }
@@ -421,27 +495,28 @@ export class MusicMetadataParser {
   // converts 1/10 to no : 1, of : 10
   // or 1 to no : 1, of : 0
   private cleanupTrack(origVal: number | string) {
-    let split = origVal.toString().split('/')
+    let split = origVal.toString().split('/');
     return {
-      no: parseInt(split[0], 10) || 0,
-      of: parseInt(split[1], 10) || 0
-    }
+      no: parseInt(split[0], 10) || null,
+      of: parseInt(split[1], 10) || null
+    };
   }
 
   private cleanupPicture(picture) {
-    let newFormat
+    let newFormat;
     if (picture.format) {
-      let split = picture.format.toLowerCase().split('/')
-      newFormat = (split.length > 1) ? split[1] : split[0]
-      if (newFormat === 'jpeg') newFormat = 'jpg'
+      let split = picture.format.toLowerCase().split('/');
+      newFormat = (split.length > 1) ? split[1] : split[0];
+      if (newFormat === 'jpeg') newFormat = 'jpg';
     } else {
-      newFormat = 'jpg'
+      newFormat = 'jpg';
     }
-    return {format: newFormat, data: picture.data}
+    return {format: newFormat, data: picture.data};
   }
 }
 
 /**
+ * Parse audio stream
  * @param stream
  * @param opts
  *   .filesize=true  Return filesize
@@ -449,9 +524,6 @@ export class MusicMetadataParser {
  * @param callback
  * @returns {*|EventEmitter}
  */
-
-let parser = MusicMetadataParser.getInstance()
-
-module.exports = (stream, opts: IOptions, callback) => {
-  return MusicMetadataParser.getInstance().parse(stream, opts, callback)
+export function parseStream(stream: ReadableStream, opts: IOptions, callback: ICallbackType) {
+  return MusicMetadataParser.getInstance().parse(stream, opts, callback);
 }

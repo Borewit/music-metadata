@@ -1,25 +1,26 @@
 'use strict'
 /*jslint browser: true*/
-var readStream = require('filereader-stream')
-var through = require('through')
-var musicmetadata = require('./index')
-var isStream = require('is-stream')
+import * as readStream from 'filereader-stream'
+import * as through from 'through'
+import * as musicmetadata from './index'
+import * as isStream  from 'is-stream'
+import {EventEmitter} from "events";
 
-module.exports = function (stream, opts, callback) {
+module.exports = (stream, opts, callback) => {
   return musicmetadata(wrapFileWithStream(stream), opts, callback)
 }
 
-function wrapFileWithStream (file) {
-  var stream = through(function write (data) {
+function wrapFileWithStream (file: any): EventEmitter {
+  let stream = through( (data) => {
     if (data.length > 0) this.queue(data)
   }, null, {autoDestroy: false})
 
-  if (file instanceof window.ArrayBuffer) {
+  if (file instanceof ArrayBuffer) {
     return wrapArrayBufferWithStream(file, stream)
   }
 
-  stream.fileSize = function (cb) {
-    process.nextTick(function () {
+  stream.fileSize = (cb) => {
+    process.nextTick( () => {
       cb(file.size)
     })
   }
@@ -27,10 +28,10 @@ function wrapFileWithStream (file) {
   if (isStream(file)) {
     return file.pipe(stream)
   }
-  if (file instanceof window.FileList) {
+  if (file instanceof FileList) {
     throw new Error('You have passed a FileList object but we expected a File')
   }
-  if (!(file instanceof window.File || file instanceof window.Blob)) {
+  if (!(file instanceof File || file instanceof Blob)) {
     throw new Error('You must provide a valid File or Blob object')
   }
 

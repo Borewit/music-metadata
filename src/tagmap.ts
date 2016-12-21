@@ -1,6 +1,6 @@
-export type HeaderType = 'vorbis' | 'id3v1.1'| 'id3v2.2' | 'id3v2.3' | 'id3v2.4' | 'APEv2' | 'asf'
+export type HeaderType = 'vorbis' | 'id3v1.1'| 'id3v2.2' | 'id3v2.3' | 'id3v2.4' | 'APEv2' | 'asf';
 
-export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'albumartist' | 'album' | 'date' | 'originaldate' |
+export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artists' | 'albumartist' | 'album' | 'date' | 'originaldate' |
   'originalyear' | 'comment' | 'genre' | 'picture' | 'composer' | 'lyrics' | 'albumsort' | 'titlesort' | 'work' |
   'artistsort' | 'albumartistsort' | 'composersort' | 'lyricist' | 'writer' | 'conductor' | 'remixer' |
   'arranger' | 'engineer' | 'producer' | 'djmixer' | 'mixer' | 'label' | 'grouping' | 'subtitle' |
@@ -12,22 +12,22 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'albuma
   'musicbrainz_artistid' | 'musicbrainz_albumartistid' | 'musicbrainz_releasegroupid' |
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
   'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
-  'peakLevel' | 'averageLevel'
+  'peakLevel' | 'averageLevel' | 'notes';
 
 export interface INativeTagMap {
-  [index: string]: CommonTag
+  [index: string]: CommonTag;
 }
 
 export interface ITagInfo {
-  singleton: boolean
+  multiple: boolean;
 }
 
 export interface ITagInfoMap {
-  [index: string]: ITagInfo
+  [index: string]: ITagInfo;
 }
 
 interface INativeTagMappings {
-  asf: INativeTagMap
+  asf: INativeTagMap,
   APEv2: INativeTagMap,
   'id3v1.1': INativeTagMap,
   'id3v2.2': INativeTagMap,
@@ -43,11 +43,11 @@ interface INativeTagMappings {
 export default class TagMap {
 
   public static getCommonTag(tag: CommonTag): ITagInfo {
-    return TagMap.commonTags[tag]
+    return TagMap.commonTags[tag];
   }
 
   public static isCommonTag(tag: string): boolean {
-    return TagMap.commonTags[tag] !== undefined
+    return TagMap.commonTags[tag] !== undefined;
   }
 
   /**
@@ -55,89 +55,91 @@ export default class TagMap {
    * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
    */
   public static isSingleton(alias: CommonTag): boolean {
-    return TagMap.commonTags.hasOwnProperty(alias) && TagMap.commonTags[alias].singleton
+    return TagMap.commonTags.hasOwnProperty(alias) && !TagMap.commonTags[alias].multiple;
   }
 
   private static commonTags: ITagInfoMap =
   {
-    year: {singleton: true},
-    track: {singleton: true},
-    disk: {singleton: true},
+    year: {multiple: false},
+    track: {multiple: false},
+    disk: {multiple: false},
 
-    title: {singleton: true},
-    artist: {singleton: false},
-    albumartist: {singleton: false},
-    album: {singleton: true},
-    date: {singleton: true},
-    originaldate: {singleton: true},
-    originalyear: {singleton: true},
-    comment: {singleton: false},
-    genre: {singleton: false},
-    picture: {singleton: false},
-    composer: {singleton: false},
-    lyrics: {singleton: false},
-    albumsort: {singleton: true},
-    titlesort: {singleton: true},
-    work: {singleton: true},
-    artistsort: {singleton: false},
-    albumartistsort: {singleton: false},
-    composersort: {singleton: false},
-    lyricist: {singleton: false},
-    writer: {singleton: false},
-    conductor: {singleton: false},
-    remixer: {singleton: false},
-    arranger: {singleton: false},
-    engineer: {singleton: false},
-    producer: {singleton: false},
-    djmixer: {singleton: false},
-    mixer: {singleton: false},
-    label: {singleton: true},
-    grouping: {singleton: true},
-    subtitle: {singleton: true},
-    discsubtitle: {singleton: true},
-    totaltracks: {singleton: true},
-    totaldiscs: {singleton: true},
-    compilation: {singleton: true},
-    _rating: {singleton: true},
-    bpm: {singleton: true},
-    mood: {singleton: true},
-    media: {singleton: true},
-    catalognumber: {singleton: true},
-    show: {singleton: true},
-    showsort: {singleton: true},
-    podcast: {singleton: true},
-    podcasturl: {singleton: true},
-    releasestatus: {singleton: true},
-    releasetype: {singleton: false},
-    releasecountry: {singleton: true},
-    script: {singleton: true},
-    language: {singleton: true},
-    copyright: {singleton: true},
-    license: {singleton: true},
-    encodedby: {singleton: true},
-    encodersettings: {singleton: true},
-    gapless: {singleton: true},
-    barcode: {singleton: true},
-    isrc: {singleton: true},
-    asin: {singleton: true},
-    musicbrainz_recordingid: {singleton: true},
-    musicbrainz_trackid: {singleton: true},
-    musicbrainz_albumid: {singleton: true},
-    musicbrainz_artistid: {singleton: false},
-    musicbrainz_albumartistid: {singleton: false},
-    musicbrainz_releasegroupid: {singleton: true},
-    musicbrainz_workid: {singleton: true},
-    musicbrainz_trmid: {singleton: true},
-    musicbrainz_discid: {singleton: true},
-    acoustid_id: {singleton: true},
-    acoustid_fingerprint: {singleton: true},
-    musicip_puid: {singleton: true},
-    musicip_fingerprint: {singleton: true},
-    website: {singleton: true},
-    'performer:instrument': {singleton: false},
-    averageLevel: {singleton: true},
-    peakLevel: {singleton: true}
-  }
+    title: {multiple: false},
+    artist: {multiple: false},
+    artists: {multiple: true},
+    albumartist: {multiple: false},
+    album: {multiple: false},
+    date: {multiple: false},
+    originaldate: {multiple: false},
+    originalyear: {multiple: false},
+    comment: {multiple: true},
+    genre: {multiple: true},
+    picture: {multiple: true},
+    composer: {multiple: true},
+    lyrics: {multiple: true},
+    albumsort: {multiple: false},
+    titlesort: {multiple: false},
+    work: {multiple: false},
+    artistsort: {multiple: false},
+    albumartistsort: {multiple: false},
+    composersort: {multiple: true},
+    lyricist: {multiple: true},
+    writer: {multiple: true},
+    conductor: {multiple: true},
+    remixer: {multiple: true},
+    arranger: {multiple: true},
+    engineer: {multiple: true},
+    producer: {multiple: true},
+    djmixer: {multiple: true},
+    mixer: {multiple: true},
+    label: {multiple: false},
+    grouping: {multiple: false},
+    subtitle: {multiple: false},
+    discsubtitle: {multiple: false},
+    totaltracks: {multiple: false},
+    totaldiscs: {multiple: false},
+    compilation: {multiple: false},
+    _rating: {multiple: false},
+    bpm: {multiple: false},
+    mood: {multiple: false},
+    media: {multiple: false},
+    catalognumber: {multiple: false},
+    show: {multiple: false},
+    showsort: {multiple: false},
+    podcast: {multiple: false},
+    podcasturl: {multiple: false},
+    releasestatus: {multiple: false},
+    releasetype: {multiple: true},
+    releasecountry: {multiple: false},
+    script: {multiple: false},
+    language: {multiple: false},
+    copyright: {multiple: false},
+    license: {multiple: false},
+    encodedby: {multiple: false},
+    encodersettings: {multiple: false},
+    gapless: {multiple: false},
+    barcode: {multiple: false},
+    isrc: {multiple: false},
+    asin: {multiple: false},
+    musicbrainz_recordingid: {multiple: false},
+    musicbrainz_trackid: {multiple: false},
+    musicbrainz_albumid: {multiple: false},
+    musicbrainz_artistid: {multiple: true},
+    musicbrainz_albumartistid: {multiple: true},
+    musicbrainz_releasegroupid: {multiple: false},
+    musicbrainz_workid: {multiple: false},
+    musicbrainz_trmid: {multiple: false},
+    musicbrainz_discid: {multiple: false},
+    acoustid_id: {multiple: false},
+    acoustid_fingerprint: {multiple: false},
+    musicip_puid: {multiple: false},
+    musicip_fingerprint: {multiple: false},
+    website: {multiple: false},
+    'performer:instrument': {multiple: true},
+    averageLevel: {multiple: false},
+    peakLevel: {multiple: false},
+    notes: {multiple: true}
+  };
 
   /**
    * Mapping from native header format to one or possibly more 'common' entries
@@ -147,6 +149,7 @@ export default class TagMap {
   private static vorbis: INativeTagMap = {
     TITLE: 'title',
     ARTIST: 'artist',
+    ARTISTS: 'artists',
     ALBUMARTIST: 'albumartist',
     ALBUM: 'album',
     DATE: 'date',
@@ -212,8 +215,11 @@ export default class TagMap {
     ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
     MUSICIP_PUID: 'musicip_puid',
     // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
-    WEBSITE: 'website'
-  }
+    WEBSITE: 'website',
+    NOTES: 'notes',
+    TOTALTRACKS: 'totaltracks',
+    TOTALDISCS: 'totaldiscs'
+  };
 
   private static id3v1_1: INativeTagMap = {
     title: 'title',
@@ -223,7 +229,7 @@ export default class TagMap {
     comment: 'comment',
     track: 'track',
     genre: 'genre'
-  }
+  };
 
   private static id3v2_2: INativeTagMap = {
     TT2: 'title',
@@ -251,18 +257,21 @@ export default class TagMap {
     TEN: 'encodedby',
     TSS: 'encodersettings',
     WAR: 'website'
-  }
+  };
 
   private static id3v2_3: INativeTagMap = {
     // id3v2.3
     TIT2: 'title',
     TPE1: 'artist',
+    'TXXX:Artists': 'artists',
     TPE2: 'albumartist',
     TALB: 'album',
     TDRV: 'date', // [ 'date', 'year' ] ToDo: improve 'year' mapping
-    TORY: 'originaldate',
+    /**
+     * Original release year
+     */
+    TORY: 'originalyear',
     'COMM:description': 'comment',
-    TRCK: 'track',
     TPOS: 'disk',
     TCON: 'genre',
     APIC: 'picture',
@@ -287,8 +296,7 @@ export default class TagMap {
     TPUB: 'label',
     TIT1: 'grouping',
     TIT3: 'subtitle',
-    // 'TRCK: 'totaltracks',
-    // 'TPOS: 'totaldiscs',
+    TRCK: 'track',
     TCMP: 'compilation',
     POPM: '_rating',
     TBPM: 'bpm',
@@ -306,6 +314,7 @@ export default class TagMap {
     'TXXX:BARCODE': 'barcode',
     TSRC: 'isrc',
     'TXXX:ASIN': 'asin',
+    'TXXX:originalyear': 'originalyear',
     'UFID:http://musicbrainz.org': 'musicbrainz_recordingid',
     'TXXX:MusicBrainz Release Track Id': 'musicbrainz_trackid',
     'TXXX:MusicBrainz Album Id': 'musicbrainz_albumid',
@@ -339,16 +348,18 @@ export default class TagMap {
     // Windows Media Player
     'PRIV:AverageLevel' : 'averageLevel',
     'PRIV:PeakLevel' : 'peakLevel'
-  }
+  };
   // ToDo: capitalization tricky
   private static ape: INativeTagMap = {
     // MusicBrainz tag mappings:
     Title: 'title',
     Artist: 'artist',
+    Artists: 'artists',
     'Album Artist': 'albumartist',
     Album: 'album',
-    Year: 'year',
-    ORIGINALYEAR: 'originalyear',
+    Year: 'date',
+    Originalyear: 'originalyear',
+    Originaldate: 'originaldate',
     Comment: 'comment',
     Track: 'track',
     Disc: 'disk',
@@ -408,7 +419,7 @@ export default class TagMap {
     ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
     MUSICIP_PUID: 'musicip_puid',
     Weblink: 'website'
-  }
+  };
   // ToDo: capitalization tricky
   private static asf: INativeTagMap = {
     // MusicBrainz tag mappings:
@@ -471,7 +482,7 @@ export default class TagMap {
     'Acoustid/Id': 'acoustid_id',
     'Acoustid/Fingerprint': 'acoustid_fingerprint',
     'MusicIP/PUID': 'musicip_puid'
-  }
+  };
 
   private static m4a: INativeTagMap = {
     '©nam': 'title',
@@ -538,19 +549,19 @@ export default class TagMap {
     '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
     // Additional mappings:
     gnre: 'genre' // ToDo: check mapping
-  }
+  };
 
   private static capitalizeTags(map: INativeTagMap): INativeTagMap {
-    let newMap: INativeTagMap = {}
+    let newMap: INativeTagMap = {};
     for (let tag in map) {
       if (map.hasOwnProperty(tag)) {
-        newMap[tag.toUpperCase()] = map[tag]
+        newMap[tag.toUpperCase()] = map[tag];
       }
     }
-    return newMap
+    return newMap;
   }
 
-  private mappings: INativeTagMappings
+  private mappings: INativeTagMappings;
 
   constructor() {
     // Normalize (post-process) common tag mappings
@@ -564,11 +575,11 @@ export default class TagMap {
       'id3v2.4': TagMap.id3v2_3,
       m4a: TagMap.m4a,
       vorbis: TagMap.vorbis
-    }
+    };
 
-    this.mappings.APEv2 = TagMap.capitalizeTags(this.mappings.APEv2)
+    this.mappings.APEv2 = TagMap.capitalizeTags(this.mappings.APEv2);
 
-    this.mappings['id3v2.3'] = this.mappings['id3v2.4']
+    this.mappings['id3v2.3'] = this.mappings['id3v2.4'];
   }
 
   /**
@@ -578,11 +589,23 @@ export default class TagMap {
    * @returns {boolean} true is we can safely assume that it is a  singleton
    */
   public isNativeSingleton(type, tag): boolean {
-    if (type === 'format') {
-      return true
+    switch (type) {
+      case 'format':
+        return true;
+      case 'id3v2.3':
+        switch (tag) {
+          case 'IPLS':
+            return true;
+        }
+      case 'id3v2.4':
+        switch (tag) {
+          case 'TIPL':
+          case 'TMCL':
+            return true;
+        }
     }
-    let alias = this.getCommonName(type, tag)
-    return alias && TagMap.commonTags[alias].singleton
+    let alias = this.getCommonName(type, tag);
+    return alias && !TagMap.commonTags[alias].multiple;
   }
 
   /**
@@ -592,8 +615,8 @@ export default class TagMap {
    */
   public getCommonName(type: HeaderType, tag: string): CommonTag {
     if (!this.mappings[type]) {
-      throw new Error('Illegal header headerType: ' + type)
+      throw new Error('Illegal header headerType: ' + type);
     }
-    return this.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag]
+    return this.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag];
   }
 }

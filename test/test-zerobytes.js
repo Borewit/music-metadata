@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('zero bytes', function (t) {
@@ -10,7 +10,7 @@ test('zero bytes', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/zerobytes')])
     : fs.createReadStream(path.join(__dirname, '/samples/zerobytes'))
 
-  id3(sample, function (err) {
+  mm.parseStream(sample, function (err) {
     t.equal(err.message, 'Could not read any data from this stream')
     t.end()
   })

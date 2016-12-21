@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('id3v2-duration-allframes', function (t) {
@@ -20,16 +20,16 @@ test('id3v2-duration-allframes', function (t) {
   function checkCommon(common) {
     t.strictEqual(common.title, 'Turkish Rondo', 'common.album')
     t.strictEqual(common.album, 'Piano Classics', 'common.title')
-    t.strictEqual(common.year, '0', 'common.year')
-    t.deepEqual(common.artist, [ 'Aubrey Hilliard' ], 'common.artist')
+    t.strictEqual(common.year, 0, 'common.year')
+    t.deepEqual(common.artist, 'Aubrey Hilliard', 'common.artist')
     t.deepEqual(common.composer, [ 'Mozart' ], 'common.composer')
-    t.deepEqual(common.track, { no: 1, of: 0 }, 'common.track')
+    t.deepEqual(common.track, { no: 1, of: null }, 'common.track')
     t.deepEqual(common.genre, [ 'Classical' ], 'common.genre')
-    t.deepEqual(common.disk, { no: 0, of: 0 }, 'common.disk')
+    t.deepEqual(common.disk, { no: null, of: null }, 'common.disk')
     t.deepEqual(common.picture, undefined, 'common.picture')
   }
 
-  id3(sample, {'duration': true}, function (err, result) {
+  mm.parseStream(sample, {duration: true}, function (err, result) {
     t.error(err)
 
     checkFormat(result.format)

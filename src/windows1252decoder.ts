@@ -1,13 +1,13 @@
 export class Windows1292Decoder {
 
   public static decode (buffer: Uint8Array): string {
-    let str = ''
+    let str = '';
     for (let i in buffer) {
       if (buffer.hasOwnProperty(i)) {
-        str += Windows1292Decoder.codePointToString(Windows1292Decoder.singleByteDecoder(buffer[i]))
+        str += Windows1292Decoder.codePointToString(Windows1292Decoder.singleByteDecoder(buffer[i]));
       }
     }
-    return str
+    return str;
   }
 
   private static windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
@@ -18,33 +18,33 @@ export class Windows1292Decoder {
     201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
     217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
     233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
-    248, 249, 250, 251, 252, 253, 254, 255]
+    248, 249, 250, 251, 252, 253, 254, 255];
 
   private static inRange (a, min, max): boolean {
-    return min <= a && a <= max
+    return min <= a && a <= max;
   }
 
   private static codePointToString (cp: number): string {
     if (cp <= 0xFFFF) {
-      return String.fromCharCode(cp)
+      return String.fromCharCode(cp);
     } else {
-      cp -= 0x10000
-      return String.fromCharCode((cp >> 10) + 0xD800, (cp & 0x3FF) + 0xDC00)
+      cp -= 0x10000;
+      return String.fromCharCode((cp >> 10) + 0xD800, (cp & 0x3FF) + 0xDC00);
     }
   }
 
   private static singleByteDecoder (bite: number): number {
     if (Windows1292Decoder.inRange(bite, 0x00, 0x7F)) {
-      return bite
+      return bite;
     }
 
-    let codePoint = Windows1292Decoder.windows1252[bite - 0x80]
+    let codePoint = Windows1292Decoder.windows1252[bite - 0x80];
     if (codePoint === null) {
-      throw Error('invaliding encoding')
+      throw Error('invaliding encoding');
     }
 
-    return codePoint
+    return codePoint;
   }
 }
 
-export default Windows1292Decoder.decode
+export default Windows1292Decoder.decode;

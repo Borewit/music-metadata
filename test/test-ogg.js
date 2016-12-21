@@ -4,7 +4,7 @@ var fs = require('fs')
 var test = require('tape')
 
 test('ogg', function (t) {
-  t.plan(52)
+  t.plan(47)
   var comCounter = 0
   var genCounter = 0
 
@@ -12,26 +12,34 @@ test('ogg', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/oggy.ogg')])
     : fs.createReadStream(path.join(__dirname, '/samples/oggy.ogg'))
 
-  mm(sample, { duration: true }, function (err, result) {
-    t.error(err)
-    t.strictEqual(result.format.headerType, 'vorbis', 'format.tagType')
-    t.strictEqual(result.format.duration, 0, 'format.duration = 0 sec')
-    t.strictEqual(result.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
-    t.strictEqual(result.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)')
-    t.strictEqual(result.format.bitrate, 64000, 'bitrate = 64 kbit/sec')
+  function checkFormat (format) {
+    t.strictEqual(format.headerType, 'vorbis', 'format.tagType')
+    t.strictEqual(format.duration, 0, 'format.duration = 0 sec')
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
+    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)')
+    t.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec')
+  }
 
-    t.strictEqual(result.common.title, 'In Bloom', 'title')
-    t.strictEqual(result.common.artist[0], 'Nirvana', 'artist')
-    t.strictEqual(result.common.albumartist[0], 'Nirvana', 'albumartist')
-    t.strictEqual(result.common.album, 'Nevermind', 'album')
-    t.strictEqual(result.common.year, '1991', 'year')
-    t.strictEqual(result.common.track.no, 1, 'track no')
-    t.strictEqual(result.common.track.of, 12, 'track of')
-    t.strictEqual(result.common.disk.no, 1, 'disk no')
-    t.strictEqual(result.common.disk.of, 0, 'disk of')
-    t.deepEqual(result.common.genre, ['Grunge', 'Alternative'], 'genre')
-    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
-    t.strictEqual(result.common.picture[0].data.length, 30966, 'picture length')
+  function checkCommon (common) {
+    t.strictEqual(common.title, 'In Bloom', 'common.title')
+    t.strictEqual(common.artist, 'Nirvana', 'common.artist')
+    t.strictEqual(common.albumartist, 'Nirvana', 'common.albumartist')
+    t.strictEqual(common.album, 'Nevermind', 'common.album')
+    t.strictEqual(common.year, 1991, 'common.year')
+    t.deepEqual(common.track, {no: 1, of: 12}, 'common.track')
+    t.deepEqual(common.disk, {no: 1, of: null}, 'common.disk')
+    t.deepEqual(common.genre, ['Grunge', 'Alternative'], 'genre')
+    t.strictEqual(common.picture[0].format, 'jpg', 'picture format')
+    t.strictEqual(common.picture[0].data.length, 30966, 'picture length')
+  }
+
+
+  mm.parseStream(sample, { duration: true }, function (err, result) {
+    t.error(err)
+
+    checkFormat (result.format)
+    checkCommon (result.common)
+
     t.end()
   })
     .on('duration', function (result) {
@@ -42,28 +50,25 @@ test('ogg', function (t) {
       t.strictEqual(result, 'In Bloom', 'aliased title')
     })
     .on('artist', function (result) {
-      t.strictEqual(result[0], 'Nirvana', 'aliased artist')
+      t.strictEqual(result, 'Nirvana', 'aliased artist')
     })
     .on('albumartist', function (result) {
-      t.strictEqual(result[0], 'Nirvana', 'aliased albumartist')
+      t.strictEqual(result, 'Nirvana', 'aliased albumartist')
     })
     .on('album', function (result) {
       t.strictEqual(result, 'Nevermind', 'aliased album')
     })
     .on('year', function (result) {
-      t.strictEqual(result, '1991', 'aliased year')
+      t.strictEqual(result, 1991, 'aliased year')
     })
     .on('track', function (result) {
-      t.strictEqual(result.no, 1, 'aliased track no')
-      t.strictEqual(result.of, 12, 'aliased track of')
+      t.deepEqual(result, {no: 1, of: 12}, 'aliased track')
     })
     .on('disk', function (result) {
-      t.strictEqual(result.no, 1, 'aliased disk no')
-      t.strictEqual(result.of, 0, 'aliased disk of')
+      t.deepEqual(result, {no: 1, of: null}, 'aliased disk')
     })
     .on('genre', function (result) {
-      t.strictEqual(result[0], 'Grunge', 'aliased genre 0')
-      t.strictEqual(result[1], 'Alternative', 'aliased genre 1')
+      t.deepEqual(result, ['Grunge',  'Alternative'], 'aliased genre')
     })
     .on('picture', function (result) {
       t.strictEqual(result[0].format, 'jpg', 'aliased picture format')
@@ -127,4 +132,4 @@ test('ogg', function (t) {
       t.strictEqual(result.data[result.data.length - 1], 217, 'raw METADATA_BLOCK_PICTURE data -1')
       t.strictEqual(result.data[result.data.length - 2], 255, 'raw METADATA_BLOCK_PICTURE data -2')
     })
-})
+});

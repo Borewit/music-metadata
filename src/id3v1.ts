@@ -1,55 +1,73 @@
-'use strict'
-import common from './common'
-import {IStreamParser, TagCallback} from './parser'
+'use strict';
+import * as strtok from 'strtok2';
+import common from './common';
+import {MpegParser} from './mpeg';
+import {Done, IStreamParser, TagCallback} from './parser';
 
 class Id3v1Parser implements IStreamParser {
 
   public static getInstance(): Id3v1Parser {
-    return new Id3v1Parser()
+    return new Id3v1Parser();
   }
 
-  public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
+  private static parseTag(buf: Buffer, offset: number, end: number, type, tag, callback: TagCallback): void {
+    let value = buf.toString('ascii', offset, end);
+    value = value.trim().replace(/\x00/g, '');
+    if ( value.length > 0) {
+      callback(type, tag, value);
+    }
+  }
 
-    let endData = null
-    let type = 'id3v1.1'
+  private endData: Buffer;
+  private type = 'id3v1.1';
+  private mpegParser: MpegParser;
+
+  public parse(stream, callback: TagCallback, done, readDuration?, fileSize?) {
+
+    let mp3Done = false;
+    let id3Done = false;
 
     stream.on('data', (data) => {
-      endData = data
-    })
-    common.streamOnRealEnd(stream, () => {
-      let offset = endData.length - 128
-      let header = endData.toString('ascii', offset, offset += 3)
-      if (header !== 'TAG') {
-        return done(new Error('Could not find metadata header'))
-      }
+      this.endData = data;
+    });
 
-      callback('format', 'headerType', type)
+    this.mpegParser = new MpegParser(128);
+    this.mpegParser.parse(stream, callback, (err) => {
+        mp3Done = true;
+        if (id3Done) {
+          return done(err);
+        } else return strtok.DONE;
+      }, readDuration, fileSize);
+  }
 
-      let title = endData.toString('ascii', offset, offset += 30)
-      callback(type, 'title', title.trim().replace(/\x00/g, ''))
+  public end (callback: TagCallback, done: Done) {
 
-      let artist = endData.toString('ascii', offset, offset += 30)
-      callback(type, 'artist', artist.trim().replace(/\x00/g, ''))
+    let offset = this.endData.length - 128;
+    let header = this.endData.toString('ascii', offset, offset += 3);
+    if (header !== 'TAG') {
+      return done(new Error('Could not find metadata header'));
+    }
 
-      let album = endData.toString('ascii', offset, offset += 30)
-      callback(type, 'album', album.trim().replace(/\x00/g, ''))
+    callback('format', 'headerType', this.type);
 
-      let year = endData.toString('ascii', offset, offset += 4)
-      callback(type, 'year', year.trim().replace(/\x00/g, ''))
+    Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'title', callback);
+    Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'artist', callback);
+    Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'album', callback);
+    Id3v1Parser.parseTag(this.endData, offset, offset += 4, this.type, 'year', callback);
+    Id3v1Parser.parseTag(this.endData, offset, offset += 28, this.type, 'comment', callback);
 
-      let comment = endData.toString('ascii', offset, offset += 28)
-      callback(type, 'comment', comment.trim().replace(/\x00/g, ''))
+    let track = this.endData[this.endData.length - 2];
+    callback(this.type, 'track', track);
 
-      let track = endData[endData.length - 2]
-      callback(type, 'track', track)
+    if (this.endData[this.endData.length - 1] in common.GENRES) {
+      let genre = common.GENRES[this.endData[this.endData.length - 1]];
+      callback(this.type, 'genre', genre);
+    }
 
-      if (endData[endData.length - 1] in common.GENRES) {
-        let genre = common.GENRES[endData[endData.length - 1]]
-        callback(type, 'genre', genre)
-      }
-      return done()
-    })
+    if (this.mpegParser) {
+      this.mpegParser.end(callback, done);
+    }
   }
 }
 
-module.exports = Id3v1Parser.getInstance()
+module.exports = Id3v1Parser.getInstance();

@@ -2,11 +2,11 @@
 
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
-  t.plan(60)
+  t.plan(57)
   var apicCounter = 0
   var tconCounter = 0
   var tpe1Counter = 0
@@ -16,68 +16,65 @@ test('id3v2.4', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.4.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2.4.mp3'))
 
-  id3(sample, {'duration': true}, function (err, result) {
+  mm.parseStream(sample, {'duration': true}, function (err, result) {
     t.error(err)
 
-    t.strictEqual(result.format.headerType, 'id3v2.4', 'tagType')
-    t.strictEqual(result.format.duration, 1, 'format.duration')
-    t.strictEqual(result.format.sampleRate, 44100, 'sampleRate = 44.1 kHz')
-    t.strictEqual(result.format.bitrate, 128000, 'bitrate = 128 kbit/sec')
+    t.strictEqual(result.format.headerType, 'id3v2.4', 'format.headerType')
+    t.strictEqual(result.format.duration, 1, 'format.format.duration')
+    t.strictEqual(result.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
+    t.strictEqual(result.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
+    t.strictEqual(result.format.codecProfile, 'CBR', 'format.codecProfile = CBR')
+    t.strictEqual(result.format.encoder, 'LAME3.98r', 'format.encoder = LAME3.98r')
+    t.strictEqual(result.format.numberOfChannels, 2, 'format.numberOfChannels = 2')
 
     t.strictEqual(result.common.title, 'Home', 'title')
-    t.deepEqual(result.common.artist, ['Explo', 'ions', 'nodejsftws'], 'artists')
-    t.deepEqual(result.common.albumartist, ['Soundtrack'], 'albumartist')
+    t.strictEqual(result.common.artist, undefined, 'common.artist')
+    t.deepEqual(result.common.artists, [ 'Explo', 'ions', 'nodejsftws' ], 'common.artists')
+    t.strictEqual(result.common.albumartist, 'Soundtrack', 'albumartist')
     t.strictEqual(result.common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album')
-    t.strictEqual(result.common.year, '2004', 'year')
-    t.strictEqual(result.common.track.no, 5, 'track no')
-    t.strictEqual(result.common.track.of, 0, 'track of')
-    t.strictEqual(result.common.disk.no, 1, 'disk no')
-    t.strictEqual(result.common.disk.of, 1, 'disk of')
-    t.deepEqual(result.common.genre, ['Soundtrack', 'OST'], 'genres')
-    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
-    t.strictEqual(result.common.picture[0].data.length, 80938, 'picture 0 length')
-    t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')
-    t.strictEqual(result.common.picture[1].data.length, 80938, 'picture 1 length')
+    t.strictEqual(result.common.year, 2004, 'year')
+    t.deepEqual(result.common.track, {no: 5, of: null}, 'common.track')
+    t.deepEqual(result.common.disk, {no: 1, of: 1}, 'common.disk')
+    t.deepEqual(result.common.genre, ['Soundtrack', 'OST'], 'common.genres')
+    t.strictEqual(result.common.picture[0].format, 'jpg', 'common.picture 0 format')
+    t.strictEqual(result.common.picture[0].data.length, 80938, 'common.picture 0 length')
+    t.strictEqual(result.common.picture[1].format, 'jpg', 'common.picture 1 format')
+    t.strictEqual(result.common.picture[1].data.length, 80938, 'common.picture 1 length')
     t.end()
   })
     .on('duration', function (result) {
-      t.strictEqual(result, 1, 'duration')
+      t.strictEqual(result, 1, 'event duration')
     })
     // aliased tests
     .on('title', function (result) {
-      t.strictEqual(result, 'Home', 'aliased title')
+      t.strictEqual(result, 'Home', 'event common.title')
     })
-    .on('artist', function (result) {
-      t.strictEqual(result[0], 'Explo', 'aliased artist 0')
-      t.strictEqual(result[1], 'ions', 'aliased artist 1')
-      t.strictEqual(result[2], 'nodejsftws', 'aliased artist 2')
+    .on('artists', function (result) {
+      t.deepEqual(result, [ 'Explo', 'ions', 'nodejsftws' ], 'event common.artists')
     })
     .on('albumartist', function (result) {
-      t.strictEqual(result[0], 'Soundtrack', 'aliased albumartist')
+      t.strictEqual(result, 'Soundtrack', 'common.albumartist')
     })
     .on('album', function (result) {
-      t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'aliased album')
+      t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'event common.album')
     })
     .on('year', function (result) {
-      t.strictEqual(result, '2004', 'aliased year')
+      t.strictEqual(result, 2004, 'event common.year')
     })
     .on('track', function (result) {
-      t.strictEqual(result.no, 5, 'aliased track no')
-      t.strictEqual(result.of, 0, 'aliased track of')
+      t.deepEqual(result, {no: 5, of: null}, 'event common.track')
     })
     .on('disk', function (result) {
-      t.strictEqual(result.no, 1, 'aliased disk no')
-      t.strictEqual(result.of, 1, 'aliased disk of')
+      t.deepEqual(result, {no: 1, of: 1}, 'event common.disk')
     })
     .on('genre', function (result) {
-      t.strictEqual(result[0], 'Soundtrack', 'aliased genre 0')
-      t.strictEqual(result[1], 'OST', 'aliased genre 1')
+      t.deepEqual(result, ['Soundtrack', 'OST'], 'event common.genre')
     })
     .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'aliased picture 0 format')
-      t.strictEqual(result[0].data.length, 80938, 'aliased picture 0 length')
-      t.strictEqual(result[1].format, 'jpg', 'aliased picture 1 format')
-      t.strictEqual(result[1].data.length, 80938, 'aliased picture 1 length')
+      t.strictEqual(result[0].format, 'jpg', 'common.picture 0 format')
+      t.strictEqual(result[0].data.length, 80938, 'common.picture 0 length')
+      t.strictEqual(result[1].format, 'jpg', 'common.picture 1 format')
+      t.strictEqual(result[1].data.length, 80938, 'common.picture 1 length')
     })
     // raw tests
     .on('TALB', function (result) {
@@ -85,7 +82,7 @@ test('id3v2.4', function (t) {
     })
     .on('TPE1', function (result) {
       if (tpe1Counter === 0) {
-        t.strictEqual(result, 'Explo', 'raw TPE1 0')
+        t.strictEqual(result, 'Explo')
       }
       if (tpe1Counter === 1) {
         t.strictEqual(result, 'ions', 'raw TPE1 1')
@@ -122,8 +119,8 @@ test('id3v2.4', function (t) {
     .on('TDRC', function (result) {
       t.strictEqual(result, '2004', 'raw TDRC')
     })
-    .on('TXXX', function (result) {
-      t.deepEqual(result, {description: 'PERFORMER', text: 'Explosions In The Sky'}, 'TXXX:PERFORMER')
+    .on('TXXX:PERFORMER', function (result) {
+      t.strictEqual(result, 'Explosions In The Sky', 'TXXX:PERFORMER')
     })
     .on('PRIV', function (result) {
       switch (privCounter) {

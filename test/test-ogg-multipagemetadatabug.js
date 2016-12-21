@@ -10,12 +10,11 @@ test('ogg-multipage-metadata-bug', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/ogg-multipagemetadata-bug.ogg')])
     : fs.createReadStream(path.join(__dirname, '/samples/ogg-multipagemetadata-bug.ogg'))
 
-  mm(sample, function (err, result) {
+  mm.parseStream(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.common.title,
-      'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title')
-    t.strictEqual(result.common.artist[0], 'Break The Noize & The Autobots', 'artist')
-    t.strictEqual(result.common.albumartist[0], 'Modestep', 'albumartist')
+    t.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title')
+    t.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist')
+    t.strictEqual(result.common.albumartist, 'Modestep', 'albumartist')
     t.strictEqual(result.common.album, 'To The Stars', 'album')
     t.strictEqual(result.common.date, '2011-01-01', 'year')
     t.strictEqual(result.common.track.no, 2, 'track no')

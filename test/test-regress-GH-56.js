@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('mp3 cbr calculation', function (t) {
@@ -10,7 +10,7 @@ test('mp3 cbr calculation', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/regress-GH-56.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/regress-GH-56.mp3'))
 
-  id3(sample, {'duration': true}, function (err, result) {
+  mm.parseStream(sample, {'duration': true}, function (err, result) {
     t.error(err)
     t.strictEqual(result.format.duration, 373.329375, 'format.duration')
     t.end()

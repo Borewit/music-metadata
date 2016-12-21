@@ -10,7 +10,7 @@ test('should be able to read id3v2 files with lyrics', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2-lyrics.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2-lyrics.mp3'))
 
-  var meta = mm(sample, function (err, result) {
+  var meta = mm.parseStream(sample, function (err, result) {
     t.error(err, 'no errors should occur')
   })
 

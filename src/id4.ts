@@ -1,6 +1,6 @@
-import * as strtok from 'strtok2'
-import common from './common'
-import {IStreamParser, TagCallback} from './parser'
+import * as strtok from 'strtok2';
+import common from './common';
+import {IStreamParser, TagCallback} from './parser';
 
 enum State {
   skip = -1,
@@ -12,10 +12,10 @@ enum State {
 
 class Id4Parser implements IStreamParser {
 
-  public static type = 'm4a'
+  public static type = 'm4a';
 
   public static getInstance(): Id4Parser {
-    return new Id4Parser()
+    return new Id4Parser();
   }
 
   private static Types: { [index: number]: string } = {
@@ -24,141 +24,141 @@ class Id4Parser implements IStreamParser {
     13: 'jpeg',
     14: 'png',
     21: 'uint8'
-  }
+  };
 
-  private static ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia']
+  private static ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
 
   public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
     strtok.parse(stream, (v, cb) => {
       // the very first thing we expect to see is the first atom's length
       if (!v) {
-        cb.metaAtomsTotalLength = 0
-        cb.state = 0
-        return strtok.UINT32_BE
+        cb.metaAtomsTotalLength = 0;
+        cb.state = 0;
+        return strtok.UINT32_BE;
       }
 
       switch (cb.state) {
         case State.skip: // skip
-          cb.state = State.atomLength
-          return strtok.UINT32_BE
+          cb.state = State.atomLength;
+          return strtok.UINT32_BE;
 
         case State.atomLength: // atom length
-          cb.atomLength = v
-          cb.state++
-          return new strtok.BufferType(4)
+          cb.atomLength = v;
+          cb.state++;
+          return new strtok.BufferType(4);
 
         case State.atomName: // atom name
-          v = v.toString('binary')
-          cb.atomName = v
+          v = v.toString('binary');
+          cb.atomName = v;
 
           // meta has 4 bytes padding at the start (skip)
           if (v === 'meta') {
-            cb.state = State.skip
-            return new strtok.IgnoreType(4)
+            cb.state = State.skip;
+            return new strtok.IgnoreType(4);
           }
 
           if (readDuration) {
             if (v === 'mdhd') {
-              cb.state = State.mdhdAtom
-              return new strtok.BufferType(cb.atomLength - 8)
+              cb.state = State.mdhdAtom;
+              return new strtok.BufferType(cb.atomLength - 8);
             }
           }
 
           if (!~Id4Parser.ContainerAtoms.indexOf(v)) {
             if (cb.atomContainer === 'ilst') {
-              cb.state = State.ilstAtom
-              return new strtok.BufferType(cb.atomLength - 8)
+              cb.state = State.ilstAtom;
+              return new strtok.BufferType(cb.atomLength - 8);
             }
-            cb.state = State.skip
-            return new strtok.IgnoreType(cb.atomLength - 8)
+            cb.state = State.skip;
+            return new strtok.IgnoreType(cb.atomLength - 8);
           }
 
           // dig into container atoms
-          cb.atomContainer = v
-          cb.atomContainerLength = cb.atomLength
-          cb.state--
-          return strtok.UINT32_BE
+          cb.atomContainer = v;
+          cb.atomContainerLength = cb.atomLength;
+          cb.state--;
+          return strtok.UINT32_BE;
 
         case State.ilstAtom: // ilst atom
-          cb.metaAtomsTotalLength += cb.atomLength
-          let results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8)
+          cb.metaAtomsTotalLength += cb.atomLength;
+          let results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
           if (results.length > 0) {
             for (let result of results) {
-              callback(Id4Parser.type, cb.atomName, result)
+              callback(Id4Parser.type, cb.atomName, result);
             }
           }
 
           // we can stop processing atoms once we get to the end of the ilst atom
           if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
-            return done()
+            return done();
           }
 
-          cb.state = State.atomLength
-          return strtok.UINT32_BE
+          cb.state = State.atomLength;
+          return strtok.UINT32_BE;
 
         case State.mdhdAtom: // mdhd atom
           // TODO: support version 1
-          let sampleRate = v.readUInt32BE(12)
-          let duration = v.readUInt32BE(16)
-          callback('format', 'duration', duration / sampleRate)
-          callback('format', 'sampleRate', sampleRate) // ToDo: add to test
-          cb.state = State.atomLength
-          return strtok.UINT32_BE
+          let sampleRate = v.readUInt32BE(12);
+          let duration = v.readUInt32BE(16);
+          callback('format', 'duration', duration / sampleRate);
+          callback('format', 'sampleRate', sampleRate); // ToDo: add to test
+          cb.state = State.atomLength;
+          return strtok.UINT32_BE;
 
         default:
-          return done(new Error('illegal state:' + cb.state))
+          return done(new Error('illegal state:' + cb.state));
 
       }
-    })
+    });
   }
 
   private processMetaAtom(data, atomName: string, atomLength: number) {
-    let result = []
-    let offset = 0
+    let result = [];
+    let offset = 0;
 
     // ignore proprietary iTunes atoms (for now)
-    if (atomName === '----') return result
+    if (atomName === '----') return result;
 
     while (offset < atomLength) {
-      let length = strtok.UINT32_BE.get(data, offset)
-      let contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)]
+      let length = strtok.UINT32_BE.get(data, offset);
+      let contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)];
 
-      let content = this.processMetaDataAtom(data.slice(offset + 12, offset + length), contType, atomName)
+      let content = this.processMetaDataAtom(data.slice(offset + 12, offset + length), contType, atomName);
 
-      result.push(content)
-      offset += length
+      result.push(content);
+      offset += length;
     }
 
-    return result
+    return result;
   }
 
   private processMetaDataAtom(data, type, atomName) {
     switch (type) {
       case 'text':
-        return data.toString('utf8', 4)
+        return data.toString('utf8', 4);
 
       case 'uint8':
         if (atomName === 'gnre') {
-          let genreInt = strtok.UINT8.get(data, 5)
-          return common.GENRES[genreInt - 1]
+          let genreInt = strtok.UINT8.get(data, 5);
+          return common.GENRES[genreInt - 1];
         }
         if (atomName === 'trkn' || atomName === 'disk') {
-          return data[7] + '/' + data[9]
+          return data[7] + '/' + data[9];
         }
 
-        return strtok.UINT8.get(data, 4)
+        return strtok.UINT8.get(data, 4);
 
       case 'jpeg':
       case 'png':
         return {
           format: 'image/' + type,
           data: new Buffer(data.slice(4))
-        }
+        };
 
       default:
-        throw new Error('Unexpected type: ' + type)
+        throw new Error('Unexpected type: ' + type);
     }
   }
 }
 
-module.exports = Id4Parser.getInstance()
+module.exports = Id4Parser.getInstance();

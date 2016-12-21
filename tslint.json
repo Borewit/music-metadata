@@ -12,14 +12,16 @@
      */
     "curly": false,
     "max-classes-per-file": [false],
-    "semicolon": [true, "never"],
+    "semicolon": [true, "always", "ignore-interfaces"],
     "quotemark": [true, "single", "avoid-escape"],
     "no-bitwise": false,
     "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
     "object-literal-key-quotes": [true, "as-needed"],
     "variable-name": [true, "ban-keywords"],
     "object-literal-sort-keys": [false],
-    "max-line-length": [true, 150]
+    "max-line-length": [true, 150],
+    "switch-default": false,
+    "prefer-for-of": false
   },
   "jsRules": {
     /*

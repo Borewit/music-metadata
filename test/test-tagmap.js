@@ -5,7 +5,7 @@ var test = require('tape')
 var TagMap = require('../lib/tagmap').default
 
 test('tagmap', function (t) {
-  t.plan(5)
+  t.plan(6)
 
   // Check mappings
   t.doesNotThrow(function () {
@@ -22,12 +22,13 @@ test('tagmap', function (t) {
 
   // common tags, singleton
   t.ok(TagMap.isSingleton('title'), 'common tag "title" is a singleton')
-  t.ok(!TagMap.isSingleton('artist'), 'common tag "artist" is not a singleton')
+  t.ok(TagMap.isSingleton('artist'), 'common tag "artist" is a singleton')
+  t.ok(!TagMap.isSingleton('artists'), 'common tag "artists" is not a singleton')
 
   var tagMap = new TagMap
 
   // native tags, singleton
   t.ok(tagMap.isNativeSingleton('vorbis', 'TITLE'), 'Vorbis tag "TITLE" is a singleton')
-  t.ok(!tagMap.isNativeSingleton('vorbis', 'ARTIST'), 'Vorbis tag "ARTIST" is not a singleton')
+  t.ok(!tagMap.isNativeSingleton('vorbis', ' METADATA_BLOCK_PICTURE'), 'Vorbis tag " METADATA_BLOCK_PICTURE" is not a singleton')
 
 })
