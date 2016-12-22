@@ -2,8 +2,7 @@
 
 Streaming music metadata parser for node and the browser.
 
-Installation
-------------
+## Installation
 Install via [npm](http://npmjs.org):
 
 ```
@@ -14,23 +13,44 @@ You can also download a pre packaged browser release from `dist/music-metadata.j
 See `example/drop_media_file.html` for usage.
 
 
-Supports
------------------
-* mp3 (1.1, 2.2, 2.3, 2.4)
+## Supports metadata of the following audio files:
+* mp3 (ID3v1, ID3v2.2, ID3v2.3, ID3v2.4)
 * m4a (mp4)
-* vorbis (ogg, flac)
-* asf (wma, wmv)
-* MonkeyAudio, APEv2 (ape)
+* Ogg (Vorbis)
+* FLAC (Vorbis)
+* ASF (wma, wmv)
+* APE (APEv2)
 
+## API
 
-API
------------------
+### Examples
+
+#### JavaScript
 ```javascript
 var fs = require('fs');
 var mm = require('music-metadata');
 
-// create a new parser from a node ReadStream
-var parser = mm(fs.createReadStream('04. Lungs.flac'), {native: true, duration: true}, function (err, metadata) {
+
+var audioStream = fs.createReadStream('/audio/04. Lungs.flac')
+
+// create a new music-metadata from a node ReadStream
+var parser = mm.parseStream(audioStream, {native: true}, function (err, metadata) {
+  audioStream.close(); // important to close the stream
+  if (err) throw err;
+  console.log(metadata);
+});
+```
+
+#### TypeScript
+```TypeScript
+import * as fs from 'fs'
+import * as mm from 'music-metadata';
+
+let audioStream = fs.createReadStream('04. Lungs.flac')
+
+// create a new music-metadata parser from a node ReadStream
+let parser = mm.parseStream(audioStream, {native: true}, (err, metadata) => {
+  audioStream.close(); // important to close the stream
   if (err) throw err;
   console.log(metadata);
 });
@@ -42,13 +62,15 @@ This will output the following music metadata:
 {
   "common": {
     "title": "Lungs",
-    "artist": ["I Have A Tribe"],
-    "albumartist": ["I Have A Tribe"],
+    "artist": "I Have A Tribe",
+    "artists": ["I Have A Tribe"],
+    "artistsort": "I Have a Tribe"
+    "albumartist": "I Have A Tribe",
     "album": "No Countries",
     "year": "2015",
-    "track": {"no": 4, "of": 5},
+    "track": {no: 4, of: 5},
     "genre": ["Pop Rock"],
-    "disk": {"no": 1, "of": 1},
+    "disk": {no: 1, of: 1},
     "picture": [
       {
         "format": "jpg",
@@ -68,17 +90,16 @@ This will output the following music metadata:
     "albumartistsort": ["I Have a Tribe"],
     "originaldate": "2015-10-16",
     "script": "Latn",
-    "musicbrainz_albumid": "4f54e938-89b4-4ee8-b282-74964f1e23bb",
     "releasestatus": "official",
     "acoustid_id": "5c94b20e-be79-4f6d-9800-d4caf8bc2a76",
     "catalognumber": "DAGRON153",
-    "musicbrainz_artistid": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
     "media": "Digital Media",
     "releasetype": ["ep"],
     "originalyear": "2015",
+    "musicbrainz_albumid": "4f54e938-89b4-4ee8-b282-74964f1e23bb",
+    "musicbrainz_artistid": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
     "musicbrainz_releasegroupid": "9c288627-be99-490e-9d3e-e6b135e9b8dd",
     "musicbrainz_recordingid": "a1a9ede1-219b-464c-9520-d9fd1debf933",
-    "artistsort": ["I Have a Tribe"]
   },
 
   "format": {
