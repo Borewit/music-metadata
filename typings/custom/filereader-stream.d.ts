@@ -1,18 +1,8 @@
 declare module 'filereader-stream' {
-  import * as events from 'events'
-  import WritableStream = NodeJS.WritableStream;
 
-  export class FileStream extends events.EventEmitter {
-    constructor(file, options?: {output?: string})
+  import ReadableStream = NodeJS.ReadableStream;
 
-    public readChunk(outputType)
+  function readStream (file, options?: {output?: string}): ReadableStream;
 
-    public pipe<T extends WritableStream>(destination: T, options?: { end?: boolean; }): T;
-
-    public pause()
-
-    public resume()
-
-    public abort()
-  }
+  export = readStream
 }
