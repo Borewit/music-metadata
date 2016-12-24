@@ -27,150 +27,164 @@ See `example/drop_media_file.html` for usage.
 
 #### JavaScript
 ```javascript
-var fs = require('fs');
-var mm = require('music-metadata');
+var fs = require('fs')
+var mm = require('music-metadata')
+const util = require('util')
 
-
-var audioStream = fs.createReadStream('/audio/04. Lungs.flac')
+var audioStream = fs.createReadStream('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
 
 // create a new music-metadata from a node ReadStream
-var parser = mm.parseStream(audioStream, {native: true}, function (err, metadata) {
-  audioStream.close(); // important to close the stream
+mm.parseStream(audioStream, {native: true}, function (err, metadata) {
+  // important note, the stream is not closed by default. To prevent leaks, you must close it yourself
+  audioStream.close();
   if (err) throw err;
-  console.log(metadata);
+
+  console.log(util.inspect(metadata, {showHidden: false, depth: null}));
 });
 ```
 
 #### TypeScript
 ```TypeScript
 import * as fs from 'fs'
-import * as mm from 'music-metadata';
+import * as mm from '..'
+import * as util from 'util'
 
-let audioStream = fs.createReadStream('04. Lungs.flac')
+let audioStream = fs.createReadStream('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
 
 // create a new music-metadata parser from a node ReadStream
-let parser = mm.parseStream(audioStream, {native: true}, (err, metadata) => {
-  audioStream.close(); // important to close the stream
+mm.parseStream(audioStream, {native: true}, (err, metadata) => {
+  // important note, the stream is not closed by default. To prevent leaks, you must close it yourself
+  audioStream.close();
   if (err) throw err;
-  console.log(metadata);
+
+  console.log(util.inspect(metadata, {showHidden: false, depth: null}));
 });
 ```
 
 This will output the following music metadata:
 
 ```javascript
-{
-  "common": {
-    "title": "Lungs",
-    "artist": "I Have A Tribe",
-    "artists": ["I Have A Tribe"],
-    "artistsort": "I Have a Tribe"
-    "albumartist": "I Have A Tribe",
-    "album": "No Countries",
-    "year": "2015",
-    "track": {no: 4, of: 5},
-    "genre": ["Pop Rock"],
-    "disk": {no: 1, of: 1},
-    "picture": [
-      {
-        "format": "jpg",
-        "data": {
-          "type": "Buffer",
-          "data": ["..."]
-        }
-      }
-    ],
-    "grouping": "Rock",
-    "copyright": "2015 Grönland Records",
-    "releasecountry": "DE",
-    "label": "Grönland Records",
-    "musicbrainz_albumartistid": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "date": "2015-10-16",
-    "musicbrainz_trackid": "ed040a93-1f95-4f91-8c41-359f5a6e7770",
-    "albumartistsort": ["I Have a Tribe"],
-    "originaldate": "2015-10-16",
-    "script": "Latn",
-    "releasestatus": "official",
-    "acoustid_id": "5c94b20e-be79-4f6d-9800-d4caf8bc2a76",
-    "catalognumber": "DAGRON153",
-    "media": "Digital Media",
-    "releasetype": ["ep"],
-    "originalyear": "2015",
-    "musicbrainz_albumid": "4f54e938-89b4-4ee8-b282-74964f1e23bb",
-    "musicbrainz_artistid": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "musicbrainz_releasegroupid": "9c288627-be99-490e-9d3e-e6b135e9b8dd",
-    "musicbrainz_recordingid": "a1a9ede1-219b-464c-9520-d9fd1debf933",
-  },
-
-  "format": {
-    "duration": 266.56,
-    "numberOfChannels": 2,
-    "bitsPerSample": 16,
-    "headerType": "vorbis",
-    "sampleRate": 44100
-  },
-
-  "vorbis": {
-    "GROUPING": "Rock",
-    "COPYRIGHT": "2015 Grönland Records",
-    "GENRE": ["Pop Rock"],
-    "DESCRIPTION": ["Interprètes : I Have A Tribe, Main Artist; Patrick O'Laoghaire, Composer, Lyricist; Copyright Control\r\nLabel : Grönland Records - GoodToGo\r\n"],
-    "TITLE": "Lungs",
-    "RELEASECOUNTRY": "DE",
-    "TOTALDISCS": ["1"],
-    "LABEL": "Grönland Records",
-    "TOTALTRACKS": ["5"],
-    "MUSICBRAINZ_ALBUMARTISTID": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "DATE": "2015-10-16",
-    "DISCNUMBER": "1",
-    "TRACKTOTAL": "5",
-    "MUSICBRAINZ_RELEASETRACKID": "ed040a93-1f95-4f91-8c41-359f5a6e7770",
-    "ALBUMARTISTSORT": ["I Have a Tribe"],
-    "ORIGINALDATE": "2015-10-16",
-    "SCRIPT": "Latn",
-    "MUSICBRAINZ_ALBUMID": "4f54e938-89b4-4ee8-b282-74964f1e23bb",
-    "RELEASESTATUS": "official",
-    "ALBUMARTIST": ["I Have A Tribe"],
-    "ACOUSTID_ID": "5c94b20e-be79-4f6d-9800-d4caf8bc2a76",
-    "CATALOGNUMBER": "DAGRON153",
-    "ALBUM": "No Countries",
-    "MUSICBRAINZ_ARTISTID": ["d8e73ae6-9884-4061-a056-c686b3375c9d"],
-    "MEDIA": "Digital Media",
-    "RELEASETYPE": ["ep"],
-    "ORIGINALYEAR": "2015",
-    "ARTIST": ["I Have A Tribe"],
-    "DISCTOTAL": "1",
-    "MUSICBRAINZ_RELEASEGROUPID": "9c288627-be99-490e-9d3e-e6b135e9b8dd",
-    "MUSICBRAINZ_TRACKID": "a1a9ede1-219b-464c-9520-d9fd1debf933",
-    "ARTISTSORT": ["I Have a Tribe"],
-    "ARTISTS": ["I Have A Tribe"],
-    "TRACKNUMBER": "4",
-    "METADATA_BLOCK_PICTURE": [
-      {
-        "type": "Cover (front)",
-        "format": "image/jpeg",
-        "description": "Official cover included in digital release",
-        "width": 0,
-        "height": 0,
-        "colour_depth": 0,
-        "indexed_color": 0,
-        "data": {
-          "type": "Buffer",
-          "data": ["..."]
-        }
-      }
-    ]
-  }
-}
-```
-
-Note, the stream is not closed by default. To prevent leaks, you must close it yourself:
-```javascript
-var readableStream = fs.createReadStream('sample.mp3');
-var parser = mm(readableStream, function (err, metadata) {
-  if (err) throw err;
-  readableStream.close();
-});
+{ 
+  common: 
+   { 
+     artists: [ 'Beth Hart', 'Joe Bonamassa' ],
+     track: { no: 1, of: 10 },
+     disk: { no: 1, of: 1 },
+     title: 'Sinner\'s Prayer',
+     artist: 'Beth Hart & Joe Bonamassa',
+     album: 'Don\'t Explain',
+     year: 2011,
+     date: '2011-09-27',
+     picture: 
+      [ { format: 'jpg',
+          data: <Buffer ff d8 ff e0 00 10 4a 46 49 46 00 01 01 00 00 01 00 01 00 00 ff db 00 43 00 03 02 02 03 02 02 03 03 03 03 04 03 03 04 05 08 05 05 04 04 05 0a 07 07 06 ... > } ],
+     originaldate: '2011-09-26',
+     media: 'CD',
+     albumartist: 'Beth Hart & Joe Bonamassa',
+     label: 'J&R Adventures',
+     albumartistsort: 'Hart, Beth & Bonamassa, Joe',
+     artistsort: 'Hart, Beth & Bonamassa, Joe',
+     asin: 'B004X5SCGM',
+     barcode: '804879313915',
+     catalognumber: 'PRAR931391',
+     musicbrainz_albumartistid: 
+      [ '3fe817fc-966e-4ece-b00a-76be43e7e73c',
+        '984f8239-8fe1-4683-9c54-10ffb14439e9' ],
+     musicbrainz_albumid: 'e7050302-74e6-42e4-aba0-09efd5d431d8',
+     releasestatus: 'official',
+     releasetype: [ 'album' ],
+     musicbrainz_artistid: 
+      [ '3fe817fc-966e-4ece-b00a-76be43e7e73c',
+        '984f8239-8fe1-4683-9c54-10ffb14439e9' ],
+     musicbrainz_releasegroupid: 'e00305af-1c72-469b-9a7c-6dc665ca9adc',
+     musicbrainz_trackid: 'd062f484-253c-374b-85f7-89aab45551c7',
+     script: 'Latn',
+     originalyear: 2011,
+     musicbrainz_recordingid: 'f151cb94-c909-46a8-ad99-fb77391abfb8' },
+  format: 
+    { duration: 2,
+     headerType: 'id3v2.4',
+     dataformat: 'mp3',
+     lossless: false,
+     bitrate: 128000,
+     sampleRate: 44100,
+     numberOfChannels: 2,
+     encoder: 'LAME3.99r',
+     codecProfile: 'V2' },
+  'id3v2.4': 
+   { TIT2: 'Sinner\'s Prayer',
+     TPE1: 'Beth Hart & Joe Bonamassa',
+     TRCK: '1/10',
+     TALB: 'Don\'t Explain',
+     TPOS: '1/1',
+     TDRC: '2011-09-27',
+     APIC: 
+      [ { format: 'image/jpeg',
+          type: 'Cover (front)',
+          description: '',
+          data: <Buffer ff d8 ff e0 00 10 4a 46 49 46 00 01 01 00 00 01 00 01 00 00 ff db 00 43 00 03 02 02 03 02 02 03 03 03 03 04 03 03 04 05 08 05 05 04 04 05 0a 07 07 06 ... > } ],
+     TDOR: '2011-09-26',
+     TIPL: 
+      { producer: [ 'Roy Weisman' ],
+        engineer: [ 'James McCullagh', 'Jared Kvitka' ],
+        arranger: [ 'Jeff Bova' ] },
+     TMCL: 
+      { 'bass guitar': [ 'Carmine Rojas' ],
+        orchestra: [ 'The Bovaland Orchestra' ],
+        drums: [ 'Anton Fig' ],
+        percussion: [ 'Anton Fig' ],
+        guitar: [ 'Blondie Chaplin', 'Joe Bonamassa' ],
+        keyboard: [ 'Arlan Scheirbaum' ],
+        vocals: [ 'Beth Hart', 'Joe Bonamassa' ],
+        piano: [ 'Beth Hart' ] },
+     TMED: 'CD',
+     TPE2: 'Beth Hart & Joe Bonamassa',
+     TPUB: 'J&R Adventures',
+     TSO2: 'Hart, Beth & Bonamassa, Joe',
+     TSOP: 'Hart, Beth & Bonamassa, Joe',
+     'TXXX:ACOUSTID_ID': [ '09c06fac-679a-45b1-8ea0-6ce532318363' ],
+     'TXXX:ARRANGER': [ 'Jeff Bova' ],
+     'TXXX:ARTISTS': [ 'Joe Bonamassa' ],
+     'TXXX:ARTISTSORT': [ 'Hart, Beth & Bonamassa, Joe' ],
+     'TXXX:ASIN': 'B004X5SCGM',
+     'TXXX:Artists': [ 'Beth Hart', 'Joe Bonamassa' ],
+     'TXXX:BARCODE': '804879313915',
+     'TXXX:Band': [ 'Beth Hart & Joe Bonamassa' ],
+     'TXXX:CATALOGNUMBER': 'PRAR931391',
+     'TXXX:ENGINEER': [ 'Jared Kvitka' ],
+     'TXXX:LABEL': [ 'J&R Adventures' ],
+     'TXXX:MEDIA': [ 'CD' ],
+     'TXXX:MUSICBRAINZ_ALBUMARTISTID': [ '984f8239-8fe1-4683-9c54-10ffb14439e9' ],
+     'TXXX:MUSICBRAINZ_ALBUMID': [ 'e7050302-74e6-42e4-aba0-09efd5d431d8' ],
+     'TXXX:MUSICBRAINZ_ARTISTID': [ '984f8239-8fe1-4683-9c54-10ffb14439e9' ],
+     'TXXX:MUSICBRAINZ_RELEASEGROUPID': [ 'e00305af-1c72-469b-9a7c-6dc665ca9adc' ],
+     'TXXX:MUSICBRAINZ_RELEASETRACKID': [ 'd062f484-253c-374b-85f7-89aab45551c7' ],
+     'TXXX:MUSICBRAINZ_TRACKID': [ 'f151cb94-c909-46a8-ad99-fb77391abfb8' ],
+     'TXXX:MusicBrainz Album Artist Id': 
+      [ '3fe817fc-966e-4ece-b00a-76be43e7e73c',
+        '984f8239-8fe1-4683-9c54-10ffb14439e9' ],
+     'TXXX:MusicBrainz Album Id': 'e7050302-74e6-42e4-aba0-09efd5d431d8',
+     'TXXX:MusicBrainz Album Status': 'official',
+     'TXXX:MusicBrainz Album Type': [ 'album' ],
+     'TXXX:MusicBrainz Artist Id': 
+      [ '3fe817fc-966e-4ece-b00a-76be43e7e73c',
+        '984f8239-8fe1-4683-9c54-10ffb14439e9' ],
+     'TXXX:MusicBrainz Release Group Id': 'e00305af-1c72-469b-9a7c-6dc665ca9adc',
+     'TXXX:MusicBrainz Release Track Id': 'd062f484-253c-374b-85f7-89aab45551c7',
+     'TXXX:NOTES': [ 'Medieval CUE Splitter (www.medieval.it)' ],
+     'TXXX:ORIGINALDATE': [ '2011-09-26' ],
+     'TXXX:ORIGINALYEAR': [ '2011' ],
+     'TXXX:PERFORMER': [ 'Beth Hart (piano)' ],
+     'TXXX:PRODUCER': [ 'Roy Weisman' ],
+     'TXXX:Part of a set': [ '1/1' ],
+     'TXXX:RELEASECOUNTRY': [ 'GB' ],
+     'TXXX:RELEASESTATUS': [ 'official' ],
+     'TXXX:RELEASETYPE': [ 'album' ],
+     'TXXX:SCRIPT': 'Latn',
+     'TXXX:originalyear': '2011',
+     UFID: 
+      [ { owner_identifier: 'http://musicbrainz.org',
+          identifier: <Buffer 66 31 35 31 63 62 39 34 2d 63 39 30 39 2d 34 36 61 38 2d 61 64 39 39 2d 66 62 37 37 33 39 31 61 62 66 62 38> } ] } }
 ```
 
 `music-metadata` also emits all metadata it discovers during parsing. For example if you wanted to read the `TLEN` frame from an id3v2.x file you can do this:
@@ -181,15 +195,15 @@ parser.on('TLEN', function (result) {
 });
 ```
 
-You can also read the duration; to calculate the duration `music-metadata` may need to parse the entire file
-so only enable this if you need the functionality.
+Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
+To enforce parsing the entire file if needed you should set `duration` to `true`.
 ```javascript
 mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
 
 });
 ```
 
-Note that in order to read the duration for streams that are not file streams, you must also pass the size of the file in bytes.
+Note that in order to read the duration for streams that are not file streams, in some cases you should pass the size of the file in bytes.
 ```javascript
 mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 }, function (err, metadata) {
 
