@@ -40,7 +40,7 @@
     "ape",
     "MonkeyAudio"
   ],
-  "main": "lib/index.js",
+  "main": "lib",
   "typings": "lib/index",
   "browser": "lib/browser",
   "files": [

@@ -1,19 +1,26 @@
 'use strict'
 /*jslint browser: true*/
-import * as readStream from 'filereader-stream'
 import * as through from 'through'
-import * as musicmetadata from './index'
-import * as isStream  from 'is-stream'
-import {EventEmitter} from "events";
+import * as musicMetadata from './index'
+
+import readStream = require('filereader-stream')
+import isStream = require('is-stream')
+
+import {ThroughStream} from "through"
+import ReadableStream = NodeJS.ReadableStream
 
 module.exports = (stream, opts, callback) => {
-  return musicmetadata(wrapFileWithStream(stream), opts, callback)
+  return musicMetadata.parseStream(wrapFileWithStream(stream), opts, callback)
+};
+
+interface FileWrapperStream extends ThroughStream{
+  fileSize: (cb: (fileSize: number) => void) => void
 }
 
-function wrapFileWithStream (file: any): EventEmitter {
-  let stream = through( (data) => {
+function wrapFileWithStream (file: ArrayBuffer | Blob | FileList | ReadableStream): ReadableStream {
+  let stream = <FileWrapperStream> through( (data) => {
     if (data.length > 0) this.queue(data)
-  }, null, {autoDestroy: false})
+  }, null, {autoDestroy: false});
 
   if (file instanceof ArrayBuffer) {
     return wrapArrayBufferWithStream(file, stream)
@@ -21,12 +28,12 @@ function wrapFileWithStream (file: any): EventEmitter {
 
   stream.fileSize = (cb) => {
     process.nextTick( () => {
-      cb(file.size)
+      cb((<Blob>file).size)
     })
-  }
+  };
 
   if (isStream(file)) {
-    return file.pipe(stream)
+    return (<ReadableStream>file).pipe(stream)
   }
   if (file instanceof FileList) {
     throw new Error('You have passed a FileList object but we expected a File')
@@ -38,17 +45,17 @@ function wrapFileWithStream (file: any): EventEmitter {
   return readStream(file).pipe(stream)
 }
 
-function wrapArrayBufferWithStream (arrayBuffer, throughStream) {
-  throughStream.fileSize = function (cb) {
+function wrapArrayBufferWithStream (arrayBuffer: ArrayBuffer, throughStream: ThroughStream) {
+  (<FileWrapperStream> throughStream).fileSize = function (cb) {
     process.nextTick(function () {
       cb(arrayBuffer.byteLength)
     })
-  }
+  };
 
   process.nextTick(function () {
     throughStream.write(new Buffer(new Uint8Array(arrayBuffer)))
     throughStream.end()
-  })
+  });
 
   return throughStream
 }
