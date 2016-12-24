@@ -214,7 +214,7 @@ class MusicMetadataParser {
    * @param callback
    * @returns {EventEmitter}
    */
-  public parse(stream: ReadableStream | ReadStream, opts: IOptions, callback: ICallbackType): EventEmitter {
+  public parse(stream: ReadableStream, opts: IOptions, callback: ICallbackType): EventEmitter {
     if (typeof opts === 'function') {
       callback = (<ICallbackType> opts);
       opts = {};
