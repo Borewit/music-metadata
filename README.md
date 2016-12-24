@@ -12,14 +12,22 @@ npm install music-metadata
 You can also download a pre packaged browser release from `dist/music-metadata.js`.
 See `example/drop_media_file.html` for usage.
 
+## Features
 
-## Supports metadata of the following audio files:
-* mp3 (ID3v1, ID3v2.2, ID3v2.3, ID3v2.4)
-* m4a (mp4)
-* Ogg (Vorbis)
-* FLAC (Vorbis)
-* ASF (wma, wmv)
-* APE (APEv2)
+* Supports metadata of the following audio files:
+  * mp3 (ID3v1, ID3v2.2, ID3v2.3, ID3v2.4)
+  * m4a (mp4)
+  * Ogg (Vorbis)
+  * FLAC (Vorbis)
+  * ASF (wma, wmv)
+  * APE (APEv2)
+* Support for [MusicBrainz](https://pages.github.com/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
+* Support for encoding / format details:
+  * bitrate
+  * sample depth
+  * duration
+  * encoding profile (e.g. CBR, V0, V2)
+  
 
 ## API
 
