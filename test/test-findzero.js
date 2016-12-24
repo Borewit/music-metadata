@@ -1,7 +1,7 @@
 var common = require('../lib/common')
 var test = require('tape')
 
-var findZero = common.findZero
+var findZero = common.default.findZero
 
 test('find terminator in ascii encoded string', function (t) {
   var buf = new Buffer([0xFF, 0xFF, 0xFF, 0x00])

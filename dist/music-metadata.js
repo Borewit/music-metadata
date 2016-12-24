@@ -1,1473 +1,1759 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.musicMetadata = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var common = require('./common')
-var equal = require('deep-equal')
-
-var type = 'asf'
-
-var decodeString = common.decodeString
-
-module.exports = function (stream, callback, done) {
-  var currentState = startState
-
-  strtok.parse(stream, function (v, cb) {
-    currentState = currentState.parse(callback, v, done)
-    return currentState.getExpectedType()
-  })
-}
-
-var startState = {
-  parse: function (callback) {
-    return idState
-  }
-}
-
-var finishedState = {
-  parse: function (callback) {
-    return this
-  },
-  getExpectedType: function () {
-    return strtok.DONE
-  }
-}
-
-var idState = {
-  parse: function (callback, data, done) {
-    if (!equal(common.asfGuidBuf, data)) {
-      done(new Error('expected asf header but was not found'))
-      return finishedState
+'use strict';
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var equal = require('deep-equal');
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var State = (function () {
+    function State(nextState, size) {
+        this.nextState = nextState;
+        this.size = size;
     }
-    return headerDataState
-  },
-  getExpectedType: function () {
-    return new strtok.BufferType(common.asfGuidBuf.length)
-  }
-}
-
-function ReadObjectState (size, objectCount) {
-  this.size = size
-  this.objectCount = objectCount
-}
-
-ReadObjectState.prototype.parse = function (callback, data, done) {
-  var guid = data.slice(0, 16)
-  var size = readUInt64LE(data, 16)
-  var State = stateByGuid(guid) || IgnoreObjectState
-  this.objectCount -= 1
-  this.size -= size
-  var nextState = (this.objectCount <= 0) ? finishedState : this
-  return new State(nextState, size - 24)
-}
-
-ReadObjectState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(24)
-}
-
-var headerDataState = {
-  parse: function (callback, data, done) {
-    var size = readUInt64LE(data, 0)
-    var objectCount = data.readUInt32LE(8)
-    return new ReadObjectState(size, objectCount)
-  },
-  getExpectedType: function () {
-    // 8 bytes size
-    // 4 bytes object count
-    // 2 bytes ignore
-    return new strtok.BufferType(14)
-  }
-}
-
-function IgnoreObjectState (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-IgnoreObjectState.prototype.parse = function (callback, data, done) {
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-IgnoreObjectState.prototype.getExpectedType = function () {
-  return new strtok.IgnoreType(this.size)
-}
-
-function ContentDescriptionObjectState (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-var contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating']
-ContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
-  var lengths = [
-    data.readUInt16LE(0),
-    data.readUInt16LE(2),
-    data.readUInt16LE(4),
-    data.readUInt16LE(6),
-    data.readUInt16LE(8)
-  ]
-  var pos = 10
-  for (var i = 0; i < contentDescTags.length; i += 1) {
-    var tagName = contentDescTags[i]
-    var length = lengths[i]
-    var end = pos + length
-    if (length > 0) {
-      var value = parseUnicodeAttr(data.slice(pos, end))
-      callback(type, tagName, value)
+    return State;
+}());
+var AsfParser = (function () {
+    function AsfParser() {
     }
-    pos = end
-  }
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-ContentDescriptionObjectState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.size)
-}
-
-ContentDescriptionObjectState.guid = new Buffer([
-  0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-])
-
-function ExtendedContentDescriptionObjectState (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-var attributeParsers = [
-  parseUnicodeAttr,
-  parseByteArrayAttr,
-  parseBoolAttr,
-  parseDWordAttr,
-  parseQWordAttr,
-  parseWordAttr,
-  parseByteArrayAttr
-]
-
-ExtendedContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
-  var attrCount = data.readUInt16LE(0)
-  var pos = 2
-  for (var i = 0; i < attrCount; i += 1) {
-    var nameLen = data.readUInt16LE(pos)
-    pos += 2
-    var name = parseUnicodeAttr(data.slice(pos, pos + nameLen))
-    pos += nameLen
-    var valueType = data.readUInt16LE(pos)
-    pos += 2
-    var valueLen = data.readUInt16LE(pos)
-    pos += 2
-    var value = data.slice(pos, pos + valueLen)
-    pos += valueLen
-    var parseAttr = attributeParsers[valueType]
-    if (!parseAttr) {
-      done(new Error('unexpected value type: ' + valueType))
-      return finishedState
+    AsfParser.getInstance = function () {
+        return new AsfParser();
+    };
+    AsfParser.prototype.parse = function (stream, callback, done) {
+        var currentState = AsfParser.startState;
+        strtok.parse(stream, function (v, cb) {
+            currentState = currentState.parse(callback, v, done);
+            return currentState.getExpectedType();
+        });
+    };
+    AsfParser.headerType = 'asf';
+    AsfParser.startState = {
+        parse: function () {
+            return AsfParser.idState;
+        },
+        getExpectedType: function () {
+            return strtok.DONE; // unreachable statement
+        }
+    };
+    AsfParser.finishedState = {
+        parse: function () {
+            return AsfParser.finishedState;
+        },
+        getExpectedType: function () {
+            return strtok.DONE;
+        }
+    };
+    AsfParser.idState = {
+        parse: function (callback, data, done) {
+            if (!equal(common_1.default.asfGuidBuf, data)) {
+                done(new Error('expected asf header but was not found'));
+                return AsfParser.finishedState;
+            }
+            return new HeaderDataState();
+        },
+        getExpectedType: function () {
+            return new strtok.BufferType(common_1.default.asfGuidBuf.length);
+        }
+    };
+    return AsfParser;
+}());
+var Util = (function () {
+    function Util() {
     }
-    var attr = parseAttr(value)
-    callback(type, name, attr)
-  }
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-ExtendedContentDescriptionObjectState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.size)
-}
-
-ExtendedContentDescriptionObjectState.guid = new Buffer([
-  0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
-  0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
-])
-
-function FilePropertiesObject (nextState, size) {
-  this.nextState = nextState
-  this.size = size
-}
-
-FilePropertiesObject.prototype.parse = function (callback, data, done) {
-  // in miliseconds
-  var playDuration = parseQWordAttr(data.slice(40, 48)) / 10000
-  callback('format', 'duration', playDuration / 1000)
-
-  if (this.nextState === finishedState) done()
-  return this.nextState
-}
-
-FilePropertiesObject.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.size)
-}
-
-FilePropertiesObject.guid = new Buffer([
-  0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
-  0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
-])
-
-var guidStates = [
-  FilePropertiesObject,
-  ContentDescriptionObjectState,
-  ExtendedContentDescriptionObjectState
-]
-function stateByGuid (guidBuf) {
-  for (var i = 0; i < guidStates.length; i += 1) {
-    var GuidState = guidStates[i]
-    if (equal(GuidState.guid, guidBuf)) return GuidState
-  }
-  return null
-}
-
-function parseUnicodeAttr (buf) {
-  return common.stripNulls(decodeString(buf, 'utf16le'))
-}
-
-function parseByteArrayAttr (buf) {
-  var newBuf = new Buffer(buf.length)
-  buf.copy(newBuf)
-  return newBuf
-}
-
-function parseBoolAttr (buf) {
-  return parseDWordAttr(buf) === 1
-}
-
-function parseDWordAttr (buf) {
-  return buf.readUInt32LE(0)
-}
-
-function parseQWordAttr (buf) {
-  return readUInt64LE(buf, 0)
-}
-
-function parseWordAttr (buf) {
-  return buf.readUInt16LE(0)
-}
-
-function readUInt64LE (buffer, offset) {
-  var high = buffer.slice(offset, offset + 4).readUInt32LE(0)
-  var low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0)
-  var maxuint32 = Math.pow(2, 32)
-  return ((low * maxuint32) + (high >>> 0))
-}
+    Util.getParserForAttr = function (i) {
+        return Util.attributeParsers[i];
+    };
+    Util.parseUnicodeAttr = function (buf) {
+        return common_1.default.stripNulls(common_1.default.decodeString(buf, 'utf16le'));
+    };
+    Util.parseByteArrayAttr = function (buf) {
+        var newBuf = new Buffer(buf.length);
+        buf.copy(newBuf);
+        return newBuf;
+    };
+    Util.parseBoolAttr = function (buf) {
+        return Util.parseDWordAttr(buf) === 1;
+    };
+    Util.parseDWordAttr = function (buf) {
+        return buf.readUInt32LE(0);
+    };
+    Util.parseQWordAttr = function (buf) {
+        return Util.readUInt64LE(buf, 0);
+    };
+    Util.parseWordAttr = function (buf) {
+        return buf.readUInt16LE(0);
+    };
+    Util.readUInt64LE = function (buffer, offset) {
+        var high = buffer.slice(offset, offset + 4).readUInt32LE(0);
+        var low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0);
+        var maxuint32 = Math.pow(2, 32);
+        return ((low * maxuint32) + (high >>> 0));
+    };
+    Util.attributeParsers = [
+        Util.parseUnicodeAttr,
+        Util.parseByteArrayAttr,
+        Util.parseBoolAttr,
+        Util.parseDWordAttr,
+        Util.parseQWordAttr,
+        Util.parseWordAttr,
+        Util.parseByteArrayAttr
+    ];
+    return Util;
+}());
+var ReadObjectState = (function () {
+    function ReadObjectState(size, objectCount) {
+        this.size = size;
+        this.objectCount = objectCount;
+    }
+    ReadObjectState.stateByGuid = function (guidBuf) {
+        for (var _i = 0, _a = ReadObjectState.guidStates; _i < _a.length; _i++) {
+            var guidState = _a[_i];
+            if (equal(guidState.guid, guidBuf)) {
+                return guidState;
+            }
+        }
+        return null;
+    };
+    ReadObjectState.prototype.parse = function (callback, data, done) {
+        var guid = data.slice(0, 16);
+        var size = Util.readUInt64LE(data, 16);
+        this.objectCount -= 1;
+        this.size -= size;
+        var nextState = (this.objectCount <= 0) ? AsfParser.finishedState : this;
+        var guidState = ReadObjectState.stateByGuid(guid);
+        return guidState ? guidState.getState(nextState, size - 24) : new IgnoreObjectState(nextState, size - 24);
+    };
+    ReadObjectState.prototype.getExpectedType = function () {
+        return new strtok.BufferType(24);
+    };
+    ReadObjectState.guidStates = [
+        {
+            guid: new Buffer([
+                0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
+                0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
+            ]),
+            getState: function (nextState, size) {
+                return new FilePropertiesObject(nextState, size);
+            }
+        },
+        // ContentDescriptionObject
+        {
+            guid: new Buffer([
+                0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+                0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+            ]),
+            getState: function (nextState, size) {
+                return new ContentDescriptionObjectState(nextState, size);
+            }
+        },
+        // ExtendedContentDescriptionObject
+        {
+            guid: new Buffer([
+                0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
+                0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
+            ]),
+            getState: function (nextState, size) {
+                return new ExtendedContentDescriptionObjectState(nextState, size);
+            }
+        }];
+    return ReadObjectState;
+}());
+var HeaderDataState = (function () {
+    function HeaderDataState() {
+    }
+    HeaderDataState.prototype.parse = function (callback, data, done) {
+        var size = Util.readUInt64LE(data, 0);
+        var objectCount = data.readUInt32LE(8);
+        return new ReadObjectState(size, objectCount);
+    };
+    HeaderDataState.prototype.getExpectedType = function () {
+        // 8 bytes size
+        // 4 bytes object count
+        // 2 bytes ignore
+        return new strtok.BufferType(14);
+    };
+    return HeaderDataState;
+}());
+var IgnoreObjectState = (function (_super) {
+    __extends(IgnoreObjectState, _super);
+    function IgnoreObjectState(nextState, size) {
+        _super.call(this, nextState, size);
+    }
+    IgnoreObjectState.prototype.parse = function (callback, data, done) {
+        if (this.nextState === AsfParser.finishedState) {
+            done();
+        }
+        return this.nextState;
+    };
+    IgnoreObjectState.prototype.getExpectedType = function () {
+        return new strtok.IgnoreType(this.size);
+    };
+    return IgnoreObjectState;
+}(State));
+var ContentDescriptionObjectState = (function (_super) {
+    __extends(ContentDescriptionObjectState, _super);
+    function ContentDescriptionObjectState(nextState, size) {
+        _super.call(this, nextState, size);
+    }
+    ContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
+        var lengths = [
+            data.readUInt16LE(0),
+            data.readUInt16LE(2),
+            data.readUInt16LE(4),
+            data.readUInt16LE(6),
+            data.readUInt16LE(8)
+        ];
+        var pos = 10;
+        for (var i = 0; i < ContentDescriptionObjectState.contentDescTags.length; i += 1) {
+            var tagName = ContentDescriptionObjectState.contentDescTags[i];
+            var length_1 = lengths[i];
+            var end = pos + length_1;
+            if (length_1 > 0) {
+                var value = Util.parseUnicodeAttr(data.slice(pos, end));
+                callback(AsfParser.headerType, tagName, value);
+            }
+            pos = end;
+        }
+        if (this.nextState === AsfParser.finishedState) {
+            done();
+        }
+        return this.nextState;
+    };
+    ContentDescriptionObjectState.prototype.getExpectedType = function () {
+        return new strtok.BufferType(this.size);
+    };
+    ContentDescriptionObjectState.guid = new Buffer([
+        0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+        0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+    ]);
+    ContentDescriptionObjectState.contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
+    return ContentDescriptionObjectState;
+}(State));
+var ExtendedContentDescriptionObjectState = (function (_super) {
+    __extends(ExtendedContentDescriptionObjectState, _super);
+    function ExtendedContentDescriptionObjectState(nextState, size) {
+        _super.call(this, nextState, size);
+    }
+    ExtendedContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
+        var attrCount = data.readUInt16LE(0);
+        var pos = 2;
+        for (var i = 0; i < attrCount; i += 1) {
+            var nameLen = data.readUInt16LE(pos);
+            pos += 2;
+            var name_1 = Util.parseUnicodeAttr(data.slice(pos, pos + nameLen));
+            pos += nameLen;
+            var valueType = data.readUInt16LE(pos);
+            pos += 2;
+            var valueLen = data.readUInt16LE(pos);
+            pos += 2;
+            var value = data.slice(pos, pos + valueLen);
+            pos += valueLen;
+            var parseAttr = Util.getParserForAttr(valueType);
+            if (!parseAttr) {
+                done(new Error('unexpected value headerType: ' + valueType));
+                return AsfParser.finishedState;
+            }
+            var attr = parseAttr(value);
+            callback(AsfParser.headerType, name_1, attr);
+        }
+        if (this.nextState === AsfParser.finishedState) {
+            done();
+        }
+        return this.nextState;
+    };
+    ExtendedContentDescriptionObjectState.prototype.getExpectedType = function () {
+        return new strtok.BufferType(this.size);
+    };
+    return ExtendedContentDescriptionObjectState;
+}(State));
+var FilePropertiesObject = (function (_super) {
+    __extends(FilePropertiesObject, _super);
+    function FilePropertiesObject(nextState, size) {
+        _super.call(this, nextState, size);
+    }
+    FilePropertiesObject.prototype.parse = function (callback, data, done) {
+        // in miliseconds
+        var playDuration = Util.parseQWordAttr(data.slice(40, 48)) / 10000;
+        callback('format', 'duration', playDuration / 1000);
+        if (this.nextState === AsfParser.finishedState) {
+            done();
+        }
+        return this.nextState;
+    };
+    FilePropertiesObject.prototype.getExpectedType = function () {
+        return new strtok.BufferType(this.size);
+    };
+    return FilePropertiesObject;
+}(State));
+module.exports = AsfParser.getInstance();
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":19,"deep-equal":22,"strtok2":48}],2:[function(require,module,exports){
+},{"./common":3,"buffer":21,"deep-equal":23,"strtok2":50}],2:[function(require,module,exports){
 (function (process,Buffer){
-'use strict'
+'use strict';
 /*jslint browser: true*/
-var readStream = require('filereader-stream')
-var through = require('through')
-var musicmetadata = require('./index')
-var isStream = require('is-stream')
-
+var through = require('through');
+var musicMetadata = require('./index');
+var readStream = require('filereader-stream');
+var isStream = require('is-stream');
 module.exports = function (stream, opts, callback) {
-  return musicmetadata(wrapFileWithStream(stream), opts, callback)
+    return musicMetadata.parseStream(wrapFileWithStream(stream), opts, callback);
+};
+function wrapFileWithStream(file) {
+    var _this = this;
+    var stream = through(function (data) {
+        if (data.length > 0)
+            _this.queue(data);
+    }, null, { autoDestroy: false });
+    if (file instanceof ArrayBuffer) {
+        return wrapArrayBufferWithStream(file, stream);
+    }
+    stream.fileSize = function (cb) {
+        process.nextTick(function () {
+            cb(file.size);
+        });
+    };
+    if (isStream(file)) {
+        return file.pipe(stream);
+    }
+    if (file instanceof FileList) {
+        throw new Error('You have passed a FileList object but we expected a File');
+    }
+    if (!(file instanceof File || file instanceof Blob)) {
+        throw new Error('You must provide a valid File or Blob object');
+    }
+    return readStream(file).pipe(stream);
 }
-
-function wrapFileWithStream (file) {
-  var stream = through(function write (data) {
-    if (data.length > 0) this.queue(data)
-  }, null, {autoDestroy: false})
-
-  if (file instanceof window.ArrayBuffer) {
-    return wrapArrayBufferWithStream(file, stream)
-  }
-
-  stream.fileSize = function (cb) {
+function wrapArrayBufferWithStream(arrayBuffer, throughStream) {
+    throughStream.fileSize = function (cb) {
+        process.nextTick(function () {
+            cb(arrayBuffer.byteLength);
+        });
+    };
     process.nextTick(function () {
-      cb(file.size)
-    })
-  }
-
-  if (isStream(file)) {
-    return file.pipe(stream)
-  }
-  if (file instanceof window.FileList) {
-    throw new Error('You have passed a FileList object but we expected a File')
-  }
-  if (!(file instanceof window.File || file instanceof window.Blob)) {
-    throw new Error('You must provide a valid File or Blob object')
-  }
-
-  return readStream(file).pipe(stream)
-}
-
-function wrapArrayBufferWithStream (arrayBuffer, throughStream) {
-  throughStream.fileSize = function (cb) {
-    process.nextTick(function () {
-      cb(arrayBuffer.byteLength)
-    })
-  }
-
-  process.nextTick(function () {
-    throughStream.write(new Buffer(new Uint8Array(arrayBuffer)))
-    throughStream.end()
-  })
-
-  return throughStream
+        throughStream.write(new Buffer(new Uint8Array(arrayBuffer)));
+        throughStream.end();
+    });
+    return throughStream;
 }
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./index":9,"_process":33,"buffer":19,"filereader-stream":26,"is-stream":31,"through":49}],3:[function(require,module,exports){
+},{"./index":9,"_process":36,"buffer":21,"filereader-stream":27,"is-stream":32,"through":51}],3:[function(require,module,exports){
 (function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var equal = require('deep-equal')
-var windows1252decoder = require('./windows1252decoder')
-
-var asfGuidBuf = new Buffer([
-  0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-])
-exports.asfGuidBuf = asfGuidBuf
-
-exports.getParserForMediaType = function (types, header) {
-  for (var i = 0; i < types.length; i += 1) {
-    var type = types[i]
-    var offset = type.offset || 0
-    if (header.length >= offset + type.buf.length &&
-      equal(header.slice(offset, offset + type.buf.length), type.buf)) {
-      return type.tag
+"use strict";
+var equal = require('deep-equal');
+var windows1252decoder_1 = require('./windows1252decoder');
+var Common = (function () {
+    function Common() {
     }
-  }
-  // default to id3v1.1 if we cannot detect any other tags
-  return require('./id3v1')
-}
+    Common.getParserForMediaType = function (types, header) {
+        for (var _i = 0, types_1 = types; _i < types_1.length; _i++) {
+            var type = types_1[_i];
+            var offset = type.offset || 0;
+            if (header.length >= offset + type.buf.length &&
+                equal(header.slice(offset, offset + type.buf.length), type.buf)) {
+                return type.tag;
+            }
+        }
+        // default to id3v1.1 if we cannot detect any other tags
+        return require('./id3v1');
+    };
+    Common.streamOnRealEnd = function (stream, callback) {
+        stream.on('end', done);
+        stream.on('close', done);
+        function done() {
+            stream.removeListener('end', done);
+            stream.removeListener('close', done);
+            callback();
+        }
+    };
+    Common.removeUnsyncBytes = function (buffer) {
+        var readI = 0;
+        var writeI = 0;
+        while (readI < buffer.length - 1) {
+            if (readI !== writeI) {
+                buffer[writeI] = buffer[readI];
+            }
+            readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1;
+            writeI++;
+        }
+        if (readI < buffer.length) {
+            buffer[writeI++] = buffer[readI++];
+        }
+        return buffer.slice(0, writeI);
+    };
+    /**
+     *
+     * @param buffer
+     * @param start
+     * @param end
+     * @param encoding // ToDo: ts.enum
+     * @return {number}
+     */
+    Common.findZero = function (buffer, start, end, encoding) {
+        var i = start;
+        if (encoding === 'utf16') {
+            while (buffer[i] !== 0 || buffer[i + 1] !== 0) {
+                if (i >= end)
+                    return end;
+                i += 2;
+            }
+            return i;
+        }
+        else {
+            while (buffer[i] !== 0) {
+                if (i >= end)
+                    return end;
+                i++;
+            }
+            return i;
+        }
+    };
+    Common.sum = function (arr) {
+        var s = 0;
+        for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
+            var v = arr_1[_i];
+            s += v;
+        }
+        return s;
+    };
+    Common.swapBytes = function (buffer) {
+        var l = buffer.length;
+        if (l & 0x01) {
+            throw new Error('Buffer length must be even');
+        }
+        for (var i = 0; i < l; i += 2) {
+            var a = buffer[i];
+            buffer[i] = buffer[i + 1];
+            buffer[i + 1] = a;
+        }
+        return buffer;
+    };
+    Common.readUTF16String = function (buffer) {
+        var offset = 0;
+        if (buffer[0] === 0xFE && buffer[1] === 0xFF) {
+            buffer = Common.swapBytes(buffer);
+            offset = 2;
+        }
+        else if (buffer[0] === 0xFF && buffer[1] === 0xFE) {
+            offset = 2;
+        }
+        return buffer.toString('ucs2', offset);
+    };
+    /**
+     *
+     * @param buffer
+     * @param encoding ToDo
+     * @return {string}
+     */
+    Common.decodeString = function (buffer, encoding) {
+        // annoying workaround for a double BOM issue
+        // https://github.com/leetreveil/musicmetadata/issues/84
+        if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {
+            buffer = buffer.slice(2);
+        }
+        if (encoding === 'utf16le' || encoding === 'utf16') {
+            return Common.readUTF16String(buffer);
+        }
+        else if (encoding === 'utf8') {
+            return buffer.toString('utf8');
+        }
+        else if (encoding === 'iso-8859-1') {
+            return windows1252decoder_1.default(buffer);
+        }
+        throw Error(encoding + ' encoding is not supported!');
+    };
+    Common.parseGenre = function (origVal) {
+        // match everything inside parentheses
+        var split = origVal.trim().split(/\((.*?)\)/g).filter(function (val) {
+            return val !== '';
+        });
+        var array = [];
+        for (var _i = 0, split_1 = split; _i < split_1.length; _i++) {
+            var cur = split_1[_i];
+            if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
+                cur = Common.GENRES[cur];
+            }
+            array.push(cur);
+        }
+        return array
+            .filter(function (val) {
+            return val !== undefined;
+        }).join('/');
+    };
+    Common.stripNulls = function (str) {
+        str = str.replace(/^\x00+/g, '');
+        str = str.replace(/\x00+$/g, '');
+        return str;
+    };
+    /**
+     * Read bit-aligned number start from buffer
+     * Total offset in bits = byteOffset * 8 + bitOffset
+     * @param buf Byte buffer
+     * @param byteOffset Starting offset in bytes
+     * @param bitOffset Starting offset in bits: 0 = lsb
+     * @param len Length of number in bits
+     * @return {number} decoded bit aligned number
+     */
+    Common.getBitAllignedNumber = function (buf, byteOffset, bitOffset, len) {
+        var byteOff = byteOffset + ~~(bitOffset / 8);
+        var bitOff = bitOffset % 8;
+        var value = buf[byteOff];
+        value &= 0xff >> bitOff;
+        var bitsRead = 8 - bitOff;
+        var bitsLeft = len - bitsRead;
+        if (bitsLeft < 0) {
+            value >>= (8 - bitOff - len);
+        }
+        else if (bitsLeft > 0) {
+            value <<= bitsLeft;
+            value |= Common.getBitAllignedNumber(buf, byteOffset, bitOffset + bitsRead, bitsLeft);
+        }
+        return value;
+    };
+    /**
+     * Read bit-aligned number start from buffer
+     * Total offset in bits = byteOffset * 8 + bitOffset
+     * @param buf Byte buffer
+     * @param byteOffset Starting offset in bytes
+     * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is least significant bit
+     * @return {number} decoded bit aligned number
+     */
+    Common.isBitSet = function (buf, byteOffset, bitOffset) {
+        return Common.getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
+    };
+    // ToDo: move to ASF
+    Common.asfGuidBuf = new Buffer([
+        0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+        0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+    ]);
+    Common.strtokUINT24_BE = {
+        get: function (buf, off) {
+            return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
+        },
+        len: 3
+    };
+    Common.strtokBITSET = {
+        get: function (buf, off, bit) {
+            return (buf[off] & (1 << bit)) !== 0;
+        },
+        len: 1
+    };
+    Common.strtokUINT32_LE = {
+        len: 4,
+        get: function (buf, off) {
+            // Shifting the MSB by 24 directly causes it to go negative if its
+            // last bit is high, so we instead shift by 23 and multiply by 2.
+            // Also, using binary OR to count the MSB if its last bit is high
+            // causes the value to go negative. Use addition there.
+            return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
+                ((buf[off + 3] << 23) * 2);
+        }
+    };
+    Common.GENRES = [
+        'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
+        'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
+        'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
+        'Euro-Techno', 'Ambient', 'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance',
+        'Classical', 'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel', 'Noise',
+        'Alt. Rock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative', 'Instrumental Pop',
+        'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave', 'Techno-Industrial',
+        'Electronic', 'Pop-Folk', 'Eurodance', 'Dream', 'Southern Rock', 'Comedy', 'Cult',
+        'Gangsta Rap', 'Top 40', 'Christian Rap', 'Pop/Funk', 'Jungle', 'Native American',
+        'Cabaret', 'New Wave', 'Psychedelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
+        'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll', 'Hard Rock',
+        'Folk', 'Folk/Rock', 'National Folk', 'Swing', 'Fast-Fusion', 'Bebob', 'Latin', 'Revival',
+        'Celtic', 'Bluegrass', 'Avantgarde', 'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock',
+        'Symphonic Rock', 'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
+        'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony', 'Booty Bass', 'Primus',
+        'Porn Groove', 'Satire', 'Slow Jam', 'Club', 'Tango', 'Samba', 'Folklore',
+        'Ballad', 'Power Ballad', 'Rhythmic Soul', 'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo',
+        'A Cappella', 'Euro-House', 'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House',
+        'Hardcore', 'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
+        'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover', 'Contemporary Christian',
+        'Christian Rock', 'Merengue', 'Salsa', 'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
+        'Abstract', 'Art Rock', 'Baroque', 'Bhangra', 'Big Beat', 'Breakbeat', 'Chillout',
+        'Downtempo', 'Dub', 'EBM', 'Eclectic', 'Electro', 'Electroclash', 'Emo', 'Experimental',
+        'Garage', 'Global', 'IDM', 'Illbient', 'Industro-Goth', 'Jam Band', 'Krautrock',
+        'Leftfield', 'Lounge', 'Math Rock', 'New Romantic', 'Nu-Breakz', 'Post-Punk', 'Post-Rock',
+        'Psytrance', 'Shoegaze', 'Space Rock', 'Trop Rock', 'World Music', 'Neoclassical', 'Audiobook',
+        'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
+        'Garage Rock', 'Psybient'
+    ];
+    return Common;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Common;
 
-exports.streamOnRealEnd = function (stream, callback) {
-  stream.on('end', done)
-  stream.on('close', done)
-  function done () {
-    stream.removeListener('end', done)
-    stream.removeListener('close', done)
-    callback()
-  }
-}
-
-exports.readVorbisPicture = function (buffer) {
-  var picture = {}
-  var offset = 0
-
-  picture.type = PICTURE_TYPE[strtok.UINT32_BE.get(buffer, 0)]
-
-  var mimeLen = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.format = buffer.toString('utf-8', offset += 4, offset + mimeLen)
-
-  var descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen)
-  picture.description = buffer.toString('utf-8', offset += 4, offset + descLen)
-
-  picture.width = strtok.UINT32_BE.get(buffer, offset += descLen)
-  picture.height = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4)
-
-  var picDataLen = strtok.UINT32_BE.get(buffer, offset += 4)
-  picture.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen))
-
-  return picture
-}
-
-exports.removeUnsyncBytes = function (buffer) {
-  var readI = 0
-  var writeI = 0
-  while (readI < buffer.length - 1) {
-    if (readI !== writeI) {
-      buffer[writeI] = buffer[readI]
+}).call(this,require("buffer").Buffer)
+},{"./id3v1":5,"./windows1252decoder":15,"buffer":21,"deep-equal":23}],4:[function(require,module,exports){
+'use strict';
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var vorbis_1 = require('./vorbis');
+var FlacParser = (function () {
+    function FlacParser() {
     }
-    readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1
-    writeI++
-  }
-  if (readI < buffer.length) {
-    buffer[writeI++] = buffer[readI++]
-  }
-  return buffer.slice(0, writeI)
-}
-
-exports.findZero = function (buffer, start, end, encoding) {
-  var i = start
-  if (encoding === 'utf16') {
-    while (buffer[i] !== 0 || buffer[i + 1] !== 0) {
-      if (i >= end) return end
-      i += 2
-    }
-    return i
-  } else {
-    while (buffer[i] !== 0) {
-      if (i >= end) return end
-      i++
-    }
-    return i
-  }
-}
-
-exports.sum = function (arr) {
-  var s = 0
-  var i
-  for (i = 0; i < arr.length; i++) {
-    s += arr[i]
-  }
-  return s
-}
-
-function swapBytes (buffer) {
-  var l = buffer.length
-  if (l & 0x01) {
-    throw new Error('Buffer length must be even')
-  }
-  for (var i = 0; i < l; i += 2) {
-    var a = buffer[i]
-    buffer[i] = buffer[i + 1]
-    buffer[i + 1] = a
-  }
-  return buffer
-}
-
-var readUTF16String = exports.readUTF16String = function (buffer) {
-  var offset = 0
-  if (buffer[0] === 0xFE && buffer[1] === 0xFF) { // big endian
-    buffer = swapBytes(buffer)
-    offset = 2
-  } else if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
-    offset = 2
-  }
-  return buffer.toString('ucs2', offset)
-}
-
-exports.decodeString = function (buffer, encoding) {
-  // annoying workaround for a double BOM issue
-  // https://github.com/leetreveil/musicmetadata/issues/84
-  if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {
-    buffer = buffer.slice(2)
-  }
-
-  if (encoding === 'utf16le' || encoding === 'utf16') {
-    return readUTF16String(buffer)
-  } else if (encoding === 'utf8') {
-    return buffer.toString('utf8')
-  } else if (encoding === 'iso-8859-1') {
-    return windows1252decoder(buffer)
-  }
-
-  throw Error(encoding + ' encoding is not supported!')
-}
-
-exports.parseGenre = function (origVal) {
-  // match everything inside parentheses
-  var split = origVal.trim().split(/\((.*?)\)/g)
-    .filter(function (val) { return val !== '' })
-
-  var array = []
-  for (var i = 0; i < split.length; i++) {
-    var cur = split[i]
-    if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
-      cur = GENRES[cur]
-    }
-    array.push(cur)
-  }
-
-  return array
-    .filter(function (val) { return val !== undefined })
-    .join('/')
-}
-
-exports.stripNulls = function (str) {
-  str = str.replace(/^\x00+/g, '')
-  str = str.replace(/\x00+$/g, '')
-  return str
-}
-
+    FlacParser.getInstance = function () {
+        return new FlacParser();
+    };
+    FlacParser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+        var currentState = startState;
+        strtok.parse(stream, function (v, cb) {
+            currentState = currentState.parse(callback, v, done);
+            return currentState.getExpectedType();
+        });
+    };
+    FlacParser.headerType = 'vorbis';
+    return FlacParser;
+}());
 /**
- * Read bit-aligned number start from buffer
- * @param buf Byte buffer
- * @param off Starting offset in bits
- * @param len Length of number in bits
- * @return {number} decoded bit aligned number
+ * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
+ * ref: https://xiph.org/flac/format.html#metadata_block
  */
-exports.getBitAllignedNumber = function (buf, off, len) {
-  var byteOff = ~~(off / 8)
-  var bitOff = off % 8
-  var value = buf[byteOff]
-  value &= 0xff >> bitOff
-  var bitsRead = 8 - bitOff
-  var bitsLeft = len - bitsRead
-  if (bitsLeft < 0) {
-    value >>= (8 - bitOff - len)
-  } else if (bitsLeft > 0) {
-    value <<= bitsLeft
-    value |= exports.getBitAllignedNumber(buf, off + bitsRead, bitsLeft)
-  }
-  return value
-}
-
-exports.strtokUINT24_BE = {
-  len: 3,
-  get: function (buf, off) {
-    return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2]
-  }
-}
-
-exports.strtokBITSET = {
-  len: 1,
-  get: function (buf, off, bit) {
-    return (buf[off] & (1 << bit)) !== 0
-  }
-}
-
-exports.strtokINT32SYNCSAFE = {
-  len: 4,
-  get: function (buf, off) {
-    return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
-        ((buf[off + 1]) << 14) | ((buf[off]) << 21)
-  }
-}
-
-var PICTURE_TYPE = exports.PICTURE_TYPE = [
-  'Other',
-  "32x32 pixels 'file icon' (PNG only)",
-  'Other file icon',
-  'Cover (front)',
-  'Cover (back)',
-  'Leaflet page',
-  'Media (e.g. lable side of CD)',
-  'Lead artist/lead performer/soloist',
-  'Artist/performer',
-  'Conductor',
-  'Band/Orchestra',
-  'Composer',
-  'Lyricist/text writer',
-  'Recording Location',
-  'During recording',
-  'During performance',
-  'Movie/video screen capture',
-  'A bright coloured fish',
-  'Illustration',
-  'Band/artist logotype',
-  'Publisher/Studio logotype'
-]
-
-var GENRES = exports.GENRES = [
-  'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
-  'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
-  'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
-  'Euro-Techno', 'Ambient', 'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance',
-  'Classical', 'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel', 'Noise',
-  'Alt. Rock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative', 'Instrumental Pop',
-  'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave', 'Techno-Industrial',
-  'Electronic', 'Pop-Folk', 'Eurodance', 'Dream', 'Southern Rock', 'Comedy', 'Cult',
-  'Gangsta Rap', 'Top 40', 'Christian Rap', 'Pop/Funk', 'Jungle', 'Native American',
-  'Cabaret', 'New Wave', 'Psychedelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
-  'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll', 'Hard Rock',
-  'Folk', 'Folk/Rock', 'National Folk', 'Swing', 'Fast-Fusion', 'Bebob', 'Latin', 'Revival',
-  'Celtic', 'Bluegrass', 'Avantgarde', 'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock',
-  'Symphonic Rock', 'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
-  'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony', 'Booty Bass', 'Primus',
-  'Porn Groove', 'Satire', 'Slow Jam', 'Club', 'Tango', 'Samba', 'Folklore',
-  'Ballad', 'Power Ballad', 'Rhythmic Soul', 'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo',
-  'A Cappella', 'Euro-House', 'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House',
-  'Hardcore', 'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
-  'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover', 'Contemporary Christian',
-  'Christian Rock', 'Merengue', 'Salsa', 'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
-  'Abstract', 'Art Rock', 'Baroque', 'Bhangra', 'Big Beat', 'Breakbeat', 'Chillout',
-  'Downtempo', 'Dub', 'EBM', 'Eclectic', 'Electro', 'Electroclash', 'Emo', 'Experimental',
-  'Garage', 'Global', 'IDM', 'Illbient', 'Industro-Goth', 'Jam Band', 'Krautrock',
-  'Leftfield', 'Lounge', 'Math Rock', 'New Romantic', 'Nu-Breakz', 'Post-Punk', 'Post-Rock',
-  'Psytrance', 'Shoegaze', 'Space Rock', 'Trop Rock', 'World Music', 'Neoclassical', 'Audiobook',
-  'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
-  'Garage Rock', 'Psybient'
-]
-
-}).call(this,require("buffer").Buffer)
-},{"./id3v1":5,"./windows1252decoder":13,"buffer":19,"deep-equal":22,"strtok2":48}],4:[function(require,module,exports){
-'use strict'
-var strtok = require('strtok2')
-var common = require('./common')
-
-var type = 'vorbis'
-
-module.exports = function (stream, callback, done) {
-  var currentState = startState
-
-  strtok.parse(stream, function (v, cb) {
-    currentState = currentState.parse(callback, v, done)
-    return currentState.getExpectedType()
-  })
-}
-
-var DataDecoder = function (data) {
-  this.data = data
-  this.offset = 0
-}
-
-DataDecoder.prototype.readInt32 = function () {
-  var value = strtok.UINT32_LE.get(this.data, this.offset)
-  this.offset += 4
-  return value
-}
-
-DataDecoder.prototype.readStringUtf8 = function () {
-  var len = this.readInt32()
-  var value = this.data.toString('utf8', this.offset, this.offset + len)
-  this.offset += len
-  return value
-}
-
+var BlockType;
+(function (BlockType) {
+    BlockType[BlockType["STREAMINFO"] = 0] = "STREAMINFO";
+    BlockType[BlockType["PADDING"] = 1] = "PADDING";
+    BlockType[BlockType["APPLICATION"] = 2] = "APPLICATION";
+    BlockType[BlockType["SEEKTABLE"] = 3] = "SEEKTABLE";
+    BlockType[BlockType["VORBIS_COMMENT"] = 4] = "VORBIS_COMMENT";
+    BlockType[BlockType["CUESHEET"] = 5] = "CUESHEET";
+    BlockType[BlockType["PICTURE"] = 6] = "PICTURE";
+})(BlockType || (BlockType = {}));
+var Metadata = (function () {
+    function Metadata() {
+    }
+    Metadata.BlockHeader = {
+        len: 4,
+        get: function (buf, off) {
+            return {
+                lastBlock: common_1.default.strtokBITSET.get(buf, off, 7),
+                type: common_1.default.getBitAllignedNumber(buf, off, 1, 7),
+                length: common_1.default.strtokUINT24_BE.get(buf, off + 1)
+            };
+        }
+    };
+    /**
+     * METADATA_BLOCK_DATA
+     * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
+     */
+    Metadata.BlockStreamInfo = {
+        len: 34,
+        get: function (buf, off) {
+            return {
+                // The minimum block size (in samples) used in the stream.
+                minimumBlockSize: strtok.UINT16_BE.get(buf, off),
+                // The maximum block size (in samples) used in the stream.
+                // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
+                maximumBlockSize: strtok.UINT16_BE.get(buf, off + 2) / 1000,
+                // The minimum frame size (in bytes) used in the stream.
+                // May be 0 to imply the value is not known.
+                minimumFrameSize: strtok.UINT24_BE.get(buf, off + 4),
+                // The maximum frame size (in bytes) used in the stream.
+                // May be 0 to imply the value is not known.
+                maximumFrameSize: strtok.UINT24_BE.get(buf, off + 7),
+                // Sample rate in Hz. Though 20 bits are available,
+                // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
+                // Also, a value of 0 is invalid.
+                sampleRate: common_1.default.strtokUINT24_BE.get(buf, off + 10) >> 4,
+                // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
+                // (number of channels)-1. FLAC supports from 1 to 8 channels
+                channels: common_1.default.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
+                // bits per sample)-1.
+                // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
+                bitsPerSample: common_1.default.getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
+                // Total samples in stream.
+                // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
+                // A value of zero here means the number of total samples is unknown.
+                totalSamples: common_1.default.getBitAllignedNumber(buf, off + 13, 4, 36),
+                // the MD5 hash of the file (see notes for usage... it's a littly tricky)
+                fileMD5: new strtok.BufferType(16).get(buf, off + 18)
+            };
+        }
+    };
+    return Metadata;
+}());
+var DataDecoder = (function () {
+    function DataDecoder(data) {
+        this.data = data;
+        this.offset = 0;
+    }
+    DataDecoder.prototype.readInt32 = function () {
+        var value = strtok.UINT32_LE.get(this.data, this.offset);
+        this.offset += 4;
+        return value;
+    };
+    DataDecoder.prototype.readStringUtf8 = function () {
+        var len = this.readInt32();
+        var value = this.data.toString('utf8', this.offset, this.offset + len);
+        this.offset += len;
+        return value;
+    };
+    return DataDecoder;
+}());
+// ToDo: same in ASF
 var finishedState = {
-  parse: function (callback) {
-    return this
-  },
-  getExpectedType: function () {
-    return strtok.DONE
-  }
-}
-
-var BlockDataState = function (type, length, nextStateFactory) {
-  this.type = type
-  this.length = length
-  this.nextStateFactory = nextStateFactory
-}
-
-BlockDataState.prototype.parse = function (callback, data) {
-  if (this.type === 4) {
-    var decoder = new DataDecoder(data)
-    decoder.readStringUtf8() // vendor (skip)
-    var commentListLength = decoder.readInt32()
-    var comment
-    var split
-    var i
-
-    for (i = 0; i < commentListLength; i++) {
-      comment = decoder.readStringUtf8()
-      split = comment.split('=')
-      callback(type, split[0].toUpperCase(), split[1])
-    }
-  } else if (this.type === 6) {
-    var picture = common.readVorbisPicture(data)
-    callback(type, 'METADATA_BLOCK_PICTURE', picture)
-  } else if (this.type === 0) { // METADATA_BLOCK_STREAMINFO
-    if (data.length < 34) return // invalid streaminfo
-    // Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
-    var sampleRate = common.strtokUINT24_BE.get(data, 10) >> 4
-    var channels = common.getBitAllignedNumber(data, 100, 3) + 1
-    var bitsPerSample = common.getBitAllignedNumber(data, 103, 5) + 1
-    var totalSamples = data.readUInt32BE(14)
-    var duration = totalSamples / sampleRate
-    callback('format', 'numberOfChannels', channels)
-    callback('format', 'bitsPerSample', bitsPerSample)
-    callback('format', 'tagType', type)
-    callback('format', 'sampleRate', sampleRate)
-    callback('format', 'duration', duration)
-  }
-
-  return this.nextStateFactory()
-}
-
-BlockDataState.prototype.getExpectedType = function () {
-  return new strtok.BufferType(this.length)
-}
-
-var blockHeaderState = {
-  parse: function (callback, data, done) {
-    var header = {
-      lastBlock: (data[0] & 0x80) === 0x80,
-      type: data[0] & 0x7f,
-      length: common.strtokUINT24_BE.get(data, 1)
-    }
-    var followingStateFactory = header.lastBlock ? function () {
-      done()
-      return finishedState
-    } : function () {
-      return blockHeaderState
-    }
-
-    return new BlockDataState(header.type, header.length, followingStateFactory)
-  },
-  getExpectedType: function () {
-    return new strtok.BufferType(4)
-  }
-}
-
-var idState = {
-  parse: function (callback, data, done) {
-    if (data.toString() !== 'fLaC') {
-      done(new Error('expected flac header but was not found'))
-    }
-    return blockHeaderState
-  },
-  getExpectedType: function () {
-    return new strtok.BufferType(4)
-  }
-}
-
-var startState = {
-  parse: function (callback) {
-    return idState
-  },
-  getExpectedType: function () {
-    return strtok.DONE
-  }
-}
-
-},{"./common":3,"strtok2":48}],5:[function(require,module,exports){
-'use strict'
-var common = require('./common')
-
-module.exports = function (stream, callback, done) {
-  var endData = null
-  var type = 'id3v1.1'
-  stream.on('data', function (data) {
-    endData = data
-  })
-  common.streamOnRealEnd(stream, function () {
-    var offset = endData.length - 128
-    var header = endData.toString('ascii', offset, offset += 3)
-    if (header !== 'TAG') {
-      return done(new Error('Could not find metadata header'))
-    }
-
-    callback('format', 'tagType', type)
-
-    var title = endData.toString('ascii', offset, offset += 30)
-    callback(type, 'title', title.trim().replace(/\x00/g, ''))
-
-    var artist = endData.toString('ascii', offset, offset += 30)
-    callback(type, 'artist', artist.trim().replace(/\x00/g, ''))
-
-    var album = endData.toString('ascii', offset, offset += 30)
-    callback(type, 'album', album.trim().replace(/\x00/g, ''))
-
-    var year = endData.toString('ascii', offset, offset += 4)
-    callback(type, 'year', year.trim().replace(/\x00/g, ''))
-
-    var comment = endData.toString('ascii', offset, offset += 28)
-    callback(type, 'comment', comment.trim().replace(/\x00/g, ''))
-
-    var track = endData[endData.length - 2]
-    callback(type, 'track', track)
-
-    if (endData[endData.length - 1] in common.GENRES) {
-      var genre = common.GENRES[endData[endData.length - 1]]
-      callback(type, 'genre', genre)
-    }
-    return done()
-  })
-}
-
-},{"./common":3}],6:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var parser = require('./id3v2_frames')
-var common = require('./common')
-
-module.exports = function (stream, callback, done, readDuration, fileSize) {
-  var type
-  var frameCount = 0
-  var audioFrameHeader
-  var bitrates = []
-
-  strtok.parse(stream, function (v, cb) {
-    if (v === undefined) {
-      cb.state = 0
-      return new strtok.BufferType(10)
-    }
-
-    switch (cb.state) {
-      case 0: // header
-        if (v.toString('ascii', 0, 3) !== 'ID3') {
-          return done(new Error('expected id3 header but was not found'))
-        }
-        cb.id3Header = {
-          version: '2.' + v[3] + '.' + v[4],
-          major: v[3],
-          unsync: common.strtokBITSET.get(v, 5, 7),
-          xheader: common.strtokBITSET.get(v, 5, 6),
-          xindicator: common.strtokBITSET.get(v, 5, 5),
-          footer: common.strtokBITSET.get(v, 5, 4),
-          size: common.strtokINT32SYNCSAFE.get(v, 6)
-        }
-        cb.state = 1
-        type = 'id3v2.' + v[3]
-        return new strtok.BufferType(cb.id3Header.size)
-
-      case 1: // id3 data
-        parseMetadata(v, cb.id3Header, done).map(function (obj) {
-          callback.apply(this, [type].concat(obj))
-        })
-        if (readDuration) {
-          cb.state = 2
-          return new strtok.BufferType(4)
-        }
-        return done()
-
-      case 1.5:
-        var shiftedBuffer = new Buffer(4)
-        cb.frameFragment.copy(shiftedBuffer, 0, 1)
-        v.copy(shiftedBuffer, 3)
-        v = shiftedBuffer
-        cb.state = 2
-
-      /* falls through */
-      case 2: // audio frame header
-
-        // we have found the id3 tag at the end of the file, ignore
-        if (v.slice(0, 3).toString() === 'TAG') {
-          return done()
-        }
-
-        // first 11 bits should all be set (frame sync)
-        if ((v[0] === 0xFF && (v[1] & 0xE0) === 0xE0) !== true) {
-          // keep scanning for frame header, id3 tag may
-          // have some padding (0x00) at the end
-          return seekFirstAudioFrame(done)
-        }
-
-        var header = {
-          'version': readMpegVersion(v[1]),
-          'layer': readLayer(v[1]),
-          'protection': !(v[1] & 0x1),
-          'padding': !!((v[2] & 0x02) >> 1),
-          'mode': readMode(v[3])
-        }
-
-        if (isNaN(header.version) || isNaN(header.layer)) {
-          return seekFirstAudioFrame(done)
-        }
-
-        // mp3 files are only found in MPEG1/2 Layer 3
-        if ((header.version !== 1 && header.version !== 2) || header.layer !== 3) {
-          return seekFirstAudioFrame(done)
-        }
-
-        header.samples_per_frame = calcSamplesPerFrame(
-          header.version, header.layer)
-
-        header.bitrate = id3BitrateCalculator(v[2], header.version, header.layer)
-        if (isNaN(header.bitrate)) {
-          return seekFirstAudioFrame(done)
-        }
-
-        header.sample_rate = samplingRateCalculator(v[2], header.version)
-        if (isNaN(header.sample_rate)) {
-          return seekFirstAudioFrame(done)
-        }
-
-        callback('format', 'tagType', type)
-        callback('format', 'bitrate', header.bitrate * 1000)
-        callback('format', 'sampleRate', header.sample_rate)
-        callback('format', 'numberOfChannels', header.mode === 'mono' ? 1 : 2)
-
-        header.slot_size = calcSlotSize(header.layer)
-
-        header.sideinfo_length = calculateSideInfoLength(
-          header.layer, header.mode, header.version)
-
-        var bps = header.samples_per_frame / 8.0
-        var fsize = (bps * (header.bitrate * 1000) / header.sample_rate) +
-          ((header.padding) ? header.slot_size : 0)
-        header.frame_size = Math.floor(fsize)
-
-        audioFrameHeader = header
-        frameCount++
-        bitrates.push(header.bitrate)
-
-        // xtra header only exists in first frame
-        if (frameCount === 1) {
-          cb.offset = header.sideinfo_length
-          cb.state = 3
-          return new strtok.BufferType(header.sideinfo_length)
-        }
-
-        // the stream is CBR if the first 3 frame bitrates are the same
-        if (readDuration && fileSize && frameCount === 3 && areAllSame(bitrates)) {
-          fileSize(function (size) {
-            // subtract non audio stream data from duration calculation
-            size = size - cb.id3Header.size
-            var kbps = (header.bitrate * 1000) / 8
-            callback('format', 'duration', size / kbps)
-            cb(done())
-          })
-          return strtok.DEFER
-        }
-
-        // once we know the file is VBR attach listener to end of
-        // stream so we can do the duration calculation when we
-        // have counted all the frames
-        if (readDuration && frameCount === 4) {
-          stream.once('end', function () {
-            callback('format', 'duration', calcDuration(frameCount,
-              header.samples_per_frame, header.sample_rate))
-            done()
-          })
-        }
-
-        cb.state = 5
-        return new strtok.IgnoreType(header.frame_size - 4)
-
-      case 3: // side information
-        cb.offset += 12
-        cb.state = 4
-        return new strtok.BufferType(12)
-
-      case 4: // xtra / info header
-        cb.state = 5
-        var frameDataLeft = audioFrameHeader.frame_size - 4 - cb.offset
-
-        var id = v.toString('ascii', 0, 4)
-        if (id !== 'Xtra' && id !== 'Info' && id !== 'Xing') {
-          return new strtok.IgnoreType(frameDataLeft)
-        }
-
-        // frames field is not present
-        if ((v[7] & 0x01) !== 1) {
-          return new strtok.IgnoreType(frameDataLeft)
-        }
-
-        var numFrames = v.readUInt32BE(8)
-        var ah = audioFrameHeader
-        callback('format', 'duration', calcDuration(numFrames, ah.samples_per_frame, ah.sample_rate))
-        return done()
-
-      case 5: // skip frame data
-        cb.state = 2
-        return new strtok.BufferType(4)
-    }
-
-    function seekFirstAudioFrame (done) {
-      if (frameCount) {
-        return done(new Error('expected frame header but was not found'))
-      }
-
-      cb.frameFragment = v
-      cb.state = 1.5
-      return new strtok.BufferType(1)
-    }
-  })
-}
-
-function areAllSame (array) {
-  var first = array[0]
-  return array.every(function (element) {
-    return element === first
-  })
-}
-
-function calcDuration (numFrames, samplesPerFrame, sampleRate) {
-  return Math.round(numFrames * (samplesPerFrame / sampleRate))
-}
-
-function parseMetadata (data, header, done) {
-  var offset = 0
-  var frames = []
-
-  if (header.xheader) {
-    offset += data.readUInt32BE(0)
-  }
-
-  while (true) {
-    if (offset === data.length) break
-    var frameHeaderBytes = data.slice(offset, offset += getFrameHeaderLength(header.major, done))
-    var frameHeader = readFrameHeader(frameHeaderBytes, header.major)
-
-    // Last frame. Check first char is a letter, bit of defensive programming
-    if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
-      break
-    }
-
-    var frameDataBytes = data.slice(offset, offset += frameHeader.length)
-    var frameData = readFrameData(frameDataBytes, frameHeader, header.major)
-    for (var pos in frameData) {
-      if (frameData.hasOwnProperty(pos)) {
-        frames.push([frameHeader.id, frameData[pos]])
-      }
-    }
-  }
-  return frames
-}
-
-function readFrameData (v, frameHeader, majorVer) {
-  switch (majorVer) {
-    case 2:
-      return parser.readData(v, frameHeader.id, null, majorVer)
-    case 3:
-    case 4:
-      if (frameHeader.flags.format.unsync) {
-        v = common.removeUnsyncBytes(v)
-      }
-      if (frameHeader.flags.format.data_length_indicator) {
-        v = v.slice(4, v.length)
-      }
-      return parser.readData(v, frameHeader.id, frameHeader.flags, majorVer)
-  }
-}
-
-function readFrameHeader (v, majorVer) {
-  var header = {}
-  switch (majorVer) {
-    case 2:
-      header.id = v.toString('ascii', 0, 3)
-      header.length = common.strtokUINT24_BE.get(v, 3, 6)
-    break
-    case 3:
-      header.id = v.toString('ascii', 0, 4)
-      header.length = strtok.UINT32_BE.get(v, 4, 8)
-      header.flags = readFrameFlags(v.slice(8, 10))
-    break
-    case 4:
-      header.id = v.toString('ascii', 0, 4)
-      header.length = common.strtokINT32SYNCSAFE.get(v, 4, 8)
-      header.flags = readFrameFlags(v.slice(8, 10))
-    break
-  }
-  return header
-}
-
-function getFrameHeaderLength (majorVer, done) {
-  switch (majorVer) {
-    case 2:
-      return 6
-    case 3:
-    case 4:
-      return 10
-    default:
-      return done(new Error('header version is incorrect'))
-  }
-}
-
-function readFrameFlags (b) {
-  return {
-    status: {
-      tag_alter_preservation: common.strtokBITSET.get(b, 0, 6),
-      file_alter_preservation: common.strtokBITSET.get(b, 0, 5),
-      read_only: common.strtokBITSET.get(b, 0, 4)
+    parse: function (callback) {
+        return finishedState; // ToDo: correct?
     },
-    format: {
-      grouping_identity: common.strtokBITSET.get(b, 1, 7),
-      compression: common.strtokBITSET.get(b, 1, 3),
-      encryption: common.strtokBITSET.get(b, 1, 2),
-      unsync: common.strtokBITSET.get(b, 1, 1),
-      data_length_indicator: common.strtokBITSET.get(b, 1, 0)
+    getExpectedType: function () {
+        return strtok.DONE;
     }
-  }
-}
-
-function readMpegVersion (byte) {
-  var bits = (byte & 0x18) >> 3
-
-  if (bits === 0x00) {
-    return 2.5
-  } else if (bits === 0x01) {
-    return 'reserved'
-  } else if (bits === 0x02) {
-    return 2
-  } else if (bits === 0x03) {
-    return 1
-  }
-}
-
-function readLayer (byte) {
-  var bits = (byte & 0x6) >> 1
-
-  if (bits === 0x00) {
-    return 'reserved'
-  } else if (bits === 0x01) {
-    return 3
-  } else if (bits === 0x02) {
-    return 2
-  } else if (bits === 0x03) {
-    return 1
-  }
-}
-
-function readMode (byte) {
-  var bits = (byte & 0xC0) >> 6
-  if (bits === 0x00) {
-    return 'stereo'
-  } else if (bits === 0x01) {
-    return 'joint_stereo'
-  } else if (bits === 0x02) {
-    return 'dual_channel'
-  } else if (bits === 0x03) {
-    return 'mono'
-  }
-}
-
-function calcSamplesPerFrame (version, layer) {
-  if (layer === 1) return 384
-  if (layer === 2) return 1152
-  if (layer === 3 && version === 1) return 1152
-  if (layer === 3 && (version === 2 || version === 2.5)) return 576
-}
-
-function calculateSideInfoLength (layer, mode, version) {
-  if (layer !== 3) return 2
-  if (['stereo', 'joint_stereo', 'dual_channel'].indexOf(mode) >= 0) {
-    if (version === 1) {
-      return 32
-    } else if (version === 2 || version === 2.5) {
-      return 17
+};
+var BlockDataState = (function () {
+    function BlockDataState(type, length, nextStateFactory) {
+        this.type = type;
+        this.length = length;
+        this.nextStateFactory = nextStateFactory;
     }
-  } else if (mode === 'mono') {
-    if (version === 1) {
-      return 17
-    } else if (version === 2 || version === 2.5) {
-      return 9
+    BlockDataState.prototype.parse = function (callback, data) {
+        switch (this.type) {
+            case BlockType.STREAMINFO:
+                var blockStreamInfo = data;
+                // Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
+                callback('format', 'dataformat', 'flac');
+                callback('format', 'lossless', true);
+                callback('format', 'headerType', FlacParser.headerType);
+                callback('format', 'numberOfChannels', blockStreamInfo.channels);
+                callback('format', 'bitsPerSample', blockStreamInfo.bitsPerSample);
+                callback('format', 'sampleRate', blockStreamInfo.sampleRate);
+                var duration = blockStreamInfo.totalSamples / blockStreamInfo.sampleRate;
+                callback('format', 'duration', blockStreamInfo.totalSamples / blockStreamInfo.sampleRate);
+                // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
+                break;
+            case BlockType.VORBIS_COMMENT:
+                var decoder = new DataDecoder(data);
+                decoder.readStringUtf8(); // vendor (skip)
+                var commentListLength = decoder.readInt32();
+                for (var i = 0; i < commentListLength; i++) {
+                    var comment = decoder.readStringUtf8();
+                    var split = comment.split('=');
+                    callback(FlacParser.headerType, split[0].toUpperCase(), split[1]);
+                }
+                break;
+            case BlockType.PICTURE:
+                var picture = vorbis_1.default.readPicture(data);
+                callback(FlacParser.headerType, 'METADATA_BLOCK_PICTURE', picture);
+                break;
+        }
+        return this.nextStateFactory();
+    };
+    BlockDataState.prototype.getExpectedType = function () {
+        switch (this.type) {
+            case 0:
+                return Metadata.BlockStreamInfo;
+            default:
+                return new strtok.BufferType(this.length);
+        }
+    };
+    return BlockDataState;
+}());
+var blockHeaderState = {
+    parse: function (callback, data, done) {
+        var header = data;
+        var followingStateFactory = header.lastBlock ? function () {
+            done();
+            return finishedState;
+        } : function () {
+            return blockHeaderState;
+        };
+        return new BlockDataState(header.type, header.length, followingStateFactory);
+    },
+    getExpectedType: function () {
+        return Metadata.BlockHeader;
     }
-  }
-}
-
-function calcSlotSize (layer) {
-  if (layer === 0) return 'reserved'
-  if (layer === 1) return 4
-  if (layer === 2) return 1
-  if (layer === 3) return 1
-}
-
-// [bits][mpegversion + layer] = bitrate
-var bitrate_index = {
-    0x01: {'11': 32, '12': 32, '13': 32, '21': 32, '22': 8, '23': 8},
-    0x02: {'11': 64, '12': 48, '13': 40, '21': 48, '22': 16, '23': 16},
-    0x03: {'11': 96, '12': 56, '13': 48, '21': 56, '22': 24, '23': 24},
-    0x04: {'11': 128, '12': 64, '13': 56, '21': 64, '22': 32, '23': 32},
-    0x05: {'11': 160, '12': 80, '13': 64, '21': 80, '22': 40, '23': 40},
-    0x06: {'11': 192, '12': 96, '13': 80, '21': 96, '22': 48, '23': 48},
-    0x07: {'11': 224, '12': 112, '13': 96, '21': 112, '22': 56, '23': 56},
-    0x08: {'11': 256, '12': 128, '13': 112, '21': 128, '22': 64, '23': 64},
-    0x09: {'11': 288, '12': 160, '13': 128, '21': 144, '22': 80, '23': 80},
-    0x0A: {'11': 320, '12': 192, '13': 160, '21': 160, '22': 96, '23': 96},
-    0x0B: {'11': 352, '12': 224, '13': 192, '21': 176, '22': 112, '23': 112},
-    0x0C: {'11': 384, '12': 256, '13': 224, '21': 192, '22': 128, '23': 128},
-    0x0D: {'11': 416, '12': 320, '13': 256, '21': 224, '22': 144, '23': 144},
-    0x0E: {'11': 448, '12': 384, '13': 320, '21': 256, '22': 160, '23': 160}
-  }
-
-function id3BitrateCalculator (byte, mpegVersion, layer) {
-  var bits = (byte & 0xF0) >> 4
-  if (bits === 0x00) return 'free'
-  if (bits === 0x0F) return 'reserved'
-  return bitrate_index[bits][mpegVersion.toString() + layer]
-}
-
-// [version][bits] == sampling rate
-var sampling_rate_freq_index = {
-    1: {0x00: 44100, 0x01: 48000, 0x02: 32000},
-    2: {0x00: 22050, 0x01: 24000, 0x02: 16000},
-    2.5: {0x00: 11025, 0x01: 12000, 0x02: 8000}
-}
-
-function samplingRateCalculator (byte, version) {
-  var bits = (byte & 0xC) >> 2
-  if (bits === 0x03) return 'reserved'
-  return sampling_rate_freq_index[version][bits]
-}
-
-}).call(this,require("buffer").Buffer)
-},{"./common":3,"./id3v2_frames":7,"buffer":19,"strtok2":48}],7:[function(require,module,exports){
-'use strict'
-var Buffer = require('buffer').Buffer
-var strtok = require('strtok2')
-var common = require('./common')
-var findZero = common.findZero
-var decodeString = common.decodeString
-
-exports.readData = function readData (b, type, flags, major) {
-  var encoding = getTextEncoding(b[0])
-  var length = b.length
-  var offset = 0
-  var output = []
-  var nullTerminatorLength = getNullTerminatorLength(encoding)
-  var fzero
-  var out = {}
-
-  switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
-    case 'T*': // 4.2.1. Text information frames - details
-      var text = decodeString(b.slice(1), encoding).replace(/\x00+$/, '')
-      // id3v2.4 defines that multiple T* values are separated by 0x00
-      output = text.split(/\x00/g)
-      break
-
-    case 'TXXX':
-      output = readIdentifierAndData(b, offset + 1, length, encoding)
-      output = [{
-        description: output.id,
-        text: decodeString(output.data, encoding).replace(/\x00+$/, '') }]
-      break
-
-    case 'PIC':
-    case 'APIC':
-      var pic = {}
-
-      offset += 1
-
-      switch (major) {
-        case 2:
-          pic.format = decodeString(b.slice(offset, offset + 3), encoding)
-          offset += 3
-          break
-        case 3:
-        case 4:
-          var enc = 'iso-8859-1'
-          fzero = findZero(b, offset, length, enc)
-          pic.format = decodeString(b.slice(offset, fzero), enc)
-          offset = fzero + 1
-          break
-      }
-
-      pic.type = common.PICTURE_TYPE[b[offset]]
-      offset += 1
-
-      fzero = findZero(b, offset, length, encoding)
-      pic.description = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
-
-      pic.data = new Buffer(b.slice(offset, length))
-      output = [pic]
-      break
-
-    case 'CNT':
-    case 'PCNT':
-      output = [strtok.UINT32_BE.get(b, 0)]
-      break
-
-    case 'SYLT':
-      // skip text encoding (1 byte),
-      //      language (3 bytes),
-      //      time stamp format (1 byte),
-      //      content type (1 byte),
-      //      content descriptor (1 byte)
-      offset += 7
-
-      output = []
-      while (offset < length) {
-        var txt = b.slice(offset, offset = findZero(b, offset, length, encoding))
-        offset += 5 // push offset forward one +  4 byte timestamp
-        output.push(decodeString(txt, encoding))
-      }
-      break
-
-    case 'ULT':
-    case 'USLT':
-    case 'COM':
-    case 'COMM':
-
-      offset += 1
-
-      out.language = decodeString(b.slice(offset, offset + 3), 'iso-8859-1')
-      offset += 3
-
-      fzero = findZero(b, offset, length, encoding)
-      out.description = decodeString(b.slice(offset, fzero), encoding)
-      offset = fzero + nullTerminatorLength
-
-      out.text = decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '')
-
-      output = [out]
-      break
-
-    case 'UFID':
-      output = readIdentifierAndData(b, offset, length, 'iso-8859-1')
-      output = [{owner_identifier: output.id, identifier: output.data }]
-
-      break
-
-    case 'PRIV': // private frame
-      output = readIdentifierAndData(b, offset, length, 'iso-8859-1')
-      output = [{owner_identifier: output.id, data: output.data }]
-      break
-  }
-
-  return output
-}
-
-function readIdentifierAndData (b, offset, length, encoding) {
-  var fzero = findZero(b, offset, length, encoding)
-
-  var id = decodeString(b.slice(offset, fzero), encoding)
-  offset = fzero + getNullTerminatorLength(encoding)
-
-  return {id: id, data: b.slice(offset, length)}
-}
-
-function getTextEncoding (byte) {
-  switch (byte) {
-    case 0x00:
-      return 'iso-8859-1' // binary
-    case 0x01:
-    case 0x02:
-      return 'utf16' // 01 = with bom, 02 = without bom
-    case 0x03:
-      return 'utf8'
-    default:
-      return 'utf8'
-  }
-}
-
-function getNullTerminatorLength (enc) {
-  switch (enc) {
-    case 'utf16':
-      return 2
-    default:
-      return 1
-  }
-}
-
-},{"./common":3,"buffer":19,"strtok2":48}],8:[function(require,module,exports){
-(function (Buffer){
-'use strict'
-var strtok = require('strtok2')
-var common = require('./common')
-var type = 'm4a'
-
-module.exports = function (stream, callback, done, readDuration) {
-  strtok.parse(stream, function (v, cb) {
-    // the very first thing we expect to see is the first atom's length
-    if (!v) {
-      cb.metaAtomsTotalLength = 0
-      cb.state = 0
-      return strtok.UINT32_BE
+};
+var idState = {
+    parse: function (callback, data, done) {
+        if (data.toString() !== 'fLaC') {
+            done(new Error('expected flac header but was not found'));
+        }
+        return blockHeaderState;
+    },
+    getExpectedType: function () {
+        return new strtok.BufferType(4);
     }
-
-    switch (cb.state) {
-      case -1: // skip
-        cb.state = 0
-        return strtok.UINT32_BE
-
-      case 0: // atom length
-        cb.atomLength = v
-        cb.state++
-        return new strtok.BufferType(4)
-
-      case 1: // atom name
-        v = v.toString('binary')
-        cb.atomName = v
-
-        // meta has 4 bytes padding at the start (skip)
-        if (v === 'meta') {
-          cb.state = -1
-          return new strtok.IgnoreType(4)
-        }
-
-        if (readDuration) {
-          if (v === 'mdhd') {
-            cb.state = 3
-            return new strtok.BufferType(cb.atomLength - 8)
-          }
-        }
-
-        if (!~CONTAINER_ATOMS.indexOf(v)) {
-          if (cb.atomContainer === 'ilst') {
-            cb.state = 2
-            return new strtok.BufferType(cb.atomLength - 8)
-          }
-          cb.state = -1
-          return new strtok.IgnoreType(cb.atomLength - 8)
-        }
-
-        // dig into container atoms
-        cb.atomContainer = v
-        cb.atomContainerLength = cb.atomLength
-        cb.state--
-        return strtok.UINT32_BE
-
-      case 2: // ilst atom
-        cb.metaAtomsTotalLength += cb.atomLength
-        var result = processMetaAtom(v, cb.atomName, cb.atomLength - 8)
-        if (result.length > 0) {
-          for (var i = 0; i < result.length; i++) {
-            callback(type, cb.atomName, result[i])
-          }
-        }
-
-        // we can stop processing atoms once we get to the end of the ilst atom
-        if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
-          return done()
-        }
-
-        cb.state = 0
-        return strtok.UINT32_BE
-
-      case 3: // mdhd atom
-        // TODO: support version 1
-        var sampleRate = v.readUInt32BE(12)
-        var duration = v.readUInt32BE(16)
-        callback('format', 'duration', duration / sampleRate)
-        cb.state = 0
-        return strtok.UINT32_BE
+};
+var startState = {
+    parse: function (callback) {
+        return idState;
+    },
+    getExpectedType: function () {
+        return strtok.DONE;
     }
+};
+module.exports = FlacParser.getInstance();
 
-    // if we ever get this this point something bad has happened
-    return done(new Error('error parsing'))
-  })
-}
-
-function processMetaAtom (data, atomName, atomLength) {
-  var result = []
-  var offset = 0
-
-  // ignore proprietary iTunes atoms (for now)
-  if (atomName === '----') return result
-
-  while (offset < atomLength) {
-    var length = strtok.UINT32_BE.get(data, offset)
-    var type = TYPES[strtok.UINT32_BE.get(data, offset + 8)]
-
-    var content = processMetaDataAtom(data.slice(offset + 12, offset + length), type, atomName)
-
-    result.push(content)
-    offset += length
-  }
-
-  return result
-
-  function processMetaDataAtom (data, type, atomName) {
-    switch (type) {
-      case 'text':
-        return data.toString('utf8', 4)
-
-      case 'uint8':
-        if (atomName === 'gnre') {
-          var genreInt = strtok.UINT8.get(data, 5)
-          return common.GENRES[genreInt - 1]
+},{"./common":3,"./vorbis":14,"strtok2":50}],5:[function(require,module,exports){
+'use strict';
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var mpeg_1 = require('./mpeg');
+var Id3v1Parser = (function () {
+    function Id3v1Parser() {
+        this.type = 'id3v1.1';
+    }
+    Id3v1Parser.getInstance = function () {
+        return new Id3v1Parser();
+    };
+    Id3v1Parser.parseTag = function (buf, offset, end, type, tag, callback) {
+        var value = buf.toString('ascii', offset, end);
+        value = value.trim().replace(/\x00/g, '');
+        if (value.length > 0) {
+            callback(type, tag, value);
         }
-        if (atomName === 'trkn' || atomName === 'disk') {
-          return data[7] + '/' + data[9]
+    };
+    Id3v1Parser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+        var _this = this;
+        var mp3Done = false;
+        var id3Done = false;
+        stream.on('data', function (data) {
+            _this.endData = data;
+        });
+        this.mpegParser = new mpeg_1.MpegParser(128);
+        this.mpegParser.parse(stream, callback, function (err) {
+            mp3Done = true;
+            if (id3Done) {
+                return done(err);
+            }
+            else
+                return strtok.DONE;
+        }, readDuration, fileSize);
+    };
+    Id3v1Parser.prototype.end = function (callback, done) {
+        var offset = this.endData.length - 128;
+        var header = this.endData.toString('ascii', offset, offset += 3);
+        if (header !== 'TAG') {
+            return done(new Error('Could not find metadata header'));
         }
+        callback('format', 'headerType', this.type);
+        Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'title', callback);
+        Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'artist', callback);
+        Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'album', callback);
+        Id3v1Parser.parseTag(this.endData, offset, offset += 4, this.type, 'year', callback);
+        Id3v1Parser.parseTag(this.endData, offset, offset += 28, this.type, 'comment', callback);
+        var track = this.endData[this.endData.length - 2];
+        callback(this.type, 'track', track);
+        if (this.endData[this.endData.length - 1] in common_1.default.GENRES) {
+            var genre = common_1.default.GENRES[this.endData[this.endData.length - 1]];
+            callback(this.type, 'genre', genre);
+        }
+        if (this.mpegParser) {
+            this.mpegParser.end(callback, done);
+        }
+    };
+    return Id3v1Parser;
+}());
+module.exports = Id3v1Parser.getInstance();
 
-        return strtok.UINT8.get(data, 4)
-
-      case 'jpeg':
-      case 'png':
+},{"./common":3,"./mpeg":11,"strtok2":50}],6:[function(require,module,exports){
+"use strict";
+var strtok = require('strtok2');
+var util_1 = require('util');
+var common_1 = require('./common');
+var id3v2_frames_1 = require('./id3v2_frames');
+var mpeg_1 = require('./mpeg');
+var State;
+(function (State) {
+    State[State["header"] = 0] = "header";
+    State[State["extendedHeader"] = 1] = "extendedHeader";
+    State[State["extendedHeaderData"] = 2] = "extendedHeaderData";
+    State[State["id3_data"] = 3] = "id3_data";
+    State[State["MP3"] = 4] = "MP3";
+})(State || (State = {}));
+var ID3v2 = (function () {
+    function ID3v2() {
+    }
+    /**
+     * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.
+     * 4 * %0xxxxxxx
+     */
+    ID3v2.UINT32SYNCSAFE = {
+        get: function (buf, off) {
+            return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
+                ((buf[off + 1]) << 14) | ((buf[off]) << 21);
+        },
+        len: 4
+    };
+    /**
+     * ID3v2 header
+     * Ref: http://id3.org/id3v2.3.0#ID3v2_header
+     * ToDo
+     */
+    ID3v2.Header = {
+        len: 10,
+        get: function (buf, off) {
+            return {
+                // ID3v2/file identifier   "ID3"
+                fileIdentifier: new strtok.StringType(3, 'ascii').get(buf, off),
+                // ID3v2 versionIndex
+                version: {
+                    major: strtok.INT8.get(buf, off + 3),
+                    revision: strtok.INT8.get(buf, off + 4)
+                },
+                // ID3v2 flags
+                flags: {
+                    // Raw flags value
+                    raw: strtok.INT8.get(buf, off + 4),
+                    // Unsynchronisation
+                    unsynchronisation: common_1.default.strtokBITSET.get(buf, off + 5, 7),
+                    // Extended header
+                    isExtendedHeader: common_1.default.strtokBITSET.get(buf, off + 5, 6),
+                    // Experimental indicator
+                    expIndicator: common_1.default.strtokBITSET.get(buf, off + 5, 5),
+                    footer: common_1.default.strtokBITSET.get(buf, off + 5, 4)
+                },
+                size: ID3v2.UINT32SYNCSAFE.get(buf, off + 6)
+            };
+        }
+    };
+    ID3v2.ExtendedHeader = {
+        len: 10,
+        get: function (buf, off) {
+            return {
+                // Extended header size
+                size: strtok.UINT32_BE.get(buf, off),
+                // Extended Flags
+                extendedFlags: strtok.UINT16_BE.get(buf, off + 4),
+                // Size of padding
+                sizeOfPadding: strtok.UINT32_BE.get(buf, off + 6),
+                // CRC data present
+                crcDataPresent: common_1.default.strtokBITSET.get(buf, off + 4, 31)
+            };
+        }
+    };
+    return ID3v2;
+}());
+var Id3v2Parser = (function () {
+    function Id3v2Parser() {
+        this.state = State.header;
+    }
+    Id3v2Parser.getInstance = function () {
+        return new Id3v2Parser();
+    };
+    Id3v2Parser.readFrameHeader = function (v, majorVer) {
+        var header;
+        switch (majorVer) {
+            case 2:
+                header = {
+                    id: v.toString('ascii', 0, 3),
+                    length: common_1.default.strtokUINT24_BE.get(v, 3)
+                };
+                break;
+            case 3:
+                header = {
+                    id: v.toString('ascii', 0, 4),
+                    length: strtok.UINT32_BE.get(v, 4),
+                    flags: Id3v2Parser.readFrameFlags(v.slice(8, 10))
+                };
+                break;
+            case 4:
+                header = {
+                    id: v.toString('ascii', 0, 4),
+                    length: ID3v2.UINT32SYNCSAFE.get(v, 4),
+                    flags: Id3v2Parser.readFrameFlags(v.slice(8, 10))
+                };
+                break;
+            default:
+                throw new Error('Unexpected majorVer: ' + majorVer);
+        }
+        return header;
+    };
+    Id3v2Parser.getFrameHeaderLength = function (majorVer, done) {
+        switch (majorVer) {
+            case 2:
+                return 6;
+            case 3:
+            case 4:
+                return 10;
+            default:
+                return done(new Error('header versionIndex is incorrect'));
+        }
+    };
+    Id3v2Parser.readFrameFlags = function (b) {
         return {
-          format: 'image/' + type,
-          data: new Buffer(data.slice(4))
+            status: {
+                tag_alter_preservation: common_1.default.strtokBITSET.get(b, 0, 6),
+                file_alter_preservation: common_1.default.strtokBITSET.get(b, 0, 5),
+                read_only: common_1.default.strtokBITSET.get(b, 0, 4)
+            },
+            format: {
+                grouping_identity: common_1.default.strtokBITSET.get(b, 1, 7),
+                compression: common_1.default.strtokBITSET.get(b, 1, 3),
+                encryption: common_1.default.strtokBITSET.get(b, 1, 2),
+                unsynchronisation: common_1.default.strtokBITSET.get(b, 1, 1),
+                data_length_indicator: common_1.default.strtokBITSET.get(b, 1, 0)
+            }
+        };
+    };
+    Id3v2Parser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+        var _this = this;
+        var self = this;
+        var id3Header;
+        var extendedHeader;
+        var headerType;
+        strtok.parse(stream, function (v, cb) {
+            if (v === undefined) {
+                self.state = State.header;
+                return ID3v2.Header;
+            }
+            switch (self.state) {
+                case State.header:
+                    id3Header = v;
+                    if (id3Header.fileIdentifier !== 'ID3') {
+                        return done(new Error('expected file identifier \'ID3\' not found'));
+                    }
+                    headerType = ('id3v2.' + id3Header.version.major);
+                    if (id3Header.flags.isExtendedHeader) {
+                        self.state = State.extendedHeader;
+                        return ID3v2.ExtendedHeader;
+                    }
+                    else {
+                        self.state = State.id3_data;
+                        return new strtok.BufferType(id3Header.size);
+                    }
+                case State.extendedHeader:
+                    extendedHeader = v;
+                    var dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
+                    if (dataRemaining > 0) {
+                        self.state = State.extendedHeaderData;
+                        return new strtok.BufferType(dataRemaining);
+                    }
+                    else {
+                        self.state = State.id3_data;
+                        return new strtok.BufferType(id3Header.size - extendedHeader.size);
+                    }
+                case State.extendedHeaderData:
+                    self.state = State.id3_data;
+                    return new strtok.BufferType(id3Header.size - extendedHeader.size);
+                case State.id3_data:
+                    for (var _i = 0, _a = _this.parseMetadata(v, id3Header, done); _i < _a.length; _i++) {
+                        var tag = _a[_i];
+                        if (tag.id === 'TXXX') {
+                            for (var _b = 0, _c = tag.value.text; _b < _c.length; _b++) {
+                                var text = _c[_b];
+                                callback(headerType, tag.id + ':' + tag.value.description, text);
+                            }
+                        }
+                        else if (util_1.isArray(tag.value)) {
+                            for (var _d = 0, _e = tag.value; _d < _e.length; _d++) {
+                                var value = _e[_d];
+                                callback(headerType, tag.id, value);
+                            }
+                        }
+                        else {
+                            callback(headerType, tag.id, tag.value);
+                        }
+                    }
+                    callback('format', 'headerType', headerType);
+                    _this.mpegParser = new mpeg_1.MpegParser(id3Header.size);
+                    _this.mpegParser.parse(stream, callback, done, readDuration, fileSize);
+                    return strtok.DONE;
+                default:
+                    done(new Error('Undefined state: ' + self.state));
+            }
+        });
+    };
+    Id3v2Parser.prototype.end = function (callback, done) {
+        this.mpegParser.end(callback, done);
+    };
+    Id3v2Parser.prototype.parseMetadata = function (data, header, done) {
+        var offset = 0;
+        var tags = [];
+        while (true) {
+            if (offset === data.length)
+                break;
+            var frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(header.version.major, done));
+            var frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, header.version.major);
+            // Last frame. Check first char is a letter, bit of defensive programming
+            if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
+                'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
+                // ToDo: generate warning
+                break;
+            }
+            var frameDataBytes = data.slice(offset, offset += frameHeader.length);
+            var values = this.readFrameData(frameDataBytes, frameHeader, header.version.major);
+            tags.push({ id: frameHeader.id, value: values });
         }
+        return tags;
+    };
+    Id3v2Parser.prototype.readFrameData = function (v, frameHeader, majorVer) {
+        switch (majorVer) {
+            case 2:
+                return id3v2_frames_1.default.readData(v, frameHeader.id, null, majorVer);
+            case 3:
+            case 4:
+                if (frameHeader.flags.format.unsynchronisation) {
+                    v = common_1.default.removeUnsyncBytes(v);
+                }
+                if (frameHeader.flags.format.data_length_indicator) {
+                    v = v.slice(4, v.length);
+                }
+                return id3v2_frames_1.default.readData(v, frameHeader.id, frameHeader.flags, majorVer);
+            default:
+                throw new Error('Unexpected majorVer: ' + majorVer);
+        }
+    };
+    return Id3v2Parser;
+}());
+module.exports = Id3v2Parser.getInstance();
+
+},{"./common":3,"./id3v2_frames":7,"./mpeg":11,"strtok2":50,"util":56}],7:[function(require,module,exports){
+(function (Buffer){
+"use strict";
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var vorbis_1 = require('./vorbis');
+var FrameParser = (function () {
+    function FrameParser() {
     }
-  }
-}
-
-var TYPES = {
-  '0': 'uint8',
-  '1': 'text',
-  '13': 'jpeg',
-  '14': 'png',
-  '21': 'uint8'
-}
-
-var CONTAINER_ATOMS = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia']
+    FrameParser.readData = function (b, type, flags, major) {
+        var encoding = FrameParser.getTextEncoding(b[0]);
+        var length = b.length;
+        var offset = 0;
+        var output = []; // ToDo
+        var nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
+        var fzero;
+        var out = {};
+        switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
+            case 'T*': // 4.2.1. Text information frames - details
+            case 'IPLS':
+                var text = common_1.default.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
+                // id3v2.4 defines that multiple T* values are separated by 0x00
+                // id3v2.3 defines that multiple T* values are separated by /
+                switch (type) {
+                    case 'TMCL': // Musician credits list
+                    case 'TIPL': // Involved people list
+                    case 'IPLS':
+                        output = FrameParser.splitValue(4, text);
+                        output = FrameParser.functionList(output);
+                        break;
+                    case 'TRK':
+                    case 'TRCK':
+                    case 'TPOS':
+                        output = text;
+                        break;
+                    default:
+                        output = FrameParser.splitValue(major, text);
+                }
+                break;
+            case 'TXXX':
+                output = FrameParser.readIdentifierAndData(b, offset + 1, length, encoding);
+                output = {
+                    description: output.id,
+                    text: FrameParser.splitValue(major, common_1.default.decodeString(output.data, encoding).replace(/\x00+$/, ''))
+                };
+                break;
+            case 'PIC':
+            case 'APIC':
+                var pic = {};
+                offset += 1;
+                switch (major) {
+                    case 2:
+                        pic.format = common_1.default.decodeString(b.slice(offset, offset + 3), encoding);
+                        offset += 3;
+                        break;
+                    case 3:
+                    case 4:
+                        var enc = 'iso-8859-1';
+                        fzero = common_1.default.findZero(b, offset, length, enc);
+                        pic.format = common_1.default.decodeString(b.slice(offset, fzero), enc);
+                        offset = fzero + 1;
+                        break;
+                    default:
+                        throw new Error('Warning: unexpected major versionIndex: ' + major);
+                }
+                pic.type = vorbis_1.default.getPictureType(b[offset]);
+                offset += 1;
+                fzero = common_1.default.findZero(b, offset, length, encoding);
+                pic.description = common_1.default.decodeString(b.slice(offset, fzero), encoding);
+                offset = fzero + nullTerminatorLength;
+                pic.data = new Buffer(b.slice(offset, length));
+                output = pic;
+                break;
+            case 'CNT':
+            case 'PCNT':
+                output = strtok.UINT32_BE.get(b, 0);
+                break;
+            case 'SYLT':
+                // skip text encoding (1 byte),
+                //      language (3 bytes),
+                //      time stamp format (1 byte),
+                //      content headerType (1 byte),
+                //      content descriptor (1 byte)
+                offset += 7;
+                output = [];
+                while (offset < length) {
+                    var txt = b.slice(offset, offset = common_1.default.findZero(b, offset, length, encoding));
+                    offset += 5; // push offset forward one +  4 byte timestamp
+                    output.push(common_1.default.decodeString(txt, encoding));
+                }
+                break;
+            case 'ULT':
+            case 'USLT':
+            case 'COM':
+            case 'COMM':
+                offset += 1;
+                out.language = common_1.default.decodeString(b.slice(offset, offset + 3), 'iso-8859-1');
+                offset += 3;
+                fzero = common_1.default.findZero(b, offset, length, encoding);
+                out.description = common_1.default.decodeString(b.slice(offset, fzero), encoding);
+                offset = fzero + nullTerminatorLength;
+                out.text = common_1.default.decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '');
+                output = [out];
+                break;
+            case 'UFID':
+                output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1');
+                output = { owner_identifier: output.id, identifier: output.data };
+                break;
+            case 'PRIV':
+                output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1');
+                output = { owner_identifier: output.id, data: output.data };
+                break;
+            default:
+                // ToDO? console.log('Warning: unsupported id3v2-tag-type: ' + type)
+                break;
+        }
+        return output;
+    };
+    /**
+     * Converts TMCL (Musician credits list) or TIPL (Involved people list)
+     * @param entries
+     */
+    FrameParser.functionList = function (entries) {
+        var res = {};
+        for (var i = 0; i < entries.length; i += 2) {
+            var names = entries[i + 1].split(',');
+            res[entries[i]] = res.hasOwnProperty(entries[i]) ? res[entries[i]].concat(names) : names;
+        }
+        return res;
+    };
+    FrameParser.splitValue = function (major, text) {
+        var values = text.split(major >= 4 ? /\x00/g : /\//g);
+        return FrameParser.trimArray(values);
+    };
+    FrameParser.trimArray = function (values) {
+        for (var i = 0; i < values.length; ++i) {
+            values[i] = values[i].replace(/\x00+$/, '').trim();
+        }
+        return values;
+    };
+    FrameParser.readIdentifierAndData = function (b, offset, length, encoding) {
+        var fzero = common_1.default.findZero(b, offset, length, encoding);
+        var id = common_1.default.decodeString(b.slice(offset, fzero), encoding);
+        offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+        return { id: id, data: b.slice(offset, length) };
+    };
+    FrameParser.getTextEncoding = function (byte) {
+        switch (byte) {
+            case 0x00:
+                return 'iso-8859-1'; // binary
+            case 0x01:
+            case 0x02:
+                return 'utf16'; // 01 = with bom, 02 = without bom
+            case 0x03:
+                return 'utf8';
+            default:
+                return 'utf8';
+        }
+    };
+    FrameParser.getNullTerminatorLength = function (enc) {
+        switch (enc) {
+            case 'utf16':
+                return 2;
+            default:
+                return 1;
+        }
+    };
+    return FrameParser;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = FrameParser;
+// exports.readData = function readData (b, type, flags, major) {
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":19,"strtok2":48}],9:[function(require,module,exports){
+},{"./common":3,"./vorbis":14,"buffer":21,"strtok2":50}],8:[function(require,module,exports){
+(function (Buffer){
+"use strict";
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var State;
+(function (State) {
+    State[State["skip"] = -1] = "skip";
+    State[State["atomLength"] = 0] = "atomLength";
+    State[State["atomName"] = 1] = "atomName";
+    State[State["ilstAtom"] = 2] = "ilstAtom";
+    State[State["mdhdAtom"] = 3] = "mdhdAtom";
+})(State || (State = {}));
+var Id4Parser = (function () {
+    function Id4Parser() {
+    }
+    Id4Parser.getInstance = function () {
+        return new Id4Parser();
+    };
+    Id4Parser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+        var _this = this;
+        strtok.parse(stream, function (v, cb) {
+            // the very first thing we expect to see is the first atom's length
+            if (!v) {
+                cb.metaAtomsTotalLength = 0;
+                cb.state = 0;
+                return strtok.UINT32_BE;
+            }
+            switch (cb.state) {
+                case State.skip:
+                    cb.state = State.atomLength;
+                    return strtok.UINT32_BE;
+                case State.atomLength:
+                    cb.atomLength = v;
+                    cb.state++;
+                    return new strtok.BufferType(4);
+                case State.atomName:
+                    v = v.toString('binary');
+                    cb.atomName = v;
+                    // meta has 4 bytes padding at the start (skip)
+                    if (v === 'meta') {
+                        cb.state = State.skip;
+                        return new strtok.IgnoreType(4);
+                    }
+                    if (readDuration) {
+                        if (v === 'mdhd') {
+                            cb.state = State.mdhdAtom;
+                            return new strtok.BufferType(cb.atomLength - 8);
+                        }
+                    }
+                    if (!~Id4Parser.ContainerAtoms.indexOf(v)) {
+                        if (cb.atomContainer === 'ilst') {
+                            cb.state = State.ilstAtom;
+                            return new strtok.BufferType(cb.atomLength - 8);
+                        }
+                        cb.state = State.skip;
+                        return new strtok.IgnoreType(cb.atomLength - 8);
+                    }
+                    // dig into container atoms
+                    cb.atomContainer = v;
+                    cb.atomContainerLength = cb.atomLength;
+                    cb.state--;
+                    return strtok.UINT32_BE;
+                case State.ilstAtom:
+                    cb.metaAtomsTotalLength += cb.atomLength;
+                    var results = _this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
+                    if (results.length > 0) {
+                        for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
+                            var result = results_1[_i];
+                            callback(Id4Parser.type, cb.atomName, result);
+                        }
+                    }
+                    // we can stop processing atoms once we get to the end of the ilst atom
+                    if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
+                        return done();
+                    }
+                    cb.state = State.atomLength;
+                    return strtok.UINT32_BE;
+                case State.mdhdAtom:
+                    // TODO: support version 1
+                    var sampleRate = v.readUInt32BE(12);
+                    var duration = v.readUInt32BE(16);
+                    callback('format', 'duration', duration / sampleRate);
+                    callback('format', 'sampleRate', sampleRate); // ToDo: add to test
+                    cb.state = State.atomLength;
+                    return strtok.UINT32_BE;
+                default:
+                    return done(new Error('illegal state:' + cb.state));
+            }
+        });
+    };
+    Id4Parser.prototype.processMetaAtom = function (data, atomName, atomLength) {
+        var result = [];
+        var offset = 0;
+        // ignore proprietary iTunes atoms (for now)
+        if (atomName === '----')
+            return result;
+        while (offset < atomLength) {
+            var length_1 = strtok.UINT32_BE.get(data, offset);
+            var contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)];
+            var content = this.processMetaDataAtom(data.slice(offset + 12, offset + length_1), contType, atomName);
+            result.push(content);
+            offset += length_1;
+        }
+        return result;
+    };
+    Id4Parser.prototype.processMetaDataAtom = function (data, type, atomName) {
+        switch (type) {
+            case 'text':
+                return data.toString('utf8', 4);
+            case 'uint8':
+                if (atomName === 'gnre') {
+                    var genreInt = strtok.UINT8.get(data, 5);
+                    return common_1.default.GENRES[genreInt - 1];
+                }
+                if (atomName === 'trkn' || atomName === 'disk') {
+                    return data[7] + '/' + data[9];
+                }
+                return strtok.UINT8.get(data, 4);
+            case 'jpeg':
+            case 'png':
+                return {
+                    format: 'image/' + type,
+                    data: new Buffer(data.slice(4))
+                };
+            default:
+                throw new Error('Unexpected type: ' + type);
+        }
+    };
+    Id4Parser.type = 'm4a';
+    Id4Parser.Types = {
+        0: 'uint8',
+        1: 'text',
+        13: 'jpeg',
+        14: 'png',
+        21: 'uint8'
+    };
+    Id4Parser.ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
+    return Id4Parser;
+}());
+module.exports = Id4Parser.getInstance();
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"buffer":21,"strtok2":50}],9:[function(require,module,exports){
 (function (process,Buffer){
 /* jshint maxlen: 300 */
-'use strict'
-var events = require('events')
-var common = require('./common')
-var strtok = require('strtok2')
-var through = require('through')
-var fs = require('fs')
-var tagmap = require('./tagmap')
-
+'use strict';
+var events = require('events');
+var fs = require('fs');
+var strtok = require('strtok2');
+var through = require('through');
+var common_1 = require('./common');
+var tagmap_1 = require('./tagmap');
+var MusicMetadataParser = (function () {
+    function MusicMetadataParser() {
+        this.tagMap = new tagmap_1.default();
+    }
+    MusicMetadataParser.getInstance = function () {
+        return new MusicMetadataParser();
+    };
+    MusicMetadataParser.toIntOrNull = function (str) {
+        var cleaned = parseInt(str, 10);
+        return isNaN(cleaned) ? null : cleaned;
+    };
+    /**
+     * @param stream
+     * @param opts
+     *   .filesize=true  Return filesize
+     *   .native=true    Will return original header in result
+     * @param callback
+     * @returns {EventEmitter}
+     */
+    MusicMetadataParser.prototype.parse = function (stream, opts, callback) {
+        if (typeof opts === 'function') {
+            callback = opts;
+            opts = {};
+        }
+        var emitter = new events.EventEmitter();
+        var fsize = function (cb) {
+            if (opts.fileSize) {
+                process.nextTick(function () {
+                    cb(opts.fileSize);
+                });
+            }
+            else if (stream.path) {
+                fs.stat(stream.path, function (err, stats) {
+                    if (err)
+                        throw err;
+                    cb(stats.size);
+                });
+            }
+            else if (stream.fileSize) {
+                stream.fileSize(cb);
+            }
+            else if (opts.duration) {
+                emitter.emit('done', new Error('for non file streams, specify the size of the stream with a fileSize option'));
+            }
+        };
+        // pipe to an internal stream so we aren't messing
+        // with the stream passed to us by our users
+        var istream = stream.pipe(through(null, null, { autoDestroy: false }));
+        /**
+         * Default present metadata properties
+         */
+        var metadata = {
+            common: {
+                artists: [],
+                track: { no: null, of: null },
+                disk: { no: null, of: null }
+            },
+            format: {
+                duration: null
+            }
+        };
+        var isDone = false;
+        var hasReadData = false;
+        var streamParser;
+        var self = this;
+        function tagCallback(headerType, tag, value) {
+            if (value === null)
+                return;
+            if (headerType === 'format') {
+                metadata.format[tag] = value;
+            }
+            else {
+                self.setCommonTags(metadata.common, headerType, tag, value);
+            }
+            // Send native event, unless it's native name is the same as a common name
+            if (!tagmap_1.default.isCommonTag(tag)) {
+                emitter.emit(tag, value);
+            }
+            if (opts.native) {
+                if (!metadata.hasOwnProperty(headerType)) {
+                    metadata[headerType] = {}; // Register new native header headerType
+                }
+                if (self.tagMap.isNativeSingleton(headerType, tag)) {
+                    metadata[headerType][tag] = value;
+                }
+                else {
+                    (metadata[headerType][tag] = metadata[headerType][tag] ? metadata[headerType][tag] : []).push(value);
+                }
+            }
+        }
+        istream.once('data', function (result) {
+            hasReadData = true;
+            streamParser = common_1.default.getParserForMediaType(MusicMetadataParser.headerTypes, result);
+            streamParser.parse(istream, function (headerType, tag, value) {
+                tagCallback(headerType, tag, value);
+            }, done, opts.duration, fsize);
+            // re-emitting the first data chunk so the
+            // parser picks the stream up from the start
+            istream.emit('data', result);
+        });
+        istream.once('end', function () {
+            if (!hasReadData) {
+                done(new Error('Could not read any data from this stream'));
+            }
+            else {
+                if (!isDone) {
+                    isDone = true;
+                    // Ensure the parsers 'end' handlers is executed first
+                    if (streamParser && streamParser.end) {
+                        streamParser.end(tagCallback, done);
+                    }
+                    else
+                        done();
+                }
+            }
+        });
+        istream.on('close', onClose);
+        function onClose() {
+            done(new Error('Unexpected end of stream'));
+        }
+        function done(exception) {
+            isDone = true;
+            istream.removeListener('close', onClose);
+            /**
+             * If MusicBrainz defined artists, the artist may be a single combined field,
+             * otherwise artist may contain multiple artists.
+             */
+            if (metadata.common.artists && metadata.common.artists.length > 0) {
+                metadata.common.artist = metadata.common.artist[0];
+            }
+            else {
+                if (metadata.common.artist) {
+                    metadata.common.artists = metadata.common.artist;
+                    if (metadata.common.artist.length > 1) {
+                        delete metadata.common.artist;
+                    }
+                    else {
+                        metadata.common.artist = metadata.common.artist[0];
+                    }
+                }
+            }
+            if (!exception) {
+                // We only emit aliased events once the 'done' event has been raised,
+                // this is because an alias like 'artist' could have values split
+                // over many data chunks.
+                for (var _alias in metadata.common) {
+                    if (metadata.common.hasOwnProperty(_alias)) {
+                        emitter.emit(_alias, metadata.common[_alias]);
+                    }
+                }
+            }
+            if (callback) {
+                callback(exception, metadata);
+            }
+            return strtok.DONE;
+        }
+        return emitter;
+    };
+    /**
+     * Process and set common tags
+     * @param comTags Target metadata to wrote common tags to
+     * @param type    Native headerType e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+     * @param tag     Native tag
+     * @param value   Native tag value
+     */
+    MusicMetadataParser.prototype.setCommonTags = function (comTags, type, tag, value) {
+        switch (type) {
+            /*
+             case 'vorbis':
+             switch (tag) {
+      
+             case 'TRACKTOTAL':
+             case 'TOTALTRACKS': // rare tag
+             comTags.track.of = MusicMetadataParser.toIntOrNull(value)
+             return
+      
+             case 'DISCTOTAL':
+             case 'TOTALDISCS': // rare tag
+             comTags.disk.of = MusicMetadataParser.toIntOrNull(value)
+             return
+             default:
+             }
+             break
+             */
+            case 'id3v2.3':
+            case 'id3v2.4':
+                switch (tag) {
+                    /*
+                     case 'TXXX':
+                     tag += ':' + value.description
+                     value = value.text
+                     break*/
+                    case 'UFID':
+                        if (value.owner_identifier === 'http://musicbrainz.org') {
+                            tag += ':' + value.owner_identifier;
+                            value = common_1.default.decodeString(value.identifier, 'iso-8859-1');
+                        }
+                        break;
+                    case 'PRIV':
+                        switch (value.owner_identifier) {
+                            // decode Windows Media Player
+                            case 'AverageLevel':
+                            case 'PeakValue':
+                                tag += ':' + value.owner_identifier;
+                                value = common_1.default.strtokUINT32_LE.get(value.data, 0);
+                                break;
+                            default:
+                        }
+                        break;
+                    default:
+                }
+                break;
+            default:
+        }
+        // Convert native tag event to common (aliased) event
+        var alias = this.tagMap.getCommonName(type, tag);
+        if (alias) {
+            // Common tag (alias) found
+            // check if we need to do something special with common tag
+            // if the event has been aliased then we need to clean it before
+            // it is emitted to the user. e.g. genre (20) -> Electronic
+            switch (alias) {
+                case 'genre':
+                    value = common_1.default.parseGenre(value);
+                    break;
+                case 'picture':
+                    value = this.cleanupPicture(value);
+                    break;
+                case 'totaltracks':
+                    comTags.track.of = MusicMetadataParser.toIntOrNull(value);
+                    return;
+                case 'totaldiscs':
+                    comTags.disk.of = MusicMetadataParser.toIntOrNull(value);
+                    return;
+                case 'track':
+                case 'disk':
+                    var of = comTags[alias].of; // store of value, maybe maybe overwritten
+                    comTags[alias] = this.cleanupTrack(value);
+                    comTags[alias].of = of != null ? of : comTags[alias].of;
+                    return;
+                case 'year':
+                case 'originalyear':
+                    value = parseInt(value, 10);
+                    break;
+                case 'date':
+                    // ToDo: be more strict on 'YYYY...'
+                    // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
+                    comTags.year = parseInt(value.substr(0, 4), 10);
+                    break;
+                default:
+            }
+            if (alias !== 'artist' && tagmap_1.default.isSingleton(alias)) {
+                comTags[alias] = value;
+            }
+            else {
+                if (comTags.hasOwnProperty(alias)) {
+                    comTags[alias].push(value);
+                }
+                else {
+                    // if we haven't previously seen this tag then
+                    // initialize it to an array, ready for values to be entered
+                    comTags[alias] = [value];
+                }
+            }
+        }
+    };
+    // TODO: a string of 1of1 would fail to be converted
+    // converts 1/10 to no : 1, of : 10
+    // or 1 to no : 1, of : 0
+    MusicMetadataParser.prototype.cleanupTrack = function (origVal) {
+        var split = origVal.toString().split('/');
+        return {
+            no: parseInt(split[0], 10) || null,
+            of: parseInt(split[1], 10) || null
+        };
+    };
+    MusicMetadataParser.prototype.cleanupPicture = function (picture) {
+        var newFormat;
+        if (picture.format) {
+            var split = picture.format.toLowerCase().split('/');
+            newFormat = (split.length > 1) ? split[1] : split[0];
+            if (newFormat === 'jpeg')
+                newFormat = 'jpg';
+        }
+        else {
+            newFormat = 'jpg';
+        }
+        return { format: newFormat, data: picture.data };
+    };
+    MusicMetadataParser.headerTypes = [
+        {
+            buf: common_1.default.asfGuidBuf,
+            tag: require('./asf')
+        },
+        {
+            buf: new Buffer('ID3'),
+            tag: require('./id3v2')
+        },
+        {
+            buf: new Buffer('ftypM4A'),
+            tag: require('./id4'),
+            offset: 4
+        },
+        {
+            buf: new Buffer('ftypmp42'),
+            tag: require('./id4'),
+            offset: 4
+        },
+        {
+            buf: new Buffer('OggS'),
+            tag: require('./ogg')
+        },
+        {
+            buf: new Buffer('fLaC'),
+            tag: require('./flac')
+        },
+        {
+            buf: new Buffer('MAC'),
+            tag: require('./monkeysaudio')
+        }
+    ];
+    return MusicMetadataParser;
+}());
 /**
+ * Parse audio stream
  * @param stream
  * @param opts
  *   .filesize=true  Return filesize
@@ -1475,1285 +1761,1464 @@ var tagmap = require('./tagmap')
  * @param callback
  * @returns {*|EventEmitter}
  */
-module.exports = function (stream, opts, callback) {
-  if (typeof opts === 'function') {
-    callback = opts
-    opts = {}
-  }
-
-  var emitter = new events.EventEmitter()
-
-  var fsize = function (cb) {
-    if (opts.fileSize) {
-      process.nextTick(function () {
-        cb(opts.fileSize)
-      })
-    } else if (stream.hasOwnProperty('path')) {
-      fs.stat(stream.path, function (err, stats) {
-        if (err) throw err
-        cb(stats.size)
-      })
-    } else if (stream.hasOwnProperty('fileSize')) {
-      stream.fileSize(cb)
-    } else if (opts.duration) {
-      emitter.emit(
-        'done',
-        new Error('for non file streams, specify the size of the stream with a fileSize option'))
-    }
-  }
-
-  // pipe to an internal stream so we aren't messing
-  // with the stream passed to us by our users
-  var istream = stream.pipe(through(null, null, { autoDestroy: false }))
-
-  /**
-   * Default present metadata properties
-   */
-  var metadata = {
-    common: {
-      title: '',
-      artist: [],
-      albumartist: [],
-      album: '',
-      year: '',
-      track: { no: 0, of: 0 },
-      genre: [],
-      disk: { no: 0, of: 0 },
-      picture: []
-    },
-    format: {
-      duration: 0
-    }
-  }
-
-  var hasReadData = false
-  istream.once('data', function (result) {
-    hasReadData = true
-    var parser = common.getParserForMediaType(headerTypes, result)
-    parser(istream, function (type, tag, value) {
-      if (value === null) return
-
-      if (type === 'format') {
-        metadata.format[tag] = value
-      } else {
-        setCommonTags(metadata.common, type, tag, value)
-      }
-
-      // Send native event, unless it's native name is the same as a common name
-      if (!tagmap.common.hasOwnProperty(tag)) {
-        emitter.emit(tag, value)
-      }
-
-      if (opts.native) {
-        if (!metadata.hasOwnProperty(type)) {
-          metadata[ type ] = {} // Register new native header type
-        }
-
-        if (tagmap.isNativeSingleton(type, tag)) {
-          metadata[type][tag] = value
-        } else {
-          if (metadata[type].hasOwnProperty(tag)) {
-            metadata[type][tag].push(value)
-          } else {
-            metadata[type][tag] = [value]
-          }
-        }
-      }
-    }, done, opts.hasOwnProperty('duration'), fsize)
-    // re-emitting the first data chunk so the
-    // parser picks the stream up from the start
-    istream.emit('data', result)
-  })
-
-  istream.on('end', function () {
-    if (!hasReadData) {
-      done(new Error('Could not read any data from this stream'))
-    }
-  })
-
-  istream.on('close', onClose)
-
-  function onClose () {
-    done(new Error('Unexpected end of stream'))
-  }
-
-  function done (exception) {
-    istream.removeListener('close', onClose)
-
-    // We only emit aliased events once the 'done' event has been raised,
-    // this is because an alias like 'artist' could have values split
-    // over many data chunks.
-    for (var _alias in metadata.common) {
-      if (metadata.common.hasOwnProperty(_alias)) {
-        emitter.emit(_alias, metadata.common[_alias])
-      }
-    }
-
-    if (callback) {
-      callback(exception, metadata)
-    }
-    return strtok.DONE
-  }
-
-  return emitter
+function parseStream(stream, opts, callback) {
+    return MusicMetadataParser.getInstance().parse(stream, opts, callback);
 }
-
-function toIntOrZero (str) {
-  var cleaned = parseInt(str, 10)
-  return isNaN(cleaned) ? 0 : cleaned
-}
-
-/**
- * Process and set common tags
- * @param comTags Target metadata to wrote common tags to
- * @param type    Native type e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
- * @param tag     Native tag
- * @param value   Native tag value
- */
-
-function setCommonTags (comTags, type, tag, value) {
-
-  switch (type) {
-    case 'vorbis':
-      switch (tag) {
-
-        case 'TRACKTOTAL':
-        case 'TOTALTRACKS': // rare tag
-          comTags.track.of = toIntOrZero(value)
-          return
-
-        case 'DISCTOTAL':
-        case 'TOTALDISCS': // rare tag
-          comTags.disk.of = toIntOrZero(value)
-          return
-      }
-      break
-
-    case 'id3v2.3':
-    case 'id3v2.4':
-      switch (tag) {
-
-        case 'TXXX':
-          tag += ':' + value.description
-          value = value.text
-          break
-
-        case 'UFID': // decode MusicBrainz Recording Id
-          if (value.owner_identifier === 'http://musicbrainz.org') {
-            tag += ':' + value.owner_identifier
-            value = common.decodeString(value.identifier, 'iso-8859-1')
-          }
-          break
-
-      }
-      break
-  }
-
-  // Convert native tag event to common (aliased) event
-  var alias = tagmap.getCommonName(type, tag)
-
-  if (alias) {
-    // Common tag (alias) found
-
-    // check if we need to do something special with common tag
-    // if the event has been aliased then we need to clean it before
-    // it is emitted to the user. e.g. genre (20) -> Electronic
-    switch (alias) {
-      case 'genre':
-        value = common.parseGenre(value)
-        break
-
-      case 'picture':
-        value = cleanupPicture(value)
-        break
-
-      case 'track':
-      case 'disk':
-        var of = comTags[alias].of // store of value, maybe maybe overwritten
-        comTags[alias] = cleanupTrack(value)
-        comTags[alias].of = Math.max(of, comTags[alias].of)
-        return
-
-      case 'date':
-        // ToDo: be more strict on 'YYYY...'
-        // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
-        comTags.year = value.substr(0, 4)
-        break
-    }
-
-    if (tagmap.isSingleton(alias)) {
-      comTags[alias] = value
-    } else {
-      if (comTags.hasOwnProperty(alias)) {
-        comTags[alias].push(value)
-      } else {
-        // if we haven't previously seen this tag then
-        // initialize it to an array, ready for values to be entered
-        comTags[alias] = [value]
-      }
-    }
-  }
-}
-
-// TODO: a string of 1of1 would fail to be converted
-// converts 1/10 to no : 1, of : 10
-// or 1 to no : 1, of : 0
-function cleanupTrack (origVal) {
-  var split = origVal.toString().split('/')
-  return {
-    no: parseInt(split[ 0 ], 10) || 0,
-    of: parseInt(split[ 1 ], 10) || 0
-  }
-}
-
-function cleanupPicture (picture) {
-  var newFormat
-  if (picture.format) {
-    var split = picture.format.toLowerCase().split('/')
-    newFormat = (split.length > 1) ? split[ 1 ] : split[ 0 ]
-    if (newFormat === 'jpeg') newFormat = 'jpg'
-  } else {
-    newFormat = 'jpg'
-  }
-  return { format: newFormat, data: picture.data }
-}
-
-var headerTypes = [
-  {
-    buf: common.asfGuidBuf,
-    tag: require('./asf')
-  },
-  {
-    buf: new Buffer('ID3'),
-    tag: require('./id3v2')
-  },
-  {
-    buf: new Buffer('ftypM4A'),
-    tag: require('./id4'),
-    offset: 4
-  },
-  {
-    buf: new Buffer('ftypmp42'),
-    tag: require('./id4'),
-    offset: 4
-  },
-  {
-    buf: new Buffer('OggS'),
-    tag: require('./ogg')
-  },
-  {
-    buf: new Buffer('fLaC'),
-    tag: require('./flac')
-  },
-  {
-    buf: new Buffer('MAC'),
-    tag: require('./monkeysaudio')
-  }
-]
+exports.parseStream = parseStream;
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":11,"./tagmap":12,"_process":33,"buffer":19,"events":25,"fs":17,"strtok2":48,"through":49}],10:[function(require,module,exports){
+},{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":12,"./tagmap":13,"_process":36,"buffer":21,"events":26,"fs":19,"strtok2":50,"through":51}],10:[function(require,module,exports){
 (function (Buffer){
-'use strict'
-var common = require('./common')
-var strtok = require('strtok2')
-var type = 'APEv2' // ToDo: version should be made dynamic, APE may also contain ID3
-
-var ape = {}
-
-/**
- * APETag version history / supported formats
- *
- *  1.0 (1000) - Original APE tag spec.  Fully supported by this code.
- *  2.0 (2000) - Refined APE tag spec (better streaming support, UTF encoding). Fully supported by this code.
- *
- *  Notes:
- *  - also supports reading of ID3v1.1 tags
- *  - all saving done in the APE Tag format using CURRENT_APE_TAG_VERSION
- *
- * APE File Format Overview: (pieces in order -- only valid for the latest version APE files)
- *
- * JUNK - any amount of "junk" before the APE_DESCRIPTOR (so people that put ID3v2 tags on the files aren't hosed)
- * APE_DESCRIPTOR - defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
- * APE_HEADER - describes all of the necessary information about the APE file
- * SEEK TABLE - the table that represents seek offsets [optional]
- * HEADER DATA - the pre-audio data from the original file [optional]
- * APE FRAMES - the actual compressed audio (broken into frames for seekability)
- * TERMINATING DATA - the post-audio data from the original file [optional]
- * TAG - describes all the properties of the file [optional]
- */
-
-module.exports = function (stream, callback, done) {
-
-  strtok.parse(stream, function (v, cb) {
-    if (v === undefined) {
-      cb.state = 'descriptor'
-      return Ape.descriptor
+'use strict';
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var DataType;
+(function (DataType) {
+    DataType[DataType["text_utf8"] = 0] = "text_utf8";
+    DataType[DataType["binary"] = 1] = "binary";
+    DataType[DataType["external_info"] = 2] = "external_info";
+    DataType[DataType["reserved"] = 3] = "reserved";
+})(DataType || (DataType = {}));
+var Structure = (function () {
+    function Structure() {
     }
-
-    switch (cb.state) {
-      case 'descriptor':
-        if (v.ID !== 'MAC ') {
-          throw new Error('Expected MAC on beginning of file') // ToDo: strip/parse JUNK
+    Structure.parseTagFlags = function (flags) {
+        return {
+            containsHeader: Structure.isBitSet(flags, 31),
+            containsFooter: Structure.isBitSet(flags, 30),
+            isHeader: Structure.isBitSet(flags, 31),
+            readOnly: Structure.isBitSet(flags, 0),
+            dataType: (flags & 6) >> 1
+        };
+    };
+    /**
+     * @param num {number}
+     * @param bit 0 is least significant bit (LSB)
+     * @return {boolean} true if bit is 1; otherwise false
+     */
+    Structure.isBitSet = function (num, bit) {
+        return (num & 1 << bit) !== 0;
+    };
+    /**
+     * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
+     */
+    Structure.DescriptorParser = {
+        len: 52,
+        get: function (buf, off) {
+            return {
+                // should equal 'MAC '
+                ID: new strtok.StringType(4, 'ascii').get(buf, off),
+                // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
+                version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
+                // the number of descriptor bytes (allows later expansion of this header)
+                descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
+                // the number of header APE_HEADER bytes
+                headerBytes: strtok.UINT32_LE.get(buf, off + 12),
+                // the number of header APE_HEADER bytes
+                seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
+                // the number of header data bytes (from original file)
+                headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
+                // the number of bytes of APE frame data
+                apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
+                // the high order number of APE frame data bytes
+                apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
+                // the terminating data of the file (not including tag data)
+                terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
+                // the MD5 hash of the file (see notes for usage... it's a littly tricky)
+                fileMD5: new strtok.BufferType(16).get(buf, off + 36)
+            };
         }
-        ape.descriptor = v
-        var lenExp = v.descriptorBytes - ape.descriptor.len
-        if (lenExp > 0) {
-          cb.state = 'descriptorExpansion'
-          return new strtok.IgnoreType(lenExp)
-        } else {
-          cb.state = 'header'
-          return Ape.header
+    };
+    /**
+     * APE_HEADER: describes all of the necessary information about the APE file
+     */
+    Structure.Header = {
+        len: 24,
+        get: function (buf, off) {
+            return {
+                // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
+                compressionLevel: strtok.UINT16_LE.get(buf, off),
+                // any format flags (for future use)
+                formatFlags: strtok.UINT16_LE.get(buf, off + 2),
+                // the number of audio blocks in one frame
+                blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
+                // the number of audio blocks in the final frame
+                finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
+                // the total number of frames
+                totalFrames: strtok.UINT32_LE.get(buf, off + 12),
+                // the bits per sample (typically 16)
+                bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
+                // the number of channels (1 or 2)
+                channel: strtok.UINT16_LE.get(buf, off + 18),
+                // the sample rate (typically 44100)
+                sampleRate: strtok.UINT32_LE.get(buf, off + 20)
+            };
         }
-        cb.state = 'descriptorExpansion'
-        return new strtok.IgnoreType(lenExp)
-
-      case 'descriptorExpansion':
-        cb.state = 'header'
-        return Ape.header
-
-      case 'header':
-        ape.header = v
-        callback('format', 'tagType', type)
-        callback('format', 'bitsPerSample', v.bitsPerSample)
-        callback('format', 'sampleRate', v.sampleRate)
-        callback('format', 'numberOfChannels', v.channel)
-        callback('format', 'duration', calculateDuration(v))
-        var forwardBytes = ape.descriptor.seekTableBytes + ape.descriptor.headerDataBytes +
-          ape.descriptor.apeFrameDataBytes + ape.descriptor.terminatingDataBytes
-        cb.state = 'skipData'
-        return new strtok.IgnoreType(forwardBytes)
-
-      case 'skipData':
-        cb.state = 'tagFooter'
-        return Ape.tagFooter
-
-      case 'tagFooter':
-        if (v.ID !== 'APETAGEX') {
-          done(new Error('Expected footer to start with APETAGEX '))
+    };
+    /**
+     * TAG: describes all the properties of the file [optional]
+     */
+    Structure.TagFooter = {
+        len: 32,
+        get: function (buf, off) {
+            return {
+                // should equal 'APETAGEX'
+                ID: new strtok.StringType(8, 'ascii').get(buf, off),
+                // equals CURRENT_APE_TAG_VERSION
+                version: strtok.UINT32_LE.get(buf, off + 8),
+                // the complete size of the tag, including this footer (excludes header)
+                size: strtok.UINT32_LE.get(buf, off + 12),
+                // the number of fields in the tag
+                fields: strtok.UINT32_LE.get(buf, off + 16),
+                // reserved for later use (must be zero)
+                reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
+            };
         }
-        ape.footer = v
-        cb.state = 'tagField'
-        return Ape.tagField(v)
-
-      case 'tagField':
-        parseTags(ape.footer, v, callback)
-        done()
-        break
-
-      default:
-        done(new Error('Illegal state: ' + cb.state))
+    };
+    Structure.TagField = function (footer) {
+        return new strtok.BufferType(footer.size - Structure.TagFooter.len);
+    };
+    return Structure;
+}());
+var ApeParser = (function () {
+    function ApeParser() {
+        this.type = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
+        this.ape = {};
     }
-    return 0
-  })
-}
-
-var Ape = {
-
-  /**
-   * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
-   */
-  descriptor: {
-    len: 52,
-
-    get: function (buf, off) {
-      return {
-        // should equal 'MAC '
-        ID: new strtok.StringType(4, 'ascii').get(buf, off),
-        // version number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-        version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
-        // the number of descriptor bytes (allows later expansion of this header)
-        descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
-        // the number of header APE_HEADER bytes
-        headerBytes: strtok.UINT32_LE.get(buf, off + 12),
-        // the number of header APE_HEADER bytes
-        seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
-        // the number of header data bytes (from original file)
-        headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
-        // the number of bytes of APE frame data
-        apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
-        // the high order number of APE frame data bytes
-        apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
-        // the terminating data of the file (not including tag data)
-        terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
-        // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new strtok.BufferType(16).get(buf, off + 36)
-      }
-    }
-  },
-
-  /**
-   * APE_HEADER: describes all of the necessary information about the APE file
-   */
-  header: {
-    len: 24,
-
-    get: function (buf, off) {
-      return {
-        // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-        compressionLevel: strtok.UINT16_LE.get(buf, off),
-        // any format flags (for future use)
-        formatFlags: strtok.UINT16_LE.get(buf, off + 2),
-        // the number of audio blocks in one frame
-        blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
-        // the number of audio blocks in the final frame
-        finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
-        // the total number of frames
-        totalFrames: strtok.UINT32_LE.get(buf, off + 12),
-        // the bits per sample (typically 16)
-        bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
-        // the number of channels (1 or 2)
-        channel: strtok.UINT16_LE.get(buf, off + 18),
-        // the sample rate (typically 44100)
-        sampleRate: strtok.UINT32_LE.get(buf, off + 20)
-      }
-    }
-  },
-
-  /**
-   * TAG: describes all the properties of the file [optional]
-   */
-  tagFooter: {
-    len: 32,
-
-    get: function (buf, off) {
-      return {
-        // should equal 'APETAGEX'
-        ID: new strtok.StringType(8, 'ascii').get(buf, off),
-        // equals CURRENT_APE_TAG_VERSION
-        version: strtok.UINT32_LE.get(buf, off + 8),
-        // the complete size of the tag, including this footer (excludes header)
-        size: strtok.UINT32_LE.get(buf, off + 12),
-        // the number of fields in the tag
-        fields: strtok.UINT32_LE.get(buf, off + 16),
-        // reserved for later use (must be zero)
-        reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
-      }
-    }
-  },
-
-  tagField: function (footer) {
-    return new strtok.BufferType(footer.size - Ape.tagFooter.len)
-  }
-}
-
-/**
- * Calculate the media file duration
- * @param ah ApeHeader
- * @return {number} duration in seconds
- */
-function calculateDuration (ah) {
-  var duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0
-  duration += ah.finalFrameBlocks
-  return duration / ah.sampleRate
-}
-
-function parseTags (footer, buffer, callback) {
-  var offset = 0
-
-  for (var i = 0; i < footer.fields; i++) {
-    var size = strtok.UINT32_LE.get(buffer, offset, offset += 4)
-    var flags = parseTagFlags(strtok.UINT32_LE.get(buffer, offset, offset += 4))
-
-    var zero = common.findZero(buffer, offset, buffer.length)
-    var key = buffer.toString('ascii', offset, zero)
-    offset = zero + 1
-
-    switch (flags.dataType) {
-      case 'text_utf8': { // utf-8 textstring
-        var value = buffer.toString('utf8', offset, offset += size)
-        var values = value.split(/\x00/g)
-
-        /*jshint loopfunc:true */
-        values.forEach(function (val) {
-          callback(type, key, val)
-        })
-      }
-        break
-      case 'binary': { // binary (probably artwork)
-        if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
-          var picData = buffer.slice(offset, offset + size)
-
-          var off = 0
-          zero = common.findZero(picData, off, picData.length)
-          var description = picData.toString('utf8', off, zero)
-          off = zero + 1
-
-          var picture = {
-            description: description,
-            data: new Buffer(picData.slice(off))
-          }
-
-          offset += size
-          callback(type, key, picture)
+    ApeParser.getInstance = function () {
+        return new ApeParser();
+    };
+    /**
+     * Calculate the media file duration
+     * @param ah ApeHeader
+     * @return {number} duration in seconds
+     */
+    ApeParser.calculateDuration = function (ah) {
+        var duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
+        duration += ah.finalFrameBlocks;
+        return duration / ah.sampleRate;
+    };
+    ApeParser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+        var _this = this;
+        strtok.parse(stream, function (v, cb) {
+            if (v === undefined) {
+                cb.state = 'descriptor';
+                return Structure.DescriptorParser;
+            }
+            switch (cb.state) {
+                case 'descriptor':
+                    if (v.ID !== 'MAC ') {
+                        throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
+                    }
+                    _this.ape.descriptor = v;
+                    var lenExp = v.descriptorBytes - Structure.DescriptorParser.len;
+                    if (lenExp > 0) {
+                        cb.state = 'descriptorExpansion';
+                        return new strtok.IgnoreType(lenExp);
+                    }
+                    else {
+                        cb.state = 'header';
+                        return Structure.Header;
+                    }
+                case 'descriptorExpansion':
+                    cb.state = 'header';
+                    return Structure.Header;
+                case 'header':
+                    _this.ape.header = v;
+                    callback('format', 'dataformat', 'ape');
+                    callback('format', 'lossless', true);
+                    callback('format', 'headerType', _this.type);
+                    callback('format', 'bitsPerSample', v.bitsPerSample);
+                    callback('format', 'sampleRate', v.sampleRate);
+                    callback('format', 'numberOfChannels', v.channel);
+                    callback('format', 'duration', ApeParser.calculateDuration(v));
+                    var forwardBytes = _this.ape.descriptor.seekTableBytes + _this.ape.descriptor.headerDataBytes +
+                        _this.ape.descriptor.apeFrameDataBytes + _this.ape.descriptor.terminatingDataBytes;
+                    cb.state = 'skipData';
+                    return new strtok.IgnoreType(forwardBytes);
+                case 'skipData':
+                    cb.state = 'tagFooter';
+                    return Structure.TagFooter;
+                case 'tagFooter':
+                    if (v.ID !== 'APETAGEX') {
+                        done(new Error('Expected footer to start with APETAGEX '));
+                    }
+                    _this.ape.footer = v;
+                    cb.state = 'tagField';
+                    return Structure.TagField(v);
+                case 'tagField':
+                    _this.parseTags(_this.ape.footer, v, callback);
+                    done();
+                    break;
+                default:
+                    done(new Error('Illegal state: ' + cb.state));
+            }
+            return 0;
+        });
+    };
+    ;
+    ApeParser.prototype.parseTags = function (footer, buffer, callback) {
+        var offset = 0;
+        for (var i = 0; i < footer.fields; i++) {
+            var size = strtok.UINT32_LE.get(buffer, offset);
+            offset += 4;
+            var flags = Structure.parseTagFlags(strtok.UINT32_LE.get(buffer, offset));
+            offset += 4;
+            var zero = common_1.default.findZero(buffer, offset, buffer.length);
+            var key = buffer.toString('ascii', offset, zero);
+            offset = zero + 1;
+            switch (flags.dataType) {
+                case DataType.text_utf8:
+                    {
+                        var value = buffer.toString('utf8', offset, offset += size);
+                        var values = value.split(/\x00/g);
+                        /*jshint loopfunc:true */
+                        for (var _i = 0, values_1 = values; _i < values_1.length; _i++) {
+                            var val = values_1[_i];
+                            callback(this.type, key, val);
+                        }
+                    }
+                    break;
+                case DataType.binary:
+                    {
+                        if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
+                            var picData = buffer.slice(offset, offset + size);
+                            var off = 0;
+                            zero = common_1.default.findZero(picData, off, picData.length);
+                            var description = picData.toString('utf8', off, zero);
+                            off = zero + 1;
+                            var picture = {
+                                description: description,
+                                data: new Buffer(picData.slice(off))
+                            };
+                            offset += size;
+                            callback(this.type, key, picture);
+                        }
+                    }
+                    break;
+                default:
+                    throw new Error('Unexpected data-type: ' + flags.dataType);
+            }
         }
-      }
-        break
-    }
-  }
-}
-
-function parseTagFlags (flags) {
-  return {
-    containsHeader: isBitSet(flags, 31),
-    containsFooter: isBitSet(flags, 30),
-    isHeader: isBitSet(flags, 31),
-    readOnly: isBitSet(flags, 0),
-    dataType: getDataType((flags & 6) >> 1)
-  }
-}
-
-function getDataType (type) {
-  var types = ['text_utf8', 'binary', 'external_info', 'reserved']
-  return types[type]
-}
-
-/**
- * @param num {number}
- * @param bit 0 is least significant bit (LSB)
- * @return {boolean} true if bit is 1; otherwise false
- */
-function isBitSet (num, bit) {
-  return (num & 1 << bit) !== 0
-}
+    };
+    return ApeParser;
+}());
+module.exports = ApeParser.getInstance();
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":19,"strtok2":48}],11:[function(require,module,exports){
+},{"./common":3,"buffer":21,"strtok2":50}],11:[function(require,module,exports){
 (function (Buffer){
-'use strict'
-var events = require('events')
-var strtok = require('strtok2')
-var common = require('./common')
-var sum = common.sum
-
-var type = 'vorbis'
-
-module.exports = function (stream, callback, done, readDuration) {
-  var innerStream = new events.EventEmitter()
-
-  var pageLength = 0
-  var formatInfo
-  var header
-  var stop = false
-
-  stream.on('end', function () {
-    callback('format', 'tagType', type)
-    callback('format', 'sampleRate', formatInfo.sampleRate)
-    callback('format', 'bitrate', formatInfo.bitrateNominal)
-    callback('format', 'numberOfChannels', formatInfo.channelMode)
-    if (readDuration) {
-      callback('format', 'duration', header.pcm_sample_pos / formatInfo.sampleRate)
-      done()
+'use strict';
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var State;
+(function (State) {
+    State[State["mpegSearchSync1"] = 1] = "mpegSearchSync1";
+    State[State["mpegSearchSync2"] = 2] = "mpegSearchSync2";
+    State[State["audio_frame_header"] = 3] = "audio_frame_header";
+    State[State["CRC"] = 4] = "CRC";
+    State[State["side_information"] = 5] = "side_information";
+    State[State["xtra_info_header"] = 6] = "xtra_info_header";
+    State[State["skip_frame_data"] = 7] = "skip_frame_data";
+})(State || (State = {}));
+/**
+ * MPEG Audio Layer I/II/III frame header
+ * Ref: https://www.mp3-tech.org/programmer/frame_header.html
+ * Bit layout: AAAAAAAA AAABBCCD EEEEFFGH IIJJKLMM
+ */
+var MpegFrameHeader = (function () {
+    function MpegFrameHeader(buf, off) {
+        // B(20,19): MPEG Audio versionIndex ID
+        this.versionIndex = common_1.default.getBitAllignedNumber(buf, off + 1, 3, 2);
+        // C(18,17): Layer description
+        this.layer = MpegFrameHeader.LayerDescription[common_1.default.getBitAllignedNumber(buf, off + 1, 5, 2)];
+        // D(16): Protection bit (if true 16-bit CRC follows header)
+        this.isProtectedByCRC = !common_1.default.isBitSet(buf, off + 1, 7);
+        // E(15,12): Bitrate index
+        this.bitrateIndex = common_1.default.getBitAllignedNumber(buf, off + 2, 0, 4);
+        // F(11,10): Sampling rate frequency index
+        this.sampRateFreqIndex = common_1.default.getBitAllignedNumber(buf, off + 2, 4, 2);
+        // G(9): Padding bit
+        this.padding = common_1.default.isBitSet(buf, off + 2, 6);
+        // H(8): Private bit
+        this.privateBit = common_1.default.isBitSet(buf, off + 2, 7);
+        // I(7,6): Channel Mode
+        this.channelModeIndex = common_1.default.getBitAllignedNumber(buf, off + 3, 0, 2);
+        // J(5,4): Mode extension (Only used in Joint stereo)
+        this.modeExtension = common_1.default.getBitAllignedNumber(buf, off + 3, 2, 2);
+        // K(3): Copyright
+        this.isCopyrighted = common_1.default.isBitSet(buf, off + 3, 4);
+        // L(2): Original
+        this.isOriginalMedia = common_1.default.isBitSet(buf, off + 3, 5);
+        // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
+        this.emphasis = common_1.default.getBitAllignedNumber(buf, off + 3, 7, 2);
+        this.version = MpegFrameHeader.VersionID[this.versionIndex];
+        this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
+        this.samplingRate = this.calcSamplingRate();
+        var bitrateInKbps = this.calcBitrate();
+        this.bitrate = bitrateInKbps == null ? null : bitrateInKbps * 1000;
+        this.samplingRate = this.calcSamplingRate();
     }
-  })
-
-  // top level parser that handles the parsing of pages
-  strtok.parse(stream, function (v, cb) {
-    if (!v) {
-      cb.state = 0
-      return new strtok.BufferType(27)
+    MpegFrameHeader.prototype.calcDuration = function (numFrames) {
+        return Math.round(numFrames * (this.calcSamplesPerFrame() / this.samplingRate));
+    };
+    MpegFrameHeader.prototype.calcSamplesPerFrame = function () {
+        if (this.layer === 1)
+            return 384;
+        if (this.layer === 2)
+            return 1152;
+        if (this.layer === 3 && this.version === 1)
+            return 1152;
+        if (this.layer === 3 && (this.version === 2 || this.version === 2.5))
+            return 576;
+    };
+    MpegFrameHeader.prototype.calculateSideInfoLength = function () {
+        if (this.layer !== 3)
+            return 2;
+        if (this.channelModeIndex === 3) {
+            // mono
+            if (this.version === 1) {
+                return 17;
+            }
+            else if (this.version === 2 || this.version === 2.5) {
+                return 9;
+            }
+        }
+        else {
+            if (this.version === 1) {
+                return 32;
+            }
+            else if (this.version === 2 || this.version === 2.5) {
+                return 17;
+            }
+        }
+    };
+    MpegFrameHeader.prototype.calcSlotSize = function () {
+        return [null, 4, 1, 1][this.layer];
+    };
+    MpegFrameHeader.prototype.calcBitrate = function () {
+        if (this.bitrateIndex === 0x00)
+            return null; // free
+        if (this.bitrateIndex === 0x0F)
+            return null; // 'reserved'
+        var mpegVersion = this.version.toString() + this.layer;
+        return MpegFrameHeader.bitrate_index[this.bitrateIndex][mpegVersion];
+    };
+    MpegFrameHeader.prototype.calcSamplingRate = function () {
+        if (this.sampRateFreqIndex === 0x03)
+            return null; // 'reserved'
+        return MpegFrameHeader.sampling_rate_freq_index[this.version][this.sampRateFreqIndex];
+    };
+    MpegFrameHeader.SyncByte1 = 0xFF;
+    MpegFrameHeader.SyncByte2 = 0xE0;
+    MpegFrameHeader.VersionID = [2.5, null, 2, 1];
+    MpegFrameHeader.LayerDescription = [null, 3, 2, 1];
+    MpegFrameHeader.ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
+    MpegFrameHeader.bitrate_index = {
+        0x01: { 11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8 },
+        0x02: { 11: 64, 12: 48, 13: 40, 21: 48, 22: 16, 23: 16 },
+        0x03: { 11: 96, 12: 56, 13: 48, 21: 56, 22: 24, 23: 24 },
+        0x04: { 11: 128, 12: 64, 13: 56, 21: 64, 22: 32, 23: 32 },
+        0x05: { 11: 160, 12: 80, 13: 64, 21: 80, 22: 40, 23: 40 },
+        0x06: { 11: 192, 12: 96, 13: 80, 21: 96, 22: 48, 23: 48 },
+        0x07: { 11: 224, 12: 112, 13: 96, 21: 112, 22: 56, 23: 56 },
+        0x08: { 11: 256, 12: 128, 13: 112, 21: 128, 22: 64, 23: 64 },
+        0x09: { 11: 288, 12: 160, 13: 128, 21: 144, 22: 80, 23: 80 },
+        0x0A: { 11: 320, 12: 192, 13: 160, 21: 160, 22: 96, 23: 96 },
+        0x0B: { 11: 352, 12: 224, 13: 192, 21: 176, 22: 112, 23: 112 },
+        0x0C: { 11: 384, 12: 256, 13: 224, 21: 192, 22: 128, 23: 128 },
+        0x0D: { 11: 416, 12: 320, 13: 256, 21: 224, 22: 144, 23: 144 },
+        0x0E: { 11: 448, 12: 384, 13: 320, 21: 256, 22: 160, 23: 160 }
+    };
+    MpegFrameHeader.sampling_rate_freq_index = {
+        1: { 0x00: 44100, 0x01: 48000, 0x02: 32000 },
+        2: { 0x00: 22050, 0x01: 24000, 0x02: 16000 },
+        2.5: { 0x00: 11025, 0x01: 12000, 0x02: 8000 }
+    };
+    return MpegFrameHeader;
+}());
+/**
+ * MPEG Audio Layer I/II/III
+ */
+var MpegAudioLayer = (function () {
+    function MpegAudioLayer() {
     }
-
-    if (stop) {
-      return done()
+    MpegAudioLayer.getVbrCodecProfile = function (vbrScale) {
+        return 'V' + (100 - vbrScale) / 10;
+    };
+    MpegAudioLayer.FrameHeader = {
+        len: 4,
+        get: function (buf, off) {
+            return new MpegFrameHeader(buf, off);
+        }
+    };
+    /**
+     * Info Tag
+     * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
+     */
+    MpegAudioLayer.InfoTag = {
+        len: 140,
+        get: function (buf, off) {
+            return {
+                // 4 bytes for Header Tag
+                headerTag: new strtok.StringType(4, 'ascii').get(buf, off),
+                // 4 bytes for HeaderFlags
+                headerFlags: new strtok.BufferType(4).get(buf, off + 4),
+                // 100 bytes for entry (NUMTOCENTRIES)
+                // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
+                // FRAME SIZE
+                // frameSize: strtok.UINT32_BE.get(buf, off + 108),
+                numFrames: strtok.UINT32_BE.get(buf, off + 8),
+                numToCentries: new strtok.BufferType(100).get(buf, off + 108),
+                // the number of header APE_HEADER bytes
+                streamSize: strtok.UINT32_BE.get(buf, off + 112),
+                // the number of header data bytes (from original file)
+                vbrScale: strtok.UINT32_BE.get(buf, off + 116),
+                /**
+                 * LAME Tag, extends the Xing header format
+                 * First added in LAME 3.12 for VBR
+                 * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
+                 */
+                //  Initial LAME info, e.g.: LAME3.99r
+                encoder: new strtok.StringType(9, 'ascii').get(buf, off + 120),
+                //  Info Tag
+                infoTag: strtok.UINT8.get(buf, off + 129) >> 4,
+                // VBR method
+                vbrMethod: strtok.UINT8.get(buf, off + 129) & 0xf
+            };
+        }
+    };
+    return MpegAudioLayer;
+}());
+var MpegParser = (function () {
+    function MpegParser(headerSize) {
+        this.frameCount = 0;
+        this.bitrates = [];
+        this.calculateVbrDuration = false;
+        this.headerSize = headerSize;
     }
-
-    switch (cb.state) {
-      case 0: // header
-        header = {
-          type: v.toString('ascii', 0, 4),
-          version: v[4],
-          packet_flag: v[5],
-          pcm_sample_pos: (v.readUInt32LE(10) << 32) + v.readUInt32LE(6),
-          stream_serial_num: strtok.UINT32_LE.get(v, 14),
-          page_number: strtok.UINT32_LE.get(v, 18),
-          check_sum: strtok.UINT32_LE.get(v, 22),
-          segments: v[26]
+    MpegParser.prototype.parse = function (stream, tagEvent, done, readDuration, fileSize) {
+        var _this = this;
+        this.stream = stream;
+        this.tagEvent = tagEvent;
+        this.done = done;
+        this.readDuration = readDuration;
+        this.fileSize = fileSize;
+        this.state = State.mpegSearchSync1;
+        strtok.parse(stream, function (v, cb) { return _this.strParse(v, cb); });
+    };
+    MpegParser.prototype.end = function (callback, done) {
+        if (this.calculateVbrDuration) {
+            this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
         }
-        if (header.type !== 'OggS') {
-          return done(new Error('expected ogg header but was not found'))
+        return done();
+    };
+    MpegParser.prototype.strParse = function (v, cb) {
+        var _this = this;
+        if (v === undefined) {
+            return strtok.UINT8;
         }
-        cb.pageNumber = header.page_number
-        cb.state++
-        return new strtok.BufferType(header.segments)
-
-      case 1: // segments
-        pageLength = sum(v)
-        cb.state++
-        return new strtok.BufferType(pageLength)
-
-      case 2: // page data
-        innerStream.emit('data', new Buffer(v))
-        cb.state = 0
-        return new strtok.BufferType(27)
-    }
-  })
-
-  // Second level parser that handles the parsing of metadata.
-  // The top level parser emits data that this parser should
-  // handle.
-  strtok.parse(innerStream, function (v, cb) {
-    if (!v) {
-      cb.commentsRead = 0
-      cb.state = 0
-      return new strtok.BufferType(7)
-    }
-
-    switch (cb.state) {
-      case 0: // type
-        if (v.toString() === '\x01vorbis') {
-          cb.state = 6
-          return new strtok.BufferType(23)
-        } else if (v.toString() === '\x03vorbis') {
-          cb.state++
-          return strtok.UINT32_LE
-        } else {
-          return done(new Error('expected vorbis header but found something else'))
+        switch (this.state) {
+            case State.mpegSearchSync1:
+                this.state = v === MpegFrameHeader.SyncByte1 ? State.mpegSearchSync2 : State.mpegSearchSync1;
+                return strtok.UINT8;
+            case State.mpegSearchSync2:
+                if ((v & 0xE0) === 0xE0) {
+                    // Synchronized
+                    this.state = State.audio_frame_header;
+                    this.frameSyncByte2 = v;
+                    return new strtok.BufferType(2);
+                }
+                else {
+                    this.state = State.mpegSearchSync1;
+                    return strtok.UINT8;
+                }
+            /* falls through */
+            case State.audio_frame_header:
+                // we have found the mm tag at the end of the file, ignore
+                /*
+                 if (v.slice(0, 3).toString() === 'TAG') {
+                 return done()
+                 }*/
+                var buf_frame_header = new Buffer(4);
+                v.copy(buf_frame_header, 2);
+                buf_frame_header[0] = MpegFrameHeader.SyncByte1;
+                buf_frame_header[1] = this.frameSyncByte2;
+                var header_1 = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
+                if (header_1.version === null || header_1.layer === null) {
+                    return this.seekFirstAudioFrame();
+                }
+                // mp3 files are only found in MPEG1/2 Layer 3
+                if ((header_1.version !== 1 && header_1.version !== 2) || header_1.layer !== 3) {
+                    return this.seekFirstAudioFrame();
+                }
+                if (header_1.bitrate == null) {
+                    return this.seekFirstAudioFrame();
+                }
+                if (header_1.samplingRate == null) {
+                    return this.seekFirstAudioFrame();
+                }
+                this.tagEvent('format', 'dataformat', 'mp3');
+                this.tagEvent('format', 'lossless', false);
+                this.tagEvent('format', 'bitrate', header_1.bitrate);
+                this.tagEvent('format', 'sampleRate', header_1.samplingRate);
+                this.tagEvent('format', 'numberOfChannels', header_1.channelMode === 'mono' ? 1 : 2);
+                var slot_size = header_1.calcSlotSize();
+                if (slot_size == null) {
+                    this.done(new Error('invalid slot_size'));
+                }
+                var samples_per_frame = header_1.calcSamplesPerFrame();
+                var bps = samples_per_frame / 8.0;
+                var fsize = (bps * header_1.bitrate / header_1.samplingRate) +
+                    ((header_1.padding) ? slot_size : 0);
+                this.frame_size = Math.floor(fsize);
+                this.audioFrameHeader = header_1;
+                this.frameCount++;
+                this.bitrates.push(header_1.bitrate);
+                // xtra header only exists in first frame
+                if (this.frameCount === 1) {
+                    this.offset = MpegAudioLayer.FrameHeader.len;
+                    return this.skipSideInformation(header_1);
+                }
+                if (this.fileSize && this.frameCount === 3) {
+                    // the stream is CBR if the first 3 frame bitrates are the same
+                    if (this.areAllSame(this.bitrates)) {
+                        this.fileSize(function (size) {
+                            // subtract non audio stream data from duration calculation
+                            size = size - _this.headerSize;
+                            var bps = (header_1.bitrate) / 8;
+                            _this.tagEvent('format', 'duration', size / bps);
+                            // cb(done())
+                            return _this.done();
+                        });
+                        return strtok.DEFER;
+                    }
+                    else if (!this.readDuration) {
+                        return this.done();
+                    }
+                }
+                // once we know the file is VBR attach listener to end of
+                // stream so we can do the duration calculation when we
+                // have counted all the frames
+                if (this.readDuration && this.frameCount === 4) {
+                    return this.calculateVbrDuration = true;
+                }
+                this.offset = 4;
+                if (header_1.isProtectedByCRC) {
+                    this.state = State.CRC;
+                    return strtok.INT16_BE;
+                }
+                else {
+                    return this.skipSideInformation(header_1);
+                }
+            case State.CRC:
+                this.offset += 2;
+                this.crc = v;
+                return this.skipSideInformation(this.audioFrameHeader);
+            case State.side_information:
+                this.offset += MpegAudioLayer.InfoTag.len; // 12
+                this.state = State.xtra_info_header;
+                return MpegAudioLayer.InfoTag;
+            case State.xtra_info_header:
+                this.state = State.skip_frame_data;
+                var frameDataLeft = this.frame_size - this.offset;
+                var codecProfile = void 0;
+                switch (v.headerTag) {
+                    case 'Info':
+                        codecProfile = 'CBR';
+                        break;
+                    case 'Xing':
+                        codecProfile = MpegAudioLayer.getVbrCodecProfile(v.vbrScale);
+                        break;
+                    case 'Xtra':
+                        // ToDo: ???
+                        break;
+                    default:
+                        return new strtok.IgnoreType(frameDataLeft);
+                }
+                this.tagEvent('format', 'encoder', v.encoder);
+                this.tagEvent('format', 'codecProfile', codecProfile);
+                // frames field is not present
+                if ((v.headerFlags[3] & 0x01) !== 1) {
+                    return new strtok.IgnoreType(frameDataLeft);
+                }
+                this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(v.numFrames));
+                return this.done();
+            case State.skip_frame_data:
+                this.state = State.mpegSearchSync1;
+                return strtok.UINT8;
+            default:
+                this.done(new Error('Undefined state: ' + this.state));
         }
-      break
-
-      case 1: // vendor length
-        cb.state++
-        return new strtok.BufferType(v)
-
-      case 2: // vendor string
-        cb.state++
-        return new strtok.BufferType(4)
-
-      case 3: // user comment list length
-        cb.commentsLength = v.readUInt32LE(0)
-        // no metadata, stop parsing
-        if (cb.commentsLength === 0) return strtok.DONE
-        cb.state++
-        return strtok.UINT32_LE
-
-      case 4: // comment length
-        cb.state++
-        return new strtok.BufferType(v)
-
-      case 5: // comment
-        cb.commentsRead++
-        v = v.toString()
-        var idx = v.indexOf('=')
-        var key = v.slice(0, idx).toUpperCase()
-        var value = v.slice(idx + 1)
-
-        if (key === 'METADATA_BLOCK_PICTURE') {
-          value = common.readVorbisPicture(new Buffer(value, 'base64'))
+    };
+    MpegParser.prototype.skipSideInformation = function (header) {
+        var sideinfo_length = header.calculateSideInfoLength();
+        this.offset += sideinfo_length;
+        this.state = State.side_information;
+        return new strtok.BufferType(sideinfo_length);
+    };
+    MpegParser.prototype.seekFirstAudioFrame = function () {
+        if (this.frameCount > 0) {
+            return this.done(new Error('expected frame header but was not found'));
         }
-
-        callback(type, key, value)
-
-        if (cb.commentsRead === cb.commentsLength) {
-          // if we don't want to read the duration
-          // then tell the parent stream to stop
-          stop = !readDuration
-          return strtok.DONE
-        }
-
-        cb.state-- // back to comment length
-        return strtok.UINT32_LE
-
-      case 6: // vorbis info
-        formatInfo = {
-          'version': v.readUInt32LE(0),
-          'channelMode': v.readUInt8(4),
-          'sampleRate': v.readUInt32LE(5),
-          'bitrateMax': v.readUInt32LE(9),
-          'bitrateNominal': v.readUInt32LE(13),
-          'bitrateMin': v.readUInt32LE(17)
-        }
-        cb.state = 0
-        return new strtok.BufferType(7)
-    }
-  })
-}
+        this.state = State.mpegSearchSync1;
+        return strtok.UINT8;
+    };
+    MpegParser.prototype.areAllSame = function (array) {
+        var first = array[0];
+        return array.every(function (element) {
+            return element === first;
+        });
+    };
+    return MpegParser;
+}());
+exports.MpegParser = MpegParser;
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":19,"events":25,"strtok2":48}],12:[function(require,module,exports){
-'use strict'
+},{"./common":3,"buffer":21,"strtok2":50}],12:[function(require,module,exports){
+(function (Buffer){
+'use strict';
+var events = require('events');
+var strtok = require('strtok2');
+var common_1 = require('./common');
+var vorbis_1 = require('./vorbis');
+var State;
+(function (State) {
+    State[State["header"] = 0] = "header";
+    State[State["segments"] = 1] = "segments";
+    State[State["pageData"] = 2] = "pageData";
+})(State || (State = {}));
+var MetaState;
+(function (MetaState) {
+    MetaState[MetaState["type"] = 0] = "type";
+    MetaState[MetaState["vendorLength"] = 1] = "vendorLength";
+    MetaState[MetaState["vendorString"] = 2] = "vendorString";
+    MetaState[MetaState["userCommentListLength"] = 3] = "userCommentListLength";
+    MetaState[MetaState["commentLength"] = 4] = "commentLength";
+    MetaState[MetaState["comment"] = 5] = "comment";
+    MetaState[MetaState["vorbisInfo"] = 6] = "vorbisInfo";
+})(MetaState || (MetaState = {}));
+var OggParser = (function () {
+    function OggParser() {
+    }
+    OggParser.getInstance = function () {
+        return new OggParser();
+    };
+    OggParser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+        var _this = this;
+        var innerStream = new events.EventEmitter();
+        var pageLength = 0;
+        var stop = false;
+        // top level parser that handles the parsing of pages
+        strtok.parse(stream, function (v, cb) {
+            if (!v) {
+                cb.state = State.header;
+                return OggParser.Header;
+            }
+            if (stop) {
+                return done();
+            }
+            switch (cb.state) {
+                case State.header:
+                    _this.header = v;
+                    if (_this.header.type !== 'OggS') {
+                        return done(new Error('expected ogg header but was not found'));
+                    }
+                    cb.pageNumber = _this.header.page_number;
+                    cb.state++;
+                    return new strtok.BufferType(_this.header.segments);
+                case State.segments:
+                    pageLength = common_1.default.sum(v);
+                    cb.state++;
+                    return new strtok.BufferType(pageLength);
+                case State.pageData:
+                    innerStream.emit('data', new Buffer(v));
+                    cb.state = State.header;
+                    return OggParser.Header;
+                default:
+                    done(new Error('Illegal state'));
+            }
+        });
+        // Second level parser that handles the parsing of metadata.
+        // The top level parser emits data that this parser should
+        // handle.
+        strtok.parse(innerStream, function (v, cb) {
+            if (!v) {
+                cb.commentsRead = 0;
+                cb.state = MetaState.type;
+                return new strtok.BufferType(7);
+            }
+            switch (cb.state) {
+                case MetaState.type:
+                    if (v.toString() === '\x01vorbis') {
+                        cb.state = MetaState.vorbisInfo;
+                        return new strtok.BufferType(23);
+                    }
+                    else if (v.toString() === '\x03vorbis') {
+                        cb.state++;
+                        return strtok.UINT32_LE;
+                    }
+                    else {
+                        return done(new Error('expected vorbis header but found something else'));
+                    }
+                case MetaState.vendorLength:
+                    cb.state++;
+                    return new strtok.BufferType(v);
+                case MetaState.vendorString:
+                    cb.state++;
+                    return new strtok.BufferType(4);
+                case MetaState.userCommentListLength:
+                    cb.commentsLength = v.readUInt32LE(0);
+                    // no metadata, stop parsing
+                    if (cb.commentsLength === 0)
+                        return strtok.DONE;
+                    cb.state++;
+                    return strtok.UINT32_LE;
+                case MetaState.commentLength:
+                    cb.state++;
+                    return new strtok.BufferType(v);
+                case MetaState.comment:
+                    cb.commentsRead++;
+                    v = v.toString();
+                    var idx = v.indexOf('=');
+                    var key = v.slice(0, idx).toUpperCase();
+                    var value = v.slice(idx + 1);
+                    if (key === 'METADATA_BLOCK_PICTURE') {
+                        value = vorbis_1.default.readPicture(new Buffer(value, 'base64'));
+                    }
+                    callback(OggParser.headerType, key, value);
+                    if (cb.commentsRead === cb.commentsLength) {
+                        // if we don't want to read the duration
+                        // then tell the parent stream to stop
+                        stop = !readDuration;
+                        return strtok.DONE;
+                    }
+                    cb.state--; // back to comment length
+                    return strtok.UINT32_LE;
+                case MetaState.vorbisInfo:
+                    _this.formatInfo = {
+                        version: v.readUInt32LE(0),
+                        channelMode: v.readUInt8(4),
+                        sampleRate: v.readUInt32LE(5),
+                        bitrateMax: v.readUInt32LE(9),
+                        bitrateNominal: v.readUInt32LE(13),
+                        bitrateMin: v.readUInt32LE(17)
+                    };
+                    callback('format', 'headerType', OggParser.headerType);
+                    callback('format', 'sampleRate', _this.formatInfo.sampleRate);
+                    callback('format', 'bitrate', _this.formatInfo.bitrateNominal);
+                    callback('format', 'numberOfChannels', _this.formatInfo.channelMode);
+                    cb.state = MetaState.type;
+                    return new strtok.BufferType(7);
+                default:
+                    done(new Error('Illegal metadata-state: ' + cb.state));
+                    return strtok.DONE;
+            }
+        });
+    };
+    OggParser.prototype.end = function (callback, done) {
+        callback('format', 'duration', this.header.pcm_sample_pos / this.formatInfo.sampleRate);
+        done();
+    };
+    OggParser.Header = {
+        len: 27,
+        get: function (buf, off) {
+            return {
+                type: new strtok.StringType(4, 'ascii').get(buf, off + 0),
+                version: buf.readUInt8(off + 4),
+                packet_flag: buf.readUInt8(off + 5),
+                pcm_sample_pos: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
+                stream_serial_num: strtok.UINT32_LE.get(buf, off + 14),
+                page_number: strtok.UINT32_LE.get(buf, off + 18),
+                check_sum: strtok.UINT32_LE.get(buf, off + 22),
+                segments: buf.readUInt8(off + 26)
+            };
+        }
+    };
+    OggParser.headerType = 'vorbis';
+    return OggParser;
+}());
+module.exports = OggParser.getInstance();
+
+}).call(this,require("buffer").Buffer)
+},{"./common":3,"./vorbis":14,"buffer":21,"events":26,"strtok2":50}],13:[function(require,module,exports){
+"use strict";
 /**
  * tagmap maps native meta tags to generic common types
  */
-module.exports = (function () {
-
-  var self = {}
-
-  self.common =
-  {
-    year: { singleton: true },
-    track: { singleton: true },
-    disk: { singleton: true },
-
-    title: { singleton: true },
-    artist: { singleton: false },
-    albumartist: { singleton: false },
-    album: { singleton: true },
-    date: { singleton: true },
-    originaldate: { singleton: true },
-    originalyear: { singleton: true },
-    comment: { singleton: false },
-    genre: { singleton: false },
-    picture: { singleton: false },
-    composer: { singleton: false },
-    lyrics: { singleton: false },
-    albumsort: { singleton: true },
-    titlesort: { singleton: true },
-    work: { singleton: true },
-    artistsort: { singleton: false },
-    albumartistsort: { singleton: false },
-    composersort: { singleton: false },
-    lyricist: { singleton: false },
-    writer: { singleton: false },
-    conductor: { singleton: false },
-    remixer: { singleton: false },
-    arranger: { singleton: false },
-    engineer: { singleton: false },
-    producer: { singleton: false },
-    djmixer: { singleton: false },
-    mixer: { singleton: false },
-    label: { singleton: true },
-    grouping: { singleton: true },
-    subtitle: { singleton: true },
-    discsubtitle: { singleton: true },
-    totaltracks: { singleton: true },
-    totaldiscs: { singleton: true },
-    compilation: { singleton: true },
-    _rating: { singleton: true },
-    bpm: { singleton: true },
-    mood: { singleton: true },
-    media: { singleton: true },
-    catalognumber: { singleton: true },
-    show: { singleton: true },
-    showsort: { singleton: true },
-    podcast: { singleton: true },
-    podcasturl: { singleton: true },
-    releasestatus: { singleton: true },
-    releasetype: { singleton: false },
-    releasecountry: { singleton: true },
-    script: { singleton: true },
-    language: { singleton: true },
-    copyright: { singleton: true },
-    license: { singleton: true },
-    encodedby: { singleton: true },
-    encodersettings: { singleton: true },
-    gapless: { singleton: true },
-    barcode: { singleton: true },
-    isrc: { singleton: true },
-    asin: { singleton: true },
-    musicbrainz_recordingid: { singleton: true },
-    musicbrainz_trackid: { singleton: true },
-    musicbrainz_albumid: { singleton: true },
-    musicbrainz_artistid: { singleton: false },
-    musicbrainz_albumartistid: { singleton: false },
-    musicbrainz_releasegroupid: { singleton: true },
-    musicbrainz_workid: { singleton: true },
-    musicbrainz_trmid: { singleton: true },
-    musicbrainz_discid: { singleton: true },
-    acoustid_id: { singleton: true },
-    acoustid_fingerprint: { singleton: true },
-    musicip_puid: { singleton: true },
-    musicip_fingerprint: { singleton: true },
-    website: { singleton: true },
-    'performer:instrument': { singleton: false }
-  }
-
-  /**
-   * Mapping from native header format to one or possibly more 'common' entries
-   * The common entries aim to read the same information from different media files
-   * independent of the underlying format
-   */
-  self.mappings = {
-    vorbis: {
-      'TITLE': 'title',
-      'ARTIST': 'artist',
-      'ALBUMARTIST': 'albumartist',
-      'ALBUM': 'album',
-      'DATE': 'date',
-      'ORIGINALDATE': 'originaldate',
-      'ORIGINALYEAR': 'originalyear',
-      'COMMENT': 'comment',
-      'TRACKNUMBER': 'track',
-      'DISCNUMBER': 'disk',
-      'GENRE': 'genre',
-      'METADATA_BLOCK_PICTURE': 'picture',
-      'COMPOSER': 'composer',
-      'LYRICS': 'lyrics',
-      'ALBUMSORT': 'albumsort',
-      'TITLESORT': 'titlesort',
-      'WORK': 'work',
-      'ARTISTSORT': 'artistsort',
-      'ALBUMARTISTSORT': 'albumartistsort',
-      'COMPOSERSORT': 'composersort',
-      'LYRICIST': 'lyricist',
-      'WRITER': 'writer',
-      'CONDUCTOR': 'conductor',
-      'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
-      'REMIXER': 'remixer',
-      'ARRANGER': 'arranger',
-      'ENGINEER': 'engineer',
-      'PRODUCER': 'producer',
-      'DJMIXER': 'djmixer',
-      'MIXER': 'mixer',
-      'LABEL': 'label',
-      'GROUPING': 'grouping',
-      'SUBTITLE': 'subtitle',
-      'DISCSUBTITLE': 'discsubtitle',
-      'TRACKTOTAL': 'totaltracks',
-      'DISCTOTAL': 'totaldiscs',
-      'COMPILATION': 'compilation',
-      'RATING:user@email': '_rating',
-      'BPM': 'bpm',
-      'MOOD': 'mood',
-      'MEDIA': 'media',
-      'CATALOGNUMBER': 'catalognumber',
-      'RELEASESTATUS': 'releasestatus',
-      'RELEASETYPE': 'releasetype',
-      'RELEASECOUNTRY': 'releasecountry',
-      'SCRIPT': 'script',
-      'LANGUAGE': 'language',
-      'COPYRIGHT': 'copyright',
-      'LICENSE': 'license',
-      'ENCODEDBY': 'encodedby',
-      'ENCODERSETTINGS': 'encodersettings',
-      'BARCODE': 'barcode',
-      'ISRC': 'isrc',
-      'ASIN': 'asin',
-      'MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',
-      'MUSICBRAINZ_RELEASETRACKID': 'musicbrainz_trackid',
-      'MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
-      'MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
-      'MUSICBRAINZ_ALBUMARTISTID': 'musicbrainz_albumartistid',
-      'MUSICBRAINZ_RELEASEGROUPID': 'musicbrainz_releasegroupid',
-      'MUSICBRAINZ_WORKID': 'musicbrainz_workid',
-      'MUSICBRAINZ_TRMID': 'musicbrainz_trmid',
-      'MUSICBRAINZ_DISCID': 'musicbrainz_discid',
-      'ACOUSTID_ID': 'acoustid_id',
-      'ACOUSTID_FINGERPRINT': 'acoustid_fingerprint',
-      'MUSICIP_PUID': 'musicip_puid',
-      'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
-      'WEBSITE': 'website'
-
-    },
-    'id3v1.1': {
-      'title': 'title',
-      'artist': 'artist',
-      'album': 'album',
-      'year': 'year',
-      'comment': 'comment',
-      'track': 'track',
-      'genre': 'genre'
-    },
-    'id3v2.2': {
-      'TT2': 'title',
-      'TP1': 'artist',
-      'TP2': 'albumartist',
-      'TAL': 'album',
-      'TYE': 'year',
-      'COM': 'comment',
-      'TRK': 'track',
-      'TPA': 'disk',
-      'TCO': 'genre',
-      'PIC': 'picture',
-      'TCM': 'composer',
-
-      'TOR': 'originaldate',
-      'TOT': 'work',
-      'TXT': 'lyricist',
-      'TP3': 'conductor',
-      'TPB': 'label',
-      'TT1': 'grouping',
-      'TT3': 'subtitle',
-      'TLA': 'language',
-      'TCR': 'copyright',
-      'WCP': 'license',
-      'TEN': 'encodedby',
-      'TSS': 'encodersettings',
-      'WAR': 'website'
-    },
-    'id3v2.4': {
-      // id3v2.3
-      'TIT2': 'title',
-      'TPE1': 'artist',
-      'TPE2': 'albumartist',
-      'TALB': 'album',
-      'TDRV': 'date', // [ 'date', 'year' ] ToDo: improve 'year' mapping
-      'TORY': 'originaldate',
-      'COMM:description': 'comment',
-      'TRCK': 'track',
-      'TPOS': 'disk',
-      'TCON': 'genre',
-      'APIC': 'picture',
-      'TCOM': 'composer',
-      'USLT:description': 'lyrics',
-      'TSOA': 'albumsort',
-      'TSOT': 'titlesort',
-      'TOAL': 'work',
-      'TSOP': 'artistsort',
-      'TSO2': 'albumartistsort',
-      'TSOC': 'composersort',
-      'TEXT': 'lyricist',
-      'TXXX:Writer': 'writer',
-      'TPE3': 'conductor',
-      'IPLS:instrument': 'performer:instrument',
-      'TPE4': 'remixer',
-      'IPLS:arranger': 'arranger',
-      'IPLS:engineer': 'engineer',
-      'IPLS:producer': 'producer',
-      'IPLS:DJ-mix': 'djmixer',
-      'IPLS:mix': 'mixer',
-      'TPUB': 'label',
-      'TIT1': 'grouping',
-      'TIT3': 'subtitle',
-      // 'TRCK': 'totaltracks',
-      // 'TPOS': 'totaldiscs',
-      'TCMP': 'compilation',
-      'POPM': '_rating',
-      'TBPM': 'bpm',
-      'TMED': 'media',
-      'TXXX:CATALOGNUMBER': 'catalognumber',
-      'TXXX:MusicBrainz Album Status': 'releasestatus',
-      'TXXX:MusicBrainz Album Type': 'releasetype',
-      'TXXX:MusicBrainz Album Release Country': 'releasecountry',
-      'TXXX:SCRIPT': 'script',
-      'TLAN': 'language',
-      'TCOP': 'copyright',
-      'WCOP': 'license',
-      'TENC': 'encodedby',
-      'TSSE': 'encodersettings',
-      'TXXX:BARCODE': 'barcode',
-      'TSRC': 'isrc',
-      'TXXX:ASIN': 'asin',
-      'UFID:http://musicbrainz.org': 'musicbrainz_recordingid',
-      'TXXX:MusicBrainz Release Track Id': 'musicbrainz_trackid',
-      'TXXX:MusicBrainz Album Id': 'musicbrainz_albumid',
-      'TXXX:MusicBrainz Artist Id': 'musicbrainz_artistid',
-      'TXXX:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-      'TXXX:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
-      'TXXX:MusicBrainz Work Id': 'musicbrainz_workid',
-      'TXXX:MusicBrainz TRM Id': 'musicbrainz_trmid',
-      'TXXX:MusicBrainz Disc Id': 'musicbrainz_discid',
-      'TXXX:Acoustid Id': 'acoustid_id',
-      'TXXX:Acoustid Fingerprint': 'acoustid_fingerprint',
-      'TXXX:MusicIP PUID': 'musicip_puid',
-      'TXXX:MusicMagic Fingerprint': 'musicip_fingerprint',
-      'WOAR': 'website',
-
-      // id3v2.4
-      'TDRC': 'date', // date YYYY-MM-DD
-      'TYER': 'year',
-      'TDOR': 'originaldate',
-      'TMCL:instrument': 'performer:instrument',
-      'TIPL:arranger': 'arranger',
-      'TIPL:engineer': 'engineer',
-      'TIPL:producer': 'producer',
-      'TIPL:DJ-mix': 'djmixer',
-      'TIPL:mix': 'mixer',
-      'TMOO': 'mood',
-
-      // additional mappings:
-      'SYLT': 'lyrics'
-
-    },
+var TagMap = (function () {
+    function TagMap() {
+        // Normalize (post-process) common tag mappings
+        this.mappings = {
+            // capitalize 'APEv2' tags for case insensitive tag matching
+            asf: TagMap.asf,
+            APEv2: TagMap.capitalizeTags(TagMap.ape),
+            'id3v1.1': TagMap.id3v1_1,
+            'id3v2.2': TagMap.id3v2_2,
+            'id3v2.3': TagMap.id3v2_3,
+            'id3v2.4': TagMap.id3v2_3,
+            m4a: TagMap.m4a,
+            vorbis: TagMap.vorbis
+        };
+        this.mappings.APEv2 = TagMap.capitalizeTags(this.mappings.APEv2);
+        this.mappings['id3v2.3'] = this.mappings['id3v2.4'];
+    }
+    TagMap.getCommonTag = function (tag) {
+        return TagMap.commonTags[tag];
+    };
+    TagMap.isCommonTag = function (tag) {
+        return TagMap.commonTags[tag] !== undefined;
+    };
+    /**
+     * @param alias Name of common tag
+     * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
+     */
+    TagMap.isSingleton = function (alias) {
+        return TagMap.commonTags.hasOwnProperty(alias) && !TagMap.commonTags[alias].multiple;
+    };
+    TagMap.capitalizeTags = function (map) {
+        var newMap = {};
+        for (var tag in map) {
+            if (map.hasOwnProperty(tag)) {
+                newMap[tag.toUpperCase()] = map[tag];
+            }
+        }
+        return newMap;
+    };
+    /**
+     * Test if native tag headerType is a singleton
+     * @param type e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+     * @param  tag Native tag name', e.g. 'TITLE'
+     * @returns {boolean} true is we can safely assume that it is a  singleton
+     */
+    TagMap.prototype.isNativeSingleton = function (type, tag) {
+        switch (type) {
+            case 'format':
+                return true;
+            case 'id3v2.3':
+                switch (tag) {
+                    case 'IPLS':
+                        return true;
+                }
+            case 'id3v2.4':
+                switch (tag) {
+                    case 'TIPL':
+                    case 'TMCL':
+                        return true;
+                }
+        }
+        var alias = this.getCommonName(type, tag);
+        return alias && !TagMap.commonTags[alias].multiple;
+    };
+    /**
+     * @headerType Native header headerType: e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'vorbis'
+     * @tag  Native header tag
+     * @return common tag name (alias)
+     */
+    TagMap.prototype.getCommonName = function (type, tag) {
+        if (!this.mappings[type]) {
+            throw new Error('Illegal header headerType: ' + type);
+        }
+        return this.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag];
+    };
+    TagMap.commonTags = {
+        year: { multiple: false },
+        track: { multiple: false },
+        disk: { multiple: false },
+        title: { multiple: false },
+        artist: { multiple: false },
+        artists: { multiple: true },
+        albumartist: { multiple: false },
+        album: { multiple: false },
+        date: { multiple: false },
+        originaldate: { multiple: false },
+        originalyear: { multiple: false },
+        comment: { multiple: true },
+        genre: { multiple: true },
+        picture: { multiple: true },
+        composer: { multiple: true },
+        lyrics: { multiple: true },
+        albumsort: { multiple: false },
+        titlesort: { multiple: false },
+        work: { multiple: false },
+        artistsort: { multiple: false },
+        albumartistsort: { multiple: false },
+        composersort: { multiple: true },
+        lyricist: { multiple: true },
+        writer: { multiple: true },
+        conductor: { multiple: true },
+        remixer: { multiple: true },
+        arranger: { multiple: true },
+        engineer: { multiple: true },
+        producer: { multiple: true },
+        djmixer: { multiple: true },
+        mixer: { multiple: true },
+        label: { multiple: false },
+        grouping: { multiple: false },
+        subtitle: { multiple: false },
+        discsubtitle: { multiple: false },
+        totaltracks: { multiple: false },
+        totaldiscs: { multiple: false },
+        compilation: { multiple: false },
+        _rating: { multiple: false },
+        bpm: { multiple: false },
+        mood: { multiple: false },
+        media: { multiple: false },
+        catalognumber: { multiple: false },
+        show: { multiple: false },
+        showsort: { multiple: false },
+        podcast: { multiple: false },
+        podcasturl: { multiple: false },
+        releasestatus: { multiple: false },
+        releasetype: { multiple: true },
+        releasecountry: { multiple: false },
+        script: { multiple: false },
+        language: { multiple: false },
+        copyright: { multiple: false },
+        license: { multiple: false },
+        encodedby: { multiple: false },
+        encodersettings: { multiple: false },
+        gapless: { multiple: false },
+        barcode: { multiple: false },
+        isrc: { multiple: false },
+        asin: { multiple: false },
+        musicbrainz_recordingid: { multiple: false },
+        musicbrainz_trackid: { multiple: false },
+        musicbrainz_albumid: { multiple: false },
+        musicbrainz_artistid: { multiple: true },
+        musicbrainz_albumartistid: { multiple: true },
+        musicbrainz_releasegroupid: { multiple: false },
+        musicbrainz_workid: { multiple: false },
+        musicbrainz_trmid: { multiple: false },
+        musicbrainz_discid: { multiple: false },
+        acoustid_id: { multiple: false },
+        acoustid_fingerprint: { multiple: false },
+        musicip_puid: { multiple: false },
+        musicip_fingerprint: { multiple: false },
+        website: { multiple: false },
+        'performer:instrument': { multiple: true },
+        averageLevel: { multiple: false },
+        peakLevel: { multiple: false },
+        notes: { multiple: true }
+    };
+    /**
+     * Mapping from native header format to one or possibly more 'common' entries
+     * The common entries aim to read the same information from different media files
+     * independent of the underlying format
+     */
+    TagMap.vorbis = {
+        TITLE: 'title',
+        ARTIST: 'artist',
+        ARTISTS: 'artists',
+        ALBUMARTIST: 'albumartist',
+        ALBUM: 'album',
+        DATE: 'date',
+        ORIGINALDATE: 'originaldate',
+        ORIGINALYEAR: 'originalyear',
+        COMMENT: 'comment',
+        TRACKNUMBER: 'track',
+        DISCNUMBER: 'disk',
+        GENRE: 'genre',
+        METADATA_BLOCK_PICTURE: 'picture',
+        COMPOSER: 'composer',
+        LYRICS: 'lyrics',
+        ALBUMSORT: 'albumsort',
+        TITLESORT: 'titlesort',
+        WORK: 'work',
+        ARTISTSORT: 'artistsort',
+        ALBUMARTISTSORT: 'albumartistsort',
+        COMPOSERSORT: 'composersort',
+        LYRICIST: 'lyricist',
+        WRITER: 'writer',
+        CONDUCTOR: 'conductor',
+        // 'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
+        REMIXER: 'remixer',
+        ARRANGER: 'arranger',
+        ENGINEER: 'engineer',
+        PRODUCER: 'producer',
+        DJMIXER: 'djmixer',
+        MIXER: 'mixer',
+        LABEL: 'label',
+        GROUPING: 'grouping',
+        SUBTITLE: 'subtitle',
+        DISCSUBTITLE: 'discsubtitle',
+        TRACKTOTAL: 'totaltracks',
+        DISCTOTAL: 'totaldiscs',
+        COMPILATION: 'compilation',
+        'RATING:user@email': '_rating',
+        BPM: 'bpm',
+        MOOD: 'mood',
+        MEDIA: 'media',
+        CATALOGNUMBER: 'catalognumber',
+        RELEASESTATUS: 'releasestatus',
+        RELEASETYPE: 'releasetype',
+        RELEASECOUNTRY: 'releasecountry',
+        SCRIPT: 'script',
+        LANGUAGE: 'language',
+        COPYRIGHT: 'copyright',
+        LICENSE: 'license',
+        ENCODEDBY: 'encodedby',
+        ENCODERSETTINGS: 'encodersettings',
+        BARCODE: 'barcode',
+        ISRC: 'isrc',
+        ASIN: 'asin',
+        MUSICBRAINZ_TRACKID: 'musicbrainz_recordingid',
+        MUSICBRAINZ_RELEASETRACKID: 'musicbrainz_trackid',
+        MUSICBRAINZ_ALBUMID: 'musicbrainz_albumid',
+        MUSICBRAINZ_ARTISTID: 'musicbrainz_artistid',
+        MUSICBRAINZ_ALBUMARTISTID: 'musicbrainz_albumartistid',
+        MUSICBRAINZ_RELEASEGROUPID: 'musicbrainz_releasegroupid',
+        MUSICBRAINZ_WORKID: 'musicbrainz_workid',
+        MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
+        MUSICBRAINZ_DISCID: 'musicbrainz_discid',
+        ACOUSTID_ID: 'acoustid_id',
+        ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
+        MUSICIP_PUID: 'musicip_puid',
+        // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
+        WEBSITE: 'website',
+        NOTES: 'notes',
+        TOTALTRACKS: 'totaltracks',
+        TOTALDISCS: 'totaldiscs'
+    };
+    TagMap.id3v1_1 = {
+        title: 'title',
+        artist: 'artist',
+        album: 'album',
+        year: 'year',
+        comment: 'comment',
+        track: 'track',
+        genre: 'genre'
+    };
+    TagMap.id3v2_2 = {
+        TT2: 'title',
+        TP1: 'artist',
+        TP2: 'albumartist',
+        TAL: 'album',
+        TYE: 'year',
+        COM: 'comment',
+        TRK: 'track',
+        TPA: 'disk',
+        TCO: 'genre',
+        PIC: 'picture',
+        TCM: 'composer',
+        TOR: 'originaldate',
+        TOT: 'work',
+        TXT: 'lyricist',
+        TP3: 'conductor',
+        TPB: 'label',
+        TT1: 'grouping',
+        TT3: 'subtitle',
+        TLA: 'language',
+        TCR: 'copyright',
+        WCP: 'license',
+        TEN: 'encodedby',
+        TSS: 'encodersettings',
+        WAR: 'website'
+    };
+    TagMap.id3v2_3 = {
+        // id3v2.3
+        TIT2: 'title',
+        TPE1: 'artist',
+        'TXXX:Artists': 'artists',
+        TPE2: 'albumartist',
+        TALB: 'album',
+        TDRV: 'date',
+        /**
+         * Original release year
+         */
+        TORY: 'originalyear',
+        'COMM:description': 'comment',
+        TPOS: 'disk',
+        TCON: 'genre',
+        APIC: 'picture',
+        TCOM: 'composer',
+        'USLT:description': 'lyrics',
+        TSOA: 'albumsort',
+        TSOT: 'titlesort',
+        TOAL: 'work',
+        TSOP: 'artistsort',
+        TSO2: 'albumartistsort',
+        TSOC: 'composersort',
+        TEXT: 'lyricist',
+        'TXXX:Writer': 'writer',
+        TPE3: 'conductor',
+        // 'IPLS:instrument': 'performer:instrument', // ToDo
+        TPE4: 'remixer',
+        'IPLS:arranger': 'arranger',
+        'IPLS:engineer': 'engineer',
+        'IPLS:producer': 'producer',
+        'IPLS:DJ-mix': 'djmixer',
+        'IPLS:mix': 'mixer',
+        TPUB: 'label',
+        TIT1: 'grouping',
+        TIT3: 'subtitle',
+        TRCK: 'track',
+        TCMP: 'compilation',
+        POPM: '_rating',
+        TBPM: 'bpm',
+        TMED: 'media',
+        'TXXX:CATALOGNUMBER': 'catalognumber',
+        'TXXX:MusicBrainz Album Status': 'releasestatus',
+        'TXXX:MusicBrainz Album Type': 'releasetype',
+        'TXXX:MusicBrainz Album Release Country': 'releasecountry',
+        'TXXX:SCRIPT': 'script',
+        TLAN: 'language',
+        TCOP: 'copyright',
+        WCOP: 'license',
+        TENC: 'encodedby',
+        TSSE: 'encodersettings',
+        'TXXX:BARCODE': 'barcode',
+        TSRC: 'isrc',
+        'TXXX:ASIN': 'asin',
+        'TXXX:originalyear': 'originalyear',
+        'UFID:http://musicbrainz.org': 'musicbrainz_recordingid',
+        'TXXX:MusicBrainz Release Track Id': 'musicbrainz_trackid',
+        'TXXX:MusicBrainz Album Id': 'musicbrainz_albumid',
+        'TXXX:MusicBrainz Artist Id': 'musicbrainz_artistid',
+        'TXXX:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+        'TXXX:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
+        'TXXX:MusicBrainz Work Id': 'musicbrainz_workid',
+        'TXXX:MusicBrainz TRM Id': 'musicbrainz_trmid',
+        'TXXX:MusicBrainz Disc Id': 'musicbrainz_discid',
+        'TXXX:Acoustid Id': 'acoustid_id',
+        'TXXX:Acoustid Fingerprint': 'acoustid_fingerprint',
+        'TXXX:MusicIP PUID': 'musicip_puid',
+        'TXXX:MusicMagic Fingerprint': 'musicip_fingerprint',
+        WOAR: 'website',
+        // id3v2.4
+        TDRC: 'date',
+        TYER: 'year',
+        TDOR: 'originaldate',
+        // 'TMCL:instrument': 'performer:instrument',
+        'TIPL:arranger': 'arranger',
+        'TIPL:engineer': 'engineer',
+        'TIPL:producer': 'producer',
+        'TIPL:DJ-mix': 'djmixer',
+        'TIPL:mix': 'mixer',
+        TMOO: 'mood',
+        // additional mappings:
+        SYLT: 'lyrics',
+        // Windows Media Player
+        'PRIV:AverageLevel': 'averageLevel',
+        'PRIV:PeakLevel': 'peakLevel'
+    };
     // ToDo: capitalization tricky
-    'APEv2': {
-      // MusicBrainz tag mappings:
-      'Title': 'title',
-      'Artist': 'artist',
-      'Album Artist': 'albumartist',
-      'Album': 'album',
-      'Year': 'year',
-      'ORIGINALYEAR': 'originalyear',
-      'Comment': 'comment',
-      'Track': 'track',
-      'Disc': 'disk',
-      'DISCNUMBER': 'disk', // ToDo: backwards compatibility, valid tag?
-      'Genre': 'genre',
-      'Cover Art (Front)': 'picture',
-      'Cover Art (Back)': 'picture',
-      'Composer': 'composer',
-      'Lyrics': 'lyrics',
-      'ALBUMSORT': 'albumsort',
-      'TITLESORT': 'titlesort',
-      'WORK': 'work',
-      'ARTISTSORT': 'artistsort',
-      'ALBUMARTISTSORT': 'albumartistsort',
-      'COMPOSERSORT': 'composersort',
-      'Lyricist': 'lyricist',
-      'Writer': 'writer',
-      'Conductor': 'conductor',
-      'Performer=artist (instrument)': 'performer:instrument',
-      'MixArtist': 'remixer',
-      'Arranger': 'arranger',
-      'Engineer': 'engineer',
-      'Producer': 'producer',
-      'DJMixer': 'djmixer',
-      'Mixer': 'mixer',
-      'Label': 'label',
-      'Grouping': 'grouping',
-      'Subtitle': 'subtitle',
-      'DiscSubtitle': 'discsubtitle',
-      'Compilation': 'compilation',
-      'BPM': 'bpm',
-      'Mood': 'mood',
-      'Media': 'media',
-      'CatalogNumber': 'catalognumber',
-      'MUSICBRAINZ_ALBUMSTATUS': 'releasestatus',
-      'MUSICBRAINZ_ALBUMTYPE': 'releasetype',
-      'RELEASECOUNTRY': 'releasecountry',
-      'Script': 'script',
-      'Language': 'language',
-      'Copyright': 'copyright',
-      'LICENSE': 'license',
-      'EncodedBy': 'encodedby',
-      'EncoderSettings': 'encodersettings',
-      'Barcode': 'barcode',
-      'ISRC': 'isrc',
-      'ASIN': 'asin',
-      'MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',
-      'MUSICBRAINZ_RELEASETRACKID': 'musicbrainz_trackid',
-      'MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
-      'MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
-      'MUSICBRAINZ_ALBUMARTISTID': 'musicbrainz_albumartistid',
-      'MUSICBRAINZ_RELEASEGROUPID': 'musicbrainz_releasegroupid',
-      'MUSICBRAINZ_WORKID': 'musicbrainz_workid',
-      'MUSICBRAINZ_TRMID': 'musicbrainz_trmid',
-      'MUSICBRAINZ_DISCID': 'musicbrainz_discid',
-      'ACOUSTID_ID': 'acoustid_id',
-      'ACOUSTID_FINGERPRINT': 'acoustid_fingerprint',
-      'MUSICIP_PUID': 'musicip_puid',
-      'Weblink': 'website'
-    },
+    TagMap.ape = {
+        // MusicBrainz tag mappings:
+        Title: 'title',
+        Artist: 'artist',
+        Artists: 'artists',
+        'Album Artist': 'albumartist',
+        Album: 'album',
+        Year: 'date',
+        Originalyear: 'originalyear',
+        Originaldate: 'originaldate',
+        Comment: 'comment',
+        Track: 'track',
+        Disc: 'disk',
+        DISCNUMBER: 'disk',
+        Genre: 'genre',
+        'Cover Art (Front)': 'picture',
+        'Cover Art (Back)': 'picture',
+        Composer: 'composer',
+        Lyrics: 'lyrics',
+        ALBUMSORT: 'albumsort',
+        TITLESORT: 'titlesort',
+        WORK: 'work',
+        ARTISTSORT: 'artistsort',
+        ALBUMARTISTSORT: 'albumartistsort',
+        COMPOSERSORT: 'composersort',
+        Lyricist: 'lyricist',
+        Writer: 'writer',
+        Conductor: 'conductor',
+        // 'Performer=artist (instrument)': 'performer:instrument',
+        MixArtist: 'remixer',
+        Arranger: 'arranger',
+        Engineer: 'engineer',
+        Producer: 'producer',
+        DJMixer: 'djmixer',
+        Mixer: 'mixer',
+        Label: 'label',
+        Grouping: 'grouping',
+        Subtitle: 'subtitle',
+        DiscSubtitle: 'discsubtitle',
+        Compilation: 'compilation',
+        BPM: 'bpm',
+        Mood: 'mood',
+        Media: 'media',
+        CatalogNumber: 'catalognumber',
+        MUSICBRAINZ_ALBUMSTATUS: 'releasestatus',
+        MUSICBRAINZ_ALBUMTYPE: 'releasetype',
+        RELEASECOUNTRY: 'releasecountry',
+        Script: 'script',
+        Language: 'language',
+        Copyright: 'copyright',
+        LICENSE: 'license',
+        EncodedBy: 'encodedby',
+        EncoderSettings: 'encodersettings',
+        Barcode: 'barcode',
+        ISRC: 'isrc',
+        ASIN: 'asin',
+        MUSICBRAINZ_TRACKID: 'musicbrainz_recordingid',
+        MUSICBRAINZ_RELEASETRACKID: 'musicbrainz_trackid',
+        MUSICBRAINZ_ALBUMID: 'musicbrainz_albumid',
+        MUSICBRAINZ_ARTISTID: 'musicbrainz_artistid',
+        MUSICBRAINZ_ALBUMARTISTID: 'musicbrainz_albumartistid',
+        MUSICBRAINZ_RELEASEGROUPID: 'musicbrainz_releasegroupid',
+        MUSICBRAINZ_WORKID: 'musicbrainz_workid',
+        MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
+        MUSICBRAINZ_DISCID: 'musicbrainz_discid',
+        ACOUSTID_ID: 'acoustid_id',
+        ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
+        MUSICIP_PUID: 'musicip_puid',
+        Weblink: 'website'
+    };
     // ToDo: capitalization tricky
-    'asf': {
-      // MusicBrainz tag mappings:
-      'Title': 'title',
-      'Author': 'artist',
-      'WM/AlbumArtist': 'albumartist',
-      'WM/AlbumTitle': 'album',
-      'WM/Year': 'year',
-      'WM/OriginalReleaseTime': 'originaldate',
-      'WM/OriginalReleaseYear': 'originalyear',
-      'Description': 'comment',
-      'WM/TrackNumber': 'track',
-      'WM/PartOfSet': 'disk',
-      'WM/Genre': 'genre',
-      'WM/Composer': 'composer',
-      'WM/Lyrics': 'lyrics',
-      'WM/AlbumSortOrder': 'albumsort',
-      'WM/TitleSortOrder': 'titlesort',
-      'WM/ArtistSortOrder': 'artistsort',
-      'WM/AlbumArtistSortOrder': 'albumartistsort',
-      'WM/ComposerSortOrder': 'composersort',
-      'WM/Writer': 'lyricist',
-      'WM/Conductor': 'conductor',
-      'WM/ModifiedBy': 'remixer',
-      'WM/Engineer': 'engineer',
-      'WM/Producer': 'producer',
-      'WM/DJMixer': 'djmixer',
-      'WM/Mixer': 'mixer',
-      'WM/Publisher': 'label',
-      'WM/ContentGroupDescription': 'grouping',
-      'WM/SubTitle': 'subtitle',
-      'WM/SetSubTitle': 'discsubtitle',
-      // 'WM/PartOfSet': 'totaldiscs',
-      'WM/IsCompilation': 'compilation',
-      'WM/SharedUserRating': '_rating',
-      'WM/BeatsPerMinute': 'bpm',
-      'WM/Mood': 'mood',
-      'WM/Media': 'media',
-      'WM/CatalogNo': 'catalognumber',
-      'MusicBrainz/Album Status': 'releasestatus',
-      'MusicBrainz/Album Type': 'releasetype',
-      'MusicBrainz/Album Release Country': 'releasecountry',
-      'WM/Script': 'script',
-      'WM/Language': 'language',
-      'Copyright': 'copyright',
-      'LICENSE': 'license',
-      'WM/EncodedBy': 'encodedby',
-      'WM/EncodingSettings': 'encodersettings',
-      'WM/Barcode': 'barcode',
-      'WM/ISRC': 'isrc',
-      'MusicBrainz/Track Id': 'musicbrainz_recordingid',
-      'MusicBrainz/Release Track Id': 'musicbrainz_trackid',
-      'MusicBrainz/Album Id': 'musicbrainz_albumid',
-      'MusicBrainz/Artist Id': 'musicbrainz_artistid',
-      'MusicBrainz/Album Artist Id': 'musicbrainz_albumartistid',
-      'MusicBrainz/Release Group Id': 'musicbrainz_releasegroupid',
-      'MusicBrainz/Work Id': 'musicbrainz_workid',
-      'MusicBrainz/TRM Id': 'musicbrainz_trmid',
-      'MusicBrainz/Disc Id': 'musicbrainz_discid',
-      'Acoustid/Id': 'acoustid_id',
-      'Acoustid/Fingerprint': 'acoustid_fingerprint',
-      'MusicIP/PUID': 'musicip_puid'
-    },
-    m4a: {
-      '©nam': 'title',
-      '©ART': 'artist',
-      'aART': 'albumartist',
-      '©alb': 'album',
-      '©day': 'date',
-      '©cmt': 'comment',
-      'trkn': 'track',
-      'disk': 'disk',
-      '©gen': 'genre',
-      'covr': 'picture',
-      '©wrt': 'composer',
-      '©lyr': 'lyrics',
-      'soal': 'albumsort',
-      'sonm': 'titlesort',
-      'soar': 'artistsort',
-      'soaa': 'albumartistsort',
-      'soco': 'composersort',
-      '----:com.apple.iTunes:LYRICIST': 'lyricist',
-      '----:com.apple.iTunes:CONDUCTOR': 'conductor',
-      '----:com.apple.iTunes:REMIXER': 'remixer',
-      '----:com.apple.iTunes:ENGINEER': 'engineer',
-      '----:com.apple.iTunes:PRODUCER': 'producer',
-      '----:com.apple.iTunes:DJMIXER': 'djmixer',
-      '----:com.apple.iTunes:MIXER': 'mixer',
-      '----:com.apple.iTunes:LABEL': 'label',
-      '©grp': 'grouping',
-      '----:com.apple.iTunes:SUBTITLE': 'subtitle',
-      '----:com.apple.iTunes:DISCSUBTITLE': 'discsubtitle',
-      'cpil': 'compilation',
-      'tmpo': 'bpm',
-      '----:com.apple.iTunes:MOOD': 'mood',
-      '----:com.apple.iTunes:MEDIA': 'media',
-      '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
-      'tvsh': 'show',
-      'sosn': 'showsort',
-      'pcst': 'podcast',
-      'purl': 'podcasturl',
-      '----:com.apple.iTunes:MusicBrainz Album Status': 'releasestatus',
-      '----:com.apple.iTunes:MusicBrainz Album Type': 'releasetype',
-      '----:com.apple.iTunes:MusicBrainz Album Release Country': 'releasecountry',
-      '----:com.apple.iTunes:SCRIPT': 'script',
-      '----:com.apple.iTunes:LANGUAGE': 'language',
-      'cprt': 'copyright',
-      '----:com.apple.iTunes:LICENSE': 'license',
-      '©too': 'encodedby',
-      'pgap': 'gapless',
-      '----:com.apple.iTunes:BARCODE': 'barcode',
-      '----:com.apple.iTunes:ISRC': 'isrc',
-      '----:com.apple.iTunes:ASIN': 'asin',
-      '----:com.apple.iTunes:MusicBrainz Track Id': 'musicbrainz_recordingid',
-      '----:com.apple.iTunes:MusicBrainz Release Track Id': 'musicbrainz_trackid',
-      '----:com.apple.iTunes:MusicBrainz Album Id': 'musicbrainz_albumid',
-      '----:com.apple.iTunes:MusicBrainz Artist Id': 'musicbrainz_artistid',
-      '----:com.apple.iTunes:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-      '----:com.apple.iTunes:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
-      '----:com.apple.iTunes:MusicBrainz Work Id': 'musicbrainz_workid',
-      '----:com.apple.iTunes:MusicBrainz TRM Id': 'musicbrainz_trmid',
-      '----:com.apple.iTunes:MusicBrainz Disc Id': 'musicbrainz_discid',
-      '----:com.apple.iTunes:Acoustid Id': 'acoustid_id',
-      '----:com.apple.iTunes:Acoustid Fingerprint': 'acoustid_fingerprint',
-      '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
-      '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
-      // Additional mappings:
-      'gnre': 'genre' // ToDo: check mapping
-    }
-  }
-
-  /**
-   * @param alias Name of common tag
-   * @returns {boolean|*} true if given alias is mapped as a singleton, otherwise false
-   */
-
-  self.isSingleton = function (alias) {
-    return this.common.hasOwnProperty(alias) && this.common[alias].singleton
-  }
-
-  /**
-   * Test if native tag type is a singleton
-   * @param type e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
-   * @param  tag Native tag name, e.g. 'TITLE'
-   * @returns {boolean} true is we can safely assume that it is a  singleton
-   */
-  self.isNativeSingleton = function (type, tag) {
-    if (type === 'format') {
-      return true
-    }
-    var alias = self.getCommonName(type, tag)
-    return alias && self.common[alias].singleton
-  }
-
-  self.capitalizeAttributes = function (obj) {
-    var newObj = {}
-    for (var key in obj) {
-      newObj[key.toUpperCase()] = obj[key]
-    }
-    return newObj
-  }
-
-  /**
-   * @type Native header type: e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'vorbis'
-   * @tag  Native header tag
-   * @return common tag name (alias)
-   */
-  self.getCommonName = function (type, tag) {
-    if (!self.mappings.hasOwnProperty(type)) {
-      throw new Error('Illegal header type: ' + type)
-    }
-    return self.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag]
-  }
-
-  // Normalize (post-process) common tag mappings
-  // capitalize 'APEv2' tags for case insensitive tag matching
-  self.mappings.APEv2 = self.capitalizeAttributes(self.mappings.APEv2)
-
-  // 'id3v2.3' & 'id3v2.4' are combined
-  self.mappings['id3v2.3'] = self.mappings['id3v2.4']
-
-  return self
-}())
-
-},{}],13:[function(require,module,exports){
-var windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
-8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
-8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
-169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
-185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
-217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
-233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
-248, 249, 250, 251, 252, 253, 254, 255]
-
-function inRange (a, min, max) {
-  return min <= a && a <= max
-}
-
-function codePointToString (cp) {
-  if (cp <= 0xFFFF) {
-    return String.fromCharCode(cp)
-  } else {
-    cp -= 0x10000
-    return String.fromCharCode((cp >> 10) + 0xD800, (cp & 0x3FF) + 0xDC00)
-  }
-}
-
-function singleByteDecoder (bite, index) {
-  if (inRange(bite, 0x00, 0x7F)) {
-    return bite
-  }
-
-  var code_point = index[bite - 0x80]
-  if (code_point === null) {
-    throw Error('invaliding encoding')
-  }
-
-  return code_point
-}
-
-module.exports = function (buffer) {
-  var str = ''
-  for (var i = 0; i < buffer.length; i++) {
-    str += codePointToString(singleByteDecoder(buffer[i], windows1252))
-  }
-  return str
-}
+    TagMap.asf = {
+        // MusicBrainz tag mappings:
+        Title: 'title',
+        Author: 'artist',
+        'WM/AlbumArtist': 'albumartist',
+        'WM/AlbumTitle': 'album',
+        'WM/Year': 'year',
+        'WM/OriginalReleaseTime': 'originaldate',
+        'WM/OriginalReleaseYear': 'originalyear',
+        Description: 'comment',
+        'WM/TrackNumber': 'track',
+        'WM/PartOfSet': 'disk',
+        'WM/Genre': 'genre',
+        'WM/Composer': 'composer',
+        'WM/Lyrics': 'lyrics',
+        'WM/AlbumSortOrder': 'albumsort',
+        'WM/TitleSortOrder': 'titlesort',
+        'WM/ArtistSortOrder': 'artistsort',
+        'WM/AlbumArtistSortOrder': 'albumartistsort',
+        'WM/ComposerSortOrder': 'composersort',
+        'WM/Writer': 'lyricist',
+        'WM/Conductor': 'conductor',
+        'WM/ModifiedBy': 'remixer',
+        'WM/Engineer': 'engineer',
+        'WM/Producer': 'producer',
+        'WM/DJMixer': 'djmixer',
+        'WM/Mixer': 'mixer',
+        'WM/Publisher': 'label',
+        'WM/ContentGroupDescription': 'grouping',
+        'WM/SubTitle': 'subtitle',
+        'WM/SetSubTitle': 'discsubtitle',
+        // 'WM/PartOfSet': 'totaldiscs',
+        'WM/IsCompilation': 'compilation',
+        'WM/SharedUserRating': '_rating',
+        'WM/BeatsPerMinute': 'bpm',
+        'WM/Mood': 'mood',
+        'WM/Media': 'media',
+        'WM/CatalogNo': 'catalognumber',
+        'MusicBrainz/Album Status': 'releasestatus',
+        'MusicBrainz/Album Type': 'releasetype',
+        'MusicBrainz/Album Release Country': 'releasecountry',
+        'WM/Script': 'script',
+        'WM/Language': 'language',
+        Copyright: 'copyright',
+        LICENSE: 'license',
+        'WM/EncodedBy': 'encodedby',
+        'WM/EncodingSettings': 'encodersettings',
+        'WM/Barcode': 'barcode',
+        'WM/ISRC': 'isrc',
+        'MusicBrainz/Track Id': 'musicbrainz_recordingid',
+        'MusicBrainz/Release Track Id': 'musicbrainz_trackid',
+        'MusicBrainz/Album Id': 'musicbrainz_albumid',
+        'MusicBrainz/Artist Id': 'musicbrainz_artistid',
+        'MusicBrainz/Album Artist Id': 'musicbrainz_albumartistid',
+        'MusicBrainz/Release Group Id': 'musicbrainz_releasegroupid',
+        'MusicBrainz/Work Id': 'musicbrainz_workid',
+        'MusicBrainz/TRM Id': 'musicbrainz_trmid',
+        'MusicBrainz/Disc Id': 'musicbrainz_discid',
+        'Acoustid/Id': 'acoustid_id',
+        'Acoustid/Fingerprint': 'acoustid_fingerprint',
+        'MusicIP/PUID': 'musicip_puid'
+    };
+    TagMap.m4a = {
+        '©nam': 'title',
+        '©ART': 'artist',
+        aART: 'albumartist',
+        '©alb': 'album',
+        '©day': 'date',
+        '©cmt': 'comment',
+        trkn: 'track',
+        disk: 'disk',
+        '©gen': 'genre',
+        covr: 'picture',
+        '©wrt': 'composer',
+        '©lyr': 'lyrics',
+        soal: 'albumsort',
+        sonm: 'titlesort',
+        soar: 'artistsort',
+        soaa: 'albumartistsort',
+        soco: 'composersort',
+        '----:com.apple.iTunes:LYRICIST': 'lyricist',
+        '----:com.apple.iTunes:CONDUCTOR': 'conductor',
+        '----:com.apple.iTunes:REMIXER': 'remixer',
+        '----:com.apple.iTunes:ENGINEER': 'engineer',
+        '----:com.apple.iTunes:PRODUCER': 'producer',
+        '----:com.apple.iTunes:DJMIXER': 'djmixer',
+        '----:com.apple.iTunes:MIXER': 'mixer',
+        '----:com.apple.iTunes:LABEL': 'label',
+        '©grp': 'grouping',
+        '----:com.apple.iTunes:SUBTITLE': 'subtitle',
+        '----:com.apple.iTunes:DISCSUBTITLE': 'discsubtitle',
+        cpil: 'compilation',
+        tmpo: 'bpm',
+        '----:com.apple.iTunes:MOOD': 'mood',
+        '----:com.apple.iTunes:MEDIA': 'media',
+        '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
+        tvsh: 'show',
+        sosn: 'showsort',
+        pcst: 'podcast',
+        purl: 'podcasturl',
+        '----:com.apple.iTunes:MusicBrainz Album Status': 'releasestatus',
+        '----:com.apple.iTunes:MusicBrainz Album Type': 'releasetype',
+        '----:com.apple.iTunes:MusicBrainz Album Release Country': 'releasecountry',
+        '----:com.apple.iTunes:SCRIPT': 'script',
+        '----:com.apple.iTunes:LANGUAGE': 'language',
+        cprt: 'copyright',
+        '----:com.apple.iTunes:LICENSE': 'license',
+        '©too': 'encodedby',
+        pgap: 'gapless',
+        '----:com.apple.iTunes:BARCODE': 'barcode',
+        '----:com.apple.iTunes:ISRC': 'isrc',
+        '----:com.apple.iTunes:ASIN': 'asin',
+        '----:com.apple.iTunes:MusicBrainz Track Id': 'musicbrainz_recordingid',
+        '----:com.apple.iTunes:MusicBrainz Release Track Id': 'musicbrainz_trackid',
+        '----:com.apple.iTunes:MusicBrainz Album Id': 'musicbrainz_albumid',
+        '----:com.apple.iTunes:MusicBrainz Artist Id': 'musicbrainz_artistid',
+        '----:com.apple.iTunes:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+        '----:com.apple.iTunes:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
+        '----:com.apple.iTunes:MusicBrainz Work Id': 'musicbrainz_workid',
+        '----:com.apple.iTunes:MusicBrainz TRM Id': 'musicbrainz_trmid',
+        '----:com.apple.iTunes:MusicBrainz Disc Id': 'musicbrainz_discid',
+        '----:com.apple.iTunes:Acoustid Id': 'acoustid_id',
+        '----:com.apple.iTunes:Acoustid Fingerprint': 'acoustid_fingerprint',
+        '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
+        '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
+        // Additional mappings:
+        gnre: 'genre' // ToDo: check mapping
+    };
+    return TagMap;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = TagMap;
 
 },{}],14:[function(require,module,exports){
+(function (Buffer){
+"use strict";
+var strtok = require('strtok2');
+(function (VorbisPictureType) {
+    VorbisPictureType[VorbisPictureType['Other'] = 0] = 'Other';
+    VorbisPictureType[VorbisPictureType["32x32 pixels 'file icon' (PNG only)"] = 1] = "32x32 pixels 'file icon' (PNG only)";
+    VorbisPictureType[VorbisPictureType['Other file icon'] = 2] = 'Other file icon';
+    VorbisPictureType[VorbisPictureType['Cover (front)'] = 3] = 'Cover (front)';
+    VorbisPictureType[VorbisPictureType['Cover (back)'] = 4] = 'Cover (back)';
+    VorbisPictureType[VorbisPictureType['Leaflet page'] = 5] = 'Leaflet page';
+    VorbisPictureType[VorbisPictureType['Media (e.g. lable side of CD)'] = 6] = 'Media (e.g. lable side of CD)';
+    VorbisPictureType[VorbisPictureType['Lead artist/lead performer/soloist'] = 7] = 'Lead artist/lead performer/soloist';
+    VorbisPictureType[VorbisPictureType['Artist/performer'] = 8] = 'Artist/performer';
+    VorbisPictureType[VorbisPictureType['Conductor'] = 9] = 'Conductor';
+    VorbisPictureType[VorbisPictureType['Band/Orchestra'] = 10] = 'Band/Orchestra';
+    VorbisPictureType[VorbisPictureType['Composer'] = 11] = 'Composer';
+    VorbisPictureType[VorbisPictureType['Lyricist/text writer'] = 12] = 'Lyricist/text writer';
+    VorbisPictureType[VorbisPictureType['Recording Location'] = 13] = 'Recording Location';
+    VorbisPictureType[VorbisPictureType['During recording'] = 14] = 'During recording';
+    VorbisPictureType[VorbisPictureType['During performance'] = 15] = 'During performance';
+    VorbisPictureType[VorbisPictureType['Movie/video screen capture'] = 16] = 'Movie/video screen capture';
+    VorbisPictureType[VorbisPictureType['A bright coloured fish'] = 17] = 'A bright coloured fish';
+    VorbisPictureType[VorbisPictureType['Illustration'] = 18] = 'Illustration';
+    VorbisPictureType[VorbisPictureType['Band/artist logotype'] = 19] = 'Band/artist logotype';
+    VorbisPictureType[VorbisPictureType['Publisher/Studio logotype'] = 20] = 'Publisher/Studio logotype';
+})(exports.VorbisPictureType || (exports.VorbisPictureType = {}));
+var VorbisPictureType = exports.VorbisPictureType;
+var VorbisPictureParser = (function () {
+    function VorbisPictureParser(buffer) {
+        var offset = 0;
+        this.type = VorbisPictureType[strtok.UINT32_BE.get(buffer, 0)];
+        var mimeLen = strtok.UINT32_BE.get(buffer, offset += 4);
+        this.format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
+        var descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen);
+        this.description = buffer.toString('utf-8', offset += 4, offset + descLen);
+        this.width = strtok.UINT32_BE.get(buffer, offset += descLen);
+        this.height = strtok.UINT32_BE.get(buffer, offset += 4);
+        this.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4);
+        this.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4);
+        var picDataLen = strtok.UINT32_BE.get(buffer, offset += 4);
+        this.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen));
+    }
+    return VorbisPictureParser;
+}());
+var Vorbis = (function () {
+    function Vorbis() {
+    }
+    Vorbis.readPicture = function (buffer) {
+        return new VorbisPictureParser(buffer);
+    };
+    Vorbis.getPictureType = function (type) {
+        return VorbisPictureType[type];
+    };
+    return Vorbis;
+}());
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Vorbis;
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":21,"strtok2":50}],15:[function(require,module,exports){
+"use strict";
+var Windows1292Decoder = (function () {
+    function Windows1292Decoder() {
+    }
+    Windows1292Decoder.decode = function (buffer) {
+        var str = '';
+        for (var i in buffer) {
+            if (buffer.hasOwnProperty(i)) {
+                str += Windows1292Decoder.codePointToString(Windows1292Decoder.singleByteDecoder(buffer[i]));
+            }
+        }
+        return str;
+    };
+    Windows1292Decoder.inRange = function (a, min, max) {
+        return min <= a && a <= max;
+    };
+    Windows1292Decoder.codePointToString = function (cp) {
+        if (cp <= 0xFFFF) {
+            return String.fromCharCode(cp);
+        }
+        else {
+            cp -= 0x10000;
+            return String.fromCharCode((cp >> 10) + 0xD800, (cp & 0x3FF) + 0xDC00);
+        }
+    };
+    Windows1292Decoder.singleByteDecoder = function (bite) {
+        if (Windows1292Decoder.inRange(bite, 0x00, 0x7F)) {
+            return bite;
+        }
+        var codePoint = Windows1292Decoder.windows1252[bite - 0x80];
+        if (codePoint === null) {
+            throw Error('invaliding encoding');
+        }
+        return codePoint;
+    };
+    Windows1292Decoder.windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
+        8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
+        8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
+        169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
+        201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
+        217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
+        248, 249, 250, 251, 252, 253, 254, 255];
+    return Windows1292Decoder;
+}());
+exports.Windows1292Decoder = Windows1292Decoder;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = Windows1292Decoder.decode;
+
+},{}],16:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -3114,7 +3579,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":53}],15:[function(require,module,exports){
+},{"util/":56}],17:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3230,11 +3695,11 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 
-},{}],17:[function(require,module,exports){
-arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],20:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3346,7 +3811,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":19}],19:[function(require,module,exports){
+},{"buffer":21}],21:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -5139,14 +5604,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":15,"ieee754":28,"isarray":20}],20:[function(require,module,exports){
-var toString = {}.toString;
-
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-},{}],21:[function(require,module,exports){
+},{"base64-js":17,"ieee754":29,"isarray":34}],22:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5257,7 +5715,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":30}],22:[function(require,module,exports){
+},{"../../is-buffer/index.js":31}],23:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -5353,7 +5811,7 @@ function objEquiv(a, b, opts) {
   return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":23,"./lib/keys.js":24}],23:[function(require,module,exports){
+},{"./lib/is_arguments.js":24,"./lib/keys.js":25}],24:[function(require,module,exports){
 var supportsArgumentsClass = (function(){
   return Object.prototype.toString.call(arguments)
 })() == '[object Arguments]';
@@ -5375,7 +5833,7 @@ function unsupported(object){
     false;
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 exports = module.exports = typeof Object.keys === 'function'
   ? Object.keys : shim;
 
@@ -5386,7 +5844,7 @@ function shim (obj) {
   return keys;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5690,136 +6148,150 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],26:[function(require,module,exports){
-(function (Buffer){
-var inherits = require('inherits')
-var EventEmitter = require('events').EventEmitter
+},{}],27:[function(require,module,exports){
+/* global FileReader */
+var from2 = require('from2')
+var toBuffer = require('typedarray-to-buffer')
 
-module.exports = FileStream
-
-function FileStream(file, options) { 
-  if (!(this instanceof FileStream))
-    return new FileStream(file, options)
+module.exports = function (file, options) {
   options = options || {}
-  options.output = options.output || 'arraybuffer'
-  this.options = options
-  this._file = file
-  this.readable = true
-  this.offset = options.offset || 0
-  this.paused = false
-  this.chunkSize = this.options.chunkSize || 8128  
+  var offset = options.offset || 0
+  var chunkSize = options.chunkSize || 1024 * 1024 // default 1MB chunk has tolerable perf on large files
+  var fileReader = new FileReader(file)
 
-  var tags = ['name','size','type','lastModifiedDate']
-  tags.forEach(function (thing) {
-     this[thing] = file[thing]
-   }, this)      
-}
-
-  
-FileStream.prototype._FileReader = function() {
-  var self = this
-  var reader = new FileReader()
-  var outputType = this.options.output
-
-  reader.onloadend = function loaded(event) {
-    var data = event.target.result      
-    if (data instanceof ArrayBuffer)
-      data = new Buffer(new Uint8Array(event.target.result))
-    self.dest.write(data)        
-    if (self.offset < self._file.size) {
-      self.emit('progress', self.offset)
-      !self.paused && self.readChunk(outputType)      
-      return
+  var from = from2(function (size, cb) {
+    if (offset >= file.size) return cb(null, null)
+    fileReader.onloadend = function loaded (event) {
+      var data = event.target.result
+      if (data instanceof ArrayBuffer) data = toBuffer(new Uint8Array(event.target.result))
+      cb(null, data)
     }
-    self._end()
-  }
-  reader.onerror = function(e) {
-    self.emit('error', e.target.error)
-  }
-
-  return reader
-}
-
-FileStream.prototype.readChunk = function(outputType) {
-  var end = this.offset + this.chunkSize
-  var slice = this._file.slice(this.offset, end)
-  this.offset = end
-  if (outputType === 'binary')
-    this.reader.readAsBinaryString(slice)
-  else if (outputType === 'dataurl')
-    this.reader.readAsDataURL(slice)
-  else if (outputType === 'arraybuffer')
-    this.reader.readAsArrayBuffer(slice)
-  else if (outputType === 'text')
-    this.reader.readAsText(slice)  
-}
-
-FileStream.prototype._end = function() {
-  if (this.dest !== console && (!this.options || this.options.end !== false)) {
-    this.dest.end && this.dest.end()
-    this.dest.close && this.dest.close()
-    this.emit('end', this._file.size)
-  }  
-}
-
-FileStream.prototype.pipe = function pipe(dest, options) {
-  this.reader = this._FileReader()
-  this.readChunk(this.options.output)
-  this.dest = dest
-  return dest
-}
-
-FileStream.prototype.pause = function() {
-  this.paused = true
-  return this.offset
-}
-
-FileStream.prototype.resume = function() {
-  this.paused = false
-  this.readChunk(this.options.output)
-}
-
-FileStream.prototype.abort = function() {
-  this.paused = true
-  this.reader.abort()
-  this._end()
-  return this.offset
-}
-
-inherits(FileStream, EventEmitter)
-}).call(this,require("buffer").Buffer)
-},{"buffer":19,"events":25,"inherits":27}],27:[function(require,module,exports){
-module.exports = inherits
-
-function inherits (c, p, proto) {
-  proto = proto || {}
-  var e = {}
-  ;[c.prototype, proto].forEach(function (s) {
-    Object.getOwnPropertyNames(s).forEach(function (k) {
-      e[k] = Object.getOwnPropertyDescriptor(s, k)
-    })
+    var end = offset + chunkSize
+    var slice = file.slice(offset, end)
+    fileReader.readAsArrayBuffer(slice)
+    offset = end
   })
-  c.prototype = Object.create(p.prototype, e)
-  c.super = p
+
+  from.name = file.name
+  from.size = file.size
+  from.type = file.type
+  from.lastModifiedDate = file.lastModifiedDate
+
+  fileReader.onerror = function (err) {
+    from.destroy(err)
+  }
+
+  return from
 }
 
-//function Child () {
-//  Child.super.call(this)
-//  console.error([this
-//                ,this.constructor
-//                ,this.constructor === Child
-//                ,this.constructor.super === Parent
-//                ,Object.getPrototypeOf(this) === Child.prototype
-//                ,Object.getPrototypeOf(Object.getPrototypeOf(this))
-//                 === Parent.prototype
-//                ,this instanceof Child
-//                ,this instanceof Parent])
-//}
-//function Parent () {}
-//inherits(Child, Parent)
-//new Child
+},{"from2":28,"typedarray-to-buffer":52}],28:[function(require,module,exports){
+(function (process){
+var Readable = require('readable-stream').Readable
+var inherits = require('inherits')
 
-},{}],28:[function(require,module,exports){
+module.exports = from2
+
+from2.ctor = ctor
+from2.obj = obj
+
+var Proto = ctor()
+
+function toFunction(list) {
+  list = list.slice()
+  return function (_, cb) {
+    var err = null
+    var item = list.length ? list.shift() : null
+    if (item instanceof Error) {
+      err = item
+      item = null
+    }
+
+    cb(err, item)
+  }
+}
+
+function from2(opts, read) {
+  if (typeof opts !== 'object' || Array.isArray(opts)) {
+    read = opts
+    opts = {}
+  }
+
+  var rs = new Proto(opts)
+  rs._from = Array.isArray(read) ? toFunction(read) : (read || noop)
+  return rs
+}
+
+function ctor(opts, read) {
+  if (typeof opts === 'function') {
+    read = opts
+    opts = {}
+  }
+
+  opts = defaults(opts)
+
+  inherits(Class, Readable)
+  function Class(override) {
+    if (!(this instanceof Class)) return new Class(override)
+    this._reading = false
+    this._callback = check
+    this.destroyed = false
+    Readable.call(this, override || opts)
+
+    var self = this
+    var hwm = this._readableState.highWaterMark
+
+    function check(err, data) {
+      if (self.destroyed) return
+      if (err) return self.destroy(err)
+      if (data === null) return self.push(null)
+      self._reading = false
+      if (self.push(data)) self._read(hwm)
+    }
+  }
+
+  Class.prototype._from = read || noop
+  Class.prototype._read = function(size) {
+    if (this._reading || this.destroyed) return
+    this._reading = true
+    this._from(size, this._callback)
+  }
+
+  Class.prototype.destroy = function(err) {
+    if (this.destroyed) return
+    this.destroyed = true
+
+    var self = this
+    process.nextTick(function() {
+      if (err) self.emit('error', err)
+      self.emit('close')
+    })
+  }
+
+  return Class
+}
+
+function obj(opts, read) {
+  if (typeof opts === 'function' || Array.isArray(opts)) {
+    read = opts
+    opts = {}
+  }
+
+  opts = defaults(opts)
+  opts.objectMode = true
+  opts.highWaterMark = 16
+
+  return from2(opts, read)
+}
+
+function noop () {}
+
+function defaults(opts) {
+  opts = opts || {}
+  return opts
+}
+
+}).call(this,require('_process'))
+},{"_process":36,"inherits":30,"readable-stream":45}],29:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -5905,7 +6377,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -5930,7 +6402,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -5953,7 +6425,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 var isStream = module.exports = function (stream) {
@@ -5976,7 +6448,57 @@ isStream.transform = function (stream) {
 	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
+module.exports      = isTypedArray
+isTypedArray.strict = isStrictTypedArray
+isTypedArray.loose  = isLooseTypedArray
+
+var toString = Object.prototype.toString
+var names = {
+    '[object Int8Array]': true
+  , '[object Int16Array]': true
+  , '[object Int32Array]': true
+  , '[object Uint8Array]': true
+  , '[object Uint8ClampedArray]': true
+  , '[object Uint16Array]': true
+  , '[object Uint32Array]': true
+  , '[object Float32Array]': true
+  , '[object Float64Array]': true
+}
+
+function isTypedArray(arr) {
+  return (
+       isStrictTypedArray(arr)
+    || isLooseTypedArray(arr)
+  )
+}
+
+function isStrictTypedArray(arr) {
+  return (
+       arr instanceof Int8Array
+    || arr instanceof Int16Array
+    || arr instanceof Int32Array
+    || arr instanceof Uint8Array
+    || arr instanceof Uint8ClampedArray
+    || arr instanceof Uint16Array
+    || arr instanceof Uint32Array
+    || arr instanceof Float32Array
+    || arr instanceof Float64Array
+  )
+}
+
+function isLooseTypedArray(arr) {
+  return names[toString.call(arr)]
+}
+
+},{}],34:[function(require,module,exports){
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+},{}],35:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6023,7 +6545,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":33}],33:[function(require,module,exports){
+},{"_process":36}],36:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -6205,141 +6727,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],34:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-module.exports = Stream;
-
-var EE = require('events').EventEmitter;
-var inherits = require('inherits');
-
-inherits(Stream, EE);
-Stream.Readable = require('readable-stream/readable.js');
-Stream.Writable = require('readable-stream/writable.js');
-Stream.Duplex = require('readable-stream/duplex.js');
-Stream.Transform = require('readable-stream/transform.js');
-Stream.PassThrough = require('readable-stream/passthrough.js');
-
-// Backwards-compat with node 0.4.x
-Stream.Stream = Stream;
-
-
-
-// old-style streams.  Note that the pipe method (the only relevant
-// part of this class) is overridden in the Readable class.
-
-function Stream() {
-  EE.call(this);
-}
-
-Stream.prototype.pipe = function(dest, options) {
-  var source = this;
-
-  function ondata(chunk) {
-    if (dest.writable) {
-      if (false === dest.write(chunk) && source.pause) {
-        source.pause();
-      }
-    }
-  }
-
-  source.on('data', ondata);
-
-  function ondrain() {
-    if (source.readable && source.resume) {
-      source.resume();
-    }
-  }
-
-  dest.on('drain', ondrain);
-
-  // If the 'end' option is not supplied, dest.end() will be called when
-  // source gets the 'end' or 'close' events.  Only dest.end() once.
-  if (!dest._isStdio && (!options || options.end !== false)) {
-    source.on('end', onend);
-    source.on('close', onclose);
-  }
-
-  var didOnEnd = false;
-  function onend() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    dest.end();
-  }
-
-
-  function onclose() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    if (typeof dest.destroy === 'function') dest.destroy();
-  }
-
-  // don't leave dangling pipes when there are errors.
-  function onerror(er) {
-    cleanup();
-    if (EE.listenerCount(this, 'error') === 0) {
-      throw er; // Unhandled stream error in pipe.
-    }
-  }
-
-  source.on('error', onerror);
-  dest.on('error', onerror);
-
-  // remove all the event listeners that were added.
-  function cleanup() {
-    source.removeListener('data', ondata);
-    dest.removeListener('drain', ondrain);
-
-    source.removeListener('end', onend);
-    source.removeListener('close', onclose);
-
-    source.removeListener('error', onerror);
-    dest.removeListener('error', onerror);
-
-    source.removeListener('end', cleanup);
-    source.removeListener('close', cleanup);
-
-    dest.removeListener('close', cleanup);
-  }
-
-  source.on('end', cleanup);
-  source.on('close', cleanup);
-
-  dest.on('close', cleanup);
-
-  dest.emit('pipe', source);
-
-  // Allow for unix-like usage: A.pipe(B).pipe(C)
-  return dest;
-};
-
-},{"events":25,"inherits":29,"readable-stream/duplex.js":36,"readable-stream/passthrough.js":43,"readable-stream/readable.js":44,"readable-stream/transform.js":45,"readable-stream/writable.js":46}],35:[function(require,module,exports){
-arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":37}],37:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":38}],38:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -6415,7 +6806,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":39,"./_stream_writable":41,"core-util-is":21,"inherits":29,"process-nextick-args":32}],38:[function(require,module,exports){
+},{"./_stream_readable":40,"./_stream_writable":42,"core-util-is":22,"inherits":30,"process-nextick-args":35}],39:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -6442,7 +6833,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":40,"core-util-is":21,"inherits":29}],39:[function(require,module,exports){
+},{"./_stream_transform":41,"core-util-is":22,"inherits":30}],40:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6454,6 +6845,10 @@ var processNextTick = require('process-nextick-args');
 
 /*<replacement>*/
 var isArray = require('isarray');
+/*</replacement>*/
+
+/*<replacement>*/
+var Duplex;
 /*</replacement>*/
 
 Readable.ReadableState = ReadableState;
@@ -6503,6 +6898,8 @@ var StringDecoder;
 util.inherits(Readable, Stream);
 
 function prependListener(emitter, event, fn) {
+  // Sadly this is not cacheable as some libraries bundle their own
+  // event emitter implementation with them.
   if (typeof emitter.prependListener === 'function') {
     return emitter.prependListener(event, fn);
   } else {
@@ -6514,7 +6911,6 @@ function prependListener(emitter, event, fn) {
   }
 }
 
-var Duplex;
 function ReadableState(options, stream) {
   Duplex = Duplex || require('./_stream_duplex');
 
@@ -6584,7 +6980,6 @@ function ReadableState(options, stream) {
   }
 }
 
-var Duplex;
 function Readable(options) {
   Duplex = Duplex || require('./_stream_duplex');
 
@@ -6907,7 +7302,7 @@ function maybeReadMore_(stream, state) {
 // for virtual (non-string, non-buffer) streams, "length" is somewhat
 // arbitrary, and perhaps not very meaningful.
 Readable.prototype._read = function (n) {
-  this.emit('error', new Error('not implemented'));
+  this.emit('error', new Error('_read() is not implemented'));
 };
 
 Readable.prototype.pipe = function (dest, pipeOpts) {
@@ -7085,16 +7480,16 @@ Readable.prototype.unpipe = function (dest) {
     state.pipesCount = 0;
     state.flowing = false;
 
-    for (var _i = 0; _i < len; _i++) {
-      dests[_i].emit('unpipe', this);
+    for (var i = 0; i < len; i++) {
+      dests[i].emit('unpipe', this);
     }return this;
   }
 
   // try to find the right one.
-  var i = indexOf(state.pipes, dest);
-  if (i === -1) return this;
+  var index = indexOf(state.pipes, dest);
+  if (index === -1) return this;
 
-  state.pipes.splice(i, 1);
+  state.pipes.splice(index, 1);
   state.pipesCount -= 1;
   if (state.pipesCount === 1) state.pipes = state.pipes[0];
 
@@ -7382,7 +7777,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":37,"./internal/streams/BufferList":42,"_process":33,"buffer":19,"buffer-shims":18,"core-util-is":21,"events":25,"inherits":29,"isarray":35,"process-nextick-args":32,"string_decoder/":47,"util":16}],40:[function(require,module,exports){
+},{"./_stream_duplex":38,"./internal/streams/BufferList":43,"_process":36,"buffer":21,"buffer-shims":20,"core-util-is":22,"events":26,"inherits":30,"isarray":34,"process-nextick-args":35,"string_decoder/":49,"util":18}],41:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -7479,7 +7874,6 @@ function Transform(options) {
 
   this._transformState = new TransformState(this);
 
-  // when the writable side finishes, then flush out anything remaining.
   var stream = this;
 
   // start out asking for a readable event once data is transformed.
@@ -7496,9 +7890,10 @@ function Transform(options) {
     if (typeof options.flush === 'function') this._flush = options.flush;
   }
 
+  // When the writable side finishes, then flush out anything remaining.
   this.once('prefinish', function () {
-    if (typeof this._flush === 'function') this._flush(function (er) {
-      done(stream, er);
+    if (typeof this._flush === 'function') this._flush(function (er, data) {
+      done(stream, er, data);
     });else done(stream);
   });
 }
@@ -7519,7 +7914,7 @@ Transform.prototype.push = function (chunk, encoding) {
 // an error, then that'll put the hurt on the whole operation.  If you
 // never call cb(), then you'll never get another chunk.
 Transform.prototype._transform = function (chunk, encoding, cb) {
-  throw new Error('Not implemented');
+  throw new Error('_transform() is not implemented');
 };
 
 Transform.prototype._write = function (chunk, encoding, cb) {
@@ -7549,8 +7944,10 @@ Transform.prototype._read = function (n) {
   }
 };
 
-function done(stream, er) {
+function done(stream, er, data) {
   if (er) return stream.emit('error', er);
+
+  if (data !== null && data !== undefined) stream.push(data);
 
   // if there's nothing in the write buffer, then that means
   // that nothing more will ever be provided
@@ -7563,7 +7960,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":37,"core-util-is":21,"inherits":29}],41:[function(require,module,exports){
+},{"./_stream_duplex":38,"core-util-is":22,"inherits":30}],42:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -7579,6 +7976,10 @@ var processNextTick = require('process-nextick-args');
 
 /*<replacement>*/
 var asyncWrite = !process.browser && ['v0.10', 'v0.9.'].indexOf(process.version.slice(0, 5)) > -1 ? setImmediate : processNextTick;
+/*</replacement>*/
+
+/*<replacement>*/
+var Duplex;
 /*</replacement>*/
 
 Writable.WritableState = WritableState;
@@ -7621,7 +8022,6 @@ function WriteReq(chunk, encoding, cb) {
   this.next = null;
 }
 
-var Duplex;
 function WritableState(options, stream) {
   Duplex = Duplex || require('./_stream_duplex');
 
@@ -7643,6 +8043,7 @@ function WritableState(options, stream) {
   // cast to ints.
   this.highWaterMark = ~ ~this.highWaterMark;
 
+  // drain event flag.
   this.needDrain = false;
   // at the start of calling end()
   this.ending = false;
@@ -7717,7 +8118,7 @@ function WritableState(options, stream) {
   this.corkedRequestsFree = new CorkedRequest(this);
 }
 
-WritableState.prototype.getBuffer = function writableStateGetBuffer() {
+WritableState.prototype.getBuffer = function getBuffer() {
   var current = this.bufferedRequest;
   var out = [];
   while (current) {
@@ -7737,13 +8138,37 @@ WritableState.prototype.getBuffer = function writableStateGetBuffer() {
   } catch (_) {}
 })();
 
-var Duplex;
+// Test _writableState for inheritance to account for Duplex streams,
+// whose prototype chain only points to Readable.
+var realHasInstance;
+if (typeof Symbol === 'function' && Symbol.hasInstance && typeof Function.prototype[Symbol.hasInstance] === 'function') {
+  realHasInstance = Function.prototype[Symbol.hasInstance];
+  Object.defineProperty(Writable, Symbol.hasInstance, {
+    value: function (object) {
+      if (realHasInstance.call(this, object)) return true;
+
+      return object && object._writableState instanceof WritableState;
+    }
+  });
+} else {
+  realHasInstance = function (object) {
+    return object instanceof this;
+  };
+}
+
 function Writable(options) {
   Duplex = Duplex || require('./_stream_duplex');
 
-  // Writable ctor is applied to Duplexes, though they're not
-  // instanceof Writable, they're instanceof Readable.
-  if (!(this instanceof Writable) && !(this instanceof Duplex)) return new Writable(options);
+  // Writable ctor is applied to Duplexes, too.
+  // `realHasInstance` is necessary because using plain `instanceof`
+  // would return false, as no `_writableState` property is attached.
+
+  // Trying to use the custom `instanceof` for Writable here will also break the
+  // Node.js LazyTransform implementation, which has a non-trivial getter for
+  // `_writableState` that would lead to infinite recursion.
+  if (!realHasInstance.call(Writable, this) && !(this instanceof Duplex)) {
+    return new Writable(options);
+  }
 
   this._writableState = new WritableState(options, this);
 
@@ -8003,7 +8428,7 @@ function clearBuffer(stream, state) {
 }
 
 Writable.prototype._write = function (chunk, encoding, cb) {
-  cb(new Error('not implemented'));
+  cb(new Error('_write() is not implemented'));
 };
 
 Writable.prototype._writev = null;
@@ -8092,7 +8517,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":37,"_process":33,"buffer":19,"buffer-shims":18,"core-util-is":21,"events":25,"inherits":29,"process-nextick-args":32,"util-deprecate":50}],42:[function(require,module,exports){
+},{"./_stream_duplex":38,"_process":36,"buffer":21,"buffer-shims":20,"core-util-is":22,"events":26,"inherits":30,"process-nextick-args":35,"util-deprecate":53}],43:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -8157,10 +8582,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":19,"buffer-shims":18}],43:[function(require,module,exports){
+},{"buffer":21,"buffer-shims":20}],44:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":38}],44:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":39}],45:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -8180,13 +8605,142 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":37,"./lib/_stream_passthrough.js":38,"./lib/_stream_readable.js":39,"./lib/_stream_transform.js":40,"./lib/_stream_writable.js":41,"_process":33}],45:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":38,"./lib/_stream_passthrough.js":39,"./lib/_stream_readable.js":40,"./lib/_stream_transform.js":41,"./lib/_stream_writable.js":42,"_process":36}],46:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":40}],46:[function(require,module,exports){
+},{"./lib/_stream_transform.js":41}],47:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":41}],47:[function(require,module,exports){
+},{"./lib/_stream_writable.js":42}],48:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+module.exports = Stream;
+
+var EE = require('events').EventEmitter;
+var inherits = require('inherits');
+
+inherits(Stream, EE);
+Stream.Readable = require('readable-stream/readable.js');
+Stream.Writable = require('readable-stream/writable.js');
+Stream.Duplex = require('readable-stream/duplex.js');
+Stream.Transform = require('readable-stream/transform.js');
+Stream.PassThrough = require('readable-stream/passthrough.js');
+
+// Backwards-compat with node 0.4.x
+Stream.Stream = Stream;
+
+
+
+// old-style streams.  Note that the pipe method (the only relevant
+// part of this class) is overridden in the Readable class.
+
+function Stream() {
+  EE.call(this);
+}
+
+Stream.prototype.pipe = function(dest, options) {
+  var source = this;
+
+  function ondata(chunk) {
+    if (dest.writable) {
+      if (false === dest.write(chunk) && source.pause) {
+        source.pause();
+      }
+    }
+  }
+
+  source.on('data', ondata);
+
+  function ondrain() {
+    if (source.readable && source.resume) {
+      source.resume();
+    }
+  }
+
+  dest.on('drain', ondrain);
+
+  // If the 'end' option is not supplied, dest.end() will be called when
+  // source gets the 'end' or 'close' events.  Only dest.end() once.
+  if (!dest._isStdio && (!options || options.end !== false)) {
+    source.on('end', onend);
+    source.on('close', onclose);
+  }
+
+  var didOnEnd = false;
+  function onend() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    dest.end();
+  }
+
+
+  function onclose() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    if (typeof dest.destroy === 'function') dest.destroy();
+  }
+
+  // don't leave dangling pipes when there are errors.
+  function onerror(er) {
+    cleanup();
+    if (EE.listenerCount(this, 'error') === 0) {
+      throw er; // Unhandled stream error in pipe.
+    }
+  }
+
+  source.on('error', onerror);
+  dest.on('error', onerror);
+
+  // remove all the event listeners that were added.
+  function cleanup() {
+    source.removeListener('data', ondata);
+    dest.removeListener('drain', ondrain);
+
+    source.removeListener('end', onend);
+    source.removeListener('close', onclose);
+
+    source.removeListener('error', onerror);
+    dest.removeListener('error', onerror);
+
+    source.removeListener('end', cleanup);
+    source.removeListener('close', cleanup);
+
+    dest.removeListener('close', cleanup);
+  }
+
+  source.on('end', cleanup);
+  source.on('close', cleanup);
+
+  dest.on('close', cleanup);
+
+  dest.emit('pipe', source);
+
+  // Allow for unix-like usage: A.pipe(B).pipe(C)
+  return dest;
+};
+
+},{"events":26,"inherits":30,"readable-stream/duplex.js":37,"readable-stream/passthrough.js":44,"readable-stream/readable.js":45,"readable-stream/transform.js":46,"readable-stream/writable.js":47}],49:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8409,7 +8963,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":19}],48:[function(require,module,exports){
+},{"buffer":21}],50:[function(require,module,exports){
 // A fast streaming parser library.
 
 var assert = require('assert');
@@ -8506,6 +9060,50 @@ var UINT16_BE = {
     }
 };
 exports.UINT16_BE = UINT16_BE;
+
+var UINT24_LE = {
+    len : 3,
+    get : function(buf, off) {
+        return buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16);
+    },
+    put : function(b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = v & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = (v >>> 16) & 0xff;
+
+        return (no - o) + this.len;
+    }
+};
+exports.UINT24_LE = UINT24_LE;
+
+var UINT24_BE = {
+    len : 3,
+    get : function (buf, off) {
+        return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2]
+    },
+    put : function(b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 16) & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = v & 0xff;
+
+        return (no - o) + this.len;
+    }
+};
+exports.UINT24_BE = UINT24_BE;
 
 var UINT32_LE = {
     len : 4,
@@ -8606,6 +9204,30 @@ var INT16_BE = {
     }
 };
 exports.INT16_BE = INT16_BE;
+
+var INT24_BE = {
+    len : 3,
+    get : function(buf, off)  {
+       var v = UINT24_BE.get(buf, off);
+        return ((v & 0x800000) === 0x800000) ?
+          (-0x800000 + (v & 0x7fffff)) : v;
+    },
+    put : function(b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= -0x800000 && v <= 0x7fffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 16) & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = v & 0xff;
+
+        return (no - o) + this.len;
+    }
+};
+exports.INT24_BE = INT24_BE;
 
 var INT32_BE = {
     len : 4,
@@ -8835,7 +9457,7 @@ var parse = function(s, cb) {
 };
 exports.parse = parse;
 
-},{"assert":14,"buffer":19}],49:[function(require,module,exports){
+},{"assert":16,"buffer":21}],51:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -8947,7 +9569,36 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":33,"stream":34}],50:[function(require,module,exports){
+},{"_process":36,"stream":48}],52:[function(require,module,exports){
+(function (Buffer){
+/**
+ * Convert a typed array to a Buffer without a copy
+ *
+ * Author:   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * License:  MIT
+ *
+ * `npm install typedarray-to-buffer`
+ */
+
+var isTypedArray = require('is-typedarray').strict
+
+module.exports = function typedarrayToBuffer (arr) {
+  if (isTypedArray(arr)) {
+    // To avoid a copy, use the typed array's underlying ArrayBuffer to back new Buffer
+    var buf = new Buffer(arr.buffer)
+    if (arr.byteLength !== arr.buffer.byteLength) {
+      // Respect the "view", i.e. byteOffset and byteLength, without doing a copy
+      buf = buf.slice(arr.byteOffset, arr.byteOffset + arr.byteLength)
+    }
+    return buf
+  } else {
+    // Pass through all other types to the `Buffer` constructor
+    return new Buffer(arr)
+  }
+}
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":21,"is-typedarray":33}],53:[function(require,module,exports){
 (function (global){
 
 /**
@@ -9018,16 +9669,16 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],51:[function(require,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],52:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"dup":30}],55:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],53:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9617,5 +10268,5 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":52,"_process":33,"inherits":51}]},{},[2])(2)
+},{"./support/isBuffer":55,"_process":36,"inherits":54}]},{},[2])(2)
 });

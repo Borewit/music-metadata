@@ -4,16 +4,16 @@ var mm = require('..')
 var test = require('tape')
 
 test('nonasciichars', function (t) {
-  t.plan(2)
+  t.plan(3)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/bug-non ascii chars.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/bug-non ascii chars.mp3'))
 
-  mm(sample, function (err, result) {
+  mm.parseStream(sample, function (err, result) {
     t.error(err)
-    t.strictEqual(result.common.artist[0],
-      'Janelle Monáe/Roman Gianarthur/Nate Wonder/Roman Gianarthur', 'artist')
+    t.deepEqual(result.common.artist, undefined, 'common.artist')
+    t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder', 'Roman Gianarthur'], 'common.artists')
     t.end()
   })
 })

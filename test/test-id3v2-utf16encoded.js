@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
@@ -10,11 +10,11 @@ test('id3v2.4', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2-utf16.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/id3v2-utf16.mp3'))
 
-  id3(sample, function (err, result) {
+  mm.parseStream(sample, function (err, result) {
     t.error(err)
     t.strictEqual(result.common.title, 'Redial (Feat. LeafRunner and Nowacking)', 'title')
-    t.strictEqual(result.common.artist[0], 'YourEnigma', 'artist 0')
-    t.strictEqual(result.common.year, '2014', 'year')
+    t.strictEqual(result.common.artist, 'YourEnigma', 'artist 0')
+    t.strictEqual(result.common.year, 2014, 'year')
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture 0 format')
     t.strictEqual(result.common.picture[0].data.length, 214219, 'picture 0 length')
     t.deepEqual(result.common.picture[0].data.slice(0, 2), new Buffer([0xFF, 0xD8]),

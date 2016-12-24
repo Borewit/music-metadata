@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "sourceMap":  true,
+    "inlineSources": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "allowJs": false,
+    "target": "es5",
+    "declaration": true,
+    "outDir": "lib/"
+  },
+  "include": [
+    "src/**/*.ts",
+    "typings/**/*.d.ts"
+  ]
+}
+

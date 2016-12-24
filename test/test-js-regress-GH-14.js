@@ -1,7 +1,7 @@
-var common = require('../lib/common')
+var common = require('../lib/common').default
 var test = require('tape')
 
-test('should be able to detect ftypmp42 as a valid mp4 header type', function (t) {
+test('should be able to detect ftypmp42 as a valid mp4 header headerType', function (t) {
   var buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32])
 
   var types = [
@@ -12,6 +12,6 @@ test('should be able to detect ftypmp42 as a valid mp4 header type', function (t
     }
   ]
 
-  t.equal(common.getParserForMediaType(types, buf), require('../lib/id4'), 'type')
+  t.equal(common.getParserForMediaType(types, buf), require('../lib/id4'), 'headerType')
   t.end()
 })

@@ -10,7 +10,7 @@ test('audio-frame-header-bug', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/audio-frame-header-bug.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/audio-frame-header-bug.mp3'))
 
-  mm(sample, { duration: true }, function (err, result) {
+  mm.parseStream(sample, { duration: true }, function (err, result) {
     t.error(err)
     t.strictEqual(result.format.duration, 200.59591666666665)
     t.end()

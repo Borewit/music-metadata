@@ -1,6 +1,6 @@
 var path = require('path')
 var fs = require('fs')
-var id3 = require('..')
+var mm = require('..')
 var test = require('tape')
 
 test('id3v2.4', function (t) {
@@ -10,7 +10,7 @@ test('id3v2.4', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/29 - Dominator.mp3')])
     : fs.createReadStream(path.join(__dirname, '/samples/29 - Dominator.mp3'))
 
-  id3(sample, function (err) {
+  mm.parseStream(sample, function (err) {
     t.error(err)
     t.end()
   })

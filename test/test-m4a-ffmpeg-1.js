@@ -10,7 +10,7 @@ test('error handling', function (t) {
     new window.Blob([fs.readFileSync(__dirname + '/samples/Simpsons01x01.m4a')])
     : fs.createReadStream(path.join(__dirname, '/samples/Simpsons01x01.m4a'))
 
-  mm(sample, function (err) {
+  mm.parseStream(sample, function (err) {
     t.error(err)
     t.end()
   })
