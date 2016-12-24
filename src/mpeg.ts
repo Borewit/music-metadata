@@ -359,8 +359,7 @@ export class MpegParser implements IStreamParser {
             this.fileSize((size) => {
               // subtract non audio stream data from duration calculation
               size = size - this.headerSize;
-              let bps = (header.bitrate ) / 8;
-              this.tagEvent('format', 'duration', size / bps);
+              this.tagEvent('format', 'duration', (size * 8) / header.bitrate);
               // cb(done())
               return this.done();
             });
