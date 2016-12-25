@@ -238,5 +238,5 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 [npm-image]: https://badge.fury.io/js/music-metadata.svg
 [npm-downloads-image]: http://img.shields.io/npm/dm/music-metadata.svg
 
-[travis-url]: https://travis-ci.org/profile/Borewit/music-metadata
+[travis-url]: https://travis-ci.org/Borewit/music-metadata
 [travis-image]: https://travis-ci.org/Borewit/music-metadata.svg?branch=master
