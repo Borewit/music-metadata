@@ -206,15 +206,16 @@ parser.on('TLEN', function (result) {
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
 ```javascript
-mm(fs.createReadStream('sample.mp3'), { duration: true }, function (err, metadata) {
-
+var audioStream = fs.createReadStream('sample.mp3');
+mm(audioStream, { duration: true }, function (err, metadata) {
+  audioStream.close();
 });
 ```
 
 Note that in order to read the duration for streams that are not file streams, in some cases you should pass the size of the file in bytes.
 ```javascript
-mm(fs.createReadStream('sample.mp3'), { duration: true, fileSize: 26838 }, function (err, metadata) {
-
+mm.parseStream(noFileStream, { duration: true, fileSize: 26838 }, function (err, metadata) {
+  audioStream.close();
 });
 ```
 
