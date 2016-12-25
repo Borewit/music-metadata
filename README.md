@@ -54,7 +54,7 @@ mm.parseStream(audioStream, {native: true}, function (err, metadata) {
 #### TypeScript
 ```TypeScript
 import * as fs from 'fs'
-import * as mm from '..'
+import * as mm from 'music-metadata'
 import * as util from 'util'
 
 let audioStream = fs.createReadStream('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
