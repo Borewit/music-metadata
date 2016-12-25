@@ -215,7 +215,7 @@ mm(audioStream, { duration: true }, function (err, metadata) {
 Note that in order to read the duration for streams that are not file streams, in some cases you should pass the size of the file in bytes.
 ```javascript
 mm.parseStream(noFileStream, { duration: true, fileSize: 26838 }, function (err, metadata) {
-  audioStream.close();
+  noFileStream.close();
 });
 ```
 
