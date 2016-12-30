@@ -111,6 +111,9 @@ class MpegFrameHeader {
     this.emphasis = common.getBitAllignedNumber(buf, off + 3, 7, 2);
 
     this.version = MpegFrameHeader.VersionID[this.versionIndex];
+    if(this.version === null)
+      throw new Error('Invalid MPEG Audio version');
+
     this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
     this.samplingRate = this.calcSamplingRate();
 

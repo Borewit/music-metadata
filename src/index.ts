@@ -49,7 +49,7 @@ export interface ICommonTagsResult {
   producer?: string[],
   djmixer?: string[],
   mixer?: string[],
-  label?: string[],
+  label?: string,
   grouping?: string[],
   subtitle?: string[],
   discsubtitle?: string[],
@@ -60,7 +60,7 @@ export interface ICommonTagsResult {
   bpm?: string,
   mood?: string,
   media?: string,
-  catalognumber?: string[],
+  catalognumber?: string,
   show?: string,
   showsort?: string,
   podcast?: string,
@@ -262,8 +262,20 @@ class MusicMetadataParser {
     let streamParser: IStreamParser;
     let self = this;
 
+    // ToDo: expose warnings to API
+    let warning: string[] = [];
+
     function tagCallback(headerType, tag, value) {
-      if (value === null) return;
+      if (value === null) {
+        warning.push('tag ' + tag + ' is null');
+        return
+      }
+
+      if (value === '') {
+        warning.push('tag ' + tag + ' is empty');
+        return
+      }
+
 
       if (headerType === 'format') {
         metadata.format[tag] = value;
