@@ -7,4 +7,5 @@ install:
 - npm install
 - typings install
 script:
+- tslint --version
 - npm run verify
