@@ -6,9 +6,9 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var equal = require('deep-equal');
-var strtok = require('strtok2');
-var common_1 = require('./common');
+var equal = require("deep-equal");
+var strtok = require("strtok2");
+var common_1 = require("./common");
 var State = (function () {
     function State(nextState, size) {
         this.nextState = nextState;
@@ -29,37 +29,37 @@ var AsfParser = (function () {
             return currentState.getExpectedType();
         });
     };
-    AsfParser.headerType = 'asf';
-    AsfParser.startState = {
-        parse: function () {
-            return AsfParser.idState;
-        },
-        getExpectedType: function () {
-            return strtok.DONE; // unreachable statement
-        }
-    };
-    AsfParser.finishedState = {
-        parse: function () {
-            return AsfParser.finishedState;
-        },
-        getExpectedType: function () {
-            return strtok.DONE;
-        }
-    };
-    AsfParser.idState = {
-        parse: function (callback, data, done) {
-            if (!equal(common_1.default.asfGuidBuf, data)) {
-                done(new Error('expected asf header but was not found'));
-                return AsfParser.finishedState;
-            }
-            return new HeaderDataState();
-        },
-        getExpectedType: function () {
-            return new strtok.BufferType(common_1.default.asfGuidBuf.length);
-        }
-    };
     return AsfParser;
 }());
+AsfParser.headerType = 'asf';
+AsfParser.startState = {
+    parse: function () {
+        return AsfParser.idState;
+    },
+    getExpectedType: function () {
+        return strtok.DONE; // unreachable statement
+    }
+};
+AsfParser.finishedState = {
+    parse: function () {
+        return AsfParser.finishedState;
+    },
+    getExpectedType: function () {
+        return strtok.DONE;
+    }
+};
+AsfParser.idState = {
+    parse: function (callback, data, done) {
+        if (!equal(common_1.default.asfGuidBuf, data)) {
+            done(new Error('expected asf header but was not found'));
+            return AsfParser.finishedState;
+        }
+        return new HeaderDataState();
+    },
+    getExpectedType: function () {
+        return new strtok.BufferType(common_1.default.asfGuidBuf.length);
+    }
+};
 var Util = (function () {
     function Util() {
     }
@@ -92,17 +92,17 @@ var Util = (function () {
         var maxuint32 = Math.pow(2, 32);
         return ((low * maxuint32) + (high >>> 0));
     };
-    Util.attributeParsers = [
-        Util.parseUnicodeAttr,
-        Util.parseByteArrayAttr,
-        Util.parseBoolAttr,
-        Util.parseDWordAttr,
-        Util.parseQWordAttr,
-        Util.parseWordAttr,
-        Util.parseByteArrayAttr
-    ];
     return Util;
 }());
+Util.attributeParsers = [
+    Util.parseUnicodeAttr,
+    Util.parseByteArrayAttr,
+    Util.parseBoolAttr,
+    Util.parseDWordAttr,
+    Util.parseQWordAttr,
+    Util.parseWordAttr,
+    Util.parseByteArrayAttr
+];
 var ReadObjectState = (function () {
     function ReadObjectState(size, objectCount) {
         this.size = size;
@@ -129,38 +129,39 @@ var ReadObjectState = (function () {
     ReadObjectState.prototype.getExpectedType = function () {
         return new strtok.BufferType(24);
     };
-    ReadObjectState.guidStates = [
-        {
-            guid: new Buffer([
-                0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
-                0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
-            ]),
-            getState: function (nextState, size) {
-                return new FilePropertiesObject(nextState, size);
-            }
-        },
-        // ContentDescriptionObject
-        {
-            guid: new Buffer([
-                0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-                0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-            ]),
-            getState: function (nextState, size) {
-                return new ContentDescriptionObjectState(nextState, size);
-            }
-        },
-        // ExtendedContentDescriptionObject
-        {
-            guid: new Buffer([
-                0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
-                0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
-            ]),
-            getState: function (nextState, size) {
-                return new ExtendedContentDescriptionObjectState(nextState, size);
-            }
-        }];
     return ReadObjectState;
 }());
+ReadObjectState.guidStates = [
+    {
+        guid: new Buffer([
+            0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
+            0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
+        ]),
+        getState: function (nextState, size) {
+            return new FilePropertiesObject(nextState, size);
+        }
+    },
+    // ContentDescriptionObject
+    {
+        guid: new Buffer([
+            0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+            0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+        ]),
+        getState: function (nextState, size) {
+            return new ContentDescriptionObjectState(nextState, size);
+        }
+    },
+    // ExtendedContentDescriptionObject
+    {
+        guid: new Buffer([
+            0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
+            0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
+        ]),
+        getState: function (nextState, size) {
+            return new ExtendedContentDescriptionObjectState(nextState, size);
+        }
+    }
+];
 var HeaderDataState = (function () {
     function HeaderDataState() {
     }
@@ -180,7 +181,7 @@ var HeaderDataState = (function () {
 var IgnoreObjectState = (function (_super) {
     __extends(IgnoreObjectState, _super);
     function IgnoreObjectState(nextState, size) {
-        _super.call(this, nextState, size);
+        return _super.call(this, nextState, size) || this;
     }
     IgnoreObjectState.prototype.parse = function (callback, data, done) {
         if (this.nextState === AsfParser.finishedState) {
@@ -196,7 +197,7 @@ var IgnoreObjectState = (function (_super) {
 var ContentDescriptionObjectState = (function (_super) {
     __extends(ContentDescriptionObjectState, _super);
     function ContentDescriptionObjectState(nextState, size) {
-        _super.call(this, nextState, size);
+        return _super.call(this, nextState, size) || this;
     }
     ContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
         var lengths = [
@@ -225,17 +226,17 @@ var ContentDescriptionObjectState = (function (_super) {
     ContentDescriptionObjectState.prototype.getExpectedType = function () {
         return new strtok.BufferType(this.size);
     };
-    ContentDescriptionObjectState.guid = new Buffer([
-        0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-        0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-    ]);
-    ContentDescriptionObjectState.contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
     return ContentDescriptionObjectState;
 }(State));
+ContentDescriptionObjectState.guid = new Buffer([
+    0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+    0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+]);
+ContentDescriptionObjectState.contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
 var ExtendedContentDescriptionObjectState = (function (_super) {
     __extends(ExtendedContentDescriptionObjectState, _super);
     function ExtendedContentDescriptionObjectState(nextState, size) {
-        _super.call(this, nextState, size);
+        return _super.call(this, nextState, size) || this;
     }
     ExtendedContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
         var attrCount = data.readUInt16LE(0);
@@ -272,7 +273,7 @@ var ExtendedContentDescriptionObjectState = (function (_super) {
 var FilePropertiesObject = (function (_super) {
     __extends(FilePropertiesObject, _super);
     function FilePropertiesObject(nextState, size) {
-        _super.call(this, nextState, size);
+        return _super.call(this, nextState, size) || this;
     }
     FilePropertiesObject.prototype.parse = function (callback, data, done) {
         // in miliseconds
@@ -295,10 +296,10 @@ module.exports = AsfParser.getInstance();
 (function (process,Buffer){
 'use strict';
 /*jslint browser: true*/
-var through = require('through');
-var musicMetadata = require('./index');
-var readStream = require('filereader-stream');
-var isStream = require('is-stream');
+var through = require("through");
+var musicMetadata = require("./index");
+var readStream = require("filereader-stream");
+var isStream = require("is-stream");
 module.exports = function (stream, opts, callback) {
     return musicMetadata.parseStream(wrapFileWithStream(stream), opts, callback);
 };
@@ -344,8 +345,8 @@ function wrapArrayBufferWithStream(arrayBuffer, throughStream) {
 },{"./index":9,"_process":36,"buffer":21,"filereader-stream":27,"is-stream":32,"through":51}],3:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var equal = require('deep-equal');
-var windows1252decoder_1 = require('./windows1252decoder');
+var equal = require("deep-equal");
+var windows1252decoder_1 = require("./windows1252decoder");
 var Common = (function () {
     function Common() {
     }
@@ -525,75 +526,75 @@ var Common = (function () {
     Common.isBitSet = function (buf, byteOffset, bitOffset) {
         return Common.getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
     };
-    // ToDo: move to ASF
-    Common.asfGuidBuf = new Buffer([
-        0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-        0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-    ]);
-    Common.strtokUINT24_BE = {
-        get: function (buf, off) {
-            return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
-        },
-        len: 3
-    };
-    Common.strtokBITSET = {
-        get: function (buf, off, bit) {
-            return (buf[off] & (1 << bit)) !== 0;
-        },
-        len: 1
-    };
-    Common.strtokUINT32_LE = {
-        len: 4,
-        get: function (buf, off) {
-            // Shifting the MSB by 24 directly causes it to go negative if its
-            // last bit is high, so we instead shift by 23 and multiply by 2.
-            // Also, using binary OR to count the MSB if its last bit is high
-            // causes the value to go negative. Use addition there.
-            return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
-                ((buf[off + 3] << 23) * 2);
-        }
-    };
-    Common.GENRES = [
-        'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
-        'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
-        'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
-        'Euro-Techno', 'Ambient', 'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance',
-        'Classical', 'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel', 'Noise',
-        'Alt. Rock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative', 'Instrumental Pop',
-        'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave', 'Techno-Industrial',
-        'Electronic', 'Pop-Folk', 'Eurodance', 'Dream', 'Southern Rock', 'Comedy', 'Cult',
-        'Gangsta Rap', 'Top 40', 'Christian Rap', 'Pop/Funk', 'Jungle', 'Native American',
-        'Cabaret', 'New Wave', 'Psychedelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
-        'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll', 'Hard Rock',
-        'Folk', 'Folk/Rock', 'National Folk', 'Swing', 'Fast-Fusion', 'Bebob', 'Latin', 'Revival',
-        'Celtic', 'Bluegrass', 'Avantgarde', 'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock',
-        'Symphonic Rock', 'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
-        'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony', 'Booty Bass', 'Primus',
-        'Porn Groove', 'Satire', 'Slow Jam', 'Club', 'Tango', 'Samba', 'Folklore',
-        'Ballad', 'Power Ballad', 'Rhythmic Soul', 'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo',
-        'A Cappella', 'Euro-House', 'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House',
-        'Hardcore', 'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
-        'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover', 'Contemporary Christian',
-        'Christian Rock', 'Merengue', 'Salsa', 'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
-        'Abstract', 'Art Rock', 'Baroque', 'Bhangra', 'Big Beat', 'Breakbeat', 'Chillout',
-        'Downtempo', 'Dub', 'EBM', 'Eclectic', 'Electro', 'Electroclash', 'Emo', 'Experimental',
-        'Garage', 'Global', 'IDM', 'Illbient', 'Industro-Goth', 'Jam Band', 'Krautrock',
-        'Leftfield', 'Lounge', 'Math Rock', 'New Romantic', 'Nu-Breakz', 'Post-Punk', 'Post-Rock',
-        'Psytrance', 'Shoegaze', 'Space Rock', 'Trop Rock', 'World Music', 'Neoclassical', 'Audiobook',
-        'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
-        'Garage Rock', 'Psybient'
-    ];
     return Common;
 }());
+// ToDo: move to ASF
+Common.asfGuidBuf = new Buffer([
+    0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+    0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+]);
+Common.strtokUINT24_BE = {
+    get: function (buf, off) {
+        return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
+    },
+    len: 3
+};
+Common.strtokBITSET = {
+    get: function (buf, off, bit) {
+        return (buf[off] & (1 << bit)) !== 0;
+    },
+    len: 1
+};
+Common.strtokUINT32_LE = {
+    len: 4,
+    get: function (buf, off) {
+        // Shifting the MSB by 24 directly causes it to go negative if its
+        // last bit is high, so we instead shift by 23 and multiply by 2.
+        // Also, using binary OR to count the MSB if its last bit is high
+        // causes the value to go negative. Use addition there.
+        return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
+            ((buf[off + 3] << 23) * 2);
+    }
+};
+Common.GENRES = [
+    'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
+    'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
+    'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
+    'Euro-Techno', 'Ambient', 'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance',
+    'Classical', 'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel', 'Noise',
+    'Alt. Rock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative', 'Instrumental Pop',
+    'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave', 'Techno-Industrial',
+    'Electronic', 'Pop-Folk', 'Eurodance', 'Dream', 'Southern Rock', 'Comedy', 'Cult',
+    'Gangsta Rap', 'Top 40', 'Christian Rap', 'Pop/Funk', 'Jungle', 'Native American',
+    'Cabaret', 'New Wave', 'Psychedelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
+    'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll', 'Hard Rock',
+    'Folk', 'Folk/Rock', 'National Folk', 'Swing', 'Fast-Fusion', 'Bebob', 'Latin', 'Revival',
+    'Celtic', 'Bluegrass', 'Avantgarde', 'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock',
+    'Symphonic Rock', 'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
+    'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony', 'Booty Bass', 'Primus',
+    'Porn Groove', 'Satire', 'Slow Jam', 'Club', 'Tango', 'Samba', 'Folklore',
+    'Ballad', 'Power Ballad', 'Rhythmic Soul', 'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo',
+    'A Cappella', 'Euro-House', 'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House',
+    'Hardcore', 'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
+    'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover', 'Contemporary Christian',
+    'Christian Rock', 'Merengue', 'Salsa', 'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
+    'Abstract', 'Art Rock', 'Baroque', 'Bhangra', 'Big Beat', 'Breakbeat', 'Chillout',
+    'Downtempo', 'Dub', 'EBM', 'Eclectic', 'Electro', 'Electroclash', 'Emo', 'Experimental',
+    'Garage', 'Global', 'IDM', 'Illbient', 'Industro-Goth', 'Jam Band', 'Krautrock',
+    'Leftfield', 'Lounge', 'Math Rock', 'New Romantic', 'Nu-Breakz', 'Post-Punk', 'Post-Rock',
+    'Psytrance', 'Shoegaze', 'Space Rock', 'Trop Rock', 'World Music', 'Neoclassical', 'Audiobook',
+    'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
+    'Garage Rock', 'Psybient'
+];
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Common;
 
 }).call(this,require("buffer").Buffer)
 },{"./id3v1":5,"./windows1252decoder":15,"buffer":21,"deep-equal":23}],4:[function(require,module,exports){
 'use strict';
-var strtok = require('strtok2');
-var common_1 = require('./common');
-var vorbis_1 = require('./vorbis');
+var strtok = require("strtok2");
+var common_1 = require("./common");
+var vorbis_1 = require("./vorbis");
 var FlacParser = (function () {
     function FlacParser() {
     }
@@ -607,9 +608,9 @@ var FlacParser = (function () {
             return currentState.getExpectedType();
         });
     };
-    FlacParser.headerType = 'vorbis';
     return FlacParser;
 }());
+FlacParser.headerType = 'vorbis';
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
  * ref: https://xiph.org/flac/format.html#metadata_block
@@ -627,56 +628,56 @@ var BlockType;
 var Metadata = (function () {
     function Metadata() {
     }
-    Metadata.BlockHeader = {
-        len: 4,
-        get: function (buf, off) {
-            return {
-                lastBlock: common_1.default.strtokBITSET.get(buf, off, 7),
-                type: common_1.default.getBitAllignedNumber(buf, off, 1, 7),
-                length: common_1.default.strtokUINT24_BE.get(buf, off + 1)
-            };
-        }
-    };
-    /**
-     * METADATA_BLOCK_DATA
-     * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
-     */
-    Metadata.BlockStreamInfo = {
-        len: 34,
-        get: function (buf, off) {
-            return {
-                // The minimum block size (in samples) used in the stream.
-                minimumBlockSize: strtok.UINT16_BE.get(buf, off),
-                // The maximum block size (in samples) used in the stream.
-                // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-                maximumBlockSize: strtok.UINT16_BE.get(buf, off + 2) / 1000,
-                // The minimum frame size (in bytes) used in the stream.
-                // May be 0 to imply the value is not known.
-                minimumFrameSize: strtok.UINT24_BE.get(buf, off + 4),
-                // The maximum frame size (in bytes) used in the stream.
-                // May be 0 to imply the value is not known.
-                maximumFrameSize: strtok.UINT24_BE.get(buf, off + 7),
-                // Sample rate in Hz. Though 20 bits are available,
-                // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
-                // Also, a value of 0 is invalid.
-                sampleRate: common_1.default.strtokUINT24_BE.get(buf, off + 10) >> 4,
-                // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
-                // (number of channels)-1. FLAC supports from 1 to 8 channels
-                channels: common_1.default.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
-                // bits per sample)-1.
-                // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
-                bitsPerSample: common_1.default.getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
-                // Total samples in stream.
-                // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
-                // A value of zero here means the number of total samples is unknown.
-                totalSamples: common_1.default.getBitAllignedNumber(buf, off + 13, 4, 36),
-                // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-                fileMD5: new strtok.BufferType(16).get(buf, off + 18)
-            };
-        }
-    };
     return Metadata;
 }());
+Metadata.BlockHeader = {
+    len: 4,
+    get: function (buf, off) {
+        return {
+            lastBlock: common_1.default.strtokBITSET.get(buf, off, 7),
+            type: common_1.default.getBitAllignedNumber(buf, off, 1, 7),
+            length: common_1.default.strtokUINT24_BE.get(buf, off + 1)
+        };
+    }
+};
+/**
+ * METADATA_BLOCK_DATA
+ * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
+ */
+Metadata.BlockStreamInfo = {
+    len: 34,
+    get: function (buf, off) {
+        return {
+            // The minimum block size (in samples) used in the stream.
+            minimumBlockSize: strtok.UINT16_BE.get(buf, off),
+            // The maximum block size (in samples) used in the stream.
+            // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
+            maximumBlockSize: strtok.UINT16_BE.get(buf, off + 2) / 1000,
+            // The minimum frame size (in bytes) used in the stream.
+            // May be 0 to imply the value is not known.
+            minimumFrameSize: strtok.UINT24_BE.get(buf, off + 4),
+            // The maximum frame size (in bytes) used in the stream.
+            // May be 0 to imply the value is not known.
+            maximumFrameSize: strtok.UINT24_BE.get(buf, off + 7),
+            // Sample rate in Hz. Though 20 bits are available,
+            // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
+            // Also, a value of 0 is invalid.
+            sampleRate: common_1.default.strtokUINT24_BE.get(buf, off + 10) >> 4,
+            // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
+            // (number of channels)-1. FLAC supports from 1 to 8 channels
+            channels: common_1.default.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
+            // bits per sample)-1.
+            // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
+            bitsPerSample: common_1.default.getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
+            // Total samples in stream.
+            // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
+            // A value of zero here means the number of total samples is unknown.
+            totalSamples: common_1.default.getBitAllignedNumber(buf, off + 13, 4, 36),
+            // the MD5 hash of the file (see notes for usage... it's a littly tricky)
+            fileMD5: new strtok.BufferType(16).get(buf, off + 18)
+        };
+    }
+};
 var DataDecoder = (function () {
     function DataDecoder(data) {
         this.data = data;
@@ -790,9 +791,9 @@ module.exports = FlacParser.getInstance();
 
 },{"./common":3,"./vorbis":14,"strtok2":50}],5:[function(require,module,exports){
 'use strict';
-var strtok = require('strtok2');
-var common_1 = require('./common');
-var mpeg_1 = require('./mpeg');
+var strtok = require("strtok2");
+var common_1 = require("./common");
+var mpeg_1 = require("./mpeg");
 var Id3v1Parser = (function () {
     function Id3v1Parser() {
         this.type = 'id3v1.1';
@@ -852,11 +853,11 @@ module.exports = Id3v1Parser.getInstance();
 
 },{"./common":3,"./mpeg":11,"strtok2":50}],6:[function(require,module,exports){
 "use strict";
-var strtok = require('strtok2');
-var util_1 = require('util');
-var common_1 = require('./common');
-var id3v2_frames_1 = require('./id3v2_frames');
-var mpeg_1 = require('./mpeg');
+var strtok = require("strtok2");
+var util_1 = require("util");
+var common_1 = require("./common");
+var id3v2_frames_1 = require("./id3v2_frames");
+var mpeg_1 = require("./mpeg");
 var State;
 (function (State) {
     State[State["header"] = 0] = "header";
@@ -868,66 +869,66 @@ var State;
 var ID3v2 = (function () {
     function ID3v2() {
     }
-    /**
-     * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.
-     * 4 * %0xxxxxxx
-     */
-    ID3v2.UINT32SYNCSAFE = {
-        get: function (buf, off) {
-            return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
-                ((buf[off + 1]) << 14) | ((buf[off]) << 21);
-        },
-        len: 4
-    };
-    /**
-     * ID3v2 header
-     * Ref: http://id3.org/id3v2.3.0#ID3v2_header
-     * ToDo
-     */
-    ID3v2.Header = {
-        len: 10,
-        get: function (buf, off) {
-            return {
-                // ID3v2/file identifier   "ID3"
-                fileIdentifier: new strtok.StringType(3, 'ascii').get(buf, off),
-                // ID3v2 versionIndex
-                version: {
-                    major: strtok.INT8.get(buf, off + 3),
-                    revision: strtok.INT8.get(buf, off + 4)
-                },
-                // ID3v2 flags
-                flags: {
-                    // Raw flags value
-                    raw: strtok.INT8.get(buf, off + 4),
-                    // Unsynchronisation
-                    unsynchronisation: common_1.default.strtokBITSET.get(buf, off + 5, 7),
-                    // Extended header
-                    isExtendedHeader: common_1.default.strtokBITSET.get(buf, off + 5, 6),
-                    // Experimental indicator
-                    expIndicator: common_1.default.strtokBITSET.get(buf, off + 5, 5),
-                    footer: common_1.default.strtokBITSET.get(buf, off + 5, 4)
-                },
-                size: ID3v2.UINT32SYNCSAFE.get(buf, off + 6)
-            };
-        }
-    };
-    ID3v2.ExtendedHeader = {
-        len: 10,
-        get: function (buf, off) {
-            return {
-                // Extended header size
-                size: strtok.UINT32_BE.get(buf, off),
-                // Extended Flags
-                extendedFlags: strtok.UINT16_BE.get(buf, off + 4),
-                // Size of padding
-                sizeOfPadding: strtok.UINT32_BE.get(buf, off + 6),
-                // CRC data present
-                crcDataPresent: common_1.default.strtokBITSET.get(buf, off + 4, 31)
-            };
-        }
-    };
     return ID3v2;
 }());
+/**
+ * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.
+ * 4 * %0xxxxxxx
+ */
+ID3v2.UINT32SYNCSAFE = {
+    get: function (buf, off) {
+        return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
+            ((buf[off + 1]) << 14) | ((buf[off]) << 21);
+    },
+    len: 4
+};
+/**
+ * ID3v2 header
+ * Ref: http://id3.org/id3v2.3.0#ID3v2_header
+ * ToDo
+ */
+ID3v2.Header = {
+    len: 10,
+    get: function (buf, off) {
+        return {
+            // ID3v2/file identifier   "ID3"
+            fileIdentifier: new strtok.StringType(3, 'ascii').get(buf, off),
+            // ID3v2 versionIndex
+            version: {
+                major: strtok.INT8.get(buf, off + 3),
+                revision: strtok.INT8.get(buf, off + 4)
+            },
+            // ID3v2 flags
+            flags: {
+                // Raw flags value
+                raw: strtok.INT8.get(buf, off + 4),
+                // Unsynchronisation
+                unsynchronisation: common_1.default.strtokBITSET.get(buf, off + 5, 7),
+                // Extended header
+                isExtendedHeader: common_1.default.strtokBITSET.get(buf, off + 5, 6),
+                // Experimental indicator
+                expIndicator: common_1.default.strtokBITSET.get(buf, off + 5, 5),
+                footer: common_1.default.strtokBITSET.get(buf, off + 5, 4)
+            },
+            size: ID3v2.UINT32SYNCSAFE.get(buf, off + 6)
+        };
+    }
+};
+ID3v2.ExtendedHeader = {
+    len: 10,
+    get: function (buf, off) {
+        return {
+            // Extended header size
+            size: strtok.UINT32_BE.get(buf, off),
+            // Extended Flags
+            extendedFlags: strtok.UINT16_BE.get(buf, off + 4),
+            // Size of padding
+            sizeOfPadding: strtok.UINT32_BE.get(buf, off + 6),
+            // CRC data present
+            crcDataPresent: common_1.default.strtokBITSET.get(buf, off + 4, 31)
+        };
+    }
+};
 var Id3v2Parser = (function () {
     function Id3v2Parser() {
         this.state = State.header;
@@ -1105,9 +1106,9 @@ module.exports = Id3v2Parser.getInstance();
 },{"./common":3,"./id3v2_frames":7,"./mpeg":11,"strtok2":50,"util":56}],7:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var strtok = require('strtok2');
-var common_1 = require('./common');
-var vorbis_1 = require('./vorbis');
+var strtok = require("strtok2");
+var common_1 = require("./common");
+var vorbis_1 = require("./vorbis");
 var FrameParser = (function () {
     function FrameParser() {
     }
@@ -1226,7 +1227,7 @@ var FrameParser = (function () {
      */
     FrameParser.functionList = function (entries) {
         var res = {};
-        for (var i = 0; i < entries.length; i += 2) {
+        for (var i = 0; i + 1 < entries.length; i += 2) {
             var names = entries[i + 1].split(',');
             res[entries[i]] = res.hasOwnProperty(entries[i]) ? res[entries[i]].concat(names) : names;
         }
@@ -1279,8 +1280,8 @@ exports.default = FrameParser;
 },{"./common":3,"./vorbis":14,"buffer":21,"strtok2":50}],8:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var strtok = require('strtok2');
-var common_1 = require('./common');
+var strtok = require("strtok2");
+var common_1 = require("./common");
 var State;
 (function (State) {
     State[State["skip"] = -1] = "skip";
@@ -1405,17 +1406,17 @@ var Id4Parser = (function () {
                 throw new Error('Unexpected type: ' + type);
         }
     };
-    Id4Parser.type = 'm4a';
-    Id4Parser.Types = {
-        0: 'uint8',
-        1: 'text',
-        13: 'jpeg',
-        14: 'png',
-        21: 'uint8'
-    };
-    Id4Parser.ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
     return Id4Parser;
 }());
+Id4Parser.type = 'm4a';
+Id4Parser.Types = {
+    0: 'uint8',
+    1: 'text',
+    13: 'jpeg',
+    14: 'png',
+    21: 'uint8'
+};
+Id4Parser.ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
 module.exports = Id4Parser.getInstance();
 
 }).call(this,require("buffer").Buffer)
@@ -1423,12 +1424,12 @@ module.exports = Id4Parser.getInstance();
 (function (process,Buffer){
 /* jshint maxlen: 300 */
 'use strict';
-var events = require('events');
-var fs = require('fs');
-var strtok = require('strtok2');
-var through = require('through');
-var common_1 = require('./common');
-var tagmap_1 = require('./tagmap');
+var events = require("events");
+var fs = require("fs");
+var strtok = require("strtok2");
+var through = require("through");
+var common_1 = require("./common");
+var tagmap_1 = require("./tagmap");
 var MusicMetadataParser = (function () {
     function MusicMetadataParser() {
         this.tagMap = new tagmap_1.default();
@@ -1494,9 +1495,17 @@ var MusicMetadataParser = (function () {
         var hasReadData = false;
         var streamParser;
         var self = this;
+        // ToDo: expose warnings to API
+        var warning = [];
         function tagCallback(headerType, tag, value) {
-            if (value === null)
+            if (value === null) {
+                warning.push('tag ' + tag + ' is null');
                 return;
+            }
+            if (value === '') {
+                warning.push('tag ' + tag + ' is empty');
+                return;
+            }
             if (headerType === 'format') {
                 metadata.format[tag] = value;
             }
@@ -1549,28 +1558,28 @@ var MusicMetadataParser = (function () {
         function onClose() {
             done(new Error('Unexpected end of stream'));
         }
-        function done(exception) {
+        function done(err) {
             isDone = true;
             istream.removeListener('close', onClose);
-            /**
-             * If MusicBrainz defined artists, the artist may be a single combined field,
-             * otherwise artist may contain multiple artists.
-             */
-            if (metadata.common.artists && metadata.common.artists.length > 0) {
-                metadata.common.artist = metadata.common.artist[0];
-            }
-            else {
-                if (metadata.common.artist) {
-                    metadata.common.artists = metadata.common.artist;
-                    if (metadata.common.artist.length > 1) {
-                        delete metadata.common.artist;
-                    }
-                    else {
-                        metadata.common.artist = metadata.common.artist[0];
+            if (!err) {
+                /**
+                 * If MusicBrainz defined artists, the artist may be a single combined field,
+                 * otherwise artist may contain multiple artists.
+                 */
+                if (metadata.common.artists && metadata.common.artists.length > 0) {
+                    metadata.common.artist = metadata.common.artist[0];
+                }
+                else {
+                    if (metadata.common.artist) {
+                        metadata.common.artists = metadata.common.artist;
+                        if (metadata.common.artist.length > 1) {
+                            delete metadata.common.artist;
+                        }
+                        else {
+                            metadata.common.artist = metadata.common.artist[0];
+                        }
                     }
                 }
-            }
-            if (!exception) {
                 // We only emit aliased events once the 'done' event has been raised,
                 // this is because an alias like 'artist' could have values split
                 // over many data chunks.
@@ -1581,7 +1590,7 @@ var MusicMetadataParser = (function () {
                 }
             }
             if (callback) {
-                callback(exception, metadata);
+                callback(err, metadata);
             }
             return strtok.DONE;
         }
@@ -1718,40 +1727,40 @@ var MusicMetadataParser = (function () {
         }
         return { format: newFormat, data: picture.data };
     };
-    MusicMetadataParser.headerTypes = [
-        {
-            buf: common_1.default.asfGuidBuf,
-            tag: require('./asf')
-        },
-        {
-            buf: new Buffer('ID3'),
-            tag: require('./id3v2')
-        },
-        {
-            buf: new Buffer('ftypM4A'),
-            tag: require('./id4'),
-            offset: 4
-        },
-        {
-            buf: new Buffer('ftypmp42'),
-            tag: require('./id4'),
-            offset: 4
-        },
-        {
-            buf: new Buffer('OggS'),
-            tag: require('./ogg')
-        },
-        {
-            buf: new Buffer('fLaC'),
-            tag: require('./flac')
-        },
-        {
-            buf: new Buffer('MAC'),
-            tag: require('./monkeysaudio')
-        }
-    ];
     return MusicMetadataParser;
 }());
+MusicMetadataParser.headerTypes = [
+    {
+        buf: common_1.default.asfGuidBuf,
+        tag: require('./asf')
+    },
+    {
+        buf: new Buffer('ID3'),
+        tag: require('./id3v2')
+    },
+    {
+        buf: new Buffer('ftypM4A'),
+        tag: require('./id4'),
+        offset: 4
+    },
+    {
+        buf: new Buffer('ftypmp42'),
+        tag: require('./id4'),
+        offset: 4
+    },
+    {
+        buf: new Buffer('OggS'),
+        tag: require('./ogg')
+    },
+    {
+        buf: new Buffer('fLaC'),
+        tag: require('./flac')
+    },
+    {
+        buf: new Buffer('MAC'),
+        tag: require('./monkeysaudio')
+    }
+];
 /**
  * Parse audio stream
  * @param stream
@@ -1770,8 +1779,8 @@ exports.parseStream = parseStream;
 },{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":12,"./tagmap":13,"_process":36,"buffer":21,"events":26,"fs":19,"strtok2":50,"through":51}],10:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var strtok = require('strtok2');
-var common_1 = require('./common');
+var strtok = require("strtok2");
+var common_1 = require("./common");
 var DataType;
 (function (DataType) {
     DataType[DataType["text_utf8"] = 0] = "text_utf8";
@@ -1799,87 +1808,87 @@ var Structure = (function () {
     Structure.isBitSet = function (num, bit) {
         return (num & 1 << bit) !== 0;
     };
-    /**
-     * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
-     */
-    Structure.DescriptorParser = {
-        len: 52,
-        get: function (buf, off) {
-            return {
-                // should equal 'MAC '
-                ID: new strtok.StringType(4, 'ascii').get(buf, off),
-                // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-                version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
-                // the number of descriptor bytes (allows later expansion of this header)
-                descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
-                // the number of header APE_HEADER bytes
-                headerBytes: strtok.UINT32_LE.get(buf, off + 12),
-                // the number of header APE_HEADER bytes
-                seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
-                // the number of header data bytes (from original file)
-                headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
-                // the number of bytes of APE frame data
-                apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
-                // the high order number of APE frame data bytes
-                apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
-                // the terminating data of the file (not including tag data)
-                terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
-                // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-                fileMD5: new strtok.BufferType(16).get(buf, off + 36)
-            };
-        }
-    };
-    /**
-     * APE_HEADER: describes all of the necessary information about the APE file
-     */
-    Structure.Header = {
-        len: 24,
-        get: function (buf, off) {
-            return {
-                // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-                compressionLevel: strtok.UINT16_LE.get(buf, off),
-                // any format flags (for future use)
-                formatFlags: strtok.UINT16_LE.get(buf, off + 2),
-                // the number of audio blocks in one frame
-                blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
-                // the number of audio blocks in the final frame
-                finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
-                // the total number of frames
-                totalFrames: strtok.UINT32_LE.get(buf, off + 12),
-                // the bits per sample (typically 16)
-                bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
-                // the number of channels (1 or 2)
-                channel: strtok.UINT16_LE.get(buf, off + 18),
-                // the sample rate (typically 44100)
-                sampleRate: strtok.UINT32_LE.get(buf, off + 20)
-            };
-        }
-    };
-    /**
-     * TAG: describes all the properties of the file [optional]
-     */
-    Structure.TagFooter = {
-        len: 32,
-        get: function (buf, off) {
-            return {
-                // should equal 'APETAGEX'
-                ID: new strtok.StringType(8, 'ascii').get(buf, off),
-                // equals CURRENT_APE_TAG_VERSION
-                version: strtok.UINT32_LE.get(buf, off + 8),
-                // the complete size of the tag, including this footer (excludes header)
-                size: strtok.UINT32_LE.get(buf, off + 12),
-                // the number of fields in the tag
-                fields: strtok.UINT32_LE.get(buf, off + 16),
-                // reserved for later use (must be zero)
-                reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
-            };
-        }
-    };
-    Structure.TagField = function (footer) {
-        return new strtok.BufferType(footer.size - Structure.TagFooter.len);
-    };
     return Structure;
 }());
+/**
+ * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
+ */
+Structure.DescriptorParser = {
+    len: 52,
+    get: function (buf, off) {
+        return {
+            // should equal 'MAC '
+            ID: new strtok.StringType(4, 'ascii').get(buf, off),
+            // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
+            version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
+            // the number of descriptor bytes (allows later expansion of this header)
+            descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
+            // the number of header APE_HEADER bytes
+            headerBytes: strtok.UINT32_LE.get(buf, off + 12),
+            // the number of header APE_HEADER bytes
+            seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
+            // the number of header data bytes (from original file)
+            headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
+            // the number of bytes of APE frame data
+            apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
+            // the high order number of APE frame data bytes
+            apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
+            // the terminating data of the file (not including tag data)
+            terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
+            // the MD5 hash of the file (see notes for usage... it's a littly tricky)
+            fileMD5: new strtok.BufferType(16).get(buf, off + 36)
+        };
+    }
+};
+/**
+ * APE_HEADER: describes all of the necessary information about the APE file
+ */
+Structure.Header = {
+    len: 24,
+    get: function (buf, off) {
+        return {
+            // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
+            compressionLevel: strtok.UINT16_LE.get(buf, off),
+            // any format flags (for future use)
+            formatFlags: strtok.UINT16_LE.get(buf, off + 2),
+            // the number of audio blocks in one frame
+            blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
+            // the number of audio blocks in the final frame
+            finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
+            // the total number of frames
+            totalFrames: strtok.UINT32_LE.get(buf, off + 12),
+            // the bits per sample (typically 16)
+            bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
+            // the number of channels (1 or 2)
+            channel: strtok.UINT16_LE.get(buf, off + 18),
+            // the sample rate (typically 44100)
+            sampleRate: strtok.UINT32_LE.get(buf, off + 20)
+        };
+    }
+};
+/**
+ * TAG: describes all the properties of the file [optional]
+ */
+Structure.TagFooter = {
+    len: 32,
+    get: function (buf, off) {
+        return {
+            // should equal 'APETAGEX'
+            ID: new strtok.StringType(8, 'ascii').get(buf, off),
+            // equals CURRENT_APE_TAG_VERSION
+            version: strtok.UINT32_LE.get(buf, off + 8),
+            // the complete size of the tag, including this footer (excludes header)
+            size: strtok.UINT32_LE.get(buf, off + 12),
+            // the number of fields in the tag
+            fields: strtok.UINT32_LE.get(buf, off + 16),
+            // reserved for later use (must be zero)
+            reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
+        };
+    }
+};
+Structure.TagField = function (footer) {
+    return new strtok.BufferType(footer.size - Structure.TagFooter.len);
+};
 var ApeParser = (function () {
     function ApeParser() {
         this.type = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
@@ -2009,8 +2018,8 @@ module.exports = ApeParser.getInstance();
 },{"./common":3,"buffer":21,"strtok2":50}],11:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var strtok = require('strtok2');
-var common_1 = require('./common');
+var strtok = require("strtok2");
+var common_1 = require("./common");
 var State;
 (function (State) {
     State[State["mpegSearchSync1"] = 1] = "mpegSearchSync1";
@@ -2053,6 +2062,8 @@ var MpegFrameHeader = (function () {
         // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
         this.emphasis = common_1.default.getBitAllignedNumber(buf, off + 3, 7, 2);
         this.version = MpegFrameHeader.VersionID[this.versionIndex];
+        if (this.version === null)
+            throw new Error('Invalid MPEG Audio version');
         this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
         this.samplingRate = this.calcSamplingRate();
         var bitrateInKbps = this.calcBitrate();
@@ -2109,34 +2120,34 @@ var MpegFrameHeader = (function () {
             return null; // 'reserved'
         return MpegFrameHeader.sampling_rate_freq_index[this.version][this.sampRateFreqIndex];
     };
-    MpegFrameHeader.SyncByte1 = 0xFF;
-    MpegFrameHeader.SyncByte2 = 0xE0;
-    MpegFrameHeader.VersionID = [2.5, null, 2, 1];
-    MpegFrameHeader.LayerDescription = [null, 3, 2, 1];
-    MpegFrameHeader.ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
-    MpegFrameHeader.bitrate_index = {
-        0x01: { 11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8 },
-        0x02: { 11: 64, 12: 48, 13: 40, 21: 48, 22: 16, 23: 16 },
-        0x03: { 11: 96, 12: 56, 13: 48, 21: 56, 22: 24, 23: 24 },
-        0x04: { 11: 128, 12: 64, 13: 56, 21: 64, 22: 32, 23: 32 },
-        0x05: { 11: 160, 12: 80, 13: 64, 21: 80, 22: 40, 23: 40 },
-        0x06: { 11: 192, 12: 96, 13: 80, 21: 96, 22: 48, 23: 48 },
-        0x07: { 11: 224, 12: 112, 13: 96, 21: 112, 22: 56, 23: 56 },
-        0x08: { 11: 256, 12: 128, 13: 112, 21: 128, 22: 64, 23: 64 },
-        0x09: { 11: 288, 12: 160, 13: 128, 21: 144, 22: 80, 23: 80 },
-        0x0A: { 11: 320, 12: 192, 13: 160, 21: 160, 22: 96, 23: 96 },
-        0x0B: { 11: 352, 12: 224, 13: 192, 21: 176, 22: 112, 23: 112 },
-        0x0C: { 11: 384, 12: 256, 13: 224, 21: 192, 22: 128, 23: 128 },
-        0x0D: { 11: 416, 12: 320, 13: 256, 21: 224, 22: 144, 23: 144 },
-        0x0E: { 11: 448, 12: 384, 13: 320, 21: 256, 22: 160, 23: 160 }
-    };
-    MpegFrameHeader.sampling_rate_freq_index = {
-        1: { 0x00: 44100, 0x01: 48000, 0x02: 32000 },
-        2: { 0x00: 22050, 0x01: 24000, 0x02: 16000 },
-        2.5: { 0x00: 11025, 0x01: 12000, 0x02: 8000 }
-    };
     return MpegFrameHeader;
 }());
+MpegFrameHeader.SyncByte1 = 0xFF;
+MpegFrameHeader.SyncByte2 = 0xE0;
+MpegFrameHeader.VersionID = [2.5, null, 2, 1];
+MpegFrameHeader.LayerDescription = [null, 3, 2, 1];
+MpegFrameHeader.ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
+MpegFrameHeader.bitrate_index = {
+    0x01: { 11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8 },
+    0x02: { 11: 64, 12: 48, 13: 40, 21: 48, 22: 16, 23: 16 },
+    0x03: { 11: 96, 12: 56, 13: 48, 21: 56, 22: 24, 23: 24 },
+    0x04: { 11: 128, 12: 64, 13: 56, 21: 64, 22: 32, 23: 32 },
+    0x05: { 11: 160, 12: 80, 13: 64, 21: 80, 22: 40, 23: 40 },
+    0x06: { 11: 192, 12: 96, 13: 80, 21: 96, 22: 48, 23: 48 },
+    0x07: { 11: 224, 12: 112, 13: 96, 21: 112, 22: 56, 23: 56 },
+    0x08: { 11: 256, 12: 128, 13: 112, 21: 128, 22: 64, 23: 64 },
+    0x09: { 11: 288, 12: 160, 13: 128, 21: 144, 22: 80, 23: 80 },
+    0x0A: { 11: 320, 12: 192, 13: 160, 21: 160, 22: 96, 23: 96 },
+    0x0B: { 11: 352, 12: 224, 13: 192, 21: 176, 22: 112, 23: 112 },
+    0x0C: { 11: 384, 12: 256, 13: 224, 21: 192, 22: 128, 23: 128 },
+    0x0D: { 11: 416, 12: 320, 13: 256, 21: 224, 22: 144, 23: 144 },
+    0x0E: { 11: 448, 12: 384, 13: 320, 21: 256, 22: 160, 23: 160 }
+};
+MpegFrameHeader.sampling_rate_freq_index = {
+    1: { 0x00: 44100, 0x01: 48000, 0x02: 32000 },
+    2: { 0x00: 22050, 0x01: 24000, 0x02: 16000 },
+    2.5: { 0x00: 11025, 0x01: 12000, 0x02: 8000 }
+};
 /**
  * MPEG Audio Layer I/II/III
  */
@@ -2146,50 +2157,50 @@ var MpegAudioLayer = (function () {
     MpegAudioLayer.getVbrCodecProfile = function (vbrScale) {
         return 'V' + (100 - vbrScale) / 10;
     };
-    MpegAudioLayer.FrameHeader = {
-        len: 4,
-        get: function (buf, off) {
-            return new MpegFrameHeader(buf, off);
-        }
-    };
-    /**
-     * Info Tag
-     * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
-     */
-    MpegAudioLayer.InfoTag = {
-        len: 140,
-        get: function (buf, off) {
-            return {
-                // 4 bytes for Header Tag
-                headerTag: new strtok.StringType(4, 'ascii').get(buf, off),
-                // 4 bytes for HeaderFlags
-                headerFlags: new strtok.BufferType(4).get(buf, off + 4),
-                // 100 bytes for entry (NUMTOCENTRIES)
-                // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
-                // FRAME SIZE
-                // frameSize: strtok.UINT32_BE.get(buf, off + 108),
-                numFrames: strtok.UINT32_BE.get(buf, off + 8),
-                numToCentries: new strtok.BufferType(100).get(buf, off + 108),
-                // the number of header APE_HEADER bytes
-                streamSize: strtok.UINT32_BE.get(buf, off + 112),
-                // the number of header data bytes (from original file)
-                vbrScale: strtok.UINT32_BE.get(buf, off + 116),
-                /**
-                 * LAME Tag, extends the Xing header format
-                 * First added in LAME 3.12 for VBR
-                 * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
-                 */
-                //  Initial LAME info, e.g.: LAME3.99r
-                encoder: new strtok.StringType(9, 'ascii').get(buf, off + 120),
-                //  Info Tag
-                infoTag: strtok.UINT8.get(buf, off + 129) >> 4,
-                // VBR method
-                vbrMethod: strtok.UINT8.get(buf, off + 129) & 0xf
-            };
-        }
-    };
     return MpegAudioLayer;
 }());
+MpegAudioLayer.FrameHeader = {
+    len: 4,
+    get: function (buf, off) {
+        return new MpegFrameHeader(buf, off);
+    }
+};
+/**
+ * Info Tag
+ * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
+ */
+MpegAudioLayer.InfoTag = {
+    len: 140,
+    get: function (buf, off) {
+        return {
+            // 4 bytes for Header Tag
+            headerTag: new strtok.StringType(4, 'ascii').get(buf, off),
+            // 4 bytes for HeaderFlags
+            headerFlags: new strtok.BufferType(4).get(buf, off + 4),
+            // 100 bytes for entry (NUMTOCENTRIES)
+            // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
+            // FRAME SIZE
+            // frameSize: strtok.UINT32_BE.get(buf, off + 108),
+            numFrames: strtok.UINT32_BE.get(buf, off + 8),
+            numToCentries: new strtok.BufferType(100).get(buf, off + 108),
+            // the number of header APE_HEADER bytes
+            streamSize: strtok.UINT32_BE.get(buf, off + 112),
+            // the number of header data bytes (from original file)
+            vbrScale: strtok.UINT32_BE.get(buf, off + 116),
+            /**
+             * LAME Tag, extends the Xing header format
+             * First added in LAME 3.12 for VBR
+             * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
+             */
+            //  Initial LAME info, e.g.: LAME3.99r
+            encoder: new strtok.StringType(9, 'ascii').get(buf, off + 120),
+            //  Info Tag
+            infoTag: strtok.UINT8.get(buf, off + 129) >> 4,
+            // VBR method
+            vbrMethod: strtok.UINT8.get(buf, off + 129) & 0xf
+        };
+    }
+};
 var MpegParser = (function () {
     function MpegParser(headerSize) {
         this.frameCount = 0;
@@ -2205,7 +2216,14 @@ var MpegParser = (function () {
         this.readDuration = readDuration;
         this.fileSize = fileSize;
         this.state = State.mpegSearchSync1;
-        strtok.parse(stream, function (v, cb) { return _this.strParse(v, cb); });
+        strtok.parse(stream, function (v, cb) {
+            try {
+                return _this.strParse(v, cb);
+            }
+            catch (error) {
+                return done(error);
+            }
+        });
     };
     MpegParser.prototype.end = function (callback, done) {
         if (this.calculateVbrDuration) {
@@ -2286,8 +2304,7 @@ var MpegParser = (function () {
                         this.fileSize(function (size) {
                             // subtract non audio stream data from duration calculation
                             size = size - _this.headerSize;
-                            var bps = (header_1.bitrate) / 8;
-                            _this.tagEvent('format', 'duration', size / bps);
+                            _this.tagEvent('format', 'duration', (size * 8) / header_1.bitrate);
                             // cb(done())
                             return _this.done();
                         });
@@ -2378,10 +2395,10 @@ exports.MpegParser = MpegParser;
 },{"./common":3,"buffer":21,"strtok2":50}],12:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var events = require('events');
-var strtok = require('strtok2');
-var common_1 = require('./common');
-var vorbis_1 = require('./vorbis');
+var events = require("events");
+var strtok = require("strtok2");
+var common_1 = require("./common");
+var vorbis_1 = require("./vorbis");
 var State;
 (function (State) {
     State[State["header"] = 0] = "header";
@@ -2520,24 +2537,24 @@ var OggParser = (function () {
         callback('format', 'duration', this.header.pcm_sample_pos / this.formatInfo.sampleRate);
         done();
     };
-    OggParser.Header = {
-        len: 27,
-        get: function (buf, off) {
-            return {
-                type: new strtok.StringType(4, 'ascii').get(buf, off + 0),
-                version: buf.readUInt8(off + 4),
-                packet_flag: buf.readUInt8(off + 5),
-                pcm_sample_pos: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
-                stream_serial_num: strtok.UINT32_LE.get(buf, off + 14),
-                page_number: strtok.UINT32_LE.get(buf, off + 18),
-                check_sum: strtok.UINT32_LE.get(buf, off + 22),
-                segments: buf.readUInt8(off + 26)
-            };
-        }
-    };
-    OggParser.headerType = 'vorbis';
     return OggParser;
 }());
+OggParser.Header = {
+    len: 27,
+    get: function (buf, off) {
+        return {
+            type: new strtok.StringType(4, 'ascii').get(buf, off + 0),
+            version: buf.readUInt8(off + 4),
+            packet_flag: buf.readUInt8(off + 5),
+            pcm_sample_pos: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
+            stream_serial_num: strtok.UINT32_LE.get(buf, off + 14),
+            page_number: strtok.UINT32_LE.get(buf, off + 18),
+            check_sum: strtok.UINT32_LE.get(buf, off + 22),
+            segments: buf.readUInt8(off + 26)
+        };
+    }
+};
+OggParser.headerType = 'vorbis';
 module.exports = OggParser.getInstance();
 
 }).call(this,require("buffer").Buffer)
@@ -2621,520 +2638,520 @@ var TagMap = (function () {
         }
         return this.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag];
     };
-    TagMap.commonTags = {
-        year: { multiple: false },
-        track: { multiple: false },
-        disk: { multiple: false },
-        title: { multiple: false },
-        artist: { multiple: false },
-        artists: { multiple: true },
-        albumartist: { multiple: false },
-        album: { multiple: false },
-        date: { multiple: false },
-        originaldate: { multiple: false },
-        originalyear: { multiple: false },
-        comment: { multiple: true },
-        genre: { multiple: true },
-        picture: { multiple: true },
-        composer: { multiple: true },
-        lyrics: { multiple: true },
-        albumsort: { multiple: false },
-        titlesort: { multiple: false },
-        work: { multiple: false },
-        artistsort: { multiple: false },
-        albumartistsort: { multiple: false },
-        composersort: { multiple: true },
-        lyricist: { multiple: true },
-        writer: { multiple: true },
-        conductor: { multiple: true },
-        remixer: { multiple: true },
-        arranger: { multiple: true },
-        engineer: { multiple: true },
-        producer: { multiple: true },
-        djmixer: { multiple: true },
-        mixer: { multiple: true },
-        label: { multiple: false },
-        grouping: { multiple: false },
-        subtitle: { multiple: false },
-        discsubtitle: { multiple: false },
-        totaltracks: { multiple: false },
-        totaldiscs: { multiple: false },
-        compilation: { multiple: false },
-        _rating: { multiple: false },
-        bpm: { multiple: false },
-        mood: { multiple: false },
-        media: { multiple: false },
-        catalognumber: { multiple: false },
-        show: { multiple: false },
-        showsort: { multiple: false },
-        podcast: { multiple: false },
-        podcasturl: { multiple: false },
-        releasestatus: { multiple: false },
-        releasetype: { multiple: true },
-        releasecountry: { multiple: false },
-        script: { multiple: false },
-        language: { multiple: false },
-        copyright: { multiple: false },
-        license: { multiple: false },
-        encodedby: { multiple: false },
-        encodersettings: { multiple: false },
-        gapless: { multiple: false },
-        barcode: { multiple: false },
-        isrc: { multiple: false },
-        asin: { multiple: false },
-        musicbrainz_recordingid: { multiple: false },
-        musicbrainz_trackid: { multiple: false },
-        musicbrainz_albumid: { multiple: false },
-        musicbrainz_artistid: { multiple: true },
-        musicbrainz_albumartistid: { multiple: true },
-        musicbrainz_releasegroupid: { multiple: false },
-        musicbrainz_workid: { multiple: false },
-        musicbrainz_trmid: { multiple: false },
-        musicbrainz_discid: { multiple: false },
-        acoustid_id: { multiple: false },
-        acoustid_fingerprint: { multiple: false },
-        musicip_puid: { multiple: false },
-        musicip_fingerprint: { multiple: false },
-        website: { multiple: false },
-        'performer:instrument': { multiple: true },
-        averageLevel: { multiple: false },
-        peakLevel: { multiple: false },
-        notes: { multiple: true }
-    };
-    /**
-     * Mapping from native header format to one or possibly more 'common' entries
-     * The common entries aim to read the same information from different media files
-     * independent of the underlying format
-     */
-    TagMap.vorbis = {
-        TITLE: 'title',
-        ARTIST: 'artist',
-        ARTISTS: 'artists',
-        ALBUMARTIST: 'albumartist',
-        ALBUM: 'album',
-        DATE: 'date',
-        ORIGINALDATE: 'originaldate',
-        ORIGINALYEAR: 'originalyear',
-        COMMENT: 'comment',
-        TRACKNUMBER: 'track',
-        DISCNUMBER: 'disk',
-        GENRE: 'genre',
-        METADATA_BLOCK_PICTURE: 'picture',
-        COMPOSER: 'composer',
-        LYRICS: 'lyrics',
-        ALBUMSORT: 'albumsort',
-        TITLESORT: 'titlesort',
-        WORK: 'work',
-        ARTISTSORT: 'artistsort',
-        ALBUMARTISTSORT: 'albumartistsort',
-        COMPOSERSORT: 'composersort',
-        LYRICIST: 'lyricist',
-        WRITER: 'writer',
-        CONDUCTOR: 'conductor',
-        // 'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
-        REMIXER: 'remixer',
-        ARRANGER: 'arranger',
-        ENGINEER: 'engineer',
-        PRODUCER: 'producer',
-        DJMIXER: 'djmixer',
-        MIXER: 'mixer',
-        LABEL: 'label',
-        GROUPING: 'grouping',
-        SUBTITLE: 'subtitle',
-        DISCSUBTITLE: 'discsubtitle',
-        TRACKTOTAL: 'totaltracks',
-        DISCTOTAL: 'totaldiscs',
-        COMPILATION: 'compilation',
-        'RATING:user@email': '_rating',
-        BPM: 'bpm',
-        MOOD: 'mood',
-        MEDIA: 'media',
-        CATALOGNUMBER: 'catalognumber',
-        RELEASESTATUS: 'releasestatus',
-        RELEASETYPE: 'releasetype',
-        RELEASECOUNTRY: 'releasecountry',
-        SCRIPT: 'script',
-        LANGUAGE: 'language',
-        COPYRIGHT: 'copyright',
-        LICENSE: 'license',
-        ENCODEDBY: 'encodedby',
-        ENCODERSETTINGS: 'encodersettings',
-        BARCODE: 'barcode',
-        ISRC: 'isrc',
-        ASIN: 'asin',
-        MUSICBRAINZ_TRACKID: 'musicbrainz_recordingid',
-        MUSICBRAINZ_RELEASETRACKID: 'musicbrainz_trackid',
-        MUSICBRAINZ_ALBUMID: 'musicbrainz_albumid',
-        MUSICBRAINZ_ARTISTID: 'musicbrainz_artistid',
-        MUSICBRAINZ_ALBUMARTISTID: 'musicbrainz_albumartistid',
-        MUSICBRAINZ_RELEASEGROUPID: 'musicbrainz_releasegroupid',
-        MUSICBRAINZ_WORKID: 'musicbrainz_workid',
-        MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
-        MUSICBRAINZ_DISCID: 'musicbrainz_discid',
-        ACOUSTID_ID: 'acoustid_id',
-        ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
-        MUSICIP_PUID: 'musicip_puid',
-        // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
-        WEBSITE: 'website',
-        NOTES: 'notes',
-        TOTALTRACKS: 'totaltracks',
-        TOTALDISCS: 'totaldiscs'
-    };
-    TagMap.id3v1_1 = {
-        title: 'title',
-        artist: 'artist',
-        album: 'album',
-        year: 'year',
-        comment: 'comment',
-        track: 'track',
-        genre: 'genre'
-    };
-    TagMap.id3v2_2 = {
-        TT2: 'title',
-        TP1: 'artist',
-        TP2: 'albumartist',
-        TAL: 'album',
-        TYE: 'year',
-        COM: 'comment',
-        TRK: 'track',
-        TPA: 'disk',
-        TCO: 'genre',
-        PIC: 'picture',
-        TCM: 'composer',
-        TOR: 'originaldate',
-        TOT: 'work',
-        TXT: 'lyricist',
-        TP3: 'conductor',
-        TPB: 'label',
-        TT1: 'grouping',
-        TT3: 'subtitle',
-        TLA: 'language',
-        TCR: 'copyright',
-        WCP: 'license',
-        TEN: 'encodedby',
-        TSS: 'encodersettings',
-        WAR: 'website'
-    };
-    TagMap.id3v2_3 = {
-        // id3v2.3
-        TIT2: 'title',
-        TPE1: 'artist',
-        'TXXX:Artists': 'artists',
-        TPE2: 'albumartist',
-        TALB: 'album',
-        TDRV: 'date',
-        /**
-         * Original release year
-         */
-        TORY: 'originalyear',
-        'COMM:description': 'comment',
-        TPOS: 'disk',
-        TCON: 'genre',
-        APIC: 'picture',
-        TCOM: 'composer',
-        'USLT:description': 'lyrics',
-        TSOA: 'albumsort',
-        TSOT: 'titlesort',
-        TOAL: 'work',
-        TSOP: 'artistsort',
-        TSO2: 'albumartistsort',
-        TSOC: 'composersort',
-        TEXT: 'lyricist',
-        'TXXX:Writer': 'writer',
-        TPE3: 'conductor',
-        // 'IPLS:instrument': 'performer:instrument', // ToDo
-        TPE4: 'remixer',
-        'IPLS:arranger': 'arranger',
-        'IPLS:engineer': 'engineer',
-        'IPLS:producer': 'producer',
-        'IPLS:DJ-mix': 'djmixer',
-        'IPLS:mix': 'mixer',
-        TPUB: 'label',
-        TIT1: 'grouping',
-        TIT3: 'subtitle',
-        TRCK: 'track',
-        TCMP: 'compilation',
-        POPM: '_rating',
-        TBPM: 'bpm',
-        TMED: 'media',
-        'TXXX:CATALOGNUMBER': 'catalognumber',
-        'TXXX:MusicBrainz Album Status': 'releasestatus',
-        'TXXX:MusicBrainz Album Type': 'releasetype',
-        'TXXX:MusicBrainz Album Release Country': 'releasecountry',
-        'TXXX:SCRIPT': 'script',
-        TLAN: 'language',
-        TCOP: 'copyright',
-        WCOP: 'license',
-        TENC: 'encodedby',
-        TSSE: 'encodersettings',
-        'TXXX:BARCODE': 'barcode',
-        TSRC: 'isrc',
-        'TXXX:ASIN': 'asin',
-        'TXXX:originalyear': 'originalyear',
-        'UFID:http://musicbrainz.org': 'musicbrainz_recordingid',
-        'TXXX:MusicBrainz Release Track Id': 'musicbrainz_trackid',
-        'TXXX:MusicBrainz Album Id': 'musicbrainz_albumid',
-        'TXXX:MusicBrainz Artist Id': 'musicbrainz_artistid',
-        'TXXX:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-        'TXXX:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
-        'TXXX:MusicBrainz Work Id': 'musicbrainz_workid',
-        'TXXX:MusicBrainz TRM Id': 'musicbrainz_trmid',
-        'TXXX:MusicBrainz Disc Id': 'musicbrainz_discid',
-        'TXXX:Acoustid Id': 'acoustid_id',
-        'TXXX:Acoustid Fingerprint': 'acoustid_fingerprint',
-        'TXXX:MusicIP PUID': 'musicip_puid',
-        'TXXX:MusicMagic Fingerprint': 'musicip_fingerprint',
-        WOAR: 'website',
-        // id3v2.4
-        TDRC: 'date',
-        TYER: 'year',
-        TDOR: 'originaldate',
-        // 'TMCL:instrument': 'performer:instrument',
-        'TIPL:arranger': 'arranger',
-        'TIPL:engineer': 'engineer',
-        'TIPL:producer': 'producer',
-        'TIPL:DJ-mix': 'djmixer',
-        'TIPL:mix': 'mixer',
-        TMOO: 'mood',
-        // additional mappings:
-        SYLT: 'lyrics',
-        // Windows Media Player
-        'PRIV:AverageLevel': 'averageLevel',
-        'PRIV:PeakLevel': 'peakLevel'
-    };
-    // ToDo: capitalization tricky
-    TagMap.ape = {
-        // MusicBrainz tag mappings:
-        Title: 'title',
-        Artist: 'artist',
-        Artists: 'artists',
-        'Album Artist': 'albumartist',
-        Album: 'album',
-        Year: 'date',
-        Originalyear: 'originalyear',
-        Originaldate: 'originaldate',
-        Comment: 'comment',
-        Track: 'track',
-        Disc: 'disk',
-        DISCNUMBER: 'disk',
-        Genre: 'genre',
-        'Cover Art (Front)': 'picture',
-        'Cover Art (Back)': 'picture',
-        Composer: 'composer',
-        Lyrics: 'lyrics',
-        ALBUMSORT: 'albumsort',
-        TITLESORT: 'titlesort',
-        WORK: 'work',
-        ARTISTSORT: 'artistsort',
-        ALBUMARTISTSORT: 'albumartistsort',
-        COMPOSERSORT: 'composersort',
-        Lyricist: 'lyricist',
-        Writer: 'writer',
-        Conductor: 'conductor',
-        // 'Performer=artist (instrument)': 'performer:instrument',
-        MixArtist: 'remixer',
-        Arranger: 'arranger',
-        Engineer: 'engineer',
-        Producer: 'producer',
-        DJMixer: 'djmixer',
-        Mixer: 'mixer',
-        Label: 'label',
-        Grouping: 'grouping',
-        Subtitle: 'subtitle',
-        DiscSubtitle: 'discsubtitle',
-        Compilation: 'compilation',
-        BPM: 'bpm',
-        Mood: 'mood',
-        Media: 'media',
-        CatalogNumber: 'catalognumber',
-        MUSICBRAINZ_ALBUMSTATUS: 'releasestatus',
-        MUSICBRAINZ_ALBUMTYPE: 'releasetype',
-        RELEASECOUNTRY: 'releasecountry',
-        Script: 'script',
-        Language: 'language',
-        Copyright: 'copyright',
-        LICENSE: 'license',
-        EncodedBy: 'encodedby',
-        EncoderSettings: 'encodersettings',
-        Barcode: 'barcode',
-        ISRC: 'isrc',
-        ASIN: 'asin',
-        MUSICBRAINZ_TRACKID: 'musicbrainz_recordingid',
-        MUSICBRAINZ_RELEASETRACKID: 'musicbrainz_trackid',
-        MUSICBRAINZ_ALBUMID: 'musicbrainz_albumid',
-        MUSICBRAINZ_ARTISTID: 'musicbrainz_artistid',
-        MUSICBRAINZ_ALBUMARTISTID: 'musicbrainz_albumartistid',
-        MUSICBRAINZ_RELEASEGROUPID: 'musicbrainz_releasegroupid',
-        MUSICBRAINZ_WORKID: 'musicbrainz_workid',
-        MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
-        MUSICBRAINZ_DISCID: 'musicbrainz_discid',
-        ACOUSTID_ID: 'acoustid_id',
-        ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
-        MUSICIP_PUID: 'musicip_puid',
-        Weblink: 'website'
-    };
-    // ToDo: capitalization tricky
-    TagMap.asf = {
-        // MusicBrainz tag mappings:
-        Title: 'title',
-        Author: 'artist',
-        'WM/AlbumArtist': 'albumartist',
-        'WM/AlbumTitle': 'album',
-        'WM/Year': 'year',
-        'WM/OriginalReleaseTime': 'originaldate',
-        'WM/OriginalReleaseYear': 'originalyear',
-        Description: 'comment',
-        'WM/TrackNumber': 'track',
-        'WM/PartOfSet': 'disk',
-        'WM/Genre': 'genre',
-        'WM/Composer': 'composer',
-        'WM/Lyrics': 'lyrics',
-        'WM/AlbumSortOrder': 'albumsort',
-        'WM/TitleSortOrder': 'titlesort',
-        'WM/ArtistSortOrder': 'artistsort',
-        'WM/AlbumArtistSortOrder': 'albumartistsort',
-        'WM/ComposerSortOrder': 'composersort',
-        'WM/Writer': 'lyricist',
-        'WM/Conductor': 'conductor',
-        'WM/ModifiedBy': 'remixer',
-        'WM/Engineer': 'engineer',
-        'WM/Producer': 'producer',
-        'WM/DJMixer': 'djmixer',
-        'WM/Mixer': 'mixer',
-        'WM/Publisher': 'label',
-        'WM/ContentGroupDescription': 'grouping',
-        'WM/SubTitle': 'subtitle',
-        'WM/SetSubTitle': 'discsubtitle',
-        // 'WM/PartOfSet': 'totaldiscs',
-        'WM/IsCompilation': 'compilation',
-        'WM/SharedUserRating': '_rating',
-        'WM/BeatsPerMinute': 'bpm',
-        'WM/Mood': 'mood',
-        'WM/Media': 'media',
-        'WM/CatalogNo': 'catalognumber',
-        'MusicBrainz/Album Status': 'releasestatus',
-        'MusicBrainz/Album Type': 'releasetype',
-        'MusicBrainz/Album Release Country': 'releasecountry',
-        'WM/Script': 'script',
-        'WM/Language': 'language',
-        Copyright: 'copyright',
-        LICENSE: 'license',
-        'WM/EncodedBy': 'encodedby',
-        'WM/EncodingSettings': 'encodersettings',
-        'WM/Barcode': 'barcode',
-        'WM/ISRC': 'isrc',
-        'MusicBrainz/Track Id': 'musicbrainz_recordingid',
-        'MusicBrainz/Release Track Id': 'musicbrainz_trackid',
-        'MusicBrainz/Album Id': 'musicbrainz_albumid',
-        'MusicBrainz/Artist Id': 'musicbrainz_artistid',
-        'MusicBrainz/Album Artist Id': 'musicbrainz_albumartistid',
-        'MusicBrainz/Release Group Id': 'musicbrainz_releasegroupid',
-        'MusicBrainz/Work Id': 'musicbrainz_workid',
-        'MusicBrainz/TRM Id': 'musicbrainz_trmid',
-        'MusicBrainz/Disc Id': 'musicbrainz_discid',
-        'Acoustid/Id': 'acoustid_id',
-        'Acoustid/Fingerprint': 'acoustid_fingerprint',
-        'MusicIP/PUID': 'musicip_puid'
-    };
-    TagMap.m4a = {
-        '©nam': 'title',
-        '©ART': 'artist',
-        aART: 'albumartist',
-        '©alb': 'album',
-        '©day': 'date',
-        '©cmt': 'comment',
-        trkn: 'track',
-        disk: 'disk',
-        '©gen': 'genre',
-        covr: 'picture',
-        '©wrt': 'composer',
-        '©lyr': 'lyrics',
-        soal: 'albumsort',
-        sonm: 'titlesort',
-        soar: 'artistsort',
-        soaa: 'albumartistsort',
-        soco: 'composersort',
-        '----:com.apple.iTunes:LYRICIST': 'lyricist',
-        '----:com.apple.iTunes:CONDUCTOR': 'conductor',
-        '----:com.apple.iTunes:REMIXER': 'remixer',
-        '----:com.apple.iTunes:ENGINEER': 'engineer',
-        '----:com.apple.iTunes:PRODUCER': 'producer',
-        '----:com.apple.iTunes:DJMIXER': 'djmixer',
-        '----:com.apple.iTunes:MIXER': 'mixer',
-        '----:com.apple.iTunes:LABEL': 'label',
-        '©grp': 'grouping',
-        '----:com.apple.iTunes:SUBTITLE': 'subtitle',
-        '----:com.apple.iTunes:DISCSUBTITLE': 'discsubtitle',
-        cpil: 'compilation',
-        tmpo: 'bpm',
-        '----:com.apple.iTunes:MOOD': 'mood',
-        '----:com.apple.iTunes:MEDIA': 'media',
-        '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
-        tvsh: 'show',
-        sosn: 'showsort',
-        pcst: 'podcast',
-        purl: 'podcasturl',
-        '----:com.apple.iTunes:MusicBrainz Album Status': 'releasestatus',
-        '----:com.apple.iTunes:MusicBrainz Album Type': 'releasetype',
-        '----:com.apple.iTunes:MusicBrainz Album Release Country': 'releasecountry',
-        '----:com.apple.iTunes:SCRIPT': 'script',
-        '----:com.apple.iTunes:LANGUAGE': 'language',
-        cprt: 'copyright',
-        '----:com.apple.iTunes:LICENSE': 'license',
-        '©too': 'encodedby',
-        pgap: 'gapless',
-        '----:com.apple.iTunes:BARCODE': 'barcode',
-        '----:com.apple.iTunes:ISRC': 'isrc',
-        '----:com.apple.iTunes:ASIN': 'asin',
-        '----:com.apple.iTunes:MusicBrainz Track Id': 'musicbrainz_recordingid',
-        '----:com.apple.iTunes:MusicBrainz Release Track Id': 'musicbrainz_trackid',
-        '----:com.apple.iTunes:MusicBrainz Album Id': 'musicbrainz_albumid',
-        '----:com.apple.iTunes:MusicBrainz Artist Id': 'musicbrainz_artistid',
-        '----:com.apple.iTunes:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
-        '----:com.apple.iTunes:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
-        '----:com.apple.iTunes:MusicBrainz Work Id': 'musicbrainz_workid',
-        '----:com.apple.iTunes:MusicBrainz TRM Id': 'musicbrainz_trmid',
-        '----:com.apple.iTunes:MusicBrainz Disc Id': 'musicbrainz_discid',
-        '----:com.apple.iTunes:Acoustid Id': 'acoustid_id',
-        '----:com.apple.iTunes:Acoustid Fingerprint': 'acoustid_fingerprint',
-        '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
-        '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
-        // Additional mappings:
-        gnre: 'genre' // ToDo: check mapping
-    };
     return TagMap;
 }());
+TagMap.commonTags = {
+    year: { multiple: false },
+    track: { multiple: false },
+    disk: { multiple: false },
+    title: { multiple: false },
+    artist: { multiple: false },
+    artists: { multiple: true },
+    albumartist: { multiple: false },
+    album: { multiple: false },
+    date: { multiple: false },
+    originaldate: { multiple: false },
+    originalyear: { multiple: false },
+    comment: { multiple: true },
+    genre: { multiple: true },
+    picture: { multiple: true },
+    composer: { multiple: true },
+    lyrics: { multiple: true },
+    albumsort: { multiple: false },
+    titlesort: { multiple: false },
+    work: { multiple: false },
+    artistsort: { multiple: false },
+    albumartistsort: { multiple: false },
+    composersort: { multiple: true },
+    lyricist: { multiple: true },
+    writer: { multiple: true },
+    conductor: { multiple: true },
+    remixer: { multiple: true },
+    arranger: { multiple: true },
+    engineer: { multiple: true },
+    producer: { multiple: true },
+    djmixer: { multiple: true },
+    mixer: { multiple: true },
+    label: { multiple: false },
+    grouping: { multiple: false },
+    subtitle: { multiple: false },
+    discsubtitle: { multiple: false },
+    totaltracks: { multiple: false },
+    totaldiscs: { multiple: false },
+    compilation: { multiple: false },
+    _rating: { multiple: false },
+    bpm: { multiple: false },
+    mood: { multiple: false },
+    media: { multiple: false },
+    catalognumber: { multiple: false },
+    show: { multiple: false },
+    showsort: { multiple: false },
+    podcast: { multiple: false },
+    podcasturl: { multiple: false },
+    releasestatus: { multiple: false },
+    releasetype: { multiple: true },
+    releasecountry: { multiple: false },
+    script: { multiple: false },
+    language: { multiple: false },
+    copyright: { multiple: false },
+    license: { multiple: false },
+    encodedby: { multiple: false },
+    encodersettings: { multiple: false },
+    gapless: { multiple: false },
+    barcode: { multiple: false },
+    isrc: { multiple: false },
+    asin: { multiple: false },
+    musicbrainz_recordingid: { multiple: false },
+    musicbrainz_trackid: { multiple: false },
+    musicbrainz_albumid: { multiple: false },
+    musicbrainz_artistid: { multiple: true },
+    musicbrainz_albumartistid: { multiple: true },
+    musicbrainz_releasegroupid: { multiple: false },
+    musicbrainz_workid: { multiple: false },
+    musicbrainz_trmid: { multiple: false },
+    musicbrainz_discid: { multiple: false },
+    acoustid_id: { multiple: false },
+    acoustid_fingerprint: { multiple: false },
+    musicip_puid: { multiple: false },
+    musicip_fingerprint: { multiple: false },
+    website: { multiple: false },
+    'performer:instrument': { multiple: true },
+    averageLevel: { multiple: false },
+    peakLevel: { multiple: false },
+    notes: { multiple: true }
+};
+/**
+ * Mapping from native header format to one or possibly more 'common' entries
+ * The common entries aim to read the same information from different media files
+ * independent of the underlying format
+ */
+TagMap.vorbis = {
+    TITLE: 'title',
+    ARTIST: 'artist',
+    ARTISTS: 'artists',
+    ALBUMARTIST: 'albumartist',
+    ALBUM: 'album',
+    DATE: 'date',
+    ORIGINALDATE: 'originaldate',
+    ORIGINALYEAR: 'originalyear',
+    COMMENT: 'comment',
+    TRACKNUMBER: 'track',
+    DISCNUMBER: 'disk',
+    GENRE: 'genre',
+    METADATA_BLOCK_PICTURE: 'picture',
+    COMPOSER: 'composer',
+    LYRICS: 'lyrics',
+    ALBUMSORT: 'albumsort',
+    TITLESORT: 'titlesort',
+    WORK: 'work',
+    ARTISTSORT: 'artistsort',
+    ALBUMARTISTSORT: 'albumartistsort',
+    COMPOSERSORT: 'composersort',
+    LYRICIST: 'lyricist',
+    WRITER: 'writer',
+    CONDUCTOR: 'conductor',
+    // 'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
+    REMIXER: 'remixer',
+    ARRANGER: 'arranger',
+    ENGINEER: 'engineer',
+    PRODUCER: 'producer',
+    DJMIXER: 'djmixer',
+    MIXER: 'mixer',
+    LABEL: 'label',
+    GROUPING: 'grouping',
+    SUBTITLE: 'subtitle',
+    DISCSUBTITLE: 'discsubtitle',
+    TRACKTOTAL: 'totaltracks',
+    DISCTOTAL: 'totaldiscs',
+    COMPILATION: 'compilation',
+    'RATING:user@email': '_rating',
+    BPM: 'bpm',
+    MOOD: 'mood',
+    MEDIA: 'media',
+    CATALOGNUMBER: 'catalognumber',
+    RELEASESTATUS: 'releasestatus',
+    RELEASETYPE: 'releasetype',
+    RELEASECOUNTRY: 'releasecountry',
+    SCRIPT: 'script',
+    LANGUAGE: 'language',
+    COPYRIGHT: 'copyright',
+    LICENSE: 'license',
+    ENCODEDBY: 'encodedby',
+    ENCODERSETTINGS: 'encodersettings',
+    BARCODE: 'barcode',
+    ISRC: 'isrc',
+    ASIN: 'asin',
+    MUSICBRAINZ_TRACKID: 'musicbrainz_recordingid',
+    MUSICBRAINZ_RELEASETRACKID: 'musicbrainz_trackid',
+    MUSICBRAINZ_ALBUMID: 'musicbrainz_albumid',
+    MUSICBRAINZ_ARTISTID: 'musicbrainz_artistid',
+    MUSICBRAINZ_ALBUMARTISTID: 'musicbrainz_albumartistid',
+    MUSICBRAINZ_RELEASEGROUPID: 'musicbrainz_releasegroupid',
+    MUSICBRAINZ_WORKID: 'musicbrainz_workid',
+    MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
+    MUSICBRAINZ_DISCID: 'musicbrainz_discid',
+    ACOUSTID_ID: 'acoustid_id',
+    ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
+    MUSICIP_PUID: 'musicip_puid',
+    // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
+    WEBSITE: 'website',
+    NOTES: 'notes',
+    TOTALTRACKS: 'totaltracks',
+    TOTALDISCS: 'totaldiscs'
+};
+TagMap.id3v1_1 = {
+    title: 'title',
+    artist: 'artist',
+    album: 'album',
+    year: 'year',
+    comment: 'comment',
+    track: 'track',
+    genre: 'genre'
+};
+TagMap.id3v2_2 = {
+    TT2: 'title',
+    TP1: 'artist',
+    TP2: 'albumartist',
+    TAL: 'album',
+    TYE: 'year',
+    COM: 'comment',
+    TRK: 'track',
+    TPA: 'disk',
+    TCO: 'genre',
+    PIC: 'picture',
+    TCM: 'composer',
+    TOR: 'originaldate',
+    TOT: 'work',
+    TXT: 'lyricist',
+    TP3: 'conductor',
+    TPB: 'label',
+    TT1: 'grouping',
+    TT3: 'subtitle',
+    TLA: 'language',
+    TCR: 'copyright',
+    WCP: 'license',
+    TEN: 'encodedby',
+    TSS: 'encodersettings',
+    WAR: 'website'
+};
+TagMap.id3v2_3 = {
+    // id3v2.3
+    TIT2: 'title',
+    TPE1: 'artist',
+    'TXXX:Artists': 'artists',
+    TPE2: 'albumartist',
+    TALB: 'album',
+    TDRV: 'date',
+    /**
+     * Original release year
+     */
+    TORY: 'originalyear',
+    'COMM:description': 'comment',
+    TPOS: 'disk',
+    TCON: 'genre',
+    APIC: 'picture',
+    TCOM: 'composer',
+    'USLT:description': 'lyrics',
+    TSOA: 'albumsort',
+    TSOT: 'titlesort',
+    TOAL: 'work',
+    TSOP: 'artistsort',
+    TSO2: 'albumartistsort',
+    TSOC: 'composersort',
+    TEXT: 'lyricist',
+    'TXXX:Writer': 'writer',
+    TPE3: 'conductor',
+    // 'IPLS:instrument': 'performer:instrument', // ToDo
+    TPE4: 'remixer',
+    'IPLS:arranger': 'arranger',
+    'IPLS:engineer': 'engineer',
+    'IPLS:producer': 'producer',
+    'IPLS:DJ-mix': 'djmixer',
+    'IPLS:mix': 'mixer',
+    TPUB: 'label',
+    TIT1: 'grouping',
+    TIT3: 'subtitle',
+    TRCK: 'track',
+    TCMP: 'compilation',
+    POPM: '_rating',
+    TBPM: 'bpm',
+    TMED: 'media',
+    'TXXX:CATALOGNUMBER': 'catalognumber',
+    'TXXX:MusicBrainz Album Status': 'releasestatus',
+    'TXXX:MusicBrainz Album Type': 'releasetype',
+    'TXXX:MusicBrainz Album Release Country': 'releasecountry',
+    'TXXX:SCRIPT': 'script',
+    TLAN: 'language',
+    TCOP: 'copyright',
+    WCOP: 'license',
+    TENC: 'encodedby',
+    TSSE: 'encodersettings',
+    'TXXX:BARCODE': 'barcode',
+    TSRC: 'isrc',
+    'TXXX:ASIN': 'asin',
+    'TXXX:originalyear': 'originalyear',
+    'UFID:http://musicbrainz.org': 'musicbrainz_recordingid',
+    'TXXX:MusicBrainz Release Track Id': 'musicbrainz_trackid',
+    'TXXX:MusicBrainz Album Id': 'musicbrainz_albumid',
+    'TXXX:MusicBrainz Artist Id': 'musicbrainz_artistid',
+    'TXXX:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+    'TXXX:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
+    'TXXX:MusicBrainz Work Id': 'musicbrainz_workid',
+    'TXXX:MusicBrainz TRM Id': 'musicbrainz_trmid',
+    'TXXX:MusicBrainz Disc Id': 'musicbrainz_discid',
+    'TXXX:Acoustid Id': 'acoustid_id',
+    'TXXX:Acoustid Fingerprint': 'acoustid_fingerprint',
+    'TXXX:MusicIP PUID': 'musicip_puid',
+    'TXXX:MusicMagic Fingerprint': 'musicip_fingerprint',
+    WOAR: 'website',
+    // id3v2.4
+    TDRC: 'date',
+    TYER: 'year',
+    TDOR: 'originaldate',
+    // 'TMCL:instrument': 'performer:instrument',
+    'TIPL:arranger': 'arranger',
+    'TIPL:engineer': 'engineer',
+    'TIPL:producer': 'producer',
+    'TIPL:DJ-mix': 'djmixer',
+    'TIPL:mix': 'mixer',
+    TMOO: 'mood',
+    // additional mappings:
+    SYLT: 'lyrics',
+    // Windows Media Player
+    'PRIV:AverageLevel': 'averageLevel',
+    'PRIV:PeakLevel': 'peakLevel'
+};
+// ToDo: capitalization tricky
+TagMap.ape = {
+    // MusicBrainz tag mappings:
+    Title: 'title',
+    Artist: 'artist',
+    Artists: 'artists',
+    'Album Artist': 'albumartist',
+    Album: 'album',
+    Year: 'date',
+    Originalyear: 'originalyear',
+    Originaldate: 'originaldate',
+    Comment: 'comment',
+    Track: 'track',
+    Disc: 'disk',
+    DISCNUMBER: 'disk',
+    Genre: 'genre',
+    'Cover Art (Front)': 'picture',
+    'Cover Art (Back)': 'picture',
+    Composer: 'composer',
+    Lyrics: 'lyrics',
+    ALBUMSORT: 'albumsort',
+    TITLESORT: 'titlesort',
+    WORK: 'work',
+    ARTISTSORT: 'artistsort',
+    ALBUMARTISTSORT: 'albumartistsort',
+    COMPOSERSORT: 'composersort',
+    Lyricist: 'lyricist',
+    Writer: 'writer',
+    Conductor: 'conductor',
+    // 'Performer=artist (instrument)': 'performer:instrument',
+    MixArtist: 'remixer',
+    Arranger: 'arranger',
+    Engineer: 'engineer',
+    Producer: 'producer',
+    DJMixer: 'djmixer',
+    Mixer: 'mixer',
+    Label: 'label',
+    Grouping: 'grouping',
+    Subtitle: 'subtitle',
+    DiscSubtitle: 'discsubtitle',
+    Compilation: 'compilation',
+    BPM: 'bpm',
+    Mood: 'mood',
+    Media: 'media',
+    CatalogNumber: 'catalognumber',
+    MUSICBRAINZ_ALBUMSTATUS: 'releasestatus',
+    MUSICBRAINZ_ALBUMTYPE: 'releasetype',
+    RELEASECOUNTRY: 'releasecountry',
+    Script: 'script',
+    Language: 'language',
+    Copyright: 'copyright',
+    LICENSE: 'license',
+    EncodedBy: 'encodedby',
+    EncoderSettings: 'encodersettings',
+    Barcode: 'barcode',
+    ISRC: 'isrc',
+    ASIN: 'asin',
+    MUSICBRAINZ_TRACKID: 'musicbrainz_recordingid',
+    MUSICBRAINZ_RELEASETRACKID: 'musicbrainz_trackid',
+    MUSICBRAINZ_ALBUMID: 'musicbrainz_albumid',
+    MUSICBRAINZ_ARTISTID: 'musicbrainz_artistid',
+    MUSICBRAINZ_ALBUMARTISTID: 'musicbrainz_albumartistid',
+    MUSICBRAINZ_RELEASEGROUPID: 'musicbrainz_releasegroupid',
+    MUSICBRAINZ_WORKID: 'musicbrainz_workid',
+    MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
+    MUSICBRAINZ_DISCID: 'musicbrainz_discid',
+    ACOUSTID_ID: 'acoustid_id',
+    ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
+    MUSICIP_PUID: 'musicip_puid',
+    Weblink: 'website'
+};
+// ToDo: capitalization tricky
+TagMap.asf = {
+    // MusicBrainz tag mappings:
+    Title: 'title',
+    Author: 'artist',
+    'WM/AlbumArtist': 'albumartist',
+    'WM/AlbumTitle': 'album',
+    'WM/Year': 'year',
+    'WM/OriginalReleaseTime': 'originaldate',
+    'WM/OriginalReleaseYear': 'originalyear',
+    Description: 'comment',
+    'WM/TrackNumber': 'track',
+    'WM/PartOfSet': 'disk',
+    'WM/Genre': 'genre',
+    'WM/Composer': 'composer',
+    'WM/Lyrics': 'lyrics',
+    'WM/AlbumSortOrder': 'albumsort',
+    'WM/TitleSortOrder': 'titlesort',
+    'WM/ArtistSortOrder': 'artistsort',
+    'WM/AlbumArtistSortOrder': 'albumartistsort',
+    'WM/ComposerSortOrder': 'composersort',
+    'WM/Writer': 'lyricist',
+    'WM/Conductor': 'conductor',
+    'WM/ModifiedBy': 'remixer',
+    'WM/Engineer': 'engineer',
+    'WM/Producer': 'producer',
+    'WM/DJMixer': 'djmixer',
+    'WM/Mixer': 'mixer',
+    'WM/Publisher': 'label',
+    'WM/ContentGroupDescription': 'grouping',
+    'WM/SubTitle': 'subtitle',
+    'WM/SetSubTitle': 'discsubtitle',
+    // 'WM/PartOfSet': 'totaldiscs',
+    'WM/IsCompilation': 'compilation',
+    'WM/SharedUserRating': '_rating',
+    'WM/BeatsPerMinute': 'bpm',
+    'WM/Mood': 'mood',
+    'WM/Media': 'media',
+    'WM/CatalogNo': 'catalognumber',
+    'MusicBrainz/Album Status': 'releasestatus',
+    'MusicBrainz/Album Type': 'releasetype',
+    'MusicBrainz/Album Release Country': 'releasecountry',
+    'WM/Script': 'script',
+    'WM/Language': 'language',
+    Copyright: 'copyright',
+    LICENSE: 'license',
+    'WM/EncodedBy': 'encodedby',
+    'WM/EncodingSettings': 'encodersettings',
+    'WM/Barcode': 'barcode',
+    'WM/ISRC': 'isrc',
+    'MusicBrainz/Track Id': 'musicbrainz_recordingid',
+    'MusicBrainz/Release Track Id': 'musicbrainz_trackid',
+    'MusicBrainz/Album Id': 'musicbrainz_albumid',
+    'MusicBrainz/Artist Id': 'musicbrainz_artistid',
+    'MusicBrainz/Album Artist Id': 'musicbrainz_albumartistid',
+    'MusicBrainz/Release Group Id': 'musicbrainz_releasegroupid',
+    'MusicBrainz/Work Id': 'musicbrainz_workid',
+    'MusicBrainz/TRM Id': 'musicbrainz_trmid',
+    'MusicBrainz/Disc Id': 'musicbrainz_discid',
+    'Acoustid/Id': 'acoustid_id',
+    'Acoustid/Fingerprint': 'acoustid_fingerprint',
+    'MusicIP/PUID': 'musicip_puid'
+};
+TagMap.m4a = {
+    '©nam': 'title',
+    '©ART': 'artist',
+    aART: 'albumartist',
+    '©alb': 'album',
+    '©day': 'date',
+    '©cmt': 'comment',
+    trkn: 'track',
+    disk: 'disk',
+    '©gen': 'genre',
+    covr: 'picture',
+    '©wrt': 'composer',
+    '©lyr': 'lyrics',
+    soal: 'albumsort',
+    sonm: 'titlesort',
+    soar: 'artistsort',
+    soaa: 'albumartistsort',
+    soco: 'composersort',
+    '----:com.apple.iTunes:LYRICIST': 'lyricist',
+    '----:com.apple.iTunes:CONDUCTOR': 'conductor',
+    '----:com.apple.iTunes:REMIXER': 'remixer',
+    '----:com.apple.iTunes:ENGINEER': 'engineer',
+    '----:com.apple.iTunes:PRODUCER': 'producer',
+    '----:com.apple.iTunes:DJMIXER': 'djmixer',
+    '----:com.apple.iTunes:MIXER': 'mixer',
+    '----:com.apple.iTunes:LABEL': 'label',
+    '©grp': 'grouping',
+    '----:com.apple.iTunes:SUBTITLE': 'subtitle',
+    '----:com.apple.iTunes:DISCSUBTITLE': 'discsubtitle',
+    cpil: 'compilation',
+    tmpo: 'bpm',
+    '----:com.apple.iTunes:MOOD': 'mood',
+    '----:com.apple.iTunes:MEDIA': 'media',
+    '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
+    tvsh: 'show',
+    sosn: 'showsort',
+    pcst: 'podcast',
+    purl: 'podcasturl',
+    '----:com.apple.iTunes:MusicBrainz Album Status': 'releasestatus',
+    '----:com.apple.iTunes:MusicBrainz Album Type': 'releasetype',
+    '----:com.apple.iTunes:MusicBrainz Album Release Country': 'releasecountry',
+    '----:com.apple.iTunes:SCRIPT': 'script',
+    '----:com.apple.iTunes:LANGUAGE': 'language',
+    cprt: 'copyright',
+    '----:com.apple.iTunes:LICENSE': 'license',
+    '©too': 'encodedby',
+    pgap: 'gapless',
+    '----:com.apple.iTunes:BARCODE': 'barcode',
+    '----:com.apple.iTunes:ISRC': 'isrc',
+    '----:com.apple.iTunes:ASIN': 'asin',
+    '----:com.apple.iTunes:MusicBrainz Track Id': 'musicbrainz_recordingid',
+    '----:com.apple.iTunes:MusicBrainz Release Track Id': 'musicbrainz_trackid',
+    '----:com.apple.iTunes:MusicBrainz Album Id': 'musicbrainz_albumid',
+    '----:com.apple.iTunes:MusicBrainz Artist Id': 'musicbrainz_artistid',
+    '----:com.apple.iTunes:MusicBrainz Album Artist Id': 'musicbrainz_albumartistid',
+    '----:com.apple.iTunes:MusicBrainz Release Group Id': 'musicbrainz_releasegroupid',
+    '----:com.apple.iTunes:MusicBrainz Work Id': 'musicbrainz_workid',
+    '----:com.apple.iTunes:MusicBrainz TRM Id': 'musicbrainz_trmid',
+    '----:com.apple.iTunes:MusicBrainz Disc Id': 'musicbrainz_discid',
+    '----:com.apple.iTunes:Acoustid Id': 'acoustid_id',
+    '----:com.apple.iTunes:Acoustid Fingerprint': 'acoustid_fingerprint',
+    '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
+    '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
+    // Additional mappings:
+    gnre: 'genre' // ToDo: check mapping
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = TagMap;
 
 },{}],14:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var strtok = require('strtok2');
+var strtok = require("strtok2");
+var VorbisPictureType;
 (function (VorbisPictureType) {
-    VorbisPictureType[VorbisPictureType['Other'] = 0] = 'Other';
+    VorbisPictureType[VorbisPictureType["Other"] = 0] = "Other";
     VorbisPictureType[VorbisPictureType["32x32 pixels 'file icon' (PNG only)"] = 1] = "32x32 pixels 'file icon' (PNG only)";
-    VorbisPictureType[VorbisPictureType['Other file icon'] = 2] = 'Other file icon';
-    VorbisPictureType[VorbisPictureType['Cover (front)'] = 3] = 'Cover (front)';
-    VorbisPictureType[VorbisPictureType['Cover (back)'] = 4] = 'Cover (back)';
-    VorbisPictureType[VorbisPictureType['Leaflet page'] = 5] = 'Leaflet page';
-    VorbisPictureType[VorbisPictureType['Media (e.g. lable side of CD)'] = 6] = 'Media (e.g. lable side of CD)';
-    VorbisPictureType[VorbisPictureType['Lead artist/lead performer/soloist'] = 7] = 'Lead artist/lead performer/soloist';
-    VorbisPictureType[VorbisPictureType['Artist/performer'] = 8] = 'Artist/performer';
-    VorbisPictureType[VorbisPictureType['Conductor'] = 9] = 'Conductor';
-    VorbisPictureType[VorbisPictureType['Band/Orchestra'] = 10] = 'Band/Orchestra';
-    VorbisPictureType[VorbisPictureType['Composer'] = 11] = 'Composer';
-    VorbisPictureType[VorbisPictureType['Lyricist/text writer'] = 12] = 'Lyricist/text writer';
-    VorbisPictureType[VorbisPictureType['Recording Location'] = 13] = 'Recording Location';
-    VorbisPictureType[VorbisPictureType['During recording'] = 14] = 'During recording';
-    VorbisPictureType[VorbisPictureType['During performance'] = 15] = 'During performance';
-    VorbisPictureType[VorbisPictureType['Movie/video screen capture'] = 16] = 'Movie/video screen capture';
-    VorbisPictureType[VorbisPictureType['A bright coloured fish'] = 17] = 'A bright coloured fish';
-    VorbisPictureType[VorbisPictureType['Illustration'] = 18] = 'Illustration';
-    VorbisPictureType[VorbisPictureType['Band/artist logotype'] = 19] = 'Band/artist logotype';
-    VorbisPictureType[VorbisPictureType['Publisher/Studio logotype'] = 20] = 'Publisher/Studio logotype';
-})(exports.VorbisPictureType || (exports.VorbisPictureType = {}));
-var VorbisPictureType = exports.VorbisPictureType;
+    VorbisPictureType[VorbisPictureType["Other file icon"] = 2] = "Other file icon";
+    VorbisPictureType[VorbisPictureType["Cover (front)"] = 3] = "Cover (front)";
+    VorbisPictureType[VorbisPictureType["Cover (back)"] = 4] = "Cover (back)";
+    VorbisPictureType[VorbisPictureType["Leaflet page"] = 5] = "Leaflet page";
+    VorbisPictureType[VorbisPictureType["Media (e.g. lable side of CD)"] = 6] = "Media (e.g. lable side of CD)";
+    VorbisPictureType[VorbisPictureType["Lead artist/lead performer/soloist"] = 7] = "Lead artist/lead performer/soloist";
+    VorbisPictureType[VorbisPictureType["Artist/performer"] = 8] = "Artist/performer";
+    VorbisPictureType[VorbisPictureType["Conductor"] = 9] = "Conductor";
+    VorbisPictureType[VorbisPictureType["Band/Orchestra"] = 10] = "Band/Orchestra";
+    VorbisPictureType[VorbisPictureType["Composer"] = 11] = "Composer";
+    VorbisPictureType[VorbisPictureType["Lyricist/text writer"] = 12] = "Lyricist/text writer";
+    VorbisPictureType[VorbisPictureType["Recording Location"] = 13] = "Recording Location";
+    VorbisPictureType[VorbisPictureType["During recording"] = 14] = "During recording";
+    VorbisPictureType[VorbisPictureType["During performance"] = 15] = "During performance";
+    VorbisPictureType[VorbisPictureType["Movie/video screen capture"] = 16] = "Movie/video screen capture";
+    VorbisPictureType[VorbisPictureType["A bright coloured fish"] = 17] = "A bright coloured fish";
+    VorbisPictureType[VorbisPictureType["Illustration"] = 18] = "Illustration";
+    VorbisPictureType[VorbisPictureType["Band/artist logotype"] = 19] = "Band/artist logotype";
+    VorbisPictureType[VorbisPictureType["Publisher/Studio logotype"] = 20] = "Publisher/Studio logotype";
+})(VorbisPictureType = exports.VorbisPictureType || (exports.VorbisPictureType = {}));
 var VorbisPictureParser = (function () {
     function VorbisPictureParser(buffer) {
         var offset = 0;
@@ -3203,17 +3220,17 @@ var Windows1292Decoder = (function () {
         }
         return codePoint;
     };
-    Windows1292Decoder.windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
-        8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
-        8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
-        169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
-        185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-        201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
-        217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
-        233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
-        248, 249, 250, 251, 252, 253, 254, 255];
     return Windows1292Decoder;
 }());
+Windows1292Decoder.windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352,
+    8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732,
+    8482, 353, 8250, 339, 157, 382, 376, 160, 161, 162, 163, 164, 165, 166, 167, 168,
+    169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184,
+    185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
+    201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216,
+    217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232,
+    233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
+    248, 249, 250, 251, 252, 253, 254, 255];
 exports.Windows1292Decoder = Windows1292Decoder;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Windows1292Decoder.decode;
