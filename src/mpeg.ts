@@ -268,7 +268,7 @@ export class MpegParser implements IStreamParser {
 
     strtok.parse(stream, (v, cb) => {
       try {
-        return this.strParse(v, cb)
+        return this.strParse(v, cb);
       } catch (error) {
         return done(error);
       }

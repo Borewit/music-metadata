@@ -268,14 +268,13 @@ class MusicMetadataParser {
     function tagCallback(headerType, tag, value) {
       if (value === null) {
         warning.push('tag ' + tag + ' is null');
-        return
+        return;
       }
 
       if (value === '') {
         warning.push('tag ' + tag + ' is empty');
-        return
+        return;
       }
-
 
       if (headerType === 'format') {
         metadata.format[tag] = value;
@@ -337,7 +336,7 @@ class MusicMetadataParser {
       isDone = true;
       istream.removeListener('close', onClose);
 
-      if(!err) {
+      if (!err) {
         /**
          * If MusicBrainz defined artists, the artist may be a single combined field,
          * otherwise artist may contain multiple artists.
