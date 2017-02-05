@@ -552,8 +552,8 @@ export default class TagMap {
   };
 
   private static capitalizeTags(map: INativeTagMap): INativeTagMap {
-    let newMap: INativeTagMap = {};
-    for (let tag in map) {
+    const newMap: INativeTagMap = {};
+    for (const tag in map) {
       if (map.hasOwnProperty(tag)) {
         newMap[tag.toUpperCase()] = map[tag];
       }
@@ -604,7 +604,7 @@ export default class TagMap {
             return true;
         }
     }
-    let alias = this.getCommonName(type, tag);
+    const alias = this.getCommonName(type, tag);
     return alias && !TagMap.commonTags[alias].multiple;
   }
 

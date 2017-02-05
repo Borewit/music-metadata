@@ -209,7 +209,7 @@ class Id3v2Parser implements IStreamParser {
   private mpegParser: MpegParser;
 
   public parse(stream, callback, done, readDuration, fileSize) {
-    let self: Id3v2Parser = this;
+    const self: Id3v2Parser = this;
 
     let id3Header: IID3v2header;
     let extendedHeader: IExtendedHeader;
@@ -223,11 +223,11 @@ class Id3v2Parser implements IStreamParser {
 
       switch (self.state) {
         case State.header: // ID3v2 header
-          id3Header = <IID3v2header> v;
+          id3Header = v as IID3v2header;
           if (id3Header.fileIdentifier !== 'ID3') {
             return done(new Error('expected file identifier \'ID3\' not found'));
           }
-          headerType = <HeaderType> ('id3v2.' + id3Header.version.major);
+          headerType = ('id3v2.' + id3Header.version.major) as HeaderType;
           if (id3Header.flags.isExtendedHeader) {
             self.state = State.extendedHeader;
             return ID3v2.ExtendedHeader;
@@ -237,8 +237,8 @@ class Id3v2Parser implements IStreamParser {
           }
 
         case State.extendedHeader:
-          extendedHeader = <IExtendedHeader> v;
-          let dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
+          extendedHeader = v as IExtendedHeader;
+          const dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
           if (dataRemaining > 0) {
             self.state = State.extendedHeaderData;
             return new strtok.BufferType(dataRemaining);
@@ -252,13 +252,13 @@ class Id3v2Parser implements IStreamParser {
           return new strtok.BufferType(id3Header.size - extendedHeader.size);
 
         case State.id3_data: // mm data
-          for (let tag of this.parseMetadata(v, id3Header, done)){
+          for (const tag of this.parseMetadata(v, id3Header, done)){
           if (tag.id === 'TXXX') {
-            for (let text of tag.value.text) {
+            for (const text of tag.value.text) {
               callback(headerType, tag.id + ':' + tag.value.description, text);
             }
           } else if (isArray(tag.value)) {
-              for (let value of tag.value) {
+              for (const value of tag.value) {
                 callback(headerType, tag.id, value);
               }
             } else {
@@ -282,12 +282,12 @@ class Id3v2Parser implements IStreamParser {
 
   private parseMetadata(data: Buffer, header: IID3v2header, done): Array<{id: string, value: any}> {
     let offset = 0;
-    let tags: Array<{id: string, value: any}> = [];
+    const tags: Array<{id: string, value: any}> = [];
 
     while (true) {
       if (offset === data.length) break;
-      let frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(header.version.major, done));
-      let frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, header.version.major);
+      const frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(header.version.major, done));
+      const frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, header.version.major);
 
       // Last frame. Check first char is a letter, bit of defensive programming
       if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
@@ -296,8 +296,8 @@ class Id3v2Parser implements IStreamParser {
         break;
       }
 
-      let frameDataBytes = data.slice(offset, offset += frameHeader.length);
-      let values = this.readFrameData(frameDataBytes, frameHeader, header.version.major);
+      const frameDataBytes = data.slice(offset, offset += frameHeader.length);
+      const values = this.readFrameData(frameDataBytes, frameHeader, header.version.major);
       tags.push({id: frameHeader.id, value: values});
     }
     return tags;

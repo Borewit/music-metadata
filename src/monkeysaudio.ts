@@ -27,7 +27,7 @@ import {HeaderType} from './tagmap';
  * TAG - describes all the properties of the file [optional]
  */
 
-type Descriptor = {
+interface IDescriptor {
   // should equal 'MAC '
   ID: string,
   // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
@@ -48,12 +48,12 @@ type Descriptor = {
   terminatingDataBytes: number,
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
   fileMD5: number[]
-};
+}
 
 /**
  * APE_HEADER: describes all of the necessary information about the APE file
  */
-type Header = {
+interface IHeader {
   // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
   compressionLevel: number,
   // any format flags (for future use)
@@ -70,9 +70,9 @@ type Header = {
   channel: number,
   // the sample rate (typically 44100)
   sampleRate: number
-};
+}
 
-type Footer = {
+interface IFooter {
   // should equal 'APETAGEX'
   ID: string,
   // equals CURRENT_APE_TAG_VERSION
@@ -83,15 +83,15 @@ type Footer = {
   fields: number,
   // reserved for later use (must be zero)
   reserved: number[] // ToDo: what is this???
-};
+}
 
-type TagFlags = {
+interface ITagFlags {
   containsHeader: boolean,
   containsFooter: boolean,
   isHeader: boolean,
   readOnly: boolean,
   dataType: DataType
-};
+}
 
 enum DataType {
   text_utf8 = 0,
@@ -187,7 +187,7 @@ class Structure {
     return new strtok.BufferType(footer.size - Structure.TagFooter.len);
   }
 
-  public static parseTagFlags(flags): TagFlags {
+  public static parseTagFlags(flags): ITagFlags {
     return {
       containsHeader: Structure.isBitSet(flags, 31),
       containsFooter: Structure.isBitSet(flags, 30),
@@ -208,10 +208,10 @@ class Structure {
 
 }
 
-type ApeInfo = {
-  descriptor?: Descriptor,
-  header?: Header,
-  footer?: Footer
+interface IApeInfo {
+  descriptor?: IDescriptor,
+  header?: IHeader,
+  footer?: IFooter
 };
 
 class ApeParser implements IStreamParser {
@@ -224,7 +224,7 @@ class ApeParser implements IStreamParser {
    * @param ah ApeHeader
    * @return {number} duration in seconds
    */
-  public static calculateDuration(ah: Header): number {
+  public static calculateDuration(ah: IHeader): number {
     let duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
     duration += ah.finalFrameBlocks;
     return duration / ah.sampleRate;
@@ -232,7 +232,7 @@ class ApeParser implements IStreamParser {
 
   private type: HeaderType = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
 
-  private ape: ApeInfo = {};
+  private ape: IApeInfo = {};
 
   public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
 
@@ -248,7 +248,7 @@ class ApeParser implements IStreamParser {
             throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
           }
           this.ape.descriptor = v;
-          let lenExp = v.descriptorBytes - Structure.DescriptorParser.len;
+          const lenExp = v.descriptorBytes - Structure.DescriptorParser.len;
           if (lenExp > 0) {
             cb.state = 'descriptorExpansion';
             return new strtok.IgnoreType(lenExp);
@@ -270,7 +270,7 @@ class ApeParser implements IStreamParser {
           callback('format', 'sampleRate', v.sampleRate);
           callback('format', 'numberOfChannels', v.channel);
           callback('format', 'duration', ApeParser.calculateDuration(v));
-          let forwardBytes = this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
+          const forwardBytes = this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
             this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes;
           cb.state = 'skipData';
           return new strtok.IgnoreType(forwardBytes);
@@ -299,26 +299,26 @@ class ApeParser implements IStreamParser {
     });
   };
 
-  private parseTags(footer: Footer, buffer: Buffer, callback) {
+  private parseTags(footer: IFooter, buffer: Buffer, callback) {
     let offset = 0;
 
     for (let i = 0; i < footer.fields; i++) {
-      let size = strtok.UINT32_LE.get(buffer, offset);
+      const size = strtok.UINT32_LE.get(buffer, offset);
       offset += 4;
-      let flags = Structure.parseTagFlags(strtok.UINT32_LE.get(buffer, offset));
+      const flags = Structure.parseTagFlags(strtok.UINT32_LE.get(buffer, offset));
       offset += 4;
 
       let zero = common.findZero(buffer, offset, buffer.length);
-      let key = buffer.toString('ascii', offset, zero);
+      const key = buffer.toString('ascii', offset, zero);
       offset = zero + 1;
 
       switch (flags.dataType) {
         case DataType.text_utf8: { // utf-8 textstring
-          let value = buffer.toString('utf8', offset, offset += size);
-          let values = value.split(/\x00/g);
+          const value = buffer.toString('utf8', offset, offset += size);
+          const values = value.split(/\x00/g);
 
           /*jshint loopfunc:true */
-          for (let val of values) {
+          for (const val of values) {
             callback(this.type, key, val);
           }
         }
@@ -326,14 +326,14 @@ class ApeParser implements IStreamParser {
 
         case DataType.binary: { // binary (probably artwork)
           if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
-            let picData = buffer.slice(offset, offset + size);
+            const picData = buffer.slice(offset, offset + size);
 
             let off = 0;
             zero = common.findZero(picData, off, picData.length);
-            let description = picData.toString('utf8', off, zero);
+            const description = picData.toString('utf8', off, zero);
             off = zero + 1;
 
-            let picture = {
+            const picture = {
               description,
               data: new Buffer(picData.slice(off))
             };

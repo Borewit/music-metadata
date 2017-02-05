@@ -97,7 +97,7 @@ class Util {
   }
 
   public static parseByteArrayAttr(buf: Buffer): Buffer {
-    let newBuf = new Buffer(buf.length);
+    const newBuf = new Buffer(buf.length);
     buf.copy(newBuf);
     return newBuf;
   }
@@ -119,9 +119,9 @@ class Util {
   }
 
   public static readUInt64LE(buffer, offset): number {
-    let high = buffer.slice(offset, offset + 4).readUInt32LE(0);
-    let low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0);
-    let maxuint32 = Math.pow(2, 32);
+    const high = buffer.slice(offset, offset + 4).readUInt32LE(0);
+    const low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0);
+    const maxuint32 = Math.pow(2, 32);
     return ((low * maxuint32) + (high >>> 0));
   }
 
@@ -145,7 +145,7 @@ interface IGuidState {
 class ReadObjectState implements IState {
 
   public static stateByGuid(guidBuf) {
-    for (let guidState of ReadObjectState.guidStates) {
+    for (const guidState of ReadObjectState.guidStates) {
       if (equal(guidState.guid, guidBuf)) {
         return guidState;
       }
@@ -196,12 +196,12 @@ class ReadObjectState implements IState {
   }
 
   public parse(callback, data, done) {
-    let guid = data.slice(0, 16);
-    let size = Util.readUInt64LE(data, 16);
+    const guid = data.slice(0, 16);
+    const size = Util.readUInt64LE(data, 16);
     this.objectCount -= 1;
     this.size -= size;
-    let nextState = (this.objectCount <= 0) ? AsfParser.finishedState : this;
-    let guidState = ReadObjectState.stateByGuid(guid);
+    const nextState = (this.objectCount <= 0) ? AsfParser.finishedState : this;
+    const guidState = ReadObjectState.stateByGuid(guid);
     return guidState ? guidState.getState(nextState, size - 24) : new IgnoreObjectState(nextState, size - 24);
   }
 
@@ -213,8 +213,8 @@ class ReadObjectState implements IState {
 class HeaderDataState implements IState {
 
   public parse(callback, data, done) {
-    let size = Util.readUInt64LE(data, 0);
-    let objectCount = data.readUInt32LE(8);
+    const size = Util.readUInt64LE(data, 0);
+    const objectCount = data.readUInt32LE(8);
     return new ReadObjectState(size, objectCount);
   }
 
@@ -258,7 +258,7 @@ class ContentDescriptionObjectState extends State {
   }
 
   public parse(callback, data, done) {
-    let lengths = [
+    const lengths = [
       data.readUInt16LE(0),
       data.readUInt16LE(2),
       data.readUInt16LE(4),
@@ -267,11 +267,11 @@ class ContentDescriptionObjectState extends State {
     ];
     let pos = 10;
     for (let i = 0; i < ContentDescriptionObjectState.contentDescTags.length; i += 1) {
-      let tagName = ContentDescriptionObjectState.contentDescTags[i];
-      let length = lengths[i];
-      let end = pos + length;
+      const tagName = ContentDescriptionObjectState.contentDescTags[i];
+      const length = lengths[i];
+      const end = pos + length;
       if (length > 0) {
-        let value = Util.parseUnicodeAttr(data.slice(pos, end));
+        const value = Util.parseUnicodeAttr(data.slice(pos, end));
         callback(AsfParser.headerType, tagName, value);
       }
       pos = end;
@@ -295,25 +295,25 @@ class ExtendedContentDescriptionObjectState extends State {
   }
 
   public parse(callback, data, done) {
-    let attrCount = data.readUInt16LE(0);
+    const attrCount = data.readUInt16LE(0);
     let pos = 2;
     for (let i = 0; i < attrCount; i += 1) {
-      let nameLen = data.readUInt16LE(pos);
+      const nameLen = data.readUInt16LE(pos);
       pos += 2;
-      let name = Util.parseUnicodeAttr(data.slice(pos, pos + nameLen));
+      const name = Util.parseUnicodeAttr(data.slice(pos, pos + nameLen));
       pos += nameLen;
-      let valueType = data.readUInt16LE(pos);
+      const valueType = data.readUInt16LE(pos);
       pos += 2;
-      let valueLen = data.readUInt16LE(pos);
+      const valueLen = data.readUInt16LE(pos);
       pos += 2;
-      let value = data.slice(pos, pos + valueLen);
+      const value = data.slice(pos, pos + valueLen);
       pos += valueLen;
-      let parseAttr = Util.getParserForAttr(valueType);
+      const parseAttr = Util.getParserForAttr(valueType);
       if (!parseAttr) {
         done(new Error('unexpected value headerType: ' + valueType));
         return AsfParser.finishedState;
       }
-      let attr = parseAttr(value);
+      const attr = parseAttr(value);
       callback(AsfParser.headerType, name, attr);
     }
     if (this.nextState === AsfParser.finishedState) {
@@ -335,7 +335,7 @@ class FilePropertiesObject extends State {
 
   public parse(callback, data, done) {
     // in miliseconds
-    let playDuration = Util.parseQWordAttr(data.slice(40, 48)) / 10000;
+    const playDuration = Util.parseQWordAttr(data.slice(40, 48)) / 10000;
     callback('format', 'duration', playDuration / 1000);
 
     if (this.nextState === AsfParser.finishedState) {

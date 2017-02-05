@@ -67,8 +67,8 @@ export default class Common {
   ];
 
   public static getParserForMediaType(types, header) {
-    for (let type of types) {
-      let offset = type.offset || 0;
+    for (const type of types) {
+      const offset = type.offset || 0;
       if (header.length >= offset + type.buf.length &&
         equal(header.slice(offset, offset + type.buf.length), type.buf)) {
         return type.tag;
@@ -131,19 +131,19 @@ export default class Common {
 
   public static sum(arr: number[]): number {
     let s: number = 0;
-    for (let v of arr) {
+    for (const v of arr) {
       s += v;
     }
     return s;
   }
 
   public static swapBytes(buffer: Buffer): Buffer {
-    let l = buffer.length;
+    const l = buffer.length;
     if (l & 0x01) {
       throw new Error('Buffer length must be even');
     }
     for (let i = 0; i < l; i += 2) {
-      let a = buffer[i];
+      const a = buffer[i];
       buffer[i] = buffer[i + 1];
       buffer[i + 1] = a;
     }
@@ -187,11 +187,11 @@ export default class Common {
 
   public static parseGenre(origVal) {
     // match everything inside parentheses
-    let split = origVal.trim().split(/\((.*?)\)/g).filter( (val) => {
+    const split = origVal.trim().split(/\((.*?)\)/g).filter( (val) => {
         return val !== '';
       });
 
-    let array = [];
+    const array = [];
     for (let cur of split) {
       if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
         cur = Common.GENRES[cur];
@@ -221,12 +221,12 @@ export default class Common {
    * @return {number} decoded bit aligned number
    */
   public static getBitAllignedNumber(buf: Buffer, byteOffset: number, bitOffset: number, len: number): number {
-    let byteOff = byteOffset + ~~(bitOffset / 8);
-    let bitOff = bitOffset % 8;
+    const byteOff = byteOffset + ~~(bitOffset / 8);
+    const bitOff = bitOffset % 8;
     let value = buf[byteOff];
     value &= 0xff >> bitOff;
-    let bitsRead = 8 - bitOff;
-    let bitsLeft = len - bitsRead;
+    const bitsRead = 8 - bitOff;
+    const bitsLeft = len - bitsRead;
     if (bitsLeft < 0) {
       value >>= (8 - bitOff - len);
     } else if (bitsLeft > 0) {

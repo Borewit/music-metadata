@@ -9,6 +9,6 @@ export type Done = (err?: Error) => Token;
 export type GetFileSize = (cb: (fileSize: number) => void) => void;
 
 export interface IStreamParser {
-  parse (stream: NodeJS.ReadableStream, tagEvent: TagCallback, done: Done, readDuration?: boolean, fileSize?: GetFileSize): void;
-  end? (callback: TagCallback, done: Done): void;
+  parse(stream: NodeJS.ReadableStream, tagEvent: TagCallback, done: Done, readDuration?: boolean, fileSize?: GetFileSize): void;
+  end?(callback: TagCallback, done: Done): void;
 }

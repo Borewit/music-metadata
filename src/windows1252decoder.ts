@@ -1,8 +1,8 @@
 export class Windows1292Decoder {
 
-  public static decode (buffer: Uint8Array): string {
+  public static decode(buffer: Uint8Array): string {
     let str = '';
-    for (let i in buffer) {
+    for (const i in buffer) {
       if (buffer.hasOwnProperty(i)) {
         str += Windows1292Decoder.codePointToString(Windows1292Decoder.singleByteDecoder(buffer[i]));
       }
@@ -20,11 +20,11 @@ export class Windows1292Decoder {
     233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
     248, 249, 250, 251, 252, 253, 254, 255];
 
-  private static inRange (a, min, max): boolean {
+  private static inRange(a, min, max): boolean {
     return min <= a && a <= max;
   }
 
-  private static codePointToString (cp: number): string {
+  private static codePointToString(cp: number): string {
     if (cp <= 0xFFFF) {
       return String.fromCharCode(cp);
     } else {
@@ -33,12 +33,12 @@ export class Windows1292Decoder {
     }
   }
 
-  private static singleByteDecoder (bite: number): number {
+  private static singleByteDecoder(bite: number): number {
     if (Windows1292Decoder.inRange(bite, 0x00, 0x7F)) {
       return bite;
     }
 
-    let codePoint = Windows1292Decoder.windows1252[bite - 0x80];
+    const codePoint = Windows1292Decoder.windows1252[bite - 0x80];
     if (codePoint === null) {
       throw Error('invaliding encoding');
     }

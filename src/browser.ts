@@ -18,10 +18,10 @@ interface IFileWrapperStream extends ThroughStream {
   fileSize: (cb: (fileSize: number) => void) => void
 }
 
-function wrapFileWithStream (file: ArrayBuffer | Blob | FileList | ReadableStream): ReadableStream {
-  let stream = <IFileWrapperStream> through( (data) => {
+function wrapFileWithStream(file: ArrayBuffer | Blob | FileList | ReadableStream): ReadableStream {
+  const stream = through( (data) => {
     if (data.length > 0) this.queue(data);
-  }, null, {autoDestroy: false});
+  }, null, {autoDestroy: false}) as IFileWrapperStream;
 
   if (file instanceof ArrayBuffer) {
     return wrapArrayBufferWithStream(file, stream);
@@ -29,12 +29,12 @@ function wrapFileWithStream (file: ArrayBuffer | Blob | FileList | ReadableStrea
 
   stream.fileSize = (cb) => {
     process.nextTick( () => {
-      cb((<Blob> file).size);
+      cb((file as Blob).size);
     });
   };
 
   if (isStream(file)) {
-    return (<ReadableStream> file).pipe(stream);
+    return (file as ReadableStream).pipe(stream);
   }
   if (file instanceof FileList) {
     throw new Error('You have passed a FileList object but we expected a File');
@@ -46,8 +46,8 @@ function wrapFileWithStream (file: ArrayBuffer | Blob | FileList | ReadableStrea
   return readStream(file).pipe(stream);
 }
 
-function wrapArrayBufferWithStream (arrayBuffer: ArrayBuffer, throughStream: ThroughStream) {
-  (<IFileWrapperStream> throughStream).fileSize = (cb) => {
+function wrapArrayBufferWithStream(arrayBuffer: ArrayBuffer, throughStream: ThroughStream) {
+  (throughStream as IFileWrapperStream).fileSize = (cb) => {
     process.nextTick( () => {
       cb(arrayBuffer.byteLength);
     });

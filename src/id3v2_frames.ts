@@ -36,18 +36,18 @@ interface IInvolvedPerson {
 export default class FrameParser {
 
   public static readData(b: Buffer, type: string, flags, major: number) {
-    let encoding = FrameParser.getTextEncoding(b[0]);
-    let length = b.length;
+    const encoding = FrameParser.getTextEncoding(b[0]);
+    const length = b.length;
     let offset = 0;
     let output: any = []; // ToDo
-    let nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
+    const nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
     let fzero: number;
-    let out: IOut = {};
+    const out: IOut = {};
 
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
       case 'T*': // 4.2.1. Text information frames - details
       case 'IPLS': // v2.3: Involved people list
-        let text = common.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
+        const text = common.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
         // id3v2.4 defines that multiple T* values are separated by 0x00
         // id3v2.3 defines that multiple T* values are separated by /
         switch (type) {
@@ -77,7 +77,7 @@ export default class FrameParser {
 
       case 'PIC':
       case 'APIC':
-        let pic: IPicture = {};
+        const pic: IPicture = {};
 
         offset += 1;
 
@@ -88,7 +88,7 @@ export default class FrameParser {
             break;
           case 3:
           case 4:
-            let enc = 'iso-8859-1';
+            const enc = 'iso-8859-1';
             fzero = common.findZero(b, offset, length, enc);
             pic.format = common.decodeString(b.slice(offset, fzero), enc);
             offset = fzero + 1;
@@ -124,7 +124,7 @@ export default class FrameParser {
 
         output = [];
         while (offset < length) {
-          let txt = b.slice(offset, offset = common.findZero(b, offset, length, encoding));
+          const txt = b.slice(offset, offset = common.findZero(b, offset, length, encoding));
           offset += 5; // push offset forward one +  4 byte timestamp
           output.push(common.decodeString(txt, encoding));
         }
@@ -172,17 +172,17 @@ export default class FrameParser {
    * Converts TMCL (Musician credits list) or TIPL (Involved people list)
    * @param entries
    */
-  private static functionList(entries: string[]): {[index: string]: string[] } {
-    let res: {[index: string]: string[] } = {};
+  private static functionList(entries: string[]): {[index: string]: string[]} {
+    const res: {[index: string]: string[]} = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
-      let names: string[] = entries[i + 1].split(',');
+      const names: string[] = entries[i + 1].split(',');
       res[entries[i]] = res.hasOwnProperty(entries[i]) ? res[entries[i]].concat(names) : names;
     }
     return res;
   }
 
   private static splitValue(major: number, text: string) {
-    let values = text.split(major >= 4 ? /\x00/g : /\//g);
+    const values = text.split(major >= 4 ? /\x00/g : /\//g);
     return FrameParser.trimArray(values);
   }
 
@@ -194,9 +194,9 @@ export default class FrameParser {
   }
 
   private static readIdentifierAndData(b, offset, length, encoding): {id: string, data: Uint8Array} {
-    let fzero = common.findZero(b, offset, length, encoding);
+    const fzero = common.findZero(b, offset, length, encoding);
 
-    let id = common.decodeString(b.slice(offset, fzero), encoding);
+    const id = common.decodeString(b.slice(offset, fzero), encoding);
     offset = fzero + FrameParser.getNullTerminatorLength(encoding);
 
     return {id, data: b.slice(offset, length)};

@@ -50,10 +50,10 @@ class VorbisPictureParser implements IVorbisPicture {
 
     this.type = VorbisPictureType[strtok.UINT32_BE.get(buffer, 0)];
 
-    let mimeLen = strtok.UINT32_BE.get(buffer, offset += 4);
+    const mimeLen = strtok.UINT32_BE.get(buffer, offset += 4);
     this.format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
 
-    let descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen);
+    const descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen);
     this.description = buffer.toString('utf-8', offset += 4, offset + descLen);
 
     this.width = strtok.UINT32_BE.get(buffer, offset += descLen);
@@ -61,14 +61,14 @@ class VorbisPictureParser implements IVorbisPicture {
     this.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4);
     this.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4);
 
-    let picDataLen = strtok.UINT32_BE.get(buffer, offset += 4);
+    const picDataLen = strtok.UINT32_BE.get(buffer, offset += 4);
     this.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen));
   }
 }
 
 export default class Vorbis {
 
-  public static readPicture (buffer: Buffer): IVorbisPicture {
+  public static readPicture(buffer: Buffer): IVorbisPicture {
     return new VorbisPictureParser(buffer);
   }
 

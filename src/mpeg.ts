@@ -117,7 +117,7 @@ class MpegFrameHeader {
     this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
     this.samplingRate = this.calcSamplingRate();
 
-    let bitrateInKbps = this.calcBitrate();
+    const bitrateInKbps = this.calcBitrate();
     this.bitrate = bitrateInKbps == null ? null : bitrateInKbps * 1000;
     this.samplingRate = this.calcSamplingRate();
   }
@@ -158,7 +158,7 @@ class MpegFrameHeader {
   private calcBitrate(): number {
     if (this.bitrateIndex === 0x00) return null; // free
     if (this.bitrateIndex === 0x0F) return null; // 'reserved'
-    let mpegVersion: string = this.version.toString() + this.layer;
+    const mpegVersion: string = this.version.toString() + this.layer;
     return MpegFrameHeader.bitrate_index[this.bitrateIndex][mpegVersion];
   }
 
@@ -312,11 +312,11 @@ export class MpegParser implements IStreamParser {
          if (v.slice(0, 3).toString() === 'TAG') {
          return done()
          }*/
-        let buf_frame_header = new Buffer(4);
+        const buf_frame_header = new Buffer(4);
         v.copy(buf_frame_header, 2);
         buf_frame_header[0] = MpegFrameHeader.SyncByte1;
         buf_frame_header[1] = this.frameSyncByte2;
-        let header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
+        const header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
 
         if (header.version === null || header.layer === null) {
           return this.seekFirstAudioFrame();
@@ -341,14 +341,14 @@ export class MpegParser implements IStreamParser {
         this.tagEvent('format', 'sampleRate', header.samplingRate);
         this.tagEvent('format', 'numberOfChannels', header.channelMode === 'mono' ? 1 : 2);
 
-        let slot_size = header.calcSlotSize();
+        const slot_size = header.calcSlotSize();
         if (slot_size == null) {
           this.done(new Error('invalid slot_size'));
         }
 
-        let samples_per_frame = header.calcSamplesPerFrame();
-        let bps = samples_per_frame / 8.0;
-        let fsize = (bps * header.bitrate / header.samplingRate) +
+        const samples_per_frame = header.calcSamplesPerFrame();
+        const bps = samples_per_frame / 8.0;
+        const fsize = (bps * header.bitrate / header.samplingRate) +
           ((header.padding) ? slot_size : 0);
         this.frame_size = Math.floor(fsize);
 
@@ -405,7 +405,7 @@ export class MpegParser implements IStreamParser {
 
       case State.xtra_info_header: // xtra / info header
         this.state = State.skip_frame_data;
-        let frameDataLeft = this.frame_size - this.offset;
+        const frameDataLeft = this.frame_size - this.offset;
 
         let codecProfile: string;
         switch (v.headerTag) {
@@ -443,7 +443,7 @@ export class MpegParser implements IStreamParser {
   }
 
   private skipSideInformation(header: MpegFrameHeader) {
-    let sideinfo_length = header.calculateSideInfoLength();
+    const sideinfo_length = header.calculateSideInfoLength();
 
     this.offset += sideinfo_length;
     this.state = State.side_information;
@@ -459,7 +459,7 @@ export class MpegParser implements IStreamParser {
   }
 
   private areAllSame(array) {
-    let first = array[0];
+    const first = array[0];
     return array.every((element) => {
       return element === first;
     });

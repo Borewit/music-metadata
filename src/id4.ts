@@ -81,9 +81,9 @@ class Id4Parser implements IStreamParser {
 
         case State.ilstAtom: // ilst atom
           cb.metaAtomsTotalLength += cb.atomLength;
-          let results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
+          const results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
           if (results.length > 0) {
-            for (let result of results) {
+            for (const result of results) {
               callback(Id4Parser.type, cb.atomName, result);
             }
           }
@@ -98,8 +98,8 @@ class Id4Parser implements IStreamParser {
 
         case State.mdhdAtom: // mdhd atom
           // TODO: support version 1
-          let sampleRate = v.readUInt32BE(12);
-          let duration = v.readUInt32BE(16);
+          const sampleRate = v.readUInt32BE(12);
+          const duration = v.readUInt32BE(16);
           callback('format', 'duration', duration / sampleRate);
           callback('format', 'sampleRate', sampleRate); // ToDo: add to test
           cb.state = State.atomLength;
@@ -113,17 +113,17 @@ class Id4Parser implements IStreamParser {
   }
 
   private processMetaAtom(data, atomName: string, atomLength: number) {
-    let result = [];
+    const result = [];
     let offset = 0;
 
     // ignore proprietary iTunes atoms (for now)
     if (atomName === '----') return result;
 
     while (offset < atomLength) {
-      let length = strtok.UINT32_BE.get(data, offset);
-      let contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)];
+      const length = strtok.UINT32_BE.get(data, offset);
+      const contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)];
 
-      let content = this.processMetaDataAtom(data.slice(offset + 12, offset + length), contType, atomName);
+      const content = this.processMetaDataAtom(data.slice(offset + 12, offset + length), contType, atomName);
 
       result.push(content);
       offset += length;
@@ -139,7 +139,7 @@ class Id4Parser implements IStreamParser {
 
       case 'uint8':
         if (atomName === 'gnre') {
-          let genreInt = strtok.UINT8.get(data, 5);
+          const genreInt = strtok.UINT8.get(data, 5);
           return common.GENRES[genreInt - 1];
         }
         if (atomName === 'trkn' || atomName === 'disk') {

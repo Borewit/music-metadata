@@ -25,7 +25,7 @@ class Id3v1Parser implements IStreamParser {
   public parse(stream, callback: TagCallback, done, readDuration?, fileSize?) {
 
     let mp3Done = false;
-    let id3Done = false;
+    const id3Done = false;
 
     stream.on('data', (data) => {
       this.endData = data;
@@ -40,10 +40,10 @@ class Id3v1Parser implements IStreamParser {
       }, readDuration, fileSize);
   }
 
-  public end (callback: TagCallback, done: Done) {
+  public end(callback: TagCallback, done: Done) {
 
     let offset = this.endData.length - 128;
-    let header = this.endData.toString('ascii', offset, offset += 3);
+    const header = this.endData.toString('ascii', offset, offset += 3);
     if (header !== 'TAG') {
       return done(new Error('Could not find metadata header'));
     }
@@ -56,11 +56,11 @@ class Id3v1Parser implements IStreamParser {
     Id3v1Parser.parseTag(this.endData, offset, offset += 4, this.type, 'year', callback);
     Id3v1Parser.parseTag(this.endData, offset, offset += 28, this.type, 'comment', callback);
 
-    let track = this.endData[this.endData.length - 2];
+    const track = this.endData[this.endData.length - 2];
     callback(this.type, 'track', track);
 
     if (this.endData[this.endData.length - 1] in common.GENRES) {
-      let genre = common.GENRES[this.endData[this.endData.length - 1]];
+      const genre = common.GENRES[this.endData[this.endData.length - 1]];
       callback(this.type, 'genre', genre);
     }
 

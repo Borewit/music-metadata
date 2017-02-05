@@ -8,9 +8,9 @@ import vorbis from './vorbis';
 
 interface IState {
 
-  parse (callback, data, done): IState;
+  parse(callback, data, done): IState;
 
-  getExpectedType ();
+  getExpectedType();
 }
 
 class FlacParser implements IStreamParser {
@@ -157,21 +157,21 @@ class DataDecoder {
   }
 
   public readInt32(): number {
-    let value = strtok.UINT32_LE.get(this.data, this.offset);
+    const value = strtok.UINT32_LE.get(this.data, this.offset);
     this.offset += 4;
     return value;
   }
 
   public readStringUtf8(): string {
-    let len = this.readInt32();
-    let value = this.data.toString('utf8', this.offset, this.offset + len);
+    const len = this.readInt32();
+    const value = this.data.toString('utf8', this.offset, this.offset + len);
     this.offset += len;
     return value;
   }
 }
 
 // ToDo: same in ASF
-let finishedState: IState = {
+const finishedState: IState = {
 
   parse: (callback) => {
     return finishedState; // ToDo: correct?
@@ -197,7 +197,7 @@ class BlockDataState implements IState {
   public parse(callback, data) {
     switch (this.type) {
       case BlockType.STREAMINFO: // METADATA_BLOCK_STREAMINFO
-        let blockStreamInfo = <IBlockStreamInfo> data;
+        const blockStreamInfo = data as IBlockStreamInfo;
         // Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
         callback('format', 'dataformat', 'flac');
         callback('format', 'lossless', true);
@@ -205,24 +205,24 @@ class BlockDataState implements IState {
         callback('format', 'numberOfChannels', blockStreamInfo.channels);
         callback('format', 'bitsPerSample', blockStreamInfo.bitsPerSample);
         callback('format', 'sampleRate', blockStreamInfo.sampleRate);
-        let duration = blockStreamInfo.totalSamples / blockStreamInfo.sampleRate;
+        const duration = blockStreamInfo.totalSamples / blockStreamInfo.sampleRate;
         callback('format', 'duration', blockStreamInfo.totalSamples / blockStreamInfo.sampleRate);
         // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
         break;
 
       case BlockType.VORBIS_COMMENT: // METADATA_BLOCK_VORBIS_COMMENT
-        let decoder = new DataDecoder(data);
+        const decoder = new DataDecoder(data);
         decoder.readStringUtf8(); // vendor (skip)
-        let commentListLength = decoder.readInt32();
+        const commentListLength = decoder.readInt32();
         for (let i = 0; i < commentListLength; i++) {
-          let comment = decoder.readStringUtf8();
-          let split = comment.split('=');
+          const comment = decoder.readStringUtf8();
+          const split = comment.split('=');
           callback(FlacParser.headerType, split[0].toUpperCase(), split[1]);
         }
         break;
 
       case BlockType.PICTURE: // METADATA_BLOCK_PICTURE
-        let picture = vorbis.readPicture(data);
+        const picture = vorbis.readPicture(data);
         callback(FlacParser.headerType, 'METADATA_BLOCK_PICTURE', picture);
         break;
     }
@@ -239,10 +239,10 @@ class BlockDataState implements IState {
   }
 }
 
-let blockHeaderState: IState = {
+const blockHeaderState: IState = {
   parse: (callback, data, done) => {
-    let header = <IBlockHeader> data;
-    let followingStateFactory = header.lastBlock ? () => {
+    const header = data as IBlockHeader;
+    const followingStateFactory = header.lastBlock ? () => {
       done();
       return finishedState;
     } : () => {
@@ -256,7 +256,7 @@ let blockHeaderState: IState = {
   }
 };
 
-let idState: IState = {
+const idState: IState = {
 
   parse: (callback, data, done) => {
     if (data.toString() !== 'fLaC') {
@@ -270,7 +270,7 @@ let idState: IState = {
   }
 };
 
-let startState: IState = {
+const startState: IState = {
 
   parse: (callback) => {
     return idState;

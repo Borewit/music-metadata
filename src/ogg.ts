@@ -71,7 +71,7 @@ class OggParser implements IStreamParser {
   private header: IOggHeader;
 
   public parse(stream, callback, done, readDuration, fileSize) {
-    let innerStream = new events.EventEmitter();
+    const innerStream = new events.EventEmitter();
 
     let pageLength = 0;
     let stop = false;
@@ -157,8 +157,8 @@ class OggParser implements IStreamParser {
         case MetaState.comment: // comment
           cb.commentsRead++;
           v = v.toString();
-          let idx = v.indexOf('=');
-          let key = v.slice(0, idx).toUpperCase();
+          const idx = v.indexOf('=');
+          const key = v.slice(0, idx).toUpperCase();
           let value = v.slice(idx + 1);
 
           if (key === 'METADATA_BLOCK_PICTURE') {
