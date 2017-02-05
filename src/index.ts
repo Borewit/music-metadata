@@ -333,29 +333,28 @@ class MusicMetadataParser {
       done(new Error('Unexpected end of stream'));
     }
 
-    function done(exception?: Error) {
+    function done(err?: Error) {
       isDone = true;
-
       istream.removeListener('close', onClose);
 
-      /**
-       * If MusicBrainz defined artists, the artist may be a single combined field,
-       * otherwise artist may contain multiple artists.
-       */
-      if (metadata.common.artists && metadata.common.artists.length > 0) {
-        metadata.common.artist = metadata.common.artist[0];
-      } else {
-        if (metadata.common.artist) {
-          metadata.common.artists = <any> metadata.common.artist;
-          if (metadata.common.artist.length > 1) {
-            delete metadata.common.artist;
-          } else {
-            metadata.common.artist = metadata.common.artist[0];
+      if(!err) {
+        /**
+         * If MusicBrainz defined artists, the artist may be a single combined field,
+         * otherwise artist may contain multiple artists.
+         */
+        if (metadata.common.artists && metadata.common.artists.length > 0) {
+          metadata.common.artist = metadata.common.artist[0];
+        } else {
+          if (metadata.common.artist) {
+            metadata.common.artists = <any> metadata.common.artist;
+            if (metadata.common.artist.length > 1) {
+              delete metadata.common.artist;
+            } else {
+              metadata.common.artist = metadata.common.artist[0];
+            }
           }
         }
-      }
 
-      if (!exception) {
         // We only emit aliased events once the 'done' event has been raised,
         // this is because an alias like 'artist' could have values split
         // over many data chunks.
@@ -367,7 +366,7 @@ class MusicMetadataParser {
       }
 
       if (callback) {
-        callback(exception, metadata);
+        callback(err, metadata);
       }
       return strtok.DONE;
     }

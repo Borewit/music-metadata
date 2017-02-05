@@ -111,7 +111,7 @@ class MpegFrameHeader {
     this.emphasis = common.getBitAllignedNumber(buf, off + 3, 7, 2);
 
     this.version = MpegFrameHeader.VersionID[this.versionIndex];
-    if(this.version === null)
+    if (this.version === null)
       throw new Error('Invalid MPEG Audio version');
 
     this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
@@ -266,7 +266,13 @@ export class MpegParser implements IStreamParser {
 
     this.state = State.mpegSearchSync1;
 
-    strtok.parse(stream, (v, cb) => this.strParse(v, cb));
+    strtok.parse(stream, (v, cb) => {
+      try {
+        return this.strParse(v, cb)
+      } catch (error) {
+        return done(error);
+      }
+    });
   }
 
   public end(callback: TagCallback, done: Done) {
