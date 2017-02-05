@@ -174,7 +174,7 @@ export default class FrameParser {
    */
   private static functionList(entries: string[]): {[index: string]: string[] } {
     let res: {[index: string]: string[] } = {};
-    for (let i = 0; i < entries.length; i += 2) {
+    for (let i = 0; i + 1 < entries.length; i += 2) {
       let names: string[] = entries[i + 1].split(',');
       res[entries[i]] = res.hasOwnProperty(entries[i]) ? res[entries[i]].concat(names) : names;
     }
