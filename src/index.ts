@@ -142,12 +142,12 @@ export interface IFormat {
   numberOfChannels?: number,
 }
 
-export interface IResult {
+export interface IAudioMetadata {
   common: ICommonTagsResult,
   format: IFormat;
 }
 
-export type ICallbackType = (error?: Error, result?: IResult) => void;
+export type ICallbackType = (error?: Error, metadata?: IAudioMetadata) => void;
 
 export interface IOptions {
   path?: string,
@@ -246,7 +246,7 @@ class MusicMetadataParser {
     /**
      * Default present metadata properties
      */
-    const metadata: IResult = {
+    const metadata: IAudioMetadata = {
       common: {
         artists: [],
         track: {no: null, of: null},
@@ -451,6 +451,10 @@ class MusicMetadataParser {
       switch (alias) {
         case 'genre':
           value = common.parseGenre(value);
+          break;
+
+        case 'barcode':
+          comTags.barcode = typeof value === "string" ? parseInt(value) : value;
           break;
 
         case 'picture':
