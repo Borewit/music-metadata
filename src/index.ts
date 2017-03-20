@@ -75,7 +75,8 @@ export interface ICommonTagsResult {
   encodedby?: string,
   encodersettings?: string,
   gapless?: string,
-  barcode?: string, // ToDo: multiple??
+  barcode?: number, // ToDo: multiple??
+  // International Standard Recording Code
   isrc?: string,
   asin?: string,
   musicbrainz_recordingid?: string,
