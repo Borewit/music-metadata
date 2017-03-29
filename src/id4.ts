@@ -10,6 +10,8 @@ enum State {
   mdhdAtom = 3
 }
 
+type IMetaDataAtom = string | {format: string, data: Buffer};
+
 class Id4Parser implements IStreamParser {
 
   public static type = 'm4a';
@@ -118,7 +120,7 @@ class Id4Parser implements IStreamParser {
     });
   }
 
-  private processMetaAtom(data, atomName: string, atomLength: number) {
+  private processMetaAtom(data: Buffer, atomName: string, atomLength: number): IMetaDataAtom[] {
     const result = [];
     let offset = 0;
 
@@ -138,7 +140,7 @@ class Id4Parser implements IStreamParser {
     return result;
   }
 
-  private processMetaDataAtom(data, type, atomName) {
+  private processMetaDataAtom(data: Buffer, type: string, atomName: string): IMetaDataAtom {
     switch (type) {
       case 'text':
         return data.toString('utf8', 4);
