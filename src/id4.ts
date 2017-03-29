@@ -81,7 +81,13 @@ class Id4Parser implements IStreamParser {
 
         case State.ilstAtom: // ilst atom
           cb.metaAtomsTotalLength += cb.atomLength;
-          const results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
+          let results;
+          try {
+            results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
+          } catch (err) {
+            return done(err);
+          }
+
           if (results.length > 0) {
             for (const result of results) {
               callback(Id4Parser.type, cb.atomName, result);
