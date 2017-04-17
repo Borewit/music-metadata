@@ -454,7 +454,7 @@ class MusicMetadataParser {
           break;
 
         case 'barcode':
-          comTags.barcode = typeof value === 'string' ? parseInt(value, 10) : value;
+          value = typeof value === 'string' ? parseInt(value, 10) : value;
           break;
 
         case 'picture':

@@ -34,7 +34,7 @@ test('Test multi-artists flac', function (t) {
     t.strictEqual(common.date, '2011-09-27', 'common.date')
     t.strictEqual(common.year, 2011, 'common.year')
     t.strictEqual(common.media, 'CD', 'common.media = CD')
-    t.strictEqual(common.barcode, '804879313915', 'common.barcode')
+    t.strictEqual(common.barcode, 804879313915, 'common.barcode')
     t.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
     t.strictEqual(common.label, 'J&R Adventures', 'common.label = J&R Adventures')
     t.strictEqual(common.catalognumber, 'PRAR931391', 'common.catalognumber = PRAR931391')
