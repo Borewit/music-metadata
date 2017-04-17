@@ -19,7 +19,8 @@ interface IFileWrapperStream extends ThroughStream {
 }
 
 function wrapFileWithStream(file: ArrayBuffer | Blob | FileList | ReadableStream): ReadableStream {
-  const stream = through( (data) => {
+  // tslint:disable-next-line
+  const stream = through( function(data) {
     if (data.length > 0) this.queue(data);
   }, null, {autoDestroy: false}) as IFileWrapperStream;
 
