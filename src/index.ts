@@ -365,7 +365,7 @@ class MusicMetadataParser {
       }
 
       if (callback) {
-        callback(err, metadata);
+        callback(err, metadata, stream);
       }
       return strtok.DONE;
     }
