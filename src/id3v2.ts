@@ -4,8 +4,13 @@ import {isArray} from 'util';
 import common from './common';
 import id3v2_frames from './id3v2_frames';
 import {MpegParser} from './mpeg';
-import {IStreamParser} from './parser';
 import {HeaderType} from './tagmap';
+import {IFileParser} from "./FileParser";
+import {FileTokenizer, IGetToken, IToken} from "./FileTokenizer";
+import {IAudioMetadata, ICommonTagsResult, IFormat, MusicMetadataParser} from "./index";
+import {IOptions} from "../lib/src/index";
+import TagMap from "../lib/tagmap";
+
 
 interface IFrameFlags {
   status: {
@@ -63,14 +68,6 @@ interface IExtendedHeader {
   crcDataPresent: boolean;
 }
 
-enum State {
-  header,
-  extendedHeader,
-  extendedHeaderData,
-  id3_data,
-  MP3
-}
-
 class ID3v2 {
 
   /**
@@ -90,7 +87,7 @@ class ID3v2 {
    * Ref: http://id3.org/id3v2.3.0#ID3v2_header
    * ToDo
    */
-  public static Header = {
+  public static Header: IGetToken<IID3v2header> = {
     len: 10,
 
     get: (buf, off): IID3v2header => {
@@ -119,7 +116,7 @@ class ID3v2 {
     }
   };
 
-  public static ExtendedHeader = {
+  public static ExtendedHeader: IGetToken<IExtendedHeader> = {
     len: 10,
 
     get: (buf, off): IExtendedHeader => {
@@ -137,7 +134,7 @@ class ID3v2 {
   };
 }
 
-class Id3v2Parser implements IStreamParser {
+class Id3v2Parser implements IFileParser {
 
   public static getInstance(): Id3v2Parser {
     return new Id3v2Parser();
@@ -176,7 +173,7 @@ class Id3v2Parser implements IStreamParser {
     return header;
   }
 
-  private static getFrameHeaderLength(majorVer, done): number {
+  private static getFrameHeaderLength(majorVer: number): number {
     switch (majorVer) {
       case 2:
         return 6;
@@ -184,7 +181,7 @@ class Id3v2Parser implements IStreamParser {
       case 4:
         return 10;
       default:
-        return done(new Error('header versionIndex is incorrect'));
+        throw new Error('header versionIndex is incorrect');
     }
   }
 
@@ -205,89 +202,102 @@ class Id3v2Parser implements IStreamParser {
     };
   }
 
-  private state: State = State.header;
-  private mpegParser: MpegParser;
+  private fileTokenizer: FileTokenizer;
+  private id3Header: IID3v2header;
 
-  public parse(stream, callback, done, readDuration, fileSize) {
-    const self: Id3v2Parser = this;
+  private tags: { id: string, value: any }[] = [];
+  private headerType: HeaderType;
+  private options: IOptions;
 
-    let id3Header: IID3v2header;
-    let extendedHeader: IExtendedHeader;
-    let headerType: HeaderType;
+  public parse(fileTokenizer: FileTokenizer, options: IOptions): Promise<IAudioMetadata> {
 
-    strtok.parse(stream, (v, cb) => {
-      if (v === undefined) {
-        self.state = State.header;
-        return ID3v2.Header;
+    this.fileTokenizer = fileTokenizer;
+    this.options = options;
+
+    return this.fileTokenizer.readToken(ID3v2.Header).then((id3Header) => {
+
+      if (id3Header.fileIdentifier !== 'ID3') {
+        throw new Error("expected file identifier 'ID3' not found");
       }
 
-      switch (self.state) {
-        case State.header: // ID3v2 header
-          id3Header = v as IID3v2header;
-          if (id3Header.fileIdentifier !== 'ID3') {
-            return done(new Error('expected file identifier \'ID3\' not found'));
-          }
-          headerType = ('id3v2.' + id3Header.version.major) as HeaderType;
-          if (id3Header.flags.isExtendedHeader) {
-            self.state = State.extendedHeader;
-            return ID3v2.ExtendedHeader;
-          } else {
-            self.state = State.id3_data;
-            return new strtok.BufferType(id3Header.size);
-          }
+      this.id3Header = id3Header;
 
-        case State.extendedHeader:
-          extendedHeader = v as IExtendedHeader;
-          const dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
-          if (dataRemaining > 0) {
-            self.state = State.extendedHeaderData;
-            return new strtok.BufferType(dataRemaining);
-          } else {
-            self.state = State.id3_data;
-            return new strtok.BufferType(id3Header.size - extendedHeader.size);
-          }
+      this.headerType = ('id3v2.' + id3Header.version.major) as HeaderType;
 
-        case State.extendedHeaderData:
-          self.state = State.id3_data;
-          return new strtok.BufferType(id3Header.size - extendedHeader.size);
-
-        case State.id3_data: // mm data
-          for (const tag of this.parseMetadata(v, id3Header, done)){
-          if (tag.id === 'TXXX') {
-            for (const text of tag.value.text) {
-              callback(headerType, tag.id + ':' + tag.value.description, text);
-            }
-          } else if (isArray(tag.value)) {
-              for (const value of tag.value) {
-                callback(headerType, tag.id, value);
-              }
-            } else {
-              callback(headerType, tag.id, tag.value);
-            }
-          }
-          callback('format', 'headerType', headerType);
-          this.mpegParser = new MpegParser(id3Header.size);
-          this.mpegParser.parse(stream, callback, done, readDuration, fileSize);
-          return strtok.DONE;
-
-        default:
-          done(new Error('Undefined state: ' + self.state));
+      if (id3Header.flags.isExtendedHeader) {
+        return this.parseExtendedHeader();
+      } else {
+        return this.parseId3Data(id3Header.size);
       }
-    });
+    })
   }
 
-  public end(callback, done) {
-    this.mpegParser.end(callback, done);
+  public parseExtendedHeader(): Promise<IAudioMetadata> {
+    return this.fileTokenizer.readToken(ID3v2.ExtendedHeader).then((extendedHeader) => {
+      const dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
+      if (dataRemaining > 0) {
+        return this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);
+      } else {
+        return this.parseId3Data(this.id3Header.size - extendedHeader.size);
+      }
+    })
   }
 
-  private parseMetadata(data: Buffer, header: IID3v2header, done): Array<{id: string, value: any}> {
+  public parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<IAudioMetadata> {
+    const buffer = new Buffer(dataRemaining);
+    return this.fileTokenizer.readBuffer(buffer, 0, dataRemaining).then(() => {
+      return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
+    })
+  }
+
+  public parseId3Data(dataLen: number): Promise<IAudioMetadata> {
+    const buffer = new Buffer(dataLen);
+    return this.fileTokenizer.readBuffer(buffer, 0, dataLen).then(() => {
+      for (const tag of this.parseMetadata(buffer)) {
+        if (tag.id === 'TXXX') {
+          for (const text of tag.value.text) {
+            this.tags.push({id: tag.id + ':' + tag.value.description, value: text});
+          }
+        } else if (isArray(tag.value)) {
+          for (const value of tag.value) {
+            this.tags.push({id: tag.id, value: value});
+          }
+        } else {
+          this.tags.push({id: tag.id, value: tag.value});
+        }
+      }
+
+      return new MpegParser(this.fileTokenizer, this.id3Header.size, this.options && this.options.duration).parse().then((format) => {
+
+        const res: IAudioMetadata = {
+          common: {
+            artists: [],
+            track: {no: null, of: null},
+            disk: {no: null, of: null}
+          },
+          format,
+          native: this.tags
+        };
+
+        res.format.type = this.headerType;
+
+        for (const tag of this.tags) {
+          this.getCommonTags(res.common, this.headerType, tag.id, tag.value);
+        }
+
+        return res;
+      })
+    })
+  }
+
+  private parseMetadata(data: Buffer): { id: string, value: any }[] {
     let offset = 0;
-    const tags: Array<{id: string, value: any}> = [];
+    const tags: { id: string, value: any }[] = [];
 
     while (true) {
       if (offset === data.length) break;
-      const frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(header.version.major, done));
-      const frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, header.version.major);
+      const frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(this.id3Header.version.major));
+      const frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
       // Last frame. Check first char is a letter, bit of defensive programming
       if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
@@ -297,13 +307,13 @@ class Id3v2Parser implements IStreamParser {
       }
 
       const frameDataBytes = data.slice(offset, offset += frameHeader.length);
-      const values = this.readFrameData(frameDataBytes, frameHeader, header.version.major);
+      const values = this.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major);
       tags.push({id: frameHeader.id, value: values});
     }
     return tags;
   }
 
-  private readFrameData(v, frameHeader, majorVer) {
+  private readFrameData(v, frameHeader, majorVer: number) {
     switch (majorVer) {
       case 2:
         return id3v2_frames.readData(v, frameHeader.id, null, majorVer);
@@ -318,6 +328,102 @@ class Id3v2Parser implements IStreamParser {
         return id3v2_frames.readData(v, frameHeader.id, frameHeader.flags, majorVer);
       default:
         throw new Error('Unexpected majorVer: ' + majorVer);
+    }
+  }
+
+  private tagMap = new TagMap(); // ToDo: split tagmap amongst parsers
+
+  private getCommonTags(comTags: ICommonTagsResult, type: HeaderType, tag: string, value: any) {
+
+    switch (tag) {
+
+      case 'UFID': // decode MusicBrainz Recording Id
+        if (value.owner_identifier === 'http://musicbrainz.org') {
+          tag += ':' + value.owner_identifier;
+          value = common.decodeString(value.identifier, 'iso-8859-1');
+        }
+        break;
+
+      case 'PRIV':
+        switch (value.owner_identifier) {
+          // decode Windows Media Player
+          case 'AverageLevel':
+          case 'PeakValue':
+            tag += ':' + value.owner_identifier;
+            value = common.strtokUINT32_LE.get(value.data, 0);
+            break;
+          default:
+          // Unknown PRIV owner-identifier
+        }
+        break;
+
+      default:
+      // nothing to do
+    }
+
+    // Convert native tag event to common (aliased) event
+    const alias = this.tagMap.getCommonName(type, tag);
+
+    if (alias) {
+      // Common tag (alias) found
+
+      // check if we need to do something special with common tag
+      // if the event has been aliased then we need to clean it before
+      // it is emitted to the user. e.g. genre (20) -> Electronic
+      switch (alias) {
+        case 'genre':
+          value = common.parseGenre(value);
+          break;
+
+        case 'barcode':
+          value = typeof value === 'string' ? parseInt(value, 10) : value;
+          break;
+
+        case 'picture':
+          value = MusicMetadataParser.cleanupPicture(value);
+          break;
+
+        case 'totaltracks':
+          comTags.track.of = MusicMetadataParser.toIntOrNull(value);
+          return;
+
+        case 'totaldiscs':
+          comTags.disk.of = MusicMetadataParser.toIntOrNull(value);
+          return;
+
+        case 'track':
+        case 'disk':
+          const of = comTags[alias].of; // store of value, maybe maybe overwritten
+          comTags[alias] = MusicMetadataParser.cleanupTrack(value);
+          comTags[alias].of = of != null ? of : comTags[alias].of;
+          return;
+
+        case 'year':
+        case 'originalyear':
+          value = parseInt(value, 10);
+          break;
+
+        case 'date':
+          // ToDo: be more strict on 'YYYY...'
+          // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
+          comTags.year = parseInt(value.substr(0, 4), 10);
+          break;
+
+        default:
+        // nothing to do
+      }
+
+      if (alias !== 'artist' && TagMap.isSingleton(alias)) {
+        comTags[alias] = value;
+      } else {
+        if (comTags.hasOwnProperty(alias)) {
+          comTags[alias].push(value);
+        } else {
+          // if we haven't previously seen this tag then
+          // initialize it to an array, ready for values to be entered
+          comTags[alias] = [value];
+        }
+      }
     }
   }
 }

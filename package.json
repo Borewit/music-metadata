@@ -16,6 +16,7 @@
   "dependencies": {
     "deep-equal": "^1.0.1",
     "filereader-stream": "^1.0.0",
+    "fs-extra": "^3.0.1",
     "is-stream": "^1.1.0",
     "strtok2": "^1.0.4",
     "through": "~2.3.8"
@@ -56,14 +57,15 @@
     "verify": "npm-run-all compile lint test"
   },
   "devDependencies": {
+    "@types/fs-extra": "^3.0.1",
     "brfs": "1.2.0",
     "browserify": "^13.0.0",
     "npm-run-all": "^3.1.1",
     "tape": "^4.5.1",
     "testling": "^1.7.1",
     "tslint": "^4.4.2",
-    "typings": "2.0.0",
-    "typescript": "^2.0.3"
+    "typescript": "^2.0.3",
+    "typings": "2.0.0"
   },
   "testling": {
     "files": [

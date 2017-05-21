@@ -7,14 +7,12 @@ var fs = require('fs')
 var test = require('tape')
 
 test('id3v2.3', function (t) {
-  t.plan(49)
+  t.plan(33)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.3.mp3')])
-    : fs.createReadStream(path.join(__dirname, '/samples/id3v2.3.mp3'))
+  var filePath = path.join(__dirname, 'samples', 'id3v2.3.mp3');
 
   function checkFormat (format) {
-    t.strictEqual(format.headerType, 'id3v2.3', 'format.tag_type')
+    t.strictEqual(format.type, 'id3v2.3', 'format.type')
     t.strictEqual(format.duration, 1, 'format.duration')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
@@ -25,7 +23,7 @@ test('id3v2.3', function (t) {
 
   function checkCommon (common) {
     t.strictEqual(common.title, 'Home', 'common.title')
-    t.deepEqual(common.artists, [ 'Explosions In The Sky', 'Another', 'And Another' ], 'common.artist')
+    t.deepEqual(common.artists, [ 'Explosions In The Sky', 'Another', 'And Another' ], 'common.artists')
     t.strictEqual(common.albumartist, 'Soundtrack', 'common.albumartist')
     t.strictEqual(common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'common.album')
     t.strictEqual(common.year, 2004, 'common.year')
@@ -38,96 +36,52 @@ test('id3v2.3', function (t) {
     t.strictEqual(common.picture[0].data.length, 80938, 'common.picture length')
   }
 
+  function getNativeTags (native, tagId) {
+    return native.filter(function (tag) { return tag.id === tagId }).map(function(tag){ return tag.value })
+  }
+
+  function checkNative (native) {
+
+    t.deepEqual(getNativeTags(native, 'TALB'), ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB')
+
+    t.deepEqual(getNativeTags(native, 'TPE1'), ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1')
+
+    t.deepEqual(getNativeTags(native, 'TPE2'), ['Soundtrack'], 'native: TPE2')
+
+    t.deepEqual(getNativeTags(native, 'TCOM'), ['Explosions in the Sky'], 'native: TCOM')
+
+    t.deepEqual(getNativeTags(native, 'TPOS'), ['1/1'], 'native: TPOS')
+
+    t.deepEqual(getNativeTags(native, 'TCON'), ['Soundtrack'], 'native: TCON')
+
+    t.deepEqual(getNativeTags(native, 'TIT2'), ['Home'], 'native: TIT2')
+
+    t.deepEqual(getNativeTags(native, 'TRCK'), ['5'], 'native: TRCK')
+
+    t.deepEqual(getNativeTags(native, 'TYER'), ['2004'], 'native: TYER')
+
+    t.deepEqual(getNativeTags(native, 'TXXX:PERFORMER'), ['Explosions In The Sky'], 'native: TXXX:PERFORMER')
+
+    var apic = getNativeTags(native, 'APIC')[0];
+
+    t.strictEqual(apic.format, 'image/jpg', 'raw APIC format')
+    t.strictEqual(apic.type, 'Cover (front)', 'raw APIC headerType')
+    t.strictEqual(apic.description, '', 'raw APIC description')
+    t.strictEqual(apic.data.length, 80938, 'raw APIC length')
+  }
+
   var tpe1Counter = 0
 
-  mm.parseStream(sample, {duration: true}, function (err, result) {
-    t.error(err)
+  mm.parseFile(filePath, {duration: true}).then(function (result) {
 
     checkFormat(result.format)
 
     checkCommon(result.common)
 
+    checkNative(result.native)
+
     t.end()
-  })
-    .on('duration', function (result) {
-      t.strictEqual(result, 1, 'duration')
-    })
-    // aliased tests
-    .on('title', function (result) {
-      t.strictEqual(result, 'Home', 'aliased title')
-    })
-    .on('artists', function (result) {
-      t.deepEqual(result,  [ 'Explosions In The Sky', 'Another', 'And Another' ], 'aliased artist')
-    })
-    .on('albumartist', function (result) {
-      t.strictEqual(result, 'Soundtrack', 'aliased albumartist')
-    })
-    .on('album', function (result) {
-      t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'aliased album')
-    })
-    .on('year', function (result) {
-      t.strictEqual(result, 2004, 'aliased year')
-    })
-    .on('track', function (result) {
-      t.strictEqual(result.no, 5, 'aliased track no')
-      t.strictEqual(result.of, null, 'aliased track of')
-    })
-    .on('disk', function (result) {
-      t.strictEqual(result.no, 1, 'aliased disk no')
-      t.strictEqual(result.of, 1, 'aliased disk of')
-    })
-    .on('genre', function (result) {
-      t.strictEqual(result[0], 'Soundtrack', 'aliased genre')
-    })
-    .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'aliased picture format')
-      t.strictEqual(result[0].data.length, 80938, 'aliased picture length')
-    })
-    // raw tests
-    .on('TALB', function (result) {
-      t.strictEqual(result, 'Friday Night Lights [Original Movie Soundtrack]', 'raw TALB')
-    })
-    .on('TPE1', function (result) {
-      switch(tpe1Counter++) {
-        case 0:
-          t.strictEqual(result, 'Explosions In The Sky', 'raw TPE1')
-          break
-        case 1:
-          t.strictEqual(result, 'Another', 'raw TPE1')
-          break
-        case 2:
-          t.strictEqual(result, 'And Another', 'raw TPE1')
-          break
-      }
-    })
-    .on('TPE2', function (result) {
-      t.strictEqual(result, 'Soundtrack', 'raw TPE2')
-    })
-    .on('TCOM', function (result) {
-      t.strictEqual(result, 'Explosions in the Sky', 'raw TCOM')
-    })
-    .on('TPOS', function (result) {
-      t.strictEqual(result, '1/1', 'raw TPOS')
-    })
-    .on('TCON', function (result) {
-      t.strictEqual(result, 'Soundtrack', 'raw TCON')
-    })
-    .on('TIT2', function (result) {
-      t.strictEqual(result, 'Home', 'raw TIT2')
-    })
-    .on('TRCK', function (result) {
-      t.strictEqual(result, '5', 'raw TRCK')
-    })
-    .on('TYER', function (result) {
-      t.strictEqual(result, '2004', 'raw TYER')
-    })
-    .on('TXXX:PERFORMER', function (result) {
-      t.strictEqual(result, 'Explosions In The Sky', 'TXXX:PERFORMER')
-    })
-    .on('APIC', function (result) {
-      t.strictEqual(result.format, 'image/jpg', 'raw APIC format')
-      t.strictEqual(result.type, 'Cover (front)', 'raw APIC headerType')
-      t.strictEqual(result.description, '', 'raw APIC description')
-      t.strictEqual(result.data.length, 80938, 'raw APIC length')
-    })
+  }).catch( function(err) {
+    t.error(err)
+  });
 })

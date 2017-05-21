@@ -1,10 +1,14 @@
 'use strict';
 
 import ReadableStream = NodeJS.ReadableStream;
-import * as strtok from 'strtok2';
-import {Token} from 'strtok2';
+
+import {Token, IgnoreType} from 'strtok2';
 import common from './common';
 import {Done, GetFileSize, IStreamParser, TagCallback} from './parser';
+import {IFileParser} from "./FileParser";
+import {FileTokenizer, StringType, UINT32_BE, UINT8} from "./FileTokenizer";
+import {IFormat} from "../lib/";
+import {BufferType, INT16_BE} from "../lib/FileTokenizer";
 
 enum State {
   mpegSearchSync1 = 1,
@@ -191,23 +195,23 @@ class MpegAudioLayer {
     get: (buf, off) => {
       return {
         // 4 bytes for Header Tag
-        headerTag: new strtok.StringType(4, 'ascii').get(buf, off),
+        headerTag: new StringType(4, 'ascii').get(buf, off),
         // 4 bytes for HeaderFlags
-        headerFlags: new strtok.BufferType(4).get(buf, off + 4),
+        headerFlags: new BufferType(4).get(buf, off + 4),
 
         // 100 bytes for entry (NUMTOCENTRIES)
         // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
         // FRAME SIZE
         // frameSize: strtok.UINT32_BE.get(buf, off + 108),
 
-        numFrames: strtok.UINT32_BE.get(buf, off + 8),
+        numFrames: UINT32_BE.get(buf, off + 8),
 
-        numToCentries: new strtok.BufferType(100).get(buf, off + 108),
+        numToCentries: new BufferType(100).get(buf, off + 108),
 
         // the number of header APE_HEADER bytes
-        streamSize: strtok.UINT32_BE.get(buf, off + 112),
+        streamSize: UINT32_BE.get(buf, off + 112),
         // the number of header data bytes (from original file)
-        vbrScale: strtok.UINT32_BE.get(buf, off + 116),
+        vbrScale: UINT32_BE.get(buf, off + 116),
 
         /**
          * LAME Tag, extends the Xing header format
@@ -216,11 +220,11 @@ class MpegAudioLayer {
          */
 
         //  Initial LAME info, e.g.: LAME3.99r
-        encoder: new strtok.StringType(9, 'ascii').get(buf, off + 120),
+        encoder: new StringType(9, 'ascii').get(buf, off + 120),
         //  Info Tag
-        infoTag: strtok.UINT8.get(buf, off + 129) >> 4,
+        infoTag: UINT8.get(buf, off + 129) >> 4,
         // VBR method
-        vbrMethod: strtok.UINT8.get(buf, off + 129) & 0xf
+        vbrMethod: UINT8.get(buf, off + 129) & 0xf
       };
     }
   };
@@ -230,9 +234,7 @@ class MpegAudioLayer {
   }
 }
 
-export class MpegParser implements IStreamParser {
-
-  private headerSize: number;
+export class MpegParser implements IFileParser {
 
   private frameCount: number = 0;
   private state: State;
@@ -243,220 +245,188 @@ export class MpegParser implements IStreamParser {
   private frame_size;
   private crc: number;
 
-  private stream: NodeJS.ReadableStream;
-  private tagEvent: TagCallback;
-  private done: Done;
-  private readDuration: boolean;
-  private fileSize: GetFileSize;
-  private frameSyncByte2: number;
-
   private calculateVbrDuration: boolean = false;
 
-  public constructor(headerSize: number) {
-    this.headerSize = headerSize;
+  private format: IFormat;
+
+  public constructor(private fileTokenizer: FileTokenizer, private headerSize: number, private readDuration: boolean) {
   }
 
-  public parse(stream: NodeJS.ReadableStream, tagEvent: TagCallback, done: Done, readDuration?: boolean, fileSize?: GetFileSize) {
+  public parse(): Promise<IFormat> {
 
-    this.stream = stream;
-    this.tagEvent = tagEvent;
-    this.done = done;
-    this.readDuration = readDuration;
-    this.fileSize = fileSize;
+    this.format = {
+      dataformat: 'mp3',
+      lossless: false
+    };
 
-    this.state = State.mpegSearchSync1;
+    return this.sync().then(() => {
+      return this.format;
+    });
+  }
 
-    strtok.parse(stream, (v, cb) => {
-      try {
-        return this.strParse(v, cb);
-      } catch (error) {
-        return done(error);
+  public sync(): Promise<void> {
+    const buf_frame_header = new Buffer(4);
+    return this.fileTokenizer.readBuffer(buf_frame_header, 0, 1).then((v) => {
+      if (buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
+        return this.fileTokenizer.readBuffer(buf_frame_header, 1, 1).then((v) => {
+          if ((buf_frame_header[1] & 0xE0) === 0xE0) {
+            // Synchronized
+            return this.parseAudioFrameHeader(buf_frame_header);
+          } else {
+            return this.sync();
+          }
+        })
+      }
+    })
+  }
+
+  public parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
+
+    return this.fileTokenizer.readBuffer(buf_frame_header, 2, 2).then(() => {
+      const header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
+
+      if (header.version === null || header.layer === null) {
+        return this.sync();
+      }
+
+      // mp3 files are only found in MPEG1/2 Layer 3
+      if (( header.version !== 1 && header.version !== 2) || header.layer !== 3) {
+        return this.sync();
+      }
+
+      if (header.bitrate == null) {
+        return this.sync();
+      }
+
+      if (header.samplingRate == null) {
+        return this.sync();
+      }
+
+      this.format.dataformat = 'mp3';
+      this.format.lossless = false;
+
+      this.format.bitrate = header.bitrate;
+      this.format.sampleRate = header.samplingRate;
+      this.format.numberOfChannels = header.channelMode === 'mono' ? 1 : 2;
+
+      const slot_size = header.calcSlotSize();
+      if (slot_size === null) {
+        throw new Error('invalid slot_size');
+      }
+
+      const samples_per_frame = header.calcSamplesPerFrame();
+      const bps = samples_per_frame / 8.0;
+      const fsize = (bps * header.bitrate / header.samplingRate) +
+        ((header.padding) ? slot_size : 0);
+      this.frame_size = Math.floor(fsize);
+
+      this.audioFrameHeader = header;
+      this.frameCount++;
+      this.bitrates.push(header.bitrate);
+
+      // xtra header only exists in first frame
+      if (this.frameCount === 1) {
+        this.offset = MpegAudioLayer.FrameHeader.len;
+        return this.skipSideInformation(header);
+      }
+
+      if (this.frameCount === 3) {
+        // the stream is CBR if the first 3 frame bitrates are the same
+        if (this.areAllSame(this.bitrates)) {
+          // subtract non audio stream data from duration calculation
+          const size = this.fileTokenizer.fileSize - this.headerSize;
+          this.format.duration = (size * 8) / header.bitrate;
+          return; // Done
+        } else if (!this.readDuration) {
+          return; // Done
+        }
+      }
+
+      // once we know the file is VBR attach listener to end of
+      // stream so we can do the duration calculation when we
+      // have counted all the frames
+      if (this.readDuration && this.frameCount === 4) {
+        return this.calculateVbrDuration = true;
+      }
+
+      this.offset = 4;
+      if (header.isProtectedByCRC) {
+        return this.parseCrc();
+      } else {
+        return this.skipSideInformation();
       }
     });
   }
 
+  public parseCrc(): Promise<void> {
+    this.fileTokenizer.readNumber(INT16_BE).then((crc) => {
+      this.crc = crc;
+    });
+    this.offset += 2;
+    return this.skipSideInformation();
+  }
+
+  public skipSideInformation(): Promise<void> {
+    const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
+    this.offset += sideinfo_length;
+    // side information
+    return this.fileTokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
+      this.offset += MpegAudioLayer.InfoTag.len;  // 12
+    }).then(() => {
+      return this.read_xtra_info_header();
+    })
+  }
+
+  public read_xtra_info_header(): Promise<void> {
+    this.offset += MpegAudioLayer.InfoTag.len;  // 12
+
+    return this.fileTokenizer.readToken(MpegAudioLayer.InfoTag).then((infoTag) => {
+
+     // case State.xtra_info_header: // xtra / info header
+      this.state = State.skip_frame_data;
+      const frameDataLeft = this.frame_size - this.offset;
+
+      let codecProfile: string;
+      switch (infoTag.headerTag) {
+        case 'Info':
+          codecProfile = 'CBR';
+          break;
+        case 'Xing':
+          codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
+          break;
+        case 'Xtra':
+          // ToDo: ???
+          break;
+        default:
+          return this.skipFrameData(frameDataLeft);
+      }
+
+      this.format.encoder = infoTag.encoder;
+      this.format.codecProfile = codecProfile;
+
+      // frames field is not present
+      if ((infoTag.headerFlags[3] & 0x01) !== 1) {
+        return this.skipFrameData(frameDataLeft);
+      }
+
+      this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
+      return Promise.resolve(); // Done
+    });
+   }
+
+   private skipFrameData(frameDataLeft: number): Promise<void> {
+     this.fileTokenizer.readToken(new IgnoreType(frameDataLeft));
+     return this.sync();
+   }
+
+
+  /* ToDo:
   public end(callback: TagCallback, done: Done) {
     if (this.calculateVbrDuration) {
       this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
     }
     return done();
-  }
-
-  private strParse(v, cb) {
-    if (v === undefined) {
-      return strtok.UINT8;
-    }
-
-    switch (this.state) {
-
-      case State.mpegSearchSync1:
-        this.state = v === MpegFrameHeader.SyncByte1 ? State.mpegSearchSync2 : State.mpegSearchSync1;
-        return strtok.UINT8;
-
-      case State.mpegSearchSync2:
-        if ((v & 0xE0) === 0xE0) {
-          // Synchronized
-          this.state = State.audio_frame_header;
-          this.frameSyncByte2 = v;
-          return new strtok.BufferType(2);
-        } else {
-          this.state = State.mpegSearchSync1;
-          return strtok.UINT8;
-        }
-
-      /* falls through */
-      case State.audio_frame_header: // audio frame header
-
-        // we have found the mm tag at the end of the file, ignore
-        /*
-         if (v.slice(0, 3).toString() === 'TAG') {
-         return done()
-         }*/
-        const buf_frame_header = new Buffer(4);
-        v.copy(buf_frame_header, 2);
-        buf_frame_header[0] = MpegFrameHeader.SyncByte1;
-        buf_frame_header[1] = this.frameSyncByte2;
-        const header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
-
-        if (header.version === null || header.layer === null) {
-          return this.seekFirstAudioFrame();
-        }
-
-        // mp3 files are only found in MPEG1/2 Layer 3
-        if (( header.version !== 1 && header.version !== 2) || header.layer !== 3) {
-          return this.seekFirstAudioFrame();
-        }
-
-        if (header.bitrate == null) {
-          return this.seekFirstAudioFrame();
-        }
-
-        if (header.samplingRate == null) {
-          return this.seekFirstAudioFrame();
-        }
-
-        this.tagEvent('format', 'dataformat', 'mp3');
-        this.tagEvent('format', 'lossless', false);
-        this.tagEvent('format', 'bitrate', header.bitrate);
-        this.tagEvent('format', 'sampleRate', header.samplingRate);
-        this.tagEvent('format', 'numberOfChannels', header.channelMode === 'mono' ? 1 : 2);
-
-        const slot_size = header.calcSlotSize();
-        if (slot_size == null) {
-          this.done(new Error('invalid slot_size'));
-        }
-
-        const samples_per_frame = header.calcSamplesPerFrame();
-        const bps = samples_per_frame / 8.0;
-        const fsize = (bps * header.bitrate / header.samplingRate) +
-          ((header.padding) ? slot_size : 0);
-        this.frame_size = Math.floor(fsize);
-
-        this.audioFrameHeader = header;
-        this.frameCount++;
-        this.bitrates.push(header.bitrate);
-
-        // xtra header only exists in first frame
-        if (this.frameCount === 1) {
-          this.offset = MpegAudioLayer.FrameHeader.len;
-          return this.skipSideInformation(header);
-        }
-
-        if (this.fileSize && this.frameCount === 3) {
-          // the stream is CBR if the first 3 frame bitrates are the same
-          if (this.areAllSame(this.bitrates)) {
-            this.fileSize((size) => {
-              // subtract non audio stream data from duration calculation
-              size = size - this.headerSize;
-              this.tagEvent('format', 'duration', (size * 8) / header.bitrate);
-              // cb(done())
-              return this.done();
-            });
-            return strtok.DEFER;
-          } else if (!this.readDuration) {
-            return this.done();
-          }
-        }
-
-        // once we know the file is VBR attach listener to end of
-        // stream so we can do the duration calculation when we
-        // have counted all the frames
-        if (this.readDuration && this.frameCount === 4) {
-          return this.calculateVbrDuration = true;
-        }
-
-        this.offset = 4;
-        if (header.isProtectedByCRC) {
-          this.state = State.CRC;
-          return strtok.INT16_BE;
-        } else {
-          return this.skipSideInformation(header);
-        }
-
-      case State.CRC:
-        this.offset += 2;
-        this.crc = v;
-        return this.skipSideInformation(this.audioFrameHeader);
-
-      case State.side_information: // side information
-        this.offset += MpegAudioLayer.InfoTag.len;  // 12
-        this.state = State.xtra_info_header;
-        return MpegAudioLayer.InfoTag;
-
-      case State.xtra_info_header: // xtra / info header
-        this.state = State.skip_frame_data;
-        const frameDataLeft = this.frame_size - this.offset;
-
-        let codecProfile: string;
-        switch (v.headerTag) {
-          case 'Info':
-            codecProfile = 'CBR';
-            break;
-          case 'Xing':
-            codecProfile = MpegAudioLayer.getVbrCodecProfile(v.vbrScale);
-            break;
-          case 'Xtra':
-            // ToDo: ???
-            break;
-          default:
-            return new strtok.IgnoreType(frameDataLeft);
-        }
-
-        this.tagEvent('format', 'encoder', v.encoder);
-        this.tagEvent('format', 'codecProfile', codecProfile);
-
-        // frames field is not present
-        if ((v.headerFlags[3] & 0x01) !== 1) {
-          return new strtok.IgnoreType(frameDataLeft);
-        }
-
-        this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(v.numFrames));
-        return this.done();
-
-      case State.skip_frame_data: // skip frame data
-        this.state = State.mpegSearchSync1;
-        return strtok.UINT8;
-
-      default:
-        this.done(new Error('Undefined state: ' + this.state));
-    }
-  }
-
-  private skipSideInformation(header: MpegFrameHeader) {
-    const sideinfo_length = header.calculateSideInfoLength();
-
-    this.offset += sideinfo_length;
-    this.state = State.side_information;
-    return new strtok.BufferType(sideinfo_length);
-  }
-
-  private seekFirstAudioFrame(): Token {
-    if (this.frameCount > 0) {
-      return this.done(new Error('expected frame header but was not found'));
-    }
-    this.state = State.mpegSearchSync1;
-    return strtok.UINT8;
-  }
+  }*/
 
   private areAllSame(array) {
     const first = array[0];
