@@ -10,7 +10,7 @@ import {IOptions} from "../lib/src/index";
 import {FileTokenizer} from "./FileTokenizer";
 
 export interface IFileParser {
-  parse(fileTokenizer: FileTokenizer): Promise<IAudioMetadata>;
+  parse(fileTokenizer: FileTokenizer, options: IOptions): Promise<IAudioMetadata>;
 }
 
 export class FileParser {

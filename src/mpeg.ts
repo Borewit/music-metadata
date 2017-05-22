@@ -186,16 +186,26 @@ class MpegAudioLayer {
   };
 
   /**
+   * Info Tag: Xing, LAME
+   */
+  public static InfoTagHeaderTag = new StringType(4, 'ascii');
+
+  /**
+   * LAME TAG value
+   * Did not find any official documentation for this
+   * Value e.g.: "3.98.4"
+   */
+  public static LameEncoderVersion = new StringType(6, 'ascii');
+
+  /**
    * Info Tag
    * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
    */
-  public static InfoTag = {
-    len: 140,
+  public static XingInfoTag = {
+    len: 136,
 
     get: (buf, off) => {
       return {
-        // 4 bytes for Header Tag
-        headerTag: new StringType(4, 'ascii').get(buf, off),
         // 4 bytes for HeaderFlags
         headerFlags: new BufferType(4).get(buf, off + 4),
 
@@ -327,7 +337,7 @@ export class MpegParser implements IFileParser {
       // xtra header only exists in first frame
       if (this.frameCount === 1) {
         this.offset = MpegAudioLayer.FrameHeader.len;
-        return this.skipSideInformation(header);
+        return this.skipSideInformation();
       }
 
       if (this.frameCount === 3) {
@@ -336,9 +346,9 @@ export class MpegParser implements IFileParser {
           // subtract non audio stream data from duration calculation
           const size = this.fileTokenizer.fileSize - this.headerSize;
           this.format.duration = (size * 8) / header.bitrate;
-          return; // Done
+          return Promise.resolve<void>(); // Done
         } else if (!this.readDuration) {
-          return; // Done
+          return Promise.resolve<void>(); // Done
         }
       }
 
@@ -368,65 +378,92 @@ export class MpegParser implements IFileParser {
 
   public skipSideInformation(): Promise<void> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
-    this.offset += sideinfo_length;
     // side information
     return this.fileTokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
-      this.offset += MpegAudioLayer.InfoTag.len;  // 12
-    }).then(() => {
-      return this.read_xtra_info_header();
+      this.offset += sideinfo_length;
+      return this.readXtraInfoHeader();
     })
   }
 
-  public read_xtra_info_header(): Promise<void> {
-    this.offset += MpegAudioLayer.InfoTag.len;  // 12
+  public readXtraInfoHeader(): Promise<void> {
 
-    return this.fileTokenizer.readToken(MpegAudioLayer.InfoTag).then((infoTag) => {
+    return this.fileTokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((headerTag) => {
+      this.offset += MpegAudioLayer.InfoTagHeaderTag.len;  // 12
 
-     // case State.xtra_info_header: // xtra / info header
-      this.state = State.skip_frame_data;
-      const frameDataLeft = this.frame_size - this.offset;
+      // case State.xtra_info_header: // xtra / info header
 
       let codecProfile: string;
-      switch (infoTag.headerTag) {
+      switch (headerTag) {
+
         case 'Info':
-          codecProfile = 'CBR';
-          break;
+          this.format.codecProfile = 'CBR';
+          return this.readXingInfoHeader();
+
         case 'Xing':
-          codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
-          break;
-        case 'Xtra':
+          return this.readXingInfoHeader().then((infoTag) => {
+            this.format.codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
+            return null;
+          });
+
+          case 'Xtra':
           // ToDo: ???
           break;
-        default:
-          return this.skipFrameData(frameDataLeft);
+
+          case 'LAME':
+            return this.fileTokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
+              this.offset += MpegAudioLayer.LameEncoderVersion.len;
+              this.format.encoder = "LAME " + version;
+              const frameDataLeft = this.frame_size - this.offset;
+              return this.skipFrameData(frameDataLeft);
+            });
+          // ToDo: ???
       }
+
+      // ToDo: promise duration???
+      const frameDataLeft = this.frame_size - this.offset;
+      return this.skipFrameData(frameDataLeft);
+    });
+  }
+
+  /**
+   * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
+   * @returns {Promise<string>}
+   */
+  public readXingInfoHeader(): Promise<MpegAudioLayer.XingInfoTagHeaderTag> {
+
+    return this.fileTokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((infoTag) => {
+      this.offset += MpegAudioLayer.XingInfoTag.len;  // 12
 
       this.format.encoder = infoTag.encoder;
-      this.format.codecProfile = codecProfile;
 
-      // frames field is not present
-      if ((infoTag.headerFlags[3] & 0x01) !== 1) {
-        return this.skipFrameData(frameDataLeft);
+      if ((infoTag.headerFlags[3] & 0x01) === 1) {
+        this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
+        return infoTag; // Done
       }
 
-      this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
-      return Promise.resolve(); // Done
-    });
-   }
+      // frames field is not present
+      const frameDataLeft = this.frame_size - this.offset;
 
-   private skipFrameData(frameDataLeft: number): Promise<void> {
-     this.fileTokenizer.readToken(new IgnoreType(frameDataLeft));
-     return this.sync();
-   }
+      // ToDo: promise duration???
+      return this.skipFrameData(frameDataLeft).then(() => {
+        return infoTag;
+      });
+    });
+  }
+
+  private skipFrameData(frameDataLeft: number): Promise<void> {
+    this.fileTokenizer.readToken(new IgnoreType(frameDataLeft));
+    return this.sync();
+  }
 
 
   /* ToDo:
-  public end(callback: TagCallback, done: Done) {
-    if (this.calculateVbrDuration) {
-      this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
-    }
-    return done();
-  }*/
+   public end(callback: TagCallback, done: Done) {
+   if (this.calculateVbrDuration) {
+   this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
+   }
+   return done();
+   }*/
 
   private areAllSame(array) {
     const first = array[0];

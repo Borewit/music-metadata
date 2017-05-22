@@ -99,7 +99,7 @@ export interface IFormat {
 
   dataformat?: string, // ToDo: make mandatory
 
-  type?: HeaderType, // ToDo: make mandatory
+  headerType?: HeaderType, // ToDo: make mandatory
 
   /**
    * Duration in seconds

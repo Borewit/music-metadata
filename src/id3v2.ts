@@ -279,7 +279,7 @@ class Id3v2Parser implements IFileParser {
           native: this.tags
         };
 
-        res.format.type = this.headerType;
+        res.format.headerType = this.headerType;
 
         for (const tag of this.tags) {
           this.getCommonTags(res.common, this.headerType, tag.id, tag.value);

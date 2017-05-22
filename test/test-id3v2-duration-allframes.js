@@ -4,11 +4,9 @@ var mm = require('..')
 var test = require('tape')
 
 test('id3v2-duration-allframes', function (t) {
-  t.plan(16)
+  t.plan(15)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2-duration-allframes.mp3')])
-    : fs.createReadStream(path.join(__dirname, '/samples/id3v2-duration-allframes.mp3'))
+  var filePath = path.join(__dirname, 'samples', 'id3v2-duration-allframes.mp3');
 
   function checkFormat(format) {
     t.strictEqual(format.headerType, 'id3v2.3', 'format.headerType')
@@ -16,6 +14,7 @@ test('id3v2-duration-allframes', function (t) {
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate')
     t.strictEqual(format.duration, 1.48928125, 'format.duration (test duration=true)')
+    t.strictEqual(format.encoder, 'LAME 3.98.4', 'format.encoder')
   }
   function checkCommon(common) {
     t.strictEqual(common.title, 'Turkish Rondo', 'common.album')
@@ -29,16 +28,13 @@ test('id3v2-duration-allframes', function (t) {
     t.deepEqual(common.picture, undefined, 'common.picture')
   }
 
-  mm.parseStream(sample, {duration: true}, function (err, result) {
-    t.error(err)
+  mm.parseFile(filePath, {duration: true}).then(function (result) {
 
     checkFormat(result.format)
 
     checkCommon(result.common)
 
-    t.end()
+  }).catch( function(err) {
+    t.error(err)
   })
-    .on('duration', function (result) {
-      t.strictEqual(result, 1.48928125, 'duration')
-    })
 })

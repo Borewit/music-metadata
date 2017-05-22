@@ -12,7 +12,7 @@ test('id3v2.3', function (t) {
   var filePath = path.join(__dirname, 'samples', 'id3v2.3.mp3');
 
   function checkFormat (format) {
-    t.strictEqual(format.type, 'id3v2.3', 'format.type')
+    t.strictEqual(format.headerType, 'id3v2.3', 'format.type')
     t.strictEqual(format.duration, 1, 'format.duration')
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
