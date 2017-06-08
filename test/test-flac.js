@@ -4,11 +4,10 @@ var mm = require('..')
 var test = require('tape')
 
 test('flac', function (t) {
-  t.plan(41)
+  t.plan(30);
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/flac.flac')])
-    : fs.createReadStream(path.join(__dirname, '/samples/flac.flac'))
+  var filename = 'flac.flac';
+  var filePath = path.join(__dirname, 'samples', filename);
 
   function checkFormat (format) {
     t.strictEqual(format.dataformat, 'flac', 'format.tag_type')
@@ -32,67 +31,47 @@ test('flac', function (t) {
     t.strictEqual(common.picture[0].data.length, 175668, 'common.picture length')
   }
 
-  mm.parseStream(sample, function (err, metadata) {
-    t.error(err)
+  function checkNative (vorbis) {
+    // Compare expectedCommonTags with result.common
+    t.deepEqual(vorbis.TITLE, ['Brian Eno'], 'vorbis.TITLE');
+    t.deepEqual(vorbis.ARTIST, ['MGMT'], 'vorbis.ARTIST');
+    t.deepEqual(vorbis.DATE, ['2010'], 'vorbis.DATE');
+    t.deepEqual(vorbis.TRACKNUMBER, ['07'], 'vorbis.TRACKNUMBER');
+    t.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis.GENRE');
+    t.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode'], 'vorbis.COMMENT');
+    var pic = vorbis.METADATA_BLOCK_PICTURE[0];
 
-    checkFormat(metadata.format)
-    checkCommon(metadata.common)
-    t.strictEqual(metadata.vorbis, undefined, 'Native metadata not requested')
+    t.strictEqual(pic.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype')
+    t.strictEqual(pic.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format')
+    t.strictEqual(pic.description, '', 'raw METADATA_BLOCK_PICTURE description')
+    t.strictEqual(pic.width, 450, 'raw METADATA_BLOCK_PICTURE width')
+    t.strictEqual(pic.height, 450, 'raw METADATA_BLOCK_PICTURE height')
+    t.strictEqual(pic.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth')
+    t.strictEqual(pic.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color')
+    t.strictEqual(pic.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length')
+  }
+
+  function mapNativeTags (nativeTags) {
+    var tags = {};
+    nativeTags.forEach(function(tag) {
+      (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
+    })
+    return tags;
+  }
+
+  mm.parseFile(filePath, { duration: true }).then(function (metadata) {
+
+    checkFormat(metadata.format);
+
+    checkCommon(metadata.common);
+
+    //t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
+
+    checkNative(mapNativeTags(metadata.native.vorbis))
+
     t.end()
-  })
-    // aliased tests
-    .on('title', function (result) {
-      t.strictEqual(result, 'Brian Eno', 'common.title')
-    })
-    .on('artist', function (result) {
-      t.strictEqual(result, 'MGMT', 'common.artist')
-    })
-    .on('year', function (result) {
-      t.strictEqual(result, 2010, 'common.year')
-    })
-    .on('track', function (result) {
-      t.deepEqual(result, {no: 7, of: null}, 'common.track')
-    })
-    .on('genre', function (result) {
-      t.deepEqual(result, ['Alt. Rock'], 'common.genre')
-    })
-    .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'common.picture format')
-      t.strictEqual(result[0].data.length, 175668, 'common.picture length')
-    })
-    .on('comment', function (result) {
-      t.strictEqual(result[0], 'EAC-Secure Mode', 'common.comment')
-    })
-    .on('duration', function (result) {
-      t.strictEqual(result, 271.7733333333333, 'common.duration')
-    })
-    // raw tests
-    .on('TITLE', function (result) {
-      t.strictEqual(result, 'Brian Eno', 'raw TITLE')
-    })
-    .on('ARTIST', function (result) {
-      t.strictEqual(result, 'MGMT', 'raw ARTIST')
-    })
-    .on('DATE', function (result) {
-      t.strictEqual(result, '2010', 'raw DATE')
-    })
-    .on('TRACKNUMBER', function (result) {
-      t.strictEqual(result, '07', 'raw TRACKNUMBER')
-    })
-    .on('GENRE', function (result) {
-      t.strictEqual(result, 'Alt. Rock', 'raw GENRE')
-    })
-    .on('COMMENT', function (result) {
-      t.strictEqual(result, 'EAC-Secure Mode', 'raw COMMENT')
-    })
-    .on('METADATA_BLOCK_PICTURE', function (result) {
-      t.strictEqual(result.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype')
-      t.strictEqual(result.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format')
-      t.strictEqual(result.description, '', 'raw METADATA_BLOCK_PICTURE description')
-      t.strictEqual(result.width, 450, 'raw METADATA_BLOCK_PICTURE width')
-      t.strictEqual(result.height, 450, 'raw METADATA_BLOCK_PICTURE height')
-      t.strictEqual(result.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth')
-      t.strictEqual(result.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color')
-      t.strictEqual(result.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length')
-    })
+  }).catch( function(err) {
+    t.error(err);
+  });
+
 })

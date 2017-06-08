@@ -4,18 +4,14 @@ var mm = require('..')
 var test = require('tape')
 
 test('should be able to read id3v2 files with lyrics', function (t) {
-  t.plan(2)
+  t.plan(1)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2-lyrics.mp3')])
-    : fs.createReadStream(path.join(__dirname, '/samples/id3v2-lyrics.mp3'))
+  var filename = 'id3v2-lyrics.mp3';
+  var filePath = path.join(__dirname, 'samples', filename);
 
-  var meta = mm.parseStream(sample, function (err, result) {
-    t.error(err, 'no errors should occur')
-  })
+  mm.parseFile(filePath, { duration: true }).then(function (metadata) {
 
-  meta.on('lyrics', function (result) {
-    t.deepEqual(result, [
+    t.deepEqual(metadata.common.lyrics, [
       'The way we\'re living makes no sense',
       'Take me back to the age of innocence',
       'I wanna go back then',
@@ -76,6 +72,10 @@ test('should be able to read id3v2 files with lyrics', function (t) {
       'Don\'t wanna be the page on the scalpel\'s blade',
       'So please tell me, please tell me',
       'What ever happened?',
-      'Happened?' ])
-  })
+      'Happened?' ], 'Check lyrics');
+
+  }).catch( function(err) {
+    t.error(err);
+  });
+
 })

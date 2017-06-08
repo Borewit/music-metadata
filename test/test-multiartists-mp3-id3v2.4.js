@@ -5,14 +5,11 @@ var fs = require('fs')
 var mm = require('..')
 var test = require('tape')
 
-test('Test multi-artists flac', function (t) {
-  t.plan(68)
+test('Test multi-artists MP3-V2 id3v2.4', function (t) {
+  t.plan(67)
 
   var filename = 'MusicBrainz-multiartist [id3v2.4].V2.mp3'
-
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/' + filename)])
-    : fs.createReadStream(path.join(__dirname, '/samples/' + filename))
+  var filePath = path.join(__dirname, 'samples', filename);
 
   function checkFormat (format) {
     t.strictEqual(format.headerType, 'id3v2.4', 'format.headerType')
@@ -101,20 +98,20 @@ test('Test multi-artists flac', function (t) {
     t.deepEqual(id3v24.UFID[0], {owner_identifier: 'http://musicbrainz.org', identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')}, 'id3v24.UFID: Unique file identifier')
 
 
-    t.deepEqual(id3v24['TXXX:ASIN'], 'B004X5SCGM', 'id3v24.TXXX:ASIN')
+    t.deepEqual(id3v24['TXXX:ASIN'], ['B004X5SCGM'], 'id3v24.TXXX:ASIN')
     t.deepEqual(id3v24['TXXX:Artists'], ['Beth Hart', 'Joe Bonamassa'], 'id3v24.TXXX:Artists')
-    t.deepEqual(id3v24['TXXX:BARCODE'], '804879313915', 'id3v24.TXXX:BARCODE')
-    t.deepEqual(id3v24['TXXX:CATALOGNUMBER'], 'PRAR931391', 'id3v24.TXXX:CATALOGNUMBER')
+    t.deepEqual(id3v24['TXXX:BARCODE'], ['804879313915'], 'id3v24.TXXX:BARCODE')
+    t.deepEqual(id3v24['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v24.TXXX:CATALOGNUMBER')
     t.deepEqual(id3v24['TXXX:MusicBrainz Album Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v24.TXXX:MusicBrainz Album Artist Id')
-    t.deepEqual(id3v24['TXXX:MusicBrainz Album Id'], 'e7050302-74e6-42e4-aba0-09efd5d431d8', 'id3v24.TXXX:MusicBrainz Album Id')
+    t.deepEqual(id3v24['TXXX:MusicBrainz Album Id'], ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'id3v24.TXXX:MusicBrainz Album Id')
     // ToDo?? t.deepEqual(id3v24['TXXX:MusicBrainz Album Release Country'], 'GB', 'id3v24.TXXX:MusicBrainz Album Release Country')
-    t.deepEqual(id3v24['TXXX:MusicBrainz Album Status'], 'official', 'id3v24.TXXX:MusicBrainz Album Status')
+    t.deepEqual(id3v24['TXXX:MusicBrainz Album Status'], ['official'], 'id3v24.TXXX:MusicBrainz Album Status')
     t.deepEqual(id3v24['TXXX:MusicBrainz Album Type'], ['album'], 'id3v24.TXXX:MusicBrainz Album Type')
     t.deepEqual(id3v24['TXXX:MusicBrainz Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v24.TXXX:MusicBrainz Artist Id')
-    t.deepEqual(id3v24['TXXX:MusicBrainz Release Group Id'], 'e00305af-1c72-469b-9a7c-6dc665ca9adc', 'id3v24.TXXX.MusicBrainz Release Group Id')
-    t.deepEqual(id3v24['TXXX:MusicBrainz Release Track Id'], 'd062f484-253c-374b-85f7-89aab45551c7', 'id3v24.TXXX.MusicBrainz Release Track Id')
-    t.deepEqual(id3v24['TXXX:SCRIPT'], 'Latn', 'id3v24.TXXX:SCRIPT')
-    t.deepEqual(id3v24['TXXX:originalyear'], '2011', 'id3v24.TXXX:originalyear')
+    t.deepEqual(id3v24['TXXX:MusicBrainz Release Group Id'], ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'id3v24.TXXX.MusicBrainz Release Group Id')
+    t.deepEqual(id3v24['TXXX:MusicBrainz Release Track Id'], ['d062f484-253c-374b-85f7-89aab45551c7'], 'id3v24.TXXX.MusicBrainz Release Track Id')
+    t.deepEqual(id3v24['TXXX:SCRIPT'], ['Latn'], 'id3v24.TXXX:SCRIPT')
+    t.deepEqual(id3v24['TXXX:originalyear'], ['2011'], 'id3v24.TXXX:originalyear')
   }
 
   function sortTXXX(txxxTags) {
@@ -125,17 +122,21 @@ test('Test multi-artists flac', function (t) {
     return res
   }
 
-  var countMusicBrainzAlbumArtistId = 0
-  var countMusicBrainzArtistId = 0
-  var countEngineer = 0
-  var countPerformer = 0
+  function mapNativeTags (nativeTags) {
+    var tags = {};
+    nativeTags.forEach(function(tag) {
+      (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
+    })
+    return tags;
+  }
 
   // Run with default options
-  mm.parseStream(sample, {native: true}, function (err, result) {
-    t.error(err)
-    t.ok(result.hasOwnProperty('id3v2.4'), 'should include native id3v2.4 tags')
+  mm.parseFile(filePath).then(function (result) {
+    t.ok(result.native && result.native.hasOwnProperty('id3v2.4'), 'should include native id3v2.4 tags')
     checkFormat(result.format)
-    checkID3Tags(result['id3v2.4'])
+    checkID3Tags(mapNativeTags(result.native['id3v2.4']))
     checkCommonTags(result.common)
+  }).catch(function (err) {
+    t.error(err, 'no error')
   });
 })

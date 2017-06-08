@@ -2,13 +2,12 @@
 
 import ReadableStream = NodeJS.ReadableStream;
 
-import {Token, IgnoreType} from 'strtok2';
-import common from './common';
-import {Done, GetFileSize, IStreamParser, TagCallback} from './parser';
-import {IFileParser} from "./FileParser";
-import {FileTokenizer, StringType, UINT32_BE, UINT8} from "./FileTokenizer";
+import {IgnoreType} from 'strtok2';
+import {ITokenParser} from "./FileParser";
+import {ITokenizer, StringType, UINT32_BE, UINT8} from "./FileTokenizer";
 import {IFormat} from "../lib/";
 import {BufferType, INT16_BE} from "../lib/FileTokenizer";
+import Common from "./common";
 
 enum State {
   mpegSearchSync1 = 1,
@@ -90,29 +89,29 @@ class MpegFrameHeader {
 
   public constructor(buf, off) {
     // B(20,19): MPEG Audio versionIndex ID
-    this.versionIndex = common.getBitAllignedNumber(buf, off + 1, 3, 2);
+    this.versionIndex = Common.getBitAllignedNumber(buf, off + 1, 3, 2);
     // C(18,17): Layer description
-    this.layer = MpegFrameHeader.LayerDescription[common.getBitAllignedNumber(buf, off + 1, 5, 2)];
+    this.layer = MpegFrameHeader.LayerDescription[Common.getBitAllignedNumber(buf, off + 1, 5, 2)];
     // D(16): Protection bit (if true 16-bit CRC follows header)
-    this.isProtectedByCRC = !common.isBitSet(buf, off + 1, 7);
+    this.isProtectedByCRC = !Common.isBitSet(buf, off + 1, 7);
     // E(15,12): Bitrate index
-    this.bitrateIndex = common.getBitAllignedNumber(buf, off + 2, 0, 4);
+    this.bitrateIndex = Common.getBitAllignedNumber(buf, off + 2, 0, 4);
     // F(11,10): Sampling rate frequency index
-    this.sampRateFreqIndex = common.getBitAllignedNumber(buf, off + 2, 4, 2);
+    this.sampRateFreqIndex = Common.getBitAllignedNumber(buf, off + 2, 4, 2);
     // G(9): Padding bit
-    this.padding = common.isBitSet(buf, off + 2, 6);
+    this.padding = Common.isBitSet(buf, off + 2, 6);
     // H(8): Private bit
-    this.privateBit = common.isBitSet(buf, off + 2, 7);
+    this.privateBit = Common.isBitSet(buf, off + 2, 7);
     // I(7,6): Channel Mode
-    this.channelModeIndex = common.getBitAllignedNumber(buf, off + 3, 0, 2);
+    this.channelModeIndex = Common.getBitAllignedNumber(buf, off + 3, 0, 2);
     // J(5,4): Mode extension (Only used in Joint stereo)
-    this.modeExtension = common.getBitAllignedNumber(buf, off + 3, 2, 2);
+    this.modeExtension = Common.getBitAllignedNumber(buf, off + 3, 2, 2);
     // K(3): Copyright
-    this.isCopyrighted = common.isBitSet(buf, off + 3, 4);
+    this.isCopyrighted = Common.isBitSet(buf, off + 3, 4);
     // L(2): Original
-    this.isOriginalMedia = common.isBitSet(buf, off + 3, 5);
+    this.isOriginalMedia = Common.isBitSet(buf, off + 3, 5);
     // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
-    this.emphasis = common.getBitAllignedNumber(buf, off + 3, 7, 2);
+    this.emphasis = Common.getBitAllignedNumber(buf, off + 3, 7, 2);
 
     this.version = MpegFrameHeader.VersionID[this.versionIndex];
     if (this.version === null)
@@ -207,21 +206,21 @@ class MpegAudioLayer {
     get: (buf, off) => {
       return {
         // 4 bytes for HeaderFlags
-        headerFlags: new BufferType(4).get(buf, off + 4),
+        headerFlags: new BufferType(4).get(buf, off),
 
         // 100 bytes for entry (NUMTOCENTRIES)
         // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
         // FRAME SIZE
         // frameSize: strtok.UINT32_BE.get(buf, off + 108),
 
-        numFrames: UINT32_BE.get(buf, off + 8),
+        numFrames: UINT32_BE.get(buf, off + 4),
 
-        numToCentries: new BufferType(100).get(buf, off + 108),
+        numToCentries: new BufferType(100).get(buf, off + 104),
 
         // the number of header APE_HEADER bytes
-        streamSize: UINT32_BE.get(buf, off + 112),
+        streamSize: UINT32_BE.get(buf, off + 108),
         // the number of header data bytes (from original file)
-        vbrScale: UINT32_BE.get(buf, off + 116),
+        vbrScale: UINT32_BE.get(buf, off + 112),
 
         /**
          * LAME Tag, extends the Xing header format
@@ -230,11 +229,11 @@ class MpegAudioLayer {
          */
 
         //  Initial LAME info, e.g.: LAME3.99r
-        encoder: new StringType(9, 'ascii').get(buf, off + 120),
+        encoder: new StringType(9, 'ascii').get(buf, off + 116),
         //  Info Tag
-        infoTag: UINT8.get(buf, off + 129) >> 4,
+        infoTag: UINT8.get(buf, off + 125) >> 4,
         // VBR method
-        vbrMethod: UINT8.get(buf, off + 129) & 0xf
+        vbrMethod: UINT8.get(buf, off + 125) & 0xf
       };
     }
   };
@@ -244,10 +243,9 @@ class MpegAudioLayer {
   }
 }
 
-export class MpegParser implements IFileParser {
+export class MpegParser implements ITokenParser {
 
   private frameCount: number = 0;
-  private state: State;
 
   private audioFrameHeader;
   private bitrates: number[] = [];
@@ -259,7 +257,7 @@ export class MpegParser implements IFileParser {
 
   private format: IFormat;
 
-  public constructor(private fileTokenizer: FileTokenizer, private headerSize: number, private readDuration: boolean) {
+  public constructor(private tokenizer: ITokenizer, private headerSize: number, private readDuration: boolean) {
   }
 
   public parse(): Promise<IFormat> {
@@ -276,9 +274,15 @@ export class MpegParser implements IFileParser {
 
   public sync(): Promise<void> {
     const buf_frame_header = new Buffer(4);
-    return this.fileTokenizer.readBuffer(buf_frame_header, 0, 1).then((v) => {
+    return this.tokenizer.readBuffer(buf_frame_header, 0, 1).then((v) => {
+      if(v === 0) {
+        return Promise.resolve<void>();
+      }
       if (buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
-        return this.fileTokenizer.readBuffer(buf_frame_header, 1, 1).then((v) => {
+        return this.tokenizer.readBuffer(buf_frame_header, 1, 1).then((v) => {
+          if(v === 0) {
+            return Promise.resolve<void>();
+          }
           if ((buf_frame_header[1] & 0xE0) === 0xE0) {
             // Synchronized
             return this.parseAudioFrameHeader(buf_frame_header);
@@ -286,13 +290,15 @@ export class MpegParser implements IFileParser {
             return this.sync();
           }
         })
+      } else {
+        return this.sync();
       }
     })
   }
 
   public parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
 
-    return this.fileTokenizer.readBuffer(buf_frame_header, 2, 2).then(() => {
+    return this.tokenizer.readBuffer(buf_frame_header, 2, 2).then(() => {
       const header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
 
       if (header.version === null || header.layer === null) {
@@ -344,11 +350,11 @@ export class MpegParser implements IFileParser {
         // the stream is CBR if the first 3 frame bitrates are the same
         if (this.areAllSame(this.bitrates)) {
           // subtract non audio stream data from duration calculation
-          const size = this.fileTokenizer.fileSize - this.headerSize;
+          const size = this.tokenizer.fileSize - this.headerSize;
           this.format.duration = (size * 8) / header.bitrate;
-          return Promise.resolve<void>(); // Done
+          return; // Done
         } else if (!this.readDuration) {
-          return Promise.resolve<void>(); // Done
+          return; // Done
         }
       }
 
@@ -369,25 +375,25 @@ export class MpegParser implements IFileParser {
   }
 
   public parseCrc(): Promise<void> {
-    this.fileTokenizer.readNumber(INT16_BE).then((crc) => {
+    this.tokenizer.readNumber(INT16_BE).then((crc) => {
       this.crc = crc;
     });
     this.offset += 2;
     return this.skipSideInformation();
   }
 
-  public skipSideInformation(): Promise<void> {
+  public skipSideInformation(): Promise<any> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
     // side information
-    return this.fileTokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
+    return this.tokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
       this.offset += sideinfo_length;
       return this.readXtraInfoHeader();
     })
   }
 
-  public readXtraInfoHeader(): Promise<void> {
+  public readXtraInfoHeader(): Promise<any> {
 
-    return this.fileTokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((headerTag) => {
+    return this.tokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((headerTag) => {
       this.offset += MpegAudioLayer.InfoTagHeaderTag.len;  // 12
 
       // case State.xtra_info_header: // xtra / info header
@@ -410,7 +416,7 @@ export class MpegParser implements IFileParser {
           break;
 
           case 'LAME':
-            return this.fileTokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
+            return this.tokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
               this.offset += MpegAudioLayer.LameEncoderVersion.len;
               this.format.encoder = "LAME " + version;
               const frameDataLeft = this.frame_size - this.offset;
@@ -429,12 +435,12 @@ export class MpegParser implements IFileParser {
    * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
    * @returns {Promise<string>}
    */
-  public readXingInfoHeader(): Promise<MpegAudioLayer.XingInfoTagHeaderTag> {
+  public readXingInfoHeader(): Promise<MpegAudioLayer.XingInfoTag> {
 
-    return this.fileTokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((infoTag) => {
+    return this.tokenizer.readToken(MpegAudioLayer.XingInfoTag).then((infoTag) => {
       this.offset += MpegAudioLayer.XingInfoTag.len;  // 12
 
-      this.format.encoder = infoTag.encoder;
+      this.format.encoder = Common.stripNulls(infoTag.encoder);
 
       if ((infoTag.headerFlags[3] & 0x01) === 1) {
         this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
@@ -452,8 +458,9 @@ export class MpegParser implements IFileParser {
   }
 
   private skipFrameData(frameDataLeft: number): Promise<void> {
-    this.fileTokenizer.readToken(new IgnoreType(frameDataLeft));
-    return this.sync();
+    return this.tokenizer.readToken(new IgnoreType(frameDataLeft)).then(() => {
+      return this.sync();
+    });
   }
 
 

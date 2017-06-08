@@ -13,7 +13,7 @@ test('id3v2.3', function (t) {
 
   function checkFormat (format) {
     t.strictEqual(format.headerType, 'id3v2.3', 'format.type')
-    t.strictEqual(format.duration, 1, 'format.duration')
+    t.strictEqual(format.duration, 1, 'format.duration') // FooBar says 0.732 seconds (32.727 samples)
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
     t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec')
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)')
@@ -78,7 +78,7 @@ test('id3v2.3', function (t) {
 
     checkCommon(result.common)
 
-    checkNative(result.native)
+    checkNative(result.native['id3v2.3'])
 
     t.end()
   }).catch( function(err) {

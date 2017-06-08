@@ -3,15 +3,20 @@ var fs = require('fs')
 var mm = require('..')
 var test = require('tape')
 
-test("shouldn't raise metadata event for files that can't be parsed", function (t) {
-  t.plan(1)
+test("Should reject files that can't be parsed", function (t) {
+  t.plan(0)
 
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__filename)])
     : fs.createReadStream(path.join(__filename))
 
-  mm.parseStream(sample, function (err, result) {
-    t.strictEqual(err.message, 'Could not find metadata header')
-    t.end()
-  })
+  var filePath = __filename;
+
+  // Run with default options
+  mm.parseFile(filePath).then(function (result) {
+    t.fail("Should reject a file which cannot be parsed");
+  }).catch(function (err) {
+    t.end();
+  });
+
 })

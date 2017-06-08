@@ -1,7 +1,6 @@
 /* jshint maxlen: 300 */
 'use strict';
 
-import * as fs from 'fs-extra';
 import common from './common';
 
 import TagMap from './tagmap';
@@ -139,10 +138,18 @@ export interface IFormat {
   numberOfChannels?: number,
 }
 
-export interface IAudioMetadata {
-  common: ICommonTagsResult,
+export interface ITag {
+  id: string,
+  value: any
+}
+
+export interface INativeAudioMetadata {
   format: IFormat,
-  native: {id: string, value: any}[]
+  native: { [tagType: string]: ITag[]; }
+}
+
+export interface IAudioMetadata extends INativeAudioMetadata {
+  common: ICommonTagsResult,
 }
 
 export type ICallbackType = (error?: Error, metadata?: IAudioMetadata) => void;
@@ -215,7 +222,36 @@ export class MusicMetadataParser {
    */
   public parse(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
-    return FileParser.parse(filePath);
+    return FileParser.parse(filePath, opts).then((nativeData) => {
+      const metadata: IAudioMetadata = {
+        format: nativeData.format,
+        native: nativeData.native,
+        common: {
+          track: { no: null, of: null },
+          disk: { no: null, of: null },
+        } as any
+      };
+
+      for(const tagType in metadata.native) {
+        for(const tag of metadata.native[tagType]) {
+          this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value)
+        }
+      }
+
+      if (metadata.common.artists && metadata.common.artists.length > 0) {
+        metadata.common.artist = metadata.common.artist[0];
+      } else {
+        if (metadata.common.artist) {
+          metadata.common.artists = metadata.common.artist as any;
+          if (metadata.common.artist.length > 1) {
+            delete metadata.common.artist;
+          } else {
+            metadata.common.artist = metadata.common.artist[0];
+          }
+        }
+      }
+      return metadata;
+    });
   }
 
   /*
@@ -341,7 +377,7 @@ export class MusicMetadataParser {
           break;
 
         case 'picture':
-          value = this.cleanupPicture(value);
+          value = MusicMetadataParser.cleanupPicture(value);
           break;
 
         case 'totaltracks':
@@ -355,7 +391,7 @@ export class MusicMetadataParser {
         case 'track':
         case 'disk':
           const of = comTags[alias].of; // store of value, maybe maybe overwritten
-          comTags[alias] = this.cleanupTrack(value);
+          comTags[alias] = MusicMetadataParser.cleanupTrack(value);
           comTags[alias].of = of != null ? of : comTags[alias].of;
           return;
 

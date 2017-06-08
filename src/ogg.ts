@@ -208,4 +208,3 @@ class OggParser implements IStreamParser {
   }
 }
 
-module.exports = OggParser.getInstance();

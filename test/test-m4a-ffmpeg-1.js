@@ -4,14 +4,16 @@ var mm = require('..')
 var test = require('tape')
 
 test('error handling', function (t) {
-  t.plan(1)
+  t.plan(0)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/Simpsons01x01.m4a')])
-    : fs.createReadStream(path.join(__dirname, '/samples/Simpsons01x01.m4a'))
 
-  mm.parseStream(sample, function (err) {
-    t.error(err)
+  var filename = 'Simpsons01x01.m4a';
+  var filePath = path.join(__dirname, 'samples', filename);
+
+  mm.parseFile(filePath).then(function (result) {
+    // ToDo: only relevant for content based type determination
     t.end()
-  })
+  }).catch(function (err) {
+    t.error(err, 'no error')
+  });
 })

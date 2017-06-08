@@ -4,59 +4,48 @@ var fs = require('fs')
 var test = require('tape')
 
 test('asf', function (t) {
-  t.plan(22)
+  t.plan(13)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/asf.wma')])
-    : fs.createReadStream(path.join(__dirname, '/samples/asf.wma'))
+  var filePath = path.join(__dirname, 'samples', 'asf.wma');
 
-  mm.parseStream(sample, function (err, result) {
+  function checkFormat (format) {
+    t.strictEqual(format.duration, 244.885, 'format.duration')
+    t.strictEqual(format.bitrate, 192639, 'format.bitrate')
+  }
+
+  function checkCommon (common) {
+    t.strictEqual(common.title, "Don't Bring Me Down", 'common.title')
+    t.deepEqual(common.artist, 'Electric Light Orchestra', 'common.artist')
+    t.deepEqual(common.albumartist, 'Electric Light Orchestra', 'common.albumartist')
+    t.strictEqual(common.album, 'Discovery', 'common.album')
+    t.strictEqual(common.year, 2001, 'common.year')
+    t.deepEqual(common.track, {no: 9, of: null}, 'common.track 9/0')
+    t.deepEqual(common.disk, {no: null, of: null}, 'common.disk 0/0')
+    t.deepEqual(common.genre, ['Rock'], 'common.genre')
+  }
+
+  function getNativeTags (native, tagId) {
+    return native.filter(function (tag) { return tag.id === tagId }).map(function(tag){ return tag.value })
+  }
+
+  function checkNative (native) {
+
+    t.deepEqual(getNativeTags(native, 'WM/AlbumTitle'), ['Discovery'], 'native: WM/AlbumTitle')
+    t.deepEqual(getNativeTags(native, 'WM/BeatsPerMinute'), [117], 'native: WM/BeatsPerMinute')
+    t.deepEqual(getNativeTags(native, 'REPLAYGAIN_TRACK_GAIN'), ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN')
+  }
+
+  mm.parseFile(filePath).then(function (result) {
+
+    checkFormat(result.format);
+
+    checkCommon(result.common);
+
+    checkNative(result.native.asf);
+
+   t.end()
+  }).catch( function(err) {
     t.error(err)
-    t.strictEqual(result.format.duration, 244.885, 'duration')
+  });
 
-    t.strictEqual(result.common.title, "Don't Bring Me Down", 'common.title')
-    t.deepEqual(result.common.artist, 'Electric Light Orchestra', 'common.artist')
-    t.deepEqual(result.common.albumartist, 'Electric Light Orchestra', 'common.albumartist')
-    t.strictEqual(result.common.album, 'Discovery', 'common.album')
-    t.strictEqual(result.common.year, 2001, 'common.year')
-    t.deepEqual(result.common.track, {no: 9, of: null}, 'common.track 9/0')
-    t.deepEqual(result.common.disk, {no: null, of: null}, 'common.disk 0/0')
-    t.deepEqual(result.common.genre, ['Rock'], 'common.genre')
-    t.end()
-  }) // aliased tests
-    .on('title', function (result) {
-      t.strictEqual(result, "Don't Bring Me Down")
-    })
-    .on('artist', function (result) {
-      t.strictEqual(result, 'Electric Light Orchestra', 'aliased artist')
-    })
-    .on('albumartist', function (result) {
-      t.strictEqual(result, 'Electric Light Orchestra', 'aliased albumartist')
-    })
-    .on('album', function (result) {
-      t.strictEqual(result, 'Discovery', 'aliased album')
-    })
-    .on('year', function (result) {
-      t.strictEqual(result, 2001, 'aliased year')
-    })
-    .on('track', function (result) {
-      t.strictEqual(result.no, 9, 'aliased track no')
-      t.strictEqual(result.of, null, 'aliased track of')
-    })
-    .on('genre', function (result) {
-      t.strictEqual(result[0], 'Rock', 'aliased genre')
-    })
-    .on('duration', function (result) {
-      t.strictEqual(result, 244.885, 'aliased duration')
-    })
-    // raw tests
-    .on('WM/AlbumTitle', function (result) {
-      t.strictEqual(result, 'Discovery')
-    })
-    .on('WM/BeatsPerMinute', function (result) {
-      t.strictEqual(result, 117)
-    })
-    .on('REPLAYGAIN_TRACK_GAIN', function (result) {
-      t.strictEqual(result, '-4.7 dB')
-    })
 })

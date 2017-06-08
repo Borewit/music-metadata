@@ -6,13 +6,11 @@ var mm = require('..')
 var test = require('tape')
 
 test('Test multi-artists ape', function (t) {
-  t.plan(66)
+  t.plan(65)
 
-  var filename = 'MusicBrainz-multiartist.ape'
+  var filename = 'MusicBrainz-multiartist.ape';
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/' + filename)])
-    : fs.createReadStream(path.join(__dirname, '/samples/' + filename))
+  var filePath = path.join(__dirname, 'samples', filename);
 
   function checkFormat (format) {
     t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds')
@@ -58,25 +56,25 @@ test('Test multi-artists ape', function (t) {
 
   function checkVorbisTags (APEv2) {
     // Compare expectedCommonTags with result.common
-    t.deepEqual(APEv2.Title, 'Sinner\'s Prayer', 'APEv2.Title')
-    t.deepEqual(APEv2.Album, 'Don\'t Explain', 'APEv2.Album')
-    t.deepEqual(APEv2.Year, '2011-09-27', 'APEv2.Year')
-    t.deepEqual(APEv2.Track, '1/10', 'APEv2.Track')
-    t.deepEqual(APEv2.Disc, '1/1', 'APEv2.Disc')
-    t.deepEqual(APEv2.Originalyear, '2011', 'APEv2.Year')
-    t.deepEqual(APEv2.Originaldate, '2011-09-26', 'APEv2.Originaldate')
-    t.deepEqual(APEv2.Label, 'J&R Adventures', 'APEv2.LABEL')
-    t.deepEqual(APEv2.CatalogNumber, 'PRAR931391', 'APEv2.CatalogNumber')
+    t.deepEqual(APEv2.Title, ['Sinner\'s Prayer'], 'APEv2.Title')
+    t.deepEqual(APEv2.Album, ['Don\'t Explain'], 'APEv2.Album')
+    t.deepEqual(APEv2.Year, ['2011-09-27'], 'APEv2.Year')
+    t.deepEqual(APEv2.Track, ['1/10'], 'APEv2.Track')
+    t.deepEqual(APEv2.Disc, ['1/1'], 'APEv2.Disc')
+    t.deepEqual(APEv2.Originalyear, ['2011'], 'APEv2.Year')
+    t.deepEqual(APEv2.Originaldate, ['2011-09-26'], 'APEv2.Originaldate')
+    t.deepEqual(APEv2.Label, ['J&R Adventures'], 'APEv2.LABEL')
+    t.deepEqual(APEv2.CatalogNumber, ['PRAR931391'], 'APEv2.CatalogNumber')
     // ToDo?: t.deepEqual(APEv2.ACOUSTID_ID, '09c06fac-679a-45b1-8ea0-6ce532318363', 'APEv2.ACOUSTID_ID')
-    t.deepEqual(APEv2.Artist, 'Beth Hart & Joe Bonamassa', 'APEv2.Artist')
+    t.deepEqual(APEv2.Artist, ['Beth Hart & Joe Bonamassa'], 'APEv2.Artist')
     t.deepEqual(APEv2.Artists, [ 'Beth Hart', 'Joe Bonamassa' ], 'APEv2.Artists')
-    t.deepEqual(APEv2.Artistsort, 'Hart, Beth & Bonamassa, Joe', 'APEv2.Artistsort')
-    t.deepEqual(APEv2['Album Artist'], 'Beth Hart & Joe Bonamassa', 'APEv2.ALBUMARTIST')
-    t.deepEqual(APEv2.Albumartistsort, 'Hart, Beth & Bonamassa, Joe', 'APEv2.Albumartistsort')
-    t.deepEqual(APEv2.Originaldate, '2011-09-26', 'APEv2.ORIGINALDATE')
-    t.deepEqual(APEv2.Script, 'Latn', 'APEv2.Script')
-    t.deepEqual(APEv2.Media, 'CD', 'APEv2.Media')
-    t.deepEqual(APEv2.Musicbrainz_Albumid, 'e7050302-74e6-42e4-aba0-09efd5d431d8', 'APEv2.Musicbrainz_Albumid')
+    t.deepEqual(APEv2.Artistsort, ['Hart, Beth & Bonamassa, Joe'], 'APEv2.Artistsort')
+    t.deepEqual(APEv2['Album Artist'], ['Beth Hart & Joe Bonamassa'], 'APEv2.ALBUMARTIST')
+    t.deepEqual(APEv2.Albumartistsort, ['Hart, Beth & Bonamassa, Joe'], 'APEv2.Albumartistsort')
+    t.deepEqual(APEv2.Originaldate, ['2011-09-26'], 'APEv2.ORIGINALDATE')
+    t.deepEqual(APEv2.Script, ['Latn'], 'APEv2.Script')
+    t.deepEqual(APEv2.Media, ['CD'], 'APEv2.Media')
+    t.deepEqual(APEv2.Musicbrainz_Albumid, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'APEv2.Musicbrainz_Albumid')
     t.deepEqual(APEv2.Musicbrainz_Albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Albumartistid')
     t.deepEqual(APEv2.Musicbrainz_Artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Artistid')
 
@@ -86,16 +84,16 @@ test('Test multi-artists ape', function (t) {
     t.deepEqual(APEv2.Engineer, ['James McCullagh', 'Jared Kvitka'], 'APEv2.ENGINEER')
     t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.ARRANGER')
 
-    t.deepEqual(APEv2.Musicbrainz_Albumid, 'e7050302-74e6-42e4-aba0-09efd5d431d8', 'APEv2.Musicbrainz_Albumid')
-    t.deepEqual(APEv2.musicbrainz_releasetrackid, 'd062f484-253c-374b-85f7-89aab45551c7', 'APEv2.musicbrainz_releasetrackid')
-    t.deepEqual(APEv2.Musicbrainz_Releasegroupid, 'e00305af-1c72-469b-9a7c-6dc665ca9adc', 'APEv2.Musicbrainz_Releasegroupid')
-    t.deepEqual(APEv2.musicbrainz_trackid, 'f151cb94-c909-46a8-ad99-fb77391abfb8', 'APEv2.musicbrainz_trackid')
+    t.deepEqual(APEv2.Musicbrainz_Albumid, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'APEv2.Musicbrainz_Albumid')
+    t.deepEqual(APEv2.musicbrainz_releasetrackid, ['d062f484-253c-374b-85f7-89aab45551c7'], 'APEv2.musicbrainz_releasetrackid')
+    t.deepEqual(APEv2.Musicbrainz_Releasegroupid, ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'APEv2.Musicbrainz_Releasegroupid')
+    t.deepEqual(APEv2.musicbrainz_trackid, ['f151cb94-c909-46a8-ad99-fb77391abfb8'], 'APEv2.musicbrainz_trackid')
 
     //t.deepEqual(APEv2.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'APEv2.NOTES')
-    t.deepEqual(APEv2.Barcode, '804879313915', 'APEv2.Barcode')
+    t.deepEqual(APEv2.Barcode, ['804879313915'], 'APEv2.Barcode')
     // ToDo: not set??? t.deepEqual(APEv2.ASIN, 'B004X5SCGM', 'APEv2.ASIN')
     // ToDo: not set??? t.deepEqual(APEv2.RELEASECOUNTRY, 'GB', 'APEv2.RELEASECOUNTRY')
-    t.deepEqual(APEv2.MUSICBRAINZ_ALBUMSTATUS, 'official', 'APEv2.MUSICBRAINZ_ALBUMSTATUS')
+    t.deepEqual(APEv2.MUSICBRAINZ_ALBUMSTATUS, ['official'], 'APEv2.MUSICBRAINZ_ALBUMSTATUS')
 
     t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.Arranger')
 
@@ -109,18 +107,30 @@ test('Test multi-artists ape', function (t) {
 
   }
 
+  function mapNativeTags (nativeTags) {
+    var tags = {};
+    nativeTags.forEach(function(tag) {
+      (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
+    })
+    return tags;
+  }
+
   var countMusicBrainzAlbumArtistId = 0
   var countMusicBrainzArtistId = 0
   var countEngineer = 0
   var countPerformer = 0
 
   // Run with default options
-  mm.parseStream(sample, {native: true}, function (err, result) {
-    t.error(err)
-    t.ok(result.hasOwnProperty('APEv2'), 'should include native Vorbis tags')
+  mm.parseFile(filePath, {native: true}).then( function (result) {
+    t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native Vorbis tags')
+
     checkFormat(result.format)
-    checkVorbisTags(result.APEv2)
+
+    checkVorbisTags(mapNativeTags(result.native.APEv2))
+
     checkCommonTags(result.common)
-  })
+  }).catch( function(err) {
+    t.error(err);
+  });
 
 })

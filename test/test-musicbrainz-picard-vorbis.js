@@ -6,11 +6,10 @@ var mm = require('..')
 var test = require('tape')
 
 test('MusicBrains/Picard tags in FLAC', function (t) {
-  t.plan(82)
+  t.plan(92)
 
-  var sample = (process.browser) ?
-    new window.Blob([ fs.readFileSync(__dirname + '/samples/MusicBrainz-Picard-tags.flac') ])
-    : fs.createReadStream(path.join(__dirname, '/samples/MusicBrainz-Picard-tags.flac'))
+  var filename = 'MusicBrainz-Picard-tags.flac'
+  var filePath = path.join(__dirname, 'samples', filename);
 
   function checkFormat (format) {
     t.deepEqual(format.duration, 271.7733333333333, 'format.duration')
@@ -54,13 +53,27 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
   }
 
   // Run with default options
-  mm.parseStream(sample, function (err, result) {
-    t.error(err)
-    t.ok(!result.hasOwnProperty('vorbis'), 'should NOT include native Vorbis tags')
+  mm.parseFile(filePath, {native: false}).then(function (result) {
+    t.ok(!(result.native && result.native.vorbis), 'should NOT include native Vorbis tags')
     checkFormat(result.format)
     checkCommonTags(result.common)
-  })
+    checkNativeTags(mapNativeTags(result.native.vorbis))
 
+    // Run once more, now include native tags
+    mm.parseFile(filePath).then(function (result) {
+      t.ok(result.common, 'should include common tags')
+      t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags')
+      checkNativeTags(mapNativeTags(result.native.vorbis))
+
+      t.end()
+    }).catch(function (err) {
+      t.error(err, 'no error')
+    });
+
+  }).catch(function (err) {
+    t.error(err, 'no error')
+  });
+/*
     .on('picture', function (result) {
       t.strictEqual(result[ 0 ].format, 'jpg', 'aliased picture format')
       t.strictEqual(result[ 0 ].data.length, 175668, 'aliased picture length')
@@ -94,51 +107,49 @@ test('MusicBrains/Picard tags in FLAC', function (t) {
       t.strictEqual(result.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth')
       t.strictEqual(result.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color')
       t.strictEqual(result.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length')
-    })
+    })*/
 
   function checkNativeTags (vorbis) {
     // Compare expectedCommonTags with result.vorbis
-    t.strictEqual(vorbis.TITLE, 'Brian Eno', 'vorbis: .TITLE')
-    t.strictEqual(vorbis.ARTIST, 'MGMT', 'vorbis: artist')
+    t.deepEqual(vorbis.TITLE, ['Brian Eno'], 'vorbis: .TITLE')
+    t.deepEqual(vorbis.ARTIST, ['MGMT'], 'vorbis: artist')
     t.deepEqual(vorbis.ARTISTS, ['MGMT'], 'vorbis: artist')
-    t.strictEqual(vorbis.ALBUMARTIST, 'MGMT', 'vorbis: albumartist')
-    t.strictEqual(vorbis.ALBUM, 'Oracular Spectacular / Congratulations', 'vorbis: album')
-    t.deepEqual(vorbis.TRACKNUMBER, '7', 'vorbis: TRACK')
-    t.deepEqual(vorbis.TRACKTOTAL, '9', 'vorbis: TRACKTOTAL')
-    t.deepEqual(vorbis.DISCNUMBER, '2', 'vorbis: DISCNUMBER')
-    t.deepEqual(vorbis.DISCTOTAL, '2', 'vorbis: DISCTOTAL')
-    t.deepEqual(vorbis.DISCSUBTITLE, 'Cogratulations', 'vorbis: DISCSUBTITLE')
-    t.deepEqual(vorbis.DATE, '2011-09-11', 'vorbis: DATE')
-    t.deepEqual(vorbis.RELEASECOUNTRY, 'XE', 'vorbis: RELEASECOUNTRY')
-    t.deepEqual(vorbis.ASIN, 'B0055U9LNC', 'vorbis: ASIN')
-    t.deepEqual(vorbis.BARCODE, '886979357723', 'vorbis: BARCODE')
-    t.deepEqual(vorbis.LABEL, 'Sony Music', 'vorbis: LABEL')
-    t.deepEqual(vorbis.CATALOGNUMBER, '88697935772', 'vorbis: CATALOGNUMBER')
-    t.deepEqual(vorbis.ORIGINALYEAR, '2011', 'vorbis: ORIGINALYEAR')
-    t.deepEqual(vorbis.ORIGINALDATE, '2011-09-11', 'vorbis: ORIGINALDATE')
-    t.deepEqual(vorbis.RELEASESTATUS, 'official', 'vorbis: RELEASESTATUS')
+    t.deepEqual(vorbis.ALBUMARTIST, ['MGMT'], 'vorbis: albumartist')
+    t.deepEqual(vorbis.ALBUM, ['Oracular Spectacular / Congratulations'], 'vorbis: album')
+    t.deepEqual(vorbis.TRACKNUMBER, ['7'], 'vorbis: TRACK')
+    t.deepEqual(vorbis.TRACKTOTAL, ['9'], 'vorbis: TRACKTOTAL')
+    t.deepEqual(vorbis.DISCNUMBER, ['2'], 'vorbis: DISCNUMBER')
+    t.deepEqual(vorbis.DISCTOTAL, ['2'], 'vorbis: DISCTOTAL')
+    t.deepEqual(vorbis.DISCSUBTITLE, ['Cogratulations'], 'vorbis: DISCSUBTITLE')
+    t.deepEqual(vorbis.DATE, ['2011-09-11'], 'vorbis: DATE')
+    t.deepEqual(vorbis.RELEASECOUNTRY, ['XE'], 'vorbis: RELEASECOUNTRY')
+    t.deepEqual(vorbis.ASIN, ['B0055U9LNC'], 'vorbis: ASIN')
+    t.deepEqual(vorbis.BARCODE, ['886979357723'], 'vorbis: BARCODE')
+    t.deepEqual(vorbis.LABEL, ['Sony Music'], 'vorbis: LABEL')
+    t.deepEqual(vorbis.CATALOGNUMBER, ['88697935772'], 'vorbis: CATALOGNUMBER')
+    t.deepEqual(vorbis.ORIGINALYEAR, ['2011'], 'vorbis: ORIGINALYEAR')
+    t.deepEqual(vorbis.ORIGINALDATE, ['2011-09-11'], 'vorbis: ORIGINALDATE')
+    t.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis: RELEASESTATUS')
     t.deepEqual(vorbis.RELEASETYPE, [ 'album', 'compilation' ], 'vorbis: RELEASETYPE')
     t.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode'], 'vorbis: COMMENT')
     t.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis: GENRE')
-    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'vorbis: MUSICBRAINZ_ALBUMID')
-    t.deepEqual(vorbis.MUSICBRAINZ_TRACKID, 'b0c1d984-ba93-4167-880a-ac02255bf9e7', 'vorbis: MUSICBRAINZ_RECORDINGID')
-    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, [ 'c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'vorbis: MUSICBRAINZ_ALBUMARTISTID')
-    t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, [ 'c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'vorbis: MUSICBRAINZ_ARTISTID')
-    t.deepEqual(vorbis.MUSICBRAINZ_RELEASEGROUPID, '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'vorbis: MUSICBRAINZ_RELEASEGROUPID')
-    t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, '0f53f7a3-89df-4069-9357-d04252239b6d', 'vorbis: MUSICBRAINZ_RELEASETRACKID')
+    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['6032dfc4-8880-4fea-b1c0-aaee52e1113c'], 'vorbis: MUSICBRAINZ_ALBUMID')
+    t.deepEqual(vorbis.MUSICBRAINZ_TRACKID, ['b0c1d984-ba93-4167-880a-ac02255bf9e7'], 'vorbis: MUSICBRAINZ_RECORDINGID')
+    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'vorbis: MUSICBRAINZ_ALBUMARTISTID')
+    t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['c485632c-b784-4ee9-8ea1-c5fb365681fc' ], 'vorbis: MUSICBRAINZ_ARTISTID')
+    t.deepEqual(vorbis.MUSICBRAINZ_RELEASEGROUPID, ['9a3237f4-c2a5-467f-9a8e-fe1d247ff520'], 'vorbis: MUSICBRAINZ_RELEASEGROUPID')
+    t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['0f53f7a3-89df-4069-9357-d04252239b6d'], 'vorbis: MUSICBRAINZ_RELEASETRACKID')
 
     // t.deepEqual(common.picture[ 0 ].format, 'jpg', 'picture format')
     // i.deepEqual(common.picture[ 0 ].data.length, 175668, 'picture length')
   }
 
-  // Run once more, now include native tags
-  mm.parseStream(sample, {native: true }, function (err, result) {
-    t.error(err)
-    t.ok(result.hasOwnProperty('common'), 'should include common tags')
-    t.ok(result.hasOwnProperty('vorbis'), 'should include native Vorbis tags')
-    checkNativeTags(result.vorbis)
-
-    t.end()
-  })
+  function mapNativeTags (nativeTags) {
+    var tags = {};
+    nativeTags.forEach(function(tag) {
+      (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
+    })
+    return tags;
+  }
 
 })

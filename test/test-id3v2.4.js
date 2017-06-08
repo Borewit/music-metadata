@@ -12,13 +12,10 @@ test('id3v2.4', function (t) {
   var tpe1Counter = 0
   var privCounter = 0
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/id3v2.4.mp3')])
-    : fs.createReadStream(path.join(__dirname, '/samples/id3v2.4.mp3'))
+  var filename = 'id3v2.4.mp3';
+  var filePath = path.join(__dirname, 'samples', filename);
 
-  mm.parseStream(sample, {'duration': true}, function (err, result) {
-    t.error(err)
-
+  mm.parseFile(filePath, { duration: true }).then(function (result) {
     t.strictEqual(result.format.headerType, 'id3v2.4', 'format.headerType')
     t.strictEqual(result.format.duration, 1, 'format.format.duration')
     t.strictEqual(result.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz')
@@ -41,8 +38,11 @@ test('id3v2.4', function (t) {
     t.strictEqual(result.common.picture[1].format, 'jpg', 'common.picture 1 format')
     t.strictEqual(result.common.picture[1].data.length, 80938, 'common.picture 1 length')
     t.end()
-  })
-    .on('duration', function (result) {
+  }).catch(function (err) {
+    t.error(err, 'no error')
+  });
+  /*
+  on('duration', function (result) {
       t.strictEqual(result, 1, 'event duration')
     })
     // aliased tests
@@ -152,4 +152,5 @@ test('id3v2.4', function (t) {
       }
       apicCounter++
     })
+    */
 })

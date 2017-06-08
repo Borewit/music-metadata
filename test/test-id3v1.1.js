@@ -5,11 +5,15 @@ var mm = require('..')
 var test = require('tape')
 
 test('id3v1.1', function (t) {
-  t.plan(24)
+  t.plan(16)
 
+  var filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
+
+  /*
   var sample = (process.browser) ?
     new window.Blob([fs.readFileSync(__dirname + '/samples/id3v1_Blood_Sugar.mp3')])
-    : fs.createReadStream(path.join(__dirname, 'samples/id3v1_Blood_Sugar.mp3'))
+    : fs.createReadStream(filePath)\
+   */
 
   function checkFormat (format) {
     t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type')
@@ -30,38 +34,17 @@ test('id3v1.1', function (t) {
     t.strictEqual(common.track.no, 1, 'common.track.no = 1')
     t.strictEqual(common.track.of, null, 'common.track.of = null')
     t.deepEqual(common.genre, ['Electronic'], 'common.genre')
+    t.deepEqual(common.comment, ['abcdefg'], 'common.comment')
   }
 
-  mm.parseStream(sample, function (err, result) { // ToDo: remove duration
-    t.error(err)
-
+  mm.parseFile(filePath).then( function(result) { // ToDo: remove duration
     checkFormat(result.format)
 
     checkCommon(result.common)
 
     t.end()
+  }).catch(function(err) {
+    t.error(err)
   })
-    .on('title', function (result) {
-      t.strictEqual(result, 'Blood Sugar', 'title')
-    })
-    .on('artist', function (result) {
-      t.strictEqual(result, 'Pendulum', 'artist')
-    })
-    .on('album', function (result) {
-      t.strictEqual(result, 'Blood Sugar (Single)', 'album')
-    })
-    .on('year', function (result) {
-      t.strictEqual(result, 2007, 'year')
-    })
-    .on('track', function (result) {
-      t.strictEqual(result.no, 1, 'track no')
-      t.strictEqual(result.of, null, 'track of')
-    })
-    .on('genre', function (result) {
-      t.strictEqual(result[0], 'Electronic', 'genre')
-    })
-    .on('comment', function (result) {
-      t.strictEqual(result[0], 'abcdefg', 'comment')
-    })
 })
 

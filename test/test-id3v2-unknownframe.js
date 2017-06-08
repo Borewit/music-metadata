@@ -4,11 +4,10 @@ var mm = require('..')
 var test = require('tape')
 
 test('invalid "Date" frame should not cause crash', function (t) {
-  t.plan(7)
+  t.plan(6)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/bug-id3v2-unknownframe.mp3')])
-    : fs.createReadStream(path.join(__dirname, '/samples/bug-id3v2-unknownframe.mp3'))
+  var filename = 'bug-id3v2-unknownframe.mp3';
+  var filePath = path.join(__dirname, 'samples', filename);
 
   function checkCommon (common) {
     t.strictEqual(common.title, 'One', 'common.title')
@@ -20,11 +19,10 @@ test('invalid "Date" frame should not cause crash', function (t) {
   }
 
 
-  mm.parseStream(sample, function (err, result) {
-    t.error(err)
-
-    checkCommon(result.common)
-
+  mm.parseFile(filePath, { duration: true }).then(function (metadata) {
+    checkCommon(metadata.common)
     t.end()
-  })
+  }).catch( function(err) {
+    t.error(err);
+  });
 })

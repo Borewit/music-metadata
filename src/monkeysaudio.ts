@@ -1,9 +1,11 @@
 'use strict';
 
-import * as strtok from 'strtok2';
 import common from './common';
-import {IStreamParser, TagCallback} from './parser';
 import {HeaderType} from './tagmap';
+import {ITokenizer, IgnoreType, UINT32_LE, StringType, BufferType, UINT16_LE} from "./FileTokenizer";
+import {INativeAudioMetadata, IOptions} from "./index";
+import {IFormat} from "../lib/index";
+import {ITokenParser} from "./FileParser";
 
 /**
  * APETag versionIndex history / supported formats
@@ -110,25 +112,25 @@ class Structure {
     get: (buf, off) => {
       return {
         // should equal 'MAC '
-        ID: new strtok.StringType(4, 'ascii').get(buf, off),
+        ID: new StringType(4, 'ascii').get(buf, off),
         // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-        version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
+        version: UINT32_LE.get(buf, off + 4) / 1000,
         // the number of descriptor bytes (allows later expansion of this header)
-        descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
+        descriptorBytes: UINT32_LE.get(buf, off + 8),
         // the number of header APE_HEADER bytes
-        headerBytes: strtok.UINT32_LE.get(buf, off + 12),
+        headerBytes: UINT32_LE.get(buf, off + 12),
         // the number of header APE_HEADER bytes
-        seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
+        seekTableBytes: UINT32_LE.get(buf, off + 16),
         // the number of header data bytes (from original file)
-        headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
+        headerDataBytes: UINT32_LE.get(buf, off + 20),
         // the number of bytes of APE frame data
-        apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
+        apeFrameDataBytes: UINT32_LE.get(buf, off + 24),
         // the high order number of APE frame data bytes
-        apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
+        apeFrameDataBytesHigh: UINT32_LE.get(buf, off + 28),
         // the terminating data of the file (not including tag data)
-        terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
+        terminatingDataBytes: UINT32_LE.get(buf, off + 32),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new strtok.BufferType(16).get(buf, off + 36)
+        fileMD5: new BufferType(16).get(buf, off + 36)
       };
     }
   };
@@ -142,21 +144,21 @@ class Structure {
     get: (buf, off) => {
       return {
         // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-        compressionLevel: strtok.UINT16_LE.get(buf, off),
+        compressionLevel: UINT16_LE.get(buf, off),
         // any format flags (for future use)
-        formatFlags: strtok.UINT16_LE.get(buf, off + 2),
+        formatFlags: UINT16_LE.get(buf, off + 2),
         // the number of audio blocks in one frame
-        blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
+        blocksPerFrame: UINT32_LE.get(buf, off + 4),
         // the number of audio blocks in the final frame
-        finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
+        finalFrameBlocks: UINT32_LE.get(buf, off + 8),
         // the total number of frames
-        totalFrames: strtok.UINT32_LE.get(buf, off + 12),
+        totalFrames: UINT32_LE.get(buf, off + 12),
         // the bits per sample (typically 16)
-        bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
+        bitsPerSample: UINT16_LE.get(buf, off + 16),
         // the number of channels (1 or 2)
-        channel: strtok.UINT16_LE.get(buf, off + 18),
+        channel: UINT16_LE.get(buf, off + 18),
         // the sample rate (typically 44100)
-        sampleRate: strtok.UINT32_LE.get(buf, off + 20)
+        sampleRate: UINT32_LE.get(buf, off + 20)
       };
     }
   };
@@ -170,21 +172,21 @@ class Structure {
     get: (buf, off) => {
       return {
         // should equal 'APETAGEX'
-        ID: new strtok.StringType(8, 'ascii').get(buf, off),
+        ID: new StringType(8, 'ascii').get(buf, off),
         // equals CURRENT_APE_TAG_VERSION
-        version: strtok.UINT32_LE.get(buf, off + 8),
+        version: UINT32_LE.get(buf, off + 8),
         // the complete size of the tag, including this footer (excludes header)
-        size: strtok.UINT32_LE.get(buf, off + 12),
+        size: UINT32_LE.get(buf, off + 12),
         // the number of fields in the tag
-        fields: strtok.UINT32_LE.get(buf, off + 16),
+        fields: UINT32_LE.get(buf, off + 16),
         // reserved for later use (must be zero)
-        reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
+        reserved: new BufferType(12).get(buf, off + 20) // ToDo: what is this???
       };
     }
   };
 
   public static TagField = (footer) => {
-    return new strtok.BufferType(footer.size - Structure.TagFooter.len);
+    return new BufferType(footer.size - Structure.TagFooter.len);
   }
 
   public static parseTagFlags(flags): ITagFlags {
@@ -212,13 +214,14 @@ interface IApeInfo {
   descriptor?: IDescriptor,
   header?: IHeader,
   footer?: IFooter
-};
+}
+;
 
-class ApeParser implements IStreamParser {
+export class ApeParser implements ITokenParser {
 
-  public static getInstance(): ApeParser {
-    return new ApeParser();
+  public constructor(){
   }
+
   /**
    * Calculate the media file duration
    * @param ah ApeHeader
@@ -234,78 +237,83 @@ class ApeParser implements IStreamParser {
 
   private ape: IApeInfo = {};
 
-  public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
+  private tokenizer: ITokenizer;
 
-    strtok.parse(stream, (v, cb) => {
-      if (v === undefined) {
-        cb.state = 'descriptor';
-        return Structure.DescriptorParser;
-      }
+  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
-      switch (cb.state) {
-        case 'descriptor':
-          if (v.ID !== 'MAC ') {
-            throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
-          }
-          this.ape.descriptor = v;
-          const lenExp = v.descriptorBytes - Structure.DescriptorParser.len;
-          if (lenExp > 0) {
-            cb.state = 'descriptorExpansion';
-            return new strtok.IgnoreType(lenExp);
-          } else {
-            cb.state = 'header';
-            return Structure.Header;
-          }
+    this.tokenizer = tokenizer;
 
-        case 'descriptorExpansion':
-          cb.state = 'header';
-          return Structure.Header;
+    return this.tokenizer.readToken(Structure.DescriptorParser)
+      .then((descriptor) => {
+        if (descriptor.ID !== 'MAC ') {
+          throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
+        }
+        this.ape.descriptor = descriptor;
+        const lenExp = descriptor.descriptorBytes - Structure.DescriptorParser.len;
+        if (lenExp > 0) {
+          return this.parseDescriptorExpansion(lenExp);
+        } else {
+          return this.parseHeader();
+        }
+      }).then((header) => {
+        return this.tokenizer.readToken(new IgnoreType(header.forwardBytes)).then(() => {
+          return this.parseFooter().then((tags) => {
+            return {
+              format: header.format,
+              native: {
+                APEv2: tags
+              }
+            };
+          })
+        });
+      })
 
-        case 'header':
-          this.ape.header = v;
-          callback('format', 'dataformat', 'ape');
-          callback('format', 'lossless', true);
-          callback('format', 'headerType', this.type);
-          callback('format', 'bitsPerSample', v.bitsPerSample);
-          callback('format', 'sampleRate', v.sampleRate);
-          callback('format', 'numberOfChannels', v.channel);
-          callback('format', 'duration', ApeParser.calculateDuration(v));
-          const forwardBytes = this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
-            this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes;
-          cb.state = 'skipData';
-          return new strtok.IgnoreType(forwardBytes);
-
-        case 'skipData':
-          cb.state = 'tagFooter';
-          return Structure.TagFooter;
-
-        case 'tagFooter':
-          if (v.ID !== 'APETAGEX') {
-            done(new Error('Expected footer to start with APETAGEX '));
-          }
-          this.ape.footer = v;
-          cb.state = 'tagField';
-          return Structure.TagField(v);
-
-        case 'tagField':
-          this.parseTags(this.ape.footer, v, callback);
-          done();
-          break;
-
-        default:
-          done(new Error('Illegal state: ' + cb.state));
-      }
-      return 0;
-    });
   };
 
-  private parseTags(footer: IFooter, buffer: Buffer, callback) {
+  private parseDescriptorExpansion(lenExp: number): Promise<{ format: IFormat, forwardBytes: number }> {
+    return this.tokenizer.readToken(new IgnoreType(lenExp)).then(() => {
+      return this.parseHeader();
+    });
+  }
+
+  private parseHeader(): Promise<{ format: IFormat, forwardBytes: number }> {
+    return this.tokenizer.readToken(Structure.Header).then((header) => {
+      return {
+        format: {
+          // dataformat: 'ape',
+          lossless: true,
+          headerType: this.type,
+          bitsPerSample: header.bitsPerSample,
+          sampleRate: header.sampleRate,
+          numberOfChannels: header.channel,
+          duration: ApeParser.calculateDuration(header)
+        },
+        forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
+        this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
+      }
+    });
+  }
+
+  private parseFooter(): Promise<{id: string, value: any}[]> {
+    return this.tokenizer.readToken(Structure.TagFooter).then((footer) => {
+      if (footer.ID !== 'APETAGEX') {
+        throw new Error('Expected footer to start with APETAGEX ');
+      }
+      return this.tokenizer.readToken(Structure.TagField(footer)).then((tags) => {
+        return ApeParser.parseTags(footer, tags);
+      });
+    });
+  }
+
+  private static parseTags(footer: IFooter, buffer: Buffer): {id: string, value: any}[] {
     let offset = 0;
 
+    const tags: {id: string, value: any}[] = [];
+
     for (let i = 0; i < footer.fields; i++) {
-      const size = strtok.UINT32_LE.get(buffer, offset);
+      const size = UINT32_LE.get(buffer, offset);
       offset += 4;
-      const flags = Structure.parseTagFlags(strtok.UINT32_LE.get(buffer, offset));
+      const flags = Structure.parseTagFlags(UINT32_LE.get(buffer, offset));
       offset += 4;
 
       let zero = common.findZero(buffer, offset, buffer.length);
@@ -319,7 +327,7 @@ class ApeParser implements IStreamParser {
 
           /*jshint loopfunc:true */
           for (const val of values) {
-            callback(this.type, key, val);
+            tags.push({id: key, value: val});
           }
         }
           break;
@@ -339,7 +347,7 @@ class ApeParser implements IStreamParser {
             };
 
             offset += size;
-            callback(this.type, key, picture);
+            tags.push({id: key, value: picture});
           }
         }
           break;
@@ -348,7 +356,6 @@ class ApeParser implements IStreamParser {
           throw new Error('Unexpected data-type: ' + flags.dataType);
       }
     }
+    return tags;
   }
 }
-
-module.exports = ApeParser.getInstance();

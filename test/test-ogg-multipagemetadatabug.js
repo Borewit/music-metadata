@@ -6,12 +6,10 @@ var test = require('tape')
 test('ogg-multipage-metadata-bug', function (t) {
   t.plan(13)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/ogg-multipagemetadata-bug.ogg')])
-    : fs.createReadStream(path.join(__dirname, '/samples/ogg-multipagemetadata-bug.ogg'))
+  var filename = 'ogg-multipagemetadata-bug.ogg';
+  var filePath = path.join(__dirname, 'samples', filename);
 
-  mm.parseStream(sample, function (err, result) {
-    t.error(err)
+  mm.parseFile(filePath).then(function (result) {
     t.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title')
     t.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist')
     t.strictEqual(result.common.albumartist, 'Modestep', 'albumartist')
@@ -25,5 +23,7 @@ test('ogg-multipage-metadata-bug', function (t) {
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format')
     t.strictEqual(result.common.picture[0].data.length, 207439, 'picture length')
     t.end()
-  })
+  }).catch(function (err) {
+    t.fail(err)
+  });
 })

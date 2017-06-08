@@ -1,41 +1,14 @@
 import * as equal from 'deep-equal';
 import windows1252decoder from './windows1252decoder';
+import {Id3v1Parser} from "./id3v1";
 
 export default class Common {
 
-  // ToDo: move to ASF
-  public static asfGuidBuf = new Buffer([
-    0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-    0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-  ]);
-
-  public static strtokUINT24_BE = {
-    get: (buf: Buffer, off: number): number => {
-      return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
-    },
-    len: 3
-  };
-
-  public static strtokBITSET = {
-    get: (buf: Buffer, off: number, bit: number): boolean => {
-      return (buf[off] & (1 << bit)) !== 0;
-    },
-    len: 1
-  };
-
-  public static strtokUINT32_LE = {
-    len: 4,
-    get: (buf: Buffer, off: number) => {
-      // Shifting the MSB by 24 directly causes it to go negative if its
-      // last bit is high, so we instead shift by 23 and multiply by 2.
-      // Also, using binary OR to count the MSB if its last bit is high
-      // causes the value to go negative. Use addition there.
-      return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
-        ((buf[off + 3] << 23) * 2);
-    }
-  };
-
-  public static GENRES = [
+  /**
+   * ID3v1 Genre mappings
+   * Ref: https://de.wikipedia.org/wiki/Liste_der_ID3v1-Genres
+   */
+  public static Genres = [
     'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
     'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
     'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
@@ -65,6 +38,32 @@ export default class Common {
     'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
     'Garage Rock', 'Psybient'
   ];
+
+  public static strtokUINT24_BE = {
+    get: (buf: Buffer, off: number): number => {
+      return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
+    },
+    len: 3
+  };
+
+  public static strtokBITSET = {
+    get: (buf: Buffer, off: number, bit: number): boolean => {
+      return (buf[off] & (1 << bit)) !== 0;
+    },
+    len: 1
+  };
+
+  public static strtokUINT32_LE = {
+    len: 4,
+    get: (buf: Buffer, off: number) => {
+      // Shifting the MSB by 24 directly causes it to go negative if its
+      // last bit is high, so we instead shift by 23 and multiply by 2.
+      // Also, using binary OR to count the MSB if its last bit is high
+      // causes the value to go negative. Use addition there.
+      return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
+        ((buf[off + 3] << 23) * 2);
+    }
+  };
 
   public static getParserForMediaType(types, header) {
     for (const type of types) {
@@ -194,7 +193,7 @@ export default class Common {
     const array = [];
     for (let cur of split) {
       if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
-        cur = Common.GENRES[cur];
+        cur = Common.Genres[cur];
       }
       array.push(cur);
     }

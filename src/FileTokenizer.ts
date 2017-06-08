@@ -337,15 +337,26 @@ export class IgnoreType implements IGetToken<Buffer> {
   }
 }
 
-export class FileTokenizer {
+export interface ITokenizer {
+
+  fileSize: number;
+
+  readBuffer(buffer: Buffer, offset: number, length: number, position?: number): Promise<number>;
+
+  readToken<T>(token: IGetToken<T>, position?: number | null): Promise<T>;
+
+  readNumber(token: IToken<number>): Promise<number>;
+}
+
+export class FileTokenizer implements ITokenizer{
 
   private numBuffer = new Buffer(4);
 
   constructor(private fd: number, public fileSize: number) {
   }
 
-  public readBuffer(buffer: Buffer, offset: number, length: number, position: number = null): Promise<[number, Buffer]> {
-    return fs.read(this.fd, buffer, offset, length, position);
+  public readBuffer(buffer: Buffer, offset: number, length: number, position: number = null): Promise<number> {
+    return fs.read(this.fd, buffer, offset, length, position); // ToDo: looks like wrong return type is defined in fs.read
   }
 
   private _readToken<T>(buffer: Buffer, token: IToken<T>): Promise<T> {
@@ -354,9 +365,12 @@ export class FileTokenizer {
     });
   }
 
-  public readToken<T>(token: IGetToken<T>): Promise<T> {
+  public readToken<T>(token: IGetToken<T>, position: number | null = null): Promise<T> {
     const buffer = new Buffer(token.len);
-    return this.readBuffer(buffer, 0, token.len, null).then((res) => {
+    return this.readBuffer(buffer, 0, token.len, position).then((res) => {
+      if(res<token.len) {
+        return null; // EOF
+      }
       return token.get(buffer, 0);
     });
   }

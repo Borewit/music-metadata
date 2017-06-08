@@ -2179,7 +2179,7 @@ MpegAudioLayer.FrameHeader = {
  * Info Tag
  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
  */
-MpegAudioLayer.InfoTag = {
+MpegAudioLayer.XingInfoTag = {
     len: 140,
     get: function (buf, off) {
         return {
@@ -2343,9 +2343,9 @@ var MpegParser = (function () {
                 this.crc = v;
                 return this.skipSideInformation(this.audioFrameHeader);
             case State.side_information:
-                this.offset += MpegAudioLayer.InfoTag.len; // 12
+                this.offset += MpegAudioLayer.XingInfoTag.len; // 12
                 this.state = State.xtra_info_header;
-                return MpegAudioLayer.InfoTag;
+                return MpegAudioLayer.XingInfoTag;
             case State.xtra_info_header:
                 this.state = State.skip_frame_data;
                 var frameDataLeft = this.frame_size - this.offset;

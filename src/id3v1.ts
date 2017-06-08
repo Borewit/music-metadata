@@ -1,45 +1,101 @@
 'use strict';
-import * as strtok from 'strtok2';
-import common from './common';
-import {MpegParser} from './mpeg';
-import {Done, IStreamParser, TagCallback} from './parser';
 
-class Id3v1Parser implements IStreamParser {
+import {MpegParser} from './mpeg';
+import {ITokenParser} from "./FileParser";
+import {INativeAudioMetadata, IOptions} from "./index";
+import {IGetToken} from "../lib/FileTokenizer";
+import {INT8, ITokenizer, StringType} from "./FileTokenizer";
+import {HeaderType} from "./tagmap";
+import Common from "./common";
+
+
+/**
+ * ID3v1 tag header interface
+ */
+interface Iid3v1Header {
+  header: string,
+  title: string,
+  artist: string,
+  album: string,
+  year: string,
+  comment: string,
+  zeroByte: number,
+  track: number,
+  genre: number
+}
+
+/**
+ * Ref: https://en.wikipedia.org/wiki/ID3
+ * @type {{len: number; get: ((buf, off)=>Iid3v1Header)}}
+ */
+const Iid3v1Token: IGetToken<Iid3v1Header> = {
+  len: 128,
+
+  get: (buf, off):  Iid3v1Header => {
+    return {
+      header: new Id3v1StringType(3, 'ascii').get(buf, off),
+      title: new Id3v1StringType(30, 'ascii').get(buf, off + 3),
+      artist: new Id3v1StringType(30, 'ascii').get(buf, off + 33),
+      album: new Id3v1StringType(30, 'ascii').get(buf, off + 63),
+      year: new Id3v1StringType(4, 'ascii').get(buf, off + 93),
+      comment: new Id3v1StringType(28, 'ascii').get(buf, off + 97),
+      zeroByte: INT8.get(buf, off + 127),
+      track: INT8.get(buf, off + 126),
+      genre: INT8.get(buf, off + 127)
+    };
+  }
+};
+
+class Id3v1StringType extends StringType {
+
+  public get(buf: Buffer, off: number): string {
+    let value = super.get(buf, off);
+    value = value.trim().replace(/\x00/g, '');
+    return value.length > 0 ? value : undefined;
+  }
+}
+
+export class Id3v1Parser implements ITokenParser {
 
   public static getInstance(): Id3v1Parser {
     return new Id3v1Parser();
   }
 
-  private static parseTag(buf: Buffer, offset: number, end: number, type, tag, callback: TagCallback): void {
-    let value = buf.toString('ascii', offset, end);
-    value = value.trim().replace(/\x00/g, '');
-    if ( value.length > 0) {
-      callback(type, tag, value);
-    }
-  }
-
-  private endData: Buffer;
-  private type = 'id3v1.1';
   private mpegParser: MpegParser;
 
-  public parse(stream, callback: TagCallback, done, readDuration?, fileSize?) {
+  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
-    let mp3Done = false;
-    const id3Done = false;
-
-    stream.on('data', (data) => {
-      this.endData = data;
+    this.mpegParser = new MpegParser(tokenizer, 128, options && options.duration);
+    return this.mpegParser.parse().then((format) => {
+      return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then((header) => {
+        const res = {
+          format: format,
+          native: {
+            'id3v1.1': [
+              {id: 'title', value: header.title},
+              {id: 'artist', value: header.artist},
+              {id: 'album', value: header.album},
+              {id: 'comment', value: header.comment},
+              {id: 'track', value: header.track},
+              {id: 'year', value: header.year},
+              {id: 'genre', value: Id3v1Parser.getGenre(header.genre)},
+            ]
+          }
+        };
+        res.format.headerType = 'id3v1.1' as HeaderType;
+        return res;
+      })
     });
-
-    this.mpegParser = new MpegParser(128);
-    this.mpegParser.parse(stream, callback, (err) => {
-        mp3Done = true;
-        if (id3Done) {
-          return done(err);
-        } else return strtok.DONE;
-      }, readDuration, fileSize);
   }
 
+  private static getGenre(genreIndex: number): string {
+    if(genreIndex < Common.Genres.length ) {
+      return Common.Genres[genreIndex];
+    }
+    return undefined; // ToDO: generate warning
+  }
+
+  /*
   public end(callback: TagCallback, done: Done) {
 
     let offset = this.endData.length - 128;
@@ -67,7 +123,6 @@ class Id3v1Parser implements IStreamParser {
     if (this.mpegParser) {
       this.mpegParser.end(callback, done);
     }
-  }
+  }*/
 }
 
-module.exports = Id3v1Parser.getInstance();

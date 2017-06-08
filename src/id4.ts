@@ -1,6 +1,11 @@
-import * as strtok from 'strtok2';
 import common from './common';
-import {IStreamParser, TagCallback} from './parser';
+import {ITokenParser} from "./FileParser";
+import {INativeAudioMetadata, ITag} from "./index";
+import {IFormat, IOptions} from "../lib/index";
+import {
+  BufferType, IGetToken, IgnoreType, INT24_BE, ITokenizer, StringType, UINT16_BE, UINT24_BE, UINT32_BE,
+  UINT8
+} from "./FileTokenizer";
 
 enum State {
   skip = -1,
@@ -10,11 +15,355 @@ enum State {
   mdhdAtom = 3
 }
 
-type IMetaDataAtom = string | {format: string, data: Buffer};
+type IMetaDataAtom = string | { format: string, data: Buffer };
 
-class Id4Parser implements IStreamParser {
+/**
+ * M4A signature, ref: https://www.filesignatures.net/index.php?page=search&search=M4A&mode=EXT
+ * ascii: ••• ftypM4A
+ */
+//const signature_m4a = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41];
 
-  public static type = 'm4a';
+/**
+ * ascii: ••• ftypmp42
+ */
+//const signature_m4a_42  = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x34, 0x32];
+
+interface IAtomHeader {
+  length: number,
+  name: string
+}
+
+interface IAtomFtyp {
+  type: string
+}
+
+/**
+ * Common interface for the mvhd (Movie Header) & mdhd (Media) atom
+ */
+interface IAtomMxhd {
+
+  /**
+   * A 1-byte specification of the version of this movie header atom.
+   */
+  version: number,
+
+  /**
+   * Three bytes of space for future movie header flags.
+   */
+  flags: number,
+
+  /**
+   * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was created.
+   * It is strongly recommended that this value should be specified using coordinated universal time (UTC).
+   */
+  creationTime: number,
+
+  /**
+   * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was changed.
+   * It is strongly recommended that this value should be specified using coordinated universal time (UTC).
+   */
+  modificationTime: number,
+
+  /**
+   * A time value that indicates the time scale for this media—that is, the number of time units that pass per second in its time coordinate system.
+   */
+  timeScale: number,
+
+  /**
+   * Duration: the duration of this media in units of its time scale.
+   */
+  duration: number,
+}
+
+interface IAtomMdhd extends IAtomMxhd {
+  /**
+   * A 16-bit integer that specifies the language code for this media.
+   * See Language Code Values for valid language codes.
+   * Also see Extended Language Tag Atom for the preferred code to use here if an extended language tag is also included in the media atom.
+   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap4/qtff4.html#//apple_ref/doc/uid/TP40000939-CH206-34353
+   */
+  language: number,
+
+
+  quality: number
+}
+
+/**
+ * Interface for the parsed Movie Header Atom (mvhd)
+ */
+interface IAtomMvhd extends IAtomMxhd {
+
+  /**
+   * Preferred rate: a 32-bit fixed-point number that specifies the rate at which to play this movie. A value of 1.0 indicates normal rate.
+   */
+  preferredRate: number,
+
+  /**
+   * Preferred volume: A 16-bit fixed-point number that specifies how loud to play this movie’s sound. A value of 1.0 indicates full volume.
+   */
+  preferredVolume: number,
+
+  /**
+   * Reserved: Ten bytes reserved for use by Apple. Set to 0.
+   */
+  //reserved: number,
+
+  /**
+   *  Matrix structure: The matrix structure associated with this movie. A matrix shows how to map points from one coordinate space into another. See Matrices for a discussion of how display matrices are used in QuickTime.
+   */
+  // matrixStructure: ???;
+
+  /**
+   * Preview time: The time value in the movie at which the preview begins.
+   */
+  previewTime: number,
+
+  /**
+   * Preview duration: The duration of the movie preview in movie time scale units.
+   */
+  previewDuration: number;
+
+  /**
+   * Poster time: The time value of the time of the movie poster.
+   */
+  posterTime: number,
+
+  /**
+   * selection time: The time value for the start time of the current selection.
+   */
+  selectionTime: number,
+
+  /**
+   * Selection duration:  The duration of the current selection in movie time scale units.
+   */
+  selectionDuration: number,
+
+  /**
+   * Current time:  The time value for current time position within the movie.
+   */
+  currentTime: number
+
+  /**
+   * Next track ID:  A 32-bit integer that indicates a value to use for the track ID number of the next track added to this movie. Note that 0 is not a valid track ID value.
+   */
+  nextTrackID: number
+}
+
+/**
+ * Interface for the metadata header atom: 'mhdr'
+ * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW13
+ */
+interface IAtom_mhdr {
+
+  /**
+   * One byte that is set to 0.
+   */
+  version: number,
+
+  /**
+   * Three bytes that are set to 0.
+   */
+  flags: number,
+
+  /**
+   * A 32-bit unsigned integer indicating the value to use for the item ID of the next item created or assigned an item ID.
+   * If the value is all ones, it indicates that future additions will require a search for an unused item ID.
+   */
+  nextItemID: number
+}
+
+interface IMovieHeaderAtom {
+  version: number,
+  flags: number,
+  nextItemID: number
+}
+
+/**
+ * Interface for the parsed Media Atom (mdhd)
+ */
+class Atom {
+
+  public static Header: IGetToken<IAtomHeader> = {
+    len: 8,
+
+    get: (buf: Buffer, off: number): IAtomHeader => {
+      return {
+        length: UINT32_BE.get(buf, 0),
+        name: new StringType(4, "binary").get(buf, off + 4)
+      };
+    }
+  };
+
+  public static ftyp: IGetToken<IAtomFtyp> = {
+    len: 4,
+
+    get: (buf: Buffer, off: number): IAtomFtyp => {
+      return {
+        type: new StringType(4, "ascii").get(buf, off)
+      };
+    }
+  };
+
+  /**
+   * Token: Media Header Atom
+   */
+  public static mdhd: IGetToken<IAtomMdhd> = {
+    len: 24,
+
+    get: (buf: Buffer, off: number): IAtomMdhd => {
+      return {
+        version: UINT8.get(buf, off + 0),
+        flags: UINT24_BE.get(buf, off + 1),
+        creationTime: UINT32_BE.get(buf, off + 4),
+        modificationTime: UINT32_BE.get(buf, off + 8),
+        timeScale: UINT32_BE.get(buf, off + 12),
+        duration: UINT32_BE.get(buf, off + 16),
+        language: UINT16_BE.get(buf, off + 20),
+        quality: UINT16_BE.get(buf, off + 22)
+      };
+    }
+  };
+
+  /**
+   * Token: Movie Header Atom
+   */
+  public static mvhd: IGetToken<IAtomMvhd> = {
+    len: 100,
+
+    get: (buf: Buffer, off: number): IAtomMvhd => {
+      return {
+        version: UINT8.get(buf, off + 0),
+        flags: UINT24_BE.get(buf, off + 1),
+        creationTime: UINT32_BE.get(buf, off + 4),
+        modificationTime: UINT32_BE.get(buf, off + 8),
+        timeScale: UINT32_BE.get(buf, off + 12),
+        duration: UINT32_BE.get(buf, off + 16),
+        preferredRate: UINT32_BE.get(buf, off + 20),
+        preferredVolume: UINT16_BE.get(buf, off + 24),
+        // ignore reserver: 10 bytes
+        // ignore matrix structure: 36 bytes
+        previewTime: UINT32_BE.get(buf, off + 72),
+        previewDuration: UINT32_BE.get(buf, off + 76),
+        posterTime: UINT32_BE.get(buf, off + 80),
+        selectionTime: UINT32_BE.get(buf, off + 84),
+        selectionDuration: UINT32_BE.get(buf, off + 88),
+        currentTime: UINT32_BE.get(buf, off + 92),
+        nextTrackID: UINT32_BE.get(buf, off + 96)
+      };
+    }
+  };
+
+  /**
+   * Token: Movie Header Atom
+   */
+  public static mhdr: IGetToken<IMovieHeaderAtom> = {
+    len: 8,
+
+    get: (buf: Buffer, off: number): IMovieHeaderAtom => {
+      return {
+        version: UINT8.get(buf, off + 0),
+        flags: UINT24_BE.get(buf, off + 1),
+        nextItemID: UINT32_BE.get(buf, off + 4),
+      };
+    }
+  };
+
+}
+
+/**
+ * Data Atom Structure ('data')
+ * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW32
+ */
+interface IDataAtom {
+  /**
+   * Type Indicator
+   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW28
+   */
+  type: {
+    /**
+     * The set of types from which the type is drawn
+     * If 0, type is drawn from the well-known set of types.
+     */
+    set: number, // ToDo: enum?
+    type: number
+  },
+  /**
+   * Locale Indicator
+   */
+  locale: number,
+  /**
+   * An array of bytes containing the value of the metadata.
+   */
+  value: Buffer;
+}
+
+/**
+ * Data Atom Structure
+ */
+class DataAtom implements IGetToken<IDataAtom> {
+
+  public constructor(public len: number) {
+  }
+
+  public get(buf: Buffer, off: number): IDataAtom {
+    return {
+      type: {
+        set: UINT8.get(buf, off + 0),
+        type: UINT24_BE.get(buf, off + 1)
+      },
+      locale: UINT24_BE.get(buf, off + 4),
+      value: new BufferType(this.len - 8).get(buf, off + 8)
+    };
+  }
+}
+
+/**
+ * Data Atom Structure ('data')
+ * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW32
+ */
+interface INameAtom {
+
+  /**
+   * One byte that is set to 0.
+   */
+  version: number,
+
+  /**
+   * Three bytes that are set to 0.
+   */
+  flags: number,
+
+  /**
+   * An array of bytes containing the value of the metadata.
+   */
+  name: string;
+}
+
+/**
+ * Data Atom Structure
+ * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW31
+ */
+class NameAtom implements IGetToken<INameAtom> {
+
+  public constructor(public len: number) {
+  }
+
+  public get(buf: Buffer, off: number): INameAtom {
+    return {
+      version: UINT8.get(buf, off),
+      flags: UINT24_BE.get(buf, off + 1),
+      name: new StringType(this.len - 4, "utf-8").get(buf, off + 4)
+    };
+  }
+}
+
+/*
+ * Support for iTunes-style m4a tags
+ * Ref:
+ *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
+ *   http://atomicparsley.sourceforge.net/mpeg-4files.html
+ */
+export class Id4Parser implements ITokenParser {
 
   public static getInstance(): Id4Parser {
     return new Id4Parser();
@@ -28,145 +377,318 @@ class Id4Parser implements IStreamParser {
     21: 'uint8'
   };
 
-  private static ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
+  private tokenizer: ITokenizer;
 
-  public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
-    strtok.parse(stream, (v, cb) => {
-      // the very first thing we expect to see is the first atom's length
-      if (!v) {
-        cb.metaAtomsTotalLength = 0;
-        cb.state = 0;
-        return strtok.UINT32_BE;
-      }
+  private metaAtomsTotalLength = 0;
 
-      switch (cb.state) {
-        case State.skip: // skip
-          cb.state = State.atomLength;
-          return strtok.UINT32_BE;
+  private format: IFormat = {};
+  private tags: ITag[] = [];
 
-        case State.atomLength: // atom length
-          cb.atomLength = v;
-          cb.state++;
-          return new strtok.BufferType(4);
+  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+    this.tokenizer = tokenizer;
 
-        case State.atomName: // atom name
-          v = v.toString('binary');
-          cb.atomName = v;
-
-          // meta has 4 bytes padding at the start (skip)
-          if (v === 'meta') {
-            cb.state = State.skip;
-            return new strtok.IgnoreType(4);
-          }
-
-          if (readDuration) {
-            if (v === 'mdhd') {
-              cb.state = State.mdhdAtom;
-              return new strtok.BufferType(cb.atomLength - 8);
-            }
-          }
-
-          if (!~Id4Parser.ContainerAtoms.indexOf(v)) {
-            if (cb.atomContainer === 'ilst') {
-              cb.state = State.ilstAtom;
-              return new strtok.BufferType(cb.atomLength - 8);
-            }
-            cb.state = State.skip;
-            return new strtok.IgnoreType(cb.atomLength - 8);
-          }
-
-          // dig into container atoms
-          cb.atomContainer = v;
-          cb.atomContainerLength = cb.atomLength;
-          cb.state--;
-          return strtok.UINT32_BE;
-
-        case State.ilstAtom: // ilst atom
-          cb.metaAtomsTotalLength += cb.atomLength;
-          let results;
-          try {
-            results = this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
-          } catch (err) {
-            return done(err);
-          }
-
-          if (results.length > 0) {
-            for (const result of results) {
-              callback(Id4Parser.type, cb.atomName, result);
-            }
-          }
-
-          // we can stop processing atoms once we get to the end of the ilst atom
-          if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
-            return done();
-          }
-
-          cb.state = State.atomLength;
-          return strtok.UINT32_BE;
-
-        case State.mdhdAtom: // mdhd atom
-          // TODO: support version 1
-          const sampleRate = v.readUInt32BE(12);
-          const duration = v.readUInt32BE(16);
-          callback('format', 'duration', duration / sampleRate);
-          callback('format', 'sampleRate', sampleRate); // ToDo: add to test
-          cb.state = State.atomLength;
-          return strtok.UINT32_BE;
-
-        default:
-          return done(new Error('illegal state:' + cb.state));
-
+    return this.parseAtom().then(() => {
+      return {
+        format: this.format,
+        native: {
+          m4a: this.tags
+        }
       }
     });
   }
 
-  private processMetaAtom(data: Buffer, atomName: string, atomLength: number): IMetaDataAtom[] {
-    const result = [];
-    let offset = 0;
+  public parseAtom(): Promise<boolean> {
 
-    // ignore proprietary iTunes atoms (for now)
-    if (atomName === '----') return result;
-
-    while (offset < atomLength) {
-      const length = strtok.UINT32_BE.get(data, offset);
-      const contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)];
-
-      const content = this.processMetaDataAtom(data.slice(offset + 12, offset + length), contType, atomName);
-
-      result.push(content);
-      offset += length;
-    }
-
-    return result;
+    // Parse atom header
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+      return this.parseAtomData(header).then((done) => {
+        if (done) {
+          // ToDo: messy ending
+          // console.log("Done with %s", header.name);
+          return done;
+        } else {
+          return this.parseAtom();
+        }
+      })
+    });
   }
 
-  private processMetaDataAtom(data: Buffer, type: string, atomName: string): IMetaDataAtom {
-    switch (type) {
-      case 'text':
-        return data.toString('utf8', 4);
+  private parseAtomData(header: IAtomHeader): Promise<boolean> {
+    const dataLen = header.length - 8;
+    // console.log("atom name=%s, len=%s", header.name, header.length);
+    switch (header.name) {
+      case 'ftyp':
+        return this.parseAtom_ftyp(dataLen).then((types) => {
+          return false;
+        });
 
-      case 'uint8':
-        if (atomName === 'gnre') {
-          const genreInt = strtok.UINT8.get(data, 5);
-          return common.GENRES[genreInt - 1];
-        }
-        if (atomName === 'trkn' || atomName === 'disk') {
-          return data[7] + '/' + data[9];
-        }
+      // "Container" atoms, contain nested atoms: 'moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'
+      case 'moov': // The Movie Atom: contains other atoms
+      case 'udta': // User defined atom
+      case 'trak':
+      case 'mdia': // Media atom
+      case 'minf': // Media Information Atom
+      case 'stbl': // Media Information Atom
+        return this.parseAtom().then((done) => done);
 
-        return strtok.UINT8.get(data, 4);
+      case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+        return this.tokenizer.readToken<void>(new IgnoreType(4)).then(() => false); // meta has 4 bytes of padding, ignore
 
-      case 'jpeg':
-      case 'png':
-        return {
-          format: 'image/' + type,
-          data: new Buffer(data.slice(4))
-        };
+      case 'ilst': // 'meta' => 'ilst': Metadata Item List Atom
+        // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
+        return this.parseMetadataItem(dataLen).then(() => false);
+
+      case 'mdhd': // Media header atom
+        return this.parseAtom_mdhd(dataLen).then(() => false);
+
+      case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
+        return this.parseAtom_mvhd(dataLen).then(() => false);
+
+      case '<id>': // 'meta' => 'ilst' => '<id>': metadata item atom
+        return this.parseMetadataItem(dataLen).then(() => false);
+
+      case 'cmov': // compressed movie atom; child of Movie Atom
+      case 'rmra': // reference movie atom; child of Movie Atom
+
+      case 'mdat':
+        return Promise.resolve<void>().then(() => true);
 
       default:
-        throw new Error('Unexpected type: ' + type);
+        //return this.ignoreAtomData(dataLen);
+        return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((buf) => {
+          // console.log("  ascii: %s", header.name, header.length, buf.toString('ascii'));
+          buf = buf;
+        }).then(() => false);
     }
   }
-}
 
-module.exports = Id4Parser.getInstance();
+  private ignoreAtomData(len: number): Promise<void> {
+    return this.tokenizer.readToken<void>(new IgnoreType(len));
+  }
+
+  private parseAtom_ftyp(len: number): Promise<string[]> {
+    return this.tokenizer.readToken<IAtomFtyp>(Atom.ftyp).then((ftype) => {
+      len -= Atom.ftyp.len;
+      if (len > 0) {
+        return this.parseAtom_ftyp(len).then((types) => {
+          types.push(ftype.type);
+          return types;
+        })
+      } else {
+        return [];
+      }
+    });
+  }
+
+  /**
+   * Parse movie header (mvhd) atom
+   * @param len
+   */
+  private parseAtom_mvhd(len: number): Promise<void> {
+    return this.tokenizer.readToken<IAtomMvhd>(Atom.mvhd).then((mvhd) => {
+      this.parse_mxhd(mvhd);
+    });
+  }
+
+  /**
+   * Parse media header (mdhd) atom
+   * @param len
+   */
+  private parseAtom_mdhd(len: number): Promise<void> {
+    return this.tokenizer.readToken<IAtomMdhd>(Atom.mdhd).then((mdhd) => {
+      this.parse_mxhd(mdhd);
+    });
+  }
+
+  private parse_mxhd(mxhd: IAtomMxhd) {
+    this.format.sampleRate = mxhd.timeScale;
+    this.format.duration = mxhd.duration / mxhd.timeScale; // calculate duration in seconds
+  }
+
+  /**
+   * Parse media header (ilst) atom
+   * @param len
+   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+   */
+  /*
+   private parseMetadataItem(len: number): Promise<void>{
+   // Parse atom header
+   return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+
+   return this.parseAtomData(header);
+   });
+   }*/
+
+  /**
+   * Parse Meta-item-list-atom (item of 'ilst' atom)
+   * @param len
+   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+   */
+  private parseMetadataItem(len: number): Promise<void> {
+    // Parse atom header
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+      // console.log("metadata-item: name=%s, len=%s", header.name, header.length);
+      return this.parseMetadataItemData(header.name, header.length - Atom.Header.len).then(() => {
+        const remaining = len - Atom.Header.len - header.length;
+        if (remaining > 0) {
+          return this.parseMetadataItem(remaining);
+        } else
+          return;
+      })
+    });
+  }
+
+  private parseMetadataItemData(tagKey: string, remLen: number): Promise<void> {
+    // Parse Meta Item List Atom
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+      const dataLen = header.length - Atom.Header.len;
+      switch (header.name) {
+        case 'data': // value atom
+          return this.parseValueAtom(tagKey, header);
+        case 'itif': // item information atom (optional)
+          return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((dataAtom) => {
+            // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
+            return header.length;
+          });
+        case 'name': // name atom (optional)
+          return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then((name) => {
+            tagKey += ":" + name.name;
+            return header.length;
+          });
+        case 'mean': // name atom (optional)
+          return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then((mean) => {
+            // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
+            tagKey += ":" + mean.name;
+            return header.length;
+          });
+        default:
+          return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((dataAtom) => {
+            // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
+            return header.length;
+          });
+        //throw new Error("Unsupported " + header.name);
+      }
+    }).then((len) => {
+      const remaining = remLen - len;
+      if (remaining === 0) {
+        return;
+      } else {
+        return this.parseMetadataItemData(tagKey, remaining);
+      }
+    });
+  }
+
+  private parseValueAtom(tagKey: string, header: IAtomHeader): Promise<number> {
+    return this.tokenizer.readToken(new DataAtom(header.length - Atom.Header.len)).then((dataAtom) => {
+
+      if (dataAtom.type.set === 0) {
+        // Use well-known-type table
+        // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW35
+        switch (dataAtom.type.type) { // ToDo?: use enum
+
+          case 0: // reserved: Reserved for use where no type needs to be indicated
+            switch (tagKey) {
+              case 'trkn':
+              case 'disk':
+                const num = UINT8.get(dataAtom.value, 3);
+                const of = UINT8.get(dataAtom.value, 5);
+                // console.log("  %s[data] = %s/%s", tagKey, num, of);
+                this.tags.push({id: tagKey, value: num + "/" + of});
+                break;
+
+              case 'gnre':
+                const genreInt = UINT8.get(dataAtom.value, 1);
+                const genreStr = common.Genres[genreInt - 1];
+                // console.log("  %s[data] = %s", tagKey, genreStr);
+                this.tags.push({id: tagKey, value: genreStr});
+                break;
+
+              default:
+                // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }", header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
+            }
+            break;
+
+          case 1: // UTF-8: Without any count or NULL terminator
+            this.tags.push({id: tagKey, value: dataAtom.value.toString("utf-8")});
+            break;
+
+          case 13: // JPEG
+            this.tags.push({
+              id: tagKey, value: {
+                format: 'image/jpeg',
+                data: new Buffer(dataAtom.value)
+              }
+            });
+            break;
+
+          case 14: // PNG
+            this.tags.push({
+              id: tagKey, value: {
+                format: 'image/png',
+                data: new Buffer(dataAtom.value)
+              }
+            });
+            break;
+
+          case 21: // BE Signed Integer
+            this.tags.push({id: tagKey, value: Id4Parser.read_BE_Signed_Integer(dataAtom.value)});
+            break;
+
+          case 22: // BE Unsigned Integer
+            this.tags.push({id: tagKey, value: Id4Parser.read_BE_Unsigned_Integer(dataAtom.value)});
+            break;
+
+          case 65: // An 8-bit signed integer
+            this.tags.push({id: tagKey, value: dataAtom.value.readInt8(0)});
+            break;
+
+          case 66: // A big-endian 16-bit signed integer
+            this.tags.push({id: tagKey, value: dataAtom.value.readInt16BE(0)});
+            break;
+
+          case 67: // A big-endian 32-bit signed integer
+            this.tags.push({id: tagKey, value: dataAtom.value.readInt32BE(0)});
+            break;
+
+          default:
+            throw new Error("Unsupported well-known-type: " + dataAtom.type.type);
+        }
+      } else {
+        throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
+      }
+
+      return header.length;
+    });
+  }
+
+  private static read_BE_Signed_Integer(value: Buffer): number {
+    switch (value.length) {
+      case 1:
+        return value.readInt8(0);
+      case 2:
+        return value.readInt16BE(0);
+      case 3:
+        return INT24_BE.get(value, 0);
+      case 4:
+        return value.readInt32BE(0);
+      default:
+        throw new Error("Illegal value length for BE-Signed-Integer (type 21): " + value.length);
+    }
+  }
+
+  private static read_BE_Unsigned_Integer(value: Buffer): number {
+    switch (value.length) {
+      case 1:
+        return value.readUInt8(0);
+      case 2:
+        return value.readUInt16BE(0);
+      case 3:
+        return UINT24_BE.get(value, 0);
+      case 4:
+        return value.readUInt32BE(0);
+      default:
+        throw new Error("Illegal value length for BE-Unsigned-Integer (type 22): " + value.length);
+    }
+  }
+
+}

@@ -1,35 +1,11 @@
 'use strict';
 
-import * as strtok from 'strtok2';
 import common from './common';
-import {IStreamParser, TagCallback} from './parser';
-import {HeaderType} from './tagmap';
 import vorbis from './vorbis';
-
-interface IState {
-
-  parse(callback, data, done): IState;
-
-  getExpectedType();
-}
-
-class FlacParser implements IStreamParser {
-
-  public static headerType: HeaderType = 'vorbis';
-
-  public static getInstance(): FlacParser {
-    return new FlacParser();
-  }
-
-  public parse(stream, callback: TagCallback, done?, readDuration?, fileSize?) {
-    let currentState: IState = startState;
-
-    strtok.parse(stream, (v, cb) => {
-      currentState = currentState.parse(callback, v, done);
-      return currentState.getExpectedType();
-    });
-  }
-}
+import {ITokenParser} from "./FileParser";
+import {INativeAudioMetadata, IOptions, ITag, IFormat} from "./index";
+import {BufferType, IGetToken, IgnoreType, ITokenizer, UINT24_BE, UINT32_LE} from "./FileTokenizer";
+import {UINT16_BE} from "../lib/FileTokenizer";
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -43,6 +19,121 @@ enum BlockType {
   VORBIS_COMMENT = 4,
   CUESHEET = 5,
   PICTURE = 6
+}
+
+export class FlacParser implements ITokenParser {
+
+  private tokenizer: ITokenizer;
+
+  private format: IFormat;
+  private tags: ITag[] = [];
+  private padding: number = 0;
+
+  public static getInstance(): FlacParser {
+    return new FlacParser();
+  }
+
+  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+
+    this.tokenizer = tokenizer;
+
+    return tokenizer.readToken<Buffer>(new BufferType(4)).then((buf) => {
+      if (buf.toString() !== 'fLaC') {
+        throw new Error('expected flac header but was not found');
+      }
+      return this.parseBlockHeader();
+    });
+  }
+
+  private parseBlockHeader(): Promise<INativeAudioMetadata> {
+    // Read block header
+    return this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader).then((blockHeader) => {
+      // Parse block data
+      return this.parseDataBlock(blockHeader).then(() => {
+        if (blockHeader.lastBlock) {
+          // done
+          return {
+            format: this.format,
+            native: {
+              vorbis: this.tags
+            }
+          };
+        } else {
+          return this.parseBlockHeader();
+        }
+      })
+    })
+  }
+
+  private parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
+    switch (blockHeader.type) {
+      case BlockType.STREAMINFO:
+        return this.parseBlockStreamInfo(blockHeader.length);
+      case BlockType.PADDING:
+        this.padding += blockHeader.length;
+        break;
+      case BlockType.APPLICATION:
+        break;
+      case BlockType.SEEKTABLE:
+        break;
+      case BlockType.VORBIS_COMMENT:
+        return this.parseComment(blockHeader.length);
+      case BlockType.CUESHEET:
+        break;
+      case BlockType.PICTURE:
+        return this.parsePicture(blockHeader.length);
+      default:
+        console.log("Unknown block type: %s", blockHeader.type);
+        //throw new Error("Unknown block type: " + blockHeader.type);
+    }
+    // Ignore data block
+    return this.tokenizer.readToken<void>(new IgnoreType(blockHeader.length));
+  }
+
+  /**
+   * Parse STREAMINFO
+   */
+  private parseBlockStreamInfo(dataLen: number): Promise<void> {
+
+    if(dataLen !== Metadata.BlockStreamInfo.len)
+      throw new Error("Unexpected block-stream-info length");
+
+    return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then((streamInfo) => {
+      this.format = {
+        dataformat: 'flac',
+        lossless: true,
+        headerType: 'vorbis',
+        numberOfChannels: streamInfo.channels,
+        bitsPerSample: streamInfo.bitsPerSample,
+        sampleRate: streamInfo.sampleRate,
+        duration: streamInfo.totalSamples / streamInfo.sampleRate
+      };
+      // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
+    });
+  }
+
+  /**
+   * Parse VORBIS_COMMENT
+   */
+  private parseComment(dataLen: number): Promise<void> {
+    return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
+      const decoder = new DataDecoder(data);
+      decoder.readStringUtf8(); // vendor (skip)
+      const commentListLength = decoder.readInt32();
+      for (let i = 0; i < commentListLength; i++) {
+        const comment = decoder.readStringUtf8();
+        const split = comment.split('=');
+        this.tags.push({id: split[0].toUpperCase(), value: split[1]});
+      }
+    });
+  }
+
+  private parsePicture(dataLen: number) {
+    return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
+      const picture = vorbis.readPicture(data);
+      this.tags.push({id: 'METADATA_BLOCK_PICTURE', value: picture});
+    });
+  }
 }
 
 /**
@@ -93,7 +184,7 @@ interface IBlockStreamInfo {
 
 class Metadata {
 
-  public static BlockHeader = {
+  public static BlockHeader: IGetToken<IBlockHeader> = {
     len: 4,
 
     get: (buf: Buffer, off: number): IBlockHeader => {
@@ -109,22 +200,22 @@ class Metadata {
    * METADATA_BLOCK_DATA
    * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
    */
-  public static BlockStreamInfo = {
+  public static BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
     len: 34,
 
     get: (buf: Buffer, off: number): IBlockStreamInfo => {
       return {
         // The minimum block size (in samples) used in the stream.
-        minimumBlockSize: strtok.UINT16_BE.get(buf, off),
+        minimumBlockSize: UINT16_BE.get(buf, off),
         // The maximum block size (in samples) used in the stream.
         // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-        maximumBlockSize: strtok.UINT16_BE.get(buf, off + 2) / 1000,
+        maximumBlockSize: UINT16_BE.get(buf, off + 2) / 1000,
         // The minimum frame size (in bytes) used in the stream.
         // May be 0 to imply the value is not known.
-        minimumFrameSize: strtok.UINT24_BE.get(buf, off + 4),
+        minimumFrameSize: UINT24_BE.get(buf, off + 4),
         // The maximum frame size (in bytes) used in the stream.
         // May be 0 to imply the value is not known.
-        maximumFrameSize: strtok.UINT24_BE.get(buf, off + 7),
+        maximumFrameSize: UINT24_BE.get(buf, off + 7),
         // Sample rate in Hz. Though 20 bits are available,
         // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
         // Also, a value of 0 is invalid.
@@ -140,7 +231,7 @@ class Metadata {
         // A value of zero here means the number of total samples is unknown.
         totalSamples: common.getBitAllignedNumber(buf, off + 13, 4, 36),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new strtok.BufferType(16).get(buf, off + 18)
+        fileMD5: new BufferType(16).get(buf, off + 18)
       };
     }
   };
@@ -157,7 +248,7 @@ class DataDecoder {
   }
 
   public readInt32(): number {
-    const value = strtok.UINT32_LE.get(this.data, this.offset);
+    const value = UINT32_LE.get(this.data, this.offset);
     this.offset += 4;
     return value;
   }
@@ -170,115 +261,3 @@ class DataDecoder {
   }
 }
 
-// ToDo: same in ASF
-const finishedState: IState = {
-
-  parse: (callback) => {
-    return finishedState; // ToDo: correct?
-  },
-
-  getExpectedType: () => {
-    return strtok.DONE;
-  }
-};
-
-class BlockDataState implements IState {
-
-  private type: BlockType;
-  private length: number;
-  private nextStateFactory;
-
-  constructor(type, length, nextStateFactory) {
-    this.type = type;
-    this.length = length;
-    this.nextStateFactory = nextStateFactory;
-  }
-
-  public parse(callback, data) {
-    switch (this.type) {
-      case BlockType.STREAMINFO: // METADATA_BLOCK_STREAMINFO
-        const blockStreamInfo = data as IBlockStreamInfo;
-        // Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
-        callback('format', 'dataformat', 'flac');
-        callback('format', 'lossless', true);
-        callback('format', 'headerType', FlacParser.headerType);
-        callback('format', 'numberOfChannels', blockStreamInfo.channels);
-        callback('format', 'bitsPerSample', blockStreamInfo.bitsPerSample);
-        callback('format', 'sampleRate', blockStreamInfo.sampleRate);
-        const duration = blockStreamInfo.totalSamples / blockStreamInfo.sampleRate;
-        callback('format', 'duration', blockStreamInfo.totalSamples / blockStreamInfo.sampleRate);
-        // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
-        break;
-
-      case BlockType.VORBIS_COMMENT: // METADATA_BLOCK_VORBIS_COMMENT
-        const decoder = new DataDecoder(data);
-        decoder.readStringUtf8(); // vendor (skip)
-        const commentListLength = decoder.readInt32();
-        for (let i = 0; i < commentListLength; i++) {
-          const comment = decoder.readStringUtf8();
-          const split = comment.split('=');
-          callback(FlacParser.headerType, split[0].toUpperCase(), split[1]);
-        }
-        break;
-
-      case BlockType.PICTURE: // METADATA_BLOCK_PICTURE
-        const picture = vorbis.readPicture(data);
-        callback(FlacParser.headerType, 'METADATA_BLOCK_PICTURE', picture);
-        break;
-    }
-    return this.nextStateFactory();
-  }
-
-  public getExpectedType() {
-    switch (this.type) {
-      case 0:
-        return Metadata.BlockStreamInfo;
-      default:
-        return new strtok.BufferType(this.length);
-    }
-  }
-}
-
-const blockHeaderState: IState = {
-  parse: (callback, data, done) => {
-    const header = data as IBlockHeader;
-    const followingStateFactory = header.lastBlock ? () => {
-      done();
-      return finishedState;
-    } : () => {
-      return blockHeaderState;
-    };
-
-    return new BlockDataState(header.type, header.length, followingStateFactory);
-  },
-  getExpectedType: () => {
-    return Metadata.BlockHeader;
-  }
-};
-
-const idState: IState = {
-
-  parse: (callback, data, done) => {
-    if (data.toString() !== 'fLaC') {
-      done(new Error('expected flac header but was not found'));
-    }
-    return blockHeaderState;
-  },
-
-  getExpectedType: () => {
-    return new strtok.BufferType(4);
-  }
-};
-
-const startState: IState = {
-
-  parse: (callback) => {
-    return idState;
-  },
-
-  getExpectedType: () => {
-    return strtok.DONE;
-  }
-};
-
-module.exports = FlacParser.getInstance();

@@ -4,14 +4,12 @@ var mm = require('..')
 var test = require('tape')
 
 test('id4', function (t) {
-  t.plan(49)
+  t.plan(33)
 
-  var sample = (process.browser) ?
-    new window.Blob([fs.readFileSync(__dirname + '/samples/id4.m4a')])
-    : fs.createReadStream(path.join(__dirname, '/samples/id4.m4a'))
+  var filename = 'id4.m4a';
+  var filePath = path.join(__dirname, 'samples', filename);
 
-  mm.parseStream(sample, { duration: true }, function (err, result) {
-    t.error(err)
+  mm.parseFile(filePath, { duration: true }).then(function (result) {
 
     t.strictEqual(result.format.duration, 2.2058956916099772, 'format.duration')
 
@@ -29,50 +27,37 @@ test('id4', function (t) {
     t.strictEqual(result.common.picture[0].data.length, 196450, 'picture 0 length')
     t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format')
     t.strictEqual(result.common.picture[1].data.length, 196450, 'picture 1 length')
+
+    var native = result.native.m4a;
+    t.ok(native, 'Native m4a tags should be present')
+
+    i=0;
+    t.deepEqual(native[i++], {id: 'trkn', value: '1/12'}, 'm4a.trkn');
+    t.deepEqual(native[i++], {id: 'disk', value: '1/1'}, 'm4a.disk');
+    t.deepEqual(native[i++], {id: 'tmpo', value: 0}, 'm4a.tmpo');
+    t.deepEqual(native[i++], {id: 'gnre', value: 'Electronic'}, 'm4a.gnre');
+    t.deepEqual(native[i++], {id: 'stik', value: 1}, 'm4a.stik');
+    t.deepEqual(native[i++], {id: '©alb', value: 'Voodoo People'}, 'm4a.©alb');
+    t.deepEqual(native[i++], {id: 'aART', value: 'Pendulum'}, 'm4a.aART');
+    t.deepEqual(native[i++], {id: '©ART', value: 'The Prodigy'}, 'm4a.©ART');
+    t.deepEqual(native[i++], {id: '©cmt', value: '(Pendulum Remix)'}, 'm4a.©cmt');
+    t.deepEqual(native[i++], {id: '©wrt', value: 'Liam Howlett'}, 'm4a.©wrt');
+    t.deepEqual(native[i++], {id: '----:com.apple.iTunes:iTunNORM', value: ' 0000120A 00001299 00007365 0000712F 0002D88B 0002D88B 00007F2B 00007F2C 0003C770 0001F5C7'}, 'm4a.----:com.apple.iTunes:iTunNORM');
+    t.deepEqual(native[i++], {id: '©nam', value: 'Voodoo People (Pendulum Remix)'}, 'm4a.©nam');
+    t.deepEqual(native[i++], {id: '©too', value: 'Lavf52.36.0'}, 'm4a.©too');
+    t.deepEqual(native[i++], {id: '©day', value: '2005'}, 'm4a.@day');
+
+    var covr = native[i++];
+    t.strictEqual(covr.id, 'covr', 'm4a.covr');
+    t.strictEqual(covr.value.format, 'image/jpeg', 'm4a.covr.format');
+    t.strictEqual(covr.value.data.length, 196450, 'm4a.covr.data.length');
+
     t.end()
-  })
-    .on('duration', function (result) {
-      t.strictEqual(result, 2.2058956916099772, 'duration')
-    })
-    // aliased tests
-    .on('title', function (result) {
-      t.strictEqual(result, 'Voodoo People (Pendulum Remix)', 'aliased title')
-    })
-    .on('artist', function (result) {
-      t.strictEqual(result, 'The Prodigy', 'aliased artist')
-    })
-    .on('albumartist', function (result) {
-      t.strictEqual(result, 'Pendulum', 'aliased albumartist')
-    })
-    .on('album', function (result) {
-      t.strictEqual(result, 'Voodoo People', 'aliased album')
-    })
-    .on('year', function (result) {
-      t.strictEqual(result, 2005, 'aliased year')
-    })
-    .on('track', function (result) {
-      t.strictEqual(result.no, 1, 'aliased track no')
-      t.strictEqual(result.of, 12, 'aliased track of')
-    })
-    .on('disk', function (result) {
-      t.strictEqual(result.no, 1, 'aliased disk no')
-      t.strictEqual(result.of, 1, 'aliased disk of')
-    })
-    .on('genre', function (result) {
-      t.strictEqual(result[0], 'Electronic', 'aliased genre')
-    })
-    .on('picture', function (result) {
-      t.strictEqual(result[0].format, 'jpg', 'aliased picture 0 format')
-      t.strictEqual(result[0].data.length, 196450, 'aliased picture 0 length')
-      t.strictEqual(result[1].format, 'jpg', 'aliased picture 1 format')
-      t.strictEqual(result[1].data.length, 196450, 'aliased picture 1 length')
-    })
-    .on('comment', function (result) {
-      t.strictEqual(result[0], '(Pendulum Remix)', 'aliased comment')
-    })
-    .on('composer', function (result) {
-      t.strictEqual(result[0], 'Liam Howlett', 'aliased composer')
-    })
+  }).catch(function (err) {
+    t.error(err, 'no error')
+  });
+
+  /*
     // raw tests
     .on('trkn', function (result) {
       t.strictEqual(result, '1/12', 'raw trkn')
@@ -114,5 +99,5 @@ test('id4', function (t) {
     .on('covr', function (result) {
       t.strictEqual(result.format, 'image/jpeg', 'raw covr format (asserted twice)')
       t.strictEqual(result.data.length, 196450, 'raw covr length (asserted twice)')
-    })
+    })*/
 })
