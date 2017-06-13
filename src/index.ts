@@ -147,7 +147,7 @@ export interface IAudioMetadata {
   format: IFormat;
 }
 
-export type ICallbackType = (error?: Error, metadata?: IAudioMetadata) => void;
+export type ICallbackType = (error?: Error, metadata?: IAudioMetadata, underlayingAudioStream?: ReadableStream) => void;
 
 export interface IOptions {
   path?: string,
@@ -365,7 +365,7 @@ class MusicMetadataParser {
       }
 
       if (callback) {
-        callback(err, metadata);
+        callback(err, metadata, stream);
       }
       return strtok.DONE;
     }
