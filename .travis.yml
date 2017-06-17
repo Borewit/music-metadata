@@ -5,6 +5,7 @@ node_js:
  - "7"
 install:
 - npm install
+- npm install --only=dev
 - typings install
 script:
 - tslint --version
