@@ -17,8 +17,9 @@
     "deep-equal": "^1.0.1",
     "filereader-stream": "^1.0.0",
     "is-stream": "^1.1.0",
-    "strtok2": "^1.0.4",
-    "through": "~2.3.8"
+    "strtok2": "^1.1.1",
+    "through": "~2.3.8",
+    "typescript": "^2.4.0"
   },
   "keywords": [
     "tags",
