@@ -1,10 +1,10 @@
-import {Token} from 'strtok2';
+import {AnyToken} from 'strtok2';
 
 export type ParserResult = (err: Error) => void;
 
 export type TagCallback = (type: string, tag: string, value: string | number | boolean) => void;
 
-export type Done = (err?: Error) => Token;
+export type Done = (err?: Error) => AnyToken;
 
 export type GetFileSize = (cb: (fileSize: number) => void) => void;
 

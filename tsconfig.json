@@ -10,8 +10,7 @@
     "outDir": "lib/"
   },
   "include": [
-    "src/**/*.ts",
-    "typings/**/*.d.ts"
+    "src/**/*.ts"
   ]
 }
 

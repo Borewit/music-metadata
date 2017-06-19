@@ -1,16 +1,15 @@
 'use strict';
 import * as equal from 'deep-equal';
 import * as strtok from 'strtok2';
-import {Token} from 'strtok2';
+import {AnyToken} from 'strtok2';
 import common from './common';
 import {IStreamParser, TagCallback} from './parser';
-import ReadableStream = NodeJS.ReadableStream;
 
 interface IState {
 
   parse(callback, data, done): IState;
 
-  getExpectedType(): Token;
+  getExpectedType(): AnyToken;
 }
 
 abstract class State implements IState {

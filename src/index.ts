@@ -1,16 +1,19 @@
 /* jshint maxlen: 300 */
 'use strict';
 import * as events from 'events';
+import {EventEmitter} from 'events';
 import * as fs from 'fs';
+import * as stream from 'stream';
 import * as strtok from 'strtok2';
 import * as through from 'through';
 import common from './common';
 import {IStreamParser} from './parser';
 import TagMap from './tagmap';
 import {HeaderType} from './tagmap';
-import EventEmitter = NodeJS.EventEmitter;
-import {ReadStream} from 'fs';
-import ReadableStream = NodeJS.ReadableStream;
+
+interface IFileReadStream extends stream.Readable {
+  path: string;
+}
 
 export interface IPicture {
   format: string,
@@ -147,7 +150,7 @@ export interface IAudioMetadata {
   format: IFormat;
 }
 
-export type ICallbackType = (error?: Error, metadata?: IAudioMetadata, underlayingAudioStream?: ReadableStream) => void;
+export type ICallbackType = (error?: Error, metadata?: IAudioMetadata, underlayingAudioStream?: stream.Readable) => void;
 
 export interface IOptions {
   path?: string,
@@ -214,7 +217,7 @@ class MusicMetadataParser {
    * @param callback
    * @returns {EventEmitter}
    */
-  public parse(stream: ReadableStream, opts: IOptions, callback: ICallbackType): EventEmitter {
+  public parse(stream: stream.Readable, opts: IOptions, callback: ICallbackType): EventEmitter {
     if (typeof opts === 'function') {
       callback = (opts as ICallbackType);
       opts = {};
@@ -227,8 +230,8 @@ class MusicMetadataParser {
         process.nextTick(() => {
           cb(opts.fileSize);
         });
-      } else if ((stream as ReadStream).path) {
-        fs.stat((stream as ReadStream).path, (err, stats) => {
+      } else if ((stream as IFileReadStream).path) {
+        fs.stat((stream as IFileReadStream).path, (err, stats) => {
           if (err) throw err;
           cb(stats.size);
         });
@@ -538,6 +541,6 @@ class MusicMetadataParser {
  * @param callback
  * @returns {*|EventEmitter}
  */
-export function parseStream(stream: ReadableStream, opts: IOptions, callback: ICallbackType) {
+export function parseStream(stream: stream.Readable, opts: IOptions, callback: ICallbackType) {
   return MusicMetadataParser.getInstance().parse(stream, opts, callback);
 }

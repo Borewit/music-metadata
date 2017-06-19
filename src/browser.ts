@@ -3,12 +3,10 @@
 /*jslint browser: true*/
 import * as through from 'through';
 import * as musicMetadata from './index';
-
 import readStream = require('filereader-stream');
 import isStream = require('is-stream');
-
+import * as stream from 'stream';
 import {ThroughStream} from 'through';
-import ReadableStream = NodeJS.ReadableStream;
 
 module.exports = (stream, opts, callback) => {
   return musicMetadata.parseStream(wrapFileWithStream(stream), opts, callback);
@@ -18,9 +16,9 @@ interface IFileWrapperStream extends ThroughStream {
   fileSize: (cb: (fileSize: number) => void) => void
 }
 
-function wrapFileWithStream(file: ArrayBuffer | Blob | FileList | ReadableStream): ReadableStream {
+function wrapFileWithStream(file: ArrayBuffer | Blob | FileList | stream.Readable): stream.Readable {
   // tslint:disable-next-line
-  const stream = through( function(data) {
+  const stream = through( (data) => {
     if (data.length > 0) this.queue(data);
   }, null, {autoDestroy: false}) as IFileWrapperStream;
 
@@ -35,7 +33,7 @@ function wrapFileWithStream(file: ArrayBuffer | Blob | FileList | ReadableStream
   };
 
   if (isStream(file)) {
-    return (file as ReadableStream).pipe(stream);
+    return (file as stream.Readable).pipe(stream);
   }
   if (file instanceof FileList) {
     throw new Error('You have passed a FileList object but we expected a File');

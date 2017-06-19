@@ -2,7 +2,7 @@
 
 import ReadableStream = NodeJS.ReadableStream;
 import * as strtok from 'strtok2';
-import {Token} from 'strtok2';
+import {AnyToken} from 'strtok2';
 import common from './common';
 import {Done, GetFileSize, IStreamParser, TagCallback} from './parser';
 
@@ -450,7 +450,7 @@ export class MpegParser implements IStreamParser {
     return new strtok.BufferType(sideinfo_length);
   }
 
-  private seekFirstAudioFrame(): Token {
+  private seekFirstAudioFrame(): AnyToken {
     if (this.frameCount > 0) {
       return this.done(new Error('expected frame header but was not found'));
     }

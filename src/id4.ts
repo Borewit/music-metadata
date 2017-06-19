@@ -140,7 +140,7 @@ class Id4Parser implements IStreamParser {
     return result;
   }
 
-  private processMetaDataAtom(data: Buffer, type: string, atomName: string): IMetaDataAtom {
+  private processMetaDataAtom(data: Buffer, type: string, atomName: string): IMetaDataAtom | number {
     switch (type) {
       case 'text':
         return data.toString('utf8', 4);

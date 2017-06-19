@@ -57,14 +57,17 @@
     "verify": "npm-run-all compile lint test"
   },
   "devDependencies": {
+    "@types/deep-equal": "^1.0.0",
+    "@types/node": "^7.0.31",
+    "@types/through": "0.0.28",
     "brfs": "1.2.0",
     "browserify": "^13.0.0",
     "npm-run-all": "^3.1.1",
     "tape": "^4.5.1",
     "testling": "^1.7.1",
     "tslint": "^4.4.2",
-    "typings": "2.0.0",
-    "typescript": "^2.0.3"
+    "typescript": "^2.0.3",
+    "typings": "2.0.0"
   },
   "testling": {
     "files": [
