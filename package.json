@@ -57,7 +57,6 @@
     "verify": "npm-run-all compile lint test"
   },
   "devDependencies": {
-    "@types/deep-equal": "^1.0.0",
     "@types/node": "^7.0.31",
     "@types/through": "0.0.28",
     "brfs": "1.2.0",
