@@ -13,15 +13,16 @@
     "curly": false,
     "max-classes-per-file": [false],
     "semicolon": [true, "always", "ignore-interfaces"],
-    "quotemark": [true, "single", "avoid-escape"],
+    "quotemark": [false, "double", "avoid-escape"],
     "no-bitwise": false,
     "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
     "object-literal-key-quotes": [true, "as-needed"],
     "variable-name": [true, "ban-keywords"],
     "object-literal-sort-keys": [false],
-    "max-line-length": [true, 150],
+    "max-line-length": [true, 200],
     "switch-default": false,
-    "prefer-for-of": false
+    "prefer-for-of": false,
+    "ordered-imports": false
   },
   "jsRules": {
     /*

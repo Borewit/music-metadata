@@ -2,10 +2,12 @@
 
 import common from './common';
 import {HeaderType} from './tagmap';
-import {ITokenizer, IgnoreType, UINT32_LE, StringType, BufferType, UINT16_LE} from "./FileTokenizer";
-import {INativeAudioMetadata, IOptions} from "./index";
-import {IFormat} from "../lib/index";
-import {ITokenParser} from "./FileParser";
+import {INativeAudioMetadata, IOptions, IFormat} from "./";
+import {ITokenParser} from "./ParserFactory";
+import {ITokenizer, IgnoreType} from "strtok3";
+import {BufferType, StringType} from "token-types";
+import * as Token from "token-types";
+
 
 /**
  * APETag versionIndex history / supported formats
@@ -49,13 +51,13 @@ interface IDescriptor {
   // the terminating data of the file (not including tag data)
   terminatingDataBytes: number,
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-  fileMD5: number[]
+  fileMD5: Buffer
 }
 
 /**
  * APE_HEADER: describes all of the necessary information about the APE file
  */
-interface IHeader {
+export interface IHeader {
   // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
   compressionLevel: number,
   // any format flags (for future use)
@@ -84,7 +86,7 @@ interface IFooter {
   // the number of fields in the tag
   fields: number,
   // reserved for later use (must be zero)
-  reserved: number[] // ToDo: what is this???
+  reserved: Buffer // ToDo: what is this???
 }
 
 interface ITagFlags {
@@ -106,7 +108,7 @@ class Structure {
   /**
    * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
    */
-  public static DescriptorParser = {
+  public static DescriptorParser: Token.IGetToken<IDescriptor> = {
     len: 52,
 
     get: (buf, off) => {
@@ -114,21 +116,21 @@ class Structure {
         // should equal 'MAC '
         ID: new StringType(4, 'ascii').get(buf, off),
         // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-        version: UINT32_LE.get(buf, off + 4) / 1000,
+        version: Token.UINT32_LE.get(buf, off + 4) / 1000,
         // the number of descriptor bytes (allows later expansion of this header)
-        descriptorBytes: UINT32_LE.get(buf, off + 8),
+        descriptorBytes: Token.UINT32_LE.get(buf, off + 8),
         // the number of header APE_HEADER bytes
-        headerBytes: UINT32_LE.get(buf, off + 12),
+        headerBytes: Token.UINT32_LE.get(buf, off + 12),
         // the number of header APE_HEADER bytes
-        seekTableBytes: UINT32_LE.get(buf, off + 16),
+        seekTableBytes: Token.UINT32_LE.get(buf, off + 16),
         // the number of header data bytes (from original file)
-        headerDataBytes: UINT32_LE.get(buf, off + 20),
+        headerDataBytes: Token.UINT32_LE.get(buf, off + 20),
         // the number of bytes of APE frame data
-        apeFrameDataBytes: UINT32_LE.get(buf, off + 24),
+        apeFrameDataBytes: Token.UINT32_LE.get(buf, off + 24),
         // the high order number of APE frame data bytes
-        apeFrameDataBytesHigh: UINT32_LE.get(buf, off + 28),
+        apeFrameDataBytesHigh: Token.UINT32_LE.get(buf, off + 28),
         // the terminating data of the file (not including tag data)
-        terminatingDataBytes: UINT32_LE.get(buf, off + 32),
+        terminatingDataBytes: Token.UINT32_LE.get(buf, off + 32),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
         fileMD5: new BufferType(16).get(buf, off + 36)
       };
@@ -144,21 +146,21 @@ class Structure {
     get: (buf, off) => {
       return {
         // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-        compressionLevel: UINT16_LE.get(buf, off),
+        compressionLevel: Token.UINT16_LE.get(buf, off),
         // any format flags (for future use)
-        formatFlags: UINT16_LE.get(buf, off + 2),
+        formatFlags: Token.UINT16_LE.get(buf, off + 2),
         // the number of audio blocks in one frame
-        blocksPerFrame: UINT32_LE.get(buf, off + 4),
+        blocksPerFrame: Token.UINT32_LE.get(buf, off + 4),
         // the number of audio blocks in the final frame
-        finalFrameBlocks: UINT32_LE.get(buf, off + 8),
+        finalFrameBlocks: Token.UINT32_LE.get(buf, off + 8),
         // the total number of frames
-        totalFrames: UINT32_LE.get(buf, off + 12),
+        totalFrames: Token.UINT32_LE.get(buf, off + 12),
         // the bits per sample (typically 16)
-        bitsPerSample: UINT16_LE.get(buf, off + 16),
+        bitsPerSample: Token.UINT16_LE.get(buf, off + 16),
         // the number of channels (1 or 2)
-        channel: UINT16_LE.get(buf, off + 18),
+        channel: Token.UINT16_LE.get(buf, off + 18),
         // the sample rate (typically 44100)
-        sampleRate: UINT32_LE.get(buf, off + 20)
+        sampleRate: Token.UINT32_LE.get(buf, off + 20)
       };
     }
   };
@@ -166,7 +168,7 @@ class Structure {
   /**
    * TAG: describes all the properties of the file [optional]
    */
-  public static TagFooter = {
+  public static TagFooter: Token.IGetToken<IFooter> = {
     len: 32,
 
     get: (buf, off) => {
@@ -174,11 +176,11 @@ class Structure {
         // should equal 'APETAGEX'
         ID: new StringType(8, 'ascii').get(buf, off),
         // equals CURRENT_APE_TAG_VERSION
-        version: UINT32_LE.get(buf, off + 8),
+        version: Token.UINT32_LE.get(buf, off + 8),
         // the complete size of the tag, including this footer (excludes header)
-        size: UINT32_LE.get(buf, off + 12),
+        size: Token.UINT32_LE.get(buf, off + 12),
         // the number of fields in the tag
-        fields: UINT32_LE.get(buf, off + 16),
+        fields: Token.UINT32_LE.get(buf, off + 16),
         // reserved for later use (must be zero)
         reserved: new BufferType(12).get(buf, off + 20) // ToDo: what is this???
       };
@@ -187,7 +189,7 @@ class Structure {
 
   public static TagField = (footer) => {
     return new BufferType(footer.size - Structure.TagFooter.len);
-  }
+  };
 
   public static parseTagFlags(flags): ITagFlags {
     return {
@@ -215,12 +217,8 @@ interface IApeInfo {
   header?: IHeader,
   footer?: IFooter
 }
-;
 
 export class ApeParser implements ITokenParser {
-
-  public constructor(){
-  }
 
   /**
    * Calculate the media file duration
@@ -264,9 +262,9 @@ export class ApeParser implements ITokenParser {
                 APEv2: tags
               }
             };
-          })
+          });
         });
-      })
+      });
 
   };
 
@@ -290,30 +288,30 @@ export class ApeParser implements ITokenParser {
         },
         forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
         this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
-      }
+      };
     });
   }
 
-  private parseFooter(): Promise<{id: string, value: any}[]> {
-    return this.tokenizer.readToken(Structure.TagFooter).then((footer) => {
+  private parseFooter(): Promise<Array<{id: string, value: any}>> {
+    return this.tokenizer.readToken<IFooter>(Structure.TagFooter).then((footer) => {
       if (footer.ID !== 'APETAGEX') {
         throw new Error('Expected footer to start with APETAGEX ');
       }
-      return this.tokenizer.readToken(Structure.TagField(footer)).then((tags) => {
+      return this.tokenizer.readToken<Buffer>(Structure.TagField(footer)).then((tags) => {
         return ApeParser.parseTags(footer, tags);
       });
     });
   }
 
-  private static parseTags(footer: IFooter, buffer: Buffer): {id: string, value: any}[] {
+  private static parseTags(footer: IFooter, buffer: Buffer): Array<{id: string, value: any}> {
     let offset = 0;
 
-    const tags: {id: string, value: any}[] = [];
+    const tags: Array<{id: string, value: any}> = [];
 
     for (let i = 0; i < footer.fields; i++) {
-      const size = UINT32_LE.get(buffer, offset);
+      const size = Token.UINT32_LE.get(buffer, offset);
       offset += 4;
-      const flags = Structure.parseTagFlags(UINT32_LE.get(buffer, offset));
+      const flags = Structure.parseTagFlags(Token.UINT32_LE.get(buffer, offset));
       offset += 4;
 
       let zero = common.findZero(buffer, offset, buffer.length);

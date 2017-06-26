@@ -3,3 +3,9 @@ node_modules/
 *.iml
 lib/
 typings/globals/
+src/**/*.js
+src/**/*.d.ts
+src/**/*.map
+test/**/*.js
+test/**/*.map
+test/**/*.d.ts

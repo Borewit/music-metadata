@@ -1,6 +1,7 @@
-import * as strtok from 'strtok2';
+
 import common from './common';
 import vorbis from './vorbis';
+import * as Token from "token-types";
 
 interface IOut {
   language?: string,
@@ -111,7 +112,7 @@ export default class FrameParser {
 
       case 'CNT':
       case 'PCNT':
-        output = strtok.UINT32_BE.get(b, 0);
+        output = Token.UINT32_BE.get(b, 0);
         break;
 
       case 'SYLT':

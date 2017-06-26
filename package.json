@@ -13,14 +13,6 @@
       "url": "https://github.com/leetreveil"
     }
   ],
-  "dependencies": {
-    "deep-equal": "^1.0.1",
-    "filereader-stream": "^1.0.0",
-    "fs-extra": "^3.0.1",
-    "is-stream": "^1.1.0",
-    "strtok2": "^1.0.4",
-    "through": "~2.3.8"
-  },
   "keywords": [
     "tags",
     "MusicBrainz",
@@ -51,18 +43,34 @@
   "scripts": {
     "compile": "tsc --pretty",
     "lint": "tslint --format=verbose 'src/**/*.ts'",
-    "test": "[ ! -d 'test/' ] && echo 'The test directory is not included with the project due to the size of the test audio files. If you want to run the tests you can git clone the project.' || tape test/test-*.js",
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
     "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js",
+    "test": "mocha --require ts-node/register test/*.ts",
     "verify": "npm-run-all compile lint test"
   },
+  "dependencies": {
+    "deep-equal": "^1.0.1",
+    "es6-promise": "^4.1.0",
+    "filereader-stream": "^1.0.0",
+    "fs-extra": "^3.0.1",
+    "is-stream": "^1.1.0",
+    "strtok3": "0.1.2",
+    "then-read-stream": "0.0.6",
+    "through": "~2.3.8",
+    "token-types": "0.0.1"
+  },
   "devDependencies": {
+    "@types/es6-promise": "0.0.32",
     "@types/fs-extra": "^3.0.1",
+    "@types/mocha": "^2.2.41",
     "brfs": "1.2.0",
     "browserify": "^13.0.0",
+    "chai": "^4.0.2",
+    "mocha": "^3.4.2",
     "npm-run-all": "^3.1.1",
     "tape": "^4.5.1",
     "testling": "^1.7.1",
+    "ts-node": "^3.0.6",
     "tslint": "^4.4.2",
     "typescript": "^2.0.3",
     "typings": "2.0.0"

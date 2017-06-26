@@ -2412,7 +2412,7 @@ var vorbis_1 = require("./vorbis");
 var State;
 (function (State) {
     State[State["header"] = 0] = "header";
-    State[State["segments"] = 1] = "segments";
+    State[State["segmentTable"] = 1] = "segmentTable";
     State[State["pageData"] = 2] = "pageData";
 })(State || (State = {}));
 var MetaState;
@@ -2451,9 +2451,9 @@ var OggParser = (function () {
                     if (_this.header.type !== 'OggS') {
                         return done(new Error('expected ogg header but was not found'));
                     }
-                    cb.pageNumber = _this.header.page_number;
+                    cb.pageNumber = _this.header.pageSequenceNo;
                     cb.state++;
-                    return new strtok.BufferType(_this.header.segments);
+                    return new strtok.BufferType(_this.header.segmentTable);
                 case State.segments:
                     pageLength = common_1.default.sum(v);
                     cb.state++;
@@ -2544,7 +2544,7 @@ var OggParser = (function () {
         });
     };
     OggParser.prototype.end = function (callback, done) {
-        callback('format', 'duration', this.header.pcm_sample_pos / this.formatInfo.sampleRate);
+        callback('format', 'duration', this.header.absoluteGranulePosition / this.formatInfo.sampleRate);
         done();
     };
     return OggParser;

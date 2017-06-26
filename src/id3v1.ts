@@ -1,13 +1,13 @@
 'use strict';
 
 import {MpegParser} from './mpeg';
-import {ITokenParser} from "./FileParser";
+import {ITokenParser} from "./ParserFactory";
 import {INativeAudioMetadata, IOptions} from "./index";
-import {IGetToken} from "../lib/FileTokenizer";
-import {INT8, ITokenizer, StringType} from "./FileTokenizer";
 import {HeaderType} from "./tagmap";
 import Common from "./common";
-
+import {ITokenizer} from "strtok3";
+import {IGetToken, StringType} from "token-types";
+import * as Token from "token-types";
 
 /**
  * ID3v1 tag header interface
@@ -39,9 +39,9 @@ const Iid3v1Token: IGetToken<Iid3v1Header> = {
       album: new Id3v1StringType(30, 'ascii').get(buf, off + 63),
       year: new Id3v1StringType(4, 'ascii').get(buf, off + 93),
       comment: new Id3v1StringType(28, 'ascii').get(buf, off + 97),
-      zeroByte: INT8.get(buf, off + 127),
-      track: INT8.get(buf, off + 126),
-      genre: INT8.get(buf, off + 127)
+      zeroByte: Token.INT8.get(buf, off + 127),
+      track: Token.INT8.get(buf, off + 126),
+      genre: Token.INT8.get(buf, off + 127)
     };
   }
 };

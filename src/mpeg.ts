@@ -3,21 +3,13 @@
 import ReadableStream = NodeJS.ReadableStream;
 
 import {IgnoreType} from 'strtok2';
-import {ITokenParser} from "./FileParser";
-import {ITokenizer, StringType, UINT32_BE, UINT8} from "./FileTokenizer";
-import {IFormat} from "../lib/";
-import {BufferType, INT16_BE} from "../lib/FileTokenizer";
+import {ITokenizer} from "strtok3";
+import {IFormat} from "../src";
 import Common from "./common";
-
-enum State {
-  mpegSearchSync1 = 1,
-  mpegSearchSync2 = 2,
-  audio_frame_header = 3,
-  CRC = 4,
-  side_information = 5,
-  xtra_info_header = 6,
-  skip_frame_data = 7
-}
+import {ITokenParser} from "./ParserFactory";
+import * as Token from "token-types";
+import {StringType, BufferType} from "token-types";
+import {Promise} from "es6-promise";
 
 /**
  * MPEG Audio Layer I/II/III frame header
@@ -92,6 +84,10 @@ class MpegFrameHeader {
     this.versionIndex = Common.getBitAllignedNumber(buf, off + 1, 3, 2);
     // C(18,17): Layer description
     this.layer = MpegFrameHeader.LayerDescription[Common.getBitAllignedNumber(buf, off + 1, 5, 2)];
+
+    if (this.layer === null)
+      throw new Error('Invalid MPEG layer');
+
     // D(16): Protection bit (if true 16-bit CRC follows header)
     this.isProtectedByCRC = !Common.isBitSet(buf, off + 1, 7);
     // E(15,12): Bitrate index
@@ -114,15 +110,24 @@ class MpegFrameHeader {
     this.emphasis = Common.getBitAllignedNumber(buf, off + 3, 7, 2);
 
     this.version = MpegFrameHeader.VersionID[this.versionIndex];
+
     if (this.version === null)
       throw new Error('Invalid MPEG Audio version');
 
     this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
-    this.samplingRate = this.calcSamplingRate();
 
+    // Calculate bitrate
     const bitrateInKbps = this.calcBitrate();
-    this.bitrate = bitrateInKbps == null ? null : bitrateInKbps * 1000;
+    if (bitrateInKbps == null) {
+      throw new Error('Cannot determine bit-rate');
+    }
+    this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
+
+    // Calculate sampling rate
     this.samplingRate = this.calcSamplingRate();
+    if (this.samplingRate == null) {
+      throw new Error('Cannot determine sampling-rate');
+    }
   }
 
   public calcDuration(numFrames): number {
@@ -213,14 +218,14 @@ class MpegAudioLayer {
         // FRAME SIZE
         // frameSize: strtok.UINT32_BE.get(buf, off + 108),
 
-        numFrames: UINT32_BE.get(buf, off + 4),
+        numFrames: Token.UINT32_BE.get(buf, off + 4),
 
         numToCentries: new BufferType(100).get(buf, off + 104),
 
         // the number of header APE_HEADER bytes
-        streamSize: UINT32_BE.get(buf, off + 108),
+        streamSize: Token.UINT32_BE.get(buf, off + 108),
         // the number of header data bytes (from original file)
-        vbrScale: UINT32_BE.get(buf, off + 112),
+        vbrScale: Token.UINT32_BE.get(buf, off + 112),
 
         /**
          * LAME Tag, extends the Xing header format
@@ -231,9 +236,9 @@ class MpegAudioLayer {
         //  Initial LAME info, e.g.: LAME3.99r
         encoder: new StringType(9, 'ascii').get(buf, off + 116),
         //  Info Tag
-        infoTag: UINT8.get(buf, off + 125) >> 4,
+        infoTag: Token.UINT8.get(buf, off + 125) >> 4,
         // VBR method
-        vbrMethod: UINT8.get(buf, off + 125) & 0xf
+        vbrMethod: Token.UINT8.get(buf, off + 125) & 0xf
       };
     }
   };
@@ -257,6 +262,9 @@ export class MpegParser implements ITokenParser {
 
   private format: IFormat;
 
+  private buf_frame_header = new Buffer(4);
+
+
   public constructor(private tokenizer: ITokenizer, private headerSize: number, private readDuration: boolean) {
   }
 
@@ -273,48 +281,35 @@ export class MpegParser implements ITokenParser {
   }
 
   public sync(): Promise<void> {
-    const buf_frame_header = new Buffer(4);
-    return this.tokenizer.readBuffer(buf_frame_header, 0, 1).then((v) => {
-      if(v === 0) {
-        return Promise.resolve<void>();
-      }
-      if (buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
-        return this.tokenizer.readBuffer(buf_frame_header, 1, 1).then((v) => {
-          if(v === 0) {
-            return Promise.resolve<void>();
-          }
-          if ((buf_frame_header[1] & 0xE0) === 0xE0) {
+    return this.tokenizer.readBuffer(this.buf_frame_header, 0, 1).then((v) => {
+      if (this.buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
+        return this.tokenizer.readBuffer(this.buf_frame_header, 1, 1).then((v) => {
+          if ((this.buf_frame_header[1] & 0xE0) === 0xE0) {
             // Synchronized
-            return this.parseAudioFrameHeader(buf_frame_header);
+            return this.parseAudioFrameHeader(this.buf_frame_header);
           } else {
             return this.sync();
           }
-        })
+        });
       } else {
         return this.sync();
       }
-    })
+    });
   }
 
   public parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
 
     return this.tokenizer.readBuffer(buf_frame_header, 2, 2).then(() => {
-      const header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
 
-      if (header.version === null || header.layer === null) {
-        return this.sync();
+      let header: MpegFrameHeader;
+      try {
+        header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
+      } catch (err) {
+        return this.sync(); // ToDO: register warning
       }
 
       // mp3 files are only found in MPEG1/2 Layer 3
       if (( header.version !== 1 && header.version !== 2) || header.layer !== 3) {
-        return this.sync();
-      }
-
-      if (header.bitrate == null) {
-        return this.sync();
-      }
-
-      if (header.samplingRate == null) {
         return this.sync();
       }
 
@@ -375,7 +370,7 @@ export class MpegParser implements ITokenParser {
   }
 
   public parseCrc(): Promise<void> {
-    this.tokenizer.readNumber(INT16_BE).then((crc) => {
+    this.tokenizer.readNumber(Token.INT16_BE).then((crc) => {
       this.crc = crc;
     });
     this.offset += 2;
@@ -388,7 +383,7 @@ export class MpegParser implements ITokenParser {
     return this.tokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
       this.offset += sideinfo_length;
       return this.readXtraInfoHeader();
-    })
+    });
   }
 
   public readXtraInfoHeader(): Promise<any> {
@@ -396,9 +391,6 @@ export class MpegParser implements ITokenParser {
     return this.tokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((headerTag) => {
       this.offset += MpegAudioLayer.InfoTagHeaderTag.len;  // 12
 
-      // case State.xtra_info_header: // xtra / info header
-
-      let codecProfile: string;
       switch (headerTag) {
 
         case 'Info':
@@ -435,7 +427,7 @@ export class MpegParser implements ITokenParser {
    * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
    * @returns {Promise<string>}
    */
-  public readXingInfoHeader(): Promise<MpegAudioLayer.XingInfoTag> {
+  private readXingInfoHeader(): Promise<MpegAudioLayer.XingInfoTag> {
 
     return this.tokenizer.readToken(MpegAudioLayer.XingInfoTag).then((infoTag) => {
       this.offset += MpegAudioLayer.XingInfoTag.len;  // 12

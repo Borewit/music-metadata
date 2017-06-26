@@ -1,32 +1,22 @@
 import common from './common';
-import {ITokenParser} from "./FileParser";
+import {ITokenParser} from "./ParserFactory";
 import {INativeAudioMetadata, ITag} from "./index";
 import {IFormat, IOptions} from "../lib/index";
-import {
-  BufferType, IGetToken, IgnoreType, INT24_BE, ITokenizer, StringType, UINT16_BE, UINT24_BE, UINT32_BE,
-  UINT8
-} from "./FileTokenizer";
-
-enum State {
-  skip = -1,
-  atomLength = 0,
-  atomName = 1,
-  ilstAtom = 2,
-  mdhdAtom = 3
-}
-
-type IMetaDataAtom = string | { format: string, data: Buffer };
+import {ITokenizer} from "strtok3";
+import {Promise} from "es6-promise";
+import {StringType, BufferType, IGetToken, IgnoreType} from "token-types";
+import * as Token from "token-types";
 
 /**
  * M4A signature, ref: https://www.filesignatures.net/index.php?page=search&search=M4A&mode=EXT
  * ascii: ••• ftypM4A
  */
-//const signature_m4a = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41];
+// const signature_m4a = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41];
 
 /**
  * ascii: ••• ftypmp42
  */
-//const signature_m4a_42  = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x34, 0x32];
+// const signature_m4a_42  = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x34, 0x32];
 
 interface IAtomHeader {
   length: number,
@@ -106,7 +96,7 @@ interface IAtomMvhd extends IAtomMxhd {
   /**
    * Reserved: Ten bytes reserved for use by Apple. Set to 0.
    */
-  //reserved: number,
+  // reserved: number,
 
   /**
    *  Matrix structure: The matrix structure associated with this movie. A matrix shows how to map points from one coordinate space into another. See Matrices for a discussion of how display matrices are used in QuickTime.
@@ -188,7 +178,7 @@ class Atom {
 
     get: (buf: Buffer, off: number): IAtomHeader => {
       return {
-        length: UINT32_BE.get(buf, 0),
+        length: Token.UINT32_BE.get(buf, 0),
         name: new StringType(4, "binary").get(buf, off + 4)
       };
     }
@@ -212,14 +202,14 @@ class Atom {
 
     get: (buf: Buffer, off: number): IAtomMdhd => {
       return {
-        version: UINT8.get(buf, off + 0),
-        flags: UINT24_BE.get(buf, off + 1),
-        creationTime: UINT32_BE.get(buf, off + 4),
-        modificationTime: UINT32_BE.get(buf, off + 8),
-        timeScale: UINT32_BE.get(buf, off + 12),
-        duration: UINT32_BE.get(buf, off + 16),
-        language: UINT16_BE.get(buf, off + 20),
-        quality: UINT16_BE.get(buf, off + 22)
+        version: Token.UINT8.get(buf, off + 0),
+        flags: Token.UINT24_BE.get(buf, off + 1),
+        creationTime: Token.UINT32_BE.get(buf, off + 4),
+        modificationTime: Token.UINT32_BE.get(buf, off + 8),
+        timeScale: Token.UINT32_BE.get(buf, off + 12),
+        duration: Token.UINT32_BE.get(buf, off + 16),
+        language: Token.UINT16_BE.get(buf, off + 20),
+        quality: Token.UINT16_BE.get(buf, off + 22)
       };
     }
   };
@@ -232,23 +222,23 @@ class Atom {
 
     get: (buf: Buffer, off: number): IAtomMvhd => {
       return {
-        version: UINT8.get(buf, off + 0),
-        flags: UINT24_BE.get(buf, off + 1),
-        creationTime: UINT32_BE.get(buf, off + 4),
-        modificationTime: UINT32_BE.get(buf, off + 8),
-        timeScale: UINT32_BE.get(buf, off + 12),
-        duration: UINT32_BE.get(buf, off + 16),
-        preferredRate: UINT32_BE.get(buf, off + 20),
-        preferredVolume: UINT16_BE.get(buf, off + 24),
+        version: Token.UINT8.get(buf, off + 0),
+        flags: Token.UINT24_BE.get(buf, off + 1),
+        creationTime: Token.UINT32_BE.get(buf, off + 4),
+        modificationTime: Token.UINT32_BE.get(buf, off + 8),
+        timeScale: Token.UINT32_BE.get(buf, off + 12),
+        duration: Token.UINT32_BE.get(buf, off + 16),
+        preferredRate: Token.UINT32_BE.get(buf, off + 20),
+        preferredVolume: Token.UINT16_BE.get(buf, off + 24),
         // ignore reserver: 10 bytes
         // ignore matrix structure: 36 bytes
-        previewTime: UINT32_BE.get(buf, off + 72),
-        previewDuration: UINT32_BE.get(buf, off + 76),
-        posterTime: UINT32_BE.get(buf, off + 80),
-        selectionTime: UINT32_BE.get(buf, off + 84),
-        selectionDuration: UINT32_BE.get(buf, off + 88),
-        currentTime: UINT32_BE.get(buf, off + 92),
-        nextTrackID: UINT32_BE.get(buf, off + 96)
+        previewTime: Token.UINT32_BE.get(buf, off + 72),
+        previewDuration: Token.UINT32_BE.get(buf, off + 76),
+        posterTime: Token.UINT32_BE.get(buf, off + 80),
+        selectionTime: Token.UINT32_BE.get(buf, off + 84),
+        selectionDuration: Token.UINT32_BE.get(buf, off + 88),
+        currentTime: Token.UINT32_BE.get(buf, off + 92),
+        nextTrackID: Token.UINT32_BE.get(buf, off + 96)
       };
     }
   };
@@ -261,9 +251,9 @@ class Atom {
 
     get: (buf: Buffer, off: number): IMovieHeaderAtom => {
       return {
-        version: UINT8.get(buf, off + 0),
-        flags: UINT24_BE.get(buf, off + 1),
-        nextItemID: UINT32_BE.get(buf, off + 4),
+        version: Token.UINT8.get(buf, off + 0),
+        flags: Token.UINT24_BE.get(buf, off + 1),
+        nextItemID: Token.UINT32_BE.get(buf, off + 4)
       };
     }
   };
@@ -308,10 +298,10 @@ class DataAtom implements IGetToken<IDataAtom> {
   public get(buf: Buffer, off: number): IDataAtom {
     return {
       type: {
-        set: UINT8.get(buf, off + 0),
-        type: UINT24_BE.get(buf, off + 1)
+        set: Token.UINT8.get(buf, off + 0),
+        type: Token.UINT24_BE.get(buf, off + 1)
       },
-      locale: UINT24_BE.get(buf, off + 4),
+      locale: Token.UINT24_BE.get(buf, off + 4),
       value: new BufferType(this.len - 8).get(buf, off + 8)
     };
   }
@@ -350,8 +340,8 @@ class NameAtom implements IGetToken<INameAtom> {
 
   public get(buf: Buffer, off: number): INameAtom {
     return {
-      version: UINT8.get(buf, off),
-      flags: UINT24_BE.get(buf, off + 1),
+      version: Token.UINT8.get(buf, off),
+      flags: Token.UINT24_BE.get(buf, off + 1),
       name: new StringType(this.len - 4, "utf-8").get(buf, off + 4)
     };
   }
@@ -377,6 +367,36 @@ export class Id4Parser implements ITokenParser {
     21: 'uint8'
   };
 
+  private static read_BE_Signed_Integer(value: Buffer): number {
+    switch (value.length) {
+      case 1:
+        return value.readInt8(0);
+      case 2:
+        return value.readInt16BE(0);
+      case 3:
+        return Token.INT24_BE.get(value, 0);
+      case 4:
+        return value.readInt32BE(0);
+      default:
+        throw new Error("Illegal value length for BE-Signed-Integer (type 21): " + value.length);
+    }
+  }
+
+  private static read_BE_Unsigned_Integer(value: Buffer): number {
+    switch (value.length) {
+      case 1:
+        return value.readUInt8(0);
+      case 2:
+        return value.readUInt16BE(0);
+      case 3:
+        return Token.UINT24_BE.get(value, 0);
+      case 4:
+        return value.readUInt32BE(0);
+      default:
+        throw new Error("Illegal value length for BE-Unsigned-Integer (type 22): " + value.length);
+    }
+  }
+
   private tokenizer: ITokenizer;
 
   private metaAtomsTotalLength = 0;
@@ -393,7 +413,7 @@ export class Id4Parser implements ITokenParser {
         native: {
           m4a: this.tags
         }
-      }
+      };
     });
   }
 
@@ -409,7 +429,7 @@ export class Id4Parser implements ITokenParser {
         } else {
           return this.parseAtom();
         }
-      })
+      });
     });
   }
 
@@ -451,10 +471,10 @@ export class Id4Parser implements ITokenParser {
       case 'rmra': // reference movie atom; child of Movie Atom
 
       case 'mdat':
-        return Promise.resolve<void>().then(() => true);
+        return Promise.resolve<boolean>(true);
 
       default:
-        //return this.ignoreAtomData(dataLen);
+        // return this.ignoreAtomData(dataLen);
         return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((buf) => {
           // console.log("  ascii: %s", header.name, header.length, buf.toString('ascii'));
           buf = buf;
@@ -473,7 +493,7 @@ export class Id4Parser implements ITokenParser {
         return this.parseAtom_ftyp(len).then((types) => {
           types.push(ftype.type);
           return types;
-        })
+        });
       } else {
         return [];
       }
@@ -534,7 +554,7 @@ export class Id4Parser implements ITokenParser {
           return this.parseMetadataItem(remaining);
         } else
           return;
-      })
+      });
     });
   }
 
@@ -590,14 +610,14 @@ export class Id4Parser implements ITokenParser {
             switch (tagKey) {
               case 'trkn':
               case 'disk':
-                const num = UINT8.get(dataAtom.value, 3);
-                const of = UINT8.get(dataAtom.value, 5);
+                const num = Token.UINT8.get(dataAtom.value, 3);
+                const of = Token.UINT8.get(dataAtom.value, 5);
                 // console.log("  %s[data] = %s/%s", tagKey, num, of);
                 this.tags.push({id: tagKey, value: num + "/" + of});
                 break;
 
               case 'gnre':
-                const genreInt = UINT8.get(dataAtom.value, 1);
+                const genreInt = Token.UINT8.get(dataAtom.value, 1);
                 const genreStr = common.Genres[genreInt - 1];
                 // console.log("  %s[data] = %s", tagKey, genreStr);
                 this.tags.push({id: tagKey, value: genreStr});
@@ -659,36 +679,6 @@ export class Id4Parser implements ITokenParser {
 
       return header.length;
     });
-  }
-
-  private static read_BE_Signed_Integer(value: Buffer): number {
-    switch (value.length) {
-      case 1:
-        return value.readInt8(0);
-      case 2:
-        return value.readInt16BE(0);
-      case 3:
-        return INT24_BE.get(value, 0);
-      case 4:
-        return value.readInt32BE(0);
-      default:
-        throw new Error("Illegal value length for BE-Signed-Integer (type 21): " + value.length);
-    }
-  }
-
-  private static read_BE_Unsigned_Integer(value: Buffer): number {
-    switch (value.length) {
-      case 1:
-        return value.readUInt8(0);
-      case 2:
-        return value.readUInt16BE(0);
-      case 3:
-        return UINT24_BE.get(value, 0);
-      case 4:
-        return value.readUInt32BE(0);
-      default:
-        throw new Error("Illegal value length for BE-Unsigned-Integer (type 22): " + value.length);
-    }
   }
 
 }

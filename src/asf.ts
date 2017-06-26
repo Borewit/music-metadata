@@ -1,13 +1,12 @@
 'use strict';
 import * as equal from 'deep-equal';
-import * as strtok from 'strtok2';
-import {Token} from 'strtok2';
 import common from './common';
-import {IStreamParser, TagCallback} from './parser';
 import ReadableStream = NodeJS.ReadableStream;
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "./index";
-import {IGetToken, ITokenizer, UINT32_LE, BufferType} from "./FileTokenizer";
-import {ITokenParser} from "./FileParser";
+import {ITokenizer} from "strtok3";
+import {BufferType, IGetToken} from "token-types";
+import * as Token from "token-types";
+import {ITokenParser} from "./ParserFactory";
 
 /**
  * Ref: https://tools.ietf.org/html/draft-fleischman-asf-01
@@ -215,7 +214,7 @@ class AsfObject {
       return {
         objectId: new BufferType(16).get(buf, off),
         objectSize: Util.readUInt64LE(buf, off + 16),
-        numberOfHeaderObjects: UINT32_LE.get(buf, off + 24),
+        numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24),
         // Reserved: 2 bytes
       };
     }
@@ -376,10 +375,10 @@ class FilePropertiesObject extends State<IFilePropertiesObject> {
         broadcast: common.strtokBITSET.get(buf, off + 64, 0),
         seekable: common.strtokBITSET.get(buf, off + 64, 1),
       },
-      flagsNumeric: UINT32_LE.get(buf, off + 64),
-      minimumDataPacketSize: UINT32_LE.get(buf, off + 68),
-      maximumDataPacketSize: UINT32_LE.get(buf, off + 72),
-      maximumBitrate: UINT32_LE.get(buf, off + 76)
+      // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
+      minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
+      maximumDataPacketSize: Token.UINT32_LE.get(buf, off + 72),
+      maximumBitrate: Token.UINT32_LE.get(buf, off + 76)
     };
   }
 }

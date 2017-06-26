@@ -4,10 +4,12 @@ import common from './common';
 import id3v2_frames from './id3v2_frames';
 import {MpegParser} from './mpeg';
 import {HeaderType} from './tagmap';
-import {ITokenParser} from "./FileParser";
-import {ITokenizer, IGetToken, INT8, UINT32_BE, UINT16_BE, StringType} from "./FileTokenizer";
-import {INativeAudioMetadata, ITag} from "./index";
-import {IOptions} from "../lib/src/index";
+import {ITokenParser} from "./ParserFactory";
+import {ITokenizer} from "strtok3";
+import {INativeAudioMetadata, ITag} from "./";
+import {IGetToken, StringType} from "token-types";
+import * as Token from "token-types";
+import {IOptions} from "./";
 
 
 
@@ -59,10 +61,10 @@ interface IID3v2header {
 
 interface IExtendedHeader {
   // Extended header size
-  size: number,
-  extendedFlags: number,
+  size: number;
+  extendedFlags: number;
   // Size of padding
-  sizeOfPadding: number,
+  sizeOfPadding: number;
   // CRC data present
   crcDataPresent: boolean;
 }
@@ -95,13 +97,13 @@ class ID3v2 {
         fileIdentifier: new StringType(3, 'ascii').get(buf, off),
         // ID3v2 versionIndex
         version: {
-          major: INT8.get(buf, off + 3),
-          revision: INT8.get(buf, off + 4)
+          major: Token.INT8.get(buf, off + 3),
+          revision: Token.INT8.get(buf, off + 4)
         },
         // ID3v2 flags
         flags: {
           // Raw flags value
-          raw: INT8.get(buf, off + 4),
+          raw: Token.INT8.get(buf, off + 4),
           // Unsynchronisation
           unsynchronisation: common.strtokBITSET.get(buf, off + 5, 7),
           // Extended header
@@ -121,11 +123,11 @@ class ID3v2 {
     get: (buf, off): IExtendedHeader => {
       return {
         // Extended header size
-        size: UINT32_BE.get(buf, off),
+        size: Token.UINT32_BE.get(buf, off),
         // Extended Flags
-        extendedFlags: UINT16_BE.get(buf, off + 4),
+        extendedFlags: Token.UINT16_BE.get(buf, off + 4),
         // Size of padding
-        sizeOfPadding: UINT32_BE.get(buf, off + 6),
+        sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
         // CRC data present
         crcDataPresent: common.strtokBITSET.get(buf, off + 4, 31)
       };
@@ -153,7 +155,7 @@ export class Id3v2Parser implements ITokenParser {
       case 3:
         header = {
           id: v.toString('ascii', 0, 4),
-          length: UINT32_BE.get(v, 4),
+          length: Token.UINT32_BE.get(v, 4),
           flags: Id3v2Parser.readFrameFlags(v.slice(8, 10))
         };
         break;
@@ -228,7 +230,7 @@ export class Id3v2Parser implements ITokenParser {
       } else {
         return this.parseId3Data(id3Header.size);
       }
-    })
+    });
   }
 
   public parseExtendedHeader(): Promise<INativeAudioMetadata> {
@@ -239,14 +241,14 @@ export class Id3v2Parser implements ITokenParser {
       } else {
         return this.parseId3Data(this.id3Header.size - extendedHeader.size);
       }
-    })
+    });
   }
 
   public parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<INativeAudioMetadata> {
     const buffer = new Buffer(dataRemaining);
     return this.tokenizer.readBuffer(buffer, 0, dataRemaining).then(() => {
       return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
-    })
+    });
   }
 
   public parseId3Data(dataLen: number): Promise<INativeAudioMetadata> {
@@ -277,8 +279,8 @@ export class Id3v2Parser implements ITokenParser {
         res.native[this.headerType] = this.tags;
 
         return res;
-      })
-    })
+      });
+    });
   }
 
   private parseMetadata(data: Buffer): ITag[] {

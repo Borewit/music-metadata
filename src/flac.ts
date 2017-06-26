@@ -2,10 +2,13 @@
 
 import common from './common';
 import vorbis from './vorbis';
-import {ITokenParser} from "./FileParser";
 import {INativeAudioMetadata, IOptions, ITag, IFormat} from "./index";
-import {BufferType, IGetToken, IgnoreType, ITokenizer, UINT24_BE, UINT32_LE} from "./FileTokenizer";
-import {UINT16_BE} from "../lib/FileTokenizer";
+import {ITokenParser} from "./ParserFactory";
+import {ITokenizer, IgnoreType} from "strtok3";
+import {BufferType, IGetToken} from "token-types";
+import * as Token from "token-types";
+
+
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -206,16 +209,16 @@ class Metadata {
     get: (buf: Buffer, off: number): IBlockStreamInfo => {
       return {
         // The minimum block size (in samples) used in the stream.
-        minimumBlockSize: UINT16_BE.get(buf, off),
+        minimumBlockSize: Token.UINT16_BE.get(buf, off),
         // The maximum block size (in samples) used in the stream.
         // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-        maximumBlockSize: UINT16_BE.get(buf, off + 2) / 1000,
+        maximumBlockSize: Token.UINT16_BE.get(buf, off + 2) / 1000,
         // The minimum frame size (in bytes) used in the stream.
         // May be 0 to imply the value is not known.
-        minimumFrameSize: UINT24_BE.get(buf, off + 4),
+        minimumFrameSize: Token.UINT24_BE.get(buf, off + 4),
         // The maximum frame size (in bytes) used in the stream.
         // May be 0 to imply the value is not known.
-        maximumFrameSize: UINT24_BE.get(buf, off + 7),
+        maximumFrameSize: Token.UINT24_BE.get(buf, off + 7),
         // Sample rate in Hz. Though 20 bits are available,
         // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
         // Also, a value of 0 is invalid.
@@ -248,7 +251,7 @@ class DataDecoder {
   }
 
   public readInt32(): number {
-    const value = UINT32_LE.get(this.data, this.offset);
+    const value = Token.UINT32_LE.get(this.data, this.offset);
     this.offset += 4;
     return value;
   }

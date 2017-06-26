@@ -6,11 +6,11 @@
     "moduleResolution": "node",
     "allowJs": false,
     "target": "es5",
-    "declaration": true,
-    "outDir": "lib/"
+    "declaration": false
   },
   "include": [
     "src/**/*.ts",
+    "test/*.ts",
     "typings/**/*.d.ts"
   ]
 }

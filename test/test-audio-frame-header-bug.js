@@ -1,17 +1,13 @@
-var path = require('path')
-var mm = require('..')
-var fs = require('fs')
-var test = require('tape')
-
-test('audio-frame-header-bug', function (t) {
-  t.plan(1)
-
-  var filePath = path.join(__dirname, 'samples', 'audio-frame-header-bug.mp3');
-
-  mm.parseFile(filePath, { duration: true }).then(function (result) {
-    t.strictEqual(result.format.duration, 200.59591666666665)
-    t.end()
-  }).catch( function(err) {
-    t.error(err)
-  });
-})
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var chai_1 = require("chai");
+var mm = require("../src");
+var path = require('path');
+var t = chai_1.assert;
+it("should handle audio-frame-header-bug", function () {
+    var filePath = path.join(__dirname, 'samples', 'audio-frame-header-bug.mp3');
+    return mm.parseFile(filePath, { duration: true }).then(function (result) {
+        t.strictEqual(result.format.duration, 200.59591666666665);
+    });
+});
+//# sourceMappingURL=test-audio-frame-header-bug.js.map

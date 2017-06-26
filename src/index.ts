@@ -6,7 +6,9 @@ import common from './common';
 import TagMap from './tagmap';
 import {HeaderType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
-import {FileParser} from "./FileParser";
+import {ParserFactory} from "./ParserFactory";
+import * as stream from "stream";
+import * as fs from "fs-extra";
 
 export interface IPicture {
   format: string,
@@ -156,13 +158,9 @@ export type ICallbackType = (error?: Error, metadata?: IAudioMetadata) => void;
 
 export interface IOptions {
   path?: string,
-  fileSize?: string,
+  fileSize?: number,
   native?: boolean,
   duration?: boolean;
-}
-
-export interface IFileSize {
-  fileSize?: (size: number) => void;
 }
 
 export class MusicMetadataParser {
@@ -211,86 +209,83 @@ export class MusicMetadataParser {
 
   private tagMap = new TagMap();
 
-
   /**
    * Extract metadata from the given audio file
    * @param filePath File path of the audio file to parse
    * @param opts
    *   .filesize=true  Return filesize
    *   .native=true    Will return original header in result
-   * @returns {EventEmitter}
+   * @returns {Promise<IAudioMetadata>}
    */
-  public parse(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
+  public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
-    return FileParser.parse(filePath, opts).then((nativeData) => {
-      const metadata: IAudioMetadata = {
-        format: nativeData.format,
-        native: nativeData.native,
-        common: {
-          track: { no: null, of: null },
-          disk: { no: null, of: null },
-        } as any
-      };
-
-      for(const tagType in metadata.native) {
-        for(const tag of metadata.native[tagType]) {
-          this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value)
-        }
-      }
-
-      if (metadata.common.artists && metadata.common.artists.length > 0) {
-        metadata.common.artist = metadata.common.artist[0];
-      } else {
-        if (metadata.common.artist) {
-          metadata.common.artists = metadata.common.artist as any;
-          if (metadata.common.artist.length > 1) {
-            delete metadata.common.artist;
-          } else {
-            metadata.common.artist = metadata.common.artist[0];
-          }
-        }
-      }
-      return metadata;
+    return ParserFactory.parseFile(filePath, opts).then((nativeData) => {
+      return this.parseNativeTags(nativeData);
     });
+
   }
 
-  /*
-  private tagCallback(headerType, tag, value) {
-  if (value === null) {
-    this.warning.push('tag ' + tag + ' is null');
-    return;
-  }
+  /**
+   * Extract metadata from the given audio file
+   * @param stream Audio ReadableStream
+   * @param mimeType Mime-Type of stream
+   * @param opts
+   *   .filesize=true  Return filesize
+   *   .native=true    Will return original header in result
+   * @returns {Promise<IAudioMetadata>}
+   */
+  public parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
-  if (value === '') {
-    this.warning.push('tag ' + tag + ' is empty');
-    return;
-  }
-
-  if (headerType === 'format') {
-    metadata.format[tag] = value;
-  } else {
-    self.setCommonTags(metadata.common, headerType as HeaderType, tag, value);
-  }
-
-  // Send native event, unless it's native name is the same as a common name
-  if (!TagMap.isCommonTag(tag)) {
-    emitter.emit(tag, value);
-  }
-
-  if (opts.native) {
-    if (!metadata.hasOwnProperty(headerType)) {
-      metadata[headerType] = {}; // Register new native header headerType
-    }
-
-    if (self.tagMap.isNativeSingleton(headerType, tag)) {
-      metadata[headerType][tag] = value;
+    if(opts.duration && !opts.fileSize) {
+      if((stream as any).path) {
+        return fs.stat((stream as any).path).then((stat) => {
+          opts.fileSize = stat.size;
+          return parseStream(stream, mimeType, opts);
+        })
+      }
     } else {
-      (metadata[headerType][tag] = metadata[headerType][tag] ? metadata[headerType][tag] : []).push(value);
+      return ParserFactory.parseStream(stream, mimeType, opts).then((nativeData) => {
+        return this.parseNativeTags(nativeData);
+      });
     }
   }
-}*/
 
+  /**
+   * Convert native tags to common tags
+   * @param nativeData
+   * @returns {IAudioMetadata} Native + common tags
+   */
+  public parseNativeTags(nativeData: INativeAudioMetadata): IAudioMetadata {
 
+    const metadata: IAudioMetadata = {
+      format: nativeData.format,
+      native: nativeData.native,
+      common: {
+        track: {no: null, of: null},
+        disk: {no: null, of: null},
+      } as any
+    };
+
+    for (const tagType in metadata.native) {
+      for (const tag of metadata.native[tagType]) {
+        this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value)
+      }
+    }
+
+    if (metadata.common.artists && metadata.common.artists.length > 0) {
+      metadata.common.artist = metadata.common.artist[0];
+    } else {
+      if (metadata.common.artist) {
+        metadata.common.artists = metadata.common.artist as any;
+        if (metadata.common.artist.length > 1) {
+          delete metadata.common.artist;
+        } else {
+          metadata.common.artist = metadata.common.artist[0];
+        }
+      }
+    }
+    return metadata;
+  }
 
   /**
    * Process and set common tags
@@ -449,14 +444,25 @@ export class MusicMetadataParser {
 }
 
 /**
+ * Parse audio file
+ * @param stream
+ * @param opts
+ *   .filesize=true  Return filesize
+ *   .native=true    Will return original header in result
+ * @returns {Promise<IAudioMetadata>}
+ */
+export function parseFile(filePath: string, opts?: IOptions): Promise<IAudioMetadata> {
+  return MusicMetadataParser.getInstance().parseFile(filePath, opts);
+}
+
+/**
  * Parse audio stream
  * @param stream
  * @param opts
  *   .filesize=true  Return filesize
  *   .native=true    Will return original header in result
- * @param callback
- * @returns {*|EventEmitter}
+ * @returns {Promise<IAudioMetadata>}
  */
-export function parseFile(filePath: string, opts: IOptions): Promise<IAudioMetadata> {
-  return MusicMetadataParser.getInstance().parse(filePath, opts);
+export function parseStream(stream: stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {
+  return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
 }
