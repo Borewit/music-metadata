@@ -4,7 +4,6 @@ import common from './common';
 import ReadableStream = NodeJS.ReadableStream;
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "./index";
 import {ITokenizer} from "strtok3";
-import {BufferType, IGetToken} from "token-types";
 import * as Token from "token-types";
 import {ITokenParser} from "./ParserFactory";
 
@@ -39,7 +38,7 @@ export class AsfParser implements ITokenParser {
 
   private paresTopLevelHeaderObject(): Promise<INativeAudioMetadata> {
     return this.tokenizer.readToken<IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken).then((header) => {
-      if (!equal(header.objectId, AsfObject.GUID.Header)) {
+      if (!equal(header.objectId, Header_GUID)) {
         throw new Error('expected asf header; but was not found');
       }
       this.numberOfObjectHeaders = header.numberOfHeaderObjects;
@@ -59,10 +58,10 @@ export class AsfParser implements ITokenParser {
         return this.parseExtendedContentDescriptionObject(header);
       } else {
         console.log("Ignore ASF-Object-GUID: %s", AsfParser.guidToString(header.objectId));
-        return this.tokenizer.readToken<ITag[]>(new IgnoreObjectState(header));
+        return this.tokenizer.readToken<void>(new IgnoreObjectState(header));
         //throw new Error('Unexpected GUID: ' + AsfParser.guidToString(header.objectId) );
       }
-    }).then(() => {
+    }).then( () => {
       if(--this.numberOfObjectHeaders > 0) {
         return this.parseObjectHeader();
       } else {
@@ -72,7 +71,7 @@ export class AsfParser implements ITokenParser {
           native: {
             asf: this.tags
           }
-        }
+        };
       }
     });
   }
@@ -90,10 +89,9 @@ export class AsfParser implements ITokenParser {
       + objectId.slice(10, 16).toString('hex').toUpperCase()
   }
 
-  private parseContentDescription(header: IAsfObjectHeader): Promise<ITag[]> {
+  private parseContentDescription(header: IAsfObjectHeader): Promise<void> {
     return this.tokenizer.readToken<ITag[]>(new ContentDescriptionObjectState(header)).then((tags) => {
       this.tags = this.tags.concat(tags);
-      return tags;
     });
   }
 
@@ -104,10 +102,9 @@ export class AsfParser implements ITokenParser {
     });
   }
 
-  private parseExtendedContentDescriptionObject(header: IAsfObjectHeader): Promise<ITag[]> {
+  private parseExtendedContentDescriptionObject(header: IAsfObjectHeader): Promise<void> {
     return this.tokenizer.readToken<ITag[]>(new ExtendedContentDescriptionObjectState(header)).then((tags) => {
       this.tags = this.tags.concat(tags);
-      return tags;
     });
   }
 }
@@ -187,32 +184,27 @@ interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
   numberOfHeaderObjects: number
 }
 
+/**
+ * The ASF_Header_Object GUID
+ * @type {Buffer}
+ */
+export const Header_GUID = new Buffer([
+  0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+  0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+]);
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
  */
 class AsfObject {
 
-  public static GUID = {
-
-    /**
-     * The ASF_Header_Object GUID
-     * @type {Buffer}
-     */
-    Header: new Buffer([
-      0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-      0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-    ]),
-  };
-
-
-  public static TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
+  public static TopLevelHeaderObjectToken: Token.IGetToken<IAsfTopLevelObjectHeader> = {
 
     len: 30,
 
     get: (buf, off): IAsfTopLevelObjectHeader => {
       return {
-        objectId: new BufferType(16).get(buf, off),
+        objectId: new Token.BufferType(16).get(buf, off),
         objectSize: Util.readUInt64LE(buf, off + 16),
         numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24),
         // Reserved: 2 bytes
@@ -220,13 +212,13 @@ class AsfObject {
     }
   };
 
-  public static ObjectHeaderToken: IGetToken<IAsfObjectHeader> = {
+  public static ObjectHeaderToken: Token.IGetToken<IAsfObjectHeader> = {
 
     len: 24,
 
     get: (buf, off): IAsfObjectHeader => {
       return {
-        objectId: new BufferType(16).get(buf, off),
+        objectId: new Token.BufferType(16).get(buf, off),
         objectSize: Util.readUInt64LE(buf, off + 16)
       };
     }
@@ -234,7 +226,7 @@ class AsfObject {
 
 }
 
-abstract class State<T> implements IGetToken<T> {
+abstract class State<T> implements Token.IGetToken<T> {
 
   public len: number;
 
@@ -364,7 +356,7 @@ class FilePropertiesObject extends State<IFilePropertiesObject> {
 
 
     return {
-      fileId: new BufferType(16).get(buf, off),
+      fileId: new Token.BufferType(16).get(buf, off),
       fileSize: Util.readUInt64LE(buf, off + 16),
       creationDate: Util.readUInt64LE(buf, off + 24),
       dataPacketsCount: Util.readUInt64LE(buf, off + 32),

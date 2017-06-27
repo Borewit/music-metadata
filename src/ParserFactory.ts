@@ -116,14 +116,14 @@ export class ParserFactory {
 
   public static parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
-    const tokenizer = ReadStreamTokenizer.read(stream);
+    return ReadStreamTokenizer.read(stream).then((tokenizer) => {
+      if (!tokenizer.fileSize && opts.fileSize) {
+        tokenizer.fileSize = opts.fileSize;
+      }
 
-    if(opts.fileSize) {
-      tokenizer.fileSize = opts.fileSize;
-    }
-
-    return ParserFactory.getParserForMimeType(mimeType).then((parser) => {
-      return parser.parse(tokenizer, opts);
-    })
+      return ParserFactory.getParserForMimeType(mimeType).then((parser) => {
+        return parser.parse(tokenizer, opts);
+      })
+    });
   }
 }

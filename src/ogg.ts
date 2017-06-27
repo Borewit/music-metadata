@@ -335,6 +335,7 @@ export class OggParser implements ITokenParser {
       return metadata;
     });
 
+
     const ogg = this.parsePage().catch((err) => {
       if (err === StreamReader.EndOfStream) {
         console.log("EndOfStream: ogg");
@@ -342,15 +343,16 @@ export class OggParser implements ITokenParser {
       } else throw err;
     });
 
-    return Promise.all<[void, void]>([vorbis, ogg]).then((res) => {
-      return res[0];
+    return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([vorbis]) => {
+      return vorbis;
     }).catch((err) => {
       err = err; // ToDo
+      throw err;
     });
   }
 
   private parsePage(): Promise<void> {
-    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then((header) => {
+    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then(header => {
       if (header.capturePattern !== 'OggS') { // Capture pattern
         throw new Error('expected ogg header but was not found');
       }

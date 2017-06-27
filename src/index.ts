@@ -8,7 +8,7 @@ import {HeaderType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
 import * as stream from "stream";
-import * as fs from "fs-extra";
+import * as ASF from "./asf";
 
 export interface IPicture {
   format: string,
@@ -171,7 +171,7 @@ export class MusicMetadataParser {
 
   private static headerTypes = [
     {
-      buf: common.asfGuidBuf,
+      buf: ASF.Header_GUID,
       tag: require('./asf')
     },
     {
@@ -235,19 +235,9 @@ export class MusicMetadataParser {
    * @returns {Promise<IAudioMetadata>}
    */
   public parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-
-    if(opts.duration && !opts.fileSize) {
-      if((stream as any).path) {
-        return fs.stat((stream as any).path).then((stat) => {
-          opts.fileSize = stat.size;
-          return parseStream(stream, mimeType, opts);
-        })
-      }
-    } else {
-      return ParserFactory.parseStream(stream, mimeType, opts).then((nativeData) => {
-        return this.parseNativeTags(nativeData);
-      });
-    }
+    return ParserFactory.parseStream(stream, mimeType, opts).then((nativeData) => {
+      return this.parseNativeTags(nativeData);
+    });
   }
 
   /**

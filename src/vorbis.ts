@@ -1,4 +1,4 @@
-import * as strtok from 'strtok2';
+import * as Token from "token-types";
 
 export enum VorbisPictureType {
   'Other',
@@ -48,20 +48,20 @@ class VorbisPictureParser implements IVorbisPicture {
   constructor(buffer: Buffer) {
     let offset = 0;
 
-    this.type = VorbisPictureType[strtok.UINT32_BE.get(buffer, 0)];
+    this.type = VorbisPictureType[Token.UINT32_BE.get(buffer, 0)];
 
-    const mimeLen = strtok.UINT32_BE.get(buffer, offset += 4);
+    const mimeLen = Token.UINT32_BE.get(buffer, offset += 4);
     this.format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
 
-    const descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen);
+    const descLen = Token.UINT32_BE.get(buffer, offset += mimeLen);
     this.description = buffer.toString('utf-8', offset += 4, offset + descLen);
 
-    this.width = strtok.UINT32_BE.get(buffer, offset += descLen);
-    this.height = strtok.UINT32_BE.get(buffer, offset += 4);
-    this.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4);
-    this.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4);
+    this.width = Token.UINT32_BE.get(buffer, offset += descLen);
+    this.height = Token.UINT32_BE.get(buffer, offset += 4);
+    this.colour_depth = Token.UINT32_BE.get(buffer, offset += 4);
+    this.indexed_color = Token.UINT32_BE.get(buffer, offset += 4);
 
-    const picDataLen = strtok.UINT32_BE.get(buffer, offset += 4);
+    const picDataLen = Token.UINT32_BE.get(buffer, offset += 4);
     this.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen));
   }
 }

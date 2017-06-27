@@ -2,7 +2,6 @@
 
 import ReadableStream = NodeJS.ReadableStream;
 
-import {IgnoreType} from 'strtok2';
 import {ITokenizer} from "strtok3";
 import {IFormat} from "../src";
 import Common from "./common";
@@ -176,6 +175,40 @@ class MpegFrameHeader {
   }
 }
 
+interface IXingInfoTag {
+
+  headerFlags: Buffer,
+
+  numFrames: number,
+
+  numToCentries: Buffer,
+
+  /**
+   * the number of header APE_HEADER bytes
+   */
+  streamSize: number,
+
+  // the number of header data bytes (from original file)
+  vbrScale: number,
+
+  /**
+   * LAME Tag, extends the Xing header format
+   * First added in LAME 3.12 for VBR
+   * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
+   */
+
+  //  Initial LAME info, e.g.: LAME3.99r
+  encoder: string,
+  /**
+   * Info Tag
+   */
+  infoTag: number,
+  /**
+   * VBR method
+   */
+  vbrMethod: number;
+}
+
 /**
  * MPEG Audio Layer I/II/III
  */
@@ -205,7 +238,7 @@ class MpegAudioLayer {
    * Info Tag
    * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
    */
-  public static XingInfoTag = {
+  public static XingInfoTag: Token.IGetToken<IXingInfoTag> = {
     len: 136,
 
     get: (buf, off) => {
@@ -341,7 +374,7 @@ export class MpegParser implements ITokenParser {
         return this.skipSideInformation();
       }
 
-      if (this.frameCount === 3) {
+       if (this.frameCount === 3) {
         // the stream is CBR if the first 3 frame bitrates are the same
         if (this.areAllSame(this.bitrates)) {
           // subtract non audio stream data from duration calculation
@@ -357,7 +390,8 @@ export class MpegParser implements ITokenParser {
       // stream so we can do the duration calculation when we
       // have counted all the frames
       if (this.readDuration && this.frameCount === 4) {
-        return this.calculateVbrDuration = true;
+        this.calculateVbrDuration = true;
+        return;
       }
 
       this.offset = 4;
@@ -377,7 +411,7 @@ export class MpegParser implements ITokenParser {
     return this.skipSideInformation();
   }
 
-  public skipSideInformation(): Promise<any> {
+  public skipSideInformation(): Promise<void> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
     // side information
     return this.tokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
@@ -427,9 +461,9 @@ export class MpegParser implements ITokenParser {
    * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
    * @returns {Promise<string>}
    */
-  private readXingInfoHeader(): Promise<MpegAudioLayer.XingInfoTag> {
+  private readXingInfoHeader(): Promise<IXingInfoTag> {
 
-    return this.tokenizer.readToken(MpegAudioLayer.XingInfoTag).then((infoTag) => {
+    return this.tokenizer.readToken<IXingInfoTag>(MpegAudioLayer.XingInfoTag).then((infoTag) => {
       this.offset += MpegAudioLayer.XingInfoTag.len;  // 12
 
       this.format.encoder = Common.stripNulls(infoTag.encoder);
@@ -450,7 +484,7 @@ export class MpegParser implements ITokenParser {
   }
 
   private skipFrameData(frameDataLeft: number): Promise<void> {
-    return this.tokenizer.readToken(new IgnoreType(frameDataLeft)).then(() => {
+    return this.tokenizer.readToken(new Token.IgnoreType(frameDataLeft)).then(() => {
       return this.sync();
     });
   }

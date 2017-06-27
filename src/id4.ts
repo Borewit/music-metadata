@@ -1,7 +1,6 @@
 import common from './common';
 import {ITokenParser} from "./ParserFactory";
-import {INativeAudioMetadata, ITag} from "./index";
-import {IFormat, IOptions} from "../lib/index";
+import {INativeAudioMetadata, ITag, IFormat, IOptions} from "./";
 import {ITokenizer} from "strtok3";
 import {Promise} from "es6-promise";
 import {StringType, BufferType, IGetToken, IgnoreType} from "token-types";
