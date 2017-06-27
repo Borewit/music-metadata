@@ -25,6 +25,5 @@ it("ogg-multipage-metadata-bug", () => {
     t.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format');
     t.strictEqual(result.common.picture[0].data.length, 207439, 'picture length');
-    t.end()
   })
 });

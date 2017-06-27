@@ -11,8 +11,6 @@ import {IGetToken, StringType} from "token-types";
 import * as Token from "token-types";
 import {IOptions} from "./";
 
-
-
 interface IFrameFlags {
   status: {
     tag_alter_preservation: boolean,

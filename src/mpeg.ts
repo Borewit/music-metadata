@@ -2,7 +2,7 @@
 
 import ReadableStream = NodeJS.ReadableStream;
 
-import {ITokenizer} from "strtok3";
+import {ITokenizer, EndOfFile} from "strtok3";
 import {IFormat} from "../src";
 import Common from "./common";
 import {ITokenParser} from "./ParserFactory";
@@ -310,7 +310,10 @@ export class MpegParser implements ITokenParser {
 
     return this.sync().then(() => {
       return this.format;
-    });
+    }).catch(err => {
+      if(err === EndOfFile)
+      return this.format;
+    })
   }
 
   public sync(): Promise<void> {

@@ -3,11 +3,10 @@ import common from './common';
 import vorbis from './vorbis';
 import ReadableStream = NodeJS.ReadableStream;
 import {ITokenParser} from "./ParserFactory";
-import {ITokenizer} from "strtok3";
+import {ITokenizer, EndOfFile, ReadStreamTokenizer} from "strtok3";
 import {IFormat, INativeAudioMetadata, IOptions, ITag} from "./index";
 import {Readable} from "stream";
 import {Promise} from "es6-promise";
-import {ReadStreamTokenizer} from "strtok3";
 import {StreamReader} from "then-read-stream";
 import * as Token from "token-types";
 
@@ -96,7 +95,6 @@ class Vorbis {
     len: 7,
 
     get: (buf, off): ICommonHeader => {
-      console.log("vorbis: %s", buf.slice(off, off + 7).toString("ascii"));
       return {
         packetType: buf.readUInt8(off),
         vorbis: new Token.StringType(6, 'ascii').get(buf, off + 1)
@@ -160,12 +158,10 @@ class VorbisParser implements ITokenParser {
    */
   private parseHeaderPacket(): Promise<boolean> {
 
-    console.log("Vorbis: read common header");
     return this.tokenizer.readToken<ICommonHeader>(Vorbis.CommonHeader).then((header) => {
       if (header.vorbis !== 'vorbis')
         throw new Error('Metadata does not look like Vorbis');
 
-      console.log("Vorbis: parsePacket");
       return this.parsePacket(header.packetType).then((res) => {
         if (!res.done) {
           return this.parseHeaderPacket();
@@ -184,13 +180,11 @@ class VorbisParser implements ITokenParser {
     switch (packetType) {
 
       case 1: //  type 1: the identification header
-        console.log("Vorbis: parseVorbisInfo");
         return this.parseVorbisInfo().then((len) => {
           return {len, done: false};
         });
 
       case 3: //  type 3: comment header
-        console.log("Vorbis: parseUserCommentList");
         return this.parseUserCommentList().then((len) => {
           return {len, done: true};
         });
@@ -341,13 +335,14 @@ export class OggParser implements ITokenParser {
         console.log("EndOfStream: ogg");
         this.vorbisStream.append(null);
       } else throw err;
+    }).catch((err) => {
+      if(err === EndOfFile)
+        return;
+      else throw err;
     });
 
     return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([vorbis]) => {
       return vorbis;
-    }).catch((err) => {
-      err = err; // ToDo
-      throw err;
     });
   }
 
@@ -363,7 +358,6 @@ export class OggParser implements ITokenParser {
       return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.segmentTable)).then((segments) => {
         const pageLength = common.sum(segments as any);
         return this.tokenizer.readToken<Buffer>(new Token.BufferType(pageLength)).then((pageData) => {
-          console.log("Send ogg-page %s", header.pageSequenceNo);
           this.vorbisStream.append(pageData);
           return this.parsePage();
         });

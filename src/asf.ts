@@ -25,6 +25,8 @@ export class AsfParser implements ITokenParser {
 
   private tags: ITag[] = [];
 
+  private warnings: string[] = []; // ToDo: make these part of the parsing result
+
   private format: IFormat = {
     dataformat: 'asf'
   };
@@ -57,7 +59,7 @@ export class AsfParser implements ITokenParser {
       } else if (equal(header.objectId, ExtendedContentDescriptionObjectState.guid)) {
         return this.parseExtendedContentDescriptionObject(header);
       } else {
-        console.log("Ignore ASF-Object-GUID: %s", AsfParser.guidToString(header.objectId));
+        this.warnings.push("Ignore ASF-Object-GUID: %s", AsfParser.guidToString(header.objectId));
         return this.tokenizer.readToken<void>(new IgnoreObjectState(header));
         //throw new Error('Unexpected GUID: ' + AsfParser.guidToString(header.objectId) );
       }
