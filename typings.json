@@ -1,7 +1,0 @@
-{
-  "globalDependencies": {
-    "deep-equal": "registry:dt/deep-equal#0.0.0+20160316155526",
-    "node": "registry:dt/node#6.0.0+20161121110008",
-    "through": "registry:dt/through#0.0.0+20160317120654"
-  }
-}
