@@ -18,6 +18,19 @@ export class AsfParser implements ITokenParser {
     return new AsfParser();
   }
 
+  /**
+   * Print GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
+   * @param objectId Binary GUID
+   * @returns {string} GUID as dashed hexadecimal representation
+   */
+  private static guidToString(objectId: Buffer): string {
+    return objectId.slice(0, 4).toString('hex').toUpperCase() + "-"
+      + objectId.slice(4, 6).toString('hex').toUpperCase() + "-"
+      + objectId.slice(6, 8).toString('hex').toUpperCase() + "-"
+      + objectId.slice(8, 10).toString('hex').toUpperCase() + "-"
+      + objectId.slice(10, 16).toString('hex').toUpperCase();
+  }
+
   private tokenizer: ITokenizer;
 
   private numberOfObjectHeaders: number;
@@ -51,19 +64,18 @@ export class AsfParser implements ITokenParser {
     // Parse common header of the ASF Object
     return this.tokenizer.readToken<IAsfObjectHeader>(AsfObject.ObjectHeaderToken).then((header) => {
       // Parse data part of the ASF Object
-      if ( header.objectId.compare(FilePropertiesObject.guid) === 0) {
+      if (header.objectId.compare(FilePropertiesObject.guid) === 0) {
         return this.parseFilePropertiesObject(header);
       } else if (header.objectId.compare(ContentDescriptionObjectState.guid) === 0) {
         return this.parseContentDescription(header);
-      } else if ( header.objectId.compare(ExtendedContentDescriptionObjectState.guid) === 0) {
+      } else if (header.objectId.compare(ExtendedContentDescriptionObjectState.guid) === 0) {
         return this.parseExtendedContentDescriptionObject(header);
       } else {
         this.warnings.push("Ignore ASF-Object-GUID: %s", AsfParser.guidToString(header.objectId));
         return this.tokenizer.readToken<void>(new IgnoreObjectState(header));
-        //throw new Error('Unexpected GUID: ' + AsfParser.guidToString(header.objectId) );
       }
-    }).then( () => {
-      if(--this.numberOfObjectHeaders > 0) {
+    }).then(() => {
+      if (--this.numberOfObjectHeaders > 0) {
         return this.parseObjectHeader();
       } else {
         // done
@@ -75,19 +87,6 @@ export class AsfParser implements ITokenParser {
         };
       }
     });
-  }
-
-  /**
-   * Print GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
-   * @param objectId Binary GUID
-   * @returns {string} GUID as dashed hexadecimal representation
-   */
-  private static guidToString(objectId: Buffer): string {
-    return objectId.slice(0, 4).toString('hex').toUpperCase() + "-"
-      + objectId.slice(4, 6).toString('hex').toUpperCase() + "-"
-      + objectId.slice(6, 8).toString('hex').toUpperCase() + "-"
-      + objectId.slice(8, 10).toString('hex').toUpperCase() + "-"
-      + objectId.slice(10, 16).toString('hex').toUpperCase()
   }
 
   private parseContentDescription(header: IAsfObjectHeader): Promise<void> {
@@ -207,7 +206,7 @@ class AsfObject {
       return {
         objectId: new Token.BufferType(16).get(buf, off),
         objectSize: Util.readUInt64LE(buf, off + 16),
-        numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24),
+        numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
         // Reserved: 2 bytes
       };
     }
@@ -355,7 +354,6 @@ class FilePropertiesObject extends State<IFilePropertiesObject> {
 
   public get(buf: Buffer, off: number): IFilePropertiesObject {
 
-
     return {
       fileId: new Token.BufferType(16).get(buf, off),
       fileSize: Util.readUInt64LE(buf, off + 16),
@@ -366,7 +364,7 @@ class FilePropertiesObject extends State<IFilePropertiesObject> {
       preroll: Util.readUInt64LE(buf, off + 56),
       flags: {
         broadcast: common.strtokBITSET.get(buf, off + 64, 0),
-        seekable: common.strtokBITSET.get(buf, off + 64, 1),
+        seekable: common.strtokBITSET.get(buf, off + 64, 1)
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
@@ -375,4 +373,3 @@ class FilePropertiesObject extends State<IFilePropertiesObject> {
     };
   }
 }
-

@@ -8,8 +8,6 @@ import {ITokenizer, IgnoreType} from "strtok3";
 import {BufferType, IGetToken} from "token-types";
 import * as Token from "token-types";
 
-
-
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
  * ref: https://xiph.org/flac/format.html#metadata_block
@@ -26,15 +24,16 @@ enum BlockType {
 
 export class FlacParser implements ITokenParser {
 
+  public static getInstance(): FlacParser {
+    return new FlacParser();
+  }
+
   private tokenizer: ITokenizer;
 
   private format: IFormat;
   private tags: ITag[] = [];
   private padding: number = 0;
-
-  public static getInstance(): FlacParser {
-    return new FlacParser();
-  }
+  private warnings: string[] = []; // ToDo: should be part of the parsing result
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
@@ -64,8 +63,8 @@ export class FlacParser implements ITokenParser {
         } else {
           return this.parseBlockHeader();
         }
-      })
-    })
+      });
+    });
   }
 
   private parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
@@ -86,8 +85,7 @@ export class FlacParser implements ITokenParser {
       case BlockType.PICTURE:
         return this.parsePicture(blockHeader.length);
       default:
-        console.log("Unknown block type: %s", blockHeader.type);
-        //throw new Error("Unknown block type: " + blockHeader.type);
+        this.warnings.push("Unknown block type: " + blockHeader.type);
     }
     // Ignore data block
     return this.tokenizer.readToken<void>(new IgnoreType(blockHeader.length));
@@ -98,7 +96,7 @@ export class FlacParser implements ITokenParser {
    */
   private parseBlockStreamInfo(dataLen: number): Promise<void> {
 
-    if(dataLen !== Metadata.BlockStreamInfo.len)
+    if (dataLen !== Metadata.BlockStreamInfo.len)
       throw new Error("Unexpected block-stream-info length");
 
     return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then((streamInfo) => {
@@ -263,4 +261,3 @@ class DataDecoder {
     return value;
   }
 }
-

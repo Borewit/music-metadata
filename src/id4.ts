@@ -73,7 +73,6 @@ interface IAtomMdhd extends IAtomMxhd {
    */
   language: number,
 
-
   quality: number
 }
 
@@ -83,12 +82,14 @@ interface IAtomMdhd extends IAtomMxhd {
 interface IAtomMvhd extends IAtomMxhd {
 
   /**
-   * Preferred rate: a 32-bit fixed-point number that specifies the rate at which to play this movie. A value of 1.0 indicates normal rate.
+   * Preferred rate: a 32-bit fixed-point number that specifies the rate at which to play this movie.
+   * A value of 1.0 indicates normal rate.
    */
   preferredRate: number,
 
   /**
-   * Preferred volume: A 16-bit fixed-point number that specifies how loud to play this movie’s sound. A value of 1.0 indicates full volume.
+   * Preferred volume: A 16-bit fixed-point number that specifies how loud to play this movie’s sound.
+   * A value of 1.0 indicates full volume.
    */
   preferredVolume: number,
 
@@ -98,7 +99,9 @@ interface IAtomMvhd extends IAtomMxhd {
   // reserved: number,
 
   /**
-   *  Matrix structure: The matrix structure associated with this movie. A matrix shows how to map points from one coordinate space into another. See Matrices for a discussion of how display matrices are used in QuickTime.
+   *  Matrix structure: The matrix structure associated with this movie.
+   *  A matrix shows how to map points from one coordinate space into another.
+   *  See Matrices for a discussion of how display matrices are used in QuickTime.
    */
   // matrixStructure: ???;
 
@@ -395,6 +398,7 @@ export class Id4Parser implements ITokenParser {
 
   private format: IFormat = {};
   private tags: ITag[] = [];
+  private warnings: string[] = []; // ToDo: make this part of the parsing result
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
     this.tokenizer = tokenizer;
@@ -576,9 +580,9 @@ export class Id4Parser implements ITokenParser {
         default:
           return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((dataAtom) => {
             // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
+            this.warnings.push("unsupported meta-item: " + tagKey + "[" + header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
             return header.length;
           });
-        //throw new Error("Unsupported " + header.name);
       }
     }).then((len) => {
       const remaining = remLen - len;
@@ -616,7 +620,8 @@ export class Id4Parser implements ITokenParser {
                 break;
 
               default:
-                // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }", header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
+                // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
+                // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
             }
             break;
 

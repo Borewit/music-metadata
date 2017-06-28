@@ -8,7 +8,6 @@ import {ITokenizer, IgnoreType} from "strtok3";
 import {BufferType, StringType} from "token-types";
 import * as Token from "token-types";
 
-
 /**
  * APETag versionIndex history / supported formats
  *
@@ -189,7 +188,7 @@ class Structure {
 
   public static TagField = (footer) => {
     return new BufferType(footer.size - Structure.TagFooter.len);
-  };
+  }
 
   public static parseTagFlags(flags): ITagFlags {
     return {
@@ -229,6 +228,60 @@ export class ApeParser implements ITokenParser {
     let duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
     duration += ah.finalFrameBlocks;
     return duration / ah.sampleRate;
+  }
+
+  private static parseTags(footer: IFooter, buffer: Buffer): Array<{id: string, value: any}> {
+    let offset = 0;
+
+    const tags: Array<{id: string, value: any}> = [];
+
+    for (let i = 0; i < footer.fields; i++) {
+      const size = Token.UINT32_LE.get(buffer, offset);
+      offset += 4;
+      const flags = Structure.parseTagFlags(Token.UINT32_LE.get(buffer, offset));
+      offset += 4;
+
+      let zero = common.findZero(buffer, offset, buffer.length);
+      const key = buffer.toString('ascii', offset, zero);
+      offset = zero + 1;
+
+      switch (flags.dataType) {
+        case DataType.text_utf8: { // utf-8 textstring
+          const value = buffer.toString('utf8', offset, offset += size);
+          const values = value.split(/\x00/g);
+
+          /*jshint loopfunc:true */
+          for (const val of values) {
+            tags.push({id: key, value: val});
+          }
+        }
+          break;
+
+        case DataType.binary: { // binary (probably artwork)
+          if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
+            const picData = buffer.slice(offset, offset + size);
+
+            let off = 0;
+            zero = common.findZero(picData, off, picData.length);
+            const description = picData.toString('utf8', off, zero);
+            off = zero + 1;
+
+            const picture = {
+              description,
+              data: new Buffer(picData.slice(off))
+            };
+
+            offset += size;
+            tags.push({id: key, value: picture});
+          }
+        }
+          break;
+
+        default:
+          throw new Error('Unexpected data-type: ' + flags.dataType);
+      }
+    }
+    return tags;
   }
 
   private type: HeaderType = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
@@ -301,59 +354,5 @@ export class ApeParser implements ITokenParser {
         return ApeParser.parseTags(footer, tags);
       });
     });
-  }
-
-  private static parseTags(footer: IFooter, buffer: Buffer): Array<{id: string, value: any}> {
-    let offset = 0;
-
-    const tags: Array<{id: string, value: any}> = [];
-
-    for (let i = 0; i < footer.fields; i++) {
-      const size = Token.UINT32_LE.get(buffer, offset);
-      offset += 4;
-      const flags = Structure.parseTagFlags(Token.UINT32_LE.get(buffer, offset));
-      offset += 4;
-
-      let zero = common.findZero(buffer, offset, buffer.length);
-      const key = buffer.toString('ascii', offset, zero);
-      offset = zero + 1;
-
-      switch (flags.dataType) {
-        case DataType.text_utf8: { // utf-8 textstring
-          const value = buffer.toString('utf8', offset, offset += size);
-          const values = value.split(/\x00/g);
-
-          /*jshint loopfunc:true */
-          for (const val of values) {
-            tags.push({id: key, value: val});
-          }
-        }
-          break;
-
-        case DataType.binary: { // binary (probably artwork)
-          if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
-            const picData = buffer.slice(offset, offset + size);
-
-            let off = 0;
-            zero = common.findZero(picData, off, picData.length);
-            const description = picData.toString('utf8', off, zero);
-            off = zero + 1;
-
-            const picture = {
-              description,
-              data: new Buffer(picData.slice(off))
-            };
-
-            offset += size;
-            tags.push({id: key, value: picture});
-          }
-        }
-          break;
-
-        default:
-          throw new Error('Unexpected data-type: ' + flags.dataType);
-      }
-    }
-    return tags;
   }
 }

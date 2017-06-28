@@ -10,8 +10,7 @@ import {ITokenizer, FileTokenizer, ReadStreamTokenizer} from "strtok3";
 import {StringType} from "token-types";
 import {Promise} from "es6-promise";
 import * as stream from "stream";
-
-const path = require('path');
+import * as path from "path";
 
 export interface ITokenParser {
   parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -40,6 +39,26 @@ export class ParserFactory {
         return fileTokenizer.close().then(() => {
           throw err;
         });
+      });
+    });
+  }
+
+  /**
+   * Parse metadata from stream
+   * @param stream
+   * @param mimeType The mime-type, e.g. "audio/mpeg". This is used to redirect to the correct parser.
+   * @param opts Parsing options
+   * @returns {Promise<INativeAudioMetadata>}
+   */
+  public static parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
+
+    return ReadStreamTokenizer.read(stream).then((tokenizer) => {
+      if (!tokenizer.fileSize && opts.fileSize) {
+        tokenizer.fileSize = opts.fileSize;
+      }
+
+      return ParserFactory.getParserForMimeType(mimeType).then((parser) => {
+        return parser.parse(tokenizer, opts);
       });
     });
   }
@@ -114,16 +133,4 @@ export class ParserFactory {
   // ToDo: expose warnings to API
   private warning: string[] = [];
 
-  public static parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
-
-    return ReadStreamTokenizer.read(stream).then((tokenizer) => {
-      if (!tokenizer.fileSize && opts.fileSize) {
-        tokenizer.fileSize = opts.fileSize;
-      }
-
-      return ParserFactory.getParserForMimeType(mimeType).then((parser) => {
-        return parser.parse(tokenizer, opts);
-      })
-    });
-  }
 }

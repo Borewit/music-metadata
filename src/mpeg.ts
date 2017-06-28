@@ -297,7 +297,6 @@ export class MpegParser implements ITokenParser {
 
   private buf_frame_header = new Buffer(4);
 
-
   public constructor(private tokenizer: ITokenizer, private headerSize: number, private readDuration: boolean) {
   }
 
@@ -310,16 +309,16 @@ export class MpegParser implements ITokenParser {
 
     return this.sync().then(() => {
       return this.format;
-    }).catch(err => {
-      if(err === EndOfFile)
-      return this.format;
-    })
+    }).catch((err) => {
+      if (err === EndOfFile)
+        return this.format;
+    });
   }
 
   public sync(): Promise<void> {
-    return this.tokenizer.readBuffer(this.buf_frame_header, 0, 1).then((v) => {
+    return this.tokenizer.readBuffer(this.buf_frame_header, 0, 1).then(() => {
       if (this.buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
-        return this.tokenizer.readBuffer(this.buf_frame_header, 1, 1).then((v) => {
+        return this.tokenizer.readBuffer(this.buf_frame_header, 1, 1).then(() => {
           if ((this.buf_frame_header[1] & 0xE0) === 0xE0) {
             // Synchronized
             return this.parseAudioFrameHeader(this.buf_frame_header);
@@ -377,7 +376,7 @@ export class MpegParser implements ITokenParser {
         return this.skipSideInformation();
       }
 
-       if (this.frameCount === 3) {
+      if (this.frameCount === 3) {
         // the stream is CBR if the first 3 frame bitrates are the same
         if (this.areAllSame(this.bitrates)) {
           // subtract non audio stream data from duration calculation
@@ -440,18 +439,18 @@ export class MpegParser implements ITokenParser {
             return null;
           });
 
-          case 'Xtra':
+        case 'Xtra':
           // ToDo: ???
           break;
 
-          case 'LAME':
-            return this.tokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
-              this.offset += MpegAudioLayer.LameEncoderVersion.len;
-              this.format.encoder = "LAME " + version;
-              const frameDataLeft = this.frame_size - this.offset;
-              return this.skipFrameData(frameDataLeft);
-            });
-          // ToDo: ???
+        case 'LAME':
+          return this.tokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
+            this.offset += MpegAudioLayer.LameEncoderVersion.len;
+            this.format.encoder = "LAME " + version;
+            const frameDataLeft = this.frame_size - this.offset;
+            return this.skipFrameData(frameDataLeft);
+          });
+        // ToDo: ???
       }
 
       // ToDo: promise duration???
@@ -491,15 +490,6 @@ export class MpegParser implements ITokenParser {
       return this.sync();
     });
   }
-
-
-  /* ToDo:
-   public end(callback: TagCallback, done: Done) {
-   if (this.calculateVbrDuration) {
-   this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
-   }
-   return done();
-   }*/
 
   private areAllSame(array) {
     const first = array[0];

@@ -22,7 +22,8 @@
     "max-line-length": [true, 200],
     "switch-default": false,
     "prefer-for-of": false,
-    "ordered-imports": false
+    "ordered-imports": false,
+    "forin": false
   },
   "jsRules": {
     /*

@@ -17,7 +17,8 @@ import * as Token from "token-types";
 interface IOggPageHeader {
   /**
    * capture_pattern
-   * A header begins with a capture pattern that simplifies identifying pages; once the decoder has found the capture pattern it can do a more intensive job of verifying that it has in fact found a page boundary (as opposed to an inadvertent coincidence in the byte stream).
+   * A header begins with a capture pattern that simplifies identifying pages;
+   * once the decoder has found the capture pattern it can do a more intensive job of verifying that it has in fact found a page boundary (as opposed to an inadvertent coincidence in the byte stream).
    */
   capturePattern: string,
   /**
@@ -257,6 +258,10 @@ class VorbisStream extends Readable {
     this.queue.push(vorbisData);
     this._tryPush();
   }
+  public _read() {
+    this.waitingForData = true;
+    this._tryPush();
+  }
 
   private _tryPush() {
     while (this.waitingForData) {
@@ -266,14 +271,13 @@ class VorbisStream extends Readable {
       } else break;
     }
   }
-
-  public _read() {
-    this.waitingForData = true;
-    this._tryPush();
-  }
 }
 
 export class OggParser implements ITokenParser {
+
+  public static getInstance(): OggParser {
+    return new OggParser();
+  }
 
   private static Header: Token.IGetToken<IOggPageHeader> = {
     len: 27,
@@ -288,7 +292,7 @@ export class OggParser implements ITokenParser {
           firstPage: common.strtokBITSET.get(buf, off + 5, 1),
           lastPage: common.strtokBITSET.get(buf, off + 5, 2)
         },
-        //packet_flag: buf.readUInt8(off + 5),
+        // packet_flag: buf.readUInt8(off + 5),
         absoluteGranulePosition: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
         streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
         pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
@@ -297,10 +301,6 @@ export class OggParser implements ITokenParser {
       };
     }
   };
-
-  public static getInstance(): OggParser {
-    return new OggParser();
-  }
 
   private tokenizer: ITokenizer;
 
@@ -329,25 +329,24 @@ export class OggParser implements ITokenParser {
       return metadata;
     });
 
-
     const ogg = this.parsePage().catch((err) => {
       if (err === StreamReader.EndOfStream) {
-        console.log("EndOfStream: ogg");
+        // console.log("EndOfStream: ogg");
         this.vorbisStream.append(null);
       } else throw err;
     }).catch((err) => {
-      if(err === EndOfFile)
+      if (err === EndOfFile)
         return;
       else throw err;
     });
 
-    return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([vorbis]) => {
-      return vorbis;
+    return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([metadata]) => {
+      return metadata;
     });
   }
 
   private parsePage(): Promise<void> {
-    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then(header => {
+    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then( (header) => {
       if (header.capturePattern !== 'OggS') { // Capture pattern
         throw new Error('expected ogg header but was not found');
       }

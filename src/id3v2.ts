@@ -204,7 +204,7 @@ export class Id3v2Parser implements ITokenParser {
   private tokenizer: ITokenizer;
   private id3Header: IID3v2header;
 
-  private tags: { id: string, value: any }[] = [];
+  private tags: Array<{ id: string, value: any }> = [];
   private headerType: HeaderType;
   private options: IOptions;
 
@@ -259,7 +259,7 @@ export class Id3v2Parser implements ITokenParser {
           }
         } else if (isArray(tag.value)) {
           for (const value of tag.value) {
-            this.tags.push({id: tag.id, value: value});
+            this.tags.push({id: tag.id, value});
           }
         } else {
           this.tags.push({id: tag.id, value: tag.value});
@@ -283,7 +283,7 @@ export class Id3v2Parser implements ITokenParser {
 
   private parseMetadata(data: Buffer): ITag[] {
     let offset = 0;
-    const tags: { id: string, value: any }[] = [];
+    const tags: Array<{ id: string, value: any }> = [];
 
     while (true) {
       if (offset === data.length) break;

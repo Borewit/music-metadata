@@ -31,7 +31,7 @@ interface Iid3v1Header {
 const Iid3v1Token: IGetToken<Iid3v1Header> = {
   len: 128,
 
-  get: (buf, off):  Iid3v1Header => {
+  get: (buf, off): Iid3v1Header => {
     return {
       header: new Id3v1StringType(3, 'ascii').get(buf, off),
       title: new Id3v1StringType(30, 'ascii').get(buf, off + 3),
@@ -61,6 +61,13 @@ export class Id3v1Parser implements ITokenParser {
     return new Id3v1Parser();
   }
 
+  private static getGenre(genreIndex: number): string {
+    if (genreIndex < Common.Genres.length) {
+      return Common.Genres[genreIndex];
+    }
+    return undefined; // ToDO: generate warning
+  }
+
   private mpegParser: MpegParser;
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
@@ -69,7 +76,7 @@ export class Id3v1Parser implements ITokenParser {
     return this.mpegParser.parse().then((format) => {
       return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then((header) => {
         const res = {
-          format: format,
+          format,
           native: {
             'id3v1.1': [
               {id: 'title', value: header.title},
@@ -78,51 +85,13 @@ export class Id3v1Parser implements ITokenParser {
               {id: 'comment', value: header.comment},
               {id: 'track', value: header.track},
               {id: 'year', value: header.year},
-              {id: 'genre', value: Id3v1Parser.getGenre(header.genre)},
+              {id: 'genre', value: Id3v1Parser.getGenre(header.genre)}
             ]
           }
         };
         res.format.headerType = 'id3v1.1' as HeaderType;
         return res;
-      })
+      });
     });
   }
-
-  private static getGenre(genreIndex: number): string {
-    if(genreIndex < Common.Genres.length ) {
-      return Common.Genres[genreIndex];
-    }
-    return undefined; // ToDO: generate warning
-  }
-
-  /*
-  public end(callback: TagCallback, done: Done) {
-
-    let offset = this.endData.length - 128;
-    const header = this.endData.toString('ascii', offset, offset += 3);
-    if (header !== 'TAG') {
-      return done(new Error('Could not find metadata header'));
-    }
-
-    callback('format', 'headerType', this.type);
-
-    Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'title', callback);
-    Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'artist', callback);
-    Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'album', callback);
-    Id3v1Parser.parseTag(this.endData, offset, offset += 4, this.type, 'year', callback);
-    Id3v1Parser.parseTag(this.endData, offset, offset += 28, this.type, 'comment', callback);
-
-    const track = this.endData[this.endData.length - 2];
-    callback(this.type, 'track', track);
-
-    if (this.endData[this.endData.length - 1] in common.GENRES) {
-      const genre = common.GENRES[this.endData[this.endData.length - 1]];
-      callback(this.type, 'genre', genre);
-    }
-
-    if (this.mpegParser) {
-      this.mpegParser.end(callback, done);
-    }
-  }*/
 }
-

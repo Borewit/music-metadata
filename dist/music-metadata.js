@@ -1,65 +1,225 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.musicMetadata = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var id3v2_1 = require("./id3v2");
+var id3v1_1 = require("./id3v1");
+var monkeysaudio_1 = require("./monkeysaudio");
+var asf_1 = require("./asf");
+var flac_1 = require("./flac");
+var id4_1 = require("./id4");
+var ogg_1 = require("./ogg");
+var strtok3_1 = require("strtok3");
+var token_types_1 = require("token-types");
+var es6_promise_1 = require("es6-promise");
+var path = require('path');
+var ParserFactory = (function () {
+    function ParserFactory() {
+        // ToDo: expose warnings to API
+        this.warning = [];
+    }
+    /**
+     * Extract metadata from the given audio file
+     * @param filePath File path of the audio file to parse
+     * @param opts
+     *   .fileSize=true  Return filesize
+     *   .native=true    Will return original header in result
+     * @returns {Promise<INativeAudioMetadata>}
+     */
+    ParserFactory.parseFile = function (filePath, opts) {
+        if (opts === void 0) { opts = {}; }
+        return strtok3_1.FileTokenizer.open(filePath).then(function (fileTokenizer) {
+            return ParserFactory.getParserForExtension(filePath).then(function (parser) {
+                return parser.parse(fileTokenizer, opts).then(function (metadata) {
+                    return fileTokenizer.close().then(function () {
+                        return metadata;
+                    });
+                });
+            }).catch(function (err) {
+                return fileTokenizer.close().then(function () {
+                    throw err;
+                });
+            });
+        });
+    };
+    /**
+     * @param filePath Path to audio file
+     */
+    ParserFactory.getParserForExtension = function (filePath) {
+        var extension = path.extname(filePath).toLocaleLowerCase();
+        switch (extension) {
+            case '.mp3':
+                return this.hasStartTag(filePath, 'ID3').then(function (hasID3) {
+                    return hasID3 ? new id3v2_1.Id3v2Parser() : new id3v1_1.Id3v1Parser();
+                });
+            case '.ape':
+                return es6_promise_1.Promise.resolve(new monkeysaudio_1.ApeParser());
+            case '.m4a':
+                return es6_promise_1.Promise.resolve(new id4_1.Id4Parser());
+            case '.wma':
+                return es6_promise_1.Promise.resolve(new asf_1.AsfParser());
+            case '.flac':
+                return es6_promise_1.Promise.resolve(new flac_1.FlacParser());
+            case '.ogg':
+                return es6_promise_1.Promise.resolve(new ogg_1.OggParser());
+            default:
+                throw new Error("Extension " + extension + " not supported.");
+        }
+    };
+    ParserFactory.getParserForMimeType = function (mimeType) {
+        switch (mimeType) {
+            case 'audio/mpeg':
+                return es6_promise_1.Promise.resolve(new id3v2_1.Id3v2Parser()); // ToDo: handle ID1 header as well
+            case 'audio/x-monkeys-audio':
+                return es6_promise_1.Promise.resolve(new monkeysaudio_1.ApeParser());
+            case 'audio/mp4':
+                return es6_promise_1.Promise.resolve(new id4_1.Id4Parser());
+            case 'audio/x-ms-wma':
+                return es6_promise_1.Promise.resolve(new asf_1.AsfParser());
+            case 'audio/flac':
+                return es6_promise_1.Promise.resolve(new flac_1.FlacParser());
+            case 'audio/ogg':
+                return es6_promise_1.Promise.resolve(new ogg_1.OggParser());
+            default:
+                throw new Error("MIME-Type: " + mimeType + " not supported.");
+        }
+    };
+    // ToDo: obsolete
+    ParserFactory.hasStartTag = function (filePath, tagIdentifier) {
+        return strtok3_1.FileTokenizer.open(filePath).then(function (tokenizer) {
+            return tokenizer.readToken(new token_types_1.StringType(tagIdentifier.length, 'ascii')).then(function (token) {
+                return token === tagIdentifier;
+            });
+        });
+    };
+    ParserFactory.parseStream = function (stream, mimeType, opts) {
+        if (opts === void 0) { opts = {}; }
+        return strtok3_1.ReadStreamTokenizer.read(stream).then(function (tokenizer) {
+            if (!tokenizer.fileSize && opts.fileSize) {
+                tokenizer.fileSize = opts.fileSize;
+            }
+            return ParserFactory.getParserForMimeType(mimeType).then(function (parser) {
+                return parser.parse(tokenizer, opts);
+            });
+        });
+    };
+    return ParserFactory;
+}());
+exports.ParserFactory = ParserFactory;
+
+},{"./asf":2,"./flac":5,"./id3v1":6,"./id3v2":7,"./id4":9,"./monkeysaudio":11,"./ogg":13,"es6-promise":25,"path":73,"strtok3":89,"token-types":92}],2:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var equal = require("deep-equal");
-var strtok = require("strtok2");
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
-var State = (function () {
-    function State(nextState, size) {
-        this.nextState = nextState;
-        this.size = size;
-    }
-    return State;
-}());
+var Token = require("token-types");
+/**
+ * Ref: https://tools.ietf.org/html/draft-fleischman-asf-01
+ * Ref: https://hwiegman.home.xs4all.nl/fileformats/asf/ASF_Specification.pdf
+ */
 var AsfParser = (function () {
     function AsfParser() {
+        this.tags = [];
+        this.warnings = []; // ToDo: make these part of the parsing result
+        this.format = {
+            dataformat: 'asf'
+        };
     }
     AsfParser.getInstance = function () {
         return new AsfParser();
     };
-    AsfParser.prototype.parse = function (stream, callback, done) {
-        var currentState = AsfParser.startState;
-        strtok.parse(stream, function (v, cb) {
-            currentState = currentState.parse(callback, v, done);
-            return currentState.getExpectedType();
+    AsfParser.prototype.parse = function (tokenizer, options) {
+        this.tokenizer = tokenizer;
+        return this.paresTopLevelHeaderObject();
+    };
+    AsfParser.prototype.paresTopLevelHeaderObject = function () {
+        var _this = this;
+        return this.tokenizer.readToken(AsfObject.TopLevelHeaderObjectToken).then(function (header) {
+            if (header.objectId.compare(exports.Header_GUID) !== 0) {
+                throw new Error('expected asf header; but was not found');
+            }
+            _this.numberOfObjectHeaders = header.numberOfHeaderObjects;
+            return _this.parseObjectHeader();
+        });
+    };
+    AsfParser.prototype.parseObjectHeader = function () {
+        var _this = this;
+        // Parse common header of the ASF Object
+        return this.tokenizer.readToken(AsfObject.ObjectHeaderToken).then(function (header) {
+            // Parse data part of the ASF Object
+            if (header.objectId.compare(FilePropertiesObject.guid) === 0) {
+                return _this.parseFilePropertiesObject(header);
+            }
+            else if (header.objectId.compare(ContentDescriptionObjectState.guid) === 0) {
+                return _this.parseContentDescription(header);
+            }
+            else if (header.objectId.compare(ExtendedContentDescriptionObjectState.guid) === 0) {
+                return _this.parseExtendedContentDescriptionObject(header);
+            }
+            else {
+                _this.warnings.push("Ignore ASF-Object-GUID: %s", AsfParser.guidToString(header.objectId));
+                return _this.tokenizer.readToken(new IgnoreObjectState(header));
+                //throw new Error('Unexpected GUID: ' + AsfParser.guidToString(header.objectId) );
+            }
+        }).then(function () {
+            if (--_this.numberOfObjectHeaders > 0) {
+                return _this.parseObjectHeader();
+            }
+            else {
+                // done
+                return {
+                    format: _this.format,
+                    native: {
+                        asf: _this.tags
+                    }
+                };
+            }
+        });
+    };
+    /**
+     * Print GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
+     * @param objectId Binary GUID
+     * @returns {string} GUID as dashed hexadecimal representation
+     */
+    AsfParser.guidToString = function (objectId) {
+        return objectId.slice(0, 4).toString('hex').toUpperCase() + "-"
+            + objectId.slice(4, 6).toString('hex').toUpperCase() + "-"
+            + objectId.slice(6, 8).toString('hex').toUpperCase() + "-"
+            + objectId.slice(8, 10).toString('hex').toUpperCase() + "-"
+            + objectId.slice(10, 16).toString('hex').toUpperCase();
+    };
+    AsfParser.prototype.parseContentDescription = function (header) {
+        var _this = this;
+        return this.tokenizer.readToken(new ContentDescriptionObjectState(header)).then(function (tags) {
+            _this.tags = _this.tags.concat(tags);
+        });
+    };
+    AsfParser.prototype.parseFilePropertiesObject = function (header) {
+        var _this = this;
+        return this.tokenizer.readToken(new FilePropertiesObject(header)).then(function (fpo) {
+            _this.format.duration = fpo.playDuration / 10000000;
+            _this.format.bitrate = fpo.maximumBitrate;
+        });
+    };
+    AsfParser.prototype.parseExtendedContentDescriptionObject = function (header) {
+        var _this = this;
+        return this.tokenizer.readToken(new ExtendedContentDescriptionObjectState(header)).then(function (tags) {
+            _this.tags = _this.tags.concat(tags);
         });
     };
     return AsfParser;
 }());
 AsfParser.headerType = 'asf';
-AsfParser.startState = {
-    parse: function () {
-        return AsfParser.idState;
-    },
-    getExpectedType: function () {
-        return strtok.DONE; // unreachable statement
-    }
-};
-AsfParser.finishedState = {
-    parse: function () {
-        return AsfParser.finishedState;
-    },
-    getExpectedType: function () {
-        return strtok.DONE;
-    }
-};
-AsfParser.idState = {
-    parse: function (callback, data, done) {
-        if (!equal(common_1.default.asfGuidBuf, data)) {
-            done(new Error('expected asf header but was not found'));
-            return AsfParser.finishedState;
-        }
-        return new HeaderDataState();
-    },
-    getExpectedType: function () {
-        return new strtok.BufferType(common_1.default.asfGuidBuf.length);
-    }
-};
+exports.AsfParser = AsfParser;
 var Util = (function () {
     function Util() {
     }
@@ -103,128 +263,78 @@ Util.attributeParsers = [
     Util.parseWordAttr,
     Util.parseByteArrayAttr
 ];
-var ReadObjectState = (function () {
-    function ReadObjectState(size, objectCount) {
-        this.size = size;
-        this.objectCount = objectCount;
+/**
+ * The ASF_Header_Object GUID
+ * @type {Buffer}
+ */
+exports.Header_GUID = new Buffer([
+    0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+    0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+]);
+/**
+ * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
+ */
+var AsfObject = (function () {
+    function AsfObject() {
     }
-    ReadObjectState.stateByGuid = function (guidBuf) {
-        for (var _i = 0, _a = ReadObjectState.guidStates; _i < _a.length; _i++) {
-            var guidState = _a[_i];
-            if (equal(guidState.guid, guidBuf)) {
-                return guidState;
-            }
-        }
-        return null;
-    };
-    ReadObjectState.prototype.parse = function (callback, data, done) {
-        var guid = data.slice(0, 16);
-        var size = Util.readUInt64LE(data, 16);
-        this.objectCount -= 1;
-        this.size -= size;
-        var nextState = (this.objectCount <= 0) ? AsfParser.finishedState : this;
-        var guidState = ReadObjectState.stateByGuid(guid);
-        return guidState ? guidState.getState(nextState, size - 24) : new IgnoreObjectState(nextState, size - 24);
-    };
-    ReadObjectState.prototype.getExpectedType = function () {
-        return new strtok.BufferType(24);
-    };
-    return ReadObjectState;
+    return AsfObject;
 }());
-ReadObjectState.guidStates = [
-    {
-        guid: new Buffer([
-            0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
-            0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
-        ]),
-        getState: function (nextState, size) {
-            return new FilePropertiesObject(nextState, size);
-        }
-    },
-    // ContentDescriptionObject
-    {
-        guid: new Buffer([
-            0x33, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-            0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-        ]),
-        getState: function (nextState, size) {
-            return new ContentDescriptionObjectState(nextState, size);
-        }
-    },
-    // ExtendedContentDescriptionObject
-    {
-        guid: new Buffer([
-            0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
-            0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
-        ]),
-        getState: function (nextState, size) {
-            return new ExtendedContentDescriptionObjectState(nextState, size);
-        }
+AsfObject.TopLevelHeaderObjectToken = {
+    len: 30,
+    get: function (buf, off) {
+        return {
+            objectId: new Token.BufferType(16).get(buf, off),
+            objectSize: Util.readUInt64LE(buf, off + 16),
+            numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24),
+        };
     }
-];
-var HeaderDataState = (function () {
-    function HeaderDataState() {
+};
+AsfObject.ObjectHeaderToken = {
+    len: 24,
+    get: function (buf, off) {
+        return {
+            objectId: new Token.BufferType(16).get(buf, off),
+            objectSize: Util.readUInt64LE(buf, off + 16)
+        };
     }
-    HeaderDataState.prototype.parse = function (callback, data, done) {
-        var size = Util.readUInt64LE(data, 0);
-        var objectCount = data.readUInt32LE(8);
-        return new ReadObjectState(size, objectCount);
-    };
-    HeaderDataState.prototype.getExpectedType = function () {
-        // 8 bytes size
-        // 4 bytes object count
-        // 2 bytes ignore
-        return new strtok.BufferType(14);
-    };
-    return HeaderDataState;
+};
+var State = (function () {
+    function State(header) {
+        this.len = header.objectSize - AsfObject.ObjectHeaderToken.len;
+    }
+    return State;
 }());
 var IgnoreObjectState = (function (_super) {
     __extends(IgnoreObjectState, _super);
-    function IgnoreObjectState(nextState, size) {
-        return _super.call(this, nextState, size) || this;
+    function IgnoreObjectState(header) {
+        return _super.call(this, header) || this;
     }
-    IgnoreObjectState.prototype.parse = function (callback, data, done) {
-        if (this.nextState === AsfParser.finishedState) {
-            done();
-        }
-        return this.nextState;
-    };
-    IgnoreObjectState.prototype.getExpectedType = function () {
-        return new strtok.IgnoreType(this.size);
+    IgnoreObjectState.prototype.get = function (buf, off) {
+        return null;
     };
     return IgnoreObjectState;
 }(State));
+/**
+ * 3.10 Content Description Object (optional, one only)
+ */
 var ContentDescriptionObjectState = (function (_super) {
     __extends(ContentDescriptionObjectState, _super);
-    function ContentDescriptionObjectState(nextState, size) {
-        return _super.call(this, nextState, size) || this;
+    function ContentDescriptionObjectState(header) {
+        return _super.call(this, header) || this;
     }
-    ContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
-        var lengths = [
-            data.readUInt16LE(0),
-            data.readUInt16LE(2),
-            data.readUInt16LE(4),
-            data.readUInt16LE(6),
-            data.readUInt16LE(8)
-        ];
+    ContentDescriptionObjectState.prototype.get = function (buf, off) {
+        var tags = [];
         var pos = 10;
-        for (var i = 0; i < ContentDescriptionObjectState.contentDescTags.length; i += 1) {
-            var tagName = ContentDescriptionObjectState.contentDescTags[i];
-            var length_1 = lengths[i];
-            var end = pos + length_1;
+        for (var i = 0; i < ContentDescriptionObjectState.contentDescTags.length; ++i) {
+            var length_1 = buf.readUInt16LE(i * 2);
             if (length_1 > 0) {
-                var value = Util.parseUnicodeAttr(data.slice(pos, end));
-                callback(AsfParser.headerType, tagName, value);
+                var tagName = ContentDescriptionObjectState.contentDescTags[i];
+                var end = pos + length_1;
+                tags.push({ id: tagName, value: Util.parseUnicodeAttr(buf.slice(pos, end)) });
+                pos = end;
             }
-            pos = end;
         }
-        if (this.nextState === AsfParser.finishedState) {
-            done();
-        }
-        return this.nextState;
-    };
-    ContentDescriptionObjectState.prototype.getExpectedType = function () {
-        return new strtok.BufferType(this.size);
+        return tags;
     };
     return ContentDescriptionObjectState;
 }(State));
@@ -235,90 +345,100 @@ ContentDescriptionObjectState.guid = new Buffer([
 ContentDescriptionObjectState.contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
 var ExtendedContentDescriptionObjectState = (function (_super) {
     __extends(ExtendedContentDescriptionObjectState, _super);
-    function ExtendedContentDescriptionObjectState(nextState, size) {
-        return _super.call(this, nextState, size) || this;
+    function ExtendedContentDescriptionObjectState(header) {
+        return _super.call(this, header) || this;
     }
-    ExtendedContentDescriptionObjectState.prototype.parse = function (callback, data, done) {
-        var attrCount = data.readUInt16LE(0);
+    ExtendedContentDescriptionObjectState.prototype.get = function (buf, off) {
+        var tags = [];
+        var attrCount = buf.readUInt16LE(0);
         var pos = 2;
         for (var i = 0; i < attrCount; i += 1) {
-            var nameLen = data.readUInt16LE(pos);
+            var nameLen = buf.readUInt16LE(pos);
             pos += 2;
-            var name_1 = Util.parseUnicodeAttr(data.slice(pos, pos + nameLen));
+            var name_1 = Util.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
             pos += nameLen;
-            var valueType = data.readUInt16LE(pos);
+            var valueType = buf.readUInt16LE(pos);
             pos += 2;
-            var valueLen = data.readUInt16LE(pos);
+            var valueLen = buf.readUInt16LE(pos);
             pos += 2;
-            var value = data.slice(pos, pos + valueLen);
+            var value = buf.slice(pos, pos + valueLen);
             pos += valueLen;
             var parseAttr = Util.getParserForAttr(valueType);
             if (!parseAttr) {
-                done(new Error('unexpected value headerType: ' + valueType));
-                return AsfParser.finishedState;
+                throw new Error('unexpected value headerType: ' + valueType);
             }
-            var attr = parseAttr(value);
-            callback(AsfParser.headerType, name_1, attr);
+            tags.push({ id: name_1, value: parseAttr(value) });
         }
-        if (this.nextState === AsfParser.finishedState) {
-            done();
-        }
-        return this.nextState;
-    };
-    ExtendedContentDescriptionObjectState.prototype.getExpectedType = function () {
-        return new strtok.BufferType(this.size);
+        return tags;
     };
     return ExtendedContentDescriptionObjectState;
 }(State));
+ExtendedContentDescriptionObjectState.guid = new Buffer([
+    0x40, 0xA4, 0xD0, 0xD2, 0x07, 0xE3, 0xD2, 0x11,
+    0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50
+]);
 var FilePropertiesObject = (function (_super) {
     __extends(FilePropertiesObject, _super);
-    function FilePropertiesObject(nextState, size) {
-        return _super.call(this, nextState, size) || this;
+    function FilePropertiesObject(header) {
+        return _super.call(this, header) || this;
     }
-    FilePropertiesObject.prototype.parse = function (callback, data, done) {
-        // in miliseconds
-        var playDuration = Util.parseQWordAttr(data.slice(40, 48)) / 10000;
-        callback('format', 'duration', playDuration / 1000);
-        if (this.nextState === AsfParser.finishedState) {
-            done();
-        }
-        return this.nextState;
-    };
-    FilePropertiesObject.prototype.getExpectedType = function () {
-        return new strtok.BufferType(this.size);
+    FilePropertiesObject.prototype.get = function (buf, off) {
+        return {
+            fileId: new Token.BufferType(16).get(buf, off),
+            fileSize: Util.readUInt64LE(buf, off + 16),
+            creationDate: Util.readUInt64LE(buf, off + 24),
+            dataPacketsCount: Util.readUInt64LE(buf, off + 32),
+            playDuration: Util.readUInt64LE(buf, off + 40),
+            sendDuration: Util.readUInt64LE(buf, off + 48),
+            preroll: Util.readUInt64LE(buf, off + 56),
+            flags: {
+                broadcast: common_1.default.strtokBITSET.get(buf, off + 64, 0),
+                seekable: common_1.default.strtokBITSET.get(buf, off + 64, 1),
+            },
+            // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
+            minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
+            maximumDataPacketSize: Token.UINT32_LE.get(buf, off + 72),
+            maximumBitrate: Token.UINT32_LE.get(buf, off + 76)
+        };
     };
     return FilePropertiesObject;
 }(State));
-module.exports = AsfParser.getInstance();
+FilePropertiesObject.guid = new Buffer([
+    0xA1, 0xDC, 0xAB, 0x8C, 0x47, 0xA9, 0xCF, 0x11,
+    0x8E, 0xE4, 0x00, 0xC0, 0x0C, 0x20, 0x53, 0x65
+]);
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":21,"deep-equal":23,"strtok2":50}],2:[function(require,module,exports){
+},{"./common":4,"buffer":22,"token-types":92}],3:[function(require,module,exports){
 (function (process,Buffer){
 'use strict';
+Object.defineProperty(exports, "__esModule", { value: true });
 /*jslint browser: true*/
-var through = require("through");
 var musicMetadata = require("./index");
 var readStream = require("filereader-stream");
 var isStream = require("is-stream");
+var through = require("through");
+var stream = require("stream");
 module.exports = function (stream, opts, callback) {
     return musicMetadata.parseStream(wrapFileWithStream(stream), opts, callback);
 };
 function wrapFileWithStream(file) {
+    var _this = this;
     // tslint:disable-next-line
-    var stream = through(function (data) {
+    var _stream = through(function (data) {
         if (data.length > 0)
-            this.queue(data);
+            _this.queue(data);
     }, null, { autoDestroy: false });
     if (file instanceof ArrayBuffer) {
-        return wrapArrayBufferWithStream(file, stream);
+        return wrapArrayBufferWithStream(file, _stream);
     }
-    stream.fileSize = function (cb) {
+    _stream.fileSize = function (cb) {
         process.nextTick(function () {
             cb(file.size);
         });
     };
     if (isStream(file)) {
-        return file.pipe(stream);
+        return file.pipe(_stream);
     }
     if (file instanceof FileList) {
         throw new Error('You have passed a FileList object but we expected a File');
@@ -342,10 +462,9 @@ function wrapArrayBufferWithStream(arrayBuffer, throughStream) {
 }
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./index":9,"_process":36,"buffer":21,"filereader-stream":27,"is-stream":32,"through":51}],3:[function(require,module,exports){
-(function (Buffer){
+},{"./index":10,"_process":75,"buffer":22,"filereader-stream":27,"is-stream":68,"stream":87,"through":91}],4:[function(require,module,exports){
 "use strict";
-var equal = require("deep-equal");
+Object.defineProperty(exports, "__esModule", { value: true });
 var windows1252decoder_1 = require("./windows1252decoder");
 var Common = (function () {
     function Common() {
@@ -354,8 +473,7 @@ var Common = (function () {
         for (var _i = 0, types_1 = types; _i < types_1.length; _i++) {
             var type = types_1[_i];
             var offset = type.offset || 0;
-            if (header.length >= offset + type.buf.length &&
-                equal(header.slice(offset, offset + type.buf.length), type.buf)) {
+            if (header.length >= offset + type.buf.length && header.slice(offset, offset + type.buf.length).compare(type.buf) === 0) {
                 return type.tag;
             }
         }
@@ -476,7 +594,7 @@ var Common = (function () {
         for (var _i = 0, split_1 = split; _i < split_1.length; _i++) {
             var cur = split_1[_i];
             if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
-                cur = Common.GENRES[cur];
+                cur = Common.Genres[cur];
             }
             array.push(cur);
         }
@@ -528,35 +646,11 @@ var Common = (function () {
     };
     return Common;
 }());
-// ToDo: move to ASF
-Common.asfGuidBuf = new Buffer([
-    0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-    0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
-]);
-Common.strtokUINT24_BE = {
-    get: function (buf, off) {
-        return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
-    },
-    len: 3
-};
-Common.strtokBITSET = {
-    get: function (buf, off, bit) {
-        return (buf[off] & (1 << bit)) !== 0;
-    },
-    len: 1
-};
-Common.strtokUINT32_LE = {
-    len: 4,
-    get: function (buf, off) {
-        // Shifting the MSB by 24 directly causes it to go negative if its
-        // last bit is high, so we instead shift by 23 and multiply by 2.
-        // Also, using binary OR to count the MSB if its last bit is high
-        // causes the value to go negative. Use addition there.
-        return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
-            ((buf[off + 3] << 23) * 2);
-    }
-};
-Common.GENRES = [
+/**
+ * ID3v1 Genre mappings
+ * Ref: https://de.wikipedia.org/wiki/Liste_der_ID3v1-Genres
+ */
+Common.Genres = [
     'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge', 'Hip-Hop',
     'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B', 'Rap', 'Reggae', 'Rock',
     'Techno', 'Industrial', 'Alternative', 'Ska', 'Death Metal', 'Pranks', 'Soundtrack',
@@ -586,31 +680,39 @@ Common.GENRES = [
     'Audio Theatre', 'Neue Deutsche Welle', 'Podcast', 'Indie Rock', 'G-Funk', 'Dubstep',
     'Garage Rock', 'Psybient'
 ];
-Object.defineProperty(exports, "__esModule", { value: true });
+Common.strtokUINT24_BE = {
+    get: function (buf, off) {
+        return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
+    },
+    len: 3
+};
+Common.strtokBITSET = {
+    get: function (buf, off, bit) {
+        return (buf[off] & (1 << bit)) !== 0;
+    },
+    len: 1
+};
+Common.strtokUINT32_LE = {
+    len: 4,
+    get: function (buf, off) {
+        // Shifting the MSB by 24 directly causes it to go negative if its
+        // last bit is high, so we instead shift by 23 and multiply by 2.
+        // Also, using binary OR to count the MSB if its last bit is high
+        // causes the value to go negative. Use addition there.
+        return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
+            ((buf[off + 3] << 23) * 2);
+    }
+};
 exports.default = Common;
 
-}).call(this,require("buffer").Buffer)
-},{"./id3v1":5,"./windows1252decoder":15,"buffer":21,"deep-equal":23}],4:[function(require,module,exports){
+},{"./id3v1":6,"./windows1252decoder":16}],5:[function(require,module,exports){
 'use strict';
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var vorbis_1 = require("./vorbis");
-var FlacParser = (function () {
-    function FlacParser() {
-    }
-    FlacParser.getInstance = function () {
-        return new FlacParser();
-    };
-    FlacParser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
-        var currentState = startState;
-        strtok.parse(stream, function (v, cb) {
-            currentState = currentState.parse(callback, v, done);
-            return currentState.getExpectedType();
-        });
-    };
-    return FlacParser;
-}());
-FlacParser.headerType = 'vorbis';
+var strtok3_1 = require("strtok3");
+var token_types_1 = require("token-types");
+var Token = require("token-types");
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
  * ref: https://xiph.org/flac/format.html#metadata_block
@@ -625,6 +727,114 @@ var BlockType;
     BlockType[BlockType["CUESHEET"] = 5] = "CUESHEET";
     BlockType[BlockType["PICTURE"] = 6] = "PICTURE";
 })(BlockType || (BlockType = {}));
+var FlacParser = (function () {
+    function FlacParser() {
+        this.tags = [];
+        this.padding = 0;
+    }
+    FlacParser.getInstance = function () {
+        return new FlacParser();
+    };
+    FlacParser.prototype.parse = function (tokenizer, options) {
+        var _this = this;
+        this.tokenizer = tokenizer;
+        return tokenizer.readToken(new token_types_1.BufferType(4)).then(function (buf) {
+            if (buf.toString() !== 'fLaC') {
+                throw new Error('expected flac header but was not found');
+            }
+            return _this.parseBlockHeader();
+        });
+    };
+    FlacParser.prototype.parseBlockHeader = function () {
+        var _this = this;
+        // Read block header
+        return this.tokenizer.readToken(Metadata.BlockHeader).then(function (blockHeader) {
+            // Parse block data
+            return _this.parseDataBlock(blockHeader).then(function () {
+                if (blockHeader.lastBlock) {
+                    // done
+                    return {
+                        format: _this.format,
+                        native: {
+                            vorbis: _this.tags
+                        }
+                    };
+                }
+                else {
+                    return _this.parseBlockHeader();
+                }
+            });
+        });
+    };
+    FlacParser.prototype.parseDataBlock = function (blockHeader) {
+        switch (blockHeader.type) {
+            case BlockType.STREAMINFO:
+                return this.parseBlockStreamInfo(blockHeader.length);
+            case BlockType.PADDING:
+                this.padding += blockHeader.length;
+                break;
+            case BlockType.APPLICATION:
+                break;
+            case BlockType.SEEKTABLE:
+                break;
+            case BlockType.VORBIS_COMMENT:
+                return this.parseComment(blockHeader.length);
+            case BlockType.CUESHEET:
+                break;
+            case BlockType.PICTURE:
+                return this.parsePicture(blockHeader.length);
+            default:
+                console.log("Unknown block type: %s", blockHeader.type);
+        }
+        // Ignore data block
+        return this.tokenizer.readToken(new strtok3_1.IgnoreType(blockHeader.length));
+    };
+    /**
+     * Parse STREAMINFO
+     */
+    FlacParser.prototype.parseBlockStreamInfo = function (dataLen) {
+        var _this = this;
+        if (dataLen !== Metadata.BlockStreamInfo.len)
+            throw new Error("Unexpected block-stream-info length");
+        return this.tokenizer.readToken(Metadata.BlockStreamInfo).then(function (streamInfo) {
+            _this.format = {
+                dataformat: 'flac',
+                lossless: true,
+                headerType: 'vorbis',
+                numberOfChannels: streamInfo.channels,
+                bitsPerSample: streamInfo.bitsPerSample,
+                sampleRate: streamInfo.sampleRate,
+                duration: streamInfo.totalSamples / streamInfo.sampleRate
+            };
+            // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
+        });
+    };
+    /**
+     * Parse VORBIS_COMMENT
+     */
+    FlacParser.prototype.parseComment = function (dataLen) {
+        var _this = this;
+        return this.tokenizer.readToken(new token_types_1.BufferType(dataLen)).then(function (data) {
+            var decoder = new DataDecoder(data);
+            decoder.readStringUtf8(); // vendor (skip)
+            var commentListLength = decoder.readInt32();
+            for (var i = 0; i < commentListLength; i++) {
+                var comment = decoder.readStringUtf8();
+                var split = comment.split('=');
+                _this.tags.push({ id: split[0].toUpperCase(), value: split[1] });
+            }
+        });
+    };
+    FlacParser.prototype.parsePicture = function (dataLen) {
+        var _this = this;
+        return this.tokenizer.readToken(new token_types_1.BufferType(dataLen)).then(function (data) {
+            var picture = vorbis_1.default.readPicture(data);
+            _this.tags.push({ id: 'METADATA_BLOCK_PICTURE', value: picture });
+        });
+    };
+    return FlacParser;
+}());
+exports.FlacParser = FlacParser;
 var Metadata = (function () {
     function Metadata() {
     }
@@ -649,16 +859,16 @@ Metadata.BlockStreamInfo = {
     get: function (buf, off) {
         return {
             // The minimum block size (in samples) used in the stream.
-            minimumBlockSize: strtok.UINT16_BE.get(buf, off),
+            minimumBlockSize: Token.UINT16_BE.get(buf, off),
             // The maximum block size (in samples) used in the stream.
             // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-            maximumBlockSize: strtok.UINT16_BE.get(buf, off + 2) / 1000,
+            maximumBlockSize: Token.UINT16_BE.get(buf, off + 2) / 1000,
             // The minimum frame size (in bytes) used in the stream.
             // May be 0 to imply the value is not known.
-            minimumFrameSize: strtok.UINT24_BE.get(buf, off + 4),
+            minimumFrameSize: Token.UINT24_BE.get(buf, off + 4),
             // The maximum frame size (in bytes) used in the stream.
             // May be 0 to imply the value is not known.
-            maximumFrameSize: strtok.UINT24_BE.get(buf, off + 7),
+            maximumFrameSize: Token.UINT24_BE.get(buf, off + 7),
             // Sample rate in Hz. Though 20 bits are available,
             // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
             // Also, a value of 0 is invalid.
@@ -674,7 +884,7 @@ Metadata.BlockStreamInfo = {
             // A value of zero here means the number of total samples is unknown.
             totalSamples: common_1.default.getBitAllignedNumber(buf, off + 13, 4, 36),
             // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-            fileMD5: new strtok.BufferType(16).get(buf, off + 18)
+            fileMD5: new token_types_1.BufferType(16).get(buf, off + 18)
         };
     }
 };
@@ -684,7 +894,7 @@ var DataDecoder = (function () {
         this.offset = 0;
     }
     DataDecoder.prototype.readInt32 = function () {
-        var value = strtok.UINT32_LE.get(this.data, this.offset);
+        var value = Token.UINT32_LE.get(this.data, this.offset);
         this.offset += 4;
         return value;
     };
@@ -696,176 +906,105 @@ var DataDecoder = (function () {
     };
     return DataDecoder;
 }());
-// ToDo: same in ASF
-var finishedState = {
-    parse: function (callback) {
-        return finishedState; // ToDo: correct?
-    },
-    getExpectedType: function () {
-        return strtok.DONE;
-    }
-};
-var BlockDataState = (function () {
-    function BlockDataState(type, length, nextStateFactory) {
-        this.type = type;
-        this.length = length;
-        this.nextStateFactory = nextStateFactory;
-    }
-    BlockDataState.prototype.parse = function (callback, data) {
-        switch (this.type) {
-            case BlockType.STREAMINFO:
-                var blockStreamInfo = data;
-                // Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
-                callback('format', 'dataformat', 'flac');
-                callback('format', 'lossless', true);
-                callback('format', 'headerType', FlacParser.headerType);
-                callback('format', 'numberOfChannels', blockStreamInfo.channels);
-                callback('format', 'bitsPerSample', blockStreamInfo.bitsPerSample);
-                callback('format', 'sampleRate', blockStreamInfo.sampleRate);
-                var duration = blockStreamInfo.totalSamples / blockStreamInfo.sampleRate;
-                callback('format', 'duration', blockStreamInfo.totalSamples / blockStreamInfo.sampleRate);
-                // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
-                break;
-            case BlockType.VORBIS_COMMENT:
-                var decoder = new DataDecoder(data);
-                decoder.readStringUtf8(); // vendor (skip)
-                var commentListLength = decoder.readInt32();
-                for (var i = 0; i < commentListLength; i++) {
-                    var comment = decoder.readStringUtf8();
-                    var split = comment.split('=');
-                    callback(FlacParser.headerType, split[0].toUpperCase(), split[1]);
-                }
-                break;
-            case BlockType.PICTURE:
-                var picture = vorbis_1.default.readPicture(data);
-                callback(FlacParser.headerType, 'METADATA_BLOCK_PICTURE', picture);
-                break;
-        }
-        return this.nextStateFactory();
-    };
-    BlockDataState.prototype.getExpectedType = function () {
-        switch (this.type) {
-            case 0:
-                return Metadata.BlockStreamInfo;
-            default:
-                return new strtok.BufferType(this.length);
-        }
-    };
-    return BlockDataState;
-}());
-var blockHeaderState = {
-    parse: function (callback, data, done) {
-        var header = data;
-        var followingStateFactory = header.lastBlock ? function () {
-            done();
-            return finishedState;
-        } : function () {
-            return blockHeaderState;
-        };
-        return new BlockDataState(header.type, header.length, followingStateFactory);
-    },
-    getExpectedType: function () {
-        return Metadata.BlockHeader;
-    }
-};
-var idState = {
-    parse: function (callback, data, done) {
-        if (data.toString() !== 'fLaC') {
-            done(new Error('expected flac header but was not found'));
-        }
-        return blockHeaderState;
-    },
-    getExpectedType: function () {
-        return new strtok.BufferType(4);
-    }
-};
-var startState = {
-    parse: function (callback) {
-        return idState;
-    },
-    getExpectedType: function () {
-        return strtok.DONE;
-    }
-};
-module.exports = FlacParser.getInstance();
 
-},{"./common":3,"./vorbis":14,"strtok2":50}],5:[function(require,module,exports){
+},{"./common":4,"./vorbis":15,"strtok3":89,"token-types":92}],6:[function(require,module,exports){
 'use strict';
-var strtok = require("strtok2");
-var common_1 = require("./common");
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 var mpeg_1 = require("./mpeg");
+var common_1 = require("./common");
+var token_types_1 = require("token-types");
+var Token = require("token-types");
+/**
+ * Ref: https://en.wikipedia.org/wiki/ID3
+ * @type {{len: number; get: ((buf, off)=>Iid3v1Header)}}
+ */
+var Iid3v1Token = {
+    len: 128,
+    get: function (buf, off) {
+        return {
+            header: new Id3v1StringType(3, 'ascii').get(buf, off),
+            title: new Id3v1StringType(30, 'ascii').get(buf, off + 3),
+            artist: new Id3v1StringType(30, 'ascii').get(buf, off + 33),
+            album: new Id3v1StringType(30, 'ascii').get(buf, off + 63),
+            year: new Id3v1StringType(4, 'ascii').get(buf, off + 93),
+            comment: new Id3v1StringType(28, 'ascii').get(buf, off + 97),
+            zeroByte: Token.INT8.get(buf, off + 127),
+            track: Token.INT8.get(buf, off + 126),
+            genre: Token.INT8.get(buf, off + 127)
+        };
+    }
+};
+var Id3v1StringType = (function (_super) {
+    __extends(Id3v1StringType, _super);
+    function Id3v1StringType() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Id3v1StringType.prototype.get = function (buf, off) {
+        var value = _super.prototype.get.call(this, buf, off);
+        value = value.trim().replace(/\x00/g, '');
+        return value.length > 0 ? value : undefined;
+    };
+    return Id3v1StringType;
+}(token_types_1.StringType));
 var Id3v1Parser = (function () {
     function Id3v1Parser() {
-        this.type = 'id3v1.1';
     }
     Id3v1Parser.getInstance = function () {
         return new Id3v1Parser();
     };
-    Id3v1Parser.parseTag = function (buf, offset, end, type, tag, callback) {
-        var value = buf.toString('ascii', offset, end);
-        value = value.trim().replace(/\x00/g, '');
-        if (value.length > 0) {
-            callback(type, tag, value);
-        }
-    };
-    Id3v1Parser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
-        var _this = this;
-        var mp3Done = false;
-        var id3Done = false;
-        stream.on('data', function (data) {
-            _this.endData = data;
+    Id3v1Parser.prototype.parse = function (tokenizer, options) {
+        this.mpegParser = new mpeg_1.MpegParser(tokenizer, 128, options && options.duration);
+        return this.mpegParser.parse().then(function (format) {
+            return tokenizer.readToken(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then(function (header) {
+                var res = {
+                    format: format,
+                    native: {
+                        'id3v1.1': [
+                            { id: 'title', value: header.title },
+                            { id: 'artist', value: header.artist },
+                            { id: 'album', value: header.album },
+                            { id: 'comment', value: header.comment },
+                            { id: 'track', value: header.track },
+                            { id: 'year', value: header.year },
+                            { id: 'genre', value: Id3v1Parser.getGenre(header.genre) },
+                        ]
+                    }
+                };
+                res.format.headerType = 'id3v1.1';
+                return res;
+            });
         });
-        this.mpegParser = new mpeg_1.MpegParser(128);
-        this.mpegParser.parse(stream, callback, function (err) {
-            mp3Done = true;
-            if (id3Done) {
-                return done(err);
-            }
-            else
-                return strtok.DONE;
-        }, readDuration, fileSize);
     };
-    Id3v1Parser.prototype.end = function (callback, done) {
-        var offset = this.endData.length - 128;
-        var header = this.endData.toString('ascii', offset, offset += 3);
-        if (header !== 'TAG') {
-            return done(new Error('Could not find metadata header'));
+    Id3v1Parser.getGenre = function (genreIndex) {
+        if (genreIndex < common_1.default.Genres.length) {
+            return common_1.default.Genres[genreIndex];
         }
-        callback('format', 'headerType', this.type);
-        Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'title', callback);
-        Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'artist', callback);
-        Id3v1Parser.parseTag(this.endData, offset, offset += 30, this.type, 'album', callback);
-        Id3v1Parser.parseTag(this.endData, offset, offset += 4, this.type, 'year', callback);
-        Id3v1Parser.parseTag(this.endData, offset, offset += 28, this.type, 'comment', callback);
-        var track = this.endData[this.endData.length - 2];
-        callback(this.type, 'track', track);
-        if (this.endData[this.endData.length - 1] in common_1.default.GENRES) {
-            var genre = common_1.default.GENRES[this.endData[this.endData.length - 1]];
-            callback(this.type, 'genre', genre);
-        }
-        if (this.mpegParser) {
-            this.mpegParser.end(callback, done);
-        }
+        return undefined; // ToDO: generate warning
     };
     return Id3v1Parser;
 }());
-module.exports = Id3v1Parser.getInstance();
+exports.Id3v1Parser = Id3v1Parser;
 
-},{"./common":3,"./mpeg":11,"strtok2":50}],6:[function(require,module,exports){
+},{"./common":4,"./mpeg":12,"token-types":92}],7:[function(require,module,exports){
+(function (Buffer){
 "use strict";
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
 var util_1 = require("util");
 var common_1 = require("./common");
 var id3v2_frames_1 = require("./id3v2_frames");
 var mpeg_1 = require("./mpeg");
-var State;
-(function (State) {
-    State[State["header"] = 0] = "header";
-    State[State["extendedHeader"] = 1] = "extendedHeader";
-    State[State["extendedHeaderData"] = 2] = "extendedHeaderData";
-    State[State["id3_data"] = 3] = "id3_data";
-    State[State["MP3"] = 4] = "MP3";
-})(State || (State = {}));
+var token_types_1 = require("token-types");
+var Token = require("token-types");
 var ID3v2 = (function () {
     function ID3v2() {
     }
@@ -892,16 +1031,16 @@ ID3v2.Header = {
     get: function (buf, off) {
         return {
             // ID3v2/file identifier   "ID3"
-            fileIdentifier: new strtok.StringType(3, 'ascii').get(buf, off),
+            fileIdentifier: new token_types_1.StringType(3, 'ascii').get(buf, off),
             // ID3v2 versionIndex
             version: {
-                major: strtok.INT8.get(buf, off + 3),
-                revision: strtok.INT8.get(buf, off + 4)
+                major: Token.INT8.get(buf, off + 3),
+                revision: Token.INT8.get(buf, off + 4)
             },
             // ID3v2 flags
             flags: {
                 // Raw flags value
-                raw: strtok.INT8.get(buf, off + 4),
+                raw: Token.INT8.get(buf, off + 4),
                 // Unsynchronisation
                 unsynchronisation: common_1.default.strtokBITSET.get(buf, off + 5, 7),
                 // Extended header
@@ -919,11 +1058,11 @@ ID3v2.ExtendedHeader = {
     get: function (buf, off) {
         return {
             // Extended header size
-            size: strtok.UINT32_BE.get(buf, off),
+            size: Token.UINT32_BE.get(buf, off),
             // Extended Flags
-            extendedFlags: strtok.UINT16_BE.get(buf, off + 4),
+            extendedFlags: Token.UINT16_BE.get(buf, off + 4),
             // Size of padding
-            sizeOfPadding: strtok.UINT32_BE.get(buf, off + 6),
+            sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
             // CRC data present
             crcDataPresent: common_1.default.strtokBITSET.get(buf, off + 4, 31)
         };
@@ -931,7 +1070,7 @@ ID3v2.ExtendedHeader = {
 };
 var Id3v2Parser = (function () {
     function Id3v2Parser() {
-        this.state = State.header;
+        this.tags = [];
     }
     Id3v2Parser.getInstance = function () {
         return new Id3v2Parser();
@@ -948,7 +1087,7 @@ var Id3v2Parser = (function () {
             case 3:
                 header = {
                     id: v.toString('ascii', 0, 4),
-                    length: strtok.UINT32_BE.get(v, 4),
+                    length: Token.UINT32_BE.get(v, 4),
                     flags: Id3v2Parser.readFrameFlags(v.slice(8, 10))
                 };
                 break;
@@ -964,7 +1103,7 @@ var Id3v2Parser = (function () {
         }
         return header;
     };
-    Id3v2Parser.getFrameHeaderLength = function (majorVer, done) {
+    Id3v2Parser.getFrameHeaderLength = function (majorVer) {
         switch (majorVer) {
             case 2:
                 return 6;
@@ -972,7 +1111,7 @@ var Id3v2Parser = (function () {
             case 4:
                 return 10;
             default:
-                return done(new Error('header versionIndex is incorrect'));
+                throw new Error('header versionIndex is incorrect');
         }
     };
     Id3v2Parser.readFrameFlags = function (b) {
@@ -991,85 +1130,84 @@ var Id3v2Parser = (function () {
             }
         };
     };
-    Id3v2Parser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+    Id3v2Parser.prototype.parse = function (tokenizer, options) {
         var _this = this;
-        var self = this;
-        var id3Header;
-        var extendedHeader;
-        var headerType;
-        strtok.parse(stream, function (v, cb) {
-            if (v === undefined) {
-                self.state = State.header;
-                return ID3v2.Header;
+        this.tokenizer = tokenizer;
+        this.options = options;
+        return this.tokenizer.readToken(ID3v2.Header).then(function (id3Header) {
+            if (id3Header.fileIdentifier !== 'ID3') {
+                throw new Error("expected file identifier 'ID3' not found");
             }
-            switch (self.state) {
-                case State.header:
-                    id3Header = v;
-                    if (id3Header.fileIdentifier !== 'ID3') {
-                        return done(new Error('expected file identifier \'ID3\' not found'));
-                    }
-                    headerType = ('id3v2.' + id3Header.version.major);
-                    if (id3Header.flags.isExtendedHeader) {
-                        self.state = State.extendedHeader;
-                        return ID3v2.ExtendedHeader;
-                    }
-                    else {
-                        self.state = State.id3_data;
-                        return new strtok.BufferType(id3Header.size);
-                    }
-                case State.extendedHeader:
-                    extendedHeader = v;
-                    var dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
-                    if (dataRemaining > 0) {
-                        self.state = State.extendedHeaderData;
-                        return new strtok.BufferType(dataRemaining);
-                    }
-                    else {
-                        self.state = State.id3_data;
-                        return new strtok.BufferType(id3Header.size - extendedHeader.size);
-                    }
-                case State.extendedHeaderData:
-                    self.state = State.id3_data;
-                    return new strtok.BufferType(id3Header.size - extendedHeader.size);
-                case State.id3_data:
-                    for (var _i = 0, _a = _this.parseMetadata(v, id3Header, done); _i < _a.length; _i++) {
-                        var tag = _a[_i];
-                        if (tag.id === 'TXXX') {
-                            for (var _b = 0, _c = tag.value.text; _b < _c.length; _b++) {
-                                var text = _c[_b];
-                                callback(headerType, tag.id + ':' + tag.value.description, text);
-                            }
-                        }
-                        else if (util_1.isArray(tag.value)) {
-                            for (var _d = 0, _e = tag.value; _d < _e.length; _d++) {
-                                var value = _e[_d];
-                                callback(headerType, tag.id, value);
-                            }
-                        }
-                        else {
-                            callback(headerType, tag.id, tag.value);
-                        }
-                    }
-                    callback('format', 'headerType', headerType);
-                    _this.mpegParser = new mpeg_1.MpegParser(id3Header.size);
-                    _this.mpegParser.parse(stream, callback, done, readDuration, fileSize);
-                    return strtok.DONE;
-                default:
-                    done(new Error('Undefined state: ' + self.state));
+            _this.id3Header = id3Header;
+            _this.headerType = ('id3v2.' + id3Header.version.major);
+            if (id3Header.flags.isExtendedHeader) {
+                return _this.parseExtendedHeader();
+            }
+            else {
+                return _this.parseId3Data(id3Header.size);
             }
         });
     };
-    Id3v2Parser.prototype.end = function (callback, done) {
-        this.mpegParser.end(callback, done);
+    Id3v2Parser.prototype.parseExtendedHeader = function () {
+        var _this = this;
+        return this.tokenizer.readToken(ID3v2.ExtendedHeader).then(function (extendedHeader) {
+            var dataRemaining = extendedHeader.size - ID3v2.ExtendedHeader.len;
+            if (dataRemaining > 0) {
+                return _this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);
+            }
+            else {
+                return _this.parseId3Data(_this.id3Header.size - extendedHeader.size);
+            }
+        });
     };
-    Id3v2Parser.prototype.parseMetadata = function (data, header, done) {
+    Id3v2Parser.prototype.parseExtendedHeaderData = function (dataRemaining, extendedHeaderSize) {
+        var _this = this;
+        var buffer = new Buffer(dataRemaining);
+        return this.tokenizer.readBuffer(buffer, 0, dataRemaining).then(function () {
+            return _this.parseId3Data(_this.id3Header.size - extendedHeaderSize);
+        });
+    };
+    Id3v2Parser.prototype.parseId3Data = function (dataLen) {
+        var _this = this;
+        var buffer = new Buffer(dataLen);
+        return this.tokenizer.readBuffer(buffer, 0, dataLen).then(function () {
+            for (var _i = 0, _a = _this.parseMetadata(buffer); _i < _a.length; _i++) {
+                var tag = _a[_i];
+                if (tag.id === 'TXXX') {
+                    for (var _b = 0, _c = tag.value.text; _b < _c.length; _b++) {
+                        var text = _c[_b];
+                        _this.tags.push({ id: tag.id + ':' + tag.value.description, value: text });
+                    }
+                }
+                else if (util_1.isArray(tag.value)) {
+                    for (var _d = 0, _e = tag.value; _d < _e.length; _d++) {
+                        var value = _e[_d];
+                        _this.tags.push({ id: tag.id, value: value });
+                    }
+                }
+                else {
+                    _this.tags.push({ id: tag.id, value: tag.value });
+                }
+            }
+            return new mpeg_1.MpegParser(_this.tokenizer, _this.id3Header.size, _this.options && _this.options.duration).parse().then(function (format) {
+                var res = {
+                    format: format,
+                    native: {}
+                };
+                res.format.headerType = _this.headerType;
+                res.native[_this.headerType] = _this.tags;
+                return res;
+            });
+        });
+    };
+    Id3v2Parser.prototype.parseMetadata = function (data) {
         var offset = 0;
         var tags = [];
         while (true) {
             if (offset === data.length)
                 break;
-            var frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(header.version.major, done));
-            var frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, header.version.major);
+            var frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(this.id3Header.version.major));
+            var frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
             // Last frame. Check first char is a letter, bit of defensive programming
             if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
                 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
@@ -1077,7 +1215,7 @@ var Id3v2Parser = (function () {
                 break;
             }
             var frameDataBytes = data.slice(offset, offset += frameHeader.length);
-            var values = this.readFrameData(frameDataBytes, frameHeader, header.version.major);
+            var values = this.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major);
             tags.push({ id: frameHeader.id, value: values });
         }
         return tags;
@@ -1101,14 +1239,16 @@ var Id3v2Parser = (function () {
     };
     return Id3v2Parser;
 }());
-module.exports = Id3v2Parser.getInstance();
+exports.Id3v2Parser = Id3v2Parser;
 
-},{"./common":3,"./id3v2_frames":7,"./mpeg":11,"strtok2":50,"util":56}],7:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"./common":4,"./id3v2_frames":8,"./mpeg":12,"buffer":22,"token-types":92,"util":98}],8:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var vorbis_1 = require("./vorbis");
+var Token = require("token-types");
 var FrameParser = (function () {
     function FrameParser() {
     }
@@ -1178,7 +1318,7 @@ var FrameParser = (function () {
                 break;
             case 'CNT':
             case 'PCNT':
-                output = strtok.UINT32_BE.get(b, 0);
+                output = Token.UINT32_BE.get(b, 0);
                 break;
             case 'SYLT':
                 // skip text encoding (1 byte),
@@ -1272,149 +1412,433 @@ var FrameParser = (function () {
     };
     return FrameParser;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FrameParser;
 // exports.readData = function readData (b, type, flags, major) {
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"./vorbis":14,"buffer":21,"strtok2":50}],8:[function(require,module,exports){
+},{"./common":4,"./vorbis":15,"buffer":22,"token-types":92}],9:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
-var State;
-(function (State) {
-    State[State["skip"] = -1] = "skip";
-    State[State["atomLength"] = 0] = "atomLength";
-    State[State["atomName"] = 1] = "atomName";
-    State[State["ilstAtom"] = 2] = "ilstAtom";
-    State[State["mdhdAtom"] = 3] = "mdhdAtom";
-})(State || (State = {}));
+var es6_promise_1 = require("es6-promise");
+var token_types_1 = require("token-types");
+var Token = require("token-types");
+/**
+ * Interface for the parsed Media Atom (mdhd)
+ */
+var Atom = (function () {
+    function Atom() {
+    }
+    return Atom;
+}());
+Atom.Header = {
+    len: 8,
+    get: function (buf, off) {
+        return {
+            length: Token.UINT32_BE.get(buf, 0),
+            name: new token_types_1.StringType(4, "binary").get(buf, off + 4)
+        };
+    }
+};
+Atom.ftyp = {
+    len: 4,
+    get: function (buf, off) {
+        return {
+            type: new token_types_1.StringType(4, "ascii").get(buf, off)
+        };
+    }
+};
+/**
+ * Token: Media Header Atom
+ */
+Atom.mdhd = {
+    len: 24,
+    get: function (buf, off) {
+        return {
+            version: Token.UINT8.get(buf, off + 0),
+            flags: Token.UINT24_BE.get(buf, off + 1),
+            creationTime: Token.UINT32_BE.get(buf, off + 4),
+            modificationTime: Token.UINT32_BE.get(buf, off + 8),
+            timeScale: Token.UINT32_BE.get(buf, off + 12),
+            duration: Token.UINT32_BE.get(buf, off + 16),
+            language: Token.UINT16_BE.get(buf, off + 20),
+            quality: Token.UINT16_BE.get(buf, off + 22)
+        };
+    }
+};
+/**
+ * Token: Movie Header Atom
+ */
+Atom.mvhd = {
+    len: 100,
+    get: function (buf, off) {
+        return {
+            version: Token.UINT8.get(buf, off + 0),
+            flags: Token.UINT24_BE.get(buf, off + 1),
+            creationTime: Token.UINT32_BE.get(buf, off + 4),
+            modificationTime: Token.UINT32_BE.get(buf, off + 8),
+            timeScale: Token.UINT32_BE.get(buf, off + 12),
+            duration: Token.UINT32_BE.get(buf, off + 16),
+            preferredRate: Token.UINT32_BE.get(buf, off + 20),
+            preferredVolume: Token.UINT16_BE.get(buf, off + 24),
+            // ignore reserver: 10 bytes
+            // ignore matrix structure: 36 bytes
+            previewTime: Token.UINT32_BE.get(buf, off + 72),
+            previewDuration: Token.UINT32_BE.get(buf, off + 76),
+            posterTime: Token.UINT32_BE.get(buf, off + 80),
+            selectionTime: Token.UINT32_BE.get(buf, off + 84),
+            selectionDuration: Token.UINT32_BE.get(buf, off + 88),
+            currentTime: Token.UINT32_BE.get(buf, off + 92),
+            nextTrackID: Token.UINT32_BE.get(buf, off + 96)
+        };
+    }
+};
+/**
+ * Token: Movie Header Atom
+ */
+Atom.mhdr = {
+    len: 8,
+    get: function (buf, off) {
+        return {
+            version: Token.UINT8.get(buf, off + 0),
+            flags: Token.UINT24_BE.get(buf, off + 1),
+            nextItemID: Token.UINT32_BE.get(buf, off + 4)
+        };
+    }
+};
+/**
+ * Data Atom Structure
+ */
+var DataAtom = (function () {
+    function DataAtom(len) {
+        this.len = len;
+    }
+    DataAtom.prototype.get = function (buf, off) {
+        return {
+            type: {
+                set: Token.UINT8.get(buf, off + 0),
+                type: Token.UINT24_BE.get(buf, off + 1)
+            },
+            locale: Token.UINT24_BE.get(buf, off + 4),
+            value: new token_types_1.BufferType(this.len - 8).get(buf, off + 8)
+        };
+    };
+    return DataAtom;
+}());
+/**
+ * Data Atom Structure
+ * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW31
+ */
+var NameAtom = (function () {
+    function NameAtom(len) {
+        this.len = len;
+    }
+    NameAtom.prototype.get = function (buf, off) {
+        return {
+            version: Token.UINT8.get(buf, off),
+            flags: Token.UINT24_BE.get(buf, off + 1),
+            name: new token_types_1.StringType(this.len - 4, "utf-8").get(buf, off + 4)
+        };
+    };
+    return NameAtom;
+}());
+/*
+ * Support for iTunes-style m4a tags
+ * Ref:
+ *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
+ *   http://atomicparsley.sourceforge.net/mpeg-4files.html
+ */
 var Id4Parser = (function () {
     function Id4Parser() {
+        this.metaAtomsTotalLength = 0;
+        this.format = {};
+        this.tags = [];
     }
     Id4Parser.getInstance = function () {
         return new Id4Parser();
     };
-    Id4Parser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+    Id4Parser.read_BE_Signed_Integer = function (value) {
+        switch (value.length) {
+            case 1:
+                return value.readInt8(0);
+            case 2:
+                return value.readInt16BE(0);
+            case 3:
+                return Token.INT24_BE.get(value, 0);
+            case 4:
+                return value.readInt32BE(0);
+            default:
+                throw new Error("Illegal value length for BE-Signed-Integer (type 21): " + value.length);
+        }
+    };
+    Id4Parser.read_BE_Unsigned_Integer = function (value) {
+        switch (value.length) {
+            case 1:
+                return value.readUInt8(0);
+            case 2:
+                return value.readUInt16BE(0);
+            case 3:
+                return Token.UINT24_BE.get(value, 0);
+            case 4:
+                return value.readUInt32BE(0);
+            default:
+                throw new Error("Illegal value length for BE-Unsigned-Integer (type 22): " + value.length);
+        }
+    };
+    Id4Parser.prototype.parse = function (tokenizer, options) {
         var _this = this;
-        strtok.parse(stream, function (v, cb) {
-            // the very first thing we expect to see is the first atom's length
-            if (!v) {
-                cb.metaAtomsTotalLength = 0;
-                cb.state = 0;
-                return strtok.UINT32_BE;
+        this.tokenizer = tokenizer;
+        return this.parseAtom().then(function () {
+            return {
+                format: _this.format,
+                native: {
+                    m4a: _this.tags
+                }
+            };
+        });
+    };
+    Id4Parser.prototype.parseAtom = function () {
+        var _this = this;
+        // Parse atom header
+        return this.tokenizer.readToken(Atom.Header).then(function (header) {
+            return _this.parseAtomData(header).then(function (done) {
+                if (done) {
+                    // ToDo: messy ending
+                    // console.log("Done with %s", header.name);
+                    return done;
+                }
+                else {
+                    return _this.parseAtom();
+                }
+            });
+        });
+    };
+    Id4Parser.prototype.parseAtomData = function (header) {
+        var dataLen = header.length - 8;
+        // console.log("atom name=%s, len=%s", header.name, header.length);
+        switch (header.name) {
+            case 'ftyp':
+                return this.parseAtom_ftyp(dataLen).then(function (types) {
+                    return false;
+                });
+            // "Container" atoms, contain nested atoms: 'moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'
+            case 'moov': // The Movie Atom: contains other atoms
+            case 'udta': // User defined atom
+            case 'trak':
+            case 'mdia': // Media atom
+            case 'minf': // Media Information Atom
+            case 'stbl':
+                return this.parseAtom().then(function (done) { return done; });
+            case 'meta':
+                return this.tokenizer.readToken(new token_types_1.IgnoreType(4)).then(function () { return false; }); // meta has 4 bytes of padding, ignore
+            case 'ilst':
+                // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
+                return this.parseMetadataItem(dataLen).then(function () { return false; });
+            case 'mdhd':
+                return this.parseAtom_mdhd(dataLen).then(function () { return false; });
+            case 'mvhd':
+                return this.parseAtom_mvhd(dataLen).then(function () { return false; });
+            case '<id>':
+                return this.parseMetadataItem(dataLen).then(function () { return false; });
+            case 'cmov': // compressed movie atom; child of Movie Atom
+            case 'rmra': // reference movie atom; child of Movie Atom
+            case 'mdat':
+                return es6_promise_1.Promise.resolve(true);
+            default:
+                // return this.ignoreAtomData(dataLen);
+                return this.tokenizer.readToken(new token_types_1.BufferType(dataLen)).then(function (buf) {
+                    // console.log("  ascii: %s", header.name, header.length, buf.toString('ascii'));
+                    buf = buf;
+                }).then(function () { return false; });
+        }
+    };
+    Id4Parser.prototype.ignoreAtomData = function (len) {
+        return this.tokenizer.readToken(new token_types_1.IgnoreType(len));
+    };
+    Id4Parser.prototype.parseAtom_ftyp = function (len) {
+        var _this = this;
+        return this.tokenizer.readToken(Atom.ftyp).then(function (ftype) {
+            len -= Atom.ftyp.len;
+            if (len > 0) {
+                return _this.parseAtom_ftyp(len).then(function (types) {
+                    types.push(ftype.type);
+                    return types;
+                });
             }
-            switch (cb.state) {
-                case State.skip:
-                    cb.state = State.atomLength;
-                    return strtok.UINT32_BE;
-                case State.atomLength:
-                    cb.atomLength = v;
-                    cb.state++;
-                    return new strtok.BufferType(4);
-                case State.atomName:
-                    v = v.toString('binary');
-                    cb.atomName = v;
-                    // meta has 4 bytes padding at the start (skip)
-                    if (v === 'meta') {
-                        cb.state = State.skip;
-                        return new strtok.IgnoreType(4);
-                    }
-                    if (readDuration) {
-                        if (v === 'mdhd') {
-                            cb.state = State.mdhdAtom;
-                            return new strtok.BufferType(cb.atomLength - 8);
-                        }
-                    }
-                    if (!~Id4Parser.ContainerAtoms.indexOf(v)) {
-                        if (cb.atomContainer === 'ilst') {
-                            cb.state = State.ilstAtom;
-                            return new strtok.BufferType(cb.atomLength - 8);
-                        }
-                        cb.state = State.skip;
-                        return new strtok.IgnoreType(cb.atomLength - 8);
-                    }
-                    // dig into container atoms
-                    cb.atomContainer = v;
-                    cb.atomContainerLength = cb.atomLength;
-                    cb.state--;
-                    return strtok.UINT32_BE;
-                case State.ilstAtom:
-                    cb.metaAtomsTotalLength += cb.atomLength;
-                    var results = void 0;
-                    try {
-                        results = _this.processMetaAtom(v, cb.atomName, cb.atomLength - 8);
-                    }
-                    catch (err) {
-                        return done(err);
-                    }
-                    if (results.length > 0) {
-                        for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
-                            var result = results_1[_i];
-                            callback(Id4Parser.type, cb.atomName, result);
-                        }
-                    }
-                    // we can stop processing atoms once we get to the end of the ilst atom
-                    if (cb.metaAtomsTotalLength >= cb.atomContainerLength - 8) {
-                        return done();
-                    }
-                    cb.state = State.atomLength;
-                    return strtok.UINT32_BE;
-                case State.mdhdAtom:
-                    // TODO: support version 1
-                    var sampleRate = v.readUInt32BE(12);
-                    var duration = v.readUInt32BE(16);
-                    callback('format', 'duration', duration / sampleRate);
-                    callback('format', 'sampleRate', sampleRate); // ToDo: add to test
-                    cb.state = State.atomLength;
-                    return strtok.UINT32_BE;
-                default:
-                    return done(new Error('illegal state:' + cb.state));
+            else {
+                return [];
             }
         });
     };
-    Id4Parser.prototype.processMetaAtom = function (data, atomName, atomLength) {
-        var result = [];
-        var offset = 0;
-        // ignore proprietary iTunes atoms (for now)
-        if (atomName === '----')
-            return result;
-        while (offset < atomLength) {
-            var length_1 = strtok.UINT32_BE.get(data, offset);
-            var contType = Id4Parser.Types[strtok.UINT32_BE.get(data, offset + 8)];
-            var content = this.processMetaDataAtom(data.slice(offset + 12, offset + length_1), contType, atomName);
-            result.push(content);
-            offset += length_1;
-        }
-        return result;
+    /**
+     * Parse movie header (mvhd) atom
+     * @param len
+     */
+    Id4Parser.prototype.parseAtom_mvhd = function (len) {
+        var _this = this;
+        return this.tokenizer.readToken(Atom.mvhd).then(function (mvhd) {
+            _this.parse_mxhd(mvhd);
+        });
     };
-    Id4Parser.prototype.processMetaDataAtom = function (data, type, atomName) {
-        switch (type) {
-            case 'text':
-                return data.toString('utf8', 4);
-            case 'uint8':
-                if (atomName === 'gnre') {
-                    var genreInt = strtok.UINT8.get(data, 5);
-                    return common_1.default.GENRES[genreInt - 1];
+    /**
+     * Parse media header (mdhd) atom
+     * @param len
+     */
+    Id4Parser.prototype.parseAtom_mdhd = function (len) {
+        var _this = this;
+        return this.tokenizer.readToken(Atom.mdhd).then(function (mdhd) {
+            _this.parse_mxhd(mdhd);
+        });
+    };
+    Id4Parser.prototype.parse_mxhd = function (mxhd) {
+        this.format.sampleRate = mxhd.timeScale;
+        this.format.duration = mxhd.duration / mxhd.timeScale; // calculate duration in seconds
+    };
+    /**
+     * Parse media header (ilst) atom
+     * @param len
+     * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+     */
+    /*
+     private parseMetadataItem(len: number): Promise<void>{
+     // Parse atom header
+     return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+  
+     return this.parseAtomData(header);
+     });
+     }*/
+    /**
+     * Parse Meta-item-list-atom (item of 'ilst' atom)
+     * @param len
+     * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+     */
+    Id4Parser.prototype.parseMetadataItem = function (len) {
+        var _this = this;
+        // Parse atom header
+        return this.tokenizer.readToken(Atom.Header).then(function (header) {
+            // console.log("metadata-item: name=%s, len=%s", header.name, header.length);
+            return _this.parseMetadataItemData(header.name, header.length - Atom.Header.len).then(function () {
+                var remaining = len - Atom.Header.len - header.length;
+                if (remaining > 0) {
+                    return _this.parseMetadataItem(remaining);
                 }
-                if (atomName === 'trkn' || atomName === 'disk') {
-                    return data[7] + '/' + data[9];
+                else
+                    return;
+            });
+        });
+    };
+    Id4Parser.prototype.parseMetadataItemData = function (tagKey, remLen) {
+        var _this = this;
+        // Parse Meta Item List Atom
+        return this.tokenizer.readToken(Atom.Header).then(function (header) {
+            var dataLen = header.length - Atom.Header.len;
+            switch (header.name) {
+                case 'data':
+                    return _this.parseValueAtom(tagKey, header);
+                case 'itif':
+                    return _this.tokenizer.readToken(new token_types_1.BufferType(dataLen)).then(function (dataAtom) {
+                        // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
+                        return header.length;
+                    });
+                case 'name':
+                    return _this.tokenizer.readToken(new NameAtom(dataLen)).then(function (name) {
+                        tagKey += ":" + name.name;
+                        return header.length;
+                    });
+                case 'mean':
+                    return _this.tokenizer.readToken(new NameAtom(dataLen)).then(function (mean) {
+                        // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
+                        tagKey += ":" + mean.name;
+                        return header.length;
+                    });
+                default:
+                    return _this.tokenizer.readToken(new token_types_1.BufferType(dataLen)).then(function (dataAtom) {
+                        // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
+                        return header.length;
+                    });
+            }
+        }).then(function (len) {
+            var remaining = remLen - len;
+            if (remaining === 0) {
+                return;
+            }
+            else {
+                return _this.parseMetadataItemData(tagKey, remaining);
+            }
+        });
+    };
+    Id4Parser.prototype.parseValueAtom = function (tagKey, header) {
+        var _this = this;
+        return this.tokenizer.readToken(new DataAtom(header.length - Atom.Header.len)).then(function (dataAtom) {
+            if (dataAtom.type.set === 0) {
+                // Use well-known-type table
+                // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW35
+                switch (dataAtom.type.type) {
+                    case 0:
+                        switch (tagKey) {
+                            case 'trkn':
+                            case 'disk':
+                                var num = Token.UINT8.get(dataAtom.value, 3);
+                                var of = Token.UINT8.get(dataAtom.value, 5);
+                                // console.log("  %s[data] = %s/%s", tagKey, num, of);
+                                _this.tags.push({ id: tagKey, value: num + "/" + of });
+                                break;
+                            case 'gnre':
+                                var genreInt = Token.UINT8.get(dataAtom.value, 1);
+                                var genreStr = common_1.default.Genres[genreInt - 1];
+                                // console.log("  %s[data] = %s", tagKey, genreStr);
+                                _this.tags.push({ id: tagKey, value: genreStr });
+                                break;
+                            default:
+                        }
+                        break;
+                    case 1:
+                        _this.tags.push({ id: tagKey, value: dataAtom.value.toString("utf-8") });
+                        break;
+                    case 13:
+                        _this.tags.push({
+                            id: tagKey, value: {
+                                format: 'image/jpeg',
+                                data: new Buffer(dataAtom.value)
+                            }
+                        });
+                        break;
+                    case 14:
+                        _this.tags.push({
+                            id: tagKey, value: {
+                                format: 'image/png',
+                                data: new Buffer(dataAtom.value)
+                            }
+                        });
+                        break;
+                    case 21:
+                        _this.tags.push({ id: tagKey, value: Id4Parser.read_BE_Signed_Integer(dataAtom.value) });
+                        break;
+                    case 22:
+                        _this.tags.push({ id: tagKey, value: Id4Parser.read_BE_Unsigned_Integer(dataAtom.value) });
+                        break;
+                    case 65:
+                        _this.tags.push({ id: tagKey, value: dataAtom.value.readInt8(0) });
+                        break;
+                    case 66:
+                        _this.tags.push({ id: tagKey, value: dataAtom.value.readInt16BE(0) });
+                        break;
+                    case 67:
+                        _this.tags.push({ id: tagKey, value: dataAtom.value.readInt32BE(0) });
+                        break;
+                    default:
+                        throw new Error("Unsupported well-known-type: " + dataAtom.type.type);
                 }
-                return strtok.UINT8.get(data, 4);
-            case 'jpeg':
-            case 'png':
-                return {
-                    format: 'image/' + type,
-                    data: new Buffer(data.slice(4))
-                };
-            default:
-                throw new Error('Unexpected type: ' + type);
-        }
+            }
+            else {
+                throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
+            }
+            return header.length;
+        });
     };
     return Id4Parser;
 }());
-Id4Parser.type = 'm4a';
 Id4Parser.Types = {
     0: 'uint8',
     1: 'text',
@@ -1422,20 +1846,18 @@ Id4Parser.Types = {
     14: 'png',
     21: 'uint8'
 };
-Id4Parser.ContainerAtoms = ['moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'];
-module.exports = Id4Parser.getInstance();
+exports.Id4Parser = Id4Parser;
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":21,"strtok2":50}],9:[function(require,module,exports){
-(function (process,Buffer){
+},{"./common":4,"buffer":22,"es6-promise":25,"token-types":92}],10:[function(require,module,exports){
+(function (Buffer){
 /* jshint maxlen: 300 */
 'use strict';
-var events = require("events");
-var fs = require("fs");
-var strtok = require("strtok2");
-var through = require("through");
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var tagmap_1 = require("./tagmap");
+var ParserFactory_1 = require("./ParserFactory");
+var ASF = require("./asf");
 var MusicMetadataParser = (function () {
     function MusicMetadataParser() {
         this.tagMap = new tagmap_1.default();
@@ -1448,159 +1870,71 @@ var MusicMetadataParser = (function () {
         return isNaN(cleaned) ? null : cleaned;
     };
     /**
-     * @param stream
+     * Extract metadata from the given audio file
+     * @param filePath File path of the audio file to parse
      * @param opts
      *   .filesize=true  Return filesize
      *   .native=true    Will return original header in result
-     * @param callback
-     * @returns {EventEmitter}
+     * @returns {Promise<IAudioMetadata>}
      */
-    MusicMetadataParser.prototype.parse = function (stream, opts, callback) {
-        if (typeof opts === 'function') {
-            callback = opts;
-            opts = {};
-        }
-        var emitter = new events.EventEmitter();
-        var fsize = function (cb) {
-            if (opts.fileSize) {
-                process.nextTick(function () {
-                    cb(opts.fileSize);
-                });
-            }
-            else if (stream.path) {
-                fs.stat(stream.path, function (err, stats) {
-                    if (err)
-                        throw err;
-                    cb(stats.size);
-                });
-            }
-            else if (stream.fileSize) {
-                stream.fileSize(cb);
-            }
-            else if (opts.duration) {
-                emitter.emit('done', new Error('for non file streams, specify the size of the stream with a fileSize option'));
-            }
-        };
-        // pipe to an internal stream so we aren't messing
-        // with the stream passed to us by our users
-        var istream = stream.pipe(through(null, null, { autoDestroy: false }));
-        /**
-         * Default present metadata properties
-         */
+    MusicMetadataParser.prototype.parseFile = function (filePath, opts) {
+        var _this = this;
+        if (opts === void 0) { opts = {}; }
+        return ParserFactory_1.ParserFactory.parseFile(filePath, opts).then(function (nativeData) {
+            return _this.parseNativeTags(nativeData);
+        });
+    };
+    /**
+     * Extract metadata from the given audio file
+     * @param stream Audio ReadableStream
+     * @param mimeType Mime-Type of stream
+     * @param opts
+     *   .filesize=true  Return filesize
+     *   .native=true    Will return original header in result
+     * @returns {Promise<IAudioMetadata>}
+     */
+    MusicMetadataParser.prototype.parseStream = function (stream, mimeType, opts) {
+        var _this = this;
+        if (opts === void 0) { opts = {}; }
+        return ParserFactory_1.ParserFactory.parseStream(stream, mimeType, opts).then(function (nativeData) {
+            return _this.parseNativeTags(nativeData);
+        });
+    };
+    /**
+     * Convert native tags to common tags
+     * @param nativeData
+     * @returns {IAudioMetadata} Native + common tags
+     */
+    MusicMetadataParser.prototype.parseNativeTags = function (nativeData) {
         var metadata = {
+            format: nativeData.format,
+            native: nativeData.native,
             common: {
-                artists: [],
                 track: { no: null, of: null },
-                disk: { no: null, of: null }
-            },
-            format: {
-                duration: null
+                disk: { no: null, of: null },
             }
         };
-        var isDone = false;
-        var hasReadData = false;
-        var streamParser;
-        var self = this;
-        // ToDo: expose warnings to API
-        var warning = [];
-        function tagCallback(headerType, tag, value) {
-            if (value === null) {
-                warning.push('tag ' + tag + ' is null');
-                return;
+        for (var tagType in metadata.native) {
+            for (var _i = 0, _a = metadata.native[tagType]; _i < _a.length; _i++) {
+                var tag = _a[_i];
+                this.setCommonTags(metadata.common, tagType, tag.id, tag.value);
             }
-            if (value === '') {
-                warning.push('tag ' + tag + ' is empty');
-                return;
-            }
-            if (headerType === 'format') {
-                metadata.format[tag] = value;
-            }
-            else {
-                self.setCommonTags(metadata.common, headerType, tag, value);
-            }
-            // Send native event, unless it's native name is the same as a common name
-            if (!tagmap_1.default.isCommonTag(tag)) {
-                emitter.emit(tag, value);
-            }
-            if (opts.native) {
-                if (!metadata.hasOwnProperty(headerType)) {
-                    metadata[headerType] = {}; // Register new native header headerType
-                }
-                if (self.tagMap.isNativeSingleton(headerType, tag)) {
-                    metadata[headerType][tag] = value;
+        }
+        if (metadata.common.artists && metadata.common.artists.length > 0) {
+            metadata.common.artist = metadata.common.artist[0];
+        }
+        else {
+            if (metadata.common.artist) {
+                metadata.common.artists = metadata.common.artist;
+                if (metadata.common.artist.length > 1) {
+                    delete metadata.common.artist;
                 }
                 else {
-                    (metadata[headerType][tag] = metadata[headerType][tag] ? metadata[headerType][tag] : []).push(value);
-                }
-            }
-        }
-        istream.once('data', function (result) {
-            hasReadData = true;
-            streamParser = common_1.default.getParserForMediaType(MusicMetadataParser.headerTypes, result);
-            streamParser.parse(istream, function (headerType, tag, value) {
-                tagCallback(headerType, tag, value);
-            }, done, opts.duration, fsize);
-            // re-emitting the first data chunk so the
-            // parser picks the stream up from the start
-            istream.emit('data', result);
-        });
-        istream.once('end', function () {
-            if (!hasReadData) {
-                done(new Error('Could not read any data from this stream'));
-            }
-            else {
-                if (!isDone) {
-                    isDone = true;
-                    // Ensure the parsers 'end' handlers is executed first
-                    if (streamParser && streamParser.end) {
-                        streamParser.end(tagCallback, done);
-                    }
-                    else
-                        done();
-                }
-            }
-        });
-        istream.on('close', onClose);
-        function onClose() {
-            done(new Error('Unexpected end of stream'));
-        }
-        function done(err) {
-            isDone = true;
-            istream.removeListener('close', onClose);
-            if (!err) {
-                /**
-                 * If MusicBrainz defined artists, the artist may be a single combined field,
-                 * otherwise artist may contain multiple artists.
-                 */
-                if (metadata.common.artists && metadata.common.artists.length > 0) {
                     metadata.common.artist = metadata.common.artist[0];
                 }
-                else {
-                    if (metadata.common.artist) {
-                        metadata.common.artists = metadata.common.artist;
-                        if (metadata.common.artist.length > 1) {
-                            delete metadata.common.artist;
-                        }
-                        else {
-                            metadata.common.artist = metadata.common.artist[0];
-                        }
-                    }
-                }
-                // We only emit aliased events once the 'done' event has been raised,
-                // this is because an alias like 'artist' could have values split
-                // over many data chunks.
-                for (var _alias in metadata.common) {
-                    if (metadata.common.hasOwnProperty(_alias)) {
-                        emitter.emit(_alias, metadata.common[_alias]);
-                    }
-                }
             }
-            if (callback) {
-                callback(err, metadata);
-            }
-            return strtok.DONE;
         }
-        return emitter;
+        return metadata;
     };
     /**
      * Process and set common tags
@@ -1670,10 +2004,10 @@ var MusicMetadataParser = (function () {
                     value = common_1.default.parseGenre(value);
                     break;
                 case 'barcode':
-                    comTags.barcode = typeof value === 'string' ? parseInt(value, 10) : value;
+                    value = typeof value === 'string' ? parseInt(value, 10) : value;
                     break;
                 case 'picture':
-                    value = this.cleanupPicture(value);
+                    value = MusicMetadataParser.cleanupPicture(value);
                     break;
                 case 'totaltracks':
                     comTags.track.of = MusicMetadataParser.toIntOrNull(value);
@@ -1684,7 +2018,7 @@ var MusicMetadataParser = (function () {
                 case 'track':
                 case 'disk':
                     var of = comTags[alias].of; // store of value, maybe maybe overwritten
-                    comTags[alias] = this.cleanupTrack(value);
+                    comTags[alias] = MusicMetadataParser.cleanupTrack(value);
                     comTags[alias].of = of != null ? of : comTags[alias].of;
                     return;
                 case 'year':
@@ -1716,14 +2050,14 @@ var MusicMetadataParser = (function () {
     // TODO: a string of 1of1 would fail to be converted
     // converts 1/10 to no : 1, of : 10
     // or 1 to no : 1, of : 0
-    MusicMetadataParser.prototype.cleanupTrack = function (origVal) {
+    MusicMetadataParser.cleanupTrack = function (origVal) {
         var split = origVal.toString().split('/');
         return {
             no: parseInt(split[0], 10) || null,
             of: parseInt(split[1], 10) || null
         };
     };
-    MusicMetadataParser.prototype.cleanupPicture = function (picture) {
+    MusicMetadataParser.cleanupPicture = function (picture) {
         var newFormat;
         if (picture.format) {
             var split = picture.format.toLowerCase().split('/');
@@ -1740,7 +2074,7 @@ var MusicMetadataParser = (function () {
 }());
 MusicMetadataParser.headerTypes = [
     {
-        buf: common_1.default.asfGuidBuf,
+        buf: ASF.Header_GUID,
         tag: require('./asf')
     },
     {
@@ -1770,26 +2104,41 @@ MusicMetadataParser.headerTypes = [
         tag: require('./monkeysaudio')
     }
 ];
+exports.MusicMetadataParser = MusicMetadataParser;
+/**
+ * Parse audio file
+ * @param stream
+ * @param opts
+ *   .filesize=true  Return filesize
+ *   .native=true    Will return original header in result
+ * @returns {Promise<IAudioMetadata>}
+ */
+function parseFile(filePath, opts) {
+    return MusicMetadataParser.getInstance().parseFile(filePath, opts);
+}
+exports.parseFile = parseFile;
 /**
  * Parse audio stream
  * @param stream
  * @param opts
  *   .filesize=true  Return filesize
  *   .native=true    Will return original header in result
- * @param callback
- * @returns {*|EventEmitter}
+ * @returns {Promise<IAudioMetadata>}
  */
-function parseStream(stream, opts, callback) {
-    return MusicMetadataParser.getInstance().parse(stream, opts, callback);
+function parseStream(stream, mimeType, opts) {
+    return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
 }
 exports.parseStream = parseStream;
 
-}).call(this,require('_process'),require("buffer").Buffer)
-},{"./asf":1,"./common":3,"./flac":4,"./id3v2":6,"./id4":8,"./monkeysaudio":10,"./ogg":12,"./tagmap":13,"_process":36,"buffer":21,"events":26,"fs":19,"strtok2":50,"through":51}],10:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"./ParserFactory":1,"./asf":2,"./common":4,"./flac":5,"./id3v2":7,"./id4":9,"./monkeysaudio":11,"./ogg":13,"./tagmap":14,"buffer":22}],11:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
+var strtok3_1 = require("strtok3");
+var token_types_1 = require("token-types");
+var Token = require("token-types");
 var DataType;
 (function (DataType) {
     DataType[DataType["text_utf8"] = 0] = "text_utf8";
@@ -1827,25 +2176,25 @@ Structure.DescriptorParser = {
     get: function (buf, off) {
         return {
             // should equal 'MAC '
-            ID: new strtok.StringType(4, 'ascii').get(buf, off),
+            ID: new token_types_1.StringType(4, 'ascii').get(buf, off),
             // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-            version: strtok.UINT32_LE.get(buf, off + 4) / 1000,
+            version: Token.UINT32_LE.get(buf, off + 4) / 1000,
             // the number of descriptor bytes (allows later expansion of this header)
-            descriptorBytes: strtok.UINT32_LE.get(buf, off + 8),
+            descriptorBytes: Token.UINT32_LE.get(buf, off + 8),
             // the number of header APE_HEADER bytes
-            headerBytes: strtok.UINT32_LE.get(buf, off + 12),
+            headerBytes: Token.UINT32_LE.get(buf, off + 12),
             // the number of header APE_HEADER bytes
-            seekTableBytes: strtok.UINT32_LE.get(buf, off + 16),
+            seekTableBytes: Token.UINT32_LE.get(buf, off + 16),
             // the number of header data bytes (from original file)
-            headerDataBytes: strtok.UINT32_LE.get(buf, off + 20),
+            headerDataBytes: Token.UINT32_LE.get(buf, off + 20),
             // the number of bytes of APE frame data
-            apeFrameDataBytes: strtok.UINT32_LE.get(buf, off + 24),
+            apeFrameDataBytes: Token.UINT32_LE.get(buf, off + 24),
             // the high order number of APE frame data bytes
-            apeFrameDataBytesHigh: strtok.UINT32_LE.get(buf, off + 28),
+            apeFrameDataBytesHigh: Token.UINT32_LE.get(buf, off + 28),
             // the terminating data of the file (not including tag data)
-            terminatingDataBytes: strtok.UINT32_LE.get(buf, off + 32),
+            terminatingDataBytes: Token.UINT32_LE.get(buf, off + 32),
             // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-            fileMD5: new strtok.BufferType(16).get(buf, off + 36)
+            fileMD5: new token_types_1.BufferType(16).get(buf, off + 36)
         };
     }
 };
@@ -1857,21 +2206,21 @@ Structure.Header = {
     get: function (buf, off) {
         return {
             // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-            compressionLevel: strtok.UINT16_LE.get(buf, off),
+            compressionLevel: Token.UINT16_LE.get(buf, off),
             // any format flags (for future use)
-            formatFlags: strtok.UINT16_LE.get(buf, off + 2),
+            formatFlags: Token.UINT16_LE.get(buf, off + 2),
             // the number of audio blocks in one frame
-            blocksPerFrame: strtok.UINT32_LE.get(buf, off + 4),
+            blocksPerFrame: Token.UINT32_LE.get(buf, off + 4),
             // the number of audio blocks in the final frame
-            finalFrameBlocks: strtok.UINT32_LE.get(buf, off + 8),
+            finalFrameBlocks: Token.UINT32_LE.get(buf, off + 8),
             // the total number of frames
-            totalFrames: strtok.UINT32_LE.get(buf, off + 12),
+            totalFrames: Token.UINT32_LE.get(buf, off + 12),
             // the bits per sample (typically 16)
-            bitsPerSample: strtok.UINT16_LE.get(buf, off + 16),
+            bitsPerSample: Token.UINT16_LE.get(buf, off + 16),
             // the number of channels (1 or 2)
-            channel: strtok.UINT16_LE.get(buf, off + 18),
+            channel: Token.UINT16_LE.get(buf, off + 18),
             // the sample rate (typically 44100)
-            sampleRate: strtok.UINT32_LE.get(buf, off + 20)
+            sampleRate: Token.UINT32_LE.get(buf, off + 20)
         };
     }
 };
@@ -1883,30 +2232,26 @@ Structure.TagFooter = {
     get: function (buf, off) {
         return {
             // should equal 'APETAGEX'
-            ID: new strtok.StringType(8, 'ascii').get(buf, off),
+            ID: new token_types_1.StringType(8, 'ascii').get(buf, off),
             // equals CURRENT_APE_TAG_VERSION
-            version: strtok.UINT32_LE.get(buf, off + 8),
+            version: Token.UINT32_LE.get(buf, off + 8),
             // the complete size of the tag, including this footer (excludes header)
-            size: strtok.UINT32_LE.get(buf, off + 12),
+            size: Token.UINT32_LE.get(buf, off + 12),
             // the number of fields in the tag
-            fields: strtok.UINT32_LE.get(buf, off + 16),
+            fields: Token.UINT32_LE.get(buf, off + 16),
             // reserved for later use (must be zero)
-            reserved: new strtok.BufferType(12).get(buf, off + 20) // ToDo: what is this???
+            reserved: new token_types_1.BufferType(12).get(buf, off + 20) // ToDo: what is this???
         };
     }
 };
 Structure.TagField = function (footer) {
-    return new strtok.BufferType(footer.size - Structure.TagFooter.len);
+    return new token_types_1.BufferType(footer.size - Structure.TagFooter.len);
 };
-;
 var ApeParser = (function () {
     function ApeParser() {
         this.type = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
         this.ape = {};
     }
-    ApeParser.getInstance = function () {
-        return new ApeParser();
-    };
     /**
      * Calculate the media file duration
      * @param ah ApeHeader
@@ -1917,71 +2262,78 @@ var ApeParser = (function () {
         duration += ah.finalFrameBlocks;
         return duration / ah.sampleRate;
     };
-    ApeParser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+    ApeParser.prototype.parse = function (tokenizer, options) {
         var _this = this;
-        strtok.parse(stream, function (v, cb) {
-            if (v === undefined) {
-                cb.state = 'descriptor';
-                return Structure.DescriptorParser;
+        this.tokenizer = tokenizer;
+        return this.tokenizer.readToken(Structure.DescriptorParser)
+            .then(function (descriptor) {
+            if (descriptor.ID !== 'MAC ') {
+                throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
             }
-            switch (cb.state) {
-                case 'descriptor':
-                    if (v.ID !== 'MAC ') {
-                        throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
-                    }
-                    _this.ape.descriptor = v;
-                    var lenExp = v.descriptorBytes - Structure.DescriptorParser.len;
-                    if (lenExp > 0) {
-                        cb.state = 'descriptorExpansion';
-                        return new strtok.IgnoreType(lenExp);
-                    }
-                    else {
-                        cb.state = 'header';
-                        return Structure.Header;
-                    }
-                case 'descriptorExpansion':
-                    cb.state = 'header';
-                    return Structure.Header;
-                case 'header':
-                    _this.ape.header = v;
-                    callback('format', 'dataformat', 'ape');
-                    callback('format', 'lossless', true);
-                    callback('format', 'headerType', _this.type);
-                    callback('format', 'bitsPerSample', v.bitsPerSample);
-                    callback('format', 'sampleRate', v.sampleRate);
-                    callback('format', 'numberOfChannels', v.channel);
-                    callback('format', 'duration', ApeParser.calculateDuration(v));
-                    var forwardBytes = _this.ape.descriptor.seekTableBytes + _this.ape.descriptor.headerDataBytes +
-                        _this.ape.descriptor.apeFrameDataBytes + _this.ape.descriptor.terminatingDataBytes;
-                    cb.state = 'skipData';
-                    return new strtok.IgnoreType(forwardBytes);
-                case 'skipData':
-                    cb.state = 'tagFooter';
-                    return Structure.TagFooter;
-                case 'tagFooter':
-                    if (v.ID !== 'APETAGEX') {
-                        done(new Error('Expected footer to start with APETAGEX '));
-                    }
-                    _this.ape.footer = v;
-                    cb.state = 'tagField';
-                    return Structure.TagField(v);
-                case 'tagField':
-                    _this.parseTags(_this.ape.footer, v, callback);
-                    done();
-                    break;
-                default:
-                    done(new Error('Illegal state: ' + cb.state));
+            _this.ape.descriptor = descriptor;
+            var lenExp = descriptor.descriptorBytes - Structure.DescriptorParser.len;
+            if (lenExp > 0) {
+                return _this.parseDescriptorExpansion(lenExp);
             }
-            return 0;
+            else {
+                return _this.parseHeader();
+            }
+        }).then(function (header) {
+            return _this.tokenizer.readToken(new strtok3_1.IgnoreType(header.forwardBytes)).then(function () {
+                return _this.parseFooter().then(function (tags) {
+                    return {
+                        format: header.format,
+                        native: {
+                            APEv2: tags
+                        }
+                    };
+                });
+            });
         });
     };
     ;
-    ApeParser.prototype.parseTags = function (footer, buffer, callback) {
+    ApeParser.prototype.parseDescriptorExpansion = function (lenExp) {
+        var _this = this;
+        return this.tokenizer.readToken(new strtok3_1.IgnoreType(lenExp)).then(function () {
+            return _this.parseHeader();
+        });
+    };
+    ApeParser.prototype.parseHeader = function () {
+        var _this = this;
+        return this.tokenizer.readToken(Structure.Header).then(function (header) {
+            return {
+                format: {
+                    // dataformat: 'ape',
+                    lossless: true,
+                    headerType: _this.type,
+                    bitsPerSample: header.bitsPerSample,
+                    sampleRate: header.sampleRate,
+                    numberOfChannels: header.channel,
+                    duration: ApeParser.calculateDuration(header)
+                },
+                forwardBytes: _this.ape.descriptor.seekTableBytes + _this.ape.descriptor.headerDataBytes +
+                    _this.ape.descriptor.apeFrameDataBytes + _this.ape.descriptor.terminatingDataBytes
+            };
+        });
+    };
+    ApeParser.prototype.parseFooter = function () {
+        var _this = this;
+        return this.tokenizer.readToken(Structure.TagFooter).then(function (footer) {
+            if (footer.ID !== 'APETAGEX') {
+                throw new Error('Expected footer to start with APETAGEX ');
+            }
+            return _this.tokenizer.readToken(Structure.TagField(footer)).then(function (tags) {
+                return ApeParser.parseTags(footer, tags);
+            });
+        });
+    };
+    ApeParser.parseTags = function (footer, buffer) {
         var offset = 0;
+        var tags = [];
         for (var i = 0; i < footer.fields; i++) {
-            var size = strtok.UINT32_LE.get(buffer, offset);
+            var size = Token.UINT32_LE.get(buffer, offset);
             offset += 4;
-            var flags = Structure.parseTagFlags(strtok.UINT32_LE.get(buffer, offset));
+            var flags = Structure.parseTagFlags(Token.UINT32_LE.get(buffer, offset));
             offset += 4;
             var zero = common_1.default.findZero(buffer, offset, buffer.length);
             var key = buffer.toString('ascii', offset, zero);
@@ -1994,7 +2346,7 @@ var ApeParser = (function () {
                         /*jshint loopfunc:true */
                         for (var _i = 0, values_1 = values; _i < values_1.length; _i++) {
                             var val = values_1[_i];
-                            callback(this.type, key, val);
+                            tags.push({ id: key, value: val });
                         }
                     }
                     break;
@@ -2011,7 +2363,7 @@ var ApeParser = (function () {
                                 data: new Buffer(picData.slice(off))
                             };
                             offset += size;
-                            callback(this.type, key, picture);
+                            tags.push({ id: key, value: picture });
                         }
                     }
                     break;
@@ -2019,27 +2371,21 @@ var ApeParser = (function () {
                     throw new Error('Unexpected data-type: ' + flags.dataType);
             }
         }
+        return tags;
     };
     return ApeParser;
 }());
-module.exports = ApeParser.getInstance();
+exports.ApeParser = ApeParser;
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":21,"strtok2":50}],11:[function(require,module,exports){
+},{"./common":4,"buffer":22,"strtok3":89,"token-types":92}],12:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
+var strtok3_1 = require("strtok3");
 var common_1 = require("./common");
-var State;
-(function (State) {
-    State[State["mpegSearchSync1"] = 1] = "mpegSearchSync1";
-    State[State["mpegSearchSync2"] = 2] = "mpegSearchSync2";
-    State[State["audio_frame_header"] = 3] = "audio_frame_header";
-    State[State["CRC"] = 4] = "CRC";
-    State[State["side_information"] = 5] = "side_information";
-    State[State["xtra_info_header"] = 6] = "xtra_info_header";
-    State[State["skip_frame_data"] = 7] = "skip_frame_data";
-})(State || (State = {}));
+var Token = require("token-types");
+var token_types_1 = require("token-types");
 /**
  * MPEG Audio Layer I/II/III frame header
  * Ref: https://www.mp3-tech.org/programmer/frame_header.html
@@ -2051,6 +2397,8 @@ var MpegFrameHeader = (function () {
         this.versionIndex = common_1.default.getBitAllignedNumber(buf, off + 1, 3, 2);
         // C(18,17): Layer description
         this.layer = MpegFrameHeader.LayerDescription[common_1.default.getBitAllignedNumber(buf, off + 1, 5, 2)];
+        if (this.layer === null)
+            throw new Error('Invalid MPEG layer');
         // D(16): Protection bit (if true 16-bit CRC follows header)
         this.isProtectedByCRC = !common_1.default.isBitSet(buf, off + 1, 7);
         // E(15,12): Bitrate index
@@ -2075,10 +2423,17 @@ var MpegFrameHeader = (function () {
         if (this.version === null)
             throw new Error('Invalid MPEG Audio version');
         this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
-        this.samplingRate = this.calcSamplingRate();
+        // Calculate bitrate
         var bitrateInKbps = this.calcBitrate();
-        this.bitrate = bitrateInKbps == null ? null : bitrateInKbps * 1000;
+        if (bitrateInKbps == null) {
+            throw new Error('Cannot determine bit-rate');
+        }
+        this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
+        // Calculate sampling rate
         this.samplingRate = this.calcSamplingRate();
+        if (this.samplingRate == null) {
+            throw new Error('Cannot determine sampling-rate');
+        }
     }
     MpegFrameHeader.prototype.calcDuration = function (numFrames) {
         return Math.round(numFrames * (this.calcSamplesPerFrame() / this.samplingRate));
@@ -2176,221 +2531,235 @@ MpegAudioLayer.FrameHeader = {
     }
 };
 /**
+ * Info Tag: Xing, LAME
+ */
+MpegAudioLayer.InfoTagHeaderTag = new token_types_1.StringType(4, 'ascii');
+/**
+ * LAME TAG value
+ * Did not find any official documentation for this
+ * Value e.g.: "3.98.4"
+ */
+MpegAudioLayer.LameEncoderVersion = new token_types_1.StringType(6, 'ascii');
+/**
  * Info Tag
  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
  */
 MpegAudioLayer.XingInfoTag = {
-    len: 140,
+    len: 136,
     get: function (buf, off) {
         return {
-            // 4 bytes for Header Tag
-            headerTag: new strtok.StringType(4, 'ascii').get(buf, off),
             // 4 bytes for HeaderFlags
-            headerFlags: new strtok.BufferType(4).get(buf, off + 4),
+            headerFlags: new token_types_1.BufferType(4).get(buf, off),
             // 100 bytes for entry (NUMTOCENTRIES)
             // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
             // FRAME SIZE
             // frameSize: strtok.UINT32_BE.get(buf, off + 108),
-            numFrames: strtok.UINT32_BE.get(buf, off + 8),
-            numToCentries: new strtok.BufferType(100).get(buf, off + 108),
+            numFrames: Token.UINT32_BE.get(buf, off + 4),
+            numToCentries: new token_types_1.BufferType(100).get(buf, off + 104),
             // the number of header APE_HEADER bytes
-            streamSize: strtok.UINT32_BE.get(buf, off + 112),
+            streamSize: Token.UINT32_BE.get(buf, off + 108),
             // the number of header data bytes (from original file)
-            vbrScale: strtok.UINT32_BE.get(buf, off + 116),
+            vbrScale: Token.UINT32_BE.get(buf, off + 112),
             /**
              * LAME Tag, extends the Xing header format
              * First added in LAME 3.12 for VBR
              * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
              */
             //  Initial LAME info, e.g.: LAME3.99r
-            encoder: new strtok.StringType(9, 'ascii').get(buf, off + 120),
+            encoder: new token_types_1.StringType(9, 'ascii').get(buf, off + 116),
             //  Info Tag
-            infoTag: strtok.UINT8.get(buf, off + 129) >> 4,
+            infoTag: Token.UINT8.get(buf, off + 125) >> 4,
             // VBR method
-            vbrMethod: strtok.UINT8.get(buf, off + 129) & 0xf
+            vbrMethod: Token.UINT8.get(buf, off + 125) & 0xf
         };
     }
 };
 var MpegParser = (function () {
-    function MpegParser(headerSize) {
+    function MpegParser(tokenizer, headerSize, readDuration) {
+        this.tokenizer = tokenizer;
+        this.headerSize = headerSize;
+        this.readDuration = readDuration;
         this.frameCount = 0;
         this.bitrates = [];
         this.calculateVbrDuration = false;
-        this.headerSize = headerSize;
+        this.buf_frame_header = new Buffer(4);
     }
-    MpegParser.prototype.parse = function (stream, tagEvent, done, readDuration, fileSize) {
+    MpegParser.prototype.parse = function () {
         var _this = this;
-        this.stream = stream;
-        this.tagEvent = tagEvent;
-        this.done = done;
-        this.readDuration = readDuration;
-        this.fileSize = fileSize;
-        this.state = State.mpegSearchSync1;
-        strtok.parse(stream, function (v, cb) {
-            try {
-                return _this.strParse(v, cb);
+        this.format = {
+            dataformat: 'mp3',
+            lossless: false
+        };
+        return this.sync().then(function () {
+            return _this.format;
+        }).catch(function (err) {
+            if (err === strtok3_1.EndOfFile)
+                return _this.format;
+        });
+    };
+    MpegParser.prototype.sync = function () {
+        var _this = this;
+        return this.tokenizer.readBuffer(this.buf_frame_header, 0, 1).then(function (v) {
+            if (_this.buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
+                return _this.tokenizer.readBuffer(_this.buf_frame_header, 1, 1).then(function (v) {
+                    if ((_this.buf_frame_header[1] & 0xE0) === 0xE0) {
+                        // Synchronized
+                        return _this.parseAudioFrameHeader(_this.buf_frame_header);
+                    }
+                    else {
+                        return _this.sync();
+                    }
+                });
             }
-            catch (error) {
-                return done(error);
+            else {
+                return _this.sync();
             }
         });
     };
-    MpegParser.prototype.end = function (callback, done) {
-        if (this.calculateVbrDuration) {
-            this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
-        }
-        return done();
-    };
-    MpegParser.prototype.strParse = function (v, cb) {
+    MpegParser.prototype.parseAudioFrameHeader = function (buf_frame_header) {
         var _this = this;
-        if (v === undefined) {
-            return strtok.UINT8;
-        }
-        switch (this.state) {
-            case State.mpegSearchSync1:
-                this.state = v === MpegFrameHeader.SyncByte1 ? State.mpegSearchSync2 : State.mpegSearchSync1;
-                return strtok.UINT8;
-            case State.mpegSearchSync2:
-                if ((v & 0xE0) === 0xE0) {
-                    // Synchronized
-                    this.state = State.audio_frame_header;
-                    this.frameSyncByte2 = v;
-                    return new strtok.BufferType(2);
+        return this.tokenizer.readBuffer(buf_frame_header, 2, 2).then(function () {
+            var header;
+            try {
+                header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
+            }
+            catch (err) {
+                return _this.sync(); // ToDO: register warning
+            }
+            // mp3 files are only found in MPEG1/2 Layer 3
+            if ((header.version !== 1 && header.version !== 2) || header.layer !== 3) {
+                return _this.sync();
+            }
+            _this.format.dataformat = 'mp3';
+            _this.format.lossless = false;
+            _this.format.bitrate = header.bitrate;
+            _this.format.sampleRate = header.samplingRate;
+            _this.format.numberOfChannels = header.channelMode === 'mono' ? 1 : 2;
+            var slot_size = header.calcSlotSize();
+            if (slot_size === null) {
+                throw new Error('invalid slot_size');
+            }
+            var samples_per_frame = header.calcSamplesPerFrame();
+            var bps = samples_per_frame / 8.0;
+            var fsize = (bps * header.bitrate / header.samplingRate) +
+                ((header.padding) ? slot_size : 0);
+            _this.frame_size = Math.floor(fsize);
+            _this.audioFrameHeader = header;
+            _this.frameCount++;
+            _this.bitrates.push(header.bitrate);
+            // xtra header only exists in first frame
+            if (_this.frameCount === 1) {
+                _this.offset = MpegAudioLayer.FrameHeader.len;
+                return _this.skipSideInformation();
+            }
+            if (_this.frameCount === 3) {
+                // the stream is CBR if the first 3 frame bitrates are the same
+                if (_this.areAllSame(_this.bitrates)) {
+                    // subtract non audio stream data from duration calculation
+                    var size = _this.tokenizer.fileSize - _this.headerSize;
+                    _this.format.duration = (size * 8) / header.bitrate;
+                    return; // Done
                 }
-                else {
-                    this.state = State.mpegSearchSync1;
-                    return strtok.UINT8;
+                else if (!_this.readDuration) {
+                    return; // Done
                 }
-            /* falls through */
-            case State.audio_frame_header:
-                // we have found the mm tag at the end of the file, ignore
-                /*
-                 if (v.slice(0, 3).toString() === 'TAG') {
-                 return done()
-                 }*/
-                var buf_frame_header = new Buffer(4);
-                v.copy(buf_frame_header, 2);
-                buf_frame_header[0] = MpegFrameHeader.SyncByte1;
-                buf_frame_header[1] = this.frameSyncByte2;
-                var header_1 = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
-                if (header_1.version === null || header_1.layer === null) {
-                    return this.seekFirstAudioFrame();
-                }
-                // mp3 files are only found in MPEG1/2 Layer 3
-                if ((header_1.version !== 1 && header_1.version !== 2) || header_1.layer !== 3) {
-                    return this.seekFirstAudioFrame();
-                }
-                if (header_1.bitrate == null) {
-                    return this.seekFirstAudioFrame();
-                }
-                if (header_1.samplingRate == null) {
-                    return this.seekFirstAudioFrame();
-                }
-                this.tagEvent('format', 'dataformat', 'mp3');
-                this.tagEvent('format', 'lossless', false);
-                this.tagEvent('format', 'bitrate', header_1.bitrate);
-                this.tagEvent('format', 'sampleRate', header_1.samplingRate);
-                this.tagEvent('format', 'numberOfChannels', header_1.channelMode === 'mono' ? 1 : 2);
-                var slot_size = header_1.calcSlotSize();
-                if (slot_size == null) {
-                    this.done(new Error('invalid slot_size'));
-                }
-                var samples_per_frame = header_1.calcSamplesPerFrame();
-                var bps = samples_per_frame / 8.0;
-                var fsize = (bps * header_1.bitrate / header_1.samplingRate) +
-                    ((header_1.padding) ? slot_size : 0);
-                this.frame_size = Math.floor(fsize);
-                this.audioFrameHeader = header_1;
-                this.frameCount++;
-                this.bitrates.push(header_1.bitrate);
-                // xtra header only exists in first frame
-                if (this.frameCount === 1) {
-                    this.offset = MpegAudioLayer.FrameHeader.len;
-                    return this.skipSideInformation(header_1);
-                }
-                if (this.fileSize && this.frameCount === 3) {
-                    // the stream is CBR if the first 3 frame bitrates are the same
-                    if (this.areAllSame(this.bitrates)) {
-                        this.fileSize(function (size) {
-                            // subtract non audio stream data from duration calculation
-                            size = size - _this.headerSize;
-                            _this.tagEvent('format', 'duration', (size * 8) / header_1.bitrate);
-                            // cb(done())
-                            return _this.done();
-                        });
-                        return strtok.DEFER;
-                    }
-                    else if (!this.readDuration) {
-                        return this.done();
-                    }
-                }
-                // once we know the file is VBR attach listener to end of
-                // stream so we can do the duration calculation when we
-                // have counted all the frames
-                if (this.readDuration && this.frameCount === 4) {
-                    return this.calculateVbrDuration = true;
-                }
-                this.offset = 4;
-                if (header_1.isProtectedByCRC) {
-                    this.state = State.CRC;
-                    return strtok.INT16_BE;
-                }
-                else {
-                    return this.skipSideInformation(header_1);
-                }
-            case State.CRC:
-                this.offset += 2;
-                this.crc = v;
-                return this.skipSideInformation(this.audioFrameHeader);
-            case State.side_information:
-                this.offset += MpegAudioLayer.XingInfoTag.len; // 12
-                this.state = State.xtra_info_header;
-                return MpegAudioLayer.XingInfoTag;
-            case State.xtra_info_header:
-                this.state = State.skip_frame_data;
-                var frameDataLeft = this.frame_size - this.offset;
-                var codecProfile = void 0;
-                switch (v.headerTag) {
-                    case 'Info':
-                        codecProfile = 'CBR';
-                        break;
-                    case 'Xing':
-                        codecProfile = MpegAudioLayer.getVbrCodecProfile(v.vbrScale);
-                        break;
-                    case 'Xtra':
-                        // ToDo: ???
-                        break;
-                    default:
-                        return new strtok.IgnoreType(frameDataLeft);
-                }
-                this.tagEvent('format', 'encoder', v.encoder);
-                this.tagEvent('format', 'codecProfile', codecProfile);
-                // frames field is not present
-                if ((v.headerFlags[3] & 0x01) !== 1) {
-                    return new strtok.IgnoreType(frameDataLeft);
-                }
-                this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(v.numFrames));
-                return this.done();
-            case State.skip_frame_data:
-                this.state = State.mpegSearchSync1;
-                return strtok.UINT8;
-            default:
-                this.done(new Error('Undefined state: ' + this.state));
-        }
+            }
+            // once we know the file is VBR attach listener to end of
+            // stream so we can do the duration calculation when we
+            // have counted all the frames
+            if (_this.readDuration && _this.frameCount === 4) {
+                _this.calculateVbrDuration = true;
+                return;
+            }
+            _this.offset = 4;
+            if (header.isProtectedByCRC) {
+                return _this.parseCrc();
+            }
+            else {
+                return _this.skipSideInformation();
+            }
+        });
     };
-    MpegParser.prototype.skipSideInformation = function (header) {
-        var sideinfo_length = header.calculateSideInfoLength();
-        this.offset += sideinfo_length;
-        this.state = State.side_information;
-        return new strtok.BufferType(sideinfo_length);
+    MpegParser.prototype.parseCrc = function () {
+        var _this = this;
+        this.tokenizer.readNumber(Token.INT16_BE).then(function (crc) {
+            _this.crc = crc;
+        });
+        this.offset += 2;
+        return this.skipSideInformation();
     };
-    MpegParser.prototype.seekFirstAudioFrame = function () {
-        if (this.frameCount > 0) {
-            return this.done(new Error('expected frame header but was not found'));
-        }
-        this.state = State.mpegSearchSync1;
-        return strtok.UINT8;
+    MpegParser.prototype.skipSideInformation = function () {
+        var _this = this;
+        var sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
+        // side information
+        return this.tokenizer.readToken(new token_types_1.BufferType(sideinfo_length)).then(function () {
+            _this.offset += sideinfo_length;
+            return _this.readXtraInfoHeader();
+        });
     };
+    MpegParser.prototype.readXtraInfoHeader = function () {
+        var _this = this;
+        return this.tokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then(function (headerTag) {
+            _this.offset += MpegAudioLayer.InfoTagHeaderTag.len; // 12
+            switch (headerTag) {
+                case 'Info':
+                    _this.format.codecProfile = 'CBR';
+                    return _this.readXingInfoHeader();
+                case 'Xing':
+                    return _this.readXingInfoHeader().then(function (infoTag) {
+                        _this.format.codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
+                        return null;
+                    });
+                case 'Xtra':
+                    // ToDo: ???
+                    break;
+                case 'LAME':
+                    return _this.tokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then(function (version) {
+                        _this.offset += MpegAudioLayer.LameEncoderVersion.len;
+                        _this.format.encoder = "LAME " + version;
+                        var frameDataLeft = _this.frame_size - _this.offset;
+                        return _this.skipFrameData(frameDataLeft);
+                    });
+            }
+            // ToDo: promise duration???
+            var frameDataLeft = _this.frame_size - _this.offset;
+            return _this.skipFrameData(frameDataLeft);
+        });
+    };
+    /**
+     * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
+     * @returns {Promise<string>}
+     */
+    MpegParser.prototype.readXingInfoHeader = function () {
+        var _this = this;
+        return this.tokenizer.readToken(MpegAudioLayer.XingInfoTag).then(function (infoTag) {
+            _this.offset += MpegAudioLayer.XingInfoTag.len; // 12
+            _this.format.encoder = common_1.default.stripNulls(infoTag.encoder);
+            if ((infoTag.headerFlags[3] & 0x01) === 1) {
+                _this.format.duration = _this.audioFrameHeader.calcDuration(infoTag.numFrames);
+                return infoTag; // Done
+            }
+            // frames field is not present
+            var frameDataLeft = _this.frame_size - _this.offset;
+            // ToDo: promise duration???
+            return _this.skipFrameData(frameDataLeft).then(function () {
+                return infoTag;
+            });
+        });
+    };
+    MpegParser.prototype.skipFrameData = function (frameDataLeft) {
+        var _this = this;
+        return this.tokenizer.readToken(new Token.IgnoreType(frameDataLeft)).then(function () {
+            return _this.sync();
+        });
+    };
+    /* ToDo:
+     public end(callback: TagCallback, done: Done) {
+     if (this.calculateVbrDuration) {
+     this.tagEvent('format', 'duration', this.audioFrameHeader.calcDuration(this.frameCount));
+     }
+     return done();
+     }*/
     MpegParser.prototype.areAllSame = function (array) {
         var first = array[0];
         return array.every(function (element) {
@@ -2402,150 +2771,261 @@ var MpegParser = (function () {
 exports.MpegParser = MpegParser;
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"buffer":21,"strtok2":50}],12:[function(require,module,exports){
+},{"./common":4,"buffer":22,"strtok3":89,"token-types":92}],13:[function(require,module,exports){
 (function (Buffer){
 'use strict';
-var events = require("events");
-var strtok = require("strtok2");
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var vorbis_1 = require("./vorbis");
-var State;
-(function (State) {
-    State[State["header"] = 0] = "header";
-    State[State["segmentTable"] = 1] = "segmentTable";
-    State[State["pageData"] = 2] = "pageData";
-})(State || (State = {}));
-var MetaState;
-(function (MetaState) {
-    MetaState[MetaState["type"] = 0] = "type";
-    MetaState[MetaState["vendorLength"] = 1] = "vendorLength";
-    MetaState[MetaState["vendorString"] = 2] = "vendorString";
-    MetaState[MetaState["userCommentListLength"] = 3] = "userCommentListLength";
-    MetaState[MetaState["commentLength"] = 4] = "commentLength";
-    MetaState[MetaState["comment"] = 5] = "comment";
-    MetaState[MetaState["vorbisInfo"] = 6] = "vorbisInfo";
-})(MetaState || (MetaState = {}));
+var strtok3_1 = require("strtok3");
+var stream_1 = require("stream");
+var es6_promise_1 = require("es6-promise");
+var then_read_stream_1 = require("then-read-stream");
+var Token = require("token-types");
+/**
+ * Vorbis 1 decoding tokens
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-620004.2.1
+ */
+var Vorbis = (function () {
+    function Vorbis() {
+    }
+    return Vorbis;
+}());
+/**
+ * Comment header decoder
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-620004.2.1
+ */
+Vorbis.CommonHeader = {
+    len: 7,
+    get: function (buf, off) {
+        return {
+            packetType: buf.readUInt8(off),
+            vorbis: new Token.StringType(6, 'ascii').get(buf, off + 1)
+        };
+    }
+};
+/**
+ * Identification header
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
+ * @type {{len: number; get: ((buf, off)=>IFormatInfo)}}
+ */
+Vorbis.IdentificationHeader = {
+    len: 23,
+    get: function (buf, off) {
+        return {
+            version: buf.readUInt32LE(off + 0),
+            channelMode: buf.readUInt8(off + 4),
+            sampleRate: buf.readUInt32LE(off + 5),
+            bitrateMax: buf.readUInt32LE(off + 9),
+            bitrateNominal: buf.readUInt32LE(off + 13),
+            bitrateMin: buf.readUInt32LE(off + 17)
+        };
+    }
+};
+/**
+ * Vorbis 1 Parser.
+ * Used by OggParser
+ */
+var VorbisParser = (function () {
+    function VorbisParser() {
+        this.format = {
+            headerType: 'vorbis'
+        };
+        this.tags = [];
+    }
+    VorbisParser.prototype.parse = function (tokenizer, options) {
+        var _this = this;
+        this.tokenizer = tokenizer;
+        return this.parseHeaderPacket().then(function () {
+            return {
+                format: _this.format,
+                native: {
+                    vorbis: _this.tags
+                }
+            };
+        });
+    };
+    /**
+     * Vorbis 1 parser
+     * @param pageLength
+     * @returns {Promise<void>}
+     */
+    VorbisParser.prototype.parseHeaderPacket = function () {
+        var _this = this;
+        return this.tokenizer.readToken(Vorbis.CommonHeader).then(function (header) {
+            if (header.vorbis !== 'vorbis')
+                throw new Error('Metadata does not look like Vorbis');
+            return _this.parsePacket(header.packetType).then(function (res) {
+                if (!res.done) {
+                    return _this.parseHeaderPacket();
+                }
+                return res.done;
+            });
+        }).catch(function (err) {
+            if (err === then_read_stream_1.StreamReader.EndOfStream) {
+                return true;
+            }
+            else
+                throw err;
+        });
+    };
+    VorbisParser.prototype.parsePacket = function (packetType) {
+        switch (packetType) {
+            case 1:
+                return this.parseVorbisInfo().then(function (len) {
+                    return { len: len, done: false };
+                });
+            case 3:
+                return this.parseUserCommentList().then(function (len) {
+                    return { len: len, done: true };
+                });
+            case 5:
+                throw new Error("'setup header type' not implemented");
+        }
+    };
+    VorbisParser.prototype.parseVorbisInfo = function () {
+        var _this = this;
+        return this.tokenizer.readToken(Vorbis.IdentificationHeader).then(function (vi) {
+            _this.format.sampleRate = vi.sampleRate;
+            _this.format.bitrate = vi.bitrateNominal;
+            _this.format.numberOfChannels = vi.channelMode;
+            return Vorbis.IdentificationHeader.len;
+        });
+    };
+    /**
+     * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
+     * @returns {Promise<number>}
+     */
+    VorbisParser.prototype.parseUserCommentList = function () {
+        var _this = this;
+        return this.tokenizer.readToken(Token.UINT32_LE).then(function (strLen) {
+            return _this.tokenizer.readToken(new Token.StringType(strLen, 'utf-8')).then(function (vendorString) {
+                return _this.tokenizer.readToken(Token.UINT32_LE).then(function (userCommentListLength) {
+                    return _this.parseUserComment(userCommentListLength).then(function (len) {
+                        return 2 * Token.UINT32_LE.len + strLen + len;
+                    });
+                });
+            });
+        });
+    };
+    VorbisParser.prototype.parseUserComment = function (userCommentListLength) {
+        var _this = this;
+        return this.tokenizer.readToken(Token.UINT32_LE).then(function (strLen) {
+            return _this.tokenizer.readToken(new Token.StringType(strLen, 'ascii')).then(function (v) {
+                var idx = v.indexOf('=');
+                var key = v.slice(0, idx).toUpperCase();
+                var value = v.slice(idx + 1);
+                if (key === 'METADATA_BLOCK_PICTURE') {
+                    value = vorbis_1.default.readPicture(new Buffer(value, 'base64'));
+                }
+                _this.tags.push({ id: key, value: value });
+                var len = Token.UINT32_LE.len + strLen;
+                if (--userCommentListLength > 0) {
+                    // if we don't want to read the duration
+                    // then tell the parent stream to stop
+                    // stop = !readDuration;
+                    return _this.parseUserComment(userCommentListLength).then(function (recLen) {
+                        return len + recLen;
+                    });
+                }
+                return strLen;
+            });
+        });
+    };
+    return VorbisParser;
+}());
+var VorbisStream = (function (_super) {
+    __extends(VorbisStream, _super);
+    function VorbisStream() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.queue = [];
+        _this.waitingForData = false;
+        return _this;
+    }
+    VorbisStream.prototype.append = function (vorbisData) {
+        this.queue.push(vorbisData);
+        this._tryPush();
+    };
+    VorbisStream.prototype._tryPush = function () {
+        while (this.waitingForData) {
+            var buf = this.queue.shift();
+            if (buf) {
+                this.waitingForData = this.push(buf);
+            }
+            else
+                break;
+        }
+    };
+    VorbisStream.prototype._read = function () {
+        this.waitingForData = true;
+        this._tryPush();
+    };
+    return VorbisStream;
+}(stream_1.Readable));
 var OggParser = (function () {
     function OggParser() {
     }
     OggParser.getInstance = function () {
         return new OggParser();
     };
-    OggParser.prototype.parse = function (stream, callback, done, readDuration, fileSize) {
+    OggParser.prototype.parse = function (tokenizer, options) {
         var _this = this;
-        var innerStream = new events.EventEmitter();
-        var pageLength = 0;
-        var stop = false;
-        // top level parser that handles the parsing of pages
-        strtok.parse(stream, function (v, cb) {
-            if (!v) {
-                cb.state = State.header;
-                return OggParser.Header;
+        this.tokenizer = tokenizer;
+        this.vorbisParser = new VorbisParser();
+        this.vorbisStream = new VorbisStream();
+        var vorbisTokenizer = new strtok3_1.ReadStreamTokenizer(this.vorbisStream);
+        // ToDo: should be provided with level-2 tokenizer
+        var vorbis = this.vorbisParser.parse(vorbisTokenizer, options).then(function (metadata) {
+            if (metadata.format.sampleRate) {
+                // Calculate duration
+                metadata.format.duration = _this.header.absoluteGranulePosition / metadata.format.sampleRate;
             }
-            if (stop) {
-                return done();
-            }
-            switch (cb.state) {
-                case State.header:
-                    _this.header = v;
-                    if (_this.header.type !== 'OggS') {
-                        return done(new Error('expected ogg header but was not found'));
-                    }
-                    cb.pageNumber = _this.header.pageSequenceNo;
-                    cb.state++;
-                    return new strtok.BufferType(_this.header.segmentTable);
-                case State.segments:
-                    pageLength = common_1.default.sum(v);
-                    cb.state++;
-                    return new strtok.BufferType(pageLength);
-                case State.pageData:
-                    innerStream.emit('data', new Buffer(v));
-                    cb.state = State.header;
-                    return OggParser.Header;
-                default:
-                    done(new Error('Illegal state'));
-            }
+            return metadata;
         });
-        // Second level parser that handles the parsing of metadata.
-        // The top level parser emits data that this parser should
-        // handle.
-        strtok.parse(innerStream, function (v, cb) {
-            if (!v) {
-                cb.commentsRead = 0;
-                cb.state = MetaState.type;
-                return new strtok.BufferType(7);
+        var ogg = this.parsePage().catch(function (err) {
+            if (err === then_read_stream_1.StreamReader.EndOfStream) {
+                console.log("EndOfStream: ogg");
+                _this.vorbisStream.append(null);
             }
-            switch (cb.state) {
-                case MetaState.type:
-                    if (v.toString() === '\x01vorbis') {
-                        cb.state = MetaState.vorbisInfo;
-                        return new strtok.BufferType(23);
-                    }
-                    else if (v.toString() === '\x03vorbis') {
-                        cb.state++;
-                        return strtok.UINT32_LE;
-                    }
-                    else {
-                        return done(new Error('expected vorbis header but found something else'));
-                    }
-                case MetaState.vendorLength:
-                    cb.state++;
-                    return new strtok.BufferType(v);
-                case MetaState.vendorString:
-                    cb.state++;
-                    return new strtok.BufferType(4);
-                case MetaState.userCommentListLength:
-                    cb.commentsLength = v.readUInt32LE(0);
-                    // no metadata, stop parsing
-                    if (cb.commentsLength === 0)
-                        return strtok.DONE;
-                    cb.state++;
-                    return strtok.UINT32_LE;
-                case MetaState.commentLength:
-                    cb.state++;
-                    return new strtok.BufferType(v);
-                case MetaState.comment:
-                    cb.commentsRead++;
-                    v = v.toString();
-                    var idx = v.indexOf('=');
-                    var key = v.slice(0, idx).toUpperCase();
-                    var value = v.slice(idx + 1);
-                    if (key === 'METADATA_BLOCK_PICTURE') {
-                        value = vorbis_1.default.readPicture(new Buffer(value, 'base64'));
-                    }
-                    callback(OggParser.headerType, key, value);
-                    if (cb.commentsRead === cb.commentsLength) {
-                        // if we don't want to read the duration
-                        // then tell the parent stream to stop
-                        stop = !readDuration;
-                        return strtok.DONE;
-                    }
-                    cb.state--; // back to comment length
-                    return strtok.UINT32_LE;
-                case MetaState.vorbisInfo:
-                    _this.formatInfo = {
-                        version: v.readUInt32LE(0),
-                        channelMode: v.readUInt8(4),
-                        sampleRate: v.readUInt32LE(5),
-                        bitrateMax: v.readUInt32LE(9),
-                        bitrateNominal: v.readUInt32LE(13),
-                        bitrateMin: v.readUInt32LE(17)
-                    };
-                    callback('format', 'headerType', OggParser.headerType);
-                    callback('format', 'sampleRate', _this.formatInfo.sampleRate);
-                    callback('format', 'bitrate', _this.formatInfo.bitrateNominal);
-                    callback('format', 'numberOfChannels', _this.formatInfo.channelMode);
-                    cb.state = MetaState.type;
-                    return new strtok.BufferType(7);
-                default:
-                    done(new Error('Illegal metadata-state: ' + cb.state));
-                    return strtok.DONE;
-            }
+            else
+                throw err;
+        }).catch(function (err) {
+            if (err === strtok3_1.EndOfFile)
+                return;
+            else
+                throw err;
+        });
+        return es6_promise_1.Promise.all([vorbis, ogg]).then(function (_a) {
+            var vorbis = _a[0];
+            return vorbis;
         });
     };
-    OggParser.prototype.end = function (callback, done) {
-        callback('format', 'duration', this.header.absoluteGranulePosition / this.formatInfo.sampleRate);
-        done();
+    OggParser.prototype.parsePage = function () {
+        var _this = this;
+        return this.tokenizer.readToken(OggParser.Header).then(function (header) {
+            if (header.capturePattern !== 'OggS') {
+                throw new Error('expected ogg header but was not found');
+            }
+            _this.header = header;
+            _this.pageNumber = header.pageSequenceNo;
+            return _this.tokenizer.readToken(new Token.BufferType(header.segmentTable)).then(function (segments) {
+                var pageLength = common_1.default.sum(segments);
+                return _this.tokenizer.readToken(new Token.BufferType(pageLength)).then(function (pageData) {
+                    _this.vorbisStream.append(pageData);
+                    return _this.parsePage();
+                });
+            });
+        });
     };
     return OggParser;
 }());
@@ -2553,23 +3033,28 @@ OggParser.Header = {
     len: 27,
     get: function (buf, off) {
         return {
-            type: new strtok.StringType(4, 'ascii').get(buf, off + 0),
+            capturePattern: new Token.StringType(4, 'ascii').get(buf, off),
             version: buf.readUInt8(off + 4),
-            packet_flag: buf.readUInt8(off + 5),
-            pcm_sample_pos: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
-            stream_serial_num: strtok.UINT32_LE.get(buf, off + 14),
-            page_number: strtok.UINT32_LE.get(buf, off + 18),
-            check_sum: strtok.UINT32_LE.get(buf, off + 22),
-            segments: buf.readUInt8(off + 26)
+            headerType: {
+                continued: common_1.default.strtokBITSET.get(buf, off + 5, 0),
+                firstPage: common_1.default.strtokBITSET.get(buf, off + 5, 1),
+                lastPage: common_1.default.strtokBITSET.get(buf, off + 5, 2)
+            },
+            //packet_flag: buf.readUInt8(off + 5),
+            absoluteGranulePosition: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
+            streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
+            pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
+            pageChecksum: Token.UINT32_LE.get(buf, off + 22),
+            segmentTable: buf.readUInt8(off + 26)
         };
     }
 };
-OggParser.headerType = 'vorbis';
-module.exports = OggParser.getInstance();
+exports.OggParser = OggParser;
 
 }).call(this,require("buffer").Buffer)
-},{"./common":3,"./vorbis":14,"buffer":21,"events":26,"strtok2":50}],13:[function(require,module,exports){
+},{"./common":4,"./vorbis":15,"buffer":22,"es6-promise":25,"stream":87,"strtok3":89,"then-read-stream":90,"token-types":92}],14:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * tagmap maps native meta tags to generic common types
  */
@@ -3131,13 +3616,13 @@ TagMap.m4a = {
     // Additional mappings:
     gnre: 'genre' // ToDo: check mapping
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = TagMap;
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (Buffer){
 "use strict";
-var strtok = require("strtok2");
+Object.defineProperty(exports, "__esModule", { value: true });
+var Token = require("token-types");
 var VorbisPictureType;
 (function (VorbisPictureType) {
     VorbisPictureType[VorbisPictureType["Other"] = 0] = "Other";
@@ -3165,16 +3650,16 @@ var VorbisPictureType;
 var VorbisPictureParser = (function () {
     function VorbisPictureParser(buffer) {
         var offset = 0;
-        this.type = VorbisPictureType[strtok.UINT32_BE.get(buffer, 0)];
-        var mimeLen = strtok.UINT32_BE.get(buffer, offset += 4);
+        this.type = VorbisPictureType[Token.UINT32_BE.get(buffer, 0)];
+        var mimeLen = Token.UINT32_BE.get(buffer, offset += 4);
         this.format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
-        var descLen = strtok.UINT32_BE.get(buffer, offset += mimeLen);
+        var descLen = Token.UINT32_BE.get(buffer, offset += mimeLen);
         this.description = buffer.toString('utf-8', offset += 4, offset + descLen);
-        this.width = strtok.UINT32_BE.get(buffer, offset += descLen);
-        this.height = strtok.UINT32_BE.get(buffer, offset += 4);
-        this.colour_depth = strtok.UINT32_BE.get(buffer, offset += 4);
-        this.indexed_color = strtok.UINT32_BE.get(buffer, offset += 4);
-        var picDataLen = strtok.UINT32_BE.get(buffer, offset += 4);
+        this.width = Token.UINT32_BE.get(buffer, offset += descLen);
+        this.height = Token.UINT32_BE.get(buffer, offset += 4);
+        this.colour_depth = Token.UINT32_BE.get(buffer, offset += 4);
+        this.indexed_color = Token.UINT32_BE.get(buffer, offset += 4);
+        var picDataLen = Token.UINT32_BE.get(buffer, offset += 4);
         this.data = new Buffer(buffer.slice(offset += 4, offset + picDataLen));
     }
     return VorbisPictureParser;
@@ -3190,12 +3675,12 @@ var Vorbis = (function () {
     };
     return Vorbis;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Vorbis;
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":21,"strtok2":50}],15:[function(require,module,exports){
+},{"buffer":22,"token-types":92}],16:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Windows1292Decoder = (function () {
     function Windows1292Decoder() {
     }
@@ -3242,10 +3727,9 @@ Windows1292Decoder.windows1252 = [8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 
     233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247,
     248, 249, 250, 251, 252, 253, 254, 255];
 exports.Windows1292Decoder = Windows1292Decoder;
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Windows1292Decoder.decode;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3739,7 +4223,7 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"util/":56}],17:[function(require,module,exports){
+},{"util/":98}],18:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3855,11 +4339,11 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],18:[function(require,module,exports){
-
 },{}],19:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],20:[function(require,module,exports){
+
+},{}],20:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19}],21:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -3971,7 +4455,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":21}],21:[function(require,module,exports){
+},{"buffer":22}],22:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -5764,7 +6248,218 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":17,"ieee754":29,"isarray":34}],22:[function(require,module,exports){
+},{"base64-js":18,"ieee754":65,"isarray":70}],23:[function(require,module,exports){
+module.exports={
+  "O_RDONLY": 0,
+  "O_WRONLY": 1,
+  "O_RDWR": 2,
+  "S_IFMT": 61440,
+  "S_IFREG": 32768,
+  "S_IFDIR": 16384,
+  "S_IFCHR": 8192,
+  "S_IFBLK": 24576,
+  "S_IFIFO": 4096,
+  "S_IFLNK": 40960,
+  "S_IFSOCK": 49152,
+  "O_CREAT": 512,
+  "O_EXCL": 2048,
+  "O_NOCTTY": 131072,
+  "O_TRUNC": 1024,
+  "O_APPEND": 8,
+  "O_DIRECTORY": 1048576,
+  "O_NOFOLLOW": 256,
+  "O_SYNC": 128,
+  "O_SYMLINK": 2097152,
+  "O_NONBLOCK": 4,
+  "S_IRWXU": 448,
+  "S_IRUSR": 256,
+  "S_IWUSR": 128,
+  "S_IXUSR": 64,
+  "S_IRWXG": 56,
+  "S_IRGRP": 32,
+  "S_IWGRP": 16,
+  "S_IXGRP": 8,
+  "S_IRWXO": 7,
+  "S_IROTH": 4,
+  "S_IWOTH": 2,
+  "S_IXOTH": 1,
+  "E2BIG": 7,
+  "EACCES": 13,
+  "EADDRINUSE": 48,
+  "EADDRNOTAVAIL": 49,
+  "EAFNOSUPPORT": 47,
+  "EAGAIN": 35,
+  "EALREADY": 37,
+  "EBADF": 9,
+  "EBADMSG": 94,
+  "EBUSY": 16,
+  "ECANCELED": 89,
+  "ECHILD": 10,
+  "ECONNABORTED": 53,
+  "ECONNREFUSED": 61,
+  "ECONNRESET": 54,
+  "EDEADLK": 11,
+  "EDESTADDRREQ": 39,
+  "EDOM": 33,
+  "EDQUOT": 69,
+  "EEXIST": 17,
+  "EFAULT": 14,
+  "EFBIG": 27,
+  "EHOSTUNREACH": 65,
+  "EIDRM": 90,
+  "EILSEQ": 92,
+  "EINPROGRESS": 36,
+  "EINTR": 4,
+  "EINVAL": 22,
+  "EIO": 5,
+  "EISCONN": 56,
+  "EISDIR": 21,
+  "ELOOP": 62,
+  "EMFILE": 24,
+  "EMLINK": 31,
+  "EMSGSIZE": 40,
+  "EMULTIHOP": 95,
+  "ENAMETOOLONG": 63,
+  "ENETDOWN": 50,
+  "ENETRESET": 52,
+  "ENETUNREACH": 51,
+  "ENFILE": 23,
+  "ENOBUFS": 55,
+  "ENODATA": 96,
+  "ENODEV": 19,
+  "ENOENT": 2,
+  "ENOEXEC": 8,
+  "ENOLCK": 77,
+  "ENOLINK": 97,
+  "ENOMEM": 12,
+  "ENOMSG": 91,
+  "ENOPROTOOPT": 42,
+  "ENOSPC": 28,
+  "ENOSR": 98,
+  "ENOSTR": 99,
+  "ENOSYS": 78,
+  "ENOTCONN": 57,
+  "ENOTDIR": 20,
+  "ENOTEMPTY": 66,
+  "ENOTSOCK": 38,
+  "ENOTSUP": 45,
+  "ENOTTY": 25,
+  "ENXIO": 6,
+  "EOPNOTSUPP": 102,
+  "EOVERFLOW": 84,
+  "EPERM": 1,
+  "EPIPE": 32,
+  "EPROTO": 100,
+  "EPROTONOSUPPORT": 43,
+  "EPROTOTYPE": 41,
+  "ERANGE": 34,
+  "EROFS": 30,
+  "ESPIPE": 29,
+  "ESRCH": 3,
+  "ESTALE": 70,
+  "ETIME": 101,
+  "ETIMEDOUT": 60,
+  "ETXTBSY": 26,
+  "EWOULDBLOCK": 35,
+  "EXDEV": 18,
+  "SIGHUP": 1,
+  "SIGINT": 2,
+  "SIGQUIT": 3,
+  "SIGILL": 4,
+  "SIGTRAP": 5,
+  "SIGABRT": 6,
+  "SIGIOT": 6,
+  "SIGBUS": 10,
+  "SIGFPE": 8,
+  "SIGKILL": 9,
+  "SIGUSR1": 30,
+  "SIGSEGV": 11,
+  "SIGUSR2": 31,
+  "SIGPIPE": 13,
+  "SIGALRM": 14,
+  "SIGTERM": 15,
+  "SIGCHLD": 20,
+  "SIGCONT": 19,
+  "SIGSTOP": 17,
+  "SIGTSTP": 18,
+  "SIGTTIN": 21,
+  "SIGTTOU": 22,
+  "SIGURG": 16,
+  "SIGXCPU": 24,
+  "SIGXFSZ": 25,
+  "SIGVTALRM": 26,
+  "SIGPROF": 27,
+  "SIGWINCH": 28,
+  "SIGIO": 23,
+  "SIGSYS": 12,
+  "SSL_OP_ALL": 2147486719,
+  "SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION": 262144,
+  "SSL_OP_CIPHER_SERVER_PREFERENCE": 4194304,
+  "SSL_OP_CISCO_ANYCONNECT": 32768,
+  "SSL_OP_COOKIE_EXCHANGE": 8192,
+  "SSL_OP_CRYPTOPRO_TLSEXT_BUG": 2147483648,
+  "SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS": 2048,
+  "SSL_OP_EPHEMERAL_RSA": 0,
+  "SSL_OP_LEGACY_SERVER_CONNECT": 4,
+  "SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER": 32,
+  "SSL_OP_MICROSOFT_SESS_ID_BUG": 1,
+  "SSL_OP_MSIE_SSLV2_RSA_PADDING": 0,
+  "SSL_OP_NETSCAPE_CA_DN_BUG": 536870912,
+  "SSL_OP_NETSCAPE_CHALLENGE_BUG": 2,
+  "SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG": 1073741824,
+  "SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG": 8,
+  "SSL_OP_NO_COMPRESSION": 131072,
+  "SSL_OP_NO_QUERY_MTU": 4096,
+  "SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION": 65536,
+  "SSL_OP_NO_SSLv2": 16777216,
+  "SSL_OP_NO_SSLv3": 33554432,
+  "SSL_OP_NO_TICKET": 16384,
+  "SSL_OP_NO_TLSv1": 67108864,
+  "SSL_OP_NO_TLSv1_1": 268435456,
+  "SSL_OP_NO_TLSv1_2": 134217728,
+  "SSL_OP_PKCS1_CHECK_1": 0,
+  "SSL_OP_PKCS1_CHECK_2": 0,
+  "SSL_OP_SINGLE_DH_USE": 1048576,
+  "SSL_OP_SINGLE_ECDH_USE": 524288,
+  "SSL_OP_SSLEAY_080_CLIENT_DH_BUG": 128,
+  "SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG": 0,
+  "SSL_OP_TLS_BLOCK_PADDING_BUG": 512,
+  "SSL_OP_TLS_D5_BUG": 256,
+  "SSL_OP_TLS_ROLLBACK_BUG": 8388608,
+  "ENGINE_METHOD_DSA": 2,
+  "ENGINE_METHOD_DH": 4,
+  "ENGINE_METHOD_RAND": 8,
+  "ENGINE_METHOD_ECDH": 16,
+  "ENGINE_METHOD_ECDSA": 32,
+  "ENGINE_METHOD_CIPHERS": 64,
+  "ENGINE_METHOD_DIGESTS": 128,
+  "ENGINE_METHOD_STORE": 256,
+  "ENGINE_METHOD_PKEY_METHS": 512,
+  "ENGINE_METHOD_PKEY_ASN1_METHS": 1024,
+  "ENGINE_METHOD_ALL": 65535,
+  "ENGINE_METHOD_NONE": 0,
+  "DH_CHECK_P_NOT_SAFE_PRIME": 2,
+  "DH_CHECK_P_NOT_PRIME": 1,
+  "DH_UNABLE_TO_CHECK_GENERATOR": 4,
+  "DH_NOT_SUITABLE_GENERATOR": 8,
+  "NPN_ENABLED": 1,
+  "RSA_PKCS1_PADDING": 1,
+  "RSA_SSLV23_PADDING": 2,
+  "RSA_NO_PADDING": 3,
+  "RSA_PKCS1_OAEP_PADDING": 4,
+  "RSA_X931_PADDING": 5,
+  "RSA_PKCS1_PSS_PADDING": 6,
+  "POINT_CONVERSION_COMPRESSED": 2,
+  "POINT_CONVERSION_UNCOMPRESSED": 4,
+  "POINT_CONVERSION_HYBRID": 6,
+  "F_OK": 0,
+  "R_OK": 4,
+  "W_OK": 2,
+  "X_OK": 1,
+  "UV_UDP_REUSEADDR": 4
+}
+
+},{}],24:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5875,136 +6570,1169 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":31}],23:[function(require,module,exports){
-var pSlice = Array.prototype.slice;
-var objectKeys = require('./lib/keys.js');
-var isArguments = require('./lib/is_arguments.js');
+},{"../../is-buffer/index.js":67}],25:[function(require,module,exports){
+(function (process,global){
+/*!
+ * @overview es6-promise - a tiny implementation of Promises/A+.
+ * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
+ * @license   Licensed under MIT license
+ *            See https://raw.githubusercontent.com/stefanpenner/es6-promise/master/LICENSE
+ * @version   4.1.0
+ */
 
-var deepEqual = module.exports = function (actual, expected, opts) {
-  if (!opts) opts = {};
-  // 7.1. All identical values are equivalent, as determined by ===.
-  if (actual === expected) {
-    return true;
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global.ES6Promise = factory());
+}(this, (function () { 'use strict';
 
-  } else if (actual instanceof Date && expected instanceof Date) {
-    return actual.getTime() === expected.getTime();
-
-  // 7.3. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
-    return opts.strict ? actual === expected : actual == expected;
-
-  // 7.4. For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
-  } else {
-    return objEquiv(actual, expected, opts);
-  }
+function objectOrFunction(x) {
+  return typeof x === 'function' || typeof x === 'object' && x !== null;
 }
 
-function isUndefinedOrNull(value) {
-  return value === null || value === undefined;
+function isFunction(x) {
+  return typeof x === 'function';
 }
 
-function isBuffer (x) {
-  if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
-  if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
-    return false;
-  }
-  if (x.length > 0 && typeof x[0] !== 'number') return false;
-  return true;
+var _isArray = undefined;
+if (!Array.isArray) {
+  _isArray = function (x) {
+    return Object.prototype.toString.call(x) === '[object Array]';
+  };
+} else {
+  _isArray = Array.isArray;
 }
 
-function objEquiv(a, b, opts) {
-  var i, key;
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-    return false;
-  // an identical 'prototype' property.
-  if (a.prototype !== b.prototype) return false;
-  //~~~I've managed to break Object.keys through screwy arguments passing.
-  //   Converting to array solves the problem.
-  if (isArguments(a)) {
-    if (!isArguments(b)) {
-      return false;
+var isArray = _isArray;
+
+var len = 0;
+var vertxNext = undefined;
+var customSchedulerFn = undefined;
+
+var asap = function asap(callback, arg) {
+  queue[len] = callback;
+  queue[len + 1] = arg;
+  len += 2;
+  if (len === 2) {
+    // If len is 2, that means that we need to schedule an async flush.
+    // If additional callbacks are queued before the queue is flushed, they
+    // will be processed by this flush that we are scheduling.
+    if (customSchedulerFn) {
+      customSchedulerFn(flush);
+    } else {
+      scheduleFlush();
     }
-    a = pSlice.call(a);
-    b = pSlice.call(b);
-    return deepEqual(a, b, opts);
   }
-  if (isBuffer(a)) {
-    if (!isBuffer(b)) {
-      return false;
-    }
-    if (a.length !== b.length) return false;
-    for (i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return false;
-    }
-    return true;
+};
+
+function setScheduler(scheduleFn) {
+  customSchedulerFn = scheduleFn;
+}
+
+function setAsap(asapFn) {
+  asap = asapFn;
+}
+
+var browserWindow = typeof window !== 'undefined' ? window : undefined;
+var browserGlobal = browserWindow || {};
+var BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
+var isNode = typeof self === 'undefined' && typeof process !== 'undefined' && ({}).toString.call(process) === '[object process]';
+
+// test for web worker but not in IE10
+var isWorker = typeof Uint8ClampedArray !== 'undefined' && typeof importScripts !== 'undefined' && typeof MessageChannel !== 'undefined';
+
+// node
+function useNextTick() {
+  // node version 0.10.x displays a deprecation warning when nextTick is used recursively
+  // see https://github.com/cujojs/when/issues/410 for details
+  return function () {
+    return process.nextTick(flush);
+  };
+}
+
+// vertx
+function useVertxTimer() {
+  if (typeof vertxNext !== 'undefined') {
+    return function () {
+      vertxNext(flush);
+    };
   }
+
+  return useSetTimeout();
+}
+
+function useMutationObserver() {
+  var iterations = 0;
+  var observer = new BrowserMutationObserver(flush);
+  var node = document.createTextNode('');
+  observer.observe(node, { characterData: true });
+
+  return function () {
+    node.data = iterations = ++iterations % 2;
+  };
+}
+
+// web worker
+function useMessageChannel() {
+  var channel = new MessageChannel();
+  channel.port1.onmessage = flush;
+  return function () {
+    return channel.port2.postMessage(0);
+  };
+}
+
+function useSetTimeout() {
+  // Store setTimeout reference so es6-promise will be unaffected by
+  // other code modifying setTimeout (like sinon.useFakeTimers())
+  var globalSetTimeout = setTimeout;
+  return function () {
+    return globalSetTimeout(flush, 1);
+  };
+}
+
+var queue = new Array(1000);
+function flush() {
+  for (var i = 0; i < len; i += 2) {
+    var callback = queue[i];
+    var arg = queue[i + 1];
+
+    callback(arg);
+
+    queue[i] = undefined;
+    queue[i + 1] = undefined;
+  }
+
+  len = 0;
+}
+
+function attemptVertx() {
   try {
-    var ka = objectKeys(a),
-        kb = objectKeys(b);
-  } catch (e) {//happens when one is a string literal and the other isn't
-    return false;
+    var r = require;
+    var vertx = r('vertx');
+    vertxNext = vertx.runOnLoop || vertx.runOnContext;
+    return useVertxTimer();
+  } catch (e) {
+    return useSetTimeout();
   }
-  // having the same number of owned properties (keys incorporates
-  // hasOwnProperty)
-  if (ka.length != kb.length)
-    return false;
-  //the same set of keys (although not necessarily the same order),
-  ka.sort();
-  kb.sort();
-  //~~~cheap key test
-  for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] != kb[i])
-      return false;
-  }
-  //equivalent values for every corresponding key, and
-  //~~~possibly expensive deep test
-  for (i = ka.length - 1; i >= 0; i--) {
-    key = ka[i];
-    if (!deepEqual(a[key], b[key], opts)) return false;
-  }
-  return typeof a === typeof b;
 }
 
-},{"./lib/is_arguments.js":24,"./lib/keys.js":25}],24:[function(require,module,exports){
-var supportsArgumentsClass = (function(){
-  return Object.prototype.toString.call(arguments)
-})() == '[object Arguments]';
-
-exports = module.exports = supportsArgumentsClass ? supported : unsupported;
-
-exports.supported = supported;
-function supported(object) {
-  return Object.prototype.toString.call(object) == '[object Arguments]';
-};
-
-exports.unsupported = unsupported;
-function unsupported(object){
-  return object &&
-    typeof object == 'object' &&
-    typeof object.length == 'number' &&
-    Object.prototype.hasOwnProperty.call(object, 'callee') &&
-    !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
-    false;
-};
-
-},{}],25:[function(require,module,exports){
-exports = module.exports = typeof Object.keys === 'function'
-  ? Object.keys : shim;
-
-exports.shim = shim;
-function shim (obj) {
-  var keys = [];
-  for (var key in obj) keys.push(key);
-  return keys;
+var scheduleFlush = undefined;
+// Decide what async method to use to triggering processing of queued callbacks:
+if (isNode) {
+  scheduleFlush = useNextTick();
+} else if (BrowserMutationObserver) {
+  scheduleFlush = useMutationObserver();
+} else if (isWorker) {
+  scheduleFlush = useMessageChannel();
+} else if (browserWindow === undefined && typeof require === 'function') {
+  scheduleFlush = attemptVertx();
+} else {
+  scheduleFlush = useSetTimeout();
 }
 
-},{}],26:[function(require,module,exports){
+function then(onFulfillment, onRejection) {
+  var _arguments = arguments;
+
+  var parent = this;
+
+  var child = new this.constructor(noop);
+
+  if (child[PROMISE_ID] === undefined) {
+    makePromise(child);
+  }
+
+  var _state = parent._state;
+
+  if (_state) {
+    (function () {
+      var callback = _arguments[_state - 1];
+      asap(function () {
+        return invokeCallback(_state, child, callback, parent._result);
+      });
+    })();
+  } else {
+    subscribe(parent, child, onFulfillment, onRejection);
+  }
+
+  return child;
+}
+
+/**
+  `Promise.resolve` returns a promise that will become resolved with the
+  passed `value`. It is shorthand for the following:
+
+  ```javascript
+  let promise = new Promise(function(resolve, reject){
+    resolve(1);
+  });
+
+  promise.then(function(value){
+    // value === 1
+  });
+  ```
+
+  Instead of writing the above, your code now simply becomes the following:
+
+  ```javascript
+  let promise = Promise.resolve(1);
+
+  promise.then(function(value){
+    // value === 1
+  });
+  ```
+
+  @method resolve
+  @static
+  @param {Any} value value that the returned promise will be resolved with
+  Useful for tooling.
+  @return {Promise} a promise that will become fulfilled with the given
+  `value`
+*/
+function resolve(object) {
+  /*jshint validthis:true */
+  var Constructor = this;
+
+  if (object && typeof object === 'object' && object.constructor === Constructor) {
+    return object;
+  }
+
+  var promise = new Constructor(noop);
+  _resolve(promise, object);
+  return promise;
+}
+
+var PROMISE_ID = Math.random().toString(36).substring(16);
+
+function noop() {}
+
+var PENDING = void 0;
+var FULFILLED = 1;
+var REJECTED = 2;
+
+var GET_THEN_ERROR = new ErrorObject();
+
+function selfFulfillment() {
+  return new TypeError("You cannot resolve a promise with itself");
+}
+
+function cannotReturnOwn() {
+  return new TypeError('A promises callback cannot return that same promise.');
+}
+
+function getThen(promise) {
+  try {
+    return promise.then;
+  } catch (error) {
+    GET_THEN_ERROR.error = error;
+    return GET_THEN_ERROR;
+  }
+}
+
+function tryThen(then, value, fulfillmentHandler, rejectionHandler) {
+  try {
+    then.call(value, fulfillmentHandler, rejectionHandler);
+  } catch (e) {
+    return e;
+  }
+}
+
+function handleForeignThenable(promise, thenable, then) {
+  asap(function (promise) {
+    var sealed = false;
+    var error = tryThen(then, thenable, function (value) {
+      if (sealed) {
+        return;
+      }
+      sealed = true;
+      if (thenable !== value) {
+        _resolve(promise, value);
+      } else {
+        fulfill(promise, value);
+      }
+    }, function (reason) {
+      if (sealed) {
+        return;
+      }
+      sealed = true;
+
+      _reject(promise, reason);
+    }, 'Settle: ' + (promise._label || ' unknown promise'));
+
+    if (!sealed && error) {
+      sealed = true;
+      _reject(promise, error);
+    }
+  }, promise);
+}
+
+function handleOwnThenable(promise, thenable) {
+  if (thenable._state === FULFILLED) {
+    fulfill(promise, thenable._result);
+  } else if (thenable._state === REJECTED) {
+    _reject(promise, thenable._result);
+  } else {
+    subscribe(thenable, undefined, function (value) {
+      return _resolve(promise, value);
+    }, function (reason) {
+      return _reject(promise, reason);
+    });
+  }
+}
+
+function handleMaybeThenable(promise, maybeThenable, then$$) {
+  if (maybeThenable.constructor === promise.constructor && then$$ === then && maybeThenable.constructor.resolve === resolve) {
+    handleOwnThenable(promise, maybeThenable);
+  } else {
+    if (then$$ === GET_THEN_ERROR) {
+      _reject(promise, GET_THEN_ERROR.error);
+      GET_THEN_ERROR.error = null;
+    } else if (then$$ === undefined) {
+      fulfill(promise, maybeThenable);
+    } else if (isFunction(then$$)) {
+      handleForeignThenable(promise, maybeThenable, then$$);
+    } else {
+      fulfill(promise, maybeThenable);
+    }
+  }
+}
+
+function _resolve(promise, value) {
+  if (promise === value) {
+    _reject(promise, selfFulfillment());
+  } else if (objectOrFunction(value)) {
+    handleMaybeThenable(promise, value, getThen(value));
+  } else {
+    fulfill(promise, value);
+  }
+}
+
+function publishRejection(promise) {
+  if (promise._onerror) {
+    promise._onerror(promise._result);
+  }
+
+  publish(promise);
+}
+
+function fulfill(promise, value) {
+  if (promise._state !== PENDING) {
+    return;
+  }
+
+  promise._result = value;
+  promise._state = FULFILLED;
+
+  if (promise._subscribers.length !== 0) {
+    asap(publish, promise);
+  }
+}
+
+function _reject(promise, reason) {
+  if (promise._state !== PENDING) {
+    return;
+  }
+  promise._state = REJECTED;
+  promise._result = reason;
+
+  asap(publishRejection, promise);
+}
+
+function subscribe(parent, child, onFulfillment, onRejection) {
+  var _subscribers = parent._subscribers;
+  var length = _subscribers.length;
+
+  parent._onerror = null;
+
+  _subscribers[length] = child;
+  _subscribers[length + FULFILLED] = onFulfillment;
+  _subscribers[length + REJECTED] = onRejection;
+
+  if (length === 0 && parent._state) {
+    asap(publish, parent);
+  }
+}
+
+function publish(promise) {
+  var subscribers = promise._subscribers;
+  var settled = promise._state;
+
+  if (subscribers.length === 0) {
+    return;
+  }
+
+  var child = undefined,
+      callback = undefined,
+      detail = promise._result;
+
+  for (var i = 0; i < subscribers.length; i += 3) {
+    child = subscribers[i];
+    callback = subscribers[i + settled];
+
+    if (child) {
+      invokeCallback(settled, child, callback, detail);
+    } else {
+      callback(detail);
+    }
+  }
+
+  promise._subscribers.length = 0;
+}
+
+function ErrorObject() {
+  this.error = null;
+}
+
+var TRY_CATCH_ERROR = new ErrorObject();
+
+function tryCatch(callback, detail) {
+  try {
+    return callback(detail);
+  } catch (e) {
+    TRY_CATCH_ERROR.error = e;
+    return TRY_CATCH_ERROR;
+  }
+}
+
+function invokeCallback(settled, promise, callback, detail) {
+  var hasCallback = isFunction(callback),
+      value = undefined,
+      error = undefined,
+      succeeded = undefined,
+      failed = undefined;
+
+  if (hasCallback) {
+    value = tryCatch(callback, detail);
+
+    if (value === TRY_CATCH_ERROR) {
+      failed = true;
+      error = value.error;
+      value.error = null;
+    } else {
+      succeeded = true;
+    }
+
+    if (promise === value) {
+      _reject(promise, cannotReturnOwn());
+      return;
+    }
+  } else {
+    value = detail;
+    succeeded = true;
+  }
+
+  if (promise._state !== PENDING) {
+    // noop
+  } else if (hasCallback && succeeded) {
+      _resolve(promise, value);
+    } else if (failed) {
+      _reject(promise, error);
+    } else if (settled === FULFILLED) {
+      fulfill(promise, value);
+    } else if (settled === REJECTED) {
+      _reject(promise, value);
+    }
+}
+
+function initializePromise(promise, resolver) {
+  try {
+    resolver(function resolvePromise(value) {
+      _resolve(promise, value);
+    }, function rejectPromise(reason) {
+      _reject(promise, reason);
+    });
+  } catch (e) {
+    _reject(promise, e);
+  }
+}
+
+var id = 0;
+function nextId() {
+  return id++;
+}
+
+function makePromise(promise) {
+  promise[PROMISE_ID] = id++;
+  promise._state = undefined;
+  promise._result = undefined;
+  promise._subscribers = [];
+}
+
+function Enumerator(Constructor, input) {
+  this._instanceConstructor = Constructor;
+  this.promise = new Constructor(noop);
+
+  if (!this.promise[PROMISE_ID]) {
+    makePromise(this.promise);
+  }
+
+  if (isArray(input)) {
+    this._input = input;
+    this.length = input.length;
+    this._remaining = input.length;
+
+    this._result = new Array(this.length);
+
+    if (this.length === 0) {
+      fulfill(this.promise, this._result);
+    } else {
+      this.length = this.length || 0;
+      this._enumerate();
+      if (this._remaining === 0) {
+        fulfill(this.promise, this._result);
+      }
+    }
+  } else {
+    _reject(this.promise, validationError());
+  }
+}
+
+function validationError() {
+  return new Error('Array Methods must be provided an Array');
+};
+
+Enumerator.prototype._enumerate = function () {
+  var length = this.length;
+  var _input = this._input;
+
+  for (var i = 0; this._state === PENDING && i < length; i++) {
+    this._eachEntry(_input[i], i);
+  }
+};
+
+Enumerator.prototype._eachEntry = function (entry, i) {
+  var c = this._instanceConstructor;
+  var resolve$$ = c.resolve;
+
+  if (resolve$$ === resolve) {
+    var _then = getThen(entry);
+
+    if (_then === then && entry._state !== PENDING) {
+      this._settledAt(entry._state, i, entry._result);
+    } else if (typeof _then !== 'function') {
+      this._remaining--;
+      this._result[i] = entry;
+    } else if (c === Promise) {
+      var promise = new c(noop);
+      handleMaybeThenable(promise, entry, _then);
+      this._willSettleAt(promise, i);
+    } else {
+      this._willSettleAt(new c(function (resolve$$) {
+        return resolve$$(entry);
+      }), i);
+    }
+  } else {
+    this._willSettleAt(resolve$$(entry), i);
+  }
+};
+
+Enumerator.prototype._settledAt = function (state, i, value) {
+  var promise = this.promise;
+
+  if (promise._state === PENDING) {
+    this._remaining--;
+
+    if (state === REJECTED) {
+      _reject(promise, value);
+    } else {
+      this._result[i] = value;
+    }
+  }
+
+  if (this._remaining === 0) {
+    fulfill(promise, this._result);
+  }
+};
+
+Enumerator.prototype._willSettleAt = function (promise, i) {
+  var enumerator = this;
+
+  subscribe(promise, undefined, function (value) {
+    return enumerator._settledAt(FULFILLED, i, value);
+  }, function (reason) {
+    return enumerator._settledAt(REJECTED, i, reason);
+  });
+};
+
+/**
+  `Promise.all` accepts an array of promises, and returns a new promise which
+  is fulfilled with an array of fulfillment values for the passed promises, or
+  rejected with the reason of the first passed promise to be rejected. It casts all
+  elements of the passed iterable to promises as it runs this algorithm.
+
+  Example:
+
+  ```javascript
+  let promise1 = resolve(1);
+  let promise2 = resolve(2);
+  let promise3 = resolve(3);
+  let promises = [ promise1, promise2, promise3 ];
+
+  Promise.all(promises).then(function(array){
+    // The array here would be [ 1, 2, 3 ];
+  });
+  ```
+
+  If any of the `promises` given to `all` are rejected, the first promise
+  that is rejected will be given as an argument to the returned promises's
+  rejection handler. For example:
+
+  Example:
+
+  ```javascript
+  let promise1 = resolve(1);
+  let promise2 = reject(new Error("2"));
+  let promise3 = reject(new Error("3"));
+  let promises = [ promise1, promise2, promise3 ];
+
+  Promise.all(promises).then(function(array){
+    // Code here never runs because there are rejected promises!
+  }, function(error) {
+    // error.message === "2"
+  });
+  ```
+
+  @method all
+  @static
+  @param {Array} entries array of promises
+  @param {String} label optional string for labeling the promise.
+  Useful for tooling.
+  @return {Promise} promise that is fulfilled when all `promises` have been
+  fulfilled, or rejected if any of them become rejected.
+  @static
+*/
+function all(entries) {
+  return new Enumerator(this, entries).promise;
+}
+
+/**
+  `Promise.race` returns a new promise which is settled in the same way as the
+  first passed promise to settle.
+
+  Example:
+
+  ```javascript
+  let promise1 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 1');
+    }, 200);
+  });
+
+  let promise2 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 2');
+    }, 100);
+  });
+
+  Promise.race([promise1, promise2]).then(function(result){
+    // result === 'promise 2' because it was resolved before promise1
+    // was resolved.
+  });
+  ```
+
+  `Promise.race` is deterministic in that only the state of the first
+  settled promise matters. For example, even if other promises given to the
+  `promises` array argument are resolved, but the first settled promise has
+  become rejected before the other promises became fulfilled, the returned
+  promise will become rejected:
+
+  ```javascript
+  let promise1 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 1');
+    }, 200);
+  });
+
+  let promise2 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      reject(new Error('promise 2'));
+    }, 100);
+  });
+
+  Promise.race([promise1, promise2]).then(function(result){
+    // Code here never runs
+  }, function(reason){
+    // reason.message === 'promise 2' because promise 2 became rejected before
+    // promise 1 became fulfilled
+  });
+  ```
+
+  An example real-world use case is implementing timeouts:
+
+  ```javascript
+  Promise.race([ajax('foo.json'), timeout(5000)])
+  ```
+
+  @method race
+  @static
+  @param {Array} promises array of promises to observe
+  Useful for tooling.
+  @return {Promise} a promise which settles in the same way as the first passed
+  promise to settle.
+*/
+function race(entries) {
+  /*jshint validthis:true */
+  var Constructor = this;
+
+  if (!isArray(entries)) {
+    return new Constructor(function (_, reject) {
+      return reject(new TypeError('You must pass an array to race.'));
+    });
+  } else {
+    return new Constructor(function (resolve, reject) {
+      var length = entries.length;
+      for (var i = 0; i < length; i++) {
+        Constructor.resolve(entries[i]).then(resolve, reject);
+      }
+    });
+  }
+}
+
+/**
+  `Promise.reject` returns a promise rejected with the passed `reason`.
+  It is shorthand for the following:
+
+  ```javascript
+  let promise = new Promise(function(resolve, reject){
+    reject(new Error('WHOOPS'));
+  });
+
+  promise.then(function(value){
+    // Code here doesn't run because the promise is rejected!
+  }, function(reason){
+    // reason.message === 'WHOOPS'
+  });
+  ```
+
+  Instead of writing the above, your code now simply becomes the following:
+
+  ```javascript
+  let promise = Promise.reject(new Error('WHOOPS'));
+
+  promise.then(function(value){
+    // Code here doesn't run because the promise is rejected!
+  }, function(reason){
+    // reason.message === 'WHOOPS'
+  });
+  ```
+
+  @method reject
+  @static
+  @param {Any} reason value that the returned promise will be rejected with.
+  Useful for tooling.
+  @return {Promise} a promise rejected with the given `reason`.
+*/
+function reject(reason) {
+  /*jshint validthis:true */
+  var Constructor = this;
+  var promise = new Constructor(noop);
+  _reject(promise, reason);
+  return promise;
+}
+
+function needsResolver() {
+  throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
+}
+
+function needsNew() {
+  throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+}
+
+/**
+  Promise objects represent the eventual result of an asynchronous operation. The
+  primary way of interacting with a promise is through its `then` method, which
+  registers callbacks to receive either a promise's eventual value or the reason
+  why the promise cannot be fulfilled.
+
+  Terminology
+  -----------
+
+  - `promise` is an object or function with a `then` method whose behavior conforms to this specification.
+  - `thenable` is an object or function that defines a `then` method.
+  - `value` is any legal JavaScript value (including undefined, a thenable, or a promise).
+  - `exception` is a value that is thrown using the throw statement.
+  - `reason` is a value that indicates why a promise was rejected.
+  - `settled` the final resting state of a promise, fulfilled or rejected.
+
+  A promise can be in one of three states: pending, fulfilled, or rejected.
+
+  Promises that are fulfilled have a fulfillment value and are in the fulfilled
+  state.  Promises that are rejected have a rejection reason and are in the
+  rejected state.  A fulfillment value is never a thenable.
+
+  Promises can also be said to *resolve* a value.  If this value is also a
+  promise, then the original promise's settled state will match the value's
+  settled state.  So a promise that *resolves* a promise that rejects will
+  itself reject, and a promise that *resolves* a promise that fulfills will
+  itself fulfill.
+
+
+  Basic Usage:
+  ------------
+
+  ```js
+  let promise = new Promise(function(resolve, reject) {
+    // on success
+    resolve(value);
+
+    // on failure
+    reject(reason);
+  });
+
+  promise.then(function(value) {
+    // on fulfillment
+  }, function(reason) {
+    // on rejection
+  });
+  ```
+
+  Advanced Usage:
+  ---------------
+
+  Promises shine when abstracting away asynchronous interactions such as
+  `XMLHttpRequest`s.
+
+  ```js
+  function getJSON(url) {
+    return new Promise(function(resolve, reject){
+      let xhr = new XMLHttpRequest();
+
+      xhr.open('GET', url);
+      xhr.onreadystatechange = handler;
+      xhr.responseType = 'json';
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.send();
+
+      function handler() {
+        if (this.readyState === this.DONE) {
+          if (this.status === 200) {
+            resolve(this.response);
+          } else {
+            reject(new Error('getJSON: `' + url + '` failed with status: [' + this.status + ']'));
+          }
+        }
+      };
+    });
+  }
+
+  getJSON('/posts.json').then(function(json) {
+    // on fulfillment
+  }, function(reason) {
+    // on rejection
+  });
+  ```
+
+  Unlike callbacks, promises are great composable primitives.
+
+  ```js
+  Promise.all([
+    getJSON('/posts'),
+    getJSON('/comments')
+  ]).then(function(values){
+    values[0] // => postsJSON
+    values[1] // => commentsJSON
+
+    return values;
+  });
+  ```
+
+  @class Promise
+  @param {function} resolver
+  Useful for tooling.
+  @constructor
+*/
+function Promise(resolver) {
+  this[PROMISE_ID] = nextId();
+  this._result = this._state = undefined;
+  this._subscribers = [];
+
+  if (noop !== resolver) {
+    typeof resolver !== 'function' && needsResolver();
+    this instanceof Promise ? initializePromise(this, resolver) : needsNew();
+  }
+}
+
+Promise.all = all;
+Promise.race = race;
+Promise.resolve = resolve;
+Promise.reject = reject;
+Promise._setScheduler = setScheduler;
+Promise._setAsap = setAsap;
+Promise._asap = asap;
+
+Promise.prototype = {
+  constructor: Promise,
+
+  /**
+    The primary way of interacting with a promise is through its `then` method,
+    which registers callbacks to receive either a promise's eventual value or the
+    reason why the promise cannot be fulfilled.
+  
+    ```js
+    findUser().then(function(user){
+      // user is available
+    }, function(reason){
+      // user is unavailable, and you are given the reason why
+    });
+    ```
+  
+    Chaining
+    --------
+  
+    The return value of `then` is itself a promise.  This second, 'downstream'
+    promise is resolved with the return value of the first promise's fulfillment
+    or rejection handler, or rejected if the handler throws an exception.
+  
+    ```js
+    findUser().then(function (user) {
+      return user.name;
+    }, function (reason) {
+      return 'default name';
+    }).then(function (userName) {
+      // If `findUser` fulfilled, `userName` will be the user's name, otherwise it
+      // will be `'default name'`
+    });
+  
+    findUser().then(function (user) {
+      throw new Error('Found user, but still unhappy');
+    }, function (reason) {
+      throw new Error('`findUser` rejected and we're unhappy');
+    }).then(function (value) {
+      // never reached
+    }, function (reason) {
+      // if `findUser` fulfilled, `reason` will be 'Found user, but still unhappy'.
+      // If `findUser` rejected, `reason` will be '`findUser` rejected and we're unhappy'.
+    });
+    ```
+    If the downstream promise does not specify a rejection handler, rejection reasons will be propagated further downstream.
+  
+    ```js
+    findUser().then(function (user) {
+      throw new PedagogicalException('Upstream error');
+    }).then(function (value) {
+      // never reached
+    }).then(function (value) {
+      // never reached
+    }, function (reason) {
+      // The `PedgagocialException` is propagated all the way down to here
+    });
+    ```
+  
+    Assimilation
+    ------------
+  
+    Sometimes the value you want to propagate to a downstream promise can only be
+    retrieved asynchronously. This can be achieved by returning a promise in the
+    fulfillment or rejection handler. The downstream promise will then be pending
+    until the returned promise is settled. This is called *assimilation*.
+  
+    ```js
+    findUser().then(function (user) {
+      return findCommentsByAuthor(user);
+    }).then(function (comments) {
+      // The user's comments are now available
+    });
+    ```
+  
+    If the assimliated promise rejects, then the downstream promise will also reject.
+  
+    ```js
+    findUser().then(function (user) {
+      return findCommentsByAuthor(user);
+    }).then(function (comments) {
+      // If `findCommentsByAuthor` fulfills, we'll have the value here
+    }, function (reason) {
+      // If `findCommentsByAuthor` rejects, we'll have the reason here
+    });
+    ```
+  
+    Simple Example
+    --------------
+  
+    Synchronous Example
+  
+    ```javascript
+    let result;
+  
+    try {
+      result = findResult();
+      // success
+    } catch(reason) {
+      // failure
+    }
+    ```
+  
+    Errback Example
+  
+    ```js
+    findResult(function(result, err){
+      if (err) {
+        // failure
+      } else {
+        // success
+      }
+    });
+    ```
+  
+    Promise Example;
+  
+    ```javascript
+    findResult().then(function(result){
+      // success
+    }, function(reason){
+      // failure
+    });
+    ```
+  
+    Advanced Example
+    --------------
+  
+    Synchronous Example
+  
+    ```javascript
+    let author, books;
+  
+    try {
+      author = findAuthor();
+      books  = findBooksByAuthor(author);
+      // success
+    } catch(reason) {
+      // failure
+    }
+    ```
+  
+    Errback Example
+  
+    ```js
+  
+    function foundBooks(books) {
+  
+    }
+  
+    function failure(reason) {
+  
+    }
+  
+    findAuthor(function(author, err){
+      if (err) {
+        failure(err);
+        // failure
+      } else {
+        try {
+          findBoooksByAuthor(author, function(books, err) {
+            if (err) {
+              failure(err);
+            } else {
+              try {
+                foundBooks(books);
+              } catch(reason) {
+                failure(reason);
+              }
+            }
+          });
+        } catch(error) {
+          failure(err);
+        }
+        // success
+      }
+    });
+    ```
+  
+    Promise Example;
+  
+    ```javascript
+    findAuthor().
+      then(findBooksByAuthor).
+      then(function(books){
+        // found books
+    }).catch(function(reason){
+      // something went wrong
+    });
+    ```
+  
+    @method then
+    @param {Function} onFulfilled
+    @param {Function} onRejected
+    Useful for tooling.
+    @return {Promise}
+  */
+  then: then,
+
+  /**
+    `catch` is simply sugar for `then(undefined, onRejection)` which makes it the same
+    as the catch block of a try/catch statement.
+  
+    ```js
+    function findAuthor(){
+      throw new Error('couldn't find that author');
+    }
+  
+    // synchronous
+    try {
+      findAuthor();
+    } catch(reason) {
+      // something went wrong
+    }
+  
+    // async with promises
+    findAuthor().catch(function(reason){
+      // something went wrong
+    });
+    ```
+  
+    @method catch
+    @param {Function} onRejection
+    Useful for tooling.
+    @return {Promise}
+  */
+  'catch': function _catch(onRejection) {
+    return this.then(null, onRejection);
+  }
+};
+
+function polyfill() {
+    var local = undefined;
+
+    if (typeof global !== 'undefined') {
+        local = global;
+    } else if (typeof self !== 'undefined') {
+        local = self;
+    } else {
+        try {
+            local = Function('return this')();
+        } catch (e) {
+            throw new Error('polyfill failed because global object is unavailable in this environment');
+        }
+    }
+
+    var P = local.Promise;
+
+    if (P) {
+        var promiseToString = null;
+        try {
+            promiseToString = Object.prototype.toString.call(P.resolve());
+        } catch (e) {
+            // silently ignored
+        }
+
+        if (promiseToString === '[object Promise]' && !P.cast) {
+            return;
+        }
+    }
+
+    local.Promise = Promise;
+}
+
+// Strange compat..
+Promise.polyfill = polyfill;
+Promise.Promise = Promise;
+
+return Promise;
+
+})));
+
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"_process":75}],26:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6344,7 +8072,7 @@ module.exports = function (file, options) {
   return from
 }
 
-},{"from2":28,"typedarray-to-buffer":52}],28:[function(require,module,exports){
+},{"from2":28,"typedarray-to-buffer":93}],28:[function(require,module,exports){
 (function (process){
 var Readable = require('readable-stream').Readable
 var inherits = require('inherits')
@@ -6451,7 +8179,2655 @@ function defaults(opts) {
 }
 
 }).call(this,require('_process'))
-},{"_process":36,"inherits":30,"readable-stream":45}],29:[function(require,module,exports){
+},{"_process":75,"inherits":66,"readable-stream":84}],29:[function(require,module,exports){
+'use strict'
+
+const fs = require('graceful-fs')
+
+const BUF_LENGTH = 64 * 1024
+const _buff = require('../util/buffer')(BUF_LENGTH)
+
+function copyFileSync (srcFile, destFile, options) {
+  const overwrite = options.overwrite
+  const errorOnExist = options.errorOnExist
+  const preserveTimestamps = options.preserveTimestamps
+
+  if (fs.existsSync(destFile)) {
+    if (overwrite) {
+      fs.unlinkSync(destFile)
+    } else if (errorOnExist) {
+      throw new Error(`${destFile} already exists`)
+    } else return
+  }
+
+  const fdr = fs.openSync(srcFile, 'r')
+  const stat = fs.fstatSync(fdr)
+  const fdw = fs.openSync(destFile, 'w', stat.mode)
+  let bytesRead = 1
+  let pos = 0
+
+  while (bytesRead > 0) {
+    bytesRead = fs.readSync(fdr, _buff, 0, BUF_LENGTH, pos)
+    fs.writeSync(fdw, _buff, 0, bytesRead)
+    pos += bytesRead
+  }
+
+  if (preserveTimestamps) {
+    fs.futimesSync(fdw, stat.atime, stat.mtime)
+  }
+
+  fs.closeSync(fdr)
+  fs.closeSync(fdw)
+}
+
+module.exports = copyFileSync
+
+},{"../util/buffer":59,"graceful-fs":62}],30:[function(require,module,exports){
+(function (process){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const copyFileSync = require('./copy-file-sync')
+const mkdir = require('../mkdirs')
+
+function copySync (src, dest, options) {
+  if (typeof options === 'function' || options instanceof RegExp) {
+    options = {filter: options}
+  }
+
+  options = options || {}
+  options.recursive = !!options.recursive
+
+  // default to true for now
+  options.clobber = 'clobber' in options ? !!options.clobber : true
+  // overwrite falls back to clobber
+  options.overwrite = 'overwrite' in options ? !!options.overwrite : options.clobber
+  options.dereference = 'dereference' in options ? !!options.dereference : false
+  options.preserveTimestamps = 'preserveTimestamps' in options ? !!options.preserveTimestamps : false
+
+  options.filter = options.filter || function () { return true }
+
+  // Warn about using preserveTimestamps on 32-bit node:
+  if (options.preserveTimestamps && process.arch === 'ia32') {
+    console.warn(`fs-extra: Using the preserveTimestamps option in 32-bit node is not recommended;\n
+    see https://github.com/jprichardson/node-fs-extra/issues/269`)
+  }
+
+  const stats = (options.recursive && !options.dereference) ? fs.lstatSync(src) : fs.statSync(src)
+  const destFolder = path.dirname(dest)
+  const destFolderExists = fs.existsSync(destFolder)
+  let performCopy = false
+
+  if (options.filter instanceof RegExp) {
+    console.warn('Warning: fs-extra: Passing a RegExp filter is deprecated, use a function')
+    performCopy = options.filter.test(src)
+  } else if (typeof options.filter === 'function') performCopy = options.filter(src, dest)
+
+  if (stats.isFile() && performCopy) {
+    if (!destFolderExists) mkdir.mkdirsSync(destFolder)
+    copyFileSync(src, dest, {
+      overwrite: options.overwrite,
+      errorOnExist: options.errorOnExist,
+      preserveTimestamps: options.preserveTimestamps
+    })
+  } else if (stats.isDirectory() && performCopy) {
+    if (!fs.existsSync(dest)) mkdir.mkdirsSync(dest)
+    const contents = fs.readdirSync(src)
+    contents.forEach(content => {
+      const opts = options
+      opts.recursive = true
+      copySync(path.join(src, content), path.join(dest, content), opts)
+    })
+  } else if (options.recursive && stats.isSymbolicLink() && performCopy) {
+    const srcPath = fs.readlinkSync(src)
+    fs.symlinkSync(srcPath, dest)
+  }
+}
+
+module.exports = copySync
+
+}).call(this,require('_process'))
+},{"../mkdirs":48,"./copy-file-sync":29,"_process":75,"graceful-fs":62,"path":73}],31:[function(require,module,exports){
+module.exports = {
+  copySync: require('./copy-sync')
+}
+
+},{"./copy-sync":30}],32:[function(require,module,exports){
+(function (process){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const ncp = require('./ncp')
+const mkdir = require('../mkdirs')
+const pathExists = require('../path-exists').pathExists
+
+function copy (src, dest, options, callback) {
+  if (typeof options === 'function' && !callback) {
+    callback = options
+    options = {}
+  } else if (typeof options === 'function' || options instanceof RegExp) {
+    options = {filter: options}
+  }
+  callback = callback || function () {}
+  options = options || {}
+
+  // Warn about using preserveTimestamps on 32-bit node:
+  if (options.preserveTimestamps && process.arch === 'ia32') {
+    console.warn(`fs-extra: Using the preserveTimestamps option in 32-bit node is not recommended;\n
+    see https://github.com/jprichardson/node-fs-extra/issues/269`)
+  }
+
+  // don't allow src and dest to be the same
+  const basePath = process.cwd()
+  const currentPath = path.resolve(basePath, src)
+  const targetPath = path.resolve(basePath, dest)
+  if (currentPath === targetPath) return callback(new Error('Source and destination must not be the same.'))
+
+  fs.lstat(src, (err, stats) => {
+    if (err) return callback(err)
+
+    let dir = null
+    if (stats.isDirectory()) {
+      const parts = dest.split(path.sep)
+      parts.pop()
+      dir = parts.join(path.sep)
+    } else {
+      dir = path.dirname(dest)
+    }
+
+    pathExists(dir, (err, dirExists) => {
+      if (err) return callback(err)
+      if (dirExists) return ncp(src, dest, options, callback)
+      mkdir.mkdirs(dir, err => {
+        if (err) return callback(err)
+        ncp(src, dest, options, callback)
+      })
+    })
+  })
+}
+
+module.exports = copy
+
+}).call(this,require('_process'))
+},{"../mkdirs":48,"../path-exists":55,"./ncp":34,"_process":75,"graceful-fs":62,"path":73}],33:[function(require,module,exports){
+const u = require('universalify').fromCallback
+module.exports = {
+  copy: u(require('./copy'))
+}
+
+},{"./copy":32,"universalify":94}],34:[function(require,module,exports){
+(function (process){
+// imported from ncp (this is temporary, will rewrite)
+
+var fs = require('graceful-fs')
+var path = require('path')
+var utimes = require('../util/utimes')
+
+function ncp (source, dest, options, callback) {
+  if (!callback) {
+    callback = options
+    options = {}
+  }
+
+  var basePath = process.cwd()
+  var currentPath = path.resolve(basePath, source)
+  var targetPath = path.resolve(basePath, dest)
+
+  var filter = options.filter
+  var transform = options.transform
+  var overwrite = options.overwrite
+  // If overwrite is undefined, use clobber, otherwise default to true:
+  if (overwrite === undefined) overwrite = options.clobber
+  if (overwrite === undefined) overwrite = true
+  var errorOnExist = options.errorOnExist
+  var dereference = options.dereference
+  var preserveTimestamps = options.preserveTimestamps === true
+
+  var started = 0
+  var finished = 0
+  var running = 0
+
+  var errored = false
+
+  startCopy(currentPath)
+
+  function startCopy (source) {
+    started++
+    if (filter) {
+      if (filter instanceof RegExp) {
+        console.warn('Warning: fs-extra: Passing a RegExp filter is deprecated, use a function')
+        if (!filter.test(source)) {
+          return doneOne(true)
+        }
+      } else if (typeof filter === 'function') {
+        if (!filter(source, dest)) {
+          return doneOne(true)
+        }
+      }
+    }
+    return getStats(source)
+  }
+
+  function getStats (source) {
+    var stat = dereference ? fs.stat : fs.lstat
+    running++
+    stat(source, function (err, stats) {
+      if (err) return onError(err)
+
+      // We need to get the mode from the stats object and preserve it.
+      var item = {
+        name: source,
+        mode: stats.mode,
+        mtime: stats.mtime, // modified time
+        atime: stats.atime, // access time
+        stats: stats // temporary
+      }
+
+      if (stats.isDirectory()) {
+        return onDir(item)
+      } else if (stats.isFile() || stats.isCharacterDevice() || stats.isBlockDevice()) {
+        return onFile(item)
+      } else if (stats.isSymbolicLink()) {
+        // Symlinks don't really need to know about the mode.
+        return onLink(source)
+      }
+    })
+  }
+
+  function onFile (file) {
+    var target = file.name.replace(currentPath, targetPath.replace('$', '$$$$')) // escapes '$' with '$$'
+    isWritable(target, function (writable) {
+      if (writable) {
+        copyFile(file, target)
+      } else {
+        if (overwrite) {
+          rmFile(target, function () {
+            copyFile(file, target)
+          })
+        } else if (errorOnExist) {
+          onError(new Error(target + ' already exists'))
+        } else {
+          doneOne()
+        }
+      }
+    })
+  }
+
+  function copyFile (file, target) {
+    var readStream = fs.createReadStream(file.name)
+    var writeStream = fs.createWriteStream(target, { mode: file.mode })
+
+    readStream.on('error', onError)
+    writeStream.on('error', onError)
+
+    if (transform) {
+      transform(readStream, writeStream, file)
+    } else {
+      writeStream.on('open', function () {
+        readStream.pipe(writeStream)
+      })
+    }
+
+    writeStream.once('close', function () {
+      fs.chmod(target, file.mode, function (err) {
+        if (err) return onError(err)
+        if (preserveTimestamps) {
+          utimes.utimesMillis(target, file.atime, file.mtime, function (err) {
+            if (err) return onError(err)
+            return doneOne()
+          })
+        } else {
+          doneOne()
+        }
+      })
+    })
+  }
+
+  function rmFile (file, done) {
+    fs.unlink(file, function (err) {
+      if (err) return onError(err)
+      return done()
+    })
+  }
+
+  function onDir (dir) {
+    var target = dir.name.replace(currentPath, targetPath.replace('$', '$$$$')) // escapes '$' with '$$'
+    isWritable(target, function (writable) {
+      if (writable) {
+        return mkDir(dir, target)
+      }
+      copyDir(dir.name)
+    })
+  }
+
+  function mkDir (dir, target) {
+    fs.mkdir(target, dir.mode, function (err) {
+      if (err) return onError(err)
+      // despite setting mode in fs.mkdir, doesn't seem to work
+      // so we set it here.
+      fs.chmod(target, dir.mode, function (err) {
+        if (err) return onError(err)
+        copyDir(dir.name)
+      })
+    })
+  }
+
+  function copyDir (dir) {
+    fs.readdir(dir, function (err, items) {
+      if (err) return onError(err)
+      items.forEach(function (item) {
+        startCopy(path.join(dir, item))
+      })
+      return doneOne()
+    })
+  }
+
+  function onLink (link) {
+    var target = link.replace(currentPath, targetPath)
+    fs.readlink(link, function (err, resolvedPath) {
+      if (err) return onError(err)
+      checkLink(resolvedPath, target)
+    })
+  }
+
+  function checkLink (resolvedPath, target) {
+    if (dereference) {
+      resolvedPath = path.resolve(basePath, resolvedPath)
+    }
+    isWritable(target, function (writable) {
+      if (writable) {
+        return makeLink(resolvedPath, target)
+      }
+      fs.readlink(target, function (err, targetDest) {
+        if (err) return onError(err)
+
+        if (dereference) {
+          targetDest = path.resolve(basePath, targetDest)
+        }
+        if (targetDest === resolvedPath) {
+          return doneOne()
+        }
+        return rmFile(target, function () {
+          makeLink(resolvedPath, target)
+        })
+      })
+    })
+  }
+
+  function makeLink (linkPath, target) {
+    fs.symlink(linkPath, target, function (err) {
+      if (err) return onError(err)
+      return doneOne()
+    })
+  }
+
+  function isWritable (path, done) {
+    fs.lstat(path, function (err) {
+      if (err) {
+        if (err.code === 'ENOENT') return done(true)
+        return done(false)
+      }
+      return done(false)
+    })
+  }
+
+  function onError (err) {
+    // ensure callback is defined & called only once:
+    if (!errored && callback !== undefined) {
+      errored = true
+      return callback(err)
+    }
+  }
+
+  function doneOne (skipped) {
+    if (!skipped) running--
+    finished++
+    if ((started === finished) && (running === 0)) {
+      if (callback !== undefined) {
+        return callback(null)
+      }
+    }
+  }
+}
+
+module.exports = ncp
+
+}).call(this,require('_process'))
+},{"../util/utimes":60,"_process":75,"graceful-fs":62,"path":73}],35:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const fs = require('fs')
+const path = require('path')
+const mkdir = require('../mkdirs')
+const remove = require('../remove')
+
+const emptyDir = u(function emptyDir (dir, callback) {
+  callback = callback || function () {}
+  fs.readdir(dir, (err, items) => {
+    if (err) return mkdir.mkdirs(dir, callback)
+
+    items = items.map(item => path.join(dir, item))
+
+    deleteItem()
+
+    function deleteItem () {
+      const item = items.pop()
+      if (!item) return callback()
+      remove.remove(item, err => {
+        if (err) return callback(err)
+        deleteItem()
+      })
+    }
+  })
+})
+
+function emptyDirSync (dir) {
+  let items
+  try {
+    items = fs.readdirSync(dir)
+  } catch (err) {
+    return mkdir.mkdirsSync(dir)
+  }
+
+  items.forEach(item => {
+    item = path.join(dir, item)
+    remove.removeSync(item)
+  })
+}
+
+module.exports = {
+  emptyDirSync,
+  emptydirSync: emptyDirSync,
+  emptyDir,
+  emptydir: emptyDir
+}
+
+},{"../mkdirs":48,"../remove":56,"fs":20,"path":73,"universalify":94}],36:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const path = require('path')
+const fs = require('graceful-fs')
+const mkdir = require('../mkdirs')
+const pathExists = require('../path-exists').pathExists
+
+function createFile (file, callback) {
+  function makeFile () {
+    fs.writeFile(file, '', err => {
+      if (err) return callback(err)
+      callback()
+    })
+  }
+
+  pathExists(file, (err, fileExists) => {
+    if (err) return callback(err)
+    if (fileExists) return callback()
+    const dir = path.dirname(file)
+    pathExists(dir, (err, dirExists) => {
+      if (err) return callback(err)
+      if (dirExists) return makeFile()
+      mkdir.mkdirs(dir, err => {
+        if (err) return callback(err)
+        makeFile()
+      })
+    })
+  })
+}
+
+function createFileSync (file) {
+  if (fs.existsSync(file)) return
+
+  const dir = path.dirname(file)
+  if (!fs.existsSync(dir)) {
+    mkdir.mkdirsSync(dir)
+  }
+
+  fs.writeFileSync(file, '')
+}
+
+module.exports = {
+  createFile: u(createFile),
+  createFileSync
+}
+
+},{"../mkdirs":48,"../path-exists":55,"graceful-fs":62,"path":73,"universalify":94}],37:[function(require,module,exports){
+'use strict'
+
+const file = require('./file')
+const link = require('./link')
+const symlink = require('./symlink')
+
+module.exports = {
+  // file
+  createFile: file.createFile,
+  createFileSync: file.createFileSync,
+  ensureFile: file.createFile,
+  ensureFileSync: file.createFileSync,
+  // link
+  createLink: link.createLink,
+  createLinkSync: link.createLinkSync,
+  ensureLink: link.createLink,
+  ensureLinkSync: link.createLinkSync,
+  // symlink
+  createSymlink: symlink.createSymlink,
+  createSymlinkSync: symlink.createSymlinkSync,
+  ensureSymlink: symlink.createSymlink,
+  ensureSymlinkSync: symlink.createSymlinkSync
+}
+
+},{"./file":36,"./link":38,"./symlink":41}],38:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const path = require('path')
+const fs = require('graceful-fs')
+const mkdir = require('../mkdirs')
+const pathExists = require('../path-exists').pathExists
+
+function createLink (srcpath, dstpath, callback) {
+  function makeLink (srcpath, dstpath) {
+    fs.link(srcpath, dstpath, err => {
+      if (err) return callback(err)
+      callback(null)
+    })
+  }
+
+  pathExists(dstpath, (err, destinationExists) => {
+    if (err) return callback(err)
+    if (destinationExists) return callback(null)
+    fs.lstat(srcpath, (err, stat) => {
+      if (err) {
+        err.message = err.message.replace('lstat', 'ensureLink')
+        return callback(err)
+      }
+
+      const dir = path.dirname(dstpath)
+      pathExists(dir, (err, dirExists) => {
+        if (err) return callback(err)
+        if (dirExists) return makeLink(srcpath, dstpath)
+        mkdir.mkdirs(dir, err => {
+          if (err) return callback(err)
+          makeLink(srcpath, dstpath)
+        })
+      })
+    })
+  })
+}
+
+function createLinkSync (srcpath, dstpath, callback) {
+  const destinationExists = fs.existsSync(dstpath)
+  if (destinationExists) return undefined
+
+  try {
+    fs.lstatSync(srcpath)
+  } catch (err) {
+    err.message = err.message.replace('lstat', 'ensureLink')
+    throw err
+  }
+
+  const dir = path.dirname(dstpath)
+  const dirExists = fs.existsSync(dir)
+  if (dirExists) return fs.linkSync(srcpath, dstpath)
+  mkdir.mkdirsSync(dir)
+
+  return fs.linkSync(srcpath, dstpath)
+}
+
+module.exports = {
+  createLink: u(createLink),
+  createLinkSync
+}
+
+},{"../mkdirs":48,"../path-exists":55,"graceful-fs":62,"path":73,"universalify":94}],39:[function(require,module,exports){
+'use strict'
+
+const path = require('path')
+const fs = require('graceful-fs')
+const pathExists = require('../path-exists').pathExists
+
+/**
+ * Function that returns two types of paths, one relative to symlink, and one
+ * relative to the current working directory. Checks if path is absolute or
+ * relative. If the path is relative, this function checks if the path is
+ * relative to symlink or relative to current working directory. This is an
+ * initiative to find a smarter `srcpath` to supply when building symlinks.
+ * This allows you to determine which path to use out of one of three possible
+ * types of source paths. The first is an absolute path. This is detected by
+ * `path.isAbsolute()`. When an absolute path is provided, it is checked to
+ * see if it exists. If it does it's used, if not an error is returned
+ * (callback)/ thrown (sync). The other two options for `srcpath` are a
+ * relative url. By default Node's `fs.symlink` works by creating a symlink
+ * using `dstpath` and expects the `srcpath` to be relative to the newly
+ * created symlink. If you provide a `srcpath` that does not exist on the file
+ * system it results in a broken symlink. To minimize this, the function
+ * checks to see if the 'relative to symlink' source file exists, and if it
+ * does it will use it. If it does not, it checks if there's a file that
+ * exists that is relative to the current working directory, if does its used.
+ * This preserves the expectations of the original fs.symlink spec and adds
+ * the ability to pass in `relative to current working direcotry` paths.
+ */
+
+function symlinkPaths (srcpath, dstpath, callback) {
+  if (path.isAbsolute(srcpath)) {
+    return fs.lstat(srcpath, (err, stat) => {
+      if (err) {
+        err.message = err.message.replace('lstat', 'ensureSymlink')
+        return callback(err)
+      }
+      return callback(null, {
+        'toCwd': srcpath,
+        'toDst': srcpath
+      })
+    })
+  } else {
+    const dstdir = path.dirname(dstpath)
+    const relativeToDst = path.join(dstdir, srcpath)
+    return pathExists(relativeToDst, (err, exists) => {
+      if (err) return callback(err)
+      if (exists) {
+        return callback(null, {
+          'toCwd': relativeToDst,
+          'toDst': srcpath
+        })
+      } else {
+        return fs.lstat(srcpath, (err, stat) => {
+          if (err) {
+            err.message = err.message.replace('lstat', 'ensureSymlink')
+            return callback(err)
+          }
+          return callback(null, {
+            'toCwd': srcpath,
+            'toDst': path.relative(dstdir, srcpath)
+          })
+        })
+      }
+    })
+  }
+}
+
+function symlinkPathsSync (srcpath, dstpath) {
+  let exists
+  if (path.isAbsolute(srcpath)) {
+    exists = fs.existsSync(srcpath)
+    if (!exists) throw new Error('absolute srcpath does not exist')
+    return {
+      'toCwd': srcpath,
+      'toDst': srcpath
+    }
+  } else {
+    const dstdir = path.dirname(dstpath)
+    const relativeToDst = path.join(dstdir, srcpath)
+    exists = fs.existsSync(relativeToDst)
+    if (exists) {
+      return {
+        'toCwd': relativeToDst,
+        'toDst': srcpath
+      }
+    } else {
+      exists = fs.existsSync(srcpath)
+      if (!exists) throw new Error('relative srcpath does not exist')
+      return {
+        'toCwd': srcpath,
+        'toDst': path.relative(dstdir, srcpath)
+      }
+    }
+  }
+}
+
+module.exports = {
+  symlinkPaths,
+  symlinkPathsSync
+}
+
+},{"../path-exists":55,"graceful-fs":62,"path":73}],40:[function(require,module,exports){
+'use strict'
+
+const fs = require('graceful-fs')
+
+function symlinkType (srcpath, type, callback) {
+  callback = (typeof type === 'function') ? type : callback
+  type = (typeof type === 'function') ? false : type
+  if (type) return callback(null, type)
+  fs.lstat(srcpath, (err, stats) => {
+    if (err) return callback(null, 'file')
+    type = (stats && stats.isDirectory()) ? 'dir' : 'file'
+    callback(null, type)
+  })
+}
+
+function symlinkTypeSync (srcpath, type) {
+  let stats
+
+  if (type) return type
+  try {
+    stats = fs.lstatSync(srcpath)
+  } catch (e) {
+    return 'file'
+  }
+  return (stats && stats.isDirectory()) ? 'dir' : 'file'
+}
+
+module.exports = {
+  symlinkType,
+  symlinkTypeSync
+}
+
+},{"graceful-fs":62}],41:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const path = require('path')
+const fs = require('graceful-fs')
+const _mkdirs = require('../mkdirs')
+const mkdirs = _mkdirs.mkdirs
+const mkdirsSync = _mkdirs.mkdirsSync
+
+const _symlinkPaths = require('./symlink-paths')
+const symlinkPaths = _symlinkPaths.symlinkPaths
+const symlinkPathsSync = _symlinkPaths.symlinkPathsSync
+
+const _symlinkType = require('./symlink-type')
+const symlinkType = _symlinkType.symlinkType
+const symlinkTypeSync = _symlinkType.symlinkTypeSync
+
+const pathExists = require('../path-exists').pathExists
+
+function createSymlink (srcpath, dstpath, type, callback) {
+  callback = (typeof type === 'function') ? type : callback
+  type = (typeof type === 'function') ? false : type
+
+  pathExists(dstpath, (err, destinationExists) => {
+    if (err) return callback(err)
+    if (destinationExists) return callback(null)
+    symlinkPaths(srcpath, dstpath, (err, relative) => {
+      if (err) return callback(err)
+      srcpath = relative.toDst
+      symlinkType(relative.toCwd, type, (err, type) => {
+        if (err) return callback(err)
+        const dir = path.dirname(dstpath)
+        pathExists(dir, (err, dirExists) => {
+          if (err) return callback(err)
+          if (dirExists) return fs.symlink(srcpath, dstpath, type, callback)
+          mkdirs(dir, err => {
+            if (err) return callback(err)
+            fs.symlink(srcpath, dstpath, type, callback)
+          })
+        })
+      })
+    })
+  })
+}
+
+function createSymlinkSync (srcpath, dstpath, type, callback) {
+  callback = (typeof type === 'function') ? type : callback
+  type = (typeof type === 'function') ? false : type
+
+  const destinationExists = fs.existsSync(dstpath)
+  if (destinationExists) return undefined
+
+  const relative = symlinkPathsSync(srcpath, dstpath)
+  srcpath = relative.toDst
+  type = symlinkTypeSync(relative.toCwd, type)
+  const dir = path.dirname(dstpath)
+  const exists = fs.existsSync(dir)
+  if (exists) return fs.symlinkSync(srcpath, dstpath, type)
+  mkdirsSync(dir)
+  return fs.symlinkSync(srcpath, dstpath, type)
+}
+
+module.exports = {
+  createSymlink: u(createSymlink),
+  createSymlinkSync
+}
+
+},{"../mkdirs":48,"../path-exists":55,"./symlink-paths":39,"./symlink-type":40,"graceful-fs":62,"path":73,"universalify":94}],42:[function(require,module,exports){
+// This is adapted from https://github.com/normalize/mz
+// Copyright (c) 2014-2016 Jonathan Ong me@jongleberry.com and Contributors
+const u = require('universalify').fromCallback
+const fs = require('graceful-fs')
+
+const api = [
+  'access',
+  'appendFile',
+  'chmod',
+  'chown',
+  'close',
+  'fchmod',
+  'fchown',
+  'fdatasync',
+  'fstat',
+  'fsync',
+  'ftruncate',
+  'futimes',
+  'lchown',
+  'link',
+  'lstat',
+  'mkdir',
+  'open',
+  'read',
+  'readFile',
+  'readdir',
+  'readlink',
+  'realpath',
+  'rename',
+  'rmdir',
+  'stat',
+  'symlink',
+  'truncate',
+  'unlink',
+  'utimes',
+  'write',
+  'writeFile'
+]
+// fs.mkdtemp() was added in Node.js v5.10.0, so check if it exists
+typeof fs.mkdtemp === 'function' && api.push('mkdtemp')
+
+// Export all keys:
+Object.keys(fs).forEach(key => {
+  exports[key] = fs[key]
+})
+
+// Universalify async methods:
+api.forEach(method => {
+  exports[method] = u(fs[method])
+})
+
+// We differ from mz/fs in that we still ship the old, broken, fs.exists()
+// since we are a drop-in replacement for the native module
+exports.exists = function (filename, callback) {
+  if (typeof callback === 'function') {
+    return fs.exists(filename, callback)
+  }
+  return new Promise(resolve => {
+    return fs.exists(filename, resolve)
+  })
+}
+
+},{"graceful-fs":62,"universalify":94}],43:[function(require,module,exports){
+'use strict'
+
+const assign = require('./util/assign')
+
+const fs = {}
+
+// Export graceful-fs:
+assign(fs, require('./fs'))
+// Export extra methods:
+assign(fs, require('./copy'))
+assign(fs, require('./copy-sync'))
+assign(fs, require('./mkdirs'))
+assign(fs, require('./remove'))
+assign(fs, require('./json'))
+assign(fs, require('./move'))
+assign(fs, require('./move-sync'))
+assign(fs, require('./empty'))
+assign(fs, require('./ensure'))
+assign(fs, require('./output'))
+assign(fs, require('./path-exists'))
+
+module.exports = fs
+
+},{"./copy":33,"./copy-sync":31,"./empty":35,"./ensure":37,"./fs":42,"./json":44,"./mkdirs":48,"./move":53,"./move-sync":52,"./output":54,"./path-exists":55,"./remove":56,"./util/assign":58}],44:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const jsonFile = require('./jsonfile')
+
+jsonFile.outputJsonSync = require('./output-json-sync')
+jsonFile.outputJson = u(require('./output-json'))
+// aliases
+jsonFile.outputJSONSync = jsonFile.outputJSONSync
+jsonFile.outputJSON = jsonFile.outputJson
+jsonFile.writeJSON = jsonFile.writeJson
+jsonFile.writeJSONSync = jsonFile.writeJsonSync
+jsonFile.readJSON = jsonFile.readJson
+jsonFile.readJSONSync = jsonFile.readJsonSync
+
+module.exports = jsonFile
+
+},{"./jsonfile":45,"./output-json":47,"./output-json-sync":46,"universalify":94}],45:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const jsonFile = require('jsonfile')
+
+module.exports = {
+  // jsonfile exports
+  readJson: u(jsonFile.readFile),
+  readJsonSync: jsonFile.readFileSync,
+  writeJson: u(jsonFile.writeFile),
+  writeJsonSync: jsonFile.writeFileSync
+}
+
+},{"jsonfile":71,"universalify":94}],46:[function(require,module,exports){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const mkdir = require('../mkdirs')
+const jsonFile = require('./jsonfile')
+
+function outputJsonSync (file, data, options) {
+  const dir = path.dirname(file)
+
+  if (!fs.existsSync(dir)) {
+    mkdir.mkdirsSync(dir)
+  }
+
+  jsonFile.writeJsonSync(file, data, options)
+}
+
+module.exports = outputJsonSync
+
+},{"../mkdirs":48,"./jsonfile":45,"graceful-fs":62,"path":73}],47:[function(require,module,exports){
+'use strict'
+
+const path = require('path')
+const mkdir = require('../mkdirs')
+const pathExists = require('../path-exists').pathExists
+const jsonFile = require('./jsonfile')
+
+function outputJson (file, data, options, callback) {
+  if (typeof options === 'function') {
+    callback = options
+    options = {}
+  }
+
+  const dir = path.dirname(file)
+
+  pathExists(dir, (err, itDoes) => {
+    if (err) return callback(err)
+    if (itDoes) return jsonFile.writeJson(file, data, options, callback)
+
+    mkdir.mkdirs(dir, err => {
+      if (err) return callback(err)
+      jsonFile.writeJson(file, data, options, callback)
+    })
+  })
+}
+
+module.exports = outputJson
+
+},{"../mkdirs":48,"../path-exists":55,"./jsonfile":45,"path":73}],48:[function(require,module,exports){
+'use strict'
+const u = require('universalify').fromCallback
+const mkdirs = u(require('./mkdirs'))
+const mkdirsSync = require('./mkdirs-sync')
+
+module.exports = {
+  mkdirs: mkdirs,
+  mkdirsSync: mkdirsSync,
+  // alias
+  mkdirp: mkdirs,
+  mkdirpSync: mkdirsSync,
+  ensureDir: mkdirs,
+  ensureDirSync: mkdirsSync
+}
+
+},{"./mkdirs":50,"./mkdirs-sync":49,"universalify":94}],49:[function(require,module,exports){
+(function (process){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const invalidWin32Path = require('./win32').invalidWin32Path
+
+const o777 = parseInt('0777', 8)
+
+function mkdirsSync (p, opts, made) {
+  if (!opts || typeof opts !== 'object') {
+    opts = { mode: opts }
+  }
+
+  let mode = opts.mode
+  const xfs = opts.fs || fs
+
+  if (process.platform === 'win32' && invalidWin32Path(p)) {
+    const errInval = new Error(p + ' contains invalid WIN32 path characters.')
+    errInval.code = 'EINVAL'
+    throw errInval
+  }
+
+  if (mode === undefined) {
+    mode = o777 & (~process.umask())
+  }
+  if (!made) made = null
+
+  p = path.resolve(p)
+
+  try {
+    xfs.mkdirSync(p, mode)
+    made = made || p
+  } catch (err0) {
+    switch (err0.code) {
+      case 'ENOENT':
+        if (path.dirname(p) === p) throw err0
+        made = mkdirsSync(path.dirname(p), opts, made)
+        mkdirsSync(p, opts, made)
+        break
+
+      // In the case of any other error, just see if there's a dir
+      // there already.  If so, then hooray!  If not, then something
+      // is borked.
+      default:
+        let stat
+        try {
+          stat = xfs.statSync(p)
+        } catch (err1) {
+          throw err0
+        }
+        if (!stat.isDirectory()) throw err0
+        break
+    }
+  }
+
+  return made
+}
+
+module.exports = mkdirsSync
+
+}).call(this,require('_process'))
+},{"./win32":51,"_process":75,"graceful-fs":62,"path":73}],50:[function(require,module,exports){
+(function (process){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const invalidWin32Path = require('./win32').invalidWin32Path
+
+const o777 = parseInt('0777', 8)
+
+function mkdirs (p, opts, callback, made) {
+  if (typeof opts === 'function') {
+    callback = opts
+    opts = {}
+  } else if (!opts || typeof opts !== 'object') {
+    opts = { mode: opts }
+  }
+
+  if (process.platform === 'win32' && invalidWin32Path(p)) {
+    const errInval = new Error(p + ' contains invalid WIN32 path characters.')
+    errInval.code = 'EINVAL'
+    return callback(errInval)
+  }
+
+  let mode = opts.mode
+  const xfs = opts.fs || fs
+
+  if (mode === undefined) {
+    mode = o777 & (~process.umask())
+  }
+  if (!made) made = null
+
+  callback = callback || function () {}
+  p = path.resolve(p)
+
+  xfs.mkdir(p, mode, er => {
+    if (!er) {
+      made = made || p
+      return callback(null, made)
+    }
+    switch (er.code) {
+      case 'ENOENT':
+        if (path.dirname(p) === p) return callback(er)
+        mkdirs(path.dirname(p), opts, (er, made) => {
+          if (er) callback(er, made)
+          else mkdirs(p, opts, callback, made)
+        })
+        break
+
+      // In the case of any other error, just see if there's a dir
+      // there already.  If so, then hooray!  If not, then something
+      // is borked.
+      default:
+        xfs.stat(p, (er2, stat) => {
+          // if the stat fails, then that's super weird.
+          // let the original error be the failure reason.
+          if (er2 || !stat.isDirectory()) callback(er, made)
+          else callback(null, made)
+        })
+        break
+    }
+  })
+}
+
+module.exports = mkdirs
+
+}).call(this,require('_process'))
+},{"./win32":51,"_process":75,"graceful-fs":62,"path":73}],51:[function(require,module,exports){
+'use strict'
+
+const path = require('path')
+
+// get drive on windows
+function getRootPath (p) {
+  p = path.normalize(path.resolve(p)).split(path.sep)
+  if (p.length > 0) return p[0]
+  return null
+}
+
+// http://stackoverflow.com/a/62888/10333 contains more accurate
+// TODO: expand to include the rest
+const INVALID_PATH_CHARS = /[<>:"|?*]/
+
+function invalidWin32Path (p) {
+  const rp = getRootPath(p)
+  p = p.replace(rp, '')
+  return INVALID_PATH_CHARS.test(p)
+}
+
+module.exports = {
+  getRootPath,
+  invalidWin32Path
+}
+
+},{"path":73}],52:[function(require,module,exports){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const copySync = require('../copy-sync').copySync
+const removeSync = require('../remove').removeSync
+const mkdirpSync = require('../mkdirs').mkdirsSync
+const buffer = require('../util/buffer')
+
+function moveSync (src, dest, options) {
+  options = options || {}
+  const overwrite = options.overwrite || options.clobber || false
+
+  src = path.resolve(src)
+  dest = path.resolve(dest)
+
+  if (src === dest) return fs.accessSync(src)
+
+  if (isSrcSubdir(src, dest)) throw new Error(`Cannot move '${src}' into itself '${dest}'.`)
+
+  mkdirpSync(path.dirname(dest))
+  tryRenameSync()
+
+  function tryRenameSync () {
+    if (overwrite) {
+      try {
+        return fs.renameSync(src, dest)
+      } catch (err) {
+        if (err.code === 'ENOTEMPTY' || err.code === 'EEXIST' || err.code === 'EPERM') {
+          removeSync(dest)
+          options.overwrite = false // just overwriteed it, no need to do it again
+          return moveSync(src, dest, options)
+        }
+
+        if (err.code !== 'EXDEV') throw err
+        return moveSyncAcrossDevice(src, dest, overwrite)
+      }
+    } else {
+      try {
+        fs.linkSync(src, dest)
+        return fs.unlinkSync(src)
+      } catch (err) {
+        if (err.code === 'EXDEV' || err.code === 'EISDIR' || err.code === 'EPERM' || err.code === 'ENOTSUP') {
+          return moveSyncAcrossDevice(src, dest, overwrite)
+        }
+        throw err
+      }
+    }
+  }
+}
+
+function moveSyncAcrossDevice (src, dest, overwrite) {
+  const stat = fs.statSync(src)
+
+  if (stat.isDirectory()) {
+    return moveDirSyncAcrossDevice(src, dest, overwrite)
+  } else {
+    return moveFileSyncAcrossDevice(src, dest, overwrite)
+  }
+}
+
+function moveFileSyncAcrossDevice (src, dest, overwrite) {
+  const BUF_LENGTH = 64 * 1024
+  const _buff = buffer(BUF_LENGTH)
+
+  const flags = overwrite ? 'w' : 'wx'
+
+  const fdr = fs.openSync(src, 'r')
+  const stat = fs.fstatSync(fdr)
+  const fdw = fs.openSync(dest, flags, stat.mode)
+  let bytesRead = 1
+  let pos = 0
+
+  while (bytesRead > 0) {
+    bytesRead = fs.readSync(fdr, _buff, 0, BUF_LENGTH, pos)
+    fs.writeSync(fdw, _buff, 0, bytesRead)
+    pos += bytesRead
+  }
+
+  fs.closeSync(fdr)
+  fs.closeSync(fdw)
+  return fs.unlinkSync(src)
+}
+
+function moveDirSyncAcrossDevice (src, dest, overwrite) {
+  const options = {
+    overwrite: false
+  }
+
+  if (overwrite) {
+    removeSync(dest)
+    tryCopySync()
+  } else {
+    tryCopySync()
+  }
+
+  function tryCopySync () {
+    copySync(src, dest, options)
+    return removeSync(src)
+  }
+}
+
+// return true if dest is a subdir of src, otherwise false.
+// extract dest base dir and check if that is the same as src basename
+function isSrcSubdir (src, dest) {
+  try {
+    return fs.statSync(src).isDirectory() &&
+           src !== dest &&
+           dest.indexOf(src) > -1 &&
+           dest.split(path.dirname(src) + path.sep)[1].split(path.sep)[0] === path.basename(src)
+  } catch (e) {
+    return false
+  }
+}
+
+module.exports = {
+  moveSync
+}
+
+},{"../copy-sync":31,"../mkdirs":48,"../remove":56,"../util/buffer":59,"graceful-fs":62,"path":73}],53:[function(require,module,exports){
+'use strict'
+
+// most of this code was written by Andrew Kelley
+// licensed under the BSD license: see
+// https://github.com/andrewrk/node-mv/blob/master/package.json
+
+// this needs a cleanup
+
+const u = require('universalify').fromCallback
+const fs = require('graceful-fs')
+const ncp = require('../copy/ncp')
+const path = require('path')
+const remove = require('../remove').remove
+const mkdirp = require('../mkdirs').mkdirs
+
+function move (source, dest, options, callback) {
+  if (typeof options === 'function') {
+    callback = options
+    options = {}
+  }
+
+  const shouldMkdirp = ('mkdirp' in options) ? options.mkdirp : true
+  const overwrite = options.overwrite || options.clobber || false
+
+  if (shouldMkdirp) {
+    mkdirs()
+  } else {
+    doRename()
+  }
+
+  function mkdirs () {
+    mkdirp(path.dirname(dest), err => {
+      if (err) return callback(err)
+      doRename()
+    })
+  }
+
+  function doRename () {
+    if (path.resolve(source) === path.resolve(dest)) {
+      fs.access(source, callback)
+    } else if (overwrite) {
+      fs.rename(source, dest, err => {
+        if (!err) return callback()
+
+        if (err.code === 'ENOTEMPTY' || err.code === 'EEXIST') {
+          remove(dest, err => {
+            if (err) return callback(err)
+            options.overwrite = false // just overwriteed it, no need to do it again
+            move(source, dest, options, callback)
+          })
+          return
+        }
+
+        // weird Windows shit
+        if (err.code === 'EPERM') {
+          setTimeout(() => {
+            remove(dest, err => {
+              if (err) return callback(err)
+              options.overwrite = false
+              move(source, dest, options, callback)
+            })
+          }, 200)
+          return
+        }
+
+        if (err.code !== 'EXDEV') return callback(err)
+        moveAcrossDevice(source, dest, overwrite, callback)
+      })
+    } else {
+      fs.link(source, dest, err => {
+        if (err) {
+          if (err.code === 'EXDEV' || err.code === 'EISDIR' || err.code === 'EPERM' || err.code === 'ENOTSUP') {
+            moveAcrossDevice(source, dest, overwrite, callback)
+            return
+          }
+          callback(err)
+          return
+        }
+        fs.unlink(source, callback)
+      })
+    }
+  }
+}
+
+function moveAcrossDevice (source, dest, overwrite, callback) {
+  fs.stat(source, (err, stat) => {
+    if (err) {
+      callback(err)
+      return
+    }
+
+    if (stat.isDirectory()) {
+      moveDirAcrossDevice(source, dest, overwrite, callback)
+    } else {
+      moveFileAcrossDevice(source, dest, overwrite, callback)
+    }
+  })
+}
+
+function moveFileAcrossDevice (source, dest, overwrite, callback) {
+  const flags = overwrite ? 'w' : 'wx'
+  const ins = fs.createReadStream(source)
+  const outs = fs.createWriteStream(dest, { flags })
+
+  ins.on('error', err => {
+    ins.destroy()
+    outs.destroy()
+    outs.removeListener('close', onClose)
+
+    // may want to create a directory but `out` line above
+    // creates an empty file for us: See #108
+    // don't care about error here
+    fs.unlink(dest, () => {
+      // note: `err` here is from the input stream errror
+      if (err.code === 'EISDIR' || err.code === 'EPERM') {
+        moveDirAcrossDevice(source, dest, overwrite, callback)
+      } else {
+        callback(err)
+      }
+    })
+  })
+
+  outs.on('error', err => {
+    ins.destroy()
+    outs.destroy()
+    outs.removeListener('close', onClose)
+    callback(err)
+  })
+
+  outs.once('close', onClose)
+  ins.pipe(outs)
+
+  function onClose () {
+    fs.unlink(source, callback)
+  }
+}
+
+function moveDirAcrossDevice (source, dest, overwrite, callback) {
+  const options = {
+    overwrite: false
+  }
+
+  if (overwrite) {
+    remove(dest, err => {
+      if (err) return callback(err)
+      startNcp()
+    })
+  } else {
+    startNcp()
+  }
+
+  function startNcp () {
+    ncp(source, dest, options, err => {
+      if (err) return callback(err)
+      remove(source, callback)
+    })
+  }
+}
+
+module.exports = {
+  move: u(move)
+}
+
+},{"../copy/ncp":34,"../mkdirs":48,"../remove":56,"graceful-fs":62,"path":73,"universalify":94}],54:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const fs = require('graceful-fs')
+const path = require('path')
+const mkdir = require('../mkdirs')
+const pathExists = require('../path-exists').pathExists
+
+function outputFile (file, data, encoding, callback) {
+  if (typeof encoding === 'function') {
+    callback = encoding
+    encoding = 'utf8'
+  }
+
+  const dir = path.dirname(file)
+  pathExists(dir, (err, itDoes) => {
+    if (err) return callback(err)
+    if (itDoes) return fs.writeFile(file, data, encoding, callback)
+
+    mkdir.mkdirs(dir, err => {
+      if (err) return callback(err)
+
+      fs.writeFile(file, data, encoding, callback)
+    })
+  })
+}
+
+function outputFileSync (file, data, encoding) {
+  const dir = path.dirname(file)
+  if (fs.existsSync(dir)) {
+    return fs.writeFileSync.apply(fs, arguments)
+  }
+  mkdir.mkdirsSync(dir)
+  fs.writeFileSync.apply(fs, arguments)
+}
+
+module.exports = {
+  outputFile: u(outputFile),
+  outputFileSync
+}
+
+},{"../mkdirs":48,"../path-exists":55,"graceful-fs":62,"path":73,"universalify":94}],55:[function(require,module,exports){
+'use strict'
+const u = require('universalify').fromPromise
+const fs = require('../fs')
+
+function pathExists (path) {
+  return fs.access(path).then(() => true).catch(() => false)
+}
+
+module.exports = {
+  pathExists: u(pathExists),
+  pathExistsSync: fs.existsSync
+}
+
+},{"../fs":42,"universalify":94}],56:[function(require,module,exports){
+'use strict'
+
+const u = require('universalify').fromCallback
+const rimraf = require('./rimraf')
+
+module.exports = {
+  remove: u(rimraf),
+  removeSync: rimraf.sync
+}
+
+},{"./rimraf":57,"universalify":94}],57:[function(require,module,exports){
+(function (process){
+'use strict'
+
+const fs = require('graceful-fs')
+const path = require('path')
+const assert = require('assert')
+
+const isWindows = (process.platform === 'win32')
+
+function defaults (options) {
+  const methods = [
+    'unlink',
+    'chmod',
+    'stat',
+    'lstat',
+    'rmdir',
+    'readdir'
+  ]
+  methods.forEach(m => {
+    options[m] = options[m] || fs[m]
+    m = m + 'Sync'
+    options[m] = options[m] || fs[m]
+  })
+
+  options.maxBusyTries = options.maxBusyTries || 3
+}
+
+function rimraf (p, options, cb) {
+  let busyTries = 0
+
+  if (typeof options === 'function') {
+    cb = options
+    options = {}
+  }
+
+  assert(p, 'rimraf: missing path')
+  assert.equal(typeof p, 'string', 'rimraf: path should be a string')
+  assert.equal(typeof cb, 'function', 'rimraf: callback function required')
+  assert(options, 'rimraf: invalid options argument provided')
+  assert.equal(typeof options, 'object', 'rimraf: options should be object')
+
+  defaults(options)
+
+  rimraf_(p, options, function CB (er) {
+    if (er) {
+      if (isWindows && (er.code === 'EBUSY' || er.code === 'ENOTEMPTY' || er.code === 'EPERM') &&
+          busyTries < options.maxBusyTries) {
+        busyTries++
+        let time = busyTries * 100
+        // try again, with the same exact callback as this one.
+        return setTimeout(() => rimraf_(p, options, CB), time)
+      }
+
+      // already gone
+      if (er.code === 'ENOENT') er = null
+    }
+
+    cb(er)
+  })
+}
+
+// Two possible strategies.
+// 1. Assume it's a file.  unlink it, then do the dir stuff on EPERM or EISDIR
+// 2. Assume it's a directory.  readdir, then do the file stuff on ENOTDIR
+//
+// Both result in an extra syscall when you guess wrong.  However, there
+// are likely far more normal files in the world than directories.  This
+// is based on the assumption that a the average number of files per
+// directory is >= 1.
+//
+// If anyone ever complains about this, then I guess the strategy could
+// be made configurable somehow.  But until then, YAGNI.
+function rimraf_ (p, options, cb) {
+  assert(p)
+  assert(options)
+  assert(typeof cb === 'function')
+
+  // sunos lets the root user unlink directories, which is... weird.
+  // so we have to lstat here and make sure it's not a dir.
+  options.lstat(p, (er, st) => {
+    if (er && er.code === 'ENOENT') {
+      return cb(null)
+    }
+
+    // Windows can EPERM on stat.  Life is suffering.
+    if (er && er.code === 'EPERM' && isWindows) {
+      return fixWinEPERM(p, options, er, cb)
+    }
+
+    if (st && st.isDirectory()) {
+      return rmdir(p, options, er, cb)
+    }
+
+    options.unlink(p, er => {
+      if (er) {
+        if (er.code === 'ENOENT') {
+          return cb(null)
+        }
+        if (er.code === 'EPERM') {
+          return (isWindows)
+            ? fixWinEPERM(p, options, er, cb)
+            : rmdir(p, options, er, cb)
+        }
+        if (er.code === 'EISDIR') {
+          return rmdir(p, options, er, cb)
+        }
+      }
+      return cb(er)
+    })
+  })
+}
+
+function fixWinEPERM (p, options, er, cb) {
+  assert(p)
+  assert(options)
+  assert(typeof cb === 'function')
+  if (er) {
+    assert(er instanceof Error)
+  }
+
+  options.chmod(p, 666, er2 => {
+    if (er2) {
+      cb(er2.code === 'ENOENT' ? null : er)
+    } else {
+      options.stat(p, (er3, stats) => {
+        if (er3) {
+          cb(er3.code === 'ENOENT' ? null : er)
+        } else if (stats.isDirectory()) {
+          rmdir(p, options, er, cb)
+        } else {
+          options.unlink(p, cb)
+        }
+      })
+    }
+  })
+}
+
+function fixWinEPERMSync (p, options, er) {
+  let stats
+
+  assert(p)
+  assert(options)
+  if (er) {
+    assert(er instanceof Error)
+  }
+
+  try {
+    options.chmodSync(p, 666)
+  } catch (er2) {
+    if (er2.code === 'ENOENT') {
+      return
+    } else {
+      throw er
+    }
+  }
+
+  try {
+    stats = options.statSync(p)
+  } catch (er3) {
+    if (er3.code === 'ENOENT') {
+      return
+    } else {
+      throw er
+    }
+  }
+
+  if (stats.isDirectory()) {
+    rmdirSync(p, options, er)
+  } else {
+    options.unlinkSync(p)
+  }
+}
+
+function rmdir (p, options, originalEr, cb) {
+  assert(p)
+  assert(options)
+  if (originalEr) {
+    assert(originalEr instanceof Error)
+  }
+  assert(typeof cb === 'function')
+
+  // try to rmdir first, and only readdir on ENOTEMPTY or EEXIST (SunOS)
+  // if we guessed wrong, and it's not a directory, then
+  // raise the original error.
+  options.rmdir(p, er => {
+    if (er && (er.code === 'ENOTEMPTY' || er.code === 'EEXIST' || er.code === 'EPERM')) {
+      rmkids(p, options, cb)
+    } else if (er && er.code === 'ENOTDIR') {
+      cb(originalEr)
+    } else {
+      cb(er)
+    }
+  })
+}
+
+function rmkids (p, options, cb) {
+  assert(p)
+  assert(options)
+  assert(typeof cb === 'function')
+
+  options.readdir(p, (er, files) => {
+    if (er) return cb(er)
+
+    let n = files.length
+    let errState
+
+    if (n === 0) return options.rmdir(p, cb)
+
+    files.forEach(f => {
+      rimraf(path.join(p, f), options, er => {
+        if (errState) {
+          return
+        }
+        if (er) return cb(errState = er)
+        if (--n === 0) {
+          options.rmdir(p, cb)
+        }
+      })
+    })
+  })
+}
+
+// this looks simpler, and is strictly *faster*, but will
+// tie up the JavaScript thread and fail on excessively
+// deep directory trees.
+function rimrafSync (p, options) {
+  let st
+
+  options = options || {}
+  defaults(options)
+
+  assert(p, 'rimraf: missing path')
+  assert.equal(typeof p, 'string', 'rimraf: path should be a string')
+  assert(options, 'rimraf: missing options')
+  assert.equal(typeof options, 'object', 'rimraf: options should be object')
+
+  try {
+    st = options.lstatSync(p)
+  } catch (er) {
+    if (er.code === 'ENOENT') {
+      return
+    }
+
+    // Windows can EPERM on stat.  Life is suffering.
+    if (er.code === 'EPERM' && isWindows) {
+      fixWinEPERMSync(p, options, er)
+    }
+  }
+
+  try {
+    // sunos lets the root user unlink directories, which is... weird.
+    if (st && st.isDirectory()) {
+      rmdirSync(p, options, null)
+    } else {
+      options.unlinkSync(p)
+    }
+  } catch (er) {
+    if (er.code === 'ENOENT') {
+      return
+    } else if (er.code === 'EPERM') {
+      return isWindows ? fixWinEPERMSync(p, options, er) : rmdirSync(p, options, er)
+    } else if (er.code !== 'EISDIR') {
+      throw er
+    }
+    rmdirSync(p, options, er)
+  }
+}
+
+function rmdirSync (p, options, originalEr) {
+  assert(p)
+  assert(options)
+  if (originalEr) {
+    assert(originalEr instanceof Error)
+  }
+
+  try {
+    options.rmdirSync(p)
+  } catch (er) {
+    if (er.code === 'ENOTDIR') {
+      throw originalEr
+    } else if (er.code === 'ENOTEMPTY' || er.code === 'EEXIST' || er.code === 'EPERM') {
+      rmkidsSync(p, options)
+    } else if (er.code !== 'ENOENT') {
+      throw er
+    }
+  }
+}
+
+function rmkidsSync (p, options) {
+  assert(p)
+  assert(options)
+  options.readdirSync(p).forEach(f => rimrafSync(path.join(p, f), options))
+  options.rmdirSync(p, options)
+}
+
+module.exports = rimraf
+rimraf.sync = rimrafSync
+
+}).call(this,require('_process'))
+},{"_process":75,"assert":17,"graceful-fs":62,"path":73}],58:[function(require,module,exports){
+'use strict'
+
+// simple mutable assign
+function assign () {
+  const args = [].slice.call(arguments).filter(i => i)
+  const dest = args.shift()
+  args.forEach(src => {
+    Object.keys(src).forEach(key => {
+      dest[key] = src[key]
+    })
+  })
+
+  return dest
+}
+
+module.exports = assign
+
+},{}],59:[function(require,module,exports){
+(function (Buffer){
+/* eslint-disable node/no-deprecated-api */
+module.exports = function (size) {
+  if (typeof Buffer.allocUnsafe === 'function') {
+    try {
+      return Buffer.allocUnsafe(size)
+    } catch (e) {
+      return new Buffer(size)
+    }
+  }
+  return new Buffer(size)
+}
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":22}],60:[function(require,module,exports){
+'use strict'
+
+const fs = require('graceful-fs')
+const os = require('os')
+const path = require('path')
+
+// HFS, ext{2,3}, FAT do not, Node.js v0.10 does not
+function hasMillisResSync () {
+  let tmpfile = path.join('millis-test-sync' + Date.now().toString() + Math.random().toString().slice(2))
+  tmpfile = path.join(os.tmpdir(), tmpfile)
+
+  // 550 millis past UNIX epoch
+  const d = new Date(1435410243862)
+  fs.writeFileSync(tmpfile, 'https://github.com/jprichardson/node-fs-extra/pull/141')
+  const fd = fs.openSync(tmpfile, 'r+')
+  fs.futimesSync(fd, d, d)
+  fs.closeSync(fd)
+  return fs.statSync(tmpfile).mtime > 1435410243000
+}
+
+function hasMillisRes (callback) {
+  let tmpfile = path.join('millis-test' + Date.now().toString() + Math.random().toString().slice(2))
+  tmpfile = path.join(os.tmpdir(), tmpfile)
+
+  // 550 millis past UNIX epoch
+  const d = new Date(1435410243862)
+  fs.writeFile(tmpfile, 'https://github.com/jprichardson/node-fs-extra/pull/141', err => {
+    if (err) return callback(err)
+    fs.open(tmpfile, 'r+', (err, fd) => {
+      if (err) return callback(err)
+      fs.futimes(fd, d, d, err => {
+        if (err) return callback(err)
+        fs.close(fd, err => {
+          if (err) return callback(err)
+          fs.stat(tmpfile, (err, stats) => {
+            if (err) return callback(err)
+            callback(null, stats.mtime > 1435410243000)
+          })
+        })
+      })
+    })
+  })
+}
+
+function timeRemoveMillis (timestamp) {
+  if (typeof timestamp === 'number') {
+    return Math.floor(timestamp / 1000) * 1000
+  } else if (timestamp instanceof Date) {
+    return new Date(Math.floor(timestamp.getTime() / 1000) * 1000)
+  } else {
+    throw new Error('fs-extra: timeRemoveMillis() unknown parameter type')
+  }
+}
+
+function utimesMillis (path, atime, mtime, callback) {
+  // if (!HAS_MILLIS_RES) return fs.utimes(path, atime, mtime, callback)
+  fs.open(path, 'r+', (err, fd) => {
+    if (err) return callback(err)
+    fs.futimes(fd, atime, mtime, futimesErr => {
+      fs.close(fd, closeErr => {
+        if (callback) callback(futimesErr || closeErr)
+      })
+    })
+  })
+}
+
+module.exports = {
+  hasMillisRes,
+  hasMillisResSync,
+  timeRemoveMillis,
+  utimesMillis
+}
+
+},{"graceful-fs":62,"os":72,"path":73}],61:[function(require,module,exports){
+'use strict'
+
+var fs = require('fs')
+
+module.exports = clone(fs)
+
+function clone (obj) {
+  if (obj === null || typeof obj !== 'object')
+    return obj
+
+  if (obj instanceof Object)
+    var copy = { __proto__: obj.__proto__ }
+  else
+    var copy = Object.create(null)
+
+  Object.getOwnPropertyNames(obj).forEach(function (key) {
+    Object.defineProperty(copy, key, Object.getOwnPropertyDescriptor(obj, key))
+  })
+
+  return copy
+}
+
+},{"fs":20}],62:[function(require,module,exports){
+(function (process){
+var fs = require('fs')
+var polyfills = require('./polyfills.js')
+var legacy = require('./legacy-streams.js')
+var queue = []
+
+var util = require('util')
+
+function noop () {}
+
+var debug = noop
+if (util.debuglog)
+  debug = util.debuglog('gfs4')
+else if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || ''))
+  debug = function() {
+    var m = util.format.apply(util, arguments)
+    m = 'GFS4: ' + m.split(/\n/).join('\nGFS4: ')
+    console.error(m)
+  }
+
+if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || '')) {
+  process.on('exit', function() {
+    debug(queue)
+    require('assert').equal(queue.length, 0)
+  })
+}
+
+module.exports = patch(require('./fs.js'))
+if (process.env.TEST_GRACEFUL_FS_GLOBAL_PATCH) {
+  module.exports = patch(fs)
+}
+
+// Always patch fs.close/closeSync, because we want to
+// retry() whenever a close happens *anywhere* in the program.
+// This is essential when multiple graceful-fs instances are
+// in play at the same time.
+module.exports.close =
+fs.close = (function (fs$close) { return function (fd, cb) {
+  return fs$close.call(fs, fd, function (err) {
+    if (!err)
+      retry()
+
+    if (typeof cb === 'function')
+      cb.apply(this, arguments)
+  })
+}})(fs.close)
+
+module.exports.closeSync =
+fs.closeSync = (function (fs$closeSync) { return function (fd) {
+  // Note that graceful-fs also retries when fs.closeSync() fails.
+  // Looks like a bug to me, although it's probably a harmless one.
+  var rval = fs$closeSync.apply(fs, arguments)
+  retry()
+  return rval
+}})(fs.closeSync)
+
+function patch (fs) {
+  // Everything that references the open() function needs to be in here
+  polyfills(fs)
+  fs.gracefulify = patch
+  fs.FileReadStream = ReadStream;  // Legacy name.
+  fs.FileWriteStream = WriteStream;  // Legacy name.
+  fs.createReadStream = createReadStream
+  fs.createWriteStream = createWriteStream
+  var fs$readFile = fs.readFile
+  fs.readFile = readFile
+  function readFile (path, options, cb) {
+    if (typeof options === 'function')
+      cb = options, options = null
+
+    return go$readFile(path, options, cb)
+
+    function go$readFile (path, options, cb) {
+      return fs$readFile(path, options, function (err) {
+        if (err && (err.code === 'EMFILE' || err.code === 'ENFILE'))
+          enqueue([go$readFile, [path, options, cb]])
+        else {
+          if (typeof cb === 'function')
+            cb.apply(this, arguments)
+          retry()
+        }
+      })
+    }
+  }
+
+  var fs$writeFile = fs.writeFile
+  fs.writeFile = writeFile
+  function writeFile (path, data, options, cb) {
+    if (typeof options === 'function')
+      cb = options, options = null
+
+    return go$writeFile(path, data, options, cb)
+
+    function go$writeFile (path, data, options, cb) {
+      return fs$writeFile(path, data, options, function (err) {
+        if (err && (err.code === 'EMFILE' || err.code === 'ENFILE'))
+          enqueue([go$writeFile, [path, data, options, cb]])
+        else {
+          if (typeof cb === 'function')
+            cb.apply(this, arguments)
+          retry()
+        }
+      })
+    }
+  }
+
+  var fs$appendFile = fs.appendFile
+  if (fs$appendFile)
+    fs.appendFile = appendFile
+  function appendFile (path, data, options, cb) {
+    if (typeof options === 'function')
+      cb = options, options = null
+
+    return go$appendFile(path, data, options, cb)
+
+    function go$appendFile (path, data, options, cb) {
+      return fs$appendFile(path, data, options, function (err) {
+        if (err && (err.code === 'EMFILE' || err.code === 'ENFILE'))
+          enqueue([go$appendFile, [path, data, options, cb]])
+        else {
+          if (typeof cb === 'function')
+            cb.apply(this, arguments)
+          retry()
+        }
+      })
+    }
+  }
+
+  var fs$readdir = fs.readdir
+  fs.readdir = readdir
+  function readdir (path, options, cb) {
+    var args = [path]
+    if (typeof options !== 'function') {
+      args.push(options)
+    } else {
+      cb = options
+    }
+    args.push(go$readdir$cb)
+
+    return go$readdir(args)
+
+    function go$readdir$cb (err, files) {
+      if (files && files.sort)
+        files.sort()
+
+      if (err && (err.code === 'EMFILE' || err.code === 'ENFILE'))
+        enqueue([go$readdir, [args]])
+      else {
+        if (typeof cb === 'function')
+          cb.apply(this, arguments)
+        retry()
+      }
+    }
+  }
+
+  function go$readdir (args) {
+    return fs$readdir.apply(fs, args)
+  }
+
+  if (process.version.substr(0, 4) === 'v0.8') {
+    var legStreams = legacy(fs)
+    ReadStream = legStreams.ReadStream
+    WriteStream = legStreams.WriteStream
+  }
+
+  var fs$ReadStream = fs.ReadStream
+  ReadStream.prototype = Object.create(fs$ReadStream.prototype)
+  ReadStream.prototype.open = ReadStream$open
+
+  var fs$WriteStream = fs.WriteStream
+  WriteStream.prototype = Object.create(fs$WriteStream.prototype)
+  WriteStream.prototype.open = WriteStream$open
+
+  fs.ReadStream = ReadStream
+  fs.WriteStream = WriteStream
+
+  function ReadStream (path, options) {
+    if (this instanceof ReadStream)
+      return fs$ReadStream.apply(this, arguments), this
+    else
+      return ReadStream.apply(Object.create(ReadStream.prototype), arguments)
+  }
+
+  function ReadStream$open () {
+    var that = this
+    open(that.path, that.flags, that.mode, function (err, fd) {
+      if (err) {
+        if (that.autoClose)
+          that.destroy()
+
+        that.emit('error', err)
+      } else {
+        that.fd = fd
+        that.emit('open', fd)
+        that.read()
+      }
+    })
+  }
+
+  function WriteStream (path, options) {
+    if (this instanceof WriteStream)
+      return fs$WriteStream.apply(this, arguments), this
+    else
+      return WriteStream.apply(Object.create(WriteStream.prototype), arguments)
+  }
+
+  function WriteStream$open () {
+    var that = this
+    open(that.path, that.flags, that.mode, function (err, fd) {
+      if (err) {
+        that.destroy()
+        that.emit('error', err)
+      } else {
+        that.fd = fd
+        that.emit('open', fd)
+      }
+    })
+  }
+
+  function createReadStream (path, options) {
+    return new ReadStream(path, options)
+  }
+
+  function createWriteStream (path, options) {
+    return new WriteStream(path, options)
+  }
+
+  var fs$open = fs.open
+  fs.open = open
+  function open (path, flags, mode, cb) {
+    if (typeof mode === 'function')
+      cb = mode, mode = null
+
+    return go$open(path, flags, mode, cb)
+
+    function go$open (path, flags, mode, cb) {
+      return fs$open(path, flags, mode, function (err, fd) {
+        if (err && (err.code === 'EMFILE' || err.code === 'ENFILE'))
+          enqueue([go$open, [path, flags, mode, cb]])
+        else {
+          if (typeof cb === 'function')
+            cb.apply(this, arguments)
+          retry()
+        }
+      })
+    }
+  }
+
+  return fs
+}
+
+function enqueue (elem) {
+  debug('ENQUEUE', elem[0].name, elem[1])
+  queue.push(elem)
+}
+
+function retry () {
+  var elem = queue.shift()
+  if (elem) {
+    debug('RETRY', elem[0].name, elem[1])
+    elem[0].apply(null, elem[1])
+  }
+}
+
+}).call(this,require('_process'))
+},{"./fs.js":61,"./legacy-streams.js":63,"./polyfills.js":64,"_process":75,"assert":17,"fs":20,"util":98}],63:[function(require,module,exports){
+(function (process){
+var Stream = require('stream').Stream
+
+module.exports = legacy
+
+function legacy (fs) {
+  return {
+    ReadStream: ReadStream,
+    WriteStream: WriteStream
+  }
+
+  function ReadStream (path, options) {
+    if (!(this instanceof ReadStream)) return new ReadStream(path, options);
+
+    Stream.call(this);
+
+    var self = this;
+
+    this.path = path;
+    this.fd = null;
+    this.readable = true;
+    this.paused = false;
+
+    this.flags = 'r';
+    this.mode = 438; /*=0666*/
+    this.bufferSize = 64 * 1024;
+
+    options = options || {};
+
+    // Mixin options into this
+    var keys = Object.keys(options);
+    for (var index = 0, length = keys.length; index < length; index++) {
+      var key = keys[index];
+      this[key] = options[key];
+    }
+
+    if (this.encoding) this.setEncoding(this.encoding);
+
+    if (this.start !== undefined) {
+      if ('number' !== typeof this.start) {
+        throw TypeError('start must be a Number');
+      }
+      if (this.end === undefined) {
+        this.end = Infinity;
+      } else if ('number' !== typeof this.end) {
+        throw TypeError('end must be a Number');
+      }
+
+      if (this.start > this.end) {
+        throw new Error('start must be <= end');
+      }
+
+      this.pos = this.start;
+    }
+
+    if (this.fd !== null) {
+      process.nextTick(function() {
+        self._read();
+      });
+      return;
+    }
+
+    fs.open(this.path, this.flags, this.mode, function (err, fd) {
+      if (err) {
+        self.emit('error', err);
+        self.readable = false;
+        return;
+      }
+
+      self.fd = fd;
+      self.emit('open', fd);
+      self._read();
+    })
+  }
+
+  function WriteStream (path, options) {
+    if (!(this instanceof WriteStream)) return new WriteStream(path, options);
+
+    Stream.call(this);
+
+    this.path = path;
+    this.fd = null;
+    this.writable = true;
+
+    this.flags = 'w';
+    this.encoding = 'binary';
+    this.mode = 438; /*=0666*/
+    this.bytesWritten = 0;
+
+    options = options || {};
+
+    // Mixin options into this
+    var keys = Object.keys(options);
+    for (var index = 0, length = keys.length; index < length; index++) {
+      var key = keys[index];
+      this[key] = options[key];
+    }
+
+    if (this.start !== undefined) {
+      if ('number' !== typeof this.start) {
+        throw TypeError('start must be a Number');
+      }
+      if (this.start < 0) {
+        throw new Error('start must be >= zero');
+      }
+
+      this.pos = this.start;
+    }
+
+    this.busy = false;
+    this._queue = [];
+
+    if (this.fd === null) {
+      this._open = fs.open;
+      this._queue.push([this._open, this.path, this.flags, this.mode, undefined]);
+      this.flush();
+    }
+  }
+}
+
+}).call(this,require('_process'))
+},{"_process":75,"stream":87}],64:[function(require,module,exports){
+(function (process){
+var fs = require('./fs.js')
+var constants = require('constants')
+
+var origCwd = process.cwd
+var cwd = null
+
+var platform = process.env.GRACEFUL_FS_PLATFORM || process.platform
+
+process.cwd = function() {
+  if (!cwd)
+    cwd = origCwd.call(process)
+  return cwd
+}
+try {
+  process.cwd()
+} catch (er) {}
+
+var chdir = process.chdir
+process.chdir = function(d) {
+  cwd = null
+  chdir.call(process, d)
+}
+
+module.exports = patch
+
+function patch (fs) {
+  // (re-)implement some things that are known busted or missing.
+
+  // lchmod, broken prior to 0.6.2
+  // back-port the fix here.
+  if (constants.hasOwnProperty('O_SYMLINK') &&
+      process.version.match(/^v0\.6\.[0-2]|^v0\.5\./)) {
+    patchLchmod(fs)
+  }
+
+  // lutimes implementation, or no-op
+  if (!fs.lutimes) {
+    patchLutimes(fs)
+  }
+
+  // https://github.com/isaacs/node-graceful-fs/issues/4
+  // Chown should not fail on einval or eperm if non-root.
+  // It should not fail on enosys ever, as this just indicates
+  // that a fs doesn't support the intended operation.
+
+  fs.chown = chownFix(fs.chown)
+  fs.fchown = chownFix(fs.fchown)
+  fs.lchown = chownFix(fs.lchown)
+
+  fs.chmod = chmodFix(fs.chmod)
+  fs.fchmod = chmodFix(fs.fchmod)
+  fs.lchmod = chmodFix(fs.lchmod)
+
+  fs.chownSync = chownFixSync(fs.chownSync)
+  fs.fchownSync = chownFixSync(fs.fchownSync)
+  fs.lchownSync = chownFixSync(fs.lchownSync)
+
+  fs.chmodSync = chmodFixSync(fs.chmodSync)
+  fs.fchmodSync = chmodFixSync(fs.fchmodSync)
+  fs.lchmodSync = chmodFixSync(fs.lchmodSync)
+
+  fs.stat = statFix(fs.stat)
+  fs.fstat = statFix(fs.fstat)
+  fs.lstat = statFix(fs.lstat)
+
+  fs.statSync = statFixSync(fs.statSync)
+  fs.fstatSync = statFixSync(fs.fstatSync)
+  fs.lstatSync = statFixSync(fs.lstatSync)
+
+  // if lchmod/lchown do not exist, then make them no-ops
+  if (!fs.lchmod) {
+    fs.lchmod = function (path, mode, cb) {
+      if (cb) process.nextTick(cb)
+    }
+    fs.lchmodSync = function () {}
+  }
+  if (!fs.lchown) {
+    fs.lchown = function (path, uid, gid, cb) {
+      if (cb) process.nextTick(cb)
+    }
+    fs.lchownSync = function () {}
+  }
+
+  // on Windows, A/V software can lock the directory, causing this
+  // to fail with an EACCES or EPERM if the directory contains newly
+  // created files.  Try again on failure, for up to 60 seconds.
+
+  // Set the timeout this long because some Windows Anti-Virus, such as Parity
+  // bit9, may lock files for up to a minute, causing npm package install
+  // failures. Also, take care to yield the scheduler. Windows scheduling gives
+  // CPU to a busy looping process, which can cause the program causing the lock
+  // contention to be starved of CPU by node, so the contention doesn't resolve.
+  if (platform === "win32") {
+    fs.rename = (function (fs$rename) { return function (from, to, cb) {
+      var start = Date.now()
+      var backoff = 0;
+      fs$rename(from, to, function CB (er) {
+        if (er
+            && (er.code === "EACCES" || er.code === "EPERM")
+            && Date.now() - start < 60000) {
+          setTimeout(function() {
+            fs.stat(to, function (stater, st) {
+              if (stater && stater.code === "ENOENT")
+                fs$rename(from, to, CB);
+              else
+                cb(er)
+            })
+          }, backoff)
+          if (backoff < 100)
+            backoff += 10;
+          return;
+        }
+        if (cb) cb(er)
+      })
+    }})(fs.rename)
+  }
+
+  // if read() returns EAGAIN, then just try it again.
+  fs.read = (function (fs$read) { return function (fd, buffer, offset, length, position, callback_) {
+    var callback
+    if (callback_ && typeof callback_ === 'function') {
+      var eagCounter = 0
+      callback = function (er, _, __) {
+        if (er && er.code === 'EAGAIN' && eagCounter < 10) {
+          eagCounter ++
+          return fs$read.call(fs, fd, buffer, offset, length, position, callback)
+        }
+        callback_.apply(this, arguments)
+      }
+    }
+    return fs$read.call(fs, fd, buffer, offset, length, position, callback)
+  }})(fs.read)
+
+  fs.readSync = (function (fs$readSync) { return function (fd, buffer, offset, length, position) {
+    var eagCounter = 0
+    while (true) {
+      try {
+        return fs$readSync.call(fs, fd, buffer, offset, length, position)
+      } catch (er) {
+        if (er.code === 'EAGAIN' && eagCounter < 10) {
+          eagCounter ++
+          continue
+        }
+        throw er
+      }
+    }
+  }})(fs.readSync)
+}
+
+function patchLchmod (fs) {
+  fs.lchmod = function (path, mode, callback) {
+    fs.open( path
+           , constants.O_WRONLY | constants.O_SYMLINK
+           , mode
+           , function (err, fd) {
+      if (err) {
+        if (callback) callback(err)
+        return
+      }
+      // prefer to return the chmod error, if one occurs,
+      // but still try to close, and report closing errors if they occur.
+      fs.fchmod(fd, mode, function (err) {
+        fs.close(fd, function(err2) {
+          if (callback) callback(err || err2)
+        })
+      })
+    })
+  }
+
+  fs.lchmodSync = function (path, mode) {
+    var fd = fs.openSync(path, constants.O_WRONLY | constants.O_SYMLINK, mode)
+
+    // prefer to return the chmod error, if one occurs,
+    // but still try to close, and report closing errors if they occur.
+    var threw = true
+    var ret
+    try {
+      ret = fs.fchmodSync(fd, mode)
+      threw = false
+    } finally {
+      if (threw) {
+        try {
+          fs.closeSync(fd)
+        } catch (er) {}
+      } else {
+        fs.closeSync(fd)
+      }
+    }
+    return ret
+  }
+}
+
+function patchLutimes (fs) {
+  if (constants.hasOwnProperty("O_SYMLINK")) {
+    fs.lutimes = function (path, at, mt, cb) {
+      fs.open(path, constants.O_SYMLINK, function (er, fd) {
+        if (er) {
+          if (cb) cb(er)
+          return
+        }
+        fs.futimes(fd, at, mt, function (er) {
+          fs.close(fd, function (er2) {
+            if (cb) cb(er || er2)
+          })
+        })
+      })
+    }
+
+    fs.lutimesSync = function (path, at, mt) {
+      var fd = fs.openSync(path, constants.O_SYMLINK)
+      var ret
+      var threw = true
+      try {
+        ret = fs.futimesSync(fd, at, mt)
+        threw = false
+      } finally {
+        if (threw) {
+          try {
+            fs.closeSync(fd)
+          } catch (er) {}
+        } else {
+          fs.closeSync(fd)
+        }
+      }
+      return ret
+    }
+
+  } else {
+    fs.lutimes = function (_a, _b, _c, cb) { if (cb) process.nextTick(cb) }
+    fs.lutimesSync = function () {}
+  }
+}
+
+function chmodFix (orig) {
+  if (!orig) return orig
+  return function (target, mode, cb) {
+    return orig.call(fs, target, mode, function (er) {
+      if (chownErOk(er)) er = null
+      if (cb) cb.apply(this, arguments)
+    })
+  }
+}
+
+function chmodFixSync (orig) {
+  if (!orig) return orig
+  return function (target, mode) {
+    try {
+      return orig.call(fs, target, mode)
+    } catch (er) {
+      if (!chownErOk(er)) throw er
+    }
+  }
+}
+
+
+function chownFix (orig) {
+  if (!orig) return orig
+  return function (target, uid, gid, cb) {
+    return orig.call(fs, target, uid, gid, function (er) {
+      if (chownErOk(er)) er = null
+      if (cb) cb.apply(this, arguments)
+    })
+  }
+}
+
+function chownFixSync (orig) {
+  if (!orig) return orig
+  return function (target, uid, gid) {
+    try {
+      return orig.call(fs, target, uid, gid)
+    } catch (er) {
+      if (!chownErOk(er)) throw er
+    }
+  }
+}
+
+
+function statFix (orig) {
+  if (!orig) return orig
+  // Older versions of Node erroneously returned signed integers for
+  // uid + gid.
+  return function (target, cb) {
+    return orig.call(fs, target, function (er, stats) {
+      if (!stats) return cb.apply(this, arguments)
+      if (stats.uid < 0) stats.uid += 0x100000000
+      if (stats.gid < 0) stats.gid += 0x100000000
+      if (cb) cb.apply(this, arguments)
+    })
+  }
+}
+
+function statFixSync (orig) {
+  if (!orig) return orig
+  // Older versions of Node erroneously returned signed integers for
+  // uid + gid.
+  return function (target) {
+    var stats = orig.call(fs, target)
+    if (stats.uid < 0) stats.uid += 0x100000000
+    if (stats.gid < 0) stats.gid += 0x100000000
+    return stats;
+  }
+}
+
+// ENOSYS means that the fs doesn't support the op. Just ignore
+// that, because it doesn't matter.
+//
+// if there's no getuid, or if getuid() is something other
+// than 0, and the error is EINVAL or EPERM, then just ignore
+// it.
+//
+// This specific case is a silent failure in cp, install, tar,
+// and most other unix tools that manage permissions.
+//
+// When running as root, or if other types of errors are
+// encountered, then it's strict.
+function chownErOk (er) {
+  if (!er)
+    return true
+
+  if (er.code === "ENOSYS")
+    return true
+
+  var nonroot = !process.getuid || process.getuid() !== 0
+  if (nonroot) {
+    if (er.code === "EINVAL" || er.code === "EPERM")
+      return true
+  }
+
+  return false
+}
+
+}).call(this,require('_process'))
+},{"./fs.js":61,"_process":75,"constants":23}],65:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -6537,7 +10913,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],30:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -6562,7 +10938,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],31:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -6585,7 +10961,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],32:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 
 var isStream = module.exports = function (stream) {
@@ -6608,7 +10984,7 @@ isStream.transform = function (stream) {
 	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
 };
 
-},{}],33:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports      = isTypedArray
 isTypedArray.strict = isStrictTypedArray
 isTypedArray.loose  = isLooseTypedArray
@@ -6651,14 +11027,425 @@ function isLooseTypedArray(arr) {
   return names[toString.call(arr)]
 }
 
-},{}],34:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],35:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
+(function (Buffer){
+var _fs
+try {
+  _fs = require('graceful-fs')
+} catch (_) {
+  _fs = require('fs')
+}
+
+function readFile (file, options, callback) {
+  if (callback == null) {
+    callback = options
+    options = {}
+  }
+
+  if (typeof options === 'string') {
+    options = {encoding: options}
+  }
+
+  options = options || {}
+  var fs = options.fs || _fs
+
+  var shouldThrow = true
+  // DO NOT USE 'passParsingErrors' THE NAME WILL CHANGE!!!, use 'throws' instead
+  if ('passParsingErrors' in options) {
+    shouldThrow = options.passParsingErrors
+  } else if ('throws' in options) {
+    shouldThrow = options.throws
+  }
+
+  fs.readFile(file, options, function (err, data) {
+    if (err) return callback(err)
+
+    data = stripBom(data)
+
+    var obj
+    try {
+      obj = JSON.parse(data, options ? options.reviver : null)
+    } catch (err2) {
+      if (shouldThrow) {
+        err2.message = file + ': ' + err2.message
+        return callback(err2)
+      } else {
+        return callback(null, null)
+      }
+    }
+
+    callback(null, obj)
+  })
+}
+
+function readFileSync (file, options) {
+  options = options || {}
+  if (typeof options === 'string') {
+    options = {encoding: options}
+  }
+
+  var fs = options.fs || _fs
+
+  var shouldThrow = true
+  // DO NOT USE 'passParsingErrors' THE NAME WILL CHANGE!!!, use 'throws' instead
+  if ('passParsingErrors' in options) {
+    shouldThrow = options.passParsingErrors
+  } else if ('throws' in options) {
+    shouldThrow = options.throws
+  }
+
+  try {
+    var content = fs.readFileSync(file, options)
+    content = stripBom(content)
+    return JSON.parse(content, options.reviver)
+  } catch (err) {
+    if (shouldThrow) {
+      err.message = file + ': ' + err.message
+      throw err
+    } else {
+      return null
+    }
+  }
+}
+
+function writeFile (file, obj, options, callback) {
+  if (callback == null) {
+    callback = options
+    options = {}
+  }
+  options = options || {}
+  var fs = options.fs || _fs
+
+  var spaces = typeof options === 'object' && options !== null
+    ? 'spaces' in options
+    ? options.spaces : this.spaces
+    : this.spaces
+
+  var str = ''
+  try {
+    str = JSON.stringify(obj, options ? options.replacer : null, spaces) + '\n'
+  } catch (err) {
+    if (callback) return callback(err, null)
+  }
+
+  fs.writeFile(file, str, options, callback)
+}
+
+function writeFileSync (file, obj, options) {
+  options = options || {}
+  var fs = options.fs || _fs
+
+  var spaces = typeof options === 'object' && options !== null
+    ? 'spaces' in options
+    ? options.spaces : this.spaces
+    : this.spaces
+
+  var str = JSON.stringify(obj, options.replacer, spaces) + '\n'
+  // not sure if fs.writeFileSync returns anything, but just in case
+  return fs.writeFileSync(file, str, options)
+}
+
+function stripBom (content) {
+  // we do this because JSON.parse would convert it to a utf8 string if encoding wasn't specified
+  if (Buffer.isBuffer(content)) content = content.toString('utf8')
+  content = content.replace(/^\uFEFF/, '')
+  return content
+}
+
+var jsonfile = {
+  spaces: null,
+  readFile: readFile,
+  readFileSync: readFileSync,
+  writeFile: writeFile,
+  writeFileSync: writeFileSync
+}
+
+module.exports = jsonfile
+
+}).call(this,{"isBuffer":require("../is-buffer/index.js")})
+},{"../is-buffer/index.js":67,"fs":20,"graceful-fs":62}],72:[function(require,module,exports){
+exports.endianness = function () { return 'LE' };
+
+exports.hostname = function () {
+    if (typeof location !== 'undefined') {
+        return location.hostname
+    }
+    else return '';
+};
+
+exports.loadavg = function () { return [] };
+
+exports.uptime = function () { return 0 };
+
+exports.freemem = function () {
+    return Number.MAX_VALUE;
+};
+
+exports.totalmem = function () {
+    return Number.MAX_VALUE;
+};
+
+exports.cpus = function () { return [] };
+
+exports.type = function () { return 'Browser' };
+
+exports.release = function () {
+    if (typeof navigator !== 'undefined') {
+        return navigator.appVersion;
+    }
+    return '';
+};
+
+exports.networkInterfaces
+= exports.getNetworkInterfaces
+= function () { return {} };
+
+exports.arch = function () { return 'javascript' };
+
+exports.platform = function () { return 'browser' };
+
+exports.tmpdir = exports.tmpDir = function () {
+    return '/tmp';
+};
+
+exports.EOL = '\n';
+
+},{}],73:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require('_process'))
+},{"_process":75}],74:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6705,7 +11492,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":36}],36:[function(require,module,exports){
+},{"_process":75}],75:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -6887,10 +11674,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],37:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":38}],38:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":77}],77:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -6966,7 +11753,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":40,"./_stream_writable":42,"core-util-is":22,"inherits":30,"process-nextick-args":35}],39:[function(require,module,exports){
+},{"./_stream_readable":79,"./_stream_writable":81,"core-util-is":24,"inherits":66,"process-nextick-args":74}],78:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -6993,7 +11780,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":41,"core-util-is":22,"inherits":30}],40:[function(require,module,exports){
+},{"./_stream_transform":80,"core-util-is":24,"inherits":66}],79:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -7937,7 +12724,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":38,"./internal/streams/BufferList":43,"_process":36,"buffer":21,"buffer-shims":20,"core-util-is":22,"events":26,"inherits":30,"isarray":34,"process-nextick-args":35,"string_decoder/":49,"util":18}],41:[function(require,module,exports){
+},{"./_stream_duplex":77,"./internal/streams/BufferList":82,"_process":75,"buffer":22,"buffer-shims":21,"core-util-is":24,"events":26,"inherits":66,"isarray":70,"process-nextick-args":74,"string_decoder/":88,"util":19}],80:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -8120,7 +12907,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":38,"core-util-is":22,"inherits":30}],42:[function(require,module,exports){
+},{"./_stream_duplex":77,"core-util-is":24,"inherits":66}],81:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -8677,7 +13464,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":38,"_process":36,"buffer":21,"buffer-shims":20,"core-util-is":22,"events":26,"inherits":30,"process-nextick-args":35,"util-deprecate":53}],43:[function(require,module,exports){
+},{"./_stream_duplex":77,"_process":75,"buffer":22,"buffer-shims":21,"core-util-is":24,"events":26,"inherits":66,"process-nextick-args":74,"util-deprecate":95}],82:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -8742,10 +13529,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":21,"buffer-shims":20}],44:[function(require,module,exports){
+},{"buffer":22,"buffer-shims":21}],83:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":39}],45:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":78}],84:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -8765,13 +13552,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":38,"./lib/_stream_passthrough.js":39,"./lib/_stream_readable.js":40,"./lib/_stream_transform.js":41,"./lib/_stream_writable.js":42,"_process":36}],46:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":77,"./lib/_stream_passthrough.js":78,"./lib/_stream_readable.js":79,"./lib/_stream_transform.js":80,"./lib/_stream_writable.js":81,"_process":75}],85:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":41}],47:[function(require,module,exports){
+},{"./lib/_stream_transform.js":80}],86:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":42}],48:[function(require,module,exports){
+},{"./lib/_stream_writable.js":81}],87:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8900,7 +13687,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":26,"inherits":30,"readable-stream/duplex.js":37,"readable-stream/passthrough.js":44,"readable-stream/readable.js":45,"readable-stream/transform.js":46,"readable-stream/writable.js":47}],49:[function(require,module,exports){
+},{"events":26,"inherits":66,"readable-stream/duplex.js":76,"readable-stream/passthrough.js":83,"readable-stream/readable.js":84,"readable-stream/transform.js":85,"readable-stream/writable.js":86}],88:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -9123,501 +13910,236 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":21}],50:[function(require,module,exports){
-// A fast streaming parser library.
-
+},{"buffer":22}],89:[function(require,module,exports){
+(function (Buffer){
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 var assert = require('assert');
-var Buffer = require('buffer').Buffer;
-
-// Buffer for parse() to handle types that span more than one buffer
-var SPANNING_BUF = new Buffer(1024);
-
-// Possibly call flush()
-var maybeFlush = function(b, o, len, flush) {
-    if (o + len > b.length) {
-        if (typeof(flush) !== 'function') {
-            throw new Error(
-                'Buffer out of space and no valid flush() function found'
-            );
-        }
-
-        flush(b, o);
-
-        return 0;
+var then_read_stream_1 = require("then-read-stream");
+var fs = require("fs-extra");
+/**
+ * Used to reject read if end-of-stream or end-of-file is reached
+ * @type {Error}
+ */
+exports.EndOfFile = new Error("End-Of-File");
+var IgnoreType = (function () {
+    /**
+     * @param len Number of bytes to ignore (skip)
+     */
+    function IgnoreType(len) {
+        this.len = len;
     }
-
-    return o;
-};
-
-// Sentinel types
-
-var DEFER = {};
-exports.DEFER = DEFER;
-
-var DONE = {};
-exports.DONE = DONE;
-
-// Primitive types
-
-var UINT8 = {
-    len : 1,
-    get : function(buf, off) {
-        return buf[off];
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT8 = UINT8;
-
-var UINT16_LE = {
-    len : 2,
-    get : function(buf, off) {
-        return buf[off] | (buf[off + 1] << 8);
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = v & 0xff;
-        b[no + 1] = (v >>> 8) & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT16_LE = UINT16_LE;
-
-var UINT16_BE = {
-    len : 2,
-    get : function(buf, off) {
-        return (buf[off] << 8) | buf[off + 1];
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = (v >>> 8) & 0xff;
-        b[no + 1] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT16_BE = UINT16_BE;
-
-var UINT24_LE = {
-    len : 3,
-    get : function(buf, off) {
-        return buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16);
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xffffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = v & 0xff;
-        b[no + 1] = (v >>> 8) & 0xff;
-        b[no + 2] = (v >>> 16) & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT24_LE = UINT24_LE;
-
-var UINT24_BE = {
-    len : 3,
-    get : function (buf, off) {
-        return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2]
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xffffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = (v >>> 16) & 0xff;
-        b[no + 1] = (v >>> 8) & 0xff;
-        b[no + 2] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT24_BE = UINT24_BE;
-
-var UINT32_LE = {
-    len : 4,
-    get : function(buf, off) {
-        // Shifting the MSB by 24 directly causes it to go negative if its
-        // last bit is high, so we instead shift by 23 and multiply by 2.
-        // Also, using binary OR to count the MSB if its last bit is high
-        // causes the value to go negative. Use addition there.
-        return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
-               ((buf[off + 3] << 23) * 2);
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xffffffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = v & 0xff;
-        b[no + 1] = (v >>> 8) & 0xff;
-        b[no + 2] = (v >>> 16) & 0xff;
-        b[no + 3] = (v >>> 24) & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT32_LE = UINT32_LE;
-
-var UINT32_BE = {
-    len : 4,
-    get : function(buf, off) {
-        // See comments in UINT32_LE.get()
-        return ((buf[off] << 23) * 2) +
-               ((buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]);
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= 0 && v <= 0xffffffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = (v >>> 24) & 0xff;
-        b[no + 1] = (v >>> 16) & 0xff;
-        b[no + 2] = (v >>> 8) & 0xff;
-        b[no + 3] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.UINT32_BE = UINT32_BE;
-
-var INT8 = {
-    len : 1,
-    get : function(buf, off)  {
-        var v = UINT8.get(buf, off);
-        return ((v & 0x80) === 0x80) ?
-            (-128 + (v & 0x7f)) :
-            v;
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= -128 && v <= 127);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.INT8 = INT8;
-
-var INT16_BE = {
-    len : 2,
-    get : function(buf, off)  {
-        var v = UINT16_BE.get(buf, off);
-        return ((v & 0x8000) === 0x8000) ?
-            (-32768 + (v & 0x7fff)) :
-            v;
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= -32768 && v <= 32767);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = ((v & 0xffff) >>> 8) & 0xff;
-        b[no + 1] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.INT16_BE = INT16_BE;
-
-var INT24_BE = {
-    len : 3,
-    get : function(buf, off)  {
-       var v = UINT24_BE.get(buf, off);
-        return ((v & 0x800000) === 0x800000) ?
-          (-0x800000 + (v & 0x7fffff)) : v;
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= -0x800000 && v <= 0x7fffff);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = (v >>> 16) & 0xff;
-        b[no + 1] = (v >>> 8) & 0xff;
-        b[no + 2] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.INT24_BE = INT24_BE;
-
-var INT32_BE = {
-    len : 4,
-    get : function(buf, off)  {
-        // We cannot check for 0x80000000 directly, as this always returns
-        // false. Instead, check for the two's-compliment value, which
-        // behaves as expected. Also, we cannot subtract our value all at
-        // once, so do it in two steps to avoid sign busting.
-        var v = UINT32_BE.get(buf, off);
-        return ((v & 0x80000000) === -2147483648) ?
-            ((v & 0x7fffffff) - 1073741824 - 1073741824) :
-            v;
-    },
-    put : function(b, o, v, flush) {
-        assert.equal(typeof o, 'number');
-        assert.equal(typeof v, 'number');
-        assert.ok(v >= -2147483648 && v <= 2147483647);
-        assert.ok(o >= 0);
-        assert.ok(this.len <= b.length);
-
-        var no = maybeFlush(b, o, this.len, flush);
-        b[no] = (v >>> 24) & 0xff;
-        b[no + 1] = (v >>> 16) & 0xff;
-        b[no + 2] = (v >>> 8) & 0xff;
-        b[no + 3] = v & 0xff;
-
-        return (no - o) + this.len;
-    }
-};
-exports.INT32_BE = INT32_BE;
-
-// Complex types
-//
-// These types are intended to allow callers to re-use them by manipulating
-// the 'len' and other properties directly.
-
-var IgnoreType = function(l) {
-  this.len = l;
-  this.get = function() {
-    return null;
-  };
-};
-exports.IgnoreType = IgnoreType;
-
-
-var BufferType = function(l) {
-    var self = this;
-
-    self.len = l;
-
-    self.get = function(buf, off) {
+    // ToDo: don't read,, but skip data
+    IgnoreType.prototype.get = function (buf, off) {
         return buf.slice(off, off + this.len);
     };
-};
-exports.BufferType = BufferType;
-
-var StringType = function(l, e) {
-    var self = this;
-
-    self.len = l;
-
-    self.encoding = e;
-
-    self.get = function(buf, off) {
-        return buf.toString(e, off, off + this.len);
-    };
-};
-exports.StringType = StringType;
-
-// Parse a stream
-var parse = function(s, cb) {
-    // Type of data that we're to parse next; if DEFER, we're awaiting
-    // an invocation of typeCallback
-    var type = DEFER;
-
-    // Data that we've seen but not yet processed / handed off to cb; first
-    // valid byte to process is always bufs[0][bufOffset]
-    var bufs = [];
-    var bufsLen = 0;
-    var bufOffset = 0;
-    var ignoreLen = 0;
-
-    // Callback for FSM to tell us what type to expect next
-    var typeCallback = function(t) {
-        if (type !== DEFER) {
-            throw new Error('refusing to overwrite non-DEFER type');
-        }
-
-        type = t;
-
-        emitData();
-    };
-
-    // Process data that we have accumulated so far, emitting any type(s)
-    // collected. This is the main parsing loop.
-    //
-    // Out strategy for handling buffers is to shift them off of the bufs[]
-    // array until we have enough accumulated to account for type.len bytes.
-    var emitData = function() {
-        var b;
-        while (type !== DONE && type !== DEFER && bufsLen >= type.len) {
-            b = bufs[0];
-            var bo = bufOffset;
-
-            assert.ok(bufOffset >= 0 && bufOffset < b.length);
-
-            if ((b.length - bufOffset) < type.len) {
-                if (SPANNING_BUF.length < type.len) {
-                    SPANNING_BUF = new Buffer(
-                        Math.pow(2, Math.ceil(Math.log(type.len) / Math.log(2)))
-                    );
-                }
-
-                b = SPANNING_BUF;
-                bo = 0;
-
-                var bytesCopied = 0;
-                while (bytesCopied < type.len && bufs.length > 0) {
-                    var bb = bufs[0];
-                    var copyLength = Math.min(type.len - bytesCopied, bb.length - bufOffset);
-
-                    // TODO: Manually copy bytes if we don't need many of them.
-                    //       Bouncing down into C++ land to invoke
-                    //       Buffer.copy() is expensive enough that we
-                    //       shouldnt' do it unless we have a lot of dato to
-                    //       copy.
-                    bb.copy(
-                        b,
-                        bytesCopied,
-                        bufOffset,
-                        bufOffset + copyLength
-                    );
-
-                    bytesCopied += copyLength;
-
-                    if (copyLength < (bb.length - bufOffset)) {
-                        assert.equal(bytesCopied, type.len);
-                        bufOffset += copyLength;
-                    } else {
-                        assert.equal(bufOffset + copyLength, bb.length);
-                        bufs.shift();
-                        bufOffset = 0;
-                    }
-                }
-
-                assert.equal(bytesCopied, type.len);
-            } else if ((b.length - bufOffset) === type.len) {
-                bufs.shift();
-                bufOffset = 0;
-            } else {
-                bufOffset += type.len;
-            }
-
-            bufsLen -= type.len;
-            type = cb(type.get(b, bo), typeCallback);
-            if (type instanceof IgnoreType) {
-              ignoreLen += type.len;
-              if (ignoreLen >= bufsLen) {
-                // clear all buffers
-                ignoreLen -= bufsLen;
-                bufsLen = 0;
-                bufs = [];
-                bufOffset = 0;
-              } else if (ignoreLen < bufs[0].length - bufOffset) {
-                // set bufOffset correctly
-                bufsLen -= ignoreLen;
-                bufOffset += ignoreLen;
-                ignoreLen = 0;
-              } else if (bufsLen > 0) {
-                // shift some buffers and set bufOffset correctly.
-                bufsLen -= ignoreLen;
-                ignoreLen += bufOffset;
-                while (ignoreLen >= bufs[0].length) {
-                  ignoreLen -= bufs.shift().length;
-                }
-                bufOffset = ignoreLen;
-                ignoreLen = 0;
-              }
-              type = cb(type.get(), typeCallback);
-            }
-        }
-
-        if (type === DONE) {
-            s.removeListener('data', dataListener);
-
-            // Pump all of the buffers that we already saw back through the
-            // stream; the protocol layer will have set up listeners for this
-            // event if it cares about the remaining data.
-            while (bufs.length > 0) {
-                b = bufs.shift();
-
-                if (bufOffset > 0) {
-                    b = b.slice(bufOffset, b.length);
-                    bufOffset = 0;
-                }
-
-                s.emit('data', b);
-            }
-        }
-    };
-
-    // Listen for data from our stream
-    var dataListener = function(d) {
-        if (d.length <= ignoreLen) {
-          // ignore this data
-          assert.strictEqual(bufsLen, 0);
-          assert.strictEqual(bufs.length, 0);
-          ignoreLen -= d.length;
-        } else if (ignoreLen > 0) {
-          assert.strictEqual(bufsLen, 0);
-          bufsLen = d.length - ignoreLen;
-          bufs.push(d.slice(ignoreLen));
-          ignoreLen = 0;
-          emitData();
-        } else {
-          bufs.push(d);
-          bufsLen += d.length;
-          emitData();
-        }
-    };
-
-    // Get the initial type
-    type = cb(undefined, typeCallback);
-    if (type !== DONE) {
-        s.on('data', dataListener);
+    return IgnoreType;
+}());
+exports.IgnoreType = IgnoreType;
+var AbstractTokenizer = (function () {
+    function AbstractTokenizer() {
+        this.numBuffer = new Buffer(4);
     }
-};
-exports.parse = parse;
+    AbstractTokenizer.prototype._readToken = function (buffer, token) {
+        return this.readBuffer(buffer, 0, token.len, null).then(function (res) {
+            return token.get(buffer, 0);
+        });
+    };
+    AbstractTokenizer.prototype.readToken = function (token, position) {
+        if (position === void 0) { position = null; }
+        var buffer = new Buffer(token.len);
+        return this.readBuffer(buffer, 0, token.len, position).then(function (res) {
+            return token.get(buffer, 0);
+        });
+    };
+    AbstractTokenizer.prototype.readNumber = function (token) {
+        return this._readToken(this.numBuffer, token);
+    };
+    return AbstractTokenizer;
+}());
+exports.AbstractTokenizer = AbstractTokenizer;
+var ReadStreamTokenizer = (function (_super) {
+    __extends(ReadStreamTokenizer, _super);
+    function ReadStreamTokenizer(stream, fileSize) {
+        var _this = _super.call(this) || this;
+        _this.streamReader = new then_read_stream_1.StreamReader(stream);
+        _this.fileSize = fileSize;
+        return _this;
+    }
+    ReadStreamTokenizer.prototype.readBuffer = function (buffer, offset, length, position) {
+        if (position === void 0) { position = null; }
+        return this.streamReader.read(buffer, offset, length, position) // ToDo: looks like wrong return type is defined in fs.read
+            .catch(function (err) {
+            if (err = then_read_stream_1.StreamReader.EndOfStream)
+                throw exports.EndOfFile;
+            else
+                throw err;
+        });
+    };
+    /**
+     * Construct ReadStreamTokenizer from given stream.
+     * Will set fileSize, if provided given stream has set the .path property/
+     * @param stream stream.Readable
+     * @returns {any}
+     */
+    ReadStreamTokenizer.read = function (stream) {
+        if (stream.path) {
+            return fs.stat(stream.path).then(function (stat) {
+                return new ReadStreamTokenizer(stream, stat.size);
+            });
+        }
+        return Promise.resolve(new ReadStreamTokenizer(stream));
+    };
+    ReadStreamTokenizer.prototype.ignore = function (length) {
+        var buf = new Buffer(length);
+        return this.streamReader.read(buf, 0, length).then(function () { return null; }); // stream cannot skip data
+    };
+    return ReadStreamTokenizer;
+}(AbstractTokenizer));
+exports.ReadStreamTokenizer = ReadStreamTokenizer;
+var FileTokenizer = (function (_super) {
+    __extends(FileTokenizer, _super);
+    function FileTokenizer(fd, fileSize) {
+        var _this = _super.call(this) || this;
+        _this.fd = fd;
+        _this.fileSize = fileSize;
+        _this.fileOffset = 0;
+        _this.ignoreLength = 0;
+        return _this;
+    }
+    FileTokenizer.prototype.readBuffer = function (buffer, offset, length, position) {
+        var _this = this;
+        if (position === void 0) { position = null; }
+        if (position) {
+            this.fileOffset = position;
+            this.ignoreLength = 0;
+        }
+        else if (this.ignoreLength > 0) {
+            position = this.fileOffset + this.ignoreLength;
+            this.ignoreLength = 0;
+        }
+        return fs.read(this.fd, buffer, offset, length, position).then(function (bytesRead) {
+            if (bytesRead < length)
+                throw exports.EndOfFile;
+            _this.fileOffset += bytesRead;
+            return bytesRead;
+        });
+    };
+    FileTokenizer.open = function (filePath) {
+        return fs.pathExists(filePath).then(function (exist) {
+            if (!exist) {
+                throw new Error("File not found: " + filePath);
+            }
+            return fs.stat(filePath).then(function (stat) {
+                return fs.open(filePath, "r").then(function (fd) {
+                    return new FileTokenizer(fd, stat.size);
+                });
+            });
+        });
+    };
+    FileTokenizer.prototype.ignore = function (length) {
+        this.ignoreLength += length;
+        return Promise.resolve(null);
+    };
+    FileTokenizer.prototype.close = function () {
+        return fs.close(this.fd);
+    };
+    return FileTokenizer;
+}(AbstractTokenizer));
+exports.FileTokenizer = FileTokenizer;
 
-},{"assert":16,"buffer":21}],51:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"assert":17,"buffer":22,"fs-extra":43,"then-read-stream":90}],90:[function(require,module,exports){
+"use strict";
+exports.__esModule = true;
+var es6_promise_1 = require("es6-promise");
+var Deferred = (function () {
+    function Deferred() {
+        var _this = this;
+        this.promise = new es6_promise_1.Promise(function (resolve, reject) {
+            _this.reject = reject;
+            _this.resolve = resolve;
+        });
+    }
+    return Deferred;
+}());
+var StreamReader = (function () {
+    function StreamReader(s) {
+        var _this = this;
+        this.s = s;
+        this.endOfStream = false;
+        this.s.once("end", function () {
+            _this.endOfStream = true;
+            if (_this.request) {
+                _this.request.deferred.reject(StreamReader.EndOfStream);
+            }
+            _this.request = null;
+        });
+    }
+    // Read chunk from stream
+    StreamReader.prototype.read = function (buffer, offset, length, position) {
+        var _this = this;
+        if (position === void 0) { position = null; }
+        if (this.request)
+            throw new Error("Concurrent read operation");
+        var readBuffer = this.s.read(length);
+        if (readBuffer) {
+            readBuffer.copy(buffer, offset);
+            return es6_promise_1.Promise.resolve(length);
+        }
+        else {
+            this.request = {
+                buffer: buffer,
+                offset: offset,
+                length: length,
+                position: position,
+                deferred: new Deferred()
+            };
+            this.s.once("readable", function () {
+                _this.tryRead();
+            });
+            return this.request.deferred.promise.then(function (n) {
+                _this.request = null;
+                return n;
+            })["catch"](function (err) {
+                _this.request = null;
+                throw err;
+            });
+        }
+    };
+    StreamReader.prototype.tryRead = function () {
+        var _this = this;
+        var readBuffer = this.s.read(this.request.length);
+        if (readBuffer) {
+            readBuffer.copy(this.request.buffer, this.request.offset);
+            this.request.deferred.resolve(this.request.length);
+        }
+        else {
+            this.s.once("readable", function () {
+                _this.tryRead();
+            });
+        }
+    };
+    return StreamReader;
+}());
+/**
+ * Used to reject read if end-of-stream has been reached
+ * @type {Error}
+ */
+StreamReader.EndOfStream = new Error("End-Of-Stream");
+exports.StreamReader = StreamReader;
+
+},{"es6-promise":25}],91:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -9729,7 +14251,315 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":36,"stream":48}],52:[function(require,module,exports){
+},{"_process":75,"stream":87}],92:[function(require,module,exports){
+"use strict";
+// A fast streaming parser library.
+exports.__esModule = true;
+var assert = require("assert");
+// Possibly call flush()
+var maybeFlush = function (b, o, len, flush) {
+    if (o + len > b.length) {
+        if (typeof (flush) !== 'function') {
+            throw new Error('Buffer out of space and no valid flush() function found');
+        }
+        flush(b, o);
+        return 0;
+    }
+    return o;
+};
+// Primitive types
+/**
+ * 8-bit unsigned integer
+ */
+exports.UINT8 = {
+    len: 1,
+    get: function (buf, off) {
+        return buf[off];
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 16-bit unsigned integer, Little Endian byte order
+ */
+exports.UINT16_LE = {
+    len: 2,
+    get: function (buf, off) {
+        return buf[off] | (buf[off + 1] << 8);
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = v & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 16-bit unsigned integer, Big Endian byte order
+ */
+exports.UINT16_BE = {
+    len: 2,
+    get: function (buf, off) {
+        return (buf[off] << 8) | buf[off + 1];
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 8) & 0xff;
+        b[no + 1] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 24-bit unsigned integer, Little Endian byte order
+ */
+exports.UINT24_LE = {
+    len: 3,
+    get: function (buf, off) {
+        return buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16);
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = v & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = (v >>> 16) & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 24-bit unsigned integer, Big Endian byte order
+ */
+exports.UINT24_BE = {
+    len: 3,
+    get: function (buf, off) {
+        return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 16) & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 32-bit unsigned integer, Little Endian byte order
+ */
+exports.UINT32_LE = {
+    len: 4,
+    get: function (buf, off) {
+        // Shifting the MSB by 24 directly causes it to go negative if its
+        // last bit is high, so we instead shift by 23 and multiply by 2.
+        // Also, using binary OR to count the MSB if its last bit is high
+        // causes the value to go negative. Use addition there.
+        return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
+            ((buf[off + 3] << 23) * 2);
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffffffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = v & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = (v >>> 16) & 0xff;
+        b[no + 3] = (v >>> 24) & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 32-bit unsigned integer, Big Endian byte order
+ */
+exports.UINT32_BE = {
+    len: 4,
+    get: function (buf, off) {
+        // See comments in UINT32_LE.get()
+        return ((buf[off] << 23) * 2) +
+            ((buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]);
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= 0 && v <= 0xffffffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 24) & 0xff;
+        b[no + 1] = (v >>> 16) & 0xff;
+        b[no + 2] = (v >>> 8) & 0xff;
+        b[no + 3] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 8-bit signed integer
+ */
+exports.INT8 = {
+    len: 1,
+    get: function (buf, off) {
+        var v = exports.UINT8.get(buf, off);
+        return ((v & 0x80) === 0x80) ?
+            (-128 + (v & 0x7f)) :
+            v;
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= -128 && v <= 127);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 16-bit signed integer, Big Endian byte order
+ */
+exports.INT16_BE = {
+    len: 2,
+    get: function (buf, off) {
+        var v = exports.UINT16_BE.get(buf, off);
+        return ((v & 0x8000) === 0x8000) ?
+            (-32768 + (v & 0x7fff)) :
+            v;
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= -32768 && v <= 32767);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = ((v & 0xffff) >>> 8) & 0xff;
+        b[no + 1] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 24-bit signed integer, Big Endian byte order
+ */
+exports.INT24_BE = {
+    len: 3,
+    get: function (buf, off) {
+        var v = exports.UINT24_BE.get(buf, off);
+        return ((v & 0x800000) === 0x800000) ?
+            (-0x800000 + (v & 0x7fffff)) : v;
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= -0x800000 && v <= 0x7fffff);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 16) & 0xff;
+        b[no + 1] = (v >>> 8) & 0xff;
+        b[no + 2] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * 32-bit signed integer, Big Endian byte order
+ */
+exports.INT32_BE = {
+    len: 4,
+    get: function (buf, off) {
+        // We cannot check for 0x80000000 directly, as this always returns
+        // false. Instead, check for the two's-compliment value, which
+        // behaves as expected. Also, we cannot subtract our value all at
+        // once, so do it in two steps to avoid sign busting.
+        var v = exports.UINT32_BE.get(buf, off);
+        return ((v & 0x80000000) === -2147483648) ?
+            ((v & 0x7fffffff) - 1073741824 - 1073741824) :
+            v;
+    },
+    put: function (b, o, v, flush) {
+        assert.equal(typeof o, 'number');
+        assert.equal(typeof v, 'number');
+        assert.ok(v >= -2147483648 && v <= 2147483647);
+        assert.ok(o >= 0);
+        assert.ok(this.len <= b.length);
+        var no = maybeFlush(b, o, this.len, flush);
+        b[no] = (v >>> 24) & 0xff;
+        b[no + 1] = (v >>> 16) & 0xff;
+        b[no + 2] = (v >>> 8) & 0xff;
+        b[no + 3] = v & 0xff;
+        return (no - o) + this.len;
+    }
+};
+/**
+ * Ignore a given number of bytes
+ */
+var IgnoreType = (function () {
+    /**
+     * @param len number of bytes to ignore
+     */
+    function IgnoreType(len) {
+        this.len = len;
+    }
+    // ToDo: don't read, but skip data
+    IgnoreType.prototype.get = function (buf, off) {
+        return null;
+    };
+    return IgnoreType;
+}());
+exports.IgnoreType = IgnoreType;
+var BufferType = (function () {
+    function BufferType(len) {
+        this.len = len;
+    }
+    BufferType.prototype.get = function (buf, off) {
+        return buf.slice(off, off + this.len);
+    };
+    return BufferType;
+}());
+exports.BufferType = BufferType;
+/**
+ * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
+ */
+var StringType = (function () {
+    function StringType(len, encoding) {
+        this.len = len;
+        this.encoding = encoding;
+    }
+    StringType.prototype.get = function (buf, off) {
+        return buf.toString(this.encoding, off, off + this.len);
+    };
+    return StringType;
+}());
+exports.StringType = StringType;
+
+},{"assert":17}],93:[function(require,module,exports){
 (function (Buffer){
 /**
  * Convert a typed array to a Buffer without a copy
@@ -9758,7 +14588,34 @@ module.exports = function typedarrayToBuffer (arr) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":21,"is-typedarray":33}],53:[function(require,module,exports){
+},{"buffer":22,"is-typedarray":69}],94:[function(require,module,exports){
+'use strict'
+
+exports.fromCallback = function (fn) {
+  return Object.defineProperty(function () {
+    if (typeof arguments[arguments.length - 1] === 'function') fn.apply(this, arguments)
+    else {
+      return new Promise((resolve, reject) => {
+        arguments[arguments.length] = (err, res) => {
+          if (err) return reject(err)
+          resolve(res)
+        }
+        arguments.length++
+        fn.apply(this, arguments)
+      })
+    }
+  }, 'name', { value: fn.name })
+}
+
+exports.fromPromise = function (fn) {
+  return Object.defineProperty(function () {
+    const cb = arguments[arguments.length - 1]
+    if (typeof cb !== 'function') return fn.apply(this, arguments)
+    else fn.apply(this, arguments).then(r => cb(null, r)).catch(cb)
+  }, 'name', { value: fn.name })
+}
+
+},{}],95:[function(require,module,exports){
 (function (global){
 
 /**
@@ -9829,16 +14686,16 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],54:[function(require,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],55:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
+arguments[4][66][0].apply(exports,arguments)
+},{"dup":66}],97:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],56:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10428,5 +15285,5 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":55,"_process":36,"inherits":54}]},{},[2])(2)
+},{"./support/isBuffer":97,"_process":75,"inherits":96}]},{},[3])(3)
 });

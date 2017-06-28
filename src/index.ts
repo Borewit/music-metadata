@@ -169,6 +169,37 @@ export class MusicMetadataParser {
     return new MusicMetadataParser();
   }
 
+  public static toIntOrNull(str: string): number {
+    const cleaned = parseInt(str, 10);
+    return isNaN(cleaned) ? null : cleaned;
+  }
+
+  // TODO: a string of 1of1 would fail to be converted
+  // converts 1/10 to no : 1, of : 10
+  // or 1 to no : 1, of : 0
+  public static cleanupTrack(origVal: number | string) {
+    const split = origVal.toString().split('/');
+    return {
+      no: parseInt(split[0], 10) || null,
+      of: parseInt(split[1], 10) || null
+    };
+  }
+
+  public static cleanupPicture(picture) {
+    let newFormat;
+    if (picture.format) {
+      const split = picture.format.toLowerCase().split('/');
+      newFormat = (split.length > 1) ? split[1] : split[0];
+      if (newFormat === 'jpeg') newFormat = 'jpg';
+    } else {
+      newFormat = 'jpg';
+    }
+    return {format: newFormat, data: picture.data};
+  }
+
+  /**
+   * ToDo: move to respective format implementations
+   */
   private static headerTypes = [
     {
       buf: ASF.Header_GUID,
@@ -201,11 +232,6 @@ export class MusicMetadataParser {
       tag: require('./monkeysaudio')
     }
   ];
-
-  public static toIntOrNull(str: string): number {
-    const cleaned = parseInt(str, 10);
-    return isNaN(cleaned) ? null : cleaned;
-  }
 
   private tagMap = new TagMap();
 
@@ -252,13 +278,13 @@ export class MusicMetadataParser {
       native: nativeData.native,
       common: {
         track: {no: null, of: null},
-        disk: {no: null, of: null},
+        disk: {no: null, of: null}
       } as any
     };
 
     for (const tagType in metadata.native) {
       for (const tag of metadata.native[tagType]) {
-        this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value)
+        this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value);
       }
     }
 
@@ -407,29 +433,6 @@ export class MusicMetadataParser {
         }
       }
     }
-  }
-
-  // TODO: a string of 1of1 would fail to be converted
-  // converts 1/10 to no : 1, of : 10
-  // or 1 to no : 1, of : 0
-  public static cleanupTrack(origVal: number | string) {
-    const split = origVal.toString().split('/');
-    return {
-      no: parseInt(split[0], 10) || null,
-      of: parseInt(split[1], 10) || null
-    };
-  }
-
-  public static cleanupPicture(picture) {
-    let newFormat;
-    if (picture.format) {
-      const split = picture.format.toLowerCase().split('/');
-      newFormat = (split.length > 1) ? split[1] : split[0];
-      if (newFormat === 'jpeg') newFormat = 'jpg';
-    } else {
-      newFormat = 'jpg';
-    }
-    return {format: newFormat, data: picture.data};
   }
 }
 
