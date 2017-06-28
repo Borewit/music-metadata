@@ -187,28 +187,23 @@ This will output the following music metadata:
           identifier: <Buffer 66 31 35 31 63 62 39 34 2d 63 39 30 39 2d 34 36 61 38 2d 61 64 39 39 2d 66 62 37 37 33 39 31 61 62 66 62 38> } ] } }
 ```
 
-`music-metadata` also emits all metadata it discovers during parsing. For example if you wanted to read the `TLEN` frame from an id3v2.x file you can do this:
-
-```javascript
-parser.on('TLEN', function (result) {
-  console.log(result);
-});
-```
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
 ```javascript
-var audioStream = fs.createReadStream('sample.mp3');
-mm(audioStream, { duration: true }, function (err, metadata) {
-  audioStream.close();
-});
+mm.parseFile('sample.mp3', {duration: true})
+  .then(function (metadata) {
+    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+  })
 ```
 
 Note that in order to read the duration for streams that are not file streams, in some cases you should pass the size of the file in bytes.
 ```javascript
-mm.parseStream(noFileStream, { duration: true, fileSize: 26838 }, function (err, metadata) {
-  noFileStream.close();
-});
+mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 })
+  .then( function (metadata) {
+     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+     someReadStream.close();
+   });
 ```
 
 Licence
