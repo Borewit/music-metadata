@@ -53,14 +53,10 @@ app.controller('DropAudioController', function ($scope, $log) {
 
     self.getImageData = function (picture) {
       $log.debug('getImageData: %o', picture)
-      return URL.createObjectURL(new Blob([picture.data], {'type': 'image/' + picture.format }))
+      return URL.createObjectURL(new Blob([picture.data], { 'type': 'image/' + picture.format }))
     }
 
-    musicMetadata(file, {native: true}, function (err, metadata) {
-      if (err) {
-        $log.error('Error: %s', err)
-        throw err
-      }
+    musicMetadata.parseStream(file, { native: true }).then(function (metadata) {
       $log.debug('Got metadata %o', metadata)
       // Post processing metadata
       $scope.metadata = metadata
@@ -72,6 +68,9 @@ app.controller('DropAudioController', function ($scope, $log) {
       $scope.native = $scope.metadata[$scope.metadata.format.tagType]
 
       $scope.$apply()
+    }).catch(function (err) {
+      $log.error(err.message)
+      throw err
     })
   }
 
