@@ -281,7 +281,7 @@ class MpegAudioLayer {
   }
 }
 
-export class MpegParser implements ITokenParser {
+export class MpegParser {
 
   private frameCount: number = 0;
 
