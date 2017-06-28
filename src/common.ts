@@ -1,6 +1,4 @@
-import * as equal from 'deep-equal';
 import windows1252decoder from './windows1252decoder';
-import {Id3v1Parser} from "./id3v1";
 
 export default class Common {
 
@@ -68,8 +66,7 @@ export default class Common {
   public static getParserForMediaType(types, header) {
     for (const type of types) {
       const offset = type.offset || 0;
-      if (header.length >= offset + type.buf.length &&
-        equal(header.slice(offset, offset + type.buf.length), type.buf)) {
+      if (header.length >= offset + type.buf.length && header.slice(offset, offset + type.buf.length).compare(type.buf) === 0) {
         return type.tag;
       }
     }

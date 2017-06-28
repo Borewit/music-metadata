@@ -1,5 +1,4 @@
 'use strict';
-import * as equal from 'deep-equal';
 import common from './common';
 import ReadableStream = NodeJS.ReadableStream;
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "./index";
@@ -40,7 +39,7 @@ export class AsfParser implements ITokenParser {
 
   private paresTopLevelHeaderObject(): Promise<INativeAudioMetadata> {
     return this.tokenizer.readToken<IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken).then((header) => {
-      if (!equal(header.objectId, Header_GUID)) {
+      if (header.objectId.compare(Header_GUID) !== 0) {
         throw new Error('expected asf header; but was not found');
       }
       this.numberOfObjectHeaders = header.numberOfHeaderObjects;
@@ -52,11 +51,11 @@ export class AsfParser implements ITokenParser {
     // Parse common header of the ASF Object
     return this.tokenizer.readToken<IAsfObjectHeader>(AsfObject.ObjectHeaderToken).then((header) => {
       // Parse data part of the ASF Object
-      if (equal(header.objectId, FilePropertiesObject.guid)) {
+      if ( header.objectId.compare(FilePropertiesObject.guid) === 0) {
         return this.parseFilePropertiesObject(header);
-      } else if (equal(header.objectId, ContentDescriptionObjectState.guid)) {
+      } else if (header.objectId.compare(ContentDescriptionObjectState.guid) === 0) {
         return this.parseContentDescription(header);
-      } else if (equal(header.objectId, ExtendedContentDescriptionObjectState.guid)) {
+      } else if ( header.objectId.compare(ExtendedContentDescriptionObjectState.guid) === 0) {
         return this.parseExtendedContentDescriptionObject(header);
       } else {
         this.warnings.push("Ignore ASF-Object-GUID: %s", AsfParser.guidToString(header.objectId));
