@@ -46,6 +46,7 @@
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
     "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js",
     "test": "mocha --require ts-node/register test/*.ts",
+    "prepare": "npm run compile",
     "verify": "npm-run-all compile lint test"
   },
   "dependencies": {
