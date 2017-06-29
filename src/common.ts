@@ -1,4 +1,4 @@
-import windows1252decoder from './windows1252decoder';
+import {Windows1292Decoder} from './windows1252decoder';
 
 export default class Common {
 
@@ -175,7 +175,7 @@ export default class Common {
     } else if (encoding === 'utf8') {
       return buffer.toString('utf8');
     } else if (encoding === 'iso-8859-1') {
-      return windows1252decoder(buffer);
+      return Windows1292Decoder.decode(buffer);
     }
 
     throw Error(encoding + ' encoding is not supported!');

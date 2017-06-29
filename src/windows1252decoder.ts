@@ -46,5 +46,3 @@ export class Windows1292Decoder {
     return codePoint;
   }
 }
-
-export default Windows1292Decoder.decode;
