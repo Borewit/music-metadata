@@ -56,4 +56,3 @@ it("should decode ogg audio-file", function () {
         checkVorbisTags(mapNativeTags(result.native.vorbis));
     });
 });
-//# sourceMappingURL=test-ogg.js.map

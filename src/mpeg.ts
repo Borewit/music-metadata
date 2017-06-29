@@ -117,7 +117,7 @@ class MpegFrameHeader {
 
     // Calculate bitrate
     const bitrateInKbps = this.calcBitrate();
-    if (bitrateInKbps == null) {
+    if (!bitrateInKbps) {
       throw new Error('Cannot determine bit-rate');
     }
     this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
@@ -395,6 +395,27 @@ export class MpegParser {
         this.calculateVbrDuration = true;
         return;
       }
+
+      /*
+      if (this.frameCount === 4) {
+        // ingore the first frame, consider the stream is CBR if frame 2..4 bit rates are the same
+        if (this.areAllSame(this.bitrates.slice(1))) {
+          // subtract non audio stream data from duration calculation
+          const size = this.tokenizer.fileSize - this.headerSize;
+          this.format.duration = (size * 8) / header.bitrate;
+          return; // Done
+        } else if (!this.readDuration) {
+          return; // Done
+        }
+      }
+
+      // once we know the file is VBR attach listener to end of
+      // stream so we can do the duration calculation when we
+      // have counted all the frames
+      if (this.readDuration && this.frameCount === 5) {
+        this.calculateVbrDuration = true;
+        return;
+      }*/
 
       this.offset = 4;
       if (header.isProtectedByCRC) {
