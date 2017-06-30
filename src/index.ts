@@ -138,6 +138,13 @@ export interface IFormat {
    * Number of audio channels
    */
   numberOfChannels?: number,
+
+  /**
+   * Number of samples.
+   * One sample contains all channels
+   * The duration is: numberOfChannels / bitsPerSample
+   */
+  numberOfSamples?: number
 }
 
 export interface ITag {

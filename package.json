@@ -50,7 +50,8 @@
     "verify": "npm-run-all compile lint test"
   },
   "dependencies": {
-    "es6-promise": "^4.1.0",
+    "@types/chai": "^4.0.1",
+    "es6-promise": "^4.1.1",
     "filereader-stream": "^1.0.0",
     "fs-extra": "^3.0.1",
     "is-stream": "^1.1.0",
@@ -63,18 +64,15 @@
     "@types/es6-promise": "0.0.32",
     "@types/fs-extra": "^3.0.1",
     "@types/mocha": "^2.2.41",
-    "@types/node": "^8.0.4",
+    "@types/node": "^8.0.6",
     "@types/through": "0.0.28",
-    "brfs": "1.2.0",
     "browserify": "^13.0.0",
     "chai": "^4.0.2",
     "mocha": "^3.4.2",
     "npm-run-all": "^3.1.1",
-    "tape": "^4.5.1",
-    "testling": "^1.7.1",
     "ts-node": "^3.1.0",
-    "tslint": "^4.4.2",
-    "typescript": "^2.0.3",
+    "tslint": "^4.5.1",
+    "typescript": "^2.4.1",
     "typings": "2.0.0"
   },
   "testling": {
