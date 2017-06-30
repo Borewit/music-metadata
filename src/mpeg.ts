@@ -312,7 +312,7 @@ export class MpegParser {
       return this.format;
     }).catch((err) => {
       if (err === EndOfFile) {
-        if(this.calculateVbrDuration) {
+        if (this.calculateVbrDuration) {
           this.format.numberOfSamples = this.frameCount * this.samplesPerFrame;
           this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
         }
@@ -320,7 +320,7 @@ export class MpegParser {
       } else {
         throw err;
       }
-   });
+    });
   }
 
   public sync(): Promise<void> {
