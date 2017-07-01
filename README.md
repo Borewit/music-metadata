@@ -1,6 +1,6 @@
 [![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![npm downloads][npm-downloads-image]][npm-url]
 
-Streaming music metadata parser for node and the browser.
+Streaming music metadata parser for node.
 
 ## Installation
 Install via [npm](http://npmjs.org):
@@ -8,9 +8,6 @@ Install via [npm](http://npmjs.org):
 ```
 npm install music-metadata
 ```
-
-You can also download a pre packaged browser release from `dist/music-metadata.js`.
-See `example/drop_media_file.html` for usage.
 
 ## Features
 

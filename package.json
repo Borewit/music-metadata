@@ -44,7 +44,6 @@
     "compile": "tsc --pretty",
     "lint": "tslint --format=verbose 'src/**/*.ts'",
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
-    "dist": "browserify lib/browser.js --standalone 'music-metadata' -o dist/music-metadata.js",
     "test": "mocha --require ts-node/register test/*.ts",
     "prepare": "npm run compile",
     "verify": "npm-run-all compile lint test"
@@ -57,7 +56,6 @@
     "is-stream": "^1.1.0",
     "strtok3": "^0.1.4",
     "then-read-stream": "0.0.6",
-    "through": "^2.3.8",
     "token-types": "0.0.1"
   },
   "devDependencies": {
@@ -65,8 +63,6 @@
     "@types/fs-extra": "^3.0.1",
     "@types/mocha": "^2.2.41",
     "@types/node": "^8.0.6",
-    "@types/through": "0.0.28",
-    "browserify": "^13.0.0",
     "chai": "^4.0.2",
     "mocha": "^3.4.2",
     "npm-run-all": "^3.1.1",
