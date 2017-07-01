@@ -419,7 +419,6 @@ export class MpegParser {
       if (this.readDuration && this.frameCount === 4) {
         this.samplesPerFrame = samples_per_frame;
         this.calculateVbrDuration = true;
-        return;
       }
 
       this.offset = 4;
