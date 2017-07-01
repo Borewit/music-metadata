@@ -295,6 +295,7 @@ export class MpegParser {
   private crc: number;
 
   private calculateVbrDuration: boolean = false;
+  private samplesPerFrame;
 
   private format: IFormat;
 
@@ -314,7 +315,13 @@ export class MpegParser {
       return this.format;
     }).catch((err) => {
       if (err === EndOfFile)
-        return this.format;
+        if (this.calculateVbrDuration) {
+          if (this.samplesPerFrame) {
+            this.format.numberOfSamples = this.frameCount * this.samplesPerFrame; // -529 (1152-529)=623
+            this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
+          }
+        }
+      return this.format;
     });
   }
 
@@ -395,8 +402,8 @@ export class MpegParser {
       // stream so we can do the duration calculation when we
       // have counted all the frames
       if (this.readDuration && this.frameCount === 4) {
+        this.samplesPerFrame = samples_per_frame;
         this.calculateVbrDuration = true;
-        return;
       }
 
       this.offset = 4;
