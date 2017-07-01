@@ -1,7 +1,6 @@
 import {} from "mocha"
 import {assert} from 'chai';
 import * as mm from '../src';
-import through = require("through");
 import * as fs from "fs-extra";
 
 const path = require('path');
