@@ -392,7 +392,8 @@ export class MpegParser {
       this.audioFrameHeader = header;
       this.frameCount++;
       this.bitrates.push(header.bitrate);
-      // debug("frame#=%s, bitrate=%s, sampleRate=%s, samplesPerFrame=%s, numberOfChannels=%s, frame-size=%s", this.frameCount, this.format.bitrate, this.format.sampleRate, samples_per_frame, this.format.numberOfChannels, this.frame_size);
+      // debug("frame#=%s, bitrate=%s, sampleRate=%s, samplesPerFrame=%s, numberOfChannels=%s, frame-size=%s", this.frameCount,
+      //    this.format.bitrate, this.format.sampleRate, samples_per_frame, this.format.numberOfChannels, this.frame_size);
 
       // xtra header only exists in first frame
       if (this.frameCount === 1) {
@@ -511,12 +512,8 @@ export class MpegParser {
     });
   }
 
-  private countDataFrames: number = 0;
-
   private skipFrameData(frameDataLeft: number): Promise<void> {
-    //return this.tokenizer.readToken(new Token.IgnoreType(frameDataLeft)).then(() => {
     return this.tokenizer.readToken(new Token.IgnoreType(frameDataLeft)).then(() => {
-      this.countDataFrames = frameDataLeft;
       this.countSkipFrameData += frameDataLeft;
       return this.sync();
     });
