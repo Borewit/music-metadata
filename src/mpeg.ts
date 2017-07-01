@@ -47,6 +47,12 @@ class MpegFrameHeader {
     2.5: {0x00: 11025, 0x01: 12000, 0x02: 8000}
   };
 
+  private static samplesInFrameTable = [
+  /* Layer   I    II   III */
+    [0, 384, 1152, 1152], // MPEG-1
+    [0, 384, 1152, 576] // MPEG-2(.5
+  ];
+
   // B(20,19): MPEG Audio versionIndex ID
   public versionIndex: number;
   // C(18,17): Layer description
@@ -134,10 +140,7 @@ class MpegFrameHeader {
   }
 
   public calcSamplesPerFrame(): number {
-    if (this.layer === 1) return 384;
-    if (this.layer === 2) return 1152;
-    if (this.layer === 3 && this.version === 1) return 1152;
-    if (this.layer === 3 && (this.version === 2 || this.version === 2.5)) return 576;
+    return MpegFrameHeader.samplesInFrameTable[this.version === 1 ? 0 : 1][this.layer];
   }
 
   public calculateSideInfoLength(): number {
