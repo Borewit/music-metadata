@@ -321,14 +321,15 @@ export class MpegParser {
     return this.sync().then(() => {
       return this.format;
     }).catch((err) => {
-      if (err === EndOfFile)
+      if (err === EndOfFile) {
         if (this.calculateVbrDuration) {
-          if (this.samplesPerFrame) {
-            this.format.numberOfSamples = this.frameCount * this.samplesPerFrame; // -529 (1152-529)=623
-            this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
-          }
+          this.format.numberOfSamples = this.frameCount * this.samplesPerFrame;
+          this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
         }
-      return this.format;
+        return this.format;
+      } else {
+        throw err;
+      }
     });
   }
 
@@ -360,7 +361,7 @@ export class MpegParser {
       let header: MpegFrameHeader;
       try {
         header = MpegAudioLayer.FrameHeader.get(buf_frame_header, 0);
-      } catch (err) { // ToDO: register warning
+      } catch (err) {
         this.warnings.push("Parse error: " + err.message);
         return this.sync();
       }
@@ -392,8 +393,6 @@ export class MpegParser {
       this.audioFrameHeader = header;
       this.frameCount++;
       this.bitrates.push(header.bitrate);
-      // debug("frame#=%s, bitrate=%s, sampleRate=%s, samplesPerFrame=%s, numberOfChannels=%s, frame-size=%s", this.frameCount,
-      //    this.format.bitrate, this.format.sampleRate, samples_per_frame, this.format.numberOfChannels, this.frame_size);
 
       // xtra header only exists in first frame
       if (this.frameCount === 1) {
@@ -410,7 +409,6 @@ export class MpegParser {
           this.format.codecProfile = "CBR";
           return; // Done
         } else if (!this.readDuration) {
-          // debug("duration=false => done.");
           return; // Done
         }
       }
@@ -421,6 +419,7 @@ export class MpegParser {
       if (this.readDuration && this.frameCount === 4) {
         this.samplesPerFrame = samples_per_frame;
         this.calculateVbrDuration = true;
+        return;
       }
 
       this.offset = 4;
