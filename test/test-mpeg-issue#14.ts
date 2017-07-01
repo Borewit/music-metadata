@@ -16,7 +16,7 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
      * First frame is 224 kbps, rest 320 kbps
      * After id3v2.3, lots of 0 padding
      */
-    this.timeout(4000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+    this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
     const filePath = path.join(__dirname, 'samples', "04 - You Don't Know.mp3");
 
