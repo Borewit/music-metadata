@@ -8,13 +8,16 @@ const t = assert;
 
 describe("mpeg parsing fails for irrelevant attributes #14", () => {
 
-  it("should decode 04 - You Don't Know.mp3", () => {
+  it("should decode 04 - You Don't Know.mp3", function () {
+
 
     /**
      * File has id3v2.3 & id3v1 tags
      * First frame is 224 kbps, rest 320 kbps
      * After id3v2.3, lots of 0 padding
      */
+    this.timeout(4000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+
     const filePath = path.join(__dirname, 'samples', "04 - You Don't Know.mp3");
 
     function checkFormat(format) {
