@@ -11,6 +11,7 @@ describe("Parser options", () => {
   const file_flac = path.join(__dirname, 'samples', 'MusicBrainz-multiartist.flac');
   const file_id3v22 = path.join(__dirname, 'samples', 'id3v2.2.mp3');
   const file_m4a = path.join(__dirname, 'samples', 'id4.m4a');
+  const file_ogg = path.join(__dirname, 'samples', 'oggy.ogg');
 
   describe("option 'native'", () => {
 
@@ -169,6 +170,40 @@ describe("Parser options", () => {
         const m4a = mm.orderTags(result.native.m4a);
         // Native
         t.isDefined(m4a.aART, "m4a.covr");
+        // Common
+        t.isDefined(result.common.picture, "result.common.picture");
+      });
+    });
+
+  }); // should skipCovers in M4A format
+
+  describe("'skipCovers' in ogg format", () => {
+
+    it("should include cover-art if option.skipCovers is not defined", () => {
+      return mm.parseFile(file_ogg, {native: true}).then((result) => {
+        const vorbis = mm.orderTags(result.native.vorbis);
+        // Native
+        t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
+        // Common
+        t.isDefined(result.common.picture, "result.common.picture");
+      });
+    });
+
+    it("should not include cover-art if option.skipCovers=true", () => {
+      return mm.parseFile(file_ogg, {native: true, skipCovers: true}).then((result) => {
+        const vorbis = mm.orderTags(result.native.vorbis);
+        // Native
+        t.isUndefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
+        // Common
+        t.isUndefined(result.common.picture, "result.common.picture");
+      });
+    });
+
+    it("should include cover-art if option.skipCovers=false", () => {
+      return mm.parseFile(file_ogg, {native: true, skipCovers: false}).then((result) => {
+        const vorbis = mm.orderTags(result.native.vorbis);
+        // Native
+        t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
         // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });

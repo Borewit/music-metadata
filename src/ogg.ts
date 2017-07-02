@@ -137,10 +137,12 @@ class VorbisParser implements ITokenParser {
   private tags: ITag[] = [];
 
   private tokenizer: ITokenizer;
+  private options: IOptions;
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
+    this.options = options;
 
     return this.parseHeaderPacket().then(() => {
       return {
@@ -229,10 +231,15 @@ class VorbisParser implements ITokenParser {
         let value: any = v.slice(idx + 1);
 
         if (key === 'METADATA_BLOCK_PICTURE') {
-          value = vorbis.readPicture(new Buffer(value, 'base64'));
+          if(!this.options.skipCovers) {
+            value = vorbis.readPicture(new Buffer(value, 'base64'));
+          } else {
+            value = null;
+          }
         }
 
-        this.tags.push({id: key, value});
+        if(value !== null)
+          this.tags.push({id: key, value});
 
         const len = Token.UINT32_LE.len + strLen;
         if (--userCommentListLength > 0) {
