@@ -255,7 +255,7 @@ export class ApeParser implements ITokenParser {
             tags.push({id: key, value: val});
           }
         }
-        break;
+          break;
 
         case DataType.binary: { // binary (probably artwork)
           if (includeCovers && (key === 'Cover Art (Front)' || key === 'Cover Art (Back)')) {
@@ -275,7 +275,7 @@ export class ApeParser implements ITokenParser {
             tags.push({id: key, value: picture});
           }
         }
-        break;
+          break;
 
         default:
           throw new Error('Unexpected data-type: ' + flags.dataType);
