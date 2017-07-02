@@ -254,10 +254,10 @@ export class ApeParser implements ITokenParser {
           for (const val of values) {
             tags.push({id: key, value: val});
           }
-        }
           break;
+        }
 
-        case DataType.binary: { // binary (probably artwork)
+        case DataType.binary: // binary (probably artwork)
           if (includeCovers && (key === 'Cover Art (Front)' || key === 'Cover Art (Back)')) {
             const picData = buffer.slice(offset, offset + size);
 
@@ -274,7 +274,6 @@ export class ApeParser implements ITokenParser {
             offset += size;
             tags.push({id: key, value: picture});
           }
-        }
           break;
 
         default:
