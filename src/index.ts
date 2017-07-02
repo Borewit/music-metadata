@@ -93,7 +93,8 @@ export interface ICommonTagsResult {
   website?: string,
   'performer:instrument'?: string[],
   averageLevel?: number,
-  peakLevel?: number;
+  peakLevel?: number,
+  notes: string[]
 }
 
 export interface IFormat {
@@ -152,21 +153,41 @@ export interface ITag {
   value: any
 }
 
+/**
+ * Flat list of tags
+ */
+export interface INativeTags { [tagType: string]: ITag[]; }
+
+/**
+ * Tags ordered by tag-ID
+ */
+export interface INativeTagDict { [tagId: string]: any[]; }
+
 export interface INativeAudioMetadata {
   format: IFormat,
-  native: { [tagType: string]: ITag[]; }
+  native: INativeTags
 }
 
 export interface IAudioMetadata extends INativeAudioMetadata {
   common: ICommonTagsResult,
 }
 
-export type ICallbackType = (error?: Error, metadata?: IAudioMetadata) => void;
-
 export interface IOptions {
   path?: string,
+
+  /**
+   *  default: `undefined`, pass the
+   */
   fileSize?: number,
+
+  /**
+   *  default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
+   */
   native?: boolean,
+
+  /**
+   * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+   */
   duration?: boolean;
 }
 
@@ -445,9 +466,8 @@ export class MusicMetadataParser {
 
 /**
  * Parse audio file
- * @param stream
- * @param opts
- *   .filesize=true  Return filesize
+ * @param filePath Media file to read meta-data from
+ * @param opts Parsing options:
  *   .native=true    Will return original header in result
  * @returns {Promise<IAudioMetadata>}
  */
@@ -458,11 +478,24 @@ export function parseFile(filePath: string, opts?: IOptions): Promise<IAudioMeta
 /**
  * Parse audio stream
  * @param stream
- * @param opts
- *   .filesize=true  Return filesize
+ * @param mimeType
+ * @param opts Parsing options
  *   .native=true    Will return original header in result
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseStream(stream: stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {
   return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
+}
+
+/**
+ * Create a dictionary ordered by their tag id (key)
+ * @param nativeTags list of tags
+ * @returns tags indexed by id
+ */
+export function orderTags(nativeTags: ITag[]): INativeTagDict {
+  const tags = {};
+  for (const tag of nativeTags) {
+    (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
+  }
+  return tags;
 }

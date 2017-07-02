@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -75,7 +75,6 @@ it("should be able to read id3v2 files with lyrics", () => {
       'So please tell me, please tell me',
       'What ever happened?',
       'Happened?' ], 'Check lyrics');
-
   });
 
 });

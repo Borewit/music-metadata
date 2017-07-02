@@ -1,4 +1,4 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import Common from "../src/common";
 
@@ -8,7 +8,7 @@ describe("Common", () => {
 
   it("should be able to parse genres", () => {
     const tests = {
-      'Electronic': 'Electronic',
+      Electronic: 'Electronic',
       'Electronic/Rock': 'Electronic/Rock',
       '(0)': 'Blues',
       '(0)(1)(2)': 'Blues/Classic Rock/Country',
@@ -22,7 +22,7 @@ describe("Common", () => {
       'RX/CR': 'RX/CR'
     };
     for (const test in tests) {
-      t.strictEqual(Common.parseGenre(test), tests[test], test)
+      t.strictEqual(Common.parseGenre(test), tests[test], test);
     }
   });
 
@@ -34,19 +34,19 @@ describe("Common", () => {
   });
 
   /*
-  it("should be able to detect ftypmp42 as a valid mp4 header headerType", () => {
-    const buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]);
+   it("should be able to detect ftypmp42 as a valid mp4 header headerType", () => {
+   const buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]);
 
-    const types = [
-      {
-        buf: new Buffer([0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]),
-        tag: require('../lib/id4'),
-        offset: 4
-      }
-    ];
+   const types = [
+   {
+   buf: new Buffer([0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]),
+   tag: require('../lib/id4'),
+   offset: 4
+   }
+   ];
 
-    t.equal(Common.getParserForMediaType(types, buf), require('../src/id4'), 'headerType');
-  });*/
+   t.equal(Common.getParserForMediaType(types, buf), require('../src/id4'), 'headerType');
+   });*/
 
   it("readUInt64LE", () => {
     const tests = [
@@ -67,9 +67,9 @@ describe("Common", () => {
         expected: 'joystick'
       }
     ];
-    tests.forEach( (test) => {
-      t.strictEqual(Common.stripNulls(test.str), test.expected)
+    tests.forEach((test) => {
+      t.strictEqual(Common.stripNulls(test.str), test.expected);
     });
-  })
+  });
 
 });

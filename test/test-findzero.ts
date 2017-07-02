@@ -1,6 +1,6 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
-import * as common from '../src/common'
+import * as common from '../src/common';
 
 const findZero = common.default.findZero;
 
@@ -20,7 +20,7 @@ describe("find zero", () => {
 
   it("return offset to end if nothing is found", () => {
     const buf = new Buffer([0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
-    t.equal(findZero(buf, 0, buf.length, 'ascii'), buf.length)
+    t.equal(findZero(buf, 0, buf.length, 'ascii'), buf.length);
   });
 
   it("find terminator in utf16le encoded string", () => {
@@ -29,8 +29,8 @@ describe("find zero", () => {
   });
 
   it("find terminator in utf16be encoded string", () => {
-    const buf = new Buffer([0x00, 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x00])
-    t.equal(findZero(buf, 0, buf.length, 'utf16'), 8)
+    const buf = new Buffer([0x00, 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x00]);
+    t.equal(findZero(buf, 0, buf.length, 'utf16'), 8);
   });
 
 });

@@ -1,9 +1,9 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as fs from 'fs-extra';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 

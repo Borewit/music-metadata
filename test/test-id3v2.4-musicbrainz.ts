@@ -1,8 +1,7 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -11,7 +10,7 @@ it("should MusicBrainz tags with id3v2.4", () => {
   const filename = 'id3v2.4-musicbrainz.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath, { duration: true }).then(function (result) {
+  return mm.parseFile(filePath, {duration: true}).then((result) => {
     t.deepEqual(result.format.duration, 1, 'format.duration');
 
     t.deepEqual(result.common.title, 'Home', 'common.title');
@@ -41,11 +40,14 @@ it("should MusicBrainz tags with id3v2.4", () => {
     const native = result.native['id3v2.4'];
     t.ok(native, 'Native id3v2.4 tags should be present');
 
-    let i=0;
+    let i = 0;
     t.deepEqual(native[i++], {id: 'TIT2', value: 'Home'}, "['id3v2.4'].TIT2");
     t.deepEqual(native[i++], {id: 'TPE1', value: 'Explosions in the Sky'}, "['id3v2.4'].TPE1");
     t.deepEqual(native[i++], {id: 'TRCK', value: '5/14'}, "['id3v2.4'].TRCK");
-    t.deepEqual(native[i++], {id: 'TALB', value: 'Friday Night Lights: Original Motion Picture Soundtrack'}, "['id3v2.4'].TALB");
+    t.deepEqual(native[i++], {
+      id: 'TALB',
+      value: 'Friday Night Lights: Original Motion Picture Soundtrack'
+    }, "['id3v2.4'].TALB");
     t.deepEqual(native[i++], {id: 'TPOS', value: '1/1'}, "['id3v2.4'].TPOS");
     t.deepEqual(native[i++], {id: 'TDRC', value: '2004-10-12'}, "['id3v2.4'].TDRC");
     t.deepEqual(native[i++], {id: 'TCON', value: 'Soundtrack'}, "['id3v2.4'].TCON #1");
@@ -54,17 +56,26 @@ it("should MusicBrainz tags with id3v2.4", () => {
     {
       const picTag = native[i++];
       t.strictEqual(picTag.id, 'APIC', "['id3v2.4'].APIC #1");
-      t.deepEqual(picTag.value.format, 'image/jpeg', "['id3v2.4'].APIC #1 format")
-      t.deepEqual(picTag.value.type, 'Cover (front)', "['id3v2.4'].APIC #1 headerType")
-      t.deepEqual(picTag.value.description, '', "['id3v2.4'].APIC #1 description")
-      t.deepEqual(picTag.value.data.length, 75818, "['id3v2.4'].APIC #1 length")
+      t.deepEqual(picTag.value.format, 'image/jpeg', "['id3v2.4'].APIC #1 format");
+      t.deepEqual(picTag.value.type, 'Cover (front)', "['id3v2.4'].APIC #1 headerType");
+      t.deepEqual(picTag.value.description, '', "['id3v2.4'].APIC #1 description");
+      t.deepEqual(picTag.value.data.length, 75818, "['id3v2.4'].APIC #1 length");
     }
 
-    t.deepEqual(native[i++], {id: 'PRIV', value: {data: new Buffer([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'} }, "['id3v2.4'].PRIV.AverageLevel");
-    t.deepEqual(native[i++], {id: 'PRIV', value: {data: new Buffer([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'} }, "['id3v2.4'].PRIV.PeakValue");
+    t.deepEqual(native[i++], {
+      id: 'PRIV',
+      value: {data: new Buffer([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
+    }, "['id3v2.4'].PRIV.AverageLevel");
+    t.deepEqual(native[i++], {
+      id: 'PRIV',
+      value: {data: new Buffer([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
+    }, "['id3v2.4'].PRIV.PeakValue");
     t.deepEqual(native[i++], {id: 'TCOM', value: 'Explosions in the Sky'}, "['id3v2.3'].TCOM");
     t.deepEqual(native[i++], {id: 'TDOR', value: '2004-10-12'}, "['id3v2.4'].TDOR");
-    t.deepEqual(native[i++], {id: 'TIPL', value: { producer: [ 'Brian Grazer', 'Brian Reitzell', 'Peter Berg' ] }}, "['id3v2.4'].TIPL");
+    t.deepEqual(native[i++], {
+      id: 'TIPL',
+      value: {producer: ['Brian Grazer', 'Brian Reitzell', 'Peter Berg']}
+    }, "['id3v2.4'].TIPL");
     t.deepEqual(native[i++], {id: 'TMED', value: 'CD'}, "['id3v2.4'].TIPL");
     t.deepEqual(native[i++], {id: 'TPE2', value: 'Explosions in the Sky'}, "['id3v2.4'].TPE2");
     t.deepEqual(native[i++], {id: 'TPUB', value: 'Hip-O Records'}, "['id3v2.4'].TPUB");
@@ -75,29 +86,59 @@ it("should MusicBrainz tags with id3v2.4", () => {
     t.deepEqual(native[i++], {id: 'TXXX:Artists', value: 'Explosions in the Sky'}, "['id3v2.4'].TXXX:Artists");
     t.deepEqual(native[i++], {id: 'TXXX:BARCODE', value: '602498644102'}, "['id3v2.4'].TXXX:BARCODE");
     t.deepEqual(native[i++], {id: 'TXXX:CATALOGNUMBER', value: 'B0003663-02'}, "['id3v2.4'].TXXX:CATALOGNUMBER");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Album Artist Id', value: '4236acde-2ce2-441c-a3d4-38d55f1b5474'}, "['id3v2.4'].TXXX:MusicBrainz Album Artist Id");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Album Id', value: '2644f258-0619-4beb-a150-0c0069ca6699'}, "['id3v2.4'].TXXX:MusicBrainz Album Id");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Album Release Country', value: 'US'}, "['id3v2.4'].TXXX:MusicBrainz Album Release Country");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Album Status', value: 'official'}, "['id3v2.4'].TXXX:MusicBrainz Album Status");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Album Type', value: 'album'}, "['id3v2.4'].TXXX:MusicBrainz Album Type #1");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Album Type', value: 'soundtrack'}, "['id3v2.4'].TXXX:MusicBrainz Album Type #2");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Artist Id', value: '4236acde-2ce2-441c-a3d4-38d55f1b5474'}, "['id3v2.4'].MusicBrainz Artist Id");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Release Group Id', value: 'afe7c5d8-f8bc-32cf-b77d-8fb8561989a7'}, "['id3v2.4'].MusicBrainz Release Group Id");
-    t.deepEqual(native[i++], {id: 'TXXX:MusicBrainz Release Track Id', value: 'd87d56d0-9bd3-3199-8ff3-d03dff3abb13'}, "['id3v2.4'].MusicBrainz Release Track Id");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Album Artist Id',
+      value: '4236acde-2ce2-441c-a3d4-38d55f1b5474'
+    }, "['id3v2.4'].TXXX:MusicBrainz Album Artist Id");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Album Id',
+      value: '2644f258-0619-4beb-a150-0c0069ca6699'
+    }, "['id3v2.4'].TXXX:MusicBrainz Album Id");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Album Release Country',
+      value: 'US'
+    }, "['id3v2.4'].TXXX:MusicBrainz Album Release Country");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Album Status',
+      value: 'official'
+    }, "['id3v2.4'].TXXX:MusicBrainz Album Status");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Album Type',
+      value: 'album'
+    }, "['id3v2.4'].TXXX:MusicBrainz Album Type #1");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Album Type',
+      value: 'soundtrack'
+    }, "['id3v2.4'].TXXX:MusicBrainz Album Type #2");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Artist Id',
+      value: '4236acde-2ce2-441c-a3d4-38d55f1b5474'
+    }, "['id3v2.4'].MusicBrainz Artist Id");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Release Group Id',
+      value: 'afe7c5d8-f8bc-32cf-b77d-8fb8561989a7'
+    }, "['id3v2.4'].MusicBrainz Release Group Id");
+    t.deepEqual(native[i++], {
+      id: 'TXXX:MusicBrainz Release Track Id',
+      value: 'd87d56d0-9bd3-3199-8ff3-d03dff3abb13'
+    }, "['id3v2.4'].MusicBrainz Release Track Id");
     t.deepEqual(native[i++], {id: 'TXXX:PERFORMER', value: 'Explosions In The Sky'}, "['id3v2.4'].PERFORMER");
     t.deepEqual(native[i++], {id: 'TXXX:SCRIPT', value: 'Latn'}, "['id3v2.4'].'SCRIPT");
     t.deepEqual(native[i++], {id: 'TXXX:originalyear', value: '2004'}, "['id3v2.4'].'originalyear");
-    t.deepEqual(native[i++], {id: 'UFID', value: {
-      identifier: new Buffer([
-        0x38, 0x34, 0x38, 0x35, 0x31, 0x31, 0x35, 0x30, 0x2d, 0x61, 0x31, 0x39, 0x36, 0x2d, 0x34, 0x38,
-        0x66, 0x61, 0x2d, 0x61, 0x64, 0x61, 0x35, 0x2d, 0x31, 0x61, 0x30, 0x31, 0x32, 0x62, 0x31, 0x63,
-        0x64, 0x39, 0x65, 0x64]),
-      owner_identifier: 'http://musicbrainz.org'}}, "['id3v2.4'].UFID");
-    t.deepEqual(native[i++], undefined, "End of metadata");
+    t.deepEqual(native[i++], {
+      id: 'UFID', value: {
+        identifier: new Buffer([
+          0x38, 0x34, 0x38, 0x35, 0x31, 0x31, 0x35, 0x30, 0x2d, 0x61, 0x31, 0x39, 0x36, 0x2d, 0x34, 0x38,
+          0x66, 0x61, 0x2d, 0x61, 0x64, 0x61, 0x35, 0x2d, 0x31, 0x61, 0x30, 0x31, 0x32, 0x62, 0x31, 0x63,
+          0x64, 0x39, 0x65, 0x64]),
+        owner_identifier: 'http://musicbrainz.org'
+      }
+    }, "['id3v2.4'].UFID");
+    t.deepEqual(native[i], undefined, "End of metadata");
   });
 
   /*
- .on('TSSE', function (result) {
-      t.deepEqual(result, 'image/jpeg', 'raw APIC 0 format')
-    })*/
+   .on('TSSE', function (result) {
+   t.deepEqual(result, 'image/jpeg', 'raw APIC 0 format')
+   })*/
 });

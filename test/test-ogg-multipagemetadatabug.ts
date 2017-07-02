@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -11,7 +11,7 @@ it("ogg-multipage-metadata-bug", () => {
   const filename = 'ogg-multipagemetadata-bug.ogg';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then( (result) => {
+  return mm.parseFile(filePath).then((result) => {
     t.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
     t.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist');
     t.strictEqual(result.common.albumartist, 'Modestep', 'albumartist');
@@ -24,5 +24,6 @@ it("ogg-multipage-metadata-bug", () => {
     t.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
     t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format');
     t.strictEqual(result.common.picture[0].data.length, 207439, 'picture length');
-  })
+  });
+
 });

@@ -1,26 +1,24 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
-
 import * as mm from '../src';
-
-const path = require('path');
+import * as path from 'path';
 
 it("should decode ogg audio-file", () => {
 
   const filename = 'oggy.ogg';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  function checkFormat (format) {
+  function checkFormat(format) {
     assert.strictEqual(format.headerType, 'vorbis', 'format.headerType');
     assert.strictEqual(format.duration, 97391.54861678004, 'format.duration = ~97391 sec'); // ToDO: check this
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
-    assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec')
+    assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
   }
 
-  function checkCommon (common) {
+  function checkCommon(common) {
     assert.strictEqual(common.title, 'In Bloom', 'common.title');
-    assert.strictEqual(common.artist, 'Nirvana', 'common.artist')
+    assert.strictEqual(common.artist, 'Nirvana', 'common.artist');
     assert.strictEqual(common.albumartist, 'Nirvana', 'common.albumartist');
     assert.strictEqual(common.album, 'Nevermind', 'common.album');
     assert.strictEqual(common.year, 1991, 'common.year');
@@ -31,7 +29,7 @@ it("should decode ogg audio-file", () => {
     assert.strictEqual(common.picture[0].data.length, 30966, 'picture length');
   }
 
-  function checkVorbisTags (vorbis) {
+  function checkVorbisTags(vorbis) {
 
     assert.deepEqual(vorbis.TRACKNUMBER, ['1'], 'vorbis.TRACKNUMBER');
     assert.deepEqual(vorbis.TRACKTOTAL, ['12'], 'vorbis.TRACKTOTAL');
@@ -53,19 +51,10 @@ it("should decode ogg audio-file", () => {
     assert.strictEqual(cover.data[cover.data.length - 2], 255, 'vorbis.METADATA_BLOCK_PICTURE data -2');
   }
 
-  function mapNativeTags (nativeTags) {
-    const tags = {};
-    nativeTags.forEach( (tag) => {
-      (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
-    });
-    return tags;
-  }
-
-  return mm.parseFile(filePath).then( (result) => {
-    checkFormat (result.format);
-    checkCommon (result.common);
-    checkVorbisTags(mapNativeTags(result.native.vorbis));
+  return mm.parseFile(filePath).then((result) => {
+    checkFormat(result.format);
+    checkCommon(result.common);
+    checkVorbisTags(mm.orderTags(result.native.vorbis));
   });
-
 
 });

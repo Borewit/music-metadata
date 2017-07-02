@@ -1,9 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as fs from 'fs-extra';
-
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -56,40 +55,24 @@ describe("FLAC decoding", () => {
       t.strictEqual(pic.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
     }
 
-    function mapNativeTags(nativeTags: any[]): { [tag: string]: any[] } {
-      const tags = {};
-      nativeTags.forEach((tag) => {
-        (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
-      });
-      return tags;
-    }
-
-    return mm.parseFile(filePath).then((metadata) => {
-
+    return mm.parseFile(filePath).then( (metadata) => {
       checkFormat(metadata.format);
-
       checkCommon(metadata.common);
-
-      //t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
-
-      checkNative(mapNativeTags(metadata.native.vorbis));
+      // t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
+      checkNative(mm.orderTags(metadata.native.vorbis));
     }).then(() => {
       // Parse stream
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/flac').then(function (metadata) {
-
+      return mm.parseStream(stream, 'audio/flac').then( (metadata) => {
         checkFormat(metadata.format);
-
         checkCommon(metadata.common);
+        // t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
+        checkNative(mm.orderTags(metadata.native.vorbis));
+      });
 
-        //t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
+    });
 
-        checkNative(mapNativeTags(metadata.native.vorbis))
-      })
-
-    })
-
-  })
+  });
 });

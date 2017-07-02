@@ -1,9 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as fs from "fs-extra";
-
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -23,7 +22,6 @@ const t = assert;
 
 it("nonfilestream", () => {
 
-
   const runOnce = () => {
 
     // shim process for browser-based tests
@@ -34,21 +32,21 @@ it("nonfilestream", () => {
 
     const sample = path.join(__dirname, 'samples/id3v2-duration-allframes.mp3');
     /* ToDo?
-    const nonFileStream = through(
-      function write(data) {
-        this.queue(data);
-      },
-      function end() {
-        this.queue(null);
-      });*/
+     const nonFileStream = through(
+     function write(data) {
+     this.queue(data);
+     },
+     function end() {
+     this.queue(null);
+     });*/
 
     const fileStream = fs.createReadStream(sample);
-    //fileStream.pipe(nonFileStream);
+    // fileStream.pipe(nonFileStream);
 
     return mm.parseStream(fileStream, "audio/mpeg", {duration: true, fileSize: 47889}).then((result) => {
       t.equal(result.format.duration, 1.48928125);
       return fileStream.close();
-    })
+    });
   };
 
   let countdown = 100;
@@ -56,7 +54,7 @@ it("nonfilestream", () => {
   const loop = () => {
     return runOnce().then(() => {
       --countdown;
-      if(countdown>0)
+      if (countdown > 0)
         return loop();
     });
   };

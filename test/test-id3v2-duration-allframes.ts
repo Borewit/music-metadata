@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -30,11 +30,9 @@ it("should decode id3v2-duration-allframes", () => {
     t.deepEqual(common.picture, undefined, 'common.picture');
   }
 
-  return mm.parseFile(filePath, {duration: true}).then(function (result) {
-
+  return mm.parseFile(filePath, {duration: true}).then( (result) => {
     checkFormat(result.format);
-
     checkCommon(result.common);
+  });
 
-  })
 });

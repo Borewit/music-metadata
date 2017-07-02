@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -15,4 +15,5 @@ it("should decode non-ascii-characters", () => {
     t.deepEqual(result.common.artist, undefined, 'common.artist');
     t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder', 'Roman Gianarthur'], 'common.artists');
   });
+
 });

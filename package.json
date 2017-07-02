@@ -42,7 +42,7 @@
   ],
   "scripts": {
     "compile": "tsc --pretty",
-    "lint": "tslint --format=verbose 'src/**/*.ts'",
+    "lint": "tslint --format=verbose 'src/**/*.ts' 'test/**/*.ts'",
     "test-browser": "for f in test/test-*.js; do browserify -t brfs $f | testling; done",
     "test": "mocha --require ts-node/register test/*.ts",
     "prepare": "npm run compile",

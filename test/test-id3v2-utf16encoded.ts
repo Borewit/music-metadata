@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -11,7 +11,7 @@ it("decode id3v2-utf16", () => {
   const filename = 'id3v2-utf16.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath, { duration: true }).then(function (result) {
+  return mm.parseFile(filePath, { duration: true }).then( (result) => {
 
     t.strictEqual(result.common.title, 'Redial (Feat. LeafRunner and Nowacking)', 'title');
     t.strictEqual(result.common.artist, 'YourEnigma', 'artist 0');
@@ -26,7 +26,6 @@ it("decode id3v2-utf16", () => {
     t.deepEqual(native[0], {id: 'TIT2', value: 'Redial (Feat. LeafRunner and Nowacking)'}, "['id3v2.3'].TIT2");
     t.deepEqual(native[1], {id: 'TPE1', value: 'YourEnigma'}, "['id3v2.3'].TIT2");
     t.deepEqual(native[2], {id: 'TYER', value: '2014'}, "['id3v2.3'].TYER");
-
-  })
+  });
 
 });

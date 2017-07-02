@@ -1,10 +1,10 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
 const t = assert;
 
-const path = require('path');
+import * as path from 'path';
 
 it("should be able to read metadata with unknown encoding", () => {
 

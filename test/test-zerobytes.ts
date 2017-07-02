@@ -1,8 +1,7 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -11,7 +10,7 @@ it("zero bytes", () => {
   const filename = 'zerobytes';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then( (result) => {
+  return mm.parseFile(filePath).then((result) => {
     throw new Error("should throw an exception");
   }).catch((err) => {
     t.equal(err.message, 'Extension  not supported.');

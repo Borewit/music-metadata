@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
-const path = require('path');
+import * as path from 'path';
 
 const t = assert;
 
@@ -33,6 +33,6 @@ it("should decode id3v2.4", () => {
     t.strictEqual(result.common.picture[0].data.length, 80938, 'common.picture 0 length');
     t.strictEqual(result.common.picture[1].format, 'jpg', 'common.picture 1 format');
     t.strictEqual(result.common.picture[1].data.length, 80938, 'common.picture 1 length');
-  })
+  });
 
 });

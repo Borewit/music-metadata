@@ -1,10 +1,10 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import Common from "../src/common";
 
 /* ToDo?
-const path = require('path');
+import * as path from 'path';
 
 const headers = [
   new Buffer([0x4F, 0x67, 0x67, 0x53]), // ogg

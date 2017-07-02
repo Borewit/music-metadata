@@ -1,8 +1,8 @@
-import {} from "mocha"
+import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-
-const path = require('path');
+import {INativeTagDict} from "../src/index";
+import * as path from 'path';
 
 const t = assert;
 
@@ -11,14 +11,14 @@ it("should support multiple artists in flac format", () => {
   const filename = 'MusicBrainz-multiartist.flac';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  function checkFormat (format) {
+  function checkFormat(format) {
     t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
   }
 
-  function checkCommonTags (common) {
+  function checkCommonTags(common: mm.ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
     t.strictEqual(common.title, 'Sinner\'s Prayer', 'common.tagtitle');
     t.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', 'common.artist');
@@ -26,8 +26,8 @@ it("should support multiple artists in flac format", () => {
     t.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist');
     t.strictEqual(common.albumartistsort, 'Hart, Beth & Bonamassa, Joe', 'common.albumsort');
     t.strictEqual(common.album, 'Don\'t Explain', 'common.album = Don\'t Explain');
-    t.deepEqual(common.track, { no: 1, of: 10 }, 'common.track');
-    t.deepEqual(common.disk, { no: 1, of: 1 }, 'common.disk');
+    t.deepEqual(common.track, {no: 1, of: 10}, 'common.track');
+    t.deepEqual(common.disk, {no: 1, of: 1}, 'common.disk');
     t.strictEqual(common.date, '2011-09-27', 'common.date');
     t.strictEqual(common.year, 2011, 'common.year');
     t.strictEqual(common.media, 'CD', 'common.media = CD');
@@ -53,7 +53,7 @@ it("should support multiple artists in flac format", () => {
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
   }
 
-  function checkVorbisTags (vorbis) {
+  function checkVorbisTags(vorbis: INativeTagDict) {
     // Compare expectedCommonTags with result.common
     t.deepEqual(vorbis.TITLE, ['Sinner\'s Prayer'], 'vorbis.TITLE');
     t.deepEqual(vorbis.ALBUM, ['Don\'t Explain'], 'vorbis.TITLE');
@@ -96,21 +96,12 @@ it("should support multiple artists in flac format", () => {
     t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
   }
 
-
-  function mapNativeTags (nativeTags) {
-    const tags = {};
-    nativeTags.forEach(function(tag) {
-      (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
-    });
-    return tags;
-  }
-
   // Run with default options
-  return mm.parseFile(filePath, {native: true}).then( function (result) {
-    t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags')
+  return mm.parseFile(filePath, {native: true}).then((result) => {
+    t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
     checkFormat(result.format);
-    checkVorbisTags(mapNativeTags(result.native.vorbis));
+    checkVorbisTags(mm.orderTags(result.native.vorbis));
     checkCommonTags(result.common);
-  })
+  });
 
 });
