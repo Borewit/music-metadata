@@ -201,6 +201,24 @@ export class Id3v2Parser implements ITokenParser {
     };
   }
 
+  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: number, includeCovers: boolean) {
+    switch (majorVer) {
+      case 2:
+        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
+      case 3:
+      case 4:
+        if (frameHeader.flags.format.unsynchronisation) {
+          buf = common.removeUnsyncBytes(buf);
+        }
+        if (frameHeader.flags.format.data_length_indicator) {
+          buf = buf.slice(4, buf.length);
+        }
+        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
+      default:
+        throw new Error('Unexpected majorVer: ' + majorVer);
+    }
+  }
+
   private tokenizer: ITokenizer;
   private id3Header: IID3v2header;
 
@@ -302,24 +320,6 @@ export class Id3v2Parser implements ITokenParser {
       tags.push({id: frameHeader.id, value: values});
     }
     return tags;
-  }
-
-  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: number, includeCovers: boolean) {
-    switch (majorVer) {
-      case 2:
-        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
-      case 3:
-      case 4:
-        if (frameHeader.flags.format.unsynchronisation) {
-          buf = common.removeUnsyncBytes(buf);
-        }
-        if (frameHeader.flags.format.data_length_indicator) {
-          buf = buf.slice(4, buf.length);
-        }
-        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
-      default:
-        throw new Error('Unexpected majorVer: ' + majorVer);
-    }
   }
 
 }

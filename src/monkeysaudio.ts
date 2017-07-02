@@ -188,7 +188,7 @@ class Structure {
 
   public static TagField = (footer) => {
     return new BufferType(footer.size - Structure.TagFooter.len);
-  };
+  }
 
   public static parseTagFlags(flags): ITagFlags {
     return {

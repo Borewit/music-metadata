@@ -132,7 +132,7 @@ export class FlacParser implements ITokenParser {
   }
 
   private parsePicture(dataLen: number) {
-    if(this.options.skipCovers) {
+    if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     } else {
       return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {

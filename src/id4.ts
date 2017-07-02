@@ -622,8 +622,8 @@ export class Id4Parser implements ITokenParser {
                 break;
 
               default:
-                // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
-                // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
+              // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
+              // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
             }
             break;
 
@@ -632,7 +632,7 @@ export class Id4Parser implements ITokenParser {
             break;
 
           case 13: // JPEG
-            if(this.options.skipCovers)
+            if (this.options.skipCovers)
               break;
             this.tags.push({
               id: tagKey, value: {
@@ -643,7 +643,7 @@ export class Id4Parser implements ITokenParser {
             break;
 
           case 14: // PNG
-            if(this.options.skipCovers)
+            if (this.options.skipCovers)
               break;
             this.tags.push({
               id: tagKey, value: {
