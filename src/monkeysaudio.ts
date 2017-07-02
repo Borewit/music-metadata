@@ -230,10 +230,10 @@ export class ApeParser implements ITokenParser {
     return duration / ah.sampleRate;
   }
 
-  private static parseTags(footer: IFooter, buffer: Buffer, includeCovers: boolean): Array<{id: string, value: any}> {
+  private static parseTags(footer: IFooter, buffer: Buffer, includeCovers: boolean): Array<{ id: string, value: any }> {
     let offset = 0;
 
-    const tags: Array<{id: string, value: any}> = [];
+    const tags: Array<{ id: string, value: any }> = [];
 
     for (let i = 0; i < footer.fields; i++) {
       const size = Token.UINT32_LE.get(buffer, offset);
@@ -255,7 +255,7 @@ export class ApeParser implements ITokenParser {
             tags.push({id: key, value: val});
           }
         }
-          break;
+        break;
 
         case DataType.binary: { // binary (probably artwork)
           if (includeCovers && (key === 'Cover Art (Front)' || key === 'Cover Art (Back)')) {
@@ -275,7 +275,7 @@ export class ApeParser implements ITokenParser {
             tags.push({id: key, value: picture});
           }
         }
-          break;
+        break;
 
         default:
           throw new Error('Unexpected data-type: ' + flags.dataType);
@@ -321,7 +321,7 @@ export class ApeParser implements ITokenParser {
         });
       });
 
-  };
+  }
 
   private parseDescriptorExpansion(lenExp: number): Promise<{ format: IFormat, forwardBytes: number }> {
     return this.tokenizer.readToken(new IgnoreType(lenExp)).then(() => {
@@ -347,7 +347,7 @@ export class ApeParser implements ITokenParser {
     });
   }
 
-  private parseFooter(): Promise<Array<{id: string, value: any}>> {
+  private parseFooter(): Promise<Array<{ id: string, value: any }>> {
     return this.tokenizer.readToken<IFooter>(Structure.TagFooter).then((footer) => {
       if (footer.ID !== 'APETAGEX') {
         throw new Error('Expected footer to start with APETAGEX ');

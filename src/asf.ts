@@ -234,7 +234,7 @@ abstract class State<T> implements Token.IGetToken<T> {
     this.len = header.objectSize - AsfObject.ObjectHeaderToken.len;
   }
 
-  public abstract get(buf: Buffer, off: number): T
+  public abstract get(buf: Buffer, off: number): T;
 }
 
 class IgnoreObjectState extends State<any> {
