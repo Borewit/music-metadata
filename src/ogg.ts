@@ -231,14 +231,14 @@ class VorbisParser implements ITokenParser {
         let value: any = v.slice(idx + 1);
 
         if (key === 'METADATA_BLOCK_PICTURE') {
-          if(!this.options.skipCovers) {
+          if (!this.options.skipCovers) {
             value = vorbis.readPicture(new Buffer(value, 'base64'));
           } else {
             value = null;
           }
         }
 
-        if(value !== null)
+        if (value !== null)
           this.tags.push({id: key, value});
 
         const len = Token.UINT32_LE.len + strLen;
@@ -265,6 +265,7 @@ class VorbisStream extends Readable {
     this.queue.push(vorbisData);
     this._tryPush();
   }
+
   public _read() {
     this.waitingForData = true;
     this._tryPush();
@@ -353,7 +354,7 @@ export class OggParser implements ITokenParser {
   }
 
   private parsePage(): Promise<void> {
-    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then( (header) => {
+    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then((header) => {
       if (header.capturePattern !== 'OggS') { // Capture pattern
         throw new Error('expected ogg header but was not found');
       }
