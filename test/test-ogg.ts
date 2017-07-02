@@ -51,7 +51,7 @@ it("should decode ogg audio-file", () => {
     assert.strictEqual(cover.data[cover.data.length - 2], 255, 'vorbis.METADATA_BLOCK_PICTURE data -2');
   }
 
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath, {native: true}).then((result) => {
     checkFormat(result.format);
     checkCommon(result.common);
     checkVorbisTags(mm.orderTags(result.native.vorbis));

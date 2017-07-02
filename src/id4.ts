@@ -393,6 +393,7 @@ export class Id4Parser implements ITokenParser {
   }
 
   private tokenizer: ITokenizer;
+  private options: IOptions;
 
   private metaAtomsTotalLength = 0;
 
@@ -402,6 +403,7 @@ export class Id4Parser implements ITokenParser {
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
     this.tokenizer = tokenizer;
+    this.options = options;
 
     return this.parseAtom().then(() => {
       return {
@@ -630,6 +632,8 @@ export class Id4Parser implements ITokenParser {
             break;
 
           case 13: // JPEG
+            if(this.options.skipCovers)
+              break;
             this.tags.push({
               id: tagKey, value: {
                 format: 'image/jpeg',
@@ -639,6 +643,8 @@ export class Id4Parser implements ITokenParser {
             break;
 
           case 14: // PNG
+            if(this.options.skipCovers)
+              break;
             this.tags.push({
               id: tagKey, value: {
                 format: 'image/png',

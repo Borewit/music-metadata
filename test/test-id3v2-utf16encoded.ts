@@ -11,7 +11,7 @@ it("decode id3v2-utf16", () => {
   const filename = 'id3v2-utf16.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath, { duration: true }).then( (result) => {
+  return mm.parseFile(filePath, { duration: true, native: true }).then( (result) => {
 
     t.strictEqual(result.common.title, 'Redial (Feat. LeafRunner and Nowacking)', 'title');
     t.strictEqual(result.common.artist, 'YourEnigma', 'artist 0');

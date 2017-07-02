@@ -84,7 +84,7 @@ export default class Common {
     }
   }
 
-  public static removeUnsyncBytes(buffer: Buffer): Uint8Array {
+  public static removeUnsyncBytes(buffer: Buffer): Buffer {
     let readI = 0;
     let writeI = 0;
     while (readI < buffer.length - 1) {

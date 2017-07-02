@@ -188,7 +188,7 @@ class Structure {
 
   public static TagField = (footer) => {
     return new BufferType(footer.size - Structure.TagFooter.len);
-  }
+  };
 
   public static parseTagFlags(flags): ITagFlags {
     return {
@@ -230,7 +230,7 @@ export class ApeParser implements ITokenParser {
     return duration / ah.sampleRate;
   }
 
-  private static parseTags(footer: IFooter, buffer: Buffer): Array<{id: string, value: any}> {
+  private static parseTags(footer: IFooter, buffer: Buffer, includeCovers: boolean): Array<{id: string, value: any}> {
     let offset = 0;
 
     const tags: Array<{id: string, value: any}> = [];
@@ -258,7 +258,7 @@ export class ApeParser implements ITokenParser {
           break;
 
         case DataType.binary: { // binary (probably artwork)
-          if (key === 'Cover Art (Front)' || key === 'Cover Art (Back)') {
+          if (includeCovers && (key === 'Cover Art (Front)' || key === 'Cover Art (Back)')) {
             const picData = buffer.slice(offset, offset + size);
 
             let off = 0;
@@ -289,10 +289,12 @@ export class ApeParser implements ITokenParser {
   private ape: IApeInfo = {};
 
   private tokenizer: ITokenizer;
+  private options: IOptions;
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
+    this.options = options;
 
     return this.tokenizer.readToken(Structure.DescriptorParser)
       .then((descriptor) => {
@@ -351,7 +353,7 @@ export class ApeParser implements ITokenParser {
         throw new Error('Expected footer to start with APETAGEX ');
       }
       return this.tokenizer.readToken<Buffer>(Structure.TagField(footer)).then((tags) => {
-        return ApeParser.parseTags(footer, tags);
+        return ApeParser.parseTags(footer, tags, !this.options.skipCovers);
       });
     });
   }

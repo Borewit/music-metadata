@@ -118,7 +118,7 @@ it("should support multiple artists in id3v2.4 header", () => {
   }
 
   // Run with default options
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath, {native: true}).then((result) => {
     t.ok(result.native && result.native.hasOwnProperty('id3v2.4'), 'should include native id3v2.4 tags');
     checkFormat(result.format);
     checkID3Tags(mm.orderTags(result.native['id3v2.4']));

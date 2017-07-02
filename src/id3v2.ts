@@ -298,16 +298,16 @@ export class Id3v2Parser implements ITokenParser {
       }
 
       const frameDataBytes = data.slice(offset, offset += frameHeader.length);
-      const values = Id3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major);
+      const values = Id3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers);
       tags.push({id: frameHeader.id, value: values});
     }
     return tags;
   }
 
-  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: number) {
+  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: number, includeCovers: boolean) {
     switch (majorVer) {
       case 2:
-        return id3v2_frames.readData(buf, frameHeader.id, null, majorVer);
+        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
       case 3:
       case 4:
         if (frameHeader.flags.format.unsynchronisation) {
@@ -316,7 +316,7 @@ export class Id3v2Parser implements ITokenParser {
         if (frameHeader.flags.format.data_length_indicator) {
           buf = buf.slice(4, buf.length);
         }
-        return id3v2_frames.readData(buf, frameHeader.id, frameHeader.flags, majorVer);
+        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
       default:
         throw new Error('Unexpected majorVer: ' + majorVer);
     }

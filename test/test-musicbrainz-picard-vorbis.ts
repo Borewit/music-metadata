@@ -88,7 +88,7 @@ it("MusicBrains/Picard tags in FLAC", () => {
   }
 
   // Run with default options
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath, {native: true}).then((result) => {
 
     t.ok(result.common, 'should include common tags');
     t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');

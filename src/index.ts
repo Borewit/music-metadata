@@ -156,12 +156,14 @@ export interface ITag {
 /**
  * Flat list of tags
  */
-export interface INativeTags { [tagType: string]: ITag[]; }
+export interface INativeTags { [tagType: string]: ITag[];
+}
 
 /**
  * Tags ordered by tag-ID
  */
-export interface INativeTagDict { [tagId: string]: any[]; }
+export interface INativeTagDict { [tagId: string]: any[];
+}
 
 export interface INativeAudioMetadata {
   format: IFormat,
@@ -189,6 +191,11 @@ export interface IOptions {
    * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
    */
   duration?: boolean;
+
+  /**
+   * default: `false`, if set to `true`, it will skip parsing covers.
+   */
+  skipCovers?: boolean;
 }
 
 export class MusicMetadataParser {
@@ -274,7 +281,7 @@ export class MusicMetadataParser {
   public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
     return ParserFactory.parseFile(filePath, opts).then((nativeData) => {
-      return this.parseNativeTags(nativeData);
+      return this.parseNativeTags(nativeData, opts.native);
     });
 
   }
@@ -290,28 +297,29 @@ export class MusicMetadataParser {
    */
   public parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
     return ParserFactory.parseStream(stream, mimeType, opts).then((nativeData) => {
-      return this.parseNativeTags(nativeData);
+      return this.parseNativeTags(nativeData, opts.native);
     });
   }
 
   /**
    * Convert native tags to common tags
    * @param nativeData
+   * @includeNative return native tags in result
    * @returns {IAudioMetadata} Native + common tags
    */
-  public parseNativeTags(nativeData: INativeAudioMetadata): IAudioMetadata {
+  public parseNativeTags(nativeData: INativeAudioMetadata, includeNative?: boolean): IAudioMetadata {
 
     const metadata: IAudioMetadata = {
       format: nativeData.format,
-      native: nativeData.native,
+      native: includeNative ? nativeData.native : undefined,
       common: {
         track: {no: null, of: null},
         disk: {no: null, of: null}
       } as any
     };
 
-    for (const tagType in metadata.native) {
-      for (const tag of metadata.native[tagType]) {
+    for (const tagType in nativeData.native) {
+      for (const tag of nativeData.native[tagType]) {
         this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value);
       }
     }
@@ -467,12 +475,12 @@ export class MusicMetadataParser {
 /**
  * Parse audio file
  * @param filePath Media file to read meta-data from
- * @param opts Parsing options:
+ * @param options Parsing options:
  *   .native=true    Will return original header in result
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseFile(filePath: string, opts?: IOptions): Promise<IAudioMetadata> {
-  return MusicMetadataParser.getInstance().parseFile(filePath, opts);
+export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
+  return MusicMetadataParser.getInstance().parseFile(filePath, options);
 }
 
 /**

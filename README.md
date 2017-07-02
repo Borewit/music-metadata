@@ -28,6 +28,12 @@ npm install music-metadata
 
 ## API
 
+### Options:
+  * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+  * `covers`: default: `false`, if set to `false`, it will avoid collecting embedded cover-art (images).
+  * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
+    
+
 ### Examples
 
 #### JavaScript

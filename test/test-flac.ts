@@ -55,22 +55,22 @@ describe("FLAC decoding", () => {
       t.strictEqual(pic.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
     }
 
-    return mm.parseFile(filePath).then( (metadata) => {
+    return mm.parseFile(filePath, {native: true}).then( (metadata) => {
       checkFormat(metadata.format);
       checkCommon(metadata.common);
-      // t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
       checkNative(mm.orderTags(metadata.native.vorbis));
     }).then(() => {
       // Parse stream
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/flac').then( (metadata) => {
+      return mm.parseStream(stream, 'audio/flac', {native: true}).then( (metadata) => {
         checkFormat(metadata.format);
         checkCommon(metadata.common);
-        // t.strictEqual(result.native.vorbis, undefined, 'Native metadata not requested')
         checkNative(mm.orderTags(metadata.native.vorbis));
-      });
+      }).then(() => {
+        stream.close();
+      })
 
     });
 

@@ -55,7 +55,7 @@ it("should decode id3v2.3", () => {
     t.strictEqual(apic.data.length, 80938, 'raw APIC length');
   }
 
-  return mm.parseFile(filePath, {duration: true}).then((result) => {
+  return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
     checkFormat(result.format);
     checkCommon(result.common);
     checkNative(mm.orderTags(result.native['id3v2.3']));

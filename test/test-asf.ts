@@ -33,7 +33,7 @@ it("should decode asf", () => {
     t.deepEqual(native.REPLAYGAIN_TRACK_GAIN, ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN');
   }
 
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath, {native: true}).then((result) => {
 
     checkFormat(result.format);
 

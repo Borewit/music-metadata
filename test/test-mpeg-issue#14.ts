@@ -58,7 +58,7 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
       t.deepEqual(native.COMM, [{description: "", language: "eng", text: "Jive"}], 'native: COMM');
     }
 
-    return mm.parseFile(filePath, {duration: true}).then((result) => {
+    return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
 
       checkFormat(result.format);
       checkCommon(result.common);
@@ -108,7 +108,7 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
       t.deepEqual(native.COMM, [{description: "", language: "eng", text: "Jive"}], 'native: COMM');
     }
 
-    return mm.parseFile(filePath, {duration: true}).then((result) => {
+    return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
 
       checkFormat(result.format);
       checkCommon(result.common);

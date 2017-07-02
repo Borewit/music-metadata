@@ -29,6 +29,7 @@ export class FlacParser implements ITokenParser {
   }
 
   private tokenizer: ITokenizer;
+  private options: IOptions;
 
   private format: IFormat;
   private tags: ITag[] = [];
@@ -38,6 +39,7 @@ export class FlacParser implements ITokenParser {
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
+    this.options = options;
 
     return tokenizer.readToken<Buffer>(new BufferType(4)).then((buf) => {
       if (buf.toString() !== 'fLaC') {
@@ -130,10 +132,14 @@ export class FlacParser implements ITokenParser {
   }
 
   private parsePicture(dataLen: number) {
-    return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
-      const picture = vorbis.readPicture(data);
-      this.tags.push({id: 'METADATA_BLOCK_PICTURE', value: picture});
-    });
+    if(this.options.skipCovers) {
+      return this.tokenizer.ignore(dataLen);
+    } else {
+      return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
+        const picture = vorbis.readPicture(data);
+        this.tags.push({id: 'METADATA_BLOCK_PICTURE', value: picture});
+      });
+    }
   }
 }
 

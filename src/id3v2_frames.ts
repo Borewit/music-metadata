@@ -1,4 +1,3 @@
-
 import common from './common';
 import vorbis from './vorbis';
 import * as Token from "token-types";
@@ -36,7 +35,7 @@ interface IInvolvedPerson {
 
 export default class FrameParser {
 
-  public static readData(b: Buffer, type: string, flags, major: number) {
+  public static readData(b: Buffer, type: string, major: number, includeCovers: boolean) {
     const encoding = FrameParser.getTextEncoding(b[0]);
     const length = b.length;
     let offset = 0;
@@ -78,36 +77,38 @@ export default class FrameParser {
 
       case 'PIC':
       case 'APIC':
-        const pic: IPicture = {};
+        if (includeCovers) {
+          const pic: IPicture = {};
 
-        offset += 1;
+          offset += 1;
 
-        switch (major) {
-          case 2:
-            pic.format = common.decodeString(b.slice(offset, offset + 3), encoding);
-            offset += 3;
-            break;
-          case 3:
-          case 4:
-            const enc = 'iso-8859-1';
-            fzero = common.findZero(b, offset, length, enc);
-            pic.format = common.decodeString(b.slice(offset, fzero), enc);
-            offset = fzero + 1;
-            break;
+          switch (major) {
+            case 2:
+              pic.format = common.decodeString(b.slice(offset, offset + 3), encoding);
+              offset += 3;
+              break;
+            case 3:
+            case 4:
+              const enc = 'iso-8859-1';
+              fzero = common.findZero(b, offset, length, enc);
+              pic.format = common.decodeString(b.slice(offset, fzero), enc);
+              offset = fzero + 1;
+              break;
 
-          default:
-            throw new Error('Warning: unexpected major versionIndex: ' + major);
+            default:
+              throw new Error('Warning: unexpected major versionIndex: ' + major);
+          }
+
+          pic.type = vorbis.getPictureType(b[offset]);
+          offset += 1;
+
+          fzero = common.findZero(b, offset, length, encoding);
+          pic.description = common.decodeString(b.slice(offset, fzero), encoding);
+          offset = fzero + nullTerminatorLength;
+
+          pic.data = new Buffer(b.slice(offset, length));
+          output = pic;
         }
-
-        pic.type = vorbis.getPictureType(b[offset]);
-        offset += 1;
-
-        fzero = common.findZero(b, offset, length, encoding);
-        pic.description = common.decodeString(b.slice(offset, fzero), encoding);
-        offset = fzero + nullTerminatorLength;
-
-        pic.data = new Buffer(b.slice(offset, length));
-        output = pic;
         break;
 
       case 'CNT':
@@ -173,8 +174,8 @@ export default class FrameParser {
    * Converts TMCL (Musician credits list) or TIPL (Involved people list)
    * @param entries
    */
-  private static functionList(entries: string[]): {[index: string]: string[]} {
-    const res: {[index: string]: string[]} = {};
+  private static functionList(entries: string[]): { [index: string]: string[] } {
+    const res: { [index: string]: string[] } = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
       const names: string[] = entries[i + 1].split(',');
       res[entries[i]] = res.hasOwnProperty(entries[i]) ? res[entries[i]].concat(names) : names;
@@ -194,7 +195,7 @@ export default class FrameParser {
     return values;
   }
 
-  private static readIdentifierAndData(b, offset, length, encoding): {id: string, data: Uint8Array} {
+  private static readIdentifierAndData(b, offset, length, encoding): { id: string, data: Uint8Array } {
     const fzero = common.findZero(b, offset, length, encoding);
 
     const id = common.decodeString(b.slice(offset, fzero), encoding);

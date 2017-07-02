@@ -10,7 +10,7 @@ it("should decode iTunes-style M4A tags", () => {
   const filename = 'id4.m4a';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath, {duration: true}).then((result) => {
+  return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
 
     t.strictEqual(result.format.duration, 2.2058956916099772, 'format.duration');
 

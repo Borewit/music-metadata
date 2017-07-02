@@ -40,7 +40,6 @@ it("should decode id3v1.1", () => {
 
   return mm.parseFile(filePath).then((result) => { // ToDo: remove duration
     checkFormat(result.format);
-
     checkCommon(result.common);
   });
 
