@@ -6,14 +6,14 @@ import {AsfParser} from "./asf";
 import {FlacParser} from "./flac";
 import {Id4Parser} from "./id4";
 import {OggParser} from "./ogg";
-import {ITokenizer, FileTokenizer, ReadStreamTokenizer} from "strtok3";
+import * as strtok3 from "strtok3";
 import {StringType} from "token-types";
 import {Promise} from "es6-promise";
 import * as stream from "stream";
 import * as path from "path";
 
 export interface ITokenParser {
-  parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
+  parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
 }
 
 export class ParserFactory {
@@ -28,7 +28,7 @@ export class ParserFactory {
    */
   public static parseFile(filePath: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
-    return FileTokenizer.open(filePath).then((fileTokenizer) => {
+    return strtok3.fromFile(filePath).then((fileTokenizer) => {
       return ParserFactory.getParserForExtension(filePath).then((parser) => {
         return parser.parse(fileTokenizer, opts).then((metadata) => {
           return fileTokenizer.close().then(() => {
@@ -52,7 +52,7 @@ export class ParserFactory {
    */
   public static parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
-    return ReadStreamTokenizer.read(stream).then((tokenizer) => {
+    return strtok3.fromStream(stream).then((tokenizer) => {
       if (!tokenizer.fileSize && opts.fileSize) {
         tokenizer.fileSize = opts.fileSize;
       }
@@ -123,7 +123,7 @@ export class ParserFactory {
 
   // ToDo: obsolete
   private static hasStartTag(filePath: string, tagIdentifier: string): Promise<boolean> {
-    return FileTokenizer.open(filePath).then((tokenizer) => {
+    return strtok3.fromFile(filePath).then((tokenizer) => {
       return tokenizer.readToken(new StringType(tagIdentifier.length, 'ascii')).then((token) => {
         return token === tagIdentifier;
       });

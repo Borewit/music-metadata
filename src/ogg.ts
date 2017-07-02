@@ -3,7 +3,7 @@ import common from './common';
 import vorbis from './vorbis';
 import ReadableStream = NodeJS.ReadableStream;
 import {ITokenParser} from "./ParserFactory";
-import {ITokenizer, EndOfFile, ReadStreamTokenizer} from "strtok3";
+import * as strtok3 from "strtok3";
 import {IFormat, INativeAudioMetadata, IOptions, ITag} from "./index";
 import {Readable} from "stream";
 import {Promise} from "es6-promise";
@@ -136,10 +136,10 @@ class VorbisParser implements ITokenParser {
 
   private tags: ITag[] = [];
 
-  private tokenizer: ITokenizer;
+  private tokenizer: strtok3.ITokenizer;
   private options: IOptions;
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
     this.options = options;
@@ -231,11 +231,7 @@ class VorbisParser implements ITokenParser {
         let value: any = v.slice(idx + 1);
 
         if (key === 'METADATA_BLOCK_PICTURE') {
-          if (!this.options.skipCovers) {
-            value = vorbis.readPicture(new Buffer(value, 'base64'));
-          } else {
-            value = null;
-          }
+          value = this.options.skipCovers ? null : vorbis.readPicture(new Buffer(value, 'base64'));
         }
 
         if (value !== null)
@@ -310,7 +306,7 @@ export class OggParser implements ITokenParser {
     }
   };
 
-  private tokenizer: ITokenizer;
+  private tokenizer: strtok3.ITokenizer;
 
   private vorbisParser: VorbisParser;
 
@@ -318,38 +314,39 @@ export class OggParser implements ITokenParser {
   private pageNumber: number;
   private vorbisStream: VorbisStream;
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
     this.vorbisParser = new VorbisParser();
 
     this.vorbisStream = new VorbisStream();
-    const vorbisTokenizer = new ReadStreamTokenizer(this.vorbisStream);
+    return strtok3.fromStream(this.vorbisStream).then((vorbisTokenizer) => {
+      // ToDo: should be provided with level-2 tokenizer
+      const vorbis = this.vorbisParser.parse(vorbisTokenizer, options).then((metadata) => {
 
-    // ToDo: should be provided with level-2 tokenizer
-    const vorbis = this.vorbisParser.parse(vorbisTokenizer, options).then((metadata) => {
+        if (metadata.format.sampleRate) {
+          // Calculate duration
+          metadata.format.duration = this.header.absoluteGranulePosition / metadata.format.sampleRate;
+        }
 
-      if (metadata.format.sampleRate) {
-        // Calculate duration
-        metadata.format.duration = this.header.absoluteGranulePosition / metadata.format.sampleRate;
-      }
+        return metadata;
+      });
 
-      return metadata;
-    });
+      const ogg = this.parsePage().catch((err) => {
+        if (err === StreamReader.EndOfStream) {
+          // console.log("EndOfStream: ogg");
+          this.vorbisStream.append(null);
+        } else throw err;
+      }).catch((err) => {
+        if (err === strtok3.EndOfFile)
+          return;
+        else throw err;
+      });
 
-    const ogg = this.parsePage().catch((err) => {
-      if (err === StreamReader.EndOfStream) {
-        // console.log("EndOfStream: ogg");
-        this.vorbisStream.append(null);
-      } else throw err;
-    }).catch((err) => {
-      if (err === EndOfFile)
-        return;
-      else throw err;
-    });
+      return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([metadata]) => {
+        return metadata;
+      });
 
-    return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([metadata]) => {
-      return metadata;
     });
   }
 
