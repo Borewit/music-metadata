@@ -37,8 +37,7 @@
   "typings": "lib/index",
   "browser": "lib/browser",
   "files": [
-    "lib/",
-    "dist/"
+    "lib/"
   ],
   "scripts": {
     "compile": "tsc --pretty",
