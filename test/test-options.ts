@@ -8,7 +8,7 @@ const t = assert;
 describe("Parser options", () => {
 
   const file_ape = path.join(__dirname, 'samples', 'monkeysaudio.ape');
-  const file_flac = path.join(__dirname, 'samples', 'MusicBrainz-multiartist.flac');
+  const file_flac = path.join(__dirname, 'samples', "MusicBrainz - Beth Hart - Sinner's Prayer.flac");
   const file_id3v22 = path.join(__dirname, 'samples', 'id3v2.2.mp3');
   const file_m4a = path.join(__dirname, 'samples', 'id4.m4a');
   const file_ogg = path.join(__dirname, 'samples', 'oggy.ogg');
@@ -147,9 +147,9 @@ describe("Parser options", () => {
 
     it("should include cover-art if option.skipCovers is not defined", () => {
       return mm.parseFile(file_m4a, {native: true}).then((result) => {
-        const m4a = mm.orderTags(result.native.m4a);
+        const iTunes = mm.orderTags(result.native['iTunes MP4']);
         // Native
-        t.isDefined(m4a.covr, "m4a.covr");
+        t.isDefined(iTunes.covr, "iTunes.covr");
         // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });
@@ -157,9 +157,9 @@ describe("Parser options", () => {
 
     it("should not include cover-art if option.skipCovers=true", () => {
       return mm.parseFile(file_m4a, {native: true, skipCovers: true}).then((result) => {
-        const m4a = mm.orderTags(result.native.m4a);
+        const iTunes = mm.orderTags(result.native['iTunes MP4']);
         // Native
-        t.isUndefined(m4a.covr, "m4a.covr");
+        t.isUndefined(iTunes.covr, "m4a.covr");
         // Common
         t.isUndefined(result.common.picture, "result.common.picture");
       });
@@ -167,9 +167,9 @@ describe("Parser options", () => {
 
     it("should include cover-art if option.skipCovers=false", () => {
       return mm.parseFile(file_m4a, {native: true, skipCovers: false}).then((result) => {
-        const m4a = mm.orderTags(result.native.m4a);
+        const iTunes = mm.orderTags(result.native['iTunes MP4']);
         // Native
-        t.isDefined(m4a.aART, "m4a.covr");
+        t.isDefined(iTunes.aART, "m4a.covr");
         // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });

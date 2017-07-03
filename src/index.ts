@@ -18,14 +18,26 @@ export interface IPicture {
 export interface ICommonTagsResult {
   track: { no: number, of: number },
   disk: { no: number, of: number },
+  /**
+   * Release year
+   */
   year?: number,
   title?: string,
   artist?: string, // ToDo: string[] is only used internal
   artists?: string[],
   albumartist?: string,
   album?: string,
+  /**
+   * Release data
+   */
   date?: string,
+  /**
+   * Original release date
+   */
   originaldate?: string,
+  /**
+   * Original release yeat
+   */
   originalyear?: number,
   comment?: string,
   genre?: string[];
@@ -342,7 +354,7 @@ export class MusicMetadataParser {
   /**
    * Process and set common tags
    * @param comTags Target metadata to wrote common tags to
-   * @param type    Native headerType e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+   * @param type    Native headerType e.g.: 'iTunes MP4' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
    * @param tag     Native tag
    * @param value   Native tag value
    */

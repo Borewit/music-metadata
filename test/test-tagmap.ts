@@ -31,4 +31,6 @@ it("tagmap", () => {
   t.ok(tagMap.isNativeSingleton('vorbis', 'TITLE'), 'Vorbis tag "TITLE" is a singleton');
   t.ok(!tagMap.isNativeSingleton('vorbis', 'METADATA_BLOCK_PICTURE'), 'Vorbis tag "METADATA_BLOCK_PICTURE" is not a singleton');
 
+  t.ok(tagMap.isNativeSingleton('iTunes MP4',  '©nam'), 'iTunes MP4 tag "©nam" is a singleton');
+
 });

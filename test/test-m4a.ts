@@ -29,7 +29,7 @@ it("should decode iTunes-style M4A tags", () => {
     t.strictEqual(result.common.picture[1].format, 'jpg', 'picture 1 format');
     t.strictEqual(result.common.picture[1].data.length, 196450, 'picture 1 length');
 
-    const native = result.native.m4a;
+    const native = result.native['iTunes MP4'];
     t.ok(native, 'Native m4a tags should be present');
 
     let i = 0;

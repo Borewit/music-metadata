@@ -343,7 +343,7 @@ class NameAtom implements IGetToken<INameAtom> {
 }
 
 /*
- * Support for iTunes-style m4a tags
+ * Support for Apple iTunes MP4 tags as found in a M4A/MP4 file
  * Ref:
  *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
@@ -397,7 +397,9 @@ export class Id4Parser implements ITokenParser {
 
   private metaAtomsTotalLength = 0;
 
-  private format: IFormat = {};
+  private format: IFormat = {
+    headerType: "iTunes MP4"
+  };
   private tags: ITag[] = [];
   private warnings: string[] = []; // ToDo: make this part of the parsing result
 
@@ -409,7 +411,7 @@ export class Id4Parser implements ITokenParser {
       return {
         format: this.format,
         native: {
-          m4a: this.tags
+          "iTunes MP4": this.tags
         }
       };
     });

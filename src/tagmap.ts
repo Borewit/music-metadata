@@ -1,4 +1,4 @@
-export type HeaderType = 'vorbis' | 'id3v1.1'| 'id3v2.2' | 'id3v2.3' | 'id3v2.4' | 'APEv2' | 'asf';
+export type HeaderType = 'vorbis' | 'id3v1.1'| 'id3v2.2' | 'id3v2.3' | 'id3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
 
 export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artists' | 'albumartist' | 'album' | 'date' | 'originaldate' |
   'originalyear' | 'comment' | 'genre' | 'picture' | 'composer' | 'lyrics' | 'albumsort' | 'titlesort' | 'work' |
@@ -33,7 +33,7 @@ interface INativeTagMappings {
   'id3v2.2': INativeTagMap,
   'id3v2.3': INativeTagMap,
   'id3v2.4': INativeTagMap,
-  m4a: INativeTagMap,
+  'iTunes MP4': INativeTagMap,
   vorbis: INativeTagMap
 }
 
@@ -304,7 +304,14 @@ export default class TagMap {
     'TXXX:CATALOGNUMBER': 'catalognumber',
     'TXXX:MusicBrainz Album Status': 'releasestatus',
     'TXXX:MusicBrainz Album Type': 'releasetype',
+    /**
+     * Release country as documented: https://picard.musicbrainz.org/docs/mappings/#cite_note-0
+     */
     'TXXX:MusicBrainz Album Release Country': 'releasecountry',
+    /**
+     * Release country as implemented // ToDo: report
+     */
+    'TXXX:RELEASECOUNTRY': 'releasecountry',
     'TXXX:SCRIPT': 'script',
     TLAN: 'language',
     TCOP: 'copyright',
@@ -324,6 +331,7 @@ export default class TagMap {
     'TXXX:MusicBrainz Work Id': 'musicbrainz_workid',
     'TXXX:MusicBrainz TRM Id': 'musicbrainz_trmid',
     'TXXX:MusicBrainz Disc Id': 'musicbrainz_discid',
+    'TXXX:ACOUSTID_ID': 'acoustid_id',
     'TXXX:Acoustid Id': 'acoustid_id',
     'TXXX:Acoustid Fingerprint': 'acoustid_fingerprint',
     'TXXX:MusicIP PUID': 'musicip_puid',
@@ -484,10 +492,14 @@ export default class TagMap {
     'MusicIP/PUID': 'musicip_puid'
   };
 
-  private static m4a: INativeTagMap = {
+  private static iTunes_MP4: INativeTagMap = {
     '©nam': 'title',
     '©ART': 'artist',
     aART: 'albumartist',
+    /**
+     * ToDo: Album artist seems to be stored here while Picard documentation says: aART
+     */
+    '----:com.apple.iTunes:Band': 'albumartist',
     '©alb': 'album',
     '©day': 'date',
     '©cmt': 'comment',
@@ -548,7 +560,13 @@ export default class TagMap {
     '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
     '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
     // Additional mappings:
-    gnre: 'genre' // ToDo: check mapping
+    gnre: 'genre', // ToDo: check mapping
+
+    '----:com.apple.iTunes:ALBUMARTISTSORT': 'albumartistsort',
+    '----:com.apple.iTunes:ARTISTS': 'artists',
+    '----:com.apple.iTunes:ORIGINALDATE': 'originaldate',
+    '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear'
+    // '----:com.apple.iTunes:PERFORMER': 'performer'
   };
 
   private static capitalizeTags(map: INativeTagMap): INativeTagMap {
@@ -573,7 +591,7 @@ export default class TagMap {
       'id3v2.2': TagMap.id3v2_2,
       'id3v2.3': TagMap.id3v2_3,
       'id3v2.4': TagMap.id3v2_3,
-      m4a: TagMap.m4a,
+      'iTunes MP4': TagMap.iTunes_MP4,
       vorbis: TagMap.vorbis
     };
 
@@ -584,7 +602,7 @@ export default class TagMap {
 
   /**
    * Test if native tag headerType is a singleton
-   * @param type e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+   * @param type e.g.: 'iTunes MP4' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
    * @param  tag Native tag name', e.g. 'TITLE'
    * @returns {boolean} true is we can safely assume that it is a  singleton
    */
