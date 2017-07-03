@@ -1,12 +1,12 @@
 'use strict';
 
 import common from './common';
-import vorbis from './vorbis';
 import {INativeAudioMetadata, IOptions, ITag, IFormat} from "./index";
 import {ITokenParser} from "./ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
 import {BufferType, IGetToken} from "token-types";
 import * as Token from "token-types";
+import {IVorbisPicture, VorbisPictureToken} from "./vorbis";
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -117,6 +117,7 @@ export class FlacParser implements ITokenParser {
 
   /**
    * Parse VORBIS_COMMENT
+   * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private parseComment(dataLen: number): Promise<void> {
     return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
@@ -135,8 +136,7 @@ export class FlacParser implements ITokenParser {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     } else {
-      return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
-        const picture = vorbis.readPicture(data);
+      return this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen)).then((picture) => {
         this.tags.push({id: 'METADATA_BLOCK_PICTURE', value: picture});
       });
     }

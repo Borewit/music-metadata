@@ -1,6 +1,6 @@
 import common from './common';
-import vorbis from './vorbis';
 import * as Token from "token-types";
+import {AttachedPictureType} from "./id3v2";
 
 interface IOut {
   language?: string,
@@ -99,7 +99,7 @@ export default class FrameParser {
               throw new Error('Warning: unexpected major versionIndex: ' + major);
           }
 
-          pic.type = vorbis.getPictureType(b[offset]);
+          pic.type = AttachedPictureType[b[offset]];
           offset += 1;
 
           fzero = common.findZero(b, offset, length, encoding);

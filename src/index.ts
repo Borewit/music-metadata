@@ -111,6 +111,9 @@ export interface ICommonTagsResult {
 
 export interface IFormat {
 
+  /**
+   * E.g.: 'flac'
+   */
   dataformat?: string, // ToDo: make mandatory
 
   headerType?: HeaderType, // ToDo: make mandatory

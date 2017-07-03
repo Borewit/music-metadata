@@ -1,6 +1,6 @@
 'use strict';
 import common from './common';
-import vorbis from './vorbis';
+import {VorbisPictureToken} from './vorbis';
 import ReadableStream = NodeJS.ReadableStream;
 import {ITokenParser} from "./ParserFactory";
 import * as strtok3 from "strtok3";
@@ -231,7 +231,7 @@ class VorbisParser implements ITokenParser {
         let value: any = v.slice(idx + 1);
 
         if (key === 'METADATA_BLOCK_PICTURE') {
-          value = this.options.skipCovers ? null : vorbis.readPicture(new Buffer(value, 'base64'));
+          value = this.options.skipCovers ? null : VorbisPictureToken.fromBase64(value);
         }
 
         if (value !== null)

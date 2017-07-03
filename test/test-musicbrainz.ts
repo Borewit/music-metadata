@@ -111,69 +111,100 @@ describe("MusicBrainz mapping", () => {
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
   }
 
+  /**
+   * Check native Vorbis header
+   * @param vorbis Vorbis native tags
+   */
+  function checkVorbisTags(vorbis: INativeTagDict, dataformat: string) {
+    // Compare expectedCommonTags with result.common
+    t.deepEqual(vorbis.TITLE, ['Sinner\'s Prayer'], 'vorbis.TITLE');
+    t.deepEqual(vorbis.ALBUM, ['Don\'t Explain'], 'vorbis.TITLE');
+    t.deepEqual(vorbis.DATE, ['2011-09-27'], 'vorbis.DATE');
+    t.deepEqual(vorbis.TRACKNUMBER, ['1'], 'vorbis.TRACKNUMBER');
+    t.deepEqual(vorbis.PRODUCER, ['Roy Weisman'], 'vorbis.PRODUCER');
+    t.deepEqual(vorbis.ENGINEER, ['James McCullagh', 'Jared Kvitka'], 'vorbis.ENGINEER');
+    t.deepEqual(vorbis.LABEL, ['J&R Adventures'], 'vorbis.LABEL');
+    t.deepEqual(vorbis.CATALOGNUMBER, ['PRAR931391'], 'vorbis.CATALOGNUMBER');
+    t.deepEqual(vorbis.ACOUSTID_ID, ['09c06fac-679a-45b1-8ea0-6ce532318363'], 'vorbis.ACOUSTID_ID');
+    t.deepEqual(vorbis.ARTIST, ['Beth Hart & Joe Bonamassa'], 'vorbis.ARTIST');
+    t.deepEqual(vorbis.ARTISTS, ['Beth Hart', 'Joe Bonamassa'], 'vorbis.ARTISTS');
+    t.deepEqual(vorbis.ARTISTSORT, ['Hart, Beth & Bonamassa, Joe'], 'vorbis.ARTISTSORT');
+    t.deepEqual(vorbis.ALBUMARTIST, ['Beth Hart & Joe Bonamassa'], 'vorbis.ALBUMARTIST');
+    t.deepEqual(vorbis.ALBUMARTISTSORT, ['Hart, Beth & Bonamassa, Joe'], 'vorbis.ALBUMARTISTSORT');
+    t.deepEqual(vorbis.ORIGINALDATE, ['2011-09-26'], 'vorbis.ORIGINALDATE');
+    t.deepEqual(vorbis.SCRIPT, ['Latn'], 'vorbis.SCRIPT');
+    t.deepEqual(vorbis.MEDIA, ['CD'], 'vorbis.MEDIA');
+    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
+    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ALBUMARTISTID');
+    t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ARTISTID');
+    t.deepEqual(vorbis.PERFORMER, ['Carmine Rojas (bass guitar)', 'The Bovaland Orchestra (orchestra)', 'Anton Fig (drums)', 'Anton Fig (percussion)', 'Blondie Chaplin (guitar)',
+      'Joe Bonamassa (guitar)', 'Arlan Scheirbaum (keyboard)', 'Beth Hart (vocals)', 'Joe Bonamassa (vocals)', 'Beth Hart (piano)'], 'vorbis.PERFORMER');
+    t.deepEqual(vorbis.ARRANGER, ['Jeff Bova'], 'vorbis.ARRANGER');
+    t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
+    t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['d062f484-253c-374b-85f7-89aab45551c7'], 'vorbis.MUSICBRAINZ_RELEASETRACKID');
+    t.deepEqual(vorbis.MUSICBRAINZ_RELEASEGROUPID, ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'vorbis.MUSICBRAINZ_RELEASEGROUPID');
+    t.deepEqual(vorbis.MUSICBRAINZ_TRACKID, ['f151cb94-c909-46a8-ad99-fb77391abfb8'], 'vorbis.MUSICBRAINZ_TRACKID');
+    t.deepEqual(vorbis.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'vorbis.NOTES');
+    t.deepEqual(vorbis.BARCODE, ['804879313915'], 'vorbis.BARCODE');
+    t.deepEqual(vorbis.ASIN, ['B004X5SCGM'], 'vorbis.ASIN');
+    t.deepEqual(vorbis.RELEASECOUNTRY, ['GB'], 'vorbis.RELEASECOUNTRY');
+    t.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis.RELEASESTATUS');
+
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].format, 'image/jpeg', "vorbis.METADATA_BLOCK_PICTURE.format = 'image/jpeg'");
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].type, 'Cover (front)', "vorbis.METADATA_BLOCK_PICTURE.type = 'Cover (front)'"); // ToDo: description??
+
+    const dimension = dataformat === "flac" ? 0 : 500; // For some magical reason, the width & height is not set in the FLAC file
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].width, dimension, 'vorbis.METADATA_BLOCK_PICTURE.width = 500 px');
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].height, dimension, 'vorbis.METADATA_BLOCK_PICTURE.height = 500 px');
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
+  }
+
   it("should map FLAC/Vorbis", () => {
 
     const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
     const filePath = path.join(__dirname, 'samples', filename);
 
     function checkFormat(format) {
+      t.strictEqual(format.dataformat, "flac", "format.dataformat = 'flac'");
       t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
-      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-      t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44100 samples/sec');
+      t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
+      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
     }
 
-    function checkVorbisTags(vorbis: INativeTagDict) {
-      // Compare expectedCommonTags with result.common
-      t.deepEqual(vorbis.TITLE, ['Sinner\'s Prayer'], 'vorbis.TITLE');
-      t.deepEqual(vorbis.ALBUM, ['Don\'t Explain'], 'vorbis.TITLE');
-      t.deepEqual(vorbis.DATE, ['2011-09-27'], 'vorbis.DATE');
-      t.deepEqual(vorbis.TRACKNUMBER, ['1'], 'vorbis.TRACKNUMBER');
-      t.deepEqual(vorbis.PRODUCER, ['Roy Weisman'], 'vorbis.PRODUCER');
-      t.deepEqual(vorbis.ENGINEER, ['James McCullagh', 'Jared Kvitka'], 'vorbis.ENGINEER');
-      t.deepEqual(vorbis.LABEL, ['J&R Adventures'], 'vorbis.LABEL');
-      t.deepEqual(vorbis.CATALOGNUMBER, ['PRAR931391'], 'vorbis.CATALOGNUMBER');
-      t.deepEqual(vorbis.ACOUSTID_ID, ['09c06fac-679a-45b1-8ea0-6ce532318363'], 'vorbis.ACOUSTID_ID');
-      t.deepEqual(vorbis.ARTIST, ['Beth Hart & Joe Bonamassa'], 'vorbis.ARTIST');
-      t.deepEqual(vorbis.ARTISTS, ['Beth Hart', 'Joe Bonamassa'], 'vorbis.ARTISTS');
-      t.deepEqual(vorbis.ARTISTSORT, ['Hart, Beth & Bonamassa, Joe'], 'vorbis.ARTISTSORT');
-      t.deepEqual(vorbis.ALBUMARTIST, ['Beth Hart & Joe Bonamassa'], 'vorbis.ALBUMARTIST');
-      t.deepEqual(vorbis.ALBUMARTISTSORT, ['Hart, Beth & Bonamassa, Joe'], 'vorbis.ALBUMARTISTSORT');
-      t.deepEqual(vorbis.ORIGINALDATE, ['2011-09-26'], 'vorbis.ORIGINALDATE');
-      t.deepEqual(vorbis.SCRIPT, ['Latn'], 'vorbis.SCRIPT');
-      t.deepEqual(vorbis.MEDIA, ['CD'], 'vorbis.MEDIA');
-      t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
-      t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ALBUMARTISTID');
-      t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ARTISTID');
-      t.deepEqual(vorbis.PERFORMER, ['Carmine Rojas (bass guitar)', 'The Bovaland Orchestra (orchestra)', 'Anton Fig (drums)', 'Anton Fig (percussion)', 'Blondie Chaplin (guitar)',
-        'Joe Bonamassa (guitar)', 'Arlan Scheirbaum (keyboard)', 'Beth Hart (vocals)', 'Joe Bonamassa (vocals)', 'Beth Hart (piano)'], 'vorbis.PERFORMER');
-      t.deepEqual(vorbis.ARRANGER, ['Jeff Bova'], 'vorbis.ARRANGER');
-      t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
-      t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['d062f484-253c-374b-85f7-89aab45551c7'], 'vorbis.MUSICBRAINZ_RELEASETRACKID');
-      t.deepEqual(vorbis.MUSICBRAINZ_RELEASEGROUPID, ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'vorbis.MUSICBRAINZ_RELEASEGROUPID');
-      t.deepEqual(vorbis.MUSICBRAINZ_TRACKID, ['f151cb94-c909-46a8-ad99-fb77391abfb8'], 'vorbis.MUSICBRAINZ_TRACKID');
-      t.deepEqual(vorbis.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'vorbis.NOTES');
-      t.deepEqual(vorbis.BARCODE, ['804879313915'], 'vorbis.BARCODE');
-      t.deepEqual(vorbis.ASIN, ['B004X5SCGM'], 'vorbis.ASIN');
-      t.deepEqual(vorbis.RELEASECOUNTRY, ['GB'], 'vorbis.RELEASECOUNTRY');
-      t.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis.RELEASESTATUS');
-
-      t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE.format');
-      t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].type, 'Cover (front)', 'vorbis.METADATA_BLOCK_PICTURE.type'); // ToDo: description??
-      t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].width, 0, 'vorbis.METADATA_BLOCK_PICTURE.width');
-      t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].height, 0, 'vorbis.METADATA_BLOCK_PICTURE.height');
-      t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length');
-      t.deepEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
-    }
-
-    // Run with default options
+    // Parse flac/Vorbis file
     return mm.parseFile(filePath, {native: true}).then((result) => {
       t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
       checkFormat(result.format);
-      checkVorbisTags(mm.orderTags(result.native.vorbis));
+      checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
       checkCommonMapping(result.format.headerType, result.common);
     });
 
+  });
+
+  it("should map ogg/Vorbis", () => {
+
+    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ogg";
+    const filePath = path.join(__dirname, 'samples', filename);
+
+    function checkFormat(format) {
+      // ToDo t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds');
+      // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+      // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+    }
+
+    // Parse ogg/Vorbis file
+    return mm.parseFile(filePath, {native: true}).then((result) => {
+      t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
+      // Check ogg format
+      checkFormat(result.format);
+      // Check Vorbis native tags
+      checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
+      // Check Vorbis mappings
+      checkCommonMapping(result.format.headerType, result.common);
+    });
   });
 
   it("should map APE (Monkey's Audio)", () => {
