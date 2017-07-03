@@ -1,10 +1,10 @@
-import common from './common';
 import {ITokenParser} from "./ParserFactory";
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "./";
 import {ITokenizer} from "strtok3";
 import {Promise} from "es6-promise";
 import {StringType, BufferType, IGetToken, IgnoreType} from "token-types";
 import * as Token from "token-types";
+import {Genres} from "./id3v1";
 
 /**
  * M4A signature, ref: https://www.filesignatures.net/index.php?page=search&search=M4A&mode=EXT
@@ -618,7 +618,7 @@ export class Id4Parser implements ITokenParser {
 
               case 'gnre':
                 const genreInt = Token.UINT8.get(dataAtom.value, 1);
-                const genreStr = common.Genres[genreInt - 1];
+                const genreStr = Genres[genreInt - 1];
                 // console.log("  %s[data] = %s", tagKey, genreStr);
                 this.tags.push({id: tagKey, value: genreStr});
                 break;
