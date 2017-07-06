@@ -8,7 +8,7 @@ import {HeaderType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
 import * as stream from "stream";
-import * as ASF from "./asf";
+import GUID from "./asf/GUID";
 
 export interface IPicture {
   format: string,
@@ -250,10 +250,11 @@ export class MusicMetadataParser {
   /**
    * ToDo: move to respective format implementations
    */
+  /*
   private static headerTypes = [
     {
-      buf: ASF.Header_GUID,
-      tag: require('./asf')
+      buf: GUID.HeaderObject.toBin(),
+      tag: require('./asf/AsfParser')
     },
     {
       buf: new Buffer('ID3'),
@@ -281,7 +282,7 @@ export class MusicMetadataParser {
       buf: new Buffer('MAC'),
       tag: require('./monkeysaudio')
     }
-  ];
+  ];*/
 
   private tagMap = new TagMap();
 

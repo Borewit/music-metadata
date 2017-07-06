@@ -2,7 +2,7 @@ import {INativeAudioMetadata, IOptions} from "./";
 import {Id3v2Parser} from "./id3v2";
 import {Id3v1Parser} from "./id3v1";
 import {ApeParser} from "./monkeysaudio";
-import {AsfParser} from "./asf";
+import {AsfParser} from "./asf/AsfParser";
 import {FlacParser} from "./flac";
 import {Id4Parser} from "./id4";
 import {OggParser} from "./ogg";

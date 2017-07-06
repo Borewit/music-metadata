@@ -125,11 +125,11 @@ export default class Common {
 
   /**
    *
-   * @param buffer
-   * @param encoding ToDo
+   * @param buffer Decoder input data
+   * @param encoding 'utf16le' | 'utf16' | 'utf8' | 'iso-8859-1'
    * @return {string}
    */
-  public static decodeString(buffer: Buffer, encoding: string): string {
+  public static decodeString(buffer: Buffer, encoding: 'utf16le' | 'utf16' | 'utf8' | 'iso-8859-1'): string {
     // annoying workaround for a double BOM issue
     // https://github.com/leetreveil/musicmetadata/issues/84
     if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {

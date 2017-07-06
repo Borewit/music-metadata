@@ -204,7 +204,7 @@ export default class FrameParser {
     return {id, data: b.slice(offset, length)};
   }
 
-  private static getTextEncoding(byte): string {
+  private static getTextEncoding(byte): 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' {
     switch (byte) {
       case 0x00:
         return 'iso-8859-1'; // binary

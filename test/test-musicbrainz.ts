@@ -35,6 +35,7 @@ describe("MusicBrainz mapping", () => {
     switch (inputTagType) {
       case "APEv2": // Picard has a mapping for these, but does not seem to include this
       case "iTunes MP4": // Picard has a mapping for these, but does not seem to include this
+      case "asf":
         return false;
       default: return true;
     }
@@ -43,6 +44,7 @@ describe("MusicBrainz mapping", () => {
   function hasASIN(inputTagType: HeaderType): boolean {
     switch (inputTagType) {
       case "APEv2": // Picard has a mapping for these, but does not seem to include this
+      case "asf": // Picard has a mapping for these, but does not seem to include this
         return false;
       default: return true;
     }
@@ -53,6 +55,7 @@ describe("MusicBrainz mapping", () => {
       case "APEv2": // Picard has a mapping for these, but does not seem to include this
       case "id3v2.3": // Picard has a mapping for these, but does not seem to include this
       case "iTunes MP4": // Picard has a mapping for these, but does not seem to include this
+      case "asf":
         return false;
       default: return true;
     }
@@ -67,11 +70,23 @@ describe("MusicBrainz mapping", () => {
     // Compare expectedCommonTags with result.common
     t.strictEqual(common.title, "Sinner's Prayer", inputTagType + " => common.title");
     t.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', inputTagType + " => common.artist");
-    t.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], inputTagType + " => common.artists");
+
+    if (inputTagType === "asf") {
+      t.deepEqual(common.artists, ['Joe Bonamassa', 'Beth Hart'], inputTagType + " => common.artists");
+      t.deepEqual(common.musicbrainz_artistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], inputTagType + " => common.musicbrainz_artistid");
+    } else {
+      t.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], inputTagType + " => common.artists");
+      t.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], inputTagType + " => common.musicbrainz_artistid");
+    }
+
     t.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist'); // ToDo: this is not set
     t.deepEqual(common.albumartistsort, 'Hart, Beth & Bonamassa, Joe', inputTagType + " =>  common.albumartistsort");
     t.strictEqual(common.album, "Don't Explain", inputTagType + " => common.album = Don't Explain");
-    t.deepEqual(common.track, {no: 1, of: 10}, inputTagType + " => common.track");
+    if (inputTagType === "asf") {
+      t.deepEqual(common.track, {no: 1, of: null}, inputTagType + " => common.track");
+    } else {
+      t.deepEqual(common.track, {no: 1, of: 10}, inputTagType + " => common.track");
+    }
     t.deepEqual(common.disk, {no: 1, of: 1}, inputTagType + " => common.disk");
     if ( hasOriginalData(inputTagType) ) {
       t.strictEqual(common.originaldate, "2011-09-26", inputTagType + " => common.originaldate = 2011-09-26");
@@ -91,8 +106,13 @@ describe("MusicBrainz mapping", () => {
     t.deepEqual(common.releasetype, ['album'], inputTagType + " => common.releasetype");
     t.strictEqual(common.musicbrainz_albumid, 'e7050302-74e6-42e4-aba0-09efd5d431d8', inputTagType + " => common.musicbrainz_albumid");
     t.strictEqual(common.musicbrainz_recordingid, 'f151cb94-c909-46a8-ad99-fb77391abfb8', inputTagType + " => common.musicbrainz_recordingid");
-    t.deepEqual(common.musicbrainz_albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], inputTagType + " => common.musicbrainz_albumartistid");
-    t.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], inputTagType + " => common.musicbrainz_artistid");
+
+    if (inputTagType === "asf") {
+      t.deepEqual(common.musicbrainz_albumartistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], inputTagType + " => common.musicbrainz_albumartistid");
+    } else {
+      t.deepEqual(common.musicbrainz_albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], inputTagType + " => common.musicbrainz_albumartistid");
+    }
+
     t.strictEqual(common.musicbrainz_releasegroupid, 'e00305af-1c72-469b-9a7c-6dc665ca9adc', inputTagType + " => common.musicbrainz_releasegroupid");
     t.strictEqual(common.musicbrainz_trackid, 'd062f484-253c-374b-85f7-89aab45551c7', inputTagType + " => common.musicbrainz_trackid");
 
@@ -202,7 +222,7 @@ describe("MusicBrainz mapping", () => {
       checkFormat(result.format);
       // Check Vorbis native tags
       checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
-      // Check Vorbis mappings
+      // Check common mappings
       checkCommonMapping(result.format.headerType, result.common);
     });
   });
@@ -494,6 +514,129 @@ describe("MusicBrainz mapping", () => {
       checkFormat(result.format);
       check_iTunes_Tags(mm.orderTags(result.native['iTunes MP4']));
       checkCommonTags(result.common);
+      checkCommonMapping(result.format.headerType, result.common);
+    });
+
+  });
+
+  it("should map id3v2.4 header", () => {
+
+    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3";
+    const filePath = path.join(__dirname, 'samples', filename);
+
+    function checkFormat(format: mm.IFormat) {
+      t.strictEqual(format.headerType, 'id3v2.4', 'format.headerType');
+      t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
+      t.strictEqual(format.duration, 2, 'format.duration'); // ToDo: add fraction
+      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+      // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
+      t.strictEqual(format.encoder, 'LAME3.99r', 'format.encoder = LAME3.99r');
+    }
+
+    function checkID3Tags(id3v24: mm.INativeTagDict) {
+
+      t.deepEqual(id3v24.APIC[0].data.length, 98008, 'id3v24.APIC.data.length');
+      t.deepEqual(id3v24.APIC[0].description, '', 'id3v24.APIC.data.description');
+      t.deepEqual(id3v24.APIC[0].format, 'image/jpeg', 'id3v24.APIC.format = image/jpeg');
+      t.deepEqual(id3v24.APIC[0].type, 'Cover (front)', 'd3v24.APIC.type = Cover (front)');
+
+      t.deepEqual(id3v24.TALB, ['Don\'t Explain'], 'id3v24.TALB: Album/Movie/Show title');
+      t.deepEqual(id3v24.TDOR, ['2011-09-26'], 'id3v24.TDOR');
+      t.deepEqual(id3v24.TDRC, ['2011-09-27'], 'id3v24.DATE');
+
+      t.deepEqual(id3v24.TIPL[0], {
+        arranger: ['Jeff Bova'],
+        engineer: ['James McCullagh', 'Jared Kvitka'],
+        producer: ['Roy Weisman']
+      }, 'event id3v24.TIPL');
+
+      t.deepEqual(id3v24.TIT2[0], 'Sinner\'s Prayer', 'id3v24.TIT2: Title/songname/content description');
+
+      t.deepEqual(id3v24.TMCL[0], {
+        'bass guitar': ['Carmine Rojas'],
+        drums: ['Anton Fig'],
+        guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
+        keyboard: ['Arlan Scheirbaum'],
+        orchestra: ['The Bovaland Orchestra'],
+        percussion: ['Anton Fig'],
+        piano: ['Beth Hart'],
+        vocals: ['Beth Hart', 'Joe Bonamassa']
+      }, 'event id3v24.TMCL');
+
+      // Lead performer(s)/Soloist(s)
+      t.deepEqual(id3v24.TMED, ['CD'], 'id3v24.TMED');
+      t.deepEqual(id3v24.TPE1, ['Beth Hart & Joe Bonamassa'], 'id3v24.TPE1: Lead performer(s)/Soloist(s)');
+      t.deepEqual(id3v24.TPE2, ['Beth Hart & Joe Bonamassa'], 'id3v24.TPE1: Band/orchestra/accompaniment');
+      t.deepEqual(id3v24.TPOS, ['1/1'], 'id3v24.TPOS');
+      t.deepEqual(id3v24.TPUB, ['J&R Adventures'], 'id3v24.TPUB');
+      t.deepEqual(id3v24.TRCK, ['1/10'], 'id3v24.TRCK');
+
+      t.deepEqual(id3v24.TSO2, ['Hart, Beth & Bonamassa, Joe'], 'TSO2');
+      t.deepEqual(id3v24.TSOP, ['Hart, Beth & Bonamassa, Joe'], 'TSOP');
+
+      t.deepEqual(id3v24.UFID[0], {
+        owner_identifier: 'http://musicbrainz.org',
+        identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+      }, 'id3v24.UFID: Unique file identifier');
+
+      t.deepEqual(id3v24['TXXX:ASIN'], ['B004X5SCGM'], 'id3v24.TXXX:ASIN');
+      t.deepEqual(id3v24['TXXX:Artists'], ['Beth Hart', 'Joe Bonamassa'], 'id3v24.TXXX:Artists');
+      t.deepEqual(id3v24['TXXX:BARCODE'], ['804879313915'], 'id3v24.TXXX:BARCODE');
+      t.deepEqual(id3v24['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v24.TXXX:CATALOGNUMBER');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Album Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v24.TXXX:MusicBrainz Album Artist Id');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Album Id'], ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'id3v24.TXXX:MusicBrainz Album Id');
+      // ToDo?? t.deepEqual(id3v24['TXXX:MusicBrainz Album Release Country'], 'GB', 'id3v24.TXXX:MusicBrainz Album Release Country');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Album Status'], ['official'], 'id3v24.TXXX:MusicBrainz Album Status');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Album Type'], ['album'], 'id3v24.TXXX:MusicBrainz Album Type');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v24.TXXX:MusicBrainz Artist Id');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Release Group Id'], ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'id3v24.TXXX.MusicBrainz Release Group Id');
+      t.deepEqual(id3v24['TXXX:MusicBrainz Release Track Id'], ['d062f484-253c-374b-85f7-89aab45551c7'], 'id3v24.TXXX.MusicBrainz Release Track Id');
+      t.deepEqual(id3v24['TXXX:SCRIPT'], ['Latn'], 'id3v24.TXXX:SCRIPT');
+      t.deepEqual(id3v24['TXXX:originalyear'], ['2011'], 'id3v24.TXXX:originalyear');
+    }
+
+    // Run with default options
+    return mm.parseFile(filePath, {native: true}).then((result) => {
+      t.ok(result.native && result.native.hasOwnProperty('id3v2.4'), 'should include native id3v2.4 tags');
+      checkFormat(result.format);
+      checkID3Tags(mm.orderTags(result.native['id3v2.4']));
+      checkCommonMapping(result.format.headerType, result.common);
+    });
+
+  });
+
+  it("should map WMA/ASF header", () => {
+
+    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.wma";
+    const filePath = path.join(__dirname, 'samples', filename);
+
+    function checkFormat(format: mm.IFormat) {
+      t.strictEqual(format.headerType, "asf", "format.headerType = asf");
+      t.strictEqual(format.bitrate, 320000, "format.bitrate = 320000");
+      // ToDo t.strictEqual(format.dataformat, "wma", "format.dataformat = wma");
+      // ToDo t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
+      // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+      // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
+      // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
+    }
+
+    function check_asf_Tags(native: mm.INativeTagDict) {
+      t.deepEqual(native["WM/AlbumArtist"], ["Beth Hart & Joe Bonamassa"], "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'");
+      t.deepEqual(native["WM/AlbumTitle"], ["Don't Explain"], "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'");
+      t.deepEqual(native["WM/ARTISTS"], ['Joe Bonamassa', 'Beth Hart'], "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']");
+      // ToDO
+    }
+
+    // Parse wma/asf file
+    return mm.parseFile(filePath, {native: true}).then((result) => {
+      t.ok(result.native && result.native.asf, 'should include native asf tags');
+      // Check wma format
+      checkFormat(result.format);
+      // Check asf native tags
+      check_asf_Tags(mm.orderTags(result.native.asf));
+      // Check common tag mappings
       checkCommonMapping(result.format.headerType, result.common);
     });
 
