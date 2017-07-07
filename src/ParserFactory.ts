@@ -9,7 +9,7 @@ import {OggParser} from "./ogg";
 import * as strtok3 from "strtok3";
 import {StringType} from "token-types";
 import {Promise} from "es6-promise";
-import * as stream from "stream";
+import * as Stream from "stream";
 import * as path from "path";
 
 export interface ITokenParser {
@@ -50,7 +50,7 @@ export class ParserFactory {
    * @param opts Parsing options
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
+  public static parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
     return strtok3.fromStream(stream).then((tokenizer) => {
       if (!tokenizer.fileSize && opts.fileSize) {

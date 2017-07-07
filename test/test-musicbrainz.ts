@@ -250,7 +250,7 @@ describe("MusicBrainz mapping", () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     }
 
-    function checkVorbisTags(APEv2: INativeTagDict) {
+    function checkApeTags(APEv2: INativeTagDict) {
       // Compare expectedCommonTags with result.common
       t.deepEqual(APEv2.Title, ['Sinner\'s Prayer'], 'APEv2.Title');
       t.deepEqual(APEv2.Album, ['Don\'t Explain'], 'APEv2.Album');
@@ -307,7 +307,7 @@ describe("MusicBrainz mapping", () => {
     return mm.parseFile(filePath, {native: true}).then((result) => {
       t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native Vorbis tags');
       checkFormat(result.format);
-      checkVorbisTags(mm.orderTags(result.native.APEv2));
+      checkApeTags(mm.orderTags(result.native.APEv2));
       checkCommonMapping(result.format.headerType, result.common);
     });
 

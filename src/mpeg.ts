@@ -472,8 +472,7 @@ export class MpegParser {
           return this.tokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
             this.offset += MpegAudioLayer.LameEncoderVersion.len;
             this.format.encoder = "LAME " + version;
-            const frameDataLeft = this.frame_size - this.offset;
-            return this.skipFrameData(frameDataLeft);
+            return this.skipFrameData(this.frame_size - this.offset);
           });
         // ToDo: ???
       }
