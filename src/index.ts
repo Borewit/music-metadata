@@ -8,11 +8,10 @@ import {HeaderType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
 import * as stream from "stream";
-import GUID from "./asf/GUID";
 
 export interface IPicture {
   format: string,
-  data: Uint8Array;
+  data: Buffer;
 }
 
 export interface ICommonTagsResult {

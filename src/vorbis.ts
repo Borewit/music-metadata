@@ -41,6 +41,7 @@ export interface IVorbisPicture {
  * Parse the METADATA_BLOCK_PICTURE
  * Ref: https://wiki.xiph.org/VorbisComment#METADATA_BLOCK_PICTURE
  * Ref: https://xiph.org/flac/format.html#metadata_block_picture
+ * // ToDo: move to ID3 / APIC?
  */
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 

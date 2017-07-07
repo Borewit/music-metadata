@@ -19,7 +19,7 @@
 export default class GUID {
 
   // 10.1 Top-level ASF object GUIDs
-  public static HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C"); // 3026B275-8E66-CF11-A6D9-00AA0062CE6C
+  public static HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
   public static DataObject = new GUID("75B22636-668E-11CF-A6D9-00AA0062CE6C");
   public static SimpleIndexObject = new GUID("33000890-E5B1-11CF-89F4-00A0C90349CB");
   public static IndexObject = new GUID("D6E229D3-35DA-11D1-9034-00A0C90349BE");
@@ -67,17 +67,6 @@ export default class GUID {
   public static Degradable_JPEG_Media	= new GUID("35907DE0-E415-11CF-A917-00805F5C442B");
   public static FileTransferMedia	= new GUID("91BD222C-F21C-497A-8B6D-5AA86BFC0185");
   public static BinaryMedia = new GUID("3AFB65E2-47EF-40F2-AC2C-70A90D71D343");
-
-  // 11d2 d3ab baa9 cf11 8ee6 00c0 0c20 5365 0600 0f91 0100
-  // eacb f8c5 af5b 7748 8467 aa8c 44fa 4cca => MetadataHeader
-  // 1a00 0000 0000 0000 0000
-  // 941c 2344 9894 d149 a141 1d13 4e45 7054 => MetadataLibraryHeader
-
-  public static MetadataHeader = new GUID("EACBF8C5-AF5B-7748-8467-AA8C44FA4CCA");
-
-  public static MetadataLibraryHeader = new GUID("941C2344-9894-D149-A141-1D134E457054");
-
-  public static X1 = new GUID("74D40618-DFCA-0945-A4BA-9AABCB96AAE8");
 
   public static fromBin(bin: Buffer, offset: number = 0) {
     return new GUID(this.decode(bin, offset));
@@ -127,4 +116,3 @@ export default class GUID {
   }
 
 }
-

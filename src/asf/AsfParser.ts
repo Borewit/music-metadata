@@ -6,7 +6,6 @@ import {ITokenizer} from "strtok3";
 import {ITokenParser} from "../ParserFactory";
 import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
-import {IHeaderExtensionObject, IStreamPropertiesObject} from "./AsfObject";
 
 /**
  * Windows Media Metadata Usage Guidelines
@@ -81,12 +80,12 @@ export class AsfParser implements ITokenParser {
           });
 
         case AsfObject.StreamPropertiesObject.guid.str: // 3.3
-          return this.tokenizer.readToken<IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header)).then(() => {
+          return this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header)).then(() => {
             return null; // ToDo
           });
 
         case AsfObject.HeaderExtensionObject.guid.str: // 3.4
-          return this.tokenizer.readToken<IHeaderExtensionObject>(new AsfObject.HeaderExtensionObject(header)).then(() => {
+          return this.tokenizer.readToken<AsfObject.IHeaderExtensionObject>(new AsfObject.HeaderExtensionObject(header)).then(() => {
             return this.parseObjectHeader();
           });
 
@@ -98,6 +97,11 @@ export class AsfParser implements ITokenParser {
         case AsfObject.ExtendedContentDescriptionObjectState.guid.str: // 3.11
           return this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header)).then((tags) => {
             this.tags = this.tags.concat(tags);
+          });
+
+        case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
+          return this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header)).then((cd) => {
+            return null;
           });
 
         case AsfObject.MetadataObjectState.guid.str: // 4.7
@@ -115,7 +119,8 @@ export class AsfParser implements ITokenParser {
           return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
 
         default:
-          this.warnings.push("Ignore ASF-Object-GUID: %s", header.objectId.str);
+          this.warnings.push("Ignore ASF-Object-GUID: " + header.objectId.str);
+          // console.log("Ignore ASF-Object-GUID: %s", header.objectId.str);
           return this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
       }
     }).then(() => {
@@ -133,4 +138,3 @@ export class AsfParser implements ITokenParser {
     });
   }
 }
-

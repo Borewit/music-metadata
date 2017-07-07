@@ -13,7 +13,7 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artist
   'musicbrainz_artistid' | 'musicbrainz_albumartistid' | 'musicbrainz_releasegroupid' |
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
   'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
-  'peakLevel' | 'averageLevel' | 'notes';
+  'peakLevel' | 'averageLevel' | 'notes' | 'key';
 
 export interface INativeTagMap {
   [index: string]: CommonTag;

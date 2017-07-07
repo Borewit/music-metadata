@@ -4,6 +4,7 @@ import * as mm from '../src';
 import {ICommonTagsResult, INativeTagDict} from "../src/index";
 import * as path from 'path';
 import {HeaderType} from "../src/tagmap";
+import * as crypto from "crypto";
 
 const t = assert;
 
@@ -59,6 +60,12 @@ describe("MusicBrainz mapping", () => {
         return false;
       default: return true;
     }
+  }
+
+  function calcHash(buf: Buffer): string {
+    const hash = crypto.createHash('md5');
+    hash.update(buf);
+    return hash.digest('hex');
   }
 
   /**
@@ -129,6 +136,7 @@ describe("MusicBrainz mapping", () => {
 
     t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
+    t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'picture data');
   }
 
   /**
@@ -176,8 +184,9 @@ describe("MusicBrainz mapping", () => {
     const dimension = dataformat === "flac" ? 0 : 500; // For some magical reason, the width & height is not set in the FLAC file
     t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].width, dimension, 'vorbis.METADATA_BLOCK_PICTURE.width = 500 px');
     t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].height, dimension, 'vorbis.METADATA_BLOCK_PICTURE.height = 500 px');
-    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
     t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
+    t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
+    t.strictEqual(calcHash(vorbis.METADATA_BLOCK_PICTURE[0].data), 'c57bec49b36ebf422018f82273d1995a', 'Picture content');
   }
 
   it("should map FLAC/Vorbis", () => {
@@ -616,7 +625,7 @@ describe("MusicBrainz mapping", () => {
       t.strictEqual(format.headerType, "asf", "format.headerType = asf");
       t.strictEqual(format.bitrate, 320000, "format.bitrate = 320000");
       // ToDo t.strictEqual(format.dataformat, "wma", "format.dataformat = wma");
-      // ToDo t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
+      t.strictEqual(format.duration, 5.235, 'format.duration'); // duration is wrong, but seems to be what is written in file
       // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
       // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
@@ -626,6 +635,8 @@ describe("MusicBrainz mapping", () => {
       t.deepEqual(native["WM/AlbumArtist"], ["Beth Hart & Joe Bonamassa"], "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'");
       t.deepEqual(native["WM/AlbumTitle"], ["Don't Explain"], "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'");
       t.deepEqual(native["WM/ARTISTS"], ['Joe Bonamassa', 'Beth Hart'], "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']");
+      t.isDefined(native["WM/Picture"], "Contains WM/Picture");
+      t.strictEqual(native["WM/Picture"].length, 1, "Contains 1 WM/Picture");
       // ToDO
     }
 

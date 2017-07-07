@@ -67,7 +67,9 @@ export const AsfTagMap: INativeTagMap = {
   'WM/ARTISTS': 'artists',
 
   'WM/InitialKey': 'key',
-  'ASIN': 'asin',
+  ASIN: 'asin',
   'WM/Work': 'work',
-  'WM/AuthorURL': 'website'
+  'WM/AuthorURL': 'website',
+
+  'WM/Picture': 'picture'
 };
