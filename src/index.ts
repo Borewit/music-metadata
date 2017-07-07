@@ -7,7 +7,7 @@ import TagMap from './tagmap';
 import {HeaderType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
-import * as stream from "stream";
+import * as Stream from "stream";
 
 export interface IPicture {
   format: string,
@@ -304,13 +304,13 @@ export class MusicMetadataParser {
   /**
    * Extract metadata from the given audio file
    * @param stream Audio ReadableStream
-   * @param mimeType Mime-Type of stream
+   * @param mimeType Mime-Type of Stream
    * @param opts
    *   .filesize=true  Return filesize
    *   .native=true    Will return original header in result
    * @returns {Promise<IAudioMetadata>}
    */
-  public parseStream(stream: stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
+  public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
     return ParserFactory.parseStream(stream, mimeType, opts).then((nativeData) => {
       return this.parseNativeTags(nativeData, opts.native);
     });
@@ -499,14 +499,14 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
 }
 
 /**
- * Parse audio stream
+ * Parse audio Stream
  * @param stream
  * @param mimeType
  * @param opts Parsing options
  *   .native=true    Will return original header in result
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {
+export function parseStream(stream: Stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {
   return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
 }
 
