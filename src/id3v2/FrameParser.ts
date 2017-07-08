@@ -1,6 +1,6 @@
 import common from '../common';
 import * as Token from "token-types";
-import {AttachedPictureType} from "../id3v2/ID3v2Parser";
+import {AttachedPictureType} from "./ID3v2Parser";
 
 interface IOut {
   language?: string,
@@ -229,4 +229,3 @@ export default class FrameParser {
 
 }
 
-// exports.readData = function readData (b, type, flags, major) {
