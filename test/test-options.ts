@@ -113,7 +113,7 @@ describe("Parser options", () => {
         return mm.parseFile(file_id3v22, {native: true}).then((result) => {
           const id3 = mm.orderTags(result.native['id3v2.2']);
           // Native
-          t.isDefined(id3.PIC, "id3.PIC");
+          t.isDefined(id3.PIC, "id3v1.PIC");
           // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
@@ -123,7 +123,7 @@ describe("Parser options", () => {
         return mm.parseFile(file_id3v22, {native: true, skipCovers: true}).then((result) => {
           const id3 = mm.orderTags(result.native['id3v2.2']);
           // Native
-          t.isUndefined(id3.PIC, "id3.PIC");
+          t.isUndefined(id3.PIC, "id3v1.PIC");
           // Common
           t.isUndefined(result.common.picture, "result.common.picture");
         });
@@ -133,7 +133,7 @@ describe("Parser options", () => {
         return mm.parseFile(file_id3v22, {native: true, skipCovers: false}).then((result) => {
           const id3 = mm.orderTags(result.native['id3v2.2']);
           // Native
-          t.isDefined(id3.PIC, "id3.PIC");
+          t.isDefined(id3.PIC, "id3v1.PIC");
           // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });

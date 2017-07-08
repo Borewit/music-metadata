@@ -1,6 +1,6 @@
-import common from './common';
+import common from '../common';
 import * as Token from "token-types";
-import {AttachedPictureType} from "./id3v2";
+import {AttachedPictureType} from "../id3v2/ID3v2Parser";
 
 interface IOut {
   language?: string,

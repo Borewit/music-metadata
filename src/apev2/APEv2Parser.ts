@@ -1,9 +1,9 @@
 'use strict';
 
-import common from './common';
-import {HeaderType} from './tagmap';
-import {INativeAudioMetadata, IOptions, IFormat} from "./";
-import {ITokenParser} from "./ParserFactory";
+import common from '../common';
+import {HeaderType} from '../tagmap';
+import {INativeAudioMetadata, IOptions, IFormat} from "../";
+import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
 import {BufferType, StringType} from "token-types";
 import * as Token from "token-types";
@@ -217,7 +217,7 @@ interface IApeInfo {
   footer?: IFooter
 }
 
-export class ApeParser implements ITokenParser {
+export class APEv2Parser implements ITokenParser {
 
   /**
    * Calculate the media file duration
@@ -338,7 +338,7 @@ export class ApeParser implements ITokenParser {
           bitsPerSample: header.bitsPerSample,
           sampleRate: header.sampleRate,
           numberOfChannels: header.channel,
-          duration: ApeParser.calculateDuration(header)
+          duration: APEv2Parser.calculateDuration(header)
         },
         forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
         this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
@@ -352,7 +352,7 @@ export class ApeParser implements ITokenParser {
         throw new Error('Expected footer to start with APETAGEX ');
       }
       return this.tokenizer.readToken<Buffer>(Structure.TagField(footer)).then((tags) => {
-        return ApeParser.parseTags(footer, tags, !this.options.skipCovers);
+        return APEv2Parser.parseTags(footer, tags, !this.options.skipCovers);
       });
     });
   }

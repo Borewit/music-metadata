@@ -1,9 +1,9 @@
 'use strict';
 
-import {MpegParser} from './mpeg';
-import {ITokenParser} from "./ParserFactory";
-import {INativeAudioMetadata, IOptions} from "./index";
-import {HeaderType} from "./tagmap";
+import {MpegParser} from '../mpeg/MpegParser';
+import {ITokenParser} from "../ParserFactory";
+import {INativeAudioMetadata, IOptions} from "../index";
+import {HeaderType} from "../tagmap";
 import {ITokenizer} from "strtok3";
 import {IGetToken, StringType} from "token-types";
 import * as Token from "token-types";
@@ -89,10 +89,10 @@ class Id3v1StringType extends StringType {
   }
 }
 
-export class Id3v1Parser implements ITokenParser {
+export class ID3v1Parser implements ITokenParser {
 
-  public static getInstance(): Id3v1Parser {
-    return new Id3v1Parser();
+  public static getInstance(): ID3v1Parser {
+    return new ID3v1Parser();
   }
 
   private static getGenre(genreIndex: number): string {
@@ -119,7 +119,7 @@ export class Id3v1Parser implements ITokenParser {
               {id: 'comment', value: header.comment},
               {id: 'track', value: header.track},
               {id: 'year', value: header.year},
-              {id: 'genre', value: Id3v1Parser.getGenre(header.genre)}
+              {id: 'genre', value: ID3v1Parser.getGenre(header.genre)}
             ]
           }
         };

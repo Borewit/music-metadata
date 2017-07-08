@@ -3,8 +3,8 @@
 import ReadableStream = NodeJS.ReadableStream;
 
 import {ITokenizer, EndOfFile} from "strtok3";
-import {IFormat} from "../src";
-import Common from "./common";
+import {IFormat} from "../";
+import Common from "../common";
 import * as Token from "token-types";
 import {StringType, BufferType} from "token-types";
 import {Promise} from "es6-promise";
@@ -47,7 +47,7 @@ class MpegFrameHeader {
   };
 
   private static samplesInFrameTable = [
-  /* Layer   I    II   III */
+    /* Layer   I    II   III */
     [0, 384, 1152, 1152], // MPEG-1
     [0, 384, 1152, 576] // MPEG-2(.5
   ];

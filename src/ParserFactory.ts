@@ -1,11 +1,11 @@
 import {INativeAudioMetadata, IOptions} from "./";
-import {Id3v2Parser} from "./id3v2";
-import {Id3v1Parser} from "./id3v1";
-import {ApeParser} from "./monkeysaudio";
+import {ID3v2Parser} from "./id3v2/ID3v2Parser";
+import {ID3v1Parser} from "./id3v1/ID3v1Parser";
+import {APEv2Parser} from "./apev2/APEv2Parser";
 import {AsfParser} from "./asf/AsfParser";
-import {FlacParser} from "./flac";
-import {Id4Parser} from "./id4";
-import {OggParser} from "./ogg";
+import {FlacParser} from "./flac/FlacParser";
+import {MP4Parser} from "./mp4/MP4Parser";
+import {OggParser} from "./ogg/OggParser";
 import * as strtok3 from "strtok3";
 import {StringType} from "token-types";
 import {Promise} from "es6-promise";
@@ -72,16 +72,19 @@ export class ParserFactory {
 
       case '.mp3':
         return this.hasStartTag(filePath, 'ID3').then((hasID3) => {
-          return hasID3 ? new Id3v2Parser() : new Id3v1Parser();
+          return hasID3 ? new ID3v2Parser() : new ID3v1Parser();
         });
 
       case '.ape':
-        return Promise.resolve<ITokenParser>(new ApeParser());
+        return Promise.resolve<ITokenParser>(new APEv2Parser());
 
+      case '.mp4':
       case '.m4a':
-        return Promise.resolve<ITokenParser>(new Id4Parser());
+        return Promise.resolve<ITokenParser>(new MP4Parser());
 
       case '.wma':
+      case '.wmv':
+      case '.asf':
         return Promise.resolve<ITokenParser>(new AsfParser());
 
       case '.flac':
@@ -99,13 +102,13 @@ export class ParserFactory {
     switch (mimeType) {
 
       case 'audio/mpeg':
-        return Promise.resolve<ITokenParser>(new Id3v2Parser()); // ToDo: handle ID1 header as well
+        return Promise.resolve<ITokenParser>(new ID3v2Parser()); // ToDo: handle ID1 header as well
 
       case 'audio/x-monkeys-audio':
-        return Promise.resolve<ITokenParser>(new ApeParser());
+        return Promise.resolve<ITokenParser>(new APEv2Parser());
 
       case 'audio/mp4':
-        return Promise.resolve<ITokenParser>(new Id4Parser());
+        return Promise.resolve<ITokenParser>(new MP4Parser());
 
       case 'audio/x-ms-wma':
         return Promise.resolve<ITokenParser>(new AsfParser());

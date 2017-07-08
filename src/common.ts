@@ -1,5 +1,5 @@
-import {Windows1292Decoder} from './windows1252decoder';
-import {Genres} from "./id3v1";
+import {Windows1292Decoder} from './Windows1292Decoder';
+import {Genres} from "./id3v1/ID3v1Parser";
 
 export default class Common {
 
@@ -37,7 +37,7 @@ export default class Common {
       }
     }
     // default to id3v1.1 if we cannot detect any other tags
-    return require('./id3v1');
+    return require('./id3v1/id3v1');
   }
 
   public static streamOnRealEnd(stream: NodeJS.ReadableStream, callback: () => void): void {
@@ -147,7 +147,7 @@ export default class Common {
     throw Error(encoding + ' encoding is not supported!');
   }
 
-  public static parseGenre(origVal) {
+  public static parseGenre(origVal: string) {
     // match everything inside parentheses
     const split = origVal.trim().split(/\((.*?)\)/g).filter( (val) => {
         return val !== '';

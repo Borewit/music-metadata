@@ -1,15 +1,15 @@
 import ReadableStream = NodeJS.ReadableStream;
 import {isArray} from 'util';
-import common from './common';
-import id3v2_frames from './id3v2_frames';
-import {MpegParser} from './mpeg';
-import {HeaderType} from './tagmap';
-import {ITokenParser} from "./ParserFactory";
+import common from '../common';
+import {HeaderType} from '../tagmap';
+import {ITokenParser} from "../ParserFactory";
 import {ITokenizer} from "strtok3";
-import {INativeAudioMetadata, ITag} from "./";
+import {INativeAudioMetadata, ITag} from "../";
 import {IGetToken, StringType} from "token-types";
 import * as Token from "token-types";
-import {IOptions} from "./";
+import {IOptions} from "../";
+import {MpegParser} from "../mpeg/MpegParser";
+import FrameParser from "./FrameParser";
 
 interface IFrameFlags {
   status: {
@@ -161,10 +161,10 @@ class ID3v2 {
   };
 }
 
-export class Id3v2Parser implements ITokenParser {
+export class ID3v2Parser implements ITokenParser {
 
-  public static getInstance(): Id3v2Parser {
-    return new Id3v2Parser();
+  public static getInstance(): ID3v2Parser {
+    return new ID3v2Parser();
   }
 
   private static readFrameHeader(v, majorVer): IFrameHeader {
@@ -182,7 +182,7 @@ export class Id3v2Parser implements ITokenParser {
         header = {
           id: v.toString('ascii', 0, 4),
           length: Token.UINT32_BE.get(v, 4),
-          flags: Id3v2Parser.readFrameFlags(v.slice(8, 10))
+          flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
         };
         break;
 
@@ -190,7 +190,7 @@ export class Id3v2Parser implements ITokenParser {
         header = {
           id: v.toString('ascii', 0, 4),
           length: ID3v2.UINT32SYNCSAFE.get(v, 4),
-          flags: Id3v2Parser.readFrameFlags(v.slice(8, 10))
+          flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
         };
         break;
 
@@ -232,7 +232,7 @@ export class Id3v2Parser implements ITokenParser {
   private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: number, includeCovers: boolean) {
     switch (majorVer) {
       case 2:
-        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
+        return FrameParser.readData(buf, frameHeader.id, majorVer, includeCovers);
       case 3:
       case 4:
         if (frameHeader.flags.format.unsynchronisation) {
@@ -241,7 +241,7 @@ export class Id3v2Parser implements ITokenParser {
         if (frameHeader.flags.format.data_length_indicator) {
           buf = buf.slice(4, buf.length);
         }
-        return id3v2_frames.readData(buf, frameHeader.id, majorVer, includeCovers);
+        return FrameParser.readData(buf, frameHeader.id, majorVer, includeCovers);
       default:
         throw new Error('Unexpected majorVer: ' + majorVer);
     }
@@ -333,8 +333,8 @@ export class Id3v2Parser implements ITokenParser {
 
     while (true) {
       if (offset === data.length) break;
-      const frameHeaderBytes = data.slice(offset, offset += Id3v2Parser.getFrameHeaderLength(this.id3Header.version.major));
-      const frameHeader = Id3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
+      const frameHeaderBytes = data.slice(offset, offset += ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major));
+      const frameHeader = ID3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
       // Last frame. Check first char is a letter, bit of defensive programming
       if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
@@ -344,7 +344,7 @@ export class Id3v2Parser implements ITokenParser {
       }
 
       const frameDataBytes = data.slice(offset, offset += frameHeader.length);
-      const values = Id3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers);
+      const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers);
       tags.push({id: frameHeader.id, value: values});
     }
     return tags;

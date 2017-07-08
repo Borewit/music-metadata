@@ -1,16 +1,15 @@
 import * as Token from "token-types";
 import {IGetToken} from "token-types";
-import {AttachedPictureType} from "./id3v2";
+import {AttachedPictureType} from "../id3v2/ID3v2Parser";
+import {IPicture} from "../index";
 
-export interface IVorbisPicture {
+export interface IVorbisPicture extends IPicture {
   type: string
-  format: string,
   description: string,
   width: number,
   height: number,
   colour_depth: number,
-  indexed_color: number,
-  data: Buffer;
+  indexed_color: number
 }
 
 /**
@@ -86,3 +85,72 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     };
   }
 }
+
+/**
+ * Vorbis 1 decoding tokens
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-620004.2.1
+ */
+
+/**
+ * Comment header interface
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-620004.2.1
+ */
+export interface ICommonHeader {
+  /**
+   * Packet Type
+   */
+  packetType: number,
+  /**
+   * Should be 'vorbis'
+   */
+  vorbis: string
+}
+
+/**
+ * Comment header decoder
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-620004.2.1
+ */
+export const CommonHeader: Token.IGetToken<ICommonHeader> = {
+  len: 7,
+
+  get: (buf, off): ICommonHeader => {
+    return {
+      packetType: buf.readUInt8(off),
+      vorbis: new Token.StringType(6, 'ascii').get(buf, off + 1)
+    };
+  }
+};
+
+/**
+ * Identification header interface
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
+ * @type {{len: number; get: ((buf, off)=>IFormatInfo)}}
+ */
+export interface IFormatInfo {
+  version: number,
+  channelMode: number,
+  sampleRate: number,
+  bitrateMax: number,
+  bitrateNominal: number,
+  bitrateMin: number
+}
+
+/**
+ * Identification header decoder
+ * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
+ * @type {{len: number; get: ((buf, off)=>IFormatInfo)}}
+ */
+export const IdentificationHeader: Token.IGetToken<IFormatInfo> = {
+  len: 23,
+
+  get: (buf, off): IFormatInfo => {
+    return {
+      version: buf.readUInt32LE(off + 0),
+      channelMode: buf.readUInt8(off + 4),
+      sampleRate: buf.readUInt32LE(off + 5),
+      bitrateMax: buf.readUInt32LE(off + 9),
+      bitrateNominal: buf.readUInt32LE(off + 13),
+      bitrateMin: buf.readUInt32LE(off + 17)
+    };
+  }
+};

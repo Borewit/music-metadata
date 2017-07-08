@@ -34,8 +34,8 @@ describe("MusicBrainz mapping", () => {
 
   function hasReleaseCountry(inputTagType: HeaderType): boolean {
     switch (inputTagType) {
-      case "APEv2": // Picard has a mapping for these, but does not seem to include this
-      case "iTunes MP4": // Picard has a mapping for these, but does not seem to include this
+      case "APEv2": // Picard has a mapping for this, but does not seem to include this
+      case "iTunes MP4": // Picard has a mapping for this, but does not seem to include this
       case "asf":
         return false;
       default: return true;
@@ -44,8 +44,8 @@ describe("MusicBrainz mapping", () => {
 
   function hasASIN(inputTagType: HeaderType): boolean {
     switch (inputTagType) {
-      case "APEv2": // Picard has a mapping for these, but does not seem to include this
-      case "asf": // Picard has a mapping for these, but does not seem to include this
+      case "APEv2": // Picard has a mapping for this, but does not seem to include this
+      case "asf": // Picard has a mapping for this, but does not seem to include this
         return false;
       default: return true;
     }
@@ -53,9 +53,9 @@ describe("MusicBrainz mapping", () => {
 
   function hasAccousticId(inputTagType: HeaderType): boolean {
     switch (inputTagType) {
-      case "APEv2": // Picard has a mapping for these, but does not seem to include this
-      case "id3v2.3": // Picard has a mapping for these, but does not seem to include this
-      case "iTunes MP4": // Picard has a mapping for these, but does not seem to include this
+      case "APEv2": // Picard has a mapping for this, but does not seem to include this
+      case "id3v2.3": // Picard has a mapping for this, but does not seem to include this
+      case "iTunes MP4": // Picard has a mapping for this, but does not seem to include this
       case "asf":
         return false;
       default: return true;

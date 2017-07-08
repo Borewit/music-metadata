@@ -1,12 +1,12 @@
 'use strict';
 
-import common from './common';
-import {INativeAudioMetadata, IOptions, ITag, IFormat} from "./index";
-import {ITokenParser} from "./ParserFactory";
+import common from '../common';
+import {INativeAudioMetadata, IOptions, ITag, IFormat} from "../index";
+import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
 import {BufferType, IGetToken} from "token-types";
 import * as Token from "token-types";
-import {IVorbisPicture, VorbisPictureToken} from "./vorbis";
+import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:

@@ -1,10 +1,10 @@
-import {ITokenParser} from "./ParserFactory";
-import {INativeAudioMetadata, ITag, IFormat, IOptions} from "./";
+import {ITokenParser} from "../ParserFactory";
+import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../";
 import {ITokenizer} from "strtok3";
 import {Promise} from "es6-promise";
 import {StringType, BufferType, IGetToken, IgnoreType} from "token-types";
 import * as Token from "token-types";
-import {Genres} from "./id3v1";
+import {Genres} from "../id3v1/ID3v1Parser";
 
 /**
  * M4A signature, ref: https://www.filesignatures.net/index.php?page=search&search=M4A&mode=EXT
@@ -348,10 +348,10 @@ class NameAtom implements IGetToken<INameAtom> {
  *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
  */
-export class Id4Parser implements ITokenParser {
+export class MP4Parser implements ITokenParser {
 
-  public static getInstance(): Id4Parser {
-    return new Id4Parser();
+  public static getInstance(): MP4Parser {
+    return new MP4Parser();
   }
 
   private static Types: { [index: number]: string } = {
@@ -656,11 +656,11 @@ export class Id4Parser implements ITokenParser {
             break;
 
           case 21: // BE Signed Integer
-            this.tags.push({id: tagKey, value: Id4Parser.read_BE_Signed_Integer(dataAtom.value)});
+            this.tags.push({id: tagKey, value: MP4Parser.read_BE_Signed_Integer(dataAtom.value)});
             break;
 
           case 22: // BE Unsigned Integer
-            this.tags.push({id: tagKey, value: Id4Parser.read_BE_Unsigned_Integer(dataAtom.value)});
+            this.tags.push({id: tagKey, value: MP4Parser.read_BE_Unsigned_Integer(dataAtom.value)});
             break;
 
           case 65: // An 8-bit signed integer
