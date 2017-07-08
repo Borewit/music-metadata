@@ -1,5 +1,5 @@
 import {AsfTagMap} from "./asf/AsfTagMap";
-import {ID3v1TagMap} from "./id3v1/Id3v1TagMap";
+import {ID3v1TagMap} from "./id3v1/ID3v1TagMap";
 import {ID3v22TagMap} from "./id3v2/ID3v22TagMap";
 import {ID3v24TagMap} from "./id3v2/ID3v24TagMap";
 import {MP4TagMap} from "./mp4/MP4TagMap";
