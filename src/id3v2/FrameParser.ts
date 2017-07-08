@@ -1,4 +1,5 @@
-import common from '../common';
+import common from "../common";
+import {encoding} from "../common";
 import * as Token from "token-types";
 import {AttachedPictureType} from "./ID3v2Parser";
 
@@ -89,7 +90,7 @@ export default class FrameParser {
               break;
             case 3:
             case 4:
-              const enc = 'iso-8859-1';
+              const enc: encoding = 'iso-8859-1';
               fzero = common.findZero(b, offset, length, enc);
               pic.format = common.decodeString(b.slice(offset, fzero), enc);
               offset = fzero + 1;
@@ -195,7 +196,7 @@ export default class FrameParser {
     return values;
   }
 
-  private static readIdentifierAndData(b, offset, length, encoding): { id: string, data: Uint8Array } {
+  private static readIdentifierAndData(b: Buffer, offset: number, length: number, encoding: encoding): { id: string, data: Uint8Array } {
     const fzero = common.findZero(b, offset, length, encoding);
 
     const id = common.decodeString(b.slice(offset, fzero), encoding);
@@ -204,7 +205,7 @@ export default class FrameParser {
     return {id, data: b.slice(offset, length)};
   }
 
-  private static getTextEncoding(byte): 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' {
+  private static getTextEncoding(byte): encoding {
     switch (byte) {
       case 0x00:
         return 'iso-8859-1'; // binary
