@@ -12,12 +12,14 @@ npm install music-metadata
 ## Features
 
 * Supports metadata of the following audio files:
+  * ape (APEv2)
+  * asf (ASF)
+  * flac (Vorbis)
+  * m4a (MP4, Apple iTunes)
   * mp3 (ID3v1, ID3v2.2, ID3v2.3, ID3v2.4)
-  * m4a (mp4)
   * Ogg (Vorbis)
-  * FLAC (Vorbis)
-  * ASF (wma, wmv)
-  * APE (APEv2)
+  * wma (ASF)
+  * wmv (ASF)
 * Support for [MusicBrainz](https://pages.github.com/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
 * Support for encoding / format details:
   * bitrate
