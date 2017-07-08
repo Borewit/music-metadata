@@ -11,6 +11,7 @@ import {StringType} from "token-types";
 import {Promise} from "es6-promise";
 import * as Stream from "stream";
 import * as path from "path";
+import {AIFFParser} from "./aiff/AiffParser";
 
 export interface ITokenParser {
   parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -92,6 +93,9 @@ export class ParserFactory {
 
       case '.ogg':
         return Promise.resolve<ITokenParser>(new OggParser());
+
+      case '.aiff':
+        return Promise.resolve<ITokenParser>(new AIFFParser());
 
       default:
         throw new Error("Extension " + extension + " not supported.");
