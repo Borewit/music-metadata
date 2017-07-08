@@ -1,7 +1,7 @@
 import {Windows1292Decoder} from './Windows1292Decoder';
 import {Genres} from "./id3v1/ID3v1Parser";
 
-export type encoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8'| 'utf16le';
+export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8'| 'utf16le';
 
 export default class Common {
 
@@ -131,7 +131,7 @@ export default class Common {
    * @param encoding 'utf16le' | 'utf16' | 'utf8' | 'iso-8859-1'
    * @return {string}
    */
-  public static decodeString(buffer: Buffer, encoding: encoding): string {
+  public static decodeString(buffer: Buffer, encoding: StringEncoding): string {
     // annoying workaround for a double BOM issue
     // https://github.com/leetreveil/musicmetadata/issues/84
     if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {

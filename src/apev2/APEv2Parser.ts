@@ -12,7 +12,7 @@ import * as Token from "token-types";
  * APETag versionIndex history / supported formats
  *
  *  1.0 (1000) - Original APE tag spec.  Fully supported by this code.
- *  2.0 (2000) - Refined APE tag spec (better streaming support, UTF encoding). Fully supported by this code.
+ *  2.0 (2000) - Refined APE tag spec (better streaming support, UTF StringEncoding). Fully supported by this code.
  *
  *  Notes:
  *  - also supports reading of ID3v1.1 tags
