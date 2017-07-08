@@ -67,7 +67,7 @@ export const APEv2TagMap: INativeTagMap = {
   MUSICBRAINZ_WORKID: 'musicbrainz_workid',
   MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
   MUSICBRAINZ_DISCID: 'musicbrainz_discid',
-  ACOUSTID_ID: 'acoustid_id',
+  Acoustid_Id: 'acoustid_id',
   ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
   MUSICIP_PUID: 'musicip_puid',
   Weblink: 'website'

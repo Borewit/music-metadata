@@ -32,36 +32,6 @@ describe("MusicBrainz mapping", () => {
     }
   }
 
-  function hasReleaseCountry(inputTagType: HeaderType): boolean {
-    switch (inputTagType) {
-      case "APEv2": // Picard has a mapping for this, but does not seem to include this
-      case "iTunes MP4": // Picard has a mapping for this, but does not seem to include this
-      case "asf":
-        return false;
-      default: return true;
-    }
-  }
-
-  function hasASIN(inputTagType: HeaderType): boolean {
-    switch (inputTagType) {
-      case "APEv2": // Picard has a mapping for this, but does not seem to include this
-      case "asf": // Picard has a mapping for this, but does not seem to include this
-        return false;
-      default: return true;
-    }
-  }
-
-  function hasAccousticId(inputTagType: HeaderType): boolean {
-    switch (inputTagType) {
-      case "APEv2": // Picard has a mapping for this, but does not seem to include this
-      case "id3v2.3": // Picard has a mapping for this, but does not seem to include this
-      case "iTunes MP4": // Picard has a mapping for this, but does not seem to include this
-      case "asf":
-        return false;
-      default: return true;
-    }
-  }
-
   function calcHash(buf: Buffer): string {
     const hash = crypto.createHash('md5');
     hash.update(buf);
@@ -71,7 +41,7 @@ describe("MusicBrainz mapping", () => {
   /**
    * Check common output
    * @param inputTagType Meta-data header format
-   * @param common COmmon tag mapping
+   * @param common Common tag mapping
    */
   function checkCommonMapping(inputTagType: HeaderType, common: ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
@@ -122,18 +92,8 @@ describe("MusicBrainz mapping", () => {
 
     t.strictEqual(common.musicbrainz_releasegroupid, 'e00305af-1c72-469b-9a7c-6dc665ca9adc', inputTagType + " => common.musicbrainz_releasegroupid");
     t.strictEqual(common.musicbrainz_trackid, 'd062f484-253c-374b-85f7-89aab45551c7', inputTagType + " => common.musicbrainz_trackid");
-
-    if ( hasReleaseCountry(inputTagType)) {
-      t.strictEqual(common.releasecountry, "GB", inputTagType + " => common.releasecountry");
-    }
-    if ( hasASIN(inputTagType)) {
-      t.strictEqual(common.asin, "B004X5SCGM", inputTagType + " => common.asin");
-    }
-
-    if ( hasAccousticId(inputTagType) ) {
-      t.strictEqual(common.acoustid_id, "09c06fac-679a-45b1-8ea0-6ce532318363", inputTagType + " => common.acoustid_id");
-    }
-
+    t.strictEqual(common.asin, "B005NPEUB2", inputTagType + " => common.asin");
+    t.strictEqual(common.acoustid_id, "09c06fac-679a-45b1-8ea0-6ce532318363", inputTagType + " => common.acoustid_id");
     t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
     t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'picture data');
@@ -165,8 +125,18 @@ describe("MusicBrainz mapping", () => {
     t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
     t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ALBUMARTISTID');
     t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ARTISTID');
-    t.deepEqual(vorbis.PERFORMER, ['Carmine Rojas (bass guitar)', 'The Bovaland Orchestra (orchestra)', 'Anton Fig (drums)', 'Anton Fig (percussion)', 'Blondie Chaplin (guitar)',
-      'Joe Bonamassa (guitar)', 'Arlan Scheirbaum (keyboard)', 'Beth Hart (vocals)', 'Joe Bonamassa (vocals)', 'Beth Hart (piano)'], 'vorbis.PERFORMER');
+    t.deepEqual(vorbis.PERFORMER, [
+      "Beth Hart (piano)",
+      "Beth Hart (vocals)",
+      "Joe Bonamassa (vocals)",
+      "The Bovaland Orchestra (orchestra)",
+      "Blondie Chaplin (guitar)",
+      "Joe Bonamassa (guitar)",
+      "Anton Fig (drums)",
+      "Anton Fig (percussion)",
+      "Carmine Rojas (bass guitar)",
+      "Arlan Scheirbaum (keyboard)"
+    ], 'vorbis.PERFORMER');
     t.deepEqual(vorbis.ARRANGER, ['Jeff Bova'], 'vorbis.ARRANGER');
     t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
     t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['d062f484-253c-374b-85f7-89aab45551c7'], 'vorbis.MUSICBRAINZ_RELEASETRACKID');
@@ -174,7 +144,7 @@ describe("MusicBrainz mapping", () => {
     t.deepEqual(vorbis.MUSICBRAINZ_TRACKID, ['f151cb94-c909-46a8-ad99-fb77391abfb8'], 'vorbis.MUSICBRAINZ_TRACKID');
     t.deepEqual(vorbis.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'vorbis.NOTES');
     t.deepEqual(vorbis.BARCODE, ['804879313915'], 'vorbis.BARCODE');
-    t.deepEqual(vorbis.ASIN, ['B004X5SCGM'], 'vorbis.ASIN');
+    t.deepEqual(vorbis.ASIN, ['B005NPEUB2'], 'vorbis.ASIN');
     t.deepEqual(vorbis.RELEASECOUNTRY, ['GB'], 'vorbis.RELEASECOUNTRY');
     t.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis.RELEASESTATUS');
 
@@ -261,7 +231,7 @@ describe("MusicBrainz mapping", () => {
       t.deepEqual(APEv2.Originaldate, ['2011-09-26'], 'APEv2.Originaldate');
       t.deepEqual(APEv2.Label, ['J&R Adventures'], 'APEv2.LABEL');
       t.deepEqual(APEv2.CatalogNumber, ['PRAR931391'], 'APEv2.CatalogNumber');
-      // ToDo?: t.deepEqual(APEv2.ACOUSTID_ID, '09c06fac-679a-45b1-8ea0-6ce532318363', 'APEv2.ACOUSTID_ID')
+      t.deepEqual(APEv2.Acoustid_Id, ['09c06fac-679a-45b1-8ea0-6ce532318363'], 'APEv2.Acoustid_Id');
       t.deepEqual(APEv2.Artist, ['Beth Hart & Joe Bonamassa'], 'APEv2.Artist');
       t.deepEqual(APEv2.Artists, ['Beth Hart', 'Joe Bonamassa'], 'APEv2.Artists');
       t.deepEqual(APEv2.Artistsort, ['Hart, Beth & Bonamassa, Joe'], 'APEv2.Artistsort');
@@ -274,8 +244,18 @@ describe("MusicBrainz mapping", () => {
       t.deepEqual(APEv2.Musicbrainz_Albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Albumartistid');
       t.deepEqual(APEv2.Musicbrainz_Artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Artistid');
 
-      t.deepEqual(APEv2.Performer, ['Carmine Rojas (bass guitar)', 'The Bovaland Orchestra (orchestra)', 'Anton Fig (drums)', 'Anton Fig (percussion)', 'Blondie Chaplin (guitar)',
-        'Joe Bonamassa (guitar)', 'Arlan Scheirbaum (keyboard)', 'Beth Hart (vocals)', 'Joe Bonamassa (vocals)', 'Beth Hart (piano)'], 'APEv2.Performer');
+      t.deepEqual(APEv2.Performer, [
+        "Beth Hart (piano)",
+        "Beth Hart (vocals)",
+        "Joe Bonamassa (vocals)",
+        "The Bovaland Orchestra (orchestra)",
+        "Blondie Chaplin (guitar)",
+        "Joe Bonamassa (guitar)",
+        "Anton Fig (drums)",
+        "Anton Fig (percussion)",
+        "Carmine Rojas (bass guitar)",
+        "Arlan Scheirbaum (keyboard)"
+      ], 'APEv2.Performer');
       t.deepEqual(APEv2.Producer, ['Roy Weisman'], 'APEv2.PRODUCER');
       t.deepEqual(APEv2.Engineer, ['James McCullagh', 'Jared Kvitka'], 'APEv2.ENGINEER');
       t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.ARRANGER');
@@ -287,7 +267,7 @@ describe("MusicBrainz mapping", () => {
 
       // t.deepEqual(APEv2.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'APEv2.NOTES')
       t.deepEqual(APEv2.Barcode, ['804879313915'], 'APEv2.Barcode');
-      // ToDo: not set??? t.deepEqual(APEv2.ASIN, 'B004X5SCGM', 'APEv2.ASIN');
+      // ToDo: not set??? t.deepEqual(APEv2.ASIN, 'B005NPEUB2', 'APEv2.ASIN');
       // ToDo: not set??? t.deepEqual(APEv2.RELEASECOUNTRY, 'GB', 'APEv2.RELEASECOUNTRY');
       t.deepEqual(APEv2.MUSICBRAINZ_ALBUMSTATUS, ['official'], 'APEv2.MUSICBRAINZ_ALBUMSTATUS');
 
@@ -362,7 +342,7 @@ describe("MusicBrainz mapping", () => {
         vocals: ['Beth Hart', 'Joe Bonamassa']
       }], 'id3v23.IPLS: Involved people list');
 
-      t.deepEqual(native['TXXX:ASIN'], ['B004X5SCGM'], 'id3v23.TXXX:ASIN');
+      t.deepEqual(native['TXXX:ASIN'], ['B005NPEUB2'], 'id3v23.TXXX:ASIN');
       t.deepEqual(native['TXXX:Artists'], ['Beth Hart', 'Joe Bonamassa'], 'id3v23.TXXX:Artists');
       t.deepEqual(native['TXXX:BARCODE'], ['804879313915'], 'id3v23.TXXX:BARCODE');
       t.deepEqual(native['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v23.TXXX:CATALOGNUMBER');
@@ -452,7 +432,7 @@ describe("MusicBrainz mapping", () => {
         identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
       }, 'id3v24.UFID: Unique file identifier');
 
-      t.deepEqual(id3v24['TXXX:ASIN'], ['B004X5SCGM'], 'id3v24.TXXX:ASIN');
+      t.deepEqual(id3v24['TXXX:ASIN'], ['B005NPEUB2'], 'id3v24.TXXX:ASIN');
       t.deepEqual(id3v24['TXXX:Artists'], ['Beth Hart', 'Joe Bonamassa'], 'id3v24.TXXX:Artists');
       t.deepEqual(id3v24['TXXX:BARCODE'], ['804879313915'], 'id3v24.TXXX:BARCODE');
       t.deepEqual(id3v24['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v24.TXXX:CATALOGNUMBER');
@@ -590,7 +570,7 @@ describe("MusicBrainz mapping", () => {
         identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
       }, 'id3v24.UFID: Unique file identifier');
 
-      t.deepEqual(id3v24['TXXX:ASIN'], ['B004X5SCGM'], 'id3v24.TXXX:ASIN');
+      t.deepEqual(id3v24['TXXX:ASIN'], ['B005NPEUB2'], 'id3v24.TXXX:ASIN');
       t.deepEqual(id3v24['TXXX:Artists'], ['Beth Hart', 'Joe Bonamassa'], 'id3v24.TXXX:Artists');
       t.deepEqual(id3v24['TXXX:BARCODE'], ['804879313915'], 'id3v24.TXXX:BARCODE');
       t.deepEqual(id3v24['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v24.TXXX:CATALOGNUMBER');
