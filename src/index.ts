@@ -105,7 +105,9 @@ export interface ICommonTagsResult {
   'performer:instrument'?: string[],
   averageLevel?: number,
   peakLevel?: number,
-  notes: string[]
+  notes: string[],
+  originalalbum: string,
+  originalartist: string
 }
 
 export interface IFormat {

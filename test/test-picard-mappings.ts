@@ -2,6 +2,7 @@ import {} from "mocha";
 import {assert} from 'chai';
 import {APEv2TagMap} from "../src/apev2/APEv2TagMap";
 import {AsfTagMap} from "../src/asf/AsfTagMap";
+import {ID3v24TagMap} from "../src/id3v2/ID3v24TagMap";
 
 describe("Picard mappings", () => {
 
@@ -128,6 +129,63 @@ describe("Picard mappings", () => {
 
       assert.isDefined(APEv2TagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
       assert.equal(APEv2TagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+    }
+
+  });
+
+  it("ID3v2.4.0", () => {
+
+    /**
+     * Picard mappings
+     * Taken from: picard-release-1.4.2/picard/formats/asf.py
+     */
+    const PicardMappings = {
+      // In same sequence as defined at http://id3.org/id3v2.4.0-frames
+      TIT1: 'grouping',
+      TIT2: 'title',
+      TIT3: 'subtitle',
+      TALB: 'album',
+      TSST: 'discsubtitle',
+      TSRC: 'isrc',
+      TPE1: 'artist',
+      TPE2: 'albumartist',
+      TPE3: 'conductor',
+      TPE4: 'remixer',
+      TEXT: 'lyricist',
+      TCOM: 'composer',
+      TENC: 'encodedby',
+      TBPM: 'bpm',
+      TKEY: 'key',
+      TLAN: 'language',
+      TCON: 'genre',
+      TMED: 'media',
+      TMOO: 'mood',
+      TCOP: 'copyright',
+      TPUB: 'label',
+      TDOR: 'originaldate',
+      TDRC: 'date',
+      TSSE: 'encodersettings',
+      TSOA: 'albumsort',
+      TSOP: 'artistsort',
+      TSOT: 'titlesort',
+      WCOP: 'license',
+      WOAR: 'website',
+      COMM: 'comment',
+      TOAL: 'originalalbum',
+      TOPE: 'originalartist',
+
+      // The following are informal iTunes extensions to id3v2:
+      TCMP: 'compilation',
+      TSOC: 'composersort',
+      TSO2: 'albumartistsort'
+    };
+
+    for (const picNativeTag in PicardMappings) {
+      const picComTag = PicardMappings[picNativeTag];
+      const mmCommonTag = convertName(picComTag);
+
+      assert.isDefined(ID3v24TagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
+      assert.equal(ID3v24TagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
     }
 
   });

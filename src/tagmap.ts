@@ -19,7 +19,7 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artist
   'musicbrainz_artistid' | 'musicbrainz_albumartistid' | 'musicbrainz_releasegroupid' |
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
   'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
-  'peakLevel' | 'averageLevel' | 'notes' | 'key';
+  'peakLevel' | 'averageLevel' | 'notes' | 'key'| 'originalalbum' | 'originalartist';
 
 export interface INativeTagMap {
   [index: string]: CommonTag;
@@ -147,7 +147,10 @@ export default class TagMap {
     peakLevel: {multiple: false},
     notes: {multiple: true},
 
-    key: {multiple: false}
+    key: {multiple: false},
+    originalalbum: {multiple: false},
+    originalartist: {multiple: false}
+
   };
 
   private static capitalizeTags(map: INativeTagMap): INativeTagMap {

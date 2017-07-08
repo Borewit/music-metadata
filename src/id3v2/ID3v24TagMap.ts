@@ -23,7 +23,7 @@ export const ID3v24TagMap: INativeTagMap = {
   'USLT:description': 'lyrics',
   TSOA: 'albumsort',
   TSOT: 'titlesort',
-  TOAL: 'work',
+  TOAL: 'originalalbum',
   TSOP: 'artistsort',
   TSO2: 'albumartistsort',
   TSOC: 'composersort',
@@ -83,6 +83,7 @@ export const ID3v24TagMap: INativeTagMap = {
   WOAR: 'website',
 
   // id3v2.4
+  // ToDo: In same sequence as defined at http://id3.org/id3v2.4.0-frames
   TDRC: 'date', // date YYYY-MM-DD
   TYER: 'year',
   TDOR: 'originaldate',
@@ -96,6 +97,11 @@ export const ID3v24TagMap: INativeTagMap = {
 
   // additional mappings:
   SYLT: 'lyrics',
+
+  TSST: 'discsubtitle',
+  TKEY: 'key',
+  COMM: 'comment',
+  TOPE: 'originalartist',
 
   // Windows Media Player
   'PRIV:AverageLevel' : 'averageLevel',
