@@ -3,6 +3,7 @@ import {assert} from 'chai';
 import * as mm from '../src';
 
 import * as path from 'path';
+import {ICommonTagsResult} from "../src/index";
 
 const t = assert;
 
@@ -12,7 +13,7 @@ describe("ID3v1.1", () => {
 
     const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
 
-    function checkFormat(format) {
+    function checkFormat(format: mm.IFormat) {
       t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type');
       t.strictEqual(format.duration, 5.4857, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
@@ -22,7 +23,7 @@ describe("ID3v1.1", () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
 
-    function checkCommon(common) {
+    function checkCommon(common: ICommonTagsResult) {
       t.strictEqual(common.title, 'Blood Sugar', 'common.title');
       t.strictEqual(common.artist, 'Pendulum', 'common.artist');
       t.strictEqual(common.album, 'Blood Sugar (Single)', 'common.album');
@@ -45,8 +46,8 @@ describe("ID3v1.1", () => {
 
     const filePath = path.join(__dirname, 'samples', "MusicBrainz - Beth Hart - Sinner's Prayer [no-tags].V4.mp3");
 
-    function checkFormat(format) {
-      t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type');
+    function checkFormat(format: mm.IFormat) {
+      t.isUndefined(format.headerType, 'format.tag_type');
       t.strictEqual(format.duration, 2, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
@@ -56,12 +57,14 @@ describe("ID3v1.1", () => {
     }
 
     return mm.parseFile(filePath, {native: true}).then((result) => {
-      for (const tagType of ["id3v2.2", "id3v2.3", "id3v2.4", "id3v1.1"]) {
-        t.isUndefined(result.native[tagType], "Should not contain " + tagType + " tags");
+
+      checkFormat(result.format);
+
+      for (const tagType in result.native) {
+        throw new Error("Do not expect any native tag type, got: " + tagType);
       }
     });
 
   });
 
 });
-
