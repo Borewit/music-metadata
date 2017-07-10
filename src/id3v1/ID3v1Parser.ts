@@ -60,14 +60,19 @@ interface Iid3v1Header {
 
 /**
  * Ref: https://en.wikipedia.org/wiki/ID3
- * @type {{len: number; get: ((buf, off)=>Iid3v1Header)}}
  */
 const Iid3v1Token: IGetToken<Iid3v1Header> = {
   len: 128,
 
+  /**
+   * @param buf Buffer possibly holding the 128 bytes ID3v1.1 metadata header
+   * @param off Offset in buffer in bytes
+   * @returns ID3v1.1 header if first 3 bytes equals 'TAG', otherwise null is returned
+   */
   get: (buf, off): Iid3v1Header => {
-    return {
-      header: new Id3v1StringType(3, 'ascii').get(buf, off),
+    const header = new Id3v1StringType(3, 'ascii').get(buf, off);
+    return header === "TAG" ? {
+      header,
       title: new Id3v1StringType(30, 'ascii').get(buf, off + 3),
       artist: new Id3v1StringType(30, 'ascii').get(buf, off + 33),
       album: new Id3v1StringType(30, 'ascii').get(buf, off + 63),
@@ -76,7 +81,7 @@ const Iid3v1Token: IGetToken<Iid3v1Header> = {
       zeroByte: Token.INT8.get(buf, off + 127),
       track: Token.INT8.get(buf, off + 126),
       genre: Token.INT8.get(buf, off + 127)
-    };
+    } : null;
   }
 };
 
@@ -111,19 +116,20 @@ export class ID3v1Parser implements ITokenParser {
       return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then((header) => {
         const res = {
           format,
-          native: {
-            'id3v1.1': [
-              {id: 'title', value: header.title},
-              {id: 'artist', value: header.artist},
-              {id: 'album', value: header.album},
-              {id: 'comment', value: header.comment},
-              {id: 'track', value: header.track},
-              {id: 'year', value: header.year},
-              {id: 'genre', value: ID3v1Parser.getGenre(header.genre)}
-            ]
-          }
+          native: {}
         };
-        res.format.headerType = 'id3v1.1' as HeaderType;
+        if (header) {
+          res.format.headerType = 'id3v1.1' as HeaderType;
+          res.native['id3v1.1'] = [
+            {id: 'title', value: header.title},
+            {id: 'artist', value: header.artist},
+            {id: 'album', value: header.album},
+            {id: 'comment', value: header.comment},
+            {id: 'track', value: header.track},
+            {id: 'year', value: header.year},
+            {id: 'genre', value: ID3v1Parser.getGenre(header.genre)}
+          ];
+        }
         return res;
       });
     });

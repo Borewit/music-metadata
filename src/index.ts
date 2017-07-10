@@ -38,7 +38,7 @@ export interface ICommonTagsResult {
    * Original release yeat
    */
   originalyear?: number,
-  comment?: string,
+  comment?: string[],
   genre?: string[];
   picture?: IPicture[];
   composer?: string[];
