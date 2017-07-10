@@ -466,7 +466,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should parse AIFF/ID3v2.4 audio file", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.aiff";
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff";
       const filePath = path.join(__dirname, 'samples', filename);
 
       function checkFormat(format: mm.IFormat) {
