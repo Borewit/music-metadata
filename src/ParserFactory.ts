@@ -112,6 +112,8 @@ export class ParserFactory {
       case 'audio/x-monkeys-audio':
         return Promise.resolve<ITokenParser>(new APEv2Parser());
 
+      case 'audio/aac':
+      case 'audio/aacp':
       case 'audio/mp4':
         return Promise.resolve<ITokenParser>(new MP4Parser());
 
@@ -124,9 +126,10 @@ export class ParserFactory {
       case 'audio/ogg':
         return Promise.resolve<ITokenParser>(new OggParser());
 
-      case 'audio/aac':
-      case 'audio/aacp':
-        return Promise.resolve<ITokenParser>(new MP4Parser());
+      case 'audio/aiff':
+      case 'audio/x-aif':
+      case 'audio/x-aifc':
+        return Promise.resolve<ITokenParser>(new AIFFParser());
 
       default:
         throw new Error("MIME-Type: " + mimeType + " not supported.");
