@@ -4,7 +4,7 @@ import {APEv2TagMap} from "../src/apev2/APEv2TagMap";
 import {AsfTagMap} from "../src/asf/AsfTagMap";
 import {ID3v24TagMap} from "../src/id3v2/ID3v24TagMap";
 
-describe("Picard mappings", () => {
+describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   function convertName(picardName: string) {
     switch (picardName) {

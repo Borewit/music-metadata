@@ -157,7 +157,7 @@ export interface IFormat {
   numberOfChannels?: number,
 
   /**
-   * Number of samples.
+   * Number of samples frames.
    * One sample contains all channels
    * The duration is: numberOfSamples / sampleRate
    */

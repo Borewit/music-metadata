@@ -79,6 +79,7 @@ export class ParserFactory {
       case '.ape':
         return Promise.resolve<ITokenParser>(new APEv2Parser());
 
+      case '.aac':
       case '.mp4':
       case '.m4a':
         return Promise.resolve<ITokenParser>(new MP4Parser());
@@ -122,6 +123,10 @@ export class ParserFactory {
 
       case 'audio/ogg':
         return Promise.resolve<ITokenParser>(new OggParser());
+
+      case 'audio/aac':
+      case 'audio/aacp':
+        return Promise.resolve<ITokenParser>(new MP4Parser());
 
       default:
         throw new Error("MIME-Type: " + mimeType + " not supported.");
