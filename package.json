@@ -31,7 +31,8 @@
     "wmv",
     "tag",
     "ape",
-    "MonkeyAudio"
+    "MonkeyAudio",
+    "aiff"
   ],
   "main": "lib",
   "typings": "lib/index",
