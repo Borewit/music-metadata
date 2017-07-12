@@ -1,4 +1,7 @@
-[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![npm downloads][npm-downloads-image]][npm-url]
+[![Build Status](https://travis-ci.org/Borewit/music-metadata.svg?branch=master)](https://travis-ci.org/Borewit/music-metadata)
+[![NPM version](https://badge.fury.io/js/music-metadata.svg)](https://npmjs.org/package/music-metadata)
+[![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmjs.org/package/music-metadata)
+[![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://github.com/Borewit/music-metadata)
 
 Streaming music metadata parser for node.
 
@@ -38,7 +41,7 @@ npm install music-metadata
 
 ### Examples
 
-#### JavaScript
+##### JavaScript
 ```javascript
 var mm = require('music-metadata');
 const util = require('util')
@@ -52,7 +55,7 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
   });
 ```
 
-#### TypeScript
+##### TypeScript
 ```TypeScript
 import * as mm from 'music-metadata';
 import * as util from 'util';
@@ -226,9 +229,4 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[npm-url]: https://npmjs.org/package/music-metadata
-[npm-image]: https://badge.fury.io/js/music-metadata.svg
-[npm-downloads-image]: http://img.shields.io/npm/dm/music-metadata.svg
 
-[travis-url]: https://travis-ci.org/Borewit/music-metadata
-[travis-image]: https://travis-ci.org/Borewit/music-metadata.svg?branch=master
