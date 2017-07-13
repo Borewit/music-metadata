@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/Borewit/music-metadata.svg?branch=master)](https://travis-ci.org/Borewit/music-metadata)
 [![NPM version](https://badge.fury.io/js/music-metadata.svg)](https://npmjs.org/package/music-metadata)
 [![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmjs.org/package/music-metadata)
-[![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://github.com/Borewit/music-metadata)
+[![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://david-dm.org/Borewit/music-metadata)
 
 Streaming music metadata parser for node.
 
