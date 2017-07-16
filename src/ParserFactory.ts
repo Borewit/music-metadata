@@ -82,6 +82,11 @@ export class ParserFactory {
       case '.aac':
       case '.mp4':
       case '.m4a':
+      case '.m4b':
+      case '.m4pa':
+      case '.m4v':
+      case '.m4r':
+      case '.3gp':
         return Promise.resolve<ITokenParser>(new MP4Parser());
 
       case '.wma':
@@ -93,6 +98,9 @@ export class ParserFactory {
         return Promise.resolve<ITokenParser>(new FlacParser());
 
       case '.ogg':
+      case '.ogv':
+      case '.oga':
+      case '.ogx':
         return Promise.resolve<ITokenParser>(new OggParser());
 
       case '.aiff':
@@ -117,6 +125,7 @@ export class ParserFactory {
       case 'audio/mp4':
         return Promise.resolve<ITokenParser>(new MP4Parser());
 
+      case 'video/x-ms-asf':
       case 'audio/x-ms-wma':
         return Promise.resolve<ITokenParser>(new AsfParser());
 
@@ -124,6 +133,8 @@ export class ParserFactory {
         return Promise.resolve<ITokenParser>(new FlacParser());
 
       case 'audio/ogg':
+      case 'application/ogg':
+      case 'video/ogg':
         return Promise.resolve<ITokenParser>(new OggParser());
 
       case 'audio/aiff':
