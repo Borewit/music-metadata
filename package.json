@@ -1,7 +1,7 @@
 {
   "name": "music-metadata",
   "description": "Streaming music metadata parser for node and the browser.",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
@@ -54,7 +54,7 @@
     "filereader-stream": "^1.0.0",
     "fs-extra": "^3.0.1",
     "is-stream": "^1.1.0",
-    "strtok3": "^0.2.0",
+    "strtok3": "^1.0.0",
     "then-read-stream": "^0.1.0",
     "token-types": "0.0.1"
   },
