@@ -31,17 +31,6 @@ export default class Common {
     }
   };
 
-  public static getParserForMediaType(types, header) {
-    for (const type of types) {
-      const offset = type.offset || 0;
-      if (header.length >= offset + type.buf.length && header.slice(offset, offset + type.buf.length).compare(type.buf) === 0) {
-        return type.tag;
-      }
-    }
-    // default to id3v1.1 if we cannot detect any other tags
-    return require('./id3v1/id3v1');
-  }
-
   public static streamOnRealEnd(stream: NodeJS.ReadableStream, callback: () => void): void {
     stream.on('end', done);
     stream.on('close', done);
