@@ -1,9 +1,9 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../src';
-import {ICommonTagsResult, INativeTagDict} from "../src/index";
+import * as mm from '../lib';
+import {ICommonTagsResult, INativeTagDict} from "../lib/index";
 import * as path from 'path';
-import {HeaderType} from "../src/tagmap";
+import {HeaderType} from "../lib/tagmap";
 import * as crypto from "crypto";
 
 const t = assert;

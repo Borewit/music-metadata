@@ -68,7 +68,7 @@ export const HeaderObjectToken: Token.IGetToken<IAsfObjectHeader> = {
   }
 };
 
-abstract class State<T> implements Token.IGetToken<T> {
+export abstract class State<T> implements Token.IGetToken<T> {
 
   public len: number;
 

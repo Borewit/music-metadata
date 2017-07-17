@@ -1,5 +1,5 @@
 test/
 node_modules/
-src/
 example/
 doc-gen/
+coverage/

@@ -1,9 +1,9 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 
 import * as path from 'path';
-import {ICommonTagsResult} from "../src/index";
+import {ICommonTagsResult} from "../lib/index";
 
 const t = assert;
 

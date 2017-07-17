@@ -1,11 +1,10 @@
 node_modules/
 .idea/
 *.iml
-lib/
-typings/globals/
-src/**/*.js
-src/**/*.d.ts
-src/**/*.map
+lib/**/*.js
+lib/**/*.d.ts
+lib/**/*.map
 test/**/*.js
 test/**/*.map
 test/**/*.d.ts
+covergae

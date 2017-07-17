@@ -1,7 +1,7 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../src';
-import {INativeTagDict} from "../src/index";
+import * as mm from '../lib';
+import {INativeTagDict} from "../lib/index";
 import * as path from 'path';
 
 const t = assert;

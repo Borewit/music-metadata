@@ -1,6 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import Common from "../src/common";
+import Common from "../lib/common";
 
 const t = assert;
 

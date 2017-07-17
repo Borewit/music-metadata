@@ -1,6 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as common from '../src/common';
+import * as common from '../lib/common';
 
 const findZero = common.default.findZero;
 

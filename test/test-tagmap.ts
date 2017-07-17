@@ -1,6 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import TagMap, {ITagInfoMap} from "../src/tagmap";
+import TagMap, {ITagInfoMap} from "../lib/tagmap";
 
 const t = assert;
 

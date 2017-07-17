@@ -1,10 +1,10 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../src';
-import {INativeTagDict} from "../src/index";
+import * as mm from '../lib';
+import {INativeTagDict} from "../lib/index";
 import * as path from 'path';
-import GUID from "../src/asf/GUID";
-import {AsfTagMap} from "../src/asf/AsfTagMap";
+import GUID from "../lib/asf/GUID";
+import {AsfTagMap} from "../lib/asf/AsfTagMap";
 
 const t = assert;
 

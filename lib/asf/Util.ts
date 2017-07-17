@@ -1,6 +1,6 @@
 import common from '../common';
 
-type AttributeParser = (buf: Buffer) => boolean | string | number | Buffer;
+export type AttributeParser = (buf: Buffer) => boolean | string | number | Buffer;
 
 export class Util {
 

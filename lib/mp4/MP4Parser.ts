@@ -6,17 +6,6 @@ import {StringType, BufferType, IGetToken, IgnoreType} from "token-types";
 import * as Token from "token-types";
 import {Genres} from "../id3v1/ID3v1Parser";
 
-/**
- * M4A signature, ref: https://www.filesignatures.net/index.php?page=search&search=M4A&mode=EXT
- * ascii: ••• ftypM4A
- */
-// const signature_m4a = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41];
-
-/**
- * ascii: ••• ftypmp42
- */
-// const signature_m4a_42  = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x34, 0x32];
-
 interface IAtomHeader {
   length: number,
   name: string
