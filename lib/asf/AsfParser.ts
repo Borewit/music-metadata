@@ -21,23 +21,6 @@ export class AsfParser implements ITokenParser {
 
   public static headerType = 'asf';
 
-  public static getInstance(): AsfParser {
-    return new AsfParser();
-  }
-
-  /**
-   * Print GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
-   * @param objectId Binary GUID
-   * @returns {string} GUID as dashed hexadecimal representation
-   */
-  private static guidToString(objectId: Buffer): string {
-    return objectId.slice(0, 4).toString('hex').toUpperCase() + "-"
-      + objectId.slice(4, 6).toString('hex').toUpperCase() + "-"
-      + objectId.slice(6, 8).toString('hex').toUpperCase() + "-"
-      + objectId.slice(8, 10).toString('hex').toUpperCase() + "-"
-      + objectId.slice(10, 16).toString('hex').toUpperCase();
-  }
-
   private tokenizer: ITokenizer;
 
   private numberOfObjectHeaders: number;
