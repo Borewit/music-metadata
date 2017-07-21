@@ -50,16 +50,14 @@
     "coveralls": "npm run cover-test && nyc report --reporter=text-lcov | coveralls"
   },
   "dependencies": {
-    "@types/chai": "^4.0.1",
     "es6-promise": "^4.1.1",
-    "filereader-stream": "^1.0.0",
     "fs-extra": "^4.0.0",
-    "is-stream": "^1.1.0",
     "strtok3": "^1.0.3",
     "then-read-stream": "^0.9.1",
     "token-types": "^0.1.2"
   },
   "devDependencies": {
+    "@types/chai": "^4.0.1",
     "@types/es6-promise": "0.0.32",
     "@types/fs-extra": "^3.0.3",
     "@types/mocha": "^2.2.41",
