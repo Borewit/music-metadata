@@ -12,6 +12,7 @@ import {Promise} from "es6-promise";
 import * as Stream from "stream";
 import * as path from "path";
 import {AIFFParser} from "./aiff/AiffParser";
+import {WavePcmParser} from "./riff/RiffParser";
 
 export interface ITokenParser {
   parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -71,7 +72,9 @@ export class ParserFactory {
     const extension = path.extname(filePath).toLocaleLowerCase();
     switch (extension) {
 
+      case '.mp2':
       case '.mp3':
+      case '.m2a':
         return this.hasStartTag(filePath, 'ID3').then((hasID3) => {
           return hasID3 ? new ID3v2Parser() : new ID3v1Parser();
         });
@@ -103,8 +106,13 @@ export class ParserFactory {
       case '.ogx':
         return Promise.resolve<ITokenParser>(new OggParser());
 
+      case '.aif':
       case '.aiff':
+      case '.aifc':
         return Promise.resolve<ITokenParser>(new AIFFParser());
+
+      case '.wav':
+        return Promise.resolve<ITokenParser>(new WavePcmParser());
 
       default:
         throw new Error("Extension " + extension + " not supported.");

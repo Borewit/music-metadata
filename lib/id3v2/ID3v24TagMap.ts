@@ -1,7 +1,7 @@
 import {INativeTagMap} from "../tagmap";
 
 /**
- * ID3v2.3 tag mappings
+ * ID3v2.3/ID3v2.4 tag mappings
  */
 export const ID3v24TagMap: INativeTagMap = {
   // id3v2.3
@@ -105,5 +105,5 @@ export const ID3v24TagMap: INativeTagMap = {
 
   // Windows Media Player
   'PRIV:AverageLevel' : 'averageLevel',
-  'PRIV:PeakLevel' : 'peakLevel'
+  'PRIV:PeakLevel' : 'peakLevel',
 };

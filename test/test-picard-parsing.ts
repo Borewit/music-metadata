@@ -20,7 +20,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     switch (inputTagType) {
       case "id3v2.3": // has original year, not the original date
         return false;
-      default: return true;
+      default:
+        return true;
     }
   }
 
@@ -28,7 +29,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     switch (inputTagType) {
       case "id3v2.3": // has original year, not the original date
         return false;
-      default: return true;
+      default:
+        return true;
     }
   }
 
@@ -65,10 +67,10 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(common.track, {no: 1, of: 10}, inputTagType + " => common.track");
     }
     t.deepEqual(common.disk, {no: 1, of: 1}, inputTagType + " => common.disk");
-    if ( hasOriginalData(inputTagType) ) {
+    if (hasOriginalData(inputTagType)) {
       t.strictEqual(common.originaldate, "2011-09-26", inputTagType + " => common.originaldate = 2011-09-26");
     }
-    if ( hasReleaseData(inputTagType) ) {
+    if (hasReleaseData(inputTagType)) {
       t.strictEqual(common.date, "2011-09-27", inputTagType + " => common.date");
     }
     t.strictEqual(common.year, 2011, inputTagType + " => common.year");
@@ -99,7 +101,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'picture data');
   }
 
-  describe("Vorbis mappings" , () => {
+  describe("Vorbis mappings", () => {
 
     /**
      * Check native Vorbis header
@@ -297,27 +299,13 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   });
 
-  it("should map id3v2.3 header", () => {
-
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3";
-    const filePath = path.join(__dirname, 'samples', filename);
-
-    function checkFormat(format) {
-      t.strictEqual(format.headerType, 'id3v2.3', 'format.headerType');
-      t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
-      t.strictEqual(format.duration, 2, 'format.duration = 2.123 sec'); // ToDo, add fraction???
-      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-      // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
-      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-      t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
-      t.strictEqual(format.encoder, 'LAME3.99r', 'format.encoder = LAME3.99r');
-    }
+  describe("ID3v2.3 header", () => {
 
     function checkID3Tags(native: INativeTagDict) {
 
       t.deepEqual(native.TIT2, ['Sinner\'s Prayer'], 'id3v23.TIT2: Title/songname/content description');
       t.deepEqual(native.TPE1, ['Beth Hart & Joe Bonamassa'], 'id3v23.TPE1: Lead performer(s)/Soloist(s)');
-      t.deepEqual(native.TPE2, ['Beth Hart & Joe Bonamassa'], 'id3v23.TPE1: Band/orchestra/accompaniment');
+      t.deepEqual(native.TPE2, ['Beth Hart & Joe Bonamassa'], 'id3v23.TPE2: Band/orchestra/accompaniment');
       t.deepEqual(native.TALB, ['Don\'t Explain'], 'id3v23.TALB: Album/Movie/Show title');
       t.deepEqual(native.TORY, ['2011'], 'id3v23.TORY: Original release year');
       t.deepEqual(native.TYER, ['2011'], 'id3v23.TYER');
@@ -325,8 +313,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(native.TRCK, ['1/10'], 'id3v23.TRCK: Track number/Position in set');
       t.deepEqual(native.TPUB, ['J&R Adventures'], 'id3v23.TPUB: Publisher');
       t.deepEqual(native.TMED, ['CD'], 'id3v23.TMED: Media type');
-      // tslint:disable:max-line-length
-      // t.deepEqual(id3v23.UFID[0], {owner_identifier: 'http://musicbrainz.org', identifier: Buffer.from([102, 49, 53, 49, 99, 98, 57, 52, 45, 99, 57, 48, 57, 45, 52, 54, 97, 56, 45, 97, 100, 57, 57, 45, 102, 98, 55, 55, 51, 57, 49, 97, 98, 102, 98, 56])}, 'id3v23.UFID: Unique file identifier')
       t.deepEqual(native.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
         identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
@@ -364,12 +350,60 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       // t.strictEqual(native.METADATA_BLOCK_PICTURE.data.length, 98008, 'native.METADATA_BLOCK_PICTURE length')
     }
 
-    // Run with default options
-    return mm.parseFile(filePath, {native: true}).then((result) => {
-      t.ok(result.native && result.native.hasOwnProperty('id3v2.3'), 'should include native id3v2.3 tags');
-      checkFormat(result.format);
-      checkID3Tags(mm.orderTags(result.native['id3v2.3']));
-      checkCommonMapping(result.format.headerType, result.common);
+    it("MP3 / ID3v2.3", () => {
+
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3";
+      const filePath = path.join(__dirname, 'samples', filename);
+
+      function checkFormat(format) {
+        t.strictEqual(format.headerType, 'id3v2.3', 'format.headerType');
+        t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
+        t.strictEqual(format.duration, 2, 'format.duration = 2.123 sec'); // ToDo, add fraction???
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
+        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+        t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
+        t.strictEqual(format.encoder, 'LAME3.99r', 'format.encoder = LAME3.99r');
+      }
+
+      // Run with default options
+      return mm.parseFile(filePath, {native: true}).then((result) => {
+        t.ok(result.native && result.native.hasOwnProperty('id3v2.3'), 'should include native id3v2.3 tags');
+        checkFormat(result.format);
+        checkID3Tags(mm.orderTags(result.native['id3v2.3']));
+        checkCommonMapping(result.format.headerType, result.common);
+      });
+
+    });
+
+    /**
+     * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
+     * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
+     */
+    it("should map RIFF/WAVE/PCM / ID3v2.3", () => {
+
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
+      const filePath = path.join(__dirname, 'samples', filename);
+
+      function checkFormat(format: mm.IFormat) {
+        // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
+        // t.strictEqual(format.headerType, "id3v2.4", "format.headerType = 'id3v2.4'"); // ToDo
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
+        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
+        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
+      }
+
+      // Parse wma/asf file
+      return mm.parseFile(filePath, {native: true}).then((result) => {
+        // Check wma format
+        checkFormat(result.format);
+        // Check native tags
+        checkID3Tags(mm.orderTags(result.native['id3v2.3']));
+        checkCommonMapping(result.format.headerType, result.common);
+      });
+
     });
 
   });
@@ -501,7 +535,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     });
 
-    });
+  });
 
   it("should map M4A / (Apple) iTunes MP4 header", () => {
 
@@ -585,7 +619,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       // Check asf native tags
       check_asf_Tags(mm.orderTags(result.native.asf));
       // Check common tag mappings
-      checkCommonMapping(result.format.headerType, result.common);
+      // ToDo checkCommonMapping(result.format.headerType, result.common);
     });
 
   });
