@@ -4,7 +4,7 @@
 [![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://david-dm.org/Borewit/music-metadata)
 [![Coverage Status](https://coveralls.io/repos/github/Borewit/music-metadata/badge.svg?branch=master)](https://coveralls.io/github/Borewit/music-metadata?branch=master)
 
-Streaming music metadata parser for node.
+Stream and file based music metadata parser for node.
 
 ## Installation
 Install via [npm](http://npmjs.org):
