@@ -105,5 +105,5 @@ export const ID3v24TagMap: INativeTagMap = {
 
   // Windows Media Player
   'PRIV:AverageLevel' : 'averageLevel',
-  'PRIV:PeakLevel' : 'peakLevel',
+  'PRIV:PeakLevel' : 'peakLevel'
 };
