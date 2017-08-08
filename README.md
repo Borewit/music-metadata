@@ -17,14 +17,16 @@ npm install music-metadata
 
 * Supports metadata of the following audio and tag types:
 
-| File extension                         | MIME-type                      |   Tag header type                  |
-| -------------------------------------- | ------------------------------ | ---------------------------------- |
-| ape                                    | audio/ape                      | APEv2                              |
-| asf, wma, wmv                          | audio/x-ms-wma, video/x-ms-asf | ASF                                |
-| flac                                   | audio/flac                     | Vorbis                             | 
-| m4a, m4b, m4p, m4v, m4r, 3gp, mp4, aac | audio/aac, audio/aacp          | QTFF                               | 
-| mp3                                    | audio/mpeg                     | ID3v1.1, ID3v2.2, ID3v2.3, ID3v2.4 | 
-| ogv, oga, ogx, ogg                     | audio/ogg, application/ogg     | Vorbis                             |
+| File extension                         | MIME-type                             |   Tag header type                  |
+| -------------------------------------- | ------------------------------------- | ---------------------------------- |
+| ape                                    | audio/ape                             | APEv2                              |
+| aif, aiff, aifc                        | audio/aiff, audio/x-aif, audio/x-aifc | ID3v2                              |
+| asf, wma, wmv                          | audio/x-ms-wma, video/x-ms-asf        | ASF                                |
+| flac                                   | audio/flac                            | Vorbis                             | 
+| m4a, m4b, m4p, m4v, m4r, 3gp, mp4, aac | audio/aac, audio/aacp                 | QTFF                               | 
+| mp2, mp3, m2a                          | audio/mpeg                            | ID3v1.1, ID3v2                     | 
+| ogv, oga, ogx, ogg                     | audio/ogg, application/ogg            | Vorbis                             |
+| wav                                    | audio/wav, audio/wave                 | ID3v2                              |
 
 
 * Support for [MusicBrainz](https://pages.github.com/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
