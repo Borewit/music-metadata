@@ -1,7 +1,7 @@
 import {Windows1292Decoder} from './Windows1292Decoder';
 import {Genres} from "./id3v1/ID3v1Parser";
 
-export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8'| 'utf16le';
+export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' | 'utf16le';
 
 export default class Common {
 
@@ -140,9 +140,9 @@ export default class Common {
 
   public static parseGenre(origVal: string) {
     // match everything inside parentheses
-    const split = origVal.trim().split(/\((.*?)\)/g).filter( (val) => {
-        return val !== '';
-      });
+    const split = origVal.trim().split(/\((.*?)\)/g).filter((val) => {
+      return val !== '';
+    });
 
     const array = [];
     for (let cur of split) {
@@ -153,7 +153,7 @@ export default class Common {
     }
 
     return array
-      .filter( (val) => {
+      .filter((val) => {
         return val !== undefined;
       }).join('/');
   }

@@ -2,7 +2,6 @@ import {ITokenParser} from "../ParserFactory";
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../";
 import {ITokenizer} from "strtok3";
 import {Promise} from "es6-promise";
-import {StringType, BufferType, IGetToken, IgnoreType} from "token-types";
 import * as Token from "token-types";
 import {Genres} from "../id3v1/ID3v1Parser";
 
@@ -157,23 +156,23 @@ interface IMovieHeaderAtom {
  */
 class Atom {
 
-  public static Header: IGetToken<IAtomHeader> = {
+  public static Header: Token.IGetToken<IAtomHeader> = {
     len: 8,
 
     get: (buf: Buffer, off: number): IAtomHeader => {
       return {
         length: Token.UINT32_BE.get(buf, 0),
-        name: new StringType(4, "binary").get(buf, off + 4)
+        name: new Token.StringType(4, "binary").get(buf, off + 4)
       };
     }
   };
 
-  public static ftyp: IGetToken<IAtomFtyp> = {
+  public static ftyp: Token.IGetToken<IAtomFtyp> = {
     len: 4,
 
     get: (buf: Buffer, off: number): IAtomFtyp => {
       return {
-        type: new StringType(4, "ascii").get(buf, off)
+        type: new Token.StringType(4, "ascii").get(buf, off)
       };
     }
   };
@@ -181,7 +180,7 @@ class Atom {
   /**
    * Token: Media Header Atom
    */
-  public static mdhd: IGetToken<IAtomMdhd> = {
+  public static mdhd: Token.IGetToken<IAtomMdhd> = {
     len: 24,
 
     get: (buf: Buffer, off: number): IAtomMdhd => {
@@ -201,7 +200,7 @@ class Atom {
   /**
    * Token: Movie Header Atom
    */
-  public static mvhd: IGetToken<IAtomMvhd> = {
+  public static mvhd: Token.IGetToken<IAtomMvhd> = {
     len: 100,
 
     get: (buf: Buffer, off: number): IAtomMvhd => {
@@ -230,7 +229,7 @@ class Atom {
   /**
    * Token: Movie Header Atom
    */
-  public static mhdr: IGetToken<IMovieHeaderAtom> = {
+  public static mhdr: Token.IGetToken<IMovieHeaderAtom> = {
     len: 8,
 
     get: (buf: Buffer, off: number): IMovieHeaderAtom => {
@@ -274,7 +273,7 @@ interface IDataAtom {
 /**
  * Data Atom Structure
  */
-class DataAtom implements IGetToken<IDataAtom> {
+class DataAtom implements Token.IGetToken<IDataAtom> {
 
   public constructor(public len: number) {
   }
@@ -286,7 +285,7 @@ class DataAtom implements IGetToken<IDataAtom> {
         type: Token.UINT24_BE.get(buf, off + 1)
       },
       locale: Token.UINT24_BE.get(buf, off + 4),
-      value: new BufferType(this.len - 8).get(buf, off + 8)
+      value: new Token.BufferType(this.len - 8).get(buf, off + 8)
     };
   }
 }
@@ -317,7 +316,7 @@ interface INameAtom {
  * Data Atom Structure
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW31
  */
-class NameAtom implements IGetToken<INameAtom> {
+class NameAtom implements Token.IGetToken<INameAtom> {
 
   public constructor(public len: number) {
   }
@@ -326,7 +325,7 @@ class NameAtom implements IGetToken<INameAtom> {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      name: new StringType(this.len - 4, "utf-8").get(buf, off + 4)
+      name: new Token.StringType(this.len - 4, "utf-8").get(buf, off + 4)
     };
   }
 }
@@ -441,7 +440,7 @@ export class MP4Parser implements ITokenParser {
         return this.parseAtom().then((done) => done);
 
       case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
-        return this.tokenizer.readToken<void>(new IgnoreType(4)).then(() => false); // meta has 4 bytes of padding, ignore
+        return this.tokenizer.readToken<void>(new Token.IgnoreType(4)).then(() => false); // meta has 4 bytes of padding, ignore
 
       case 'ilst': // 'meta' => 'ilst': Metadata Item List Atom
         // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
@@ -464,7 +463,7 @@ export class MP4Parser implements ITokenParser {
 
       default:
         // return this.ignoreAtomData(dataLen);
-        return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((buf) => {
+        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((buf) => {
           // console.log("  ascii: %s", header.name, header.length, buf.toString('ascii'));
           buf = buf;
         }).then(() => false);
@@ -472,7 +471,7 @@ export class MP4Parser implements ITokenParser {
   }
 
   private ignoreAtomData(len: number): Promise<void> {
-    return this.tokenizer.readToken<void>(new IgnoreType(len));
+    return this.tokenizer.readToken<void>(new Token.IgnoreType(len));
   }
 
   private parseAtom_ftyp(len: number): Promise<string[]> {
@@ -555,7 +554,7 @@ export class MP4Parser implements ITokenParser {
         case 'data': // value atom
           return this.parseValueAtom(tagKey, header);
         case 'itif': // item information atom (optional)
-          return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((dataAtom) => {
+          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((dataAtom) => {
             // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
             return header.length;
           });
@@ -571,7 +570,7 @@ export class MP4Parser implements ITokenParser {
             return header.length;
           });
         default:
-          return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((dataAtom) => {
+          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((dataAtom) => {
             // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
             this.warnings.push("unsupported meta-item: " + tagKey + "[" + header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
             return header.length;

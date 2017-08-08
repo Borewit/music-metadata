@@ -6,7 +6,6 @@ import {ITokenizer, EndOfFile} from "strtok3";
 import {IFormat} from "../";
 import Common from "../common";
 import * as Token from "token-types";
-import {StringType, BufferType} from "token-types";
 import {Promise} from "es6-promise";
 
 /**
@@ -232,14 +231,14 @@ class MpegAudioLayer {
   /**
    * Info Tag: Xing, LAME
    */
-  public static InfoTagHeaderTag = new StringType(4, 'ascii');
+  public static InfoTagHeaderTag = new Token.StringType(4, 'ascii');
 
   /**
    * LAME TAG value
    * Did not find any official documentation for this
    * Value e.g.: "3.98.4"
    */
-  public static LameEncoderVersion = new StringType(6, 'ascii');
+  public static LameEncoderVersion = new Token.StringType(6, 'ascii');
 
   /**
    * Info Tag
@@ -251,7 +250,7 @@ class MpegAudioLayer {
     get: (buf, off) => {
       return {
         // 4 bytes for HeaderFlags
-        headerFlags: new BufferType(4).get(buf, off),
+        headerFlags: new Token.BufferType(4).get(buf, off),
 
         // 100 bytes for entry (NUMTOCENTRIES)
         // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
@@ -260,7 +259,7 @@ class MpegAudioLayer {
 
         numFrames: Token.UINT32_BE.get(buf, off + 4),
 
-        numToCentries: new BufferType(100).get(buf, off + 104),
+        numToCentries: new Token.BufferType(100).get(buf, off + 104),
 
         // the number of header APE_HEADER bytes
         streamSize: Token.UINT32_BE.get(buf, off + 108),
@@ -274,7 +273,7 @@ class MpegAudioLayer {
          */
 
         //  Initial LAME info, e.g.: LAME3.99r
-        encoder: new StringType(9, 'ascii').get(buf, off + 116),
+        encoder: new Token.StringType(9, 'ascii').get(buf, off + 116),
         //  Info Tag
         infoTag: Token.UINT8.get(buf, off + 125) >> 4,
         // VBR method
@@ -367,7 +366,7 @@ export class MpegParser {
       }
 
       // mp3 files are only found in MPEG1/2 Layer 3
-      if (( header.version !== 1 && header.version !== 2) || header.layer !== 3) {
+      if ((header.version !== 1 && header.version !== 2) || header.layer !== 3) {
         this.warnings.push("Parse error:  mp3 files are only found in MPEG1/2 Layer 3");
         return this.sync();
       }
@@ -441,7 +440,7 @@ export class MpegParser {
   public skipSideInformation(): Promise<void> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
     // side information
-    return this.tokenizer.readToken(new BufferType(sideinfo_length)).then(() => {
+    return this.tokenizer.readToken(new Token.BufferType(sideinfo_length)).then(() => {
       this.offset += sideinfo_length;
       return this.readXtraInfoHeader();
     });

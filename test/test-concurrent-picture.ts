@@ -13,7 +13,7 @@ it("should handle concurrent parsing of pictures", () => {
 
   const promises: Array<Promise<any>> = [];
 
-  files.forEach( (file) => {
+  files.forEach((file) => {
     promises.push(mm.parseFile(file).then((result) => {
       return fs.readFile(file + '.jpg').then((data) => {
         t.deepEqual(result.common.picture[0].data, data, 'check picture');

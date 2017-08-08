@@ -4,7 +4,6 @@ import common from '../common';
 import {INativeAudioMetadata, IOptions, ITag, IFormat} from "../index";
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
-import {BufferType, IGetToken} from "token-types";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
 
@@ -41,7 +40,7 @@ export class FlacParser implements ITokenParser {
     this.tokenizer = tokenizer;
     this.options = options;
 
-    return tokenizer.readToken<Buffer>(new BufferType(4)).then((buf) => {
+    return tokenizer.readToken<Buffer>(new Token.BufferType(4)).then((buf) => {
       if (buf.toString() !== 'fLaC') {
         throw new Error('expected flac header but was not found');
       }
@@ -120,7 +119,7 @@ export class FlacParser implements ITokenParser {
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private parseComment(dataLen: number): Promise<void> {
-    return this.tokenizer.readToken<Buffer>(new BufferType(dataLen)).then((data) => {
+    return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((data) => {
       const decoder = new DataDecoder(data);
       decoder.readStringUtf8(); // vendor (skip)
       const commentListLength = decoder.readInt32();
@@ -191,7 +190,7 @@ interface IBlockStreamInfo {
 
 class Metadata {
 
-  public static BlockHeader: IGetToken<IBlockHeader> = {
+  public static BlockHeader: Token.IGetToken<IBlockHeader> = {
     len: 4,
 
     get: (buf: Buffer, off: number): IBlockHeader => {
@@ -207,7 +206,7 @@ class Metadata {
    * METADATA_BLOCK_DATA
    * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
    */
-  public static BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
+  public static BlockStreamInfo: Token.IGetToken<IBlockStreamInfo> = {
     len: 34,
 
     get: (buf: Buffer, off: number): IBlockStreamInfo => {
@@ -238,7 +237,7 @@ class Metadata {
         // A value of zero here means the number of total samples is unknown.
         totalSamples: common.getBitAllignedNumber(buf, off + 13, 4, 36),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new BufferType(16).get(buf, off + 18)
+        fileMD5: new Token.BufferType(16).get(buf, off + 18)
       };
     }
   };

@@ -1,5 +1,4 @@
 import {} from "mocha";
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../lib';
 

@@ -1,7 +1,6 @@
 import {ITokenParser} from "../ParserFactory";
-import {EndOfFile, ITokenizer} from "strtok3";
 import * as strtok3 from "strtok3";
-import {IOptions, INativeAudioMetadata, IFormat} from "../";
+import {IOptions, INativeAudioMetadata} from "../";
 import * as Token from "token-types";
 import * as Chunk from "./Chunk";
 import {Readable} from "stream";
@@ -16,7 +15,7 @@ import {ID3v2Parser} from "../id3v2/ID3v2Parser";
  */
 export class AIFFParser implements ITokenParser {
 
-  private tokenizer: ITokenizer;
+  private tokenizer: strtok3.ITokenizer;
   private options: IOptions;
 
   private metadata: INativeAudioMetadata = {
@@ -28,7 +27,7 @@ export class AIFFParser implements ITokenParser {
 
   private native: INativeAudioMetadata;
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
     this.options = options;
@@ -47,7 +46,7 @@ export class AIFFParser implements ITokenParser {
         });
       })
       .catch((err) => {
-        if (err === EndOfFile) {
+        if (err === strtok3.EndOfFile) {
           return this.metadata;
         } else {
           throw err;

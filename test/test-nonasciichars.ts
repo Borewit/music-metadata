@@ -11,7 +11,7 @@ it("should decode non-ascii-characters", () => {
   const filename = 'bug-non ascii chars.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then( (result) => {
+  return mm.parseFile(filePath).then((result) => {
     t.deepEqual(result.common.artist, undefined, 'common.artist');
     t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder', 'Roman Gianarthur'], 'common.artists');
   });

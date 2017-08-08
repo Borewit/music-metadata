@@ -2,7 +2,6 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
-import {INativeTagDict} from "../lib";
 
 const t = assert;
 
@@ -35,7 +34,7 @@ it("should decode monkeysaudio (.ape)", () => {
     t.strictEqual(common.picture[1].data.length, 48658, 'common.picture 1 length');
   }
 
-  function checkNative(ape: INativeTagDict) {
+  function checkNative(ape: mm.INativeTagDict) {
     t.deepEqual(ape.ENSEMBLE, ['Audioslave']);
     t.deepEqual(ape.Artist, ['Audioslave', 'Chris Cornell']);
     t.strictEqual(ape['Cover Art (Front)'][0].data.length, 48658, 'raw cover art (front) length');

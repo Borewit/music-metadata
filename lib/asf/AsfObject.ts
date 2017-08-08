@@ -7,7 +7,6 @@ import {IPicture, ITag} from "../index";
 import * as Token from "token-types";
 import GUID from "./GUID";
 import {Util} from "./Util";
-import {IGetToken} from "token-types";
 import {AttachedPictureType} from "../id3v2/ID3v2Parser";
 
 /**
@@ -304,7 +303,7 @@ export interface IHeaderExtensionObject {
  * 3.4: Header Extension Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_4
  */
-export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> {
+export class HeaderExtensionObject implements Token.IGetToken<IHeaderExtensionObject> {
 
   public static guid = GUID.HeaderExtensionObject;
 
@@ -531,7 +530,7 @@ export interface IWmPicture extends IPicture {
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd757977(v=vs.85).aspx
  */
-export class WmPictureToken implements IGetToken<IWmPicture> {
+export class WmPictureToken implements Token.IGetToken<IWmPicture> {
 
   public static fromBase64(base64str: string): IPicture {
     return this.fromBuffer(new Buffer(base64str, 'base64'));

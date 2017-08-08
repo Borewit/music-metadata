@@ -2,9 +2,7 @@
 'use strict';
 
 import common from './common';
-
-import TagMap from './tagmap';
-import {HeaderType} from './tagmap';
+import TagMap, {HeaderType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";

@@ -4,10 +4,8 @@ import common from '../common';
 import {HeaderType} from '../tagmap';
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer} from "strtok3";
-import {INativeAudioMetadata, ITag} from "../";
-import {IGetToken, StringType} from "token-types";
+import {INativeAudioMetadata, ITag, IOptions} from "../";
 import * as Token from "token-types";
-import {IOptions} from "../";
 import {MpegParser} from "../mpeg/MpegParser";
 import FrameParser from "./FrameParser";
 
@@ -114,13 +112,13 @@ class ID3v2 {
    * Ref: http://id3.org/id3v2.3.0#ID3v2_header
    * ToDo
    */
-  public static Header: IGetToken<IID3v2header> = {
+  public static Header: Token.IGetToken<IID3v2header> = {
     len: 10,
 
     get: (buf, off): IID3v2header => {
       return {
         // ID3v2/file identifier   "ID3"
-        fileIdentifier: new StringType(3, 'ascii').get(buf, off),
+        fileIdentifier: new Token.StringType(3, 'ascii').get(buf, off),
         // ID3v2 versionIndex
         version: {
           major: Token.INT8.get(buf, off + 3),
@@ -143,7 +141,7 @@ class ID3v2 {
     }
   };
 
-  public static ExtendedHeader: IGetToken<IExtendedHeader> = {
+  public static ExtendedHeader: Token.IGetToken<IExtendedHeader> = {
     len: 10,
 
     get: (buf, off): IExtendedHeader => {

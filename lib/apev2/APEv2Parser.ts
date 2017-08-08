@@ -5,7 +5,6 @@ import {HeaderType} from '../tagmap';
 import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
-import {BufferType, StringType} from "token-types";
 import * as Token from "token-types";
 
 /**
@@ -113,7 +112,7 @@ class Structure {
     get: (buf, off) => {
       return {
         // should equal 'MAC '
-        ID: new StringType(4, 'ascii').get(buf, off),
+        ID: new Token.StringType(4, 'ascii').get(buf, off),
         // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
         version: Token.UINT32_LE.get(buf, off + 4) / 1000,
         // the number of descriptor bytes (allows later expansion of this header)
@@ -131,7 +130,7 @@ class Structure {
         // the terminating data of the file (not including tag data)
         terminatingDataBytes: Token.UINT32_LE.get(buf, off + 32),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new BufferType(16).get(buf, off + 36)
+        fileMD5: new Token.BufferType(16).get(buf, off + 36)
       };
     }
   };
@@ -173,7 +172,7 @@ class Structure {
     get: (buf, off) => {
       return {
         // should equal 'APETAGEX'
-        ID: new StringType(8, 'ascii').get(buf, off),
+        ID: new Token.StringType(8, 'ascii').get(buf, off),
         // equals CURRENT_APE_TAG_VERSION
         version: Token.UINT32_LE.get(buf, off + 8),
         // the complete size of the tag, including this footer (excludes header)
@@ -181,13 +180,13 @@ class Structure {
         // the number of fields in the tag
         fields: Token.UINT32_LE.get(buf, off + 16),
         // reserved for later use (must be zero)
-        reserved: new BufferType(12).get(buf, off + 20) // ToDo: what is this???
+        reserved: new Token.BufferType(12).get(buf, off + 20) // ToDo: what is this???
       };
     }
   };
 
   public static TagField = (footer) => {
-    return new BufferType(footer.size - Structure.TagFooter.len);
+    return new Token.BufferType(footer.size - Structure.TagFooter.len);
   }
 
   public static parseTagFlags(flags): ITagFlags {

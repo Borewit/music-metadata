@@ -1,5 +1,4 @@
-import common from "../common";
-import {StringEncoding} from "../common";
+import common, {StringEncoding} from "../common";
 import * as Token from "token-types";
 import {AttachedPictureType} from "./ID3v2Parser";
 

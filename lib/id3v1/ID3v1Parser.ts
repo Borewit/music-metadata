@@ -5,7 +5,6 @@ import {ITokenParser} from "../ParserFactory";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {HeaderType} from "../tagmap";
 import {ITokenizer} from "strtok3";
-import {IGetToken, StringType} from "token-types";
 import * as Token from "token-types";
 
 /**
@@ -61,7 +60,7 @@ interface Iid3v1Header {
 /**
  * Ref: https://en.wikipedia.org/wiki/ID3
  */
-const Iid3v1Token: IGetToken<Iid3v1Header> = {
+const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
   len: 128,
 
   /**
@@ -85,7 +84,7 @@ const Iid3v1Token: IGetToken<Iid3v1Header> = {
   }
 };
 
-class Id3v1StringType extends StringType {
+class Id3v1StringType extends Token.StringType {
 
   public get(buf: Buffer, off: number): string {
     let value = super.get(buf, off);

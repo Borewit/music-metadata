@@ -1,5 +1,4 @@
 import {ITokenParser} from "../ParserFactory";
-import {EndOfFile, ITokenizer} from "strtok3";
 import * as strtok3 from "strtok3";
 import {IOptions, INativeAudioMetadata} from "../";
 import * as Token from "token-types";
@@ -19,7 +18,7 @@ import {ID3v2Parser} from "../id3v2/ID3v2Parser";
  */
 export class WavePcmParser implements ITokenParser {
 
-  private tokenizer: ITokenizer;
+  private tokenizer: strtok3.ITokenizer;
   private options: IOptions;
 
   private metadata: INativeAudioMetadata = {
@@ -34,7 +33,7 @@ export class WavePcmParser implements ITokenParser {
 
   private native: INativeAudioMetadata;
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
     this.options = options;
@@ -53,7 +52,7 @@ export class WavePcmParser implements ITokenParser {
         });
       })
       .catch((err) => {
-        if (err === EndOfFile) {
+        if (err === strtok3.EndOfFile) {
           return this.metadata;
         } else {
           throw err;

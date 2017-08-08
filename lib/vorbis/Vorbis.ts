@@ -1,5 +1,4 @@
 import * as Token from "token-types";
-import {IGetToken} from "token-types";
 import {AttachedPictureType} from "../id3v2/ID3v2Parser";
 import {IPicture} from "../index";
 
@@ -42,7 +41,7 @@ export interface IVorbisPicture {
  * Ref: https://xiph.org/flac/format.html#metadata_block_picture
  * // ToDo: move to ID3 / APIC?
  */
-export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
+export class VorbisPictureToken implements Token.IGetToken<IVorbisPicture> {
 
   public static fromBase64(base64str: string): IVorbisPicture {
     return this.fromBuffer(new Buffer(base64str, 'base64'));
