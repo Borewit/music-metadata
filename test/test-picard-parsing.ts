@@ -212,19 +212,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   });
 
-  it("should map APEv2 (Monkey's Audio)", () => {
-
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ape";
-
-    const filePath = path.join(__dirname, 'samples', filename);
-
-    function checkFormat(format) {
-      t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
-      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-      t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-    }
+  describe("APEv2 header", () => {
 
     function checkApeTags(APEv2: INativeTagDict) {
       // Compare expectedCommonTags with result.common
@@ -289,12 +277,52 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     }
 
-    // Run with default options
-    return mm.parseFile(filePath, {native: true}).then((result) => {
-      t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native Vorbis tags');
-      checkFormat(result.format);
-      checkApeTags(mm.orderTags(result.native.APEv2));
-      checkCommonMapping(result.format.headerType, result.common);
+    it("should map Monkey's Audio / APEv2", () => {
+
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ape";
+
+      const filePath = path.join(__dirname, 'samples', filename);
+
+      function checkFormat(format) {
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      }
+
+      // Run with default options
+      return mm.parseFile(filePath, {native: true}).then((result) => {
+        t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native APEv2 tags');
+        checkFormat(result.format);
+        checkApeTags(mm.orderTags(result.native.APEv2));
+        checkCommonMapping(result.format.headerType, result.common);
+      });
+
+    });
+
+    it("should map WavPack / APEv2", () => {
+
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.wv";
+
+      const filePath = path.join(__dirname, 'samples', filename);
+
+      function checkFormat(format) {
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      }
+
+      // Run with default options
+      return mm.parseFile(filePath, {native: true}).then((result) => {
+        t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native APEv2 tags');
+        checkFormat(result.format);
+        checkApeTags(mm.orderTags(result.native.APEv2));
+        checkCommonMapping(result.format.headerType, result.common);
+      });
+
     });
 
   });

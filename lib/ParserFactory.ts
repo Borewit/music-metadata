@@ -13,6 +13,8 @@ import * as Stream from "stream";
 import * as path from "path";
 import {AIFFParser} from "./aiff/AiffParser";
 import {WavePcmParser} from "./riff/RiffParser";
+import {WavPackParser} from "./wavpack/WavPackParser";
+import {ApeParser} from "./apev2/ApeParser";
 
 export interface ITokenParser {
   parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -114,6 +116,11 @@ export class ParserFactory {
       case '.wav':
         return Promise.resolve<ITokenParser>(new WavePcmParser());
 
+      case '.wv':
+      case '.wvp':
+        return Promise.resolve<ITokenParser>(new WavPackParser());
+
+
       default:
         throw new Error("Extension " + extension + " not supported.");
     }
@@ -149,6 +156,9 @@ export class ParserFactory {
       case 'audio/x-aif':
       case 'audio/x-aifc':
         return Promise.resolve<ITokenParser>(new AIFFParser());
+
+      case 'audio/x-wavpack':
+        return Promise.resolve<ITokenParser>(new WavPackParser());
 
       default:
         throw new Error("MIME-Type: " + mimeType + " not supported.");

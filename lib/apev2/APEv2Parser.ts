@@ -229,7 +229,8 @@ export class APEv2Parser implements ITokenParser {
     return duration / ah.sampleRate;
   }
 
-  private static parseTags(footer: IFooter, buffer: Buffer, includeCovers: boolean): Array<{ id: string, value: any }> {
+  // ToDo: public ???
+  public static parseTags(footer: IFooter, buffer: Buffer, includeCovers: boolean): Array<{ id: string, value: any }> {
     let offset = 0;
 
     const tags: Array<{ id: string, value: any }> = [];
@@ -282,6 +283,17 @@ export class APEv2Parser implements ITokenParser {
     return tags;
   }
 
+  public static parseFooter(tokenizer: ITokenizer, options: IOptions): Promise<Array<{ id: string, value: any }>> {
+    return tokenizer.readToken<IFooter>(Structure.TagFooter).then((footer) => {
+      if (footer.ID !== 'APETAGEX') {
+        throw new Error('Expected footer to start with APETAGEX ');
+      }
+      return tokenizer.readToken<Buffer>(Structure.TagField(footer)).then((tags) => {
+        return APEv2Parser.parseTags(footer, tags, !options.skipCovers);
+      });
+    });
+  }
+
   private type: HeaderType = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
 
   private ape: IApeInfo = {};
@@ -308,7 +320,7 @@ export class APEv2Parser implements ITokenParser {
         }
       }).then((header) => {
         return this.tokenizer.readToken(new IgnoreType(header.forwardBytes)).then(() => {
-          return this.parseFooter().then((tags) => {
+          return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
             return {
               format: header.format,
               native: {
@@ -345,14 +357,4 @@ export class APEv2Parser implements ITokenParser {
     });
   }
 
-  private parseFooter(): Promise<Array<{ id: string, value: any }>> {
-    return this.tokenizer.readToken<IFooter>(Structure.TagFooter).then((footer) => {
-      if (footer.ID !== 'APETAGEX') {
-        throw new Error('Expected footer to start with APETAGEX ');
-      }
-      return this.tokenizer.readToken<Buffer>(Structure.TagField(footer)).then((tags) => {
-        return APEv2Parser.parseTags(footer, tags, !this.options.skipCovers);
-      });
-    });
-  }
 }
