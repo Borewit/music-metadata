@@ -1,6 +1,6 @@
 import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
-import {ITokenizer, IgnoreType} from "strtok3";
+import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {APEv2Parser} from "../apev2/APEv2Parser";
 
@@ -47,6 +47,25 @@ interface IBlockHeader {
   crc: Buffer
 }
 
+interface IMetadataId {
+  /**
+   * metadata function id
+   */
+  functionId: number,
+  /**
+   * If true, audio-decoder does not need to understand the metadata field
+   */
+  isOptional: boolean
+  /**
+   * actual data byte length is 1 less
+   */
+  actualDataByteLength: boolean
+  /**
+   * large block (> 255 words)
+   */
+  largeBlock: boolean
+}
+
 const SampleRates = [6000, 8000, 9600, 11025, 12000, 16000, 22050, 24000, 32000, 44100,
   48000, 64000, 88200, 96000, 192000, -1];
 
@@ -57,8 +76,7 @@ class WavPack {
    *
    * 32-byte little-endian header at the front of every WavPack block
    *
-   * Ref:
-   *  http://www.wavpack.com/WavPack5FileFormat.pdf (page 2/6: 2.0 "Block Header")
+   * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf (page 2/6: 2.0 "Block Header")
    */
   public static BlockHeaderToken: Token.IGetToken<IBlockHeader> = {
     len: 32,
@@ -87,8 +105,8 @@ class WavPack {
           isHybrid: WavPack.isBitSet(flags, 3),
           isJointStereo: WavPack.isBitSet(flags, 4),
           crossChannel: WavPack.isBitSet(flags, 5),
-          hybridNoiseShaping : WavPack.isBitSet(flags, 6),
-          floatingPoint : WavPack.isBitSet(flags, 7),
+          hybridNoiseShaping: WavPack.isBitSet(flags, 6),
+          floatingPoint: WavPack.isBitSet(flags, 7),
           samplingRate: SampleRates[WavPack.getBitAllignedNumber(flags, 23, 4)],
           isDSD: WavPack.isBitSet(flags, 31)
         },
@@ -98,12 +116,30 @@ class WavPack {
     }
   };
 
+  /**
+   * 3.0 Metadata Sub-Blocks
+   *  Ref: http://www.wavpack.com/WavPack5FileFormat.pdf (page 4/6: 3.0 "Metadata Sub-Block")
+   */
+  public static MetadataIdToken: Token.IGetToken<IMetadataId> = {
+    len: 1,
+
+    get: (buf, off) => {
+
+      return {
+        functionId: WavPack.getBitAllignedNumber(buf[off], 0, 6),
+        isOptional: WavPack.isBitSet(buf[off], 5),
+        actualDataByteLength: WavPack.isBitSet(buf[off], 6),
+        largeBlock: WavPack.isBitSet(buf[off], 7)
+      };
+    }
+  };
+
   private static isBitSet(flags: number, bitOffset: number): boolean {
     return WavPack.getBitAllignedNumber(flags, bitOffset, 1) === 1;
   }
 
-  public static getBitAllignedNumber(flags: number, bitOffset: number, len: number): number {
-    return ( flags >>> bitOffset) & (0xffffffff >>> (32 - len));
+  private static getBitAllignedNumber(flags: number, bitOffset: number, len: number): number {
+    return (flags >>> bitOffset) & (0xffffffff >>> (32 - len));
   }
 }
 
@@ -113,15 +149,6 @@ class WavPack {
 export class WavPackParser implements ITokenParser {
 
   private format: IFormat;
-
-  /**
-   * Calculate the media file duration
-   * @param ah ApeHeader
-   * @return {number} duration in seconds
-   */
-  private static calculateDuration(header: IBlockHeader): number {
-    return header.totalSamples / header.flags.samplingRate;
-  }
 
   private tokenizer: ITokenizer;
   private options: IOptions;
@@ -139,7 +166,7 @@ export class WavPackParser implements ITokenParser {
 
         // console.log('Got header: %s {block_index=%s, total_samples=%s, block_samples=%s}', header.BlockID, header.blockIndex, header.totalSamples, header.blockSamples);
 
-        if ( header.blockIndex === 0 && !this.format ) {
+        if (header.blockIndex === 0 && !this.format) {
           this.format = {
             dataformat: 'WavPack',
             lossless: !header.flags.isHybrid,
@@ -153,22 +180,60 @@ export class WavPackParser implements ITokenParser {
 
         const ignoreBytes = header.blockSize - (32 - 8);
         // console.log('Ignore: %s bytes', ignoreBytes);
-        this.tokenizer.ignore(ignoreBytes);
 
-        if (header.blockIndex === 0 && header.blockSamples === 0 ) {
-          // Last empty WavPack block
-          return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
-            return {
-              format: this.format,
-              native: {
-                APEv2: tags
-              }
-            };
+        if (header.blockIndex === 0 && header.blockSamples === 0) {
+          // Meta-data block
+          // console.log("End of WavPack");
+
+          return this.parseMetadataSubBlock(ignoreBytes).then(() => {
+
+            // ToDo: start reading APEv2 if we did not read a 'wvpk'-block
+            return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
+              return {
+                format: this.format,
+                native: {
+                  APEv2: tags
+                }
+              };
+            });
+
+          });
+        } else {
+          // console.log('Ignore: %s bytes', ignoreBytes);
+          return this.tokenizer.ignore(ignoreBytes).then(() => {
+            return this.parse(tokenizer, options);
           });
         }
-
-        return this.parse(tokenizer, options);
       });
+  }
+
+  private parseMetadataSubBlock(remainingLength: number): Promise<void> {
+    return this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken).then((id) => {
+      return this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8).then((dataSizeInWords) => {
+        const metadataSize = 1 + dataSizeInWords * 2 + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
+        if (metadataSize > remainingLength)
+          throw new Error('Metadata exceeding block size');
+        const data = new Buffer(dataSizeInWords * 2);
+        return this.tokenizer.readBuffer(data, 0, data.length).then(() => {
+          switch (id.functionId) {
+            case 0x0: // ID_DUMMY could be used to pad WavPack blocks
+              break;
+
+            case 0x26: // ID_MD5_CHECKSUM
+              this.format.audioMD5 = data;
+              break;
+
+            case 0x2F: // ID_BLOCK_CHECKSUM
+              break;
+          }
+
+          remainingLength -= metadataSize;
+          if (remainingLength > 1) {
+            return this.parseMetadataSubBlock(remainingLength); // recursion, parse next metadata sub-block
+          }
+        });
+      });
+    });
   }
 
 }

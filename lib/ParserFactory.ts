@@ -14,7 +14,6 @@ import * as path from "path";
 import {AIFFParser} from "./aiff/AiffParser";
 import {WavePcmParser} from "./riff/RiffParser";
 import {WavPackParser} from "./wavpack/WavPackParser";
-import {ApeParser} from "./apev2/ApeParser";
 
 export interface ITokenParser {
   parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -119,7 +118,6 @@ export class ParserFactory {
       case '.wv':
       case '.wvp':
         return Promise.resolve<ITokenParser>(new WavPackParser());
-
 
       default:
         throw new Error("Extension " + extension + " not supported.");

@@ -160,6 +160,11 @@ export interface IFormat {
    * The duration is: numberOfSamples / sampleRate
    */
   numberOfSamples?: number
+
+  /**
+   * 16-byte MD5 of raw audio
+   */
+  audioMD5?: Buffer;
 }
 
 export interface ITag {
