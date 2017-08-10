@@ -27,6 +27,7 @@ npm install music-metadata
 | mp2, mp3, m2a                          | audio/mpeg                            | ID3v1.1, ID3v2                     | 
 | ogv, oga, ogx, ogg                     | audio/ogg, application/ogg            | Vorbis                             |
 | wav                                    | audio/wav, audio/wave                 | ID3v2                              |
+| wv, wvp                                | audio/x-wavpack                       | APEv2                              |
 
 
 * Support for [MusicBrainz](https://pages.github.com/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
