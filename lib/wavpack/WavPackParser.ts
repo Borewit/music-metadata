@@ -183,8 +183,6 @@ export class WavPackParser implements ITokenParser {
               throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
             }
 
-            // console.log('Got header: %s {block_index=%s, total_samples=%s, block_samples=%s}', header.BlockID, header.blockIndex, header.totalSamples, header.blockSamples);
-
             if (header.blockIndex === 0 && !this.format) {
               this.format = {
                 dataformat: 'WavPack',
@@ -198,21 +196,17 @@ export class WavPackParser implements ITokenParser {
             }
 
             const ignoreBytes = header.blockSize - (32 - 8);
-            // console.log('Ignore: %s bytes', ignoreBytes);
 
             if (header.blockIndex === 0 && header.blockSamples === 0) {
               // Meta-data block
               // console.log("End of WavPack");
-
-              return this.parseMetadataSubBlock(ignoreBytes).then(() => {
-
-              });
+              return this.parseMetadataSubBlock(ignoreBytes);
             } else {
               // console.log('Ignore: %s bytes', ignoreBytes);
-              return this.tokenizer.ignore(ignoreBytes).then(() => {
-                return this.parseWavPackBlocks();
-              });
+              return this.tokenizer.ignore(ignoreBytes);
             }
+          }).then(() => {
+            return this.parseWavPackBlocks(); // recursion: continue with next WavPack-block
           });
       }
     });
