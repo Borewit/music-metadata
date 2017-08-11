@@ -158,53 +158,64 @@ export class WavPackParser implements ITokenParser {
     this.tokenizer = tokenizer;
     this.options = options;
 
-    return this.tokenizer.readToken(WavPack.BlockHeaderToken)
-      .then((header) => {
-        if (header.BlockID !== 'wvpk') {
-          throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
-        }
-
-        // console.log('Got header: %s {block_index=%s, total_samples=%s, block_samples=%s}', header.BlockID, header.blockIndex, header.totalSamples, header.blockSamples);
-
-        if (header.blockIndex === 0 && !this.format) {
-          this.format = {
-            dataformat: 'WavPack',
-            lossless: !header.flags.isHybrid,
-            // headerType: this.type,
-            bitsPerSample: header.flags.bitsPerSample,
-            sampleRate: header.flags.samplingRate,
-            numberOfChannels: header.flags.isMono ? 1 : 2,
-            duration: header.totalSamples / header.flags.samplingRate
+    // First parse all WavPack blocks
+    return this.parseWavPackBlocks()
+      .then(() => {
+        // The try to parse APEv2 header
+        return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
+          return {
+            format: this.format,
+            native: {
+              APEv2: tags
+            }
           };
-        }
-
-        const ignoreBytes = header.blockSize - (32 - 8);
-        // console.log('Ignore: %s bytes', ignoreBytes);
-
-        if (header.blockIndex === 0 && header.blockSamples === 0) {
-          // Meta-data block
-          // console.log("End of WavPack");
-
-          return this.parseMetadataSubBlock(ignoreBytes).then(() => {
-
-            // ToDo: start reading APEv2 if we did not read a 'wvpk'-block
-            return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
-              return {
-                format: this.format,
-                native: {
-                  APEv2: tags
-                }
-              };
-            });
-
-          });
-        } else {
-          // console.log('Ignore: %s bytes', ignoreBytes);
-          return this.tokenizer.ignore(ignoreBytes).then(() => {
-            return this.parse(tokenizer, options);
-          });
-        }
+        });
       });
+  }
+
+  public parseWavPackBlocks(): Promise<INativeAudioMetadata> {
+
+    return this.tokenizer.peekToken<string>(new Token.StringType(4, 'ascii')).then((blockId) => {
+      if (blockId === 'wvpk') {
+        return this.tokenizer.readToken(WavPack.BlockHeaderToken)
+          .then((header) => {
+            if (header.BlockID !== 'wvpk') {
+              throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
+            }
+
+            // console.log('Got header: %s {block_index=%s, total_samples=%s, block_samples=%s}', header.BlockID, header.blockIndex, header.totalSamples, header.blockSamples);
+
+            if (header.blockIndex === 0 && !this.format) {
+              this.format = {
+                dataformat: 'WavPack',
+                lossless: !header.flags.isHybrid,
+                // headerType: this.type,
+                bitsPerSample: header.flags.bitsPerSample,
+                sampleRate: header.flags.samplingRate,
+                numberOfChannels: header.flags.isMono ? 1 : 2,
+                duration: header.totalSamples / header.flags.samplingRate
+              };
+            }
+
+            const ignoreBytes = header.blockSize - (32 - 8);
+            // console.log('Ignore: %s bytes', ignoreBytes);
+
+            if (header.blockIndex === 0 && header.blockSamples === 0) {
+              // Meta-data block
+              // console.log("End of WavPack");
+
+              return this.parseMetadataSubBlock(ignoreBytes).then(() => {
+
+              });
+            } else {
+              // console.log('Ignore: %s bytes', ignoreBytes);
+              return this.tokenizer.ignore(ignoreBytes).then(() => {
+                return this.parseWavPackBlocks();
+              });
+            }
+          });
+      }
+    });
   }
 
   private parseMetadataSubBlock(remainingLength: number): Promise<void> {

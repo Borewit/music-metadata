@@ -54,8 +54,8 @@
   "dependencies": {
     "es6-promise": "^4.1.1",
     "fs-extra": "^4.0.1",
-    "strtok3": "^1.0.3",
-    "then-read-stream": "^0.9.1",
+    "strtok3": "^1.1.0",
+    "then-read-stream": "^0.9.2",
     "token-types": "^0.1.2"
   },
   "devDependencies": {
