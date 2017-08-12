@@ -84,7 +84,7 @@ mm.parseFile('sample.mp3', {duration: true})
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   })
 ```
-For a live example see [_Parse MP3 (ID3v2.4 tags) stream with music-metadata_](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
+For a live example see [parse MP3 (ID3v2.4 tags) stream with music-metadata](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
 ```javascript
