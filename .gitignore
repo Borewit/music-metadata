@@ -1,10 +1,8 @@
 node_modules/
 .idea/
 *.iml
-lib/**/*.js
-lib/**/*.d.ts
-lib/**/*.map
+lib/
 test/**/*.js
 test/**/*.map
 test/**/*.d.ts
-covergae
+coverage/

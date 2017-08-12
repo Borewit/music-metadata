@@ -1,49 +1,49 @@
 {
   "name": "music-metadata",
   "description": "Streaming music metadata parser for node and the browser.",
-  "version": "0.7.12
-    "compile-src": "tsc -p src",",
-    "author": {
-      "name": "Borewit",
-      "url": "https://github.com/Borewit"
-    },
-    "contributors": [
-      {
-        "name": "Lee Treveil",
-        "email": "leetreveil@gmail.com",
-        "url": "https://github.com/leetreveil"
-      }
-    ],
-    "keywords": [
-      "tag",
-      "tags",
-      "MusicBrainz",
-      "Picard",
-      "IDd3",
-      "ID3v1",
-      "ID3v2",
-      "m4a",
-      "mp3",
-      "mp4",
-      "Vorbis",
-      "ogg",
-      "flac",
-      "asf",
-      "wma",
-      "wmv",
-      "tag",
-      "ape",
-      "MonkeyAudio",
-      "aiff",
-      "wav",
-      "WavPack"
-    ],
-    "main": "lib",
-    "typings": "lib/index",
-    "files": [
-      "lib/"
-    ],
-    "scripts": {
+  "version": "0.7.12",
+  "author": {
+    "name": "Borewit",
+    "url": "https://github.com/Borewit"
+  },
+  "contributors": [
+    {
+      "name": "Lee Treveil",
+      "email": "leetreveil@gmail.com",
+      "url": "https://github.com/leetreveil"
+    }
+  ],
+  "keywords": [
+    "tag",
+    "tags",
+    "MusicBrainz",
+    "Picard",
+    "IDd3",
+    "ID3v1",
+    "ID3v2",
+    "m4a",
+    "mp3",
+    "mp4",
+    "Vorbis",
+    "ogg",
+    "flac",
+    "asf",
+    "wma",
+    "wmv",
+    "tag",
+    "ape",
+    "MonkeyAudio",
+    "aiff",
+    "wav",
+    "WavPack"
+  ],
+  "main": "lib",
+  "typings": "lib/index",
+  "files": [
+    "lib/"
+  ],
+  "scripts": {
+    "compile-src": "tsc -p src",
     "compile-test": "tsc -p test",
     "compile": "npm run compile-src && npm run compile-test",
     "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
