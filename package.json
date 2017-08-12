@@ -18,13 +18,13 @@
     "tags",
     "MusicBrainz",
     "Picard",
-    "id3",
-    "id3v1",
-    "id3v2",
+    "IDd3",
+    "ID3v1",
+    "ID3v2",
     "m4a",
     "mp3",
     "mp4",
-    "vorbis",
+    "Vorbis",
     "ogg",
     "flac",
     "asf",
@@ -34,11 +34,11 @@
     "ape",
     "MonkeyAudio",
     "aiff",
-    "wav"
+    "wav",
+    "WavPack"
   ],
   "main": "lib",
   "typings": "lib/index",
-  "browser": "lib/browser",
   "files": [
     "lib/"
   ],
