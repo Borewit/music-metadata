@@ -53,7 +53,8 @@ npm install music-metadata
 var mm = require('music-metadata');
 const util = require('util')
 
-mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
+mm.parseFile('../test/samples/Mu' +
+ 'sicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
   .then(function (metadata) {
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   })

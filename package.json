@@ -1,50 +1,52 @@
 {
   "name": "music-metadata",
   "description": "Streaming music metadata parser for node and the browser.",
-  "version": "0.7.11",
-  "author": {
-    "name": "Borewit",
-    "url": "https://github.com/Borewit"
-  },
-  "contributors": [
-    {
-      "name": "Lee Treveil",
-      "email": "leetreveil@gmail.com",
-      "url": "https://github.com/leetreveil"
-    }
-  ],
-  "keywords": [
-    "tag",
-    "tags",
-    "MusicBrainz",
-    "Picard",
-    "IDd3",
-    "ID3v1",
-    "ID3v2",
-    "m4a",
-    "mp3",
-    "mp4",
-    "Vorbis",
-    "ogg",
-    "flac",
-    "asf",
-    "wma",
-    "wmv",
-    "tag",
-    "ape",
-    "MonkeyAudio",
-    "aiff",
-    "wav",
-    "WavPack"
-  ],
-  "main": "lib",
-  "typings": "lib/index",
-  "files": [
-    "lib/"
-  ],
-  "scripts": {
-    "compile": "tsc --pretty",
-    "lint": "tslint 'lib/**/*.ts' --exclude 'lib/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
+  "version": "0.7.12
+    "compile-src": "tsc -p src",",
+    "author": {
+      "name": "Borewit",
+      "url": "https://github.com/Borewit"
+    },
+    "contributors": [
+      {
+        "name": "Lee Treveil",
+        "email": "leetreveil@gmail.com",
+        "url": "https://github.com/leetreveil"
+      }
+    ],
+    "keywords": [
+      "tag",
+      "tags",
+      "MusicBrainz",
+      "Picard",
+      "IDd3",
+      "ID3v1",
+      "ID3v2",
+      "m4a",
+      "mp3",
+      "mp4",
+      "Vorbis",
+      "ogg",
+      "flac",
+      "asf",
+      "wma",
+      "wmv",
+      "tag",
+      "ape",
+      "MonkeyAudio",
+      "aiff",
+      "wav",
+      "WavPack"
+    ],
+    "main": "lib",
+    "typings": "lib/index",
+    "files": [
+      "lib/"
+    ],
+    "scripts": {
+    "compile-test": "tsc -p test",
+    "compile": "npm run compile-src && npm run compile-test",
+    "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
     "test": "mocha --require ts-node/register test",
     "prepare": "npm run compile",
     "start": "npm-run-all compile lint cover-test",
@@ -54,8 +56,8 @@
   "dependencies": {
     "es6-promise": "^4.1.1",
     "fs-extra": "^4.0.1",
-    "strtok3": "^1.1.0",
-    "then-read-stream": "^0.9.2",
+    "strtok3": "^1.1.1",
+    "then-read-stream": "^0.9.3",
     "token-types": "^0.1.2"
   },
   "devDependencies": {

@@ -155,6 +155,10 @@ export class ParserFactory {
       case 'audio/x-aifc':
         return Promise.resolve<ITokenParser>(new AIFFParser());
 
+      case 'audio/wav':
+      case 'audio/wave':
+        return Promise.resolve<ITokenParser>(new WavePcmParser());
+
       case 'audio/x-wavpack':
         return Promise.resolve<ITokenParser>(new WavPackParser());
 
