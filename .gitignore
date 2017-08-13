@@ -6,3 +6,4 @@ test/**/*.js
 test/**/*.map
 test/**/*.d.ts
 coverage/
+.nyc_output

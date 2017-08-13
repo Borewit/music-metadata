@@ -4,3 +4,4 @@ example/
 doc-gen/
 coverage/
 src/
+.nyc_output/
