@@ -4,7 +4,7 @@ import * as mm from '../src';
 import {INativeTagDict} from "../lib/index";
 import * as path from 'path';
 import GUID from "../lib/asf/GUID";
-import {AsfTagMap} from "../lib/asf/AsfTagMap";
+import * as fs from 'fs-extra';
 
 const t = assert;
 
@@ -22,7 +22,7 @@ describe("ASF", () => {
     });
   });
 
-  it("should parse ASF", () => {
+  describe("parse", () => {
 
     const filePath = path.join(__dirname, 'samples', 'asf.wma');
 
@@ -49,14 +49,32 @@ describe("ASF", () => {
       t.deepEqual(native.REPLAYGAIN_TRACK_GAIN, ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN');
     }
 
-    return mm.parseFile(filePath, {native: true}).then((result) => {
+    it("should decode an ASF audio file (.wma)", () => {
 
-      checkFormat(result.format);
+      return mm.parseFile(filePath, {native: true}).then((result) => {
 
-      checkCommon(result.common);
+        checkFormat(result.format);
 
-      t.ok(result.native && result.native.asf, 'should include native ASF tags');
-      checkNative(mm.orderTags(result.native.asf));
+        checkCommon(result.common);
+
+        t.ok(result.native && result.native.asf, 'should include native ASF tags');
+        checkNative(mm.orderTags(result.native.asf));
+      });
+
+    });
+
+    it("should decode from ASF from a stream (audio/x-ms-wma)", () => {
+
+      const stream = fs.createReadStream(filePath);
+
+      return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then((metadata) => {
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
+        checkNative(mm.orderTags(metadata.native.asf));
+      }).then(() => {
+        stream.close();
+      });
+
     });
 
   });

@@ -2,8 +2,11 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
+import * as fs from 'fs-extra';
 
-it("should decode ogg audio-file", () => {
+describe("Parsing Ogg Vorbis", function() {
+
+  this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
   const filename = 'oggy.ogg';
   const filePath = path.join(__dirname, 'samples', filename);
@@ -51,10 +54,30 @@ it("should decode ogg audio-file", () => {
     assert.strictEqual(cover.data[cover.data.length - 2], 255, 'vorbis.METADATA_BLOCK_PICTURE data -2');
   }
 
-  return mm.parseFile(filePath, {native: true}).then((result) => {
-    checkFormat(result.format);
-    checkCommon(result.common);
-    checkVorbisTags(mm.orderTags(result.native.vorbis));
+  it("should decode an Ogg Vorbis audio file (.ogg)", () => {
+
+    return mm.parseFile(filePath, {native: true}).then((metadata) => {
+      checkFormat(metadata.format);
+      checkCommon(metadata.common);
+      checkVorbisTags(mm.orderTags(metadata.native.vorbis));
+    });
+
+  });
+
+  it("should decode from an Ogg Vorbis audio stream (audio/ogg)", function() {
+
+    this.skip(); // ToDo
+
+    const stream = fs.createReadStream(filePath);
+
+    return mm.parseStream(stream, 'audio/ogg', {native: true}).then((metadata) => {
+      checkFormat(metadata.format);
+      checkCommon(metadata.common);
+      checkVorbisTags(mm.orderTags(metadata.native.vorbis));
+    }).then(() => {
+      stream.close();
+    });
+
   });
 
 });

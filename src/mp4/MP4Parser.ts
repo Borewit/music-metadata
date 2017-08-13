@@ -338,10 +338,6 @@ class NameAtom implements Token.IGetToken<INameAtom> {
  */
 export class MP4Parser implements ITokenParser {
 
-  public static getInstance(): MP4Parser {
-    return new MP4Parser();
-  }
-
   private static Types: { [index: number]: string } = {
     0: 'uint8',
     1: 'text',
