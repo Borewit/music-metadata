@@ -94,12 +94,6 @@
     "type": "git",
     "url": "git://github.com/borewit/music-metadata.git"
   },
-  "jshintConfig": {
-    "asi": true,
-    "node": true,
-    "maxlen": 120,
-    "indent": 2
-  },
   "license": "MIT",
   "standard": {
     "ignore": [
@@ -114,5 +108,16 @@
   },
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
+  },
+  "nyc": {
+    "check-coverage": true,
+    "include": [
+      "src/**/*"
+    ],
+    "reporter": [
+      "lcov",
+      "text"
+    ],
+    "report-dir": "docs/reports/coverage"
   }
 }
