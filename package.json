@@ -118,6 +118,6 @@
       "lcov",
       "text"
     ],
-    "report-dir": "docs/reports/coverage"
+    "report-dir": "coverage"
   }
 }
