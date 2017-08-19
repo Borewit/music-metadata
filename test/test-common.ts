@@ -1,6 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import Common from "../lib/common";
+import Common from "../src/common";
 
 const t = assert;
 
@@ -40,7 +40,7 @@ describe("Common", () => {
    const types = [
    {
    buf: new Buffer([0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]),
-   tag: require('../lib/id4'),
+   tag: require('../src/id4'),
    offset: 4
    }
    ];

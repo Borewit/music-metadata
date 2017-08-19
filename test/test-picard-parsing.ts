@@ -1,9 +1,8 @@
 import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-import {ICommonTagsResult, INativeTagDict} from "../lib/index";
 import * as path from 'path';
-import {HeaderType} from "../lib/tagmap";
+import {HeaderType} from "../src/tagmap";
 import * as crypto from "crypto";
 
 const t = assert;
@@ -45,7 +44,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
    * @param inputTagType Meta-data header format
    * @param common Common tag mapping
    */
-  function checkCommonMapping(inputTagType: HeaderType, common: ICommonTagsResult) {
+  function checkCommonMapping(inputTagType: HeaderType, common: mm.ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
     t.strictEqual(common.title, "Sinner's Prayer", inputTagType + " => common.title");
     t.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', inputTagType + " => common.artist");
@@ -107,7 +106,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
      * Check native Vorbis header
      * @param vorbis Vorbis native tags
      */
-    function checkVorbisTags(vorbis: INativeTagDict, dataformat: string) {
+    function checkVorbisTags(vorbis: mm.INativeTagDict, dataformat: string) {
       // Compare expectedCommonTags with result.common
       t.deepEqual(vorbis.TITLE, ['Sinner\'s Prayer'], 'vorbis.TITLE');
       t.deepEqual(vorbis.ALBUM, ['Don\'t Explain'], 'vorbis.TITLE');
@@ -214,7 +213,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   describe("APEv2 header", () => {
 
-    function checkApeTags(APEv2: INativeTagDict) {
+    function checkApeTags(APEv2: mm.INativeTagDict) {
       // Compare expectedCommonTags with result.common
       t.deepEqual(APEv2.Title, ['Sinner\'s Prayer'], 'APEv2.Title');
       t.deepEqual(APEv2.Album, ['Don\'t Explain'], 'APEv2.Album');
@@ -329,7 +328,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   describe("ID3v2.3 header", () => {
 
-    function checkID3Tags(native: INativeTagDict) {
+    function checkID3Tags(native: mm.INativeTagDict) {
 
       t.deepEqual(native.TIT2, ['Sinner\'s Prayer'], 'id3v23.TIT2: Title/songname/content description');
       t.deepEqual(native.TPE1, ['Beth Hart & Joe Bonamassa'], 'id3v23.TPE1: Lead performer(s)/Soloist(s)');

@@ -1,8 +1,8 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import {APEv2TagMap} from "../lib/apev2/APEv2TagMap";
-import {AsfTagMap} from "../lib/asf/AsfTagMap";
-import {ID3v24TagMap} from "../lib/id3v2/ID3v24TagMap";
+import {APEv2TagMap} from "../src/apev2/APEv2TagMap";
+import {AsfTagMap} from "../src/asf/AsfTagMap";
+import {ID3v24TagMap} from "../src/id3v2/ID3v24TagMap";
 
 describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 

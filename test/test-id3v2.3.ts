@@ -1,7 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-import {INativeTagDict} from "../lib/index";
 import * as path from 'path';
 
 const t = assert;
@@ -35,7 +34,7 @@ it("should decode id3v2.3", () => {
     t.strictEqual(common.picture[0].data.length, 80938, 'common.picture length');
   }
 
-  function checkNative(native: INativeTagDict) {
+  function checkNative(native: mm.INativeTagDict) {
 
     t.deepEqual(native.TALB, ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB');
     t.deepEqual(native.TPE1, ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1');

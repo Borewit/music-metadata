@@ -1,7 +1,7 @@
 import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-import Common from "../lib/common";
+import Common from "../src/common";
 
 /* ToDo?
 import * as path from 'path';

@@ -3,7 +3,6 @@ import {assert} from 'chai';
 import * as mm from '../src';
 
 import * as path from 'path';
-import {ICommonTagsResult} from "../lib/index";
 
 const t = assert;
 
@@ -23,7 +22,7 @@ describe("ID3v1.1", () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
 
-    function checkCommon(common: ICommonTagsResult) {
+    function checkCommon(common: mm.ICommonTagsResult) {
       t.strictEqual(common.title, 'Blood Sugar', 'common.title');
       t.strictEqual(common.artist, 'Pendulum', 'common.artist');
       t.strictEqual(common.album, 'Blood Sugar (Single)', 'common.album');

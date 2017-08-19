@@ -1,9 +1,8 @@
 import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
-import {INativeTagDict} from "../lib/index";
 import * as path from 'path';
-import GUID from "../lib/asf/GUID";
+import GUID from "../src/asf/GUID";
 import * as fs from 'fs-extra';
 
 const t = assert;
@@ -42,7 +41,7 @@ describe("ASF", () => {
       t.deepEqual(common.genre, ['Rock'], 'common.genre');
     }
 
-    function checkNative(native: INativeTagDict) {
+    function checkNative(native: mm.INativeTagDict) {
 
       t.deepEqual(native['WM/AlbumTitle'], ['Discovery'], 'native: WM/AlbumTitle');
       t.deepEqual(native['WM/BeatsPerMinute'], [117], 'native: WM/BeatsPerMinute');
