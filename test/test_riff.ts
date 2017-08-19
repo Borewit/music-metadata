@@ -1,0 +1,52 @@
+import {} from "mocha";
+import {assert} from 'chai';
+import * as mm from '../src';
+import * as path from 'path';
+
+const t = assert;
+
+describe("Extract metadata from RIFF (Resource Interchange File Format)", () => {
+
+  describe("Parse RIFF/WAVE audio format", () => {
+
+    function checkExifTags(exif: mm.INativeTagDict) {
+
+      t.deepEqual(exif.IART, ["Beth Hart & Joe Bonamassa"], "exif.IART");
+      t.deepEqual(exif.ICRD, ["2011"], "exif.ICRD");
+      t.deepEqual(exif.INAM, ["Sinner's Prayer"], "exif.INAM");
+      t.deepEqual(exif.IPRD, ["Don't Explain"], "exif.IPRD");
+      t.deepEqual(exif.ITRK, ["1/10"], "exif.ITRK");
+    }
+
+    /**
+     * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
+     * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
+     */
+    it("should parse LIST-INFO (EXIF)", () => {
+
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
+      const filePath = path.join(__dirname, 'samples', filename);
+
+      function checkFormat(format: mm.IFormat) {
+        t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE");
+        // t.strictEqual(format.headerType, "id3v2.4", "format.headerType = 'id3v2.4'"); // ToDo
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
+        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
+        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
+      }
+
+      // Parse wma/asf file
+      return mm.parseFile(filePath, {native: true}).then((result) => {
+        // Check wma format
+        checkFormat(result.format);
+        // Check native tags
+        checkExifTags(mm.orderTags(result.native.exif));
+      });
+
+    });
+
+  });
+
+});

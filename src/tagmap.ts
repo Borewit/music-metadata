@@ -5,6 +5,7 @@ import {ID3v24TagMap} from "./id3v2/ID3v24TagMap";
 import {MP4TagMap} from "./mp4/MP4TagMap";
 import {VorbisTagMap} from "./vorbis/VorbisTagMap";
 import {APEv2TagMap} from "./apev2/APEv2TagMap";
+import {RiffInfoTagMap} from "./riff/RiffInfoTagMap";
 export type HeaderType = 'vorbis' | 'id3v1.1'| 'id3v2.2' | 'id3v2.3' | 'id3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
 
 export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artists' | 'albumartist' | 'album' | 'date' | 'originaldate' |
@@ -41,7 +42,8 @@ interface INativeTagMappings {
   'id3v2.3': INativeTagMap,
   'id3v2.4': INativeTagMap,
   'iTunes MP4': INativeTagMap,
-  vorbis: INativeTagMap
+  vorbis: INativeTagMap,
+  exif: INativeTagMap
 }
 
 /**
@@ -175,6 +177,7 @@ export default class TagMap {
       'id3v2.3': ID3v24TagMap,
       'id3v2.4': ID3v24TagMap,
       'iTunes MP4': MP4TagMap,
+      exif: RiffInfoTagMap,
       vorbis: VorbisTagMap
     };
   }

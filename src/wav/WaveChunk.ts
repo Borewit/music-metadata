@@ -41,7 +41,7 @@ export interface IFormat {
 }
 
 /**
- * "fmt " chunk
+ * format chunk; chunk-id is "fmt "
  * http://soundfile.sapp.org/doc/WaveFormat/
  */
 export class Format implements Token.IGetToken<IFormat> {

@@ -3,7 +3,7 @@ import * as Token from "token-types";
 export interface IChunkHeader {
 
   /**
-   * 	A chunk ID (ie, 4 ASCII bytes)
+   *  A chunk ID (ie, 4 ASCII bytes)
    */
   chunkID: string,
   /**
@@ -27,3 +27,20 @@ export const Header: Token.IGetToken<IChunkHeader> = {
     };
   }
 };
+
+/**
+ * Token to parse RIFF-INFO tag value
+ */
+export class ListInfoTagValue implements Token.IGetToken<string> {
+
+  public len: number;
+
+  public constructor(private tagHeader: IChunkHeader) {
+    this.len = tagHeader.size;
+    this.len += this.len & 1; // if it an odd length, round up to even
+  }
+
+  public get(buf, off): string {
+    return new Token.StringType(this.tagHeader.size, 'ascii').get(buf, off);
+  }
+}
