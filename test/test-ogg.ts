@@ -66,7 +66,7 @@ describe("Parsing Ogg Vorbis", function() {
 
   it("should decode from an Ogg Vorbis audio stream (audio/ogg)", function() {
 
-    this.skip(); // ToDo
+    this.skip(); // issue #29
 
     const stream = fs.createReadStream(filePath);
 
