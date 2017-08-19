@@ -13,7 +13,7 @@ describe("Parsing Ogg Vorbis", function() {
 
   function checkFormat(format) {
     assert.strictEqual(format.headerType, 'vorbis', 'format.headerType');
-    assert.strictEqual(format.duration, 97391.54861678004, 'format.duration = ~97391 sec'); // ToDO: check this
+    assert.strictEqual(format.duration, 0, 'format.duration = 0 sec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
     assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
@@ -64,9 +64,7 @@ describe("Parsing Ogg Vorbis", function() {
 
   });
 
-  it("should decode from an Ogg Vorbis audio stream (audio/ogg)", function() {
-
-    this.skip(); // issue #29
+  it("should decode from an Ogg Vorbis audio stream (audio/ogg)", () => {
 
     const stream = fs.createReadStream(filePath);
 

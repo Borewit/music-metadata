@@ -6,7 +6,6 @@ import * as strtok3 from "strtok3";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {Readable} from "stream";
 import {Promise} from "es6-promise";
-import {StreamReader} from "then-read-stream";
 import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
 
@@ -103,7 +102,7 @@ export class OggParser implements ITokenParser {
           lastPage: common.strtokBITSET.get(buf, off + 5, 2)
         },
         // packet_flag: buf.readUInt8(off + 5),
-        absoluteGranulePosition: (buf.readUInt32LE(off + 10) << 32) + buf.readUInt32LE(off + 6),
+        absoluteGranulePosition: buf.readIntLE(off + 6, 6), // cannot read 2 of 8 most significant bytes
         streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
         pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
         pageChecksum: Token.UINT32_LE.get(buf, off + 22),
@@ -127,29 +126,23 @@ export class OggParser implements ITokenParser {
 
     this.vorbisStream = new VorbisStream();
     return strtok3.fromStream(this.vorbisStream).then((vorbisTokenizer) => {
-      // ToDo: should be provided with level-2 tokenizer
-      const vorbis = this.vorbisParser.parse(vorbisTokenizer, options).then((metadata) => {
 
-        if (metadata.format.sampleRate) {
+      const vorbis = this.vorbisParser.parse(vorbisTokenizer, options);
+
+      const ogg = this.parsePage()
+        .catch((err) => {
+          if (err === strtok3.EndOfFile) {
+            this.vorbisStream.append(null);
+          } else throw err;
+        });
+
+      return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([metadata]) => {
+
+        if (metadata.format.sampleRate && this.header.absoluteGranulePosition >= 0) {
           // Calculate duration
           metadata.format.duration = this.header.absoluteGranulePosition / metadata.format.sampleRate;
         }
 
-        return metadata;
-      });
-
-      const ogg = this.parsePage().catch((err) => {
-        if (err === StreamReader.EndOfStream) {
-          // console.log("EndOfStream: ogg");
-          this.vorbisStream.append(null);
-        } else throw err;
-      }).catch((err) => {
-        if (err === strtok3.EndOfFile)
-          return;
-        else throw err;
-      });
-
-      return Promise.all<INativeAudioMetadata, void>([vorbis, ogg]).then(([metadata]) => {
         return metadata;
       });
 
@@ -161,6 +154,7 @@ export class OggParser implements ITokenParser {
       if (header.capturePattern !== 'OggS') { // Capture pattern
         throw new Error('expected ogg header but was not found');
       }
+      // console.log('Ogg: Page-header: seqNo=%s, pos=%s', header.pageSequenceNo, header.absoluteGranulePosition);
       this.header = header;
 
       this.pageNumber = header.pageSequenceNo;

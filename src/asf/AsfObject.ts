@@ -13,9 +13,9 @@ import {AttachedPictureType} from "../id3v2/ID3v2Parser";
  * Data Type: Specifies the type of information being stored. The following values are recognized.
  */
 export enum DataType {
-    /**
-     * Unicode string. The data consists of a sequence of Unicode characters.
-     */
+  /**
+   * Unicode string. The data consists of a sequence of Unicode characters.
+   */
   UnicodeString,
     /**
      * BYTE array. The type of data is implementation-specific.

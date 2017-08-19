@@ -43,7 +43,7 @@ export class VorbisParser implements ITokenParser {
    * @param pageLength
    * @returns {Promise<void>}
    */
-  private parseHeaderPacket(): Promise<boolean> {
+  private parseHeaderPacket(): Promise<void> {
 
     return this.tokenizer.readToken<Vorbis.ICommonHeader>(Vorbis.CommonHeader).then((header) => {
       if (header.vorbis !== 'vorbis')
@@ -53,11 +53,10 @@ export class VorbisParser implements ITokenParser {
         if (!res.done) {
           return this.parseHeaderPacket();
         }
-        return res.done;
       });
     }).catch((err) => {
       if (err === StreamReader.EndOfStream) {
-        return true;
+        return;
       } else
         throw err;
     });
