@@ -1,5 +1,6 @@
 import ReadableStream = NodeJS.ReadableStream;
 import {isArray} from 'util';
+import * as assert from 'assert';
 import common from '../common';
 import {HeaderType} from '../tagmap';
 import {ITokenParser} from "../ParserFactory";
@@ -331,13 +332,21 @@ export class ID3v2Parser implements ITokenParser {
 
     while (true) {
       if (offset === data.length) break;
-      const frameHeaderBytes = data.slice(offset, offset += ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major));
+
+      const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major);
+
+      if (offset + frameHeaderLength > data.length) {
+        // ToDo: generate WARNING: Illegal ID3v2-tag-length
+        break;
+      }
+
+      const frameHeaderBytes = data.slice(offset, offset += frameHeaderLength);
       const frameHeader = ID3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
       // Last frame. Check first char is a letter, bit of defensive programming
       if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
-        // ToDo: generate warning
+        // ToDo: generate WARNING
         break;
       }
 
