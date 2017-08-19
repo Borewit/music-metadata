@@ -69,7 +69,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     /**
      * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
      */
-    const filePath = path.join(__dirname, 'samples', 'issue#26', '04-Strawberry.mp3');
+    const filePath = path.join(__dirname, 'samples', '04-Strawberry.mp3');
 
     function checkFormat(format: mm.IFormat) {
       t.strictEqual(format.duration, 248, 'format.duration');
