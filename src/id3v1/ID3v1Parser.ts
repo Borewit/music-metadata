@@ -58,7 +58,8 @@ interface Iid3v1Header {
 }
 
 /**
- * Ref: https://en.wikipedia.org/wiki/ID3
+ * Spec: http://id3.org/ID3v1
+ * Wiki: https://en.wikipedia.org/wiki/ID3
  */
 const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
   len: 128,
@@ -77,9 +78,11 @@ const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
       album: new Id3v1StringType(30, 'ascii').get(buf, off + 63),
       year: new Id3v1StringType(4, 'ascii').get(buf, off + 93),
       comment: new Id3v1StringType(28, 'ascii').get(buf, off + 97),
-      zeroByte: Token.INT8.get(buf, off + 127),
-      track: Token.INT8.get(buf, off + 126),
-      genre: Token.INT8.get(buf, off + 127)
+      // ID3v1.1 separator for track
+      zeroByte: Token.UINT8.get(buf, off + 127),
+      // track: ID3v1.1 field added by Michael Mutschler
+      track: Token.UINT8.get(buf, off + 126),
+      genre: Token.UINT8.get(buf, off + 127)
     } : null;
   }
 };
@@ -119,15 +122,14 @@ export class ID3v1Parser implements ITokenParser {
         };
         if (header) {
           res.format.headerType = 'id3v1.1' as HeaderType;
-          res.native['id3v1.1'] = [
-            {id: 'title', value: header.title},
-            {id: 'artist', value: header.artist},
-            {id: 'album', value: header.album},
-            {id: 'comment', value: header.comment},
-            {id: 'track', value: header.track},
-            {id: 'year', value: header.year},
-            {id: 'genre', value: ID3v1Parser.getGenre(header.genre)}
-          ];
+          const id3 = res.native['id3v1.1'] = [];
+          for (const id of ['title', 'artist', 'album', 'comment', 'track',  'year']) {
+            if (header[id] && header[id] !== '')
+              id3.push({id, value: header[id]});
+          }
+          const genre = ID3v1Parser.getGenre(header.genre);
+          if (genre)
+            id3.push({id: 'genre', value: genre});
         }
         return res;
       });
