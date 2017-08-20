@@ -6,13 +6,13 @@ import * as path from 'path';
 
 const t = assert;
 
-it("id3v2.4", () => {
+it("ID3v2.4", () => {
 
   const filename = '29 - Dominator.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
   return mm.parseFile(filePath, {native: true}).then((result) => {
-    const nativeTags = mm.orderTags(result.native["id3v2.3"]);
+    const nativeTags = mm.orderTags(result.native["ID3v2.3"]);
 
     t.equal(nativeTags.UFID.length, 1);
 

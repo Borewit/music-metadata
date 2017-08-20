@@ -379,9 +379,7 @@ export class MP4Parser implements ITokenParser {
 
   private metaAtomsTotalLength = 0;
 
-  private format: IFormat = {
-    headerType: "iTunes MP4"
-  };
+  private format: IFormat = {};
   private tags: ITag[] = [];
   private warnings: string[] = []; // ToDo: make this part of the parsing result
 

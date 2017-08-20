@@ -14,6 +14,7 @@ import * as path from "path";
 import {AIFFParser} from "./aiff/AiffParser";
 import {WavePcmParser} from "./riff/RiffParser";
 import {WavPackParser} from "./wavpack/WavPackParser";
+import {MpegParser} from "./mpeg/MpegParser";
 
 export interface ITokenParser {
   parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -76,9 +77,7 @@ export class ParserFactory {
       case '.mp2':
       case '.mp3':
       case '.m2a':
-        return this.hasStartTag(filePath, 'ID3').then((hasID3) => {
-          return hasID3 ? new ID3v2Parser() : new ID3v1Parser();
-        });
+        return Promise.resolve<ITokenParser>(new MpegParser());
 
       case '.ape':
         return Promise.resolve<ITokenParser>(new APEv2Parser());
@@ -128,7 +127,7 @@ export class ParserFactory {
     switch (mimeType) {
 
       case 'audio/mpeg':
-        return Promise.resolve<ITokenParser>(new ID3v2Parser()); // ToDo: handle ID1 header as well
+        return Promise.resolve<ITokenParser>(new MpegParser()); // ToDo: handle ID1 header as well
 
       case 'audio/x-monkeys-audio':
         return Promise.resolve<ITokenParser>(new APEv2Parser());

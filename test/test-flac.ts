@@ -12,8 +12,8 @@ describe("FLAC decoding", () => {
   const filePath = path.join(__dirname, 'samples', filename);
 
   function checkFormat(format) {
-    t.strictEqual(format.dataformat, 'flac', 'format.tag_type');
-    t.strictEqual(format.headerType, 'vorbis', 'format.tag_type');
+    t.strictEqual(format.dataformat, 'flac', 'format.tagTypes');
+    t.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
     t.strictEqual(format.duration, 271.7733333333333, 'format.duration');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bit');

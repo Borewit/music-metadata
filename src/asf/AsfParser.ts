@@ -29,9 +29,7 @@ export class AsfParser implements ITokenParser {
 
   private warnings: string[] = []; // ToDo: make these part of the parsing result
 
-  private format: IFormat = {
-    headerType: "asf"
-  };
+  private format: IFormat = {};
 
   public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 

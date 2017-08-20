@@ -14,10 +14,7 @@ import * as Token from "token-types";
  */
 export class VorbisParser implements ITokenParser {
 
-  private format: IFormat = {
-    headerType: 'vorbis'
-  };
-
+  private format: IFormat = {};
   private tags: ITag[] = [];
 
   private tokenizer: strtok3.ITokenizer;

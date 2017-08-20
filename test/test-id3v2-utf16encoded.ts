@@ -20,12 +20,12 @@ it("decode id3v2-utf16", () => {
     t.strictEqual(result.common.picture[0].data.length, 214219, 'picture 0 length');
     t.deepEqual(result.common.picture[0].data.slice(0, 2), new Buffer([0xFF, 0xD8]), 'picture 0 JFIF magic header');
 
-    const native = result.native['id3v2.3'];
+    const native = result.native['ID3v2.3'];
     t.ok(native, 'Native id3v2.3 tags should be present');
 
-    t.deepEqual(native[0], {id: 'TIT2', value: 'Redial (Feat. LeafRunner and Nowacking)'}, "['id3v2.3'].TIT2");
-    t.deepEqual(native[1], {id: 'TPE1', value: 'YourEnigma'}, "['id3v2.3'].TIT2");
-    t.deepEqual(native[2], {id: 'TYER', value: '2014'}, "['id3v2.3'].TYER");
+    t.deepEqual(native[0], {id: 'TIT2', value: 'Redial (Feat. LeafRunner and Nowacking)'}, "['ID3v2.4'].TIT2");
+    t.deepEqual(native[1], {id: 'TPE1', value: 'YourEnigma'}, "['ID3v2.4'].TIT2");
+    t.deepEqual(native[2], {id: 'TYER', value: '2014'}, "['ID3v2.4'].TYER");
   });
 
 });

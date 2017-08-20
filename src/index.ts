@@ -2,7 +2,7 @@
 'use strict';
 
 import common from './common';
-import TagMap, {HeaderType} from './tagmap';
+import TagMap, {TagPriority, TagType} from './tagmap';
 import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
@@ -115,7 +115,10 @@ export interface IFormat {
    */
   dataformat?: string, // ToDo: make mandatory
 
-  headerType?: HeaderType, // ToDo: make mandatory
+  /**
+   * List of tags found in parsed audio file
+   */
+  tagTypes?: TagType[],
 
   /**
    * Duration in seconds
@@ -338,9 +341,18 @@ export class MusicMetadataParser {
       } as any
     };
 
+    metadata.format.tagTypes = [];
+
+    // 'vorbis' | 'ID3v1.1'| 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
     for (const tagType in nativeData.native) {
-      for (const tag of nativeData.native[tagType]) {
-        this.setCommonTags(metadata.common, tagType as HeaderType, tag.id, tag.value);
+      metadata.format.tagTypes.push(tagType as TagType);
+    }
+    for (const tagType of TagPriority) {
+      if (nativeData.native[tagType]) {
+        for (const tag of nativeData.native[tagType]) {
+          this.setCommonTags(metadata.common, tagType as TagType, tag.id, tag.value);
+        }
+        break;
       }
     }
 
@@ -362,11 +374,11 @@ export class MusicMetadataParser {
   /**
    * Process and set common tags
    * @param comTags Target metadata to wrote common tags to
-   * @param type    Native headerType e.g.: 'iTunes MP4' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+   * @param type    Native tagTypes e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
    * @param tag     Native tag
    * @param value   Native tag value
    */
-  private setCommonTags(comTags, type: HeaderType, tag: string, value: any) {
+  private setCommonTags(comTags, type: TagType, tag: string, value: any) {
 
     switch (type) {
       /*
@@ -387,8 +399,8 @@ export class MusicMetadataParser {
        break
        */
 
-      case 'id3v2.3':
-      case 'id3v2.4':
+      case 'ID3v2.4':
+      case 'ID3v2.4':
         switch (tag) {
 
           /*

@@ -11,7 +11,7 @@ it("should decode id3v2-duration-allframes", () => {
   const filePath = path.join(__dirname, 'samples', 'id3v2-duration-allframes.mp3');
 
   function checkFormat(format) {
-    t.strictEqual(format.headerType, 'id3v2.3', 'format.headerType');
+    t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
     t.strictEqual(format.bitrate, 256000, 'format.bitrate');
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');

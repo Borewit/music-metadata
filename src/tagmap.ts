@@ -6,7 +6,7 @@ import {MP4TagMap} from "./mp4/MP4TagMap";
 import {VorbisTagMap} from "./vorbis/VorbisTagMap";
 import {APEv2TagMap} from "./apev2/APEv2TagMap";
 import {RiffInfoTagMap} from "./riff/RiffInfoTagMap";
-export type HeaderType = 'vorbis' | 'id3v1.1'| 'id3v2.2' | 'id3v2.3' | 'id3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
+export type TagType = 'vorbis' | 'ID3v1.1'| 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
 
 export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artists' | 'albumartist' | 'album' | 'date' | 'originaldate' |
   'originalyear' | 'comment' | 'genre' | 'picture' | 'composer' | 'lyrics' | 'albumsort' | 'titlesort' | 'work' |
@@ -21,6 +21,8 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artist
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
   'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
   'peakLevel' | 'averageLevel' | 'notes' | 'key'| 'originalalbum' | 'originalartist';
+
+export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'asf', 'iTunes MP4', 'ID3v1.1'];
 
 export interface INativeTagMap {
   [index: string]: CommonTag;
@@ -37,10 +39,10 @@ export interface ITagInfoMap {
 interface INativeTagMappings {
   asf: INativeTagMap,
   APEv2: INativeTagMap,
-  'id3v1.1': INativeTagMap,
-  'id3v2.2': INativeTagMap,
-  'id3v2.3': INativeTagMap,
-  'id3v2.4': INativeTagMap,
+  'ID3v1.1': INativeTagMap,
+  'ID3v2.2': INativeTagMap,
+  'ID3v2.3': INativeTagMap,
+  'ID3v2.4': INativeTagMap,
   'iTunes MP4': INativeTagMap,
   vorbis: INativeTagMap,
   exif: INativeTagMap
@@ -172,10 +174,10 @@ export default class TagMap {
     this.mappings = {
       asf: AsfTagMap,
       APEv2: TagMap.capitalizeTags(APEv2TagMap), // capitalize 'APEv2' tags for case insensitive tag matching
-      'id3v1.1': ID3v1TagMap,
-      'id3v2.2': ID3v22TagMap,
-      'id3v2.3': ID3v24TagMap,
-      'id3v2.4': ID3v24TagMap,
+      'ID3v1.1': ID3v1TagMap,
+      'ID3v2.2': ID3v22TagMap,
+      'ID3v2.3': ID3v24TagMap,
+      'ID3v2.4': ID3v24TagMap,
       'iTunes MP4': MP4TagMap,
       exif: RiffInfoTagMap,
       vorbis: VorbisTagMap
@@ -183,8 +185,8 @@ export default class TagMap {
   }
 
   /**
-   * Test if native tag headerType is a singleton
-   * @param type e.g.: 'iTunes MP4' | 'asf' | 'id3v1.1' | 'id3v2.4' | 'vorbis'
+   * Test if native tag tagTypes is a singleton
+   * @param type e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
    * @param  tag Native tag name', e.g. 'TITLE'
    * @returns {boolean} true is we can safely assume that it is a  singleton
    */
@@ -192,12 +194,12 @@ export default class TagMap {
     switch (type) {
       case 'format':
         return true;
-      case 'id3v2.3':
+      case 'ID3v2.3':
         switch (tag) {
           case 'IPLS':
             return true;
         }
-      case 'id3v2.4':
+      case 'ID3v2.4':
         switch (tag) {
           case 'TIPL':
           case 'TMCL':
@@ -209,13 +211,13 @@ export default class TagMap {
   }
 
   /**
-   * @headerType Native header headerType: e.g.: 'm4a' | 'asf' | 'id3v1.1' | 'vorbis'
+   * @tagTypes Native header tagTypes: e.g.: 'm4a' | 'asf' | 'ID3v1.1' | 'vorbis'
    * @tag  Native header tag
    * @return common tag name (alias)
    */
-  public getCommonName(type: HeaderType, tag: string): CommonTag {
+  public getCommonName(type: TagType, tag: string): CommonTag {
     if (!this.mappings[type]) {
-      throw new Error('Illegal header headerType: ' + type);
+      throw new Error('Illegal TagType: ' + type);
     }
     return this.mappings[type][type === 'APEv2' ? tag.toUpperCase() : tag];
   }

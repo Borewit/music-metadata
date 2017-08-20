@@ -1,9 +1,6 @@
 'use strict';
 
-import {MpegParser} from '../mpeg/MpegParser';
-import {ITokenParser} from "../ParserFactory";
-import {INativeAudioMetadata, IOptions} from "../index";
-import {HeaderType} from "../tagmap";
+import {INativeTags, IOptions, ITag} from "../index";
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 
@@ -96,7 +93,7 @@ class Id3v1StringType extends Token.StringType {
   }
 }
 
-export class ID3v1Parser implements ITokenParser {
+export class ID3v1Parser {
 
   public static getInstance(): ID3v1Parser {
     return new ID3v1Parser();
@@ -109,30 +106,23 @@ export class ID3v1Parser implements ITokenParser {
     return undefined; // ToDO: generate warning
   }
 
-  private mpegParser: MpegParser;
+  public parse(tokenizer: ITokenizer): Promise<INativeTags> {
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.mpegParser = new MpegParser(tokenizer, 128, options && options.duration);
-    return this.mpegParser.parse().then((format) => {
-      return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then((header) => {
-        const res = {
-          format,
-          native: {}
-        };
-        if (header) {
-          res.format.headerType = 'id3v1.1' as HeaderType;
-          const id3 = res.native['id3v1.1'] = [];
-          for (const id of ['title', 'artist', 'album', 'comment', 'track',  'year']) {
-            if (header[id] && header[id] !== '')
-              id3.push({id, value: header[id]});
-          }
-          const genre = ID3v1Parser.getGenre(header.genre);
-          if (genre)
-            id3.push({id: 'genre', value: genre});
+    return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then((header) => {
+      if (header) {
+        const id3: ITag[] = [];
+        for (const id of ['title', 'artist', 'album', 'comment', 'track',  'year']) {
+          if (header[id] && header[id] !== '')
+            id3.push({id, value: header[id]});
         }
-        return res;
-      });
+        const genre = ID3v1Parser.getGenre(header.genre);
+        if (genre)
+          id3.push({id: 'genre', value: genre});
+        return {
+          'ID3v1.1': id3
+        };
+      } else
+        return null;
     });
   }
 }

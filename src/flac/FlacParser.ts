@@ -104,7 +104,6 @@ export class FlacParser implements ITokenParser {
       this.format = {
         dataformat: 'flac',
         lossless: true,
-        headerType: 'vorbis',
         numberOfChannels: streamInfo.channels,
         bitsPerSample: streamInfo.bitsPerSample,
         sampleRate: streamInfo.sampleRate,

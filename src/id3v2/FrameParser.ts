@@ -1,6 +1,6 @@
 import common, {StringEncoding} from "../common";
 import * as Token from "token-types";
-import {AttachedPictureType} from "./ID3v2Parser";
+import {AttachedPictureType} from "./ID3v2";
 
 interface IOut {
   language?: string,
@@ -120,7 +120,7 @@ export default class FrameParser {
         // skip text encoding (1 byte),
         //      language (3 bytes),
         //      time stamp format (1 byte),
-        //      content headerType (1 byte),
+        //      content tagTypes (1 byte),
         //      content descriptor (1 byte)
         offset += 7;
 

@@ -13,7 +13,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
     const filePath = path.join(__dirname, 'samples', 'id4.m4a');
 
     function checkFormat(format) {
-      assert.strictEqual(format.headerType, 'iTunes MP4', 'format.headerType');
+      assert.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
       t.strictEqual(format.duration, 2.2058956916099772, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     }

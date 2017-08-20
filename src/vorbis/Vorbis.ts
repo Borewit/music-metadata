@@ -1,5 +1,5 @@
 import * as Token from "token-types";
-import {AttachedPictureType} from "../id3v2/ID3v2Parser";
+import {AttachedPictureType} from "../id3v2/ID3v2";
 import {IPicture} from "../index";
 
 export interface IVorbisPicture extends IPicture {

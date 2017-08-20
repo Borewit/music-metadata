@@ -29,7 +29,7 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
 
       function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE");
-        // t.strictEqual(format.headerType, "id3v2.4", "format.headerType = 'id3v2.4'"); // ToDo
+        t.deepEqual(format.tagTypes, ["ID3v2.3", "exif"], "format.tagTypes = ['ID3v2.3']"); // ToDo
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');

@@ -111,7 +111,7 @@ describe("Parser options", () => {
 
       it("should include cover-art if option.skipCovers is not defined", () => {
         return mm.parseFile(file_id3v22, {native: true}).then((result) => {
-          const id3 = mm.orderTags(result.native['id3v2.2']);
+          const id3 = mm.orderTags(result.native['ID3v2.2']);
           // Native
           t.isDefined(id3.PIC, "id3v1.PIC");
           // Common
@@ -121,7 +121,7 @@ describe("Parser options", () => {
 
       it("should not include cover-art if option.skipCovers=true", () => {
         return mm.parseFile(file_id3v22, {native: true, skipCovers: true}).then((result) => {
-          const id3 = mm.orderTags(result.native['id3v2.2']);
+          const id3 = mm.orderTags(result.native['ID3v2.2']);
           // Native
           t.isUndefined(id3.PIC, "id3v1.PIC");
           // Common
@@ -131,7 +131,7 @@ describe("Parser options", () => {
 
       it("should include cover-art if option.skipCovers=false", () => {
         return mm.parseFile(file_id3v22, {native: true, skipCovers: false}).then((result) => {
-          const id3 = mm.orderTags(result.native['id3v2.2']);
+          const id3 = mm.orderTags(result.native['ID3v2.2']);
           // Native
           t.isDefined(id3.PIC, "id3v1.PIC");
           // Common

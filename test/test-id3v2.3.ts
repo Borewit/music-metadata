@@ -12,7 +12,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     const filePath = path.join(__dirname, 'samples', 'id3v2.3.mp3');
 
     function checkFormat(format) {
-      t.strictEqual(format.headerType, 'id3v2.3', 'format.type');
+      t.deepEqual(format.tagTypes, [ 'ID3v2.3', 'ID3v1.1' ], 'format.type');
       t.strictEqual(format.duration, 1, 'format.duration'); // FooBar says 0.732 seconds (32.727 samples)
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
@@ -36,22 +36,32 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.strictEqual(common.picture[0].data.length, 80938, 'common.picture length');
     }
 
-    function checkNative(native: mm.INativeTagDict) {
+    function checkID3v1(id3v11: mm.INativeTagDict) {
 
-      t.deepEqual(native.TALB, ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB');
-      t.deepEqual(native.TPE1, ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1');
-      t.deepEqual(native.TPE2, ['Soundtrack'], 'native: TPE2');
-      t.deepEqual(native.TCOM, ['Explosions in the Sky'], 'native: TCOM');
-      t.deepEqual(native.TPOS, ['1/1'], 'native: TPOS');
-      t.deepEqual(native.TCON, ['Soundtrack'], 'native: TCON');
-      t.deepEqual(native.TIT2, ['Home'], 'native: TIT2');
-      t.deepEqual(native.TRCK, ['5'], 'native: TRCK');
-      t.deepEqual(native.TYER, ['2004'], 'native: TYER');
-      t.deepEqual(native['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
+      t.deepEqual(id3v11.title, ['Home'], 'id3v11.title');
+      t.deepEqual(id3v11.album, ['Friday Night Lights [Original'], 'id3v11.album');
+      t.deepEqual(id3v11.artist, ['Explosions In The Sky/Another/'], 'id3v11.artist');
+      t.deepEqual(id3v11.genre, ['Soundtrack'], 'id3v11.genre');
+      t.deepEqual(id3v11.track, [5], 'id3v11.track');
+      t.deepEqual(id3v11.year, ['2004'], 'id3v11.year');
+    }
 
-      const apic = native.APIC[0];
+    function checkID3v23(id3v23: mm.INativeTagDict) {
+
+      t.deepEqual(id3v23.TALB, ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB');
+      t.deepEqual(id3v23.TPE1, ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1');
+      t.deepEqual(id3v23.TPE2, ['Soundtrack'], 'native: TPE2');
+      t.deepEqual(id3v23.TCOM, ['Explosions in the Sky'], 'native: TCOM');
+      t.deepEqual(id3v23.TPOS, ['1/1'], 'native: TPOS');
+      t.deepEqual(id3v23.TCON, ['Soundtrack'], 'native: TCON');
+      t.deepEqual(id3v23.TIT2, ['Home'], 'native: TIT2');
+      t.deepEqual(id3v23.TRCK, ['5'], 'native: TRCK');
+      t.deepEqual(id3v23.TYER, ['2004'], 'native: TYER');
+      t.deepEqual(id3v23['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
+
+      const apic = id3v23.APIC[0];
       t.strictEqual(apic.format, 'image/jpg', 'raw APIC format');
-      t.strictEqual(apic.type, 'Cover (front)', 'raw APIC headerType');
+      t.strictEqual(apic.type, 'Cover (front)', 'raw APIC tagTypes');
       t.strictEqual(apic.description, '', 'raw APIC description');
       t.strictEqual(apic.data.length, 80938, 'raw APIC length');
     }
@@ -59,7 +69,8 @@ describe("Extract metadata from ID3v2.3 header", () => {
     return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
       checkFormat(result.format);
       checkCommon(result.common);
-      checkNative(mm.orderTags(result.native['id3v2.3']));
+      checkID3v1(mm.orderTags(result.native['ID3v1.1']));
+      checkID3v23(mm.orderTags(result.native['ID3v2.3']));
     });
 
   });
@@ -73,7 +84,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
     function checkFormat(format: mm.IFormat) {
       t.strictEqual(format.duration, 248, 'format.duration');
-      t.strictEqual(format.headerType, 'id3v2.3', 'format.tag_type');
+      t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');

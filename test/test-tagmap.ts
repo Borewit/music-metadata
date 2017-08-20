@@ -17,7 +17,7 @@ it("tagmap", () => {
       const typeMap = (tagMap as any).mappings[type];
       for (const tag in typeMap) {
         const commonType = typeMap[tag];
-        t.isDefined(commonTags[commonType], 'Unknown common headerType in mapping ' + type + '.' + tag + ' => ' + commonType);
+        t.isDefined(commonTags[commonType], 'Unknown common tagTypes in mapping ' + type + '.' + tag + ' => ' + commonType);
       }
     }
   });

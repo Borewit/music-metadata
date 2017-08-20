@@ -2,7 +2,7 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
-import {HeaderType} from "../src/tagmap";
+import {TagType} from "../src/tagmap";
 import * as crypto from "crypto";
 
 const t = assert;
@@ -15,18 +15,18 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   // Following function manage common mapping exceptions, for good or bad reasons
 
-  function hasReleaseData(inputTagType: HeaderType): boolean {
+  function hasReleaseData(inputTagType: TagType): boolean {
     switch (inputTagType) {
-      case "id3v2.3": // has original year, not the original date
+      case "ID3v2.3": // has original year, not the original date
         return false;
       default:
         return true;
     }
   }
 
-  function hasOriginalData(inputTagType: HeaderType): boolean {
+  function hasOriginalData(inputTagType: TagType): boolean {
     switch (inputTagType) {
-      case "id3v2.3": // has original year, not the original date
+      case "ID3v2.3": // has original year, not the original date
         return false;
       default:
         return true;
@@ -44,7 +44,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
    * @param inputTagType Meta-data header format
    * @param common Common tag mapping
    */
-  function checkCommonMapping(inputTagType: HeaderType, common: mm.ICommonTagsResult) {
+  function checkCommonMapping(inputTagType: TagType, common: mm.ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
     t.strictEqual(common.title, "Sinner's Prayer", inputTagType + " => common.title");
     t.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', inputTagType + " => common.artist");
@@ -180,7 +180,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         checkFormat(result.format);
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
-        checkCommonMapping(result.format.headerType, result.common);
+        checkCommonMapping('vorbis', result.common);
       });
 
     });
@@ -205,7 +205,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         // Check Vorbis native tags
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
         // Check common mappings
-        checkCommonMapping(result.format.headerType, result.common);
+        checkCommonMapping('vorbis', result.common);
       });
     });
 
@@ -295,7 +295,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native APEv2 tags');
         checkFormat(result.format);
         checkApeTags(mm.orderTags(result.native.APEv2));
-        checkCommonMapping(result.format.headerType, result.common);
+        checkCommonMapping('APEv2', result.common);
       });
 
     });
@@ -319,7 +319,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native APEv2 tags');
         checkFormat(result.format);
         checkApeTags(mm.orderTags(result.native.APEv2));
-        checkCommonMapping(result.format.headerType, result.common);
+        checkCommonMapping('APEv2', result.common);
       });
 
     });
@@ -383,7 +383,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const filePath = path.join(__dirname, 'samples', filename);
 
       function checkFormat(format) {
-        t.strictEqual(format.headerType, 'id3v2.3', 'format.headerType');
+        t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
         t.strictEqual(format.duration, 2, 'format.duration = 2.123 sec'); // ToDo, add fraction???
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -395,10 +395,10 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       // Run with default options
       return mm.parseFile(filePath, {native: true}).then((result) => {
-        t.ok(result.native && result.native.hasOwnProperty('id3v2.3'), 'should include native id3v2.3 tags');
+        t.ok(result.native && result.native.hasOwnProperty('ID3v2.3'), 'should include native id3v2.3 tags');
         checkFormat(result.format);
-        checkID3Tags(mm.orderTags(result.native['id3v2.3']));
-        checkCommonMapping(result.format.headerType, result.common);
+        checkID3Tags(mm.orderTags(result.native['ID3v2.3']));
+        checkCommonMapping('ID3v2.3', result.common);
       });
 
     });
@@ -414,7 +414,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format: mm.IFormat) {
         // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
-        // t.strictEqual(format.headerType, "id3v2.4", "format.headerType = 'id3v2.4'"); // ToDo
+        t.deepEqual(format.tagTypes, ["ID3v2.3", "exif"], "format.tagTypes = ['ID3v2.3']"); // ToDo
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
@@ -427,8 +427,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         // Check wma format
         checkFormat(result.format);
         // Check native tags
-        checkID3Tags(mm.orderTags(result.native['id3v2.3']));
-        checkCommonMapping(result.format.headerType, result.common);
+        checkID3Tags(mm.orderTags(result.native['ID3v2.3']));
+        checkCommonMapping('ID3v2.3', result.common);
       });
 
     });
@@ -505,7 +505,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const filePath = path.join(__dirname, 'samples', filename);
 
       function checkFormat(format: mm.IFormat) {
-        t.strictEqual(format.headerType, 'id3v2.4', 'format.headerType');
+        t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
         t.strictEqual(format.duration, 2, 'format.duration'); // ToDo: add fraction
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -517,10 +517,10 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       // Run with default options
       return mm.parseFile(filePath, {native: true}).then((result) => {
-        t.ok(result.native && result.native.hasOwnProperty('id3v2.4'), 'should include native id3v2.4 tags');
+        t.ok(result.native && result.native.hasOwnProperty('ID3v2.4'), 'should include native id3v2.4 tags');
         checkFormat(result.format);
-        checkID3Tags(mm.orderTags(result.native['id3v2.4']));
-        checkCommonMapping(result.format.headerType, result.common);
+        checkID3Tags(mm.orderTags(result.native['ID3v2.4']));
+        checkCommonMapping('ID3v2.4', result.common);
       });
 
     });
@@ -532,7 +532,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.dataformat, "AIFF", "format.dataformat = 'AIFF'");
-        t.strictEqual(format.headerType, "id3v2.4", "format.headerType = 'id3v2.4'"); // ToDo
+        t.deepEqual(format.tagTypes, ["ID3v2.4"], "format.tagTypes = 'ID3v2.4'"); // ToDo
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
@@ -551,13 +551,13 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       // Parse wma/asf file
       return mm.parseFile(filePath, {native: true}).then((result) => {
-        t.ok(result.native && result.native['id3v2.4'], 'should include native id3v2.4 tags');
+        t.ok(result.native && result.native['ID3v2.4'], 'should include native id3v2.4 tags');
         // Check wma format
         checkFormat(result.format);
         // Check ID3v2.4 native tags
-        checkID3Tags(mm.orderTags(result.native['id3v2.4']));
+        checkID3Tags(mm.orderTags(result.native['ID3v2.4']));
         // Check common tag mappings
-        checkCommonMapping(result.format.headerType, result.common);
+        checkCommonMapping('ID3v2.4', result.common);
       });
 
     });
@@ -570,7 +570,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     const filePath = path.join(__dirname, 'samples', filename);
 
     function checkFormat(format: mm.IFormat) {
-      t.strictEqual(format.headerType, 'iTunes MP4', 'format.headerType');
+      t.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
       // t.strictEqual(format.dataformat, 'm4a', 'ToDo: M4A/ALAC');
       t.strictEqual(format.duration, 2.1229931972789116, 'format.duration'); // ToDo: add fraction
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -609,7 +609,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       checkFormat(result.format);
       check_iTunes_Tags(mm.orderTags(result.native['iTunes MP4']));
       checkCommonTags(result.common);
-      checkCommonMapping(result.format.headerType, result.common);
+      checkCommonMapping('iTunes MP4', result.common);
     });
 
   });
@@ -620,7 +620,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     const filePath = path.join(__dirname, 'samples', filename);
 
     function checkFormat(format: mm.IFormat) {
-      t.strictEqual(format.headerType, "asf", "format.headerType = asf");
+      t.deepEqual(format.tagTypes, ["asf"], "format.tagTypes = asf");
       t.strictEqual(format.bitrate, 320000, "format.bitrate = 320000");
       // ToDo t.strictEqual(format.dataformat, "wma", "format.dataformat = wma");
       t.strictEqual(format.duration, 5.235, 'format.duration'); // duration is wrong, but seems to be what is written in file
@@ -646,7 +646,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       // Check asf native tags
       check_asf_Tags(mm.orderTags(result.native.asf));
       // Check common tag mappings
-      // ToDo checkCommonMapping(result.format.headerType, result.common);
+      // ToDo checkCommonMapping(result.format.tagTypes, result.common);
     });
 
   });

@@ -12,7 +12,7 @@ describe("Parsing Ogg Vorbis", function() {
   const filePath = path.join(__dirname, 'samples', filename);
 
   function checkFormat(format) {
-    assert.strictEqual(format.headerType, 'vorbis', 'format.headerType');
+    assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
     assert.strictEqual(format.duration, 0, 'format.duration = 0 sec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
@@ -44,7 +44,7 @@ describe("Parsing Ogg Vorbis", function() {
     const cover = vorbis.METADATA_BLOCK_PICTURE[0];
 
     assert.strictEqual(cover.format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE format');
-    assert.strictEqual(cover.type, 'Cover (back)', 'vorbis.METADATA_BLOCK_PICTURE headerType');
+    assert.strictEqual(cover.type, 'Cover (back)', 'vorbis.METADATA_BLOCK_PICTURE tagTypes');
     assert.strictEqual(cover.description, 'little willy', 'raw METADATA_BLOCK_PICTURE description');
     // test exact contents too
     assert.strictEqual(cover.data.length, 30966, 'vorbis.METADATA_BLOCK_PICTURE length');
@@ -72,9 +72,7 @@ describe("Parsing Ogg Vorbis", function() {
       checkFormat(metadata.format);
       checkCommon(metadata.common);
       checkVorbisTags(mm.orderTags(metadata.native.vorbis));
-    }).then(() => {
-      stream.close();
-    });
+    }).then(() => stream.close());
 
   });
 

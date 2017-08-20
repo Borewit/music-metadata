@@ -12,7 +12,7 @@ describe("Parsing MPEG / ID3v1", () => {
   describe("should be able to read an ID3v1.1 tag", () => {
 
     function checkFormat(format: mm.IFormat) {
-      t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type');
+      t.deepEqual(format.tagTypes, ['ID3v1.1'], 'format.tagTypes');
       t.strictEqual(format.duration, 5.4857, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
@@ -43,9 +43,7 @@ describe("Parsing MPEG / ID3v1", () => {
       });
     });
 
-    it("should decode from a stream", function() {
-
-      this.skip(); // ToDo: Streaming MPEG parser should be able to handle stream without ID3 header
+    it("should decode from a stream", () => {
 
       const stream = fs.createReadStream(filePath);
 
@@ -63,7 +61,7 @@ describe("Parsing MPEG / ID3v1", () => {
     const filePath = path.join(__dirname, 'samples', "MusicBrainz - Beth Hart - Sinner's Prayer [no-tags].V4.mp3");
 
     function checkFormat(format: mm.IFormat) {
-      t.isUndefined(format.headerType, 'format.tag_type');
+      t.isUndefined(format.tagTypes, 'format.tagTypes');
       t.strictEqual(format.duration, 2, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
@@ -80,9 +78,7 @@ describe("Parsing MPEG / ID3v1", () => {
       });
     });
 
-    it("should decode from a stream", function() {
-
-      this.skip(); // ToDo: Streaming MPEG parser should be able to handle stream without ID3 header
+    it("should decode from a stream", () => {
 
       const stream = fs.createReadStream(filePath);
 
@@ -104,7 +100,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     function checkFormat(format: mm.IFormat) {
       t.strictEqual(format.duration, 33, 'format.duration (checked with foobar)');
-      t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type');
+      t.deepEqual(format.tagTypes, ['ID3v1.1'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -124,9 +120,10 @@ describe("Parsing MPEG / ID3v1", () => {
       t.isUndefined(common.comment, 'common.comment');
     }
 
-    return mm.parseFile(filePath).then((result) => {
-      checkFormat(result.format);
-      checkCommon(result.common);
+    return mm.parseFile(filePath).then((metadata) => {
+      t.isDefined(metadata, "should provide metadata");
+      checkFormat(metadata.format);
+      checkCommon(metadata.common);
     });
 
   });

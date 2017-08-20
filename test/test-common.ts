@@ -34,7 +34,7 @@ describe("Common", () => {
   });
 
   /*
-   it("should be able to detect ftypmp42 as a valid mp4 header headerType", () => {
+   it("should be able to detect ftypmp42 as a valid mp4 header tagTypes", () => {
    const buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]);
 
    const types = [
@@ -45,7 +45,7 @@ describe("Common", () => {
    }
    ];
 
-   t.equal(Common.getParserForMediaType(types, buf), require('../src/id4'), 'headerType');
+   t.equal(Common.getParserForMediaType(types, buf), require('../src/id4'), 'tagTypes');
    });*/
 
   it("readUInt64LE", () => {

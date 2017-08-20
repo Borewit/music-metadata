@@ -7,6 +7,8 @@ import {IFormat} from "../";
 import Common from "../common";
 import * as Token from "token-types";
 import {Promise} from "es6-promise";
+import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
+import {INativeAudioMetadata, IOptions} from "../index";
 
 /**
  * MPEG Audio Layer I/II/III frame header
@@ -287,7 +289,7 @@ class MpegAudioLayer {
   }
 }
 
-export class MpegParser {
+export class MpegParser extends AbstractID3v2Parser {
 
   private frameCount: number = 0;
   private countSkipFrameData: number = 0;
@@ -307,28 +309,45 @@ export class MpegParser {
 
   private buf_frame_header = new Buffer(4);
 
-  public constructor(private tokenizer: ITokenizer, private headerSize: number, private readDuration: boolean) {
-  }
+  private tokenizer: ITokenizer;
+  /**
+   * Number of bytes already parsed since beginning of stream / file
+   */
+  private headerSize: number;
+  private readDuration: boolean;
 
-  public parse(): Promise<IFormat> {
+  /*
+   public constructor(private tokenizer: ITokenizer, private headerSize: number, private readDuration: boolean) {
+   }*/
+
+  /**
+   * Called after ID3 headers have been parsed
+   */
+  public _parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+
+    this.tokenizer = tokenizer;
+    this.readDuration = options.duration;
+    this.headerSize = tokenizer.offset;
 
     this.format = {
       dataformat: 'mp3',
       lossless: false
     };
 
-    return this.sync().then(() => {
-      return this.format;
-    }).catch((err) => {
+    return this.sync().catch((err) => {
       if (err === EndOfFile) {
         if (this.calculateVbrDuration) {
           this.format.numberOfSamples = this.frameCount * this.samplesPerFrame;
           this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
         }
-        return this.format;
       } else {
         throw err;
       }
+    }).then(() => {
+      return {
+        format: this.format,
+        native: {}
+      };
     });
   }
 
@@ -403,7 +422,8 @@ export class MpegParser {
         // the stream is CBR if the first 3 frame bitrates are the same
         if (this.areAllSame(this.bitrates)) {
           // subtract non audio stream data from duration calculation
-          const size = this.tokenizer.fileSize - this.headerSize;
+          // The 128 bytes is based on a very unsafe assumtion that a ID3v1 will follow (ToDo: improve)
+          const size = this.tokenizer.fileSize - (this.headerSize === 0 ? 128 : this.headerSize);
           this.format.duration = (size * 8) / header.bitrate;
           this.format.codecProfile = "CBR";
           return; // Done

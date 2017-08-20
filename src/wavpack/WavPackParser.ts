@@ -187,7 +187,7 @@ export class WavPackParser implements ITokenParser {
               this.format = {
                 dataformat: 'WavPack',
                 lossless: !header.flags.isHybrid,
-                // headerType: this.type,
+                // tagTypes: this.type,
                 bitsPerSample: header.flags.bitsPerSample,
                 sampleRate: header.flags.samplingRate,
                 numberOfChannels: header.flags.isMono ? 1 : 2,

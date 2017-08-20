@@ -1,7 +1,7 @@
 'use strict';
 
 import common from '../common';
-import {HeaderType} from '../tagmap';
+import {TagType} from '../tagmap';
 import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
@@ -294,7 +294,7 @@ export class APEv2Parser implements ITokenParser {
     return tags;
   }
 
-  private type: HeaderType = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
+  private type: TagType = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
 
   private ape: IApeInfo = {};
 
@@ -343,7 +343,6 @@ export class APEv2Parser implements ITokenParser {
     return this.tokenizer.readToken(Structure.Header).then((header) => {
       return {
         format: {
-          // dataformat: 'ape',
           lossless: true,
           headerType: this.type,
           bitsPerSample: header.bitsPerSample,

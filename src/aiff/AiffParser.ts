@@ -20,7 +20,8 @@ export class AIFFParser implements ITokenParser {
 
   private metadata: INativeAudioMetadata = {
     format: {
-      dataformat: "AIFF"
+      dataformat: "AIFF",
+      tagTypes: []
     },
     native: {}
   };
@@ -75,8 +76,7 @@ export class AIFFParser implements ITokenParser {
                 const id3stream = new ID3Stream(id3_data);
                 return strtok3.fromStream(id3stream).then((rst) => {
                   return ID3v2Parser.getInstance().parse(rst, this.options).then((id3) => {
-                    this.metadata.format.headerType = id3.format.headerType;
-                    this.metadata.native = id3.native;
+                    this.metadata.native = id3;
                   });
                 });
               });
