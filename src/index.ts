@@ -343,7 +343,6 @@ export class MusicMetadataParser {
 
     metadata.format.tagTypes = [];
 
-    // 'vorbis' | 'ID3v1.1'| 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
     for (const tagType in nativeData.native) {
       metadata.format.tagTypes.push(tagType as TagType);
     }
@@ -399,7 +398,7 @@ export class MusicMetadataParser {
        break
        */
 
-      case 'ID3v2.4':
+      case 'ID3v2.3':
       case 'ID3v2.4':
         switch (tag) {
 
