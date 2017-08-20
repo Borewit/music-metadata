@@ -51,8 +51,6 @@ describe("MPEG parsing", () => {
     // tslint:disable:only-arrow-functions
     it("should decode 04 - You Don't Know.mp3", function() {
 
-      this.skip(); // ToDo
-
       /**
        * File has id3v2.3 & id3v1 tags
        * First frame is 224 kbps, rest 320 kbps
@@ -63,7 +61,7 @@ describe("MPEG parsing", () => {
       const filePath = path.join(__dirname, 'samples', "04 - You Don't Know.mp3");
 
       function checkFormat(format) {
-        t.strictEqual(format.headerType, 'ID3v2.4', 'format.type');
+        t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.tagTypes');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.numberOfSamples, 9099648, 'format.numberOfSamples'); // FooBar says 3:26.329 seconds (9.099.119 samples)
         t.strictEqual(format.duration, 206.3412244897959, 'format.duration'); // FooBar says 3:26.329 seconds (9.099.119 samples)
@@ -87,40 +85,49 @@ describe("MPEG parsing", () => {
         t.strictEqual(common.genre[0], 'Ska-Punk', 'common.genre');
       }
 
-      function checkNative(native: mm.INativeTagDict) {
+      function checkID3v1(id3v1: mm.INativeTagDict) {
 
-        t.deepEqual(native.TPE2, ['Reel Big Fish'], 'native: TPE2');
-        t.deepEqual(native.TIT2, ["You Don't Know"], 'native: TIT2');
-        t.deepEqual(native.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
-        t.deepEqual(native.TPE1, ['Reel Big Fish'], 'native: TPE1');
-        t.deepEqual(native.TCON, ['Ska-Punk'], 'native: TCON');
-        t.deepEqual(native.TYER, ['1998'], 'native: TYER');
-        t.deepEqual(native.TCOM, ['CA'], 'native: TCOM'); // ToDo: common property?
-        t.deepEqual(native.TRCK, ['04'], 'native: TRCK');
-        t.deepEqual(native.COMM, [{description: "", language: "eng", text: "Jive"}], 'native: COMM');
+        t.deepEqual(id3v1.artist, ['Reel Big Fish'], 'id3v1.artist');
+        t.deepEqual(id3v1.title, ["You Don't Know"], 'id3v1.title');
+        t.deepEqual(id3v1.album, ['Why Do They Rock So Hard?'], 'id3v1.album');
+        t.deepEqual(id3v1.year, ['1998'], '(id3v1.year');
+        t.deepEqual(id3v1.track, [4], 'id3v1.track');
+        t.deepEqual(id3v1.comment, ['000010DF 00000B5A 00007784'], 'id3v1.comment');
+      }
+
+      function checkID3v23(id3v23: mm.INativeTagDict) {
+
+        t.deepEqual(id3v23.TPE2, ['Reel Big Fish'], 'native: TPE2');
+        t.deepEqual(id3v23.TIT2, ["You Don't Know"], 'native: TIT2');
+        t.deepEqual(id3v23.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
+        t.deepEqual(id3v23.TPE1, ['Reel Big Fish'], 'native: TPE1');
+        t.deepEqual(id3v23.TCON, ['Ska-Punk'], 'native: TCON');
+        t.deepEqual(id3v23.TYER, ['1998'], 'native: TYER');
+        t.deepEqual(id3v23.TCOM, ['CA'], 'native: TCOM'); // ToDo: common property?
+        t.deepEqual(id3v23.TRCK, ['04'], 'native: TRCK');
+        t.deepEqual(id3v23.COMM, [{description: "", language: "eng", text: "Jive"}], 'native: COMM');
       }
 
       return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
 
         checkFormat(result.format);
         checkCommon(result.common);
-        checkNative(mm.orderTags(result.native['ID3v2.4']));
+        checkID3v23(mm.orderTags(result.native['ID3v2.3']));
+        checkID3v1(mm.orderTags(result.native['ID3v1.1']));
       });
 
     });
 
-    it("should decode 07 - I'm Cool.mp3", function() {
+    it("should decode 07 - I'm Cool.mp3", () => {
       // 'LAME3.91' found on position 81BCF=531407
-
-      this.skip(); // ToDo
 
       const filePath = path.join(__dirname, 'samples', "07 - I'm Cool.mp3");
 
       function checkFormat(format) {
-        t.strictEqual(format.headerType, 'ID3v2.4', 'format.type');
+        t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.type');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
-        t.strictEqual(format.duration, 200.9606, 'format.duration'); // FooBar says 3:26.329 seconds
+        t.strictEqual(format.duration, 200.96035, 'format.duration'); // FooBar says 3:26.329 seconds
         t.strictEqual(format.bitrate, 320000, 'format.bitrate = 128 kbit/sec');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
         // t.strictEqual(format.encoder, 'LAME3.98r', 'format.encoder'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407
@@ -140,7 +147,7 @@ describe("MPEG parsing", () => {
         t.strictEqual(common.genre[0], 'Ska-Punk', 'common.genre');
       }
 
-      function checkNative(native: mm.INativeTagDict) {
+      function checkID3v23(native: mm.INativeTagDict) {
         t.deepEqual(native.TPE2, ['Reel Big Fish'], 'native: TPE2');
         t.deepEqual(native.TIT2, ["I'm Cool"], 'native: TIT2');
         t.deepEqual(native.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
@@ -156,7 +163,7 @@ describe("MPEG parsing", () => {
 
         checkFormat(result.format);
         checkCommon(result.common);
-        checkNative(mm.orderTags(result.native['ID3v2.4']));
+        checkID3v23(mm.orderTags(result.native['ID3v2.3']));
       });
     });
   });
