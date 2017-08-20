@@ -2,10 +2,27 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
+import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
+import * as strtok from "strtok3";
 
 const t = assert;
 
 describe("Extract metadata from ID3v2.3 header", () => {
+
+  it("should parse a raw ID3v2.3 header", () => {
+
+    const filePath = path.join(__dirname, "samples", "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
+
+    return strtok.fromFile(filePath).then((tokenizer) => {
+      return ID3v2Parser.getInstance().parse(tokenizer, {}).then((id3) => {
+
+        t.strictEqual(33, id3['ID3v2.3'].length);
+
+        const id3v23 = mm.orderTags(id3['ID3v2.3']);
+        t.isDefined(id3v23.UFID, "check if ID3v2.3-UFID is set");
+      });
+    });
+  });
 
   it("parse a ID3v2.3", () => {
 
