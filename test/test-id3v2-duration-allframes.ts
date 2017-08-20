@@ -15,7 +15,7 @@ it("should decode id3v2-duration-allframes", () => {
     t.strictEqual(format.bitrate, 256000, 'format.bitrate');
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-    t.strictEqual(format.duration, 1.48928125, 'format.duration (test duration=true)');
+    t.strictEqual(format.duration, 1.48896875, 'format.duration (test duration=true)');
     t.strictEqual(format.encoder, 'LAME 3.98.4', 'format.encoder');
   }
 

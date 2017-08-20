@@ -12,7 +12,7 @@ it("should be able to read id3v2 files with extended headers", () => {
   const filePath = path.join(__dirname, 'samples', filename);
 
   return mm.parseFile(filePath, {duration: true}).then((result) => {
-    t.strictEqual(result.format.duration, 0.4969375, 'format.duration');
+    t.strictEqual(result.format.duration, 0.4963125, 'format.duration');
 
     t.strictEqual(result.common.title, 'title', 'common.title');
     t.deepEqual(result.common.track, {no: null, of: null}, 'common.track');

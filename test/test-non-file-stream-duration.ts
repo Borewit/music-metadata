@@ -44,7 +44,8 @@ it("nonfilestream", () => {
     // fileStream.pipe(nonFileStream);
 
     return mm.parseStream(fileStream, "audio/mpeg", {duration: true, fileSize: 47889}).then((result) => {
-      t.equal(result.format.duration, 1.48928125);
+      // FoorBar: 0:01.477 (65135 samples) => 1,476984126984127
+      t.equal(result.format.duration, 1.48896875);
       return fileStream.close();
     });
   };

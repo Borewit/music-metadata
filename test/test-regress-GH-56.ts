@@ -14,7 +14,7 @@ it("should calculate duration for a VBR encoded MP3", () => {
 
   const stream = fs.createReadStream(filePath);
   return mm.parseStream(stream, 'audio/mpeg', {duration: true}).then((result) => {
-    t.strictEqual(result.format.duration, 373.329375, 'format.duration');
+    t.strictEqual(result.format.duration, 373.32875, 'format.duration');
     stream.close();
   });
 
