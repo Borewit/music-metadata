@@ -3,14 +3,13 @@ import {assert} from 'chai';
 import * as mm from '../src';
 
 import * as path from 'path';
+import * as fs from 'fs-extra';
 
 const t = assert;
 
-describe("ID3v1", () => {
+describe("Parsing MPEG / ID3v1", () => {
 
-  it("should decode ID3v1.1", () => {
-
-    const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
+  describe("should be able to read an ID3v1.1 tag", () => {
 
     function checkFormat(format: mm.IFormat) {
       t.strictEqual(format.headerType, 'id3v1.1', 'format.tag_type');
@@ -34,14 +33,32 @@ describe("ID3v1", () => {
       t.deepEqual(common.comment, ['abcdefg'], 'common.comment');
     }
 
-    return mm.parseFile(filePath).then((result) => {
-      checkFormat(result.format);
-      checkCommon(result.common);
+    const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
+
+    it("should decode from a file", () => {
+
+      return mm.parseFile(filePath).then((metadata) => {
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
+      });
+    });
+
+    it("should decode from a stream", function() {
+
+      this.skip(); // ToDo: Streaming MPEG parser should be able to handle stream without ID3 header
+
+      const stream = fs.createReadStream(filePath);
+
+      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then((metadata) => {
+        for (const tagType in metadata.native)
+          throw new Error("Do not expect any native tag type, got: " + tagType);
+      }).then(() => stream.close());
+
     });
 
   });
 
-  it("should handle MP3 without any tags", () => {
+  describe("should handle MP3 without any tags", () => {
 
     const filePath = path.join(__dirname, 'samples', "MusicBrainz - Beth Hart - Sinner's Prayer [no-tags].V4.mp3");
 
@@ -55,13 +72,25 @@ describe("ID3v1", () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
 
-    return mm.parseFile(filePath, {native: true}).then((result) => {
+    it("should decode from a file", () => {
 
-      checkFormat(result.format);
+      return mm.parseFile(filePath).then((metadata) => {
+        for (const tagType in metadata.native)
+          throw new Error("Do not expect any native tag type, got: " + tagType);
+      });
+    });
 
-      for (const tagType in result.native) {
-        throw new Error("Do not expect any native tag type, got: " + tagType);
-      }
+    it("should decode from a stream", function() {
+
+      this.skip(); // ToDo: Streaming MPEG parser should be able to handle stream without ID3 header
+
+      const stream = fs.createReadStream(filePath);
+
+      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then((metadata) => {
+        for (const tagType in metadata.native)
+          throw new Error("Do not expect any native tag type, got: " + tagType);
+      }).then(() => stream.close());
+
     });
 
   });
