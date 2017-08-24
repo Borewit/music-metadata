@@ -5,5 +5,8 @@ lib/
 test/**/*.js
 test/**/*.map
 test/**/*.d.ts
+src/**/*.js
+src/**/*.map
+src/**/*.d.ts
 coverage/
 .nyc_output
