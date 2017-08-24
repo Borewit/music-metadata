@@ -30,7 +30,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
     function checkFormat(format) {
       t.deepEqual(format.tagTypes, [ 'ID3v2.3', 'ID3v1.1' ], 'format.type');
-      t.strictEqual(format.duration, 1, 'format.duration'); // FooBar says 0.732 seconds (32.727 samples)
+      t.strictEqual(format.duration, 0.7836734693877551, 'format.duration'); // FooBar says 0.732 seconds (32.727 samples)
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
@@ -100,7 +100,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     const filePath = path.join(__dirname, 'samples', '04-Strawberry.mp3');
 
     function checkFormat(format: mm.IFormat) {
-      t.strictEqual(format.duration, 248, 'format.duration');
+      t.strictEqual(format.duration, 247.84979591836733, 'format.duration');
       t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');

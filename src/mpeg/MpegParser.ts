@@ -9,6 +9,7 @@ import * as Token from "token-types";
 import {Promise} from "es6-promise";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
 import {INativeAudioMetadata, IOptions} from "../index";
+import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
 
 /**
  * MPEG Audio Layer I/II/III frame header
@@ -135,8 +136,8 @@ class MpegFrameHeader {
     }
   }
 
-  public calcDuration(numFrames): number {
-    return Math.round(numFrames * (this.calcSamplesPerFrame() / this.samplingRate));
+  public calcDuration(numFrames: number): number {
+    return numFrames * this.calcSamplesPerFrame() / this.samplingRate;
   }
 
   public calcSamplesPerFrame(): number {
@@ -178,45 +179,6 @@ class MpegFrameHeader {
   }
 }
 
-interface IXingInfoTag {
-
-  headerFlags: Buffer,
-
-  /**
-   * total bit stream frames from Vbr header data
-   */
-  numFrames: number,
-
-  numToCentries: Buffer,
-
-  /**
-   * the number of header APE_HEADER bytes
-   */
-  streamSize: number,
-
-  /**
-   * the number of header data bytes (from original file)
-   */
-  vbrScale: number,
-
-  /**
-   * LAME Tag, extends the Xing header format
-   * First added in LAME 3.12 for VBR
-   * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
-   */
-
-  //  Initial LAME info, e.g.: LAME3.99r
-  encoder: string,
-  /**
-   * Info Tag
-   */
-  infoTag: number,
-  /**
-   * VBR method
-   */
-  vbrMethod: number;
-}
-
 /**
  * MPEG Audio Layer I/II/III
  */
@@ -227,60 +189,6 @@ class MpegAudioLayer {
 
     get: (buf, off): MpegFrameHeader => {
       return new MpegFrameHeader(buf, off);
-    }
-  };
-
-  /**
-   * Info Tag: Xing, LAME
-   */
-  public static InfoTagHeaderTag = new Token.StringType(4, 'ascii');
-
-  /**
-   * LAME TAG value
-   * Did not find any official documentation for this
-   * Value e.g.: "3.98.4"
-   */
-  public static LameEncoderVersion = new Token.StringType(6, 'ascii');
-
-  /**
-   * Info Tag
-   * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
-   */
-  public static XingInfoTag: Token.IGetToken<IXingInfoTag> = {
-    len: 136,
-
-    get: (buf, off) => {
-      return {
-        // 4 bytes for HeaderFlags
-        headerFlags: new Token.BufferType(4).get(buf, off),
-
-        // 100 bytes for entry (NUMTOCENTRIES)
-        // numToCentries: new strtok.BufferType(100).get(buf, off + 8),
-        // FRAME SIZE
-        // frameSize: strtok.UINT32_BE.get(buf, off + 108),
-
-        numFrames: Token.UINT32_BE.get(buf, off + 4),
-
-        numToCentries: new Token.BufferType(100).get(buf, off + 104),
-
-        // the number of header APE_HEADER bytes
-        streamSize: Token.UINT32_BE.get(buf, off + 108),
-        // the number of header data bytes (from original file)
-        vbrScale: Token.UINT32_BE.get(buf, off + 112),
-
-        /**
-         * LAME Tag, extends the Xing header format
-         * First added in LAME 3.12 for VBR
-         * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
-         */
-
-        //  Initial LAME info, e.g.: LAME3.99r
-        encoder: new Token.StringType(9, 'ascii').get(buf, off + 116),
-        //  Info Tag
-        infoTag: Token.UINT8.get(buf, off + 125) >> 4,
-        // VBR method
-        vbrMethod: Token.UINT8.get(buf, off + 125) & 0xf
-      };
     }
   };
 
@@ -468,8 +376,8 @@ export class MpegParser extends AbstractID3v2Parser {
 
   public readXtraInfoHeader(): Promise<any> {
 
-    return this.tokenizer.readToken(MpegAudioLayer.InfoTagHeaderTag).then((headerTag) => {
-      this.offset += MpegAudioLayer.InfoTagHeaderTag.len;  // 12
+    return this.tokenizer.readToken(InfoTagHeaderTag).then((headerTag) => {
+      this.offset += InfoTagHeaderTag.len;  // 12
 
       switch (headerTag) {
 
@@ -488,8 +396,8 @@ export class MpegParser extends AbstractID3v2Parser {
           break;
 
         case 'LAME':
-          return this.tokenizer.readToken(MpegAudioLayer.LameEncoderVersion).then((version) => {
-            this.offset += MpegAudioLayer.LameEncoderVersion.len;
+          return this.tokenizer.readToken(LameEncoderVersion).then((version) => {
+            this.offset += LameEncoderVersion.len;
             this.format.encoder = "LAME " + version;
             return this.skipFrameData(this.frame_size - this.offset);
           });
@@ -508,20 +416,26 @@ export class MpegParser extends AbstractID3v2Parser {
    */
   private readXingInfoHeader(): Promise<IXingInfoTag> {
 
-    return this.tokenizer.readToken<IXingInfoTag>(MpegAudioLayer.XingInfoTag).then((infoTag) => {
-      this.offset += MpegAudioLayer.XingInfoTag.len;  // 12
+    return this.tokenizer.readToken<IXingInfoTag>(XingInfoTag).then((infoTag) => {
+      this.offset += XingInfoTag.len;  // 12
 
       this.format.encoder = Common.stripNulls(infoTag.encoder);
 
       if ((infoTag.headerFlags[3] & 0x01) === 1) {
         this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
-        return infoTag; // Done
+        /* ToDo: jump to end of stream
+        if (infoTag.streamSize) {
+          return this.skipFrameData(infoTag.streamSize - (4 + XingInfoTag.len)).then(() => {
+            return infoTag;
+          });
+        }
+        */
+        return infoTag; // Done ToDo: will get out-of sync
       }
 
       // frames field is not present
       const frameDataLeft = this.frame_size - this.offset;
 
-      // ToDo: promise duration???
       return this.skipFrameData(frameDataLeft).then(() => {
         return infoTag;
       });

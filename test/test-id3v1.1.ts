@@ -58,14 +58,14 @@ describe("Parsing MPEG / ID3v1", () => {
 
   describe("should handle MP3 without any tags", () => {
 
-    const filePath = path.join(__dirname, 'samples', "MusicBrainz - Beth Hart - Sinner's Prayer [no-tags].V4.mp3");
+    const filePath = path.join(__dirname, 'samples', "silence-2s-16000 [no-tags].CBR-128.mp3");
 
     function checkFormat(format: mm.IFormat) {
-      t.isUndefined(format.tagTypes, 'format.tagTypes');
-      t.strictEqual(format.duration, 2, 'format.duration');
+      t.deepEqual(format.tagTypes, [], 'format.tagTypes');
+      t.strictEqual(format.duration, 2.088, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
-      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+      t.strictEqual(format.sampleRate, 16000, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
@@ -75,6 +75,7 @@ describe("Parsing MPEG / ID3v1", () => {
       return mm.parseFile(filePath).then((metadata) => {
         for (const tagType in metadata.native)
           throw new Error("Do not expect any native tag type, got: " + tagType);
+        checkFormat(metadata.format);
       });
     });
 
@@ -85,6 +86,7 @@ describe("Parsing MPEG / ID3v1", () => {
       return mm.parseStream(stream, 'audio/mpeg', {native: true}).then((metadata) => {
         for (const tagType in metadata.native)
           throw new Error("Do not expect any native tag type, got: " + tagType);
+        checkFormat(metadata.format);
       }).then(() => stream.close());
 
     });
@@ -99,7 +101,7 @@ describe("Parsing MPEG / ID3v1", () => {
     const filePath = path.join(__dirname, 'samples', 'Luomo - Tessio (Spektre Remix) ID3v10.mp3');
 
     function checkFormat(format: mm.IFormat) {
-      t.strictEqual(format.duration, 33, 'format.duration (checked with foobar)');
+      t.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
       t.deepEqual(format.tagTypes, ['ID3v1.1'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');

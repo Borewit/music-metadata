@@ -385,9 +385,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
-        t.strictEqual(format.duration, 2, 'format.duration = 2.123 sec'); // ToDo, add fraction???
+        t.strictEqual(format.duration, 2.1681632653061222, 'format.duration = 2.123 sec');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-        // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample')
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
         t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
         t.strictEqual(format.encoder, 'LAME3.99r', 'format.encoder = LAME3.99r');
@@ -507,7 +506,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
-        t.strictEqual(format.duration, 2, 'format.duration'); // ToDo: add fraction
+        t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');

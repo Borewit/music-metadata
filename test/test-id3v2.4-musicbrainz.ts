@@ -11,7 +11,7 @@ it("should MusicBrainz tags with id3v2.4", () => {
   const filePath = path.join(__dirname, 'samples', filename);
 
   return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
-    t.deepEqual(result.format.duration, 1, 'format.duration');
+    t.deepEqual(result.format.duration, 0.7836734693877551, 'format.duration');
 
     t.deepEqual(result.common.title, 'Home', 'common.title');
     t.deepEqual(result.common.artist, 'Explosions in the Sky', 'common.artist');

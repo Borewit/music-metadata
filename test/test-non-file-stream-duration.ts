@@ -43,7 +43,7 @@ it("nonfilestream", () => {
     const fileStream = fs.createReadStream(sample);
     // fileStream.pipe(nonFileStream);
 
-    return mm.parseStream(fileStream, "audio/mpeg", {duration: true, fileSize: 47889}).then((result) => {
+    return mm.parseStream(fileStream, "audio/mpeg", {duration: false, fileSize: 47889}).then((result) => {
       // FoorBar: 0:01.477 (65135 samples) => 1,476984126984127
       t.equal(result.format.duration, 1.48896875);
       return fileStream.close();
