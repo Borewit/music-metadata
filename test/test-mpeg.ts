@@ -9,6 +9,32 @@ const t = assert;
 
 describe("MPEG parsing", () => {
 
+  it("should parse MPEG-1 Audio Layer II ", () => {
+    /**
+     * No errors found in file.
+     *
+     * Summary:
+     * ===============
+     * Total number of frames: 20, unpadded: 1, padded: 19
+     * File is CBR. Bitrate of each frame is 128 kbps.
+     * Exact length: 00:00
+     *
+     * FooBar: 22559 samples
+     */
+    const filePath = path.join(__dirname, 'samples', "1971 - 003 - Sweet - Co-Co - CannaPower.mp2");
+
+    return mm.parseFile(filePath, {duration: true, native: true}).then((metadata) => {
+
+      t.strictEqual(metadata.format.dataformat, "mp2", "format.dataformat = mp2 (MPEG-2 Audio Layer II)");
+      t.strictEqual(metadata.format.bitrate, 128000, "format.bitrate = 128 kbit/sec");
+      t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
+      // t.strictEqual(metadata.format.numberOfSamples, 22559, "format.numberOfSamples = 22559");
+      // t.strictEqual(metadata.format.duration, 22559 / 44100, "format.durarion = ~0.512 sec"); // ToDo: take ID3v1 header into account
+      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"], "Tags: ID3v1 & ID3v2.3");
+
+    });
+  });
+
   it("sync efficiency, using stream", function() {
 
     this.skip(); // ToDo
@@ -35,7 +61,7 @@ describe("MPEG parsing", () => {
 
     this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
-    const filePath = path.join(__dirname, "samples", "issue#26", "13 - Zillertaler Schürzenjäger - Die Welt is koa Glashaus.mp3");
+    const filePath = path.join(__dirname, "samples", "issue", "13 - Zillertaler Schürzenjäger - Die Welt is koa Glashaus.mp3");
 
     return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
       throw new Error('Should fail');
@@ -127,7 +153,7 @@ describe("MPEG parsing", () => {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.type');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
-        t.strictEqual(format.duration, 200.96035, 'format.duration'); // FooBar says 3:26.329 seconds
+        t.strictEqual(format.duration, 200.9861224489796, 'format.duration'); // FooBar says 3:26.329 seconds
         t.strictEqual(format.bitrate, 320000, 'format.bitrate = 128 kbit/sec');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
         // t.strictEqual(format.encoder, 'LAME3.98r', 'format.encoder'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407

@@ -292,13 +292,9 @@ export class MpegParser extends AbstractID3v2Parser {
         return this.sync();
       }
 
-      // mp3 files are only found in MPEG1/2 Layer 3
-      if ((header.version !== 1 && header.version !== 2) || header.layer !== 3) {
-        this.warnings.push("Parse error:  mp3 files are only found in MPEG1/2 Layer 3");
-        return this.sync();
-      }
+      // ToDo: this.format.dataformat = "MPEG-" + header.version + " Audio Layer " + Common.romanize(header.layer);
+      this.format.dataformat = "mp" + header.layer;
 
-      this.format.dataformat = 'mp3';
       this.format.lossless = false;
 
       this.format.bitrate = header.bitrate;

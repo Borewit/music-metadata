@@ -13,6 +13,9 @@ it("should handle audio-frame-header-bug", () => {
     // FooBar: 3:20.556 (8.844.527 samples); 44100 Hz => 200.5561678004535 seconds
     // t.strictEqual(result.format.duration, 200.59591666666665); // previous
     // t.strictEqual(result.format.duration, 200.5561678004535); // FooBar
-    t.strictEqual(result.format.duration, 200.5955);
+
+    // If MPEG Layer II is accepted, it will give back third frame with a different frame length;
+    // therefore it start counting actual parsable frames ending up on ~66.86
+    t.strictEqual(result.format.duration, 66.8647619047619);
   });
 });
