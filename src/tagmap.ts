@@ -6,7 +6,7 @@ import {MP4TagMap} from "./mp4/MP4TagMap";
 import {VorbisTagMap} from "./vorbis/VorbisTagMap";
 import {APEv2TagMap} from "./apev2/APEv2TagMap";
 import {RiffInfoTagMap} from "./riff/RiffInfoTagMap";
-export type TagType = 'vorbis' | 'ID3v1.1'| 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
+export type TagType = 'vorbis' | 'ID3v1.1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
 
 export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artists' | 'albumartist' | 'album' | 'date' | 'originaldate' |
   'originalyear' | 'comment' | 'genre' | 'picture' | 'composer' | 'lyrics' | 'albumsort' | 'titlesort' | 'work' |
@@ -20,7 +20,7 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artist
   'musicbrainz_artistid' | 'musicbrainz_albumartistid' | 'musicbrainz_releasegroupid' |
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
   'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
-  'peakLevel' | 'averageLevel' | 'notes' | 'key'| 'originalalbum' | 'originalartist';
+  'peakLevel' | 'averageLevel' | 'notes' | 'key' | 'originalalbum' | 'originalartist';
 
 export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'asf', 'iTunes MP4', 'ID3v1.1'];
 
