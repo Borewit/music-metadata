@@ -5,7 +5,9 @@ import * as path from 'path';
 
 const t = assert;
 
-it("should handle audio-frame-header-bug", () => {
+it("should handle audio-frame-header-bug", function() {
+
+  this.timeout(15000); // It takes a long time to parse
 
   const filePath = path.join(__dirname, 'samples', 'audio-frame-header-bug.mp3');
 
