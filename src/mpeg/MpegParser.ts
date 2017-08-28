@@ -235,7 +235,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
     this.tokenizer = tokenizer;
     this.readDuration = options.duration;
-    this.headerSize = tokenizer.offset;
+    this.headerSize = tokenizer.position;
 
     this.format = {
       dataformat: 'mp3',
