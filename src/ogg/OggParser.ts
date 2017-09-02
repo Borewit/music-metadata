@@ -131,7 +131,7 @@ export class OggParser implements ITokenParser {
 
       const ogg = this.parsePage()
         .catch((err) => {
-          if (err === strtok3.EndOfFile) {
+          if (err.message === strtok3.endOfFile) {
             this.vorbisStream.append(null);
           } else throw err;
         });

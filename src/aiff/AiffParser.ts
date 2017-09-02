@@ -47,7 +47,7 @@ export class AIFFParser implements ITokenParser {
         });
       })
       .catch((err) => {
-        if (err === strtok3.EndOfFile) {
+        if (err.message === strtok3.endOfFile) {
           return this.metadata;
         } else {
           throw err;

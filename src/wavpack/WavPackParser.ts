@@ -161,7 +161,7 @@ export class WavPackParser implements ITokenParser {
     // First parse all WavPack blocks
     return this.parseWavPackBlocks()
       .then(() => {
-        // The try to parse APEv2 header
+        // try to parse APEv2 header
         return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
           return {
             format: this.format,
@@ -195,7 +195,7 @@ export class WavPackParser implements ITokenParser {
               };
             }
 
-            const ignoreBytes = header.blockSize - (32 - 8);
+            const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
 
             if (header.blockIndex === 0 && header.blockSamples === 0) {
               // Meta-data block
@@ -206,7 +206,7 @@ export class WavPackParser implements ITokenParser {
               return this.tokenizer.ignore(ignoreBytes);
             }
           }).then(() => {
-            return this.parseWavPackBlocks(); // recursion: continue with next WavPack-block
+            return this.parseWavPackBlocks();
           });
       }
     });

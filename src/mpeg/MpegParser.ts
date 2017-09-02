@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
 import ReadableStream = NodeJS.ReadableStream;
 
-import {ITokenizer, EndOfFile} from "strtok3";
+import {ITokenizer, endOfFile} from "strtok3";
 import {IFormat} from "../";
 import Common from "../common";
 import * as Token from "token-types";
@@ -10,6 +10,11 @@ import {Promise} from "es6-promise";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
+
+/**
+ * Cache buffer size used for searching synchronization preabmle
+ */
+const maxPeekLen = 1024;
 
 /**
  * MPEG Audio Layer I/II/III frame header
@@ -23,7 +28,7 @@ class MpegFrameHeader {
 
   public static VersionID = [2.5, null, 2, 1];
   public static LayerDescription = [null, 3, 2, 1];
-  public static ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
+  public static ChannelMode = ["stereo", "joint_stereo", "dual_channel", "mono"];
 
   private static bitrate_index = {
     0x01: {11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8},
@@ -92,7 +97,7 @@ class MpegFrameHeader {
     this.layer = MpegFrameHeader.LayerDescription[Common.getBitAllignedNumber(buf, off + 1, 5, 2)];
 
     if (this.layer === null)
-      throw new Error('Invalid MPEG layer');
+      throw new Error("Invalid MPEG layer");
 
     // D(16): Protection bit (if true 16-bit CRC follows header)
     this.isProtectedByCRC = !Common.isBitSet(buf, off + 1, 7);
@@ -118,21 +123,21 @@ class MpegFrameHeader {
     this.version = MpegFrameHeader.VersionID[this.versionIndex];
 
     if (this.version === null)
-      throw new Error('Invalid MPEG Audio version');
+      throw new Error("Invalid MPEG Audio version");
 
     this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
 
     // Calculate bitrate
     const bitrateInKbps = this.calcBitrate();
     if (!bitrateInKbps) {
-      throw new Error('Cannot determine bit-rate');
+      throw new Error("Cannot determine bit-rate");
     }
     this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
 
     // Calculate sampling rate
     this.samplingRate = this.calcSamplingRate();
     if (this.samplingRate == null) {
-      throw new Error('Cannot determine sampling-rate');
+      throw new Error("Cannot determine sampling-rate");
     }
   }
 
@@ -193,7 +198,7 @@ class MpegAudioLayer {
   };
 
   public static getVbrCodecProfile(vbrScale: number): string {
-    return 'V' + (100 - vbrScale) / 10;
+    return "V" + (100 - vbrScale) / 10;
   }
 }
 
@@ -224,9 +229,10 @@ export class MpegParser extends AbstractID3v2Parser {
   private headerSize: number;
   private readDuration: boolean;
 
-  /*
-   public constructor(private tokenizer: ITokenizer, private headerSize: number, private readDuration: boolean) {
-   }*/
+  private syncPeek = {
+    buf: new Buffer(maxPeekLen),
+    len: 0
+  };
 
   /**
    * Called after ID3 headers have been parsed
@@ -238,12 +244,12 @@ export class MpegParser extends AbstractID3v2Parser {
     this.headerSize = tokenizer.position;
 
     this.format = {
-      dataformat: 'mp3',
+      dataformat: "mp3",
       lossless: false
     };
 
     return this.sync().catch((err) => {
-      if (err === EndOfFile) {
+      if (err.message === endOfFile) {
         if (this.calculateVbrDuration) {
           this.format.numberOfSamples = this.frameCount * this.samplesPerFrame;
           this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
@@ -259,30 +265,59 @@ export class MpegParser extends AbstractID3v2Parser {
     });
   }
 
-  public sync(): Promise<void> {
-    return this.tokenizer.readBuffer(this.buf_frame_header, 0, 1).then(() => {
-      if (this.buf_frame_header[0] === MpegFrameHeader.SyncByte1) {
-        return this.tokenizer.readBuffer(this.buf_frame_header, 1, 1).then(() => {
-          if ((this.buf_frame_header[1] & 0xE0) === 0xE0) {
-            // Synchronized
-            this.warnings.push("synchronized, after " + this.unsynced + " bytes of unsynced data");
-            this.unsynced = 0;
-            return this.parseAudioFrameHeader(this.buf_frame_header);
-          } else {
-            this.unsynced += 2;
-            return this.sync();
-          }
-        });
-      } else {
-        ++this.unsynced;
-        return this.sync();
-      }
+  private _peekBuffer(): Promise<number> {
+    this.unsynced += this.syncPeek.len;
+    return this.tokenizer.ignore(this.syncPeek.len).then(() => {
+      return this.tokenizer.peekBuffer(this.syncPeek.buf, 0, maxPeekLen).then((len) => {
+        this.syncPeek.len = len;
+        return len;
+      });
     });
   }
 
-  public parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
+  private _sync(offset: number, gotFirstSync: boolean) {
 
-    return this.tokenizer.readBuffer(buf_frame_header, 2, 2).then(() => {
+    return (offset === 0 ? this._peekBuffer() : Promise.resolve(this.syncPeek.buf.length - offset))
+      .then((len) => {
+        if (gotFirstSync) {
+          if (len === 0)
+            throw new Error(endOfFile);
+          if ((this.syncPeek.buf[offset] & 0xE0) === 0xE0) {
+            this.syncPeek.len = 0;
+            this.unsynced += offset - 1;
+            return this.tokenizer.ignore(offset); // Full sync
+          } else {
+            return this._sync((offset + 1) % this.syncPeek.buf.length, false); // partial sync
+          }
+        } else {
+          if (len <= 1)
+            throw new Error(endOfFile);
+          const index = this.syncPeek.buf.indexOf(MpegFrameHeader.SyncByte1, offset);
+          if (index >= 0) {
+            return this._sync((index + 1) % this.syncPeek.buf.length, true);
+          } else {
+            return this._sync(0, false);
+          }
+        }
+      });
+  }
+
+  private sync(): Promise<any> {
+
+    return this._sync(0, false)
+      .then(() => {
+        if (this.unsynced > 0) {
+          this.warnings.push("synchronized, after " + this.unsynced + " bytes of unsynced data");
+          // debug("synchronized, after " + this.unsynced + " bytes of unsynced data");
+          this.unsynced = 0;
+        }
+        return this.parseAudioFrameHeader(this.buf_frame_header);
+      });
+  }
+
+  private parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
+
+    return this.tokenizer.readBuffer(buf_frame_header, 1, 3).then(() => {
 
       let header: MpegFrameHeader;
       try {
@@ -299,11 +334,11 @@ export class MpegParser extends AbstractID3v2Parser {
 
       this.format.bitrate = header.bitrate;
       this.format.sampleRate = header.samplingRate;
-      this.format.numberOfChannels = header.channelMode === 'mono' ? 1 : 2;
+      this.format.numberOfChannels = header.channelMode === "mono" ? 1 : 2;
 
       const slot_size = header.calcSlotSize();
       if (slot_size === null) {
-        throw new Error('invalid slot_size');
+        throw new Error("invalid slot_size");
       }
 
       const samples_per_frame = header.calcSamplesPerFrame();
@@ -353,7 +388,7 @@ export class MpegParser extends AbstractID3v2Parser {
     });
   }
 
-  public parseCrc(): Promise<void> {
+  private parseCrc(): Promise<void> {
     this.tokenizer.readNumber(Token.INT16_BE).then((crc) => {
       this.crc = crc;
     });
@@ -361,7 +396,7 @@ export class MpegParser extends AbstractID3v2Parser {
     return this.skipSideInformation();
   }
 
-  public skipSideInformation(): Promise<void> {
+  private skipSideInformation(): Promise<void> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
     // side information
     return this.tokenizer.readToken(new Token.BufferType(sideinfo_length)).then(() => {
@@ -370,28 +405,28 @@ export class MpegParser extends AbstractID3v2Parser {
     });
   }
 
-  public readXtraInfoHeader(): Promise<any> {
+  private readXtraInfoHeader(): Promise<any> {
 
     return this.tokenizer.readToken(InfoTagHeaderTag).then((headerTag) => {
       this.offset += InfoTagHeaderTag.len;  // 12
 
       switch (headerTag) {
 
-        case 'Info':
-          this.format.codecProfile = 'CBR';
+        case "Info":
+          this.format.codecProfile = "CBR";
           return this.readXingInfoHeader();
 
-        case 'Xing':
+        case "Xing":
           return this.readXingInfoHeader().then((infoTag) => {
             this.format.codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
             return null;
           });
 
-        case 'Xtra':
+        case "Xtra":
           // ToDo: ???
           break;
 
-        case 'LAME':
+        case "LAME":
           return this.tokenizer.readToken(LameEncoderVersion).then((version) => {
             this.offset += LameEncoderVersion.len;
             this.format.encoder = "LAME " + version;
@@ -420,12 +455,12 @@ export class MpegParser extends AbstractID3v2Parser {
       if ((infoTag.headerFlags[3] & 0x01) === 1) {
         this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
         /* ToDo: jump to end of stream
-        if (infoTag.streamSize) {
-          return this.skipFrameData(infoTag.streamSize - (4 + XingInfoTag.len)).then(() => {
-            return infoTag;
-          });
-        }
-        */
+         if (infoTag.streamSize) {
+         return this.skipFrameData(infoTag.streamSize - (4 + XingInfoTag.len)).then(() => {
+         return infoTag;
+         });
+         }
+         */
         return infoTag; // Done ToDo: will get out-of sync
       }
 
