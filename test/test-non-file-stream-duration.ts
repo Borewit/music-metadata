@@ -20,7 +20,7 @@ const t = assert;
  npm test will fail every 3rd to 5th time.
  */
 
-it("nonfilestream", function() {
+it("nonfilestream", () => {
 
   const runOnce = () => {
 
