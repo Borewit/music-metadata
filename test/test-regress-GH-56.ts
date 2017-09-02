@@ -9,8 +9,6 @@ const t = assert;
 
 it("should calculate duration for a VBR encoded MP3", function() {
 
-  this.skip();
-
   const filename = 'regress-GH-56.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 

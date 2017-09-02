@@ -22,8 +22,6 @@ const t = assert;
 
 it("nonfilestream", function() {
 
-  this.skip();
-
   const runOnce = () => {
 
     // shim process for browser-based tests
