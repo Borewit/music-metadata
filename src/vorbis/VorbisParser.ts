@@ -5,7 +5,7 @@ import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
 import {IFormat, INativeAudioMetadata, IOptions, ITag} from "../index";
 import {Promise} from "es6-promise";
-import {EndOfStream} from "then-read-stream";
+import {endOfStream} from "then-read-stream";
 import * as Token from "token-types";
 
 /**
@@ -52,7 +52,7 @@ export class VorbisParser implements ITokenParser {
         }
       });
     }).catch((err) => {
-      if (err === EndOfStream) {
+      if (err.message === endOfStream) {
         return;
       } else
         throw err;
