@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import {Windows1292Decoder} from './Windows1292Decoder';
 import {Genres} from "./id3v1/ID3v1Parser";
 
@@ -47,9 +48,7 @@ export default class Common {
 
   public static swapBytes(buffer: Buffer): Buffer {
     const l = buffer.length;
-    if (l & 0x01) {
-      throw new Error('Buffer length must be even');
-    }
+    assert.ok((l & 1) === 0, 'Buffer length must be even');
     for (let i = 0; i < l; i += 2) {
       const a = buffer[i];
       buffer[i] = buffer[i + 1];
