@@ -13,16 +13,6 @@ export default class Common {
   };
 
 
-  public static streamOnRealEnd(stream: NodeJS.ReadableStream, callback: () => void): void {
-    stream.on('end', done);
-    stream.on('close', done);
-    function done() {
-      stream.removeListener('end', done);
-      stream.removeListener('close', done);
-      callback();
-    }
-  }
-
   public static removeUnsyncBytes(buffer: Buffer): Buffer {
     let readI = 0;
     let writeI = 0;
