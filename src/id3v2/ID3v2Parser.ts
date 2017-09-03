@@ -35,6 +35,22 @@ export class ID3v2Parser {
     return new ID3v2Parser();
   }
 
+  public static removeUnsyncBytes(buffer: Buffer): Buffer {
+    let readI = 0;
+    let writeI = 0;
+    while (readI < buffer.length - 1) {
+      if (readI !== writeI) {
+        buffer[writeI] = buffer[readI];
+      }
+      readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1;
+      writeI++;
+    }
+    if (readI < buffer.length) {
+      buffer[writeI++] = buffer[readI++];
+    }
+    return buffer.slice(0, writeI);
+  }
+
   private static readFrameHeader(v, majorVer): IFrameHeader {
     let header: IFrameHeader;
     switch (majorVer) {
@@ -104,7 +120,7 @@ export class ID3v2Parser {
       case 3:
       case 4:
         if (frameHeader.flags.format.unsynchronisation) {
-          buf = common.removeUnsyncBytes(buf);
+          buf = ID3v2Parser.removeUnsyncBytes(buf);
         }
         if (frameHeader.flags.format.data_length_indicator) {
           buf = buf.slice(4, buf.length);

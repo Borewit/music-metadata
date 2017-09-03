@@ -12,23 +12,6 @@ export default class Common {
     len: 1
   };
 
-
-  public static removeUnsyncBytes(buffer: Buffer): Buffer {
-    let readI = 0;
-    let writeI = 0;
-    while (readI < buffer.length - 1) {
-      if (readI !== writeI) {
-        buffer[writeI] = buffer[readI];
-      }
-      readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1;
-      writeI++;
-    }
-    if (readI < buffer.length) {
-      buffer[writeI++] = buffer[readI++];
-    }
-    return buffer.slice(0, writeI);
-  }
-
   /**
    *
    * @param buffer

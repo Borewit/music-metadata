@@ -2,8 +2,20 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
+import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
 
 const t = assert;
+
+describe("ID3v2Parser", () => {
+
+  it("should be able to remove unsynchronisation bytes from buffer", () => {
+    const expected = new Buffer([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
+    const sample = new Buffer([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
+    const output = ID3v2Parser.removeUnsyncBytes(sample);
+    t.deepEqual(output, expected, 'bytes');
+  });
+
+});
 
 it("should decode id3v2.2", () => {
 

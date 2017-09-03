@@ -26,13 +26,6 @@ describe("Common", () => {
     }
   });
 
-  it("be able to remove unsynchronisation bytes from buffer", () => {
-    const expected = new Buffer([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
-    const sample = new Buffer([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
-    const output = Common.removeUnsyncBytes(sample);
-    t.deepEqual(output, expected, 'bytes');
-  });
-
   /*
    it("should be able to detect ftypmp42 as a valid mp4 header tagTypes", () => {
    const buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]);
