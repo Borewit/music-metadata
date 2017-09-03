@@ -6,6 +6,7 @@ import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
+import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -21,7 +22,7 @@ enum BlockType {
   PICTURE = 6
 }
 
-export class FlacParser implements ITokenParser {
+export class FlacParser extends AbstractID3v2Parser {
 
   public static getInstance(): FlacParser {
     return new FlacParser();
@@ -35,7 +36,7 @@ export class FlacParser implements ITokenParser {
   private padding: number = 0;
   private warnings: string[] = []; // ToDo: should be part of the parsing result
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+  public _parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
 
     this.tokenizer = tokenizer;
     this.options = options;
