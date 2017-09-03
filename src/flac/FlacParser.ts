@@ -196,7 +196,7 @@ class Metadata {
       return {
         lastBlock: common.strtokBITSET.get(buf, off, 7),
         type: common.getBitAllignedNumber(buf, off, 1, 7),
-        length: common.strtokUINT24_BE.get(buf, off + 1)
+        length: Token.UINT24_BE.get(buf, off + 1)
       };
     }
   };
@@ -224,7 +224,7 @@ class Metadata {
         // Sample rate in Hz. Though 20 bits are available,
         // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
         // Also, a value of 0 is invalid.
-        sampleRate: common.strtokUINT24_BE.get(buf, off + 10) >> 4,
+        sampleRate: Token.UINT24_BE.get(buf, off + 10) >> 4,
         // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
         // (number of channels)-1. FLAC supports from 1 to 8 channels
         channels: common.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,

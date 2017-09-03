@@ -5,13 +5,6 @@ export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' | 'utf16le
 
 export default class Common {
 
-  public static strtokUINT24_BE = {
-    get: (buf: Buffer, off: number): number => {
-      return (((buf[off] << 8) + buf[off + 1]) << 8) + buf[off + 2];
-    },
-    len: 3
-  };
-
   public static strtokBITSET = {
     get: (buf: Buffer, off: number, bit: number): boolean => {
       return (buf[off] & (1 << bit)) !== 0;

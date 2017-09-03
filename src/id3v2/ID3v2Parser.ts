@@ -42,7 +42,7 @@ export class ID3v2Parser {
       case 2:
         header = {
           id: v.toString('ascii', 0, 3),
-          length: common.strtokUINT24_BE.get(v, 3)
+          length: Token.UINT24_BE.get(v, 3)
         };
         break;
 
