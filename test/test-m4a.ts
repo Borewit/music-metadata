@@ -87,20 +87,20 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
       });
 
     });
-
   });
 
-  it("should decode 8-byte unsigned integer", function() {
+  it("should decode 8-byte unsigned integer", () => {
 
-    this.skip(); // ToDo: shrink sample file
-
-    const filename = path.join(__dirname, 'samples', '01 Trumpsta (Djuro Remix).m4a');
+    // AAC
+    const filename = path.join(__dirname, "samples", "01. Trumpsta (Djuro Remix).m4a");
 
     return mm.parseFile(filename, {native: true}).then((metadata) => {
 
-      t.isDefined(metadata.native['iTunes MP4'], 'Native m4a tags should be present');
-      const iTunes = mm.orderTags(metadata.native['iTunes MP4']);
-      t.deepEqual(iTunes.plID, [637567119], 'iTunes.plID');
+      t.isDefined(metadata.native["iTunes MP4"], "Native m4a tags should be present");
+      t.deepEqual(metadata.format.duration, 2.066575963718821, "metadata.format.duration");
+      const iTunes = mm.orderTags(metadata.native["iTunes MP4"]);
+      t.deepEqual(iTunes.plID, [637567119], "iTunes.plID=637567119 (64-bit / 8-byte encoded uint");
+      t.deepEqual(iTunes.cnID, [637567333], "iTunes.cnID (ITUNESCATALOGID) = 637567333");
     });
 
   });
