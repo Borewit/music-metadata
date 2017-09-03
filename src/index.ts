@@ -421,7 +421,7 @@ export class MusicMetadataParser {
               case 'AverageLevel':
               case 'PeakValue':
                 tag += ':' + value.owner_identifier;
-                value = common.strtokUINT32_LE.get(value.data, 0);
+                value = value.data.readUInt32LE();
                 break;
               default:
               // Unknown PRIV owner-identifier

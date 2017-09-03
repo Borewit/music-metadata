@@ -12,17 +12,6 @@ export default class Common {
     len: 1
   };
 
-  public static strtokUINT32_LE = {
-    len: 4,
-    get: (buf: Buffer, off: number) => {
-      // Shifting the MSB by 24 directly causes it to go negative if its
-      // last bit is high, so we instead shift by 23 and multiply by 2.
-      // Also, using binary OR to count the MSB if its last bit is high
-      // causes the value to go negative. Use addition there.
-      return (buf[off] | (buf[off + 1] << 8) | (buf[off + 2] << 16)) +
-        ((buf[off + 3] << 23) * 2);
-    }
-  };
 
   public static streamOnRealEnd(stream: NodeJS.ReadableStream, callback: () => void): void {
     stream.on('end', done);
