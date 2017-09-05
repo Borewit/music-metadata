@@ -1,7 +1,6 @@
 "use strict";
 
-import ReadableStream = NodeJS.ReadableStream;
-
+import * as assert from "assert";
 import {ITokenizer, endOfFile} from "strtok3";
 import {IFormat} from "../";
 import Common from "../common";
@@ -317,6 +316,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
   private parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
 
+    // console.log("Frame #%s: position=%s", this.frameCount, this.tokenizer.position - 1);
     return this.tokenizer.readBuffer(buf_frame_header, 1, 3).then(() => {
 
       let header: MpegFrameHeader;
@@ -437,7 +437,12 @@ export class MpegParser extends AbstractID3v2Parser {
 
       // ToDo: promise duration???
       const frameDataLeft = this.frame_size - this.offset;
-      return this.skipFrameData(frameDataLeft);
+      if (frameDataLeft < 0) {
+        this.warnings.push("Frame " + this.frameCount + "corrupt: negative frameDataLeft");
+        return this.sync();
+      } else {
+        return this.skipFrameData(frameDataLeft);
+      }
     });
   }
 
@@ -474,6 +479,7 @@ export class MpegParser extends AbstractID3v2Parser {
   }
 
   private skipFrameData(frameDataLeft: number): Promise<void> {
+    assert.ok(frameDataLeft >= 0, 'frame-data-left cannot be negative');
     return this.tokenizer.readToken(new Token.IgnoreType(frameDataLeft)).then(() => {
       this.countSkipFrameData += frameDataLeft;
       return this.sync();

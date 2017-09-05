@@ -192,4 +192,40 @@ describe("MPEG parsing", () => {
     });
   });
 
+  describe("Handle corrupt MPEG-frames", () => {
+
+    it("should handle corrupt frame causing negative frame data left", () => {
+
+      /*------------[outofbounds.mp3]-------------------------------------------
+       Frame 2 header expected at byte 2465, but found at byte 3343.
+       Frame 1 (bytes 2048-3343) was 1295 bytes long (expected 417 bytes).
+
+       Frame 17 header expected at byte 19017, but found at byte 19019.
+       Frame 16 (bytes 17972-19019) was 1047 bytes long (expected 1045 bytes).
+
+       Frame 18 header expected at byte 20064, but found at byte 21107.
+       Frame 17 (bytes 19019-21107) was 2088 bytes long (expected 1045 bytes).
+
+       Summary:
+       ===============
+       Total number of frames: 19, unpadded: 3, padded: 16
+       File is VBR. Average bitrate is 309 kbps.
+       Exact length: 00:00
+       ------------------------------------------------------------------------*/
+      const filePath = path.join(__dirname, "samples", "outofbounds.mp3");
+
+      function checkFormat(format) {
+        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1.1"], "format.type");
+        t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
+        t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
+        t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
+      }
+
+      return mm.parseFile(filePath, {duration: true}).then((metadata) => {
+        checkFormat(metadata.format);
+      });
+    });
+
+  });
+
 });
