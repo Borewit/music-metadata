@@ -226,7 +226,7 @@ export class MpegParser extends AbstractID3v2Parser {
   /**
    * Number of bytes already parsed since beginning of stream / file
    */
-  private headerSize: number;
+  private mpegOffset: number;
   private readDuration: boolean;
 
   private syncPeek = {
@@ -241,7 +241,6 @@ export class MpegParser extends AbstractID3v2Parser {
 
     this.tokenizer = tokenizer;
     this.readDuration = options.duration;
-    this.headerSize = tokenizer.position;
 
     this.format = {
       dataformat: "mp3",
@@ -263,6 +262,23 @@ export class MpegParser extends AbstractID3v2Parser {
         native: {}
       };
     });
+  }
+
+  /**
+   * Called after file has been fully parsed, this allows, if present, to exclude the ID3v1.1 header length
+   * @param metadata
+   * @returns {INativeAudioMetadata}
+   */
+  protected finalize(metadata: INativeAudioMetadata): INativeAudioMetadata {
+
+    if (!this.format.duration && this.format.codecProfile === "CBR") {
+      const hasID3v1 = metadata.native.hasOwnProperty('ID3v1.1');
+      const mpegSize = this.tokenizer.fileSize - this.mpegOffset - (hasID3v1 ? 128 : 0);
+      this.format.numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
+      this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
+    }
+
+    return metadata;
   }
 
   private _peekBuffer(): Promise<number> {
@@ -317,6 +333,10 @@ export class MpegParser extends AbstractID3v2Parser {
 
   private parseAudioFrameHeader(buf_frame_header: Buffer): Promise<void> {
 
+    if (this.frameCount === 0) {
+      this.mpegOffset = this.tokenizer.position - 1;
+    }
+
     return this.tokenizer.readBuffer(buf_frame_header, 1, 3).then(() => {
 
       let header: MpegFrameHeader;
@@ -362,8 +382,10 @@ export class MpegParser extends AbstractID3v2Parser {
         if (this.areAllSame(this.bitrates)) {
           // subtract non audio stream data from duration calculation
           // The 128 bytes is based on a very unsafe assumtion that a ID3v1 will follow (ToDo: improve)
-          const size = this.tokenizer.fileSize - (this.headerSize === 0 ? 128 : this.headerSize);
-          this.format.duration = (size * 8) / header.bitrate;
+          // const mpegSize = this.tokenizer.fileSize - (this.mpegOffset === 0 ? 128 : this.mpegOffset);
+          // this.format.numberOfSamples = Math.ceil(mpegSize / fsize) * samples_per_frame;
+          // this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
+          this.samplesPerFrame = samples_per_frame;
           this.format.codecProfile = "CBR";
           return; // Done
         } else if (!this.readDuration) {
@@ -454,14 +476,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
       if ((infoTag.headerFlags[3] & 0x01) === 1) {
         this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
-        /* ToDo: jump to end of stream
-         if (infoTag.streamSize) {
-         return this.skipFrameData(infoTag.streamSize - (4 + XingInfoTag.len)).then(() => {
-         return infoTag;
-         });
-         }
-         */
-        return infoTag; // Done ToDo: will get out-of sync
+        return infoTag;
       }
 
       // frames field is not present

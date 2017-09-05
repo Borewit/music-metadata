@@ -13,12 +13,12 @@ describe("Parsing MPEG / ID3v1", () => {
 
     function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ['ID3v1.1'], 'format.tagTypes');
-      t.strictEqual(format.duration, 5.4857, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 160000, 'format.bitrate = 160 kbit/sec');
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
+      t.strictEqual(format.duration, 241920 / format.sampleRate, 'format.duration');
     }
 
     function checkCommon(common: mm.ICommonTagsResult) {
@@ -33,6 +33,9 @@ describe("Parsing MPEG / ID3v1", () => {
       t.deepEqual(common.comment, ['abcdefg'], 'common.comment');
     }
 
+    /**
+     * 241920 samples
+     */
     const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
 
     it("should decode from a file", () => {
