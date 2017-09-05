@@ -8,6 +8,20 @@ const t = assert;
 
 it("should decode id3v2-duration-allframes", () => {
 
+  /**
+   * Audacity:         64512 samples (counts 56 frames??)
+   * ---------------------------
+   * MPEG-length:	     47647
+   * Sample-rate:	     44100
+   * frame_size:	       835
+   * Samples per frame	1152
+   *
+   *   Summary:
+   *   ===============
+   *    Total number of frames: 57, unpadded: 5, padded: 52
+   *    File is CBR. Bitrate of each frame is 256 kbps.
+   *    Exact length: 00:01
+   */
   const filePath = path.join(__dirname, 'samples', 'id3v2-duration-allframes.mp3');
 
   function checkFormat(format) {
@@ -15,7 +29,7 @@ it("should decode id3v2-duration-allframes", () => {
     t.strictEqual(format.bitrate, 256000, 'format.bitrate');
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-    t.strictEqual(format.duration, 1.48896875, 'format.duration (test duration=true)');
+    t.strictEqual(format.duration, 57 * 1152 / format.sampleRate, 'format.duration (test duration=true)');
     t.strictEqual(format.encoder, 'LAME 3.98.4', 'format.encoder');
   }
 

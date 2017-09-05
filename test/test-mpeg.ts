@@ -14,6 +14,12 @@ describe("MPEG parsing", () => {
     /**
      * No errors found in file.
      *
+     * ---------------------------
+     * MPEG-length:	      8359
+     * Sample-rate:	     44100
+     * frame_size:	       418
+     * Samples per frame	1152
+     *
      * Summary:
      * ===============
      * Total number of frames: 20, unpadded: 1, padded: 19
@@ -21,18 +27,20 @@ describe("MPEG parsing", () => {
      * Exact length: 00:00
      *
      * FooBar: 22559 samples
+     * Audacity: 23040 samples (assumed to be correct)
+     *
+     * Using CBR calculation: 23392.29375; same as Mutagen
      */
     const filePath = path.join(__dirname, "samples", "1971 - 003 - Sweet - Co-Co - CannaPower.mp2");
 
     return mm.parseFile(filePath, {duration: true, native: true}).then((metadata) => {
 
+      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"], "Tags: ID3v1 & ID3v2.3");
       t.strictEqual(metadata.format.dataformat, "mp2", "format.dataformat = mp2 (MPEG-2 Audio Layer II)");
       t.strictEqual(metadata.format.bitrate, 128000, "format.bitrate = 128 kbit/sec");
       t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
-      // t.strictEqual(metadata.format.numberOfSamples, 22559, "format.numberOfSamples = 22559");
-      // t.strictEqual(metadata.format.duration, 22559 / 44100, "format.durarion = ~0.512 sec"); // ToDo: take ID3v1 header into account
-      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"], "Tags: ID3v1 & ID3v2.3");
-
+      t.strictEqual(metadata.format.numberOfSamples, 23040, "format.numberOfSamples = 23040");
+      t.strictEqual(metadata.format.duration, 0.5224489795918368, "duration [seconds]"); // validated 2017-04-09
     });
   });
 

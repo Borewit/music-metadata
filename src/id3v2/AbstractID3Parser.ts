@@ -39,7 +39,7 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
           for (const tagType in id3v1Metadata) {
             metadata.native[tagType] = id3v1Metadata[tagType];
           }
-          return metadata;
+          return this.finalize(metadata);
         });
       });
   }
@@ -52,4 +52,8 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
    * @private
    */
   public abstract _parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
+
+  protected finalize(metadata: INativeAudioMetadata): INativeAudioMetadata {
+    return metadata;
+  }
 }
