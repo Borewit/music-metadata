@@ -217,7 +217,7 @@ export class MpegParser extends AbstractID3v2Parser {
   private calculateVbrDuration: boolean = false;
   private samplesPerFrame;
 
-  private format: IFormat;
+  private metadata: INativeAudioMetadata;
 
   private buf_frame_header = new Buffer(4);
 
@@ -236,30 +236,24 @@ export class MpegParser extends AbstractID3v2Parser {
   /**
    * Called after ID3 headers have been parsed
    */
-  public _parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
+  public _parse(metadata: INativeAudioMetadata, tokenizer: ITokenizer, options: IOptions): Promise<void> {
 
+    this.metadata = metadata;
     this.tokenizer = tokenizer;
     this.readDuration = options.duration;
 
-    this.format = {
-      dataformat: "mp3",
-      lossless: false
-    };
+    const format = this.metadata.format;
+    format.lossless = false;
 
     return this.sync().catch((err) => {
       if (err.message === endOfFile) {
         if (this.calculateVbrDuration) {
-          this.format.numberOfSamples = this.frameCount * this.samplesPerFrame;
-          this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
+          format.numberOfSamples = this.frameCount * this.samplesPerFrame;
+          format.duration = format.numberOfSamples / format.sampleRate;
         }
       } else {
         throw err;
       }
-    }).then(() => {
-      return {
-        format: this.format,
-        native: {}
-      };
     });
   }
 
@@ -270,11 +264,12 @@ export class MpegParser extends AbstractID3v2Parser {
    */
   protected finalize(metadata: INativeAudioMetadata): INativeAudioMetadata {
 
-    if (!this.format.duration && this.format.codecProfile === "CBR") {
+    const format = this.metadata.format;
+    if (!format.duration && format.codecProfile === "CBR") {
       const hasID3v1 = metadata.native.hasOwnProperty('ID3v1.1');
       const mpegSize = this.tokenizer.fileSize - this.mpegOffset - (hasID3v1 ? 128 : 0);
-      this.format.numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
-      this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
+      format.numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
+      format.duration = format.numberOfSamples / format.sampleRate;
     }
 
     return metadata;
@@ -346,14 +341,15 @@ export class MpegParser extends AbstractID3v2Parser {
         return this.sync();
       }
 
+      const format = this.metadata.format;
       // ToDo: this.format.dataformat = "MPEG-" + header.version + " Audio Layer " + Common.romanize(header.layer);
-      this.format.dataformat = "mp" + header.layer;
+      format.dataformat = "mp" + header.layer;
 
-      this.format.lossless = false;
+      format.lossless = false;
 
-      this.format.bitrate = header.bitrate;
-      this.format.sampleRate = header.samplingRate;
-      this.format.numberOfChannels = header.channelMode === "mono" ? 1 : 2;
+      format.bitrate = header.bitrate;
+      format.sampleRate = header.samplingRate;
+      format.numberOfChannels = header.channelMode === "mono" ? 1 : 2;
 
       const slot_size = header.calcSlotSize();
       if (slot_size === null) {
@@ -381,7 +377,7 @@ export class MpegParser extends AbstractID3v2Parser {
         if (this.areAllSame(this.bitrates)) {
           // Actual calculation will be done in finalize
           this.samplesPerFrame = samples_per_frame;
-          this.format.codecProfile = "CBR";
+          format.codecProfile = "CBR";
           return; // Done
         } else if (!this.readDuration) {
           return; // Done
@@ -430,12 +426,12 @@ export class MpegParser extends AbstractID3v2Parser {
       switch (headerTag) {
 
         case "Info":
-          this.format.codecProfile = "CBR";
+          this.metadata.format.codecProfile = "CBR";
           return this.readXingInfoHeader();
 
         case "Xing":
           return this.readXingInfoHeader().then((infoTag) => {
-            this.format.codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
+            this.metadata.format.codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
             return null;
           });
 
@@ -446,7 +442,7 @@ export class MpegParser extends AbstractID3v2Parser {
         case "LAME":
           return this.tokenizer.readToken(LameEncoderVersion).then((version) => {
             this.offset += LameEncoderVersion.len;
-            this.format.encoder = "LAME " + version;
+            this.metadata.format.encoder = "LAME " + version;
             return this.skipFrameData(this.frame_size - this.offset);
           });
         // ToDo: ???
@@ -472,10 +468,10 @@ export class MpegParser extends AbstractID3v2Parser {
     return this.tokenizer.readToken<IXingInfoTag>(XingInfoTag).then((infoTag) => {
       this.offset += XingInfoTag.len;  // 12
 
-      this.format.encoder = Common.stripNulls(infoTag.encoder);
+      this.metadata.format.encoder = Common.stripNulls(infoTag.encoder);
 
       if ((infoTag.headerFlags[3] & 0x01) === 1) {
-        this.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
+        this.metadata.format.duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
         return infoTag;
       }
 

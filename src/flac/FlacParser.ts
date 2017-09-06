@@ -1,8 +1,7 @@
 'use strict';
 
 import common from '../common';
-import {INativeAudioMetadata, IOptions, ITag, IFormat} from "../index";
-import {ITokenParser} from "../ParserFactory";
+import {INativeAudioMetadata, IOptions, ITag} from "../index";
 import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
@@ -31,13 +30,13 @@ export class FlacParser extends AbstractID3v2Parser {
   private tokenizer: ITokenizer;
   private options: IOptions;
 
-  private format: IFormat;
+  private metadata: INativeAudioMetadata;
   private tags: ITag[] = [];
   private padding: number = 0;
   private warnings: string[] = []; // ToDo: should be part of the parsing result
 
-  public _parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
+  public _parse(metadata: INativeAudioMetadata, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+    this.metadata = metadata;
     this.tokenizer = tokenizer;
     this.options = options;
 
@@ -49,19 +48,14 @@ export class FlacParser extends AbstractID3v2Parser {
     });
   }
 
-  private parseBlockHeader(): Promise<INativeAudioMetadata> {
+  private parseBlockHeader(): Promise<void> {
     // Read block header
     return this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader).then((blockHeader) => {
       // Parse block data
       return this.parseDataBlock(blockHeader).then(() => {
         if (blockHeader.lastBlock) {
+          this.metadata.native.vorbis = this.tags;
           // done
-          return {
-            format: this.format,
-            native: {
-              vorbis: this.tags
-            }
-          };
         } else {
           return this.parseBlockHeader();
         }
@@ -102,7 +96,7 @@ export class FlacParser extends AbstractID3v2Parser {
       throw new Error("Unexpected block-stream-info length");
 
     return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then((streamInfo) => {
-      this.format = {
+      this.metadata.format = {
         dataformat: 'flac',
         lossless: true,
         numberOfChannels: streamInfo.channels,

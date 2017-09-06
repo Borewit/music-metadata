@@ -200,6 +200,9 @@ describe("MPEG parsing", () => {
     });
   });
 
+  /**
+   * Related to issue #38
+   */
   describe("Handle corrupt MPEG-frames", () => {
 
     it("should handle corrupt frame causing negative frame data left", () => {
@@ -231,6 +234,43 @@ describe("MPEG parsing", () => {
 
       return mm.parseFile(filePath, {duration: true}).then((metadata) => {
         checkFormat(metadata.format);
+      });
+    });
+
+  });
+
+  const issueDir = path.join(__dirname, "samples");
+
+  /**
+   * Related to issue #39
+   */
+  describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1.1", () => {
+
+    function checkFormat(format: mm.IFormat, expectedDuration) {
+      t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v2.4", "ID3v1.1"], "format.tagTypes");
+      t.strictEqual(format.duration, expectedDuration, "format.duration");
+      t.strictEqual(format.dataformat, "mp3", "format.dataformat");
+      t.strictEqual(format.lossless, false, "format.lossless");
+      t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
+      t.strictEqual(format.bitrate, 320000, "format.bitrate = 160 kbit/sec");
+      t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
+    }
+
+    it("should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1.1", () => {
+
+      return mm.parseFile(path.join(issueDir, "id3-multi-02.mp3")).then((metadata) => {
+        checkFormat(metadata.format, 230.29551020408164);
+      });
+    });
+
+    /**
+     *  Test on multiple headers: ID3v1.1, ID3v2.3, ID3v2.4 & ID3v2.4 ( 2x ID3v2.4 !! )
+     */
+    it("should decode mp3_01 with 2x ID3v2.4 header",  () => {
+
+      // ToDo: currently second ID3v2.4 is overwritten. Either make both headers accessible or generate warning
+      return mm.parseFile(path.join(issueDir, "id3-multi-01.mp3")).then((metadata) => {
+        checkFormat(metadata.format, 0.1306122448979592);
       });
     });
 

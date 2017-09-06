@@ -7,11 +7,15 @@ import * as path from 'path';
 
 const t = assert;
 
-it("should calculate duration for a VBR encoded MP3", () => {
+it("should calculate duration for a CBR encoded MP3", function() {
+
+  this.skip(); // Need to support APEv2 header first
 
   /**
    *
-   * TAG headers: ID3v2.3 0 (len 191), APE v2.0 @ 5973245
+   * TAG headers:
+   * - ID3v2.3 0 at position 0, length is 191 bytes
+   * - APE v2.0 at position 5973245
    *
    * MPEG-length:	   5973054
    * Sample-rate:	     44100

@@ -75,9 +75,7 @@ export class AIFFParser implements ITokenParser {
               .then((id3_data) => {
                 const id3stream = new ID3Stream(id3_data);
                 return strtok3.fromStream(id3stream).then((rst) => {
-                  return ID3v2Parser.getInstance().parse(rst, this.options).then((id3) => {
-                    this.metadata.native = id3;
-                  });
+                  return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
                 });
               });
 

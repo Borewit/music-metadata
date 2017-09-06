@@ -1,4 +1,3 @@
-import ReadableStream = NodeJS.ReadableStream;
 import {isArray} from 'util';
 import common from '../common';
 import {TagType} from '../tagmap';
@@ -7,7 +6,7 @@ import {ITag, IOptions} from "../";
 import * as Token from "token-types";
 import FrameParser from "./FrameParser";
 import {ID3v2Token, IID3v2header} from "./ID3v2";
-import {INativeTags} from "../index";
+import {INativeAudioMetadata} from "../index";
 
 interface IFrameFlags {
   status: {
@@ -138,7 +137,7 @@ export class ID3v2Parser {
   private headerType: TagType;
   private options: IOptions;
 
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeTags> {
+  public parse(result: INativeAudioMetadata, tokenizer: ITokenizer, options: IOptions): Promise<void> {
 
     this.tokenizer = tokenizer;
     this.options = options;
@@ -159,13 +158,7 @@ export class ID3v2Parser {
         return this.parseId3Data(id3Header.size);
       }
     }).then(() => {
-
-      const native: INativeTags = {};
-
-      // ToDo: res.format.tagTypes = this.tagTypes;
-      native[this.headerType] = this.tags;
-
-      return native;
+      result.native[this.headerType] = this.tags;
     });
   }
 
