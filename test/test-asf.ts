@@ -4,6 +4,8 @@ import * as mm from '../src';
 import * as path from 'path';
 import GUID from "../src/asf/GUID";
 import * as fs from 'fs-extra';
+import {Util} from "../src/asf/Util";
+import {DataType} from "../src/asf/AsfObject";
 
 const t = assert;
 
@@ -19,6 +21,40 @@ describe("ASF", () => {
 
       assert.deepEqual(GUID.HeaderObject.toBin(), Header_GUID);
     });
+  });
+
+  /**
+   * Trying Buffer.readUIntLE(0, 8)
+   * Where 8 is 2 bytes longer then maximum allowed of 6
+   */
+  it("should be able to roughly decode a 64-bit QWord", () => {
+
+    const tests: Array<{ raw: string, expected: number, description: string }> = [
+      { raw: "\xFF\x00\x00\x00\x00\x00\x00\x00",
+        expected: 0xFF,
+        description: "8-bit" },
+      { raw: "\xFF\xFF\x00\x00\x00\x00\x00\x00",
+        expected: 0xFFFF,
+        description: "16-bit"},
+      { raw: "\xFF\xFF\xFF\xFF\x00\x00\x00\x00",
+        expected: 0xFFFFFFFF,
+        description: "32-bit"},
+      { raw: "\xFF\xFF\xFF\xFF\xFF\x00\x00\x00",
+        expected: 0xFFFFFFFFFF,
+        description: "40-bit"},
+      { raw: "\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00",
+        expected: 0xFFFFFFFFFFFF,
+        description: "48-bit"},
+      { raw:     "\xFF\xFF\xFF\xFF\xFF\xFF\x0F\x00",
+        expected: 0xFFFFFFFFFFFFF,
+        description: "52-bit"}
+    ];
+
+    tests.forEach((test) => {
+      const buf = new Buffer(test.raw, "binary");
+      t.strictEqual(Util.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
+    });
+
   });
 
   describe("parse", () => {

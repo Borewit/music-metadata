@@ -2,7 +2,7 @@
 
 'use strict';
 import common from '../common';
-import ReadableStream = NodeJS.ReadableStream;
+
 import {IPicture, ITag} from "../index";
 import * as Token from "token-types";
 import GUID from "./GUID";

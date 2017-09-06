@@ -347,31 +347,11 @@ export class MP4Parser implements ITokenParser {
   };
 
   private static read_BE_Signed_Integer(value: Buffer): number {
-    switch (value.length) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-        return value.readIntBE(0, value.length);
-      case 8:
-        return value.readIntBE(2, 6); // JavaScript does not support larger then 6 bytes
-      default:
-        throw new Error("Illegal value length for BE-Signed-Integer (type 21): " + value.length);
-    }
+    return value.readIntBE(0, value.length);
   }
 
   private static read_BE_Unsigned_Integer(value: Buffer): number {
-    switch (value.length) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-        return value.readUIntBE(0, value.length);
-      case 8:
-        return value.readUIntBE(2, 6); // JavaScript does not support larger then 6 bytes
-      default:
-        throw new Error("Illegal value length for BE-Unsigned-Integer (type 22): " + value.length);
-    }
+    return value.readUIntBE(0, value.length);
   }
 
   private tokenizer: ITokenizer;

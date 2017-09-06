@@ -9,15 +9,12 @@ export class Util {
     return Util.attributeParsers[i];
   }
 
-  public static readUInt64LE(buffer: Buffer, offset: number): number {
-    const high = buffer.slice(offset, offset + 4).readUInt32LE(0);
-    const low = buffer.slice(offset + 4, offset + 8).readUInt32LE(0);
-    const maxuint32 = Math.pow(2, 32);
-    return ((low * maxuint32) + (high >>> 0));
-  }
-
   public static parseUnicodeAttr(buf): string {
     return common.stripNulls(common.decodeString(buf, 'utf16le'));
+  }
+
+  public static readUInt64LE(buf: Buffer, offset: number = 0): number {
+    return buf.readUIntLE(offset, 8);
   }
 
   private static attributeParsers: AttributeParser[] = [
@@ -51,5 +48,4 @@ export class Util {
   private static parseWordAttr(buf: Buffer, offset: number = 0): number {
     return buf.readUInt16LE(offset);
   }
-
 }
