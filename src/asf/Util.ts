@@ -36,8 +36,8 @@ export class Util {
     return newBuf;
   }
 
-  private static parseBoolAttr(buf: Buffer): boolean {
-    return Util.parseWordAttr(buf) === 1;
+  private static parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
+    return Util.parseWordAttr(buf, offset) === 1;
   }
 
   private static parseDWordAttr(buf: Buffer, offset: number = 0): number {
