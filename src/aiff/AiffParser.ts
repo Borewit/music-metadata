@@ -36,22 +36,13 @@ export class AIFFParser implements ITokenParser {
     return this.tokenizer.readToken<Chunk.IChunkHeader>(Chunk.Header)
       .then((header) => {
         if (header.chunkID !== 'FORM')
-          return null; // Not AIFF format
+          throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
         return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then((type) => {
           this.metadata.format.dataformat = type;
         }).then(() => {
-          return this.readChunk().then(() => {
-            return null;
-          });
+          return this.readChunk().then(() => this.metadata);
         });
-      })
-      .catch((err) => {
-        if (err.message === strtok3.endOfFile) {
-          return this.metadata;
-        } else {
-          throw err;
-        }
       });
   }
 
@@ -84,8 +75,10 @@ export class AIFFParser implements ITokenParser {
             return this.tokenizer.ignore(header.size);
 
         }
-      }).then(() => {
-        return this.readChunk();
+      }).then(() => this.readChunk()).catch((err) => {
+        if (err.message !== strtok3.endOfFile) {
+          throw err;
+        }
       });
   }
 
