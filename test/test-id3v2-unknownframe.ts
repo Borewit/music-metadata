@@ -19,7 +19,7 @@ it('invalid "Date" frame should not cause crash', () => {
     t.deepEqual(common.genre, ['Progressive Rock'], 'common.genre');
   }
 
-  return mm.parseFile(filePath, {duration: true}).then((metadata) => {
+  return mm.parseFile(filePath, {duration: true}).then(metadata => {
     checkCommon(metadata.common);
   });
 

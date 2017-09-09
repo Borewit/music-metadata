@@ -39,7 +39,7 @@ export class AsfParser implements ITokenParser {
   }
 
   private paresTopLevelHeaderObject(): Promise<INativeAudioMetadata> {
-    return this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken).then((header) => {
+    return this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken).then(header => {
       if (!header.objectId.equals(GUID.HeaderObject)) {
         throw new Error('expected asf header; but was not found; got: ' + header.objectId.str);
       }
@@ -50,12 +50,12 @@ export class AsfParser implements ITokenParser {
 
   private parseObjectHeader(): Promise<INativeAudioMetadata> {
     // Parse common header of the ASF Object (3.1)
-    return this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken).then((header) => {
+    return this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken).then(header => {
       // Parse data part of the ASF Object
       switch (header.objectId.str) {
 
         case AsfObject.FilePropertiesObject.guid.str: // 3.2
-          return this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header)).then((fpo) => {
+          return this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header)).then(fpo => {
             this.format.duration = fpo.playDuration / 10000000;
             this.format.bitrate = fpo.maximumBitrate;
           });
@@ -71,27 +71,27 @@ export class AsfParser implements ITokenParser {
           });
 
         case AsfObject.ContentDescriptionObjectState.guid.str: // 3.10
-          return this.tokenizer.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header)).then((tags) => {
+          return this.tokenizer.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header)).then(tags => {
             this.tags = this.tags.concat(tags);
           });
 
         case AsfObject.ExtendedContentDescriptionObjectState.guid.str: // 3.11
-          return this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header)).then((tags) => {
+          return this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header)).then(tags => {
             this.tags = this.tags.concat(tags);
           });
 
         case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
-          return this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header)).then((cd) => {
+          return this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header)).then(cd => {
             return null;
           });
 
         case AsfObject.MetadataObjectState.guid.str: // 4.7
-          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header)).then((tags) => {
+          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header)).then(tags => {
             this.tags = this.tags.concat(tags);
           });
 
         case AsfObject.MetadataLibraryObjectState.guid.str: // 4.8
-          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header)).then((tags) => {
+          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header)).then(tags => {
             this.tags = this.tags.concat(tags);
           });
 

@@ -32,14 +32,14 @@ export class ParserFactory {
    */
   public static parseFile(filePath: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
-    return strtok3.fromFile(filePath).then((fileTokenizer) => {
-      return ParserFactory.getParserForExtension(filePath).then((parser) => {
-        return parser.parse(fileTokenizer, opts).then((metadata) => {
+    return strtok3.fromFile(filePath).then(fileTokenizer => {
+      return ParserFactory.getParserForExtension(filePath).then(parser => {
+        return parser.parse(fileTokenizer, opts).then(metadata => {
           return fileTokenizer.close().then(() => {
             return metadata;
           });
         });
-      }).catch((err) => {
+      }).catch(err => {
         return fileTokenizer.close().then(() => {
           throw err;
         });
@@ -56,12 +56,12 @@ export class ParserFactory {
    */
   public static parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
-    return strtok3.fromStream(stream).then((tokenizer) => {
+    return strtok3.fromStream(stream).then(tokenizer => {
       if (!tokenizer.fileSize && opts.fileSize) {
         tokenizer.fileSize = opts.fileSize;
       }
 
-      return ParserFactory.getParserForMimeType(mimeType).then((parser) => {
+      return ParserFactory.getParserForMimeType(mimeType).then(parser => {
         return parser.parse(tokenizer, opts);
       });
     });
@@ -168,8 +168,8 @@ export class ParserFactory {
 
   // ToDo: obsolete
   private static hasStartTag(filePath: string, tagIdentifier: string): Promise<boolean> {
-    return strtok3.fromFile(filePath).then((tokenizer) => {
-      return tokenizer.readToken(new StringType(tagIdentifier.length, 'ascii')).then((token) => {
+    return strtok3.fromFile(filePath).then(tokenizer => {
+      return tokenizer.readToken(new StringType(tagIdentifier.length, 'ascii')).then(token => {
         return token === tagIdentifier;
       });
     });

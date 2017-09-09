@@ -37,7 +37,7 @@ it("should calculate duration for a CBR encoded MP3", function() {
   const filePath = path.join(__dirname, "samples", filename);
 
   const stream = fs.createReadStream(filePath);
-  return mm.parseStream(stream, "audio/mpeg", {duration: true}).then((metadata) => {
+  return mm.parseStream(stream, "audio/mpeg", {duration: true}).then(metadata => {
     // ToDo: t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2'], 'format.tagTypes');
     t.deepEqual(metadata.format.tagTypes, ["ID3v2.3"], "format.tagTypes");
     t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");

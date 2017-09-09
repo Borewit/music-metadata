@@ -62,7 +62,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
     it("should decode from a file", () => {
 
-      return mm.parseFile(filePath, {native: true}).then((metadata) => {
+      return mm.parseFile(filePath, {native: true}).then(metadata => {
 
         const native = metadata.native['iTunes MP4'];
         t.ok(native, 'Native m4a tags should be present');
@@ -78,7 +78,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/mp4', {native: true}).then((metadata) => {
+      return mm.parseStream(stream, 'audio/mp4', {native: true}).then(metadata => {
         checkFormat(metadata.format);
         checkCommon(metadata.common);
         checkNativeTags(mm.orderTags(metadata.native['iTunes MP4']));
@@ -94,7 +94,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
     // AAC
     const filename = path.join(__dirname, "samples", "01. Trumpsta (Djuro Remix).m4a");
 
-    return mm.parseFile(filename, {native: true}).then((metadata) => {
+    return mm.parseFile(filename, {native: true}).then(metadata => {
 
       t.isDefined(metadata.native["iTunes MP4"], "Native m4a tags should be present");
       t.deepEqual(metadata.format.duration, 2.066575963718821, "metadata.format.duration");

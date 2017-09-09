@@ -142,7 +142,7 @@ export class ID3v2Parser {
     this.tokenizer = tokenizer;
     this.options = options;
 
-    return this.tokenizer.readToken(ID3v2Token.Header).then((id3Header) => {
+    return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
 
       if (id3Header.fileIdentifier !== 'ID3') {
         throw new Error("expected file identifier 'ID3' not found");
@@ -163,7 +163,7 @@ export class ID3v2Parser {
   }
 
   public parseExtendedHeader(): Promise<void> {
-    return this.tokenizer.readToken(ID3v2Token.ExtendedHeader).then((extendedHeader) => {
+    return this.tokenizer.readToken(ID3v2Token.ExtendedHeader).then(extendedHeader => {
       const dataRemaining = extendedHeader.size - ID3v2Token.ExtendedHeader.len;
       if (dataRemaining > 0) {
         return this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);

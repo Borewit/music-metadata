@@ -42,16 +42,16 @@ export class VorbisParser implements ITokenParser {
    */
   private parseHeaderPacket(): Promise<void> {
 
-    return this.tokenizer.readToken<Vorbis.ICommonHeader>(Vorbis.CommonHeader).then((header) => {
+    return this.tokenizer.readToken<Vorbis.ICommonHeader>(Vorbis.CommonHeader).then(header => {
       if (header.vorbis !== 'vorbis')
         throw new Error('Metadata does not look like Vorbis');
 
-      return this.parsePacket(header.packetType).then((res) => {
+      return this.parsePacket(header.packetType).then(res => {
         if (!res.done) {
           return this.parseHeaderPacket();
         }
       });
-    }).catch((err) => {
+    }).catch(err => {
       if (err.message === endOfStream) {
         return;
       } else
@@ -63,12 +63,12 @@ export class VorbisParser implements ITokenParser {
     switch (packetType) {
 
       case 1: //  type 1: the identification header
-        return this.parseVorbisInfo().then((len) => {
+        return this.parseVorbisInfo().then(len => {
           return {len, done: false};
         });
 
       case 3: //  type 3: comment header
-        return this.parseUserCommentList().then((len) => {
+        return this.parseUserCommentList().then(len => {
           return {len, done: true};
         });
 
@@ -78,7 +78,7 @@ export class VorbisParser implements ITokenParser {
   }
 
   private parseVorbisInfo(): Promise<number> {
-    return this.tokenizer.readToken<Vorbis.IFormatInfo>(Vorbis.IdentificationHeader).then((vi) => {
+    return this.tokenizer.readToken<Vorbis.IFormatInfo>(Vorbis.IdentificationHeader).then(vi => {
       this.format.sampleRate = vi.sampleRate;
       this.format.bitrate = vi.bitrateNominal;
       this.format.numberOfChannels = vi.channelMode;
@@ -92,10 +92,10 @@ export class VorbisParser implements ITokenParser {
    */
   private parseUserCommentList(): Promise<number> {
 
-    return this.tokenizer.readToken<number>(Token.UINT32_LE).then((strLen) => {
+    return this.tokenizer.readToken<number>(Token.UINT32_LE).then(strLen => {
       return this.tokenizer.readToken<string>(new Token.StringType(strLen, 'utf-8')).then((vendorString: string) => {
-        return this.tokenizer.readToken<number>(Token.UINT32_LE).then((userCommentListLength) => {
-          return this.parseUserComment(userCommentListLength).then((len) => {
+        return this.tokenizer.readToken<number>(Token.UINT32_LE).then(userCommentListLength => {
+          return this.parseUserComment(userCommentListLength).then(len => {
             return 2 * Token.UINT32_LE.len + strLen + len;
           });
         });
@@ -104,8 +104,8 @@ export class VorbisParser implements ITokenParser {
   }
 
   private parseUserComment(userCommentListLength: number): Promise<number> {
-    return this.tokenizer.readToken<number>(Token.UINT32_LE).then((strLen) => {
-      return this.tokenizer.readToken<string>(new Token.StringType(strLen, 'ascii')).then((v) => {
+    return this.tokenizer.readToken<number>(Token.UINT32_LE).then(strLen => {
+      return this.tokenizer.readToken<string>(new Token.StringType(strLen, 'ascii')).then(v => {
         const idx = v.indexOf('=');
         const key = v.slice(0, idx).toUpperCase();
         let value: any = v.slice(idx + 1);
@@ -122,7 +122,7 @@ export class VorbisParser implements ITokenParser {
           // if we don't want to read the duration
           // then tell the parent stream to stop
           // stop = !readDuration;
-          return this.parseUserComment(userCommentListLength).then((recLen) => {
+          return this.parseUserComment(userCommentListLength).then(recLen => {
             return len + recLen;
           });
         }

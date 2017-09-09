@@ -61,7 +61,7 @@ describe("Common", () => {
           expected: "joystick"
         }
       ];
-      tests.forEach((test) => {
+      tests.forEach(test => {
         t.strictEqual(Common.stripNulls(test.str), test.expected);
       });
     });

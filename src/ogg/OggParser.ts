@@ -125,12 +125,12 @@ export class OggParser implements ITokenParser {
     this.vorbisParser = new VorbisParser();
 
     this.vorbisStream = new VorbisStream();
-    return strtok3.fromStream(this.vorbisStream).then((vorbisTokenizer) => {
+    return strtok3.fromStream(this.vorbisStream).then(vorbisTokenizer => {
 
       const vorbis = this.vorbisParser.parse(vorbisTokenizer, options);
 
       const ogg = this.parsePage()
-        .catch((err) => {
+        .catch(err => {
           if (err.message === strtok3.endOfFile) {
             this.vorbisStream.append(null);
           } else throw err;
@@ -150,7 +150,7 @@ export class OggParser implements ITokenParser {
   }
 
   private parsePage(): Promise<void> {
-    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then((header) => {
+    return this.tokenizer.readToken<IOggPageHeader>(OggParser.Header).then(header => {
       if (header.capturePattern !== 'OggS') { // Capture pattern
         throw new Error('expected ogg header but was not found');
       }
@@ -159,9 +159,9 @@ export class OggParser implements ITokenParser {
 
       this.pageNumber = header.pageSequenceNo;
 
-      return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.segmentTable)).then((segments) => {
+      return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.segmentTable)).then(segments => {
         const pageLength = common.sum(segments as any);
-        return this.tokenizer.readToken<Buffer>(new Token.BufferType(pageLength)).then((pageData) => {
+        return this.tokenizer.readToken<Buffer>(new Token.BufferType(pageLength)).then(pageData => {
           this.vorbisStream.append(pageData);
           return this.parsePage();
         });

@@ -50,7 +50,7 @@ describe("ASF", () => {
         description: "52-bit"}
     ];
 
-    tests.forEach((test) => {
+    tests.forEach(test => {
       const buf = new Buffer(test.raw, "binary");
       t.strictEqual(Util.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
     });
@@ -86,7 +86,7 @@ describe("ASF", () => {
 
     it("should decode an ASF audio file (.wma)", () => {
 
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
 
         checkFormat(result.format);
 
@@ -102,7 +102,7 @@ describe("ASF", () => {
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then((metadata) => {
+      return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then(metadata => {
         checkFormat(metadata.format);
         checkCommon(metadata.common);
         checkNative(mm.orderTags(metadata.native.asf));

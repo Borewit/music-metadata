@@ -162,7 +162,7 @@ export class WavPackParser implements ITokenParser {
     return this.parseWavPackBlocks()
       .then(() => {
         // try to parse APEv2 header
-        return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
+        return APEv2Parser.parseFooter(tokenizer, options).then(tags => {
           return {
             format: this.format,
             native: {
@@ -175,10 +175,10 @@ export class WavPackParser implements ITokenParser {
 
   public parseWavPackBlocks(): Promise<INativeAudioMetadata> {
 
-    return this.tokenizer.peekToken<string>(new Token.StringType(4, 'ascii')).then((blockId) => {
+    return this.tokenizer.peekToken<string>(new Token.StringType(4, 'ascii')).then(blockId => {
       if (blockId === 'wvpk') {
         return this.tokenizer.readToken(WavPack.BlockHeaderToken)
-          .then((header) => {
+          .then(header => {
             if (header.BlockID !== 'wvpk') {
               throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
             }
@@ -213,8 +213,8 @@ export class WavPackParser implements ITokenParser {
   }
 
   private parseMetadataSubBlock(remainingLength: number): Promise<void> {
-    return this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken).then((id) => {
-      return this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8).then((dataSizeInWords) => {
+    return this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken).then(id => {
+      return this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8).then(dataSizeInWords => {
         const metadataSize = 1 + dataSizeInWords * 2 + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
         if (metadataSize > remainingLength)
           throw new Error('Metadata exceeding block size');

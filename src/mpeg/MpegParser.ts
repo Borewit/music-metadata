@@ -245,7 +245,7 @@ export class MpegParser extends AbstractID3v2Parser {
     const format = this.metadata.format;
     format.lossless = false;
 
-    return this.sync().catch((err) => {
+    return this.sync().catch(err => {
       if (err.message === endOfFile) {
         if (this.calculateVbrDuration) {
           format.numberOfSamples = this.frameCount * this.samplesPerFrame;
@@ -278,7 +278,7 @@ export class MpegParser extends AbstractID3v2Parser {
   private _peekBuffer(): Promise<number> {
     this.unsynced += this.syncPeek.len;
     return this.tokenizer.ignore(this.syncPeek.len).then(() => {
-      return this.tokenizer.peekBuffer(this.syncPeek.buf, 0, maxPeekLen).then((len) => {
+      return this.tokenizer.peekBuffer(this.syncPeek.buf, 0, maxPeekLen).then(len => {
         this.syncPeek.len = len;
         return len;
       });
@@ -288,7 +288,7 @@ export class MpegParser extends AbstractID3v2Parser {
   private _sync(offset: number, gotFirstSync: boolean) {
 
     return (offset === 0 ? this._peekBuffer() : Promise.resolve(this.syncPeek.buf.length - offset))
-      .then((len) => {
+      .then(len => {
         if (gotFirstSync) {
           if (len === 0)
             throw new Error(endOfFile);
@@ -402,7 +402,7 @@ export class MpegParser extends AbstractID3v2Parser {
   }
 
   private parseCrc(): Promise<void> {
-    this.tokenizer.readNumber(Token.INT16_BE).then((crc) => {
+    this.tokenizer.readNumber(Token.INT16_BE).then(crc => {
       this.crc = crc;
     });
     this.offset += 2;
@@ -420,7 +420,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
   private readXtraInfoHeader(): Promise<any> {
 
-    return this.tokenizer.readToken(InfoTagHeaderTag).then((headerTag) => {
+    return this.tokenizer.readToken(InfoTagHeaderTag).then(headerTag => {
       this.offset += InfoTagHeaderTag.len;  // 12
 
       switch (headerTag) {
@@ -430,7 +430,7 @@ export class MpegParser extends AbstractID3v2Parser {
           return this.readXingInfoHeader();
 
         case "Xing":
-          return this.readXingInfoHeader().then((infoTag) => {
+          return this.readXingInfoHeader().then(infoTag => {
             this.metadata.format.codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
             return null;
           });
@@ -440,7 +440,7 @@ export class MpegParser extends AbstractID3v2Parser {
           break;
 
         case "LAME":
-          return this.tokenizer.readToken(LameEncoderVersion).then((version) => {
+          return this.tokenizer.readToken(LameEncoderVersion).then(version => {
             this.offset += LameEncoderVersion.len;
             this.metadata.format.encoder = "LAME " + version;
             return this.skipFrameData(this.frame_size - this.offset);
@@ -465,7 +465,7 @@ export class MpegParser extends AbstractID3v2Parser {
    */
   private readXingInfoHeader(): Promise<IXingInfoTag> {
 
-    return this.tokenizer.readToken<IXingInfoTag>(XingInfoTag).then((infoTag) => {
+    return this.tokenizer.readToken<IXingInfoTag>(XingInfoTag).then(infoTag => {
       this.offset += XingInfoTag.len;  // 12
 
       this.metadata.format.encoder = Common.stripNulls(infoTag.encoder);
@@ -494,7 +494,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
   private areAllSame(array) {
     const first = array[0];
-    return array.every((element) => {
+    return array.every(element => {
       return element === first;
     });
   }

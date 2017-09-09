@@ -34,11 +34,11 @@ export class AIFFParser implements ITokenParser {
     this.options = options;
 
     return this.tokenizer.readToken<Chunk.IChunkHeader>(Chunk.Header)
-      .then((header) => {
+      .then(header => {
         if (header.chunkID !== 'FORM')
           throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
-        return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then((type) => {
+        return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then(type => {
           this.metadata.format.dataformat = type;
         }).then(() => {
           return this.readChunk().then(() => this.metadata);
@@ -48,12 +48,12 @@ export class AIFFParser implements ITokenParser {
 
   public readChunk(): Promise<void> {
     return this.tokenizer.readToken<Chunk.IChunkHeader>(Chunk.Header)
-      .then((header) => {
+      .then(header => {
         switch (header.chunkID) {
 
           case 'COMM': // The Common Chunk
             return this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header))
-              .then((common) => {
+              .then(common => {
                 this.metadata.format.bitsPerSample = common.sampleSize;
                 this.metadata.format.sampleRate = common.sampleRate;
                 this.metadata.format.numberOfChannels = common.numChannels;
@@ -63,9 +63,9 @@ export class AIFFParser implements ITokenParser {
 
           case 'ID3 ': // ID3-meta-data
             return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.size))
-              .then((id3_data) => {
+              .then(id3_data => {
                 const id3stream = new ID3Stream(id3_data);
-                return strtok3.fromStream(id3stream).then((rst) => {
+                return strtok3.fromStream(id3stream).then(rst => {
                   return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
                 });
               });
@@ -75,7 +75,7 @@ export class AIFFParser implements ITokenParser {
             return this.tokenizer.ignore(header.size);
 
         }
-      }).then(() => this.readChunk()).catch((err) => {
+      }).then(() => this.readChunk()).catch(err => {
         if (err.message !== strtok3.endOfFile) {
           throw err;
         }

@@ -54,7 +54,7 @@ describe("FLAC decoding", () => {
 
   it("should decode a FLAC audio file (.flac)", () => {
 
-    return mm.parseFile(flacFilePath, {native: true}).then((metadata) => {
+    return mm.parseFile(flacFilePath, {native: true}).then(metadata => {
       checkFormat(metadata.format);
       checkCommon(metadata.common);
       checkNative(mm.orderTags(metadata.native.vorbis));
@@ -66,7 +66,7 @@ describe("FLAC decoding", () => {
 
     const stream = fs.createReadStream(flacFilePath);
 
-    return mm.parseStream(stream, "audio/flac", {native: true}).then((metadata) => {
+    return mm.parseStream(stream, "audio/flac", {native: true}).then(metadata => {
       checkFormat(metadata.format);
       checkCommon(metadata.common);
       checkNative(mm.orderTags(metadata.native.vorbis));
@@ -80,7 +80,7 @@ describe("FLAC decoding", () => {
 
     const filePath = path.join(__dirname, "samples", "a kind of magic.flac");
 
-    return mm.parseFile(filePath, {native: true}).then((metadata) => {
+    return mm.parseFile(filePath, {native: true}).then(metadata => {
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "vorbis", "ID3v1.1"], "File has 3 tag types: \"vorbis\", \"ID3v2.3\" & \"ID3v1.1\"");
     });
 

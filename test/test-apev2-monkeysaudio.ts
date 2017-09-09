@@ -41,7 +41,7 @@ it("should decode monkeysaudio (.ape)", () => {
     t.strictEqual(ape['Cover Art (Back)'][0].data.length, 48658, 'raw cover art (front) length');
   }
 
-  return mm.parseFile(filePath, {native: true}).then((result) => {
+  return mm.parseFile(filePath, {native: true}).then(result => {
 
     checkFormat(result.format);
 

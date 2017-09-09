@@ -108,7 +108,7 @@ export class ID3v1Parser {
 
   public parse(tokenizer: ITokenizer): Promise<INativeTags> {
 
-    return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then((header) => {
+    return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then(header => {
       if (header) {
         const id3: ITag[] = [];
         for (const id of ['title', 'artist', 'album', 'comment', 'track',  'year']) {

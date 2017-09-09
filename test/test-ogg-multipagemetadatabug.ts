@@ -11,7 +11,7 @@ it("ogg-multipage-metadata-bug", () => {
   const filename = 'ogg-multipagemetadata-bug.ogg';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath).then(result => {
     t.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
     t.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist');
     t.strictEqual(result.common.albumartist, 'Modestep', 'albumartist');

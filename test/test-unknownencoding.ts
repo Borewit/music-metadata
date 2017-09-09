@@ -11,7 +11,7 @@ it("should be able to read metadata with unknown encoding", () => {
   const filename = 'bug-unkown encoding.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath).then(result => {
     t.strictEqual(result.common.title, '808', 'title');
     t.strictEqual(result.common.artist, 'Benga', 'artist');
     t.strictEqual(result.common.albumartist, 'Benga', 'albumartist');

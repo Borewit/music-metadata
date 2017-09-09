@@ -38,7 +38,7 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
       }
 
       // Parse wma/asf file
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         // Check wma format
         checkFormat(result.format);
         // Check native tags

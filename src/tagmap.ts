@@ -53,14 +53,6 @@ interface INativeTagMappings {
  */
 export default class TagMap {
 
-  public static getCommonTag(tag: CommonTag): ITagInfo {
-    return TagMap.commonTags[tag];
-  }
-
-  public static isCommonTag(tag: string): boolean {
-    return TagMap.commonTags[tag] !== undefined;
-  }
-
   /**
    * @param alias Name of common tag
    * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
@@ -154,16 +146,14 @@ export default class TagMap {
     key: {multiple: false},
     originalalbum: {multiple: false},
     originalartist: {multiple: false}
-
   };
 
   private static capitalizeTags(map: INativeTagMap): INativeTagMap {
     const newMap: INativeTagMap = {};
-    for (const tag in map) {
-      if (map.hasOwnProperty(tag)) {
-        newMap[tag.toUpperCase()] = map[tag];
-      }
-    }
+
+    Object.keys(map).forEach(tag => {
+      newMap[tag.toUpperCase()] = map[tag];
+    });
     return newMap;
   }
 
@@ -190,10 +180,8 @@ export default class TagMap {
    * @param  tag Native tag name', e.g. 'TITLE'
    * @returns {boolean} true is we can safely assume that it is a  singleton
    */
-  public isNativeSingleton(type, tag): boolean {
+  public isNativeSingleton(type: TagType, tag: string): boolean {
     switch (type) {
-      case 'format':
-        return true;
       case 'ID3v2.3':
         switch (tag) {
           case 'IPLS':

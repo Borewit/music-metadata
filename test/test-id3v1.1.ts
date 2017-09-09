@@ -40,7 +40,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     it("should decode from a file", () => {
 
-      return mm.parseFile(filePath).then((metadata) => {
+      return mm.parseFile(filePath).then(metadata => {
         checkFormat(metadata.format);
         checkCommon(metadata.common);
       });
@@ -50,7 +50,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then((metadata) => {
+      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then(metadata => {
         for (const tagType in metadata.native)
           throw new Error("Do not expect any native tag type, got: " + tagType);
       }).then(() => stream.close());
@@ -75,7 +75,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     it("should decode from a file", () => {
 
-      return mm.parseFile(filePath).then((metadata) => {
+      return mm.parseFile(filePath).then(metadata => {
         for (const tagType in metadata.native)
           throw new Error("Do not expect any native tag type, got: " + tagType);
         checkFormat(metadata.format);
@@ -86,7 +86,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then((metadata) => {
+      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then(metadata => {
         for (const tagType in metadata.native)
           throw new Error("Do not expect any native tag type, got: " + tagType);
         checkFormat(metadata.format);
@@ -125,7 +125,7 @@ describe("Parsing MPEG / ID3v1", () => {
       t.isUndefined(common.comment, 'common.comment');
     }
 
-    return mm.parseFile(filePath).then((metadata) => {
+    return mm.parseFile(filePath).then(metadata => {
       t.isDefined(metadata, "should provide metadata");
       checkFormat(metadata.format);
       checkCommon(metadata.common);

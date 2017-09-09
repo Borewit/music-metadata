@@ -19,7 +19,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       native: {}
     };
 
-    return strtok.fromFile(filePath).then((tokenizer) => {
+    return strtok.fromFile(filePath).then(tokenizer => {
       return ID3v2Parser.getInstance().parse(metadata, tokenizer, {}).then(() => {
 
         t.strictEqual(33, metadata.native['ID3v2.3'].length);
@@ -89,7 +89,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.strictEqual(apic.data.length, 80938, 'raw APIC length');
     }
 
-    return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
+    return mm.parseFile(filePath, {duration: true, native: true}).then(result => {
       checkFormat(result.format);
       checkCommon(result.common);
       checkID3v1(mm.orderTags(result.native['ID3v1.1']));
@@ -127,7 +127,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.isUndefined(common.comment, "common.comment");
     }
 
-    return mm.parseFile(filePath).then((result) => {
+    return mm.parseFile(filePath).then(result => {
       checkFormat(result.format);
       checkCommon(result.common);
     });

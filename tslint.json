@@ -23,7 +23,8 @@
     "switch-default": false,
     "prefer-for-of": false,
     "ordered-imports": false,
-    "forin": false
+    "forin": false,
+    "arrow-parens": [true, "ban-single-arg-parens"]
   },
   "jsRules": {
     /*

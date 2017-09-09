@@ -33,7 +33,7 @@ describe("MPEG parsing", () => {
      */
     const filePath = path.join(__dirname, "samples", "1971 - 003 - Sweet - Co-Co - CannaPower.mp2");
 
-    return mm.parseFile(filePath, {duration: true, native: true}).then((metadata) => {
+    return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"], "Tags: ID3v1 & ID3v2.3");
       t.strictEqual(metadata.format.dataformat, "mp2", "format.dataformat = mp2 (MPEG-2 Audio Layer II)");
@@ -138,7 +138,7 @@ describe("MPEG parsing", () => {
         t.deepEqual(id3v23.COMM, [{description: "", language: "eng", text: "Jive"}], "native: COMM");
       }
 
-      return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
+      return mm.parseFile(filePath, {duration: true, native: true}).then(result => {
 
         checkFormat(result.format);
         checkCommon(result.common);
@@ -191,7 +191,7 @@ describe("MPEG parsing", () => {
         t.deepEqual(native.COMM, [{description: "", language: "eng", text: "Jive"}], "native: COMM");
       }
 
-      return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
+      return mm.parseFile(filePath, {duration: true, native: true}).then(result => {
 
         checkFormat(result.format);
         checkCommon(result.common);
@@ -232,7 +232,7 @@ describe("MPEG parsing", () => {
         t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
       }
 
-      return mm.parseFile(filePath, {duration: true}).then((metadata) => {
+      return mm.parseFile(filePath, {duration: true}).then(metadata => {
         checkFormat(metadata.format);
       });
     });
@@ -258,7 +258,7 @@ describe("MPEG parsing", () => {
 
     it("should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1.1", () => {
 
-      return mm.parseFile(path.join(issueDir, "id3-multi-02.mp3")).then((metadata) => {
+      return mm.parseFile(path.join(issueDir, "id3-multi-02.mp3")).then(metadata => {
         checkFormat(metadata.format, 230.29551020408164);
       });
     });
@@ -269,7 +269,7 @@ describe("MPEG parsing", () => {
     it("should decode mp3_01 with 2x ID3v2.4 header",  () => {
 
       // ToDo: currently second ID3v2.4 is overwritten. Either make both headers accessible or generate warning
-      return mm.parseFile(path.join(issueDir, "id3-multi-01.mp3")).then((metadata) => {
+      return mm.parseFile(path.join(issueDir, "id3-multi-01.mp3")).then(metadata => {
         checkFormat(metadata.format, 0.1306122448979592);
       });
     });

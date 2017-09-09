@@ -176,7 +176,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse flac/Vorbis file
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         checkFormat(result.format);
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
@@ -198,7 +198,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse ogg/Vorbis file
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         // Check ogg format
         checkFormat(result.format);
@@ -291,7 +291,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Run with default options
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native APEv2 tags');
         checkFormat(result.format);
         checkApeTags(mm.orderTags(result.native.APEv2));
@@ -315,7 +315,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Run with default options
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.hasOwnProperty('APEv2'), 'should include native APEv2 tags');
         checkFormat(result.format);
         checkApeTags(mm.orderTags(result.native.APEv2));
@@ -393,7 +393,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Run with default options
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.hasOwnProperty('ID3v2.3'), 'should include native id3v2.3 tags');
         checkFormat(result.format);
         checkID3Tags(mm.orderTags(result.native['ID3v2.3']));
@@ -422,7 +422,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse wma/asf file
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         // Check wma format
         checkFormat(result.format);
         // Check native tags
@@ -515,7 +515,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Run with default options
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.hasOwnProperty('ID3v2.4'), 'should include native id3v2.4 tags');
         checkFormat(result.format);
         checkID3Tags(mm.orderTags(result.native['ID3v2.4']));
@@ -549,7 +549,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse wma/asf file
-      return mm.parseFile(filePath, {native: true}).then((result) => {
+      return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native['ID3v2.4'], 'should include native id3v2.4 tags');
         // Check wma format
         checkFormat(result.format);
@@ -603,7 +603,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     // Run with default options
-    return mm.parseFile(filePath, {native: true}).then((result) => {
+    return mm.parseFile(filePath, {native: true}).then(result => {
       t.ok(result.native && result.native['iTunes MP4'], 'should include native M4A tags');
       checkFormat(result.format);
       check_iTunes_Tags(mm.orderTags(result.native['iTunes MP4']));
@@ -638,7 +638,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     // Parse wma/asf file
-    return mm.parseFile(filePath, {native: true}).then((result) => {
+    return mm.parseFile(filePath, {native: true}).then(result => {
       t.ok(result.native && result.native.asf, 'should include native asf tags');
       // Check wma format
       checkFormat(result.format);

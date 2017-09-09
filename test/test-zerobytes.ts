@@ -10,9 +10,9 @@ it("zero bytes", () => {
   const filename = 'zerobytes';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath).then(result => {
     throw new Error("should throw an exception");
-  }).catch((err) => {
+  }).catch(err => {
     t.equal(err.message, 'Extension  not supported.');
   });
 });

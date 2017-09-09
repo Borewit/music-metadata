@@ -94,7 +94,7 @@ export default class Common {
 
   public static parseGenre(origVal: string) {
     // match everything inside parentheses
-    const split = origVal.trim().split(/\((.*?)\)/g).filter((val) => {
+    const split = origVal.trim().split(/\((.*?)\)/g).filter(val => {
       return val !== '';
     });
 
@@ -107,7 +107,7 @@ export default class Common {
     }
 
     return array
-      .filter((val) => {
+      .filter(val => {
         return val !== undefined;
       }).join('/');
   }

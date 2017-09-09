@@ -11,7 +11,7 @@ it("should read utf16bom encoded metadata correctly", () => {
   const filename = 'bug-utf16bom-encoding.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath).then((result) => {
+  return mm.parseFile(filePath).then(result => {
     t.equal(result.common.title, "It's All Over You Know", 'title');
     t.equal(result.common.artist, 'The Apers', 'artist');
     t.deepEqual(result.common.artists, ['The Apers'], 'artist');

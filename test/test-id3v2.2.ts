@@ -22,7 +22,7 @@ it("should decode id3v2.2", () => {
   const filename = 'id3v2.2.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath, {duration: true, native: true}).then((result) => {
+  return mm.parseFile(filePath, {duration: true, native: true}).then(result => {
     t.strictEqual(result.common.title, 'You Are The One', 'title');
     t.strictEqual(result.common.artist, 'Shiny Toy Guns', 'artist');
     t.strictEqual(result.common.album, 'We Are Pilots', 'album');

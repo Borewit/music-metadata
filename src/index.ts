@@ -303,7 +303,7 @@ export class MusicMetadataParser {
    */
   public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
-    return ParserFactory.parseFile(filePath, opts).then((nativeData) => {
+    return ParserFactory.parseFile(filePath, opts).then(nativeData => {
       return this.parseNativeTags(nativeData, opts.native);
     });
 
@@ -319,7 +319,7 @@ export class MusicMetadataParser {
    * @returns {Promise<IAudioMetadata>}
    */
   public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseStream(stream, mimeType, opts).then((nativeData) => {
+    return ParserFactory.parseStream(stream, mimeType, opts).then(nativeData => {
       return this.parseNativeTags(nativeData, opts.native);
     });
   }

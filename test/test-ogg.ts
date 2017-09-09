@@ -56,7 +56,7 @@ describe("Parsing Ogg Vorbis", function() {
 
   it("should decode an Ogg Vorbis audio file (.ogg)", () => {
 
-    return mm.parseFile(filePath, {native: true}).then((metadata) => {
+    return mm.parseFile(filePath, {native: true}).then(metadata => {
       checkFormat(metadata.format);
       checkCommon(metadata.common);
       checkVorbisTags(mm.orderTags(metadata.native.vorbis));
@@ -68,7 +68,7 @@ describe("Parsing Ogg Vorbis", function() {
 
     const stream = fs.createReadStream(filePath);
 
-    return mm.parseStream(stream, 'audio/ogg', {native: true}).then((metadata) => {
+    return mm.parseStream(stream, 'audio/ogg', {native: true}).then(metadata => {
       checkFormat(metadata.format);
       checkCommon(metadata.common);
       checkVorbisTags(mm.orderTags(metadata.native.vorbis));

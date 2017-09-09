@@ -40,7 +40,7 @@ export class FlacParser extends AbstractID3v2Parser {
     this.tokenizer = tokenizer;
     this.options = options;
 
-    return tokenizer.readToken<Buffer>(new Token.BufferType(4)).then((buf) => {
+    return tokenizer.readToken<Buffer>(new Token.BufferType(4)).then(buf => {
       if (buf.toString() !== 'fLaC') {
         throw new Error('expected flac header but was not found');
       }
@@ -50,7 +50,7 @@ export class FlacParser extends AbstractID3v2Parser {
 
   private parseBlockHeader(): Promise<void> {
     // Read block header
-    return this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader).then((blockHeader) => {
+    return this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader).then(blockHeader => {
       // Parse block data
       return this.parseDataBlock(blockHeader).then(() => {
         if (blockHeader.lastBlock) {
@@ -95,7 +95,7 @@ export class FlacParser extends AbstractID3v2Parser {
     if (dataLen !== Metadata.BlockStreamInfo.len)
       throw new Error("Unexpected block-stream-info length");
 
-    return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then((streamInfo) => {
+    return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then(streamInfo => {
       this.metadata.format = {
         dataformat: 'flac',
         lossless: true,
@@ -113,7 +113,7 @@ export class FlacParser extends AbstractID3v2Parser {
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private parseComment(dataLen: number): Promise<void> {
-    return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((data) => {
+    return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(data => {
       const decoder = new DataDecoder(data);
       decoder.readStringUtf8(); // vendor (skip)
       const commentListLength = decoder.readInt32();
@@ -129,7 +129,7 @@ export class FlacParser extends AbstractID3v2Parser {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     } else {
-      return this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen)).then((picture) => {
+      return this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen)).then(picture => {
         this.tags.push({id: 'METADATA_BLOCK_PICTURE', value: picture});
       });
     }

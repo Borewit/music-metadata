@@ -185,7 +185,7 @@ class Structure {
     }
   };
 
-  public static TagField = (footer) => {
+  public static TagField = footer => {
     return new Token.BufferType(footer.size - Structure.TagFooter.len);
   }
 
@@ -230,11 +230,11 @@ export class APEv2Parser implements ITokenParser {
   }
 
   public static parseFooter(tokenizer: ITokenizer, options: IOptions): Promise<Array<{ id: string, value: any }>> {
-    return tokenizer.readToken<IFooter>(Structure.TagFooter).then((footer) => {
+    return tokenizer.readToken<IFooter>(Structure.TagFooter).then(footer => {
       if (footer.ID !== 'APETAGEX') {
         throw new Error('Expected footer to start with APETAGEX ');
       }
-      return tokenizer.readToken<Buffer>(Structure.TagField(footer)).then((tags) => {
+      return tokenizer.readToken<Buffer>(Structure.TagField(footer)).then(tags => {
         return APEv2Parser.parseTags(footer, tags, !options.skipCovers);
       });
     });
@@ -307,7 +307,7 @@ export class APEv2Parser implements ITokenParser {
     this.options = options;
 
     return this.tokenizer.readToken(Structure.DescriptorParser)
-      .then((descriptor) => {
+      .then(descriptor => {
         if (descriptor.ID !== 'MAC ') {
           throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
         }
@@ -318,9 +318,9 @@ export class APEv2Parser implements ITokenParser {
         } else {
           return this.parseHeader();
         }
-      }).then((header) => {
+      }).then(header => {
         return this.tokenizer.readToken(new IgnoreType(header.forwardBytes)).then(() => {
-          return APEv2Parser.parseFooter(tokenizer, options).then((tags) => {
+          return APEv2Parser.parseFooter(tokenizer, options).then(tags => {
             return {
               format: header.format,
               native: {
@@ -340,7 +340,7 @@ export class APEv2Parser implements ITokenParser {
   }
 
   private parseHeader(): Promise<{ format: IFormat, forwardBytes: number }> {
-    return this.tokenizer.readToken(Structure.Header).then((header) => {
+    return this.tokenizer.readToken(Structure.Header).then(header => {
       return {
         format: {
           lossless: true,

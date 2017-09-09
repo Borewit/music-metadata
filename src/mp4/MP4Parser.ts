@@ -380,8 +380,8 @@ export class MP4Parser implements ITokenParser {
   public parseAtom(): Promise<boolean> {
 
     // Parse atom header
-    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
-      return this.parseAtomData(header).then((done) => {
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then(header => {
+      return this.parseAtomData(header).then(done => {
         if (done) {
           // ToDo: messy ending
           // console.log("Done with %s", header.name);
@@ -398,7 +398,7 @@ export class MP4Parser implements ITokenParser {
     // console.log("atom name=%s, len=%s", header.name, header.length);
     switch (header.name) {
       case 'ftyp':
-        return this.parseAtom_ftyp(dataLen).then((types) => {
+        return this.parseAtom_ftyp(dataLen).then(types => {
           return false;
         });
 
@@ -409,7 +409,7 @@ export class MP4Parser implements ITokenParser {
       case 'mdia': // Media atom
       case 'minf': // Media Information Atom
       case 'stbl': // Media Information Atom
-        return this.parseAtom().then((done) => done);
+        return this.parseAtom().then(done => done);
 
       case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         return this.tokenizer.readToken<void>(new Token.IgnoreType(4)).then(() => false); // meta has 4 bytes of padding, ignore
@@ -435,7 +435,7 @@ export class MP4Parser implements ITokenParser {
 
       default:
         // return this.ignoreAtomData(dataLen);
-        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((buf) => {
+        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(buf => {
           // console.log("  ascii: %s", header.name, header.length, buf.toString('ascii'));
           buf = buf;
         }).then(() => false);
@@ -447,10 +447,10 @@ export class MP4Parser implements ITokenParser {
   }
 
   private parseAtom_ftyp(len: number): Promise<string[]> {
-    return this.tokenizer.readToken<IAtomFtyp>(Atom.ftyp).then((ftype) => {
+    return this.tokenizer.readToken<IAtomFtyp>(Atom.ftyp).then(ftype => {
       len -= Atom.ftyp.len;
       if (len > 0) {
-        return this.parseAtom_ftyp(len).then((types) => {
+        return this.parseAtom_ftyp(len).then(types => {
           types.push(ftype.type);
           return types;
         });
@@ -465,7 +465,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mvhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<IAtomMvhd>(Atom.mvhd).then((mvhd) => {
+    return this.tokenizer.readToken<IAtomMvhd>(Atom.mvhd).then(mvhd => {
       this.parse_mxhd(mvhd);
     });
   }
@@ -475,7 +475,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mdhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<IAtomMdhd>(Atom.mdhd).then((mdhd) => {
+    return this.tokenizer.readToken<IAtomMdhd>(Atom.mdhd).then(mdhd => {
       this.parse_mxhd(mdhd);
     });
   }
@@ -506,7 +506,7 @@ export class MP4Parser implements ITokenParser {
    */
   private parseMetadataItem(len: number): Promise<void> {
     // Parse atom header
-    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then(header => {
       // console.log("metadata-item: name=%s, len=%s", header.name, header.length);
       return this.parseMetadataItemData(header.name, header.length - Atom.Header.len).then(() => {
         const remaining = len - Atom.Header.len - header.length;
@@ -520,35 +520,35 @@ export class MP4Parser implements ITokenParser {
 
   private parseMetadataItemData(tagKey: string, remLen: number): Promise<void> {
     // Parse Meta Item List Atom
-    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then(header => {
       const dataLen = header.length - Atom.Header.len;
       switch (header.name) {
         case 'data': // value atom
           return this.parseValueAtom(tagKey, header);
         case 'itif': // item information atom (optional)
-          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((dataAtom) => {
+          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(dataAtom => {
             // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
             return header.length;
           });
         case 'name': // name atom (optional)
-          return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then((name) => {
+          return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then(name => {
             tagKey += ":" + name.name;
             return header.length;
           });
         case 'mean': // name atom (optional)
-          return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then((mean) => {
+          return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then(mean => {
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
             return header.length;
           });
         default:
-          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then((dataAtom) => {
+          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(dataAtom => {
             // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
             this.warnings.push("unsupported meta-item: " + tagKey + "[" + header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
             return header.length;
           });
       }
-    }).then((len) => {
+    }).then(len => {
       const remaining = remLen - len;
       if (remaining === 0) {
         return;
@@ -559,7 +559,7 @@ export class MP4Parser implements ITokenParser {
   }
 
   private parseValueAtom(tagKey: string, header: IAtomHeader): Promise<number> {
-    return this.tokenizer.readToken(new DataAtom(header.length - Atom.Header.len)).then((dataAtom) => {
+    return this.tokenizer.readToken(new DataAtom(header.length - Atom.Header.len)).then(dataAtom => {
 
       if (dataAtom.type.set === 0) {
         // Use well-known-type table

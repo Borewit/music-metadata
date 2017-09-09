@@ -45,7 +45,7 @@ it("should decode id3v2-duration-allframes", () => {
     t.deepEqual(common.picture, undefined, 'common.picture');
   }
 
-  return mm.parseFile(filePath, {duration: true}).then((result) => {
+  return mm.parseFile(filePath, {duration: true}).then(result => {
     checkFormat(result.format);
     checkCommon(result.common);
   });

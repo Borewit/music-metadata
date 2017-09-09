@@ -45,11 +45,11 @@ export class WavePcmParser implements ITokenParser {
     this.options = options;
 
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
-      .then((header) => {
+      .then(header => {
         if (header.chunkID !== 'RIFF')
           return null; // Not RIFF format
 
-        return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then((type) => {
+        return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then(type => {
           this.metadata.format.dataformat = type;
         }).then(() => {
           return this.readChunk(header).then(() => {
@@ -57,13 +57,13 @@ export class WavePcmParser implements ITokenParser {
           });
         });
       })
-      .catch((err) => {
+      .catch(err => {
         if (err.message === strtok3.endOfFile) {
           return this.metadata;
         } else {
           throw err;
         }
-      }).then((metadata) => {
+      }).then(metadata => {
         if (this.riffInfoTags.length > 0) {
           metadata.native.exif = this.riffInfoTags;
         }
@@ -73,11 +73,11 @@ export class WavePcmParser implements ITokenParser {
 
   public readChunk(parent: IChunkHeader): Promise<void> {
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(WaveChunk.Header)
-      .then((header) => {
+      .then(header => {
         switch (header.chunkID) {
 
           case "LIST":
-            return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then((listTypes) => {
+            return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then(listTypes => {
               switch (listTypes) {
                 case 'INFO':
                   return this.parseRiffInfoTags(header.size - 4).then(() => header.size);
@@ -90,7 +90,7 @@ export class WavePcmParser implements ITokenParser {
 
           case "fmt ": // The Common Chunk
             return this.tokenizer.readToken<WaveChunk.IFormat>(new WaveChunk.Format(header))
-              .then((common) => {
+              .then(common => {
                 this.metadata.format.bitsPerSample = common.bitsPerSample;
                 this.metadata.format.sampleRate = common.sampleRate;
                 this.metadata.format.numberOfChannels = common.numChannels;
@@ -101,9 +101,9 @@ export class WavePcmParser implements ITokenParser {
           case "id3 ": // The way Picard, FooBar currently stores, ID3 meta-data
           case "ID3 ": // The way Mp3Tags stores ID3 meta-data
             return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.size))
-              .then((id3_data) => {
+              .then(id3_data => {
                 const id3stream = new ID3Stream(id3_data);
-                return strtok3.fromStream(id3stream).then((rst) => {
+                return strtok3.fromStream(id3stream).then(rst => {
                   return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
                 });
               });
@@ -125,9 +125,9 @@ export class WavePcmParser implements ITokenParser {
 
   private parseRiffInfoTags(chunkSize): Promise<void> {
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(WaveChunk.Header)
-      .then((header) => {
+      .then(header => {
         const valueToken = new RiffChunk.ListInfoTagValue(header);
-        return this.tokenizer.readToken(valueToken).then((value) => {
+        return this.tokenizer.readToken(valueToken).then(value => {
           this.riffInfoTags.push({id: header.chunkID, value: Common.stripNulls(value)});
           chunkSize -= (8 + valueToken.len);
           if (chunkSize > 8) {

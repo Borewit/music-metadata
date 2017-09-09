@@ -8,7 +8,7 @@ import {ID3v1Parser} from "../id3v1/ID3v1Parser";
 export abstract class AbstractID3v2Parser implements ITokenParser {
 
   public static startsWithID3v2Header(tokenizer: strtok3.ITokenizer): Promise<boolean> {
-    return tokenizer.peekToken(ID3v2Token.Header).then((id3Header) => (id3Header.fileIdentifier === "ID3"));
+    return tokenizer.peekToken(ID3v2Token.Header).then(id3Header => (id3Header.fileIdentifier === "ID3"));
   }
 
   public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
@@ -20,7 +20,7 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
 
     return this.parseID3v2(metadata, tokenizer, options).then(() => {
       return metadata;
-    }).catch((err) => {
+    }).catch(err => {
       if (err.message === strtok3.endOfFile)
       // ToDo: maybe a warning?
         return metadata;
@@ -43,8 +43,8 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
 
   private parseID3v2(metadata: INativeAudioMetadata, tokenizer: strtok3.ITokenizer, options: IOptions): Promise<void> {
     return tokenizer.peekToken(ID3v2Token.Header)
-      .then((id3Header) => (id3Header.fileIdentifier === "ID3"))
-      .then((isID3) => {
+      .then(id3Header => (id3Header.fileIdentifier === "ID3"))
+      .then(isID3 => {
         if (isID3) {
           const id3parser = new ID3v2Parser();
           return id3parser.parse(metadata, tokenizer, options).then(() => this.parseID3v2(metadata, tokenizer, options));
@@ -56,7 +56,7 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
       })
       .then(() => {
         const id3v1parser = new ID3v1Parser();
-        return id3v1parser.parse(tokenizer).then((id3v1Metadata) => {
+        return id3v1parser.parse(tokenizer).then(id3v1Metadata => {
           for (const tagType in id3v1Metadata) {
             metadata.native[tagType] = id3v1Metadata[tagType];
           }
