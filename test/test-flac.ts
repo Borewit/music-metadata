@@ -3,6 +3,7 @@ import {assert} from "chai";
 import * as mm from "../src";
 import * as fs from "fs-extra";
 import * as path from "path";
+import {SourceStream} from "./util";
 
 const t = assert;
 
@@ -85,4 +86,40 @@ describe("FLAC decoding", () => {
     });
 
   });
-});
+
+  describe("handle corrupt FLAC data", () => {
+
+    const emptyStreamSize = 10 * 1024;
+    const buf = new Buffer(emptyStreamSize).fill(0);
+
+    it("should handle a corrupt stream", () => {
+
+      const streamReader = new SourceStream(buf);
+
+      return mm.parseStream(streamReader, "audio/flac", {duration: true, native: true})
+        .then(() => {
+          t.fail("Should reject");
+        }).catch(err => {
+          t.strictEqual(err.message, "Invalid FLAC preamble");
+        });
+    });
+
+    it("should handle a corrupt file", () => {
+
+      const tmpFilePath = path.join(__dirname, "samples", "zeroes.flac");
+
+      return fs.writeFile(tmpFilePath, buf).then(() => {
+        return mm.parseFile(tmpFilePath, {duration: true, native: true});
+      }).then(() => {
+        t.fail("Should reject");
+        return fs.remove(tmpFilePath);
+      }).catch(err => {
+        t.strictEqual(err.message, "Invalid FLAC preamble");
+        return fs.remove(tmpFilePath);
+      });
+
+    });
+
+  });
+})
+;

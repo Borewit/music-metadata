@@ -42,7 +42,7 @@ export class FlacParser extends AbstractID3v2Parser {
 
     return tokenizer.readToken<Buffer>(new Token.BufferType(4)).then(buf => {
       if (buf.toString() !== 'fLaC') {
-        throw new Error('expected flac header but was not found');
+        throw new Error("Invalid FLAC preamble");
       }
       return this.parseBlockHeader();
     });

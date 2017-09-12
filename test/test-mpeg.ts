@@ -55,9 +55,7 @@ describe("MPEG parsing", () => {
 
       const streamReader = new SourceStream(buf);
 
-      return mm.parseStream(streamReader, "audio/mpeg", {duration: true, native: true}).catch(() => {
-        // ToDo throwing error not consistent with file behaviour
-      });
+      return mm.parseStream(streamReader, "audio/mpeg", {duration: true, native: true});
     });
 
     it("should sync efficient, from a file", function() {
@@ -67,7 +65,7 @@ describe("MPEG parsing", () => {
       const tmpFilePath = path.join(__dirname, "samples", "zeroes.mp3");
 
       return fs.writeFile(tmpFilePath, buf).then(() => {
-        return mm.parseFile(tmpFilePath, {duration: true, native: true}); // ToDo throwing error not consistent with stream behaviour
+        return mm.parseFile(tmpFilePath, {duration: true, native: true});
       }).then(() => {
         return fs.remove(tmpFilePath);
       });

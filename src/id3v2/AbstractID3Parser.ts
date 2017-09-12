@@ -22,8 +22,10 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
       return metadata;
     }).catch(err => {
       if (err.message === strtok3.endOfFile)
-      // ToDo: maybe a warning?
+        // ToDo: maybe a warning?
         return metadata;
+      else
+        throw err;
     });
   }
 
