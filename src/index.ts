@@ -1,9 +1,7 @@
-/* jshint maxlen: 300 */
 'use strict';
 
 import common from './common';
 import TagMap, {TagPriority, TagType} from './tagmap';
-import EventEmitter = NodeJS.EventEmitter;
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
 
@@ -105,7 +103,10 @@ export interface ICommonTagsResult {
   peakLevel?: number,
   notes: string[],
   originalalbum: string,
-  originalartist: string
+  originalartist: string,
+  // Discogs:
+  discogs_release_id?: number,
+
 }
 
 export interface IFormat {
@@ -482,6 +483,10 @@ export class MusicMetadataParser {
           // ToDo: be more strict on 'YYYY...'
           // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
           comTags.year = parseInt(value.substr(0, 4), 10);
+          break;
+
+        case 'discogs_release_id':
+          value = typeof value === 'string' ? parseInt(value, 10) : value;
           break;
 
         default:

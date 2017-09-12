@@ -79,5 +79,9 @@ export const VorbisTagMap: INativeTagMap = {
   WEBSITE: 'website',
   NOTES: 'notes',
   TOTALTRACKS: 'totaltracks',
-  TOTALDISCS: 'totaldiscs'
+  TOTALDISCS: 'totaldiscs',
+  // Discogs
+  DISCOGS_RELEASE_ID: 'discogs_release_id',
+  CATALOGID: 'catalognumber',
+  STYLE: 'genre'
 };
