@@ -135,6 +135,7 @@ export class ParserFactory {
       case 'audio/aac':
       case 'audio/aacp':
       case 'audio/mp4':
+      case 'audio/x-aac':
         return Promise.resolve<ITokenParser>(new MP4Parser());
 
       case 'video/x-ms-asf':
@@ -142,6 +143,7 @@ export class ParserFactory {
         return Promise.resolve<ITokenParser>(new AsfParser());
 
       case 'audio/flac':
+      case 'audio/x-flac':
         return Promise.resolve<ITokenParser>(new FlacParser());
 
       case 'audio/ogg':
