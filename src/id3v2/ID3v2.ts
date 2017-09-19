@@ -1,4 +1,4 @@
-import common from '../common';
+import common from '../common/Common';
 import * as Token from "token-types";
 
 /**

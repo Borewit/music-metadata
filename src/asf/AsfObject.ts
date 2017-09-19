@@ -1,8 +1,7 @@
 // ASF Objects
 
-'use strict';
-import common from '../common';
-
+"use strict";
+import common from "../common/Common";
 import {IPicture, ITag} from "../index";
 import * as Token from "token-types";
 import GUID from "./GUID";

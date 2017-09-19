@@ -7,7 +7,7 @@ import * as WaveChunk from "./../wav/WaveChunk";
 import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {IChunkHeader} from "../aiff/Chunk";
-import Common from "../common";
+import Common from "../common/Common";
 
 /**
  * Resource Interchange File Format (RIFF) Parser

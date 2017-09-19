@@ -1,6 +1,5 @@
 'use strict';
-import common from '../common';
-import ReadableStream = NodeJS.ReadableStream;
+import common from "../common/Common";
 import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
 import {INativeAudioMetadata, IOptions} from "../index";

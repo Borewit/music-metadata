@@ -1,5 +1,5 @@
 import {isArray} from 'util';
-import common from '../common';
+import common from '../common/Common';
 import {TagType} from '../tagmap';
 import {ITokenizer} from "strtok3";
 import {ITag, IOptions} from "../";

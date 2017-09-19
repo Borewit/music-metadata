@@ -1,4 +1,4 @@
-import common from '../common';
+import common from "../common/Common";
 import {DataType} from "./AsfObject";
 
 export type AttributeParser = (buf: Buffer) => boolean | string | number | Buffer;

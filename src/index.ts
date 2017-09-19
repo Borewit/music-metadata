@@ -1,6 +1,6 @@
 'use strict';
 
-import common from './common';
+import common from './common/Common';
 import TagMap, {TagPriority, TagType} from './tagmap';
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
