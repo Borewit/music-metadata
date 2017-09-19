@@ -1,6 +1,5 @@
 'use strict';
 import * as Vorbis from './Vorbis';
-import ReadableStream = NodeJS.ReadableStream;
 import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
 import {IFormat, INativeAudioMetadata, IOptions, ITag} from "../index";

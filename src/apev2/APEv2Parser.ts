@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-import {TagType} from '../tagmap';
 import common from "../common/Common";
+import {TagType} from "../tagmap";
 import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
@@ -173,7 +173,7 @@ class Structure {
     get: (buf, off) => {
       return {
         // should equal 'APETAGEX'
-        ID: new Token.StringType(8, 'ascii').get(buf, off),
+        ID: new Token.StringType(8, "ascii").get(buf, off),
         // equals CURRENT_APE_TAG_VERSION
         version: Token.UINT32_LE.get(buf, off + 8),
         // the complete size of the tag, including this footer (excludes header)
@@ -232,8 +232,8 @@ export class APEv2Parser implements ITokenParser {
 
   public static parseFooter(tokenizer: ITokenizer, options: IOptions): Promise<Array<{ id: string, value: any }>> {
     return tokenizer.readToken<IFooter>(Structure.TagFooter).then(footer => {
-      if (footer.ID !== 'APETAGEX') {
-        throw new Error('Expected footer to start with APETAGEX ');
+      if (footer.ID !== "APETAGEX") {
+        throw new Error("Expected footer to start with APETAGEX ");
       }
       return tokenizer.readToken<Buffer>(Structure.TagField(footer)).then(tags => {
         return APEv2Parser.parseTags(footer, tags, !options.skipCovers);
@@ -254,12 +254,12 @@ export class APEv2Parser implements ITokenParser {
       offset += 4;
 
       let zero = common.findZero(buffer, offset, buffer.length);
-      const key = buffer.toString('ascii', offset, zero);
+      const key = buffer.toString("ascii", offset, zero);
       offset = zero + 1;
 
       switch (flags.dataType) {
         case DataType.text_utf8: { // utf-8 textstring
-          const value = buffer.toString('utf8', offset, offset += size);
+          const value = buffer.toString("utf8", offset, offset += size);
           const values = value.split(/\x00/g);
 
           /*jshint loopfunc:true */
@@ -270,12 +270,12 @@ export class APEv2Parser implements ITokenParser {
         }
 
         case DataType.binary: // binary (probably artwork)
-          if (includeCovers && (key === 'Cover Art (Front)' || key === 'Cover Art (Back)')) {
+          if (includeCovers && (key === "Cover Art (Front)" || key === "Cover Art (Back)")) {
             const picData = buffer.slice(offset, offset + size);
 
             let off = 0;
             zero = common.findZero(picData, off, picData.length);
-            const description = picData.toString('utf8', off, zero);
+            const description = picData.toString("utf8", off, zero);
             off = zero + 1;
 
             const picture = {
@@ -289,13 +289,13 @@ export class APEv2Parser implements ITokenParser {
           break;
 
         default:
-          throw new Error('Unexpected data-type: ' + flags.dataType);
+          throw new Error("Unexpected data-type: " + flags.dataType);
       }
     }
     return tags;
   }
 
-  private type: TagType = 'APEv2'; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
+  private type: TagType = "APEv2"; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
 
   private ape: IApeInfo = {};
 
@@ -309,8 +309,8 @@ export class APEv2Parser implements ITokenParser {
 
     return this.tokenizer.readToken(Structure.DescriptorParser)
       .then(descriptor => {
-        if (descriptor.ID !== 'MAC ') {
-          throw new Error('Expected MAC on beginning of file'); // ToDo: strip/parse JUNK
+        if (descriptor.ID !== "MAC ") {
+          throw new Error("Expected MAC on beginning of file"); // ToDo: strip/parse JUNK
         }
         this.ape.descriptor = descriptor;
         const lenExp = descriptor.descriptorBytes - Structure.DescriptorParser.len;

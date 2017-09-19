@@ -10,7 +10,7 @@ export class Util {
   }
 
   public static parseUnicodeAttr(buf): string {
-    return common.stripNulls(common.decodeString(buf, 'utf16le'));
+    return common.stripNulls(common.decodeString(buf, "utf16le"));
   }
 
   public static readUInt64LE(buf: Buffer, offset: number = 0): number {

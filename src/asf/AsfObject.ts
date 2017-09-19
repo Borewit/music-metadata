@@ -16,25 +16,25 @@ export enum DataType {
    * Unicode string. The data consists of a sequence of Unicode characters.
    */
   UnicodeString,
-    /**
-     * BYTE array. The type of data is implementation-specific.
-     */
+  /**
+   * BYTE array. The type of data is implementation-specific.
+   */
   ByteArray,
-    /**
-     * BOOL. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer. Only 0x0000 or 0x0001 are permitted values.
-     */
+  /**
+   * BOOL. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer. Only 0x0000 or 0x0001 are permitted values.
+   */
   Bool,
-    /**
-     * DWORD. The data is 4 bytes long and should be interpreted as a 32-bit unsigned integer.
-     */
+  /**
+   * DWORD. The data is 4 bytes long and should be interpreted as a 32-bit unsigned integer.
+   */
   DWord,
-    /**
-     * QWORD. The data is 8 bytes long and should be interpreted as a 64-bit unsigned integer.
-     */
+  /**
+   * QWORD. The data is 8 bytes long and should be interpreted as a 64-bit unsigned integer.
+   */
   QWord,
-    /**
-     * WORD. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer.
-     */
+  /**
+   * WORD. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer.
+   */
   Word
 }
 
@@ -331,7 +331,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
 
   public static guid = GUID.ContentDescriptionObject;
 
-  private static contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
+  private static contentDescTags = ["Title", "Author", "Copyright", "Description", "Rating"];
 
   constructor(header: IAsfObjectHeader) {
     super(header);
@@ -384,7 +384,7 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
       pos += valueLen;
       const parseAttr = Util.getParserForAttr(valueType);
       if (!parseAttr) {
-        throw new Error('unexpected value headerType: ' + valueType);
+        throw new Error("unexpected value headerType: " + valueType);
       }
       tags.push({id: name, value: parseAttr(value)});
     }
@@ -496,7 +496,7 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += dataLen;
       const parseAttr = Util.getParserForAttr(dataType);
       if (!parseAttr) {
-        throw new Error('unexpected value headerType: ' + dataType);
+        throw new Error("unexpected value headerType: " + dataType);
       }
       if (name === "WM/Picture") {
         tags.push({id: name, value: WmPictureToken.fromBuffer(data)});
@@ -532,7 +532,7 @@ export interface IWmPicture extends IPicture {
 export class WmPictureToken implements Token.IGetToken<IWmPicture> {
 
   public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(new Buffer(base64str, 'base64'));
+    return this.fromBuffer(new Buffer(base64str, "base64"));
   }
 
   public static fromBuffer(buffer: Buffer): IWmPicture {

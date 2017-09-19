@@ -162,7 +162,7 @@ class Atom {
 
     get: (buf: Buffer, off: number): IAtomHeader => {
       const length = Token.UINT32_BE.get(buf, 0);
-      if(length<0)
+      if (length < 0)
         throw new Error("Invalid atom header length");
 
       return {
@@ -344,11 +344,11 @@ class NameAtom implements Token.IGetToken<INameAtom> {
 export class MP4Parser implements ITokenParser {
 
   private static Types: { [index: number]: string } = {
-    0: 'uint8',
-    1: 'text',
-    13: 'jpeg',
-    14: 'png',
-    21: 'uint8'
+    0: "uint8",
+    1: "text",
+    13: "jpeg",
+    14: "png",
+    21: "uint8"
   };
 
   private static read_BE_Signed_Integer(value: Buffer): number {
@@ -402,40 +402,40 @@ export class MP4Parser implements ITokenParser {
     const dataLen = header.length - 8;
     // console.log("atom name=%s, len=%s", header.name, header.length);
     switch (header.name) {
-      case 'ftyp':
+      case "ftyp":
         return this.parseAtom_ftyp(dataLen).then(types => {
           return false;
         });
 
       // "Container" atoms, contain nested atoms: 'moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'
-      case 'moov': // The Movie Atom: contains other atoms
-      case 'udta': // User defined atom
-      case 'trak':
-      case 'mdia': // Media atom
-      case 'minf': // Media Information Atom
-      case 'stbl': // Media Information Atom
+      case "moov": // The Movie Atom: contains other atoms
+      case "udta": // User defined atom
+      case "trak":
+      case "mdia": // Media atom
+      case "minf": // Media Information Atom
+      case "stbl": // Media Information Atom
         return this.parseAtom().then(done => done);
 
-      case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+      case "meta": // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         return this.tokenizer.readToken<void>(new Token.IgnoreType(4)).then(() => false); // meta has 4 bytes of padding, ignore
 
-      case 'ilst': // 'meta' => 'ilst': Metadata Item List Atom
+      case "ilst": // 'meta' => 'ilst': Metadata Item List Atom
         // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
         return this.parseMetadataItem(dataLen).then(() => false);
 
-      case 'mdhd': // Media header atom
+      case "mdhd": // Media header atom
         return this.parseAtom_mdhd(dataLen).then(() => false);
 
-      case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
+      case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
         return this.parseAtom_mvhd(dataLen).then(() => false);
 
-      case '<id>': // 'meta' => 'ilst' => '<id>': metadata item atom
+      case "<id>": // 'meta' => 'ilst' => '<id>': metadata item atom
         return this.parseMetadataItem(dataLen).then(() => false);
 
-      case 'cmov': // compressed movie atom; child of Movie Atom
-      case 'rmra': // reference movie atom; child of Movie Atom
+      case "cmov": // compressed movie atom; child of Movie Atom
+      case "rmra": // reference movie atom; child of Movie Atom
 
-      case 'mdat':
+      case "mdat":
         return Promise.resolve<boolean>(true);
 
       default:
@@ -495,6 +495,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
    */
+
   /*
    private parseMetadataItem(len: number): Promise<void>{
    // Parse atom header
@@ -528,19 +529,19 @@ export class MP4Parser implements ITokenParser {
     return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then(header => {
       const dataLen = header.length - Atom.Header.len;
       switch (header.name) {
-        case 'data': // value atom
+        case "data": // value atom
           return this.parseValueAtom(tagKey, header);
-        case 'itif': // item information atom (optional)
+        case "itif": // item information atom (optional)
           return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(dataAtom => {
             // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
             return header.length;
           });
-        case 'name': // name atom (optional)
+        case "name": // name atom (optional)
           return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then(name => {
             tagKey += ":" + name.name;
             return header.length;
           });
-        case 'mean': // name atom (optional)
+        case "mean": // name atom (optional)
           return this.tokenizer.readToken<INameAtom>(new NameAtom(dataLen)).then(mean => {
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
@@ -573,15 +574,15 @@ export class MP4Parser implements ITokenParser {
 
           case 0: // reserved: Reserved for use where no type needs to be indicated
             switch (tagKey) {
-              case 'trkn':
-              case 'disk':
+              case "trkn":
+              case "disk":
                 const num = Token.UINT8.get(dataAtom.value, 3);
                 const of = Token.UINT8.get(dataAtom.value, 5);
                 // console.log("  %s[data] = %s/%s", tagKey, num, of);
                 this.tags.push({id: tagKey, value: num + "/" + of});
                 break;
 
-              case 'gnre':
+              case "gnre":
                 const genreInt = Token.UINT8.get(dataAtom.value, 1);
                 const genreStr = Genres[genreInt - 1];
                 // console.log("  %s[data] = %s", tagKey, genreStr);
@@ -603,7 +604,7 @@ export class MP4Parser implements ITokenParser {
               break;
             this.tags.push({
               id: tagKey, value: {
-                format: 'image/jpeg',
+                format: "image/jpeg",
                 data: new Buffer(dataAtom.value)
               }
             });
@@ -614,7 +615,7 @@ export class MP4Parser implements ITokenParser {
               break;
             this.tags.push({
               id: tagKey, value: {
-                format: 'image/png',
+                format: "image/png",
                 data: new Buffer(dataAtom.value)
               }
             });

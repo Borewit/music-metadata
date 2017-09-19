@@ -8,10 +8,9 @@ export const FourCcToken: Token.IGetToken<string> = {
   len: 4,
 
   get: (buf: Buffer, off: number): string => {
-    const id = buf.toString("ascii", off, off +  FourCcToken.len);
-    console.log("id=%s", id);
+    const id = buf.toString("ascii", off, off + FourCcToken.len);
     for (const c of id) {
-      if (!((c >= " " && c <= "Z") || ( c >= "a" && c <= "z")))
+      if (!((c >= " " && c <= "Z") || (c >= "a" && c <= "z")))
         throw new Error("FourCC contains invalid characters");
     }
     return id;

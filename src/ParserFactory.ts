@@ -1,6 +1,4 @@
 import {INativeAudioMetadata, IOptions} from "./";
-import {ID3v2Parser} from "./id3v2/ID3v2Parser";
-import {ID3v1Parser} from "./id3v1/ID3v1Parser";
 import {APEv2Parser} from "./apev2/APEv2Parser";
 import {AsfParser} from "./asf/AsfParser";
 import {FlacParser} from "./flac/FlacParser";
@@ -74,48 +72,48 @@ export class ParserFactory {
     const extension = path.extname(filePath).toLocaleLowerCase();
     switch (extension) {
 
-      case '.mp2':
-      case '.mp3':
-      case '.m2a':
+      case ".mp2":
+      case ".mp3":
+      case ".m2a":
         return Promise.resolve<ITokenParser>(new MpegParser());
 
-      case '.ape':
+      case ".ape":
         return Promise.resolve<ITokenParser>(new APEv2Parser());
 
-      case '.aac':
-      case '.mp4':
-      case '.m4a':
-      case '.m4b':
-      case '.m4pa':
-      case '.m4v':
-      case '.m4r':
-      case '.3gp':
+      case ".aac":
+      case ".mp4":
+      case ".m4a":
+      case ".m4b":
+      case ".m4pa":
+      case ".m4v":
+      case ".m4r":
+      case ".3gp":
         return Promise.resolve<ITokenParser>(new MP4Parser());
 
-      case '.wma':
-      case '.wmv':
-      case '.asf':
+      case ".wma":
+      case ".wmv":
+      case ".asf":
         return Promise.resolve<ITokenParser>(new AsfParser());
 
-      case '.flac':
+      case ".flac":
         return Promise.resolve<ITokenParser>(new FlacParser());
 
-      case '.ogg':
-      case '.ogv':
-      case '.oga':
-      case '.ogx':
+      case ".ogg":
+      case ".ogv":
+      case ".oga":
+      case ".ogx":
         return Promise.resolve<ITokenParser>(new OggParser());
 
-      case '.aif':
-      case '.aiff':
-      case '.aifc':
+      case ".aif":
+      case ".aiff":
+      case ".aifc":
         return Promise.resolve<ITokenParser>(new AIFFParser());
 
-      case '.wav':
+      case ".wav":
         return Promise.resolve<ITokenParser>(new WavePcmParser());
 
-      case '.wv':
-      case '.wvp':
+      case ".wv":
+      case ".wvp":
         return Promise.resolve<ITokenParser>(new WavPackParser());
 
       default:
@@ -126,41 +124,41 @@ export class ParserFactory {
   private static getParserForMimeType(mimeType: string): Promise<ITokenParser> {
     switch (mimeType) {
 
-      case 'audio/mpeg':
+      case "audio/mpeg":
         return Promise.resolve<ITokenParser>(new MpegParser()); // ToDo: handle ID1 header as well
 
-      case 'audio/x-monkeys-audio':
+      case "audio/x-monkeys-audio":
         return Promise.resolve<ITokenParser>(new APEv2Parser());
 
-      case 'audio/aac':
-      case 'audio/aacp':
-      case 'audio/mp4':
-      case 'audio/x-aac':
+      case "audio/aac":
+      case "audio/aacp":
+      case "audio/mp4":
+      case "audio/x-aac":
         return Promise.resolve<ITokenParser>(new MP4Parser());
 
-      case 'video/x-ms-asf':
-      case 'audio/x-ms-wma':
+      case "video/x-ms-asf":
+      case "audio/x-ms-wma":
         return Promise.resolve<ITokenParser>(new AsfParser());
 
-      case 'audio/flac':
-      case 'audio/x-flac':
+      case "audio/flac":
+      case "audio/x-flac":
         return Promise.resolve<ITokenParser>(new FlacParser());
 
-      case 'audio/ogg':
-      case 'application/ogg':
-      case 'video/ogg':
+      case "audio/ogg":
+      case "application/ogg":
+      case "video/ogg":
         return Promise.resolve<ITokenParser>(new OggParser());
 
-      case 'audio/aiff':
-      case 'audio/x-aif':
-      case 'audio/x-aifc':
+      case "audio/aiff":
+      case "audio/x-aif":
+      case "audio/x-aifc":
         return Promise.resolve<ITokenParser>(new AIFFParser());
 
-      case 'audio/wav':
-      case 'audio/wave':
+      case "audio/wav":
+      case "audio/wave":
         return Promise.resolve<ITokenParser>(new WavePcmParser());
 
-      case 'audio/x-wavpack':
+      case "audio/x-wavpack":
         return Promise.resolve<ITokenParser>(new WavPackParser());
 
       default:
@@ -171,7 +169,7 @@ export class ParserFactory {
   // ToDo: obsolete
   private static hasStartTag(filePath: string, tagIdentifier: string): Promise<boolean> {
     return strtok3.fromFile(filePath).then(tokenizer => {
-      return tokenizer.readToken(new StringType(tagIdentifier.length, 'ascii')).then(token => {
+      return tokenizer.readToken(new StringType(tagIdentifier.length, "ascii")).then(token => {
         return token === tagIdentifier;
       });
     });
