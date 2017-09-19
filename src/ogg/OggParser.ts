@@ -75,7 +75,7 @@ class VorbisStream extends Readable {
   private _tryPush() {
     while (this.waitingForData) {
       const buf = this.queue.shift();
-      if (buf) {
+      if (buf || buf === null) { // buf === null will generate end-of-stream
         this.waitingForData = this.push(buf);
       } else break;
     }
