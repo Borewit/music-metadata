@@ -8,6 +8,7 @@ import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {IChunkHeader} from "../aiff/Chunk";
 import Common from "../common/Common";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * Resource Interchange File Format (RIFF) Parser
@@ -49,7 +50,7 @@ export class WavePcmParser implements ITokenParser {
         if (header.chunkID !== 'RIFF')
           return null; // Not RIFF format
 
-        return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then(type => {
+        return this.tokenizer.readToken<string>(FourCcToken).then(type => {
           this.metadata.format.dataformat = type;
         }).then(() => {
           return this.readChunk(header).then(() => {
@@ -77,7 +78,7 @@ export class WavePcmParser implements ITokenParser {
         switch (header.chunkID) {
 
           case "LIST":
-            return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then(listTypes => {
+            return this.tokenizer.readToken<string>(FourCcToken).then(listTypes => {
               switch (listTypes) {
                 case 'INFO':
                   return this.parseRiffInfoTags(header.size - 4).then(() => header.size);

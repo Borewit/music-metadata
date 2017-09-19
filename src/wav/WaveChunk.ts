@@ -1,6 +1,7 @@
 import * as Token from "token-types";
 import * as assert from "assert";
 import {IChunkHeader} from "../riff/RiffChunk";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * WAVE header chunk
@@ -11,7 +12,7 @@ export const  Header: Token.IGetToken<IChunkHeader> = {
   get: (buf, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: new Token.StringType(4, 'ascii').get(buf, off),
+      chunkID: FourCcToken.get(buf, off),
       // Size
       size: buf.readUInt32LE(off + 4)
     };

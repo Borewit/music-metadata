@@ -6,6 +6,7 @@ import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -40,8 +41,8 @@ export class FlacParser extends AbstractID3v2Parser {
     this.tokenizer = tokenizer;
     this.options = options;
 
-    return tokenizer.readToken<Buffer>(new Token.BufferType(4)).then(buf => {
-      if (buf.toString() !== 'fLaC') {
+    return tokenizer.readToken<string>(FourCcToken).then(fourCC => {
+      if (fourCC.toString() !== 'fLaC') {
         throw new Error("Invalid FLAC preamble");
       }
       return this.parseBlockHeader();

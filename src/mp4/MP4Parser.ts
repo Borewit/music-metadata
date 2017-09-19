@@ -4,6 +4,7 @@ import {ITokenizer} from "strtok3";
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import {Genres} from "../id3v1/ID3v1Parser";
+import {FourCcToken} from "../common/FourCC";
 
 interface IAtomHeader {
   length: number,
@@ -160,9 +161,13 @@ class Atom {
     len: 8,
 
     get: (buf: Buffer, off: number): IAtomHeader => {
+      const length = Token.UINT32_BE.get(buf, 0);
+      if(length<0)
+        throw new Error("Invalid atom header length");
+
       return {
-        length: Token.UINT32_BE.get(buf, 0),
-        name: new Token.StringType(4, "binary").get(buf, off + 4)
+        length,
+        name: FourCcToken.get(buf, off + 4)
       };
     }
   };
@@ -172,7 +177,7 @@ class Atom {
 
     get: (buf: Buffer, off: number): IAtomFtyp => {
       return {
-        type: new Token.StringType(4, "ascii").get(buf, off)
+        type: FourCcToken.get(buf, off)
       };
     }
   };

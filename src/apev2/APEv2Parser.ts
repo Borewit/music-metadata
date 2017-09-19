@@ -6,6 +6,7 @@ import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * APETag versionIndex history / supported formats
@@ -112,7 +113,7 @@ class Structure {
     get: (buf, off) => {
       return {
         // should equal 'MAC '
-        ID: new Token.StringType(4, 'ascii').get(buf, off),
+        ID: FourCcToken.get(buf, off),
         // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
         version: Token.UINT32_LE.get(buf, off + 4) / 1000,
         // the number of descriptor bytes (allows later expansion of this header)

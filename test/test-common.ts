@@ -1,6 +1,7 @@
 import {} from "mocha";
 import {assert} from "chai";
 import Common from "../src/common/Common";
+import {FourCcToken} from "../src/common/FourCC";
 
 const t = assert;
 
@@ -68,4 +69,33 @@ describe("Common", () => {
 
   });
 
+});
+
+describe("FourCC token", () => {
+
+  const testData: Array<{ fourCC: string, valid: boolean }> = [
+    {fourCC: "\x00\x00\x00\x00", valid: false},
+    {fourCC: "WAVE", valid: true},
+    {fourCC: "fmt ", valid: true},
+    {fourCC: "fmt_", valid: false}
+  ];
+
+  it("should only accept a valid identifier, otherwise is should throw an error", () => {
+    for (const data of testData) {
+      const buf = Buffer.from(data.fourCC, "ascii");
+
+      let valid;
+      let fourCC;
+      try {
+        fourCC = FourCcToken.get(buf, 0);
+        valid = true;
+      } catch (e) {
+        valid = false;
+      }
+      t.strictEqual(valid, data.valid, "FourCC: " + data.fourCC);
+      if (data.valid) {
+        t.strictEqual(fourCC, data.fourCC);
+      }
+    }
+  });
 });

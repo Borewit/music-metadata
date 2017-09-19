@@ -1,4 +1,5 @@
 import * as Token from "token-types";
+import {FourCcToken} from "../common/FourCC";
 
 export interface IChunkHeader {
 
@@ -21,7 +22,7 @@ export const Header: Token.IGetToken<IChunkHeader> = {
   get: (buf, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: new Token.StringType(4, 'ascii').get(buf, off),
+      chunkID: FourCcToken.get(buf, off),
       // Size
       size: buf.readUInt32BE(off + 4)
     };

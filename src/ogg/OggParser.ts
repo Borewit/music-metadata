@@ -7,6 +7,7 @@ import {Readable} from "stream";
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * Page header
@@ -92,7 +93,7 @@ export class OggParser implements ITokenParser {
 
     get: (buf, off): IOggPageHeader => {
       return {
-        capturePattern: new Token.StringType(4, 'ascii').get(buf, off),
+        capturePattern: FourCcToken.get(buf, off),
         version: buf.readUInt8(off + 4),
 
         headerType: {

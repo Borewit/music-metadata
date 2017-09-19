@@ -3,6 +3,7 @@ import {ITokenParser} from "../ParserFactory";
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {APEv2Parser} from "../apev2/APEv2Parser";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * WavPack Block Header
@@ -87,7 +88,7 @@ class WavPack {
 
       return {
         // should equal 'wvpk'
-        BlockID: new Token.StringType(4, 'ascii').get(buf, off),
+        BlockID: FourCcToken.get(buf, off),
         //  0x402 to 0x410 are valid for decode
         blockSize: Token.UINT32_LE.get(buf, off + 4),
         //  0x402 (1026) to 0x410 are valid for decode
@@ -175,7 +176,7 @@ export class WavPackParser implements ITokenParser {
 
   public parseWavPackBlocks(): Promise<INativeAudioMetadata> {
 
-    return this.tokenizer.peekToken<string>(new Token.StringType(4, 'ascii')).then(blockId => {
+    return this.tokenizer.peekToken<string>(FourCcToken).then(blockId => {
       if (blockId === 'wvpk') {
         return this.tokenizer.readToken(WavPack.BlockHeaderToken)
           .then(header => {

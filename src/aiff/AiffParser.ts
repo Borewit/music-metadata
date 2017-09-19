@@ -5,6 +5,7 @@ import * as Token from "token-types";
 import * as Chunk from "./Chunk";
 import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
+import {FourCcToken} from "../common/FourCC";
 
 /**
  * AIFF - Audio Interchange File Format
@@ -38,7 +39,7 @@ export class AIFFParser implements ITokenParser {
         if (header.chunkID !== 'FORM')
           throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
-        return this.tokenizer.readToken<string>(new Token.StringType(4, 'ascii')).then(type => {
+        return this.tokenizer.readToken<string>(FourCcToken).then(type => {
           this.metadata.format.dataformat = type;
         }).then(() => {
           return this.readChunk().then(() => this.metadata);
