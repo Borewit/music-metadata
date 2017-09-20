@@ -44,7 +44,7 @@
     "lib/"
   ],
   "scripts": {
-    "clean": "del-cli lib/** src/**/*.js src/**/*.js.map src/**/*.d.ts",
+    "clean": "del-cli lib/** src/**/*.js src/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
     "compile-src": "tsc -p src",
     "compile-test": "tsc -p test",
     "compile": "npm run compile-src && npm run compile-test",
