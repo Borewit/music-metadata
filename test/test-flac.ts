@@ -100,7 +100,7 @@ describe("FLAC decoding", () => {
         .then(() => {
           t.fail("Should reject");
         }).catch(err => {
-          t.strictEqual(err.message, "Invalid FLAC preamble");
+          t.strictEqual(err.message, "FourCC contains invalid characters");
         });
     });
 
@@ -114,7 +114,7 @@ describe("FLAC decoding", () => {
         t.fail("Should reject");
         return fs.remove(tmpFilePath);
       }).catch(err => {
-        t.strictEqual(err.message, "Invalid FLAC preamble");
+        t.strictEqual(err.message, "FourCC contains invalid characters");
         return fs.remove(tmpFilePath);
       });
 

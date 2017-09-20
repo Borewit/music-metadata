@@ -177,7 +177,7 @@ class Atom {
 
     get: (buf: Buffer, off: number): IAtomFtyp => {
       return {
-        type: FourCcToken.get(buf, off)
+        type: new Token.StringType(4, "ascii").get(buf, off)
       };
     }
   };
