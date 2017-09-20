@@ -11,7 +11,6 @@ export const FourCcToken: Token.IGetToken<string> = {
     const id = buf.toString("binary", off, off + FourCcToken.len);
     for (const c of id) {
       if (!((c >= " " && c <= "z") || c === '©')) {
-        console.log('ID=%s', id);
         throw new Error("FourCC contains invalid characters");
       }
     }
