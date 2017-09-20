@@ -77,7 +77,7 @@ describe("FourCC token", () => {
     {fourCC: "\x00\x00\x00\x00", valid: false},
     {fourCC: "WAVE", valid: true},
     {fourCC: "fmt ", valid: true},
-    {fourCC: "fmt_", valid: false}
+    {fourCC: "fmt\x00", valid: false}
   ];
 
   it("should only accept a valid identifier, otherwise is should throw an error", () => {
