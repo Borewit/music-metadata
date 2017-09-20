@@ -47,8 +47,8 @@ export class ParserFactory {
 
   /**
    * Parse metadata from stream
-   * @param stream
-   * @param mimeType The mime-type, e.g. "audio/mpeg". This is used to redirect to the correct parser.
+   * @param stream Node stream
+   * @param mimeType The mime-type, e.g. "audio/mpeg", extension e.g. ".mp3" or filename. This is used to redirect to the correct parser.
    * @param opts Parsing options
    * @returns {Promise<INativeAudioMetadata>}
    */
@@ -69,7 +69,7 @@ export class ParserFactory {
    * @param filePath Path to audio file
    */
   private static getParserForExtension(filePath: string): Promise<ITokenParser> {
-    const extension = path.extname(filePath).toLocaleLowerCase();
+    const extension = path.extname(filePath).toLocaleLowerCase() || filePath;
     switch (extension) {
 
       case ".mp2":
@@ -121,6 +121,10 @@ export class ParserFactory {
     }
   }
 
+  /**
+   * @param {string} mimeType MIME-Type, extension, path or filename
+   * @returns {Promise<ITokenParser>}
+   */
   private static getParserForMimeType(mimeType: string): Promise<ITokenParser> {
     switch (mimeType) {
 
@@ -162,7 +166,10 @@ export class ParserFactory {
         return Promise.resolve<ITokenParser>(new WavPackParser());
 
       default:
-        throw new Error("MIME-Type: " + mimeType + " not supported.");
+        // Interpret mimeType as extension
+        return ParserFactory.getParserForExtension(mimeType).catch(() => {
+          throw new Error("MIME-Type: " + mimeType + " not supported.");
+        });
     }
   }
 
