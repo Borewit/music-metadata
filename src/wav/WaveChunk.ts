@@ -4,7 +4,7 @@ import {IChunkHeader} from "../riff/RiffChunk";
 import {FourCcToken} from "../common/FourCC";
 
 /**
- * WAVE header chunk
+ * RIFF sub-chunk
  */
 export const  Header: Token.IGetToken<IChunkHeader> = {
   len: 8,
