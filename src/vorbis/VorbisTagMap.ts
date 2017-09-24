@@ -83,5 +83,8 @@ export const VorbisTagMap: INativeTagMap = {
   // Discogs
   DISCOGS_RELEASE_ID: "discogs_release_id",
   CATALOGID: "catalognumber",
-  STYLE: "genre"
+  STYLE: "genre",
+
+  REPLAYGAIN_TRACK_GAIN: "replaygain_track_gain",
+  REPLAYGAIN_TRACK_PEAK: "replaygain_track_peak"
 };

@@ -110,5 +110,8 @@ export const ID3v24TagMap: INativeTagMap = {
   // Discogs
   "TXXX:DISCOGS_RELEASE_ID": "discogs_release_id",
   "TXXX:CATALOGID": "catalognumber",
-  "TXXX:STYLE": "genre"
+  "TXXX:STYLE": "genre",
+
+  "TXXX:replaygain_track_peak": "replaygain_track_peak",
+  "TXXX:replaygain_track_gain": "replaygain_track_gain"
 };

@@ -20,7 +20,8 @@ export type CommonTag = 'track' | 'disk' | 'year' | 'title' | 'artist' | 'artist
   'musicbrainz_artistid' | 'musicbrainz_albumartistid' | 'musicbrainz_releasegroupid' |
   'musicbrainz_workid' | 'musicbrainz_trmid' | 'musicbrainz_discid' | 'acoustid_id' |
   'acoustid_fingerprint' | 'musicip_puid' | 'musicip_fingerprint' | 'website' | 'performer:instrument' |
-  'peakLevel' | 'averageLevel' | 'notes' | 'key' | 'originalalbum' | 'originalartist' | 'discogs_release_id';
+  'peakLevel' | 'averageLevel' | 'notes' | 'key' | 'originalalbum' | 'originalartist' | 'discogs_release_id' |
+  'replaygain_track_gain' | 'replaygain_track_peak';
 
 export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'asf', 'iTunes MP4', 'ID3v1.1'];
 
@@ -147,7 +148,10 @@ export default class TagMap {
     originalalbum: {multiple: false},
     originalartist: {multiple: false},
 
-    discogs_release_id: {multiple: false}
+    discogs_release_id: {multiple: false},
+
+    replaygain_track_peak: {multiple: false},
+    replaygain_track_gain: {multiple: false}
   };
 
   private static capitalizeTags(map: INativeTagMap): INativeTagMap {

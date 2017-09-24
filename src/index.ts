@@ -106,6 +106,14 @@ export interface ICommonTagsResult {
   originalartist: string,
   // Discogs:
   discogs_release_id?: number,
+  /**
+   * Track gain in dB; eg: "-7.03 dB"
+   */
+  replaygain_track_gain: string,
+  /**
+   * Track peak [0..1]
+   */
+  replaygain_track_peak: number
 
 }
 
@@ -429,6 +437,9 @@ export class MusicMetadataParser {
             }
             break;
 
+          case 'MCDI':
+            break;
+
           default:
           // nothing to do
         }
@@ -487,6 +498,10 @@ export class MusicMetadataParser {
 
         case 'discogs_release_id':
           value = typeof value === 'string' ? parseInt(value, 10) : value;
+          break;
+
+        case 'replaygain_track_peak':
+          value = typeof value === 'string' ? parseFloat(value) : value;
           break;
 
         default:
