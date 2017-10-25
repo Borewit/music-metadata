@@ -1,3 +1,6 @@
+/**
+ * windows-1252 / iso_8859-1 decoder (ANSI)
+ */
 export class Windows1292Decoder {
 
   public static decode(buffer: Uint8Array): string {
