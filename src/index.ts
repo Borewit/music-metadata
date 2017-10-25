@@ -492,8 +492,10 @@ export class MusicMetadataParser {
 
         case 'date':
           // ToDo: be more strict on 'YYYY...'
-          // if (/^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/.test(value)) {
-          comTags.year = parseInt(value.substr(0, 4), 10);
+          const year = parseInt(value.substr(0, 4), 10);
+          if (year && !isNaN(year)) {
+            comTags.year = year;
+          }
           break;
 
         case 'discogs_release_id':
