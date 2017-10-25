@@ -24,7 +24,8 @@
     "prefer-for-of": false,
     "ordered-imports": false,
     "forin": false,
-    "arrow-parens": [true, "ban-single-arg-parens"]
+    "arrow-parens": [true, "ban-single-arg-parens"],
+    "no-implicit-dependencies": [true, "dev"]
   },
   "jsRules": {
     /*
