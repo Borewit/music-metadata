@@ -60,12 +60,12 @@ export default class GUID {
   public static AdvancedContentEncryptionObject = new GUID("43058533-6981-49E6-9B74-AD12CB86D58C");
 
   // 10.4 Stream Properties Object Stream Type GUIDs
-  public static AudioMedia	= new GUID("F8699E40-5B4D-11CF-A8FD-00805F5C442B");
-  public static VideoMedia	= new GUID("BC19EFC0-5B4D-11CF-A8FD-00805F5C442B");
-  public static CommandMedia	= new GUID("59DACFC0-59E6-11D0-A3AC-00A0C90348F6");
-  public static JFIF_Media= new GUID("B61BE100-5B4E-11CF-A8FD-00805F5C442B");
-  public static Degradable_JPEG_Media	= new GUID("35907DE0-E415-11CF-A917-00805F5C442B");
-  public static FileTransferMedia	= new GUID("91BD222C-F21C-497A-8B6D-5AA86BFC0185");
+  public static AudioMedia = new GUID("F8699E40-5B4D-11CF-A8FD-00805F5C442B");
+  public static VideoMedia = new GUID("BC19EFC0-5B4D-11CF-A8FD-00805F5C442B");
+  public static CommandMedia = new GUID("59DACFC0-59E6-11D0-A3AC-00A0C90348F6");
+  public static JFIF_Media = new GUID("B61BE100-5B4E-11CF-A8FD-00805F5C442B");
+  public static Degradable_JPEG_Media = new GUID("35907DE0-E415-11CF-A917-00805F5C442B");
+  public static FileTransferMedia = new GUID("91BD222C-F21C-497A-8B6D-5AA86BFC0185");
   public static BinaryMedia = new GUID("3AFB65E2-47EF-40F2-AC2C-70A90D71D343");
 
   public static fromBin(bin: Buffer, offset: number = 0) {
