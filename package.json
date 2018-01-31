@@ -1,7 +1,7 @@
 {
   "name": "music-metadata",
   "description": "Streaming music metadata parser for node and the browser.",
-  "version": "0.8.7",
+  "version": "0.8.9",
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
