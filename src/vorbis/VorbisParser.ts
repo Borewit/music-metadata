@@ -104,7 +104,7 @@ export class VorbisParser implements ITokenParser {
 
   private parseUserComment(userCommentListLength: number): Promise<number> {
     return this.tokenizer.readToken<number>(Token.UINT32_LE).then(strLen => {
-      return this.tokenizer.readToken<string>(new Token.StringType(strLen, 'ascii')).then(v => {
+      return this.tokenizer.readToken<string>(new Token.StringType(strLen, 'utf-8')).then(v => {
         const idx = v.indexOf('=');
         const key = v.slice(0, idx).toUpperCase();
         let value: any = v.slice(idx + 1);
