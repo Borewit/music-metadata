@@ -25,7 +25,7 @@ npm install music-metadata
 | flac                                   | audio/flac                            | Vorbis                             | 
 | m4a, m4b, m4p, m4v, m4r, 3gp, mp4, aac | audio/aac, audio/aacp                 | QTFF                               | 
 | mp2, mp3, m2a                          | audio/mpeg                            | ID3v1.1, ID3v2                     | 
-| ogv, oga, ogx, ogg                     | audio/ogg, application/ogg            | Vorbis                             |
+| ogv, oga, ogx, ogg, opus               | audio/ogg, application/ogg            | Vorbis                             |
 | wav                                    | audio/wav, audio/wave                 | ID3v2, RIFF/INFO (EXIF 2.3)        |
 | wv, wvp                                | audio/x-wavpack                       | APEv2                              |
 

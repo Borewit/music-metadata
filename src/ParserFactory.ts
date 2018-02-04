@@ -102,7 +102,8 @@ export class ParserFactory {
       case ".ogv":
       case ".oga":
       case ".ogx":
-        return Promise.resolve<ITokenParser>(new OggParser());
+      case ".opus": // recommended filename extension for Ogg Opus files
+            return Promise.resolve<ITokenParser>(new OggParser());
 
       case ".aif":
       case ".aiff":
@@ -148,7 +149,7 @@ export class ParserFactory {
       case "audio/x-flac":
         return Promise.resolve<ITokenParser>(new FlacParser());
 
-      case "audio/ogg":
+      case "audio/ogg": // RFC 7845
       case "application/ogg":
       case "video/ogg":
         return Promise.resolve<ITokenParser>(new OggParser());
