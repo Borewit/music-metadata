@@ -95,6 +95,10 @@ export class OggParser implements ITokenParser {
           }
         });
       });
+    }).catch (err => {
+      if (err.message !== "End-Of-File") {
+        throw err;
+      }
     });
   }
 

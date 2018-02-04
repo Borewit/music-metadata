@@ -8,7 +8,7 @@ const t = assert;
 
 describe("MIME & extension mapping", () => {
 
-  const buf = new Buffer(16).fill(0);
+  const buf = new Buffer(30).fill(0);
 
   const audioExtension = [".aac", ".mp3", ".ogg", ".wav", ".flac", ".m4a"]; // ToDo: ass ".ac3"
 
@@ -18,10 +18,8 @@ describe("MIME & extension mapping", () => {
       case ".m4a":
       case ".flac":
       case ".wav":
-        t.strictEqual(err.message, "FourCC contains invalid characters",  "Extension=" + extension);
-        break;
       case ".ogg":
-        t.strictEqual(err.message, "End-Of-File",  "Extension=" + extension);
+        t.strictEqual(err.message, "FourCC contains invalid characters",  "Extension=" + extension);
         break;
 
       default:

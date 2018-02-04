@@ -1,8 +1,10 @@
 import {} from "mocha";
-import {assert} from 'chai';
+import {assert, expect} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import {IdHeader} from "../src/opus/Opus";
+import {OggParser} from "../src/ogg/OggParser";
 
 describe("Parsing Ogg", function() {
 
@@ -80,6 +82,17 @@ describe("Parsing Ogg", function() {
   });
 
   describe("Parsing Ogg/Opus", () => {
+
+    describe("components", () => {
+
+      it("IdHeader should throw error if data is shorter than header", () => {
+        try {
+          const idHeader = new IdHeader(18);
+        } catch (err) {
+          expect(err.message).to.equal('ID-header-page 0 should be at least 19 bytes long');
+        }
+      });
+    });
 
     describe("decode: Nirvana - In Bloom - 2-sec.opus", () => {
 

@@ -47,7 +47,7 @@ export class IdHeader implements Token.IGetToken<IIdHeader> {
 
   constructor(public len: number) {
     if (len < 19) {
-      throw new Error("ID-header-page 0 should be at leader 19 bytes long");
+      throw new Error("ID-header-page 0 should be at least 19 bytes long");
     }
   }
 
