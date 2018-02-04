@@ -52,7 +52,7 @@ describe("MIME & extension mapping", () => {
 
   });
 
-  it("should map on exension as well", () => {
+  it("should map on extension as well", () => {
 
     const prom = [];
 

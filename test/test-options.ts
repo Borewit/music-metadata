@@ -11,7 +11,7 @@ describe("Parser options", () => {
   const file_flac = path.join(__dirname, 'samples', "MusicBrainz - Beth Hart - Sinner's Prayer.flac");
   const file_id3v22 = path.join(__dirname, 'samples', 'id3v2.2.mp3');
   const file_m4a = path.join(__dirname, 'samples', 'id4.m4a');
-  const file_ogg = path.join(__dirname, 'samples', 'oggy.ogg');
+  const file_ogg = path.join(__dirname, 'samples', 'Nirvana - In Bloom - 2-sec.ogg');
 
   describe("option 'native'", () => {
 
