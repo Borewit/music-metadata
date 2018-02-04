@@ -5,3 +5,4 @@ doc-gen/
 coverage/
 src/
 .nyc_output/
+*.iml
