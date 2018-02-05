@@ -7,7 +7,6 @@ import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
 
-
 /**
  * Cache buffer size used for searching synchronization preabmle
  */
