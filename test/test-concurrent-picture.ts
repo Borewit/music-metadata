@@ -18,8 +18,8 @@ it("should handle concurrent parsing of pictures", () => {
       return fs.readFile(file + '.jpg').then(data => {
         t.deepEqual(result.common.picture[0].data, data, 'check picture');
       });
-    }));
+    }) as any);
   });
 
-  return Promise.all<any[]>(promises);
+  return Promise.all<any>(promises);
 });

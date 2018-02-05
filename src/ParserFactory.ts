@@ -70,6 +70,7 @@ export class ParserFactory {
    */
   private static getParserForExtension(filePath: string): Promise<ITokenParser> {
     const extension = path.extname(filePath).toLocaleLowerCase() || filePath;
+
     switch (extension) {
 
       case ".mp2":
@@ -93,7 +94,7 @@ export class ParserFactory {
       case ".wma":
       case ".wmv":
       case ".asf":
-        return Promise.resolve<ITokenParser>(new AsfParser());
+        return Promise.resolve<ITokenParser>(new AsfParser()) as any;
 
       case ".flac":
         return Promise.resolve<ITokenParser>(new FlacParser());
@@ -130,24 +131,24 @@ export class ParserFactory {
     switch (mimeType) {
 
       case "audio/mpeg":
-        return Promise.resolve<ITokenParser>(new MpegParser()); // ToDo: handle ID1 header as well
+        return Promise.resolve<ITokenParser>(new MpegParser() as any); // ToDo: handle ID1 header as well
 
       case "audio/x-monkeys-audio":
-        return Promise.resolve<ITokenParser>(new APEv2Parser());
+        return Promise.resolve<ITokenParser>(new APEv2Parser() as any);
 
       case "audio/aac":
       case "audio/aacp":
       case "audio/mp4":
       case "audio/x-aac":
-        return Promise.resolve<ITokenParser>(new MP4Parser());
+        return Promise.resolve<ITokenParser>(new MP4Parser() as any);
 
       case "video/x-ms-asf":
       case "audio/x-ms-wma":
-        return Promise.resolve<ITokenParser>(new AsfParser());
+        return Promise.resolve<ITokenParser>(new AsfParser() as any);
 
       case "audio/flac":
       case "audio/x-flac":
-        return Promise.resolve<ITokenParser>(new FlacParser());
+        return Promise.resolve<ITokenParser>(new FlacParser() as any);
 
       case "audio/ogg": // RFC 7845
       case "application/ogg":
@@ -157,14 +158,14 @@ export class ParserFactory {
       case "audio/aiff":
       case "audio/x-aif":
       case "audio/x-aifc":
-        return Promise.resolve<ITokenParser>(new AIFFParser());
+        return Promise.resolve<ITokenParser>(new AIFFParser() as any);
 
       case "audio/wav":
       case "audio/wave":
-        return Promise.resolve<ITokenParser>(new WavePcmParser());
+        return Promise.resolve<ITokenParser>(new WavePcmParser() as any);
 
       case "audio/x-wavpack":
-        return Promise.resolve<ITokenParser>(new WavPackParser());
+        return Promise.resolve<ITokenParser>(new WavPackParser() as any);
 
       default:
         // Interpret mimeType as extension

@@ -3,6 +3,7 @@ import {assert} from "chai";
 import * as mime from "mime";
 import * as mm from "../src";
 import {SourceStream} from "./util";
+import {Promise} from 'es6-promise';
 
 const t = assert;
 

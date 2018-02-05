@@ -6,6 +6,7 @@ import {ITokenizer} from "strtok3";
 import {ITokenParser} from "../ParserFactory";
 import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
+import {Promise} from "es6-promise";
 
 /**
  * Windows Media Metadata Usage Guidelines

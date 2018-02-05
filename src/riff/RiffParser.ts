@@ -9,6 +9,7 @@ import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {IChunkHeader} from "../aiff/Chunk";
 import Common from "../common/Common";
 import {FourCcToken} from "../common/FourCC";
+import {Promise} from "es6-promise";
 
 /**
  * Resource Interchange File Format (RIFF) Parser
@@ -134,7 +135,7 @@ export class WavePcmParser implements ITokenParser {
           if (chunkSize > 8) {
             return this.parseRiffInfoTags(chunkSize);
           } else if (chunkSize === 0) {
-            return Promise.resolve<void>();
+            return Promise.resolve<void>(null);
           } else {
             throw Error("Illegal remaining size: " + chunkSize);
           }

@@ -4,6 +4,7 @@ import {INativeAudioMetadata, IOptions} from "../index";
 import {ID3v2Token} from "./ID3v2";
 import {ID3v2Parser} from "./ID3v2Parser";
 import {ID3v1Parser} from "../id3v1/ID3v1Parser";
+import {Promise} from "es6-promise";
 
 export abstract class AbstractID3v2Parser implements ITokenParser {
 
