@@ -5,7 +5,6 @@ import {FlacParser} from "./flac/FlacParser";
 import {MP4Parser} from "./mp4/MP4Parser";
 import {OggParser} from "./ogg/OggParser";
 import * as strtok3 from "strtok3";
-import {StringType} from "token-types";
 import {Promise} from "es6-promise";
 import * as Stream from "stream";
 import * as path from "path";
@@ -31,17 +30,20 @@ export class ParserFactory {
   public static parseFile(filePath: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
     return strtok3.fromFile(filePath).then(fileTokenizer => {
-      return ParserFactory.getParserForExtension(filePath).then(parser => {
+      const parser = ParserFactory.getParserForExtension(filePath);
+      if (parser) {
         return parser.parse(fileTokenizer, opts).then(metadata => {
           return fileTokenizer.close().then(() => {
             return metadata;
           });
+        }).catch(err => {
+          return fileTokenizer.close().then(() => {
+            throw err;
+          });
         });
-      }).catch(err => {
-        return fileTokenizer.close().then(() => {
-          throw err;
-        });
-      });
+      } else {
+        throw new Error('No parser found for extension: ' + path.extname(filePath));
+      }
     });
   }
 
@@ -59,16 +61,22 @@ export class ParserFactory {
         tokenizer.fileSize = opts.fileSize;
       }
 
-      return ParserFactory.getParserForMimeType(mimeType).then(parser => {
-        return parser.parse(tokenizer, opts);
-      });
+      // Interpret mimeType as extension
+      const parser = ParserFactory.getParserForMimeType(mimeType) || ParserFactory.getParserForExtension(mimeType) as ITokenParser;
+      if (parser === null) {
+        // No MIME-type mapping found
+        throw new Error("MIME-type or extension not supported:" + mimeType);
+      }
+      // Parser found, execute parser
+      return parser.parse(tokenizer, opts);
     });
   }
 
   /**
-   * @param filePath Path to audio file
+   * @param filePath Path, filename or extension to audio file
+   * @return ITokenParser if extension is supported; otherwise false
    */
-  private static getParserForExtension(filePath: string): Promise<ITokenParser> {
+  private static getParserForExtension(filePath: string): ITokenParser | false {
     const extension = path.extname(filePath).toLocaleLowerCase() || filePath;
 
     switch (extension) {
@@ -76,10 +84,10 @@ export class ParserFactory {
       case ".mp2":
       case ".mp3":
       case ".m2a":
-        return Promise.resolve<ITokenParser>(new MpegParser());
+        return new MpegParser();
 
       case ".ape":
-        return Promise.resolve<ITokenParser>(new APEv2Parser());
+        return new APEv2Parser();
 
       case ".aac":
       case ".mp4":
@@ -89,99 +97,87 @@ export class ParserFactory {
       case ".m4v":
       case ".m4r":
       case ".3gp":
-        return Promise.resolve<ITokenParser>(new MP4Parser());
+        return new MP4Parser();
 
       case ".wma":
       case ".wmv":
       case ".asf":
-        return Promise.resolve<ITokenParser>(new AsfParser()) as any;
+        return new AsfParser();
 
       case ".flac":
-        return Promise.resolve<ITokenParser>(new FlacParser());
+        return new FlacParser();
 
       case ".ogg":
       case ".ogv":
       case ".oga":
       case ".ogx":
       case ".opus": // recommended filename extension for Ogg Opus files
-            return Promise.resolve<ITokenParser>(new OggParser());
+        return new OggParser();
 
       case ".aif":
       case ".aiff":
       case ".aifc":
-        return Promise.resolve<ITokenParser>(new AIFFParser());
+        return new AIFFParser();
 
       case ".wav":
-        return Promise.resolve<ITokenParser>(new WavePcmParser());
+        return new WavePcmParser();
 
       case ".wv":
       case ".wvp":
-        return Promise.resolve<ITokenParser>(new WavPackParser());
+        return new WavPackParser();
 
       default:
-        throw new Error("Extension " + extension + " not supported.");
+        return false;
     }
   }
 
   /**
    * @param {string} mimeType MIME-Type, extension, path or filename
-   * @returns {Promise<ITokenParser>}
+   * @returns ITokenParser if MIME-type is supported; otherwise false
    */
-  private static getParserForMimeType(mimeType: string): Promise<ITokenParser> {
+  private static getParserForMimeType(mimeType: string): ITokenParser | false {
     switch (mimeType) {
 
       case "audio/mpeg":
-        return Promise.resolve<ITokenParser>(new MpegParser() as any); // ToDo: handle ID1 header as well
+        return new MpegParser(); // ToDo: handle ID1 header as well
 
       case "audio/x-monkeys-audio":
-        return Promise.resolve<ITokenParser>(new APEv2Parser() as any);
+        return new APEv2Parser();
 
       case "audio/aac":
       case "audio/aacp":
       case "audio/mp4":
       case "audio/x-aac":
-        return Promise.resolve<ITokenParser>(new MP4Parser() as any);
+        return new MP4Parser();
 
       case "video/x-ms-asf":
       case "audio/x-ms-wma":
-        return Promise.resolve<ITokenParser>(new AsfParser() as any);
+        return new AsfParser();
 
       case "audio/flac":
       case "audio/x-flac":
-        return Promise.resolve<ITokenParser>(new FlacParser() as any);
+        return new FlacParser();
 
       case "audio/ogg": // RFC 7845
       case "application/ogg":
       case "video/ogg":
-        return Promise.resolve<ITokenParser>(new OggParser());
+        return new OggParser();
 
       case "audio/aiff":
       case "audio/x-aif":
       case "audio/x-aifc":
-        return Promise.resolve<ITokenParser>(new AIFFParser() as any);
+        return new AIFFParser();
 
       case "audio/wav":
       case "audio/wave":
-        return Promise.resolve<ITokenParser>(new WavePcmParser() as any);
+        return new WavePcmParser();
 
       case "audio/x-wavpack":
-        return Promise.resolve<ITokenParser>(new WavPackParser() as any);
+        return new WavPackParser();
 
       default:
-        // Interpret mimeType as extension
-        return ParserFactory.getParserForExtension(mimeType).catch(() => {
-          throw new Error("MIME-Type: " + mimeType + " not supported.");
-        });
+        return false;
     }
-  }
-
-  // ToDo: obsolete
-  private static hasStartTag(filePath: string, tagIdentifier: string): Promise<boolean> {
-    return strtok3.fromFile(filePath).then(tokenizer => {
-      return tokenizer.readToken(new StringType(tagIdentifier.length, "ascii")).then(token => {
-        return token === tagIdentifier;
-      });
-    });
   }
 
   // ToDo: expose warnings to API
