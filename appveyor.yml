@@ -2,11 +2,10 @@
 environment:
   nodejs_version: "6"
 
-version: $(package_version)-{build}
+version: 0.9.2-{build}
 
 # Install scripts. (runs after repo cloning)
 install:
-  - ps: $env:package_version = (Get-Content -Raw -Path package.json | ConvertFrom-Json).version
   - ps: Update-AppveyorBuild -Version "$env:package_version-$env:APPVEYOR_BUILD_NUMBER"
   # Get the latest stable version of Node.js or io.js
   - ps: Install-Product node $env:nodejs_version
