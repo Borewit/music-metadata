@@ -438,6 +438,9 @@ export class MP4Parser implements ITokenParser {
       case "mdat":
         return Promise.resolve<boolean>(true);
 
+      case "©cmt":
+        return this.parseMetadataItemData(header.name, dataLen).then(() => false);
+
       default:
         // return this.ignoreAtomData(dataLen);
         return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(buf => {
