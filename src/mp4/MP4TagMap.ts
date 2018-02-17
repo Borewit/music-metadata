@@ -54,6 +54,7 @@ export const MP4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:BARCODE': 'barcode',
   '----:com.apple.iTunes:ISRC': 'isrc',
   '----:com.apple.iTunes:ASIN': 'asin',
+  '----:com.apple.iTunes:NOTES': 'comment',
   '----:com.apple.iTunes:MusicBrainz Track Id': 'musicbrainz_recordingid',
   '----:com.apple.iTunes:MusicBrainz Release Track Id': 'musicbrainz_trackid',
   '----:com.apple.iTunes:MusicBrainz Album Id': 'musicbrainz_albumid',
