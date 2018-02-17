@@ -110,7 +110,8 @@ describe("MPEG parsing", () => {
         t.strictEqual(common.track.of, null, "common.track.of");
         t.strictEqual(common.disk.no, null, "common.disk.no");
         t.strictEqual(common.disk.of, null, "common.disk.of");
-        t.strictEqual(common.genre[0], "Ska-Punk", "common.genre");
+        t.deepEqual(common.genre, ["Ska-Punk"], "common.genre");
+        t.deepEqual(common.comment, ["Jive"], "common.genre");
       }
 
       function checkID3v1(id3v1: mm.INativeTagDict) {
@@ -174,7 +175,8 @@ describe("MPEG parsing", () => {
         t.strictEqual(common.track.of, null, "common.track.of");
         t.strictEqual(common.disk.no, null, "common.disk.no");
         t.strictEqual(common.disk.of, null, "common.disk.of");
-        t.strictEqual(common.genre[0], "Ska-Punk", "common.genre");
+        t.deepEqual(common.genre, ["Ska-Punk"], "common.genre");
+        t.deepEqual(common.comment, ["Jive"], "common.genre");
       }
 
       function checkID3v23(native: mm.INativeTagDict) {
@@ -184,7 +186,7 @@ describe("MPEG parsing", () => {
         t.deepEqual(native.TPE1, ["Reel Big Fish"], "native: TPE1");
         t.deepEqual(native.TCON, ["Ska-Punk"], "native: TCON");
         t.deepEqual(native.TYER, ["1998"], "native: TYER");
-        t.deepEqual(native.TCOM, ["CA"], "native: TCOM"); // ToDo: common property?
+        t.deepEqual(native.TCOM, ["CA"], "native: TCOM");
         t.deepEqual(native.TRCK, ["07"], "native: TRCK");
         t.deepEqual(native.COMM, [{description: "", language: "eng", text: "Jive"}], "native: COMM");
       }

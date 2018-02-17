@@ -571,7 +571,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
       // t.strictEqual(format.dataformat, 'm4a', 'ToDo: M4A/ALAC');
-      t.strictEqual(format.duration, 2.1229931972789116, 'format.duration'); // ToDo: add fraction
+      t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
       // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
@@ -599,6 +599,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(iTunes["----:com.apple.iTunes:ACOUSTID_ID"], ["09c06fac-679a-45b1-8ea0-6ce532318363"]);
       t.deepEqual(iTunes["----:com.apple.iTunes:ARRANGER"], ["Jeff Bova"]);
 
+      t.deepEqual(iTunes["----:com.apple.iTunes:NOTES"], ["Medieval CUE Splitter (www.medieval.it)"]);
       // ToDO
     }
 
