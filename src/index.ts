@@ -440,6 +440,10 @@ export class MusicMetadataParser {
           case 'MCDI':
             break;
 
+          case 'COMM':
+            value = value ? value.text : null;
+            break;
+
           default:
           // nothing to do
         }
