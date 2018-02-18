@@ -1,10 +1,11 @@
-import {INativeTagMap} from "../tagmap";
+import {INativeTagMap} from "../common/GenericTagTypes";
+import {CommonTagMapper} from "../common/GenericTagMapper";
 
 /**
  * ASF Metadata tag mappings.
  * See http://msdn.microsoft.com/en-us/library/ms867702.aspx
  */
-export const AsfTagMap: INativeTagMap = {
+const asfTagMap: INativeTagMap = {
   Title: 'title',
   Author: 'artist',
   'WM/AlbumArtist': 'albumartist',
@@ -73,3 +74,10 @@ export const AsfTagMap: INativeTagMap = {
 
   'WM/Picture': 'picture'
 };
+
+export class AsfTagMapper extends CommonTagMapper {
+
+  public constructor() {
+    super(['asf'], asfTagMap);
+  }
+}

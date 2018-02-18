@@ -1,6 +1,8 @@
-import {INativeTagMap} from "../tagmap";
+import {ICommonTagsResult} from "../";
+import {INativeTagMap} from "../common/GenericTagTypes";
+import {CommonTagMapper, IGenericTagMapper} from "../common/GenericTagMapper";
 
-export const MP4TagMap: INativeTagMap = {
+const mp4TagMap: INativeTagMap = {
   '©nam': 'title',
   '©ART': 'artist',
   aART: 'albumartist',
@@ -77,3 +79,11 @@ export const MP4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear'
   // '----:com.apple.iTunes:PERFORMER': 'performer'
 };
+
+export class MP4TagMapper extends CommonTagMapper {
+
+  public constructor() {
+    super(['iTunes MP4'],  mp4TagMap);
+  }
+
+}

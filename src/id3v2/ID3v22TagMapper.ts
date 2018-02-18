@@ -1,9 +1,10 @@
-import {INativeTagMap} from "../tagmap";
+import {INativeTagMap} from "../common/GenericTagTypes";
+import {CommonTagMapper} from "../common/GenericTagMapper";
 
 /**
  * ID3v2.2 tag mappings
  */
-export const ID3v22TagMap: INativeTagMap = {
+export const id3v22TagMap: INativeTagMap = {
   TT2: 'title',
   TP1: 'artist',
   TP2: 'albumartist',
@@ -30,3 +31,10 @@ export const ID3v22TagMap: INativeTagMap = {
   TSS: 'encodersettings',
   WAR: 'website'
 };
+
+export class ID3v22TagMapper extends CommonTagMapper {
+
+  public constructor() {
+    super(['ID3v2.2'], id3v22TagMap);
+  }
+}

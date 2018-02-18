@@ -4,7 +4,7 @@ import {Genres} from "../id3v1/ID3v1Parser";
 
 export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' | 'utf16le';
 
-export default class Common {
+export default class Util {
 
   public static strtokBITSET = {
     get: (buf: Buffer, off: number, bit: number): boolean => {
@@ -60,7 +60,7 @@ export default class Common {
   public static readUTF16String(buffer: Buffer): string {
     let offset = 0;
     if (buffer[0] === 0xFE && buffer[1] === 0xFF) { // big endian
-      buffer = Common.swapBytes(buffer);
+      buffer = Util.swapBytes(buffer);
       offset = 2;
     } else if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
       offset = 2;
@@ -82,7 +82,7 @@ export default class Common {
     }
 
     if (encoding === 'utf16le' || encoding === 'utf16') {
-      return Common.readUTF16String(buffer);
+      return Util.readUTF16String(buffer);
     } else if (encoding === 'utf8') {
       return buffer.toString('utf8');
     } else if (encoding === 'iso-8859-1') {
@@ -90,26 +90,6 @@ export default class Common {
     }
 
     throw Error(encoding + ' encoding is not supported!');
-  }
-
-  public static parseGenre(origVal: string) {
-    // match everything inside parentheses
-    const split = origVal.trim().split(/\((.*?)\)/g).filter(val => {
-      return val !== '';
-    });
-
-    const array = [];
-    for (let cur of split) {
-      if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
-        cur = Genres[cur];
-      }
-      array.push(cur);
-    }
-
-    return array
-      .filter(val => {
-        return val !== undefined;
-      }).join('/');
   }
 
   public static stripNulls(str: string): string {
@@ -138,7 +118,7 @@ export default class Common {
       value >>= (8 - bitOff - len);
     } else if (bitsLeft > 0) {
       value <<= bitsLeft;
-      value |= Common.getBitAllignedNumber(buf, byteOffset, bitOffset + bitsRead, bitsLeft);
+      value |= Util.getBitAllignedNumber(buf, byteOffset, bitOffset + bitsRead, bitsLeft);
     }
     return value;
   }
@@ -152,6 +132,6 @@ export default class Common {
    * @return {number} decoded bit aligned number
    */
   public static isBitSet(buf: Buffer, byteOffset: number, bitOffset: number): boolean {
-    return Common.getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
+    return Util.getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
   }
 }

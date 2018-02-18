@@ -1,10 +1,10 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import {APEv2TagMap} from "../src/apev2/APEv2TagMap";
-import {AsfTagMap} from "../src/asf/AsfTagMap";
-import {ID3v24TagMap} from "../src/id3v2/ID3v24TagMap";
+import {AsfTagMapper} from "../src/asf/AsfTagMapper";
+import {APEv2TagMapper} from "../src/apev2/APEv2TagMapper";
+import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
 
-describe("Parsing of metadata saved by 'Picard' in audio files", () => {
+describe("Picard mapping coverage", () => {
 
   function convertName(picardName: string) {
     switch (picardName) {
@@ -90,12 +90,14 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       website: 'WM/AuthorURL'
     };
 
+    const asfTagMapper = new AsfTagMapper();
+
     for (const picComTag in PicardMappings) {
       const picNativeTag = PicardMappings[picComTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(AsfTagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
-      assert.equal(AsfTagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+      assert.isDefined(asfTagMapper.tagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
+      assert.equal(asfTagMapper.tagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
     }
 
   });
@@ -123,12 +125,14 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       musicbrainz_releasetrackid: "musicbrainz_trackid"
     };
 
+    const apeTagMapper = new APEv2TagMapper();
+
     for (const picNativeTag in PicardMappings) {
       const picComTag = PicardMappings[picNativeTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(APEv2TagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
-      assert.equal(APEv2TagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+      assert.isDefined(apeTagMapper.tagMap[picNativeTag.toUpperCase()], "Is '" + picNativeTag + "' defined?");
+      assert.equal(apeTagMapper.tagMap[picNativeTag.toUpperCase()], mmCommonTag, "Check Picard mapping for " + picNativeTag);
     }
 
   });
@@ -180,12 +184,14 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       TSO2: 'albumartistsort'
     };
 
+    const id3v24TagMapper = new ID3v24TagMapper();
+
     for (const picNativeTag in PicardMappings) {
       const picComTag = PicardMappings[picNativeTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(ID3v24TagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
-      assert.equal(ID3v24TagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+      assert.isDefined(id3v24TagMapper.tagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
+      assert.equal(id3v24TagMapper.tagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
     }
 
   });

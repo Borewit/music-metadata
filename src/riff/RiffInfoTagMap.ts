@@ -1,4 +1,4 @@
-import {INativeTagMap} from "../tagmap";
+import {INativeTagMap} from "../common/GenericTagTypes";
 
 /**
  * RIFF Info Tags; part of the EXIF 2.3
