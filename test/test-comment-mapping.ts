@@ -2,8 +2,6 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
-import {TagType} from "../src/tagmap";
-import * as crypto from "crypto";
 
 const t = assert;
 

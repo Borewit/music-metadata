@@ -7,7 +7,7 @@ import * as WaveChunk from "./../wav/WaveChunk";
 import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {IChunkHeader} from "../aiff/Chunk";
-import Common from "../common/Common";
+import Common from "../common/Util";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
 
@@ -90,7 +90,7 @@ export class WavePcmParser implements ITokenParser {
               }
             });
 
-          case "fmt ": // The Common Chunk
+          case "fmt ": // The Util Chunk
             return this.tokenizer.readToken<WaveChunk.IFormat>(new WaveChunk.Format(header))
               .then(common => {
                 this.metadata.format.bitsPerSample = common.bitsPerSample;

@@ -1,6 +1,6 @@
 'use strict';
 
-import common from '../common/Common';
+import common from '../common/Util';
 import {INativeAudioMetadata, IOptions, ITag} from "../index";
 import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";

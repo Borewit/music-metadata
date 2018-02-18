@@ -1,11 +1,13 @@
 import {} from "mocha";
 import {assert} from "chai";
-import Common from "../src/common/Common";
-import {FourCcToken} from "../src/common/FourCC";
+
+import {CommonTagMapper} from "../src/common/GenericTagMapper";
+import {commonTags, isSingleton} from "../lib/common/GenericTagTypes";
+import {CombinedTagMapper} from "../src/index";
 
 const t = assert;
 
-describe("Common", () => {
+describe("CommonTagMapper.parseGenre", () => {
 
   it("should be able to parse genres", () => {
     const tests = {
@@ -23,79 +25,48 @@ describe("Common", () => {
       "RX/CR": "RX/CR"
     };
     for (const test in tests) {
-      t.strictEqual(Common.parseGenre(test), tests[test], test);
+      t.strictEqual(CommonTagMapper.parseGenre(test), tests[test], test);
     }
   });
-
-  /*
-   it("should be able to detect ftypmp42 as a valid mp4 header tagTypes", () => {
-   const buf = new Buffer([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]);
-
-   const types = [
-   {
-   buf: new Buffer([0x66, 0x74, 0x79, 0x70, 0x6D, 0x70, 0x34, 0x32]),
-   tag: require('../src/id4'),
-   offset: 4
-   }
-   ];
-
-   t.equal(Common.getParserForMediaType(types, buf), require('../src/id4'), 'tagTypes');
-   });*/
-
-  describe("stripNulls", () => {
-    it("should strip nulls", () => {
-      const tests = [
-        {
-          str: "foo",
-          expected: "foo"
-        },
-        {
-          str: "derp\x00\x00",
-          expected: "derp"
-        },
-        {
-          str: "\x00\x00harkaaa\x00",
-          expected: "harkaaa"
-        },
-        {
-          str: "\x00joystick",
-          expected: "joystick"
-        }
-      ];
-      tests.forEach(test => {
-        t.strictEqual(Common.stripNulls(test.str), test.expected);
-      });
-    });
-
-  });
-
 });
 
-describe("FourCC token", () => {
+describe("GenericTagMap", () => {
 
-  const testData: Array<{ fourCC: string, valid: boolean }> = [
-    {fourCC: "\x00\x00\x00\x00", valid: false},
-    {fourCC: "WAVE", valid: true},
-    {fourCC: "fmt ", valid: true},
-    {fourCC: "fmt\x00", valid: false}
-  ];
+  const combinedTagMapper = new CombinedTagMapper();
 
-  it("should only accept a valid identifier, otherwise is should throw an error", () => {
-    for (const data of testData) {
-      const buf = Buffer.from(data.fourCC, "ascii");
+  it("Check if each native tag, is mapped to a valid common type", () => {
 
-      let valid;
-      let fourCC;
-      try {
-        fourCC = FourCcToken.get(buf, 0);
-        valid = true;
-      } catch (e) {
-        valid = false;
-      }
-      t.strictEqual(valid, data.valid, "FourCC: " + data.fourCC);
-      if (data.valid) {
-        t.strictEqual(fourCC, data.fourCC);
+    t.isDefined(commonTags);
+
+    // for each tag type
+    for (const nativeType in combinedTagMapper.tagMappers) {
+      const tagMapper = combinedTagMapper.tagMappers[nativeType];
+      for (const nativeTag in tagMapper.tagMap) {
+        const commonType = tagMapper.tagMap[nativeTag];
+        t.isDefined(commonTags[commonType], "Unknown common tagTypes in mapping " + nativeType + "." + nativeTag + " => " + commonType);
       }
     }
   });
+
+  it("should be able to distinct singletons", () => {
+
+    // common tags, singleton
+    t.ok(isSingleton("title"), "common tag \"title\" is a singleton");
+    t.ok(isSingleton("artist"), "common tag \"artist\" is a singleton");
+    t.ok(!isSingleton("artists"), "common tag \"artists\" is not a singleton");
+  });
+
+  describe("Vorbis generic mapper", () => {
+    const vorbisGenericMapper = combinedTagMapper.tagMappers.vorbis;
+    t.isDefined(vorbisGenericMapper);
+
+    t.ok(vorbisGenericMapper.isNativeSingleton("TITLE"), "Vorbis tag \"TITLE\" is a singleton");
+    t.ok(!vorbisGenericMapper.isNativeSingleton("METADATA_BLOCK_PICTURE"), "Vorbis tag \"METADATA_BLOCK_PICTURE\" is not a singleton");
+  });
+
+  describe("iTunes MP4", () => {
+    const itunesGenericMapper = combinedTagMapper.tagMappers["iTunes MP4"];
+    t.ok(itunesGenericMapper.isNativeSingleton("©nam"), "iTunes MP4 tag \"©nam\" is a singleton");
+  });
+
 });

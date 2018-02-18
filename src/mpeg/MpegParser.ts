@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import {ITokenizer, endOfFile} from "strtok3";
-import Common from "../common/Common";
+import Common, {default as Util} from "../common/Util";
 import * as Token from "token-types";
 import {Promise} from "es6-promise";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
@@ -339,7 +339,7 @@ export class MpegParser extends AbstractID3v2Parser {
       }
 
       const format = this.metadata.format;
-      // ToDo: this.format.dataformat = "MPEG-" + header.version + " Audio Layer " + Common.romanize(header.layer);
+      // format.dataformat = "MPEG-" + header.version + " Audio Layer " + Util.romanize(header.layer);
       format.dataformat = "mp" + header.layer;
 
       format.lossless = false;

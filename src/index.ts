@@ -1,9 +1,16 @@
 'use strict';
 
-import common from './common/Common';
-import TagMap, {TagPriority, TagType} from './tagmap';
+import {TagPriority, TagType} from './common/GenericTagTypes';
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
+import {IGenericTagMapper} from "./common/GenericTagMapper";
+import {ID3v24TagMapper} from "./id3v2/ID3v24TagMapper";
+import {MP4TagMapper} from "./mp4/MP4TagMapper";
+import {VorbisTagMapper} from "./vorbis/VorbisTagMapper";
+import {APEv2TagMapper} from "./apev2/APEv2TagMapper";
+import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
+import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
+import {AsfTagMapper} from "./asf/AsfTagMapper";
 
 export interface IPicture {
   format: string,
@@ -187,13 +194,15 @@ export interface ITag {
 /**
  * Flat list of tags
  */
-export interface INativeTags { [tagType: string]: ITag[];
+export interface INativeTags {
+  [tagType: string]: ITag[];
 }
 
 /**
  * Tags ordered by tag-ID
  */
-export interface INativeTagDict { [tagId: string]: any[];
+export interface INativeTagDict {
+  [tagId: string]: any[];
 }
 
 export interface INativeAudioMetadata {
@@ -229,43 +238,63 @@ export interface IOptions {
   skipCovers?: boolean;
 }
 
+/**
+ * Combines all generic-tag-mappers for each tag type
+ */
+export class CombinedTagMapper {
+
+  public tagMappers: { [index: string]: IGenericTagMapper } = {};
+
+  public constructor() {
+    [
+      new ID3v1TagMapper(),
+      new ID3v22TagMapper(),
+      new ID3v24TagMapper(),
+      new MP4TagMapper(),
+      new MP4TagMapper(),
+      new VorbisTagMapper(),
+      new APEv2TagMapper(),
+      new AsfTagMapper()
+    ].forEach(mapper => {
+      this.registerTagMapper(mapper);
+    });
+  }
+
+  /**
+   * Process and set common tags
+   * @param comTags Target metadata to
+   * write common tags to
+   * @param comTags Generic tag results (output of this function)
+   * @param tag     Native tag
+   */
+  public setGenericTag(comTags: ICommonTagsResult, tagType: TagType, tag: ITag) {
+    const tagMapper = this.tagMappers[tagType];
+    if (tagMapper) {
+      this.tagMappers[tagType].setGenericTag(comTags, tag);
+    } else {
+      throw new Error("No generic tag mapper defined for tag-format: " + tagType);
+    }
+  }
+
+  private registerTagMapper(genericTagMapper: IGenericTagMapper) {
+    for (const tagType of genericTagMapper.tagTypes) {
+      this.tagMappers[tagType] = genericTagMapper;
+    }
+  }
+}
+
 export class MusicMetadataParser {
 
   public static getInstance(): MusicMetadataParser {
     return new MusicMetadataParser();
   }
 
-  public static toIntOrNull(str: string): number {
-    const cleaned = parseInt(str, 10);
-    return isNaN(cleaned) ? null : cleaned;
-  }
-
-  // TODO: a string of 1of1 would fail to be converted
-  // converts 1/10 to no : 1, of : 10
-  // or 1 to no : 1, of : 0
-  public static cleanupTrack(origVal: number | string) {
-    const split = origVal.toString().split('/');
-    return {
-      no: parseInt(split[0], 10) || null,
-      of: parseInt(split[1], 10) || null
-    };
-  }
-
-  public static cleanupPicture(picture) {
-    let newFormat;
-    if (picture.format) {
-      const split = picture.format.toLowerCase().split('/');
-      newFormat = (split.length > 1) ? split[1] : split[0];
-      if (newFormat === 'jpeg') newFormat = 'jpg';
-    } else {
-      newFormat = 'jpg';
-    }
-    return {format: newFormat, data: picture.data};
-  }
+  private tagMapper = new CombinedTagMapper();
 
   /**
    * ToDo: move to respective format implementations
    */
+
   /*
   private static headerTypes = [
     {
@@ -299,8 +328,6 @@ export class MusicMetadataParser {
       tag: require('./monkeysaudio')
     }
   ];*/
-
-  private tagMap = new TagMap();
 
   /**
    * Extract metadata from the given audio file
@@ -358,7 +385,7 @@ export class MusicMetadataParser {
     for (const tagType of TagPriority) {
       if (nativeData.native[tagType]) {
         for (const tag of nativeData.native[tagType]) {
-          this.setCommonTags(metadata.common, tagType as TagType, tag.id, tag.value);
+          this.tagMapper.setGenericTag(metadata.common, tagType as TagType, tag);
         }
         break;
       }
@@ -377,155 +404,6 @@ export class MusicMetadataParser {
       }
     }
     return metadata;
-  }
-
-  /**
-   * Process and set common tags
-   * @param comTags Target metadata to wrote common tags to
-   * @param type    Native tagTypes e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
-   * @param tag     Native tag
-   * @param value   Native tag value
-   */
-  private setCommonTags(comTags, type: TagType, tag: string, value: any) {
-
-    switch (type) {
-      /*
-       case 'vorbis':
-       switch (tag) {
-
-       case 'TRACKTOTAL':
-       case 'TOTALTRACKS': // rare tag
-       comTags.track.of = MusicMetadataParser.toIntOrNull(value)
-       return
-
-       case 'DISCTOTAL':
-       case 'TOTALDISCS': // rare tag
-       comTags.disk.of = MusicMetadataParser.toIntOrNull(value)
-       return
-       default:
-       }
-       break
-       */
-
-      case 'ID3v2.3':
-      case 'ID3v2.4':
-        switch (tag) {
-
-          /*
-           case 'TXXX':
-           tag += ':' + value.description
-           value = value.text
-           break*/
-
-          case 'UFID': // decode MusicBrainz Recording Id
-            if (value.owner_identifier === 'http://musicbrainz.org') {
-              tag += ':' + value.owner_identifier;
-              value = common.decodeString(value.identifier, 'iso-8859-1');
-            }
-            break;
-
-          case 'PRIV':
-            switch (value.owner_identifier) {
-              // decode Windows Media Player
-              case 'AverageLevel':
-              case 'PeakValue':
-                tag += ':' + value.owner_identifier;
-                value = value.data.readUInt32LE();
-                break;
-              default:
-              // Unknown PRIV owner-identifier
-            }
-            break;
-
-          case 'MCDI':
-            break;
-
-          case 'COMM':
-            value = value ? value.text : null;
-            break;
-
-          default:
-          // nothing to do
-        }
-        break;
-      default:
-      // nothing to do
-    }
-
-    // Convert native tag event to common (aliased) event
-    const alias = this.tagMap.getCommonName(type, tag);
-
-    if (alias) {
-      // Common tag (alias) found
-
-      // check if we need to do something special with common tag
-      // if the event has been aliased then we need to clean it before
-      // it is emitted to the user. e.g. genre (20) -> Electronic
-      switch (alias) {
-        case 'genre':
-          value = common.parseGenre(value);
-          break;
-
-        case 'barcode':
-          value = typeof value === 'string' ? parseInt(value, 10) : value;
-          break;
-
-        case 'picture':
-          value = MusicMetadataParser.cleanupPicture(value);
-          break;
-
-        case 'totaltracks':
-          comTags.track.of = MusicMetadataParser.toIntOrNull(value);
-          return;
-
-        case 'totaldiscs':
-          comTags.disk.of = MusicMetadataParser.toIntOrNull(value);
-          return;
-
-        case 'track':
-        case 'disk':
-          const of = comTags[alias].of; // store of value, maybe maybe overwritten
-          comTags[alias] = MusicMetadataParser.cleanupTrack(value);
-          comTags[alias].of = of != null ? of : comTags[alias].of;
-          return;
-
-        case 'year':
-        case 'originalyear':
-          value = parseInt(value, 10);
-          break;
-
-        case 'date':
-          // ToDo: be more strict on 'YYYY...'
-          const year = parseInt(value.substr(0, 4), 10);
-          if (year && !isNaN(year)) {
-            comTags.year = year;
-          }
-          break;
-
-        case 'discogs_release_id':
-          value = typeof value === 'string' ? parseInt(value, 10) : value;
-          break;
-
-        case 'replaygain_track_peak':
-          value = typeof value === 'string' ? parseFloat(value) : value;
-          break;
-
-        default:
-        // nothing to do
-      }
-
-      if (alias !== 'artist' && TagMap.isSingleton(alias)) {
-        comTags[alias] = value;
-      } else {
-        if (comTags.hasOwnProperty(alias)) {
-          comTags[alias].push(value);
-        } else {
-          // if we haven't previously seen this tag then
-          // initialize it to an array, ready for values to be entered
-          comTags[alias] = [value];
-        }
-      }
-    }
   }
 }
 
