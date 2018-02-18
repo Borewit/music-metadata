@@ -14,7 +14,7 @@ export interface IChunkHeader {
 }
 
 /**
- * Common RIFF chunk header
+ * Util RIFF chunk header
  */
 export const Header: Token.IGetToken<IChunkHeader> = {
   len: 8,

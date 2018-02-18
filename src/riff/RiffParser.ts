@@ -90,7 +90,7 @@ export class WavePcmParser implements ITokenParser {
               }
             });
 
-          case "fmt ": // The Common Chunk
+          case "fmt ": // The Util Chunk
             return this.tokenizer.readToken<WaveChunk.IFormat>(new WaveChunk.Format(header))
               .then(common => {
                 this.metadata.format.bitsPerSample = common.bitsPerSample;

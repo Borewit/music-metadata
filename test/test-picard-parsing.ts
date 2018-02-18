@@ -42,7 +42,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
   /**
    * Check common output
    * @param inputTagType Meta-data header format
-   * @param common Common tag mapping
+   * @param common Util tag mapping
    */
   function checkCommonMapping(inputTagType: TagType, common: mm.ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
