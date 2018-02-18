@@ -53,7 +53,7 @@ export class AIFFParser implements ITokenParser {
       .then(header => {
         switch (header.chunkID) {
 
-          case 'COMM': // The Util Chunk
+          case 'COMM': // The Common Chunk
             return this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header))
               .then(common => {
                 this.metadata.format.bitsPerSample = common.sampleSize;

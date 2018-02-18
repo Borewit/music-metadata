@@ -15,7 +15,7 @@ export interface IChunkHeader {
 }
 
 /**
- * Util AIFF chunk header
+ * Common AIFF chunk header
  */
 export const Header: Token.IGetToken<IChunkHeader> = {
   len: 8,
@@ -31,7 +31,7 @@ export const Header: Token.IGetToken<IChunkHeader> = {
 };
 
 /**
- * The Util Chunk.
+ * The Common Chunk.
  * Describes fundamental parameters of the waveform data such as sample rate, bit resolution, and how many channels of
  * digital audio are stored in the FORM AIFF.
  */

@@ -44,7 +44,7 @@ describe("Parser options", () => {
           // Native
           t.isDefined(native['Cover Art (Back)'], "APEv2.'Cover Art (Back)'");
           t.isDefined(native['Cover Art (Back)'], "APEv2.'Cover Art (Front)'");
-          // Util
+          // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
       });
@@ -55,7 +55,7 @@ describe("Parser options", () => {
           // Native
           t.isUndefined(native['Cover Art (Back)'], "APEv2.'Cover Art (Back)'");
           t.isUndefined(native['Cover Art (Back)'], "APEv2.'Cover Art (Front)'");
-          // Util
+          // Common
           t.isUndefined(result.common.picture, "result.common.picture");
         });
       });
@@ -66,7 +66,7 @@ describe("Parser options", () => {
           // Native
           t.isDefined(native['Cover Art (Back)'], "APEv2.'Cover Art (Back)'");
           t.isDefined(native['Cover Art (Back)'], "APEv2.'Cover Art (Front)'");
-          // Util
+          // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
       });
@@ -80,7 +80,7 @@ describe("Parser options", () => {
           const vorbis = mm.orderTags(result.native.vorbis);
           // Native
           t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-          // Util
+          // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
       });
@@ -90,7 +90,7 @@ describe("Parser options", () => {
           const vorbis = mm.orderTags(result.native.vorbis);
           // Native
           t.isUndefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-          // Util
+          // Common
           t.isUndefined(result.common.picture, "result.common.picture");
         });
       });
@@ -100,7 +100,7 @@ describe("Parser options", () => {
           const vorbis = mm.orderTags(result.native.vorbis);
           // Native
           t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-          // Util
+          // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
       });
@@ -114,7 +114,7 @@ describe("Parser options", () => {
           const id3 = mm.orderTags(result.native['ID3v2.2']);
           // Native
           t.isDefined(id3.PIC, "id3v1.PIC");
-          // Util
+          // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
       });
@@ -124,7 +124,7 @@ describe("Parser options", () => {
           const id3 = mm.orderTags(result.native['ID3v2.2']);
           // Native
           t.isUndefined(id3.PIC, "id3v1.PIC");
-          // Util
+          // Common
           t.isUndefined(result.common.picture, "result.common.picture");
         });
       });
@@ -134,7 +134,7 @@ describe("Parser options", () => {
           const id3 = mm.orderTags(result.native['ID3v2.2']);
           // Native
           t.isDefined(id3.PIC, "id3v1.PIC");
-          // Util
+          // Common
           t.isDefined(result.common.picture, "result.common.picture");
         });
       });
@@ -150,7 +150,7 @@ describe("Parser options", () => {
         const iTunes = mm.orderTags(result.native['iTunes MP4']);
         // Native
         t.isDefined(iTunes.covr, "iTunes.covr");
-        // Util
+        // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });
     });
@@ -160,7 +160,7 @@ describe("Parser options", () => {
         const iTunes = mm.orderTags(result.native['iTunes MP4']);
         // Native
         t.isUndefined(iTunes.covr, "m4a.covr");
-        // Util
+        // Common
         t.isUndefined(result.common.picture, "result.common.picture");
       });
     });
@@ -170,7 +170,7 @@ describe("Parser options", () => {
         const iTunes = mm.orderTags(result.native['iTunes MP4']);
         // Native
         t.isDefined(iTunes.aART, "m4a.covr");
-        // Util
+        // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });
     });
@@ -184,7 +184,7 @@ describe("Parser options", () => {
         const vorbis = mm.orderTags(result.native.vorbis);
         // Native
         t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-        // Util
+        // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });
     });
@@ -194,7 +194,7 @@ describe("Parser options", () => {
         const vorbis = mm.orderTags(result.native.vorbis);
         // Native
         t.isUndefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-        // Util
+        // Common
         t.isUndefined(result.common.picture, "result.common.picture");
       });
     });
@@ -204,7 +204,7 @@ describe("Parser options", () => {
         const vorbis = mm.orderTags(result.native.vorbis);
         // Native
         t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-        // Util
+        // Common
         t.isDefined(result.common.picture, "result.common.picture");
       });
     });

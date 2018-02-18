@@ -16,7 +16,7 @@ interface IAtomFtyp {
 }
 
 /**
- * Util interface for the mvhd (Movie Header) & mdhd (Media) atom
+ * Common interface for the mvhd (Movie Header) & mdhd (Media) atom
  */
 interface IAtomMxhd {
 
