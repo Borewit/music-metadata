@@ -1,9 +1,10 @@
-import {INativeTagMap} from "../tagmap";
+import {INativeTagMap} from "../common/GenericTagTypes";
+import {CommonTagMapper} from "../common/GenericTagMapper";
 
 /**
  * ID3v1 tag mappings
  */
-export const ID3v1TagMap: INativeTagMap = {
+const id3v1TagMap: INativeTagMap = {
   title: 'title',
   artist: 'artist',
   album: 'album',
@@ -12,3 +13,10 @@ export const ID3v1TagMap: INativeTagMap = {
   track: 'track',
   genre: 'genre'
 };
+
+export class ID3v1TagMapper extends CommonTagMapper {
+
+  public constructor() {
+    super(['ID3v1.1'], id3v1TagMap);
+  }
+}

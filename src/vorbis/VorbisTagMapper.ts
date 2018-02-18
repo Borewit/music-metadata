@@ -1,4 +1,5 @@
-import {INativeTagMap} from "../tagmap";
+import {INativeTagMap} from "../common/GenericTagTypes";
+import {CommonTagMapper} from "../common/GenericTagMapper";
 
 /**
  * Vorbis tag mappings
@@ -7,7 +8,7 @@ import {INativeTagMap} from "../tagmap";
  * The common entries aim to read the same information from different media files
  * independent of the underlying format
  */
-export const VorbisTagMap: INativeTagMap = {
+const vorbisTagMap: INativeTagMap = {
   TITLE: "title",
   ARTIST: "artist",
   ARTISTS: "artists",
@@ -88,3 +89,11 @@ export const VorbisTagMap: INativeTagMap = {
   REPLAYGAIN_TRACK_GAIN: "replaygain_track_gain",
   REPLAYGAIN_TRACK_PEAK: "replaygain_track_peak"
 };
+
+export class VorbisTagMapper extends CommonTagMapper {
+
+  public constructor() {
+    super(['vorbis'],  vorbisTagMap);
+  }
+
+}

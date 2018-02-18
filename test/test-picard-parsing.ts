@@ -2,8 +2,8 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
-import {TagType} from "../src/tagmap";
 import * as crypto from "crypto";
+import {TagType} from "../src/common/GenericTagTypes";
 
 const t = assert;
 
@@ -42,7 +42,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
   /**
    * Check common output
    * @param inputTagType Meta-data header format
-   * @param common Common tag mapping
+   * @param common Util tag mapping
    */
   function checkCommonMapping(inputTagType: TagType, common: mm.ICommonTagsResult) {
     // Compare expectedCommonTags with result.common

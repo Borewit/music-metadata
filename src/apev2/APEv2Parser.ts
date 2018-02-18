@@ -1,7 +1,7 @@
 "use strict";
 
-import common from "../common/Common";
-import {TagType} from "../tagmap";
+import common from "../common/Util";
+import {TagType} from "../common/GenericTagTypes";
 import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";

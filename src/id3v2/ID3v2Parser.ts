@@ -1,6 +1,6 @@
 import {isArray} from 'util';
-import common from '../common/Common';
-import {TagType} from '../tagmap';
+import common from '../common/Util';
+import {TagType} from '../common/GenericTagTypes';
 import {ITokenizer} from "strtok3";
 import {ITag, IOptions} from "../";
 import * as Token from "token-types";

@@ -1,9 +1,12 @@
-import {INativeTagMap} from "../tagmap";
+import {INativeTagMap, TagType} from "../common/GenericTagTypes";
+import {CommonTagMapper} from "../common/GenericTagMapper";
+import common from '../common/Util';
+import {ITag} from "../index";
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
  */
-export const ID3v24TagMap: INativeTagMap = {
+const id3v24TagMap: INativeTagMap = {
   // id3v2.3
   TIT2: "title",
   TPE1: "artist",
@@ -115,3 +118,70 @@ export const ID3v24TagMap: INativeTagMap = {
   "TXXX:replaygain_track_peak": "replaygain_track_peak",
   "TXXX:replaygain_track_gain": "replaygain_track_gain"
 };
+
+export class ID3v24TagMapper extends CommonTagMapper {
+
+  public constructor() {
+    super(['ID3v2.3', 'ID3v2.4'], id3v24TagMap);
+  }
+
+  public isNativeSingleton(tag: string): boolean {
+    switch (tag) {
+      case 'IPLS':
+        return true;
+      case 'TIPL':
+      case 'TMCL':
+        return true;
+      default:
+        return super.isNativeSingleton(tag);
+    }
+  }
+
+  /**
+   * Handle post mapping exceptions / correction
+   * @param {string} id Tag key e.g. "©alb"
+   * @param id e.g. "Buena Vista Social Club"
+   * @return Common value e.g. "Buena Vista Social Club"
+   */
+  protected postMap(tag: ITag): void {
+
+    switch (tag.id) {
+
+      /*
+       case 'TXXX':
+       tag += ':' + value.description
+       value = value.text
+       break*/
+
+      case 'UFID': // decode MusicBrainz Recording Id
+        if (tag.value.owner_identifier === 'http://musicbrainz.org') {
+          tag.id += ':' + tag.value.owner_identifier;
+          tag.value = common.decodeString(tag.value.identifier, 'iso-8859-1');
+        }
+        break;
+
+      case 'PRIV':
+        switch (tag.value.owner_identifier) {
+          // decode Windows Media Player
+          case 'AverageLevel':
+          case 'PeakValue':
+            tag.id += ':' + tag.value.owner_identifier;
+            tag.value = tag.value.data.readUInt32LE();
+            break;
+          default:
+          // Unknown PRIV owner-identifier
+        }
+        break;
+
+      case 'MCDI':
+        break;
+
+      case 'COMM':
+        tag.value = tag.value ? tag.value.text : null;
+        break;
+
+      default:
+        break;
+    }
+  }
+}
