@@ -62,8 +62,16 @@ export default class FrameParser {
           case 'TPOS':
             output = text;
             break;
-          default:
+          case 'TCOM':
+          case 'TEXT':
+          case 'TOLY':
+          case 'TOPE':
+          case 'TPE1':
+            // Split tag Values, in case of id3v2.3 by /
             output = FrameParser.splitValue(major, text);
+            break;
+          default:
+            output = major >= 4 ? FrameParser.splitValue(major, text) : [text];
         }
         break;
 
