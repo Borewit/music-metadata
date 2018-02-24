@@ -48,8 +48,6 @@ export default class FrameParser {
       case 'T*': // 4.2.1. Text information frames - details
       case 'IPLS': // v2.3: Involved people list
         const text = common.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
-        // id3v2.4 defines that multiple T* values are separated by 0x00
-        // id3v2.3 defines that multiple T* values are separated by /
         switch (type) {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list
@@ -62,8 +60,16 @@ export default class FrameParser {
           case 'TPOS':
             output = text;
             break;
-          default:
+          case 'TCOM':
+          case 'TEXT':
+          case 'TOLY':
+          case 'TOPE':
+          case 'TPE1':
+            // id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
             output = FrameParser.splitValue(major, text);
+            break;
+          default:
+            output = major >= 4 ? FrameParser.splitValue(major, text) : [text];
         }
         break;
 
@@ -183,6 +189,13 @@ export default class FrameParser {
     return res;
   }
 
+  /**
+   * id3v2.4 defines that multiple T* values are separated by 0x00
+   * id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
+   * @param {number} major Major version, e.g. (4) for  id3v2.4
+   * @param {string} text Concatenated tag value
+   * @returns {string[]} Slitted value
+   */
   private static splitValue(major: number, text: string) {
     const values = text.split(major >= 4 ? /\x00/g : /\//g);
     return FrameParser.trimArray(values);

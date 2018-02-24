@@ -134,4 +134,28 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
   });
 
+  /**
+   * id3v2.4 defines that multiple T* values are separated by 0x00
+   * id3v2.3 defines that multiple T* values are separated by /
+   * Related issue: https://github.com/Borewit/music-metadata/issues/52
+   * Specification: http://id3.org/id3v2.3.0#line-290
+   */
+  describe("slash delimited fields", () => {
+
+    it("Slash in track title", () => {
+      const filePath = path.join(__dirname, 'samples', "Their - They're - Therapy - 1sec.mp3");
+
+      return mm.parseFile(filePath, {native: true}).then(result => {
+        t.isDefined(result.native['ID3v2.3'], 'Expect ID3v2.3 tag');
+        const id3v23 = mm.orderTags(result.native['ID3v2.3']);
+        // It should not split the id3v23.TIT2 tag (containing '/')
+        t.deepEqual(id3v23.TIT2, ["Their / They're / Therapy"], 'id3v23.TIT2');
+        // The artist name is actually "Their / They're / There"
+        // Specification: http://id3.org/id3v2.3.0#line-455
+        t.deepEqual(id3v23.TPE1, ["Their", "They're", "There"], 'id3v23.TPE1');
+      });
+    });
+
+  });
+
 });
