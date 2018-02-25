@@ -151,10 +151,15 @@ export class CommonTagMapper implements IGenericTagMapper {
           }
           break;
 
+        case 'discogs_label_id':
         case 'discogs_release_id':
+        case 'discogs_master_release_id':
+        case 'discogs_artist_id':
+        case 'discogs_votes':
           tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
           break;
 
+        case 'discogs_rating':
         case 'replaygain_track_peak':
           tag.value = typeof tag.value === 'string' ? parseFloat(tag.value) : tag.value;
           break;

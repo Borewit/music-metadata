@@ -82,7 +82,18 @@ const vorbisTagMap: INativeTagMap = {
   TOTALTRACKS: "totaltracks",
   TOTALDISCS: "totaldiscs",
   // Discogs
+  DISCOGS_ARTIST_ID: "discogs_artist_id",
+  DISCOGS_ARTIST_NAME: "artists",
+  DISCOGS_CATALOG: "catalognumber",
+  DISCOGS_COUNTRY: "releasecountry",
+  DISCOGS_DATE: "originaldate",
+  DISCOGS_LABEL: "label",
+  DISCOGS_LABEL_ID: "discogs_label_id",
+  DISCOGS_MASTER_RELEASE_ID: "discogs_master_release_id",
+  DISCOGS_RATING: "discogs_rating",
+  DISCOGS_RELEASED: "date",
   DISCOGS_RELEASE_ID: "discogs_release_id",
+  DISCOGS_VOTES: "discogs_votes",
   CATALOGID: "catalognumber",
   STYLE: "genre",
 
