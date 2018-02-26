@@ -111,7 +111,21 @@ const id3v24TagMap: INativeTagMap = {
   "PRIV:PeakLevel": "peakLevel",
 
   // Discogs
+  "TXXX:DISCOGS_ARTIST_ID": "discogs_artist_id",
+  "TXXX:DISCOGS_ARTISTS": "artists",
+  "TXXX:DISCOGS_ARTIST_NAME": "artists",
+  "TXXX:DISCOGS_ALBUM_ARTISTS": "albumartist",
+  "TXXX:DISCOGS_CATALOG": "catalognumber",
+  "TXXX:DISCOGS_COUNTRY": "releasecountry",
+  "TXXX:DISCOGS_DATE": "originaldate",
+  "TXXX:DISCOGS_LABEL": "label",
+  "TXXX:DISCOGS_LABEL_ID": "discogs_label_id",
+  "TXXX:DISCOGS_MASTER_RELEASE_ID": "discogs_master_release_id",
+  "TXXX:DISCOGS_RATING": "discogs_rating",
+  "TXXX:DISCOGS_RELEASED": "date",
   "TXXX:DISCOGS_RELEASE_ID": "discogs_release_id",
+  "TXXX:DISCOGS_VOTES": "discogs_votes",
+
   "TXXX:CATALOGID": "catalognumber",
   "TXXX:STYLE": "genre",
 
