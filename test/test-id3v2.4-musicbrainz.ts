@@ -26,7 +26,7 @@ it("should MusicBrainz tags with id3v2.4", () => {
     t.deepEqual(result.common.picture[0].data.length, 75818, 'common.picture 0 length');
 
     t.deepEqual(result.common.barcode, '602498644102', 'common.barcode');
-    t.deepEqual(result.common.isrc, 'USUG10400421', 'common.isrc');
+    t.deepEqual(result.common.isrc, ['USUG10400421'], 'common.isrc');
     t.deepEqual(result.common.catalognumber, 'B0003663-02', 'common.catalognumber');
     t.deepEqual(result.common.label, 'Hip-O Records', 'common.label');
     t.deepEqual(result.common.releasecountry, 'US', 'common.releasecountry');

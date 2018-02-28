@@ -33,8 +33,8 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
+        t.strictEqual(format.numberOfSamples, 88200, 'format.numberOfSamples = 93624');
+        t.strictEqual(format.duration, 2.0, 'format.duration = 2 seconds');
       }
 
       // Parse wma/asf file

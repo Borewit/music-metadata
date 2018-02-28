@@ -160,7 +160,7 @@ export const commonTags: ITagInfoMap = {
   encodersettings: {multiple: false},
   gapless: {multiple: false},
   barcode: {multiple: false},
-  isrc: {multiple: false},
+  isrc: {multiple: true},
   asin: {multiple: false},
   musicbrainz_recordingid: {multiple: false},
   musicbrainz_trackid: {multiple: false},

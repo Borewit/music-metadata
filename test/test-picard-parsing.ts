@@ -351,7 +351,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         drums: ['Anton Fig'],
         engineer: ['James McCullagh', 'Jared Kvitka'],
         guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
-        keyboard: ['Arlan Scheirbaum'],
+        keyboard: ['Arlan Schierbaum'],
         orchestra: ['The Bovaland Orchestra'],
         percussion: ['Anton Fig'],
         piano: ['Beth Hart'],
@@ -417,8 +417,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
+        t.strictEqual(format.numberOfSamples, 88200, 'format.numberOfSamples = 88200');
+        t.strictEqual(format.duration, 2.0, 'format.duration = 2 seconds');
       }
 
       // Parse wma/asf file
@@ -459,7 +459,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         'bass guitar': ['Carmine Rojas'],
         drums: ['Anton Fig'],
         guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
-        keyboard: ['Arlan Scheirbaum'],
+        keyboard: ['Arlan Schierbaum'],
         orchestra: ['The Bovaland Orchestra'],
         percussion: ['Anton Fig'],
         piano: ['Beth Hart'],

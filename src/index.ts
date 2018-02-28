@@ -89,7 +89,7 @@ export interface ICommonTagsResult {
   gapless?: string,
   barcode?: string,
   // International Standard Recording Code
-  isrc?: string,
+  isrc?: string[],
   asin?: string,
   musicbrainz_recordingid?: string,
   musicbrainz_trackid?: string,
