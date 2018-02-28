@@ -4,7 +4,6 @@ import * as mm from '../src';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import {IdHeader} from "../src/opus/Opus";
-import {OggParser} from "../src/ogg/OggParser";
 
 describe("Parsing Ogg", function() {
 
