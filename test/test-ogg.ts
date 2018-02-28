@@ -21,6 +21,7 @@ describe("Parsing Ogg", function() {
     assert.deepEqual(common.genre, ['Grunge', 'Alternative'], 'genre');
     assert.strictEqual(common.picture[0].format, 'jpg', 'picture format');
     assert.strictEqual(common.picture[0].data.length, 30966, 'picture length');
+    assert.strictEqual(common.barcode, '0720642442524', 'common.barcode (including leading zero)');
   }
 
   function  check_Nirvana_In_Bloom_VorbisTags(vorbis) {

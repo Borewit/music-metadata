@@ -87,7 +87,7 @@ export interface ICommonTagsResult {
   encodedby?: string,
   encodersettings?: string,
   gapless?: string,
-  barcode?: number, // ToDo: multiple??
+  barcode?: string,
   // International Standard Recording Code
   isrc?: string,
   asin?: string,
