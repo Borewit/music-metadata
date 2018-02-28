@@ -1,23 +1,6 @@
 import * as Token from "token-types";
 import * as assert from "assert";
 import {IChunkHeader} from "../riff/RiffChunk";
-import {FourCcToken} from "../common/FourCC";
-
-/**
- * RIFF sub-chunk
- */
-export const  Header: Token.IGetToken<IChunkHeader> = {
-  len: 8,
-
-  get: (buf, off): IChunkHeader => {
-    return {
-      // Group-ID
-      chunkID: FourCcToken.get(buf, off),
-      // Size
-      size: buf.readUInt32LE(off + 4)
-    };
-  }
-};
 
 /**
  * "fmt"  sub-chunk describes the sound data's format
