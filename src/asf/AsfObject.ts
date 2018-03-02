@@ -105,6 +105,18 @@ export abstract class State<T> implements Token.IGetToken<T> {
   }
 
   public abstract get(buf: Buffer, off: number): T;
+
+  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any)  {
+    if (name === "WM/Picture") {
+      tags.push({id: name, value: WmPictureToken.fromBuffer(data)});
+    } else {
+      const parseAttr = Util.getParserForAttr(valueType);
+      if (!parseAttr) {
+        throw new Error("unexpected value headerType: " + valueType);
+      }
+      tags.push({id: name, value: parseAttr(data)});
+    }
+  }
 }
 
 // ToDo: use ignore type
@@ -295,7 +307,7 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
 export interface IHeaderExtensionObject {
   reserved1: GUID,
   reserved2: number,
-  extensionData: Buffer
+  extensionDataSize: number
 }
 
 /**
@@ -308,7 +320,7 @@ export class HeaderExtensionObject implements Token.IGetToken<IHeaderExtensionOb
 
   public len: number;
 
-  public constructor(header: IAsfObjectHeader) {
+  public constructor() {
     this.len = 22;
   }
 
@@ -317,8 +329,7 @@ export class HeaderExtensionObject implements Token.IGetToken<IHeaderExtensionOb
     return {
       reserved1: GUID.fromBin(buf, off),
       reserved2: buf.readUInt16LE(off + 16),
-      extensionData: new Token.BufferType(dataSize).get(buf, off + 20)
-      // ToDo
+      extensionDataSize: buf.readUInt32LE(off + 18)
     };
   }
 }
@@ -382,11 +393,7 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
       pos += 2;
       const value = buf.slice(pos, pos + valueLen);
       pos += valueLen;
-      const parseAttr = Util.getParserForAttr(valueType);
-      if (!parseAttr) {
-        throw new Error("unexpected value headerType: " + valueType);
-      }
-      tags.push({id: name, value: parseAttr(value)});
+      this.postProcessTag(tags, name, valueType, value);
     }
     return tags;
   }
@@ -498,11 +505,7 @@ export class MetadataObjectState extends State<ITag[]> {
       if (!parseAttr) {
         throw new Error("unexpected value headerType: " + dataType);
       }
-      if (name === "WM/Picture") {
-        tags.push({id: name, value: WmPictureToken.fromBuffer(data)});
-      } else {
-        tags.push({id: name, value: parseAttr(data)});
-      }
+      this.postProcessTag(tags, name, dataType, data);
     }
     return tags;
   }
