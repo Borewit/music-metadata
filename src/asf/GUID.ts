@@ -56,7 +56,7 @@ export default class GUID {
   public static IndexParametersObject = new GUID("D6E229DF-35DA-11D1-9034-00A0C90349BE");
   public static MediaObjectIndexParametersObject = new GUID("6B203BAD-3F11-48E4-ACA8-D7613DE2CFA7");
   public static TimecodeIndexParametersObject = new GUID("F55E496D-9797-4B5D-8C8B-604DFE9BFB24");
-  public static CompatibilityObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
+  public static CompatibilityObject = new GUID("26F18B5D-4584-47EC-9F5F-0E651F0452C9");
   public static AdvancedContentEncryptionObject = new GUID("43058533-6981-49E6-9B74-AD12CB86D58C");
 
   // 10.4 Stream Properties Object Stream Type GUIDs
@@ -67,6 +67,8 @@ export default class GUID {
   public static Degradable_JPEG_Media = new GUID("35907DE0-E415-11CF-A917-00805F5C442B");
   public static FileTransferMedia = new GUID("91BD222C-F21C-497A-8B6D-5AA86BFC0185");
   public static BinaryMedia = new GUID("3AFB65E2-47EF-40F2-AC2C-70A90D71D343");
+
+  public static ASF_Index_Placeholder_Object  = new GUID("D9AADE20-7C17-4F9C-BC28-8555DD98E2A2");
 
   public static fromBin(bin: Buffer, offset: number = 0) {
     return new GUID(this.decode(bin, offset));

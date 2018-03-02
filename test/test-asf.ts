@@ -59,7 +59,7 @@ describe("ASF", () => {
 
   describe("parse", () => {
 
-    const filePath = path.join(__dirname, 'samples', 'asf.wma');
+    const asfFilePath = path.join(__dirname, 'samples', 'asf.wma');
 
     function checkFormat(format) {
       t.strictEqual(format.duration, 244.885, 'format.duration');
@@ -86,7 +86,7 @@ describe("ASF", () => {
 
     it("should decode an ASF audio file (.wma)", () => {
 
-      return mm.parseFile(filePath, {native: true}).then(result => {
+      return mm.parseFile(asfFilePath, {native: true}).then(result => {
 
         checkFormat(result.format);
 
@@ -100,7 +100,7 @@ describe("ASF", () => {
 
     it("should decode from ASF from a stream (audio/x-ms-wma)", () => {
 
-      const stream = fs.createReadStream(filePath);
+      const stream = fs.createReadStream(asfFilePath);
 
       return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then(metadata => {
         checkFormat(metadata.format);
@@ -110,6 +110,18 @@ describe("ASF", () => {
         stream.close();
       });
 
+    });
+
+    it("should decode picture from ", () => {
+
+      const filePath = path.join(__dirname, 'samples', 'issue_57.wma');
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        const asf = mm.orderTags(metadata.native.asf);
+        assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
+        const nativePicture = asf['WM/Picture'][0];
+        assert.exists(nativePicture.data);
+      });
     });
 
   });
