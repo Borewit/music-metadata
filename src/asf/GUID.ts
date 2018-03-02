@@ -56,7 +56,7 @@ export default class GUID {
   public static IndexParametersObject = new GUID("D6E229DF-35DA-11D1-9034-00A0C90349BE");
   public static MediaObjectIndexParametersObject = new GUID("6B203BAD-3F11-48E4-ACA8-D7613DE2CFA7");
   public static TimecodeIndexParametersObject = new GUID("F55E496D-9797-4B5D-8C8B-604DFE9BFB24");
-  public static CompatibilityObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
+  public static CompatibilityObject = new GUID("26F18B5D-4584-47EC-9F5F-0E651F0452C9");
   public static AdvancedContentEncryptionObject = new GUID("43058533-6981-49E6-9B74-AD12CB86D58C");
 
   // 10.4 Stream Properties Object Stream Type GUIDs
