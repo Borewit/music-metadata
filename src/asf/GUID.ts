@@ -68,6 +68,8 @@ export default class GUID {
   public static FileTransferMedia = new GUID("91BD222C-F21C-497A-8B6D-5AA86BFC0185");
   public static BinaryMedia = new GUID("3AFB65E2-47EF-40F2-AC2C-70A90D71D343");
 
+  public static ASF_Index_Placeholder_Object  = new GUID("D9AADE20-7C17-4F9C-BC28-8555DD98E2A2");
+
   public static fromBin(bin: Buffer, offset: number = 0) {
     return new GUID(this.decode(bin, offset));
   }

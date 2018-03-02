@@ -1,6 +1,5 @@
 'use strict';
 
-import ReadableStream = NodeJS.ReadableStream;
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../index";
 import {ITokenizer} from "strtok3";
 import {ITokenParser} from "../ParserFactory";
@@ -24,8 +23,6 @@ export class AsfParser implements ITokenParser {
 
   private tokenizer: ITokenizer;
 
-  private numberOfObjectHeaders: number;
-
   private tags: ITag[] = [];
 
   private warnings: string[] = []; // ToDo: make these part of the parsing result
@@ -44,12 +41,11 @@ export class AsfParser implements ITokenParser {
       if (!header.objectId.equals(GUID.HeaderObject)) {
         throw new Error('expected asf header; but was not found; got: ' + header.objectId.str);
       }
-      this.numberOfObjectHeaders = header.numberOfHeaderObjects;
-      return this.parseObjectHeader();
+      return this.parseObjectHeader(header.numberOfHeaderObjects);
     });
   }
 
-  private parseObjectHeader(): Promise<INativeAudioMetadata> {
+  private parseObjectHeader(numberOfObjectHeaders: number): Promise<INativeAudioMetadata> {
     // Parse common header of the ASF Object (3.1)
     return this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken).then(header => {
       // Parse data part of the ASF Object
@@ -67,8 +63,8 @@ export class AsfParser implements ITokenParser {
           });
 
         case AsfObject.HeaderExtensionObject.guid.str: // 3.4
-          return this.tokenizer.readToken<AsfObject.IHeaderExtensionObject>(new AsfObject.HeaderExtensionObject(header)).then(() => {
-            return this.parseObjectHeader();
+          return this.tokenizer.readToken<AsfObject.IHeaderExtensionObject>(new AsfObject.HeaderExtensionObject()).then(extHeader => {
+            return this.parseExtensionObject(extHeader.extensionDataSize);
           });
 
         case AsfObject.ContentDescriptionObjectState.guid.str: // 3.10
@@ -79,22 +75,16 @@ export class AsfParser implements ITokenParser {
         case AsfObject.ExtendedContentDescriptionObjectState.guid.str: // 3.11
           return this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header)).then(tags => {
             this.tags = this.tags.concat(tags);
+            return header.objectSize;
           });
 
-        case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
-          return this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header)).then(cd => {
-            return null;
-          });
+        case GUID.CodecListObject.str:
+          // ToDo?
+          return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
 
-        case AsfObject.MetadataObjectState.guid.str: // 4.7
-          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header)).then(tags => {
-            this.tags = this.tags.concat(tags);
-          });
-
-        case AsfObject.MetadataLibraryObjectState.guid.str: // 4.8
-          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header)).then(tags => {
-            this.tags = this.tags.concat(tags);
-          });
+        case GUID.StreamBitratePropertiesObject.str:
+          // ToDo?
+          return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
 
         case GUID.PaddingObject.str:
           // ToDo: register bytes pad
@@ -106,8 +96,9 @@ export class AsfParser implements ITokenParser {
           return this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
       }
     }).then(() => {
-      if (--this.numberOfObjectHeaders > 0) {
-        return this.parseObjectHeader();
+      --numberOfObjectHeaders;
+      if (numberOfObjectHeaders > 0) {
+        return this.parseObjectHeader(numberOfObjectHeaders);
       } else {
         // done
         return {
@@ -116,6 +107,55 @@ export class AsfParser implements ITokenParser {
             asf: this.tags
           }
         };
+      }
+    });
+  }
+
+  private parseExtensionObject(extensionSize: number): Promise<number> {
+    // Parse common header of the ASF Object (3.1)
+    return this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken).then(header => {
+      // Parse data part of the ASF Object
+      switch (header.objectId.str) {
+
+        case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
+          return this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header)).then(cd => {
+            return header.objectSize;
+          });
+
+        case AsfObject.MetadataObjectState.guid.str: // 4.7
+          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header)).then(tags => {
+            this.tags = this.tags.concat(tags);
+            return header.objectSize;
+          });
+
+        case AsfObject.MetadataLibraryObjectState.guid.str: // 4.8
+          return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header)).then(tags => {
+            this.tags = this.tags.concat(tags);
+            return header.objectSize;
+          });
+
+        case GUID.PaddingObject.str:
+          // ToDo: register bytes pad
+          return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len).then(() => header.objectSize);
+
+        case GUID.CompatibilityObject.str:
+          return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len).then(() => header.objectSize);
+
+        case GUID.ASF_Index_Placeholder_Object.str:
+          return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len).then(() => header.objectSize);
+
+        default:
+          this.warnings.push("Ignore ASF-Object-GUID: " + header.objectId.str);
+          // console.log("Ignore ASF-Object-GUID: %s", header.objectId.str);
+          return this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
+      }
+    }).then(objectSize => {
+      extensionSize -= objectSize;
+      if (extensionSize > 0) {
+        return this.parseExtensionObject(extensionSize);
+      } else {
+        // done
+        return 0;
       }
     });
   }
