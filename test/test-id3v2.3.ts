@@ -35,7 +35,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     const filePath = path.join(__dirname, 'samples', 'id3v2.3.mp3');
 
     function checkFormat(format) {
-      t.deepEqual(format.tagTypes, [ 'ID3v2.3', 'ID3v1.1' ], 'format.type');
+      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.type');
       t.strictEqual(format.duration, 0.7836734693877551, 'format.duration'); // FooBar says 0.732 seconds (32.727 samples)
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
@@ -98,38 +98,51 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
   });
 
-  it("should decode corrupt ID3v2.3 header: 'Strawberry'", () => {
+  describe("corrupt header / tags", () => {
 
-    /**
-     * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
-     */
-    const filePath = path.join(__dirname, 'samples', '04-Strawberry.mp3');
+    it("should decode corrupt ID3v2.3 header: 'Strawberry'", () => {
 
-    function checkFormat(format: mm.IFormat) {
-      t.strictEqual(format.duration, 247.84979591836733, 'format.duration');
-      t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
-      t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
-      t.strictEqual(format.lossless, false, 'format.lossless');
-      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-      t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
-      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
-    }
+      /**
+       * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
+       */
+      const filePath = path.join(__dirname, 'samples', '04-Strawberry.mp3');
 
-    function checkCommon(common: mm.ICommonTagsResult) {
-      t.strictEqual(common.title, 'Strawberry', 'common.title');
-      t.strictEqual(common.artist, 'Union Youth', "common.artist");
-      t.strictEqual(common.album, "The Royal Gene", "common.album");
-      t.strictEqual(common.albumartist, undefined, "common.albumartist");
-      t.strictEqual(common.year, 2002, 'common.year');
-      t.deepEqual(common.track, {no: 4, of: null}, 'common.track = 4/?');
-      t.strictEqual(common.track.of, null, 'common.track.of = null');
-      t.deepEqual(common.genre, ["Alternative"], "common.genre");
-      t.isUndefined(common.comment, "common.comment");
-    }
+      function checkFormat(format: mm.IFormat) {
+        t.strictEqual(format.duration, 247.84979591836733, 'format.duration');
+        t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
+        t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
+        t.strictEqual(format.lossless, false, 'format.lossless');
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
+        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
+      }
 
-    return mm.parseFile(filePath).then(result => {
-      checkFormat(result.format);
-      checkCommon(result.common);
+      function checkCommon(common: mm.ICommonTagsResult) {
+        t.strictEqual(common.title, 'Strawberry', 'common.title');
+        t.strictEqual(common.artist, 'Union Youth', "common.artist");
+        t.strictEqual(common.album, "The Royal Gene", "common.album");
+        t.strictEqual(common.albumartist, undefined, "common.albumartist");
+        t.strictEqual(common.year, 2002, 'common.year');
+        t.deepEqual(common.track, {no: 4, of: null}, 'common.track = 4/?');
+        t.strictEqual(common.track.of, null, 'common.track.of = null');
+        t.deepEqual(common.genre, ["Alternative"], "common.genre");
+        t.isUndefined(common.comment, "common.comment");
+      }
+
+      return mm.parseFile(filePath).then(result => {
+        checkFormat(result.format);
+        checkCommon(result.common);
+      });
+
+    });
+
+    it("should decode PeakValue without data", () => {
+
+      const filePath = path.join(__dirname, 'samples', 'issue_56.mp3');
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
+      });
     });
 
   });

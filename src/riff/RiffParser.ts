@@ -74,7 +74,7 @@ export class WavePcmParser implements ITokenParser {
   }
 
   public readChunk(parent: IChunkHeader): Promise<void> {
-    return this.tokenizer.readToken<RiffChunk.IChunkHeader>(WaveChunk.Header)
+    return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(header => {
         switch (header.chunkID) {
 
@@ -126,7 +126,7 @@ export class WavePcmParser implements ITokenParser {
   }
 
   private parseRiffInfoTags(chunkSize): Promise<void> {
-    return this.tokenizer.readToken<RiffChunk.IChunkHeader>(WaveChunk.Header)
+    return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(header => {
         const valueToken = new RiffChunk.ListInfoTagValue(header);
         return this.tokenizer.readToken(valueToken).then(value => {

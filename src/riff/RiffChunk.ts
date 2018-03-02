@@ -24,7 +24,7 @@ export const Header: Token.IGetToken<IChunkHeader> = {
       // Group-ID
       chunkID: FourCcToken.get(buf, off),
       // Size
-      size: buf.readUInt32BE(off + 4)
+      size: buf.readUInt32LE(off + 4)
     };
   }
 };
