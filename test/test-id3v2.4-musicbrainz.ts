@@ -27,8 +27,8 @@ it("should MusicBrainz tags with id3v2.4", () => {
 
     t.deepEqual(result.common.barcode, '602498644102', 'common.barcode');
     t.deepEqual(result.common.isrc, ['USUG10400421'], 'common.isrc');
-    t.deepEqual(result.common.catalognumber, 'B0003663-02', 'common.catalognumber');
-    t.deepEqual(result.common.label, 'Hip-O Records', 'common.label');
+    t.deepEqual(result.common.label, ['Hip-O Records'], 'common.label');
+    t.deepEqual(result.common.catalognumber, ['B0003663-02'], 'common.catalognumber');
     t.deepEqual(result.common.releasecountry, 'US', 'common.releasecountry');
     t.deepEqual(result.common.media, 'CD', 'common.media');
     t.deepEqual(result.common.musicbrainz_artistid, ['4236acde-2ce2-441c-a3d4-38d55f1b5474'], 'MusicBrainz Artist Id');

@@ -22,7 +22,7 @@ describe("Parsing Ogg", function() {
     assert.strictEqual(common.picture[0].data.length, 30966, 'picture length');
     assert.strictEqual(common.barcode, '0720642442524', 'common.barcode (including leading zero)');
     assert.strictEqual(common.asin, 'B000003TA4', 'common.asin');
-    assert.strictEqual(common.catalognumber, 'GED24425', 'common.asin');
+    assert.deepEqual(common.catalognumber, ['GED24425'], 'common.asin');
     assert.deepEqual(common.isrc, ['USGF19942502'], 'common.isrc');
   }
 

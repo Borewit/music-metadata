@@ -77,8 +77,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.media, 'CD', inputTagType + " => common.media = CD");
     t.strictEqual(common.barcode, "804879313915", inputTagType + " => common.barcode");
     // ToDo?? t.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
-    t.strictEqual(common.label, 'J&R Adventures', inputTagType + " => common.label = 'J&R Adventures'");
-    t.strictEqual(common.catalognumber, 'PRAR931391', inputTagType + " => common.catalognumber = PRAR931391");
+    t.deepEqual(common.label, ['J&R Adventures'], inputTagType + " => common.label = 'J&R Adventures'");
+    t.deepEqual(common.catalognumber, ['PRAR931391'], inputTagType + " => common.catalognumber = PRAR931391");
     t.strictEqual(common.originalyear, 2011, inputTagType + " => common.originalyear = 2011");
     t.strictEqual(common.releasestatus, 'official', inputTagType + " => common.releasestatus = official");
     t.deepEqual(common.releasetype, ['album'], inputTagType + " => common.releasetype");
