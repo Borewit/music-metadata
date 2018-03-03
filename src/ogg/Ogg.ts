@@ -46,7 +46,18 @@ export interface IPageHeader {
   streamSerialNumber: number,
   pageSequenceNo: number,
   pageChecksum: number,
-  segmentTable: number;
+  /**
+   * The number of segment entries to appear in the segment table.
+   * The maximum number of 255 segments (255 bytes each) sets the maximum possible physical page size at 65307 bytes or
+   * just under 64kB (thus we know that a header corrupted so as destroy sizing/alignment information will not cause a
+   * runaway bitstream. We'll read in the page according to the corrupted size information that's guaranteed to be a
+   * reasonable size regardless, notice the checksum mismatch, drop sync and then look for recapture).
+   */
+  page_segments: number;
+}
+
+export interface ISegmentTable {
+  totalPageSize: number
 }
 
 export interface IPageConsumer {
@@ -57,6 +68,11 @@ export interface IPageConsumer {
    * @param {Buffer} pageData Ogg page data
    */
   parsePage(header: IPageHeader, pageData: Buffer);
+
+  /**
+   * Force to parse pending segments
+   */
+  flush();
 }
 
 export interface IAudioParser extends IPageConsumer {
