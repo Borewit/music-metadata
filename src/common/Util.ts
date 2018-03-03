@@ -38,14 +38,6 @@ export default class Util {
     }
   }
 
-  public static sum(arr: number[]): number {
-    let s: number = 0;
-    for (const v of arr) {
-      s += v;
-    }
-    return s;
-  }
-
   public static swapBytes(buffer: Buffer): Buffer {
     const l = buffer.length;
     assert.ok((l & 1) === 0, 'Buffer length must be even');

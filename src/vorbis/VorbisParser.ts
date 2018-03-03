@@ -4,6 +4,9 @@ import {IFormat, INativeAudioMetadata, IOptions, ITag} from "../index";
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import * as Ogg from "../ogg/Ogg";
+import * as _debug from "debug";
+
+const debug = _debug("music-metadata/ogg/vorbis");
 
 /**
  * Vorbis 1 Parser.
@@ -38,7 +41,7 @@ export class VorbisParser implements Ogg.IAudioParser {
         // Flush page segments
         if (this.pageSegments.length > 0) {
           const fullPage = Buffer.concat(this.pageSegments);
-          this.parseFullPage(header, fullPage);
+          this.parseFullPage(fullPage);
         }
         // Reset page segments
         this.pageSegments = header.headerType.lastPage ? [] : [pageData];
@@ -47,6 +50,10 @@ export class VorbisParser implements Ogg.IAudioParser {
     if (header.headerType.lastPage) {
       this.calculateDuration(header);
     }
+  }
+
+  public flush() {
+    this.parseFullPage(Buffer.concat(this.pageSegments));
   }
 
   public getMetadata(): INativeAudioMetadata {
@@ -64,6 +71,7 @@ export class VorbisParser implements Ogg.IAudioParser {
    * @param {Buffer} pageData
    */
   protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
+    debug("Parse first page");
     // Parse  Vorbis common header
     const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis')
@@ -75,11 +83,13 @@ export class VorbisParser implements Ogg.IAudioParser {
       this.format.sampleRate = idHeader.sampleRate;
       this.format.bitrate = idHeader.bitrateNominal;
       this.format.numberOfChannels = idHeader.channelMode;
+      debug("sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s",  idHeader.sampleRate, idHeader.bitrateNominal, idHeader.channelMode);
     } else throw new Error('First Ogg page should be type 1: the identification header');
   }
 
-  protected parseFullPage(header: Ogg.IPageHeader, pageData: Buffer) {
+  protected parseFullPage(pageData: Buffer) {
     // New page
+    debug("Parse full page");
     const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
     switch (commonHeader.packetType) {
 

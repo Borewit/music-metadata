@@ -33,7 +33,7 @@ export class OpusParser extends VorbisParser {
     this.format.numberOfChannels = this.idHeader.channelCount;
   }
 
-  protected parseFullPage(header: IPageHeader, pageData: Buffer) {
+  protected parseFullPage(pageData: Buffer) {
     const magicSignature = new Token.StringType(8, 'ascii').get(pageData, 0);
     switch (magicSignature) {
       case 'OpusTags':
