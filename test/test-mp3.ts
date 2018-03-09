@@ -24,4 +24,28 @@ describe("Parse MP3 files", () => {
     });
   });
 
+  describe("should handle incomplete MP3 file", () => {
+
+    const filePath = path.join(__dirname, 'samples', "incomplete.mp3");
+
+    function checkFormat(format: mm.IFormat) {
+      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.tagTypes');
+      t.strictEqual(format.duration, 4349.6751020408165, 'format.duration');
+      t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
+      t.strictEqual(format.lossless, false, 'format.lossless');
+      t.strictEqual(format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
+      t.strictEqual(format.bitrate, 64000, 'format.bitrate = 128 kbit/sec');
+      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
+    }
+
+    it("should decode from a file", () => {
+
+      return mm.parseFile(filePath).then(metadata => {
+        for (const tagType in metadata.native)
+          throw new Error("Do not expect any native tag type, got: " + tagType);
+        checkFormat(metadata.format);
+      });
+    });
+  });
+
 });
