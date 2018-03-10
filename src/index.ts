@@ -108,19 +108,19 @@ export interface ICommonTagsResult {
   'performer:instrument'?: string[],
   averageLevel?: number,
   peakLevel?: number,
-  notes: string[],
-  originalalbum: string,
-  originalartist: string,
+  notes?: string[],
+  originalalbum?: string,
+  originalartist?: string,
   // Discogs:
   discogs_release_id?: number,
   /**
    * Track gain in dB; eg: "-7.03 dB"
    */
-  replaygain_track_gain: string,
+  replaygain_track_gain?: string,
   /**
    * Track peak [0..1]
    */
-  replaygain_track_peak: number
+  replaygain_track_peak?: number
 
 }
 
@@ -374,7 +374,7 @@ export class MusicMetadataParser {
       common: {
         track: {no: null, of: null},
         disk: {no: null, of: null}
-      } as any
+      }
     };
 
     metadata.format.tagTypes = [];
