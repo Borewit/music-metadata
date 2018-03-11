@@ -150,7 +150,7 @@ If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` inte
   
 #### Common
 
-Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity. The tag mapping is strongly inspired on the []MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).
+Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity. The tag mapping is strongly inspired on the [MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).
 
 | Common tag                 | n | Description                                                                                                                             | ID3v1.1 | ID3v2.2 | ID3v2.3                                                     | ID3v2.4                                                     | iTunes MP4                                              | vorbis                     | APEv2                               | asf                               |
 |----------------------------|---|-----------------------------------------------------------------------------------------------------------------------------------------|---------|---------|-------------------------------------------------------------|-------------------------------------------------------------|---------------------------------------------------------|----------------------------|-------------------------------------|-----------------------------------|
@@ -240,8 +240,7 @@ Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplici
 | replaygain_track_gain      | 1 | _ToDo_: difference with averageLevel                                                                                                    |         |         | TXXX:replaygain_track_gain                                  | TXXX:replaygain_track_gain                                  |                                                         | REPLAYGAIN_TRACK_GAIN      |                                     |                                   |
                                                                                                           |         |         | TXXX:replaygain_track_gain                                  | TXXX:replaygain_track_gain                                  |                                                                                                      |
 
-=== Examples:
-_ToDo_
+## Examples
 
 For a live example see [parse MP3 (ID3v2.4 tags) stream with music-metadata](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
 
@@ -254,8 +253,8 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
    });
 ```
 
-Licence
------------------
+## Licence
+
 (The MIT License)
 
 Copyright (c) 2017 Borewit
