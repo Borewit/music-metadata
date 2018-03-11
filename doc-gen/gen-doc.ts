@@ -20,7 +20,7 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const tagMapper = combinedTagMapper.tagMappers[nativeType];
   for (const nativeTag in tagMapper.tagMap) {
     if (commonTag === tagMapper.tagMap[nativeTag] ) {
-      console.log("%s <= %s:%s", commonTag, nativeType, nativeTag)
+      // console.log("%s <= %s:%s", commonTag, nativeType, nativeTag)
       result.push(nativeTag);
     }
   }
