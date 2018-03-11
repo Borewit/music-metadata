@@ -8,6 +8,9 @@
 
 Stream and file based music metadata parser for node.
 
+= Document Title
+:toc:
+
 ## Installation
 Install via [npm](http://npmjs.org):
 
@@ -42,15 +45,33 @@ npm install music-metadata
 
 ## API
 
-### Options:
-  * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
-  * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
-  * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-    
+### Import music-metadata:
 
-### Examples
+This is how you can import music-metadata in JavaScript, in you code:
+```JavaScript
+var mm = require('music-metadata');
+```
 
-##### JavaScript
+This is how it's done in TypeScript:
+```TypeScript
+import * as mm from 'music-metadata';
+```
+
+### Module Functions:
+
+There are two ways to parse (read) audio tracks:
+1) Audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile)
+2) Using [Node.js streams](https://nodejs.org/api/stream.html) using the [parseStream function](#parseStream).
+
+Direct file access tends to be a little faster, because it can 'jump' to various parts in the file without being obliged to read intermediate date.
+
+#### parseFile function
+
+Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
+
+`parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+
+Javascript example:
 ```javascript
 var mm = require('music-metadata');
 const util = require('util')
@@ -65,7 +86,7 @@ mm.parseFile('../test/samples/Mu' +
   });
 ```
 
-##### TypeScript
+Typescript example:
 ```TypeScript
 import * as mm from 'music-metadata';
 import * as util from 'util';
@@ -79,14 +100,144 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
   });
 ```
 
+#### parseStream function
+
+Parses the provided audio stream for metadata. You should specify the corresponding [MIME-type] (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+
+`parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+
+Example:
+```javascript
+mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
+  .then( function (metadata) {
+     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+     someReadStream.close();
+   });
+```
+
+### Options:
+  * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+  * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
+  * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
+  * `fileSize`: only provide this in combination with `parseStream` function. 
+
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
-```javascript
-mm.parseFile('sample.mp3', {duration: true})
-  .then(function (metadata) {
-    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-  })
-```
+    
+### Metadata result:
+
+If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
+
+  * [`format: IFormat`](#format) Audio format information
+  * `native: INativeTags` List of native (original) tags found in the parsed audio file. If the native option is set to false, this property is not defined.
+  * [`common: ICommonTagsResult`](#common) Is a generic (abstract) way of reading metadata information.
+  
+#### Format
+  
+  Audio format information. Defined in the TypeScript `IFormat` interface:
+  
+  * `dataformat?: string` Audio encoding format. e.g.: 'flac'
+  * `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
+  * `duration?: number` Duration in seconds
+  * `bitrate?: number` Number bits per second of encoded audio file
+  * `sampleRate?: number` Sampling rate in Samples per second (S/s)
+  * `bitsPerSample?: number` Audio bit depth
+  * `encoder?` Encoder name
+  * `codecProfile?: string` Codec profile
+  * `lossless?: boolean` True if lossless,  false for lossy encoding
+  * `numberOfChannels?: number` Number of audio channels
+  * `numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
+  
+#### Common
+
+| Common tag                 | n | Description                                                                                                    |
+|----------------------------|---|----------------------------------------------------------------------------------------------------------------|
+| year                       | 1 | Release year                                                                                                   |
+| track                      | 1 | Track number on the media, e.g. `{no: 1, of: 2}`                                                               |
+| disk                       | 1 | Disk or media number, e.g. `{no: 1, of: 2}`                                                                    |
+| title                      | 1 | Track title                                                                                                    |
+| artist                     | 1 | Literal written track artist e.g.: `"Beth Hart & Joe Bonamassa"`                                               |
+| artists                    | * | Track artists e.g.: `["Beth Hart", "Joe Bonamassa"]`                                                           |
+| albumartist                | 1 | Literal written album artist e.g.: `"Beth Hart & Joe Bonamassa"`                                               |
+| album                      | 1 | Album title                                                                                                    |
+| date                       | 1 | Release date                                                                                                   |
+| originaldate               | 1 | Original (initial) release date, formatted like: YYYY-MM-DD                                                    |
+| originalyear               | 1 | Original (initial) release year                                                                                |
+| comment                    | * | Comments                                                                                                       |
+| genre                      | * | Genres                                                                                                         |
+| picture                    | * | Embedded cover art                                                                                             |
+| composer                   | * | Composer                                                                                                       |
+| lyrics                     | * | Lyricist                                                                                                       |
+| albumsort                  | 1 | Album title, formatted for alphabetic ordering                                                                 |
+| titlesort                  | 1 | Track title, formatted for alphabetic ordering                                                                 |
+| work                       | 1 |                                                                                                                |
+| artistsort                 | 1 | Track artist sort name                                                                                         |
+| albumartistsort            | 1 | Album artist sort name                                                                                         |
+| composersort               | * | Composer, formatted for alphabetic ordering                                                                    |
+| lyricist                   | * | Lyricist, formatted for alphabetic ordering                                                                    |
+| writer                     | * | Writer                                                                                                         |
+| conductor                  | * | Conductor                                                                                                      |
+| remixer                    | * | Remixer(s)                                                                                                     |
+| arranger                   | * | Arranger                                                                                                       |
+| engineer                   | * | Engineer(s)                                                                                                    |
+| producer                   | * | Producer(s)                                                                                                    |
+| djmixer                    | * | Mix-DJ(s)                                                                                                      |
+| mixer                      | * | Mixed by                                                                                                       |
+| label                      | 1 | Release label name(s)                                                                                          |
+| grouping                   | 1 |                                                                                                                |
+| subtitle                   | 1 |                                                                                                                |
+| discsubtitle               | 1 | The Media Title given to a specific disc                                                                       |
+| totaltracks                | 1 |                                                                                                                |
+| totaldiscs                 | 1 |                                                                                                                |
+| compilation                | 1 |                                                                                                                |
+| _rating                    | 1 |                                                                                                                |
+| bpm                        | 1 | Beats Per Minute (BPM)                                                                                         |
+| mood                       | 1 |                                                                                                                |
+| media                      | 1 | Release Format                                                                                                 |
+| catalognumber              | 1 | Release catalog number(s)                                                                                      |
+| show                       | 1 |                                                                                                                |
+| showsort                   | 1 |                                                                                                                |
+| podcast                    | 1 |                                                                                                                |
+| podcasturl                 | 1 |                                                                                                                |
+| releasestatus              | 1 |                                                                                                                |
+| releasetype                | * |                                                                                                                |
+| releasecountry             | 1 |                                                                                                                |
+| script                     | 1 |                                                                                                                |
+| language                   | 1 |                                                                                                                |
+| copyright                  | 1 |                                                                                                                |
+| license                    | 1 |                                                                                                                |
+| encodedby                  | 1 |                                                                                                                |
+| encodersettings            | 1 |                                                                                                                |
+| gapless                    | 1 |                                                                                                                |
+| barcode                    | 1 | Release Barcode                                                                                                |
+| isrc                       | 1 | [ISRC](http://www.isrc.net/)                                                                                   |
+| asin                       | 1 | Amazon Standard Identification Number (ASIN)                                                                   |
+| musicbrainz_recordingid    | 1 |                                                                                                                |
+| musicbrainz_trackid        | 1 |                                                                                                                |
+| musicbrainz_albumid        | 1 |                                                                                                                |
+| musicbrainz_artistid       | * |                                                                                                                |
+| musicbrainz_albumartistid  | * |                                                                                                                |
+| musicbrainz_releasegroupid | 1 |                                                                                                                |
+| musicbrainz_workid         | 1 |                                                                                                                |
+| musicbrainz_trmid          | 1 |                                                                                                                |
+| musicbrainz_discid         | 1 | [Disc ID](https://musicbrainz.org/doc/Disc_ID) is the code number which MusicBrainz uses to link a physical CD |
+| acoustid_id                | 1 | the open-source (acoustic fingerprint)[https://en.wikipedia.org/wiki/Acoustic_fingerprint] system              |
+| acoustid_fingerprint       | 1 |                                                                                                                |
+| musicip_puid               | 1 |                                                                                                                |
+| musicip_fingerprint        | 1 |                                                                                                                |
+| website                    | 1 |                                                                                                                |
+| performer:instrument       | * |                                                                                                                |
+| averageLevel               | 1 |                                                                                                                |
+| peakLevel                  | 1 |                                                                                                                |
+| notes                      | * |                                                                                                                |
+| key                        | 1 |                                                                                                                |
+| originalalbum              | 1 |                                                                                                                |
+| originalartist             | 1 |                                                                                                                |
+| discogs_release_id         | 1 |                                                                                                                |
+| replaygain_track_peak      | 1 |                                                                                                                |
+| replaygain_track_gain      | 1 |                                                                                                                |
+
+
 For a live example see [parse MP3 (ID3v2.4 tags) stream with music-metadata](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
