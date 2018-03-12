@@ -130,6 +130,16 @@ export class ID3v2Parser {
     }
   }
 
+  /**
+   * Create a combined tag key, of tag & description
+   * @param {string} tag e.g.: COM
+   * @param {string} description e.g. iTunPGAP
+   * @returns {string} e.g. COM:iTunPGAP
+   */
+  private static makeDescriptionTagName(tag: string, description: string): string {
+    return tag + (description ? ':' + description : '');
+  }
+
   private tokenizer: ITokenizer;
   private id3Header: IID3v2header;
 
@@ -186,7 +196,11 @@ export class ID3v2Parser {
       for (const tag of this.parseMetadata(buffer)) {
         if (tag.id === 'TXXX') {
           for (const text of tag.value.text) {
-            this.tags.push({id: tag.id + ':' + tag.value.description, value: text});
+            this.tags.push({id: ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), value: text});
+          }
+        } else if (tag.id === 'COM') {
+          for (const value of tag.value) {
+            this.tags.push({id: ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value: value.text});
           }
         } else if (isArray(tag.value)) {
           for (const value of tag.value) {
@@ -196,9 +210,6 @@ export class ID3v2Parser {
           this.tags.push({id: tag.id, value: tag.value});
         }
       }
-
-      // End of ID3v2 header
-      // return new MpegParser(this.tokenizer, this.id3Header.size, this.options && this.options.duration).parse().then((format) => {
     });
   }
 
