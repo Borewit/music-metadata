@@ -132,5 +132,4 @@ describe("Parsing MPEG / ID3v1", () => {
     });
 
   });
-
 });

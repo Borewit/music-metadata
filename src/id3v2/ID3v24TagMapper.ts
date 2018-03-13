@@ -18,7 +18,6 @@ const id3v24TagMap: INativeTagMap = {
    * Original release year
    */
   TORY: "originalyear",
-  "COMM:description": "comment",
   TPOS: "disk",
   TCON: "genre",
   APIC: "picture",
