@@ -9,7 +9,7 @@ import {CombinedTagMapper} from "../src/index";
 
 import * as markDown from "./MarkDown";
 
-type ITagInfoDict = { [key: string]: {description: string}; }
+interface ITagInfoDict { [key: string]: {description: string}; }
 
 const combinedTagMapper = new CombinedTagMapper();
 
@@ -19,17 +19,15 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
 
   const tagMapper = combinedTagMapper.tagMappers[nativeType];
   for (const nativeTag in tagMapper.tagMap) {
-    if (commonTag === tagMapper.tagMap[nativeTag] ) {
+    if (commonTag === tagMapper.tagMap[nativeTag]) {
       // console.log("%s <= %s:%s", commonTag, nativeType, nativeTag)
       result.push(nativeTag);
     }
   }
-  return result
+  return result;
 }
 
-function run() {
-
-  const combinedTagMapper = new CombinedTagMapper();
+function write(out: fs.WriteStream) {
 
   const json = fs.readFileSync(path.join(__dirname, 'common.json'));
   const commonDescriptionDict: ITagInfoDict = JSON.parse(json as any);
@@ -44,7 +42,6 @@ function run() {
     table.header.values.push(nativeType);
   }
 
-
   for (const commonTagKey in commonTags) {
     const tagInfo = commonDescriptionDict[commonTagKey];
     // console.log('common-tag: key=%s, description=%s', commonTagKey, tagInfo.description)
@@ -57,8 +54,13 @@ function run() {
     table.rows.push(row);
   }
 
-  console.log(table.toString())
+  table.writeTo(out);
 }
 
-run();
+const txt = fs.createWriteStream(path.join(__dirname, '..', 'doc', 'metadata.md'));
 
+txt.write("# Common Metadata\n\n");
+txt.write("Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n");
+txt.write("The tag mapping is strongly inspired on the [MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).\n\n");
+
+write(txt);

@@ -48,13 +48,15 @@
     "clean": "del-cli lib/** src/**/*.js src/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
     "compile-src": "tsc -p src",
     "compile-test": "tsc -p test",
-    "compile": "npm run compile-src && npm run compile-test",
-    "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
+    "compile-doc": "tsc -p doc-gen",
+    "compile": "npm run compile-src && npm run compile-test && npm run compile-doc",
+    "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
     "test": "mocha --require ts-node/register test",
-    "prepare": "npm run clean && npm run compile",
+    "prepare": "npm run clean && npm run compile && npm doc-gen",
     "start": "npm-run-all compile lint cover-test",
     "cover-test": "nyc npm run test",
-    "coveralls": "npm run cover-test && nyc report --reporter=text-lcov | coveralls"
+    "coveralls": "npm run cover-test && nyc report --reporter=text-lcov | coveralls",
+    "doc-gen": "node doc-gen/gen.js"
   },
   "dependencies": {
     "debug": "^3.1.0",
