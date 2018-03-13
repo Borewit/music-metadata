@@ -86,8 +86,8 @@ export interface ICommonTagsResult {
   license?: string,
   encodedby?: string,
   encodersettings?: string,
-  gapless?: string,
-  barcode?: string,
+  gapless?: boolean,
+  barcode?: number, // ToDo: multiple??
   // International Standard Recording Code
   isrc?: string[],
   asin?: string,
@@ -108,19 +108,19 @@ export interface ICommonTagsResult {
   'performer:instrument'?: string[],
   averageLevel?: number,
   peakLevel?: number,
-  notes: string[],
-  originalalbum: string,
-  originalartist: string,
+  notes?: string[],
+  originalalbum?: string,
+  originalartist?: string,
   // Discogs:
   discogs_release_id?: number,
   /**
    * Track gain in dB; eg: "-7.03 dB"
    */
-  replaygain_track_gain: string,
+  replaygain_track_gain?: string,
   /**
    * Track peak [0..1]
    */
-  replaygain_track_peak: number
+  replaygain_track_peak?: number
 
 }
 

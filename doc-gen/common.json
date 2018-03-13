@@ -1,0 +1,254 @@
+{
+  "year": {
+    "description": "Release year"
+  },
+  "track": {
+    "description":  "Track number on the media, e.g. `{no: 1, of: 2}`"
+  },
+  "disk": {
+    "description": "Disk or media number, e.g. `{no: 1, of: 2}`"
+  },
+  "title": {
+    "description": "Track title"
+  },
+  "artist": {
+    "description": "Literal written track artist e.g.: `\"Beth Hart & Joe Bonamassa\"`"
+  },
+  "artists": {
+    "description": "Track artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`"
+  },
+  "albumartist": {
+    "description": "Literal written album artist e.g.: `\"Beth Hart & Joe Bonamassa\"`"
+  },
+  "album": {
+    "description": "Album title"
+  },
+  "date": {
+    "description": "Release date"
+  },
+  "originaldate": {
+    "description": "Original (initial) release date, formatted like: YYYY-MM-DD"
+  },
+  "originalyear": {
+    "description": "Original (initial) release year"
+  },
+  "comment": {
+    "description": "Comments"
+  },
+  "genre": {
+    "description": "Genres"
+  },
+  "picture": {
+    "description": "Embedded cover art"
+  },
+  "composer": {
+    "description": "Composer"
+  },
+  "lyrics": {
+    "description": "Lyricist"
+  },
+  "albumsort": {
+    "description": "Album title, formatted for alphabetic ordering"
+  },
+  "titlesort": {
+    "description": "Track title, formatted for alphabetic ordering"
+  },
+  "work": {
+    "description": "The canonical title of the [work](https://musicbrainz.org/doc/Work)"
+  },
+  "artistsort": {
+    "description": "Track artist sort name"
+  },
+  "albumartistsort": {
+    "description": "Album artist sort name"
+  },
+  "composersort": {
+    "description": "Composer, formatted for alphabetic ordering"
+  },
+  "lyricist": {
+    "description": "Lyricist, formatted for alphabetic ordering"
+  },
+  "writer": {
+    "description": "Writer"
+  },
+  "conductor": {
+    "description": "Conductor"
+  },
+  "remixer": {
+    "description": "Remixer(s)"
+  },
+  "arranger": {
+    "description": "Arranger"
+  },
+  "engineer": {
+    "description": "Engineer(s)"
+  },
+  "producer": {
+    "description": "Producer(s)"
+  },
+  "djmixer": {
+    "description": "Mix-DJ(s)"
+  },
+  "mixer": {
+    "description": "Mixed by"
+  },
+  "label": {
+    "description": "Release label name(s)"
+  },
+  "grouping": {
+    "description": "Content group description. Used to group track titles in sections."
+  },
+  "subtitle": {
+    "description": "Contains the subtitle of the content"
+  },
+  "discsubtitle": {
+    "description": "The Media Title given to a specific disc"
+  },
+  "totaltracks": {
+    "description": "The total number of tracks"
+  },
+  "totaldiscs": {
+    "description": "The total number of discs"
+  },
+  "compilation": {
+    "description": "Is part of compilation (unofficial iTunes Compilation Flag)"
+  },
+  "_rating": {
+    "description": "_ToDo_"
+  },
+  "bpm": {
+    "description": "Beats Per Minute (BPM)"
+  },
+  "mood": {
+    "description": "Keywords to reflect the mood of the audio, e.g. \"Romantic\" or \"Sad\""
+  },
+  "media": {
+    "description": "Release Format"
+  },
+  "catalognumber": {
+    "description": "[Release catalog number(s)](https://musicbrainz.org/doc/Release/Catalog_Number)"
+  },
+  "show": {
+    "description": "TV show title"
+  },
+  "showsort": {
+    "description": "TV show sorting title"
+  },
+  "podcast": {
+    "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
+  },
+  "podcasturl": {
+    "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
+  },
+  "releasestatus": {
+    "description": "See [releases status](https://wiki.musicbrainz.org/History:Release_Status)"
+  },
+  "releasetype": {
+    "description": "[Release type](https://musicbrainz.org/doc/Release_Group/Type), e,g,: Album"
+  },
+  "releasecountry": {
+    "description": "[Release country](https://wiki.musicbrainz.org/Release_Country) describes the country in which an album was released."
+  },
+  "script": {
+    "description": "[Release Script](https://picard.musicbrainz.org/docs/tags/)"
+  },
+  "language": {
+    "description": "Language used in metadata"
+  },
+  "copyright": {
+    "description": "Contain copyright message for the copyright holder of the original sound, begin with a year and a space character."
+  },
+  "license": {
+    "description": "License Relationship Type (releases, recordings)"
+  },
+  "encodedby": {
+    "description": "Encoded by (person/organisation)"
+  },
+  "encodersettings": {
+    "description": "Encoder Settings"
+  },
+  "gapless": {
+    "description": "Gapless album indicator ([MP4](http://help.mp3tag.de/main_tags.html))"
+  },
+  "barcode": {
+    "description": "[Release barcode](https://musicbrainz.org/doc/Barcode)."
+  },
+  "isrc": {
+    "description": "[ISRC](https://musicbrainz.org/doc/ISRC)"
+  },
+  "asin": {
+    "description": "[Amazon Standard Identification Number (ASIN)](https://musicbrainz.org/doc/ASIN)"
+  },
+  "musicbrainz_recordingid": {
+    "description": "Release [recording](https://musicbrainz.org/doc/Recording) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_trackid": {
+    "description": "Release track [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_albumid": {
+    "description": "[Album (release)](https://musicbrainz.org/doc/Release) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_artistid": {
+    "description": "Track [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_albumartistid": {
+    "description": "Album (written on cover) [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_releasegroupid": {
+    "description": "[Release group](https://musicbrainz.org/doc/Release_Group) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_workid": {
+    "description": "[Work](https://musicbrainz.org/doc/Work) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+  },
+  "musicbrainz_trmid": {
+    "description": "[TRM (TRM Recognizes Music)]((https://musicbrainz.org/doc/Fingerprinting#TRM)) IDs were MusicBrainz’ first audio fingerprinting system."
+  },
+  "musicbrainz_discid": {
+    "description": "[Disc ID](https://musicbrainz.org/doc/Disc_ID) is the code number which MusicBrainz uses to link a physical CD"
+  },
+  "acoustid_id": {
+    "description": "(AcoustID)[https://en.wikipedia.org/wiki/Acoustic_fingerprint] is MusicBrainz’ third and most recent audio fingerprinting system."
+  },
+  "acoustid_fingerprint": {
+    "description": "[AcoustID Fingerprint](https://picard.musicbrainz.org/docs/mappings/). _ToDo: Same as acoustid_id._"
+  },
+  "musicip_puid": {
+    "description": "[PUIDs](https://musicbrainz.org/doc/Fingerprinting#PUID) were MusicBrainz’ second audio fingerprinting system."
+  },
+  "musicip_fingerprint": {
+    "description": "MusicIP Fingerprint), not sure which algorithm."
+  },
+  "website": {
+    "description": "URL of website"
+  },
+  "performer:instrument": {
+    "description": "Performer relationship types, instrument can also be vocals."
+  },
+  "averageLevel": {
+    "description": "Average gain level. _ToDo_"
+  },
+  "peakLevel": {
+    "description": "Peak gain level. _ToDo_"
+  },
+  "notes": {
+    "description": "Similar to comments"
+  },
+  "key": {
+    "description": "The 'Initial key' frame contains the musical key in which the sound starts."
+  },
+  "originalalbum": {
+    "description": "Original release title of the earliest release in the release group intended for the title of the original recording."
+  },
+  "originalartist": {
+    "description": "Original track artist of the earliest release in the release group intended for the performer(s) of the original recording."
+  },
+  "discogs_release_id": {
+    "description": "Discogs release identifier"
+  },
+  "replaygain_track_peak": {
+    "description": "_ToDo_: difference with peakLevel?"
+  },
+  "replaygain_track_gain": {
+    "description": "_ToDo_: difference with averageLevel"
+  }
+}

@@ -8,6 +8,9 @@
 
 Stream and file based music metadata parser for node.
 
+= Document Title
+:toc:
+
 ## Installation
 Install via [npm](http://npmjs.org):
 
@@ -42,15 +45,33 @@ npm install music-metadata
 
 ## API
 
-### Options:
-  * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
-  * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
-  * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-    
+### Import music-metadata:
 
-### Examples
+This is how you can import music-metadata in JavaScript, in you code:
+```JavaScript
+var mm = require('music-metadata');
+```
 
-##### JavaScript
+This is how it's done in TypeScript:
+```TypeScript
+import * as mm from 'music-metadata';
+```
+
+### Module Functions:
+
+There are two ways to parse (read) audio tracks:
+1) Audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile)
+2) Using [Node.js streams](https://nodejs.org/api/stream.html) using the [parseStream function](#parseStream).
+
+Direct file access tends to be a little faster, because it can 'jump' to various parts in the file without being obliged to read intermediate date.
+
+#### parseFile function
+
+Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
+
+`parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+
+Javascript example:
 ```javascript
 var mm = require('music-metadata');
 const util = require('util')
@@ -65,7 +86,7 @@ mm.parseFile('../test/samples/Mu' +
   });
 ```
 
-##### TypeScript
+Typescript example:
 ```TypeScript
 import * as mm from 'music-metadata';
 import * as util from 'util';
@@ -79,14 +100,60 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
   });
 ```
 
+#### parseStream function
+
+Parses the provided audio stream for metadata. You should specify the corresponding [MIME-type] (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+
+`parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+
+Example:
+```javascript
+mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
+  .then( function (metadata) {
+     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+     someReadStream.close();
+   });
+```
+
+### Options:
+  * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+  * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
+  * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
+  * `fileSize`: only provide this in combination with `parseStream` function. 
+
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
-```javascript
-mm.parseFile('sample.mp3', {duration: true})
-  .then(function (metadata) {
-    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-  })
-```
+    
+### Metadata result:
+
+If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
+
+  * [`format: IFormat`](#format) Audio format information
+  * `native: INativeTags` List of native (original) tags found in the parsed audio file. If the native option is set to false, this property is not defined.
+  * [`common: ICommonTagsResult`](doc/common_metadata.md) Is a generic (abstract) way of reading metadata information. 
+  
+#### Format
+  
+  Audio format information. Defined in the TypeScript `IFormat` interface:
+  
+  * `dataformat?: string` Audio encoding format. e.g.: 'flac'
+  * `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
+  * `duration?: number` Duration in seconds
+  * `bitrate?: number` Number bits per second of encoded audio file
+  * `sampleRate?: number` Sampling rate in Samples per second (S/s)
+  * `bitsPerSample?: number` Audio bit depth
+  * `encoder?` Encoder name
+  * `codecProfile?: string` Codec profile
+  * `lossless?: boolean` True if lossless,  false for lossy encoding
+  * `numberOfChannels?: number` Number of audio channels
+  * `numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
+  
+#### Common
+
+[Common tag documentation](doc/common_metadata.md) is automatically generated.
+
+## Examples
+
 For a live example see [parse MP3 (ID3v2.4 tags) stream with music-metadata](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
@@ -98,8 +165,8 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
    });
 ```
 
-Licence
------------------
+## Licence
+
 (The MIT License)
 
 Copyright (c) 2017 Borewit

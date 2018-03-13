@@ -155,6 +155,10 @@ export class CommonTagMapper implements IGenericTagMapper {
           tag.value = typeof tag.value === 'string' ? parseFloat(tag.value) : tag.value;
           break;
 
+        case 'gapless': // iTunes gap-less flag
+          tag.value = tag.value === "1"; // boolean
+          break;
+
         default:
         // nothing to do
       }

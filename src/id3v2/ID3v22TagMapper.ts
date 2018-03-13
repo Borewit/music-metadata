@@ -29,7 +29,13 @@ export const id3v22TagMap: INativeTagMap = {
   WCP: 'license',
   TEN: 'encodedby',
   TSS: 'encodersettings',
-  WAR: 'website'
+  WAR: 'website',
+  'COM:iTunPGAP': 'gapless'
+  /* ToDo: iTunes tags:
+  'COM:iTunNORM': ,
+  'COM:iTunSMPB': 'encoder delay',
+  'COM:iTunes_CDDB_IDs'
+  */
 };
 
 export class ID3v22TagMapper extends CommonTagMapper {
