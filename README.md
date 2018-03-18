@@ -8,9 +8,6 @@
 
 Stream and file based music metadata parser for node.
 
-= Document Title
-:toc:
-
 ## Installation
 Install via [npm](http://npmjs.org):
 
