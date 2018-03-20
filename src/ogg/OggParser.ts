@@ -11,7 +11,7 @@ import {OpusParser} from "../opus/OpusParser";
 import * as Token from "token-types";
 import * as _debug from "debug";
 
-const debug = _debug("music-metadata/ogg");
+const debug = _debug("music-metadata:parser:ogg");
 
 export class SegmentTable implements  Token.IGetToken<Ogg.ISegmentTable> {
 
