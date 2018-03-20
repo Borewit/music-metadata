@@ -86,13 +86,19 @@ const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
 
 class Id3v1StringType extends Token.StringType {
 
+  private static trimRightNull(x: string): string {
+    const pos0 = x.indexOf('\0');
+    return pos0 === -1 ? x : x.substr(0, pos0);
+  }
+
   constructor(len: number) {
     super(len, "binary");
   }
 
   public get(buf: Buffer, off: number): string {
     let value = super.get(buf, off);
-    value = value.trim().replace(/\x00/g, "");
+    value = Id3v1StringType.trimRightNull(value);
+    value = value.trim();
     return value.length > 0 ? value : undefined;
   }
 }
