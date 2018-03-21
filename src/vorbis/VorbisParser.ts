@@ -6,7 +6,7 @@ import * as Token from "token-types";
 import * as Ogg from "../ogg/Ogg";
 import * as _debug from "debug";
 
-const debug = _debug("music-metadata/ogg/vorbis");
+const debug = _debug("music-metadata:parser:Ogg/Vorbis1");
 
 /**
  * Vorbis 1 Parser.
@@ -89,18 +89,16 @@ export class VorbisParser implements Ogg.IAudioParser {
 
   protected parseFullPage(pageData: Buffer) {
     // New page
-    debug("Parse full page");
     const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
+    debug("Parse full page: type=%s, byteLength=%s", commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
-
-      case 1: //  type 1: the identification header
-        throw new Error('Found identification header after first page');
 
       case 3: //  type 3: comment header
         return this.parseUserCommentList(pageData, Vorbis.CommonHeader.len);
 
+      case 1: // type 1: the identification header
       case 5: // type 5: setup header type
-        throw new Error("'setup header type' not implemented");
+        break; // ignore
     }
   }
 
@@ -141,8 +139,10 @@ export class VorbisParser implements Ogg.IAudioParser {
       value = this.options.skipCovers ? null : Vorbis.VorbisPictureToken.fromBase64(value);
     }
 
-    if (value !== null)
+    if (value !== null) {
+      debug("Push tag: id=%s, value=%s", key, value);
       this.tags.push({id: key, value});
+    }
 
     return Token.UINT32_LE.len + strLen;
   }
