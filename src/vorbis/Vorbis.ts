@@ -123,7 +123,6 @@ export const CommonHeader: Token.IGetToken<ICommonHeader> = {
 /**
  * Identification header interface
  * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
- * @type {{len: number; get: ((buf, off)=>IFormatInfo)}}
  */
 export interface IFormatInfo {
   version: number,
@@ -137,7 +136,6 @@ export interface IFormatInfo {
 /**
  * Identification header decoder
  * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
- * @type {{len: number; get: ((buf, off)=>IFormatInfo)}}
  */
 export const IdentificationHeader: Token.IGetToken<IFormatInfo> = {
   len: 23,
