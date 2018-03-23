@@ -101,17 +101,6 @@
     "url": "git://github.com/borewit/music-metadata.git"
   },
   "license": "MIT",
-  "standard": {
-    "ignore": [
-      "**/dist/**",
-      "**/example/**"
-    ],
-    "globals": [
-      "musicMetadata",
-      "angular",
-      "URL"
-    ]
-  },
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
   },
