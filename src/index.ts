@@ -1,6 +1,6 @@
 'use strict';
 
-import {TagPriority, TagType} from './common/GenericTagTypes';
+import {TagPriority, TagPriorityReversed, TagType} from './common/GenericTagTypes';
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
 import {IGenericTagMapper} from "./common/GenericTagMapper";
@@ -236,6 +236,11 @@ export interface IOptions {
    * default: `false`, if set to `true`, it will skip parsing covers.
    */
   skipCovers?: boolean;
+
+  /**
+   * default: `false`, if set to `true`, it will use all tag headers available to populate common. Newest header version having priority.
+   */
+  mergeTagHeaders?: boolean;
 }
 
 /**
@@ -340,7 +345,7 @@ export class MusicMetadataParser {
   public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
     return ParserFactory.parseFile(filePath, opts).then(nativeData => {
-      return this.parseNativeTags(nativeData, opts.native);
+      return this.parseNativeTags(nativeData, opts.native, opts.mergeTagHeaders);
     });
 
   }
@@ -356,7 +361,7 @@ export class MusicMetadataParser {
    */
   public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
     return ParserFactory.parseStream(stream, mimeType, opts).then(nativeData => {
-      return this.parseNativeTags(nativeData, opts.native);
+      return this.parseNativeTags(nativeData, opts.native, opts.mergeTagHeaders);
     });
   }
 
@@ -364,9 +369,10 @@ export class MusicMetadataParser {
    * Convert native tags to common tags
    * @param nativeData
    * @includeNative return native tags in result
+   * @mergeTagHeaders populate common by merging all available tags information
    * @returns {IAudioMetadata} Native + common tags
    */
-  public parseNativeTags(nativeData: INativeAudioMetadata, includeNative?: boolean): IAudioMetadata {
+  public parseNativeTags(nativeData: INativeAudioMetadata, includeNative?: boolean, mergeTagHeaders?: boolean): IAudioMetadata {
 
     const metadata: IAudioMetadata = {
       format: nativeData.format,
@@ -382,12 +388,17 @@ export class MusicMetadataParser {
     for (const tagType in nativeData.native) {
       metadata.format.tagTypes.push(tagType as TagType);
     }
-    for (const tagType of TagPriority) {
+
+    const tagPriorities = mergeTagHeaders ? TagPriorityReversed : TagPriority;
+
+    for (const tagType of tagPriorities) {
       if (nativeData.native[tagType]) {
         for (const tag of nativeData.native[tagType]) {
           this.tagMapper.setGenericTag(metadata.common, tagType as TagType, tag);
         }
-        break;
+        if (!mergeTagHeaders) {
+          break;
+        }
       }
     }
 
@@ -412,6 +423,7 @@ export class MusicMetadataParser {
  * @param filePath Media file to read meta-data from
  * @param options Parsing options:
  *   .native=true    Will return original header in result
+ *   .mergeTagHeaders=false  Populate common from data of all headers available
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
@@ -424,6 +436,7 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
  * @param mimeType
  * @param opts Parsing options
  *   .native=true    Will return original header in result
+ *   .mergeTagHeaders=false  Populate common from data of all headers available
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseStream(stream: Stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {

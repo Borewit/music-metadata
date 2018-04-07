@@ -100,6 +100,7 @@ export type CommonTag =
   | 'replaygain_track_peak';
 
 export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'asf', 'iTunes MP4', 'ID3v1.1'];
+export const TagPriorityReversed = [].concat(TagPriority).reverse();
 
 export interface INativeTagMap {
   [index: string]: CommonTag;
