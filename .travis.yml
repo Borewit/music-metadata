@@ -1,3 +1,5 @@
+env:
+ - DEBUG=music-metadata:parser:MP4
 language: node_js
 node_js:
  - "4"
