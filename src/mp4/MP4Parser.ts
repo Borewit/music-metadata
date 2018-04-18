@@ -6,6 +6,10 @@ import * as Token from "token-types";
 import {Genres} from "../id3v1/ID3v1Parser";
 import {FourCcToken} from "../common/FourCC";
 
+import * as _debug from "debug";
+
+const debug = _debug("music-metadata:parser:MP4");
+
 interface IAtomHeader {
   length: number,
   name: string
@@ -372,7 +376,7 @@ export class MP4Parser implements ITokenParser {
     this.tokenizer = tokenizer;
     this.options = options;
 
-    return this.parseAtom().then(() => {
+    return this.parseAtom([], this.tokenizer.fileSize).then(() => {
       return {
         format: this.format,
         native: {
@@ -382,30 +386,28 @@ export class MP4Parser implements ITokenParser {
     });
   }
 
-  public parseAtom(): Promise<boolean> {
+  public parseAtom(parent: string[], size: number): Promise<void> {
 
     // Parse atom header
-    return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then(header => {
-      return this.parseAtomData(header).then(done => {
-        if (done) {
-          // ToDo: messy ending
-          // console.log("Done with %s", header.name);
-          return done;
-        } else {
-          return this.parseAtom();
-        }
+    return this.tokenizer.readToken<IAtomHeader>(Atom.Header)
+      .then(header => {
+        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, this.tokenizer.position); //  buf.toString('ascii')
+        return this.parseAtomData(header, parent).then(() => {
+          size -= header.length;
+          if (size > 0) {
+            return this.parseAtom(parent, size);
+          } else {
+            return;
+          }
+        });
       });
-    });
   }
 
-  private parseAtomData(header: IAtomHeader): Promise<boolean> {
+  private parseAtomData(header: IAtomHeader, parent: string[]): Promise<void> {
     const dataLen = header.length - 8;
-    // console.log("atom name=%s, len=%s", header.name, header.length);
     switch (header.name) {
       case "ftyp":
-        return this.parseAtom_ftyp(dataLen).then(types => {
-          return false;
-        });
+        return this.parseAtom_ftyp(dataLen).then(() => null);
 
       // "Container" atoms, contain nested atoms: 'moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'
       case "moov": // The Movie Atom: contains other atoms
@@ -414,39 +416,38 @@ export class MP4Parser implements ITokenParser {
       case "mdia": // Media atom
       case "minf": // Media Information Atom
       case "stbl": // Media Information Atom
-        return this.parseAtom().then(done => done);
+        return this.parseAtom(parent.concat([header.name]), dataLen);
 
       case "meta": // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
-        return this.tokenizer.readToken<void>(new Token.IgnoreType(4)).then(() => false); // meta has 4 bytes of padding, ignore
+        return this.tokenizer.readToken<void>(new Token.IgnoreType(4))
+          .then(() => {
+            return this.parseAtom(parent.concat([header.name]), dataLen - 4);
+          }); // meta has 4 bytes of padding, ignore
 
       case "ilst": // 'meta' => 'ilst': Metadata Item List Atom
         // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
-        return this.parseMetadataItem(dataLen).then(() => false);
+        return this.parseMetadataItem(dataLen);
 
       case "mdhd": // Media header atom
-        return this.parseAtom_mdhd(dataLen).then(() => false);
+        return this.parseAtom_mdhd(dataLen);
 
       case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-        return this.parseAtom_mvhd(dataLen).then(() => false);
+        return this.parseAtom_mvhd(dataLen);
 
       case "<id>": // 'meta' => 'ilst' => '<id>': metadata item atom
-        return this.parseMetadataItem(dataLen).then(() => false);
+        return this.parseMetadataItem(dataLen);
 
       case "cmov": // compressed movie atom; child of Movie Atom
       case "rmra": // reference movie atom; child of Movie Atom
 
-      case "mdat":
-        return Promise.resolve<boolean>(true);
-
       case "©cmt":
-        return this.parseMetadataItemData(header.name, dataLen).then(() => false);
+        return this.parseMetadataItemData(header.name, dataLen);
 
       default:
-        // return this.ignoreAtomData(dataLen);
-        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(buf => {
-          // console.log("  ascii: %s", header.name, header.length, buf.toString('ascii'));
-          buf = buf;
-        }).then(() => false);
+        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
+          .then(buf => {
+            debug("Ignore: name=%s, len=%s", header.name, header.length); //  buf.toString('ascii')
+          });
     }
   }
 

@@ -124,6 +124,28 @@ describe("ASF", () => {
       });
     });
 
+    /**
+     * Related issue: https://github.com/Borewit/music-metadata/issues/68
+     */
+    it("should be able to parse truncated .wma file", () => {
+
+      const filePath = path.join(__dirname, 'samples', '13 Thirty Dirty Birds.wma');
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+
+        const asf = mm.orderTags(metadata.native.asf);
+        // ToDo: Contains some WM/... tags which could be parsed / mapped better
+
+        assert.strictEqual(metadata.common.title, "Thirty Dirty Birds", "metadata.common.title");
+        assert.strictEqual(metadata.common.artist, "The Red Hot Chili Peppers", "metadata.common.artist");
+        assert.strictEqual(metadata.common.date, "2003", "metadata.common.date");
+        assert.strictEqual(metadata.common.label, "Capitol", "metadata.common.label");
+        assert.strictEqual(metadata.common.track.no, 13, "metadata.common.track.no");
+
+        assert.exists(asf);
+      });
+    });
+
   });
 
 });
