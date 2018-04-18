@@ -444,9 +444,6 @@ export class MP4Parser implements ITokenParser {
         return this.parseMetadataItemData(header.name, dataLen);
 
       default:
-        if (dataLen === 0) {
-          return Promise.resolve(); // Avoid 0 bytes are read
-        }
         return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
           .then(buf => {
             debug("Ignore: name=%s, len=%s", header.name, header.length); //  buf.toString('ascii')
