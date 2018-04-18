@@ -105,4 +105,20 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
   });
 
+  /**
+   * Ref: https://github.com/Borewit/music-metadata/issues/74
+   */
+  it("should support metadata behind the 'mdat' atom", () => {
+
+    const filePath = path.join(__dirname, "samples", "issue_74.m4a");
+
+    return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+
+      assert.isAtLeast(metadata.native['iTunes MP4'].length, 1);
+      t.deepEqual(metadata.common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
+      t.deepEqual(metadata.common.albumartist, "They Say We're Sinking");
+      t.deepEqual(metadata.common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
+    });
+  });
+
 });

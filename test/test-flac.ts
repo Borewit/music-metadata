@@ -40,7 +40,7 @@ describe("FLAC decoding", () => {
     t.deepEqual(vorbis.DATE, ["2010"], "vorbis.DATE");
     t.deepEqual(vorbis.TRACKNUMBER, ["07"], "vorbis.TRACKNUMBER");
     t.deepEqual(vorbis.GENRE, ["Alt. Rock"], "vorbis.GENRE");
-    t.deepEqual(vorbis.COMMENT, ["EAC-Secure Mode"], "vorbis.COMMENT");
+    t.deepEqual(vorbis.COMMENT, ["EAC-Secure Mode=should ignore equal sign"], "vorbis.COMMENT");
     const pic = vorbis.METADATA_BLOCK_PICTURE[0];
 
     t.strictEqual(pic.type, "Cover (front)", "raw METADATA_BLOCK_PICTUREtype");

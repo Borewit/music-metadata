@@ -6,6 +6,9 @@ import {ITokenParser} from "../ParserFactory";
 import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
 import {Promise} from "es6-promise";
+import * as _debug from "debug";
+
+const debug = _debug("music-metadata:parser:ASF");
 
 /**
  * Windows Media Metadata Usage Guidelines
@@ -41,7 +44,17 @@ export class AsfParser implements ITokenParser {
       if (!header.objectId.equals(GUID.HeaderObject)) {
         throw new Error('expected asf header; but was not found; got: ' + header.objectId.str);
       }
-      return this.parseObjectHeader(header.numberOfHeaderObjects);
+      return this.parseObjectHeader(header.numberOfHeaderObjects).catch(err => {
+          debug("Error while parsing ASF: %s", err);
+          // ToDo: register warning
+          return {
+            format: this.format,
+            native: {
+              asf: this.tags
+            }
+          };
+        });
+
     });
   }
 
@@ -49,6 +62,7 @@ export class AsfParser implements ITokenParser {
     // Parse common header of the ASF Object (3.1)
     return this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken).then(header => {
       // Parse data part of the ASF Object
+      debug("header GUID=%s", header.objectId.str);
       switch (header.objectId.str) {
 
         case AsfObject.FilePropertiesObject.guid.str: // 3.2
@@ -88,11 +102,12 @@ export class AsfParser implements ITokenParser {
 
         case GUID.PaddingObject.str:
           // ToDo: register bytes pad
+          debug("Padding: %s bytes", header.objectSize - AsfObject.HeaderObjectToken.len);
           return this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
 
         default:
           this.warnings.push("Ignore ASF-Object-GUID: " + header.objectId.str);
-          // console.log("Ignore ASF-Object-GUID: %s", header.objectId.str);
+          debug("Ignore ASF-Object-GUID: %s", header.objectId.str);
           return this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
       }
     }).then(() => {

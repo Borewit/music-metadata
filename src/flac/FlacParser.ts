@@ -122,7 +122,7 @@ export class FlacParser extends AbstractID3v2Parser {
       for (let i = 0; i < commentListLength; i++) {
         const comment = decoder.readStringUtf8();
         const split = comment.split('=');
-        this.tags.push({id: split[0].toUpperCase(), value: split[1]});
+        this.tags.push({id: split[0].toUpperCase(), value: split.splice(1).join('=')});
       }
     });
   }

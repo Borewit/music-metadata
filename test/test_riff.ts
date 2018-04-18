@@ -47,6 +47,16 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
 
     });
 
+    // Issue https://github.com/Borewit/music-metadata/issues/75
+    it("should be able to handle complex nested chunk structures", () => {
+
+      const filePath = path.join(__dirname, "samples", "issue_75.wav");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        assert.deepEqual(metadata.format.dataformat, "WAVE");
+      });
+    });
+
   });
 
 });
