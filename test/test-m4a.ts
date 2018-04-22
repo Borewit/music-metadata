@@ -121,4 +121,23 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
     });
   });
 
+  /**
+   * Ref: https://github.com/Borewit/music-metadata/issues/79
+   */
+  it("should be able to extract the composer and artist", () => {
+
+    const filePath = path.join(__dirname, "samples", "issue_79.m4a");
+
+    return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+      assert.strictEqual(metadata.common.title, "Uprising");
+      assert.deepEqual(metadata.common.composer, ["Muse"]);
+      assert.deepEqual(metadata.common.artists, ["Muse"]);
+      assert.deepEqual(metadata.common.genre, ["Rock"]);
+      assert.strictEqual(metadata.common.date, "2009");
+      assert.strictEqual(metadata.common.encodedby, "iTunes 8.2.0.23, QuickTime 7.6.2");
+      assert.deepEqual(metadata.common.disk, {no: 1, of: 1});
+      assert.deepEqual(metadata.common.track, {no: 1, of: null});
+    });
+  });
+
 });
