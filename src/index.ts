@@ -384,10 +384,14 @@ export class MusicMetadataParser {
     }
     for (const tagType of TagPriority) {
       if (nativeData.native[tagType]) {
-        for (const tag of nativeData.native[tagType]) {
-          this.tagMapper.setGenericTag(metadata.common, tagType as TagType, tag);
+        if (nativeData.native[tagType].length === 0) {
+          // ToDo: register warning: empty tag header
+        } else {
+          for (const tag of nativeData.native[tagType]) {
+            this.tagMapper.setGenericTag(metadata.common, tagType as TagType, tag);
+          }
+          break;
         }
-        break;
       }
     }
 
