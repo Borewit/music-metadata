@@ -1,6 +1,6 @@
 'use strict';
 
-import {TagPriority, TagPriorityReversed, TagType} from './common/GenericTagTypes';
+import {TagPriority, TagType} from './common/GenericTagTypes';
 import {ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
 import {IGenericTagMapper} from "./common/GenericTagMapper";
@@ -369,7 +369,6 @@ export class MusicMetadataParser {
    * Convert native tags to common tags
    * @param nativeData
    * @includeNative return native tags in result
-   * @mergeTagHeaders populate common by merging all available tags information
    * @returns {IAudioMetadata} Native + common tags
    */
   public parseNativeTags(nativeData: INativeAudioMetadata, includeNative?: boolean, mergeTagHeaders?: boolean): IAudioMetadata {
@@ -377,10 +376,7 @@ export class MusicMetadataParser {
     const metadata: IAudioMetadata = {
       format: nativeData.format,
       native: includeNative ? nativeData.native : undefined,
-      common: {
-        track: {no: null, of: null},
-        disk: {no: null, of: null}
-      }
+      common: {} as any
     };
 
     metadata.format.tagTypes = [];
@@ -389,15 +385,31 @@ export class MusicMetadataParser {
       metadata.format.tagTypes.push(tagType as TagType);
     }
 
-    const tagPriorities = mergeTagHeaders ? TagPriorityReversed : TagPriority;
+    for (const tagType of TagPriority) {
 
-    for (const tagType of tagPriorities) {
       if (nativeData.native[tagType]) {
-        for (const tag of nativeData.native[tagType]) {
-          this.tagMapper.setGenericTag(metadata.common, tagType as TagType, tag);
-        }
-        if (!mergeTagHeaders) {
-          break;
+        if (nativeData.native[tagType].length === 0) {
+          // ToDo: register warning: empty tag header
+        } else {
+
+          const common = {
+            track: {no: null, of: null},
+            disk: {no: null, of: null}
+          };
+
+          for (const tag of nativeData.native[tagType]) {
+            this.tagMapper.setGenericTag(common, tagType as TagType, tag);
+          }
+
+          for (const tag of Object.keys(common)) {
+            if (!metadata.common[tag]) {
+              metadata.common[tag] = common[tag];
+            }
+          }
+
+          if (!mergeTagHeaders) {
+            break;
+          }
         }
       }
     }

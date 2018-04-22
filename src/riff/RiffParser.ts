@@ -10,6 +10,9 @@ import {IChunkHeader} from "../aiff/Chunk";
 import Common from "../common/Util";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
+import * as _debug from "debug";
+
+const debug = _debug("music-metadata:parser:RIFF");
 
 /**
  * Resource Interchange File Format (RIFF) Parser
@@ -19,6 +22,8 @@ import {Promise} from "es6-promise";
  * Ref:
  *  http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html
  *  http://soundfile.sapp.org/doc/WaveFormat
+ *
+ *  ToDo: Split WAVE part from RIFF parser
  */
 export class WavePcmParser implements ITokenParser {
 
@@ -47,17 +52,12 @@ export class WavePcmParser implements ITokenParser {
     this.options = options;
 
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
-      .then(header => {
-        if (header.chunkID !== 'RIFF')
+      .then(riffHeader => {
+        debug('pos=%s, parse: chunkID=%s', this.tokenizer.position, riffHeader.chunkID);
+        if (riffHeader.chunkID !== 'RIFF')
           return null; // Not RIFF format
 
-        return this.tokenizer.readToken<string>(FourCcToken).then(type => {
-          this.metadata.format.dataformat = type;
-        }).then(() => {
-          return this.readChunk(header).then(() => {
-            return null;
-          });
-        });
+        return this.parseRiffChunk();
       })
       .catch(err => {
         if (err.message === strtok3.endOfFile) {
@@ -73,22 +73,26 @@ export class WavePcmParser implements ITokenParser {
       });
   }
 
-  public readChunk(parent: IChunkHeader): Promise<void> {
+  public parseRiffChunk(): Promise<void> {
+    return this.tokenizer.readToken<string>(FourCcToken).then(type => {
+      this.metadata.format.dataformat = type;
+      switch (type) {
+        case "WAVE":
+          return this.readWaveChunk();
+        default:
+          throw new Error("Unsupported RIFF format: RIFF/" + type);
+      }
+    });
+  }
+
+  public readWaveChunk(): Promise<void> {
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(header => {
+        debug('pos=%s, readChunk: chunkID=RIFF/WAVE/%s', this.tokenizer.position, header.chunkID);
         switch (header.chunkID) {
 
           case "LIST":
-            return this.tokenizer.readToken<string>(FourCcToken).then(listTypes => {
-              switch (listTypes) {
-                case 'INFO':
-                  return this.parseRiffInfoTags(header.size - 4).then(() => header.size);
-
-                default:
-                  this.warnings.push("Ignore chunk: RIFF/LIST." + listTypes);
-                  return this.tokenizer.ignore(header.size).then(() => header.size);
-              }
-            });
+            return this.parseListTag(header);
 
           case "fmt ": // The Util Chunk
             return this.tokenizer.readToken<WaveChunk.IFormat>(new WaveChunk.Format(header))
@@ -121,18 +125,38 @@ export class WavePcmParser implements ITokenParser {
             return this.tokenizer.ignore(header.size);
         }
       }).then(() => {
-        return this.readChunk(parent);
+        return this.readWaveChunk();
       });
   }
 
+  public parseListTag(listHeader: IChunkHeader): Promise<void> {
+    return this.tokenizer.readToken<string>(FourCcToken).then(listType => {
+      debug('pos=%s, parseListTag: chunkID=RIFF/WAVE/LIST/%s', this.tokenizer.position, listType);
+      switch (listType) {
+        case 'INFO':
+          return this.parseRiffInfoTags(listHeader.size - 4);
+
+        default:
+          this.warnings.push("Ignore chunk: RIFF/WAVE/LIST/" + listType);
+          debug("Ignoring chunkID=RIFF/WAVE/LIST/" + listType);
+
+        case 'adtl':
+          return this.tokenizer.ignore(listHeader.size - 4);
+      }
+    });
+  }
+
   private parseRiffInfoTags(chunkSize): Promise<void> {
+    if (chunkSize === 0) {
+      return Promise.resolve<void>(null);
+    }
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(header => {
         const valueToken = new RiffChunk.ListInfoTagValue(header);
         return this.tokenizer.readToken(valueToken).then(value => {
           this.riffInfoTags.push({id: header.chunkID, value: Common.stripNulls(value)});
           chunkSize -= (8 + valueToken.len);
-          if (chunkSize > 8) {
+          if (chunkSize >= 8) {
             return this.parseRiffInfoTags(chunkSize);
           } else if (chunkSize === 0) {
             return Promise.resolve<void>(null);
