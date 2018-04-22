@@ -20,7 +20,7 @@ describe('Merge tag headers', () => {
     });
   });
 
-  describe.only('mergeTagHeaders option', () => {
+  describe('mergeTagHeaders option', () => {
     const testSample = path.join(issueDir, "Dethklok-mergeTagHeaders.mp3");
     /**
      * About the sample:
