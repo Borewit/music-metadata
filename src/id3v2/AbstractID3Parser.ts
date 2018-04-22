@@ -6,6 +6,9 @@ import {ID3v2Parser} from "./ID3v2Parser";
 import {ID3v1Parser} from "../id3v1/ID3v1Parser";
 import {Promise} from "es6-promise";
 
+import * as _debug from "debug";
+const debug = _debug("music-metadata:parser:ID3");
+
 export abstract class AbstractID3v2Parser implements ITokenParser {
 
   public static startsWithID3v2Header(tokenizer: strtok3.ITokenizer): Promise<boolean> {
@@ -55,6 +58,7 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
       })
       .then(() => {
         // merge ID3v2 metadata with whatever came after the ID3v2 header
+        debug("Completed ID3v2 header, pos=%s", tokenizer.position);
         return this._parse(metadata, tokenizer, options);
       })
       .then(() => {
