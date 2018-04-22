@@ -12,7 +12,7 @@
     "description": "Track title"
   },
   "artist": {
-    "description": "Literal written track artist e.g.: `\"Beth Hart & Joe Bonamassa\"`"
+    "description": "Literal written track artist e.g.: `\"Beth Hart & Joe Bonamassa\"`. If multiple track arists are found, this is likely to be undefined. Use _common.artists_ instead. "
   },
   "artists": {
     "description": "Track artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`"
