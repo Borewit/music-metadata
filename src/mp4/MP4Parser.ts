@@ -66,8 +66,6 @@ export class MP4Parser implements ITokenParser {
           size -= header.length;
           if (size > 0) {
             return this.parseAtom(parent, size);
-          } else {
-            return;
           }
         });
       });
@@ -91,32 +89,14 @@ export class MP4Parser implements ITokenParser {
       case "meta": // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         return this.tokenizer.readToken<void>(new Token.IgnoreType(4))
           .then(() => {
-            return this.parseAtom(parent.concat([header.name]), dataLen - 4);
+            return this.parseMetaAtom(parent.concat([header.name]), dataLen - 4);
           }); // meta has 4 bytes of padding, ignore
 
-      case "ilst": // 'meta' => 'ilst': Metadata Item List Atom
-        // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
-        return this.parseMetadataItem(dataLen);
-
-      case "mdhd": // Media header atom
+     case "mdhd": // Media header atom
         return this.parseAtom_mdhd(dataLen);
 
       case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
         return this.parseAtom_mvhd(dataLen);
-
-      case "<id>": // 'meta' => 'ilst' => '<id>': metadata item atom
-        return this.parseMetadataItem(dataLen);
-
-      case "cmov": // compressed movie atom; child of Movie Atom
-      case "rmra": // reference movie atom; child of Movie Atom
-
-      case "©cmt": // Comment
-      case "©src":
-      case "©wrt":
-      case "gnre": // Genre
-      case "©gen": // Genre
-      case "©ART": // Genre
-        return this.parseMetadataItemData(header.name, dataLen);
 
       case "tkhd":
         return this.tokenizer.readToken<Atom.ITrackHeaderAtom>(new Atom.TrackHeaderAtom(dataLen))
@@ -125,6 +105,47 @@ export class MP4Parser implements ITokenParser {
           });
 
       default:
+        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
+          .then(buf => {
+            debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
+          });
+    }
+  }
+
+  /**
+   * Parse Metadata Atom (meta), ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+   * @param {string[]} parent Parent Atoms
+   * @param {number} size Remaining meta atom size
+   * @returns {Promise<void>}
+   */
+  private parseMetaAtom(parent: string[], size: number): Promise<void> {
+
+    // Parse atom header
+    return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header)
+      .then(header => {
+        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, this.tokenizer.position); //  buf.toString('ascii')
+        return this.parseMetaAtomData(header, parent).then(() => {
+          size -= header.length;
+          if (size > 0) {
+            return this.parseMetaAtom(parent, size);
+          }
+        });
+      });
+  }
+
+  private parseMetaAtomData(header: Atom.IAtomHeader, parent: string[]): Promise<void> {
+    const dataLen = header.length - 8;
+    switch (header.name) {
+      case "ilst": // 'meta' => 'ilst': Metadata Item List Atom
+      case "<id>": // 'meta' => 'ilst' => '<id>': metadata item atom
+        // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
+        return this.parseMetadataItemList(dataLen);
+
+      default: // If the Atom explicitly ignored, and not a meta-data-item-data, it will likely cause a crash
+        return this.parseMetadataItemData(header.name, dataLen);
+
+      case "free":
+      case "hdlr": // Handler Reference Atoms, https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-BBCIBHFD
         return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
           .then(buf => {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
@@ -144,9 +165,8 @@ export class MP4Parser implements ITokenParser {
           types.push(ftype.type);
           return types;
         });
-      } else {
-        return [];
       }
+      return [];
     });
   }
 
@@ -176,33 +196,18 @@ export class MP4Parser implements ITokenParser {
   }
 
   /**
-   * Parse media header (ilst) atom
-   * @param len
-   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
-   */
-
-  /*
-   private parseMetadataItem(len: number): Promise<void>{
-   // Parse atom header
-   return this.tokenizer.readToken<IAtomHeader>(Atom.Header).then((header) => {
-
-   return this.parseAtomData(header);
-   });
-   }*/
-
-  /**
    * Parse Meta-item-list-atom (item of 'ilst' atom)
    * @param len
    * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
    */
-  private parseMetadataItem(len: number): Promise<void> {
+  private parseMetadataItemList(len: number): Promise<void> {
     // Parse atom header
     return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header).then(header => {
-      // console.log("metadata-item: name=%s, len=%s", header.name, header.length);
+      debug("metadata-item: name=%s, len=%s", header.name, header.length);
       return this.parseMetadataItemData(header.name, header.length - Atom.Atom.Header.len).then(() => {
         const remaining = len - Atom.Atom.Header.len - header.length;
         if (remaining > 0) {
-          return this.parseMetadataItem(remaining);
+          return this.parseMetadataItemList(remaining);
         } else
           return;
       });
