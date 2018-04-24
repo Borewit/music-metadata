@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import {ITokenizer, endOfFile} from "strtok3";
-import Common, {default as Util} from "../common/Util";
+import Common from "../common/Util";
 import * as Token from "token-types";
 import {Promise} from "es6-promise";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
