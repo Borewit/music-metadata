@@ -148,6 +148,7 @@ export class ParserFactory {
       case "audio/aacp":
       case "audio/mp4":
       case "audio/x-aac":
+      case "audio/x-m4a":
         return new MP4Parser();
 
       case "video/x-ms-asf":
