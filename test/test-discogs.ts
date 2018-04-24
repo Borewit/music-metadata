@@ -171,7 +171,6 @@ describe("Discogs mappings", () => {
       t.deepEqual(common.album, "Sentir", "common.album");
       t.deepEqual(common.artist, "Yasmin Levy", "common.artist");
 
-
       // Each Discogs tag should be mapped
       for (const tag of discogs_tags_found) {
         assert.isTrue(discogs_tags.indexOf(tag) !== -1, "Discog/Vorbis tag: " + tag);
@@ -192,9 +191,9 @@ describe("Discogs mappings", () => {
       t.deepEqual(native[tagName], ["467650"], tagType + "/" + tagName);
       t.deepEqual(common.discogs_artist_id, [467650], tagType + "/" + tagName + " => common.discogs_artist_id");
 
-      //tagName = getTagName("DISCOGS_ALBUM_ARTISTS");
-      //t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
-      //t.deepEqual(common.artists, ["Yasmin Levy", "Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
+      // tagName = getTagName("DISCOGS_ALBUM_ARTISTS");
+      // t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
+      // t.deepEqual(common.artists, ["Yasmin Levy", "Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
 
       // Check Discogs-tag: DISCOGS_ARTIST_NAME ToDo: test multiple artists
       tagName = getTagName("DISCOGS_ARTIST_NAME");
