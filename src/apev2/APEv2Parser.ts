@@ -7,7 +7,7 @@ import {ITokenParser} from "../ParserFactory";
 import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "es6-promise";
+import {Promise} from "bluebird";
 
 /**
  * APETag versionIndex history / supported formats
