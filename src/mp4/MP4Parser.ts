@@ -1,7 +1,7 @@
 import {ITokenParser} from "../ParserFactory";
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../";
 import {ITokenizer} from "strtok3";
-import {Promise} from "es6-promise";
+import {Promise} from "bluebird";
 import * as Token from "token-types";
 import * as Atom from "./Atom";
 import {Genres} from "../id3v1/ID3v1Parser";

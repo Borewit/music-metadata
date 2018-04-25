@@ -1,7 +1,7 @@
 'use strict';
 import * as Vorbis from './Vorbis';
 import {IFormat, INativeAudioMetadata, IOptions, ITag} from "../index";
-import {Promise} from "es6-promise";
+import {Promise} from "bluebird";
 import * as Token from "token-types";
 import * as Ogg from "../ogg/Ogg";
 import * as _debug from "debug";
