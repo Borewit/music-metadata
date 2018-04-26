@@ -11,6 +11,7 @@ import {APEv2TagMapper} from "./apev2/APEv2TagMapper";
 import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
 import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
 import {AsfTagMapper} from "./asf/AsfTagMapper";
+import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
 
 export interface IPicture {
   format: string,
@@ -259,7 +260,8 @@ export class CombinedTagMapper {
       new MP4TagMapper(),
       new VorbisTagMapper(),
       new APEv2TagMapper(),
-      new AsfTagMapper()
+      new AsfTagMapper(),
+      new RiffInfoTagMapper()
     ].forEach(mapper => {
       this.registerTagMapper(mapper);
     });

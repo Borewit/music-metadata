@@ -57,6 +57,35 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
       });
     });
 
+    // Issue https://github.com/Borewit/music-metadata/issues/75
+    it("should map RIFF tags to common", () => {
+
+      const filePath = path.join(__dirname, "samples", "issue_83.wav");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+
+        const format = metadata.format;
+        assert.deepEqual(format.dataformat, "WAVE");
+        assert.deepEqual(format.bitsPerSample, 24);
+        assert.deepEqual(format.sampleRate, 48000);
+        assert.deepEqual(format.numberOfSamples, 29762);
+        assert.deepEqual(format.duration, 0.6200416666666667);
+        assert.deepEqual(format.tagTypes, [ 'exif' ]);
+
+        const exif = mm.orderTags(metadata.native.exif);
+        assert.deepEqual(exif.IART, ["FUCK ZORRO"]);
+        assert.deepEqual(exif.ICRD, ["2018-04-25T18:00:33-05:00"]);
+        assert.deepEqual(exif.ISFT, ["Adobe Audition CC 2018.1 (Macintosh)"]);
+
+        const common = metadata.common;
+        assert.deepEqual(common.artists, ["FUCK ZORRO"]);
+        assert.deepEqual(common.date, "2018-04-25T18:00:33-05:00");
+        assert.deepEqual(common.year, 2018);
+        assert.deepEqual(common.encodedby, "Adobe Audition CC 2018.1 (Macintosh)");
+
+      });
+    });
+
   });
 
 });
