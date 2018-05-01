@@ -8,8 +8,15 @@ jobs:
 
     - stage: install dependencies
       script: npm install
-      node_js: 9
 
+    - stage: compile
+      script: npm intall typescript@2.0
+      script: npm run compile
+      node_js: 4
+    - stage: compile
+      script: npm intall typescript@2.4
+      script: npm run compile
+      node_js: 6
     - stage: compile
       script: npm run compile
       node_js: 7
@@ -23,6 +30,12 @@ jobs:
       script: npm run compile
       node_js: 10
 
+    - stage: test
+      script: npm run test
+      node_js: 4
+    - stage: test
+      script: npm run test
+      node_js: 6
     - stage: test
       script: npm run test
       node_js: 7
