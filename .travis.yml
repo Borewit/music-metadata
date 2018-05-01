@@ -1,6 +1,5 @@
 language: node_js
 node_js:
- - "4"
  - "6"
  - "7"
  - "8"
@@ -8,16 +7,12 @@ node_js:
 install:
 - npm install
 script:
+- npm run lint
+- npm run compile
 - npm run test
 
 jobs:
   include:
-    - stage: before_install
-      script: npm run lint
-      node_js: 8
-    - stage: before_script
-      script: npm run compile
-      node_js: 8
     - stage: after_success
       script: npm run coveralls
       node_js: 8
