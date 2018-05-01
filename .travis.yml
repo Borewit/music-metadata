@@ -12,16 +12,18 @@ jobs:
   include:
     - stage: check code
       script: npm run lint
-    - stage: test
+
+    - stage: install
+      script: npm install typescript@2.0
+      node_js: 4
+    - stage: install
+      script: npm install typescript@2.4
+      node_js: 6
+
+    - stage: script
       script: npm run lint
       script: npm run compile
       script: npm run coveralls
-    - stage: before_script
-      script: npm install typescript@2.0
-      node_js: 4
-    - stage: before_script
-      script: npm install typescript@2.4
-      node_js: 6
 
     - stage: after_success
       script: npm run coveralls
