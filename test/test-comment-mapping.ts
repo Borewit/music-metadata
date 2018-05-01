@@ -38,9 +38,7 @@ describe("Mapping of common comment tag", () => {
 
   describe("APEv2 header", () => {
 
-    it("Monkey's Audio / APEv2", function() {
-
-      this.skip(); // ToDo: update sample file
+    it("Monkey's Audio / APEv2", () => {
 
       const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
@@ -50,9 +48,7 @@ describe("Mapping of common comment tag", () => {
       });
     });
 
-    it("WavPack / APEv2", function() {
-
-      this.skip(); // ToDo: update sample file
+    it("WavPack / APEv2", () => {
 
       const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
@@ -75,9 +71,7 @@ describe("Mapping of common comment tag", () => {
       });
     });
 
-    it("RIFF/WAVE/PCM / ID3v2.3", function() {
-
-      this.skip(); // ToDo: update sample file
+    it("RIFF/WAVE/PCM / ID3v2.3", () => {
 
       const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
@@ -111,9 +105,7 @@ describe("Mapping of common comment tag", () => {
       });
     });
 
-    it("should parse AIFF/ID3v2.4 audio file", function() {
-
-      this.skip(); // ToDo: update sample file
+    it("should parse AIFF/ID3v2.4 audio file", () => {
 
       const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
