@@ -4,15 +4,17 @@ node_js:
  - "7"
  - "8"
  - "9"
-install:
-- npm install
-script:
-- npm run lint
-- npm run compile
-- npm run test
 
 jobs:
   include:
+    - stage: install_dependencies
+      script: npm install
+    - stage: check_code
+      script: npm run lint
+    - stage: compile
+      script: npm run compile
+    - stage: test
+      script: npm run test
     - stage: after_success
       script: npm run coveralls
       node_js: 8
