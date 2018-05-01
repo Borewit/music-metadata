@@ -4,10 +4,15 @@ jobs:
   include:
     - stage: check code
       script: npm run lint
+      node_js: 9
 
     - stage: install dependencies
       script: npm install
+      node_js: 9
 
+    - stage: compile
+      script: npm run compile
+      node_js: 7
     - stage: compile
       script: npm run compile
       node_js: 8
