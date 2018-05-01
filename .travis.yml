@@ -6,12 +6,13 @@ jobs:
       script: npm run lint
       node_js: 9
 
+    - stage: install dependencies
+      script: npm install
+
     - stage: compile
-      script: npm install typescript@2.0
       script: npm run compile
       node_js: 4
     - stage: compile
-      script: npm install typescript@2.4
       script: npm run compile
       node_js: 6
     - stage: compile
