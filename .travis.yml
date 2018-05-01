@@ -4,9 +4,16 @@ node_js:
  - "6"
  - "7"
  - "8"
+ - "9"
 install:
 - npm install
 script:
 - npm run lint
 - npm run compile
-- npm run coveralls
+- npm run test
+
+jobs:
+  include:
+    - stage: after_success
+      script: npm run coveralls
+      node_js: 8
