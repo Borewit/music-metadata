@@ -41,8 +41,7 @@
     "aiff",
     "wav",
     "WavPack",
-    "Opus",
-    "metadata"
+    "Opus"
   ],
   "main": "lib",
   "typings": "lib/index",
