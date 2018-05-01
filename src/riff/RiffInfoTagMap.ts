@@ -21,8 +21,12 @@ export const riffInfoTagMap: INativeTagMap = {
   YEAR: 'year',
   ISFT: 'encodedby', // Software
   CODE: 'encodedby', // EncodedBy
-  TURL: 'website' // URL
-  // ITCH:	'technician' //Technician
+  TURL: 'website', // URL,
+  IGNR: 'genre', // Genre
+  IENG: 'engineer', // Engineer
+  ITCH:	'technician', // Technician
+  IMED: 'media', // Original Media
+  IRPD: 'album' // Product, where the file was intended for
 };
 
 export class RiffInfoTagMapper extends CommonTagMapper {
