@@ -1,53 +1,27 @@
 language: node_js
 
+node_js:
+- "4"
+- "6"
+- "7"
+- "8"
+- "9"
+- "10"
+
 jobs:
   include:
     - stage: check code
       script: npm run lint
-      node_js: 9
-
-    - stage: install dependencies
-      script: npm install
-
-    - stage: compile
+    - stage: test
+      script: npm run lint
+      script: npm run compile
+      script: npm run coveralls
+    - stage: before_script
       script: npm install typescript@2.0
-      script: npm run compile
       node_js: 4
-    - stage: compile
+    - stage: before_script
       script: npm install typescript@2.4
-      script: npm run compile
       node_js: 6
-    - stage: compile
-      script: npm run compile
-      node_js: 7
-    - stage: compile
-      script: npm run compile
-      node_js: 8
-    - stage: compile
-      script: npm run compile
-      node_js: 9
-    - stage: compile
-      script: npm run compile
-      node_js: 10
-
-    - stage: test
-      script: npm run test
-      node_js: 4
-    - stage: test
-      script: npm run test
-      node_js: 6
-    - stage: test
-      script: npm run test
-      node_js: 7
-    - stage: test
-      script: npm run test
-      node_js: 8
-    - stage: test
-      script: npm run test
-      node_js: 9
-    - stage: test
-      script: npm run test
-      node_js: 10
 
     - stage: after_success
       script: npm run coveralls
