@@ -250,5 +250,8 @@
   },
   "replaygain_track_gain": {
     "description": "_ToDo_: difference with averageLevel"
+  },
+  "technician": {
+    "description": "Technician who digitized subject"
   }
 }

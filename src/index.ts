@@ -62,6 +62,7 @@ export interface ICommonTagsResult {
   producer?: string[],
   djmixer?: string[],
   mixer?: string[],
+  technician?: string[],
   label?: string,
   grouping?: string[],
   subtitle?: string[],
