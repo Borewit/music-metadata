@@ -28,6 +28,10 @@ jobs:
       script: npm run compile
       node_js: 10
 
+    - stage: prepare cache
+      script: npm run compile
+      node_js: 10
+
     - stage: test
       script: npm run test
       node_js: 4
