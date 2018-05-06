@@ -1,9 +1,8 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import GUID from "../src/asf/GUID";
-import * as fs from 'fs-extra';
+import * as fse from 'fs-extra';
 import {Util} from "../src/asf/Util";
 import {DataType} from "../src/asf/AsfObject";
 
@@ -100,7 +99,7 @@ describe("ASF", () => {
 
     it("should decode from ASF from a stream (audio/x-ms-wma)", () => {
 
-      const stream = fs.createReadStream(asfFilePath);
+      const stream = fse.createReadStream(asfFilePath);
 
       return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then(metadata => {
         checkFormat(metadata.format);
