@@ -13,8 +13,18 @@ export class Util {
     return common.stripNulls(common.decodeString(buf, "utf16le"));
   }
 
+  /**
+   * Best effort approach to read 64 but unsigned integer.
+   * Note that JavasScript is limited to 2^53 - 1 bit.
+   */
   public static readUInt64LE(buf: Buffer, offset: number = 0): number {
-    return buf.readUIntLE(offset, 8);
+    let n = buf[offset];
+    let mul = 1;
+    let i = 0;
+    while (++i < 8 && (mul *= 0x100)) {
+      n += buf[offset + i] * mul
+    }
+    return n;
   }
 
   private static attributeParsers: AttributeParser[] = [
@@ -28,7 +38,7 @@ export class Util {
   ];
 
   private static parseByteArrayAttr(buf: Buffer): Buffer {
-    const newBuf = new Buffer(buf.length);
+    const newBuf = Buffer.alloc(buf.length);
     buf.copy(newBuf);
     return newBuf;
   }

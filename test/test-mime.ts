@@ -8,7 +8,7 @@ const t = assert;
 
 describe("MIME & extension mapping", () => {
 
-  const buf = new Buffer(30).fill(0);
+  const buf = Buffer.alloc(30).fill(0);
 
   const audioExtension = [".aac", ".mp3", ".ogg", ".wav", ".flac", ".m4a"]; // ToDo: ass ".ac3"
 

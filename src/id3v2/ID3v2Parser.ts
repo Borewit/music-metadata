@@ -191,7 +191,7 @@ export class ID3v2Parser {
   }
 
   public parseId3Data(dataLen: number): Promise<void> {
-    const buffer = new Buffer(dataLen);
+    const buffer = Buffer.alloc(dataLen);
     return this.tokenizer.readBuffer(buffer, 0, dataLen).then(() => {
       for (const tag of this.parseMetadata(buffer)) {
         if (tag.id === 'TXXX') {

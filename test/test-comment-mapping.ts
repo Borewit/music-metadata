@@ -127,15 +127,14 @@ describe("Mapping of common comment tag", () => {
     });
   });
 
-  it("should map WMA/ASF header", function() {
+  it.skip("should map WMA/ASF header", () => {
 
-    this.skip(); // ToDo: update sample file
-
+    // ToDo: update sample file
     const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     // Parse wma/asf file
     return mm.parseFile(filePath, {native: true}).then(metadata => {
-      t.deepEqual(metadata.common.comment, ["Medieval CUE Splitter (www.medieval.it)", "Test 123"]);
+      t.deepEqual(metadata.common.comment, ["Test 123"]);
     });
   });
 
