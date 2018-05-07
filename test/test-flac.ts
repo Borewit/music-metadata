@@ -90,7 +90,7 @@ describe("FLAC decoding", () => {
   describe("handle corrupt FLAC data", () => {
 
     const emptyStreamSize = 10 * 1024;
-    const buf = new Buffer(emptyStreamSize).fill(0);
+    const buf = Buffer.alloc(emptyStreamSize).fill(0);
 
     it("should handle a corrupt stream", () => {
 

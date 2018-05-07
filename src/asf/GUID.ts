@@ -96,7 +96,7 @@ export default class GUID {
    * @returns {Buffer} Encoded Bnary GUID
    */
   public static encode(str: string): Buffer {
-    const bin = new Buffer(16);
+    const bin = Buffer.alloc(16);
     bin.writeUInt32LE(parseInt(str.slice(0, 8), 16), 0);
     bin.writeUInt16LE(parseInt(str.slice(9, 13), 16), 4);
     bin.writeUInt16LE(parseInt(str.slice(14, 18), 16), 6);

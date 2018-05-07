@@ -38,7 +38,7 @@ export class Util {
   ];
 
   private static parseByteArrayAttr(buf: Buffer): Buffer {
-    const newBuf = new Buffer(buf.length);
+    const newBuf = Buffer.alloc(buf.length);
     buf.copy(newBuf);
     return newBuf;
   }

@@ -216,7 +216,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
   private metadata: INativeAudioMetadata;
 
-  private buf_frame_header = new Buffer(4);
+  private buf_frame_header = Buffer.alloc(4);
 
   private tokenizer: ITokenizer;
   /**
@@ -226,7 +226,7 @@ export class MpegParser extends AbstractID3v2Parser {
   private readDuration: boolean;
 
   private syncPeek = {
-    buf: new Buffer(maxPeekLen),
+    buf: Buffer.alloc(maxPeekLen),
     len: 0
   };
 
