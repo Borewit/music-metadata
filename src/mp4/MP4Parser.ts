@@ -5,7 +5,7 @@ import {Promise} from "bluebird";
 import * as Token from "token-types";
 import * as Atom from "./Atom";
 import {Genres} from "../id3v1/ID3v1Parser";
-import util from "../common/util";
+import util from "../common/Util";
 
 import * as _debug from "debug";
 const debug = _debug("music-metadata:parser:MP4");
