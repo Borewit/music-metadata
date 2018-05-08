@@ -1,6 +1,5 @@
 import * as assert from "assert";
 import {Windows1292Decoder} from './Windows1292Decoder';
-import {Genres} from "../id3v1/ID3v1Parser";
 
 export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' | 'utf16le';
 
@@ -125,5 +124,59 @@ export default class Util {
    */
   public static isBitSet(buf: Buffer, byteOffset: number, bitOffset: number): boolean {
     return Util.getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
+  }
+
+  /**
+   * Best effort approach to read 64 but unsigned integer.
+   * Note that JavasScript is limited to 2^53 - 1 bit.
+   */
+  public static readUInt64LE(buf: Buffer, offset: number = 0): number {
+    let n = buf[offset];
+    let mul = 1;
+    let i = 0;
+    while (++i < 8) {
+      mul *= 0x100;
+      n += buf[offset + i] * mul;
+    }
+    return n;
+  }
+
+  /**
+   * Best effort approach to read 64 but unsigned integer.
+   * Note that JavasScript is limited to 2^53 - 1 bit.
+   */
+  public static readIntBE(buf: Buffer, offset: number, byteLength: number): number {
+    offset = offset >>> 0;
+    byteLength = byteLength >>> 0;
+
+    let i = byteLength;
+    let mul = 1;
+    let val = buf[offset + --i];
+    while (i > 0) {
+      mul *= 0x100;
+      val += buf[offset + --i] * mul;
+    }
+    mul *= 0x80;
+
+    if (val >= mul) val -= Math.pow(2, 8 * byteLength);
+
+    return val;
+  }
+
+  /**
+   * Best effort approach to read 64 but unsigned integer.
+   * Note that JavasScript is limited to 2^53 - 1 bit.
+   */
+  public static readUIntBE(buf: Buffer, offset: number, byteLength: number): number {
+    offset = offset >>> 0;
+    byteLength = byteLength >>> 0;
+
+    let val = buf[offset + --byteLength];
+    let mul = 1;
+    while (byteLength > 0) {
+      mul *= 0x100;
+      val += buf[offset + --byteLength] * mul;
+    }
+    return val;
   }
 }
