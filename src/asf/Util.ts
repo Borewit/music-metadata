@@ -21,8 +21,9 @@ export class Util {
     let n = buf[offset];
     let mul = 1;
     let i = 0;
-    while (++i < 8 && (mul *= 0x100)) {
-      n += buf[offset + i] * mul
+    while (++i < 8) {
+      mul *= 0x100;
+      n += buf[offset + i] * mul;
     }
     return n;
   }
