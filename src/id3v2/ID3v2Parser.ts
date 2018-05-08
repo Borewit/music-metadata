@@ -184,7 +184,7 @@ export class ID3v2Parser {
   }
 
   public parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
-    const buffer = new Buffer(dataRemaining);
+    const buffer = Buffer.alloc(dataRemaining);
     return this.tokenizer.readBuffer(buffer, 0, dataRemaining).then(() => {
       return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
     });

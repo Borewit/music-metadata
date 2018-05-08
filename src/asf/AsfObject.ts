@@ -535,7 +535,7 @@ export interface IWmPicture extends IPicture {
 export class WmPictureToken implements Token.IGetToken<IWmPicture> {
 
   public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(new Buffer(base64str, "base64"));
+    return this.fromBuffer(Buffer.from(base64str, "base64"));
   }
 
   public static fromBuffer(buffer: Buffer): IWmPicture {
