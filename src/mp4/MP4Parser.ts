@@ -296,7 +296,7 @@ export class MP4Parser implements ITokenParser {
             this.tags.push({
               id: tagKey, value: {
                 format: "image/jpeg",
-                data: new Buffer(dataAtom.value)
+                data: Buffer.from(dataAtom.value)
               }
             });
             break;
@@ -307,7 +307,7 @@ export class MP4Parser implements ITokenParser {
             this.tags.push({
               id: tagKey, value: {
                 format: "image/png",
-                data: new Buffer(dataAtom.value)
+                data: Buffer.from(dataAtom.value)
               }
             });
             break;

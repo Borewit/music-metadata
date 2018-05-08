@@ -44,7 +44,7 @@ export interface IVorbisPicture {
 export class VorbisPictureToken implements Token.IGetToken<IVorbisPicture> {
 
   public static fromBase64(base64str: string): IVorbisPicture {
-    return this.fromBuffer(new Buffer(base64str, 'base64'));
+    return this.fromBuffer(Buffer.from(base64str, 'base64'));
   }
 
   public static fromBuffer(buffer: Buffer): IVorbisPicture {
@@ -70,7 +70,7 @@ export class VorbisPictureToken implements Token.IGetToken<IVorbisPicture> {
     const indexed_color = Token.UINT32_BE.get(buffer, offset += 4);
 
     const picDataLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const data = new Buffer(buffer.slice(offset += 4, offset + picDataLen));
+    const data = Buffer.from(buffer.slice(offset += 4, offset + picDataLen));
 
     return {
       type,

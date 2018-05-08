@@ -4,6 +4,7 @@ node_js:
  - "7"
  - "8"
  - "9"
+ - "10"
 install:
 - npm install
 script:
@@ -15,4 +16,4 @@ jobs:
   include:
     - stage: after_success
       script: npm run coveralls
-      node_js: 8
+      node_js: 9

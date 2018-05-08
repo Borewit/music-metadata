@@ -281,7 +281,7 @@ export class APEv2Parser implements ITokenParser {
 
             const picture = {
               description,
-              data: new Buffer(picData.slice(off))
+              data: Buffer.from(picData.slice(off))
             };
 
             offset += size;

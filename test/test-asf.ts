@@ -13,7 +13,7 @@ describe("ASF", () => {
   describe("GUID", () => {
     it("should construct GUID from string", () => {
 
-      const Header_GUID = new Buffer([
+      const Header_GUID = Buffer.from([
         0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
         0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
       ]);
@@ -50,7 +50,7 @@ describe("ASF", () => {
     ];
 
     tests.forEach(test => {
-      const buf = new Buffer(test.raw, "binary");
+      const buf = Buffer.from(test.raw, "binary");
       t.strictEqual(AsfUtil.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
     });
 

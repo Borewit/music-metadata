@@ -310,29 +310,29 @@ export class MusicMetadataParser {
       tag: require('./asf/AsfParser')
     },
     {
-      buf: new Buffer('ID3'),
+      buf: new Buffer.from('ID3'),
       tag: require('./id3v2')
     },
     {
-      buf: new Buffer('ftypM4A'),
+      buf: new Buffer.from('ftypM4A'),
       tag: require('./id4'),
       offset: 4
     },
     {
-      buf: new Buffer('ftypmp42'),
+      buf: new Buffer.from('ftypmp42'),
       tag: require('./id4'),
       offset: 4
     },
     {
-      buf: new Buffer('OggS'),
+      buf: new Buffer.from('OggS'),
       tag: require('./ogg')
     },
     {
-      buf: new Buffer('fLaC'),
+      buf: new Buffer.from('fLaC'),
       tag: require('./flac')
     },
     {
-      buf: new Buffer('MAC'),
+      buf: new Buffer.from('MAC'),
       tag: require('./monkeysaudio')
     }
   ];*/
