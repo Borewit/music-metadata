@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from "chai";
 
 import {CommonTagMapper} from "../src/common/GenericTagMapper";

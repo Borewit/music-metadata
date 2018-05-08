@@ -1,10 +1,9 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import GUID from "../src/asf/GUID";
 import * as fs from 'fs-extra';
-import {Util} from "../src/asf/Util";
+import {AsfUtil} from "../src/asf/AsfUtil";
 import {DataType} from "../src/asf/AsfObject";
 
 const t = assert;
@@ -52,7 +51,7 @@ describe("ASF", () => {
 
     tests.forEach(test => {
       const buf = new Buffer(test.raw, "binary");
-      t.strictEqual(Util.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
+      t.strictEqual(AsfUtil.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
     });
 
   });

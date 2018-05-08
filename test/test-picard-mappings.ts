@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import {AsfTagMapper} from "../src/asf/AsfTagMapper";
 import {APEv2TagMapper} from "../src/apev2/APEv2TagMapper";

@@ -5,6 +5,7 @@ import {Promise} from "bluebird";
 import * as Token from "token-types";
 import * as Atom from "./Atom";
 import {Genres} from "../id3v1/ID3v1Parser";
+import util from "../common/Util";
 
 import * as _debug from "debug";
 const debug = _debug("music-metadata:parser:MP4");
@@ -26,11 +27,11 @@ export class MP4Parser implements ITokenParser {
   };
 
   private static read_BE_Signed_Integer(value: Buffer): number {
-    return value.readIntBE(0, value.length);
+    return util.readIntBE(value, 0, value.length);
   }
 
   private static read_BE_Unsigned_Integer(value: Buffer): number {
-    return value.readUIntBE(0, value.length);
+    return util.readUIntBE(value, 0, value.length);
   }
 
   private tokenizer: ITokenizer;

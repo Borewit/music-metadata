@@ -1,9 +1,13 @@
 language: node_js
+
 node_js:
+ - "4"
  - "6"
  - "7"
  - "8"
  - "9"
+ - "10"
+
 install:
 - npm install
 script:
@@ -12,7 +16,10 @@ script:
 - npm run test
 
 jobs:
-  include:
     - stage: after_success
       script: npm run coveralls
-      node_js: 8
+      node_js: 9
+
+matrix:
+  allow_failures:
+  - node_js: 10
