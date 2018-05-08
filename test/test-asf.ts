@@ -2,8 +2,8 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import GUID from "../src/asf/GUID";
-import * as fse from 'fs-extra';
-import {Util} from "../src/asf/Util";
+import * as fs from 'fs-extra';
+import {AsfUtil} from "../src/asf/AsfUtil";
 import {DataType} from "../src/asf/AsfObject";
 
 const t = assert;
@@ -51,7 +51,7 @@ describe("ASF", () => {
 
     tests.forEach(test => {
       const buf = new Buffer(test.raw, "binary");
-      t.strictEqual(Util.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
+      t.strictEqual(AsfUtil.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
     });
 
   });
@@ -99,7 +99,7 @@ describe("ASF", () => {
 
     it("should decode from ASF from a stream (audio/x-ms-wma)", () => {
 
-      const stream = fse.createReadStream(asfFilePath);
+      const stream = fs.createReadStream(asfFilePath);
 
       return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then(metadata => {
         checkFormat(metadata.format);

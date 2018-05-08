@@ -3,10 +3,10 @@ import {DataType} from "./AsfObject";
 
 export type AttributeParser = (buf: Buffer) => boolean | string | number | Buffer;
 
-export class Util {
+export class AsfUtil {
 
   public static getParserForAttr(i: DataType): AttributeParser {
-    return Util.attributeParsers[i];
+    return AsfUtil.attributeParsers[i];
   }
 
   public static parseUnicodeAttr(buf): string {
@@ -18,24 +18,17 @@ export class Util {
    * Note that JavasScript is limited to 2^53 - 1 bit.
    */
   public static readUInt64LE(buf: Buffer, offset: number = 0): number {
-    let n = buf[offset];
-    let mul = 1;
-    let i = 0;
-    while (++i < 8) {
-      mul *= 0x100;
-      n += buf[offset + i] * mul;
-    }
-    return n;
+    return common.readUInt64LE(buf, offset);
   }
 
   private static attributeParsers: AttributeParser[] = [
-    Util.parseUnicodeAttr,
-    Util.parseByteArrayAttr,
-    Util.parseBoolAttr,
-    Util.parseDWordAttr,
-    Util.parseQWordAttr,
-    Util.parseWordAttr,
-    Util.parseByteArrayAttr
+    AsfUtil.parseUnicodeAttr,
+    AsfUtil.parseByteArrayAttr,
+    AsfUtil.parseBoolAttr,
+    AsfUtil.parseDWordAttr,
+    AsfUtil.parseQWordAttr,
+    AsfUtil.parseWordAttr,
+    AsfUtil.parseByteArrayAttr
   ];
 
   private static parseByteArrayAttr(buf: Buffer): Buffer {
@@ -45,7 +38,7 @@ export class Util {
   }
 
   private static parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
-    return Util.parseWordAttr(buf, offset) === 1;
+    return AsfUtil.parseWordAttr(buf, offset) === 1;
   }
 
   private static parseDWordAttr(buf: Buffer, offset: number = 0): number {
@@ -53,7 +46,7 @@ export class Util {
   }
 
   private static parseQWordAttr(buf: Buffer, offset: number = 0): number {
-    return Util.readUInt64LE(buf, offset);
+    return AsfUtil.readUInt64LE(buf, offset);
   }
 
   private static parseWordAttr(buf: Buffer, offset: number = 0): number {
