@@ -112,7 +112,7 @@ export default class FrameParser {
           pic.description = common.decodeString(b.slice(offset, fzero), encoding);
           offset = fzero + nullTerminatorLength;
 
-          pic.data = new Buffer(b.slice(offset, length));
+          pic.data = Buffer.from(b.slice(offset, length));
           output = pic;
         }
         break;

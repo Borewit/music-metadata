@@ -7,9 +7,7 @@ import * as path from "path";
 
 const t = assert;
 
-it("should calculate duration for a CBR encoded MP3", function() {
-
-  this.skip(); // Need to support APEv2 header first
+it.skip("should calculate duration for a CBR encoded MP3", () => {
 
   /*--------------------------------------------------------
    TAG headers:

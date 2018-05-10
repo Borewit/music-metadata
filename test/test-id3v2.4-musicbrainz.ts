@@ -65,11 +65,11 @@ it("should MusicBrainz tags with id3v2.4", () => {
 
     t.deepEqual(native[i++], {
       id: 'PRIV',
-      value: {data: new Buffer([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
+      value: {data: Buffer.from([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
     }, "['ID3v2.4'].PRIV.AverageLevel");
     t.deepEqual(native[i++], {
       id: 'PRIV',
-      value: {data: new Buffer([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
+      value: {data: Buffer.from([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
     }, "['ID3v2.4'].PRIV.PeakValue");
     t.deepEqual(native[i++], {id: 'TCOM', value: 'Explosions in the Sky'}, "['ID3v2.4'].TCOM");
     t.deepEqual(native[i++], {id: 'TDOR', value: '2004-10-12'}, "['ID3v2.4'].TDOR");
@@ -128,7 +128,7 @@ it("should MusicBrainz tags with id3v2.4", () => {
     t.deepEqual(native[i++], {id: 'TXXX:originalyear', value: '2004'}, "['ID3v2.4'].'originalyear");
     t.deepEqual(native[i++], {
       id: 'UFID', value: {
-        identifier: new Buffer([
+        identifier: Buffer.from([
           0x38, 0x34, 0x38, 0x35, 0x31, 0x31, 0x35, 0x30, 0x2d, 0x61, 0x31, 0x39, 0x36, 0x2d, 0x34, 0x38,
           0x66, 0x61, 0x2d, 0x61, 0x64, 0x61, 0x35, 0x2d, 0x31, 0x61, 0x30, 0x31, 0x32, 0x62, 0x31, 0x63,
           0x64, 0x39, 0x65, 0x64]),

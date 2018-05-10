@@ -5,6 +5,7 @@
 [![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://david-dm.org/Borewit/music-metadata)
 [![Coverage Status](https://coveralls.io/repos/github/Borewit/music-metadata/badge.svg?branch=master)](https://coveralls.io/github/Borewit/music-metadata?branch=master)
 [![NSP Status](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938/badge)](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938)
+[![Package Quality](http://npm.packagequality.com/shield/music-metadata.svg)](http://packagequality.com/#?package=music-metadata)
 
 Stream and file based music metadata parser for node.
 
@@ -116,7 +117,8 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
   * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
   * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
   * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-  * `fileSize`: only provide this in combination with `parseStream` function. 
+  * `fileSize`: only provide this in combination with `parseStream` function.
+  * `mergeTagHeaders`: default: `false`, if set to `true`, it will merge the information from all headers found in the file (highest version has priority).
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.

@@ -1,4 +1,4 @@
-export type TagType = 'vorbis' | 'ID3v1.1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
+export type TagType = 'vorbis' | 'ID3v1.1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4' | 'exif';
 
 export type CommonTag =
   'track'
@@ -29,6 +29,7 @@ export type CommonTag =
   | 'remixer'
   | 'arranger'
   | 'engineer'
+  | 'technician'
   | 'producer'
   | 'djmixer'
   | 'mixer'
@@ -67,7 +68,7 @@ export type CommonTag =
   | 'musicbrainz_artistid'
   | 'musicbrainz_albumartistid'
   | 'musicbrainz_releasegroupid'
-  |  'musicbrainz_workid'
+  | 'musicbrainz_workid'
   | 'musicbrainz_trmid'
   | 'musicbrainz_discid'
   | 'acoustid_id'
@@ -86,7 +87,7 @@ export type CommonTag =
   | 'replaygain_track_gain'
   | 'replaygain_track_peak';
 
-export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'asf', 'iTunes MP4', 'ID3v1.1'];
+export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes MP4', 'ID3v1.1'];
 
 export interface INativeTagMap {
   [index: string]: CommonTag;
@@ -131,6 +132,7 @@ export const commonTags: ITagInfoMap = {
   arranger: {multiple: true},
   engineer: {multiple: true},
   producer: {multiple: true},
+  technician: {multiple: true},
   djmixer: {multiple: true},
   mixer: {multiple: true},
   label: {multiple: true},

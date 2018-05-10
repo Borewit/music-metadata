@@ -9,8 +9,8 @@ const t = assert;
 describe("ID3v2Parser", () => {
 
   it("should be able to remove unsynchronisation bytes from buffer", () => {
-    const expected = new Buffer([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
-    const sample = new Buffer([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
+    const expected = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
+    const sample = Buffer.from([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
     const output = ID3v2Parser.removeUnsyncBytes(sample);
     t.deepEqual(output, expected, 'bytes');
   });

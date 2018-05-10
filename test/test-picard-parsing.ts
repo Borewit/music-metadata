@@ -342,7 +342,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(native.TMED, ['CD'], 'id3v23.TMED: Media type');
       t.deepEqual(native.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
-        identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+        identifier: Buffer.from('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
       }, 'id3v23.UFID: Unique file identifier');
 
       t.deepEqual(native.IPLS, [{
@@ -479,7 +479,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       t.deepEqual(id3v24.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
-        identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+        identifier: Buffer.from('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
       }, 'id3v24.UFID: Unique file identifier');
 
       t.deepEqual(id3v24['TXXX:ASIN'], ['B005NPEUB2'], 'id3v24.TXXX:ASIN');
@@ -587,7 +587,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(iTunes["©nam"], ["Sinner's Prayer"], "iTunes.©nam => common.title");
       t.deepEqual(iTunes["©ART"], ["Beth Hart & Joe Bonamassa"], "iTunes.@ART => common.artist");
       t.deepEqual(iTunes["----:com.apple.iTunes:ARTISTS"], ["Beth Hart", "Joe Bonamassa"], "iTunes.----:com.apple.iTunes:ARTISTS => common.artists");
-      t.deepEqual(iTunes.aART, undefined, "iTunes.aART => common.albumartist");
+      t.deepEqual(iTunes.aART, [ 'Beth Hart & Joe Bonamassa' ], "iTunes.aART => common.albumartist");
       t.deepEqual(iTunes["----:com.apple.iTunes:Band"], ["Beth Hart & Joe Bonamassa"], "iTunes.----:com.apple.iTunes:Band => common.albumartist");
       t.deepEqual(iTunes["----:com.apple.iTunes:ALBUMARTISTSORT"], ["Hart, Beth & Bonamassa, Joe"], "iTunes.----:com.apple.iTunes:ALBUMARTISTSORT => common.albumartistsort");
       t.deepEqual(iTunes["©alb"], ["Don't Explain"], "iTunes.©alb => common.album");
