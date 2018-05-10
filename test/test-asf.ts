@@ -138,7 +138,7 @@ describe("ASF", () => {
         assert.strictEqual(metadata.common.title, "Thirty Dirty Birds", "metadata.common.title");
         assert.strictEqual(metadata.common.artist, "The Red Hot Chili Peppers", "metadata.common.artist");
         assert.strictEqual(metadata.common.date, "2003", "metadata.common.date");
-        assert.strictEqual(metadata.common.label, "Capitol", "metadata.common.label");
+        assert.deepEqual(metadata.common.label, ["Capitol"], "metadata.common.label");
         assert.strictEqual(metadata.common.track.no, 13, "metadata.common.track.no");
 
         assert.exists(asf);

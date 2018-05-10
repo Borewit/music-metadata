@@ -128,7 +128,7 @@ describe("Mapping of common comment tag", () => {
     });
   });
 
-  it.skip("should map WMA/ASF header", () => {
+  it("should map WMA/ASF header", () => {
 
     // ToDo: update sample file
     const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");

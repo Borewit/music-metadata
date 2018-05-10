@@ -417,8 +417,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-        t.strictEqual(format.numberOfSamples, 88200, 'format.numberOfSamples = 88200');
-        t.strictEqual(format.duration, 2.0, 'format.duration = 2 seconds');
+        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 88200');
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2 seconds');
       }
 
       // Parse wma/asf file
@@ -537,15 +537,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
         t.strictEqual(format.numberOfSamples, 93624, 'format.bitsPerSample = 93624');
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
-      }
-
-      function check_asf_Tags(native: mm.INativeTagDict) {
-        t.deepEqual(native["WM/AlbumArtist"], ["Beth Hart & Joe Bonamassa"], "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'");
-        t.deepEqual(native["WM/AlbumTitle"], ["Don't Explain"], "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'");
-        t.deepEqual(native["WM/ARTISTS"], ['Joe Bonamassa', 'Beth Hart'], "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']");
-        t.isDefined(native["WM/Picture"], "Contains WM/Picture");
-        t.strictEqual(native["WM/Picture"].length, 1, "Contains 1 WM/Picture");
-        // ToDO
       }
 
       // Parse wma/asf file
