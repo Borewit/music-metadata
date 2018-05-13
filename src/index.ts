@@ -418,7 +418,7 @@ export class MusicMetadataParser {
     }
 
     if (metadata.common.artists && metadata.common.artists.length > 0) {
-      metadata.common.artist = metadata.common.artist[0];
+      metadata.common.artist = metadata.common.artists[0];
     } else {
       if (metadata.common.artist) {
         metadata.common.artists = metadata.common.artist as any;
