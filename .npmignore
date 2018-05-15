@@ -4,5 +4,6 @@ example/
 doc-gen/
 coverage/
 src/
+.github
 .nyc_output/
 *.iml
