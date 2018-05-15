@@ -297,45 +297,14 @@ export class MusicMetadataParser {
     return new MusicMetadataParser();
   }
 
-  private tagMapper = new CombinedTagMapper();
-
-  /**
-   * ToDo: move to respective format implementations
-   */
-
-  /*
-  private static headerTypes = [
-    {
-      buf: GUID.HeaderObject.toBin(),
-      tag: require('./asf/AsfParser')
-    },
-    {
-      buf: new Buffer.from('ID3'),
-      tag: require('./id3v2')
-    },
-    {
-      buf: new Buffer.from('ftypM4A'),
-      tag: require('./id4'),
-      offset: 4
-    },
-    {
-      buf: new Buffer.from('ftypmp42'),
-      tag: require('./id4'),
-      offset: 4
-    },
-    {
-      buf: new Buffer.from('OggS'),
-      tag: require('./ogg')
-    },
-    {
-      buf: new Buffer.from('fLaC'),
-      tag: require('./flac')
-    },
-    {
-      buf: new Buffer.from('MAC'),
-      tag: require('./monkeysaudio')
+  public static joinArtists(artists: string[]): string {
+    if (artists.length > 2) {
+      return artists.slice(0, artists.length - 1).join(', ') + ' & ' +  artists[artists.length - 1];
     }
-  ];*/
+    return artists.join(' & ');
+  }
+
+  private tagMapper = new CombinedTagMapper();
 
   /**
    * Extract metadata from the given audio file
@@ -418,7 +387,8 @@ export class MusicMetadataParser {
     }
 
     if (metadata.common.artists && metadata.common.artists.length > 0) {
-      metadata.common.artist = metadata.common.artist[0];
+      // common.artists explicitly by meta-data
+      metadata.common.artist = !metadata.common.artist ? MusicMetadataParser.joinArtists(metadata.common.artists) : metadata.common.artist[0];
     } else {
       if (metadata.common.artist) {
         metadata.common.artists = metadata.common.artist as any;
