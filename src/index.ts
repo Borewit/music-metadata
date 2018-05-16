@@ -63,7 +63,7 @@ export interface ICommonTagsResult {
   djmixer?: string[],
   mixer?: string[],
   technician?: string[],
-  label?: string,
+  label?: string[],
   grouping?: string[],
   subtitle?: string[],
   discsubtitle?: string[],
@@ -74,7 +74,7 @@ export interface ICommonTagsResult {
   bpm?: string,
   mood?: string,
   media?: string,
-  catalognumber?: string,
+  catalognumber?: string[],
   show?: string,
   showsort?: string,
   podcast?: string,
@@ -89,9 +89,9 @@ export interface ICommonTagsResult {
   encodedby?: string,
   encodersettings?: string,
   gapless?: boolean,
-  barcode?: number, // ToDo: multiple??
+  barcode?: string, // ToDo: multiple??
   // International Standard Recording Code
-  isrc?: string,
+  isrc?: string[],
   asin?: string,
   musicbrainz_recordingid?: string,
   musicbrainz_trackid?: string,

@@ -32,9 +32,9 @@ it("MusicBrains/Picard tags in FLAC", () => {
     t.deepEqual(common.year, 2011, 'common.year');
     t.deepEqual(common.releasecountry, 'XE', 'common.releasecountry');
     t.deepEqual(common.asin, 'B0055U9LNC', 'common.asin');
-    t.deepEqual(common.barcode, 886979357723, 'common.barcode');
-    t.deepEqual(common.label, 'Sony Music', 'common.label');
-    t.deepEqual(common.catalognumber, '88697935772', 'common.catalognumber');
+    t.deepEqual(common.barcode, "886979357723", 'common.barcode');
+    t.deepEqual(common.label, ['Sony Music'], 'common.label');
+    t.deepEqual(common.catalognumber, ['88697935772'], 'common.catalognumber');
     t.deepEqual(common.originalyear, 2011, 'common.originalyear');
     t.deepEqual(common.originaldate, '2011-09-11', 'common.originaldate');
     t.deepEqual(common.releasestatus, 'official', 'common.releasestatus');

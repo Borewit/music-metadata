@@ -75,10 +75,10 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.year, 2011, inputTagType + " => common.year");
     t.strictEqual(common.originalyear, 2011, inputTagType + " => common.year");
     t.strictEqual(common.media, 'CD', inputTagType + " => common.media = CD");
-    t.strictEqual(common.barcode, 804879313915, inputTagType + " => common.barcode");
+    t.strictEqual(common.barcode, "804879313915", inputTagType + " => common.barcode");
     // ToDo?? t.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
-    t.strictEqual(common.label, 'J&R Adventures', inputTagType + " => common.label = 'J&R Adventures'");
-    t.strictEqual(common.catalognumber, 'PRAR931391', inputTagType + " => common.catalognumber = PRAR931391");
+    t.deepEqual(common.label, ['J&R Adventures'], inputTagType + " => common.label = 'J&R Adventures'");
+    t.deepEqual(common.catalognumber, ['PRAR931391'], inputTagType + " => common.catalognumber = PRAR931391");
     t.strictEqual(common.originalyear, 2011, inputTagType + " => common.originalyear = 2011");
     t.strictEqual(common.releasestatus, 'official', inputTagType + " => common.releasestatus = official");
     t.deepEqual(common.releasetype, ['album'], inputTagType + " => common.releasetype");
@@ -351,7 +351,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         drums: ['Anton Fig'],
         engineer: ['James McCullagh', 'Jared Kvitka'],
         guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
-        keyboard: ['Arlan Scheirbaum'],
+        keyboard: ['Arlan Schierbaum'],
         orchestra: ['The Bovaland Orchestra'],
         percussion: ['Anton Fig'],
         piano: ['Beth Hart'],
@@ -417,8 +417,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
+        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 88200');
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2 seconds');
       }
 
       // Parse wma/asf file
@@ -459,7 +459,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         'bass guitar': ['Carmine Rojas'],
         drums: ['Anton Fig'],
         guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
-        keyboard: ['Arlan Scheirbaum'],
+        keyboard: ['Arlan Schierbaum'],
         orchestra: ['The Bovaland Orchestra'],
         percussion: ['Anton Fig'],
         piano: ['Beth Hart'],
@@ -537,15 +537,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
         t.strictEqual(format.numberOfSamples, 93624, 'format.bitsPerSample = 93624');
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
-      }
-
-      function check_asf_Tags(native: mm.INativeTagDict) {
-        t.deepEqual(native["WM/AlbumArtist"], ["Beth Hart & Joe Bonamassa"], "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'");
-        t.deepEqual(native["WM/AlbumTitle"], ["Don't Explain"], "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'");
-        t.deepEqual(native["WM/ARTISTS"], ['Joe Bonamassa', 'Beth Hart'], "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']");
-        t.isDefined(native["WM/Picture"], "Contains WM/Picture");
-        t.strictEqual(native["WM/Picture"].length, 1, "Contains 1 WM/Picture");
-        // ToDO
       }
 
       // Parse wma/asf file

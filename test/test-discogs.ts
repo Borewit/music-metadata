@@ -53,7 +53,7 @@ describe("Discogs mappings", () => {
 
       // Check discogs, CATALOGID mapping
       t.deepEqual(id3v23["TXXX:CATALOGID"], ["PRAR931391"], "id3v23/TXXX:CATALOGID: PRAR931391");
-      t.strictEqual(common.catalognumber, "PRAR931391", "id3v23/TXXX:CATALOGID => common.catalognumber");
+      t.deepEqual(common.catalognumber, ["PRAR931391"], "id3v23/TXXX:CATALOGID => common.catalognumber");
 
       // Check discogs, CATALOGID mapping
       t.deepEqual(id3v23.TCON, ["Rock, Blues"], "id3v23/TCON");
@@ -74,7 +74,7 @@ describe("Discogs mappings", () => {
       t.deepEqual(common.artist, "Beth Hart , Joe Bonamassa", "common.artist");
       // Discogs specific:
       t.deepEqual(common.discogs_release_id, "4204665", "common.discogs_release_id");
-      t.deepEqual(common.catalognumber, "PRAR931391", "common.catalognumber");
+      t.deepEqual(common.catalognumber, ["PRAR931391"], "common.catalognumber");
 
     }
 
@@ -108,7 +108,7 @@ describe("Discogs mappings", () => {
 
       // Check discogs, CATALOGID mapping
       t.deepEqual(vorbis.CATALOGID, ["PRAR931391"], "Vorbis/CATALOGID: PRAR931391");
-      t.strictEqual(common.catalognumber, "PRAR931391", "Vorbis/CATALOGID => common.catalognumber");
+      t.deepEqual(common.catalognumber, ["PRAR931391"], "Vorbis/CATALOGID => common.catalognumber");
 
       // Check discogs, CATALOGID mapping
       t.deepEqual(vorbis.GENRE, ["Rock, Blues"], "Vorbis/GENRE");

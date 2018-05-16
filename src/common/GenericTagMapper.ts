@@ -115,10 +115,6 @@ export class CommonTagMapper implements IGenericTagMapper {
           tag.value = CommonTagMapper.parseGenre(tag.value);
           break;
 
-        case 'barcode':
-          tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
-          break;
-
         case 'picture':
           tag.value = CommonTagMapper.cleanupPicture(tag.value);
           break;
