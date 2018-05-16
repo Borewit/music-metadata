@@ -155,7 +155,7 @@ export class ID3v2Parser {
     return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
 
       if (id3Header.fileIdentifier !== 'ID3') {
-        throw new Error("expected file identifier 'ID3' not found");
+        throw new Error("expected ID3-header file-identifier 'ID3' was not found");
       }
 
       this.id3Header = id3Header;
