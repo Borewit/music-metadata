@@ -34,7 +34,7 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
         t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2 seconds');
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
       }
 
       // Parse wma/asf file
@@ -68,7 +68,7 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
         assert.deepEqual(format.bitsPerSample, 24);
         assert.deepEqual(format.sampleRate, 48000);
         assert.deepEqual(format.numberOfSamples, 13171);
-        assert.deepEqual(format.duration, 0.27439583333333334);
+        assert.deepEqual(format.duration, 0.27439583333333334, "~2.274 (checked with Adobe Audition)");
         assert.deepEqual(format.tagTypes, [ 'exif' ]);
 
         const exif = mm.orderTags(metadata.native.exif);
