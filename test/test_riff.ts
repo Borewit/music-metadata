@@ -3,19 +3,17 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 
-const t = assert;
-
 describe("Extract metadata from RIFF (Resource Interchange File Format)", () => {
 
   describe("Parse RIFF/WAVE audio format", () => {
 
     function checkExifTags(exif: mm.INativeTagDict) {
 
-      t.deepEqual(exif.IART, ["Beth Hart & Joe Bonamassa"], "exif.IART");
-      t.deepEqual(exif.ICRD, ["2011"], "exif.ICRD");
-      t.deepEqual(exif.INAM, ["Sinner's Prayer"], "exif.INAM");
-      t.deepEqual(exif.IPRD, ["Don't Explain"], "exif.IPRD");
-      t.deepEqual(exif.ITRK, ["1/10"], "exif.ITRK");
+      assert.deepEqual(exif.IART, ["Beth Hart & Joe Bonamassa"], "exif.IART");
+      assert.deepEqual(exif.ICRD, ["2011"], "exif.ICRD");
+      assert.deepEqual(exif.INAM, ["Sinner's Prayer"], "exif.INAM");
+      assert.deepEqual(exif.IPRD, ["Don't Explain"], "exif.IPRD");
+      assert.deepEqual(exif.ITRK, ["1/10"], "exif.ITRK");
     }
 
     /**
@@ -28,13 +26,14 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
       const filePath = path.join(__dirname, 'samples', filename);
 
       function checkFormat(format: mm.IFormat) {
-        t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE");
-        t.deepEqual(format.tagTypes, ["ID3v2.3", "exif"], "format.tagTypes = ['ID3v2.3']"); // ToDo
-        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-        t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
-        t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
+        assert.strictEqual(format.dataformat, "WAVE/PCM", "format.dataformat = WAVE/PCM");
+        assert.strictEqual(format.lossless, true);
+        assert.deepEqual(format.tagTypes, ["ID3v2.3", "exif"], "format.tagTypes = ['ID3v2.3']"); // ToDo
+        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
+        assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
+        assert.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
+        assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
       }
 
       // Parse wma/asf file
@@ -53,7 +52,7 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
       const filePath = path.join(__dirname, "samples", "issue_75.wav");
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        assert.deepEqual(metadata.format.dataformat, "WAVE");
+        assert.deepEqual(metadata.format.dataformat, "WAVE/PCM");
       });
     });
 
@@ -64,7 +63,8 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         const format = metadata.format;
-        assert.deepEqual(format.dataformat, "WAVE");
+        assert.strictEqual(format.lossless, true);
+        assert.deepEqual(format.dataformat, "WAVE/PCM");
         assert.deepEqual(format.bitsPerSample, 24);
         assert.deepEqual(format.sampleRate, 48000);
         assert.deepEqual(format.numberOfSamples, 13171);
@@ -105,6 +105,23 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
       });
     });
 
+  });
+
+  describe("non-PCM", () => {
+
+    it("should parse Microsoft 4-bit ADPCM encoded", () => {
+
+      const filePath = path.join(__dirname, "samples", "issue-92.wav");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        const format = metadata.format;
+        assert.strictEqual(format.dataformat, "WAVE/ADPCM");
+        assert.strictEqual(format.lossless, false);
+        assert.strictEqual(format.sampleRate, 22050);
+        assert.strictEqual(format.bitsPerSample, 4);
+        assert.strictEqual(4660260 / 22050, metadata.format.duration, "file's duration is 3'31\"");
+      });
+    });
   });
 
 });
