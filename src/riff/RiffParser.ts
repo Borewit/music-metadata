@@ -158,9 +158,7 @@ export class WavePcmParser implements ITokenParser {
           chunkSize -= (8 + valueToken.len);
           if (chunkSize >= 8) {
             return this.parseRiffInfoTags(chunkSize);
-          } else if (chunkSize === 0) {
-            return Promise.resolve<void>(null);
-          } else {
+          } else if (chunkSize !== 0) {
             throw Error("Illegal remaining size: " + chunkSize);
           }
         });
