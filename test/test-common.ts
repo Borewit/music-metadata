@@ -56,19 +56,6 @@ describe("GenericTagMap", () => {
     t.ok(!isSingleton("artists"), "common tag \"artists\" is not a singleton");
   });
 
-  describe("Vorbis generic mapper", () => {
-    const vorbisGenericMapper = combinedTagMapper.tagMappers.vorbis;
-    t.isDefined(vorbisGenericMapper);
-
-    t.ok(vorbisGenericMapper.isNativeSingleton("TITLE"), "Vorbis tag \"TITLE\" is a singleton");
-    t.ok(!vorbisGenericMapper.isNativeSingleton("METADATA_BLOCK_PICTURE"), "Vorbis tag \"METADATA_BLOCK_PICTURE\" is not a singleton");
-  });
-
-  describe("iTunes MP4", () => {
-    const itunesGenericMapper = combinedTagMapper.tagMappers["iTunes MP4"];
-    t.ok(itunesGenericMapper.isNativeSingleton("©nam"), "iTunes MP4 tag \"©nam\" is a singleton");
-  });
-
   describe("common.artist / common.artists mapping", () => {
 
     it("should be able to join artists", () => {

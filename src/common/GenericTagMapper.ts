@@ -24,14 +24,6 @@ export interface IGenericTagMapper {
    */
   setGenericTag(comTags: ICommonTagsResult, tag: ITag);
 
-  /**
-   * Test if native tag tagTypes is a singleton
-   * @param type e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
-   * @param  tag Native tag name', e.g. 'TITLE'
-   * @returns {boolean} true is we can safely assume that it is a singleton
-   */
-  isNativeSingleton(tag: string): boolean;
-
 }
 
 export class CommonTagMapper implements IGenericTagMapper {
@@ -175,17 +167,6 @@ export class CommonTagMapper implements IGenericTagMapper {
         }
       }
     }
-  }
-
-  /**
-   * Test if native tag tagTypes is a singleton
-   * @param type e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
-   * @param  tag Native tag name', e.g. 'TITLE'
-   * @returns {boolean} true is we can safely assume that it is a singleton
-   */
-  public isNativeSingleton(tag: string): boolean {
-    const alias = this.getCommonName(tag);
-    return alias && !generic.commonTags[alias].multiple;
   }
 
   /**
