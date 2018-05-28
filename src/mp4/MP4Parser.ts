@@ -241,7 +241,7 @@ export class MP4Parser implements ITokenParser {
   private parseValueAtom(tagKey: string, header: Atom.IAtomHeader): Promise<number> {
     return this.tokenizer.readToken(new Atom.DataAtom(header.length - Atom.Atom.Header.len)).then(dataAtom => {
 
-      if (dataAtom.type.set!== 0) {
+      if (dataAtom.type.set !== 0) {
         throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
       }
 

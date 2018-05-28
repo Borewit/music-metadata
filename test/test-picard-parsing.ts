@@ -181,7 +181,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse flac/Vorbis file
-      return mm.parseFile( path.join(samplePath, filename), {native: true}).then(result => {
+      return mm.parseFile(path.join(samplePath, filename), {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         checkFormat(result.format);
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
@@ -269,11 +269,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(APEv2['Cover Art (Back)'][0].format, 'png', 'picture.format');
       t.deepEqual(APEv2['Cover Art (Back)'][0].description, 'back', 'picture.description');
       t.deepEqual(APEv2['Cover Art (Back)'][0].data.length, 120291, 'picture.data.length');
-
-
-      // t.strictEqual(APEv2.METADATA_BLOCK_PICTURE.format, 'image/jpeg', 'APEv2.METADATA_BLOCK_PICTURE format');
-      // t.strictEqual(APEv2.METADATA_BLOCK_PICTURE.data.length, 98008, 'APEv2.METADATA_BLOCK_PICTURE length');
-
     }
 
     it("should map Monkey's Audio / APEv2", () => {
@@ -569,12 +564,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(iTunes["©nam"], ["Sinner's Prayer"], "iTunes.©nam => common.title");
       t.deepEqual(iTunes["©ART"], ["Beth Hart & Joe Bonamassa"], "iTunes.@ART => common.artist");
       t.deepEqual(iTunes["©alb"], ["Don't Explain"], "iTunes.©alb => common.album");
-      t.deepEqual(iTunes["soar"], ["Hart, Beth & Bonamassa, Joe"], "iTunes.----:com.apple.iTunes:soar => common.artistsort");
-      t.deepEqual(iTunes["soaa"], ["Hart, Beth & Bonamassa, Joe"], "iTunes.----:com.apple.iTunessoaa => common.albumartistsort");
+      t.deepEqual(iTunes.soar, ["Hart, Beth & Bonamassa, Joe"], "iTunes.soar => common.artistsort");
+      t.deepEqual(iTunes.soaa, ["Hart, Beth & Bonamassa, Joe"], "iTunes.soaa => common.albumartistsort");
       t.deepEqual(iTunes["----:com.apple.iTunes:ARTISTS"], ["Beth Hart", "Joe Bonamassa"], "iTunes.----:com.apple.iTunes:ARTISTS => common.artists");
       t.deepEqual(iTunes.aART, [ 'Beth Hart & Joe Bonamassa' ], "iTunes.aART => common.albumartist");
       t.deepEqual(iTunes["----:com.apple.iTunes:Band"], ["Beth Hart & Joe Bonamassa"], "iTunes.----:com.apple.iTunes:Band => common.albumartist");
-      //t.deepEqual(iTunes["----:com.apple.iTunes:ALBUMARTISTSORT"], ["Hart, Beth & Bonamassa, Joe"], "iTunes.----:com.apple.iTunes:ALBUMARTISTSORT => common.albumartistsort");
       t.deepEqual(iTunes.trkn, ["1/10"], "iTunes.trkn => common.track");
       t.deepEqual(iTunes.disk, ["1/1"], "iTunes.trkn => common.disk");
       t.deepEqual(iTunes["----:com.apple.iTunes:ORIGINALDATE"], ["2011-09-26"], "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.albumartistsort");

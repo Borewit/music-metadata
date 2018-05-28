@@ -287,8 +287,8 @@ export class APEv2Parser implements ITokenParser {
             const data = Buffer.from(picData.slice(off));
             const fileType = FileType(data);
 
-            if(fileType) {
-              if(fileType.mime.indexOf('image/') === 0) {
+            if (fileType) {
+              if (fileType.mime.indexOf('image/') === 0) {
                 const picture: IPicture = {
                   description,
                   data,
