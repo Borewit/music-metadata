@@ -292,7 +292,7 @@ export class APEv2Parser implements ITokenParser {
                 const picture: IPicture = {
                   description,
                   data,
-                  format: fileType.ext
+                  format: fileType.mime
                 };
 
                 offset += size;

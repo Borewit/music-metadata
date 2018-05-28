@@ -29,9 +29,9 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
       t.strictEqual(common.disk.no, 1, 'disk no');
       t.strictEqual(common.disk.of, 1, 'disk of');
       t.strictEqual(common.genre[0], 'Electronic', 'genre');
-      t.strictEqual(common.picture[0].format, 'jpg', 'picture 0 format');
+      t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture 0 format');
       t.strictEqual(common.picture[0].data.length, 196450, 'picture 0 length');
-      t.strictEqual(common.picture[1].format, 'jpg', 'picture 1 format');
+      t.strictEqual(common.picture[1].format, 'image/jpeg', 'picture 1 format');
       t.strictEqual(common.picture[1].data.length, 196450, 'picture 1 length');
     }
 

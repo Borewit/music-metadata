@@ -22,7 +22,7 @@ it("should MusicBrainz tags with id3v2.4", () => {
     t.deepEqual(result.common.track, {no: 5, of: 14}, 'common.track');
     t.deepEqual(result.common.disk, {no: 1, of: 1}, 'common.disk');
     t.deepEqual(result.common.genre, ['Soundtrack', 'OST'], 'common.genre');
-    t.deepEqual(result.common.picture[0].format, 'jpg', 'common.picture 0 format');
+    t.deepEqual(result.common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
     t.deepEqual(result.common.picture[0].data.length, 75818, 'common.picture 0 length');
 
     t.deepEqual(result.common.barcode, '602498644102', 'common.barcode');

@@ -55,7 +55,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.strictEqual(common.disk.no, 1, 'common.disk.no');
       t.strictEqual(common.disk.of, 1, 'common.disk.of');
       t.strictEqual(common.genre[0], 'Soundtrack', 'common.genre');
-      t.strictEqual(common.picture[0].format, 'jpg', 'common.picture format');
+      t.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture format');
       t.strictEqual(common.picture[0].data.length, 80938, 'common.picture length');
     }
 
@@ -83,7 +83,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.deepEqual(id3v23['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
 
       const apic = id3v23.APIC[0];
-      t.strictEqual(apic.format, 'image/jpg', 'raw APIC format');
+      t.strictEqual(apic.format, 'image/jpeg', 'raw APIC format');
       t.strictEqual(apic.type, 'Cover (front)', 'raw APIC tagTypes');
       t.strictEqual(apic.description, '', 'raw APIC description');
       t.strictEqual(apic.data.length, 80938, 'raw APIC length');

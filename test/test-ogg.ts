@@ -18,7 +18,7 @@ describe("Parsing Ogg", function() {
     assert.deepEqual(common.track, {no: 2, of: 12}, 'common.track');
     assert.deepEqual(common.disk, {no: 1, of: 1}, 'common.disk');
     assert.deepEqual(common.genre, ['Grunge', 'Alternative'], 'genre');
-    assert.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+    assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
     assert.strictEqual(common.picture[0].data.length, 30966, 'picture length');
     assert.strictEqual(common.barcode, '0720642442524', 'common.barcode (including leading zero)');
     assert.strictEqual(common.asin, 'B000003TA4', 'common.asin');

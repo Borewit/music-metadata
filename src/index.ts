@@ -18,7 +18,7 @@ import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
  */
 export interface IPicture {
   /**
-   * image extension: jpg, png
+   * Image mime type
    */
   format: string,
   /**

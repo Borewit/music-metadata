@@ -105,6 +105,8 @@ export default class FrameParser {
               throw new Error('Warning: unexpected major versionIndex: ' + major);
           }
 
+          pic.format = FrameParser.fixPictureMimeType(pic.format);
+
           pic.type = AttachedPictureType[b[offset]];
           offset += 1;
 
@@ -174,6 +176,17 @@ export default class FrameParser {
     }
 
     return output;
+  }
+
+  protected static fixPictureMimeType(pictureType: string): string {
+    pictureType = pictureType.toLocaleLowerCase();
+    switch (pictureType) {
+      case 'jpg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+    }
+    return pictureType;
   }
 
   /**

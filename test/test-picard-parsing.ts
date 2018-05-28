@@ -99,12 +99,12 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.acoustid_id, "09c06fac-679a-45b1-8ea0-6ce532318363", inputTagType + " => common.acoustid_id");
 
     // Check front cover
-    t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+    t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
     t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'hash front cover data');
 
     // Check back cover
-    t.strictEqual(common.picture[1].format, 'png', 'picture format');
+    t.strictEqual(common.picture[1].format, 'image/png', 'picture format');
     t.strictEqual(common.picture[1].data.length, 120291, 'picture length');
     t.strictEqual(calcHash(common.picture[1].data), '90ec686eb82e745e737b2c7aa706eeaa', 'hash back cover data');
   }
@@ -262,11 +262,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.Arranger');
 
       // ToDo:
-      t.deepEqual(APEv2['Cover Art (Front)'][0].format, 'jpg', 'picture.format');
+      t.deepEqual(APEv2['Cover Art (Front)'][0].format, 'image/jpeg', 'picture.format');
       t.deepEqual(APEv2['Cover Art (Front)'][0].description, 'front', 'picture.description');
       t.deepEqual(APEv2['Cover Art (Front)'][0].data.length, 98008, 'picture.data.length');
 
-      t.deepEqual(APEv2['Cover Art (Back)'][0].format, 'png', 'picture.format');
+      t.deepEqual(APEv2['Cover Art (Back)'][0].format, 'image/png', 'picture.format');
       t.deepEqual(APEv2['Cover Art (Back)'][0].description, 'back', 'picture.description');
       t.deepEqual(APEv2['Cover Art (Back)'][0].data.length, 120291, 'picture.data.length');
     }
@@ -555,7 +555,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     function checkCommonTags(common) {
-      t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
       t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
     }
 

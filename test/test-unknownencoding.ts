@@ -20,7 +20,7 @@ it("should be able to read metadata with unknown encoding", () => {
     t.strictEqual(result.common.track.no, 4, 'track no');
     t.strictEqual(result.common.track.of, 8, 'track of');
     t.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
-    t.strictEqual(result.common.picture[0].format, 'jpg', 'picture format');
+    t.strictEqual(result.common.picture[0].format, 'image/jpeg', 'picture format');
     t.strictEqual(result.common.picture[0].data.length, 6761, 'picture length');
   });
 

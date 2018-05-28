@@ -31,9 +31,9 @@ describe("Decode MP3/ID3v2.4", () => {
       t.deepEqual(metadata.common.track, {no: 5, of: null}, 'common.track');
       t.deepEqual(metadata.common.disk, {no: 1, of: 1}, 'common.disk');
       t.deepEqual(metadata.common.genre, ['Soundtrack', 'OST'], 'common.genres');
-      t.strictEqual(metadata.common.picture[0].format, 'jpg', 'common.picture 0 format');
+      t.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
       t.strictEqual(metadata.common.picture[0].data.length, 80938, 'common.picture 0 length');
-      t.strictEqual(metadata.common.picture[1].format, 'jpg', 'common.picture 1 format');
+      t.strictEqual(metadata.common.picture[1].format, 'image/jpeg', 'common.picture 1 format');
       t.strictEqual(metadata.common.picture[1].data.length, 80938, 'common.picture 1 length');
     });
 
