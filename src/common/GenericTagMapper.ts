@@ -1,7 +1,6 @@
 import * as generic from "./GenericTagTypes";
-import {ICommonTagsResult, IPicture, ITag} from "../index";
+import {ICommonTagsResult, ITag} from "../index";
 import {Genres} from "../id3v1/ID3v1Parser";
-import {IGenericTagMapper} from "../../lib/common/GenericTagMapper";
 
 export interface IGenericTagMapper {
 
