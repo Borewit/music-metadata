@@ -155,9 +155,6 @@ export class ID3v24TagMapper extends CommonTagMapper {
         }
         break;
 
-      case 'MCDI':
-        break;
-
       case 'COMM':
         tag.value = tag.value ? tag.value.text : null;
         break;
