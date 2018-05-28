@@ -18,14 +18,6 @@ const debug = _debug("music-metadata:parser:MP4");
  */
 export class MP4Parser implements ITokenParser {
 
-  private static Types: { [index: number]: string } = {
-    0: "uint8",
-    1: "text",
-    13: "jpeg",
-    14: "png",
-    21: "uint8"
-  };
-
   private static read_BE_Signed_Integer(value: Buffer): number {
     return util.readIntBE(value, 0, value.length);
   }
@@ -154,10 +146,6 @@ export class MP4Parser implements ITokenParser {
     }
   }
 
-  private ignoreAtomData(len: number): Promise<void> {
-    return this.tokenizer.readToken<void>(new Token.IgnoreType(len));
-  }
-
   private parseAtom_ftyp(len: number): Promise<string[]> {
     return this.tokenizer.readToken<Atom.IAtomFtyp>(Atom.Atom.ftyp).then(ftype => {
       len -= Atom.Atom.ftyp.len;
@@ -222,11 +210,6 @@ export class MP4Parser implements ITokenParser {
       switch (header.name) {
         case "data": // value atom
           return this.parseValueAtom(tagKey, header);
-        case "itif": // item information atom (optional)
-          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(dataAtom => {
-            // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
-            return header.length;
-          });
         case "name": // name atom (optional)
           return this.tokenizer.readToken<Atom.INameAtom>(new Atom.NameAtom(dataLen)).then(name => {
             tagKey += ":" + name.name;
@@ -240,7 +223,7 @@ export class MP4Parser implements ITokenParser {
           });
         default:
           return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(dataAtom => {
-            // console.log("  WARNING unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
+            debug("Unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
             this.warnings.push("unsupported meta-item: " + tagKey + "[" + header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
             return header.length;
           });
@@ -258,85 +241,85 @@ export class MP4Parser implements ITokenParser {
   private parseValueAtom(tagKey: string, header: Atom.IAtomHeader): Promise<number> {
     return this.tokenizer.readToken(new Atom.DataAtom(header.length - Atom.Atom.Header.len)).then(dataAtom => {
 
-      if (dataAtom.type.set === 0) {
-        // Use well-known-type table
-        // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW35
-        switch (dataAtom.type.type) { // ToDo?: use enum
-
-          case 0: // reserved: Reserved for use where no type needs to be indicated
-            switch (tagKey) {
-              case "trkn":
-              case "disk":
-                const num = Token.UINT8.get(dataAtom.value, 3);
-                const of = Token.UINT8.get(dataAtom.value, 5);
-                // console.log("  %s[data] = %s/%s", tagKey, num, of);
-                this.tags.push({id: tagKey, value: num + "/" + of});
-                break;
-
-              case "gnre":
-                const genreInt = Token.UINT8.get(dataAtom.value, 1);
-                const genreStr = Genres[genreInt - 1];
-                // console.log("  %s[data] = %s", tagKey, genreStr);
-                this.tags.push({id: tagKey, value: genreStr});
-                break;
-
-              default:
-              // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
-              // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
-            }
-            break;
-
-          case 1: // UTF-8: Without any count or NULL terminator
-            this.tags.push({id: tagKey, value: dataAtom.value.toString("utf-8")});
-            break;
-
-          case 13: // JPEG
-            if (this.options.skipCovers)
-              break;
-            this.tags.push({
-              id: tagKey, value: {
-                format: "image/jpeg",
-                data: Buffer.from(dataAtom.value)
-              }
-            });
-            break;
-
-          case 14: // PNG
-            if (this.options.skipCovers)
-              break;
-            this.tags.push({
-              id: tagKey, value: {
-                format: "image/png",
-                data: Buffer.from(dataAtom.value)
-              }
-            });
-            break;
-
-          case 21: // BE Signed Integer
-            this.tags.push({id: tagKey, value: MP4Parser.read_BE_Signed_Integer(dataAtom.value)});
-            break;
-
-          case 22: // BE Unsigned Integer
-            this.tags.push({id: tagKey, value: MP4Parser.read_BE_Unsigned_Integer(dataAtom.value)});
-            break;
-
-          case 65: // An 8-bit signed integer
-            this.tags.push({id: tagKey, value: dataAtom.value.readInt8(0)});
-            break;
-
-          case 66: // A big-endian 16-bit signed integer
-            this.tags.push({id: tagKey, value: dataAtom.value.readInt16BE(0)});
-            break;
-
-          case 67: // A big-endian 32-bit signed integer
-            this.tags.push({id: tagKey, value: dataAtom.value.readInt32BE(0)});
-            break;
-
-          default:
-            throw new Error("Unsupported well-known-type: " + dataAtom.type.type);
-        }
-      } else {
+      if (dataAtom.type.set !== 0) {
         throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
+      }
+
+      // Use well-known-type table
+      // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW35
+      switch (dataAtom.type.type) { // ToDo?: use enum
+
+        case 0: // reserved: Reserved for use where no type needs to be indicated
+          switch (tagKey) {
+            case "trkn":
+            case "disk":
+              const num = Token.UINT8.get(dataAtom.value, 3);
+              const of = Token.UINT8.get(dataAtom.value, 5);
+              // console.log("  %s[data] = %s/%s", tagKey, num, of);
+              this.tags.push({id: tagKey, value: num + "/" + of});
+              break;
+
+            case "gnre":
+              const genreInt = Token.UINT8.get(dataAtom.value, 1);
+              const genreStr = Genres[genreInt - 1];
+              // console.log("  %s[data] = %s", tagKey, genreStr);
+              this.tags.push({id: tagKey, value: genreStr});
+              break;
+
+            default:
+            // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
+            // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
+          }
+          break;
+
+        case 1: // UTF-8: Without any count or NULL terminator
+          this.tags.push({id: tagKey, value: dataAtom.value.toString("utf-8")});
+          break;
+
+        case 13: // JPEG
+          if (this.options.skipCovers)
+            break;
+          this.tags.push({
+            id: tagKey, value: {
+              format: "image/jpeg",
+              data: Buffer.from(dataAtom.value)
+            }
+          });
+          break;
+
+        case 14: // PNG
+          if (this.options.skipCovers)
+            break;
+          this.tags.push({
+            id: tagKey, value: {
+              format: "image/png",
+              data: Buffer.from(dataAtom.value)
+            }
+          });
+          break;
+
+        case 21: // BE Signed Integer
+          this.tags.push({id: tagKey, value: MP4Parser.read_BE_Signed_Integer(dataAtom.value)});
+          break;
+
+        case 22: // BE Unsigned Integer
+          this.tags.push({id: tagKey, value: MP4Parser.read_BE_Unsigned_Integer(dataAtom.value)});
+          break;
+
+        case 65: // An 8-bit signed integer
+          this.tags.push({id: tagKey, value: dataAtom.value.readInt8(0)});
+          break;
+
+        case 66: // A big-endian 16-bit signed integer
+          this.tags.push({id: tagKey, value: dataAtom.value.readInt16BE(0)});
+          break;
+
+        case 67: // A big-endian 32-bit signed integer
+          this.tags.push({id: tagKey, value: dataAtom.value.readInt32BE(0)});
+          break;
+
+        default:
+          throw new Error("Unsupported well-known-type: " + dataAtom.type.type);
       }
 
       return header.length;

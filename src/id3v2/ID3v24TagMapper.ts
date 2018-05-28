@@ -124,18 +124,6 @@ export class ID3v24TagMapper extends CommonTagMapper {
     super(['ID3v2.3', 'ID3v2.4'], id3v24TagMap);
   }
 
-  public isNativeSingleton(tag: string): boolean {
-    switch (tag) {
-      case 'IPLS':
-        return true;
-      case 'TIPL':
-      case 'TMCL':
-        return true;
-      default:
-        return super.isNativeSingleton(tag);
-    }
-  }
-
   /**
    * Handle post mapping exceptions / correction
    * @param {string} id Tag key e.g. "©alb"
@@ -145,12 +133,6 @@ export class ID3v24TagMapper extends CommonTagMapper {
   protected postMap(tag: ITag): void {
 
     switch (tag.id) {
-
-      /*
-       case 'TXXX':
-       tag += ':' + value.description
-       value = value.text
-       break*/
 
       case 'UFID': // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === 'http://musicbrainz.org') {
@@ -171,9 +153,6 @@ export class ID3v24TagMapper extends CommonTagMapper {
           default:
           // Unknown PRIV owner-identifier
         }
-        break;
-
-      case 'MCDI':
         break;
 
       case 'COMM':

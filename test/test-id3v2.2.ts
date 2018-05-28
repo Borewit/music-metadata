@@ -55,7 +55,7 @@ describe("ID3v2Parser", () => {
       t.strictEqual(metadata.common.track.no, 1, 'track no');
       t.strictEqual(metadata.common.track.of, 11, 'track of');
       t.deepEqual(metadata.common.genre, ['Alternative'], 'genre');
-      t.strictEqual(metadata.common.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'picture format');
       t.strictEqual(metadata.common.picture[0].data.length, 99738, 'picture length');
       t.strictEqual(metadata.common.gapless, false, 'common.gapless');
       t.isUndefined(metadata.common.comment, 'common.comment');

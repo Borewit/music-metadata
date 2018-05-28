@@ -8,6 +8,11 @@ import {ITokenizer, IgnoreType} from "strtok3";
 import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "bluebird";
+import FileType = require("file-type");
+
+import * as _debug from "debug";
+import {IPicture} from "../index";
+const debug = _debug("music-metadata:parser:APEv2");
 
 /**
  * APETag versionIndex history / supported formats
@@ -271,7 +276,7 @@ export class APEv2Parser implements ITokenParser {
         }
 
         case DataType.binary: // binary (probably artwork)
-          if (includeCovers && (key === "Cover Art (Front)" || key === "Cover Art (Back)")) {
+          if (includeCovers) {
             const picData = buffer.slice(offset, offset + size);
 
             let off = 0;
@@ -279,13 +284,25 @@ export class APEv2Parser implements ITokenParser {
             const description = picData.toString("utf8", off, zero);
             off = zero + 1;
 
-            const picture = {
-              description,
-              data: Buffer.from(picData.slice(off))
-            };
+            const data = Buffer.from(picData.slice(off));
+            const fileType = FileType(data);
 
-            offset += size;
-            tags.push({id: key, value: picture});
+            if (fileType) {
+              if (fileType.mime.indexOf('image/') === 0) {
+                const picture: IPicture = {
+                  description,
+                  data,
+                  format: fileType.mime
+                };
+
+                offset += size;
+                tags.push({id: key, value: picture});
+              } else {
+                debug('Unexpected binary tag of type ' + fileType.mime);
+              }
+            } else {
+              debug('Failed to determine file type for binary tag: ' + key);
+            }
           }
           break;
 

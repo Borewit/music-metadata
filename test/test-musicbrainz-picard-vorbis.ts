@@ -48,7 +48,7 @@ it("MusicBrains/Picard tags in FLAC", () => {
     t.deepEqual(common.musicbrainz_releasegroupid, '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'common.musicbrainz_releasegroupid');
     t.deepEqual(common.musicbrainz_trackid, '0f53f7a3-89df-4069-9357-d04252239b6d', 'common.musicbrainz_trackid');
 
-    t.deepEqual(common.picture[0].format, 'jpg', 'picture format');
+    t.deepEqual(common.picture[0].format, 'image/jpeg', 'picture format');
     t.deepEqual(common.picture[0].data.length, 175668, 'picture length');
   }
 

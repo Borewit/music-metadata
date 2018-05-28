@@ -24,14 +24,6 @@ export interface IGenericTagMapper {
    */
   setGenericTag(comTags: ICommonTagsResult, tag: ITag);
 
-  /**
-   * Test if native tag tagTypes is a singleton
-   * @param type e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
-   * @param  tag Native tag name', e.g. 'TITLE'
-   * @returns {boolean} true is we can safely assume that it is a singleton
-   */
-  isNativeSingleton(tag: string): boolean;
-
 }
 
 export class CommonTagMapper implements IGenericTagMapper {
@@ -56,16 +48,13 @@ export class CommonTagMapper implements IGenericTagMapper {
       }).join('/');
   }
 
-  public static cleanupPicture(picture) {
-    let newFormat;
-    if (picture.format) {
-      const split = picture.format.toLowerCase().split('/');
-      newFormat = (split.length > 1) ? split[1] : split[0];
-      if (newFormat === 'jpeg') newFormat = 'jpg';
-    } else {
-      newFormat = 'jpg';
+  public static fixPictureMimeType(pictureType: string): string {
+    pictureType = pictureType.toLocaleLowerCase();
+    switch (pictureType) {
+      case 'image/jpg':
+        return 'image/jpeg';  // ToDo: register warning
     }
-    return {format: newFormat, data: picture.data};
+    return pictureType;
   }
 
   public static toIntOrNull(str: string): number {
@@ -76,7 +65,7 @@ export class CommonTagMapper implements IGenericTagMapper {
   // TODO: a string of 1of1 would fail to be converted
   // converts 1/10 to no : 1, of : 10
   // or 1 to no : 1, of : 0
-  public static cleanupTrack(origVal: number | string) {
+  public static normalizeTrack(origVal: number | string) {
     const split = origVal.toString().split('/');
     return {
       no: parseInt(split[0], 10) || null,
@@ -116,7 +105,7 @@ export class CommonTagMapper implements IGenericTagMapper {
           break;
 
         case 'picture':
-          tag.value = CommonTagMapper.cleanupPicture(tag.value);
+          tag.value.format = CommonTagMapper.fixPictureMimeType(tag.value.format);
           break;
 
         case 'totaltracks':
@@ -130,7 +119,7 @@ export class CommonTagMapper implements IGenericTagMapper {
         case 'track':
         case 'disk':
           const of = comTags[alias].of; // store of value, maybe maybe overwritten
-          comTags[alias] = CommonTagMapper.cleanupTrack(tag.value);
+          comTags[alias] = CommonTagMapper.normalizeTrack(tag.value);
           comTags[alias].of = of != null ? of : comTags[alias].of;
           return;
 
@@ -175,17 +164,6 @@ export class CommonTagMapper implements IGenericTagMapper {
         }
       }
     }
-  }
-
-  /**
-   * Test if native tag tagTypes is a singleton
-   * @param type e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
-   * @param  tag Native tag name', e.g. 'TITLE'
-   * @returns {boolean} true is we can safely assume that it is a singleton
-   */
-  public isNativeSingleton(tag: string): boolean {
-    const alias = this.getCommonName(tag);
-    return alias && !generic.commonTags[alias].multiple;
   }
 
   /**

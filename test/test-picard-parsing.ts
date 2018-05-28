@@ -13,6 +13,8 @@ const t = assert;
  */
 describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
+  const samplePath = path.join(__dirname, 'samples');
+
   // Following function manage common mapping exceptions, for good or bad reasons
 
   function hasReleaseData(inputTagType: TagType): boolean {
@@ -95,9 +97,16 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.musicbrainz_trackid, 'd062f484-253c-374b-85f7-89aab45551c7', inputTagType + " => common.musicbrainz_trackid");
     t.strictEqual(common.asin, "B005NPEUB2", inputTagType + " => common.asin");
     t.strictEqual(common.acoustid_id, "09c06fac-679a-45b1-8ea0-6ce532318363", inputTagType + " => common.acoustid_id");
-    t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+
+    // Check front cover
+    t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
-    t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'picture data');
+    t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'hash front cover data');
+
+    // Check back cover
+    t.strictEqual(common.picture[1].format, 'image/png', 'picture format');
+    t.strictEqual(common.picture[1].data.length, 120291, 'picture length');
+    t.strictEqual(calcHash(common.picture[1].data), '90ec686eb82e745e737b2c7aa706eeaa', 'hash back cover data');
   }
 
   describe("Vorbis mappings", () => {
@@ -154,9 +163,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].format, 'image/jpeg', "vorbis.METADATA_BLOCK_PICTURE.format = 'image/jpeg'");
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].type, 'Cover (front)', "vorbis.METADATA_BLOCK_PICTURE.type = 'Cover (front)'"); // ToDo: description??
 
-      const dimension = dataformat === "flac" ? 0 : 500; // For some magical reason, the width & height is not set in the FLAC file
-      t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].width, dimension, 'vorbis.METADATA_BLOCK_PICTURE.width = 500 px');
-      t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].height, dimension, 'vorbis.METADATA_BLOCK_PICTURE.height = 500 px');
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
       t.strictEqual(calcHash(vorbis.METADATA_BLOCK_PICTURE[0].data), 'c57bec49b36ebf422018f82273d1995a', 'Picture content');
@@ -165,7 +171,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     it("should map FLAC/Vorbis", () => {
 
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
-      const filePath = path.join(__dirname, 'samples', filename);
 
       function checkFormat(format) {
         t.strictEqual(format.dataformat, "flac", "format.dataformat = 'flac'");
@@ -176,7 +181,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse flac/Vorbis file
-      return mm.parseFile(filePath, {native: true}).then(result => {
+      return mm.parseFile(path.join(samplePath, filename), {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         checkFormat(result.format);
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
@@ -187,21 +192,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map ogg/Vorbis", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ogg";
-      const filePath = path.join(__dirname, 'samples', filename);
-
-      function checkFormat(format) {
-        // ToDo t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds');
-        // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-        // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-        // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-      }
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
 
       // Parse ogg/Vorbis file
       return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
-        // Check ogg format
-        checkFormat(result.format);
         // Check Vorbis native tags
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
         // Check common mappings
@@ -267,20 +262,18 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.Arranger');
 
       // ToDo:
-      // t.deepEqual(APEv2['Cover Art (Front)'][0].format, 'jpg', 'picture.format');
-      t.deepEqual(APEv2['Cover Art (Front)'][0].description, 'Cover Art (Front).jpg', 'picture.description');
+      t.deepEqual(APEv2['Cover Art (Front)'][0].format, 'image/jpeg', 'picture.format');
+      t.deepEqual(APEv2['Cover Art (Front)'][0].description, 'front', 'picture.description');
       t.deepEqual(APEv2['Cover Art (Front)'][0].data.length, 98008, 'picture.data.length');
 
-      // t.strictEqual(APEv2.METADATA_BLOCK_PICTURE.format, 'image/jpeg', 'APEv2.METADATA_BLOCK_PICTURE format');
-      // t.strictEqual(APEv2.METADATA_BLOCK_PICTURE.data.length, 98008, 'APEv2.METADATA_BLOCK_PICTURE length');
-
+      t.deepEqual(APEv2['Cover Art (Back)'][0].format, 'image/png', 'picture.format');
+      t.deepEqual(APEv2['Cover Art (Back)'][0].description, 'back', 'picture.description');
+      t.deepEqual(APEv2['Cover Art (Back)'][0].data.length, 120291, 'picture.data.length');
     }
 
     it("should map Monkey's Audio / APEv2", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ape";
-
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
       function checkFormat(format) {
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
@@ -302,9 +295,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map WavPack / APEv2", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.wv";
-
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
       function checkFormat(format) {
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
@@ -379,8 +370,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("MP3 / ID3v2.3", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
@@ -408,8 +398,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
      */
     it("should map RIFF/WAVE/PCM / ID3v2.3", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
       function checkFormat(format: mm.IFormat) {
         // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
@@ -500,8 +489,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map MP3/ID3v2.4 header", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
@@ -526,8 +514,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should parse AIFF/ID3v2.4 audio file", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
       function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.dataformat, "AIFF", "format.dataformat = 'AIFF'");
@@ -556,8 +543,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   it("should map M4A / (Apple) iTunes MP4 header", () => {
 
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.m4a";
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
@@ -569,7 +555,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     function checkCommonTags(common) {
-      t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
       t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
     }
 
@@ -577,11 +563,12 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       t.deepEqual(iTunes["©nam"], ["Sinner's Prayer"], "iTunes.©nam => common.title");
       t.deepEqual(iTunes["©ART"], ["Beth Hart & Joe Bonamassa"], "iTunes.@ART => common.artist");
+      t.deepEqual(iTunes["©alb"], ["Don't Explain"], "iTunes.©alb => common.album");
+      t.deepEqual(iTunes.soar, ["Hart, Beth & Bonamassa, Joe"], "iTunes.soar => common.artistsort");
+      t.deepEqual(iTunes.soaa, ["Hart, Beth & Bonamassa, Joe"], "iTunes.soaa => common.albumartistsort");
       t.deepEqual(iTunes["----:com.apple.iTunes:ARTISTS"], ["Beth Hart", "Joe Bonamassa"], "iTunes.----:com.apple.iTunes:ARTISTS => common.artists");
       t.deepEqual(iTunes.aART, [ 'Beth Hart & Joe Bonamassa' ], "iTunes.aART => common.albumartist");
       t.deepEqual(iTunes["----:com.apple.iTunes:Band"], ["Beth Hart & Joe Bonamassa"], "iTunes.----:com.apple.iTunes:Band => common.albumartist");
-      t.deepEqual(iTunes["----:com.apple.iTunes:ALBUMARTISTSORT"], ["Hart, Beth & Bonamassa, Joe"], "iTunes.----:com.apple.iTunes:ALBUMARTISTSORT => common.albumartistsort");
-      t.deepEqual(iTunes["©alb"], ["Don't Explain"], "iTunes.©alb => common.album");
       t.deepEqual(iTunes.trkn, ["1/10"], "iTunes.trkn => common.track");
       t.deepEqual(iTunes.disk, ["1/1"], "iTunes.trkn => common.disk");
       t.deepEqual(iTunes["----:com.apple.iTunes:ORIGINALDATE"], ["2011-09-26"], "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.albumartistsort");
@@ -607,8 +594,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   it("should map WMA/ASF header", () => {
 
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.wma";
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ["asf"], "format.tagTypes = asf");
