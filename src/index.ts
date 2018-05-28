@@ -13,9 +13,22 @@ import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
 import {AsfTagMapper} from "./asf/AsfTagMapper";
 import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
 
+/**
+ * Attached picture, typically used for cover art
+ */
 export interface IPicture {
+  /**
+   * image extension: jpg, png
+   */
   format: string,
-  data: Buffer;
+  /**
+   * Image data
+   */
+  data: Buffer,
+  /**
+   * Optional description
+   */
+  description?: string
 }
 
 export interface ICommonTagsResult {
