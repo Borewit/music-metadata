@@ -281,11 +281,19 @@ describe("MPEG parsing", () => {
    */
   describe("POPM decoding", () => {
 
-    it("decode Yeahs-It's Blitz!", () => {
+    it("from 'Yeahs-It's Blitz!.mp3'", () => {
 
       return mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {duration: false, native: true}).then(metadata => {
         const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
         assert.deepEqual(idv23.POPM[0], {email: "no@email", rating: 128, counter: 0}, "ID3v2.3 POPM");
+      });
+    });
+
+    it("from 'id3v2-lyrics.mp3'", () => {
+
+      return mm.parseFile(path.join(issueDir, "id3v2-lyrics.mp3"), {duration: false, native: true}).then(metadata => {
+        const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(idv23.POPM[0], {email: "MusicBee", rating: 255, counter: 0}, "ID3v2.3 POPM");
       });
     });
 
