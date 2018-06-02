@@ -276,4 +276,19 @@ describe("MPEG parsing", () => {
 
   });
 
+  /**
+   * Test decoding popularimeter
+   */
+  describe("POPM decoding", () => {
+
+    it("decode Yeahs-It's Blitz!", () => {
+
+      return mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {duration: false, native: true}).then(metadata => {
+        const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(idv23.POPM[0], {email: "no@email", rating: 128, counter: 0}, "ID3v2.3 POPM");
+      });
+    });
+
+  });
+
 });

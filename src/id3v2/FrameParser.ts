@@ -2,6 +2,9 @@ import common, {StringEncoding} from "../common/Util";
 import * as Token from "token-types";
 import {AttachedPictureType} from "./ID3v2";
 
+import * as _debug from "debug";
+const debug = _debug("music-metadata:id3v2:frame-parser");
+
 interface IOut {
   language?: string,
   description?: string,
@@ -162,7 +165,6 @@ export default class FrameParser {
       case 'UFID':
         output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1');
         output = {owner_identifier: output.id, identifier: output.data};
-
         break;
 
       case 'PRIV': // private frame
@@ -170,8 +172,19 @@ export default class FrameParser {
         output = {owner_identifier: output.id, data: output.data};
         break;
 
+      case 'POPM': // Popularimeter
+        fzero = common.findZero(b, offset, length, encoding);
+        const email = common.decodeString(b.slice(offset, fzero), encoding);
+        offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+        output = {
+          email,
+          rating: b.readUInt8(offset),
+          counter:  b.readUInt32BE(offset + 1)
+        };
+        break;
+
       default:
-        // ToDO? console.log('Warning: unsupported id3v2-tag-type: ' + type)
+        debug('Warning: unsupported id3v2-tag-type: ' + type);
         break;
     }
 
