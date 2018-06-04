@@ -121,7 +121,20 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.picture[1].data.length, 120291, 'picture length');
     t.strictEqual(calcHash(common.picture[1].data), '90ec686eb82e745e737b2c7aa706eeaa', 'hash back cover data');
 
+    // ISRC
     t.deepEqual(common.isrc, ["NLB931100460", "USMH51100098"], "ISRC's");
+
+    // Rating
+    switch (inputTagType) {
+
+      case 'APEv2':
+      case 'iTunes MP4':
+        break; // Skip rating tests for mapping type
+
+      default:
+        t.isDefined(common.rating, `'${inputTagType}' has rating`);
+        t.strictEqual(common.rating[0].rating, 3.0, `'${inputTagType}': rating=3.0`);
+    }
   }
 
   describe("Vorbis mappings", () => {
