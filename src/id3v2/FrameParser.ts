@@ -65,6 +65,7 @@ export default class FrameParser {
           case 'TOLY':
           case 'TOPE':
           case 'TPE1':
+          case 'TSRC':
             // id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
             output = FrameParser.splitValue(major, text);
             break;
