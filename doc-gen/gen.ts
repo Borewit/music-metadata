@@ -43,7 +43,7 @@ function write(out: fs.WriteStream) {
 
   for (const commonTagKey in commonTags) {
     const tagInfo = commonDescriptionDict[commonTagKey];
-    if(!tagInfo)
+    if (!tagInfo)
       throw new Error(`${commonTagKey} not found`);
     // console.log('common-tag: key=%s, description=%s', commonTagKey, tagInfo.description)
     const multiplicity = commonTags[commonTagKey].multiple ? '*' : '1';

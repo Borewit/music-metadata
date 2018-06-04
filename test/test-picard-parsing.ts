@@ -41,6 +41,19 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     return hash.digest('hex');
   }
 
+  const performers = [
+    "Carmine Rojas (bass guitar)",
+    "The Bovaland Orchestra (orchestra)",
+    "Anton Fig (drums)",
+    "Blondie Chaplin (guitar)",
+    "Joe Bonamassa (guitar)",
+    "Anton Fig (percussion)",
+    "Arlan Schierbaum (keyboard)",
+    "Beth Hart (vocals)",
+    "Joe Bonamassa (vocals)",
+    "Beth Hart (piano)"
+  ];
+
   /**
    * Check common output
    * @param inputTagType Meta-data header format
@@ -137,18 +150,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ALBUMARTISTID');
       t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ARTISTID');
-      t.deepEqual(vorbis.PERFORMER, [
-        "Carmine Rojas (bass guitar)",
-        "The Bovaland Orchestra (orchestra)",
-        "Anton Fig (drums)",
-        "Blondie Chaplin (guitar)",
-        "Joe Bonamassa (guitar)",
-        "Anton Fig (percussion)",
-        "Arlan Schierbaum (keyboard)",
-        "Beth Hart (vocals)",
-        "Joe Bonamassa (vocals)",
-        "Beth Hart (piano)"
-      ], 'vorbis.PERFORMER');
+      t.deepEqual(vorbis.PERFORMER, performers, 'vorbis.PERFORMER');
       t.deepEqual(vorbis.ARRANGER, ['Jeff Bova'], 'vorbis.ARRANGER');
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
       t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['d062f484-253c-374b-85f7-89aab45551c7'], 'vorbis.MUSICBRAINZ_RELEASETRACKID');
@@ -232,18 +234,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(APEv2.Musicbrainz_Albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Albumartistid');
       t.deepEqual(APEv2.Musicbrainz_Artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Artistid');
 
-      t.deepEqual(APEv2.Performer, [
-        "Beth Hart (piano)",
-        "Beth Hart (vocals)",
-        "Joe Bonamassa (vocals)",
-        "The Bovaland Orchestra (orchestra)",
-        "Blondie Chaplin (guitar)",
-        "Joe Bonamassa (guitar)",
-        "Anton Fig (drums)",
-        "Anton Fig (percussion)",
-        "Carmine Rojas (bass guitar)",
-        "Arlan Scheirbaum (keyboard)"
-      ], 'APEv2.Performer');
+      t.deepEqual(APEv2.Performer, performers, 'APEv2.Performer');
       t.deepEqual(APEv2.Producer, ['Roy Weisman'], 'APEv2.PRODUCER');
       t.deepEqual(APEv2.Engineer, ['James McCullagh', 'Jared Kvitka'], 'APEv2.ENGINEER');
       t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.ARRANGER');
