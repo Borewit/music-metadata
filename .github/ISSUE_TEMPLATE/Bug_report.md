@@ -4,7 +4,7 @@ about: Create a report to help us improve
 
 ---
 
-**Describe the bug**
+**Bug description**
 A clear and concise description of what the bug is.
 
 **Expected behavior**
