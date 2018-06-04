@@ -40,7 +40,7 @@ export type CommonTag =
   | 'totaltracks'
   | 'totaldiscs'
   | 'compilation'
-  | '_rating'
+  | 'rating'
   | 'bpm'
   | 'mood'
   | 'media'
@@ -142,7 +142,7 @@ export const commonTags: ITagInfoMap = {
   totaltracks: {multiple: false},
   totaldiscs: {multiple: false},
   compilation: {multiple: false},
-  _rating: {multiple: false},
+  rating: {multiple: true},
   bpm: {multiple: false},
   mood: {multiple: false},
   media: {multiple: false},

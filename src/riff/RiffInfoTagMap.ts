@@ -17,7 +17,7 @@ export const riffInfoTagMap: INativeTagMap = {
   ICNT: 'releasecountry',
   GNRE: 'genre', // Genre
   IWRI: 'writer', // WrittenBy
-  RATE: '_rating',
+  RATE: 'rating',
   YEAR: 'year',
   ISFT: 'encodedby', // Software
   CODE: 'encodedby', // EncodedBy
