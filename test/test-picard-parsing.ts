@@ -138,16 +138,16 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ALBUMARTISTID');
       t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ARTISTID');
       t.deepEqual(vorbis.PERFORMER, [
-        "Beth Hart (piano)",
-        "Beth Hart (vocals)",
-        "Joe Bonamassa (vocals)",
+        "Carmine Rojas (bass guitar)",
         "The Bovaland Orchestra (orchestra)",
+        "Anton Fig (drums)",
         "Blondie Chaplin (guitar)",
         "Joe Bonamassa (guitar)",
-        "Anton Fig (drums)",
         "Anton Fig (percussion)",
-        "Carmine Rojas (bass guitar)",
-        "Arlan Scheirbaum (keyboard)"
+        "Arlan Schierbaum (keyboard)",
+        "Beth Hart (vocals)",
+        "Joe Bonamassa (vocals)",
+        "Beth Hart (piano)"
       ], 'vorbis.PERFORMER');
       t.deepEqual(vorbis.ARRANGER, ['Jeff Bova'], 'vorbis.ARRANGER');
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
@@ -157,7 +157,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(vorbis.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'vorbis.NOTES');
       t.deepEqual(vorbis.BARCODE, ['804879313915'], 'vorbis.BARCODE');
       t.deepEqual(vorbis.ASIN, ['B005NPEUB2'], 'vorbis.ASIN');
-      t.deepEqual(vorbis.RELEASECOUNTRY, ['GB'], 'vorbis.RELEASECOUNTRY');
+      t.deepEqual(vorbis.RELEASECOUNTRY, ['US'], 'vorbis.RELEASECOUNTRY');
       t.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis.RELEASESTATUS');
 
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].format, 'image/jpeg', "vorbis.METADATA_BLOCK_PICTURE.format = 'image/jpeg'");
