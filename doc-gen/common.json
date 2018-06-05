@@ -113,8 +113,8 @@
   "compilation": {
     "description": "Is part of compilation (unofficial iTunes Compilation Flag)"
   },
-  "_rating": {
-    "description": "_ToDo_"
+  "rating": {
+    "description": "Object holding rating score ([0..5]) and source (e.g. user e-mail)"
   },
   "bpm": {
     "description": "Beats Per Minute (BPM)"

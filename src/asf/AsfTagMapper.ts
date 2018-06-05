@@ -37,7 +37,7 @@ const asfTagMap: INativeTagMap = {
   'WM/SetSubTitle': 'discsubtitle',
   // 'WM/PartOfSet': 'totaldiscs',
   'WM/IsCompilation': 'compilation',
-  'WM/SharedUserRating': '_rating',
+  'WM/SharedUserRating': 'rating',
   'WM/BeatsPerMinute': 'bpm',
   'WM/Mood': 'mood',
   'WM/Media': 'media',

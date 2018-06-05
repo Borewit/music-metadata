@@ -1,7 +1,7 @@
 import {INativeTagMap, TagType} from "../common/GenericTagTypes";
 import {CommonTagMapper} from "../common/GenericTagMapper";
 import common from '../common/Util';
-import {ITag} from "../index";
+import {IRating, ITag} from "../index";
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -44,7 +44,7 @@ const id3v24TagMap: INativeTagMap = {
   TIT3: "subtitle",
   TRCK: "track",
   TCMP: "compilation",
-  POPM: "_rating",
+  POPM: "rating",
   TBPM: "bpm",
   TMED: "media",
   "TXXX:CATALOGNUMBER": "catalognumber",
@@ -120,6 +120,14 @@ const id3v24TagMap: INativeTagMap = {
 
 export class ID3v24TagMapper extends CommonTagMapper {
 
+  public static toRating(popm: any): IRating {
+
+    return {
+      source: popm.email,
+      rating: popm.rating > 0 ? popm.rating / 255 * CommonTagMapper.rating_steps : undefined
+    };
+  }
+
   public constructor() {
     super(['ID3v2.3', 'ID3v2.4'], id3v24TagMap);
   }
@@ -157,6 +165,10 @@ export class ID3v24TagMapper extends CommonTagMapper {
 
       case 'COMM':
         tag.value = tag.value ? tag.value.text : null;
+        break;
+
+      case 'POPM':
+        tag.value = ID3v24TagMapper.toRating(tag.value);
         break;
 
       default:

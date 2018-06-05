@@ -12,8 +12,6 @@ describe("Picard mapping coverage", () => {
         return "track"; // ToDo: make consistent with Picard convention
       case "discnumber":
         return "disk"; // ToDo: make consistent with Picard convention
-      case "rating":
-        return "_rating"; // ToDo: make consistent with Picard convention
       default:
         return picardName;
     }

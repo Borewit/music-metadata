@@ -28,6 +28,8 @@ export interface IGenericTagMapper {
 
 export class CommonTagMapper implements IGenericTagMapper {
 
+  public static rating_steps = 5;
+
   public static parseGenre(origVal: string) {
     // match everything inside parentheses
     const split = origVal.trim().split(/\((.*?)\)/g).filter(val => {

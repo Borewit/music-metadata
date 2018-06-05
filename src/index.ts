@@ -31,6 +31,20 @@ export interface IPicture {
   description?: string
 }
 
+/**
+ * Abstract interface to access rating information
+ */
+export interface IRating {
+  /**
+   * Rating source, could be an e-mail address
+   */
+  source?: string,
+  /**
+   * Rating [0..5]
+   */
+  rating: number
+}
+
 export interface ICommonTagsResult {
   track: { no: number, of: number },
   disk: { no: number, of: number },
@@ -83,7 +97,7 @@ export interface ICommonTagsResult {
   totaltracks?: string,
   totaldiscs?: string,
   compilation?: string,
-  _rating?: string,
+  rating?: IRating,
   bpm?: string,
   mood?: string,
   media?: string,

@@ -8,6 +8,11 @@ import * as _debug from "debug";
 
 const debug = _debug("music-metadata:parser:Ogg/Vorbis1");
 
+export interface INestedKeyTag {
+  key: string,
+  value: string
+}
+
 /**
  * Vorbis 1 Parser.
  * Used by OggParser
