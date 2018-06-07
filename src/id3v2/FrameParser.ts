@@ -177,10 +177,11 @@ export default class FrameParser {
         fzero = common.findZero(b, offset, length, encoding);
         const email = common.decodeString(b.slice(offset, fzero), encoding);
         offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+        const dataLen = length - offset;
         output = {
           email,
           rating: b.readUInt8(offset),
-          counter:  b.readUInt32BE(offset + 1)
+          counter:  dataLen >= 5 ? b.readUInt32BE(offset + 1) : undefined
         };
         break;
 

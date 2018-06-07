@@ -309,6 +309,20 @@ describe("MPEG parsing", () => {
       });
     });
 
+    it("decode POPM without a counter field", () => {
+
+      const filePath = path.join(issueDir, "issue-100.mp3");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(idv23.POPM[0], {
+          counter: undefined,
+          email: "Windows Media Player 9 Series",
+          rating: 255
+        }, "ID3v2.3 POPM");
+      });
+    });
+
   });
 
 });
