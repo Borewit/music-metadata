@@ -63,12 +63,13 @@ export class ParserFactory {
 
       // Interpret mimeType as extension
       const parser = ParserFactory.getParserForMimeType(mimeType) || ParserFactory.getParserForExtension(mimeType) as ITokenParser;
-      if (parser === null) {
+      if (parser) {
+        // Parser found, execute parser
+        return parser.parse(tokenizer, opts);
+      } else {
         // No MIME-type mapping found
         throw new Error("MIME-type or extension not supported:" + mimeType);
       }
-      // Parser found, execute parser
-      return parser.parse(tokenizer, opts);
     });
   }
 
