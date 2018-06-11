@@ -140,6 +140,7 @@ export class ParserFactory {
     switch (mimeType) {
 
       case "audio/mpeg":
+      case "audio/mp3":
         return new MpegParser(); // ToDo: handle ID1 header as well
 
       case "audio/x-monkeys-audio":
