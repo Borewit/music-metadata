@@ -35,6 +35,21 @@
   "comment": {
     "description": "Comments"
   },
+  "discogs_artist_id": {
+    "description": "Discogs artist ID"
+  },
+  "discogs_label_id": {
+    "description": "Discogs label ID"
+  },
+  "discogs_master_release_id": {
+    "description": "Discogs master release ID"
+  },
+  "discogs_votes": {
+    "description": "Discogs votes"
+  },
+  "discogs_rating": {
+    "description": "Discogs rating"
+  },
   "genre": {
     "description": "Genres"
   },
