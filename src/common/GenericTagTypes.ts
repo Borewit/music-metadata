@@ -1,4 +1,4 @@
-export type TagType = 'vorbis' | 'ID3v1.1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4';
+export type TagType = 'vorbis' | 'ID3v1.1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4' | 'exif';
 
 export type CommonTag =
   'track'
@@ -29,6 +29,7 @@ export type CommonTag =
   | 'remixer'
   | 'arranger'
   | 'engineer'
+  | 'technician'
   | 'producer'
   | 'djmixer'
   | 'mixer'
@@ -39,7 +40,7 @@ export type CommonTag =
   | 'totaltracks'
   | 'totaldiscs'
   | 'compilation'
-  | '_rating'
+  | 'rating'
   | 'bpm'
   | 'mood'
   | 'media'
@@ -91,7 +92,7 @@ export type CommonTag =
   | 'replaygain_track_gain'
   | 'replaygain_track_peak';
 
-export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'asf', 'iTunes MP4', 'ID3v1.1'];
+export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes MP4', 'ID3v1.1'];
 
 export interface INativeTagMap {
   [index: string]: CommonTag;
@@ -136,20 +137,21 @@ export const commonTags: ITagInfoMap = {
   arranger: {multiple: true},
   engineer: {multiple: true},
   producer: {multiple: true},
+  technician: {multiple: true},
   djmixer: {multiple: true},
   mixer: {multiple: true},
-  label: {multiple: false},
+  label: {multiple: true},
   grouping: {multiple: false},
   subtitle: {multiple: false},
   discsubtitle: {multiple: false},
   totaltracks: {multiple: false},
   totaldiscs: {multiple: false},
   compilation: {multiple: false},
-  _rating: {multiple: false},
+  rating: {multiple: true},
   bpm: {multiple: false},
   mood: {multiple: false},
   media: {multiple: false},
-  catalognumber: {multiple: false},
+  catalognumber: {multiple: true},
   show: {multiple: false},
   showsort: {multiple: false},
   podcast: {multiple: false},
@@ -165,7 +167,7 @@ export const commonTags: ITagInfoMap = {
   encodersettings: {multiple: false},
   gapless: {multiple: false},
   barcode: {multiple: false},
-  isrc: {multiple: false},
+  isrc: {multiple: true},
   asin: {multiple: false},
   musicbrainz_recordingid: {multiple: false},
   musicbrainz_trackid: {multiple: false},

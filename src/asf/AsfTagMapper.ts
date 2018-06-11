@@ -1,5 +1,6 @@
 import {INativeTagMap} from "../common/GenericTagTypes";
 import {CommonTagMapper} from "../common/GenericTagMapper";
+import {IRating, ITag} from "../index";
 
 /**
  * ASF Metadata tag mappings.
@@ -37,7 +38,7 @@ const asfTagMap: INativeTagMap = {
   'WM/SetSubTitle': 'discsubtitle',
   // 'WM/PartOfSet': 'totaldiscs',
   'WM/IsCompilation': 'compilation',
-  'WM/SharedUserRating': '_rating',
+  'WM/SharedUserRating': 'rating',
   'WM/BeatsPerMinute': 'bpm',
   'WM/Mood': 'mood',
   'WM/Media': 'media',
@@ -77,7 +78,26 @@ const asfTagMap: INativeTagMap = {
 
 export class AsfTagMapper extends CommonTagMapper {
 
+  public static toRating(rating: string): IRating {
+
+    return {
+      rating: parseFloat(rating + 1) / 5
+    };
+  }
+
   public constructor() {
     super(['asf'], asfTagMap);
+  }
+
+  protected postMap(tag: ITag): void {
+
+    switch (tag.id) {
+      case 'WM/SharedUserRating':
+        const keys = tag.id.split(':');
+        tag.value = AsfTagMapper.toRating(tag.value);
+        tag.id = keys[0];
+        break;
+    }
+
   }
 }

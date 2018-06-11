@@ -9,8 +9,8 @@ const t = assert;
 describe("ID3v2Parser", () => {
 
   it("should be able to remove unsynchronisation bytes from buffer", () => {
-    const expected = new Buffer([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
-    const sample = new Buffer([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
+    const expected = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
+    const sample = Buffer.from([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
     const output = ID3v2Parser.removeUnsyncBytes(sample);
     t.deepEqual(output, expected, 'bytes');
   });
@@ -55,7 +55,7 @@ describe("ID3v2Parser", () => {
       t.strictEqual(metadata.common.track.no, 1, 'track no');
       t.strictEqual(metadata.common.track.of, 11, 'track of');
       t.deepEqual(metadata.common.genre, ['Alternative'], 'genre');
-      t.strictEqual(metadata.common.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'picture format');
       t.strictEqual(metadata.common.picture[0].data.length, 99738, 'picture length');
       t.strictEqual(metadata.common.gapless, false, 'common.gapless');
       t.isUndefined(metadata.common.comment, 'common.comment');

@@ -11,7 +11,7 @@ it("should be able to read id3v2 files with lyrics", () => {
   const filename = 'id3v2-lyrics.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
 
-  return mm.parseFile(filePath, {duration: true}).then(metadata => {
+  return mm.parseFile(filePath).then(metadata => {
 
     t.deepEqual(metadata.common.lyrics, [
       'The way we\'re living makes no sense',

@@ -4,7 +4,7 @@ import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {APEv2Parser} from "../apev2/APEv2Parser";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "es6-promise";
+import {Promise} from "bluebird";
 
 /**
  * WavPack Block Header
@@ -220,7 +220,7 @@ export class WavPackParser implements ITokenParser {
         const metadataSize = 1 + dataSizeInWords * 2 + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
         if (metadataSize > remainingLength)
           throw new Error('Metadata exceeding block size');
-        const data = new Buffer(dataSizeInWords * 2);
+        const data = Buffer.alloc(dataSizeInWords * 2);
         return this.tokenizer.readBuffer(data, 0, data.length).then(() => {
           switch (id.functionId) {
             case 0x0: // ID_DUMMY could be used to pad WavPack blocks

@@ -1,9 +1,9 @@
-import {} from "mocha";
 import {assert} from "chai";
 
 import {CommonTagMapper} from "../src/common/GenericTagMapper";
 import {commonTags, isSingleton} from "../lib/common/GenericTagTypes";
-import {CombinedTagMapper} from "../src/index";
+import * as path from "path";
+import * as mm from "../src";
 
 const t = assert;
 
@@ -32,7 +32,7 @@ describe("CommonTagMapper.parseGenre", () => {
 
 describe("GenericTagMap", () => {
 
-  const combinedTagMapper = new CombinedTagMapper();
+  const combinedTagMapper = new mm.CombinedTagMapper();
 
   it("Check if each native tag, is mapped to a valid common type", () => {
 
@@ -56,17 +56,23 @@ describe("GenericTagMap", () => {
     t.ok(!isSingleton("artists"), "common tag \"artists\" is not a singleton");
   });
 
-  describe("Vorbis generic mapper", () => {
-    const vorbisGenericMapper = combinedTagMapper.tagMappers.vorbis;
-    t.isDefined(vorbisGenericMapper);
+  describe("common.artist / common.artists mapping", () => {
 
-    t.ok(vorbisGenericMapper.isNativeSingleton("TITLE"), "Vorbis tag \"TITLE\" is a singleton");
-    t.ok(!vorbisGenericMapper.isNativeSingleton("METADATA_BLOCK_PICTURE"), "Vorbis tag \"METADATA_BLOCK_PICTURE\" is not a singleton");
+    it("should be able to join artists", () => {
+      t.equal(mm.MusicMetadataParser.joinArtists(["David Bowie"]), "David Bowie");
+      t.equal(mm.MusicMetadataParser.joinArtists(["David Bowie", "Stevie Ray Vaughan"]), "David Bowie & Stevie Ray Vaughan");
+      t.equal(mm.MusicMetadataParser.joinArtists(["David Bowie", "Queen", "Mick Ronson"]), "David Bowie, Queen & Mick Ronson");
+    });
+
+    it("parse RIFF tags", () => {
+
+      const filePath = path.join(__dirname, "samples", "issue-89 no-artist.aiff");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        t.deepEqual(metadata.common.artists, ["Beth Hart", "Joe Bonamassa"], "common.artists directly via WM/ARTISTS");
+        t.strictEqual(metadata.common.artist, "Beth Hart & Joe Bonamassa", "common.artist derived from common.artists");
+      });
+    });
+
   });
-
-  describe("iTunes MP4", () => {
-    const itunesGenericMapper = combinedTagMapper.tagMappers["iTunes MP4"];
-    t.ok(itunesGenericMapper.isNativeSingleton("©nam"), "iTunes MP4 tag \"©nam\" is a singleton");
-  });
-
 });

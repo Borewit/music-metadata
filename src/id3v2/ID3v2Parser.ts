@@ -155,7 +155,7 @@ export class ID3v2Parser {
     return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
 
       if (id3Header.fileIdentifier !== 'ID3') {
-        throw new Error("expected file identifier 'ID3' not found");
+        throw new Error("expected ID3-header file-identifier 'ID3' was not found");
       }
 
       this.id3Header = id3Header;
@@ -184,14 +184,14 @@ export class ID3v2Parser {
   }
 
   public parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
-    const buffer = new Buffer(dataRemaining);
+    const buffer = Buffer.alloc(dataRemaining);
     return this.tokenizer.readBuffer(buffer, 0, dataRemaining).then(() => {
       return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
     });
   }
 
   public parseId3Data(dataLen: number): Promise<void> {
-    const buffer = new Buffer(dataLen);
+    const buffer = Buffer.alloc(dataLen);
     return this.tokenizer.readBuffer(buffer, 0, dataLen).then(() => {
       for (const tag of this.parseMetadata(buffer)) {
         if (tag.id === 'TXXX') {

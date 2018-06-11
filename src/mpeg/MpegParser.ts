@@ -2,10 +2,10 @@ import * as assert from "assert";
 import {ITokenizer, endOfFile} from "strtok3";
 import Common from "../common/Util";
 import * as Token from "token-types";
-import {Promise} from "es6-promise";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
+import {Promise} from "bluebird";
 
 /**
  * Cache buffer size used for searching synchronization preabmle
@@ -216,7 +216,7 @@ export class MpegParser extends AbstractID3v2Parser {
 
   private metadata: INativeAudioMetadata;
 
-  private buf_frame_header = new Buffer(4);
+  private buf_frame_header = Buffer.alloc(4);
 
   private tokenizer: ITokenizer;
   /**
@@ -226,7 +226,7 @@ export class MpegParser extends AbstractID3v2Parser {
   private readDuration: boolean;
 
   private syncPeek = {
-    buf: new Buffer(maxPeekLen),
+    buf: Buffer.alloc(maxPeekLen),
     len: 0
   };
 

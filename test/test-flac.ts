@@ -29,7 +29,7 @@ describe("FLAC decoding", () => {
     t.deepEqual(common.track, {no: 7, of: null}, "common.track");
     t.deepEqual(common.disk, {no: null, of: null}, "common.disk");
     t.deepEqual(common.genre, ["Alt. Rock"], "genre");
-    t.strictEqual(common.picture[0].format, "jpg", "common.picture format");
+    t.strictEqual(common.picture[0].format, "image/jpeg", "common.picture format");
     t.strictEqual(common.picture[0].data.length, 175668, "common.picture length");
   }
 
@@ -90,7 +90,7 @@ describe("FLAC decoding", () => {
   describe("handle corrupt FLAC data", () => {
 
     const emptyStreamSize = 10 * 1024;
-    const buf = new Buffer(emptyStreamSize).fill(0);
+    const buf = Buffer.alloc(emptyStreamSize).fill(0);
 
     it("should handle a corrupt stream", () => {
 

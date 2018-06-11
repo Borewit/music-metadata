@@ -1,11 +1,11 @@
 // ASF Objects
 
 "use strict";
-import common from "../common/Util";
+import util from "../common/Util";
 import {IPicture, ITag} from "../index";
 import * as Token from "token-types";
 import GUID from "./GUID";
-import {Util} from "./Util";
+import {AsfUtil} from "./AsfUtil";
 import {AttachedPictureType} from "../id3v2/ID3v2";
 
 /**
@@ -73,7 +73,7 @@ export const TopLevelHeaderObjectToken: Token.IGetToken<IAsfTopLevelObjectHeader
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
       objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
-      objectSize: Util.readUInt64LE(buf, off + 16),
+      objectSize: util.readUInt64LE(buf, off + 16),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
       // Reserved: 2 bytes
     };
@@ -91,7 +91,7 @@ export const HeaderObjectToken: Token.IGetToken<IAsfObjectHeader> = {
   get: (buf, off): IAsfObjectHeader => {
     return {
       objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
-      objectSize: Util.readUInt64LE(buf, off + 16)
+      objectSize: util.readUInt64LE(buf, off + 16)
     };
   }
 };
@@ -110,7 +110,7 @@ export abstract class State<T> implements Token.IGetToken<T> {
     if (name === "WM/Picture") {
       tags.push({id: name, value: WmPictureToken.fromBuffer(data)});
     } else {
-      const parseAttr = Util.getParserForAttr(valueType);
+      const parseAttr = AsfUtil.getParserForAttr(valueType);
       if (!parseAttr) {
         throw new Error("unexpected value headerType: " + valueType);
       }
@@ -247,15 +247,15 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
 
     return {
       fileId: GUID.fromBin(buf, off),
-      fileSize: Util.readUInt64LE(buf, off + 16),
-      creationDate: Util.readUInt64LE(buf, off + 24),
-      dataPacketsCount: Util.readUInt64LE(buf, off + 32),
-      playDuration: Util.readUInt64LE(buf, off + 40),
-      sendDuration: Util.readUInt64LE(buf, off + 48),
-      preroll: Util.readUInt64LE(buf, off + 56),
+      fileSize: util.readUInt64LE(buf, off + 16),
+      creationDate: util.readUInt64LE(buf, off + 24),
+      dataPacketsCount: util.readUInt64LE(buf, off + 32),
+      playDuration: util.readUInt64LE(buf, off + 40),
+      sendDuration: util.readUInt64LE(buf, off + 48),
+      preroll: util.readUInt64LE(buf, off + 56),
       flags: {
-        broadcast: common.strtokBITSET.get(buf, off + 64, 24),
-        seekable: common.strtokBITSET.get(buf, off + 64, 25)
+        broadcast: util.strtokBITSET.get(buf, off + 64, 24),
+        seekable: util.strtokBITSET.get(buf, off + 64, 25)
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
@@ -358,7 +358,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;
-        tags.push({id: tagName, value: Util.parseUnicodeAttr(buf.slice(pos, end))});
+        tags.push({id: tagName, value: AsfUtil.parseUnicodeAttr(buf.slice(pos, end))});
         pos = end;
       }
     }
@@ -385,7 +385,7 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
     for (let i = 0; i < attrCount; i += 1) {
       const nameLen = buf.readUInt16LE(pos);
       pos += 2;
-      const name = Util.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
+      const name = AsfUtil.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
       pos += nameLen;
       const valueType = buf.readUInt16LE(pos);
       pos += 2;
@@ -447,8 +447,8 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
 
   public get(buf: Buffer, off: number): IExtendedStreamPropertiesObject {
     return {
-      startTime: Util.readUInt64LE(buf, off),
-      endTime: Util.readUInt64LE(buf, off + 8),
+      startTime: util.readUInt64LE(buf, off),
+      endTime: util.readUInt64LE(buf, off + 8),
       dataBitrate: buf.readInt32LE(off + 12),
       bufferSize: buf.readInt32LE(off + 16),
       initialBufferFullness: buf.readInt32LE(off + 20),
@@ -457,9 +457,9 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
       alternateInitialBufferFullness: buf.readInt32LE(off + 32),
       maximumObjectSize: buf.readInt32LE(off + 36),
       flags: { // ToDo, check flag positions
-        reliableFlag: common.strtokBITSET.get(buf, off + 40, 0),
-        seekableFlag: common.strtokBITSET.get(buf, off + 40, 1),
-        resendLiveCleanpointsFlag: common.strtokBITSET.get(buf, off + 40, 2)
+        reliableFlag: util.strtokBITSET.get(buf, off + 40, 0),
+        seekableFlag: util.strtokBITSET.get(buf, off + 40, 1),
+        resendLiveCleanpointsFlag: util.strtokBITSET.get(buf, off + 40, 2)
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       streamNumber: buf.readInt16LE(off + 42),
@@ -497,11 +497,11 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += 2;
       const dataLen = buf.readUInt32LE(pos);
       pos += 4;
-      const name = Util.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
+      const name = AsfUtil.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
       pos += nameLen;
       const data = buf.slice(pos, pos + dataLen);
       pos += dataLen;
-      const parseAttr = Util.getParserForAttr(dataType);
+      const parseAttr = AsfUtil.getParserForAttr(dataType);
       if (!parseAttr) {
         throw new Error("unexpected value headerType: " + dataType);
       }
@@ -535,7 +535,7 @@ export interface IWmPicture extends IPicture {
 export class WmPictureToken implements Token.IGetToken<IWmPicture> {
 
   public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(new Buffer(base64str, "base64"));
+    return this.fromBuffer(Buffer.from(base64str, "base64"));
   }
 
   public static fromBuffer(buffer: Buffer): IWmPicture {

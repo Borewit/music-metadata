@@ -4,7 +4,7 @@ import {INativeAudioMetadata, IOptions} from "../index";
 import {ID3v2Token} from "./ID3v2";
 import {ID3v2Parser} from "./ID3v2Parser";
 import {ID3v1Parser} from "../id3v1/ID3v1Parser";
-import {Promise} from "es6-promise";
+import {Promise} from "bluebird";
 
 import * as _debug from "debug";
 const debug = _debug("music-metadata:parser:ID3");

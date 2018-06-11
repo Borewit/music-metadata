@@ -1,5 +1,6 @@
 import {INativeTagMap} from "../common/GenericTagTypes";
 import {CommonTagMapper} from "../common/GenericTagMapper";
+import {IRating, ITag} from "../index";
 
 /**
  * Vorbis tag mappings
@@ -47,7 +48,7 @@ const vorbisTagMap: INativeTagMap = {
   TRACKTOTAL: "totaltracks",
   DISCTOTAL: "totaldiscs",
   COMPILATION: "compilation",
-  "RATING:user@email": "_rating",
+  RATING: "rating",
   BPM: "bpm",
   MOOD: "mood",
   MEDIA: "media",
@@ -106,8 +107,26 @@ const vorbisTagMap: INativeTagMap = {
 
 export class VorbisTagMapper extends CommonTagMapper {
 
+  public static toRating(email: string, rating: string): IRating {
+
+    return {
+      source: email ? email.toLowerCase() : email,
+      rating: parseFloat(rating) * 5
+    };
+  }
+
   public constructor() {
     super(['vorbis'],  vorbisTagMap);
+  }
+
+  protected postMap(tag: ITag): void {
+
+    if (tag.id.indexOf('RATING:') === 0) {
+      const keys = tag.id.split(':');
+      tag.value = VorbisTagMapper.toRating(keys[1], tag.value);
+      tag.id = keys[0];
+    }
+
   }
 
 }

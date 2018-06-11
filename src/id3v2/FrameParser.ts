@@ -2,6 +2,9 @@ import common, {StringEncoding} from "../common/Util";
 import * as Token from "token-types";
 import {AttachedPictureType} from "./ID3v2";
 
+import * as _debug from "debug";
+const debug = _debug("music-metadata:id3v2:frame-parser");
+
 interface IOut {
   language?: string,
   description?: string,
@@ -65,6 +68,7 @@ export default class FrameParser {
           case 'TOLY':
           case 'TOPE':
           case 'TPE1':
+          case 'TSRC':
             // id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
             output = FrameParser.splitValue(major, text);
             break;
@@ -105,6 +109,8 @@ export default class FrameParser {
               throw new Error('Warning: unexpected major versionIndex: ' + major);
           }
 
+          pic.format = FrameParser.fixPictureMimeType(pic.format);
+
           pic.type = AttachedPictureType[b[offset]];
           offset += 1;
 
@@ -112,7 +118,7 @@ export default class FrameParser {
           pic.description = common.decodeString(b.slice(offset, fzero), encoding);
           offset = fzero + nullTerminatorLength;
 
-          pic.data = new Buffer(b.slice(offset, length));
+          pic.data = Buffer.from(b.slice(offset, length));
           output = pic;
         }
         break;
@@ -160,7 +166,6 @@ export default class FrameParser {
       case 'UFID':
         output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1');
         output = {owner_identifier: output.id, identifier: output.data};
-
         break;
 
       case 'PRIV': // private frame
@@ -168,12 +173,35 @@ export default class FrameParser {
         output = {owner_identifier: output.id, data: output.data};
         break;
 
+      case 'POPM': // Popularimeter
+        fzero = common.findZero(b, offset, length, encoding);
+        const email = common.decodeString(b.slice(offset, fzero), encoding);
+        offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+        const dataLen = length - offset;
+        output = {
+          email,
+          rating: b.readUInt8(offset),
+          counter:  dataLen >= 5 ? b.readUInt32BE(offset + 1) : undefined
+        };
+        break;
+
       default:
-        // ToDO? console.log('Warning: unsupported id3v2-tag-type: ' + type)
+        debug('Warning: unsupported id3v2-tag-type: ' + type);
         break;
     }
 
     return output;
+  }
+
+  protected static fixPictureMimeType(pictureType: string): string {
+    pictureType = pictureType.toLocaleLowerCase();
+    switch (pictureType) {
+      case 'jpg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+    }
+    return pictureType;
   }
 
   /**

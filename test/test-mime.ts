@@ -3,13 +3,13 @@ import {assert} from "chai";
 import * as mime from "mime";
 import * as mm from "../src";
 import {SourceStream} from "./util";
-import {Promise} from 'es6-promise';
+import {Promise} from 'bluebird';
 
 const t = assert;
 
 describe("MIME & extension mapping", () => {
 
-  const buf = new Buffer(30).fill(0);
+  const buf = Buffer.alloc(30).fill(0);
 
   const audioExtension = [".aac", ".mp3", ".ogg", ".wav", ".flac", ".m4a"]; // ToDo: ass ".ac3"
 

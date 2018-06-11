@@ -5,6 +5,7 @@ import * as mm from "../src";
 import * as fs from "fs-extra";
 import * as path from "path";
 import {SourceStream} from "./util";
+import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
 
 const t = assert;
 
@@ -47,7 +48,7 @@ describe("MPEG parsing", () => {
   describe("MPEG frame sync efficiency", () => {
 
     const emptyStreamSize = 5 * 1024 * 1024;
-    const buf = new Buffer(emptyStreamSize).fill(0);
+    const buf = Buffer.alloc(emptyStreamSize).fill(0);
 
     it("should sync efficient from a stream", function() {
 
@@ -271,6 +272,54 @@ describe("MPEG parsing", () => {
       // ToDo: currently second ID3v2.4 is overwritten. Either make both headers accessible or generate warning
       return mm.parseFile(path.join(issueDir, "id3-multi-01.mp3")).then(metadata => {
         checkFormat(metadata.format, 0.1306122448979592);
+      });
+    });
+
+  });
+
+  /**
+   * Test decoding popularimeter
+   */
+  describe("POPM decoding", () => {
+
+    it("check mapping function", () => {
+
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 0}), {source: 'user1@bla.com', rating: undefined}, 'unknown rating');
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1}), {source: 'user1@bla.com', rating: 5 / 255}, 'lowest rating');
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255}), {source: 'user1@bla.com', rating: 5}, 'highest rating');
+    });
+
+    it("from 'Yeahs-It's Blitz!.mp3'", () => {
+
+      return mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {duration: false, native: true}).then(metadata => {
+        const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(idv23.POPM[0], {email: "no@email", rating: 128, counter: 0}, "ID3v2.3 POPM");
+        assert.approximately(metadata.common.rating[0].rating, 2.5, 0.05, "Common rating");
+      });
+    });
+
+    it("from 'id3v2-lyrics.mp3'", () => {
+
+      return mm.parseFile(path.join(issueDir, "id3v2-lyrics.mp3"), {duration: false, native: true}).then(metadata => {
+        const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+        // Native rating value
+        assert.deepEqual(idv23.POPM[0], {email: "MusicBee", rating: 255, counter: 0}, "ID3v2.3 POPM");
+        // Common rating value
+        assert.approximately(metadata.common.rating[0].rating, 5, 0.05, "Common rating");
+      });
+    });
+
+    it("decode POPM without a counter field", () => {
+
+      const filePath = path.join(issueDir, "issue-100.mp3");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(idv23.POPM[0], {
+          counter: undefined,
+          email: "Windows Media Player 9 Series",
+          rating: 255
+        }, "ID3v2.3 POPM");
       });
     });
 

@@ -11,10 +11,38 @@ import {APEv2TagMapper} from "./apev2/APEv2TagMapper";
 import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
 import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
 import {AsfTagMapper} from "./asf/AsfTagMapper";
+import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
 
+/**
+ * Attached picture, typically used for cover art
+ */
 export interface IPicture {
+  /**
+   * Image mime type
+   */
   format: string,
-  data: Buffer;
+  /**
+   * Image data
+   */
+  data: Buffer,
+  /**
+   * Optional description
+   */
+  description?: string
+}
+
+/**
+ * Abstract interface to access rating information
+ */
+export interface IRating {
+  /**
+   * Rating source, could be an e-mail address
+   */
+  source?: string,
+  /**
+   * Rating [0..5]
+   */
+  rating: number
 }
 
 export interface ICommonTagsResult {
@@ -61,18 +89,19 @@ export interface ICommonTagsResult {
   producer?: string[],
   djmixer?: string[],
   mixer?: string[],
-  label?: string,
+  technician?: string[],
+  label?: string[],
   grouping?: string[],
   subtitle?: string[],
   discsubtitle?: string[],
   totaltracks?: string,
   totaldiscs?: string,
   compilation?: string,
-  _rating?: string,
+  rating?: IRating,
   bpm?: string,
   mood?: string,
   media?: string,
-  catalognumber?: string,
+  catalognumber?: string[],
   show?: string,
   showsort?: string,
   podcast?: string,
@@ -87,9 +116,9 @@ export interface ICommonTagsResult {
   encodedby?: string,
   encodersettings?: string,
   gapless?: boolean,
-  barcode?: number, // ToDo: multiple??
+  barcode?: string, // ToDo: multiple??
   // International Standard Recording Code
-  isrc?: string,
+  isrc?: string[],
   asin?: string,
   musicbrainz_recordingid?: string,
   musicbrainz_trackid?: string,
@@ -265,7 +294,8 @@ export class CombinedTagMapper {
       new MP4TagMapper(),
       new VorbisTagMapper(),
       new APEv2TagMapper(),
-      new AsfTagMapper()
+      new AsfTagMapper(),
+      new RiffInfoTagMapper()
     ].forEach(mapper => {
       this.registerTagMapper(mapper);
     });
@@ -300,45 +330,14 @@ export class MusicMetadataParser {
     return new MusicMetadataParser();
   }
 
-  private tagMapper = new CombinedTagMapper();
-
-  /**
-   * ToDo: move to respective format implementations
-   */
-
-  /*
-  private static headerTypes = [
-    {
-      buf: GUID.HeaderObject.toBin(),
-      tag: require('./asf/AsfParser')
-    },
-    {
-      buf: new Buffer('ID3'),
-      tag: require('./id3v2')
-    },
-    {
-      buf: new Buffer('ftypM4A'),
-      tag: require('./id4'),
-      offset: 4
-    },
-    {
-      buf: new Buffer('ftypmp42'),
-      tag: require('./id4'),
-      offset: 4
-    },
-    {
-      buf: new Buffer('OggS'),
-      tag: require('./ogg')
-    },
-    {
-      buf: new Buffer('fLaC'),
-      tag: require('./flac')
-    },
-    {
-      buf: new Buffer('MAC'),
-      tag: require('./monkeysaudio')
+  public static joinArtists(artists: string[]): string {
+    if (artists.length > 2) {
+      return artists.slice(0, artists.length - 1).join(', ') + ' & ' +  artists[artists.length - 1];
     }
-  ];*/
+    return artists.join(' & ');
+  }
+
+  private tagMapper = new CombinedTagMapper();
 
   /**
    * Extract metadata from the given audio file
@@ -421,7 +420,8 @@ export class MusicMetadataParser {
     }
 
     if (metadata.common.artists && metadata.common.artists.length > 0) {
-      metadata.common.artist = metadata.common.artist[0];
+      // common.artists explicitly by meta-data
+      metadata.common.artist = !metadata.common.artist ? MusicMetadataParser.joinArtists(metadata.common.artists) : metadata.common.artist[0];
     } else {
       if (metadata.common.artist) {
         metadata.common.artists = metadata.common.artist as any;

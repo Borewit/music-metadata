@@ -1,5 +1,4 @@
 import {} from "mocha";
-import {assert} from "chai";
 
 import * as path from 'path';
 import * as fs from "fs";
@@ -44,6 +43,8 @@ function write(out: fs.WriteStream) {
 
   for (const commonTagKey in commonTags) {
     const tagInfo = commonDescriptionDict[commonTagKey];
+    if (!tagInfo)
+      throw new Error(`${commonTagKey} not found`);
     // console.log('common-tag: key=%s, description=%s', commonTagKey, tagInfo.description)
     const multiplicity = commonTags[commonTagKey].multiple ? '*' : '1';
 
@@ -57,7 +58,7 @@ function write(out: fs.WriteStream) {
   table.writeTo(out);
 }
 
-const txt = fs.createWriteStream(path.join(__dirname, '..', 'doc', 'metadata.md'));
+const txt = fs.createWriteStream(path.join(__dirname, '..', 'doc', 'common_metadata.md'));
 
 txt.write("# Common Metadata\n\n");
 txt.write("Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n");

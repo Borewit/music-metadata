@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "sourceMap": false,
+   "sourceMap": false,
     "inlineSources": false,
     "module": "commonjs",
     "moduleResolution": "node",

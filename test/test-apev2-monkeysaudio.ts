@@ -28,9 +28,9 @@ it("should decode monkeysaudio (.ape)", () => {
     t.deepEqual(common.genre, ['Alternative'], 'common.genre');
     t.deepEqual(common.track, {no: 7, of: null}, 'common.track');
     t.deepEqual(common.disk, {no: 3, of: null}, 'common.disk');
-    t.strictEqual(common.picture[0].format, 'jpg', 'common.picture 0 format');
+    t.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
     t.strictEqual(common.picture[0].data.length, 48658, 'common.picture 0 length');
-    t.strictEqual(common.picture[1].format, 'jpg', 'common.picture 1 format');
+    t.strictEqual(common.picture[1].format, 'image/jpeg', 'common.picture 1 format');
     t.strictEqual(common.picture[1].data.length, 48658, 'common.picture 1 length');
   }
 

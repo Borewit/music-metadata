@@ -6,12 +6,14 @@ import * as path from 'path';
 
 const t = assert;
 
+const samplePath = path.join(__dirname, 'samples');
+
 describe("Decode MP3/ID3v2.4", () => {
 
   it("should decode id3v2.4", () => {
 
     const filename = 'id3v2.4.mp3';
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, {duration: true}).then(metadata => {
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.4", "ID3v1.1"], 'format.tagTypes');
@@ -31,9 +33,9 @@ describe("Decode MP3/ID3v2.4", () => {
       t.deepEqual(metadata.common.track, {no: 5, of: null}, 'common.track');
       t.deepEqual(metadata.common.disk, {no: 1, of: 1}, 'common.disk');
       t.deepEqual(metadata.common.genre, ['Soundtrack', 'OST'], 'common.genres');
-      t.strictEqual(metadata.common.picture[0].format, 'jpg', 'common.picture 0 format');
+      t.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
       t.strictEqual(metadata.common.picture[0].data.length, 80938, 'common.picture 0 length');
-      t.strictEqual(metadata.common.picture[1].format, 'jpg', 'common.picture 1 format');
+      t.strictEqual(metadata.common.picture[1].format, 'image/jpeg', 'common.picture 1 format');
       t.strictEqual(metadata.common.picture[1].data.length, 80938, 'common.picture 1 length');
     });
 
@@ -42,7 +44,7 @@ describe("Decode MP3/ID3v2.4", () => {
   it("should respect skipCovers-flag", () => {
 
     const filename = 'id3v2.4.mp3';
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, {duration: true, skipCovers: true}).then(result => {
       t.isUndefined(result.common.picture, 'common.picture should be undefined');

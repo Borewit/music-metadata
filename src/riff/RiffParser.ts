@@ -9,7 +9,7 @@ import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {IChunkHeader} from "../aiff/Chunk";
 import Common from "../common/Util";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "es6-promise";
+import {Promise} from "bluebird";
 import * as _debug from "debug";
 
 const debug = _debug("music-metadata:parser:RIFF");
@@ -32,10 +32,13 @@ export class WavePcmParser implements ITokenParser {
 
   private metadata: INativeAudioMetadata = {
     format: {
-      dataformat: "WAVE PCM"
+      dataformat: "WAVE/?",
+      lossless: true
     },
     native: {}
   };
+
+  private fact: WaveChunk.IFactChunk;
 
   /**
    * RIFF/ILIST-INFO tag stored in EXIF
@@ -94,14 +97,26 @@ export class WavePcmParser implements ITokenParser {
           case "LIST":
             return this.parseListTag(header);
 
-          case "fmt ": // The Util Chunk
-            return this.tokenizer.readToken<WaveChunk.IFormat>(new WaveChunk.Format(header))
-              .then(common => {
-                this.metadata.format.bitsPerSample = common.bitsPerSample;
-                this.metadata.format.sampleRate = common.sampleRate;
-                this.metadata.format.numberOfChannels = common.numChannels;
-                this.metadata.format.bitrate = common.blockAlign * common.sampleRate * 8;
-                this.blockAlign = common.blockAlign;
+          case 'fact': // extended Format chunk,
+            this.metadata.format.lossless = false;
+            return this.tokenizer.readToken(new WaveChunk.FactChunk(header)).then(fact => {
+              this.fact = fact;
+            });
+
+          case "fmt ": // The Util Chunk, non-PCM Formats
+            return this.tokenizer.readToken<WaveChunk.IWaveFormat>(new WaveChunk.Format(header))
+              .then(fmt => {
+                this.metadata.format.dataformat = WaveChunk.WaveFormat[fmt.wFormatTag];
+                if (!this.metadata.format.dataformat) {
+                  debug("WAVE/non-PCM format=" + fmt.wFormatTag);
+                  this.metadata.format.dataformat = "non-PCM (" + fmt.wFormatTag + ")";
+                }
+                this.metadata.format.dataformat = "WAVE/" + this.metadata.format.dataformat;
+                this.metadata.format.bitsPerSample = fmt.wBitsPerSample;
+                this.metadata.format.sampleRate = fmt.nSamplesPerSec;
+                this.metadata.format.numberOfChannels = fmt.nChannels;
+                this.metadata.format.bitrate = fmt.nBlockAlign * fmt.nSamplesPerSec * 8;
+                this.blockAlign = fmt.nBlockAlign;
               });
 
           case "id3 ": // The way Picard, FooBar currently stores, ID3 meta-data
@@ -115,12 +130,13 @@ export class WavePcmParser implements ITokenParser {
               });
 
           case 'data': // PCM-data
-            this.metadata.format.numberOfSamples = header.size / this.blockAlign;
+            this.metadata.format.numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.size / this.blockAlign);
             this.metadata.format.duration = this.metadata.format.numberOfSamples / this.metadata.format.sampleRate;
             this.metadata.format.bitrate = this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate; // ToDo: check me
             return this.tokenizer.ignore(header.size);
 
           default:
+            debug("Ignore chunk: RIFF/" + header.chunkID);
             this.warnings.push("Ignore chunk: RIFF/" + header.chunkID);
             return this.tokenizer.ignore(header.size);
         }
@@ -158,9 +174,7 @@ export class WavePcmParser implements ITokenParser {
           chunkSize -= (8 + valueToken.len);
           if (chunkSize >= 8) {
             return this.parseRiffInfoTags(chunkSize);
-          } else if (chunkSize === 0) {
-            return Promise.resolve<void>(null);
-          } else {
+          } else if (chunkSize !== 0) {
             throw Error("Illegal remaining size: " + chunkSize);
           }
         });

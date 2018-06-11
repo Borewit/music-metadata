@@ -13,6 +13,8 @@ const t = assert;
  */
 describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
+  const samplePath = path.join(__dirname, 'samples');
+
   // Following function manage common mapping exceptions, for good or bad reasons
 
   function hasReleaseData(inputTagType: TagType): boolean {
@@ -38,6 +40,19 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     hash.update(buf);
     return hash.digest('hex');
   }
+
+  const performers = [
+    "Carmine Rojas (bass guitar)",
+    "The Bovaland Orchestra (orchestra)",
+    "Anton Fig (drums)",
+    "Blondie Chaplin (guitar)",
+    "Joe Bonamassa (guitar)",
+    "Anton Fig (percussion)",
+    "Arlan Schierbaum (keyboard)",
+    "Beth Hart (vocals)",
+    "Joe Bonamassa (vocals)",
+    "Beth Hart (piano)"
+  ];
 
   /**
    * Check common output
@@ -75,10 +90,10 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.year, 2011, inputTagType + " => common.year");
     t.strictEqual(common.originalyear, 2011, inputTagType + " => common.year");
     t.strictEqual(common.media, 'CD', inputTagType + " => common.media = CD");
-    t.strictEqual(common.barcode, 804879313915, inputTagType + " => common.barcode");
+    t.strictEqual(common.barcode, "804879313915", inputTagType + " => common.barcode");
     // ToDo?? t.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
-    t.strictEqual(common.label, 'J&R Adventures', inputTagType + " => common.label = 'J&R Adventures'");
-    t.strictEqual(common.catalognumber, 'PRAR931391', inputTagType + " => common.catalognumber = PRAR931391");
+    t.deepEqual(common.label, ['J&R Adventures'], inputTagType + " => common.label = 'J&R Adventures'");
+    t.deepEqual(common.catalognumber, ['PRAR931391'], inputTagType + " => common.catalognumber = PRAR931391");
     t.strictEqual(common.originalyear, 2011, inputTagType + " => common.originalyear = 2011");
     t.strictEqual(common.releasestatus, 'official', inputTagType + " => common.releasestatus = official");
     t.deepEqual(common.releasetype, ['album'], inputTagType + " => common.releasetype");
@@ -95,9 +110,31 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     t.strictEqual(common.musicbrainz_trackid, 'd062f484-253c-374b-85f7-89aab45551c7', inputTagType + " => common.musicbrainz_trackid");
     t.strictEqual(common.asin, "B005NPEUB2", inputTagType + " => common.asin");
     t.strictEqual(common.acoustid_id, "09c06fac-679a-45b1-8ea0-6ce532318363", inputTagType + " => common.acoustid_id");
-    t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+
+    // Check front cover
+    t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
     t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
-    t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'picture data');
+    t.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'hash front cover data');
+
+    // Check back cover
+    t.strictEqual(common.picture[1].format, 'image/png', 'picture format');
+    t.strictEqual(common.picture[1].data.length, 120291, 'picture length');
+    t.strictEqual(calcHash(common.picture[1].data), '90ec686eb82e745e737b2c7aa706eeaa', 'hash back cover data');
+
+    // ISRC
+    t.deepEqual(common.isrc, ["NLB931100460", "USMH51100098"], "ISRC's");
+
+    // Rating
+    switch (inputTagType) {
+
+      case 'APEv2':
+      case 'iTunes MP4':
+        break; // Skip rating tests for mapping type
+
+      default:
+        t.isDefined(common.rating, `'${inputTagType}' has rating`);
+        t.strictEqual(common.rating[0].rating, 3.0, `'${inputTagType}': rating=3.0`);
+    }
   }
 
   describe("Vorbis mappings", () => {
@@ -128,18 +165,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ALBUMARTISTID');
       t.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'vorbis.MUSICBRAINZ_ARTISTID');
-      t.deepEqual(vorbis.PERFORMER, [
-        "Beth Hart (piano)",
-        "Beth Hart (vocals)",
-        "Joe Bonamassa (vocals)",
-        "The Bovaland Orchestra (orchestra)",
-        "Blondie Chaplin (guitar)",
-        "Joe Bonamassa (guitar)",
-        "Anton Fig (drums)",
-        "Anton Fig (percussion)",
-        "Carmine Rojas (bass guitar)",
-        "Arlan Scheirbaum (keyboard)"
-      ], 'vorbis.PERFORMER');
+      t.deepEqual(vorbis.PERFORMER, performers, 'vorbis.PERFORMER');
       t.deepEqual(vorbis.ARRANGER, ['Jeff Bova'], 'vorbis.ARRANGER');
       t.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'vorbis.MUSICBRAINZ_ALBUMID');
       t.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['d062f484-253c-374b-85f7-89aab45551c7'], 'vorbis.MUSICBRAINZ_RELEASETRACKID');
@@ -148,15 +174,12 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(vorbis.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'vorbis.NOTES');
       t.deepEqual(vorbis.BARCODE, ['804879313915'], 'vorbis.BARCODE');
       t.deepEqual(vorbis.ASIN, ['B005NPEUB2'], 'vorbis.ASIN');
-      t.deepEqual(vorbis.RELEASECOUNTRY, ['GB'], 'vorbis.RELEASECOUNTRY');
+      t.deepEqual(vorbis.RELEASECOUNTRY, ['US'], 'vorbis.RELEASECOUNTRY');
       t.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis.RELEASESTATUS');
 
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].format, 'image/jpeg', "vorbis.METADATA_BLOCK_PICTURE.format = 'image/jpeg'");
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].type, 'Cover (front)', "vorbis.METADATA_BLOCK_PICTURE.type = 'Cover (front)'"); // ToDo: description??
 
-      const dimension = dataformat === "flac" ? 0 : 500; // For some magical reason, the width & height is not set in the FLAC file
-      t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].width, dimension, 'vorbis.METADATA_BLOCK_PICTURE.width = 500 px');
-      t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].height, dimension, 'vorbis.METADATA_BLOCK_PICTURE.height = 500 px');
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
       t.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
       t.strictEqual(calcHash(vorbis.METADATA_BLOCK_PICTURE[0].data), 'c57bec49b36ebf422018f82273d1995a', 'Picture content');
@@ -165,7 +188,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     it("should map FLAC/Vorbis", () => {
 
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
-      const filePath = path.join(__dirname, 'samples', filename);
 
       function checkFormat(format) {
         t.strictEqual(format.dataformat, "flac", "format.dataformat = 'flac'");
@@ -176,7 +198,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       }
 
       // Parse flac/Vorbis file
-      return mm.parseFile(filePath, {native: true}).then(result => {
+      return mm.parseFile(path.join(samplePath, filename), {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         checkFormat(result.format);
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
@@ -187,21 +209,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map ogg/Vorbis", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ogg";
-      const filePath = path.join(__dirname, 'samples', filename);
-
-      function checkFormat(format) {
-        // ToDo t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds');
-        // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-        // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-        // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-      }
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
 
       // Parse ogg/Vorbis file
       return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
-        // Check ogg format
-        checkFormat(result.format);
         // Check Vorbis native tags
         checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
         // Check common mappings
@@ -237,18 +249,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(APEv2.Musicbrainz_Albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Albumartistid');
       t.deepEqual(APEv2.Musicbrainz_Artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'APEv2.Musicbrainz_Artistid');
 
-      t.deepEqual(APEv2.Performer, [
-        "Beth Hart (piano)",
-        "Beth Hart (vocals)",
-        "Joe Bonamassa (vocals)",
-        "The Bovaland Orchestra (orchestra)",
-        "Blondie Chaplin (guitar)",
-        "Joe Bonamassa (guitar)",
-        "Anton Fig (drums)",
-        "Anton Fig (percussion)",
-        "Carmine Rojas (bass guitar)",
-        "Arlan Scheirbaum (keyboard)"
-      ], 'APEv2.Performer');
+      t.deepEqual(APEv2.Performer, performers, 'APEv2.Performer');
       t.deepEqual(APEv2.Producer, ['Roy Weisman'], 'APEv2.PRODUCER');
       t.deepEqual(APEv2.Engineer, ['James McCullagh', 'Jared Kvitka'], 'APEv2.ENGINEER');
       t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.ARRANGER');
@@ -267,20 +268,18 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.Arranger');
 
       // ToDo:
-      // t.deepEqual(APEv2['Cover Art (Front)'][0].format, 'jpg', 'picture.format');
-      t.deepEqual(APEv2['Cover Art (Front)'][0].description, 'Cover Art (Front).jpg', 'picture.description');
+      t.deepEqual(APEv2['Cover Art (Front)'][0].format, 'image/jpeg', 'picture.format');
+      t.deepEqual(APEv2['Cover Art (Front)'][0].description, 'front', 'picture.description');
       t.deepEqual(APEv2['Cover Art (Front)'][0].data.length, 98008, 'picture.data.length');
 
-      // t.strictEqual(APEv2.METADATA_BLOCK_PICTURE.format, 'image/jpeg', 'APEv2.METADATA_BLOCK_PICTURE format');
-      // t.strictEqual(APEv2.METADATA_BLOCK_PICTURE.data.length, 98008, 'APEv2.METADATA_BLOCK_PICTURE length');
-
+      t.deepEqual(APEv2['Cover Art (Back)'][0].format, 'image/png', 'picture.format');
+      t.deepEqual(APEv2['Cover Art (Back)'][0].description, 'back', 'picture.description');
+      t.deepEqual(APEv2['Cover Art (Back)'][0].data.length, 120291, 'picture.data.length');
     }
 
     it("should map Monkey's Audio / APEv2", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.ape";
-
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
       function checkFormat(format) {
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
@@ -302,9 +301,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map WavPack / APEv2", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.wv";
-
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
       function checkFormat(format) {
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
@@ -342,7 +339,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.deepEqual(native.TMED, ['CD'], 'id3v23.TMED: Media type');
       t.deepEqual(native.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
-        identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+        identifier: Buffer.from('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
       }, 'id3v23.UFID: Unique file identifier');
 
       t.deepEqual(native.IPLS, [{
@@ -351,7 +348,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         drums: ['Anton Fig'],
         engineer: ['James McCullagh', 'Jared Kvitka'],
         guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
-        keyboard: ['Arlan Scheirbaum'],
+        keyboard: ['Arlan Schierbaum'],
         orchestra: ['The Bovaland Orchestra'],
         percussion: ['Anton Fig'],
         piano: ['Beth Hart'],
@@ -379,8 +376,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("MP3 / ID3v2.3", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
@@ -408,8 +404,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
      */
     it("should map RIFF/WAVE/PCM / ID3v2.3", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
       function checkFormat(format: mm.IFormat) {
         // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
@@ -417,8 +412,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
+        t.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 88200');
+        t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2 seconds');
       }
 
       // Parse wma/asf file
@@ -459,7 +454,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         'bass guitar': ['Carmine Rojas'],
         drums: ['Anton Fig'],
         guitar: ['Blondie Chaplin', 'Joe Bonamassa'],
-        keyboard: ['Arlan Scheirbaum'],
+        keyboard: ['Arlan Schierbaum'],
         orchestra: ['The Bovaland Orchestra'],
         percussion: ['Anton Fig'],
         piano: ['Beth Hart'],
@@ -479,7 +474,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       t.deepEqual(id3v24.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
-        identifier: new Buffer('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+        identifier: Buffer.from('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
       }, 'id3v24.UFID: Unique file identifier');
 
       t.deepEqual(id3v24['TXXX:ASIN'], ['B005NPEUB2'], 'id3v24.TXXX:ASIN');
@@ -500,8 +495,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map MP3/ID3v2.4 header", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
@@ -526,8 +520,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should parse AIFF/ID3v2.4 audio file", () => {
 
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
       function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.dataformat, "AIFF", "format.dataformat = 'AIFF'");
@@ -537,15 +530,6 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
         t.strictEqual(format.numberOfSamples, 93624, 'format.bitsPerSample = 93624');
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
-      }
-
-      function check_asf_Tags(native: mm.INativeTagDict) {
-        t.deepEqual(native["WM/AlbumArtist"], ["Beth Hart & Joe Bonamassa"], "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'");
-        t.deepEqual(native["WM/AlbumTitle"], ["Don't Explain"], "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'");
-        t.deepEqual(native["WM/ARTISTS"], ['Joe Bonamassa', 'Beth Hart'], "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']");
-        t.isDefined(native["WM/Picture"], "Contains WM/Picture");
-        t.strictEqual(native["WM/Picture"].length, 1, "Contains 1 WM/Picture");
-        // ToDO
       }
 
       // Parse wma/asf file
@@ -565,8 +549,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   it("should map M4A / (Apple) iTunes MP4 header", () => {
 
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.m4a";
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
@@ -578,7 +561,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     function checkCommonTags(common) {
-      t.strictEqual(common.picture[0].format, 'jpg', 'picture format');
+      t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
       t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
     }
 
@@ -586,11 +569,12 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       t.deepEqual(iTunes["©nam"], ["Sinner's Prayer"], "iTunes.©nam => common.title");
       t.deepEqual(iTunes["©ART"], ["Beth Hart & Joe Bonamassa"], "iTunes.@ART => common.artist");
+      t.deepEqual(iTunes["©alb"], ["Don't Explain"], "iTunes.©alb => common.album");
+      t.deepEqual(iTunes.soar, ["Hart, Beth & Bonamassa, Joe"], "iTunes.soar => common.artistsort");
+      t.deepEqual(iTunes.soaa, ["Hart, Beth & Bonamassa, Joe"], "iTunes.soaa => common.albumartistsort");
       t.deepEqual(iTunes["----:com.apple.iTunes:ARTISTS"], ["Beth Hart", "Joe Bonamassa"], "iTunes.----:com.apple.iTunes:ARTISTS => common.artists");
       t.deepEqual(iTunes.aART, [ 'Beth Hart & Joe Bonamassa' ], "iTunes.aART => common.albumartist");
       t.deepEqual(iTunes["----:com.apple.iTunes:Band"], ["Beth Hart & Joe Bonamassa"], "iTunes.----:com.apple.iTunes:Band => common.albumartist");
-      t.deepEqual(iTunes["----:com.apple.iTunes:ALBUMARTISTSORT"], ["Hart, Beth & Bonamassa, Joe"], "iTunes.----:com.apple.iTunes:ALBUMARTISTSORT => common.albumartistsort");
-      t.deepEqual(iTunes["©alb"], ["Don't Explain"], "iTunes.©alb => common.album");
       t.deepEqual(iTunes.trkn, ["1/10"], "iTunes.trkn => common.track");
       t.deepEqual(iTunes.disk, ["1/1"], "iTunes.trkn => common.disk");
       t.deepEqual(iTunes["----:com.apple.iTunes:ORIGINALDATE"], ["2011-09-26"], "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.albumartistsort");
@@ -616,8 +600,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   it("should map WMA/ASF header", () => {
 
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.wma";
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ["asf"], "format.tagTypes = asf");

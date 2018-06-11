@@ -22,12 +22,13 @@ it("should MusicBrainz tags with id3v2.4", () => {
     t.deepEqual(result.common.track, {no: 5, of: 14}, 'common.track');
     t.deepEqual(result.common.disk, {no: 1, of: 1}, 'common.disk');
     t.deepEqual(result.common.genre, ['Soundtrack', 'OST'], 'common.genre');
-    t.deepEqual(result.common.picture[0].format, 'jpg', 'common.picture 0 format');
+    t.deepEqual(result.common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
     t.deepEqual(result.common.picture[0].data.length, 75818, 'common.picture 0 length');
 
-    t.deepEqual(result.common.isrc, 'USUG10400421', 'common.isrc');
-    t.deepEqual(result.common.catalognumber, 'B0003663-02', 'common.catalognumber');
-    t.deepEqual(result.common.label, 'Hip-O Records', 'common.label');
+    t.deepEqual(result.common.barcode, '602498644102', 'common.barcode');
+    t.deepEqual(result.common.isrc, ['USUG10400421'], 'common.isrc');
+    t.deepEqual(result.common.label, ['Hip-O Records'], 'common.label');
+    t.deepEqual(result.common.catalognumber, ['B0003663-02'], 'common.catalognumber');
     t.deepEqual(result.common.releasecountry, 'US', 'common.releasecountry');
     t.deepEqual(result.common.media, 'CD', 'common.media');
     t.deepEqual(result.common.musicbrainz_artistid, ['4236acde-2ce2-441c-a3d4-38d55f1b5474'], 'MusicBrainz Artist Id');
@@ -64,11 +65,11 @@ it("should MusicBrainz tags with id3v2.4", () => {
 
     t.deepEqual(native[i++], {
       id: 'PRIV',
-      value: {data: new Buffer([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
+      value: {data: Buffer.from([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
     }, "['ID3v2.4'].PRIV.AverageLevel");
     t.deepEqual(native[i++], {
       id: 'PRIV',
-      value: {data: new Buffer([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
+      value: {data: Buffer.from([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
     }, "['ID3v2.4'].PRIV.PeakValue");
     t.deepEqual(native[i++], {id: 'TCOM', value: 'Explosions in the Sky'}, "['ID3v2.4'].TCOM");
     t.deepEqual(native[i++], {id: 'TDOR', value: '2004-10-12'}, "['ID3v2.4'].TDOR");
@@ -127,7 +128,7 @@ it("should MusicBrainz tags with id3v2.4", () => {
     t.deepEqual(native[i++], {id: 'TXXX:originalyear', value: '2004'}, "['ID3v2.4'].'originalyear");
     t.deepEqual(native[i++], {
       id: 'UFID', value: {
-        identifier: new Buffer([
+        identifier: Buffer.from([
           0x38, 0x34, 0x38, 0x35, 0x31, 0x31, 0x35, 0x30, 0x2d, 0x61, 0x31, 0x39, 0x36, 0x2d, 0x34, 0x38,
           0x66, 0x61, 0x2d, 0x61, 0x64, 0x61, 0x35, 0x2d, 0x31, 0x61, 0x30, 0x31, 0x32, 0x62, 0x31, 0x63,
           0x64, 0x39, 0x65, 0x64]),
