@@ -4,7 +4,6 @@ import * as mm from '../src';
 import * as path from 'path';
 import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
 import * as strtok from "strtok3";
-import {INativeAudioMetadata} from "../src";
 
 const t = assert;
 
@@ -16,7 +15,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
     const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
 
-    const metadata: INativeAudioMetadata = {
+    const metadata: mm.INativeAudioMetadata = {
       format: {},
       native: {}
     };
