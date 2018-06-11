@@ -6,12 +6,14 @@ import * as path from 'path';
 
 const t = assert;
 
+const samplePath = path.join(__dirname, 'samples');
+
 describe("Decode MP3/ID3v2.4", () => {
 
   it("should decode id3v2.4", () => {
 
     const filename = 'id3v2.4.mp3';
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, {duration: true}).then(metadata => {
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.4", "ID3v1.1"], 'format.tagTypes');
@@ -42,7 +44,7 @@ describe("Decode MP3/ID3v2.4", () => {
   it("should respect skipCovers-flag", () => {
 
     const filename = 'id3v2.4.mp3';
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, {duration: true, skipCovers: true}).then(result => {
       t.isUndefined(result.common.picture, 'common.picture should be undefined');

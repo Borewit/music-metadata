@@ -4,15 +4,17 @@ import * as mm from '../src';
 import * as path from 'path';
 import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
 import * as strtok from "strtok3";
-import {INativeAudioMetadata} from "../src/index";
+import {INativeAudioMetadata} from "../src";
 
 const t = assert;
+
+const samplePath = path.join(__dirname, 'samples');
 
 describe("Extract metadata from ID3v2.3 header", () => {
 
   it("should parse a raw ID3v2.3 header", () => {
 
-    const filePath = path.join(__dirname, "samples", "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
+    const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
 
     const metadata: INativeAudioMetadata = {
       format: {},
@@ -32,7 +34,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
   it("parse a ID3v2.3", () => {
 
-    const filePath = path.join(__dirname, 'samples', 'id3v2.3.mp3');
+    const filePath = path.join(samplePath, 'id3v2.3.mp3');
 
     function checkFormat(format) {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.type');
@@ -105,7 +107,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       /**
        * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
        */
-      const filePath = path.join(__dirname, 'samples', '04-Strawberry.mp3');
+      const filePath = path.join(samplePath, '04-Strawberry.mp3');
 
       function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.duration, 247.84979591836733, 'format.duration');
@@ -138,7 +140,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
     it("should decode PeakValue without data", () => {
 
-      const filePath = path.join(__dirname, 'samples', 'issue_56.mp3');
+      const filePath = path.join(samplePath, 'issue_56.mp3');
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
@@ -156,7 +158,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
   describe("slash delimited fields", () => {
 
     it("Slash in track title", () => {
-      const filePath = path.join(__dirname, 'samples', "Their - They're - Therapy - 1sec.mp3");
+      const filePath = path.join(samplePath, "Their - They're - Therapy - 1sec.mp3");
 
       return mm.parseFile(filePath, {native: true}).then(result => {
         t.isDefined(result.native['ID3v2.3'], 'Expect ID3v2.3 tag');
