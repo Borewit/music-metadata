@@ -144,8 +144,8 @@ describe("Discogs mappings", () => {
         t.deepEqual(id3v23["TXXX:CATALOGID"], ["PRAR931391"], "id3v23/TXXX:CATALOGID: PRAR931391");
         t.deepEqual(common.catalognumber, ["PRAR931391"], "id3v23/TXXX:CATALOGID => common.catalognumber");
 
-        // Check discogs, CATALOGID mapping
-        t.deepEqual(id3v23.TCON, ["Rock, Blues"], "id3v23/TCON");
+        // Check discogs, Genre mapping
+        t.deepEqual(id3v23.TCON, ["Rock;Blues"], "id3v23/TCON");
         t.deepEqual(id3v23["TXXX:STYLE"], ["Blues Rock"], "id3v23/TXXX:STYLE");
         t.deepEqual(common.genre, ["Rock;Blues", "Blues Rock"], "id3v23/TXXX:STYLE => common.genre");
       });

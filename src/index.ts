@@ -432,8 +432,28 @@ export class MusicMetadataParser {
         }
       }
     }
+
+    // Remove duplicate catalog-numbers
+    if (metadata.common.catalognumber) {
+      metadata.common.catalognumber = unique(metadata.common.catalognumber);
+    }
+
     return metadata;
   }
+}
+
+/**
+ * Remove duplicate array values
+ * @param {any[]} array
+ * @returns {any} array with unique values
+ */
+function unique(array: any[]) {
+  return array.reduce((accum, current) => {
+    if (accum.indexOf(current) < 0) {
+      accum.push(current);
+    }
+    return accum;
+  }, []);
 }
 
 /**
