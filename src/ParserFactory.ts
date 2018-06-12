@@ -63,13 +63,14 @@ export class ParserFactory {
 
       // Interpret mimeType as extension
       const parser = ParserFactory.getParserForMimeType(mimeType) || ParserFactory.getParserForExtension(mimeType) as ITokenParser;
-      if (parser) {
-        // Parser found, execute parser
-        return parser.parse(tokenizer, opts);
-      } else {
+
+      if (!parser) {
         // No MIME-type mapping found
-        throw new Error("MIME-type or extension not supported:" + mimeType);
+        throw new Error("MIME-type or extension not supported: " + mimeType);
       }
+
+      // Parser found, execute parser
+      return parser.parse(tokenizer, opts);
     });
   }
 
@@ -140,7 +141,6 @@ export class ParserFactory {
     switch (mimeType) {
 
       case "audio/mpeg":
-      case "audio/mp3":
         return new MpegParser(); // ToDo: handle ID1 header as well
 
       case "audio/x-monkeys-audio":
