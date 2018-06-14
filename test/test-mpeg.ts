@@ -325,4 +325,27 @@ describe("MPEG parsing", () => {
 
   });
 
+  describe("Calculate / read duration", () => {
+
+    it("VBR read from Xing header", () => {
+
+      const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
+
+      return mm.parseFile(filePath, {duration: false, native: true}).then(metadata => {
+        assert.strictEqual(metadata.format.duration, 0.4963265306122449);
+      });
+
+    });
+
+    it("VBR: based on frame count if duration flag is set", () => {
+
+      const filePath = path.join(issueDir, "04 - You Don't Know.mp3");
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        assert.approximately(metadata.format.duration, 206.3, 1 / 10);
+      });
+    });
+
+  });
+
 });

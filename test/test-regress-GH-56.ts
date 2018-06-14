@@ -7,7 +7,7 @@ import * as path from "path";
 
 const t = assert;
 
-it.skip("should calculate duration for a CBR encoded MP3", () => {
+it("should calculate duration for a CBR encoded MP3", () => {
 
   /*--------------------------------------------------------
    TAG headers:
@@ -28,7 +28,7 @@ it.skip("should calculate duration for a CBR encoded MP3", () => {
    Exact length: 06:13
 
    Audacity:   16463232
-   Calculated: 16502400
+   Calculated: 16462080
    --------------------------------------------------------*/
 
   const filename = "regress-GH-56.mp3";
@@ -39,7 +39,7 @@ it.skip("should calculate duration for a CBR encoded MP3", () => {
     // ToDo: t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2'], 'format.tagTypes');
     t.deepEqual(metadata.format.tagTypes, ["ID3v2.3"], "format.tagTypes");
     t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");
-    t.strictEqual(metadata.format.duration, 16502400 / metadata.format.sampleRate, "format.duration");
+    t.strictEqual(metadata.format.duration, 16462080 / metadata.format.sampleRate, "format.duration");
     stream.close();
   });
 });
