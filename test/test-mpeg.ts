@@ -52,7 +52,7 @@ describe("MPEG parsing", () => {
 
     it("should sync efficient from a stream", function() {
 
-      this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const streamReader = new SourceStream(buf);
 
@@ -61,7 +61,7 @@ describe("MPEG parsing", () => {
 
     it("should sync efficient, from a file", function() {
 
-      this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const tmpFilePath = path.join(__dirname, "samples", "zeroes.mp3");
 
@@ -339,11 +339,15 @@ describe("MPEG parsing", () => {
 
     it("VBR: based on frame count if duration flag is set", () => {
 
-      const filePath = path.join(issueDir, "04 - You Don't Know.mp3");
+      const filePath = path.join(issueDir, "Dethklok-mergeTagHeaders.mp3");
 
-      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        assert.approximately(metadata.format.duration, 206.3, 1 / 10);
+      const stream = fs.createReadStream(filePath);
+      stream.path = undefined; // disable file size based calculation
+
+      return mm.parseStream(stream, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+        assert.approximately(metadata.format.duration, 34.69, 1 / 100);
       });
+
     });
 
   });

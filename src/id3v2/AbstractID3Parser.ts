@@ -38,11 +38,6 @@ export abstract class AbstractID3v2Parser implements ITokenParser {
 
   /**
    * Called after ID3v2 headers are parsed
-   * @param metadata Metadata result
-   * @param tokenizer
-   * @param options
-   * @param prefixSize Number of bytes already parsed since beginning of stream / file
-   * @private
    */
   public abstract _parse(metadata: INativeAudioMetadata, tokenizer: strtok3.ITokenizer, options: IOptions): Promise<void>;
 
