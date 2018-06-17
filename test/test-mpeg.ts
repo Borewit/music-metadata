@@ -52,7 +52,7 @@ describe("MPEG parsing", () => {
 
     it("should sync efficient from a stream", function() {
 
-      this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const streamReader = new SourceStream(buf);
 
@@ -61,7 +61,7 @@ describe("MPEG parsing", () => {
 
     it("should sync efficient, from a file", function() {
 
-      this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const tmpFilePath = path.join(__dirname, "samples", "zeroes.mp3");
 
@@ -321,6 +321,33 @@ describe("MPEG parsing", () => {
           rating: 255
         }, "ID3v2.3 POPM");
       });
+    });
+
+  });
+
+  describe("Calculate / read duration", () => {
+
+    it("VBR read from Xing header", () => {
+
+      const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
+
+      return mm.parseFile(filePath, {duration: false, native: true}).then(metadata => {
+        assert.strictEqual(metadata.format.duration, 0.4963265306122449);
+      });
+
+    });
+
+    it("VBR: based on frame count if duration flag is set", () => {
+
+      const filePath = path.join(issueDir, "Dethklok-mergeTagHeaders.mp3");
+
+      const stream = fs.createReadStream(filePath);
+      stream.path = undefined; // disable file size based calculation
+
+      return mm.parseStream(stream, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+        assert.approximately(metadata.format.duration, 34.69, 1 / 100);
+      });
+
     });
 
   });
