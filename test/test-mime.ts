@@ -20,11 +20,11 @@ describe("MIME & extension mapping", () => {
       case ".flac":
       case ".wav":
       case ".ogg":
-        t.strictEqual(err.message, "FourCC contains invalid characters",  "Extension=" + extension);
+        t.strictEqual(err.message, "FourCC contains invalid characters", "Extension=" + extension);
         break;
 
       default:
-        throw new Error("caught error parsing " + extension + ": "  + err.message);
+        throw new Error("caught error parsing " + extension + ": " + err.message);
     }
   }
 
@@ -42,7 +42,7 @@ describe("MIME & extension mapping", () => {
       const res = mm.parseStream(streamReader, mimeType)
         .catch(err => {
           handleError(extension, err);
-      });
+        });
 
       prom.push(res);
     });
@@ -67,6 +67,18 @@ describe("MIME & extension mapping", () => {
 
     return Promise.all(prom);
 
+  });
+
+  it("should throw error on unrecognized MIME-type", () => {
+
+    const streamReader = new SourceStream(buf);
+    return mm.parseStream(streamReader, "audio/not-existing")
+      .then(() => {
+        assert.fail('Should throw an Error');
+      })
+      .catch(err => {
+        assert.equal(err.message, 'MIME-type or extension not supported: audio/not-existing');
+      });
   });
 
 });
