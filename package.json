@@ -1,7 +1,7 @@
 {
   "name": "music-metadata",
   "description": "Streaming music metadata parser for node and the browser.",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
@@ -66,8 +66,7 @@
     "bluebird": "^3.5.1",
     "debug": "^3.1.0",
     "file-type": "^8.0.0",
-    "fs-extra": "^6.0.1",
-    "strtok3": "^1.4.2",
+    "strtok3": "^1.4.3",
     "then-read-stream": "^1.1.3",
     "token-types": "^0.9.4"
   },
@@ -76,14 +75,15 @@
     "@types/file-type": "^5.2.1",
     "@types/fs-extra": "^5.0.3",
     "@types/mocha": "^5.2.2",
-    "@types/node": "^9.6.21",
+    "@types/node": "^10.3.4",
     "chai": "^4.1.2",
     "coveralls": "^3.0.1",
     "del-cli": "^1.1.0",
+    "fs-extra": "^6.0.1",
     "mime": "^2.3.1",
     "mocha": "^5.2.0",
     "npm-run-all": "^4.1.3",
-    "nyc": "^11.9.0",
+    "nyc": "^13.0.0",
     "ts-node": "^6.1.1",
     "tslint": "^5.10.0",
     "typescript": "^2.9.2"
