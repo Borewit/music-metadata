@@ -172,4 +172,37 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
   });
 
+  describe("Decode frames", () => {
+
+    // http://id3.org/id3v2.3.0#URL_link_frames_-_details
+    it("4.3.1 WCOM: Commercial information", () => {
+      return mm.parseFile(path.join(samplePath, 'id3v2-lyrics.mp3'), {native: true}).then(metadata => {
+        const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+        // tslint:disable:max-line-length
+        t.deepEqual(id3v23.WCOM[0], "http://www.amazon.com/Rotation-Cute-What-We-Aim/dp/B0018QCXAU%3FSubscriptionId%3D0R6CGKPJ3EKNPQBPYJR2%26tag%3Dsoftpointer-20%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB0018QCXAU ");
+      });
+    });
+
+    // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
+    it("4.3.2 WXXX: User defined URL link frame", () => {
+      return mm.parseFile(path.join(samplePath, 'bug-unkown encoding.mp3'), {native: true}).then(metadata => {
+        const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+        t.deepEqual(id3v23.WXXX[0], {
+          description: "Tempa at bleep",
+          url: "http://www"
+        });
+      });
+    });
+
+    // http://id3.org/id3v2.3.0#Music_CD_identifier
+    it("4.5 MCDI: Music CD identifier", () => {
+
+      return mm.parseFile(path.join(samplePath, '04-Strawberry.mp3'), {native: true}).then(metadata => {
+        const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+        t.equal(id3v23.MCDI[0].length, 804, 'TOC');
+      });
+    });
+
+  });
+
 });
