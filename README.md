@@ -41,7 +41,7 @@ npm install music-metadata
   * encoding profile (e.g. CBR, V0, V2)
   
 
-### Donation
+### Donate
 [PayPal.me](https://paypal.me/borewit)
 
 ## API
