@@ -5,7 +5,7 @@ import * as Token from "token-types";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
-import {Promise} from "bluebird";
+import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
 const debug = _debug("music-metadata:parser:mpeg");
