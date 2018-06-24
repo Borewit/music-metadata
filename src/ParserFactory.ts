@@ -5,7 +5,7 @@ import {FlacParser} from "./flac/FlacParser";
 import {MP4Parser} from "./mp4/MP4Parser";
 import {OggParser} from "./ogg/OggParser";
 import * as strtok3 from "strtok3";
-import {Promise} from "bluebird";
+import {Promise} from "es6-promise";
 import * as Stream from "stream";
 import * as path from "path";
 import {AIFFParser} from "./aiff/AiffParser";

@@ -5,7 +5,7 @@ import {ITokenizer} from "strtok3";
 import {ITokenParser} from "../ParserFactory";
 import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
-import {Promise} from "bluebird";
+import {Promise} from "es6-promise";
 import * as _debug from "debug";
 
 const debug = _debug("music-metadata:parser:ASF");

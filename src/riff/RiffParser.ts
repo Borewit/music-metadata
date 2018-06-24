@@ -9,7 +9,7 @@ import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {IChunkHeader} from "../aiff/Chunk";
 import Common from "../common/Util";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "bluebird";
+import {Promise} from "es6-promise";
 import * as _debug from "debug";
 
 const debug = _debug("music-metadata:parser:RIFF");
