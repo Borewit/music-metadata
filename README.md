@@ -41,6 +41,11 @@ npm install music-metadata
   * encoding profile (e.g. CBR, V0, V2)
   
 
+### Online demo's
+
+Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
+* [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
+
 ### Donate
 [PayPal.me](https://paypal.me/borewit)
 
@@ -155,8 +160,6 @@ If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` inte
 [Common tag documentation](doc/common_metadata.md) is automatically generated.
 
 ## Examples
-
-For a live example see [parse MP3 (ID3v2.4 tags) stream with music-metadata](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
 ```javascript
