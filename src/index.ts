@@ -451,7 +451,7 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
  *   .mergeTagHeaders=false  Populate common from data of all headers available
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: Stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {
+export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {
   return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
 }
 

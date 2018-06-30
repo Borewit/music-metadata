@@ -12,6 +12,11 @@ import {AIFFParser} from "./aiff/AiffParser";
 import {WavePcmParser} from "./riff/RiffParser";
 import {WavPackParser} from "./wavpack/WavPackParser";
 import {MpegParser} from "./mpeg/MpegParser";
+import * as fileType from "file-type";
+
+import * as _debug from "debug";
+
+const debug = _debug("music-metadata:parser:factory");
 
 export interface ITokenParser {
   parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
@@ -60,25 +65,50 @@ export class ParserFactory {
       if (!tokenizer.fileSize && opts.fileSize) {
         tokenizer.fileSize = opts.fileSize;
       }
-
-      // Interpret mimeType as extension
-      const parser = ParserFactory.getParserForMimeType(mimeType) || ParserFactory.getParserForExtension(mimeType) as ITokenParser;
-
-      if (!parser) {
-        // No MIME-type mapping found
-        throw new Error("MIME-type or extension not supported: " + mimeType);
-      }
-
-      // Parser found, execute parser
-      return parser.parse(tokenizer, opts);
+      return this.parse(tokenizer, mimeType, opts);
     });
+  }
+
+  /**
+   *  Parse metadata from tokenizer
+   * @param {ITokenizer} tokenizer
+   * @param {string} contentType
+   * @param {IOptions} opts
+   * @returns {Promise<INativeAudioMetadata>}
+   */
+  public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
+
+    // Resolve parser based on MIME-type or file extension
+    let parser = ParserFactory.getParserForMimeType(contentType) || ParserFactory.getParserForExtension(contentType) as ITokenParser;
+
+    if (!parser) {
+      // No MIME-type mapping found
+      debug("No parser found for MIME-type / extension:" + contentType);
+
+      const buf = Buffer.alloc(4100);
+      return tokenizer.peekBuffer(buf).then(() => {
+        const guessedType = fileType(buf);
+        if (!guessedType)
+          throw new Error("Failed to guess MIME-type");
+        parser = ParserFactory.getParserForMimeType(guessedType.mime) as ITokenParser;
+        if (!parser)
+          throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
+        return parser.parse(tokenizer, opts);
+      });
+    }
+
+    // Parser found, execute parser
+    return parser.parse(tokenizer, opts);
   }
 
   /**
    * @param filePath Path, filename or extension to audio file
    * @return ITokenParser if extension is supported; otherwise false
    */
-  private static getParserForExtension(filePath: string): ITokenParser | false {
+  private static getParserForExtension(filePath: string): ITokenParser {
+    if (!filePath)
+      return;
+
     const extension = path.extname(filePath).toLocaleLowerCase() || filePath;
 
     switch (extension) {
@@ -129,7 +159,7 @@ export class ParserFactory {
         return new WavPackParser();
 
       default:
-        return false;
+        return;
     }
   }
 
@@ -146,11 +176,12 @@ export class ParserFactory {
       case "audio/x-monkeys-audio":
         return new APEv2Parser();
 
+      case "audio/mp4":
       case "audio/aac":
       case "audio/aacp":
-      case "audio/mp4":
       case "audio/x-aac":
       case "audio/x-m4a":
+      case "audio/m4a":
         return new MP4Parser();
 
       case "video/x-ms-asf":
@@ -171,12 +202,18 @@ export class ParserFactory {
       case "audio/x-aifc":
         return new AIFFParser();
 
+      case "audio/vnd.wave":
       case "audio/wav":
       case "audio/wave":
+      case "audio/x-wav":
         return new WavePcmParser();
 
       case "audio/x-wavpack":
         return new WavPackParser();
+
+      case "audio/ape":
+      case "audio/x-ape":
+        return new APEv2Parser();
 
       default:
         return false;

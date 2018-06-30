@@ -4,10 +4,14 @@ import * as mime from "mime";
 import * as mm from "../src";
 import {SourceStream} from "./util";
 import {Promise} from 'es6-promise';
+import * as fs from "fs-extra";
+import * as path from "path";
 
 const t = assert;
 
 describe("MIME & extension mapping", () => {
+
+  const samplePath = path.join(__dirname, 'samples');
 
   const buf = Buffer.alloc(30).fill(0);
 
@@ -69,16 +73,60 @@ describe("MIME & extension mapping", () => {
 
   });
 
-  it("should throw error on unrecognized MIME-type", () => {
+  describe("Resolve MIME based on content", () => {
 
-    const streamReader = new SourceStream(buf);
-    return mm.parseStream(streamReader, "audio/not-existing")
-      .then(() => {
-        assert.fail('Should throw an Error');
-      })
-      .catch(err => {
-        assert.equal(err.message, 'MIME-type or extension not supported: audio/not-existing');
+    it("should throw error on unrecognized MIME-type", () => {
+
+      const streamReader = new SourceStream(buf);
+      return mm.parseStream(streamReader, "audio/not-existing")
+        .then(() => {
+          assert.fail('Should throw an Error');
+        })
+        .catch(err => {
+          assert.equal(err.message, 'Failed to guess MIME-type');
+        });
+    });
+
+    function testFileType(sample: string, dataformat: string) {
+      const stream = fs.createReadStream(path.join(samplePath, sample));
+      return mm.parseStream(stream).then(metadata => {
+        assert.equal(metadata.format.dataformat, dataformat);
       });
+    }
+
+    it("should recognize MP2", () => {
+      return testFileType('1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'mp2');
+    });
+
+    it("should recognize MP3", () => {
+      return testFileType('04-Strawberry.mp3', 'mp3');
+    });
+
+    it.skip("should recognize WMA", () => {
+      // file-type returns 'video/x-ms-wmv'
+      return testFileType('asf.wma', 'wma');
+    });
+
+    it("should recognize MPEG-4 audio", () => {
+      return testFileType('Discogs - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4 audio');
+    });
+
+    it("should recognize FLAC", () => {
+      return testFileType('flac.flac', 'flac');
+    });
+
+    it("should recognize OGG", () => {
+      return testFileType('07. Brian Eno.ogg', 'Ogg/Vorbis I');
+    });
+
+    it("should recognize WAV", () => {
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer [exif].wav', 'WAVE/PCM');
+    });
+
+    it.skip("should recognize APE", () => {
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.ape', "Monkey's Audio");
+    });
+
   });
 
 });
