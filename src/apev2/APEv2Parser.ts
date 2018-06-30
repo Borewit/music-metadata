@@ -9,9 +9,9 @@ import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
 import FileType = require("file-type");
+import {IPicture} from "../index";
 
 import * as _debug from "debug";
-import {IPicture} from "../index";
 const debug = _debug("music-metadata:parser:APEv2");
 
 /**
