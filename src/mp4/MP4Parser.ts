@@ -11,6 +11,7 @@ import * as _debug from "debug";
 const debug = _debug("music-metadata:parser:MP4");
 
 /*
+ * Parser for: MPEG-4 Audio / MPEG-4 Part 3 (m4a/mp4) extension
  * Support for Apple iTunes MP4 tags as found in a M4A/MP4 file
  * Ref:
  *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
@@ -31,7 +32,9 @@ export class MP4Parser implements ITokenParser {
 
   private metaAtomsTotalLength = 0;
 
-  private format: IFormat = {};
+  private format: IFormat = {
+    dataformat: 'MPEG-4 audio'
+  };
   private tags: ITag[] = [];
   private warnings: string[] = []; // ToDo: make this part of the parsing result
 

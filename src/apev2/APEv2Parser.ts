@@ -363,6 +363,7 @@ export class APEv2Parser implements ITokenParser {
       return {
         format: {
           lossless: true,
+          dataformat: "Monkey's Audio",
           headerType: this.type,
           bitsPerSample: header.bitsPerSample,
           sampleRate: header.sampleRate,
