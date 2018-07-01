@@ -97,7 +97,7 @@ export interface ICommonTagsResult {
   totaltracks?: string,
   totaldiscs?: string,
   compilation?: string,
-  rating?: IRating,
+  rating?: IRating[],
   bpm?: string,
   mood?: string,
   media?: string,
