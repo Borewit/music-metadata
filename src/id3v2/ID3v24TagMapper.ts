@@ -124,7 +124,7 @@ export class ID3v24TagMapper extends CommonTagMapper {
 
     return {
       source: popm.email,
-      rating: popm.rating > 0 ? popm.rating / 255 * CommonTagMapper.rating_steps : undefined
+      rating: popm.rating > 0 ? (popm.rating - 1) / 254 * CommonTagMapper.rating_steps : undefined
     };
   }
 
