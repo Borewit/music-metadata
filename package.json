@@ -58,8 +58,8 @@
     "debug": "^3.1.0",
     "es6-promise": "^4.2.4",
     "file-type": "^8.0.0",
-    "strtok3": "^1.5.0",
-    "then-read-stream": "^1.2.0",
+    "strtok3": "^1.5.1",
+    "then-read-stream": "^1.2.1",
     "token-types": "^0.9.4"
   },
   "devDependencies": {
