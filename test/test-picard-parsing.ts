@@ -133,7 +133,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       default:
         t.isDefined(common.rating, `'${inputTagType}' has rating`);
-        t.strictEqual(common.rating[0].rating, 3.0, `'${inputTagType}': rating=3.0`);
+        t.approximately(common.rating[0].rating, 0.6, 0.1, `'${inputTagType}': rating=3.0`);
     }
   }
 
