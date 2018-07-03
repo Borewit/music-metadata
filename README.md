@@ -108,9 +108,12 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
 
 #### parseStream function
 
-Parses the provided audio stream for metadata. You should specify the corresponding [MIME-type] (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+Parses the provided audio stream for metadata.
+It is recommended to provide the corresponding [MIME-type] (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+An extension (e.g.: `.mp3`), filename or path will also work.
+If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
 
-`parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+`parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
 
 Example:
 ```javascript
