@@ -121,6 +121,22 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
    });
 ```
 
+#### orderTags function
+
+Utility to Converts the native tags to a dictionary index on the tag identifier
+
+```TypeScript
+orderTags(nativeTags: ITag[]): [tagId: string]: any[]
+```
+
+#### ratingToStars function
+
+Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
+
+```TypeScript
+ratingToStars(rating: number): number
+```
+
 ### Options:
   * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
   * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.

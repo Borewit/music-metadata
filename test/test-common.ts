@@ -76,3 +76,19 @@ describe("GenericTagMap", () => {
 
   });
 });
+
+describe("Convert rating", () => {
+
+  it("should convert rating to stars", () => {
+
+    assert.equal(mm.ratingToStars(undefined), 0);
+    assert.equal(mm.ratingToStars(0), 1);
+    assert.equal(mm.ratingToStars(0.1), 1);
+    assert.equal(mm.ratingToStars(0.2), 2);
+    assert.equal(mm.ratingToStars(0.5), 3);
+    assert.equal(mm.ratingToStars(0.75), 4);
+    assert.equal(mm.ratingToStars(1), 5);
+
+  });
+
+});
