@@ -114,7 +114,7 @@
     "description": "Is part of compilation (unofficial iTunes Compilation Flag)"
   },
   "rating": {
-    "description": "Object holding rating score ([0..5]) and source (e.g. user e-mail)"
+    "description": "Object holding rating score [0..1] (0.0 worst rating, 1.0 best rating) and source (e.g. user e-mail)"
   },
   "bpm": {
     "description": "Beats Per Minute (BPM)"

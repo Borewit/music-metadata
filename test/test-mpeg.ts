@@ -285,8 +285,8 @@ describe("MPEG parsing", () => {
     it("check mapping function", () => {
 
       assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 0}), {source: 'user1@bla.com', rating: undefined}, 'unknown rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1}), {source: 'user1@bla.com', rating: 5 / 255}, 'lowest rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255}), {source: 'user1@bla.com', rating: 5}, 'highest rating');
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1}), {source: 'user1@bla.com', rating: 0 / 255}, 'lowest rating');
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255}), {source: 'user1@bla.com', rating: 1}, 'highest rating');
     });
 
     it("from 'Yeahs-It's Blitz!.mp3'", () => {
@@ -294,7 +294,7 @@ describe("MPEG parsing", () => {
       return mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {duration: false, native: true}).then(metadata => {
         const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
         assert.deepEqual(idv23.POPM[0], {email: "no@email", rating: 128, counter: 0}, "ID3v2.3 POPM");
-        assert.approximately(metadata.common.rating[0].rating, 2.5, 0.05, "Common rating");
+        assert.approximately(metadata.common.rating[0].rating, 0.5, 1 / (2 * 254), "Common rating");
       });
     });
 
@@ -305,7 +305,7 @@ describe("MPEG parsing", () => {
         // Native rating value
         assert.deepEqual(idv23.POPM[0], {email: "MusicBee", rating: 255, counter: 0}, "ID3v2.3 POPM");
         // Common rating value
-        assert.approximately(metadata.common.rating[0].rating, 5, 0.05, "Common rating");
+        assert.approximately(metadata.common.rating[0].rating, 1, 0, "Common rating");
       });
     });
 

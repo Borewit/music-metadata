@@ -1,7 +1,7 @@
 import {assert} from "chai";
 
 import {CommonTagMapper} from "../src/common/GenericTagMapper";
-import {commonTags, isSingleton} from "../lib/common/GenericTagTypes";
+import {commonTags, isSingleton} from "../src/common/GenericTagTypes";
 import * as path from "path";
 import * as mm from "../src";
 

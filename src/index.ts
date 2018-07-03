@@ -40,7 +40,7 @@ export interface IRating {
    */
   source?: string,
   /**
-   * Rating [0..5]
+   * Rating [0..1]
    */
   rating: number
 }
