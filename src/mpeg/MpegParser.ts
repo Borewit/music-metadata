@@ -214,7 +214,7 @@ export class MpegParser extends AbstractID3v2Parser {
   private unsynced: number = 0;
   private warnings: string[] = [];
 
-  private calculateVbrDuration: boolean = false;
+  private calculateEofDuration: boolean = false;
   private samplesPerFrame;
 
   private metadata: INativeAudioMetadata;
@@ -247,10 +247,10 @@ export class MpegParser extends AbstractID3v2Parser {
 
     return this.sync().catch(err => {
       if (err.message === endOfFile) {
-        if (this.calculateVbrDuration) {
+        if (this.calculateEofDuration) {
           format.numberOfSamples = this.frameCount * this.samplesPerFrame;
           format.duration = format.numberOfSamples / format.sampleRate;
-          debug("Get duration at endOfFile: %s", this.metadata.format.duration);
+          debug("Calculate duration at EOF: %s", this.metadata.format.duration);
         }
       } else {
         throw err;
@@ -395,7 +395,7 @@ export class MpegParser extends AbstractID3v2Parser {
       // have counted all the frames
       if (this.readDuration && this.frameCount === 4) {
         this.samplesPerFrame = samples_per_frame;
-        this.calculateVbrDuration = true;
+        this.calculateEofDuration = true;
       }
 
       this.offset = 4;
