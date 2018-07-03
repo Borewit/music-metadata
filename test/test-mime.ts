@@ -108,7 +108,7 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize MPEG-4 audio", () => {
-      return testFileType('Discogs - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4 audio');
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4 audio');
     });
 
     it("should recognize FLAC", () => {
@@ -116,11 +116,11 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize OGG", () => {
-      return testFileType('07. Brian Eno.ogg', 'Ogg/Vorbis I');
+      return testFileType('issue_62.ogg', 'Ogg/Vorbis I');
     });
 
     it("should recognize WAV", () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer [exif].wav', 'WAVE/PCM');
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav', 'WAVE/PCM');
     });
 
     it.skip("should recognize APE", () => {
