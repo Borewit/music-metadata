@@ -87,6 +87,18 @@ describe("MIME & extension mapping", () => {
         });
     });
 
+    it("should throw error on recognized MIME-type which is not supported", () => {
+
+      const stream = fs.createReadStream(path.join(samplePath, 'flac.flac.jpg'));
+      return mm.parseStream(stream, "audio/not-existing")
+        .then(() => {
+          assert.fail('Should throw an Error');
+        })
+        .catch(err => {
+          assert.equal(err.message, 'Guessed MIME-type not supported: image/jpeg');
+        });
+    });
+
     function testFileType(sample: string, dataformat: string) {
       const stream = fs.createReadStream(path.join(samplePath, sample));
       return mm.parseStream(stream).then(metadata => {
