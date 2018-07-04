@@ -58,7 +58,7 @@ describe("Decode Monkey's Audio (.ape)", () => {
 
   it('from a stream', () => {
 
-    const stream = fs.createReadStream(path.join(samplePath,  'monkeysaudio.ape'));
+    const stream = fs.createReadStream(path.join(samplePath, 'monkeysaudio.ape'));
     return mm.parseStream(stream, 'audio/ape', {native: true})
       .then(md => {
         checkFormat(md.format);
