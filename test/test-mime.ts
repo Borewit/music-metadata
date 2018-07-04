@@ -73,6 +73,15 @@ describe("MIME & extension mapping", () => {
 
   });
 
+  it("should be able to handle MIME-type parameter(s)", () => {
+
+    const stream = fs.createReadStream(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
+    return mm.parseStream(stream, '').then(metadata => {
+      assert.equal(metadata.format.dataformat, "WAVE/PCM");
+    });
+
+  });
+
   describe("Resolve MIME based on content", () => {
 
     it("should throw error on unrecognized MIME-type", () => {
@@ -132,11 +141,11 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize WAV", () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav', 'WAVE/PCM');
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE/PCM');
     });
 
     it.skip("should recognize APE", () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.ape', "Monkey's Audio");
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
     });
 
   });

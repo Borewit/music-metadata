@@ -12,6 +12,7 @@ import {AIFFParser} from "./aiff/AiffParser";
 import {WavePcmParser} from "./riff/RiffParser";
 import {WavPackParser} from "./wavpack/WavPackParser";
 import {MpegParser} from "./mpeg/MpegParser";
+import {MimeType} from "./common/MimeType";
 import * as fileType from "file-type";
 
 import * as _debug from "debug";
@@ -168,55 +169,86 @@ export class ParserFactory {
    * @returns ITokenParser if MIME-type is supported; otherwise false
    */
   private static getParserForMimeType(mimeType: string): ITokenParser | false {
-    switch (mimeType) {
 
-      case "audio/mpeg":
-        return new MpegParser(); // ToDo: handle ID1 header as well
+    let mime;
+    try {
+      mime = MimeType.parse(mimeType);
+    } catch (err) {
+      debug(`Invalid MIME-type: ${mimeType}`);
+      return;
+    }
 
-      case "audio/x-monkeys-audio":
-        return new APEv2Parser();
+    const subType = mime.subtype.indexOf('x-') === 0 ? mime.subtype.substring(2) : mime.subtype;
 
-      case "audio/mp4":
-      case "audio/aac":
-      case "audio/aacp":
-      case "audio/x-aac":
-      case "audio/x-m4a":
-      case "audio/m4a":
-        return new MP4Parser();
+    switch (mime.type) {
 
-      case "video/x-ms-asf":
-      case "audio/x-ms-wma":
-        return new AsfParser();
+      case 'audio':
+        switch (subType) {
 
-      case "audio/flac":
-      case "audio/x-flac":
-        return new FlacParser();
+          case 'mpeg':
+            return new MpegParser(); // ToDo: handle ID1 header as well
 
-      case "audio/ogg": // RFC 7845
-      case "application/ogg":
-      case "video/ogg":
-        return new OggParser();
+          case 'monkeys-audio':
+            return new APEv2Parser();
 
-      case "audio/aiff":
-      case "audio/x-aif":
-      case "audio/x-aifc":
-        return new AIFFParser();
+          case 'mp4':
+          case 'aac':
+          case 'aacp':
+          case 'm4a':
+            return new MP4Parser();
 
-      case "audio/vnd.wave":
-      case "audio/wav":
-      case "audio/wave":
-      case "audio/x-wav":
-        return new WavePcmParser();
+          case 'video/x-ms-asf':
+          case 'ms-wma':
+            return new AsfParser();
 
-      case "audio/x-wavpack":
-        return new WavPackParser();
+          case 'flac':
+            return new FlacParser();
 
-      case "audio/ape":
-      case "audio/x-ape":
-        return new APEv2Parser();
+          case 'ogg': // RFC 7845
+            return new OggParser();
 
-      default:
-        return false;
+          case 'aiff':
+          case 'aif':
+          case 'aifc':
+            return new AIFFParser();
+
+          case 'vnd.wave':
+          case 'wav':
+          case 'wave':
+          case 'x-wav':
+            return new WavePcmParser();
+
+          case 'x-wavpack':
+            return new WavPackParser();
+
+          case 'ape':
+          case 'x-ape':
+            return new APEv2Parser();
+
+          default:
+            return false;
+        }
+        break;
+
+      case 'video':
+        switch (subType) {
+
+          case 'ms-asf':
+            return new AsfParser();
+
+          case 'application/ogg':
+          case 'video/ogg':
+            return new OggParser();
+        }
+        break;
+
+      case 'application':
+        switch (subType) {
+
+          case 'ogg':
+            return new OggParser();
+        }
+        break;
     }
   }
 

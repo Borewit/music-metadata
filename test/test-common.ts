@@ -4,6 +4,7 @@ import {CommonTagMapper} from "../src/common/GenericTagMapper";
 import {commonTags, isSingleton} from "../src/common/GenericTagTypes";
 import * as path from "path";
 import * as mm from "../src";
+import {MimeType} from "../src/common/MimeType";
 
 const t = assert;
 
@@ -73,7 +74,6 @@ describe("GenericTagMap", () => {
         t.strictEqual(metadata.common.artist, "Beth Hart & Joe Bonamassa", "common.artist derived from common.artists");
       });
     });
-
   });
 });
 
@@ -89,6 +89,26 @@ describe("Convert rating", () => {
     assert.equal(mm.ratingToStars(0.75), 4);
     assert.equal(mm.ratingToStars(1), 5);
 
+  });
+
+});
+
+describe("MimeType", () => {
+
+  it("should be able to decode MIME-types", () => {
+    let mime = MimeType.parse('audio/mpeg');
+    assert.equal(mime.type, "audio");
+    assert.equal(mime.subtype, "mpeg");
+
+    mime = MimeType.parse("message/external-body; access-type=URL");
+    assert.equal(mime.type, "message");
+    assert.equal(mime.subtype, "external-body");
+    assert.deepEqual(mime.parameters, {'access-type': 'URL'});
+
+    mime = MimeType.parse('Text/HTML;Charset="utf-8"');
+    assert.equal(mime.type, "text");
+    assert.equal(mime.subtype, "html");
+    assert.deepEqual(mime.parameters, {charset: 'utf-8'});
   });
 
 });
