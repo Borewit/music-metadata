@@ -158,9 +158,6 @@ export class ParserFactory {
       case ".wv":
       case ".wvp":
         return new WavPackParser();
-
-      default:
-        return;
     }
   }
 
@@ -197,7 +194,6 @@ export class ParserFactory {
           case 'm4a':
             return new MP4Parser();
 
-          case 'video/x-ms-asf':
           case 'ms-wma':
             return new AsfParser();
 
@@ -224,9 +220,6 @@ export class ParserFactory {
           case 'ape':
           case 'x-ape':
             return new APEv2Parser();
-
-          default:
-            return false;
         }
         break;
 
@@ -236,8 +229,7 @@ export class ParserFactory {
           case 'ms-asf':
             return new AsfParser();
 
-          case 'application/ogg':
-          case 'video/ogg':
+          case 'ogg':
             return new OggParser();
         }
         break;
