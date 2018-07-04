@@ -193,7 +193,13 @@ export default class FrameParser {
           const filename = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
           offset = fzero + 1;
           fzero = common.findZero(b, offset, length - offset, encoding);
-          const contentDescription = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          const description = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          output = {
+            type: mimeType,
+            filename,
+            description,
+            data: b.slice(offset + 1, length)
+          };
           break;
         }
 
