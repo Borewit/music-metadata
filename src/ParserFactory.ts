@@ -185,6 +185,10 @@ export class ParserFactory {
           case 'mpeg':
             return new MpegParser(); // ToDo: handle ID1 header as well
 
+          case 'flac':
+            return new FlacParser();
+
+          case 'ape':
           case 'monkeys-audio':
             return new APEv2Parser();
 
@@ -194,14 +198,11 @@ export class ParserFactory {
           case 'm4a':
             return new MP4Parser();
 
-          case 'ms-wma':
-            return new AsfParser();
-
-          case 'flac':
-            return new FlacParser();
-
           case 'ogg': // RFC 7845
             return new OggParser();
+
+          case 'ms-wma':
+            return new AsfParser();
 
           case 'aiff':
           case 'aif':
@@ -215,9 +216,6 @@ export class ParserFactory {
 
           case 'wavpack':
             return new WavPackParser();
-
-          case 'ape':
-            return new APEv2Parser();
         }
         break;
 

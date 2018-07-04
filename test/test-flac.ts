@@ -12,7 +12,7 @@ describe("FLAC decoding", () => {
   const flacFilePath = path.join(__dirname, "samples", "flac.flac");
 
   function checkFormat(format) {
-    t.strictEqual(format.dataformat, "flac", "format.tagTypes");
+    t.strictEqual(format.dataformat, "flac", "format.dataformat");
     t.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
     t.strictEqual(format.duration, 271.7733333333333, "format.duration");
     t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
@@ -121,5 +121,4 @@ describe("FLAC decoding", () => {
     });
 
   });
-})
-;
+});
