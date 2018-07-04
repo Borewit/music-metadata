@@ -211,14 +211,12 @@ export class ParserFactory {
           case 'vnd.wave':
           case 'wav':
           case 'wave':
-          case 'x-wav':
             return new WavePcmParser();
 
-          case 'x-wavpack':
+          case 'wavpack':
             return new WavPackParser();
 
           case 'ape':
-          case 'x-ape':
             return new APEv2Parser();
         }
         break;
