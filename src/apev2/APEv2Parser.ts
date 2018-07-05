@@ -4,7 +4,7 @@ import common from "../common/Util";
 import {TagType} from "../common/GenericTagTypes";
 import {INativeAudioMetadata, IOptions, IFormat} from "../";
 import {ITokenParser} from "../ParserFactory";
-import {ITokenizer, IgnoreType} from "strtok3";
+import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
@@ -338,7 +338,7 @@ export class APEv2Parser implements ITokenParser {
           return this.parseHeader();
         }
       }).then(header => {
-        return this.tokenizer.readToken(new IgnoreType(header.forwardBytes)).then(() => {
+        return this.tokenizer.readToken(new Token.IgnoreType(header.forwardBytes)).then(() => {
           return APEv2Parser.parseFooter(tokenizer, options).then(tags => {
             return {
               format: header.format,
@@ -353,7 +353,7 @@ export class APEv2Parser implements ITokenParser {
   }
 
   private parseDescriptorExpansion(lenExp: number): Promise<{ format: IFormat, forwardBytes: number }> {
-    return this.tokenizer.readToken(new IgnoreType(lenExp)).then(() => {
+    return this.tokenizer.readToken(new Token.IgnoreType(lenExp)).then(() => {
       return this.parseHeader();
     });
   }

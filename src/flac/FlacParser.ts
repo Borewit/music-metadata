@@ -2,7 +2,7 @@
 
 import common from '../common/Util';
 import {INativeAudioMetadata, IOptions, ITag} from "../index";
-import {ITokenizer, IgnoreType} from "strtok3";
+import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
 import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
@@ -86,7 +86,7 @@ export class FlacParser extends AbstractID3v2Parser {
         this.warnings.push("Unknown block type: " + blockHeader.type);
     }
     // Ignore data block
-    return this.tokenizer.readToken<void>(new IgnoreType(blockHeader.length));
+    return this.tokenizer.readToken<void>(new Token.IgnoreType(blockHeader.length));
   }
 
   /**
