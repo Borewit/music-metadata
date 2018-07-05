@@ -12,8 +12,8 @@ import {AIFFParser} from "./aiff/AiffParser";
 import {WavePcmParser} from "./riff/RiffParser";
 import {WavPackParser} from "./wavpack/WavPackParser";
 import {MpegParser} from "./mpeg/MpegParser";
-import {MimeType} from "./common/MimeType";
 import * as fileType from "file-type";
+import * as MimeType from "media-typer";
 
 import * as _debug from "debug";
 
