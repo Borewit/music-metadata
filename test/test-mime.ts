@@ -144,7 +144,7 @@ describe("MIME & extension mapping", () => {
       return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE/PCM');
     });
 
-    it.skip("should recognize APE", () => {
+    it("should recognize APE", () => {
       return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
     });
 
