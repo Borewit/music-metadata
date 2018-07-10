@@ -72,8 +72,8 @@ export class AsfParser implements ITokenParser {
           });
 
         case AsfObject.StreamPropertiesObject.guid.str: // 3.3
-          return this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header)).then(() => {
-            return null; // ToDo
+          return this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header)).then(spo => {
+            this.format.dataformat = 'ASF/' + spo.streamType;
           });
 
         case AsfObject.HeaderExtensionObject.guid.str: // 3.4

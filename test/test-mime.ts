@@ -123,9 +123,9 @@ describe("MIME & extension mapping", () => {
       return testFileType('04-Strawberry.mp3', 'mp3');
     });
 
-    it.skip("should recognize WMA", () => {
+    it("should recognize WMA", () => {
       // file-type returns 'video/x-ms-wmv'
-      return testFileType('asf.wma', 'wma');
+      return testFileType('asf.wma', 'ASF/audio');
     });
 
     it("should recognize MPEG-4 audio", () => {

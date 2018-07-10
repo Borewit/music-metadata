@@ -202,6 +202,8 @@ export class ParserFactory {
             return new OggParser();
 
           case 'ms-wma':
+          case 'ms-wmv':
+          case 'ms-asf':
             return new AsfParser();
 
           case 'aiff':
@@ -223,6 +225,7 @@ export class ParserFactory {
         switch (subType) {
 
           case 'ms-asf':
+          case 'ms-wmv':
             return new AsfParser();
 
           case 'ogg':
@@ -232,6 +235,9 @@ export class ParserFactory {
 
       case 'application':
         switch (subType) {
+
+          case 'vnd.ms-asf':
+            return new AsfParser();
 
           case 'ogg':
             return new OggParser();
