@@ -9,7 +9,9 @@ const t = assert;
 
 describe("FLAC decoding", () => {
 
-  const flacFilePath = path.join(__dirname, "samples", "flac.flac");
+  const samplePath = path.join(__dirname, "samples");
+
+  const flacFilePath = path.join(samplePath, "flac.flac");
 
   function checkFormat(format) {
     t.strictEqual(format.dataformat, "flac", "format.dataformat");
@@ -79,10 +81,20 @@ describe("FLAC decoding", () => {
 
   it("should be able to recognize a ID3v2 tag header prefixing a FLAC file", () => {
 
-    const filePath = path.join(__dirname, "samples", "a kind of magic.flac");
+    const filePath = path.join(samplePath, "a kind of magic.flac");
 
     return mm.parseFile(filePath, {native: true}).then(metadata => {
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "vorbis", "ID3v1.1"], "File has 3 tag types: \"vorbis\", \"ID3v2.3\" & \"ID3v1.1\"");
+    });
+
+  });
+
+  it("should be able to determine the bit-rate", () => {
+
+    const filePath = path.join(samplePath, "04 Long Drive.flac");
+
+    return mm.parseFile(filePath, {duration: true}).then(metadata => {
+      assert.approximately(496000, metadata.format.bitrate, 500);
     });
 
   });
@@ -106,7 +118,7 @@ describe("FLAC decoding", () => {
 
     it("should handle a corrupt file", () => {
 
-      const tmpFilePath = path.join(__dirname, "samples", "zeroes.flac");
+      const tmpFilePath = path.join(samplePath, "zeroes.flac");
 
       return fs.writeFile(tmpFilePath, buf).then(() => {
         return mm.parseFile(tmpFilePath, {duration: true, native: true});
@@ -119,6 +131,5 @@ describe("FLAC decoding", () => {
       });
 
     });
-
   });
 });
