@@ -1,7 +1,7 @@
 'use strict';
 
 import {TagPriority, TagType} from './common/GenericTagTypes';
-import {ParserFactory} from "./ParserFactory";
+import {ITokenParser, ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
 import {IGenericTagMapper} from "./common/GenericTagMapper";
 import {ID3v24TagMapper} from "./id3v2/ID3v24TagMapper";
@@ -12,6 +12,7 @@ import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
 import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
 import {AsfTagMapper} from "./asf/AsfTagMapper";
 import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
+import {Promise} from "es6-promise";
 
 /**
  * Attached picture, typically used for cover art
@@ -270,6 +271,13 @@ export interface IOptions {
    * default: `false`, if set to `true`, it will use all tag headers available to populate common. Newest header version having priority.
    */
   mergeTagHeaders?: boolean;
+
+  /**
+   * Allow custom loading of modules
+   * @param {string} moduleName module name
+   * @return {Promise<ITokenParser>} parser
+   */
+  loadParser?: (moduleName: string) => Promise<ITokenParser>;
 }
 
 /**
