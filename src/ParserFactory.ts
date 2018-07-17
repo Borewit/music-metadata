@@ -248,11 +248,11 @@ export class ParserFactory {
     debug(`Lazy loading parser: ${moduleName}`);
     if (options.loadParser) {
       return options.loadParser(moduleName).then(parser => {
-        if(!parser) {
+        if (!parser) {
           throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
         }
         return parser;
-      })
+      });
     }
     const module = require('./' + moduleName);
     return Promise.resolve(new module.default());
