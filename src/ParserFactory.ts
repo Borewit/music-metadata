@@ -27,7 +27,7 @@ export class ParserFactory {
   public static parseFile(filePath: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
     return strtok3.fromFile(filePath).then(fileTokenizer => {
-      const parserName = ParserFactory.getParserForExtension(filePath);
+      const parserName = ParserFactory.getParserIdForExtension(filePath);
       if (parserName) {
         return ParserFactory.loadParser(parserName, opts).then(parser => {
           return parser.parse(fileTokenizer, opts).then(metadata => {
@@ -74,7 +74,7 @@ export class ParserFactory {
   public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
-    let parserId = ParserFactory.getParserForMimeType(contentType) || ParserFactory.getParserForExtension(contentType);
+    let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
 
     if (!parserId) {
       // No MIME-type mapping found
@@ -85,7 +85,7 @@ export class ParserFactory {
         const guessedType = fileType(buf);
         if (!guessedType)
           throw new Error("Failed to guess MIME-type");
-        parserId = ParserFactory.getParserForMimeType(guessedType.mime);
+        parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
         if (!parserId)
           throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
         return ParserFactory.loadParser(parserId, opts).then(parser => {
@@ -102,9 +102,9 @@ export class ParserFactory {
 
   /**
    * @param filePath Path, filename or extension to audio file
-   * @return ITokenParser if extension is supported; otherwise false
+   * @return Parser sub-module name
    */
-  private static getParserForExtension(filePath: string): string {
+  private static getParserIdForExtension(filePath: string): string {
     if (!filePath)
       return;
 
@@ -163,7 +163,7 @@ export class ParserFactory {
    * @param {string} mimeType MIME-Type, extension, path or filename
    * @returns {string} Parser sub-module name
    */
-  private static getParserForMimeType(mimeType: string): string {
+  private static getParserIdForMimeType(mimeType: string): string {
 
     let mime;
     try {
@@ -247,7 +247,12 @@ export class ParserFactory {
   private static loadParser(moduleName: string, options: IOptions): Promise<ITokenParser> {
     debug(`Lazy loading parser: ${moduleName}`);
     if (options.loadParser) {
-      return options.loadParser(moduleName);
+      return options.loadParser(moduleName).then(parser => {
+        if(!parser) {
+          throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
+        }
+        return parser;
+      })
     }
     const module = require('./' + moduleName);
     return Promise.resolve(new module.default());
