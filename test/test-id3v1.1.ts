@@ -65,6 +65,16 @@ describe("Parsing MPEG / ID3v1", () => {
       });
     });
 
+    it("it should skip id3v1 header if options.skipPostHeaders is set", () => {
+
+      const stream = fs.createReadStream(path.join(__dirname, 'samples', "07 - I'm Cool.mp3"));
+
+      return mm.parseStream(stream, 'audio/mpeg', {native: true, skipPostHeaders: true}).then(metadata => {
+        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
+      }).then(() => stream.close());
+
+    });
+
   });
 
   describe("should handle MP3 without any tags", () => {

@@ -268,9 +268,16 @@ export interface IOptions {
   skipCovers?: boolean;
 
   /**
-   * default: `false`, if set to `true`, it will use all tag headers available to populate common. Newest header version having priority.
+   * default: `false`, if set to `true`, it will use all tag headers available to populate common.
+   * Newest header version having priority.
    */
   mergeTagHeaders?: boolean;
+
+  /**
+   * default: `false`, if set to `true`, it will not search all the entire track for additional headers.
+   * Only recommenced to use in combination with streams.
+   */
+  skipPostHeaders?: boolean;
 
   /**
    * Allow custom loading of modules
