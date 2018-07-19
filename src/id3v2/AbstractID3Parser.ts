@@ -55,14 +55,25 @@ export abstract class AbstractID3Parser implements ITokenParser {
         return this._parse(metadata, tokenizer, options);
       })
       .then(() => {
-        const id3v1parser = new ID3v1Parser();
-        return id3v1parser.parse(tokenizer).then(id3v1Metadata => {
-          for (const tagType in id3v1Metadata) {
-            metadata.native[tagType] = id3v1Metadata[tagType];
-          }
+        if (options.skipPostHeaders && this.hasAnyMetadata(metadata)) {
           this.finalize(metadata);
-        });
+        } else {
+          const id3v1parser = new ID3v1Parser();
+          return id3v1parser.parse(tokenizer).then(id3v1Metadata => {
+            for (const tagType in id3v1Metadata) {
+              metadata.native[tagType] = id3v1Metadata[tagType];
+            }
+            this.finalize(metadata);
+          });
+        }
       });
+  }
+
+  private hasAnyMetadata(md: INativeAudioMetadata) {
+    for (const tagType in md.native) {
+      return true;
+    }
+    return false;
   }
 
   private tryReadId3v2Headers(metadata: INativeAudioMetadata, tokenizer: strtok3.ITokenizer, options: IOptions): Promise<void> {
