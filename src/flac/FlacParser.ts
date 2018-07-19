@@ -5,7 +5,7 @@ import {INativeAudioMetadata, IOptions, ITag} from "../index";
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
-import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
+import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
 
@@ -27,7 +27,7 @@ enum BlockType {
   PICTURE = 6
 }
 
-export class FlacParser extends AbstractID3v2Parser {
+export class FlacParser extends AbstractID3Parser {
 
   public static getInstance(): FlacParser {
     return new FlacParser();

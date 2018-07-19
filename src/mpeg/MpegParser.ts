@@ -2,7 +2,7 @@ import * as assert from "assert";
 import {ITokenizer, endOfFile} from "strtok3";
 import Common from "../common/Util";
 import * as Token from "token-types";
-import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
+import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
 import {INativeAudioMetadata, IOptions} from "../index";
 import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
 import {Promise} from "es6-promise";
@@ -201,7 +201,7 @@ class MpegAudioLayer {
   }
 }
 
-export class MpegParser extends AbstractID3v2Parser {
+export class MpegParser extends AbstractID3Parser {
 
   private frameCount: number = 0;
   private countSkipFrameData: number = 0;

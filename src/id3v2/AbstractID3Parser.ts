@@ -10,7 +10,10 @@ import * as _debug from "debug";
 
 const debug = _debug("music-metadata:parser:ID3");
 
-export abstract class AbstractID3v2Parser implements ITokenParser {
+/**
+ * Abstract parser which tries take ID3v2 and ID3v1 headers.
+ */
+export abstract class AbstractID3Parser implements ITokenParser {
 
   public static startsWithID3v2Header(tokenizer: strtok3.ITokenizer): Promise<boolean> {
     return tokenizer.peekToken(ID3v2Token.Header).then(id3Header => (id3Header.fileIdentifier === "ID3"));
