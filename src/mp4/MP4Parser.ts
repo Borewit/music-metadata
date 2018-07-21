@@ -103,8 +103,8 @@ export class MP4Parser implements ITokenParser {
           });
 
       default:
-        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
-          .then(buf => {
+        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
+          .then(() => {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
     }
