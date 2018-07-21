@@ -55,9 +55,11 @@ export class MP4Parser implements ITokenParser {
   public parseAtom(parent: string[], size: number): Promise<void> {
 
     // Parse atom header
+    const offset = this.tokenizer.position;
+    // debug("Reading next token on offset=%s...", offset); //  buf.toString('ascii')
     return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header)
       .then(header => {
-        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, this.tokenizer.position); //  buf.toString('ascii')
+        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, offset); //  buf.toString('ascii')
         return this.parseAtomData(header, parent).then(() => {
           size -= header.length;
           if (size > 0) {
