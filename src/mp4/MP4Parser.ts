@@ -169,7 +169,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mvhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<Atom.IAtomMvhd>(Atom.Atom.mvhd).then(mvhd => {
+    return this.tokenizer.readToken<Atom.IAtomMvhd>(new Atom.MvhdAtom(len)).then(mvhd => {
       this.parse_mxhd(mvhd);
     });
   }
@@ -179,7 +179,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mdhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<Atom.IAtomMdhd>(Atom.Atom.mdhd).then(mdhd => {
+    return this.tokenizer.readToken<Atom.IAtomMdhd>(new Atom.MdhdAtom(len)).then(mdhd => {
       this.parse_mxhd(mdhd);
     });
   }
