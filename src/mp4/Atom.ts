@@ -139,7 +139,8 @@ export interface IMovieHeaderAtom {
 }
 
 /**
- * Interface for the parsed Media Atom (mdhd)
+ * Interface for the parsed Media Atom
+ * https://wiki.multimedia.cx/index.php/QuickTime_container
  */
 export class Atom {
 
@@ -222,7 +223,9 @@ export interface IAtomMdhd extends IAtomMxhd {
 
 /**
  * Token: Media Header Atom
- * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
+ * Ref:
+ *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
+ *   https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
  */
 export class MdhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMdhd> {
 
