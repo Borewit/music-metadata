@@ -55,9 +55,11 @@ export class MP4Parser implements ITokenParser {
   public parseAtom(parent: string[], size: number): Promise<void> {
 
     // Parse atom header
+    const offset = this.tokenizer.position;
+    // debug("Reading next token on offset=%s...", offset); //  buf.toString('ascii')
     return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header)
       .then(header => {
-        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, this.tokenizer.position); //  buf.toString('ascii')
+        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, offset); //  buf.toString('ascii')
         return this.parseAtomData(header, parent).then(() => {
           size -= header.length;
           if (size > 0) {
@@ -100,9 +102,15 @@ export class MP4Parser implements ITokenParser {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
 
-      default:
-        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
+      case "mdat":
+        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
           .then(buf => {
+            debug("Ignore payload data in %s of length=%s", parent.concat([header.name]).join('/'), dataLen); //  buf.toString('ascii')
+          });
+
+      default:
+        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
+          .then(() => {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
     }
@@ -167,7 +175,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mvhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<Atom.IAtomMvhd>(Atom.Atom.mvhd).then(mvhd => {
+    return this.tokenizer.readToken<Atom.IAtomMvhd>(new Atom.MvhdAtom(len)).then(mvhd => {
       this.parse_mxhd(mvhd);
     });
   }
@@ -177,7 +185,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mdhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<Atom.IAtomMdhd>(Atom.Atom.mdhd).then(mdhd => {
+    return this.tokenizer.readToken<Atom.IAtomMdhd>(new Atom.MdhdAtom(len)).then(mdhd => {
       this.parse_mxhd(mdhd);
     });
   }
