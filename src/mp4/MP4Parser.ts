@@ -102,6 +102,12 @@ export class MP4Parser implements ITokenParser {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
 
+      case "mdat":
+        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
+          .then(buf => {
+            debug("Ignore payload data in %s of length=%s", parent.concat([header.name]).join('/'), dataLen); //  buf.toString('ascii')
+          });
+
       default:
         return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
           .then(() => {
