@@ -86,6 +86,10 @@
   version "4.1.4"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.1.4.tgz#5ca073b330d90b4066d6ce18f60d57f2084ce8ca"
 
+"@types/debug@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@types/debug/-/debug-0.0.30.tgz#dc1e40f7af3b9c815013a7860e6252f6352a84df"
+
 "@types/file-type@^5.2.1":
   version "5.2.1"
   resolved "https://registry.yarnpkg.com/@types/file-type/-/file-type-5.2.1.tgz#e7af49e08187b6b7598509c5e416669d25fa3461"
