@@ -8,7 +8,11 @@ import {Genres} from "../id3v1/ID3v1Parser";
 import util from "../common/Util";
 
 import * as _debug from "debug";
+import {IMetadataCollector} from "../common/MetadataCollector";
+import {BasicParser} from "../common/BasicParser";
 const debug = _debug("music-metadata:parser:MP4");
+
+const tagFormat =  'iTunes MP4';
 
 /*
  * Parser for: MPEG-4 Audio / MPEG-4 Part 3 (m4a/mp4) extension
@@ -17,7 +21,7 @@ const debug = _debug("music-metadata:parser:MP4");
  *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
  */
-export class MP4Parser implements ITokenParser {
+export class MP4Parser extends BasicParser {
 
   private static read_BE_Signed_Integer(value: Buffer): number {
     return util.readIntBE(value, 0, value.length);
@@ -27,29 +31,11 @@ export class MP4Parser implements ITokenParser {
     return util.readUIntBE(value, 0, value.length);
   }
 
-  private tokenizer: ITokenizer;
-  private options: IOptions;
+  public parse(): Promise<void> {
 
-  private metaAtomsTotalLength = 0;
+    this.metadata.setFormat('dataformat', 'MPEG-4 audio');
 
-  private format: IFormat = {
-    dataformat: 'MPEG-4 audio'
-  };
-  private tags: ITag[] = [];
-  private warnings: string[] = []; // ToDo: make this part of the parsing result
-
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-    this.tokenizer = tokenizer;
-    this.options = options;
-
-    return this.parseAtom([], this.tokenizer.fileSize).then(() => {
-      return {
-        format: this.format,
-        native: {
-          "iTunes MP4": this.tags
-        }
-      };
-    });
+    return this.parseAtom([], this.tokenizer.fileSize);
   }
 
   public parseAtom(parent: string[], size: number): Promise<void> {
@@ -114,6 +100,10 @@ export class MP4Parser implements ITokenParser {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
     }
+  }
+
+  private addTag(id: string, value: any) {
+    this.metadata.addTag(tagFormat, id, value);
   }
 
   /**
@@ -191,8 +181,8 @@ export class MP4Parser implements ITokenParser {
   }
 
   private parse_mxhd(mxhd: Atom.IAtomMxhd) {
-    this.format.sampleRate = mxhd.timeScale;
-    this.format.duration = mxhd.duration / mxhd.timeScale; // calculate duration in seconds
+    this.metadata.setFormat('sampleRate', mxhd.timeScale);
+    this.metadata.setFormat('duration', mxhd.duration / mxhd.timeScale); // calculate duration in seconds
   }
 
   /**
@@ -267,14 +257,14 @@ export class MP4Parser implements ITokenParser {
               const num = Token.UINT8.get(dataAtom.value, 3);
               const of = Token.UINT8.get(dataAtom.value, 5);
               // console.log("  %s[data] = %s/%s", tagKey, num, of);
-              this.tags.push({id: tagKey, value: num + "/" + of});
+              this.addTag(tagKey, num + "/" + of);
               break;
 
             case "gnre":
               const genreInt = Token.UINT8.get(dataAtom.value, 1);
               const genreStr = Genres[genreInt - 1];
               // console.log("  %s[data] = %s", tagKey, genreStr);
-              this.tags.push({id: tagKey, value: genreStr});
+              this.addTag(tagKey, genreStr);
               break;
 
             default:
@@ -284,49 +274,45 @@ export class MP4Parser implements ITokenParser {
           break;
 
         case 1: // UTF-8: Without any count or NULL terminator
-          this.tags.push({id: tagKey, value: dataAtom.value.toString("utf-8")});
+          this.addTag(tagKey, dataAtom.value.toString("utf-8"));
           break;
 
         case 13: // JPEG
           if (this.options.skipCovers)
             break;
-          this.tags.push({
-            id: tagKey, value: {
+          this.addTag(tagKey, {
               format: "image/jpeg",
               data: Buffer.from(dataAtom.value)
-            }
-          });
+            });
           break;
 
         case 14: // PNG
           if (this.options.skipCovers)
             break;
-          this.tags.push({
-            id: tagKey, value: {
+          this.addTag(tagKey, {
               format: "image/png",
               data: Buffer.from(dataAtom.value)
-            }
-          });
+            });
           break;
 
         case 21: // BE Signed Integer
-          this.tags.push({id: tagKey, value: MP4Parser.read_BE_Signed_Integer(dataAtom.value)});
+          this.addTag(tagKey, MP4Parser.read_BE_Signed_Integer(dataAtom.value));
           break;
 
         case 22: // BE Unsigned Integer
-          this.tags.push({id: tagKey, value: MP4Parser.read_BE_Unsigned_Integer(dataAtom.value)});
+          this.addTag(tagKey, MP4Parser.read_BE_Unsigned_Integer(dataAtom.value));
           break;
 
         case 65: // An 8-bit signed integer
-          this.tags.push({id: tagKey, value: dataAtom.value.readInt8(0)});
+          this.addTag(tagKey, dataAtom.value.readInt8(0));
           break;
 
         case 66: // A big-endian 16-bit signed integer
-          this.tags.push({id: tagKey, value: dataAtom.value.readInt16BE(0)});
+          this.addTag(tagKey, dataAtom.value.readInt16BE(0));
           break;
 
         case 67: // A big-endian 32-bit signed integer
-          this.tags.push({id: tagKey, value: dataAtom.value.readInt32BE(0)});
+          this.addTag(tagKey, dataAtom.value.readInt32BE(0));
           break;
 
         default:

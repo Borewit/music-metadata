@@ -84,7 +84,7 @@ describe("FLAC decoding", () => {
     const filePath = path.join(samplePath, "a kind of magic.flac");
 
     return mm.parseFile(filePath, {native: true}).then(metadata => {
-      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "vorbis", "ID3v1.1"], "File has 3 tag types: \"vorbis\", \"ID3v2.3\" & \"ID3v1.1\"");
+      t.deepEqual(metadata.format.tagTypes, ['ID3v2.3' , 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
     });
 
   });

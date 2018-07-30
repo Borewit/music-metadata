@@ -32,7 +32,7 @@ describe("Discogs mappings", () => {
     return mm.parseFile(filePath, {native: true}).then(metadata => {
 
       t.ok(metadata.common, "should include common tags");
-      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"]);
+      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1"]);
 
       const common = metadata.common;
       const id3v23 = mm.orderTags(metadata.native["ID3v2.3"]);

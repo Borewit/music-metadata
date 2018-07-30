@@ -4,6 +4,7 @@ import * as mm from '../src';
 import * as path from 'path';
 import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
 import * as strtok from "strtok3";
+import {MetadataCollector} from "../src/common/MetadataCollector";
 
 const t = assert;
 
@@ -15,10 +16,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
 
     const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
 
-    const metadata: mm.INativeAudioMetadata = {
-      format: {},
-      native: {}
-    };
+    const metadata = new MetadataCollector({});
 
     return strtok.fromFile(filePath).then(tokenizer => {
       return ID3v2Parser.getInstance().parse(metadata, tokenizer, {}).then(() => {
@@ -36,7 +34,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     const filePath = path.join(samplePath, 'id3v2.3.mp3');
 
     function checkFormat(format) {
-      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.type');
+      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
       t.strictEqual(format.duration, 0.7836734693877551, 'format.duration'); // FooBar says 0.732 seconds (32.727 samples)
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
@@ -93,7 +91,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     return mm.parseFile(filePath, {duration: true, native: true}).then(result => {
       checkFormat(result.format);
       checkCommon(result.common);
-      checkID3v1(mm.orderTags(result.native['ID3v1.1']));
+      checkID3v1(mm.orderTags(result.native['ID3v1']));
       checkID3v23(mm.orderTags(result.native['ID3v2.3']));
     });
 
@@ -142,7 +140,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       const filePath = path.join(samplePath, 'issue_56.mp3');
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
+        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
       });
     });
 

@@ -7,11 +7,27 @@ import * as MimeType from "media-typer";
 import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
+import {IMetadataCollector, MetadataCollector} from "./common/MetadataCollector";
+import {IAudioMetadata} from "./index";
 
 const debug = _debug("music-metadata:parser:factory");
 
 export interface ITokenParser {
-  parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata>;
+
+  /**
+   * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
+   * @param {IMetadataCollector} metadata Output
+   * @param {ITokenizer} tokenizer Input
+   * @param {IOptions} options Parsing options
+   */
+  init(metadata: IMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions): ITokenParser;
+
+  /**
+   * Parse audio track.
+   * Called after init(...).
+   * @returns {Promise<void>}
+   */
+  parse(): Promise<void>;
 }
 
 export class ParserFactory {
@@ -24,15 +40,16 @@ export class ParserFactory {
    *   .native=true    Will return original header in result
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parseFile(filePath: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
+  public static parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
     return strtok3.fromFile(filePath).then(fileTokenizer => {
       const parserName = ParserFactory.getParserIdForExtension(filePath);
       if (parserName) {
         return ParserFactory.loadParser(parserName, opts).then(parser => {
-          return parser.parse(fileTokenizer, opts).then(metadata => {
+          const metadata = new MetadataCollector(opts);
+          return parser.init(metadata, fileTokenizer, opts).parse().then(() => {
             return fileTokenizer.close().then(() => {
-              return metadata;
+              return metadata.toCommonMetadata();
             });
           }).catch(err => {
             return fileTokenizer.close().then(() => {
@@ -54,7 +71,7 @@ export class ParserFactory {
    * @param opts Parsing options
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
+  public static parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
     return strtok3.fromStream(stream).then(tokenizer => {
       if (!tokenizer.fileSize && opts.fileSize) {
@@ -71,7 +88,7 @@ export class ParserFactory {
    * @param {IOptions} opts
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts: IOptions = {}): Promise<INativeAudioMetadata> {
+  public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
     let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
@@ -88,15 +105,21 @@ export class ParserFactory {
         parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
         if (!parserId)
           throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
-        return ParserFactory.loadParser(parserId, opts).then(parser => {
-          return parser.parse(tokenizer, opts);
-        });
+        return this._parse(tokenizer, parserId, opts);
       });
     }
 
     // Parser found, execute parser
+    return this._parse(tokenizer, parserId, opts);
+  }
+
+  private static _parse(tokenizer: strtok3.ITokenizer, parserId: string, opts: IOptions = {}): Promise<IAudioMetadata> {
+    // Parser found, execute parser
     return ParserFactory.loadParser(parserId, opts).then(parser => {
-      return parser.parse(tokenizer, opts);
+      const metadata = new MetadataCollector(opts);
+      return parser.init(metadata, tokenizer, opts).parse().then(() => {
+        return metadata.toCommonMetadata();
+      });
     });
   }
 

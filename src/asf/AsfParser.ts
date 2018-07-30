@@ -7,8 +7,13 @@ import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
 import {Promise} from "es6-promise";
 import * as _debug from "debug";
+import {IMetadataCollector} from "../common/MetadataCollector";
+import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:ASF");
+
+const headerType = 'asf';
+
 
 /**
  * Windows Media Metadata Usage Guidelines
@@ -20,39 +25,15 @@ const debug = _debug("music-metadata:parser:ASF");
  *   http://drang.s4.xrea.com/program/tips/id3tag/wmp/index.html
  *   https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
  */
-export class AsfParser implements ITokenParser {
+export class AsfParser extends BasicParser {
 
-  public static headerType = 'asf';
-
-  private tokenizer: ITokenizer;
-
-  private tags: ITag[] = [];
-
-  private warnings: string[] = []; // ToDo: make these part of the parsing result
-
-  private format: IFormat = {};
-
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.tokenizer = tokenizer;
-
-    return this.paresTopLevelHeaderObject();
-  }
-
-  private paresTopLevelHeaderObject(): Promise<INativeAudioMetadata> {
+  public parse(): Promise<void> {
     return this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken).then(header => {
       if (!header.objectId.equals(GUID.HeaderObject)) {
         throw new Error('expected asf header; but was not found; got: ' + header.objectId.str);
       }
       return this.parseObjectHeader(header.numberOfHeaderObjects).catch(err => {
           debug("Error while parsing ASF: %s", err);
-          // ToDo: register warning
-          return {
-            format: this.format,
-            native: {
-              asf: this.tags
-            }
-          };
         });
 
     });
@@ -67,13 +48,13 @@ export class AsfParser implements ITokenParser {
 
         case AsfObject.FilePropertiesObject.guid.str: // 3.2
           return this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header)).then(fpo => {
-            this.format.duration = fpo.playDuration / 10000000;
-            this.format.bitrate = fpo.maximumBitrate;
+            this.metadata.setFormat('duration', fpo.playDuration / 10000000);
+            this.metadata.setFormat('bitrate' , fpo.maximumBitrate);
           });
 
         case AsfObject.StreamPropertiesObject.guid.str: // 3.3
           return this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header)).then(spo => {
-            this.format.dataformat = 'ASF/' + spo.streamType;
+            this.metadata.setFormat('dataformat', 'ASF/' + spo.streamType);
           });
 
         case AsfObject.HeaderExtensionObject.guid.str: // 3.4
@@ -83,12 +64,12 @@ export class AsfParser implements ITokenParser {
 
         case AsfObject.ContentDescriptionObjectState.guid.str: // 3.10
           return this.tokenizer.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header)).then(tags => {
-            this.tags = this.tags.concat(tags);
+            this.addTags(tags);
           });
 
         case AsfObject.ExtendedContentDescriptionObjectState.guid.str: // 3.11
           return this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header)).then(tags => {
-            this.tags = this.tags.concat(tags);
+            this.addTags(tags);
             return header.objectSize;
           });
 
@@ -114,15 +95,16 @@ export class AsfParser implements ITokenParser {
       --numberOfObjectHeaders;
       if (numberOfObjectHeaders > 0) {
         return this.parseObjectHeader(numberOfObjectHeaders);
-      } else {
-        // done
-        return {
-          format: this.format,
-          native: {
-            asf: this.tags
-          }
-        };
       }
+      // done
+    });
+  }
+
+
+
+  private addTags(tags: ITag[]) {
+    tags.forEach(tag => {
+      this.metadata.addTag(headerType, tag.id, tag.value);
     });
   }
 
@@ -139,13 +121,13 @@ export class AsfParser implements ITokenParser {
 
         case AsfObject.MetadataObjectState.guid.str: // 4.7
           return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header)).then(tags => {
-            this.tags = this.tags.concat(tags);
+            this.addTags(tags);
             return header.objectSize;
           });
 
         case AsfObject.MetadataLibraryObjectState.guid.str: // 4.8
           return this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header)).then(tags => {
-            this.tags = this.tags.concat(tags);
+            this.addTags(tags);
             return header.objectSize;
           });
 

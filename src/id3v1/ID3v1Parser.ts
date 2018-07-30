@@ -1,10 +1,10 @@
 "use strict";
 
-import {INativeTags, IOptions, ITag} from "../index";
-import {ITokenizer} from "strtok3";
+import {ITag} from "../index";
 import * as Token from "token-types";
 
 import * as _debug from "debug";
+import {BasicParser} from "../common/BasicParser";
 const debug = _debug("music-metadata:parser:ID3v1");
 
 /**
@@ -106,7 +106,7 @@ class Id3v1StringType extends Token.StringType {
   }
 }
 
-export class ID3v1Parser {
+export class ID3v1Parser extends BasicParser {
 
   private static getGenre(genreIndex: number): string {
     if (genreIndex < Genres.length) {
@@ -115,31 +115,30 @@ export class ID3v1Parser {
     return undefined; // ToDO: generate warning
   }
 
-  public parse(tokenizer: ITokenizer): Promise<INativeTags> {
+  public parse(): Promise<void> {
 
-    if (!tokenizer.fileSize) {
+    if (!this.tokenizer.fileSize) {
       debug('Skip checking for ID3v1 because the file-size is unknown'
       );
     }
-
-    return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then(header => {
+    return this.tokenizer.readToken<Iid3v1Header>(Iid3v1Token, this.tokenizer.fileSize - Iid3v1Token.len).then(header => {
       if (header) {
-        debug("ID3v1 header found at: pos=%s", tokenizer.fileSize - Iid3v1Token.len);
+        debug("ID3v1 header found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
         const id3: ITag[] = [];
         for (const id of ["title", "artist", "album", "comment", "track", "year"]) {
           if (header[id] && header[id] !== "")
-            id3.push({id, value: header[id]});
+            this.addTag(id, header[id]);
         }
         const genre = ID3v1Parser.getGenre(header.genre);
         if (genre)
-          id3.push({id: "genre", value: genre});
-        return {
-          "ID3v1.1": id3
-        };
+          this.addTag('genre', genre);
       } else {
-        debug("ID3v1 header not found at: pos=%s", tokenizer.fileSize - Iid3v1Token.len);
-        return null;
+        debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
       }
-    });
+    }).then();
+  }
+
+  private addTag(id: string, value: any) {
+    this.metadata.addTag('ID3v1', id, value);
   }
 }

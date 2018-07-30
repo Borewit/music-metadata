@@ -287,57 +287,7 @@ export interface IOptions {
   loadParser?: (moduleName: string) => Promise<ITokenParser>;
 }
 
-/**
- * Combines all generic-tag-mappers for each tag type
- */
-export class CombinedTagMapper {
-
-  public tagMappers: { [index: string]: IGenericTagMapper } = {};
-
-  public constructor() {
-    [
-      new ID3v1TagMapper(),
-      new ID3v22TagMapper(),
-      new ID3v24TagMapper(),
-      new MP4TagMapper(),
-      new MP4TagMapper(),
-      new VorbisTagMapper(),
-      new APEv2TagMapper(),
-      new AsfTagMapper(),
-      new RiffInfoTagMapper()
-    ].forEach(mapper => {
-      this.registerTagMapper(mapper);
-    });
-  }
-
-  /**
-   * Process and set common tags
-   * @param comTags Target metadata to
-   * write common tags to
-   * @param comTags Generic tag results (output of this function)
-   * @param tag     Native tag
-   */
-  public setGenericTag(comTags: ICommonTagsResult, tagType: TagType, tag: ITag) {
-    const tagMapper = this.tagMappers[tagType];
-    if (tagMapper) {
-      this.tagMappers[tagType].setGenericTag(comTags, tag);
-    } else {
-      throw new Error("No generic tag mapper defined for tag-format: " + tagType);
-    }
-  }
-
-  private registerTagMapper(genericTagMapper: IGenericTagMapper) {
-    for (const tagType of genericTagMapper.tagTypes) {
-      this.tagMappers[tagType] = genericTagMapper;
-    }
-  }
-}
-
 export class MusicMetadataParser {
-
-  public static getInstance(): MusicMetadataParser {
-    return new MusicMetadataParser();
-  }
 
   public static joinArtists(artists: string[]): string {
     if (artists.length > 2) {
@@ -346,7 +296,6 @@ export class MusicMetadataParser {
     return artists.join(' & ');
   }
 
-  private tagMapper = new CombinedTagMapper();
 
   /**
    * Extract metadata from the given audio file
@@ -357,11 +306,7 @@ export class MusicMetadataParser {
    * @returns {Promise<IAudioMetadata>}
    */
   public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-
-    return ParserFactory.parseFile(filePath, opts).then(nativeData => {
-      return this.parseNativeTags(nativeData, opts.native, opts.mergeTagHeaders);
-    });
-
+    return ParserFactory.parseFile(filePath, opts);
   }
 
   /**
@@ -374,75 +319,9 @@ export class MusicMetadataParser {
    * @returns {Promise<IAudioMetadata>}
    */
   public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseStream(stream, mimeType, opts).then(nativeData => {
-      return this.parseNativeTags(nativeData, opts.native, opts.mergeTagHeaders);
-    });
+    return ParserFactory.parseStream(stream, mimeType, opts);
   }
 
-  /**
-   * Convert native tags to common tags
-   * @param nativeData
-   * @includeNative return native tags in result
-   * @returns {IAudioMetadata} Native + common tags
-   */
-  public parseNativeTags(nativeData: INativeAudioMetadata, includeNative?: boolean, mergeTagHeaders?: boolean): IAudioMetadata {
-
-    const metadata: IAudioMetadata = {
-      format: nativeData.format,
-      native: includeNative ? nativeData.native : undefined,
-      common: {} as any
-    };
-
-    metadata.format.tagTypes = [];
-
-    for (const tagType in nativeData.native) {
-      metadata.format.tagTypes.push(tagType as TagType);
-    }
-
-    for (const tagType of TagPriority) {
-
-      if (nativeData.native[tagType]) {
-        if (nativeData.native[tagType].length === 0) {
-          // ToDo: register warning: empty tag header
-        } else {
-
-          const common = {
-            track: {no: null, of: null},
-            disk: {no: null, of: null}
-          };
-
-          for (const tag of nativeData.native[tagType]) {
-            this.tagMapper.setGenericTag(common, tagType as TagType, tag);
-          }
-
-          for (const tag of Object.keys(common)) {
-            if (!metadata.common[tag]) {
-              metadata.common[tag] = common[tag];
-            }
-          }
-
-          if (!mergeTagHeaders) {
-            break;
-          }
-        }
-      }
-    }
-
-    if (metadata.common.artists && metadata.common.artists.length > 0) {
-      // common.artists explicitly by meta-data
-      metadata.common.artist = !metadata.common.artist ? MusicMetadataParser.joinArtists(metadata.common.artists) : metadata.common.artist[0];
-    } else {
-      if (metadata.common.artist) {
-        metadata.common.artists = metadata.common.artist as any;
-        if (metadata.common.artist.length > 1) {
-          delete metadata.common.artist;
-        } else {
-          metadata.common.artist = metadata.common.artist[0];
-        }
-      }
-    }
-    return metadata;
-  }
 }
 
 /**
@@ -454,7 +333,7 @@ export class MusicMetadataParser {
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
-  return MusicMetadataParser.getInstance().parseFile(filePath, options);
+  return new MusicMetadataParser().parseFile(filePath, options);
 }
 
 /**
@@ -467,7 +346,7 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {
-  return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
+  return new MusicMetadataParser().parseStream(stream, mimeType, opts);
 }
 
 /**

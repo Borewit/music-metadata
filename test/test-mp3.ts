@@ -29,7 +29,7 @@ describe("Parse MP3 files", () => {
     const filePath = path.join(__dirname, 'samples', "incomplete.mp3");
 
     function checkFormat(format: mm.IFormat) {
-      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1.1'], 'format.tagTypes');
+      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
       t.approximately(format.duration, 61.73, 1 / 100, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');

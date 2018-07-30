@@ -1,9 +1,9 @@
 import * as assert from "assert";
-import {ITokenizer, endOfFile} from "strtok3";
+import {endOfFile} from "strtok3";
 import Common from "../common/Util";
 import * as Token from "token-types";
 import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
-import {INativeAudioMetadata, IOptions} from "../index";
+import {INativeAudioMetadata} from "../index";
 import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
 import {Promise} from "es6-promise";
 
@@ -212,16 +212,12 @@ export class MpegParser extends AbstractID3Parser {
   private frame_size;
   private crc: number;
   private unsynced: number = 0;
-  private warnings: string[] = [];
 
   private calculateEofDuration: boolean = false;
   private samplesPerFrame;
 
-  private metadata: INativeAudioMetadata;
-
   private buf_frame_header = Buffer.alloc(4);
 
-  private tokenizer: ITokenizer;
   /**
    * Number of bytes already parsed since beginning of stream / file
    */
@@ -236,11 +232,7 @@ export class MpegParser extends AbstractID3Parser {
   /**
    * Called after ID3 headers have been parsed
    */
-  public _parse(metadata: INativeAudioMetadata, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-
-    this.metadata = metadata;
-    this.tokenizer = tokenizer;
-    this.readDuration = options.duration;
+  public _parse(): Promise<void> {
 
     const format = this.metadata.format;
     format.lossless = false;
@@ -263,18 +255,16 @@ export class MpegParser extends AbstractID3Parser {
    * @param metadata
    * @returns {INativeAudioMetadata}
    */
-  protected finalize(metadata: INativeAudioMetadata): INativeAudioMetadata {
+  protected finalize() {
 
     const format = this.metadata.format;
     if (!format.duration && this.tokenizer.fileSize && format.codecProfile === "CBR") {
-      const hasID3v1 = metadata.native.hasOwnProperty('ID3v1.1');
+      const hasID3v1 = this.metadata.native.hasOwnProperty('ID3v1.1');
       const mpegSize = this.tokenizer.fileSize - this.mpegOffset - (hasID3v1 ? 128 : 0);
       format.numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
       format.duration = format.numberOfSamples / format.sampleRate;
       debug("Calculate CBR duration based on file size: %s", format.duration);
     }
-
-    return metadata;
   }
 
   private _peekBuffer(): Promise<number> {
@@ -385,7 +375,7 @@ export class MpegParser extends AbstractID3Parser {
           format.codecProfile = "CBR";
           if (this.tokenizer.fileSize)
             return; // Calculate duration based on file size
-        } else if (!this.readDuration) {
+        } else if (!this.options.duration) {
           return; // Done
         }
       }
@@ -393,7 +383,7 @@ export class MpegParser extends AbstractID3Parser {
       // once we know the file is VBR attach listener to end of
       // stream so we can do the duration calculation when we
       // have counted all the frames
-      if (this.readDuration && this.frameCount === 4) {
+      if (this.options.duration && this.frameCount === 4) {
         this.samplesPerFrame = samples_per_frame;
         this.calculateEofDuration = true;
       }

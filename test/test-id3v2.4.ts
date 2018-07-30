@@ -16,7 +16,7 @@ describe("Decode MP3/ID3v2.4", () => {
     const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, {duration: true}).then(metadata => {
-      t.deepEqual(metadata.format.tagTypes, ["ID3v2.4", "ID3v1.1"], 'format.tagTypes');
+      t.deepEqual(metadata.format.tagTypes, ["ID3v2.4", "ID3v1"], 'format.tagTypes');
       t.strictEqual(metadata.format.duration, 0.7836734693877551, 'format.format.duration');
       t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(metadata.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');

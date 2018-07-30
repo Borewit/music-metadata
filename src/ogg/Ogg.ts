@@ -4,6 +4,7 @@
  */
 
 import {INativeAudioMetadata} from "../index";
+import {IMetadataCollector} from "../common/MetadataCollector";
 
 export interface IPageHeader {
   /**
@@ -76,6 +77,4 @@ export interface IPageConsumer {
 }
 
 export interface IAudioParser extends IPageConsumer {
-
-  getMetadata(): INativeAudioMetadata
 }
