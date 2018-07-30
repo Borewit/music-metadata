@@ -1,9 +1,9 @@
 import {} from "mocha";
 import {assert, expect} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import {IdHeader} from "../src/opus/Opus";
+import {IdHeader} from "../lib/opus/Opus";
 
 describe("Parsing Ogg", function() {
 

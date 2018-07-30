@@ -1,7 +1,7 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import util from "../src/common/Util";
-import {FourCcToken} from "../src/common/FourCC";
+import util from "../lib/common/Util";
+import {FourCcToken} from "../lib/common/FourCC";
 
 const t = assert;
 

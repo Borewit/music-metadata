@@ -1,10 +1,10 @@
 import {assert} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from 'path';
-import GUID from "../src/asf/GUID";
+import GUID from "../lib/asf/GUID";
 import * as fs from 'fs-extra';
-import {AsfUtil} from "../src/asf/AsfUtil";
-import {DataType} from "../src/asf/AsfObject";
+import {AsfUtil} from "../lib/asf/AsfUtil";
+import {DataType} from "../lib/asf/AsfObject";
 
 const t = assert;
 

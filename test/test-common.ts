@@ -1,9 +1,9 @@
 import {assert} from "chai";
 
-import {CommonTagMapper} from "../src/common/GenericTagMapper";
-import {commonTags, isSingleton} from "../src/common/GenericTagTypes";
+import {CommonTagMapper} from "../lib/common/GenericTagMapper";
+import {commonTags, isSingleton} from "../lib/common/GenericTagTypes";
 import * as path from "path";
-import * as mm from "../src";
+import * as mm from "../lib";
 import * as MimeType from "media-typer";
 
 const t = assert;

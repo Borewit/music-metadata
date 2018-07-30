@@ -1,8 +1,8 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import {AsfTagMapper} from "../src/asf/AsfTagMapper";
-import {APEv2TagMapper} from "../src/apev2/APEv2TagMapper";
-import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
+import {AsfTagMapper} from "../lib/asf/AsfTagMapper";
+import {APEv2TagMapper} from "../lib/apev2/APEv2TagMapper";
+import {ID3v24TagMapper} from "../lib/id3v2/ID3v24TagMapper";
 
 describe("Picard mapping coverage", () => {
 

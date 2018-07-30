@@ -1,4 +1,4 @@
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from "path";
 import {assert} from "chai";
 import {Promise} from "es6-promise";
@@ -11,7 +11,7 @@ describe("Lazy loading of format parser (ITokenParser", () => {
 
     return mm.parseFile(filePath, {duration: true, native: true, loadParser: moduleName => {
         assert.strictEqual(moduleName, 'mpeg');
-        const parserModule = require('../src/' + moduleName);
+        const parserModule = require('../lib/' + moduleName);
         return Promise.resolve(new parserModule.default());
       }
     });
