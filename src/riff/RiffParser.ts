@@ -110,7 +110,7 @@ export class WavePcmParser extends BasicParser {
               });
 
           case 'data': // PCM-data
-            if(this.metadata.format !== false) {
+            if (this.metadata.format.lossless !== false) {
               this.metadata.setFormat('lossless', true);
             }
             this.metadata.format.numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.size / this.blockAlign);

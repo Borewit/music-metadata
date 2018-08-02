@@ -32,7 +32,7 @@ export interface IMetadataCollector {
 
   setFormat(key: string, value: any);
 
-  addTag(headertType: string, tagId: string, value: any);
+  addTag(tagType: string, tagId: string, value: any);
 
 }
 
@@ -42,7 +42,9 @@ export interface IMetadataCollector {
  */
 export class MetadataCollector implements IMetadataCollector {
 
-  public readonly format: IFormat = {};
+  public readonly format: IFormat = {
+    tagTypes: []
+  };
   public readonly native: INativeTags = {};
 
   private tagMapper = new CombinedTagMapper();
@@ -68,7 +70,7 @@ export class MetadataCollector implements IMetadataCollector {
   public addTag(tagType: TagType, tagId: string, value: any) {
     debug(`tag ${tagType}.${tagId} = ${value}`);
     if (!this.native[tagType]) {
-      this.format.tagTypes.push(tagType as TagType);
+      this.format.tagTypes.push(tagType);
       this.native[tagType] = [];
     }
     this.native[tagType].push({id: tagId, value: value});
