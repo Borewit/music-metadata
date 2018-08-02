@@ -1,9 +1,9 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../lib';
+import * as mm from '../src';
 import * as path from 'path';
 import * as crypto from "crypto";
-import {TagType} from "../lib/common/GenericTagTypes";
+import {TagType} from "../src/common/GenericTagTypes";
 
 const t = assert;
 

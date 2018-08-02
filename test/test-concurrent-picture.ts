@@ -1,6 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../lib';
+import * as mm from '../src';
 import * as fs from 'fs-extra';
 import {Promise} from 'es6-promise';
 import * as path from 'path';

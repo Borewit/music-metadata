@@ -1,6 +1,6 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../lib';
+import * as mm from '../src';
 import * as path from 'path';
 
 describe("Extract metadata from RIFF (Resource Interchange File Format)", () => {

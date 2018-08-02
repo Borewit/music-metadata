@@ -1,8 +1,8 @@
 import {} from "mocha";
 import {assert} from 'chai';
-import * as mm from '../lib';
+import * as mm from '../src';
 import * as path from 'path';
-import {ID3v2Parser} from "../lib/id3v2/ID3v2Parser";
+import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
 
 const t = assert;
 

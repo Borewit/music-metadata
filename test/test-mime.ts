@@ -1,7 +1,7 @@
 import {} from "mocha";
 import {assert} from "chai";
 import * as mime from "mime";
-import * as mm from "../lib";
+import * as mm from "../src";
 import {SourceStream} from "./util";
 import {Promise} from 'es6-promise';
 import * as fs from "fs-extra";
