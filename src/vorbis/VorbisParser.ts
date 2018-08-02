@@ -1,21 +1,19 @@
 'use strict';
 import * as Vorbis from './Vorbis';
-import {IFormat, INativeAudioMetadata, IOptions, ITag} from "../index";
+import {IOptions} from "../";
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import * as Ogg from "../ogg/Ogg";
 import * as _debug from "debug";
 import {IMetadataCollector} from "../common/MetadataCollector";
-import {IPageConsumer} from "../ogg/Ogg";
 
 const debug = _debug("music-metadata:parser:Ogg/Vorbis1");
-
 
 /**
  * Vorbis 1 Parser.
  * Used by OggParser
  */
-export class VorbisParser implements IPageConsumer {
+export class VorbisParser implements Ogg.IPageConsumer {
 
   private pageSegments: Buffer[] = [];
 

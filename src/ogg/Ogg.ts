@@ -75,6 +75,3 @@ export interface IPageConsumer {
    */
   flush();
 }
-
-export interface IAudioParser extends IPageConsumer {
-}

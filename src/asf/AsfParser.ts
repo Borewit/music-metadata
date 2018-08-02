@@ -14,7 +14,6 @@ const debug = _debug("music-metadata:parser:ASF");
 
 const headerType = 'asf';
 
-
 /**
  * Windows Media Metadata Usage Guidelines
  *   Ref: https://msdn.microsoft.com/en-us/library/ms867702.aspx
@@ -99,8 +98,6 @@ export class AsfParser extends BasicParser {
       // done
     });
   }
-
-
 
   private addTags(tags: ITag[]) {
     tags.forEach(tag => {

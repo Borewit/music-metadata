@@ -22,8 +22,6 @@ export abstract class AbstractID3Parser extends BasicParser {
 
   private id3parser = new ID3v2Parser();
 
-  protected metadata: IMetadataCollector;
-
   public parse(): Promise<void> {
 
     return this.parseID3v2().catch(err => {

@@ -296,7 +296,6 @@ export class MusicMetadataParser {
     return artists.join(' & ');
   }
 
-
   /**
    * Extract metadata from the given audio file
    * @param filePath File path of the audio file to parse

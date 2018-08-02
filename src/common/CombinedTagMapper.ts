@@ -10,7 +10,6 @@ import {MP4TagMapper} from "../mp4/MP4TagMapper";
 import {VorbisTagMapper} from "../vorbis/VorbisTagMapper";
 import {RiffInfoTagMapper} from "../riff/RiffInfoTagMap";
 
-
 export class CombinedTagMapper {
 
   public tagMappers: { [index: string]: IGenericTagMapper } = {};

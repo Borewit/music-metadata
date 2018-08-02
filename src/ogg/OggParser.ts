@@ -69,7 +69,7 @@ export class OggParser extends BasicParser {
 
   private header: Ogg.IPageHeader;
   private pageNumber: number;
-  private pageConsumer: Ogg.IAudioParser;
+  private pageConsumer: Ogg.IPageConsumer;
 
   /**
    * Parse page

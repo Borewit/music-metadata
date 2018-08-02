@@ -73,7 +73,7 @@ export class MetadataCollector implements IMetadataCollector {
       this.format.tagTypes.push(tagType);
       this.native[tagType] = [];
     }
-    this.native[tagType].push({id: tagId, value: value});
+    this.native[tagType].push({id: tagId, value});
   }
 
   public getNativeMetadata(): INativeAudioMetadata {

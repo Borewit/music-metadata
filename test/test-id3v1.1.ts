@@ -159,7 +159,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
-      const id3v1 = mm.orderTags(metadata.native['ID3v1']);
+      const id3v1 = mm.orderTags(metadata.native.ID3v1);
       assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
       assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');
       assert.deepEqual(id3v1.album, ['Skupinove foto'], 'id3v1.album');

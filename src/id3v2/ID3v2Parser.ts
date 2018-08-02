@@ -154,7 +154,7 @@ export class ID3v2Parser {
     this.metadata = metadata;
     this.options = options;
 
-   return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
+    return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
 
       if (id3Header.fileIdentifier !== 'ID3') {
         throw new Error("expected ID3-header file-identifier 'ID3' was not found");
@@ -169,8 +169,6 @@ export class ID3v2Parser {
       } else {
         return this.parseId3Data(id3Header.size);
       }
-    }).then(() => {
-      //result.native[this.headerType] = this.tags;
     });
   }
 

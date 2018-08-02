@@ -171,8 +171,6 @@ export class WavPackParser extends BasicParser {
 
             if (header.blockIndex === 0 && !this.metadata.format.dataformat) {
               this.metadata.setFormat('dataformat', 'WavPack');
-
-
               this.metadata.setFormat('lossless', !header.flags.isHybrid);
                 // tagTypes: this.type,
               this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);

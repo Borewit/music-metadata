@@ -91,7 +91,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     return mm.parseFile(filePath, {duration: true, native: true}).then(result => {
       checkFormat(result.format);
       checkCommon(result.common);
-      checkID3v1(mm.orderTags(result.native['ID3v1']));
+      checkID3v1(mm.orderTags(result.native.ID3v1));
       checkID3v23(mm.orderTags(result.native['ID3v2.3']));
     });
 

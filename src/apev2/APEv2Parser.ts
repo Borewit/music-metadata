@@ -357,7 +357,6 @@ export class APEv2Parser extends BasicParser {
       this.metadata.setFormat('numberOfChannels', header.channel);
       this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
 
-
       return {
         forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
         this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
