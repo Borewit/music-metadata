@@ -259,7 +259,7 @@ export class MpegParser extends AbstractID3Parser {
 
     const format = this.metadata.format;
     if (!format.duration && this.tokenizer.fileSize && format.codecProfile === "CBR") {
-      const hasID3v1 = this.metadata.native.hasOwnProperty('ID3v1.1');
+      const hasID3v1 = this.metadata.native.hasOwnProperty('ID3v1');
       const mpegSize = this.tokenizer.fileSize - this.mpegOffset - (hasID3v1 ? 128 : 0);
       format.numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
       format.duration = format.numberOfSamples / format.sampleRate;
