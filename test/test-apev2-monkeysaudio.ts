@@ -11,7 +11,6 @@ describe("Decode Monkey's Audio (.ape)", () => {
   const samplePath = path.join(__dirname, 'samples');
 
   function checkFormat(format) {
-    t.strictEqual(format.headerType, 'APEv2', 'format.tagTypes');
     t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]');
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
