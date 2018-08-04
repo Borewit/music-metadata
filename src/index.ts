@@ -154,6 +154,8 @@ export interface ICommonTagsResult {
 
 }
 
+export type FormatId = 'dataformat' | 'duration' | 'bitrate' | 'sampleRate' | 'bitsPerSample' | 'encoder' | 'codecProfile' | 'lossless' | 'numberOfChannels' | 'numberOfSamples' | 'audioMD5';
+
 export interface IFormat {
 
   /**

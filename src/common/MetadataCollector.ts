@@ -1,4 +1,5 @@
 import {
+  FormatId,
   IAudioMetadata,
   IFormat,
   INativeAudioMetadata,
@@ -30,7 +31,7 @@ export interface IMetadataCollector {
    */
   hasAny(): boolean;
 
-  setFormat(key: string, value: any);
+  setFormat(key: FormatId, value: any);
 
   addTag(tagType: string, tagId: string, value: any);
 
