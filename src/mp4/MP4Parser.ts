@@ -8,7 +8,7 @@ import {Genres} from "../id3v1/ID3v1Parser";
 import util from "../common/Util";
 
 import * as _debug from "debug";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 import {BasicParser} from "../common/BasicParser";
 const debug = _debug("music-metadata:parser:MP4");
 

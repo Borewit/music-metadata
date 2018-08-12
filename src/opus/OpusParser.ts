@@ -4,7 +4,7 @@ import {IPageHeader} from "../ogg/Ogg";
 import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
 import {IOptions} from "../index";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 /**
  * Opus parser
@@ -15,7 +15,7 @@ export class OpusParser extends VorbisParser {
 
   private idHeader: Opus.IIdHeader;
 
-  constructor(metadata: IMetadataCollector, options: IOptions) {
+  constructor(metadata: INativeMetadataCollector, options: IOptions) {
     super(metadata, options);
   }
 

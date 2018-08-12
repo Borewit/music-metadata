@@ -4,7 +4,7 @@
  */
 
 import {INativeAudioMetadata} from "../index";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 export interface IPageHeader {
   /**

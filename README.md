@@ -142,11 +142,10 @@ ratingToStars(rating: number): number
 
 ### Options:
   * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+  * `fileSize`: only provide this in combination with `parseStream` function.
+  * `loadParser: (moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
   * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
   * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-  * `fileSize`: only provide this in combination with `parseStream` function.
-  * `mergeTagHeaders`: default: `false`, if set to `true`, it will merge the information from all headers found in the file (highest version has priority).
-  * `loadParser(moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
   * `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.

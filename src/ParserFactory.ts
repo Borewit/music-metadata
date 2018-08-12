@@ -7,7 +7,7 @@ import * as MimeType from "media-typer";
 import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
-import {IMetadataCollector, MetadataCollector} from "./common/MetadataCollector";
+import {INativeMetadataCollector, MetadataCollector} from "./common/MetadataCollector";
 import {IAudioMetadata} from "./index";
 
 const debug = _debug("music-metadata:parser:factory");
@@ -16,11 +16,11 @@ export interface ITokenParser {
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
-   * @param {IMetadataCollector} metadata Output
+   * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
    */
-  init(metadata: IMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions): ITokenParser;
+  init(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions): ITokenParser;
 
   /**
    * Parse audio track.

@@ -6,7 +6,7 @@ import {ID3v1Parser} from "../id3v1/ID3v1Parser";
 import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:ID3");

@@ -7,7 +7,7 @@ import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
 import {Promise} from "es6-promise";
 import * as _debug from "debug";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:ASF");

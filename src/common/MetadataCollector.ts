@@ -1,6 +1,6 @@
 import {
   FormatId,
-  IAudioMetadata,
+  IAudioMetadata, ICommonTagsResult,
   IFormat,
   INativeAudioMetadata,
   INativeTags, IOptions,
@@ -8,16 +8,19 @@ import {
 } from "../index";
 
 import * as _debug from "debug";
-import {TagPriority, TagType} from "./GenericTagTypes";
+import {GenericTagId, IGenericTag, TagType, isSingleton} from "./GenericTagTypes";
 import {CombinedTagMapper} from "./CombinedTagMapper";
+import {CommonTagMapper} from "./GenericTagMapper";
 
 const debug = _debug("music-metadata:collector");
+
+const TagPriority: TagType[] = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes MP4', 'ID3v1'];
 
 /**
  * Combines all generic-tag-mappers for each tag type
  */
 
-export interface IMetadataCollector {
+export interface INativeMetadataCollector {
 
   /**
    * Only use this for reading
@@ -41,16 +44,42 @@ export interface IMetadataCollector {
  * Provided to the parser to uodate the metadata result.
  * Responsible for triggering async updates
  */
-export class MetadataCollector implements IMetadataCollector {
+export class MetadataCollector implements INativeMetadataCollector {
 
   public readonly format: IFormat = {
     tagTypes: []
   };
+
   public readonly native: INativeTags = {};
+
+  public readonly common: ICommonTagsResult = {
+    track: {no: null, of: null},
+    disk: {no: null, of: null}
+  };
+
+  /**
+   * Keeps track of origin priority for each mapped id
+   */
+  private readonly commonOrigin: {
+    [id: string]: number;
+  } = {};
+
+  /**
+   * Maps a tag type to a priority
+   */
+  private readonly originPriority: {
+    [tagType: string]: number;
+  } = {};
 
   private tagMapper = new CombinedTagMapper();
 
   public constructor(private opts: IOptions) {
+    let priority: number = 1;
+    for (const tagType of TagPriority) {
+      this.originPriority[tagType] = priority++;
+    }
+    this.originPriority.artificial = 500; // Filled using alternative tags
+    this.originPriority.id3v1 = 600; // Consider worst due to field length limit
   }
 
   /**
@@ -75,13 +104,104 @@ export class MetadataCollector implements IMetadataCollector {
       this.native[tagType] = [];
     }
     this.native[tagType].push({id: tagId, value});
+
+    this.toCommon(tagType, tagId, value);
   }
 
   public getNativeMetadata(): INativeAudioMetadata {
-    return  {
+    return {
       format: this.format,
       native: this.native
     };
+  }
+
+  public postMap(tagType: TagType | 'artificial', tag: IGenericTag) {
+
+    // Common tag (alias) found
+
+    // check if we need to do something special with common tag
+    // if the event has been aliased then we need to clean it before
+    // it is emitted to the user. e.g. genre (20) -> Electronic
+    switch (tag.id) {
+
+      case 'artist':
+
+        if (this.commonOrigin.artist === this.originPriority[tagType]) {
+          // Assume the artist field is used as artists
+          return this.postMap('artificial', {id: 'artists', value: tag.value});
+        }
+
+        if (!this.common.artists) {
+          // Fill artists using artist source
+          this.setGenericTag('artificial', {id: 'artists', value: tag.value});
+        }
+        break;
+
+      case 'artists':
+        if (!this.common.artist || this.commonOrigin.artist === this.originPriority.artificial) {
+          if (!this.common.artists || this.common.artists.indexOf(tag.value) === -1) {
+            // Fill artist using artists source
+            const artists = (this.common.artists || []).concat([tag.value]);
+            const value = MusicMetadataParser.joinArtists(artists);
+            const artistTag: IGenericTag = {id: 'artist', value};
+            this.setGenericTag('artificial', artistTag);
+          }
+        }
+        break;
+
+      case 'genre':
+        tag.value = CommonTagMapper.parseGenre(tag.value);
+        break;
+
+      case 'picture':
+        tag.value.format = CommonTagMapper.fixPictureMimeType(tag.value.format);
+        break;
+
+      case 'totaltracks':
+        this.common.track.of = CommonTagMapper.toIntOrNull(tag.value);
+        return;
+
+      case 'totaldiscs':
+        this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value);
+        return;
+
+      case 'track':
+      case 'disk':
+        const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
+        this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value);
+        this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
+        return;
+
+      case 'year':
+      case 'originalyear':
+        tag.value = parseInt(tag.value, 10);
+        break;
+
+      case 'date':
+        // ToDo: be more strict on 'YYYY...'
+        const year = parseInt(tag.value.substr(0, 4), 10);
+        if (year && !isNaN(year)) {
+          this.common.year = year;
+        }
+        break;
+
+      case 'discogs_release_id':
+        tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
+        break;
+
+      case 'replaygain_track_peak':
+        tag.value = typeof tag.value === 'string' ? parseFloat(tag.value) : tag.value;
+        break;
+
+      case 'gapless': // iTunes gap-less flag
+        tag.value = tag.value === "1"; // boolean
+        break;
+
+      default:
+      // nothing to do
+    }
+
+    this.setGenericTag(tagType, tag);
   }
 
   /**
@@ -89,58 +209,58 @@ export class MetadataCollector implements IMetadataCollector {
    * @returns {IAudioMetadata} Native + common tags
    */
   public toCommonMetadata(): IAudioMetadata {
-
-    const metadata: IAudioMetadata = {
+    return {
       format: this.format,
       native: this.opts.native ? this.native : undefined,
-      common: {} as any
+      common: this.common
     };
+  }
 
-    for (const tagType of TagPriority) {
+  /**
+   * Convert native tag to common tags
+   */
+  private toCommon(tagType: TagType, tagId: string, value: any) {
 
-      if (this.native[tagType]) {
-        if (this.native[tagType].length === 0) {
-          // ToDo: register warning: empty tag header
-        } else {
+    const tag = {id: tagId, value};
 
-          const common = {
-            track: {no: null, of: null},
-            disk: {no: null, of: null}
-          };
+    const genericTag = this.tagMapper.mapTag(tagType, tag);
 
-          const x = this.native[tagType];
-
-          for (const tag of this.native[tagType]) {
-            this.tagMapper.setGenericTag(common, tagType as TagType, tag);
-          }
-
-          for (const tag of Object.keys(common)) {
-            if (!metadata.common[tag]) {
-              metadata.common[tag] = common[tag];
-            }
-          }
-
-          if (!this.opts.mergeTagHeaders) {
-            break;
-          }
-        }
-      }
+    if (genericTag) {
+      this.postMap(tagType, genericTag);
     }
+  }
 
-    if (metadata.common.artists && metadata.common.artists.length > 0) {
-      // common.artists explicitly by meta-data
-      metadata.common.artist = !metadata.common.artist ? MusicMetadataParser.joinArtists(metadata.common.artists) : metadata.common.artist[0];
+  /**
+   * Set generic tag
+   * @param {GenericTagId} tagId
+   * @param {TagType} tagType originating header type, used to prioritize concurrent mappings
+   * @param value
+   */
+  private setGenericTag(tagType: TagType | 'artificial', tag: IGenericTag) {
+
+    debug(`common.${tag.id} = ${tag.value}`);
+    const prio0 = this.commonOrigin[tag.id] || 1000;
+    const prio1 = this.originPriority[tagType];
+
+    if (isSingleton(tag.id)) {
+      if (prio1 <= prio0) {
+        this.common[tag.id] = tag.value;
+        this.commonOrigin[tag.id] = prio1;
+      } else {
+        return debug(`Ignore native tag (singleton): ${tagType}.${tag.id} = ${tag.value}`);
+      }
     } else {
-      if (metadata.common.artist) {
-        metadata.common.artists = metadata.common.artist as any;
-        if (metadata.common.artist.length > 1) {
-          delete metadata.common.artist;
-        } else {
-          metadata.common.artist = metadata.common.artist[0];
-        }
+      if (prio1 === prio0) {
+        this.common[tag.id].push(tag.value);
+        this.commonOrigin[tag.id] = prio1;
+      } else if (prio1 < prio0) {
+        this.common[tag.id] = [tag.value];
+        this.commonOrigin[tag.id] = prio1;
+      } else {
+        return debug(`Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value}`);
       }
     }
-    return metadata;
+    // ToDo: trigger metadata event
   }
 
 }

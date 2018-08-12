@@ -19,7 +19,7 @@ describe("Decode Monkey's Audio (.ape)", () => {
 
   function checkCommon(common) {
     t.strictEqual(common.title, '07. Shadow On The Sun', 'common.title');
-    t.strictEqual(common.artist, undefined, 'common.artist');
+    t.strictEqual(common.artist, 'Audioslave', 'common.artist');
     t.deepEqual(common.artists, ['Audioslave', 'Chris Cornell'], 'common.artists');
     // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
     t.deepEqual(common.albumartist, undefined, 'common.albumartist');

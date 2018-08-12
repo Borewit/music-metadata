@@ -1,11 +1,11 @@
 import {ITokenParser} from "../ParserFactory";
 import {IOptions} from "../index";
-import {IMetadataCollector} from "./MetadataCollector";
+import {INativeMetadataCollector} from "./MetadataCollector";
 import {ITokenizer} from "strtok3";
 
 export abstract class BasicParser implements ITokenParser {
 
-  protected metadata: IMetadataCollector;
+  protected metadata: INativeMetadataCollector;
   protected tokenizer: ITokenizer;
   protected options: IOptions;
 
@@ -13,11 +13,11 @@ export abstract class BasicParser implements ITokenParser {
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
-   * @param {IMetadataCollector} metadata Output
+   * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
    */
-  public init(metadata: IMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
+  public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
 
     this.metadata = metadata;
     this.tokenizer = tokenizer;

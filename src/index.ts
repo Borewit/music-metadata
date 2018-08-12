@@ -1,17 +1,8 @@
 'use strict';
 
-import {TagPriority, TagType} from './common/GenericTagTypes';
+import {TagType} from './common/GenericTagTypes';
 import {ITokenParser, ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
-import {IGenericTagMapper} from "./common/GenericTagMapper";
-import {ID3v24TagMapper} from "./id3v2/ID3v24TagMapper";
-import {MP4TagMapper} from "./mp4/MP4TagMapper";
-import {VorbisTagMapper} from "./vorbis/VorbisTagMapper";
-import {APEv2TagMapper} from "./apev2/APEv2TagMapper";
-import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
-import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
-import {AsfTagMapper} from "./asf/AsfTagMapper";
-import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
 import {Promise} from "es6-promise";
 
 /**
@@ -270,12 +261,6 @@ export interface IOptions {
   skipCovers?: boolean;
 
   /**
-   * default: `false`, if set to `true`, it will use all tag headers available to populate common.
-   * Newest header version having priority.
-   */
-  mergeTagHeaders?: boolean;
-
-  /**
    * default: `false`, if set to `true`, it will not search all the entire track for additional headers.
    * Only recommenced to use in combination with streams.
    */
@@ -328,9 +313,7 @@ export class MusicMetadataParser {
 /**
  * Parse audio file
  * @param filePath Media file to read meta-data from
- * @param options Parsing options:
- *   .native=true    Will return original header in result
- *   .mergeTagHeaders=false  Populate common from data of all headers available
+ * @param options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
@@ -341,9 +324,7 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
  * Parse audio Stream
  * @param stream
  * @param mimeType
- * @param opts Parsing options
- *   .native=true    Will return original header in result
- *   .mergeTagHeaders=false  Populate common from data of all headers available
+ * @param options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {

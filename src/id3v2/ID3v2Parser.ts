@@ -6,7 +6,7 @@ import {ITag, IOptions} from "../";
 import * as Token from "token-types";
 import FrameParser from "./FrameParser";
 import {ID3v2Token, IID3v2header} from "./ID3v2";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 interface IFrameFlags {
   status: {
@@ -142,13 +142,13 @@ export class ID3v2Parser {
 
   private tokenizer: ITokenizer;
   private id3Header: IID3v2header;
-  private metadata: IMetadataCollector;
+  private metadata: INativeMetadataCollector;
 
   // private tags: Array<{ id: string, value: any }> = [];
   private headerType: TagType;
   private options: IOptions;
 
-  public parse(metadata: IMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+  public parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
 
     this.tokenizer = tokenizer;
     this.metadata = metadata;

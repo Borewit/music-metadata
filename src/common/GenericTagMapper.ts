@@ -1,5 +1,5 @@
 import * as generic from "./GenericTagTypes";
-import {ICommonTagsResult, ITag} from "../index";
+import { ITag} from "../";
 import {Genres} from "../id3v1/ID3v1Parser";
 
 export interface IGenericTagMapper {
@@ -15,14 +15,11 @@ export interface IGenericTagMapper {
   tagMap: generic.INativeTagMap;
 
   /**
-   * Process and set common tags
-   * @param comTags Target metadata to
-   * write common tags to
-   * @param type    Native tagTypes e.g.: 'iTunes MP4' | 'asf' | 'ID3v1.1' | 'ID3v2.4' | 'vorbis'
+   * Map native tag to generic tag
    * @param tag     Native tag
-   * @param value   Native tag value
+   * @return Generic tac, if native tag could be mapped
    */
-  setGenericTag(comTags: ICommonTagsResult, tag: ITag);
+  mapGenericTag(tag: ITag): generic.IGenericTag
 
 }
 
@@ -82,90 +79,19 @@ export class CommonTagMapper implements IGenericTagMapper {
    * Process and set common tags
    * @param comTags Target metadata to
    * write common tags to
-   * @param comTags Generic tag results (output of this function)
    * @param tag     Native tag
    * @param value   Native tag value
+   * @return common name
    */
-  public setGenericTag(comTags: ICommonTagsResult, tag: ITag) {
+  public mapGenericTag(tag: ITag): generic.IGenericTag {
 
     tag = {id: tag.id, value: tag.value}; // clone object
 
     this.postMap(tag);
 
     // Convert native tag event to generic 'alias' tag
-    const alias = this.getCommonName(tag.id);
-
-    if (alias) {
-      // Common tag (alias) found
-
-      // check if we need to do something special with common tag
-      // if the event has been aliased then we need to clean it before
-      // it is emitted to the user. e.g. genre (20) -> Electronic
-      switch (alias) {
-        case 'genre':
-          tag.value = CommonTagMapper.parseGenre(tag.value);
-          break;
-
-        case 'picture':
-          tag.value.format = CommonTagMapper.fixPictureMimeType(tag.value.format);
-          break;
-
-        case 'totaltracks':
-          comTags.track.of = CommonTagMapper.toIntOrNull(tag.value);
-          return;
-
-        case 'totaldiscs':
-          comTags.disk.of = CommonTagMapper.toIntOrNull(tag.value);
-          return;
-
-        case 'track':
-        case 'disk':
-          const of = comTags[alias].of; // store of value, maybe maybe overwritten
-          comTags[alias] = CommonTagMapper.normalizeTrack(tag.value);
-          comTags[alias].of = of != null ? of : comTags[alias].of;
-          return;
-
-        case 'year':
-        case 'originalyear':
-          tag.value = parseInt(tag.value, 10);
-          break;
-
-        case 'date':
-          // ToDo: be more strict on 'YYYY...'
-          const year = parseInt(tag.value.substr(0, 4), 10);
-          if (year && !isNaN(year)) {
-            comTags.year = year;
-          }
-          break;
-
-        case 'discogs_release_id':
-          tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
-          break;
-
-        case 'replaygain_track_peak':
-          tag.value = typeof tag.value === 'string' ? parseFloat(tag.value) : tag.value;
-          break;
-
-        case 'gapless': // iTunes gap-less flag
-          tag.value = tag.value === "1"; // boolean
-          break;
-
-        default:
-        // nothing to do
-      }
-
-      if (alias !== 'artist' && generic.isSingleton(alias)) {
-        comTags[alias] = tag.value;
-      } else {
-        if (comTags.hasOwnProperty(alias)) {
-          comTags[alias].push(tag.value);
-        } else {
-          // if we haven't previously seen this tag then
-          // initialize it to an array, ready for values to be entered
-          comTags[alias] = [tag.value];
-        }
-      }
-    }
+    const id = this.getCommonName(tag.id);
+    return id ? {id, value: tag.value} : null;
   }
 
   /**
@@ -173,7 +99,7 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @tag  Native header tag
    * @return common tag name (alias)
    */
-  protected getCommonName(tag: string): generic.CommonTag {
+  protected getCommonName(tag: string): generic.GenericTagId {
     return this.tagMap[tag];
   }
 

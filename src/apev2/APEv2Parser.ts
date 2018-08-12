@@ -11,7 +11,7 @@ import FileType = require("file-type");
 import {IPicture} from "../index";
 
 import * as _debug from "debug";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 import {BasicParser} from "../common/BasicParser";
 const debug = _debug("music-metadata:parser:APEv2");
 
@@ -239,7 +239,7 @@ export class APEv2Parser extends BasicParser {
     return duration / ah.sampleRate;
   }
 
-  public static parseFooter(metadata: IMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+  public static parseFooter(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
     return tokenizer.readToken<IFooter>(Structure.TagFooter).then(footer => {
       if (footer.ID !== "APETAGEX") {
         throw new Error("Expected footer to start with APETAGEX ");
@@ -251,7 +251,7 @@ export class APEv2Parser extends BasicParser {
   }
 
   // ToDo: public ???
-  private static parseTags(metadata: IMetadataCollector, footer: IFooter, buffer: Buffer, includeCovers: boolean) {
+  private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, includeCovers: boolean) {
     let offset = 0;
 
     for (let i = 0; i < footer.fields; i++) {

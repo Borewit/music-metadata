@@ -5,7 +5,7 @@ import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import * as Ogg from "../ogg/Ogg";
 import * as _debug from "debug";
-import {IMetadataCollector} from "../common/MetadataCollector";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 const debug = _debug("music-metadata:parser:Ogg/Vorbis1");
 
@@ -17,7 +17,7 @@ export class VorbisParser implements Ogg.IPageConsumer {
 
   private pageSegments: Buffer[] = [];
 
-  constructor(protected metadata: IMetadataCollector, protected options: IOptions) {
+  constructor(protected metadata: INativeMetadataCollector, protected options: IOptions) {
   }
 
   /**

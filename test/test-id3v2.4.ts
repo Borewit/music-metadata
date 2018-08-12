@@ -25,7 +25,7 @@ describe("Decode MP3/ID3v2.4", () => {
       t.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2');
 
       t.strictEqual(metadata.common.title, 'Home', 'title');
-      t.strictEqual(metadata.common.artist, undefined, 'common.artist');
+      t.strictEqual(metadata.common.artist, 'Explo', 'common.artist');
       t.deepEqual(metadata.common.artists, ['Explo', 'ions', 'nodejsftws'], 'common.artists');
       t.strictEqual(metadata.common.albumartist, 'Soundtrack', 'albumartist');
       t.strictEqual(metadata.common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album');
