@@ -152,6 +152,10 @@ describe("MIME & extension mapping", () => {
       return testFileType("issue_57.wma", "ASF/audio");
     });
 
+    it("should recognize WavPack", () => {
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.wv", "WavPack");
+    });
+
   });
 
 });
