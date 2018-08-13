@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import util from "../src/common/Util";
 import {FourCcToken} from "../src/common/FourCC";
