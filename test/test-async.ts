@@ -14,50 +14,85 @@ describe("Asynchronous observer updates", () => {
 
     return mm.parseFile(flacFilePath, {native: true, observer: (event => {
         eventTags.push(event.tag);
-        if (typeof event.tag.value !== 'string') {
-          event.tag.value = null;
+        switch (typeof event.tag.value) {
+          case 'number':
+          case 'string':
+          case 'boolean':
+            break;
+          default:
+            event.tag.value = null;
         }
       })})
       .then(metadata => {
         assert.deepEqual(eventTags, [
           {
-            id: "album",
-            type: "common",
-            value: "Congratulations"
+            id: 'dataformat',
+            type: 'format',
+            value: 'flac'
           },
           {
-            id: "artists",
-            type: "common",
-            value: "MGMT"
+            id: 'lossless',
+            type: 'format',
+            value: true
           },
           {
-            id: "artist",
-            type: "common",
-            value: "MGMT"
+            id: 'numberOfChannels',
+            type: 'format',
+            value: 2
           },
           {
-            id: "comment",
-            type: "common",
-            value: "EAC-Secure Mode=should ignore equal sign"
+            id: 'bitsPerSample',
+            type: 'format',
+            value: 16
           },
           {
-            id: "genre",
-            type: "common",
-            value: "Alt. Rock"
+            id: 'sampleRate',
+            type: 'format',
+            value: 44100
           },
           {
-            id: "title",
-            type: "common",
-            value: "Brian Eno"
+            id: 'duration',
+            type: 'format',
+            value: 271.7733333333333
           },
           {
-            id: "date",
-            type: "common",
-            value: "2010"
+            id: 'album',
+            type: 'common',
+            value: 'Congratulations'
           },
           {
-            id: "picture",
-            type: "common",
+            id: 'artists',
+            type: 'common',
+            value: 'MGMT'
+          },
+          {
+            id: 'artist',
+            type: 'common',
+            value: 'MGMT'
+          },
+          {
+            id: 'comment',
+            type: 'common',
+            value: 'EAC-Secure Mode=should ignore equal sign'
+          },
+          {
+            id: 'genre',
+            type: 'common',
+            value: 'Alt. Rock'
+          },
+          {
+            id: 'title',
+            type: 'common',
+            value: 'Brian Eno'
+          },
+          {
+            id: 'date',
+            type: 'common',
+            value: '2010'
+          },
+          {
+            id: 'picture',
+            type: 'common',
             value: null
           }
         ]);
