@@ -92,9 +92,13 @@ export class MetadataCollector implements INativeMetadataCollector {
     return false;
   }
 
-  public setFormat(key: string, value: any) {
+  public setFormat(key: FormatId, value: any) {
     debug(`format: ${key} = ${value}`);
     this.format[key] = value;
+
+    if (this.opts.observer) {
+      this.opts.observer({metadata: this, tag: {type: 'format', id: key, value}});
+    }
   }
 
   public addTag(tagType: TagType, tagId: string, value: any) {
