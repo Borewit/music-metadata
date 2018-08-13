@@ -260,6 +260,9 @@ export class MetadataCollector implements INativeMetadataCollector {
         return debug(`Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value}`);
       }
     }
+    if (this.opts.observer) {
+      this.opts.observer({metadata: this, tag: {type: 'common', id: tag.id, value: tag.value}});
+    }
     // ToDo: trigger metadata event
   }
 

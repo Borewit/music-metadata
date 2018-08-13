@@ -1,6 +1,6 @@
 'use strict';
 
-import {TagType} from './common/GenericTagTypes';
+import {GenericTagId, TagType} from './common/GenericTagTypes';
 import {ITokenParser, ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
 import {Promise} from "es6-promise";
@@ -272,7 +272,46 @@ export interface IOptions {
    * @return {Promise<ITokenParser>} parser
    */
   loadParser?: (moduleName: string) => Promise<ITokenParser>;
+
+  /**
+   * Set observer for async callbacks to common or format.
+   */
+  observer?: Observer;
 }
+
+/**
+ * Event definition send after each change to common/format metadata change to observer.
+ */
+export interface IMetadataEvent {
+
+  /**
+   * Tag which has been updated.
+   */
+  tag: {
+
+    /**
+     * Either 'common' if it a generic tag event, or 'format' for format related updates
+     */
+    type: 'common' | 'format'
+
+    /**
+     * Tag id
+     */
+    id: GenericTagId | FormatId
+
+    /**
+     * Tag value
+     */
+    value: any
+  };
+
+  /**
+   * Metadata model including the attached tag
+   */
+  metadata: IAudioMetadata
+}
+
+export type Observer = (update: IMetadataEvent) => void;
 
 export class MusicMetadataParser {
 
