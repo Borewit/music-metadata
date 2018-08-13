@@ -57,7 +57,7 @@
   "dependencies": {
     "debug": "^3.1.0",
     "es6-promise": "^4.2.4",
-    "file-type": "^8.1.0",
+    "file-type": "9",
     "media-typer": "^0.3.0",
     "strtok3": "^1.5.3",
     "then-read-stream": "^1.2.1",

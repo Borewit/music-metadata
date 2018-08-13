@@ -148,6 +148,10 @@ describe("MIME & extension mapping", () => {
       return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
     });
 
+    it("should recognize WMA", () => {
+      return testFileType("issue_57.wma", "ASF/audio");
+    });
+
   });
 
 });
