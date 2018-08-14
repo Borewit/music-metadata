@@ -261,7 +261,6 @@ export class MP4Parser implements ITokenParser {
       switch (dataAtom.type.type) { // ToDo?: use enum
 
         case 0: // reserved: Reserved for use where no type needs to be indicated
-        case 18: // Found in m4b in combination with a '©gen' tag
           switch (tagKey) {
             case "trkn":
             case "disk":
@@ -272,7 +271,6 @@ export class MP4Parser implements ITokenParser {
               break;
 
             case "gnre":
-            case "©gen":
               const genreInt = Token.UINT8.get(dataAtom.value, 1);
               const genreStr = Genres[genreInt - 1];
               // console.log("  %s[data] = %s", tagKey, genreStr);
@@ -286,6 +284,7 @@ export class MP4Parser implements ITokenParser {
           break;
 
         case 1: // UTF-8: Without any count or NULL terminator
+        case 18: // Unknown: Found in m4b in combination with a '©gen' tag
           this.tags.push({id: tagKey, value: dataAtom.value.toString("utf-8")});
           break;
 
