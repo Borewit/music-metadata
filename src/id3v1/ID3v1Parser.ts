@@ -4,6 +4,9 @@ import {INativeTags, IOptions, ITag} from "../index";
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 
+import * as _debug from "debug";
+const debug = _debug("music-metadata:parser:ID3v1");
+
 /**
  * ID3v1 Genre mappings
  * Ref: https://de.wikipedia.org/wiki/Liste_der_ID3v1-Genres
@@ -105,10 +108,6 @@ class Id3v1StringType extends Token.StringType {
 
 export class ID3v1Parser {
 
-  public static getInstance(): ID3v1Parser {
-    return new ID3v1Parser();
-  }
-
   private static getGenre(genreIndex: number): string {
     if (genreIndex < Genres.length) {
       return Genres[genreIndex];
@@ -118,8 +117,14 @@ export class ID3v1Parser {
 
   public parse(tokenizer: ITokenizer): Promise<INativeTags> {
 
+    if (!tokenizer.fileSize) {
+      debug('Skip checking for ID3v1 because the file-size is unknown'
+      );
+    }
+
     return tokenizer.readToken<Iid3v1Header>(Iid3v1Token, tokenizer.fileSize - Iid3v1Token.len).then(header => {
       if (header) {
+        debug("ID3v1 header found at: pos=%s", tokenizer.fileSize - Iid3v1Token.len);
         const id3: ITag[] = [];
         for (const id of ["title", "artist", "album", "comment", "track", "year"]) {
           if (header[id] && header[id] !== "")
@@ -131,8 +136,10 @@ export class ID3v1Parser {
         return {
           "ID3v1.1": id3
         };
-      } else
+      } else {
+        debug("ID3v1 header not found at: pos=%s", tokenizer.fileSize - Iid3v1Token.len);
         return null;
+      }
     });
   }
 }

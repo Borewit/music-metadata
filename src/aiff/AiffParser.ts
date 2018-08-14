@@ -6,6 +6,7 @@ import * as Chunk from "./Chunk";
 import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {FourCcToken} from "../common/FourCC";
+import {Promise} from "es6-promise";
 
 /**
  * AIFF - Audio Interchange File Format

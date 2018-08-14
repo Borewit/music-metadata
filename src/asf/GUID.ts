@@ -91,6 +91,22 @@ export default class GUID {
   }
 
   /**
+   * Decode stream type
+   * @param {string} mediaType
+   * @returns {string}
+   */
+  public static decodeMediaType(mediaType: GUID): string {
+    switch (mediaType.str) {
+      case GUID.AudioMedia.str: return 'audio';
+      case GUID.VideoMedia.str: return 'video';
+      case GUID.CommandMedia.str: return 'command';
+      case GUID.Degradable_JPEG_Media.str: return 'degradable-jpeg';
+      case GUID.FileTransferMedia.str: return 'file-transfer';
+      case GUID.BinaryMedia.str: return 'binary';
+    }
+  }
+
+  /**
    * Encode GUID
    * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
    * @returns {Buffer} Encoded Bnary GUID

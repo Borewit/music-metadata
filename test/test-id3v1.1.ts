@@ -38,7 +38,7 @@ describe("Parsing MPEG / ID3v1", () => {
      */
     const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
 
-    it("should decode from a file", () => {
+    it("from a file", () => {
 
       return mm.parseFile(filePath).then(metadata => {
         checkFormat(metadata.format);
@@ -46,13 +46,31 @@ describe("Parsing MPEG / ID3v1", () => {
       });
     });
 
-    it("should decode from a stream", () => {
+    it("from a stream", () => {
 
       const stream = fs.createReadStream(filePath);
 
-      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then(metadata => {
+      return mm.parseStream(stream, 'audio/mpeg').then(metadata => {
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
+      }).then(() => stream.close());
+
+    });
+
+    it("should do without native", () => {
+
+      return mm.parseFile(filePath).then(metadata => {
         for (const tagType in metadata.native)
           throw new Error("Do not expect any native tag type, got: " + tagType);
+      });
+    });
+
+    it("it should skip id3v1 header if options.skipPostHeaders is set", () => {
+
+      const stream = fs.createReadStream(path.join(__dirname, 'samples', "07 - I'm Cool.mp3"));
+
+      return mm.parseStream(stream, 'audio/mpeg', {native: true, skipPostHeaders: true}).then(metadata => {
+        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
       }).then(() => stream.close());
 
     });

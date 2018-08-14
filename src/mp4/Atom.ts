@@ -1,6 +1,9 @@
 import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
 
+import * as _debug from "debug";
+const debug = _debug("music-metadata:parser:MP4:atom");
+
 export interface IAtomHeader {
   length: number,
   name: string
@@ -46,18 +49,6 @@ export interface IAtomMxhd {
    * Duration: the duration of this media in units of its time scale.
    */
   duration: number,
-}
-
-export interface IAtomMdhd extends IAtomMxhd {
-  /**
-   * A 16-bit integer that specifies the language code for this media.
-   * See Language Code Values for valid language codes.
-   * Also see Extended Language Tag Atom for the preferred code to use here if an extended language tag is also included in the media atom.
-   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap4/qtff4.html#//apple_ref/doc/uid/TP40000939-CH206-34353
-   */
-  language: number,
-
-  quality: number
 }
 
 /**
@@ -148,7 +139,8 @@ export interface IMovieHeaderAtom {
 }
 
 /**
- * Interface for the parsed Media Atom (mdhd)
+ * Interface for the parsed Media Atom
+ * https://wiki.multimedia.cx/index.php/QuickTime_container
  */
 export class Atom {
 
@@ -178,55 +170,6 @@ export class Atom {
   };
 
   /**
-   * Token: Media Header Atom
-   */
-  public static mdhd: Token.IGetToken<IAtomMdhd> = {
-    len: 24,
-
-    get: (buf: Buffer, off: number): IAtomMdhd => {
-      return {
-        version: Token.UINT8.get(buf, off + 0),
-        flags: Token.UINT24_BE.get(buf, off + 1),
-        creationTime: Token.UINT32_BE.get(buf, off + 4),
-        modificationTime: Token.UINT32_BE.get(buf, off + 8),
-        timeScale: Token.UINT32_BE.get(buf, off + 12),
-        duration: Token.UINT32_BE.get(buf, off + 16),
-        language: Token.UINT16_BE.get(buf, off + 20),
-        quality: Token.UINT16_BE.get(buf, off + 22)
-      };
-    }
-  };
-
-  /**
-   * Token: Movie Header Atom
-   */
-  public static mvhd: Token.IGetToken<IAtomMvhd> = {
-    len: 100,
-
-    get: (buf: Buffer, off: number): IAtomMvhd => {
-      return {
-        version: Token.UINT8.get(buf, off + 0),
-        flags: Token.UINT24_BE.get(buf, off + 1),
-        creationTime: Token.UINT32_BE.get(buf, off + 4),
-        modificationTime: Token.UINT32_BE.get(buf, off + 8),
-        timeScale: Token.UINT32_BE.get(buf, off + 12),
-        duration: Token.UINT32_BE.get(buf, off + 16),
-        preferredRate: Token.UINT32_BE.get(buf, off + 20),
-        preferredVolume: Token.UINT16_BE.get(buf, off + 24),
-        // ignore reserver: 10 bytes
-        // ignore matrix structure: 36 bytes
-        previewTime: Token.UINT32_BE.get(buf, off + 72),
-        previewDuration: Token.UINT32_BE.get(buf, off + 76),
-        posterTime: Token.UINT32_BE.get(buf, off + 80),
-        selectionTime: Token.UINT32_BE.get(buf, off + 84),
-        selectionDuration: Token.UINT32_BE.get(buf, off + 88),
-        currentTime: Token.UINT32_BE.get(buf, off + 92),
-        nextTrackID: Token.UINT32_BE.get(buf, off + 96)
-      };
-    }
-  };
-
-  /**
    * Token: Movie Header Atom
    */
   public static mhdr: Token.IGetToken<IMovieHeaderAtom> = {
@@ -240,6 +183,100 @@ export class Atom {
       };
     }
   };
+
+}
+
+/**
+ * Base class for 'fixed' length atoms.
+ * In some cases these atoms are longer then the sum of the described fields.
+ * Issue: https://github.com/Borewit/music-metadata/issues/120
+ */
+abstract class FixedLengthAtom {
+  /**
+   *
+   * @param {number} len Length as specified in the size field
+   * @param {number} expLen Total length of sum of specified fields in the standard
+   */
+  protected constructor(public len: number, expLen: number, atomId: string) {
+    if (len < expLen) {
+      throw new Error(`Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`);
+    } else if (len > expLen) {
+      debug(`Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`);
+    }
+  }
+}
+
+/**
+ * Interface for the parsed Movie Header Atom (mdhd)
+ */
+export interface IAtomMdhd extends IAtomMxhd {
+  /**
+   * A 16-bit integer that specifies the language code for this media.
+   * See Language Code Values for valid language codes.
+   * Also see Extended Language Tag Atom for the preferred code to use here if an extended language tag is also included in the media atom.
+   * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap4/qtff4.html#//apple_ref/doc/uid/TP40000939-CH206-34353
+   */
+  language: number,
+
+  quality: number
+}
+
+/**
+ * Token: Media Header Atom
+ * Ref:
+ *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
+ *   https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
+ */
+export class MdhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMdhd> {
+
+  public constructor(public len: number) {
+    super(len, 24, 'mdhd');
+  }
+
+  public get(buf: Buffer, off: number): IAtomMdhd {
+    return {
+      version: Token.UINT8.get(buf, off + 0),
+      flags: Token.UINT24_BE.get(buf, off + 1),
+      creationTime: Token.UINT32_BE.get(buf, off + 4),
+      modificationTime: Token.UINT32_BE.get(buf, off + 8),
+      timeScale: Token.UINT32_BE.get(buf, off + 12),
+      duration: Token.UINT32_BE.get(buf, off + 16),
+      language: Token.UINT16_BE.get(buf, off + 20),
+      quality: Token.UINT16_BE.get(buf, off + 22)
+    };
+  }
+}
+
+/**
+ * Token: Movie Header Atom
+ */
+export class MvhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMvhd> {
+
+  public constructor(public len: number) {
+    super(len, 100, 'mvhd');
+  }
+
+  public get(buf: Buffer, off: number): IAtomMvhd {
+    return {
+      version: Token.UINT8.get(buf, off + 0),
+      flags: Token.UINT24_BE.get(buf, off + 1),
+      creationTime: Token.UINT32_BE.get(buf, off + 4),
+      modificationTime: Token.UINT32_BE.get(buf, off + 8),
+      timeScale: Token.UINT32_BE.get(buf, off + 12),
+      duration: Token.UINT32_BE.get(buf, off + 16),
+      preferredRate: Token.UINT32_BE.get(buf, off + 20),
+      preferredVolume: Token.UINT16_BE.get(buf, off + 24),
+      // ignore reserver: 10 bytes
+      // ignore matrix structure: 36 bytes
+      previewTime: Token.UINT32_BE.get(buf, off + 72),
+      previewDuration: Token.UINT32_BE.get(buf, off + 76),
+      posterTime: Token.UINT32_BE.get(buf, off + 80),
+      selectionTime: Token.UINT32_BE.get(buf, off + 84),
+      selectionDuration: Token.UINT32_BE.get(buf, off + 88),
+      currentTime: Token.UINT32_BE.get(buf, off + 92),
+      nextTrackID: Token.UINT32_BE.get(buf, off + 96)
+    };
+  }
 
 }
 

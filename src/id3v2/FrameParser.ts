@@ -181,9 +181,56 @@ export default class FrameParser {
         output = {
           email,
           rating: b.readUInt8(offset),
-          counter:  dataLen >= 5 ? b.readUInt32BE(offset + 1) : undefined
+          counter: dataLen >= 5 ? b.readUInt32BE(offset + 1) : undefined
         };
         break;
+
+      case 'GEOB': {  // General encapsulated object
+          fzero = common.findZero(b, offset + 1, length, encoding);
+          const mimeType = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          offset = fzero + 1;
+          fzero = common.findZero(b, offset, length - offset, encoding);
+          const filename = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          offset = fzero + 1;
+          fzero = common.findZero(b, offset, length - offset, encoding);
+          const description = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          output = {
+            type: mimeType,
+            filename,
+            description,
+            data: b.slice(offset + 1, length)
+          };
+          break;
+        }
+
+      // W-Frames:
+      case 'WCOM':
+      case 'WCOP':
+      case 'WOAF':
+      case 'WOAR':
+      case 'WOAS':
+      case 'WORS':
+      case 'WPAY':
+      case 'WPUB':
+        // Decode URL
+        output = common.decodeString(b.slice(offset, fzero), encoding);
+        break;
+
+      case 'WXXX': {
+          // Decode URL
+          fzero = common.findZero(b, offset + 1, length, encoding);
+          const description = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          offset = fzero + 1;
+          fzero = common.findZero(b, offset, length - offset, encoding);
+          output = {description, url: common.decodeString(b.slice(offset, length - offset), encoding)};
+          break;
+        }
+
+      case 'MCDI': {
+        // Music CD identifier
+        output = b.slice(0, length);
+        break;
+      }
 
       default:
         debug('Warning: unsupported id3v2-tag-type: ' + type);

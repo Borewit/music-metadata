@@ -2,12 +2,13 @@ import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
+import * as fs from "fs-extra";
 
 const t = assert;
 
-it("should decode monkeysaudio (.ape)", () => {
+describe("Decode Monkey's Audio (.ape)", () => {
 
-  const filePath = path.join(__dirname, 'samples', 'monkeysaudio.ape');
+  const samplePath = path.join(__dirname, 'samples');
 
   function checkFormat(format) {
     t.strictEqual(format.headerType, 'APEv2', 'format.tagTypes');
@@ -41,14 +42,32 @@ it("should decode monkeysaudio (.ape)", () => {
     t.strictEqual(ape['Cover Art (Back)'][0].data.length, 48658, 'raw cover art (front) length');
   }
 
-  return mm.parseFile(filePath, {native: true}).then(result => {
+  it('from a file', () => {
 
-    checkFormat(result.format);
+    return mm.parseFile(path.join(samplePath, 'monkeysaudio.ape'), {native: true}).then(md => {
 
-    checkCommon(result.common);
+      checkFormat(md.format);
 
-    t.ok(result.native && result.native.APEv2, 'should include native APEv2 tags');
-    checkNative(mm.orderTags(result.native.APEv2));
+      checkCommon(md.common);
+
+      t.ok(md.native && md.native.APEv2, 'should include native APEv2 tags');
+      checkNative(mm.orderTags(md.native.APEv2));
+    });
+
+  });
+
+  it('from a stream', () => {
+
+    const stream = fs.createReadStream(path.join(samplePath, 'monkeysaudio.ape'));
+    return mm.parseStream(stream, 'audio/ape', {native: true})
+      .then(md => {
+        checkFormat(md.format);
+
+        checkCommon(md.common);
+
+        t.ok(md.native && md.native.APEv2, 'should include native APEv2 tags');
+        checkNative(mm.orderTags(md.native.APEv2));
+      });
   });
 
 });

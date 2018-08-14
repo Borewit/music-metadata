@@ -3,11 +3,15 @@ import {assert} from "chai";
 import * as mime from "mime";
 import * as mm from "../src";
 import {SourceStream} from "./util";
-import {Promise} from 'bluebird';
+import {Promise} from 'es6-promise';
+import * as fs from "fs-extra";
+import * as path from "path";
 
 const t = assert;
 
 describe("MIME & extension mapping", () => {
+
+  const samplePath = path.join(__dirname, 'samples');
 
   const buf = Buffer.alloc(30).fill(0);
 
@@ -69,16 +73,89 @@ describe("MIME & extension mapping", () => {
 
   });
 
-  it("should throw error on unrecognized MIME-type", () => {
+  it("should be able to handle MIME-type parameter(s)", () => {
 
-    const streamReader = new SourceStream(buf);
-    return mm.parseStream(streamReader, "audio/not-existing")
-      .then(() => {
-        assert.fail('Should throw an Error');
-      })
-      .catch(err => {
-        assert.equal(err.message, 'MIME-type or extension not supported: audio/not-existing');
+    const stream = fs.createReadStream(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
+    return mm.parseStream(stream, '').then(metadata => {
+      assert.equal(metadata.format.dataformat, "WAVE/PCM");
+    });
+
+  });
+
+  describe("Resolve MIME based on content", () => {
+
+    it("should throw error on unrecognized MIME-type", () => {
+
+      const streamReader = new SourceStream(buf);
+      return mm.parseStream(streamReader, "audio/not-existing")
+        .then(() => {
+          assert.fail('Should throw an Error');
+        })
+        .catch(err => {
+          assert.equal(err.message, 'Failed to guess MIME-type');
+        });
+    });
+
+    it("should throw error on recognized MIME-type which is not supported", () => {
+
+      const stream = fs.createReadStream(path.join(samplePath, 'flac.flac.jpg'));
+      return mm.parseStream(stream, "audio/not-existing")
+        .then(() => {
+          assert.fail('Should throw an Error');
+        })
+        .catch(err => {
+          assert.equal(err.message, 'Guessed MIME-type not supported: image/jpeg');
+        });
+    });
+
+    function testFileType(sample: string, dataformat: string) {
+      const stream = fs.createReadStream(path.join(samplePath, sample));
+      return mm.parseStream(stream).then(metadata => {
+        assert.equal(metadata.format.dataformat, dataformat);
       });
+    }
+
+    it("should recognize MP2", () => {
+      return testFileType('1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'mp2');
+    });
+
+    it("should recognize MP3", () => {
+      return testFileType('04-Strawberry.mp3', 'mp3');
+    });
+
+    it("should recognize WMA", () => {
+      // file-type returns 'video/x-ms-wmv'
+      return testFileType('asf.wma', 'ASF/audio');
+    });
+
+    it("should recognize MPEG-4 audio", () => {
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4 audio');
+    });
+
+    it("should recognize FLAC", () => {
+      return testFileType('flac.flac', 'flac');
+    });
+
+    it("should recognize OGG", () => {
+      return testFileType('issue_62.ogg', 'Ogg/Vorbis I');
+    });
+
+    it("should recognize WAV", () => {
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE/PCM');
+    });
+
+    it("should recognize APE", () => {
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
+    });
+
+    it("should recognize WMA", () => {
+      return testFileType("issue_57.wma", "ASF/audio");
+    });
+
+    it("should recognize WavPack", () => {
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.wv", "WavPack");
+    });
+
   });
 
 });

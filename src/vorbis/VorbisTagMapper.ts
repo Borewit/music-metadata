@@ -111,7 +111,7 @@ export class VorbisTagMapper extends CommonTagMapper {
 
     return {
       source: email ? email.toLowerCase() : email,
-      rating: parseFloat(rating) * 5
+      rating: parseFloat(rating) * CommonTagMapper.maxRatingScore
     };
   }
 

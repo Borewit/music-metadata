@@ -3,7 +3,7 @@ import common from "../common/Util";
 import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
 import {INativeAudioMetadata, IOptions} from "../index";
-import {Promise} from "bluebird";
+import {Promise} from "es6-promise";
 import {VorbisParser} from "../vorbis/VorbisParser";
 import {FourCcToken} from "../common/FourCC";
 import * as Ogg from "./Ogg";

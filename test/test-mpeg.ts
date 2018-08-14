@@ -52,7 +52,7 @@ describe("MPEG parsing", () => {
 
     it("should sync efficient from a stream", function() {
 
-      this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const streamReader = new SourceStream(buf);
 
@@ -61,7 +61,7 @@ describe("MPEG parsing", () => {
 
     it("should sync efficient, from a file", function() {
 
-      this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const tmpFilePath = path.join(__dirname, "samples", "zeroes.mp3");
 
@@ -285,8 +285,8 @@ describe("MPEG parsing", () => {
     it("check mapping function", () => {
 
       assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 0}), {source: 'user1@bla.com', rating: undefined}, 'unknown rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1}), {source: 'user1@bla.com', rating: 5 / 255}, 'lowest rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255}), {source: 'user1@bla.com', rating: 5}, 'highest rating');
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1}), {source: 'user1@bla.com', rating: 0 / 255}, 'lowest rating');
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255}), {source: 'user1@bla.com', rating: 1}, 'highest rating');
     });
 
     it("from 'Yeahs-It's Blitz!.mp3'", () => {
@@ -294,7 +294,7 @@ describe("MPEG parsing", () => {
       return mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {duration: false, native: true}).then(metadata => {
         const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
         assert.deepEqual(idv23.POPM[0], {email: "no@email", rating: 128, counter: 0}, "ID3v2.3 POPM");
-        assert.approximately(metadata.common.rating[0].rating, 2.5, 0.05, "Common rating");
+        assert.approximately(metadata.common.rating[0].rating, 0.5, 1 / (2 * 254), "Common rating");
       });
     });
 
@@ -305,7 +305,7 @@ describe("MPEG parsing", () => {
         // Native rating value
         assert.deepEqual(idv23.POPM[0], {email: "MusicBee", rating: 255, counter: 0}, "ID3v2.3 POPM");
         // Common rating value
-        assert.approximately(metadata.common.rating[0].rating, 5, 0.05, "Common rating");
+        assert.approximately(metadata.common.rating[0].rating, 1, 0, "Common rating");
       });
     });
 
@@ -321,6 +321,33 @@ describe("MPEG parsing", () => {
           rating: 255
         }, "ID3v2.3 POPM");
       });
+    });
+
+  });
+
+  describe("Calculate / read duration", () => {
+
+    it("VBR read from Xing header", () => {
+
+      const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
+
+      return mm.parseFile(filePath, {duration: false, native: true}).then(metadata => {
+        assert.strictEqual(metadata.format.duration, 0.4963265306122449);
+      });
+
+    });
+
+    it("VBR: based on frame count if duration flag is set", () => {
+
+      const filePath = path.join(issueDir, "Dethklok-mergeTagHeaders.mp3");
+
+      const stream = fs.createReadStream(filePath);
+      stream.path = undefined; // disable file size based calculation
+
+      return mm.parseStream(stream, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+        assert.approximately(metadata.format.duration, 34.69, 1 / 100);
+      });
+
     });
 
   });

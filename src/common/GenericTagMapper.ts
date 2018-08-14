@@ -28,7 +28,7 @@ export interface IGenericTagMapper {
 
 export class CommonTagMapper implements IGenericTagMapper {
 
-  public static rating_steps = 5;
+  public static maxRatingScore = 1;
 
   public static parseGenre(origVal: string) {
     // match everything inside parentheses

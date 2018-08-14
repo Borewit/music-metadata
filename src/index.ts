@@ -1,7 +1,7 @@
 'use strict';
 
 import {TagPriority, TagType} from './common/GenericTagTypes';
-import {ParserFactory} from "./ParserFactory";
+import {ITokenParser, ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
 import {IGenericTagMapper} from "./common/GenericTagMapper";
 import {ID3v24TagMapper} from "./id3v2/ID3v24TagMapper";
@@ -12,6 +12,7 @@ import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
 import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
 import {AsfTagMapper} from "./asf/AsfTagMapper";
 import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
+import {Promise} from "es6-promise";
 
 /**
  * Attached picture, typically used for cover art
@@ -40,7 +41,7 @@ export interface IRating {
    */
   source?: string,
   /**
-   * Rating [0..5]
+   * Rating [0..1]
    */
   rating: number
 }
@@ -97,7 +98,7 @@ export interface ICommonTagsResult {
   totaltracks?: string,
   totaldiscs?: string,
   compilation?: string,
-  rating?: IRating,
+  rating?: IRating[],
   bpm?: string,
   mood?: string,
   media?: string,
@@ -273,9 +274,23 @@ export interface IOptions {
   skipCovers?: boolean;
 
   /**
-   * default: `false`, if set to `true`, it will use all tag headers available to populate common. Newest header version having priority.
+   * default: `false`, if set to `true`, it will use all tag headers available to populate common.
+   * Newest header version having priority.
    */
   mergeTagHeaders?: boolean;
+
+  /**
+   * default: `false`, if set to `true`, it will not search all the entire track for additional headers.
+   * Only recommenced to use in combination with streams.
+   */
+  skipPostHeaders?: boolean;
+
+  /**
+   * Allow custom loading of modules
+   * @param {string} moduleName module name
+   * @return {Promise<ITokenParser>} parser
+   */
+  loadParser?: (moduleName: string) => Promise<ITokenParser>;
 }
 
 /**
@@ -477,7 +492,7 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
  *   .mergeTagHeaders=false  Populate common from data of all headers available
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: Stream.Readable, mimeType: string, opts?: IOptions): Promise<IAudioMetadata> {
+export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {
   return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
 }
 
@@ -492,4 +507,13 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
     (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
   }
   return tags;
+}
+
+/**
+ * Convert rating to 1-5 star rating
+ * @param {number} rating Normalized rating [0..1] (common.rating[n].rating)
+ * @returns {number} Number of stars: 1, 2, 3, 4 or 5 stars
+ */
+export function ratingToStars(rating: number): number {
+  return rating === undefined ? 0 : 1 + Math.round(rating * 4);
 }

@@ -1,9 +1,10 @@
 import {assert} from "chai";
 
 import {CommonTagMapper} from "../src/common/GenericTagMapper";
-import {commonTags, isSingleton} from "../lib/common/GenericTagTypes";
+import {commonTags, isSingleton} from "../src/common/GenericTagTypes";
 import * as path from "path";
 import * as mm from "../src";
+import * as MimeType from "media-typer";
 
 const t = assert;
 
@@ -73,6 +74,54 @@ describe("GenericTagMap", () => {
         t.strictEqual(metadata.common.artist, "Beth Hart & Joe Bonamassa", "common.artist derived from common.artists");
       });
     });
+  });
+});
+
+describe("Convert rating", () => {
+
+  it("should convert rating to stars", () => {
+
+    assert.equal(mm.ratingToStars(undefined), 0);
+    assert.equal(mm.ratingToStars(0), 1);
+    assert.equal(mm.ratingToStars(0.1), 1);
+    assert.equal(mm.ratingToStars(0.2), 2);
+    assert.equal(mm.ratingToStars(0.5), 3);
+    assert.equal(mm.ratingToStars(0.75), 4);
+    assert.equal(mm.ratingToStars(1), 5);
 
   });
+
+});
+
+describe("MimeType", () => {
+
+  it('should be able to decode basic MIME-types', () => {
+    const mime = MimeType.parse('audio/mpeg');
+    assert.equal(mime.type, 'audio');
+    assert.equal(mime.subtype, 'mpeg');
+  });
+
+  it('should be able to decode MIME-type parameters', () => {
+    {
+      const mime = MimeType.parse('message/external-body; access-type=URL');
+      assert.equal(mime.type, 'message');
+      assert.equal(mime.subtype, 'external-body');
+      assert.deepEqual(mime.parameters, {'access-type': 'URL'});
+    }
+
+    {
+      const mime = MimeType.parse('Text/HTML;Charset="utf-8"');
+      assert.equal(mime.type, 'text');
+      assert.equal(mime.subtype, 'html');
+      assert.deepEqual(mime.parameters, {charset: 'utf-8'});
+    }
+  });
+
+  it('should be able to decode MIME-type suffix', () => {
+    const mime = MimeType.parse('application/xhtml+xml');
+    assert.equal(mime.type, 'application');
+    assert.equal(mime.subtype, 'xhtml');
+    assert.equal(mime.suffix, 'xml');
+  });
+
 });

@@ -273,7 +273,7 @@ export interface IStreamPropertiesObject {
   /**
    * Stream Type
    */
-  streamType: GUID,
+  streamType: string,
 
   /**
    * Error Correction Type
@@ -297,8 +297,8 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
   public get(buf: Buffer, off: number): IStreamPropertiesObject {
 
     return {
-      streamType: GUID.fromBin(buf, off),
-      errorCorrectionType: GUID.fromBin(buf, off + 16)
+      streamType: GUID.decodeMediaType(GUID.fromBin(buf , off)),
+      errorCorrectionType: GUID.fromBin(buf, off + 8)
       // ToDo
     };
   }

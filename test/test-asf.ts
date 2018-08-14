@@ -61,6 +61,7 @@ describe("ASF", () => {
     const asfFilePath = path.join(__dirname, 'samples', 'asf.wma');
 
     function checkFormat(format) {
+      t.strictEqual(format.dataformat, 'ASF/audio', 'format.dataformat');
       t.strictEqual(format.duration, 244.885, 'format.duration');
       t.strictEqual(format.bitrate, 192639, 'format.bitrate');
     }

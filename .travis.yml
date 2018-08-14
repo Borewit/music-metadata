@@ -6,7 +6,7 @@ node_js:
  - "9"
  - "10"
 install:
-- npm install
+- yarn install
 script:
 - npm run lint
 - npm run compile
@@ -15,5 +15,8 @@ script:
 jobs:
   include:
     - stage: after_success
-      script: npm run coveralls
+      script:
+      - yarn install
+      - npm run compile
+      - npm run coveralls
       node_js: 9

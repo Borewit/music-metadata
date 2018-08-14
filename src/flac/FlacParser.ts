@@ -2,12 +2,16 @@
 
 import common from '../common/Util';
 import {INativeAudioMetadata, IOptions, ITag} from "../index";
-import {ITokenizer, IgnoreType} from "strtok3";
+import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
-import {AbstractID3v2Parser} from "../id3v2/AbstractID3Parser";
+import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "bluebird";
+import {Promise} from "es6-promise";
+
+import * as _debug from "debug";
+
+const debug = _debug("music-metadata:parser:FLAC");
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -23,7 +27,7 @@ enum BlockType {
   PICTURE = 6
 }
 
-export class FlacParser extends AbstractID3v2Parser {
+export class FlacParser extends AbstractID3Parser {
 
   public static getInstance(): FlacParser {
     return new FlacParser();
@@ -46,7 +50,12 @@ export class FlacParser extends AbstractID3v2Parser {
       if (fourCC.toString() !== 'fLaC') {
         throw new Error("Invalid FLAC preamble");
       }
-      return this.parseBlockHeader();
+      return this.parseBlockHeader().then(() => {
+        if (this.tokenizer.fileSize && this.metadata.format.duration) {
+          const dataSize = this.tokenizer.fileSize - this.tokenizer.position;
+          this.metadata.format.bitrate = 8 * dataSize / this.metadata.format.duration;
+        }
+      });
     });
   }
 
@@ -66,6 +75,7 @@ export class FlacParser extends AbstractID3v2Parser {
   }
 
   private parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
+    debug(`blockHeader type=${blockHeader.type}, length=${blockHeader.length}`);
     switch (blockHeader.type) {
       case BlockType.STREAMINFO:
         return this.parseBlockStreamInfo(blockHeader.length);
@@ -86,7 +96,7 @@ export class FlacParser extends AbstractID3v2Parser {
         this.warnings.push("Unknown block type: " + blockHeader.type);
     }
     // Ignore data block
-    return this.tokenizer.readToken<void>(new IgnoreType(blockHeader.length));
+    return this.tokenizer.readToken<void>(new Token.IgnoreType(blockHeader.length));
   }
 
   /**
@@ -106,7 +116,6 @@ export class FlacParser extends AbstractID3v2Parser {
         sampleRate: streamInfo.sampleRate,
         duration: streamInfo.totalSamples / streamInfo.sampleRate
       };
-      // callback('format', 'bitrate', fileSize / duration) // ToDo: exclude meta-data
     });
   }
 

@@ -41,7 +41,12 @@ npm install music-metadata
   * encoding profile (e.g. CBR, V0, V2)
   
 
-### Donation
+### Online demo's
+
+Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
+* [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
+
+### Donate
 [PayPal.me](https://paypal.me/borewit)
 
 ## API
@@ -103,9 +108,12 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
 
 #### parseStream function
 
-Parses the provided audio stream for metadata. You should specify the corresponding [MIME-type] (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+Parses the provided audio stream for metadata.
+It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+An extension (e.g.: `.mp3`), filename or path will also work.
+If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
 
-`parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+`parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
 
 Example:
 ```javascript
@@ -116,12 +124,30 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
    });
 ```
 
+#### orderTags function
+
+Utility to Converts the native tags to a dictionary index on the tag identifier
+
+```TypeScript
+orderTags(nativeTags: ITag[]): [tagId: string]: any[]
+```
+
+#### ratingToStars function
+
+Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
+
+```TypeScript
+ratingToStars(rating: number): number
+```
+
 ### Options:
   * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
   * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
   * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
   * `fileSize`: only provide this in combination with `parseStream` function.
   * `mergeTagHeaders`: default: `false`, if set to `true`, it will merge the information from all headers found in the file (highest version has priority).
+  * `loadParser(moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
+  * `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
@@ -155,8 +181,6 @@ If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` inte
 [Common tag documentation](doc/common_metadata.md) is automatically generated.
 
 ## Examples
-
-For a live example see [parse MP3 (ID3v2.4 tags) stream with music-metadata](https://runkit.com/borewit/parse-mp3-id3v2-4-tags-stream-with-music-metadata), hosted on RunKit.
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
 ```javascript
