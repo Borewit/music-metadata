@@ -138,28 +138,22 @@ export interface IMovieHeaderAtom {
   nextItemID: number
 }
 
-/**
- * Interface for the parsed Media Atom
- * https://wiki.multimedia.cx/index.php/QuickTime_container
- */
-export class Atom {
+export const Header: Token.IGetToken<IAtomHeader> = {
+  len: 8,
 
-  public static Header: Token.IGetToken<IAtomHeader> = {
-    len: 8,
+  get: (buf: Buffer, off: number): IAtomHeader => {
+    const length = Token.UINT32_BE.get(buf, 0);
+    if (length < 0)
+      throw new Error("Invalid atom header length");
 
-    get: (buf: Buffer, off: number): IAtomHeader => {
-      const length = Token.UINT32_BE.get(buf, 0);
-      if (length < 0)
-        throw new Error("Invalid atom header length");
+    return {
+      length,
+      name: FourCcToken.get(buf, off + 4)
+    };
+  }
+};
 
-      return {
-        length,
-        name: FourCcToken.get(buf, off + 4)
-      };
-    }
-  };
-
-  public static ftyp: Token.IGetToken<IAtomFtyp> = {
+export const ftyp: Token.IGetToken<IAtomFtyp> = {
     len: 4,
 
     get: (buf: Buffer, off: number): IAtomFtyp => {
@@ -169,22 +163,20 @@ export class Atom {
     }
   };
 
-  /**
-   * Token: Movie Header Atom
-   */
-  public static mhdr: Token.IGetToken<IMovieHeaderAtom> = {
-    len: 8,
+/**
+ * Token: Movie Header Atom
+ */
+export const mhdr: Token.IGetToken<IMovieHeaderAtom> = {
+  len: 8,
 
-    get: (buf: Buffer, off: number): IMovieHeaderAtom => {
-      return {
-        version: Token.UINT8.get(buf, off + 0),
-        flags: Token.UINT24_BE.get(buf, off + 1),
-        nextItemID: Token.UINT32_BE.get(buf, off + 4)
-      };
-    }
-  };
-
-}
+  get: (buf: Buffer, off: number): IMovieHeaderAtom => {
+    return {
+      version: Token.UINT8.get(buf, off + 0),
+      flags: Token.UINT24_BE.get(buf, off + 1),
+      nextItemID: Token.UINT32_BE.get(buf, off + 4)
+    };
+  }
+};
 
 /**
  * Base class for 'fixed' length atoms.
