@@ -183,7 +183,7 @@ export const mhdr: Token.IGetToken<IMovieHeaderAtom> = {
  * In some cases these atoms are longer then the sum of the described fields.
  * Issue: https://github.com/Borewit/music-metadata/issues/120
  */
-abstract class FixedLengthAtom {
+export abstract class FixedLengthAtom {
   /**
    *
    * @param {number} len Length as specified in the size field
