@@ -270,6 +270,7 @@ export class MP4Parser extends BasicParser {
           break;
 
         case 1: // UTF-8: Without any count or NULL terminator
+        case 18: // Unknown: Found in m4b in combination with a '©gen' tag
           this.addTag(tagKey, dataAtom.value.toString("utf-8"));
           break;
 
@@ -312,7 +313,7 @@ export class MP4Parser extends BasicParser {
           break;
 
         default:
-          throw new Error("Unsupported well-known-type: " + dataAtom.type.type);
+          this.warnings.push(`atom key=${tagKey}, has unknown well-known-type (data-type): ${dataAtom.type.type}`);
       }
 
       return header.length;
