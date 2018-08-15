@@ -1,14 +1,16 @@
 import {Promise} from "es6-promise";
-import * as Token from "token-types";
+
+import * as _debug from "debug";
+import {BasicParser} from "../common/BasicParser";
+import {Atom} from "./Atom";
 import * as AtomToken from "./AtomToken";
 import {Genres} from "../id3v1/ID3v1Parser";
 import util from "../common/Util";
 
-import * as _debug from "debug";
-import {BasicParser} from "../common/BasicParser";
 const debug = _debug("music-metadata:parser:MP4");
+import * as Token from "token-types";
 
-const tagFormat =  'iTunes MP4';
+const tagFormat = 'iTunes MP4';
 
 /*
  * Parser for: MPEG-4 Audio / MPEG-4 Part 3 (m4a/mp4) extension
@@ -31,212 +33,89 @@ export class MP4Parser extends BasicParser {
 
     this.metadata.setFormat('dataformat', 'MPEG-4 audio');
 
-    return this.parseAtom([], this.tokenizer.fileSize);
-  }
+    const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, null);
+    return rootAtom.readAtoms(this.tokenizer, atom => {
 
-  public parseAtom(parent: string[], size: number): Promise<void> {
+      if (atom.parent) {
+        switch (atom.parent.header.name) {
+          case 'ilst':
+          case '<id>':
+            return this.parseMetadataItemData(atom).then(null);
+        }
+      }
 
-    // Parse atom header
-    const offset = this.tokenizer.position;
-    // debug("Reading next token on offset=%s...", offset); //  buf.toString('ascii')
-    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
-      .then(header => {
-        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, offset); //  buf.toString('ascii')
-        return this.parseAtomData(header, parent).then(() => {
-          size -= header.length;
-          if (size > 0) {
-            return this.parseAtom(parent, size);
+      switch (atom.header.name) {
+
+        case "ftyp":
+          return this.parseAtom_ftyp(atom.dataLen).then(types => {
+            debug('ftyp: ' + types.join('/'));
+          });
+
+        case 'mdhd': // Media header atom
+          return this.parseAtom_mdhd(atom);
+
+        case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
+          return this.parseAtom_mvhd(atom);
+
+        case 'name':
+        case 'data':
+        case 'mean':
+          if (atom.parent && atom.parent.parent && atom.parent.parent.header.name === 'ilst' || atom.parent.parent.header.name === '<id>') {
+            return this.parseMetadataItemData(atom).then(null);
           }
+          break;
+      }
+
+      return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(atom.dataLen))
+        .then(() => {
+          debug("Ignore atom data: path=%s, payload-len=%s", atom.atomPath, atom.dataLen);
         });
-      });
-  }
 
-  private parseAtomData(header: AtomToken.IAtomHeader, parent: string[]): Promise<void> {
-    const dataLen = header.length - 8;
-    switch (header.name) {
-      case "ftyp":
-        return this.parseAtom_ftyp(dataLen).then(() => null);
-
-      // "Container" atoms, contain nested atoms: 'moov', 'udta', 'meta', 'ilst', 'trak', 'mdia'
-      case "moov": // The Movie Atom: contains other atoms
-      case "udta": // User defined atom
-      case "trak":
-      case "mdia": // Media atom
-      case "minf": // Media Information Atom
-      case "stbl": // Media Information Atom
-        return this.parseAtom(parent.concat([header.name]), dataLen);
-
-      case "meta": // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
-        return this.tokenizer.readToken<void>(new Token.IgnoreType(4))
-          .then(() => {
-            return this.parseMetaAtom(parent.concat([header.name]), dataLen - 4);
-          }); // meta has 4 bytes of padding, ignore
-
-     case "mdhd": // Media header atom
-        return this.parseAtom_mdhd(dataLen);
-
-      case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-        return this.parseAtom_mvhd(dataLen);
-
-      case "tkhd":
-        return this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(new AtomToken.TrackHeaderAtom(dataLen))
-          .then(tkhd => {
-            debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
-          });
-
-      case "mdat":
-        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
-          .then(buf => {
-            debug("Ignore payload data in %s of length=%s", parent.concat([header.name]).join('/'), dataLen); //  buf.toString('ascii')
-          });
-
-      default:
-        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
-          .then(() => {
-            debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
-          });
-    }
+    }, this.tokenizer.fileSize);
   }
 
   private addTag(id: string, value: any) {
     this.metadata.addTag(tagFormat, id, value);
   }
 
-  /**
-   * Parse Metadata Atom (meta), ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
-   * @param {string[]} parent Parent Atoms
-   * @param {number} size Remaining meta atom size
-   * @returns {Promise<void>}
-   */
-  private parseMetaAtom(parent: string[], size: number): Promise<void> {
-
-    // Parse atom header
-    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
-      .then(header => {
-        debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, this.tokenizer.position); //  buf.toString('ascii')
-        return this.parseMetaAtomData(header, parent).then(() => {
-          size -= header.length;
-          if (size > 0) {
-            return this.parseMetaAtom(parent, size);
-          }
-        });
-      });
-  }
-
-  private parseMetaAtomData(header: AtomToken.IAtomHeader, parent: string[]): Promise<void> {
-    const dataLen = header.length - 8;
-    switch (header.name) {
-      case "ilst": // 'meta' => 'ilst': Metadata Item List Atom
-      case "<id>": // 'meta' => 'ilst' => '<id>': metadata item atom
-        // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW24
-        return this.parseMetadataItemList(dataLen);
-
-      default: // If the Atom explicitly ignored, and not a meta-data-item-data, it will likely cause a crash
-        return this.parseMetadataItemData(header.name, dataLen);
-
-      case "free":
-      case "hdlr": // Handler Reference Atoms, https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-BBCIBHFD
-        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
-          .then(() => {
-            debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
-          });
-    }
-  }
-
-  private parseAtom_ftyp(len: number): Promise<string[]> {
-    return this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp).then(ftype => {
-      len -= AtomToken.ftyp.len;
-      if (len > 0) {
-        return this.parseAtom_ftyp(len).then(types => {
-          types.push(ftype.type);
-          return types;
-        });
-      }
-      return [];
-    });
+  private addWarning(message: string) {
+    debug('Warning:' + message);
+    this.warnings.push(message);
   }
 
   /**
-   * Parse movie header (mvhd) atom
-   * @param len
-   */
-  private parseAtom_mvhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len)).then(mvhd => {
-      this.parse_mxhd(mvhd);
-    });
-  }
-
-  /**
-   * Parse media header (mdhd) atom
-   * @param len
-   */
-  private parseAtom_mdhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<AtomToken.IAtomMdhd>(new AtomToken.MdhdAtom(len)).then(mdhd => {
-      this.parse_mxhd(mdhd);
-    });
-  }
-
-  private parse_mxhd(mxhd: AtomToken.IAtomMxhd) {
-    this.metadata.setFormat('sampleRate', mxhd.timeScale);
-    this.metadata.setFormat('duration', mxhd.duration / mxhd.timeScale); // calculate duration in seconds
-  }
-
-  /**
-   * Parse Meta-item-list-atom (item of 'ilst' atom)
-   * @param len
+   * Parse data of Meta-item-list-atom (item of 'ilst' atom)
+   * @param metaAtom
    * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
    */
-  private parseMetadataItemList(len: number): Promise<void> {
-    // Parse atom header
-    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header).then(header => {
-      debug("metadata-item: name=%s, len=%s", header.name, header.length);
-      return this.parseMetadataItemData(header.name, header.length - AtomToken.Header.len).then(() => {
-        const remaining = len - AtomToken.Header.len - header.length;
-        if (remaining > 0) {
-          return this.parseMetadataItemList(remaining);
-        } else
-          return;
-      });
-    });
-  }
+  private parseMetadataItemData(metaAtom: Atom): Promise<void> {
 
-  private parseMetadataItemData(tagKey: string, remLen: number): Promise<void> {
-    // Parse Meta Item List Atom
-    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header).then(header => {
-      const dataLen = header.length - AtomToken.Header.len;
-      switch (header.name) {
+    let tagKey = metaAtom.header.name;
+
+    return metaAtom.readAtoms(this.tokenizer, child => {
+      switch (child.header.name) {
         case "data": // value atom
-          return this.parseValueAtom(tagKey, header);
+          return this.parseValueAtom(tagKey, child);
         case "name": // name atom (optional)
-          return this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(dataLen)).then(name => {
+          return this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(child.dataLen)).then(name => {
             tagKey += ":" + name.name;
-            return header.length;
           });
         case "mean": // name atom (optional)
-          return this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(dataLen)).then(mean => {
+          return this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(child.dataLen)).then(mean => {
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
-            return header.length;
           });
         default:
-          return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(dataAtom => {
-            debug("Unsupported meta-item: %s[%s] => value=%s ascii=%s", tagKey, header.name, dataAtom.toString("hex"), dataAtom.toString("ascii"));
-            this.warnings.push("unsupported meta-item: " + tagKey + "[" + header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
-            return header.length;
+          return this.tokenizer.readToken<Buffer>(new Token.BufferType(child.dataLen)).then(dataAtom => {
+            this.addWarning("Unsupported meta-item: " + tagKey + "[" + child.header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
           });
       }
-    }).then(len => {
-      const remaining = remLen - len;
-      if (remaining === 0) {
-        return;
-      } else {
-        return this.parseMetadataItemData(tagKey, remaining);
-      }
-    });
+
+    }, metaAtom.dataLen);
   }
 
-  private parseValueAtom(tagKey: string, header: AtomToken.IAtomHeader): Promise<number> {
-    return this.tokenizer.readToken(new AtomToken.DataAtom(header.length - AtomToken.Header.len)).then(dataAtom => {
+  private parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
+    return this.tokenizer.readToken(new AtomToken.DataAtom(metaAtom.header.length - AtomToken.Header.len)).then(dataAtom => {
 
       if (dataAtom.type.set !== 0) {
         throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
@@ -244,7 +123,7 @@ export class MP4Parser extends BasicParser {
 
       // Use well-known-type table
       // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW35
-      switch (dataAtom.type.type) { // ToDo?: use enum
+      switch (dataAtom.type.type) {
 
         case 0: // reserved: Reserved for use where no type needs to be indicated
           switch (tagKey) {
@@ -278,18 +157,18 @@ export class MP4Parser extends BasicParser {
           if (this.options.skipCovers)
             break;
           this.addTag(tagKey, {
-              format: "image/jpeg",
-              data: Buffer.from(dataAtom.value)
-            });
+            format: "image/jpeg",
+            data: Buffer.from(dataAtom.value)
+          });
           break;
 
         case 14: // PNG
           if (this.options.skipCovers)
             break;
           this.addTag(tagKey, {
-              format: "image/png",
-              data: Buffer.from(dataAtom.value)
-            });
+            format: "image/png",
+            data: Buffer.from(dataAtom.value)
+          });
           break;
 
         case 21: // BE Signed Integer
@@ -313,11 +192,47 @@ export class MP4Parser extends BasicParser {
           break;
 
         default:
-          this.warnings.push(`atom key=${tagKey}, has unknown well-known-type (data-type): ${dataAtom.type.type}`);
+          this.addWarning(`atom key=${tagKey}, has unknown well-known-type (data-type): ${dataAtom.type.type}`);
       }
-
-      return header.length;
     });
   }
 
+  /**
+   * Parse movie header (mvhd) atom
+   * @param mvhd mvhd atom
+   */
+  private parseAtom_mvhd(mvhd: Atom): Promise<void> {
+    return this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(mvhd.dataLen)).then(mvhd_data => {
+      this.parse_mxhd(mvhd_data);
+    });
+  }
+
+  /**
+   * Parse media header (mdhd) atom
+   * @param mdhd mdhd atom
+   */
+  private parseAtom_mdhd(mdhd: Atom): Promise<void> {
+    return this.tokenizer.readToken<AtomToken.IAtomMdhd>(new AtomToken.MdhdAtom(mdhd.dataLen))
+      .then(mdhd_data => {
+        this.parse_mxhd(mdhd_data);
+      });
+  }
+
+  private parse_mxhd(mxhd: AtomToken.IAtomMxhd) {
+    this.metadata.setFormat('sampleRate', mxhd.timeScale);
+    this.metadata.setFormat('duration', mxhd.duration / mxhd.timeScale); // calculate duration in seconds
+  }
+
+  private parseAtom_ftyp(len: number): Promise<string[]> {
+    return this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp).then(ftype => {
+      len -= AtomToken.ftyp.len;
+      if (len > 0) {
+        return this.parseAtom_ftyp(len).then(types => {
+          types.push(ftype.type);
+          return types;
+        });
+      }
+      return [];
+    });
+  }
 }
