@@ -136,8 +136,8 @@ export class MP4Parser extends BasicParser {
 
       case "free":
       case "hdlr": // Handler Reference Atoms, https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-BBCIBHFD
-        return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen))
-          .then(buf => {
+        return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(dataLen))
+          .then(() => {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
     }
