@@ -3,7 +3,7 @@ import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../";
 import {ITokenizer} from "strtok3";
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
-import * as Atom from "./Atom";
+import * as AtomToken from "./AtomToken";
 import {Genres} from "../id3v1/ID3v1Parser";
 import util from "../common/Util";
 
@@ -57,7 +57,7 @@ export class MP4Parser implements ITokenParser {
     // Parse atom header
     const offset = this.tokenizer.position;
     // debug("Reading next token on offset=%s...", offset); //  buf.toString('ascii')
-    return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header)
+    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
       .then(header => {
         debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, offset); //  buf.toString('ascii')
         return this.parseAtomData(header, parent).then(() => {
@@ -69,7 +69,7 @@ export class MP4Parser implements ITokenParser {
       });
   }
 
-  private parseAtomData(header: Atom.IAtomHeader, parent: string[]): Promise<void> {
+  private parseAtomData(header: AtomToken.IAtomHeader, parent: string[]): Promise<void> {
     const dataLen = header.length - 8;
     switch (header.name) {
       case "ftyp":
@@ -97,7 +97,7 @@ export class MP4Parser implements ITokenParser {
         return this.parseAtom_mvhd(dataLen);
 
       case "tkhd":
-        return this.tokenizer.readToken<Atom.ITrackHeaderAtom>(new Atom.TrackHeaderAtom(dataLen))
+        return this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(new AtomToken.TrackHeaderAtom(dataLen))
           .then(tkhd => {
             debug("Ignore: name=%s, len=%s", parent.concat([header.name]).join('/'), header.length); //  buf.toString('ascii')
           });
@@ -125,7 +125,7 @@ export class MP4Parser implements ITokenParser {
   private parseMetaAtom(parent: string[], size: number): Promise<void> {
 
     // Parse atom header
-    return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header)
+    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
       .then(header => {
         debug("parse atom name=%s, len=%s on offset=%s", parent.concat([header.name]).join('/'), header.length, this.tokenizer.position); //  buf.toString('ascii')
         return this.parseMetaAtomData(header, parent).then(() => {
@@ -137,7 +137,7 @@ export class MP4Parser implements ITokenParser {
       });
   }
 
-  private parseMetaAtomData(header: Atom.IAtomHeader, parent: string[]): Promise<void> {
+  private parseMetaAtomData(header: AtomToken.IAtomHeader, parent: string[]): Promise<void> {
     const dataLen = header.length - 8;
     switch (header.name) {
       case "ilst": // 'meta' => 'ilst': Metadata Item List Atom
@@ -158,8 +158,8 @@ export class MP4Parser implements ITokenParser {
   }
 
   private parseAtom_ftyp(len: number): Promise<string[]> {
-    return this.tokenizer.readToken<Atom.IAtomFtyp>(Atom.Atom.ftyp).then(ftype => {
-      len -= Atom.Atom.ftyp.len;
+    return this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp).then(ftype => {
+      len -= AtomToken.ftyp.len;
       if (len > 0) {
         return this.parseAtom_ftyp(len).then(types => {
           types.push(ftype.type);
@@ -175,7 +175,7 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mvhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<Atom.IAtomMvhd>(new Atom.MvhdAtom(len)).then(mvhd => {
+    return this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len)).then(mvhd => {
       this.parse_mxhd(mvhd);
     });
   }
@@ -185,12 +185,12 @@ export class MP4Parser implements ITokenParser {
    * @param len
    */
   private parseAtom_mdhd(len: number): Promise<void> {
-    return this.tokenizer.readToken<Atom.IAtomMdhd>(new Atom.MdhdAtom(len)).then(mdhd => {
+    return this.tokenizer.readToken<AtomToken.IAtomMdhd>(new AtomToken.MdhdAtom(len)).then(mdhd => {
       this.parse_mxhd(mdhd);
     });
   }
 
-  private parse_mxhd(mxhd: Atom.IAtomMxhd) {
+  private parse_mxhd(mxhd: AtomToken.IAtomMxhd) {
     this.format.sampleRate = mxhd.timeScale;
     this.format.duration = mxhd.duration / mxhd.timeScale; // calculate duration in seconds
   }
@@ -202,10 +202,10 @@ export class MP4Parser implements ITokenParser {
    */
   private parseMetadataItemList(len: number): Promise<void> {
     // Parse atom header
-    return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header).then(header => {
+    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header).then(header => {
       debug("metadata-item: name=%s, len=%s", header.name, header.length);
-      return this.parseMetadataItemData(header.name, header.length - Atom.Atom.Header.len).then(() => {
-        const remaining = len - Atom.Atom.Header.len - header.length;
+      return this.parseMetadataItemData(header.name, header.length - AtomToken.Header.len).then(() => {
+        const remaining = len - AtomToken.Header.len - header.length;
         if (remaining > 0) {
           return this.parseMetadataItemList(remaining);
         } else
@@ -216,18 +216,18 @@ export class MP4Parser implements ITokenParser {
 
   private parseMetadataItemData(tagKey: string, remLen: number): Promise<void> {
     // Parse Meta Item List Atom
-    return this.tokenizer.readToken<Atom.IAtomHeader>(Atom.Atom.Header).then(header => {
-      const dataLen = header.length - Atom.Atom.Header.len;
+    return this.tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header).then(header => {
+      const dataLen = header.length - AtomToken.Header.len;
       switch (header.name) {
         case "data": // value atom
           return this.parseValueAtom(tagKey, header);
         case "name": // name atom (optional)
-          return this.tokenizer.readToken<Atom.INameAtom>(new Atom.NameAtom(dataLen)).then(name => {
+          return this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(dataLen)).then(name => {
             tagKey += ":" + name.name;
             return header.length;
           });
         case "mean": // name atom (optional)
-          return this.tokenizer.readToken<Atom.INameAtom>(new Atom.NameAtom(dataLen)).then(mean => {
+          return this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(dataLen)).then(mean => {
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
             return header.length;
@@ -249,8 +249,8 @@ export class MP4Parser implements ITokenParser {
     });
   }
 
-  private parseValueAtom(tagKey: string, header: Atom.IAtomHeader): Promise<number> {
-    return this.tokenizer.readToken(new Atom.DataAtom(header.length - Atom.Atom.Header.len)).then(dataAtom => {
+  private parseValueAtom(tagKey: string, header: AtomToken.IAtomHeader): Promise<number> {
+    return this.tokenizer.readToken(new AtomToken.DataAtom(header.length - AtomToken.Header.len)).then(dataAtom => {
 
       if (dataAtom.type.set !== 0) {
         throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
