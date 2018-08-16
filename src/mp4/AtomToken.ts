@@ -138,11 +138,11 @@ export interface IMovieHeaderAtom {
   nextItemID: number
 }
 
-export const Header: Token.IGetToken<IAtomHeader> = {
+export const Header: Token.IToken<IAtomHeader> = {
   len: 8,
 
   get: (buf: Buffer, off: number): IAtomHeader => {
-    const length = Token.UINT32_BE.get(buf, 0);
+    const length = Token.UINT32_BE.get(buf, off);
     if (length < 0)
       throw new Error("Invalid atom header length");
 
@@ -150,6 +150,11 @@ export const Header: Token.IGetToken<IAtomHeader> = {
       length,
       name: FourCcToken.get(buf, off + 4)
     };
+  },
+
+  put: (buf: Buffer, off: number, hdr: IAtomHeader) => {
+    Token.UINT32_BE.put(buf, off, hdr.length);
+    return FourCcToken.put(buf, off + 4, hdr.name);
   }
 };
 
