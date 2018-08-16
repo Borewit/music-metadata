@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
@@ -11,7 +10,6 @@ describe("Decode Monkey's Audio (.ape)", () => {
   const samplePath = path.join(__dirname, 'samples');
 
   function checkFormat(format) {
-    t.strictEqual(format.headerType, 'APEv2', 'format.tagTypes');
     t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]');
     t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
@@ -20,7 +18,7 @@ describe("Decode Monkey's Audio (.ape)", () => {
 
   function checkCommon(common) {
     t.strictEqual(common.title, '07. Shadow On The Sun', 'common.title');
-    t.strictEqual(common.artist, undefined, 'common.artist');
+    t.strictEqual(common.artist, 'Audioslave', 'common.artist');
     t.deepEqual(common.artists, ['Audioslave', 'Chris Cornell'], 'common.artists');
     // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
     t.deepEqual(common.albumartist, undefined, 'common.albumartist');

@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
@@ -28,7 +27,7 @@ describe("Extract metadata from RIFF (Resource Interchange File Format)", () => 
       function checkFormat(format: mm.IFormat) {
         assert.strictEqual(format.dataformat, "WAVE/PCM", "format.dataformat = WAVE/PCM");
         assert.strictEqual(format.lossless, true);
-        assert.deepEqual(format.tagTypes, ["ID3v2.3", "exif"], "format.tagTypes = ['ID3v2.3']"); // ToDo
+        assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], "format.tagTypes = ['exif', 'ID3v2.3']");
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');

@@ -1,30 +1,23 @@
 'use strict';
 import * as Vorbis from './Vorbis';
-import {IFormat, INativeAudioMetadata, IOptions, ITag} from "../index";
+import {IOptions} from "../";
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import * as Ogg from "../ogg/Ogg";
 import * as _debug from "debug";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 const debug = _debug("music-metadata:parser:Ogg/Vorbis1");
-
-export interface INestedKeyTag {
-  key: string,
-  value: string
-}
 
 /**
  * Vorbis 1 Parser.
  * Used by OggParser
  */
-export class VorbisParser implements Ogg.IAudioParser {
-
-  protected format: IFormat = {};
-  protected tags: ITag[] = [];
+export class VorbisParser implements Ogg.IPageConsumer {
 
   private pageSegments: Buffer[] = [];
 
-  constructor(protected options: IOptions) {
+  constructor(protected metadata: INativeMetadataCollector, protected options: IOptions) {
   }
 
   /**
@@ -61,15 +54,6 @@ export class VorbisParser implements Ogg.IAudioParser {
     this.parseFullPage(Buffer.concat(this.pageSegments));
   }
 
-  public getMetadata(): INativeAudioMetadata {
-    return {
-      format: this.format,
-      native: {
-        vorbis: this.tags
-      }
-    };
-  }
-
   /**
    * Parse first Ogg/Vorbis page
    * @param {IPageHeader} header
@@ -81,13 +65,13 @@ export class VorbisParser implements Ogg.IAudioParser {
     const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis')
       throw new Error('Metadata does not look like Vorbis');
-    this.format.dataformat = "Ogg/Vorbis I";
+    this.metadata.setFormat('dataformat', 'Ogg/Vorbis I');
     if (commonHeader.packetType === 1) {
       const idHeader = Vorbis.IdentificationHeader.get(pageData, Vorbis.CommonHeader.len);
 
-      this.format.sampleRate = idHeader.sampleRate;
-      this.format.bitrate = idHeader.bitrateNominal;
-      this.format.numberOfChannels = idHeader.channelMode;
+      this.metadata.setFormat('sampleRate', idHeader.sampleRate);
+      this.metadata.setFormat('bitrate', idHeader.bitrateNominal);
+      this.metadata.setFormat('numberOfChannels', idHeader.channelMode);
       debug("sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s",  idHeader.sampleRate, idHeader.bitrateNominal, idHeader.channelMode);
     } else throw new Error('First Ogg page should be type 1: the identification header');
   }
@@ -108,10 +92,10 @@ export class VorbisParser implements Ogg.IAudioParser {
   }
 
   protected calculateDuration(header: Ogg.IPageHeader) {
-    if (this.format.sampleRate && header.absoluteGranulePosition >= 0) {
+    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
-      this.format.numberOfSamples = header.absoluteGranulePosition;
-      this.format.duration = this.format.numberOfSamples / this.format.sampleRate;
+      this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition);
+      this.metadata.setFormat('duration',  this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
     }
   }
 
@@ -146,7 +130,7 @@ export class VorbisParser implements Ogg.IAudioParser {
 
     if (value !== null) {
       debug("Push tag: id=%s, value=%s", key, value);
-      this.tags.push({id: key, value});
+      this.metadata.addTag('vorbis', key, value);
     }
 
     return Token.UINT32_LE.len + strLen;

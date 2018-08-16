@@ -1,8 +1,5 @@
 'use strict';
 import common from "../common/Util";
-import {ITokenParser} from "../ParserFactory";
-import * as strtok3 from "strtok3";
-import {INativeAudioMetadata, IOptions} from "../index";
 import {Promise} from "es6-promise";
 import {VorbisParser} from "../vorbis/VorbisParser";
 import {FourCcToken} from "../common/FourCC";
@@ -10,6 +7,7 @@ import * as Ogg from "./Ogg";
 import {OpusParser} from "../opus/OpusParser";
 import * as Token from "token-types";
 import * as _debug from "debug";
+import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:Ogg");
 
@@ -40,7 +38,7 @@ export class SegmentTable implements  Token.IGetToken<Ogg.ISegmentTable> {
 /**
  * Parser for Ogg logical bitstream framing
  */
-export class OggParser implements ITokenParser {
+export class OggParser extends BasicParser {
 
   public static getInstance(): OggParser {
     return new OggParser();
@@ -69,28 +67,15 @@ export class OggParser implements ITokenParser {
     }
   };
 
-  private tokenizer: strtok3.ITokenizer;
-
   private header: Ogg.IPageHeader;
   private pageNumber: number;
-  private pageConsumer: Ogg.IAudioParser;
-  private options: IOptions;
+  private pageConsumer: Ogg.IPageConsumer;
 
-  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.tokenizer = tokenizer;
-    this.options = options;
-
-    return this.parsePage().then(() => {
-
-      if (this.pageConsumer) {
-        return this.pageConsumer.getMetadata();
-      }
-      return null;
-    });
-  }
-
-  private parsePage(): Promise<void> {
+  /**
+   * Parse page
+   * @returns {Promise<void>}
+   */
+  public parse(): Promise<void> {
     debug("pos=%s, parsePage()", this.tokenizer.position);
     return this.tokenizer.readToken<Ogg.IPageHeader>(OggParser.Header).then(header => {
       if (header.capturePattern !== 'OggS') { // Capture pattern
@@ -110,11 +95,11 @@ export class OggParser implements ITokenParser {
             switch (id[1]) {
               case 'v': // Ogg/Vorbis
                 debug("Set page consumer to Ogg/Vorbis ");
-                this.pageConsumer = new VorbisParser(this.options);
+                this.pageConsumer = new VorbisParser(this.metadata, this.options);
                 break;
               case 'p': // Ogg/Opus
                 debug("Set page consumer to Ogg/Opus");
-                this.pageConsumer = new OpusParser(this.options);
+                this.pageConsumer = new OpusParser(this.metadata, this.options);
                 break;
               default:
                 throw new Error('gg audio-codec not recognized (id=' + id + ')');
@@ -122,7 +107,7 @@ export class OggParser implements ITokenParser {
           }
           this.pageConsumer.parsePage(header, pageData);
           if (!header.headerType.lastPage) {
-            return this.parsePage();
+            return this.parse(); // Parse next page
           }
         });
       });

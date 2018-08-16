@@ -6,7 +6,7 @@ import {ITag, IOptions} from "../";
 import * as Token from "token-types";
 import FrameParser from "./FrameParser";
 import {ID3v2Token, IID3v2header} from "./ID3v2";
-import {INativeAudioMetadata} from "../index";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 interface IFrameFlags {
   status: {
@@ -142,14 +142,16 @@ export class ID3v2Parser {
 
   private tokenizer: ITokenizer;
   private id3Header: IID3v2header;
+  private metadata: INativeMetadataCollector;
 
-  private tags: Array<{ id: string, value: any }> = [];
+  // private tags: Array<{ id: string, value: any }> = [];
   private headerType: TagType;
   private options: IOptions;
 
-  public parse(result: INativeAudioMetadata, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+  public parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
 
     this.tokenizer = tokenizer;
+    this.metadata = metadata;
     this.options = options;
 
     return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
@@ -167,8 +169,6 @@ export class ID3v2Parser {
       } else {
         return this.parseId3Data(id3Header.size);
       }
-    }).then(() => {
-      result.native[this.headerType] = this.tags;
     });
   }
 
@@ -196,21 +196,25 @@ export class ID3v2Parser {
       for (const tag of this.parseMetadata(buffer)) {
         if (tag.id === 'TXXX') {
           for (const text of tag.value.text) {
-            this.tags.push({id: ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), value: text});
+            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text);
           }
         } else if (tag.id === 'COM') {
           for (const value of tag.value) {
-            this.tags.push({id: ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value: value.text});
+            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text);
           }
         } else if (isArray(tag.value)) {
           for (const value of tag.value) {
-            this.tags.push({id: tag.id, value});
+            this.addTag(tag.id, value);
           }
         } else {
-          this.tags.push({id: tag.id, value: tag.value});
+          this.addTag(tag.id, tag.value);
         }
       }
     });
+  }
+
+  private addTag(id: string, value: any) {
+    this.metadata.addTag(this.headerType, id, value);
   }
 
   private parseMetadata(data: Buffer): ITag[] {

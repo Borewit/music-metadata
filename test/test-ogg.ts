@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert, expect} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';

@@ -4,6 +4,7 @@
  */
 
 import {INativeAudioMetadata} from "../index";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 export interface IPageHeader {
   /**
@@ -73,9 +74,4 @@ export interface IPageConsumer {
    * Force to parse pending segments
    */
   flush();
-}
-
-export interface IAudioParser extends IPageConsumer {
-
-  getMetadata(): INativeAudioMetadata
 }

@@ -1,12 +1,12 @@
 import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
-import {IOptions, INativeAudioMetadata} from "../";
 import * as Token from "token-types";
 import * as Chunk from "./Chunk";
 import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
+import {BasicParser} from "../common/BasicParser";
 
 /**
  * AIFF - Audio Interchange File Format
@@ -15,25 +15,9 @@ import {Promise} from "es6-promise";
  *  http://www.onicos.com/staff/iz/formats/aiff.html
  *  http://muratnkonar.com/aiff/index.html
  */
-export class AIFFParser implements ITokenParser {
+export class AIFFParser extends BasicParser {
 
-  private tokenizer: strtok3.ITokenizer;
-  private options: IOptions;
-
-  private metadata: INativeAudioMetadata = {
-    format: {
-      dataformat: "AIFF",
-      tagTypes: []
-    },
-    native: {}
-  };
-
-  private native: INativeAudioMetadata;
-
-  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.tokenizer = tokenizer;
-    this.options = options;
+  public parse(): Promise<void> {
 
     return this.tokenizer.readToken<Chunk.IChunkHeader>(Chunk.Header)
       .then(header => {
@@ -41,9 +25,9 @@ export class AIFFParser implements ITokenParser {
           throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
         return this.tokenizer.readToken<string>(FourCcToken).then(type => {
-          this.metadata.format.dataformat = type;
+          this.metadata.setFormat('dataformat', type);
         }).then(() => {
-          return this.readChunk().then(() => this.metadata);
+          return this.readChunk();
         });
       });
   }
@@ -56,11 +40,12 @@ export class AIFFParser implements ITokenParser {
           case 'COMM': // The Common Chunk
             return this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header))
               .then(common => {
-                this.metadata.format.bitsPerSample = common.sampleSize;
-                this.metadata.format.sampleRate = common.sampleRate;
-                this.metadata.format.numberOfChannels = common.numChannels;
-                this.metadata.format.numberOfSamples = common.numSampleFrames;
-                this.metadata.format.duration = this.metadata.format.numberOfSamples / this.metadata.format.sampleRate;
+                this.metadata.setFormat('bitsPerSample', common.sampleSize);
+                this.metadata.setFormat('bitsPerSample', common.sampleSize);
+                this.metadata.setFormat('sampleRate', common.sampleRate);
+                this.metadata.setFormat('numberOfChannels', common.numChannels);
+                this.metadata.setFormat('numberOfSamples', common.numSampleFrames);
+                this.metadata.setFormat('duration', common.numSampleFrames / common.sampleRate);
               });
 
           case 'ID3 ': // ID3-meta-data
