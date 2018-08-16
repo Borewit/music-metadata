@@ -56,14 +56,6 @@ export class MP4Parser extends BasicParser {
 
         case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
           return this.parseAtom_mvhd(atom);
-
-        case 'name':
-        case 'data':
-        case 'mean':
-          if (atom.parent && atom.parent.parent && atom.parent.parent.header.name === 'ilst' || atom.parent.parent.header.name === '<id>') {
-            return this.parseMetadataItemData(atom).then(null);
-          }
-          break;
       }
 
       return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(atom.dataLen))
