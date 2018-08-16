@@ -9,7 +9,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
   const samples = path.join(__dirname, "samples");
 
-  describe("Parse MPEG-4 audio files", () => {
+  describe("Parse MPEG-4 audio files (.m4a)", () => {
 
     const filePath = path.join(__dirname, 'samples', 'id4.m4a');
 
@@ -141,7 +141,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
     });
   });
 
-  describe("Parse MPEG-4 Audio Book files (.m4a)", () => {
+  describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
 
     it("audio book from issue #120", () => {
 
