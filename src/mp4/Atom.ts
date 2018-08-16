@@ -23,18 +23,18 @@ export class Atom {
     this.dataLen = this.header.length - 8;
   }
 
-  public readAtoms(tokenizer: ITokenizer, listener: AtomDataHandler, size: number): Promise<void> {
+  public readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
 
-    return this.readAtom(tokenizer, listener).then(atomBean => {
+    return this.readAtom(tokenizer, dataHandler).then(atomBean => {
       this.children.push(atomBean);
       size -= atomBean.header.length;
       if (size > 0) {
-        return this.readAtoms(tokenizer, listener, size);
+        return this.readAtoms(tokenizer, dataHandler, size);
       }
     });
   }
 
-  private readAtom(tokenizer: ITokenizer, listener: AtomDataHandler): Promise<Atom> {
+  private readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<Atom> {
 
     // Parse atom header
     const offset = tokenizer.position;
@@ -43,13 +43,13 @@ export class Atom {
       .then(header => {
         const atomBean = new Atom(header, this);
         debug("parse atom name=%s, offset=%s, len=%s ", atomBean.atomPath, offset, header.length); //  buf.toString('ascii')
-        return atomBean.readData(tokenizer, listener).then(() => {
+        return atomBean.readData(tokenizer, dataHandler).then(() => {
           return atomBean;
         });
       });
   }
 
-  private readData(tokenizer: ITokenizer, listener: AtomDataHandler): Promise<void> {
+  private readData(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<void> {
     switch (this.header.name) {
       // "Container" atoms, contains nested atoms
       case "moov": // The Movie Atom: contains other atoms
@@ -60,13 +60,13 @@ export class Atom {
       case "stbl": // The Sample Table Atom
       case "<id>":
       case "ilst":
-        return this.readAtoms(tokenizer, listener, this.dataLen);
+        return this.readAtoms(tokenizer, dataHandler, this.dataLen);
 
       case "meta": // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         // meta has 4 bytes of padding, ignore
         return tokenizer.readToken<void>(new Token.IgnoreType(4))
           .then(() => {
-            return this.readAtoms(tokenizer, listener, this.dataLen - 4);
+            return this.readAtoms(tokenizer, dataHandler, this.dataLen - 4);
           });
 
       case "mdhd": // Media header atom
@@ -75,7 +75,7 @@ export class Atom {
       case "stsz":
       case "mdat":
       default:
-        return listener(this);
+        return dataHandler(this);
     }
   }
 }
