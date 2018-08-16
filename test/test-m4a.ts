@@ -7,6 +7,8 @@ const t = assert;
 
 describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
+  const samples = path.join(__dirname, "samples");
+
   describe("Parse MPEG-4 audio files", () => {
 
     const filePath = path.join(__dirname, 'samples', 'id4.m4a');
@@ -91,7 +93,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
   it("should decode 8-byte unsigned integer", () => {
 
     // AAC
-    const filename = path.join(__dirname, "samples", "01. Trumpsta (Djuro Remix).m4a");
+    const filename = path.join(samples, "01. Trumpsta (Djuro Remix).m4a");
 
     return mm.parseFile(filename, {native: true}).then(metadata => {
 
@@ -109,7 +111,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
    */
   it("should support metadata behind the 'mdat' atom", () => {
 
-    const filePath = path.join(__dirname, "samples", "issue_74.m4a");
+    const filePath = path.join(samples, "issue_74.m4a");
 
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
@@ -125,7 +127,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
    */
   it("should be able to extract the composer and artist", () => {
 
-    const filePath = path.join(__dirname, "samples", "issue_79.m4a");
+    const filePath = path.join(samples, "issue_79.m4a");
 
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
       assert.strictEqual(metadata.common.title, "Uprising");
@@ -137,6 +139,28 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
       assert.deepEqual(metadata.common.disk, {no: 1, of: 1});
       assert.deepEqual(metadata.common.track, {no: 1, of: null});
     });
+  });
+
+  describe("Parse MPEG-4 Audio Book files (.m4a)", () => {
+
+    it("audio book from issue #120", () => {
+
+      const filePath = path.join(samples, 'issue-120.m4b');
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        assert.strictEqual(metadata.common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
+        assert.deepEqual(metadata.common.composer, ['Nick Podehl']);
+        assert.deepEqual(metadata.common.artists, ['Aleron Kong']);
+        assert.deepEqual(metadata.common.genre, [ 'Audiobook']);
+        assert.strictEqual(metadata.common.year, 2018);
+        assert.strictEqual(metadata.common.encodedby, "inAudible 1.97");
+        assert.deepEqual(metadata.common.disk, {no: null, of: null});
+        assert.deepEqual(metadata.common.track, {no: null, of: null});
+        assert.deepEqual(metadata.common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
+      });
+
+    });
+
   });
 
 });
