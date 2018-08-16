@@ -4,6 +4,7 @@ import {IPageHeader} from "../ogg/Ogg";
 import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
 import {IOptions} from "../index";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 /**
  * Opus parser
@@ -14,8 +15,8 @@ export class OpusParser extends VorbisParser {
 
   private idHeader: Opus.IIdHeader;
 
-  constructor(protected options: IOptions) {
-    super(options);
+  constructor(metadata: INativeMetadataCollector, options: IOptions) {
+    super(metadata, options);
   }
 
   /**
@@ -28,9 +29,9 @@ export class OpusParser extends VorbisParser {
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
     if (this.idHeader.magicSignature !== "OpusHead")
       throw new Error("Illegal ogg/Opus magic-signature");
-    this.format.dataformat = "Ogg/Opus";
-    this.format.sampleRate = this.idHeader.inputSampleRate;
-    this.format.numberOfChannels = this.idHeader.channelCount;
+    this.metadata.setFormat('dataformat', 'Ogg/Opus');
+    this.metadata.setFormat('sampleRate', this.idHeader.inputSampleRate);
+    this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
   }
 
   protected parseFullPage(pageData: Buffer) {
@@ -45,10 +46,10 @@ export class OpusParser extends VorbisParser {
   }
 
   protected calculateDuration(header: IPageHeader) {
-    if (this.format.sampleRate && header.absoluteGranulePosition >= 0) {
+    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
-      this.format.numberOfSamples = header.absoluteGranulePosition - this.idHeader.preSkip;
-      this.format.duration = this.format.numberOfSamples / this.idHeader.inputSampleRate;
+      this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition - this.idHeader.preSkip);
+      this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.idHeader.inputSampleRate);
     }
   }
 

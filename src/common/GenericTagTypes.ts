@@ -1,6 +1,11 @@
-export type TagType = 'vorbis' | 'ID3v1.1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4' | 'exif';
+export type TagType = 'vorbis' | 'ID3v1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4' | 'exif';
 
-export type CommonTag =
+export interface IGenericTag {
+  id: GenericTagId,
+  value: any
+}
+
+export type GenericTagId =
   'track'
   | 'disk'
   | 'year'
@@ -87,10 +92,8 @@ export type CommonTag =
   | 'replaygain_track_gain'
   | 'replaygain_track_peak';
 
-export const TagPriority = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes MP4', 'ID3v1.1'];
-
 export interface INativeTagMap {
-  [index: string]: CommonTag;
+  [index: string]: GenericTagId;
 }
 
 export interface ITagInfo {
@@ -197,6 +200,6 @@ export const commonTags: ITagInfoMap = {
  * @param alias Name of common tag
  * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
  */
-export function isSingleton(alias: CommonTag): boolean {
+export function isSingleton(alias: GenericTagId): boolean {
   return commonTags.hasOwnProperty(alias) && !commonTags[alias].multiple;
 }

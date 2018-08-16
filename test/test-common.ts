@@ -5,6 +5,7 @@ import {commonTags, isSingleton} from "../src/common/GenericTagTypes";
 import * as path from "path";
 import * as mm from "../src";
 import * as MimeType from "media-typer";
+import {CombinedTagMapper} from "../src/common/CombinedTagMapper";
 
 const t = assert;
 
@@ -33,7 +34,7 @@ describe("CommonTagMapper.parseGenre", () => {
 
 describe("GenericTagMap", () => {
 
-  const combinedTagMapper = new mm.CombinedTagMapper();
+  const combinedTagMapper = new CombinedTagMapper();
 
   it("Check if each native tag, is mapped to a valid common type", () => {
 

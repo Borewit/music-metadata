@@ -1,4 +1,4 @@
-import {} from "mocha";
+
 import {assert} from "chai";
 import * as mm from "../src";
 import * as fs from "fs-extra";
@@ -6,7 +6,6 @@ import * as path from "path";
 import {SourceStream} from "./util";
 
 const t = assert;
-
 describe("WavPack decoding", () => {
 
   const samplePath = path.join(__dirname, 'samples');

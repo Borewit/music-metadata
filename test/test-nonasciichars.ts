@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
@@ -12,7 +11,7 @@ it("should decode non-ascii-characters", () => {
   const filePath = path.join(__dirname, 'samples', filename);
 
   return mm.parseFile(filePath).then(result => {
-    t.deepEqual(result.common.artist, undefined, 'common.artist');
+    t.deepEqual(result.common.artist, 'Janelle Monáe', 'common.artist');
     t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder', 'Roman Gianarthur'], 'common.artists');
   });
 

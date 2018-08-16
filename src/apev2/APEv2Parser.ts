@@ -2,8 +2,7 @@
 
 import common from "../common/Util";
 import {TagType} from "../common/GenericTagTypes";
-import {INativeAudioMetadata, IOptions, IFormat} from "../";
-import {ITokenParser} from "../ParserFactory";
+import {IOptions} from "../";
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
@@ -12,6 +11,8 @@ import FileType = require("file-type");
 import {IPicture} from "../index";
 
 import * as _debug from "debug";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
+import {BasicParser} from "../common/BasicParser";
 const debug = _debug("music-metadata:parser:APEv2");
 
 /**
@@ -108,6 +109,8 @@ enum DataType {
   external_info = 2,
   reserved = 3
 }
+
+const tagFormat = 'APEv2';
 
 class Structure {
   /**
@@ -223,7 +226,7 @@ interface IApeInfo {
   footer?: IFooter
 }
 
-export class APEv2Parser implements ITokenParser {
+export class APEv2Parser extends BasicParser {
 
   /**
    * Calculate the media file duration
@@ -236,22 +239,20 @@ export class APEv2Parser implements ITokenParser {
     return duration / ah.sampleRate;
   }
 
-  public static parseFooter(tokenizer: ITokenizer, options: IOptions): Promise<Array<{ id: string, value: any }>> {
+  public static parseFooter(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
     return tokenizer.readToken<IFooter>(Structure.TagFooter).then(footer => {
       if (footer.ID !== "APETAGEX") {
         throw new Error("Expected footer to start with APETAGEX ");
       }
       return tokenizer.readToken<Buffer>(Structure.TagField(footer)).then(tags => {
-        return APEv2Parser.parseTags(footer, tags, !options.skipCovers);
+        return APEv2Parser.parseTags(metadata, footer, tags, !options.skipCovers);
       });
     });
   }
 
   // ToDo: public ???
-  private static parseTags(footer: IFooter, buffer: Buffer, includeCovers: boolean): Array<{ id: string, value: any }> {
+  private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, includeCovers: boolean) {
     let offset = 0;
-
-    const tags: Array<{ id: string, value: any }> = [];
 
     for (let i = 0; i < footer.fields; i++) {
       const size = Token.UINT32_LE.get(buffer, offset);
@@ -270,7 +271,7 @@ export class APEv2Parser implements ITokenParser {
 
           /*jshint loopfunc:true */
           for (const val of values) {
-            tags.push({id: key, value: val});
+            metadata.addTag(tagFormat, key, val);
           }
           break;
         }
@@ -296,7 +297,7 @@ export class APEv2Parser implements ITokenParser {
                 };
 
                 offset += size;
-                tags.push({id: key, value: picture});
+                metadata.addTag(tagFormat, key, picture);
               } else {
                 debug('Unexpected binary tag of type ' + fileType.mime);
               }
@@ -310,20 +311,13 @@ export class APEv2Parser implements ITokenParser {
           throw new Error("Unexpected data-type: " + flags.dataType);
       }
     }
-    return tags;
   }
 
   private type: TagType = "APEv2"; // ToDo: versionIndex should be made dynamic, APE may also contain ID3
 
   private ape: IApeInfo = {};
 
-  private tokenizer: ITokenizer;
-  private options: IOptions;
-
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.tokenizer = tokenizer;
-    this.options = options;
+  public parse(): Promise<void> {
 
     return this.tokenizer.readToken(Structure.DescriptorParser)
       .then(descriptor => {
@@ -339,37 +333,30 @@ export class APEv2Parser implements ITokenParser {
         }
       }).then(header => {
         return this.tokenizer.readToken(new Token.IgnoreType(header.forwardBytes)).then(() => {
-          return APEv2Parser.parseFooter(tokenizer, options).then(tags => {
-            return {
-              format: header.format,
-              native: {
-                APEv2: tags
-              }
-            };
-          });
+          return APEv2Parser.parseFooter(this.metadata, this.tokenizer, this.options);
         });
       });
 
   }
 
-  private parseDescriptorExpansion(lenExp: number): Promise<{ format: IFormat, forwardBytes: number }> {
+  private parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
     return this.tokenizer.readToken(new Token.IgnoreType(lenExp)).then(() => {
       return this.parseHeader();
     });
   }
 
-  private parseHeader(): Promise<{ format: IFormat, forwardBytes: number }> {
+  private parseHeader(): Promise<{forwardBytes: number }> {
     return this.tokenizer.readToken(Structure.Header).then(header => {
+      // ToDo before
+      this.metadata.setFormat('lossless', true);
+      this.metadata.setFormat('dataformat', "Monkey's Audio");
+
+      this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
+      this.metadata.setFormat('sampleRate', header.sampleRate);
+      this.metadata.setFormat('numberOfChannels', header.channel);
+      this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
+
       return {
-        format: {
-          lossless: true,
-          dataformat: "Monkey's Audio",
-          headerType: this.type,
-          bitsPerSample: header.bitsPerSample,
-          sampleRate: header.sampleRate,
-          numberOfChannels: header.channel,
-          duration: APEv2Parser.calculateDuration(header)
-        },
         forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
         this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
       };

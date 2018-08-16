@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
@@ -16,7 +15,7 @@ describe("Decode MP3/ID3v2.4", () => {
     const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, {duration: true}).then(metadata => {
-      t.deepEqual(metadata.format.tagTypes, ["ID3v2.4", "ID3v1.1"], 'format.tagTypes');
+      t.deepEqual(metadata.format.tagTypes, ["ID3v2.4", "ID3v1"], 'format.tagTypes');
       t.strictEqual(metadata.format.duration, 0.7836734693877551, 'format.format.duration');
       t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(metadata.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
@@ -25,7 +24,7 @@ describe("Decode MP3/ID3v2.4", () => {
       t.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2');
 
       t.strictEqual(metadata.common.title, 'Home', 'title');
-      t.strictEqual(metadata.common.artist, undefined, 'common.artist');
+      t.strictEqual(metadata.common.artist, 'Explo', 'common.artist');
       t.deepEqual(metadata.common.artists, ['Explo', 'ions', 'nodejsftws'], 'common.artists');
       t.strictEqual(metadata.common.albumartist, 'Soundtrack', 'albumartist');
       t.strictEqual(metadata.common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album');
