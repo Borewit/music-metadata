@@ -5,6 +5,7 @@ import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
 import {IOptions} from "../index";
 import {INativeMetadataCollector} from "../common/MetadataCollector";
+import {ITokenizer} from 'strtok3/lib';
 
 /**
  * Opus parser
@@ -15,7 +16,9 @@ export class OpusParser extends VorbisParser {
 
   private idHeader: Opus.IIdHeader;
 
-  constructor(metadata: INativeMetadataCollector, options: IOptions) {
+  private lastPos: number = -1;
+
+  constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
     super(metadata, options);
   }
 
@@ -37,9 +40,12 @@ export class OpusParser extends VorbisParser {
   protected parseFullPage(pageData: Buffer) {
     const magicSignature = new Token.StringType(8, 'ascii').get(pageData, 0);
     switch (magicSignature) {
+
       case 'OpusTags':
         this.parseUserCommentList(pageData, 8);
+        this.lastPos = this.tokenizer.position;
         break;
+
       default:
         break;
     }
@@ -50,6 +56,11 @@ export class OpusParser extends VorbisParser {
       // Calculate duration
       this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition - this.idHeader.preSkip);
       this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.idHeader.inputSampleRate);
+
+      if (this.lastPos !== -1 && this.tokenizer.fileSize && this.metadata.format.duration) {
+        const dataSize = this.tokenizer.fileSize - this.lastPos;
+        this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
+      }
     }
   }
 

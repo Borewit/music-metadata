@@ -26,15 +26,6 @@ const debug = _debug("music-metadata:parser:RIFF");
  */
 export class WavePcmParser extends BasicParser {
 
-  /*
-  private metadata: INativeAudioMetadata = {
-    format: {
-      dataformat: "WAVE/?",
-      lossless: true
-    },
-    native: {}
-  };*/
-
   private fact: WaveChunk.IFactChunk;
 
   private blockAlign: number;
@@ -58,7 +49,7 @@ export class WavePcmParser extends BasicParser {
 
   public parseRiffChunk(): Promise<void> {
     return this.tokenizer.readToken<string>(FourCcToken).then(type => {
-      this.metadata.format.dataformat = type;
+      this.metadata.setFormat('dataformat', type);
       switch (type) {
         case "WAVE":
           return this.readWaveChunk();
@@ -86,16 +77,16 @@ export class WavePcmParser extends BasicParser {
           case "fmt ": // The Util Chunk, non-PCM Formats
             return this.tokenizer.readToken<WaveChunk.IWaveFormat>(new WaveChunk.Format(header))
               .then(fmt => {
-                this.metadata.format.dataformat = WaveChunk.WaveFormat[fmt.wFormatTag];
-                if (!this.metadata.format.dataformat) {
+                let subFormat = WaveChunk.WaveFormat[fmt.wFormatTag];
+                if (!subFormat) {
                   debug("WAVE/non-PCM format=" + fmt.wFormatTag);
-                  this.metadata.format.dataformat = "non-PCM (" + fmt.wFormatTag + ")";
+                  subFormat = "non-PCM (" + fmt.wFormatTag + ")";
                 }
-                this.metadata.format.dataformat = "WAVE/" + this.metadata.format.dataformat;
-                this.metadata.format.bitsPerSample = fmt.wBitsPerSample;
-                this.metadata.format.sampleRate = fmt.nSamplesPerSec;
-                this.metadata.format.numberOfChannels = fmt.nChannels;
-                this.metadata.format.bitrate = fmt.nBlockAlign * fmt.nSamplesPerSec * 8;
+                this.metadata.setFormat('dataformat', 'WAVE/' + subFormat);
+                this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
+                this.metadata.setFormat('sampleRate',  fmt.nSamplesPerSec);
+                this.metadata.setFormat('numberOfChannels', fmt.nChannels);
+                this.metadata.setFormat('bitrate', fmt.nBlockAlign * fmt.nSamplesPerSec * 8);
                 this.blockAlign = fmt.nBlockAlign;
               });
 
@@ -113,9 +104,11 @@ export class WavePcmParser extends BasicParser {
             if (this.metadata.format.lossless !== false) {
               this.metadata.setFormat('lossless', true);
             }
-            this.metadata.format.numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.size / this.blockAlign);
-            this.metadata.format.duration = this.metadata.format.numberOfSamples / this.metadata.format.sampleRate;
-            this.metadata.format.bitrate = this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate; // ToDo: check me
+            const numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.size / this.blockAlign);
+            this.metadata.setFormat('numberOfSamples', numberOfSamples);
+
+            this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
+            this.metadata.setFormat('bitrate', this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate); // ToDo: check me
             return this.tokenizer.ignore(header.size);
 
           default:

@@ -158,61 +158,61 @@ export interface IFormat {
   /**
    * E.g.: 'flac'
    */
-  dataformat?: string, // ToDo: make mandatory
+  readonly dataformat?: string, // ToDo: make mandatory
 
   /**
    * List of tags found in parsed audio file
    */
-  tagTypes?: TagType[],
+  readonly tagTypes?: TagType[],
 
   /**
    * Duration in seconds
    */
-  duration?: number,
+  readonly duration?: number,
 
   /**
    * Number bits per second of encoded audio file
    */
-  bitrate?: number,
+  readonly bitrate?: number,
 
   /**
    * Sampling rate in Samples per second (S/s)
    */
-  sampleRate?: number,
+  readonly sampleRate?: number,
 
   /**
    * Audio bit depth
    */
-  bitsPerSample?: number,
+  readonly bitsPerSample?: number,
 
   /**
    * Encoder name, e.g.:
    */
-  encoder?: string,
+  readonly encoder?: string,
 
   /**
    * Codec profile
    */
-  codecProfile?: string,
+  readonly codecProfile?: string,
 
-  lossless?: boolean,
+  readonly lossless?: boolean,
 
   /**
    * Number of audio channels
    */
-  numberOfChannels?: number,
+  readonly numberOfChannels?: number,
 
   /**
    * Number of samples frames.
    * One sample contains all channels
    * The duration is: numberOfSamples / sampleRate
    */
-  numberOfSamples?: number
+  readonly numberOfSamples?: number
 
   /**
    * 16-byte MD5 of raw audio
    */
-  audioMD5?: Buffer;
+  readonly audioMD5?: Buffer;
 }
 
 export interface ITag {

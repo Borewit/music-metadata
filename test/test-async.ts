@@ -94,6 +94,11 @@ describe("Asynchronous observer updates", () => {
             id: 'picture',
             type: 'common',
             value: null
+          },
+          {
+            id: 'bitrate',
+            type: 'format',
+            value: 3529.912181720061
           }
         ]);
     });

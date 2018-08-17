@@ -27,7 +27,7 @@ export interface INativeMetadataCollector {
    */
   readonly format: IFormat;
 
-  readonly native: IFormat;
+  readonly native: INativeTags;
 
   /**
    * @returns {boolean} true if one or more tags have been found
@@ -94,7 +94,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   public setFormat(key: FormatId, value: any) {
     debug(`format: ${key} = ${value}`);
-    this.format[key] = value;
+    (this.format as any)[key] = value; // as any to override readonly
 
     if (this.opts.observer) {
       this.opts.observer({metadata: this, tag: {type: 'format', id: key, value}});
