@@ -11,7 +11,7 @@ import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:Ogg");
 
-export class SegmentTable implements  Token.IGetToken<Ogg.ISegmentTable> {
+export class SegmentTable implements Token.IGetToken<Ogg.ISegmentTable> {
 
   private static sum(buf: number[], off: number, len: number): number {
     let s: number = 0;
@@ -92,14 +92,14 @@ export class OggParser extends BasicParser {
           debug("firstPage=%s, lastPage=%s, continued=%s", header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
           if (header.headerType.firstPage) {
             const id = new Token.StringType(7, 'ascii').get(pageData, 0);
-            switch (id[1]) {
-              case 'v': // Ogg/Vorbis
+            switch (id) {
+              case 'vorbis': // Ogg/Vorbis
                 debug("Set page consumer to Ogg/Vorbis ");
                 this.pageConsumer = new VorbisParser(this.metadata, this.options);
                 break;
-              case 'p': // Ogg/Opus
+              case 'OpusHea': // Ogg/Opus
                 debug("Set page consumer to Ogg/Opus");
-                this.pageConsumer = new OpusParser(this.metadata, this.options);
+                this.pageConsumer = new OpusParser(this.metadata, this.options, this.tokenizer);
                 break;
               default:
                 throw new Error('gg audio-codec not recognized (id=' + id + ')');
