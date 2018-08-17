@@ -5,7 +5,7 @@ import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
 import {IOptions} from "../index";
 import {INativeMetadataCollector} from "../common/MetadataCollector";
-import {ITokenizer} from 'strtok3/lib';
+import {ITokenizer} from 'strtok3';
 
 /**
  * Opus parser
