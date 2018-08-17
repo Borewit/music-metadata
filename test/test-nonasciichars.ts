@@ -12,7 +12,7 @@ it("should decode non-ascii-characters", () => {
 
   return mm.parseFile(filePath).then(result => {
     t.deepEqual(result.common.artist, 'Janelle Monáe', 'common.artist');
-    t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder', 'Roman Gianarthur'], 'common.artists');
+    t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder'], 'common.artists');
   });
 
 });

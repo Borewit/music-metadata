@@ -133,7 +133,13 @@ export interface ICommonTagsResult {
   originalalbum?: string,
   originalartist?: string,
   // Discogs:
+  discogs_artist_id?: number[],
   discogs_release_id?: number,
+  discogs_label_id?: number,
+  discogs_master_release_id?: number,
+  discogs_votes?: number,
+  discogs_rating?: number,
+
   /**
    * Track gain in dB; eg: "-7.03 dB"
    */

@@ -8,7 +8,7 @@ import {
 } from "../index";
 
 import * as _debug from "debug";
-import {GenericTagId, IGenericTag, TagType, isSingleton} from "./GenericTagTypes";
+import {GenericTagId, IGenericTag, TagType, isSingleton, isUnique} from "./GenericTagTypes";
 import {CombinedTagMapper} from "./CombinedTagMapper";
 import {CommonTagMapper} from "./GenericTagMapper";
 
@@ -189,7 +189,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         }
         break;
 
+      case 'discogs_label_id':
       case 'discogs_release_id':
+      case 'discogs_master_release_id':
+      case 'discogs_artist_id':
+      case 'discogs_votes':
         tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
         break;
 
@@ -255,8 +259,12 @@ export class MetadataCollector implements INativeMetadataCollector {
       }
     } else {
       if (prio1 === prio0) {
-        this.common[tag.id].push(tag.value);
-        this.commonOrigin[tag.id] = prio1;
+        if (!isUnique(tag.id) || this.common[tag.id].indexOf(tag.value) === -1) {
+          this.common[tag.id].push(tag.value);
+        } else {
+          debug(`Ignore duplicate value: ${tagType}.${tag.id} = ${tag.value}`);
+        }
+        // no effect? this.commonOrigin[tag.id] = prio1;
       } else if (prio1 < prio0) {
         this.common[tag.id] = [tag.value];
         this.commonOrigin[tag.id] = prio1;

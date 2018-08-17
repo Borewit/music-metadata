@@ -88,7 +88,12 @@ export type GenericTagId =
   | 'key'
   | 'originalalbum'
   | 'originalartist'
+  | 'discogs_artist_id'
+  | 'discogs_label_id'
+  | 'discogs_master_release_id'
+  | 'discogs_rating'
   | 'discogs_release_id'
+  | 'discogs_votes'
   | 'replaygain_track_gain'
   | 'replaygain_track_peak';
 
@@ -97,7 +102,14 @@ export interface INativeTagMap {
 }
 
 export interface ITagInfo {
-  multiple: boolean;
+  /**
+   * True if result is an array
+   */
+  multiple: boolean,
+  /**
+   * True if the result is an array and each value in the array should be unique
+   */
+  unique?: boolean
 }
 
 export interface ITagInfoMap {
@@ -108,37 +120,36 @@ export const commonTags: ITagInfoMap = {
   year: {multiple: false},
   track: {multiple: false},
   disk: {multiple: false},
-
   title: {multiple: false},
   artist: {multiple: false},
-  artists: {multiple: true},
+  artists: {multiple: true, unique: true},
   albumartist: {multiple: false},
   album: {multiple: false},
   date: {multiple: false},
   originaldate: {multiple: false},
   originalyear: {multiple: false},
-  comment: {multiple: true},
-  genre: {multiple: true},
-  picture: {multiple: true},
-  composer: {multiple: true},
-  lyrics: {multiple: true},
-  albumsort: {multiple: false},
-  titlesort: {multiple: false},
-  work: {multiple: false},
-  artistsort: {multiple: false},
-  albumartistsort: {multiple: false},
-  composersort: {multiple: true},
-  lyricist: {multiple: true},
-  writer: {multiple: true},
-  conductor: {multiple: true},
-  remixer: {multiple: true},
-  arranger: {multiple: true},
-  engineer: {multiple: true},
-  producer: {multiple: true},
-  technician: {multiple: true},
-  djmixer: {multiple: true},
-  mixer: {multiple: true},
-  label: {multiple: true},
+  comment: {multiple: true, unique: false},
+  genre: {multiple: true, unique: true},
+  picture: {multiple: true, unique: true},
+  composer: {multiple: true, unique: true},
+  lyrics: {multiple: true, unique: false},
+  albumsort: {multiple: false, unique: true},
+  titlesort: {multiple: false, unique: true},
+  work: {multiple: false, unique: true},
+  artistsort: {multiple: false, unique: true},
+  albumartistsort: {multiple: false, unique: true},
+  composersort: {multiple: true, unique: true},
+  lyricist: {multiple: true, unique: true},
+  writer: {multiple: true, unique: true},
+  conductor: {multiple: true, unique: true},
+  remixer: {multiple: true, unique: true},
+  arranger: {multiple: true, unique: true},
+  engineer: {multiple: true, unique: true},
+  producer: {multiple: true, unique: true},
+  technician: {multiple: true, unique: true},
+  djmixer: {multiple: true, unique: true},
+  mixer: {multiple: true, unique: true},
+  label: {multiple: true, unique: true},
   grouping: {multiple: false},
   subtitle: {multiple: false},
   discsubtitle: {multiple: false},
@@ -149,7 +160,7 @@ export const commonTags: ITagInfoMap = {
   bpm: {multiple: false},
   mood: {multiple: false},
   media: {multiple: false},
-  catalognumber: {multiple: true},
+  catalognumber: {multiple: true, unique: true},
   show: {multiple: false},
   showsort: {multiple: false},
   podcast: {multiple: false},
@@ -181,16 +192,21 @@ export const commonTags: ITagInfoMap = {
   musicip_puid: {multiple: false},
   musicip_fingerprint: {multiple: false},
   website: {multiple: false},
-  'performer:instrument': {multiple: true},
+  'performer:instrument': {multiple: true, unique: true},
   averageLevel: {multiple: false},
   peakLevel: {multiple: false},
-  notes: {multiple: true},
+  notes: {multiple: true, unique: false},
 
   key: {multiple: false},
   originalalbum: {multiple: false},
   originalartist: {multiple: false},
 
+  discogs_artist_id: {multiple: true, unique: true},
   discogs_release_id: {multiple: false},
+  discogs_label_id: {multiple: false},
+  discogs_master_release_id: {multiple: false},
+  discogs_votes: {multiple: false},
+  discogs_rating: {multiple: false},
 
   replaygain_track_peak: {multiple: false},
   replaygain_track_gain: {multiple: false}
@@ -202,4 +218,12 @@ export const commonTags: ITagInfoMap = {
  */
 export function isSingleton(alias: GenericTagId): boolean {
   return commonTags.hasOwnProperty(alias) && !commonTags[alias].multiple;
+}
+
+/**
+ * @param alias Common (generic) tag
+ * @returns {boolean|*} true if given alias is a singleton or explicitly marked as unique
+ */
+export function isUnique(alias: GenericTagId): boolean {
+  return !commonTags[alias].multiple || commonTags[alias].unique;
 }
