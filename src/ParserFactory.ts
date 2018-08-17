@@ -277,7 +277,7 @@ export class ParserFactory {
         return parser;
       });
     }
-    const module = require('./' + moduleName);
+    const module = require('./' + moduleName + '/index');
     return Promise.resolve(new module.default());
   }
 
