@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
@@ -408,7 +407,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format: mm.IFormat) {
         // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
-        t.deepEqual(format.tagTypes, ["ID3v2.3", "exif"], "format.tagTypes = ['ID3v2.3']"); // ToDo
+        t.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes)');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');

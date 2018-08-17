@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from "chai";
 import * as mm from "../src";
 
@@ -36,7 +35,7 @@ describe("MPEG parsing", () => {
 
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
-      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"], "Tags: ID3v1 & ID3v2.3");
+      t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1"], "Tags: ID3v1 & ID3v2.3");
       t.strictEqual(metadata.format.dataformat, "mp2", "format.dataformat = mp2 (MPEG-2 Audio Layer II)");
       t.strictEqual(metadata.format.bitrate, 128000, "format.bitrate = 128 kbit/sec");
       t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
@@ -90,7 +89,7 @@ describe("MPEG parsing", () => {
       const filePath = path.join(__dirname, "samples", "04 - You Don't Know.mp3");
 
       function checkFormat(format) {
-        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1.1"], "format.tagTypes");
+        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.tagTypes");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         t.strictEqual(format.numberOfSamples, 9099648, "format.numberOfSamples"); // FooBar says 3:26.329 seconds (9.099.119 samples)
         t.strictEqual(format.duration, 206.3412244897959, "format.duration"); // FooBar says 3:26.329 seconds (9.099.119 samples)
@@ -143,7 +142,7 @@ describe("MPEG parsing", () => {
         checkFormat(result.format);
         checkCommon(result.common);
         checkID3v23(mm.orderTags(result.native["ID3v2.3"]));
-        checkID3v1(mm.orderTags(result.native["ID3v1.1"]));
+        checkID3v1(mm.orderTags(result.native.ID3v1));
       });
 
     });
@@ -156,7 +155,7 @@ describe("MPEG parsing", () => {
       this.timeout(15000); // It takes a long time to parse
 
       function checkFormat(format) {
-        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1.1"], "format.type");
+        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
         t.strictEqual(format.duration, 200.9861224489796, "format.duration"); // FooBar says 3:26.329 seconds
@@ -227,7 +226,7 @@ describe("MPEG parsing", () => {
       const filePath = path.join(__dirname, "samples", "outofbounds.mp3");
 
       function checkFormat(format) {
-        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1.1"], "format.type");
+        t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
@@ -245,10 +244,10 @@ describe("MPEG parsing", () => {
   /**
    * Related to issue #39
    */
-  describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1.1", () => {
+  describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
 
     function checkFormat(format: mm.IFormat, expectedDuration) {
-      t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v2.4", "ID3v1.1"], "format.tagTypes");
+      t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v2.4", "ID3v1"], "format.tagTypes");
       t.strictEqual(format.duration, expectedDuration, "format.duration");
       t.strictEqual(format.dataformat, "mp3", "format.dataformat");
       t.strictEqual(format.lossless, false, "format.lossless");
@@ -257,7 +256,7 @@ describe("MPEG parsing", () => {
       t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
     }
 
-    it("should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1.1", () => {
+    it("should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1", () => {
 
       return mm.parseFile(path.join(issueDir, "id3-multi-02.mp3")).then(metadata => {
         checkFormat(metadata.format, 230.29551020408164);
@@ -265,7 +264,7 @@ describe("MPEG parsing", () => {
     });
 
     /**
-     *  Test on multiple headers: ID3v1.1, ID3v2.3, ID3v2.4 & ID3v2.4 ( 2x ID3v2.4 !! )
+     *  Test on multiple headers: ID3v1, ID3v2.3, ID3v2.4 & ID3v2.4 ( 2x ID3v2.4 !! )
      */
     it("should decode mp3_01 with 2x ID3v2.4 header",  () => {
 

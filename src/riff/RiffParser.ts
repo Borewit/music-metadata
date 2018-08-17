@@ -1,6 +1,4 @@
-import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
-import {IOptions, INativeAudioMetadata, ITag} from "../";
 import * as Token from "token-types";
 import * as RiffChunk from "./RiffChunk";
 import * as WaveChunk from "./../wav/WaveChunk";
@@ -11,6 +9,7 @@ import Common from "../common/Util";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
 import * as _debug from "debug";
+import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:RIFF");
 
@@ -25,34 +24,22 @@ const debug = _debug("music-metadata:parser:RIFF");
  *
  *  ToDo: Split WAVE part from RIFF parser
  */
-export class WavePcmParser implements ITokenParser {
+export class WavePcmParser extends BasicParser {
 
-  private tokenizer: strtok3.ITokenizer;
-  private options: IOptions;
-
+  /*
   private metadata: INativeAudioMetadata = {
     format: {
       dataformat: "WAVE/?",
       lossless: true
     },
     native: {}
-  };
+  };*/
 
   private fact: WaveChunk.IFactChunk;
 
-  /**
-   * RIFF/ILIST-INFO tag stored in EXIF
-   */
-  private riffInfoTags: ITag[] = [];
-
-  private warnings: string[] = [];
-
   private blockAlign: number;
 
-  public parse(tokenizer: strtok3.ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.tokenizer = tokenizer;
-    this.options = options;
+  public parse(): Promise<void> {
 
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(riffHeader => {
@@ -63,16 +50,9 @@ export class WavePcmParser implements ITokenParser {
         return this.parseRiffChunk();
       })
       .catch(err => {
-        if (err.message === strtok3.endOfFile) {
-          return this.metadata;
-        } else {
+        if (err.message !== strtok3.endOfFile) {
           throw err;
         }
-      }).then(metadata => {
-        if (this.riffInfoTags.length > 0) {
-          metadata.native.exif = this.riffInfoTags;
-        }
-        return metadata;
       });
   }
 
@@ -98,7 +78,7 @@ export class WavePcmParser implements ITokenParser {
             return this.parseListTag(header);
 
           case 'fact': // extended Format chunk,
-            this.metadata.format.lossless = false;
+            this.metadata.setFormat('lossless', false);
             return this.tokenizer.readToken(new WaveChunk.FactChunk(header)).then(fact => {
               this.fact = fact;
             });
@@ -130,6 +110,9 @@ export class WavePcmParser implements ITokenParser {
               });
 
           case 'data': // PCM-data
+            if (this.metadata.format.lossless !== false) {
+              this.metadata.setFormat('lossless', true);
+            }
             this.metadata.format.numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.size / this.blockAlign);
             this.metadata.format.duration = this.metadata.format.numberOfSamples / this.metadata.format.sampleRate;
             this.metadata.format.bitrate = this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate; // ToDo: check me
@@ -170,7 +153,7 @@ export class WavePcmParser implements ITokenParser {
       .then(header => {
         const valueToken = new RiffChunk.ListInfoTagValue(header);
         return this.tokenizer.readToken(valueToken).then(value => {
-          this.riffInfoTags.push({id: header.chunkID, value: Common.stripNulls(value)});
+          this.addTag(header.chunkID, Common.stripNulls(value));
           chunkSize -= (8 + valueToken.len);
           if (chunkSize >= 8) {
             return this.parseRiffInfoTags(chunkSize);
@@ -179,6 +162,10 @@ export class WavePcmParser implements ITokenParser {
           }
         });
       });
+  }
+
+  private addTag(id: string, value: any) {
+    this.metadata.addTag('exif', id, value);
   }
 
 }

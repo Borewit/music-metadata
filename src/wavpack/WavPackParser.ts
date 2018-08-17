@@ -1,10 +1,9 @@
-import {INativeAudioMetadata, IOptions, IFormat} from "../";
-import {ITokenParser} from "../ParserFactory";
-import {ITokenizer} from "strtok3";
+import {INativeAudioMetadata} from "../";
 import * as Token from "token-types";
 import {APEv2Parser} from "../apev2/APEv2Parser";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";
+import {BasicParser} from "../common/BasicParser";
 
 /**
  * WavPack Block Header
@@ -148,30 +147,15 @@ class WavPack {
 /**
  * WavPack Parser
  */
-export class WavPackParser implements ITokenParser {
+export class WavPackParser extends BasicParser {
 
-  private format: IFormat;
-
-  private tokenizer: ITokenizer;
-  private options: IOptions;
-
-  public parse(tokenizer: ITokenizer, options: IOptions): Promise<INativeAudioMetadata> {
-
-    this.tokenizer = tokenizer;
-    this.options = options;
+  public parse(): Promise<void> {
 
     // First parse all WavPack blocks
     return this.parseWavPackBlocks()
       .then(() => {
         // try to parse APEv2 header
-        return APEv2Parser.parseFooter(tokenizer, options).then(tags => {
-          return {
-            format: this.format,
-            native: {
-              APEv2: tags
-            }
-          };
-        });
+        return APEv2Parser.parseFooter(this.metadata, this.tokenizer, this.options);
       });
   }
 
@@ -185,16 +169,14 @@ export class WavPackParser implements ITokenParser {
               throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
             }
 
-            if (header.blockIndex === 0 && !this.format) {
-              this.format = {
-                dataformat: 'WavPack',
-                lossless: !header.flags.isHybrid,
+            if (header.blockIndex === 0 && !this.metadata.format.dataformat) {
+              this.metadata.setFormat('dataformat', 'WavPack');
+              this.metadata.setFormat('lossless', !header.flags.isHybrid);
                 // tagTypes: this.type,
-                bitsPerSample: header.flags.bitsPerSample,
-                sampleRate: header.flags.samplingRate,
-                numberOfChannels: header.flags.isMono ? 1 : 2,
-                duration: header.totalSamples / header.flags.samplingRate
-              };
+              this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);
+              this.metadata.setFormat('sampleRate', header.flags.samplingRate);
+              this.metadata.setFormat('numberOfChannels', header.flags.isMono ? 1 : 2);
+              this.metadata.setFormat('duration', header.totalSamples / header.flags.samplingRate);
             }
 
             const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
@@ -227,7 +209,7 @@ export class WavPackParser implements ITokenParser {
               break;
 
             case 0x26: // ID_MD5_CHECKSUM
-              this.format.audioMD5 = data;
+              this.metadata.setFormat('audioMD5', data);
               break;
 
             case 0x2F: // ID_BLOCK_CHECKSUM

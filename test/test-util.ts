@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import util from "../src/common/Util";
 import {FourCcToken} from "../src/common/FourCC";
@@ -92,6 +91,13 @@ describe("shared utility functionality", () => {
         }
       }
     });
+
+    it("should be able to encode FourCC token", () => {
+      const buffer = Buffer.alloc(4);
+      FourCcToken.put(buffer, 0, 'abcd');
+      t.deepEqual(buffer.toString('binary'), 'abcd');
+    });
+
   });
 
 });

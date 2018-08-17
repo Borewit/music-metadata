@@ -1,4 +1,3 @@
-import {} from "mocha";
 import {assert} from 'chai';
 import * as mm from '../src';
 
@@ -9,10 +8,10 @@ const t = assert;
 
 describe("Parsing MPEG / ID3v1", () => {
 
-  describe("should be able to read an ID3v1.1 tag", () => {
+  describe("should be able to read an ID3v1 tag", () => {
 
     function checkFormat(format: mm.IFormat) {
-      t.deepEqual(format.tagTypes, ['ID3v1.1'], 'format.tagTypes');
+      t.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -27,7 +26,7 @@ describe("Parsing MPEG / ID3v1", () => {
       t.strictEqual(common.album, 'Blood Sugar (Single)', 'common.album');
       t.isUndefined(common.albumartist, 'common.albumartist');
       t.strictEqual(common.year, 2007, 'common.year');
-      t.strictEqual(common.track.no, 1, 'common.track.no = 1 (ID3v1.1 tag)');
+      t.strictEqual(common.track.no, 1, 'common.track.no = 1 (ID3v1 tag)');
       t.strictEqual(common.track.of, null, 'common.track.of = null');
       t.deepEqual(common.genre, ['Electronic'], 'common.genre');
       t.deepEqual(common.comment, ['abcdefg'], 'common.comment');
@@ -123,7 +122,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     function checkFormat(format: mm.IFormat) {
       t.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
-      t.deepEqual(format.tagTypes, ['ID3v1.1'], 'format.tagTypes');
+      t.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -159,7 +158,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
-      const id3v1 = mm.orderTags(metadata.native['ID3v1.1']);
+      const id3v1 = mm.orderTags(metadata.native.ID3v1);
       assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
       assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');
       assert.deepEqual(id3v1.album, ['Skupinove foto'], 'id3v1.album');

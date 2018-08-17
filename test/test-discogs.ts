@@ -1,10 +1,9 @@
-import {} from "mocha";
 import {assert} from "chai";
 import * as mm from "../src";
 
 import * as path from "path";
-import {VorbisTagMapper} from "../src/vorbis/VorbisTagMapper";
 import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
+import {VorbisTagMapper} from "../src/vorbis/VorbisTagMapper";
 
 const t = assert;
 
@@ -66,7 +65,7 @@ describe("Discogs mappings", () => {
       // Check discogs, DISCOGS_RELEASE_ID
       tagName = getTagName("DISCOGS_RELEASE_ID");
       t.deepEqual(native[tagName], ["4204665"], tagType + "/" + tagName);
-      t.strictEqual(common.discogs_release_id, 4204665, + tagType + "/" + tagName + " => common.discogs_release_id");
+      t.strictEqual(common.discogs_release_id, 4204665, +tagType + "/" + tagName + " => common.discogs_release_id");
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
       tagName = getTagName("DISCOGS_ARTIST_ID");
@@ -117,11 +116,16 @@ describe("Discogs mappings", () => {
 
       }
 
+      function checkNative(id3v23) {
+        // Compare expectedCommonTags with result.common
+        t.deepEqual(id3v23["TXXX:CATALOGID"], "PRAR931391");
+      }
+
       // Run with default options
       return mm.parseFile(filePath, {native: true}).then(metadata => {
 
         t.ok(metadata.common, "should include common tags");
-        t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1.1"]);
+        t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1"]);
 
         const common = metadata.common;
         const id3v23 = mm.orderTags(metadata.native["ID3v2.3"]);
@@ -144,7 +148,7 @@ describe("Discogs mappings", () => {
         t.deepEqual(id3v23["TXXX:CATALOGID"], ["PRAR931391"], "id3v23/TXXX:CATALOGID: PRAR931391");
         t.deepEqual(common.catalognumber, ["PRAR931391"], "id3v23/TXXX:CATALOGID => common.catalognumber");
 
-        // Check discogs, Genre mapping
+        // Check discogs, CATALOGID mapping
         t.deepEqual(id3v23.TCON, ["Rock;Blues"], "id3v23/TCON");
         t.deepEqual(id3v23["TXXX:STYLE"], ["Blues Rock"], "id3v23/TXXX:STYLE");
         t.deepEqual(common.genre, ["Rock;Blues", "Blues Rock"], "id3v23/TXXX:STYLE => common.genre");
@@ -165,17 +169,17 @@ describe("Discogs mappings", () => {
       // Run with default options
       return mm.parseFile(filePath, {native: true}).then(metadata => {
 
-          t.ok(metadata.common, "should include common tags");
-          t.deepEqual(metadata.format.tagTypes, ["vorbis"]);
+        t.ok(metadata.common, "should include common tags");
+        t.deepEqual(metadata.format.tagTypes, ["vorbis"]);
 
-          const format = metadata.format;
-          t.deepEqual(format.duration, 2.1229931972789116, "format.duration");
-          t.deepEqual(format.sampleRate, 44100, "format.sampleRate");
-          t.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
-          t.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
+        const format = metadata.format;
+        t.deepEqual(format.duration, 2.1229931972789116, "format.duration");
+        t.deepEqual(format.sampleRate, 44100, "format.sampleRate");
+        t.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
+        t.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
 
-          checkTags(metadata, "vorbis", tag => tag);
-        });
+        checkTags(metadata, "vorbis", tag => tag);
+      });
 
     });
 
@@ -225,17 +229,14 @@ describe("Discogs mappings", () => {
       // tagName = getTagName("DISCOGS_ALBUM_ARTISTS");
       // t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
       // t.deepEqual(common.artists, ["Yasmin Levy", "Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
-
       // Check Discogs-tag: DISCOGS_ARTIST_NAME ToDo: test multiple artists
       tagName = getTagName("DISCOGS_ARTIST_NAME");
       t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
-      t.deepEqual(common.artists, ["Yasmin Levy", "Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
-
+      t.deepEqual(common.artists, ["Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
       // Check Discogs-tag: DISCOGS_DATE
       tagName = getTagName("DISCOGS_DATE");
       t.deepEqual(native[tagName], ["2009"], tagType + "/" + tagName);
       // ToDo? t.deepEqual(common.originaldate, "2009", "Vorbis/DISCOGS_DATE: => common.originaldate");
-
       // Check Discogs: DISCOGS_CATALOG
       tagName = getTagName("DISCOGS_CATALOG");
       t.deepEqual(native[tagName], ["450010"], tagType + "/" + tagName);

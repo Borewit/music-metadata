@@ -1,17 +1,8 @@
 'use strict';
 
-import {TagPriority, TagType} from './common/GenericTagTypes';
+import {GenericTagId, TagType} from './common/GenericTagTypes';
 import {ITokenParser, ParserFactory} from "./ParserFactory";
 import * as Stream from "stream";
-import {IGenericTagMapper} from "./common/GenericTagMapper";
-import {ID3v24TagMapper} from "./id3v2/ID3v24TagMapper";
-import {MP4TagMapper} from "./mp4/MP4TagMapper";
-import {VorbisTagMapper} from "./vorbis/VorbisTagMapper";
-import {APEv2TagMapper} from "./apev2/APEv2TagMapper";
-import {ID3v22TagMapper} from "./id3v2/ID3v22TagMapper";
-import {ID3v1TagMapper} from "./id3v1/ID3v1TagMap";
-import {AsfTagMapper} from "./asf/AsfTagMapper";
-import {RiffInfoTagMapper} from "./riff/RiffInfoTagMap";
 import {Promise} from "es6-promise";
 
 /**
@@ -160,6 +151,8 @@ export interface ICommonTagsResult {
 
 }
 
+export type FormatId = 'dataformat' | 'duration' | 'bitrate' | 'sampleRate' | 'bitsPerSample' | 'encoder' | 'codecProfile' | 'lossless' | 'numberOfChannels' | 'numberOfSamples' | 'audioMD5';
+
 export interface IFormat {
 
   /**
@@ -274,12 +267,6 @@ export interface IOptions {
   skipCovers?: boolean;
 
   /**
-   * default: `false`, if set to `true`, it will use all tag headers available to populate common.
-   * Newest header version having priority.
-   */
-  mergeTagHeaders?: boolean;
-
-  /**
    * default: `false`, if set to `true`, it will not search all the entire track for additional headers.
    * Only recommenced to use in combination with streams.
    */
@@ -291,59 +278,48 @@ export interface IOptions {
    * @return {Promise<ITokenParser>} parser
    */
   loadParser?: (moduleName: string) => Promise<ITokenParser>;
+
+  /**
+   * Set observer for async callbacks to common or format.
+   */
+  observer?: Observer;
 }
 
 /**
- * Combines all generic-tag-mappers for each tag type
+ * Event definition send after each change to common/format metadata change to observer.
  */
-export class CombinedTagMapper {
-
-  public tagMappers: { [index: string]: IGenericTagMapper } = {};
-
-  public constructor() {
-    [
-      new ID3v1TagMapper(),
-      new ID3v22TagMapper(),
-      new ID3v24TagMapper(),
-      new MP4TagMapper(),
-      new MP4TagMapper(),
-      new VorbisTagMapper(),
-      new APEv2TagMapper(),
-      new AsfTagMapper(),
-      new RiffInfoTagMapper()
-    ].forEach(mapper => {
-      this.registerTagMapper(mapper);
-    });
-  }
+export interface IMetadataEvent {
 
   /**
-   * Process and set common tags
-   * @param comTags Target metadata to
-   * write common tags to
-   * @param comTags Generic tag results (output of this function)
-   * @param tag     Native tag
+   * Tag which has been updated.
    */
-  public setGenericTag(comTags: ICommonTagsResult, tagType: TagType, tag: ITag) {
-    const tagMapper = this.tagMappers[tagType];
-    if (tagMapper) {
-      this.tagMappers[tagType].setGenericTag(comTags, tag);
-    } else {
-      throw new Error("No generic tag mapper defined for tag-format: " + tagType);
-    }
-  }
+  tag: {
 
-  private registerTagMapper(genericTagMapper: IGenericTagMapper) {
-    for (const tagType of genericTagMapper.tagTypes) {
-      this.tagMappers[tagType] = genericTagMapper;
-    }
-  }
+    /**
+     * Either 'common' if it a generic tag event, or 'format' for format related updates
+     */
+    type: 'common' | 'format'
+
+    /**
+     * Tag id
+     */
+    id: GenericTagId | FormatId
+
+    /**
+     * Tag value
+     */
+    value: any
+  };
+
+  /**
+   * Metadata model including the attached tag
+   */
+  metadata: IAudioMetadata
 }
 
-export class MusicMetadataParser {
+export type Observer = (update: IMetadataEvent) => void;
 
-  public static getInstance(): MusicMetadataParser {
-    return new MusicMetadataParser();
-  }
+export class MusicMetadataParser {
 
   public static joinArtists(artists: string[]): string {
     if (artists.length > 2) {
@@ -351,8 +327,6 @@ export class MusicMetadataParser {
     }
     return artists.join(' & ');
   }
-
-  private tagMapper = new CombinedTagMapper();
 
   /**
    * Extract metadata from the given audio file
@@ -363,11 +337,7 @@ export class MusicMetadataParser {
    * @returns {Promise<IAudioMetadata>}
    */
   public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-
-    return ParserFactory.parseFile(filePath, opts).then(nativeData => {
-      return this.parseNativeTags(nativeData, opts.native, opts.mergeTagHeaders);
-    });
-
+    return ParserFactory.parseFile(filePath, opts);
   }
 
   /**
@@ -380,120 +350,30 @@ export class MusicMetadataParser {
    * @returns {Promise<IAudioMetadata>}
    */
   public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseStream(stream, mimeType, opts).then(nativeData => {
-      return this.parseNativeTags(nativeData, opts.native, opts.mergeTagHeaders);
-    });
+    return ParserFactory.parseStream(stream, mimeType, opts);
   }
 
-  /**
-   * Convert native tags to common tags
-   * @param nativeData
-   * @includeNative return native tags in result
-   * @returns {IAudioMetadata} Native + common tags
-   */
-  public parseNativeTags(nativeData: INativeAudioMetadata, includeNative?: boolean, mergeTagHeaders?: boolean): IAudioMetadata {
-
-    const metadata: IAudioMetadata = {
-      format: nativeData.format,
-      native: includeNative ? nativeData.native : undefined,
-      common: {} as any
-    };
-
-    metadata.format.tagTypes = [];
-
-    for (const tagType in nativeData.native) {
-      metadata.format.tagTypes.push(tagType as TagType);
-    }
-
-    for (const tagType of TagPriority) {
-
-      if (nativeData.native[tagType]) {
-        if (nativeData.native[tagType].length === 0) {
-          // ToDo: register warning: empty tag header
-        } else {
-
-          const common = {
-            track: {no: null, of: null},
-            disk: {no: null, of: null}
-          };
-
-          for (const tag of nativeData.native[tagType]) {
-            this.tagMapper.setGenericTag(common, tagType as TagType, tag);
-          }
-
-          for (const tag of Object.keys(common)) {
-            if (!metadata.common[tag]) {
-              metadata.common[tag] = common[tag];
-            }
-          }
-
-          if (!mergeTagHeaders) {
-            break;
-          }
-        }
-      }
-    }
-
-    if (metadata.common.artists && metadata.common.artists.length > 0) {
-      // common.artists explicitly by meta-data
-      metadata.common.artist = !metadata.common.artist ? MusicMetadataParser.joinArtists(metadata.common.artists) : metadata.common.artist[0];
-    } else {
-      if (metadata.common.artist) {
-        metadata.common.artists = metadata.common.artist as any;
-        if (metadata.common.artist.length > 1) {
-          delete metadata.common.artist;
-        } else {
-          metadata.common.artist = metadata.common.artist[0];
-        }
-      }
-    }
-
-    // Remove duplicate catalog-numbers
-    if (metadata.common.catalognumber) {
-      metadata.common.catalognumber = unique(metadata.common.catalognumber);
-    }
-
-    return metadata;
-  }
-}
-
-/**
- * Remove duplicate array values
- * @param {any[]} array
- * @returns {any} array with unique values
- */
-function unique(array: any[]) {
-  return array.reduce((accum, current) => {
-    if (accum.indexOf(current) < 0) {
-      accum.push(current);
-    }
-    return accum;
-  }, []);
 }
 
 /**
  * Parse audio file
  * @param filePath Media file to read meta-data from
- * @param options Parsing options:
- *   .native=true    Will return original header in result
- *   .mergeTagHeaders=false  Populate common from data of all headers available
+ * @param options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
-  return MusicMetadataParser.getInstance().parseFile(filePath, options);
+  return new MusicMetadataParser().parseFile(filePath, options);
 }
 
 /**
  * Parse audio Stream
  * @param stream
  * @param mimeType
- * @param opts Parsing options
- *   .native=true    Will return original header in result
- *   .mergeTagHeaders=false  Populate common from data of all headers available
+ * @param options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {
-  return MusicMetadataParser.getInstance().parseStream(stream, mimeType, opts);
+  return new MusicMetadataParser().parseStream(stream, mimeType, opts);
 }
 
 /**

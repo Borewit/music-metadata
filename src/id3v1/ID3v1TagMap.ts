@@ -17,6 +17,6 @@ const id3v1TagMap: INativeTagMap = {
 export class ID3v1TagMapper extends CommonTagMapper {
 
   public constructor() {
-    super(['ID3v1.1'], id3v1TagMap);
+    super(['ID3v1'], id3v1TagMap);
   }
 }

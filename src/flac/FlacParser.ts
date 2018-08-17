@@ -1,8 +1,6 @@
 'use strict';
 
 import common from '../common/Util';
-import {INativeAudioMetadata, IOptions, ITag} from "../index";
-import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
 import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
@@ -33,20 +31,11 @@ export class FlacParser extends AbstractID3Parser {
     return new FlacParser();
   }
 
-  private tokenizer: ITokenizer;
-  private options: IOptions;
-
-  private metadata: INativeAudioMetadata;
-  private tags: ITag[] = [];
   private padding: number = 0;
-  private warnings: string[] = []; // ToDo: should be part of the parsing result
 
-  public _parse(metadata: INativeAudioMetadata, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-    this.metadata = metadata;
-    this.tokenizer = tokenizer;
-    this.options = options;
+  public _parse(): Promise<void> {
 
-    return tokenizer.readToken<string>(FourCcToken).then(fourCC => {
+    return this.tokenizer.readToken<string>(FourCcToken).then(fourCC => {
       if (fourCC.toString() !== 'fLaC') {
         throw new Error("Invalid FLAC preamble");
       }
@@ -65,13 +54,16 @@ export class FlacParser extends AbstractID3Parser {
       // Parse block data
       return this.parseDataBlock(blockHeader).then(() => {
         if (blockHeader.lastBlock) {
-          this.metadata.native.vorbis = this.tags;
           // done
         } else {
           return this.parseBlockHeader();
         }
       });
     });
+  }
+
+  private addTag(id: string, value: any) {
+    this.metadata.addTag('vorbis', id, value);
   }
 
   private parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
@@ -108,14 +100,12 @@ export class FlacParser extends AbstractID3Parser {
       throw new Error("Unexpected block-stream-info length");
 
     return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then(streamInfo => {
-      this.metadata.format = {
-        dataformat: 'flac',
-        lossless: true,
-        numberOfChannels: streamInfo.channels,
-        bitsPerSample: streamInfo.bitsPerSample,
-        sampleRate: streamInfo.sampleRate,
-        duration: streamInfo.totalSamples / streamInfo.sampleRate
-      };
+      this.metadata.setFormat('dataformat', 'flac');
+      this.metadata.setFormat('lossless', true);
+      this.metadata.setFormat('numberOfChannels', streamInfo.channels);
+      this.metadata.setFormat('bitsPerSample',  streamInfo.bitsPerSample);
+      this.metadata.setFormat('sampleRate',  streamInfo.sampleRate);
+      this.metadata.setFormat('duration',  streamInfo.totalSamples / streamInfo.sampleRate);
     });
   }
 
@@ -131,7 +121,7 @@ export class FlacParser extends AbstractID3Parser {
       for (let i = 0; i < commentListLength; i++) {
         const comment = decoder.readStringUtf8();
         const split = comment.split('=');
-        this.tags.push({id: split[0].toUpperCase(), value: split.splice(1).join('=')});
+        this.addTag(split[0].toUpperCase(), split.splice(1).join('='));
       }
     });
   }
@@ -141,7 +131,7 @@ export class FlacParser extends AbstractID3Parser {
       return this.tokenizer.ignore(dataLen);
     } else {
       return this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen)).then(picture => {
-        this.tags.push({id: 'METADATA_BLOCK_PICTURE', value: picture});
+        this.addTag('METADATA_BLOCK_PICTURE', picture);
       });
     }
   }
