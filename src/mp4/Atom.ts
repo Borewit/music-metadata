@@ -17,10 +17,10 @@ export class Atom {
   public readonly atomPath: string;
   public readonly dataLen: number;
 
-  public constructor(public readonly header: AtomToken.IAtomHeader, public readonly parent: Atom) {
+  public constructor(public readonly header: AtomToken.IAtomHeader, public extended: boolean, public readonly parent: Atom) {
     this.children = [];
     this.atomPath = (this.parent ? this.parent.atomPath + '/' : '') + this.header.name;
-    this.dataLen = this.header.length - 8;
+    this.dataLen = this.header.length - (extended ? 16 : 8);
   }
 
   public readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
@@ -41,8 +41,17 @@ export class Atom {
     // debug("Reading next token on offset=%s...", offset); //  buf.toString('ascii')
     return tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
       .then(header => {
-        const atomBean = new Atom(header, this);
-        debug("parse atom name=%s, offset=%s, len=%s ", atomBean.atomPath, offset, header.length); //  buf.toString('ascii')
+        const extended = header.length === 1;
+        if (extended) {
+          return tokenizer.readToken<number>(AtomToken.ExtendedSize).then(extendedSize => {
+            header.length = extendedSize;
+            return new Atom(header, true, this);
+          });
+        } else {
+          return Promise.resolve(new Atom(header, false, this));
+        }
+      }).then(atomBean => {
+        debug("parse atom name=%s, extended=%s, ffset=%s, len=%s ", atomBean.atomPath, atomBean.extended, offset, atomBean.header.length); //  buf.toString('ascii')
         return atomBean.readData(tokenizer, dataHandler).then(() => {
           return atomBean;
         });

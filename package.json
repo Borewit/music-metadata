@@ -61,7 +61,7 @@
     "media-typer": "^0.3.0",
     "strtok3": "^1.5.3",
     "then-read-stream": "^1.2.1",
-    "token-types": "^0.9.4"
+    "token-types": "^0.10.0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
