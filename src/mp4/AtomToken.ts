@@ -2,6 +2,8 @@ import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
 
 import * as _debug from "debug";
+import util from "../common/Util";
+
 const debug = _debug("music-metadata:parser:MP4:atom");
 
 export interface IAtomHeader {
@@ -158,15 +160,20 @@ export const Header: Token.IToken<IAtomHeader> = {
   }
 };
 
-export const ftyp: Token.IGetToken<IAtomFtyp> = {
-    len: 4,
+/**
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap1/qtff1.html#//apple_ref/doc/uid/TP40000939-CH203-38190
+ */
+export const ExtendedSize = Token.UINT64_BE;
 
-    get: (buf: Buffer, off: number): IAtomFtyp => {
-      return {
-        type: new Token.StringType(4, "ascii").get(buf, off)
-      };
-    }
-  };
+export const ftyp: Token.IGetToken<IAtomFtyp> = {
+  len: 4,
+
+  get: (buf: Buffer, off: number): IAtomFtyp => {
+    return {
+      type: new Token.StringType(4, "ascii").get(buf, off)
+    };
+  }
+};
 
 /**
  * Token: Movie Header Atom

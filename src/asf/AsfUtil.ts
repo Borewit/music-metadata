@@ -1,5 +1,6 @@
 import common from "../common/Util";
 import {DataType} from "./AsfObject";
+import * as Token from "token-types";
 
 export type AttributeParser = (buf: Buffer) => boolean | string | number | Buffer;
 
@@ -11,14 +12,6 @@ export class AsfUtil {
 
   public static parseUnicodeAttr(buf): string {
     return common.stripNulls(common.decodeString(buf, "utf16le"));
-  }
-
-  /**
-   * Best effort approach to read 64 but unsigned integer.
-   * Note that JavasScript is limited to 2^53 - 1 bit.
-   */
-  public static readUInt64LE(buf: Buffer, offset: number = 0): number {
-    return common.readUInt64LE(buf, offset);
   }
 
   private static attributeParsers: AttributeParser[] = [
@@ -46,7 +39,7 @@ export class AsfUtil {
   }
 
   private static parseQWordAttr(buf: Buffer, offset: number = 0): number {
-    return AsfUtil.readUInt64LE(buf, offset);
+    return Token.UINT64_LE.get(buf, offset);
   }
 
   private static parseWordAttr(buf: Buffer, offset: number = 0): number {
