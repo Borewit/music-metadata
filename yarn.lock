@@ -1902,14 +1902,14 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
-strtok3@^1.5.3:
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-1.5.3.tgz#a788ce5b43cd5365d61ae9c7620113b2c94c068f"
+strtok3@^1.5.4:
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-1.5.4.tgz#b96590a36a78c9acabbf5590d779b5cabf809efc"
   dependencies:
     debug "^3.1.0"
     es6-promise "^4.2.4"
     then-read-stream "^1.2.1"
-    token-types "^0.9.4"
+    token-types "^0.10.0"
 
 supports-color@5.4.0, supports-color@^5.3.0, supports-color@^5.4.0:
   version "5.4.0"
@@ -1957,10 +1957,6 @@ to-fast-properties@^2.0.0:
 token-types@^0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/token-types/-/token-types-0.10.0.tgz#b45ac19ede381ff58fc818d760f7113a6158693b"
-
-token-types@^0.9.4:
-  version "0.9.4"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-0.9.4.tgz#ea24c5c3fc577292a1d362a252e348a0016361ad"
 
 tough-cookie@~2.3.3:
   version "2.3.4"
