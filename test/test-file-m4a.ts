@@ -182,7 +182,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
     it("should support extended atom header", () => {
 
-      const filePath = path.join(samples, "#133", "issue-133.m4a");
+      const filePath = path.join(samples, 'issue-133.m4a');
 
       return mm.parseFile(filePath, {duration: true}).then(metadata => {
         assert.deepEqual(metadata.format.dataformat, 'MPEG-4 audio');
