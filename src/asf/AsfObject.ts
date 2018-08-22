@@ -73,7 +73,7 @@ export const TopLevelHeaderObjectToken: Token.IGetToken<IAsfTopLevelObjectHeader
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
       objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
-      objectSize: util.readUInt64LE(buf, off + 16),
+      objectSize: Token.UINT64_LE.get(buf, off + 16),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
       // Reserved: 2 bytes
     };
@@ -91,7 +91,7 @@ export const HeaderObjectToken: Token.IGetToken<IAsfObjectHeader> = {
   get: (buf, off): IAsfObjectHeader => {
     return {
       objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
-      objectSize: util.readUInt64LE(buf, off + 16)
+      objectSize: Token.UINT64_LE.get(buf, off + 16)
     };
   }
 };
@@ -247,12 +247,12 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
 
     return {
       fileId: GUID.fromBin(buf, off),
-      fileSize: util.readUInt64LE(buf, off + 16),
-      creationDate: util.readUInt64LE(buf, off + 24),
-      dataPacketsCount: util.readUInt64LE(buf, off + 32),
-      playDuration: util.readUInt64LE(buf, off + 40),
-      sendDuration: util.readUInt64LE(buf, off + 48),
-      preroll: util.readUInt64LE(buf, off + 56),
+      fileSize: Token.UINT64_LE.get(buf, off + 16),
+      creationDate: Token.UINT64_LE.get(buf, off + 24),
+      dataPacketsCount: Token.UINT64_LE.get(buf, off + 32),
+      playDuration: Token.UINT64_LE.get(buf, off + 40),
+      sendDuration: Token.UINT64_LE.get(buf, off + 48),
+      preroll: Token.UINT64_LE.get(buf, off + 56),
       flags: {
         broadcast: util.strtokBITSET.get(buf, off + 64, 24),
         seekable: util.strtokBITSET.get(buf, off + 64, 25)
@@ -447,8 +447,8 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
 
   public get(buf: Buffer, off: number): IExtendedStreamPropertiesObject {
     return {
-      startTime: util.readUInt64LE(buf, off),
-      endTime: util.readUInt64LE(buf, off + 8),
+      startTime: Token.UINT64_LE.get(buf, off),
+      endTime: Token.UINT64_LE.get(buf, off + 8),
       dataBitrate: buf.readInt32LE(off + 12),
       bufferSize: buf.readInt32LE(off + 16),
       initialBufferFullness: buf.readInt32LE(off + 20),

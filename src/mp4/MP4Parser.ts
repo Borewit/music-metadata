@@ -13,8 +13,8 @@ import * as Token from "token-types";
 const tagFormat = 'iTunes MP4';
 
 /*
- * Parser for: MPEG-4 Audio / MPEG-4 Part 3 (m4a/mp4) extension
- * Support for Apple iTunes MP4 tags as found in a M4A/MP4 file
+ * Parser for: MPEG-4 Audio / MPEG-4 Part 3 (m4a/mp4) extension.
+ * Support for Apple iTunes MP4 tags as found in a M4A/MP4 file.
  * Ref:
  *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
@@ -22,18 +22,18 @@ const tagFormat = 'iTunes MP4';
 export class MP4Parser extends BasicParser {
 
   private static read_BE_Signed_Integer(value: Buffer): number {
-    return util.readIntBE(value, 0, value.length);
+    return Token.readIntBE(value, 0, value.length);
   }
 
   private static read_BE_Unsigned_Integer(value: Buffer): number {
-    return util.readUIntBE(value, 0, value.length);
+    return Token.readUIntBE(value, 0, value.length);
   }
 
   public parse(): Promise<void> {
 
     this.metadata.setFormat('dataformat', 'MPEG-4 audio');
 
-    const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, null);
+    const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, false, null);
     return rootAtom.readAtoms(this.tokenizer, atom => {
 
       if (atom.parent) {
@@ -220,7 +220,10 @@ export class MP4Parser extends BasicParser {
       len -= AtomToken.ftyp.len;
       if (len > 0) {
         return this.parseAtom_ftyp(len).then(types => {
-          types.push(ftype.type);
+          const value = util.stripNulls(ftype.type).trim();
+          if (value.length > 0) {
+            types.push(value);
+          }
           return types;
         });
       }
