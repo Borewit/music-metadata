@@ -12,15 +12,19 @@ export interface IPicture {
   /**
    * Image mime type
    */
-  format: string,
+  format: string;
   /**
    * Image data
    */
-  data: Buffer,
+  data: Buffer;
   /**
    * Optional description
    */
-  description?: string
+  description?: string;
+  /**
+   * Picture type
+   */
+  type?: string;
 }
 
 /**
@@ -30,128 +34,139 @@ export interface IRating {
   /**
    * Rating source, could be an e-mail address
    */
-  source?: string,
+  source?: string;
   /**
    * Rating [0..1]
    */
-  rating: number
+  rating: number;
 }
 
 export interface ICommonTagsResult {
-  track: { no: number, of: number },
-  disk: { no: number, of: number },
+  track: { no: number, of: number };
+  disk: { no: number, of: number };
   /**
    * Release year
    */
-  year?: number,
-  title?: string,
-  artist?: string, // ToDo: string[] is only used internal
-  artists?: string[],
-  albumartist?: string,
-  album?: string,
+  year?: number;
+  title?: string;
+  artist?: string;
+  artists?: string[];
+  albumartist?: string;
+  album?: string;
   /**
    * Release data
    */
-  date?: string,
+  date?: string;
   /**
    * Original release date
    */
-  originaldate?: string,
+  originaldate?: string;
   /**
    * Original release yeat
    */
-  originalyear?: number,
-  comment?: string[],
+  originalyear?: number;
+  comment?: string[];
   genre?: string[];
   picture?: IPicture[];
   composer?: string[];
-  lyrics?: string[],
-  albumsort?: string,
-  titlesort?: string,
-  work?: string,
-  artistsort?: string,
-  albumartistsort?: string,
-  composersort?: string[],
-  lyricist?: string[],
-  writer?: string[],
-  conductor?: string[],
-  remixer?: string[],
-  arranger?: string[],
-  engineer?: string[],
-  producer?: string[],
-  djmixer?: string[],
-  mixer?: string[],
-  technician?: string[],
-  label?: string[],
-  grouping?: string[],
-  subtitle?: string[],
-  discsubtitle?: string[],
-  totaltracks?: string,
-  totaldiscs?: string,
-  compilation?: string,
-  rating?: IRating[],
-  bpm?: string,
-  mood?: string,
-  media?: string,
-  catalognumber?: string[],
-  show?: string,
-  showsort?: string,
-  podcast?: string,
-  podcasturl?: string,
-  releasestatus?: string,
-  releasetype?: string[],
-  releasecountry?: string,
-  script?: string,
-  language?: string,
-  copyright?: string,
-  license?: string,
-  encodedby?: string,
-  encodersettings?: string,
-  gapless?: boolean,
-  barcode?: string, // ToDo: multiple??
+  lyrics?: string[];
+  albumsort?: string;
+  titlesort?: string;
+  work?: string;
+  artistsort?: string;
+  albumartistsort?: string;
+  composersort?: string[];
+  lyricist?: string[];
+  writer?: string[];
+  conductor?: string[];
+  remixer?: string[];
+  arranger?: string[];
+  engineer?: string[];
+  producer?: string[];
+  djmixer?: string[];
+  mixer?: string[];
+  technician?: string[];
+  label?: string[];
+  grouping?: string[];
+  subtitle?: string[];
+  discsubtitle?: string[];
+  totaltracks?: string;
+  totaldiscs?: string;
+  compilation?: string;
+  rating?: IRating[];
+  bpm?: string;
+  mood?: string;
+  media?: string;
+  catalognumber?: string[];
+  show?: string;
+  showsort?: string;
+  podcast?: string;
+  podcasturl?: string;
+  releasestatus?: string;
+  releasetype?: string[];
+  releasecountry?: string;
+  script?: string;
+  language?: string;
+  copyright?: string;
+  license?: string;
+  encodedby?: string;
+  encodersettings?: string;
+  gapless?: boolean;
+  barcode?: string; // ToDo: multiple??
   // International Standard Recording Code
-  isrc?: string[],
-  asin?: string,
-  musicbrainz_recordingid?: string,
-  musicbrainz_trackid?: string,
-  musicbrainz_albumid?: string,
-  musicbrainz_artistid?: string[],
-  musicbrainz_albumartistid?: string[],
-  musicbrainz_releasegroupid?: string,
-  musicbrainz_workid?: string,
-  musicbrainz_trmid?: string,
-  musicbrainz_discid?: string,
-  acoustid_id?: string,
-  acoustid_fingerprint?: string,
-  musicip_puid?: string,
-  musicip_fingerprint?: string,
-  website?: string,
-  'performer:instrument'?: string[],
-  averageLevel?: number,
-  peakLevel?: number,
-  notes?: string[],
-  originalalbum?: string,
-  originalartist?: string,
+  isrc?: string[];
+  asin?: string;
+  musicbrainz_recordingid?: string;
+  musicbrainz_trackid?: string;
+  musicbrainz_albumid?: string;
+  musicbrainz_artistid?: string[];
+  musicbrainz_albumartistid?: string[];
+  musicbrainz_releasegroupid?: string;
+  musicbrainz_workid?: string;
+  musicbrainz_trmid?: string;
+  musicbrainz_discid?: string;
+  acoustid_id?: string;
+  acoustid_fingerprint?: string;
+  musicip_puid?: string;
+  musicip_fingerprint?: string;
+  website?: string;
+  'performer:instrument'?: string[];
+  averageLevel?: number;
+  peakLevel?: number;
+  notes?: string[];
+  originalalbum?: string;
+  originalartist?: string;
   // Discogs:
-  discogs_artist_id?: number[],
-  discogs_release_id?: number,
-  discogs_label_id?: number,
-  discogs_master_release_id?: number,
-  discogs_votes?: number,
-  discogs_rating?: number,
+  discogs_artist_id?: number[];
+  discogs_release_id?: number;
+  discogs_label_id?: number;
+  discogs_master_release_id?: number;
+  discogs_votes?: number;
+  discogs_rating?: number;
 
   /**
    * Track gain in dB; eg: "-7.03 dB"
    */
-  replaygain_track_gain?: string,
+  replaygain_track_gain?: string;
   /**
    * Track peak [0..1]
    */
-  replaygain_track_peak?: number
+  replaygain_track_peak?: number;
 
 }
 
-export type FormatId = 'dataformat' | 'duration' | 'bitrate' | 'sampleRate' | 'bitsPerSample' | 'encoder' | 'codecProfile' | 'lossless' | 'numberOfChannels' | 'numberOfSamples' | 'audioMD5';
+export type FormatId =
+  'dataformat'
+  | 'duration'
+  | 'bitrate'
+  | 'sampleRate'
+  | 'bitsPerSample'
+  | 'encoder'
+  | 'codecProfile'
+  | 'lossless'
+  | 'numberOfChannels'
+  | 'numberOfSamples'
+  | 'audioMD5';
 
 export interface IFormat {
 
@@ -323,7 +338,7 @@ export class MusicMetadataParser {
 
   public static joinArtists(artists: string[]): string {
     if (artists.length > 2) {
-      return artists.slice(0, artists.length - 1).join(', ') + ' & ' +  artists[artists.length - 1];
+      return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
     }
     return artists.join(' & ');
   }
