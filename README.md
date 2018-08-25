@@ -41,10 +41,11 @@ npm install music-metadata
   * encoding profile (e.g. CBR, V0, V2)
   
 
-### Online demo's
+### Browser Support
 
 Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
 * [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
+* [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is an experimental version which can be used in the browser.
 
 ### Donate
 [PayPal.me](https://paypal.me/borewit)
