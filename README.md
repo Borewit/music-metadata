@@ -9,13 +9,6 @@
 
 Stream and file based music metadata parser for node.
 
-## Installation
-Install via [npm](http://npmjs.org):
-
-```
-npm install music-metadata
-```
-
 ## Features
 
 * Supports metadata of the following audio and tag types:
@@ -33,7 +26,7 @@ npm install music-metadata
 | wv, wvp                                | audio/x-wavpack                       | APEv2                              |
 
 
-* Support for [MusicBrainz](https://pages.github.com/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
+* Support for [MusicBrainz](https://musicbrainz.org/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
 * Support for encoding / format details:
   * bitrate
   * sample depth
@@ -41,16 +34,31 @@ npm install music-metadata
   * encoding profile (e.g. CBR, V0, V2)
   
 
+### Online demo's
+* [Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
+* [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
+
 ### Browser Support
 
 Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
-* [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
 * [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is an experimental version which can be used in the browser.
 
-### Donate
+### Donation
+Not required, but would be extremely motivating.
 [PayPal.me](https://paypal.me/borewit)
 
-## API
+## Usage
+
+### Installation
+Install via [npm](http://npmjs.org/):
+
+```bash
+npm install music-metadata
+```
+or yarn
+```bash
+yarn add music-metadata
+```
 
 ### Import music-metadata:
 
