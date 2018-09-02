@@ -6,7 +6,7 @@ import {ID3v22TagMapper} from "../id3v2/ID3v22TagMapper";
 import {APEv2TagMapper} from "../apev2/APEv2TagMapper";
 import {IGenericTagMapper} from "./GenericTagMapper";
 import {MP4TagMapper} from "../mp4/MP4TagMapper";
-import {VorbisTagMapper} from "../vorbis/VorbisTagMapper";
+import {VorbisTagMapper} from "../ogg/vorbis/VorbisTagMapper";
 import {RiffInfoTagMapper} from "../riff/RiffInfoTagMap";
 import {ITag} from "../";
 
