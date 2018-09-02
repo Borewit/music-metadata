@@ -180,7 +180,6 @@ describe("Parsing Ogg", function() {
 
   describe("Parsing Ogg/Speex", () => {
 
-
     describe("decode: 'female_scrub.spx'", () => {
 
       const filePath = path.join(samplePath, 'female_scrub.spx');
@@ -230,5 +229,7 @@ describe("Parsing Ogg", function() {
       });
 
     });
+
   });
+
 });

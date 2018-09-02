@@ -10,7 +10,6 @@ import {OpusParser} from './opus/OpusParser';
 import {SpeexParser} from './speex/SpeexParser';
 import {BasicParser} from '../common/BasicParser';
 
-
 const debug = initDebug('music-metadata:parser:ogg');
 
 export class SegmentTable implements Token.IGetToken<Ogg.ISegmentTable> {
