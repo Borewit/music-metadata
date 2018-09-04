@@ -56,7 +56,6 @@ export class ParserFactory {
             });
           });
         });
-
       } else {
         throw new Error('No parser found for extension: ' + path.extname(filePath));
       }
@@ -163,8 +162,10 @@ export class ParserFactory {
       case ".ogg":
       case ".ogv":
       case ".oga":
+      case ".ogm":
       case ".ogx":
-      case ".opus": // recommended filename extension for Ogg Opus files
+      case ".opus": // recommended filename extension for Ogg Opus
+      case ".spx": // recommended filename extension for Ogg Speex
         return 'ogg';
 
       case ".aif":
@@ -219,6 +220,8 @@ export class ParserFactory {
             return 'mp4';
 
           case 'ogg': // RFC 7845
+          case 'opus': // RFC 6716
+          case 'speex': // RFC 5574
             return 'ogg';
 
           case 'ms-wma':

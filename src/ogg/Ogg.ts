@@ -2,10 +2,6 @@
  * Page header
  * Ref: https://www.xiph.org/ogg/doc/framing.html#page_header
  */
-
-import {INativeAudioMetadata} from "../index";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
-
 export interface IPageHeader {
   /**
    * capture_pattern
@@ -62,6 +58,12 @@ export interface ISegmentTable {
 }
 
 export interface IPageConsumer {
+
+  /**
+   * RName of Ogg coded, like 'Opus', 'Speex'
+   * @returns {string}
+   */
+  codecName: string
 
   /**
    * Parse Ogg page

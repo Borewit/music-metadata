@@ -1,11 +1,12 @@
 "use strict";
 
 import {ITag} from "../index";
+import Util from '../common/Util';
 import * as Token from "token-types";
+import * as initDebug from "debug";
 
-import * as _debug from "debug";
 import {BasicParser} from "../common/BasicParser";
-const debug = _debug("music-metadata:parser:ID3v1");
+const debug = initDebug("music-metadata:parser:ID3v1");
 
 /**
  * ID3v1 Genre mappings
@@ -89,18 +90,13 @@ const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
 
 class Id3v1StringType extends Token.StringType {
 
-  private static trimRightNull(x: string): string {
-    const pos0 = x.indexOf('\0');
-    return pos0 === -1 ? x : x.substr(0, pos0);
-  }
-
   constructor(len: number) {
     super(len, "binary");
   }
 
   public get(buf: Buffer, off: number): string {
     let value = super.get(buf, off);
-    value = Id3v1StringType.trimRightNull(value);
+    value = Util.trimRightNull(value);
     value = value.trim();
     return value.length > 0 ? value : undefined;
   }

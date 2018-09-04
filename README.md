@@ -13,22 +13,32 @@ Stream and file based music metadata parser for node.
 
 * Supports metadata of the following audio and tag types:
 
-| File extension                         | MIME-type                             |   Tag header type                  |
-| -------------------------------------- | ------------------------------------- | ---------------------------------- |
-| ape                                    | audio/ape                             | APEv2                              |
-| aif, aiff, aifc                        | audio/aiff, audio/x-aif, audio/x-aifc | ID3v2                              |
-| asf, wma, wmv                          | audio/x-ms-wma, video/x-ms-asf        | ASF                                |
-| flac                                   | audio/flac                            | Vorbis                             | 
-| m4a, m4b, m4p, m4v, m4r, 3gp, mp4, aac | audio/aac, audio/aacp                 | QTFF                               | 
-| mp2, mp3, m2a                          | audio/mpeg                            | ID3v1.1, ID3v2                     | 
-| ogv, oga, ogx, ogg, opus               | audio/ogg, application/ogg            | Vorbis                             |
-| wav                                    | audio/wav, audio/wave                 | ID3v2, RIFF/INFO (EXIF 2.3)        |
-| wv, wvp                                | audio/x-wavpack                       | APEv2                              |
+Support for audio file types:
+* [Audio Interchange File Format (AIFF)](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
+* [Advanced Systems Format (ASF) (.wma)](https://wikipedia.org/wiki/Advanced_Systems_Format)
+* [Free Lossless Audio Codec (FLAC)](https://wikipedia.org/wiki/FLAC)
+* [Monkey's Audio (.ape)](https://wikipedia.org/wiki/Monkey's_Audio)
+* [MP3](https://wikipedia.org/wiki/MP3)
+* [MPEG-4 Audio (.m4a, .mp4)](https://wikipedia.org/wiki/MPEG-4)
+* [Ogg](https://wikipedia.org/wiki/Ogg)
+  * [Ogg Vorbis (.ogg)](https://wikipedia.org/wiki/Ogg_Vorbis)
+  * [Speex (.spx)](https://wikipedia.org/wiki/Speex)
+  * [Opos (.opus)](https://wikipedia.org/wiki/Opus_(audio_format))
+* [WAV](https://wikipedia.org/wiki/WAV)
+* [WavPack (.wv)](https://wikipedia.org/wiki/WavPack)
 
-
+Support for tags:
+* APEv2  
+* ASF 
+* EXIF 2.3
+* ID3v1, ID3v1.1, ID3v2.3 & ID3v2.4
+* RIFF/INFO
+* QTFF 
+* Discogs
 * Support for [MusicBrainz](https://musicbrainz.org/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
+
 * Support for encoding / format details:
-  * bitrate
+  * bit-rate
   * sample depth
   * duration
   * encoding profile (e.g. CBR, V0, V2)

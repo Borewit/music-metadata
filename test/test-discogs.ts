@@ -3,7 +3,7 @@ import * as mm from "../src";
 
 import * as path from "path";
 import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
-import {VorbisTagMapper} from "../src/vorbis/VorbisTagMapper";
+import {VorbisTagMapper} from "../src/ogg/vorbis/VorbisTagMapper";
 
 const t = assert;
 

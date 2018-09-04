@@ -1,15 +1,16 @@
 'use strict';
-import common from "../common/Util";
-import {Promise} from "es6-promise";
-import {VorbisParser} from "../vorbis/VorbisParser";
-import {FourCcToken} from "../common/FourCC";
-import * as Ogg from "./Ogg";
-import {OpusParser} from "../opus/OpusParser";
-import * as Token from "token-types";
-import * as _debug from "debug";
-import {BasicParser} from "../common/BasicParser";
+import * as Token from 'token-types';
+import * as initDebug from 'debug';
+import {Promise} from 'es6-promise';
+import common from '../common/Util';
+import * as Ogg from './Ogg';
+import {FourCcToken} from '../common/FourCC';
+import {VorbisParser} from './vorbis/VorbisParser';
+import {OpusParser} from './opus/OpusParser';
+import {SpeexParser} from './speex/SpeexParser';
+import {BasicParser} from '../common/BasicParser';
 
-const debug = _debug("music-metadata:parser:Ogg");
+const debug = initDebug('music-metadata:parser:ogg');
 
 export class SegmentTable implements Token.IGetToken<Ogg.ISegmentTable> {
 
@@ -76,7 +77,7 @@ export class OggParser extends BasicParser {
    * @returns {Promise<void>}
    */
   public parse(): Promise<void> {
-    debug("pos=%s, parsePage()", this.tokenizer.position);
+    debug('pos=%s, parsePage()', this.tokenizer.position);
     return this.tokenizer.readToken<Ogg.IPageHeader>(OggParser.Header).then(header => {
       if (header.capturePattern !== 'OggS') { // Capture pattern
         throw new Error('expected ogg header but was not found');
@@ -84,27 +85,32 @@ export class OggParser extends BasicParser {
       this.header = header;
 
       this.pageNumber = header.pageSequenceNo;
-      debug("page#=%s, Ogg.id=%s", header.pageSequenceNo, header.capturePattern);
+      debug('page#=%s, Ogg.id=%s', header.pageSequenceNo, header.capturePattern);
 
       return this.tokenizer.readToken<Ogg.ISegmentTable>(new SegmentTable(header)).then(segmentTable => {
-        debug("totalPageSize=%s", segmentTable.totalPageSize);
+        debug('totalPageSize=%s', segmentTable.totalPageSize);
         return this.tokenizer.readToken<Buffer>(new Token.BufferType(segmentTable.totalPageSize)).then(pageData => {
-          debug("firstPage=%s, lastPage=%s, continued=%s", header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
+          debug('firstPage=%s, lastPage=%s, continued=%s', header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
           if (header.headerType.firstPage) {
             const id = new Token.StringType(7, 'ascii').get(pageData, 0);
             switch (id) {
               case 'vorbis': // Ogg/Vorbis
-                debug("Set page consumer to Ogg/Vorbis ");
+                debug('Set page consumer to Ogg/Vorbis ');
                 this.pageConsumer = new VorbisParser(this.metadata, this.options);
                 break;
               case 'OpusHea': // Ogg/Opus
-                debug("Set page consumer to Ogg/Opus");
+                debug('Set page consumer to Ogg/Opus');
                 this.pageConsumer = new OpusParser(this.metadata, this.options, this.tokenizer);
+                break;
+              case 'Speex  ': // Ogg/Speex
+                debug('Set page consumer to Ogg/Speex');
+                this.pageConsumer = new SpeexParser(this.metadata, this.options, this.tokenizer);
                 break;
               default:
                 throw new Error('gg audio-codec not recognized (id=' + id + ')');
             }
           }
+          this.metadata.setFormat('dataformat', 'Ogg/' + this.pageConsumer.codecName);
           this.pageConsumer.parsePage(header, pageData);
           if (!header.headerType.lastPage) {
             return this.parse(); // Parse next page
@@ -114,10 +120,10 @@ export class OggParser extends BasicParser {
     })
       .catch(err => {
         switch (err.message) {
-          case "End-Of-File":
+          case 'End-Of-File':
             break; // ignore this error
 
-          case "FourCC contains invalid characters":
+          case 'FourCC contains invalid characters':
             if (this.pageNumber > 0) {
               // ignore this error: work-around if last OGG-page is not marked with last-page flag
               // ToDo: capture warning

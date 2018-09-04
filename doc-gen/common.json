@@ -207,7 +207,7 @@
     "description": "Track [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
   "musicbrainz_albumartistid": {
-    "description": "Album (written on cover) [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
+    "description": "Album artists [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
   "musicbrainz_releasegroupid": {
     "description": "[Release group](https://musicbrainz.org/doc/Release_Group) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"

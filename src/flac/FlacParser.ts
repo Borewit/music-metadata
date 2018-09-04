@@ -2,7 +2,7 @@
 
 import common from '../common/Util';
 import * as Token from "token-types";
-import {IVorbisPicture, VorbisPictureToken} from "../vorbis/Vorbis";
+import {IVorbisPicture, VorbisPictureToken} from "../ogg/vorbis/Vorbis";
 import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
 import {FourCcToken} from "../common/FourCC";
 import {Promise} from "es6-promise";

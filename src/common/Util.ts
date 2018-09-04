@@ -37,6 +37,11 @@ export default class Util {
     }
   }
 
+  public static trimRightNull(x: string): string {
+    const pos0 = x.indexOf('\0');
+    return pos0 === -1 ? x : x.substr(0, pos0);
+  }
+
   public static swapBytes(buffer: Buffer): Buffer {
     const l = buffer.length;
     assert.ok((l & 1) === 0, 'Buffer length must be even');

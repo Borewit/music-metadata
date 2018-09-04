@@ -1,19 +1,22 @@
 'use strict';
-import * as Vorbis from './Vorbis';
-import {IOptions} from "../";
+
 import {Promise} from "es6-promise";
 import * as Token from "token-types";
-import * as Ogg from "../ogg/Ogg";
 import * as _debug from "debug";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
+import {IOptions} from "../../index";
+import {INativeMetadataCollector} from "../../common/MetadataCollector";
+import * as Ogg from "../Ogg";
+import * as Vorbis from './Vorbis';
 
-const debug = _debug("music-metadata:parser:Ogg/Vorbis1");
+const debug = _debug("music-metadata:parser:ogg:vorbis1");
 
 /**
  * Vorbis 1 Parser.
  * Used by OggParser
  */
 export class VorbisParser implements Ogg.IPageConsumer {
+
+  public codecName = 'Vorbis I';
 
   private pageSegments: Buffer[] = [];
 
@@ -65,7 +68,6 @@ export class VorbisParser implements Ogg.IPageConsumer {
     const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis')
       throw new Error('Metadata does not look like Vorbis');
-    this.metadata.setFormat('dataformat', 'Ogg/Vorbis I');
     if (commonHeader.packetType === 1) {
       const idHeader = Vorbis.IdentificationHeader.get(pageData, Vorbis.CommonHeader.len);
 

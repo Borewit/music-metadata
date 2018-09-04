@@ -1,10 +1,10 @@
 'use strict';
 import * as Opus from './Opus';
-import {IPageHeader} from "../ogg/Ogg";
+import {IPageHeader} from "../Ogg";
 import * as Token from "token-types";
 import {VorbisParser} from "../vorbis/VorbisParser";
-import {IOptions} from "../index";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
+import {IOptions} from "../../index";
+import {INativeMetadataCollector} from "../../common/MetadataCollector";
 import {ITokenizer} from 'strtok3';
 
 /**
@@ -14,8 +14,9 @@ import {ITokenizer} from 'strtok3';
  */
 export class OpusParser extends VorbisParser {
 
-  private idHeader: Opus.IIdHeader;
+  public codecName = 'Opus';
 
+  private idHeader: Opus.IIdHeader;
   private lastPos: number = -1;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
@@ -32,7 +33,6 @@ export class OpusParser extends VorbisParser {
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
     if (this.idHeader.magicSignature !== "OpusHead")
       throw new Error("Illegal ogg/Opus magic-signature");
-    this.metadata.setFormat('dataformat', 'Ogg/Opus');
     this.metadata.setFormat('sampleRate', this.idHeader.inputSampleRate);
     this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
   }

@@ -2,9 +2,11 @@ import {assert, expect} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import {IdHeader} from "../src/opus/Opus";
+import {IdHeader} from "../src/ogg/opus/Opus";
 
 describe("Parsing Ogg", function() {
+
+  const samplePath = path.join(__dirname, 'samples');
 
   this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
@@ -25,7 +27,7 @@ describe("Parsing Ogg", function() {
     assert.deepEqual(common.isrc, ['USGF19942502'], 'common.isrc');
   }
 
-  function  check_Nirvana_In_Bloom_VorbisTags(vorbis) {
+  function check_Nirvana_In_Bloom_VorbisTags(vorbis) {
 
     assert.deepEqual(vorbis.TRACKNUMBER, ['2'], 'vorbis.TRACKNUMBER');
     assert.deepEqual(vorbis.TRACKTOTAL, ['12'], 'vorbis.TRACKTOTAL');
@@ -50,7 +52,7 @@ describe("Parsing Ogg", function() {
 
     describe("decode: Nirvana - In Bloom - 2-sec.ogg", () => {
 
-      const filePath = path.join(__dirname, 'samples', "Nirvana - In Bloom - 2-sec.ogg");
+      const filePath = path.join(samplePath, "Nirvana - In Bloom - 2-sec.ogg");
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -84,7 +86,7 @@ describe("Parsing Ogg", function() {
 
     it("should handle page not finalized with the lastPage flag", () => {
 
-      const filePath = path.join(__dirname, 'samples', "issue_62.ogg");
+      const filePath = path.join(samplePath, "issue_62.ogg");
 
       return mm.parseFile(filePath, {native: true}).then(metadata => {
 
@@ -106,7 +108,7 @@ describe("Parsing Ogg", function() {
      */
     it("should not fail on an Ogg/Vorbis 'Setup header'", () => {
 
-      const filePath = path.join(__dirname, 'samples', 'issue_70.ogg');
+      const filePath = path.join(samplePath, 'issue_70.ogg');
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         assert.strictEqual(metadata.format.dataformat, 'Ogg/Vorbis I');
@@ -142,7 +144,7 @@ describe("Parsing Ogg", function() {
 
     describe("decode: Nirvana - In Bloom - 2-sec.opus", () => {
 
-      const filePath = path.join(__dirname, 'samples', "Nirvana - In Bloom - 2-sec.opus");
+      const filePath = path.join(samplePath, "Nirvana - In Bloom - 2-sec.opus");
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -176,24 +178,56 @@ describe("Parsing Ogg", function() {
     });
   });
 
-  it("check for ogg-multipage-metadata-bug", () => {
+  describe("Parsing Ogg/Speex", () => {
 
-    const filename = 'ogg-multipagemetadata-bug.ogg';
-    const filePath = path.join(__dirname, 'samples', filename);
+    describe("decode: 'female_scrub.spx'", () => {
 
-    return mm.parseFile(filePath).then(result => {
-      assert.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
-      assert.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist');
-      assert.strictEqual(result.common.albumartist, 'Modestep', 'albumartist');
-      assert.strictEqual(result.common.album, 'To The Stars', 'album');
-      assert.strictEqual(result.common.date, '2011-01-01', 'year');
-      assert.strictEqual(result.common.track.no, 2, 'track no');
-      assert.strictEqual(result.common.track.of, 5, 'track of');
-      assert.strictEqual(result.common.disk.no, 1, 'disk no');
-      assert.strictEqual(result.common.disk.of, 1, 'disk of');
-      assert.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
-      assert.strictEqual(result.common.picture[0].format, 'image/jpeg', 'picture format');
-      assert.strictEqual(result.common.picture[0].data.length, 207439, 'picture length');
+      const filePath = path.join(samplePath, 'female_scrub.spx');
+
+      function checkFormat(format) {
+        assert.strictEqual(format.dataformat, 'Ogg/Speex', 'format.dataformat');
+        assert.strictEqual(format.encoder, '1.0beta1');
+        assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
+      }
+
+      it("as a file", () => {
+
+        return mm.parseFile(filePath, {native: true}).then(metadata => {
+          checkFormat(metadata.format);
+        });
+
+      });
+
+      it("as a stream", () => {
+
+        const stream = fs.createReadStream(filePath);
+
+        return mm.parseStream(stream, 'audio/speex', {native: true}).then(metadata => {
+          checkFormat(metadata.format);
+        }).then(() => stream.close());
+      });
+
+    });
+
+    it("check for ogg-multipage-metadata-bug", () => {
+
+      const filePath = path.join(samplePath, 'ogg-multipagemetadata-bug.ogg');
+
+      return mm.parseFile(filePath).then(result => {
+        assert.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
+        assert.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist');
+        assert.strictEqual(result.common.albumartist, 'Modestep', 'albumartist');
+        assert.strictEqual(result.common.album, 'To The Stars', 'album');
+        assert.strictEqual(result.common.date, '2011-01-01', 'year');
+        assert.strictEqual(result.common.track.no, 2, 'track no');
+        assert.strictEqual(result.common.track.of, 5, 'track of');
+        assert.strictEqual(result.common.disk.no, 1, 'disk no');
+        assert.strictEqual(result.common.disk.of, 1, 'disk of');
+        assert.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
+        assert.strictEqual(result.common.picture[0].format, 'image/jpeg', 'picture format');
+        assert.strictEqual(result.common.picture[0].data.length, 207439, 'picture length');
+      });
+
     });
 
   });
