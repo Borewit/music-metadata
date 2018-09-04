@@ -1,4 +1,4 @@
-import {INativeAudioMetadata, IOptions} from "./index";
+import {INativeAudioMetadata, IOptions, IAudioMetadata} from "./index";
 import * as strtok3 from "strtok3";
 import * as Stream from "stream";
 import * as path from "path";
@@ -8,7 +8,6 @@ import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
 import {INativeMetadataCollector, MetadataCollector} from "./common/MetadataCollector";
-import {IAudioMetadata} from "./index";
 
 const debug = _debug("music-metadata:parser:factory");
 
