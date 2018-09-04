@@ -1,4 +1,4 @@
-import {INativeAudioMetadata, IOptions} from "./";
+import {INativeAudioMetadata, IOptions} from "./index";
 import * as strtok3 from "strtok3";
 import * as Stream from "stream";
 import * as path from "path";
