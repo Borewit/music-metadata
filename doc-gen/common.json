@@ -240,10 +240,10 @@
     "description": "Performer relationship types, instrument can also be vocals."
   },
   "averageLevel": {
-    "description": "Average gain level. _ToDo_"
+    "description": "Average gain level."
   },
   "peakLevel": {
-    "description": "Peak gain level. _ToDo_"
+    "description": "Peak gain level."
   },
   "notes": {
     "description": "Similar to comments"
@@ -261,10 +261,10 @@
     "description": "Discogs release identifier"
   },
   "replaygain_track_peak": {
-    "description": "_ToDo_: difference with peakLevel?"
+    "description": "Replaygain track peak"
   },
   "replaygain_track_gain": {
-    "description": "_ToDo_: difference with averageLevel"
+    "description": "Replay track gain"
   },
   "technician": {
     "description": "Technician who digitized subject"
