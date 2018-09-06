@@ -23,6 +23,18 @@
   "album": {
     "description": "Album title"
   },
+  "show": {
+    "description": "TV show title"
+  },
+  "showsort": {
+    "description": "TV show sorting title"
+  },
+  "podcast": {
+    "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
+  },
+  "podcasturl": {
+    "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
+  },
   "date": {
     "description": "Release date"
   },
@@ -143,17 +155,14 @@
   "catalognumber": {
     "description": "[Release catalog number(s)](https://musicbrainz.org/doc/Release/Catalog_Number)"
   },
-  "show": {
-    "description": "TV show title"
+  "barcode": {
+    "description": "[Release barcode](https://musicbrainz.org/doc/Barcode)."
   },
-  "showsort": {
-    "description": "TV show sorting title"
+  "isrc": {
+    "description": "[ISRC](https://musicbrainz.org/doc/ISRC)"
   },
-  "podcast": {
-    "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
-  },
-  "podcasturl": {
-    "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
+  "asin": {
+    "description": "[Amazon Standard Identification Number (ASIN)](https://musicbrainz.org/doc/ASIN)"
   },
   "releasestatus": {
     "description": "See [releases status](https://wiki.musicbrainz.org/History:Release_Status)"
@@ -184,15 +193,6 @@
   },
   "gapless": {
     "description": "Gapless album indicator ([MP4](http://help.mp3tag.de/main_tags.html))"
-  },
-  "barcode": {
-    "description": "[Release barcode](https://musicbrainz.org/doc/Barcode)."
-  },
-  "isrc": {
-    "description": "[ISRC](https://musicbrainz.org/doc/ISRC)"
-  },
-  "asin": {
-    "description": "[Amazon Standard Identification Number (ASIN)](https://musicbrainz.org/doc/ASIN)"
   },
   "musicbrainz_recordingid": {
     "description": "Release [recording](https://musicbrainz.org/doc/Recording) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
