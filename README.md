@@ -14,22 +14,32 @@ Stream and file based music metadata parser for node.
 * Supports metadata of the following audio and tag types:
 
 Support for audio file types:
-* [Audio Interchange File Format (AIFF)](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
-* [Advanced Systems Format (ASF) (.wma)](https://wikipedia.org/wiki/Advanced_Systems_Format)
-* [Free Lossless Audio Codec (FLAC)](https://wikipedia.org/wiki/FLAC)
-* [Monkey's Audio (.ape)](https://wikipedia.org/wiki/Monkey's_Audio)
-* [MP3](https://wikipedia.org/wiki/MP3)
-* [MPEG-4 Audio (.m4a, .mp4)](https://wikipedia.org/wiki/MPEG-4)
-* [Ogg](https://wikipedia.org/wiki/Ogg)
-  * [Ogg Vorbis (.ogg)](https://wikipedia.org/wiki/Ogg_Vorbis)
-  * [Speex (.spx)](https://wikipedia.org/wiki/Speex)
-  * [Opos (.opus)](https://wikipedia.org/wiki/Opus_(audio_format))
-* [WAV](https://wikipedia.org/wiki/WAV)
-* [WavPack (.wv)](https://wikipedia.org/wiki/WavPack)
+* [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format) (Audio Interchange File Format)
+* [APE](https://wikipedia.org/wiki/Monkey's_Audio) (Monkey's Audio)
+* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format) (Advanced Systems Format)
+
+
+| Audio format  | Description                    | Wiki                                                               |
+| ------------- |--------------------------------| ------------------------------------------------------------------:|
+| AIFF          | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
+| APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                |
+| ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       |
+| FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          |
+| MP2           | MPEG-1 Audio Layer II          | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |
+| MP3           | MPEG-1 / MEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           |
+| M4A           | MPEG 4 Audi                    | [:link:](https://wikipedia.org/wiki/MPEG-4)                        |
+| Ogg / Opos    |                                | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           |
+| Ogg / Speex   |                                | [:link:](https://wikipedia.org/wiki/Speex)                         |
+| Ogg / Vorbis  |                                | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    |
+| WAV           |                                | [:link:](https://wikipedia.org/wiki/WAV)                           |
+| WavPack       |                                | [:link:](https://wikipedia.org/wiki/WavPack)                       |
+| WMA           | Windows Media Audio            | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           |
+
+
 
 Support for tags:
-* APEv2  
-* ASF 
+* [APE](https://en.wikipedia.org/wiki/APE_tag)
+* ASF (https://en.wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
 * ID3v1, ID3v1.1, ID3v2.3 & ID3v2.4
 * RIFF/INFO
