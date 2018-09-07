@@ -13,11 +13,7 @@ Stream and file based music metadata parser for node.
 
 * Supports metadata of the following audio and tag types:
 
-Support for audio file types:
-* [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format) (Audio Interchange File Format)
-* [APE](https://wikipedia.org/wiki/Monkey's_Audio) (Monkey's Audio)
-* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format) (Advanced Systems Format)
-
+### Support for audio file types:
 
 | Audio format  | Description                    | Wiki                                                               |
 | ------------- |--------------------------------| ------------------------------------------------------------------:|
@@ -37,7 +33,7 @@ Support for audio file types:
 
 
 
-Support for tags:
+### Support for tags:
 * [APE](https://en.wikipedia.org/wiki/APE_tag)
 * ASF (https://en.wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
