@@ -36,19 +36,20 @@ Stream and file based music metadata parser for node.
 ### Support for tags:
 
 * [APE](https://en.wikipedia.org/wiki/APE_tag)
-* ASF (https://en.wikipedia.org/wiki/Advanced_Systems_Format)
+* [ASF](https://en.wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
-* ID3v1, ID3v1.1, ID3v2.3 & ID3v2.4
-* RIFF/INFO
-* QTFF 
-* Discogs
-* Support for [MusicBrainz](https://musicbrainz.org/) / [Picard](https://picard.musicbrainz.org/) [tags](https://picard.musicbrainz.org/docs/tags/)
+* [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
+* [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+
+Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
+
+### Audio format & encoding details:
 
 * Support for encoding / format details:
-  * bit-rate
-  * sample depth
-  * duration
-  * encoding profile (e.g. CBR, V0, V2)
+  * [Bit rate](https://wikipedia.org/wiki/Bit_rate)
+  * [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
+  * Duration
+  * encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
   
 
 ### Online demo's
