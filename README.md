@@ -7,6 +7,8 @@
 [![NSP Status](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938/badge)](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938)
 [![Package Quality](http://npm.packagequality.com/shield/music-metadata.svg)](http://packagequality.com/#?package=music-metadata)
 
+#  music-metadata
+
 Stream and file based music metadata parser for node.
 
 ## Features
@@ -15,12 +17,14 @@ Stream and file based music metadata parser for node.
 
 ### Support for audio file types:
 
-| Audio format  | Description                    | Wiki                                                               |
-| ------------- |--------------------------------| ------------------------------------------------------------------:|
+
+
+| Audio format  | Description                    | Wiki                                                               |   |
+| ------------- |--------------------------------| -------------------------------------------------------------------|---|
 | AIFF          | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
 | APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                |
-| ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       |
-| FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          |
+| ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       | 
+| FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80">
 | MP2           | MPEG-1 Audio Layer II          | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |
 | MP3           | MPEG-1 / MEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           |
 | M4A           | MPEG 4 Audi                    | [:link:](https://wikipedia.org/wiki/MPEG-4)                        |
@@ -34,6 +38,7 @@ Stream and file based music metadata parser for node.
 
 
 ### Support for tags:
+
 * [APE](https://en.wikipedia.org/wiki/APE_tag)
 * ASF (https://en.wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
