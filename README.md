@@ -17,12 +17,10 @@ Stream and file based music metadata parser for node.
 
 ### Support for audio file types:
 
-
-
 | Audio format  | Description                    | Wiki                                                               |   |
 | ------------- |--------------------------------| -------------------------------------------------------------------|---|
 | AIFF          | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
-| APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                |
+| APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | 
 | ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       | 
 | FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80">
 | MP2           | MPEG-1 Audio Layer II          | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |
@@ -31,11 +29,9 @@ Stream and file based music metadata parser for node.
 | Ogg / Opos    |                                | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           | <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Opus_logo2.svg" width="80">
 | Ogg / Speex   |                                | [:link:](https://wikipedia.org/wiki/Speex)                         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Speex_logo_2006.svg" width="80">
 | Ogg / Vorbis  |                                | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/en/a/ac/XiphophorusLogoSVG.svg" width="80">
-| WAV           |                                | [:link:](https://wikipedia.org/wiki/WAV)                           |
-| WavPack       |                                | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="https://upload.wikimedia.org/wikipedia/commons/1/1c/WavPack_monochrome_logo.png" width="80">
-| WMA           | Windows Media Audio            | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           |
-
-
+| WAV           |                                | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="80">
+| WavPack       |                                | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="80">
+| WMA           | Windows Media Audio            | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="80">
 
 ### Support for tags:
 
