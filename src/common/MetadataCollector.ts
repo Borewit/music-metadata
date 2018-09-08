@@ -14,7 +14,7 @@ import {CommonTagMapper} from "./GenericTagMapper";
 
 const debug = _debug("music-metadata:collector");
 
-const TagPriority: TagType[] = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes MP4', 'ID3v1'];
+const TagPriority: TagType[] = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'ID3v1'];
 
 /**
  * Combines all generic-tag-mappers for each tag type

@@ -127,8 +127,8 @@ describe("MIME & extension mapping", () => {
       return testFileType('asf.wma', 'ASF/audio');
     });
 
-    it("should recognize MPEG-4 audio", () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4 audio');
+    it("should recognize MPEG-4", () => {
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4');
     });
 
     it("should recognize FLAC", () => {

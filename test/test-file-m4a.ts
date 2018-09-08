@@ -5,16 +5,16 @@ import * as fs from 'fs-extra';
 
 const t = assert;
 
-describe("Read MPEG-4 audio files with iTunes metadata", () => {
+describe("Read MPEG-4 files with iTunes metadata", () => {
 
   const samples = path.join(__dirname, "samples");
 
-  describe("Parse MPEG-4 audio files (.m4a)", () => {
+  describe("Parse MPEG-4 files (.m4a)", () => {
 
     const filePath = path.join(__dirname, 'samples', 'id4.m4a');
 
     function checkFormat(format) {
-      assert.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
+      assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       t.strictEqual(format.duration, 2.2058956916099772, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     }
@@ -65,7 +65,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
       return mm.parseFile(filePath, {native: true}).then(metadata => {
 
-        const native = metadata.native['iTunes MP4'];
+        const native = metadata.native.iTunes;
         t.ok(native, 'Native m4a tags should be present');
 
         checkFormat(metadata.format);
@@ -82,7 +82,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
       return mm.parseStream(stream, 'audio/mp4', {native: true}).then(metadata => {
         checkFormat(metadata.format);
         checkCommon(metadata.common);
-        checkNativeTags(mm.orderTags(metadata.native['iTunes MP4']));
+        checkNativeTags(mm.orderTags(metadata.native.iTunes));
       }).then(() => {
         stream.close();
       });
@@ -97,9 +97,9 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
     return mm.parseFile(filename, {native: true}).then(metadata => {
 
-      t.isDefined(metadata.native["iTunes MP4"], "Native m4a tags should be present");
+      t.isDefined(metadata.native.iTunes, 'Native m4a tags should be present');
       t.deepEqual(metadata.format.duration, 2.066575963718821, "metadata.format.duration");
-      const iTunes = mm.orderTags(metadata.native["iTunes MP4"]);
+      const iTunes = mm.orderTags(metadata.native.iTunes);
       t.deepEqual(iTunes.plID, [637567119], "iTunes.plID=637567119 (64-bit / 8-byte encoded uint");
       t.deepEqual(iTunes.cnID, [637567333], "iTunes.cnID (ITUNESCATALOGID) = 637567333");
     });
@@ -115,7 +115,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
 
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
-      assert.isAtLeast(metadata.native['iTunes MP4'].length, 1);
+      assert.isAtLeast(metadata.native.iTunes.length, 1);
       t.deepEqual(metadata.common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
       t.deepEqual(metadata.common.albumartist, "They Say We're Sinking");
       t.deepEqual(metadata.common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
@@ -174,7 +174,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
         assert.deepEqual(metadata.common.track, {no: 1, of: null});
         assert.deepEqual(metadata.common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
 
-        const iTunes = mm.orderTags(metadata.native["iTunes MP4"]);
+        const iTunes = mm.orderTags(metadata.native.iTunes);
         assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
       });
 
@@ -185,7 +185,7 @@ describe("Read MPEG-4 audio files with iTunes metadata", () => {
       const filePath = path.join(samples, 'issue-133.m4a');
 
       return mm.parseFile(filePath, {duration: true}).then(metadata => {
-        assert.deepEqual(metadata.format.dataformat, 'MPEG-4 audio');
+        assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
       });
 
     });

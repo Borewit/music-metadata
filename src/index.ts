@@ -48,10 +48,25 @@ export interface ICommonTagsResult {
    * Release year
    */
   year?: number;
+  /**
+   * Track title
+   */
   title?: string;
+  /**
+   * Track, maybe several artists written in a single string.
+   */
   artist?: string;
+  /**
+   * Track artists, aims to capture every artist in a different string.
+   */
   artists?: string[];
+  /**
+   * Track album artists
+   */
   albumartist?: string;
+  /**
+   * Album title
+   */
   album?: string;
   /**
    * Release data
@@ -65,25 +80,85 @@ export interface ICommonTagsResult {
    * Original release yeat
    */
   originalyear?: number;
+  /**
+   * List of comments
+   */
   comment?: string[];
+  /**
+   * Genre
+   */
   genre?: string[];
+  /**
+   * Embedded album art
+   */
   picture?: IPicture[];
+  /**
+   * Track composer
+   */
   composer?: string[];
+  /**
+   * Lyrics
+   */
   lyrics?: string[];
+  /**
+   * Album title, formatted for alphabetic ordering
+   */
   albumsort?: string;
+  /**
+   * Track title, formatted for alphabetic ordering
+   */
   titlesort?: string;
+  /**
+   * The canonical title of the work
+   */
   work?: string;
+  /**
+   * Track artist, formatted for alphabetic ordering
+   */
   artistsort?: string;
+  /**
+   * Album artist, formatted for alphabetic ordering
+   */
   albumartistsort?: string;
+  /**
+   * Composer(s), formatted for alphabetic ordering
+   */
   composersort?: string[];
+  /**
+   * Lyricist(s)
+   */
   lyricist?: string[];
+  /**
+   * Writer(s)
+   */
   writer?: string[];
+  /**
+   * Conductor(s)
+   */
   conductor?: string[];
+  /**
+   * Remixer(s)
+   */
   remixer?: string[];
+  /**
+   * Arranger(s)
+   */
   arranger?: string[];
+  /**
+   * Engineer(s)
+   */
   engineer?: string[];
+  /**
+   * Producer(s)
+   */
   producer?: string[];
+  /**
+   * Mix-DJ(s)
+   */
   djmixer?: string[];
+  /**
+   * Mixed by
+   */
   mixer?: string[];
   technician?: string[];
   label?: string[];
@@ -95,11 +170,38 @@ export interface ICommonTagsResult {
   compilation?: string;
   rating?: IRating[];
   bpm?: string;
+  /**
+   * Keywords to reflect the mood of the audio, e.g. 'Romantic' or 'Sad'
+   */
   mood?: string;
+  /**
+   * Release format, e.g. 'CD'
+   */
   media?: string;
+  /**
+   * Release catalog number(s)
+   */
   catalognumber?: string[];
-  show?: string;
-  showsort?: string;
+  /**
+   * TV show title
+   */
+  tvShow?: string;
+  /**
+   * TV show title, formatted for alphabetic ordering
+   */
+  tvShowSort?: string;
+  /**
+   * TV season title
+   */
+  tvSeason?: string;
+  /**
+   * TV episode ID
+   */
+  tvEpisodeID?: string,
+  /**
+   * TV network
+   */
+  tvNetwork?: string,
   podcast?: string;
   podcasturl?: string;
   releasestatus?: string;

@@ -116,7 +116,7 @@ describe("Mapping of common comment tag", () => {
 
   });
 
-  it("should map M4A / (Apple) iTunes MP4 header", () => {
+  it("should map M4A / (Apple) iTunes header", () => {
 
     const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
