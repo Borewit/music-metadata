@@ -1,4 +1,4 @@
-import {INativeAudioMetadata, IOptions, IAudioMetadata} from "./index";
+import {INativeAudioMetadata, IOptions, IAudioMetadata, ParserType} from "./index";
 import * as strtok3 from "strtok3";
 import * as Stream from "stream";
 import * as path from "path";
@@ -111,7 +111,7 @@ export class ParserFactory {
     return this._parse(tokenizer, parserId, opts);
   }
 
-  private static _parse(tokenizer: strtok3.ITokenizer, parserId: string, opts: IOptions = {}): Promise<IAudioMetadata> {
+  private static _parse(tokenizer: strtok3.ITokenizer, parserId:ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
     // Parser found, execute parser
     return ParserFactory.loadParser(parserId, opts).then(parser => {
       const metadata = new MetadataCollector(opts);
@@ -125,7 +125,7 @@ export class ParserFactory {
    * @param filePath Path, filename or extension to audio file
    * @return Parser sub-module name
    */
-  private static getParserIdForExtension(filePath: string): string {
+  private static getParserIdForExtension(filePath: string): ParserType {
     if (!filePath)
       return;
 
@@ -186,7 +186,7 @@ export class ParserFactory {
    * @param {string} mimeType MIME-Type, extension, path or filename
    * @returns {string} Parser sub-module name
    */
-  private static getParserIdForMimeType(mimeType: string): string {
+  private static getParserIdForMimeType(mimeType: string): ParserType {
 
     let mime;
     try {
@@ -269,7 +269,7 @@ export class ParserFactory {
     }
   }
 
-  private static loadParser(moduleName: string, options: IOptions): Promise<ITokenParser> {
+  private static loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
     debug(`Lazy loading parser: ${moduleName}`);
     if (options.loadParser) {
       return options.loadParser(moduleName).then(parser => {

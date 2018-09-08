@@ -360,6 +360,11 @@ export interface IAudioMetadata extends INativeAudioMetadata {
   common: ICommonTagsResult,
 }
 
+/**
+ * Corresponds with parser module name
+ */
+export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff';
+
 export interface IOptions {
   path?: string,
 
@@ -394,7 +399,7 @@ export interface IOptions {
    * @param {string} moduleName module name
    * @return {Promise<ITokenParser>} parser
    */
-  loadParser?: (moduleName: string) => Promise<ITokenParser>;
+  loadParser?: (moduleName: ParserType) => Promise<ITokenParser>;
 
   /**
    * Set observer for async callbacks to common or format.
