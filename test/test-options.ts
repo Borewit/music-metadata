@@ -146,7 +146,7 @@ describe("Parser options", () => {
 
     it("should include cover-art if option.skipCovers is not defined", () => {
       return mm.parseFile(file_m4a, {native: true}).then(result => {
-        const iTunes = mm.orderTags(result.native['iTunes MP4']);
+        const iTunes = mm.orderTags(result.native.iTunes);
         // Native
         t.isDefined(iTunes.covr, "iTunes.covr");
         // Common
@@ -156,7 +156,7 @@ describe("Parser options", () => {
 
     it("should not include cover-art if option.skipCovers=true", () => {
       return mm.parseFile(file_m4a, {native: true, skipCovers: true}).then(result => {
-        const iTunes = mm.orderTags(result.native['iTunes MP4']);
+        const iTunes = mm.orderTags(result.native.iTunes);
         // Native
         t.isUndefined(iTunes.covr, "m4a.covr");
         // Common
@@ -166,7 +166,7 @@ describe("Parser options", () => {
 
     it("should include cover-art if option.skipCovers=false", () => {
       return mm.parseFile(file_m4a, {native: true, skipCovers: false}).then(result => {
-        const iTunes = mm.orderTags(result.native['iTunes MP4']);
+        const iTunes = mm.orderTags(result.native.iTunes);
         // Native
         t.isDefined(iTunes.aART, "m4a.covr");
         // Common

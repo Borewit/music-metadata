@@ -39,6 +39,7 @@ Stream and file based music metadata parser for node.
 * [ASF](https://en.wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
 * [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
+* [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
 * [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).

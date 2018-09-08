@@ -10,14 +10,15 @@ import util from "../common/Util";
 const debug = _debug("music-metadata:parser:MP4");
 import * as Token from "token-types";
 
-const tagFormat = 'iTunes MP4';
+const tagFormat = 'iTunes';
 
 /*
- * Parser for: MPEG-4 Audio / MPEG-4 Part 3 (m4a/mp4) extension.
- * Support for Apple iTunes MP4 tags as found in a M4A/MP4 file.
+ * Parser for: MPEG-4 Audio / Part 3 (.m4a)& MPEG 4 Video (m4v, mp4) extension.
+ * Support for Apple iTunes tags as found in a M4A/M4V files.
  * Ref:
  *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
+ *   https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
  */
 export class MP4Parser extends BasicParser {
 
@@ -31,7 +32,7 @@ export class MP4Parser extends BasicParser {
 
   public parse(): Promise<void> {
 
-    this.metadata.setFormat('dataformat', 'MPEG-4 audio');
+    this.metadata.setFormat('dataformat', 'MPEG-4');
 
     const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, false, null);
     return rootAtom.readAtoms(this.tokenizer, atom => {

@@ -23,11 +23,23 @@
   "album": {
     "description": "Album title"
   },
-  "show": {
+  "tvShow": {
     "description": "TV show title"
   },
-  "showsort": {
-    "description": "TV show sorting title"
+  "tvShowSort": {
+    "description": "TV show title, formatted for alphabetic ordering"
+  },
+  "tvSeason": {
+    "description": "TV season title"
+  },
+  "tvEpisode": {
+    "description": "TV episode title"
+  },
+  "tvEpisodeId": {
+    "description": "TV episode ID"
+  },
+  "tvNetwork": {
+    "description": "TV network"
   },
   "podcast": {
     "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
@@ -84,16 +96,16 @@
     "description": "The canonical title of the [work](https://musicbrainz.org/doc/Work)"
   },
   "artistsort": {
-    "description": "Track artist sort name"
+    "description": "Track artist, formatted for alphabetic ordering"
   },
   "albumartistsort": {
-    "description": "Album artist sort name"
+    "description": "Album artist, formatted for alphabetic ordering"
   },
   "composersort": {
     "description": "Composer, formatted for alphabetic ordering"
   },
   "lyricist": {
-    "description": "Lyricist, formatted for alphabetic ordering"
+    "description": "Lyricist"
   },
   "writer": {
     "description": "Writer"
@@ -105,7 +117,7 @@
     "description": "Remixer(s)"
   },
   "arranger": {
-    "description": "Arranger"
+    "description": "Arranger(s)"
   },
   "engineer": {
     "description": "Engineer(s)"
@@ -150,7 +162,7 @@
     "description": "Keywords to reflect the mood of the audio, e.g. \"Romantic\" or \"Sad\""
   },
   "media": {
-    "description": "Release Format"
+    "description": "Release format"
   },
   "catalognumber": {
     "description": "[Release catalog number(s)](https://musicbrainz.org/doc/Release/Catalog_Number)"
@@ -247,6 +259,9 @@
   },
   "notes": {
     "description": "Similar to comments"
+  },
+  "description": {
+    "description": "Description"
   },
   "key": {
     "description": "The 'Initial key' frame contains the musical key in which the sound starts."

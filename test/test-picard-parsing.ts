@@ -127,7 +127,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     switch (inputTagType) {
 
       case 'APEv2':
-      case 'iTunes MP4':
+      case 'iTunes':
         break; // Skip rating tests for mapping type
 
       default:
@@ -546,12 +546,12 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   });
 
-  it("should map M4A / (Apple) iTunes MP4 header", () => {
+  it("should map M4A / (Apple) iTunes header", () => {
 
     const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     function checkFormat(format: mm.IFormat) {
-      t.deepEqual(format.tagTypes, ['iTunes MP4'], 'format.tagTypes');
+      t.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       // t.strictEqual(format.dataformat, 'm4a', 'ToDo: M4A/ALAC');
       t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -588,11 +588,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     // Run with default options
     return mm.parseFile(filePath, {native: true}).then(result => {
-      t.ok(result.native && result.native['iTunes MP4'], 'should include native M4A tags');
+      t.ok(result.native && result.native.iTunes, 'should include native M4A tags');
       checkFormat(result.format);
-      check_iTunes_Tags(mm.orderTags(result.native['iTunes MP4']));
+      check_iTunes_Tags(mm.orderTags(result.native.iTunes));
       checkCommonTags(result.common);
-      checkCommonMapping('iTunes MP4', result.common);
+      checkCommonMapping('iTunes', result.common);
     });
 
   });

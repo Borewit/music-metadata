@@ -1,4 +1,4 @@
-export type TagType = 'vorbis' | 'ID3v1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes MP4' | 'exif';
+export type TagType = 'vorbis' | 'ID3v1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes' | 'exif';
 
 export interface IGenericTag {
   id: GenericTagId,
@@ -50,8 +50,12 @@ export type GenericTagId =
   | 'mood'
   | 'media'
   | 'catalognumber'
-  | 'show'
-  | 'showsort'
+  | 'tvShow'
+  | 'tvShowSort'
+  | 'tvEpisode'
+  | 'tvEpisodeId'
+  | 'tvNetwork'
+  | 'tvSeason'
   | 'podcast'
   | 'podcasturl'
   | 'releasestatus'
@@ -95,7 +99,8 @@ export type GenericTagId =
   | 'discogs_release_id'
   | 'discogs_votes'
   | 'replaygain_track_gain'
-  | 'replaygain_track_peak';
+  | 'replaygain_track_peak'
+  | 'description';
 
 export interface INativeTagMap {
   [index: string]: GenericTagId;
@@ -161,8 +166,12 @@ export const commonTags: ITagInfoMap = {
   mood: {multiple: false},
   media: {multiple: false},
   catalognumber: {multiple: true, unique: true},
-  show: {multiple: false},
-  showsort: {multiple: false},
+  tvShow: {multiple: false},
+  tvShowSort: {multiple: false},
+  tvSeason: {multiple: false},
+  tvEpisode: {multiple: false},
+  tvEpisodeId: {multiple: false},
+  tvNetwork: {multiple: false},
   podcast: {multiple: false},
   podcasturl: {multiple: false},
   releasestatus: {multiple: false},
@@ -209,7 +218,9 @@ export const commonTags: ITagInfoMap = {
   discogs_rating: {multiple: false},
 
   replaygain_track_peak: {multiple: false},
-  replaygain_track_gain: {multiple: false}
+  replaygain_track_gain: {multiple: false},
+
+  description:  {multiple: true}
 };
 
 /**

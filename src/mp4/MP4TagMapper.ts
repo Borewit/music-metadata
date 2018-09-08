@@ -1,7 +1,9 @@
-import {ICommonTagsResult} from "../";
 import {INativeTagMap} from "../common/GenericTagTypes";
-import {CommonTagMapper, IGenericTagMapper} from "../common/GenericTagMapper";
+import {CommonTagMapper} from "../common/GenericTagMapper";
 
+/**
+ * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
+ */
 const mp4TagMap: INativeTagMap = {
   '©nam': 'title',
   '©ART': 'artist',
@@ -40,8 +42,12 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:MOOD': 'mood',
   '----:com.apple.iTunes:MEDIA': 'media',
   '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
-  tvsh: 'show',
-  sosn: 'showsort',
+  tvsh: 'tvShow',
+  tvsn: 'tvSeason',
+  tves: 'tvEpisode',
+  sosn: 'tvShowSort',
+  tven: 'tvEpisodeId',
+  tvnn: 'tvNetwork',
   pcst: 'podcast',
   purl: 'podcasturl',
   '----:com.apple.iTunes:MusicBrainz Album Status': 'releasestatus',
@@ -76,14 +82,18 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:ALBUMARTISTSORT': 'albumartistsort',
   '----:com.apple.iTunes:ARTISTS': 'artists',
   '----:com.apple.iTunes:ORIGINALDATE': 'originaldate',
-  '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear'
+  '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear',
   // '----:com.apple.iTunes:PERFORMER': 'performer'
+  desc: 'description',
+  ldes: 'description'
 };
+
+export const tagType = 'iTunes';
 
 export class MP4TagMapper extends CommonTagMapper {
 
   public constructor() {
-    super(['iTunes MP4'],  mp4TagMap);
+    super([tagType],  mp4TagMap);
   }
 
 }
