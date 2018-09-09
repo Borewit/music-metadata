@@ -111,7 +111,7 @@ export class ParserFactory {
     return this._parse(tokenizer, parserId, opts);
   }
 
-  private static _parse(tokenizer: strtok3.ITokenizer, parserId:ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
+  private static _parse(tokenizer: strtok3.ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
     // Parser found, execute parser
     return ParserFactory.loadParser(parserId, opts).then(parser => {
       const metadata = new MetadataCollector(opts);
