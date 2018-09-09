@@ -446,9 +446,9 @@ export interface IMetadataEvent {
 export type Observer = (update: IMetadataEvent) => void;
 
 /**
- * Parse audio file
- * @param filePath Media file to read meta-data from
- * @param options Parsing options
+ * Parse audio from Node file
+ * @param {string} filePath Media file to read meta-data from
+ * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
@@ -474,19 +474,34 @@ export function parseFile(filePath: string, options: IOptions = {}): Promise<IAu
 }
 
 /**
- * Parse audio Stream
- * @param stream
- * @param mimeType
- * @param options Parsing options
+ * Parse audio from Node Stream.Readable
+ * @param {Stream.Readable} Stream to read the audio track from
+ * @param {string} mimeType Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: Stream.Readable, mimeType?: string, optsions: IOptions = {}): Promise<IAudioMetadata> {
+export function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
   return strtok3.fromStream(stream).then(tokenizer => {
-    if (!tokenizer.fileSize && optsions.fileSize) {
-      tokenizer.fileSize = optsions.fileSize;
+    if (!tokenizer.fileSize && options.fileSize) {
+      tokenizer.fileSize = options.fileSize;
     }
-    return ParserFactory.parse(tokenizer, mimeType, optsions);
+    return ParserFactory.parse(tokenizer, mimeType, options);
   });
+}
+
+/**
+ * Parse audio from Node Buffer
+ * @param {Stream.Readable} stream Audio input stream
+ * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param {IOptions} options Parsing options
+ * @returns {Promise<IAudioMetadata>}
+ */
+export function parseBuffer(buf: Buffer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const tokenizer = strtok3.fromBuffer(buf);
+  if (!tokenizer.fileSize && options.fileSize) {
+    tokenizer.fileSize = options.fileSize;
+  }
+  return ParserFactory.parse(tokenizer, mimeType, options);
 }
 
 /**
