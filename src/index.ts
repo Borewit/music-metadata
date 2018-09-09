@@ -1,9 +1,13 @@
 'use strict';
 
+import * as Stream from "stream";
+import * as strtok3 from "strtok3";
+import {Promise} from "es6-promise";
+import * as path from "path";
+
 import {GenericTagId, TagType} from './common/GenericTagTypes';
 import {ITokenParser, ParserFactory} from "./ParserFactory";
-import * as Stream from "stream";
-import {Promise} from "es6-promise";
+import {MetadataCollector} from './common/MetadataCollector';
 
 /**
  * Attached picture, typically used for cover art
@@ -441,50 +445,32 @@ export interface IMetadataEvent {
 
 export type Observer = (update: IMetadataEvent) => void;
 
-export class MusicMetadataParser {
-
-  public static joinArtists(artists: string[]): string {
-    if (artists.length > 2) {
-      return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
-    }
-    return artists.join(' & ');
-  }
-
-  /**
-   * Extract metadata from the given audio file
-   * @param filePath File path of the audio file to parse
-   * @param opts
-   *   .filesize=true  Return filesize
-   *   .native=true    Will return original header in result
-   * @returns {Promise<IAudioMetadata>}
-   */
-  public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseFile(filePath, opts);
-  }
-
-  /**
-   * Extract metadata from the given audio file
-   * @param stream Audio ReadableStream
-   * @param mimeType Mime-Type of Stream
-   * @param opts
-   *   .filesize=true  Return filesize
-   *   .native=true    Will return original header in result
-   * @returns {Promise<IAudioMetadata>}
-   */
-  public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseStream(stream, mimeType, opts);
-  }
-
-}
-
 /**
  * Parse audio file
  * @param filePath Media file to read meta-data from
  * @param options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
-  return new MusicMetadataParser().parseFile(filePath, options);
+export function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  return strtok3.fromFile(filePath).then(fileTokenizer => {
+    const parserName = ParserFactory.getParserIdForExtension(filePath);
+    if (parserName) {
+      return ParserFactory.loadParser(parserName, options).then(parser => {
+        const metadata = new MetadataCollector(options);
+        return parser.init(metadata, fileTokenizer, options).parse().then(() => {
+          return fileTokenizer.close().then(() => {
+            return metadata.toCommonMetadata();
+          });
+        }).catch(err => {
+          return fileTokenizer.close().then(() => {
+            throw err;
+          });
+        });
+      });
+    } else {
+      throw new Error('No parser found for extension: ' + path.extname(filePath));
+    }
+  });
 }
 
 /**
@@ -494,8 +480,13 @@ export function parseFile(filePath: string, options?: IOptions): Promise<IAudioM
  * @param options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {
-  return new MusicMetadataParser().parseStream(stream, mimeType, opts);
+export function parseStream(stream: Stream.Readable, mimeType?: string, optsions: IOptions = {}): Promise<IAudioMetadata> {
+  return strtok3.fromStream(stream).then(tokenizer => {
+    if (!tokenizer.fileSize && optsions.fileSize) {
+      tokenizer.fileSize = optsions.fileSize;
+    }
+    return ParserFactory.parse(tokenizer, mimeType, optsions);
+  });
 }
 
 /**
@@ -509,6 +500,13 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
     (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
   }
   return tags;
+}
+
+export function joinArtists(artists: string[]): string {
+  if (artists.length > 2) {
+    return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
+  }
+  return artists.join(' & ');
 }
 
 /**

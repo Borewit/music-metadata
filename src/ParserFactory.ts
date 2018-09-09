@@ -32,61 +32,13 @@ export interface ITokenParser {
 export class ParserFactory {
 
   /**
-   * Extract metadata from the given audio file
-   * @param filePath File path of the audio file to parse
-   * @param opts
-   *   .fileSize=true  Return filesize
-   *   .native=true    Will return original header in result
-   * @returns {Promise<INativeAudioMetadata>}
-   */
-  public static parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-
-    return strtok3.fromFile(filePath).then(fileTokenizer => {
-      const parserName = ParserFactory.getParserIdForExtension(filePath);
-      if (parserName) {
-        return ParserFactory.loadParser(parserName, opts).then(parser => {
-          const metadata = new MetadataCollector(opts);
-          return parser.init(metadata, fileTokenizer, opts).parse().then(() => {
-            return fileTokenizer.close().then(() => {
-              return metadata.toCommonMetadata();
-            });
-          }).catch(err => {
-            return fileTokenizer.close().then(() => {
-              throw err;
-            });
-          });
-        });
-      } else {
-        throw new Error('No parser found for extension: ' + path.extname(filePath));
-      }
-    });
-  }
-
-  /**
-   * Parse metadata from stream
-   * @param stream Node stream
-   * @param mimeType The mime-type, e.g. "audio/mpeg", extension e.g. ".mp3" or filename. This is used to redirect to the correct parser.
-   * @param opts Parsing options
-   * @returns {Promise<INativeAudioMetadata>}
-   */
-  public static parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-
-    return strtok3.fromStream(stream).then(tokenizer => {
-      if (!tokenizer.fileSize && opts.fileSize) {
-        tokenizer.fileSize = opts.fileSize;
-      }
-      return this.parse(tokenizer, mimeType, opts);
-    });
-  }
-
-  /**
    *  Parse metadata from tokenizer
    * @param {ITokenizer} tokenizer
    * @param {string} contentType
    * @param {IOptions} opts
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
+  public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts): Promise<IAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
     let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
@@ -111,21 +63,11 @@ export class ParserFactory {
     return this._parse(tokenizer, parserId, opts);
   }
 
-  private static _parse(tokenizer: strtok3.ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
-    // Parser found, execute parser
-    return ParserFactory.loadParser(parserId, opts).then(parser => {
-      const metadata = new MetadataCollector(opts);
-      return parser.init(metadata, tokenizer, opts).parse().then(() => {
-        return metadata.toCommonMetadata();
-      });
-    });
-  }
-
   /**
    * @param filePath Path, filename or extension to audio file
    * @return Parser sub-module name
    */
-  private static getParserIdForExtension(filePath: string): ParserType {
+  public static getParserIdForExtension(filePath: string): ParserType {
     if (!filePath)
       return;
 
@@ -180,6 +122,30 @@ export class ParserFactory {
       case ".wvp":
         return 'wavpack';
     }
+  }
+
+  public static loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
+    debug(`Lazy loading parser: ${moduleName}`);
+    if (options.loadParser) {
+      return options.loadParser(moduleName).then(parser => {
+        if (!parser) {
+          throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
+        }
+        return parser;
+      });
+    }
+    const module = require('./' + moduleName + '/index');
+    return Promise.resolve(new module.default());
+  }
+
+  private static _parse(tokenizer: strtok3.ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
+    // Parser found, execute parser
+    return ParserFactory.loadParser(parserId, opts).then(parser => {
+      const metadata = new MetadataCollector(opts);
+      return parser.init(metadata, tokenizer, opts).parse().then(() => {
+        return metadata.toCommonMetadata();
+      });
+    });
   }
 
   /**
@@ -267,20 +233,6 @@ export class ParserFactory {
         }
         break;
     }
-  }
-
-  private static loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
-    debug(`Lazy loading parser: ${moduleName}`);
-    if (options.loadParser) {
-      return options.loadParser(moduleName).then(parser => {
-        if (!parser) {
-          throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
-        }
-        return parser;
-      });
-    }
-    const module = require('./' + moduleName + '/index');
-    return Promise.resolve(new module.default());
   }
 
   // ToDo: expose warnings to API
