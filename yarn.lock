@@ -1902,9 +1902,9 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
-strtok3@^1.5.4:
-  version "1.5.4"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-1.5.4.tgz#b96590a36a78c9acabbf5590d779b5cabf809efc"
+strtok3@1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-1.6.0.tgz#221e887703fd0773a76e57f52b560838f12411bd"
   dependencies:
     debug "^3.1.0"
     es6-promise "^4.2.4"

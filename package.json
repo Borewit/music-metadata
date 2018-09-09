@@ -59,7 +59,7 @@
     "es6-promise": "^4.2.4",
     "file-type": "9",
     "media-typer": "^0.3.0",
-    "strtok3": "^1.5.4",
+    "strtok3": "1.6.0",
     "then-read-stream": "^1.2.1",
     "token-types": "^0.10.0"
   },

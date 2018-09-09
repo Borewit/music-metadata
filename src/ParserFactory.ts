@@ -96,7 +96,7 @@ export class ParserFactory {
       debug("No parser found for MIME-type / extension:" + contentType);
 
       const buf = Buffer.alloc(4100);
-      return tokenizer.peekBuffer(buf).then(() => {
+      return tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true).then(() => {
         const guessedType = fileType(buf);
         if (!guessedType)
           throw new Error("Failed to guess MIME-type");
