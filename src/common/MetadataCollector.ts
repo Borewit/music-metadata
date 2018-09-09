@@ -3,8 +3,7 @@ import {
   IAudioMetadata, ICommonTagsResult,
   IFormat,
   INativeAudioMetadata,
-  INativeTags, IOptions,
-  MusicMetadataParser
+  INativeTags, IOptions, joinArtists
 } from "../index";
 
 import * as _debug from "debug";
@@ -146,7 +145,7 @@ export class MetadataCollector implements INativeMetadataCollector {
           if (!this.common.artists || this.common.artists.indexOf(tag.value) === -1) {
             // Fill artist using artists source
             const artists = (this.common.artists || []).concat([tag.value]);
-            const value = MusicMetadataParser.joinArtists(artists);
+            const value = joinArtists(artists);
             const artistTag: IGenericTag = {id: 'artist', value};
             this.setGenericTag('artificial', artistTag);
           }

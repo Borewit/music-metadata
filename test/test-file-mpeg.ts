@@ -344,7 +344,7 @@ describe("MPEG parsing", () => {
       stream.path = undefined; // disable file size based calculation
 
       return mm.parseStream(stream, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
-        assert.approximately(metadata.format.duration, 34.69, 1 / 100);
+        assert.approximately(metadata.format.duration, 34.64, 1 / 100);
       });
 
     });
