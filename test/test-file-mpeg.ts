@@ -5,6 +5,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import {SourceStream} from "./util";
 import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
@@ -326,12 +327,16 @@ describe("MPEG parsing", () => {
 
   describe("Calculate / read duration", () => {
 
-    it("VBR read from Xing header", () => {
+    describe("VBR read from Xing header", () => {
 
       const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
 
-      return mm.parseFile(filePath, {duration: false, native: true}).then(metadata => {
-        assert.strictEqual(metadata.format.duration, 0.4963265306122449);
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
+            assert.strictEqual(metadata.format.duration, 0.4963265306122449);
+          }); // .then(() => parser.close());
+        });
       });
 
     });
