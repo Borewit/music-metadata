@@ -45,7 +45,7 @@ export class ParserFactory {
 
     if (!parserId) {
       // No MIME-type mapping found
-      debug("No parser found for MIME-type / extension:" + contentType);
+      debug("No parser found for MIME-type / extension: " + contentType);
 
       const buf = Buffer.alloc(4100);
       return tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true).then(() => {
@@ -169,6 +169,7 @@ export class ParserFactory {
       case 'audio':
         switch (subType) {
 
+          case 'mp3': // Incorrect MIME-type, Chrome, in Web API File object
           case 'mpeg':
             return 'mpeg'; // ToDo: handle ID1 header as well
 

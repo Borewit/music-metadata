@@ -1,12 +1,12 @@
 'use strict';
 
-import * as Stream from "stream";
-import * as strtok3 from "strtok3";
-import {Promise} from "es6-promise";
-import * as path from "path";
+import * as Stream from 'stream';
+import * as strtok3 from 'strtok3';
+import {Promise} from 'es6-promise';
+import * as path from 'path';
 
 import {GenericTagId, TagType} from './common/GenericTagTypes';
-import {ITokenParser, ParserFactory} from "./ParserFactory";
+import {ITokenParser, ParserFactory} from './ParserFactory';
 import {MetadataCollector} from './common/MetadataCollector';
 
 /**
@@ -482,10 +482,7 @@ export function parseFile(filePath: string, options: IOptions = {}): Promise<IAu
  */
 export function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
   return strtok3.fromStream(stream).then(tokenizer => {
-    if (!tokenizer.fileSize && options.fileSize) {
-      tokenizer.fileSize = options.fileSize;
-    }
-    return ParserFactory.parse(tokenizer, mimeType, options);
+    return parseFromTokenizer(tokenizer, mimeType, options);
   });
 }
 
@@ -495,9 +492,21 @@ export function parseStream(stream: Stream.Readable, mimeType?: string, options:
  * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
+ * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
  */
 export function parseBuffer(buf: Buffer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
   const tokenizer = strtok3.fromBuffer(buf);
+  return parseFromTokenizer(tokenizer, mimeType, options);
+}
+
+/**
+ * Parse audio from ITokenizer source
+ * @param {strtok3.ITokenizer} Audio source implementing the tokenizer interface
+ * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param {IOptions} options Parsing options
+ * @returns {Promise<IAudioMetadata>}
+ */
+export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
   if (!tokenizer.fileSize && options.fileSize) {
     tokenizer.fileSize = options.fileSize;
   }
