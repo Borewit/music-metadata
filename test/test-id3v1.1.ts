@@ -3,6 +3,7 @@ import * as mm from '../src';
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
@@ -37,23 +38,13 @@ describe("Parsing MPEG / ID3v1", () => {
      */
     const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
 
-    it("from a file", () => {
-
-      return mm.parseFile(filePath).then(metadata => {
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/mpeg').then(metadata => {
+          checkFormat(metadata.format);
+          checkCommon(metadata.common);
+        }); // .then(() => parser.close());
       });
-    });
-
-    it("from a stream", () => {
-
-      const stream = fs.createReadStream(filePath);
-
-      return mm.parseStream(stream, 'audio/mpeg').then(metadata => {
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
-      }).then(() => stream.close());
-
     });
 
     it("should do without native", () => {

@@ -5,6 +5,7 @@ import GUID from "../src/asf/GUID";
 import * as fs from 'fs-extra';
 import {AsfUtil} from "../src/asf/AsfUtil";
 import {DataType} from "../src/asf/AsfObject";
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
@@ -84,44 +85,37 @@ describe("ASF", () => {
       t.deepEqual(native.REPLAYGAIN_TRACK_GAIN, ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN');
     }
 
-    it("should decode an ASF audio file (.wma)", () => {
+    describe("should decode an ASF audio file (.wma)", () => {
 
-      return mm.parseFile(asfFilePath, {native: true}).then(result => {
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          parser.initParser(asfFilePath, 'audio/x-ms-wma').then(metadata => {
+            checkFormat(metadata.format);
 
-        checkFormat(result.format);
+            checkCommon(metadata.common);
 
-        checkCommon(result.common);
-
-        t.ok(result.native && result.native.asf, 'should include native ASF tags');
-        checkNative(mm.orderTags(result.native.asf));
+            t.ok(metadata.native && metadata.native.asf, 'should include native ASF tags');
+            checkNative(mm.orderTags(metadata.native.asf));
+          }); // .then(() => parser.close());
+        });
       });
 
     });
 
-    it("should decode from ASF from a stream (audio/x-ms-wma)", () => {
+    describe("should decode picture from", () => {
 
-      const stream = fs.createReadStream(asfFilePath);
-
-      return mm.parseStream(stream, 'audio/x-ms-wma', {native: true}).then(metadata => {
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
-        checkNative(mm.orderTags(metadata.native.asf));
-      }).then(() => {
-        stream.close();
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          const filePath = path.join(__dirname, 'samples', 'issue_57.wma');
+          parser.initParser(filePath, 'audio/x-ms-wma').then(metadata => {
+            const asf = mm.orderTags(metadata.native.asf);
+            assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
+            const nativePicture = asf['WM/Picture'][0];
+            assert.exists(nativePicture.data);
+          }); // .then(() => parser.close());
+        });
       });
 
-    });
-
-    it("should decode picture from ", () => {
-
-      const filePath = path.join(__dirname, 'samples', 'issue_57.wma');
-
-      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        const asf = mm.orderTags(metadata.native.asf);
-        assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
-        const nativePicture = asf['WM/Picture'][0];
-        assert.exists(nativePicture.data);
-      });
     });
 
     /**

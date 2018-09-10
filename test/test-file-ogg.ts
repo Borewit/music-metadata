@@ -3,6 +3,7 @@ import * as mm from '../src';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import {IdHeader} from "../src/ogg/opus/Opus";
+import {Parsers} from './metadata-parsers';
 
 describe("Parsing Ogg", function() {
 
@@ -62,26 +63,16 @@ describe("Parsing Ogg", function() {
         assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
       }
 
-      it("as a file", () => {
-
-        return mm.parseFile(filePath, {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-          check_Nirvana_In_Bloom_commonTags(metadata.common);
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+            checkFormat(metadata.format);
+            check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
+            check_Nirvana_In_Bloom_commonTags(metadata.common);
+          }); // .then(() => parser.close());
         });
-
       });
 
-      it("as a stream", () => {
-
-        const stream = fs.createReadStream(filePath);
-
-        return mm.parseStream(stream, 'audio/ogg', {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-          check_Nirvana_In_Bloom_commonTags(metadata.common);
-        }).then(() => stream.close());
-      });
     });
 
     it("should handle page not finalized with the lastPage flag", () => {
@@ -155,26 +146,16 @@ describe("Parsing Ogg", function() {
         // ToDo: assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
       }
 
-      it("as a file", () => {
-
-        return mm.parseFile(filePath, {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-          check_Nirvana_In_Bloom_commonTags(metadata.common);
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+            checkFormat(metadata.format);
+            check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
+            check_Nirvana_In_Bloom_commonTags(metadata.common);
+          }); // .then(() => parser.close());
         });
-
       });
 
-      it("as a stream", () => {
-
-        const stream = fs.createReadStream(filePath);
-
-        return mm.parseStream(stream, 'audio/ogg', {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-          check_Nirvana_In_Bloom_commonTags(metadata.common);
-        }).then(() => stream.close());
-      });
     });
   });
 
@@ -190,21 +171,12 @@ describe("Parsing Ogg", function() {
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
       }
 
-      it("as a file", () => {
-
-        return mm.parseFile(filePath, {native: true}).then(metadata => {
-          checkFormat(metadata.format);
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+            checkFormat(metadata.format);
+          }); // .then(() => parser.close());
         });
-
-      });
-
-      it("as a stream", () => {
-
-        const stream = fs.createReadStream(filePath);
-
-        return mm.parseStream(stream, 'audio/speex', {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-        }).then(() => stream.close());
       });
 
     });

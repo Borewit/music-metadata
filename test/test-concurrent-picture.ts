@@ -6,7 +6,7 @@ import * as path from 'path';
 
 const t = assert;
 
-it("should handle concurrent parsing of pictures", () => {
+it.skip("should handle concurrent parsing of pictures", () => {
 
   const files = [path.join(__dirname, 'samples', 'flac.flac'), path.join(__dirname, 'samples', 'flac-bug.flac')];
 
