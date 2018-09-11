@@ -160,7 +160,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
 Parses content of the provided buffer for metadata.
 
 ```TypeScript
-parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
 Example:
