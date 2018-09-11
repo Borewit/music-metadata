@@ -63,7 +63,7 @@ describe("FLAC decoding", () => {
           checkFormat(metadata.format);
           checkCommon(metadata.common);
           checkNative(mm.orderTags(metadata.native.vorbis));
-        }); // .then(() => parser.close());
+        });
       });
     });
 
@@ -77,7 +77,7 @@ describe("FLAC decoding", () => {
       it(parser.description, () => {
         parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
           t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
-        }); // .then(() => parser.close());
+        });
       });
     });
 
@@ -91,7 +91,7 @@ describe("FLAC decoding", () => {
       it(parser.description, () => {
         parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
           assert.approximately(496000, metadata.format.bitrate, 500);
-        }); // .then(() => parser.close());
+        });
       });
     });
 
@@ -99,7 +99,7 @@ describe("FLAC decoding", () => {
 
   describe("handle corrupt FLAC data", () => {
 
-    describe("should handle a corrupt data", () => {
+    it("should handle a corrupt data", () => {
 
       const emptyStreamSize = 10 * 1024;
       const buf = Buffer.alloc(emptyStreamSize).fill(0);
@@ -109,18 +109,15 @@ describe("FLAC decoding", () => {
         Parsers.forEach(parser => {
           it(parser.description, () => {
             parser.initParser(tmpFilePath, 'audio/ogg', {native: true}).then(metadata => {
-              assert.approximately(496000, metadata.format.bitrate, 500);
-            }); // .then(() => parser.close());
+              t.fail("Should reject");
+              fs.remove(tmpFilePath);
+            }).catch(err => {
+              t.strictEqual(err.message, "FourCC contains invalid characters");
+              return fs.remove(tmpFilePath);
+            });
           });
         });
-      }).then(() => {
-        t.fail("Should reject");
-        return fs.remove(tmpFilePath);
-      }).catch(err => {
-        t.strictEqual(err.message, "FourCC contains invalid characters");
-        return fs.remove(tmpFilePath);
       });
-
     });
   });
 });

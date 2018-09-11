@@ -39,7 +39,7 @@ describe("should calculate duration for a CBR encoded MP3", () => {
         t.deepEqual(metadata.format.tagTypes, ["ID3v2.3"], "format.tagTypes");
         t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");
         t.strictEqual(metadata.format.duration, 16462080 / metadata.format.sampleRate, "format.duration");
-      }); // .then(() => parser.close());
+      });
     });
   });
 

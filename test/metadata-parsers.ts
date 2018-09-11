@@ -21,7 +21,10 @@ export const Parsers: IParser[] = [
     description: 'parseStream',
     initParser: (filePath: string, mimeType?: string, options?: mm.IOptions) => {
       const stream = fs.createReadStream(filePath);
-      return mm.parseStream(stream, mimeType, options);
+      return mm.parseStream(stream, mimeType, options).then(metadata => {
+        stream.close();
+        return metadata;
+      });
     }
   }, {
     description: 'parseBuffer',

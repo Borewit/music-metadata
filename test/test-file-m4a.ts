@@ -71,7 +71,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
           checkFormat(metadata.format);
           checkCommon(metadata.common);
           checkNativeTags(mm.orderTags(native));
-        }); // .then(() => parser.close());
+        });
       });
     });
 
@@ -95,7 +95,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
           t.deepEqual(metadata.common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
           t.deepEqual(metadata.common.albumartist, "They Say We're Sinking");
           t.deepEqual(metadata.common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
-        }); // .then(() => parser.close());
+        });
       });
     });
   });
@@ -119,7 +119,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
           assert.strictEqual(metadata.common.encodedby, "iTunes 8.2.0.23, QuickTime 7.6.2");
           assert.deepEqual(metadata.common.disk, {no: 1, of: 1});
           assert.deepEqual(metadata.common.track, {no: 1, of: null});
-        }); // .then(() => parser.close());
+        });
       });
     });
   });
@@ -143,7 +143,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.disk, {no: null, of: null});
             assert.deepEqual(metadata.common.track, {no: null, of: null});
             assert.deepEqual(metadata.common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
-          }); // .then(() => parser.close());
+          });
         });
       });
     });
@@ -166,7 +166,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
             const iTunes = mm.orderTags(metadata.native.iTunes);
             assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
-          }); // .then(() => parser.close());
+          });
         });
       });
     });
@@ -180,7 +180,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
           parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
             assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
-          }); // .then(() => parser.close());
+          });
         });
       });
     });

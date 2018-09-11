@@ -4,9 +4,10 @@ import * as mm from "../src";
 import * as fs from "fs-extra";
 import * as path from "path";
 import {SourceStream} from "./util";
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
-describe("WavPack decoding", () => {
+describe("WavPack decoding (audio/x-wavpack)", () => {
 
   const samplePath = path.join(__dirname, 'samples');
   const wv1 = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
@@ -22,26 +23,13 @@ describe("WavPack decoding", () => {
     t.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], "common.artist");
   }
 
-  it("should decode a WavPack audio file (.wv)", () => {
-
-    return mm.parseFile(wv1, {native: true}).then(metadata => {
-      checkFormat(metadata.format);
-      checkCommon(metadata.common);
+  Parsers.forEach(parser => {
+    it(parser.description, () => {
+      parser.initParser(wv1, 'audio/x-wavpack', {native: true}).then(metadata => {
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
+      });
     });
-
-  });
-
-  it("should decode a WavPack audio stream (audio/x-wavpack)", () => {
-
-    const stream = fs.createReadStream(wv1);
-
-    return mm.parseStream(stream, 'audio/x-wavpack', {native: true}).then(metadata => {
-      checkFormat(metadata.format);
-      checkCommon(metadata.common);
-    }).then(() => {
-      stream.close();
-    });
-
   });
 
 });

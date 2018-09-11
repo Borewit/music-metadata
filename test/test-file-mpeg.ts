@@ -335,7 +335,7 @@ describe("MPEG parsing", () => {
         it(parser.description, () => {
           parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
             assert.strictEqual(metadata.format.duration, 0.4963265306122449);
-          }); // .then(() => parser.close());
+          });
         });
       });
 
@@ -349,6 +349,7 @@ describe("MPEG parsing", () => {
       stream.path = undefined; // disable file size based calculation
 
       return mm.parseStream(stream, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+        stream.close();
         assert.approximately(metadata.format.duration, 34.64, 1 / 100);
       });
 

@@ -50,7 +50,7 @@ describe("Decode Monkey's Audio (.ape)", () => {
 
         t.ok(metadata.native && metadata.native.APEv2, 'should include native APEv2 tags');
         checkNative(mm.orderTags(metadata.native.APEv2));
-      }); // .then(() => parser.close());
+      });
     });
   });
 

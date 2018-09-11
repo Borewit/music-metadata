@@ -96,7 +96,7 @@ describe("ASF", () => {
 
             t.ok(metadata.native && metadata.native.asf, 'should include native ASF tags');
             checkNative(mm.orderTags(metadata.native.asf));
-          }); // .then(() => parser.close());
+          });
         });
       });
 
@@ -112,7 +112,7 @@ describe("ASF", () => {
             assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
             const nativePicture = asf['WM/Picture'][0];
             assert.exists(nativePicture.data);
-          }); // .then(() => parser.close());
+          });
         });
       });
 
