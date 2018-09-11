@@ -8,15 +8,15 @@ node_js:
 install:
 - yarn install
 script:
-- npm run lint
-- npm run compile
-- npm run test
+- yarn run lint
+- yarn run compile
+- yarn run test
 
 jobs:
   include:
     - stage: after_success
       script:
       - yarn install
-      - npm run compile
-      - npm run coveralls
+      - yarn run compile
+      - yarn run coveralls
       node_js: 9
