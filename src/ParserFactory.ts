@@ -218,6 +218,9 @@ export class ParserFactory {
           case 'ms-wmv':
             return 'asf';
 
+          case 'm4a':
+            return 'mp4';
+
           case 'ogg':
             return 'ogg';
         }
