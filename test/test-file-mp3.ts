@@ -19,7 +19,7 @@ describe("Parse MP3 files", () => {
 
       // If MPEG Layer II is accepted, it will give back third frame with a different frame length;
       // therefore it start counting actual parsable frames ending up on ~66.86
-      t.strictEqual(result.format.duration, 66.8647619047619);
+      t.strictEqual(result.format.duration, 66.8560544217687);
     });
   });
 

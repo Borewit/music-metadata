@@ -3,6 +3,7 @@ import * as mm from "../src";
 import * as fs from "fs-extra";
 import * as path from "path";
 import {SourceStream} from "./util";
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
@@ -54,81 +55,69 @@ describe("FLAC decoding", () => {
     t.strictEqual(pic.data.length, 175668, "raw METADATA_BLOCK_PICTURE length");
   }
 
-  it("should decode a FLAC audio file (.flac)", () => {
+  describe("decode flac.flac", () => {
 
-    return mm.parseFile(flacFilePath, {native: true}).then(metadata => {
-      checkFormat(metadata.format);
-      checkCommon(metadata.common);
-      checkNative(mm.orderTags(metadata.native.vorbis));
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(flacFilePath, 'audio/ogg', {native: true}).then(metadata => {
+          checkFormat(metadata.format);
+          checkCommon(metadata.common);
+          checkNative(mm.orderTags(metadata.native.vorbis));
+        });
+      });
     });
 
   });
 
-  it("should decode from a FLAC audio stream (audio/flac)", () => {
-
-    const stream = fs.createReadStream(flacFilePath);
-
-    return mm.parseStream(stream, "audio/flac", {native: true}).then(metadata => {
-      checkFormat(metadata.format);
-      checkCommon(metadata.common);
-      checkNative(mm.orderTags(metadata.native.vorbis));
-    }).then(() => {
-      stream.close();
-    });
-
-  });
-
-  it("should be able to recognize a ID3v2 tag header prefixing a FLAC file", () => {
+  describe("should be able to recognize a ID3v2 tag header prefixing a FLAC file", () => {
 
     const filePath = path.join(samplePath, "a kind of magic.flac");
 
-    return mm.parseFile(filePath, {native: true}).then(metadata => {
-      t.deepEqual(metadata.format.tagTypes, ['ID3v2.3' , 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+          t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
+        });
+      });
     });
 
   });
 
-  it("should be able to determine the bit-rate", () => {
+  describe("should be able to determine the bit-rate", () => {
 
     const filePath = path.join(samplePath, "04 Long Drive.flac");
 
-    return mm.parseFile(filePath, {duration: true}).then(metadata => {
-      assert.approximately(496000, metadata.format.bitrate, 500);
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+          assert.approximately(496000, metadata.format.bitrate, 500);
+        });
+      });
     });
 
   });
 
   describe("handle corrupt FLAC data", () => {
 
-    const emptyStreamSize = 10 * 1024;
-    const buf = Buffer.alloc(emptyStreamSize).fill(0);
+    it("should handle a corrupt data", () => {
 
-    it("should handle a corrupt stream", () => {
-
-      const streamReader = new SourceStream(buf);
-
-      return mm.parseStream(streamReader, "audio/flac", {duration: true, native: true})
-        .then(() => {
-          t.fail("Should reject");
-        }).catch(err => {
-          t.strictEqual(err.message, "FourCC contains invalid characters");
-        });
-    });
-
-    it("should handle a corrupt file", () => {
-
+      const emptyStreamSize = 10 * 1024;
+      const buf = Buffer.alloc(emptyStreamSize).fill(0);
       const tmpFilePath = path.join(samplePath, "zeroes.flac");
 
       return fs.writeFile(tmpFilePath, buf).then(() => {
-        return mm.parseFile(tmpFilePath, {duration: true, native: true});
-      }).then(() => {
-        t.fail("Should reject");
-        return fs.remove(tmpFilePath);
-      }).catch(err => {
-        t.strictEqual(err.message, "FourCC contains invalid characters");
-        return fs.remove(tmpFilePath);
+        Parsers.forEach(parser => {
+          it(parser.description, () => {
+            parser.initParser(tmpFilePath, 'audio/ogg', {native: true}).then(metadata => {
+              t.fail("Should reject");
+              fs.remove(tmpFilePath);
+            }).catch(err => {
+              t.strictEqual(err.message, "FourCC contains invalid characters");
+              return fs.remove(tmpFilePath);
+            });
+          });
+        });
       });
-
     });
   });
 });

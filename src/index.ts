@@ -1,9 +1,13 @@
 'use strict';
 
+import * as Stream from 'stream';
+import * as strtok3 from 'strtok3';
+import {Promise} from 'es6-promise';
+import * as path from 'path';
+
 import {GenericTagId, TagType} from './common/GenericTagTypes';
-import {ITokenParser, ParserFactory} from "./ParserFactory";
-import * as Stream from "stream";
-import {Promise} from "es6-promise";
+import {ITokenParser, ParserFactory} from './ParserFactory';
+import {MetadataCollector} from './common/MetadataCollector';
 
 /**
  * Attached picture, typically used for cover art
@@ -360,6 +364,11 @@ export interface IAudioMetadata extends INativeAudioMetadata {
   common: ICommonTagsResult,
 }
 
+/**
+ * Corresponds with parser module name
+ */
+export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff';
+
 export interface IOptions {
   path?: string,
 
@@ -394,7 +403,7 @@ export interface IOptions {
    * @param {string} moduleName module name
    * @return {Promise<ITokenParser>} parser
    */
-  loadParser?: (moduleName: string) => Promise<ITokenParser>;
+  loadParser?: (moduleName: ParserType) => Promise<ITokenParser>;
 
   /**
    * Set observer for async callbacks to common or format.
@@ -436,61 +445,72 @@ export interface IMetadataEvent {
 
 export type Observer = (update: IMetadataEvent) => void;
 
-export class MusicMetadataParser {
-
-  public static joinArtists(artists: string[]): string {
-    if (artists.length > 2) {
-      return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
+/**
+ * Parse audio from Node file
+ * @param {string} filePath Media file to read meta-data from
+ * @param {IOptions} options Parsing options
+ * @returns {Promise<IAudioMetadata>}
+ */
+export function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  return strtok3.fromFile(filePath).then(fileTokenizer => {
+    const parserName = ParserFactory.getParserIdForExtension(filePath);
+    if (parserName) {
+      return ParserFactory.loadParser(parserName, options).then(parser => {
+        const metadata = new MetadataCollector(options);
+        return parser.init(metadata, fileTokenizer, options).parse().then(() => {
+          return fileTokenizer.close().then(() => {
+            return metadata.toCommonMetadata();
+          });
+        }).catch(err => {
+          return fileTokenizer.close().then(() => {
+            throw err;
+          });
+        });
+      });
+    } else {
+      throw new Error('No parser found for extension: ' + path.extname(filePath));
     }
-    return artists.join(' & ');
-  }
-
-  /**
-   * Extract metadata from the given audio file
-   * @param filePath File path of the audio file to parse
-   * @param opts
-   *   .filesize=true  Return filesize
-   *   .native=true    Will return original header in result
-   * @returns {Promise<IAudioMetadata>}
-   */
-  public parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseFile(filePath, opts);
-  }
-
-  /**
-   * Extract metadata from the given audio file
-   * @param stream Audio ReadableStream
-   * @param mimeType Mime-Type of Stream
-   * @param opts
-   *   .filesize=true  Return filesize
-   *   .native=true    Will return original header in result
-   * @returns {Promise<IAudioMetadata>}
-   */
-  public parseStream(stream: Stream.Readable, mimeType: string, opts: IOptions = {}): Promise<IAudioMetadata> {
-    return ParserFactory.parseStream(stream, mimeType, opts);
-  }
-
+  });
 }
 
 /**
- * Parse audio file
- * @param filePath Media file to read meta-data from
- * @param options Parsing options
+ * Parse audio from Node Stream.Readable
+ * @param {Stream.Readable} Stream to read the audio track from
+ * @param {string} mimeType Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata> {
-  return new MusicMetadataParser().parseFile(filePath, options);
+export function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  return strtok3.fromStream(stream).then(tokenizer => {
+    return parseFromTokenizer(tokenizer, mimeType, options);
+  });
 }
 
 /**
- * Parse audio Stream
- * @param stream
- * @param mimeType
- * @param options Parsing options
+ * Parse audio from Node Buffer
+ * @param {Stream.Readable} stream Audio input stream
+ * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param {IOptions} options Parsing options
+ * @returns {Promise<IAudioMetadata>}
+ * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
+ */
+export function parseBuffer(buf: Buffer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const tokenizer = strtok3.fromBuffer(buf);
+  return parseFromTokenizer(tokenizer, mimeType, options);
+}
+
+/**
+ * Parse audio from ITokenizer source
+ * @param {strtok3.ITokenizer} Audio source implementing the tokenizer interface
+ * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions): Promise<IAudioMetadata> {
-  return new MusicMetadataParser().parseStream(stream, mimeType, opts);
+export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  if (!tokenizer.fileSize && options.fileSize) {
+    tokenizer.fileSize = options.fileSize;
+  }
+  return ParserFactory.parse(tokenizer, mimeType, options);
 }
 
 /**
@@ -504,6 +524,13 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
     (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
   }
   return tags;
+}
+
+export function joinArtists(artists: string[]): string {
+  if (artists.length > 2) {
+    return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
+  }
+  return artists.join(' & ');
 }
 
 /**

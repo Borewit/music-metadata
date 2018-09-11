@@ -3,10 +3,13 @@ import * as mm from '../src';
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
 describe("Parsing MPEG / ID3v1", () => {
+
+  const fileBloodSugar = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
 
   describe("should be able to read an ID3v1 tag", () => {
 
@@ -35,45 +38,40 @@ describe("Parsing MPEG / ID3v1", () => {
     /**
      * 241920 samples
      */
-    const filePath = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
-
-    it("from a file", () => {
-
-      return mm.parseFile(filePath).then(metadata => {
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(fileBloodSugar, 'audio/mpeg').then(metadata => {
+          checkFormat(metadata.format);
+          checkCommon(metadata.common);
+        });
       });
     });
+  });
 
-    it("from a stream", () => {
+  describe("by default should not include native tags", () => {
 
-      const stream = fs.createReadStream(filePath);
-
-      return mm.parseStream(stream, 'audio/mpeg').then(metadata => {
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
-      }).then(() => stream.close());
-
-    });
-
-    it("should do without native", () => {
-
-      return mm.parseFile(filePath).then(metadata => {
-        for (const tagType in metadata.native)
-          throw new Error("Do not expect any native tag type, got: " + tagType);
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(fileBloodSugar, 'audio/mpeg').then(metadata => {
+          for (const tagType in metadata.native)
+            throw new Error("Do not expect any native tag type, got: " + tagType);
+        });
       });
     });
+  });
 
-    it("it should skip id3v1 header if options.skipPostHeaders is set", () => {
+  describe("it should skip id3v1 header if options.skipPostHeaders is set", () => {
 
-      const stream = fs.createReadStream(path.join(__dirname, 'samples', "07 - I'm Cool.mp3"));
-
-      return mm.parseStream(stream, 'audio/mpeg', {native: true, skipPostHeaders: true}).then(metadata => {
-        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
-      }).then(() => stream.close());
-
+    const filePath = path.join(__dirname, 'samples', "07 - I'm Cool.mp3");
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/mpeg',
+          {native: true, skipPostHeaders: true})
+          .then(metadata => {
+            t.deepEqual(metadata.format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
+          });
+      });
     });
-
   });
 
   describe("should handle MP3 without any tags", () => {
@@ -90,30 +88,18 @@ describe("Parsing MPEG / ID3v1", () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
 
-    it("should decode from a file", () => {
-
-      return mm.parseFile(filePath).then(metadata => {
-        for (const tagType in metadata.native)
-          throw new Error("Do not expect any native tag type, got: " + tagType);
-        checkFormat(metadata.format);
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/mpeg').then(metadata => {
+          for (const tagType in metadata.native)
+            throw new Error("Do not expect any native tag type, got: " + tagType);
+          checkFormat(metadata.format);
+        });
       });
     });
-
-    it("should decode from a stream", () => {
-
-      const stream = fs.createReadStream(filePath);
-
-      return mm.parseStream(stream, 'audio/mpeg', {native: true}).then(metadata => {
-        for (const tagType in metadata.native)
-          throw new Error("Do not expect any native tag type, got: " + tagType);
-        checkFormat(metadata.format);
-      }).then(() => stream.close());
-
-    });
-
   });
 
-  it("should decode ID3v1.0 with undefined tags", () => {
+  describe("should decode ID3v1.0 with undefined tags", () => {
 
     /**
      * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
@@ -142,11 +128,16 @@ describe("Parsing MPEG / ID3v1", () => {
       t.isUndefined(common.comment, 'common.comment');
     }
 
-    return mm.parseFile(filePath).then(metadata => {
-      t.isDefined(metadata, "should provide metadata");
-      checkFormat(metadata.format);
-      checkCommon(metadata.common);
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/mpeg', {native: true}).then(metadata => {
+          t.isDefined(metadata, "should provide metadata");
+          checkFormat(metadata.format);
+          checkCommon(metadata.common);
+        });
+      });
     });
+
   });
 
   /**
@@ -156,14 +147,18 @@ describe("Parsing MPEG / ID3v1", () => {
 
     const filePath = path.join(__dirname, 'samples', 'issue_69.mp3');
 
-    return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-
-      const id3v1 = mm.orderTags(metadata.native.ID3v1);
-      assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
-      assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');
-      assert.deepEqual(id3v1.album, ['Skupinove foto'], 'id3v1.album');
-      assert.deepEqual(id3v1.year, ['1988'], 'id3v1.year');
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+        parser.initParser(filePath, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+          const id3v1 = mm.orderTags(metadata.native.ID3v1);
+          assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
+          assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');
+          assert.deepEqual(id3v1.album, ['Skupinove foto'], 'id3v1.album');
+          assert.deepEqual(id3v1.year, ['1988'], 'id3v1.year');
+        });
+      });
     });
+
   });
 
 });

@@ -76,6 +76,7 @@ describe("MIME & extension mapping", () => {
 
     const stream = fs.createReadStream(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
     return mm.parseStream(stream, '').then(metadata => {
+      stream.close();
       assert.equal(metadata.format.dataformat, "WAVE/PCM");
     });
 
@@ -100,6 +101,7 @@ describe("MIME & extension mapping", () => {
       const stream = fs.createReadStream(path.join(samplePath, 'flac.flac.jpg'));
       return mm.parseStream(stream, "audio/not-existing")
         .then(() => {
+          stream.close();
           assert.fail('Should throw an Error');
         })
         .catch(err => {
@@ -110,6 +112,7 @@ describe("MIME & extension mapping", () => {
     function testFileType(sample: string, dataformat: string) {
       const stream = fs.createReadStream(path.join(samplePath, sample));
       return mm.parseStream(stream).then(metadata => {
+        stream.close();
         assert.equal(metadata.format.dataformat, dataformat);
       });
     }

@@ -2,6 +2,7 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import * as fs from "fs-extra";
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
@@ -40,32 +41,17 @@ describe("Decode Monkey's Audio (.ape)", () => {
     t.strictEqual(ape['Cover Art (Back)'][0].data.length, 48658, 'raw cover art (front) length');
   }
 
-  it('from a file', () => {
+  Parsers.forEach(parser => {
+    it(parser.description, () => {
+      parser.initParser(path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape').then(metadata => {
+        checkFormat(metadata.format);
 
-    return mm.parseFile(path.join(samplePath, 'monkeysaudio.ape'), {native: true}).then(md => {
+        checkCommon(metadata.common);
 
-      checkFormat(md.format);
-
-      checkCommon(md.common);
-
-      t.ok(md.native && md.native.APEv2, 'should include native APEv2 tags');
-      checkNative(mm.orderTags(md.native.APEv2));
-    });
-
-  });
-
-  it('from a stream', () => {
-
-    const stream = fs.createReadStream(path.join(samplePath, 'monkeysaudio.ape'));
-    return mm.parseStream(stream, 'audio/ape', {native: true})
-      .then(md => {
-        checkFormat(md.format);
-
-        checkCommon(md.common);
-
-        t.ok(md.native && md.native.APEv2, 'should include native APEv2 tags');
-        checkNative(mm.orderTags(md.native.APEv2));
+        t.ok(metadata.native && metadata.native.APEv2, 'should include native APEv2 tags');
+        checkNative(mm.orderTags(metadata.native.APEv2));
       });
+    });
   });
 
 });
