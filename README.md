@@ -103,25 +103,26 @@ Direct file access tends to be a little faster, because it can 'jump' to various
 
 Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
 
-`parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+```TypeScript
+parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+```
 
 Javascript example:
 ```javascript
-var mm = require('music-metadata');
+const mm = require('music-metadata');
 const util = require('util')
 
-mm.parseFile('../test/samples/Mu' +
- 'sicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
-  .then(function (metadata) {
+mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
+  .then( metadata => {
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   })
-  .catch(function (err) {
+  .catch( err => {
     console.error(err.message);
   });
 ```
 
 Typescript example:
-```TypeScript
+```javascript
 import * as mm from 'music-metadata';
 import * as util from 'util';
 
@@ -141,14 +142,32 @@ It is recommended to provide the corresponding [MIME-type](https://developer.moz
 An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
 
-`parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+```TypeScript
+parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+```
 
 Example:
 ```javascript
 mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
-  .then( function (metadata) {
+  .then( metadata => {
      console.log(util.inspect(metadata, { showHidden: false, depth: null }));
      someReadStream.close();
+   });
+```
+
+#### parseBuffer function
+
+Parses content of the provided buffer for metadata.
+
+```TypeScript
+parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+```
+
+Example:
+```javascript
+mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
+  .then( metadata => {
+    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
    });
 ```
 
