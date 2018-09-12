@@ -1,10 +1,8 @@
 import {INativeAudioMetadata, IOptions, IAudioMetadata, ParserType} from "./index";
 import * as strtok3 from "strtok3";
-import * as Stream from "stream";
 import * as path from "path";
 import * as fileType from "file-type";
 import * as MimeType from "media-typer";
-import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
 import {INativeMetadataCollector, MetadataCollector} from "./common/MetadataCollector";

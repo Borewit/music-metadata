@@ -1,12 +1,9 @@
 import * as strtok3 from "strtok3";
-import {IOptions} from "../index";
 import {ID3v2Token} from "./ID3v2";
 import {ID3v2Parser} from "./ID3v2Parser";
 import {ID3v1Parser} from "../id3v1/ID3v1Parser";
-import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
 import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:ID3");

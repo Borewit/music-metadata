@@ -1,5 +1,4 @@
 import {ITokenizer} from "strtok3";
-import {Promise} from "es6-promise";
 
 import * as _debug from "debug";
 

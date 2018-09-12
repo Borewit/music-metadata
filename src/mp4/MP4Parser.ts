@@ -1,5 +1,3 @@
-import {Promise} from "es6-promise";
-
 import * as _debug from "debug";
 import {BasicParser} from "../common/BasicParser";
 import {Atom} from "./Atom";
