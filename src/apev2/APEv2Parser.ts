@@ -6,7 +6,6 @@ import {IOptions} from "../";
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "es6-promise";
 import FileType = require("file-type");
 import {IPicture} from "../index";
 

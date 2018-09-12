@@ -1,11 +1,9 @@
-import {ITokenParser} from "../ParserFactory";
 import * as strtok3 from "strtok3";
 import * as Token from "token-types";
 import * as Chunk from "./Chunk";
 import {Readable} from "stream";
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "es6-promise";
 import {BasicParser} from "../common/BasicParser";
 
 /**

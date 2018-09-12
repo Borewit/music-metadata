@@ -1,13 +1,10 @@
 'use strict';
 
 import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../index";
-import {ITokenizer} from "strtok3";
-import {ITokenParser} from "../ParserFactory";
 import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
-import {Promise} from "es6-promise";
+
 import * as _debug from "debug";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
 import {BasicParser} from "../common/BasicParser";
 
 const debug = _debug("music-metadata:parser:ASF");
@@ -26,7 +23,7 @@ const headerType = 'asf';
  */
 export class AsfParser extends BasicParser {
 
-  public parse(): Promise<void> {
+  public parse() {
     return this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken).then(header => {
       if (!header.objectId.equals(GUID.HeaderObject)) {
         throw new Error('expected asf header; but was not found; got: ' + header.objectId.str);

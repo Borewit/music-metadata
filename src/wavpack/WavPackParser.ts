@@ -2,7 +2,6 @@ import {INativeAudioMetadata} from "../";
 import * as Token from "token-types";
 import {APEv2Parser} from "../apev2/APEv2Parser";
 import {FourCcToken} from "../common/FourCC";
-import {Promise} from "es6-promise";
 import {BasicParser} from "../common/BasicParser";
 
 /**
