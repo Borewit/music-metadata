@@ -64,7 +64,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
         const filePath = path.join(__dirname, 'samples', 'id4.m4a');
 
-        parser.initParser(filePath, 'audio/mp4').then(metadata => {
+        return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
           const native = metadata.native.iTunes;
           t.ok(native, 'Native m4a tags should be present');
 
@@ -87,7 +87,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
         const filePath = path.join(samples, "issue_74.m4a");
 
-        parser.initParser(filePath, 'audio/mp4').then(metadata => {
+        return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
           const native = metadata.native.iTunes;
           t.ok(native, 'Native m4a tags should be present');
 
@@ -110,7 +110,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
         const filePath = path.join(samples, "issue_79.m4a");
 
-        parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+        return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
           assert.strictEqual(metadata.common.title, "Uprising");
           assert.deepEqual(metadata.common.composer, ["Muse"]);
           assert.deepEqual(metadata.common.artists, ["Muse"]);
@@ -133,7 +133,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
           const filePath = path.join(samples, 'issue-120.m4b');
 
-          parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
             assert.strictEqual(metadata.common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
             assert.deepEqual(metadata.common.composer, ['Nick Podehl']);
             assert.deepEqual(metadata.common.artists, ['Aleron Kong']);
@@ -155,7 +155,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
           const filePath = path.join(samples, 'issue-127.m4b');
 
-          parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
             assert.strictEqual(metadata.common.title, 'GloriesIreland00-12_librivox');
             assert.deepEqual(metadata.common.artists, ['Joseph Dunn']);
             assert.deepEqual(metadata.common.genre, ['Audiobook']);
@@ -178,7 +178,7 @@ describe("Read MPEG-4 files with iTunes metadata", () => {
 
           const filePath = path.join(samples, 'issue-133.m4a');
 
-          parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
             assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
           });
         });

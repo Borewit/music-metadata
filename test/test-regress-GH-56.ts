@@ -34,7 +34,7 @@ describe("should calculate duration for a CBR encoded MP3", () => {
 
   Parsers.forEach(parser => {
     it(parser.description, () => {
-      parser.initParser(filePath, 'audio/mpeg', {native: true}).then(metadata => {
+      return parser.initParser(filePath, 'audio/mpeg', {native: true}).then(metadata => {
         // ToDo: t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2'], 'format.tagTypes');
         t.deepEqual(metadata.format.tagTypes, ["ID3v2.3"], "format.tagTypes");
         t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");

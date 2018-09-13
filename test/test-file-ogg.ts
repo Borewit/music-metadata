@@ -65,7 +65,7 @@ describe("Parsing Ogg", function() {
 
       Parsers.forEach(parser => {
         it(parser.description, () => {
-          parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
             checkFormat(metadata.format);
             check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
             check_Nirvana_In_Bloom_commonTags(metadata.common);
@@ -148,7 +148,7 @@ describe("Parsing Ogg", function() {
 
       Parsers.forEach(parser => {
         it(parser.description, () => {
-          parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
             checkFormat(metadata.format);
             check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
             check_Nirvana_In_Bloom_commonTags(metadata.common);
@@ -173,7 +173,7 @@ describe("Parsing Ogg", function() {
 
       Parsers.forEach(parser => {
         it(parser.description, () => {
-          parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
             checkFormat(metadata.format);
           });
         });

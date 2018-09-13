@@ -43,7 +43,7 @@ describe("Decode Monkey's Audio (.ape)", () => {
 
   Parsers.forEach(parser => {
     it(parser.description, () => {
-      parser.initParser(path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape').then(metadata => {
+      return parser.initParser(path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape', {native: true}).then(metadata => {
         checkFormat(metadata.format);
 
         checkCommon(metadata.common);

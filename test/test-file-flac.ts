@@ -59,7 +59,7 @@ describe("FLAC decoding", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(flacFilePath, 'audio/ogg', {native: true}).then(metadata => {
+        return parser.initParser(flacFilePath, 'audio/flac', {native: true}).then(metadata => {
           checkFormat(metadata.format);
           checkCommon(metadata.common);
           checkNative(mm.orderTags(metadata.native.vorbis));
@@ -75,7 +75,7 @@ describe("FLAC decoding", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+        return parser.initParser(filePath, 'audio/flac', {native: true}).then(metadata => {
           t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
         });
       });
@@ -89,7 +89,7 @@ describe("FLAC decoding", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
+        return parser.initParser(filePath, 'audio/flac', {native: true}).then(metadata => {
           assert.approximately(496000, metadata.format.bitrate, 500);
         });
       });
@@ -108,7 +108,7 @@ describe("FLAC decoding", () => {
       return fs.writeFile(tmpFilePath, buf).then(() => {
         Parsers.forEach(parser => {
           it(parser.description, () => {
-            parser.initParser(tmpFilePath, 'audio/ogg', {native: true}).then(metadata => {
+            return parser.initParser(tmpFilePath, 'audio/flac', {native: true}).then(metadata => {
               t.fail("Should reject");
               fs.remove(tmpFilePath);
             }).catch(err => {

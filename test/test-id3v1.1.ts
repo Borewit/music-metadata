@@ -40,7 +40,7 @@ describe("Parsing MPEG / ID3v1", () => {
      */
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(fileBloodSugar, 'audio/mpeg').then(metadata => {
+        return parser.initParser(fileBloodSugar, 'audio/mpeg').then(metadata => {
           checkFormat(metadata.format);
           checkCommon(metadata.common);
         });
@@ -52,7 +52,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(fileBloodSugar, 'audio/mpeg').then(metadata => {
+        return parser.initParser(fileBloodSugar, 'audio/mpeg').then(metadata => {
           for (const tagType in metadata.native)
             throw new Error("Do not expect any native tag type, got: " + tagType);
         });
@@ -65,7 +65,7 @@ describe("Parsing MPEG / ID3v1", () => {
     const filePath = path.join(__dirname, 'samples', "07 - I'm Cool.mp3");
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(filePath, 'audio/mpeg',
+        return parser.initParser(filePath, 'audio/mpeg',
           {native: true, skipPostHeaders: true})
           .then(metadata => {
             t.deepEqual(metadata.format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
@@ -90,7 +90,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(filePath, 'audio/mpeg').then(metadata => {
+        return parser.initParser(filePath, 'audio/mpeg').then(metadata => {
           for (const tagType in metadata.native)
             throw new Error("Do not expect any native tag type, got: " + tagType);
           checkFormat(metadata.format);
@@ -130,7 +130,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(filePath, 'audio/mpeg', {native: true}).then(metadata => {
+        return parser.initParser(filePath, 'audio/mpeg', {native: true}).then(metadata => {
           t.isDefined(metadata, "should provide metadata");
           checkFormat(metadata.format);
           checkCommon(metadata.common);
@@ -149,7 +149,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        parser.initParser(filePath, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+        return parser.initParser(filePath, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
           const id3v1 = mm.orderTags(metadata.native.ID3v1);
           assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
           assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');

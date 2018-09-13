@@ -89,7 +89,7 @@ describe("ASF", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, () => {
-          parser.initParser(asfFilePath, 'audio/x-ms-wma').then(metadata => {
+          return parser.initParser(asfFilePath, 'audio/x-ms-wma', {native: true}).then(metadata => {
             checkFormat(metadata.format);
 
             checkCommon(metadata.common);
@@ -107,7 +107,7 @@ describe("ASF", () => {
       Parsers.forEach(parser => {
         it(parser.description, () => {
           const filePath = path.join(__dirname, 'samples', 'issue_57.wma');
-          parser.initParser(filePath, 'audio/x-ms-wma').then(metadata => {
+          return parser.initParser(filePath, 'audio/x-ms-wma', {native: true}).then(metadata => {
             const asf = mm.orderTags(metadata.native.asf);
             assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
             const nativePicture = asf['WM/Picture'][0];

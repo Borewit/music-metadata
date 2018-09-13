@@ -25,7 +25,7 @@ describe("WavPack decoding (audio/x-wavpack)", () => {
 
   Parsers.forEach(parser => {
     it(parser.description, () => {
-      parser.initParser(wv1, 'audio/x-wavpack', {native: true}).then(metadata => {
+      return parser.initParser(wv1, 'audio/x-wavpack', {native: true}).then(metadata => {
         checkFormat(metadata.format);
         checkCommon(metadata.common);
       });

@@ -333,7 +333,7 @@ describe("MPEG parsing", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, () => {
-          parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
+          return parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
             assert.strictEqual(metadata.format.duration, 0.4963265306122449);
           });
         });
