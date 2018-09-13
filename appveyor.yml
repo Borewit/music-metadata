@@ -11,11 +11,11 @@ install:
   # Get the latest stable version of Node.js or io.js
   - ps: Install-Product node $env:nodejs_version
   # install modules
-  - npm install
+  - yarn install
 
 build_script:
-  - npm run lint
-  - npm run compile
+  - yarn run lint
+  - yarn run compile
 
 test_script:
-  - npm run test
+  - yarn run test
