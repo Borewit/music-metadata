@@ -47,7 +47,7 @@
     "compile-doc": "tsc -p doc-gen",
     "compile": "yarn run compile-src && yarn run compile-test && npm run compile-doc",
     "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
-    "test": "cd test && mocha --require ts-node/register .",
+    "test": "cd test && mocha --require ts-node/register --full-trace .",
     "build": "yarn run clean && yarn run compile && yarn run doc-gen",
     "start": "npm-run-all compile lint cover-test",
     "cover-test": "nyc yarn run test",
