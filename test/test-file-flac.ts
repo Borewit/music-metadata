@@ -7,7 +7,7 @@ import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
-describe("FLAC decoding", () => {
+describe("Parse FLAC", () => {
 
   const samplePath = path.join(__dirname, "samples");
 

@@ -1,12 +1,11 @@
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
-import * as fs from "fs-extra";
 import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
-describe("Decode Monkey's Audio (.ape)", () => {
+describe("Parse APE (Monkey's Audio)", () => {
 
   const samplePath = path.join(__dirname, 'samples');
 

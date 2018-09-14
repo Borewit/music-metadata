@@ -5,7 +5,7 @@ import * as fs from 'fs-extra';
 import {IdHeader} from "../src/ogg/opus/Opus";
 import {Parsers} from './metadata-parsers';
 
-describe("Parsing Ogg", function() {
+describe("Parse Ogg", function() {
 
   const samplePath = path.join(__dirname, 'samples');
 

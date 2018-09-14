@@ -9,7 +9,7 @@ import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
-describe("MPEG parsing", () => {
+describe("Parse MPEG", () => {
 
   it("should parse MPEG-1 Audio Layer II ", () => {
     /**

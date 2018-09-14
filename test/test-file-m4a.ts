@@ -5,7 +5,7 @@ import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
-describe("Read MPEG-4 files with iTunes metadata", () => {
+describe("Parse MPEG-4 files with iTunes metadata", () => {
 
   const samples = path.join(__dirname, "samples");
 
