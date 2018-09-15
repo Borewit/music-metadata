@@ -33,7 +33,8 @@
     "aiff",
     "wav",
     "WavPack",
-    "Opus"
+    "Opus",
+    "speex"
   ],
   "main": "lib",
   "typings": "lib/index",
