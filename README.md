@@ -4,7 +4,7 @@
 [![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmjs.org/package/music-metadata)
 [![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://david-dm.org/Borewit/music-metadata)
 [![Coverage Status](https://coveralls.io/repos/github/Borewit/music-metadata/badge.svg?branch=master)](https://coveralls.io/github/Borewit/music-metadata?branch=master)
-[![NSP Status](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938/badge)](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938)
+[![Known Vulnerabilities](https://snyk.io/test/github/Borewit/music-metadata/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/music-metadata?targetFile=package.json)
 [![Package Quality](http://npm.packagequality.com/shield/music-metadata.svg)](http://packagequality.com/#?package=music-metadata)
 
 #  music-metadata
