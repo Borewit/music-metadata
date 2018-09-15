@@ -74,7 +74,7 @@ export class AIFFParser extends BasicParser {
     switch (header.chunkID) {
 
       case 'COMM': // The Common Chunk
-        return this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header))
+        return this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header, this.isCompressed))
           .then(common => {
             this.metadata.setFormat('bitsPerSample', common.sampleSize);
             this.metadata.setFormat('bitsPerSample', common.sampleSize);
@@ -82,6 +82,7 @@ export class AIFFParser extends BasicParser {
             this.metadata.setFormat('numberOfChannels', common.numChannels);
             this.metadata.setFormat('numberOfSamples', common.numSampleFrames);
             this.metadata.setFormat('duration', common.numSampleFrames / common.sampleRate);
+            this.metadata.setFormat('encoder', common.compressionName);
             return header.size;
           });
 

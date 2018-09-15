@@ -40,14 +40,17 @@ export interface ICommon {
   numSampleFrames: number,
   sampleSize: number,
   sampleRate: number,
+  compressionType?: string,
+  compressionName?: string
 }
 
 export class Common implements Token.IGetToken<ICommon> {
 
   public len: number;
 
-  public constructor(header: IChunkHeader) {
-    assert.ok(header.size >= 18, "chunkSize should always be at least 18");
+  public constructor(header: IChunkHeader, private isAifc: boolean) {
+    const minimumChunkSize = isAifc ? 22 : 18;
+    assert.ok(header.size >= minimumChunkSize, `COMMON CHUNK size should always be at least ${minimumChunkSize}`);
     this.len = header.size;
   }
 
@@ -57,12 +60,29 @@ export class Common implements Token.IGetToken<ICommon> {
     const shift = buf.readUInt16BE(off + 8) - 16398;
     const baseSampleRate = buf.readUInt16BE(off + 8 + 2);
 
-    return {
+    const res: ICommon = {
       numChannels: buf.readUInt16BE(off),
       numSampleFrames: buf.readUInt32BE(off + 2),
       sampleSize: buf.readUInt16BE(off + 6),
       sampleRate: shift < 0 ? baseSampleRate >> Math.abs(shift) : baseSampleRate << shift
     };
+
+    if (this.isAifc) {
+      res.compressionType = FourCcToken.get(buf, off + 18);
+      if (this.len > 22) {
+        const strLen = buf.readInt8(off + 22);
+        const padding = (strLen + 1) % 2;
+        if (23 + strLen + padding === this.len) {
+          res.compressionName = new Token.StringType(strLen, 'binary').get(buf, off + 23);
+        } else {
+         throw new Error('Illegal pstring length');
+        }
+      }
+    } else {
+      res.compressionName = 'PCM';
+    }
+
+    return res;
   }
 
 }
