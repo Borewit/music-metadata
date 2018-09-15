@@ -19,6 +19,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
       t.strictEqual(format.numberOfSamples, 23493, 'format.bitsPerSample = 93624');
       t.strictEqual(format.duration, 2.936625, 'format.duration = ~2.937');
+      t.strictEqual(format.lossless, true, 'format.lossless = true');
     }
 
     Parsers.forEach(parser => {
@@ -42,6 +43,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
       t.strictEqual(format.numberOfSamples, 23493, 'format.bitsPerSample = 93624');
       t.strictEqual(format.duration, 2.936625, 'format.duration = ~2.937');
+      t.strictEqual(format.lossless, false, 'format.lossless = false');
     }
 
     Parsers.forEach(parser => {

@@ -31,7 +31,7 @@ export class AIFFParser extends BasicParser {
           throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
         return this.tokenizer.readToken<string>(FourCcToken).then(type => {
-          switch(type) {
+          switch (type) {
 
             case 'AIFF':
               this.metadata.setFormat('dataformat', type);
