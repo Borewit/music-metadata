@@ -77,7 +77,6 @@ export class AIFFParser extends BasicParser {
         return this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header, this.isCompressed))
           .then(common => {
             this.metadata.setFormat('bitsPerSample', common.sampleSize);
-            this.metadata.setFormat('bitsPerSample', common.sampleSize);
             this.metadata.setFormat('sampleRate', common.sampleRate);
             this.metadata.setFormat('numberOfChannels', common.numChannels);
             this.metadata.setFormat('numberOfSamples', common.numSampleFrames);
@@ -96,6 +95,11 @@ export class AIFFParser extends BasicParser {
           });
 
       case 'SSND': // Sound Data Chunk
+        if (this.metadata.format.duration) {
+          this.metadata.setFormat('bitrate', 8 * header.size / this.metadata.format.duration);
+        }
+        return Promise.resolve(0);
+
       default:
         return Promise.resolve(0);
     }
