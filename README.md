@@ -55,9 +55,13 @@ Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](
   * encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
   
 
-### Online demo's
+## Online demo's
 * [Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
 * [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
+
+## Compatibility
+
+The JavaScript in runtime is compliant with [ECMAScript 2015 (ES6)](https://nodejs.org/en/docs/es6/).
 
 ### Browser Support
 
