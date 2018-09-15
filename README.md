@@ -19,7 +19,7 @@ Stream and file based music metadata parser for node.
 
 | Audio format  | Description                    | Wiki                                                               |     |
 | ------------- |--------------------------------| -------------------------------------------------------------------|:---:|
-| AIFF          | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
+| AIFF / AIFF-C | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
 | APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | 
 | ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       | 
 | FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80">
