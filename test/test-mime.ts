@@ -2,7 +2,6 @@ import {assert} from "chai";
 import * as mime from "mime";
 import * as mm from "../src";
 import {SourceStream} from "./util";
-import {Promise} from 'es6-promise';
 import * as fs from "fs-extra";
 import * as path from "path";
 
@@ -31,26 +30,33 @@ describe("MIME & extension mapping", () => {
     }
   }
 
+  it("should reject an unknown file", () => {
+
+    return mm.parseFile(path.join(__dirname, '..', 'package.json'))
+      .then(() => t.fail('Should reject extension'))
+      .catch(err => {
+        t.strictEqual(err.message, 'No parser found for extension: .json');
+      });
+
+  });
+
   it("should map MIME-types", () => {
 
-    const prom = [];
+    return Promise.all(audioExtension.map(extension => {
 
-    audioExtension.forEach(extension => {
+        const streamReader = new SourceStream(buf);
+        // Convert extension to MIME-Type
+        const mimeType = mime.getType(extension);
+        t.isNotNull(mimeType, "extension: " + extension);
 
-      const streamReader = new SourceStream(buf);
-      // Convert extension to MIME-Type
-      const mimeType = mime.getType(extension);
-      t.isNotNull(mimeType, "extension: " + extension);
+        const res = mm.parseStream(streamReader, mimeType)
+          .catch(err => {
+            handleError(extension, err);
+          });
 
-      const res = mm.parseStream(streamReader, mimeType)
-        .catch(err => {
-          handleError(extension, err);
-        });
-
-      prom.push(res);
-    });
-
-    return Promise.all(prom);
+        return res;
+      })
+    );
 
   });
 

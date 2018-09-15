@@ -7,7 +7,7 @@ import {SourceStream} from "./util";
 import {Parsers} from './metadata-parsers';
 
 const t = assert;
-describe("WavPack decoding (audio/x-wavpack)", () => {
+describe("Parse WavPack (audio/x-wavpack)", () => {
 
   const samplePath = path.join(__dirname, 'samples');
   const wv1 = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");

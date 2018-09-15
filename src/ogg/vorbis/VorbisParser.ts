@@ -1,6 +1,5 @@
 'use strict';
 
-import {Promise} from "es6-promise";
 import * as Token from "token-types";
 import * as _debug from "debug";
 import {IOptions} from "../../index";

@@ -2,7 +2,7 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 
-describe("Extract metadata from RIFF (Resource Interchange File Format)", () => {
+describe("Parse RIFF (Resource Interchange File Format)", () => {
 
   describe("Parse RIFF/WAVE audio format", () => {
 

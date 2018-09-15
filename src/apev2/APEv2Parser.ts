@@ -1,14 +1,14 @@
 "use strict";
 
 import * as initDebug from 'debug';
-import {ITokenizer} from 'strtok3';
-import * as Token from 'token-types';
-import * as FileType from 'file-type';
+import FileType = require("file-type");
+import {ITokenizer} from "strtok3";
+import * as Token from "token-types";
 
-import common from '../common/Util';
-import {TagType} from '../common/GenericTagTypes';
+import common from "../common/Util";
+import {TagType} from "../common/GenericTagTypes";
+import {FourCcToken} from "../common/FourCC";
 import {IPicture, IOptions} from '../index';
-import {FourCcToken} from '../common/FourCC';
 import {INativeMetadataCollector} from '../common/MetadataCollector';
 import {BasicParser} from '../common/BasicParser';
 

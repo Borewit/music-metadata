@@ -9,7 +9,7 @@ import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
-describe("ASF", () => {
+describe("Parse ASF", () => {
 
   describe("GUID", () => {
     it("should construct GUID from string", () => {

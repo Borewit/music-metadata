@@ -2,7 +2,6 @@
 
 import * as Stream from 'stream';
 import * as strtok3 from 'strtok3';
-import {Promise} from 'es6-promise';
 import * as path from 'path';
 
 import {GenericTagId, TagType} from './common/GenericTagTypes';

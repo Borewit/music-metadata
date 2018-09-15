@@ -1,7 +1,6 @@
 import * as mm from '../src';
 import * as path from "path";
 import {assert} from "chai";
-import {Promise} from "es6-promise";
 
 describe("Lazy loading of format parser (ITokenParser", () => {
 
