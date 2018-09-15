@@ -35,12 +35,14 @@ Stream and file based music metadata parser for node.
 
 ### Support for tags:
 
-* [APE](https://en.wikipedia.org/wiki/APE_tag)
-* [ASF](https://en.wikipedia.org/wiki/Advanced_Systems_Format)
+* [APE](https://wikipedia.org/wiki/APE_tag)
+* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
 * [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
 * [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
-* [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+* [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+* [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+
 
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
 
