@@ -1,18 +1,18 @@
 "use strict";
 
-import common from "../common/Util";
-import {TagType} from "../common/GenericTagTypes";
-import {IOptions} from "../";
+import * as initDebug from 'debug';
+import FileType = require("file-type");
 import {ITokenizer} from "strtok3";
 import * as Token from "token-types";
-import {FourCcToken} from "../common/FourCC";
-import FileType = require("file-type");
-import {IPicture} from "../index";
 
-import * as _debug from "debug";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
-import {BasicParser} from "../common/BasicParser";
-const debug = _debug("music-metadata:parser:APEv2");
+import common from "../common/Util";
+import {TagType} from "../common/GenericTagTypes";
+import {FourCcToken} from "../common/FourCC";
+import {IPicture, IOptions} from '../index';
+import {INativeMetadataCollector} from '../common/MetadataCollector';
+import {BasicParser} from '../common/BasicParser';
+
+const debug = initDebug("music-metadata:parser:APEv2");
 
 /**
  * APETag versionIndex history / supported formats

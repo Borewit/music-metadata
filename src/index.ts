@@ -306,7 +306,7 @@ export interface IFormat {
   readonly bitsPerSample?: number,
 
   /**
-   * Encoder name, e.g.:
+   * Encoder name / compressionType, e.g.: 'PCM', 'ITU-T G.711 mu-law'
    */
   readonly encoder?: string,
 

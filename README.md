@@ -4,7 +4,7 @@
 [![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmjs.org/package/music-metadata)
 [![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://david-dm.org/Borewit/music-metadata)
 [![Coverage Status](https://coveralls.io/repos/github/Borewit/music-metadata/badge.svg?branch=master)](https://coveralls.io/github/Borewit/music-metadata?branch=master)
-[![NSP Status](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938/badge)](https://nodesecurity.io/orgs/borewit/projects/c62c75fc-b5fa-4ee6-9cf2-fd01a2217938)
+[![Known Vulnerabilities](https://snyk.io/test/github/Borewit/music-metadata/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/music-metadata?targetFile=package.json)
 [![Package Quality](http://npm.packagequality.com/shield/music-metadata.svg)](http://packagequality.com/#?package=music-metadata)
 
 #  music-metadata
@@ -19,7 +19,7 @@ Stream and file based music metadata parser for node.
 
 | Audio format  | Description                    | Wiki                                                               |     |
 | ------------- |--------------------------------| -------------------------------------------------------------------|:---:|
-| AIFF          | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
+| AIFF / AIFF-C | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
 | APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | 
 | ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       | 
 | FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80">
@@ -35,12 +35,14 @@ Stream and file based music metadata parser for node.
 
 ### Support for tags:
 
-* [APE](https://en.wikipedia.org/wiki/APE_tag)
-* [ASF](https://en.wikipedia.org/wiki/Advanced_Systems_Format)
+* [APE](https://wikipedia.org/wiki/APE_tag)
+* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
 * [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
 * [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
-* [RIFF](https://en.wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+* [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+* [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+
 
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
 
