@@ -52,12 +52,16 @@ export class Common implements Token.IGetToken<ICommon> {
   }
 
   public get(buf: Buffer, off: number): ICommon {
+
+    // see: https://cycling74.com/forums/aiffs-80-bit-sample-rate-value
+    const shift = buf.readUInt16BE(off + 8) - 16398;
+    const baseSampleRate = buf.readUInt16BE(off + 8 + 2);
+
     return {
       numChannels: buf.readUInt16BE(off),
       numSampleFrames: buf.readUInt32BE(off + 2),
       sampleSize: buf.readUInt16BE(off + 6),
-      // see: https://cycling74.com/forums/aiffs-80-bit-sample-rate-value
-      sampleRate: buf.readUInt16BE(off + 8 + 2)
+      sampleRate: shift < 0 ? baseSampleRate >> Math.abs(shift) : baseSampleRate << shift
     };
   }
 

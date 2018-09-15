@@ -21,7 +21,7 @@ const debug = initDebug('music-metadata:parser:aiff');
  */
 export class AIFFParser extends BasicParser {
 
-  private type: string;
+  private isCompressed: boolean;
 
   public parse(): Promise<void> {
 
@@ -31,8 +31,22 @@ export class AIFFParser extends BasicParser {
           throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
         return this.tokenizer.readToken<string>(FourCcToken).then(type => {
-          this.type = type;
-          this.metadata.setFormat('dataformat', type);
+          switch(type) {
+
+            case 'AIFF':
+              this.metadata.setFormat('dataformat', type);
+              this.isCompressed = false;
+              break;
+
+            case 'AIFC':
+              this.metadata.setFormat('dataformat', 'AIFF-C');
+              this.isCompressed = true;
+              break;
+
+            default:
+              throw Error('Unsupported AIFF type: ' + type);
+          }
+          this.metadata.setFormat('lossless', !this.isCompressed);
         }).then(() => {
           return this.readChunk();
         });
