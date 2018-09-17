@@ -19,19 +19,19 @@ Stream and file based music metadata parser for node.
 
 | Audio format  | Description                    | Wiki                                                               |     |
 | ------------- |--------------------------------| -------------------------------------------------------------------|:---:|
-| AIFF / AIFF-C | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) |
+| AIFF / AIFF-C | Audio Interchange File Format  | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) | <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Apple_Computer_Logo_rainbow.svg" width="40" alt="Apple rainbow logo">
 | APE           | Monkey's Audio                 | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | 
 | ASF           | Advanced Systems Format        | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       | 
-| FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80">
+| FLAC          | Free Lossless Audio Codec      | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80" alt="FLAC logo">
 | MP2           | MPEG-1 Audio Layer II          | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |
-| MP3           | MPEG-1 / MEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/Mp3.svg" width="80">
+| MP3           | MPEG-1 / MEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/Mp3.svg" width="80" alt="MP3 logo">
 | M4A           | MPEG 4 Audio                   | [:link:](https://wikipedia.org/wiki/MPEG-4)                        |
-| Ogg / Opus    |                                | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           | <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Opus_logo2.svg" width="80">
-| Ogg / Speex   |                                | [:link:](https://wikipedia.org/wiki/Speex)                         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Speex_logo_2006.svg" width="80">
-| Ogg / Vorbis  |                                | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/en/a/ac/XiphophorusLogoSVG.svg" width="70">
-| WAV           |                                | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="60">
-| WavPack       |                                | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60">
-| WMA           | Windows Media Audio            | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40">
+| Ogg / Opus    |                                | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           | <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Opus_logo2.svg" width="80" alt="Opus logo">
+| Ogg / Speex   |                                | [:link:](https://wikipedia.org/wiki/Speex)                         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Speex_logo_2006.svg" width="80" alt="Speex logo">
+| Ogg / Vorbis  |                                | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/en/a/ac/XiphophorusLogoSVG.svg" width="70" alt="Vorbis logo">
+| WAV           |                                | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="60" alt="WAV logo">
+| WavPack       |                                | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60" alt="WavPack logo">
+| WMA           | Windows Media Audio            | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40" alt="Windows Media logo">
 
 ### Support for tags:
 
