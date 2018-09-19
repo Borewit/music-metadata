@@ -1,5 +1,5 @@
-import * as Token from "token-types";
-import Util from "../../common/Util";
+import * as Token from 'token-types';
+import BitUtil from '../../common/Util';
 
 /**
  * Speex Header Packet
@@ -44,7 +44,7 @@ export const Header: Token.IGetToken<IHeader> = {
 
     return {
       speex: new Token.StringType(8, 'ascii').get(buf, off + 0),
-      version: Util.trimRightNull(new Token.StringType(20, 'ascii').get(buf, off + 8)),
+      version: BitUtil.trimRightNull(new Token.StringType(20, 'ascii').get(buf, off + 8)),
       version_id: buf.readInt32LE(off + 28),
       header_size: buf.readInt32LE(off + 32),
       rate: buf.readInt32LE(off + 36),

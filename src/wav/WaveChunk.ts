@@ -1,6 +1,7 @@
-import * as Token from "token-types";
-import * as assert from "assert";
-import {IChunkHeader} from "../riff/RiffChunk";
+import * as Token from 'token-types';
+import * as assert from 'assert';
+
+import {IChunkHeader} from '../riff/RiffChunk';
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx

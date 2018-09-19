@@ -1,7 +1,3 @@
-'use strict';
-
-import ReadableStream = NodeJS.ReadableStream;
-
 import * as Token from "token-types";
 
 /**

@@ -1,9 +1,10 @@
-import common, {StringEncoding} from "../common/Util";
-import * as Token from "token-types";
-import {AttachedPictureType} from "./ID3v2";
+import * as initDebug from 'debug';
+import * as Token from 'token-types';
 
-import * as _debug from "debug";
-const debug = _debug("music-metadata:id3v2:frame-parser");
+import common, {StringEncoding} from '../common/Util';
+import {AttachedPictureType} from './ID3v2';
+
+const debug = initDebug('music-metadata:id3v2:frame-parser');
 
 interface IOut {
   language?: string,

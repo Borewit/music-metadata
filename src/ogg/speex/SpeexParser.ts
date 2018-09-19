@@ -1,13 +1,13 @@
-'use strict';
-import * as Speex from './Speex';
-import {IPageHeader} from "../Ogg";
-import {VorbisParser} from "../vorbis/VorbisParser";
-import {IOptions} from "../../index";
-import {INativeMetadataCollector} from "../../common/MetadataCollector";
-import {ITokenizer} from 'strtok3';
-import * as initDebug from "debug";
+import {ITokenizer} from 'strtok3/lib/type';
+import * as initDebug from 'debug';
 
-const debug = initDebug("music-metadata:parser:ogg:speex");
+import * as Speex from './Speex';
+import {IPageHeader} from '../Ogg';
+import {VorbisParser} from '../vorbis/VorbisParser';
+import {IOptions} from '../../type';
+import {INativeMetadataCollector} from '../../common/MetadataCollector';
+
+const debug = initDebug('music-metadata:parser:ogg:speex');
 
 /**
  * Speex, RFC 5574

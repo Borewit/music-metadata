@@ -3,6 +3,7 @@ import * as mm from '../src';
 import * as path from 'path';
 import * as crypto from "crypto";
 import {TagType} from "../src/common/GenericTagTypes";
+import {ICommonTagsResult, IFormat, INativeTagDict} from '../src/type';
 
 const t = assert;
 
@@ -58,7 +59,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
    * @param inputTagType Meta-data header format
    * @param common Common tag mapping
    */
-  function checkCommonMapping(inputTagType: TagType, common: mm.ICommonTagsResult) {
+  function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
     t.strictEqual(common.title, "Sinner's Prayer", inputTagType + " => common.title");
     t.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', inputTagType + " => common.artist");
@@ -142,7 +143,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
      * Check native Vorbis header
      * @param vorbis Vorbis native tags
      */
-    function checkVorbisTags(vorbis: mm.INativeTagDict, dataformat: string) {
+    function checkVorbisTags(vorbis: INativeTagDict, dataformat: string) {
       // Compare expectedCommonTags with result.common
       t.deepEqual(vorbis.TITLE, ['Sinner\'s Prayer'], 'vorbis.TITLE');
       t.deepEqual(vorbis.ALBUM, ['Don\'t Explain'], 'vorbis.TITLE');
@@ -224,7 +225,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   describe("APEv2 header", () => {
 
-    function checkApeTags(APEv2: mm.INativeTagDict) {
+    function checkApeTags(APEv2: INativeTagDict) {
       // Compare expectedCommonTags with result.common
       t.deepEqual(APEv2.Title, ['Sinner\'s Prayer'], 'APEv2.Title');
       t.deepEqual(APEv2.Album, ['Don\'t Explain'], 'APEv2.Album');
@@ -324,7 +325,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   describe("ID3v2.3 header", () => {
 
-    function checkID3Tags(native: mm.INativeTagDict) {
+    function checkID3Tags(native: INativeTagDict) {
 
       t.deepEqual(native.TIT2, ['Sinner\'s Prayer'], 'id3v23.TIT2: Title/songname/content description');
       t.deepEqual(native.TPE1, ['Beth Hart & Joe Bonamassa'], 'id3v23.TPE1: Lead performer(s)/Soloist(s)');
@@ -405,7 +406,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
-      function checkFormat(format: mm.IFormat) {
+      function checkFormat(format: IFormat) {
         // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
         t.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes)');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -430,7 +431,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
   describe("ID3v2.4 header", () => {
 
-    function checkID3Tags(id3v24: mm.INativeTagDict) {
+    function checkID3Tags(id3v24: INativeTagDict) {
 
       t.deepEqual(id3v24.APIC[0].data.length, 98008, 'id3v24.APIC.data.length');
       t.deepEqual(id3v24.APIC[0].description, '', 'id3v24.APIC.data.description');
@@ -496,7 +497,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
 
-      function checkFormat(format: mm.IFormat) {
+      function checkFormat(format: IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
@@ -521,7 +522,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
-      function checkFormat(format: mm.IFormat) {
+      function checkFormat(format: IFormat) {
         t.strictEqual(format.dataformat, "AIFF", "format.dataformat = 'AIFF'");
         t.deepEqual(format.tagTypes, ["ID3v2.4"], "format.tagTypes = 'ID3v2.4'"); // ToDo
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -550,7 +551,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
-    function checkFormat(format: mm.IFormat) {
+    function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       // t.strictEqual(format.dataformat, 'm4a', 'ToDo: M4A/ALAC');
       t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
@@ -564,7 +565,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       t.strictEqual(common.picture[0].data.length, 98008, 'picture length');
     }
 
-    function check_iTunes_Tags(iTunes: mm.INativeTagDict) {
+    function check_iTunes_Tags(iTunes: INativeTagDict) {
 
       t.deepEqual(iTunes["©nam"], ["Sinner's Prayer"], "iTunes.©nam => common.title");
       t.deepEqual(iTunes["©ART"], ["Beth Hart & Joe Bonamassa"], "iTunes.@ART => common.artist");
@@ -601,7 +602,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     const filePath = path.join(samplePath,  "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
-    function checkFormat(format: mm.IFormat) {
+    function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ["asf"], "format.tagTypes = asf");
       t.strictEqual(format.bitrate, 320000, "format.bitrate = 320000");
       // ToDo t.strictEqual(format.dataformat, "wma", "format.dataformat = wma");
@@ -611,7 +612,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
     }
 
-    function check_asf_Tags(native: mm.INativeTagDict) {
+    function check_asf_Tags(native: INativeTagDict) {
       t.deepEqual(native["WM/AlbumArtist"], ["Beth Hart & Joe Bonamassa"], "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'");
       t.deepEqual(native["WM/AlbumTitle"], ["Don't Explain"], "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'");
       t.deepEqual(native["WM/ARTISTS"], ['Joe Bonamassa', 'Beth Hart'], "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']");

@@ -1,11 +1,11 @@
-'use strict';
+import * as Token from 'token-types';
+import {ITokenizer} from 'strtok3/lib/type';
+
 import * as Opus from './Opus';
-import {IPageHeader} from "../Ogg";
-import * as Token from "token-types";
-import {VorbisParser} from "../vorbis/VorbisParser";
-import {IOptions} from "../../index";
-import {INativeMetadataCollector} from "../../common/MetadataCollector";
-import {ITokenizer} from 'strtok3';
+import {IPageHeader} from '../Ogg';
+import {VorbisParser} from '../vorbis/VorbisParser';
+import {IOptions} from '../../type';
+import {INativeMetadataCollector} from '../../common/MetadataCollector';
 
 /**
  * Opus parser

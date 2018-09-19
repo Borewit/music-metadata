@@ -6,6 +6,7 @@ import * as path from "path";
 import {SourceStream} from "./util";
 import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
 import {Parsers} from './metadata-parsers';
+import {IFormat, INativeTagDict} from '../src/type';
 
 const t = assert;
 
@@ -115,7 +116,7 @@ describe("Parse MPEG", () => {
         t.deepEqual(common.comment, ["Jive"], "common.genre");
       }
 
-      function checkID3v1(id3v1: mm.INativeTagDict) {
+      function checkID3v1(id3v1: INativeTagDict) {
 
         t.deepEqual(id3v1.artist, ["Reel Big Fish"], "id3v1.artist");
         t.deepEqual(id3v1.title, ["You Don't Know"], "id3v1.title");
@@ -125,7 +126,7 @@ describe("Parse MPEG", () => {
         t.deepEqual(id3v1.comment, ["000010DF 00000B5A 00007784"], "id3v1.comment");
       }
 
-      function checkID3v23(id3v23: mm.INativeTagDict) {
+      function checkID3v23(id3v23: INativeTagDict) {
 
         t.deepEqual(id3v23.TPE2, ["Reel Big Fish"], "native: TPE2");
         t.deepEqual(id3v23.TIT2, ["You Don't Know"], "native: TIT2");
@@ -180,7 +181,7 @@ describe("Parse MPEG", () => {
         t.deepEqual(common.comment, ["Jive"], "common.genre");
       }
 
-      function checkID3v23(native: mm.INativeTagDict) {
+      function checkID3v23(native: INativeTagDict) {
         t.deepEqual(native.TPE2, ["Reel Big Fish"], "native: TPE2");
         t.deepEqual(native.TIT2, ["I'm Cool"], "native: TIT2");
         t.deepEqual(native.TALB, ["Why Do They Rock So Hard?"], "native: TALB");
@@ -247,7 +248,7 @@ describe("Parse MPEG", () => {
    */
   describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
 
-    function checkFormat(format: mm.IFormat, expectedDuration) {
+    function checkFormat(format: IFormat, expectedDuration) {
       t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v2.4", "ID3v1"], "format.tagTypes");
       t.strictEqual(format.duration, expectedDuration, "format.duration");
       t.strictEqual(format.dataformat, "mp3", "format.dataformat");

@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from 'token-types';
 
 /**
  * Opus ID Header interface

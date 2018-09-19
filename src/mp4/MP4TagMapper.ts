@@ -1,5 +1,5 @@
-import {INativeTagMap} from "../common/GenericTagTypes";
-import {CommonTagMapper} from "../common/GenericTagMapper";
+import {INativeTagMap} from '../common/GenericTagTypes';
+import {CommonTagMapper} from '../common/GenericTagMapper';
 
 /**
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata

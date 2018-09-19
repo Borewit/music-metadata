@@ -1,7 +1,7 @@
-import * as mm from '../src';
 import * as path from 'path';
 import {Parsers} from './metadata-parsers';
 import {assert} from 'chai';
+import {IFormat} from '../src/type';
 
 const t = assert;
 
@@ -11,7 +11,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
   const ULAW = 'ITU-T G.711 mu-law';
 
-  function checkFormat(format: mm.IFormat, compressionType: string, sampleRate: number, channels: number, bitsPerSample: number, samples: number) {
+  function checkFormat(format: IFormat, compressionType: string, sampleRate: number, channels: number, bitsPerSample: number, samples: number) {
     const lossless = compressionType === 'PCM';
     const dataFormat = lossless ? 'AIFF' : 'AIFF-C';
     const duration = samples / format.sampleRate;

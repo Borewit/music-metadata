@@ -1,16 +1,18 @@
-import * as strtok3 from "strtok3";
-import * as Token from "token-types";
-import * as RiffChunk from "./RiffChunk";
-import * as WaveChunk from "./../wav/WaveChunk";
-import {Readable} from "stream";
-import {ID3v2Parser} from "../id3v2/ID3v2Parser";
-import {IChunkHeader} from "../aiff/Chunk";
-import Common from "../common/Util";
-import {FourCcToken} from "../common/FourCC";
-import * as _debug from "debug";
-import {BasicParser} from "../common/BasicParser";
+import {endOfFile} from 'strtok3/lib/type';
+import * as strtok3 from 'strtok3/lib/core';
+import * as Token from 'token-types';
+import * as initDebug from 'debug';
+import {Readable} from 'stream';
 
-const debug = _debug("music-metadata:parser:RIFF");
+import * as RiffChunk from './RiffChunk';
+import * as WaveChunk from './../wav/WaveChunk';
+import {ID3v2Parser} from '../id3v2/ID3v2Parser';
+import {IChunkHeader} from '../aiff/Chunk';
+import Common from '../common/Util';
+import {FourCcToken} from '../common/FourCC';
+import {BasicParser} from '../common/BasicParser';
+
+const debug = initDebug('music-metadata:parser:RIFF');
 
 /**
  * Resource Interchange File Format (RIFF) Parser
@@ -40,7 +42,7 @@ export class WavePcmParser extends BasicParser {
         return this.parseRiffChunk();
       })
       .catch(err => {
-        if (err.message !== strtok3.endOfFile) {
+        if (err.message !== endOfFile) {
           throw err;
         }
       });
@@ -94,9 +96,8 @@ export class WavePcmParser extends BasicParser {
             return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.size))
               .then(id3_data => {
                 const id3stream = new ID3Stream(id3_data);
-                return strtok3.fromStream(id3stream).then(rst => {
-                  return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
-                });
+                const rst = strtok3.fromStream(id3stream);
+                return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
               });
 
           case 'data': // PCM-data

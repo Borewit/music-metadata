@@ -4,6 +4,7 @@ import * as mm from "../src";
 import * as path from "path";
 import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
 import {VorbisTagMapper} from "../src/ogg/vorbis/VorbisTagMapper";
+import {IAudioMetadata} from '../src/type';
 
 const t = assert;
 
@@ -51,7 +52,7 @@ describe("Discogs mappings", () => {
 
   describe("Track mapping: Beth Hart - Sinner's Prayer", () => {
 
-    function checkTags(metadata: mm.IAudioMetadata, tagType, getTagName: (tag: string) => string) {
+    function checkTags(metadata: IAudioMetadata, tagType, getTagName: (tag: string) => string) {
 
       const native = mm.orderTags(metadata.native[tagType]);
       const common = metadata.common;
@@ -187,7 +188,7 @@ describe("Discogs mappings", () => {
 
   describe("Track mapping: Yasmin Levy - Mi Korasón.flac'", () => {
 
-    function checkTags(metadata: mm.IAudioMetadata, tagType, getTagName: (tag: string) => string) {
+    function checkTags(metadata: IAudioMetadata, tagType, getTagName: (tag: string) => string) {
 
       const native = mm.orderTags(metadata.native[tagType]);
       const common = metadata.common;

@@ -1,8 +1,9 @@
-import {INativeAudioMetadata} from "../";
-import * as Token from "token-types";
-import {APEv2Parser} from "../apev2/APEv2Parser";
-import {FourCcToken} from "../common/FourCC";
-import {BasicParser} from "../common/BasicParser";
+import * as Token from 'token-types';
+
+import {INativeAudioMetadata} from '../type';
+import {APEv2Parser} from '../apev2/APEv2Parser';
+import {FourCcToken} from '../common/FourCC';
+import {BasicParser} from '../common/BasicParser';
 
 /**
  * WavPack Block Header

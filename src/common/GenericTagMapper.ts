@@ -1,6 +1,6 @@
-import * as generic from "./GenericTagTypes";
-import { ITag} from "../";
-import {Genres} from "../id3v1/ID3v1Parser";
+import * as generic from './GenericTagTypes';
+import {ITag} from '../type';
+import {Genres} from '../id3v1/ID3v1Parser';
 
 export interface IGenericTagMapper {
 

@@ -1,6 +1,6 @@
-'use strict';
 import * as Token from 'token-types';
 import * as initDebug from 'debug';
+
 import common from '../common/Util';
 import * as Ogg from './Ogg';
 import {FourCcToken} from '../common/FourCC';

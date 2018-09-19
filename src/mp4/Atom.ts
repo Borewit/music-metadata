@@ -1,8 +1,8 @@
-import {ITokenizer} from "strtok3";
+import {ITokenizer} from "strtok3/lib/type";
 
-import * as _debug from "debug";
+import * as initDebug from "debug";
 
-const debug = _debug("music-metadata:parser:MP4:Atom");
+const debug = initDebug("music-metadata:parser:MP4:Atom");
 
 import * as AtomToken from "./AtomToken";
 

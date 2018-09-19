@@ -1,6 +1,6 @@
 'use strict';
 
-import {INativeAudioMetadata, ITag, IFormat, IOptions} from "../index";
+import {INativeAudioMetadata, ITag} from "../type";
 import GUID from "./GUID";
 import * as AsfObject from "./AsfObject";
 
