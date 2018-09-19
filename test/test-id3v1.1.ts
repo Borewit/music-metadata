@@ -2,8 +2,8 @@ import {assert} from 'chai';
 import * as mm from '../src';
 
 import * as path from 'path';
-import * as fs from 'fs-extra';
 import {Parsers} from './metadata-parsers';
+import {ICommonTagsResult, IFormat} from '../src/type';
 
 const t = assert;
 
@@ -13,7 +13,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
   describe("should be able to read an ID3v1 tag", () => {
 
-    function checkFormat(format: mm.IFormat) {
+    function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
       t.strictEqual(format.lossless, false, 'format.lossless');
@@ -23,7 +23,7 @@ describe("Parsing MPEG / ID3v1", () => {
       t.strictEqual(format.duration, 241920 / format.sampleRate, 'format.duration');
     }
 
-    function checkCommon(common: mm.ICommonTagsResult) {
+    function checkCommon(common: ICommonTagsResult) {
       t.strictEqual(common.title, 'Blood Sugar', 'common.title');
       t.strictEqual(common.artist, 'Pendulum', 'common.artist');
       t.strictEqual(common.album, 'Blood Sugar (Single)', 'common.album');
@@ -78,7 +78,7 @@ describe("Parsing MPEG / ID3v1", () => {
 
     const filePath = path.join(__dirname, 'samples', "silence-2s-16000 [no-tags].CBR-128.mp3");
 
-    function checkFormat(format: mm.IFormat) {
+    function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, [], 'format.tagTypes');
       t.strictEqual(format.duration, 2.088, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
@@ -106,7 +106,7 @@ describe("Parsing MPEG / ID3v1", () => {
      */
     const filePath = path.join(__dirname, 'samples', 'Luomo - Tessio (Spektre Remix) ID3v10.mp3');
 
-    function checkFormat(format: mm.IFormat) {
+    function checkFormat(format: IFormat) {
       t.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
       t.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
@@ -116,7 +116,7 @@ describe("Parsing MPEG / ID3v1", () => {
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
 
-    function checkCommon(common: mm.ICommonTagsResult) {
+    function checkCommon(common: ICommonTagsResult) {
       t.strictEqual(common.title, 'Luomo - Tessio (Spektre Remix)', 'common.title');
       t.isUndefined(common.artist, 'common.artist');
       t.isUndefined(common.album, 'common.album');

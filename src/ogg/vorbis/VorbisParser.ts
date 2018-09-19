@@ -1,13 +1,12 @@
-'use strict';
+import * as Token from 'token-types';
+import * as _debug from 'debug';
 
-import * as Token from "token-types";
-import * as _debug from "debug";
-import {IOptions} from "../../index";
-import {INativeMetadataCollector} from "../../common/MetadataCollector";
-import * as Ogg from "../Ogg";
+import {IOptions} from '../../type';
+import {INativeMetadataCollector} from '../../common/MetadataCollector';
+import * as Ogg from '../Ogg';
 import * as Vorbis from './Vorbis';
 
-const debug = _debug("music-metadata:parser:ogg:vorbis1");
+const debug = _debug('music-metadata:parser:ogg:vorbis1');
 
 /**
  * Vorbis 1 Parser.

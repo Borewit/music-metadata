@@ -1,19 +1,19 @@
-import * as strtok3 from "strtok3";
-import {ID3v2Token} from "./ID3v2";
-import {ID3v2Parser} from "./ID3v2Parser";
-import {ID3v1Parser} from "../id3v1/ID3v1Parser";
+import {endOfFile, ITokenizer} from 'strtok3/lib/type';
+import {ID3v2Token} from './ID3v2';
+import {ID3v2Parser} from './ID3v2Parser';
+import {ID3v1Parser} from '../id3v1/ID3v1Parser';
 
-import * as _debug from "debug";
-import {BasicParser} from "../common/BasicParser";
+import * as _debug from 'debug';
+import {BasicParser} from '../common/BasicParser';
 
-const debug = _debug("music-metadata:parser:ID3");
+const debug = _debug('music-metadata:parser:ID3');
 
 /**
  * Abstract parser which tries take ID3v2 and ID3v1 headers.
  */
 export abstract class AbstractID3Parser extends BasicParser {
 
-  public static startsWithID3v2Header(tokenizer: strtok3.ITokenizer): Promise<boolean> {
+  public static startsWithID3v2Header(tokenizer: ITokenizer): Promise<boolean> {
     return tokenizer.peekToken(ID3v2Token.Header).then(id3Header => (id3Header.fileIdentifier === "ID3"));
   }
 
@@ -22,7 +22,7 @@ export abstract class AbstractID3Parser extends BasicParser {
   public parse(): Promise<void> {
 
     return this.parseID3v2().catch(err => {
-      if (err.message === strtok3.endOfFile)
+      if (err.message === endOfFile)
       // ToDo: maybe a warning?
         return;
       else

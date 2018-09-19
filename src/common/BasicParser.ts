@@ -1,7 +1,7 @@
-import {ITokenParser} from "../ParserFactory";
-import {IOptions} from "../index";
-import {INativeMetadataCollector} from "./MetadataCollector";
-import {ITokenizer} from "strtok3";
+import {ITokenizer} from 'strtok3/lib/type';
+import {ITokenParser} from '../ParserFactory';
+import {IOptions} from '../type';
+import {INativeMetadataCollector} from './MetadataCollector';
 
 export abstract class BasicParser implements ITokenParser {
 

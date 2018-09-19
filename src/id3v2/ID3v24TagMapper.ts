@@ -1,7 +1,7 @@
-import {INativeTagMap, TagType} from "../common/GenericTagTypes";
-import {CommonTagMapper} from "../common/GenericTagMapper";
+import {INativeTagMap} from '../common/GenericTagTypes';
+import {CommonTagMapper} from '../common/GenericTagMapper';
 import common from '../common/Util';
-import {IRating, ITag} from "../index";
+import {IRating, ITag} from '../type';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings

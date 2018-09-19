@@ -6,6 +6,7 @@ import * as path from "path";
 import * as mm from "../src";
 import * as MimeType from "media-typer";
 import {CombinedTagMapper} from "../src/common/CombinedTagMapper";
+import {joinArtists} from '../src/common/MetadataCollector';
 
 const t = assert;
 
@@ -61,9 +62,9 @@ describe("GenericTagMap", () => {
   describe("common.artist / common.artists mapping", () => {
 
     it("should be able to join artists", () => {
-      t.equal(mm.joinArtists(["David Bowie"]), "David Bowie");
-      t.equal(mm.joinArtists(["David Bowie", "Stevie Ray Vaughan"]), "David Bowie & Stevie Ray Vaughan");
-      t.equal(mm.joinArtists(["David Bowie", "Queen", "Mick Ronson"]), "David Bowie, Queen & Mick Ronson");
+      t.equal(joinArtists(["David Bowie"]), "David Bowie");
+      t.equal(joinArtists(["David Bowie", "Stevie Ray Vaughan"]), "David Bowie & Stevie Ray Vaughan");
+      t.equal(joinArtists(["David Bowie", "Queen", "Mick Ronson"]), "David Bowie, Queen & Mick Ronson");
     });
 
     it("parse RIFF tags", () => {

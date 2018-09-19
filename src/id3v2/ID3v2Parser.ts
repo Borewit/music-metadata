@@ -1,12 +1,12 @@
-import {isArray} from 'util';
+import {ITokenizer} from 'strtok3/lib/type';
+import * as Token from 'token-types';
+
 import common from '../common/Util';
 import {TagType} from '../common/GenericTagTypes';
-import {ITokenizer} from "strtok3";
-import {ITag, IOptions} from "../";
-import * as Token from "token-types";
-import FrameParser from "./FrameParser";
-import {ID3v2Token, IID3v2header} from "./ID3v2";
-import {INativeMetadataCollector} from "../common/MetadataCollector";
+import {ITag, IOptions} from '../type';
+import FrameParser from './FrameParser';
+import {ID3v2Token, IID3v2header} from './ID3v2';
+import {INativeMetadataCollector} from '../common/MetadataCollector';
 
 interface IFrameFlags {
   status: {
@@ -202,7 +202,7 @@ export class ID3v2Parser {
           for (const value of tag.value) {
             this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text);
           }
-        } else if (isArray(tag.value)) {
+        } else if (Array.isArray(tag.value)) {
           for (const value of tag.value) {
             this.addTag(tag.id, value);
           }

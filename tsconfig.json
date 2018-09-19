@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "inlineSources": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "target": "es6"
+  }
+}
+

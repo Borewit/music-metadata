@@ -1,12 +1,13 @@
 "use strict";
 
-import {ITag} from "../index";
-import Util from '../common/Util';
-import * as Token from "token-types";
-import * as initDebug from "debug";
+import * as initDebug from 'debug';
 
-import {BasicParser} from "../common/BasicParser";
-const debug = initDebug("music-metadata:parser:ID3v1");
+import {ITag} from '../type';
+import BitUtil from '../common/Util';
+import * as Token from 'token-types';
+import {BasicParser} from '../common/BasicParser';
+
+const debug = initDebug('music-metadata:parser:ID3v1');
 
 /**
  * ID3v1 Genre mappings
@@ -96,7 +97,7 @@ class Id3v1StringType extends Token.StringType {
 
   public get(buf: Buffer, off: number): string {
     let value = super.get(buf, off);
-    value = Util.trimRightNull(value);
+    value = BitUtil.trimRightNull(value);
     value = value.trim();
     return value.length > 0 ? value : undefined;
   }

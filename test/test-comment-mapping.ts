@@ -1,6 +1,7 @@
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
+import {IFormat} from '../src/type';
 
 const t = assert;
 
@@ -87,7 +88,7 @@ describe("Mapping of common comment tag", () => {
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3";
       const filePath = path.join(__dirname, 'samples', filename);
 
-      function checkFormat(format: mm.IFormat) {
+      function checkFormat(format: IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');

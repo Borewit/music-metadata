@@ -3,8 +3,8 @@ import {
   IAudioMetadata, ICommonTagsResult,
   IFormat,
   INativeAudioMetadata,
-  INativeTags, IOptions, joinArtists
-} from "../index";
+  INativeTags, IOptions
+} from '../type';
 
 import * as _debug from "debug";
 import {GenericTagId, IGenericTag, TagType, isSingleton, isUnique} from "./GenericTagTypes";
@@ -276,5 +276,11 @@ export class MetadataCollector implements INativeMetadataCollector {
     }
     // ToDo: trigger metadata event
   }
+}
 
+export function joinArtists(artists: string[]): string {
+  if (artists.length > 2) {
+    return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
+  }
+  return artists.join(' & ');
 }

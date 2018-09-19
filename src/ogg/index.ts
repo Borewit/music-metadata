@@ -1,3 +1,3 @@
-import {OggParser} from "./OggParser";
+import {OggParser} from './OggParser';
 
 export default OggParser;

@@ -1,10 +1,9 @@
-import * as Token from "token-types";
-import {FourCcToken} from "../common/FourCC";
+import * as Token from 'token-types';
+import {FourCcToken} from '../common/FourCC';
 
-import * as _debug from "debug";
-import util from "../common/Util";
+import * as initDebug from 'debug';
 
-const debug = _debug("music-metadata:parser:MP4:atom");
+const debug = initDebug('music-metadata:parser:MP4:atom');
 
 export interface IAtomHeader {
   length: number,

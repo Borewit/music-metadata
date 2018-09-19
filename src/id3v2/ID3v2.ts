@@ -1,5 +1,6 @@
+import * as Token from 'token-types';
+
 import common from '../common/Util';
-import * as Token from "token-types";
 
 /**
  * The picture type according to the ID3v2 APIC frame

@@ -8,7 +8,7 @@ import {IGenericTagMapper} from "./GenericTagMapper";
 import {MP4TagMapper} from "../mp4/MP4TagMapper";
 import {VorbisTagMapper} from "../ogg/vorbis/VorbisTagMapper";
 import {RiffInfoTagMapper} from "../riff/RiffInfoTagMap";
-import {ITag} from "../";
+import {ITag} from "../type";
 
 export class CombinedTagMapper {
 

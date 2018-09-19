@@ -2,10 +2,10 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import GUID from "../src/asf/GUID";
-import * as fs from 'fs-extra';
 import {AsfUtil} from "../src/asf/AsfUtil";
 import {DataType} from "../src/asf/AsfObject";
 import {Parsers} from './metadata-parsers';
+import {INativeTagDict} from '../src/type';
 
 const t = assert;
 
@@ -78,7 +78,7 @@ describe("Parse ASF", () => {
       t.deepEqual(common.genre, ['Rock'], 'common.genre');
     }
 
-    function checkNative(native: mm.INativeTagDict) {
+    function checkNative(native: INativeTagDict) {
 
       t.deepEqual(native['WM/AlbumTitle'], ['Discovery'], 'native: WM/AlbumTitle');
       t.deepEqual(native['WM/BeatsPerMinute'], [117], 'native: WM/BeatsPerMinute');

@@ -1,7 +1,8 @@
-import * as strtok3 from "strtok3";
 import * as Token from "token-types";
 import {Readable} from "stream";
 import * as initDebug from 'debug';
+import {endOfFile} from 'strtok3/lib/type';
+import * as strtok3 from 'strtok3/lib/core';
 
 import {ID3v2Parser} from "../id3v2/ID3v2Parser";
 import {FourCcToken} from "../common/FourCC";
@@ -64,7 +65,7 @@ export class AIFFParser extends BasicParser {
       })
       .then(() => this.readChunk())
       .catch(err => {
-        if (err.message !== strtok3.endOfFile) {
+        if (err.message !== endOfFile) {
           throw err;
         }
       });
@@ -89,9 +90,8 @@ export class AIFFParser extends BasicParser {
         return this.tokenizer.readToken<Buffer>(new Token.BufferType(header.size))
           .then(id3_data => {
             const id3stream = new ID3Stream(id3_data);
-            return strtok3.fromStream(id3stream).then(rst => {
-              return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options).then(() => header.size);
-            });
+            const rst = strtok3.fromStream(id3stream);
+            return ID3v2Parser.getInstance().parse(this.metadata, rst, this.options).then(() => header.size);
           });
 
       case 'SSND': // Sound Data Chunk

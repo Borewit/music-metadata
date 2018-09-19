@@ -2,13 +2,13 @@
 
 import * as initDebug from 'debug';
 import FileType = require("file-type");
-import {ITokenizer} from "strtok3";
+import {ITokenizer} from "strtok3/lib/type";
 import * as Token from "token-types";
 
 import common from "../common/Util";
 import {TagType} from "../common/GenericTagTypes";
 import {FourCcToken} from "../common/FourCC";
-import {IPicture, IOptions} from '../index';
+import {IPicture, IOptions} from '../type';
 import {INativeMetadataCollector} from '../common/MetadataCollector';
 import {BasicParser} from '../common/BasicParser';
 

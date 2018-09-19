@@ -1,11 +1,7 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-   "sourceMap": false,
-    "inlineSources": false,
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "declaration": true,
-    "target": "es6",
+    "sourceMap": false,
     "outDir": "../lib"
   }
 }

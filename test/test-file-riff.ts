@@ -1,12 +1,13 @@
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
+import {IFormat, INativeTagDict} from '../src/type';
 
 describe("Parse RIFF (Resource Interchange File Format)", () => {
 
   describe("Parse RIFF/WAVE audio format", () => {
 
-    function checkExifTags(exif: mm.INativeTagDict) {
+    function checkExifTags(exif: INativeTagDict) {
 
       assert.deepEqual(exif.IART, ["Beth Hart & Joe Bonamassa"], "exif.IART");
       assert.deepEqual(exif.ICRD, ["2011"], "exif.ICRD");
@@ -24,7 +25,7 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
       const filePath = path.join(__dirname, 'samples', filename);
 
-      function checkFormat(format: mm.IFormat) {
+      function checkFormat(format: IFormat) {
         assert.strictEqual(format.dataformat, "WAVE/PCM", "format.dataformat = WAVE/PCM");
         assert.strictEqual(format.lossless, true);
         assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], "format.tagTypes = ['exif', 'ID3v2.3']");

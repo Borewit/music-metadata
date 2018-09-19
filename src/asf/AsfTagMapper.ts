@@ -1,6 +1,6 @@
-import {INativeTagMap} from "../common/GenericTagTypes";
-import {CommonTagMapper} from "../common/GenericTagMapper";
-import {IRating, ITag} from "../index";
+import {INativeTagMap} from '../common/GenericTagTypes';
+import {CommonTagMapper} from '../common/GenericTagMapper';
+import {IRating, ITag} from '../type';
 
 /**
  * ASF Metadata tag mappings.

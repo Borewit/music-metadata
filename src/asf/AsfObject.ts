@@ -2,7 +2,7 @@
 
 "use strict";
 import util from "../common/Util";
-import {IPicture, ITag} from "../index";
+import {IPicture, ITag} from "../type";
 import * as Token from "token-types";
 import GUID from "./GUID";
 import {AsfUtil} from "./AsfUtil";

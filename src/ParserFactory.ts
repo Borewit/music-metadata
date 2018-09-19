@@ -1,6 +1,5 @@
-import {INativeAudioMetadata, IOptions, IAudioMetadata, ParserType} from "./index";
-import * as strtok3 from "strtok3";
-import * as path from "path";
+import {INativeAudioMetadata, IOptions, IAudioMetadata, ParserType} from "./type";
+import {ITokenizer} from "strtok3/lib/type";
 import * as fileType from "file-type";
 import * as MimeType from "media-typer";
 
@@ -17,7 +16,7 @@ export interface ITokenParser {
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
    */
-  init(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions): ITokenParser;
+  init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser;
 
   /**
    * Parse audio track.
@@ -36,7 +35,7 @@ export class ParserFactory {
    * @param {IOptions} opts
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parse(tokenizer: strtok3.ITokenizer, contentType: string, opts): Promise<IAudioMetadata> {
+  public static parse(tokenizer: ITokenizer, contentType: string, opts): Promise<IAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
     let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
@@ -69,7 +68,7 @@ export class ParserFactory {
     if (!filePath)
       return;
 
-    const extension = path.extname(filePath).toLocaleLowerCase() || filePath;
+    const extension = this.getExtension(filePath).toLocaleLowerCase() || filePath;
 
     switch (extension) {
 
@@ -136,7 +135,7 @@ export class ParserFactory {
     return Promise.resolve(new module.default());
   }
 
-  private static _parse(tokenizer: strtok3.ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
+  private static _parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
     // Parser found, execute parser
     return ParserFactory.loadParser(parserId, opts).then(parser => {
       const metadata = new MetadataCollector(opts);
@@ -144,6 +143,11 @@ export class ParserFactory {
         return metadata.toCommonMetadata();
       });
     });
+  }
+
+  private static getExtension(fname: string): string {
+    const i = fname.lastIndexOf('.');
+    return i === -1 ? '' : fname.slice(i);
   }
 
   /**

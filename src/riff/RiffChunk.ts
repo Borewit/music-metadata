@@ -1,5 +1,5 @@
-import * as Token from "token-types";
-import {FourCcToken} from "../common/FourCC";
+import * as Token from 'token-types';
+import {FourCcToken} from '../common/FourCC';
 
 export interface IChunkHeader {
 

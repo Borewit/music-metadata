@@ -1,13 +1,14 @@
-import * as assert from "assert";
-import {endOfFile} from "strtok3";
-import Common from "../common/Util";
-import * as Token from "token-types";
-import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
-import {INativeAudioMetadata} from "../index";
-import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from "./XingTag";
+import * as assert from 'assert';
+import * as Token from 'token-types';
+import {endOfFile} from 'strtok3/lib/type';
+import * as initDebug from "debug";
 
-import * as _debug from "debug";
-const debug = _debug("music-metadata:parser:mpeg");
+import Common from '../common/Util';
+import {AbstractID3Parser} from '../id3v2/AbstractID3Parser';
+import {INativeAudioMetadata} from '../type';
+import {InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag} from './XingTag';
+
+const debug = initDebug('music-metadata:parser:mpeg');
 
 /**
  * Cache buffer size used for searching synchronization preabmle

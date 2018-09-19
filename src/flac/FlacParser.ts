@@ -1,14 +1,14 @@
 'use strict';
 
 import common from '../common/Util';
-import * as Token from "token-types";
-import {IVorbisPicture, VorbisPictureToken} from "../ogg/vorbis/Vorbis";
-import {AbstractID3Parser} from "../id3v2/AbstractID3Parser";
+import * as Token from 'token-types';
+import {IVorbisPicture, VorbisPictureToken} from '../ogg/vorbis/Vorbis';
+import {AbstractID3Parser} from '../id3v2/AbstractID3Parser';
 import {FourCcToken} from "../common/FourCC";
 
-import * as _debug from "debug";
+import * as _debug from 'debug';
 
-const debug = _debug("music-metadata:parser:FLAC");
+const debug = _debug('music-metadata:parser:FLAC');
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:

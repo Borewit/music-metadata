@@ -1,13 +1,13 @@
-import * as _debug from "debug";
-import {BasicParser} from "../common/BasicParser";
-import {Atom} from "./Atom";
-import * as AtomToken from "./AtomToken";
-import {Genres} from "../id3v1/ID3v1Parser";
-import util from "../common/Util";
+import * as initDebug from 'debug';
+import * as Token from 'token-types';
 
-const debug = _debug("music-metadata:parser:MP4");
-import * as Token from "token-types";
+import {BasicParser} from '../common/BasicParser';
+import {Atom} from './Atom';
+import * as AtomToken from './AtomToken';
+import {Genres} from '../id3v1/ID3v1Parser';
+import util from '../common/Util';
 
+const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
 
 /*
