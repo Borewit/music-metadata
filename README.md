@@ -68,7 +68,7 @@ The JavaScript in runtime is compliant with [ECMAScript 2015 (ES6)](https://node
 Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
 * [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is better suitable to run in the browser.
 
-To avoid Node `fs` to be include, a sub-module inclusion has been made available:
+To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
 ```JavaScript
 import * as mm from 'music-metadata/lib/core';
 ```
