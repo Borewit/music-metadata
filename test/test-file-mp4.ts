@@ -7,7 +7,9 @@ const t = assert;
 
 describe("Parse MPEG-4 files with iTunes metadata", () => {
 
-  const samples = path.join(__dirname, "samples");
+  const _samples = path.join(__dirname, "samples");
+
+  const mp4Samples = path.join(_samples, 'mp4');
 
   describe("Parse MPEG-4 files (.m4a)", () => {
 
@@ -62,7 +64,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     Parsers.forEach(parser => {
       it(parser.description, () => {
 
-        const filePath = path.join(__dirname, 'samples', 'id4.m4a');
+        const filePath = path.join(mp4Samples, 'id4.m4a');
 
         return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
           const native = metadata.native.iTunes;
@@ -85,7 +87,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     Parsers.forEach(parser => {
       it(parser.description, () => {
 
-        const filePath = path.join(samples, "issue_74.m4a");
+        const filePath = path.join(mp4Samples, "issue-74.m4a");
 
         return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
           const native = metadata.native.iTunes;
@@ -108,7 +110,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     Parsers.forEach(parser => {
       it(parser.description, () => {
 
-        const filePath = path.join(samples, "issue_79.m4a");
+        const filePath = path.join(mp4Samples, "issue-79.m4a");
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
           assert.strictEqual(metadata.common.title, "Uprising");
@@ -131,7 +133,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       Parsers.forEach(parser => {
         it(parser.description, () => {
 
-          const filePath = path.join(samples, 'issue-120.m4b');
+          const filePath = path.join(mp4Samples, 'issue-120.m4b');
 
           return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
             assert.strictEqual(metadata.common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
@@ -153,7 +155,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       Parsers.forEach(parser => {
         it(parser.description, () => {
 
-          const filePath = path.join(samples, 'issue-127.m4b');
+          const filePath = path.join(mp4Samples, 'issue-127.m4b');
 
           return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
             assert.strictEqual(metadata.common.title, 'GloriesIreland00-12_librivox');
@@ -170,21 +172,50 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         });
       });
     });
+  });
 
-    describe("should support extended atom header", () => {
+  describe("Parse MPEG-4 Video (.mp4)", () => {
+
+    describe("Parse TV episode", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, () => {
 
-          const filePath = path.join(samples, 'issue-133.m4a');
+          const filePath = path.join(mp4Samples, 'Mr. Pickles S02E07 My Dear Boy.mp4');
 
           return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+            assert.deepEqual(metadata.common.title, 'My Dear Boy');
+            assert.deepEqual(metadata.common.tvEpisode, 7);
+            assert.deepEqual(metadata.common.tvEpisodeId, '017');
+            assert.deepEqual(metadata.common.tvSeason, 2);
+            assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
+
             assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
+            assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
+            assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
+            assert.deepEqual(metadata.common.albumartist, 'Mr. Pickles');
+            assert.deepEqual(metadata.common.copyright, '© & TM - Cartoon Network - 2016');
+
+            const iTunes = mm.orderTags(metadata.native.iTunes);
+            assert.deepEqual(iTunes.stik, [10], 'iTunes.stik = 10 = TV Show'); // Ref: http://www.zoyinc.com/?p=1004
           });
         });
       });
     });
+  });
 
+  describe("should support extended atom header", () => {
+
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+
+        const filePath = path.join(mp4Samples, 'issue-133.m4a');
+
+        return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
+        });
+      });
+    });
   });
 
 });

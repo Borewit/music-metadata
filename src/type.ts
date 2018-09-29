@@ -187,13 +187,17 @@ export interface ICommonTagsResult {
    */
   tvShowSort?: string;
   /**
-   * TV season title
+   * TV season title sequence number
    */
-  tvSeason?: string;
+  tvSeason?: number;
+  /**
+   * TV Episode sequence number
+   */
+  tvEpisode?: number;
   /**
    * TV episode ID
    */
-  tvEpisodeID?: string,
+  tvEpisodeId?: string,
   /**
    * TV network
    */
