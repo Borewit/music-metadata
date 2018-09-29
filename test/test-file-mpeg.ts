@@ -1,7 +1,7 @@
 import {assert} from "chai";
 import * as mm from "../src";
 
-import * as fs from "fs-extra";
+import * as fs from "fs";
 import * as path from "path";
 import {SourceStream} from "./util";
 import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
@@ -66,12 +66,10 @@ describe("Parse MPEG", () => {
 
       const tmpFilePath = path.join(__dirname, "samples", "zeroes.mp3");
 
-      return fs.writeFile(tmpFilePath, buf).then(() => {
-        return mm.parseFile(tmpFilePath, {duration: true, native: true});
-      }).then(() => {
-        return fs.remove(tmpFilePath);
+      fs.writeFileSync(tmpFilePath, buf);
+      return mm.parseFile(tmpFilePath, {duration: true, native: true}).then(() => {
+        fs.unlinkSync(tmpFilePath);
       });
-
     });
 
   });

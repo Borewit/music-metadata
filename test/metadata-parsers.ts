@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import * as fs from 'fs';
 import * as mm from '../src';
 import {IAudioMetadata, IOptions} from '../src/type';
 

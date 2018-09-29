@@ -1,7 +1,6 @@
 import {assert, expect} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
-import * as fs from 'fs-extra';
 import {IdHeader} from "../src/ogg/opus/Opus";
 import {Parsers} from './metadata-parsers';
 

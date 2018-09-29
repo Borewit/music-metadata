@@ -2,7 +2,7 @@ import {assert} from "chai";
 import * as mime from "mime";
 import * as mm from "../src";
 import {SourceStream} from "./util";
-import * as fs from "fs-extra";
+import * as fs from "fs";
 import * as path from "path";
 
 const t = assert;

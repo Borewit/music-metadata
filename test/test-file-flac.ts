@@ -1,8 +1,7 @@
 import {assert} from "chai";
 import * as mm from "../src";
-import * as fs from "fs-extra";
+import * as fs from "fs";
 import * as path from "path";
-import {SourceStream} from "./util";
 import {Parsers} from './metadata-parsers';
 
 const t = assert;
@@ -105,16 +104,16 @@ describe("Parse FLAC", () => {
       const buf = Buffer.alloc(emptyStreamSize).fill(0);
       const tmpFilePath = path.join(samplePath, "zeroes.flac");
 
-      return fs.writeFile(tmpFilePath, buf).then(() => {
-        Parsers.forEach(parser => {
-          it(parser.description, () => {
-            return parser.initParser(tmpFilePath, 'audio/flac', {native: true}).then(metadata => {
-              t.fail("Should reject");
-              fs.remove(tmpFilePath);
-            }).catch(err => {
-              t.strictEqual(err.message, "FourCC contains invalid characters");
-              return fs.remove(tmpFilePath);
-            });
+      fs.writeFileSync(tmpFilePath, buf);
+
+      Parsers.forEach(parser => {
+        it(parser.description, () => {
+          return parser.initParser(tmpFilePath, 'audio/flac', {native: true}).then(() => {
+            t.fail("Should reject");
+            fs.unlinkSync(tmpFilePath);
+          }).catch(err => {
+            t.strictEqual(err.message, "FourCC contains invalid characters");
+            return fs.unlinkSync(tmpFilePath);
           });
         });
       });

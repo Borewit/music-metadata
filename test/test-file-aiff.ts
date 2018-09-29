@@ -7,7 +7,7 @@ const t = assert;
 
 describe('Parse AIFF (Audio Interchange File Format)', () => {
 
-  const samplePath = path.join(__dirname, 'samples');
+  const samplePath = path.join(__dirname, 'samples', 'aiff');
 
   const ULAW = 'ITU-T G.711 mu-law';
 
