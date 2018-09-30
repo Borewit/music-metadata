@@ -183,7 +183,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
 
           const filePath = path.join(mp4Samples, 'Mr. Pickles S02E07 My Dear Boy.mp4');
 
-          return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          return parser.initParser(filePath, 'video/mp4', {duration: true, native: true}).then(metadata => {
             assert.deepEqual(metadata.common.title, 'My Dear Boy');
             assert.deepEqual(metadata.common.tvEpisode, 7);
             assert.deepEqual(metadata.common.tvEpisodeId, '017');
