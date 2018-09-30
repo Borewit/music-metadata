@@ -1,18 +1,18 @@
 "use strict";
 
 import * as initDebug from 'debug';
-import FileType = require("file-type");
-import {ITokenizer} from "strtok3/lib/type";
-import * as Token from "token-types";
+import * as FileType from 'file-type';
+import {ITokenizer} from 'strtok3/lib/type';
+import * as Token from 'token-types';
 
-import common from "../common/Util";
-import {TagType} from "../common/GenericTagTypes";
-import {FourCcToken} from "../common/FourCC";
+import common from '../common/Util';
+import {TagType} from '../common/GenericTagTypes';
+import {FourCcToken} from '../common/FourCC';
 import {IPicture, IOptions} from '../type';
 import {INativeMetadataCollector} from '../common/MetadataCollector';
 import {BasicParser} from '../common/BasicParser';
 
-const debug = initDebug("music-metadata:parser:APEv2");
+const debug = initDebug('music-metadata:parser:APEv2');
 
 /**
  * APETag versionIndex history / supported formats
@@ -344,7 +344,7 @@ export class APEv2Parser extends BasicParser {
     });
   }
 
-  private parseHeader(): Promise<{forwardBytes: number }> {
+  private parseHeader(): Promise<{ forwardBytes: number }> {
     return this.tokenizer.readToken(Structure.Header).then(header => {
       // ToDo before
       this.metadata.setFormat('lossless', true);
