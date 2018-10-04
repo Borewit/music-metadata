@@ -41,8 +41,9 @@ describe("Parse MP3 files", () => {
     it("should decode from a file", () => {
 
       return mm.parseFile(filePath).then(metadata => {
-        for (const tagType in metadata.native)
+        for (const tagType in metadata.native) {
           throw new Error("Do not expect any native tag type, got: " + tagType);
+        }
         checkFormat(metadata.format);
       });
     });

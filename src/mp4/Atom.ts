@@ -37,7 +37,7 @@ export class Atom {
 
     // Parse atom header
     const offset = tokenizer.position;
-    // debug("Reading next token on offset=%s...", offset); //  buf.toString('ascii')
+    // debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
     return tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
       .then(header => {
         const extended = header.length === 1;
@@ -50,7 +50,7 @@ export class Atom {
           return Promise.resolve(new Atom(header, false, this));
         }
       }).then(atomBean => {
-        debug("parse atom name=%s, extended=%s, ffset=%s, len=%s ", atomBean.atomPath, atomBean.extended, offset, atomBean.header.length); //  buf.toString('ascii')
+        debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
         return atomBean.readData(tokenizer, dataHandler).then(() => {
           return atomBean;
         });

@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import util from "../src/common/Util";
+import util, { default as Util } from '../src/common/Util';
 import {FourCcToken} from "../src/common/FourCC";
 
 const t = assert;
@@ -67,10 +67,13 @@ describe("shared utility functionality", () => {
   describe("FourCC token", () => {
 
     const testData: Array<{ fourCC: string, valid: boolean }> = [
-      {fourCC: "\x00\x00\x00\x00", valid: false},
-      {fourCC: "WAVE", valid: true},
-      {fourCC: "fmt ", valid: true},
-      {fourCC: "fmt\x00", valid: false}
+      {fourCC: '\x00\x00\x00\x00', valid: false},
+      {fourCC: 'WAVE', valid: true},
+      {fourCC: 'fmt ', valid: true},
+      {fourCC: 'fmt\x00', valid: true},
+      {fourCC: '----', valid: true}, // Used in MP4
+      {fourCC: '-\x00\x00\x00', valid: true}, // Used in MP4
+      {fourCC: '©nam', valid: true} // Used in MP4
     ];
 
     it("should only accept a valid identifier, otherwise is should throw an error", () => {
@@ -85,7 +88,7 @@ describe("shared utility functionality", () => {
         } catch (e) {
           valid = false;
         }
-        t.strictEqual(valid, data.valid, "FourCC: " + data.fourCC);
+        t.strictEqual(valid, data.valid, `FourCC: ${util.a2hex(data.fourCC)}`);
         if (data.valid) {
           t.strictEqual(fourCC, data.fourCC);
         }
@@ -98,6 +101,10 @@ describe("shared utility functionality", () => {
       t.deepEqual(buffer.toString('binary'), 'abcd');
     });
 
+  });
+
+  it("a2hex", () => {
+    t.equal(Util.a2hex("\x00\x01ABC\x02"), '00 01 41 42 43 02');
   });
 
 });

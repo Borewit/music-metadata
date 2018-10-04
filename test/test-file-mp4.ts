@@ -218,4 +218,25 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     });
   });
 
+  describe('Handle dashed atom-ID\'s', () => {
+
+    Parsers.forEach(parser => {
+      it(parser.description, () => {
+
+        const filePath = path.join(mp4Samples, 'issue-151.m4a');
+
+        return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
+          assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
+          assert.deepEqual(metadata.common.albumartist, 'Angels and Airwaves');
+          assert.deepEqual(metadata.common.artist, 'Angels and Airwaves');
+          assert.deepEqual(metadata.common.artists, ['Angels and Airwaves']);
+          assert.strictEqual(metadata.common.bpm, 89);
+          assert.deepEqual(metadata.common.genre, ['Rock']);
+          assert.strictEqual(metadata.common.title, 'Distraction');
+        });
+      });
+    });
+  });
+
 });

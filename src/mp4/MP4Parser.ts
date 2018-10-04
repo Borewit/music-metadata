@@ -14,7 +14,7 @@ const tagFormat = 'iTunes';
  * Parser for: MPEG-4 Audio / Part 3 (.m4a)& MPEG 4 Video (m4v, mp4) extension.
  * Support for Apple iTunes tags as found in a M4A/M4V files.
  * Ref:
- *   http://developer.apple.com/mac/library/documentation/QuickTime/QTFF/Metadata/Metadata.html
+ *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
  *   https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
  */

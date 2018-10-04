@@ -165,7 +165,7 @@ export interface ICommonTagsResult {
   totaldiscs?: string;
   compilation?: string;
   rating?: IRating[];
-  bpm?: string;
+  bpm?: number;
   /**
    * Keywords to reflect the mood of the audio, e.g. 'Romantic' or 'Sad'
    */
