@@ -1,4 +1,7 @@
 import * as Token from "token-types";
+import Util from './Util';
+
+const validFourCC =  /^[\w-©][\w-\x000-3]/;
 
 /**
  * Token for read FourCC
@@ -9,10 +12,8 @@ export const FourCcToken: Token.IToken<string> = {
 
   get: (buf: Buffer, off: number): string => {
     const id = buf.toString("binary", off, off + FourCcToken.len);
-    for (const c of id) {
-      if (!((c >= " " && c <= "z") || c === '©')) {
-        throw new Error("FourCC contains invalid characters");
-      }
+    if (!id.match(validFourCC)) {
+      throw new Error(`FourCC contains invalid characters: ${Util.a2hex(id)}`);
     }
     return id;
   },
