@@ -118,21 +118,16 @@ export class OggParser extends BasicParser {
       });
     })
       .catch(err => {
-        switch (err.message) {
-          case 'End-Of-File':
-            break; // ignore this error
-
-          case 'FourCC contains invalid characters':
-            if (this.pageNumber > 0) {
-              // ignore this error: work-around if last OGG-page is not marked with last-page flag
-              // ToDo: capture warning
-              return this.pageConsumer.flush();
-            }
-            throw err;
-
-          default:
-            throw err;
+        if (err.message === 'End-Of-File') {
+          return; // Ignore this error
+        } else if (err.message.startsWith('FourCC')) {
+          if (this.pageNumber > 0) {
+            // ignore this error: work-around if last OGG-page is not marked with last-page flag
+            this.warnings.push('Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag');
+            return this.pageConsumer.flush();
+          }
         }
+        throw err;
       });
   }
 

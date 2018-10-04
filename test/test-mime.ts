@@ -22,7 +22,7 @@ describe("MIME & extension mapping", () => {
       case ".flac":
       case ".wav":
       case ".ogg":
-        t.strictEqual(err.message, "FourCC contains invalid characters", "Extension=" + extension);
+        t.ok(err.message.startsWith('FourCC'), `Only FourCC error allowed, got: ${err.message}`);
         break;
 
       default:
