@@ -46,13 +46,13 @@
     "compile-src": "tsc -p src",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
-    "compile": "yarn run compile-src && yarn run compile-test && npm run compile-doc",
+    "compile": "npm run compile-src && npm run compile-test && npm run compile-doc",
     "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
     "test": "mocha --require ts-node/register --full-trace test",
-    "build": "yarn run clean && yarn run compile && yarn run doc-gen",
+    "build": "npm run clean && npm run compile && npm run doc-gen",
     "start": "npm-run-all compile lint cover-test",
-    "cover-test": "nyc yarn run test",
-    "coveralls": "yarn run cover-test && nyc report --reporter=text-lcov | coveralls",
+    "cover-test": "nyc npm run test",
+    "coveralls": "npm run cover-test && nyc report --reporter=text-lcov | coveralls",
     "doc-gen": "node doc-gen/gen.js"
   },
   "dependencies": {
