@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+ - "node"
+install:
+ - yarn install
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+script:
+ - yarn run lint
+ - yarn build
+ - yarn run travis-karma
+after_success:
+ - yarn run post-coveralls

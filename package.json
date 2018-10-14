@@ -1,0 +1,59 @@
+{
+  "name": "streaming-http-token-reader",
+  "version": "0.0.1",
+  "description": "HTTP-tokenizer-client",
+  "main": "dist/streaming-http-token-reader",
+  "typings": "dist/streaming-http-token-reader",
+  "repository": "https://github.com/Borewit/xhr-token-reader.git",
+  "author": {
+    "name": "Borewit",
+    "url": "https://github.com/Borewit"
+  },
+  "keywords": [
+    "xhr",
+    "http",
+    "sttok3"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Borewit/xhr-token-reader/issues"
+  },
+  "scripts": {
+    "clean": "del-cli dist/** src/**/*.js src/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map coverage",
+    "compile-dist": "tsc -p src/tsconfig.dist.json",
+    "compile-test": "tsc -p src/tsconfig.spec.json",
+    "prepublishOnly": "yarn run build",
+    "build": "npm run compile-dist",
+    "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
+    "karma": "karma start",
+    "karma-once": "karma start --browsers Chrome --single-run",
+    "travis-karma": "karma start --browsers Firefox --single-run",
+    "post-coveralls": "coveralls < coverage/lcov.info"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.8.8",
+    "@types/node": "^10.9.4",
+    "coveralls": "^3.0.2",
+    "del-cli": "^1.1.0",
+    "filereader-stream": "^2.0.0",
+    "istanbul-instrumenter-loader": "^3.0.1",
+    "jasmine-core": "^3.2.1",
+    "karma": "^3.0.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-coverage-istanbul-reporter": "^2.0.4",
+    "karma-firefox-launcher": "^1.1.0",
+    "karma-jasmine": "^1.1.2",
+    "karma-jasmine-html-reporter": "^1.3.1",
+    "karma-spec-reporter": "^0.0.32",
+    "karma-webpack": "^3.0.5",
+    "ts-loader": "^5.2.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.20.2"
+  },
+  "dependencies": {
+    "debug": "^4.1.0",
+    "music-metadata-browser": "^0.6.3",
+    "strtok3": "^2.1.0"
+  }
+}
