@@ -7,6 +7,8 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/Borewit/music-metadata/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/music-metadata?targetFile=package.json)
 [![Package Quality](http://npm.packagequality.com/shield/music-metadata.svg)](http://packagequality.com/#?package=music-metadata)
 ![NPM version](https://img.shields.io/bundlephobia/min/music-metadata.svg)
+[![Discord](https://img.shields.io/discord/460524735235883049.svg)](https://discord.gg/KyBr6sb)
+
 
 #  music-metadata
 
