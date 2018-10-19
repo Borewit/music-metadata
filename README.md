@@ -10,7 +10,7 @@
 [![Discord](https://img.shields.io/discord/460524735235883049.svg)](https://discord.gg/KyBr6sb)
 
 
-#  music-metadata
+# music-metadata
 
 Stream and file based music metadata parser for node.
 
@@ -20,21 +20,21 @@ Stream and file based music metadata parser for node.
 
 ### Support for audio file types:
 
-| Audio format  | Description                     | Wiki                                                               |     |
-| ------------- |---------------------------------| -------------------------------------------------------------------|:---:|
-| AIFF / AIFF-C | Audio Interchange File Format   | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) | <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Apple_Computer_Logo_rainbow.svg" width="40" alt="Apple rainbow logo">
-| APE           | Monkey's Audio                  | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | <img src="https://foreverhits.files.wordpress.com/2015/05/ape_audio.jpg" width="40" alt="Monkey's Audio logo">
-| ASF           | Advanced Systems Format         | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       | 
-| FLAC          | Free Lossless Audio Codec       | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80" alt="FLAC logo">
-| MP2           | MPEG-1 Audio Layer II           | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |
-| MP3           | MPEG-1 / MPEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/Mp3.svg" width="80" alt="MP3 logo">
-| MPEG 4        | mp4, m4a, m4v, aac              | [:link:](https://wikipedia.org/wiki/MPEG-4)                        | <img src="https://svgshare.com/i/8Ss.svg" width="40" alt="AAC logo">
-| Ogg / Opus    |                                 | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           | <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Opus_logo2.svg" width="80" alt="Opus logo">
-| Ogg / Speex   |                                 | [:link:](https://wikipedia.org/wiki/Speex)                         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Speex_logo_2006.svg" width="80" alt="Speex logo">
-| Ogg / Vorbis  |                                 | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/en/a/ac/XiphophorusLogoSVG.svg" width="70" alt="Vorbis logo">
-| WAV           |                                 | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="60" alt="WAV logo">
-| WavPack       |                                 | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60" alt="WavPack logo">
-| WMA           | Windows Media Audio             | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40" alt="Windows Media logo">
+| Audio format  | Description                     | Wiki                                                               |                                                                                                                                               |
+| ------------- |---------------------------------| -------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------:|
+| AIFF / AIFF-C | Audio Interchange File Format   | [:link:](https://wikipedia.org/wiki/Audio_Interchange_File_Format) | <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Apple_Computer_Logo_rainbow.svg" width="40" alt="Apple rainbow logo">           |
+| APE           | Monkey's Audio                  | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | <img src="https://foreverhits.files.wordpress.com/2015/05/ape_audio.jpg" width="40" alt="Monkey's Audio logo">                                |
+| ASF           | Advanced Systems Format         | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       |                                                                                                                                               |
+| FLAC          | Free Lossless Audio Codec       | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Flac_logo_vector.svg" width="80" alt="FLAC logo">                               |
+| MP2           | MPEG-1 Audio Layer II           | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |                                                                                                                                               |
+| MP3           | MPEG-1 / MPEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/Mp3.svg" width="80" alt="MP3 logo">                                             |
+| MPEG 4        | mp4, m4a, m4v, aac              | [:link:](https://wikipedia.org/wiki/MPEG-4)                        | <img src="https://svgshare.com/i/8Ss.svg" width="40" alt="AAC logo">                                                                          |
+| Ogg / Opus    |                                 | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           | <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Opus_logo2.svg" width="80" alt="Opus logo">                                     |
+| Ogg / Speex   |                                 | [:link:](https://wikipedia.org/wiki/Speex)                         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Speex_logo_2006.svg" width="80" alt="Speex logo">                               |
+| Ogg / Vorbis  |                                 | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/en/a/ac/XiphophorusLogoSVG.svg" width="70" alt="Vorbis logo">                                |
+| WAV           |                                 | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="60" alt="WAV logo">                                           |
+| WavPack       |                                 | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60" alt="WavPack logo">                                                              |
+| WMA           | Windows Media Audio             | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40" alt="Windows Media logo">  |
 
 ### Support for tags:
 
@@ -51,11 +51,11 @@ Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](
 
 ### Audio format & encoding details:
 
-* Support for encoding / format details:
-  * [Bit rate](https://wikipedia.org/wiki/Bit_rate)
-  * [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
-  * Duration
-  * encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
+Support for encoding / format details:
+* [Bit rate](https://wikipedia.org/wiki/Bit_rate)
+* [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
+* Duration
+* Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
   
 
 ## Online demo's
@@ -76,12 +76,12 @@ To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
 import * as mm from 'music-metadata/lib/core';
 ```
 
-| function              | `music-metadata`           | `music-metadata/lib/core`  |
-| ----------------------| ---------------------------|----------------------------|
-| `parseBuffer`         | ✓                          | ✓                          |
-| `parseStream` *       | ✓                          | ✓                          |
-| `parseFromTokenizer`  | ✓                          | ✓                          |
-| `parseFile`           | ✓                          |                            |
+| function                                             | `music-metadata`           | `music-metadata/lib/core`  |
+| -----------------------------------------------------| ---------------------------|----------------------------|
+| [`parseBuffer`](#parsefile-function)                 | ✓                          | ✓                          |
+| [`parseStream`](#parsestream-function) *             | ✓                          | ✓                          |
+| [`parseFromTokenizer`](#parsefromtokenizer-function) | ✓                          | ✓                          |
+| [`parseFile`](#parsefile-function)                   | ✓                          |                            |
 
 ### Donation
 Not required, but would be extremely motivating.
@@ -172,7 +172,7 @@ Example:
 mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
   .then( metadata => {
      console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-     someReadStream.close();
+     someReadStream.destroy();
    });
 ```
 
@@ -223,15 +223,13 @@ To enforce parsing the entire file if needed you should set `duration` to `true`
 ### Metadata result:
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
-
   * [`format: IFormat`](#format) Audio format information
   * `native: INativeTags` List of native (original) tags found in the parsed audio file. If the native option is set to false, this property is not defined.
   * [`common: ICommonTagsResult`](doc/common_metadata.md) Is a generic (abstract) way of reading metadata information. 
   
 #### Format
   
-  Audio format information. Defined in the TypeScript `IFormat` interface:
-  
+Audio format information. Defined in the TypeScript `IFormat` interface:
   * `dataformat?: string` Audio encoding format. e.g.: 'flac'
   * `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
   * `duration?: number` Duration in seconds
@@ -270,5 +268,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
