@@ -51,8 +51,9 @@
     "test": "mocha --require ts-node/register --full-trace test",
     "build": "npm run clean && npm run compile && npm run doc-gen",
     "start": "npm-run-all compile lint cover-test",
-    "cover-test": "nyc npm run test",
-    "coveralls": "npm run cover-test && nyc report --reporter=text-lcov | coveralls",
+    "cover-test": "nyc npm run test && npm run send-coveralls && npm run send-codacy",
+    "send-coveralls": "npm run cover-test",
+    "send-codacy": "nyc report --reporter=text-lcov | coveralls",
     "doc-gen": "node doc-gen/gen.js"
   },
   "dependencies": {
