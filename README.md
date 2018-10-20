@@ -16,7 +16,7 @@ Stream and file based music metadata parser for node.
 
 * Supports metadata of the following audio and tag types:
 
-### Support for audio file types:
+### Support for audio file types
 
 | Audio format  | Description                     | Wiki                                                               |                                                                                                                                               |
 | ------------- |---------------------------------| -------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------:|
@@ -34,8 +34,9 @@ Stream and file based music metadata parser for node.
 | WavPack       |                                 | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60" alt="WavPack logo">                                                              |
 | WMA           | Windows Media Audio             | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40" alt="Windows Media logo">  |
 
-### Support for tags:
+### Supported tag headers
 
+Following tag header formats are supported:
 * [APE](https://wikipedia.org/wiki/APE_tag)
 * [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
 * EXIF 2.3
@@ -44,10 +45,9 @@ Stream and file based music metadata parser for node.
 * [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 * [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
 
-
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
 
-### Audio format & encoding details:
+### Audio format & encoding details
 
 Support for encoding / format details:
 * [Bit rate](https://wikipedia.org/wiki/Bit_rate)
@@ -57,8 +57,8 @@ Support for encoding / format details:
   
 
 ## Online demo's
-* [Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
-* [Webamp powered with music-metadata](https://music-metadata-webamp.netlify.com/)
+* [<img src="https://gitcdn.xyz/repo/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
+* [<img src="https://svgshare.com/i/8uW.svg" width="40"> Webamp](https://webamp.org/)
 
 ## Compatibility
 
@@ -98,7 +98,7 @@ or yarn
 yarn add music-metadata
 ```
 
-### Import music-metadata:
+### Import music-metadata
 
 This is how you can import music-metadata in JavaScript, in you code:
 ```JavaScript
@@ -110,7 +110,7 @@ This is how it's done in TypeScript:
 import * as mm from 'music-metadata';
 ```
 
-### Module Functions:
+### Module Functions
 
 There are two ways to parse (read) audio tracks:
 1) Audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile)
@@ -206,7 +206,7 @@ Can be used to convert the normalized rating value to the 0..5 stars, where 0 an
 ratingToStars(rating: number): number
 ```
 
-### Options:
+### Options
   * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
   * `fileSize`: only provide this in combination with `parseStream` function.
   * `loadParser: (moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
@@ -218,7 +218,7 @@ ratingToStars(rating: number): number
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
     
-### Metadata result:
+### Metadata result
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
   * [`format: IFormat`](#format) Audio format information
