@@ -70,6 +70,7 @@
     "@types/file-type": "^5.2.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.7",
+    "axios": "^0.18.0",
     "chai": "^4.2.0",
     "coveralls": "^3.0.2",
     "del-cli": "^1.1.0",
