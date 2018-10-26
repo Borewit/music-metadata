@@ -24,7 +24,7 @@ export class Atom {
 
     return this.readAtom(tokenizer, dataHandler).then(atomBean => {
       this.children.push(atomBean);
-      if (!size) {
+      if (size === undefined) {
         return this.readAtoms(tokenizer, dataHandler, size).catch(err => {
           if (err.message === endOfFile) {
             debug(`Reached end-of-file`);
