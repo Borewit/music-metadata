@@ -1,14 +1,12 @@
-import {ITokenizer} from "strtok3/lib/type";
-
+import {ITokenizer, endOfFile} from "strtok3/lib/type";
 import * as initDebug from "debug";
-
-const debug = initDebug("music-metadata:parser:MP4:Atom");
+import * as Token from "token-types";
 
 import * as AtomToken from "./AtomToken";
 
-import * as Token from "token-types";
-
 export type AtomDataHandler = (atom: Atom) => Promise<void>;
+
+const debug = initDebug("music-metadata:parser:MP4:Atom");
 
 export class Atom {
 
@@ -26,6 +24,15 @@ export class Atom {
 
     return this.readAtom(tokenizer, dataHandler).then(atomBean => {
       this.children.push(atomBean);
+      if (size === undefined) {
+        return this.readAtoms(tokenizer, dataHandler, size).catch(err => {
+          if (err.message === endOfFile) {
+            debug(`Reached end-of-file`);
+          } else {
+            throw err;
+          }
+        });
+      }
       size -= atomBean.header.length;
       if (size > 0) {
         return this.readAtoms(tokenizer, dataHandler, size);

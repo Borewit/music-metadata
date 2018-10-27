@@ -47,7 +47,7 @@ export class MP4Parser extends BasicParser {
 
         case "ftyp":
           return this.parseAtom_ftyp(atom.dataLen).then(types => {
-            debug('ftyp: ' + types.join('/'));
+            debug(`ftyp: ${types.join('/')}`);
           });
 
         case 'mdhd': // Media header atom
@@ -59,7 +59,7 @@ export class MP4Parser extends BasicParser {
 
       return this.tokenizer.readToken<Buffer>(new Token.IgnoreType(atom.dataLen))
         .then(() => {
-          debug("Ignore atom data: path=%s, payload-len=%s", atom.atomPath, atom.dataLen);
+          debug(`Ignore atom data: path=${atom.atomPath}, payload-len=${atom.dataLen}`);
         });
 
     }, this.tokenizer.fileSize);
