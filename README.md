@@ -14,7 +14,7 @@ Stream and file based music metadata parser for node.
 
 ## Features
 
-* Supports metadata of the following audio and tag types:
+*   Supports metadata of the following audio and tag types:
 
 ### Support for audio file types
 
@@ -37,28 +37,28 @@ Stream and file based music metadata parser for node.
 ### Supported tag headers
 
 Following tag header formats are supported:
-* [APE](https://wikipedia.org/wiki/APE_tag)
-* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
-* EXIF 2.3
-* [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
-* [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
-* [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
-* [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+*   [APE](https://wikipedia.org/wiki/APE_tag)
+*   [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
+*   EXIF 2.3
+*   [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
+*   [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
+*   [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+*   [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
 
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
 
 ### Audio format & encoding details
 
 Support for encoding / format details:
-* [Bit rate](https://wikipedia.org/wiki/Bit_rate)
-* [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
-* Duration
-* Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
+*   [Bit rate](https://wikipedia.org/wiki/Bit_rate)
+*   [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
+*   Duration
+*   Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
   
 
 ## Online demo's
-* [<img src="https://gitcdn.xyz/repo/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
-* [<img src="https://svgshare.com/i/8uW.svg" width="40"> Webamp](https://webamp.org/)
+*   [<img src="https://gitcdn.xyz/repo/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
+*   [<img src="https://svgshare.com/i/8uW.svg" width="40"> Webamp](https://webamp.org/)
 
 ## Compatibility
 
@@ -67,7 +67,7 @@ The JavaScript in runtime is compliant with [ECMAScript 2015 (ES6)](https://node
 ### Browser Support
 
 Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
-* [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is better suitable to run in the browser.
+*   [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is better suitable to run in the browser.
 
 To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
 ```JavaScript
@@ -207,13 +207,13 @@ ratingToStars(rating: number): number
 ```
 
 ### Options
-  * `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
-  * `fileSize`: only provide this in combination with `parseStream` function.
-  * `loadParser: (moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
-  * `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
-  * `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
-  * `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-  * `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
+*   `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+*   `fileSize`: only provide this in combination with `parseStream` function.
+*   `loadParser: (moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
+*   `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
+*   `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
+*   `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
+*   `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
@@ -221,24 +221,24 @@ To enforce parsing the entire file if needed you should set `duration` to `true`
 ### Metadata result
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
-  * [`format: IFormat`](#format) Audio format information
-  * `native: INativeTags` List of native (original) tags found in the parsed audio file. If the native option is set to false, this property is not defined.
-  * [`common: ICommonTagsResult`](doc/common_metadata.md) Is a generic (abstract) way of reading metadata information. 
+*   [`format: IFormat`](#format) Audio format information
+*   `native: INativeTags` List of native (original) tags found in the parsed audio file. If the native option is set to false, this property is not defined.
+*   [`common: ICommonTagsResult`](doc/common_metadata.md) Is a generic (abstract) way of reading metadata information. 
   
 #### Format
   
 Audio format information. Defined in the TypeScript `IFormat` interface:
-  * `dataformat?: string` Audio encoding format. e.g.: 'flac'
-  * `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
-  * `duration?: number` Duration in seconds
-  * `bitrate?: number` Number bits per second of encoded audio file
-  * `sampleRate?: number` Sampling rate in Samples per second (S/s)
-  * `bitsPerSample?: number` Audio bit depth
-  * `encoder?` Encoder name
-  * `codecProfile?: string` Codec profile
-  * `lossless?: boolean` True if lossless,  false for lossy encoding
-  * `numberOfChannels?: number` Number of audio channels
-  * `numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
+*   `dataformat?: string` Audio encoding format. e.g.: 'flac'
+*   `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
+*   `duration?: number` Duration in seconds
+*   `bitrate?: number` Number bits per second of encoded audio file
+*   `sampleRate?: number` Sampling rate in Samples per second (S/s)
+*   `bitsPerSample?: number` Audio bit depth
+*   `encoder?` Encoder name
+*   `codecProfile?: string` Codec profile
+*   `lossless?: boolean` True if lossless,  false for lossy encoding
+*   `numberOfChannels?: number` Number of audio channels
+*   `numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
   
 #### Common
 
