@@ -3,6 +3,8 @@ import * as mm from '../src';
 import * as path from 'path';
 import {IFormat, INativeTagDict} from '../src/type';
 
+const samplePath = path.join(__dirname, 'samples');
+
 describe("Parse RIFF (Resource Interchange File Format)", () => {
 
   describe("Parse RIFF/WAVE audio format", () => {
@@ -23,7 +25,7 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
     it("should parse LIST-INFO (EXIF)", () => {
 
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, filename);
 
       function checkFormat(format: IFormat) {
         assert.strictEqual(format.dataformat, "WAVE/PCM", "format.dataformat = WAVE/PCM");
@@ -49,7 +51,7 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
     // Issue https://github.com/Borewit/music-metadata/issues/75
     it("should be able to handle complex nested chunk structures", () => {
 
-      const filePath = path.join(__dirname, "samples", "issue_75.wav");
+      const filePath = path.join(samplePath, "issue_75.wav");
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         assert.deepEqual(metadata.format.dataformat, "WAVE/PCM");
@@ -105,13 +107,28 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
       });
     });
 
+    it("should handle be able to handle odd chunk & padding", () => {
+
+      const filePath = path.join(samplePath, 'issue-161.wav');
+
+      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+        const format = metadata.format;
+        assert.strictEqual(format.dataformat, "WAVE/PCM");
+        assert.strictEqual(format.lossless, true);
+        assert.strictEqual(format.sampleRate, 48000);
+        assert.strictEqual(format.bitsPerSample, 24);
+        assert.strictEqual(format.numberOfSamples, 363448);
+        assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, "file's duration");
+      });
+    });
+
   });
 
   describe("non-PCM", () => {
 
     it("should parse Microsoft 4-bit ADPCM encoded", () => {
 
-      const filePath = path.join(__dirname, "samples", "issue-92.wav");
+      const filePath = path.join(samplePath, "issue-92.wav");
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         const format = metadata.format;
@@ -119,7 +136,8 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
         assert.strictEqual(format.lossless, false);
         assert.strictEqual(format.sampleRate, 22050);
         assert.strictEqual(format.bitsPerSample, 4);
-        assert.strictEqual(4660260 / 22050, metadata.format.duration, "file's duration is 3'31\"");
+        assert.strictEqual(format.numberOfSamples, 4660260);
+        assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, "file's duration is 3'31\"");
       });
     });
   });
