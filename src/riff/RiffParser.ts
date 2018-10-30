@@ -30,12 +30,13 @@ export class WavePcmParser extends BasicParser {
   private fact: WaveChunk.IFactChunk;
 
   private blockAlign: number;
+  private header: RiffChunk.IChunkHeader;
 
   public parse(): Promise<void> {
 
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(riffHeader => {
-        debug('pos=%s, parse: chunkID=%s', this.tokenizer.position, riffHeader.chunkID);
+        debug(`pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`);
         if (riffHeader.chunkID !== 'RIFF')
           return null; // Not RIFF format
 
@@ -55,7 +56,7 @@ export class WavePcmParser extends BasicParser {
         case "WAVE":
           return this.readWaveChunk();
         default:
-          throw new Error("Unsupported RIFF format: RIFF/" + type);
+          throw new Error(`Unsupported RIFF format: RIFF/${type}`);
       }
     });
   }
@@ -63,7 +64,8 @@ export class WavePcmParser extends BasicParser {
   public readWaveChunk(): Promise<void> {
     return this.tokenizer.readToken<RiffChunk.IChunkHeader>(RiffChunk.Header)
       .then(header => {
-        debug('pos=%s, readChunk: chunkID=RIFF/WAVE/%s', this.tokenizer.position, header.chunkID);
+        this.header = header;
+        debug(`pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`);
         switch (header.chunkID) {
 
           case "LIST":
@@ -112,12 +114,17 @@ export class WavePcmParser extends BasicParser {
             return this.tokenizer.ignore(header.size);
 
           default:
-            debug("Ignore chunk: RIFF/" + header.chunkID);
+            debug(`Ignore chunk: RIFF/${header.chunkID} of ${header.size} bytes`);
             this.warnings.push("Ignore chunk: RIFF/" + header.chunkID);
             return this.tokenizer.ignore(header.size);
         }
       }).then(() => {
-        return this.readWaveChunk();
+        if (this.header.size % 2 === 1) {
+          debug('Read odd padding byte'); // https://wiki.multimedia.cx/index.php/RIFF
+          return this.tokenizer.ignore(1).then(() => this.readWaveChunk());
+        } else {
+          return this.readWaveChunk();
+        }
       });
   }
 
