@@ -118,6 +118,9 @@ export class ParserFactory {
       case ".wv":
       case ".wvp":
         return 'wavpack';
+
+      case ".mpc":
+        return 'musepack';
     }
   }
 
@@ -210,6 +213,9 @@ export class ParserFactory {
 
           case 'wavpack':
             return 'wavpack';
+
+          case 'musepack':
+            return 'musepack';
         }
         break;
 

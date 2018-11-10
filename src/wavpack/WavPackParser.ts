@@ -155,7 +155,7 @@ export class WavPackParser extends BasicParser {
     return this.parseWavPackBlocks()
       .then(() => {
         // try to parse APEv2 header
-        return APEv2Parser.parseFooter(this.metadata, this.tokenizer, this.options);
+        return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
       });
   }
 
