@@ -38,7 +38,6 @@ export const parseBuffer = Core.parseBuffer;
  */
 export function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
   return strtok3.fromFile(filePath).then(fileTokenizer => {
-    options.fileSize = fileTokenizer.fileSize;
     const parserName = ParserFactory.getParserIdForExtension(filePath);
     if (parserName) {
       return ParserFactory.loadParser(parserName, options).then(parser => {

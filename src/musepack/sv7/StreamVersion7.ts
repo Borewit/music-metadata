@@ -1,6 +1,6 @@
 
 import * as Token from 'token-types';
-import Common from '../common/Util';
+import Common from '../../common/Util';
 
 /**
  * MusePack stream version 7 format specification

@@ -1,15 +1,16 @@
-"use strict";
+'use strict';
 
 import * as initDebug from 'debug';
+import * as assert from 'assert';
 
-import {BasicParser} from '../common/BasicParser';
+import { BasicParser } from '../../common/BasicParser';
 import * as SV7 from './StreamVersion7';
-import { APEv2Parser } from '../apev2/APEv2Parser';
+import { APEv2Parser } from '../../apev2/APEv2Parser';
 import { BitReader } from './BitReader';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
-export class MusepackParser extends BasicParser {
+export class MpcSv7Parser extends BasicParser {
 
   private bitreader: BitReader;
   private audioLength: number = 0;
@@ -19,11 +20,9 @@ export class MusepackParser extends BasicParser {
 
     return this.tokenizer.readToken(SV7.Header)
       .then(header => {
-        if (header.signature !== 'MP+') {
-          throw new Error("Expected MAC on beginning of file"); // ToDo: strip/parse JUNK
-        }
+        assert.equal(header.signature, 'MP+', 'Magic number');
         debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);
-        this.metadata.setFormat('dataformat', 'Musepack/SV7');
+        this.metadata.setFormat('dataformat', 'Musepack, SV7');
         this.metadata.setFormat('sampleRate', header.sampleFrequency);
         const numberOfSamples = 1152 * (header.frameCount - 1) + header.lastFrameLength;
         this.metadata.setFormat('numberOfSamples', numberOfSamples);
@@ -37,8 +36,8 @@ export class MusepackParser extends BasicParser {
       }).then(() => {
         debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
 
-        if (this.options.fileSize) {
-          const remaining = this.options.fileSize - this.tokenizer.position;
+        if (this.tokenizer.fileSize) {
+          const remaining = this.tokenizer.fileSize - this.tokenizer.position;
           const buffer = Buffer.alloc(remaining);
           return this.tokenizer.readBuffer(buffer).then(size => {
 
