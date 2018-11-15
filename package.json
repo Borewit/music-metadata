@@ -34,7 +34,9 @@
     "wav",
     "WavPack",
     "Opus",
-    "speex"
+    "speex",
+    "musepack",
+    "mpc"
   ],
   "main": "lib",
   "typings": "lib/index",
