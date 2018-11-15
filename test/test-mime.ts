@@ -168,6 +168,10 @@ describe("MIME & extension mapping", () => {
       return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.wv", "WavPack");
     });
 
+    it.skip('should recognize Musepack', () => {
+      return testFileType(path.join('mpc', 'bach-goldberg-variatians-05.mpc'), 'musepack');
+    });
+
   });
 
 });
