@@ -6,7 +6,7 @@ describe('Parse Musepack (.mpc)', () => {
 
   const samplePath = path.join(__dirname, 'samples', 'mpc');
 
-  describe('Parse Musepack/SV7 with APEv2 header', () => {
+  describe('Parse Musepack, SV7 with APEv2 header', () => {
 
     const filePath = path.join(samplePath, 'apev2.sv7.mpc');
 
@@ -33,7 +33,7 @@ describe('Parse Musepack (.mpc)', () => {
 
   });
 
-  describe('Parse Musepack/SV8 with APEv2 header', () => {
+  describe('Parse Musepack, SV8 with APEv2 header', () => {
 
     const filePath = path.join(samplePath, 'bach-goldberg-variatians-05.sv8.mpc');
 
