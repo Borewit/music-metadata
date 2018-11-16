@@ -29,6 +29,7 @@ export class MpcSv7Parser extends BasicParser {
         this.duration = numberOfSamples / header.sampleFrequency;
         this.metadata.setFormat('duration', this.duration);
         this.bitreader = new BitReader(this.tokenizer);
+        this.metadata.setFormat('numberOfChannels', header.midSideStereo || header.intensityStereo ? 2 : 1);
         return this.bitreader.read(8).then(version => {
           this.metadata.setFormat('encoder', (version / 100).toFixed(2));
           return this.skipAudioData(header.frameCount);

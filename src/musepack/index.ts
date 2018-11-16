@@ -1,17 +1,16 @@
 import * as initDebug from 'debug';
 
-import { BasicParser } from '../common/BasicParser';
-
 import * as Token from 'token-types';
 import { ITokenParser } from '../ParserFactory';
 import { MpcSv8Parser } from './sv8/MpcSv8Parser';
 import { MpcSv7Parser } from './sv7/MpcSv7Parser';
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
-class MusepackParser extends BasicParser {
+class MusepackParser extends AbstractID3Parser {
 
-  public parse(): Promise<void> {
+  public _parse(): Promise<void> {
     return this.tokenizer.peekToken(new Token.StringType(3, 'binary')).then(signature => {
       let mpcParser: ITokenParser;
       switch (signature) {

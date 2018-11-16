@@ -54,7 +54,7 @@ export class APEv2Parser extends BasicParser {
         throw new Error('Expected footer to start with APETAGEX ');
       }
       return tokenizer.readToken<Buffer>(TagField(footer)).then(tags => {
-        return APEv2Parser.parseTags(metadata, footer, tags, !options.skipCovers);
+        return APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
       });
     });
   }
@@ -62,11 +62,10 @@ export class APEv2Parser extends BasicParser {
   public static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     assert.equal(footer.ID, preamble, 'APEv2 Footer preamble');
-    this.parseTags(metadata, footer, buffer, includeCovers);
+    this.parseTags(metadata, footer, buffer, buffer.length - footer.size, includeCovers);
   }
 
-  private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, includeCovers: boolean) {
-    let offset = 0;
+  private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, offset: number, includeCovers: boolean) {
 
     for (let i = 0; i < footer.fields; i++) {
       // Only APEv2 tag has tag item headers

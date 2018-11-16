@@ -115,13 +115,17 @@ export class ID3v1Parser extends BasicParser {
   public parse(): Promise<void> {
 
     if (!this.tokenizer.fileSize) {
-      debug('Skip checking for ID3v1 because the file-size is unknown'
-      );
+      debug('Skip checking for ID3v1 because the file-size is unknown');
+      return Promise.resolve();
+    }
+    const offset = this.tokenizer.fileSize - Iid3v1Token.len;
+    if (this.tokenizer.position > offset) {
+      debug('Already consumed the last 128 bytes');
+      return Promise.resolve();
     }
     return this.tokenizer.readToken<Iid3v1Header>(Iid3v1Token, this.tokenizer.fileSize - Iid3v1Token.len).then(header => {
       if (header) {
         debug("ID3v1 header found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
-        const id3: ITag[] = [];
         for (const id of ["title", "artist", "album", "comment", "track", "year"]) {
           if (header[id] && header[id] !== "")
             this.addTag(id, header[id]);
@@ -132,7 +136,7 @@ export class ID3v1Parser extends BasicParser {
       } else {
         debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
       }
-    }).then();
+    });
   }
 
   private addTag(id: string, value: any) {
