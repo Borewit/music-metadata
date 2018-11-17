@@ -48,18 +48,36 @@ export class APEv2Parser extends BasicParser {
     return duration / ah.sampleRate;
   }
 
+  /**
+   * @param {INativeMetadataCollector} metadata
+   * @param {ITokenizer} tokenizer
+   * @param {IOptions} options
+   * @returns {Promise<boolean>} True if tags have been found
+   */
   public static parseTagHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-    return tokenizer.readToken<IFooter>(TagFooter).then(footer => {
-      if (footer.ID !== preamble) {
-        throw new Error('Expected footer to start with APETAGEX ');
+    return tokenizer.peekToken<IFooter>(TagFooter).then(footer => {
+      if (footer.ID === preamble) {
+        return tokenizer.ignore(TagFooter.len).then(() => {
+          return tokenizer.readToken<Buffer>(TagField(footer)).then(tags => {
+            APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
+            return true;
+          });
+        });
+      } else {
+        debug(`APEv2 header not found at offset=${tokenizer.position}`);
+        if (tokenizer.fileSize) {
+          // Try to read the APEv2 header using just the footer-header
+          const remaining = tokenizer.fileSize - tokenizer.position; // ToDo: take ID3v1 into account
+          const buffer = Buffer.alloc(remaining);
+          return tokenizer.readBuffer(buffer).then(size => {
+            return APEv2Parser.parseTagFooter(metadata, buffer, !options.skipCovers);
+          });
+        }
       }
-      return tokenizer.readToken<Buffer>(TagField(footer)).then(tags => {
-        return APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
-      });
     });
   }
 
-  public static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
+  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     assert.equal(footer.ID, preamble, 'APEv2 Footer preamble');
     this.parseTags(metadata, footer, buffer, buffer.length - footer.size, includeCovers);

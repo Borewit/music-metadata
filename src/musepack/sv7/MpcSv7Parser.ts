@@ -36,15 +36,7 @@ export class MpcSv7Parser extends BasicParser {
         });
       }).then(() => {
         debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
-
-        if (this.tokenizer.fileSize) {
-          const remaining = this.tokenizer.fileSize - this.tokenizer.position;
-          const buffer = Buffer.alloc(remaining);
-          return this.tokenizer.readBuffer(buffer).then(size => {
-
-            return APEv2Parser.parseTagFooter(this.metadata, buffer, !this.options.skipCovers);
-          });
-        }
+        return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
       });
   }
 
