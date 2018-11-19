@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "debug": "^4.1.0",
-    "file-type": "^10.0.0",
+    "file-type": "^10.5.0",
     "media-typer": "0.3.0",
     "strtok3": "^2.1.1",
     "then-read-stream": "^1.3.1",
