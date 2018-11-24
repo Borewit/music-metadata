@@ -7,11 +7,13 @@ const t = assert;
 
 describe("Parse MP3 files", () => {
 
+  const samplePath = path.join(__dirname, 'samples');
+
   it("should handle audio-frame-header-bug", function() {
 
     this.timeout(15000); // It takes a long time to parse
 
-    const filePath = path.join(__dirname, 'samples', 'audio-frame-header-bug.mp3');
+    const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
 
     return mm.parseFile(filePath, {duration: true}).then(result => {
       // FooBar: 3:20.556 (8.844.527 samples); 44100 Hz => 200.5561678004535 seconds
@@ -24,9 +26,30 @@ describe("Parse MP3 files", () => {
     });
   });
 
+  describe('should be able to parse: Sleep Away.mp3 ', () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'Sleep Away.mp3');
+
+    it(`parse`, () => {
+
+      return mm.parseFile(filePath, {duration: true}).then(metadata => {
+        const format = metadata.format;
+        assert.deepEqual(format.dataformat, 'mp3');
+        assert.strictEqual(format.sampleRate, 44100);
+        assert.strictEqual(format.numberOfChannels, 2);
+
+        const common = metadata.common;
+        assert.strictEqual(common.title, 'Sleep Away');
+        assert.strictEqual(common.artist, 'Bob Acri');
+        assert.deepEqual(common.composer, ['Robert R. Acri']);
+        assert.deepEqual(common.genre, ['Jazz']);
+      });
+    });
+  });
+
   describe("should handle incomplete MP3 file", () => {
 
-    const filePath = path.join(__dirname, 'samples', "incomplete.mp3");
+    const filePath = path.join(samplePath, "incomplete.mp3");
 
     function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
