@@ -395,6 +395,8 @@ export class MpegParser extends AbstractID3Parser {
       } else {
         return this.skipSideInformation();
       }
+    }).catch(err => {
+      throw err; // Workaround for issue #174
     });
   }
 
