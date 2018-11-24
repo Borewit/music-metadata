@@ -114,7 +114,6 @@ describe("Discogs mappings", () => {
         // Discogs specific:
         t.deepEqual(common.discogs_release_id, "4204665", "common.discogs_release_id");
         t.deepEqual(common.catalognumber, "PRAR931391", "common.catalognumber");
-
       }
 
       function checkNative(id3v23) {
@@ -132,9 +131,10 @@ describe("Discogs mappings", () => {
         const id3v23 = mm.orderTags(metadata.native["ID3v2.3"]);
 
         const format = metadata.format;
-        t.deepEqual(format.duration, 2.1681632653061222, "format.duration");
+        // t.deepEqual(format.numberOfSamples, 93624, "format.numberOfSamples");
         t.deepEqual(format.sampleRate, 44100, "format.sampleRate");
-        t.deepEqual(format.bitrate, 128000, "format.bitrate");
+        t.deepEqual(format.duration, 2.1681632653061222, "format.duration");
+        t.approximately(format.bitrate, 144000, 1000, "format.bitrate");
         t.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
 
         // Expect basic common tags

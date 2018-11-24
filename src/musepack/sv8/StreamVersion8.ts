@@ -87,55 +87,49 @@ export class StreamReader {
   public constructor(private tokenizer: ITokenizer) {
   }
 
-  public readPacketHeader(): Promise<IPacketHeader> {
+  public async readPacketHeader(): Promise<IPacketHeader> {
 
-    return this.tokenizer.readToken(PacketKey).then(key => {
-      return this.readVariableSizeField()
-        .then(size => {
-          return {
-            key,
-            payloadLength: size.value - 2 - size.len
-          };
-        });
-    });
+    const key = await this.tokenizer.readToken(PacketKey);
+    const size = await this.readVariableSizeField();
+    return {
+      key,
+      payloadLength: size.value - 2 - size.len
+    };
   }
 
-  public readStreamHeader(size: number): Promise<IStreamHeader> {
+  public async readStreamHeader(size: number): Promise<IStreamHeader> {
 
     const streamHeader: IStreamHeader = {} as any;
-
     debug(`Reading SH at offset=${this.tokenizer.position}`);
-    return this.tokenizer.readToken(SH_part1).then(part1 => {
-      size -= SH_part1.len;
-      Object.assign(streamHeader, part1);
-      debug(`SH.streamVersion = ${part1.streamVersion}`);
-      return this.readVariableSizeField();
-    }).then(sampleCount => {
-      size -= sampleCount.len;
-      streamHeader.sampleCount = sampleCount.value;
-      return this.readVariableSizeField();
-    }).then(bs => {
-      size -= bs.len;
-      streamHeader.beginningOfSilence = bs.value;
-      return this.tokenizer.readToken(SH_part3);
-    }).then(part3 => {
-      size -= SH_part3.len;
-      Object.assign(streamHeader, part3);
-      // assert.equal(size, 0);
-      return this.tokenizer.ignore(size);
-    }).then(() => {
-      return streamHeader;
-    });
+
+    const part1 = await this.tokenizer.readToken(SH_part1);
+    size -= SH_part1.len;
+    Object.assign(streamHeader, part1);
+    debug(`SH.streamVersion = ${part1.streamVersion}`);
+
+    const sampleCount = await this.readVariableSizeField();
+    size -= sampleCount.len;
+    streamHeader.sampleCount = sampleCount.value;
+
+    const bs = await this.readVariableSizeField();
+    size -= bs.len;
+    streamHeader.beginningOfSilence = bs.value;
+
+    const part3 = await this.tokenizer.readToken(SH_part3);
+    size -= SH_part3.len;
+    Object.assign(streamHeader, part3);
+    // assert.equal(size, 0);
+    await this.tokenizer.ignore(size);
+    return streamHeader;
   }
 
-  private readVariableSizeField(len: number = 1, hb: number = 0): Promise<IVarSize> {
-    return this.tokenizer.readToken(Token.UINT8).then(n => {
-      if ((n & 0x80) === 0) {
-        return {len, value: hb + n};
-      }
-      n &= 0x7F;
-      n += hb;
-      return this.readVariableSizeField(len + 1, n << 7);
-    });
+  private async readVariableSizeField(len: number = 1, hb: number = 0): Promise<IVarSize> {
+    let n = await this.tokenizer.readToken(Token.UINT8);
+    if ((n & 0x80) === 0) {
+      return {len, value: hb + n};
+    }
+    n &= 0x7F;
+    n += hb;
+    return this.readVariableSizeField(len + 1, n << 7);
   }
 }

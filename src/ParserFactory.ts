@@ -35,7 +35,7 @@ export class ParserFactory {
    * @param {IOptions} opts
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static parse(tokenizer: ITokenizer, contentType: string, opts): Promise<IAudioMetadata> {
+  public static async parse(tokenizer: ITokenizer, contentType: string, opts): Promise<IAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
     let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
@@ -45,15 +45,15 @@ export class ParserFactory {
       debug("No parser found for MIME-type / extension: " + contentType);
 
       const buf = Buffer.alloc(4100);
-      return tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true).then(() => {
-        const guessedType = fileType(buf);
-        if (!guessedType)
-          throw new Error("Failed to guess MIME-type");
-        parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
-        if (!parserId)
-          throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
-        return this._parse(tokenizer, parserId, opts);
-      });
+      await tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true);
+      const guessedType = fileType(buf);
+      if (!guessedType)
+        throw new Error("Failed to guess MIME-type");
+      parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
+      if (!parserId)
+        throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
+      return this._parse(tokenizer, parserId, opts);
+
     }
 
     // Parser found, execute parser
@@ -124,28 +124,25 @@ export class ParserFactory {
     }
   }
 
-  public static loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
+  public static async loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
     debug(`Lazy loading parser: ${moduleName}`);
     if (options.loadParser) {
-      return options.loadParser(moduleName).then(parser => {
-        if (!parser) {
-          throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
-        }
-        return parser;
-      });
+      const parser = await options.loadParser(moduleName);
+      if (!parser) {
+        throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
+      }
+      return parser;
     }
     const module = require('./' + moduleName + '/index');
-    return Promise.resolve(new module.default());
+    return new module.default();
   }
 
-  private static _parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
+  private static async _parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
     // Parser found, execute parser
-    return ParserFactory.loadParser(parserId, opts).then(parser => {
-      const metadata = new MetadataCollector(opts);
-      return parser.init(metadata, tokenizer, opts).parse().then(() => {
-        return metadata.toCommonMetadata();
-      });
-    });
+    const parser = await ParserFactory.loadParser(parserId, opts);
+    const metadata = new MetadataCollector(opts);
+    await parser.init(metadata, tokenizer, opts).parse();
+    return metadata.toCommonMetadata();
   }
 
   private static getExtension(fname: string): string {

@@ -3,8 +3,8 @@ import * as Path from 'path';
 import * as strtok3 from 'strtok3';
 
 import * as Core from './core';
-import {MetadataCollector} from './common/MetadataCollector';
-import {ParserFactory} from './ParserFactory';
+import { MetadataCollector } from './common/MetadataCollector';
+import { ParserFactory } from './ParserFactory';
 import * as Type from './type';
 
 export type IAudioMetadata = Type.IAudioMetadata;
@@ -19,10 +19,9 @@ export type INativeTagDict = Type.INativeTagDict;
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
-  return strtok3.fromStream(stream).then(tokenizer => {
-    return Core.parseFromTokenizer(tokenizer, mimeType, options);
-  });
+export async function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const tokenizer = await strtok3.fromStream(stream);
+  return Core.parseFromTokenizer(tokenizer, mimeType, options);
 }
 
 /**
@@ -41,26 +40,21 @@ export const parseBuffer = Core.parseBuffer;
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
-  return strtok3.fromFile(filePath).then(fileTokenizer => {
+export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const fileTokenizer = await strtok3.fromFile(filePath);
+  try {
     const parserName = ParserFactory.getParserIdForExtension(filePath);
     if (parserName) {
-      return ParserFactory.loadParser(parserName, options).then(parser => {
-        const metadata = new MetadataCollector(options);
-        return parser.init(metadata, fileTokenizer, options).parse().then(() => {
-          return fileTokenizer.close().then(() => {
-            return metadata.toCommonMetadata();
-          });
-        }).catch(err => {
-          return fileTokenizer.close().then(() => {
-            throw err;
-          });
-        });
-      });
+      const parser = await ParserFactory.loadParser(parserName, options);
+      const metadata = new MetadataCollector(options);
+      await parser.init(metadata, fileTokenizer, options).parse();
+      return metadata.toCommonMetadata();
     } else {
       throw new Error('No parser found for extension: ' + Path.extname(filePath));
     }
-  });
+  } finally {
+    await fileTokenizer.close();
+  }
 }
 
 /**

@@ -2,9 +2,9 @@
 
 import common from '../common/Util';
 import * as Token from 'token-types';
-import {IVorbisPicture, VorbisPictureToken} from '../ogg/vorbis/Vorbis';
-import {AbstractID3Parser} from '../id3v2/AbstractID3Parser';
-import {FourCcToken} from "../common/FourCC";
+import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis';
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
+import { FourCcToken } from '../common/FourCC';
 
 import * as _debug from 'debug';
 
@@ -32,33 +32,26 @@ export class FlacParser extends AbstractID3Parser {
 
   private padding: number = 0;
 
-  public _parse(): Promise<void> {
+  public async _parse(): Promise<void> {
 
-    return this.tokenizer.readToken<string>(FourCcToken).then(fourCC => {
-      if (fourCC.toString() !== 'fLaC') {
-        throw new Error("Invalid FLAC preamble");
-      }
-      return this.parseBlockHeader().then(() => {
-        if (this.tokenizer.fileSize && this.metadata.format.duration) {
-          const dataSize = this.tokenizer.fileSize - this.tokenizer.position;
-          this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
-        }
-      });
-    });
-  }
+    const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
+    if (fourCC.toString() !== 'fLaC') {
+      throw new Error('Invalid FLAC preamble');
+    }
 
-  private parseBlockHeader(): Promise<void> {
-    // Read block header
-    return this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader).then(blockHeader => {
+    let blockHeader: IBlockHeader;
+    do {
+      // Read block header
+      blockHeader = await this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader);
       // Parse block data
-      return this.parseDataBlock(blockHeader).then(() => {
-        if (blockHeader.lastBlock) {
-          // done
-        } else {
-          return this.parseBlockHeader();
-        }
-      });
-    });
+      await this.parseDataBlock(blockHeader);
+    }
+    while (!blockHeader.lastBlock);
+
+    if (this.tokenizer.fileSize && this.metadata.format.duration) {
+      const dataSize = this.tokenizer.fileSize - this.tokenizer.position;
+      this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
+    }
   }
 
   private addTag(id: string, value: any) {
@@ -84,7 +77,7 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.PICTURE:
         return this.parsePicture(blockHeader.length);
       default:
-        this.warnings.push("Unknown block type: " + blockHeader.type);
+        this.warnings.push('Unknown block type: ' + blockHeader.type);
     }
     // Ignore data block
     return this.tokenizer.readToken<void>(new Token.IgnoreType(blockHeader.length));
@@ -93,45 +86,42 @@ export class FlacParser extends AbstractID3Parser {
   /**
    * Parse STREAMINFO
    */
-  private parseBlockStreamInfo(dataLen: number): Promise<void> {
+  private async parseBlockStreamInfo(dataLen: number): Promise<void> {
 
     if (dataLen !== Metadata.BlockStreamInfo.len)
-      throw new Error("Unexpected block-stream-info length");
+      throw new Error('Unexpected block-stream-info length');
 
-    return this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo).then(streamInfo => {
-      this.metadata.setFormat('dataformat', 'flac');
-      this.metadata.setFormat('lossless', true);
-      this.metadata.setFormat('numberOfChannels', streamInfo.channels);
-      this.metadata.setFormat('bitsPerSample',  streamInfo.bitsPerSample);
-      this.metadata.setFormat('sampleRate',  streamInfo.sampleRate);
-      this.metadata.setFormat('duration',  streamInfo.totalSamples / streamInfo.sampleRate);
-    });
+    const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo);
+    this.metadata.setFormat('dataformat', 'flac');
+    this.metadata.setFormat('lossless', true);
+    this.metadata.setFormat('numberOfChannels', streamInfo.channels);
+    this.metadata.setFormat('bitsPerSample', streamInfo.bitsPerSample);
+    this.metadata.setFormat('sampleRate', streamInfo.sampleRate);
+    this.metadata.setFormat('duration', streamInfo.totalSamples / streamInfo.sampleRate);
   }
 
   /**
    * Parse VORBIS_COMMENT
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
-  private parseComment(dataLen: number): Promise<void> {
-    return this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen)).then(data => {
-      const decoder = new DataDecoder(data);
-      decoder.readStringUtf8(); // vendor (skip)
-      const commentListLength = decoder.readInt32();
-      for (let i = 0; i < commentListLength; i++) {
-        const comment = decoder.readStringUtf8();
-        const split = comment.split('=');
-        this.addTag(split[0].toUpperCase(), split.splice(1).join('='));
-      }
-    });
+  private async parseComment(dataLen: number): Promise<void> {
+    const data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen));
+    const decoder = new DataDecoder(data);
+    decoder.readStringUtf8(); // vendor (skip)
+    const commentListLength = decoder.readInt32();
+    for (let i = 0; i < commentListLength; i++) {
+      const comment = decoder.readStringUtf8();
+      const split = comment.split('=');
+      this.addTag(split[0].toUpperCase(), split.splice(1).join('='));
+    }
   }
 
-  private parsePicture(dataLen: number) {
+  private async parsePicture(dataLen: number) {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     } else {
-      return this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen)).then(picture => {
-        this.addTag('METADATA_BLOCK_PICTURE', picture);
-      });
+      const picture = await this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen));
+      this.addTag('METADATA_BLOCK_PICTURE', picture);
     }
   }
 }

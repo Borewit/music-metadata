@@ -20,51 +20,42 @@ export class Atom {
     this.dataLen = this.header.length - (extended ? 16 : 8);
   }
 
-  public readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
+  public async readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
 
-    return this.readAtom(tokenizer, dataHandler).then(atomBean => {
-      this.children.push(atomBean);
-      if (size === undefined) {
-        return this.readAtoms(tokenizer, dataHandler, size).catch(err => {
-          if (err.message === endOfFile) {
-            debug(`Reached end-of-file`);
-          } else {
-            throw err;
-          }
-        });
-      }
-      size -= atomBean.header.length;
-      if (size > 0) {
-        return this.readAtoms(tokenizer, dataHandler, size);
-      }
-    });
+    const atomBean = await this.readAtom(tokenizer, dataHandler);
+    this.children.push(atomBean);
+    if (size === undefined) {
+      return this.readAtoms(tokenizer, dataHandler, size).catch(err => {
+        if (err.message === endOfFile) {
+          debug(`Reached end-of-file`);
+        } else {
+          throw err;
+        }
+      });
+    }
+    size -= atomBean.header.length;
+    if (size > 0) {
+      return this.readAtoms(tokenizer, dataHandler, size);
+    }
   }
 
-  private readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<Atom> {
+  private async readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<Atom> {
 
     // Parse atom header
     const offset = tokenizer.position;
     // debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
-    return tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header)
-      .then(header => {
-        const extended = header.length === 1;
-        if (extended) {
-          return tokenizer.readToken<number>(AtomToken.ExtendedSize).then(extendedSize => {
-            header.length = extendedSize;
-            return new Atom(header, true, this);
-          });
-        } else {
-          return Promise.resolve(new Atom(header, false, this));
-        }
-      }).then(atomBean => {
-        debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
-        return atomBean.readData(tokenizer, dataHandler).then(() => {
-          return atomBean;
-        });
-      });
+    const header = await tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header);
+    const extended = header.length === 1;
+    if (extended) {
+      header.length = await tokenizer.readToken<number>(AtomToken.ExtendedSize);
+    }
+    const atomBean = new Atom(header, extended, this);
+    debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
+    await atomBean.readData(tokenizer, dataHandler);
+    return atomBean;
   }
 
-  private readData(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<void> {
+  private async readData(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<void> {
     switch (this.header.name) {
       // "Container" atoms, contains nested atoms
       case "moov": // The Movie Atom: contains other atoms
@@ -79,10 +70,8 @@ export class Atom {
 
       case "meta": // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         // meta has 4 bytes of padding, ignore
-        return tokenizer.readToken<void>(new Token.IgnoreType(4))
-          .then(() => {
-            return this.readAtoms(tokenizer, dataHandler, this.dataLen - 4);
-          });
+        await tokenizer.readToken<void>(new Token.IgnoreType(4));
+        return this.readAtoms(tokenizer, dataHandler, this.dataLen - 4);
 
       case "mdhd": // Media header atom
       case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
