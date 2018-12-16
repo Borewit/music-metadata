@@ -11,6 +11,7 @@ export type IAudioMetadata = Type.IAudioMetadata;
 export type IOptions = Type.IOptions;
 export type ITag = Type.ITag;
 export type INativeTagDict = Type.INativeTagDict;
+export type ICommonTagsResult = Type.ICommonTagsResult;
 
 /**
  * Parse audio from Node Stream.Readable
