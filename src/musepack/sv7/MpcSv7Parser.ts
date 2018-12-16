@@ -16,42 +16,36 @@ export class MpcSv7Parser extends BasicParser {
   private audioLength: number = 0;
   private duration: number;
 
-  public parse(): Promise<void> {
+  public async parse(): Promise<void> {
 
-    return this.tokenizer.readToken(SV7.Header)
-      .then(header => {
-        assert.equal(header.signature, 'MP+', 'Magic number');
-        debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);
-        this.metadata.setFormat('dataformat', 'Musepack, SV7');
-        this.metadata.setFormat('sampleRate', header.sampleFrequency);
-        const numberOfSamples = 1152 * (header.frameCount - 1) + header.lastFrameLength;
-        this.metadata.setFormat('numberOfSamples', numberOfSamples);
-        this.duration = numberOfSamples / header.sampleFrequency;
-        this.metadata.setFormat('duration', this.duration);
-        this.bitreader = new BitReader(this.tokenizer);
-        this.metadata.setFormat('numberOfChannels', header.midSideStereo || header.intensityStereo ? 2 : 1);
-        return this.bitreader.read(8).then(version => {
-          this.metadata.setFormat('encoder', (version / 100).toFixed(2));
-          return this.skipAudioData(header.frameCount);
-        });
-      }).then(() => {
-        debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
-        return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
-      });
+    const header = await this.tokenizer.readToken(SV7.Header);
+
+    assert.equal(header.signature, 'MP+', 'Magic number');
+    debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);
+    this.metadata.setFormat('dataformat', 'Musepack, SV7');
+    this.metadata.setFormat('sampleRate', header.sampleFrequency);
+    const numberOfSamples = 1152 * (header.frameCount - 1) + header.lastFrameLength;
+    this.metadata.setFormat('numberOfSamples', numberOfSamples);
+    this.duration = numberOfSamples / header.sampleFrequency;
+    this.metadata.setFormat('duration', this.duration);
+    this.bitreader = new BitReader(this.tokenizer);
+    this.metadata.setFormat('numberOfChannels', header.midSideStereo || header.intensityStereo ? 2 : 1);
+    const version = await this.bitreader.read(8);
+    this.metadata.setFormat('encoder', (version / 100).toFixed(2));
+    await this.skipAudioData(header.frameCount);
+    debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
+    return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
   }
 
-  private skipAudioData(frameCount): Promise<void> {
-    if (frameCount > 0) {
-      return this.bitreader.read(20).then(frameLength => {
-        this.audioLength += 20 + frameLength;
-        return this.bitreader.ignore(frameLength);
-      }).then(() => this.skipAudioData(--frameCount));
-    } else {
-      // last frame
-      return this.bitreader.read(11).then(lastFrameLength => {
-        this.audioLength += lastFrameLength;
-        this.metadata.setFormat('bitrate', this.audioLength / this.duration);
-      });
+  private async skipAudioData(frameCount): Promise<void> {
+    while (frameCount-- > 0) {
+      const frameLength = await this.bitreader.read(20);
+      this.audioLength += 20 + frameLength;
+      await this.bitreader.ignore(frameLength);
     }
+    // last frame
+    const lastFrameLength = await this.bitreader.read(11);
+    this.audioLength += lastFrameLength;
+    this.metadata.setFormat('bitrate', this.audioLength / this.duration);
   }
 }

@@ -1,9 +1,9 @@
 import * as Token from 'token-types';
 
-import {INativeAudioMetadata} from '../type';
-import {APEv2Parser} from '../apev2/APEv2Parser';
-import {FourCcToken} from '../common/FourCC';
-import {BasicParser} from '../common/BasicParser';
+import { INativeAudioMetadata } from '../type';
+import { APEv2Parser } from '../apev2/APEv2Parser';
+import { FourCcToken } from '../common/FourCC';
+import { BasicParser } from '../common/BasicParser';
 
 /**
  * WavPack Block Header
@@ -149,80 +149,73 @@ class WavPack {
  */
 export class WavPackParser extends BasicParser {
 
-  public parse(): Promise<void> {
+  public async parse(): Promise<void> {
 
     // First parse all WavPack blocks
-    return this.parseWavPackBlocks()
-      .then(() => {
-        // try to parse APEv2 header
-        return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
-      });
+    await this.parseWavPackBlocks();
+    // try to parse APEv2 header
+    return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
   }
 
-  public parseWavPackBlocks(): Promise<INativeAudioMetadata> {
+  public async parseWavPackBlocks(): Promise<void> {
 
-    return this.tokenizer.peekToken<string>(FourCcToken).then(blockId => {
-      if (blockId === 'wvpk') {
-        return this.tokenizer.readToken(WavPack.BlockHeaderToken)
-          .then(header => {
-            if (header.BlockID !== 'wvpk') {
-              throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
-            }
+    do {
+      const blockId = await this.tokenizer.peekToken<string>(FourCcToken);
+      if (blockId !== 'wvpk')
+        break;
 
-            if (header.blockIndex === 0 && !this.metadata.format.dataformat) {
-              this.metadata.setFormat('dataformat', 'WavPack');
-              this.metadata.setFormat('lossless', !header.flags.isHybrid);
-                // tagTypes: this.type,
-              this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);
-              this.metadata.setFormat('sampleRate', header.flags.samplingRate);
-              this.metadata.setFormat('numberOfChannels', header.flags.isMono ? 1 : 2);
-              this.metadata.setFormat('duration', header.totalSamples / header.flags.samplingRate);
-            }
-
-            const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
-
-            if (header.blockIndex === 0 && header.blockSamples === 0) {
-              // Meta-data block
-              // console.log("End of WavPack");
-              return this.parseMetadataSubBlock(ignoreBytes);
-            } else {
-              // console.log('Ignore: %s bytes', ignoreBytes);
-              return this.tokenizer.ignore(ignoreBytes);
-            }
-          }).then(() => {
-            return this.parseWavPackBlocks();
-          });
+      const header = await this.tokenizer.readToken(WavPack.BlockHeaderToken);
+      if (header.BlockID !== 'wvpk') {
+        throw new Error('Expected wvpk on beginning of file'); // ToDo: strip/parse JUNK
       }
-    });
+
+      if (header.blockIndex === 0 && !this.metadata.format.dataformat) {
+        this.metadata.setFormat('dataformat', 'WavPack');
+        this.metadata.setFormat('lossless', !header.flags.isHybrid);
+        // tagTypes: this.type,
+        this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);
+        this.metadata.setFormat('sampleRate', header.flags.samplingRate);
+        this.metadata.setFormat('numberOfChannels', header.flags.isMono ? 1 : 2);
+        this.metadata.setFormat('duration', header.totalSamples / header.flags.samplingRate);
+      }
+
+      const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
+
+      if (header.blockIndex === 0 && header.blockSamples === 0) {
+        // Meta-data block
+        // console.log("End of WavPack");
+        await this.parseMetadataSubBlock(ignoreBytes);
+      } else {
+        // console.log('Ignore: %s bytes', ignoreBytes);
+        await this.tokenizer.ignore(ignoreBytes);
+      }
+    }
+    while (true);
   }
 
-  private parseMetadataSubBlock(remainingLength: number): Promise<void> {
-    return this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken).then(id => {
-      return this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8).then(dataSizeInWords => {
-        const metadataSize = 1 + dataSizeInWords * 2 + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
-        if (metadataSize > remainingLength)
-          throw new Error('Metadata exceeding block size');
-        const data = Buffer.alloc(dataSizeInWords * 2);
-        return this.tokenizer.readBuffer(data, 0, data.length).then(() => {
-          switch (id.functionId) {
-            case 0x0: // ID_DUMMY could be used to pad WavPack blocks
-              break;
+  private async parseMetadataSubBlock(remainingLength: number): Promise<void> {
+    do {
+      const id = await this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken);
+      const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
+      const metadataSize = 1 + dataSizeInWords * 2 + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
+      if (metadataSize > remainingLength)
+        throw new Error('Metadata exceeding block size');
+      const data = Buffer.alloc(dataSizeInWords * 2);
+      await this.tokenizer.readBuffer(data, 0, data.length);
+      switch (id.functionId) {
+        case 0x0: // ID_DUMMY could be used to pad WavPack blocks
+          break;
 
-            case 0x26: // ID_MD5_CHECKSUM
-              this.metadata.setFormat('audioMD5', data);
-              break;
+        case 0x26: // ID_MD5_CHECKSUM
+          this.metadata.setFormat('audioMD5', data);
+          break;
 
-            case 0x2F: // ID_BLOCK_CHECKSUM
-              break;
-          }
+        case 0x2F: // ID_BLOCK_CHECKSUM
+          break;
+      }
 
-          remainingLength -= metadataSize;
-          if (remainingLength > 1) {
-            return this.parseMetadataSubBlock(remainingLength); // recursion, parse next metadata sub-block
-          }
-        });
-      });
-    });
+      remainingLength -= metadataSize;
+    } while (remainingLength > 1);
   }
 
 }

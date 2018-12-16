@@ -13,13 +13,10 @@ export class BitReader {
    *
    * @param bits 1..30 bits
    */
-  public read(bits: number): Promise<number> {
+  public async read(bits: number): Promise<number> {
 
-    if (this.dword === undefined) {
-      return this.tokenizer.readToken(Token.UINT32_LE).then(dword => {
-        this.dword = dword;
-        return this.read(bits);
-      });
+    while (this.dword === undefined) {
+      this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
     }
 
     let out = this.dword;
@@ -27,26 +24,24 @@ export class BitReader {
 
     if (this.pos < 32) {
       out >>>= (32 - this.pos);
-      return Promise.resolve(out & ((1 << bits) - 1));
+      return out & ((1 << bits) - 1);
     } else {
       this.pos -= 32;
       if (this.pos === 0) {
         this.dword = undefined;
-        return Promise.resolve(out & ((1 << bits) - 1));
+        return out & ((1 << bits) - 1);
       } else {
-        return this.tokenizer.readToken(Token.UINT32_LE).then(dword => {
-          this.dword = dword;
-          if (this.pos) {
-            out <<= this.pos;
-            out |= this.dword >>> (32 - this.pos);
-          }
-          return out & ((1 << bits) - 1);
-        });
+        this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
+        if (this.pos) {
+          out <<= this.pos;
+          out |= this.dword >>> (32 - this.pos);
+        }
+        return out & ((1 << bits) - 1);
       }
     }
   }
 
-  public ignore(bits: number): Promise<number> {
+  public async ignore(bits: number): Promise<number> {
 
     if (this.pos > 0) {
       const remaining =  32 - this.pos;
@@ -57,9 +52,8 @@ export class BitReader {
 
     const remainder = bits % 32;
     const numOfWords = (bits - remainder) / 32;
-    return this.tokenizer.ignore(numOfWords * 4).then(() => {
-      return this.read(remainder);
-    });
+    await this.tokenizer.ignore(numOfWords * 4);
+    return this.read(remainder);
   }
 
 }

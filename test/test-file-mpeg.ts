@@ -91,8 +91,8 @@ describe("Parse MPEG", () => {
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.tagTypes");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
-        t.strictEqual(format.numberOfSamples, 9099648, "format.numberOfSamples"); // FooBar says 3:26.329 seconds (9.099.119 samples)
-        t.strictEqual(format.duration, 206.3412244897959, "format.duration"); // FooBar says 3:26.329 seconds (9.099.119 samples)
+        t.strictEqual(format.numberOfSamples, 9098496, "format.numberOfSamples"); // FooBar says 3:26.329 seconds (9.099.119 samples)
+        t.approximately(format.duration, 206.3, 1 / 10, "format.duration"); // FooBar says 3:26.329 seconds (9.099.119 samples)
         t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
 
@@ -158,7 +158,7 @@ describe("Parse MPEG", () => {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
-        t.strictEqual(format.duration, 200.9861224489796, "format.duration"); // FooBar says 3:26.329 seconds
+        t.approximately(format.duration, 200.9, 1 / 10, "format.duration"); // FooBar says 3:26.329 seconds
         t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
         // t.strictEqual(format.encoder, 'LAME3.98r', 'format.encoder'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407
@@ -330,8 +330,9 @@ describe("Parse MPEG", () => {
 
       const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
 
-      Parsers.forEach(parser => {
-        it(parser.description, () => {
+      Parsers
+        .forEach(parser => {
+          it(parser.description, () => {
           return parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
             assert.strictEqual(metadata.format.duration, 0.4963265306122449);
           });
@@ -349,7 +350,7 @@ describe("Parse MPEG", () => {
 
       return mm.parseStream(stream, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
         stream.close();
-        assert.approximately(metadata.format.duration, 34.64, 1 / 100);
+        assert.approximately(metadata.format.duration, 34.69, 1 / 100);
       });
 
     });

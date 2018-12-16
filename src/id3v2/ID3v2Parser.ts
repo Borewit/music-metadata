@@ -148,69 +148,65 @@ export class ID3v2Parser {
   private headerType: TagType;
   private options: IOptions;
 
-  public parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+  public async parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
 
     this.tokenizer = tokenizer;
     this.metadata = metadata;
     this.options = options;
 
-    return this.tokenizer.readToken(ID3v2Token.Header).then(id3Header => {
+    const id3Header = await this.tokenizer.readToken(ID3v2Token.Header);
 
-      if (id3Header.fileIdentifier !== 'ID3') {
-        throw new Error("expected ID3-header file-identifier 'ID3' was not found");
-      }
+    if (id3Header.fileIdentifier !== 'ID3') {
+      throw new Error("expected ID3-header file-identifier 'ID3' was not found");
+    }
 
-      this.id3Header = id3Header;
+    this.id3Header = id3Header;
 
-      this.headerType = ('ID3v2.' + id3Header.version.major) as TagType;
+    this.headerType = ('ID3v2.' + id3Header.version.major) as TagType;
 
-      if (id3Header.flags.isExtendedHeader) {
-        return this.parseExtendedHeader();
-      } else {
-        return this.parseId3Data(id3Header.size);
-      }
-    });
+    if (id3Header.flags.isExtendedHeader) {
+      return this.parseExtendedHeader();
+    } else {
+      return this.parseId3Data(id3Header.size);
+    }
   }
 
-  public parseExtendedHeader(): Promise<void> {
-    return this.tokenizer.readToken(ID3v2Token.ExtendedHeader).then(extendedHeader => {
-      const dataRemaining = extendedHeader.size - ID3v2Token.ExtendedHeader.len;
-      if (dataRemaining > 0) {
-        return this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);
-      } else {
-        return this.parseId3Data(this.id3Header.size - extendedHeader.size);
-      }
-    });
+  public async parseExtendedHeader(): Promise<void> {
+    const extendedHeader = await this.tokenizer.readToken(ID3v2Token.ExtendedHeader);
+    const dataRemaining = extendedHeader.size - ID3v2Token.ExtendedHeader.len;
+    if (dataRemaining > 0) {
+      return this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);
+    } else {
+      return this.parseId3Data(this.id3Header.size - extendedHeader.size);
+    }
   }
 
-  public parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
+  public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
     const buffer = Buffer.alloc(dataRemaining);
-    return this.tokenizer.readBuffer(buffer, 0, dataRemaining).then(() => {
-      return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
-    });
+    await this.tokenizer.readBuffer(buffer, 0, dataRemaining);
+    return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
   }
 
-  public parseId3Data(dataLen: number): Promise<void> {
+  public async parseId3Data(dataLen: number): Promise<void> {
     const buffer = Buffer.alloc(dataLen);
-    return this.tokenizer.readBuffer(buffer, 0, dataLen).then(() => {
-      for (const tag of this.parseMetadata(buffer)) {
-        if (tag.id === 'TXXX') {
-          for (const text of tag.value.text) {
-            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text);
-          }
-        } else if (tag.id === 'COM') {
-          for (const value of tag.value) {
-            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text);
-          }
-        } else if (Array.isArray(tag.value)) {
-          for (const value of tag.value) {
-            this.addTag(tag.id, value);
-          }
-        } else {
-          this.addTag(tag.id, tag.value);
+    await this.tokenizer.readBuffer(buffer, 0, dataLen);
+    for (const tag of this.parseMetadata(buffer)) {
+      if (tag.id === 'TXXX') {
+        for (const text of tag.value.text) {
+          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text);
         }
+      } else if (tag.id === 'COM') {
+        for (const value of tag.value) {
+          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text);
+        }
+      } else if (Array.isArray(tag.value)) {
+        for (const value of tag.value) {
+          this.addTag(tag.id, value);
+        }
+      } else {
+        this.addTag(tag.id, tag.value);
       }
-    });
+    }
   }
 
   private addTag(id: string, value: any) {

@@ -112,31 +112,30 @@ export class ID3v1Parser extends BasicParser {
     return undefined; // ToDO: generate warning
   }
 
-  public parse(): Promise<void> {
+  public async parse(): Promise<void> {
 
     if (!this.tokenizer.fileSize) {
       debug('Skip checking for ID3v1 because the file-size is unknown');
-      return Promise.resolve();
+      return;
     }
     const offset = this.tokenizer.fileSize - Iid3v1Token.len;
     if (this.tokenizer.position > offset) {
       debug('Already consumed the last 128 bytes');
-      return Promise.resolve();
+      return;
     }
-    return this.tokenizer.readToken<Iid3v1Header>(Iid3v1Token, this.tokenizer.fileSize - Iid3v1Token.len).then(header => {
-      if (header) {
-        debug("ID3v1 header found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
-        for (const id of ["title", "artist", "album", "comment", "track", "year"]) {
-          if (header[id] && header[id] !== "")
-            this.addTag(id, header[id]);
-        }
-        const genre = ID3v1Parser.getGenre(header.genre);
-        if (genre)
-          this.addTag('genre', genre);
-      } else {
-        debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
+    const header = await this.tokenizer.readToken<Iid3v1Header>(Iid3v1Token, offset);
+    if (header) {
+      debug("ID3v1 header found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
+      for (const id of ["title", "artist", "album", "comment", "track", "year"]) {
+        if (header[id] && header[id] !== "")
+          this.addTag(id, header[id]);
       }
-    });
+      const genre = ID3v1Parser.getGenre(header.genre);
+      if (genre)
+        this.addTag('genre', genre);
+    } else {
+      debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
+    }
   }
 
   private addTag(id: string, value: any) {

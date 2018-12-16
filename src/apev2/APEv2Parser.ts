@@ -54,27 +54,22 @@ export class APEv2Parser extends BasicParser {
    * @param {IOptions} options
    * @returns {Promise<boolean>} True if tags have been found
    */
-  public static parseTagHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-    return tokenizer.peekToken<IFooter>(TagFooter).then(footer => {
-      if (footer.ID === preamble) {
-        return tokenizer.ignore(TagFooter.len).then(() => {
-          return tokenizer.readToken<Buffer>(TagField(footer)).then(tags => {
-            APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
-            return true;
-          });
-        });
-      } else {
-        debug(`APEv2 header not found at offset=${tokenizer.position}`);
-        if (tokenizer.fileSize) {
-          // Try to read the APEv2 header using just the footer-header
-          const remaining = tokenizer.fileSize - tokenizer.position; // ToDo: take ID3v1 into account
-          const buffer = Buffer.alloc(remaining);
-          return tokenizer.readBuffer(buffer).then(size => {
-            return APEv2Parser.parseTagFooter(metadata, buffer, !options.skipCovers);
-          });
-        }
+  public static async parseTagHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+    const footer = await tokenizer.peekToken<IFooter>(TagFooter);
+    if (footer.ID === preamble) {
+      await tokenizer.ignore(TagFooter.len);
+      const tags = await tokenizer.readToken<Buffer>(TagField(footer));
+      APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
+    } else {
+      debug(`APEv2 header not found at offset=${tokenizer.position}`);
+      if (tokenizer.fileSize) {
+        // Try to read the APEv2 header using just the footer-header
+        const remaining = tokenizer.fileSize - tokenizer.position; // ToDo: take ID3v1 into account
+        const buffer = Buffer.alloc(remaining);
+        await tokenizer.readBuffer(buffer);
+        return APEv2Parser.parseTagFooter(metadata, buffer, !options.skipCovers);
       }
-    });
+    }
   }
 
   private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
@@ -149,48 +144,39 @@ export class APEv2Parser extends BasicParser {
 
   private ape: IApeInfo = {};
 
-  public parse(): Promise<void> {
+  public async parse(): Promise<void> {
 
-    return this.tokenizer.readToken(DescriptorParser)
-      .then(descriptor => {
-        assert.equal(descriptor.ID, 'MAC ', 'descriptor.ID');
-        this.ape.descriptor = descriptor;
-        const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
-        if (lenExp > 0) {
-          return this.parseDescriptorExpansion(lenExp);
-        } else {
-          return this.parseHeader();
-        }
-      }).then(header => {
-        return this.tokenizer.readToken(new Token.IgnoreType(header.forwardBytes)).then(() => {
-          return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
-        });
-      });
+    const descriptor = await this.tokenizer.readToken(DescriptorParser);
 
+    assert.equal(descriptor.ID, 'MAC ', 'descriptor.ID');
+    this.ape.descriptor = descriptor;
+    const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
+    const header = await(lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
+
+    await this.tokenizer.readToken(new Token.IgnoreType(header.forwardBytes));
+    return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
   }
 
-  private parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
-    return this.tokenizer.readToken(new Token.IgnoreType(lenExp)).then(() => {
-      return this.parseHeader();
-    });
+  private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
+    await this.tokenizer.readToken(new Token.IgnoreType(lenExp));
+    return this.parseHeader();
   }
 
-  private parseHeader(): Promise<{ forwardBytes: number }> {
-    return this.tokenizer.readToken(Header).then(header => {
-      // ToDo before
-      this.metadata.setFormat('lossless', true);
-      this.metadata.setFormat('dataformat', 'Monkey\'s Audio');
+  private async parseHeader(): Promise<{ forwardBytes: number }> {
+    const header = await this.tokenizer.readToken(Header);
+    // ToDo before
+    this.metadata.setFormat('lossless', true);
+    this.metadata.setFormat('dataformat', 'Monkey\'s Audio');
 
-      this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
-      this.metadata.setFormat('sampleRate', header.sampleRate);
-      this.metadata.setFormat('numberOfChannels', header.channel);
-      this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
+    this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
+    this.metadata.setFormat('sampleRate', header.sampleRate);
+    this.metadata.setFormat('numberOfChannels', header.channel);
+    this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
 
-      return {
-        forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
-        this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
-      };
-    });
+    return {
+      forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
+      this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
+    };
   }
 
 }
