@@ -134,7 +134,7 @@ describe("Discogs mappings", () => {
         // t.deepEqual(format.numberOfSamples, 93624, "format.numberOfSamples");
         t.deepEqual(format.sampleRate, 44100, "format.sampleRate");
         t.deepEqual(format.duration, 2.1681632653061222, "format.duration");
-        t.approximately(format.bitrate, 144000, 1000, "format.bitrate");
+        t.approximately(format.bitrate, 156000, 1000, "format.bitrate");
         t.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
 
         // Expect basic common tags
