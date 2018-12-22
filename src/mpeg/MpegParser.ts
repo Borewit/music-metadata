@@ -387,8 +387,8 @@ export class MpegParser extends AbstractID3Parser {
         this.metadata.setFormat('codecProfile', 'CBR');
         if (this.tokenizer.fileSize)
           return true; // Calculate duration based on file size
-      } else if (!this.options.duration) {
-        return; // Done
+      } else if (this.metadata.format.duration || !this.options.duration) {
+        return true; // Done
       }
     }
 
