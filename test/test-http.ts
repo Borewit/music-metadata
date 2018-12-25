@@ -66,27 +66,27 @@ describe.skip('HTTP streaming', function() {
 
         [true, false].forEach(hasContentLength => {
 
-          it(`Should be able to parse M4A ${hasContentLength ? 'with' : 'without'} content-length specified`, () => {
+          it(`Should be able to parse M4A ${hasContentLength ? 'with' : 'without'} content-length specified`, async () => {
 
             const url = 'https://tunalib.s3.eu-central-1.amazonaws.com/plan.m4a';
 
-            return test.client.get(url).then(response => {
+            const response = await test.client.get(url);
 
-              const options: IOptions = {};
-              if (hasContentLength) {
-                options.fileSize = parseInt(response.headers['content-length'], 10); // Always pass this in production
-              }
+            const options: IOptions = {};
+            if (hasContentLength) {
+              options.fileSize = parseInt(response.headers['content-length'], 10); // Always pass this in production
+            }
 
-              return mm.parseStream(response.stream, response.headers['content-type'], options)
-                .then(tags => {
-                  if (response.stream.destroy) {
-                    response.stream.destroy(); // Node >= v8 only
-                  }
-                  assert.strictEqual(tags.common.title, 'We Made a Plan');
-                  assert.strictEqual(tags.common.artist, 'Adan Cruz');
-                  assert.strictEqual(tags.common.album, 'Quiérelo');
-                });
-            });
+            const tags = await mm.parseStream(response.stream, response.headers['content-type'], options);
+            if (response.stream.destroy) {
+              response.stream.destroy(); // Node >= v8 only
+            }
+            assert.strictEqual(tags.format.encoder, 'MP4A');
+            assert.strictEqual(tags.format.lossless, false);
+
+            assert.strictEqual(tags.common.title, 'We Made a Plan');
+            assert.strictEqual(tags.common.artist, 'Adan Cruz');
+            assert.strictEqual(tags.common.album, 'Quiérelo');
           });
 
         });

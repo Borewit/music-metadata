@@ -115,12 +115,11 @@ describe("MIME & extension mapping", () => {
         });
     });
 
-    function testFileType(sample: string, dataformat: string) {
+    async function testFileType(sample: string, dataformat: string) {
       const stream = fs.createReadStream(path.join(samplePath, sample));
-      return mm.parseStream(stream).then(metadata => {
-        stream.close();
-        assert.equal(metadata.format.dataformat, dataformat);
-      });
+      const metadata = await mm.parseStream(stream);
+      stream.close();
+      assert.equal(metadata.format.dataformat, dataformat);
     }
 
     it("should recognize MP2", () => {
@@ -137,11 +136,11 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize MPEG-4 / m4a", () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4');
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4/ALAC');
     });
 
     it("should recognize MPEG-4 / mp4", () => {
-      return testFileType(path.join('mp4', 'Mr. Pickles S02E07 My Dear Boy.mp4'), 'MPEG-4');
+      return testFileType(path.join('mp4', 'Mr. Pickles S02E07 My Dear Boy.mp4'), 'MPEG-4/CEA-608');
     });
 
     it("should recognize FLAC", () => {

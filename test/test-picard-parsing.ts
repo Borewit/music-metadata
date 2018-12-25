@@ -553,7 +553,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
-      // t.strictEqual(format.dataformat, 'm4a', 'ToDo: M4A/ALAC');
+      t.strictEqual(format.dataformat, 'MPEG-4/ALAC');
+      t.strictEqual(format.lossless, true, 'MPEG-4/ALAC is a lossless format');
       t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
