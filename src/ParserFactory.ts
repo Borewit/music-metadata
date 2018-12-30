@@ -133,7 +133,7 @@ export class ParserFactory {
       }
       return parser;
     }
-    const module = require('./' + moduleName + '/index');
+    const module = await import('./' + moduleName + '/index');
     return new module.default();
   }
 
