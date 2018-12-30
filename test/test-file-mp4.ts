@@ -14,6 +14,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
   describe("Parse MPEG-4 files (.m4a)", () => {
 
     function checkFormat(format) {
+      assert.deepEqual(format.lossless, false);
+      assert.deepEqual(format.dataformat, 'MPEG-4/MP4A');
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       t.strictEqual(format.duration, 2.2058956916099772, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -190,7 +192,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.tvSeason, 2);
             assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
 
-            assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
+            assert.deepEqual(metadata.format.dataformat, 'MPEG-4/CEA-608');
             assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
             assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
             assert.deepEqual(metadata.common.albumartist, 'Mr. Pickles');
@@ -212,7 +214,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
+          assert.deepEqual(metadata.format.dataformat, 'MPEG-4/MP4A');
         });
       });
     });
@@ -226,7 +228,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.deepEqual(metadata.format.dataformat, 'MPEG-4');
+          assert.deepEqual(metadata.format.dataformat, 'MPEG-4/MP4S');
           assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
           assert.deepEqual(metadata.common.albumartist, 'Angels and Airwaves');
           assert.deepEqual(metadata.common.artist, 'Angels and Airwaves');

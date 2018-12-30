@@ -10,6 +10,37 @@ import util from '../common/Util';
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
 
+interface IEncoder {
+  lossy: boolean;
+  format: string;
+}
+
+const encoderDict: { [dataFormatId: string]: IEncoder; } = {
+  alac: {
+    lossy: false,
+    format: 'ALAC'
+  },
+  mp4a: {
+    lossy: true,
+    format: 'MP4A'
+  },
+  mp4s: {
+    lossy: true,
+    format: 'MP4S'
+  },
+  // Closed Captioning Media, https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-SW87
+  c608: {
+    lossy: true,
+    format: 'CEA-608'
+  },
+  c708: {
+    lossy: true,
+    format: 'CEA-708'
+  }
+};
+
+const dataFormat = 'MPEG-4';
+
 /*
  * Parser for: MPEG-4 Audio / Part 3 (.m4a)& MPEG 4 Video (m4v, mp4) extension.
  * Support for Apple iTunes tags as found in a M4A/M4V files.
@@ -30,7 +61,7 @@ export class MP4Parser extends BasicParser {
 
   public async parse(): Promise<void> {
 
-    this.metadata.setFormat('dataformat', 'MPEG-4');
+    this.metadata.setFormat('dataformat', dataFormat);
 
     const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, false, null);
     return rootAtom.readAtoms(this.tokenizer, async atom => {
@@ -40,6 +71,11 @@ export class MP4Parser extends BasicParser {
           case 'ilst':
           case '<id>':
             return this.parseMetadataItemData(atom);
+          case 'stbl':  // The Sample Table Atom
+            switch (atom.header.name) {
+              case 'stsd': // sample descriptions
+                return this.parseAtom_stsd(atom.dataLen);
+            }
         }
       }
 
@@ -222,5 +258,21 @@ export class MP4Parser extends BasicParser {
       return types;
     }
     return [];
+  }
+
+  private async parseAtom_stsd(len: number): Promise<void> {
+    const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
+    const formatList = [dataFormat];
+    for (const dfEntry of  stsd.table) {
+      const encoderInfo = encoderDict[dfEntry.dataFormat];
+      if (encoderInfo) {
+        this.metadata.setFormat('lossless', !encoderInfo.lossy);
+        formatList.push(encoderInfo.format);
+      } else {
+        debug(`Warning: data-format '${dfEntry.dataFormat}' missing in MP4Parser.encoderDict`);
+        formatList.push(dfEntry.dataFormat);
+      }
+    }
+    this.metadata.setFormat('dataformat', formatList.join('/'));
   }
 }

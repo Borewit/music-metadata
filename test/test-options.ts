@@ -144,68 +144,62 @@ describe("Parser options", () => {
 
   describe("'skipCovers' in M4A (id4) format", () => {
 
-    it("should include cover-art if option.skipCovers is not defined", () => {
-      return mm.parseFile(file_m4a, {native: true}).then(result => {
-        const iTunes = mm.orderTags(result.native.iTunes);
-        // Native
-        t.isDefined(iTunes.covr, "iTunes.covr");
-        // Common
-        t.isDefined(result.common.picture, "result.common.picture");
-      });
+    it("should include cover-art if option.skipCovers is not defined", async () => {
+      const result = await mm.parseFile(file_m4a, {native: true});
+      const iTunes = mm.orderTags(result.native.iTunes);
+      // Native
+      t.isDefined(iTunes.covr, "iTunes.covr");
+      // Common
+      t.isDefined(result.common.picture, "result.common.picture");
     });
 
-    it("should not include cover-art if option.skipCovers=true", () => {
-      return mm.parseFile(file_m4a, {native: true, skipCovers: true}).then(result => {
-        const iTunes = mm.orderTags(result.native.iTunes);
-        // Native
-        t.isUndefined(iTunes.covr, "m4a.covr");
-        // Common
-        t.isUndefined(result.common.picture, "result.common.picture");
-      });
+    it("should not include cover-art if option.skipCovers=true", async () => {
+      const result = await mm.parseFile(file_m4a, {native: true, skipCovers: true});
+      const iTunes = mm.orderTags(result.native.iTunes);
+      // Native
+      t.isUndefined(iTunes.covr, "m4a.covr");
+      // Common
+      t.isUndefined(result.common.picture, "result.common.picture");
     });
 
-    it("should include cover-art if option.skipCovers=false", () => {
-      return mm.parseFile(file_m4a, {native: true, skipCovers: false}).then(result => {
-        const iTunes = mm.orderTags(result.native.iTunes);
-        // Native
-        t.isDefined(iTunes.aART, "m4a.covr");
-        // Common
-        t.isDefined(result.common.picture, "result.common.picture");
-      });
+    it("should include cover-art if option.skipCovers=false", async () => {
+      const result = await mm.parseFile(file_m4a, {native: true, skipCovers: false});
+      const iTunes = mm.orderTags(result.native.iTunes);
+      // Native
+      t.isDefined(iTunes.aART, "m4a.covr");
+      // Common
+      t.isDefined(result.common.picture, "result.common.picture");
     });
 
   }); // should skipCovers in M4A format
 
   describe("'skipCovers' in ogg format", () => {
 
-    it("should include cover-art if option.skipCovers is not defined", () => {
-      return mm.parseFile(file_ogg, {native: true}).then(result => {
-        const vorbis = mm.orderTags(result.native.vorbis);
-        // Native
-        t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-        // Common
-        t.isDefined(result.common.picture, "result.common.picture");
-      });
+    it("should include cover-art if option.skipCovers is not defined", async () => {
+      const result = await mm.parseFile(file_ogg, {native: true});
+      const vorbis = mm.orderTags(result.native.vorbis);
+      // Native
+      t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
+      // Common
+      t.isDefined(result.common.picture, "result.common.picture");
     });
 
-    it("should not include cover-art if option.skipCovers=true", () => {
-      return mm.parseFile(file_ogg, {native: true, skipCovers: true}).then(result => {
-        const vorbis = mm.orderTags(result.native.vorbis);
-        // Native
-        t.isUndefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-        // Common
-        t.isUndefined(result.common.picture, "result.common.picture");
-      });
+    it("should not include cover-art if option.skipCovers=true", async () => {
+      const result = await mm.parseFile(file_ogg, {native: true, skipCovers: true});
+      const vorbis = mm.orderTags(result.native.vorbis);
+      // Native
+      t.isUndefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
+      // Common
+      t.isUndefined(result.common.picture, "result.common.picture");
     });
 
-    it("should include cover-art if option.skipCovers=false", () => {
-      return mm.parseFile(file_ogg, {native: true, skipCovers: false}).then(result => {
-        const vorbis = mm.orderTags(result.native.vorbis);
-        // Native
-        t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
-        // Common
-        t.isDefined(result.common.picture, "result.common.picture");
-      });
+    it("should include cover-art if option.skipCovers=false", async () => {
+      const result = await mm.parseFile(file_ogg, {native: true, skipCovers: false});
+      const vorbis = mm.orderTags(result.native.vorbis);
+      // Native
+      t.isDefined(vorbis.METADATA_BLOCK_PICTURE, "vorbis.METADATA_BLOCK_PICTURE");
+      // Common
+      t.isDefined(result.common.picture, "result.common.picture");
     });
 
   }); // should skipCovers in M4A format

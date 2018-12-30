@@ -457,3 +457,89 @@ export class TrackHeaderAtom implements Token.IGetToken<ITrackHeaderAtom> {
     };
   }
 }
+
+/**
+ * Atom: Sample Description Atom ('stsd')
+ */
+interface IAtomStsdHeader {
+  version: number;
+  flags: number;
+  numberOfEntries: number;
+}
+
+/**
+ * Atom: Sample Description Atom ('stsd')
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
+ */
+const stsdHeader: Token.IGetToken<IAtomStsdHeader> = {
+  len: 8,
+
+  get: (buf: Buffer, off: number): IAtomStsdHeader => {
+    return {
+      version: Token.UINT8.get(buf, off + 0),
+      flags: Token.UINT24_BE.get(buf, off + 1),
+      numberOfEntries: Token.UINT32_BE.get(buf, off + 4)
+    };
+  }
+};
+
+/**
+ * Atom: Sample Description Atom ('stsd')
+ */
+export interface ISampleDiscriptionTable {
+  dataFormat: string;
+  dataReferenceIndex: number;
+}
+
+export interface IAtomStsd {
+  header: IAtomStsdHeader;
+  table: ISampleDiscriptionTable[];
+}
+
+/**
+ * Atom: Sample Description Atom ('stsd')
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
+ */
+class SampleDiscriptionTable implements Token.IGetToken<ISampleDiscriptionTable> {
+
+  public constructor(public len: number) {
+  }
+
+  public get(buf: Buffer, off: number): ISampleDiscriptionTable {
+
+    return {
+      dataFormat: FourCcToken.get(buf, off),
+      dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10)
+    };
+  }
+}
+
+/**
+ * Atom: Sample Description Atom ('stsd')
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
+ */
+export class StsdAtom implements Token.IGetToken<IAtomStsd> {
+
+  public constructor(public len: number) {
+  }
+
+  public get(buf: Buffer, off: number): IAtomStsd {
+
+    const header = stsdHeader.get(buf, off);
+    off += stsdHeader.len;
+
+    const table: ISampleDiscriptionTable[] = [];
+
+    for (let n = 0; n < header.numberOfEntries; ++n) {
+      const size = Token.UINT32_BE.get(buf, off); // Sample description size
+      off += Token.UINT32_BE.len;
+      table.push(new SampleDiscriptionTable(size).get(buf, off));
+      off += size;
+    }
+
+    return {
+      header,
+      table
+    };
+  }
+}
