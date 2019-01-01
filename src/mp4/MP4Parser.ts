@@ -91,6 +91,12 @@ export class MP4Parser extends BasicParser {
 
         case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
           return this.parseAtom_mvhd(atom);
+
+        case 'mdat': // media data atom:
+          if (this.tokenizer.fileSize && this.metadata.format.duration) {
+            this.metadata.setFormat('bitrate', 8 * atom.dataLen / this.metadata.format.duration);
+          }
+          break;
       }
 
       await this.tokenizer.readToken<Buffer>(new Token.IgnoreType(atom.dataLen));

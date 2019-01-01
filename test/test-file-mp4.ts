@@ -19,6 +19,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       t.strictEqual(format.duration, 2.2058956916099772, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+      assert.approximately(format.bitrate, 148000, 500, 'Calculate bit-rate');
     }
 
     function checkCommon(common) {
