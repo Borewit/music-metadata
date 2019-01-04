@@ -5,6 +5,16 @@ import * as MimeType from "media-typer";
 
 import * as _debug from "debug";
 import {INativeMetadataCollector, MetadataCollector} from "./common/MetadataCollector";
+import { AIFFParser } from './aiff/AiffParser';
+import { APEv2Parser } from './apev2/APEv2Parser';
+import { AsfParser } from './asf/AsfParser';
+import { FlacParser } from './flac/FlacParser';
+import { MP4Parser } from './mp4/MP4Parser';
+import { MpegParser } from './mpeg/MpegParser';
+import MusepackParser from './musepack';
+import { OggParser } from './ogg/OggParser';
+import { WaveParser } from './riff/WaveParser';
+import { WavPackParser } from './wavpack/WavPackParser';
 
 const debug = _debug("music-metadata:parser:factory");
 
@@ -125,16 +135,20 @@ export class ParserFactory {
   }
 
   public static async loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
-    debug(`Lazy loading parser: ${moduleName}`);
-    if (options.loadParser) {
-      const parser = await options.loadParser(moduleName);
-      if (!parser) {
-        throw new Error(`options.loadParser failed to resolve module "${moduleName}".`);
-      }
-      return parser;
+    switch (moduleName) {
+      case 'aiff': return new AIFFParser();
+      case 'apev2': return new APEv2Parser();
+      case 'asf': return new AsfParser();
+      case 'flac': return new FlacParser();
+      case 'mp4': return new MP4Parser();
+      case 'mpeg': return new MpegParser();
+      case 'musepack': return new MusepackParser();
+      case 'ogg': return new OggParser();
+      case 'riff': return new WaveParser();
+      case 'wavpack': return new WavPackParser();
+      default:
+        throw new Error(`Unknown parser type: ${moduleName}`);
     }
-    const module = await import('./' + moduleName + '/index');
-    return new module.default();
   }
 
   private static async _parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {

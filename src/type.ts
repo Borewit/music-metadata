@@ -395,13 +395,6 @@ export interface IOptions {
   skipPostHeaders?: boolean;
 
   /**
-   * Allow custom loading of modules
-   * @param {string} moduleName module name
-   * @return {Promise<ITokenParser>} parser
-   */
-  loadParser?: (moduleName: ParserType) => Promise<ITokenParser>;
-
-  /**
    * Set observer for async callbacks to common or format.
    */
   observer?: Observer;

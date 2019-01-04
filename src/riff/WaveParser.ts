@@ -25,7 +25,7 @@ const debug = initDebug('music-metadata:parser:RIFF');
  *
  *  ToDo: Split WAVE part from RIFF parser
  */
-export class WavePcmParser extends BasicParser {
+export class WaveParser extends BasicParser {
 
   private fact: WaveChunk.IFactChunk;
 
