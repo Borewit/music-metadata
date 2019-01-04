@@ -210,7 +210,6 @@ ratingToStars(rating: number): number
 ### Options
 *   `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
 *   `fileSize`: only provide this in combination with `parseStream` function.
-*   `loadParser: (moduleName: string) => Promise<ITokenParser>;`: default: lazy load using require, allows custom async lazy loading of parser modules. The resolved `ITokenParser` will not be cached.
 *   `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
 *   `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
 *   `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
