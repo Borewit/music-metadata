@@ -1,3 +1,3 @@
-import {WavePcmParser} from "./RiffParser";
+import { WaveParser } from './WaveParser';
 
-export default WavePcmParser;
+export default WaveParser;
