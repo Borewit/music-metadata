@@ -248,8 +248,13 @@ export class MP4Parser extends BasicParser {
   }
 
   private parse_mxhd(mxhd: AtomToken.IAtomMxhd) {
-    this.metadata.setFormat('sampleRate', mxhd.timeScale);
-    this.metadata.setFormat('duration', mxhd.duration / mxhd.timeScale); // calculate duration in seconds
+    if (mxhd.timeScale) {
+      this.metadata.setFormat('sampleRate', mxhd.timeScale);
+      if (!this.metadata.format.duration) {
+        const duration = (mxhd.duration / mxhd.timeScale);
+        this.metadata.setFormat('duration', duration); // calculate duration in seconds
+      }
+    }
   }
 
   private async parseAtom_ftyp(len: number): Promise<string[]> {
