@@ -255,6 +255,55 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
    });
 ```
 
+## Frequently Asked Questions
+
+### How can I traverse (a long) list of files?
+
+What is important that file parsing should be done synchronous, music-metadata however is asynchronous.
+There are multiple ways of achieving this:
+
+#### Using recursion
+
+```javascript
+const mm = require('music-metadata')
+
+function parseFiles(audioFiles) {
+  
+  const audioFile = audioFiles.shift();
+  
+  if (audioFile) {
+    return mm.parseFile(audioFile).then(metadata => {
+      // Do great things with the metadata
+      return parseFiles(audioFiles); // process rest of the files AFTER we are finished
+    })
+  }
+  
+  return Promise.resolve();
+}
+
+```
+
+#### Use async/await
+
+Use [async/await](https://javascript.info/async-await)
+
+```javascript
+const mm = require('music-metadata')
+
+async function parseFiles(audioFiles) {
+
+    for (const audioFile of audioFiles) {
+    
+        const metadata = await mm.parseFile(audioFile);
+        // Do great things with the metadata
+    }
+}
+```
+
+#### Use a specialized module to traverse files
+
+There are specialized modules to traversing (walking) files and directory.
+
 ## Licence
 
 (The MIT License)
