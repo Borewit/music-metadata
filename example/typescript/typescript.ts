@@ -1,5 +1,4 @@
-//import * as mm from 'music-metadata';
-import * as mm from '../lib';
+import * as mm from '../../src';
 import * as util from 'util';
 
 mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
