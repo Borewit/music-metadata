@@ -257,52 +257,56 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
 
 ## Frequently Asked Questions
 
-### How can I traverse (a long) list of files?
+1.  How can I traverse (a long) list of files?
 
-What is important that file parsing should be done synchronous, music-metadata however is asynchronous.
-There are multiple ways of achieving this:
+    What is important that file parsing should be done.
+    In a plain loop, due to the asynchronous character (like most JavaScript functions), it would cause all the files to run in parallel which is will cause your application to hang in no time.
+    There are multiple ways of achieving this:
 
-#### Using recursion
+    1.  Using recursion
 
-```javascript
-const mm = require('music-metadata')
+        ```javascript
+        const mm = require('music-metadata')z
+        
+        function parseFiles(audioFiles) {
+          
+          const audioFile = audioFiles.shift();
+          
+          if (audioFile) {
+            return mm.parseFile(audioFile).then(metadata => {
+              // Do great things with the metadata
+              return parseFiles(audioFiles); // process rest of the files AFTER we are finished
+            })
+          }
+          
+          return Promise.resolve();
+        }
+        
+        ```
 
-function parseFiles(audioFiles) {
-  
-  const audioFile = audioFiles.shift();
-  
-  if (audioFile) {
-    return mm.parseFile(audioFile).then(metadata => {
-      // Do great things with the metadata
-      return parseFiles(audioFiles); // process rest of the files AFTER we are finished
-    })
-  }
-  
-  return Promise.resolve();
-}
+    2.  Use async/await
+        
+        Use [async/await](https://javascript.info/async-await)
+        
+        ```javascript
+        const mm = require('music-metadata')
+        
+        // it is required to declare the function 'async' to allow the use of await
+        async function parseFiles(audioFiles) {
+        
+            for (const audioFile of audioFiles) {
+            
+                // await will ensure the metadata parsing is completed before we move on to the next file
+                const metadata = await mm.parseFile(audioFile);
+                // Do great things with the metadata
+            }
+        }
+        ```
 
-```
+    3.  Use a specialized module to traverse files
 
-#### Use async/await
-
-Use [async/await](https://javascript.info/async-await)
-
-```javascript
-const mm = require('music-metadata')
-
-async function parseFiles(audioFiles) {
-
-    for (const audioFile of audioFiles) {
-    
-        const metadata = await mm.parseFile(audioFile);
-        // Do great things with the metadata
-    }
-}
-```
-
-#### Use a specialized module to traverse files
-
-There are specialized modules to traversing (walking) files and directory.
+        There are specialized modules to traversing (walking) files and directory,
+        like [walk](https://www.npmjs.com/package/walk).
 
 ## Licence
 
