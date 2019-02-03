@@ -49,7 +49,7 @@
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
     "compile": "npm run compile-src && npm run compile-test && npm run compile-doc",
-    "lint-ts": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
+    "lint-ts": "tslint 'src/**/*.ts' 'example/typescript/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
     "lint-md": "remark -u preset-lint-recommended .",
     "lint": "npm run lint-md && npm run lint-ts",
     "test": "mocha --require ts-node/register --full-trace test",
