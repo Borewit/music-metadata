@@ -384,9 +384,12 @@ export class MpegParser extends AbstractID3Parser {
         this.samplesPerFrame = samples_per_frame;
         this.metadata.setFormat('codecProfile', 'CBR');
         if (this.tokenizer.fileSize)
-          return true; // Calculate duration based on file size
-      } else if (this.metadata.format.duration || !this.options.duration) {
-        return true; // Done
+          return true; // Will calculate duration based on the file size
+      } else if (this.metadata.format.duration) {
+        return true; // We already got the duration, stop processing MPEG stream any further
+      }
+      if (!this.options.duration) {
+        return true; // Enforce duration not enabled, stop processing entire stream
       }
     }
 

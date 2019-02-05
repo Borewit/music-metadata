@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
-import {IFormat} from '../src/type';
+import {Parsers} from './metadata-parsers';
 
 const t = assert;
 
@@ -46,11 +46,11 @@ describe("Parse MP3 files", () => {
     });
   });
 
-  describe("should handle incomplete MP3 file", () => {
+  describe('should handle incomplete MP3 file', () => {
 
     const filePath = path.join(samplePath, "incomplete.mp3");
 
-    function checkFormat(format: IFormat) {
+    function checkFormat(format: mm.IFormat) {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
       t.approximately(format.duration, 61.73, 1 / 100, 'format.duration');
       t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
@@ -69,6 +69,40 @@ describe("Parse MP3 files", () => {
         checkFormat(metadata.format);
       });
     });
+  });
+
+  describe('Duration flag behaviour', () => {
+
+    describe("MP3/CBR without Xing header", () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'Sleep Away.mp3');
+
+      describe("duration=false", () => {
+
+        Parsers
+          .forEach(parser => {
+            it(parser.description, () => {
+              return parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
+                assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
+              });
+            });
+          });
+      });
+
+      describe("duration=true", () => {
+
+        Parsers
+          .forEach(parser => {
+            it(parser.description, () => {
+              return parser.initParser(filePath, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
+                assert.approximately(metadata.format.duration, 200.5,  1 / 10, 'Expect a duration');
+              });
+            });
+          });
+      });
+
+    });
+
   });
 
 });

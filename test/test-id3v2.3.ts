@@ -1,11 +1,9 @@
 import {assert} from 'chai';
-import * as mm from '../src';
 import * as path from 'path';
 import {ID3v2Parser} from "../src/id3v2/ID3v2Parser";
 import * as strtok from "strtok3";
 import {MetadataCollector} from "../src/common/MetadataCollector";
-import {ICommonTagsResult, INativeTagDict} from '../src/type';
-import {IFormat} from '../lib/type';
+import * as mm from '../src';
 
 const t = assert;
 
@@ -59,7 +57,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.strictEqual(common.picture[0].data.length, 80938, 'common.picture length');
     }
 
-    function checkID3v1(id3v11: INativeTagDict) {
+    function checkID3v1(id3v11: mm.INativeTagDict) {
 
       t.deepEqual(id3v11.title, ['Home'], 'id3v11.title');
       t.deepEqual(id3v11.album, ['Friday Night Lights [Original'], 'id3v11.album');
@@ -69,7 +67,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.deepEqual(id3v11.year, ['2004'], 'id3v11.year');
     }
 
-    function checkID3v23(id3v23: INativeTagDict) {
+    function checkID3v23(id3v23: mm.INativeTagDict) {
 
       t.deepEqual(id3v23.TALB, ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB');
       t.deepEqual(id3v23.TPE1, ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1');
@@ -107,7 +105,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
        */
       const filePath = path.join(samplePath, '04-Strawberry.mp3');
 
-      function checkFormat(format: IFormat) {
+      function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.duration, 247.84979591836733, 'format.duration');
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
         t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
@@ -117,7 +115,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
       }
 
-      function checkCommon(common: ICommonTagsResult) {
+      function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, 'Strawberry', 'common.title');
         t.strictEqual(common.artist, 'Union Youth', "common.artist");
         t.strictEqual(common.album, "The Royal Gene", "common.album");

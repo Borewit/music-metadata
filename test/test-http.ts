@@ -4,7 +4,7 @@ import * as Stream from 'stream';
 import * as http from 'http';
 import * as https from 'https';
 
-import * as mm from '../lib';
+import * as mm from '../src';
 import { IOptions } from '../src/type';
 
 interface IHttpResponse {
