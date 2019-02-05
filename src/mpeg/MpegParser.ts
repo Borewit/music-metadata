@@ -345,8 +345,6 @@ export class MpegParser extends AbstractID3Parser {
     }
     await this.tokenizer.ignore(3);
 
-    const format = this.metadata.format;
-    // format.dataformat = "MPEG-" + header.version + " Audio Layer " + Util.romanize(header.layer);
     this.metadata.setFormat('dataformat', 'mp' + header.layer);
     this.metadata.setFormat('lossless', false);
     this.metadata.setFormat('bitrate', header.bitrate);

@@ -103,7 +103,7 @@ yarn add music-metadata
 
 This is how you can import music-metadata in JavaScript, in you code:
 ```JavaScript
-var mm = require('music-metadata');
+const mm = require('music-metadata');
 ```
 
 This is how it's done in TypeScript:
