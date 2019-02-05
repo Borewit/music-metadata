@@ -89,7 +89,9 @@ describe("Parse MP3 files", () => {
           });
       });
 
-      describe("duration=true", () => {
+      describe("duration=true", function() {
+
+        this.timeout(15000); // Parsing this file can take a bit longer
 
         Parsers
           .forEach(parser => {
