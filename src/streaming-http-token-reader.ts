@@ -72,9 +72,6 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
       this.position = position;
     }
 
-    if(length>2000)
-      throw new Error('to long!!!!!!!!!!!!!!!!!!!!!!!!');
-
     debug(`readBuffer position=${this.position} length=${length}`);
 
     if (length === 0) {
