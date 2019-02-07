@@ -3796,14 +3796,6 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
-strtok3@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-2.1.0.tgz#f1e3aab64c15dadd23b09fdf9788afd11031b85a"
-  dependencies:
-    debug "^4.0.1"
-    then-read-stream "^1.3.0"
-    token-types "^1.0.0"
-
 strtok3@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-2.3.0.tgz#1f0168ce82c5aa52bf6a567ef44e6c70a69cf514"
@@ -3843,10 +3835,6 @@ term-size@^1.2.0:
   resolved "https://registry.yarnpkg.com/term-size/-/term-size-1.2.0.tgz#458b83887f288fc56d6fffbfad262e26638efa69"
   dependencies:
     execa "^0.7.0"
-
-then-read-stream@^1.3.0:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/then-read-stream/-/then-read-stream-1.3.1.tgz#81f91fa31d8044bd9a6d49b84af4fb6b34b5cfc7"
 
 then-read-stream@^1.5.0:
   version "1.5.0"
@@ -3912,10 +3900,6 @@ to-regex@^3.0.1, to-regex@^3.0.2:
     extend-shallow "^3.0.2"
     regex-not "^1.0.2"
     safe-regex "^1.1.0"
-
-token-types@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.0.0.tgz#91f8180eb5464abb28af361ced3ac855a1e18fb2"
 
 token-types@^1.0.1:
   version "1.0.1"

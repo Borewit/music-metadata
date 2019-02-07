@@ -54,6 +54,6 @@
   },
   "dependencies": {
     "debug": "^4.1.0",
-    "strtok3": "^2.1.0"
+    "strtok3": "^2.3.0"
   }
 }
