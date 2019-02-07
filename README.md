@@ -2,7 +2,6 @@
 [![NPM version](https://badge.fury.io/js/streaming-http-token-reader.svg)](https://npmjs.org/package/streaming-http-token-reader)
 [![npm downloads](http://img.shields.io/npm/dm/streaming-http-token-reader.svg)](https://npmjs.org/package/streaming-http-token-reader)
 [![dependencies Status](https://david-dm.org/Borewit/streaming-http-token-reader/status.svg)](https://david-dm.org/Borewit/streaming-http-token-reader)
-[![Known Vulnerabilities](https://snyk.io/test/github/Borewit/music-metadata/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/music-metadata-browser?targetFile=package.json)
 [![Known Vulnerabilities](https://snyk.io/test/github/Borewit/streaming-http-token-reader/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/streaming-http-token-reader?targetFile=package.json)
 
 # streaming-http-token-reader
@@ -35,9 +34,9 @@ The server needs to send the following headers:
 
 | HTTP header-| Value |
 |-------------|-------|
-| [Access-Control-Allow-Origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)     | "*"
-| [Access-Control-Allow-Methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods)   | "GET,HEAD,OPTIONS" |
-| [Access-Control-Allow-Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers)   | "Content-Type, Range" |
+| [Access-Control-Allow-Origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)     | "*"                             |
+| [Access-Control-Allow-Methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods)   | "GET,HEAD,OPTIONS"              |
+| [Access-Control-Allow-Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers)   | "Content-Type, Range"           |
 | [Access-Control-Expose-Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers) | "Content-Length, Content-Range" |
 
 Example configuring Apache for streaming. Add the following to `.htaccess` in the folder sharing your audio tracks:
