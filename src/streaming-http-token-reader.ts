@@ -2,7 +2,7 @@ import * as initDebug from 'debug';
 import { AbstractTokenizer } from 'strtok3/lib/AbstractTokenizer';
 import { ChunkedFileData } from './chunked-file-data';
 
-const debug = initDebug('xhr');
+const debug = initDebug('streaming-http-token-reader');
 
 export interface IStreamingHttpConfig {
   timeoutInSec?: number;
@@ -71,6 +71,9 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
     if (position) {
       this.position = position;
     }
+
+    if(length>2000)
+      throw new Error('to long!!!!!!!!!!!!!!!!!!!!!!!!');
 
     debug(`readBuffer position=${this.position} length=${length}`);
 
