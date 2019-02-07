@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import {Windows1292Decoder} from './Windows1292Decoder';
+import {IRatio} from "../type";
 
 export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' | 'utf16le';
 
@@ -140,4 +141,43 @@ export default class Util {
     return arr.join(' ');
   }
 
+}
+
+/**
+ * Convert power ratio to DB
+ * ratio: [0..1]
+ */
+export function ratioToDb(ratio: number): number {
+  return 10 * Math.log10(ratio);
+}
+
+/**
+ * Convert dB to ratio
+ * db Decibels
+ */
+export function dbToRatio(dB: number): number {
+  return Math.pow(10, dB / 10);
+}
+
+/**
+ * Convert replay gain to ratio and Decibel
+ * @param value string holding a ratio like '0.034' or '-7.54 dB'
+ */
+export function toRatio(value: string): IRatio {
+  const ps = value.split(' ').map(p => p.trim().toLowerCase());
+  // @ts-ignore
+  if (ps.length >= 1) {
+    const v = parseFloat(ps[0]);
+    if (ps.length === 2 && ps[1] === 'db') {
+      return {
+        dB: v,
+        ratio: dbToRatio(v)
+      };
+    } else {
+      return {
+        dB: ratioToDb(v),
+        ratio: v
+      };
+    }
+  }
 }

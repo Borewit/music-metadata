@@ -10,6 +10,7 @@ import * as _debug from "debug";
 import {GenericTagId, IGenericTag, TagType, isSingleton, isUnique} from "./GenericTagTypes";
 import {CombinedTagMapper} from "./CombinedTagMapper";
 import {CommonTagMapper} from "./GenericTagMapper";
+import {toRatio} from "./Util";
 
 const debug = _debug("music-metadata:collector");
 
@@ -196,8 +197,9 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
         break;
 
+      case 'replaygain_track_gain':
       case 'replaygain_track_peak':
-        tag.value = typeof tag.value === 'string' ? parseFloat(tag.value) : tag.value;
+        tag.value = toRatio(tag.value);
         break;
 
       case 'gapless': // iTunes gap-less flag
