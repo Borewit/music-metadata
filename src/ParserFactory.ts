@@ -15,6 +15,7 @@ import MusepackParser from './musepack';
 import { OggParser } from './ogg/OggParser';
 import { WaveParser } from './riff/WaveParser';
 import { WavPackParser } from './wavpack/WavPackParser';
+import {DsfParser} from "./dsf/DsfParser";
 
 const debug = _debug("music-metadata:parser:factory");
 
@@ -131,6 +132,9 @@ export class ParserFactory {
 
       case ".mpc":
         return 'musepack';
+
+      case '.dsf':
+        return 'dsf';
     }
   }
 
@@ -139,6 +143,7 @@ export class ParserFactory {
       case 'aiff': return new AIFFParser();
       case 'apev2': return new APEv2Parser();
       case 'asf': return new AsfParser();
+      case 'dsf': return new DsfParser();
       case 'flac': return new FlacParser();
       case 'mp4': return new MP4Parser();
       case 'mpeg': return new MpegParser();
