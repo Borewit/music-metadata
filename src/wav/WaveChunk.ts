@@ -55,8 +55,8 @@ export class Format implements Token.IGetToken<IWaveFormat> {
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    assert.ok(header.size >= 16, "16 for PCM.");
-    this.len = header.size;
+    assert.ok(header.chunkSize >= 16, "16 for PCM.");
+    this.len = header.chunkSize;
   }
 
   public get(buf: Buffer, off: number): IWaveFormat {
@@ -85,8 +85,8 @@ export class FactChunk implements Token.IGetToken<IFactChunk> {
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    assert.ok(header.size >= 4, "minimum fact chunk size.");
-    this.len = header.size;
+    assert.ok(header.chunkSize >= 4, "minimum fact chunk size.");
+    this.len = header.chunkSize;
   }
 
   public get(buf: Buffer, off: number): IFactChunk {

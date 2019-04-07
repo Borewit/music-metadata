@@ -1,34 +1,7 @@
 import * as Token from "token-types";
 import * as assert from "assert";
 import {FourCcToken} from "../common/FourCC";
-
-export interface IChunkHeader {
-
-  /**
-   * 	A chunk ID (ie, 4 ASCII bytes)
-   */
-  chunkID: string,
-  /**
-   * Number of data bytes following this data header
-   */
-  size: number
-}
-
-/**
- * Common AIFF chunk header
- */
-export const Header: Token.IGetToken<IChunkHeader> = {
-  len: 8,
-
-  get: (buf, off): IChunkHeader => {
-    return {
-      // Group-ID
-      chunkID: FourCcToken.get(buf, off),
-      // Size
-      size: buf.readUInt32BE(off + 4)
-    };
-  }
-};
+import * as iff from '../iff';
 
 /**
  * The Common Chunk.
@@ -48,10 +21,10 @@ export class Common implements Token.IGetToken<ICommon> {
 
   public len: number;
 
-  public constructor(header: IChunkHeader, private isAifc: boolean) {
+  public constructor(header: iff.IChunkHeader, private isAifc: boolean) {
     const minimumChunkSize = isAifc ? 22 : 18;
-    assert.ok(header.size >= minimumChunkSize, `COMMON CHUNK size should always be at least ${minimumChunkSize}`);
-    this.len = header.size;
+    assert.ok(header.chunkSize >= minimumChunkSize, `COMMON CHUNK size should always be at least ${minimumChunkSize}`);
+    this.len = header.chunkSize;
   }
 
   public get(buf: Buffer, off: number): ICommon {
