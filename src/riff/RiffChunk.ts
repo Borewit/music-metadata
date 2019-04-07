@@ -1,17 +1,8 @@
 import * as Token from 'token-types';
 import {FourCcToken} from '../common/FourCC';
+import {IChunkHeader} from '../iff';
 
-export interface IChunkHeader {
-
-  /**
-   *  A chunk ID (ie, 4 ASCII bytes)
-   */
-  chunkID: string,
-  /**
-   * Number of data bytes following this data header
-   */
-  size: number
-}
+export {IChunkHeader} from '../iff';
 
 /**
  * Common RIFF chunk header
@@ -24,7 +15,7 @@ export const Header: Token.IGetToken<IChunkHeader> = {
       // Group-ID
       chunkID: FourCcToken.get(buf, off),
       // Size
-      size: buf.readUInt32LE(off + 4)
+      chunkSize: buf.readUInt32LE(off + 4)
     };
   }
 };
@@ -37,11 +28,11 @@ export class ListInfoTagValue implements Token.IGetToken<string> {
   public len: number;
 
   public constructor(private tagHeader: IChunkHeader) {
-    this.len = tagHeader.size;
+    this.len = tagHeader.chunkSize;
     this.len += this.len & 1; // if it is an odd length, round up to even
   }
 
   public get(buf, off): string {
-    return new Token.StringType(this.tagHeader.size, 'ascii').get(buf, off);
+    return new Token.StringType(this.tagHeader.chunkSize, 'ascii').get(buf, off);
   }
 }
