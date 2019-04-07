@@ -36,7 +36,9 @@
     "Opus",
     "speex",
     "musepack",
-    "mpc"
+    "mpc",
+    "dff",
+    "dsdiff"
   ],
   "main": "lib",
   "typings": "lib/index",
