@@ -38,7 +38,9 @@
     "musepack",
     "mpc",
     "dsd",
-    "dsf"
+    "dsf",
+    "dff",
+    "dsdiff"
   ],
   "main": "lib",
   "typings": "lib/index",
