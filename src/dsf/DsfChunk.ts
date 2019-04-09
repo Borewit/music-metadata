@@ -120,7 +120,7 @@ export interface IFormatChunk {
  * Common chunk DSD header: the 'chunk name (Four-CC)' & chunk size
  */
 export const FormatChunk: Token.IGetToken<IFormatChunk> = {
-  len: 44,
+  len: 40,
 
   get: (buf: Buffer, off: number): IFormatChunk => {
     return {
