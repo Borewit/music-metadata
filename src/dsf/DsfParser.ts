@@ -20,6 +20,7 @@ export class DsfParser extends AbstractID3Parser {
     const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
     assert.strictEqual(chunkHeader.id, 'DSD ');
     this.metadata.setFormat('dataformat', 'DSF');
+    this.metadata.setFormat('lossless', true);
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);
     if (dsdChunk.metadataPointer === 0) {
       debug(`No ID3v2 tag present`);
@@ -43,6 +44,8 @@ export class DsfParser extends AbstractID3Parser {
         this.metadata.setFormat('bitsPerSample', formatChunk.bitsPerSample);
         this.metadata.setFormat('numberOfSamples', formatChunk.sampleCount);
         this.metadata.setFormat('duration', formatChunk.sampleCount / formatChunk.samplingFrequency);
+        const bitrate = formatChunk.bitsPerSample * formatChunk.samplingFrequency * formatChunk.channelNum;
+        this.metadata.setFormat('bitrate', bitrate);
         return;
       default:
         this.tokenizer.ignore(chunkHeader.size - ChunkHeader.len);
