@@ -135,6 +135,10 @@ export class DsdiffParser extends BasicParser {
       remainingSize -= ChunkHeader.len + sndPropHeader.chunkSize;
       debug(`Parsing sound-property-chunks, remainingSize=${remainingSize}`);
     }
+    if (this.metadata.format.lossless && this.metadata.format.sampleRate && this.metadata.format.numberOfChannels && this.metadata.format.bitsPerSample) {
+      const bitrate = this.metadata.format.sampleRate * this.metadata.format.numberOfChannels * this.metadata.format.bitsPerSample;
+      this.metadata.setFormat('bitrate', bitrate);
+    }
   }
 
   private async handleChannelChunks(remainingSize: number): Promise<string[]> {
