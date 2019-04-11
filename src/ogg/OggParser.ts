@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
 import * as initDebug from 'debug';
+import * as assert from 'assert';
 
 import common from '../common/Util';
 import * as Ogg from './Ogg';
@@ -40,10 +41,6 @@ export class SegmentTable implements Token.IGetToken<Ogg.ISegmentTable> {
  */
 export class OggParser extends BasicParser {
 
-  public static getInstance(): OggParser {
-    return new OggParser();
-  }
-
   private static Header: Token.IGetToken<Ogg.IPageHeader> = {
     len: 27,
 
@@ -82,9 +79,7 @@ export class OggParser extends BasicParser {
       do {
         header = await this.tokenizer.readToken<Ogg.IPageHeader>(OggParser.Header);
 
-        if (header.capturePattern !== 'OggS') { // Capture pattern
-          throw new Error('expected ogg header but was not found');
-        }
+        assert.strictEqual(header.capturePattern, 'OggS', 'Ogg capture pattern');
         this.header = header;
 
         this.pageNumber = header.pageSequenceNo;
@@ -112,8 +107,8 @@ export class OggParser extends BasicParser {
             default:
               throw new Error('gg audio-codec not recognized (id=' + id + ')');
           }
+          this.metadata.setFormat('dataformat', 'Ogg/' + this.pageConsumer.codecName);
         }
-        this.metadata.setFormat('dataformat', 'Ogg/' + this.pageConsumer.codecName);
         this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);
     } catch (err) {
