@@ -2,7 +2,6 @@ import { endOfFile } from 'strtok3/lib/type';
 import * as strtok3 from 'strtok3/lib/core';
 import * as Token from 'token-types';
 import * as initDebug from 'debug';
-import { Readable } from 'stream';
 
 import * as riff from './RiffChunk';
 import * as WaveChunk from './../wav/WaveChunk';
@@ -11,6 +10,7 @@ import { ID3v2Parser } from '../id3v2/ID3v2Parser';
 import Common from '../common/Util';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
+import { ID3Stream } from "../id3v2/ID3Stream";
 
 const debug = initDebug('music-metadata:parser:RIFF');
 
@@ -95,7 +95,7 @@ export class WaveParser extends BasicParser {
           const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
           const id3stream = new ID3Stream(id3_data);
           const rst = strtok3.fromStream(id3stream);
-          await ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
+          await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
 
         case 'data': // PCM-data
@@ -156,16 +156,4 @@ export class WaveParser extends BasicParser {
     this.metadata.addTag('exif', id, value);
   }
 
-}
-
-class ID3Stream extends Readable {
-
-  constructor(private buf: Buffer) {
-    super();
-  }
-
-  public _read() {
-    this.push(this.buf);
-    this.push(null); // push the EOF-signaling `null` chunk
-  }
 }

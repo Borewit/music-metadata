@@ -10,6 +10,7 @@ import { BasicParser } from '../common/BasicParser';
 
 import * as AiffToken from './AiffToken';
 import * as iff from '../iff';
+import { ID3Stream } from "../id3v2/ID3Stream";
 
 const debug = initDebug('music-metadata:parser:aiff');
 
@@ -82,7 +83,7 @@ export class AIFFParser extends BasicParser {
         const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
         const id3stream = new ID3Stream(id3_data);
         const rst = strtok3.fromStream(id3stream);
-        await ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
+        await new ID3v2Parser().parse(this.metadata, rst, this.options);
         return header.chunkSize;
 
       case 'SSND': // Sound Data Chunk
@@ -96,16 +97,4 @@ export class AIFFParser extends BasicParser {
     }
   }
 
-}
-
-class ID3Stream extends Readable {
-
-  constructor(private buf: Buffer) {
-    super();
-  }
-
-  public _read() {
-    this.push(this.buf);
-    this.push(null); // push the EOF-signaling `null` chunk
-  }
 }
