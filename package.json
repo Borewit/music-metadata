@@ -120,6 +120,11 @@
       ".ts"
     ],
     "sourceMap": true,
-    "instrument": true
+    "instrument": true,
+    "reporter": [
+      "lcov",
+      "text"
+    ],
+    "report-dir": "coverage"
   }
 }
