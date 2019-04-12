@@ -52,7 +52,7 @@
     "lint-ts": "tslint 'src/**/*.ts' 'example/typescript/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
     "lint-md": "remark -u preset-lint-recommended .",
     "lint": "npm run lint-md && npm run lint-ts",
-    "test": "mocha --require ts-node/register --full-trace test",
+    "test": "mocha --compilers ts-node/register --require source-map-support/register --full-trace test/test-*.ts",
     "build": "npm run clean && npm run compile && npm run doc-gen",
     "start": "npm-run-all compile lint cover-test",
     "test-coverage": "nyc npm run test",
@@ -83,6 +83,7 @@
     "nyc": "^13.1.0",
     "remark-cli": "^6.0.1",
     "remark-preset-lint-recommended": "^3.0.2",
+    "source-map-support": "^0.5.12",
     "ts-lint": "^4.5.1",
     "ts-node": "^8.0.2",
     "tslint": "^5.11.0",
@@ -111,14 +112,14 @@
     "url": "https://github.com/Borewit/music-metadata/issues"
   },
   "nyc": {
-    "check-coverage": true,
     "include": [
-      "src/**/*"
+      "src/**/*.ts",
+      "test/**/*.ts"
     ],
-    "reporter": [
-      "lcov",
-      "text"
+    "extension": [
+      ".ts"
     ],
-    "report-dir": "coverage"
+    "sourceMap": true,
+    "instrument": true
   }
 }

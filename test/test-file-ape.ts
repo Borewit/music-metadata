@@ -2,7 +2,6 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 import {Parsers} from './metadata-parsers';
-import {INativeTagDict} from '../src/type';
 
 const t = assert;
 
@@ -34,7 +33,7 @@ describe("Parse APE (Monkey's Audio)", () => {
     t.strictEqual(common.picture[1].data.length, 48658, 'common.picture 1 length');
   }
 
-  function checkNative(ape: INativeTagDict) {
+  function checkNative(ape: mm.INativeTagDict) {
     t.deepEqual(ape.ENSEMBLE, ['Audioslave']);
     t.deepEqual(ape.Artist, ['Audioslave', 'Chris Cornell']);
     t.strictEqual(ape['Cover Art (Front)'][0].data.length, 48658, 'raw cover art (front) length');
