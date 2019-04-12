@@ -116,6 +116,9 @@
       "src/**/*.ts",
       "test/**/*.ts"
     ],
+    "exclude": [
+      "lib/**"
+    ],
     "extension": [
       ".ts"
     ],
