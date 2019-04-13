@@ -50,7 +50,7 @@ describe("Mapping of common comment tag", () => {
 
     it("WavPack / APEv2", () => {
 
-      const filePath = path.join(samples, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
+      const filePath = path.join(samples, 'wavpack', "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
       // Run with default options
       return mm.parseFile(filePath, {native: true}).then(metadata => {
