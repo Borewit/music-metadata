@@ -30,10 +30,6 @@ interface IFrameHeader {
 
 export class ID3v2Parser {
 
-  public static getInstance(): ID3v2Parser {
-    return new ID3v2Parser();
-  }
-
   public static removeUnsyncBytes(buffer: Buffer): Buffer {
     let readI = 0;
     let writeI = 0;

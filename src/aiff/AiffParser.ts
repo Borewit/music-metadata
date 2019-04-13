@@ -8,7 +8,9 @@ import { ID3v2Parser } from '../id3v2/ID3v2Parser';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
 
-import * as Chunk from './Chunk';
+import * as AiffToken from './AiffToken';
+import * as iff from '../iff';
+import { ID3Stream } from "../id3v2/ID3Stream";
 
 const debug = initDebug('music-metadata:parser:aiff');
 
@@ -26,7 +28,7 @@ export class AIFFParser extends BasicParser {
 
   public async parse(): Promise<void> {
 
-    const header = await this.tokenizer.readToken<Chunk.IChunkHeader>(Chunk.Header);
+    const header = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
     if (header.chunkID !== 'FORM')
       throw new Error('Invalid Chunk-ID, expected \'FORM\''); // Not AIFF format
 
@@ -50,12 +52,12 @@ export class AIFFParser extends BasicParser {
 
     try {
       do {
-        const chunkHeader = await this.tokenizer.readToken<Chunk.IChunkHeader>(Chunk.Header);
+        const chunkHeader = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
 
         debug(`Chunk id=${chunkHeader.chunkID}`);
-        const nextChunk = 2 * Math.round(chunkHeader.size / 2);
-        const bytesread = await this.readData(chunkHeader);
-        await this.tokenizer.ignore(nextChunk - bytesread);
+        const nextChunk = 2 * Math.round(chunkHeader.chunkSize / 2);
+        const bytesRead = await this.readData(chunkHeader);
+        await this.tokenizer.ignore(nextChunk - bytesRead);
       } while (true);
     } catch (err) {
       if (err.message !== endOfFile) {
@@ -64,29 +66,29 @@ export class AIFFParser extends BasicParser {
     }
   }
 
-  public async readData(header: Chunk.IChunkHeader): Promise<number> {
+  public async readData(header: iff.IChunkHeader): Promise<number> {
     switch (header.chunkID) {
 
       case 'COMM': // The Common Chunk
-        const common = await this.tokenizer.readToken<Chunk.ICommon>(new Chunk.Common(header, this.isCompressed));
+        const common = await this.tokenizer.readToken<AiffToken.ICommon>(new AiffToken.Common(header, this.isCompressed));
         this.metadata.setFormat('bitsPerSample', common.sampleSize);
         this.metadata.setFormat('sampleRate', common.sampleRate);
         this.metadata.setFormat('numberOfChannels', common.numChannels);
         this.metadata.setFormat('numberOfSamples', common.numSampleFrames);
         this.metadata.setFormat('duration', common.numSampleFrames / common.sampleRate);
         this.metadata.setFormat('encoder', common.compressionName);
-        return header.size;
+        return header.chunkSize;
 
       case 'ID3 ': // ID3-meta-data
-        const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.size));
+        const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
         const id3stream = new ID3Stream(id3_data);
         const rst = strtok3.fromStream(id3stream);
-        await ID3v2Parser.getInstance().parse(this.metadata, rst, this.options);
-        return header.size;
+        await new ID3v2Parser().parse(this.metadata, rst, this.options);
+        return header.chunkSize;
 
       case 'SSND': // Sound Data Chunk
         if (this.metadata.format.duration) {
-          this.metadata.setFormat('bitrate', 8 * header.size / this.metadata.format.duration);
+          this.metadata.setFormat('bitrate', 8 * header.chunkSize / this.metadata.format.duration);
         }
         return 0;
 
@@ -95,16 +97,4 @@ export class AIFFParser extends BasicParser {
     }
   }
 
-}
-
-class ID3Stream extends Readable {
-
-  constructor(private buf: Buffer) {
-    super();
-  }
-
-  public _read() {
-    this.push(this.buf);
-    this.push(null); // push the EOF-signaling `null` chunk
-  }
 }
