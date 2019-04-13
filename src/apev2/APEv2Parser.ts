@@ -55,6 +55,12 @@ export class APEv2Parser extends BasicParser {
    * @returns {Promise<boolean>} True if tags have been found
    */
   public static async parseTagHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
+
+    if (tokenizer.fileSize && tokenizer.fileSize - tokenizer.position < TagFooter.len) {
+      debug(`No APEv2 header found, end-of-file reached`);
+      return;
+    }
+
     const footer = await tokenizer.peekToken<IFooter>(TagFooter);
     if (footer.ID === preamble) {
       await tokenizer.ignore(TagFooter.len);

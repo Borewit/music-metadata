@@ -164,7 +164,7 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize WavPack", () => {
-      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.wv", "WavPack");
+      return testFileType(path.join('wavpack', "MusicBrainz - Beth Hart - Sinner's Prayer.wv"), "WavPack");
     });
 
     it('should recognize  SV7', () => {
