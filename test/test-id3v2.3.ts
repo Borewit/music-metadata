@@ -18,7 +18,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
     const metadata = new MetadataCollector({});
 
     return strtok.fromFile(filePath).then(tokenizer => {
-      return ID3v2Parser.getInstance().parse(metadata, tokenizer, {}).then(() => {
+      return new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
 
         t.strictEqual(33, metadata.native['ID3v2.3'].length);
 
