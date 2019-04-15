@@ -82,7 +82,7 @@ export class WavPack {
 
       const flags = Token.UINT32_LE.get(buf, off + 24);
 
-      return {
+      const res = {
         // should equal 'wvpk'
         BlockID: FourCcToken.get(buf, off),
         //  0x402 to 0x410 are valid for decode
@@ -110,6 +110,13 @@ export class WavPack {
         // crc for actual decoded data
         crc: new Token.BufferType(4).get(buf, off + 28)
       };
+
+      if (res.flags.isDSD) {
+        res.totalSamples *= 8;
+        res.flags.samplingRate *= res.flags.samplingRate > 0 ? 8 * 8 : 1; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
+      }
+
+      return res;
     }
   };
 
