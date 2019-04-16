@@ -59,6 +59,7 @@ export class ParserFactory {
       const guessedType = fileType(buf);
       if (!guessedType)
         throw new Error("Failed to guess MIME-type");
+      debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
       parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
       if (!parserId)
         throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
