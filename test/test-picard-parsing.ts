@@ -301,7 +301,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     it("should map WavPack / APEv2", () => {
 
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
+      const filePath = path.join(samplePath, 'wavpack', "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
       function checkFormat(format) {
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');

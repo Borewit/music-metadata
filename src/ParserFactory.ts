@@ -15,6 +15,8 @@ import MusepackParser from './musepack';
 import { OggParser } from './ogg/OggParser';
 import { WaveParser } from './riff/WaveParser';
 import { WavPackParser } from './wavpack/WavPackParser';
+import {DsfParser} from "./dsf/DsfParser";
+import {DsdiffParser} from "./dsdiff/DsdiffParser";
 
 const debug = _debug("music-metadata:parser:factory");
 
@@ -59,6 +61,7 @@ export class ParserFactory {
       const guessedType = fileType(buf);
       if (!guessedType)
         throw new Error("Failed to guess MIME-type");
+      debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
       parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
       if (!parserId)
         throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
@@ -131,6 +134,12 @@ export class ParserFactory {
 
       case ".mpc":
         return 'musepack';
+
+      case '.dsf':
+        return 'dsf';
+
+      case '.dff':
+        return 'dsdiff';
     }
   }
 
@@ -139,6 +148,8 @@ export class ParserFactory {
       case 'aiff': return new AIFFParser();
       case 'apev2': return new APEv2Parser();
       case 'asf': return new AsfParser();
+      case 'dsf': return new DsfParser();
+      case 'dsdiff': return new DsdiffParser();
       case 'flac': return new FlacParser();
       case 'mp4': return new MP4Parser();
       case 'mpeg': return new MpegParser();
