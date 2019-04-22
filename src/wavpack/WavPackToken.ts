@@ -56,7 +56,7 @@ export interface IMetadataId {
   /**
    * actual data byte length is 1 less
    */
-  actualDataByteLength: boolean
+  isOddSize: boolean
   /**
    * large block (> 255 words)
    */
@@ -82,7 +82,7 @@ export class WavPack {
 
       const flags = Token.UINT32_LE.get(buf, off + 24);
 
-      return {
+      const res = {
         // should equal 'wvpk'
         BlockID: FourCcToken.get(buf, off),
         //  0x402 to 0x410 are valid for decode
@@ -110,6 +110,12 @@ export class WavPack {
         // crc for actual decoded data
         crc: new Token.BufferType(4).get(buf, off + 28)
       };
+
+      if (res.flags.isDSD) {
+        res.totalSamples *= 8;
+      }
+
+      return res;
     }
   };
 
@@ -123,9 +129,9 @@ export class WavPack {
     get: (buf, off) => {
 
       return {
-        functionId: WavPack.getBitAllignedNumber(buf[off], 0, 6),
+        functionId: WavPack.getBitAllignedNumber(buf[off], 0, 6), // functionId overlaps with isOptional flag
         isOptional: WavPack.isBitSet(buf[off], 5),
-        actualDataByteLength: WavPack.isBitSet(buf[off], 6),
+        isOddSize: WavPack.isBitSet(buf[off], 6),
         largeBlock: WavPack.isBitSet(buf[off], 7)
       };
     }
