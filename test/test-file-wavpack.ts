@@ -39,8 +39,8 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
       t.strictEqual(format.dataformat, 'WavPack', 'format.dataformat');
       t.strictEqual(format.codecProfile, 'DSD', 'format.codecProfile');
       t.deepEqual(format.numberOfSamples, 564480, 'format.numberOfSamples');
-      // t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');
-      // t.strictEqual(format.duration, 0.1, 'format.duration');
+      t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');
+      t.strictEqual(format.duration, 0.1, 'format.duration');
       t.deepEqual(format.tagTypes, [], 'format.tagTypes');
     }
 
@@ -64,6 +64,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
       t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');
       t.strictEqual(format.duration, 0.1, 'format.duration');
       t.deepEqual(format.tagTypes, [], 'format.tagTypes');
+      t.approximately(format.bitrate, 4810400, 1);
     }
 
     const wv1 = path.join(wavpackSamplePath, 'DSD128 high compression.wv');

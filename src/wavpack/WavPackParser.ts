@@ -15,7 +15,11 @@ const debug = initDebug('music-metadata:parser:WavPack');
  */
 export class WavPackParser extends BasicParser {
 
+  private audioDataSize: number;
+
   public async parse(): Promise<void> {
+
+    this.audioDataSize = 0;
 
     // First parse all WavPack blocks
     await this.parseWavPackBlocks();
@@ -58,8 +62,12 @@ export class WavPackParser extends BasicParser {
       } else {
         await this.tokenizer.ignore(ignoreBytes);
       }
+      if (header.blockSamples > 0) {
+        this.audioDataSize += header.blockSize; // Count audio data for bit-rate calculation
+      }
     }
     while (!this.tokenizer.fileSize || this.tokenizer.fileSize - this.tokenizer.position >= WavPack.BlockHeaderToken.len);
+    this.metadata.setFormat('bitrate', this.audioDataSize * 8 / this.metadata.format.duration);
   }
 
   /**
