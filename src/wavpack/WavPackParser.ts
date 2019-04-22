@@ -4,7 +4,7 @@ import * as assert from 'assert';
 import { APEv2Parser } from '../apev2/APEv2Parser';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
-import { IMetadataId, WavPack } from './WavPackToken';
+import { IBlockHeader, IMetadataId, WavPack } from './WavPackToken';
 
 import * as initDebug from 'debug';
 
@@ -40,18 +40,21 @@ export class WavPackParser extends BasicParser {
         this.metadata.setFormat('lossless', !header.flags.isHybrid);
         // tagTypes: this.type,
         this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);
-        this.metadata.setFormat('sampleRate', header.flags.samplingRate);
+        if (!header.flags.isDSD) {
+          // In case isDSD, these values will ne set in ID_DSD_BLOCK
+          this.metadata.setFormat('sampleRate', header.flags.samplingRate);
+          this.metadata.setFormat('duration', header.totalSamples / header.flags.samplingRate);
+        }
         this.metadata.setFormat('numberOfChannels', header.flags.isMono ? 1 : 2);
         this.metadata.setFormat('numberOfSamples', header.totalSamples);
-        this.metadata.setFormat('duration', header.totalSamples / header.flags.samplingRate);
         this.metadata.setFormat('codecProfile', header.flags.isDSD ? 'DSD' : 'PCM');
       }
 
       const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
 
-      if (header.blockIndex === 0 && header.blockSamples === 0) {
+      if (header.blockIndex === 0) {
         // Meta-data block
-        await this.parseMetadataSubBlock(ignoreBytes);
+        await this.parseMetadataSubBlock(header, ignoreBytes);
       } else {
         await this.tokenizer.ignore(ignoreBytes);
       }
@@ -60,23 +63,31 @@ export class WavPackParser extends BasicParser {
   }
 
   /**
-   * Ref: ttp://www.wavpack.com/WavPack5FileFormat.pdf, 3.0 Metadata Sub-blocks
+   * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf, 3.0 Metadata Sub-blocks
    * @param remainingLength
    */
-  private async parseMetadataSubBlock(remainingLength: number): Promise<void> {
-    do {
+  private async parseMetadataSubBlock(header: IBlockHeader, remainingLength: number): Promise<void> {
+    while (remainingLength > WavPack.MetadataIdToken.len) {
       const id = await this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken);
       const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
-      const metadataSize = 1 + dataSizeInWords * 2 + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
-      if (metadataSize > remainingLength)
-        throw new Error('Metadata exceeding block size');
-      const data = Buffer.alloc(dataSizeInWords * 2);
+      const data = Buffer.alloc(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
       await this.tokenizer.readBuffer(data, 0, data.length);
+      debug(`Metadata Sub-Blocks functionId=0x${id.functionId.toString(16)}, id.largeBlock=${id.largeBlock},data-size=${data.length}`);
       switch (id.functionId) {
-        case 0x0: // ID_DUMMY could be used to pad WavPack blocks
+        case 0x0: // ID_DUMMY: could be used to pad WavPack blocks
           break;
 
-        case 0x24: // ID_ALT_TRAILER
+        case 0xe: // ID_DSD_BLOCK
+          debug('ID_DSD_BLOCK');
+          // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
+          const mp = 1 << data.readUInt8(0);
+          const samplingRate = header.flags.samplingRate * mp * 8; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
+          assert.ok(header.flags.isDSD, 'Only expect DSD block if DSD-flag is set');
+          this.metadata.setFormat('sampleRate', samplingRate);
+          this.metadata.setFormat('duration', header.totalSamples / samplingRate);
+          break;
+
+        case 0x24: // ID_ALT_TRAILER: maybe used to embed original ID3 tag header
           debug('ID_ALT_TRAILER: trailer for non-wav files');
           break;
 
@@ -84,16 +95,21 @@ export class WavPackParser extends BasicParser {
           this.metadata.setFormat('audioMD5', data);
           break;
 
-        case 0x2F: // ID_BLOCK_CHECKSUM
-          break;
+        case 0x2f: // ID_BLOCK_CHECKSUM
+           debug(`ID_BLOCK_CHECKSUM: checksum=${data.toString('hex')}`);
+           break;
 
         default:
           debug(`Ignore unsupported meta-sub-block-id functionId=0x${id.functionId.toString(16)}`);
           break;
       }
 
-      remainingLength -= metadataSize;
-    } while (remainingLength > 1);
+      remainingLength -= WavPack.MetadataIdToken.len + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) + dataSizeInWords * 2;
+      debug(`remainingLength=${remainingLength}`);
+      if (id.isOddSize)
+        this.tokenizer.ignore(1);
+      }
+    assert.strictEqual(remainingLength, 0, 'metadata-sub-block should fit it remaining length');
   }
 
 }

@@ -56,7 +56,7 @@ export interface IMetadataId {
   /**
    * actual data byte length is 1 less
    */
-  actualDataByteLength: boolean
+  isOddSize: boolean
   /**
    * large block (> 255 words)
    */
@@ -113,7 +113,6 @@ export class WavPack {
 
       if (res.flags.isDSD) {
         res.totalSamples *= 8;
-        res.flags.samplingRate *= res.flags.samplingRate > 0 ? 8 * 8 : 1; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
       }
 
       return res;
@@ -130,9 +129,9 @@ export class WavPack {
     get: (buf, off) => {
 
       return {
-        functionId: WavPack.getBitAllignedNumber(buf[off], 0, 6),
+        functionId: WavPack.getBitAllignedNumber(buf[off], 0, 6), // functionId overlaps with isOptional flag
         isOptional: WavPack.isBitSet(buf[off], 5),
-        actualDataByteLength: WavPack.isBitSet(buf[off], 6),
+        isOddSize: WavPack.isBitSet(buf[off], 6),
         largeBlock: WavPack.isBitSet(buf[off], 7)
       };
     }
