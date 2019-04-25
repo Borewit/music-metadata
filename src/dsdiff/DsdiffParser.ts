@@ -77,8 +77,8 @@ export class DsdiffParser extends BasicParser {
         break;
 
       case 'DSD':
-        const duration = header.chunkSize * 8 / (this.metadata.format.numberOfChannels * this.metadata.format.sampleRate); // ToDO: not sure if this is correct
-        this.metadata.setFormat('duration', duration);
+        this.metadata.setFormat('numberOfSamples', header.chunkSize * 8 / this.metadata.format.numberOfChannels);
+        this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
         break;
 
     }
