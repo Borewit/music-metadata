@@ -41,7 +41,9 @@
     "dsf",
     "mpc",
     "dff",
-    "dsdiff"
+    "dsdiff",
+    "aac",
+    "adts"
   ],
   "main": "lib",
   "typings": "lib/index",
