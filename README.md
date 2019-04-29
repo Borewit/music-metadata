@@ -261,7 +261,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
 
 1.  How can I traverse (a long) list of files?
 
-    What is important that file parsing should be done.
+    What is important that file parsing should be done in a sequential manner.
     In a plain loop, due to the asynchronous character (like most JavaScript functions), it would cause all the files to run in parallel which is will cause your application to hang in no time.
     There are multiple ways of achieving this:
 
