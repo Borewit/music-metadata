@@ -15,10 +15,54 @@ const debug = initDebug('music-metadata:parser:mpeg');
  */
 const maxPeekLen = 1024;
 
+type MPEG4Channel = 'front-center' | 'front-left' | 'front-right' | 'side-left' | 'side-right' | 'back-left' | 'back-right' | 'back-center' | 'LFE-channel';
+
+type MPEG4ChannelConfiguration = MPEG4Channel[];
+
+/**
+ * MPEG-4 Audio definitions
+ * Ref:  https://wiki.multimedia.cx/index.php/MPEG-4_Audio
+ */
+const MPEG4 = {
+
+  /**
+   * Audio Object Types
+   */
+  AudioObjectTypes: [
+    'AAC Main',
+    'AAC LC', // Low Complexity
+    'AAC SSR', // Scalable Sample Rate
+    'AAC LTP' // Long Term Prediction
+  ],
+
+  /**
+   * Sampling Frequencies
+   * https://wiki.multimedia.cx/index.php/MPEG-4_Audio#Sampling_Frequencies
+   */
+  SamplingFrequencies: [
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350, undefined, undefined, -1]
+
+  /**
+   * Channel Configurations
+   */
+};
+
+const MPEG4_ChannelConfigurations: MPEG4ChannelConfiguration[] = [
+  undefined,
+  ['front-center'],
+  ['front-left', 'front-right'],
+  ['front-center', 'front-left', 'front-right'],
+  ['front-center', 'front-left', 'front-right', 'back-center'],
+  ['front-center', 'front-left', 'front-right', 'back-left', 'back-right'],
+  ['front-center', 'front-left', 'front-right', 'back-left', 'back-right', 'LFE-channel'],
+  ['front-center', 'front-left', 'front-right', 'side-left', 'side-right', 'back-left', 'back-right', 'LFE-channel']
+];
+
 /**
  * MPEG Audio Layer I/II/III frame header
  * Ref: https://www.mp3-tech.org/programmer/frame_header.html
  * Bit layout: AAAAAAAA AAABBCCD EEEEFFGH IIJJKLMM
+ * Ref: https://wiki.multimedia.cx/index.php/ADTS
  */
 class MpegFrameHeader {
 
@@ -26,7 +70,7 @@ class MpegFrameHeader {
   public static SyncByte2 = 0xE0;
 
   public static VersionID = [2.5, null, 2, 1];
-  public static LayerDescription = [null, 3, 2, 1];
+  public static LayerDescription = [0, 3, 2, 1];
   public static ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
 
   private static bitrate_index = {
@@ -89,55 +133,28 @@ class MpegFrameHeader {
   public bitrate: number;
   public samplingRate: number;
 
-  public constructor(buf, off) {
+  public container: string;
+  public codec: string;
+  public codecProfile: string;
+
+  public frameLength: number;
+
+  public mp4ChannelConfig: MPEG4ChannelConfiguration;
+
+  public constructor(buf: Buffer, off: number) {
     // B(20,19): MPEG Audio versionIndex ID
     this.versionIndex = Common.getBitAllignedNumber(buf, off + 1, 3, 2);
     // C(18,17): Layer description
     this.layer = MpegFrameHeader.LayerDescription[Common.getBitAllignedNumber(buf, off + 1, 5, 2)];
 
-    if (this.layer === null)
-      throw new Error('Invalid MPEG layer');
+    if (this.versionIndex > 1 && this.layer === 0) {
+      this.parseAdtsHeader(buf, off); // Audio Data Transport Stream (ADTS)
+    } else {
+      this.parseMpegHeader(buf, off); // Conventional MPEG header
+    }
 
     // D(16): Protection bit (if true 16-bit CRC follows header)
     this.isProtectedByCRC = !Common.isBitSet(buf, off + 1, 7);
-    // E(15,12): Bitrate index
-    this.bitrateIndex = Common.getBitAllignedNumber(buf, off + 2, 0, 4);
-    // F(11,10): Sampling rate frequency index
-    this.sampRateFreqIndex = Common.getBitAllignedNumber(buf, off + 2, 4, 2);
-    // G(9): Padding bit
-    this.padding = Common.isBitSet(buf, off + 2, 6);
-    // H(8): Private bit
-    this.privateBit = Common.isBitSet(buf, off + 2, 7);
-    // I(7,6): Channel Mode
-    this.channelModeIndex = Common.getBitAllignedNumber(buf, off + 3, 0, 2);
-    // J(5,4): Mode extension (Only used in Joint stereo)
-    this.modeExtension = Common.getBitAllignedNumber(buf, off + 3, 2, 2);
-    // K(3): Copyright
-    this.isCopyrighted = Common.isBitSet(buf, off + 3, 4);
-    // L(2): Original
-    this.isOriginalMedia = Common.isBitSet(buf, off + 3, 5);
-    // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
-    this.emphasis = Common.getBitAllignedNumber(buf, off + 3, 7, 2);
-
-    this.version = MpegFrameHeader.VersionID[this.versionIndex];
-
-    if (this.version === null)
-      throw new Error('Invalid MPEG Audio version');
-
-    this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
-
-    // Calculate bitrate
-    const bitrateInKbps = this.calcBitrate();
-    if (!bitrateInKbps) {
-      throw new Error('Cannot determine bit-rate');
-    }
-    this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
-
-    // Calculate sampling rate
-    this.samplingRate = this.calcSamplingRate();
-    if (this.samplingRate == null) {
-      throw new Error('Cannot determine sampling-rate');
-    }
   }
 
   public calcDuration(numFrames: number): number {
@@ -170,6 +187,67 @@ class MpegFrameHeader {
     return [null, 4, 1, 1][this.layer];
   }
 
+  private parseMpegHeader(buf: Buffer, off: number): void {
+    this.container = 'MPEG';
+    // E(15,12): Bitrate index
+    this.bitrateIndex = Common.getBitAllignedNumber(buf, off + 2, 0, 4);
+    // F(11,10): Sampling rate frequency index
+    this.sampRateFreqIndex = Common.getBitAllignedNumber(buf, off + 2, 4, 2);
+    // G(9): Padding bit
+    this.padding = Common.isBitSet(buf, off + 2, 6);
+    // H(8): Private bit
+    this.privateBit = Common.isBitSet(buf, off + 2, 7);
+    // I(7,6): Channel Mode
+    this.channelModeIndex = Common.getBitAllignedNumber(buf, off + 3, 0, 2);
+    // J(5,4): Mode extension (Only used in Joint stereo)
+    this.modeExtension = Common.getBitAllignedNumber(buf, off + 3, 2, 2);
+    // K(3): Copyright
+    this.isCopyrighted = Common.isBitSet(buf, off + 3, 4);
+    // L(2): Original
+    this.isOriginalMedia = Common.isBitSet(buf, off + 3, 5);
+    // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
+    this.emphasis = Common.getBitAllignedNumber(buf, off + 3, 7, 2);
+
+    this.version = MpegFrameHeader.VersionID[this.versionIndex];
+    this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
+
+    this.codec = 'mp' + this.layer;
+
+    // Calculate bitrate
+    const bitrateInKbps = this.calcBitrate();
+    if (!bitrateInKbps) {
+      throw new Error('Cannot determine bit-rate');
+    }
+    this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
+
+    // Calculate sampling rate
+    this.samplingRate = this.calcSamplingRate();
+    if (this.samplingRate == null) {
+      throw new Error('Cannot determine sampling-rate');
+    }
+  }
+
+  private parseAdtsHeader(buf: Buffer, off: number): void {
+    debug(`layer=0 => ADTS`);
+    this.version = this.versionIndex === 2 ? 4 : 2;
+    this.container = 'ADTS/MPEG-' + this.version;
+    const profileIndex = Common.getBitAllignedNumber(buf, off + 2, 0, 2);
+    this.codec = 'AAC';
+    this.codecProfile = MPEG4.AudioObjectTypes[profileIndex];
+
+    debug(`MPEG-4 audio-codec=${this.codec}`);
+
+    const samplingFrequencyIndex = Common.getBitAllignedNumber(buf, off + 2, 2, 4);
+    this.samplingRate = MPEG4.SamplingFrequencies[samplingFrequencyIndex];
+    debug(`sampling-rate=${this.samplingRate}`);
+
+    const channelIndex = Common.getBitAllignedNumber(buf, off + 2, 7, 3);
+    this.mp4ChannelConfig = MPEG4_ChannelConfigurations[channelIndex];
+    debug(`channel-config=${this.mp4ChannelConfig.join('+')}`);
+
+    this.frameLength = Common.getBitAllignedNumber(buf, off + 3, 6, 2) << 11;
+  }
+
   private calcBitrate(): number {
     if (this.bitrateIndex === 0x00) return null; // free
     if (this.bitrateIndex === 0x0F) return null; // 'reserved'
@@ -186,26 +264,24 @@ class MpegFrameHeader {
 /**
  * MPEG Audio Layer I/II/III
  */
-class MpegAudioLayer {
+const FrameHeader = {
+  len: 4,
 
-  public static FrameHeader = {
-    len: 4,
-
-    get: (buf, off): MpegFrameHeader => {
-      return new MpegFrameHeader(buf, off);
-    }
-  };
-
-  public static getVbrCodecProfile(vbrScale: number): string {
-    return 'V' + (100 - vbrScale) / 10;
+  get: (buf, off): MpegFrameHeader => {
+    return new MpegFrameHeader(buf, off);
   }
+};
+
+function getVbrCodecProfile(vbrScale: number): string {
+  return 'V' + (100 - vbrScale) / 10;
 }
 
 export class MpegParser extends AbstractID3Parser {
 
   private frameCount: number = 0;
-  private syncFrameCount: number = 0;
+  private syncFrameCount: number = -1;
   private countSkipFrameData: number = 0;
+  private totalAudioLength = 0;
 
   private audioFrameHeader;
   private bitrates: number[] = [];
@@ -297,9 +373,9 @@ export class MpegParser extends AbstractID3Parser {
           this.buf_frame_header[0] = MpegFrameHeader.SyncByte1;
           this.buf_frame_header[1] = this.syncPeek.buf[bo];
           await this.tokenizer.ignore(bo);
-          debug(`Sync at offset=${this.tokenizer.position - 1}`);
+          debug(`Sync at offset=${this.tokenizer.position - 1}, frameCount=${this.frameCount}`);
           if (this.syncFrameCount === this.frameCount) {
-            debug(`Reset MPEG stream, no valid frame in between syncs`);
+            debug(`Re-synced MPEG stream, frameCount=${this.frameCount}`);
             this.frameCount = 0;
             this.frame_size = 0;
           }
@@ -324,7 +400,6 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   /**
-   * @param buf_frame_header Buffer
    * @return {Promise<boolean>} true if parser should quit
    */
   private async parseAudioFrameHeader(): Promise<boolean> {
@@ -337,7 +412,7 @@ export class MpegParser extends AbstractID3Parser {
 
     let header: MpegFrameHeader;
     try {
-      header = MpegAudioLayer.FrameHeader.get(this.buf_frame_header, 0);
+      header = FrameHeader.get(this.buf_frame_header, 0);
     } catch (err) {
       await this.tokenizer.ignore(1);
       this.warnings.push('Parse error: ' + err.message);
@@ -345,11 +420,17 @@ export class MpegParser extends AbstractID3Parser {
     }
     await this.tokenizer.ignore(3);
 
-    this.metadata.setFormat('dataformat', 'mp' + header.layer);
+    this.metadata.setFormat('dataformat', header.container);
+    this.metadata.setFormat('encoder', header.codec);
     this.metadata.setFormat('lossless', false);
-    this.metadata.setFormat('bitrate', header.bitrate);
     this.metadata.setFormat('sampleRate', header.samplingRate);
+
+    if (header.version >= 2 && header.layer === 0) {
+      return this.parseAdts(header);
+    }
+
     this.metadata.setFormat('numberOfChannels', header.channelMode === 'mono' ? 1 : 2);
+    this.metadata.setFormat('bitrate', header.bitrate);
 
     if (this.frameCount < 20 * 10000) {
       debug('offset=%s MP%s bitrate=%s sample-rate=%s', this.tokenizer.position - 4, header.layer, header.bitrate, header.samplingRate);
@@ -372,7 +453,7 @@ export class MpegParser extends AbstractID3Parser {
 
     // xtra header only exists in first frame
     if (this.frameCount === 1) {
-      this.offset = MpegAudioLayer.FrameHeader.len;
+      this.offset = FrameHeader.len;
       await this.skipSideInformation();
       return false;
     }
@@ -411,6 +492,28 @@ export class MpegParser extends AbstractID3Parser {
     }
   }
 
+  private async parseAdts(header: MpegFrameHeader): Promise<boolean> {
+    const buf = Buffer.alloc(3);
+    await this.tokenizer.readBuffer(buf);
+    header.frameLength += Common.getBitAllignedNumber(buf, 0, 0, 11);
+    this.tokenizer.ignore(header.frameLength - 7 + 1);
+    this.frameCount++;
+    this.totalAudioLength += header.frameLength;
+
+    const framesPerSec = header.samplingRate / 1024;
+    const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalAudioLength / this.frameCount;
+    const bitrate = 8 * bytesPerFrame * framesPerSec + 0.5;
+    this.metadata.setFormat('codecProfile', header.codecProfile);
+    this.metadata.setFormat('bitrate', bitrate);
+    if (header.mp4ChannelConfig) {
+      this.metadata.setFormat('numberOfChannels', header.mp4ChannelConfig.length);
+    }
+
+    debug(`size=${header.frameLength} bytes, bit-rate=${bitrate}`);
+
+    return this.frameCount === 3; // Stop parsing after the third frame
+  }
+
   private async parseCrc(): Promise<void> {
     this.crc = await this.tokenizer.readNumber(Token.INT16_BE);
     this.offset += 2;
@@ -439,7 +542,7 @@ export class MpegParser extends AbstractID3Parser {
 
       case 'Xing':
         const infoTag = await this.readXingInfoHeader();
-        const codecProfile = MpegAudioLayer.getVbrCodecProfile(infoTag.vbrScale);
+        const codecProfile = getVbrCodecProfile(infoTag.vbrScale);
         this.metadata.setFormat('codecProfile', codecProfile);
         return null;
 
@@ -450,7 +553,7 @@ export class MpegParser extends AbstractID3Parser {
       case 'LAME':
         const version = await this.tokenizer.readToken(LameEncoderVersion);
         this.offset += LameEncoderVersion.len;
-        this.metadata.setFormat('encoder', 'LAME ' + version);
+        this.metadata.setFormat('tool', 'LAME ' + version);
         await this.skipFrameData(this.frame_size - this.offset);
         return null;
       // ToDo: ???
@@ -476,7 +579,7 @@ export class MpegParser extends AbstractID3Parser {
     const infoTag = await this.tokenizer.readToken<IXingInfoTag>(XingInfoTag);
     this.offset += XingInfoTag.len;  // 12
 
-    this.metadata.setFormat('encoder', Common.stripNulls(infoTag.encoder));
+    this.metadata.setFormat('tool', Common.stripNulls(infoTag.encoder));
 
     if ((infoTag.headerFlags[3] & 0x01) === 1) {
       const duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);

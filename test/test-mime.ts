@@ -123,11 +123,11 @@ describe("MIME & extension mapping", () => {
     }
 
     it("should recognize MP2", () => {
-      return testFileType('1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'mp2');
+      return testFileType('1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'MPEG');
     });
 
     it("should recognize MP3", () => {
-      return testFileType('04-Strawberry.mp3', 'mp3');
+      return testFileType('04-Strawberry.mp3', 'MPEG');
     });
 
     it("should recognize WMA", () => {

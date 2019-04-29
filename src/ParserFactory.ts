@@ -88,12 +88,12 @@ export class ParserFactory {
       case ".mp2":
       case ".mp3":
       case ".m2a":
+      case '.aac': // Assume it is ADTS-container
         return 'mpeg';
 
       case ".ape":
         return 'apev2';
 
-      case ".aac":
       case ".mp4":
       case ".m4a":
       case ".m4b":
