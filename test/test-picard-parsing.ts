@@ -380,12 +380,13 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
-        t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
-        t.strictEqual(format.duration, 2.1681632653061222, 'format.duration = 2.123 sec');
-        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        t.deepEqual(format.dataformat, 'MPEG', 'format.dataformat');
+        t.deepEqual(format.encoder, 'mp3', 'format.encoder');
+        t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
+        t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-        t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
-        t.strictEqual(format.encoder, 'LAME3.99r', 'format.encoder = LAME3.99r');
+        t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile');
+        t.strictEqual(format.tool, 'LAME3.99r', 'format.tool');
       }
 
       // Run with default options
@@ -499,13 +500,13 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format: IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
-        t.strictEqual(format.dataformat, 'mp3', 'format.dataformat = mp3');
+        t.strictEqual(format.dataformat, 'MPEG', 'format.dataformat');
+        t.strictEqual(format.encoder, 'mp3', 'format.encoder');
+        t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
+        t.strictEqual(format.tool, 'LAME3.99r', 'format.tool');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-        // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-        t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
-        t.strictEqual(format.encoder, 'LAME3.99r', 'format.encoder = LAME3.99r');
       }
 
       // Run with default options

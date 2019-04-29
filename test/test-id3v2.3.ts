@@ -38,7 +38,9 @@ describe("Extract metadata from ID3v2.3 header", () => {
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
       t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
-      t.strictEqual(format.encoder, 'LAME3.98r', 'format.encoder');
+      t.strictEqual(format.dataformat, 'MPEG', 'format.dataformat');
+      t.strictEqual(format.encoder, 'mp3', 'format.encoder');
+      t.strictEqual(format.tool, 'LAME3.98r', 'format.tool');
       t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
     }
 
@@ -108,7 +110,8 @@ describe("Extract metadata from ID3v2.3 header", () => {
       function checkFormat(format: mm.IFormat) {
         t.strictEqual(format.duration, 247.84979591836733, 'format.duration');
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
-        t.strictEqual(format.dataformat, 'mp3', 'format.dataformat');
+        t.strictEqual(format.dataformat, 'MPEG', 'format.dataformat');
+        t.strictEqual(format.encoder, 'mp3', 'format.encoder');
         t.strictEqual(format.lossless, false, 'format.lossless');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');

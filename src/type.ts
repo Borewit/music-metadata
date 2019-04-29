@@ -264,6 +264,7 @@ export type FormatId =
   | 'sampleRate'
   | 'bitsPerSample'
   | 'encoder'
+  | 'tool'
   | 'codecProfile'
   | 'lossless'
   | 'numberOfChannels'
@@ -301,6 +302,11 @@ export interface IFormat {
    * Audio bit depth
    */
   readonly bitsPerSample?: number,
+
+  /**
+   * Encoder brand, e.g.: LAME3.99r
+   */
+  readonly tool?: string,
 
   /**
    * Encoder name / compressionType, e.g.: 'PCM', 'ITU-T G.711 mu-law'
@@ -363,7 +369,7 @@ export interface IAudioMetadata extends INativeAudioMetadata {
 /**
  * Corresponds with parser module name
  */
-export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff' | 'musepack' | 'dsf' | 'dsdiff';
+export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff' | 'musepack' | 'dsf' | 'dsdiff' | 'adts';
 
 export interface IOptions {
   path?: string,

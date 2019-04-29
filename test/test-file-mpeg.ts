@@ -38,7 +38,8 @@ describe("Parse MPEG", () => {
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1"], "Tags: ID3v1 & ID3v2.3");
-      t.strictEqual(metadata.format.dataformat, "mp2", "format.dataformat = mp2 (MPEG-2 Audio Layer II)");
+      t.strictEqual(metadata.format.dataformat, "MPEG", "format.dataformat = MPEG");
+      t.strictEqual(metadata.format.encoder, "mp2", "format.encoder = mp2 (MPEG-2 Audio Layer II)");
       t.strictEqual(metadata.format.bitrate, 128000, "format.bitrate = 128 kbit/sec");
       t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
       t.strictEqual(metadata.format.numberOfSamples, 23040, "format.numberOfSamples = 23040");
@@ -249,7 +250,8 @@ describe("Parse MPEG", () => {
     function checkFormat(format: IFormat, expectedDuration) {
       t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v2.4", "ID3v1"], "format.tagTypes");
       t.strictEqual(format.duration, expectedDuration, "format.duration");
-      t.strictEqual(format.dataformat, "mp3", "format.dataformat");
+      t.deepEqual(format.dataformat, 'MPEG', 'format.dataformat');
+      t.deepEqual(format.encoder, 'mp3', 'format.encoder');
       t.strictEqual(format.lossless, false, "format.lossless");
       t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
       t.strictEqual(format.bitrate, 320000, "format.bitrate = 160 kbit/sec");
