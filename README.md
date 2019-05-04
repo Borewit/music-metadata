@@ -104,7 +104,7 @@ yarn add music-metadata
 
 ### Import music-metadata
 
-This is how you can import music-metadata in JavaScript, in you code:
+Import music-metadata in JavaScript:
 ```JavaScript
 const mm = require('music-metadata');
 ```
