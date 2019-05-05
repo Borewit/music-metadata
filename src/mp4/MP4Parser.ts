@@ -41,13 +41,25 @@ const encoderDict: { [dataFormatId: string]: IEncoder; } = {
 
 const dataFormat = 'MPEG-4';
 
+function distinct(value: any, index: number, self: any[]) {
+  return self.indexOf(value) === index;
+}
+
 /*
- * Parser for: MPEG-4 Audio / Part 3 (.m4a)& MPEG 4 Video (m4v, mp4) extension.
+ * Parser for ISO base media file format (ISO/IEC 14496-12 – MPEG-4 Part 12), supporting:
+ * - QuickTime container
+ * - MP4 File Format
+ * - 3GPP file format
+ * - 3GPP2 file format
+ *
+ * MPEG-4 Audio / Part 3 (.m4a)& MPEG 4 Video (m4v, mp4) extension.
  * Support for Apple iTunes tags as found in a M4A/M4V files.
  * Ref:
+ *   https://en.wikipedia.org/wiki/ISO_base_media_file_format
  *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/Metadata/Metadata.html
  *   http://atomicparsley.sourceforge.net/mpeg-4files.html
  *   https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
+ *   https://wiki.multimedia.cx/index.php/QuickTime_container
  */
 export class MP4Parser extends BasicParser {
 
@@ -59,12 +71,14 @@ export class MP4Parser extends BasicParser {
     return Token.readUIntBE(value, 0, value.length);
   }
 
+  private formatList: string[];
+
   public async parse(): Promise<void> {
 
-    this.metadata.setFormat('dataformat', dataFormat);
+    this.formatList = [];
 
     const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, false, null);
-    return rootAtom.readAtoms(this.tokenizer, async atom => {
+    await rootAtom.readAtoms(this.tokenizer, async atom => {
 
       if (atom.parent) {
         switch (atom.parent.header.name) {
@@ -84,6 +98,7 @@ export class MP4Parser extends BasicParser {
         case "ftyp":
           const types = await this.parseAtom_ftyp(atom.dataLen);
           debug(`ftyp: ${types.join('/')}`);
+          this.metadata.setFormat('dataformat', types.filter(distinct).join('/'));
           return;
 
         case 'mdhd': // Media header atom
@@ -103,6 +118,8 @@ export class MP4Parser extends BasicParser {
       debug(`Ignore atom data: path=${atom.atomPath}, payload-len=${atom.dataLen}`);
 
     }, this.tokenizer.fileSize);
+
+    this.metadata.setFormat('encoder', this.formatList.filter(distinct).join('+'));
   }
 
   private addTag(id: string, value: any) {
@@ -262,7 +279,7 @@ export class MP4Parser extends BasicParser {
     len -= AtomToken.ftyp.len;
     if (len > 0) {
       const types = await this.parseAtom_ftyp(len);
-      const value = util.stripNulls(ftype.type).trim();
+      const value =  ftype.type.replace(/\W/g, '');
       if (value.length > 0) {
         types.push(value);
       }
@@ -284,6 +301,6 @@ export class MP4Parser extends BasicParser {
         formatList.push(dfEntry.dataFormat);
       }
     }
-    this.metadata.setFormat('dataformat', formatList.join('/'));
+    this.formatList.push(formatList.join('/'));
   }
 }

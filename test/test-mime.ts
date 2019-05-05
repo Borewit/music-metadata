@@ -136,11 +136,11 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize MPEG-4 / m4a", () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'MPEG-4/ALAC');
+      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'isom/mp42/M4A');
     });
 
     it("should recognize MPEG-4 / mp4", () => {
-      return testFileType(path.join('mp4', 'Mr. Pickles S02E07 My Dear Boy.mp4'), 'MPEG-4/CEA-608');
+      return testFileType(path.join('mp4', 'Mr. Pickles S02E07 My Dear Boy.mp4'), 'mp42');
     });
 
     it("should recognize FLAC", () => {
