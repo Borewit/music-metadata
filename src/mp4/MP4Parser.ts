@@ -39,8 +39,6 @@ const encoderDict: { [dataFormatId: string]: IEncoder; } = {
   }
 };
 
-const dataFormat = 'MPEG-4';
-
 function distinct(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
 }
@@ -290,7 +288,7 @@ export class MP4Parser extends BasicParser {
 
   private async parseAtom_stsd(len: number): Promise<void> {
     const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
-    const formatList = [dataFormat];
+    const formatList: string[] = [];
     for (const dfEntry of  stsd.table) {
       const encoderInfo = encoderDict[dfEntry.dataFormat];
       if (encoderInfo) {
