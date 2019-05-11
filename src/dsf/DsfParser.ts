@@ -19,7 +19,7 @@ export class DsfParser extends AbstractID3Parser {
 
     const p0 = this.tokenizer.position; // mark start position, normally 0
     const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
-    assert.strictEqual(chunkHeader.id, 'DSD ');
+    assert.strictEqual(chunkHeader.id, 'DSD ', 'Invalid chunk signature');
     this.metadata.setFormat('dataformat', 'DSF');
     this.metadata.setFormat('lossless', true);
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);
@@ -29,7 +29,7 @@ export class DsfParser extends AbstractID3Parser {
       debug(`expect ID3v2 at offset=${dsdChunk.metadataPointer}`);
       await this.parseChunks(dsdChunk.fileSize - chunkHeader.size);
       // Jump to ID3 header
-      this.tokenizer.ignore(dsdChunk.metadataPointer - this.tokenizer.position - p0);
+      await this.tokenizer.ignore(dsdChunk.metadataPointer - this.tokenizer.position - p0);
       return new ID3v2Parser().parse(this.metadata, this.tokenizer, this.options);
     }
   }
