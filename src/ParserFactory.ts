@@ -238,6 +238,9 @@ export class ParserFactory {
 
           case 'musepack':
             return 'musepack';
+
+          case 'dsf':
+            return 'dsf';
         }
         break;
 
