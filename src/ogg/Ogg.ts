@@ -60,12 +60,6 @@ export interface ISegmentTable {
 export interface IPageConsumer {
 
   /**
-   * RName of Ogg coded, like 'Opus', 'Speex'
-   * @returns {string}
-   */
-  codecName: string
-
-  /**
    * Parse Ogg page
    * @param {IPageHeader} header Ogg page header
    * @param {Buffer} pageData Ogg page data

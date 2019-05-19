@@ -148,7 +148,7 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize OGG", () => {
-      return testFileType('issue_62.ogg', 'Ogg/Vorbis I');
+      return testFileType('issue_62.ogg', 'Ogg');
     });
 
     it("should recognize WAV", () => {
