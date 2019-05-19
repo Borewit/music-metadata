@@ -47,7 +47,7 @@ export const Genres = [
 /**
  * ID3v1 tag header interface
  */
-interface Iid3v1Header {
+interface IId3v1Header {
   header: string,
   title: string,
   artist: string,
@@ -63,7 +63,7 @@ interface Iid3v1Header {
  * Spec: http://id3.org/ID3v1
  * Wiki: https://en.wikipedia.org/wiki/ID3
  */
-const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
+const Iid3v1Token: Token.IGetToken<IId3v1Header> = {
   len: 128,
 
   /**
@@ -71,7 +71,7 @@ const Iid3v1Token: Token.IGetToken<Iid3v1Header> = {
    * @param off Offset in buffer in bytes
    * @returns ID3v1.1 header if first 3 bytes equals 'TAG', otherwise null is returned
    */
-  get: (buf, off): Iid3v1Header => {
+  get: (buf, off): IId3v1Header => {
     const header = new Id3v1StringType(3).get(buf, off);
     return header === "TAG" ? {
       header,
@@ -123,7 +123,7 @@ export class ID3v1Parser extends BasicParser {
       debug('Already consumed the last 128 bytes');
       return;
     }
-    const header = await this.tokenizer.readToken<Iid3v1Header>(Iid3v1Token, offset);
+    const header = await this.tokenizer.readToken<IId3v1Header>(Iid3v1Token, offset);
     if (header) {
       debug("ID3v1 header found at: pos=%s", this.tokenizer.fileSize - Iid3v1Token.len);
       for (const id of ["title", "artist", "album", "comment", "track", "year"]) {
