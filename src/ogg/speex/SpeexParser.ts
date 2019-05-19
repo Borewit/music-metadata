@@ -17,10 +17,6 @@ const debug = initDebug('music-metadata:parser:ogg:speex');
  */
 export class SpeexParser extends VorbisParser {
 
-  public codecName = 'Speex';
-
-  private lastPos: number = -1;
-
   constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
     super(metadata, options);
   }
@@ -32,11 +28,10 @@ export class SpeexParser extends VorbisParser {
    */
   protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
     debug('First Ogg/Speex page');
-    let speexHeader = Speex.Header.get(pageData, 0);
-    speexHeader = speexHeader;
+    const speexHeader = Speex.Header.get(pageData, 0);
+    this.metadata.setFormat('codec', `Speex ${speexHeader.version}`);
     this.metadata.setFormat('numberOfChannels', speexHeader.nb_channels);
     this.metadata.setFormat('sampleRate', speexHeader.rate);
-    this.metadata.setFormat('codec', speexHeader.version);
     if (speexHeader.bitrate !== -1) {
       this.metadata.setFormat('bitrate', speexHeader.bitrate);
     }

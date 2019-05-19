@@ -14,8 +14,6 @@ import {INativeMetadataCollector} from '../../common/MetadataCollector';
  */
 export class OpusParser extends VorbisParser {
 
-  public codecName = 'Opus';
-
   private idHeader: Opus.IIdHeader;
   private lastPos: number = -1;
 
@@ -29,6 +27,7 @@ export class OpusParser extends VorbisParser {
    * @param {Buffer} pageData
    */
   protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
+    this.metadata.setFormat('codec', 'Opus');
     // Parse Opus ID Header
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
     if (this.idHeader.magicSignature !== "OpusHead")

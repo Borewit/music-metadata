@@ -96,25 +96,25 @@ describe("Parse Ogg", function() {
     /**
      * Related issue: https://github.com/Borewit/music-metadata/issues/70
      */
-    it("should not fail on an Ogg/Vorbis 'Setup header'", () => {
+    it("should not fail on an Ogg/Vorbis 'Setup header'", async () => {
 
       const filePath = path.join(samplePath, 'issue_70.ogg');
 
-      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        assert.strictEqual(metadata.format.container, 'Ogg/Vorbis I');
-        assert.strictEqual(metadata.format.sampleRate, 44100);
+      const {format, native} = await mm.parseFile(filePath, {duration: true, native: true});
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
+      assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
 
-        const vorbis = mm.orderTags(metadata.native.vorbis);
-        assert.deepEqual(vorbis.ALBUM, ['Dropsonde']);
-        assert.deepEqual(vorbis.ARTIST, ['Biosphere']);
-        assert.deepEqual(vorbis['ALBUM ARTIST'], ['Biosphere']);
-        assert.deepEqual(vorbis.ORGANIZATION, ['Touch UK']);
-        assert.deepEqual(vorbis.DATE, ['2006']);
-        assert.deepEqual(vorbis.RATING, ['-1']);
-        assert.deepEqual(vorbis.REPLAYGAIN_TRACK_PEAK, ['0.999969']);
-        assert.deepEqual(vorbis.REPLAYGAIN_TRACK_GAIN, ['0.440000 dB']);
-        assert.deepEqual(vorbis.REPLAYGAIN_ALBUM_GAIN, ['0.440000 dB']);
-      });
+      const vorbis = mm.orderTags(native.vorbis);
+      assert.deepEqual(vorbis.ALBUM, ['Dropsonde']);
+      assert.deepEqual(vorbis.ARTIST, ['Biosphere']);
+      assert.deepEqual(vorbis['ALBUM ARTIST'], ['Biosphere']);
+      assert.deepEqual(vorbis.ORGANIZATION, ['Touch UK']);
+      assert.deepEqual(vorbis.DATE, ['2006']);
+      assert.deepEqual(vorbis.RATING, ['-1']);
+      assert.deepEqual(vorbis.REPLAYGAIN_TRACK_PEAK, ['0.999969']);
+      assert.deepEqual(vorbis.REPLAYGAIN_TRACK_GAIN, ['0.440000 dB']);
+      assert.deepEqual(vorbis.REPLAYGAIN_ALBUM_GAIN, ['0.440000 dB']);
     });
 
   });
@@ -165,8 +165,8 @@ describe("Parse Ogg", function() {
       const filePath = path.join(samplePath, 'female_scrub.spx');
 
       function checkFormat(format) {
-        assert.strictEqual(format.container, 'Ogg/Speex', 'format.container');
-        assert.strictEqual(format.codec, '1.0beta1');
+        assert.strictEqual(format.container, 'Ogg', 'format.container');
+        assert.strictEqual(format.codec, 'Speex 1.0beta1');
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
       }
 

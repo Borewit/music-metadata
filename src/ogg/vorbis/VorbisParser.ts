@@ -61,6 +61,7 @@ export class VorbisParser implements Ogg.IPageConsumer {
    * @param {Buffer} pageData
    */
   protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
+    this.metadata.setFormat('codec', 'Vorbis I');
     debug("Parse first page");
     // Parse  Vorbis common header
     const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
