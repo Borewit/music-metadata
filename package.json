@@ -108,7 +108,7 @@
     ]
   },
   "engines": {
-    "node": "*"
+    "node": ">=8"
   },
   "repository": {
     "type": "git",
