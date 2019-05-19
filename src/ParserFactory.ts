@@ -1,6 +1,7 @@
 import {INativeAudioMetadata, IOptions, IAudioMetadata, ParserType} from "./type";
 import {ITokenizer} from "strtok3/lib/type";
 import * as fileType from "file-type";
+import * as ContentType from "content-type";
 import * as MimeType from "media-typer";
 
 import * as _debug from "debug";
@@ -36,6 +37,17 @@ export interface ITokenParser {
    * @returns {Promise<void>}
    */
   parse(): Promise<void>;
+}
+
+export function parseHttpContentType(contentType: string): {type: string, subtype: string, suffix?: string, parameters: { [id: string]: string; }} {
+  const type = ContentType.parse(contentType);
+  const mime = MimeType.parse(type.type);
+  return {
+    type: mime.type,
+    subtype: mime.subtype,
+    suffix: mime.suffix,
+    parameters: type.parameters
+  };
 }
 
 export class ParserFactory {
@@ -176,16 +188,16 @@ export class ParserFactory {
   }
 
   /**
-   * @param {string} mimeType MIME-Type, extension, path or filename
+   * @param {string} httpContentType HTTP Content-Type, extension, path or filename
    * @returns {string} Parser sub-module name
    */
-  private static getParserIdForMimeType(mimeType: string): ParserType {
+  private static getParserIdForMimeType(httpContentType: string): ParserType {
 
     let mime;
     try {
-      mime = MimeType.parse(mimeType);
+      mime = parseHttpContentType(httpContentType);
     } catch (err) {
-      debug(`Invalid MIME-type: ${mimeType}`);
+      debug(`Invalid HTTP Content-Type header value: ${httpContentType}`);
       return;
     }
 
