@@ -68,9 +68,10 @@
     "doc-gen": "node doc-gen/gen.js"
   },
   "dependencies": {
+    "content-type": "^1.0.4",
     "debug": "^4.1.0",
     "file-type": "^11.0.0",
-    "media-typer": "0.3.0",
+    "media-typer": "^1.1.0",
     "strtok3": "^2.3.0",
     "token-types": "^1.0.1"
   },
