@@ -39,8 +39,8 @@ export class WavPackParser extends BasicParser {
 
       debug(`WavPack header blockIndex=${header.blockIndex}, len=${WavPack.BlockHeaderToken.len}`);
 
-      if (header.blockIndex === 0 && !this.metadata.format.dataformat) {
-        this.metadata.setFormat('dataformat', 'WavPack');
+      if (header.blockIndex === 0 && !this.metadata.format.container) {
+        this.metadata.setFormat('container', 'WavPack');
         this.metadata.setFormat('lossless', !header.flags.isHybrid);
         // tagTypes: this.type,
         this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);

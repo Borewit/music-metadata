@@ -36,7 +36,7 @@ export class SpeexParser extends VorbisParser {
     speexHeader = speexHeader;
     this.metadata.setFormat('numberOfChannels', speexHeader.nb_channels);
     this.metadata.setFormat('sampleRate', speexHeader.rate);
-    this.metadata.setFormat('encoder', speexHeader.version);
+    this.metadata.setFormat('codec', speexHeader.version);
     if (speexHeader.bitrate !== -1) {
       this.metadata.setFormat('bitrate', speexHeader.bitrate);
     }

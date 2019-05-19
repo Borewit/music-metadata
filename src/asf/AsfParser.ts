@@ -53,7 +53,7 @@ export class AsfParser extends BasicParser {
 
         case AsfObject.StreamPropertiesObject.guid.str: // 3.3
           const spo = await this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header));
-          this.metadata.setFormat('dataformat', 'ASF/' + spo.streamType);
+          this.metadata.setFormat('container', 'ASF/' + spo.streamType);
           break;
 
         case AsfObject.HeaderExtensionObject.guid.str: // 3.4

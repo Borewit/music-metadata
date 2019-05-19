@@ -83,7 +83,7 @@ describe("MIME & extension mapping", () => {
     const stream = fs.createReadStream(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
     return mm.parseStream(stream, '').then(metadata => {
       stream.close();
-      assert.equal(metadata.format.dataformat, "WAVE/PCM");
+      assert.equal(metadata.format.container, "WAVE/PCM");
     });
 
   });
@@ -115,11 +115,11 @@ describe("MIME & extension mapping", () => {
         });
     });
 
-    async function testFileType(sample: string, dataformat: string) {
+    async function testFileType(sample: string, container: string) {
       const stream = fs.createReadStream(path.join(samplePath, sample));
       const metadata = await mm.parseStream(stream);
       stream.close();
-      assert.equal(metadata.format.dataformat, dataformat);
+      assert.equal(metadata.format.container, container);
     }
 
     it("should recognize MP2", () => {

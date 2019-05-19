@@ -143,7 +143,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
      * Check native Vorbis header
      * @param vorbis Vorbis native tags
      */
-    function checkVorbisTags(vorbis: INativeTagDict, dataformat: string) {
+    function checkVorbisTags(vorbis: INativeTagDict, container: string) {
       // Compare expectedCommonTags with result.common
       t.deepEqual(vorbis.TITLE, ['Sinner\'s Prayer'], 'vorbis.TITLE');
       t.deepEqual(vorbis.ALBUM, ['Don\'t Explain'], 'vorbis.TITLE');
@@ -190,7 +190,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
       function checkFormat(format) {
-        t.strictEqual(format.dataformat, "flac", "format.dataformat = 'flac'");
+        t.strictEqual(format.container, "flac", "format.container = 'flac'");
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44100 samples/sec');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
@@ -201,7 +201,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       return mm.parseFile(path.join(samplePath, filename), {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         checkFormat(result.format);
-        checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
+        checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.container);
         checkCommonMapping('vorbis', result.common);
       });
 
@@ -215,7 +215,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       return mm.parseFile(filePath, {native: true}).then(result => {
         t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
         // Check Vorbis native tags
-        checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.dataformat);
+        checkVorbisTags(mm.orderTags(result.native.vorbis), result.format.container);
         // Check common mappings
         checkCommonMapping('vorbis', result.common);
       });
@@ -380,8 +380,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
-        t.deepEqual(format.dataformat, 'MPEG', 'format.dataformat');
-        t.deepEqual(format.encoder, 'mp3', 'format.encoder');
+        t.deepEqual(format.container, 'MPEG', 'format.container');
+        t.deepEqual(format.codec, 'mp3', 'format.codec');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
@@ -408,7 +408,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
       function checkFormat(format: IFormat) {
-        // t.strictEqual(format.dataformat, "WAVE", "format.dataformat = WAVE PCM");
+        // t.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
         t.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes)');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
@@ -500,8 +500,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
       function checkFormat(format: IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
-        t.strictEqual(format.dataformat, 'MPEG', 'format.dataformat');
-        t.strictEqual(format.encoder, 'mp3', 'format.encoder');
+        t.strictEqual(format.container, 'MPEG', 'format.container');
+        t.strictEqual(format.codec, 'mp3', 'format.codec');
         t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
         t.strictEqual(format.tool, 'LAME3.99r', 'format.tool');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
@@ -524,7 +524,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
       function checkFormat(format: IFormat) {
-        t.strictEqual(format.dataformat, "AIFF", "format.dataformat = 'AIFF'");
+        t.strictEqual(format.container, "AIFF", "format.container = 'AIFF'");
         t.deepEqual(format.tagTypes, ["ID3v2.4"], "format.tagTypes = 'ID3v2.4'"); // ToDo
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
@@ -554,8 +554,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
-      t.strictEqual(format.dataformat, 'isom/mp42/M4A', 'format.dataformat');
-      t.strictEqual(format.encoder, 'ALAC', 'format.encoder');
+      t.strictEqual(format.container, 'isom/mp42/M4A', 'format.container');
+      t.strictEqual(format.codec, 'ALAC', 'format.codec');
       t.strictEqual(format.lossless, true, 'ALAC is a lossless format');
       t.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -608,7 +608,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ["asf"], "format.tagTypes = asf");
       t.strictEqual(format.bitrate, 320000, "format.bitrate = 320000");
-      // ToDo t.strictEqual(format.dataformat, "wma", "format.dataformat = wma");
+      // ToDo t.strictEqual(format.container, "wma", "format.container = wma");
       t.strictEqual(format.duration, 5.235, 'format.duration'); // duration is wrong, but seems to be what is written in file
       // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo

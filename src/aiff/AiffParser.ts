@@ -36,12 +36,12 @@ export class AIFFParser extends BasicParser {
     switch (type) {
 
       case 'AIFF':
-        this.metadata.setFormat('dataformat', type);
+        this.metadata.setFormat('container', type);
         this.isCompressed = false;
         break;
 
       case 'AIFC':
-        this.metadata.setFormat('dataformat', 'AIFF-C');
+        this.metadata.setFormat('container', 'AIFF-C');
         this.isCompressed = true;
         break;
 
@@ -76,7 +76,7 @@ export class AIFFParser extends BasicParser {
         this.metadata.setFormat('numberOfChannels', common.numChannels);
         this.metadata.setFormat('numberOfSamples', common.numSampleFrames);
         this.metadata.setFormat('duration', common.numSampleFrames / common.sampleRate);
-        this.metadata.setFormat('encoder', common.compressionName);
+        this.metadata.setFormat('codec', common.compressionName);
         return header.chunkSize;
 
       case 'ID3 ': // ID3-meta-data

@@ -18,7 +18,7 @@ export class MpcSv8Parser extends BasicParser {
 
     const signature = await this.tokenizer.readToken(FourCcToken);
     assert.equal(signature, 'MPCK', 'Magic number');
-    this.metadata.setFormat('dataformat', 'Musepack, SV8');
+    this.metadata.setFormat('container', 'Musepack, SV8');
     return this.parsePacket();
   }
 

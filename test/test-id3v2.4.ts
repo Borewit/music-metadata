@@ -20,8 +20,8 @@ describe("Decode MP3/ID3v2.4", () => {
       t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(metadata.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
       t.strictEqual(metadata.format.codecProfile, 'CBR', 'format.codecProfile = CBR');
-      t.strictEqual(metadata.format.dataformat, 'MPEG', 'format.dataformat');
-      t.strictEqual(metadata.format.encoder, 'mp3', 'format.encoder');
+      t.strictEqual(metadata.format.container, 'MPEG', 'format.container');
+      t.strictEqual(metadata.format.codec, 'mp3', 'format.codec');
       t.strictEqual(metadata.format.tool, 'LAME3.98r', 'format.tool');
       t.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2');
 

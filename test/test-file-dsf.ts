@@ -13,7 +13,7 @@ describe('Parse Sony DSF (DSD Stream File)', () => {
     const metadata = await mm.parseFile(dsfFilePath, {duration: false});
 
     // format chunk information
-    assert.strictEqual(metadata.format.dataformat, 'DSF');
+    assert.strictEqual(metadata.format.container, 'DSF');
     assert.deepEqual(metadata.format.lossless, true);
     assert.deepEqual(metadata.format.numberOfChannels, 2);
     assert.deepEqual(metadata.format.bitsPerSample, 1);

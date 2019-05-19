@@ -22,7 +22,7 @@ export class MpcSv7Parser extends BasicParser {
 
     assert.equal(header.signature, 'MP+', 'Magic number');
     debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);
-    this.metadata.setFormat('dataformat', 'Musepack, SV7');
+    this.metadata.setFormat('container', 'Musepack, SV7');
     this.metadata.setFormat('sampleRate', header.sampleFrequency);
     const numberOfSamples = 1152 * (header.frameCount - 1) + header.lastFrameLength;
     this.metadata.setFormat('numberOfSamples', numberOfSamples);
@@ -31,7 +31,7 @@ export class MpcSv7Parser extends BasicParser {
     this.bitreader = new BitReader(this.tokenizer);
     this.metadata.setFormat('numberOfChannels', header.midSideStereo || header.intensityStereo ? 2 : 1);
     const version = await this.bitreader.read(8);
-    this.metadata.setFormat('encoder', (version / 100).toFixed(2));
+    this.metadata.setFormat('codec', (version / 100).toFixed(2));
     await this.skipAudioData(header.frameCount);
     debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
     return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);

@@ -38,7 +38,7 @@ export interface IXingInfoTag {
    */
 
   //  Initial LAME info, e.g.: LAME3.99r
-  encoder: string,
+  codec: string,
   /**
    * Info tag revision
    */
@@ -80,7 +80,7 @@ export const XingInfoTag: Token.IGetToken<IXingInfoTag> = {
       // === ZONE B - Initial LAME info  ===
 
       //  Initial LAME info, e.g.: LAME3.99r
-      encoder: new Token.StringType(9, 'ascii').get(buf, off + 116), // bytes $9A-$A => 154-164 (offset doc - 38)
+      codec: new Token.StringType(9, 'ascii').get(buf, off + 116), // bytes $9A-$A => 154-164 (offset doc - 38)
       // 	 Info tag revision
       infoTagRevision: Token.UINT8.get(buf, off + 125) >> 4,
       // VBR method

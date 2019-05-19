@@ -28,7 +28,7 @@ export class DsdiffParser extends BasicParser {
     switch (type) {
 
       case 'DSD':
-        this.metadata.setFormat('dataformat', `DSDIFF/${type}`);
+        this.metadata.setFormat('container', `DSDIFF/${type}`);
         this.metadata.setFormat('lossless', true);
         return this.readFmt8Chunks(header.chunkSize - FourCcToken.len);
 
@@ -116,7 +116,7 @@ export class DsdiffParser extends BasicParser {
             this.metadata.setFormat('lossless', true);
             this.metadata.setFormat('bitsPerSample', 1);
           }
-          this.metadata.setFormat('encoder', `${compressionIdCode} (${compressionName})`);
+          this.metadata.setFormat('codec', `${compressionIdCode} (${compressionName})`);
           break;
 
         case 'ABSS': // 3.2.4 Absolute Start Time Chunk

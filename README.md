@@ -66,7 +66,8 @@ Support for encoding / format details:
 
 ## Compatibility
 
-The JavaScript in runtime is compliant with [ECMAScript 2015 (ES6)](https://nodejs.org/en/docs/es6/).
+The JavaScript in runtime is compliant with [ECMAScript 2017 (ES8)](https://en.wikipedia.org/wiki/ECMAScript#8th_Edition_-_ECMAScript_2017).
+Requires [Node.js®](https://nodejs.org/) version 6 or higher.
 
 ### Browser Support
 
@@ -231,14 +232,14 @@ If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` inte
 #### Format
   
 Audio format information. Defined in the TypeScript `IFormat` interface:
-*   `dataformat?: string` Audio encoding format. e.g.: 'flac'
+*   `container?: string` Audio encoding format. e.g.: 'flac'
+*   `codec?` Name of the codec (algorithm used for the audio compression)
+*   `codecProfile?: string` Codec profile / settings
 *   `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
 *   `duration?: number` Duration in seconds
 *   `bitrate?: number` Number bits per second of encoded audio file
 *   `sampleRate?: number` Sampling rate in Samples per second (S/s)
 *   `bitsPerSample?: number` Audio bit depth
-*   `encoder?` Encoder name
-*   `codecProfile?: string` Codec profile
 *   `lossless?: boolean` True if lossless,  false for lossy encoding
 *   `numberOfChannels?: number` Number of audio channels
 *   `numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
@@ -269,7 +270,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
     1.  Using recursion
 
         ```javascript
-        const mm = require('music-metadata')z
+        const mm = require('music-metadata')
         
         function parseFiles(audioFiles) {
           
