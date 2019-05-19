@@ -420,8 +420,8 @@ export class MpegParser extends AbstractID3Parser {
     }
     await this.tokenizer.ignore(3);
 
-    this.metadata.setFormat('dataformat', header.container);
-    this.metadata.setFormat('encoder', header.codec);
+    this.metadata.setFormat('container', header.container);
+    this.metadata.setFormat('codec', header.codec);
     this.metadata.setFormat('lossless', false);
     this.metadata.setFormat('sampleRate', header.samplingRate);
 
@@ -579,7 +579,7 @@ export class MpegParser extends AbstractID3Parser {
     const infoTag = await this.tokenizer.readToken<IXingInfoTag>(XingInfoTag);
     this.offset += XingInfoTag.len;  // 12
 
-    this.metadata.setFormat('tool', Common.stripNulls(infoTag.encoder));
+    this.metadata.setFormat('tool', Common.stripNulls(infoTag.codec));
 
     if ((infoTag.headerFlags[3] & 0x01) === 1) {
       const duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);

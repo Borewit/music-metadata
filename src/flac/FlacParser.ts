@@ -92,7 +92,7 @@ export class FlacParser extends AbstractID3Parser {
       throw new Error('Unexpected block-stream-info length');
 
     const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo);
-    this.metadata.setFormat('dataformat', 'flac');
+    this.metadata.setFormat('container', 'flac');
     this.metadata.setFormat('lossless', true);
     this.metadata.setFormat('numberOfChannels', streamInfo.channels);
     this.metadata.setFormat('bitsPerSample', streamInfo.bitsPerSample);

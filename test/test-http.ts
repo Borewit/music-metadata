@@ -81,7 +81,7 @@ describe.skip('HTTP streaming', function() {
             if (response.stream.destroy) {
               response.stream.destroy(); // Node >= v8 only
             }
-            assert.strictEqual(tags.format.encoder, 'MP4A');
+            assert.strictEqual(tags.format.codec, 'MP4A');
             assert.strictEqual(tags.format.lossless, false);
 
             assert.strictEqual(tags.common.title, 'We Made a Plan');

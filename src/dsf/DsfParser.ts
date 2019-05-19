@@ -20,7 +20,7 @@ export class DsfParser extends AbstractID3Parser {
     const p0 = this.tokenizer.position; // mark start position, normally 0
     const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
     assert.strictEqual(chunkHeader.id, 'DSD ', 'Invalid chunk signature');
-    this.metadata.setFormat('dataformat', 'DSF');
+    this.metadata.setFormat('container', 'DSF');
     this.metadata.setFormat('lossless', true);
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);
     if (dsdChunk.metadataPointer === 0) {

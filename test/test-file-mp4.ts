@@ -15,8 +15,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
 
     function checkFormat(format) {
       assert.deepEqual(format.lossless, false);
-      assert.deepEqual(format.dataformat, 'isom/M4A', 'dataformat');
-      assert.deepEqual(format.encoder, 'MP4A', 'encoder');
+      assert.deepEqual(format.container, 'isom/M4A', 'container');
+      assert.deepEqual(format.codec, 'MP4A', 'codec');
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       t.strictEqual(format.duration, 2.206, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -150,8 +150,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.track, {no: null, of: null});
             assert.deepEqual(metadata.common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
 
-            assert.deepEqual(metadata.format.dataformat, 'iso2/isom', 'format.dataformat');
-            assert.deepEqual(metadata.format.encoder, 'MP4A+text', 'format.encoder');
+            assert.deepEqual(metadata.format.container, 'iso2/isom', 'format.container');
+            assert.deepEqual(metadata.format.codec, 'MP4A+text', 'format.codec');
           });
         });
       });
@@ -173,8 +173,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.track, {no: 1, of: null});
             assert.deepEqual(metadata.common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
 
-            assert.deepEqual(metadata.format.dataformat, '3gp5/M4A', 'format.dataformat');
-            assert.deepEqual(metadata.format.encoder, 'MP4A+text', 'format.encoder');
+            assert.deepEqual(metadata.format.container, '3gp5/M4A', 'format.container');
+            assert.deepEqual(metadata.format.codec, 'MP4A+text', 'format.codec');
 
             const iTunes = mm.orderTags(metadata.native.iTunes);
             assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
@@ -200,8 +200,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.tvSeason, 2);
             assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
 
-            assert.deepEqual(metadata.format.dataformat, 'mp42', 'format.dataformat');
-            assert.deepEqual(metadata.format.encoder, 'MP4A+avc1+ac-3+CEA-608', 'format.encoder');
+            assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
+            assert.deepEqual(metadata.format.codec, 'MP4A+avc1+ac-3+CEA-608', 'format.codec');
             assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
             assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
             assert.deepEqual(metadata.common.albumartist, 'Mr. Pickles');
@@ -223,8 +223,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.deepEqual(metadata.format.dataformat, 'mp42/M4A', 'format.dataformat');
-          assert.deepEqual(metadata.format.encoder, 'MP4A', 'format.encoder');
+          assert.deepEqual(metadata.format.container, 'mp42/M4A', 'format.container');
+          assert.deepEqual(metadata.format.codec, 'MP4A', 'format.codec');
         });
       });
     });
@@ -238,8 +238,8 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.deepEqual(metadata.format.dataformat, 'mp42', 'format.dataformat');
-          assert.deepEqual(metadata.format.encoder, 'MP4A+MP4S', 'format.encoder');
+          assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
+          assert.deepEqual(metadata.format.codec, 'MP4A+MP4S', 'format.codec');
 
           assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
           assert.deepEqual(metadata.common.albumartist, 'Angels and Airwaves');

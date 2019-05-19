@@ -10,7 +10,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
   describe('codec: WavPack', () => {
 
     function checkFormat(format) {
-      t.strictEqual(format.dataformat, 'WavPack', 'format.dataformat');
+      t.strictEqual(format.container, 'WavPack', 'format.container');
       t.deepEqual(format.tagTypes, ['APEv2'], 'format.tagTypes');
       t.approximately(format.duration, 2.123, 1 / 1000, 'format.duration');
       t.strictEqual(format.codecProfile, 'PCM', 'format.codecProfile');
@@ -36,7 +36,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
   describe('codec: DSD128', () => {
 
     function checkFormat(format) {
-      t.strictEqual(format.dataformat, 'WavPack', 'format.dataformat');
+      t.strictEqual(format.container, 'WavPack', 'format.container');
       t.strictEqual(format.codecProfile, 'DSD', 'format.codecProfile');
       t.deepEqual(format.numberOfSamples, 564480, 'format.numberOfSamples');
       t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');
@@ -58,7 +58,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
   describe('codec: DSD128 compressed', () => {
 
     function checkFormat(format) {
-      t.strictEqual(format.dataformat, 'WavPack', 'format.dataformat');
+      t.strictEqual(format.container, 'WavPack', 'format.container');
       t.strictEqual(format.codecProfile, 'DSD', 'format.codecProfile');
       t.deepEqual(format.numberOfSamples, 564480, 'format.numberOfSamples');
       t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');

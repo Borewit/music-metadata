@@ -38,8 +38,8 @@ describe("Parse MPEG", () => {
     return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
 
       t.deepEqual(metadata.format.tagTypes, ["ID3v2.3", "ID3v1"], "Tags: ID3v1 & ID3v2.3");
-      t.strictEqual(metadata.format.dataformat, "MPEG", "format.dataformat = MPEG");
-      t.strictEqual(metadata.format.encoder, "mp2", "format.encoder = mp2 (MPEG-2 Audio Layer II)");
+      t.strictEqual(metadata.format.container, "MPEG", "format.container = MPEG");
+      t.strictEqual(metadata.format.codec, "mp2", "format.codec = mp2 (MPEG-2 Audio Layer II)");
       t.strictEqual(metadata.format.bitrate, 128000, "format.bitrate = 128 kbit/sec");
       t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
       t.strictEqual(metadata.format.numberOfSamples, 23040, "format.numberOfSamples = 23040");
@@ -97,7 +97,7 @@ describe("Parse MPEG", () => {
         t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
 
-        // t.strictEqual(format.encoder, 'LAME3.91', 'format.encoder');
+        // t.strictEqual(format.codec, 'LAME3.91', 'format.codec');
         // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
       }
 
@@ -162,7 +162,7 @@ describe("Parse MPEG", () => {
         t.approximately(format.duration, 200.9, 1 / 10, "format.duration"); // FooBar says 3:26.329 seconds
         t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels 2 (stereo)");
-        // t.strictEqual(format.encoder, 'LAME3.98r', 'format.encoder'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407
+        // t.strictEqual(format.codec, 'LAME3.98r', 'format.codec'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407
         // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
       }
 
@@ -250,8 +250,8 @@ describe("Parse MPEG", () => {
     function checkFormat(format: IFormat, expectedDuration) {
       t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v2.4", "ID3v1"], "format.tagTypes");
       t.strictEqual(format.duration, expectedDuration, "format.duration");
-      t.deepEqual(format.dataformat, 'MPEG', 'format.dataformat');
-      t.deepEqual(format.encoder, 'mp3', 'format.encoder');
+      t.deepEqual(format.container, 'MPEG', 'format.container');
+      t.deepEqual(format.codec, 'mp3', 'format.codec');
       t.strictEqual(format.lossless, false, "format.lossless");
       t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
       t.strictEqual(format.bitrate, 320000, "format.bitrate = 160 kbit/sec");

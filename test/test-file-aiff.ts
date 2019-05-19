@@ -15,14 +15,14 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
     const lossless = compressionType === 'PCM';
     const dataFormat = lossless ? 'AIFF' : 'AIFF-C';
     const duration = samples / format.sampleRate;
-    t.strictEqual(format.dataformat, dataFormat, `format.dataformat = '${dataFormat}'`);
+    t.strictEqual(format.container, dataFormat, `format.container = '${dataFormat}'`);
     t.strictEqual(format.lossless, lossless, `format.lossless = ${lossless}`);
     t.strictEqual(format.sampleRate, sampleRate, `format.sampleRate = ${sampleRate} kHz`);
     t.strictEqual(format.bitsPerSample, bitsPerSample, `format.bitsPerSample = ${bitsPerSample} bit`);
     t.strictEqual(format.numberOfChannels, channels, `format.numberOfChannels = ${channels} channels`);
     t.strictEqual(format.numberOfSamples, samples, `format.numberOfSamples = ${samples} samples`);
     t.strictEqual(format.duration, duration, `format.duration = ${duration} sec.`);
-    t.strictEqual(format.encoder, compressionType, `format.encoder = ${compressionType}`);
+    t.strictEqual(format.codec, compressionType, `format.codec = ${compressionType}`);
   }
 
   describe('Parse AIFF', () => {
