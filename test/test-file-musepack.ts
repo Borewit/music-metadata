@@ -16,11 +16,11 @@ describe('Parse Musepack (.mpc)', () => {
         return parser.initParser(filePath, 'audio/musepack', {native: true}).then(metadata => {
           // Check format
           const format = metadata.format;
-          assert.deepEqual(format.dataformat, 'Musepack, SV7');
+          assert.deepEqual(format.container, 'Musepack, SV7');
           assert.strictEqual(format.sampleRate, 44100);
           assert.strictEqual(format.numberOfSamples, 11940);
           assert.approximately(format.bitrate, 269649, 1);
-          assert.strictEqual(format.encoder, '1.15');
+          assert.strictEqual(format.codec, '1.15');
 
           // Check generic metadata
           const common = metadata.common;
@@ -51,11 +51,11 @@ describe('Parse Musepack (.mpc)', () => {
 
         return parser.initParser(filePath, 'audio/musepack', {native: true}).then(metadata => {
           // Check format
-          assert.deepEqual(metadata.format.dataformat, 'Musepack, SV7');
+          assert.deepEqual(metadata.format.container, 'Musepack, SV7');
           assert.strictEqual(metadata.format.sampleRate, 44100);
           assert.strictEqual(metadata.format.numberOfSamples, 11940);
           assert.approximately(metadata.format.bitrate, 269649, 1);
-          assert.strictEqual(metadata.format.encoder, '1.15');
+          assert.strictEqual(metadata.format.codec, '1.15');
 
           // Check generic metadata
           assert.strictEqual(metadata.common.title, 'God Inside');
@@ -78,7 +78,7 @@ describe('Parse Musepack (.mpc)', () => {
 
         return parser.initParser(filePath, 'audio/musepack', {native: true}).then(metadata => {
           // Check format
-          assert.deepEqual(metadata.format.dataformat, 'Musepack, SV8');
+          assert.deepEqual(metadata.format.container, 'Musepack, SV8');
           assert.strictEqual(metadata.format.sampleRate, 48000);
           assert.strictEqual(metadata.format.numberOfSamples, 24000);
           assert.strictEqual(metadata.format.numberOfChannels, 2);

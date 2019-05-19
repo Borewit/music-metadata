@@ -47,7 +47,7 @@ export class WaveParser extends BasicParser {
 
   public async parseRiffChunk(): Promise<void> {
     const type = await this.tokenizer.readToken<string>(FourCcToken);
-    this.metadata.setFormat('dataformat', type);
+    this.metadata.setFormat('container', type);
     switch (type) {
       case 'WAVE':
         return this.readWaveChunk();
@@ -82,7 +82,7 @@ export class WaveParser extends BasicParser {
             debug('WAVE/non-PCM format=' + fmt.wFormatTag);
             subFormat = 'non-PCM (' + fmt.wFormatTag + ')';
           }
-          this.metadata.setFormat('dataformat', 'WAVE/' + subFormat);
+          this.metadata.setFormat('container', 'WAVE/' + subFormat);
           this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
           this.metadata.setFormat('sampleRate', fmt.nSamplesPerSec);
           this.metadata.setFormat('numberOfChannels', fmt.nChannels);

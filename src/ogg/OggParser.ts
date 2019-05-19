@@ -107,7 +107,7 @@ export class OggParser extends BasicParser {
             default:
               throw new Error('gg audio-codec not recognized (id=' + id + ')');
           }
-          this.metadata.setFormat('dataformat', 'Ogg/' + this.pageConsumer.codecName);
+          this.metadata.setFormat('container', 'Ogg/' + this.pageConsumer.codecName);
         }
         this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);

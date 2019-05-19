@@ -101,7 +101,7 @@ describe("Parse Ogg", function() {
       const filePath = path.join(samplePath, 'issue_70.ogg');
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        assert.strictEqual(metadata.format.dataformat, 'Ogg/Vorbis I');
+        assert.strictEqual(metadata.format.container, 'Ogg/Vorbis I');
         assert.strictEqual(metadata.format.sampleRate, 44100);
 
         const vorbis = mm.orderTags(metadata.native.vorbis);
@@ -165,8 +165,8 @@ describe("Parse Ogg", function() {
       const filePath = path.join(samplePath, 'female_scrub.spx');
 
       function checkFormat(format) {
-        assert.strictEqual(format.dataformat, 'Ogg/Speex', 'format.dataformat');
-        assert.strictEqual(format.encoder, '1.0beta1');
+        assert.strictEqual(format.container, 'Ogg/Speex', 'format.container');
+        assert.strictEqual(format.codec, '1.0beta1');
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
       }
 

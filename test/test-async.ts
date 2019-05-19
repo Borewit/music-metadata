@@ -26,7 +26,7 @@ describe("Asynchronous observer updates", () => {
       .then(metadata => {
         assert.deepEqual(eventTags, [
           {
-            id: 'dataformat',
+            id: 'container',
             type: 'format',
             value: 'flac'
           },

@@ -172,7 +172,7 @@ export class APEv2Parser extends BasicParser {
     const header = await this.tokenizer.readToken(Header);
     // ToDo before
     this.metadata.setFormat('lossless', true);
-    this.metadata.setFormat('dataformat', 'Monkey\'s Audio');
+    this.metadata.setFormat('container', 'Monkey\'s Audio');
 
     this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
     this.metadata.setFormat('sampleRate', header.sampleRate);

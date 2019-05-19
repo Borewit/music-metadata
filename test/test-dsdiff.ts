@@ -13,7 +13,7 @@ describe('Parse Philips DSDIFF', () => {
     const {format, common} = await mm.parseFile(filePath, {duration: false});
 
     // format chunk information
-    assert.strictEqual(format.dataformat, 'DSDIFF/DSD');
+    assert.strictEqual(format.container, 'DSDIFF/DSD');
     assert.deepEqual(format.lossless, true);
     assert.deepEqual(format.tagTypes, ['ID3v2.3']);
     assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');

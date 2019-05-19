@@ -258,12 +258,12 @@ export interface ICommonTagsResult {
 }
 
 export type FormatId =
-  'dataformat'
+  'container'
   | 'duration'
   | 'bitrate'
   | 'sampleRate'
   | 'bitsPerSample'
-  | 'encoder'
+  | 'codec'
   | 'tool'
   | 'codecProfile'
   | 'lossless'
@@ -276,7 +276,7 @@ export interface IFormat {
   /**
    * E.g.: 'flac'
    */
-  readonly dataformat?: string, // ToDo: make mandatory
+  readonly container?: string, // ToDo: make mandatory
 
   /**
    * List of tags found in parsed audio file
@@ -311,7 +311,7 @@ export interface IFormat {
   /**
    * Encoder name / compressionType, e.g.: 'PCM', 'ITU-T G.711 mu-law'
    */
-  readonly encoder?: string,
+  readonly codec?: string,
 
   /**
    * Codec profile

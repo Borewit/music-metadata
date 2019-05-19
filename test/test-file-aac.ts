@@ -15,8 +15,8 @@ describe("Parse ADTS/AAC", () => {
   const samplePath = path.join(__dirname, 'samples', 'aac');
 
   function checkFormat(format: IFormat, dataFormat: string, codec: string, codecProfile: string, sampleRate: number, channels: number, bitrate: number, samples?: number) {
-    t.strictEqual(format.dataformat, dataFormat, 'format.dataformat');
-    t.strictEqual(format.encoder, codec, 'format.encoder');
+    t.strictEqual(format.container, dataFormat, 'format.container');
+    t.strictEqual(format.codec, codec, 'format.codec');
     t.strictEqual(format.codecProfile, codecProfile, 'format.codecProfile');
     t.strictEqual(format.lossless, false, 'format.lossless');
     t.strictEqual(format.sampleRate, sampleRate, 'format.sampleRate');
