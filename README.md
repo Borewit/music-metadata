@@ -14,8 +14,6 @@ Stream and file based music metadata parser for node.
 
 ## Features
 
-*   Supports metadata of the following audio and tag types:
-
 ### Support for audio file types
 
 | Audio format  | Description                     | Wiki                                                               |                                                                                                                                               |
