@@ -165,8 +165,8 @@ describe("Parse Ogg", function() {
       const filePath = path.join(samplePath, 'female_scrub.spx');
 
       function checkFormat(format) {
-        assert.strictEqual(format.container, 'Ogg/Speex', 'format.container');
-        assert.strictEqual(format.codec, '1.0beta1');
+        assert.strictEqual(format.container, 'Ogg', 'format.container');
+        assert.strictEqual(format.codec, 'Speex 1.0beta1');
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
       }
 
