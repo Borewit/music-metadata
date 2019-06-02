@@ -28,7 +28,12 @@ describe("Asynchronous observer updates", () => {
           {
             id: 'container',
             type: 'format',
-            value: 'flac'
+            value: 'FLAC'
+          },
+          {
+            id: 'codec',
+            type: 'format',
+            value: 'FLAC'
           },
           {
             id: 'lossless',

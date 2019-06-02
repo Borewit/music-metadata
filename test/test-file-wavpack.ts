@@ -13,7 +13,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
       t.strictEqual(format.container, 'WavPack', 'format.container');
       t.deepEqual(format.tagTypes, ['APEv2'], 'format.tagTypes');
       t.approximately(format.duration, 2.123, 1 / 1000, 'format.duration');
-      t.strictEqual(format.codecProfile, 'PCM', 'format.codecProfile');
+      t.strictEqual(format.codec, 'PCM', 'format.codecProfile');
     }
 
     function checkCommon(common) {
@@ -37,7 +37,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
 
     function checkFormat(format) {
       t.strictEqual(format.container, 'WavPack', 'format.container');
-      t.strictEqual(format.codecProfile, 'DSD', 'format.codecProfile');
+      t.strictEqual(format.codec, 'DSD', 'format.codecProfile');
       t.deepEqual(format.numberOfSamples, 564480, 'format.numberOfSamples');
       t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');
       t.strictEqual(format.duration, 0.1, 'format.duration');
@@ -59,7 +59,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
 
     function checkFormat(format) {
       t.strictEqual(format.container, 'WavPack', 'format.container');
-      t.strictEqual(format.codecProfile, 'DSD', 'format.codecProfile');
+      t.strictEqual(format.codec, 'DSD', 'format.codecProfile');
       t.deepEqual(format.numberOfSamples, 564480, 'format.numberOfSamples');
       t.strictEqual(format.sampleRate, 5644800, 'format.sampleRate');
       t.strictEqual(format.duration, 0.1, 'format.duration');

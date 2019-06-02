@@ -35,7 +35,7 @@ describe("Parse MP3 files", () => {
     return mm.parseFile(filePath, {duration: true}).then(metadata => {
       const format = metadata.format;
       assert.deepEqual(format.container, 'MPEG', 'format.container');
-      assert.deepEqual(format.codec, 'mp3', 'format.codec');
+      assert.deepEqual(format.codec, 'MP3', 'format.codec');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
 
@@ -55,7 +55,7 @@ describe("Parse MP3 files", () => {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
       t.approximately(format.duration, 61.73, 1 / 100, 'format.duration');
       t.strictEqual(format.container, 'MPEG', 'format.container');
-      t.strictEqual(format.codec, 'mp3', 'format.codec');
+      t.strictEqual(format.codec, 'MP3', 'format.codec');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 64000, 'format.bitrate = 128 kbit/sec');

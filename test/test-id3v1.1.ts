@@ -16,7 +16,7 @@ describe("Parsing MPEG / ID3v1", () => {
     function checkFormat(format: IFormat) {
       t.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       t.strictEqual(format.container, 'MPEG', 'format.container');
-      t.strictEqual(format.codec, 'mp3', 'format.codec');
+      t.strictEqual(format.codec, 'MP3', 'format.codec');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 160000, 'format.bitrate = 160 kbit/sec');
@@ -84,7 +84,7 @@ describe("Parsing MPEG / ID3v1", () => {
       t.deepEqual(format.tagTypes, [], 'format.tagTypes');
       t.strictEqual(format.duration, 2.088, 'format.duration');
       t.strictEqual(format.container, 'MPEG', 'format.container');
-      t.strictEqual(format.codec, 'mp3', 'format.codec');
+      t.strictEqual(format.codec, 'MP3', 'format.codec');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 16000, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
@@ -113,7 +113,7 @@ describe("Parsing MPEG / ID3v1", () => {
       t.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
       t.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       t.deepEqual(format.container, 'MPEG', 'format.container');
-      t.deepEqual(format.codec, 'mp3', 'format.codec');
+      t.deepEqual(format.codec, 'MP3', 'format.codec');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');

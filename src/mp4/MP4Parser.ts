@@ -96,7 +96,8 @@ export class MP4Parser extends BasicParser {
         case "ftyp":
           const types = await this.parseAtom_ftyp(atom.dataLen);
           debug(`ftyp: ${types.join('/')}`);
-          this.metadata.setFormat('container', types.filter(distinct).join('/'));
+          const x = types.filter(distinct).join('/');
+          this.metadata.setFormat('container', x);
           return;
 
         case 'mdhd': // Media header atom
