@@ -13,7 +13,8 @@ describe("Parse FLAC", () => {
   const flacFilePath = path.join(samplePath, "flac.flac");
 
   function checkFormat(format) {
-    t.strictEqual(format.container, "flac", "format.container");
+    t.strictEqual(format.container, 'FLAC', "format.container");
+    t.strictEqual(format.codec, 'FLAC', "format.codec");
     t.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
     t.strictEqual(format.duration, 271.7733333333333, "format.duration");
     t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");

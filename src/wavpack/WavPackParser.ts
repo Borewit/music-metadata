@@ -51,7 +51,7 @@ export class WavPackParser extends BasicParser {
         }
         this.metadata.setFormat('numberOfChannels', header.flags.isMono ? 1 : 2);
         this.metadata.setFormat('numberOfSamples', header.totalSamples);
-        this.metadata.setFormat('codecProfile', header.flags.isDSD ? 'DSD' : 'PCM');
+        this.metadata.setFormat('codec', header.flags.isDSD ? 'DSD' : 'PCM');
       }
 
       const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);

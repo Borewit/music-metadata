@@ -82,7 +82,7 @@ export class WaveParser extends BasicParser {
             debug('WAVE/non-PCM format=' + fmt.wFormatTag);
             subFormat = 'non-PCM (' + fmt.wFormatTag + ')';
           }
-          this.metadata.setFormat('container', 'WAVE/' + subFormat);
+          this.metadata.setFormat('codec', subFormat);
           this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
           this.metadata.setFormat('sampleRate', fmt.nSamplesPerSec);
           this.metadata.setFormat('numberOfChannels', fmt.nChannels);

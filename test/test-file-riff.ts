@@ -28,7 +28,8 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
       const filePath = path.join(samplePath, filename);
 
       function checkFormat(format: IFormat) {
-        assert.strictEqual(format.container, "WAVE/PCM", "format.container = WAVE/PCM");
+        assert.deepEqual(format.container, 'WAVE', 'format.container');
+        assert.deepEqual(format.codec, 'PCM', 'format.codec');
         assert.strictEqual(format.lossless, true);
         assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], "format.tagTypes = ['exif', 'ID3v2.3']");
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
@@ -54,7 +55,8 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
       const filePath = path.join(samplePath, "issue_75.wav");
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        assert.deepEqual(metadata.format.container, "WAVE/PCM");
+        assert.deepEqual(metadata.format.container, 'WAVE', 'format.container');
+        assert.deepEqual(metadata.format.codec, 'PCM', 'format.codec');
       });
     });
 
@@ -66,7 +68,8 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         const format = metadata.format;
         assert.strictEqual(format.lossless, true);
-        assert.deepEqual(format.container, "WAVE/PCM");
+        assert.deepEqual(format.container, 'WAVE', 'format.container');
+        assert.deepEqual(format.codec, 'PCM', 'format.codec');
         assert.deepEqual(format.bitsPerSample, 24);
         assert.deepEqual(format.sampleRate, 48000);
         assert.deepEqual(format.numberOfSamples, 13171);
@@ -113,7 +116,8 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         const format = metadata.format;
-        assert.strictEqual(format.container, "WAVE/PCM");
+        assert.strictEqual(format.container, 'WAVE', 'format.container');
+        assert.strictEqual(format.codec, 'PCM', 'format.codec');
         assert.strictEqual(format.lossless, true);
         assert.strictEqual(format.sampleRate, 48000);
         assert.strictEqual(format.bitsPerSample, 24);
@@ -132,7 +136,8 @@ describe("Parse RIFF (Resource Interchange File Format)", () => {
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
         const format = metadata.format;
-        assert.strictEqual(format.container, "WAVE/ADPCM");
+        assert.strictEqual(format.container, 'WAVE', 'format.container');
+        assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
         assert.strictEqual(format.lossless, false);
         assert.strictEqual(format.sampleRate, 22050);
         assert.strictEqual(format.bitsPerSample, 4);

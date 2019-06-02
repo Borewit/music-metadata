@@ -190,7 +190,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
       function checkFormat(format) {
-        t.strictEqual(format.container, "flac", "format.container = 'flac'");
+        t.strictEqual(format.container, 'FLAC', 'format.container');
+        t.strictEqual(format.codec, 'FLAC', 'format.codec');
         t.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44100 samples/sec');
         t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
@@ -381,7 +382,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
         t.deepEqual(format.container, 'MPEG', 'format.container');
-        t.deepEqual(format.codec, 'mp3', 'format.codec');
+        t.deepEqual(format.codec, 'MP3', 'format.codec');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
@@ -501,7 +502,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       function checkFormat(format: IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
         t.strictEqual(format.container, 'MPEG', 'format.container');
-        t.strictEqual(format.codec, 'mp3', 'format.codec');
+        t.strictEqual(format.codec, 'MP3', 'format.codec');
         t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
         t.strictEqual(format.tool, 'LAME3.99r', 'format.tool');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');

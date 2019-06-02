@@ -83,7 +83,7 @@ describe("MIME & extension mapping", () => {
     const stream = fs.createReadStream(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
     return mm.parseStream(stream, '').then(metadata => {
       stream.close();
-      assert.equal(metadata.format.container, "WAVE/PCM");
+      assert.equal(metadata.format.container, 'WAVE');
     });
 
   });
@@ -144,7 +144,7 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize FLAC", () => {
-      return testFileType('flac.flac', 'flac');
+      return testFileType('flac.flac', 'FLAC');
     });
 
     it("should recognize OGG", () => {
@@ -152,7 +152,7 @@ describe("MIME & extension mapping", () => {
     });
 
     it("should recognize WAV", () => {
-      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE/PCM');
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE');
     });
 
     it("should recognize APE", () => {
