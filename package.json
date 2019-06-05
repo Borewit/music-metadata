@@ -120,12 +120,10 @@
     "url": "https://github.com/Borewit/music-metadata/issues"
   },
   "nyc": {
-    "include": [
-      "src/**/*.ts",
-      "test/**/*.ts"
-    ],
     "exclude": [
-      "lib/**"
+      "lib/**",
+      "test/**/*.ts",
+      "src/**/*.js"
     ],
     "extension": [
       ".ts"
