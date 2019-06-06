@@ -72,7 +72,7 @@
     "debug": "^4.1.0",
     "file-type": "^11.0.0",
     "media-typer": "^1.1.0",
-    "strtok3": "^2.3.0",
+    "strtok3": "^3.0.0",
     "token-types": "^1.0.1"
   },
   "devDependencies": {
