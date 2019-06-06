@@ -16,7 +16,6 @@ jobs:
     - stage: after_success
       script:
       - yarn install
-      - yarn run compile
       - yarn run test-coverage
       - yarn run send-coveralls
       - yarn add -D codacy-coverage
