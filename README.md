@@ -3,6 +3,7 @@
 [![npm downloads](http://img.shields.io/npm/dm/streaming-http-token-reader.svg)](https://npmjs.org/package/streaming-http-token-reader)
 [![dependencies Status](https://david-dm.org/Borewit/streaming-http-token-reader/status.svg)](https://david-dm.org/Borewit/streaming-http-token-reader)
 [![Known Vulnerabilities](https://snyk.io/test/github/Borewit/streaming-http-token-reader/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/streaming-http-token-reader?targetFile=package.json)
+[![Minified size](https://badgen.net/bundlephobia/min/streaming-http-token-reader)](https://bundlephobia.com/result?p=streaming-http-token-reader)
 
 # streaming-http-token-reader
 
