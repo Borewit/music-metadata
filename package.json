@@ -26,6 +26,7 @@
     "build": "npm run compile-dist",
     "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
     "karma": "karma start",
+    "test": "npm run karma-once",
     "karma-once": "karma start --browsers Chrome --single-run",
     "travis-karma": "karma start --browsers Firefox --single-run",
     "post-coveralls": "coveralls < coverage/lcov.info"
@@ -46,7 +47,7 @@
     "karma-jasmine-html-reporter": "^1.4.0",
     "karma-spec-reporter": "^0.0.32",
     "karma-webpack": "^3.0.5",
-    "music-metadata-browser": "^0.7.1",
+    "music-metadata-browser": "^1.1.1",
     "ts-loader": "^5.2.1",
     "tslint": "^5.11.0",
     "typescript": "^3.3.1",
