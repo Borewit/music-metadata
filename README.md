@@ -13,7 +13,7 @@ The way streaming-http-token-reader
 
 ## Example
 
-```JavaScript
+```javascript
 import * as mm from 'music-metadata-browser';
 import { IStreamingHttpConfig, StreamingHttpTokenReader } from 'streaming-http-token-reader';
 
