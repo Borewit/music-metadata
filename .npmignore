@@ -1,3 +1,10 @@
 config/
 src/
 coverage/
+*.iml
+.travis.yml
+.eslintrc
+tsconfig.json
+tslint.conf
+yarn-error.log
+karma.conf.json
