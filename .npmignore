@@ -5,6 +5,6 @@ coverage/
 .travis.yml
 .eslintrc
 tsconfig.json
-tslint.conf
+tslint.json
 yarn-error.log
-karma.conf.json
+karma.conf.js
