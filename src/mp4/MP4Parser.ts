@@ -70,6 +70,7 @@ export class MP4Parser extends BasicParser {
   }
 
   private formatList: string[];
+  private audioLengthInBytes: number;
 
   public async parse(): Promise<void> {
 
@@ -107,9 +108,8 @@ export class MP4Parser extends BasicParser {
           return this.parseAtom_mvhd(atom);
 
         case 'mdat': // media data atom:
-          if (this.tokenizer.fileSize && this.metadata.format.duration) {
-            this.metadata.setFormat('bitrate', 8 * atom.dataLen / this.metadata.format.duration);
-          }
+          this.audioLengthInBytes = atom.dataLen;
+          this.calculateBitRate();
           break;
       }
 
@@ -119,6 +119,12 @@ export class MP4Parser extends BasicParser {
     }, this.tokenizer.fileSize);
 
     this.metadata.setFormat('codec', this.formatList.filter(distinct).join('+'));
+  }
+
+  private calculateBitRate() {
+    if (this.audioLengthInBytes && this.metadata.format.duration) {
+      this.metadata.setFormat('bitrate', 8 * this.audioLengthInBytes / this.metadata.format.duration);
+    }
   }
 
   private addTag(id: string, value: any) {
@@ -269,6 +275,7 @@ export class MP4Parser extends BasicParser {
       if (!this.metadata.format.duration) {
         const duration = (mxhd.duration / mxhd.timeScale);
         this.metadata.setFormat('duration', duration); // calculate duration in seconds
+        this.calculateBitRate();
       }
     }
   }
