@@ -1,5 +1,4 @@
 import * as Token from "token-types";
-import * as assert from "assert";
 import {FourCcToken} from "../common/FourCC";
 
 /**

@@ -5,7 +5,6 @@ import {BasicParser} from '../common/BasicParser';
 import {Atom} from './Atom';
 import * as AtomToken from './AtomToken';
 import {Genres} from '../id3v1/ID3v1Parser';
-import util from '../common/Util';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
