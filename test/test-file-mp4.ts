@@ -94,13 +94,13 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, "issue-74.m4a");
 
         return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
-          const native = metadata.native.iTunes;
-          t.ok(native, 'Native m4a tags should be present');
+          const {native, common} = metadata;
+          t.isDefined(native.iTunes, 'Native m4a tags should be present');
 
           assert.isAtLeast(metadata.native.iTunes.length, 1);
-          t.deepEqual(metadata.common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
-          t.deepEqual(metadata.common.albumartist, "They Say We're Sinking");
-          t.deepEqual(metadata.common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
+          t.deepEqual(common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
+          t.deepEqual(common.albumartist, "They Say We're Sinking");
+          t.deepEqual(common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
         });
       });
     });
