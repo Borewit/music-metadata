@@ -15,13 +15,49 @@ interface IEncoder {
 }
 
 const encoderDict: { [dataFormatId: string]: IEncoder; } = {
+  raw: {
+    lossy: false,
+    format: 'raw'
+  },
+  MAC3: {
+    lossy: true,
+    format: 'MACE 3:1'
+  },
+  MAC6: {
+    lossy: true,
+    format: 'MACE 6:1'
+  },
+  ima4: {
+    lossy: true,
+    format: 'IMA 4:1'
+  },
+  ulaw: {
+    lossy: true,
+    format: 'uLaw 2:1'
+  },
+  alaw: {
+    lossy: true,
+    format: 'uLaw 2:1'
+  },
+  Qclp: {
+    lossy: true,
+    format: 'QUALCOMM PureVoice'
+  },
+  '.mp3': {
+    lossy: true,
+    format: 'MPEG-1 layer 3'
+  },
   alac: {
     lossy: false,
     format: 'ALAC'
   },
+  'ac-3': {
+    lossy: true,
+    format: 'AC-3'
+  },
   mp4a: {
     lossy: true,
-    format: 'MP4A'
+    format: 'MPEG-4/AAC'
   },
   mp4s: {
     lossy: true,
@@ -87,6 +123,8 @@ export class MP4Parser extends BasicParser {
             switch (atom.header.name) {
               case 'stsd': // sample descriptions
                 return this.parseAtom_stsd(atom.dataLen);
+              default:
+                debug(`Ignore: stbl/${atom.header.name} atom`);
             }
         }
       }
@@ -270,7 +308,7 @@ export class MP4Parser extends BasicParser {
 
   private parse_mxhd(mxhd: AtomToken.IAtomMxhd) {
     if (mxhd.timeScale) {
-      this.metadata.setFormat('sampleRate', mxhd.timeScale);
+      // this.metadata.setFormat('sampleRate', mxhd.timeScale);
       if (!this.metadata.format.duration) {
         const duration = (mxhd.duration / mxhd.timeScale);
         this.metadata.setFormat('duration', duration); // calculate duration in seconds
@@ -293,19 +331,47 @@ export class MP4Parser extends BasicParser {
     return [];
   }
 
+  /**
+   * Parse sample description atom
+   * @param len
+   */
   private async parseAtom_stsd(len: number): Promise<void> {
     const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
     const formatList: string[] = [];
-    for (const dfEntry of  stsd.table) {
+    for (const dfEntry of stsd.table) {
       const encoderInfo = encoderDict[dfEntry.dataFormat];
       if (encoderInfo) {
+        this.parseSoundSampleDescription(dfEntry);
         this.metadata.setFormat('lossless', !encoderInfo.lossy);
         formatList.push(encoderInfo.format);
       } else {
         debug(`Warning: data-format '${dfEntry.dataFormat}' missing in MP4Parser.encoderDict`);
-        formatList.push(dfEntry.dataFormat);
+        // formatList.push(dfEntry.dataFormat);
       }
     }
-    this.formatList.push(formatList.join('/'));
+    if (formatList.length > 0) {
+      this.formatList.push(formatList.join('/'));
+    }
+  }
+
+  /**
+   * @param sampleDescription
+   * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-128916
+   */
+  private parseSoundSampleDescription(sampleDescription: AtomToken.ISampleDescription) {
+
+    let offset = 0;
+    const version = AtomToken.SoundSampleDescriptionVersion.get(sampleDescription.description, offset);
+    offset += AtomToken.SoundSampleDescriptionVersion.len;
+
+    if (version.version === 0 || version.version === 1) {
+      // Sound Sample Description (Version 0)
+      const description = AtomToken.SoundSampleDescriptionV0.get(sampleDescription.description, offset);
+      this.metadata.setFormat('sampleRate', description.sampleRate);
+      this.metadata.setFormat('bitsPerSample', description.sampleSize);
+      this.metadata.setFormat('numberOfChannels', description.numAudioChannels);
+    } else {
+      debug(`Warning: sound-sample-description ${version} not implemented`);
+    }
   }
 }

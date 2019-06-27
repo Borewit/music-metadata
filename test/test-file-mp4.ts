@@ -16,10 +16,13 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     function checkFormat(format) {
       assert.deepEqual(format.lossless, false);
       assert.deepEqual(format.container, 'isom/M4A', 'container');
-      assert.deepEqual(format.codec, 'MP4A', 'codec');
+      assert.deepEqual(format.codec, 'MPEG-4/AAC', 'codec');
+      assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
       t.strictEqual(format.duration, 2.206, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+      assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
       assert.approximately(format.bitrate, 148000, 500, 'Calculate bit-rate');
     }
 
@@ -140,18 +143,24 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
           const filePath = path.join(mp4Samples, 'issue-120.m4b');
 
           return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-            assert.strictEqual(metadata.common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
-            assert.deepEqual(metadata.common.composer, ['Nick Podehl']);
-            assert.deepEqual(metadata.common.artists, ['Aleron Kong']);
-            assert.deepEqual(metadata.common.genre, ['Audiobook']);
-            assert.strictEqual(metadata.common.year, 2018);
-            assert.strictEqual(metadata.common.encodedby, 'inAudible 1.97');
-            assert.deepEqual(metadata.common.disk, {no: null, of: null});
-            assert.deepEqual(metadata.common.track, {no: null, of: null});
-            assert.deepEqual(metadata.common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
 
-            assert.deepEqual(metadata.format.container, 'iso2/isom', 'format.container');
-            assert.deepEqual(metadata.format.codec, 'MP4A+text', 'format.codec');
+            const {common, format} = metadata;
+
+            assert.strictEqual(common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
+            assert.deepEqual(common.composer, ['Nick Podehl']);
+            assert.deepEqual(common.artists, ['Aleron Kong']);
+            assert.deepEqual(common.genre, ['Audiobook']);
+            assert.strictEqual(common.year, 2018);
+            assert.strictEqual(common.encodedby, 'inAudible 1.97');
+            assert.deepEqual(common.disk, {no: null, of: null});
+            assert.deepEqual(common.track, {no: null, of: null});
+            assert.deepEqual(common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
+
+            assert.deepEqual(format.container, 'iso2/isom', 'format.container');
+            assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+            assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+            assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
+            assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
           });
         });
       });
@@ -174,7 +183,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
 
             assert.deepEqual(metadata.format.container, '3gp5/M4A', 'format.container');
-            assert.deepEqual(metadata.format.codec, 'MP4A+text', 'format.codec');
+            assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
 
             const iTunes = mm.orderTags(metadata.native.iTunes);
             assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
@@ -201,7 +210,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
 
             assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
-            assert.deepEqual(metadata.format.codec, 'MP4A+avc1+ac-3+CEA-608', 'format.codec');
+            assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+AC-3+CEA-608', 'format.codec');
             assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
             assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
             assert.deepEqual(metadata.common.albumartist, 'Mr. Pickles');
@@ -224,7 +233,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
           assert.deepEqual(metadata.format.container, 'mp42/M4A', 'format.container');
-          assert.deepEqual(metadata.format.codec, 'MP4A', 'format.codec');
+          assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
         });
       });
     });
@@ -239,7 +248,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
           assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
-          assert.deepEqual(metadata.format.codec, 'MP4A+MP4S', 'format.codec');
+          assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
 
           assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
           assert.deepEqual(metadata.common.albumartist, 'Angels and Airwaves');
