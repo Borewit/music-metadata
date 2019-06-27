@@ -486,30 +486,32 @@ const stsdHeader: Token.IGetToken<IAtomStsdHeader> = {
 /**
  * Atom: Sample Description Atom ('stsd')
  */
-export interface ISampleDiscriptionTable {
+export interface ISampleDescription {
   dataFormat: string;
   dataReferenceIndex: number;
+  description: Buffer;
 }
 
 export interface IAtomStsd {
   header: IAtomStsdHeader;
-  table: ISampleDiscriptionTable[];
+  table: ISampleDescription[];
 }
 
 /**
  * Atom: Sample Description Atom ('stsd')
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
-class SampleDiscriptionTable implements Token.IGetToken<ISampleDiscriptionTable> {
+class SampleDescriptionTable implements Token.IGetToken<ISampleDescription> {
 
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): ISampleDiscriptionTable {
+  public get(buf: Buffer, off: number): ISampleDescription {
 
     return {
       dataFormat: FourCcToken.get(buf, off),
-      dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10)
+      dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10),
+      description: new Token.BufferType(this.len - 12).get(buf, off + 12)
     };
   }
 }
@@ -528,12 +530,12 @@ export class StsdAtom implements Token.IGetToken<IAtomStsd> {
     const header = stsdHeader.get(buf, off);
     off += stsdHeader.len;
 
-    const table: ISampleDiscriptionTable[] = [];
+    const table: ISampleDescription[] = [];
 
     for (let n = 0; n < header.numberOfEntries; ++n) {
       const size = Token.UINT32_BE.get(buf, off); // Sample description size
       off += Token.UINT32_BE.len;
-      table.push(new SampleDiscriptionTable(size).get(buf, off));
+      table.push(new SampleDescriptionTable(size).get(buf, off));
       off += size;
     }
 
@@ -543,3 +545,61 @@ export class StsdAtom implements Token.IGetToken<IAtomStsd> {
     };
   }
 }
+
+export interface ISoundSampleDescriptionVersion {
+  version: number;
+  revision: number;
+  vendor: number;
+}
+
+/**
+ * Common Sound Sample Description (version & revision)
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-57317
+ */
+export const SoundSampleDescriptionVersion: Token.IGetToken<ISoundSampleDescriptionVersion> = {
+
+  len: 8,
+
+  get(buf: Buffer, off: number): ISoundSampleDescriptionVersion {
+    return {
+      version: Token.INT16_BE.get(buf, off),
+      revision: Token.INT16_BE.get(buf, off + 2),
+      vendor: Token.INT32_BE.get(buf, off + 4)
+    };
+  }
+};
+
+export interface ISoundSampleDescriptionV0 {
+  numAudioChannels: number;
+  /**
+   *  number of bits in each uncompressed sound sample
+   */
+  sampleSize: number;
+  /**
+   * Compression ID
+   */
+  compressionId: number;
+
+  packetSize: number;
+
+  sampleRate: number;
+}
+
+/**
+ * Sound Sample Description (Version 0)
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-130736
+ */
+export const SoundSampleDescriptionV0: Token.IGetToken<ISoundSampleDescriptionV0> = {
+
+  len: 12,
+
+  get(buf: Buffer, off: number): ISoundSampleDescriptionV0 {
+    return {
+      numAudioChannels: Token.INT16_BE.get(buf, off + 0),
+      sampleSize: Token.INT16_BE.get(buf, off + 2),
+      compressionId: Token.INT16_BE.get(buf, off + 4),
+      packetSize: Token.INT16_BE.get(buf, off + 6),
+      sampleRate: Token.UINT16_BE.get(buf, off + 8) + Token.UINT16_BE.get(buf, off + 10) / 10000
+    };
+  }
+};
