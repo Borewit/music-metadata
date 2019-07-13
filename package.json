@@ -82,9 +82,9 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^12.0.2",
     "chai": "^4.2.0",
-    "coveralls": "^3.0.3",
-    "del-cli": "^1.1.0",
-    "eslint": "^5.13.0",
+    "coveralls": "^3.0.5",
+    "del-cli": "^2.0.0",
+    "eslint": "^6.0.1",
     "mime": "^2.4.0",
     "mocha": "^6.1.4",
     "npm-run-all": "^4.1.5",
@@ -92,10 +92,9 @@
     "remark-cli": "^6.0.1",
     "remark-preset-lint-recommended": "^3.0.2",
     "source-map-support": "^0.5.12",
-    "ts-lint": "^4.5.1",
-    "ts-node": "^8.0.2",
-    "tslint": "^5.16.0",
-    "typescript": "^3.3.1"
+    "ts-node": "^8.3.0",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.3"
   },
   "testling": {
     "files": [
