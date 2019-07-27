@@ -276,10 +276,10 @@
     "description": "Discogs release identifier"
   },
   "replaygain_track_peak": {
-    "description": "Replaygain track peak"
+    "description": "Replaygain track peak: {ratio: number, dB: number}"
   },
   "replaygain_track_gain": {
-    "description": "Replay track gain"
+    "description": "Replay track gain: {ratio: number, dB: number}"
   },
   "technician": {
     "description": "Technician who digitized subject"

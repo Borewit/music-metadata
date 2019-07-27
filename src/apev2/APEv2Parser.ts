@@ -80,7 +80,7 @@ export class APEv2Parser extends BasicParser {
 
   private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    assert.equal(footer.ID, preamble, 'APEv2 Footer preamble');
+    assert.strictEqual(footer.ID, preamble, 'APEv2 Footer preamble');
     this.parseTags(metadata, footer, buffer, buffer.length - footer.size, includeCovers);
   }
 
@@ -154,7 +154,7 @@ export class APEv2Parser extends BasicParser {
 
     const descriptor = await this.tokenizer.readToken(DescriptorParser);
 
-    assert.equal(descriptor.ID, 'MAC ', 'descriptor.ID');
+    assert.strictEqual(descriptor.ID, 'MAC ', 'descriptor.ID');
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await(lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());

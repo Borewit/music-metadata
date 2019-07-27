@@ -247,14 +247,35 @@ export interface ICommonTagsResult {
   discogs_rating?: number;
 
   /**
-   * Track gain in dB; eg: "-7.03 dB"
+   * Track gain ratio [0..1]
    */
-  replaygain_track_gain?: string;
+  replaygain_track_gain_ratio?: number;
   /**
-   * Track peak [0..1]
+   * Track peak ratio [0..1]
    */
-  replaygain_track_peak?: number;
+  replaygain_track_peak_ratio?: number;
 
+  /**
+   * Track gain ratio
+   */
+  replaygain_track_gain?: IRatio;
+  /**
+   * Track peak ratio
+   */
+  replaygain_track_peak?: IRatio;
+
+}
+
+export interface IRatio {
+  /**
+   * [0..1]
+   */
+  ratio: number;
+
+  /**
+   * Decibel
+   */
+  dB: number;
 }
 
 export type FormatId =
