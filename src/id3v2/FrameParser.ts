@@ -175,9 +175,9 @@ export default class FrameParser {
         break;
 
       case 'POPM': // Popularimeter
-        fzero = common.findZero(b, offset, length, encoding);
-        const email = common.decodeString(b.slice(offset, fzero), encoding);
-        offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+        fzero = common.findZero(b, offset, length, 'iso-8859-1');
+        const email = common.decodeString(b.slice(offset, fzero), 'iso-8859-1');
+        offset = fzero + FrameParser.getNullTerminatorLength('iso-8859-1');
         const dataLen = length - offset;
         output = {
           email,
