@@ -169,7 +169,7 @@ export class ID3v24TagMapper extends CommonTagMapper {
           case 'AverageLevel':
           case 'PeakValue':
             tag.id += ':' + tag.value.owner_identifier;
-            tag.value = tag.value.data.length === 4 ? tag.value.data.readUInt32LE() : null;
+            tag.value = tag.value.data.length === 4 ? tag.value.data.readUInt32LE(0) : null;
             // ToDo: flag warning if: tag.value === null
             break;
           default:
