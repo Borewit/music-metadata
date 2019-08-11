@@ -1,8 +1,8 @@
 import * as initDebug from 'debug';
 import * as Token from 'token-types';
 
-import common, {StringEncoding} from '../common/Util';
-import {AttachedPictureType} from './ID3v2';
+import common, { StringEncoding } from '../common/Util';
+import { AttachedPictureType, TextEncodingToken } from './ID3v2Token';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -37,10 +37,12 @@ interface IInvolvedPerson {
   name: string;
 }
 
+const defaultEnc: StringEncoding = 'iso-8859-1';
+
 export default class FrameParser {
 
   public static readData(b: Buffer, type: string, major: number, includeCovers: boolean) {
-    const encoding = FrameParser.getTextEncoding(b[0]);
+    const {encoding, bom} = TextEncodingToken.get(b, 0);
     const length = b.length;
     let offset = 0;
     let output: any = []; // ToDo
@@ -48,6 +50,7 @@ export default class FrameParser {
     let fzero: number;
     const out: IOut = {};
 
+    debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
       case 'T*': // 4.2.1. Text information frames - details
       case 'IPLS': // v2.3: Involved people list
@@ -100,9 +103,8 @@ export default class FrameParser {
               break;
             case 3:
             case 4:
-              const enc: StringEncoding = 'iso-8859-1';
-              fzero = common.findZero(b, offset, length, enc);
-              pic.format = common.decodeString(b.slice(offset, fzero), enc);
+              fzero = common.findZero(b, offset, length, defaultEnc);
+              pic.format = common.decodeString(b.slice(offset, fzero), defaultEnc);
               offset = fzero + 1;
               break;
 
@@ -152,7 +154,7 @@ export default class FrameParser {
 
         offset += 1;
 
-        out.language = common.decodeString(b.slice(offset, offset + 3), 'iso-8859-1');
+        out.language = common.decodeString(b.slice(offset, offset + 3), defaultEnc);
         offset += 3;
 
         fzero = common.findZero(b, offset, length, encoding);
@@ -165,19 +167,19 @@ export default class FrameParser {
         break;
 
       case 'UFID':
-        output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1');
+        output = FrameParser.readIdentifierAndData(b, offset, length, defaultEnc);
         output = {owner_identifier: output.id, identifier: output.data};
         break;
 
       case 'PRIV': // private frame
-        output = FrameParser.readIdentifierAndData(b, offset, length, 'iso-8859-1');
+        output = FrameParser.readIdentifierAndData(b, offset, length, defaultEnc);
         output = {owner_identifier: output.id, data: output.data};
         break;
 
       case 'POPM': // Popularimeter
-        fzero = common.findZero(b, offset, length, encoding);
-        const email = common.decodeString(b.slice(offset, fzero), encoding);
-        offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+        fzero = common.findZero(b, offset, length, defaultEnc);
+        const email = common.decodeString(b.slice(offset, fzero), defaultEnc);
+        offset = fzero + 1;
         const dataLen = length - offset;
         output = {
           email,
@@ -188,13 +190,13 @@ export default class FrameParser {
 
       case 'GEOB': {  // General encapsulated object
           fzero = common.findZero(b, offset + 1, length, encoding);
-          const mimeType = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          const mimeType = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           offset = fzero + 1;
           fzero = common.findZero(b, offset, length - offset, encoding);
-          const filename = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          const filename = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           offset = fzero + 1;
           fzero = common.findZero(b, offset, length - offset, encoding);
-          const description = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          const description = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           output = {
             type: mimeType,
             filename,
@@ -220,7 +222,7 @@ export default class FrameParser {
       case 'WXXX': {
           // Decode URL
           fzero = common.findZero(b, offset + 1, length, encoding);
-          const description = common.decodeString(b.slice(offset + 1, fzero), 'iso-8859-1');
+          const description = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           offset = fzero + 1;
           fzero = common.findZero(b, offset, length - offset, encoding);
           output = {description, url: common.decodeString(b.slice(offset, length - offset), encoding)};
@@ -294,6 +296,7 @@ export default class FrameParser {
   }
 
   private static getTextEncoding(byte): StringEncoding {
+    debug(`encoding=${byte}`);
     switch (byte) {
       case 0x00:
         return 'iso-8859-1'; // binary
