@@ -1,5 +1,5 @@
 import {endOfFile, ITokenizer} from 'strtok3/lib/type';
-import {ID3v2Token} from './ID3v2';
+import {ID3v2Header} from "./ID3v2Token";
 import {ID3v2Parser} from './ID3v2Parser';
 import {ID3v1Parser} from '../id3v1/ID3v1Parser';
 
@@ -14,7 +14,7 @@ const debug = _debug('music-metadata:parser:ID3');
 export abstract class AbstractID3Parser extends BasicParser {
 
   public static async startsWithID3v2Header(tokenizer: ITokenizer): Promise<boolean> {
-    return (await tokenizer.peekToken(ID3v2Token.Header)).fileIdentifier === 'ID3';
+    return (await tokenizer.peekToken(ID3v2Header)).fileIdentifier === 'ID3';
   }
 
   private id3parser = new ID3v2Parser();
@@ -55,7 +55,7 @@ export abstract class AbstractID3Parser extends BasicParser {
   }
 
   private async tryReadId3v2Headers(): Promise<void> {
-    const id3Header = await this.tokenizer.peekToken(ID3v2Token.Header);
+    const id3Header = await this.tokenizer.peekToken(ID3v2Header);
 
     if (id3Header.fileIdentifier === "ID3") {
       debug("Found ID3v2 header, pos=%s", this.tokenizer.position);

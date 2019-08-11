@@ -5,7 +5,7 @@ import common from '../common/Util';
 import {TagType} from '../common/GenericTagTypes';
 import {ITag, IOptions} from '../type';
 import FrameParser from './FrameParser';
-import {ID3v2Token, IID3v2header} from './ID3v2';
+import {ExtendedHeader, ID3v2Header, IID3v2header, UINT32SYNCSAFE} from "./ID3v2Token";
 import {INativeMetadataCollector} from '../common/MetadataCollector';
 
 interface IFrameFlags {
@@ -68,7 +68,7 @@ export class ID3v2Parser {
       case 4:
         header = {
           id: v.toString('ascii', 0, 4),
-          length: ID3v2Token.UINT32SYNCSAFE.get(v, 4),
+          length: UINT32SYNCSAFE.get(v, 4),
           flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
         };
         break;
@@ -150,7 +150,7 @@ export class ID3v2Parser {
     this.metadata = metadata;
     this.options = options;
 
-    const id3Header = await this.tokenizer.readToken(ID3v2Token.Header);
+    const id3Header = await this.tokenizer.readToken(ID3v2Header);
 
     if (id3Header.fileIdentifier !== 'ID3') {
       throw new Error("expected ID3-header file-identifier 'ID3' was not found");
@@ -168,8 +168,8 @@ export class ID3v2Parser {
   }
 
   public async parseExtendedHeader(): Promise<void> {
-    const extendedHeader = await this.tokenizer.readToken(ID3v2Token.ExtendedHeader);
-    const dataRemaining = extendedHeader.size - ID3v2Token.ExtendedHeader.len;
+    const extendedHeader = await this.tokenizer.readToken(ExtendedHeader);
+    const dataRemaining = extendedHeader.size - ExtendedHeader.len;
     if (dataRemaining > 0) {
       return this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);
     } else {
