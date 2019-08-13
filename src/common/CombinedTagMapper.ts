@@ -9,6 +9,7 @@ import {MP4TagMapper} from "../mp4/MP4TagMapper";
 import {VorbisTagMapper} from "../ogg/vorbis/VorbisTagMapper";
 import {RiffInfoTagMapper} from "../riff/RiffInfoTagMap";
 import {ITag} from "../type";
+import { INativeMetadataCollector } from './MetadataCollector';
 
 export class CombinedTagMapper {
 
@@ -34,12 +35,13 @@ export class CombinedTagMapper {
    * Convert native to generic (common) tags
    * @param tagType Originating tag format
    * @param tag     Native tag to map to a generic tag id
+   * @param warnings
    * @return Generic tag result (output of this function)
    */
-  public mapTag(tagType: TagType, tag: ITag): IGenericTag {
+  public mapTag(tagType: TagType, tag: ITag, warnings: INativeMetadataCollector): IGenericTag {
     const tagMapper = this.tagMappers[tagType];
     if (tagMapper) {
-      return this.tagMappers[tagType].mapGenericTag(tag);
+      return this.tagMappers[tagType].mapGenericTag(tag, warnings);
     }
     throw new Error("No generic tag mapper defined for tag-format: " + tagType);
   }

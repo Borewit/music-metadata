@@ -88,7 +88,7 @@ export class AsfParser extends BasicParser {
           break;
 
         default:
-          this.warnings.push('Ignore ASF-Object-GUID: ' + header.objectId.str);
+          this.metadata.addWarning('Ignore ASF-Object-GUID: ' + header.objectId.str);
           debug('Ignore ASF-Object-GUID: %s', header.objectId.str);
           await this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
       }
@@ -139,7 +139,7 @@ export class AsfParser extends BasicParser {
           break;
 
         default:
-          this.warnings.push('Ignore ASF-Object-GUID: ' + header.objectId.str);
+          this.metadata.addWarning('Ignore ASF-Object-GUID: ' + header.objectId.str);
           // console.log("Ignore ASF-Object-GUID: %s", header.objectId.str);
           await this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
           break;

@@ -9,8 +9,6 @@ export abstract class BasicParser implements ITokenParser {
   protected tokenizer: ITokenizer;
   protected options: IOptions;
 
-  protected warnings: string[] = []; // ToDo: make these part of the parsing result
-
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
    * @param {INativeMetadataCollector} metadata Output

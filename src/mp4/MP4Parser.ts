@@ -170,7 +170,7 @@ export class MP4Parser extends BasicParser {
 
   private addWarning(message: string) {
     debug('Warning:' + message);
-    this.warnings.push(message);
+    this.metadata.addWarning(message);
   }
 
   /**

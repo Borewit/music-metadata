@@ -2,6 +2,7 @@ import {INativeTagMap} from '../common/GenericTagTypes';
 import {CommonTagMapper} from '../common/GenericTagMapper';
 import common from '../common/Util';
 import {IRating, ITag} from '../type';
+import { INativeMetadataCollector } from '../common/MetadataCollector';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -148,11 +149,11 @@ export class ID3v24TagMapper extends CommonTagMapper {
 
   /**
    * Handle post mapping exceptions / correction
-   * @param {string} id Tag key e.g. "©alb"
-   * @param id e.g. "Buena Vista Social Club"
+   * @param {string} tag to post map
+   * @param warnings USed to register warnings
    * @return Common value e.g. "Buena Vista Social Club"
    */
-  protected postMap(tag: ITag): void {
+  protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
 
     switch (tag.id) {
 
@@ -170,10 +171,12 @@ export class ID3v24TagMapper extends CommonTagMapper {
           case 'PeakValue':
             tag.id += ':' + tag.value.owner_identifier;
             tag.value = tag.value.data.length === 4 ? tag.value.data.readUInt32LE(0) : null;
-            // ToDo: flag warning if: tag.value === null
+            if (tag.value === null) {
+              warnings.addWarning(`Failed to parse PRIV:PeakValue`);
+            }
             break;
           default:
-          // Unknown PRIV owner-identifier
+            warnings.addWarning(`Unknown PRIV owner-identifier: ${tag.value.owner_identifier}`);
         }
         break;
 
