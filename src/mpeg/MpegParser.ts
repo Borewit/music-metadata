@@ -281,7 +281,7 @@ export class MpegParser extends AbstractID3Parser {
   private frameCount: number = 0;
   private syncFrameCount: number = -1;
   private countSkipFrameData: number = 0;
-  private totalAudioLength = 0;
+  private totalDataLength = 0;
 
   private audioFrameHeader;
   private bitrates: number[] = [];
@@ -315,7 +315,7 @@ export class MpegParser extends AbstractID3Parser {
       let quit = false;
       while (!quit) {
         await this.sync();
-        quit = await this.parseAudioFrameHeader();
+        quit = await this.parseCommonMpegHeader();
       }
     } catch (err) {
       if (err.message === endOfFile) {
@@ -400,9 +400,10 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   /**
+   * Combined ADTS & MPEG (MP2 & MP3) header handling
    * @return {Promise<boolean>} true if parser should quit
    */
-  private async parseAudioFrameHeader(): Promise<boolean> {
+  private async parseCommonMpegHeader(): Promise<boolean> {
 
     if (this.frameCount === 0) {
       this.mpegOffset = this.tokenizer.position - 1;
@@ -425,9 +426,18 @@ export class MpegParser extends AbstractID3Parser {
     this.metadata.setFormat('lossless', false);
     this.metadata.setFormat('sampleRate', header.samplingRate);
 
+    this.frameCount++;
     if (header.version >= 2 && header.layer === 0) {
-      return this.parseAdts(header);
+      return this.parseAdts(header); // ADTS, usually AAC
+    } else {
+      return this.parseAudioFrameHeader(header); // MP3
     }
+  }
+
+  /**
+   * @return {Promise<boolean>} true if parser should quit
+   */
+  private async parseAudioFrameHeader(header: MpegFrameHeader): Promise<boolean> {
 
     this.metadata.setFormat('numberOfChannels', header.channelMode === 'mono' ? 1 : 2);
     this.metadata.setFormat('bitrate', header.bitrate);
@@ -448,7 +458,6 @@ export class MpegParser extends AbstractID3Parser {
     this.frame_size = Math.floor(fsize);
 
     this.audioFrameHeader = header;
-    this.frameCount++;
     this.bitrates.push(header.bitrate);
 
     // xtra header only exists in first frame
@@ -496,12 +505,12 @@ export class MpegParser extends AbstractID3Parser {
     const buf = Buffer.alloc(3);
     await this.tokenizer.readBuffer(buf);
     header.frameLength += Common.getBitAllignedNumber(buf, 0, 0, 11);
-    this.tokenizer.ignore(header.frameLength - 7 + 1);
-    this.frameCount++;
-    this.totalAudioLength += header.frameLength;
+    this.tokenizer.ignore(header.frameLength - 7);
+    this.totalDataLength += header.frameLength;
+    this.samplesPerFrame = 1024;
 
-    const framesPerSec = header.samplingRate / 1024;
-    const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalAudioLength / this.frameCount;
+    const framesPerSec = header.samplingRate / this.samplesPerFrame;
+    const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalDataLength / this.frameCount;
     const bitrate = 8 * bytesPerFrame * framesPerSec + 0.5;
     this.metadata.setFormat('codecProfile', header.codecProfile);
     this.metadata.setFormat('bitrate', bitrate);
@@ -509,9 +518,17 @@ export class MpegParser extends AbstractID3Parser {
       this.metadata.setFormat('numberOfChannels', header.mp4ChannelConfig.length);
     }
 
-    debug(`size=${header.frameLength} bytes, bit-rate=${bitrate}`);
+    debug(`frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`);
 
-    return this.frameCount === 3; // Stop parsing after the third frame
+    // Consume remaining header and frame data
+    if (this.frameCount === 3) {
+      if (this.options.duration) {
+        this.calculateEofDuration = true;
+      } else {
+        return true; // Stop parsing after the third frame
+      }
+    }
+    return false;
   }
 
   private async parseCrc(): Promise<void> {
