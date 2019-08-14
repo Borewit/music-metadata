@@ -17,7 +17,7 @@ jobs:
       script:
       - yarn install
       - yarn run test-coverage
-      # - yarn run send-coveralls
+      - yarn run send-coveralls
       - yarn add -D codacy-coverage
       - yarn run send-codacy
       node_js: 10
