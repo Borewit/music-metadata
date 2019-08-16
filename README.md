@@ -69,8 +69,7 @@ Requires [Node.js®](https://nodejs.org/) version 6 or higher.
 
 ### Browser Support
 
-Although music-metadata is designed to run in Node.js, it can also be used to run in the browser:
-*   [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is better suitable to run in the browser.
+Although music-metadata is designed to run the node.js. [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) can be used on the browser side. 
 
 To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
 ```JavaScript
