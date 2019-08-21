@@ -99,15 +99,14 @@ describe("Parse ASF", () => {
     describe("should decode an ASF audio file (.wma)", () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
-          return parser.initParser(asfFilePath, 'audio/x-ms-wma', {native: true}).then(metadata => {
-            checkFormat(metadata.format);
-
-            checkCommon(metadata.common);
-
-            t.ok(metadata.native && metadata.native.asf, 'should include native ASF tags');
-            checkNative(mm.orderTags(metadata.native.asf));
-          });
+        it(parser.description, async () => {
+          const metadata = await parser.initParser(asfFilePath, 'audio/x-ms-wma', {native: true});
+          t.isDefined(metadata, 'metadata');
+          checkFormat(metadata.format);
+          checkCommon(metadata.common);
+          t.isDefined(metadata.native, 'metadata.native');
+          t.isDefined(metadata.native.asf, 'should include native ASF tags');
+          checkNative(mm.orderTags(metadata.native.asf));
         });
       });
 

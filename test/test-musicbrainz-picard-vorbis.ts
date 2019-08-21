@@ -1,11 +1,11 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 import * as mm from '../src';
 
 import * as path from 'path';
 
 const t = assert;
 
-it("MusicBrains/Picard tags in FLAC", () => {
+it('MusicBrains/Picard tags in FLAC', async () => {
 
   const filename = 'MusicBrainz-Picard-tags.flac';
   const filePath = path.join(__dirname, 'samples', filename);
@@ -31,7 +31,7 @@ it("MusicBrains/Picard tags in FLAC", () => {
     t.deepEqual(common.year, 2011, 'common.year');
     t.deepEqual(common.releasecountry, 'XE', 'common.releasecountry');
     t.deepEqual(common.asin, 'B0055U9LNC', 'common.asin');
-    t.deepEqual(common.barcode, "886979357723", 'common.barcode');
+    t.deepEqual(common.barcode, '886979357723', 'common.barcode');
     t.deepEqual(common.label, ['Sony Music'], 'common.label');
     t.deepEqual(common.catalognumber, ['88697935772'], 'common.catalognumber');
     t.deepEqual(common.originalyear, 2011, 'common.originalyear');
@@ -87,13 +87,12 @@ it("MusicBrains/Picard tags in FLAC", () => {
   }
 
   // Run with default options
-  return mm.parseFile(filePath, {native: true}).then(result => {
-
-    t.ok(result.common, 'should include common tags');
-    t.ok(result.native && result.native.vorbis, 'should include native Vorbis tags');
-    checkFormat(result.format);
-    checkNativeTags(mm.orderTags(result.native.vorbis));
-    checkCommonTags(result.common);
-  });
-
+  const metadata = await mm.parseFile(filePath, {native: true});
+  t.isDefined(metadata, 'metadata');
+  t.isDefined(metadata.common, 'should include common tags');
+  t.isDefined(metadata.native, 'metadata.common');
+  t.isDefined(metadata.native.vorbis, 'should include native Vorbis tags');
+  checkFormat(metadata.format);
+  checkNativeTags(mm.orderTags(metadata.native.vorbis));
+  checkCommonTags(metadata.common);
 });
