@@ -10,7 +10,7 @@ export {IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IForm
 
 /**
  * Parse audio from Node Stream.Readable
- * @param {Stream.Readable} Stream to read the audio track from
+ * @param {Stream.Readable} stream Stream to read the audio track from
  * @param {string} mimeType Content specification MIME-type, e.g.: 'audio/mpeg'
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
@@ -41,7 +41,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   try {
     const parserName = ParserFactory.getParserIdForExtension(filePath);
     if (parserName) {
-      const parser = await ParserFactory.loadParser(parserName, options);
+      const parser = await ParserFactory.loadParser(parserName);
       const metadata = new MetadataCollector(options);
       await parser.init(metadata, fileTokenizer, options).parse();
       return metadata.toCommonMetadata();

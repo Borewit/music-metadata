@@ -59,7 +59,7 @@ export class ParserFactory {
    * @param {IOptions} opts
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static async parse(tokenizer: ITokenizer, contentType: string, opts): Promise<IAudioMetadata> {
+  public static async parse(tokenizer: ITokenizer, contentType: string, opts: IOptions): Promise<IAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
     let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
@@ -155,7 +155,7 @@ export class ParserFactory {
     }
   }
 
-  public static async loadParser(moduleName: ParserType, options: IOptions): Promise<ITokenParser> {
+  public static async loadParser(moduleName: ParserType): Promise<ITokenParser> {
     switch (moduleName) {
       case 'aiff': return new AIFFParser();
       case 'apev2': return new APEv2Parser();
@@ -176,7 +176,7 @@ export class ParserFactory {
 
   private static async _parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
     // Parser found, execute parser
-    const parser = await ParserFactory.loadParser(parserId, opts);
+    const parser = await ParserFactory.loadParser(parserId);
     const metadata = new MetadataCollector(opts);
     await parser.init(metadata, tokenizer, opts).parse();
     return metadata.toCommonMetadata();
@@ -284,8 +284,5 @@ export class ParserFactory {
         break;
     }
   }
-
-  // ToDo: expose warnings to API
-  private warning: string[] = [];
 
 }
