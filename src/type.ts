@@ -1,5 +1,4 @@
 import {GenericTagId, TagType} from './common/GenericTagTypes';
-import {ITokenParser} from './ParserFactory';
 
 /**
  * Attached picture, typically used for cover art
@@ -264,6 +263,11 @@ export interface ICommonTagsResult {
    */
   replaygain_track_peak?: IRatio;
 
+  /**
+   * The initial key of the music in the file, e.g. "A Minor".
+   * Ref: https://docs.microsoft.com/en-us/windows/win32/wmformat/wm-initialkey
+   */
+  key?: string;
 }
 
 export interface IRatio {
