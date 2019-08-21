@@ -111,7 +111,8 @@ export class AsfParser extends BasicParser {
       switch (header.objectId.str) {
 
         case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
-          const cd = await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header));
+          // ToDo: extended stream header properties are ignored
+          await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header));
           break;
 
         case AsfObject.MetadataObjectState.guid.str: // 4.7
