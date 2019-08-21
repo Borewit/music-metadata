@@ -19,24 +19,6 @@ interface IPicture {
   data?: Uint8Array;
 }
 
-/**
- * Used for the 'Musician credits list' (TMCL) result.
- * Mapping between instruments and the musician that played it
- */
-interface IMusicianCredit {
-  instrument: string,
-  name: string;
-}
-
-/**
- * Used for the 'Musician credits list' (TMCL) result.
- * Mapping between instruments and the musician that played it
- */
-interface IInvolvedPerson {
-  'function': string,
-  name: string;
-}
-
 const defaultEnc: StringEncoding = 'iso-8859-1';
 
 export default class FrameParser {
