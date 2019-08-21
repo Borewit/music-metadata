@@ -5,7 +5,6 @@ import * as initDebug from 'debug';
 
 import Common from '../common/Util';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
-import { INativeAudioMetadata } from '../type';
 import { InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag } from './XingTag';
 
 const debug = initDebug('music-metadata:parser:mpeg');
@@ -218,7 +217,7 @@ class MpegFrameHeader {
     if (!bitrateInKbps) {
       throw new Error('Cannot determine bit-rate');
     }
-    this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
+    this.bitrate = bitrateInKbps * 1000;
 
     // Calculate sampling rate
     this.samplingRate = this.calcSamplingRate();

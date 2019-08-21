@@ -7,7 +7,7 @@ import {IAudioMetadata, INativeTagDict, IOptions, ITag} from './type';
 
 /**
  * Parse audio from Node Stream.Readable
- * @param {Stream.Readable} Stream to read the audio track from
+ * @param {Stream.Readable} stream Stream to read the audio track from
  * @param {string} mimeType Content specification MIME-type, e.g.: 'audio/mpeg'
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
@@ -18,7 +18,7 @@ export function parseStream(stream: Stream.Readable, mimeType?: string, options:
 
 /**
  * Parse audio from Node Buffer
- * @param {Stream.Readable} stream Audio input stream
+ * @param {Stream.Readable} buf Buffer holding audio data
  * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
@@ -31,12 +31,12 @@ export function parseBuffer(buf: Buffer, mimeType?: string, options: IOptions = 
 
 /**
  * Parse audio from ITokenizer source
- * @param {strtok3.ITokenizer} Audio source implementing the tokenizer interface
+ * @param {ITokenizer} tokenizer Audio source implementing the tokenizer interface
  * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
  */
-export function parseFromTokenizer(tokenizer: ITokenizer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
+export function parseFromTokenizer(tokenizer: ITokenizer, mimeType?: string, options?: IOptions): Promise<IAudioMetadata> {
   if (!tokenizer.fileSize && options.fileSize) {
     tokenizer.fileSize = options.fileSize;
   }

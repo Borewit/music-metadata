@@ -5,12 +5,12 @@ import * as strtok3 from 'strtok3';
 import * as Core from './core';
 import { MetadataCollector } from './common/MetadataCollector';
 import { ParserFactory } from './ParserFactory';
-import {IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult} from './type';
-export {IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio} from './type';
+import { IAudioMetadata, IOptions, ITag } from './type';
+export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio } from './type';
 
 /**
  * Parse audio from Node Stream.Readable
- * @param {Stream.Readable} Stream to read the audio track from
+ * @param {Stream.Readable} stream Stream to read the audio track from
  * @param {string} mimeType Content specification MIME-type, e.g.: 'audio/mpeg'
  * @param {IOptions} options Parsing options
  * @returns {Promise<IAudioMetadata>}
@@ -41,7 +41,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   try {
     const parserName = ParserFactory.getParserIdForExtension(filePath);
     if (parserName) {
-      const parser = await ParserFactory.loadParser(parserName, options);
+      const parser = await ParserFactory.loadParser(parserName);
       const metadata = new MetadataCollector(options);
       await parser.init(metadata, fileTokenizer, options).parse();
       return metadata.toCommonMetadata();

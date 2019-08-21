@@ -19,24 +19,6 @@ interface IPicture {
   data?: Uint8Array;
 }
 
-/**
- * Used for the 'Musician credits list' (TMCL) result.
- * Mapping between instruments and the musician that played it
- */
-interface IMusicianCredit {
-  instrument: string,
-  name: string;
-}
-
-/**
- * Used for the 'Musician credits list' (TMCL) result.
- * Mapping between instruments and the musician that played it
- */
-interface IInvolvedPerson {
-  'function': string,
-  name: string;
-}
-
 const defaultEnc: StringEncoding = 'iso-8859-1';
 
 export default class FrameParser {
@@ -224,7 +206,6 @@ export default class FrameParser {
           fzero = common.findZero(b, offset + 1, length, encoding);
           const description = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           offset = fzero + 1;
-          fzero = common.findZero(b, offset, length - offset, encoding);
           output = {description, url: common.decodeString(b.slice(offset, length - offset), encoding)};
           break;
         }
@@ -295,28 +276,8 @@ export default class FrameParser {
     return {id, data: b.slice(offset, length)};
   }
 
-  private static getTextEncoding(byte): StringEncoding {
-    debug(`encoding=${byte}`);
-    switch (byte) {
-      case 0x00:
-        return 'iso-8859-1'; // binary
-      case 0x01:
-      case 0x02:
-        return 'utf16'; // 01 = with bom, 02 = without bom
-      case 0x03:
-        return 'utf8';
-      default:
-        return 'utf8';
-    }
-  }
-
-  private static getNullTerminatorLength(enc) {
-    switch (enc) {
-      case 'utf16':
-        return 2;
-      default:
-        return 1;
-    }
+  private static getNullTerminatorLength(enc: string): number {
+    return enc === 'utf16' ? 2 : 1;
   }
 
 }

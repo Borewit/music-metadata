@@ -3,10 +3,10 @@ node_modules/
 *.iml
 lib/
 test/**/*.js
-test/**/*.map
+test/**/*.js.map
 test/**/*.d.ts
 src/**/*.js
-src/**/*.map
+src/**/*.js.map
 src/**/*.d.ts
 coverage/
 .nyc_output
