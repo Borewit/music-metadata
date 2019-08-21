@@ -104,7 +104,7 @@ class MpegFrameHeader {
   // B(20,19): MPEG Audio versionIndex ID
   public versionIndex: number;
   // C(18,17): Layer description
-  public layerIndex: number;
+  public layer: number;
   // D(16): Protection bit
   public isProtectedByCRC: boolean;
   // E(15,12): Bitrate index
@@ -126,7 +126,6 @@ class MpegFrameHeader {
   // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
   public emphasis: number;
 
-  public layer: number;
   public version: number;
   public channelMode: string;
   public bitrate: number;
@@ -250,7 +249,7 @@ class MpegFrameHeader {
   private calcBitrate(): number {
     if (this.bitrateIndex === 0x00) return null; // free
     if (this.bitrateIndex === 0x0F) return null; // 'reserved'
-    const mpegVersion: string = this.version.toString() + this.layerIndex;
+    const mpegVersion: string = this.version.toString() + this.layer;
     return MpegFrameHeader.bitrate_index[this.bitrateIndex][mpegVersion];
   }
 
@@ -333,8 +332,6 @@ export class MpegParser extends AbstractID3Parser {
 
   /**
    * Called after file has been fully parsed, this allows, if present, to exclude the ID3v1.1 header length
-   * @param metadata
-   * @returns {INativeAudioMetadata}
    */
   protected finalize() {
 
