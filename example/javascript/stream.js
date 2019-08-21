@@ -22,7 +22,7 @@ function httpGet (url) {
 }
 
 // Stream MP3 sample file from GitHub via HTTP
-httpGet(audioUrl, {native: true}).then(metadata => {
+httpGet(audioUrl).then(metadata => {
   // Parse the MP3 audio stream
   const mimeType = metadata.headers['content-type'];
   console.log('Parsing: ' + mimeType);
