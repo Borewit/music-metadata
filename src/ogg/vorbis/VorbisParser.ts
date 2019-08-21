@@ -108,7 +108,7 @@ export class VorbisParser implements Ogg.IPageConsumer {
 
     const strLen = Token.UINT32_LE.get(pageData, offset);
     offset += 4;
-    const vendorString = new Token.StringType(strLen, 'utf-8').get(pageData, offset);
+    // const vendorString = new Token.StringType(strLen, 'utf-8').get(pageData, offset);
     offset += strLen;
     let userCommentListLength = Token.UINT32_LE.get(pageData, offset);
     offset += 4;
