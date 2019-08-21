@@ -1,5 +1,4 @@
 import {GenericTagId, TagType} from './common/GenericTagTypes';
-import {ITokenParser} from './ParserFactory';
 
 /**
  * Attached picture, typically used for cover art
