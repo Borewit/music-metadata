@@ -276,21 +276,6 @@ export default class FrameParser {
     return {id, data: b.slice(offset, length)};
   }
 
-  private static getTextEncoding(byte): StringEncoding {
-    debug(`encoding=${byte}`);
-    switch (byte) {
-      case 0x00:
-        return 'iso-8859-1'; // binary
-      case 0x01:
-      case 0x02:
-        return 'utf16'; // 01 = with bom, 02 = without bom
-      case 0x03:
-        return 'utf8';
-      default:
-        return 'utf8';
-    }
-  }
-
   private static getNullTerminatorLength(enc) {
     switch (enc) {
       case 'utf16':
