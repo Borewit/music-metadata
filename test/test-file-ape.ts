@@ -41,15 +41,15 @@ describe("Parse APE (Monkey's Audio)", () => {
   }
 
   Parsers.forEach(parser => {
-    it(parser.description, () => {
-      return parser.initParser(path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape', {native: true}).then(metadata => {
-        checkFormat(metadata.format);
+    it(parser.description, async () => {
+      const metadata = await parser.initParser(path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape', {native: true});
+      t.isDefined(metadata, 'metadata should be defined');
+      checkFormat(metadata.format);
+      checkCommon(metadata.common);
+      t.isDefined(metadata.native, 'metadata.native should be defined');
+      t.isDefined(metadata.native.APEv2, 'metadata.native.APEv2 should be defined');
+      checkNative(mm.orderTags(metadata.native.APEv2));
 
-        checkCommon(metadata.common);
-
-        t.ok(metadata.native && metadata.native.APEv2, 'should include native APEv2 tags');
-        checkNative(mm.orderTags(metadata.native.APEv2));
-      });
     });
   });
 
