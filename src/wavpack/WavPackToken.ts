@@ -90,9 +90,9 @@ export class WavPack {
         //  0x402 (1026) to 0x410 are valid for decode
         version: Token.UINT16_LE.get(buf, off + 8),
         //  40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
-        totalSamples: (Token.UINT8.get(buf, off + 11) << 32) + Token.UINT32_LE.get(buf, off + 12),
+        totalSamples: /* replace with bigint? (Token.UINT8.get(buf, off + 11) << 32) + */ Token.UINT32_LE.get(buf, off + 12),
         // 40-bit block_index
-        blockIndex: (Token.UINT8.get(buf, off + 10) << 32) + Token.UINT32_LE.get(buf, off + 16),
+        blockIndex: /* replace with bigint? (Token.UINT8.get(buf, off + 10) << 32) + */ Token.UINT32_LE.get(buf, off + 16),
         // 40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
         blockSamples: Token.UINT32_LE.get(buf, off + 20),
         // various flags for id and decoding
