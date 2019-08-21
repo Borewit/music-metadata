@@ -218,7 +218,7 @@ class MpegFrameHeader {
     if (!bitrateInKbps) {
       throw new Error('Cannot determine bit-rate');
     }
-    this.bitrate = bitrateInKbps === null ? null : bitrateInKbps * 1000;
+    this.bitrate = bitrateInKbps * 1000;
 
     // Calculate sampling rate
     this.samplingRate = this.calcSamplingRate();
