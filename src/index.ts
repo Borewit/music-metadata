@@ -5,8 +5,8 @@ import * as strtok3 from 'strtok3';
 import * as Core from './core';
 import { MetadataCollector } from './common/MetadataCollector';
 import { ParserFactory } from './ParserFactory';
-import {IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult} from './type';
-export {IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio} from './type';
+import { IAudioMetadata, IOptions, ITag } from './type';
+export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio } from './type';
 
 /**
  * Parse audio from Node Stream.Readable

@@ -1,4 +1,3 @@
-import { IFormatInfo } from '../vorbis/Vorbis';
 import * as Token from 'token-types';
 
 /**
