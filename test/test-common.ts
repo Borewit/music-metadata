@@ -6,7 +6,7 @@ import * as path from "path";
 import * as mm from "../src";
 import {CombinedTagMapper} from "../src/common/CombinedTagMapper";
 import {joinArtists} from '../src/common/MetadataCollector';
-import { ParserFactory, parseHttpContentType } from '../src/ParserFactory';
+import { parseHttpContentType } from '../src/ParserFactory';
 
 const t = assert;
 
