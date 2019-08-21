@@ -2,8 +2,6 @@ import {assert} from 'chai';
 import * as mm from '../src';
 import * as path from 'path';
 
-const t = assert;
-
 it("should reject files that can't be parsed", async () => {
 
   const filePath = path.join(__dirname, 'samples', __filename);
@@ -12,7 +10,7 @@ it("should reject files that can't be parsed", async () => {
   try {
     await mm.parseFile(filePath);
     assert.fail('Should reject a file which cannot be parsed');
-  } catch(err) {
+  } catch (err) {
     assert.isDefined(err);
     assert.isDefined(err.message);
   }
