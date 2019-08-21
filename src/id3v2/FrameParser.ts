@@ -276,13 +276,8 @@ export default class FrameParser {
     return {id, data: b.slice(offset, length)};
   }
 
-  private static getNullTerminatorLength(enc) {
-    switch (enc) {
-      case 'utf16':
-        return 2;
-      default:
-        return 1;
-    }
+  private static getNullTerminatorLength(enc: string): number {
+    return enc === 'utf16' ? 2 : 1;
   }
 
 }
