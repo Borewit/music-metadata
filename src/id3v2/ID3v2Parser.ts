@@ -41,7 +41,7 @@ export class ID3v2Parser {
       writeI++;
     }
     if (readI < buffer.length) {
-      buffer[writeI++] = buffer[readI++];
+      buffer[writeI++] = buffer[readI];
     }
     return buffer.slice(0, writeI);
   }
