@@ -325,7 +325,6 @@ export class HeaderExtensionObject implements Token.IGetToken<IHeaderExtensionOb
   }
 
   public get(buf: Buffer, off: number): IHeaderExtensionObject {
-    const dataSize = buf.readUInt32LE(off + 18);
     return {
       reserved1: GUID.fromBin(buf, off),
       reserved2: buf.readUInt16LE(off + 16),
