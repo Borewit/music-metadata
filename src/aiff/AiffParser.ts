@@ -1,5 +1,4 @@
 import * as Token from 'token-types';
-import { Readable } from 'stream';
 import * as initDebug from 'debug';
 import { endOfFile } from 'strtok3/lib/type';
 import * as strtok3 from 'strtok3/lib/core';
