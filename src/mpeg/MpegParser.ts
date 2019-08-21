@@ -250,7 +250,7 @@ class MpegFrameHeader {
   private calcBitrate(): number {
     if (this.bitrateIndex === 0x00) return null; // free
     if (this.bitrateIndex === 0x0F) return null; // 'reserved'
-    const mpegVersion: string = this.version.toString() + this.layer;
+    const mpegVersion: string = this.version.toString() + this.layerIndex;
     return MpegFrameHeader.bitrate_index[this.bitrateIndex][mpegVersion];
   }
 
@@ -365,8 +365,6 @@ export class MpegParser extends AbstractID3Parser {
       if (this.syncPeek.len <= 256) {
         throw new Error(endOfFile);
       }
-      if (this.syncPeek.len === 0)
-        throw new Error(endOfFile);
       while (true) {
         if (gotFirstSync && (this.syncPeek.buf[bo] & 0xE0) === 0xE0) {
           this.buf_frame_header[0] = MpegFrameHeader.SyncByte1;
