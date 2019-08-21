@@ -1,4 +1,4 @@
-import { assert, expect } from 'chai';
+import { assert } from 'chai';
 import * as path from 'path';
 import { Parsers } from './metadata-parsers';
 

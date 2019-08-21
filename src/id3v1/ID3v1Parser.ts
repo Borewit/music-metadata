@@ -2,7 +2,6 @@
 
 import * as initDebug from 'debug';
 
-import {ITag} from '../type';
 import BitUtil from '../common/Util';
 import * as Token from 'token-types';
 import {BasicParser} from '../common/BasicParser';

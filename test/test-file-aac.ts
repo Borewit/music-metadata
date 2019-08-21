@@ -1,16 +1,11 @@
-import {assert} from "chai";
-import * as mm from "../src";
-
-import * as fs from "fs";
-import * as path from "path";
-import {SourceStream} from "./util";
-import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
-import {Parsers} from './metadata-parsers';
-import {IFormat, INativeTagDict} from '../src/type';
+import { assert } from 'chai';
+import * as path from 'path';
+import { Parsers } from './metadata-parsers';
+import { IFormat } from '../src';
 
 const t = assert;
 
-describe("Parse ADTS/AAC", () => {
+describe('Parse ADTS/AAC', () => {
 
   const samplePath = path.join(__dirname, 'samples', 'aac');
 
@@ -30,7 +25,10 @@ describe("Parse ADTS/AAC", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        return parser.initParser(path.join(samplePath, 'adts-mpeg4.aac'), 'audio/mpeg', {native: true, duration: true}).then(metadata => {
+        return parser.initParser(path.join(samplePath, 'adts-mpeg4.aac'), 'audio/mpeg', {
+          native: true,
+          duration: true
+        }).then(metadata => {
           checkFormat(metadata.format, 'ADTS/MPEG-4', 'AAC', 'AAC LC', 16000, 1, 20399, 256000);
         });
       });
@@ -41,7 +39,10 @@ describe("Parse ADTS/AAC", () => {
 
     Parsers.forEach(parser => {
       it(parser.description, () => {
-        return parser.initParser(path.join(samplePath, 'adts-mpeg4-2.aac'), 'audio/mpeg', {native: true, duration: true}).then(metadata => {
+        return parser.initParser(path.join(samplePath, 'adts-mpeg4-2.aac'), 'audio/mpeg', {
+          native: true,
+          duration: true
+        }).then(metadata => {
           checkFormat(metadata.format, 'ADTS/MPEG-4', 'AAC', 'AAC LC', 44100, 2, 128000, 14336);
         });
       });
