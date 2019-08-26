@@ -4,6 +4,7 @@ example/
 doc-gen/
 coverage/
 src/
+lib/**/*.js.map
 .github
 .nyc_output/
 .travis.yml
