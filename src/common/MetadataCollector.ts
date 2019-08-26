@@ -2,12 +2,11 @@ import {
   FormatId,
   IAudioMetadata, ICommonTagsResult,
   IFormat,
-  INativeAudioMetadata,
-  INativeTags, IOptions
+  INativeTags, IOptions, IQualityInformation
 } from '../type';
 
 import * as _debug from "debug";
-import {GenericTagId, IGenericTag, TagType, isSingleton, isUnique} from "./GenericTagTypes";
+import {IGenericTag, TagType, isSingleton, isUnique} from "./GenericTagTypes";
 import {CombinedTagMapper} from "./CombinedTagMapper";
 import {CommonTagMapper} from "./GenericTagMapper";
 import {toRatio} from "./Util";
@@ -20,7 +19,16 @@ const TagPriority: TagType[] = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.
  * Combines all generic-tag-mappers for each tag type
  */
 
-export interface INativeMetadataCollector {
+export interface IWarningCollector {
+
+  /**
+   * Register parser warning
+   * @param warning
+   */
+  addWarning(warning: string);
+}
+
+export interface INativeMetadataCollector extends IWarningCollector {
 
   /**
    * Only use this for reading
@@ -28,6 +36,8 @@ export interface INativeMetadataCollector {
   readonly format: IFormat;
 
   readonly native: INativeTags;
+
+  readonly quality: IQualityInformation;
 
   /**
    * @returns {boolean} true if one or more tags have been found
@@ -37,7 +47,6 @@ export interface INativeMetadataCollector {
   setFormat(key: FormatId, value: any);
 
   addTag(tagType: string, tagId: string, value: any);
-
 }
 
 /**
@@ -55,6 +64,10 @@ export class MetadataCollector implements INativeMetadataCollector {
   public readonly common: ICommonTagsResult = {
     track: {no: null, of: null},
     disk: {no: null, of: null}
+  };
+
+  public readonly quality: IQualityInformation = {
+    warnings: []
   };
 
   /**
@@ -112,11 +125,8 @@ export class MetadataCollector implements INativeMetadataCollector {
     this.toCommon(tagType, tagId, value);
   }
 
-  public getNativeMetadata(): INativeAudioMetadata {
-    return {
-      format: this.format,
-      native: this.native
-    };
+  public addWarning(warning: string) {
+    this.quality.warnings.push({message: warning});
   }
 
   public postMap(tagType: TagType | 'artificial', tag: IGenericTag) {
@@ -221,6 +231,7 @@ export class MetadataCollector implements INativeMetadataCollector {
     return {
       format: this.format,
       native: this.opts.native ? this.native : undefined,
+      quality: this.quality,
       common: this.common
     };
   }
@@ -232,7 +243,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
     const tag = {id: tagId, value};
 
-    const genericTag = this.tagMapper.mapTag(tagType, tag);
+    const genericTag = this.tagMapper.mapTag(tagType, tag, this);
 
     if (genericTag) {
       this.postMap(tagType, genericTag);
@@ -241,9 +252,6 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   /**
    * Set generic tag
-   * @param {GenericTagId} tagId
-   * @param {TagType} tagType originating header type, used to prioritize concurrent mappings
-   * @param value
    */
   private setGenericTag(tagType: TagType | 'artificial', tag: IGenericTag) {
 

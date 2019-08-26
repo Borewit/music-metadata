@@ -1,4 +1,4 @@
-import {GenericTagId, TagType} from './common/GenericTagTypes';
+import { GenericTagId, TagType } from './common/GenericTagTypes';
 
 /**
  * Attached picture, typically used for cover art
@@ -385,10 +385,27 @@ export interface INativeTagDict {
 export interface INativeAudioMetadata {
   format: IFormat,
   native: INativeTags
+  quality: IQualityInformation;
+}
+
+export interface IQualityInformation {
+  /**
+   * Warnings
+   */
+  warnings: IParserWarning[];
+
+}
+
+export interface IParserWarning {
+  message: string;
 }
 
 export interface IAudioMetadata extends INativeAudioMetadata {
-  common: ICommonTagsResult,
+  /**
+   * Metadata, form independent interface
+   */
+  common: ICommonTagsResult;
+
 }
 
 /**

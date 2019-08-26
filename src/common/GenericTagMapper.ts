@@ -1,6 +1,7 @@
 import * as generic from './GenericTagTypes';
 import {ITag} from '../type';
 import {Genres} from '../id3v1/ID3v1Parser';
+import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector';
 
 export interface IGenericTagMapper {
 
@@ -16,11 +17,11 @@ export interface IGenericTagMapper {
 
   /**
    * Map native tag to generic tag
-   * @param tag     Native tag
-   * @return Generic tac, if native tag could be mapped
+   * @param tag       Native tag
+   * @param warnings  Register warnings
+   * @return Generic tag, if native tag could be mapped
    */
-  mapGenericTag(tag: ITag): generic.IGenericTag
-
+  mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag
 }
 
 export class CommonTagMapper implements IGenericTagMapper {
@@ -77,17 +78,16 @@ export class CommonTagMapper implements IGenericTagMapper {
 
   /**
    * Process and set common tags
-   * @param comTags Target metadata to
    * write common tags to
-   * @param tag     Native tag
-   * @param value   Native tag value
+   * @param tag Native tag
+   * @param warnings Register warnings
    * @return common name
    */
-  public mapGenericTag(tag: ITag): generic.IGenericTag {
+  public mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag {
 
     tag = {id: tag.id, value: tag.value}; // clone object
 
-    this.postMap(tag);
+    this.postMap(tag, warnings);
 
     // Convert native tag event to generic 'alias' tag
     const id = this.getCommonName(tag.id);
@@ -106,8 +106,9 @@ export class CommonTagMapper implements IGenericTagMapper {
   /**
    * Handle post mapping exceptions / correction
    * @param {string} tag Tag e.g. {"©alb", "Buena Vista Social Club")
+   * @param {warnings} Used to register warnings
    */
-  protected postMap(tag: ITag): void {
+  protected postMap(tag: ITag, warnings: IWarningCollector): void {
     return;
   }
 }

@@ -112,7 +112,7 @@ export class WaveParser extends BasicParser {
 
         default:
           debug(`Ignore chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`);
-          this.warnings.push('Ignore chunk: RIFF/' + header.chunkID);
+          this.metadata.addWarning('Ignore chunk: RIFF/' + header.chunkID);
           await this.tokenizer.ignore(header.chunkSize);
       }
 
@@ -132,7 +132,7 @@ export class WaveParser extends BasicParser {
 
       case 'adtl':
       default:
-        this.warnings.push('Ignore chunk: RIFF/WAVE/LIST/' + listType);
+        this.metadata.addWarning('Ignore chunk: RIFF/WAVE/LIST/' + listType);
         debug('Ignoring chunkID=RIFF/WAVE/LIST/' + listType);
         return this.tokenizer.ignore(listHeader.chunkSize - 4);
     }

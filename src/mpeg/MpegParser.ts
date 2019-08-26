@@ -410,7 +410,7 @@ export class MpegParser extends AbstractID3Parser {
       header = FrameHeader.get(this.buf_frame_header, 0);
     } catch (err) {
       await this.tokenizer.ignore(1);
-      this.warnings.push('Parse error: ' + err.message);
+      this.metadata.addWarning('Parse error: ' + err.message);
       return false; // sync
     }
     await this.tokenizer.ignore(3);
@@ -573,7 +573,7 @@ export class MpegParser extends AbstractID3Parser {
     // ToDo: promise duration???
     const frameDataLeft = this.frame_size - this.offset;
     if (frameDataLeft < 0) {
-      this.warnings.push('Frame ' + this.frameCount + 'corrupt: negative frameDataLeft');
+      this.metadata.addWarning('Frame ' + this.frameCount + 'corrupt: negative frameDataLeft');
     } else {
       await this.skipFrameData(frameDataLeft);
     }
