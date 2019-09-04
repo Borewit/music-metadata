@@ -40,7 +40,7 @@ export function parseFromTokenizer(tokenizer: ITokenizer, mimeType?: string, opt
   if (!tokenizer.fileSize && options.fileSize) {
     tokenizer.fileSize = options.fileSize;
   }
-  return ParserFactory.parse(tokenizer, mimeType, options);
+  return ParserFactory.parseOnContentType(tokenizer, mimeType, options);
 }
 
 /**

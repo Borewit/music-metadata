@@ -35,7 +35,7 @@ describe("MIME & extension mapping", () => {
     return mm.parseFile(path.join(__dirname, '..', 'package.json'))
       .then(() => t.fail('Should reject extension'))
       .catch(err => {
-        t.strictEqual(err.message, 'No parser found for extension: .json');
+        t.strictEqual(err.message, 'Failed to determine audio format');
       });
 
   });
@@ -90,6 +90,13 @@ describe("MIME & extension mapping", () => {
 
   describe("Resolve MIME based on content", () => {
 
+    it('should fall back on content detection in case the extension is useless', async () => {
+
+      const metadata = await mm.parseFile(path.join(samplePath, 'mp3', '1a643e9e0743dee8732554d0e870055a'));
+      assert.equal(metadata.format.container, 'MPEG');
+      assert.equal(metadata.format.codec, 'MP3');
+    });
+
     it("should throw error on unrecognized MIME-type", () => {
 
       const streamReader = new SourceStream(buf);
@@ -98,7 +105,7 @@ describe("MIME & extension mapping", () => {
           assert.fail('Should throw an Error');
         })
         .catch(err => {
-          assert.equal(err.message, 'Failed to guess MIME-type');
+          assert.equal(err.message, 'Failed to determine audio format');
         });
     });
 

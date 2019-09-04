@@ -59,26 +59,34 @@ export class ParserFactory {
    * @param {IOptions} opts
    * @returns {Promise<INativeAudioMetadata>}
    */
-  public static async parse(tokenizer: ITokenizer, contentType: string, opts: IOptions): Promise<IAudioMetadata> {
+  public static async parseOnContentType(tokenizer: ITokenizer, contentType: string, opts: IOptions): Promise<IAudioMetadata> {
 
     // Resolve parser based on MIME-type or file extension
-    let parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
+    const parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
 
     if (!parserId) {
-      // No MIME-type mapping found
       debug("No parser found for MIME-type / extension: " + contentType);
+    }
+
+    return this.parse(tokenizer, parserId, opts);
+  }
+
+  public static async parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions): Promise<IAudioMetadata> {
+
+    if (!parserId) {
+      // Parser could not be determined on MIME-type or extension
+      debug("Guess parser on content...");
 
       const buf = Buffer.alloc(4100);
       await tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true);
       const guessedType = fileType(buf);
       if (!guessedType)
-        throw new Error("Failed to guess MIME-type");
+        throw new Error('Failed to determine audio format');
       debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
       parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
       if (!parserId)
         throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
       return this._parse(tokenizer, parserId, opts);
-
     }
 
     // Parser found, execute parser

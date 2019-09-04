@@ -1,12 +1,14 @@
 import * as Stream from 'stream';
-import * as Path from 'path';
 import * as strtok3 from 'strtok3';
 
 import * as Core from './core';
-import { MetadataCollector } from './common/MetadataCollector';
 import { ParserFactory } from './ParserFactory';
 import { IAudioMetadata, IOptions, ITag } from './type';
+import * as _debug from 'debug';
+
 export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio } from './type';
+
+const debug = _debug("music-metadata:parser");
 
 /**
  * Parse audio from Node Stream.Readable
@@ -40,14 +42,10 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   const fileTokenizer = await strtok3.fromFile(filePath);
   try {
     const parserName = ParserFactory.getParserIdForExtension(filePath);
-    if (parserName) {
-      const parser = await ParserFactory.loadParser(parserName);
-      const metadata = new MetadataCollector(options);
-      await parser.init(metadata, fileTokenizer, options).parse();
-      return metadata.toCommonMetadata();
-    } else {
-      throw new Error('No parser found for extension: ' + Path.extname(filePath));
-    }
+    if (!parserName)
+      debug(' Parser could not be determined by file extension');
+
+    return await ParserFactory.parse(fileTokenizer, parserName, options);
   } finally {
     await fileTokenizer.close();
   }
