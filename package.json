@@ -13,6 +13,7 @@
     "audio",
     "tag",
     "tags",
+    "duration",
     "MusicBrainz",
     "Discogs",
     "Picard",
@@ -43,7 +44,8 @@
     "dff",
     "dsdiff",
     "aac",
-    "adts"
+    "adts",
+    "length"
   ],
   "main": "lib",
   "typings": "lib/index",
