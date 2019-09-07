@@ -1,7 +1,7 @@
 import {assert} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from 'path';
-import {IFormat, INativeTagDict} from '../src/type';
+import {IFormat, INativeTagDict} from '../lib/type';
 
 const samplePath = path.join(__dirname, 'samples');
 

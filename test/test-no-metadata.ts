@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from 'path';
 
 it("should reject files that can't be parsed", async () => {

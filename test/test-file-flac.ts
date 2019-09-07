@@ -1,5 +1,5 @@
 import {assert} from "chai";
-import * as mm from "../src";
+import * as mm from "../lib";
 import * as fs from "fs";
 import * as path from "path";
 import {Parsers} from './metadata-parsers';

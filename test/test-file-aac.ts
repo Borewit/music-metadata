@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import * as path from 'path';
 import { Parsers } from './metadata-parsers';
-import { IFormat } from '../src';
+import { IFormat } from '../lib';
 
 const t = assert;
 
