@@ -2712,9 +2712,10 @@ to-vfile@^6.0.0:
     is-buffer "^2.0.0"
     vfile "^4.0.0"
 
-token-types@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.0.1.tgz#c91671bd80f7e2ded10dee4b8ff17247c40378c7"
+token-types@^1.0.1, token-types@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.0.3.tgz#737cc01939d23577ae339b88de82fa3cb3d0b735"
+  integrity sha512-8THi5oekS/TLE01xOMknevTgHwVEcWOsO3zlqxGvzAz+tjZGiACyjcZuH1LTJuHvqmb8SsX/BeqcfQA0JRwqzA==
 
 tough-cookie@~2.4.3:
   version "2.4.3"
