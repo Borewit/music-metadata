@@ -5,7 +5,7 @@ doc-gen/
 coverage/
 src/
 lib/**/*.js.map
-.github
+.github/
 .nyc_output/
 .travis.yml
 appveyor.yml
