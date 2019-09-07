@@ -50,7 +50,8 @@
   "main": "lib",
   "typings": "lib/index",
   "files": [
-    "lib/"
+    "lib/**/*.js",
+    "lib/**/*.d.ts"
   ],
   "scripts": {
     "clean": "del-cli lib/** src/**/*.js src/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
