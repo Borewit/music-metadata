@@ -1,7 +1,7 @@
 import {assert, expect} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from 'path';
-import {IdHeader} from "../src/ogg/opus/Opus";
+import {IdHeader} from "../lib/ogg/opus/Opus";
 import {Parsers} from './metadata-parsers';
 
 describe("Parse Ogg", function() {

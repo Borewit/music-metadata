@@ -1,12 +1,12 @@
 import {assert} from "chai";
 
-import {CommonTagMapper} from "../src/common/GenericTagMapper";
-import {commonTags, isSingleton} from "../src/common/GenericTagTypes";
+import {CommonTagMapper} from "../lib/common/GenericTagMapper";
+import {commonTags, isSingleton} from "../lib/common/GenericTagTypes";
 import * as path from "path";
-import * as mm from "../src";
-import {CombinedTagMapper} from "../src/common/CombinedTagMapper";
-import {joinArtists} from '../src/common/MetadataCollector';
-import { parseHttpContentType } from '../src/ParserFactory';
+import * as mm from "../lib";
+import {CombinedTagMapper} from "../lib/common/CombinedTagMapper";
+import {joinArtists} from '../lib/common/MetadataCollector';
+import { parseHttpContentType } from '../lib/ParserFactory';
 
 const t = assert;
 

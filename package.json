@@ -54,12 +54,12 @@
     "lib/**/*.d.ts"
   ],
   "scripts": {
-    "clean": "del-cli lib/** src/**/*.js src/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
-    "compile-src": "tsc -p src",
+    "clean": "del-cli llib/**/*.js lib/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
+    "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
     "compile": "npm run compile-src && npm run compile-test && npm run compile-doc",
-    "lint-ts": "tslint 'src/**/*.ts' 'example/typescript/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
+    "lint-ts": "tslint 'lib/**/*.ts' 'example/typescript/*.ts' --exclude 'lib/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts' 'doc-gen/**/*.ts'",
     "lint-md": "remark -u preset-lint-recommended .",
     "lint": "npm run lint-md && npm run lint-ts",
     "test": "mocha --require ts-node/register --require source-map-support/register --full-trace test/test-*.ts",
@@ -123,7 +123,6 @@
   },
   "nyc": {
     "exclude": [
-      "lib/**",
       "test/**/*.ts",
       "src/**/*.js"
     ],

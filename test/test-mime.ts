@@ -1,6 +1,6 @@
 import {assert} from "chai";
 import * as mime from "mime";
-import * as mm from "../src";
+import * as mm from "../lib";
 import {SourceStream} from "./util";
 import * as fs from "fs";
 import * as path from "path";

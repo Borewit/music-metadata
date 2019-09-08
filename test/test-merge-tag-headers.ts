@@ -1,5 +1,5 @@
 import * as path from "path";
-import * as mm from "../src";
+import * as mm from "../lib";
 import {assert} from "chai";
 
 const t = assert;

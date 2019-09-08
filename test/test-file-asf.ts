@@ -1,9 +1,9 @@
 import {assert} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 import * as path from 'path';
-import GUID from "../src/asf/GUID";
-import {AsfUtil} from "../src/asf/AsfUtil";
-import {DataType} from "../src/asf/AsfObject";
+import GUID from "../lib/asf/GUID";
+import {AsfUtil} from "../lib/asf/AsfUtil";
+import {DataType} from "../lib/asf/AsfObject";
 import {Parsers} from './metadata-parsers';
 
 const t = assert;

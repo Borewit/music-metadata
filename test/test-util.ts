@@ -1,6 +1,6 @@
 import {assert} from 'chai';
-import util, { default as Util } from '../src/common/Util';
-import {FourCcToken} from "../src/common/FourCC";
+import util, { default as Util } from '../lib/common/Util';
+import {FourCcToken} from "../lib/common/FourCC";
 
 const t = assert;
 

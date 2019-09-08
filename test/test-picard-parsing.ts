@@ -2,8 +2,8 @@
 import { assert } from 'chai';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { TagType } from '../src/common/GenericTagTypes';
-import { ICommonTagsResult, IFormat, INativeTagDict, parseFile, orderTags } from '../src';
+import { TagType } from '../lib/common/GenericTagTypes';
+import { ICommonTagsResult, IFormat, INativeTagDict, parseFile, orderTags } from '../lib';
 
 const t = assert;
 

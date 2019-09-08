@@ -1,12 +1,12 @@
 import {assert} from "chai";
-import * as mm from "../src";
+import * as mm from "../lib";
 
 import * as fs from "fs";
 import * as path from "path";
 import {SourceStream} from "./util";
-import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
+import {ID3v24TagMapper} from "../lib/id3v2/ID3v24TagMapper";
 import {Parsers} from './metadata-parsers';
-import {IFormat, INativeTagDict} from '../src/type';
+import {IFormat, INativeTagDict} from '../lib/type';
 
 const t = assert;
 

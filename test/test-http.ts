@@ -4,8 +4,8 @@ import * as Stream from 'stream';
 import * as http from 'http';
 import * as https from 'https';
 
-import * as mm from '../src';
-import { IOptions } from '../src/type';
+import * as mm from '../lib';
+import { IOptions } from '../lib/type';
 
 interface IHttpResponse {
   headers: { [id: string]: string; }

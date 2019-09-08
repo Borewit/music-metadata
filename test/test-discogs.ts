@@ -1,10 +1,10 @@
 import {assert} from "chai";
-import * as mm from "../src";
+import * as mm from "../lib";
 
 import * as path from "path";
-import {ID3v24TagMapper} from "../src/id3v2/ID3v24TagMapper";
-import {VorbisTagMapper} from "../src/ogg/vorbis/VorbisTagMapper";
-import {IAudioMetadata} from '../src/type';
+import {ID3v24TagMapper} from "../lib/id3v2/ID3v24TagMapper";
+import {VorbisTagMapper} from "../lib/ogg/vorbis/VorbisTagMapper";
+import {IAudioMetadata} from '../lib/type';
 
 const t = assert;
 

@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import * as mm from '../src';
+import * as mm from '../lib';
 
 const t = assert;
 
