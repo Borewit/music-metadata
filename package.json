@@ -79,7 +79,7 @@
     "token-types": "^1.0.3"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.0",
+    "@types/chai": "^4.2.2",
     "@types/debug": "^4.1.5",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^5.2.7",
