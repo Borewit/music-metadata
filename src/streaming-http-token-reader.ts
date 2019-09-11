@@ -190,7 +190,6 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
       } else {
         throw new Error('Did not get a content range');
       }
-      return response;
     });
   }
 
