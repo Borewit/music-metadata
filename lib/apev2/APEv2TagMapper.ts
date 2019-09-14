@@ -71,7 +71,11 @@ const apev2TagMap: INativeTagMap = {
   Acoustid_Id: 'acoustid_id',
   ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
   MUSICIP_PUID: 'musicip_puid',
-  Weblink: 'website'
+  Weblink: 'website',
+  REPLAYGAIN_TRACK_GAIN: 'replaygain_track_gain',
+  REPLAYGAIN_TRACK_PEAK:  'replaygain_track_peak',
+  MP3GAIN_MINMAX: 'replaygain_track_minmax',
+  MP3GAIN_UNDO:  'replaygain_undo'
 };
 
 export class APEv2TagMapper extends CaseInsensitiveTagMap {

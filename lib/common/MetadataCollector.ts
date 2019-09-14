@@ -209,11 +209,30 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case 'replaygain_track_gain':
       case 'replaygain_track_peak':
+      case 'replaygain_album_gain':
+      case 'replaygain_album_peak':
         tag.value = toRatio(tag.value);
+        break;
+
+      case 'replaygain_track_minmax':
+        tag.value = tag.value.split(',').map(v => parseInt(v, 10));
+        break;
+
+      case 'replaygain_undo':
+        const minMix = tag.value.split(',').map(v => parseInt(v, 10));
+        tag.value = {
+          leftChannel: minMix[0],
+          rightChannel: minMix[1]
+        };
         break;
 
       case 'gapless': // iTunes gap-less flag
         tag.value = tag.value === "1"; // boolean
+        break;
+
+      case 'isrc': // Only keep unique values
+        if (this.common[tag.id] && this.common[tag.id].indexOf(tag.value) !== -1)
+          return;
         break;
 
       default:

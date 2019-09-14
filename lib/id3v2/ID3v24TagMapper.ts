@@ -130,8 +130,13 @@ const id3v24TagMap: INativeTagMap = {
   "TXXX:CATALOGID": "catalognumber",
   "TXXX:STYLE": "genre",
 
-  "TXXX:replaygain_track_peak": "replaygain_track_peak",
-  "TXXX:replaygain_track_gain": "replaygain_track_gain"
+  "TXXX:REPLAYGAIN_TRACK_PEAK": "replaygain_track_peak",
+  "TXXX:REPLAYGAIN_TRACK_GAIN": "replaygain_track_gain",
+  "TXXX:REPLAYGAIN_ALBUM_PEAK": "replaygain_album_peak",
+  "TXXX:REPLAYGAIN_ALBUM_GAIN": "replaygain_album_gain",
+  "TXXX:MP3GAIN_MINMAX": "replaygain_track_minmax",
+  "TXXX:MP3GAIN_ALBUM_MINMAX": "replaygain_album_minmax",
+  "TXXX:MP3GAIN_UNDO": "replaygain_undo"
 };
 
 export class ID3v24TagMapper extends CaseInsensitiveTagMap {

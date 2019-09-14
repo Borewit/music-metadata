@@ -258,10 +258,34 @@ export interface ICommonTagsResult {
    * Track gain ratio
    */
   replaygain_track_gain?: IRatio;
+
   /**
    * Track peak ratio
    */
   replaygain_track_peak?: IRatio;
+
+  /**
+   * Album gain ratio
+   */
+  replaygain_album_gain?: IRatio;
+
+  /**
+   * Album peak ratio
+   */
+  replaygain_album_peak?: IRatio;
+
+  /**
+   * minimum & maximum global gain values across a set of files scanned as an album
+   */
+  replaygain_undo?: {
+    leftChannel: number,
+    rightChannel: number
+  };
+
+  /**
+   * minimum & maximum global gain values across a set of files scanned as an album
+   */
+  replaygain_track_minmax?: number[];
 
   /**
    * The initial key of the music in the file, e.g. "A Minor".

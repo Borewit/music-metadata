@@ -76,6 +76,13 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:Acoustid Fingerprint': 'acoustid_fingerprint',
   '----:com.apple.iTunes:MusicIP PUID': 'musicip_puid',
   '----:com.apple.iTunes:fingerprint': 'musicip_fingerprint',
+  '----:com.apple.iTunes:replaygain_track_gain': 'replaygain_track_gain',
+  '----:com.apple.iTunes:replaygain_track_peak': 'replaygain_track_peak',
+  '----:com.apple.iTunes:replaygain_album_gain': 'replaygain_album_gain',
+  '----:com.apple.iTunes:replaygain_album_peak': 'replaygain_album_peak',
+  '----:com.apple.iTunes:replaygain_track_minmax': 'replaygain_track_minmax',
+  '----:com.apple.iTunes:replaygain_album_minmax': 'replaygain_album_minmax',
+  '----:com.apple.iTunes:replaygain_undo': 'replaygain_undo',
   // Additional mappings:
   gnre: 'genre', // ToDo: check mapping
 
