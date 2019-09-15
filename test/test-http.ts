@@ -1,54 +1,18 @@
 import { assert } from 'chai';
 
-import * as Stream from 'stream';
-import * as http from 'http';
-import * as https from 'https';
-
-import * as mm from '../lib';
-import { IOptions } from '../lib/type';
-
-interface IHttpResponse {
-  headers: { [id: string]: string; }
-  stream: Stream.Readable;
-}
-
-interface IHttpClient {
-  get: (url: string) => Promise<IHttpResponse>;
-}
+import { IOptions, parseStream } from '../lib';
+import { IHttpClient, HttpClient } from './http-client';
 
 interface IHttpClientTest {
   readonly name: string;
   client: IHttpClient;
 }
 
-class NodeHttpClient {
-
-  public get(url: string): Promise<IHttpResponse> {
-    return new Promise<IHttpResponse>((resolve, reject) => {
-      const request = ((url.startsWith('https') ? https : http) as typeof http).get(url);
-      request.on('response', resp => {
-        resolve({
-          headers: resp.headers as any,
-          stream: resp
-        });
-      });
-      request.on('abort', () => {
-        reject(new Error('abort'));
-      });
-      request.on('error', err => {
-        reject(err);
-      });
-    });
-  }
-}
-
 const clients: IHttpClientTest[] = [
-
   {
     name: 'http',
-    client: new NodeHttpClient()
+    client: new HttpClient()
   }
-
 ];
 
 // Skipped: https://github.com/Borewit/music-metadata/issues/160
@@ -77,7 +41,7 @@ describe.skip('HTTP streaming', function() {
               options.fileSize = parseInt(response.headers['content-length'], 10); // Always pass this in production
             }
 
-            const tags = await mm.parseStream(response.stream, response.headers['content-type'], options);
+            const tags = await parseStream(response.stream, response.headers['content-type'], options);
             if (response.stream.destroy) {
               response.stream.destroy(); // Node >= v8 only
             }
