@@ -3,6 +3,7 @@ import {CommonTagMapper} from '../common/GenericTagMapper';
 import common from '../common/Util';
 import {IRating, ITag} from '../type';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
+import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -133,7 +134,7 @@ const id3v24TagMap: INativeTagMap = {
   "TXXX:replaygain_track_gain": "replaygain_track_gain"
 };
 
-export class ID3v24TagMapper extends CommonTagMapper {
+export class ID3v24TagMapper extends CaseInsensitiveTagMap {
 
   public static toRating(popm: any): IRating {
 

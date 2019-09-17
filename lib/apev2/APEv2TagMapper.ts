@@ -1,5 +1,5 @@
-import {INativeTagMap} from "../common/GenericTagTypes";
-import {CommonTagMapper} from "../common/GenericTagMapper";
+import {INativeTagMap} from '../common/GenericTagTypes';
+import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
 
 /**
  * ID3v2.2 tag mappings
@@ -74,25 +74,10 @@ const apev2TagMap: INativeTagMap = {
   Weblink: 'website'
 };
 
-export class APEv2TagMapper extends CommonTagMapper {
+export class APEv2TagMapper extends CaseInsensitiveTagMap {
 
   public constructor() {
-
-    const upperCaseMap: INativeTagMap = {};
-
-    for (const tag in apev2TagMap) {
-      upperCaseMap[tag.toUpperCase()] = apev2TagMap[tag];
-    }
-
-    super(['APEv2'], upperCaseMap);
-  }
-
-  /**
-   * @tag  Native header tag
-   * @return common tag name (alias)
-   */
-  protected getCommonName(tag: string) {
-    return this.tagMap[tag.toUpperCase()];
+    super(['APEv2'], apev2TagMap);
   }
 
 }
