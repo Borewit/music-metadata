@@ -142,7 +142,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       const filePath = path.join(samplePath, 'issue_56.mp3');
 
       return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
-        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
+        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
       });
     });
 

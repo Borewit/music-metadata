@@ -470,6 +470,8 @@ export interface IOptions {
    * Set observer for async callbacks to common or format.
    */
   observer?: Observer;
+
+  apeOffset?: number;
 }
 
 /**
@@ -505,3 +507,25 @@ export interface IMetadataEvent {
 }
 
 export type Observer = (update: IMetadataEvent) => void;
+
+/**
+ * Provides random data read access
+ * Used read operations on file of buffers
+ */
+export interface IRandomReader {
+
+  /**
+   * Total length of file or buffer
+   */
+  fileSize: number;
+
+  /**
+   * Read from a given position of an abstracted file or buffer.
+   * @param buffer {Buffer} is the buffer that the data will be written to.
+   * @param offset {number} is the offset in the buffer to start writing at.
+   * @param length {number}is an integer specifying the number of bytes to read.
+   * @param position {number} is an argument specifying where to begin reading from in the file.
+   * @return {Promise<number>} bytes read
+   */
+  randomRead(buffer: Buffer, offset: number, length: number, position: number): Promise<number>;
+}

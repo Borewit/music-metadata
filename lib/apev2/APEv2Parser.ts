@@ -8,7 +8,7 @@ import * as assert from 'assert';
 
 import common from '../common/Util';
 
-import {IPicture, IOptions} from '../type';
+import { IPicture, IOptions, IRandomReader } from '../type';
 import {INativeMetadataCollector} from '../common/MetadataCollector';
 import {BasicParser} from '../common/BasicParser';
 import {
@@ -74,6 +74,18 @@ export class APEv2Parser extends BasicParser {
         const buffer = Buffer.alloc(remaining);
         await tokenizer.readBuffer(buffer);
         return APEv2Parser.parseTagFooter(metadata, buffer, !options.skipCovers);
+      }
+    }
+  }
+
+  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<number> {
+    if (offset >= TagFooter.len) {
+      // Search for APE footer header at the end of the file
+      const apeBuf = Buffer.alloc(TagFooter.len);
+      await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
+      const tagFooter = TagFooter.get(apeBuf, 0);
+      if (tagFooter.ID === 'APETAGEX') {
+        return offset - TagFooter.len - tagFooter.size;
       }
     }
   }

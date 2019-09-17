@@ -5,6 +5,8 @@ import * as initDebug from 'debug';
 import BitUtil from '../common/Util';
 import * as Token from 'token-types';
 import {BasicParser} from '../common/BasicParser';
+import { APEv2Parser } from '../apev2/APEv2Parser';
+import { IRandomReader } from '../type';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
 
@@ -117,6 +119,12 @@ export class ID3v1Parser extends BasicParser {
       debug('Skip checking for ID3v1 because the file-size is unknown');
       return;
     }
+
+    if (this.options.apeOffset) {
+      this.tokenizer.ignore(this.options.apeOffset - this.tokenizer.position);
+      await APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+    }
+
     const offset = this.tokenizer.fileSize - Iid3v1Token.len;
     if (this.tokenizer.position > offset) {
       debug('Already consumed the last 128 bytes');
@@ -140,4 +148,14 @@ export class ID3v1Parser extends BasicParser {
   private addTag(id: string, value: any) {
     this.metadata.addTag('ID3v1', id, value);
   }
+
+}
+
+export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
+  if (reader.fileSize >= 128) {
+    const tag = Buffer.alloc(3);
+    await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
+    return tag.toString('binary') === 'TAG';
+  }
+  return false;
 }
