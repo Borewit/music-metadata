@@ -39,7 +39,7 @@ function write(out: fs.WriteStream) {
     table.header.values.push(nativeType);
   }
 
-  for (const commonTagKey in commonTags) {
+  for (const commonTagKey of Object.keys(commonTags)) {
     const tagInfo = commonDescriptionDict[commonTagKey];
     if (!tagInfo)
       throw new Error(`${commonTagKey} not found`);
