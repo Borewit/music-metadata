@@ -287,13 +287,13 @@
   "replaygain_album_gain": {
     "description": "ReplayGain album gain: {ratio: number, dB: number}"
   },
-  "replaygain_minmax": {
+  "replaygain_track_minmax": {
     "description": "Minimum & maximum global gain values for this file."
   },
   "replaygain_album_minmax": {
     "description": "Minimum & maximum global gain values across a set of files scanned as an album. "
   },
-  "mp3gain_undo": {
+  "replaygain_undo": {
     "description": "The global gain adjustment to restore the original values in the left and right channels, respectively, followed by an indicator of whether to wrap"
   },
   "technician": {
