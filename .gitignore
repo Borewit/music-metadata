@@ -8,5 +8,8 @@ test/**/*.d.ts
 lib/**/*.js
 lib/**/*.js.map
 lib/**/*.d.ts
+doc-gen/**/*.js
+doc-gen/**/*.map
+doc-gen/**/*.map
 coverage/
 .nyc_output/
