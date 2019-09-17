@@ -100,6 +100,11 @@ export type GenericTagId =
   | 'discogs_votes'
   | 'replaygain_track_gain'
   | 'replaygain_track_peak'
+  | 'replaygain_album_gain'
+  | 'replaygain_album_peak'
+  | 'replaygain_track_minmax'
+  | 'replaygain_album_minmax'
+  | 'replaygain_undo'
   | 'description';
 
 export interface INativeTagMap {
@@ -219,6 +224,11 @@ export const commonTags: ITagInfoMap = {
 
   replaygain_track_peak: {multiple: false},
   replaygain_track_gain: {multiple: false},
+  replaygain_album_peak: {multiple: false},
+  replaygain_album_gain: {multiple: false},
+  replaygain_track_minmax: {multiple: false},
+  replaygain_album_minmax: {multiple: false},
+  replaygain_undo: {multiple: false},
 
   description:  {multiple: true}
 };

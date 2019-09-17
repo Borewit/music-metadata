@@ -101,8 +101,16 @@ const vorbisTagMap: INativeTagMap = {
   CATALOGID: "catalognumber",
   STYLE: "genre",
 
+  //
   REPLAYGAIN_TRACK_GAIN: "replaygain_track_gain",
-  REPLAYGAIN_TRACK_PEAK: "replaygain_track_peak"
+  REPLAYGAIN_TRACK_PEAK: "replaygain_track_peak",
+  REPLAYGAIN_ALBUM_GAIN: "replaygain_album_gain",
+  REPLAYGAIN_ALBUM_PEAK: "replaygain_album_peak",
+
+  // To Sure if these (REPLAYGAIN_MINMAX, REPLAYGAIN_ALBUM_MINMAX & REPLAYGAIN_UNDO) are used for Vorbis:
+  REPLAYGAIN_MINMAX: "replaygain_track_minmax",
+  REPLAYGAIN_ALBUM_MINMAX: "replaygain_album_minmax",
+  REPLAYGAIN_UNDO: "replaygain_undo"
 };
 
 export class VorbisTagMapper extends CommonTagMapper {

@@ -276,10 +276,25 @@
     "description": "Discogs release identifier"
   },
   "replaygain_track_peak": {
-    "description": "Replaygain track peak: {ratio: number, dB: number}"
+    "description": "ReplayGain track peak: {ratio: number, dB: number}"
   },
   "replaygain_track_gain": {
-    "description": "Replay track gain: {ratio: number, dB: number}"
+    "description": "ReplayGain track gain: {ratio: number, dB: number}"
+  },
+  "replaygain_album_peak": {
+    "description": "ReplayGain album peak: {ratio: number, dB: number}"
+  },
+  "replaygain_album_gain": {
+    "description": "ReplayGain album gain: {ratio: number, dB: number}"
+  },
+  "replaygain_minmax": {
+    "description": "Minimum & maximum global gain values for this file."
+  },
+  "replaygain_album_minmax": {
+    "description": "Minimum & maximum global gain values across a set of files scanned as an album. "
+  },
+  "mp3gain_undo": {
+    "description": "The global gain adjustment to restore the original values in the left and right channels, respectively, followed by an indicator of whether to wrap"
   },
   "technician": {
     "description": "Technician who digitized subject"

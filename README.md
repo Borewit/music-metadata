@@ -128,13 +128,13 @@ Direct file access tends to be a little faster, because it can 'jump' to various
 Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
 
 ```TypeScript
-parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+parseFile(filePath;: string, opts;: IOptions = {};): Promise<IAudioMetadata>`
 ```
 
 Javascript example:
 ```javascript
 const mm = require('music-metadata');
-const util = require('util')
+const util = require('util');
 
 mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
   .then( metadata => {
@@ -167,7 +167,7 @@ An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
 
 ```TypeScript
-parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+parseStream(stream;: Stream.Readable, mimeType?: string, opts?: IOptions = {};): Promise<IAudioMetadata>`
 ```
 
 Example:
@@ -184,7 +184,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
 Parses content of the provided buffer for metadata.
 
 ```TypeScript
-parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>
+parseBuffer(buffer;: Buffer, mimeType?: string, opts?: IOptions = {};): Promise<IAudioMetadata>
 ```
 
 Example:
@@ -200,7 +200,7 @@ mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
 Utility to Converts the native tags to a dictionary index on the tag identifier
 
 ```TypeScript
-orderTags(nativeTags: ITag[]): [tagId: string]: any[]
+orderTags(nativeTags;: ITag[];): [tagId;: string;]: any[]
 ```
 
 #### ratingToStars function
@@ -208,7 +208,7 @@ orderTags(nativeTags: ITag[]): [tagId: string]: any[]
 Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
 
 ```TypeScript
-ratingToStars(rating: number): number
+ratingToStars(rating;: number;): number
 ```
 
 ### Options
@@ -270,7 +270,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
     1.  Using recursion
 
         ```javascript
-        const mm = require('music-metadata')
+        const mm = require('music-metadata');
         
         function parseFiles(audioFiles) {
           
@@ -293,7 +293,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
         Use [async/await](https://javascript.info/async-await)
         
         ```javascript
-        const mm = require('music-metadata')
+        const mm = require('music-metadata');
         
         // it is required to declare the function 'async' to allow the use of await
         async function parseFiles(audioFiles) {
