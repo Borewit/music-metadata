@@ -35,7 +35,7 @@ Stream and file based music metadata parser for node.
 | Ogg / Opus    |                                 | [:link:](https://wikipedia.org/wiki/Opus_(audio_format))           | <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Opus_logo2.svg" width="80" alt="Opus logo">                                     |
 | Ogg / Speex   |                                 | [:link:](https://wikipedia.org/wiki/Speex)                         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Speex_logo_2006.svg" width="80" alt="Speex logo">                               |
 | Ogg / Vorbis  |                                 | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/commons/8/8d/Xiph.Org_logo_square.svg" width="70" alt="Vorbis logo">                         |
-| WAV           |                                 | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="60" alt="WAV logo">                                           |
+| WAV           | RIFF WAVE                       | [:link:](https://wikipedia.org/wiki/WAV)                           | <img src="https://www.shareicon.net/download/2015/12/08/684232_file.svg" width="60" alt="WAV logo">                                           |
 | WV            | WavPack                         | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60" alt="WavPack logo">                                                              |
 | WMA           | Windows Media Audio             | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40" alt="Windows Media logo">  |
 
@@ -50,11 +50,14 @@ Following tag header formats are supported:
 *   [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 *   [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
 
+It allows many tags to be accessed in audio format, and tag format independent way.
+
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
+[ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain) tags are supported.
 
 ### Audio format & encoding details
 
-Support for encoding / format details:
+Support for encoding / format details:git pull
 *   [Bit rate](https://wikipedia.org/wiki/Bit_rate)
 *   [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
 *   Duration
@@ -127,14 +130,14 @@ Direct file access tends to be a little faster, because it can 'jump' to various
 
 Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
 
-```TypeScript
-parseFile(filePath;: string, opts;: IOptions = {};): Promise<IAudioMetadata>`
+```
+parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Javascript example:
 ```javascript
 const mm = require('music-metadata');
-const util = require('util');
+const util = require('util')
 
 mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
   .then( metadata => {
@@ -167,7 +170,7 @@ An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
 
 ```TypeScript
-parseStream(stream;: Stream.Readable, mimeType?: string, opts?: IOptions = {};): Promise<IAudioMetadata>`
+parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Example:
@@ -184,7 +187,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
 Parses content of the provided buffer for metadata.
 
 ```TypeScript
-parseBuffer(buffer;: Buffer, mimeType?: string, opts?: IOptions = {};): Promise<IAudioMetadata>
+parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
 Example:
@@ -200,7 +203,7 @@ mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
 Utility to Converts the native tags to a dictionary index on the tag identifier
 
 ```TypeScript
-orderTags(nativeTags;: ITag[];): [tagId;: string;]: any[]
+orderTags(nativeTags: ITag[]): [tagId: string]: any[]
 ```
 
 #### ratingToStars function
@@ -208,7 +211,7 @@ orderTags(nativeTags;: ITag[];): [tagId;: string;]: any[]
 Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
 
 ```TypeScript
-ratingToStars(rating;: number;): number
+ratingToStars(rating: number): number
 ```
 
 ### Options
@@ -270,7 +273,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
     1.  Using recursion
 
         ```javascript
-        const mm = require('music-metadata');
+        const mm = require('music-metadata')
         
         function parseFiles(audioFiles) {
           
@@ -293,7 +296,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
         Use [async/await](https://javascript.info/async-await)
         
         ```javascript
-        const mm = require('music-metadata');
+        const mm = require('music-metadata')
         
         // it is required to declare the function 'async' to allow the use of await
         async function parseFiles(audioFiles) {
