@@ -4,7 +4,8 @@ import * as _debug from 'debug';
 import {IOptions} from '../../type';
 import {INativeMetadataCollector} from '../../common/MetadataCollector';
 import * as Ogg from '../Ogg';
-import * as Vorbis from './Vorbis';
+import { VorbisDecoder } from './VorbisDecoder';
+import { CommonHeader, IdentificationHeader, IVorbisPicture, VorbisPictureToken } from './Vorbis';
 
 const debug = _debug('music-metadata:parser:ogg:vorbis1');
 
@@ -13,8 +14,6 @@ const debug = _debug('music-metadata:parser:ogg:vorbis1');
  * Used by OggParser
  */
 export class VorbisParser implements Ogg.IPageConsumer {
-
-  public codecName = 'Vorbis I';
 
   private pageSegments: Buffer[] = [];
 
@@ -55,6 +54,30 @@ export class VorbisParser implements Ogg.IPageConsumer {
     this.parseFullPage(Buffer.concat(this.pageSegments));
   }
 
+  public parseUserComment(pageData: Buffer, offset: number): number {
+    const decoder = new VorbisDecoder(pageData, offset);
+    const tag = decoder.parseUserComment();
+
+    this.addTag(tag.key, tag.value);
+
+    return tag.len;
+  }
+
+  public addTag(id: string, value: string | IVorbisPicture) {
+    if (id === 'METADATA_BLOCK_PICTURE' && (typeof value === 'string')) {
+      if (this.options.skipCovers) {
+        debug(`Ignore picture`);
+        return;
+      }
+      value = VorbisPictureToken.fromBase64(value);
+      debug(`Push picture: id=${id}, format=${value.format}`);
+    } else {
+      debug(`Push tag: id=${id}, value=${value}`);
+    }
+
+    this.metadata.addTag('vorbis', id, value);
+  }
+
   /**
    * Parse first Ogg/Vorbis page
    * @param {IPageHeader} header
@@ -64,11 +87,11 @@ export class VorbisParser implements Ogg.IPageConsumer {
     this.metadata.setFormat('codec', 'Vorbis I');
     debug("Parse first page");
     // Parse  Vorbis common header
-    const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
+    const commonHeader = CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis')
       throw new Error('Metadata does not look like Vorbis');
     if (commonHeader.packetType === 1) {
-      const idHeader = Vorbis.IdentificationHeader.get(pageData, Vorbis.CommonHeader.len);
+      const idHeader = IdentificationHeader.get(pageData, CommonHeader.len);
 
       this.metadata.setFormat('sampleRate', idHeader.sampleRate);
       this.metadata.setFormat('bitrate', idHeader.bitrateNominal);
@@ -79,12 +102,12 @@ export class VorbisParser implements Ogg.IPageConsumer {
 
   protected parseFullPage(pageData: Buffer) {
     // New page
-    const commonHeader = Vorbis.CommonHeader.get(pageData, 0);
+    const commonHeader = CommonHeader.get(pageData, 0);
     debug("Parse full page: type=%s, byteLength=%s", commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
 
       case 3: //  type 3: comment header
-        return this.parseUserCommentList(pageData, Vorbis.CommonHeader.len);
+        return this.parseUserCommentList(pageData, CommonHeader.len);
 
       case 1: // type 1: the identification header
       case 5: // type 5: setup header type
@@ -102,7 +125,6 @@ export class VorbisParser implements Ogg.IPageConsumer {
 
   /**
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
-   * @returns {Promise<number>}
    */
   protected parseUserCommentList(pageData: Buffer, offset: number) {
 
@@ -116,24 +138,5 @@ export class VorbisParser implements Ogg.IPageConsumer {
     while (userCommentListLength-- > 0) {
       offset += this.parseUserComment(pageData, offset);
     }
-  }
-
-  private parseUserComment(pageData: Buffer, offset: number): number {
-    const strLen = Token.UINT32_LE.get(pageData, offset);
-    const v = new Token.StringType(strLen, 'utf-8').get(pageData, offset + 4);
-    const idx = v.indexOf('=');
-    const key = v.slice(0, idx).toUpperCase();
-    let value: any = v.slice(idx + 1);
-
-    if (key === 'METADATA_BLOCK_PICTURE') {
-      value = this.options.skipCovers ? null : Vorbis.VorbisPictureToken.fromBase64(value);
-    }
-
-    if (value !== null) {
-      debug("Push tag: id=%s, value=%s", key, value);
-      this.metadata.addTag('vorbis', key, value);
-    }
-
-    return Token.UINT32_LE.len + strLen;
   }
 }

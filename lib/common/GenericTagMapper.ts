@@ -1,4 +1,5 @@
 import * as generic from './GenericTagTypes';
+import * as assert from 'assert';
 import {ITag} from '../type';
 import {Genres} from '../id3v1/ID3v1Parser';
 import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector';
@@ -49,6 +50,7 @@ export class CommonTagMapper implements IGenericTagMapper {
   }
 
   public static fixPictureMimeType(pictureType: string): string {
+    assert.ok(pictureType, 'pictureType should be defined');
     pictureType = pictureType.toLocaleLowerCase();
     switch (pictureType) {
       case 'image/jpg':
@@ -83,7 +85,7 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @param warnings Register warnings
    * @return common name
    */
-  public mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag {
+  public mapGenericTag(tag: ITag, warnings: IWarningCollector): generic.IGenericTag {
 
     tag = {id: tag.id, value: tag.value}; // clone object
 
