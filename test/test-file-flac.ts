@@ -120,4 +120,31 @@ describe("Parse FLAC", () => {
       });
     });
   });
+
+  /**
+   * Issue: https://github.com/Borewit/music-metadata/issues/266
+   */
+  it('Support Vorbis METADATA_BLOCK_PICTURE tags', async () => {
+
+    const filePath = path.join(samplePath, 'issue-266.flac');
+
+    const metadata = await mm.parseFile(filePath, {native: true});
+    const {format, common} = metadata;
+
+    assert.strictEqual(format.container, 'FLAC');
+    assert.deepEqual(format.tagTypes, ['vorbis']);
+
+    const vorbis = mm.orderTags(metadata.native.vorbis);
+    assert.isDefined(vorbis.METADATA_BLOCK_PICTURE, 'expect a Vorbis METADATA_BLOCK_PICTURE tag');
+    assert.deepEqual(vorbis.METADATA_BLOCK_PICTURE.length, 2, 'expect 2 Vorbis METADATA_BLOCK_PICTURE tags');
+
+    assert.isDefined(common.picture, 'common.picture');
+    assert.deepEqual(common.picture.length, 2, 'common.picture.length');
+    assert.deepEqual(common.picture[0].format, 'image/jpeg', 'ommon.picture[0].format');
+    assert.deepEqual(common.picture[0].data.length, 107402, 'ommon.picture[0].data.length');
+    assert.deepEqual(common.picture[1].format, 'image/jpeg', 'ommon.picture[1].format');
+    assert.deepEqual(common.picture[1].data.length, 215889, 'ommon.picture[1].data.length');
+
+  });
+
 });

@@ -7,6 +7,12 @@ import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
 import { FourCcToken } from '../common/FourCC';
 
 import * as _debug from 'debug';
+import { VorbisParser } from '../ogg/vorbis/VorbisParser';
+import { INativeMetadataCollector } from '../common/MetadataCollector';
+import { ITokenizer } from 'strtok3/lib/type';
+import { IOptions } from '../type';
+import { ITokenParser } from '../ParserFactory';
+import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';
 
 const debug = _debug('music-metadata:parser:FLAC');
 
@@ -26,11 +32,21 @@ enum BlockType {
 
 export class FlacParser extends AbstractID3Parser {
 
-  public static getInstance(): FlacParser {
-    return new FlacParser();
-  }
+  private vorbisParser: VorbisParser;
 
   private padding: number = 0;
+
+  /**
+   * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
+   * @param {INativeMetadataCollector} metadata Output
+   * @param {ITokenizer} tokenizer Input
+   * @param {IOptions} options Parsing options
+   */
+  public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
+    super.init(metadata, tokenizer, options);
+    this.vorbisParser = new VorbisParser(metadata, options);
+    return this;
+  }
 
   public async _parse(): Promise<void> {
 
@@ -52,10 +68,6 @@ export class FlacParser extends AbstractID3Parser {
       const dataSize = this.tokenizer.fileSize - this.tokenizer.position;
       this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
     }
-  }
-
-  private addTag(id: string, value: any) {
-    this.metadata.addTag('vorbis', id, value);
   }
 
   private parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
@@ -107,13 +119,12 @@ export class FlacParser extends AbstractID3Parser {
    */
   private async parseComment(dataLen: number): Promise<void> {
     const data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen));
-    const decoder = new DataDecoder(data);
+    const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
     for (let i = 0; i < commentListLength; i++) {
-      const comment = decoder.readStringUtf8();
-      const split = comment.split('=');
-      this.addTag(split[0].toUpperCase(), split.splice(1).join('='));
+      const tag = decoder.parseUserComment();
+      this.vorbisParser.addTag(tag.key, tag.value);
     }
   }
 
@@ -122,7 +133,7 @@ export class FlacParser extends AbstractID3Parser {
       return this.tokenizer.ignore(dataLen);
     } else {
       const picture = await this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen));
-      this.addTag('METADATA_BLOCK_PICTURE', picture);
+      this.vorbisParser.addTag('METADATA_BLOCK_PICTURE', picture);
     }
   }
 }
@@ -226,28 +237,4 @@ class Metadata {
       };
     }
   };
-}
-
-class DataDecoder {
-
-  private data: Buffer;
-  private offset: number;
-
-  constructor(data: Buffer) {
-    this.data = data;
-    this.offset = 0;
-  }
-
-  public readInt32(): number {
-    const value = Token.UINT32_LE.get(this.data, this.offset);
-    this.offset += 4;
-    return value;
-  }
-
-  public readStringUtf8(): string {
-    const len = this.readInt32();
-    const value = this.data.toString('utf8', this.offset, this.offset + len);
-    this.offset += len;
-    return value;
-  }
 }
