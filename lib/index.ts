@@ -5,6 +5,7 @@ import * as Core from './core';
 import { ParserFactory } from './ParserFactory';
 import { IAudioMetadata, IOptions, ITag } from './type';
 import * as _debug from 'debug';
+import { RandomFileReader } from './common/RandomFileReader';
 
 export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio } from './type';
 
@@ -39,7 +40,16 @@ export const parseBuffer = Core.parseBuffer;
  * @returns {Promise<IAudioMetadata>}
  */
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
+
   const fileTokenizer = await strtok3.fromFile(filePath);
+
+  const fileReader = new RandomFileReader(filePath, fileTokenizer.fileSize);
+  try {
+    await Core.scanAppendingHeaders(fileReader, options);
+  } finally {
+    fileReader.close();
+  }
+
   try {
     const parserName = ParserFactory.getParserIdForExtension(filePath);
     if (!parserName)
