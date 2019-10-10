@@ -1480,9 +1480,9 @@ figgy-pudding@^3.5.1:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/figgy-pudding/-/figgy-pudding-3.5.1.tgz#862470112901c727a0e495a80744bd5baa1d6790"
 
-file-type@^11.0.0:
-  version "11.1.0"
-  resolved "https://registry.yarnpkg.com/file-type/-/file-type-11.1.0.tgz#93780f3fed98b599755d846b99a1617a2ad063b8"
+file-type@^12.1.0:
+  version "12.3.0"
+  resolved "https://registry.yarnpkg.com/file-type/-/file-type-12.3.0.tgz#74d755e5dc9c5cbc7ee6f182529b453906ac88c2"
 
 filereader-stream@^2.0.0:
   version "2.0.0"
@@ -2674,28 +2674,28 @@ ms@^2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
 
 music-metadata-browser@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/music-metadata-browser/-/music-metadata-browser-1.1.1.tgz#b741867da6bcc18cacaa82522d0927ebd3028c2b"
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/music-metadata-browser/-/music-metadata-browser-1.6.0.tgz#1844222f3a5fc841fa46af44b46f248bc5ff613d"
   dependencies:
     assert "^2.0.0"
     buffer "^5.2.1"
     debug "^4.0.1"
-    music-metadata "^4.1.1"
+    music-metadata "^4.8.0"
     readable-stream "^3.3.0"
-    readable-web-to-node-stream "^1.0.0"
+    readable-web-to-node-stream "^1.1.4"
     remove "^0.1.5"
     typedarray-to-buffer "^3.1.5"
 
-music-metadata@^4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/music-metadata/-/music-metadata-4.1.1.tgz#2218e02b437f54dcb5edf8650f736a1aeb2a7839"
+music-metadata@^4.8.0:
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/music-metadata/-/music-metadata-4.8.0.tgz#5bf1d8afe8f0cdc652847b7a39cb95d61982c179"
   dependencies:
     content-type "^1.0.4"
     debug "^4.1.0"
-    file-type "^11.0.0"
+    file-type "^12.1.0"
     media-typer "^1.1.0"
-    strtok3 "^3.0.0"
-    token-types "^1.0.1"
+    strtok3 "^3.0.1"
+    token-types "^1.0.3"
 
 nan@^2.12.1:
   version "2.14.0"
@@ -3246,7 +3246,7 @@ readable-stream@^3.3.0:
     string_decoder "^1.1.1"
     util-deprecate "^1.0.1"
 
-readable-web-to-node-stream@^1.0.0:
+readable-web-to-node-stream@^1.1.4:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/readable-web-to-node-stream/-/readable-web-to-node-stream-1.1.4.tgz#5857d32fb9f791d1c4ca3c297ff028acb41218c6"
 
@@ -3730,6 +3730,14 @@ strtok3@^3.0.0:
     then-read-stream "^2.0.0"
     token-types "^1.0.1"
 
+strtok3@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.0.1.tgz#67b67c318b44f9fbff97fd94033681ec502fdfa2"
+  dependencies:
+    debug "^4.1.1"
+    then-read-stream "^2.0.6"
+    token-types "^1.0.1"
+
 supports-color@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-2.0.0.tgz#535d045ce6b6363fa40117084629995e9df324c7"
@@ -3787,6 +3795,10 @@ terser@^4.1.2:
 then-read-stream@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/then-read-stream/-/then-read-stream-2.0.0.tgz#94bb75f01cac12198ecfc277f914d3ce5a1eb787"
+
+then-read-stream@^2.0.6:
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/then-read-stream/-/then-read-stream-2.0.6.tgz#8d8e2b165b54a1c5f866cb43e2164c1f5f9b85ac"
 
 through2@^2.0.0:
   version "2.0.5"
@@ -3858,6 +3870,10 @@ toidentifier@1.0.0:
 token-types@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.0.1.tgz#c91671bd80f7e2ded10dee4b8ff17247c40378c7"
+
+token-types@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.0.3.tgz#737cc01939d23577ae339b88de82fa3cb3d0b735"
 
 tough-cookie@~2.4.3:
   version "2.4.3"
