@@ -76,7 +76,7 @@
     "file-type": "^12.1.0",
     "media-typer": "^1.1.0",
     "strtok3": "^3.0.1",
-    "token-types": "^1.0.3"
+    "token-types": "^1.0.4"
   },
   "devDependencies": {
     "@types/chai": "^4.2.3",
