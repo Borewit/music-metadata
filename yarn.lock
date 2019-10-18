@@ -111,8 +111,8 @@
     "@types/node" "*"
 
 "@types/jasmine@^3.3.8":
-  version "3.4.3"
-  resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-3.4.3.tgz#a76de65d748f6c983f2cd54bfe1150fcd832d181"
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-3.4.4.tgz#be3fbd73e72725edb44e6f7f509cd52912d1550c"
 
 "@types/minimatch@*":
   version "3.0.3"
