@@ -1,8 +1,8 @@
 import * as initDebug from 'debug';
 import { AbstractTokenizer } from 'strtok3/lib/AbstractTokenizer';
 import { ChunkedFileData } from './chunked-file-data';
-
-import * as _fetch from 'node-fetch';
+import { HttpClient } from './http-client';
+import { IHttpClient, IHttpResponse } from './types';
 
 const debug = initDebug('streaming-http-token-reader');
 
@@ -20,12 +20,6 @@ interface IConfig {
   minimumChunkSize: number;
 }
 
-export interface IContentRangeType {
-  firstBytePosition?: number;
-  lastBytePosition?: number;
-  instanceLength?: number;
-}
-
 /**
  * StreamingHttpTokenReader
  *
@@ -34,9 +28,8 @@ export interface IContentRangeType {
  */
 export class StreamingHttpTokenReader extends AbstractTokenizer {
 
-  private static getContentLength(headers: _fetch.Headers): number {
-    const contentLength = headers.get('Content-Length');
-    return contentLength ? parseInt(contentLength, 10) : undefined;
+  public static fromUrl(url: string, config?: IStreamingHttpConfig): StreamingHttpTokenReader {
+    return new StreamingHttpTokenReader(new HttpClient(url), config);
   }
 
   public contentType: string;
@@ -50,7 +43,7 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
   private _fileData: ChunkedFileData;
   private _isInitialized: boolean;
 
-  constructor(private url: string, config?: IStreamingHttpConfig) {
+  constructor(private httpClient: IHttpClient, config?: IStreamingHttpConfig) {
     super();
     if (config) {
       Object.assign(this.config, config);
@@ -127,7 +120,7 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
     }
   }
 
-  public init(): Promise<Response> {
+  public init(): Promise<IHttpResponse> {
     return this.config.avoidHeadRequests ?
       this._fetchSizeWithGetRequest() :
       this._fetchSizeWithHeadRequest();
@@ -159,68 +152,44 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
 
     debug(`blocked range: ${range[0]}..${range[1]}`);
 
-    return this._getResponse('GET', range).then(response => {
+    return this.httpClient.getResponse('GET', range).then(response => {
       return response.arrayBuffer().then(data => {
         this._fileData.addData(range[0], data);
       });
     });
   }
 
-  private _fetchSizeWithHeadRequest(): Promise<Response> {
+  private _fetchSizeWithHeadRequest(): Promise<IHttpResponse> {
 
     debug(`_fetchSizeWithHeadRequest()`);
-    return _fetch(this.url, {method: 'HEAD'}).then(response => {
-      const contentLength = StreamingHttpTokenReader.getContentLength(response.headers);
-      if (contentLength) {
-        debug(`contentLength=${contentLength}`);
-        this.fileSize = contentLength;
+    return this.httpClient.getHeadInfo().then(info => {
+      if (info.contentLength) {
+        debug(`contentLength=${info.contentLength}`);
+        this.fileSize = info.contentLength;
       } else {
         // Content-Length not provided by the server, fallback to
         // GET requests.
         debug('Content-Length not provided by the server, fallback to GET requests');
         return this._fetchSizeWithGetRequest();
       }
-      this.contentType = response.headers.get('Content-Type');
+      this.contentType = info.contentType;
     });
   }
 
-  private _fetchSizeWithGetRequest(): Promise<Response> {
+  private _fetchSizeWithGetRequest(): Promise<IHttpResponse> {
     const range = this._roundRange([0, this.config.initialChunkSize]);
 
-    return this._getResponse('GET', range).then(response => {
-      const contentRange = this._parseContentRange(response.headers);
-      debug(`_fetchSizeWithGetRequest response: contentRange=${contentRange}`);
+    return this.httpClient.getResponse('GET', range).then(response => {
+      debug(`_fetchSizeWithGetRequest response: contentRange=${response.contentRange}`);
 
-      this.contentType = response.headers.get('Content-Type');
-      if (contentRange) {
-        this.fileSize = contentRange.instanceLength;
+      if (response.contentRange) {
+        this.fileSize = response.contentRange.instanceLength;
+        this.contentType = response.contentType;
         return response;
       } else {
         throw new Error('Did not get a content range');
       }
     });
-  }
-
-  private _parseContentRange(headers: _fetch.Headers): IContentRangeType {
-    const contentRange = headers.get('Content-Range');
-    debug(`_parseContentRang response: contentRange=${contentRange}`);
-
-    if (contentRange) {
-      const parsedContentRange = contentRange.match(
-        /bytes (\d+)-(\d+)\/(?:(\d+)|\*)/i
-      );
-      if (!parsedContentRange) {
-        throw new Error('FIXME: Unknown Content-Range syntax: ' + contentRange);
-      }
-
-      return {
-        firstBytePosition: parseInt(parsedContentRange[1], 10),
-        lastBytePosition: parseInt(parsedContentRange[2], 10),
-        instanceLength: parsedContentRange[3] ? parseInt(parsedContentRange[3], 10) : null
-      };
-    } else {
-      return null;
-    }
   }
 
   private _roundRange(range: [number, number]): [number, number] {
@@ -230,24 +199,4 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
     return [range[0], range[0] + newLength - 1];
   }
 
-  private _getResponse(method: string, range?: [number, number]): Promise<Response> {
-    if (range) {
-      debug(`_makeXHRRequest ${method} ${range[0]}..${range[1]}`);
-    } else {
-      debug(`_makeXHRRequest ${method} (range not provided)`);
-    }
-
-    const headers = new _fetch.Headers();
-    headers.set('Range', 'bytes=' + range[0] + '-' + range[1]);
-
-    return _fetch(this.url, {method, headers}).then(response => {
-
-      if (response.ok) {
-        return response;
-      } else {
-        throw new Error(`Unexpected HTTP response status=${response.status}`);
-      }
-
-    });
-  }
 }

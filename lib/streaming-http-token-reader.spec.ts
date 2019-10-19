@@ -25,7 +25,7 @@ const parsers: IParserTest[] = [
   {
     methodDescription: 'StreamingHttpTokenReader => parseTokenizer()',
     parseUrl: (audioTrackUrl, config, options) => {
-      const streamingHttpTokenReader = new StreamingHttpTokenReader(audioTrackUrl, config);
+      const streamingHttpTokenReader = StreamingHttpTokenReader.fromUrl(audioTrackUrl, config);
       return streamingHttpTokenReader.init().then(() => {
         return mm.parseFromTokenizer(streamingHttpTokenReader, streamingHttpTokenReader.contentType, options);
       });
