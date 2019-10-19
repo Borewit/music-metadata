@@ -18,15 +18,14 @@ The way streaming-http-token-reader
 import * as mm from 'music-metadata-browser';
 import { IStreamingHttpConfig, StreamingHttpTokenReader } from 'streaming-http-token-reader';
 
-
-  const streamingHttpTokenReader = new StreamingHttpTokenReader(audioTrackUrl, config);
-  streamingHttpTokenReader.init()
-  .then( () => {
-      return mm.parseFromTokenizer(streamingHttpTokenReader, streamingHttpTokenReader.contentType, options);
-    })
-  .then( metadata => {
-      // Process metadata
-    });
+const streamingHttpTokenReader = new StreamingHttpTokenReader(audioTrackUrl, config);
+streamingHttpTokenReader.init()
+.then( () => {
+  return mm.parseFromTokenizer(streamingHttpTokenReader, streamingHttpTokenReader.contentType, options);
+})
+.then( metadata => {
+  // Process metadata
+});
 ```
 
 ## Server requirements
