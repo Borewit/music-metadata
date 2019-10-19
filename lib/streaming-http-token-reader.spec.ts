@@ -195,27 +195,4 @@ describe('streaming-http-token-reader', () => {
     });
   });
 
-  describe('Parse WebAmp tracks parallel', () => {
-
-    parsers.forEach(parser => {
-      if (!parser.enable) {
-        return;
-      }
-
-      it(`Parser: ${parser.methodDescription}`, async () => {
-
-
-        return Promise.all(tiuqottigeloot_vol24_Tracks.map(track => {
-          const url = netlify.getUrl(track.url);
-          return parser.parseUrl(netlify.getUrl(url)).then(metadata => {
-            expect(metadata.common.artist).toEqual(track.metaData.artist);
-            expect(metadata.common.title).toEqual(track.metaData.title);
-          });
-        }));
-      });
-
-    });
-
-  });
-
 });

@@ -3,6 +3,8 @@ node_js:
  - "node"
 install:
  - yarn install
+services:
+  - xvfb # Required for Karma execution directly in Travis-CI
 script:
  - yarn run lint
  - yarn build
