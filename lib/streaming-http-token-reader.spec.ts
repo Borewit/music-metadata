@@ -33,10 +33,9 @@ const parsers: IParserTest[] = [
   }
 ];
 
-const webAmpTracks = [
+const tiuqottigeloot_vol24_Tracks = [
   {
-    url:
-      '01_Diablo_Swing_Orchestra_-_Heroines.mp3',
+    url: '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/01%20-%20Diablo%20Swing%20Orchestra%20-%20Heroines.mp3',
     duration: 322.612245,
     metaData: {
       title: 'Heroines',
@@ -44,7 +43,7 @@ const webAmpTracks = [
     }
   },
   {
-    url: '02_Eclectek_-_We_Are_Going_to_Eclecfunk_Your_Ass.mp3',
+    url: '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/02%20-%20Eclectek%20-%20We%20Are%20Going%20To%20Eclecfunk%20Your%20Ass.mp3',
     duration: 190.093061,
     metaData: {
       title: 'We Are Going to Eclecfunk Your Ass',
@@ -52,7 +51,8 @@ const webAmpTracks = [
     }
   },
   {
-    url: '03_Auto-Pilot_-_Seventeen.mp3',
+    url:
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/03%20-%20Auto-Pilot%20-%20Seventeen.mp3',
     duration: 214.622041,
     metaData: {
       title: 'Seventeen',
@@ -60,7 +60,8 @@ const webAmpTracks = [
     }
   },
   {
-    url: '04_Muha_-_Microphone.mp3',
+    url:
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/04%20-%20Muha%20-%20Microphone.mp3',
     duration: 181.838367,
     metaData: {
       title: 'Microphone',
@@ -68,7 +69,8 @@ const webAmpTracks = [
     }
   },
   {
-    url: '05_Just_Plain_Ant_-_Stumble.mp3',
+    url:
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/05%20-%20Just%20Plain%20Ant%20-%20Stumble.mp3',
     duration: 86.047347,
     metaData: {
       title: 'Stumble',
@@ -77,7 +79,7 @@ const webAmpTracks = [
   },
   {
     url:
-      '06_Sleaze_-_God_Damn.mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/06%20-%20Sleaze%20-%20God%20Damn.mp3',
     duration: 226.795102,
     metaData: {
       title: 'God Damn',
@@ -86,7 +88,7 @@ const webAmpTracks = [
   },
   {
     url:
-      '07_Juanitos_-_Hola_Hola_Bossa_Nova.mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/07%20-%20Juanitos%20-%20Hola%20Hola%20Bossa%20Nova.mp3',
     duration: 207.072653,
     metaData: {
       title: 'Hola Hola Bossa Nova',
@@ -95,7 +97,7 @@ const webAmpTracks = [
   },
   {
     url:
-      '08_Entertainment_for_the_Braindead_-_Resolutions_(Chris_Summer_remix).mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/08%20-%20Entertainment%20For%20The%20Braindead%20-%20Resolutions%20(Chris%20Summer%20Remix).mp3',
     duration: 314.331429,
     metaData: {
       title: 'Resolutions (Chris Summer remix)',
@@ -104,7 +106,7 @@ const webAmpTracks = [
   },
   {
     url:
-      '09_Nobara_Hayakawa_-_Trail.mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/09%20-%20Nobara%20Hayakawa%20-%20Trail.mp3',
     duration: 204.042449,
     metaData: {
       title: 'Trail',
@@ -113,7 +115,7 @@ const webAmpTracks = [
   },
   {
     url:
-      '10_Paper_Navy_-_Tongue_Tied.mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/10%20-%20Paper%20Navy%20-%20Tongue%20Tied.mp3',
     duration: 201.116735,
     metaData: {
       title: 'Tongue Tied',
@@ -122,7 +124,7 @@ const webAmpTracks = [
   },
   {
     url:
-      '11_60_Tigres_-_Garage.mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/11%20-%2060%20Tigres%20-%20Garage.mp3',
     duration: 245.394286,
     metaData: {
       title: 'Garage',
@@ -131,20 +133,20 @@ const webAmpTracks = [
   },
   {
     url:
-      '12_CM_aka_Creative_-_The_Cycle_(feat._Mista_Mista).mp3',
+      '/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/12%20-%20CM%20aka%20Creative%20-%20The%20Cycle%20(Featuring%20Mista%20Mista).mp3',
     duration: 221.44,
     metaData: {
       title: 'The Cycle (feat. Mista Mista)',
       artist: 'CM aka Creative'
     }
   }
-];
+].filter((track, n) => n < 4);
 
 describe('streaming-http-token-reader', () => {
 
   const netlify: IProvider = {
     name: 'Netlify',
-    getUrl: url => 'https://netbloc-vol24.netlify.com/' + url
+    getUrl: url => 'https://test-audio.netlify.com' + url
   };
 
   describe('Parse WebAmp tracks', () => {
@@ -176,7 +178,7 @@ describe('streaming-http-token-reader', () => {
           }
           describe(`Parser: ${parser.methodDescription}`, () => {
 
-            webAmpTracks.forEach(track => {
+            tiuqottigeloot_vol24_Tracks.forEach(track => {
               const url = profile.provider.getUrl(track.url);
               it(`track ${track.metaData.artist} - ${track.metaData.title} from url: ${url}`, () => {
                 return parser.parseUrl(url, profile.config).then(metadata => {
@@ -199,10 +201,13 @@ describe('streaming-http-token-reader', () => {
       if (!parser.enable) {
         return;
       }
-      it(`Parser: ${parser.methodDescription}`, () => {
 
-        return Promise.all(webAmpTracks.map(track => {
-          return parser.parseUrl(netlify.getUrl(track.url)).then(metadata => {
+      it(`Parser: ${parser.methodDescription}`, async () => {
+
+
+        return Promise.all(tiuqottigeloot_vol24_Tracks.map(track => {
+          const url = netlify.getUrl(track.url);
+          return parser.parseUrl(netlify.getUrl(url)).then(metadata => {
             expect(metadata.common.artist).toEqual(track.metaData.artist);
             expect(metadata.common.title).toEqual(track.metaData.title);
           });
