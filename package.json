@@ -8,7 +8,10 @@
     "lib/**/*.js",
     "lib/**/*.d.ts"
   ],
-  "repository": "https://github.com/Borewit/xhr-token-reader.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Borewit/streaming-http-token-reader.git"
+  },
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
@@ -20,7 +23,7 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Borewit/xhr-token-reader/issues"
+    "url": "https://github.com/Borewit/streaming-http-token-reader/issues"
   },
   "scripts": {
     "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts test/**/*.js test/**/*.js.map coverage",
