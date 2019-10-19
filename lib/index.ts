@@ -11,6 +11,8 @@ export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFor
 
 const debug = _debug("music-metadata:parser");
 
+export { parseFromTokenizer } from './core';
+
 /**
  * Parse audio from Node Stream.Readable
  * @param {Stream.Readable} stream Stream to read the audio track from
