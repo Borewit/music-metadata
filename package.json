@@ -2,9 +2,16 @@
   "name": "streaming-http-token-reader",
   "version": "0.1.0",
   "description": "HTTP-tokenizer-client",
-  "main": "dist/streaming-http-token-reader",
-  "typings": "dist/streaming-http-token-reader",
-  "repository": "https://github.com/Borewit/xhr-token-reader.git",
+  "main": "lib/streaming-http-token-reader",
+  "typings": "lib/streaming-http-token-reader",
+  "files": [
+    "lib/**/*.js",
+    "lib/**/*.d.ts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Borewit/streaming-http-token-reader.git"
+  },
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
@@ -16,15 +23,16 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Borewit/xhr-token-reader/issues"
+    "url": "https://github.com/Borewit/streaming-http-token-reader/issues"
   },
   "scripts": {
-    "clean": "del-cli dist/** src/**/*.js src/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map coverage",
-    "compile-dist": "tsc -p src/tsconfig.dist.json",
-    "compile-test": "tsc -p src/tsconfig.spec.json",
+    "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts test/**/*.js test/**/*.js.map coverage",
+    "compile-lib": "tsc -p lib/tsconfig.json",
+    "compile-test": "tsc -p lib/tsconfig.spec.json",
+    "compile": "npm run compile-lib && yarn run compile-test",
     "prepublishOnly": "yarn run build",
-    "build": "npm run compile-dist",
-    "lint": "tslint 'src/**/*.ts' --exclude 'src/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
+    "build": "npm run clean && yarn run compile",
+    "lint": "tslint 'lib/**/*.ts' --exclude 'lib/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
     "karma": "karma start",
     "test": "npm run karma-once",
     "karma-once": "karma start --browsers Chrome --single-run",
