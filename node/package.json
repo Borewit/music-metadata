@@ -1,0 +1,36 @@
+{
+  "scripts": {
+    "clean": "del-cli test/**/*.js test/**/*.js.map coverage",
+    "compile-test": "tsc -p test/tsconfig.json",
+    "compile": "yarn run compile-test",
+    "prepublishOnly": "yarn run build",
+    "build": "yarn run clean && yarn run compile",
+    "lint": "tslint 'lib/**/*.ts' --exclude 'lib/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
+    "karma": "karma start",
+    "mocha": "karma start",
+    "test": "mocha --require ts-node/register --require source-map-support/register --full-trace test/test.ts",
+    "karma-once": "karma start --browsers Chrome --single-run",
+    "travis-karma": "karma start --browsers Firefox --single-run",
+    "post-coveralls": "coveralls < coverage/lcov.info"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.3",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.0.7",
+    "chai": "^4.2.0",
+    "coveralls": "^3.0.2",
+    "del-cli": "^3.0.0",
+    "filereader-stream": "^2.0.0",
+    "mocha": "^6.2.2",
+    "music-metadata": "^4.8.2",
+    "ts-loader": "^6.0.2",
+    "ts-node": "^8.4.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.3.1"
+  },
+  "dependencies": {
+    "debug": "^4.1.0",
+    "node-fetch": "^2.6.0",
+    "strtok3": "^3.0.0"
+  }
+}

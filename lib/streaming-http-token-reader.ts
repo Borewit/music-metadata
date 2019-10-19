@@ -2,6 +2,8 @@ import * as initDebug from 'debug';
 import { AbstractTokenizer } from 'strtok3/lib/AbstractTokenizer';
 import { ChunkedFileData } from './chunked-file-data';
 
+import * as _fetch from 'node-fetch';
+
 const debug = initDebug('streaming-http-token-reader');
 
 export interface IStreamingHttpConfig {
@@ -32,7 +34,7 @@ export interface IContentRangeType {
  */
 export class StreamingHttpTokenReader extends AbstractTokenizer {
 
-  private static getContentLength(headers: Headers): number {
+  private static getContentLength(headers: _fetch.Headers): number {
     const contentLength = headers.get('Content-Length');
     return contentLength ? parseInt(contentLength, 10) : undefined;
   }
@@ -167,7 +169,7 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
   private _fetchSizeWithHeadRequest(): Promise<Response> {
 
     debug(`_fetchSizeWithHeadRequest()`);
-    return fetch(this.url, {method: 'HEAD'}).then(response => {
+    return _fetch(this.url, {method: 'HEAD'}).then(response => {
       const contentLength = StreamingHttpTokenReader.getContentLength(response.headers);
       if (contentLength) {
         debug(`contentLength=${contentLength}`);
@@ -199,7 +201,7 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
     });
   }
 
-  private _parseContentRange(headers: Headers): IContentRangeType {
+  private _parseContentRange(headers: _fetch.Headers): IContentRangeType {
     const contentRange = headers.get('Content-Range');
     debug(`_parseContentRang response: contentRange=${contentRange}`);
 
@@ -235,10 +237,10 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
       debug(`_makeXHRRequest ${method} (range not provided)`);
     }
 
-    const headers = new Headers();
+    const headers = new _fetch.Headers();
     headers.set('Range', 'bytes=' + range[0] + '-' + range[1]);
 
-    return fetch(this.url, {method, headers}).then(response => {
+    return _fetch(this.url, {method, headers}).then(response => {
 
       if (response.ok) {
         return response;
