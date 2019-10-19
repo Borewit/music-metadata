@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/Borewit/streaming-http-token-reader.svg?branch=master)](https://travis-ci.com/Borewit/streaming-http-token-reader)
+[![Build Status](https://travis-ci.org/Borewit/streaming-http-token-reader.svg?branch=master)](https://travis-ci.org/Borewit/streaming-http-token-reader)
 [![NPM version](https://badge.fury.io/js/streaming-http-token-reader.svg)](https://npmjs.org/package/streaming-http-token-reader)
 [![npm downloads](http://img.shields.io/npm/dm/streaming-http-token-reader.svg)](https://npmcharts.com/compare/streaming-http-token-reader?interval=30)
 [![dependencies Status](https://david-dm.org/Borewit/streaming-http-token-reader/status.svg)](https://david-dm.org/Borewit/streaming-http-token-reader)
