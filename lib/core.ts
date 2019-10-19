@@ -45,7 +45,7 @@ export async function parseBuffer(buf: Buffer, mimeType?: string, options: IOpti
  * @returns {Promise<IAudioMetadata>}
  */
 export function parseFromTokenizer(tokenizer: ITokenizer, mimeType?: string, options?: IOptions): Promise<IAudioMetadata> {
-  if (!tokenizer.fileSize && options.fileSize) {
+  if (!tokenizer.fileSize && options && options.fileSize) {
     tokenizer.fileSize = options.fileSize;
   }
   return ParserFactory.parseOnContentType(tokenizer, mimeType, options);
