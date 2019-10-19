@@ -19,7 +19,12 @@
   "keywords": [
     "xhr",
     "http",
-    "sttok3"
+    "sttok3",
+    "RFC-7233",
+    "range",
+    "chunk",
+    "https",
+    "client"
   ],
   "license": "MIT",
   "bugs": {
