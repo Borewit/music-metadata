@@ -28,7 +28,7 @@ module.exports = config => {
           {
             test: /\.ts$/,
             use: 'ts-loader',
-            include: path.resolve('lib')
+            include: [path.resolve('lib'), path.resolve('node/test')]
           },
           {
             test: /\.ts$/,

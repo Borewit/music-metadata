@@ -40,6 +40,7 @@
     "lint": "tslint 'lib/**/*.ts' --exclude 'lib/**/*.d.ts' 'test/**/*.ts' --exclude 'test/**/*.d.ts'",
     "karma": "karma start",
     "test": "npm run karma-once",
+    "test-node": "cd node && yarn install && yarn test",
     "karma-once": "karma start --browsers Chrome --single-run",
     "travis-karma": "karma start --browsers Firefox --single-run",
     "post-coveralls": "coveralls < coverage/lcov.info"
@@ -67,6 +68,7 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
+    "node-fetch": "^2.6.0",
     "strtok3": "^3.0.4"
   }
 }
