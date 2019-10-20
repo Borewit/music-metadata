@@ -184,7 +184,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
 
 #### parseBuffer function
 
-Parses content of the provided buffer for metadata.
+Parse metadata from an audio file, where the audio file is held in a [Buffer](https://nodejs.org/api/buffer.html).
 
 ```ts
 parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>
@@ -197,6 +197,13 @@ mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
    });
 ```
+
+#### parseFromTokenizer function
+This is a low level function, reading from a [strtok3](https://github.com/Borewit/strtok3) ITokenizer interface.
+[music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is depended on this function.
+
+This also enables special read modules like:
+*   [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
 
 #### orderTags function
 
