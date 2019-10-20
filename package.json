@@ -1,6 +1,6 @@
 {
   "name": "streaming-http-token-reader",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "HTTP-tokenizer-client",
   "main": "lib/streaming-http-token-reader",
   "typings": "lib/streaming-http-token-reader",
