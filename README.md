@@ -78,7 +78,7 @@ Requires [Node.js®](https://nodejs.org/) version 6 or higher.
 Although music-metadata is designed to run the node.js. [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) can be used on the browser side. 
 
 To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
-```JavaScript
+```js
 import * as mm from 'music-metadata/lib/core';
 ```
 
@@ -114,7 +114,7 @@ const mm = require('music-metadata');
 ```
 
 This is how it's done in TypeScript:
-```TypeScript
+```ts
 import * as mm from 'music-metadata';
 ```
 
@@ -135,7 +135,7 @@ parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Javascript example:
-```javascript
+```js
 const mm = require('music-metadata');
 const util = require('util')
 
@@ -149,7 +149,7 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native
 ```
 
 Typescript example:
-```javascript
+```js
 import * as mm from 'music-metadata';
 import * as util from 'util';
 
@@ -169,12 +169,12 @@ It is recommended to provide the corresponding [MIME-type](https://developer.moz
 An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
 
-```TypeScript
+```ts
 parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Example:
-```javascript
+```js
 mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
   .then( metadata => {
      console.log(util.inspect(metadata, { showHidden: false, depth: null }));
@@ -186,12 +186,12 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
 
 Parses content of the provided buffer for metadata.
 
-```TypeScript
+```ts
 parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
 Example:
-```javascript
+```js
 mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
   .then( metadata => {
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
@@ -202,7 +202,7 @@ mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
 
 Utility to Converts the native tags to a dictionary index on the tag identifier
 
-```TypeScript
+```ts
 orderTags(nativeTags: ITag[]): [tagId: string]: any[]
 ```
 
@@ -210,7 +210,7 @@ orderTags(nativeTags: ITag[]): [tagId: string]: any[]
 
 Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
 
-```TypeScript
+```ts
 ratingToStars(rating: number): number
 ```
 
@@ -254,7 +254,7 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 ## Examples
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
-```javascript
+```js
 mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 })
   .then( function (metadata) {
      console.log(util.inspect(metadata, { showHidden: false, depth: null }));
@@ -272,7 +272,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
 
     1.  Using recursion
 
-        ```javascript
+        ```js
         const mm = require('music-metadata')
         
         function parseFiles(audioFiles) {
@@ -295,7 +295,7 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
         
         Use [async/await](https://javascript.info/async-await)
         
-        ```javascript
+        ```js
         const mm = require('music-metadata')
         
         // it is required to declare the function 'async' to allow the use of await
