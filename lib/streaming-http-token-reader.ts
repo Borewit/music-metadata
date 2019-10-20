@@ -131,11 +131,17 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
       this._fetchSizeWithHeadRequest();
   }
 
-  public loadRange(range: [number, number]): Promise<void> {
+  private loadRange(range: [number, number]): Promise<void> {
 
-    debug(`loadRange ${range[0]}..${range[1]}`);
+    if (range[0] > this.fileSize - 1) {
+      throw new Error('End-Of-File');
+    }
 
-    if (this._fileData.hasDataRange(range[0], Math.min(this.fileSize, range[1]))) {
+    debug(`request range ${range[0]}..${range[1]}`);
+    range[1] = Math.min(this.fileSize - 1, range[1]);
+
+    debug(`adjusted range ${range[0]}..${range[1]}`);
+    if (this._fileData.hasDataRange(range[0], range[1])) {
       debug(`Read from cache`);
       return Promise.resolve();
     }
@@ -147,9 +153,9 @@ export class StreamingHttpTokenReader extends AbstractTokenizer {
     range = this._roundRange(range);
 
     // Upper range should not be greater than max file size
-    range[1] = Math.min(this.fileSize, range[1]);
+    range[1] = Math.min(this.fileSize - 1, range[1]);
 
-    debug(`adjust range to: ${range[0]}..${range[1]}`);
+    debug(`blocked range: ${range[0]}..${range[1]}`);
 
     return this._getResponse('GET', range).then(response => {
       return response.arrayBuffer().then(data => {
