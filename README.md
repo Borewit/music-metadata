@@ -7,25 +7,33 @@
 
 # streaming-http-token-reader
 
-Streams HTTP using [RFC-7233](https://tools.ietf.org/html/rfc7233#section-2.3) [range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests) using the browsers [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API]).
-The way streaming-http-token-reader 
-* It allows partial downloads, saving bandwidth
-* To 'seek' for a specific offset within the stream
+Streams HTTP using [RFC-7233](https://tools.ietf.org/html/rfc7233#section-2.3) [range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
+Prevents the entire content to be downloaded, for metadata analysis.
+This module can be used both in the browser and in [Node.js](https://nodejs.org).
 
 ## Example
 
-```javascript
-import * as mm from 'music-metadata-browser';
-import { IStreamingHttpConfig, StreamingHttpTokenReader } from 'streaming-http-token-reader';
+```js
+// const mm = require('music-metadata-browser');  // Use module 'music-metadata-browser' client side
+const mm = require('music-metadata'); // Use module 'music-metadata' in Node.js
 
-const streamingHttpTokenReader = new StreamingHttpTokenReader(audioTrackUrl, config);
+const {StreamingHttpTokenReader} = require('streaming-http-token-reader');
+
+const config = {
+  avoidHeadRequests: true
+};
+
+const audioTrackUrl = 'https://test-audio.netlify.com/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/01%20-%20Diablo%20Swing%20Orchestra%20-%20Heroines.mp3';
+
+const streamingHttpTokenReader = StreamingHttpTokenReader.fromUrl(audioTrackUrl, config);
 streamingHttpTokenReader.init()
-.then( () => {
-  return mm.parseFromTokenizer(streamingHttpTokenReader, streamingHttpTokenReader.contentType, options);
-})
-.then( metadata => {
-  // Process metadata
-});
+  .then(() => {
+    return mm.parseFromTokenizer(streamingHttpTokenReader, streamingHttpTokenReader.contentType);
+  })
+  .then(metadata => {
+    // Process metadata
+    console.log('metadata:', metadata);
+  });
 ```
 
 ## Server requirements
@@ -66,5 +74,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 git pull
 THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
