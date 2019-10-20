@@ -9,5 +9,6 @@ script:
  - yarn run lint
  - yarn build
  - yarn run travis-karma
+ - yarn test-node
 after_success:
  - yarn run post-coveralls
