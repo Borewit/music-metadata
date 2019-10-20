@@ -38,28 +38,29 @@ export class WaveParser extends BasicParser {
     debug(`pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`);
     if (riffHeader.chunkID !== 'RIFF')
       return; // Not RIFF format
-    return this.parseRiffChunk().catch(err => {
+    return this.parseRiffChunk(riffHeader.chunkSize).catch(err => {
       if (err.message !== endOfFile) {
         throw err;
       }
     });
   }
 
-  public async parseRiffChunk(): Promise<void> {
+  public async parseRiffChunk(chunkSize: number): Promise<void> {
     const type = await this.tokenizer.readToken<string>(FourCcToken);
     this.metadata.setFormat('container', type);
     switch (type) {
       case 'WAVE':
-        return this.readWaveChunk();
+        return this.readWaveChunk(chunkSize - FourCcToken.len);
       default:
         throw new Error(`Unsupported RIFF format: RIFF/${type}`);
     }
   }
 
-  public async readWaveChunk(): Promise<void> {
+  public async readWaveChunk(remaining: number): Promise<void> {
 
     do {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
+      remaining -= riff.Header.len + header.chunkSize;
 
       this.header = header;
       debug(`pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`);
@@ -120,7 +121,7 @@ export class WaveParser extends BasicParser {
         debug('Read odd padding byte'); // https://wiki.multimedia.cx/index.php/RIFF
         await this.tokenizer.ignore(1);
       }
-    } while (true);
+    } while (remaining > 0);
   }
 
   public async parseListTag(listHeader: riff.IChunkHeader): Promise<void> {
