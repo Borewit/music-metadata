@@ -24,7 +24,12 @@
     "range",
     "chunk",
     "https",
-    "client"
+    "client",
+    "meta",
+    "metadata",
+    "audio",
+    "media",
+    "tags"
   ],
   "license": "MIT",
   "bugs": {
