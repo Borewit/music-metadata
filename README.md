@@ -3,6 +3,8 @@
 [![npm downloads](http://img.shields.io/npm/dm/streaming-http-token-reader.svg)](https://npmcharts.com/compare/streaming-http-token-reader?interval=30)
 [![dependencies Status](https://david-dm.org/Borewit/streaming-http-token-reader/status.svg)](https://david-dm.org/Borewit/streaming-http-token-reader)
 [![Known Vulnerabilities](https://snyk.io/test/github/Borewit/streaming-http-token-reader/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/streaming-http-token-reader?targetFile=package.json)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/Borewit/streaming-http-token-reader.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Borewit/streaming-http-token-reader/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/Borewit/streaming-http-token-reader.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Borewit/streaming-http-token-reader/context:javascript)
 [![Minified size](https://badgen.net/bundlephobia/min/streaming-http-token-reader)](https://bundlephobia.com/result?p=streaming-http-token-reader)
 
 # streaming-http-token-reader
