@@ -25,7 +25,7 @@ const config = {
 
 const audioTrackUrl = 'https://test-audio.netlify.com/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/01%20-%20Diablo%20Swing%20Orchestra%20-%20Heroines.mp3';
 
-const streamingHttpTokenReader = StreamingHttpTokenReader.fromUrl(audioTrackUrl, config);
+const streamingHttpTokenReader = new StreamingHttpTokenReader(audioTrackUrl, config);
 streamingHttpTokenReader.init()
   .then(() => {
     return mm.parseFromTokenizer(streamingHttpTokenReader, streamingHttpTokenReader.contentType);
