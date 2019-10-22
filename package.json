@@ -83,7 +83,7 @@
     "@types/debug": "^4.1.5",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^12.11.1",
+    "@types/node": "^12.11.2",
     "chai": "^4.2.0",
     "coveralls": "^3.0.7",
     "del-cli": "^3.0.0",
