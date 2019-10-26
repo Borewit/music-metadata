@@ -346,7 +346,6 @@ export class MP4Parser extends BasicParser {
         formatList.push(encoderInfo.format);
       } else {
         debug(`Warning: data-format '${dfEntry.dataFormat}' missing in MP4Parser.encoderDict`);
-        // formatList.push(dfEntry.dataFormat);
       }
     }
     if (formatList.length > 0) {

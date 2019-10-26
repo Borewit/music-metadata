@@ -140,7 +140,6 @@ export class ID3v2Parser {
   private id3Header: IID3v2header;
   private metadata: INativeMetadataCollector;
 
-  // private tags: Array<{ id: string, value: any }> = [];
   private headerType: TagType;
   private options: IOptions;
 

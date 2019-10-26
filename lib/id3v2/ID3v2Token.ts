@@ -56,7 +56,7 @@ export const UINT32SYNCSAFE = {
  * ID3v2 tag header
  */
 export interface IID3v2header {
-// ID3v2/file identifier   "ID3"
+  // ID3v2/file identifier   "ID3"
   fileIdentifier: string,
   // ID3v2 versionIndex
   version: {
