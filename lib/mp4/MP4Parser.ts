@@ -317,6 +317,24 @@ export class MP4Parser extends BasicParser {
     }
   }
 
+  /**
+   * Parse sample table atom (stbl) atom
+   * @param len
+   */
+  private async parseAtom_stbl(len: number): Promise<string[]> {
+    const ftype = await this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);
+    len -= AtomToken.ftyp.len;
+    if (len > 0) {
+      const types = await this.parseAtom_ftyp(len);
+      const value =  ftype.type.replace(/\W/g, '');
+      if (value.length > 0) {
+        types.push(value);
+      }
+      return types;
+    }
+    return [];
+  }
+
   private async parseAtom_ftyp(len: number): Promise<string[]> {
     const ftype = await this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);
     len -= AtomToken.ftyp.len;
