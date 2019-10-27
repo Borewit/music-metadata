@@ -43,6 +43,8 @@ export const parseBuffer = Core.parseBuffer;
  */
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
 
+  debug(`parseFile: ${filePath}`);
+
   const fileTokenizer = await strtok3.fromFile(filePath);
 
   const fileReader = new RandomFileReader(filePath, fileTokenizer.fileSize);
