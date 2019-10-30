@@ -3197,21 +3197,21 @@ ms@^2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
 
-music-metadata-browser@^1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/music-metadata-browser/-/music-metadata-browser-1.6.0.tgz#1844222f3a5fc841fa46af44b46f248bc5ff613d"
-  integrity sha512-ylatZ0i/IbvJYZ4mCAaC1mYnqYL/CWDNrPjT/gi9QW/+CBEn4/AyNyabs7fD0/WBrwkA8yb2WQDMrWKWKL2ung==
+music-metadata-browser@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/music-metadata-browser/-/music-metadata-browser-1.6.1.tgz#0ec6470f4ad12ab1a2ed035c55b5633a144830b1"
+  integrity sha512-3TJ1TTtXCRdUKWdngio/4wjCfy5J4oMkVJhkVWuAn1uZRZh/PXND/IQOwf3aUV1CNkLHGKIwS7JIn1TcWARROQ==
   dependencies:
     assert "^2.0.0"
     buffer "^5.2.1"
     debug "^4.0.1"
-    music-metadata "^4.8.0"
+    music-metadata "^4.8.2"
     readable-stream "^3.3.0"
-    readable-web-to-node-stream "^1.1.4"
+    readable-web-to-node-stream "^2.0.0"
     remove "^0.1.5"
     typedarray-to-buffer "^3.1.5"
 
-music-metadata@^4.8.0:
+music-metadata@^4.8.2:
   version "4.8.2"
   resolved "https://registry.yarnpkg.com/music-metadata/-/music-metadata-4.8.2.tgz#4070a1e41203087063e6f797f8e89b881936a150"
   integrity sha512-8Z/tqNRY8O35+bkYd5yAzKBEqkL/mZdWcwyYJ2o7rMpHoAYNASOI/cUGKAKip7biweYuzNEUh709zpvS3yQsHw==
@@ -3854,10 +3854,10 @@ readable-stream@^3.3.0:
     string_decoder "^1.1.1"
     util-deprecate "^1.0.1"
 
-readable-web-to-node-stream@^1.1.4:
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/readable-web-to-node-stream/-/readable-web-to-node-stream-1.1.4.tgz#5857d32fb9f791d1c4ca3c297ff028acb41218c6"
-  integrity sha512-DfwzynATtPmyLSMETPMlgVAB4b/0NNPePAEFEjSzw8VkqUZfx75gjNkaSqa0fP6iul2TL+jheLn2np0SWtW4iw==
+readable-web-to-node-stream@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/readable-web-to-node-stream/-/readable-web-to-node-stream-2.0.0.tgz#751e632f466552ac0d5c440cc01470352f93c4b7"
+  integrity sha512-+oZJurc4hXpaaqsN68GoZGQAQIA3qr09Or4fqEsargABnbe5Aau8hFn6ISVleT3cpY/0n/8drn7huyyEvTbghA==
 
 readdirp@^2.2.1:
   version "2.2.1"
