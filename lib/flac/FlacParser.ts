@@ -92,7 +92,7 @@ export class FlacParser extends AbstractID3Parser {
         this.metadata.addWarning('Unknown block type: ' + blockHeader.type);
     }
     // Ignore data block
-    return this.tokenizer.readToken<void>(new Token.IgnoreType(blockHeader.length));
+    return this.tokenizer.ignore(blockHeader.length);
   }
 
   /**

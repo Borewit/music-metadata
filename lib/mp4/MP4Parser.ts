@@ -150,7 +150,7 @@ export class MP4Parser extends BasicParser {
           break;
       }
 
-      await this.tokenizer.readToken<Buffer>(new Token.IgnoreType(atom.dataLen));
+      await this.tokenizer.ignore(atom.dataLen);
       debug(`Ignore atom data: path=${atom.atomPath}, payload-len=${atom.dataLen}`);
 
     }, this.tokenizer.fileSize);

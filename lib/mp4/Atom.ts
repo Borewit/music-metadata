@@ -1,6 +1,5 @@
 import { ITokenizer } from 'strtok3/lib/type';
 import * as initDebug from 'debug';
-import * as Token from 'token-types';
 
 import * as AtomToken from './AtomToken';
 
@@ -59,7 +58,7 @@ export class Atom {
 
       case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         // meta has 4 bytes of padding, ignore
-        await tokenizer.readToken<void>(new Token.IgnoreType(4));
+        await tokenizer.ignore(4);
         return this.readAtoms(tokenizer, dataHandler, this.dataLen - 4);
 
       case 'mdhd': // Media header atom

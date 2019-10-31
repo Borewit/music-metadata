@@ -3,7 +3,6 @@
 import * as initDebug from 'debug';
 import * as FileType from 'file-type';
 import {ITokenizer} from 'strtok3/lib/type';
-import * as Token from 'token-types';
 import * as assert from 'assert';
 
 import common from '../common/Util';
@@ -171,12 +170,12 @@ export class APEv2Parser extends BasicParser {
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await(lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
 
-    await this.tokenizer.readToken(new Token.IgnoreType(header.forwardBytes));
+    await this.tokenizer.ignore(header.forwardBytes);
     return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
   }
 
   private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
-    await this.tokenizer.readToken(new Token.IgnoreType(lenExp));
+    await this.tokenizer.ignore(lenExp);
     return this.parseHeader();
   }
 
