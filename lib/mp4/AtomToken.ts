@@ -5,6 +5,18 @@ import * as initDebug from 'debug';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
 
+interface IVersionAndFlags {
+  /**
+   * A 1-byte specification of the version
+   */
+  version: number,
+
+  /**
+   * Three bytes of space for (future) flags.
+   */
+  flags: number,
+}
+
 export interface IAtomHeader {
   length: number,
   name: string
@@ -17,17 +29,7 @@ export interface IAtomFtyp {
 /**
  * Common interface for the mvhd (Movie Header) & mdhd (Media) atom
  */
-export interface IAtomMxhd {
-
-  /**
-   * A 1-byte specification of the version of this movie header atom.
-   */
-  version: number,
-
-  /**
-   * Three bytes of space for future movie header flags.
-   */
-  flags: number,
+export interface IAtomMxhd extends IVersionAndFlags {
 
   /**
    * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was created.
@@ -121,17 +123,8 @@ export interface IAtomMvhd extends IAtomMxhd {
  * Interface for the metadata header atom: 'mhdr'
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW13
  */
-export interface IMovieHeaderAtom {
+export interface IMovieHeaderAtom extends IVersionAndFlags {
 
-  /**
-   * One byte that is set to 0.
-   */
-  version: number,
-
-  /**
-   * Three bytes that are set to 0.
-   */
-  flags: number,
   /**
    * A 32-bit unsigned integer indicating the value to use for the item ID of the next item created or assigned an item ID.
    * If the value is all ones, it indicates that future additions will require a search for an unused item ID.
@@ -145,7 +138,7 @@ export const Header: Token.IToken<IAtomHeader> = {
   get: (buf: Buffer, off: number): IAtomHeader => {
     const length = Token.UINT32_BE.get(buf, off);
     if (length < 0)
-      throw new Error("Invalid atom header length");
+      throw new Error('Invalid atom header length');
 
     return {
       length,
@@ -169,7 +162,7 @@ export const ftyp: Token.IGetToken<IAtomFtyp> = {
 
   get: (buf: Buffer, off: number): IAtomFtyp => {
     return {
-      type: new Token.StringType(4, "ascii").get(buf, off)
+      type: new Token.StringType(4, 'ascii').get(buf, off)
     };
   }
 };
@@ -334,17 +327,7 @@ export class DataAtom implements Token.IGetToken<IDataAtom> {
  * Data Atom Structure ('data')
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW32
  */
-export interface INameAtom {
-
-  /**
-   * One byte that is set to 0.
-   */
-  version: number,
-
-  /**
-   * Three bytes that are set to 0.
-   */
-  flags: number,
+export interface INameAtom extends IVersionAndFlags {
 
   /**
    * An array of bytes containing the value of the metadata.
@@ -365,7 +348,7 @@ export class NameAtom implements Token.IGetToken<INameAtom> {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      name: new Token.StringType(this.len - 4, "utf-8").get(buf, off + 4)
+      name: new Token.StringType(this.len - 4, 'utf-8').get(buf, off + 4)
     };
   }
 }
@@ -374,17 +357,7 @@ export class NameAtom implements Token.IGetToken<INameAtom> {
  * Track Header Atoms interface
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
-export interface ITrackHeaderAtom {
-
-  /**
-   * One byte that is set to 0.
-   */
-  version: number,
-
-  /**
-   * Three bytes that are set to 0.
-   */
-  flags: number,
+export interface ITrackHeaderAtom extends IVersionAndFlags {
 
   /**
    * Creation Time
@@ -461,9 +434,7 @@ export class TrackHeaderAtom implements Token.IGetToken<ITrackHeaderAtom> {
 /**
  * Atom: Sample Description Atom ('stsd')
  */
-interface IAtomStsdHeader {
-  version: number;
-  flags: number;
+interface IAtomStsdHeader extends IVersionAndFlags {
   numberOfEntries: number;
 }
 
@@ -517,7 +488,7 @@ class SampleDescriptionTable implements Token.IGetToken<ISampleDescription> {
 }
 
 /**
- * Atom: Sample Description Atom ('stsd')
+ * Atom: Sample-description Atom ('stsd')
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
 export class StsdAtom implements Token.IGetToken<IAtomStsd> {
