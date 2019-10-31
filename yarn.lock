@@ -2574,14 +2574,14 @@ strip-json-comments@^3.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.0.1.tgz#85713975a91fb87bf1b305cca77395e40d2a64a7"
   integrity sha512-VTyMAUfdm047mwKl+u79WIdrZxtFtn+nBxHeb844XBQ9uMNTuTHdx2hc5RiAJYqwTj3wc/xe5HLSdJSkJ+WfZw==
 
-strtok3@^3.0.4:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.0.4.tgz#e8b3e35afafcf46f592cdd71b352a78cc6ee3efe"
-  integrity sha512-mVyL8lmjC29raM131DYFKqwoOy78GWYWB5wY5I0ycqPzPshKchsehm7DPVP8UQH6vqXCS9Wd8dVj+/bEVQjJkQ==
+strtok3@^3.0.5:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.0.5.tgz#a6c42e5aab525337832268844742fdb85da90d19"
+  integrity sha512-HUN5Bo1y7Pgy+t19hYHUKcYfsXWSvG73DxcndJF62CSQDw5v4EtIGIEoiE77a/xWnwVyFYzrwImmKVt3ObFOCQ==
   dependencies:
     debug "^4.1.1"
     then-read-stream "^2.0.7"
-    token-types "^1.0.4"
+    token-types "^1.1.0"
 
 supports-color@6.0.0:
   version "6.0.0"
@@ -2655,7 +2655,7 @@ to-vfile@^6.0.0:
     is-buffer "^2.0.0"
     vfile "^4.0.0"
 
-token-types@^1.0.4, token-types@^1.1.0:
+token-types@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.1.0.tgz#8bf60f633583089a8653005bdff96020e44f947e"
   integrity sha512-CgM5GmtJaZ+uTOiZHzs9pwUa/udjEVl/cxQ2KGpl88Hh7k71sdBz9j95dYjx83O68B6CGvefm29l4rBZq1PeuQ==
