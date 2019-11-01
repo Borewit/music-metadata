@@ -3,7 +3,7 @@ import * as strtok3 from 'strtok3';
 
 import * as Core from './core';
 import { ParserFactory } from './ParserFactory';
-import { IAudioMetadata, IOptions, ITag } from './type';
+import { IAudioMetadata, IOptions } from './type';
 import * as _debug from 'debug';
 import { RandomFileReader } from './common/RandomFileReader';
 

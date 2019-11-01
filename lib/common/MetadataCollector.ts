@@ -99,10 +99,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * @returns {boolean} true if one or more tags have been found
    */
   public hasAny() {
-    for (const tagType in this.native) {
-      return true;
-    }
-    return false;
+    return Object.keys(this.native).length > 0;
   }
 
   public setFormat(key: FormatId, value: any) {
