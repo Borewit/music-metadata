@@ -1,11 +1,11 @@
-import {INativeAudioMetadata, IOptions, IAudioMetadata, ParserType} from "./type";
-import {ITokenizer} from "strtok3/lib/type";
-import * as fileType from "file-type";
-import * as ContentType from "content-type";
-import * as MimeType from "media-typer";
+import { IOptions, IAudioMetadata, ParserType } from './type';
+import { ITokenizer } from 'strtok3/lib/type';
+import * as fileType from 'file-type';
+import * as ContentType from 'content-type';
+import * as MimeType from 'media-typer';
 
-import * as _debug from "debug";
-import {INativeMetadataCollector, MetadataCollector} from "./common/MetadataCollector";
+import * as _debug from 'debug';
+import { INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector';
 import { AIFFParser } from './aiff/AiffParser';
 import { APEv2Parser } from './apev2/APEv2Parser';
 import { AsfParser } from './asf/AsfParser';
@@ -16,10 +16,10 @@ import MusepackParser from './musepack';
 import { OggParser } from './ogg/OggParser';
 import { WaveParser } from './riff/WaveParser';
 import { WavPackParser } from './wavpack/WavPackParser';
-import {DsfParser} from "./dsf/DsfParser";
-import {DsdiffParser} from "./dsdiff/DsdiffParser";
+import { DsfParser } from './dsf/DsfParser';
+import { DsdiffParser } from './dsdiff/DsdiffParser';
 
-const debug = _debug("music-metadata:parser:factory");
+const debug = _debug('music-metadata:parser:factory');
 
 export interface ITokenParser {
 
@@ -39,7 +39,7 @@ export interface ITokenParser {
   parse(): Promise<void>;
 }
 
-export function parseHttpContentType(contentType: string): {type: string, subtype: string, suffix?: string, parameters: { [id: string]: string; }} {
+export function parseHttpContentType(contentType: string): { type: string, subtype: string, suffix?: string, parameters: { [id: string]: string; } } {
   const type = ContentType.parse(contentType);
   const mime = MimeType.parse(type.type);
   return {
@@ -65,7 +65,7 @@ export class ParserFactory {
     const parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
 
     if (!parserId) {
-      debug("No parser found for MIME-type / extension: " + contentType);
+      debug('No parser found for MIME-type / extension: ' + contentType);
     }
 
     return this.parse(tokenizer, parserId, opts);
@@ -75,7 +75,7 @@ export class ParserFactory {
 
     if (!parserId) {
       // Parser could not be determined on MIME-type or extension
-      debug("Guess parser on content...");
+      debug('Guess parser on content...');
 
       const buf = Buffer.alloc(4100);
       await tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true);
@@ -85,7 +85,7 @@ export class ParserFactory {
       debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
       parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
       if (!parserId)
-        throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
+        throw new Error('Guessed MIME-type not supported: ' + guessedType.mime);
       return this._parse(tokenizer, parserId, opts);
     }
 
@@ -105,54 +105,54 @@ export class ParserFactory {
 
     switch (extension) {
 
-      case ".mp2":
-      case ".mp3":
-      case ".m2a":
+      case '.mp2':
+      case '.mp3':
+      case '.m2a':
       case '.aac': // Assume it is ADTS-container
         return 'mpeg';
 
-      case ".ape":
+      case '.ape':
         return 'apev2';
 
-      case ".mp4":
-      case ".m4a":
-      case ".m4b":
-      case ".m4pa":
-      case ".m4v":
-      case ".m4r":
-      case ".3gp":
+      case '.mp4':
+      case '.m4a':
+      case '.m4b':
+      case '.m4pa':
+      case '.m4v':
+      case '.m4r':
+      case '.3gp':
         return 'mp4';
 
-      case ".wma":
-      case ".wmv":
-      case ".asf":
+      case '.wma':
+      case '.wmv':
+      case '.asf':
         return 'asf';
 
-      case ".flac":
+      case '.flac':
         return 'flac';
 
-      case ".ogg":
-      case ".ogv":
-      case ".oga":
-      case ".ogm":
-      case ".ogx":
-      case ".opus": // recommended filename extension for Ogg Opus
-      case ".spx": // recommended filename extension for Ogg Speex
+      case '.ogg':
+      case '.ogv':
+      case '.oga':
+      case '.ogm':
+      case '.ogx':
+      case '.opus': // recommended filename extension for Ogg Opus
+      case '.spx': // recommended filename extension for Ogg Speex
         return 'ogg';
 
-      case ".aif":
-      case ".aiff":
-      case ".aifc":
+      case '.aif':
+      case '.aiff':
+      case '.aifc':
         return 'aiff';
 
-      case ".wav":
+      case '.wav':
         return 'riff';
 
-      case ".wv":
-      case ".wvp":
+      case '.wv':
+      case '.wvp':
         return 'wavpack';
 
-      case ".mpc":
+      case '.mpc':
         return 'musepack';
 
       case '.dsf':
