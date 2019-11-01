@@ -2574,13 +2574,13 @@ strip-json-comments@^3.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.0.1.tgz#85713975a91fb87bf1b305cca77395e40d2a64a7"
   integrity sha512-VTyMAUfdm047mwKl+u79WIdrZxtFtn+nBxHeb844XBQ9uMNTuTHdx2hc5RiAJYqwTj3wc/xe5HLSdJSkJ+WfZw==
 
-strtok3@^3.0.5:
-  version "3.0.5"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.0.5.tgz#a6c42e5aab525337832268844742fdb85da90d19"
-  integrity sha512-HUN5Bo1y7Pgy+t19hYHUKcYfsXWSvG73DxcndJF62CSQDw5v4EtIGIEoiE77a/xWnwVyFYzrwImmKVt3ObFOCQ==
+strtok3@^3.0.6:
+  version "3.0.6"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.0.6.tgz#b75ad4bd00146b8bc56507266cc08df0a02b4fec"
+  integrity sha512-suDDUDB4vP0YN6xuPGDY3DZAITzzNc2kNZ+TSshi5UsD6lc/XgRAx6bdN8DD67382lxdgBNFfzLUmpRGqr5EuA==
   dependencies:
     debug "^4.1.1"
-    then-read-stream "^2.0.7"
+    then-read-stream "^2.0.8"
     token-types "^1.1.0"
 
 supports-color@6.0.0:
@@ -2623,10 +2623,10 @@ text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
 
-then-read-stream@^2.0.7:
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/then-read-stream/-/then-read-stream-2.0.7.tgz#23ee72659ae27ab8d986a68cc6059e3a688b79e3"
-  integrity sha512-UhIYV6kjtqlnmb/3Pzk4U5c27Bx45XQgLhgKRkMRO/uFR2V9YN25zvXFh5Qzu5lGJul4fSHQI74Sw96wFB6ZpA==
+then-read-stream@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/then-read-stream/-/then-read-stream-2.0.8.tgz#1d2c29e46af1327101875abef183e43313876c1b"
+  integrity sha512-OIQn3/zF2J/gp6mAQTbBb1AR+3yoSRqjaij0gGnEUcTl93T840mWIZ9sJWwubjwP7VUDwJpT+Tdl7T9RrQmMlw==
 
 through@^2.3.6:
   version "2.3.8"
