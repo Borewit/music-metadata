@@ -4,6 +4,8 @@ import { ChunkedFileData } from './chunked-file-data';
 import { HttpClient } from './http-client';
 import { IHttpClient, IHttpResponse } from './types';
 
+export { IHttpClient, IHttpResponse } from './types';
+
 const debug = initDebug('streaming-http-token-reader');
 
 export interface IStreamingHttpConfig {

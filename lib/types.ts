@@ -15,6 +15,8 @@ export interface IHttpResponse extends IHeadInfo {
 }
 
 export interface IHttpClient {
-  getHeadInfo(): Promise<IHeadInfo>
+
+  getHeadInfo?(): Promise<IHeadInfo>;
+
   getResponse(method: string, range?: [number, number]): Promise<IHttpResponse>;
 }
