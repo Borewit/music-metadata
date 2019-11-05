@@ -1,10 +1,10 @@
 import * as initDebug from 'debug';
 import * as Token from 'token-types';
 
-import {BasicParser} from '../common/BasicParser';
-import {Atom} from './Atom';
+import { BasicParser } from '../common/BasicParser';
+import { Atom } from './Atom';
 import * as AtomToken from './AtomToken';
-import {Genres} from '../id3v1/ID3v1Parser';
+import { Genres } from '../id3v1/ID3v1Parser';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -131,7 +131,7 @@ export class MP4Parser extends BasicParser {
 
       switch (atom.header.name) {
 
-        case "ftyp":
+        case 'ftyp':
           const types = await this.parseAtom_ftyp(atom.dataLen);
           debug(`ftyp: ${types.join('/')}`);
           const x = types.filter(distinct).join('/');
@@ -184,23 +184,23 @@ export class MP4Parser extends BasicParser {
 
     return metaAtom.readAtoms(this.tokenizer, async child => {
       switch (child.header.name) {
-        case "data": // value atom
+        case 'data': // value atom
           return this.parseValueAtom(tagKey, child);
 
-          case "name": // name atom (optional)
+        case 'name': // name atom (optional)
           const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(child.dataLen));
-          tagKey += ":" + name.name;
+          tagKey += ':' + name.name;
           break;
 
-        case "mean": // name atom (optional)
+        case 'mean': // name atom (optional)
           const mean = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(child.dataLen));
           // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
-          tagKey += ":" + mean.name;
+          tagKey += ':' + mean.name;
           break;
 
         default:
           const dataAtom = await this.tokenizer.readToken<Buffer>(new Token.BufferType(child.dataLen));
-          this.addWarning("Unsupported meta-item: " + tagKey + "[" + child.header.name + "] => value=" + dataAtom.toString("hex") + " ascii=" + dataAtom.toString("ascii"));
+          this.addWarning('Unsupported meta-item: ' + tagKey + '[' + child.header.name + '] => value=' + dataAtom.toString('hex') + ' ascii=' + dataAtom.toString('ascii'));
       }
 
     }, metaAtom.dataLen);
@@ -210,7 +210,7 @@ export class MP4Parser extends BasicParser {
     const dataAtom = await this.tokenizer.readToken(new AtomToken.DataAtom(metaAtom.header.length - AtomToken.Header.len));
 
     if (dataAtom.type.set !== 0) {
-      throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
+      throw new Error('Unsupported type-set != 0: ' + dataAtom.type.set);
     }
 
     // Use well-known-type table
@@ -219,15 +219,15 @@ export class MP4Parser extends BasicParser {
 
       case 0: // reserved: Reserved for use where no type needs to be indicated
         switch (tagKey) {
-          case "trkn":
-          case "disk":
+          case 'trkn':
+          case 'disk':
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
-            this.addTag(tagKey, num + "/" + of);
+            this.addTag(tagKey, num + '/' + of);
             break;
 
-          case "gnre":
+          case 'gnre':
             const genreInt = Token.UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
@@ -242,14 +242,14 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        this.addTag(tagKey, dataAtom.value.toString("utf-8"));
+        this.addTag(tagKey, dataAtom.value.toString('utf-8'));
         break;
 
       case 13: // JPEG
         if (this.options.skipCovers)
           break;
         this.addTag(tagKey, {
-          format: "image/jpeg",
+          format: 'image/jpeg',
           data: Buffer.from(dataAtom.value)
         });
         break;
@@ -258,7 +258,7 @@ export class MP4Parser extends BasicParser {
         if (this.options.skipCovers)
           break;
         this.addTag(tagKey, {
-          format: "image/png",
+          format: 'image/png',
           data: Buffer.from(dataAtom.value)
         });
         break;
@@ -326,7 +326,7 @@ export class MP4Parser extends BasicParser {
     len -= AtomToken.ftyp.len;
     if (len > 0) {
       const types = await this.parseAtom_ftyp(len);
-      const value =  ftype.type.replace(/\W/g, '');
+      const value = ftype.type.replace(/\W/g, '');
       if (value.length > 0) {
         types.push(value);
       }
@@ -340,7 +340,7 @@ export class MP4Parser extends BasicParser {
     len -= AtomToken.ftyp.len;
     if (len > 0) {
       const types = await this.parseAtom_ftyp(len);
-      const value =  ftype.type.replace(/\W/g, '');
+      const value = ftype.type.replace(/\W/g, '');
       if (value.length > 0) {
         types.push(value);
       }
