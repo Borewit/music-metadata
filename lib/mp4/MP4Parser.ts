@@ -111,51 +111,76 @@ export class MP4Parser extends BasicParser {
 
     this.formatList = [];
 
-    const rootAtom = new Atom({name: 'mp4', length: this.tokenizer.fileSize}, false, null);
-    await rootAtom.readAtoms(this.tokenizer, async atom => {
+    let remainingFileSize = this.tokenizer.fileSize;
+    let header: AtomToken.IAtomHeader;
+    const rootAtoms: Atom[] = [];
 
-      if (atom.parent) {
-        switch (atom.parent.header.name) {
-          case 'ilst':
-          case '<id>':
-            return this.parseMetadataItemData(atom);
-          case 'stbl':  // The Sample Table Atom
-            switch (atom.header.name) {
-              case 'stsd': // sample descriptions
-                return this.parseAtom_stsd(atom.dataLen);
-              default:
-                debug(`Ignore: stbl/${atom.header.name} atom`);
-            }
-        }
+    while (remainingFileSize > 0) {
+      try {
+        header = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+      } catch (error) {
+        const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
+        debug(errMsg);
+        this.addWarning(errMsg);
+        break;
       }
-
-      switch (atom.header.name) {
-
+      switch (header.name) {
         case 'ftyp':
-          const types = await this.parseAtom_ftyp(atom.dataLen);
-          debug(`ftyp: ${types.join('/')}`);
-          const x = types.filter(distinct).join('/');
-          this.metadata.setFormat('container', x);
-          return;
-
-        case 'mdhd': // Media header atom
-          return this.parseAtom_mdhd(atom);
-
-        case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-          return this.parseAtom_mvhd(atom);
-
-        case 'mdat': // media data atom:
-          this.audioLengthInBytes = atom.dataLen;
-          this.calculateBitRate();
+        case 'free':
+        case 'moov':
+        case 'mdat':
+          const rootAtom = await Atom.readAtom(this.tokenizer, atom => this.handleAtom(atom), null);
+          rootAtoms.push(rootAtom);
           break;
+        default:
+          debug(`Unknown root atom ${header.name}`);
+          this.tokenizer.ignore(header.length);
       }
-
-      await this.tokenizer.ignore(atom.dataLen);
-      debug(`Ignore atom data: path=${atom.atomPath}, payload-len=${atom.dataLen}`);
-
-    }, this.tokenizer.fileSize);
-
+      remainingFileSize -= header.length;
+    }
     this.metadata.setFormat('codec', this.formatList.filter(distinct).join('+'));
+  }
+
+  public async handleAtom(atom: Atom): Promise<void> {
+
+    if (atom.parent) {
+      switch (atom.parent.header.name) {
+        case 'ilst':
+        case '<id>':
+          return this.parseMetadataItemData(atom);
+        case 'stbl':  // The Sample Table Atom
+          switch (atom.header.name) {
+            case 'stsd': // sample descriptions
+              return this.parseAtom_stsd(atom.dataLen);
+            default:
+              debug(`Ignore: stbl/${atom.header.name} atom`);
+          }
+      }
+    }
+
+    switch (atom.header.name) {
+
+      case 'ftyp':
+        const types = await this.parseAtom_ftyp(atom.dataLen);
+        debug(`ftyp: ${types.join('/')}`);
+        const x = types.filter(distinct).join('/');
+        this.metadata.setFormat('container', x);
+        return;
+
+      case 'mdhd': // Media header atom
+        return this.parseAtom_mdhd(atom);
+
+      case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
+        return this.parseAtom_mvhd(atom);
+
+      case 'mdat': // media data atom:
+        this.audioLengthInBytes = atom.dataLen;
+        this.calculateBitRate();
+        break;
+    }
+
+    await this.tokenizer.ignore(atom.dataLen);
+    debug(`Ignore atom data: path=${atom.atomPath}, payload-len=${atom.dataLen}`);
   }
 
   private calculateBitRate() {
@@ -169,7 +194,7 @@ export class MP4Parser extends BasicParser {
   }
 
   private addWarning(message: string) {
-    debug('Warning:' + message);
+    debug('Warning: ' + message);
     this.metadata.addWarning(message);
   }
 

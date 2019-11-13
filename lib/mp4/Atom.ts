@@ -9,6 +9,22 @@ const debug = initDebug('music-metadata:parser:MP4:Atom');
 
 export class Atom {
 
+  public static async readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler, parent: Atom): Promise<Atom> {
+
+    // Parse atom header
+    const offset = tokenizer.position;
+    // debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
+    const header = await tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header);
+    const extended = header.length === 1;
+    if (extended) {
+      header.length = await tokenizer.readToken<number>(AtomToken.ExtendedSize);
+    }
+    const atomBean = new Atom(header, extended, parent);
+    debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
+    await atomBean.readData(tokenizer, dataHandler);
+    return atomBean;
+  }
+
   public readonly children: Atom[];
   public readonly atomPath: string;
   public readonly dataLen: number;
@@ -21,26 +37,10 @@ export class Atom {
 
   public async readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
     while (size > 0) {
-      const atomBean = await this.readAtom(tokenizer, dataHandler);
+      const atomBean = await Atom.readAtom(tokenizer, dataHandler, this);
       this.children.push(atomBean);
       size -= atomBean.header.length;
     }
-  }
-
-  private async readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<Atom> {
-
-    // Parse atom header
-    const offset = tokenizer.position;
-    // debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
-    const header = await tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header);
-    const extended = header.length === 1;
-    if (extended) {
-      header.length = await tokenizer.readToken<number>(AtomToken.ExtendedSize);
-    }
-    const atomBean = new Atom(header, extended, this);
-    debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
-    await atomBean.readData(tokenizer, dataHandler);
-    return atomBean;
   }
 
   private async readData(tokenizer: ITokenizer, dataHandler: AtomDataHandler): Promise<void> {

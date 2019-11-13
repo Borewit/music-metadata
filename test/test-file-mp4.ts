@@ -262,4 +262,28 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     });
   });
 
+  /**
+   * Related issue: https://github.com/Borewit/music-metadata/issues/318
+   */
+  it('Handle be able to ignore garbage behind mdat root atom', async () => {
+
+    /**
+     * Sample file with 1024 zeroes appended
+     */
+    const m4aFile = path.join(mp4Samples, 'issue-318.m4a');
+
+    const metadata = await mm.parseFile(m4aFile);
+    const {format, common} = metadata;
+    assert.strictEqual(format.container, 'isom/mp42/M4A', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+    assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+    assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
+
+    assert.strictEqual(common.artist, 'Tool', 'common.artist');
+    assert.strictEqual(common.title, 'Fear Inoculum', 'common.title');
+
+  });
+
 });
