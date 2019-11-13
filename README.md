@@ -269,6 +269,40 @@ mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 }
    });
 ```
 
+### Access cover art
+
+Via `metadata.common.picture` you can access an array of cover art if present.
+Each picture has this interface:
+
+```ts
+/**
+ * Attached picture, typically used for cover art
+ */
+export interface IPicture {
+  /**
+   * Image mime type
+   */
+  format: string;
+  /**
+   * Image data
+   */
+  data: Buffer;
+  /**
+   * Optional description
+   */
+  description?: string;
+  /**
+   * Picture type
+   */
+  type?: string;
+}
+```
+
+To assign `img` HTML-object you can do something like:
+```js
+img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+```
+
 ## Frequently Asked Questions
 
 1.  How can I traverse (a long) list of files?
