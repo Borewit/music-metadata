@@ -1,0 +1,17 @@
+version: 1
+update_configs:
+  - package_manager: "javascript"
+    directory: "/"
+    update_schedule: "daily"
+    automerged_updates:
+      - match:
+          dependency_name: "@types/node"
+          update_type: "semver:minor"
+      - match:
+          dependency_name: "ts-node"
+      - match:
+          dependency_name: "mocha"
+      - match:
+          dependency_name: "chai"
+      - match:
+          dependency_name: "typescript"
