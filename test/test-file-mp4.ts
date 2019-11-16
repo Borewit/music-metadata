@@ -97,13 +97,20 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, "issue-74.m4a");
 
         return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
-          const {native, common} = metadata;
-          t.isDefined(native.iTunes, 'Native m4a tags should be present');
+          const {format, common, native} = metadata;
 
-          assert.isAtLeast(metadata.native.iTunes.length, 1);
-          t.deepEqual(common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
-          t.deepEqual(common.albumartist, "They Say We're Sinking");
-          t.deepEqual(common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
+          assert.deepEqual(format.container, 'iso2/isom', 'format.container');
+          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+          assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
+          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+
+          assert.isDefined(native.iTunes, 'Native m4a tags should be present');
+          assert.isAtLeast(native.iTunes.length, 1);
+
+          assert.deepEqual(common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
+          assert.deepEqual(common.albumartist, "They Say We're Sinking");
+          assert.deepEqual(common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
         });
       });
     });
@@ -120,14 +127,22 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         const filePath = path.join(mp4Samples, "issue-79.m4a");
 
         return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.strictEqual(metadata.common.title, "Uprising");
-          assert.deepEqual(metadata.common.composer, ["Muse"]);
-          assert.deepEqual(metadata.common.artists, ["Muse"]);
-          assert.deepEqual(metadata.common.genre, ["Rock"]);
-          assert.strictEqual(metadata.common.date, "2009");
-          assert.strictEqual(metadata.common.encodedby, "iTunes 8.2.0.23, QuickTime 7.6.2");
-          assert.deepEqual(metadata.common.disk, {no: 1, of: 1});
-          assert.deepEqual(metadata.common.track, {no: 1, of: null});
+          const {common, format} = metadata;
+
+          assert.deepEqual(format.container, 'isom/mp42/M4A', 'format.container');
+          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+          assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
+          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+
+          assert.strictEqual(common.title, "Uprising");
+          assert.deepEqual(common.composer, ["Muse"]);
+          assert.deepEqual(common.artists, ["Muse"]);
+          assert.deepEqual(common.genre, ["Rock"]);
+          assert.strictEqual(common.date, "2009");
+          assert.strictEqual(common.encodedby, "iTunes 8.2.0.23, QuickTime 7.6.2");
+          assert.deepEqual(common.disk, {no: 1, of: 1});
+          assert.deepEqual(common.track, {no: 1, of: null});
         });
       });
     });
@@ -146,6 +161,12 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
 
             const {common, format} = metadata;
 
+            assert.deepEqual(format.container, 'iso2/isom', 'format.container');
+            assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+            assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+            assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
+            assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+
             assert.strictEqual(common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
             assert.deepEqual(common.composer, ['Nick Podehl']);
             assert.deepEqual(common.artists, ['Aleron Kong']);
@@ -155,12 +176,6 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             assert.deepEqual(common.disk, {no: null, of: null});
             assert.deepEqual(common.track, {no: null, of: null});
             assert.deepEqual(common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
-
-            assert.deepEqual(format.container, 'iso2/isom', 'format.container');
-            assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-            assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-            assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
-            assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
           });
         });
       });
@@ -174,16 +189,18 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
           const filePath = path.join(mp4Samples, 'issue-127.m4b');
 
           return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-            assert.strictEqual(metadata.common.title, 'GloriesIreland00-12_librivox');
-            assert.deepEqual(metadata.common.artists, ['Joseph Dunn']);
-            assert.deepEqual(metadata.common.genre, ['Audiobook']);
-            assert.strictEqual(metadata.common.encodedby, 'Chapter and Verse V 1.5');
-            assert.deepEqual(metadata.common.disk, {no: null, of: null});
-            assert.deepEqual(metadata.common.track, {no: 1, of: null});
-            assert.deepEqual(metadata.common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
+            const {common, format} = metadata;
 
-            assert.deepEqual(metadata.format.container, '3gp5/M4A', 'format.container');
-            assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
+            assert.deepEqual(format.container, '3gp5/M4A', 'format.container');
+            assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+
+            assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
+            assert.deepEqual(common.artists, ['Joseph Dunn']);
+            assert.deepEqual(common.genre, ['Audiobook']);
+            assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
+            assert.deepEqual(common.disk, {no: null, of: null});
+            assert.deepEqual(common.track, {no: 1, of: null});
+            assert.deepEqual(common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
 
             const iTunes = mm.orderTags(metadata.native.iTunes);
             assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
