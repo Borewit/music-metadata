@@ -112,31 +112,20 @@ export class MP4Parser extends BasicParser {
     this.formatList = [];
 
     let remainingFileSize = this.tokenizer.fileSize;
-    let header: AtomToken.IAtomHeader;
     const rootAtoms: Atom[] = [];
 
     while (remainingFileSize > 0) {
       try {
-        header = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+        await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
       } catch (error) {
         const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
         debug(errMsg);
         this.addWarning(errMsg);
         break;
       }
-      switch (header.name) {
-        case 'ftyp':
-        case 'free':
-        case 'moov':
-        case 'mdat':
-          const rootAtom = await Atom.readAtom(this.tokenizer, atom => this.handleAtom(atom), null);
-          rootAtoms.push(rootAtom);
-          break;
-        default:
-          debug(`Unknown root atom ${header.name}`);
-          this.tokenizer.ignore(header.length);
-      }
-      remainingFileSize -= header.length;
+      const rootAtom = await Atom.readAtom(this.tokenizer, atom => this.handleAtom(atom), null);
+      rootAtoms.push(rootAtom);
+      remainingFileSize -= rootAtom.header.length;
     }
     this.metadata.setFormat('codec', this.formatList.filter(distinct).join('+'));
   }
@@ -155,6 +144,7 @@ export class MP4Parser extends BasicParser {
             default:
               debug(`Ignore: stbl/${atom.header.name} atom`);
           }
+          break;
       }
     }
 
