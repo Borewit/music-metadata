@@ -20,7 +20,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
       assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
       assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
-      t.strictEqual(format.duration, 2.206, 'format.duration');
+      assert.approximately(format.duration, 2.206, 1 / 500, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
       assert.approximately(format.bitrate, 148000, 500, 'Calculate bit-rate');
