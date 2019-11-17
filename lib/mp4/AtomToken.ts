@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
-import {FourCcToken} from '../common/FourCC';
+import { FourCcToken } from '../common/FourCC';
+import * as assert from 'assert';
 
 import * as initDebug from 'debug';
 
@@ -167,6 +168,16 @@ export const ftyp: Token.IGetToken<IAtomFtyp> = {
   }
 };
 
+export const tkhd: Token.IGetToken<IAtomFtyp> = {
+  len: 4,
+
+  get: (buf: Buffer, off: number): IAtomFtyp => {
+    return {
+      type: new Token.StringType(4, 'ascii').get(buf, off)
+    };
+  }
+};
+
 /**
  * Token: Movie Header Atom
  */
@@ -254,7 +265,7 @@ export class MvhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMv
 
   public get(buf: Buffer, off: number): IAtomMvhd {
     return {
-      version: Token.UINT8.get(buf, off + 0),
+      version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
       creationTime: Token.UINT32_BE.get(buf, off + 4),
       modificationTime: Token.UINT32_BE.get(buf, off + 8),
@@ -447,7 +458,7 @@ const stsdHeader: Token.IGetToken<IAtomStsdHeader> = {
 
   get: (buf: Buffer, off: number): IAtomStsdHeader => {
     return {
-      version: Token.UINT8.get(buf, off + 0),
+      version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
       numberOfEntries: Token.UINT32_BE.get(buf, off + 4)
     };
@@ -574,3 +585,160 @@ export const SoundSampleDescriptionV0: Token.IGetToken<ISoundSampleDescriptionV0
     };
   }
 };
+
+export interface ITableAtom<T> extends IVersionAndFlags {
+  numberOfEntries: number;
+  entries: T[]
+}
+
+class SimpleTableAtom<T> implements Token.IGetToken<ITableAtom<T>> {
+
+  public constructor(public len: number, private token: Token.IGetToken<T>) {
+  }
+
+  public get(buf: Buffer, off: number): ITableAtom<T> {
+
+    const nrOfEntries = Token.INT32_BE.get(buf, off + 4);
+
+    return {
+      version: Token.INT8.get(buf, off + 0),
+      flags: Token.INT24_BE.get(buf, off + 1),
+      numberOfEntries: nrOfEntries,
+      entries: readTokenTable(buf, this.token, off + 8, this.len - 8, nrOfEntries)
+    };
+  }
+}
+
+export interface ITimeToSampleToken {
+  count: number;
+  duration: number;
+}
+
+export const TimeToSampleToken: Token.IGetToken<ITimeToSampleToken> = {
+
+  len: 8,
+
+  get(buf: Buffer, off: number): ITimeToSampleToken {
+    return {
+      count: Token.INT32_BE.get(buf, off + 0),
+      duration: Token.INT32_BE.get(buf, off + 4)
+    };
+  }
+};
+
+/**
+ * Time-to-sample('stts') atom.
+ * Store duration information for a media’s samples.
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25696
+ */
+export class SttsAtom extends SimpleTableAtom<ITimeToSampleToken> {
+  public constructor(public len: number) {
+    super(len, TimeToSampleToken);
+  }
+}
+
+/**
+ * Sample-to-Chunk ('stsc') atom table entry interface
+ */
+export interface ISampleToChunk {
+  firstChunk: number;
+  samplesPerChunk: number;
+  sampleDescriptionId: number;
+}
+
+export const SampleToChunkToken: Token.IGetToken<ISampleToChunk> = {
+
+  len: 12,
+
+  get(buf: Buffer, off: number): ISampleToChunk {
+    return {
+      firstChunk: Token.INT32_BE.get(buf, off),
+      samplesPerChunk: Token.INT32_BE.get(buf, off + 4),
+      sampleDescriptionId: Token.INT32_BE.get(buf, off + 8)
+    };
+  }
+};
+
+/**
+ * Sample-to-Chunk ('stsc') atom interface
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25706
+ */
+export class StscAtom extends SimpleTableAtom<ISampleToChunk> {
+  public constructor(public len: number) {
+    super(len, SampleToChunkToken);
+  }
+}
+
+/**
+ * Sample-size ('stsz') atom interface
+ */
+export interface IStszAtom extends ITableAtom<number> {
+  sampleSize: number;
+}
+
+/**
+ * Sample-size ('stsz') atom
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25710
+ */
+export class StszAtom implements Token.IGetToken<IStszAtom> {
+
+  public constructor(public len: number) {
+  }
+
+  public get(buf: Buffer, off: number): IStszAtom {
+
+    const nrOfEntries = Token.INT32_BE.get(buf, off + 8);
+
+    return {
+      version: Token.INT8.get(buf, off),
+      flags: Token.INT24_BE.get(buf, off + 1),
+      sampleSize: Token.INT32_BE.get(buf, off + 4),
+      numberOfEntries: nrOfEntries,
+      entries: readTokenTable(buf, Token.INT32_BE, off + 12, this.len - 12, nrOfEntries)
+    };
+  }
+}
+
+/**
+ * Chunk offset atom, 'stco'
+ * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25715
+ */
+export class StcoAtom extends SimpleTableAtom<number> {
+  public constructor(public len: number) {
+    super(len, Token.INT32_BE);
+  }
+}
+
+/**
+ * Token used to decode text-track from 'mdat' atom (raw data stream)
+ */
+export class ChapterText implements Token.IGetToken<string> {
+
+  public constructor(public len: number) {
+  }
+
+  public get(buf: Buffer, off: number): string {
+    const titleLen = Token.INT16_BE.get(buf, off + 0);
+    const str = new Token.StringType(titleLen, 'utf-8');
+    return str.get(buf, off + 2);
+  }
+}
+
+function readTokenTable<T>(buf: Buffer, token: Token.IGetToken<T>, off: number, remainingLen: number, numberOfEntries: number): T[] {
+
+  debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
+
+  if (remainingLen === 0)
+    return [];
+
+  assert.equal(remainingLen, numberOfEntries * token.len, 'mismatch number-of-entries with remaining atom-length');
+
+  const entries: T[] = [];
+  // parse offset-table
+  for (let n = 0; n < numberOfEntries; ++n) {
+    entries.push(token.get(buf, off));
+    off += token.len;
+  }
+
+  return entries;
+}
