@@ -194,7 +194,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Parse flac/Vorbis file
-      const metadata = await parseFile(path.join(samplePath, filename), {native: true});
+      const metadata = await parseFile(path.join(samplePath, filename));
       t.isDefined(metadata, 'should return metadata');
       t.isDefined(metadata.native, 'should return metadata.native');
       t.isDefined(metadata.native.vorbis, 'should return metadata.native.vorbis');
@@ -208,7 +208,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.ogg');
 
       // Parse ogg/Vorbis file
-      const metadata = await parseFile(filePath, {native: true});
+      const metadata = await parseFile(filePath);
       t.isDefined(metadata, 'should return metadata');
       t.isDefined(metadata.native, 'should return metadata.native');
       t.isDefined(metadata.native.vorbis, 'should return metadata.native.vorbis');
@@ -287,7 +287,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Run with default options
-      const metadata = await parseFile(filePath, {native: true});
+      const metadata = await parseFile(filePath);
       t.isDefined(metadata, 'should return metadata');
       t.isDefined(metadata.native, 'should return metadata.native');
       t.isDefined(metadata.native['APEv2'], 'should include native APEv2 tags');
@@ -309,7 +309,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Run with default options
-      const metadata = await parseFile(filePath, {native: true});
+      const metadata = await parseFile(filePath);
       t.isDefined(metadata, 'should return metadata');
       t.isDefined(metadata.native, 'should return metadata.native');
       t.isDefined(metadata.native['APEv2'], 'should include native APEv2 tags');
@@ -387,7 +387,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Run with default options
-      return parseFile(filePath, {native: true}).then(metadata => {
+      return parseFile(filePath).then(metadata => {
         t.isDefined(metadata, 'should return metadata');
         t.isDefined(metadata.native, 'should return metadata.native');
         t.isDefined(metadata.native['ID3v2.3'], 'should include native id3v2.3 tags');
@@ -417,7 +417,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Parse wma/asf file
-      return parseFile(filePath, {native: true}).then(result => {
+      return parseFile(filePath).then(result => {
         // Check wma format
         checkFormat(result.format);
         // Check native tags
@@ -509,7 +509,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Run with default options
-      const metadata = await parseFile(filePath, {native: true});
+      const metadata = await parseFile(filePath);
 
       t.isDefined(metadata, 'should return metadata');
       t.isDefined(metadata.native, 'should return metadata.native');
@@ -535,7 +535,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }
 
       // Parse wma/asf file
-      const metadata = await parseFile(filePath, {native: true});
+      const metadata = await parseFile(filePath);
       t.isDefined(metadata, 'should return metadata');
       t.isDefined(metadata.native, 'should return metadata.native');
       t.isDefined(metadata.native['ID3v2.4'], 'should include native id3v2.4 tags');
@@ -593,7 +593,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     }
 
     // Run with default options
-    const metadata = await parseFile(filePath, {native: true});
+    const metadata = await parseFile(filePath);
     t.isDefined(metadata, 'should return metadata');
     t.isDefined(metadata.native, 'should return metadata.native');
     t.isDefined(metadata.native.iTunes, 'should include native iTunes tags');
@@ -629,7 +629,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     }
 
     // Parse wma/asf file
-    const metadata = await parseFile(filePath, {native: true});
+    const metadata = await parseFile(filePath);
 
     t.isDefined(metadata, 'should return metadata');
     t.isDefined(metadata.native, 'should return metadata.native');

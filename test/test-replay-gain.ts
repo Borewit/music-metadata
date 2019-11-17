@@ -189,7 +189,7 @@ describe('Test Replay-Gain', () => {
 
       const filePath = path.join(pathGainSamples, sample.filename);
 
-      const metadata = await mm.parseFile(filePath, {native: true});
+      const metadata = await mm.parseFile(filePath);
       const {format, common} = metadata;
 
       assert.strictEqual(format.container, sample.container, 'format.container');

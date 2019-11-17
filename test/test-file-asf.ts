@@ -100,7 +100,7 @@ describe("Parse ASF", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async () => {
-          const metadata = await parser.initParser(asfFilePath, 'audio/x-ms-wma', {native: true});
+          const metadata = await parser.initParser(asfFilePath, 'audio/x-ms-wma');
           t.isDefined(metadata, 'metadata');
           checkFormat(metadata.format);
           checkCommon(metadata.common);
@@ -115,14 +115,13 @@ describe("Parse ASF", () => {
     describe("should decode picture from", () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
+        it(parser.description, async () => {
           const filePath = path.join(__dirname, 'samples', 'issue_57.wma');
-          return parser.initParser(filePath, 'audio/x-ms-wma', {native: true}).then(metadata => {
-            const asf = mm.orderTags(metadata.native.asf);
-            assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
-            const nativePicture = asf['WM/Picture'][0];
-            assert.exists(nativePicture.data);
-          });
+          const metadata = await parser.initParser(filePath, 'audio/x-ms-wma');
+          const asf = mm.orderTags(metadata.native.asf);
+          assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
+          const nativePicture = asf['WM/Picture'][0];
+          assert.exists(nativePicture.data);
         });
       });
 
@@ -131,23 +130,22 @@ describe("Parse ASF", () => {
     /**
      * Related issue: https://github.com/Borewit/music-metadata/issues/68
      */
-    it("should be able to parse truncated .wma file", () => {
+    it("should be able to parse truncated .wma file", async () => {
 
       const filePath = path.join(__dirname, 'samples', '13 Thirty Dirty Birds.wma');
 
-      return mm.parseFile(filePath, {duration: true, native: true}).then(metadata => {
+      const metadata = await mm.parseFile(filePath);
 
-        const asf = mm.orderTags(metadata.native.asf);
-        // ToDo: Contains some WM/... tags which could be parsed / mapped better
+      const asf = mm.orderTags(metadata.native.asf);
+      // ToDo: Contains some WM/... tags which could be parsed / mapped better
 
-        assert.strictEqual(metadata.common.title, "Thirty Dirty Birds", "metadata.common.title");
-        assert.strictEqual(metadata.common.artist, "The Red Hot Chili Peppers", "metadata.common.artist");
-        assert.strictEqual(metadata.common.date, "2003", "metadata.common.date");
-        assert.deepEqual(metadata.common.label, ["Capitol"], "metadata.common.label");
-        assert.strictEqual(metadata.common.track.no, 13, "metadata.common.track.no");
+      assert.strictEqual(metadata.common.title, "Thirty Dirty Birds", "metadata.common.title");
+      assert.strictEqual(metadata.common.artist, "The Red Hot Chili Peppers", "metadata.common.artist");
+      assert.strictEqual(metadata.common.date, "2003", "metadata.common.date");
+      assert.deepEqual(metadata.common.label, ["Capitol"], "metadata.common.label");
+      assert.strictEqual(metadata.common.track.no, 13, "metadata.common.track.no");
 
-        assert.exists(asf);
-      });
+      assert.exists(asf);
     });
 
   });

@@ -246,7 +246,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   public toCommonMetadata(): IAudioMetadata {
     return {
       format: this.format,
-      native: this.opts.native ? this.native : undefined,
+      native: this.native,
       quality: this.quality,
       common: this.common
     };
