@@ -1,17 +1,17 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
-import {Parsers} from './metadata-parsers';
+import { Parsers } from './metadata-parsers';
 
 const t = assert;
 
-describe("Parse MPEG-4 files with iTunes metadata", () => {
+describe('Parse MPEG-4 files with iTunes metadata', () => {
 
-  const _samples = path.join(__dirname, "samples");
+  const _samples = path.join(__dirname, 'samples');
 
   const mp4Samples = path.join(_samples, 'mp4');
 
-  describe("Parse MPEG-4 files (.m4a)", () => {
+  describe('Parse MPEG-4 files (.m4a)', () => {
 
     function checkFormat(format) {
       assert.deepEqual(format.lossless, false);
@@ -69,18 +69,17 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     }
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
+      it(parser.description, async () => {
 
         const filePath = path.join(mp4Samples, 'id4.m4a');
 
-        return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
-          const native = metadata.native.iTunes;
-          t.ok(native, 'Native m4a tags should be present');
+        const metadata = await parser.initParser(filePath, 'audio/mp4');
+        const native = metadata.native.iTunes;
+        t.ok(native, 'Native m4a tags should be present');
 
-          checkFormat(metadata.format);
-          checkCommon(metadata.common);
-          checkNativeTags(mm.orderTags(native));
-        });
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
+        checkNativeTags(mm.orderTags(native));
       });
     });
 
@@ -89,29 +88,28 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
   /**
    * Ref: https://github.com/Borewit/music-metadata/issues/74
    */
-  describe("should decode 8-byte unsigned integer", () => {
+  describe('should decode 8-byte unsigned integer', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
+      it(parser.description, async () => {
 
-        const filePath = path.join(mp4Samples, "issue-74.m4a");
+        const filePath = path.join(mp4Samples, 'issue-74.m4a');
 
-        return parser.initParser(filePath, 'audio/mp4', {native: true}).then(metadata => {
-          const {format, common, native} = metadata;
+        const metadata = await parser.initParser(filePath, 'audio/mp4');
+        const {format, common, native} = metadata;
 
-          assert.deepEqual(format.container, 'iso2/isom', 'format.container');
-          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-          assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
-          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+        assert.deepEqual(format.container, 'iso2/isom', 'format.container');
+        assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+        assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+        assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
+        assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
 
-          assert.isDefined(native.iTunes, 'Native m4a tags should be present');
-          assert.isAtLeast(native.iTunes.length, 1);
+        assert.isDefined(native.iTunes, 'Native m4a tags should be present');
+        assert.isAtLeast(native.iTunes.length, 1);
 
-          assert.deepEqual(common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
-          assert.deepEqual(common.albumartist, "They Say We're Sinking");
-          assert.deepEqual(common.comment, ["youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV"]);
-        });
+        assert.deepEqual(common.album, 'Live at Tom\'s Bullpen in Dover, DE (2016-04-30)');
+        assert.deepEqual(common.albumartist, 'They Say We\'re Sinking');
+        assert.deepEqual(common.comment, ['youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV']);
       });
     });
   });
@@ -119,139 +117,134 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
   /**
    * Ref: https://github.com/Borewit/music-metadata/issues/79
    */
-  describe("should be able to extract the composer and artist", () => {
+  describe('should be able to extract the composer and artist', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
+      it(parser.description, async () => {
 
-        const filePath = path.join(mp4Samples, "issue-79.m4a");
+        const filePath = path.join(mp4Samples, 'issue-79.m4a');
 
-        return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          const {common, format} = metadata;
+        const metadata = await parser.initParser(filePath, 'audio/mp4');
+        const {common, format} = metadata;
 
-          assert.deepEqual(format.container, 'isom/mp42/M4A', 'format.container');
-          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-          assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
-          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+        assert.deepEqual(format.container, 'isom/mp42/M4A', 'format.container');
+        assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+        assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+        assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
+        assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
 
-          assert.strictEqual(common.title, "Uprising");
-          assert.deepEqual(common.composer, ["Muse"]);
-          assert.deepEqual(common.artists, ["Muse"]);
-          assert.deepEqual(common.genre, ["Rock"]);
-          assert.strictEqual(common.date, "2009");
-          assert.strictEqual(common.encodedby, "iTunes 8.2.0.23, QuickTime 7.6.2");
-          assert.deepEqual(common.disk, {no: 1, of: 1});
-          assert.deepEqual(common.track, {no: 1, of: null});
-        });
+        assert.strictEqual(common.title, 'Uprising');
+        assert.deepEqual(common.composer, ['Muse']);
+        assert.deepEqual(common.artists, ['Muse']);
+        assert.deepEqual(common.genre, ['Rock']);
+        assert.strictEqual(common.date, '2009');
+        assert.strictEqual(common.encodedby, 'iTunes 8.2.0.23, QuickTime 7.6.2');
+        assert.deepEqual(common.disk, {no: 1, of: 1});
+        assert.deepEqual(common.track, {no: 1, of: null});
       });
     });
   });
 
-  describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
+  describe('Parse MPEG-4 Audio Book files (.m4b)', () => {
 
-    describe("audio book from issue #120", () => {
+    describe('audio book from issue #120', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
+        it(parser.description, async () => {
 
           const filePath = path.join(mp4Samples, 'issue-120.m4b');
 
-          return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
+          const metadata = await parser.initParser(filePath, 'audio/mp4');
 
-            const {common, format} = metadata;
+          const {common, format} = metadata;
 
-            assert.deepEqual(format.container, 'iso2/isom', 'format.container');
-            assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-            assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-            assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
-            assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+          assert.deepEqual(format.container, 'iso2/isom', 'format.container');
+          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+          assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
+          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
 
-            assert.strictEqual(common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
-            assert.deepEqual(common.composer, ['Nick Podehl']);
-            assert.deepEqual(common.artists, ['Aleron Kong']);
-            assert.deepEqual(common.genre, ['Audiobook']);
-            assert.strictEqual(common.year, 2018);
-            assert.strictEqual(common.encodedby, 'inAudible 1.97');
-            assert.deepEqual(common.disk, {no: null, of: null});
-            assert.deepEqual(common.track, {no: null, of: null});
-            assert.deepEqual(common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
-          });
+          assert.strictEqual(common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
+          assert.deepEqual(common.composer, ['Nick Podehl']);
+          assert.deepEqual(common.artists, ['Aleron Kong']);
+          assert.deepEqual(common.genre, ['Audiobook']);
+          assert.strictEqual(common.year, 2018);
+          assert.strictEqual(common.encodedby, 'inAudible 1.97');
+          assert.deepEqual(common.disk, {no: null, of: null});
+          assert.deepEqual(common.track, {no: null, of: null});
+          assert.deepEqual(common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
         });
       });
     });
 
-    describe("audio book from issue issue #127", () => {
+    describe('audio book from issue issue #127', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
+        it(parser.description, async () => {
 
           const filePath = path.join(mp4Samples, 'issue-127.m4b');
 
-          return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-            const {common, format} = metadata;
+          const metadata = await parser.initParser(filePath, 'audio/mp4');
+          const {common, format} = metadata;
 
-            assert.deepEqual(format.container, '3gp5/M4A', 'format.container');
-            assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+          assert.deepEqual(format.container, '3gp5/M4A', 'format.container');
+          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
 
-            assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
-            assert.deepEqual(common.artists, ['Joseph Dunn']);
-            assert.deepEqual(common.genre, ['Audiobook']);
-            assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
-            assert.deepEqual(common.disk, {no: null, of: null});
-            assert.deepEqual(common.track, {no: 1, of: null});
-            assert.deepEqual(common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
+          assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
+          assert.deepEqual(common.artists, ['Joseph Dunn']);
+          assert.deepEqual(common.genre, ['Audiobook']);
+          assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
+          assert.deepEqual(common.disk, {no: null, of: null});
+          assert.deepEqual(common.track, {no: 1, of: null});
+          assert.deepEqual(common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
 
-            const iTunes = mm.orderTags(metadata.native.iTunes);
-            assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
-          });
+          const iTunes = mm.orderTags(metadata.native.iTunes);
+          assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
         });
       });
     });
   });
 
-  describe("Parse MPEG-4 Video (.mp4)", () => {
+  describe('Parse MPEG-4 Video (.mp4)', () => {
 
-    describe("Parse TV episode", () => {
+    describe('Parse TV episode', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
+        it(parser.description, async () => {
 
           const filePath = path.join(mp4Samples, 'Mr. Pickles S02E07 My Dear Boy.mp4');
 
-          return parser.initParser(filePath, 'video/mp4', {duration: true, native: true}).then(metadata => {
-            assert.deepEqual(metadata.common.title, 'My Dear Boy');
-            assert.deepEqual(metadata.common.tvEpisode, 7);
-            assert.deepEqual(metadata.common.tvEpisodeId, '017');
-            assert.deepEqual(metadata.common.tvSeason, 2);
-            assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
+          const metadata = await parser.initParser(filePath, 'video/mp4');
+          assert.deepEqual(metadata.common.title, 'My Dear Boy');
+          assert.deepEqual(metadata.common.tvEpisode, 7);
+          assert.deepEqual(metadata.common.tvEpisodeId, '017');
+          assert.deepEqual(metadata.common.tvSeason, 2);
+          assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
 
-            assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
-            assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+AC-3+CEA-608', 'format.codec');
-            assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
-            assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
-            assert.deepEqual(metadata.common.albumartist, 'Mr. Pickles');
-            assert.deepEqual(metadata.common.copyright, '© & TM - Cartoon Network - 2016');
+          assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
+          assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+AC-3+CEA-608', 'format.codec');
+          assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
+          assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
+          assert.deepEqual(metadata.common.albumartist, 'Mr. Pickles');
+          assert.deepEqual(metadata.common.copyright, '© & TM - Cartoon Network - 2016');
 
-            const iTunes = mm.orderTags(metadata.native.iTunes);
-            assert.deepEqual(iTunes.stik, [10], 'iTunes.stik = 10 = TV Show'); // Ref: http://www.zoyinc.com/?p=1004
-          });
+          const iTunes = mm.orderTags(metadata.native.iTunes);
+          assert.deepEqual(iTunes.stik, [10], 'iTunes.stik = 10 = TV Show'); // Ref: http://www.zoyinc.com/?p=1004
         });
       });
     });
   });
 
-  describe("should support extended atom header", () => {
+  describe('should support extended atom header', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
+      it(parser.description, async () => {
 
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
-        return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.deepEqual(metadata.format.container, 'mp42/M4A', 'format.container');
-          assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
-        });
+        const metadata = await parser.initParser(filePath, 'video/mp4');
+        assert.deepEqual(metadata.format.container, 'mp42/M4A', 'format.container');
+        assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
       });
     });
   });
@@ -259,22 +252,21 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
   describe('Handle dashed atom-ID\'s', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
+      it(parser.description, async () => {
 
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
-        return parser.initParser(filePath, 'audio/mp4', {duration: true, native: true}).then(metadata => {
-          assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
-          assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
+        const metadata = await parser.initParser(filePath, 'video/mp4');
+        assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
+        assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
 
-          assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
-          assert.deepEqual(metadata.common.albumartist, 'Angels and Airwaves');
-          assert.deepEqual(metadata.common.artist, 'Angels and Airwaves');
-          assert.deepEqual(metadata.common.artists, ['Angels and Airwaves']);
-          assert.strictEqual(metadata.common.bpm, 89);
-          assert.deepEqual(metadata.common.genre, ['Rock']);
-          assert.strictEqual(metadata.common.title, 'Distraction');
-        });
+        assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
+        assert.deepEqual(metadata.common.albumartist, 'Angels and Airwaves');
+        assert.deepEqual(metadata.common.artist, 'Angels and Airwaves');
+        assert.deepEqual(metadata.common.artists, ['Angels and Airwaves']);
+        assert.strictEqual(metadata.common.bpm, 89);
+        assert.deepEqual(metadata.common.genre, ['Rock']);
+        assert.strictEqual(metadata.common.title, 'Distraction');
       });
     });
   });

@@ -1,15 +1,13 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
-import {Parsers} from './metadata-parsers';
+import { Parsers } from './metadata-parsers';
 
-const t = assert;
-
-describe("Parse MP3 files", () => {
+describe('Parse MP3 files', () => {
 
   const samplePath = path.join(__dirname, 'samples');
 
-  it("should handle audio-frame-header-bug", function() {
+  it('should handle audio-frame-header-bug', function() {
 
     this.timeout(15000); // It takes a long time to parse
 
@@ -22,7 +20,7 @@ describe("Parse MP3 files", () => {
 
       // If MPEG Layer II is accepted, it will give back third frame with a different frame length;
       // therefore it start counting actual parsable frames ending up on ~66.86
-      t.approximately(result.format.duration, 200.5, 1 / 10);
+      assert.approximately(result.format.duration, 200.5, 1 / 10);
     });
   });
 
@@ -55,58 +53,51 @@ describe("Parse MP3 files", () => {
 
   describe('should handle incomplete MP3 file', () => {
 
-    const filePath = path.join(samplePath, "incomplete.mp3");
+    const filePath = path.join(samplePath, 'incomplete.mp3');
 
     function checkFormat(format: mm.IFormat) {
-      t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
-      t.approximately(format.duration, 61.73, 1 / 100, 'format.duration');
-      t.strictEqual(format.container, 'MPEG', 'format.container');
-      t.strictEqual(format.codec, 'MP3', 'format.codec');
-      t.strictEqual(format.lossless, false, 'format.lossless');
-      t.strictEqual(format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
-      t.strictEqual(format.bitrate, 64000, 'format.bitrate = 128 kbit/sec');
-      t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
+      assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
+      assert.approximately(format.duration, 61.73, 1 / 100, 'format.duration');
+      assert.strictEqual(format.container, 'MPEG', 'format.container');
+      assert.strictEqual(format.codec, 'MP3', 'format.codec');
+      assert.strictEqual(format.lossless, false, 'format.lossless');
+      assert.strictEqual(format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
+      assert.strictEqual(format.bitrate, 64000, 'format.bitrate = 128 kbit/sec');
+      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     }
 
-    it("should decode from a file", () => {
-
-      return mm.parseFile(filePath).then(metadata => {
-        for (const tagType in metadata.native) {
-          throw new Error("Do not expect any native tag type, got: " + tagType);
-        }
-        checkFormat(metadata.format);
-      });
+    it('should decode from a file', async () => {
+      const metadata = await mm.parseFile(filePath);
+      checkFormat(metadata.format);
     });
   });
 
   describe('Duration flag behaviour', () => {
 
-    describe("MP3/CBR without Xing header", () => {
+    describe('MP3/CBR without Xing header', () => {
 
       const filePath = path.join(samplePath, 'mp3', 'Sleep Away.mp3');
 
-      describe("duration=false", () => {
+      describe('duration=false', () => {
 
         Parsers
           .forEach(parser => {
-            it(parser.description, () => {
-              return parser.initParser(filePath, 'audio/mpeg', {duration: false, native: true}).then(metadata => {
-                assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
-              });
+            it(parser.description, async () => {
+              const metadata = await parser.initParser(filePath, 'audio/mpeg', {duration: false});
+              assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
             });
           });
       });
 
-      describe("duration=true", function() {
+      describe('duration=true', function() {
 
         this.timeout(15000); // Parsing this file can take a bit longer
 
         Parsers
           .forEach(parser => {
-            it(parser.description, () => {
-              return parser.initParser(filePath, 'audio/mpeg', {duration: true, native: true}).then(metadata => {
-                assert.approximately(metadata.format.duration, 200.5,  1 / 10, 'Expect a duration');
-              });
+            it(parser.description, async () => {
+              const metadata = await parser.initParser(filePath, 'audio/mpeg', {duration: true});
+              assert.approximately(metadata.format.duration, 200.5, 1 / 10, 'Expect a duration');
             });
           });
       });
@@ -121,7 +112,7 @@ describe("Parse MP3 files", () => {
 
       const filePath = path.join(samplePath, 'issue_56.mp3');
 
-      const metadata = await mm.parseFile(filePath, {native: true});
+      const metadata = await mm.parseFile(filePath);
       assert.strictEqual(metadata.format.container, 'MPEG');
       assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1']);
     });
@@ -130,7 +121,7 @@ describe("Parse MP3 files", () => {
 
       const filePath = path.join(samplePath, 'mp3', 'APEv2+Lyrics3v2.mp3');
 
-      const metadata = await mm.parseFile(filePath, {native: true});
+      const metadata = await mm.parseFile(filePath);
       assert.strictEqual(metadata.format.container, 'MPEG');
       assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1']);
 
@@ -138,7 +129,7 @@ describe("Parse MP3 files", () => {
       assert.deepEqual(ape.MP3GAIN_MINMAX, ['131,189']);
       assert.deepEqual(ape.REPLAYGAIN_TRACK_GAIN, ['+0.540000 dB']);
       assert.deepEqual(ape.REPLAYGAIN_TRACK_PEAK, ['0.497886']);
-      assert.deepEqual(ape.MP3GAIN_UNDO, [ '+004,+004,N' ]);
+      assert.deepEqual(ape.MP3GAIN_UNDO, ['+004,+004,N']);
     });
 
   });

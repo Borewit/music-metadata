@@ -1,10 +1,10 @@
-import {assert, expect} from 'chai';
+import { assert, expect } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
-import {IdHeader} from "../lib/ogg/opus/Opus";
-import {Parsers} from './metadata-parsers';
+import { IdHeader } from '../lib/ogg/opus/Opus';
+import { Parsers } from './metadata-parsers';
 
-describe("Parse Ogg", function() {
+describe('Parse Ogg', function() {
 
   const samplePath = path.join(__dirname, 'samples');
 
@@ -32,7 +32,7 @@ describe("Parse Ogg", function() {
     assert.deepEqual(vorbis.TRACKNUMBER, ['2'], 'vorbis.TRACKNUMBER');
     assert.deepEqual(vorbis.TRACKTOTAL, ['12'], 'vorbis.TRACKTOTAL');
     assert.deepEqual(vorbis.ALBUM, ['Nevermind'], 'vorbis.ALBUM');
-    assert.deepEqual(vorbis.COMMENT, ["Nirvana's Greatest Album"], 'vorbis.COMMENT');
+    assert.deepEqual(vorbis.COMMENT, ['Nirvana\'s Greatest Album'], 'vorbis.COMMENT');
     assert.deepEqual(vorbis.GENRE, ['Grunge', 'Alternative'], 'vorbis.GENRE');
     assert.deepEqual(vorbis.TITLE, ['In Bloom'], 'vorbis.TITLE');
 
@@ -48,11 +48,11 @@ describe("Parse Ogg", function() {
     assert.strictEqual(cover.data[cover.data.length - 2], 255, 'vorbis.METADATA_BLOCK_PICTURE data -2');
   }
 
-  describe("Parsing Ogg/Vorbis", () => {
+  describe('Parsing Ogg/Vorbis', () => {
 
-    describe("decode: Nirvana - In Bloom - 2-sec.ogg", () => {
+    describe('decode: Nirvana - In Bloom - 2-sec.ogg', () => {
 
-      const filePath = path.join(samplePath, "Nirvana - In Bloom - 2-sec.ogg");
+      const filePath = path.join(samplePath, 'Nirvana - In Bloom - 2-sec.ogg');
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -63,44 +63,42 @@ describe("Parse Ogg", function() {
       }
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
-          return parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
-            checkFormat(metadata.format);
-            check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-            check_Nirvana_In_Bloom_commonTags(metadata.common);
-          });
+        it(parser.description, async () => {
+          const metadata = await parser.initParser(filePath, 'audio/ogg');
+          checkFormat(metadata.format);
+          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
+          check_Nirvana_In_Bloom_commonTags(metadata.common);
         });
       });
 
     });
 
-    it("should handle page not finalized with the lastPage flag", () => {
+    it('should handle page not finalized with the lastPage flag', async () => {
 
-      const filePath = path.join(samplePath, "issue_62.ogg");
+      const filePath = path.join(samplePath, 'issue_62.ogg');
 
-      return mm.parseFile(filePath, {native: true}).then(metadata => {
+      const metadata = await mm.parseFile(filePath);
 
-        assert.deepEqual(metadata.format.tagTypes, ['vorbis'], 'format.tagTypes');
-        // ToDo? assert.strictEqual(metadata.format.duration, 2.0, 'format.duration = 2.0 sec');
-        assert.strictEqual(metadata.format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
-        assert.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
-        assert.strictEqual(metadata.format.bitrate, 56000, 'bitrate = 64 kbit/sec');
+      assert.deepEqual(metadata.format.tagTypes, ['vorbis'], 'format.tagTypes');
+      // ToDo? assert.strictEqual(metadata.format.duration, 2.0, 'format.duration = 2.0 sec');
+      assert.strictEqual(metadata.format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
+      assert.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
+      assert.strictEqual(metadata.format.bitrate, 56000, 'bitrate = 64 kbit/sec');
 
-        // Following is part a page which is not correctly finalized with lastPage flag
-        assert.isDefined(metadata.common.title, "should provide: metadata.common.title");
-        assert.equal(metadata.common.title, "Al-Fatihah", "metadata.common.title");
-        assert.equal(metadata.common.artist, "Mishary Alafasi - www.TvQuran.com", "metadata.common.artist");
-      });
+      // Following is part a page which is not correctly finalized with lastPage flag
+      assert.isDefined(metadata.common.title, 'should provide: metadata.common.title');
+      assert.equal(metadata.common.title, 'Al-Fatihah', 'metadata.common.title');
+      assert.equal(metadata.common.artist, 'Mishary Alafasi - www.TvQuran.com', 'metadata.common.artist');
     });
 
     /**
      * Related issue: https://github.com/Borewit/music-metadata/issues/70
      */
-    it("should not fail on an Ogg/Vorbis 'Setup header'", async () => {
+    it('should not fail on an Ogg/Vorbis \'Setup header\'', async () => {
 
       const filePath = path.join(samplePath, 'issue_70.ogg');
 
-      const {format, native} = await mm.parseFile(filePath, {duration: true, native: true});
+      const {format, native} = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'Ogg', 'format.container');
       assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -119,11 +117,11 @@ describe("Parse Ogg", function() {
 
   });
 
-  describe("Parsing Ogg/Opus", () => {
+  describe('Parsing Ogg/Opus', () => {
 
-    describe("components", () => {
+    describe('components', () => {
 
-      it("IdHeader should throw error if data is shorter than header", () => {
+      it('IdHeader should throw error if data is shorter than header', () => {
         try {
           const idHeader = new IdHeader(18);
         } catch (err) {
@@ -132,9 +130,9 @@ describe("Parse Ogg", function() {
       });
     });
 
-    describe("decode: Nirvana - In Bloom - 2-sec.opus", () => {
+    describe('decode: Nirvana - In Bloom - 2-sec.opus', () => {
 
-      const filePath = path.join(samplePath, "Nirvana - In Bloom - 2-sec.opus");
+      const filePath = path.join(samplePath, 'Nirvana - In Bloom - 2-sec.opus');
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -146,21 +144,20 @@ describe("Parse Ogg", function() {
       }
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
-          return parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
-            checkFormat(metadata.format);
-            check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-            check_Nirvana_In_Bloom_commonTags(metadata.common);
-          });
+        it(parser.description, async () => {
+          const metadata = await parser.initParser(filePath, 'audio/ogg');
+          checkFormat(metadata.format);
+          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
+          check_Nirvana_In_Bloom_commonTags(metadata.common);
         });
       });
 
     });
   });
 
-  describe("Parsing Ogg/Speex", () => {
+  describe('Parsing Ogg/Speex', () => {
 
-    describe("decode: 'female_scrub.spx'", () => {
+    describe('decode: \'female_scrub.spx\'', () => {
 
       const filePath = path.join(samplePath, 'female_scrub.spx');
 
@@ -171,16 +168,15 @@ describe("Parse Ogg", function() {
       }
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
-          return parser.initParser(filePath, 'audio/ogg', {native: true}).then(metadata => {
-            checkFormat(metadata.format);
-          });
+        it(parser.description, async () => {
+          const metadata = await parser.initParser(filePath, 'audio/ogg');
+          checkFormat(metadata.format);
         });
       });
 
     });
 
-    it("check for ogg-multipage-metadata-bug", () => {
+    it('check for ogg-multipage-metadata-bug', () => {
 
       const filePath = path.join(samplePath, 'ogg-multipagemetadata-bug.ogg');
 

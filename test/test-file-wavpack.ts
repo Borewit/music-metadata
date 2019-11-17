@@ -24,11 +24,10 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
     const wv1 = path.join(wavpackSamplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.wv');
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
-        return parser.initParser(wv1, 'audio/x-wavpack', {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-          checkCommon(metadata.common);
-        });
+      it(parser.description, async () => {
+        const metadata = await parser.initParser(wv1, 'audio/x-wavpack');
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
       });
     });
   });
@@ -47,10 +46,9 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
     const wv1 = path.join(wavpackSamplePath, 'DSD128.wv');
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
-        return parser.initParser(wv1, 'audio/x-wavpack', {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-        });
+      it(parser.description, async () => {
+        const metadata = await parser.initParser(wv1, 'audio/x-wavpack');
+        checkFormat(metadata.format);
       });
     });
   });
@@ -70,10 +68,9 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
     const wv1 = path.join(wavpackSamplePath, 'DSD128 high compression.wv');
 
     Parsers.forEach(parser => {
-      it(parser.description, () => {
-        return parser.initParser(wv1, 'audio/x-wavpack', {native: true}).then(metadata => {
-          checkFormat(metadata.format);
-        });
+      it(parser.description, async () => {
+        const metadata = await parser.initParser(wv1, 'audio/x-wavpack');
+        checkFormat(metadata.format);
       });
     });
   });

@@ -139,7 +139,7 @@ Javascript example:
 const mm = require('music-metadata');
 const util = require('util')
 
-mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3', {native: true})
+mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
   .then( metadata => {
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   })
@@ -224,7 +224,6 @@ ratingToStars(rating: number): number
 ### Options
 *   `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
 *   `fileSize`: only provide this in combination with `parseStream` function.
-*   `native`: default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
 *   `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
 *   `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
 *   `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
@@ -236,7 +235,7 @@ To enforce parsing the entire file if needed you should set `duration` to `true`
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
 *   [`format: IFormat`](#format) Audio format information
-*   `native: INativeTags` List of native (original) tags found in the parsed audio file. If the native option is set to false, this property is not defined.
+*   `native: INativeTags` List of native (original) tags found in the parsed audio file.
 *   [`common: ICommonTagsResult`](doc/common_metadata.md) Is a generic (abstract) way of reading metadata information. 
   
 #### Format

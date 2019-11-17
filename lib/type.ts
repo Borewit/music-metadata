@@ -446,11 +446,6 @@ export interface IOptions {
   fileSize?: number,
 
   /**
-   *  default: `false`, if set to `true`, it will return native tags in addition to the `common` tags.
-   */
-  native?: boolean,
-
-  /**
    * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
    */
   duration?: boolean;
