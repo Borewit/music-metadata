@@ -13,7 +13,9 @@
 
 # music-metadata
 
-Stream and file based music metadata parser for node.
+Stream and file based music metadata parser for [node.js](https://nodejs.org/).
+Supports any common audio and tagging format.
+[TypeScript](https://www.typescriptlang.org/) definitions are included.
 
 ## Features
 
