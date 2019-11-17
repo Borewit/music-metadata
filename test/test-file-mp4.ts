@@ -147,37 +147,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
   describe('Parse MPEG-4 Audio Book files (.m4b)', () => {
 
-    describe('audio book from issue #120', () => {
-
-      Parsers.forEach(parser => {
-        it(parser.description, async () => {
-
-          const filePath = path.join(mp4Samples, 'issue-120.m4b');
-
-          const metadata = await parser.initParser(filePath, 'audio/mp4');
-
-          const {common, format} = metadata;
-
-          assert.deepEqual(format.container, 'iso2/isom', 'format.container');
-          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-          assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
-          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-
-          assert.strictEqual(common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
-          assert.deepEqual(common.composer, ['Nick Podehl']);
-          assert.deepEqual(common.artists, ['Aleron Kong']);
-          assert.deepEqual(common.genre, ['Audiobook']);
-          assert.strictEqual(common.year, 2018);
-          assert.strictEqual(common.encodedby, 'inAudible 1.97');
-          assert.deepEqual(common.disk, {no: null, of: null});
-          assert.deepEqual(common.track, {no: null, of: null});
-          assert.deepEqual(common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
-        });
-      });
-    });
-
-    describe('audio book from issue issue #127', () => {
+    describe("audio book from issue issue #127", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async () => {
