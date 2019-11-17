@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
 import { Parsers } from './metadata-parsers';
+import * as fs from 'fs';
 
 const t = assert;
 
@@ -20,7 +21,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
       assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
       assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
-      t.strictEqual(format.duration, 2.206, 'format.duration');
+      assert.approximately(format.duration, 2.206, 1 / 500, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
       assert.approximately(format.bitrate, 148000, 500, 'Calculate bit-rate');
@@ -82,7 +83,6 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         checkNativeTags(mm.orderTags(native));
       });
     });
-
   });
 
   /**
@@ -147,36 +147,6 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
   describe('Parse MPEG-4 Audio Book files (.m4b)', () => {
 
-    describe('audio book from issue #120', () => {
-
-      Parsers.forEach(parser => {
-        it(parser.description, async () => {
-
-          const filePath = path.join(mp4Samples, 'issue-120.m4b');
-
-          const metadata = await parser.initParser(filePath, 'audio/mp4');
-
-          const {common, format} = metadata;
-
-          assert.deepEqual(format.container, 'iso2/isom', 'format.container');
-          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-          assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-          assert.deepEqual(format.sampleRate, 22050, 'format.sampleRate');
-          assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-
-          assert.strictEqual(common.title, 'The Land: Predators: A LitRPG Saga: Chaos Seeds, Book 7 (Unabridged)');
-          assert.deepEqual(common.composer, ['Nick Podehl']);
-          assert.deepEqual(common.artists, ['Aleron Kong']);
-          assert.deepEqual(common.genre, ['Audiobook']);
-          assert.strictEqual(common.year, 2018);
-          assert.strictEqual(common.encodedby, 'inAudible 1.97');
-          assert.deepEqual(common.disk, {no: null, of: null});
-          assert.deepEqual(common.track, {no: null, of: null});
-          assert.deepEqual(common.comment, ['Welcome to the long-awaited seventh novel of the best-selling saga by Aleron Kong, the longest and best book ever recorded by Nick Podehl!']);
-        });
-      });
-    });
-
     describe('audio book from issue issue #127', () => {
 
       Parsers.forEach(parser => {
@@ -200,6 +170,116 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
           const iTunes = mm.orderTags(metadata.native.iTunes);
           assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
+        });
+      });
+    });
+
+    describe('Parse chapters', async () => {
+
+      /**
+       * Source audio-book: https://librivox.org/the-babys-songbook-by-walter-crane/
+       */
+      describe('BabysSongbook_librivox.m4b', async () => {
+
+        function checkMetadata(metadata: mm.IAudioMetadata) {
+          const {common, format} = metadata;
+
+          assert.deepEqual(format.container, '3gp5/M4A', 'format.container');
+          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+          assert.approximately(format.duration, 991.213, 1 / 500, 'format.duration');
+
+          assert.strictEqual(common.title, 'Babys Songbook', 'common.title');
+          assert.deepEqual(common.artists, ['Walter Crane'], 'common.artists');
+          assert.deepEqual(common.genre, ['Audiobook']);
+          assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
+          assert.deepEqual(common.disk, {no: null, of: null}, 'common.disk');
+          assert.deepEqual(common.track, {no: null, of: null}, 'common.track');
+          assert.isUndefined(common.comment, 'common.comment');
+
+          const iTunes = mm.orderTags(metadata.native.iTunes);
+          assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
+
+          assert.deepEqual(format.chapters, [
+            {
+              sampleOffset: 45056,
+              title: '01 - Baby\'s Opera: 01 - Girls and Boys'
+            },
+            {
+              sampleOffset: 2695168,
+              title: '02 - Baby\'s Opera: 02 - The Mulberry Bush'
+            },
+            {
+              sampleOffset: 5083136,
+              title: '03 - Baby\'s Opera: 03 - Oranges and Lemons'
+            },
+            {
+              sampleOffset: 8352768,
+              title: '04 - Baby\'s Opera: 04 - St. Paul\'s Steeple'
+            },
+            {
+              sampleOffset: 10544128,
+              title: '05 - Baby\'s Opera: 05 - My Lady\'s Garden'
+            },
+            {
+              sampleOffset: 12284928,
+              title: '06 - Baby\'s Opera: 12 - Dickory Dock'
+            },
+            {
+              sampleOffset: 14125056,
+              title: '07 - Baby\'s Opera: 22 - Baa!Baa!Black Sheep'
+            },
+            {
+              sampleOffset: 16410624,
+              title: '08 - Baby\'s Bouquet: 01 - Dedication and Polly put the Kettle On'
+            },
+            {
+              sampleOffset: 19068928,
+              title: '09 - Baby\'s Bouquet: 02 - Hot Cross Buns'
+            },
+            {
+              sampleOffset: 21685248,
+              title: '10 - Baby\'s Bouquet: 03 - The Little Woman and the Pedlar'
+            },
+            {
+              sampleOffset: 30461952,
+              title: '11 - Baby\'s Bouquet: 04 - The Little Disaster'
+            },
+            {
+              sampleOffset: 37761024,
+              title: '12 - Baby\'s Bouquet: 05 - The Old Woman of Norwich'
+            },
+            {
+              sampleOffset: 39628800,
+              title: '13 - Baby\'s Bouquet: 12 - Lucy Locket'
+            },
+            {
+              sampleOffset: 41500672,
+              title: '14 - Baby\'s Bouquet: 18 - The North Wind & the Robin'
+            }
+          ]);
+        }
+
+        const filePath = path.join(mp4Samples, 'BabysSongbook_librivox.m4b');
+
+        it('from a file', async () => {
+
+          let metadata: mm.IAudioMetadata;
+          const stream = fs.createReadStream(filePath);
+          try {
+            metadata = await mm.parseStream(stream, 'audio/mp4', {includeChapters: true});
+          } finally {
+            stream.close();
+          }
+          checkMetadata(metadata);
+        });
+
+        it('from a stream', async () => {
+
+          const stream = fs.createReadStream(filePath);
+          const metadata = await mm.parseStream(stream, 'audio/mp4', {includeChapters: true});
+          stream.close();
+
+          checkMetadata(metadata);
         });
       });
     });

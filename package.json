@@ -21,6 +21,7 @@
     "ID3v1",
     "ID3v2",
     "m4a",
+    "m4b",
     "mp3",
     "mp4",
     "Vorbis",
@@ -45,7 +46,8 @@
     "dsdiff",
     "aac",
     "adts",
-    "length"
+    "length",
+    "chapter"
   ],
   "main": "lib",
   "typings": "lib/index",

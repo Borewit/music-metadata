@@ -318,7 +318,8 @@ export type FormatId =
   | 'lossless'
   | 'numberOfChannels'
   | 'numberOfSamples'
-  | 'audioMD5';
+  | 'audioMD5'
+  | 'chapters';
 
 export interface IFormat {
 
@@ -385,11 +386,28 @@ export interface IFormat {
    * 16-byte MD5 of raw audio
    */
   readonly audioMD5?: Buffer;
+
+  /**
+   * Chapters in audio stream
+   */
+  readonly chapters?: IChapter[]
 }
 
 export interface ITag {
   id: string,
   value: any
+}
+
+export interface IChapter {
+  /**
+   * Chapter title
+   */
+  title: string;
+  /**
+   * Audio offset in sample number, 0 is the first sample.
+   * Duration offset is sampleOffset / format.sampleRate
+   */
+  sampleOffset: number;
 }
 
 /**
@@ -460,6 +478,11 @@ export interface IOptions {
    * Only recommenced to use in combination with streams.
    */
   skipPostHeaders?: boolean;
+
+  /**
+   * default: `false`, if set to `true`, it will include MP4 chapters
+   */
+  includeChapters?: boolean;
 
   /**
    * Set observer for async callbacks to common or format.

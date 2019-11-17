@@ -27,12 +27,18 @@ export class Atom {
 
   public readonly children: Atom[];
   public readonly atomPath: string;
-  public readonly dataLen: number;
 
   public constructor(public readonly header: AtomToken.IAtomHeader, public extended: boolean, public readonly parent: Atom) {
     this.children = [];
-    this.atomPath = (this.parent ? this.parent.atomPath + '/' : '') + this.header.name;
-    this.dataLen = this.header.length - (extended ? 16 : 8);
+    this.atomPath = (this.parent ? this.parent.atomPath + '.' : '') + this.header.name;
+  }
+
+  public getHeaderLength(): number {
+    return this.extended ? 16 : 8;
+  }
+
+  public getPayloadLength(): number {
+    return this.header.length - this.getHeaderLength();
   }
 
   public async readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
@@ -54,12 +60,13 @@ export class Atom {
       case 'stbl': // The Sample Table Atom
       case '<id>':
       case 'ilst':
-        return this.readAtoms(tokenizer, dataHandler, this.dataLen);
+      case 'tref':
+        return this.readAtoms(tokenizer, dataHandler, this.getPayloadLength());
 
       case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         // meta has 4 bytes of padding, ignore
         await tokenizer.ignore(4);
-        return this.readAtoms(tokenizer, dataHandler, this.dataLen - 4);
+        return this.readAtoms(tokenizer, dataHandler, this.getPayloadLength() - 4);
 
       case 'mdhd': // Media header atom
       case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom

@@ -7,7 +7,7 @@ import { IAudioMetadata, IOptions } from './type';
 import * as _debug from 'debug';
 import { RandomFileReader } from './common/RandomFileReader';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio } from './type';
+export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type';
 
 const debug = _debug("music-metadata:parser");
 
