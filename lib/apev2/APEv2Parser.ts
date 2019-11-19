@@ -98,6 +98,12 @@ export class APEv2Parser extends BasicParser {
   private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, offset: number, includeCovers: boolean) {
 
     for (let i = 0; i < footer.fields; i++) {
+      const bytesRemaining = buffer.length - offset;
+      if (bytesRemaining < TagItemHeader.len) {
+        metadata.addWarning(`APEv2 Tag-header: ${i} items remaining, but no more tag data to read.`);
+        break;
+      }
+
       // Only APEv2 tag has tag item headers
       const tagItemHeader = TagItemHeader.get(buffer, offset);
       offset += TagItemHeader.len;
