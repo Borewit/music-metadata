@@ -1,11 +1,11 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
-import {Parsers} from './metadata-parsers';
+import { Parsers } from './metadata-parsers';
 
-describe("Parse APE (Monkey's Audio)", () => {
+const samplePath = path.join(__dirname, 'samples');
 
-  const samplePath = path.join(__dirname, 'samples');
+describe('Parse APE (Monkey\'s Audio)', () => {
 
   function checkFormat(format) {
     assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
@@ -49,6 +49,35 @@ describe("Parse APE (Monkey's Audio)", () => {
       checkNative(mm.orderTags(metadata.native.APEv2));
 
     });
+  });
+
+});
+
+describe('Parse APEv2 header', () => {
+
+  it('Handle APEv2 with item count to high(issue #331)', async () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'issue-331.apev2.mp3');
+
+    const metadata = await mm.parseFile(filePath, {
+      duration: false
+    });
+    const {format, common, quality} = metadata;
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MP3', 'format.codec');
+    assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
+    assert.strictEqual(format.tool, 'LAME3.99r', 'format.codecProfile');
+    assert.approximately(format.duration, 348.421, 1 / 500, 'format.duration');
+    assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.deepEqual(format.tagTypes, ['ID3v2.4', 'APEv2', 'ID3v1'], 'format.tagTypes');
+    assert.strictEqual(format.bitrate, 320000, 'format.bitrate');
+
+    assert.strictEqual(common.artist, 'Criminal Vibes', 'common.artist');
+    assert.strictEqual(common.title, 'Push The Feeling On (Groove Phenomenon Remix)', 'common.title');
+
+    assert.strictEqual(quality.warnings.filter(warning => {
+      return warning.message === 'APEv2 Tag-header: 11 items remaining, but no more tag data to read.';
+    }).length, 1, 'quality.warnings');
   });
 
 });
