@@ -100,7 +100,7 @@ export class APEv2Parser extends BasicParser {
     for (let i = 0; i < footer.fields; i++) {
       const bytesRemaining = buffer.length - offset;
       if (bytesRemaining < TagItemHeader.len) {
-        metadata.addWarning(`APEv2 Tag-header: ${i} items remaining, but no more tag data to read.`);
+        metadata.addWarning(`APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`);
         break;
       }
 
