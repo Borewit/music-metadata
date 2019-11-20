@@ -76,7 +76,7 @@ describe('Parse APEv2 header', () => {
     assert.strictEqual(common.title, 'Push The Feeling On (Groove Phenomenon Remix)', 'common.title');
 
     assert.strictEqual(quality.warnings.filter(warning => {
-      return warning.message === 'APEv2 Tag-header: 11 items remaining, but no more tag data to read.';
+      return warning.message === 'APEv2 Tag-header: 1 items remaining, but no more tag data to read.';
     }).length, 1, 'quality.warnings');
   });
 
