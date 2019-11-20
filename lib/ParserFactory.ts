@@ -82,16 +82,21 @@ export class ParserFactory {
 
       const buf = Buffer.alloc(4100);
       await tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true);
-      const guessedType = fileType(buf);
-      if (!guessedType)
-        throw new Error('Failed to determine audio format');
-      debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
-      parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
-      if (!parserId)
-        throw new Error('Guessed MIME-type not supported: ' + guessedType.mime);
-      return this._parse(tokenizer, parserId, opts);
+      if (opts.path) {
+        parserId = this.getParserIdForExtension(opts.path);
+      }
+      if (!parserId) {
+        const guessedType = fileType(buf);
+        if (!guessedType) {
+          throw new Error('Failed to determine audio format');
+        }
+        debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
+        parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
+        if (!parserId) {
+          throw new Error('Guessed MIME-type not supported: ' + guessedType.mime);
+        }
+      }
     }
-
     // Parser found, execute parser
     return this._parse(tokenizer, parserId, opts);
   }
