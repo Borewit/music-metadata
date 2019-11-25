@@ -82,8 +82,8 @@ export class ParserFactory {
 
       const buf = Buffer.alloc(4100);
       await tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true);
-      if (opts.path) {
-        parserId = this.getParserIdForExtension(opts.path);
+      if (tokenizer.fileInfo.path) {
+        parserId = this.getParserIdForExtension(tokenizer.fileInfo.path);
       }
       if (!parserId) {
         const guessedType = fileType(buf);

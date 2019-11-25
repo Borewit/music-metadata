@@ -457,7 +457,6 @@ export interface IAudioMetadata extends INativeAudioMetadata {
 export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff' | 'musepack' | 'dsf' | 'dsdiff' | 'adts' | 'matroska';
 
 export interface IOptions {
-  path?: string,
 
   /**
    * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
