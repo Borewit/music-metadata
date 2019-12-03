@@ -8,6 +8,9 @@ update_configs:
           dependency_name: "@types/node"
           update_type: "semver:minor"
       - match:
+          dependency_name: "@types/chai"
+          update_type: "semver:minor"
+      - match:
           dependency_name: "ts-node"
       - match:
           dependency_name: "mocha"
