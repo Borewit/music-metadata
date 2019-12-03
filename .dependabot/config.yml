@@ -15,3 +15,15 @@ update_configs:
           dependency_name: "chai"
       - match:
           dependency_name: "typescript"
+      - match:
+          dependency_name: "tslint"
+      - match:
+          dependency_name: "coveralls"
+      - match:
+          dependency_name: "nyc"
+      - match:
+          dependency_name: "eslint"
+      - match:
+          dependency_name: "coveralls"
+      - match:
+          dependency_name: "es-lint"
