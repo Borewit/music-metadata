@@ -197,7 +197,9 @@ export class MP4Parser extends BasicParser {
         this.metadata.setFormat('numberOfChannels', ssd.description.numAudioChannels);
       }
       const encoderInfo = encoderDict[ssd.dataFormat];
-      this.metadata.setFormat('lossless', !encoderInfo.lossy);
+      if (encoderInfo) {
+        this.metadata.setFormat('lossless', !encoderInfo.lossy);
+      }
 
       this.calculateBitRate();
     }
