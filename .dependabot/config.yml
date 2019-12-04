@@ -30,3 +30,5 @@ update_configs:
           dependency_name: "coveralls"
       - match:
           dependency_name: "es-lint"
+      - match:
+          dependency_name: "strtok3"
