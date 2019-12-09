@@ -31,7 +31,7 @@ it("should decode id3v2-duration-allframes", () => {
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     t.strictEqual(format.duration, 57 * 1152 / format.sampleRate, 'format.duration (test duration=true)');
     t.strictEqual(format.container, 'MPEG', 'format.container');
-    t.strictEqual(format.codec, 'MP3', 'format.codec');
+    t.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
     t.strictEqual(format.tool, 'LAME 3.98.4', 'format.tool');
   }
 

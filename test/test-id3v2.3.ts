@@ -37,7 +37,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
       assert.strictEqual(format.container, 'MPEG', 'format.container');
-      assert.strictEqual(format.codec, 'MP3', 'format.codec');
+      assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
       assert.strictEqual(format.tool, 'LAME3.98r', 'format.tool');
       assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
     }
@@ -108,7 +108,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
         assert.strictEqual(format.duration, 247.84979591836733, 'format.duration');
         assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
         assert.strictEqual(format.container, 'MPEG', 'format.container');
-        assert.strictEqual(format.codec, 'MP3', 'format.codec');
+        assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
         assert.strictEqual(format.lossless, false, 'format.lossless');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
