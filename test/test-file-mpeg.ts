@@ -363,4 +363,16 @@ describe('Parse MPEG', () => {
 
   });
 
+  it('It should be able to decode MPEG 2.5 Layer III', async () => {
+
+    const filePath = path.join(issueDir, 'mp3', 'issue-347.mp3');
+    const {format} = await mm.parseFile(filePath);
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MP3', 'format.codec');
+    assert.strictEqual(format.codecProfile, 'CBR', 'format.codec');
+    assert.deepEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
+    assert.deepEqual(format.sampleRate, 8000, 'format.sampleRate');
+    assert.deepEqual(format.tagTypes, [], 'format.tagTypes');
+  });
+
 });
