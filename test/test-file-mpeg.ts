@@ -38,7 +38,7 @@ describe('Parse MPEG', () => {
 
     t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1'], 'Tags: ID3v1 & ID3v2.3');
     t.strictEqual(metadata.format.container, 'MPEG', 'format.container = MPEG');
-    t.strictEqual(metadata.format.codec, 'MP2', 'format.codec = mp2 (MPEG-2 Audio Layer II)');
+    t.strictEqual(metadata.format.codec, 'MPEG 1 Layer 2', 'format.codec = MPEG-1 Audio Layer II');
     t.strictEqual(metadata.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
     t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
     t.strictEqual(metadata.format.numberOfSamples, 23040, 'format.numberOfSamples = 23040');
@@ -249,7 +249,7 @@ describe('Parse MPEG', () => {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v2.4', 'ID3v1'], 'format.tagTypes');
       t.strictEqual(format.duration, expectedDuration, 'format.duration');
       t.deepEqual(format.container, 'MPEG', 'format.container');
-      t.deepEqual(format.codec, 'MP3', 'format.codec');
+      t.deepEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
       t.strictEqual(format.lossless, false, 'format.lossless');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       t.strictEqual(format.bitrate, 320000, 'format.bitrate = 160 kbit/sec');
@@ -368,7 +368,7 @@ describe('Parse MPEG', () => {
     const filePath = path.join(issueDir, 'mp3', 'issue-347.mp3');
     const {format} = await mm.parseFile(filePath);
     assert.strictEqual(format.container, 'MPEG', 'format.container');
-    assert.strictEqual(format.codec, 'MP3', 'format.codec');
+    assert.strictEqual(format.codec, 'MPEG 2.5 Layer 3', 'format.codec');
     assert.strictEqual(format.codecProfile, 'CBR', 'format.codec');
     assert.deepEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
     assert.deepEqual(format.sampleRate, 8000, 'format.sampleRate');

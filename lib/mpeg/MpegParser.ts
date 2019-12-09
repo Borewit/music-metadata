@@ -209,7 +209,7 @@ class MpegFrameHeader {
     this.version = MpegFrameHeader.VersionID[this.versionIndex];
     this.channelMode = MpegFrameHeader.ChannelMode[this.channelModeIndex];
 
-    this.codec = 'MP' + this.layer;
+    this.codec = `MPEG ${this.version} Layer ${this.layer}`;
 
     // Calculate bitrate
     const bitrateInKbps = this.calcBitrate();

@@ -13,7 +13,7 @@ describe('Parsing MPEG / ID3v1', () => {
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       assert.strictEqual(format.container, 'MPEG', 'format.container');
-      assert.strictEqual(format.codec, 'MP3', 'format.codec');
+      assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
       assert.strictEqual(format.lossless, false, 'format.lossless');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.bitrate, 160000, 'format.bitrate = 160 kbit/sec');
@@ -66,7 +66,7 @@ describe('Parsing MPEG / ID3v1', () => {
       assert.deepEqual(format.tagTypes, [], 'format.tagTypes');
       assert.strictEqual(format.duration, 2.088, 'format.duration');
       assert.strictEqual(format.container, 'MPEG', 'format.container');
-      assert.strictEqual(format.codec, 'MP3', 'format.codec');
+      assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
       assert.strictEqual(format.lossless, false, 'format.lossless');
       assert.strictEqual(format.sampleRate, 16000, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
@@ -92,7 +92,7 @@ describe('Parsing MPEG / ID3v1', () => {
       assert.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
       assert.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       assert.deepEqual(format.container, 'MPEG', 'format.container');
-      assert.deepEqual(format.codec, 'MP3', 'format.codec');
+      assert.deepEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
       assert.strictEqual(format.lossless, false, 'format.lossless');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');

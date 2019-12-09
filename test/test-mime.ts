@@ -94,7 +94,7 @@ describe("MIME & extension mapping", () => {
 
       const metadata = await mm.parseFile(path.join(samplePath, 'mp3', '1a643e9e0743dee8732554d0e870055a'));
       assert.equal(metadata.format.container, 'MPEG');
-      assert.equal(metadata.format.codec, 'MP3');
+      assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
     });
 
     it("should throw error on unrecognized MIME-type", () => {
