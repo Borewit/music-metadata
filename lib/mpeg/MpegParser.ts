@@ -247,10 +247,12 @@ class MpegFrameHeader {
   }
 
   private calcBitrate(): number {
-    if (this.bitrateIndex === 0x00) return null; // free
-    if (this.bitrateIndex === 0x0F) return null; // 'reserved'
-    const mpegVersion: string = this.version.toString() + this.layer;
-    return MpegFrameHeader.bitrate_index[this.bitrateIndex][mpegVersion];
+    if (this.bitrateIndex === 0x00 || // free
+      this.bitrateIndex === 0x0F) { // reserved
+      return;
+    }
+    const codecIndex = `${Math.floor(this.version)}${this.layer}`;
+    return MpegFrameHeader.bitrate_index[this.bitrateIndex][codecIndex];
   }
 
   private calcSamplingRate(): number {
