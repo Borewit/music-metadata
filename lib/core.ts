@@ -11,10 +11,10 @@ import { getLyricsHeaderLength } from './lyrics3/Lyrics3';
 
 /**
  * Parse audio from Node Stream.Readable
- * @param {Stream.Readable} stream Stream to read the audio track from
- * @param {string} mimeType Content specification MIME-type, e.g.: 'audio/mpeg'
- * @param {IOptions} options Parsing options
- * @returns {Promise<IAudioMetadata>}
+ * @param stream - Stream to read the audio track from
+ * @param mimeType - Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param options - Parsing options
+ * @returns Metadata
  */
 export function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
   return parseFromTokenizer(strtok3.fromStream(stream), mimeType, options);
@@ -22,10 +22,10 @@ export function parseStream(stream: Stream.Readable, mimeType?: string, options:
 
 /**
  * Parse audio from Node Buffer
- * @param {Stream.Readable} buf Buffer holding audio data
- * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
- * @param {IOptions} options Parsing options
- * @returns {Promise<IAudioMetadata>}
+ * @param buf - Buffer holding audio data
+ * @param mimeType - Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param options - Parsing options
+ * @returns Metadata
  * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
  */
 export async function parseBuffer(buf: Buffer, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
@@ -39,10 +39,10 @@ export async function parseBuffer(buf: Buffer, mimeType?: string, options: IOpti
 
 /**
  * Parse audio from ITokenizer source
- * @param {ITokenizer} tokenizer Audio source implementing the tokenizer interface
- * @param {string} mimeType <string> Content specification MIME-type, e.g.: 'audio/mpeg'
- * @param {IOptions} options Parsing options
- * @returns {Promise<IAudioMetadata>}
+ * @param tokenizer - Audio source implementing the tokenizer interface
+ * @param mimeType - Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param options - Parsing options
+ * @returns Metadata
  */
 export function parseFromTokenizer(tokenizer: ITokenizer, mimeType?: string, options?: IOptions): Promise<IAudioMetadata> {
   if (!tokenizer.fileSize && options && options.fileSize) {
@@ -66,8 +66,8 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
 
 /**
  * Convert rating to 1-5 star rating
- * @param {number} rating Normalized rating [0..1] (common.rating[n].rating)
- * @returns {number} Number of stars: 1, 2, 3, 4 or 5 stars
+ * @param rating: Normalized rating [0..1] (common.rating[n].rating)
+ * @returns Number of stars: 1, 2, 3, 4 or 5 stars
  */
 export function ratingToStars(rating: number): number {
   return rating === undefined ? 0 : 1 + Math.round(rating * 4);

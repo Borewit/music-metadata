@@ -25,16 +25,16 @@ export interface ITokenParser {
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
-   * @param {INativeMetadataCollector} metadata Output
-   * @param {ITokenizer} tokenizer Input
-   * @param {IOptions} options Parsing options
+   * @param metadata - Output
+   * @param tokenizer - Input
+   * @param options - Parsing options
    */
   init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser;
 
   /**
    * Parse audio track.
    * Called after init(...).
-   * @returns {Promise<void>}
+   * @returns Promise
    */
   parse(): Promise<void>;
 }
@@ -53,11 +53,11 @@ export function parseHttpContentType(contentType: string): { type: string, subty
 export class ParserFactory {
 
   /**
-   *  Parse metadata from tokenizer
-   * @param {ITokenizer} tokenizer
-   * @param {string} contentType
-   * @param {IOptions} opts
-   * @returns {Promise<INativeAudioMetadata>}
+   * Parse metadata from tokenizer
+   * @param tokenizer - Tokenizer
+   * @param contentType - MIME-type
+   * @param opts - Options
+   * @returns Native metadata
    */
   public static async parseOnContentType(tokenizer: ITokenizer, contentType: string, opts: IOptions): Promise<IAudioMetadata> {
 
@@ -94,7 +94,7 @@ export class ParserFactory {
   }
 
   /**
-   * @param filePath Path, filename or extension to audio file
+   * @param filePath - Path, filename or extension to audio file
    * @return Parser sub-module name
    */
   public static getParserIdForExtension(filePath: string): ParserType {
@@ -196,8 +196,8 @@ export class ParserFactory {
   }
 
   /**
-   * @param {string} httpContentType HTTP Content-Type, extension, path or filename
-   * @returns {string} Parser sub-module name
+   * @param httpContentType - HTTP Content-Type, extension, path or filename
+   * @returns Parser sub-module name
    */
   private static getParserIdForMimeType(httpContentType: string): ParserType {
 
