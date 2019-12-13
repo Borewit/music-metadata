@@ -1,4 +1,4 @@
-export type TagType = 'vorbis' | 'ID3v1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes' | 'exif';
+export type TagType = 'vorbis' | 'ID3v1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes' | 'exif' | 'EBML';
 
 export interface IGenericTag {
   id: GenericTagId,
@@ -38,6 +38,7 @@ export type GenericTagId =
   | 'producer'
   | 'djmixer'
   | 'mixer'
+  | 'publisher'
   | 'label'
   | 'grouping'
   | 'subtitle'

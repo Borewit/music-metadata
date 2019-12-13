@@ -13,7 +13,7 @@ import {toRatio} from "./Util";
 
 const debug = _debug("music-metadata:collector");
 
-const TagPriority: TagType[] = ['APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'ID3v1'];
+const TagPriority: TagType[] = ['EBML', 'APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'ID3v1'];
 
 /**
  * Combines all generic-tag-mappers for each tag type
@@ -46,7 +46,7 @@ export interface INativeMetadataCollector extends IWarningCollector {
 
   setFormat(key: FormatId, value: any);
 
-  addTag(tagType: string, tagId: string, value: any);
+  addTag(tagType: TagType, tagId: string, value: any);
 }
 
 /**
