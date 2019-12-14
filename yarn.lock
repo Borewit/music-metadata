@@ -1097,6 +1097,11 @@ iconv-lite@^0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
+ieee754@^1.1.13:
+  version "1.1.13"
+  resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.1.13.tgz#ec168558e95aa181fd87d37f55c32bbcb6708b84"
+  integrity sha512-4vf7I2LYV/HaWerSo3XmlMkp5eZ83i+/CDluXi/IGTs/O1sejBNhTtnxzmRZfvOUqj7lZjqHkeTvpgSFDlWZTg==
+
 ignore@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-4.0.6.tgz#750e3db5862087b4737ebac8207ffd1ef27b25fc"
@@ -2666,10 +2671,12 @@ to-vfile@^6.0.0:
     is-buffer "^2.0.0"
     vfile "^4.0.0"
 
-token-types@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.1.0.tgz#8bf60f633583089a8653005bdff96020e44f947e"
-  integrity sha512-CgM5GmtJaZ+uTOiZHzs9pwUa/udjEVl/cxQ2KGpl88Hh7k71sdBz9j95dYjx83O68B6CGvefm29l4rBZq1PeuQ==
+token-types@^1.1.0, token-types@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.2.0.tgz#0584de677620333953932d66585f32b8642b5e5d"
+  integrity sha512-yDF4Lnxm32qB/5Hp1XhwAaFyIBQ1OhtO14y+3ZJEgkc7yB7utiC9MDpvIeM+ZRqLBO2swIfHzaWoTOE8mAY6GQ==
+  dependencies:
+    ieee754 "^1.1.13"
 
 tough-cookie@~2.4.3:
   version "2.4.3"
