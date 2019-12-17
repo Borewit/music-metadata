@@ -33,3 +33,5 @@ update_configs:
           dependency_name: "es-lint"
       - match:
           dependency_name: "strtok3"
+      - match:
+          dependency_name: "token-types"
