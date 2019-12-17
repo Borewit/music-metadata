@@ -2671,10 +2671,10 @@ to-vfile@^6.0.0:
     is-buffer "^2.0.0"
     vfile "^4.0.0"
 
-token-types@^1.1.0, token-types@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.2.0.tgz#0584de677620333953932d66585f32b8642b5e5d"
-  integrity sha512-yDF4Lnxm32qB/5Hp1XhwAaFyIBQ1OhtO14y+3ZJEgkc7yB7utiC9MDpvIeM+ZRqLBO2swIfHzaWoTOE8mAY6GQ==
+token-types@^1.1.0, token-types@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-1.2.2.tgz#bd79e5a16ca16ff95d9e2f87cd24b164fb5c523a"
+  integrity sha512-PG5qoX5kwZELQdW2UCemTtT22eAiuBpMt64KuJRXdhrS8ppdVGPlniGZS2ACA42cur+u2V5UNy3Qf1LCUjHU4w==
   dependencies:
     ieee754 "^1.1.13"
 
