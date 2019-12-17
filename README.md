@@ -94,8 +94,7 @@ import * as mm from 'music-metadata/lib/core';
 | [`parseFile`](#parsefile-function)                   | ✓                          |                            |
 
 ### Donation
-Not required, but would be extremely motivating.
-[PayPal.me](https://paypal.me/borewit)
+Very much appreciated: [PayPal.me](https://paypal.me/borewit)
 
 ## Usage
 
@@ -103,7 +102,7 @@ Not required, but would be extremely motivating.
 Install via [npm](http://npmjs.org/):
 
 ```bash
-npm install music-metadata
+npm install --save music-metadata
 ```
 or yarn
 ```bash
