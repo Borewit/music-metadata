@@ -186,6 +186,10 @@ describe("MIME & extension mapping", () => {
       return testFileType(path.join('dsf', '2L-110_stereo-5644k-1b_04_0.1-sec.dsf'), 'DSF');
     });
 
+    it('should recognize MKA', () => {
+      return testFileType(path.join('ebml', '02 - Poxfil - Solid Ground (5 sec).mka'), 'EBML/matroska');
+    });
+
   });
 
 });

@@ -18,6 +18,7 @@ import { WaveParser } from './riff/WaveParser';
 import { WavPackParser } from './wavpack/WavPackParser';
 import { DsfParser } from './dsf/DsfParser';
 import { DsdiffParser } from './dsdiff/DsdiffParser';
+import { EbmlParser } from './ebml/EbmlParser';
 
 const debug = _debug('music-metadata:parser:factory');
 
@@ -160,6 +161,13 @@ export class ParserFactory {
 
       case '.dff':
         return 'dsdiff';
+
+      case '.mka':
+      case '.mkv':
+      case '.mk3d':
+      case '.mks':
+      case '.webm':
+        return 'ebml';
     }
   }
 
@@ -177,6 +185,7 @@ export class ParserFactory {
       case 'ogg': return new OggParser();
       case 'riff': return new WaveParser();
       case 'wavpack': return new WavPackParser();
+      case 'ebml': return new EbmlParser();
       default:
         throw new Error(`Unknown parser type: ${moduleName}`);
     }
@@ -259,6 +268,9 @@ export class ParserFactory {
           case 'musepack':
             return 'musepack';
 
+          case 'matroska':
+            return 'ebml';
+
           case 'dsf':
             return 'dsf';
         }
@@ -277,6 +289,9 @@ export class ParserFactory {
 
           case 'ogg':
             return 'ogg';
+
+          case 'matroska':
+            return 'ebml';
         }
         break;
 
