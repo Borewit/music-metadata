@@ -34,7 +34,7 @@ export class MpcSv7Parser extends BasicParser {
     this.metadata.setFormat('codec', (version / 100).toFixed(2));
     await this.skipAudioData(header.frameCount);
     debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
-    return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+    return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
   }
 
   private async skipAudioData(frameCount): Promise<void> {

@@ -24,7 +24,8 @@ export class WavPackParser extends BasicParser {
     // First parse all WavPack blocks
     await this.parseWavPackBlocks();
     // try to parse APEv2 header
-    return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+
+    return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
   }
 
   public async parseWavPackBlocks(): Promise<void> {

@@ -54,7 +54,7 @@ export class MpcSv8Parser extends BasicParser {
 
         case 'SE': // Stream End
           this.metadata.setFormat('bitrate', this.audioLength * 8 / this.metadata.format.duration);
-          return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+          return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:
           throw new Error(`Unexpected header: ${header.key}`);
