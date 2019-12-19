@@ -109,8 +109,23 @@ export class EbmlParser extends BasicParser {
         case 0x4286:
           ebml.version = await this.tokenizer.readNumber(Token.UINT8);
           break;
+        case 0x42f7:
+          ebml.readVersion = await this.readUint(e);
+          break;
+        case 0x42f2:
+          ebml.maxIDWidth = await this.readUint(e);
+          break;
+        case 0x42f3:
+          ebml.maxSizeWidth = await this.readUint(e);
+          break;
         case 0x4282:
-          ebml.docType = await this.tokenizer.readToken(new Token.StringType(e.len, 'utf-8'));
+          ebml.docType = await this.readString(e);
+          break;
+        case 0x4287:
+          ebml.docTypeVersion = await this.readUint(e);
+          break;
+        case 0x4285:
+          ebml.docTypeReadVersion = await this.readUint(e);
           break;
         case 0xec: // void
           this.padding += e.len;
