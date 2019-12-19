@@ -10,7 +10,7 @@ import {VorbisTagMapper} from "../ogg/vorbis/VorbisTagMapper";
 import {RiffInfoTagMapper} from "../riff/RiffInfoTagMap";
 import {ITag} from "../type";
 import { INativeMetadataCollector } from './MetadataCollector';
-import { EbmlTagMapper } from '../ebml/EbmlTagMapper';
+import { MatroskaTagMapper } from '../matroska/MatroskaTagMapper';
 
 export class CombinedTagMapper {
 
@@ -27,7 +27,7 @@ export class CombinedTagMapper {
       new APEv2TagMapper(),
       new AsfTagMapper(),
       new RiffInfoTagMapper(),
-      new EbmlTagMapper()
+      new MatroskaTagMapper()
     ].forEach(mapper => {
       this.registerTagMapper(mapper);
     });

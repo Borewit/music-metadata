@@ -454,7 +454,7 @@ export interface IAudioMetadata extends INativeAudioMetadata {
 /**
  * Corresponds with parser module name
  */
-export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff' | 'musepack' | 'dsf' | 'dsdiff' | 'adts' | 'ebml';
+export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff' | 'musepack' | 'dsf' | 'dsdiff' | 'adts' | 'matroska';
 
 export interface IOptions {
   path?: string,

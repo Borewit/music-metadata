@@ -3,6 +3,19 @@ export interface IHeader {
   len: number;
 }
 
+export enum DataType { string, uint, uid, bool, binary, float}
+
+export interface IElementType<T> {
+  readonly name: string;
+  readonly value?: DataType;
+  readonly container?: IContainerType;
+  readonly multiple?: boolean;
+}
+
+export interface IContainerType { [id: number]: IElementType<string | number | boolean | Buffer>; }
+
+export interface ITree { [name: string]: string | number | boolean | Buffer | ITree | ITree[]; }
+
 export interface ISeekHead {
   id?: Buffer;
   position?: number;
@@ -88,10 +101,10 @@ export interface ICueReference {
 
 export interface ISimpleTag {
   name?: string;
-  tagString?: string;
-  tagBinary?: Buffer;
+  string?: string;
+  binary?: Buffer;
   language?: string;
-  tagDefault?: boolean;
+  default?: boolean;
 }
 
 export enum TargetType {
@@ -104,28 +117,47 @@ export enum TargetType {
   collection = 70
 }
 
+export enum TrackType {
+  video = 0x01,
+  audio = 0x02,
+  complex = 0x03,
+  logo = 0x04,
+  subtitle= 0x11,
+  button = 0x12,
+  control = 0x20
+}
+
 export interface ITarget {
   trackUID?: Buffer;
   chapterUID?: Buffer;
   attachmentUID?: Buffer;
-  targetType?: TargetType;
+  targetTypeValue?: TargetType;
+  targetType?: string;
 }
 
 export interface ITag {
-  targets: ITarget;
+  target: ITarget;
   simpleTags: ISimpleTag[]
 }
 
-export interface ISegment {
+export interface ITags {
+  tag: ITag[];
+}
+
+export interface ITrackElement {
+  entries?: ITrackEntry[];
+}
+
+export interface IMatroskaSegment {
   metaSeekInfo?: IMetaSeekInformation;
   seekHeads?: ISeekHead[]
-  segmentInfo?: ISegmentInformation;
-  tracks?: ITrackEntry[];
-  tags?: ITag[];
+  info?: ISegmentInformation;
+  tracks?: ITrackElement;
+  tags?: ITags;
   cues?: ICuePoint[];
 }
 
-export interface IEBML {
+export interface IEbmlElements {
   version?: number;
   readVersion?: number;
   maxIDWidth?: number;
@@ -133,5 +165,12 @@ export interface IEBML {
   docType?: string;
   docTypeVersion?: number;
   docTypeReadVersion?: number;
-  segments: ISegment[]
+}
+
+export interface IEbmlDoc {
+  ebml: IEbmlElements
+}
+
+export interface IMatroskaDoc extends IEbmlDoc {
+  segment: IMatroskaSegment
 }
