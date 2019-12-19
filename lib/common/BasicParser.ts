@@ -1,13 +1,13 @@
 import {ITokenizer} from 'strtok3/lib/type';
 import {ITokenParser} from '../ParserFactory';
-import {IOptions} from '../type';
+import { IOptions, IPrivateOptions } from '../type';
 import {INativeMetadataCollector} from './MetadataCollector';
 
 export abstract class BasicParser implements ITokenParser {
 
   protected metadata: INativeMetadataCollector;
   protected tokenizer: ITokenizer;
-  protected options: IOptions;
+  protected options: IPrivateOptions;
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).

@@ -120,9 +120,11 @@ export class ID3v1Parser extends BasicParser {
       return;
     }
 
-    if (this.options.apeOffset) {
-      this.tokenizer.ignore(this.options.apeOffset - this.tokenizer.position);
-      await APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+    if (this.options.apeHeader) {
+      this.tokenizer.ignore(this.options.apeHeader.offset - this.tokenizer.position);
+      const apeParser = new APEv2Parser();
+      apeParser.init(this.metadata, this.tokenizer, this.options);
+      await apeParser.parseTags(this.options.apeHeader.footer);
     }
 
     const offset = this.tokenizer.fileSize - Iid3v1Token.len;
