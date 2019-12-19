@@ -128,8 +128,8 @@ export interface ISegment {
 export interface IEBML {
   version?: number;
   readVersion?: number;
-  maxIDLength?: number;
-  maxSizeLength?: Buffer;
+  maxIDWidth?: number;
+  maxSizeWidth?: number;
   docType?: string;
   docTypeVersion?: number;
   docTypeReadVersion?: number;
