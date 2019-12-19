@@ -1,4 +1,5 @@
 import { GenericTagId, TagType } from './common/GenericTagTypes';
+import { IFooter } from "./apev2/APEv2Token";
 
 /**
  * Attached picture, typically used for cover art
@@ -488,8 +489,25 @@ export interface IOptions {
    * Set observer for async callbacks to common or format.
    */
   observer?: Observer;
+}
 
-  apeOffset?: number;
+export interface IApeHeader extends IOptions {
+
+  /**
+   * Offset of APE-header
+   */
+  offset: number;
+
+  /**
+   * APEv1 / APEv2 header offset
+   */
+  footer: IFooter;
+
+}
+
+export interface IPrivateOptions extends IOptions {
+
+  apeHeader?: IApeHeader
 }
 
 /**

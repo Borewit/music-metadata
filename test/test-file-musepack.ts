@@ -38,7 +38,7 @@ describe('Parse Musepack (.mpc)', () => {
 
   });
 
-  describe('Handle APEv2 with missing header (only footer)', () => {
+  describe('Handle APEv1 TAG header (no header, only footer)', () => {
 
     /**
      * In this sample the APEv2 header is not present, only the APEv2 footer

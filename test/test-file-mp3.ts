@@ -117,6 +117,26 @@ describe('Parse MP3 files', () => {
       assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1']);
     });
 
+    it('should be able to parse APEv1 header"', async () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'issue-362.apev1.mp3');
+
+      const {format, common} = await mm.parseFile(filePath, {duration: true});
+
+      assert.deepEqual(format.container, 'MPEG', 'format.container');
+
+      assert.deepEqual(format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1'], 'format.tagTypes');
+
+      assert.strictEqual(common.title, 'Do They Know It\'s Christmas?', 'common.artist');
+      assert.strictEqual(common.artist, 'Band Aid', 'common.artist');
+      assert.deepEqual(common.artists, ['Band Aid'], 'common.artists');
+      assert.strictEqual(common.album, 'Now That\'s What I Call Xmas', 'common.album');
+      assert.strictEqual(common.year, 2006, 'common.year');
+      assert.deepEqual(common.comment, ['TunNORM', ' 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467'], 'common.comment');
+      assert.deepEqual(common.genre, ['General Holiday'], 'common.genre');
+      assert.deepEqual(common.track.no, 2, 'common.track.no');
+    });
+
     it('should be able to parse APEv2 header followed by a Lyrics3v2 header', async () => {
 
       const filePath = path.join(samplePath, 'mp3', 'APEv2+Lyrics3v2.mp3');

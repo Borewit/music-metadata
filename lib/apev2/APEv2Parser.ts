@@ -2,14 +2,14 @@
 
 import * as initDebug from 'debug';
 import * as FileType from 'file-type';
-import {ITokenizer} from 'strtok3/lib/type';
+import { ITokenizer } from 'strtok3/lib/type';
 import * as assert from 'assert';
 
 import common from '../common/Util';
 
-import { IPicture, IOptions, IRandomReader } from '../type';
-import {INativeMetadataCollector} from '../common/MetadataCollector';
-import {BasicParser} from '../common/BasicParser';
+import { IPicture, IOptions, IRandomReader, IApeHeader } from '../type';
+import { INativeMetadataCollector } from '../common/MetadataCollector';
+import { BasicParser } from '../common/BasicParser';
 import {
   DataType,
   DescriptorParser,
@@ -64,7 +64,7 @@ export class APEv2Parser extends BasicParser {
     if (footer.ID === preamble) {
       await tokenizer.ignore(TagFooter.len);
       const tags = await tokenizer.readToken<Buffer>(TagField(footer));
-      APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
+      return APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
     } else {
       debug(`APEv2 header not found at offset=${tokenizer.position}`);
       if (tokenizer.fileSize) {
@@ -77,22 +77,25 @@ export class APEv2Parser extends BasicParser {
     }
   }
 
-  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<number> {
-    if (offset >= TagFooter.len) {
-      // Search for APE footer header at the end of the file
-      const apeBuf = Buffer.alloc(TagFooter.len);
-      await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
-      const tagFooter = TagFooter.get(apeBuf, 0);
-      if (tagFooter.ID === 'APETAGEX') {
-        return offset - TagFooter.len - tagFooter.size;
-      }
+  /**
+   * Calculates the APEv1 / APEv2 first field offset
+   * @param reader
+   * @param offset
+   */
+  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader> {
+    // Search for APE footer header at the end of the file
+    const apeBuf = Buffer.alloc(TagFooter.len);
+    await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
+    const tagFooter = TagFooter.get(apeBuf, 0);
+    if (tagFooter.ID === 'APETAGEX') {
+      return {footer: tagFooter, offset: offset - tagFooter.size};
     }
   }
 
   private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     assert.strictEqual(footer.ID, preamble, 'APEv2 Footer preamble');
-    this.parseTags(metadata, footer, buffer, buffer.length - footer.size, includeCovers);
+    this.parseTags(metadata, footer, buffer, 0, includeCovers);
   }
 
   private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, offset: number, includeCovers: boolean) {
@@ -174,10 +177,16 @@ export class APEv2Parser extends BasicParser {
     assert.strictEqual(descriptor.ID, 'MAC ', 'descriptor.ID');
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
-    const header = await(lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
+    const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
 
     await this.tokenizer.ignore(header.forwardBytes);
     return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+  }
+
+  public async parseTags(footer: IFooter) {
+    const tagBuf = Buffer.alloc(footer.size - TagFooter.len);
+    await this.tokenizer.readBuffer(tagBuf);
+    APEv2Parser.parseTags(this.metadata, footer, tagBuf, 0, !this.options.skipCovers);
   }
 
   private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
@@ -198,8 +207,7 @@ export class APEv2Parser extends BasicParser {
 
     return {
       forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
-      this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
+        this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
     };
   }
-
 }

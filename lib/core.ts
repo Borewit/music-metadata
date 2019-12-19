@@ -3,7 +3,7 @@ import * as strtok3 from 'strtok3/lib/core';
 import {ITokenizer} from 'strtok3/lib/type';
 
 import {ParserFactory} from './ParserFactory';
-import { IAudioMetadata, INativeTagDict, IOptions, IRandomReader, ITag } from './type';
+import { IAudioMetadata, INativeTagDict, IOptions, IPrivateOptions, IRandomReader, ITag } from './type';
 import { RandomBufferReader } from './common/RandomBufferReader';
 import { APEv2Parser } from './apev2/APEv2Parser';
 import { hasID3v1Header } from './id3v1/ID3v1Parser';
@@ -73,7 +73,7 @@ export function ratingToStars(rating: number): number {
   return rating === undefined ? 0 : 1 + Math.round(rating * 4);
 }
 
-export async function scanAppendingHeaders(randomReader: IRandomReader, options: IOptions = {}) {
+export async function scanAppendingHeaders(randomReader: IRandomReader, options: IPrivateOptions = {}) {
 
   let apeOffset = randomReader.fileSize;
   if (await hasID3v1Header(randomReader)) {
@@ -82,5 +82,5 @@ export async function scanAppendingHeaders(randomReader: IRandomReader, options:
     apeOffset -= lyricsLen;
   }
 
-  options.apeOffset = await APEv2Parser.findApeFooterOffset(randomReader, apeOffset);
+  options.apeHeader = await APEv2Parser.findApeFooterOffset(randomReader, apeOffset);
 }
