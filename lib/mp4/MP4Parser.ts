@@ -145,7 +145,6 @@ export class MP4Parser extends BasicParser {
     this.tracks = [];
 
     let remainingFileSize = this.tokenizer.fileSize;
-    const rootAtoms: Atom[] = [];
 
     while (!this.tokenizer.fileSize || remainingFileSize > 0) {
       try {
@@ -157,7 +156,6 @@ export class MP4Parser extends BasicParser {
         break;
       }
       const rootAtom = await Atom.readAtom(this.tokenizer, atom => this.handleAtom(atom), null);
-      rootAtoms.push(rootAtom);
       remainingFileSize -= rootAtom.header.length;
     }
 

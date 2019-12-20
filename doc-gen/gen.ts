@@ -15,12 +15,11 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const result: string[] = [];
 
   const tagMapper = combinedTagMapper.tagMappers[nativeType];
-  for (const nativeTag in tagMapper.tagMap) {
+  Object.keys(tagMapper.tagMap).forEach(nativeTag => {
     if (commonTag === tagMapper.tagMap[nativeTag]) {
-      // console.log("%s <= %s:%s", commonTag, nativeType, nativeTag)
       result.push(nativeTag);
     }
-  }
+  });
   return result;
 }
 
@@ -33,9 +32,7 @@ function write(out: fs.WriteStream) {
 
   table.header = new markDown.Row(["Common tag", "n", "Description"]);
 
-  const tagTypes: string[] = [];
   for (const nativeType in combinedTagMapper.tagMappers) {
-    tagTypes.push(nativeType);
     table.header.values.push(nativeType);
   }
 
