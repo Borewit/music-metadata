@@ -146,6 +146,10 @@ describe("MIME & extension mapping", () => {
       return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'isom/mp42/M4A');
     });
 
+    it("should recognize MPEG-4 / m4b", () => {
+      return testFileType(path.join('mp4', 'issue-127.m4b'), '3gp5/M4A');
+    });
+
     it("should recognize MPEG-4 / mp4", () => {
       return testFileType(path.join('mp4', 'Mr. Pickles S02E07 My Dear Boy.mp4'), 'mp42');
     });
