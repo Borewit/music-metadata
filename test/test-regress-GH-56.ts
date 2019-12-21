@@ -43,4 +43,14 @@ describe("should calculate duration for a CBR encoded MP3", () => {
     });
   });
 
+  it('_parseFile', () => {
+    const parser = Parsers[0];
+    return parser.initParser(filePath, 'audio/mpeg').then(metadata => {
+      const expectedTags = (parser.description === 'parseFile' ||  parser.description === 'parseBuffer') ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+      t.deepEqual(metadata.format.tagTypes, expectedTags, 'format.tagTypes');
+      t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");
+      t.strictEqual(metadata.format.duration, 16462080 / metadata.format.sampleRate, "format.duration");
+    });
+  });
+
 });

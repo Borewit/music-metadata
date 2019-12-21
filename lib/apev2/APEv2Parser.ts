@@ -3,6 +3,7 @@
 import * as initDebug from 'debug';
 import * as FileType from 'file-type';
 import { ITokenizer } from 'strtok3/lib/type';
+import * as strtok3 from 'strtok3';
 import * as assert from 'assert';
 
 import common from '../common/Util';
@@ -16,11 +17,11 @@ import {
   Header,
   IDescriptor,
   IFooter,
-  IHeader,
-  TagField,
+  IHeader, ITagItemHeader,
   TagFooter,
   TagItemHeader
 } from './APEv2Token';
+import { StringType } from 'token-types';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 
@@ -36,6 +37,12 @@ const preamble = 'APETAGEX';
 
 export class APEv2Parser extends BasicParser {
 
+  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions) {
+    const apeParser = new APEv2Parser();
+    apeParser.init(metadata, tokenizer, options);
+    return apeParser.tryParseApeHeader();
+  }
+
   /**
    * Calculate the media file duration
    * @param ah ApeHeader
@@ -45,36 +52,6 @@ export class APEv2Parser extends BasicParser {
     let duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
     duration += ah.finalFrameBlocks;
     return duration / ah.sampleRate;
-  }
-
-  /**
-   * @param {INativeMetadataCollector} metadata
-   * @param {ITokenizer} tokenizer
-   * @param {IOptions} options
-   * @returns {Promise<boolean>} True if tags have been found
-   */
-  public static async parseTagHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-
-    if (tokenizer.fileSize && tokenizer.fileSize - tokenizer.position < TagFooter.len) {
-      debug(`No APEv2 header found, end-of-file reached`);
-      return;
-    }
-
-    const footer = await tokenizer.peekToken<IFooter>(TagFooter);
-    if (footer.ID === preamble) {
-      await tokenizer.ignore(TagFooter.len);
-      const tags = await tokenizer.readToken<Buffer>(TagField(footer));
-      return APEv2Parser.parseTags(metadata, footer, tags, 0, !options.skipCovers);
-    } else {
-      debug(`APEv2 header not found at offset=${tokenizer.position}`);
-      if (tokenizer.fileSize) {
-        // Try to read the APEv2 header using just the footer-header
-        const remaining = tokenizer.fileSize - tokenizer.position; // ToDo: take ID3v1 into account
-        const buffer = Buffer.alloc(remaining);
-        await tokenizer.readBuffer(buffer);
-        return APEv2Parser.parseTagFooter(metadata, buffer, !options.skipCovers);
-      }
-    }
   }
 
   /**
@@ -88,87 +65,47 @@ export class APEv2Parser extends BasicParser {
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
     const tagFooter = TagFooter.get(apeBuf, 0);
     if (tagFooter.ID === 'APETAGEX') {
+      debug(`APE footer header at offset=${offset}`);
       return {footer: tagFooter, offset: offset - tagFooter.size};
     }
   }
 
-  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, includeCovers: boolean) {
+  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, options: IOptions): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     assert.strictEqual(footer.ID, preamble, 'APEv2 Footer preamble');
-    this.parseTags(metadata, footer, buffer, 0, includeCovers);
-  }
-
-  private static parseTags(metadata: INativeMetadataCollector, footer: IFooter, buffer: Buffer, offset: number, includeCovers: boolean) {
-
-    for (let i = 0; i < footer.fields; i++) {
-      const bytesRemaining = buffer.length - offset;
-      if (bytesRemaining < TagItemHeader.len) {
-        metadata.addWarning(`APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`);
-        break;
-      }
-
-      // Only APEv2 tag has tag item headers
-      const tagItemHeader = TagItemHeader.get(buffer, offset);
-      offset += TagItemHeader.len;
-
-      let zero = common.findZero(buffer, offset, buffer.length);
-      const key = buffer.toString('ascii', offset, zero);
-      offset = zero + 1;
-
-      switch (tagItemHeader.flags.dataType) {
-        case DataType.text_utf8: { // utf-8 textstring
-          const value = buffer.toString('utf8', offset, offset += tagItemHeader.size);
-          const values = value.split(/\x00/g);
-
-          /*jshint loopfunc:true */
-          for (const val of values) {
-            metadata.addTag(tagFormat, key, val);
-          }
-          break;
-        }
-
-        case DataType.binary: // binary (probably artwork)
-          if (includeCovers) {
-            const picData = buffer.slice(offset, offset + tagItemHeader.size);
-
-            let off = 0;
-            zero = common.findZero(picData, off, picData.length);
-            const description = picData.toString('utf8', off, zero);
-            off = zero + 1;
-
-            const data = Buffer.from(picData.slice(off));
-            const fileType = FileType(data);
-
-            if (fileType) {
-              if (fileType.mime.indexOf('image/') === 0) {
-                const picture: IPicture = {
-                  description,
-                  data,
-                  format: fileType.mime
-                };
-
-                offset += tagItemHeader.size;
-                metadata.addTag(tagFormat, key, picture);
-              } else {
-                debug(`Unexpected binary tag of type': ${fileType.mime}`);
-              }
-            } else {
-              debug(`Failed to determine file type for binary tag: ${key}`);
-            }
-          }
-          break;
-
-        case DataType.external_info:
-          debug(`Ignore external info ${key}`);
-          break;
-
-        default:
-          throw new Error(`Unexpected data-type: ${tagItemHeader.flags.dataType}`);
-      }
-    }
+    strtok3.fromBuffer(buffer);
+    const apeParser = new APEv2Parser();
+    apeParser.init(metadata, strtok3.fromBuffer(buffer), options);
+    return apeParser.parseTags(footer);
   }
 
   private ape: IApeInfo = {};
+
+  /**
+   * Parse APEv1 / APEv2 header if header signature found
+   */
+  public async tryParseApeHeader(): Promise<void> {
+
+    if (this.tokenizer.fileSize && this.tokenizer.fileSize - this.tokenizer.position < TagFooter.len) {
+      debug(`No APEv2 header found, end-of-file reached`);
+      return;
+    }
+
+    const footer = await this.tokenizer.peekToken<IFooter>(TagFooter);
+    if (footer.ID === preamble) {
+      await this.tokenizer.ignore(TagFooter.len);
+      return this.parseTags(footer);
+    } else {
+      debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
+      if (this.tokenizer.fileSize) {
+        // Try to read the APEv2 header using just the footer-header
+        const remaining = this.tokenizer.fileSize - this.tokenizer.position; // ToDo: take ID3v1 into account
+        const buffer = Buffer.alloc(remaining);
+        await this.tokenizer.readBuffer(buffer);
+        return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
+      }
+    }
+  }
 
   public async parse(): Promise<void> {
 
@@ -180,13 +117,84 @@ export class APEv2Parser extends BasicParser {
     const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
 
     await this.tokenizer.ignore(header.forwardBytes);
-    return APEv2Parser.parseTagHeader(this.metadata, this.tokenizer, this.options);
+    return this.tryParseApeHeader();
   }
 
-  public async parseTags(footer: IFooter) {
-    const tagBuf = Buffer.alloc(footer.size - TagFooter.len);
-    await this.tokenizer.readBuffer(tagBuf);
-    APEv2Parser.parseTags(this.metadata, footer, tagBuf, 0, !this.options.skipCovers);
+  public async parseTags(footer: IFooter): Promise<void> {
+
+    const keyBuffer = Buffer.alloc(256); // maximum tag key length
+
+    let bytesRemaining = footer.size - TagFooter.len;
+
+    debug(`Parse APE tags at offset=${this.tokenizer.position}, size=${bytesRemaining}`);
+
+    for (let i = 0; i < footer.fields; i++) {
+      if (bytesRemaining < TagItemHeader.len) {
+        this.metadata.addWarning(`APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`);
+        break;
+      }
+
+      // Only APEv2 tag has tag item headers
+      const tagItemHeader = await this.tokenizer.readToken<ITagItemHeader>(TagItemHeader);
+      bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
+
+      await this.tokenizer.peekBuffer(keyBuffer, 0, Math.min(keyBuffer.length, bytesRemaining));
+      let zero = common.findZero(keyBuffer, 0, keyBuffer.length);
+      const key = await this.tokenizer.readToken(new StringType(zero, 'ascii'));
+      await this.tokenizer.ignore(1);
+      bytesRemaining -= key.length + 1;
+
+      switch (tagItemHeader.flags.dataType) {
+        case DataType.text_utf8: { // utf-8 textstring
+          const value = await this.tokenizer.readToken(new StringType(tagItemHeader.size, 'utf8'));
+          const values = value.split(/\x00/g);
+
+          /*jshint loopfunc:true */
+          for (const val of values) {
+            this.metadata.addTag(tagFormat, key, val);
+          }
+          break;
+        }
+
+        case DataType.binary: // binary (probably artwork)
+          if (this.options.skipCovers) {
+            await this.tokenizer.ignore(tagItemHeader.size);
+          } else {
+            const picData = Buffer.alloc(tagItemHeader.size);
+            await this.tokenizer.readBuffer(picData);
+
+            zero = common.findZero(picData, 0, picData.length);
+            const description = picData.toString('utf8', 0, zero);
+
+            const data = Buffer.from(picData.slice(zero + 1));
+            const fileType = FileType(data);
+
+            if (fileType) {
+              if (fileType.mime.indexOf('image/') === 0) {
+                const picture: IPicture = {
+                  description,
+                  data,
+                  format: fileType.mime
+                };
+                this.metadata.addTag(tagFormat, key, picture);
+              } else {
+                debug(`Unexpected binary tag of type': ${fileType.mime}`);
+              }
+            } else {
+              debug(`Failed to determine file type for binary tag: ${key}`);
+            }
+          }
+          break;
+
+        case DataType.external_info:
+          debug(`Ignore external info ${key}`);
+          await this.tokenizer.ignore(tagItemHeader.size);
+          break;
+
+        default:
+          throw new Error(`Unexpected data-type: ${tagItemHeader.flags.dataType}`);
+      }
+    }
   }
 
   private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
