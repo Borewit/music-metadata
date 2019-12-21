@@ -10,14 +10,6 @@ describe('Parser options', () => {
   const file_m4a = path.join(__dirname, 'samples', 'mp4', 'id4.m4a');
   const file_ogg = path.join(__dirname, 'samples', 'Nirvana - In Bloom - 2-sec.ogg');
 
-  describe('option \'native\'', () => {
-
-    it('should not include native tags', async () => {
-      const metadata = await mm.parseFile(file_ape);
-      assert.isDefined(metadata.native, 'native tags should be defined');
-    });
-  });
-
   describe('option \'skipCovers\'', () => {
 
     describe('\'skipCovers\' in APE format', () => {
@@ -42,8 +34,8 @@ describe('Parser options', () => {
         assert.isUndefined(metadata.common.picture, 'metadata.common.picture');
       });
 
-      it('should not include cover-art if option.skipCovers=true', async () => {
-        const metadata = await mm.parseFile(file_ape);
+      it('should include cover-art if option.skipCovers=false', async () => {
+        const metadata = await mm.parseFile(file_ape, {skipCovers: false});
         const native = mm.orderTags(metadata.native.APEv2);
         // Native
         assert.isDefined(native['Cover Art (Back)'], 'APEv2.\'Cover Art (Back)\'');
