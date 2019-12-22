@@ -50,7 +50,10 @@
     "aac",
     "adts",
     "length",
-    "chapter"
+    "chapter",
+    "info",
+    "parse",
+    "parser"
   ],
   "main": "lib",
   "typings": "lib/index",
