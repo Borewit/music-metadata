@@ -62,7 +62,7 @@
     "lib/**/*.d.ts"
   ],
   "scripts": {
-    "clean": "del-cli lib/**/*.js lib/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
+    "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts src/**/*.d.ts test/**/*.js test/**/*.js.map",
     "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
