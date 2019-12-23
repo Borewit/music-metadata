@@ -9,7 +9,7 @@ import { FourCcToken } from '../common/FourCC';
 import * as _debug from 'debug';
 import { VorbisParser } from '../ogg/vorbis/VorbisParser';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { ITokenizer } from 'strtok3/lib/type';
+import { ITokenizer } from 'strtok3';
 import { IOptions } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';

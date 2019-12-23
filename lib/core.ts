@@ -1,6 +1,6 @@
 import * as Stream from 'stream';
 import * as strtok3 from 'strtok3/lib/core';
-import {ITokenizer} from 'strtok3/lib/type';
+import {ITokenizer} from 'strtok3';
 
 import {ParserFactory} from './ParserFactory';
 import { IAudioMetadata, INativeTagDict, IOptions, IPrivateOptions, IRandomReader, ITag } from './type';

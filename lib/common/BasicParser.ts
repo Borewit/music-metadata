@@ -1,4 +1,4 @@
-import {ITokenizer} from 'strtok3/lib/type';
+import {ITokenizer} from 'strtok3';
 import {ITokenParser} from '../ParserFactory';
 import { IOptions, IPrivateOptions } from '../type';
 import {INativeMetadataCollector} from './MetadataCollector';
