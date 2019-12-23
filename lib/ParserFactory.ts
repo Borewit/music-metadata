@@ -1,5 +1,5 @@
 import { IOptions, IAudioMetadata, ParserType } from './type';
-import { ITokenizer } from 'strtok3/lib/type';
+import { ITokenizer } from 'strtok3';
 import * as fileType from 'file-type';
 import * as ContentType from 'content-type';
 import * as MimeType from 'media-typer';

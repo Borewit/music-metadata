@@ -2,7 +2,6 @@
 
 import * as initDebug from 'debug';
 import * as FileType from 'file-type';
-import { ITokenizer } from 'strtok3/lib/type';
 import * as strtok3 from 'strtok3';
 import * as assert from 'assert';
 
@@ -37,7 +36,7 @@ const preamble = 'APETAGEX';
 
 export class APEv2Parser extends BasicParser {
 
-  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions) {
+  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, tokenizer, options);
     return apeParser.tryParseApeHeader();

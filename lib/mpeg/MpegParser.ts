@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as Token from 'token-types';
-import { endOfFile } from 'strtok3/lib/type';
+import { endOfFile } from 'strtok3';
 import * as initDebug from 'debug';
 
 import Common from '../common/Util';

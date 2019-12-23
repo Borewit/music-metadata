@@ -1,4 +1,4 @@
-import {endOfFile, ITokenizer} from 'strtok3/lib/type';
+import {endOfFile, ITokenizer} from 'strtok3';
 import {ID3v2Header} from "./ID3v2Token";
 import {ID3v2Parser} from './ID3v2Parser';
 import {ID3v1Parser} from '../id3v1/ID3v1Parser';

@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import {ITokenizer} from 'strtok3/lib/type';
+import {ITokenizer} from 'strtok3';
 
 import * as Opus from './Opus';
 import {IPageHeader} from '../Ogg';

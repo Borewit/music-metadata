@@ -2775,14 +2775,13 @@ strip-json-comments@^3.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.0.1.tgz#85713975a91fb87bf1b305cca77395e40d2a64a7"
   integrity sha512-VTyMAUfdm047mwKl+u79WIdrZxtFtn+nBxHeb844XBQ9uMNTuTHdx2hc5RiAJYqwTj3wc/xe5HLSdJSkJ+WfZw==
 
-strtok3@^3.1.4:
-  version "3.1.4"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.1.4.tgz#3498446fba1ac483005110d950eb79eb8cef7bb6"
-  integrity sha512-K8qbPskXA2dR8UTBb0zt+UBSZZaSS3pnB+1xLF3Dt0S37Chu3IsIYKhsHQuKD3Cm6A/3lUMCBG2I7sQKLy/BBQ==
+strtok3@^3.1.7:
+  version "3.1.7"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-3.1.7.tgz#e236e955e7c93c156442a06f7b385a90a7f528d4"
+  integrity sha512-N0qFNf5vkyXgaPr4AHRmCTqdFwTnB1LxX3xo1N5KHMLhqircDdL9m8qem3Lpb8IIuJaNL1Jddazvb9WRwUdSlw==
   dependencies:
     debug "^4.1.1"
     then-read-stream "^2.0.8"
-    token-types "^1.2.2"
 
 supports-color@6.0.0:
   version "6.0.0"

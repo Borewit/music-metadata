@@ -1,6 +1,6 @@
 import * as Token from 'token-types';
 import Util from '../../common/Util';
-import { ITokenizer } from 'strtok3/lib/type';
+import { ITokenizer } from 'strtok3';
 import * as initDebug from 'debug';
 
 const debug = initDebug('music-metadata:parser:musepack:sv8');

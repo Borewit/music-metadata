@@ -62,7 +62,7 @@
     "lib/**/*.d.ts"
   ],
   "scripts": {
-    "clean": "del-cli lib/**/*.js lib/**/*.js.map src/**/*.d.ts test/**/*.js test/**/*.js.map",
+    "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts src/**/*.d.ts test/**/*.js test/**/*.js.map",
     "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
@@ -83,7 +83,7 @@
     "debug": "^4.1.0",
     "file-type": "^12.4.2",
     "media-typer": "^1.1.0",
-    "strtok3": "^3.1.4",
+    "strtok3": "^3.1.7",
     "token-types": "^1.2.2"
   },
   "devDependencies": {
