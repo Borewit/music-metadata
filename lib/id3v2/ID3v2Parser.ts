@@ -1,4 +1,4 @@
-import {ITokenizer} from 'strtok3';
+import {ITokenizer} from 'strtok3/lib/core';
 import * as Token from 'token-types';
 
 import common from '../common/Util';

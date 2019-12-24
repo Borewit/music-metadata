@@ -18,7 +18,7 @@ export class MpcSv7Parser extends BasicParser {
 
   public async parse(): Promise<void> {
 
-    const header = await this.tokenizer.readToken(SV7.Header);
+    const header = await this.tokenizer.readToken<SV7.IHeader>(SV7.Header);
 
     assert.equal(header.signature, 'MP+', 'Magic number');
     debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);

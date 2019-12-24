@@ -1,4 +1,4 @@
-import {endOfFile, ITokenizer} from 'strtok3';
+import {EndOfStreamError, ITokenizer} from 'strtok3/lib/core';
 import {ID3v2Header} from "./ID3v2Token";
 import {ID3v2Parser} from './ID3v2Parser';
 import {ID3v1Parser} from '../id3v1/ID3v1Parser';
@@ -19,15 +19,16 @@ export abstract class AbstractID3Parser extends BasicParser {
 
   private id3parser = new ID3v2Parser();
 
-  public parse(): Promise<void> {
-
-    return this.parseID3v2().catch(err => {
-      if (err.message === endOfFile)
-      // ToDo: maybe a warning?
-        return;
-      else
+  public async parse(): Promise<void> {
+    try {
+      await this.parseID3v2();
+    } catch (err) {
+      if (err instanceof EndOfStreamError) {
+        debug(`End-of-stream`);
+      } else {
         throw err;
-    });
+      }
+    }
   }
 
   /**

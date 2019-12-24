@@ -9,7 +9,7 @@ import { FourCcToken } from '../common/FourCC';
 import * as _debug from 'debug';
 import { VorbisParser } from '../ogg/vorbis/VorbisParser';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { ITokenizer } from 'strtok3';
+import { ITokenizer, IGetToken } from 'strtok3/lib/core';
 import { IOptions } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';
@@ -186,7 +186,7 @@ interface IBlockStreamInfo {
 
 class Metadata {
 
-  public static BlockHeader: Token.IGetToken<IBlockHeader> = {
+  public static BlockHeader: IGetToken<IBlockHeader> = {
     len: 4,
 
     get: (buf: Buffer, off: number): IBlockHeader => {
@@ -202,7 +202,7 @@ class Metadata {
    * METADATA_BLOCK_DATA
    * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
    */
-  public static BlockStreamInfo: Token.IGetToken<IBlockStreamInfo> = {
+  public static BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
     len: 34,
 
     get: (buf: Buffer, off: number): IBlockStreamInfo => {

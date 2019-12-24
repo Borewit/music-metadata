@@ -1,6 +1,5 @@
 import * as Stream from 'stream';
 import * as strtok3 from 'strtok3/lib/core';
-import {ITokenizer} from 'strtok3';
 
 import {ParserFactory} from './ParserFactory';
 import { IAudioMetadata, INativeTagDict, IOptions, IPrivateOptions, IRandomReader, ITag } from './type';
@@ -44,7 +43,7 @@ export async function parseBuffer(buf: Buffer, mimeType?: string, options: IOpti
  * @param options - Parsing options
  * @returns Metadata
  */
-export function parseFromTokenizer(tokenizer: ITokenizer, mimeType?: string, options?: IOptions): Promise<IAudioMetadata> {
+export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, mimeType?: string, options?: IOptions): Promise<IAudioMetadata> {
   if (!tokenizer.fileSize && options && options.fileSize) {
     tokenizer.fileSize = options.fileSize;
   }

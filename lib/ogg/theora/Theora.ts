@@ -1,4 +1,5 @@
 import * as Token from 'token-types';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * 6.2 Identification Header
@@ -27,7 +28,7 @@ export interface IIdentificationHeader {
  * 6.2 Identification Header
  * Ref: https://theora.org/doc/Theora.pdf: 6.2 Identification Header Decode
  */
-export const IdentificationHeader: Token.IGetToken<IIdentificationHeader> = {
+export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
   len: 42,
 
   get: (buf, off): IIdentificationHeader => {

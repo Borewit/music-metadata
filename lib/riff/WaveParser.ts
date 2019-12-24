@@ -1,4 +1,3 @@
-import { endOfFile } from 'strtok3';
 import * as strtok3 from 'strtok3/lib/core';
 import * as Token from 'token-types';
 import * as initDebug from 'debug';
@@ -39,7 +38,7 @@ export class WaveParser extends BasicParser {
     if (riffHeader.chunkID !== 'RIFF')
       return; // Not RIFF format
     return this.parseRiffChunk(riffHeader.chunkSize).catch(err => {
-      if (err.message !== endOfFile) {
+      if (!(err instanceof strtok3.EndOfStreamError)) {
         throw err;
       }
     });

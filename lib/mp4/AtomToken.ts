@@ -3,6 +3,7 @@ import { FourCcToken } from '../common/FourCC';
 import * as assert from 'assert';
 
 import * as initDebug from 'debug';
+import { IToken, IGetToken } from 'strtok3/lib/core';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
 
@@ -133,7 +134,7 @@ export interface IMovieHeaderAtom extends IVersionAndFlags {
   nextItemID: number
 }
 
-export const Header: Token.IToken<IAtomHeader> = {
+export const Header: IToken<IAtomHeader> = {
   len: 8,
 
   get: (buf: Buffer, off: number): IAtomHeader => {
@@ -158,7 +159,7 @@ export const Header: Token.IToken<IAtomHeader> = {
  */
 export const ExtendedSize = Token.UINT64_BE;
 
-export const ftyp: Token.IGetToken<IAtomFtyp> = {
+export const ftyp: IGetToken<IAtomFtyp> = {
   len: 4,
 
   get: (buf: Buffer, off: number): IAtomFtyp => {
@@ -168,7 +169,7 @@ export const ftyp: Token.IGetToken<IAtomFtyp> = {
   }
 };
 
-export const tkhd: Token.IGetToken<IAtomFtyp> = {
+export const tkhd: IGetToken<IAtomFtyp> = {
   len: 4,
 
   get: (buf: Buffer, off: number): IAtomFtyp => {
@@ -181,7 +182,7 @@ export const tkhd: Token.IGetToken<IAtomFtyp> = {
 /**
  * Token: Movie Header Atom
  */
-export const mhdr: Token.IGetToken<IMovieHeaderAtom> = {
+export const mhdr: IGetToken<IMovieHeaderAtom> = {
   len: 8,
 
   get: (buf: Buffer, off: number): IMovieHeaderAtom => {
@@ -234,7 +235,7 @@ export interface IAtomMdhd extends IAtomMxhd {
  *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
  *   https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
  */
-export class MdhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMdhd> {
+export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
 
   public constructor(public len: number) {
     super(len, 24, 'mdhd');
@@ -257,7 +258,7 @@ export class MdhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMd
 /**
  * Token: Movie Header Atom
  */
-export class MvhdAtom extends FixedLengthAtom implements Token.IGetToken<IAtomMvhd> {
+export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
 
   public constructor(public len: number) {
     super(len, 100, 'mvhd');
@@ -317,7 +318,7 @@ export interface IDataAtom {
 /**
  * Data Atom Structure
  */
-export class DataAtom implements Token.IGetToken<IDataAtom> {
+export class DataAtom implements IGetToken<IDataAtom> {
 
   public constructor(public len: number) {
   }
@@ -350,7 +351,7 @@ export interface INameAtom extends IVersionAndFlags {
  * Data Atom Structure
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW31
  */
-export class NameAtom implements Token.IGetToken<INameAtom> {
+export class NameAtom implements IGetToken<INameAtom> {
 
   public constructor(public len: number) {
   }
@@ -420,7 +421,7 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
  * Track Header Atoms structure
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
-export class TrackHeaderAtom implements Token.IGetToken<ITrackHeaderAtom> {
+export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
 
   public constructor(public len: number) {
   }
@@ -453,7 +454,7 @@ interface IAtomStsdHeader extends IVersionAndFlags {
  * Atom: Sample Description Atom ('stsd')
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
-const stsdHeader: Token.IGetToken<IAtomStsdHeader> = {
+const stsdHeader: IGetToken<IAtomStsdHeader> = {
   len: 8,
 
   get: (buf: Buffer, off: number): IAtomStsdHeader => {
@@ -483,7 +484,7 @@ export interface IAtomStsd {
  * Atom: Sample Description Atom ('stsd')
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
-class SampleDescriptionTable implements Token.IGetToken<ISampleDescription> {
+class SampleDescriptionTable implements IGetToken<ISampleDescription> {
 
   public constructor(public len: number) {
   }
@@ -502,7 +503,7 @@ class SampleDescriptionTable implements Token.IGetToken<ISampleDescription> {
  * Atom: Sample-description Atom ('stsd')
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
-export class StsdAtom implements Token.IGetToken<IAtomStsd> {
+export class StsdAtom implements IGetToken<IAtomStsd> {
 
   public constructor(public len: number) {
   }
@@ -538,7 +539,7 @@ export interface ISoundSampleDescriptionVersion {
  * Common Sound Sample Description (version & revision)
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-57317
  */
-export const SoundSampleDescriptionVersion: Token.IGetToken<ISoundSampleDescriptionVersion> = {
+export const SoundSampleDescriptionVersion: IGetToken<ISoundSampleDescriptionVersion> = {
 
   len: 8,
 
@@ -571,7 +572,7 @@ export interface ISoundSampleDescriptionV0 {
  * Sound Sample Description (Version 0)
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-130736
  */
-export const SoundSampleDescriptionV0: Token.IGetToken<ISoundSampleDescriptionV0> = {
+export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
 
   len: 12,
 
@@ -591,9 +592,9 @@ export interface ITableAtom<T> extends IVersionAndFlags {
   entries: T[]
 }
 
-class SimpleTableAtom<T> implements Token.IGetToken<ITableAtom<T>> {
+class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
 
-  public constructor(public len: number, private token: Token.IGetToken<T>) {
+  public constructor(public len: number, private token: IGetToken<T>) {
   }
 
   public get(buf: Buffer, off: number): ITableAtom<T> {
@@ -614,7 +615,7 @@ export interface ITimeToSampleToken {
   duration: number;
 }
 
-export const TimeToSampleToken: Token.IGetToken<ITimeToSampleToken> = {
+export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
 
   len: 8,
 
@@ -646,7 +647,7 @@ export interface ISampleToChunk {
   sampleDescriptionId: number;
 }
 
-export const SampleToChunkToken: Token.IGetToken<ISampleToChunk> = {
+export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
 
   len: 12,
 
@@ -680,7 +681,7 @@ export interface IStszAtom extends ITableAtom<number> {
  * Sample-size ('stsz') atom
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25710
  */
-export class StszAtom implements Token.IGetToken<IStszAtom> {
+export class StszAtom implements IGetToken<IStszAtom> {
 
   public constructor(public len: number) {
   }
@@ -712,7 +713,7 @@ export class StcoAtom extends SimpleTableAtom<number> {
 /**
  * Token used to decode text-track from 'mdat' atom (raw data stream)
  */
-export class ChapterText implements Token.IGetToken<string> {
+export class ChapterText implements IGetToken<string> {
 
   public constructor(public len: number) {
   }
@@ -724,7 +725,7 @@ export class ChapterText implements Token.IGetToken<string> {
   }
 }
 
-function readTokenTable<T>(buf: Buffer, token: Token.IGetToken<T>, off: number, remainingLen: number, numberOfEntries: number): T[] {
+function readTokenTable<T>(buf: Buffer, token: IGetToken<T>, off: number, remainingLen: number, numberOfEntries: number): T[] {
 
   debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
 

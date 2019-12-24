@@ -4,7 +4,7 @@ import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
 import * as assert from 'assert';
 
 import * as _debug from 'debug';
-import { ChunkHeader, DsdChunk, FormatChunk, IChunkHeader, IDsdChunk } from "./DsfChunk";
+import { ChunkHeader, DsdChunk, FormatChunk, IChunkHeader, IDsdChunk, IFormatChunk } from './DsfChunk';
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 
 const debug = _debug('music-metadata:parser:DSF');
@@ -40,7 +40,7 @@ export class DsfParser extends AbstractID3Parser {
       debug(`Parsing chunk name=${chunkHeader.id} size=${chunkHeader.size}`);
       switch (chunkHeader.id) {
         case 'fmt ':
-          const formatChunk = await this.tokenizer.readToken(FormatChunk);
+          const formatChunk = await this.tokenizer.readToken<IFormatChunk>(FormatChunk);
           this.metadata.setFormat('numberOfChannels', formatChunk.channelNum);
           this.metadata.setFormat('sampleRate', formatChunk.samplingFrequency);
           this.metadata.setFormat('bitsPerSample', formatChunk.bitsPerSample);

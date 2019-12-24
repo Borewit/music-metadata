@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as Token from 'token-types';
 import * as _debug from 'debug';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { ITokenizer } from 'strtok3';
+import { ITokenizer } from 'strtok3/lib/core';
 import { IOptions } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { BasicParser } from '../common/BasicParser';

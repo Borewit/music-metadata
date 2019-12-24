@@ -2,6 +2,7 @@ import * as Token from "token-types";
 import * as assert from "assert";
 import {FourCcToken} from "../common/FourCC";
 import * as iff from '../iff';
+import { IGetToken } from "strtok3";
 
 /**
  * The Common Chunk.
@@ -17,7 +18,7 @@ export interface ICommon {
   compressionName?: string
 }
 
-export class Common implements Token.IGetToken<ICommon> {
+export class Common implements IGetToken<ICommon> {
 
   public len: number;
 

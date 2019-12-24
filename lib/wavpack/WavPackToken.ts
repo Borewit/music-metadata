@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
 import { FourCcToken } from '../common/FourCC';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * WavPack Block Header
@@ -75,7 +76,7 @@ export class WavPack {
    *
    * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf (page 2/6: 2.0 "Block Header")
    */
-  public static BlockHeaderToken: Token.IGetToken<IBlockHeader> = {
+  public static BlockHeaderToken: IGetToken<IBlockHeader> = {
     len: 32,
 
     get: (buf, off) => {
@@ -123,7 +124,7 @@ export class WavPack {
    * 3.0 Metadata Sub-Blocks
    *  Ref: http://www.wavpack.com/WavPack5FileFormat.pdf (page 4/6: 3.0 "Metadata Sub-Block")
    */
-  public static MetadataIdToken: Token.IGetToken<IMetadataId> = {
+  public static MetadataIdToken: IGetToken<IMetadataId> = {
     len: 1,
 
     get: (buf, off) => {

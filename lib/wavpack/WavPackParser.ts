@@ -35,7 +35,7 @@ export class WavPackParser extends BasicParser {
       if (blockId !== 'wvpk')
         break;
 
-      const header = await this.tokenizer.readToken(WavPack.BlockHeaderToken);
+      const header = await this.tokenizer.readToken<IBlockHeader>(WavPack.BlockHeaderToken);
       assert.strictEqual(header.BlockID, 'wvpk', 'WavPack Block-ID');
 
       debug(`WavPack header blockIndex=${header.blockIndex}, len=${WavPack.BlockHeaderToken.len}`);

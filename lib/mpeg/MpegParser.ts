@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as Token from 'token-types';
-import { endOfFile } from 'strtok3';
+import { EndOfStreamError } from 'strtok3/lib/core';
 import * as initDebug from 'debug';
 
 import Common from '../common/Util';
@@ -318,7 +318,8 @@ export class MpegParser extends AbstractID3Parser {
         quit = await this.parseCommonMpegHeader();
       }
     } catch (err) {
-      if (err.message === endOfFile) {
+      if (err instanceof EndOfStreamError) {
+        debug(`End-of-stream`);
         if (this.calculateEofDuration) {
           const numberOfSamples = this.frameCount * this.samplesPerFrame;
           this.metadata.setFormat('numberOfSamples', numberOfSamples);
@@ -362,7 +363,7 @@ export class MpegParser extends AbstractID3Parser {
       let bo = 0;
       this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, 0, maxPeekLen, this.tokenizer.position, true);
       if (this.syncPeek.len <= 256) {
-        throw new Error(endOfFile);
+        throw new EndOfStreamError();
       }
       while (true) {
         if (gotFirstSync && (this.syncPeek.buf[bo] & 0xE0) === 0xE0) {
@@ -382,7 +383,7 @@ export class MpegParser extends AbstractID3Parser {
           bo = this.syncPeek.buf.indexOf(MpegFrameHeader.SyncByte1, bo);
           if (bo === -1) {
             if (this.syncPeek.len < this.syncPeek.buf.length) {
-              throw new Error(endOfFile);
+              throw new EndOfStreamError();
             }
             await this.tokenizer.ignore(this.syncPeek.len);
             break; // continue with next buffer

@@ -1,8 +1,8 @@
-import {ITokenizer} from 'strtok3';
+import { ITokenizer } from 'strtok3/lib/core';
 import * as initDebug from 'debug';
 
-import {IOptions} from '../../type';
-import {INativeMetadataCollector} from '../../common/MetadataCollector';
+import { IOptions } from '../../type';
+import { INativeMetadataCollector } from '../../common/MetadataCollector';
 import * as Ogg from '../Ogg';
 import { IdentificationHeader } from './Theora';
 

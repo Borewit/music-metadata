@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
-import {FourCcToken} from '../common/FourCC';
+import { FourCcToken } from '../common/FourCC';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * Common interface for the common chunk DSD header
@@ -20,7 +21,7 @@ export interface IChunkHeader {
 /**
  * Common chunk DSD header: the 'chunk name (Four-CC)' & chunk size
  */
-export const ChunkHeader: Token.IGetToken<IChunkHeader> = {
+export const ChunkHeader: IGetToken<IChunkHeader> = {
   len: 12,
 
   get: (buf: Buffer, off: number): IChunkHeader => {
@@ -48,15 +49,15 @@ export interface IDsdChunk {
 /**
  * Common chunk DSD header: the 'chunk name (Four-CC)' & chunk size
  */
-export const DsdChunk: Token.IGetToken<IDsdChunk> = {
+export const DsdChunk: IGetToken<IDsdChunk> = {
   len: 16,
 
   get: (buf: Buffer, off: number): IDsdChunk => {
     return {
       fileSize: Token.INT64_LE.get(buf, off),
       metadataPointer: Token.INT64_LE.get(buf, off + 8)
-  }
-    ;
+    }
+      ;
   }
 };
 
@@ -119,7 +120,7 @@ export interface IFormatChunk {
 /**
  * Common chunk DSD header: the 'chunk name (Four-CC)' & chunk size
  */
-export const FormatChunk: Token.IGetToken<IFormatChunk> = {
+export const FormatChunk: IGetToken<IFormatChunk> = {
   len: 40,
 
   get: (buf: Buffer, off: number): IFormatChunk => {

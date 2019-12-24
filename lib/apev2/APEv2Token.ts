@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
 import { FourCcToken } from '../common/FourCC';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * APETag versionIndex history / supported formats
@@ -91,7 +92,7 @@ export enum DataType {
 /**
  * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
  */
-export const DescriptorParser: Token.IGetToken<IDescriptor> = {
+export const DescriptorParser: IGetToken<IDescriptor> = {
   len: 52,
 
   get: (buf, off) => {
@@ -152,7 +153,7 @@ export const Header = {
  * APE Tag Header/Footer Version 2.0
  * TAG: describes all the properties of the file [optional]
  */
-export const TagFooter: Token.IGetToken<IFooter> = {
+export const TagFooter: IGetToken<IFooter> = {
   len: 32,
 
   get: (buf, off) => {
@@ -184,7 +185,7 @@ export interface ITagItemHeader {
 /**
  * APE Tag v2.0 Item Header
  */
-export const TagItemHeader: Token.IGetToken<ITagItemHeader> = {
+export const TagItemHeader: IGetToken<ITagItemHeader> = {
   len: 8,
 
   get: (buf, off) => {

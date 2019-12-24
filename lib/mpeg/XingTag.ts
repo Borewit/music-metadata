@@ -1,4 +1,5 @@
 import * as Token from "token-types";
+import { IGetToken } from "strtok3/lib/core";
 
 /**
  * Info Tag: Xing, LAME
@@ -53,7 +54,7 @@ export interface IXingInfoTag {
  * Info Tag
  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
  */
-export const XingInfoTag: Token.IGetToken<IXingInfoTag> = {
+export const XingInfoTag: IGetToken<IXingInfoTag> = {
   len: 136, // 140 bytes - 4 bytes TAG = 136 + 7 byte extension
 
   get: (buf, off) => {

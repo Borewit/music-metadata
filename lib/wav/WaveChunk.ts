@@ -1,7 +1,7 @@
-import * as Token from 'token-types';
 import * as assert from 'assert';
 
-import {IChunkHeader} from '../riff/RiffChunk';
+import { IChunkHeader } from '../iff';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx
@@ -50,12 +50,12 @@ export interface IWaveFormat {
  * format chunk; chunk-id is "fmt "
  * http://soundfile.sapp.org/doc/WaveFormat/
  */
-export class Format implements Token.IGetToken<IWaveFormat> {
+export class Format implements IGetToken<IWaveFormat> {
 
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    assert.ok(header.chunkSize >= 16, "16 for PCM.");
+    assert.ok(header.chunkSize >= 16, '16 for PCM.');
     this.len = header.chunkSize;
   }
 
@@ -80,12 +80,12 @@ export interface IFactChunk {
  * http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
  * http://www.recordingblogs.com/wiki/fact-chunk-of-a-wave-file
  */
-export class FactChunk implements Token.IGetToken<IFactChunk> {
+export class FactChunk implements IGetToken<IFactChunk> {
 
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    assert.ok(header.chunkSize >= 4, "minimum fact chunk size.");
+    assert.ok(header.chunkSize >= 4, 'minimum fact chunk size.');
     this.len = header.chunkSize;
   }
 
