@@ -7,7 +7,6 @@ update_configs:
     automerged_updates:
       - match:
           dependency_name: "@types/node"
-          update_type: "semver:minor"
       - match:
           dependency_name: "@types/chai"
           update_type: "semver:minor"
