@@ -545,7 +545,6 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       checkID3Tags(orderTags(metadata.native['ID3v2.4']));
       // Check common tag mappings
       checkCommonMapping('ID3v2.4', metadata.common);
-
     });
 
   });

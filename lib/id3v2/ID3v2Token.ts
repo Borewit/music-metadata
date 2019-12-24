@@ -1,6 +1,6 @@
 import * as Token from 'token-types';
-
 import common, {StringEncoding} from '../common/Util';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * The picture type according to the ID3v2 APIC frame
@@ -83,7 +83,7 @@ export interface IID3v2header {
  * Ref: http://id3.org/id3v2.3.0#ID3v2_header
  * ToDo
  */
-export const ID3v2Header: Token.IGetToken<IID3v2header> = {
+export const ID3v2Header: IGetToken<IID3v2header> = {
   len: 10,
 
   get: (buf, off): IID3v2header => {
@@ -112,7 +112,7 @@ export const ID3v2Header: Token.IGetToken<IID3v2header> = {
   }
 };
 
-export const ExtendedHeader: Token.IGetToken<IExtendedHeader> = {
+export const ExtendedHeader: IGetToken<IExtendedHeader> = {
   len: 10,
 
   get: (buf, off): IExtendedHeader => {
@@ -134,7 +134,7 @@ export interface ITextEncoding {
   bom?: boolean;
 }
 
-export const TextEncodingToken: Token.IGetToken<ITextEncoding> = {
+export const TextEncodingToken: IGetToken<ITextEncoding> = {
   len: 1,
 
   get: (buf: Buffer, off: number): ITextEncoding => {

@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
 import BitUtil from '../../common/Util';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * Speex Header Packet
@@ -36,7 +37,7 @@ export interface IHeader {
  * Speex Header Packet
  * Ref: https://www.speex.org/docs/manual/speex-manual/node8.html#SECTION00830000000000000000
  */
-export const Header: Token.IGetToken<IHeader> = {
+export const Header: IGetToken<IHeader> = {
 
   len: 80,
 

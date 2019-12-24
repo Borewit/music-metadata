@@ -2,7 +2,7 @@
 
 import * as initDebug from 'debug';
 import * as FileType from 'file-type';
-import * as strtok3 from 'strtok3';
+import * as strtok3 from 'strtok3/lib/core';
 import * as assert from 'assert';
 
 import common from '../common/Util';
@@ -108,7 +108,7 @@ export class APEv2Parser extends BasicParser {
 
   public async parse(): Promise<void> {
 
-    const descriptor = await this.tokenizer.readToken(DescriptorParser);
+    const descriptor = await this.tokenizer.readToken<IDescriptor>(DescriptorParser);
 
     assert.strictEqual(descriptor.ID, 'MAC ', 'descriptor.ID');
     this.ape.descriptor = descriptor;
@@ -139,13 +139,13 @@ export class APEv2Parser extends BasicParser {
 
       await this.tokenizer.peekBuffer(keyBuffer, 0, Math.min(keyBuffer.length, bytesRemaining));
       let zero = common.findZero(keyBuffer, 0, keyBuffer.length);
-      const key = await this.tokenizer.readToken(new StringType(zero, 'ascii'));
+      const key = await this.tokenizer.readToken<string>(new StringType(zero, 'ascii'));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
 
       switch (tagItemHeader.flags.dataType) {
         case DataType.text_utf8: { // utf-8 textstring
-          const value = await this.tokenizer.readToken(new StringType(tagItemHeader.size, 'utf8'));
+          const value = await this.tokenizer.readToken<string>(new StringType(tagItemHeader.size, 'utf8'));
           const values = value.split(/\x00/g);
 
           /*jshint loopfunc:true */

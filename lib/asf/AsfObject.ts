@@ -1,12 +1,13 @@
 // ASF Objects
 
-"use strict";
-import util from "../common/Util";
-import {IPicture, ITag} from "../type";
-import * as Token from "token-types";
-import GUID from "./GUID";
-import {AsfUtil} from "./AsfUtil";
-import {AttachedPictureType} from "../id3v2/ID3v2Token";
+'use strict';
+import util from '../common/Util';
+import { IPicture, ITag } from '../type';
+import * as Token from 'token-types';
+import GUID from './GUID';
+import { AsfUtil } from './AsfUtil';
+import { AttachedPictureType } from '../id3v2/ID3v2Token';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
@@ -66,7 +67,7 @@ export interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
  * Token for: 3. ASF top-level Header Object
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3
  */
-export const TopLevelHeaderObjectToken: Token.IGetToken<IAsfTopLevelObjectHeader> = {
+export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
 
   len: 30,
 
@@ -84,7 +85,7 @@ export const TopLevelHeaderObjectToken: Token.IGetToken<IAsfTopLevelObjectHeader
  * Token for: 3.1 Header Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_1
  */
-export const HeaderObjectToken: Token.IGetToken<IAsfObjectHeader> = {
+export const HeaderObjectToken: IGetToken<IAsfObjectHeader> = {
 
   len: 24,
 
@@ -96,7 +97,7 @@ export const HeaderObjectToken: Token.IGetToken<IAsfObjectHeader> = {
   }
 };
 
-export abstract class State<T> implements Token.IGetToken<T> {
+export abstract class State<T> implements IGetToken<T> {
 
   public len: number;
 
@@ -106,13 +107,13 @@ export abstract class State<T> implements Token.IGetToken<T> {
 
   public abstract get(buf: Buffer, off: number): T;
 
-  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any)  {
-    if (name === "WM/Picture") {
+  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any) {
+    if (name === 'WM/Picture') {
       tags.push({id: name, value: WmPictureToken.fromBuffer(data)});
     } else {
       const parseAttr = AsfUtil.getParserForAttr(valueType);
       if (!parseAttr) {
-        throw new Error("unexpected value headerType: " + valueType);
+        throw new Error('unexpected value headerType: ' + valueType);
       }
       tags.push({id: name, value: parseAttr(data)});
     }
@@ -297,7 +298,7 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
   public get(buf: Buffer, off: number): IStreamPropertiesObject {
 
     return {
-      streamType: GUID.decodeMediaType(GUID.fromBin(buf , off)),
+      streamType: GUID.decodeMediaType(GUID.fromBin(buf, off)),
       errorCorrectionType: GUID.fromBin(buf, off + 8)
       // ToDo
     };
@@ -314,7 +315,7 @@ export interface IHeaderExtensionObject {
  * 3.4: Header Extension Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_4
  */
-export class HeaderExtensionObject implements Token.IGetToken<IHeaderExtensionObject> {
+export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> {
 
   public static guid = GUID.HeaderExtensionObject;
 
@@ -341,7 +342,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
 
   public static guid = GUID.ContentDescriptionObject;
 
-  private static contentDescTags = ["Title", "Author", "Copyright", "Description", "Rating"];
+  private static contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
 
   constructor(header: IAsfObjectHeader) {
     super(header);
@@ -502,7 +503,7 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += dataLen;
       const parseAttr = AsfUtil.getParserForAttr(dataType);
       if (!parseAttr) {
-        throw new Error("unexpected value headerType: " + dataType);
+        throw new Error('unexpected value headerType: ' + dataType);
       }
       this.postProcessTag(tags, name, dataType, data);
     }
@@ -531,10 +532,10 @@ export interface IWmPicture extends IPicture {
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd757977(v=vs.85).aspx
  */
-export class WmPictureToken implements Token.IGetToken<IWmPicture> {
+export class WmPictureToken implements IGetToken<IWmPicture> {
 
   public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(Buffer.from(base64str, "base64"));
+    return this.fromBuffer(Buffer.from(base64str, 'base64'));
   }
 
   public static fromBuffer(buffer: Buffer): IWmPicture {
@@ -554,12 +555,12 @@ export class WmPictureToken implements Token.IGetToken<IWmPicture> {
     while (buffer.readUInt16BE(index) !== 0) {
       index += 2;
     }
-    const format = buffer.slice(5, index).toString("utf16le");
+    const format = buffer.slice(5, index).toString('utf16le');
 
     while (buffer.readUInt16BE(index) !== 0) {
       index += 2;
     }
-    const description = buffer.slice(5, index).toString("utf16le");
+    const description = buffer.slice(5, index).toString('utf16le');
 
     return {
       type: AttachedPictureType[typeId],

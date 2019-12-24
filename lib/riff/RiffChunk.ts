@@ -1,13 +1,13 @@
 import * as Token from 'token-types';
 import {FourCcToken} from '../common/FourCC';
 import {IChunkHeader} from '../iff';
-
+import { IGetToken } from 'strtok3/lib/core';
 export {IChunkHeader} from '../iff';
 
 /**
  * Common RIFF chunk header
  */
-export const Header: Token.IGetToken<IChunkHeader> = {
+export const Header: IGetToken<IChunkHeader> = {
   len: 8,
 
   get: (buf, off): IChunkHeader => {
@@ -23,7 +23,7 @@ export const Header: Token.IGetToken<IChunkHeader> = {
 /**
  * Token to parse RIFF-INFO tag value
  */
-export class ListInfoTagValue implements Token.IGetToken<string> {
+export class ListInfoTagValue implements IGetToken<string> {
 
   public len: number;
 

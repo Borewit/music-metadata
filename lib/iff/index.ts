@@ -1,5 +1,5 @@
-import * as Token from "token-types";
 import {FourCcToken} from "../common/FourCC";
+import { IGetToken } from "strtok3/lib/core";
 
 /**
  * "EA IFF 85" Standard for Interchange Format Files
@@ -20,7 +20,7 @@ export interface IChunkHeader {
 /**
  * Common AIFF chunk header
  */
-export const Header: Token.IGetToken<IChunkHeader> = {
+export const Header: IGetToken<IChunkHeader> = {
   len: 8,
 
   get: (buf, off): IChunkHeader => {

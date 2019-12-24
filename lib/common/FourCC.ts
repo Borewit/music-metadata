@@ -1,5 +1,5 @@
-import * as Token from "token-types";
 import Util from './Util';
+import { IToken } from "strtok3/lib/core";
 
 const validFourCC =  /^[\w-©][\w-\x000-3]/;
 
@@ -7,7 +7,7 @@ const validFourCC =  /^[\w-©][\w-\x000-3]/;
  * Token for read FourCC
  * Ref: https://en.wikipedia.org/wiki/FourCC
  */
-export const FourCcToken: Token.IToken<string> = {
+export const FourCcToken: IToken<string> = {
   len: 4,
 
   get: (buf: Buffer, off: number): string => {

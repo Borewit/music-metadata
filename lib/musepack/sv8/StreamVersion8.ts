@@ -1,6 +1,6 @@
 import * as Token from 'token-types';
 import Util from '../../common/Util';
-import { ITokenizer } from 'strtok3';
+import { ITokenizer, IGetToken } from 'strtok3/lib/core';
 import * as initDebug from 'debug';
 
 const debug = initDebug('music-metadata:parser:musepack:sv8');
@@ -30,7 +30,7 @@ interface IStreamHeader1 {
  * Stream Header Packet part 1
  * Ref: http://trac.musepack.net/musepack/wiki/SV8Specification#StreamHeaderPacket
  */
-const SH_part1: Token.IGetToken<IStreamHeader1> = {
+const SH_part1: IGetToken<IStreamHeader1> = {
   len: 5,
 
   get: (buf, off) => {
@@ -58,7 +58,7 @@ interface IStreamHeader3 {
  * Stream Header Packet part 3
  * Ref: http://trac.musepack.net/musepack/wiki/SV8Specification#StreamHeaderPacket
  */
-const SH_part3: Token.IGetToken<IStreamHeader3> = {
+const SH_part3: IGetToken<IStreamHeader3> = {
   len: 2,
 
   get: (buf, off) => {
@@ -89,7 +89,7 @@ export class StreamReader {
 
   public async readPacketHeader(): Promise<IPacketHeader> {
 
-    const key = await this.tokenizer.readToken(PacketKey);
+    const key = await this.tokenizer.readToken<string>(PacketKey);
     const size = await this.readVariableSizeField();
     return {
       key,
@@ -124,7 +124,7 @@ export class StreamReader {
   }
 
   private async readVariableSizeField(len: number = 1, hb: number = 0): Promise<IVarSize> {
-    let n = await this.tokenizer.readToken(Token.UINT8);
+    let n = await this.tokenizer.readNumber(Token.UINT8);
     if ((n & 0x80) === 0) {
       return {len, value: hb + n};
     }

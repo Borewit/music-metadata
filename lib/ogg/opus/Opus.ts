@@ -1,4 +1,5 @@
 import * as Token from 'token-types';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * Opus ID Header interface
@@ -43,7 +44,7 @@ export interface IIdHeader {
  * Opus ID Header parser
  * Ref: https://wiki.xiph.org/OggOpus#ID_Header
  */
-export class IdHeader implements Token.IGetToken<IIdHeader> {
+export class IdHeader implements IGetToken<IIdHeader> {
 
   constructor(public len: number) {
     if (len < 19) {

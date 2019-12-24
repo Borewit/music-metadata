@@ -7,6 +7,7 @@ import * as Token from 'token-types';
 import {BasicParser} from '../common/BasicParser';
 import { APEv2Parser } from '../apev2/APEv2Parser';
 import { IRandomReader } from '../type';
+import { IGetToken } from 'strtok3/lib/core';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
 
@@ -64,7 +65,7 @@ interface IId3v1Header {
  * Spec: http://id3.org/ID3v1
  * Wiki: https://en.wikipedia.org/wiki/ID3
  */
-const Iid3v1Token: Token.IGetToken<IId3v1Header> = {
+const Iid3v1Token: IGetToken<IId3v1Header> = {
   len: 128,
 
   /**

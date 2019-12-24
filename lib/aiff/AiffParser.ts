@@ -1,6 +1,5 @@
 import * as Token from 'token-types';
 import * as initDebug from 'debug';
-import { endOfFile } from 'strtok3';
 import * as strtok3 from 'strtok3/lib/core';
 
 import { ID3v2Parser } from '../id3v2/ID3v2Parser';
@@ -59,7 +58,9 @@ export class AIFFParser extends BasicParser {
         await this.tokenizer.ignore(nextChunk - bytesRead);
       } while (true);
     } catch (err) {
-      if (err.message !== endOfFile) {
+      if (err instanceof strtok3.EndOfStreamError) {
+        debug(`End-of-stream`);
+      } else {
         throw err;
       }
     }

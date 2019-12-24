@@ -1,13 +1,14 @@
 
 import * as Token from 'token-types';
 import Common from '../../common/Util';
+import { IGetToken } from 'strtok3/lib/core';
 
 /**
  * MusePack stream version 7 format specification
  * http://trac.musepack.net/musepack/wiki/SV7Specification
  */
 
-interface IHeader {
+export interface IHeader {
   // word 0
   signature: string;
   streamMinorVersion: number;
@@ -36,7 +37,7 @@ interface IHeader {
 /**
  * BASIC STRUCTURE
  */
-export const Header: Token.IGetToken<IHeader> = {
+export const Header: IGetToken<IHeader> = {
   len: 6 * 4,
 
   get: (buf, off) => {

@@ -2,6 +2,7 @@ import * as Token from 'token-types';
 
 import {AttachedPictureType} from '../../id3v2/ID3v2Token';
 import {IPicture} from '../../type';
+import { IGetToken } from 'strtok3/lib/core';
 
 export interface IVorbisPicture extends IPicture {
   type: string
@@ -42,7 +43,7 @@ export interface IVorbisPicture {
  * Ref: https://xiph.org/flac/format.html#metadata_block_picture
  * // ToDo: move to ID3 / APIC?
  */
-export class VorbisPictureToken implements Token.IGetToken<IVorbisPicture> {
+export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 
   public static fromBase64(base64str: string): IVorbisPicture {
     return this.fromBuffer(Buffer.from(base64str, 'base64'));
@@ -110,7 +111,7 @@ export interface ICommonHeader {
  * Comment header decoder
  * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-620004.2.1
  */
-export const CommonHeader: Token.IGetToken<ICommonHeader> = {
+export const CommonHeader: IGetToken<ICommonHeader> = {
   len: 7,
 
   get: (buf, off): ICommonHeader => {
@@ -138,7 +139,7 @@ export interface IFormatInfo {
  * Identification header decoder
  * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
  */
-export const IdentificationHeader: Token.IGetToken<IFormatInfo> = {
+export const IdentificationHeader: IGetToken<IFormatInfo> = {
   len: 23,
 
   get: (buf, off): IFormatInfo => {
