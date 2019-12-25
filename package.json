@@ -55,8 +55,8 @@
     "parse",
     "parser"
   ],
-  "main": "lib",
-  "typings": "lib/index",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
   "files": [
     "lib/**/*.js",
     "lib/**/*.d.ts"
