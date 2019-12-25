@@ -124,7 +124,7 @@ export const DescriptorParser: IGetToken<IDescriptor> = {
 /**
  * APE_HEADER: describes all of the necessary information about the APE file
  */
-export const Header = {
+export const Header: IGetToken<IHeader> = {
   len: 24,
 
   get: (buf, off) => {
