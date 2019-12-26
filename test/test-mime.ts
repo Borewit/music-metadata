@@ -191,7 +191,11 @@ describe("MIME & extension mapping", () => {
     });
 
     it('should recognize MKA', () => {
-      return testFileType(path.join('ebml', '02 - Poxfil - Solid Ground (5 sec).mka'), 'EBML/matroska');
+      return testFileType(path.join('matroska', '02 - Poxfil - Solid Ground (5 sec).mka'), 'EBML/matroska');
+    });
+
+    it('should recognize WebM', () => {
+      return testFileType(path.join('matroska', '02 - Poxfil - Solid Ground (5 sec).opus.webm'), 'EBML/webm');
     });
 
   });

@@ -12,16 +12,17 @@ const ebmlTagMap: INativeTagMap = {
   'track:ARTIST': 'artist',
   'track:ARTISTSORT' : 'artistsort',
   'track:TITLE': 'title',
+  'track:PART_NUMBER': 'track',
   'track:MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',
   'track:MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
   'track:MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
   'track:PUBLISHER': 'label'
 };
 
-export class EbmlTagMapper extends CaseInsensitiveTagMap {
+export class MatroskaTagMapper extends CaseInsensitiveTagMap {
 
   public constructor() {
-    super(['EBML'], ebmlTagMap);
+    super(['matroska'], ebmlTagMap);
   }
 
 }
