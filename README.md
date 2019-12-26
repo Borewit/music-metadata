@@ -102,7 +102,7 @@ Very much appreciated: [PayPal.me](https://paypal.me/borewit)
 Install using [npm](http://npmjs.org/):
 
 ```bash
-npm install --save music-metadata
+npm install music-metadata
 ```
 or using [yarn](https://yarnpkg.com/):
 ```bash
