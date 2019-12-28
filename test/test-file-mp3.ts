@@ -51,6 +51,17 @@ describe('Parse MP3 files', () => {
     });
   });
 
+  // https://github.com/Borewit/music-metadata/issues/381
+  it('should be able to handle empty ID3v2 tag', async () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'issue-381.mp3');
+
+    const {format} = await mm.parseFile(filePath);
+
+    assert.deepEqual(format.container, 'MPEG', 'format.container');
+    assert.deepEqual(format.tagTypes, [ 'ID3v2.3', 'ID3v1' ], 'format.tagTypes');
+  });
+
   describe('should handle incomplete MP3 file', () => {
 
     const filePath = path.join(samplePath, 'incomplete.mp3');

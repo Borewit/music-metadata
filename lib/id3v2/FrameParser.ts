@@ -24,6 +24,9 @@ const defaultEnc: StringEncoding = 'iso-8859-1';
 export default class FrameParser {
 
   public static readData(b: Buffer, type: string, major: number, includeCovers: boolean) {
+    if (b.length === 0) {
+      return;
+    }
     const {encoding, bom} = TextEncodingToken.get(b, 0);
     const length = b.length;
     let offset = 0;
