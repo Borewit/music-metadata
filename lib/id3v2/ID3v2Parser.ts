@@ -218,7 +218,7 @@ export class ID3v2Parser {
       const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
-        // ToDo: generate WARNING: Illegal ID3v2-tag-length
+        this.metadata.addWarning('Illegal ID3v2 tag length');
         break;
       }
 
