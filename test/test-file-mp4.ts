@@ -266,7 +266,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
           let metadata: mm.IAudioMetadata;
           const stream = fs.createReadStream(filePath);
           try {
-            metadata = await mm.parseStream(stream, 'audio/mp4', {includeChapters: true});
+            metadata = await mm.parseStream(stream, {mimeType: 'audio/mp4'}, {includeChapters: true});
           } finally {
             stream.close();
           }
@@ -276,7 +276,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         it('from a stream', async () => {
 
           const stream = fs.createReadStream(filePath);
-          const metadata = await mm.parseStream(stream, 'audio/mp4', {includeChapters: true});
+          const metadata = await mm.parseStream(stream, {mimeType: 'audio/mp4'}, {includeChapters: true});
           stream.close();
 
           checkMetadata(metadata);

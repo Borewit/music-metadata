@@ -41,7 +41,7 @@ describe.skip('HTTP streaming', function() {
               options.fileSize = parseInt(response.headers['content-length'], 10); // Always pass this in production
             }
 
-            const tags = await parseStream(response.stream, response.headers['content-type'], options);
+            const tags = await parseStream(response.stream, {mimeType: response.headers['content-type']}, options);
             if (response.stream.destroy) {
               response.stream.destroy(); // Node >= v8 only
             }

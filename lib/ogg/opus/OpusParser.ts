@@ -56,8 +56,8 @@ export class OpusParser extends VorbisParser {
       this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition - this.idHeader.preSkip);
       this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.idHeader.inputSampleRate);
 
-      if (this.lastPos !== -1 && this.tokenizer.fileSize && this.metadata.format.duration) {
-        const dataSize = this.tokenizer.fileSize - this.lastPos;
+      if (this.lastPos !== -1 && this.tokenizer.fileInfo.size && this.metadata.format.duration) {
+        const dataSize = this.tokenizer.fileInfo.size - this.lastPos;
         this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
       }
     }

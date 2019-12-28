@@ -85,7 +85,7 @@ export class APEv2Parser extends BasicParser {
    */
   public async tryParseApeHeader(): Promise<void> {
 
-    if (this.tokenizer.fileSize && this.tokenizer.fileSize - this.tokenizer.position < TagFooter.len) {
+    if (this.tokenizer.fileInfo.size && this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len) {
       debug(`No APEv2 header found, end-of-file reached`);
       return;
     }
@@ -96,9 +96,9 @@ export class APEv2Parser extends BasicParser {
       return this.parseTags(footer);
     } else {
       debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
-      if (this.tokenizer.fileSize) {
+      if (this.tokenizer.fileInfo.size) {
         // Try to read the APEv2 header using just the footer-header
-        const remaining = this.tokenizer.fileSize - this.tokenizer.position; // ToDo: take ID3v1 into account
+        const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
         const buffer = Buffer.alloc(remaining);
         await this.tokenizer.readBuffer(buffer);
         return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);

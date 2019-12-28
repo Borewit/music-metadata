@@ -50,7 +50,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-    const matroska = await this.parseContainer(matroskaDtd.elements, this.tokenizer.fileSize, []) as any as IMatroskaDoc;
+    const matroska = await this.parseContainer(matroskaDtd.elements, this.tokenizer.fileInfo.size, []) as any as IMatroskaDoc;
 
     this.metadata.setFormat('container', `EBML/${matroska.ebml.docType}`);
     if (matroska.segment) {

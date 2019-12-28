@@ -11,29 +11,19 @@ export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFor
 
 const debug = _debug("music-metadata:parser");
 
-export { parseFromTokenizer } from './core';
+export { parseFromTokenizer, parseBuffer } from './core';
 
 /**
  * Parse audio from Node Stream.Readable
  * @param stream - Stream to read the audio track from
- * @param mimeType - Content specification MIME-type, e.g.: 'audio/mpeg'
+ * @param fileInfo - File information object or MIME-type, e.g.: 'audio/mpeg'
  * @param options - Parsing options
  * @returns Metadata
  */
-export async function parseStream(stream: Stream.Readable, mimeType?: string, options: IOptions = {}): Promise<IAudioMetadata> {
-  const tokenizer = await strtok3.fromStream(stream);
-  return Core.parseFromTokenizer(tokenizer, mimeType, options);
+export async function parseStream(stream: Stream.Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const tokenizer = await strtok3.fromStream(stream, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo);
+  return Core.parseFromTokenizer(tokenizer, options);
 }
-
-/**
- * Parse audio from Node Buffer
- * @param stream - Audio input stream
- * @param mimeType - Content specification MIME-type, e.g.: 'audio/mpeg'
- * @param options - Parsing options
- * @returns Metadata
- * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
- */
-export const parseBuffer = Core.parseBuffer;
 
 /**
  * Parse audio from Node file
@@ -47,7 +37,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
   const fileTokenizer = await strtok3.fromFile(filePath);
 
-  const fileReader = new RandomFileReader(filePath, fileTokenizer.fileSize);
+  const fileReader = new RandomFileReader(filePath, fileTokenizer.fileInfo.size);
   try {
     await Core.scanAppendingHeaders(fileReader, options);
   } finally {

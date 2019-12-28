@@ -67,7 +67,7 @@ describe("MIME & extension mapping", () => {
     audioExtension.forEach(extension => {
 
       const streamReader = new SourceStream(buf);
-      const res = mm.parseStream(streamReader, extension).catch(err => {
+      const res = mm.parseStream(streamReader, {path: extension}).catch(err => {
         handleError(extension, err);
       });
 
@@ -81,7 +81,8 @@ describe("MIME & extension mapping", () => {
   it("should be able to handle MIME-type parameter(s)", () => {
 
     const stream = fs.createReadStream(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
-    return mm.parseStream(stream, '').then(metadata => {
+    (stream as any).path = undefined; // Prevent type detection via path
+    return mm.parseStream(stream).then(metadata => {
       stream.close();
       assert.equal(metadata.format.container, 'WAVE');
     });
@@ -112,7 +113,8 @@ describe("MIME & extension mapping", () => {
     it("should throw error on recognized MIME-type which is not supported", () => {
 
       const stream = fs.createReadStream(path.join(samplePath, 'flac.flac.jpg'));
-      return mm.parseStream(stream, "audio/not-existing")
+      (stream.path as any) = undefined;
+      return mm.parseStream(stream, {mimeType: "audio/not-existing"})
         .then(() => {
           stream.close();
           assert.fail('Should throw an Error');

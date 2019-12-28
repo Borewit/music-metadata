@@ -60,13 +60,15 @@ export class ParserFactory {
    * @param opts - Options
    * @returns Native metadata
    */
-  public static async parseOnContentType(tokenizer: ITokenizer, contentType: string, opts: IOptions): Promise<IAudioMetadata> {
+  public static async parseOnContentType(tokenizer: ITokenizer, opts: IOptions): Promise<IAudioMetadata> {
+
+    const { mimeType, path, url } = await tokenizer.fileInfo;
 
     // Resolve parser based on MIME-type or file extension
-    const parserId = ParserFactory.getParserIdForMimeType(contentType) || ParserFactory.getParserIdForExtension(contentType);
+    const parserId = ParserFactory.getParserIdForMimeType(mimeType) || ParserFactory.getParserIdForExtension(path) || ParserFactory.getParserIdForExtension(url);
 
     if (!parserId) {
-      debug('No parser found for MIME-type / extension: ' + contentType);
+      debug('No parser found for MIME-type / extension: ' + mimeType);
     }
 
     return this.parse(tokenizer, parserId, opts);
