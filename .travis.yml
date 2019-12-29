@@ -19,7 +19,7 @@ jobs:
     - yarn run test-coverage
     - yarn run send-coveralls
     - yarn add -D codacy-coverage
-    - yarn run send-codacy
+    - 'if [ "$TRAVIS_SECURE_ENV_VARS" == "true" ]; then yarn run send-codacy; fi'
     node_js: 10
 env:
   global:
