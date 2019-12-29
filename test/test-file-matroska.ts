@@ -22,9 +22,9 @@ describe('Matroska formats', () => {
 
     it('parse: "alac-in-matroska-short.mka"', async () => {
 
-      const dsfFilePath = path.join(matroskaSamplePath, 'alac-in-matroska-short.mka');
+      const mkaPath = path.join(matroskaSamplePath, 'alac-in-matroska-short.mka');
 
-      const {format} = await mm.parseFile(dsfFilePath, {duration: false});
+      const {format} = await mm.parseFile(mkaPath, {duration: false});
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
@@ -36,9 +36,9 @@ describe('Matroska formats', () => {
 
     it('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', async () => {
 
-      const dsfFilePath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).mka');
+      const mkaPath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).mka');
 
-      const {format, common} = await mm.parseFile(dsfFilePath, {duration: false});
+      const {format, common} = await mm.parseFile(mkaPath, {duration: false});
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
@@ -55,9 +55,9 @@ describe('Matroska formats', () => {
 
     it('parse: "big-buck-bunny_trailer-short.vp8.webm"', async () => {
 
-      const dsfFilePath = path.join(matroskaSamplePath, 'big-buck-bunny_trailer-short.vp8.webm');
+      const webmPath = path.join(matroskaSamplePath, 'big-buck-bunny_trailer-short.vp8.webm');
 
-      const {format} = await mm.parseFile(dsfFilePath, {duration: false});
+      const {format} = await mm.parseFile(webmPath, {duration: false});
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
@@ -68,9 +68,9 @@ describe('Matroska formats', () => {
 
     it('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {
 
-      const dsfFilePath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).opus.webm');
+      const webmPath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).opus.webm');
 
-      const {format} = await mm.parseFile(dsfFilePath, {duration: false});
+      const {format} = await mm.parseFile(webmPath, {duration: false});
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
@@ -78,6 +78,29 @@ describe('Matroska formats', () => {
       assert.approximately(format.duration, 5.006509896, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     });
+  });
+
+  // https://github.com/Borewit/music-metadata/issues/384
+  describe('Multiple audio tracks', () => {
+
+    it('parse: "matroska-test-w1-test5-short.mkv"', async () => {
+
+      const mkvPath = path.join(matroskaSamplePath, 'matroska-test-w1-test5-short.mkv');
+
+      const {format, common} = await mm.parseFile(mkvPath);
+
+      assert.deepEqual(format.container, 'EBML/matroska', 'format.container');
+      assert.deepEqual(format.tagTypes, [ 'matroska' ], 'format.tagTypes');
+
+      assert.deepEqual(format.codec, 'AAC', 'format.codec');
+      assert.approximately(format.duration, 3.417, 1 / 100000, 'format.duration');
+      assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
+      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+
+      assert.deepEqual(common.title, 'Elephant Dreams', 'common.title');
+      assert.deepEqual(common.album, 'Matroska Test Files - Wave 1', 'common.album');
+    });
+
   });
 
 });
