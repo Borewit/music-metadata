@@ -1,6 +1,5 @@
 import * as Token from 'token-types';
 import * as _debug from 'debug';
-import * as assert from 'assert';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { ITokenizer } from 'strtok3/lib/core';
 import { IOptions } from '../type';
@@ -35,7 +34,7 @@ export class MatroskaParser extends BasicParser {
     this.parserMap.set(DataType.string, e => this.readString(e));
     this.parserMap.set(DataType.binary, e => this.readBuffer(e));
     this.parserMap.set(DataType.uid, async e => await this.readUint(e) === 1);
-    this.parserMap.set(DataType.bool, e => this.readBuffer(e));
+    this.parserMap.set(DataType.bool, e => this.readFlag(e));
     this.parserMap.set(DataType.float, e => this.readFloat(e));
   }
 
@@ -65,15 +64,29 @@ export class MatroskaParser extends BasicParser {
 
       const audioTracks = matroska.segment.tracks;
       if (audioTracks && audioTracks.entries) {
-        const entries = audioTracks.entries.filter(entry => {
-          return entry.trackType === TrackType.audio.valueOf();
-        });
-        assert.equal(entries.length, 1, 'mapping limited to single audio track');
-        const audioTrack = entries[0];
 
-        this.metadata.setFormat('codec', audioTrack.codecID.replace('A_', ''));
-        this.metadata.setFormat('sampleRate', audioTrack.audio.samplingFrequency);
-        this.metadata.setFormat('numberOfChannels', audioTrack.audio.channels);
+        const audioTrack = audioTracks.entries
+          .filter(entry => {
+            return entry.trackType === TrackType.audio.valueOf();
+          })
+          .reduce((acc, cur) => {
+            if (!acc) {
+              return cur;
+            }
+            if (!acc.flagDefault && cur.flagDefault) {
+              return cur;
+            }
+            if (cur.trackNumber && cur.trackNumber < acc.trackNumber) {
+              return cur;
+            }
+            return acc;
+          }, null);
+
+        if (audioTrack) {
+          this.metadata.setFormat('codec', audioTrack.codecID.replace('A_', ''));
+          this.metadata.setFormat('sampleRate', audioTrack.audio.samplingFrequency);
+          this.metadata.setFormat('numberOfChannels', audioTrack.audio.channels);
+        }
 
         if (matroska.segment.tags) {
           matroska.segment.tags.tag.forEach(tag => {
