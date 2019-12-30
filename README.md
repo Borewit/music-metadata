@@ -170,17 +170,17 @@ mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
 Parses the provided audio stream for metadata.
 It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
 An extension (e.g.: `.mp3`), filename or path will also work.
-If the MIME-type or filename is not provided, or not understood, music-metadata will try to derive the type from the content.
+If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
 
 ```ts
-parseStream(stream: Stream.Readable, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+parseStream(stream: Stream.Readable, fileInfo?: IFIleInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Example:
 ```js
-mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
+mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838})
   .then( metadata => {
-     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+     console.log(util.inspect(metadata, {showHidden: false, depth: null}));
      someReadStream.destroy();
    });
 ```
@@ -190,12 +190,12 @@ mm.parseStream(someReadStream, 'audio/mpeg', { fileSize: 26838 })
 Parse metadata from an audio file, where the audio file is held in a [Buffer](https://nodejs.org/api/buffer.html).
 
 ```ts
-parseBuffer(buffer: Buffer, mimeType?: string, opts?: IOptions = {}): Promise<IAudioMetadata>
+parseBuffer(buffer: Buffer, fileInfo?: IFIleInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
 Example:
 ```js
-mm.parseBuffer(someBuffer, 'audio/mpeg', { fileSize: 26838 })
+mm.parseBuffer(someBuffer, 'audio/mpeg')
   .then( metadata => {
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
    });
@@ -265,9 +265,9 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
 ```js
-mm.parseStream(someReadStream, 'audio/mpeg', { duration: true, fileSize: 26838 })
+mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838}, {duration: true})
   .then( function (metadata) {
-     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+     console.log(util.inspect(metadata, {showHidden: false, depth: null}));
      someReadStream.close();
    });
 ```
