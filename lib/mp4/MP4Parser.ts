@@ -144,9 +144,9 @@ export class MP4Parser extends BasicParser {
 
     this.tracks = [];
 
-    let remainingFileSize = this.tokenizer.fileSize;
+    let remainingFileSize = this.tokenizer.fileInfo.size;
 
-    while (!this.tokenizer.fileSize || remainingFileSize > 0) {
+    while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
       try {
         await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
       } catch (error) {

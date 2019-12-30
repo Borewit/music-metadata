@@ -22,7 +22,7 @@ export const Parsers: IParser[] = [
     description: 'parseStream',
     initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
       const stream = fs.createReadStream(filePath);
-      return mm.parseStream(stream, mimeType, options).then(metadata => {
+      return mm.parseStream(stream, {mimeType}, options).then(metadata => {
         stream.close();
         return metadata;
       });
@@ -31,7 +31,7 @@ export const Parsers: IParser[] = [
     description: 'parseBuffer',
     initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
       const buffer = fs.readFileSync(filePath);
-      return mm.parseBuffer(buffer, mimeType, options);
+      return mm.parseBuffer(buffer, {mimeType}, options);
     }
   }
 ];

@@ -64,8 +64,8 @@ export class FlacParser extends AbstractID3Parser {
     }
     while (!blockHeader.lastBlock);
 
-    if (this.tokenizer.fileSize && this.metadata.format.duration) {
-      const dataSize = this.tokenizer.fileSize - this.tokenizer.position;
+    if (this.tokenizer.fileInfo.size && this.metadata.format.duration) {
+      const dataSize = this.tokenizer.fileInfo.size - this.tokenizer.position;
       this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
     }
   }

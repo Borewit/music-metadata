@@ -56,7 +56,7 @@ describe('Parse MPEG', () => {
 
       const streamReader = new SourceStream(buf);
 
-      await mm.parseStream(streamReader, 'audio/mpeg', {duration: true});
+      await mm.parseStream(streamReader, {mimeType: 'audio/mpeg'}, {duration: true});
     });
 
     it('should sync efficient, from a file', async function() {
@@ -354,7 +354,7 @@ describe('Parse MPEG', () => {
       let metadata: mm.IAudioMetadata;
       try {
         stream.path = undefined; // disable file size based calculation
-        metadata = await mm.parseStream(stream, 'audio/mpeg', {duration: true});
+        metadata = await mm.parseStream(stream, {mimeType: 'audio/mpeg'}, {duration: true});
       } finally {
         stream.close();
       }
