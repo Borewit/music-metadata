@@ -173,7 +173,7 @@ An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
 
 ```ts
-parseStream(stream: Stream.Readable, fileInfo?: IFIleInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+parseStream(stream: Stream.Readable, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Example:
@@ -190,7 +190,7 @@ mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838})
 Parse metadata from an audio file, where the audio file is held in a [Buffer](https://nodejs.org/api/buffer.html).
 
 ```ts
-parseBuffer(buffer: Buffer, fileInfo?: IFIleInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
+parseBuffer(buffer: Buffer, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
 Example:
