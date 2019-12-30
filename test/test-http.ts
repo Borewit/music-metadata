@@ -2,6 +2,7 @@ import { assert } from 'chai';
 
 import { IOptions, parseStream } from '../lib';
 import { IHttpClient, HttpClient } from './http-client';
+import { IFileInfo } from 'strtok3';
 
 interface IHttpClientTest {
   readonly name: string;
@@ -36,12 +37,14 @@ describe.skip('HTTP streaming', function() {
 
             const response = await test.client.get(url);
 
-            const options: IOptions = {};
+            const fileInfo: IFileInfo = {
+              mimeType: response.headers['content-type']
+            };
             if (hasContentLength) {
-              options.fileSize = parseInt(response.headers['content-length'], 10); // Always pass this in production
+              fileInfo.size = parseInt(response.headers['content-length'], 10); // Always pass this in production
             }
 
-            const tags = await parseStream(response.stream, {mimeType: response.headers['content-type']}, options);
+            const tags = await parseStream(response.stream, fileInfo);
             if (response.stream.destroy) {
               response.stream.destroy(); // Node >= v8 only
             }

@@ -226,7 +226,6 @@ ratingToStars(rating: number): number
 
 ### Options
 *   `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
-*   `fileSize`: only provide this in combination with `parseStream` function.
 *   `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
 *   `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
 *   `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.

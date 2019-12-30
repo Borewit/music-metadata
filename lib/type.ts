@@ -460,11 +460,6 @@ export interface IOptions {
   path?: string,
 
   /**
-   *  default: `undefined`, pass the
-   */
-  fileSize?: number,
-
-  /**
    * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
    */
   duration?: boolean;
