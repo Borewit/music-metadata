@@ -8,6 +8,8 @@ import { APEv2Parser } from './apev2/APEv2Parser';
 import { hasID3v1Header } from './id3v1/ID3v1Parser';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3';
 
+export { IFileInfo } from 'strtok3/lib/core';
+
 /**
  * Parse audio from Node Stream.Readable
  * @param stream - Stream to read the audio track from
