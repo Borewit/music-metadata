@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { IOptions, parseStream } from '../lib';
+import { parseStream } from '../lib';
 import { IHttpClient, HttpClient } from './http-client';
 import { IFileInfo } from 'strtok3';
 
