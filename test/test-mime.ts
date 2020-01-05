@@ -141,7 +141,7 @@ describe('MIME & extension mapping', () => {
 
     it('should recognize WMA', () => {
       // file-type returns 'video/x-ms-wmv'
-      return testFileType('asf.wma', 'ASF/audio');
+      return testFileType(path.join('asf', 'asf.wma'), 'ASF/audio');
     });
 
     it('should recognize MPEG-4 / m4a', () => {
@@ -173,7 +173,7 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize WMA', () => {
-      return testFileType('issue_57.wma', 'ASF/audio');
+      return testFileType(path.join('asf', 'issue_57.wma'), 'ASF/audio');
     });
 
     it('should recognize WavPack', () => {

@@ -326,7 +326,53 @@ export type FormatId =
   | 'audioMD5'
   | 'chapters';
 
+export interface IAudioTrack {
+  samplingFrequency?: number;
+  outputSamplingFrequency?: number;
+  channels?: number;
+  channelPositions?: Buffer;
+  bitDepth?: number
+}
+
+export interface IVideoTrack {
+  flagInterlaced?: boolean;
+  stereoMode?: number;
+  pixelWidth?: number;
+  pixelHeight?: number;
+  displayWidth?: number;
+  displayHeight?: number;
+  displayUnit?: number;
+  aspectRatioType?: number;
+  colourSpace?: Buffer;
+  gammaValue?: number;
+}
+
+export enum TrackType {
+  video = 0x01,
+  audio = 0x02,
+  complex = 0x03,
+  logo = 0x04,
+  subtitle= 0x11,
+  button = 0x12,
+  control = 0x20
+}
+
+export interface ITrackInfo {
+  type?: TrackType;
+  codecName?: string;
+  codecSettings?: string;
+  flagEnabled?: boolean;
+  flagDefault?: boolean;
+  flagLacing?: boolean;
+  name?: string;
+  language?: string;
+  audio?: IAudioTrack;
+  video?: IVideoTrack;
+}
+
 export interface IFormat {
+
+  readonly trackInfo: ITrackInfo[]
 
   /**
    * E.g.: 'flac'

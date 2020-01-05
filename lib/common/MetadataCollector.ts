@@ -2,7 +2,7 @@ import {
   FormatId,
   IAudioMetadata, ICommonTagsResult,
   IFormat,
-  INativeTags, IOptions, IPicture, IQualityInformation
+  INativeTags, IOptions, IQualityInformation, IPicture, ITrackInfo, TrackType
 } from '../type';
 
 import * as _debug from 'debug';
@@ -48,6 +48,8 @@ export interface INativeMetadataCollector extends IWarningCollector {
   setFormat(key: FormatId, value: any);
 
   addTag(tagType: TagType, tagId: string, value: any);
+
+  addStreamInfo(streamInfo: ITrackInfo);
 }
 
 /**
@@ -57,7 +59,8 @@ export interface INativeMetadataCollector extends IWarningCollector {
 export class MetadataCollector implements INativeMetadataCollector {
 
   public readonly format: IFormat = {
-    tagTypes: []
+    tagTypes: [],
+    trackInfo: []
   };
 
   public readonly native: INativeTags = {};
@@ -101,6 +104,11 @@ export class MetadataCollector implements INativeMetadataCollector {
    */
   public hasAny() {
     return Object.keys(this.native).length > 0;
+  }
+
+  public addStreamInfo(streamInfo: ITrackInfo) {
+    debug(`streamInfo: type=${TrackType[streamInfo.type]}, codec=${streamInfo.codecName}`);
+    this.format.trackInfo.push(streamInfo);
   }
 
   public setFormat(key: FormatId, value: any) {
