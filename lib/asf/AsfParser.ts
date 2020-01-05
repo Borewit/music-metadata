@@ -1,9 +1,6 @@
-'use strict';
-
 import { ITag } from '../type';
 import GUID from './GUID';
 import * as AsfObject from './AsfObject';
-
 import * as _debug from 'debug';
 import { BasicParser } from '../common/BasicParser';
 
@@ -72,8 +69,9 @@ export class AsfParser extends BasicParser {
           break;
 
         case GUID.CodecListObject.str:
-          // ToDo?
-          await this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
+          const codecs = await AsfObject.readCodecEntries(this.tokenizer);
+          const audioCodecs = codecs.filter(codec => codec.type.audioCodec).map(codec => codec.codecName).join('/');
+          this.metadata.setFormat('codec', audioCodecs);
           break;
 
         case GUID.StreamBitratePropertiesObject.str:

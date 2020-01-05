@@ -1,12 +1,10 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
 import GUID from "../lib/asf/GUID";
-import {AsfUtil} from "../lib/asf/AsfUtil";
-import {DataType} from "../lib/asf/AsfObject";
-import {Parsers} from './metadata-parsers';
-
-const t = assert;
+import { AsfUtil } from "../lib/asf/AsfUtil";
+import { DataType } from "../lib/asf/AsfObject";
+import { Parsers } from './metadata-parsers';
 
 describe("Parse ASF", () => {
 
@@ -63,7 +61,7 @@ describe("Parse ASF", () => {
 
     tests.forEach(test => {
       const buf = Buffer.from(test.raw, "binary");
-      t.strictEqual(AsfUtil.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
+      assert.strictEqual(AsfUtil.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
     });
 
   });
@@ -73,27 +71,28 @@ describe("Parse ASF", () => {
     const asfFilePath = path.join(__dirname, 'samples', 'asf.wma');
 
     function checkFormat(format) {
-      t.strictEqual(format.container, 'ASF/audio', 'format.container');
-      t.strictEqual(format.duration, 244.885, 'format.duration');
-      t.strictEqual(format.bitrate, 192639, 'format.bitrate');
+      assert.strictEqual(format.container, 'ASF/audio', 'format.container');
+      assert.strictEqual(format.codec, 'Windows Media Audio 9.1', 'format.codec');
+      assert.strictEqual(format.duration, 244.885, 'format.duration');
+      assert.strictEqual(format.bitrate, 192639, 'format.bitrate');
     }
 
     function checkCommon(common) {
-      t.strictEqual(common.title, "Don't Bring Me Down", 'common.title');
-      t.deepEqual(common.artist, 'Electric Light Orchestra', 'common.artist');
-      t.deepEqual(common.albumartist, 'Electric Light Orchestra', 'common.albumartist');
-      t.strictEqual(common.album, 'Discovery', 'common.album');
-      t.strictEqual(common.year, 2001, 'common.year');
-      t.deepEqual(common.track, {no: 9, of: null}, 'common.track 9/0');
-      t.deepEqual(common.disk, {no: null, of: null}, 'common.disk 0/0');
-      t.deepEqual(common.genre, ['Rock'], 'common.genre');
+      assert.strictEqual(common.title, "Don't Bring Me Down", 'common.title');
+      assert.deepEqual(common.artist, 'Electric Light Orchestra', 'common.artist');
+      assert.deepEqual(common.albumartist, 'Electric Light Orchestra', 'common.albumartist');
+      assert.strictEqual(common.album, 'Discovery', 'common.album');
+      assert.strictEqual(common.year, 2001, 'common.year');
+      assert.deepEqual(common.track, {no: 9, of: null}, 'common.track 9/0');
+      assert.deepEqual(common.disk, {no: null, of: null}, 'common.disk 0/0');
+      assert.deepEqual(common.genre, ['Rock'], 'common.genre');
     }
 
     function checkNative(native: mm.INativeTagDict) {
 
-      t.deepEqual(native['WM/AlbumTitle'], ['Discovery'], 'native: WM/AlbumTitle');
-      t.deepEqual(native['WM/BeatsPerMinute'], [117], 'native: WM/BeatsPerMinute');
-      t.deepEqual(native.REPLAYGAIN_TRACK_GAIN, ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN');
+      assert.deepEqual(native['WM/AlbumTitle'], ['Discovery'], 'native: WM/AlbumTitle');
+      assert.deepEqual(native['WM/BeatsPerMinute'], [117], 'native: WM/BeatsPerMinute');
+      assert.deepEqual(native.REPLAYGAIN_TRACK_GAIN, ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN');
     }
 
     describe("should decode an ASF audio file (.wma)", () => {
@@ -101,11 +100,11 @@ describe("Parse ASF", () => {
       Parsers.forEach(parser => {
         it(parser.description, async () => {
           const metadata = await parser.initParser(asfFilePath, 'audio/x-ms-wma');
-          t.isDefined(metadata, 'metadata');
+          assert.isDefined(metadata, 'metadata');
           checkFormat(metadata.format);
           checkCommon(metadata.common);
-          t.isDefined(metadata.native, 'metadata.native');
-          t.isDefined(metadata.native.asf, 'should include native ASF tags');
+          assert.isDefined(metadata.native, 'metadata.native');
+          assert.isDefined(metadata.native.asf, 'should include native ASF tags');
           checkNative(mm.orderTags(metadata.native.asf));
         });
       });
@@ -134,16 +133,21 @@ describe("Parse ASF", () => {
 
       const filePath = path.join(__dirname, 'samples', '13 Thirty Dirty Birds.wma');
 
-      const metadata = await mm.parseFile(filePath);
+      const {format, common, native} = await mm.parseFile(filePath);
 
-      const asf = mm.orderTags(metadata.native.asf);
+      assert.strictEqual(format.container, 'ASF/audio', 'format.container');
+      assert.strictEqual(format.codec, 'Windows Media Audio 9', 'format.codec');
+      assert.approximately(format.duration, 16.044, 1 / 10000, 'format.duration');
+      assert.approximately(format.bitrate, 128639, 1, 'format.bitrate');
+
+      const asf = mm.orderTags(native.asf);
       // ToDo: Contains some WM/... tags which could be parsed / mapped better
 
-      assert.strictEqual(metadata.common.title, "Thirty Dirty Birds", "metadata.common.title");
-      assert.strictEqual(metadata.common.artist, "The Red Hot Chili Peppers", "metadata.common.artist");
-      assert.strictEqual(metadata.common.date, "2003", "metadata.common.date");
-      assert.deepEqual(metadata.common.label, ["Capitol"], "metadata.common.label");
-      assert.strictEqual(metadata.common.track.no, 13, "metadata.common.track.no");
+      assert.strictEqual(common.title, "Thirty Dirty Birds", "metadata.common.title");
+      assert.strictEqual(common.artist, "The Red Hot Chili Peppers", "metadata.common.artist");
+      assert.strictEqual(common.date, "2003", "metadata.common.date");
+      assert.deepEqual(common.label, ["Capitol"], "metadata.common.label");
+      assert.strictEqual(common.track.no, 13, "metadata.common.track.no");
 
       assert.exists(asf);
     });
