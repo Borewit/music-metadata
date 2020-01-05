@@ -7,7 +7,7 @@ import * as Token from 'token-types';
 import GUID from './GUID';
 import { AsfUtil } from './AsfUtil';
 import { AttachedPictureType } from '../id3v2/ID3v2Token';
-import { IGetToken } from 'strtok3/lib/core';
+import { IGetToken, ITokenizer } from 'strtok3/lib/core';
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
@@ -332,6 +332,78 @@ export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> 
       extensionDataSize: buf.readUInt32LE(off + 18)
     };
   }
+}
+
+/**
+ * 3.5: The Codec-List-Object interface.
+ */
+interface ICodecListObjectHeader {
+  entryCount: number
+}
+
+/**
+ * 3.5: The Codec List Object provides user-friendly information about the codecs and formats used to encode the content found in the ASF file.
+ * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
+ */
+const CodecListObjectHeader: IGetToken<ICodecListObjectHeader> = {
+  len: 20,
+  get: (buf: Buffer, off: number): ICodecListObjectHeader => {
+    return {
+      entryCount: buf.readUInt16LE(off + 16)
+    };
+  }
+};
+
+export interface ICodecEntry {
+  type: {
+    videoCodec: boolean,
+    audioCodec: boolean
+  },
+  codecName: string,
+  description: string,
+  information: Buffer
+}
+
+async function readString(tokenizer: ITokenizer): Promise<string> {
+  const length = await tokenizer.readNumber(Token.UINT16_LE);
+  return (await tokenizer.readToken(new Token.StringType(length * 2, 'utf16le'))).replace('\0', '');
+}
+
+/**
+ * 3.5: Read the Codec-List-Object, which provides user-friendly information about the codecs and formats used to encode the content found in the ASF file.
+ * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
+ */
+export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEntry[]> {
+  const codecHeader = await tokenizer.readToken(CodecListObjectHeader);
+  const entries: ICodecEntry[] = [];
+  for (let i = 0; i < codecHeader.entryCount; ++i) {
+    entries.push(await readCodecEntry(tokenizer));
+  }
+  return entries;
+}
+
+async function readInformation(tokenizer: ITokenizer): Promise<Buffer> {
+  const length = await tokenizer.readNumber(Token.UINT16_LE);
+  const buf = Buffer.alloc(length);
+  await tokenizer.readBuffer(buf);
+  return buf;
+}
+
+/**
+ * Read Codec-Entries
+ * @param tokenizer
+ */
+async function readCodecEntry(tokenizer: ITokenizer): Promise<ICodecEntry> {
+  const type = await tokenizer.readNumber(Token.UINT16_LE);
+  return {
+    type: {
+      videoCodec: (type & 0x0001) === 0x0001,
+      audioCodec: (type & 0x0002) === 0x0002
+    },
+    codecName: await readString(tokenizer),
+    description: await readString(tokenizer),
+    information: await readInformation(tokenizer)
+  };
 }
 
 /**
