@@ -1,13 +1,12 @@
 'use strict';
 
 import * as initDebug from 'debug';
-import * as FileType from 'file-type';
 import * as strtok3 from 'strtok3/lib/core';
 import * as assert from 'assert';
 
 import common from '../common/Util';
 
-import { IPicture, IOptions, IRandomReader, IApeHeader } from '../type';
+import { IOptions, IRandomReader, IApeHeader } from '../type';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { BasicParser } from '../common/BasicParser';
 import {
@@ -166,22 +165,10 @@ export class APEv2Parser extends BasicParser {
             const description = picData.toString('utf8', 0, zero);
 
             const data = Buffer.from(picData.slice(zero + 1));
-            const fileType = FileType(data);
-
-            if (fileType) {
-              if (fileType.mime.indexOf('image/') === 0) {
-                const picture: IPicture = {
-                  description,
-                  data,
-                  format: fileType.mime
-                };
-                this.metadata.addTag(tagFormat, key, picture);
-              } else {
-                debug(`Unexpected binary tag of type': ${fileType.mime}`);
-              }
-            } else {
-              debug(`Failed to determine file type for binary tag: ${key}`);
-            }
+            this.metadata.addTag(tagFormat, key, {
+              description,
+              data
+            });
           }
           break;
 

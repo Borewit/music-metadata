@@ -2,16 +2,17 @@ import {
   FormatId,
   IAudioMetadata, ICommonTagsResult,
   IFormat,
-  INativeTags, IOptions, IQualityInformation
+  INativeTags, IOptions, IPicture, IQualityInformation
 } from '../type';
 
-import * as _debug from "debug";
-import {IGenericTag, TagType, isSingleton, isUnique} from "./GenericTagTypes";
-import {CombinedTagMapper} from "./CombinedTagMapper";
-import {CommonTagMapper} from "./GenericTagMapper";
-import {toRatio} from "./Util";
+import * as _debug from 'debug';
+import { IGenericTag, TagType, isSingleton, isUnique } from './GenericTagTypes';
+import { CombinedTagMapper } from './CombinedTagMapper';
+import { CommonTagMapper } from './GenericTagMapper';
+import { toRatio } from './Util';
+import * as fileType from 'file-type';
 
-const debug = _debug("music-metadata:collector");
+const debug = _debug('music-metadata:collector');
 
 const TagPriority: TagType[] = ['matroska', 'APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'ID3v1'];
 
@@ -165,7 +166,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'picture':
-        tag.value.format = CommonTagMapper.fixPictureMimeType(tag.value.format);
+        tag.value = this.postFixPicture(tag.value as IPicture);
         break;
 
       case 'totaltracks':
@@ -224,7 +225,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'gapless': // iTunes gap-less flag
-        tag.value = tag.value === "1"; // boolean
+        tag.value = tag.value === '1'; // boolean
         break;
 
       case 'isrc': // Only keep unique values
@@ -236,7 +237,9 @@ export class MetadataCollector implements INativeMetadataCollector {
       // nothing to do
     }
 
-    this.setGenericTag(tagType, tag);
+    if (tag.value !== null) {
+      this.setGenericTag(tagType, tag);
+    }
   }
 
   /**
@@ -250,6 +253,31 @@ export class MetadataCollector implements INativeMetadataCollector {
       quality: this.quality,
       common: this.common
     };
+  }
+
+  /**
+   * Fix some common issues with picture object
+   * @param pictureType
+   */
+  private postFixPicture(picture: IPicture): IPicture {
+    if (picture.data.length > 0) {
+      if (!picture.format) {
+        const type = fileType(picture.data);
+        if (type) {
+          picture.format = type.mime;
+        } else {
+          return null;
+        }
+      }
+      picture.format = picture.format.toLocaleLowerCase();
+      switch (picture.format) {
+        case 'image/jpg':
+          picture.format = 'image/jpeg';  // ToDo: register warning
+      }
+      return picture;
+    }
+    this.addWarning(`Empty picture tag found`);
+    return null;
   }
 
   /**

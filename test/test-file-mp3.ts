@@ -62,6 +62,23 @@ describe('Parse MP3 files', () => {
     assert.deepEqual(format.tagTypes, [ 'ID3v2.3', 'ID3v1' ], 'format.tagTypes');
   });
 
+  // https://github.com/Borewit/music-metadata/issues/398
+  it('Handle empty picture tag', async () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'empty-picture-tag.mp3');
+
+    const {format, common, quality} = await mm.parseFile(filePath);
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+    assert.strictEqual(common.title, 'Frankie And Johnny', 'common.title');
+    assert.strictEqual(common.artist, 'Sam Cooke', 'common.artist');
+    assert.strictEqual(common.album, 'Greatest Hits', 'common.album,');
+    assert.deepEqual(common.track, {no: 21, of: null}, 'common.track,');
+    assert.deepEqual(common.year, 1998, 'common.year,');
+    assert.isUndefined(common.picture, 'common.picturh');
+    assert.includeDeepMembers(quality.warnings, [{message: 'Empty picture tag found'}], 'quality.warnings includes Empty picture tag found');
+  });
+
   describe('should handle incomplete MP3 file', () => {
 
     const filePath = path.join(samplePath, 'incomplete.mp3');
