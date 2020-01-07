@@ -1,5 +1,4 @@
 import * as generic from './GenericTagTypes';
-import * as assert from 'assert';
 import {ITag} from '../type';
 import {Genres} from '../id3v1/ID3v1Parser';
 import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector';
@@ -47,16 +46,6 @@ export class CommonTagMapper implements IGenericTagMapper {
       .filter(val => {
         return val !== undefined;
       }).join('/');
-  }
-
-  public static fixPictureMimeType(pictureType: string): string {
-    assert.ok(pictureType, 'pictureType should be defined');
-    pictureType = pictureType.toLocaleLowerCase();
-    switch (pictureType) {
-      case 'image/jpg':
-        return 'image/jpeg';  // ToDo: register warning
-    }
-    return pictureType;
   }
 
   public static toIntOrNull(str: string): number {
