@@ -2091,6 +2091,11 @@ pathval@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/pathval/-/pathval-1.1.0.tgz#b942e6d4bde653005ef6b71361def8727d0645e0"
 
+peek-readable@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/peek-readable/-/peek-readable-3.1.0.tgz#250b08b7de09db8573d7fd8ea475215bbff14348"
+  integrity sha512-KGuODSTV6hcgdZvDrIDBUkN0utcAVj1LL7FfGbM0viKTtCHmtZcuEJ+lGqsp0fTFkGqesdtemV2yUSMeyy3ddA==
+
 performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
@@ -2793,14 +2798,14 @@ strip-json-comments@^3.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.0.1.tgz#85713975a91fb87bf1b305cca77395e40d2a64a7"
   integrity sha512-VTyMAUfdm047mwKl+u79WIdrZxtFtn+nBxHeb844XBQ9uMNTuTHdx2hc5RiAJYqwTj3wc/xe5HLSdJSkJ+WfZw==
 
-strtok3@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-5.0.0.tgz#cf48cdede0b7641eb97e62918abce18441cff688"
-  integrity sha512-HpdgEUSkMqlTjO7uWEBvWHEKBYqXCbVeihlE+sa0keGsfVXspVxye1dPa4OYvnzOJsErzn6ohQU1U/ozcVAPKQ==
+strtok3@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-5.0.1.tgz#f89e09fa024dff82e39c160faf8d8706c24e7d21"
+  integrity sha512-AWliiIjyb87onqO8pM+1Hozm+PPcR4YYIWbFUT5OKQ+tOMwgdT8HwJd/IS8v3/gKdAtE5aE2p3FhcWqryuZPLQ==
   dependencies:
     "@tokenizer/token" "^0.1.0"
     debug "^4.1.1"
-    then-read-stream "^3.0.0"
+    peek-readable "^3.1.0"
 
 supports-color@6.0.0:
   version "6.0.0"
@@ -2848,11 +2853,6 @@ test-exclude@^6.0.0:
 text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
-
-then-read-stream@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/then-read-stream/-/then-read-stream-3.0.0.tgz#4a4ec37e23f18135b56fbc61670b6e8195e545b2"
-  integrity sha512-4rrXPPD+MRft1kzKj8qe9Lo0qoz+uEkwn6QxWSM4iXux3p7MP72Oq/QJ849/yhmHweOJJI8jJsMjKvAjI33+2A==
 
 through@^2.3.6:
   version "2.3.8"
