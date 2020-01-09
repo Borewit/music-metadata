@@ -17,7 +17,7 @@
     "forin": false,
     "arrow-parens": [true, "ban-single-arg-parens"],
     "no-implicit-dependencies": [true, "dev"],
-    "no-submodule-imports": [true, "strtok3"],
+    "no-submodule-imports": [true, "strtok3", "file-type"],
     "no-var-requires": true
   },
   "jsRules": {

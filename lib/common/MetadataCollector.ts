@@ -10,7 +10,7 @@ import { IGenericTag, TagType, isSingleton, isUnique } from './GenericTagTypes';
 import { CombinedTagMapper } from './CombinedTagMapper';
 import { CommonTagMapper } from './GenericTagMapper';
 import { toRatio } from './Util';
-import * as fileType from 'file-type';
+import * as FileType from 'file-type/core';
 
 const debug = _debug('music-metadata:collector');
 
@@ -166,8 +166,13 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'picture':
-        tag.value = this.postFixPicture(tag.value as IPicture);
-        break;
+        this.postFixPicture(tag.value as IPicture).then(picture => {
+          if (picture !== null) {
+            tag.value = picture;
+            this.setGenericTag(tagType, tag);
+          }
+        });
+        return;
 
       case 'totaltracks':
         this.common.track.of = CommonTagMapper.toIntOrNull(tag.value);
@@ -259,12 +264,12 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Fix some common issues with picture object
    * @param pictureType
    */
-  private postFixPicture(picture: IPicture): IPicture {
+  private async postFixPicture(picture: IPicture): Promise<IPicture> {
     if (picture.data.length > 0) {
       if (!picture.format) {
-        const type = fileType(picture.data);
-        if (type) {
-          picture.format = type.mime;
+        const fileType = await FileType.fromBuffer(picture.data);
+        if (fileType) {
+          picture.format = fileType.mime;
         } else {
           return null;
         }
