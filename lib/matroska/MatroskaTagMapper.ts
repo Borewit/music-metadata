@@ -5,6 +5,7 @@ import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
  * EBML Tag map
  */
 const ebmlTagMap: INativeTagMap = {
+  'segment:title': 'title',
   'album:ARITST': 'albumartist',
   'album:ARITSTSORT': 'albumartistsort',
   'album:TITLE': 'album',
@@ -16,7 +17,8 @@ const ebmlTagMap: INativeTagMap = {
   'track:MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',
   'track:MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
   'track:MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
-  'track:PUBLISHER': 'label'
+  'track:PUBLISHER': 'label',
+  picture: 'picture'
 };
 
 export class MatroskaTagMapper extends CaseInsensitiveTagMap {

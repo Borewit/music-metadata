@@ -148,6 +148,18 @@ export interface ITrackElement {
   entries?: ITrackEntry[];
 }
 
+export interface IAttachmedFile {
+  description?: string;
+  name: string;
+  mimeType: string;
+  data: Buffer;
+  uid: string;
+}
+
+export interface IAttachments {
+  attachedFiles?: IAttachmedFile[];
+}
+
 export interface IMatroskaSegment {
   metaSeekInfo?: IMetaSeekInformation;
   seekHeads?: ISeekHead[]
@@ -155,6 +167,7 @@ export interface IMatroskaSegment {
   tracks?: ITrackElement;
   tags?: ITags;
   cues?: ICuePoint[];
+  attachments?: IAttachments
 }
 
 export interface IEbmlElements {
