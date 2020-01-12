@@ -194,6 +194,27 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.equal(id3v23.MCDI[0].length, 804, 'TOC');
     });
 
+    // http://id3.org/id3v2.3.0#General_encapsulated_object
+    // Issue: https://github.com/Borewit/music-metadata/issues/406
+    it('4.16 GEOB: General encapsulated object', async () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'issue-406-geob.mp3');
+
+      const {format, common, native} = await mm.parseFile(filePath);
+
+      await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'MPEG', 'format.container');
+      assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
+
+      assert.strictEqual(common.title, 'test', 'common.title');
+
+      const id3v2 = mm.orderTags(native['ID3v2.3']);
+      assert.deepEqual(id3v2.GEOB[0].type, 'application/octet-stream', 'ID3v2.GEOB[0].type');
+      assert.deepEqual(id3v2.GEOB[0].filename, '', 'ID3v2.GEOB[0].filename');
+      assert.deepEqual(id3v2.GEOB[0].description, 'Serato Overview', 'ID3v2.GEOB[0].description');
+    });
+
   });
 
 });

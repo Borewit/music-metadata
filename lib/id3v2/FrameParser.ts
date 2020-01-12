@@ -178,10 +178,10 @@ export default class FrameParser {
           const mimeType = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           offset = fzero + 1;
           fzero = common.findZero(b, offset, length - offset, encoding);
-          const filename = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
+          const filename = common.decodeString(b.slice(offset, fzero), defaultEnc);
           offset = fzero + 1;
           fzero = common.findZero(b, offset, length - offset, encoding);
-          const description = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
+          const description = common.decodeString(b.slice(offset, fzero), defaultEnc);
           output = {
             type: mimeType,
             filename,
