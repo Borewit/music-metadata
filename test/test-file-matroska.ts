@@ -57,13 +57,20 @@ describe('Matroska formats', () => {
 
       const webmPath = path.join(matroskaSamplePath, 'big-buck-bunny_trailer-short.vp8.webm');
 
-      const {format} = await mm.parseFile(webmPath, {duration: false});
+      const {format, common} = await mm.parseFile(webmPath, {duration: false});
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'VORBIS', 'format.codec');
       assert.approximately(format.duration, 7.143, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+
+      // common metadata
+      assert.strictEqual(common.title, 'Big Buck Bunny', 'common.title');
+      assert.isDefined(common.picture, 'common.picture');
+      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture[0].format');
+      assert.strictEqual(common.picture[0].description, 'Poster', 'common.picture[0].description');
+      assert.strictEqual(common.picture[0].name, 'Big buck bunny poster.jpg', 'common.picture[0].name');
     });
 
     it('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {

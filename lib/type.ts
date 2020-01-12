@@ -21,6 +21,10 @@ export interface IPicture {
    * Picture type
    */
   type?: string;
+  /**
+   * File name
+   */
+  name?: string;
 }
 
 /**

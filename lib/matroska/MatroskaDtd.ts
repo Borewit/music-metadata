@@ -203,9 +203,10 @@ export const elements: IContainerType = {
         name: 'attachments',
         container: {
           0x61a7: {
-            name: 'attachedFile',
+            name: 'attachedFiles',
+            multiple: true,
             container: {
-              0x467e: {name: 'description', value: DataType.uid},
+              0x467e: {name: 'description', value: DataType.string},
               0x466e:  {name: 'name', value: DataType.string},
               0x4660:  {name: 'mimeType', value: DataType.string},
               0x465c: {name: 'data', value: DataType.binary},
