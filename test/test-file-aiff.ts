@@ -89,7 +89,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       });
     });
 
-    describe.skip('AIFF-C file (9 samples) with trailing junk after the FORM chunk', () => {
+    describe('AIFF-C file (9 samples) with trailing junk after the FORM chunk', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async () => {
