@@ -17,7 +17,7 @@ const clients: IHttpClientTest[] = [
 ];
 
 // Skipped: https://github.com/Borewit/music-metadata/issues/160
-describe.skip('HTTP streaming', function() {
+describe('HTTP streaming', function() {
 
   // Increase time-out to 15 seconds because we retrieve files over HTTP(s)
   this.timeout(15 * 1000);
@@ -48,7 +48,8 @@ describe.skip('HTTP streaming', function() {
             if (response.stream.destroy) {
               response.stream.destroy(); // Node >= v8 only
             }
-            assert.strictEqual(tags.format.codec, 'MP4A');
+            assert.strictEqual(tags.format.container, 'isom/mp42/M4A');
+            assert.strictEqual(tags.format.codec, 'MPEG-4/AAC');
             assert.strictEqual(tags.format.lossless, false);
 
             assert.strictEqual(tags.common.title, 'We Made a Plan');
