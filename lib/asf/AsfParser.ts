@@ -1,4 +1,4 @@
-import { ITag } from '../type';
+import { ITag, TrackType } from '../type';
 import GUID from './GUID';
 import * as AsfObject from './AsfObject';
 import * as _debug from 'debug';
@@ -70,6 +70,12 @@ export class AsfParser extends BasicParser {
 
         case GUID.CodecListObject.str:
           const codecs = await AsfObject.readCodecEntries(this.tokenizer);
+          codecs.forEach(codec => {
+            this.metadata.addStreamInfo({
+              type: codec.type.videoCodec ? TrackType.video : TrackType.audio,
+              codecName: codec.codecName
+            });
+          });
           const audioCodecs = codecs.filter(codec => codec.type.audioCodec).map(codec => codec.codecName).join('/');
           this.metadata.setFormat('codec', audioCodecs);
           break;

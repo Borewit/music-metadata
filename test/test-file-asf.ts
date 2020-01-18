@@ -68,7 +68,7 @@ describe("Parse ASF", () => {
 
   describe("parse", () => {
 
-    const asfFilePath = path.join(__dirname, 'samples', 'asf.wma');
+    const asfFilePath = path.join(__dirname, 'samples', 'asf');
 
     function checkFormat(format) {
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');
@@ -99,7 +99,7 @@ describe("Parse ASF", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async () => {
-          const metadata = await parser.initParser(asfFilePath, 'audio/x-ms-wma');
+          const metadata = await parser.initParser(path.join(asfFilePath, 'asf.wma'), 'audio/x-ms-wma');
           assert.isDefined(metadata, 'metadata');
           checkFormat(metadata.format);
           checkCommon(metadata.common);
@@ -115,7 +115,7 @@ describe("Parse ASF", () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async () => {
-          const filePath = path.join(__dirname, 'samples', 'issue_57.wma');
+          const filePath = path.join(asfFilePath, 'issue_57.wma');
           const metadata = await parser.initParser(filePath, 'audio/x-ms-wma');
           const asf = mm.orderTags(metadata.native.asf);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
@@ -131,7 +131,7 @@ describe("Parse ASF", () => {
      */
     it("should be able to parse truncated .wma file", async () => {
 
-      const filePath = path.join(__dirname, 'samples', '13 Thirty Dirty Birds.wma');
+      const filePath = path.join(asfFilePath, '13 Thirty Dirty Birds.wma');
 
       const {format, common, native} = await mm.parseFile(filePath);
 

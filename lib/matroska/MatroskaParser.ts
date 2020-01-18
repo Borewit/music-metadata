@@ -2,15 +2,10 @@ import * as Token from 'token-types';
 import * as _debug from 'debug';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { ITokenizer } from 'strtok3/lib/core';
-import { IOptions } from '../type';
+import { IOptions, ITrackInfo } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { BasicParser } from '../common/BasicParser';
-import {
-  DataType,
-  IContainerType,
-  IHeader, IMatroskaDoc,
-  ITree, TargetType, TrackType
-} from './types';
+import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from './types';
 import * as matroskaDtd from './MatroskaDtd';
 
 const debug = _debug('music-metadata:parser:matroska');
@@ -65,6 +60,22 @@ export class MatroskaParser extends BasicParser {
 
       const audioTracks = matroska.segment.tracks;
       if (audioTracks && audioTracks.entries) {
+
+        audioTracks.entries.forEach(entry => {
+          const stream: ITrackInfo = {
+            codecName: entry.codecID.replace('A_', '').replace('V_', ''),
+            codecSettings: entry.codecSettings,
+            flagDefault: entry.flagDefault,
+            flagLacing: entry.flagLacing,
+            flagEnabled: entry.flagEnabled,
+            language: entry. language,
+            name: entry.name,
+            type: entry.trackType,
+            audio: entry.audio,
+            video: entry.video
+          };
+          this.metadata.addStreamInfo(stream);
+        });
 
         const audioTrack = audioTracks.entries
           .filter(entry => {

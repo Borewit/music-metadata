@@ -239,26 +239,70 @@ To enforce parsing the entire file if needed you should set `duration` to `true`
 ### Metadata result
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
-*   [`format: IFormat`](#format) Audio format information
-*   `native: INativeTags` List of native (original) tags found in the parsed audio file.
-*   [`common: ICommonTagsResult`](doc/common_metadata.md) Is a generic (abstract) way of reading metadata information. 
+*   [`metadata.format`](#metadataformat) Audio format information
+*   [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information. 
+*   [`metadata.trackInfo`](#metadatatrackInfo) Is a generic (abstract) way of reading metadata information. 
+*   `metadata.native` List of native (original) tags found in the parsed audio file.
   
-#### Format
+#### `metadata.format`
+
+The questionmark `?` indicates the property is optional. 
   
 Audio format information. Defined in the TypeScript `IFormat` interface:
-*   `container?: string` Audio encoding format. e.g.: 'flac'
-*   `codec?` Name of the codec (algorithm used for the audio compression)
-*   `codecProfile?: string` Codec profile / settings
-*   `tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
-*   `duration?: number` Duration in seconds
-*   `bitrate?: number` Number bits per second of encoded audio file
-*   `sampleRate?: number` Sampling rate in Samples per second (S/s)
-*   `bitsPerSample?: number` Audio bit depth
-*   `lossless?: boolean` True if lossless,  false for lossy encoding
-*   `numberOfChannels?: number` Number of audio channels
-*   `numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
+*   `format.container?: string` Audio encoding format. e.g.: 'flac'
+*   `format.codec?` Name of the codec (algorithm used for the audio compression)
+*   `format.codecProfile?: string` Codec profile / settings
+*   `format.tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
+*   `format.duration?: number` Duration in seconds
+*   `format.bitrate?: number` Number bits per second of encoded audio file
+*   `format.sampleRate?: number` Sampling rate in Samples per second (S/s)
+*   `format.bitsPerSample?: number` Audio bit depth
+*   `format.lossless?: boolean` True if lossless,  false for lossy encoding
+*   `format.numberOfChannels?: number` Number of audio channels
+*   `format.numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
+
+#### `metadata.trackInfo`
+
+To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental** `metadata.trackInfo` has been added,
+    
+`metadata.trackInfo` is either `undefined` or has an **array** of [trackInfo](#trackinfo)
   
-#### Common
+##### trackInfo
+  
+Audio format information. Defined in the TypeScript `IFormat` interface:
+*   `trackInfo.type?: TrackType` Track type
+*   `trackInfo.codecName?: string` Codec name
+*   `trackInfo.codecSettings?: string` Codec settings
+*   `trackInfo.flagEnabled?: boolean` Set if the track is usable, default: `true`
+*   `trackInfo.flagDefault?: boolean` Set if that track (audio, video or subs) SHOULD be active if no language found matches the user preference.
+*   `trackInfo.flagLacing?: boolean` Set if the track **may** contain blocks using lacing
+*   `trackInfo.name?: string` A human-readable track name.
+*   `trackInfo.language?: string` Specifies the language of the track
+*   `trackInfo.audio?: IAudioTrack`, see [`trackInfo.audioTrack`](#trackinfoaudiotrack)
+*   `trackInfo.video?: IVideoTrack`, see [`trackInfo.videoTrack`](#trackinfovideotrack)
+
+##### `trackInfo.audioTrack`
+
+*   `audioTrack.samplingFrequency?: number`
+*   `audioTrack.outputSamplingFrequency?: number`
+*   `audioTrack.channels?: number`
+*   `audioTrack.channelPositions?: Buffer`
+*   `audioTrack.bitDepth?: number`
+
+##### `trackInfo.videoTrack`
+
+*   `videoTrack.flagInterlaced?: boolean`
+*   `videoTrack.stereoMode?: number`
+*   `videoTrack.pixelWidth?: number`
+*   `videoTrack.pixelHeight?: number`
+*   `videoTrack.displayWidth?: number`
+*   `videoTrack.displayHeight?: number`
+*   `videoTrack.displayUnit?: number`
+*   `videoTrack.aspectRatioType?: number`
+*   `videoTrack.colourSpace?: Buffer`
+*   `videoTrack.gammaValue?: number`
+  
+#### `metadata.common`
 
 [Common tag documentation](doc/common_metadata.md) is automatically generated.
 

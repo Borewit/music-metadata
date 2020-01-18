@@ -38,7 +38,7 @@ export interface ISegmentInformation {
 export interface ITrackEntry {
   uid?: Buffer;
   trackNumber?: number;
-  trackType?: number;
+  trackType?: TrackType;
   audio?: ITrackAudio;
   video?: ITrackVideo;
   flagEnabled?: boolean;

@@ -6,7 +6,7 @@ import { BasicParser } from '../common/BasicParser';
 import { Atom } from './Atom';
 import * as AtomToken from './AtomToken';
 import { Genres } from '../id3v1/ID3v1Parser';
-import { IChapter } from '../type';
+import { IChapter, ITrackInfo, TrackType } from '../type';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -163,12 +163,30 @@ export class MP4Parser extends BasicParser {
     const formatList: string[] = [];
     this.tracks.forEach(track => {
       const trackFormats: string[] = [];
+
       track.soundSampleDescription.forEach(ssd => {
+        const streamInfo: ITrackInfo = {};
         const encoderInfo = encoderDict[ssd.dataFormat];
         if (encoderInfo) {
           trackFormats.push(encoderInfo.format);
+          streamInfo.codecName = encoderInfo.format;
+        } else {
+          streamInfo.codecName = `<${ssd.dataFormat}>`;
         }
+        if (ssd.description) {
+          const {description} = ssd;
+          if (description.sampleRate > 0) {
+            streamInfo.type = TrackType.audio;
+            streamInfo.audio = {
+              samplingFrequency: description.sampleRate,
+              bitDepth: description.sampleSize,
+              channels: description.numAudioChannels
+            };
+          }
+        }
+        this.metadata.addStreamInfo(streamInfo);
       });
+
       if (trackFormats.length >= 1) {
         formatList.push(trackFormats.join('/'));
       }
