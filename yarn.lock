@@ -1058,13 +1058,13 @@ file-entry-cache@^5.0.1:
   dependencies:
     flat-cache "^2.0.1"
 
-file-type@*, file-type@^13.1.0:
-  version "13.1.0"
-  resolved "https://registry.yarnpkg.com/file-type/-/file-type-13.1.0.tgz#5cfeade4745fad9504bb1435b5b5003af272b5a8"
-  integrity sha512-nr4fSvwYSlQl7YmaWS8rsvDrAm6VgCeb2ysHh18+YBSH4RxewhPKUQrj2XRuEMBNnH6E4xw+yWTL7+jiMrh6GA==
+file-type@*, file-type@^13.1.1:
+  version "13.1.1"
+  resolved "https://registry.yarnpkg.com/file-type/-/file-type-13.1.1.tgz#439ceea3a50a3929b21d18d9c1c77fd7f2a63aa8"
+  integrity sha512-HEb3tepyq8KzKSFEGMJSIxqn8uC1n3AM8OKME5+BIgq0bErRzcDPOdmnyPKtfjStSpIvuk0Rle8mvuG4824caQ==
   dependencies:
     readable-web-to-node-stream "^2.0.0"
-    strtok3 "^5.0.1"
+    strtok3 "^5.0.2"
     token-types "^2.0.0"
     typedarray-to-buffer "^3.1.5"
 
@@ -3107,7 +3107,7 @@ strip-json-comments@^3.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.0.1.tgz#85713975a91fb87bf1b305cca77395e40d2a64a7"
   integrity sha512-VTyMAUfdm047mwKl+u79WIdrZxtFtn+nBxHeb844XBQ9uMNTuTHdx2hc5RiAJYqwTj3wc/xe5HLSdJSkJ+WfZw==
 
-strtok3@^5.0.1, strtok3@^5.0.2:
+strtok3@^5.0.2:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-5.0.2.tgz#bb81f1f56742e16f1a30ccce5dc3d9498aa5475a"
   integrity sha512-EFeVpFC5qDsqPEJSrIYyS/ueFBknGhgSK9cW+YAJF/cgJG/KSjoK7X6rK5xnpcLe7y1LVkVFCXWbAb+ClNKzKQ==
