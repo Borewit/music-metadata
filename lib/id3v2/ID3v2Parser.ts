@@ -210,7 +210,7 @@ export class ID3v2Parser {
 
   private parseMetadata(data: Buffer): ITag[] {
     let offset = 0;
-    const tags: Array<{ id: string, value: any }> = [];
+    const tags: { id: string, value: any }[] = [];
 
     while (true) {
       if (offset === data.length) break;

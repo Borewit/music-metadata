@@ -66,7 +66,7 @@ describe("shared utility functionality", () => {
 
   describe("FourCC token", () => {
 
-    const testData: Array<{ fourCC: string, valid: boolean }> = [
+    const testData: { fourCC: string, valid: boolean }[] = [
       {fourCC: '\x00\x00\x00\x00', valid: false},
       {fourCC: 'WAVE', valid: true},
       {fourCC: 'fmt ', valid: true},
