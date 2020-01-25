@@ -361,7 +361,7 @@ export class MpegParser extends AbstractID3Parser {
 
     while (true) {
       let bo = 0;
-      this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, 0, maxPeekLen, this.tokenizer.position, true);
+      this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, {length: maxPeekLen, mayBeLess: true});
       if (this.syncPeek.len <= 256) {
         throw new EndOfStreamError();
       }
@@ -406,7 +406,7 @@ export class MpegParser extends AbstractID3Parser {
       this.mpegOffset = this.tokenizer.position - 1;
     }
 
-    await this.tokenizer.peekBuffer(this.buf_frame_header, 1, 3);
+    await this.tokenizer.peekBuffer(this.buf_frame_header, {offset: 1, length: 3});
 
     let header: MpegFrameHeader;
     try {

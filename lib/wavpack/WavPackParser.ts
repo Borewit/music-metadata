@@ -80,7 +80,7 @@ export class WavPackParser extends BasicParser {
       const id = await this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken);
       const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
       const data = Buffer.alloc(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
-      await this.tokenizer.readBuffer(data, 0, data.length);
+      await this.tokenizer.readBuffer(data);
       debug(`Metadata Sub-Blocks functionId=0x${id.functionId.toString(16)}, id.largeBlock=${id.largeBlock},data-size=${data.length}`);
       switch (id.functionId) {
         case 0x0: // ID_DUMMY: could be used to pad WavPack blocks

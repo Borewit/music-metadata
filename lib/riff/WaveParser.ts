@@ -134,7 +134,7 @@ export class WaveParser extends BasicParser {
       default:
         this.metadata.addWarning('Ignore chunk: RIFF/WAVE/LIST/' + listType);
         debug('Ignoring chunkID=RIFF/WAVE/LIST/' + listType);
-        return this.tokenizer.ignore(listHeader.chunkSize - 4);
+        return this.tokenizer.ignore(listHeader.chunkSize - 4).then();
     }
   }
 

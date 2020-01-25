@@ -178,13 +178,13 @@ export class ID3v2Parser {
 
   public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
     const buffer = Buffer.alloc(dataRemaining);
-    await this.tokenizer.readBuffer(buffer, 0, dataRemaining);
+    await this.tokenizer.readBuffer(buffer, {length: dataRemaining});
     return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
     const buffer = Buffer.alloc(dataLen);
-    await this.tokenizer.readBuffer(buffer, 0, dataLen);
+    await this.tokenizer.readBuffer(buffer, {length: dataLen});
     for (const tag of this.parseMetadata(buffer)) {
       if (tag.id === 'TXXX') {
         for (const text of tag.value.text) {

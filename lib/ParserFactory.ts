@@ -81,7 +81,7 @@ export class ParserFactory {
       debug('Guess parser on content...');
 
       const buf = Buffer.alloc(4100);
-      await tokenizer.peekBuffer(buf, 0, buf.byteLength, tokenizer.position, true);
+      await tokenizer.peekBuffer(buf, {mayBeLess: true});
       if (tokenizer.fileInfo.path) {
         parserId = this.getParserIdForExtension(tokenizer.fileInfo.path);
       }
