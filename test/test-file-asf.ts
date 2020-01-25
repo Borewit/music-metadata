@@ -26,7 +26,7 @@ describe("Parse ASF", () => {
    */
   it("should be able to roughly decode a 64-bit QWord", () => {
 
-    const tests: Array<{ raw: string, expected: number, description: string }> = [
+    const tests: { raw: string, expected: number, description: string }[] = [
       {
         raw: "\xFF\x00\x00\x00\x00\x00\x00\x00",
         expected: 0xFF,
