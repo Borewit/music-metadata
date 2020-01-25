@@ -136,7 +136,7 @@ export class APEv2Parser extends BasicParser {
       const tagItemHeader = await this.tokenizer.readToken<ITagItemHeader>(TagItemHeader);
       bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
 
-      await this.tokenizer.peekBuffer(keyBuffer, 0, Math.min(keyBuffer.length, bytesRemaining));
+      await this.tokenizer.peekBuffer(keyBuffer, {length: Math.min(keyBuffer.length, bytesRemaining)});
       let zero = common.findZero(keyBuffer, 0, keyBuffer.length);
       const key = await this.tokenizer.readToken<string>(new StringType(zero, 'ascii'));
       await this.tokenizer.ignore(1);
