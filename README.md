@@ -95,8 +95,8 @@ import * as mm from 'music-metadata/lib/core';
 | [`parseFromTokenizer`](#parsefromtokenizer-function) | ✓                          | ✓                          |
 | [`parseFile`](#parsefile-function)                   | ✓                          |                            |
 
-### Donation
-Very much appreciated: [PayPal.me](https://paypal.me/borewit)
+### Sponsor
+[Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
 
 ## Usage
 
