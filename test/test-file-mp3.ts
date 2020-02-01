@@ -90,6 +90,7 @@ describe('Parse MP3 files', () => {
 
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+    assert.strictEqual(format.codecProfile, 'V2', 'format.codecProfile');
     assert.strictEqual(format.tool, 'LAME3.97b', 'format.tool');
     assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
 

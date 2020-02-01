@@ -273,7 +273,7 @@ const FrameHeader = {
 };
 
 function getVbrCodecProfile(vbrScale: number): string {
-  return 'V' + (100 - vbrScale) / 10;
+  return 'V' + Math.floor((100 - vbrScale) / 10);
 }
 
 export class MpegParser extends AbstractID3Parser {
@@ -508,17 +508,17 @@ export class MpegParser extends AbstractID3Parser {
     const framesPerSec = header.samplingRate / this.samplesPerFrame;
     const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalDataLength / this.frameCount;
     const bitrate = 8 * bytesPerFrame * framesPerSec + 0.5;
-    this.metadata.setFormat('codecProfile', header.codecProfile);
     this.metadata.setFormat('bitrate', bitrate);
-    if (header.mp4ChannelConfig) {
-      this.metadata.setFormat('numberOfChannels', header.mp4ChannelConfig.length);
-    }
 
     debug(`frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`);
     await this.tokenizer.ignore(header.frameLength > 7 ? header.frameLength - 7 : 1);
 
     // Consume remaining header and frame data
     if (this.frameCount === 3) {
+      this.metadata.setFormat('codecProfile', header.codecProfile);
+      if (header.mp4ChannelConfig) {
+        this.metadata.setFormat('numberOfChannels', header.mp4ChannelConfig.length);
+      }
       if (this.options.duration) {
         this.calculateEofDuration = true;
       } else {
