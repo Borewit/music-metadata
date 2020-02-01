@@ -79,6 +79,26 @@ describe('Parse MP3 files', () => {
     assert.includeDeepMembers(quality.warnings, [{message: 'Empty picture tag found'}], 'quality.warnings includes Empty picture tag found');
   });
 
+  // https://github.com/Borewit/music-metadata/issues/430
+  it('Handle preceeding ADTS frame with (invalid) frame length of 0 bytes', async () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'adts-0-frame.mp3');
+
+    const {format, common} = await mm.parseFile(filePath, {duration: true});
+
+    await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+    assert.strictEqual(format.codecProfile, 'V2', 'format.codecProfile');
+    assert.strictEqual(format.tool, 'LAME3.97b', 'format.tool');
+    assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
+
+    assert.strictEqual(common.title, 'Jan Pillemann Otze', 'common.title');
+    assert.strictEqual(common.artist, 'Mickie Krause', 'common.artist');
+    assert.approximately(format.duration,  217.86, 0.005, 'format.duration');
+  });
+
   describe('should handle incomplete MP3 file', () => {
 
     const filePath = path.join(samplePath, 'incomplete.mp3');
