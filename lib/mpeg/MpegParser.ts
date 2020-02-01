@@ -502,7 +502,6 @@ export class MpegParser extends AbstractID3Parser {
     const buf = Buffer.alloc(3);
     await this.tokenizer.readBuffer(buf);
     header.frameLength += Common.getBitAllignedNumber(buf, 0, 0, 11);
-    this.tokenizer.ignore(header.frameLength - 7);
     this.totalDataLength += header.frameLength;
     this.samplesPerFrame = 1024;
 
@@ -516,6 +515,7 @@ export class MpegParser extends AbstractID3Parser {
     }
 
     debug(`frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`);
+    await this.tokenizer.ignore(header.frameLength > 7 ? header.frameLength - 7 : 1);
 
     // Consume remaining header and frame data
     if (this.frameCount === 3) {
