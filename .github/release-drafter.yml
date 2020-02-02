@@ -3,4 +3,4 @@ template: |
 
   $CHANGES
 
-NPM: [music-metadata@$MAJOR.$MINOR.$PATCH](https://www.npmjs.com/package/music-metadata/v/$MAJOR.$MINOR.$PATCH)
+  NPM: [music-metadata@$MAJOR.$MINOR.$PATCH](https://www.npmjs.com/package/music-metadata/v/$MAJOR.$MINOR.$PATCH)
