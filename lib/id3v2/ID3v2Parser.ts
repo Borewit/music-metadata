@@ -1,12 +1,12 @@
-import {ITokenizer} from 'strtok3/lib/core';
+import { ITokenizer } from 'strtok3/lib/core';
 import * as Token from 'token-types';
 
 import common from '../common/Util';
-import {TagType} from '../common/GenericTagTypes';
-import {ITag, IOptions} from '../type';
-import FrameParser from './FrameParser';
-import {ExtendedHeader, ID3v2Header, IID3v2header, UINT32SYNCSAFE} from "./ID3v2Token";
-import {INativeMetadataCollector} from '../common/MetadataCollector';
+import { TagType } from '../common/GenericTagTypes';
+import { ITag, IOptions } from '../type';
+import { FrameParser } from './FrameParser';
+import { ExtendedHeader, ID3v2Header, ID3v2MajorVersion, IID3v2header, UINT32SYNCSAFE } from './ID3v2Token';
+import { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector';
 
 interface IFrameFlags {
   status: {
@@ -22,6 +22,7 @@ interface IFrameFlags {
     data_length_indicator: boolean
   };
 }
+
 interface IFrameHeader {
   id: string,
   length?: number;
@@ -108,10 +109,11 @@ export class ID3v2Parser {
     };
   }
 
-  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: number, includeCovers: boolean) {
+  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: ID3v2MajorVersion, includeCovers: boolean, warningCollector: IWarningCollector) {
+    const frameParser = new FrameParser(majorVer, warningCollector);
     switch (majorVer) {
       case 2:
-        return FrameParser.readData(buf, frameHeader.id, majorVer, includeCovers);
+        return frameParser.readData(buf, frameHeader.id, includeCovers);
       case 3:
       case 4:
         if (frameHeader.flags.format.unsynchronisation) {
@@ -120,7 +122,7 @@ export class ID3v2Parser {
         if (frameHeader.flags.format.data_length_indicator) {
           buf = buf.slice(4, buf.length);
         }
-        return FrameParser.readData(buf, frameHeader.id, majorVer, includeCovers);
+        return frameParser.readData(buf, frameHeader.id, includeCovers);
       default:
         throw new Error('Unexpected majorVer: ' + majorVer);
     }
@@ -152,7 +154,7 @@ export class ID3v2Parser {
     const id3Header = await this.tokenizer.readToken(ID3v2Header);
 
     if (id3Header.fileIdentifier !== 'ID3') {
-      throw new Error("expected ID3-header file-identifier 'ID3' was not found");
+      throw new Error('expected ID3-header file-identifier \'ID3\' was not found');
     }
 
     this.id3Header = id3Header;
@@ -233,7 +235,7 @@ export class ID3v2Parser {
       }
 
       const frameDataBytes = data.slice(offset, offset += frameHeader.length);
-      const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers);
+      const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers, this.metadata);
       tags.push({id: frameHeader.id, value: values});
     }
     return tags;

@@ -150,21 +150,39 @@ describe('Extract metadata from ID3v2.3 header', () => {
    * Related issue: https://github.com/Borewit/music-metadata/issues/52
    * Specification: http://id3.org/id3v2.3.0#line-290
    */
-  describe('slash delimited fields', () => {
+  it('slash delimited fields', async () => {
+    const filePath = path.join(samplePath, 'Their - They\'re - Therapy - 1sec.mp3');
 
-    it('Slash in track title', async () => {
-      const filePath = path.join(samplePath, 'Their - They\'re - Therapy - 1sec.mp3');
+    const metadata = await mm.parseFile(filePath);
+    assert.isDefined(metadata.native['ID3v2.3'], 'Expect ID3v2.3 tag');
+    const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+    // It should not split the id3v23.TIT2 tag (containing '/')
+    assert.deepEqual(id3v23.TIT2, ['Their / They\'re / Therapy'], 'id3v23.TIT2');
+    // The artist name is actually "Their / They're / There"
+    // Specification: http://id3.org/id3v2.3.0#line-455
+    assert.deepEqual(id3v23.TPE1, ['Their', 'They\'re', 'There'], 'id3v23.TPE1');
+  });
 
-      const metadata = await mm.parseFile(filePath);
-      assert.isDefined(metadata.native['ID3v2.3'], 'Expect ID3v2.3 tag');
-      const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
-      // It should not split the id3v23.TIT2 tag (containing '/')
-      assert.deepEqual(id3v23.TIT2, ['Their / They\'re / Therapy'], 'id3v23.TIT2');
-      // The artist name is actually "Their / They're / There"
-      // Specification: http://id3.org/id3v2.3.0#line-455
-      assert.deepEqual(id3v23.TPE1, ['Their', 'They\'re', 'There'], 'id3v23.TPE1');
+  it('null delimited fields (non-standard)', async () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'null-separator.id3v2.3.mp3');
+
+    const {format, common, native, quality} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+    assert.deepEqual(format.tagTypes, [ 'ID3v2.3'], 'format.tagTypes');
+
+    const id3v23 = mm.orderTags(native['ID3v2.3']);
+    assert.deepEqual(id3v23.TPE1, ['2 Unlimited2', 'Ray', 'Anita'], 'null separated id3v23.TPE1');
+
+    assert.deepEqual(common.artists, ['2 Unlimited2', 'Ray', 'Anita'], 'common.artists');
+    assert.deepEqual(common.comment, ['[DJSet]', '[All]'], 'common.comment');
+    assert.deepEqual(common.genre, ['Dance', 'Classics'], 'common.genre');
+
+    ['TPE1', 'TCOM', 'TCON'].forEach(tag => {
+      assert.includeDeepMembers(quality.warnings, [{message: `ID3v2.3 ${tag} uses non standard null-separator.`}], `expect warning: null separator ID3v2.3 ${tag}`);
     });
-
   });
 
   describe('Decode frames', () => {
