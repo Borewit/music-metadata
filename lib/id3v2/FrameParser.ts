@@ -2,7 +2,8 @@ import * as initDebug from 'debug';
 import * as Token from 'token-types';
 
 import common, { StringEncoding } from '../common/Util';
-import { AttachedPictureType, TextEncodingToken } from './ID3v2Token';
+import { AttachedPictureType, ID3v2MajorVersion, TextEncodingToken } from './ID3v2Token';
+import { IWarningCollector } from '../common/MetadataCollector';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -21,9 +22,17 @@ interface IPicture {
 
 const defaultEnc: StringEncoding = 'iso-8859-1';
 
-export default class FrameParser {
+export class FrameParser {
 
-  public static readData(b: Buffer, type: string, major: number, includeCovers: boolean) {
+  /**
+   * Create id3v2 frame parser
+   * @param major - Major version, e.g. (4) for  id3v2.4
+   * @param warningCollector - Used to collect decode issue
+   */
+  constructor(private major: ID3v2MajorVersion,  private warningCollector: IWarningCollector)  {
+  }
+
+  public readData(b: Buffer, type: string, includeCovers: boolean) {
     if (b.length === 0) {
       return;
     }
@@ -44,7 +53,7 @@ export default class FrameParser {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list
           case 'IPLS': // Involved people list
-            output = FrameParser.splitValue(4, text);
+            output = this.splitValue(type, text);
             output = FrameParser.functionList(output);
             break;
           case 'TRK':
@@ -53,16 +62,17 @@ export default class FrameParser {
             output = text;
             break;
           case 'TCOM':
+          case 'TCON':
           case 'TEXT':
           case 'TOLY':
           case 'TOPE':
           case 'TPE1':
           case 'TSRC':
             // id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
-            output = FrameParser.splitValue(major, text);
+            output = this.splitValue(type, text);
             break;
           default:
-            output = major >= 4 ? FrameParser.splitValue(major, text) : [text];
+            output = this.major >= 4 ? this.splitValue(type, text) : [text];
         }
         break;
 
@@ -70,7 +80,7 @@ export default class FrameParser {
         output = FrameParser.readIdentifierAndData(b, offset + 1, length, encoding);
         output = {
           description: output.id,
-          text: FrameParser.splitValue(major, common.decodeString(output.data, encoding).replace(/\x00+$/, ''))
+          text: this.splitValue(type, common.decodeString(output.data, encoding).replace(/\x00+$/, ''))
         };
         break;
 
@@ -81,7 +91,7 @@ export default class FrameParser {
 
           offset += 1;
 
-          switch (major) {
+          switch (this.major) {
             case 2:
               pic.format = common.decodeString(b.slice(offset, offset + 3), encoding);
               offset += 3;
@@ -94,7 +104,7 @@ export default class FrameParser {
               break;
 
             default:
-              throw new Error('Warning: unexpected major versionIndex: ' + major);
+              throw new Error('Warning: unexpected major versionIndex: ' + this.major);
           }
 
           pic.format = FrameParser.fixPictureMimeType(pic.format);
@@ -254,20 +264,27 @@ export default class FrameParser {
   /**
    * id3v2.4 defines that multiple T* values are separated by 0x00
    * id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
-   * @param {number} major Major version, e.g. (4) for  id3v2.4
-   * @param {string} text Concatenated tag value
-   * @returns {string[]} Slitted value
+   * @param tag - Tag name
+   * @param text - Concatenated tag value
+   * @returns Split tag value
    */
-  private static splitValue(major: number, text: string) {
-    const values = text.split(major >= 4 ? /\x00/g : /\//g);
+  private splitValue(tag: string, text: string): string[] {
+    let values: string[];
+    if (this.major < 4) {
+      values = text.split(/\x00/g);
+      if (values.length > 1) {
+        this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
+      } else {
+        values = text.split(/\//g);
+      }
+    } else {
+      values = text.split(/\x00/g);
+    }
     return FrameParser.trimArray(values);
   }
 
   private static trimArray(values: string[]): string[] {
-    for (let i = 0; i < values.length; ++i) {
-      values[i] = values[i].replace(/\x00+$/, '').trim();
-    }
-    return values;
+    return values.map(value => value.replace(/\x00+$/, '').trim());
   }
 
   private static readIdentifierAndData(b: Buffer, offset: number, length: number, encoding: StringEncoding): { id: string, data: Uint8Array } {

@@ -30,6 +30,8 @@ export enum AttachedPictureType {
   'Publisher/Studio logotype'
 }
 
+export type ID3v2MajorVersion = 2 | 3 | 4;
+
 export interface IExtendedHeader {
   // Extended header size
   size: number;
@@ -60,7 +62,7 @@ export interface IID3v2header {
   fileIdentifier: string,
   // ID3v2 versionIndex
   version: {
-    major: number,
+    major: ID3v2MajorVersion,
     revision: number
   },
   // ID3v2 flags
@@ -92,7 +94,7 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
       fileIdentifier: new Token.StringType(3, 'ascii').get(buf, off),
       // ID3v2 versionIndex
       version: {
-        major: Token.INT8.get(buf, off + 3),
+        major: Token.INT8.get(buf, off + 3) as ID3v2MajorVersion,
         revision: Token.INT8.get(buf, off + 4)
       },
       // ID3v2 flags
