@@ -262,27 +262,6 @@ export class MP4Parser extends BasicParser {
       case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
         return this.parseAtom_mvhd(atom);
 
-      case 'mdat': // media data atom:
-        this.audioLengthInBytes = atom.getPayloadLength();
-        this.calculateBitRate();
-        break;
-    }
-
-    switch (atom.header.name) {
-
-      case 'ftyp':
-        const types = await this.parseAtom_ftyp(atom.getPayloadLength());
-        debug(`ftyp: ${types.join('/')}`);
-        const x = types.filter(distinct).join('/');
-        this.metadata.setFormat('container', x);
-        return;
-
-      case 'mdhd': // Media header atom
-        return this.parseAtom_mdhd(atom);
-
-      case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-        return this.parseAtom_mvhd(atom);
-
       case 'chap': // Chapter or scene list atom. Usually references a text track.
         const td = this.getTrackDescription();
         td.chapterList = await this.parseAtom_chap(atom);
