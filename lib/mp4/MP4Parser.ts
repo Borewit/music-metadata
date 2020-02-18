@@ -148,7 +148,13 @@ export class MP4Parser extends BasicParser {
 
     while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
       try {
-        await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+        const token = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+        if (token.name === '\0\0\0\0') {
+          const errMsg = `Error at offset=${this.tokenizer.position}: box.id=0`;
+          debug(errMsg);
+          this.addWarning(errMsg);
+          break;
+        }
       } catch (error) {
         const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
         debug(errMsg);

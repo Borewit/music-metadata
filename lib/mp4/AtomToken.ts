@@ -144,7 +144,7 @@ export const Header: IToken<IAtomHeader> = {
 
     return {
       length,
-      name: FourCcToken.get(buf, off + 4)
+      name: new Token.StringType(4, 'binary').get(buf, off + 4)
     };
   },
 
