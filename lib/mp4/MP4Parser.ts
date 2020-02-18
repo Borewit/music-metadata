@@ -148,7 +148,13 @@ export class MP4Parser extends BasicParser {
 
     while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
       try {
-        await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+        const token = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+        if (token.name === '\0\0\0\0') {
+          const errMsg = `Error at offset=${this.tokenizer.position}: box.id=0`;
+          debug(errMsg);
+          this.addWarning(errMsg);
+          break;
+        }
       } catch (error) {
         const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
         debug(errMsg);
@@ -245,27 +251,6 @@ export class MP4Parser extends BasicParser {
           }
           break;
       }
-    }
-
-    switch (atom.header.name) {
-
-      case 'ftyp':
-        const types = await this.parseAtom_ftyp(atom.getPayloadLength());
-        debug(`ftyp: ${types.join('/')}`);
-        const x = types.filter(distinct).join('/');
-        this.metadata.setFormat('container', x);
-        return;
-
-      case 'mdhd': // Media header atom
-        return this.parseAtom_mdhd(atom);
-
-      case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-        return this.parseAtom_mvhd(atom);
-
-      case 'mdat': // media data atom:
-        this.audioLengthInBytes = atom.getPayloadLength();
-        this.calculateBitRate();
-        break;
     }
 
     switch (atom.header.name) {

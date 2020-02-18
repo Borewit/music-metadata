@@ -354,7 +354,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   /**
    * Related issue: https://github.com/Borewit/music-metadata/issues/318
    */
-  it('Handle be able to ignore garbage behind mdat root atom', async () => {
+  it('Be able to handle garbage behind mdat root atom', async () => {
 
     /**
      * Sample file with 1024 zeroes appended
@@ -362,7 +362,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     const m4aFile = path.join(mp4Samples, 'issue-318.m4a');
 
     const metadata = await mm.parseFile(m4aFile);
-    const {format, common} = metadata;
+    const {format, common, quality} = metadata;
     assert.strictEqual(format.container, 'isom/mp42/M4A', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
@@ -373,6 +373,20 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(common.artist, 'Tool', 'common.artist');
     assert.strictEqual(common.title, 'Fear Inoculum', 'common.title');
 
+    assert.includeDeepMembers(quality.warnings, [{message: 'Error at offset=117501: box.id=0'}], 'check for warning regarding box.id=0');
+  });
+
+  // https://github.com/Borewit/music-metadata/issues/387
+  it('Handle box.id = 0000', async () => {
+    const {format, common} = await mm.parseFile(path.join(mp4Samples, 'issue-387.m4a'));
+    assert.strictEqual(format.container, 'isom/mp42/M4A', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.approximately(format.duration, 224.00290249433107, 1 / 200, 'format.duration');
+    assert.approximately(format.sampleRate, 44100, 1 / 200, 'format.sampleRate');
+
+    assert.strictEqual(common.artist, 'Chris Brown', 'common.artist');
+    assert.strictEqual(common.title, 'Look At Me Now', 'common.title');
+    assert.strictEqual(common.album, 'Look At Me Now (feat. Lil Wayne & Busta Rhymes) - Single', 'common.album');
   });
 
 });
