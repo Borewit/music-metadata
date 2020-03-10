@@ -171,7 +171,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
-    assert.deepEqual(format.tagTypes, [ 'ID3v2.3'], 'format.tagTypes');
+    assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
 
     const id3v23 = mm.orderTags(native['ID3v2.3']);
     assert.deepEqual(id3v23.TPE1, ['2 Unlimited2', 'Ray', 'Anita'], 'null separated id3v23.TPE1');
@@ -195,14 +195,32 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(id3v23.WCOM[0], 'http://www.amazon.com/Rotation-Cute-What-We-Aim/dp/B0018QCXAU%3FSubscriptionId%3D0R6CGKPJ3EKNPQBPYJR2%26tag%3Dsoftpointer-20%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB0018QCXAU ');
     });
 
-    // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
-    it('4.3.2 WXXX: User defined URL link frame', async () => {
-      const metadata = await mm.parseFile(path.join(samplePath, 'bug-unkown encoding.mp3'));
-      const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
-      assert.deepEqual(id3v23.WXXX[0], {
-        description: 'Tempa at bleep',
-        url: 'http://www'
+    describe('4.3.2 WXXX: User defined URL link frame', () => {
+
+      // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
+      it('decoding #1', async () => {
+        const metadata = await mm.parseFile(path.join(samplePath, 'bug-unkown encoding.mp3'));
+        const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(id3v23.WXXX[0], {
+          description: 'Tempa at bleep',
+          url: 'http://www.bleep.com/tempa'
+        });
       });
+
+      it('decoding #2', async () => {
+
+        const filePath = path.join(samplePath, 'mp3', 'issue-453.mp3');
+
+        const metadata = await mm.parseFile(filePath);
+        assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1']);
+
+        const id3 = mm.orderTags(metadata.native['ID3v2.3']);
+        assert.deepEqual(id3.WXXX[0], {
+          description: 'あ',
+          url: 'https://www.example.com'
+        });
+      });
+
     });
 
     // http://id3.org/id3v2.3.0#Music_CD_identifier
