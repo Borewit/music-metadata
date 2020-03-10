@@ -217,9 +217,9 @@ export class FrameParser {
       case 'WXXX': {
           // Decode URL
           fzero = common.findZero(b, offset + 1, length, encoding);
-          const description = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
-          offset = fzero + 1;
-          output = {description, url: common.decodeString(b.slice(offset, length - offset), encoding)};
+          const description = common.decodeString(b.slice(offset + 1, fzero), encoding);
+          offset = fzero + (encoding === 'utf16' ? 2 : 1);
+          output = {description, url: common.decodeString(b.slice(offset, length), defaultEnc)};
           break;
         }
 
