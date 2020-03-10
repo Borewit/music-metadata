@@ -129,7 +129,7 @@ There are two ways to parse (read) audio tracks:
 1) Audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile)
 2) Using [Node.js streams](https://nodejs.org/api/stream.html) using the [parseStream function](#parseStream).
 
-Direct file access tends to be a little faster, because it can 'jump' to various parts in the file without being obliged to read intermediate date.
+Direct file access tends to be a little faster, because it can 'jump' to various parts in the file without being obliged to read intermediate data.
 
 #### parseFile function
 
