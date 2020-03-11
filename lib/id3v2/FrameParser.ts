@@ -211,7 +211,7 @@ export class FrameParser {
       case 'WPAY':
       case 'WPUB':
         // Decode URL
-        output = common.decodeString(b.slice(offset, fzero), encoding);
+        output = common.decodeString(b.slice(offset, fzero), defaultEnc);
         break;
 
       case 'WXXX': {
