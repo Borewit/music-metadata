@@ -34,6 +34,7 @@ export class FrameParser {
 
   public readData(b: Buffer, type: string, includeCovers: boolean) {
     if (b.length === 0) {
+      this.warningCollector.addWarning(`id3v2.${this.major} header has empty tag type=${type}`);
       return;
     }
     const {encoding, bom} = TextEncodingToken.get(b, 0);
