@@ -251,6 +251,26 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(id3v2.GEOB[0].description, 'Serato Overview', 'ID3v2.GEOB[0].description');
     });
 
+    describe('TXXX', async () => {
+
+      it('Handle empty TXXX', async () => {
+        const {format, quality, common} = await mm.parseFile(path.join(samplePath, 'mp3', 'issue-471.mp3'));
+
+        assert.strictEqual(format.container, 'MPEG', 'format.container');
+        assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+        assert.approximately(format.duration, 309.629387755102, 1 / 200, 'format.duration');
+        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        assert.strictEqual(format.bitrate, 128000, 'format.bitrate');
+
+        assert.includeDeepMembers(quality.warnings, [{message: 'id3v2.3 header has empty tag type=TXXX'}], 'quality.warnings includes: \'id3v2.3 header has empty tag type=TXXX\'');
+
+        assert.strictEqual(common.title, 'Between Worlds', 'common.title');
+        assert.strictEqual(common.artist, 'Roger Subirana', 'common.artist');
+        assert.strictEqual(common.album, 'XII', 'common.album');
+      });
+
+    });
+
   });
 
 });

@@ -189,8 +189,10 @@ export class ID3v2Parser {
     await this.tokenizer.readBuffer(buffer, {length: dataLen});
     for (const tag of this.parseMetadata(buffer)) {
       if (tag.id === 'TXXX') {
-        for (const text of tag.value.text) {
-          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text);
+        if (tag.value) {
+          for (const text of tag.value.text) {
+            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text);
+          }
         }
       } else if (tag.id === 'COM') {
         for (const value of tag.value) {
