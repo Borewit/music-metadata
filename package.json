@@ -104,7 +104,7 @@
     "remark-preset-lint-recommended": "^3.0.2",
     "source-map-support": "^0.5.16",
     "ts-node": "^8.7.0",
-    "tslint": "^6.1.0",
+    "tslint": "^6.1.1",
     "typescript": "^3.8.3"
   },
   "testling": {
