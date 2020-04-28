@@ -19,6 +19,10 @@ export class Atom {
     if (extended) {
       header.length = await tokenizer.readToken<number>(AtomToken.ExtendedSize);
     }
+    const extendToEOF = ((header.length === 0) && (header.name === 'mdat') && !parent);
+    if (extendToEOF) {
+        header.length = tokenizer.fileInfo.size - tokenizer.position + 8;
+    }
     const atomBean = new Atom(header, extended, parent);
     debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
     await atomBean.readData(tokenizer, dataHandler);
