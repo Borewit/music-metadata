@@ -102,7 +102,7 @@
     "nyc": "^15.0.1",
     "remark-cli": "^8.0.0",
     "remark-preset-lint-recommended": "^4.0.0",
-    "source-map-support": "^0.5.16",
+    "source-map-support": "^0.5.19",
     "ts-node": "^8.8.2",
     "tslint": "^6.1.2",
     "typescript": "^3.8.3"
