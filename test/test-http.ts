@@ -33,7 +33,7 @@ describe('HTTP streaming', function() {
 
           it(`Should be able to parse M4A ${hasContentLength ? 'with' : 'without'} content-length specified`, async () => {
 
-            const url = 'https://tunalib.s3.eu-central-1.amazonaws.com/plan.m4a';
+            const url = 'http://builds.tokyo.s3.amazonaws.com/sample.m4a';
 
             const response = await test.client.get(url);
 
@@ -52,9 +52,9 @@ describe('HTTP streaming', function() {
             assert.strictEqual(tags.format.codec, 'MPEG-4/AAC');
             assert.strictEqual(tags.format.lossless, false);
 
-            assert.strictEqual(tags.common.title, 'We Made a Plan');
-            assert.strictEqual(tags.common.artist, 'Adan Cruz');
-            assert.strictEqual(tags.common.album, 'Quiérelo');
+            assert.strictEqual(tags.common.title, 'Super Mario Galaxy "Into The Galaxy"');
+            assert.strictEqual(tags.common.artist, 'club nintendo CD "SUPER MARIO GALAXY"より');
+            assert.strictEqual(tags.common.album, 'SUPER MARIO GALAXY ORIGINAL SOUNDTRACK');
           });
 
         });
