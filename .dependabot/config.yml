@@ -39,3 +39,5 @@ update_configs:
           dependency_name: "token-types"
       - match:
           dependency_name: "file-type"
+      - match:
+          dependency_name: "mime"
