@@ -50,6 +50,7 @@ const vorbisTagMap: INativeTagMap = {
   COMPILATION: "compilation",
   RATING: "rating",
   BPM: "bpm",
+  KEY: "key",
   MOOD: "mood",
   MEDIA: "media",
   CATALOGNUMBER: "catalognumber",
