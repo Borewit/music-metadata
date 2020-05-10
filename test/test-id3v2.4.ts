@@ -42,6 +42,14 @@ describe("Decode MP3/ID3v2.4", () => {
 
   });
 
+  // Issue: https://github.com/Borewit/music-metadata/issues/502
+  it('COMM mapping', async () => {
+
+    const filePath = path.join(samplePath, 'mp3', 'issue-502.mp3');
+    const {common} = await mm.parseFile(filePath);
+    t.deepEqual(common.comment, ['CLEAN'], 'common.comment');
+  });
+
   it("should respect skipCovers-flag", () => {
 
     const filename = 'id3v2.4.mp3';
