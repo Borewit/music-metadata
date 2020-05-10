@@ -198,6 +198,10 @@ export class ID3v2Parser {
         for (const value of tag.value) {
           this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text);
         }
+      } else if (tag.id === 'COMM') {
+        for (const value of tag.value) {
+          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value);
+        }
       } else if (Array.isArray(tag.value)) {
         for (const value of tag.value) {
           this.addTag(tag.id, value);
