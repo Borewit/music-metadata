@@ -83,7 +83,7 @@
     "debug": "^4.1.0",
     "file-type": "^14.6.1",
     "media-typer": "^1.1.0",
-    "strtok3": "^6.0.0",
+    "strtok3": "^6.0.2",
     "token-types": "^2.0.0"
   },
   "devDependencies": {
