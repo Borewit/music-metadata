@@ -2,9 +2,8 @@ language: node_js
 node_js:
 - '8'
 - '10'
-- '11'
 - '12'
-- '13'
+- '14'
 install:
 - yarn install
 script:
@@ -20,7 +19,7 @@ jobs:
     - yarn run send-coveralls
     - yarn add -D codacy-coverage
     - 'if [ "$TRAVIS_SECURE_ENV_VARS" == "true" ]; then yarn run send-codacy; fi'
-    node_js: 10
+    node_js: 12
 env:
   global:
     secure: h/uza/gVUQX1W9/HGk3iE4wB6flBDblaFACYlXjQhdx4fmWiuYSsasfI5fETIPIVkF1vjwt6mXQ7W2rxTBLOP36UqW5gWFP+u3ZavWosZXwLNdKPFfxBzPiRiSQhHlzBefugCT42cDxooqWEr1OakN142vue1jym8VKmhEYNoFVPVH+btf56Us2S93V7VWyFA9gIMCwq2/whkJ3JlXEg3uxT8qtCoVspGSKIlcM1+h+xYheVIHv4MLPDF6+IB3li0gsPnh/3gYHwUpJWZVWgz5pwjr5poHbdYfbMVMAX+HuAQAtWnhsYiOqZxtaUaYDBO4SShOWPnDXMGDCt/mmTfFadtQLWTYI+ib4vyBms1rYb67gPSTVq3bPM4rTFEYHxbWf2CtlGF513pIN56Vao7+mO3LDi+nWj0432zf7Tpv41mkCx/dKkIxYsbjJV6N6P65DdXM+wr/XdELBSPiLI7GB4GqxhUt7ztB22FR7U1KXtzLFJZfoYhxBBbg755kojhnSYnm3z7WmqvWuezfH1znQ5uJVPtUb+06LcPoCo1VnjfgExAvbXurCAOslAVLovIrJMiQmeL5PJTTIO11C/zrLt8+RHcUe7c1T5L8QuspBSKpSflrwAxTHS5YqIlTqYLDzBaOxqlF9UHJ1Qv9aedYItQKoLySlVGTaL0Y0xi4k=
