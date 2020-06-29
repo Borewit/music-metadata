@@ -1,7 +1,5 @@
 import {INativeTagMap} from '../common/GenericTagTypes';
 import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap';
-import {ITag} from '../type';
-import {INativeMetadataCollector} from '../common/MetadataCollector';
 
 /**
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
