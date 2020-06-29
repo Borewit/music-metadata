@@ -99,7 +99,7 @@ const mp4TagMap: INativeTagMap = {
   ldes: 'description',
   '©mvn': 'movement',
   '©mvi': 'movementIndex',
-  '©mvc': 'movementIndex',
+  '©mvc': 'movementTotal',
   '©wrk': 'work',
   catg: 'category',
   egid: 'podcastId',
@@ -118,22 +118,5 @@ export class MP4TagMapper extends CaseInsensitiveTagMap {
 
   public constructor() {
     super([tagType],  mp4TagMap);
-  }
-
-  protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
-    switch (tag.id) {
-      case '©mvi':
-        this.mvi = tag.value;
-        tag.value = `${this.mvi}/${this.mvc}`;
-        break;
-
-      case '©mvc':
-        this.mvc = tag.value;
-        tag.value = `${this.mvi}/${this.mvc}`;
-        break;
-
-      default:
-        break;
-    }
   }
 }

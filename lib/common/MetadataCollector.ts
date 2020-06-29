@@ -191,6 +191,10 @@ export class MetadataCollector implements INativeMetadataCollector {
         this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value);
         return;
 
+      case 'movementTotal':
+        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value);
+        return;
+
       case 'track':
       case 'disk':
       case 'movementIndex':

@@ -112,6 +112,7 @@ export type GenericTagId =
   | 'keywords'
   | 'movement'
   | 'movementIndex'
+  | 'movementTotal'
   | 'podcastId'
   | 'showMovement'
   | 'stik';
@@ -246,6 +247,7 @@ export const commonTags: ITagInfoMap = {
   keywords: {multiple: true},
   movement: {multiple: false},
   movementIndex: {multiple: false},
+  movementTotal: {multiple: false},
   podcastId: {multiple: false},
   showMovement: {multiple: false},
   stik: {multiple: false}
