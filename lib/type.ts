@@ -168,6 +168,7 @@ export interface ICommonTagsResult {
   discsubtitle?: string[];
   totaltracks?: string;
   totaldiscs?: string;
+  movementTotal?: number;
   compilation?: boolean;
   rating?: IRating[];
   bpm?: number;

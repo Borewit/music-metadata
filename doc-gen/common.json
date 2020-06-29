@@ -149,6 +149,9 @@
   "totaldiscs": {
     "description": "The total number of discs"
   },
+  "movementTotal": {
+    "description": "The total number of movements"
+  },
   "compilation": {
     "description": "Is part of compilation (unofficial iTunes Compilation Flag)"
   },

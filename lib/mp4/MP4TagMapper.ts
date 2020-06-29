@@ -113,10 +113,8 @@ export const tagType = 'iTunes';
 
 export class MP4TagMapper extends CaseInsensitiveTagMap {
 
-  private mvc?: number;
-  private mvi?: number;
-
   public constructor() {
     super([tagType],  mp4TagMap);
   }
+
 }
