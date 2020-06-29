@@ -28,6 +28,62 @@ import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samp
 const mp4Samples = path.join(samplePath, 'mp4');
 
 describe('Parse MPEG-4', () => {
+  // Exercise native-to-common mapping, including numeric normalization in the collector.
+  describe('MP4 movement tag mapping', () => {
+    for (const [label, name, number, total] of [
+      [
+        'freeform',
+        '----:com.apple.iTunes:Movement Name',
+        '----:com.apple.iTunes:Movement',
+        '----:com.apple.iTunes:Movement Total'
+      ],
+      ['standard', '©mvn', '©mvi', '©mvc']
+    ]) {
+      it(`maps a ${label} movement name`, async () => {
+        const metadata = new MetadataCollector();
+        await metadata.addTag('iTunes', name, 'Allegro');
+        assert.strictEqual(metadata.common.movement, 'Allegro');
+      });
+
+      for (const [id, value, expected] of [
+        [number, '2', { no: 2, of: null }],
+        [total, '4', { no: null, of: 4 }]
+      ] as const) {
+        it(`maps standalone ${id}`, async () => {
+          const metadata = new MetadataCollector();
+          await metadata.addTag('iTunes', id, value);
+          assert.deepEqual(metadata.common.movementIndex, expected);
+        });
+      }
+
+      for (const totalFirst of [false, true]) {
+        it(`combines ${label} movement number and total with total ${totalFirst ? 'first' : 'last'}`, async () => {
+          const metadata = new MetadataCollector();
+          const tags = [
+            { id: number, value: '2' },
+            { id: total, value: '4' }
+          ];
+          if (totalFirst) {
+            tags.reverse();
+          }
+          for (const tag of tags) {
+            await metadata.addTag('iTunes', tag.id, tag.value);
+          }
+          assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 4 });
+        });
+      }
+    }
+
+    it('maps freeform movement tags case-insensitively', async () => {
+      const metadata = new MetadataCollector();
+      await metadata.addTag('iTunes', '----:com.apple.iTunes:MOVEMENT NAME', 'Allegro');
+      await metadata.addTag('iTunes', '----:com.apple.iTunes:movement', '2/4');
+      await metadata.addTag('iTunes', '----:com.apple.iTunes:movement total', '5');
+      assert.strictEqual(metadata.common.movement, 'Allegro');
+      assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 5 });
+    });
+  });
+
   describe('Parse MPEG-4 files (.m4a)', () => {
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.lossless, false);
