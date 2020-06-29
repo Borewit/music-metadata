@@ -87,6 +87,9 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:replaygain_track_minmax': 'replaygain_track_minmax',
   '----:com.apple.iTunes:replaygain_album_minmax': 'replaygain_album_minmax',
   '----:com.apple.iTunes:replaygain_undo': 'replaygain_undo',
+  '----:com.apple.iTunes:Movement Name': 'movement',
+  '----:com.apple.iTunes:Movement': 'movementIndex',
+  '----:com.apple.iTunes:Movement Total': 'movementIndex',
   // Additional mappings:
   gnre: 'genre', // ToDo: check mapping
 
