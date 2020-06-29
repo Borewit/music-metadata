@@ -49,6 +49,10 @@ export class FrameParser {
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
       case 'T*': // 4.2.1. Text information frames - details
       case 'IPLS': // v2.3: Involved people list
+      case 'MVIN':
+      case 'MVNM':
+      case 'PCS':
+      case 'PCST':
         const text = common.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
         switch (type) {
           case 'TMCL': // Musician credits list
@@ -71,6 +75,12 @@ export class FrameParser {
           case 'TSRC':
             // id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
             output = this.splitValue(type, text);
+            break;
+          case 'PCS':
+          case 'PCST':
+            // TODO: Why `default` not results `1` but `''`?
+            output = this.major >= 4 ? this.splitValue(type, text) : [text];
+            output = (Array.isArray(output) && output[0] === '') ? 1 : 0;
             break;
           default:
             output = this.major >= 4 ? this.splitValue(type, text) : [text];
@@ -223,6 +233,11 @@ export class FrameParser {
           output = {description, url: common.decodeString(b.slice(offset, length), defaultEnc)};
           break;
         }
+
+      case 'WFD':
+      case 'WFED':
+        output = common.decodeString(b.slice(offset + 1, common.findZero(b, offset + 1, length, encoding)), encoding);
+        break;
 
       case 'MCDI': {
         // Music CD identifier

@@ -1,5 +1,7 @@
 import {INativeTagMap} from '../common/GenericTagTypes';
-import {CommonTagMapper} from '../common/GenericTagMapper';
+import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap';
+import {ITag} from '../type';
+import {INativeMetadataCollector} from '../common/MetadataCollector';
 
 /**
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
@@ -15,6 +17,7 @@ const mp4TagMap: INativeTagMap = {
   '©alb': 'album',
   '©day': 'date',
   '©cmt': 'comment',
+  '©com': 'comment',
   trkn: 'track',
   disk: 'disk',
   '©gen': 'genre',
@@ -56,6 +59,7 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:SCRIPT': 'script',
   '----:com.apple.iTunes:LANGUAGE': 'language',
   cprt: 'copyright',
+  '©cpy': 'copyright',
   '----:com.apple.iTunes:LICENSE': 'license',
   '©too': 'encodedby',
   pgap: 'gapless',
@@ -91,16 +95,45 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:ORIGINALDATE': 'originaldate',
   '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear',
   // '----:com.apple.iTunes:PERFORMER': 'performer'
-  desc: 'description',
-  ldes: 'description'
+  desc: 'subtitle',
+  ldes: 'description',
+  '©mvn': 'movement',
+  '©mvi': 'movementIndex',
+  '©mvc': 'movementIndex',
+  '©wrk': 'work',
+  catg: 'category',
+  egid: 'podcastId',
+  hdvd: 'hdVideo',
+  keyw: 'keywords',
+  shwm: 'showMovement',
+  stik: 'stik'
 };
 
 export const tagType = 'iTunes';
 
-export class MP4TagMapper extends CommonTagMapper {
+export class MP4TagMapper extends CaseInsensitiveTagMap {
+
+  private mvc?: number;
+  private mvi?: number;
 
   public constructor() {
     super([tagType],  mp4TagMap);
   }
 
+  protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
+    switch (tag.id) {
+      case '©mvi':
+        this.mvi = tag.value;
+        tag.value = `${this.mvi}/${this.mvc}`;
+        break;
+
+      case '©mvc':
+        this.mvc = tag.value;
+        tag.value = `${this.mvi}/${this.mvc}`;
+        break;
+
+      default:
+        break;
+    }
+  }
 }

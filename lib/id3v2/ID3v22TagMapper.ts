@@ -1,5 +1,5 @@
 import {INativeTagMap} from '../common/GenericTagTypes';
-import {CommonTagMapper} from '../common/GenericTagMapper';
+import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap';
 
 /**
  * ID3v2.2 tag mappings
@@ -18,7 +18,7 @@ export const id3v22TagMap: INativeTagMap = {
   TCM: 'composer',
 
   TOR: 'originaldate',
-  TOT: 'work',
+  TOT: 'originalalbum',
   TXT: 'lyricist',
   TP3: 'conductor',
   TPB: 'label',
@@ -35,10 +35,20 @@ export const id3v22TagMap: INativeTagMap = {
   'COM:iTunNORM': ,
   'COM:iTunSMPB': 'encoder delay',
   'COM:iTunes_CDDB_IDs'
-  */
+  */,
+
+  PCS: 'podcast',
+  TCP: "compilation",
+  TDR: 'date',
+  TS2: 'albumartistsort',
+  TSA: 'albumsort',
+  TSC: 'composersort',
+  TSP: 'artistsort',
+  TST: 'titlesort',
+  WFD: 'podcasturl'
 };
 
-export class ID3v22TagMapper extends CommonTagMapper {
+export class ID3v22TagMapper extends CaseInsensitiveTagMap {
 
   public constructor() {
     super(['ID3v2.2'], id3v22TagMap);
