@@ -9,7 +9,7 @@ const samplePath = path.join(__dirname, 'samples');
 
 // https://github.com/Borewit/music-metadata/pull/544
 
-describe('Add and fix some mappings #pr-544', () => {
+describe('Add, change and fix some mappings #pr-544', () => {
 
     describe('Movement Name', () => {
 
@@ -451,14 +451,12 @@ describe('Add and fix some mappings #pr-544', () => {
 
     describe('Composer Sort', () => {
 
-        // TODO: Why composer sort field is an array but other sort fields not?
-
         it('mp3-id3v24', () => {
             const filename = 'mp3/pr-544-id3v24.mp3';
             const filePath = path.join(samplePath, filename);
 
             return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.composersort, ['Composer Sort'], 'metadata.common.composersort');
+                t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
             });
         });
 
@@ -468,7 +466,7 @@ describe('Add and fix some mappings #pr-544', () => {
             const filePath = path.join(samplePath, filename);
 
             return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.composersort, ['Composer Sort'], 'metadata.common.composersort');
+                t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
             });
         });*/
 
@@ -477,7 +475,7 @@ describe('Add and fix some mappings #pr-544', () => {
             const filePath = path.join(samplePath, filename);
 
             return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.composersort, ['Composer Sort'], 'metadata.common.composersort');
+                t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
             });
         });
     });

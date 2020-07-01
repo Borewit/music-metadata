@@ -121,9 +121,9 @@ export interface ICommonTagsResult {
    */
   albumartistsort?: string;
   /**
-   * Composer(s), formatted for alphabetic ordering
+   * Composer, formatted for alphabetic ordering
    */
-  composersort?: string[];
+  composersort?: string;
   /**
    * Lyricist(s)
    */

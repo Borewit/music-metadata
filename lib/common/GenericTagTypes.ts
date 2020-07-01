@@ -158,7 +158,7 @@ export const commonTags: ITagInfoMap = {
   work: {multiple: false, unique: true},
   artistsort: {multiple: false, unique: true},
   albumartistsort: {multiple: false, unique: true},
-  composersort: {multiple: true, unique: true},
+  composersort: {multiple: false, unique: true},
   lyricist: {multiple: true, unique: true},
   writer: {multiple: true, unique: true},
   conductor: {multiple: true, unique: true},
