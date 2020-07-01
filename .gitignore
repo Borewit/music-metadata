@@ -13,3 +13,4 @@ doc-gen/**/*.map
 doc-gen/**/*.map
 coverage/
 .nyc_output/
+test/samples/zeroes.flac
