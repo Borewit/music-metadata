@@ -67,7 +67,8 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   public readonly common: ICommonTagsResult = {
     track: {no: null, of: null},
-    disk: {no: null, of: null}
+    disk: {no: null, of: null},
+    movementIndex: {}
   };
 
   public readonly quality: IQualityInformation = {
@@ -190,8 +191,13 @@ export class MetadataCollector implements INativeMetadataCollector {
         this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value);
         return;
 
+      case 'movementTotal':
+        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value);
+        return;
+
       case 'track':
       case 'disk':
+      case 'movementIndex':
         const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
         this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value);
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
@@ -238,7 +244,10 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'gapless': // iTunes gap-less flag
-        tag.value = tag.value === '1'; // boolean
+      case 'compilation':
+      case 'podcast':
+      case 'showMovement':
+        tag.value = tag.value === '1' || tag.value === 1; // boolean
         break;
 
       case 'isrc': // Only keep unique values

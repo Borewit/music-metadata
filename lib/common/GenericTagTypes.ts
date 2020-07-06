@@ -106,7 +106,16 @@ export type GenericTagId =
   | 'replaygain_track_minmax'
   | 'replaygain_album_minmax'
   | 'replaygain_undo'
-  | 'description';
+  | 'description'
+  | 'category'
+  | 'hdVideo'
+  | 'keywords'
+  | 'movement'
+  | 'movementIndex'
+  | 'movementTotal'
+  | 'podcastId'
+  | 'showMovement'
+  | 'stik';
 
 export interface INativeTagMap {
   [index: string]: GenericTagId;
@@ -149,7 +158,7 @@ export const commonTags: ITagInfoMap = {
   work: {multiple: false, unique: true},
   artistsort: {multiple: false, unique: true},
   albumartistsort: {multiple: false, unique: true},
-  composersort: {multiple: true, unique: true},
+  composersort: {multiple: false, unique: true},
   lyricist: {multiple: true, unique: true},
   writer: {multiple: true, unique: true},
   conductor: {multiple: true, unique: true},
@@ -162,7 +171,7 @@ export const commonTags: ITagInfoMap = {
   mixer: {multiple: true, unique: true},
   label: {multiple: true, unique: true},
   grouping: {multiple: false},
-  subtitle: {multiple: false},
+  subtitle: {multiple: true},
   discsubtitle: {multiple: false},
   totaltracks: {multiple: false},
   totaldiscs: {multiple: false},
@@ -231,7 +240,17 @@ export const commonTags: ITagInfoMap = {
   replaygain_album_minmax: {multiple: false},
   replaygain_undo: {multiple: false},
 
-  description:  {multiple: true}
+  description:  {multiple: true},
+
+  category: {multiple: true},
+  hdVideo: {multiple: false},
+  keywords: {multiple: true},
+  movement: {multiple: false},
+  movementIndex: {multiple: false},
+  movementTotal: {multiple: false},
+  podcastId: {multiple: false},
+  showMovement: {multiple: false},
+  stik: {multiple: false}
 };
 
 /**

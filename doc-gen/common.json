@@ -149,6 +149,9 @@
   "totaldiscs": {
     "description": "The total number of discs"
   },
+  "movementTotal": {
+    "description": "The total number of movements"
+  },
   "compilation": {
     "description": "Is part of compilation (unofficial iTunes Compilation Flag)"
   },
@@ -298,5 +301,29 @@
   },
   "technician": {
     "description": "Technician who digitized subject"
+  },
+  "category": {
+    "description": "Podcast Category"
+  },
+  "hdVideo": {
+    "description": "iTunes Video Quality (2=Full HD, 1=HD, 0=SD)"
+  },
+  "keywords": {
+    "description": "Podcast Keywords"
+  },
+  "movement": {
+    "description": "Movement"
+  },
+  "movementIndex": {
+    "description": "Movement Index/Total, e.g. `{no: 1, of: 4}`"
+  },
+  "podcastId": {
+    "description": "Podcast Identifier"
+  },
+  "showMovement": {
+    "description": "Show Movement"
+  },
+  "stik": {
+    "description": "iTunes Media Type (1=Normal, 2=Audiobook, 6=Music Video, 9=Movie, 10=TV Show, 11=Booklet, 14=Ringtone, https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata#user-content-media-type-stik)"
   }
 }

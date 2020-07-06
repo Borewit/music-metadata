@@ -1,5 +1,5 @@
 import {INativeTagMap} from '../common/GenericTagTypes';
-import {CommonTagMapper} from '../common/GenericTagMapper';
+import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap';
 
 /**
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
@@ -15,6 +15,7 @@ const mp4TagMap: INativeTagMap = {
   '©alb': 'album',
   '©day': 'date',
   '©cmt': 'comment',
+  '©com': 'comment',
   trkn: 'track',
   disk: 'disk',
   '©gen': 'genre',
@@ -56,6 +57,7 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:SCRIPT': 'script',
   '----:com.apple.iTunes:LANGUAGE': 'language',
   cprt: 'copyright',
+  '©cpy': 'copyright',
   '----:com.apple.iTunes:LICENSE': 'license',
   '©too': 'encodedby',
   pgap: 'gapless',
@@ -91,13 +93,23 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:ORIGINALDATE': 'originaldate',
   '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear',
   // '----:com.apple.iTunes:PERFORMER': 'performer'
-  desc: 'description',
-  ldes: 'description'
+  desc: 'subtitle',
+  ldes: 'description',
+  '©mvn': 'movement',
+  '©mvi': 'movementIndex',
+  '©mvc': 'movementTotal',
+  '©wrk': 'work',
+  catg: 'category',
+  egid: 'podcastId',
+  hdvd: 'hdVideo',
+  keyw: 'keywords',
+  shwm: 'showMovement',
+  stik: 'stik'
 };
 
 export const tagType = 'iTunes';
 
-export class MP4TagMapper extends CommonTagMapper {
+export class MP4TagMapper extends CaseInsensitiveTagMap {
 
   public constructor() {
     super([tagType],  mp4TagMap);

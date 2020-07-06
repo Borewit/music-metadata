@@ -121,9 +121,9 @@ export interface ICommonTagsResult {
    */
   albumartistsort?: string;
   /**
-   * Composer(s), formatted for alphabetic ordering
+   * Composer, formatted for alphabetic ordering
    */
-  composersort?: string[];
+  composersort?: string;
   /**
    * Lyricist(s)
    */
@@ -164,10 +164,12 @@ export interface ICommonTagsResult {
   label?: string[];
   grouping?: string[];
   subtitle?: string[];
+  description?: string[];
   discsubtitle?: string[];
   totaltracks?: string;
   totaldiscs?: string;
-  compilation?: string;
+  movementTotal?: number;
+  compilation?: boolean;
   rating?: IRating[];
   bpm?: number;
   /**
@@ -206,7 +208,7 @@ export interface ICommonTagsResult {
    * TV network
    */
   tvNetwork?: string,
-  podcast?: string;
+  podcast?: boolean;
   podcasturl?: string;
   releasestatus?: string;
   releasetype?: string[];
@@ -297,6 +299,53 @@ export interface ICommonTagsResult {
    * Ref: https://docs.microsoft.com/en-us/windows/win32/wmformat/wm-initialkey
    */
   key?: string;
+
+  /**
+   * Podcast Category
+   */
+  category?: string[];
+  /**
+   * iTunes Video Quality
+   *
+   * 2: Full HD
+   * 1: HD
+   * 0: SD
+   */
+  hdVideo?: number;
+  /**
+   * Podcast Keywords
+   */
+  keywords?: string[];
+  /**
+   * Movement
+   */
+  movement?: string;
+  /**
+   * Movement Index/Total
+   */
+  movementIndex: { no?: number, of?: number };
+  /**
+   * Podcast Identifier
+   */
+  podcastId?: string;
+  /**
+   * Show Movement
+   */
+  showMovement?: boolean;
+  /**
+   * iTunes Media Type
+   *
+   * 1: Normal
+   * 2: Audiobook
+   * 6: Music Video
+   * 9: Movie
+   * 10: TV Show
+   * 11: Booklet
+   * 14: Ringtone
+   *
+   * https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata#user-content-media-type-stik
+   */
+  stik?: number;
 }
 
 export interface IRatio {
