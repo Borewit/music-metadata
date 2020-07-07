@@ -566,10 +566,15 @@ export class MpegParser extends AbstractID3Parser {
 
       case 'LAME':
         const version = await this.tokenizer.readToken(LameEncoderVersion);
-        this.offset += LameEncoderVersion.len;
-        this.metadata.setFormat('tool', 'LAME ' + version);
-        await this.skipFrameData(this.frame_size - this.offset);
-        return null;
+        if (this.frame_size >= this.offset + LameEncoderVersion.len) {
+          this.offset += LameEncoderVersion.len;
+          this.metadata.setFormat('tool', 'LAME ' + version);
+          await this.skipFrameData(this.frame_size - this.offset);
+          return null;
+        } else {
+          this.metadata.addWarning('Corrupt LAME header');
+          break;
+        }
       // ToDo: ???
     }
 
