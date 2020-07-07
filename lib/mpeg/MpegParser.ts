@@ -610,7 +610,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async skipFrameData(frameDataLeft: number): Promise<void> {
-    assert.ok(frameDataLeft >= 0, 'frame-data-left cannot be negative');
+    // assert.ok(frameDataLeft >= 0, 'frame-data-left cannot be negative');
     await this.tokenizer.ignore(frameDataLeft);
     this.countSkipFrameData += frameDataLeft;
   }
