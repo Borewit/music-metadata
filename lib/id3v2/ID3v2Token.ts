@@ -100,7 +100,7 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
       // ID3v2 flags
       flags: {
         // Raw flags value
-        raw: Token.INT8.get(buf, off + 4),
+        raw: Token.INT8.get(buf, off + 5),
         // Unsynchronisation
         unsynchronisation: common.strtokBITSET.get(buf, off + 5, 7),
         // Extended header
