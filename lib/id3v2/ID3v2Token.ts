@@ -67,8 +67,6 @@ export interface IID3v2header {
   },
   // ID3v2 flags
   flags: {
-    // Raw flags value
-    raw: number,
     // Unsynchronisation
     unsynchronisation: boolean,
     // Extended header
@@ -99,8 +97,6 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
       },
       // ID3v2 flags
       flags: {
-        // Raw flags value
-        raw: Token.INT8.get(buf, off + 4),
         // Unsynchronisation
         unsynchronisation: common.strtokBITSET.get(buf, off + 5, 7),
         // Extended header
