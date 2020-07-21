@@ -41,3 +41,5 @@ update_configs:
           dependency_name: "file-type"
       - match:
           dependency_name: "mime"
+      - match:
+          dependency_name: "remark-cli"
