@@ -81,7 +81,7 @@
   "dependencies": {
     "content-type": "^1.0.4",
     "debug": "^4.1.0",
-    "file-type": "^14.6.2",
+    "file-type": "^14.7.0",
     "media-typer": "^1.1.0",
     "strtok3": "^6.0.4",
     "token-types": "^2.0.0"
