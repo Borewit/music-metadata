@@ -99,6 +99,20 @@ describe('Parse MP3 files', () => {
     assert.approximately(format.duration,  217.86, 0.005, 'format.duration');
   });
 
+  it('Able to handle corrupt LAME header', async() => {
+
+    const filePath = path.join(samplePath, 'mp3', 'issue-554.mp3');
+
+    const {format, quality} = await mm.parseFile(filePath, {duration: true});
+
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
+    assert.approximately(format.duration, 817.92, 1 / 200, 'format.duration');
+    assert.strictEqual(format.sampleRate, 22050, 'format.sampleRate');
+
+    assert.includeDeepMembers(quality.warnings, [{message: 'Corrupt LAME header'}], 'quality.warnings includes: \'Corrupt LAME header\'');
+  });
+
   describe('should handle incomplete MP3 file', () => {
 
     const filePath = path.join(samplePath, 'incomplete.mp3');
