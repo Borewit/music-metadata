@@ -362,7 +362,7 @@ export class MpegParser extends AbstractID3Parser {
     while (true) {
       let bo = 0;
       this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, {length: maxPeekLen, mayBeLess: true});
-      if (this.syncPeek.len <= 256) {
+      if (this.syncPeek.len <= 163) {
         throw new EndOfStreamError();
       }
       while (true) {
