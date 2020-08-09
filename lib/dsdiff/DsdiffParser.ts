@@ -3,7 +3,6 @@ import * as Token from 'token-types';
 import * as initDebug from 'debug';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
-import { ID3Stream } from '../id3v2/ID3Stream';
 
 import {ChunkHeader, IChunkHeader} from "./DsdiffToken";
 import * as strtok3 from "strtok3/lib/core";
@@ -67,8 +66,7 @@ export class DsdiffParser extends BasicParser {
 
       case 'ID3': // Unofficial ID3 tag support
         const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
-        const id3stream = new ID3Stream(id3_data);
-        const rst = strtok3.fromStream(id3stream);
+        const rst = strtok3.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         break;
 

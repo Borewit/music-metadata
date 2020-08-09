@@ -9,7 +9,6 @@ import { ID3v2Parser } from '../id3v2/ID3v2Parser';
 import Common from '../common/Util';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
-import { ID3Stream } from "../id3v2/ID3Stream";
 
 const debug = initDebug('music-metadata:parser:RIFF');
 
@@ -93,8 +92,7 @@ export class WaveParser extends BasicParser {
         case 'id3 ': // The way Picard, FooBar currently stores, ID3 meta-data
         case 'ID3 ': // The way Mp3Tags stores ID3 meta-data
           const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
-          const id3stream = new ID3Stream(id3_data);
-          const rst = strtok3.fromStream(id3stream);
+          const rst = strtok3.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
 
