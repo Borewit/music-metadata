@@ -10,7 +10,7 @@ describe('Parse FLAC', () => {
 
   const samplePath = path.join(__dirname, 'samples');
 
-  const flacFilePath = path.join(samplePath, 'flac.flac');
+  const flacFilePath = path.join(samplePath, 'flac');
 
   function checkFormat(format) {
     t.strictEqual(format.container, 'FLAC', 'format.container');
@@ -59,7 +59,7 @@ describe('Parse FLAC', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async () => {
-        const metadata = await parser.initParser(flacFilePath, 'audio/flac');
+        const metadata = await parser.initParser(path.join(samplePath, 'flac.flac'), 'audio/flac');
         checkFormat(metadata.format);
         checkCommon(metadata.common);
         checkNative(mm.orderTags(metadata.native.vorbis));
@@ -141,6 +141,15 @@ describe('Parse FLAC', () => {
     assert.deepEqual(common.picture[0].data.length, 107402, 'ommon.picture[0].data.length');
     assert.deepEqual(common.picture[1].format, 'image/jpeg', 'ommon.picture[1].format');
     assert.deepEqual(common.picture[1].data.length, 215889, 'ommon.picture[1].data.length');
+  });
+
+  it('Handle FLAC with undefined duration (number of samples == 0)', async() => {
+
+    const filePath = path.join(flacFilePath, 'test-unknown-duration.flac');
+
+    const {format} = await mm.parseFile(filePath);
+
+    assert.isUndefined(format.duration, 'format.duration');
   });
 
 });
