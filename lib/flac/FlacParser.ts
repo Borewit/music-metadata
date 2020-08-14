@@ -110,7 +110,9 @@ export class FlacParser extends AbstractID3Parser {
     this.metadata.setFormat('numberOfChannels', streamInfo.channels);
     this.metadata.setFormat('bitsPerSample', streamInfo.bitsPerSample);
     this.metadata.setFormat('sampleRate', streamInfo.sampleRate);
-    this.metadata.setFormat('duration', streamInfo.totalSamples / streamInfo.sampleRate);
+    if (streamInfo.totalSamples > 0) {
+      this.metadata.setFormat('duration', streamInfo.totalSamples / streamInfo.sampleRate);
+    }
   }
 
   /**
