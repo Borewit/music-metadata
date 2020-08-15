@@ -56,7 +56,7 @@ export class WaveParser extends BasicParser {
 
   public async readWaveChunk(remaining: number): Promise<void> {
 
-    do {
+    while (remaining >= riff.Header.len) {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
       remaining -= riff.Header.len + header.chunkSize;
 
@@ -118,7 +118,7 @@ export class WaveParser extends BasicParser {
         debug('Read odd padding byte'); // https://wiki.multimedia.cx/index.php/RIFF
         await this.tokenizer.ignore(1);
       }
-    } while (remaining > 0);
+    }
   }
 
   public async parseListTag(listHeader: riff.IChunkHeader): Promise<void> {
