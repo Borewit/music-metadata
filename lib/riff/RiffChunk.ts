@@ -1,5 +1,4 @@
 import * as Token from 'token-types';
-import {FourCcToken} from '../common/FourCC';
 import {IChunkHeader} from '../iff';
 import { IGetToken } from 'strtok3/lib/core';
 export {IChunkHeader} from '../iff';
@@ -13,7 +12,7 @@ export const Header: IGetToken<IChunkHeader> = {
   get: (buf, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: FourCcToken.get(buf, off),
+      chunkID: buf.toString('binary', off, 4),
       // Size
       chunkSize: buf.readUInt32LE(off + 4)
     };

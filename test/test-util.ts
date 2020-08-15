@@ -75,7 +75,7 @@ describe("shared utility functionality", () => {
       {fourCC: '-\x00\x00\x00', valid: true}, // Used in MP4
       {fourCC: '©nam', valid: true}, // Used in MP4
       {fourCC: '(c) ', valid: true}, // Used in AIFF
-      {fourCC: ' XML', valid: true}, // Used in WAVE
+      {fourCC: ' XML', valid: false},
       {fourCC: ' XM ', valid: false}
     ];
 
@@ -91,7 +91,7 @@ describe("shared utility functionality", () => {
         } catch (e) {
           valid = false;
         }
-        t.strictEqual(valid, data.valid, `FourCC: ${util.a2hex(data.fourCC)}`);
+        t.strictEqual(valid, data.valid, `FourCC: ${util.a2hex(data.fourCC)} "${data.fourCC}"`);
         if (data.valid) {
           t.strictEqual(fourCC, data.fourCC);
         }
