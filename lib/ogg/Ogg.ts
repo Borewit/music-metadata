@@ -67,6 +67,12 @@ export interface IPageConsumer {
   parsePage(header: IPageHeader, pageData: Buffer);
 
   /**
+   * Calculate duration of provided header
+   * @param header Ogg header
+   */
+  calculateDuration(header: IPageHeader);
+
+  /**
    * Force to parse pending segments
    */
   flush();

@@ -50,7 +50,7 @@ export class OpusParser extends VorbisParser {
     }
   }
 
-  protected calculateDuration(header: IPageHeader) {
+  public calculateDuration(header: IPageHeader) {
     if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
       this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition - this.idHeader.preSkip);

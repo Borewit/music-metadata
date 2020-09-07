@@ -78,6 +78,14 @@ export class VorbisParser implements Ogg.IPageConsumer {
     this.metadata.addTag('vorbis', id, value);
   }
 
+  public calculateDuration(header: Ogg.IPageHeader) {
+    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
+      // Calculate duration
+      this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition);
+      this.metadata.setFormat('duration',  this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
+    }
+  }
+
   /**
    * Parse first Ogg/Vorbis page
    * @param {IPageHeader} header
@@ -112,14 +120,6 @@ export class VorbisParser implements Ogg.IPageConsumer {
       case 1: // type 1: the identification header
       case 5: // type 5: setup header type
         break; // ignore
-    }
-  }
-
-  protected calculateDuration(header: Ogg.IPageHeader) {
-    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
-      // Calculate duration
-      this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition);
-      this.metadata.setFormat('duration',  this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
     }
   }
 

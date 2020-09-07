@@ -7,6 +7,7 @@ import { Parsers } from './metadata-parsers';
 describe('Parse Ogg', function() {
 
   const samplePath = path.join(__dirname, 'samples');
+  const oggSamplePath = path.join(samplePath, 'ogg');
 
   this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
@@ -137,7 +138,7 @@ describe('Parse Ogg', function() {
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
         assert.strictEqual(format.numberOfSamples, 96000, 'format.numberOfSamples = 96000');
-        // ToDo: assert.strictEqual(format.duration, 2.0, 'format.duration = 2.0 sec');
+        assert.approximately(format.duration, 2.18, 1 / 200, 'format.duration = 2.0 sec');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
         // ToDo: assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
@@ -198,5 +199,35 @@ describe('Parse Ogg', function() {
     });
 
   });
+
+
+  describe('Calculate duration', () => {
+
+    it('with proper last page header', async() => {
+
+      const filePath = path.join(oggSamplePath, 'last-page.oga');
+
+      const {format} = await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'Opus', 'format.codec');
+      assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
+      assert.approximately(format.duration, 5.28, 1 / 200, 'format.duration');
+    });
+
+    it('with no last page', async() => {
+
+      const filePath = path.join(oggSamplePath, 'no-last-page.oga');
+
+      const {format} = await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'Opus', 'format.codec');
+      assert.strictEqual(format.sampleRate, 16000, 'format.sampleRate');
+      assert.approximately(format.duration, 16.92, 1 / 200, 'format.duration');
+    });
+
+  });
+
 
 });
