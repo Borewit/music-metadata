@@ -32,6 +32,10 @@ export class TheoraParser implements Ogg.IPageConsumer {
     debug('flush');
   }
 
+  public calculateDuration(header: Ogg.IPageHeader) {
+    debug('duration calculation not implemented');
+  }
+
   /**
    * Parse first Theora Ogg page. the initial identification header packet
    * @param {IPageHeader} header
