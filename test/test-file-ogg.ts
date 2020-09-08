@@ -78,18 +78,20 @@ describe('Parse Ogg', function() {
 
       const filePath = path.join(samplePath, 'issue_62.ogg');
 
-      const metadata = await mm.parseFile(filePath);
+      const {format, common, quality} = await mm.parseFile(filePath);
 
-      assert.deepEqual(metadata.format.tagTypes, ['vorbis'], 'format.tagTypes');
-      // ToDo? assert.strictEqual(metadata.format.duration, 2.0, 'format.duration = 2.0 sec');
-      assert.strictEqual(metadata.format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
-      assert.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
-      assert.strictEqual(metadata.format.bitrate, 56000, 'bitrate = 64 kbit/sec');
+      assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
+      // assert.strictEqual(format.duration, 2.0, 'format.duration = 2.0 sec');
+      assert.strictEqual(format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
+      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
+      assert.strictEqual(format.bitrate, 56000, 'bitrate = 64 kbit/sec');
 
       // Following is part a page which is not correctly finalized with lastPage flag
-      assert.isDefined(metadata.common.title, 'should provide: metadata.common.title');
-      assert.equal(metadata.common.title, 'Al-Fatihah', 'metadata.common.title');
-      assert.equal(metadata.common.artist, 'Mishary Alafasi - www.TvQuran.com', 'metadata.common.artist');
+      assert.isDefined(common.title, 'should provide: metadata.common.title');
+      assert.equal(common.title, 'Al-Fatihah', 'metadata.common.title');
+      assert.equal(common.artist, 'Mishary Alafasi - www.TvQuran.com', 'metadata.common.artist');
+
+      assert.includeDeepMembers(quality.warnings, [{message: 'Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag'}]);
     });
 
     /**
@@ -138,10 +140,10 @@ describe('Parse Ogg', function() {
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
         assert.strictEqual(format.numberOfSamples, 96000, 'format.numberOfSamples = 96000');
-        assert.approximately(format.duration, 2.18, 1 / 200, 'format.duration = 2.0 sec');
+        assert.approximately(format.duration, 2.0, 1 / 200, 'format.duration = 2.0 sec');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
-        // ToDo: assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
+        // assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
       }
 
       Parsers.forEach(parser => {
@@ -212,6 +214,7 @@ describe('Parse Ogg', function() {
       assert.strictEqual(format.container, 'Ogg', 'format.container');
       assert.strictEqual(format.codec, 'Opus', 'format.codec');
       assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
+      assert.strictEqual(format.numberOfSamples, 253440, 'format.numberOfSamples');
       assert.approximately(format.duration, 5.28, 1 / 200, 'format.duration');
     });
 
@@ -219,12 +222,15 @@ describe('Parse Ogg', function() {
 
       const filePath = path.join(oggSamplePath, 'no-last-page.oga');
 
-      const {format} = await mm.parseFile(filePath);
+      const {format, quality} = await mm.parseFile(filePath);
 
       assert.strictEqual(format.container, 'Ogg', 'format.container');
       assert.strictEqual(format.codec, 'Opus', 'format.codec');
       assert.strictEqual(format.sampleRate, 16000, 'format.sampleRate');
-      assert.approximately(format.duration, 16.92, 1 / 200, 'format.duration');
+      assert.strictEqual(format.numberOfSamples, 270720, 'format.numberOfSamples');
+      assert.approximately(format.duration, 5.64, 1 / 200, 'format.duration');
+
+      assert.includeDeepMembers(quality.warnings, [{message: 'Last OGG-page is not marked with last-page flag'}]);
     });
 
   });
