@@ -42,7 +42,7 @@ export class OpusParser extends VorbisParser {
 
       case 'OpusTags':
         this.parseUserCommentList(pageData, 8);
-        this.lastPos = this.tokenizer.position;
+        this.lastPos = this.tokenizer.position - pageData.length;
         break;
 
       default:
@@ -53,8 +53,9 @@ export class OpusParser extends VorbisParser {
   public calculateDuration(header: IPageHeader) {
     if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
-      this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition - this.idHeader.preSkip);
-      this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.idHeader.inputSampleRate);
+      const pos_48bit = header.absoluteGranulePosition - this.idHeader.preSkip;
+      this.metadata.setFormat('numberOfSamples', pos_48bit);
+      this.metadata.setFormat('duration', pos_48bit / 48000);
 
       if (this.lastPos !== -1 && this.tokenizer.fileInfo.size && this.metadata.format.duration) {
         const dataSize = this.tokenizer.fileInfo.size - this.lastPos;
