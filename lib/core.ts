@@ -2,7 +2,7 @@ import * as Stream from 'stream';
 import * as strtok3 from 'strtok3/lib/core';
 
 import {ParserFactory} from './ParserFactory';
-import { IAudioMetadata, INativeTagDict, IOptions, IPrivateOptions, IRandomReader, ITag } from './type';
+import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type';
 import { RandomBufferReader } from './common/RandomBufferReader';
 import { APEv2Parser } from './apev2/APEv2Parser';
 import { hasID3v1Header } from './id3v1/ID3v1Parser';
@@ -68,6 +68,19 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
  */
 export function ratingToStars(rating: number): number {
   return rating === undefined ? 0 : 1 + Math.round(rating * 4);
+}
+
+/**
+ * Select most likely cover image.
+ * @param pictures Usually metadata.common.picture
+ * @return Cover image, if any, otherwise null
+ */
+export function selectCover(pictures?: IPicture[]): IPicture | null {
+  return pictures ? pictures.reduce((acc, cur) => {
+    if (cur.name && cur.name.toLowerCase() in ['front', 'cover', 'cover (front)'])
+      return cur;
+    return acc;
+  }) : null;
 }
 
 export async function scanAppendingHeaders(randomReader: IRandomReader, options: IPrivateOptions = {}) {

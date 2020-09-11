@@ -92,6 +92,40 @@ describe('Convert rating', () => {
 
 });
 
+describe('function selectCover()', () => {
+
+  const samplePath = path.join(__dirname, 'samples');
+
+  const multiCoverFiles = [
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].V2.mp3',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].aiff',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer.ape',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer.flac',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a',
+    'MusicBrainz - Beth Hart - Sinner\'s Prayer.ogg',
+    'id3v2.4.mp3',
+    'issue-266.flac',
+    'monkeysaudio.ape'
+  ];
+
+  it('Should pick the front cover', async () => {
+    for (const multiCoverFile of multiCoverFiles) {
+      const filePath = path.join(samplePath, multiCoverFile);
+      const {common} = await mm.parseFile(filePath);
+      assert.isTrue(common.picture.length > 1);
+      const cover = mm.selectCover(common.picture);
+      if (cover.type) {
+        assert.equal(cover.type, 'Cover (front)', 'cover.type');
+      } else {
+        assert.equal(cover.data, common.picture[0].data, 'First picture if no type is defined');
+      }
+    }
+  });
+
+});
+
 describe('MimeType', () => {
 
   it('should be able to decode basic MIME-types', () => {
