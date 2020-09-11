@@ -5,6 +5,9 @@ import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser';
 
 describe('ID3v2Parser', () => {
 
+  const samplePath = path.join(__dirname, 'samples');
+  const mp3Path = path.join(samplePath, 'mp3');
+
   it('should be able to remove unsynchronisation bytes from buffer', () => {
     const expected = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
     const sample = Buffer.from([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
@@ -14,7 +17,7 @@ describe('ID3v2Parser', () => {
 
   it('should normalize ID3v2.2 comments correctly', async () => {
 
-    const filePath = path.join(__dirname, 'samples', 'issue_66.mp3');
+    const filePath = path.join(samplePath, 'issue_66.mp3');
 
     const metadata = await mm.parseFile(filePath, {duration: true});
 
@@ -81,6 +84,20 @@ describe('ID3v2Parser', () => {
       // tslint:disable:max-line-length
       text: 'Black rose & a radio fire\nits so contagious\nsuch something changing my mind\nim gonna take whats evil\n\nYour cover melting inside\nwith wide eyes you tremble\nkissing over & over again\nyour god knows his faithful\n\nI try - to digest my pride\nbut passions grip i fear\nwhen i climb - into shallow vats of wine\ni think i almost hear - but its not clear\n\nYou are the one\nyou\'ll never be alone again\nyou\'re more then in my head - your more\n\nSpin faster shouting out loud\nyou cant steal whats paid for\nsuch something hurting again\nmurder son shes painful\n\nYou so believe your own lies\non my skin your fingers\nrunaway until the last time\nwere gonna lose forever\n\nwhen you try - don\'t try to say you wont\ntry to crawl into my head\nwhen you cry - cause it\'s all built up inside\nyour tears already said - already said\n\nYou\'ll never be alone again'
     }], '[\'ID3v2.2\'].ULT');
+  });
+
+
+  it('05 I Believe You.mp3', async() => {
+
+    const filePath = path.join(mp3Path, 'issue-641.mp3');
+    const {format, common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    const pics = common.picture;
+    assert.strictEqual(pics[0].format, 'image/jpeg', 'picture format');
+    assert.strictEqual(pics[0].type, 'Cover (front)', 'picture type');
   });
 
 });
