@@ -104,7 +104,7 @@ export class FrameParser {
 
           switch (this.major) {
             case 2:
-              pic.format = common.decodeString(b.slice(offset, offset + 3), encoding);
+              pic.format = common.decodeString(b.slice(offset, offset + 3), 'iso-8859-1');
               offset += 3;
               break;
             case 3:
