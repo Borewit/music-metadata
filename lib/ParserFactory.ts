@@ -154,6 +154,7 @@ export class ParserFactory {
         return 'aiff';
 
       case '.wav':
+      case '.bwf': // Broadcast Wave Format
         return 'riff';
 
       case '.wv':
