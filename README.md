@@ -219,12 +219,29 @@ orderTags(nativeTags: ITag[]): [tagId: string]: any[]
 ```
 
 #### ratingToStars function
+   
+   Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
+   
+   ```ts
+   ratingToStars(rating: number): number
+   ```
+#### selectCover function
 
-Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
+Select cover image based on image type field, otherwise the first picture in file.
 
 ```ts
-ratingToStars(rating: number): number
+export function selectCover(pictures?: IPicture[]): IPicture | null
 ```
+
+```js
+import * as mm from 'music-metadata';
+
+(async () => {
+  const {common} = await mm.parseFile(filePath);
+  const cover = mm.selectCover(common.picture); // pick the cover image
+}
+)();
+ ```
 
 ### Options
 *   `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
