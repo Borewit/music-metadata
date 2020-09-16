@@ -42,8 +42,8 @@ export interface IRating {
 }
 
 export interface ICommonTagsResult {
-  track: { no: number, of: number };
-  disk: { no: number, of: number };
+  track: { no: number | null, of: number | null };
+  disk: { no: number | null, of: number | null };
   /**
    * Release year
    */
