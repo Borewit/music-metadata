@@ -162,7 +162,7 @@ export interface ICommonTagsResult {
   mixer?: string[];
   technician?: string[];
   label?: string[];
-  grouping?: string[];
+  grouping?: string;
   subtitle?: string[];
   description?: string[];
   discsubtitle?: string[];
