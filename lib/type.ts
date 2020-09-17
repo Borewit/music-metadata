@@ -165,6 +165,7 @@ export interface ICommonTagsResult {
   grouping?: string;
   subtitle?: string[];
   description?: string[];
+  longDescription?: string;
   discsubtitle?: string[];
   totaltracks?: string;
   totaldiscs?: string;

@@ -3,7 +3,7 @@
     "description": "Release year"
   },
   "track": {
-    "description":  "Track number on the media, e.g. `{no: 1, of: 2}`"
+    "description": "Track number on the media, e.g. `{no: 1, of: 2}`"
   },
   "disk": {
     "description": "Disk or media number, e.g. `{no: 1, of: 2}`"
@@ -325,5 +325,8 @@
   },
   "stik": {
     "description": "iTunes Media Type (1=Normal, 2=Audiobook, 6=Music Video, 9=Movie, 10=TV Show, 11=Booklet, 14=Ringtone, https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata#user-content-media-type-stik)"
+  },
+  "longDescription": {
+    "description": "Long description or synopsis"
   }
 }
