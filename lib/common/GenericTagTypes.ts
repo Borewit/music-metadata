@@ -107,6 +107,7 @@ export type GenericTagId =
   | 'replaygain_album_minmax'
   | 'replaygain_undo'
   | 'description'
+  | 'longDescription'
   | 'category'
   | 'hdVideo'
   | 'keywords'
@@ -241,6 +242,7 @@ export const commonTags: ITagInfoMap = {
   replaygain_undo: {multiple: false},
 
   description:  {multiple: true},
+  longDescription: {multiple: false},
 
   category: {multiple: true},
   hdVideo: {multiple: false},

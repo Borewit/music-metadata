@@ -301,7 +301,7 @@ describe('Add, change and fix some mappings #pr-544', () => {
             const filePath = path.join(samplePath, filename);
 
             return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subtitle');
+                t.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subscription');
             });
         });
 
@@ -320,7 +320,7 @@ describe('Add, change and fix some mappings #pr-544', () => {
             const filePath = path.join(samplePath, filename);
 
             return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subtitle');
+                t.deepEqual(metadata.common.description, ['Short Description'], 'metadata.common.subscription');
             });
         });
     });
@@ -351,7 +351,7 @@ describe('Add, change and fix some mappings #pr-544', () => {
             const filePath = path.join(samplePath, filename);
 
             return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.description, ['Long Description'], 'metadata.common.description');
+                t.deepEqual(metadata.common.longDescription, 'Long Description', 'metadata.common.description');
             });
         });
     });
