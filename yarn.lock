@@ -1068,10 +1068,10 @@ file-entry-cache@^5.0.1:
   dependencies:
     flat-cache "^2.0.1"
 
-file-type@*, file-type@^15.0.1:
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/file-type/-/file-type-15.0.1.tgz#54175484953d48b970c095ba8737d4e0c3a9b407"
-  integrity sha512-0LieQlSA3bWUdErNrxzxfI4rhsvNAVPBO06R8pTc1hp9SE6nhqlVyvhcaXoMmtXkBTPnQenbMPLW9X76hH76oQ==
+file-type@*, file-type@^16.0.0:
+  version "16.0.0"
+  resolved "https://registry.yarnpkg.com/file-type/-/file-type-16.0.0.tgz#68f8723bf264d67b1002528a247c23c4a63677ca"
+  integrity sha512-0u4D11yDu0NXF+8qp1eiQ/6cOwPI7sbu9/bGzUOhlwzKbB9FYFivgTtsVPtlkXAakfByWjOsLp2/Jx927OVetg==
   dependencies:
     readable-web-to-node-stream "^2.0.0"
     strtok3 "^6.0.3"
