@@ -49,6 +49,7 @@ export class AIFFParser extends BasicParser {
 
     try {
       do {
+        debug('Reading AIFF chunk at offset=' + this.tokenizer.position);
         const chunkHeader = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
 
         debug(`Chunk id=${chunkHeader.chunkID}`);
