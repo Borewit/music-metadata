@@ -48,7 +48,7 @@ export class AIFFParser extends BasicParser {
     this.metadata.setFormat('lossless', !this.isCompressed);
 
     try {
-      do {
+      while (!this.tokenizer.fileInfo.size || this.tokenizer.fileInfo.size - this.tokenizer.position >= iff.Header.len) {
         debug('Reading AIFF chunk at offset=' + this.tokenizer.position);
         const chunkHeader = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
 
@@ -56,7 +56,7 @@ export class AIFFParser extends BasicParser {
         const nextChunk = 2 * Math.round(chunkHeader.chunkSize / 2);
         const bytesRead = await this.readData(chunkHeader);
         await this.tokenizer.ignore(nextChunk - bytesRead);
-      } while (true);
+      }
     } catch (err) {
       if (err instanceof strtok3.EndOfStreamError) {
         debug(`End-of-stream`);
