@@ -73,7 +73,8 @@ describe("shared utility functionality", () => {
       {fourCC: 'fmt\x00', valid: true},
       {fourCC: '----', valid: true}, // Used in MP4
       {fourCC: '-\x00\x00\x00', valid: true}, // Used in MP4
-      {fourCC: '©nam', valid: true} // Used in MP4
+      {fourCC: '©nam', valid: true}, // Used in MP4
+      {fourCC: '(c) ', valid: true} // Used in AIFF
     ];
 
     it("should only accept a valid identifier, otherwise is should throw an error", () => {

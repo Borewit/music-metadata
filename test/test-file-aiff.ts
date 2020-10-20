@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { Parsers } from './metadata-parsers';
 import { assert } from 'chai';
-import { IFormat } from '../lib';
+import * as mm from '../lib';
 
 describe('Parse AIFF (Audio Interchange File Format)', () => {
 
@@ -9,7 +9,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
   const ULAW = 'ITU-T G.711 mu-law';
 
-  function checkFormat(format: IFormat, compressionType: string, sampleRate: number, channels: number, bitsPerSample: number, samples: number) {
+  function checkFormat(format: mm.IFormat, compressionType: string, sampleRate: number, channels: number, bitsPerSample: number, samples: number) {
     const lossless = compressionType === 'PCM';
     const dataFormat = lossless ? 'AIFF' : 'AIFF-C';
     const duration = samples / format.sampleRate;
@@ -109,6 +109,22 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       });
     });
 
+  });
+
+  // Issue: https://github.com/Borewit/music-metadata/issues/643
+  it('Parse tag "(c) "', async () => {
+
+    const filePath = path.join(samplePath, 'No Sanctuary Here.aiff');
+
+    const {format, common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'AIFF', 'format.container');
+    assert.strictEqual(format.codec, 'PCM', 'format.codec');
+
+    assert.strictEqual(common.album, 'Hdtracks 2020 Hi-Res Sampler', 'common.album');
+    assert.deepEqual(common.artists, ['Chris Jones'], 'common.artists');
+    assert.strictEqual(common.encodersettings, 'Lavf58.29.100', 'common.encodersettings');
+    assert.strictEqual(common.year, 2020, 'common.year');
   });
 
 });
