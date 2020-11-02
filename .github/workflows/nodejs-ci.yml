@@ -50,7 +50,8 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v2
+      - name: 'Checkout the repository'
+        uses: actions/checkout@v2
 
       - name: Test with Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
