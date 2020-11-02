@@ -181,13 +181,15 @@ export class ParserFactory {
   public static async loadParser(moduleName: ParserType): Promise<ITokenParser> {
     switch (moduleName) {
       case 'aiff': return new AIFFParser();
+      case 'adts':
+      case 'mpeg':
+        return new MpegParser();
       case 'apev2': return new APEv2Parser();
       case 'asf': return new AsfParser();
       case 'dsf': return new DsfParser();
       case 'dsdiff': return new DsdiffParser();
       case 'flac': return new FlacParser();
       case 'mp4': return new MP4Parser();
-      case 'mpeg': return new MpegParser();
       case 'musepack': return new MusepackParser();
       case 'ogg': return new OggParser();
       case 'riff': return new WaveParser();
@@ -234,7 +236,11 @@ export class ParserFactory {
 
           case 'mp3': // Incorrect MIME-type, Chrome, in Web API File object
           case 'mpeg':
-            return 'mpeg'; // ToDo: handle ID1 header as well
+            return 'mpeg';
+
+          case 'aac':
+          case 'aacp':
+            return 'adts';
 
           case 'flac':
             return 'flac';
@@ -244,8 +250,6 @@ export class ParserFactory {
             return 'apev2';
 
           case 'mp4':
-          case 'aac':
-          case 'aacp':
           case 'm4a':
             return 'mp4';
 
