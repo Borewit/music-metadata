@@ -63,7 +63,7 @@ Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](
 
 ### Audio format & encoding details
 
-Support for encoding / format details:git pull
+Support for encoding / format details:
 *   [Bit rate](https://wikipedia.org/wiki/Bit_rate)
 *   [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
 *   Duration
