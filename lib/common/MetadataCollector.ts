@@ -282,7 +282,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * @param pictureType
    */
   private async postFixPicture(picture: IPicture): Promise<IPicture> {
-    if (picture.data.length > 0) {
+    if (picture.data && picture.data.length > 0) {
       if (!picture.format) {
         const fileType = await FileType.fromBuffer(picture.data);
         if (fileType) {
