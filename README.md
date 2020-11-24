@@ -8,7 +8,6 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/Borewit/music-metadata.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Borewit/music-metadata/alerts/)
 [![DeepScan grade](https://deepscan.io/api/teams/5165/projects/6938/branches/61821/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=5165&pid=6938&bid=61821)
 [![Known Vulnerabilities](https://snyk.io/test/github/Borewit/music-metadata/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Borewit/music-metadata?targetFile=package.json)
-[![Dependencies](https://david-dm.org/Borewit/music-metadata.svg)](https://david-dm.org/Borewit/music-metadata)
 [![Discord](https://img.shields.io/discord/460524735235883049.svg)](https://discord.gg/KyBr6sb)
 
 # music-metadata
