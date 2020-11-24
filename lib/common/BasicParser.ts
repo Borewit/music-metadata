@@ -24,6 +24,6 @@ export abstract class BasicParser implements ITokenParser {
     return this;
   }
 
-  public abstract async parse();
+  public abstract parse();
 
 }
