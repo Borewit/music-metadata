@@ -216,4 +216,17 @@ describe('Parse MP3 files', () => {
 
   });
 
+  describe('Handle Xing header', () => {
+
+    it('Handle Xing header, without LAME extension', async () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'Solace.mp3');
+      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      assert.strictEqual(format.container, 'MPEG', 'format.container');
+      assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+      assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
+    });
+
+  });
+
 });

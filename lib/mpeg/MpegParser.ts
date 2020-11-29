@@ -5,7 +5,7 @@ import * as initDebug from 'debug';
 
 import Common from '../common/Util';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
-import { InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, XingInfoTag } from './XingTag';
+import { InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag';
 
 const debug = initDebug('music-metadata:parser:mpeg');
 
@@ -595,12 +595,15 @@ export class MpegParser extends AbstractID3Parser {
    */
   private async readXingInfoHeader(): Promise<IXingInfoTag> {
 
-    const infoTag = await this.tokenizer.readToken<IXingInfoTag>(XingInfoTag);
-    this.offset += XingInfoTag.len;  // 12
+    const _offset = this.tokenizer.position;
+    const infoTag = await readXingHeader(this.tokenizer);
+    this.offset += this.tokenizer.position - _offset;
 
-    this.metadata.setFormat('tool', Common.stripNulls(infoTag.codec));
+    if (infoTag.lame) {
+      this.metadata.setFormat('tool', Common.stripNulls(infoTag.lame.version));
+    }
 
-    if ((infoTag.headerFlags[3] & 0x01) === 1) {
+    if (infoTag.streamSize) {
       const duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
       this.metadata.setFormat('duration', duration);
       debug('Get duration from Xing header: %s', this.metadata.format.duration);
