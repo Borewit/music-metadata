@@ -1,5 +1,13 @@
 import * as Token from "token-types";
-import { IGetToken } from "strtok3/lib/core";
+import { IGetToken, ITokenizer } from 'strtok3/lib/core';
+import Common from '../common/Util';
+
+export interface IXingHeaderFlags {
+  frames: boolean;
+  bytes: boolean;
+  toc: boolean;
+  vbrScale: boolean;
+}
 
 /**
  * Info Tag: Xing, LAME
@@ -15,77 +23,70 @@ export const LameEncoderVersion = new Token.StringType(6, 'ascii');
 
 export interface IXingInfoTag {
 
-  headerFlags: Buffer,
-
   /**
    * total bit stream frames from Vbr header data
    */
-  numFrames: number,
+  numFrames?: number,
 
   /**
    * Actual stream size = file size - header(s) size [bytes]
    */
-  streamSize: number,
+  streamSize?: number,
+
+  toc?: Buffer;
 
   /**
    * the number of header data bytes (from original file)
    */
-  vbrScale: number,
+  vbrScale?: number;
 
-  /**
-   * LAME Tag, extends the Xing header format
-   * First added in LAME 3.12 for VBR
-   * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
-   */
-
-  //  Initial LAME info, e.g.: LAME3.99r
-  codec: string,
-  /**
-   * Info tag revision
-   */
-  infoTagRevision: number,
-  /**
-   * VBR method
-   */
-  vbrMethod: number;
+  lame?: {
+    version: string;
+  }
 }
 
 /**
  * Info Tag
  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
  */
-export const XingInfoTag: IGetToken<IXingInfoTag> = {
-  len: 136, // 140 bytes - 4 bytes TAG = 136 + 7 byte extension
+export const XingHeaderFlags: IGetToken<IXingHeaderFlags> = {
+  len: 4,
 
   get: (buf, off) => {
     return {
-
-      // === ZONE A - Traditional Xing VBR Tag data ===
-
-      // 4 bytes for HeaderFlags
-      headerFlags: new Token.BufferType(4).get(buf, off),
-
-      numFrames: Token.UINT32_BE.get(buf, off + 4),
-
-      streamSize: Token.UINT32_BE.get(buf, off + 8),
-
-      // the number of header data bytes (from original file)
-      vbrScale: Token.UINT32_BE.get(buf, off + 112),
-
-      /**
-       * LAME Tag, extends the Xing header format
-       * First added in LAME 3.12 for VBR
-       * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
-       */
-
-      // === ZONE B - Initial LAME info  ===
-
-      //  Initial LAME info, e.g.: LAME3.99r
-      codec: new Token.StringType(9, 'ascii').get(buf, off + 116), // bytes $9A-$A => 154-164 (offset doc - 38)
-      // 	 Info tag revision
-      infoTagRevision: Token.UINT8.get(buf, off + 125) >> 4,
-      // VBR method
-      vbrMethod: Token.UINT8.get(buf, off + 125) & 0xf // $A5
+      frames: Common.isBitSet(buf, off, 31),
+      bytes: Common.isBitSet(buf, off, 30),
+      toc: Common.isBitSet(buf, off, 29),
+      vbrScale: Common.isBitSet(buf, off, 28)
     };
   }
 };
+
+// /**
+//  * XING Header Tag
+//  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
+//  */
+export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTag> {
+  const flags = await tokenizer.readToken(XingHeaderFlags);
+  const xingInfoTag: IXingInfoTag = {};
+  if (flags.frames) {
+    xingInfoTag.numFrames =  await tokenizer.readToken(Token.UINT32_BE);
+  }
+  if (flags.bytes) {
+    xingInfoTag.streamSize =  await tokenizer.readToken(Token.UINT32_BE);
+  }
+  if (flags.toc) {
+    xingInfoTag.toc = Buffer.alloc(100);
+    await tokenizer.readBuffer(xingInfoTag.toc);
+  }
+  if (flags.vbrScale) {
+    xingInfoTag.vbrScale = await tokenizer.readToken(Token.UINT32_BE);
+  }
+  const lameTag = await tokenizer.peekToken(new Token.StringType(4, 'ascii'));
+  if (lameTag === 'LAME') {
+    xingInfoTag. lame = {
+      version: await tokenizer.readToken(new Token.StringType(9, 'ascii'))
+    };
+  }
+  return xingInfoTag;
+}
