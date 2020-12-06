@@ -14,6 +14,7 @@ const vorbisTagMap: INativeTagMap = {
   ARTIST: "artist",
   ARTISTS: "artists",
   ALBUMARTIST: "albumartist",
+  'ALBUM ARTIST': "albumartist",
   ALBUM: "album",
   DATE: "date",
   ORIGINALDATE: "originaldate",
