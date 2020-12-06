@@ -152,4 +152,16 @@ describe('Parse FLAC', () => {
     assert.isUndefined(format.duration, 'format.duration');
   });
 
+
+  it('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async () => {
+
+    const filePath = path.join(flacFilePath, '14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac');
+    const {format, common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'FLAC', 'format.container');
+    assert.strictEqual(format.codec, 'FLAC', 'format.codec');
+
+    assert.strictEqual(common.albumartist, 'Various Artists', 'common.albumartist');
+  });
+
 });
