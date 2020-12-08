@@ -376,7 +376,10 @@ export type FormatId =
   | 'audioMD5'
   | 'chapters'
   | 'modificationTime'
-  | 'creationTime';
+  | 'creationTime'
+  | 'trackPeakLevel'
+  | 'trackGain'
+  | 'albumGain';
 
 export interface IAudioTrack {
   samplingFrequency?: number;
@@ -504,6 +507,10 @@ export interface IFormat {
    * Time file was modified
    */
   readonly modificationTime?: Date;
+
+  readonly trackGain?: number;
+  readonly trackPeakLevel?: number;
+  readonly albumGain?: number;
 }
 
 export interface ITag {

@@ -38,7 +38,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
-      assert.strictEqual(format.tool, 'LAME3.98r', 'format.tool');
+      assert.strictEqual(format.tool, 'LAME 3.98r', 'format.tool');
       assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
     }
 
