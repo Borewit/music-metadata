@@ -273,6 +273,8 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 *   `format.numberOfChannels?: number` Number of audio channels
 *   `format.creationTime?: Date` Track creation time
 *   `format.modificationTime?: Date` Track modification / tag update time
+*   `format.trackGain?: number` Track gain in dB
+*   `format.albumGain?: number` Album gain in dB
 
 #### `metadata.trackInfo`
 

@@ -22,7 +22,7 @@ describe("Decode MP3/ID3v2.4", () => {
       t.strictEqual(metadata.format.codecProfile, 'CBR', 'format.codecProfile = CBR');
       t.strictEqual(metadata.format.container, 'MPEG', 'format.container');
       t.strictEqual(metadata.format.codec, 'MPEG 1 Layer 3', 'format.codec');
-      t.strictEqual(metadata.format.tool, 'LAME3.98r', 'format.tool');
+      t.strictEqual(metadata.format.tool, 'LAME 3.98r', 'format.tool');
       t.strictEqual(metadata.format.numberOfChannels, 2, 'format.numberOfChannels = 2');
 
       t.strictEqual(metadata.common.title, 'Home', 'title');

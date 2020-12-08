@@ -599,7 +599,18 @@ export class MpegParser extends AbstractID3Parser {
     this.offset += this.tokenizer.position - _offset;
 
     if (infoTag.lame) {
-      this.metadata.setFormat('tool', Common.stripNulls(infoTag.lame.version));
+      this.metadata.setFormat('tool', 'LAME ' + Common.stripNulls(infoTag.lame.version));
+      if (infoTag.lame.extended) {
+        // this.metadata.setFormat('trackGain', infoTag.lame.extended.track_gain);
+        this.metadata.setFormat('trackPeakLevel', infoTag.lame.extended.track_peak);
+        if (infoTag.lame.extended.track_gain) {
+          this.metadata.setFormat('trackGain', infoTag.lame.extended.track_gain.adjustment);
+        }
+        if (infoTag.lame.extended.album_gain) {
+          this.metadata.setFormat('albumGain', infoTag.lame.extended.album_gain.adjustment);
+        }
+        this.metadata.setFormat('duration', infoTag.lame.extended.music_length / 1000);
+      }
     }
 
     if (infoTag.streamSize) {

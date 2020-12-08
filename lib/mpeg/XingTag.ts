@@ -1,6 +1,7 @@
 import * as Token from "token-types";
 import { IGetToken, ITokenizer } from 'strtok3/lib/core';
 import Common from '../common/Util';
+import { ExtendedLameHeader, IExtendedLameHeader } from './ExtendedLameHeader';
 
 export interface IXingHeaderFlags {
   frames: boolean;
@@ -42,6 +43,7 @@ export interface IXingInfoTag {
 
   lame?: {
     version: string;
+    extended?: IExtendedLameHeader
   }
 }
 
@@ -84,9 +86,16 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
   }
   const lameTag = await tokenizer.peekToken(new Token.StringType(4, 'ascii'));
   if (lameTag === 'LAME') {
-    xingInfoTag. lame = {
-      version: await tokenizer.readToken(new Token.StringType(9, 'ascii'))
+    await tokenizer.ignore(4);
+    xingInfoTag.lame = {
+      version: await tokenizer.readToken(new Token.StringType(5, 'ascii'))
     };
+    const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
+    const version = majorMinorVersion.split('.').map(n => parseInt(n, 10));
+    if (version[0] >= 3 && version[1] >= 90) {
+      xingInfoTag.lame.extended = await tokenizer.readToken(ExtendedLameHeader);
+    }
+
   }
   return xingInfoTag;
 }

@@ -174,7 +174,7 @@ describe('Parse MP3 files', () => {
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
     assert.strictEqual(format.codecProfile, 'V2', 'format.codecProfile');
-    assert.strictEqual(format.tool, 'LAME3.97b', 'format.tool');
+    assert.strictEqual(format.tool, 'LAME 3.97b', 'format.tool');
     assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
 
     assert.strictEqual(common.title, 'Jan Pillemann Otze', 'common.title');
@@ -304,10 +304,28 @@ describe('Parse MP3 files', () => {
     it('Handle Xing header, without LAME extension', async () => {
 
       const filePath = path.join(mp3SamplePath, 'Solace.mp3');
-      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      const {format} = await mm.parseFile(filePath, {duration: true});
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
       assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
+    });
+
+    describe('Lame extension', () => {
+
+      it('track peak', async () => {
+
+        const filePath = path.join(mp3SamplePath, 'lame-peak.mp3');
+        const {format} = await mm.parseFile(filePath, {duration: true});
+
+        assert.strictEqual(format.container, 'MPEG', 'format.container');
+        assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+        assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
+        assert.strictEqual(format.tool, 'LAME 3.99r', 'format.tool');
+        assert.approximately(format.trackPeakLevel, 0.21857, 5 / 1000000, 'format.trackPeakLevel');
+        assert.strictEqual(format.trackGain, 6.8, 'format.trackGain');
+        assert.isUndefined(format.albumGain, 'format.albumGain');
+      });
+
     });
 
   });

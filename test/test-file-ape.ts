@@ -66,7 +66,7 @@ describe('Parse APEv2 header', () => {
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
     assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
-    assert.strictEqual(format.tool, 'LAME3.99r', 'format.codecProfile');
+    assert.strictEqual(format.tool, 'LAME 3.99r', 'format.codecProfile');
     assert.approximately(format.duration, 348.421, 1 / 500, 'format.duration');
     assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.deepEqual(format.tagTypes, ['ID3v2.4', 'APEv2', 'ID3v1'], 'format.tagTypes');

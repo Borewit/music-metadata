@@ -383,7 +383,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
         t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile');
-        t.strictEqual(format.tool, 'LAME3.99r', 'format.tool');
+        t.strictEqual(format.tool, 'LAME 3.99r', 'format.tool');
       }
 
       // Run with default options
@@ -502,7 +502,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
         t.strictEqual(format.container, 'MPEG', 'format.container');
         t.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
         t.strictEqual(format.codecProfile, 'V2', 'format.codecProfile = V2');
-        t.strictEqual(format.tool, 'LAME3.99r', 'format.tool');
+        t.strictEqual(format.tool, 'LAME 3.99r', 'format.tool');
         t.strictEqual(format.duration, 2.1681632653061222, 'format.duration');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
