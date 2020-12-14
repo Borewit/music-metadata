@@ -271,6 +271,23 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     });
 
+    describe('PRIV', async () => {
+
+      it('Handle empty PRIV tag', async () => {
+
+        const filePath = path.join(samplePath, 'mp3', 'issue-693.mp3');
+        const {format, common, quality} = await mm.parseFile(filePath);
+
+        assert.strictEqual(format.container, 'MPEG', 'format.container');
+        assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+
+        assert.includeDeepMembers(quality.warnings, [
+          {message: 'id3v2.3 header has empty tag type=PRIV'},
+          {message: 'Invalid ID3v2.3 frame-header-ID'}], 'quality.warnings includes');
+      });
+
+    });
+
   });
 
 });
