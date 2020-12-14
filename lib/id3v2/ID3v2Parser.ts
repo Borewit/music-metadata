@@ -233,16 +233,16 @@ export class ID3v2Parser {
       const frameHeaderBytes = data.slice(offset, offset += frameHeaderLength);
       const frameHeader = ID3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
-      // Last frame. Check first char is a letter, bit of defensive programming
-      if (frameHeader.id === '' || frameHeader.id === '\u0000\u0000\u0000\u0000' ||
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(frameHeader.id[0]) === -1) {
-        // ToDo: generate WARNING
+      if (!frameHeader.id.match(/[A-Z]/g)) {
+        this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID`);
         break;
       }
 
       const frameDataBytes = data.slice(offset, offset += frameHeader.length);
       const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers, this.metadata);
-      tags.push({id: frameHeader.id, value: values});
+      if (values) {
+        tags.push({id: frameHeader.id, value: values});
+      }
     }
     return tags;
   }
