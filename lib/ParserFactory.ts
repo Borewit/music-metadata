@@ -14,7 +14,7 @@ import { MP4Parser } from './mp4/MP4Parser';
 import { MpegParser } from './mpeg/MpegParser';
 import MusepackParser from './musepack';
 import { OggParser } from './ogg/OggParser';
-import { WaveParser } from './riff/WaveParser';
+import { WaveParser } from './wav/WaveParser';
 import { WavPackParser } from './wavpack/WavPackParser';
 import { DsfParser } from './dsf/DsfParser';
 import { DsdiffParser } from './dsdiff/DsdiffParser';
