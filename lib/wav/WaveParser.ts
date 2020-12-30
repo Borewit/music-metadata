@@ -100,10 +100,12 @@ export class WaveParser extends BasicParser {
           if (this.metadata.format.lossless !== false) {
             this.metadata.setFormat('lossless', true);
           }
-          const numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.chunkSize / this.blockAlign);
-          this.metadata.setFormat('numberOfSamples', numberOfSamples);
+          const numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.chunkSize === 0xffffffff ? undefined : (header.chunkSize / this.blockAlign));
+          if (numberOfSamples) {
+            this.metadata.setFormat('numberOfSamples', numberOfSamples);
+            this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
+          }
 
-          this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
           this.metadata.setFormat('bitrate', this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate); // ToDo: check me
           await this.tokenizer.ignore(header.chunkSize);
           break;

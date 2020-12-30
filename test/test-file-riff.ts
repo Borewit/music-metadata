@@ -120,25 +120,39 @@ describe('Parse RIFF (Resource Interchange File Format)', () => {
       assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration');
     });
 
-  });
+    describe('non-PCM', () => {
 
-  describe('non-PCM', () => {
+      it('should parse Microsoft 4-bit ADPCM encoded', () => {
 
-    it('should parse Microsoft 4-bit ADPCM encoded', () => {
+        const filePath = path.join(samplePath, 'issue-92.wav');
 
-      const filePath = path.join(samplePath, 'issue-92.wav');
-
-      return mm.parseFile(filePath, {duration: true}).then(metadata => {
-        const format = metadata.format;
-        assert.strictEqual(format.container, 'WAVE', 'format.container');
-        assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
-        assert.strictEqual(format.lossless, false);
-        assert.strictEqual(format.sampleRate, 22050);
-        assert.strictEqual(format.bitsPerSample, 4);
-        assert.strictEqual(format.numberOfSamples, 4660260);
-        assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
+        return mm.parseFile(filePath, {duration: true}).then(metadata => {
+          const format = metadata.format;
+          assert.strictEqual(format.container, 'WAVE', 'format.container');
+          assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
+          assert.strictEqual(format.lossless, false);
+          assert.strictEqual(format.sampleRate, 22050);
+          assert.strictEqual(format.bitsPerSample, 4);
+          assert.strictEqual(format.numberOfSamples, 4660260);
+          assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
+        });
       });
+
     });
+
+    // https://github.com/Borewit/music-metadata/issues/707
+    it('should handle missing chunk-size', async () => {
+
+      const filePath = path.join(samplePath, 'wav', 'ffmpeg-missing-chunksize.wav');
+
+      const {format} = await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'PCM', 'format.codec');
+      assert.isUndefined(format.duration, 'format.duration');
+      assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    });
+
   });
 
 });
