@@ -374,7 +374,9 @@ export type FormatId =
   | 'numberOfChannels'
   | 'numberOfSamples'
   | 'audioMD5'
-  | 'chapters';
+  | 'chapters'
+  | 'modificationTime'
+  | 'creationTime';
 
 export interface IAudioTrack {
   samplingFrequency?: number;
@@ -492,6 +494,16 @@ export interface IFormat {
    * Chapters in audio stream
    */
   readonly chapters?: IChapter[]
+
+  /**
+   * Time file was created
+   */
+  readonly creationTime?: Date;
+
+  /**
+   * Time file was modified
+   */
+  readonly modificationTime?: Date;
 }
 
 export interface ITag {

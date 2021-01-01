@@ -387,9 +387,9 @@ export class MP4Parser extends BasicParser {
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
      */
     mvhd: async (len: number) => {
-      // await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(mvhd.getPayloadLength()));
-      // ToDo: export movie metadata
-      await this.tokenizer.ignore(len);
+      const _mvhd = await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
+      this.metadata.setFormat('creationTime', _mvhd.creationTime);
+      this.metadata.setFormat('modificationTime', _mvhd.modificationTime);
     },
 
     /**
@@ -502,6 +502,11 @@ export class MP4Parser extends BasicParser {
     stco: async (len: number) => {
       const stco = await this.tokenizer.readToken<AtomToken.ITableAtom<number>>(new AtomToken.StcoAtom(len));
       this.getTrackDescription().chunkOffsetTable = stco.entries; // remember chunk offsets
+    },
+
+    date: async (len: number) => {
+      const date = await this.tokenizer.readToken(new Token.StringType(len, 'utf-8'));
+      this.addTag('date', date);
     }
   };
 
