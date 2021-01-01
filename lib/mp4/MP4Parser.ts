@@ -45,6 +45,8 @@ interface ITrackDescription extends AtomToken.ITrackHeaderAtom {
   timeToSampleTable?: AtomToken.ITimeToSampleToken[];
 }
 
+type IAtomParser = (payloadLength: number) => Promise<any>;
+
 const encoderDict: { [dataFormatId: string]: IEncoder; } = {
   raw: {
     lossy: false,
@@ -234,57 +236,15 @@ export class MP4Parser extends BasicParser {
         case 'ilst':
         case '<id>':
           return this.parseMetadataItemData(atom);
-        case 'stbl':  // The Sample Table Atom
-          switch (atom.header.name) {
-            case 'stsd': // sample descriptions
-              return this.parseAtom_stsd(atom.getPayloadLength());
-            case 'stsc': // sample-to-Chunk Atoms
-              return this.parseAtom_stsc(atom.getPayloadLength());
-            case 'stts': // time to sample
-              return this.parseAtom_stts(atom.getPayloadLength());
-            case 'stsz': // sample sizes
-              return this.parseAtom_stsz(atom.getPayloadLength());
-            case 'stco':
-              return this.parseAtom_stco(atom.getPayloadLength());
-            default:
-              debug(`Ignore: stbl/${atom.header.name} atom`);
-          }
-          break;
       }
     }
 
-    switch (atom.header.name) {
-
-      case 'ftyp':
-        const types = await this.parseAtom_ftyp(atom.getPayloadLength());
-        debug(`ftyp: ${types.join('/')}`);
-        const x = types.filter(distinct).join('/');
-        this.metadata.setFormat('container', x);
-        return;
-
-      case 'mdhd': // Media header atom
-        return this.parseAtom_mdhd(atom);
-
-      case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-        return this.parseAtom_mvhd(atom);
-
-      case 'chap': // Chapter or scene list atom. Usually references a text track.
-        const td = this.getTrackDescription();
-        td.chapterList = await this.parseAtom_chap(atom);
-        return;
-
-      case 'tkhd': // Chapter or scene list atom. Usually references a text track.
-        await this.parseAtom_tkhd(atom.getPayloadLength());
-        return;
-
-      case 'mdat': // media data atom:
-        this.audioLengthInBytes = atom.getPayloadLength();
-        this.calculateBitRate();
-        return this.parseAtom_mdat(atom.getPayloadLength());
+    if (this.atomParsers[atom.header.name]) {
+      return this.atomParsers[atom.header.name](atom.getPayloadLength());
+    } else {
+      debug(`No parser for atom path=${atom.atomPath}, payload-len=${atom.getPayloadLength()}, ignoring atom`);
+      await this.tokenizer.ignore(atom.getPayloadLength());
     }
-
-    await this.tokenizer.ignore(atom.getPayloadLength());
-    debug(`Ignore atom data: path=${atom.atomPath}, payload-len=${atom.getPayloadLength()}`);
   }
 
   private getTrackDescription(): ITrackDescription {
@@ -421,70 +381,130 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  /**
-   * Parse movie header (mvhd) atom
-   * @param mvhd mvhd atom
-   * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
-   */
-  private async parseAtom_mvhd(mvhd: Atom): Promise<void> {
-    // await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(mvhd.getPayloadLength()));
-    // ToDo: export movie metadata
-    await this.tokenizer.ignore((mvhd.getPayloadLength()));
-  }
+  private atomParsers: { [id: string]: IAtomParser; } = {
+    /**
+     * Parse movie header (mvhd) atom
+     * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
+     */
+    mvhd: async (len: number) => {
+      // await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(mvhd.getPayloadLength()));
+      // ToDo: export movie metadata
+      await this.tokenizer.ignore(len);
+    },
 
-  /**
-   * Parse media header (mdhd) atom
-   * @param mdhd mdhd atom
-   * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25615
-   */
-  private async parseAtom_mdhd(mdhd: Atom): Promise<void> {
-    const mdhd_data = await this.tokenizer.readToken<AtomToken.IAtomMdhd>(new AtomToken.MdhdAtom(mdhd.getPayloadLength()));
-    // this.parse_mxhd(mdhd_data, this.currentTrack);
-    const td = this.getTrackDescription();
-    td.creationTime = mdhd_data.creationTime;
-    td.modificationTime = mdhd_data.modificationTime;
-    td.timeScale = mdhd_data.timeScale;
-    td.duration = mdhd_data.duration;
-  }
+    /**
+     * Parse media header (mdhd) atom
+     * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25615
+     */
+    mdhd: async (len: number) => {
+      const mdhd_data = await this.tokenizer.readToken<AtomToken.IAtomMdhd>(new AtomToken.MdhdAtom(len));
+      // this.parse_mxhd(mdhd_data, this.currentTrack);
+      const td = this.getTrackDescription();
+      td.creationTime = mdhd_data.creationTime;
+      td.modificationTime = mdhd_data.modificationTime;
+      td.timeScale = mdhd_data.timeScale;
+      td.duration = mdhd_data.duration;
+    },
 
-  private async parseAtom_ftyp(len: number): Promise<string[]> {
-    const ftype = await this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);
-    len -= AtomToken.ftyp.len;
-    if (len > 0) {
-      const types = await this.parseAtom_ftyp(len);
-      const value = ftype.type.replace(/\W/g, '');
-      if (value.length > 0) {
-        types.push(value);
+    chap: async (len: number) => {
+
+      const td = this.getTrackDescription();
+
+      const trackIds: number[] = [];
+      while (len >= Token.UINT32_BE.len) {
+        trackIds.push(await this.tokenizer.readNumber(Token.UINT32_BE));
+        len -= Token.UINT32_BE.len;
       }
-      return types;
+
+      td.chapterList = trackIds;
+    },
+
+    tkhd: async (len: number) => {
+      const track = (await this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(new AtomToken.TrackHeaderAtom(len))) as ITrackDescription;
+      this.tracks.push(track);
+    },
+
+    /**
+     * Parse mdat atom.
+     * Will scan for chapters
+     */
+    mdat: async (len: number) => {
+
+      this.audioLengthInBytes = len;
+      this.calculateBitRate();
+
+      if (this.options.includeChapters) {
+        const trackWithChapters = this.tracks.filter(track => track.chapterList);
+        if (trackWithChapters.length === 1) {
+          const chapterTrackIds = trackWithChapters[0].chapterList;
+          const chapterTracks = this.tracks.filter(track => chapterTrackIds.indexOf(track.trackId) !== -1);
+          if (chapterTracks.length === 1) {
+            return this.parseChapterTrack(chapterTracks[0], trackWithChapters[0], len);
+          }
+        }
+      }
+      await this.tokenizer.ignore(len);
+    },
+
+    ftyp: async (len: number) => {
+      const types = [];
+      while (len > 0) {
+        const ftype = await this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);
+        len -= AtomToken.ftyp.len;
+        const value = ftype.type.replace(/\W/g, '');
+        if (value.length > 0) {
+          types.push(value); // unshift for backward compatibility
+        }
+      }
+      debug(`ftyp: ${types.join('/')}`);
+      const x = types.filter(distinct).join('/');
+      this.metadata.setFormat('container', x);
+    },
+
+    /**
+     * Parse sample description atom
+     */
+    stsd: async (len: number) => {
+      const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
+      const trackDescription = this.getTrackDescription();
+      trackDescription.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
+    },
+
+    /**
+     * sample-to-Chunk Atoms
+     */
+    stsc: async (len: number) => {
+      const stsc = await this.tokenizer.readToken<AtomToken.ITableAtom<AtomToken.ISampleToChunk>>(new AtomToken.StscAtom(len));
+      this.getTrackDescription().sampleToChunkTable = stsc.entries;
+    },
+
+    /**
+     * time to sample
+     */
+    stts: async (len: number) => {
+      const stts = await this.tokenizer.readToken<AtomToken.ITableAtom<AtomToken.ITimeToSampleToken>>(new AtomToken.SttsAtom(len));
+      this.getTrackDescription().timeToSampleTable = stts.entries;
+    },
+
+    /**
+     * Parse sample-sizes atom ('stsz')
+     */
+    stsz: async (len: number) => {
+      const stsz = await this.tokenizer.readToken<AtomToken.IStszAtom>(new AtomToken.StszAtom(len));
+      const td = this.getTrackDescription();
+      td.sampleSize = stsz.sampleSize;
+      td.sampleSizeTable = stsz.entries;
+    },
+
+    /**
+     * Parse chunk-offset atom ('stco')
+     */
+    stco: async (len: number) => {
+      const stco = await this.tokenizer.readToken<AtomToken.ITableAtom<number>>(new AtomToken.StcoAtom(len));
+      this.getTrackDescription().chunkOffsetTable = stco.entries; // remember chunk offsets
     }
-    return [];
-  }
+  };
 
-  private async parseAtom_tkhd(len: number) {
-    const track = (await this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(new AtomToken.TrackHeaderAtom(len))) as ITrackDescription;
-    this.tracks.push(track);
-  }
-
-  /**
-   * Parse sample description atom
-   * @param len
-   */
-  private async parseAtom_stsd(len: number): Promise<void> {
-    const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
-    const trackDescription = this.getTrackDescription();
-    trackDescription.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
-  }
-
-  private async parseAtom_stsc(len: number): Promise<void> {
-    const stsc = await this.tokenizer.readToken<AtomToken.ITableAtom<AtomToken.ISampleToChunk>>(new AtomToken.StscAtom(len));
-    this.getTrackDescription().sampleToChunkTable = stsc.entries;
-  }
-
-  private async parseAtom_stts(len: number): Promise<void> {
-    const stts = await this.tokenizer.readToken<AtomToken.ITableAtom<AtomToken.ITimeToSampleToken>>(new AtomToken.SttsAtom(len));
-    this.getTrackDescription().timeToSampleTable = stts.entries;
-  }
 
   /**
    * @param sampleDescription
@@ -508,59 +528,6 @@ export class MP4Parser extends BasicParser {
       debug(`Warning: sound-sample-description ${version} not implemented`);
     }
     return ssd;
-  }
-
-  /**
-   * Parse chapter-list atom
-   * @param chap chap atom
-   */
-  private async parseAtom_chap(chap: Atom): Promise<number[]> {
-    const trackIds: number[] = [];
-    let len = chap.getPayloadLength();
-    while (len >= Token.UINT32_BE.len) {
-      trackIds.push(await this.tokenizer.readNumber(Token.UINT32_BE));
-      len -= Token.UINT32_BE.len;
-    }
-    return trackIds;
-  }
-
-  /**
-   * Parse sample-sizes atom ('stsz')
-   * @param len
-   */
-  private async parseAtom_stsz(len: number): Promise<void> {
-    const stsz = await this.tokenizer.readToken<AtomToken.IStszAtom>(new AtomToken.StszAtom(len));
-    const td = this.getTrackDescription();
-    td.sampleSize = stsz.sampleSize;
-    td.sampleSizeTable = stsz.entries;
-  }
-
-  /**
-   * Parse chunk-offset atom ('stco')
-   * @param len
-   */
-  private async parseAtom_stco(len: number): Promise<void> {
-    const stco = await this.tokenizer.readToken<AtomToken.ITableAtom<number>>(new AtomToken.StcoAtom(len));
-    this.getTrackDescription().chunkOffsetTable = stco.entries; // remember chunk offsets
-  }
-
-  /**
-   * Parse mdat atom.
-   * Will scan for chapters
-   * @param len
-   */
-  private async parseAtom_mdat(len: number): Promise<void> {
-    if (this.options.includeChapters) {
-      const trackWithChapters = this.tracks.filter(track => track.chapterList);
-      if (trackWithChapters.length === 1) {
-        const chapterTrackIds = trackWithChapters[0].chapterList;
-        const chapterTracks = this.tracks.filter(track => chapterTrackIds.indexOf(track.trackId) !== -1);
-        if (chapterTracks.length === 1) {
-          return this.parseChapterTrack(chapterTracks[0], trackWithChapters[0], len);
-        }
-      }
-    }
-    await this.tokenizer.ignore(len);
   }
 
   private async parseChapterTrack(chapterTrack: ITrackDescription, track: ITrackDescription, len: number): Promise<void> {
