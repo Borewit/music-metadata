@@ -16,7 +16,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
     function checkFormat(format) {
       assert.deepEqual(format.lossless, false);
-      assert.deepEqual(format.container, 'isom/M4A', 'container');
+      assert.deepEqual(format.container, 'M4A/isom/iso2', 'container');
       assert.deepEqual(format.codec, 'MPEG-4/AAC', 'codec');
       assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
       assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -98,7 +98,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         const metadata = await parser.initParser(filePath, 'audio/mp4');
         const {format, common, native} = metadata;
 
-        assert.deepEqual(format.container, 'iso2/isom', 'format.container');
+        assert.deepEqual(format.container, 'isom/iso2/mp41', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
         assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
         assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -127,7 +127,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         const metadata = await parser.initParser(filePath, 'audio/mp4');
         const {common, format} = metadata;
 
-        assert.deepEqual(format.container, 'isom/mp42/M4A', 'format.container');
+        assert.deepEqual(format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
         assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
         assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -157,7 +157,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
           const metadata = await parser.initParser(filePath, 'audio/mp4');
           const {common, format} = metadata;
 
-          assert.deepEqual(format.container, '3gp5/M4A', 'format.container');
+          assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
 
           assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
@@ -184,7 +184,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         function checkMetadata(metadata: mm.IAudioMetadata) {
           const {common, format} = metadata;
 
-          assert.deepEqual(format.container, '3gp5/M4A', 'format.container');
+          assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
           assert.approximately(format.duration, 991.213, 1 / 500, 'format.duration');
 
@@ -301,7 +301,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
           assert.deepEqual(metadata.common.tvSeason, 2);
           assert.deepEqual(metadata.common.tvShow, 'Mr. Pickles');
 
-          assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
+          assert.deepEqual(metadata.format.container, 'mp42/isom', 'format.container');
           assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+AC-3+CEA-608', 'format.codec');
           assert.deepEqual(metadata.common.artist, 'Mr. Pickles');
           assert.deepEqual(metadata.common.artists, ['Mr. Pickles']);
@@ -323,7 +323,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
         const metadata = await parser.initParser(filePath, 'video/mp4');
-        assert.deepEqual(metadata.format.container, 'mp42/M4A', 'format.container');
+        assert.deepEqual(metadata.format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
       });
     });
@@ -337,7 +337,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
         const metadata = await parser.initParser(filePath, 'video/mp4');
-        assert.deepEqual(metadata.format.container, 'mp42', 'format.container');
+        assert.deepEqual(metadata.format.container, 'mp42/isom', 'format.container');
         assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
 
         assert.deepEqual(metadata.common.album, 'We Don`t Need to Whisper');
@@ -363,7 +363,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
     const metadata = await mm.parseFile(m4aFile);
     const {format, common, quality} = metadata;
-    assert.strictEqual(format.container, 'isom/mp42/M4A', 'format.container');
+    assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -379,7 +379,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   // https://github.com/Borewit/music-metadata/issues/387
   it('Handle box.id = 0000', async () => {
     const {format, common} = await mm.parseFile(path.join(mp4Samples, 'issue-387.m4a'));
-    assert.strictEqual(format.container, 'isom/mp42/M4A', 'format.container');
+    assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.approximately(format.duration, 224.00290249433107, 1 / 200, 'format.duration');
     assert.approximately(format.sampleRate, 44100, 1 / 200, 'format.sampleRate');

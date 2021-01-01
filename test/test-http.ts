@@ -48,7 +48,7 @@ describe('HTTP streaming', function() {
             if (response.stream.destroy) {
               response.stream.destroy(); // Node >= v8 only
             }
-            assert.strictEqual(tags.format.container, 'isom/mp42/M4A');
+            assert.strictEqual(tags.format.container, 'M4A/mp42/isom');
             assert.strictEqual(tags.format.codec, 'MPEG-4/AAC');
             assert.strictEqual(tags.format.lossless, false);
 
