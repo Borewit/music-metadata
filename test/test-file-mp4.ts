@@ -389,4 +389,22 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(common.album, 'Look At Me Now (feat. Lil Wayne & Busta Rhymes) - Single', 'common.album');
   });
 
+  it('Extract creation and modified time', async () => {
+
+    const filePath = path.join(mp4Samples, 'Apple  voice memo.m4a');
+
+    const {format, quality, common, native} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'M4A/isom/mp42', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.approximately(format.duration, 1.024, 1 / 2000, 'format.duration');
+    assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
+
+    assert.strictEqual(format.creationTime.toISOString(), '2021-01-02T17:42:46.000Z', 'format.modificationTime');
+    assert.strictEqual(format.modificationTime.toISOString(), '2021-01-02T17:43:25.000Z', 'format.modificationTime');
+
+    const iTunes = mm.orderTags(native.iTunes);
+    assert.strictEqual(iTunes.date[0], '2021-01-02T17:42:05Z', 'moov.udta.date');
+  });
+
 });

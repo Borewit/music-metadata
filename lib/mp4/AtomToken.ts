@@ -37,13 +37,13 @@ export interface IAtomMxhd extends IVersionAndFlags {
    * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was created.
    * It is strongly recommended that this value should be specified using coordinated universal time (UTC).
    */
-  creationTime: number,
+  creationTime: Date,
 
   /**
    * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was changed.
    * It is strongly recommended that this value should be specified using coordinated universal time (UTC).
    */
-  modificationTime: number,
+  modificationTime: Date,
 
   /**
    * A time value that indicates the time scale for this media—that is, the number of time units that pass per second in its time coordinate system.
@@ -230,6 +230,17 @@ export interface IAtomMdhd extends IAtomMxhd {
 }
 
 /**
+ * Timestamp stored in seconds since Mac Epoch (1 January 1904)
+ */
+const SecondsSinceMacEpoch: IGetToken<Date> = {
+  len: 4,
+
+  get: (buf: Buffer, off: number): Date => {
+    const secondsSinceUnixEpoch = Token.UINT32_BE.get(buf, off) - 2082844800;
+    return new Date(secondsSinceUnixEpoch * 1000);
+  }};
+
+/**
  * Token: Media Header Atom
  * Ref:
  *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
@@ -245,8 +256,8 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
     return {
       version: Token.UINT8.get(buf, off + 0),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      creationTime: Token.UINT32_BE.get(buf, off + 4),
-      modificationTime: Token.UINT32_BE.get(buf, off + 8),
+      creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
+      modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
       timeScale: Token.UINT32_BE.get(buf, off + 12),
       duration: Token.UINT32_BE.get(buf, off + 16),
       language: Token.UINT16_BE.get(buf, off + 20),
@@ -268,8 +279,8 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      creationTime: Token.UINT32_BE.get(buf, off + 4),
-      modificationTime: Token.UINT32_BE.get(buf, off + 8),
+      creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
+      modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
       timeScale: Token.UINT32_BE.get(buf, off + 12),
       duration: Token.UINT32_BE.get(buf, off + 16),
       preferredRate: Token.UINT32_BE.get(buf, off + 20),
@@ -374,12 +385,12 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
   /**
    * Creation Time
    */
-  creationTime: number;
+  creationTime: Date;
 
   /**
    * Modification Time
    */
-  modificationTime: number;
+  modificationTime: Date;
 
   /**
    * TrackID
@@ -417,6 +428,7 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
   volume: number
 }
 
+
 /**
  * Track Header Atoms structure
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
@@ -430,8 +442,8 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      creationTime: Token.UINT32_BE.get(buf, off + 4),
-      modificationTime: Token.UINT32_BE.get(buf, off + 8),
+      creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
+      modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
       trackId: Token.UINT32_BE.get(buf, off + 12),
       // reserved 4 bytes
       duration: Token.UINT32_BE.get(buf, off + 20),
