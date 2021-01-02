@@ -138,32 +138,19 @@ Parses the specified file (`filePath`) and returns a promise with the metadata r
 parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
-Javascript example:
+Example:
 ```js
 const mm = require('music-metadata');
 const util = require('util');
 
-mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
-  .then( metadata => {
+(async () => {
+  try {
+    const metadata = await mm.parseFile('../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-  })
-  .catch( err => {
-    console.error(err.message);
-  });
-```
-
-Typescript example:
-```js
-import * as mm from 'music-metadata';
-import * as util from 'util';
-
-mm.parseFile('../test/samples/MusicBrainz-multiartist [id3v2.4].V2.mp3')
-  .then( metadata => {
-    console.log(util.inspect(metadata, {showHidden: false, depth: null}));
-  })
-  .catch((err) => {
-    console.error(err.message);
-  });
+  } catch (error) {
+    console.err(err.message);
+  }
+})();
 ```
 
 #### parseStream function
@@ -179,11 +166,16 @@ parseStream(stream: Stream.Readable, fileInfo?: IFileInfo | string, opts?: IOpti
 
 Example:
 ```js
-mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838})
-  .then( metadata => {
-     console.log(util.inspect(metadata, {showHidden: false, depth: null}));
-     someReadStream.destroy();
-   });
+const mm = require('music-metadata');
+
+(async () => {
+  try {
+    const metadata = await mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838});
+    console.log(metadata);
+  } catch (error) {
+    console.err(err.message);
+  }
+})();
 ```
 
 #### parseBuffer function
@@ -196,10 +188,14 @@ parseBuffer(buffer: Buffer, fileInfo?: IFileInfo | string, opts?: IOptions = {})
 
 Example:
 ```js
-mm.parseBuffer(someBuffer, 'audio/mpeg')
-  .then( metadata => {
-    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-   });
+(async () => {
+  try {
+    const metadata = mm.parseBuffer(someBuffer, 'audio/mpeg');
+    console.log(metadata);
+  } catch (error) {
+    console.err(err.message);
+  }
+})();
 ```
 
 #### parseFromTokenizer function
