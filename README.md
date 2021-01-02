@@ -275,7 +275,8 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 *   `format.bitsPerSample?: number` Audio bit depth
 *   `format.lossless?: boolean` True if lossless,  false for lossy encoding
 *   `format.numberOfChannels?: number` Number of audio channels
-*   `format.numberOfSamples?: number` Number of samples frames, one sample contains all channels. The duration is: numberOfSamples / sampleRate
+*   `format.creationTime?: Date` Track creation time
+*   `format.modificationTime?: Date` Track modification / tag update time
 
 #### `metadata.trackInfo`
 
