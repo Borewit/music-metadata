@@ -6,6 +6,10 @@
     "name": "Borewit",
     "url": "https://github.com/Borewit"
   },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/Borewit"
+  },
   "keywords": [
     "music",
     "metadata",
