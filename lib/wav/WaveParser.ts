@@ -124,7 +124,7 @@ export class WaveParser extends BasicParser {
   }
 
   public async parseListTag(listHeader: riff.IChunkHeader): Promise<void> {
-    const listType = await this.tokenizer.readToken<string>(FourCcToken);
+    const listType = await this.tokenizer.readToken(new Token.StringType(4, 'binary'));
     debug('pos=%s, parseListTag: chunkID=RIFF/WAVE/LIST/%s', this.tokenizer.position, listType);
     switch (listType) {
       case 'INFO':
