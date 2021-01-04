@@ -24,7 +24,8 @@ function httpGet (url) {
 (async () => {
   try {
     // Stream MP3 sample file from GitHub via HTTP
-    const metadata = await httpGet(audioUrl);
+    const stream = await httpGet(audioUrl);
+    const metadata = await mm.parseStream(stream);
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   } catch(err) {
     // Oops, something went wrong
