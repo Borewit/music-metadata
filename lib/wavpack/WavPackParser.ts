@@ -1,5 +1,4 @@
 import * as Token from 'token-types';
-import * as assert from 'assert';
 
 import { APEv2Parser } from '../apev2/APEv2Parser';
 import { FourCcToken } from '../common/FourCC';
@@ -36,7 +35,7 @@ export class WavPackParser extends BasicParser {
         break;
 
       const header = await this.tokenizer.readToken<IBlockHeader>(WavPack.BlockHeaderToken);
-      assert.strictEqual(header.BlockID, 'wvpk', 'WavPack Block-ID');
+      if (header.BlockID !== 'wvpk') throw new Error('Invalid WavPack Block-ID');
 
       debug(`WavPack header blockIndex=${header.blockIndex}, len=${WavPack.BlockHeaderToken.len}`);
 
@@ -91,7 +90,8 @@ export class WavPackParser extends BasicParser {
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
           const mp = 1 << data.readUInt8(0);
           const samplingRate = header.flags.samplingRate * mp * 8; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
-          assert.ok(header.flags.isDSD, 'Only expect DSD block if DSD-flag is set');
+          if (!header.flags.isDSD)
+            throw new Error('Only expect DSD block if DSD-flag is set');
           this.metadata.setFormat('sampleRate', samplingRate);
           this.metadata.setFormat('duration', header.totalSamples / samplingRate);
           break;
@@ -105,8 +105,8 @@ export class WavPackParser extends BasicParser {
           break;
 
         case 0x2f: // ID_BLOCK_CHECKSUM
-           debug(`ID_BLOCK_CHECKSUM: checksum=${data.toString('hex')}`);
-           break;
+          debug(`ID_BLOCK_CHECKSUM: checksum=${data.toString('hex')}`);
+          break;
 
         default:
           debug(`Ignore unsupported meta-sub-block-id functionId=0x${id.functionId.toString(16)}`);
@@ -117,8 +117,8 @@ export class WavPackParser extends BasicParser {
       debug(`remainingLength=${remainingLength}`);
       if (id.isOddSize)
         this.tokenizer.ignore(1);
-      }
-    assert.strictEqual(remainingLength, 0, 'metadata-sub-block should fit it remaining length');
+    }
+    if (remainingLength !== 0) throw new Error('metadata-sub-block should fit it remaining length');
   }
 
 }

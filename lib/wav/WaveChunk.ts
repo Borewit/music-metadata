@@ -1,5 +1,3 @@
-import * as assert from 'assert';
-
 import { IChunkHeader } from '../iff';
 import { IGetToken } from 'strtok3/lib/core';
 
@@ -55,7 +53,8 @@ export class Format implements IGetToken<IWaveFormat> {
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    assert.ok(header.chunkSize >= 16, '16 for PCM.');
+    if (header.chunkSize < 16)
+      throw new Error('Invalid chunk size');
     this.len = header.chunkSize;
   }
 
@@ -85,7 +84,9 @@ export class FactChunk implements IGetToken<IFactChunk> {
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    assert.ok(header.chunkSize >= 4, 'minimum fact chunk size.');
+    if (header.chunkSize < 4) {
+      throw new Error('Invalid fact chunk size.');
+    }
     this.len = header.chunkSize;
   }
 

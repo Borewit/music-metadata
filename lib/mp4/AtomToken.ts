@@ -1,6 +1,5 @@
 import * as Token from 'token-types';
 import { FourCcToken } from '../common/FourCC';
-import * as assert from 'assert';
 
 import * as initDebug from 'debug';
 import { IToken, IGetToken } from 'strtok3/lib/core';
@@ -744,7 +743,7 @@ function readTokenTable<T>(buf: Buffer, token: IGetToken<T>, off: number, remain
   if (remainingLen === 0)
     return [];
 
-  assert.equal(remainingLen, numberOfEntries * token.len, 'mismatch number-of-entries with remaining atom-length');
+  if (remainingLen !== numberOfEntries * token.len) throw new Error('mismatch number-of-entries with remaining atom-length');
 
   const entries: T[] = [];
   // parse offset-table

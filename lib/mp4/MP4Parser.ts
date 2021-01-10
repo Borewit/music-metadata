@@ -1,6 +1,5 @@
 import * as initDebug from 'debug';
 import * as Token from 'token-types';
-import * as assert from 'assert';
 
 import { BasicParser } from '../common/BasicParser';
 import { Atom } from './Atom';
@@ -537,7 +536,8 @@ export class MP4Parser extends BasicParser {
 
   private async parseChapterTrack(chapterTrack: ITrackDescription, track: ITrackDescription, len: number): Promise<void> {
     if (!chapterTrack.sampleSize) {
-      assert.equal(chapterTrack.chunkOffsetTable.length, chapterTrack.sampleSizeTable.length, 'chunk-offset-table & sample-size-table length');
+      if (chapterTrack.chunkOffsetTable.length !== chapterTrack.sampleSizeTable.length)
+        throw new Error('Expected equal chunk-offset-table & sample-size-table length.');
     }
     const chapters: IChapter[] = [];
     for (let i = 0; i < chapterTrack.chunkOffsetTable.length && len > 0; ++i) {
@@ -545,7 +545,7 @@ export class MP4Parser extends BasicParser {
       const nextChunkLen = chunkOffset - this.tokenizer.position;
       const sampleSize = chapterTrack.sampleSize > 0 ? chapterTrack.sampleSize : chapterTrack.sampleSizeTable[i];
       len -= nextChunkLen + sampleSize;
-      assert.ok(len >= 0, 'Chapter chunk exceeding token length');
+      if (len < 0) throw new Error('Chapter chunk exceeding token length');
       await this.tokenizer.ignore(nextChunkLen);
       const title = await this.tokenizer.readToken(new AtomToken.ChapterText(sampleSize));
       debug(`Chapter ${i + 1}: ${title}`);

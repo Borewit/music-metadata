@@ -1,7 +1,4 @@
-'use strict';
-
 import * as initDebug from 'debug';
-import * as assert from 'assert';
 
 import { BasicParser } from '../../common/BasicParser';
 import * as SV8 from './StreamVersion8';
@@ -17,7 +14,7 @@ export class MpcSv8Parser extends BasicParser {
   public async parse(): Promise<void> {
 
     const signature = await this.tokenizer.readToken(FourCcToken);
-    assert.equal(signature, 'MPCK', 'Magic number');
+    if (signature !== 'MPCK') throw new Error('Invalid Magic number');
     this.metadata.setFormat('container', 'Musepack, SV8');
     return this.parsePacket();
   }
