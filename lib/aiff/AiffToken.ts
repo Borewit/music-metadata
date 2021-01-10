@@ -1,5 +1,4 @@
 import * as Token from "token-types";
-import * as assert from "assert";
 import {FourCcToken} from "../common/FourCC";
 import * as iff from '../iff';
 import { IGetToken } from "strtok3";
@@ -24,7 +23,7 @@ export class Common implements IGetToken<ICommon> {
 
   public constructor(header: iff.IChunkHeader, private isAifc: boolean) {
     const minimumChunkSize = isAifc ? 22 : 18;
-    assert.ok(header.chunkSize >= minimumChunkSize, `COMMON CHUNK size should always be at least ${minimumChunkSize}`);
+    if (header.chunkSize < minimumChunkSize) throw new Error(`COMMON CHUNK size should always be at least ${minimumChunkSize}`);
     this.len = header.chunkSize;
   }
 

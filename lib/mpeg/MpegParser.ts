@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import * as Token from 'token-types';
 import { EndOfStreamError } from 'strtok3/lib/core';
 import * as initDebug from 'debug';
@@ -618,7 +617,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async skipFrameData(frameDataLeft: number): Promise<void> {
-    assert.ok(frameDataLeft >= 0, 'frame-data-left cannot be negative');
+    if (frameDataLeft < 0) throw new Error('frame-data-left cannot be negative');
     await this.tokenizer.ignore(frameDataLeft);
     this.countSkipFrameData += frameDataLeft;
   }

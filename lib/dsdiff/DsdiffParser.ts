@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import * as Token from 'token-types';
 import * as initDebug from 'debug';
 import { FourCcToken } from '../common/FourCC';
@@ -21,7 +20,7 @@ export class DsdiffParser extends BasicParser {
   public async parse(): Promise<void> {
 
     const header = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
-    assert.strictEqual(header.chunkID, 'FRM8');
+    if (header.chunkID !== 'FRM8') throw new Error('Unexpected chunk-ID');
 
     const type = (await this.tokenizer.readToken<string>(FourCcToken)).trim();
     switch (type) {
@@ -60,7 +59,7 @@ export class DsdiffParser extends BasicParser {
 
       case 'PROP': // 3.2 PROPERTY CHUNK
         const propType = await this.tokenizer.readToken(FourCcToken);
-        assert.strictEqual(propType, 'SND ');
+        if (propType !== 'SND ') throw new Error('Unexpected PROP-chunk ID');
         await this.handleSoundPropertyChunks(header.chunkSize - FourCcToken.len);
         break;
 

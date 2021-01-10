@@ -1,7 +1,6 @@
 'use strict';
 
 import * as initDebug from 'debug';
-import * as assert from 'assert';
 
 import { BasicParser } from '../../common/BasicParser';
 import * as SV7 from './StreamVersion7';
@@ -20,7 +19,7 @@ export class MpcSv7Parser extends BasicParser {
 
     const header = await this.tokenizer.readToken<SV7.IHeader>(SV7.Header);
 
-    assert.equal(header.signature, 'MP+', 'Magic number');
+    if (header.signature !== 'MP+') throw new Error('Unexpected magic number');
     debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);
     this.metadata.setFormat('container', 'Musepack, SV7');
     this.metadata.setFormat('sampleRate', header.sampleFrequency);

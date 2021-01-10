@@ -1,8 +1,5 @@
-'use strict';
-
 import * as initDebug from 'debug';
 import * as strtok3 from 'strtok3/lib/core';
-import * as assert from 'assert';
 
 import common from '../common/Util';
 
@@ -70,7 +67,7 @@ export class APEv2Parser extends BasicParser {
 
   private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, options: IOptions): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    assert.strictEqual(footer.ID, preamble, 'APEv2 Footer preamble');
+    if (footer.ID !== preamble) throw new Error('Unexpected APEv2 Footer ID preamble value.');
     strtok3.fromBuffer(buffer);
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, strtok3.fromBuffer(buffer), options);
@@ -109,7 +106,7 @@ export class APEv2Parser extends BasicParser {
 
     const descriptor = await this.tokenizer.readToken<IDescriptor>(DescriptorParser);
 
-    assert.strictEqual(descriptor.ID, 'MAC ', 'descriptor.ID');
+    if (descriptor.ID !== 'MAC ') throw new Error('Unexpected descriptor ID');
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());

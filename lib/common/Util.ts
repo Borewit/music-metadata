@@ -1,8 +1,7 @@
-import * as assert from "assert";
 import {Windows1292Decoder} from './Windows1292Decoder';
 import {IRatio} from "../type";
 
-export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf8' | 'utf16le';
+export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf16le';
 
 export default class Util {
 
@@ -45,7 +44,7 @@ export default class Util {
 
   public static swapBytes(buffer: Buffer): Buffer {
     const l = buffer.length;
-    assert.ok((l & 1) === 0, 'Buffer length must be even');
+    if ((l & 1) !== 0) throw new Error('Buffer length must be even');
     for (let i = 0; i < l; i += 2) {
       const a = buffer[i];
       buffer[i] = buffer[i + 1];
