@@ -88,7 +88,7 @@
     "file-type": "^16.1.0",
     "media-typer": "^1.1.0",
     "strtok3": "^6.0.7",
-    "token-types": "^2.1.0"
+    "token-types": "^2.1.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",
