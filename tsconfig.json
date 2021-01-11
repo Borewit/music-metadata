@@ -3,7 +3,6 @@
     "inlineSources": false,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "ES2017",
-    "sourceMap": true
+    "target": "ES2017"
   }
 }
