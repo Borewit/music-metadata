@@ -521,6 +521,14 @@ export interface IChapter {
    * Duration offset is sampleOffset / format.sampleRate
    */
   sampleOffset: number;
+  /**
+   * Time where chapter starts
+   */
+  start: number;
+  /**
+   * 
+   */
+  timeScale: number;
 }
 
 /**
