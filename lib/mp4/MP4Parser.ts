@@ -541,7 +541,9 @@ export class MP4Parser extends BasicParser {
     }
     const chapters: IChapter[] = [];
     for (let i = 0; i < chapterTrack.chunkOffsetTable.length && len > 0; ++i) {
-      const start = chapterTrack.timeToSampleTable.slice(0, i ).reduce((acc, cur)=> acc + cur.duration, 0);
+      const start = chapterTrack.timeToSampleTable
+        .slice(0, i)
+        .reduce((acc, cur) => acc + cur.duration, 0);
 
       const chunkOffset = chapterTrack.chunkOffsetTable[i];  
       const nextChunkLen = chunkOffset - this.tokenizer.position;
