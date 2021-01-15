@@ -543,7 +543,7 @@ export interface IChapter {
    */
   start: number;
   /**
-   * 
+   * Chapter track timescale
    */
   timeScale: number;
 }
