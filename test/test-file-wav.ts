@@ -162,7 +162,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-    assert.approximately(format.duration, 1 / 20000, 187.0866);
+    assert.approximately(format.duration, 187.0866, 1 / 20000);
   });
 
 });
