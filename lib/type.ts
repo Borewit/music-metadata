@@ -522,11 +522,12 @@ export interface IChapter {
    */
   sampleOffset: number;
   /**
-   * Time where chapter starts
+   * Timestamp where the chapter starts
+   * Chapter timestamp is start/timeScale in seconds.
    */
   start: number;
   /**
-   * Chapter track timescale
+   * Time value that indicates the time scale for chapter tracks, the number of time units that pass per second in its time coordinate system.
    */
   timeScale: number;
 }
