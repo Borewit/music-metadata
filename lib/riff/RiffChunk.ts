@@ -12,7 +12,7 @@ export const Header: IGetToken<IChunkHeader> = {
   get: (buf, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: buf.toString('binary', off, 4),
+      chunkID: buf.toString('binary', off, off + 4),
       // Size
       chunkSize: buf.readUInt32LE(off + 4)
     };
