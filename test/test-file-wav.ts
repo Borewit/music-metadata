@@ -1,6 +1,7 @@
 import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
+import * as fs from 'fs';
 import { IFormat, INativeTagDict } from '../lib/type';
 
 const samplePath = path.join(__dirname, 'samples');
@@ -163,6 +164,20 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.approximately(format.duration, 187.0866, 1 / 20000);
+  });
+
+  // https://github.com/Borewit/music-metadata/issues/740
+  it('should handle missing wav data via parseBuffer', async () => {
+
+    const filePath = path.join(wavSamples, 'ffmpeg-missing-chunksize.wav');
+
+    const buffer = fs.readFileSync(filePath);
+    const {format} = await mm.parseBuffer(buffer);
+
+    assert.strictEqual(format.container, 'WAVE', 'format.container');
+    assert.strictEqual(format.codec, 'PCM', 'format.codec');
+    assert.isUndefined(format.duration, 'format.duration');
+    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
   });
 
 });
