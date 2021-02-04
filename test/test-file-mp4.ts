@@ -407,4 +407,19 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(iTunes.date[0], '2021-01-02T17:42:05Z', 'moov.udta.date');
   });
 
+  // https://github.com/Borewit/music-metadata/issues/744
+  it('Select the audio track from mp4', async () => {
+
+    const filePath = path.join(mp4Samples, 'issue-744.mp4');
+
+    const {format} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'isom/iso2/mp41', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+    assert.approximately(format.duration, 360.8, 1 / 20, 'format.duration');
+  });
+
 });
