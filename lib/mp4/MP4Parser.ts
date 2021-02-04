@@ -204,7 +204,7 @@ export class MP4Parser extends BasicParser {
     }
 
     const audioTracks = this.tracks.filter(track => {
-      return track.soundSampleDescription.length >= 1 && track.soundSampleDescription[0].description && track.soundSampleDescription[0].description.sampleRate > 0;
+      return track.soundSampleDescription.length >= 1 && track.soundSampleDescription[0].description && track.soundSampleDescription[0].description.numAudioChannels > 0;
     });
 
     if (audioTracks.length >= 1) {
