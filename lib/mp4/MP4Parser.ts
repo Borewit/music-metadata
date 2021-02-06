@@ -162,8 +162,8 @@ export class MP4Parser extends BasicParser {
         this.addWarning(errMsg);
         break;
       }
-      const rootAtom = await Atom.readAtom(this.tokenizer, atom => this.handleAtom(atom), null);
-      remainingFileSize -= rootAtom.header.length;
+      const rootAtom = await Atom.readAtom(this.tokenizer, (atom, remaining)  => this.handleAtom(atom, remaining), null, remainingFileSize);
+      remainingFileSize -= rootAtom.header.length === 0 ? remainingFileSize : rootAtom.header.length;
     }
 
     // Post process metadata
@@ -228,7 +228,7 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  public async handleAtom(atom: Atom): Promise<void> {
+  public async handleAtom(atom: Atom, remaining: number): Promise<void> {
 
     if (atom.parent) {
       switch (atom.parent.header.name) {
@@ -238,11 +238,13 @@ export class MP4Parser extends BasicParser {
       }
     }
 
+    // const payloadLength = atom.getPayloadLength(remaining);
+
     if (this.atomParsers[atom.header.name]) {
-      return this.atomParsers[atom.header.name](atom.getPayloadLength());
+      return this.atomParsers[atom.header.name](remaining);
     } else {
-      debug(`No parser for atom path=${atom.atomPath}, payload-len=${atom.getPayloadLength()}, ignoring atom`);
-      await this.tokenizer.ignore(atom.getPayloadLength());
+      debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
+      await this.tokenizer.ignore(remaining);
     }
   }
 
@@ -274,28 +276,29 @@ export class MP4Parser extends BasicParser {
 
     let tagKey = metaAtom.header.name;
 
-    return metaAtom.readAtoms(this.tokenizer, async child => {
+    return metaAtom.readAtoms(this.tokenizer, async (child, remaining) => {
+      const payLoadLength = child.getPayloadLength(remaining);
       switch (child.header.name) {
         case 'data': // value atom
           return this.parseValueAtom(tagKey, child);
 
         case 'name': // name atom (optional)
-          const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(child.getPayloadLength()));
+          const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
           tagKey += ':' + name.name;
           break;
 
         case 'mean': // name atom (optional)
-          const mean = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(child.getPayloadLength()));
+          const mean = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
           // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
           tagKey += ':' + mean.name;
           break;
 
         default:
-          const dataAtom = await this.tokenizer.readToken<Buffer>(new Token.BufferType(child.getPayloadLength()));
+          const dataAtom = await this.tokenizer.readToken<Buffer>(new Token.BufferType(payLoadLength));
           this.addWarning('Unsupported meta-item: ' + tagKey + '[' + child.header.name + '] => value=' + dataAtom.toString('hex') + ' ascii=' + dataAtom.toString('ascii'));
       }
 
-    }, metaAtom.getPayloadLength());
+    }, metaAtom.getPayloadLength(0));
   }
 
   private async parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
