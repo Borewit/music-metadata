@@ -10,7 +10,8 @@ lib/**/*.js.map
 lib/**/*.d.ts
 doc-gen/**/*.js
 doc-gen/**/*.map
-doc-gen/**/*.map
+test/samples/originals
+test/_test-issues.ts
 coverage/
 .nyc_output/
 test/samples/zeroes.flac
