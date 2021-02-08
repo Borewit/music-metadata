@@ -27,8 +27,8 @@ function httpGet (url) {
     const stream = await httpGet(audioUrl);
     const metadata = await mm.parseStream(stream);
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
-  } catch(err) {
+  } catch(error) {
     // Oops, something went wrong
-    console.error(err.message);
+    console.error(error.message);
   }
 })();

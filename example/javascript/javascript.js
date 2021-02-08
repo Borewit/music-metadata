@@ -6,6 +6,6 @@ const util = require('util');
     const metadata = await mm.parseFile('../../test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   } catch (error) {
-    console.err(err.message);
+    console.error(error.message);
   }
 })();

@@ -28,9 +28,9 @@ async function walkFunc(err, pathname, dirent) {
   try {
     await Walk.walk('M:\\_Classic', walkFunc);
     console.log('Done.');
-  } catch(err) {
+  } catch(error) {
     // Oops, something went wrong
-    console.error(err.message);
+    console.error(error.message);
   }
 })();
 
