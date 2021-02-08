@@ -148,7 +148,7 @@ const util = require('util');
     const metadata = await mm.parseFile('../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
     console.log(util.inspect(metadata, { showHidden: false, depth: null }));
   } catch (error) {
-    console.err(err.message);
+    console.error(error.message);
   }
 })();
 ```
@@ -173,7 +173,7 @@ const mm = require('music-metadata');
     const metadata = await mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838});
     console.log(metadata);
   } catch (error) {
-    console.err(err.message);
+    console.error(error.message);
   }
 })();
 ```
@@ -193,7 +193,7 @@ Example:
     const metadata = mm.parseBuffer(someBuffer, 'audio/mpeg');
     console.log(metadata);
   } catch (error) {
-    console.err(err.message);
+    console.error(error.message);
   }
 })();
 ```
