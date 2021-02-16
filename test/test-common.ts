@@ -1,35 +1,10 @@
 import { assert } from 'chai';
-
-import { CommonTagMapper } from '../lib/common/GenericTagMapper';
 import { commonTags, isSingleton } from '../lib/common/GenericTagTypes';
 import * as path from 'path';
 import * as mm from '../lib';
 import { CombinedTagMapper } from '../lib/common/CombinedTagMapper';
 import { joinArtists } from '../lib/common/MetadataCollector';
 import { parseHttpContentType } from '../lib/ParserFactory';
-
-describe('CommonTagMapper.parseGenre', () => {
-
-  it('should be able to parse genres', () => {
-    const tests = {
-      Electronic: 'Electronic',
-      'Electronic/Rock': 'Electronic/Rock',
-      '(0)': 'Blues',
-      '(0)(1)(2)': 'Blues/Classic Rock/Country',
-      '(0)(160)(2)': 'Blues/Electroclash/Country',
-      '(0)(192)(2)': 'Blues/Country',
-      '(0)(255)(2)': 'Blues/Country',
-      '(4)Eurodisco': 'Disco/Eurodisco',
-      '(4)Eurodisco(0)Mopey': 'Disco/Eurodisco/Blues/Mopey',
-      '(RX)(CR)': 'RX/CR',
-      '1stuff': '1stuff',
-      'RX/CR': 'RX/CR'
-    };
-    for (const test in tests) {
-      assert.strictEqual(CommonTagMapper.parseGenre(test), tests[test], test);
-    }
-  });
-});
 
 describe('GenericTagMap', () => {
 

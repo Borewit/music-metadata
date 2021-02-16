@@ -4,6 +4,7 @@ import * as Token from 'token-types';
 import common, { StringEncoding } from '../common/Util';
 import { AttachedPictureType, ID3v2MajorVersion, TextEncodingToken } from './ID3v2Token';
 import { IWarningCollector } from '../common/MetadataCollector';
+import { Genres } from '../id3v1/ID3v1Parser';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -21,6 +22,52 @@ interface IPicture {
 }
 
 const defaultEnc: StringEncoding = 'iso-8859-1';
+
+export function parseGenre(origVal: string): string[] {
+  // match everything inside parentheses
+  const genres = [];
+  let code: string;
+  let word: string = '';
+  for (const c of origVal) {
+    if (typeof code === 'string') {
+      if (c === '(' && code === '') {
+        word += '(';
+        code = undefined;
+      } else if (c === ')') {
+        if (word !== '') {
+          genres.push(word);
+          word = '';
+        }
+        const genre = parseGenreCode(code);
+        if (genre) {
+          genres.push(genre);
+        }
+        code = undefined;
+      } else code += c;
+    } else if (c === '(') {
+      code = '';
+    } else {
+      word += c;
+    }
+  }
+  if (word) {
+    if (genres.length === 0 && word.match(/^\d*$/)) {
+      word = Genres[word];
+    }
+    genres.push(word);
+  }
+  return genres;
+}
+
+function parseGenreCode(code: string): string {
+  if (code === 'RX')
+    return 'Remix';
+  if (code === 'CR')
+    return 'Cover';
+  if (code.match(/^\d*$/)) {
+    return Genres[code];
+  }
+}
 
 export class FrameParser {
 
@@ -67,7 +114,6 @@ export class FrameParser {
             output = text;
             break;
           case 'TCOM':
-          case 'TCON':
           case 'TEXT':
           case 'TOLY':
           case 'TOPE':
@@ -75,6 +121,10 @@ export class FrameParser {
           case 'TSRC':
             // id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
             output = this.splitValue(type, text);
+            break;
+          case 'TCO':
+          case 'TCON':
+            output = this.splitValue(type, text).map(v => parseGenre(v)).reduce((acc, val) => acc.concat(val), []);
             break;
           case 'PCS':
           case 'PCST':

@@ -1,5 +1,3 @@
-"use strict";
-
 import * as initDebug from 'debug';
 
 import BitUtil from '../common/Util';
