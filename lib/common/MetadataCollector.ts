@@ -170,10 +170,6 @@ export class MetadataCollector implements INativeMetadataCollector {
         }
         break;
 
-      case 'genre':
-        tag.value = CommonTagMapper.parseGenre(tag.value);
-        break;
-
       case 'picture':
         this.postFixPicture(tag.value as IPicture).then(picture => {
           if (picture !== null) {

@@ -1,6 +1,5 @@
 import * as generic from './GenericTagTypes';
 import {ITag} from '../type';
-import {Genres} from '../id3v1/ID3v1Parser';
 import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector';
 
 export interface IGenericTagMapper {
@@ -27,26 +26,6 @@ export interface IGenericTagMapper {
 export class CommonTagMapper implements IGenericTagMapper {
 
   public static maxRatingScore = 1;
-
-  public static parseGenre(origVal: string) {
-    // match everything inside parentheses
-    const split = origVal.trim().split(/\((.*?)\)/g).filter(val => {
-      return val !== '';
-    });
-
-    const array = [];
-    for (let cur of split) {
-      if (/^\d+$/.test(cur) && !isNaN(parseInt(cur, 10))) {
-        cur = Genres[cur];
-      }
-      array.push(cur);
-    }
-
-    return array
-      .filter(val => {
-        return val !== undefined;
-      }).join('/');
-  }
 
   public static toIntOrNull(str: string): number {
     const cleaned = parseInt(str, 10);

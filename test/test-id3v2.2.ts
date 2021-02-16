@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser';
+import { parseGenre } from '../lib/id3v2/FrameParser';
 
 describe('ID3v2Parser', () => {
 
@@ -74,7 +75,7 @@ describe('ID3v2Parser', () => {
     assert.deepEqual(id3v22['COM:iTunes_CDDB_IDs'], ['11+3ABC77F16B8A2F0F1E1A1EBAB868A98F+8210091'], 'COM:iTunes_CDDB_IDs');
 
     assert.isDefined(id3v22.PIC, '[\'ID3v2.2\'].PIC');
-    assert.deepEqual(id3v22.TCO, ['(20)'], '[\'ID3v2.2\'].TCO');
+    assert.deepEqual(id3v22.TCO, ['Alternative'], '[\'ID3v2.2\'].TCO');
     assert.deepEqual(id3v22.TAL, ['We Are Pilots'], '[\'ID3v2.2\'].TAL');
     assert.deepEqual(id3v22.TT2, ['You Are The One'], '[\'ID3v2.2\'].TT2');
 
@@ -100,4 +101,32 @@ describe('ID3v2Parser', () => {
     assert.strictEqual(pics[0].type, 'Cover (front)', 'picture type');
   });
 
+});
+
+describe('Post parse genre', () => {
+
+  it('should be able to parse genres', () => {
+
+    const tests = {
+      Electronic: ['Electronic'],
+      '(52)(RX)':	['Electronic', 'Remix'],
+      '(52)(CR)': ['Electronic', 'Cover'],
+      '(0)': ['Blues'],
+      '(0)(1)(2)': ['Blues', 'Classic Rock', 'Country'],
+      '(0)(160)(2)': ['Blues', 'Electroclash', 'Country'],
+      '(0)(192)(2)': ['Blues', 'Country'],
+      '(0)(255)(2)': ['Blues', 'Country'],
+      '(4)Eurodisco': ['Disco', 'Eurodisco'],
+      '(4)Eurodisco(0)Mopey': ['Disco', 'Eurodisco', 'Blues', 'Mopey'],
+      '(RX)(CR)': ['Remix', 'Cover'],
+      '1stuff': ['1stuff'],
+      'RX/CR': ['RX/CR'],
+      '((52)(RX)': ['(52)', 'Remix'],
+      '((52)((RX)': ['(52)(RX)'],
+      52: ['Electronic']
+    };
+    for (const test in tests) {
+      assert.deepStrictEqual(parseGenre(test), tests[test], `parse genre: "${test}"`);
+    }
+  });
 });
