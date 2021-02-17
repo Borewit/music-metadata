@@ -185,6 +185,19 @@ describe('Extract metadata from ID3v2.3 header', () => {
     });
   });
 
+  describe('4.2.1 Text information frames', () => {
+
+    // http://id3.org/id3v2.3.0#line-299
+    it('TCON: Content type (genres)', async () => {
+      const filePath = path.join(samplePath, 'mp3', 'tcon.mp3');
+      const {format, common} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'MPEG', 'format.container');
+      assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
+      assert.deepStrictEqual(common.genre, ['Electronic', 'Pop-Folk'], 'common.genre');
+    });
+
+  });
+
   describe('Decode frames', () => {
 
     // http://id3.org/id3v2.3.0#URL_link_frames_-_details
