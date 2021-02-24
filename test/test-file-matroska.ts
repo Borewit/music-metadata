@@ -110,4 +110,20 @@ describe('Matroska formats', () => {
 
   });
 
+  // https://www.matroska.org/technical/streaming.html
+  // https://github.com/Borewit/music-metadata/issues/765
+  describe('Parse Matroska Stream', () => {
+
+    const mkvPath = path.join(matroskaSamplePath, 'stream.weba');
+
+    it('Parse stream', async () => {
+      const {format} = await mm.parseFile(mkvPath);
+      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
+      assert.strictEqual(format.codec, 'OPUS', 'format.codec');
+      assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
+    });
+
+
+  });
+
 });

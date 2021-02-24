@@ -23,6 +23,9 @@ export class MatroskaParser extends BasicParser {
 
   private parserMap = new Map<DataType, (e: IHeader) => Promise<any>>();
 
+  private ebmlMaxIDLength	= 4;
+  private ebmlMaxSizeLength = 8;
+
   constructor() {
     super();
     this.parserMap.set(DataType.uint, e => this.readUint(e));
@@ -132,12 +135,21 @@ export class MatroskaParser extends BasicParser {
   private async parseContainer(container: IContainerType, posDone: number, path: string[]): Promise<ITree> {
     const tree: ITree = {};
     while (this.tokenizer.position < posDone) {
-      const element = await this.readElement();
+      let element: IHeader;
+      try {
+        element = await this.readElement();
+      } catch (error) {
+        if (error.message === 'End-Of-Stream') {
+          break;
+        }
+        throw error;
+      }
       const type = container[element.id];
       if (type) {
+        debug(`Element: name=${type.name}, container=${!!type.container}`);
         if (type.container) {
-          const res = await this.parseContainer(type.container, this.tokenizer.position + element.len, path.concat([type.name]));
-          if (type.multiple) {
+         const res = await this.parseContainer(type.container, element.len >= 0 ? this.tokenizer.position + element.len : -1, path.concat([type.name]));
+         if (type.multiple) {
             if (!tree[type.name]) {
               tree[type.name] = [];
             }
@@ -164,31 +176,43 @@ export class MatroskaParser extends BasicParser {
     return tree;
   }
 
-  private async readVintData(): Promise<Buffer> {
+  private async readVintData(maxLength: number): Promise<Buffer> {
     const msb = await this.tokenizer.peekNumber(Token.UINT8);
     let mask = 0x80;
-    let ic = 1;
+    let oc = 1;
 
     // Calculate VINT_WIDTH
     while ((msb & mask) === 0) {
-      ++ic;
+      if (oc > maxLength) {
+        throw new Error('VINT value exceeding maximum size');
+      }
+      ++oc;
       mask >>= 1;
     }
-
-    const id = Buffer.alloc(ic);
+    const id = Buffer.alloc(oc);
     await this.tokenizer.readBuffer(id);
     return id;
   }
 
   private async readElement(): Promise<IHeader> {
-    const id = await this.readVintData();
-    const lenField = await this.readVintData();
+    const id = await this.readVintData(this.ebmlMaxIDLength);
+    const lenField = await this.readVintData(this.ebmlMaxSizeLength);
     lenField[0] ^= 0x80 >> (lenField.length - 1);
     const nrLen = Math.min(6, lenField.length); // JavaScript can max read 6 bytes integer
     return {
       id: id.readUIntBE(0, id.length),
       len: lenField.readUIntBE(lenField.length - nrLen, nrLen)
     };
+  }
+
+  private isMaxValue(vintData: Buffer) {
+    if (vintData.length === this.ebmlMaxSizeLength) {
+      for (let n = 1; n < this.ebmlMaxSizeLength; ++n) {
+        if (vintData[n] !== 0xff) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   private async readFloat(e: IHeader) {
