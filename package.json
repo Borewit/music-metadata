@@ -96,7 +96,7 @@
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^8.2.1",
     "@types/node": "^14.14.31",
-    "chai": "^4.3.1",
+    "chai": "^4.3.3",
     "coveralls": "^3.1.0",
     "del-cli": "=3.0.0",
     "eslint": "=7.21.0",
