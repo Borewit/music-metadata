@@ -42,7 +42,7 @@ export interface IBlockHeader {
     // false = PCM audio; true = DSD audio (ver 5.0+)
   }
   // crc for actual decoded data
-  crc: Buffer
+  crc: Uint8Array
 }
 
 export interface IMetadataId {
@@ -109,7 +109,7 @@ export class WavPack {
           isDSD: WavPack.isBitSet(flags, 31)
         },
         // crc for actual decoded data
-        crc: new Token.BufferType(4).get(buf, off + 28)
+        crc: new Token.Uint8ArrayType(4).get(buf, off + 28)
       };
 
       if (res.flags.isDSD) {

@@ -44,7 +44,7 @@ export const Header: IGetToken<IHeader> = {
 
     const header = {
       // word 0
-      signature: buf.toString("binary", off, off + 3),
+      signature: Buffer.from(buf).toString('latin1', off, off + 3),
       // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
       streamMinorVersion:  util.getBitAllignedNumber(buf, off + 3, 0, 4),
       streamMajorVersion: util.getBitAllignedNumber(buf, off + 3, 4, 4),

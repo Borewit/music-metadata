@@ -93,7 +93,7 @@ export function stripNulls(str: string): string {
  * @param len Length of number in bits
  * @return {number} decoded bit aligned number
  */
-export function getBitAllignedNumber(buf: Buffer, byteOffset: number, bitOffset: number, len: number): number {
+export function getBitAllignedNumber(buf: Uint8Array, byteOffset: number, bitOffset: number, len: number): number {
   const byteOff = byteOffset + ~~(bitOffset / 8);
   const bitOff = bitOffset % 8;
   let value = buf[byteOff];
@@ -117,7 +117,7 @@ export function getBitAllignedNumber(buf: Buffer, byteOffset: number, bitOffset:
  * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is least significant bit
  * @return {number} decoded bit aligned number
  */
-export function isBitSet(buf: Buffer, byteOffset: number, bitOffset: number): boolean {
+export function isBitSet(buf: Uint8Array, byteOffset: number, bitOffset: number): boolean {
   return getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
 }
 

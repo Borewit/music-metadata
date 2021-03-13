@@ -1,5 +1,6 @@
 import {FourCcToken} from "../common/FourCC";
 import { IGetToken } from "strtok3/lib/core";
+import * as Token from 'token-types';
 
 /**
  * "EA IFF 85" Standard for Interchange Format Files
@@ -44,7 +45,7 @@ export const Header: IGetToken<IChunkHeader> = {
       // Chunk type ID
       chunkID: FourCcToken.get(buf, off),
       // Chunk size
-      chunkSize: buf.readUInt32BE(off + 4)
+      chunkSize: Number(BigInt(Token.UINT32_BE.get(buf, off + 4)))
     };
   }
 };

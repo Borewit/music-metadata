@@ -64,7 +64,7 @@ export class DsdiffParser extends BasicParser {
         break;
 
       case 'ID3': // Unofficial ID3 tag support
-        const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(Number(header.chunkSize)));
+        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(Number(header.chunkSize)));
         const rst = strtok3.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         break;

@@ -333,14 +333,14 @@ export class DataAtom implements IGetToken<IDataAtom> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): IDataAtom {
+  public get(buf: Uint8Array, off: number): IDataAtom {
     return {
       type: {
         set: Token.UINT8.get(buf, off + 0),
         type: Token.UINT24_BE.get(buf, off + 1)
       },
       locale: Token.UINT24_BE.get(buf, off + 4),
-      value: new Token.BufferType(this.len - 8).get(buf, off + 8)
+      value: Buffer.from(new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8))
     };
   }
 }
@@ -483,7 +483,7 @@ const stsdHeader: IGetToken<IAtomStsdHeader> = {
 export interface ISampleDescription {
   dataFormat: string;
   dataReferenceIndex: number;
-  description: Buffer;
+  description: Uint8Array;
 }
 
 export interface IAtomStsd {
@@ -505,7 +505,7 @@ class SampleDescriptionTable implements IGetToken<ISampleDescription> {
     return {
       dataFormat: FourCcToken.get(buf, off),
       dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10),
-      description: new Token.BufferType(this.len - 12).get(buf, off + 12)
+      description: new Token.Uint8ArrayType(this.len - 12).get(buf, off + 12)
     };
   }
 }

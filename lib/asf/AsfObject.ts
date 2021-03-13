@@ -66,7 +66,7 @@ export interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
  * Token for: 3. ASF top-level Header Object
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3
  */
-export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
+export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Buffer> = {
 
   len: 30,
 
@@ -84,7 +84,7 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
  * Token for: 3.1 Header Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_1
  */
-export const HeaderObjectToken: IGetToken<IAsfObjectHeader> = {
+export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Buffer> = {
 
   len: 24,
 

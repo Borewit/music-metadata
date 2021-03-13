@@ -44,7 +44,7 @@ export interface IDescriptor {
   // the terminating data of the file (not including tag data)
   terminatingDataBytes: number,
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-  fileMD5: Buffer
+  fileMD5: Uint8Array
 }
 
 /**
@@ -115,8 +115,8 @@ export const DescriptorParser: IGetToken<IDescriptor> = {
       apeFrameDataBytesHigh: Token.UINT32_LE.get(buf, off + 28),
       // the terminating data of the file (not including tag data)
       terminatingDataBytes: Token.UINT32_LE.get(buf, off + 32),
-      // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-      fileMD5: new Token.BufferType(16).get(buf, off + 36)
+      // the MD5 hash of the file (see notes for usage... it's a little tricky)
+      fileMD5: new Token.Uint8ArrayType(16).get(buf, off + 36)
     };
   }
 };
@@ -156,7 +156,7 @@ export const Header: IGetToken<IHeader> = {
 export const TagFooter: IGetToken<IFooter> = {
   len: 32,
 
-  get: (buf, off) => {
+  get: (buf: Buffer, off) => {
     return {
       // should equal 'APETAGEX'
       ID: new Token.StringType(8, 'ascii').get(buf, off),
@@ -199,7 +199,7 @@ export const TagItemHeader: IGetToken<ITagItemHeader> = {
 };
 
 export const TagField = footer => {
-  return new Token.BufferType(footer.size - TagFooter.len);
+  return new Token.Uint8ArrayType(footer.size - TagFooter.len);
 };
 
 export interface ITagFlags {
