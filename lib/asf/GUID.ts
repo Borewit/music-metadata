@@ -1,5 +1,3 @@
-// Implementation of the Advanced Systems Format (ASF)
-
 /**
  * Ref:
  *    https://tools.ietf.org/html/draft-fleischman-asf-01, Appendix A: ASF GUIDs

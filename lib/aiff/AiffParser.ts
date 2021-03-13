@@ -80,7 +80,7 @@ export class AIFFParser extends BasicParser {
         return header.chunkSize;
 
       case 'ID3 ': // ID3-meta-data
-        const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
+        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
         const rst = strtok3.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         return header.chunkSize;

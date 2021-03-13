@@ -114,7 +114,7 @@ export interface ICommonHeader {
 export const CommonHeader: IGetToken<ICommonHeader> = {
   len: 7,
 
-  get: (buf, off): ICommonHeader => {
+  get: (buf: Buffer, off): ICommonHeader => {
     return {
       packetType: buf.readUInt8(off),
       vorbis: new Token.StringType(6, 'ascii').get(buf, off + 1)
@@ -142,14 +142,15 @@ export interface IFormatInfo {
 export const IdentificationHeader: IGetToken<IFormatInfo> = {
   len: 23,
 
-  get: (buf, off): IFormatInfo => {
+  get: (uint8Array, off): IFormatInfo => {
+    const dataView = new DataView(uint8Array.buffer, uint8Array.byteOffset);
     return {
-      version: buf.readUInt32LE(off + 0),
-      channelMode: buf.readUInt8(off + 4),
-      sampleRate: buf.readUInt32LE(off + 5),
-      bitrateMax: buf.readUInt32LE(off + 9),
-      bitrateNominal: buf.readUInt32LE(off + 13),
-      bitrateMin: buf.readUInt32LE(off + 17)
+      version: dataView.getUint32(off + 0, true),
+      channelMode: dataView.getUint8(off + 4),
+      sampleRate: dataView.getUint32(off + 5, true),
+      bitrateMax: dataView.getUint32(off + 9, true),
+      bitrateNominal: dataView.getUint32(off + 13, true),
+      bitrateMin: dataView.getUint32(off + 17, true)
     };
   }
 };

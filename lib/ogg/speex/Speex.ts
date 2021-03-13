@@ -41,7 +41,7 @@ export const Header: IGetToken<IHeader> = {
 
   len: 80,
 
-  get: (buf, off) => {
+  get: (buf: Buffer, off) => {
 
     return {
       speex: new Token.StringType(8, 'ascii').get(buf, off + 0),

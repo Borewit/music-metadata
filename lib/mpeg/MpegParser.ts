@@ -536,7 +536,7 @@ export class MpegParser extends AbstractID3Parser {
   private async skipSideInformation(): Promise<void> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
     // side information
-    await this.tokenizer.readToken(new Token.BufferType(sideinfo_length));
+    await this.tokenizer.readToken(new Token.Uint8ArrayType(sideinfo_length));
     this.offset += sideinfo_length;
     await this.readXtraInfoHeader();
     return;

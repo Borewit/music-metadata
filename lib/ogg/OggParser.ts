@@ -48,7 +48,7 @@ export class OggParser extends BasicParser {
     get: (buf, off): Ogg.IPageHeader => {
       return {
         capturePattern: FourCcToken.get(buf, off),
-        version: buf.readUInt8(off + 4),
+        version: Token.UINT8.get(buf, off + 4),
 
         headerType: {
           continued: util.getBit(buf, off + 5, 0),
@@ -56,11 +56,11 @@ export class OggParser extends BasicParser {
           lastPage: util.getBit(buf, off + 5, 2)
         },
         // packet_flag: buf.readUInt8(off + 5),
-        absoluteGranulePosition: buf.readIntLE(off + 6, 6), // cannot read 2 of 8 most significant bytes
+        absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
         streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
         pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
         pageChecksum: Token.UINT32_LE.get(buf, off + 22),
-        page_segments: buf.readUInt8(off + 26)
+        page_segments: Token.UINT8.get(buf, off + 26)
       };
     }
   };
@@ -89,10 +89,10 @@ export class OggParser extends BasicParser {
 
         const segmentTable = await this.tokenizer.readToken<Ogg.ISegmentTable>(new SegmentTable(header));
         debug('totalPageSize=%s', segmentTable.totalPageSize);
-        const pageData = await this.tokenizer.readToken<Buffer>(new Token.BufferType(segmentTable.totalPageSize));
+        const pageData = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(segmentTable.totalPageSize));
         debug('firstPage=%s, lastPage=%s, continued=%s', header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
         if (header.headerType.firstPage) {
-          const id = new Token.StringType(7, 'ascii').get(pageData, 0);
+          const id = new Token.StringType(7, 'ascii').get(Buffer.from(pageData), 0);
           switch (id) {
             case '\x01vorbis': // Ogg/Vorbis
               debug('Set page consumer to Ogg/Vorbis');

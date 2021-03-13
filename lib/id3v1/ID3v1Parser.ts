@@ -71,7 +71,7 @@ const Iid3v1Token: IGetToken<IId3v1Header> = {
    * @param off Offset in buffer in bytes
    * @returns ID3v1.1 header if first 3 bytes equals 'TAG', otherwise null is returned
    */
-  get: (buf, off): IId3v1Header => {
+  get: (buf: Buffer, off): IId3v1Header => {
     const header = new Id3v1StringType(3).get(buf, off);
     return header === "TAG" ? {
       header,

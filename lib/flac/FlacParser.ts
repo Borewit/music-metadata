@@ -120,7 +120,7 @@ export class FlacParser extends AbstractID3Parser {
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private async parseComment(dataLen: number): Promise<void> {
-    const data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(dataLen));
+    const data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(dataLen));
     const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
@@ -183,7 +183,7 @@ interface IBlockStreamInfo {
   // A value of zero here means the number of total samples is unknown.
   totalSamples: number,
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-  fileMD5: Buffer;
+  fileMD5: Uint8Array;
 }
 
 class Metadata {
@@ -235,7 +235,7 @@ class Metadata {
         // A value of zero here means the number of total samples is unknown.
         totalSamples: util.getBitAllignedNumber(buf, off + 13, 4, 36),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new Token.BufferType(16).get(buf, off + 18)
+        fileMD5: new Token.Uint8ArrayType(16).get(buf, off + 18)
       };
     }
   };

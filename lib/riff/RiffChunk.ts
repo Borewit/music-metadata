@@ -9,12 +9,12 @@ export {IChunkHeader} from '../iff';
 export const Header: IGetToken<IChunkHeader> = {
   len: 8,
 
-  get: (buf, off): IChunkHeader => {
+  get: (buf: Buffer, off): IChunkHeader => {
     return {
       // Group-ID
       chunkID: buf.toString('binary', off, off + 4),
       // Size
-      chunkSize: buf.readUInt32LE(off + 4)
+      chunkSize: Token.UINT32_LE.get(buf, 4)
     };
   }
 };

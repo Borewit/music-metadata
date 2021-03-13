@@ -94,7 +94,7 @@ export class WaveParser extends BasicParser {
 
         case 'id3 ': // The way Picard, FooBar currently stores, ID3 meta-data
         case 'ID3 ': // The way Mp3Tags stores ID3 meta-data
-          const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
+          const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
           const rst = strtok3.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;

@@ -47,7 +47,7 @@ export interface IExtendedHeader {
  * 4 * %0xxxxxxx
  */
 export const UINT32SYNCSAFE = {
-  get: (buf: Buffer, off: number): number => {
+  get: (buf: Uint8Array, off: number): number => {
     return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
       ((buf[off + 1]) << 14) | ((buf[off]) << 21);
   },
@@ -86,7 +86,7 @@ export interface IID3v2header {
 export const ID3v2Header: IGetToken<IID3v2header> = {
   len: 10,
 
-  get: (buf, off): IID3v2header => {
+  get: (buf: Buffer, off): IID3v2header => {
     return {
       // ID3v2/file identifier   "ID3"
       fileIdentifier: new Token.StringType(3, 'ascii').get(buf, off),

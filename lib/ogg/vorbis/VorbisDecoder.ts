@@ -2,7 +2,7 @@ import * as Token from 'token-types';
 
 export class VorbisDecoder {
 
-  constructor(private readonly data: Buffer, private offset) {
+  constructor(private readonly data: Uint8Array, private offset) {
   }
 
   public readInt32(): number {
@@ -13,7 +13,7 @@ export class VorbisDecoder {
 
   public readStringUtf8(): string {
     const len = this.readInt32();
-    const value = this.data.toString('utf8', this.offset, this.offset + len);
+    const value = Buffer.from(this.data).toString('utf-8', this.offset, this.offset + len);
     this.offset += len;
     return value;
   }
