@@ -21,6 +21,7 @@ import { musepackParserLoader } from './musepack/MusepackLoader.js';
 import { oggParserLoader } from './ogg/OggLoader.js';
 import { wavpackParserLoader } from './wavpack/WavPackLoader.js';
 import { riffParserLoader } from './wav/WaveLoader.js';
+import { amrParserLoader } from './amr/AmrLoader.js';
 
 const debug = initDebug('music-metadata:parser:factory');
 
@@ -81,7 +82,8 @@ export class ParserFactory {
       wavpackParserLoader,
       musepackParserLoader,
       dsfParserLoader,
-      dsdiffParserLoader
+      dsdiffParserLoader,
+      amrParserLoader
     ].forEach(parser => this.registerParser(parser));
   }
 
@@ -220,6 +222,9 @@ function getParserIdForMimeType(httpContentType: string | undefined): ParserType
 
         case 'dsf':
           return 'dsf';
+
+        case 'amr':
+          return 'amr';
       }
       break;
 
