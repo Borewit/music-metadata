@@ -596,7 +596,8 @@ export type ParserType =
   | 'dsf'
   | 'dsdiff'
   | 'adts'
-  | 'matroska';
+  | 'matroska'
+  | 'amr';
 
 export interface IOptions {
 
