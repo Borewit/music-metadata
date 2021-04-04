@@ -73,7 +73,7 @@ describe("Parse ASF", () => {
     function checkFormat(format) {
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');
       assert.strictEqual(format.codec, 'Windows Media Audio 9.1', 'format.codec');
-      assert.strictEqual(format.duration, 244.885, 'format.duration');
+      assert.approximately(format.duration, 243.306, 1 / 10000, "format.duration");
       assert.strictEqual(format.bitrate, 192639, 'format.bitrate');
     }
 
@@ -137,7 +137,7 @@ describe("Parse ASF", () => {
 
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');
       assert.strictEqual(format.codec, 'Windows Media Audio 9', 'format.codec');
-      assert.approximately(format.duration, 16.044, 1 / 10000, 'format.duration');
+      assert.approximately(format.duration, 14.466, 1 / 10000, 'format.duration');
       assert.approximately(format.bitrate, 128639, 1, 'format.bitrate');
 
       const asf = mm.orderTags(native.asf);

@@ -44,7 +44,7 @@ export class AsfParser extends BasicParser {
 
         case AsfObject.FilePropertiesObject.guid.str: // 3.2
           const fpo = await this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header));
-          this.metadata.setFormat('duration', fpo.playDuration / 10000000);
+          this.metadata.setFormat('duration', fpo.playDuration / 10000000 - fpo.preroll / 1000);
           this.metadata.setFormat('bitrate', fpo.maximumBitrate);
           break;
 
