@@ -612,7 +612,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       t.deepEqual(format.tagTypes, ['asf'], 'format.tagTypes = asf');
       t.strictEqual(format.bitrate, 320000, 'format.bitrate = 320000');
       // ToDo t.strictEqual(format.container, "wma", "format.container = wma");
-      t.strictEqual(format.duration, 5.235, 'format.duration'); // duration is wrong, but seems to be what is written in file
+      t.approximately(format.duration, 2.135, 1 / 10000, "format.duration");
       // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
       // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
