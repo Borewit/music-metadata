@@ -301,6 +301,27 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     });
 
+    it('Handle ID32.2 tag ID\'s in ID32.3 header', async () => {
+      const filePath = path.join(samplePath, 'mp3', 'issue-795.mp3');
+
+      const {native, quality, common} = await mm.parseFile(filePath);
+      assert.isDefined(native['ID3v2.3'], 'native[\'ID3v2.3\']');
+      const ids = native['ID3v2.3'].map(tag => {
+        return tag.id;
+      });
+      assert.deepStrictEqual(ids, ['TP1\u0000', 'TP2\u0000', 'TAL\u0000', 'TEN\u0000', 'TIT2'], 'Decode id3v2.3 TAG names');
+
+      assert.includeDeepMembers(quality.warnings, [
+        {message: 'Invalid ID3v2.3 frame-header-ID: TP1\u0000'},
+        {message: 'Invalid ID3v2.3 frame-header-ID: TP2\u0000'},
+        {message: 'Invalid ID3v2.3 frame-header-ID: TAL\u0000'},
+        {message: 'Invalid ID3v2.3 frame-header-ID: TEN\u0000'}
+      ], 'Warning invalid ID: TP1\u0000, TP2\u0000, TAL\u0000 & TEN\u0000');
+
+      assert.strictEqual(common.title, 'FDP (Clean Edit)', 'common.title');
+    });
+
+
   });
 
 });
