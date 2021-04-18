@@ -47,39 +47,6 @@ export class ID3v2Parser {
     return buffer.slice(0, writeI);
   }
 
-  private static readFrameHeader(v, majorVer): IFrameHeader {
-    let header: IFrameHeader;
-    switch (majorVer) {
-
-      case 2:
-        header = {
-          id: v.toString('ascii', 0, 3),
-          length: Token.UINT24_BE.get(v, 3)
-        };
-        break;
-
-      case 3:
-        header = {
-          id: v.toString('ascii', 0, 4),
-          length: Token.UINT32_BE.get(v, 4),
-          flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
-        };
-        break;
-
-      case 4:
-        header = {
-          id: v.toString('ascii', 0, 4),
-          length: UINT32SYNCSAFE.get(v, 4),
-          flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
-        };
-        break;
-
-      default:
-        throw new Error('Unexpected majorVer: ' + majorVer);
-    }
-    return header;
-  }
-
   private static getFrameHeaderLength(majorVer: number): number {
     switch (majorVer) {
       case 2:
@@ -226,17 +193,12 @@ export class ID3v2Parser {
       const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
-        this.metadata.addWarning('Illegal ID3v2 tag length');
-        break;
+         this.metadata.addWarning('Illegal ID3v2 tag length');
+         break;
       }
 
       const frameHeaderBytes = data.slice(offset, offset += frameHeaderLength);
-      const frameHeader = ID3v2Parser.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
-
-      if (!frameHeader.id.match(/[A-Z]/g)) {
-        this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID`);
-        break;
-      }
+      const frameHeader = this.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
       const frameDataBytes = data.slice(offset, offset += frameHeader.length);
       const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers, this.metadata);
@@ -245,6 +207,38 @@ export class ID3v2Parser {
       }
     }
     return tags;
+  }
+
+  private readFrameHeader(v: Buffer, majorVer: number): IFrameHeader {
+    let header: IFrameHeader;
+    switch (majorVer) {
+
+      case 2:
+        header = {
+          id: v.toString('ascii', 0, 3),
+          length: Token.UINT24_BE.get(v, 3)
+        };
+        if (!header.id.match(/[A-Z0-9]{3}/g)) {
+          this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
+        }
+        break;
+
+      case 3:
+      case 4:
+        header = {
+          id: v.toString('ascii', 0, 4),
+          length: (majorVer === 4 ?  UINT32SYNCSAFE : Token.UINT32_BE).get(v, 4),
+          flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
+        };
+        if (!header.id.match(/[A-Z0-9]{4}/g)) {
+          this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
+        }
+        break;
+
+      default:
+        throw new Error('Unexpected majorVer: ' + majorVer);
+    }
+    return header;
   }
 
 }
