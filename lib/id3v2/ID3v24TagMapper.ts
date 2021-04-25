@@ -67,6 +67,7 @@ const id3v24TagMap: INativeTagMap = {
   TENC: 'encodedby',
   TSSE: 'encodersettings',
   'TXXX:BARCODE': 'barcode',
+  'TXXX:ISRC': 'isrc',
   TSRC: 'isrc',
   'TXXX:ASIN': 'asin',
   'TXXX:originalyear': 'originalyear',
