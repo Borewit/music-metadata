@@ -61,4 +61,17 @@ describe("Decode MP3/ID3v2.4", () => {
 
   });
 
+  it("Map TXXX:ISRC", async () => {
+
+    const filename = 'issue-802.mp3';
+    const filePath = path.join(samplePath, 'mp3', filename);
+
+    const {common, native} = await mm.parseFile(filePath);
+    const id3v24 = native['ID3v2.4'];
+    t.isDefined(id3v24, 'ID3v2.4 presence');
+    t.strictEqual(id3v24.filter(tag => { return tag.id === 'TSRC'; }).length, 0, 'ID3v2.4 tag TSRC not defined');
+    t.strictEqual(id3v24.filter(tag => { return tag.id === 'TXXX:ISRC'; }).length, 1, 'ID3v2.4 tag TXXX:ISRC to be defined');
+    t.includeDeepMembers(common.isrc, ['DEAE61300058'], 'ISRC');
+  });
+
 });
