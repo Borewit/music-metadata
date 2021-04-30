@@ -1,0 +1,21 @@
+{
+  "name": "@music-metadata/http-got",
+  "version": "0.1.0",
+  "description": "Example reading metadata over HTTP using GOT",
+  "main": "http-got.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": {
+    "name": "Borewit",
+    "url": "https://github.com/Borewit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "got": "^11.8.2",
+    "music-metadata": "^7.8.5"
+  },
+  "engines": {
+    "node": ">=8"
+  }
+}
