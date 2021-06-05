@@ -90,12 +90,14 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
     xingInfoTag.lame = {
       version: await tokenizer.readToken(new Token.StringType(5, 'ascii'))
     };
-    const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
-    const version = majorMinorVersion.split('.').map(n => parseInt(n, 10));
-    if (version[0] >= 3 && version[1] >= 90) {
-      xingInfoTag.lame.extended = await tokenizer.readToken(ExtendedLameHeader);
+    const match = xingInfoTag.lame.version.match(/\d+.\d+/g);
+    if (match) {
+      const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
+      const version = majorMinorVersion.split('.').map(n => parseInt(n, 10));
+      if (version[0] >= 3 && version[1] >= 90) {
+        xingInfoTag.lame.extended = await tokenizer.readToken(ExtendedLameHeader);
+      }
     }
-
   }
   return xingInfoTag;
 }
