@@ -328,6 +328,16 @@ describe('Parse MP3 files', () => {
 
     });
 
+    it('Handle invalid LAME version', async () => {
+      const filePath = path.join(mp3SamplePath, 'issue-828.mp3');
+
+      const {format} = await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'MPEG');
+      assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
+      assert.strictEqual(format.tool, 'LAME ZyK! ');
+    });
+
   });
 
 });
