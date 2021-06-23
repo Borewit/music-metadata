@@ -59,6 +59,9 @@ export class WaveParser extends BasicParser {
     while (remaining >= riff.Header.len) {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
       remaining -= riff.Header.len + header.chunkSize;
+      if (header.chunkSize > remaining) {
+        this.metadata.addWarning('Data chunk size exceeds file size');
+      }
 
       this.header = header;
       debug(`pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`);
@@ -100,7 +103,17 @@ export class WaveParser extends BasicParser {
           if (this.metadata.format.lossless !== false) {
             this.metadata.setFormat('lossless', true);
           }
-          const numberOfSamples = this.fact ? this.fact.dwSampleLength : (header.chunkSize === 0xffffffff ? undefined : (header.chunkSize / this.blockAlign));
+
+          let chunkSize = header.chunkSize;
+          if (this.tokenizer.fileInfo.size) {
+            const calcRemaining = this.tokenizer.fileInfo.size - this.tokenizer.position;
+            if (calcRemaining < chunkSize) {
+              this.metadata.addWarning('data chunk length exceeding file length');
+              chunkSize = calcRemaining;
+            }
+          }
+
+          const numberOfSamples = this.fact ? this.fact.dwSampleLength : (chunkSize === 0xffffffff ? undefined : chunkSize / this.blockAlign);
           if (numberOfSamples) {
             this.metadata.setFormat('numberOfSamples', numberOfSamples);
             this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
