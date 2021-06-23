@@ -1,7 +1,6 @@
 import { assert } from 'chai';
 import * as mm from '../lib';
 import * as path from 'path';
-import * as fs from 'fs';
 import { IFormat, INativeTagDict } from '../lib/type';
 
 const samplePath = path.join(__dirname, 'samples');
@@ -150,7 +149,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
-    assert.isUndefined(format.duration, 'format.duration');
+    assert.strictEqual(format.duration, 27648 / 44100, 'format.duration');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
   });
 
@@ -163,21 +162,19 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-    assert.approximately(format.duration, 187.0866, 1 / 20000);
+    assert.approximately(format.duration, 3 / 44100, 1 / 20000, 'format.duration');
   });
 
-  // https://github.com/Borewit/music-metadata/issues/740
-  it('should handle missing wav data via parseBuffer', async () => {
+  // https://github.com/Borewit/music-metadata/issues/819
+  it('Duration despite wrong chunk size', async () => {
+    const filePath = path.join(wavSamples, 'issue-819.wav');
 
-    const filePath = path.join(wavSamples, 'ffmpeg-missing-chunksize.wav');
+    const {format} = await mm.parseFile(filePath);
 
-    const buffer = fs.readFileSync(filePath);
-    const {format} = await mm.parseBuffer(buffer);
-
-    assert.strictEqual(format.container, 'WAVE', 'format.container');
-    assert.strictEqual(format.codec, 'PCM', 'format.codec');
-    assert.isUndefined(format.duration, 'format.duration');
-    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.strictEqual(format.container, 'WAVE');
+    assert.strictEqual(format.codec, 'PCM');
+    // assert.strictEqual(format.numberOfSamples, 2158080, 'format.numberOfSamples');
+    assert.approximately(format.duration, 2478 / 16000, 5 / 1000, 'format.duration');
   });
 
 });
