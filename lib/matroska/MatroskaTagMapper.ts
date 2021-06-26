@@ -20,6 +20,9 @@ const ebmlTagMap: INativeTagMap = {
   'track:MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
   'track:MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
   'track:PUBLISHER': 'label',
+  'track:GENRE': 'genre',
+  'track:ENCODER': 'encodedby',
+  'track:ENCODER_OPTIONS': 'encodersettings',
   'edition:TOTAL_PARTS': 'totaldiscs',
   picture: 'picture'
 };

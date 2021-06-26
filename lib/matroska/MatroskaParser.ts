@@ -106,7 +106,7 @@ export class MatroskaParser extends BasicParser {
         if (matroska.segment.tags) {
           matroska.segment.tags.tag.forEach(tag => {
             const target = tag.target;
-            const targetType = target.targetTypeValue ? TargetType[target.targetTypeValue] : (target.targetType ? target.targetType : TargetType.album);
+            const targetType = target.targetTypeValue ? TargetType[target.targetTypeValue] : (target.targetType ? target.targetType : 'track');
             tag.simpleTags.forEach(simpleTag => {
               const value = simpleTag.string ? simpleTag.string : simpleTag.binary;
               this.addTag(`${targetType}:${simpleTag.name}`, value);
