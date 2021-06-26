@@ -77,13 +77,32 @@ describe('Matroska formats', () => {
 
       const webmPath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).opus.webm');
 
-      const {format} = await mm.parseFile(webmPath, {duration: false});
+      const {format, common} = await mm.parseFile(webmPath, {duration: false});
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
       assert.approximately(format.duration, 5.006509896, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+
+      assert.strictEqual(common.title, 'Solid Ground', 'common.title');
+      assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
+      assert.deepStrictEqual(common.track, {no: 2, of: 10}, 'common.track');
+    });
+
+    it('should parse "My Baby Boy.webm"', async () => {
+
+      const filePath = path.join(matroskaSamplePath, 'My Baby Boy.webm');
+
+      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
+      assert.strictEqual(format.codec, 'OPUS', 'format.codec');
+
+      assert.strictEqual(common.title, 'My Baby Boy', 'common.title');
+      assert.strictEqual(common.artist, 'theAngelcy', 'common.artist');
+      assert.strictEqual(common.albumartist, 'theAngelcy', 'common.albumartist');
+      assert.deepStrictEqual(common.track, {no: 2, of: 13}, 'common.track');
+      assert.deepStrictEqual(common.disk, {no: 1, of: 1}, 'common.disk');
     });
   });
 
