@@ -88,13 +88,15 @@ describe('Matroska formats', () => {
       assert.strictEqual(common.title, 'Solid Ground', 'common.title');
       assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
       assert.deepStrictEqual(common.track, {no: 2, of: 10}, 'common.track');
+      assert.strictEqual(common.encodedby, 'Max 0.8b', 'common.encodersettings');
+      assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
 
     it('should parse "My Baby Boy.webm"', async () => {
 
       const filePath = path.join(matroskaSamplePath, 'My Baby Boy.webm');
 
-      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      const {format, common, native} = await mm.parseFile(filePath, {duration: true});
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
 
@@ -103,6 +105,9 @@ describe('Matroska formats', () => {
       assert.strictEqual(common.albumartist, 'theAngelcy', 'common.albumartist');
       assert.deepStrictEqual(common.track, {no: 2, of: 13}, 'common.track');
       assert.deepStrictEqual(common.disk, {no: 1, of: 1}, 'common.disk');
+      assert.deepStrictEqual(common.genre, ['Folk'], 'common.genre');
+      assert.strictEqual(common.encodedby, 'opusenc from opus-tools 0.2', 'common.encodersettings');
+      assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
   });
 
