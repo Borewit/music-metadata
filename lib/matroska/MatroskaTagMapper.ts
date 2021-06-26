@@ -6,10 +6,12 @@ import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
  */
 const ebmlTagMap: INativeTagMap = {
   'segment:title': 'title',
-  'album:ARITST': 'albumartist',
-  'album:ARITSTSORT': 'albumartistsort',
+  'album:ARTIST': 'albumartist',
+  'album:ARTISTSORT': 'albumartistsort',
   'album:TITLE': 'album',
   'album:DATE_RECORDED': 'originaldate',
+  'album:PART_NUMBER': 'disk',
+  'album:TOTAL_PARTS': 'totaltracks',
   'track:ARTIST': 'artist',
   'track:ARTISTSORT' : 'artistsort',
   'track:TITLE': 'title',
@@ -18,6 +20,7 @@ const ebmlTagMap: INativeTagMap = {
   'track:MUSICBRAINZ_ALBUMID': 'musicbrainz_albumid',
   'track:MUSICBRAINZ_ARTISTID': 'musicbrainz_artistid',
   'track:PUBLISHER': 'label',
+  'edition:TOTAL_PARTS': 'totaldiscs',
   picture: 'picture'
 };
 
