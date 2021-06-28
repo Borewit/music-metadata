@@ -131,11 +131,17 @@ function distinct(value: any, index: number, self: any[]) {
 export class MP4Parser extends BasicParser {
 
   private static read_BE_Signed_Integer(value: Buffer): number {
-    return Token.readIntBE(value, 0, value.length);
+    if (value.length === 8) {
+      return Number(value.readBigInt64BE(0));
+    }
+    return value.readIntBE(0, value.length);
   }
 
   private static read_BE_Unsigned_Integer(value: Buffer): number {
-    return Token.readUIntBE(value, 0, value.length);
+    if (value.length === 8) {
+      return Number(value.readBigUInt64BE(0));
+    }
+    return value.readUIntBE(0, value.length);
   }
 
   private audioLengthInBytes: number;
@@ -163,7 +169,7 @@ export class MP4Parser extends BasicParser {
         break;
       }
       const rootAtom = await Atom.readAtom(this.tokenizer, (atom, remaining)  => this.handleAtom(atom, remaining), null, remainingFileSize);
-      remainingFileSize -= rootAtom.header.length === 0 ? remainingFileSize : rootAtom.header.length;
+      remainingFileSize -= rootAtom.header.length === BigInt(0) ? remainingFileSize : Number(rootAtom.header.length);
     }
 
     // Post process metadata
@@ -302,7 +308,7 @@ export class MP4Parser extends BasicParser {
   }
 
   private async parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
-    const dataAtom = await this.tokenizer.readToken(new AtomToken.DataAtom(metaAtom.header.length - AtomToken.Header.len));
+    const dataAtom = await this.tokenizer.readToken(new AtomToken.DataAtom(Number(metaAtom.header.length) - AtomToken.Header.len));
 
     if (dataAtom.type.set !== 0) {
       throw new Error('Unsupported type-set != 0: ' + dataAtom.type.set);

@@ -44,7 +44,7 @@ export class AsfParser extends BasicParser {
 
         case AsfObject.FilePropertiesObject.guid.str: // 3.2
           const fpo = await this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header));
-          this.metadata.setFormat('duration', fpo.playDuration / 10000000 - fpo.preroll / 1000);
+          this.metadata.setFormat('duration',  Number(fpo.playDuration / BigInt(1000)) / 10000 - Number(fpo.preroll) / 1000);
           this.metadata.setFormat('bitrate', fpo.maximumBitrate);
           break;
 
@@ -111,6 +111,7 @@ export class AsfParser extends BasicParser {
     do {
       // Parse common header of the ASF Object (3.1)
       const header = await this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken);
+      const remaining = header.objectSize - AsfObject.HeaderObjectToken.len;
       // Parse data part of the ASF Object
       switch (header.objectId.str) {
 
@@ -131,15 +132,15 @@ export class AsfParser extends BasicParser {
 
         case GUID.PaddingObject.str:
           // ToDo: register bytes pad
-          await this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
+          await this.tokenizer.ignore(remaining);
           break;
 
         case GUID.CompatibilityObject.str:
-          this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
+          this.tokenizer.ignore(remaining);
           break;
 
         case GUID.ASF_Index_Placeholder_Object.str:
-          await this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
+          await this.tokenizer.ignore(remaining);
           break;
 
         default:

@@ -2,7 +2,7 @@ import common from "../common/Util";
 import {DataType} from "./AsfObject";
 import * as Token from "token-types";
 
-export type AttributeParser = (buf: Buffer) => boolean | string | number | Buffer;
+export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
 
 export class AsfUtil {
 
@@ -38,7 +38,7 @@ export class AsfUtil {
     return buf.readUInt32LE(offset);
   }
 
-  private static parseQWordAttr(buf: Buffer, offset: number = 0): number {
+  private static parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
     return Token.UINT64_LE.get(buf, offset);
   }
 

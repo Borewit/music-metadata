@@ -14,19 +14,19 @@ describe('Parse Sony DSF (DSD Stream File)', () => {
 
     // format chunk information
     assert.strictEqual(metadata.format.container, 'DSF');
-    assert.deepEqual(metadata.format.lossless, true);
-    assert.deepEqual(metadata.format.numberOfChannels, 2);
-    assert.deepEqual(metadata.format.bitsPerSample, 1);
-    assert.deepEqual(metadata.format.sampleRate, 5644800);
-    assert.deepEqual(metadata.format.numberOfSamples, 564480);
-    assert.deepEqual(metadata.format.duration, 0.1);
-    assert.deepEqual(metadata.format.bitrate, 11289600);
-    assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3']);
+    assert.strictEqual(metadata.format.lossless, true);
+    assert.strictEqual(metadata.format.numberOfChannels, 2);
+    assert.strictEqual(metadata.format.bitsPerSample, 1);
+    assert.strictEqual(metadata.format.sampleRate, 5644800);
+    assert.strictEqual(Number(metadata.format.numberOfSamples), 564480);
+    assert.strictEqual(metadata.format.duration, 0.1);
+    assert.strictEqual(metadata.format.bitrate, 11289600);
+    assert.deepStrictEqual(metadata.format.tagTypes, ['ID3v2.3']);
 
     // ID3v2 chunk information
     assert.strictEqual(metadata.common.title, 'Kyrie');
     assert.strictEqual(metadata.common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim');
-    assert.deepEqual(metadata.common.track, {no: 4, of: 12});
+    assert.deepStrictEqual(metadata.common.track, {no: 4, of: 12});
   });
 
 });

@@ -61,7 +61,7 @@ describe("Parse ASF", () => {
 
     tests.forEach(test => {
       const buf = Buffer.from(test.raw, "binary");
-      assert.strictEqual(AsfUtil.getParserForAttr(DataType.QWord)(buf), test.expected, test.description);
+      assert.strictEqual(Number(AsfUtil.getParserForAttr(DataType.QWord)(buf)), test.expected, test.description);
     });
 
   });

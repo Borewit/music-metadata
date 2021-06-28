@@ -15,11 +15,11 @@ export class Atom {
     const offset = tokenizer.position;
     // debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
     const header = await tokenizer.readToken<AtomToken.IAtomHeader>(AtomToken.Header);
-    const extended = header.length === 1;
+    const extended = header.length === BigInt(1);
     if (extended) {
-      header.length = await tokenizer.readToken<number>(AtomToken.ExtendedSize);
+      header.length = await tokenizer.readToken<bigint>(AtomToken.ExtendedSize);
     }
-    const atomBean = new Atom(header, header.length === 1, parent);
+    const atomBean = new Atom(header, header.length === BigInt(1), parent);
     const payloadLength = atomBean.getPayloadLength(remaining);
     debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
     await atomBean.readData(tokenizer, dataHandler, payloadLength);
@@ -39,14 +39,14 @@ export class Atom {
   }
 
   public getPayloadLength(remaining: number): number {
-    return (this.header.length === 0 ? remaining : this.header.length) - this.getHeaderLength();
+    return (this.header.length === BigInt(0) ? remaining : Number(this.header.length)) - this.getHeaderLength();
   }
 
   public async readAtoms(tokenizer: ITokenizer, dataHandler: AtomDataHandler, size: number): Promise<void> {
     while (size > 0) {
       const atomBean = await Atom.readAtom(tokenizer, dataHandler, this, size);
       this.children.push(atomBean);
-      size -= atomBean.header.length === 0 ? size : atomBean.header.length;
+      size -= atomBean.header.length === BigInt(0) ? size : Number(atomBean.header.length);
     }
   }
 
