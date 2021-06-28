@@ -15,7 +15,7 @@ export interface IChunkHeader {
   /**
    * Chunk size
    */
-  size: number;
+  size: bigint;
 }
 
 /**
@@ -37,13 +37,13 @@ export interface IDsdChunk {
   /**
    * Total file size
    */
-  fileSize: number;
+  fileSize: bigint;
 
   /**
    * If Metadata doesn’t exist, set 0. If the file has ID3v2 tag, then set the pointer to it.
    * ID3v2 tag should be located in the end of the file.
    */
-  metadataPointer: number;
+  metadataPointer: bigint;
 }
 
 /**
@@ -109,7 +109,7 @@ export interface IFormatChunk {
   /**
    * Sample count
    */
-  sampleCount: number;
+  sampleCount: bigint;
 
   /**
    * Block size per channel

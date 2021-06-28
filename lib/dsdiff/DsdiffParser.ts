@@ -3,7 +3,7 @@ import * as initDebug from 'debug';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
 
-import {ChunkHeader, IChunkHeader} from "./DsdiffToken";
+import { ChunkHeader64, IChunkHeader64 } from './DsdiffToken';
 import * as strtok3 from "strtok3/lib/core";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 
@@ -19,7 +19,7 @@ export class DsdiffParser extends BasicParser {
 
   public async parse(): Promise<void> {
 
-    const header = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
+    const header = await this.tokenizer.readToken<IChunkHeader64>(ChunkHeader64);
     if (header.chunkID !== 'FRM8') throw new Error('Unexpected chunk-ID');
 
     const type = (await this.tokenizer.readToken<string>(FourCcToken)).trim();
@@ -28,26 +28,26 @@ export class DsdiffParser extends BasicParser {
       case 'DSD':
         this.metadata.setFormat('container', `DSDIFF/${type}`);
         this.metadata.setFormat('lossless', true);
-        return this.readFmt8Chunks(header.chunkSize - FourCcToken.len);
+        return this.readFmt8Chunks(header.chunkSize - BigInt(FourCcToken.len));
 
       default:
         throw Error(`Unsupported DSDIFF type: ${type}`);
     }
   }
 
-  private async readFmt8Chunks(remainingSize: number): Promise<void> {
+  private async readFmt8Chunks(remainingSize: bigint): Promise<void> {
 
-    while (remainingSize >= ChunkHeader.len) {
-      const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
+    while (remainingSize >= ChunkHeader64.len) {
+      const chunkHeader = await this.tokenizer.readToken<IChunkHeader64>(ChunkHeader64);
 
       //  If the data is an odd number of bytes in length, a pad byte must be added at the end
       debug(`Chunk id=${chunkHeader.chunkID}`);
       await this.readData(chunkHeader);
-      remainingSize -= (ChunkHeader.len + chunkHeader.chunkSize);
+      remainingSize -= (BigInt(ChunkHeader64.len) + chunkHeader.chunkSize);
     }
   }
 
-  private async readData(header: IChunkHeader): Promise<void> {
+  private async readData(header: IChunkHeader64): Promise<void> {
     debug(`Reading data of chunk[ID=${header.chunkID}, size=${header.chunkSize}]`);
     const p0 = this.tokenizer.position;
     switch (header.chunkID.trim()) {
@@ -60,11 +60,11 @@ export class DsdiffParser extends BasicParser {
       case 'PROP': // 3.2 PROPERTY CHUNK
         const propType = await this.tokenizer.readToken(FourCcToken);
         if (propType !== 'SND ') throw new Error('Unexpected PROP-chunk ID');
-        await this.handleSoundPropertyChunks(header.chunkSize - FourCcToken.len);
+        await this.handleSoundPropertyChunks(header.chunkSize - BigInt(FourCcToken.len));
         break;
 
       case 'ID3': // Unofficial ID3 tag support
-        const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(header.chunkSize));
+        const id3_data = await this.tokenizer.readToken<Buffer>(new Token.BufferType(Number(header.chunkSize)));
         const rst = strtok3.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         break;
@@ -74,22 +74,22 @@ export class DsdiffParser extends BasicParser {
         break;
 
       case 'DSD':
-        this.metadata.setFormat('numberOfSamples', header.chunkSize * 8 / this.metadata.format.numberOfChannels);
+        this.metadata.setFormat('numberOfSamples', Number(header.chunkSize * BigInt(8) / BigInt(this.metadata.format.numberOfChannels)));
         this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
         break;
 
     }
-    const remaining = header.chunkSize - (this.tokenizer.position - p0);
+    const remaining = header.chunkSize - BigInt(this.tokenizer.position - p0);
     if (remaining > 0) {
       debug(`After Parsing chunk, remaining ${remaining} bytes`);
-      await this.tokenizer.ignore(remaining);
+      await this.tokenizer.ignore(Number(remaining));
     }
   }
 
-  private async handleSoundPropertyChunks(remainingSize: number): Promise<void> {
+  private async handleSoundPropertyChunks(remainingSize: bigint): Promise<void> {
     debug(`Parsing sound-property-chunks, remainingSize=${remainingSize}`);
     while (remainingSize > 0) {
-      const sndPropHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
+      const sndPropHeader = await this.tokenizer.readToken<IChunkHeader64>(ChunkHeader64);
       debug(`Sound-property-chunk[ID=${sndPropHeader.chunkID}, size=${sndPropHeader.chunkSize}]`);
       const p0 = this.tokenizer.position;
       switch (sndPropHeader.chunkID.trim()) {
@@ -102,7 +102,7 @@ export class DsdiffParser extends BasicParser {
         case 'CHNL': // 3.2.2 Channels Chunk
           const numChannels = await this.tokenizer.readToken<number>(Token.UINT16_BE);
           this.metadata.setFormat('numberOfChannels', numChannels);
-          await this.handleChannelChunks(sndPropHeader.chunkSize - Token.UINT16_BE.len);
+          await this.handleChannelChunks(sndPropHeader.chunkSize - BigInt(Token.UINT16_BE.len));
           break;
 
         case 'CMPR': // 3.2.3 Compression Type Chunk
@@ -132,14 +132,14 @@ export class DsdiffParser extends BasicParser {
         case 'COMT':
         default:
           debug(`Unknown sound-property-chunk[ID=${sndPropHeader.chunkID}, size=${sndPropHeader.chunkSize}]`);
-          await this.tokenizer.ignore(sndPropHeader.chunkSize);
+          await this.tokenizer.ignore(Number(sndPropHeader.chunkSize));
       }
-      const remaining = sndPropHeader.chunkSize - (this.tokenizer.position - p0);
+      const remaining = sndPropHeader.chunkSize - BigInt(this.tokenizer.position - p0);
       if (remaining > 0) {
         debug(`After Parsing sound-property-chunk ${sndPropHeader.chunkSize}, remaining ${remaining} bytes`);
-        await this.tokenizer.ignore(remaining);
+        await this.tokenizer.ignore(Number(remaining));
       }
-      remainingSize -= ChunkHeader.len + sndPropHeader.chunkSize;
+      remainingSize -= BigInt(ChunkHeader64.len) + sndPropHeader.chunkSize;
       debug(`Parsing sound-property-chunks, remainingSize=${remainingSize}`);
     }
     if (this.metadata.format.lossless && this.metadata.format.sampleRate && this.metadata.format.numberOfChannels && this.metadata.format.bitsPerSample) {
@@ -148,14 +148,14 @@ export class DsdiffParser extends BasicParser {
     }
   }
 
-  private async handleChannelChunks(remainingSize: number): Promise<string[]> {
+  private async handleChannelChunks(remainingSize: bigint): Promise<string[]> {
     debug(`Parsing channel-chunks, remainingSize=${remainingSize}`);
     const channels: string[] = [];
     while (remainingSize >= FourCcToken.len) {
       const channelId = await this.tokenizer.readToken<string>(FourCcToken);
       debug(`Channel[ID=${channelId}]`);
       channels.push(channelId);
-      remainingSize -= FourCcToken.len;
+      remainingSize -= BigInt(FourCcToken.len);
     }
     debug(`Channels: ${channels.join(', ')}`);
     return channels;

@@ -21,18 +21,18 @@ export class DsfParser extends AbstractID3Parser {
     this.metadata.setFormat('container', 'DSF');
     this.metadata.setFormat('lossless', true);
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);
-    if (dsdChunk.metadataPointer === 0) {
+    if (dsdChunk.metadataPointer === BigInt(0)) {
       debug(`No ID3v2 tag present`);
     } else {
       debug(`expect ID3v2 at offset=${dsdChunk.metadataPointer}`);
       await this.parseChunks(dsdChunk.fileSize - chunkHeader.size);
       // Jump to ID3 header
-      await this.tokenizer.ignore(dsdChunk.metadataPointer - this.tokenizer.position - p0);
+      await this.tokenizer.ignore(Number(dsdChunk.metadataPointer) - this.tokenizer.position - p0);
       return new ID3v2Parser().parse(this.metadata, this.tokenizer, this.options);
     }
   }
 
-  private async parseChunks(bytesRemaining: number) {
+  private async parseChunks(bytesRemaining: bigint) {
     while (bytesRemaining >= ChunkHeader.len) {
       const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
       debug(`Parsing chunk name=${chunkHeader.id} size=${chunkHeader.size}`);
@@ -43,12 +43,12 @@ export class DsfParser extends AbstractID3Parser {
           this.metadata.setFormat('sampleRate', formatChunk.samplingFrequency);
           this.metadata.setFormat('bitsPerSample', formatChunk.bitsPerSample);
           this.metadata.setFormat('numberOfSamples', formatChunk.sampleCount);
-          this.metadata.setFormat('duration', formatChunk.sampleCount / formatChunk.samplingFrequency);
+          this.metadata.setFormat('duration', Number(formatChunk.sampleCount) / formatChunk.samplingFrequency);
           const bitrate = formatChunk.bitsPerSample * formatChunk.samplingFrequency * formatChunk.channelNum;
           this.metadata.setFormat('bitrate', bitrate);
           return; // We got what we want, stop further processing of chunks
         default:
-          this.tokenizer.ignore(chunkHeader.size - ChunkHeader.len);
+          this.tokenizer.ignore(Number(chunkHeader.size) - ChunkHeader.len);
           break;
       }
       bytesRemaining -= chunkHeader.size;

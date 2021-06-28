@@ -74,7 +74,7 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
       objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
-      objectSize: Token.UINT64_LE.get(buf, off + 16),
+      objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
       // Reserved: 2 bytes
     };
@@ -92,7 +92,7 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader> = {
   get: (buf, off): IAsfObjectHeader => {
     return {
       objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
-      objectSize: Token.UINT64_LE.get(buf, off + 16)
+      objectSize: Number(Token.UINT64_LE.get(buf, off + 16))
     };
   }
 };
@@ -102,7 +102,7 @@ export abstract class State<T> implements IGetToken<T> {
   public len: number;
 
   constructor(header: IAsfObjectHeader) {
-    this.len = header.objectSize - HeaderObjectToken.len;
+    this.len = Number(header.objectSize) - HeaderObjectToken.len;
   }
 
   public abstract get(buf: Buffer, off: number): T;
@@ -150,31 +150,31 @@ export interface IFilePropertiesObject {
    * Specifies the size, in bytes, of the entire file.
    * The value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  fileSize: number,
+  fileSize: bigint,
   /**
    * Specifies the date and time of the initial creation of the file. The value is given as the number of 100-nanosecond
    * intervals since January 1, 1601, according to Coordinated Universal Time (Greenwich Mean Time). The value of this
    * field may be invalid if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  creationDate: number,
+  creationDate: bigint,
   /**
    * Specifies the number of Data Packet entries that exist within the Data Object. The value of this field is invalid
    * if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  dataPacketsCount: number,
+  dataPacketsCount: bigint,
   /**
    * Specifies the time needed to play the file in 100-nanosecond units.
    * This value should include the duration (estimated, if an exact value is unavailable) of the the last media object
    * in the presentation. The value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  playDuration: number,
+  playDuration: bigint,
   /**
    * Specifies the time needed to send the file in 100-nanosecond units.
    * This value should include the duration of the last packet in the content.
    * The value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
    * Players can ignore this value.
    */
-  sendDuration: number,
+  sendDuration: bigint,
   /**
    * Specifies the amount of time to buffer data before starting to play the file, in millisecond units.
    * If this value is nonzero, the Play Duration field and all of the payload Presentation Time fields have been offset
@@ -182,7 +182,7 @@ export interface IFilePropertiesObject {
    * presentation times to calculate their actual values. It follows that all payload Presentation Time fields need to
    * be at least this value.
    */
-  preroll: number,
+  preroll: bigint,
   /**
    * The flags
    */
@@ -481,8 +481,8 @@ export interface IStreamName {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/04_objects_in_the_asf_header_extension_object.html#4_1
  */
 export interface IExtendedStreamPropertiesObject {
-  startTime: number,
-  endTime: number,
+  startTime: bigint,
+  endTime: bigint,
   dataBitrate: number,
   bufferSize: number,
   initialBufferFullness: number,

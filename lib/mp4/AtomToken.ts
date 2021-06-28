@@ -19,7 +19,7 @@ interface IVersionAndFlags {
 }
 
 export interface IAtomHeader {
-  length: number,
+  length: bigint,
   name: string
 }
 
@@ -142,13 +142,13 @@ export const Header: IToken<IAtomHeader> = {
       throw new Error('Invalid atom header length');
 
     return {
-      length,
+      length: BigInt(length),
       name: new Token.StringType(4, 'binary').get(buf, off + 4)
     };
   },
 
   put: (buf: Buffer, off: number, hdr: IAtomHeader) => {
-    Token.UINT32_BE.put(buf, off, hdr.length);
+    Token.UINT32_BE.put(buf, off, Number(hdr.length));
     return FourCcToken.put(buf, off + 4, hdr.name);
   }
 };
@@ -156,7 +156,7 @@ export const Header: IToken<IAtomHeader> = {
 /**
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap1/qtff1.html#//apple_ref/doc/uid/TP40000939-CH203-38190
  */
-export const ExtendedSize = Token.UINT64_BE;
+export const ExtendedSize: IToken<bigint> = Token.UINT64_BE;
 
 export const ftyp: IGetToken<IAtomFtyp> = {
   len: 4,
@@ -186,7 +186,7 @@ export const mhdr: IGetToken<IMovieHeaderAtom> = {
 
   get: (buf: Buffer, off: number): IMovieHeaderAtom => {
     return {
-      version: Token.UINT8.get(buf, off + 0),
+      version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
       nextItemID: Token.UINT32_BE.get(buf, off + 4)
     };
