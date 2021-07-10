@@ -349,16 +349,12 @@ describe('Parse MPEG', () => {
     it('VBR: based on frame count if duration flag is set', async () => {
 
       const filePath = path.join(issueDir, 'Dethklok-mergeTagHeaders.mp3');
+      // Wrap stream around buffer, to prevent the `stream.path` is provided
+      const buffer = fs.readFileSync(filePath);
+      const stream = new SourceStream(buffer);
 
-      const stream = fs.createReadStream(filePath);
-      let metadata: mm.IAudioMetadata;
-      try {
-        stream.path = undefined; // disable file size based calculation
-        metadata = await mm.parseStream(stream, {mimeType: 'audio/mpeg'}, {duration: true});
-      } finally {
-        stream.close();
-      }
-      assert.approximately(metadata.format.duration, 34.69, 1 / 100);
+      const metadata = await mm.parseStream(stream, {mimeType: 'audio/mpeg'}, {duration: true});
+      assert.approximately(metadata.format.duration, 34.66, 5 / 1000);
     });
 
   });
