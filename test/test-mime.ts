@@ -78,15 +78,13 @@ describe('MIME & extension mapping', () => {
 
   });
 
-  it('should be able to handle MIME-type parameter(s)', () => {
+  it('should be able to handle MIME-type parameter(s)', async () => {
 
-    const stream = fs.createReadStream(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav'));
-    (stream as any).path = undefined; // Prevent type detection via path
-    return mm.parseStream(stream).then(metadata => {
-      stream.close();
-      assert.equal(metadata.format.container, 'WAVE');
-    });
-
+    // Wrap stream around buffer, to prevent the `stream.path` is provided
+    const buffer = fs.readFileSync(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav'));
+    const stream = new SourceStream(buffer);
+    const metadata = await mm.parseStream(stream);
+    assert.equal(metadata.format.container, 'WAVE');
   });
 
   describe('Resolve MIME based on content', () => {
@@ -98,30 +96,29 @@ describe('MIME & extension mapping', () => {
       assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
     });
 
-    it('should throw error on unrecognized MIME-type', () => {
+    it('should throw error on unrecognized MIME-type', async () => {
 
       const streamReader = new SourceStream(buf);
-      return mm.parseStream(streamReader, 'audio/not-existing')
-        .then(() => {
-          assert.fail('Should throw an Error');
-        })
-        .catch(err => {
-          assert.equal(err.message, 'Failed to determine audio format');
-        });
+      try {
+        await mm.parseStream(streamReader, {mimeType: 'audio/not-existing'});
+        assert.fail('Should throw an Error');
+      } catch (err) {
+        assert.equal(err.message, 'Failed to determine audio format');
+      }
+
     });
 
-    it('should throw error on recognized MIME-type which is not supported', () => {
+    it('should throw error on recognized MIME-type which is not supported', async () => {
+      // Wrap stream around buffer, to prevent the `stream.path` is provided
+      const buffer = fs.readFileSync(path.join(samplePath, 'flac.flac.jpg'));
+      const stream = new SourceStream(buffer);
 
-      const stream = fs.createReadStream(path.join(samplePath, 'flac.flac.jpg'));
-      (stream.path as any) = undefined;
-      return mm.parseStream(stream, {mimeType: 'audio/not-existing'})
-        .then(() => {
-          stream.close();
-          assert.fail('Should throw an Error');
-        })
-        .catch(err => {
-          assert.equal(err.message, 'Guessed MIME-type not supported: image/jpeg');
-        });
+      try {
+        await mm.parseStream(stream, {mimeType: 'audio/not-existing'});
+        assert.fail('Should throw an Error');
+      } catch (err) {
+        assert.equal(err.message, 'Guessed MIME-type not supported: image/jpeg');
+      }
     });
 
     async function testFileType(sample: string, container: string) {
