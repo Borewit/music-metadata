@@ -6,7 +6,7 @@ import * as riff from '../riff/RiffChunk';
 import * as WaveChunk from './../wav/WaveChunk';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser';
 
-import Common from '../common/Util';
+import * as util from '../common/Util';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
 
@@ -156,7 +156,7 @@ export class WaveParser extends BasicParser {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
       const valueToken = new riff.ListInfoTagValue(header);
       const value = await this.tokenizer.readToken(valueToken);
-      this.addTag(header.chunkID, Common.stripNulls(value));
+      this.addTag(header.chunkID, util.stripNulls(value));
       chunkSize -= (8 + valueToken.len);
     }
 

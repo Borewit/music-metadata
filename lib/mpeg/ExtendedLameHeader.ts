@@ -4,7 +4,7 @@
 
 import { IGetToken } from 'strtok3/lib/core';
 import * as Token from 'token-types';
-import Common from '../common/Util';
+import * as common from '../common/Util';
 import { ReplayGain, IReplayGain } from './ReplayGainDataFormat';
 
 /**
@@ -36,8 +36,8 @@ export const ExtendedLameHeader: IGetToken<IExtendedLameHeader> = {
   get: (buf, off) => {
     const track_peak = Token.UINT32_BE.get(buf, off + 2);
     return {
-      revision: Common.getBitAllignedNumber(buf, off, 0, 4),
-      vbr_method: Common.getBitAllignedNumber(buf, off, 4, 4),
+      revision: common.getBitAllignedNumber(buf, off, 0, 4),
+      vbr_method: common.getBitAllignedNumber(buf, off, 4, 4),
       lowpass_filter: 100 * Token.UINT8.get(buf, off + 1),
       track_peak: track_peak === 0 ? undefined : track_peak / Math.pow(2, 23),
       track_gain: ReplayGain.get(buf, 6),
