@@ -1,6 +1,6 @@
 'use strict';
 
-import common from '../common/Util';
+import * as util from '../common/Util';
 import * as Token from 'token-types';
 import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
@@ -193,8 +193,8 @@ class Metadata {
 
     get: (buf: Buffer, off: number): IBlockHeader => {
       return {
-        lastBlock: common.strtokBITSET.get(buf, off, 7),
-        type: common.getBitAllignedNumber(buf, off, 1, 7),
+        lastBlock: util.strtokBITSET.get(buf, off, 7),
+        type: util.getBitAllignedNumber(buf, off, 1, 7),
         length: Token.UINT24_BE.get(buf, off + 1)
       };
     }
@@ -226,14 +226,14 @@ class Metadata {
         sampleRate: Token.UINT24_BE.get(buf, off + 10) >> 4,
         // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
         // (number of channels)-1. FLAC supports from 1 to 8 channels
-        channels: common.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
+        channels: util.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
         // bits per sample)-1.
         // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
-        bitsPerSample: common.getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
+        bitsPerSample: util.getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
         // Total samples in stream.
         // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
         // A value of zero here means the number of total samples is unknown.
-        totalSamples: common.getBitAllignedNumber(buf, off + 13, 4, 36),
+        totalSamples: util.getBitAllignedNumber(buf, off + 13, 4, 36),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
         fileMD5: new Token.BufferType(16).get(buf, off + 18)
       };

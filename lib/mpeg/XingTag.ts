@@ -1,6 +1,6 @@
 import * as Token from "token-types";
 import { IGetToken, ITokenizer } from 'strtok3/lib/core';
-import Common from '../common/Util';
+import * as util from '../common/Util';
 import { ExtendedLameHeader, IExtendedLameHeader } from './ExtendedLameHeader';
 
 export interface IXingHeaderFlags {
@@ -56,10 +56,10 @@ export const XingHeaderFlags: IGetToken<IXingHeaderFlags> = {
 
   get: (buf, off) => {
     return {
-      frames: Common.isBitSet(buf, off, 31),
-      bytes: Common.isBitSet(buf, off, 30),
-      toc: Common.isBitSet(buf, off, 29),
-      vbrScale: Common.isBitSet(buf, off, 28)
+      frames: util.isBitSet(buf, off, 31),
+      bytes: util.isBitSet(buf, off, 30),
+      toc: util.isBitSet(buf, off, 29),
+      vbrScale: util.isBitSet(buf, off, 28)
     };
   }
 };

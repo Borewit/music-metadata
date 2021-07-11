@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import Util from '../../common/Util';
+import * as util from '../../common/Util';
 import { ITokenizer, IGetToken } from 'strtok3/lib/core';
 import * as initDebug from 'debug';
 
@@ -64,11 +64,11 @@ const SH_part3: IGetToken<IStreamHeader3> = {
   get: (buf, off) => {
 
     return {
-      sampleFrequency: [44100, 48000, 37800, 32000][Util.getBitAllignedNumber(buf, off, 0, 3)],
-      maxUsedBands: Util.getBitAllignedNumber(buf, off, 3, 5),
-      channelCount: Util.getBitAllignedNumber(buf, off + 1, 0, 4) + 1,
-      msUsed: Util.isBitSet(buf, off + 1, 4),
-      audioBlockFrames: Util.getBitAllignedNumber(buf, off + 1, 5, 3)
+      sampleFrequency: [44100, 48000, 37800, 32000][util.getBitAllignedNumber(buf, off, 0, 3)],
+      maxUsedBands: util.getBitAllignedNumber(buf, off, 3, 5),
+      channelCount: util.getBitAllignedNumber(buf, off + 1, 0, 4) + 1,
+      msUsed: util.isBitSet(buf, off + 1, 4),
+      audioBlockFrames: util.getBitAllignedNumber(buf, off + 1, 5, 3)
     };
   }
 };

@@ -1,4 +1,4 @@
-import common from "../common/Util";
+import * as util from "../common/Util";
 import {DataType} from "./AsfObject";
 import * as Token from "token-types";
 
@@ -11,7 +11,7 @@ export class AsfUtil {
   }
 
   public static parseUnicodeAttr(buf): string {
-    return common.stripNulls(common.decodeString(buf, "utf16le"));
+    return util.stripNulls(util.decodeString(buf, "utf16le"));
   }
 
   private static attributeParsers: AttributeParser[] = [

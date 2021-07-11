@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import common, {StringEncoding} from '../common/Util';
+import * as util from '../common/Util';
 import { IGetToken } from 'strtok3/lib/core';
 
 /**
@@ -98,12 +98,12 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
       // ID3v2 flags
       flags: {
         // Unsynchronisation
-        unsynchronisation: common.strtokBITSET.get(buf, off + 5, 7),
+        unsynchronisation: util.strtokBITSET.get(buf, off + 5, 7),
         // Extended header
-        isExtendedHeader: common.strtokBITSET.get(buf, off + 5, 6),
+        isExtendedHeader: util.strtokBITSET.get(buf, off + 5, 6),
         // Experimental indicator
-        expIndicator: common.strtokBITSET.get(buf, off + 5, 5),
-        footer: common.strtokBITSET.get(buf, off + 5, 4)
+        expIndicator: util.strtokBITSET.get(buf, off + 5, 5),
+        footer: util.strtokBITSET.get(buf, off + 5, 4)
       },
       size: UINT32SYNCSAFE.get(buf, off + 6)
     };
@@ -122,13 +122,13 @@ export const ExtendedHeader: IGetToken<IExtendedHeader> = {
       // Size of padding
       sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
       // CRC data present
-      crcDataPresent: common.strtokBITSET.get(buf, off + 4, 31)
+      crcDataPresent: util.strtokBITSET.get(buf, off + 4, 31)
     };
   }
 };
 
 export interface ITextEncoding {
-  encoding: StringEncoding;
+  encoding: util.StringEncoding;
   bom?: boolean;
 }
 

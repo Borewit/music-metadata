@@ -1,7 +1,7 @@
 import * as initDebug from 'debug';
 import * as Token from 'token-types';
 
-import common, { StringEncoding } from '../common/Util';
+import * as util from '../common/Util';
 import { AttachedPictureType, ID3v2MajorVersion, TextEncodingToken } from './ID3v2Token';
 import { IWarningCollector } from '../common/MetadataCollector';
 import { Genres } from '../id3v1/ID3v1Parser';
@@ -21,7 +21,7 @@ interface IPicture {
   data?: Uint8Array;
 }
 
-const defaultEnc: StringEncoding = 'iso-8859-1';
+const defaultEnc: util.StringEncoding = 'iso-8859-1';
 
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
@@ -100,7 +100,7 @@ export class FrameParser {
       case 'MVNM':
       case 'PCS':
       case 'PCST':
-        const text = common.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
+        const text = util.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
         switch (type) {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list
@@ -141,7 +141,7 @@ export class FrameParser {
         output = FrameParser.readIdentifierAndData(b, offset + 1, length, encoding);
         output = {
           description: output.id,
-          text: this.splitValue(type, common.decodeString(output.data, encoding).replace(/\x00+$/, ''))
+          text: this.splitValue(type, util.decodeString(output.data, encoding).replace(/\x00+$/, ''))
         };
         break;
 
@@ -154,13 +154,13 @@ export class FrameParser {
 
           switch (this.major) {
             case 2:
-              pic.format = common.decodeString(b.slice(offset, offset + 3), 'iso-8859-1');
+              pic.format = util.decodeString(b.slice(offset, offset + 3), 'iso-8859-1');
               offset += 3;
               break;
             case 3:
             case 4:
-              fzero = common.findZero(b, offset, length, defaultEnc);
-              pic.format = common.decodeString(b.slice(offset, fzero), defaultEnc);
+              fzero = util.findZero(b, offset, length, defaultEnc);
+              pic.format = util.decodeString(b.slice(offset, fzero), defaultEnc);
               offset = fzero + 1;
               break;
 
@@ -173,8 +173,8 @@ export class FrameParser {
           pic.type = AttachedPictureType[b[offset]];
           offset += 1;
 
-          fzero = common.findZero(b, offset, length, encoding);
-          pic.description = common.decodeString(b.slice(offset, fzero), encoding);
+          fzero = util.findZero(b, offset, length, encoding);
+          pic.description = util.decodeString(b.slice(offset, fzero), encoding);
           offset = fzero + nullTerminatorLength;
 
           pic.data = Buffer.from(b.slice(offset, length));
@@ -197,9 +197,9 @@ export class FrameParser {
 
         output = [];
         while (offset < length) {
-          const txt = b.slice(offset, offset = common.findZero(b, offset, length, encoding));
+          const txt = b.slice(offset, offset = util.findZero(b, offset, length, encoding));
           offset += 5; // push offset forward one +  4 byte timestamp
-          output.push(common.decodeString(txt, encoding));
+          output.push(util.decodeString(txt, encoding));
         }
         break;
 
@@ -210,14 +210,14 @@ export class FrameParser {
 
         offset += 1;
 
-        out.language = common.decodeString(b.slice(offset, offset + 3), defaultEnc);
+        out.language = util.decodeString(b.slice(offset, offset + 3), defaultEnc);
         offset += 3;
 
-        fzero = common.findZero(b, offset, length, encoding);
-        out.description = common.decodeString(b.slice(offset, fzero), encoding);
+        fzero = util.findZero(b, offset, length, encoding);
+        out.description = util.decodeString(b.slice(offset, fzero), encoding);
         offset = fzero + nullTerminatorLength;
 
-        out.text = common.decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '');
+        out.text = util.decodeString(b.slice(offset, length), encoding).replace(/\x00+$/, '');
 
         output = [out];
         break;
@@ -233,8 +233,8 @@ export class FrameParser {
         break;
 
       case 'POPM': // Popularimeter
-        fzero = common.findZero(b, offset, length, defaultEnc);
-        const email = common.decodeString(b.slice(offset, fzero), defaultEnc);
+        fzero = util.findZero(b, offset, length, defaultEnc);
+        const email = util.decodeString(b.slice(offset, fzero), defaultEnc);
         offset = fzero + 1;
         const dataLen = length - offset;
         output = {
@@ -245,14 +245,14 @@ export class FrameParser {
         break;
 
       case 'GEOB': {  // General encapsulated object
-          fzero = common.findZero(b, offset + 1, length, encoding);
-          const mimeType = common.decodeString(b.slice(offset + 1, fzero), defaultEnc);
+          fzero = util.findZero(b, offset + 1, length, encoding);
+          const mimeType = util.decodeString(b.slice(offset + 1, fzero), defaultEnc);
           offset = fzero + 1;
-          fzero = common.findZero(b, offset, length - offset, encoding);
-          const filename = common.decodeString(b.slice(offset, fzero), defaultEnc);
+          fzero = util.findZero(b, offset, length - offset, encoding);
+          const filename = util.decodeString(b.slice(offset, fzero), defaultEnc);
           offset = fzero + 1;
-          fzero = common.findZero(b, offset, length - offset, encoding);
-          const description = common.decodeString(b.slice(offset, fzero), defaultEnc);
+          fzero = util.findZero(b, offset, length - offset, encoding);
+          const description = util.decodeString(b.slice(offset, fzero), defaultEnc);
           output = {
             type: mimeType,
             filename,
@@ -272,21 +272,21 @@ export class FrameParser {
       case 'WPAY':
       case 'WPUB':
         // Decode URL
-        output = common.decodeString(b.slice(offset, fzero), defaultEnc);
+        output = util.decodeString(b.slice(offset, fzero), defaultEnc);
         break;
 
       case 'WXXX': {
           // Decode URL
-          fzero = common.findZero(b, offset + 1, length, encoding);
-          const description = common.decodeString(b.slice(offset + 1, fzero), encoding);
+          fzero = util.findZero(b, offset + 1, length, encoding);
+          const description = util.decodeString(b.slice(offset + 1, fzero), encoding);
           offset = fzero + (encoding === 'utf16' ? 2 : 1);
-          output = {description, url: common.decodeString(b.slice(offset, length), defaultEnc)};
+          output = {description, url: util.decodeString(b.slice(offset, length), defaultEnc)};
           break;
         }
 
       case 'WFD':
       case 'WFED':
-        output = common.decodeString(b.slice(offset + 1, common.findZero(b, offset + 1, length, encoding)), encoding);
+        output = util.decodeString(b.slice(offset + 1, util.findZero(b, offset + 1, length, encoding)), encoding);
         break;
 
       case 'MCDI': {
@@ -353,10 +353,10 @@ export class FrameParser {
     return values.map(value => value.replace(/\x00+$/, '').trim());
   }
 
-  private static readIdentifierAndData(b: Buffer, offset: number, length: number, encoding: StringEncoding): { id: string, data: Uint8Array } {
-    const fzero = common.findZero(b, offset, length, encoding);
+  private static readIdentifierAndData(b: Buffer, offset: number, length: number, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
+    const fzero = util.findZero(b, offset, length, encoding);
 
-    const id = common.decodeString(b.slice(offset, fzero), encoding);
+    const id = util.decodeString(b.slice(offset, fzero), encoding);
     offset = fzero + FrameParser.getNullTerminatorLength(encoding);
 
     return {id, data: b.slice(offset, length)};

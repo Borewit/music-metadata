@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import util, { default as Util } from '../lib/common/Util';
+import * as util from '../lib/common/Util';
 import {FourCcToken} from "../lib/common/FourCC";
 
 const t = assert;
@@ -107,7 +107,7 @@ describe("shared utility functionality", () => {
   });
 
   it("a2hex", () => {
-    t.equal(Util.a2hex("\x00\x01ABC\x02"), '00 01 41 42 43 02');
+    t.equal(util.a2hex("\x00\x01ABC\x02"), '00 01 41 42 43 02');
   });
 
 });

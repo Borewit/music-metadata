@@ -1,4 +1,4 @@
-import Util from './Util';
+import * as util from './Util';
 import { IToken } from "strtok3/lib/core";
 
 const validFourCC =  /^[\x21-\x7e©][\x20-\x7e\x00()]{3}/;
@@ -15,7 +15,7 @@ export const FourCcToken: IToken<string> = {
     switch (id) {
       default:
         if (!id.match(validFourCC)) {
-          throw new Error(`FourCC contains invalid characters: ${Util.a2hex(id)} "${id}"`);
+          throw new Error(`FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`);
         }
     }
     return id;

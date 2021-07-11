@@ -1,6 +1,6 @@
 import { INativeTagMap } from '../common/GenericTagTypes';
 import { CommonTagMapper } from '../common/GenericTagMapper';
-import common from '../common/Util';
+import * as util from '../common/Util';
 import { IRating, ITag } from '../type';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
@@ -177,7 +177,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
       case 'UFID': // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === 'http://musicbrainz.org') {
           tag.id += ':' + tag.value.owner_identifier;
-          tag.value = common.decodeString(tag.value.identifier, 'iso-8859-1');
+          tag.value = util.decodeString(tag.value.identifier, 'iso-8859-1');
         }
         break;
 

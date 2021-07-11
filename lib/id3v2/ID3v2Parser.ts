@@ -1,7 +1,7 @@
 import { ITokenizer } from 'strtok3/lib/core';
 import * as Token from 'token-types';
 
-import common from '../common/Util';
+import * as util from '../common/Util';
 import { TagType } from '../common/GenericTagTypes';
 import { ITag, IOptions } from '../type';
 import { FrameParser } from './FrameParser';
@@ -62,16 +62,16 @@ export class ID3v2Parser {
   private static readFrameFlags(b: Buffer): IFrameFlags {
     return {
       status: {
-        tag_alter_preservation: common.strtokBITSET.get(b, 0, 6),
-        file_alter_preservation: common.strtokBITSET.get(b, 0, 5),
-        read_only: common.strtokBITSET.get(b, 0, 4)
+        tag_alter_preservation: util.strtokBITSET.get(b, 0, 6),
+        file_alter_preservation: util.strtokBITSET.get(b, 0, 5),
+        read_only: util.strtokBITSET.get(b, 0, 4)
       },
       format: {
-        grouping_identity: common.strtokBITSET.get(b, 1, 7),
-        compression: common.strtokBITSET.get(b, 1, 3),
-        encryption: common.strtokBITSET.get(b, 1, 2),
-        unsynchronisation: common.strtokBITSET.get(b, 1, 1),
-        data_length_indicator: common.strtokBITSET.get(b, 1, 0)
+        grouping_identity: util.strtokBITSET.get(b, 1, 7),
+        compression: util.strtokBITSET.get(b, 1, 3),
+        encryption: util.strtokBITSET.get(b, 1, 2),
+        unsynchronisation: util.strtokBITSET.get(b, 1, 1),
+        data_length_indicator: util.strtokBITSET.get(b, 1, 0)
       }
     };
   }

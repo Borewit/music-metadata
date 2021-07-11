@@ -1,7 +1,7 @@
 import * as initDebug from 'debug';
 import * as strtok3 from 'strtok3/lib/core';
 
-import common from '../common/Util';
+import * as util from '../common/Util';
 
 import { IOptions, IRandomReader, IApeHeader } from '../type';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
@@ -134,7 +134,7 @@ export class APEv2Parser extends BasicParser {
       bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
 
       await this.tokenizer.peekBuffer(keyBuffer, {length: Math.min(keyBuffer.length, bytesRemaining)});
-      let zero = common.findZero(keyBuffer, 0, keyBuffer.length);
+      let zero = util.findZero(keyBuffer, 0, keyBuffer.length);
       const key = await this.tokenizer.readToken<string>(new StringType(zero, 'ascii'));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
@@ -158,7 +158,7 @@ export class APEv2Parser extends BasicParser {
             const picData = Buffer.alloc(tagItemHeader.size);
             await this.tokenizer.readBuffer(picData);
 
-            zero = common.findZero(picData, 0, picData.length);
+            zero = util.findZero(picData, 0, picData.length);
             const description = picData.toString('utf8', 0, zero);
 
             const data = Buffer.from(picData.slice(zero + 1));

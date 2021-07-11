@@ -1,6 +1,6 @@
 import * as initDebug from 'debug';
 
-import BitUtil from '../common/Util';
+import * as util from '../common/Util';
 import * as Token from 'token-types';
 import {BasicParser} from '../common/BasicParser';
 import { APEv2Parser } from '../apev2/APEv2Parser';
@@ -97,7 +97,7 @@ class Id3v1StringType extends Token.StringType {
 
   public get(buf: Buffer, off: number): string {
     let value = super.get(buf, off);
-    value = BitUtil.trimRightNull(value);
+    value = util.trimRightNull(value);
     value = value.trim();
     return value.length > 0 ? value : undefined;
   }
