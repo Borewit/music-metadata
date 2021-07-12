@@ -98,12 +98,12 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
       // ID3v2 flags
       flags: {
         // Unsynchronisation
-        unsynchronisation: util.strtokBITSET.get(buf, off + 5, 7),
+        unsynchronisation: util.getBit(buf, off + 5, 7),
         // Extended header
-        isExtendedHeader: util.strtokBITSET.get(buf, off + 5, 6),
+        isExtendedHeader: util.getBit(buf, off + 5, 6),
         // Experimental indicator
-        expIndicator: util.strtokBITSET.get(buf, off + 5, 5),
-        footer: util.strtokBITSET.get(buf, off + 5, 4)
+        expIndicator: util.getBit(buf, off + 5, 5),
+        footer: util.getBit(buf, off + 5, 4)
       },
       size: UINT32SYNCSAFE.get(buf, off + 6)
     };
@@ -122,7 +122,7 @@ export const ExtendedHeader: IGetToken<IExtendedHeader> = {
       // Size of padding
       sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
       // CRC data present
-      crcDataPresent: util.strtokBITSET.get(buf, off + 4, 31)
+      crcDataPresent: util.getBit(buf, off + 4, 31)
     };
   }
 };

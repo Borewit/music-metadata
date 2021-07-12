@@ -62,16 +62,16 @@ export class ID3v2Parser {
   private static readFrameFlags(b: Buffer): IFrameFlags {
     return {
       status: {
-        tag_alter_preservation: util.strtokBITSET.get(b, 0, 6),
-        file_alter_preservation: util.strtokBITSET.get(b, 0, 5),
-        read_only: util.strtokBITSET.get(b, 0, 4)
+        tag_alter_preservation: util.getBit(b, 0, 6),
+        file_alter_preservation: util.getBit(b, 0, 5),
+        read_only: util.getBit(b, 0, 4)
       },
       format: {
-        grouping_identity: util.strtokBITSET.get(b, 1, 7),
-        compression: util.strtokBITSET.get(b, 1, 3),
-        encryption: util.strtokBITSET.get(b, 1, 2),
-        unsynchronisation: util.strtokBITSET.get(b, 1, 1),
-        data_length_indicator: util.strtokBITSET.get(b, 1, 0)
+        grouping_identity: util.getBit(b, 1, 7),
+        compression: util.getBit(b, 1, 3),
+        encryption: util.getBit(b, 1, 2),
+        unsynchronisation: util.getBit(b, 1, 1),
+        data_length_indicator: util.getBit(b, 1, 0)
       }
     };
   }

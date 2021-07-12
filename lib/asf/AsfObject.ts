@@ -254,8 +254,8 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
       sendDuration: Token.UINT64_LE.get(buf, off + 48),
       preroll: Token.UINT64_LE.get(buf, off + 56),
       flags: {
-        broadcast: util.strtokBITSET.get(buf, off + 64, 24),
-        seekable: util.strtokBITSET.get(buf, off + 64, 25)
+        broadcast: util.getBit(buf, off + 64, 24),
+        seekable: util.getBit(buf, off + 64, 25)
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
@@ -528,9 +528,9 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
       alternateInitialBufferFullness: buf.readInt32LE(off + 32),
       maximumObjectSize: buf.readInt32LE(off + 36),
       flags: { // ToDo, check flag positions
-        reliableFlag: util.strtokBITSET.get(buf, off + 40, 0),
-        seekableFlag: util.strtokBITSET.get(buf, off + 40, 1),
-        resendLiveCleanpointsFlag: util.strtokBITSET.get(buf, off + 40, 2)
+        reliableFlag: util.getBit(buf, off + 40, 0),
+        seekableFlag: util.getBit(buf, off + 40, 1),
+        resendLiveCleanpointsFlag: util.getBit(buf, off + 40, 2)
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       streamNumber: buf.readInt16LE(off + 42),

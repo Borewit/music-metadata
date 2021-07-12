@@ -1,33 +1,30 @@
 import { Windows1292Decoder } from './Windows1292Decoder';
-import { IRatio } from "../type";
+import { IRatio } from '../type';
 
 export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf16le';
 
-export const strtokBITSET = {
-  get: (buf: Buffer, off: number, bit: number): boolean => {
-    return (buf[off] & (1 << bit)) !== 0;
-  },
-  len: 1
-};
+export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
+  return (buf[off] & (1 << bit)) !== 0;
+}
 
 /**
  *
- * @param buffer
+ * @param uint8Array
  * @param start
  * @param end
  * @param encoding // ToDo: ts.enum
  * @return {number}
  */
-export function findZero(buffer: Buffer, start: number, end: number, encoding?: string): number {
+export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: string): number {
   let i = start;
   if (encoding === 'utf16') {
-    while (buffer[i] !== 0 || buffer[i + 1] !== 0) {
+    while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
       if (i >= end) return end;
       i += 2;
     }
     return i;
   } else {
-    while (buffer[i] !== 0) {
+    while (uint8Array[i] !== 0) {
       if (i >= end) return end;
       i++;
     }
@@ -40,15 +37,15 @@ export function trimRightNull(x: string): string {
   return pos0 === -1 ? x : x.substr(0, pos0);
 }
 
-export function swapBytes(buffer: Buffer): Buffer {
-  const l = buffer.length;
+export function swapBytes<T extends Uint8Array>(uint8Array: T): T {
+  const l = uint8Array.length;
   if ((l & 1) !== 0) throw new Error('Buffer length must be even');
   for (let i = 0; i < l; i += 2) {
-    const a = buffer[i];
-    buffer[i] = buffer[i + 1];
-    buffer[i + 1] = a;
+    const a = uint8Array[i];
+    uint8Array[i] = uint8Array[i + 1];
+    uint8Array[i + 1] = a;
   }
-  return buffer;
+  return uint8Array;
 }
 
 export function readUTF16String(buffer: Buffer): string {
