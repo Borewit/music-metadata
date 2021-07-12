@@ -56,7 +56,6 @@ export class ParserFactory {
   /**
    * Parse metadata from tokenizer
    * @param tokenizer - Tokenizer
-   * @param contentType - MIME-type
    * @param opts - Options
    * @returns Native metadata
    */
