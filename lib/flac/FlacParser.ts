@@ -193,7 +193,7 @@ class Metadata {
 
     get: (buf: Buffer, off: number): IBlockHeader => {
       return {
-        lastBlock: util.strtokBITSET.get(buf, off, 7),
+        lastBlock: util.getBit(buf, off, 7),
         type: util.getBitAllignedNumber(buf, off, 1, 7),
         length: Token.UINT24_BE.get(buf, off + 1)
       };

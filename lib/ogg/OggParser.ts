@@ -51,9 +51,9 @@ export class OggParser extends BasicParser {
         version: buf.readUInt8(off + 4),
 
         headerType: {
-          continued: util.strtokBITSET.get(buf, off + 5, 0),
-          firstPage: util.strtokBITSET.get(buf, off + 5, 1),
-          lastPage: util.strtokBITSET.get(buf, off + 5, 2)
+          continued: util.getBit(buf, off + 5, 0),
+          firstPage: util.getBit(buf, off + 5, 1),
+          lastPage: util.getBit(buf, off + 5, 2)
         },
         // packet_flag: buf.readUInt8(off + 5),
         absoluteGranulePosition: buf.readIntLE(off + 6, 6), // cannot read 2 of 8 most significant bytes
