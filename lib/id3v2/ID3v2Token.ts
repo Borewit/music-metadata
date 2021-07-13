@@ -138,11 +138,11 @@ export const TextEncodingToken: IGetToken<ITextEncoding> = {
   get: (buf: Buffer, off: number): ITextEncoding => {
     switch (buf.readUInt8(off)) {
       case 0x00:
-        return {encoding: 'iso-8859-1'}; // binary
+        return {encoding: 'latin1'}; // binary
       case 0x01:
-        return {encoding: 'utf16', bom: true};
+        return {encoding: 'utf16le', bom: true};
       case 0x02:
-        return {encoding: 'utf16', bom: false};
+        return {encoding: 'utf16le', bom: false};
       case 0x03:
         return {encoding: 'utf8', bom: false};
       default:

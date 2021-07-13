@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const t = assert;
 
-it("should read utf16bom encoded metadata correctly", () => {
+it("should read utf16bom (big endian) encoded metadata correctly", () => {
 
   const filename = 'bug-utf16bom-encoding.mp3';
   const filePath = path.join(__dirname, 'samples', filename);
