@@ -1,23 +1,29 @@
-import { Windows1292Decoder } from './Windows1292Decoder';
 import { IRatio } from '../type';
 
-export type StringEncoding = 'iso-8859-1' | 'utf16' | 'utf8' | 'utf16le';
+export type StringEncoding =
+  'ascii' // Use  'utf-8' or latin1 instead
+  | 'utf8' // alias: 'utf-8'
+  | 'utf16le' // alias: 'ucs2', 'ucs-2'
+  | 'ucs2' //  'utf16le'
+  | 'base64url'
+  | 'latin1' // Same as ISO-8859-1 (alias: 'binary')
+  | 'hex';
 
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
 }
 
 /**
- *
- * @param uint8Array
- * @param start
- * @param end
- * @param encoding // ToDo: ts.enum
- * @return {number}
+ * Found delimiting zero in uint8Array
+ * @param uint8Array Uint8Array to find the zero delimiter in
+ * @param start Offset in uint8Array
+ * @param end Last position to parse in uint8Array
+ * @param encoding The string encoding used
+ * @return Absolute position on uint8Array where zero found
  */
-export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: string): number {
+export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: StringEncoding): number {
   let i = start;
-  if (encoding === 'utf16') {
+  if (encoding === 'utf16le') {
     while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
       if (i >= end) return end;
       i += 2;
@@ -37,7 +43,7 @@ export function trimRightNull(x: string): string {
   return pos0 === -1 ? x : x.substr(0, pos0);
 }
 
-export function swapBytes<T extends Uint8Array>(uint8Array: T): T {
+function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
   if ((l & 1) !== 0) throw new Error('Buffer length must be even');
   for (let i = 0; i < l; i += 2) {
@@ -48,16 +54,6 @@ export function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   return uint8Array;
 }
 
-export function readUTF16String(buffer: Buffer): string {
-  let offset = 0;
-  if (buffer[0] === 0xFE && buffer[1] === 0xFF) { // big endian
-    buffer = swapBytes(buffer);
-    offset = 2;
-  } else if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
-    offset = 2;
-  }
-  return buffer.toString('ucs2', offset);
-}
 
 /**
  *
@@ -68,19 +64,18 @@ export function readUTF16String(buffer: Buffer): string {
 export function decodeString(buffer: Buffer, encoding: StringEncoding): string {
   // annoying workaround for a double BOM issue
   // https://github.com/leetreveil/musicmetadata/issues/84
-  if (buffer[0] === 0xFF && buffer[1] === 0xFE && buffer[2] === 0xFE && buffer[3] === 0xFF) {
-    buffer = buffer.slice(2);
+  let offset = 0;
+  if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
+    if (encoding === 'utf16le') {
+      offset = 2;
+    } else if (buffer[2] === 0xFE && buffer[3] === 0xFF) {
+      offset = 2; // Clear double BOM
+    }
+  } else if (encoding === 'utf16le' &&  buffer[0] === 0xFE && buffer[1] === 0xFF) {
+    // BOM, indicating big endian decoding
+    return decodeString(swapBytes(buffer), encoding);
   }
-
-  if (encoding === 'utf16le' || encoding === 'utf16') {
-    return readUTF16String(buffer);
-  } else if (encoding === 'utf8') {
-    return buffer.toString('utf8');
-  } else if (encoding === 'iso-8859-1') {
-    return Windows1292Decoder.decode(buffer);
-  }
-
-  throw Error(encoding + ' encoding is not supported!');
+  return buffer.toString(encoding, offset);
 }
 
 export function stripNulls(str: string): string {

@@ -21,7 +21,7 @@ interface IPicture {
   data?: Uint8Array;
 }
 
-const defaultEnc: util.StringEncoding = 'iso-8859-1';
+const defaultEnc: util.StringEncoding = 'latin1'; // latin1 == iso-8859-1;
 
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
@@ -154,7 +154,7 @@ export class FrameParser {
 
           switch (this.major) {
             case 2:
-              pic.format = util.decodeString(b.slice(offset, offset + 3), 'iso-8859-1');
+              pic.format = util.decodeString(b.slice(offset, offset + 3), 'latin1'); // 'latin1'; // latin1 == iso-8859-1;
               offset += 3;
               break;
             case 3:
@@ -279,7 +279,7 @@ export class FrameParser {
           // Decode URL
           fzero = util.findZero(b, offset + 1, length, encoding);
           const description = util.decodeString(b.slice(offset + 1, fzero), encoding);
-          offset = fzero + (encoding === 'utf16' ? 2 : 1);
+          offset = fzero + (encoding === 'utf16le' ? 2 : 1);
           output = {description, url: util.decodeString(b.slice(offset, length), defaultEnc)};
           break;
         }
@@ -362,8 +362,8 @@ export class FrameParser {
     return {id, data: b.slice(offset, length)};
   }
 
-  private static getNullTerminatorLength(enc: string): number {
-    return enc === 'utf16' ? 2 : 1;
+  private static getNullTerminatorLength(enc: util.StringEncoding): number {
+    return enc === 'utf16le' ? 2 : 1;
   }
 
 }

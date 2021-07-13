@@ -11,7 +11,7 @@ export class AsfUtil {
   }
 
   public static parseUnicodeAttr(buf): string {
-    return util.stripNulls(util.decodeString(buf, "utf16le"));
+    return util.stripNulls(util.decodeString(buf, 'utf16le'));
   }
 
   private static attributeParsers: AttributeParser[] = [
