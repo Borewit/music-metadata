@@ -1239,7 +1239,7 @@ file-entry-cache@^6.0.1:
   dependencies:
     flat-cache "^3.0.4"
 
-file-type@*, file-type@^16.5.1:
+file-type@*, file-type@16.5.1:
   version "16.5.1"
   resolved "https://registry.yarnpkg.com/file-type/-/file-type-16.5.1.tgz#dd697dc5c3a2f4db63af746f38a6322e5e7bc6a5"
   integrity sha512-Pi1G43smrCy82Q3be3sfKaeS5uHdfj905dP88YqhroG6TYbVY2ljTdDXeXqa6Cn5nOk6znOjWM2uZptA8vH/qQ==
@@ -3250,6 +3250,14 @@ strip-json-comments@3.1.1, strip-json-comments@^3.1.0, strip-json-comments@^3.1.
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
 
+strtok3@6.1.3:
+  version "6.1.3"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-6.1.3.tgz#488fe8ca91664cf93432c94752ba9e5c785bd9dd"
+  integrity sha512-ssWSKFOeUTurMSucgyUf+a6Z9mVTYrsYiyEK5RLnh8BM6sFrKSljVlnjZXIDxMguYfdQI+mUPFHo88FYTxq1XA==
+  dependencies:
+    "@tokenizer/token" "^0.1.1"
+    peek-readable "^3.1.4"
+
 strtok3@^6.0.3:
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-6.1.2.tgz#4422aff1a50cf61652a03a9888f4a71386aae4b7"
@@ -3257,14 +3265,6 @@ strtok3@^6.0.3:
   dependencies:
     "@tokenizer/token" "^0.1.1"
     "@types/debug" "^4.1.6"
-    peek-readable "^3.1.4"
-
-strtok3@^6.1.3:
-  version "6.1.3"
-  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-6.1.3.tgz#488fe8ca91664cf93432c94752ba9e5c785bd9dd"
-  integrity sha512-ssWSKFOeUTurMSucgyUf+a6Z9mVTYrsYiyEK5RLnh8BM6sFrKSljVlnjZXIDxMguYfdQI+mUPFHo88FYTxq1XA==
-  dependencies:
-    "@tokenizer/token" "^0.1.1"
     peek-readable "^3.1.4"
 
 supports-color@8.1.1:
@@ -3341,18 +3341,18 @@ to-vfile@^6.0.0:
     is-buffer "^2.0.0"
     vfile "^4.0.0"
 
-token-types@^2.0.0:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-2.1.1.tgz#bd585d64902aaf720b8979d257b4b850b4d45c45"
-  integrity sha512-wnQcqlreS6VjthyHO3Y/kpK/emflxDBNhlNUPfh7wE39KnuDdOituXomIbyI79vBtF0Ninpkh72mcuRHo+RG3Q==
+token-types@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-3.0.0.tgz#982fb4e705103bc647fd281b06de213ea06ce65a"
+  integrity sha512-1cV7R6TRKfCG1++se5xGy9fUpD+L1u/7XgmViGA1Y5bubHt6W4w1r1j0uOk+5ngM6yhssRJ+qR+IaviVgAizJA==
   dependencies:
     "@tokenizer/token" "^0.1.1"
     ieee754 "^1.2.1"
 
-token-types@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/token-types/-/token-types-3.0.0.tgz#982fb4e705103bc647fd281b06de213ea06ce65a"
-  integrity sha512-1cV7R6TRKfCG1++se5xGy9fUpD+L1u/7XgmViGA1Y5bubHt6W4w1r1j0uOk+5ngM6yhssRJ+qR+IaviVgAizJA==
+token-types@^2.0.0:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-2.1.1.tgz#bd585d64902aaf720b8979d257b4b850b4d45c45"
+  integrity sha512-wnQcqlreS6VjthyHO3Y/kpK/emflxDBNhlNUPfh7wE39KnuDdOituXomIbyI79vBtF0Ninpkh72mcuRHo+RG3Q==
   dependencies:
     "@tokenizer/token" "^0.1.1"
     ieee754 "^1.2.1"
