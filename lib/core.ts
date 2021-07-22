@@ -1,4 +1,4 @@
-import * as Stream from 'stream';
+import { Readable } from 'stream';
 import * as strtok3 from 'strtok3/lib/core';
 
 import  {ParserFactory } from './ParserFactory';
@@ -17,7 +17,7 @@ export { IFileInfo } from 'strtok3/lib/core';
  * @param fileInfo - File information object or MIME-type string
  * @returns Metadata
  */
-export function parseStream(stream: Stream.Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+export function parseStream(stream: Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
   return parseFromTokenizer(strtok3.fromStream(stream, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo), options);
 }
 
