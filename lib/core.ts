@@ -3,7 +3,7 @@ import * as strtok3 from 'strtok3/lib/core';
 
 import  {ParserFactory } from './ParserFactory';
 import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type';
-import { RandomBufferReader } from './common/RandomBufferReader';
+import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader';
 import { APEv2Parser } from './apev2/APEv2Parser';
 import { hasID3v1Header } from './id3v1/ID3v1Parser';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3';
@@ -23,18 +23,18 @@ export function parseStream(stream: Readable, fileInfo?: strtok3.IFileInfo | str
 
 /**
  * Parse audio from Node Buffer
- * @param buf - Buffer holding audio data
+ * @param uint8Array - Uint8Array holding audio data
  * @param fileInfo - File information object or MIME-type string
  * @param options - Parsing options
  * @returns Metadata
  * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
  */
-export async function parseBuffer(buf: Buffer, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
 
-  const bufferReader = new RandomBufferReader(buf);
+  const bufferReader = new RandomUint8ArrayReader(uint8Array);
   await scanAppendingHeaders(bufferReader, options);
 
-  const tokenizer = strtok3.fromBuffer(buf, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo);
+  const tokenizer = strtok3.fromBuffer(uint8Array, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo);
   return parseFromTokenizer(tokenizer, options);
 }
 
