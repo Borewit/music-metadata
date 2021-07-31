@@ -87,8 +87,8 @@
     "debug": "^4.3.2",
     "file-type": "16.5.2",
     "media-typer": "^1.1.0",
-    "strtok3": "^6.2.2",
-    "token-types": "^4.1.0"
+    "strtok3": "^6.2.3",
+    "token-types": "^4.1.1"
   },
   "devDependencies": {
     "@tokenizer/token": "^0.3.0",
