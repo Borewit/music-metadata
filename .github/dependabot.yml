@@ -9,3 +9,8 @@ updates:
     labels:
       - dependencies
     versioning-strategy: increase
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: [ "version-update:semver-patch" ]
+      - dependency-name: "@types/jasmine"
+        update-types: [ "version-update:semver-patch" ]
