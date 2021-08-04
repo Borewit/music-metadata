@@ -31,7 +31,8 @@ export const Parsers: IParser[] = [
     description: 'parseBuffer',
     initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
       const buffer = fs.readFileSync(filePath);
-      return mm.parseBuffer(buffer, {mimeType}, options);
+      const array = new Uint8Array(buffer);
+      return mm.parseBuffer(array, {mimeType}, options);
     }
   }
 ];
