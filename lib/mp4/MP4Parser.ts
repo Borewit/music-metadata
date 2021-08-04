@@ -6,6 +6,7 @@ import { Atom } from './Atom';
 import * as AtomToken from './AtomToken';
 import { Genres } from '../id3v1/ID3v1Parser';
 import { IChapter, ITrackInfo, TrackType } from '../type';
+import { IGetToken } from '@tokenizer/token';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -130,18 +131,13 @@ function distinct(value: any, index: number, self: any[]) {
  */
 export class MP4Parser extends BasicParser {
 
-  private static read_BE_Signed_Integer(value: Buffer): number {
-    if (value.length === 8) {
-      return Number(value.readBigInt64BE(0));
+  private static read_BE_Integer(array: Uint8Array, signed: boolean): number {
+    const integerType = (signed ? 'INT' : 'UINT') + array.length * 8 + (array.length > 1 ? '_BE' : '');
+    const token: IGetToken<number | BigInt> = Token[integerType];
+    if (!token) {
+      throw new Error('Token for integer type not found: "' + integerType + '"');
     }
-    return value.readIntBE(0, value.length);
-  }
-
-  private static read_BE_Unsigned_Integer(value: Buffer): number {
-    if (value.length === 8) {
-      return Number(value.readBigUInt64BE(0));
-    }
-    return value.readUIntBE(0, value.length);
+    return Number(token.get(array, 0));
   }
 
   private audioLengthInBytes: number;
@@ -365,11 +361,11 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 21: // BE Signed Integer
-        this.addTag(tagKey, MP4Parser.read_BE_Signed_Integer(dataAtom.value));
+        this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, true));
         break;
 
       case 22: // BE Unsigned Integer
-        this.addTag(tagKey, MP4Parser.read_BE_Unsigned_Integer(dataAtom.value));
+        this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, false));
         break;
 
       case 65: // An 8-bit signed integer

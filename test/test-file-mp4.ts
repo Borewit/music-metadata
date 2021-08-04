@@ -348,6 +348,27 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.deepEqual(metadata.common.genre, ['Rock']);
         assert.strictEqual(metadata.common.title, 'Distraction');
       });
+
+    });
+  });
+
+  describe('Parse Trumpsta (Djuro Remix)', () => {
+
+    Parsers.forEach(parser => {
+      it(parser.description, async () => {
+        const filePath = path.join(mp4Samples, '01. Trumpsta (Djuro Remix).m4a');
+
+        const metadata = await parser.initParser(filePath, 'audio/m4a');
+        assert.deepEqual(metadata.format.container, 'M4A/mp42/isom', 'format.container');
+        assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
+
+        assert.deepEqual(metadata.common.album, 'Trumpsta (Remixes)');
+        assert.deepEqual(metadata.common.albumartist, 'Contiez');
+        assert.deepEqual(metadata.common.artist, 'Contiez');
+        assert.deepEqual(metadata.common.artists, ['Contiez']);
+        assert.strictEqual(metadata.common.title, 'Trumpsta (Djuro Remix)');
+      });
+
     });
   });
 
