@@ -106,7 +106,7 @@
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "remark-cli": "^10.0.0",
-    "remark-preset-lint-recommended": "^6.0.0",
+    "remark-preset-lint-recommended": "^6.0.1",
     "source-map-support": "^0.5.16",
     "ts-node": "^10.2.0",
     "tslint": "^6.1.3",
