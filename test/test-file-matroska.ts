@@ -109,6 +109,13 @@ describe('Matroska formats', () => {
       assert.strictEqual(common.encodedby, 'opusenc from opus-tools 0.2', 'common.encodersettings');
       assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
+
+    it('shoud ignore trailing null characters', async () => {
+      const webmPath = path.join(matroskaSamplePath, 'fixture-null.webm');
+      const {format} = await mm.parseFile(webmPath, {duration: false});
+      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
+    });
+
   });
 
   // https://github.com/Borewit/music-metadata/issues/384
