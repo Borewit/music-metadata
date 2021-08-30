@@ -290,7 +290,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       picture.format = picture.format.toLocaleLowerCase();
       switch (picture.format) {
         case 'image/jpg':
-          picture.format = 'image/jpeg';  // ToDo: register warning
+          picture.format = 'image/jpeg'; // ToDo: register warning
       }
       return picture;
     }
