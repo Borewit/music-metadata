@@ -241,7 +241,8 @@ export class MatroskaParser extends BasicParser {
   }
 
   private async readString(e: IHeader): Promise<string> {
-    return this.tokenizer.readToken(new Token.StringType(e.len, 'utf-8'));
+    const rawString = await this.tokenizer.readToken(new Token.StringType(e.len, 'utf-8'));
+    return rawString.replace(/\00.*$/g, '');
   }
 
   private async readBuffer(e: IHeader): Promise<Buffer> {
