@@ -172,7 +172,7 @@ export interface ICommonTagsResult {
   movementTotal?: number;
   compilation?: boolean;
   rating?: IRating[];
-  bpm?: number;
+  bpm?: string;
   /**
    * Keywords to reflect the mood of the audio, e.g. 'Romantic' or 'Sad'
    */
