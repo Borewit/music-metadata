@@ -92,7 +92,7 @@
   },
   "devDependencies": {
     "@tokenizer/token": "^0.3.0",
-    "@types/chai": "^4.2.21",
+    "@types/chai": "^4.3.0",
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^9.0.0",
