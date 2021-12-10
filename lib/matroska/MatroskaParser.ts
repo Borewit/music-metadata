@@ -1,10 +1,12 @@
 import * as Token from 'token-types';
 import * as _debug from 'debug';
-import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { ITokenizer } from 'strtok3/lib/core';
+
+import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { IOptions, ITrackInfo } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { BasicParser } from '../common/BasicParser';
+
 import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from './types';
 import * as matroskaDtd from './MatroskaDtd';
 

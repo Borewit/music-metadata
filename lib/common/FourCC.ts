@@ -1,7 +1,7 @@
 import * as util from './Util';
-import { IToken } from "strtok3/lib/core";
+import { IToken } from 'strtok3/lib/core';
 
-const validFourCC =  /^[\x21-\x7e©][\x20-\x7e\x00()]{3}/;
+const validFourCC = /^[\x21-\x7e©][\x20-\x7e\x00()]{3}/;
 
 /**
  * Token for read FourCC
@@ -24,7 +24,7 @@ export const FourCcToken: IToken<string> = {
   put: (buffer: Buffer, offset: number, id: string) => {
     const str = Buffer.from(id, 'binary');
     if (str.length !== 4)
-      throw new Error("Invalid length");
+      throw new Error('Invalid length');
     return str.copy(buffer, offset);
   }
 };

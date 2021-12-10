@@ -1,5 +1,5 @@
 import { GenericTagId, TagType } from './common/GenericTagTypes';
-import { IFooter } from "./apev2/APEv2Token";
+import { IFooter } from './apev2/APEv2Token';
 
 /**
  * Attached picture, typically used for cover art
@@ -386,7 +386,7 @@ export interface IAudioTrack {
   outputSamplingFrequency?: number;
   channels?: number;
   channelPositions?: Buffer;
-  bitDepth?: number
+  bitDepth?: number;
 }
 
 export interface IVideoTrack {
@@ -407,7 +407,7 @@ export enum TrackType {
   audio = 0x02,
   complex = 0x03,
   logo = 0x04,
-  subtitle= 0x11,
+  subtitle = 0x11,
   button = 0x12,
   control = 0x20
 }
@@ -573,7 +573,21 @@ export interface IAudioMetadata extends INativeAudioMetadata {
 /**
  * Corresponds with parser module name
  */
-export type ParserType = 'mpeg' | 'apev2' | 'mp4' | 'asf' | 'flac' | 'ogg' | 'aiff' | 'wavpack' | 'riff' | 'musepack' | 'dsf' | 'dsdiff' | 'adts' | 'matroska';
+export type ParserType =
+  'mpeg'
+  | 'apev2'
+  | 'mp4'
+  | 'asf'
+  | 'flac'
+  | 'ogg'
+  | 'aiff'
+  | 'wavpack'
+  | 'riff'
+  | 'musepack'
+  | 'dsf'
+  | 'dsdiff'
+  | 'adts'
+  | 'matroska';
 
 export interface IOptions {
 
@@ -620,7 +634,7 @@ export interface IApeHeader extends IOptions {
 
 export interface IPrivateOptions extends IOptions {
 
-  apeHeader?: IApeHeader
+  apeHeader?: IApeHeader;
 }
 
 /**
@@ -652,7 +666,7 @@ export interface IMetadataEvent {
   /**
    * Metadata model including the attached tag
    */
-  metadata: IAudioMetadata
+  metadata: IAudioMetadata;
 }
 
 export type Observer = (update: IMetadataEvent) => void;

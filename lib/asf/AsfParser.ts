@@ -1,11 +1,11 @@
+import * as _debug from 'debug';
+
 import { ITag, TrackType } from '../type';
 import GUID from './GUID';
 import * as AsfObject from './AsfObject';
-import * as _debug from 'debug';
 import { BasicParser } from '../common/BasicParser';
 
 const debug = _debug('music-metadata:parser:ASF');
-
 const headerType = 'asf';
 
 /**

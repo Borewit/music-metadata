@@ -1,8 +1,8 @@
 import * as initDebug from 'debug';
 import * as strtok3 from 'strtok3/lib/core';
+import { StringType } from 'token-types';
 
 import * as util from '../common/Util';
-
 import { IOptions, IRandomReader, IApeHeader } from '../type';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { BasicParser } from '../common/BasicParser';
@@ -16,7 +16,6 @@ import {
   TagFooter,
   TagItemHeader
 } from './APEv2Token';
-import { StringType } from 'token-types';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 

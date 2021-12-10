@@ -1,11 +1,10 @@
-'use strict';
-
 import * as initDebug from 'debug';
 
 import { BasicParser } from '../../common/BasicParser';
-import * as SV7 from './StreamVersion7';
 import { APEv2Parser } from '../../apev2/APEv2Parser';
+
 import { BitReader } from './BitReader';
+import * as SV7 from './StreamVersion7';
 
 const debug = initDebug('music-metadata:parser:musepack');
 

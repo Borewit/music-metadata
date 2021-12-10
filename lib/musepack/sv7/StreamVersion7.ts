@@ -1,7 +1,7 @@
-
 import * as Token from 'token-types';
-import * as util from '../../common/Util';
 import { IGetToken } from 'strtok3/lib/core';
+
+import * as util from '../../common/Util';
 
 /**
  * MusePack stream version 7 format specification

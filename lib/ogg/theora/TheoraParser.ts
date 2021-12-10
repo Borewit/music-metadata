@@ -4,6 +4,7 @@ import * as initDebug from 'debug';
 import { IOptions } from '../../type';
 import { INativeMetadataCollector } from '../../common/MetadataCollector';
 import * as Ogg from '../Ogg';
+
 import { IdentificationHeader } from './Theora';
 
 const debug = initDebug('music-metadata:parser:ogg:theora');

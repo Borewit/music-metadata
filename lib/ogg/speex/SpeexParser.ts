@@ -1,11 +1,12 @@
 import {ITokenizer} from 'strtok3/lib/core';
 import * as initDebug from 'debug';
 
-import * as Speex from './Speex';
 import {IPageHeader} from '../Ogg';
 import {VorbisParser} from '../vorbis/VorbisParser';
 import {IOptions} from '../../type';
 import {INativeMetadataCollector} from '../../common/MetadataCollector';
+
+import * as Speex from './Speex';
 
 const debug = initDebug('music-metadata:parser:ogg:speex');
 

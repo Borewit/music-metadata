@@ -1,10 +1,10 @@
-import {EndOfStreamError, ITokenizer} from 'strtok3/lib/core';
-import {ID3v2Header} from "./ID3v2Token";
-import {ID3v2Parser} from './ID3v2Parser';
-import {ID3v1Parser} from '../id3v1/ID3v1Parser';
-
+import { EndOfStreamError, ITokenizer } from 'strtok3/lib/core';
 import * as _debug from 'debug';
-import {BasicParser} from '../common/BasicParser';
+
+import { ID3v2Header } from './ID3v2Token';
+import { ID3v2Parser } from './ID3v2Parser';
+import { ID3v1Parser } from '../id3v1/ID3v1Parser';
+import { BasicParser } from '../common/BasicParser';
 
 const debug = _debug('music-metadata:parser:ID3');
 
@@ -43,7 +43,7 @@ export abstract class AbstractID3Parser extends BasicParser {
   private async parseID3v2(): Promise<void> {
     await this.tryReadId3v2Headers();
 
-    debug("End of ID3v2 header, go to MPEG-parser: pos=%s", this.tokenizer.position);
+    debug('End of ID3v2 header, go to MPEG-parser: pos=%s', this.tokenizer.position);
     await this._parse();
     if (this.options.skipPostHeaders && this.metadata.hasAny()) {
       this.finalize();
@@ -58,8 +58,8 @@ export abstract class AbstractID3Parser extends BasicParser {
   private async tryReadId3v2Headers(): Promise<void> {
     const id3Header = await this.tokenizer.peekToken(ID3v2Header);
 
-    if (id3Header.fileIdentifier === "ID3") {
-      debug("Found ID3v2 header, pos=%s", this.tokenizer.position);
+    if (id3Header.fileIdentifier === 'ID3') {
+      debug('Found ID3v2 header, pos=%s', this.tokenizer.position);
       await this.id3parser.parse(this.metadata, this.tokenizer, this.options);
       return this.tryReadId3v2Headers();
     }

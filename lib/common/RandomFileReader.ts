@@ -1,5 +1,6 @@
+import * as fs from 'fs';
+
 import { IRandomReader } from '../type';
-import * as fs from "fs";
 
 /**
  * Provides abstract file access via the IRandomRead interface

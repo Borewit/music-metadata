@@ -1,9 +1,10 @@
 import { INativeTagMap } from '../common/GenericTagTypes';
 import { CommonTagMapper } from '../common/GenericTagMapper';
-import * as util from '../common/Util';
-import { IRating, ITag } from '../type';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
+import * as util from '../common/Util';
+
+import { IRating, ITag } from '../type';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings

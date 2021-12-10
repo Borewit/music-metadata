@@ -1,11 +1,11 @@
 import * as initDebug from 'debug';
+import * as Token from 'token-types';
+import { IGetToken } from 'strtok3/lib/core';
 
 import * as util from '../common/Util';
-import * as Token from 'token-types';
 import {BasicParser} from '../common/BasicParser';
 import { APEv2Parser } from '../apev2/APEv2Parser';
 import { IRandomReader } from '../type';
-import { IGetToken } from 'strtok3/lib/core';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
 

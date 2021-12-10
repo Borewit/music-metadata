@@ -1,12 +1,13 @@
 import * as initDebug from 'debug';
 import * as Token from 'token-types';
+import { IGetToken } from '@tokenizer/token';
 
 import { BasicParser } from '../common/BasicParser';
-import { Atom } from './Atom';
-import * as AtomToken from './AtomToken';
 import { Genres } from '../id3v1/ID3v1Parser';
 import { IChapter, ITrackInfo, TrackType } from '../type';
-import { IGetToken } from '@tokenizer/token';
+
+import { Atom } from './Atom';
+import * as AtomToken from './AtomToken';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';

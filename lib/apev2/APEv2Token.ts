@@ -1,6 +1,7 @@
 import * as Token from 'token-types';
-import { FourCcToken } from '../common/FourCC';
 import { IGetToken } from 'strtok3/lib/core';
+
+import { FourCcToken } from '../common/FourCC';
 
 /**
  * APETag versionIndex history / supported formats

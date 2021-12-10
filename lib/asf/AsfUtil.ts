@@ -1,6 +1,7 @@
-import * as util from "../common/Util";
-import {DataType} from "./AsfObject";
-import * as Token from "token-types";
+import * as Token from 'token-types';
+
+import * as util from '../common/Util';
+import { DataType } from './AsfObject';
 
 export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
 

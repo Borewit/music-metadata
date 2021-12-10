@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from 'token-types';
 import { IGetToken, ITokenizer } from 'strtok3/lib/core';
 import * as util from '../common/Util';
 import { ExtendedLameHeader, IExtendedLameHeader } from './ExtendedLameHeader';
@@ -72,10 +72,10 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
   const flags = await tokenizer.readToken(XingHeaderFlags);
   const xingInfoTag: IXingInfoTag = {};
   if (flags.frames) {
-    xingInfoTag.numFrames =  await tokenizer.readToken(Token.UINT32_BE);
+    xingInfoTag.numFrames = await tokenizer.readToken(Token.UINT32_BE);
   }
   if (flags.bytes) {
-    xingInfoTag.streamSize =  await tokenizer.readToken(Token.UINT32_BE);
+    xingInfoTag.streamSize = await tokenizer.readToken(Token.UINT32_BE);
   }
   if (flags.toc) {
     xingInfoTag.toc = Buffer.alloc(100);
