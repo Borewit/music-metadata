@@ -1,6 +1,7 @@
 import * as Token from 'token-types';
-import * as util from '../common/Util';
 import { IGetToken } from 'strtok3/lib/core';
+
+import * as util from '../common/Util';
 
 /**
  * The picture type according to the ID3v2 APIC frame

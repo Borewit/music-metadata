@@ -1,15 +1,13 @@
-'use strict';
+import * as Token from 'token-types';
+import * as _debug from 'debug';
+import { ITokenizer, IGetToken } from 'strtok3/lib/core';
 
 import * as util from '../common/Util';
-import * as Token from 'token-types';
 import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
 import { FourCcToken } from '../common/FourCC';
-
-import * as _debug from 'debug';
 import { VorbisParser } from '../ogg/vorbis/VorbisParser';
 import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { ITokenizer, IGetToken } from 'strtok3/lib/core';
 import { IOptions } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';

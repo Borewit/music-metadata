@@ -1,8 +1,8 @@
 import * as Token from 'token-types';
-import { FourCcToken } from '../common/FourCC';
-
 import * as initDebug from 'debug';
 import { IToken, IGetToken } from 'strtok3/lib/core';
+
+import { FourCcToken } from '../common/FourCC';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
 

@@ -1,5 +1,6 @@
-import { IChunkHeader } from '../iff';
 import { IGetToken } from 'strtok3/lib/core';
+
+import { IChunkHeader } from '../iff';
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx

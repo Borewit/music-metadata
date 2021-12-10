@@ -1,7 +1,8 @@
 import * as Token from 'token-types';
+import { IGetToken } from 'strtok3/lib/core';
+
 import { FourCcToken } from '../common/FourCC';
 import { IChunkHeader64 } from '../iff';
-import { IGetToken } from 'strtok3/lib/core';
 export { IChunkHeader64 } from '../iff';
 
 /**

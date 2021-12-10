@@ -1,10 +1,11 @@
 import * as initDebug from 'debug';
-
 import * as Token from 'token-types';
+
 import { ITokenParser } from '../ParserFactory';
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
+
 import { MpcSv8Parser } from './sv8/MpcSv8Parser';
 import { MpcSv7Parser } from './sv7/MpcSv7Parser';
-import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
 
 const debug = initDebug('music-metadata:parser:musepack');
 

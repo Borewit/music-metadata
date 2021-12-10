@@ -4,6 +4,7 @@ import * as _debug from 'debug';
 import {IOptions} from '../../type';
 import {INativeMetadataCollector} from '../../common/MetadataCollector';
 import * as Ogg from '../Ogg';
+
 import { VorbisDecoder } from './VorbisDecoder';
 import { CommonHeader, IdentificationHeader, IVorbisPicture, VorbisPictureToken } from './Vorbis';
 

@@ -45,11 +45,11 @@ export interface INativeMetadataCollector extends IWarningCollector {
    */
   hasAny(): boolean;
 
-  setFormat(key: FormatId, value: any);
+  setFormat(key: FormatId, value: any): void;
 
-  addTag(tagType: TagType, tagId: string, value: any);
+  addTag(tagType: TagType, tagId: string, value: any): void;
 
-  addStreamInfo(streamInfo: ITrackInfo);
+  addStreamInfo(streamInfo: ITrackInfo): void;
 }
 
 /**
@@ -275,7 +275,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   /**
    * Fix some common issues with picture object
-   * @param pictureType
+   * @param picture Picture
    */
   private async postFixPicture(picture: IPicture): Promise<IPicture> {
     if (picture.data && picture.data.length > 0) {

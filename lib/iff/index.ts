@@ -1,6 +1,7 @@
-import {FourCcToken} from "../common/FourCC";
-import { IGetToken } from "strtok3/lib/core";
 import * as Token from 'token-types';
+import { IGetToken } from 'strtok3/lib/core';
+
+import { FourCcToken } from '../common/FourCC';
 
 /**
  * "EA IFF 85" Standard for Interchange Format Files
@@ -9,7 +10,7 @@ import * as Token from 'token-types';
 export interface IChunkHeader {
 
   /**
-   * 	A chunk ID (ie, 4 ASCII bytes)
+   *  A chunk ID (ie, 4 ASCII bytes)
    */
   chunkID: string,
   /**
@@ -25,7 +26,7 @@ export interface IChunkHeader {
 export interface IChunkHeader64 {
 
   /**
-   * 	A chunk ID (ie, 4 ASCII bytes)
+   *  A chunk ID (ie, 4 ASCII bytes)
    */
   chunkID: string,
   /**

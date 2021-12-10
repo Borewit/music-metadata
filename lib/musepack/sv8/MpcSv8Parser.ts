@@ -1,9 +1,10 @@
 import * as initDebug from 'debug';
 
 import { BasicParser } from '../../common/BasicParser';
-import * as SV8 from './StreamVersion8';
 import { APEv2Parser } from '../../apev2/APEv2Parser';
 import { FourCcToken } from '../../common/FourCC';
+
+import * as SV8 from './StreamVersion8';
 
 const debug = initDebug('music-metadata:parser:musepack');
 

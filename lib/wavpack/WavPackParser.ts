@@ -3,6 +3,7 @@ import * as Token from 'token-types';
 import { APEv2Parser } from '../apev2/APEv2Parser';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
+
 import { IBlockHeader, IMetadataId, WavPack } from './WavPackToken';
 
 import * as initDebug from 'debug';

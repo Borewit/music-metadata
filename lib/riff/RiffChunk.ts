@@ -1,6 +1,7 @@
 import * as Token from 'token-types';
-import {IChunkHeader} from '../iff';
 import { IGetToken } from 'strtok3/lib/core';
+
+import {IChunkHeader} from '../iff';
 export {IChunkHeader} from '../iff';
 
 /**

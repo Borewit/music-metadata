@@ -1,11 +1,12 @@
 import * as Token from 'token-types';
 import {ITokenizer} from 'strtok3/lib/core';
 
-import * as Opus from './Opus';
 import {IPageHeader} from '../Ogg';
 import {VorbisParser} from '../vorbis/VorbisParser';
 import {IOptions} from '../../type';
 import {INativeMetadataCollector} from '../../common/MetadataCollector';
+
+import * as Opus from './Opus';
 
 /**
  * Opus parser

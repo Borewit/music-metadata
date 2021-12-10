@@ -5,7 +5,6 @@ import * as initDebug from 'debug';
 import * as riff from '../riff/RiffChunk';
 import * as WaveChunk from './../wav/WaveChunk';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser';
-
 import * as util from '../common/Util';
 import { FourCcToken } from '../common/FourCC';
 import { BasicParser } from '../common/BasicParser';
