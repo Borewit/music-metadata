@@ -105,7 +105,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepEqual(common.media, 'CD');
   });
 
-  it('should handle be able to handle odd chunk & padding', async () => {
+  it('should be able to handle odd chunk & padding', async () => {
 
     const filePath = path.join(samplePath, 'issue-161.wav');
 
@@ -166,7 +166,7 @@ describe('Parse RIFF/WAVE audio format', () => {
   });
 
   // https://github.com/Borewit/music-metadata/issues/819
-  it('Duration despite wrong chunk size', async () => {
+  it('should get duration despite wrong chunk size', async () => {
     const filePath = path.join(wavSamples, 'issue-819.wav');
 
     const {format} = await mm.parseFile(filePath);
@@ -175,6 +175,55 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.codec, 'PCM');
     // assert.strictEqual(format.numberOfSamples, 2158080, 'format.numberOfSamples');
     assert.approximately(format.duration, 2478 / 16000, 5 / 1000, 'format.duration');
+  });
+
+  it('should handle cue points', async () => {
+    const filePath = path.join(wavSamples, 'cue-points.wav');
+
+    const { cues } = await mm.parseFile(filePath);
+
+    assert.deepEqual(cues, [
+      {
+        dwName: 0,
+        dwPosition: 0,
+        fccChunk: 1635017060,
+        dwChunkStart: 0,
+        dwBlockStart: 0,
+        dwSampleOffset: 0,
+        position: 0,
+        label: '00:00:00.00000'
+      },
+      {
+        dwName: 1,
+        dwPosition: 174607,
+        fccChunk: 1635017060,
+        dwChunkStart: 0,
+        dwBlockStart: 0,
+        dwSampleOffset: 174607,
+        position: 3959.342403628118,
+        label: 'test_point_1'
+      },
+      {
+        dwName: 2,
+        dwPosition: 367069,
+        fccChunk: 1635017060,
+        dwChunkStart: 0,
+        dwBlockStart: 0,
+        dwSampleOffset: 367069,
+        position: 8323.560090702947,
+        label: 'test_point_2'
+      },
+      {
+        dwName: 3,
+        dwPosition: 441000,
+        fccChunk: 1635017060,
+        dwChunkStart: 0,
+        dwBlockStart: 0,
+        dwSampleOffset: 441000,
+        position: 10000,
+        label: 'test_end'
+      }
+    ]);
   });
 
 });

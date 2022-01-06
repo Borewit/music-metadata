@@ -98,3 +98,56 @@ export class FactChunk implements IGetToken<IFactChunk> {
   }
 
 }
+
+export interface IPoint {
+  dwName: number,
+  dwPosition: number,
+  fccChunk: number,
+  dwChunkStart: number,
+  dwBlockStart: number,
+  dwSampleOffset: number,
+  /**
+   * Cue point name
+   */
+  label?: string,
+  /**
+   * Start position in milliseconds
+   */
+  position?: number
+}
+
+export interface IWaveCue {
+  dwCuePoints: number,
+  points: IPoint[]
+}
+
+export class Cue implements IGetToken<IWaveCue> {
+  public len: number;
+
+  public constructor(header: IChunkHeader) {
+    if (header.chunkSize < 4) {
+      throw new Error('Invalid fact chunk size.');
+    }
+    this.len = header.chunkSize;
+  }
+
+  public get(buf: Buffer, off: number): IWaveCue {
+    const cue = {
+      dwCuePoints: buf.readUInt32LE(off),
+      points: []
+    };
+    let cueOff = off + 4;
+    for (let i = 0; i < cue.dwCuePoints; i++) {
+      cue.points.push({
+        dwName: buf.readUInt32LE(cueOff),
+        dwPosition: buf.readUInt32LE(cueOff + 4),
+        fccChunk: buf.readUInt32LE(cueOff + 8),
+        dwChunkStart: buf.readUInt32LE(cueOff + 12),
+        dwBlockStart: buf.readUInt32LE(cueOff + 16),
+        dwSampleOffset: buf.readUInt32LE(cueOff + 20)
+      });
+      cueOff += 24;
+    }
+    return cue;
+  }
+}

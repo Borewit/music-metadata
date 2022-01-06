@@ -1,5 +1,6 @@
 import { GenericTagId, TagType } from './common/GenericTagTypes';
 import { IFooter } from './apev2/APEv2Token';
+import { IPoint } from "./wav/WaveChunk";
 
 /**
  * Attached picture, typically used for cover art
@@ -567,7 +568,7 @@ export interface IAudioMetadata extends INativeAudioMetadata {
    * Metadata, form independent interface
    */
   common: ICommonTagsResult;
-
+  cues?: IPoint[];
 }
 
 /**

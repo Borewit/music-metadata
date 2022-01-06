@@ -122,10 +122,24 @@ export class WaveParser extends BasicParser {
           await this.tokenizer.ignore(header.chunkSize);
           break;
 
+        case 'cue ': // cue points
+          const cue = await this.tokenizer.readToken(new WaveChunk.Cue(header));
+          cue.points.forEach(cuePoint => this.metadata.addCuePoint(cuePoint));
+          break;
+
         default:
           debug(`Ignore chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`);
           this.metadata.addWarning('Ignore chunk: RIFF/' + header.chunkID);
           await this.tokenizer.ignore(header.chunkSize);
+      }
+
+      if (this.metadata.cues) {
+        debug(`Cues count: ${this.metadata.cues.length}`);
+        if (this.metadata.format) {
+          for (const p of this.metadata.cues) {
+            p.position = (p.dwSampleOffset / this.metadata.format.sampleRate * 1000);
+          }
+        }
       }
 
       if (this.header.chunkSize % 2 === 1) {
@@ -143,6 +157,8 @@ export class WaveParser extends BasicParser {
         return this.parseRiffInfoTags(listHeader.chunkSize - 4);
 
       case 'adtl':
+        return this.parseRiffAdtlTags(listHeader.chunkSize - 4);
+
       default:
         this.metadata.addWarning('Ignore chunk: RIFF/WAVE/LIST/' + listType);
         debug('Ignoring chunkID=RIFF/WAVE/LIST/' + listType);
@@ -161,6 +177,25 @@ export class WaveParser extends BasicParser {
 
     if (chunkSize !== 0) {
       throw Error('Illegal remaining size: ' + chunkSize);
+    }
+  }
+
+  private async parseRiffAdtlTags(chunkSize): Promise<void> {
+    while (chunkSize >= 8) {
+      const header = await this.tokenizer.readToken(riff.Header);
+      const valueToken = new riff.ListInfoTagValue(header);
+      const value = await this.tokenizer.readToken(valueToken);
+      if (header.chunkID === 'labl') {
+        for (let c = 0; c < this.metadata.cues.length; c++) {
+          const n = this.metadata.cues[c].dwName;
+          const regex = new RegExp('^\\x0' + n);
+          if (regex.test(value)) {
+            this.metadata.cues[c].label = util.stripNulls(value.replace(regex, ''));
+            break;
+          }
+        }
+      }
+      chunkSize -= (8 + valueToken.len);
     }
   }
 
