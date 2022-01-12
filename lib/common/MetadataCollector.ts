@@ -199,6 +199,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
         return;
 
+      case 'bpm':
       case 'year':
       case 'originalyear':
         tag.value = parseInt(tag.value, 10);

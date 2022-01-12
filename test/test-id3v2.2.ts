@@ -101,6 +101,23 @@ describe('ID3v2Parser', () => {
     assert.strictEqual(pics[0].type, 'Cover (front)', 'picture type');
   });
 
+  describe('Tag mapping', () => {
+
+    it("TBP (beats per minute)", async () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'Betty Lou.mp3');
+
+      const {format, common, native} = await mm.parseFile(filePath, {duration: true});
+      assert.strictEqual(format.container, 'MPEG', 'format.container');
+      assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+
+      assert.strictEqual(common.title, 'Betty Lou', 'common.title');
+      assert.strictEqual(common.artist, 'The Hub Caps', 'common.artist,');
+
+      assert.strictEqual(common.bpm, 177, 'common.bpm,');
+    });
+  });
+
 });
 
 describe('Post parse genre', () => {

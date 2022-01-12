@@ -45,7 +45,10 @@ export const id3v22TagMap: INativeTagMap = {
   TSC: 'composersort',
   TSP: 'artistsort',
   TST: 'titlesort',
-  WFD: 'podcasturl'
+  WFD: 'podcasturl',
+
+  TBP: 'bpm'
+
 };
 
 export class ID3v22TagMapper extends CaseInsensitiveTagMap {
