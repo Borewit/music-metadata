@@ -68,3 +68,14 @@ export const orderTags = Core.orderTags;
  * @returns Number of stars: 1, 2, 3, 4 or 5 stars
  */
 export const ratingToStars = Core.ratingToStars;
+
+/**
+ * Define default module exports
+ */
+export default {
+  parseStream,
+  parseFile,
+  parseFromTokenizer: Core.parseFromTokenizer,
+  parseBuffer: Core.parseBuffer,
+  selectCover: Core.selectCover
+};
