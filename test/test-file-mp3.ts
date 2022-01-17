@@ -179,7 +179,7 @@ describe('Parse MP3 files', () => {
   });
 
   // https://github.com/Borewit/music-metadata/issues/430
-  it('Handle preceeding ADTS frame with (invalid) frame length of 0 bytes', async () => {
+  it('Handle preceding ADTS frame with (invalid) frame length of 0 bytes', async () => {
 
     const filePath = path.join(mp3SamplePath, 'adts-0-frame.mp3');
 
