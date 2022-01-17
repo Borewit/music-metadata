@@ -148,7 +148,7 @@ describe('Parse MP3 files', () => {
   // https://github.com/Borewit/music-metadata/issues/398
   it('Handle empty picture tag', async () => {
 
-    const filePath = path.join(samplePath, 'mp3', 'empty-picture-tag.mp3');
+    const filePath = path.join(mp3SamplePath, 'empty-picture-tag.mp3');
 
     const {format, common, quality} = await mm.parseFile(filePath);
     assert.strictEqual(format.container, 'MPEG', 'format.container');
@@ -162,10 +162,26 @@ describe('Parse MP3 files', () => {
     assert.includeDeepMembers(quality.warnings, [{message: 'Empty picture tag found'}], 'quality.warnings includes Empty picture tag found');
   });
 
+  // https://github.com/Borewit/music-metadata/issues/979
+  it('Handle odd number of octets for 16 bit unicide string', async () => {
+    const filePath = path.join(mp3SamplePath, 'issue-979.mp3'); // TLEN as invalid encode 16 bit unicode string
+
+    const {format, common, quality} = await mm.parseFile(filePath, {duration: true});
+    assert.strictEqual(format.container, 'MPEG', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+
+    assert.strictEqual(common.title, 'Minnie & Me', 'common.title');
+    assert.strictEqual(common.artist, 'Alexander Hacke', 'common.artist');
+    assert.strictEqual(common.album, 'Sanctuary', 'common.album');
+    assert.strictEqual(common.year, 2005, 'common.year');
+
+    assert.includeDeepMembers(quality.warnings, [{message: 'id3v2.3 type=TLEN header has invalid string value: Expected even number of octets for 16-bit unicode string'}], 'Warning on invalid TLEN field');
+  });
+
   // https://github.com/Borewit/music-metadata/issues/430
   it('Handle preceeding ADTS frame with (invalid) frame length of 0 bytes', async () => {
 
-    const filePath = path.join(samplePath, 'mp3', 'adts-0-frame.mp3');
+    const filePath = path.join(mp3SamplePath, 'adts-0-frame.mp3');
 
     const {format, common} = await mm.parseFile(filePath, {duration: true});
 
@@ -184,7 +200,7 @@ describe('Parse MP3 files', () => {
 
   it('Able to handle corrupt LAME header', async () => {
 
-    const filePath = path.join(samplePath, 'mp3', 'issue-554.mp3');
+    const filePath = path.join(mp3SamplePath, 'issue-554.mp3');
 
     const {format, quality} = await mm.parseFile(filePath, {duration: true});
 
@@ -221,7 +237,7 @@ describe('Parse MP3 files', () => {
 
     describe('MP3/CBR without Xing header', () => {
 
-      const filePath = path.join(samplePath, 'mp3', 'Sleep Away.mp3');
+      const filePath = path.join(mp3SamplePath, 'Sleep Away.mp3');
 
       describe('duration=false', () => {
 
@@ -264,7 +280,7 @@ describe('Parse MP3 files', () => {
 
     it('should be able to parse APEv1 header"', async () => {
 
-      const filePath = path.join(samplePath, 'mp3', 'issue-362.apev1.mp3');
+      const filePath = path.join(mp3SamplePath, 'issue-362.apev1.mp3');
 
       const {format, common} = await mm.parseFile(filePath, {duration: true});
 
@@ -284,7 +300,7 @@ describe('Parse MP3 files', () => {
 
     it('should be able to parse APEv2 header followed by a Lyrics3v2 header', async () => {
 
-      const filePath = path.join(samplePath, 'mp3', 'APEv2+Lyrics3v2.mp3');
+      const filePath = path.join(mp3SamplePath, 'APEv2+Lyrics3v2.mp3');
 
       const metadata = await mm.parseFile(filePath);
       assert.strictEqual(metadata.format.container, 'MPEG');
