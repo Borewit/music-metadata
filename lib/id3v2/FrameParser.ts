@@ -100,7 +100,12 @@ export class FrameParser {
       case 'MVNM':
       case 'PCS':
       case 'PCST':
-        const text = util.decodeString(b.slice(1), encoding).replace(/\x00+$/, '');
+        let text;
+        try {
+          text = util.decodeString(b.subarray(1), encoding).replace(/\x00+$/, '');
+        } catch (error) {
+          this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
+        }
         switch (type) {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list

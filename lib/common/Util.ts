@@ -9,6 +9,11 @@ export type StringEncoding =
   | 'latin1' // Same as ISO-8859-1 (alias: 'binary')
   | 'hex';
 
+export interface ITextEncoding {
+  encoding: StringEncoding;
+  bom?: boolean;
+}
+
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
 }
@@ -56,26 +61,20 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
 
 
 /**
- *
- * @param buffer Decoder input data
- * @param encoding 'utf16le' | 'utf16' | 'utf8' | 'iso-8859-1'
- * @return {string}
+ * Decode string
  */
 export function decodeString(buffer: Buffer, encoding: StringEncoding): string {
   // annoying workaround for a double BOM issue
   // https://github.com/leetreveil/musicmetadata/issues/84
-  let offset = 0;
   if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
-    if (encoding === 'utf16le') {
-      offset = 2;
-    } else if (buffer[2] === 0xFE && buffer[3] === 0xFF) {
-      offset = 2; // Clear double BOM
-    }
+    return decodeString(buffer.subarray(2), encoding);
   } else if (encoding === 'utf16le' &&  buffer[0] === 0xFE && buffer[1] === 0xFF) {
     // BOM, indicating big endian decoding
+    if ((buffer.length & 1) !== 0)
+      throw new Error('Expected even number of octets for 16-bit unicode string');
     return decodeString(swapBytes(buffer), encoding);
   }
-  return buffer.toString(encoding, offset);
+  return buffer.toString(encoding);
 }
 
 export function stripNulls(str: string): string {
