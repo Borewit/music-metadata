@@ -5,6 +5,7 @@ import GUID from '../lib/asf/GUID';
 import { AsfUtil } from '../lib/asf/AsfUtil';
 import { DataType } from '../lib/asf/AsfObject';
 import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 describe('Parse ASF', () => {
 
@@ -74,7 +75,7 @@ describe('Parse ASF', () => {
 
   describe('parse', () => {
 
-    const asfFilePath = path.join(__dirname, 'samples', 'asf');
+    const asfFilePath = path.join(samplePath, 'asf');
 
     function checkFormat(format) {
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');

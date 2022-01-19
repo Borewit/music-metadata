@@ -2,6 +2,7 @@ import { assert } from 'chai';
 
 import { parseStream } from '../lib';
 import { IHttpClient, HttpClient } from './http-client';
+
 import { IFileInfo } from 'strtok3';
 
 interface IHttpClientTest {

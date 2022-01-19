@@ -1,12 +1,13 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
+
+import * as mm from '../lib';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser';
 import { parseGenre } from '../lib/id3v2/FrameParser';
+import { samplePath } from './util';
 
 describe('ID3v2Parser', () => {
 
-  const samplePath = path.join(__dirname, 'samples');
   const mp3Path = path.join(samplePath, 'mp3');
 
   it('should be able to remove unsynchronisation bytes from buffer', () => {

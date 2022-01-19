@@ -1,13 +1,14 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util';
+
 import { IFormat, INativeTagDict } from '../lib/type';
 
-const samplePath = path.join(__dirname, 'samples');
+const wavSamples = path.join(samplePath, 'wav');
 
 describe('Parse RIFF/WAVE audio format', () => {
-
-  const wavSamples = path.join(samplePath, 'wav');
 
   function checkExifTags(exif: INativeTagDict) {
 

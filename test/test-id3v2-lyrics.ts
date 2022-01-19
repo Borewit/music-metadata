@@ -1,15 +1,16 @@
 
 import {assert} from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util.js';
 
 const t = assert;
 
 it("should be able to read id3v2 files with lyrics", () => {
 
   const filename = 'id3v2-lyrics.mp3';
-  const filePath = path.join(__dirname, 'samples', filename);
+  const filePath = path.join(samplePath, filename);
 
   return mm.parseFile(filePath).then(metadata => {
 

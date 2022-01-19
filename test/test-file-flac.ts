@@ -3,12 +3,11 @@ import * as mm from '../lib';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 const t = assert;
 
 describe('Parse FLAC', () => {
-
-  const samplePath = path.join(__dirname, 'samples');
 
   const flacFilePath = path.join(samplePath, 'flac');
 

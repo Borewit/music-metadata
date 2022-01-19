@@ -1,13 +1,14 @@
 import { assert, expect } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
-import { IdHeader } from '../lib/ogg/opus/Opus';
+
 import { Parsers } from './metadata-parsers';
+import * as mm from '../lib';
+import { samplePath } from './util';
+import { IdHeader } from '../lib/ogg/opus/Opus';
+
+const oggSamplePath = path.join(samplePath, 'ogg');
 
 describe('Parse Ogg', function() {
-
-  const samplePath = path.join(__dirname, 'samples');
-  const oggSamplePath = path.join(samplePath, 'ogg');
 
   this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 

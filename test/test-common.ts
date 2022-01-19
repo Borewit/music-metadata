@@ -1,10 +1,13 @@
 import { assert } from 'chai';
-import { commonTags, isSingleton } from '../lib/common/GenericTagTypes';
 import * as path from 'path';
+
+import { commonTags, isSingleton } from '../lib/common/GenericTagTypes';
 import * as mm from '../lib';
 import { CombinedTagMapper } from '../lib/common/CombinedTagMapper';
 import { joinArtists } from '../lib/common/MetadataCollector';
 import { parseHttpContentType } from '../lib/ParserFactory';
+
+import { samplePath } from './util.js';
 
 describe('GenericTagMap', () => {
 
@@ -68,8 +71,6 @@ describe('Convert rating', () => {
 });
 
 describe('function selectCover()', () => {
-
-  const samplePath = path.join(__dirname, 'samples');
 
   const multiCoverFiles = [
     'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3',

@@ -1,11 +1,14 @@
 import { assert } from 'chai';
 import * as path from 'path';
+
 import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 const t = assert;
-describe('Parse WavPack (audio/x-wavpack)', () => {
 
-  const wavpackSamplePath = path.join(__dirname, 'samples', 'wavpack');
+const wavpackSamplePath = path.join(samplePath, 'wavpack');
+
+describe('Parse WavPack (audio/x-wavpack)', () => {
 
   describe('codec: WavPack', () => {
 

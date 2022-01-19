@@ -2,10 +2,9 @@ import {assert} from 'chai';
 import * as mm from '../lib';
 
 import * as path from 'path';
+import { samplePath } from './util';
 
 const t = assert;
-
-const samplePath = path.join(__dirname, 'samples');
 
 describe("Decode MP3/ID3v2.4", () => {
 

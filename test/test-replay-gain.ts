@@ -1,6 +1,6 @@
 import { assert } from 'chai';
-
 import * as path from 'path';
+
 import * as mm from '../lib';
 import { TagType } from '../lib/common/GenericTagTypes';
 

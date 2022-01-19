@@ -1,15 +1,14 @@
 import { assert } from 'chai';
 import * as mime from 'mime';
-import * as mm from '../lib';
-import { SourceStream } from './util';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { SourceStream, samplePath } from './util';
 
 const t = assert;
 
 describe('MIME & extension mapping', () => {
-
-  const samplePath = path.join(__dirname, 'samples');
 
   const buf = Buffer.alloc(30).fill(0);
 

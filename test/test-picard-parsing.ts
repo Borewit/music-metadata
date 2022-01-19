@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { TagType } from '../lib/common/GenericTagTypes';
 import { ICommonTagsResult, IFormat, INativeTagDict, parseFile, orderTags } from '../lib';
+import { samplePath } from './util';
 
 const t = assert;
 
@@ -12,8 +13,6 @@ const t = assert;
  * Ref: https://picard.musicbrainz.org/docs/mappings/
  */
 describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
-
-  const samplePath = path.join(__dirname, 'samples');
 
   // Following function manage common mapping exceptions, for good or bad reasons
 

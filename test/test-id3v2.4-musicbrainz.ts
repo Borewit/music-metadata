@@ -1,11 +1,13 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util.js';
 
 it('should MusicBrainz tags with id3v2.4', async () => {
 
   const filename = 'id3v2.4-musicbrainz.mp3';
-  const filePath = path.join(__dirname, 'samples', filename);
+  const filePath = path.join(samplePath, filename);
 
   const metadata = await mm.parseFile(filePath, {duration: true});
   const { common, format } = metadata;
