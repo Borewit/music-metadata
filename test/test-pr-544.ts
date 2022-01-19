@@ -1,11 +1,10 @@
 import {assert} from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
 
-const t = assert;
+import * as mm from '../lib';
+import { samplePath } from './util';
 
-const samplePath = path.join(__dirname, 'samples');
+const t = assert;
 
 // https://github.com/Borewit/music-metadata/pull/544
 

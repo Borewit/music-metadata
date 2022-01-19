@@ -1,13 +1,14 @@
 import {assert} from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util.js';
 
 const t = assert;
 
 it('invalid "Date" frame should not cause crash', () => {
   const filename = 'bug-id3v2-unknownframe.mp3';
-  const filePath = path.join(__dirname, 'samples', filename);
+  const filePath = path.join(samplePath, filename);
 
   function checkCommon(common) {
     t.strictEqual(common.title, 'One', 'common.title');

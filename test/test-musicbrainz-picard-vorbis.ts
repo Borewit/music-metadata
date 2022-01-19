@@ -1,12 +1,13 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util';
 
 it('MusicBrains/Picard tags in FLAC', async () => {
 
   const filename = 'MusicBrainz-Picard-tags.flac';
-  const filePath = path.join(__dirname, 'samples', filename);
+  const filePath = path.join(samplePath, filename);
 
   function checkFormat(format) {
     assert.deepEqual(format.duration, 271.7733333333333, 'format.duration');

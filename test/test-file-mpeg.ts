@@ -1,11 +1,11 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
-
 import * as fs from 'fs';
 import * as path from 'path';
-import { SourceStream } from './util';
+
+import { samplePath, SourceStream } from './util';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
 import { Parsers } from './metadata-parsers';
+import * as mm from '../lib';
 
 const t = assert;
 
@@ -32,7 +32,7 @@ describe('Parse MPEG', () => {
      *
      * Using CBR calculation: 23392.29375; same as Mutagen
      */
-    const filePath = path.join(__dirname, 'samples', '1971 - 003 - Sweet - Co-Co - CannaPower.mp2');
+    const filePath = path.join(samplePath, '1971 - 003 - Sweet - Co-Co - CannaPower.mp2');
 
     const metadata = await mm.parseFile(filePath, {duration: true});
 
@@ -63,7 +63,7 @@ describe('Parse MPEG', () => {
 
       this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
-      const tmpFilePath = path.join(__dirname, 'samples', 'zeroes.mp3');
+      const tmpFilePath = path.join(samplePath, 'zeroes.mp3');
 
       fs.writeFileSync(tmpFilePath, buf);
       try {
@@ -87,7 +87,7 @@ describe('Parse MPEG', () => {
        */
       this.timeout(15000); // It takes a long time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
-      const filePath = path.join(__dirname, 'samples', '04 - You Don\'t Know.mp3');
+      const filePath = path.join(samplePath, '04 - You Don\'t Know.mp3');
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
@@ -150,7 +150,7 @@ describe('Parse MPEG', () => {
     it('should decode 07 - I\'m Cool.mp3', async function() {
       // 'LAME3.91' found on position 81BCF=531407
 
-      const filePath = path.join(__dirname, 'samples', '07 - I\'m Cool.mp3');
+      const filePath = path.join(samplePath, '07 - I\'m Cool.mp3');
 
       this.timeout(15000); // It takes a long time to parse
 
@@ -222,7 +222,7 @@ describe('Parse MPEG', () => {
        File is VBR. Average bitrate is 309 kbps.
        Exact length: 00:00
        ------------------------------------------------------------------------*/
-      const filePath = path.join(__dirname, 'samples', 'outofbounds.mp3');
+      const filePath = path.join(samplePath, 'outofbounds.mp3');
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
@@ -238,7 +238,7 @@ describe('Parse MPEG', () => {
 
   });
 
-  const issueDir = path.join(__dirname, 'samples');
+  const issueDir = path.join(samplePath);
 
   /**
    * Related to issue #39

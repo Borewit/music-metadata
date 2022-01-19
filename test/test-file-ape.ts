@@ -1,9 +1,9 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
-import { Parsers } from './metadata-parsers';
 
-const samplePath = path.join(__dirname, 'samples');
+import * as mm from '../lib';
+import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 describe('Parse APE (Monkey\'s Audio)', () => {
 

@@ -1,10 +1,10 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
 
-describe('Asynchronous observer updates', () => {
+import * as mm from '../lib';
+import { samplePath } from './util';
 
-  const samplePath = path.join(__dirname, 'samples');
+describe('Asynchronous observer updates', () => {
 
   const flacFilePath = path.join(samplePath, 'flac.flac');
 

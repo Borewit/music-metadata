@@ -1,14 +1,15 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util.js';
 
 const t = assert;
 
 it('ID3v2.4', async () => {
 
   const filename = '29 - Dominator.mp3';
-  const filePath = path.join(__dirname, 'samples', filename);
+  const filePath = path.join(samplePath, filename);
 
   const metadata = await mm.parseFile(filePath);
   const nativeTags = mm.orderTags(metadata.native['ID3v2.3']);

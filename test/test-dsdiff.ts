@@ -1,10 +1,12 @@
 import {assert} from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util';
 
 describe('Parse Philips DSDIFF', () => {
 
-  const dsdiffamplePath = path.join(__dirname, 'samples', 'dsdiff');
+  const dsdiffamplePath = path.join(samplePath, 'dsdiff');
 
   it('parse: DSD64.dff', async () => {
 

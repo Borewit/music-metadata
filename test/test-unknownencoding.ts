@@ -1,14 +1,16 @@
 import {assert} from 'chai';
+import * as path from 'path';
+
 import * as mm from '../lib';
+import { samplePath } from './util';
 
 const t = assert;
 
-import * as path from 'path';
 
 it("should be able to read metadata with unknown encoding", () => {
 
   const filename = 'bug-unkown encoding.mp3';
-  const filePath = path.join(__dirname, 'samples', filename);
+  const filePath = path.join(samplePath, filename);
 
   return mm.parseFile(filePath).then(result => {
     t.strictEqual(result.common.title, '808', 'title');

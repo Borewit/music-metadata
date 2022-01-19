@@ -1,8 +1,10 @@
 import { assert } from 'chai';
 import * as path from 'path';
+
 import * as mm from '../lib';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
 import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper';
+import { samplePath } from './util';
 
 describe('Discogs mappings', () => {
 
@@ -101,7 +103,7 @@ describe('Discogs mappings', () => {
     it('ID3v2.3/ID3v2.4', async () => {
 
       const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [id3v2.3].mp3';
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, filename);
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
@@ -139,7 +141,7 @@ describe('Discogs mappings', () => {
     it('Vorbis/FLAC', async () => {
 
       const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [APEv2].flac';
-      const filePath = path.join(__dirname, 'samples', filename);
+      const filePath = path.join(samplePath, filename);
 
       function checkNative(id3v23) {
         // Compare expectedCommonTags with result.common
@@ -226,7 +228,7 @@ describe('Discogs mappings', () => {
 
       const filename = 'Discogs - Yasmin Levy - Mi Korasón.flac';
 
-      const metadata = await mm.parseFile(path.join(__dirname, 'samples', filename));
+      const metadata = await mm.parseFile(path.join(samplePath, filename));
 
       assert.ok(metadata.common, 'should include common tags');
       assert.deepEqual(metadata.format.tagTypes, ['vorbis']);

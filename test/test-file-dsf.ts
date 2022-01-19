@@ -1,10 +1,12 @@
 import {assert} from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
+
+import * as mm from '../lib';
+import { samplePath } from './util';
 
 describe('Parse Sony DSF (DSD Stream File)', () => {
 
-  const dsfSamplePath = path.join(__dirname, 'samples', 'dsf');
+  const dsfSamplePath = path.join(samplePath, 'dsf');
 
   it('parse: 2L-110_stereo-5644k-1b_04.dsf', async () => {
 

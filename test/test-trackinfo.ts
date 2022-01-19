@@ -1,9 +1,11 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
-import { TrackType } from '../lib/type';
 
-const path_samples = path.join(__dirname, 'samples');
+import { TrackType } from '../lib/type';
+import * as mm from '../lib';
+import { samplePath } from './util';
+
+const path_samples = path.join(samplePath);
 
 describe('format.trackInfo', () => {
 

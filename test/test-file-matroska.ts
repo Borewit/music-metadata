@@ -1,10 +1,11 @@
 import * as path from 'path';
 import * as mm from '../lib';
 import { assert } from 'chai';
+import { samplePath } from './util';
 
 describe('Matroska formats', () => {
 
-  const matroskaSamplePath = path.join(__dirname, 'samples', 'matroska');
+  const matroskaSamplePath = path.join(samplePath, 'matroska');
 
   function verifyTrackSolidGround(common: mm.ICommonTagsResult) {
     // Common mapped EBML tags

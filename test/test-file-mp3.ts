@@ -1,11 +1,12 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
+
+import * as mm from '../lib';
 import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 describe('Parse MP3 files', () => {
 
-  const samplePath = path.join(__dirname, 'samples');
   const mp3SamplePath = path.join(samplePath, 'mp3');
 
   describe('Test patterns for ISO/MPEG ', () => {

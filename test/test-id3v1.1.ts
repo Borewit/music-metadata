@@ -1,12 +1,13 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
+
+import * as mm from '../lib';
 import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 describe('Parsing MPEG / ID3v1', () => {
 
-  const fileBloodSugar = path.join(__dirname, 'samples', 'id3v1_Blood_Sugar.mp3');
+  const fileBloodSugar = path.join(samplePath, 'id3v1_Blood_Sugar.mp3');
 
   describe('should be able to read an ID3v1 tag', () => {
 
@@ -48,7 +49,7 @@ describe('Parsing MPEG / ID3v1', () => {
 
   describe('it should skip id3v1 header if options.skipPostHeaders is set', () => {
 
-    const filePath = path.join(__dirname, 'samples', '07 - I\'m Cool.mp3');
+    const filePath = path.join(samplePath, '07 - I\'m Cool.mp3');
     Parsers.forEach(parser => {
       it(parser.description, async function() {
         this.timeout(15000); // Can take a bit longer
@@ -60,7 +61,7 @@ describe('Parsing MPEG / ID3v1', () => {
 
   describe('should handle MP3 without any tags', () => {
 
-    const filePath = path.join(__dirname, 'samples', 'silence-2s-16000 [no-tags].CBR-128.mp3');
+    const filePath = path.join(samplePath, 'silence-2s-16000 [no-tags].CBR-128.mp3');
 
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, [], 'format.tagTypes');
@@ -86,7 +87,7 @@ describe('Parsing MPEG / ID3v1', () => {
     /**
      * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
      */
-    const filePath = path.join(__dirname, 'samples', 'Luomo - Tessio (Spektre Remix) ID3v10.mp3');
+    const filePath = path.join(samplePath, 'Luomo - Tessio (Spektre Remix) ID3v10.mp3');
 
     function checkFormat(format: mm.IFormat) {
       assert.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
@@ -127,7 +128,7 @@ describe('Parsing MPEG / ID3v1', () => {
    */
   it('should respect null terminated tag values correctly', () => {
 
-    const filePath = path.join(__dirname, 'samples', 'issue_69.mp3');
+    const filePath = path.join(samplePath, 'issue_69.mp3');
 
     Parsers.forEach(parser => {
       it(parser.description, async () => {

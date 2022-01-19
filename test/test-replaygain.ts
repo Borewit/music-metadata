@@ -1,13 +1,13 @@
 import {assert} from 'chai';
-import * as mm from '../lib';
-
 import * as path from 'path';
 
-import {ratioToDb, dbToRatio, toRatio} from '../lib/common/Util';
+import * as mm from '../lib';
+import { samplePath } from './util';
+import { ratioToDb, dbToRatio, toRatio } from '../lib/common/Util';
 
-describe("Decode replaygain tags", () => {
+describe('Decode replaygain tags', () => {
 
-  const filePath = path.join(__dirname, 'samples', '04 Long Drive.flac');
+  const filePath = path.join(samplePath, '04 Long Drive.flac');
 
   it('Convert ratio to dB', () => {
 

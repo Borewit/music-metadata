@@ -1,22 +1,22 @@
-import {assert} from 'chai';
-import {AsfTagMapper} from "../lib/asf/AsfTagMapper";
-import {APEv2TagMapper} from "../lib/apev2/APEv2TagMapper";
-import {ID3v24TagMapper} from "../lib/id3v2/ID3v24TagMapper";
+import { assert } from 'chai';
+import { AsfTagMapper } from '../lib/asf/AsfTagMapper';
+import { APEv2TagMapper } from '../lib/apev2/APEv2TagMapper';
+import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
 
-describe("Picard mapping coverage", () => {
+describe('Picard mapping coverage', () => {
 
   function convertName(picardName: string) {
     switch (picardName) {
-      case "tracknumber":
-        return "track"; // ToDo: make consistent with Picard convention
-      case "discnumber":
-        return "disk"; // ToDo: make consistent with Picard convention
+      case 'tracknumber':
+        return 'track'; // ToDo: make consistent with Picard convention
+      case 'discnumber':
+        return 'disk'; // ToDo: make consistent with Picard convention
       default:
         return picardName;
     }
   }
 
-  it("ASF", () => {
+  it('ASF', () => {
 
     /**
      * Picard mappings
@@ -93,33 +93,33 @@ describe("Picard mapping coverage", () => {
       const picNativeTag = PicardMappings[picComTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(asfTagMapper.tagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
-      assert.equal(asfTagMapper.tagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+      assert.isDefined(asfTagMapper.tagMap[picNativeTag], 'Is \'' + picNativeTag + '\' defined?');
+      assert.equal(asfTagMapper.tagMap[picNativeTag], mmCommonTag, 'Check Picard mapping for ' + picNativeTag);
     }
 
   });
 
-  it("APEv2", () => {
+  it('APEv2', () => {
 
     /**
      * Picard mappings
      * Taken from: picard-release-1.4.2/picard/formats/apev2.py
      */
     const PicardMappings = {
-      "Album Artist": "albumartist",
-      MixArtist: "remixer",
-      Weblink: "website",
-      DiscSubtitle: "discsubtitle",
-      BPM: "bpm",
-      ISRC: "isrc",
-      CatalogNumber: "catalognumber",
-      Barcode: "barcode",
-      EncodedBy: "encodedby",
-      Language: "language",
-      MUSICBRAINZ_ALBUMSTATUS: "releasestatus",
-      MUSICBRAINZ_ALBUMTYPE: "releasetype",
-      musicbrainz_trackid: "musicbrainz_recordingid",
-      musicbrainz_releasetrackid: "musicbrainz_trackid"
+      'Album Artist': 'albumartist',
+      MixArtist: 'remixer',
+      Weblink: 'website',
+      DiscSubtitle: 'discsubtitle',
+      BPM: 'bpm',
+      ISRC: 'isrc',
+      CatalogNumber: 'catalognumber',
+      Barcode: 'barcode',
+      EncodedBy: 'encodedby',
+      Language: 'language',
+      MUSICBRAINZ_ALBUMSTATUS: 'releasestatus',
+      MUSICBRAINZ_ALBUMTYPE: 'releasetype',
+      musicbrainz_trackid: 'musicbrainz_recordingid',
+      musicbrainz_releasetrackid: 'musicbrainz_trackid'
     };
 
     const apeTagMapper = new APEv2TagMapper();
@@ -128,13 +128,13 @@ describe("Picard mapping coverage", () => {
       const picComTag = PicardMappings[picNativeTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(apeTagMapper.tagMap[picNativeTag.toUpperCase()], "Is '" + picNativeTag + "' defined?");
-      assert.equal(apeTagMapper.tagMap[picNativeTag.toUpperCase()], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+      assert.isDefined(apeTagMapper.tagMap[picNativeTag.toUpperCase()], 'Is \'' + picNativeTag + '\' defined?');
+      assert.equal(apeTagMapper.tagMap[picNativeTag.toUpperCase()], mmCommonTag, 'Check Picard mapping for ' + picNativeTag);
     }
 
   });
 
-  it("ID3v2.4.0", () => {
+  it('ID3v2.4.0', () => {
 
     /**
      * Picard mappings
@@ -187,8 +187,8 @@ describe("Picard mapping coverage", () => {
       const picComTag = PicardMappings[picNativeTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(id3v24TagMapper.tagMap[picNativeTag], "Is '" + picNativeTag + "' defined?");
-      assert.equal(id3v24TagMapper.tagMap[picNativeTag], mmCommonTag, "Check Picard mapping for " + picNativeTag);
+      assert.isDefined(id3v24TagMapper.tagMap[picNativeTag], 'Is \'' + picNativeTag + '\' defined?');
+      assert.equal(id3v24TagMapper.tagMap[picNativeTag], mmCommonTag, 'Check Picard mapping for ' + picNativeTag);
     }
 
   });

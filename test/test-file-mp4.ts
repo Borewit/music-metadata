@@ -1,16 +1,16 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
 import * as path from 'path';
-import { Parsers } from './metadata-parsers';
 import * as fs from 'fs';
+
+import * as mm from '../lib';
+import { Parsers } from './metadata-parsers';
+import { samplePath } from './util';
 
 const t = assert;
 
+const mp4Samples = path.join(samplePath, 'mp4');
+
 describe('Parse MPEG-4 files with iTunes metadata', () => {
-
-  const _samples = path.join(__dirname, 'samples');
-
-  const mp4Samples = path.join(_samples, 'mp4');
 
   describe('Parse MPEG-4 files (.m4a)', () => {
 
