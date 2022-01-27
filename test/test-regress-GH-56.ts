@@ -8,7 +8,7 @@ const t = assert;
 
 describe('should calculate duration for a CBR encoded MP3', () => {
 
-  /*--------------------------------------------------------
+  /* --------------------------------------------------------
    TAG headers:
     - ID3v2.3 at position 0, length is 191 bytes
     - APE v2.0 at position 5973245, length is 206 bytes

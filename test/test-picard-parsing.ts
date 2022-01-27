@@ -1,4 +1,4 @@
-/* tslint:disable:no-string-literal */
+/* eslint-disable dot-notation, @typescript-eslint/dot-notation */
 import { assert } from 'chai';
 import * as path from 'path';
 import * as crypto from 'crypto';

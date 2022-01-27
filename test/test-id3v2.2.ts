@@ -83,7 +83,7 @@ describe('ID3v2Parser', () => {
     assert.deepEqual(id3v22.ULT, [{
       description: '',
       language: 'eng',
-      // tslint:disable:max-line-length
+      /* eslint-disable max-len */
       text: 'Black rose & a radio fire\nits so contagious\nsuch something changing my mind\nim gonna take whats evil\n\nYour cover melting inside\nwith wide eyes you tremble\nkissing over & over again\nyour god knows his faithful\n\nI try - to digest my pride\nbut passions grip i fear\nwhen i climb - into shallow vats of wine\ni think i almost hear - but its not clear\n\nYou are the one\nyou\'ll never be alone again\nyou\'re more then in my head - your more\n\nSpin faster shouting out loud\nyou cant steal whats paid for\nsuch something hurting again\nmurder son shes painful\n\nYou so believe your own lies\non my skin your fingers\nrunaway until the last time\nwere gonna lose forever\n\nwhen you try - don\'t try to say you wont\ntry to crawl into my head\nwhen you cry - cause it\'s all built up inside\nyour tears already said - already said\n\nYou\'ll never be alone again'
     }], '[\'ID3v2.2\'].ULT');
   });

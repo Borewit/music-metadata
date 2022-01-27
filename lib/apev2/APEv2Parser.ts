@@ -139,11 +139,10 @@ export class APEv2Parser extends BasicParser {
       bytesRemaining -= key.length + 1;
 
       switch (tagItemHeader.flags.dataType) {
-        case DataType.text_utf8: { // utf-8 textstring
+        case DataType.text_utf8: { // utf-8 text-string
           const value = await this.tokenizer.readToken<string>(new StringType(tagItemHeader.size, 'utf8'));
           const values = value.split(/\x00/g);
 
-          /*jshint loopfunc:true */
           for (const val of values) {
             this.metadata.addTag(tagFormat, key, val);
           }

@@ -204,7 +204,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
     it('4.3.1 WCOM: Commercial information', async () => {
       const metadata = await mm.parseFile(path.join(samplePath, 'id3v2-lyrics.mp3'));
       const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
-      // tslint:disable:max-line-length
+      /* eslint-disable max-len */
       assert.deepEqual(id3v23.WCOM[0], 'http://www.amazon.com/Rotation-Cute-What-We-Aim/dp/B0018QCXAU%3FSubscriptionId%3D0R6CGKPJ3EKNPQBPYJR2%26tag%3Dsoftpointer-20%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB0018QCXAU ');
     });
 

@@ -10,7 +10,7 @@ describe('Merge tag headers', () => {
 
   /**
    * issue_77_empty_tag.mp3 (metadata of: 'Like Spinning Plates (Live)'):
-   *   Has an empty ID3v2.3 tag and a ID3v1 tag.
+   * Has an empty ID3v2.3 tag and a ID3v1 tag.
    */
   it('should ignore empty tag headers', async () => {
     const metadata = await mm.parseFile(path.join(issueDir, 'issue_77_empty_tag.mp3'));

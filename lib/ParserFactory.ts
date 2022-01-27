@@ -51,6 +51,14 @@ export function parseHttpContentType(contentType: string): { type: string, subty
   };
 }
 
+async function parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
+  // Parser found, execute parser
+  const parser = await ParserFactory.loadParser(parserId);
+  const metadata = new MetadataCollector(opts);
+  await parser.init(metadata, tokenizer, opts).parse();
+  return metadata.toCommonMetadata();
+}
+
 export class ParserFactory {
 
   /**
@@ -97,7 +105,7 @@ export class ParserFactory {
       }
     }
     // Parser found, execute parser
-    return this._parse(tokenizer, parserId, opts);
+    return parse(tokenizer, parserId, opts);
   }
 
   /**
@@ -197,14 +205,6 @@ export class ParserFactory {
       default:
         throw new Error(`Unknown parser type: ${moduleName}`);
     }
-  }
-
-  private static async _parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
-    // Parser found, execute parser
-    const parser = await ParserFactory.loadParser(parserId);
-    const metadata = new MetadataCollector(opts);
-    await parser.init(metadata, tokenizer, opts).parse();
-    return metadata.toCommonMetadata();
   }
 
   private static getExtension(fname: string): string {

@@ -1,5 +1,8 @@
 import { GenericTagId, TagType } from './common/GenericTagTypes';
 import { IFooter } from './apev2/APEv2Token';
+import { TrackType } from './matroska/types';
+
+export { TrackType } from './matroska/types';
 
 /**
  * Attached picture, typically used for cover art
@@ -400,16 +403,6 @@ export interface IVideoTrack {
   aspectRatioType?: number;
   colourSpace?: Buffer;
   gammaValue?: number;
-}
-
-export enum TrackType {
-  video = 0x01,
-  audio = 0x02,
-  complex = 0x03,
-  logo = 0x04,
-  subtitle = 0x11,
-  button = 0x12,
-  control = 0x20
 }
 
 export interface ITrackInfo {

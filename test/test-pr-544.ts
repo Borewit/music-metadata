@@ -1,4 +1,4 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 import * as path from 'path';
 
 import * as mm from '../lib';
@@ -10,731 +10,446 @@ const t = assert;
 
 describe('Add, change and fix some mappings #pr-544', () => {
 
-    describe('Movement Name', () => {
+  describe('Movement Name', () => {
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.movement, 'Movement Name', 'metadata.common.movement');
-            });
-        });
-
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.movement, 'Movement Name', 'metadata.common.movement');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.movement, 'Movement Name', 'metadata.common.movement');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.movement, 'Movement Name', 'metadata.common.movement');
+      });
     });
 
-    describe('Movement Index', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.movement, 'Movement Name', 'metadata.common.movement');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
-            });
-        });
+  describe('Movement Index', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
+      });
     });
 
-    describe('Show Movement', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.showMovement, true, 'metadata.common.showMovement');
-            });
-        });*/
+  describe('Show Movement', () => {
 
-        // No possibility found to write id3v22 test file
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.showMovement, true, 'metadata.common.showMovement');
-            });
-        });*/
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.showMovement, true, 'metadata.common.showMovement');
+      });
+    });
+  });
 
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
+  describe('Work', () => {
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.showMovement, true, 'metadata.common.showMovement');
-            });
-        });
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.work, 'Work', 'metadata.common.work');
+      });
+    });
+  });
+
+  describe('Podcast', () => {
+
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.podcast, true, 'metadata.common.podcast');
+      });
     });
 
-    describe('Work', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.podcast, true, 'metadata.common.podcast');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.work, 'Work', 'metadata.common.work');
-            });
-        });*/
+  describe('Podcast Category', () => {
 
-        // No possibility found to write id3v22 test file
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.work, 'Work', 'metadata.common.work');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.work, 'Work', 'metadata.common.work');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
+      });
     });
 
-    describe('Podcast', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcast, true, 'metadata.common.podcast');
-            });
-        });
+  describe('Podcast Identifier', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcast, true, 'metadata.common.podcast');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcast, true, 'metadata.common.podcast');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.podcastId, '1234', 'metadata.common.podcastId');
+      });
     });
 
-    describe('Podcast Category', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.podcastId, '1234', 'metadata.common.podcastId');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
-            });
-        });
+  describe('Podcast Keywords', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.keywords, ['Podcast Keywords'], 'metadata.common.keywords');
+      });
     });
 
-    describe('Podcast Identifier', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.keywords, ['Podcast Keywords'], 'metadata.common.keywords');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcastId, '1234', 'metadata.common.podcastId');
-            });
-        });
+  describe('Podcast Url', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcastId, '1234', 'metadata.common.podcastId');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcastId, '1234', 'metadata.common.podcastId');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
+      });
     });
 
-    describe('Podcast Keywords', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.keywords, ['Podcast Keywords'], 'metadata.common.keywords');
-            });
-        });
+  describe('Short Description', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.keywords, ['Podcast Keywords'], 'metadata.common.keywords');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.keywords, ['Podcast Keywords'], 'metadata.common.keywords');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subscription');
+      });
     });
 
-    describe('Podcast Url', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.description, ['Short Description'], 'metadata.common.subscription');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
-            });
-        });
+  describe('Long Description', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.description, ['Long Description'], 'metadata.common.description');
+      });
     });
 
-    describe('Short Description', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.longDescription, 'Long Description', 'metadata.common.description');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subscription');
-            });
-        });
+  describe('Album Artist Sort', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subtitle');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.description, ['Short Description'], 'metadata.common.subscription');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
+      });
     });
 
-    describe('Long Description', () => {
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.description, ['Long Description'], 'metadata.common.description');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
+      });
+    });
+  });
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+  describe('Album Sort', () => {
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.description, ['Long Description'], 'metadata.common.description');
-            });
-        });*/
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.longDescription, 'Long Description', 'metadata.common.description');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
+      });
     });
 
-    describe('Album Artist Sort', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
-            });
-        });
+  describe('Artist Sort', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
+      });
     });
 
-    describe('Album Sort', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
-            });
-        });
+  describe('Composer Sort', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
+      });
     });
 
-    describe('Artist Sort', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
-            });
-        });
+  describe('Title Sort', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
+      });
     });
 
-    describe('Composer Sort', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
-            });
-        });
+  describe('Copyright', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.copyright, 'Copyright', 'metadata.common.copyright');
+      });
     });
 
-    describe('Title Sort', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.copyright, 'Copyright', 'metadata.common.copyright');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
-            });
-        });
+  describe('Compilation', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.compilation, true, 'metadata.common.compilation');
+      });
     });
 
-    describe('Copyright', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.compilation, true, 'metadata.common.compilation');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.copyright, 'Copyright', 'metadata.common.copyright');
-            });
-        });
+  describe('Comment', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.copyright, 'Copyright', 'metadata.common.copyright');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.copyright, 'Copyright', 'metadata.common.copyright');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
+      });
     });
 
-    describe('Compilation', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
+      });
+    });
+  });
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.compilation, true, 'metadata.common.compilation');
-            });
-        });
+  describe('Release time', () => {
 
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.compilation, true, 'metadata.common.compilation');
-            });
-        });*/
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
 
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.compilation, true, 'metadata.common.compilation');
-            });
-        });
+        t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
+      });
     });
 
-    describe('Comment', () => {
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
-            });
-        });
-
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
-            });
-        });
+        t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
+      });
     });
+  });
 
-    describe('Release time', () => {
+  describe('Original Album', () => {
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp3-id3v24', () => {
+      const filename = 'mp3/pr-544-id3v24.mp3';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
-
-                t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
-            });
-        });
-
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
-
-                t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
-
-                t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.originalalbum, 'Original Album', 'metadata.common.originalalbum');
+      });
     });
+  });
 
-    describe('Original Album', () => {
+  describe('iTunes Video Quality', () => {
 
-        it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.originalalbum, 'Original Album', 'metadata.common.originalalbum');
-            });
-        });
-
-        // No possibility found to write id3v22 test file
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.originalalbum, 'Original Album', 'metadata.common.originalalbum');
-            });
-        });*/
-
-        // Not exists in MP4 (Written as comment)
-        /*it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.originalalbum, 'Original Album', 'metadata.common.originalalbum');
-            });
-        });*/
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.hdVideo, 2, 'metadata.common.hdVideo');
+      });
     });
+  });
 
-    describe('iTunes Video Quality', () => {
+  describe('iTunes Media Type', () => {
 
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
+    it('mp4', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.hdVideo, 2, 'metadata.common.hdVideo');
-            });
-        });*/
-
-        // No possibility found to write id3v22 test file
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.hdVideo, 2, 'metadata.common.hdVideo');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.hdVideo, 2, 'metadata.common.hdVideo');
-            });
-        });
+      return mm.parseFile(filePath).then(metadata => {
+        t.strictEqual(metadata.common.stik, 9, 'metadata.common.stik');
+      });
     });
-
-    describe('iTunes Media Type', () => {
-
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v24', () => {
-            const filename = 'mp3/pr-544-id3v24.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.stik, 9, 'metadata.common.stik');
-            });
-        });*/
-
-        // No possibility found to write id3v22 test file
-        // Not exists in MP3 (Written as comment)
-        /*it('mp3-id3v22', () => {
-            const filename = 'mp3/pr-544-id3v22.mp3';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.stik, 9, 'metadata.common.stik');
-            });
-        });*/
-
-        it('mp4', () => {
-            const filename = 'mp4/pr-544.m4a';
-            const filePath = path.join(samplePath, filename);
-
-            return mm.parseFile(filePath).then(metadata => {
-                t.strictEqual(metadata.common.stik, 9, 'metadata.common.stik');
-            });
-        });
-    });
+  });
 });
