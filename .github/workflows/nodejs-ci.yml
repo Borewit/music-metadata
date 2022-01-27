@@ -14,7 +14,7 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 16.x
 
       - name: Install production dependencies, check node engine compatiblity
         run: yarn install --production=true
