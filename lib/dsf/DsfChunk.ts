@@ -25,7 +25,7 @@ export interface IChunkHeader {
 export const ChunkHeader: IGetToken<IChunkHeader> = {
   len: 12,
 
-  get: (buf: Buffer, off: number): IChunkHeader => {
+  get: (buf: Uint8Array, off: number): IChunkHeader => {
     return {id: FourCcToken.get(buf, off), size: Token.UINT64_LE.get(buf, off + 4)};
   }
 };
@@ -53,12 +53,11 @@ export interface IDsdChunk {
 export const DsdChunk: IGetToken<IDsdChunk> = {
   len: 16,
 
-  get: (buf: Buffer, off: number): IDsdChunk => {
+  get: (buf: Uint8Array, off: number): IDsdChunk => {
     return {
       fileSize: Token.INT64_LE.get(buf, off),
       metadataPointer: Token.INT64_LE.get(buf, off + 8)
-    }
-      ;
+    };
   }
 };
 
