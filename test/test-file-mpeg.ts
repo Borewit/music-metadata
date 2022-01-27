@@ -77,7 +77,6 @@ describe('Parse MPEG', () => {
 
   describe('mpeg parsing fails for irrelevant attributes #14', () => {
 
-    // tslint:disable:only-arrow-functions
     it('should decode 04 - You Don\'t Know.mp3', async function() {
 
       /**
@@ -206,7 +205,7 @@ describe('Parse MPEG', () => {
 
     it('should handle corrupt frame causing negative frame data left', () => {
 
-      /*------------[outofbounds.mp3]-------------------------------------------
+      /* ------------[outofbounds.mp3]-------------------------------------------
        Frame 2 header expected at byte 2465, but found at byte 3343.
        Frame 1 (bytes 2048-3343) was 1295 bytes long (expected 417 bytes).
 
@@ -263,7 +262,7 @@ describe('Parse MPEG', () => {
     });
 
     /**
-     *  Test on multiple headers: ID3v1, ID3v2.3, ID3v2.4 & ID3v2.4 ( 2x ID3v2.4 !! )
+     * Test on multiple headers: ID3v1, ID3v2.3, ID3v2.4 & ID3v2.4 ( 2x ID3v2.4 !! )
      */
     it('should decode mp3_01 with 2x ID3v2.4 header', async () => {
 

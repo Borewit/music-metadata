@@ -42,20 +42,16 @@ describe('MIME & extension mapping', () => {
   it('should map MIME-types', () => {
 
     return Promise.all(audioExtension.map(extension => {
+      const streamReader = new SourceStream(buf);
+      // Convert extension to MIME-Type
+      const mimeType = mime.getType(extension);
+      t.isNotNull(mimeType, 'extension: ' + extension);
 
-        const streamReader = new SourceStream(buf);
-        // Convert extension to MIME-Type
-        const mimeType = mime.getType(extension);
-        t.isNotNull(mimeType, 'extension: ' + extension);
-
-        const res = mm.parseStream(streamReader, mimeType)
-          .catch(err => {
-            handleError(extension, err);
-          });
-
-        return res;
-      })
-    );
+      return mm.parseStream(streamReader, mimeType)
+        .catch(err => {
+          handleError(extension, err);
+        });
+    }));
 
   });
 

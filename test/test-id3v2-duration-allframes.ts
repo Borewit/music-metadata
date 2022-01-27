@@ -17,11 +17,11 @@ it("should decode id3v2-duration-allframes", () => {
    * frame_size:	       835
    * Samples per frame	1152
    *
-   *   Summary:
-   *   ===============
-   *    Total number of frames: 57, unpadded: 5, padded: 52
-   *    File is CBR. Bitrate of each frame is 256 kbps.
-   *    Exact length: 00:01
+   * Summary:
+   * ===============
+   * Total number of frames: 57, unpadded: 5, padded: 52
+   * File is CBR. Bitrate of each frame is 256 kbps.
+   * Exact length: 00:01
    */
   const filePath = path.join(samplePath, 'id3v2-duration-allframes.mp3');
 

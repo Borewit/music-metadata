@@ -1,0 +1,8 @@
+/*
+ESLint configuration
+*/
+{
+  "rules": {
+    "no-console": "off"
+  }
+}

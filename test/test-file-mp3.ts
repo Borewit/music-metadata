@@ -176,7 +176,9 @@ describe('Parse MP3 files', () => {
     assert.strictEqual(common.album, 'Sanctuary', 'common.album');
     assert.strictEqual(common.year, 2005, 'common.year');
 
-    assert.includeDeepMembers(quality.warnings, [{message: 'id3v2.3 type=TLEN header has invalid string value: Expected even number of octets for 16-bit unicode string'}], 'Warning on invalid TLEN field');
+    assert.includeDeepMembers(quality.warnings, [{
+      message: 'id3v2.3 type=TLEN header has invalid string value: Expected even number of octets for 16-bit unicode string'}],
+    'Warning on invalid TLEN field');
   });
 
   // https://github.com/Borewit/music-metadata/issues/430
