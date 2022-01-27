@@ -49,7 +49,7 @@ export class Common implements IGetToken<ICommon> {
         if (23 + strLen + padding === this.len) {
           res.compressionName = new Token.StringType(strLen, 'binary').get(buf, off + 23);
         } else {
-         throw new Error('Illegal pstring length');
+          throw new Error('Illegal pstring length');
         }
       }
     } else {
