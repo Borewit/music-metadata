@@ -144,6 +144,7 @@
     ],
     "import/no-internal-modules": "off",
     "import/order": "off",
+    "import/no-unresolved": ["error", {"caseSensitiveStrict": true }],
     "indent": "off",
     "jsdoc/check-alignment": "error",
     "jsdoc/check-indentation": "error",
@@ -219,6 +220,24 @@
     "unicorn/prefer-ternary": "error",
     "use-isnan": "error",
     "valid-typeof": "off"
+  },
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [
+        ".ts",
+        ".tsx"
+      ]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": [
+          "lib/tsconfig.json",
+          "test/tsconfig.json",
+          "doc-gen/tsconfig.json"
+        ]
+      }
+    }
   }
 }
 
