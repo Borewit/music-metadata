@@ -1,9 +1,10 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import fs from 'node:fs';
+import * as path from 'node:path';
+
+import * as mm from '../lib/index.js';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 const t = assert;
 

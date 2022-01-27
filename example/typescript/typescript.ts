@@ -1,4 +1,4 @@
-import * as mm from '../../lib';
+import * as mm from '../../lib.js';
 import * as util from 'util';
 
 (async () => {

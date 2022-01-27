@@ -1,6 +1,6 @@
-import * as generic from './GenericTagTypes';
-import { ITag } from '../type';
-import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector';
+import * as generic from './GenericTagTypes.js';
+import {ITag} from '../type.js';
+import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector.js';
 
 export interface IGenericTagMapper {
 
@@ -66,7 +66,7 @@ export class CommonTagMapper implements IGenericTagMapper {
 
   /**
    * Convert native tag key to common tag key
-   * @tag  Native header tag
+   * @param tag Native header tag
    * @return common tag name (alias)
    */
   protected getCommonName(tag: string): generic.GenericTagId {

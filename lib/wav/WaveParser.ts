@@ -1,14 +1,14 @@
-import * as strtok3 from 'strtok3/lib/core';
+import * as strtok3 from 'strtok3/core';
 import * as Token from 'token-types';
 import initDebug from 'debug';
 
-import * as riff from '../riff/RiffChunk';
-import * as WaveChunk from './../wav/WaveChunk';
-import { ID3v2Parser } from '../id3v2/ID3v2Parser';
-import * as util from '../common/Util';
-import { FourCcToken } from '../common/FourCC';
-import { BasicParser } from '../common/BasicParser';
-import { BroadcastAudioExtensionChunk } from '../wav/BwfChunk';
+import * as riff from '../riff/RiffChunk.js';
+import * as WaveChunk from './../wav/WaveChunk.js';
+import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
+import * as util from '../common/Util.js';
+import { FourCcToken } from '../common/FourCC.js';
+import { BasicParser } from '../common/BasicParser.js';
+import { BroadcastAudioExtensionChunk } from '../wav/BwfChunk.js';
 
 const debug = initDebug('music-metadata:parser:RIFF');
 

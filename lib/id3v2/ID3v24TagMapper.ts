@@ -1,10 +1,10 @@
-import { INativeTagMap } from '../common/GenericTagTypes';
-import { CommonTagMapper } from '../common/GenericTagMapper';
-import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
-import * as util from '../common/Util';
+import { INativeTagMap } from '../common/GenericTagTypes.js';
+import { CommonTagMapper } from '../common/GenericTagMapper.js';
+import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
+import * as util from '../common/Util.js';
 
-import { IRating, ITag } from '../type';
+import { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import { IRating, ITag } from '../type.js';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings

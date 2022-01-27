@@ -1,4 +1,4 @@
-import { IRandomReader } from '../type';
+import { IRandomReader } from '../type.js';
 
 /**
  * Provides abstract Uint8Array access via the IRandomRead interface

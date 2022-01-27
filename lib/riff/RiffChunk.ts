@@ -1,8 +1,8 @@
 import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import { IGetToken } from 'strtok3/core';
+import { IChunkHeader } from '../iff/index.js';
 
-import {IChunkHeader} from '../iff';
-export {IChunkHeader} from '../iff';
+export { IChunkHeader } from '../iff/index.js';
 
 /**
  * Common RIFF chunk header

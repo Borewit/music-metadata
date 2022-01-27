@@ -1,4 +1,4 @@
-import { DataType, IContainerType } from './types';
+import { DataType, IContainerType } from './types.js';
 
 /**
  * Elements of document type description

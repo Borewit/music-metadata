@@ -1,11 +1,12 @@
 import initDebug from 'debug';
-import * as strtok3 from 'strtok3/lib/core';
+import * as strtok3 from 'strtok3/core';
 import { StringType } from 'token-types';
+import { Buffer } from 'node:buffer';
 
-import * as util from '../common/Util';
-import { IOptions, IRandomReader, IApeHeader } from '../type';
-import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { BasicParser } from '../common/BasicParser';
+import * as util from '../common/Util.js';
+import { IOptions, IRandomReader, IApeHeader } from '../type.js';
+import { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import { BasicParser } from '../common/BasicParser.js';
 import {
   DataType,
   DescriptorParser,
@@ -15,7 +16,7 @@ import {
   IHeader, ITagItemHeader,
   TagFooter,
   TagItemHeader
-} from './APEv2Token';
+} from './APEv2Token.js';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 

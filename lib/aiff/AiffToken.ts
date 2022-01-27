@@ -1,8 +1,10 @@
 import * as Token from 'token-types';
-import { IGetToken } from 'strtok3';
+import { Buffer } from 'node:buffer';
 
-import {FourCcToken} from '../common/FourCC';
-import * as iff from '../iff';
+import { FourCcToken } from '../common/FourCC.js';
+import * as iff from '../iff/index.js';
+
+import { IGetToken } from 'strtok3';
 
 /**
  * The Common Chunk.

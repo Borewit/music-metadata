@@ -1,10 +1,9 @@
 import * as Token from 'token-types';
 
-import { APEv2Parser } from '../apev2/APEv2Parser';
-import { FourCcToken } from '../common/FourCC';
-import { BasicParser } from '../common/BasicParser';
-
-import { IBlockHeader, IMetadataId, WavPack } from './WavPackToken';
+import { APEv2Parser } from '../apev2/APEv2Parser.js';
+import { FourCcToken } from '../common/FourCC.js';
+import { BasicParser } from '../common/BasicParser.js';
+import { IBlockHeader, IMetadataId, WavPack } from './WavPackToken.js';
 
 import initDebug from 'debug';
 

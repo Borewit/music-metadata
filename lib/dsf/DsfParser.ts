@@ -1,8 +1,8 @@
 import initDebug from 'debug';
 
-import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
-import { ChunkHeader, DsdChunk, FormatChunk, IChunkHeader, IDsdChunk, IFormatChunk } from './DsfChunk';
-import { ID3v2Parser } from "../id3v2/ID3v2Parser";
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
+import { ChunkHeader, DsdChunk, FormatChunk, IChunkHeader, IDsdChunk, IFormatChunk } from './DsfChunk.js';
+import { ID3v2Parser } from "../id3v2/ID3v2Parser.js";
 
 const debug = initDebug('music-metadata:parser:DSF');
 

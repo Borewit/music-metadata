@@ -1,10 +1,10 @@
 import { assert } from 'chai';
-import * as mime from 'mime';
-import * as fs from 'fs';
-import * as path from 'path';
+import mime from 'mime';
+import path from 'node:path';
+import fs from 'node:fs';
 
-import * as mm from '../lib';
-import { SourceStream, samplePath } from './util';
+import * as mm from '../lib/index.js';
+import { SourceStream, samplePath } from './util.js';
 
 const t = assert;
 
@@ -31,10 +31,10 @@ describe('MIME & extension mapping', () => {
 
   it('should reject an unknown file', () => {
 
-    return mm.parseFile(path.join(__dirname, '..', 'package.json'))
+    return mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))
       .then(() => t.fail('Should reject extension'))
       .catch(err => {
-        t.strictEqual(err.message, 'Failed to determine audio format');
+        t.strictEqual(err.message, 'Guessed MIME-type not supported: image/jpeg');
       });
 
   });

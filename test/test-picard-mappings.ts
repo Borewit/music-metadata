@@ -1,7 +1,7 @@
 import { assert } from 'chai';
-import { AsfTagMapper } from '../lib/asf/AsfTagMapper';
-import { APEv2TagMapper } from '../lib/apev2/APEv2TagMapper';
-import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
+import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
+import { APEv2TagMapper } from '../lib/apev2/APEv2TagMapper.js';
+import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 
 describe('Picard mapping coverage', () => {
 

@@ -1,7 +1,8 @@
 import * as Token from 'token-types';
+import { Buffer } from 'node:buffer';
 
-import * as util from '../common/Util';
-import { DataType } from './AsfObject';
+import * as util from '../common/Util.js';
+import { DataType } from './AsfObject.js';
 
 export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
 

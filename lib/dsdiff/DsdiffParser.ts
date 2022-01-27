@@ -1,12 +1,12 @@
 import * as Token from 'token-types';
 import initDebug from 'debug';
-import * as strtok3 from 'strtok3/lib/core';
+import * as strtok3 from 'strtok3/core';
 
-import { FourCcToken } from '../common/FourCC';
-import { BasicParser } from '../common/BasicParser';
-import { ID3v2Parser } from '../id3v2/ID3v2Parser';
+import { FourCcToken } from '../common/FourCC.js';
+import { BasicParser } from '../common/BasicParser.js';
+import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
 
-import { ChunkHeader64, IChunkHeader64 } from './DsdiffToken';
+import { ChunkHeader64, IChunkHeader64 } from './DsdiffToken.js';
 
 const debug = initDebug('music-metadata:parser:aiff');
 

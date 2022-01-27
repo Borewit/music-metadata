@@ -1,7 +1,11 @@
 // Utilities for testing
 
-import { Readable } from 'stream';
-import * as path from 'path';
+import { Readable } from 'node:stream';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 /**
  * A mock readable-stream, using string to read from
@@ -18,4 +22,4 @@ export class SourceStream extends Readable {
   }
 }
 
-export const samplePath = path.join(__dirname, 'samples');
+export const samplePath = path.join(dirname, 'samples');

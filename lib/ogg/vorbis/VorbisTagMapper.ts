@@ -1,6 +1,7 @@
-import { INativeTagMap } from '../../common/GenericTagTypes';
-import { CommonTagMapper } from '../../common/GenericTagMapper';
-import { IRating, ITag } from '../../type';
+import { INativeTagMap } from '../../common/GenericTagTypes.js';
+import { CommonTagMapper } from '../../common/GenericTagMapper.js';
+
+import { IRating, ITag } from '../../type.js';
 
 /**
  * Vorbis tag mappings

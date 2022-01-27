@@ -1,13 +1,13 @@
 import * as Token from 'token-types';
 import initDebug from 'debug';
-import * as strtok3 from 'strtok3/lib/core';
+import * as strtok3 from 'strtok3/core';
 
-import { ID3v2Parser } from '../id3v2/ID3v2Parser';
-import { FourCcToken } from '../common/FourCC';
-import { BasicParser } from '../common/BasicParser';
+import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
+import { FourCcToken } from '../common/FourCC.js';
+import { BasicParser } from '../common/BasicParser.js';
 
-import * as AiffToken from './AiffToken';
-import * as iff from '../iff';
+import * as AiffToken from './AiffToken.js';
+import * as iff from '../iff/index.js';
 
 const debug = initDebug('music-metadata:parser:aiff');
 

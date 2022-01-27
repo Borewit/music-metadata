@@ -1,5 +1,5 @@
-import { INativeTagMap, TagType } from './GenericTagTypes';
-import { CommonTagMapper } from './GenericTagMapper';
+import { INativeTagMap, TagType } from './GenericTagTypes.js';
+import { CommonTagMapper } from './GenericTagMapper.js';
 
 export class CaseInsensitiveTagMap extends CommonTagMapper {
 

@@ -1,9 +1,9 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import * as mm from '../lib';
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import * as mm from '../lib/index.js';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 describe('Parse MP3 files', () => {
 

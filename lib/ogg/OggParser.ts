@@ -1,17 +1,17 @@
 import * as Token from 'token-types';
-import { IGetToken, EndOfStreamError } from 'strtok3/lib/core';
+import { IGetToken, EndOfStreamError } from 'strtok3/core';
 import initDebug from 'debug';
 
-import * as util from '../common/Util';
-import { FourCcToken } from '../common/FourCC';
-import { BasicParser } from '../common/BasicParser';
+import * as util from '../common/Util.js';
+import { FourCcToken } from '../common/FourCC.js';
+import { BasicParser } from '../common/BasicParser.js';
 
-import { VorbisParser } from './vorbis/VorbisParser';
-import { OpusParser } from './opus/OpusParser';
-import { SpeexParser } from './speex/SpeexParser';
-import { TheoraParser } from './theora/TheoraParser';
+import { VorbisParser } from './vorbis/VorbisParser.js';
+import { OpusParser } from './opus/OpusParser.js';
+import { SpeexParser } from './speex/SpeexParser.js';
+import { TheoraParser } from './theora/TheoraParser.js';
 
-import * as Ogg from './Ogg';
+import * as Ogg from './Ogg.js';
 
 const debug = initDebug('music-metadata:parser:ogg');
 

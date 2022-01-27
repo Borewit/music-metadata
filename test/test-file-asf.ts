@@ -1,11 +1,12 @@
 import { assert } from 'chai';
-import * as mm from '../lib';
-import * as path from 'path';
-import GUID from '../lib/asf/GUID';
-import { AsfUtil } from '../lib/asf/AsfUtil';
-import { DataType } from '../lib/asf/AsfObject';
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import * as mm from '../lib/index.js';
+import path from 'node:path';
+import GUID from '../lib/asf/GUID.js';
+import { AsfUtil } from '../lib/asf/AsfUtil.js';
+import { DataType } from '../lib/asf/AsfObject.js';
+import { Parsers } from './metadata-parsers.js';
+
+import { samplePath } from './util.js';
 
 describe('Parse ASF', () => {
 

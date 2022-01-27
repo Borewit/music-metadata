@@ -1,7 +1,7 @@
-import { ITokenizer } from 'strtok3/lib/core';
 import initDebug from 'debug';
+import * as AtomToken from './AtomToken.js';
 
-import * as AtomToken from './AtomToken';
+import { ITokenizer } from 'strtok3/core';
 
 export type AtomDataHandler = (atom: Atom, remaining: number) => Promise<void>;
 

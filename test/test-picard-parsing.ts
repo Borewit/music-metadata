@@ -1,10 +1,11 @@
 /* eslint-disable dot-notation, @typescript-eslint/dot-notation */
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 import * as crypto from 'crypto';
-import { TagType } from '../lib/common/GenericTagTypes';
-import { ICommonTagsResult, IFormat, INativeTagDict, parseFile, orderTags } from '../lib';
-import { samplePath } from './util';
+
+import { TagType } from '../lib/common/GenericTagTypes.js';
+import { ICommonTagsResult, IFormat, INativeTagDict, parseFile, orderTags } from '../lib/index.js';
+import { samplePath } from './util.js';
 
 const t = assert;
 

@@ -1,12 +1,13 @@
-import { ITokenizer } from 'strtok3/lib/core';
+import { ITokenizer } from 'strtok3/core';
 import * as Token from 'token-types';
 
-import * as util from '../common/Util';
-import { TagType } from '../common/GenericTagTypes';
-import { ITag, IOptions } from '../type';
-import { FrameParser } from './FrameParser';
-import { ExtendedHeader, ID3v2Header, ID3v2MajorVersion, IID3v2header, UINT32SYNCSAFE } from './ID3v2Token';
-import { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector';
+import * as util from '../common/Util.js';
+import { TagType } from '../common/GenericTagTypes.js';
+import { FrameParser } from './FrameParser.js';
+import { ExtendedHeader, ID3v2Header, ID3v2MajorVersion, IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
+
+import { ITag, IOptions } from '../type.js';
+import { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 
 interface IFrameFlags {
   status: {

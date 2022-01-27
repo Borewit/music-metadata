@@ -1,5 +1,5 @@
-import { INativeTagMap } from '../common/GenericTagTypes';
-import { CommonTagMapper } from '../common/GenericTagMapper';
+import { INativeTagMap } from '../common/GenericTagTypes.js';
+import { CommonTagMapper } from '../common/GenericTagMapper.js';
 
 /**
  * ID3v1 tag mappings

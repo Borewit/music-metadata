@@ -1,8 +1,9 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import * as mm from '../lib';
-import { TagType } from '../lib/common/GenericTagTypes';
+import * as mm from '../lib/index.js';
+import { TagType } from '../lib/common/GenericTagTypes.js';
+import { samplePath } from './util.js';
 
 interface IReplayGainSample {
   description: string;
@@ -182,7 +183,7 @@ const samples: IReplayGainSample[] = [
  */
 describe('Test Replay-Gain', () => {
 
-  const pathGainSamples = path.join(__dirname, 'samples', 'replay-gain');
+  const pathGainSamples = path.join(samplePath, 'replay-gain');
 
   samples.forEach(sample => {
     it(`Test ${sample.description}, mapping from tag header: ${sample.tagType}`, async () => {

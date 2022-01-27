@@ -1,8 +1,13 @@
 {
   "compilerOptions": {
     "inlineSources": false,
-    "module": "commonjs",
+    "module": "ES2020",
     "moduleResolution": "node",
-    "target": "ES2017"
+    "target": "ES2019",
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "strtok3/core": ["node_modules/strtok3/lib/core"]
+    }
   }
 }

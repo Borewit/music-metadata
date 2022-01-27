@@ -1,8 +1,8 @@
 import { assert } from 'chai';
-import * as path from 'path';
 
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import * as path from 'path';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 const t = assert;
 

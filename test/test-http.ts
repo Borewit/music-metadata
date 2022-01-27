@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 
-import { parseStream } from '../lib';
-import { IHttpClient, HttpClient } from './http-client';
+import { parseStream } from '../lib/index.js';
+import { IHttpClient, HttpClient } from './http-client.js';
 
 import { IFileInfo } from 'strtok3';
 

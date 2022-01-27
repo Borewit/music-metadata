@@ -1,7 +1,8 @@
-import * as path from 'path';
-import * as mm from '../lib';
+import path from 'node:path';
 import { assert } from 'chai';
-import { samplePath } from './util';
+
+import * as mm from '../lib/index.js';
+import { samplePath } from './util.js';
 
 describe('Matroska formats', () => {
 

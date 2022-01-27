@@ -1,7 +1,8 @@
 import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
 
-import { FourCcToken } from '../common/FourCC';
+import { FourCcToken } from '../common/FourCC.js';
+
+import { IGetToken } from 'strtok3/core';
 
 /**
  * WavPack Block Header

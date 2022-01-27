@@ -1,20 +1,20 @@
 import * as Token from 'token-types';
-import initDebug from 'debug';
+import debugInit from 'debug';
 
-import {IOptions} from '../../type';
-import {INativeMetadataCollector} from '../../common/MetadataCollector';
-import * as Ogg from '../Ogg';
+import { VorbisDecoder } from './VorbisDecoder.js';
+import { CommonHeader, IdentificationHeader, IVorbisPicture, VorbisPictureToken } from './Vorbis.js';
 
-import { VorbisDecoder } from './VorbisDecoder';
-import { CommonHeader, IdentificationHeader, IVorbisPicture, VorbisPictureToken } from './Vorbis';
+import { IPageConsumer, IPageHeader } from '../Ogg.js';
+import { IOptions } from '../../type.js';
+import { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 
-const debug = initDebug('music-metadata:parser:ogg:vorbis1');
+const debug = debugInit('music-metadata:parser:ogg:vorbis1');
 
 /**
  * Vorbis 1 Parser.
  * Used by OggParser
  */
-export class VorbisParser implements Ogg.IPageConsumer {
+export class VorbisParser implements IPageConsumer {
 
   private pageSegments: Buffer[] = [];
 
@@ -26,13 +26,13 @@ export class VorbisParser implements Ogg.IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public parsePage(header: Ogg.IPageHeader, pageData: Buffer) {
+  public parsePage(header: IPageHeader, pageData: Buffer) {
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
       if (header.headerType.continued) {
         if (this.pageSegments.length === 0) {
-          throw new Error("Cannot continue on previous page");
+          throw new Error('Cannot continue on previous page');
         }
         this.pageSegments.push(pageData);
       }
@@ -79,22 +79,22 @@ export class VorbisParser implements Ogg.IPageConsumer {
     this.metadata.addTag('vorbis', id, value);
   }
 
-  public calculateDuration(header: Ogg.IPageHeader) {
+  public calculateDuration(header: IPageHeader) {
     if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
       this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition);
-      this.metadata.setFormat('duration',  this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
+      this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
     }
   }
 
   /**
    * Parse first Ogg/Vorbis page
-   * @param {IPageHeader} header
-   * @param {Buffer} pageData
+   * @param header
+   * @param pageData
    */
-  protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
+  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
     this.metadata.setFormat('codec', 'Vorbis I');
-    debug("Parse first page");
+    debug('Parse first page');
     // Parse  Vorbis common header
     const commonHeader = CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis')
@@ -105,14 +105,14 @@ export class VorbisParser implements Ogg.IPageConsumer {
       this.metadata.setFormat('sampleRate', idHeader.sampleRate);
       this.metadata.setFormat('bitrate', idHeader.bitrateNominal);
       this.metadata.setFormat('numberOfChannels', idHeader.channelMode);
-      debug("sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s",  idHeader.sampleRate, idHeader.bitrateNominal, idHeader.channelMode);
+      debug('sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s', idHeader.sampleRate, idHeader.bitrateNominal, idHeader.channelMode);
     } else throw new Error('First Ogg page should be type 1: the identification header');
   }
 
   protected parseFullPage(pageData: Buffer) {
     // New page
     const commonHeader = CommonHeader.get(pageData, 0);
-    debug("Parse full page: type=%s, byteLength=%s", commonHeader.packetType, pageData.byteLength);
+    debug('Parse full page: type=%s, byteLength=%s', commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
 
       case 3: //  type 3: comment header

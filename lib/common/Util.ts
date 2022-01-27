@@ -1,4 +1,4 @@
-import { IRatio } from '../type';
+import { IRatio } from '../type.js';
 
 export type StringEncoding =
   'ascii' // Use  'utf-8' or latin1 instead

@@ -1,14 +1,15 @@
 import { Readable } from 'stream';
-import * as strtok3 from 'strtok3/lib/core';
+import * as strtok3 from 'strtok3/core';
 
-import { ParserFactory } from './ParserFactory';
-import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type';
-import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader';
-import { APEv2Parser } from './apev2/APEv2Parser';
-import { hasID3v1Header } from './id3v1/ID3v1Parser';
-import { getLyricsHeaderLength } from './lyrics3/Lyrics3';
+import { ParserFactory } from './ParserFactory.js';
+import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader.js';
+import { APEv2Parser } from './apev2/APEv2Parser.js';
+import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
+import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
-export { IFileInfo } from 'strtok3/lib/core';
+import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
+
+export { IFileInfo } from 'strtok3/core';
 
 /**
  * Parse audio from Node Stream.Readable

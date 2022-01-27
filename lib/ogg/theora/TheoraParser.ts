@@ -1,11 +1,10 @@
-import { ITokenizer } from 'strtok3/lib/core';
+import { ITokenizer } from 'strtok3/core';
 import initDebug from 'debug';
 
-import { IOptions } from '../../type';
-import { INativeMetadataCollector } from '../../common/MetadataCollector';
-import * as Ogg from '../Ogg';
-
-import { IdentificationHeader } from './Theora';
+import * as Ogg from '../Ogg.js';
+import { IOptions } from '../../type.js';
+import { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import { IdentificationHeader } from './Theora.js';
 
 const debug = initDebug('music-metadata:parser:ogg:theora');
 

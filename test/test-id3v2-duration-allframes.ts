@@ -1,9 +1,9 @@
 
 import {assert} from 'chai';
-import * as mm from '../lib';
+import * as mm from '../lib/index.js';
 
-import * as path from 'path';
-import { samplePath } from './util';
+import path from 'node:path';
+import { samplePath } from './util.js';
 
 const t = assert;
 

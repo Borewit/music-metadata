@@ -1,7 +1,8 @@
 import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import { IGetToken } from 'strtok3/core';
+import { Buffer } from 'node:buffer';
 
-import { FourCcToken } from '../common/FourCC';
+import { FourCcToken } from '../common/FourCC.js';
 
 /**
  * APETag versionIndex history / supported formats
