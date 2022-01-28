@@ -11,7 +11,7 @@ const debug = initDebug('music-metadata:parser:ogg:theora');
 
 /**
  * Ref:
- *   https://theora.org/doc/Theora.pdf
+ * - https://theora.org/doc/Theora.pdf
  */
 export class TheoraParser implements Ogg.IPageConsumer {
 

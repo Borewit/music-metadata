@@ -1,18 +1,16 @@
 /**
  * Ref:
- *    https://tools.ietf.org/html/draft-fleischman-asf-01, Appendix A: ASF GUIDs
- *    http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
- *    http://drang.s4.xrea.com/program/tips/id3tag/wmp/index.html
+ * - https://tools.ietf.org/html/draft-fleischman-asf-01, Appendix A: ASF GUIDs
+ * - http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
+ * - http://drang.s4.xrea.com/program/tips/id3tag/wmp/index.html
+ * - http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
  *
- *    http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
+ * ASF File Structure:
+ * - https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
  *
- *  ASF File Structure:
- *    https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
- *
- *  ASF GUIDs:
- *    http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
- *
- *    https://github.com/dji-sdk/FFmpeg/blob/master/libavformat/asf.c
+ * ASF GUIDs:
+ * - http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
+ * - https://github.com/dji-sdk/FFmpeg/blob/master/libavformat/asf.c
  */
 export default class GUID {
 

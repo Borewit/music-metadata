@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import * as strtok3 from 'strtok3/lib/core';
 
-import  {ParserFactory } from './ParserFactory';
+import { ParserFactory } from './ParserFactory';
 import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type';
 import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader';
 import { APEv2Parser } from './apev2/APEv2Parser';

@@ -13,8 +13,8 @@ const debug = initDebug('music-metadata:parser:ogg:speex');
 /**
  * Speex, RFC 5574
  * Ref:
- *   https://www.speex.org/docs/manual/speex-manual/
- *   https://tools.ietf.org/html/rfc5574
+ * - https://www.speex.org/docs/manual/speex-manual/
+ * - https://tools.ietf.org/html/rfc5574
  */
 export class SpeexParser extends VorbisParser {
 

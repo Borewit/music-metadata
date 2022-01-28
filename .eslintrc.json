@@ -178,7 +178,7 @@
     "no-redeclare": "error",
     "no-return-await": "error",
     "no-sequences": "error",
-    "no-shadow": "error",
+    "no-shadow": "off",
     "no-sparse-arrays": "error",
     "no-template-curly-in-string": "error",
     "no-throw-literal": "error",

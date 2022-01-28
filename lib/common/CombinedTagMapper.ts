@@ -1,14 +1,14 @@
-import {ID3v1TagMapper} from "../id3v1/ID3v1TagMap";
-import {ID3v24TagMapper} from "../id3v2/ID3v24TagMapper";
-import {AsfTagMapper} from "../asf/AsfTagMapper";
-import {IGenericTag, TagType} from "./GenericTagTypes";
-import {ID3v22TagMapper} from "../id3v2/ID3v22TagMapper";
-import {APEv2TagMapper} from "../apev2/APEv2TagMapper";
-import {IGenericTagMapper} from "./GenericTagMapper";
-import {MP4TagMapper} from "../mp4/MP4TagMapper";
-import {VorbisTagMapper} from "../ogg/vorbis/VorbisTagMapper";
-import {RiffInfoTagMapper} from "../riff/RiffInfoTagMap";
-import {ITag} from "../type";
+import { ID3v1TagMapper } from '../id3v1/ID3v1TagMap';
+import { ID3v24TagMapper } from '../id3v2/ID3v24TagMapper';
+import { AsfTagMapper } from '../asf/AsfTagMapper';
+import { IGenericTag, TagType } from './GenericTagTypes';
+import { ID3v22TagMapper } from '../id3v2/ID3v22TagMapper';
+import { APEv2TagMapper } from '../apev2/APEv2TagMapper';
+import { IGenericTagMapper } from './GenericTagMapper';
+import { MP4TagMapper } from '../mp4/MP4TagMapper';
+import { VorbisTagMapper } from '../ogg/vorbis/VorbisTagMapper';
+import { RiffInfoTagMapper } from '../riff/RiffInfoTagMap';
+import { ITag } from '../type';
 import { INativeMetadataCollector } from './MetadataCollector';
 import { MatroskaTagMapper } from '../matroska/MatroskaTagMapper';
 
@@ -45,7 +45,7 @@ export class CombinedTagMapper {
     if (tagMapper) {
       return this.tagMappers[tagType].mapGenericTag(tag, warnings);
     }
-    throw new Error("No generic tag mapper defined for tag-format: " + tagType);
+    throw new Error('No generic tag mapper defined for tag-format: ' + tagType);
   }
 
   private registerTagMapper(genericTagMapper: IGenericTagMapper) {

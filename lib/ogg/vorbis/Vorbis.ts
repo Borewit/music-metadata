@@ -4,25 +4,14 @@ import { IGetToken } from 'strtok3/lib/core';
 import {AttachedPictureType} from '../../id3v2/ID3v2Token';
 import {IPicture} from '../../type';
 
-export interface IVorbisPicture extends IPicture {
-  type: string
-  description: string,
-  width: number,
-  height: number,
-  colour_depth: number,
-  indexed_color: number
-}
-
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
  * Ref: https://wiki.xiph.org/VorbisComment#METADATA_BLOCK_PICTURE
  * Ref: https://xiph.org/flac/format.html#metadata_block_picture
  */
-export interface IVorbisPicture {
+export interface IVorbisPicture extends IPicture {
   // The picture type according to the ID3v2 APIC frame
-  type: string,
-  // The picture MIME type string
-  format: string,
+  type: string
   // The description of the picture, in UTF-8.
   description: string,
   // The width of the picture in pixels.
@@ -32,9 +21,7 @@ export interface IVorbisPicture {
   // The color depth of the picture in bits-per-pixel.
   colour_depth: number,
   // For indexed-color pictures (e.g. GIF), the number of colors used, or 0 for non-indexed pictures.
-  indexed_color: number,
-  // The binary picture data.
-  data: Buffer;
+  indexed_color: number
 }
 
 /**

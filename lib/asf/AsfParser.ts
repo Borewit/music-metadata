@@ -1,22 +1,22 @@
-import * as _debug from 'debug';
+import * as initDebug from 'debug';
 
 import { ITag, TrackType } from '../type';
 import GUID from './GUID';
 import * as AsfObject from './AsfObject';
 import { BasicParser } from '../common/BasicParser';
 
-const debug = _debug('music-metadata:parser:ASF');
+const debug = initDebug('music-metadata:parser:ASF');
 const headerType = 'asf';
 
 /**
  * Windows Media Metadata Usage Guidelines
- *   Ref: https://msdn.microsoft.com/en-us/library/ms867702.aspx
+ * - Ref: https://msdn.microsoft.com/en-us/library/ms867702.aspx
  *
  * Ref:
- *   https://tools.ietf.org/html/draft-fleischman-asf-01
- *   https://hwiegman.home.xs4all.nl/fileformats/asf/ASF_Specification.pdf
- *   http://drang.s4.xrea.com/program/tips/id3tag/wmp/index.html
- *   https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
+ * - https://tools.ietf.org/html/draft-fleischman-asf-01
+ * - https://hwiegman.home.xs4all.nl/fileformats/asf/ASF_Specification.pdf
+ * - http://drang.s4.xrea.com/program/tips/id3tag/wmp/index.html
+ * - https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
  */
 export class AsfParser extends BasicParser {
 

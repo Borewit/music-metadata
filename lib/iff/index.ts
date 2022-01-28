@@ -10,7 +10,7 @@ import { FourCcToken } from '../common/FourCC';
 export interface IChunkHeader {
 
   /**
-   *  A chunk ID (ie, 4 ASCII bytes)
+   * A chunk ID (ie, 4 ASCII bytes)
    */
   chunkID: string,
   /**
@@ -26,7 +26,7 @@ export interface IChunkHeader {
 export interface IChunkHeader64 {
 
   /**
-   *  A chunk ID (ie, 4 ASCII bytes)
+   * A chunk ID (ie, 4 ASCII bytes)
    */
   chunkID: string,
   /**

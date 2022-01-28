@@ -1,5 +1,5 @@
 import * as generic from './GenericTagTypes';
-import {ITag} from '../type';
+import { ITag } from '../type';
 import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector';
 
 export interface IGenericTagMapper {
@@ -20,7 +20,7 @@ export interface IGenericTagMapper {
    * @param warnings  Register warnings
    * @return Generic tag, if native tag could be mapped
    */
-  mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag
+  mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag;
 }
 
 export class CommonTagMapper implements IGenericTagMapper {

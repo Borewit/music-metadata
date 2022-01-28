@@ -3,7 +3,7 @@ export interface IHeader {
   len: number;
 }
 
-export enum DataType { string, uint, uid, bool, binary, float}
+export enum DataType { 'string', uint, uid, bool, binary, float}
 
 export interface IElementType<T> {
   readonly name: string;
@@ -101,7 +101,7 @@ export interface ICueReference {
 
 export interface ISimpleTag {
   name?: string;
-  string?: string;
+  'string'?: string;
   binary?: Buffer;
   language?: string;
   default?: boolean;

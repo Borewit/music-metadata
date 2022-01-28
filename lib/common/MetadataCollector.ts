@@ -5,14 +5,14 @@ import {
   INativeTags, IOptions, IQualityInformation, IPicture, ITrackInfo, TrackType
 } from '../type';
 
-import * as _debug from 'debug';
+import * as initDebug from 'debug';
 import { IGenericTag, TagType, isSingleton, isUnique } from './GenericTagTypes';
 import { CombinedTagMapper } from './CombinedTagMapper';
 import { CommonTagMapper } from './GenericTagMapper';
 import { toRatio } from './Util';
 import * as FileType from 'file-type/core';
 
-const debug = _debug('music-metadata:collector');
+const debug = initDebug('music-metadata:collector');
 
 const TagPriority: TagType[] = ['matroska', 'APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'ID3v1'];
 

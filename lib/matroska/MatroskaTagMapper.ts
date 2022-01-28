@@ -1,4 +1,4 @@
-import {INativeTagMap} from '../common/GenericTagTypes';
+import { INativeTagMap } from '../common/GenericTagTypes';
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
 
 /**
@@ -13,7 +13,7 @@ const ebmlTagMap: INativeTagMap = {
   'album:PART_NUMBER': 'disk',
   'album:TOTAL_PARTS': 'totaltracks',
   'track:ARTIST': 'artist',
-  'track:ARTISTSORT' : 'artistsort',
+  'track:ARTISTSORT': 'artistsort',
   'track:TITLE': 'title',
   'track:PART_NUMBER': 'track',
   'track:MUSICBRAINZ_TRACKID': 'musicbrainz_recordingid',

@@ -1,12 +1,14 @@
 import * as path from 'path';
 import * as fs from 'fs';
 
-import {commonTags} from '../lib/common/GenericTagTypes';
-import {CombinedTagMapper} from '../lib/common/CombinedTagMapper';
+import { commonTags } from '../lib/common/GenericTagTypes';
+import { CombinedTagMapper } from '../lib/common/CombinedTagMapper';
 
-import * as markDown from "./MarkDown";
+import * as markDown from './MarkDown';
 
-interface ITagInfoDict { [key: string]: {description: string}; }
+interface ITagInfoDict {
+  [key: string]: { description: string };
+}
 
 const combinedTagMapper = new CombinedTagMapper();
 
@@ -30,7 +32,7 @@ function write(out: fs.WriteStream) {
 
   const table = new markDown.Table();
 
-  table.header = new markDown.Row(["Common tag", "n", "Description"]);
+  table.header = new markDown.Row(['Common tag', 'n', 'Description']);
 
   for (const nativeType in combinedTagMapper.tagMappers) {
     table.header.values.push(nativeType);
@@ -45,7 +47,7 @@ function write(out: fs.WriteStream) {
 
     const row = new markDown.Row([commonTagKey, multiplicity, tagInfo.description]);
     for (const nativeType in combinedTagMapper.tagMappers) {
-      row.values.push(getNativeSourceTags(nativeType, commonTagKey).join(", "));
+      row.values.push(getNativeSourceTags(nativeType, commonTagKey).join(', '));
     }
     table.rows.push(row);
   }
@@ -55,8 +57,8 @@ function write(out: fs.WriteStream) {
 
 const txt = fs.createWriteStream(path.join(__dirname, '..', 'doc', 'common_metadata.md'));
 
-txt.write("# Common Metadata\n\n");
-txt.write("Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n");
-txt.write("The tag mapping is strongly inspired on the [MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).\n\n");
+txt.write('# Common Metadata\n\n');
+txt.write('Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n');
+txt.write('The tag mapping is strongly inspired on the [MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).\n\n');
 
 write(txt);

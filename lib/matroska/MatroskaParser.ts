@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
-import * as _debug from 'debug';
+import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
+import * as initDebug from 'debug';
 import { ITokenizer } from 'strtok3/lib/core';
 
 import { INativeMetadataCollector } from '../common/MetadataCollector';
@@ -10,7 +10,7 @@ import { BasicParser } from '../common/BasicParser';
 import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from './types';
 import * as matroskaDtd from './MatroskaDtd';
 
-const debug = _debug('music-metadata:parser:matroska');
+const debug = initDebug('music-metadata:parser:matroska');
 
 /**
  * Extensible Binary Meta Language (EBML) parser
@@ -25,7 +25,7 @@ export class MatroskaParser extends BasicParser {
 
   private parserMap = new Map<DataType, (e: IHeader) => Promise<any>>();
 
-  private ebmlMaxIDLength	= 4;
+  private ebmlMaxIDLength = 4;
   private ebmlMaxSizeLength = 8;
 
   constructor() {
@@ -73,7 +73,7 @@ export class MatroskaParser extends BasicParser {
             flagDefault: entry.flagDefault,
             flagLacing: entry.flagLacing,
             flagEnabled: entry.flagEnabled,
-            language: entry. language,
+            language: entry.language,
             name: entry.name,
             type: entry.trackType,
             audio: entry.audio,
@@ -128,7 +128,7 @@ export class MatroskaParser extends BasicParser {
               };
             }).forEach(picture => {
               this.addTag('picture', picture);
-          });
+            });
         }
       }
     }
@@ -150,8 +150,8 @@ export class MatroskaParser extends BasicParser {
       if (type) {
         debug(`Element: name=${type.name}, container=${!!type.container}`);
         if (type.container) {
-         const res = await this.parseContainer(type.container, element.len >= 0 ? this.tokenizer.position + element.len : -1, path.concat([type.name]));
-         if (type.multiple) {
+          const res = await this.parseContainer(type.container, element.len >= 0 ? this.tokenizer.position + element.len : -1, path.concat([type.name]));
+          if (type.multiple) {
             if (!tree[type.name]) {
               tree[type.name] = [];
             }
@@ -179,7 +179,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   private async readVintData(maxLength: number): Promise<Buffer> {
-    const msb = await this.tokenizer.peekNumber(Token.UINT8);
+    const msb = await this.tokenizer.peekNumber(UINT8);
     let mask = 0x80;
     let oc = 1;
 
@@ -222,11 +222,11 @@ export class MatroskaParser extends BasicParser {
       case 0:
         return 0.0;
       case 4:
-        return this.tokenizer.readNumber(Token.Float32_BE);
+        return this.tokenizer.readNumber(Float32_BE);
       case 8:
-        return this.tokenizer.readNumber(Token.Float64_BE);
+        return this.tokenizer.readNumber(Float64_BE);
       case 10:
-        return this.tokenizer.readNumber(Token.Float64_BE);
+        return this.tokenizer.readNumber(Float64_BE);
       default:
         throw new Error(`Invalid IEEE-754 float length: ${e.len}`);
     }
@@ -243,7 +243,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   private async readString(e: IHeader): Promise<string> {
-    const rawString = await this.tokenizer.readToken(new Token.StringType(e.len, 'utf-8'));
+    const rawString = await this.tokenizer.readToken(new StringType(e.len, 'utf-8'));
     return rawString.replace(/\00.*$/g, '');
   }
 

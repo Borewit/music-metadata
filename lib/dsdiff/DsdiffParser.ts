@@ -14,7 +14,7 @@ const debug = initDebug('music-metadata:parser:aiff');
  * DSDIFF - Direct Stream Digital Interchange File Format (Phillips)
  *
  * Ref:
- *  http://www.sonicstudio.com/pdf/dsd/DSDIFF_1.5_Spec.pdf
+ * - http://www.sonicstudio.com/pdf/dsd/DSDIFF_1.5_Spec.pdf
  */
 export class DsdiffParser extends BasicParser {
 

@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
-import * as _debug from 'debug';
+import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
+import * as initDebug from 'debug';
 import { ITokenizer, IGetToken } from 'strtok3/lib/core';
 
 import * as util from '../common/Util';
@@ -12,7 +12,7 @@ import { IOptions } from '../type';
 import { ITokenParser } from '../ParserFactory';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';
 
-const debug = _debug('music-metadata:parser:FLAC');
+const debug = initDebug('music-metadata:parser:FLAC');
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -46,7 +46,7 @@ export class FlacParser extends AbstractID3Parser {
     return this;
   }
 
-  public async _parse(): Promise<void> {
+  public async postId3v2Parse(): Promise<void> {
 
     const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
     if (fourCC.toString() !== 'fLaC') {
@@ -118,7 +118,7 @@ export class FlacParser extends AbstractID3Parser {
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private async parseComment(dataLen: number): Promise<void> {
-    const data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(dataLen));
+    const data = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(dataLen));
     const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
@@ -193,7 +193,7 @@ class Metadata {
       return {
         lastBlock: util.getBit(buf, off, 7),
         type: util.getBitAllignedNumber(buf, off, 1, 7),
-        length: Token.UINT24_BE.get(buf, off + 1)
+        length: UINT24_BE.get(buf, off + 1)
       };
     }
   };
@@ -208,20 +208,20 @@ class Metadata {
     get: (buf: Buffer, off: number): IBlockStreamInfo => {
       return {
         // The minimum block size (in samples) used in the stream.
-        minimumBlockSize: Token.UINT16_BE.get(buf, off),
+        minimumBlockSize: UINT16_BE.get(buf, off),
         // The maximum block size (in samples) used in the stream.
         // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-        maximumBlockSize: Token.UINT16_BE.get(buf, off + 2) / 1000,
+        maximumBlockSize: UINT16_BE.get(buf, off + 2) / 1000,
         // The minimum frame size (in bytes) used in the stream.
         // May be 0 to imply the value is not known.
-        minimumFrameSize: Token.UINT24_BE.get(buf, off + 4),
+        minimumFrameSize: UINT24_BE.get(buf, off + 4),
         // The maximum frame size (in bytes) used in the stream.
         // May be 0 to imply the value is not known.
-        maximumFrameSize: Token.UINT24_BE.get(buf, off + 7),
+        maximumFrameSize: UINT24_BE.get(buf, off + 7),
         // Sample rate in Hz. Though 20 bits are available,
         // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
         // Also, a value of 0 is invalid.
-        sampleRate: Token.UINT24_BE.get(buf, off + 10) >> 4,
+        sampleRate: UINT24_BE.get(buf, off + 10) >> 4,
         // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
         // (number of channels)-1. FLAC supports from 1 to 8 channels
         channels: util.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
@@ -233,7 +233,7 @@ class Metadata {
         // A value of zero here means the number of total samples is unknown.
         totalSamples: util.getBitAllignedNumber(buf, off + 13, 4, 36),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new Token.Uint8ArrayType(16).get(buf, off + 18)
+        fileMD5: new Uint8ArrayType(16).get(buf, off + 18)
       };
     }
   };

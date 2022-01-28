@@ -57,12 +57,7 @@ export class WavPackParser extends BasicParser {
 
       const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
 
-      if (header.blockIndex === 0) {
-        // Meta-data block
-        await this.parseMetadataSubBlock(header, ignoreBytes);
-      } else {
-        await this.tokenizer.ignore(ignoreBytes);
-      }
+      await (header.blockIndex === 0 ? this.parseMetadataSubBlock(header, ignoreBytes) : this.tokenizer.ignore(ignoreBytes));
       if (header.blockSamples > 0) {
         this.audioDataSize += header.blockSize; // Count audio data for bit-rate calculation
       }
