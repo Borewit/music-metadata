@@ -4,7 +4,7 @@ import { DataType, IContainerType } from './types';
  * Elements of document type description
  * Derived from https://github.com/tungol/EBML/blob/master/doctypes/matroska.dtd
  * Extended with:
- *  https://www.matroska.org/technical/specs/index.html
+ * - https://www.matroska.org/technical/specs/index.html
  */
 export const elements: IContainerType = {
   0x1a45dfa3: { // 5.1
@@ -232,15 +232,15 @@ export const elements: IContainerType = {
                   0x98: {name: 'hidden', value: DataType.bool},
                   0x4598: {name: 'enabled', value: DataType.uid},
                   0x8f: {name: 'track', container:  {
-                      0x89: {name: 'trackNumber', value: DataType.uid},
-                      0x80: {
-                        name: 'display', container: {
-                          0x85: {name: 'string', value: DataType.string},
-                          0x437c: {name: 'language ', value: DataType.string},
-                          0x437e: {name: 'country ', value: DataType.string}
-                        }
+                    0x89: {name: 'trackNumber', value: DataType.uid},
+                    0x80: {
+                      name: 'display', container: {
+                        0x85: {name: 'string', value: DataType.string},
+                        0x437c: {name: 'language ', value: DataType.string},
+                        0x437e: {name: 'country ', value: DataType.string}
                       }
                     }
+                  }
                   }
                 }
               }

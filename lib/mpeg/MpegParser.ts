@@ -306,7 +306,7 @@ export class MpegParser extends AbstractID3Parser {
   /**
    * Called after ID3 headers have been parsed
    */
-  public async _parse(): Promise<void> {
+  public async postId3v2Parse(): Promise<void> {
 
     this.metadata.setFormat('lossless', false);
 
@@ -423,11 +423,7 @@ export class MpegParser extends AbstractID3Parser {
     this.metadata.setFormat('sampleRate', header.samplingRate);
 
     this.frameCount++;
-    if (header.version >= 2 && header.layer === 0) {
-      return this.parseAdts(header); // ADTS, usually AAC
-    } else {
-      return this.parseAudioFrameHeader(header); // MP3
-    }
+    return header.version >= 2 && header.layer === 0 ? this.parseAdts(header) : this.parseAudioFrameHeader(header);
   }
 
   /**
@@ -594,9 +590,9 @@ export class MpegParser extends AbstractID3Parser {
    */
   private async readXingInfoHeader(): Promise<IXingInfoTag> {
 
-    const _offset = this.tokenizer.position;
+    const offset = this.tokenizer.position;
     const infoTag = await readXingHeader(this.tokenizer);
-    this.offset += this.tokenizer.position - _offset;
+    this.offset += this.tokenizer.position - offset;
 
     if (infoTag.lame) {
       this.metadata.setFormat('tool', 'LAME ' + common.stripNulls(infoTag.lame.version));

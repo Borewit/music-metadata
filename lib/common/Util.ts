@@ -154,16 +154,12 @@ export function toRatio(value: string): IRatio {
   // @ts-ignore
   if (ps.length >= 1) {
     const v = parseFloat(ps[0]);
-    if (ps.length === 2 && ps[1] === 'db') {
-      return {
-        dB: v,
-        ratio: dbToRatio(v)
-      };
-    } else {
-      return {
-        dB: ratioToDb(v),
-        ratio: v
-      };
-    }
+    return ps.length === 2 && ps[1] === 'db' ? {
+      dB: v,
+      ratio: dbToRatio(v)
+    } : {
+      dB: ratioToDb(v),
+      ratio: v
+    };
   }
 }

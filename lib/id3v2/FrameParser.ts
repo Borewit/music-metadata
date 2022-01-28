@@ -76,7 +76,7 @@ export class FrameParser {
    * @param major - Major version, e.g. (4) for  id3v2.4
    * @param warningCollector - Used to collect decode issue
    */
-  constructor(private major: ID3v2MajorVersion,  private warningCollector: IWarningCollector)  {
+  constructor(private major: ID3v2MajorVersion, private warningCollector: IWarningCollector) {
   }
 
   public readData(b: Buffer, type: string, includeCovers: boolean) {
@@ -250,22 +250,22 @@ export class FrameParser {
         break;
 
       case 'GEOB': {  // General encapsulated object
-          fzero = util.findZero(b, offset + 1, length, encoding);
-          const mimeType = util.decodeString(b.slice(offset + 1, fzero), defaultEnc);
-          offset = fzero + 1;
-          fzero = util.findZero(b, offset, length - offset, encoding);
-          const filename = util.decodeString(b.slice(offset, fzero), defaultEnc);
-          offset = fzero + 1;
-          fzero = util.findZero(b, offset, length - offset, encoding);
-          const description = util.decodeString(b.slice(offset, fzero), defaultEnc);
-          output = {
-            type: mimeType,
-            filename,
-            description,
-            data: b.slice(offset + 1, length)
-          };
-          break;
-        }
+        fzero = util.findZero(b, offset + 1, length, encoding);
+        const mimeType = util.decodeString(b.slice(offset + 1, fzero), defaultEnc);
+        offset = fzero + 1;
+        fzero = util.findZero(b, offset, length - offset, encoding);
+        const filename = util.decodeString(b.slice(offset, fzero), defaultEnc);
+        offset = fzero + 1;
+        fzero = util.findZero(b, offset, length - offset, encoding);
+        const description = util.decodeString(b.slice(offset, fzero), defaultEnc);
+        output = {
+          type: mimeType,
+          filename,
+          description,
+          data: b.slice(offset + 1, length)
+        };
+        break;
+      }
 
       // W-Frames:
       case 'WCOM':
@@ -281,13 +281,13 @@ export class FrameParser {
         break;
 
       case 'WXXX': {
-          // Decode URL
-          fzero = util.findZero(b, offset + 1, length, encoding);
-          const description = util.decodeString(b.slice(offset + 1, fzero), encoding);
-          offset = fzero + (encoding === 'utf16le' ? 2 : 1);
-          output = {description, url: util.decodeString(b.slice(offset, length), defaultEnc)};
-          break;
-        }
+        // Decode URL
+        fzero = util.findZero(b, offset + 1, length, encoding);
+        const description = util.decodeString(b.slice(offset + 1, fzero), encoding);
+        offset = fzero + (encoding === 'utf16le' ? 2 : 1);
+        output = {description, url: util.decodeString(b.slice(offset, length), defaultEnc)};
+        break;
+      }
 
       case 'WFD':
       case 'WFED':

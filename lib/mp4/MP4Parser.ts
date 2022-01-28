@@ -23,7 +23,7 @@ interface ISoundSampleDescription {
   description?: {
     numAudioChannels?: number;
     /**
-     *  number of bits in each uncompressed sound sample
+     * Number of bits in each uncompressed sound sample
      */
     sampleSize?: number;
     /**
@@ -32,7 +32,7 @@ interface ISoundSampleDescription {
     compressionId?: number;
     packetSize?: number;
     sampleRate?: number;
-  }
+  };
 }
 
 interface ITrackDescription extends AtomToken.ITrackHeaderAtom {
@@ -165,7 +165,7 @@ export class MP4Parser extends BasicParser {
         this.addWarning(errMsg);
         break;
       }
-      const rootAtom = await Atom.readAtom(this.tokenizer, (atom, remaining)  => this.handleAtom(atom, remaining), null, remainingFileSize);
+      const rootAtom = await Atom.readAtom(this.tokenizer, (atom, remaining) => this.handleAtom(atom, remaining), null, remainingFileSize);
       remainingFileSize -= rootAtom.header.length === BigInt(0) ? remainingFileSize : Number(rootAtom.header.length);
     }
 
@@ -392,9 +392,9 @@ export class MP4Parser extends BasicParser {
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
      */
     mvhd: async (len: number) => {
-      const _mvhd = await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
-      this.metadata.setFormat('creationTime', _mvhd.creationTime);
-      this.metadata.setFormat('modificationTime', _mvhd.modificationTime);
+      const mvhd = await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
+      this.metadata.setFormat('creationTime', mvhd.creationTime);
+      this.metadata.setFormat('modificationTime', mvhd.modificationTime);
     },
 
     /**

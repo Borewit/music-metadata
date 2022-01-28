@@ -6,12 +6,12 @@ import { FourCcToken } from '../common/FourCC';
 /**
  * APETag versionIndex history / supported formats
  *
- *  1.0 (1000) - Original APE tag spec.  Fully supported by this code.
- *  2.0 (2000) - Refined APE tag spec (better streaming support, UTF StringEncoding). Fully supported by this code.
+ * 1.0 (1000) - Original APE tag spec.  Fully supported by this code.
+ * 2.0 (2000) - Refined APE tag spec (better streaming support, UTF StringEncoding). Fully supported by this code.
  *
- *  Notes:
- *  - also supports reading of ID3v1.1 tags
- *  - all saving done in the APE Tag format using CURRENT_APE_TAG_VERSION
+ * Notes:
+ * - also supports reading of ID3v1.1 tags
+ * - all saving done in the APE Tag format using CURRENT_APE_TAG_VERSION
  *
  * APE File Format Overview: (pieces in order -- only valid for the latest versionIndex APE files)
  *

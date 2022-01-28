@@ -78,9 +78,9 @@ export interface IAtomMvhd extends IAtomMxhd {
   // reserved: number,
 
   /**
-   *  Matrix structure: The matrix structure associated with this movie.
-   *  A matrix shows how to map points from one coordinate space into another.
-   *  See Matrices for a discussion of how display matrices are used in QuickTime.
+   * Matrix structure: The matrix structure associated with this movie.
+   * A matrix shows how to map points from one coordinate space into another.
+   * See Matrices for a discussion of how display matrices are used in QuickTime.
    */
   // matrixStructure: ???;
 
@@ -242,8 +242,8 @@ const SecondsSinceMacEpoch: IGetToken<Date> = {
 /**
  * Token: Media Header Atom
  * Ref:
- *   https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
- *   https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
+ * - https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-SW34
+ * - https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
  */
 export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
 
@@ -566,7 +566,7 @@ export const SoundSampleDescriptionVersion: IGetToken<ISoundSampleDescriptionVer
 export interface ISoundSampleDescriptionV0 {
   numAudioChannels: number;
   /**
-   *  number of bits in each uncompressed sound sample
+   * Number of bits in each uncompressed sound sample
    */
   sampleSize: number;
   /**

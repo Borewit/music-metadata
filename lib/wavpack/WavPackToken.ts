@@ -9,7 +9,7 @@ import { FourCcToken } from '../common/FourCC';
  * 32-byte little-endian header at the front of every WavPack block
  *
  * Ref:
- *  http://www.wavpack.com/WavPack5FileFormat.pdf (page 2/6: 2.0 "Block Header")
+ * - http://www.wavpack.com/WavPack5FileFormat.pdf (page 2/6: 2.0 "Block Header")
  */
 export interface IBlockHeader {
   // should be equal to 'wvpk' for WavPack
@@ -123,7 +123,7 @@ export class WavPack {
 
   /**
    * 3.0 Metadata Sub-Blocks
-   *  Ref: http://www.wavpack.com/WavPack5FileFormat.pdf (page 4/6: 3.0 "Metadata Sub-Block")
+   * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf (page 4/6: 3.0 "Metadata Sub-Block")
    */
   public static MetadataIdToken: IGetToken<IMetadataId> = {
     len: 1,

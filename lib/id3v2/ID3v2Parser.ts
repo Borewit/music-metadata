@@ -128,21 +128,13 @@ export class ID3v2Parser {
 
     this.headerType = ('ID3v2.' + id3Header.version.major) as TagType;
 
-    if (id3Header.flags.isExtendedHeader) {
-      return this.parseExtendedHeader();
-    } else {
-      return this.parseId3Data(id3Header.size);
-    }
+    return id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size);
   }
 
   public async parseExtendedHeader(): Promise<void> {
     const extendedHeader = await this.tokenizer.readToken(ExtendedHeader);
     const dataRemaining = extendedHeader.size - ExtendedHeader.len;
-    if (dataRemaining > 0) {
-      return this.parseExtendedHeaderData(dataRemaining, extendedHeader.size);
-    } else {
-      return this.parseId3Data(this.id3Header.size - extendedHeader.size);
-    }
+    return dataRemaining > 0 ? this.parseExtendedHeaderData(dataRemaining, extendedHeader.size) : this.parseId3Data(this.id3Header.size - extendedHeader.size);
   }
 
   public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
@@ -193,8 +185,8 @@ export class ID3v2Parser {
       const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
-         this.metadata.addWarning('Illegal ID3v2 tag length');
-         break;
+        this.metadata.addWarning('Illegal ID3v2 tag length');
+        break;
       }
 
       const frameHeaderBytes = data.slice(offset, offset += frameHeaderLength);

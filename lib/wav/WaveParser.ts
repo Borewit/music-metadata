@@ -17,10 +17,10 @@ const debug = initDebug('music-metadata:parser:RIFF');
  * WAVE PCM soundfile format
  *
  * Ref:
- *  http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html
- *  http://soundfile.sapp.org/doc/WaveFormat
+ * - http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html
+ * - http://soundfile.sapp.org/doc/WaveFormat
  *
- *  ToDo: Split WAVE part from RIFF parser
+ * ToDo: Split WAVE part from RIFF parser
  */
 export class WaveParser extends BasicParser {
 

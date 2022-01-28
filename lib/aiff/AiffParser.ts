@@ -15,8 +15,8 @@ const debug = initDebug('music-metadata:parser:aiff');
  * AIFF - Audio Interchange File Format
  *
  * Ref:
- *  http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/AIFF.html
- *  http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Docs/AIFF-1.3.pdf
+ * - http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/AIFF.html
+ * - http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Docs/AIFF-1.3.pdf
  */
 export class AIFFParser extends BasicParser {
 

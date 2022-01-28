@@ -1,12 +1,12 @@
 import { EndOfStreamError, ITokenizer } from 'strtok3/lib/core';
-import * as _debug from 'debug';
+import * as initDebug from 'debug';
 
 import { ID3v2Header } from './ID3v2Token';
 import { ID3v2Parser } from './ID3v2Parser';
 import { ID3v1Parser } from '../id3v1/ID3v1Parser';
 import { BasicParser } from '../common/BasicParser';
 
-const debug = _debug('music-metadata:parser:ID3');
+const debug = initDebug('music-metadata:parser:ID3');
 
 /**
  * Abstract parser which tries take ID3v2 and ID3v1 headers.
@@ -34,7 +34,7 @@ export abstract class AbstractID3Parser extends BasicParser {
   /**
    * Called after ID3v2 headers are parsed
    */
-  public abstract _parse(): Promise<void>;
+  public abstract postId3v2Parse(): Promise<void>;
 
   protected finalize() {
     return;
@@ -44,7 +44,7 @@ export abstract class AbstractID3Parser extends BasicParser {
     await this.tryReadId3v2Headers();
 
     debug('End of ID3v2 header, go to MPEG-parser: pos=%s', this.tokenizer.position);
-    await this._parse();
+    await this.postId3v2Parse();
     if (this.options.skipPostHeaders && this.metadata.hasAny()) {
       this.finalize();
     } else {
