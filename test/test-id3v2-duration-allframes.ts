@@ -3,7 +3,7 @@ import {assert} from 'chai';
 import * as mm from '../lib';
 
 import * as path from 'path';
-import { samplePath } from './util.js';
+import { samplePath } from './util';
 
 const t = assert;
 
