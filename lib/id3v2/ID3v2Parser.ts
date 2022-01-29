@@ -97,9 +97,9 @@ export class ID3v2Parser {
 
   /**
    * Create a combined tag key, of tag & description
-   * @param {string} tag e.g.: COM
-   * @param {string} description e.g. iTunPGAP
-   * @returns {string} e.g. COM:iTunPGAP
+   * @param tag e.g.: COM
+   * @param description e.g. iTunPGAP
+   * @returns string e.g. COM:iTunPGAP
    */
   private static makeDescriptionTagName(tag: string, description: string): string {
     return tag + (description ? ':' + description : '');

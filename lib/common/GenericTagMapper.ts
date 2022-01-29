@@ -75,8 +75,8 @@ export class CommonTagMapper implements IGenericTagMapper {
 
   /**
    * Handle post mapping exceptions / correction
-   * @param {string} tag Tag e.g. {"©alb", "Buena Vista Social Club")
-   * @param {warnings} Used to register warnings
+   * @param tag Tag e.g. {"©alb", "Buena Vista Social Club")
+   * @param warnings Used to register warnings
    */
   protected postMap(tag: ITag, warnings: IWarningCollector): void {
     return;

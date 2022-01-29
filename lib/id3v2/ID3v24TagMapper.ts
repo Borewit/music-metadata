@@ -167,8 +167,8 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
 
   /**
    * Handle post mapping exceptions / correction
-   * @param {string} tag to post map
-   * @param warnings USed to register warnings
+   * @param tag to post map
+   * @param warnings Wil be used to register (collect) warnings
    * @return Common value e.g. "Buena Vista Social Club"
    */
   protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {

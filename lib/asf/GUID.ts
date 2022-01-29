@@ -74,7 +74,7 @@ export default class GUID {
    * Decode GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
    * @param objectId Binary GUID
    * @param offset Read offset in bytes, default 0
-   * @returns {string} GUID as dashed hexadecimal representation
+   * @returns GUID as dashed hexadecimal representation
    */
   public static decode(objectId: Buffer, offset: number = 0): string {
     const guid = objectId.readUInt32LE(offset).toString(16) + "-" +
@@ -88,10 +88,10 @@ export default class GUID {
 
   /**
    * Decode stream type
-   * @param {string} mediaType
-   * @returns {string}
+   * @param mediaType Media type GUID
+   * @returns Media type
    */
-  public static decodeMediaType(mediaType: GUID): string {
+  public static decodeMediaType(mediaType: GUID): 'audio' | 'video' | 'command' | 'degradable-jpeg' | 'file-transfer' | 'binary' | undefined {
     switch (mediaType.str) {
       case GUID.AudioMedia.str: return 'audio';
       case GUID.VideoMedia.str: return 'video';
@@ -105,7 +105,7 @@ export default class GUID {
   /**
    * Encode GUID
    * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
-   * @returns {Buffer} Encoded Bnary GUID
+   * @returns Encoded Binary GUID
    */
   public static encode(str: string): Buffer {
     const bin = Buffer.alloc(16);
