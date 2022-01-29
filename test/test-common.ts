@@ -7,7 +7,7 @@ import { CombinedTagMapper } from '../lib/common/CombinedTagMapper';
 import { joinArtists } from '../lib/common/MetadataCollector';
 import { parseHttpContentType } from '../lib/ParserFactory';
 
-import { samplePath } from './util.js';
+import { samplePath } from './util';
 
 describe('GenericTagMap', () => {
 

@@ -15,6 +15,7 @@
   "plugins": [
     "eslint-plugin-import",
     "eslint-plugin-jsdoc",
+    "eslint-plugin-node",
     "eslint-plugin-unicorn",
     "@typescript-eslint"
   ],
@@ -190,6 +191,8 @@
     "no-unused-labels": "error",
     "no-use-before-define": "off",
     "no-var": "error",
+    "node/file-extension-in-import": ["off"],
+    "node/no-extraneous-import": "error",
     "object-shorthand": "error",
     "one-var": [
       "error",
