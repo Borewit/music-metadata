@@ -116,7 +116,7 @@
     "remark-cli": "^10.0.1",
     "remark-preset-lint-recommended": "^6.1.2",
     "source-map-support": "^0.5.21",
-    "ts-node": "^10.3.0",
+    "ts-node": "^10.5.0",
     "typescript": "^4.5.5"
   },
   "engines": {
