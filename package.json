@@ -108,7 +108,7 @@
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-jsdoc": "^37.8.2",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-unicorn": "^40.1.0",
+    "eslint-plugin-unicorn": "^41.0.0",
     "mime": "^3.0.0",
     "mocha": "^9.2.0",
     "npm-run-all": "^4.1.5",
