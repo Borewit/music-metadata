@@ -10,7 +10,7 @@ export interface IBroadcastAudioExtensionChunk {
   timeReferenceLow: number,
   timeReferenceHigh: number,
   version: number,
-  umid: Buffer,
+  umid: Uint8Array,
 }
 
 /**
@@ -20,21 +20,21 @@ export interface IBroadcastAudioExtensionChunk {
 export const BroadcastAudioExtensionChunk: IGetToken<IBroadcastAudioExtensionChunk> = {
   len: 420,
 
-  get: (buf, off) => {
+  get: (uint8array, off) => {
     return {
-      description: new Token.StringType(256, 'ascii').get(buf, off).trim(),
-      originator: new Token.StringType(32, 'ascii').get(buf, off + 256).trim(),
-      originatorReference: new Token.StringType(32, 'ascii').get(buf, off + 288).trim(),
-      originationDate: new Token.StringType(10, 'ascii').get(buf, off + 320).trim(),
-      originationTime: new Token.StringType(8, 'ascii').get(buf, off + 330).trim(),
-      timeReferenceLow: Token.UINT32_LE.get(buf, off + 338),
-      timeReferenceHigh: Token.UINT32_LE.get(buf, off + 342),
-      version: Token.UINT16_LE.get(buf, off + 346),
-      umid: new Token.BufferType(64).get(buf, off + 348),
-      loudnessValue: Token.UINT16_LE.get(buf, off + 412),
-      maxTruePeakLevel: Token.UINT16_LE.get(buf, off + 414),
-      maxMomentaryLoudness: Token.UINT16_LE.get(buf, off + 416),
-      maxShortTermLoudness: Token.UINT16_LE.get(buf, off + 418)
+      description: new Token.StringType(256, 'ascii').get(uint8array, off).trim(),
+      originator: new Token.StringType(32, 'ascii').get(uint8array, off + 256).trim(),
+      originatorReference: new Token.StringType(32, 'ascii').get(uint8array, off + 288).trim(),
+      originationDate: new Token.StringType(10, 'ascii').get(uint8array, off + 320).trim(),
+      originationTime: new Token.StringType(8, 'ascii').get(uint8array, off + 330).trim(),
+      timeReferenceLow: Token.UINT32_LE.get(uint8array, off + 338),
+      timeReferenceHigh: Token.UINT32_LE.get(uint8array, off + 342),
+      version: Token.UINT16_LE.get(uint8array, off + 346),
+      umid: new Token.Uint8ArrayType(64).get(uint8array, off + 348),
+      loudnessValue: Token.UINT16_LE.get(uint8array, off + 412),
+      maxTruePeakLevel: Token.UINT16_LE.get(uint8array, off + 414),
+      maxMomentaryLoudness: Token.UINT16_LE.get(uint8array, off + 416),
+      maxShortTermLoudness: Token.UINT16_LE.get(uint8array, off + 418)
     };
   }
 };
