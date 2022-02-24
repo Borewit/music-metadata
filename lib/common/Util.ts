@@ -63,18 +63,18 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
 /**
  * Decode string
  */
-export function decodeString(buffer: Buffer, encoding: StringEncoding): string {
+export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): string {
   // annoying workaround for a double BOM issue
   // https://github.com/leetreveil/musicmetadata/issues/84
-  if (buffer[0] === 0xFF && buffer[1] === 0xFE) { // little endian
-    return decodeString(buffer.subarray(2), encoding);
-  } else if (encoding === 'utf16le' &&  buffer[0] === 0xFE && buffer[1] === 0xFF) {
+  if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) { // little endian
+    return decodeString(uint8Array.subarray(2), encoding);
+  } else if (encoding === 'utf16le' &&  uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
     // BOM, indicating big endian decoding
-    if ((buffer.length & 1) !== 0)
+    if ((uint8Array.length & 1) !== 0)
       throw new Error('Expected even number of octets for 16-bit unicode string');
-    return decodeString(swapBytes(buffer), encoding);
+    return decodeString(swapBytes(uint8Array), encoding);
   }
-  return buffer.toString(encoding);
+  return Buffer.from(uint8Array).toString(encoding);
 }
 
 export function stripNulls(str: string): string {
