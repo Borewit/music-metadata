@@ -37,11 +37,11 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
   const fileTokenizer = await strtok3.fromFile(filePath);
 
-  const fileReader = new RandomFileReader(filePath, fileTokenizer.fileInfo.size);
+  const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size);
   try {
     await Core.scanAppendingHeaders(fileReader, options);
   } finally {
-    fileReader.close();
+    await fileReader.close();
   }
 
   try {

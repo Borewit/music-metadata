@@ -7,10 +7,7 @@ import { IRandomReader } from '../type';
  */
 export class RandomFileReader implements IRandomReader {
 
-  private readonly fd: number;
-
-  constructor(filePath: string, public fileSize: number) {
-    this.fd = fs.openSync(filePath, 'r');
+  private constructor(private readonly fileHandle: fs.promises.FileHandle, public filePath: string, public fileSize: number) {
   }
 
   /**
@@ -21,19 +18,17 @@ export class RandomFileReader implements IRandomReader {
    * @param position {number} is an argument specifying where to begin reading from in the file.
    * @return {Promise<number>} bytes read
    */
-  public randomRead(buffer: Buffer, offset: number, length: number, position: number): Promise<number> {
-    return new Promise((resolve, reject) => {
-      fs.read(this.fd, buffer, offset, length, position, (err, bytesRead) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(bytesRead);
-        }
-      });
-    });
+  public async randomRead(buffer: Buffer, offset: number, length: number, position: number): Promise<number> {
+    const result = await this.fileHandle.read(buffer, offset, length, position);
+    return result.bytesRead;
   }
 
-  public close() {
-    fs.closeSync(this.fd);
+  public async close() {
+    return this.fileHandle.close();
+  }
+
+  public static async init(filePath: string, fileSize: number): Promise<RandomFileReader> {
+    const fileHandle = await fs.promises.open(filePath, 'r');
+    return new RandomFileReader(fileHandle, filePath, fileSize);
   }
 }
