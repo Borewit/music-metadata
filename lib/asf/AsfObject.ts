@@ -557,8 +557,9 @@ export class MetadataObjectState extends State<ITag[]> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): ITag[] {
+  public get(uint8Array: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
+    const buf = Buffer.from(uint8Array);
     const descriptionRecordsCount = buf.readUInt16LE(off);
     let pos = off + 2;
     for (let i = 0; i < descriptionRecordsCount; i += 1) {
@@ -573,10 +574,6 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += nameLen;
       const data = buf.slice(pos, pos + dataLen);
       pos += dataLen;
-      const parseAttr = AsfUtil.getParserForAttr(dataType);
-      if (!parseAttr) {
-        throw new Error('unexpected value headerType: ' + dataType);
-      }
       this.postProcessTag(tags, name, dataType, data);
     }
     return tags;
