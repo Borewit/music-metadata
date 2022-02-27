@@ -1,4 +1,4 @@
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 import * as Token from 'token-types';
 
 import { ITokenParser } from '../ParserFactory';

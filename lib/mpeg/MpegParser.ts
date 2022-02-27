@@ -1,6 +1,6 @@
 import * as Token from 'token-types';
 import { EndOfStreamError } from 'strtok3/lib/core';
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 
 import * as common from '../common/Util';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';

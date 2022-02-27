@@ -1,5 +1,5 @@
 import { ITokenizer } from 'strtok3/lib/core';
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 
 import { IOptions } from '../../type';
 import { INativeMetadataCollector } from '../../common/MetadataCollector';

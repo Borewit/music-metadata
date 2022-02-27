@@ -1,6 +1,6 @@
 import * as Token from 'token-types';
 import { ITokenizer, IGetToken } from 'strtok3/lib/core';
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 
 import * as util from '../../common/Util';
 

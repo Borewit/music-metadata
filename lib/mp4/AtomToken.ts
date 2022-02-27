@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 import { IToken, IGetToken } from 'strtok3/lib/core';
 
 import { FourCcToken } from '../common/FourCC';

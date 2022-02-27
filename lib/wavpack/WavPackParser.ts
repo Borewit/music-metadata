@@ -6,7 +6,7 @@ import { BasicParser } from '../common/BasicParser';
 
 import { IBlockHeader, IMetadataId, WavPack } from './WavPackToken';
 
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 
 const debug = initDebug('music-metadata:parser:WavPack');
 
