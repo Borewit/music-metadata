@@ -11,8 +11,8 @@ export class AsfUtil {
     return AsfUtil.attributeParsers[i];
   }
 
-  public static parseUnicodeAttr(buf): string {
-    return util.stripNulls(util.decodeString(buf, 'utf16le'));
+  public static parseUnicodeAttr(uint8Array: Uint8Array): string {
+    return util.stripNulls(util.decodeString(uint8Array, 'utf16le'));
   }
 
   private static attributeParsers: AttributeParser[] = [
@@ -25,10 +25,8 @@ export class AsfUtil {
     AsfUtil.parseByteArrayAttr
   ];
 
-  private static parseByteArrayAttr(buf: Buffer): Buffer {
-    const newBuf = Buffer.alloc(buf.length);
-    buf.copy(newBuf);
-    return newBuf;
+  private static parseByteArrayAttr(buf: Uint8Array): Buffer {
+    return Buffer.from(buf);
   }
 
   private static parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
