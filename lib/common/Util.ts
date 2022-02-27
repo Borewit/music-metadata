@@ -86,16 +86,16 @@ export function stripNulls(str: string): string {
 /**
  * Read bit-aligned number start from buffer
  * Total offset in bits = byteOffset * 8 + bitOffset
- * @param buf Byte buffer
+ * @param source Byte buffer
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = lsb
  * @param len Length of number in bits
- * @return {number} decoded bit aligned number
+ * @return Decoded bit aligned number
  */
-export function getBitAllignedNumber(buf: Uint8Array, byteOffset: number, bitOffset: number, len: number): number {
+export function getBitAllignedNumber(source: Uint8Array, byteOffset: number, bitOffset: number, len: number): number {
   const byteOff = byteOffset + ~~(bitOffset / 8);
   const bitOff = bitOffset % 8;
-  let value = buf[byteOff];
+  let value = source[byteOff];
   value &= 0xff >> bitOff;
   const bitsRead = 8 - bitOff;
   const bitsLeft = len - bitsRead;
@@ -103,7 +103,7 @@ export function getBitAllignedNumber(buf: Uint8Array, byteOffset: number, bitOff
     value >>= (8 - bitOff - len);
   } else if (bitsLeft > 0) {
     value <<= bitsLeft;
-    value |= getBitAllignedNumber(buf, byteOffset, bitOffset + bitsRead, bitsLeft);
+    value |= getBitAllignedNumber(source, byteOffset, bitOffset + bitsRead, bitsLeft);
   }
   return value;
 }
@@ -111,13 +111,13 @@ export function getBitAllignedNumber(buf: Uint8Array, byteOffset: number, bitOff
 /**
  * Read bit-aligned number start from buffer
  * Total offset in bits = byteOffset * 8 + bitOffset
- * @param buf Byte buffer
+ * @param source Byte Uint8Array
  * @param byteOffset Starting offset in bytes
- * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is least significant bit
- * @return {number} decoded bit aligned number
+ * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is the least significant bit
+ * @return True if bit is set
  */
-export function isBitSet(buf: Uint8Array, byteOffset: number, bitOffset: number): boolean {
-  return getBitAllignedNumber(buf, byteOffset, bitOffset, 1) === 1;
+export function isBitSet(source: Uint8Array, byteOffset: number, bitOffset: number): boolean {
+  return getBitAllignedNumber(source, byteOffset, bitOffset, 1) === 1;
 }
 
 export function a2hex(str: string) {

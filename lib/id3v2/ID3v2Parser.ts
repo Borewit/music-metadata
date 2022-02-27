@@ -31,7 +31,7 @@ interface IFrameHeader {
 
 export class ID3v2Parser {
 
-  public static removeUnsyncBytes(buffer: Buffer): Buffer {
+  public static removeUnsyncBytes(buffer: Uint8Array): Uint8Array {
     let readI = 0;
     let writeI = 0;
     while (readI < buffer.length - 1) {
@@ -59,7 +59,7 @@ export class ID3v2Parser {
     }
   }
 
-  private static readFrameFlags(b: Buffer): IFrameFlags {
+  private static readFrameFlags(b: Uint8Array): IFrameFlags {
     return {
       status: {
         tag_alter_preservation: util.getBit(b, 0, 6),
@@ -76,20 +76,20 @@ export class ID3v2Parser {
     };
   }
 
-  private static readFrameData(buf: Buffer, frameHeader: IFrameHeader, majorVer: ID3v2MajorVersion, includeCovers: boolean, warningCollector: IWarningCollector) {
+  private static readFrameData(uint8Array: Uint8Array, frameHeader: IFrameHeader, majorVer: ID3v2MajorVersion, includeCovers: boolean, warningCollector: IWarningCollector) {
     const frameParser = new FrameParser(majorVer, warningCollector);
     switch (majorVer) {
       case 2:
-        return frameParser.readData(buf, frameHeader.id, includeCovers);
+        return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       case 3:
       case 4:
         if (frameHeader.flags.format.unsynchronisation) {
-          buf = ID3v2Parser.removeUnsyncBytes(buf);
+          uint8Array = ID3v2Parser.removeUnsyncBytes(uint8Array);
         }
         if (frameHeader.flags.format.data_length_indicator) {
-          buf = buf.slice(4, buf.length);
+          uint8Array = uint8Array.slice(4, uint8Array.length);
         }
-        return frameParser.readData(buf, frameHeader.id, includeCovers);
+        return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
         throw new Error('Unexpected majorVer: ' + majorVer);
     }
@@ -138,15 +138,13 @@ export class ID3v2Parser {
   }
 
   public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
-    const buffer = Buffer.alloc(dataRemaining);
-    await this.tokenizer.readBuffer(buffer, {length: dataRemaining});
+    await this.tokenizer.ignore(dataRemaining);
     return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
-    const buffer = Buffer.alloc(dataLen);
-    await this.tokenizer.readBuffer(buffer, {length: dataLen});
-    for (const tag of this.parseMetadata(buffer)) {
+    const uint8Array = await this.tokenizer.readToken(new Token.Uint8ArrayType(dataLen));
+    for (const tag of this.parseMetadata(uint8Array)) {
       if (tag.id === 'TXXX') {
         if (tag.value) {
           for (const text of tag.value.text) {
@@ -175,7 +173,7 @@ export class ID3v2Parser {
     this.metadata.addTag(this.headerType, id, value);
   }
 
-  private parseMetadata(data: Buffer): ITag[] {
+  private parseMetadata(data: Uint8Array): ITag[] {
     let offset = 0;
     const tags: { id: string, value: any }[] = [];
 
@@ -201,14 +199,14 @@ export class ID3v2Parser {
     return tags;
   }
 
-  private readFrameHeader(v: Buffer, majorVer: number): IFrameHeader {
+  private readFrameHeader(uint8Array: Uint8Array, majorVer: number): IFrameHeader {
     let header: IFrameHeader;
     switch (majorVer) {
 
       case 2:
         header = {
-          id: v.toString('ascii', 0, 3),
-          length: Token.UINT24_BE.get(v, 3)
+          id: Buffer.from(uint8Array.slice(0, 3)).toString('ascii'),
+          length: Token.UINT24_BE.get(uint8Array, 3)
         };
         if (!header.id.match(/[A-Z0-9]{3}/g)) {
           this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
@@ -218,9 +216,9 @@ export class ID3v2Parser {
       case 3:
       case 4:
         header = {
-          id: v.toString('ascii', 0, 4),
-          length: (majorVer === 4 ?  UINT32SYNCSAFE : Token.UINT32_BE).get(v, 4),
-          flags: ID3v2Parser.readFrameFlags(v.slice(8, 10))
+          id:  Buffer.from(uint8Array.slice(0, 4)).toString('ascii'),
+          length: (majorVer === 4 ?  UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
+          flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10))
         };
         if (!header.id.match(/[A-Z0-9]{4}/g)) {
           this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
