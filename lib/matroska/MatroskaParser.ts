@@ -1,5 +1,5 @@
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 import { ITokenizer } from 'strtok3/lib/core';
 
 import { INativeMetadataCollector } from '../common/MetadataCollector';

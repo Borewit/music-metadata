@@ -5,7 +5,7 @@ import {
   INativeTags, IOptions, IQualityInformation, IPicture, ITrackInfo, TrackType
 } from '../type';
 
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 import { IGenericTag, TagType, isSingleton, isUnique } from './GenericTagTypes';
 import { CombinedTagMapper } from './CombinedTagMapper';
 import { CommonTagMapper } from './GenericTagMapper';

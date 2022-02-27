@@ -1,10 +1,10 @@
-import * as _debug from 'debug';
+import initDebug from 'debug';
 
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
 import { ChunkHeader, DsdChunk, FormatChunk, IChunkHeader, IDsdChunk, IFormatChunk } from './DsfChunk';
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 
-const debug = _debug('music-metadata:parser:DSF');
+const debug = initDebug('music-metadata:parser:DSF');
 
 /**
  * DSF (dsd stream file) File Parser

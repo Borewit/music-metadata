@@ -1,6 +1,6 @@
 import * as strtok3 from 'strtok3/lib/core';
 import * as Token from 'token-types';
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 
 import * as riff from '../riff/RiffChunk';
 import * as WaveChunk from './../wav/WaveChunk';

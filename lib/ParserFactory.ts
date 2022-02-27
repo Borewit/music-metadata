@@ -4,7 +4,7 @@ import * as FileType from 'file-type/core';
 import * as ContentType from 'content-type';
 import * as MimeType from 'media-typer';
 
-import * as _debug from 'debug';
+import initDebug from 'debug';
 import { INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector';
 import { AIFFParser } from './aiff/AiffParser';
 import { APEv2Parser } from './apev2/APEv2Parser';
@@ -20,7 +20,7 @@ import { DsfParser } from './dsf/DsfParser';
 import { DsdiffParser } from './dsdiff/DsdiffParser';
 import { MatroskaParser } from './matroska/MatroskaParser';
 
-const debug = _debug('music-metadata:parser:factory');
+const debug = initDebug('music-metadata:parser:factory');
 
 export interface ITokenParser {
 

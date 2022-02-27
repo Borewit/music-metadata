@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import * as _debug from 'debug';
+import initDebug from 'debug';
 
 import {IOptions} from '../../type';
 import {INativeMetadataCollector} from '../../common/MetadataCollector';
@@ -8,7 +8,7 @@ import * as Ogg from '../Ogg';
 import { VorbisDecoder } from './VorbisDecoder';
 import { CommonHeader, IdentificationHeader, IVorbisPicture, VorbisPictureToken } from './Vorbis';
 
-const debug = _debug('music-metadata:parser:ogg:vorbis1');
+const debug = initDebug('music-metadata:parser:ogg:vorbis1');
 
 /**
  * Vorbis 1 Parser.

@@ -4,12 +4,12 @@ import * as strtok3 from 'strtok3';
 import * as Core from './core';
 import { ParserFactory } from './ParserFactory';
 import { IAudioMetadata, IOptions } from './type';
-import * as _debug from 'debug';
+import initDebug from 'debug';
 import { RandomFileReader } from './common/RandomFileReader';
 
 export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type';
 
-const debug = _debug("music-metadata:parser");
+const debug = initDebug("music-metadata:parser");
 
 export { parseFromTokenizer, parseBuffer, IFileInfo, selectCover } from './core';
 

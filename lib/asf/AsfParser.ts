@@ -1,4 +1,4 @@
-import * as initDebug from 'debug';
+import initDebug from 'debug';
 
 import { ITag, TrackType } from '../type';
 import GUID from './GUID';
