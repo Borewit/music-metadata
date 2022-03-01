@@ -172,8 +172,11 @@ export class APEv2Parser extends BasicParser {
           await this.tokenizer.ignore(tagItemHeader.size);
           break;
 
-        default:
-          throw new Error(`Unexpected data-type: ${tagItemHeader.flags.dataType}`);
+        case DataType.reserved:
+          debug(`Ignore external info ${key}`);
+          this.metadata.addWarning(`APEv2 header declares a reserved datatype for "${key}"`);
+          await this.tokenizer.ignore(tagItemHeader.size);
+          break;
       }
     }
   }
