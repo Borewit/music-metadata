@@ -136,8 +136,8 @@ export interface ITextEncoding {
 export const TextEncodingToken: IGetToken<ITextEncoding> = {
   len: 1,
 
-  get: (buf: Buffer, off: number): ITextEncoding => {
-    switch (buf.readUInt8(off)) {
+  get: (uint8Array: Uint8Array, off: number): ITextEncoding => {
+    switch (uint8Array[off]) {
       case 0x00:
         return {encoding: 'latin1'}; // binary
       case 0x01:
