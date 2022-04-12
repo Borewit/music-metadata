@@ -99,7 +99,7 @@
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.21",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
-    "@typescript-eslint/parser": "^5.17.0",
+    "@typescript-eslint/parser": "^5.19.0",
     "chai": "^4.3.6",
     "coveralls": "^3.1.1",
     "del-cli": "4.0.1",
