@@ -118,7 +118,7 @@
     "remark-preset-lint-recommended": "^6.1.2",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.7.0",
-    "typescript": "^4.6.3"
+    "typescript": "^4.6.4"
   },
   "engines": {
     "node": ">=10"
