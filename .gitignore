@@ -1,0 +1,17 @@
+node_modules/
+.idea/
+*.iml
+src/
+test/**/*.js
+test/**/*.js.map
+test/**/*.d.ts
+lib/**/*.js
+lib/**/*.js.map
+lib/**/*.d.ts
+doc-gen/**/*.js
+doc-gen/**/*.map
+test/samples/originals
+test/_test-issues.ts
+coverage/
+.nyc_output/
+test/samples/zeroes.flac

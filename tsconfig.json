@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "inlineSources": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2017"
+  }
+}

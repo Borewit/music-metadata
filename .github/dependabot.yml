@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "04:00"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    versioning-strategy: increase
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: [ "version-update:semver-patch" ]
+      - dependency-name: "@types/jasmine"
+        update-types: [ "version-update:semver-patch" ]
