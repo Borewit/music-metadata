@@ -1,5 +1,5 @@
-import * as util from './Util';
-import { IToken } from 'strtok3/lib/core';
+import * as util from "./Util";
+import { IToken } from "strtok3/lib/core";
 
 const validFourCC = /^[\x21-\x7e©][\x20-\x7e\x00()]{3}/;
 
@@ -11,20 +11,21 @@ export const FourCcToken: IToken<string> = {
   len: 4,
 
   get: (buf: Buffer, off: number): string => {
-    const id = buf.toString('binary', off, off + FourCcToken.len);
+    const id = buf.toString("binary", off, off + FourCcToken.len);
     switch (id) {
       default:
         if (!id.match(validFourCC)) {
-          throw new Error(`FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`);
+          throw new Error(
+            `FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`
+          );
         }
     }
     return id;
   },
 
   put: (buffer: Buffer, offset: number, id: string) => {
-    const str = Buffer.from(id, 'binary');
-    if (str.length !== 4)
-      throw new Error('Invalid length');
+    const str = Buffer.from(id, "binary");
+    if (str.length !== 4) throw new Error("Invalid length");
     return str.copy(buffer, offset);
-  }
+  },
 };

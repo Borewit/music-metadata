@@ -1,18 +1,18 @@
-import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
-import initDebug from 'debug';
-import { ITokenizer, IGetToken } from 'strtok3/lib/core';
+import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "token-types";
+import initDebug from "debug";
+import { ITokenizer, IGetToken } from "strtok3/lib/core";
 
-import * as util from '../common/Util';
-import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis';
-import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
-import { FourCcToken } from '../common/FourCC';
-import { VorbisParser } from '../ogg/vorbis/VorbisParser';
-import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { IOptions } from '../type';
-import { ITokenParser } from '../ParserFactory';
-import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';
+import * as util from "../common/Util";
+import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/Vorbis";
+import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
+import { FourCcToken } from "../common/FourCC";
+import { VorbisParser } from "../ogg/vorbis/VorbisParser";
+import { INativeMetadataCollector } from "../common/MetadataCollector";
+import { IOptions } from "../type";
+import { ITokenParser } from "../ParserFactory";
+import { VorbisDecoder } from "../ogg/vorbis/VorbisDecoder";
 
-const debug = initDebug('music-metadata:parser:FLAC');
+const debug = initDebug("music-metadata:parser:FLAC");
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -25,11 +25,10 @@ enum BlockType {
   SEEKTABLE = 3,
   VORBIS_COMMENT = 4,
   CUESHEET = 5,
-  PICTURE = 6
+  PICTURE = 6,
 }
 
 export class FlacParser extends AbstractID3Parser {
-
   private vorbisParser: VorbisParser;
 
   private padding: number = 0;
@@ -40,31 +39,38 @@ export class FlacParser extends AbstractID3Parser {
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
    */
-  public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
+  public init(
+    metadata: INativeMetadataCollector,
+    tokenizer: ITokenizer,
+    options: IOptions
+  ): ITokenParser {
     super.init(metadata, tokenizer, options);
     this.vorbisParser = new VorbisParser(metadata, options);
     return this;
   }
 
   public async postId3v2Parse(): Promise<void> {
-
     const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
-    if (fourCC.toString() !== 'fLaC') {
-      throw new Error('Invalid FLAC preamble');
+    if (fourCC.toString() !== "fLaC") {
+      throw new Error("Invalid FLAC preamble");
     }
 
     let blockHeader: IBlockHeader;
     do {
       // Read block header
-      blockHeader = await this.tokenizer.readToken<IBlockHeader>(Metadata.BlockHeader);
+      blockHeader = await this.tokenizer.readToken<IBlockHeader>(
+        Metadata.BlockHeader
+      );
       // Parse block data
       await this.parseDataBlock(blockHeader);
-    }
-    while (!blockHeader.lastBlock);
+    } while (!blockHeader.lastBlock);
 
     if (this.tokenizer.fileInfo.size && this.metadata.format.duration) {
       const dataSize = this.tokenizer.fileInfo.size - this.tokenizer.position;
-      this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
+      this.metadata.setFormat(
+        "bitrate",
+        (8 * dataSize) / this.metadata.format.duration
+      );
     }
   }
 
@@ -87,7 +93,7 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.PICTURE:
         return this.parsePicture(blockHeader.length).then();
       default:
-        this.metadata.addWarning('Unknown block type: ' + blockHeader.type);
+        this.metadata.addWarning("Unknown block type: " + blockHeader.type);
     }
     // Ignore data block
     return this.tokenizer.ignore(blockHeader.length).then();
@@ -97,19 +103,23 @@ export class FlacParser extends AbstractID3Parser {
    * Parse STREAMINFO
    */
   private async parseBlockStreamInfo(dataLen: number): Promise<void> {
-
     if (dataLen !== Metadata.BlockStreamInfo.len)
-      throw new Error('Unexpected block-stream-info length');
+      throw new Error("Unexpected block-stream-info length");
 
-    const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(Metadata.BlockStreamInfo);
-    this.metadata.setFormat('container', 'FLAC');
-    this.metadata.setFormat('codec', 'FLAC');
-    this.metadata.setFormat('lossless', true);
-    this.metadata.setFormat('numberOfChannels', streamInfo.channels);
-    this.metadata.setFormat('bitsPerSample', streamInfo.bitsPerSample);
-    this.metadata.setFormat('sampleRate', streamInfo.sampleRate);
+    const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(
+      Metadata.BlockStreamInfo
+    );
+    this.metadata.setFormat("container", "FLAC");
+    this.metadata.setFormat("codec", "FLAC");
+    this.metadata.setFormat("lossless", true);
+    this.metadata.setFormat("numberOfChannels", streamInfo.channels);
+    this.metadata.setFormat("bitsPerSample", streamInfo.bitsPerSample);
+    this.metadata.setFormat("sampleRate", streamInfo.sampleRate);
     if (streamInfo.totalSamples > 0) {
-      this.metadata.setFormat('duration', streamInfo.totalSamples / streamInfo.sampleRate);
+      this.metadata.setFormat(
+        "duration",
+        streamInfo.totalSamples / streamInfo.sampleRate
+      );
     }
   }
 
@@ -118,7 +128,9 @@ export class FlacParser extends AbstractID3Parser {
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private async parseComment(dataLen: number): Promise<void> {
-    const data = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(dataLen));
+    const data = await this.tokenizer.readToken<Uint8Array>(
+      new Uint8ArrayType(dataLen)
+    );
     const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
@@ -132,8 +144,10 @@ export class FlacParser extends AbstractID3Parser {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     } else {
-      const picture = await this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen));
-      this.vorbisParser.addTag('METADATA_BLOCK_PICTURE', picture);
+      const picture = await this.tokenizer.readToken<IVorbisPicture>(
+        new VorbisPictureToken(dataLen)
+      );
+      this.vorbisParser.addTag("METADATA_BLOCK_PICTURE", picture);
     }
   }
 }
@@ -144,9 +158,9 @@ export class FlacParser extends AbstractID3Parser {
  */
 interface IBlockHeader {
   // Last-metadata-block flag: '1' if this block is the last metadata block before the audio blocks, '0' otherwise.
-  lastBlock: boolean,
+  lastBlock: boolean;
   // BLOCK_TYPE
-  type: BlockType,
+  type: BlockType;
   // Length (in bytes) of metadata to follow (does not include the size of the METADATA_BLOCK_HEADER)
   length: number;
 }
@@ -156,36 +170,35 @@ interface IBlockHeader {
  * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
  */
 interface IBlockStreamInfo {
-  minimumBlockSize: number,
+  minimumBlockSize: number;
   // The maximum block size (in samples) used in the stream.
   // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-  maximumBlockSize: number,
+  maximumBlockSize: number;
   // The minimum frame size (in bytes) used in the stream.
   // May be 0 to imply the value is not known.
-  minimumFrameSize: number,
+  minimumFrameSize: number;
   // The maximum frame size (in bytes) used in the stream.
   // May be 0 to imply the value is not known.
-  maximumFrameSize: number,
+  maximumFrameSize: number;
   // Sample rate in Hz. Though 20 bits are available,
   // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
   // Also, a value of 0 is invalid.
-  sampleRate: number,
+  sampleRate: number;
   // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
   // (number of channels)-1. FLAC supports from 1 to 8 channels
-  channels: number,
+  channels: number;
   // bits per sample)-1.
   // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
-  bitsPerSample: number,
+  bitsPerSample: number;
   // Total samples in stream.
   // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
   // A value of zero here means the number of total samples is unknown.
-  totalSamples: number,
+  totalSamples: number;
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
   fileMD5: Uint8Array;
 }
 
 class Metadata {
-
   public static BlockHeader: IGetToken<IBlockHeader> = {
     len: 4,
 
@@ -193,9 +206,9 @@ class Metadata {
       return {
         lastBlock: util.getBit(buf, off, 7),
         type: util.getBitAllignedNumber(buf, off, 1, 7),
-        length: UINT24_BE.get(buf, off + 1)
+        length: UINT24_BE.get(buf, off + 1),
       };
-    }
+    },
   };
 
   /**
@@ -233,8 +246,8 @@ class Metadata {
         // A value of zero here means the number of total samples is unknown.
         totalSamples: util.getBitAllignedNumber(buf, off + 13, 4, 36),
         // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-        fileMD5: new Uint8ArrayType(16).get(buf, off + 18)
+        fileMD5: new Uint8ArrayType(16).get(buf, off + 18),
       };
-    }
+    },
   };
 }

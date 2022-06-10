@@ -1,22 +1,24 @@
-import { ITokenizer } from 'strtok3/lib/core';
-import initDebug from 'debug';
+import { ITokenizer } from "strtok3/lib/core";
+import initDebug from "debug";
 
-import { IOptions } from '../../type';
-import { INativeMetadataCollector } from '../../common/MetadataCollector';
-import * as Ogg from '../Ogg';
+import { IOptions } from "../../type";
+import { INativeMetadataCollector } from "../../common/MetadataCollector";
+import * as Ogg from "../Ogg";
 
-import { IdentificationHeader } from './Theora';
+import { IdentificationHeader } from "./Theora";
 
-const debug = initDebug('music-metadata:parser:ogg:theora');
+const debug = initDebug("music-metadata:parser:ogg:theora");
 
 /**
  * Ref:
  * - https://theora.org/doc/Theora.pdf
  */
 export class TheoraParser implements Ogg.IPageConsumer {
-
-  constructor(private metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
-  }
+  constructor(
+    private metadata: INativeMetadataCollector,
+    options: IOptions,
+    private tokenizer: ITokenizer
+  ) {}
 
   /**
    * Vorbis 1 parser
@@ -30,11 +32,11 @@ export class TheoraParser implements Ogg.IPageConsumer {
   }
 
   public flush() {
-    debug('flush');
+    debug("flush");
   }
 
   public calculateDuration(header: Ogg.IPageHeader) {
-    debug('duration calculation not implemented');
+    debug("duration calculation not implemented");
   }
 
   /**
@@ -43,10 +45,9 @@ export class TheoraParser implements Ogg.IPageConsumer {
    * @param {Buffer} pageData
    */
   protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
-    debug('First Ogg/Theora page');
-    this.metadata.setFormat('codec', 'Theora');
+    debug("First Ogg/Theora page");
+    this.metadata.setFormat("codec", "Theora");
     const idHeader = IdentificationHeader.get(pageData, 0);
-    this.metadata.setFormat('bitrate', idHeader.nombr);
+    this.metadata.setFormat("bitrate", idHeader.nombr);
   }
-
 }

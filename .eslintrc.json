@@ -107,8 +107,8 @@
     // "use-isnan": "error",
     // "valid-typeof": "error",
 
-    "arrow-parens": ["error", "as-needed"],
-    "comma-dangle": "error",
+    "arrow-parens": ["off", "as-needed"],
+    "comma-dangle": "off",
     "complexity": "off",
     /* Duplicate with "eslint:recommended" */
     /* Duplicate with "plugin:@typescript-eslint/base" */
@@ -565,7 +565,7 @@
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/dot-notation": "error",
     "@typescript-eslint/indent": [
-      "error",
+      "off",
       2,
       {
         "ObjectExpression": "first",

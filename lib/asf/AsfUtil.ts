@@ -1,18 +1,19 @@
-import * as Token from 'token-types';
+import * as Token from "token-types";
 
-import * as util from '../common/Util';
-import { DataType } from './AsfObject';
+import * as util from "../common/Util";
+import { DataType } from "./AsfObject";
 
-export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
+export type AttributeParser = (
+  buf: Buffer
+) => boolean | string | number | bigint | Buffer;
 
 export class AsfUtil {
-
   public static getParserForAttr(i: DataType): AttributeParser {
     return AsfUtil.attributeParsers[i];
   }
 
   public static parseUnicodeAttr(uint8Array: Uint8Array): string {
-    return util.stripNulls(util.decodeString(uint8Array, 'utf16le'));
+    return util.stripNulls(util.decodeString(uint8Array, "utf16le"));
   }
 
   private static attributeParsers: AttributeParser[] = [
@@ -22,7 +23,7 @@ export class AsfUtil {
     AsfUtil.parseDWordAttr,
     AsfUtil.parseQWordAttr,
     AsfUtil.parseWordAttr,
-    AsfUtil.parseByteArrayAttr
+    AsfUtil.parseByteArrayAttr,
   ];
 
   private static parseByteArrayAttr(buf: Uint8Array): Buffer {

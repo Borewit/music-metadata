@@ -4,13 +4,7 @@
     "sourceType": "module"
   },
   "rules": {
-    "quotes": [
-      "error",
-      "single"
-    ],
-    "semi": [
-      "error",
-      "always"
-    ]
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"]
   }
 }

@@ -1,76 +1,74 @@
-import * as Token from 'token-types';
-import initDebug from 'debug';
-import { IToken, IGetToken } from 'strtok3/lib/core';
+import * as Token from "token-types";
+import initDebug from "debug";
+import { IToken, IGetToken } from "strtok3/lib/core";
 
-import { FourCcToken } from '../common/FourCC';
+import { FourCcToken } from "../common/FourCC";
 
-const debug = initDebug('music-metadata:parser:MP4:atom');
+const debug = initDebug("music-metadata:parser:MP4:atom");
 
 interface IVersionAndFlags {
   /**
    * A 1-byte specification of the version
    */
-  version: number,
+  version: number;
 
   /**
    * Three bytes of space for (future) flags.
    */
-  flags: number,
+  flags: number;
 }
 
 export interface IAtomHeader {
-  length: bigint,
-  name: string
+  length: bigint;
+  name: string;
 }
 
 export interface IAtomFtyp {
-  type: string
+  type: string;
 }
 
 /**
  * Common interface for the mvhd (Movie Header) & mdhd (Media) atom
  */
 export interface IAtomMxhd extends IVersionAndFlags {
-
   /**
    * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was created.
    * It is strongly recommended that this value should be specified using coordinated universal time (UTC).
    */
-  creationTime: Date,
+  creationTime: Date;
 
   /**
    * A 32-bit integer that specifies (in seconds since midnight, January 1, 1904) when the media atom was changed.
    * It is strongly recommended that this value should be specified using coordinated universal time (UTC).
    */
-  modificationTime: Date,
+  modificationTime: Date;
 
   /**
    * A time value that indicates the time scale for this media—that is, the number of time units that pass per second in its time coordinate system.
    */
-  timeScale: number,
+  timeScale: number;
 
   /**
    * Duration: the duration of this media in units of its time scale.
    */
-  duration: number,
+  duration: number;
 }
 
 /**
  * Interface for the parsed Movie Header Atom (mvhd)
  */
 export interface IAtomMvhd extends IAtomMxhd {
-
   /**
    * Preferred rate: a 32-bit fixed-point number that specifies the rate at which to play this movie.
    * A value of 1.0 indicates normal rate.
    */
-  preferredRate: number,
+  preferredRate: number;
 
   /**
    * Preferred volume: A 16-bit fixed-point number that specifies how loud to play this movie’s sound.
    * A value of 1.0 indicates full volume.
    */
-  preferredVolume: number,
+  preferredVolume: number;
 
   /**
    * Reserved: Ten bytes reserved for use by Apple. Set to 0.
@@ -87,7 +85,7 @@ export interface IAtomMvhd extends IAtomMxhd {
   /**
    * Preview time: The time value in the movie at which the preview begins.
    */
-  previewTime: number,
+  previewTime: number;
 
   /**
    * Preview duration: The duration of the movie preview in movie time scale units.
@@ -97,27 +95,27 @@ export interface IAtomMvhd extends IAtomMxhd {
   /**
    * Poster time: The time value of the time of the movie poster.
    */
-  posterTime: number,
+  posterTime: number;
 
   /**
    * selection time: The time value for the start time of the current selection.
    */
-  selectionTime: number,
+  selectionTime: number;
 
   /**
    * Selection duration:  The duration of the current selection in movie time scale units.
    */
-  selectionDuration: number,
+  selectionDuration: number;
 
   /**
    * Current time:  The time value for current time position within the movie.
    */
-  currentTime: number
+  currentTime: number;
 
   /**
    * Next track ID:  A 32-bit integer that indicates a value to use for the track ID number of the next track added to this movie. Note that 0 is not a valid track ID value.
    */
-  nextTrackID: number
+  nextTrackID: number;
 }
 
 /**
@@ -125,12 +123,11 @@ export interface IAtomMvhd extends IAtomMxhd {
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW13
  */
 export interface IMovieHeaderAtom extends IVersionAndFlags {
-
   /**
    * A 32-bit unsigned integer indicating the value to use for the item ID of the next item created or assigned an item ID.
    * If the value is all ones, it indicates that future additions will require a search for an unused item ID.
    */
-  nextItemID: number
+  nextItemID: number;
 }
 
 export const Header: IToken<IAtomHeader> = {
@@ -138,19 +135,18 @@ export const Header: IToken<IAtomHeader> = {
 
   get: (buf: Buffer, off: number): IAtomHeader => {
     const length = Token.UINT32_BE.get(buf, off);
-    if (length < 0)
-      throw new Error('Invalid atom header length');
+    if (length < 0) throw new Error("Invalid atom header length");
 
     return {
       length: BigInt(length),
-      name: new Token.StringType(4, 'binary').get(buf, off + 4)
+      name: new Token.StringType(4, "binary").get(buf, off + 4),
     };
   },
 
   put: (buf: Buffer, off: number, hdr: IAtomHeader) => {
     Token.UINT32_BE.put(buf, off, Number(hdr.length));
     return FourCcToken.put(buf, off + 4, hdr.name);
-  }
+  },
 };
 
 /**
@@ -163,9 +159,9 @@ export const ftyp: IGetToken<IAtomFtyp> = {
 
   get: (buf: Buffer, off: number): IAtomFtyp => {
     return {
-      type: new Token.StringType(4, 'ascii').get(buf, off)
+      type: new Token.StringType(4, "ascii").get(buf, off),
     };
-  }
+  },
 };
 
 export const tkhd: IGetToken<IAtomFtyp> = {
@@ -173,9 +169,9 @@ export const tkhd: IGetToken<IAtomFtyp> = {
 
   get: (buf: Buffer, off: number): IAtomFtyp => {
     return {
-      type: new Token.StringType(4, 'ascii').get(buf, off)
+      type: new Token.StringType(4, "ascii").get(buf, off),
     };
-  }
+  },
 };
 
 /**
@@ -188,9 +184,9 @@ export const mhdr: IGetToken<IMovieHeaderAtom> = {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      nextItemID: Token.UINT32_BE.get(buf, off + 4)
+      nextItemID: Token.UINT32_BE.get(buf, off + 4),
     };
-  }
+  },
 };
 
 /**
@@ -206,9 +202,13 @@ export abstract class FixedLengthAtom {
    */
   protected constructor(public len: number, expLen: number, atomId: string) {
     if (len < expLen) {
-      throw new Error(`Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`);
+      throw new Error(
+        `Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`
+      );
     } else if (len > expLen) {
-      debug(`Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`);
+      debug(
+        `Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`
+      );
     }
   }
 }
@@ -223,9 +223,9 @@ export interface IAtomMdhd extends IAtomMxhd {
    * Also see Extended Language Tag Atom for the preferred code to use here if an extended language tag is also included in the media atom.
    * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap4/qtff4.html#//apple_ref/doc/uid/TP40000939-CH206-34353
    */
-  language: number,
+  language: number;
 
-  quality: number
+  quality: number;
 }
 
 /**
@@ -237,7 +237,8 @@ const SecondsSinceMacEpoch: IGetToken<Date> = {
   get: (buf: Buffer, off: number): Date => {
     const secondsSinceUnixEpoch = Token.UINT32_BE.get(buf, off) - 2082844800;
     return new Date(secondsSinceUnixEpoch * 1000);
-  }};
+  },
+};
 
 /**
  * Token: Media Header Atom
@@ -246,9 +247,8 @@ const SecondsSinceMacEpoch: IGetToken<Date> = {
  * - https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
  */
 export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
-
   public constructor(public len: number) {
-    super(len, 24, 'mdhd');
+    super(len, 24, "mdhd");
   }
 
   public get(buf: Buffer, off: number): IAtomMdhd {
@@ -260,7 +260,7 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
       timeScale: Token.UINT32_BE.get(buf, off + 12),
       duration: Token.UINT32_BE.get(buf, off + 16),
       language: Token.UINT16_BE.get(buf, off + 20),
-      quality: Token.UINT16_BE.get(buf, off + 22)
+      quality: Token.UINT16_BE.get(buf, off + 22),
     };
   }
 }
@@ -269,9 +269,8 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
  * Token: Movie Header Atom
  */
 export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
-
   public constructor(public len: number) {
-    super(len, 100, 'mvhd');
+    super(len, 100, "mvhd");
   }
 
   public get(buf: Buffer, off: number): IAtomMvhd {
@@ -292,10 +291,9 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
       selectionTime: Token.UINT32_BE.get(buf, off + 84),
       selectionDuration: Token.UINT32_BE.get(buf, off + 88),
       currentTime: Token.UINT32_BE.get(buf, off + 92),
-      nextTrackID: Token.UINT32_BE.get(buf, off + 96)
+      nextTrackID: Token.UINT32_BE.get(buf, off + 96),
     };
   }
-
 }
 
 /**
@@ -312,13 +310,13 @@ export interface IDataAtom {
      * The set of types from which the type is drawn
      * If 0, type is drawn from the well-known set of types.
      */
-    set: number, // ToDo: enum?
-    type: number
-  },
+    set: number; // ToDo: enum?
+    type: number;
+  };
   /**
    * Locale Indicator
    */
-  locale: number,
+  locale: number;
   /**
    * An array of bytes containing the value of the metadata.
    */
@@ -329,18 +327,18 @@ export interface IDataAtom {
  * Data Atom Structure
  */
 export class DataAtom implements IGetToken<IDataAtom> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Uint8Array, off: number): IDataAtom {
     return {
       type: {
         set: Token.UINT8.get(buf, off + 0),
-        type: Token.UINT24_BE.get(buf, off + 1)
+        type: Token.UINT24_BE.get(buf, off + 1),
       },
       locale: Token.UINT24_BE.get(buf, off + 4),
-      value: Buffer.from(new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8))
+      value: Buffer.from(
+        new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8)
+      ),
     };
   }
 }
@@ -350,7 +348,6 @@ export class DataAtom implements IGetToken<IDataAtom> {
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW32
  */
 export interface INameAtom extends IVersionAndFlags {
-
   /**
    * An array of bytes containing the value of the metadata.
    */
@@ -362,15 +359,13 @@ export interface INameAtom extends IVersionAndFlags {
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW31
  */
 export class NameAtom implements IGetToken<INameAtom> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Buffer, off: number): INameAtom {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      name: new Token.StringType(this.len - 4, 'utf-8').get(buf, off + 4)
+      name: new Token.StringType(this.len - 4, "utf-8").get(buf, off + 4),
     };
   }
 }
@@ -380,7 +375,6 @@ export class NameAtom implements IGetToken<INameAtom> {
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
 export interface ITrackHeaderAtom extends IVersionAndFlags {
-
   /**
    * Creation Time
    */
@@ -418,24 +412,21 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
    * The choice may be based on such considerations as playback quality, language, or the capabilities of the computer.
    * A value of zero indicates that the track is not in an alternate track group.
    */
-  alternateGroup: number,
+  alternateGroup: number;
 
   /**
    * A 16-bit fixed-point value that indicates how loudly this track’s sound is to be played.
    * A value of 1.0 indicates normal volume.
    */
-  volume: number
+  volume: number;
 }
-
 
 /**
  * Track Header Atoms structure
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
 export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Buffer, off: number): ITrackHeaderAtom {
     return {
@@ -448,7 +439,7 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
       duration: Token.UINT32_BE.get(buf, off + 20),
       layer: Token.UINT16_BE.get(buf, off + 24),
       alternateGroup: Token.UINT16_BE.get(buf, off + 26),
-      volume: Token.UINT16_BE.get(buf, off + 28) // ToDo: fixed point
+      volume: Token.UINT16_BE.get(buf, off + 28), // ToDo: fixed point
       // ToDo: add remaining fields
     };
   }
@@ -472,9 +463,9 @@ const stsdHeader: IGetToken<IAtomStsdHeader> = {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      numberOfEntries: Token.UINT32_BE.get(buf, off + 4)
+      numberOfEntries: Token.UINT32_BE.get(buf, off + 4),
     };
-  }
+  },
 };
 
 /**
@@ -496,16 +487,13 @@ export interface IAtomStsd {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
 class SampleDescriptionTable implements IGetToken<ISampleDescription> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Buffer, off: number): ISampleDescription {
-
     return {
       dataFormat: FourCcToken.get(buf, off),
       dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10),
-      description: new Token.Uint8ArrayType(this.len - 12).get(buf, off + 12)
+      description: new Token.Uint8ArrayType(this.len - 12).get(buf, off + 12),
     };
   }
 }
@@ -515,12 +503,9 @@ class SampleDescriptionTable implements IGetToken<ISampleDescription> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
 export class StsdAtom implements IGetToken<IAtomStsd> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Buffer, off: number): IAtomStsd {
-
     const header = stsdHeader.get(buf, off);
     off += stsdHeader.len;
 
@@ -535,7 +520,7 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
 
     return {
       header,
-      table
+      table,
     };
   }
 }
@@ -550,18 +535,18 @@ export interface ISoundSampleDescriptionVersion {
  * Common Sound Sample Description (version & revision)
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-57317
  */
-export const SoundSampleDescriptionVersion: IGetToken<ISoundSampleDescriptionVersion> = {
+export const SoundSampleDescriptionVersion: IGetToken<ISoundSampleDescriptionVersion> =
+  {
+    len: 8,
 
-  len: 8,
-
-  get(buf: Buffer, off: number): ISoundSampleDescriptionVersion {
-    return {
-      version: Token.INT16_BE.get(buf, off),
-      revision: Token.INT16_BE.get(buf, off + 2),
-      vendor: Token.INT32_BE.get(buf, off + 4)
-    };
-  }
-};
+    get(buf: Buffer, off: number): ISoundSampleDescriptionVersion {
+      return {
+        version: Token.INT16_BE.get(buf, off),
+        revision: Token.INT16_BE.get(buf, off + 2),
+        vendor: Token.INT32_BE.get(buf, off + 4),
+      };
+    },
+  };
 
 export interface ISoundSampleDescriptionV0 {
   numAudioChannels: number;
@@ -584,7 +569,6 @@ export interface ISoundSampleDescriptionV0 {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-130736
  */
 export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
-
   len: 12,
 
   get(buf: Buffer, off: number): ISoundSampleDescriptionV0 {
@@ -593,30 +577,35 @@ export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
       sampleSize: Token.INT16_BE.get(buf, off + 2),
       compressionId: Token.INT16_BE.get(buf, off + 4),
       packetSize: Token.INT16_BE.get(buf, off + 6),
-      sampleRate: Token.UINT16_BE.get(buf, off + 8) + Token.UINT16_BE.get(buf, off + 10) / 10000
+      sampleRate:
+        Token.UINT16_BE.get(buf, off + 8) +
+        Token.UINT16_BE.get(buf, off + 10) / 10000,
     };
-  }
+  },
 };
 
 export interface ITableAtom<T> extends IVersionAndFlags {
   numberOfEntries: number;
-  entries: T[]
+  entries: T[];
 }
 
 class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
-
-  public constructor(public len: number, private token: IGetToken<T>) {
-  }
+  public constructor(public len: number, private token: IGetToken<T>) {}
 
   public get(buf: Buffer, off: number): ITableAtom<T> {
-
     const nrOfEntries = Token.INT32_BE.get(buf, off + 4);
 
     return {
       version: Token.INT8.get(buf, off + 0),
       flags: Token.INT24_BE.get(buf, off + 1),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(buf, this.token, off + 8, this.len - 8, nrOfEntries)
+      entries: readTokenTable(
+        buf,
+        this.token,
+        off + 8,
+        this.len - 8,
+        nrOfEntries
+      ),
     };
   }
 }
@@ -627,15 +616,14 @@ export interface ITimeToSampleToken {
 }
 
 export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
-
   len: 8,
 
   get(buf: Buffer, off: number): ITimeToSampleToken {
     return {
       count: Token.INT32_BE.get(buf, off + 0),
-      duration: Token.INT32_BE.get(buf, off + 4)
+      duration: Token.INT32_BE.get(buf, off + 4),
     };
-  }
+  },
 };
 
 /**
@@ -659,16 +647,15 @@ export interface ISampleToChunk {
 }
 
 export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
-
   len: 12,
 
   get(buf: Buffer, off: number): ISampleToChunk {
     return {
       firstChunk: Token.INT32_BE.get(buf, off),
       samplesPerChunk: Token.INT32_BE.get(buf, off + 4),
-      sampleDescriptionId: Token.INT32_BE.get(buf, off + 8)
+      sampleDescriptionId: Token.INT32_BE.get(buf, off + 8),
     };
-  }
+  },
 };
 
 /**
@@ -693,12 +680,9 @@ export interface IStszAtom extends ITableAtom<number> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25710
  */
 export class StszAtom implements IGetToken<IStszAtom> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Buffer, off: number): IStszAtom {
-
     const nrOfEntries = Token.INT32_BE.get(buf, off + 8);
 
     return {
@@ -706,7 +690,13 @@ export class StszAtom implements IGetToken<IStszAtom> {
       flags: Token.INT24_BE.get(buf, off + 1),
       sampleSize: Token.INT32_BE.get(buf, off + 4),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(buf, Token.INT32_BE, off + 12, this.len - 12, nrOfEntries)
+      entries: readTokenTable(
+        buf,
+        Token.INT32_BE,
+        off + 12,
+        this.len - 12,
+        nrOfEntries
+      ),
     };
   }
 }
@@ -725,25 +715,30 @@ export class StcoAtom extends SimpleTableAtom<number> {
  * Token used to decode text-track from 'mdat' atom (raw data stream)
  */
 export class ChapterText implements IGetToken<string> {
-
-  public constructor(public len: number) {
-  }
+  public constructor(public len: number) {}
 
   public get(buf: Buffer, off: number): string {
     const titleLen = Token.INT16_BE.get(buf, off + 0);
-    const str = new Token.StringType(titleLen, 'utf-8');
+    const str = new Token.StringType(titleLen, "utf-8");
     return str.get(buf, off + 2);
   }
 }
 
-function readTokenTable<T>(buf: Buffer, token: IGetToken<T>, off: number, remainingLen: number, numberOfEntries: number): T[] {
+function readTokenTable<T>(
+  buf: Buffer,
+  token: IGetToken<T>,
+  off: number,
+  remainingLen: number,
+  numberOfEntries: number
+): T[] {
+  debug(
+    `remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`
+  );
 
-  debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
+  if (remainingLen === 0) return [];
 
-  if (remainingLen === 0)
-    return [];
-
-  if (remainingLen !== numberOfEntries * token.len) throw new Error('mismatch number-of-entries with remaining atom-length');
+  if (remainingLen !== numberOfEntries * token.len)
+    throw new Error("mismatch number-of-entries with remaining atom-length");
 
   const entries: T[] = [];
   // parse offset-table

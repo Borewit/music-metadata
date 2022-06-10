@@ -1,21 +1,22 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { assert } from "chai";
+import * as path from "path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import * as mm from "../lib";
+import { samplePath } from "./util";
 
-describe('Parse Sony DSF (DSD Stream File)', () => {
+describe("Parse Sony DSF (DSD Stream File)", () => {
+  const dsfSamplePath = path.join(samplePath, "dsf");
 
-  const dsfSamplePath = path.join(samplePath, 'dsf');
+  it("parse: 2L-110_stereo-5644k-1b_04.dsf", async () => {
+    const dsfFilePath = path.join(
+      dsfSamplePath,
+      "2L-110_stereo-5644k-1b_04_0.1-sec.dsf"
+    );
 
-  it('parse: 2L-110_stereo-5644k-1b_04.dsf', async () => {
-
-    const dsfFilePath = path.join(dsfSamplePath, '2L-110_stereo-5644k-1b_04_0.1-sec.dsf');
-
-    const metadata = await mm.parseFile(dsfFilePath, {duration: false});
+    const metadata = await mm.parseFile(dsfFilePath, { duration: false });
 
     // format chunk information
-    assert.strictEqual(metadata.format.container, 'DSF');
+    assert.strictEqual(metadata.format.container, "DSF");
     assert.strictEqual(metadata.format.lossless, true);
     assert.strictEqual(metadata.format.numberOfChannels, 2);
     assert.strictEqual(metadata.format.bitsPerSample, 1);
@@ -23,12 +24,14 @@ describe('Parse Sony DSF (DSD Stream File)', () => {
     assert.strictEqual(Number(metadata.format.numberOfSamples), 564480);
     assert.strictEqual(metadata.format.duration, 0.1);
     assert.strictEqual(metadata.format.bitrate, 11289600);
-    assert.deepStrictEqual(metadata.format.tagTypes, ['ID3v2.3']);
+    assert.deepStrictEqual(metadata.format.tagTypes, ["ID3v2.3"]);
 
     // ID3v2 chunk information
-    assert.strictEqual(metadata.common.title, 'Kyrie');
-    assert.strictEqual(metadata.common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim');
-    assert.deepStrictEqual(metadata.common.track, {no: 4, of: 12});
+    assert.strictEqual(metadata.common.title, "Kyrie");
+    assert.strictEqual(
+      metadata.common.artist,
+      "CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim"
+    );
+    assert.deepStrictEqual(metadata.common.track, { no: 4, of: 12 });
   });
-
 });

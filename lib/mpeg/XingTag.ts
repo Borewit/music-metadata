@@ -1,7 +1,7 @@
-import * as Token from 'token-types';
-import { IGetToken, ITokenizer } from 'strtok3/lib/core';
-import * as util from '../common/Util';
-import { ExtendedLameHeader, IExtendedLameHeader } from './ExtendedLameHeader';
+import * as Token from "token-types";
+import { IGetToken, ITokenizer } from "strtok3/lib/core";
+import * as util from "../common/Util";
+import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";
 
 export interface IXingHeaderFlags {
   frames: boolean;
@@ -13,26 +13,25 @@ export interface IXingHeaderFlags {
 /**
  * Info Tag: Xing, LAME
  */
-export const InfoTagHeaderTag = new Token.StringType(4, 'ascii');
+export const InfoTagHeaderTag = new Token.StringType(4, "ascii");
 
 /**
  * LAME TAG value
  * Did not find any official documentation for this
  * Value e.g.: "3.98.4"
  */
-export const LameEncoderVersion = new Token.StringType(6, 'ascii');
+export const LameEncoderVersion = new Token.StringType(6, "ascii");
 
 export interface IXingInfoTag {
-
   /**
    * total bit stream frames from Vbr header data
    */
-  numFrames?: number,
+  numFrames?: number;
 
   /**
    * Actual stream size = file size - header(s) size [bytes]
    */
-  streamSize?: number,
+  streamSize?: number;
 
   toc?: Buffer;
 
@@ -43,8 +42,8 @@ export interface IXingInfoTag {
 
   lame?: {
     version: string;
-    extended?: IExtendedLameHeader
-  }
+    extended?: IExtendedLameHeader;
+  };
 }
 
 /**
@@ -59,16 +58,18 @@ export const XingHeaderFlags: IGetToken<IXingHeaderFlags> = {
       frames: util.isBitSet(buf, off, 31),
       bytes: util.isBitSet(buf, off, 30),
       toc: util.isBitSet(buf, off, 29),
-      vbrScale: util.isBitSet(buf, off, 28)
+      vbrScale: util.isBitSet(buf, off, 28),
     };
-  }
+  },
 };
 
 // /**
 //  * XING Header Tag
 //  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
 //  */
-export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTag> {
+export async function readXingHeader(
+  tokenizer: ITokenizer
+): Promise<IXingInfoTag> {
   const flags = await tokenizer.readToken(XingHeaderFlags);
   const xingInfoTag: IXingInfoTag = {};
   if (flags.frames) {
@@ -84,18 +85,20 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
   if (flags.vbrScale) {
     xingInfoTag.vbrScale = await tokenizer.readToken(Token.UINT32_BE);
   }
-  const lameTag = await tokenizer.peekToken(new Token.StringType(4, 'ascii'));
-  if (lameTag === 'LAME') {
+  const lameTag = await tokenizer.peekToken(new Token.StringType(4, "ascii"));
+  if (lameTag === "LAME") {
     await tokenizer.ignore(4);
     xingInfoTag.lame = {
-      version: await tokenizer.readToken(new Token.StringType(5, 'ascii'))
+      version: await tokenizer.readToken(new Token.StringType(5, "ascii")),
     };
     const match = xingInfoTag.lame.version.match(/\d+.\d+/g);
     if (match) {
       const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
-      const version = majorMinorVersion.split('.').map(n => parseInt(n, 10));
+      const version = majorMinorVersion.split(".").map((n) => parseInt(n, 10));
       if (version[0] >= 3 && version[1] >= 90) {
-        xingInfoTag.lame.extended = await tokenizer.readToken(ExtendedLameHeader);
+        xingInfoTag.lame.extended = await tokenizer.readToken(
+          ExtendedLameHeader
+        );
       }
     }
   }

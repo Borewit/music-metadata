@@ -1,15 +1,11 @@
 {
   "compilerOptions": {
-    "sourceMap":  true,
+    "sourceMap": true,
     "inlineSources": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "allowJs": false,
     "target": "es5"
   },
-  "include": [
-    "../typings/**/*.d.ts",
-    "*.ts"
-  ]
+  "include": ["../typings/**/*.d.ts", "*.ts"]
 }
-
