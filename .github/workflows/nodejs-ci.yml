@@ -13,17 +13,14 @@ jobs:
         with:
           node-version: 18.x
 
-      - name: Install production dependencies, check node engine compatiblity
-        run: yarn install --production=true
-
-      - name: Install development dependencies
-        run: yarn install --production=false --ignore-engines
+      - name: Install dependencies
+        run: npm install
 
       - name: Build & Code analysis
-        run: yarn run lint
+        run: npm run lint
 
       - name: Build
-        run: yarn run build
+        run: npm run build
 
       - name: Upload build
         uses: actions/upload-artifact@v3
@@ -55,7 +52,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: yarn install --ignore-engines
+        run: npm install
 
       - name: Download build
         uses: actions/download-artifact@v3
@@ -63,7 +60,7 @@ jobs:
           name: build
 
       - name: Test with Node.js ${{ matrix.node-version }}
-        run: yarn run test:coverage
+        run: npm run test:coverage
 
       - name: Coveralls Parallel
         uses: coverallsapp/github-action@master
