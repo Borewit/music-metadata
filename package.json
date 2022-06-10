@@ -67,7 +67,7 @@
     "lib/**/*.d.ts"
   ],
   "scripts": {
-    "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts src/**/*.d.ts test/**/*.js test/**/*.js.map test/**/*.js test/**/*.js.map doc-gen/**/*.js doc-gen/**/*.js.map",
+    "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts src/**/*.d.ts test/**/*.js test/**/*.js.map test/**/*.js test/**/*.js.map doc-gen/**/*.js doc-gen/**/*.js.map doc-gen/**/*.d.ts example/typescript/**/*.js example/typescript/**/*.js.map example/typescript/**/*.d.ts",
     "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",

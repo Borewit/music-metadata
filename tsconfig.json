@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "inlineSources": false,
-    "module": "commonjs",
+    "module": "ESNext",
     "moduleResolution": "node",
-    "target": "ES2017"
-  }
+    "target": "ESNext"
+  },
+  "include": ["lib/**/*.ts", "test/**/*.ts", "doc-gen/**/*.ts", "example/**/*.ts"]
 }
