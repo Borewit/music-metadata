@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 import * as path from "path";
 
 import * as mm from "../lib";
@@ -155,7 +155,7 @@ describe("Parse MP3 files", () => {
   });
 
   it("should handle audio-frame-header-bug", function () {
-    this.timeout(15000); // It takes a long time to parse
+    // this.timeout(15000); // It takes a long time to parse
 
     const filePath = path.join(samplePath, "audio-frame-header-bug.mp3");
 
@@ -168,10 +168,10 @@ describe("Parse MP3 files", () => {
       // therefore it start counting actual parsable frames ending up on ~66.86
       assert.approximately(result.format.duration, 200.5, 1 / 10);
     });
-  });
+  }, 15000);
 
   it("should be able to parse: Sleep Away.mp3", function () {
-    this.timeout(15000); // Parsing this file can take a bit longer
+    // this.timeout(15000); // Parsing this file can take a bit longer
 
     const filePath = path.join(mp3SamplePath, "Sleep Away.mp3");
 
@@ -194,7 +194,7 @@ describe("Parse MP3 files", () => {
       assert.strictEqual(picture.format, "image/jpeg");
       assert.strictEqual(picture.data.length, 27852);
     });
-  });
+  }, 15000);
 
   // https://github.com/Borewit/music-metadata/issues/381
   it("should be able to handle empty ID3v2 tag", async () => {
@@ -346,7 +346,7 @@ describe("Parse MP3 files", () => {
       });
 
       describe("duration=true", function () {
-        this.timeout(15000); // Parsing this file can take a bit longer
+        // this.timeout(15000); // Parsing this file can take a bit longer
 
         Parsers.forEach((parser) => {
           it(parser.description, async () => {

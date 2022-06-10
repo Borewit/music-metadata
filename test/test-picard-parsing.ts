@@ -1,5 +1,5 @@
 /* eslint-disable dot-notation, @typescript-eslint/dot-notation */
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 import * as path from "path";
 import * as crypto from "crypto";
 import { TagType } from "../lib/common/GenericTagTypes";

@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -76,7 +76,7 @@ describe("Parse MPEG", () => {
     const buf = Buffer.alloc(emptyStreamSize).fill(0);
 
     it("should sync efficient from a stream", async function () {
-      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      // this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const streamReader = new SourceStream(buf);
 
@@ -85,10 +85,10 @@ describe("Parse MPEG", () => {
         { mimeType: "audio/mpeg" },
         { duration: true }
       );
-    });
+    },10000);
 
     it("should sync efficient, from a file", async function () {
-      this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      // this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const tmpFilePath = path.join(samplePath, "zeroes.mp3");
 
@@ -98,7 +98,7 @@ describe("Parse MPEG", () => {
       } finally {
         fs.unlinkSync(tmpFilePath);
       }
-    });
+    }, 10000);
   });
 
   describe("mpeg parsing fails for irrelevant attributes #14", () => {
@@ -108,7 +108,7 @@ describe("Parse MPEG", () => {
        * First frame is 224 kbps, rest 320 kbps
        * After id3v2.3, lots of 0 padding
        */
-      this.timeout(15000); // It takes a long time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+      // this.timeout(15000); // It takes a long time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
       const filePath = path.join(samplePath, "04 - You Don't Know.mp3");
 
@@ -189,14 +189,14 @@ describe("Parse MPEG", () => {
       checkCommon(result.common);
       checkID3v23(mm.orderTags(result.native["ID3v2.3"]));
       checkID3v1(mm.orderTags(result.native.ID3v1));
-    });
+    }, 15000);
 
     it("should decode 07 - I'm Cool.mp3", async function () {
       // 'LAME3.91' found on position 81BCF=531407
 
       const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
 
-      this.timeout(15000); // It takes a long time to parse
+      // this.timeout(15000); // It takes a long time to parse
 
       function checkFormat(format) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
@@ -256,7 +256,7 @@ describe("Parse MPEG", () => {
       checkFormat(result.format);
       checkCommon(result.common);
       checkID3v23(mm.orderTags(result.native["ID3v2.3"]));
-    });
+    }, 15000);
   });
 
   /**

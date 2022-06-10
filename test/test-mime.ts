@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 import * as mime from "mime";
 import * as fs from "fs";
 import * as path from "path";

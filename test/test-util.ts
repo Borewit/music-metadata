@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 
 import * as util from "../lib/common/Util";
 import { FourCcToken } from "../lib/common/FourCC";

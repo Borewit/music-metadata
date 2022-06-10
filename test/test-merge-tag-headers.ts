@@ -1,5 +1,5 @@
+import { describe, assert, it } from "vitest";
 import * as path from "path";
-import { assert } from "chai";
 
 import * as mm from "../lib";
 import { samplePath } from "./util";

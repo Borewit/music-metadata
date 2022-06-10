@@ -6,7 +6,8 @@
     "module": "CommonJS",
     // "module": "ESNext",
     "moduleResolution": "node",
-    "target": "ESNext"
+    "target": "ESNext",
+    "skipLibCheck": true
 
     // "strict": true,
 

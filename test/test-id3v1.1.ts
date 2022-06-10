@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 import * as path from "path";
 
 import * as mm from "../lib";
@@ -67,7 +67,7 @@ describe("Parsing MPEG / ID3v1", () => {
     const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
     Parsers.forEach((parser) => {
       it(parser.description, async function () {
-        this.timeout(15000); // Can take a bit longer
+        // this.timeout(15000); // Can take a bit longer
         const metadata = await parser.initParser(filePath, "audio/mpeg", {
           skipPostHeaders: true,
         });
@@ -76,7 +76,7 @@ describe("Parsing MPEG / ID3v1", () => {
           ["ID3v2.3"],
           "format.tagTypes"
         );
-      });
+      }, 15000);
     });
   });
 

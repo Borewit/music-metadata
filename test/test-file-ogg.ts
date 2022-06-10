@@ -1,4 +1,5 @@
-import { assert, expect } from "chai";
+import { describe, assert, it } from "vitest";
+import { expect } from "chai";
 import * as path from "path";
 
 import { Parsers } from "./metadata-parsers";
@@ -9,7 +10,7 @@ import { IdHeader } from "../lib/ogg/opus/Opus";
 const oggSamplePath = path.join(samplePath, "ogg");
 
 describe("Parse Ogg", function () {
-  this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+  // this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
   function check_Nirvana_In_Bloom_commonTags(common) {
     assert.strictEqual(common.title, "In Bloom", "common.title");

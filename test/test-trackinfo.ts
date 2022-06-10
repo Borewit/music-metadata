@@ -1,4 +1,4 @@
-import { assert } from "chai";
+import { describe, assert, it } from "vitest";
 import * as path from "path";
 
 import { TrackType } from "../lib/type";
