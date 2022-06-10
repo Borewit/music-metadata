@@ -20,3 +20,5 @@ test/samples/zeroes.flac
 example/typescript/*.js
 example/typescript/*.js.map
 example/typescript/*.d.ts
+
+dist/

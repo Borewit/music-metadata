@@ -70,7 +70,7 @@
     "clean": "del-cli lib/**/*.js lib/**/*.js.map lib/**/*.d.ts src/**/*.d.ts test/**/*.js test/**/*.js.map test/**/*.d.ts doc-gen/**/*.js doc-gen/**/*.js.map doc-gen/**/*.d.ts example/typescript/**/*.js example/typescript/**/*.js.map example/typescript/**/*.d.ts",
     "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
-    "compile-doc": "tsc -p doc-gen",
+    "compile-doc": "webpack --config webpack.doc-gen.config.js",
     "compile": "npm run compile-src && npm run compile-test && npm run compile-doc",
     "eslint": "eslint lib/**/*.ts --ignore-pattern lib/**/*.d.ts example/typescript/**/*.ts test/**/*.ts doc-gen/**/*.ts",
     "lint-md": "remark -u preset-lint-recommended .",
@@ -122,9 +122,13 @@
     "remark-cli": "^10.0.1",
     "remark-preset-lint-recommended": "^6.1.2",
     "source-map-support": "^0.5.21",
+    "ts-loader": "^9.3.0",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3",
-    "vitest": "^0.14.2"
+    "vitest": "^0.14.2",
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "engines": {
     "node": ">=10"
