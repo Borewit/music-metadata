@@ -85,7 +85,7 @@ describe("Parse MPEG", () => {
         { mimeType: "audio/mpeg" },
         { duration: true }
       );
-    },10000);
+    }, 10000);
 
     it("should sync efficient, from a file", async function () {
       // this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)

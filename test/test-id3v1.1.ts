@@ -66,17 +66,21 @@ describe("Parsing MPEG / ID3v1", () => {
   describe("it should skip id3v1 header if options.skipPostHeaders is set", () => {
     const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
     Parsers.forEach((parser) => {
-      it(parser.description, async function () {
-        // this.timeout(15000); // Can take a bit longer
-        const metadata = await parser.initParser(filePath, "audio/mpeg", {
-          skipPostHeaders: true,
-        });
-        assert.deepEqual(
-          metadata.format.tagTypes,
-          ["ID3v2.3"],
-          "format.tagTypes"
-        );
-      }, 15000);
+      it(
+        parser.description,
+        async function () {
+          // this.timeout(15000); // Can take a bit longer
+          const metadata = await parser.initParser(filePath, "audio/mpeg", {
+            skipPostHeaders: true,
+          });
+          assert.deepEqual(
+            metadata.format.tagTypes,
+            ["ID3v2.3"],
+            "format.tagTypes"
+          );
+        },
+        15000
+      );
     });
   });
 
