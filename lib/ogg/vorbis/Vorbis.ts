@@ -1,8 +1,8 @@
-import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import * as Token from "token-types";
+import { IGetToken } from "strtok3/lib/core";
 
-import {AttachedPictureType} from '../../id3v2/ID3v2Token';
-import {IPicture} from '../../type';
+import { AttachedPictureType } from "../../id3v2/ID3v2Token";
+import { IPicture } from "../../type";
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
@@ -11,17 +11,17 @@ import {IPicture} from '../../type';
  */
 export interface IVorbisPicture extends IPicture {
   // The picture type according to the ID3v2 APIC frame
-  type: string
+  type: string;
   // The description of the picture, in UTF-8.
-  description: string,
+  description: string;
   // The width of the picture in pixels.
-  width: number,
+  width: number;
   // The height of the picture in pixels.
-  height: number,
+  height: number;
   // The color depth of the picture in bits-per-pixel.
-  colour_depth: number,
+  colour_depth: number;
   // For indexed-color pictures (e.g. GIF), the number of colors used, or 0 for non-indexed pictures.
-  indexed_color: number
+  indexed_color: number;
 }
 
 /**
@@ -31,35 +31,36 @@ export interface IVorbisPicture extends IPicture {
  * // ToDo: move to ID3 / APIC?
  */
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
-
   public static fromBase64(base64str: string): IVorbisPicture {
-    return this.fromBuffer(Buffer.from(base64str, 'base64'));
+    return this.fromBuffer(Buffer.from(base64str, "base64"));
   }
 
   public static fromBuffer(buffer: Buffer): IVorbisPicture {
     const pic = new VorbisPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
-  constructor(public len) {
-  }
+  constructor(public len) {}
 
   public get(buffer: Buffer, offset: number): IVorbisPicture {
-
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
 
-    const mimeLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
+    const mimeLen = Token.UINT32_BE.get(buffer, (offset += 4));
+    const format = buffer.toString("utf-8", (offset += 4), offset + mimeLen);
 
-    const descLen = Token.UINT32_BE.get(buffer, offset += mimeLen);
-    const description = buffer.toString('utf-8', offset += 4, offset + descLen);
+    const descLen = Token.UINT32_BE.get(buffer, (offset += mimeLen));
+    const description = buffer.toString(
+      "utf-8",
+      (offset += 4),
+      offset + descLen
+    );
 
-    const width = Token.UINT32_BE.get(buffer, offset += descLen);
-    const height = Token.UINT32_BE.get(buffer, offset += 4);
-    const colour_depth = Token.UINT32_BE.get(buffer, offset += 4);
-    const indexed_color = Token.UINT32_BE.get(buffer, offset += 4);
+    const width = Token.UINT32_BE.get(buffer, (offset += descLen));
+    const height = Token.UINT32_BE.get(buffer, (offset += 4));
+    const colour_depth = Token.UINT32_BE.get(buffer, (offset += 4));
+    const indexed_color = Token.UINT32_BE.get(buffer, (offset += 4));
 
-    const picDataLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const data = Buffer.from(buffer.slice(offset += 4, offset + picDataLen));
+    const picDataLen = Token.UINT32_BE.get(buffer, (offset += 4));
+    const data = Buffer.from(buffer.slice((offset += 4), offset + picDataLen));
 
     return {
       type,
@@ -69,7 +70,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
       height,
       colour_depth,
       indexed_color,
-      data
+      data,
     };
   }
 }
@@ -87,11 +88,11 @@ export interface ICommonHeader {
   /**
    * Packet Type
    */
-  packetType: number,
+  packetType: number;
   /**
    * Should be 'vorbis'
    */
-  vorbis: string
+  vorbis: string;
 }
 
 /**
@@ -104,9 +105,9 @@ export const CommonHeader: IGetToken<ICommonHeader> = {
   get: (buf: Buffer, off): ICommonHeader => {
     return {
       packetType: buf.readUInt8(off),
-      vorbis: new Token.StringType(6, 'ascii').get(buf, off + 1)
+      vorbis: new Token.StringType(6, "ascii").get(buf, off + 1),
     };
-  }
+  },
 };
 
 /**
@@ -114,12 +115,12 @@ export const CommonHeader: IGetToken<ICommonHeader> = {
  * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
  */
 export interface IFormatInfo {
-  version: number,
-  channelMode: number,
-  sampleRate: number,
-  bitrateMax: number,
-  bitrateNominal: number,
-  bitrateMin: number
+  version: number;
+  channelMode: number;
+  sampleRate: number;
+  bitrateMax: number;
+  bitrateNominal: number;
+  bitrateMin: number;
 }
 
 /**
@@ -137,7 +138,7 @@ export const IdentificationHeader: IGetToken<IFormatInfo> = {
       sampleRate: dataView.getUint32(off + 5, true),
       bitrateMax: dataView.getUint32(off + 9, true),
       bitrateNominal: dataView.getUint32(off + 13, true),
-      bitrateMin: dataView.getUint32(off + 17, true)
+      bitrateMin: dataView.getUint32(off + 17, true),
     };
-  }
+  },
 };

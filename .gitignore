@@ -9,9 +9,16 @@ lib/**/*.js
 lib/**/*.js.map
 lib/**/*.d.ts
 doc-gen/**/*.js
-doc-gen/**/*.map
+doc-gen/**/*.js.map
+doc-gen/**/*.d.ts
 test/samples/originals
 test/_test-issues.ts
 coverage/
 .nyc_output/
 test/samples/zeroes.flac
+
+example/typescript/*.js
+example/typescript/*.js.map
+example/typescript/*.d.ts
+
+dist/

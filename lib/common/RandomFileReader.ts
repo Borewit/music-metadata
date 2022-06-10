@@ -1,14 +1,16 @@
-import * as fs from 'fs';
+import * as fs from "fs";
 
-import { IRandomReader } from '../type';
+import { IRandomReader } from "../type";
 
 /**
  * Provides abstract file access via the IRandomRead interface
  */
 export class RandomFileReader implements IRandomReader {
-
-  private constructor(private readonly fileHandle: fs.promises.FileHandle, public filePath: string, public fileSize: number) {
-  }
+  private constructor(
+    private readonly fileHandle: fs.promises.FileHandle,
+    public filePath: string,
+    public fileSize: number
+  ) {}
 
   /**
    * Read from a given position of an abstracted file or buffer.
@@ -18,7 +20,12 @@ export class RandomFileReader implements IRandomReader {
    * @param position {number} is an argument specifying where to begin reading from in the file.
    * @return {Promise<number>} bytes read
    */
-  public async randomRead(buffer: Buffer, offset: number, length: number, position: number): Promise<number> {
+  public async randomRead(
+    buffer: Buffer,
+    offset: number,
+    length: number,
+    position: number
+  ): Promise<number> {
     const result = await this.fileHandle.read(buffer, offset, length, position);
     return result.bytesRead;
   }
@@ -27,8 +34,11 @@ export class RandomFileReader implements IRandomReader {
     return this.fileHandle.close();
   }
 
-  public static async init(filePath: string, fileSize: number): Promise<RandomFileReader> {
-    const fileHandle = await fs.promises.open(filePath, 'r');
+  public static async init(
+    filePath: string,
+    fileSize: number
+  ): Promise<RandomFileReader> {
+    const fileHandle = await fs.promises.open(filePath, "r");
     return new RandomFileReader(fileHandle, filePath, fileSize);
   }
 }

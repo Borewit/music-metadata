@@ -1,34 +1,34 @@
-import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import * as Token from "token-types";
+import { IGetToken } from "strtok3/lib/core";
 
-import * as util from '../common/Util';
+import * as util from "../common/Util";
 
 /**
  * The picture type according to the ID3v2 APIC frame
  * Ref: http://id3.org/id3v2.3.0#Attached_picture
  */
 export enum AttachedPictureType {
-  'Other',
+  "Other",
   "32x32 pixels 'file icon' (PNG only)",
-  'Other file icon',
-  'Cover (front)',
-  'Cover (back)',
-  'Leaflet page',
-  'Media (e.g. label side of CD)',
-  'Lead artist/lead performer/soloist',
-  'Artist/performer',
-  'Conductor',
-  'Band/Orchestra',
-  'Composer',
-  'Lyricist/text writer',
-  'Recording Location',
-  'During recording',
-  'During performance',
-  'Movie/video screen capture',
-  'A bright coloured fish',
-  'Illustration',
-  'Band/artist logotype',
-  'Publisher/Studio logotype'
+  "Other file icon",
+  "Cover (front)",
+  "Cover (back)",
+  "Leaflet page",
+  "Media (e.g. label side of CD)",
+  "Lead artist/lead performer/soloist",
+  "Artist/performer",
+  "Conductor",
+  "Band/Orchestra",
+  "Composer",
+  "Lyricist/text writer",
+  "Recording Location",
+  "During recording",
+  "During performance",
+  "Movie/video screen capture",
+  "A bright coloured fish",
+  "Illustration",
+  "Band/artist logotype",
+  "Publisher/Studio logotype",
 }
 
 export type ID3v2MajorVersion = 2 | 3 | 4;
@@ -49,10 +49,14 @@ export interface IExtendedHeader {
  */
 export const UINT32SYNCSAFE = {
   get: (buf: Uint8Array, off: number): number => {
-    return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
-      ((buf[off + 1]) << 14) | ((buf[off]) << 21);
+    return (
+      (buf[off + 3] & 0x7f) |
+      (buf[off + 2] << 7) |
+      (buf[off + 1] << 14) |
+      (buf[off] << 21)
+    );
   },
-  len: 4
+  len: 4,
 };
 
 /**
@@ -60,21 +64,21 @@ export const UINT32SYNCSAFE = {
  */
 export interface IID3v2header {
   // ID3v2/file identifier   "ID3"
-  fileIdentifier: string,
+  fileIdentifier: string;
   // ID3v2 versionIndex
   version: {
-    major: ID3v2MajorVersion,
-    revision: number
-  },
+    major: ID3v2MajorVersion;
+    revision: number;
+  };
   // ID3v2 flags
   flags: {
     // Unsynchronisation
-    unsynchronisation: boolean,
+    unsynchronisation: boolean;
     // Extended header
-    isExtendedHeader: boolean
+    isExtendedHeader: boolean;
     // Experimental indicator
-    expIndicator: boolean,
-    footer: boolean
+    expIndicator: boolean;
+    footer: boolean;
   };
   size: number;
 }
@@ -90,11 +94,11 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
   get: (buf: Buffer, off): IID3v2header => {
     return {
       // ID3v2/file identifier   "ID3"
-      fileIdentifier: new Token.StringType(3, 'ascii').get(buf, off),
+      fileIdentifier: new Token.StringType(3, "ascii").get(buf, off),
       // ID3v2 versionIndex
       version: {
         major: Token.INT8.get(buf, off + 3) as ID3v2MajorVersion,
-        revision: Token.INT8.get(buf, off + 4)
+        revision: Token.INT8.get(buf, off + 4),
       },
       // ID3v2 flags
       flags: {
@@ -104,11 +108,11 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
         isExtendedHeader: util.getBit(buf, off + 5, 6),
         // Experimental indicator
         expIndicator: util.getBit(buf, off + 5, 5),
-        footer: util.getBit(buf, off + 5, 4)
+        footer: util.getBit(buf, off + 5, 4),
       },
-      size: UINT32SYNCSAFE.get(buf, off + 6)
+      size: UINT32SYNCSAFE.get(buf, off + 6),
     };
-  }
+  },
 };
 
 export const ExtendedHeader: IGetToken<IExtendedHeader> = {
@@ -123,9 +127,9 @@ export const ExtendedHeader: IGetToken<IExtendedHeader> = {
       // Size of padding
       sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
       // CRC data present
-      crcDataPresent: util.getBit(buf, off + 4, 31)
+      crcDataPresent: util.getBit(buf, off + 4, 31),
     };
-  }
+  },
 };
 
 export interface ITextEncoding {
@@ -139,16 +143,15 @@ export const TextEncodingToken: IGetToken<ITextEncoding> = {
   get: (uint8Array: Uint8Array, off: number): ITextEncoding => {
     switch (uint8Array[off]) {
       case 0x00:
-        return {encoding: 'latin1'}; // binary
+        return { encoding: "latin1" }; // binary
       case 0x01:
-        return {encoding: 'utf16le', bom: true};
+        return { encoding: "utf16le", bom: true };
       case 0x02:
-        return {encoding: 'utf16le', bom: false};
+        return { encoding: "utf16le", bom: false };
       case 0x03:
-        return {encoding: 'utf8', bom: false};
+        return { encoding: "utf8", bom: false };
       default:
-        return {encoding: 'utf8', bom: false};
-
+        return { encoding: "utf8", bom: false };
     }
-  }
+  },
 };

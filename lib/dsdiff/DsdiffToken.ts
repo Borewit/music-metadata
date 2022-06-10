@@ -1,9 +1,9 @@
-import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import * as Token from "token-types";
+import { IGetToken } from "strtok3/lib/core";
 
-import { FourCcToken } from '../common/FourCC';
-import { IChunkHeader64 } from '../iff';
-export { IChunkHeader64 } from '../iff';
+import { FourCcToken } from "../common/FourCC";
+import { IChunkHeader64 } from "../iff";
+export { IChunkHeader64 } from "../iff";
 
 /**
  * DSDIFF chunk header
@@ -18,7 +18,7 @@ export const ChunkHeader64: IGetToken<IChunkHeader64> = {
       // Group-ID
       chunkID: FourCcToken.get(buf, off),
       // Size
-      chunkSize: Token.INT64_BE.get(buf, off + 4)
+      chunkSize: Token.INT64_BE.get(buf, off + 4),
     };
-  }
+  },
 };

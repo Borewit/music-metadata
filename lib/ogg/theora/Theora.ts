@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import * as Token from "token-types";
+import { IGetToken } from "strtok3/lib/core";
 
 /**
  * 6.2 Identification Header
@@ -7,21 +7,21 @@ import { IGetToken } from 'strtok3/lib/core';
  */
 export interface IIdentificationHeader {
   // Signature: 0x80 + 'theora'
-  id: string,
+  id: string;
   // The major version number
-  vmaj: number,
+  vmaj: number;
   // The minor version number
-  vmin: number,
+  vmin: number;
   // The version revision number.
-  vrev: number,
+  vrev: number;
   // The width of the frame in macro blocks
-  vmbw: number,
+  vmbw: number;
   // The height of the frame in macro blocks
-  vmbh: number,
+  vmbh: number;
   // The nominal bitrate of the stream, in bits per second.
-  nombr: number,
+  nombr: number;
   // The quality hint.
-  nqual: number,
+  nqual: number;
 }
 
 /**
@@ -33,14 +33,14 @@ export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
 
   get: (buf: Buffer, off): IIdentificationHeader => {
     return {
-      id: new Token.StringType(7, 'ascii').get(buf, off),
+      id: new Token.StringType(7, "ascii").get(buf, off),
       vmaj: buf.readUInt8(off + 7),
       vmin: buf.readUInt8(off + 8),
       vrev: buf.readUInt8(off + 9),
       vmbw: buf.readUInt16BE(off + 10),
       vmbh: buf.readUInt16BE(off + 17),
       nombr: Token.UINT24_BE.get(buf, off + 37),
-      nqual: buf.readUInt8(off + 40)
+      nqual: buf.readUInt8(off + 40),
     };
-  }
+  },
 };

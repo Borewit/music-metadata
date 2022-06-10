@@ -8,11 +8,11 @@ export interface IPageHeader {
    * A header begins with a capture pattern that simplifies identifying pages;
    * once the decoder has found the capture pattern it can do a more intensive job of verifying that it has in fact found a page boundary (as opposed to an inadvertent coincidence in the byte stream).
    */
-  capturePattern: string,
+  capturePattern: string;
   /**
    * stream_structure_version
    */
-  version: number,
+  version: number;
   /**
    * header_type_flag
    */
@@ -21,28 +21,28 @@ export interface IPageHeader {
      * True: continued packet;
      * False: fresh packet
      */
-    continued: boolean,
+    continued: boolean;
 
     /**
      * True: first page of logical bitstream (bos)
      * False: not first page of logical bitstream
      */
-    firstPage: boolean,
+    firstPage: boolean;
 
     /**
      * True: last page of logical bitstream (eos)
      * False: not last page of logical bitstream
      */
-    lastPage: boolean
-  },
+    lastPage: boolean;
+  };
   /**
    * The total samples encoded after including all packets finished on this page
    * The position specified in the frame header of the last page tells how long the data coded by the bitstream is.
    */
-  absoluteGranulePosition: number,
-  streamSerialNumber: number,
-  pageSequenceNo: number,
-  pageChecksum: number,
+  absoluteGranulePosition: number;
+  streamSerialNumber: number;
+  pageSequenceNo: number;
+  pageChecksum: number;
   /**
    * The number of segment entries to appear in the segment table.
    * The maximum number of 255 segments (255 bytes each) sets the maximum possible physical page size at 65307 bytes or
@@ -54,11 +54,10 @@ export interface IPageHeader {
 }
 
 export interface ISegmentTable {
-  totalPageSize: number
+  totalPageSize: number;
 }
 
 export interface IPageConsumer {
-
   /**
    * Parse Ogg page
    * @param {IPageHeader} header Ogg page header

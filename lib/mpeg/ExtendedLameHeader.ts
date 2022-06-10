@@ -2,10 +2,10 @@
  * Extended Lame Header
  */
 
-import { IGetToken } from 'strtok3/lib/core';
-import * as Token from 'token-types';
-import * as common from '../common/Util';
-import { ReplayGain, IReplayGain } from './ReplayGainDataFormat';
+import { IGetToken } from "strtok3/lib/core";
+import * as Token from "token-types";
+import * as common from "../common/Util";
+import { ReplayGain, IReplayGain } from "./ReplayGainDataFormat";
 
 /**
  * LAME Tag, extends the Xing header format
@@ -13,9 +13,8 @@ import { ReplayGain, IReplayGain } from './ReplayGainDataFormat';
  * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
  */
 export interface IExtendedLameHeader {
-
-  revision: number,
-  vbr_method: number,
+  revision: number;
+  vbr_method: number;
   lowpass_filter: number;
   track_peak?: number;
   track_gain: IReplayGain;
@@ -44,7 +43,7 @@ export const ExtendedLameHeader: IGetToken<IExtendedLameHeader> = {
       album_gain: ReplayGain.get(buf, 8),
       music_length: Token.UINT32_BE.get(buf, off + 20),
       music_crc: Token.UINT8.get(buf, off + 24),
-      header_crc: Token.UINT16_BE.get(buf, off + 24)
+      header_crc: Token.UINT16_BE.get(buf, off + 24),
     };
-  }
+  },
 };

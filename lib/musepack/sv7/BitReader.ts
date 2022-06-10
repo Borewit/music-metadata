@@ -1,20 +1,17 @@
-import { ITokenizer } from 'strtok3/lib/core';
-import * as Token from 'token-types';
+import { ITokenizer } from "strtok3/lib/core";
+import * as Token from "token-types";
 
 export class BitReader {
-
   public pos: number = 0;
   private dword: number = undefined;
 
-  public constructor(private tokenizer: ITokenizer) {
-  }
+  public constructor(private tokenizer: ITokenizer) {}
 
   /**
    *
    * @param bits 1..30 bits
    */
   public async read(bits: number): Promise<number> {
-
     while (this.dword === undefined) {
       this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
     }
@@ -23,7 +20,7 @@ export class BitReader {
     this.pos += bits;
 
     if (this.pos < 32) {
-      out >>>= (32 - this.pos);
+      out >>>= 32 - this.pos;
       return out & ((1 << bits) - 1);
     } else {
       this.pos -= 32;
@@ -42,9 +39,8 @@ export class BitReader {
   }
 
   public async ignore(bits: number): Promise<number> {
-
     if (this.pos > 0) {
-      const remaining =  32 - this.pos;
+      const remaining = 32 - this.pos;
       this.dword = undefined;
       bits -= remaining;
       this.pos = 0;
@@ -55,5 +51,4 @@ export class BitReader {
     await this.tokenizer.ignore(numOfWords * 4);
     return this.read(remainder);
   }
-
 }

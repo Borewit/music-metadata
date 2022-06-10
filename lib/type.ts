@@ -1,8 +1,8 @@
-import { GenericTagId, TagType } from './common/GenericTagTypes';
-import { IFooter } from './apev2/APEv2Token';
-import { TrackType } from './matroska/types';
+import { GenericTagId, TagType } from "./common/GenericTagTypes";
+import { IFooter } from "./apev2/APEv2Token";
+import { TrackType } from "./matroska/types";
 
-export { TrackType } from './matroska/types';
+export { TrackType } from "./matroska/types";
 
 /**
  * Attached picture, typically used for cover art
@@ -45,8 +45,8 @@ export interface IRating {
 }
 
 export interface ICommonTagsResult {
-  track: { no: number | null, of: number | null };
-  disk: { no: number | null, of: number | null };
+  track: { no: number | null; of: number | null };
+  disk: { no: number | null; of: number | null };
   /**
    * Release year
    */
@@ -207,11 +207,11 @@ export interface ICommonTagsResult {
   /**
    * TV episode ID
    */
-  tvEpisodeId?: string,
+  tvEpisodeId?: string;
   /**
    * TV network
    */
-  tvNetwork?: string,
+  tvNetwork?: string;
   podcast?: boolean;
   podcasturl?: string;
   releasestatus?: string;
@@ -242,7 +242,7 @@ export interface ICommonTagsResult {
   musicip_puid?: string;
   musicip_fingerprint?: string;
   website?: string;
-  'performer:instrument'?: string[];
+  "performer:instrument"?: string[];
   averageLevel?: number;
   peakLevel?: number;
   notes?: string[];
@@ -289,8 +289,8 @@ export interface ICommonTagsResult {
    * minimum & maximum global gain values across a set of files scanned as an album
    */
   replaygain_undo?: {
-    leftChannel: number,
-    rightChannel: number
+    leftChannel: number;
+    rightChannel: number;
   };
 
   /**
@@ -327,7 +327,7 @@ export interface ICommonTagsResult {
   /**
    * Movement Index/Total
    */
-  movementIndex: { no?: number, of?: number };
+  movementIndex: { no?: number; of?: number };
   /**
    * Podcast Identifier
    */
@@ -365,24 +365,24 @@ export interface IRatio {
 }
 
 export type FormatId =
-  'container'
-  | 'duration'
-  | 'bitrate'
-  | 'sampleRate'
-  | 'bitsPerSample'
-  | 'codec'
-  | 'tool'
-  | 'codecProfile'
-  | 'lossless'
-  | 'numberOfChannels'
-  | 'numberOfSamples'
-  | 'audioMD5'
-  | 'chapters'
-  | 'modificationTime'
-  | 'creationTime'
-  | 'trackPeakLevel'
-  | 'trackGain'
-  | 'albumGain';
+  | "container"
+  | "duration"
+  | "bitrate"
+  | "sampleRate"
+  | "bitsPerSample"
+  | "codec"
+  | "tool"
+  | "codecProfile"
+  | "lossless"
+  | "numberOfChannels"
+  | "numberOfSamples"
+  | "audioMD5"
+  | "chapters"
+  | "modificationTime"
+  | "creationTime"
+  | "trackPeakLevel"
+  | "trackGain"
+  | "albumGain";
 
 export interface IAudioTrack {
   samplingFrequency?: number;
@@ -419,67 +419,66 @@ export interface ITrackInfo {
 }
 
 export interface IFormat {
-
-  readonly trackInfo: ITrackInfo[]
+  readonly trackInfo: ITrackInfo[];
 
   /**
    * E.g.: 'flac'
    */
-  readonly container?: string, // ToDo: make mandatory
+  readonly container?: string; // ToDo: make mandatory
 
   /**
    * List of tags found in parsed audio file
    */
-  readonly tagTypes?: TagType[],
+  readonly tagTypes?: TagType[];
 
   /**
    * Duration in seconds
    */
-  readonly duration?: number,
+  readonly duration?: number;
 
   /**
    * Number bits per second of encoded audio file
    */
-  readonly bitrate?: number,
+  readonly bitrate?: number;
 
   /**
    * Sampling rate in Samples per second (S/s)
    */
-  readonly sampleRate?: number,
+  readonly sampleRate?: number;
 
   /**
    * Audio bit depth
    */
-  readonly bitsPerSample?: number,
+  readonly bitsPerSample?: number;
 
   /**
    * Encoder brand, e.g.: LAME3.99r
    */
-  readonly tool?: string,
+  readonly tool?: string;
 
   /**
    * Encoder name / compressionType, e.g.: 'PCM', 'ITU-T G.711 mu-law'
    */
-  readonly codec?: string,
+  readonly codec?: string;
 
   /**
    * Codec profile
    */
-  readonly codecProfile?: string,
+  readonly codecProfile?: string;
 
-  readonly lossless?: boolean,
+  readonly lossless?: boolean;
 
   /**
    * Number of audio channels
    */
-  readonly numberOfChannels?: number,
+  readonly numberOfChannels?: number;
 
   /**
    * Number of samples frames.
    * One sample contains all channels
    * The duration is: numberOfSamples / sampleRate
    */
-  readonly numberOfSamples?: number
+  readonly numberOfSamples?: number;
 
   /**
    * 16-byte MD5 of raw audio
@@ -489,7 +488,7 @@ export interface IFormat {
   /**
    * Chapters in audio stream
    */
-  readonly chapters?: IChapter[]
+  readonly chapters?: IChapter[];
 
   /**
    * Time file was created
@@ -507,8 +506,8 @@ export interface IFormat {
 }
 
 export interface ITag {
-  id: string,
-  value: any
+  id: string;
+  value: any;
 }
 
 export interface IChapter {
@@ -538,8 +537,8 @@ export interface INativeTagDict {
 }
 
 export interface INativeAudioMetadata {
-  format: IFormat,
-  native: INativeTags
+  format: IFormat;
+  native: INativeTags;
   quality: IQualityInformation;
 }
 
@@ -548,7 +547,6 @@ export interface IQualityInformation {
    * Warnings
    */
   warnings: IParserWarning[];
-
 }
 
 export interface IParserWarning {
@@ -560,30 +558,28 @@ export interface IAudioMetadata extends INativeAudioMetadata {
    * Metadata, form independent interface
    */
   common: ICommonTagsResult;
-
 }
 
 /**
  * Corresponds with parser module name
  */
 export type ParserType =
-  'mpeg'
-  | 'apev2'
-  | 'mp4'
-  | 'asf'
-  | 'flac'
-  | 'ogg'
-  | 'aiff'
-  | 'wavpack'
-  | 'riff'
-  | 'musepack'
-  | 'dsf'
-  | 'dsdiff'
-  | 'adts'
-  | 'matroska';
+  | "mpeg"
+  | "apev2"
+  | "mp4"
+  | "asf"
+  | "flac"
+  | "ogg"
+  | "aiff"
+  | "wavpack"
+  | "riff"
+  | "musepack"
+  | "dsf"
+  | "dsdiff"
+  | "adts"
+  | "matroska";
 
 export interface IOptions {
-
   /**
    * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
    */
@@ -612,7 +608,6 @@ export interface IOptions {
 }
 
 export interface IApeHeader extends IOptions {
-
   /**
    * Offset of APE-header
    */
@@ -622,11 +617,9 @@ export interface IApeHeader extends IOptions {
    * APEv1 / APEv2 header offset
    */
   footer: IFooter;
-
 }
 
 export interface IPrivateOptions extends IOptions {
-
   apeHeader?: IApeHeader;
 }
 
@@ -634,26 +627,24 @@ export interface IPrivateOptions extends IOptions {
  * Event definition send after each change to common/format metadata change to observer.
  */
 export interface IMetadataEvent {
-
   /**
    * Tag which has been updated.
    */
   tag: {
-
     /**
      * Either 'common' if it a generic tag event, or 'format' for format related updates
      */
-    type: 'common' | 'format'
+    type: "common" | "format";
 
     /**
      * Tag id
      */
-    id: GenericTagId | FormatId
+    id: GenericTagId | FormatId;
 
     /**
      * Tag value
      */
-    value: any
+    value: any;
   };
 
   /**
@@ -669,7 +660,6 @@ export type Observer = (update: IMetadataEvent) => void;
  * Used read operations on file of buffers
  */
 export interface IRandomReader {
-
   /**
    * Total length of file or buffer
    */
@@ -683,5 +673,10 @@ export interface IRandomReader {
    * @param position {number} is an argument specifying where to begin reading from in the file.
    * @return {Promise<number>} bytes read
    */
-  randomRead(buffer: Buffer, offset: number, length: number, position: number): Promise<number>;
+  randomRead(
+    buffer: Buffer,
+    offset: number,
+    length: number,
+    position: number
+  ): Promise<number>;
 }

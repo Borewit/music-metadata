@@ -3,7 +3,14 @@ export interface IHeader {
   len: number;
 }
 
-export enum DataType { 'string', uint, uid, bool, binary, float}
+export enum DataType {
+  "string",
+  uint,
+  uid,
+  bool,
+  binary,
+  float,
+}
 
 export interface IElementType<T> {
   readonly name: string;
@@ -12,9 +19,13 @@ export interface IElementType<T> {
   readonly multiple?: boolean;
 }
 
-export interface IContainerType { [id: number]: IElementType<string | number | boolean | Buffer>; }
+export interface IContainerType {
+  [id: number]: IElementType<string | number | boolean | Buffer>;
+}
 
-export interface ITree { [name: string]: string | number | boolean | Buffer | ITree | ITree[]; }
+export interface ITree {
+  [name: string]: string | number | boolean | Buffer | ITree | ITree[];
+}
 
 export interface ISeekHead {
   id?: Buffer;
@@ -81,7 +92,7 @@ export interface ITrackAudio {
 
 export interface ICuePoint {
   cueTime?: number;
-  cueTrackPositions: ICueTrackPosition[]
+  cueTrackPositions: ICueTrackPosition[];
 }
 
 export interface ICueTrackPosition {
@@ -101,7 +112,8 @@ export interface ICueReference {
 
 export interface ISimpleTag {
   name?: string;
-  'string'?: string;
+  // eslint-disable-next-line id-denylist
+  string?: string;
   binary?: Buffer;
   language?: string;
   default?: boolean;
@@ -114,7 +126,7 @@ export enum TargetType {
   part = 40,
   album = 50,
   edition = 60,
-  collection = 70
+  collection = 70,
 }
 
 export enum TrackType {
@@ -122,9 +134,9 @@ export enum TrackType {
   audio = 0x02,
   complex = 0x03,
   logo = 0x04,
-  subtitle= 0x11,
+  subtitle = 0x11,
   button = 0x12,
-  control = 0x20
+  control = 0x20,
 }
 
 export interface ITarget {
@@ -137,7 +149,7 @@ export interface ITarget {
 
 export interface ITag {
   target: ITarget;
-  simpleTags: ISimpleTag[]
+  simpleTags: ISimpleTag[];
 }
 
 export interface ITags {
@@ -162,12 +174,12 @@ export interface IAttachments {
 
 export interface IMatroskaSegment {
   metaSeekInfo?: IMetaSeekInformation;
-  seekHeads?: ISeekHead[]
+  seekHeads?: ISeekHead[];
   info?: ISegmentInformation;
   tracks?: ITrackElement;
   tags?: ITags;
   cues?: ICuePoint[];
-  attachments?: IAttachments
+  attachments?: IAttachments;
 }
 
 export interface IEbmlElements {
@@ -181,9 +193,9 @@ export interface IEbmlElements {
 }
 
 export interface IEbmlDoc {
-  ebml: IEbmlElements
+  ebml: IEbmlElements;
 }
 
 export interface IMatroskaDoc extends IEbmlDoc {
-  segment: IMatroskaSegment
+  segment: IMatroskaSegment;
 }
