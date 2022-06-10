@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout the repository
+        uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
@@ -22,17 +23,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload build
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: |
-            lib/**/*.js
-            lib/**/*.js.map
-            lib/**/*.d.ts
-            test/**/*.js
-            test/**/*.js.map
-
   test:
     runs-on: ubuntu-latest
 
@@ -43,7 +33,7 @@ jobs:
         node-version: [14.x, 16.x, 18.x]
 
     steps:
-      - name: "Checkout the repository"
+      - name: Checkout the repository
         uses: actions/checkout@v3
 
       - name: Test with Node.js ${{ matrix.node-version }}
@@ -53,11 +43,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Download build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
 
       - name: Test with Node.js ${{ matrix.node-version }}
         run: npm run test:coverage
