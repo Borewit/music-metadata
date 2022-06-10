@@ -1,11 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  // "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "inlineSources": false,
     "module": "CommonJS",
     // "module": "ESNext",
     "moduleResolution": "node",
     "target": "ESNext"
+
+    // "strict": true,
 
     /* strict options */
     // "alwaysStrict": true,
