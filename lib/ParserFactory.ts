@@ -1,6 +1,6 @@
 import { IOptions, IAudioMetadata, ParserType } from "./type";
 import { ITokenizer } from "strtok3/lib/core";
-import * as FileType from "file-type/core";
+import { fileTypeFromBuffer } from "file-type/core";
 import * as ContentType from "content-type";
 import * as MimeType from "media-typer";
 
@@ -115,7 +115,7 @@ export class ParserFactory {
         parserId = this.getParserIdForExtension(tokenizer.fileInfo.path);
       }
       if (!parserId) {
-        const guessedType = await FileType.fromBuffer(buf);
+        const guessedType = await fileTypeFromBuffer(buf);
         if (!guessedType) {
           throw new Error("Failed to determine audio format");
         }

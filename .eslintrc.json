@@ -16,10 +16,8 @@
     "prettier"
   ],
   "ignorePatterns": [
-    "lib/**/*.d.ts",
-    "example/**/*.ts",
-    "test/**/*.ts",
-    "doc-gen/**/*.ts"
+    "dest/**/*.d.ts",
+    "**/*.js"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {

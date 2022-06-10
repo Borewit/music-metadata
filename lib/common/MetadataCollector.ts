@@ -16,7 +16,7 @@ import { IGenericTag, TagType, isSingleton, isUnique } from "./GenericTagTypes";
 import { CombinedTagMapper } from "./CombinedTagMapper";
 import { CommonTagMapper } from "./GenericTagMapper";
 import { toRatio } from "./Util";
-import * as FileType from "file-type/core";
+import { fileTypeFromBuffer } from "file-type/core";
 
 const debug = initDebug("music-metadata:collector");
 
@@ -312,7 +312,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   private async postFixPicture(picture: IPicture): Promise<IPicture> {
     if (picture.data && picture.data.length > 0) {
       if (!picture.format) {
-        const fileType = await FileType.fromBuffer(picture.data);
+        const fileType = await fileTypeFromBuffer(picture.data);
         if (fileType) {
           picture.format = fileType.mime;
         } else {

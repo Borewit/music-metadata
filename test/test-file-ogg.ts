@@ -1,5 +1,4 @@
 import { describe, assert, it } from "vitest";
-import { expect } from "chai";
 import * as path from "path";
 
 import { Parsers } from "./metadata-parsers";
@@ -187,7 +186,8 @@ describe("Parse Ogg", function () {
         try {
           const idHeader = new IdHeader(18);
         } catch (err) {
-          expect(err.message).to.equal(
+          assert.equal(
+            err.message,
             "ID-header-page 0 should be at least 19 bytes long"
           );
         }
