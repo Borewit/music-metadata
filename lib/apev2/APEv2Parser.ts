@@ -1,6 +1,6 @@
 import initDebug from "debug";
 import * as strtok3 from "strtok3/lib/core";
-import { StringType } from "token-types";
+import { StringType } from "../token-types";
 
 import * as util from "../common/Util";
 import { IOptions, IRandomReader, IApeHeader } from "../type";

@@ -1,4 +1,4 @@
-import { Float32_BE, Float64_BE, StringType, UINT8 } from "token-types";
+import { Float32_BE, Float64_BE, StringType, UINT8 } from "../token-types";
 import initDebug from "debug";
 import { ITokenizer } from "strtok3/lib/core";
 

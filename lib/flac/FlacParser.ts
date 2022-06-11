@@ -1,4 +1,4 @@
-import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "token-types";
+import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "../token-types";
 import initDebug from "debug";
 import { ITokenizer, IGetToken } from "strtok3/lib/core";
 

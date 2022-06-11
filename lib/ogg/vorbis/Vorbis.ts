@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../../token-types";
 import { IGetToken } from "strtok3/lib/core";
 
 import { AttachedPictureType } from "../../id3v2/ID3v2Token";

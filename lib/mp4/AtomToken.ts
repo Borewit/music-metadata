@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../token-types";
 import initDebug from "debug";
 import { IToken, IGetToken } from "strtok3/lib/core";
 

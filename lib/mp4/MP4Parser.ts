@@ -1,5 +1,5 @@
 import initDebug from "debug";
-import * as Token from "token-types";
+import * as Token from "../token-types";
 import { IGetToken } from "../@tokenizer/token";
 
 import { BasicParser } from "../common/BasicParser";

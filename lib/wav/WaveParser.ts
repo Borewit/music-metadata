@@ -1,5 +1,5 @@
 import * as strtok3 from "strtok3/lib/core";
-import * as Token from "token-types";
+import * as Token from "../token-types";
 import initDebug from "debug";
 
 import * as riff from "../riff/RiffChunk";

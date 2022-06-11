@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../../token-types";
 import { ITokenizer } from "strtok3/lib/core";
 
 import { IPageHeader } from "../Ogg";

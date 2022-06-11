@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../../token-types";
 
 export class VorbisDecoder {
   constructor(private readonly data: Uint8Array, private offset) {}

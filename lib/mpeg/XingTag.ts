@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../token-types";
 import { IGetToken, ITokenizer } from "strtok3/lib/core";
 import * as util from "../common/Util";
 import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";

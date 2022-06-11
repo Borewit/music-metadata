@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../token-types";
 
 import { APEv2Parser } from "../apev2/APEv2Parser";
 import { FourCcToken } from "../common/FourCC";

@@ -1,4 +1,4 @@
-import * as Token from "token-types";
+import * as Token from "../token-types";
 import { IGetToken, EndOfStreamError } from "strtok3/lib/core";
 import initDebug from "debug";
 
