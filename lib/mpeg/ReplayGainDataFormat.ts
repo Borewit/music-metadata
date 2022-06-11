@@ -1,4 +1,4 @@
-import { IGetToken } from "strtok3/lib/core";
+import { IGetToken } from "../strtok3/core";
 import * as common from "../common/Util";
 
 export interface IReplayGain {

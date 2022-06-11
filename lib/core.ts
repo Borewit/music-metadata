@@ -1,5 +1,5 @@
 import { Readable } from "stream";
-import * as strtok3 from "strtok3/lib/core";
+import * as strtok3 from "./strtok3/core";
 
 import { ParserFactory } from "./ParserFactory";
 import {
@@ -16,7 +16,7 @@ import { APEv2Parser } from "./apev2/APEv2Parser";
 import { hasID3v1Header } from "./id3v1/ID3v1Parser";
 import { getLyricsHeaderLength } from "./lyrics3/Lyrics3";
 
-export { IFileInfo } from "strtok3/lib/core";
+export { IFileInfo } from "./strtok3/core";
 
 /**
  * Parse audio from Node Stream.Readable

@@ -1,5 +1,5 @@
-import * as Token from "token-types";
-import { IGetToken } from "strtok3/lib/core";
+import * as Token from "../token-types";
+import { IGetToken } from "../strtok3/core";
 
 import { FourCcToken } from "../common/FourCC";
 import { IChunkHeader64 } from "../iff";

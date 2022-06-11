@@ -1,6 +1,6 @@
 import { describe, assert, it } from "vitest";
 import * as path from "path";
-import * as strtok from "strtok3";
+import * as strtok from "../lib/strtok3";
 
 import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
 import { MetadataCollector } from "../lib/common/MetadataCollector";
