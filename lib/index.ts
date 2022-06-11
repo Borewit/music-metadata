@@ -1,5 +1,5 @@
 import * as Stream from "stream";
-import * as strtok3 from "strtok3";
+import * as strtok3 from "./strtok3";
 
 import * as Core from "./core";
 import { ParserFactory } from "./ParserFactory";

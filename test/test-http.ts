@@ -3,7 +3,7 @@ import { describe, assert, it } from "vitest";
 import { parseStream } from "../lib";
 import { IHttpClient, HttpClient } from "./http-client";
 
-import { IFileInfo } from "strtok3";
+import { IFileInfo } from "../lib/strtok3";
 
 interface IHttpClientTest {
   readonly name: string;

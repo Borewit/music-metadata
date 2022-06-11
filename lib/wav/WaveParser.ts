@@ -1,4 +1,4 @@
-import * as strtok3 from "strtok3/lib/core";
+import * as strtok3 from "../strtok3/core";
 import * as Token from "../token-types";
 import initDebug from "debug";
 

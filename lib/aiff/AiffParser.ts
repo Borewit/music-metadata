@@ -1,6 +1,6 @@
 import * as Token from "../token-types";
 import initDebug from "debug";
-import * as strtok3 from "strtok3/lib/core";
+import * as strtok3 from "../strtok3/core";
 
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import { FourCcToken } from "../common/FourCC";

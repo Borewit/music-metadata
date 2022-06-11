@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken, EndOfStreamError } from "strtok3/lib/core";
+import { IGetToken, EndOfStreamError } from "../strtok3/core";
 import initDebug from "debug";
 
 import * as util from "../common/Util";

@@ -1,5 +1,5 @@
 import initDebug from "debug";
-import * as strtok3 from "strtok3/lib/core";
+import * as strtok3 from "../strtok3/core";
 import { StringType } from "../token-types";
 
 import * as util from "../common/Util";

@@ -2,7 +2,7 @@
  * Extended Lame Header
  */
 
-import { IGetToken } from "strtok3/lib/core";
+import { IGetToken } from "../strtok3/core";
 import * as Token from "../token-types";
 import * as common from "../common/Util";
 import { ReplayGain, IReplayGain } from "./ReplayGainDataFormat";

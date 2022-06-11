@@ -89,7 +89,7 @@
     "file-type": "17.1.2",
     "ieee754": "^1.2.1",
     "media-typer": "^1.1.0",
-    "strtok3": "^6.3.0"
+    "peek-readable": "^4.1.0"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
