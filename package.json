@@ -84,7 +84,6 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.4",
     "debug": "^4.3.4",
     "file-type": "17.1.2",
