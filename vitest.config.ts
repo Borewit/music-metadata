@@ -6,6 +6,7 @@ export default defineConfig({
       "test/test-*.ts",
       "test/token-types/test-*.ts",
       "test/strtok3/test.ts",
+      "test/peek-readable/test-*.ts",
     ],
     exclude: ["test/test-*.d.ts"],
 

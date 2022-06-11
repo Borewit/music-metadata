@@ -4,7 +4,7 @@ import * as strtok3 from "../../lib/strtok3";
 import * as Path from "path";
 import * as fs from "../../lib/strtok3/FsPromise";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
-import { EndOfStreamError } from "peek-readable";
+import { EndOfStreamError } from "../../lib/peek-readable";
 import { PassThrough } from "stream";
 
 interface ITokenizerTest {

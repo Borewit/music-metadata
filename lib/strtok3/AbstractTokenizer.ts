@@ -1,5 +1,5 @@
 import { ITokenizer, IFileInfo, IReadChunkOptions } from "./types";
-import { EndOfStreamError } from "peek-readable";
+import { EndOfStreamError } from "../peek-readable";
 import { IGetToken, IToken } from "../@tokenizer/token";
 
 interface INormalizedReadChunkOptions extends IReadChunkOptions {

@@ -1,5 +1,5 @@
 import { AbstractTokenizer } from "./AbstractTokenizer";
-import { EndOfStreamError, StreamReader } from "peek-readable";
+import { EndOfStreamError, StreamReader } from "../peek-readable";
 import { Readable } from "stream";
 import { IFileInfo, IReadChunkOptions } from "./types";
 
