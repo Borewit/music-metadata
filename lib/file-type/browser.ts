@@ -1,10 +1,5 @@
 import { Buffer } from "node:buffer";
-import { ReadableWebToNodeStream } from "readable-web-to-node-stream";
-import {
-  fileTypeFromBuffer,
-  fileTypeFromStream as coreFileTypeFromStream,
-  FileTypeResult,
-} from "./core";
+import { fileTypeFromBuffer, FileTypeResult } from "./core";
 
 /**
  * Convert Blobs to ArrayBuffer.
@@ -20,11 +15,11 @@ function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const fileReader = new FileReader();
     fileReader.addEventListener("loadend", (event) => {
-      resolve(event.target.result);
+      resolve(event.target.result as ArrayBuffer);
     });
 
     fileReader.addEventListener("error", (event) => {
-      reject(new Error(event.message));
+      reject(new Error(event.toString()));
     });
 
     fileReader.addEventListener("abort", (event) => {
@@ -33,30 +28,6 @@ function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
 
     fileReader.readAsArrayBuffer(blob);
   });
-}
-
-/**
- * Detect the file type of a [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
- * @example
- * ```
- * import {fileTypeFromStream} from 'file-type';
- *
- * const url = 'https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg';
- *
- * const response = await fetch(url);
- * const fileType = await fileTypeFromStream(response.body);
- *
- * console.log(fileType);
- * //=> {ext: 'jpg', mime: 'image/jpeg'}
- * ```
- */
-export async function fileTypeFromStream(
-  stream: ReadableStream
-): Promise<FileTypeResult | undefined> {
-  const readableWebToNodeStream = new ReadableWebToNodeStream(stream);
-  const fileType = await coreFileTypeFromStream(readableWebToNodeStream);
-  await readableWebToNodeStream.close();
-  return fileType;
 }
 
 /**

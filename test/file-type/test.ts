@@ -1,12 +1,10 @@
-import process from "node:process";
+import * as process from "node:process";
 import { Buffer } from "node:buffer";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import fs from "node:fs";
-import stream from "node:stream";
-import test from "ava";
-import { readableNoopStream } from "noop-stream";
-import { Parser as ReadmeParser } from "commonmark";
+import * as path from "node:path";
+import * as fs from "node:fs";
+import * as stream from "node:stream";
+import { test, assert, expect } from "vitest";
+import { readableNoopStream } from "./noop-stream";
 import {
   fileTypeFromBuffer,
   fileTypeFromStream,
@@ -14,9 +12,12 @@ import {
   fileTypeStream,
   supportedExtensions,
   supportedMimeTypes,
+  ReadableStreamWithFileType,
+  FileExtension,
+  MimeType,
 } from "../../lib/file-type";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const t = assert;
 
 const missingTests = new Set(["mpc"]);
 
@@ -128,59 +129,63 @@ const falsePositives = {
 // Known failing fixture
 const failingFixture = new Set([]);
 
-async function checkBufferLike(t, type, bufferLike) {
+async function checkBufferLike(
+  type: FileExtension,
+  bufferLike: Uint8Array | ArrayBuffer | Buffer
+) {
   const { ext, mime } = (await fileTypeFromBuffer(bufferLike)) || {};
-  t.is(ext, type);
-  t.is(typeof mime, "string");
+  t.strictEqual(ext, type);
+  t.strictEqual(typeof mime, "string");
 }
 
-async function checkFile(t, type, filePath) {
+async function checkFile(type: FileExtension, filePath: string) {
   const { ext, mime } = (await fileTypeFromFile(filePath)) || {};
-  t.is(ext, type);
-  t.is(typeof mime, "string");
+  t.strictEqual(ext, type);
+  t.strictEqual(typeof mime, "string");
 }
 
-async function testFromFile(t, ext, name) {
+async function testFromFile(ext: FileExtension, name?: string) {
   const file = path.join(__dirname, "fixture", `${name || "fixture"}.${ext}`);
-  return checkFile(t, ext, file);
+  return checkFile(ext, file);
 }
 
-async function testFromBuffer(t, ext, name) {
+async function testFromBuffer(ext: FileExtension, name?: string) {
   const fixtureName = `${name || "fixture"}.${ext}`;
 
   const file = path.join(__dirname, "fixture", fixtureName);
   const chunk = fs.readFileSync(file);
-  await checkBufferLike(t, ext, chunk);
-  await checkBufferLike(t, ext, new Uint8Array(chunk));
+  await checkBufferLike(ext, chunk);
+  await checkBufferLike(ext, new Uint8Array(chunk));
   await checkBufferLike(
-    t,
     ext,
     chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
   );
 }
 
-async function testFalsePositive(t, ext, name) {
+async function testFalsePositive(ext: FileExtension, name?: string) {
   const file = path.join(__dirname, "fixture", `${name}.${ext}`);
 
-  await t.is(await fileTypeFromFile(file), undefined);
+  await t.strictEqual(await fileTypeFromFile(file), undefined);
 
   const chunk = fs.readFileSync(file);
-  t.is(await fileTypeFromBuffer(chunk), undefined);
-  t.is(await fileTypeFromBuffer(new Uint8Array(chunk)), undefined);
-  t.is(await fileTypeFromBuffer(chunk.buffer), undefined);
+  t.strictEqual(await fileTypeFromBuffer(chunk), undefined);
+  t.strictEqual(await fileTypeFromBuffer(new Uint8Array(chunk)), undefined);
+  t.strictEqual(await fileTypeFromBuffer(chunk.buffer), undefined);
 }
 
-async function testFileFromStream(t, ext, name) {
+async function testFileFromStream(ext: FileExtension, name?: string) {
   const filename = `${name || "fixture"}.${ext}`;
   const file = path.join(__dirname, "fixture", filename);
   const fileType = await fileTypeFromStream(fs.createReadStream(file));
 
-  t.truthy(fileType, `identify ${filename}`);
-  t.is(fileType.ext, ext, "fileType.ext");
-  t.is(typeof fileType.mime, "string", "fileType.mime");
+  t.isOk(fileType, `identify ${filename}`);
+  t.strictEqual(fileType.ext, ext, "fileType.ext");
+  t.strictEqual(typeof fileType.mime, "string", "fileType.mime");
 }
 
-async function loadEntireFile(readable) {
+async function loadEntireFile(
+  readable: fs.ReadStream | ReadableStreamWithFileType
+) {
   const buffer = [];
   for await (const chunk of readable) {
     buffer.push(Buffer.from(chunk));
@@ -189,7 +194,7 @@ async function loadEntireFile(readable) {
   return Buffer.concat(buffer);
 }
 
-async function testStream(t, ext, name) {
+async function testStream(ext: FileExtension, name?: string) {
   const fixtureName = `${name || "fixture"}.${ext}`;
   const file = path.join(__dirname, "fixture", fixtureName);
 
@@ -201,7 +206,7 @@ async function testStream(t, ext, name) {
     loadEntireFile(fileStream),
   ]);
 
-  t.true(bufferA.equals(bufferB));
+  t.isTrue(bufferA.equals(bufferB));
 }
 
 let i = 0;
@@ -209,61 +214,50 @@ for (const type of types) {
   if (Object.prototype.hasOwnProperty.call(names, type)) {
     for (const name of names[type]) {
       const fixtureName = `${name}.${type}`;
-      const _test = failingFixture.has(fixtureName) ? test.failing : test;
+      const testFunction = failingFixture.has(fixtureName) ? test.fails : test;
 
-      _test(
+      testFunction(
         `${name}.${type} ${i++} .fromFile() method - same fileType`,
-        testFromFile,
-        type,
-        name
+        () => testFromFile(type, name)
       );
-      _test(
+      testFunction(
         `${name}.${type} ${i++} .fromBuffer() method - same fileType`,
-        testFromBuffer,
-        type,
-        name
+        () => testFromBuffer(type, name)
       );
-      _test(
+      testFunction(
         `${name}.${type} ${i++} .fromStream() method - same fileType`,
-        testFileFromStream,
-        type,
-        name
+        () => testFileFromStream(type, name)
       );
-      test(
-        `${name}.${type} ${i++} .stream() - identical streams`,
-        testStream,
-        type,
-        name
-      );
+      test(`${name}.${type} ${i++} .stream() - identical streams`, () =>
+        testStream(type, name));
     }
   } else {
     const fixtureName = `fixture.${type}`;
-    const _test = failingFixture.has(fixtureName) ? test.failing : test;
+    const testFunction = failingFixture.has(fixtureName) ? test.fails : test;
 
-    _test(`${type} ${i++} .fromFile()`, testFromFile, type);
-    _test(`${type} ${i++} .fromBuffer()`, testFromBuffer, type);
-    _test(`${type} ${i++} .fromStream()`, testFileFromStream, type);
-    test(`${type} ${i++} .stream() - identical streams`, testStream, type);
+    testFunction(`${type} ${i++} .fromFile()`, () => testFromFile(type));
+    testFunction(`${type} ${i++} .fromBuffer()`, () => testFromBuffer(type));
+    testFunction(`${type} ${i++} .fromStream()`, () =>
+      testFileFromStream(type)
+    );
+    test(`${type} ${i++} .stream() - identical streams`, () =>
+      testStream(type));
   }
 
   if (Object.prototype.hasOwnProperty.call(falsePositives, type)) {
     for (const falsePositiveFile of falsePositives[type]) {
-      test(
-        `false positive - ${type} ${i++}`,
-        testFalsePositive,
-        type,
-        falsePositiveFile
-      );
+      test(`false positive - ${type} ${i++}`, () =>
+        testFalsePositive(type, falsePositiveFile));
     }
   }
 }
 
-test(".stream() method - empty stream", async (t) => {
+test(".stream() method - empty stream", async () => {
   const newStream = await fileTypeStream(readableNoopStream());
-  t.is(newStream.fileType, undefined);
+  t.strictEqual(newStream.fileType, undefined);
 });
 
-test(".stream() method - short stream", async (t) => {
+test(".stream() method - short stream", async () => {
   const bufferA = Buffer.from([0, 1, 0, 1]);
   class MyStream extends stream.Readable {
     _read() {
@@ -275,22 +269,23 @@ test(".stream() method - short stream", async (t) => {
   // Test filetype detection
   const shortStream = new MyStream();
   const newStream = await fileTypeStream(shortStream);
-  t.is(newStream.fileType, undefined);
+  t.strictEqual(newStream.fileType, undefined);
 
   // Test usability of returned stream
   const bufferB = await loadEntireFile(newStream);
   t.deepEqual(bufferA, bufferB);
 });
 
-test(".stream() method - no end-of-stream errors", async (t) => {
+test(".stream() method - no end-of-stream errors", async () => {
   const file = path.join(__dirname, "fixture", "fixture.ogm");
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   const stream = await fileTypeStream(fs.createReadStream(file), {
     sampleSize: 30,
   });
-  t.is(stream.fileType, undefined);
+  t.strictEqual(stream.fileType, undefined);
 });
 
-test(".stream() method - error event", async (t) => {
+test(".stream() method - error event", async () => {
   const errorMessage = "Fixture";
 
   const readableStream = new stream.Readable({
@@ -301,17 +296,16 @@ test(".stream() method - error event", async (t) => {
     },
   });
 
-  await t.throwsAsync(fileTypeStream(readableStream), {
-    message: errorMessage,
-  });
+  await expect(fileTypeStream(readableStream)).rejects.toThrow(errorMessage);
 });
 
-test(".stream() method - sampleSize option", async (t) => {
+test(".stream() method - sampleSize option", async () => {
   const file = path.join(__dirname, "fixture", "fixture.ogm");
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   let stream = await fileTypeStream(fs.createReadStream(file), {
     sampleSize: 30,
   });
-  t.is(
+  t.strictEqual(
     typeof stream.fileType,
     "undefined",
     "file-type cannot be determined with a sampleSize of 30"
@@ -320,254 +314,62 @@ test(".stream() method - sampleSize option", async (t) => {
   stream = await fileTypeStream(fs.createReadStream(file), {
     sampleSize: 4100,
   });
-  t.is(
+  t.strictEqual(
     typeof stream.fileType,
     "object",
     "file-type can be determined with a sampleSize of 4100"
   );
-  t.is(stream.fileType.mime, "video/ogg");
+  t.strictEqual(stream.fileType.mime, "video/ogg");
 });
 
-test("supportedExtensions.has", (t) => {
-  t.true(supportedExtensions.has("jpg"));
-  t.false(supportedExtensions.has("blah"));
+test("supportedExtensions.has", () => {
+  t.isTrue(supportedExtensions.has("jpg"));
+  t.isFalse(supportedExtensions.has("blah" as FileExtension));
 });
 
-test("supportedMimeTypes.has", (t) => {
-  t.true(supportedMimeTypes.has("video/mpeg"));
-  t.false(supportedMimeTypes.has("video/blah"));
+test("supportedMimeTypes.has", () => {
+  t.isTrue(supportedMimeTypes.has("video/mpeg"));
+  t.isFalse(supportedMimeTypes.has("video/blah" as MimeType));
 });
 
-test("validate the input argument type", async (t) => {
-  await t.throwsAsync(fileTypeFromBuffer("x"), {
-    message: /Expected the `input` argument to be of type `Uint8Array`/,
-  });
-
-  await t.notThrowsAsync(fileTypeFromBuffer(Buffer.from("x")));
-
-  await t.notThrowsAsync(fileTypeFromBuffer(new Uint8Array()));
-
-  await t.notThrowsAsync(fileTypeFromBuffer(new ArrayBuffer()));
-});
-
-test("validate the repo has all extensions and mimes in sync", (t) => {
-  // File: core.js (base truth)
-  function readIndexJS() {
-    const core = fs.readFileSync("core.js", { encoding: "utf8" });
-    const extArray = core.match(/(?<=ext:\s')(.*)(?=',)/g);
-    const mimeArray = core.match(/(?<=mime:\s')(.*)(?=')/g);
-    const exts = new Set(extArray);
-    const mimes = new Set(mimeArray);
-
-    return {
-      exts,
-      mimes,
-    };
-  }
-
-  // File: core.d.ts
-  function readIndexDTS() {
-    const core = fs.readFileSync("core.d.ts", { encoding: "utf8" });
-    const matches = core.match(/(?<=\|\s')(.*)(?=')/g);
-    const extArray = [];
-    const mimeArray = [];
-
-    for (const match of matches) {
-      if (match.includes("/")) {
-        mimeArray.push(match);
-      } else {
-        extArray.push(match);
-      }
-    }
-
-    return {
-      extArray,
-      mimeArray,
-    };
-  }
-
-  // File: package.json
-  function readPackageJSON() {
-    const packageJson = fs.readFileSync("package.json", { encoding: "utf8" });
-    const { keywords } = JSON.parse(packageJson);
-
-    const allowedExtras = new Set([
-      "mime",
-      "file",
-      "type",
-      "magic",
-      "archive",
-      "image",
-      "img",
-      "pic",
-      "picture",
-      "flash",
-      "photo",
-      "video",
-      "detect",
-      "check",
-      "is",
-      "exif",
-      "binary",
-      "buffer",
-      "uint8array",
-      "webassembly",
-    ]);
-
-    const extArray = keywords.filter((keyword) => !allowedExtras.has(keyword));
-    return extArray;
-  }
-
-  // File: readme.md
-  function readReadmeMD() {
-    const index = fs.readFileSync("readme.md", { encoding: "utf8" });
-    const extArray = index.match(/(?<=-\s\[`)(.*)(?=`)/g);
-    return extArray;
-  }
-
-  // Helpers
-  // Find extensions/mimes that are defined twice in a file
-  function findDuplicates(input) {
-    // TODO: Fix this.
-    // eslint-disable-next-line unicorn/no-array-reduce
-    return input.reduce((accumulator, element, index, array) => {
-      if (array.indexOf(element) !== index && !accumulator.includes(element)) {
-        accumulator.push(element);
-      }
-
-      return accumulator;
-    }, []);
-  }
-
-  // Find extensions/mimes that are in another file but not in `core.js`
-  function findExtras(array, set) {
-    return array.filter((element) => !set.has(element));
-  }
-
-  // Find extensions/mimes that are in `core.js` but missing from another file
-  function findMissing(array, set) {
-    const missing = [];
-    const other = new Set(array);
-    for (const elemenet of set) {
-      if (!other.has(elemenet)) {
-        missing.push(elemenet);
-      }
-    }
-
-    return missing;
-  }
-
-  // Test runner
-  function validate(found, baseTruth, fileName, extOrMime) {
-    const duplicates = findDuplicates(found);
-    const extras = findExtras(found, baseTruth);
-    const missing = findMissing(found, baseTruth);
-    t.is(
-      duplicates.length,
-      0,
-      `Found duplicate ${extOrMime}: ${duplicates} in ${fileName}.`
-    );
-    t.is(extras.length, 0, `Extra ${extOrMime}: ${extras} in ${fileName}.`);
-    t.is(missing.length, 0, `Missing ${extOrMime}: ${missing} in ${fileName}.`);
-  }
-
-  // Get the base truth of extensions and mimes supported from core.js
-  const { exts, mimes } = readIndexJS();
-
-  // Validate all extensions
-  const filesWithExtensions = {
-    "core.d.ts": readIndexDTS().extArray,
-    "supported.js": [...supportedExtensions],
-    "package.json": readPackageJSON(),
-    "readme.md": readReadmeMD(),
-  };
-
-  for (const fileName in filesWithExtensions) {
-    if (filesWithExtensions[fileName]) {
-      const foundExtensions = filesWithExtensions[fileName];
-      validate(foundExtensions, exts, fileName, "extensions");
-    }
-  }
-
-  // Validate all mimes
-  const filesWithMimeTypes = {
-    "core.d.ts": readIndexDTS().mimeArray,
-    "supported.js": [...supportedMimeTypes],
-  };
-
-  for (const fileName in filesWithMimeTypes) {
-    if (filesWithMimeTypes[fileName]) {
-      const foundMimeTypes = filesWithMimeTypes[fileName];
-      validate(foundMimeTypes, mimes, fileName, "mimes");
-    }
-  }
+test("validate the input argument type", async () => {
+  await expect(fileTypeFromBuffer(Buffer.from("x"))).resolves.not.toThrow();
+  await expect(fileTypeFromBuffer(new Uint8Array())).resolves.not.toThrow();
+  await expect(fileTypeFromBuffer(new ArrayBuffer(0))).resolves.not.toThrow();
 });
 
 class BufferedStream extends stream.Readable {
-  constructor(buffer) {
+  constructor(buffer: Buffer) {
     super();
     this.push(buffer);
     this.push(null);
   }
 
-  _read() {}
+  _read() {
+    // empty
+  }
 }
 
-test("odd file sizes", async (t) => {
+test("odd file sizes", async () => {
   const oddFileSizes = [
     1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 255, 256, 257, 511, 512, 513,
   ];
 
   for (const size of oddFileSizes) {
     const buffer = Buffer.alloc(size);
-    await t.notThrowsAsync(
+    await expect(
       fileTypeFromBuffer(buffer),
       `fromBuffer: File size: ${size} bytes`
-    );
+    ).resolves.not.toThrow();
   }
 
   for (const size of oddFileSizes) {
     const buffer = Buffer.alloc(size);
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     const stream = new BufferedStream(buffer);
-    await t.notThrowsAsync(
+    await expect(
       fileTypeFromStream(stream),
       `fromStream: File size: ${size} bytes`
-    );
-  }
-});
-
-test("supported files types are listed alphabetically", async (t) => {
-  const readme = await fs.promises.readFile("readme.md", { encoding: "utf8" });
-  let currentNode = new ReadmeParser().parse(readme).firstChild;
-
-  while (currentNode) {
-    if (
-      currentNode.type === "heading" &&
-      currentNode.firstChild.literal === "Supported file types"
-    ) {
-      // Header → List → First list item
-      currentNode = currentNode.next.firstChild;
-      break;
-    }
-
-    currentNode = currentNode.next;
-  }
-
-  let previousFileType;
-
-  while (currentNode) {
-    // List item → Paragraph → Link → Inline code → Text
-    const currentFileType =
-      currentNode.firstChild.firstChild.firstChild.literal;
-
-    if (previousFileType) {
-      t.true(
-        currentFileType > previousFileType,
-        `${currentFileType} should be listed before ${previousFileType}`
-      );
-    }
-
-    previousFileType = currentFileType;
-    currentNode = currentNode.next;
+    ).resolves.not.toThrow();
   }
 });

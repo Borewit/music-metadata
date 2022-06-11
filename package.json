@@ -86,10 +86,8 @@
   "dependencies": {
     "content-type": "^1.0.4",
     "debug": "^4.3.4",
-    "file-type": "17.1.2",
     "ieee754": "^1.2.1",
-    "media-typer": "^1.1.0",
-    "readable-web-to-node-stream": "^3.0.2"
+    "media-typer": "^1.1.0"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",

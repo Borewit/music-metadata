@@ -1,4 +1,6 @@
-export const extensions = [
+import { FileExtension, MimeType } from "./core";
+
+export const extensions: FileExtension[] = [
   "jpg",
   "png",
   "apng",
@@ -140,7 +142,7 @@ export const extensions = [
   "vcf",
 ];
 
-export const mimeTypes = [
+export const mimeTypes: MimeType[] = [
   "image/jpeg",
   "image/png",
   "image/gif",

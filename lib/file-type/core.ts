@@ -7,7 +7,7 @@ import {
   uint32SyncSafeToken,
 } from "./util";
 import { extensions, mimeTypes } from "./supported";
-import { Readable as ReadableStream } from "node:stream";
+import { Readable as ReadableStream, PassThrough } from "node:stream";
 import { ITokenizer } from "../strtok3/core";
 
 export type FileExtension =
@@ -358,7 +358,11 @@ export async function fileTypeFromBuffer(
   return fileTypeFromTokenizer(strtok3.fromBuffer(buffer));
 }
 
-function _check(buffer, headers, options) {
+function checkUtil(
+  buffer: Buffer,
+  headers: any[],
+  options?: { mask?: number[]; offset: any }
+) {
   options = {
     offset: 0,
     ...options,
@@ -419,15 +423,18 @@ export async function fileTypeFromTokenizer(
 }
 
 class FileTypeParser {
-  check(header, options) {
-    return _check(this.buffer, header, options);
+  buffer: Buffer;
+  tokenizer: strtok3.ITokenizer;
+
+  check(header: number[], options?: { offset: number; mask?: number[] }) {
+    return checkUtil(this.buffer, header, options);
   }
 
-  checkString(header, options) {
+  checkString(header: string, options?: { offset: number }) {
     return this.check(stringToBytes(header), options);
   }
 
-  async parse(tokenizer) {
+  async parse(tokenizer: strtok3.ITokenizer): Promise<FileTypeResult> {
     this.buffer = Buffer.alloc(minimumBytes);
 
     // Keep reading until EOF if the file size is unknown.
@@ -619,7 +626,13 @@ class FileTypeParser {
           await tokenizer.readBuffer(this.buffer, { length: 30 });
 
           // https://en.wikipedia.org/wiki/Zip_(file_format)#File_headers
-          const zipHeader = {
+          const zipHeader: {
+            filename?: string;
+            compressedSize: number;
+            uncompressedSize: number;
+            filenameLength: number;
+            extraFieldLength: number;
+          } = {
             compressedSize: this.buffer.readUInt32LE(18),
             uncompressedSize: this.buffer.readUInt32LE(22),
             filenameLength: this.buffer.readUInt16LE(26),
@@ -764,7 +777,7 @@ class FileTypeParser {
       await tokenizer.readBuffer(type);
 
       // Needs to be before `ogg` check
-      if (_check(type, [0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64])) {
+      if (checkUtil(type, [0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64])) {
         return {
           ext: "opus",
           mime: "audio/opus",
@@ -772,7 +785,7 @@ class FileTypeParser {
       }
 
       // If ' theora' in header.
-      if (_check(type, [0x80, 0x74, 0x68, 0x65, 0x6f, 0x72, 0x61])) {
+      if (checkUtil(type, [0x80, 0x74, 0x68, 0x65, 0x6f, 0x72, 0x61])) {
         return {
           ext: "ogv",
           mime: "video/ogg",
@@ -780,7 +793,7 @@ class FileTypeParser {
       }
 
       // If '\x01video' in header.
-      if (_check(type, [0x01, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x00])) {
+      if (checkUtil(type, [0x01, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x00])) {
         return {
           ext: "ogm",
           mime: "video/ogg",
@@ -788,7 +801,7 @@ class FileTypeParser {
       }
 
       // If ' FLAC' in header  https://xiph.org/flac/faq.html
-      if (_check(type, [0x7f, 0x46, 0x4c, 0x41, 0x43])) {
+      if (checkUtil(type, [0x7f, 0x46, 0x4c, 0x41, 0x43])) {
         return {
           ext: "oga",
           mime: "audio/ogg",
@@ -796,7 +809,7 @@ class FileTypeParser {
       }
 
       // 'Speex  ' in header https://en.wikipedia.org/wiki/Speex
-      if (_check(type, [0x53, 0x70, 0x65, 0x65, 0x78, 0x20, 0x20])) {
+      if (checkUtil(type, [0x53, 0x70, 0x65, 0x65, 0x78, 0x20, 0x20])) {
         return {
           ext: "spx",
           mime: "audio/ogg",
@@ -804,7 +817,7 @@ class FileTypeParser {
       }
 
       // If '\x01vorbis' in header
-      if (_check(type, [0x01, 0x76, 0x6f, 0x72, 0x62, 0x69, 0x73])) {
+      if (checkUtil(type, [0x01, 0x76, 0x6f, 0x72, 0x62, 0x69, 0x73])) {
         return {
           ext: "ogg",
           mime: "audio/ogg",
@@ -1056,7 +1069,7 @@ class FileTypeParser {
         };
       }
 
-      async function readChildren(level, children) {
+      async function readChildren(level: number, children: number) {
         while (children > 0) {
           const element = await readElement();
           if (element.id === 0x42_82) {
@@ -1307,10 +1320,8 @@ class FileTypeParser {
 
     if (this.checkString("!<arch>")) {
       await tokenizer.ignore(8);
-      const string = await tokenizer.readToken(
-        new Token.StringType(13, "ascii")
-      );
-      if (string === "debian-binary") {
+      const str = await tokenizer.readToken(new Token.StringType(13, "ascii"));
+      if (str === "debian-binary") {
         return {
           ext: "deb",
           mime: "application/x-deb",
@@ -1457,7 +1468,7 @@ class FileTypeParser {
         const header = await readHeader();
         let payload = header.size - 24;
         if (
-          _check(
+          checkUtil(
             header.id,
             [
               0x91, 0x07, 0xdc, 0xb7, 0xb7, 0xa9, 0xcf, 0x11, 0x8e, 0xe6, 0x00,
@@ -1470,7 +1481,7 @@ class FileTypeParser {
           payload -= await tokenizer.readBuffer(typeId);
 
           if (
-            _check(
+            checkUtil(
               typeId,
               [
                 0x40, 0x9e, 0x69, 0xf8, 0x4d, 0x5b, 0xcf, 0x11, 0xa8, 0xfd,
@@ -1486,7 +1497,7 @@ class FileTypeParser {
           }
 
           if (
-            _check(
+            checkUtil(
               typeId,
               [
                 0xc0, 0xef, 0x19, 0xbc, 0x4d, 0x5b, 0xcf, 0x11, 0xa8, 0xfd,
@@ -1709,7 +1720,9 @@ class FileTypeParser {
               mime: "application/x-asar",
             };
           }
-        } catch {}
+        } catch {
+          // empty
+        }
       }
     }
 
@@ -1899,7 +1912,7 @@ class FileTypeParser {
     }
   }
 
-  async readTiffTag(bigEndian) {
+  async readTiffTag(bigEndian: any): Promise<FileTypeResult> {
     const tagId = await this.tokenizer.readToken(
       bigEndian ? Token.UINT16_BE : Token.UINT16_LE
     );
@@ -1919,7 +1932,7 @@ class FileTypeParser {
     }
   }
 
-  async readTiffIFD(bigEndian) {
+  async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult> {
     const numberOfTags = await this.tokenizer.readToken(
       bigEndian ? Token.UINT16_BE : Token.UINT16_LE
     );
@@ -1931,7 +1944,7 @@ class FileTypeParser {
     }
   }
 
-  async readTiffHeader(bigEndian) {
+  async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult> {
     const version = (bigEndian ? Token.UINT16_BE : Token.UINT16_LE).get(
       this.buffer,
       2
@@ -1984,40 +1997,39 @@ class FileTypeParser {
 }
 
 /**
-Returns a `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
-
-This method can be handy to put in between a stream, but it comes with a price.
-Internally `stream()` builds up a buffer of `sampleSize` bytes, used as a sample, to determine the file type.
-The sample size impacts the file detection resolution.
-A smaller sample size will result in lower probability of the best file type detection.
-
-**Note:** This method is only available when using Node.js.
-**Note:** Requires Node.js 14 or later.
-
-@param readableStream - A [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable) containing a file to examine.
-@returns A `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
-
-@example
-```
-import got from 'got';
-import {fileTypeStream} from 'file-type';
-
-const url = 'https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg';
-
-const stream1 = got.stream(url);
-const stream2 = await fileTypeStream(stream1, {sampleSize: 1024});
-
-if (stream2.fileType && stream2.fileType.mime === 'image/jpeg') {
-	// stream2 can be used to stream the JPEG image (from the very beginning of the stream)
-}
-```
-*/
+ * Returns a `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
+ *
+ * This method can be handy to put in between a stream, but it comes with a price.
+ * Internally `stream()` builds up a buffer of `sampleSize` bytes, used as a sample, to determine the file type.
+ * The sample size impacts the file detection resolution.
+ * A smaller sample size will result in lower probability of the best file type detection.
+ *
+ * **Note:** This method is only available when using Node.js.
+ * **Note:** Requires Node.js 14 or later.
+ * @param readableStream - A [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable) containing a file to examine.
+ * @returns A `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
+ *
+ * @example
+ * ```
+ * import got from 'got';
+ * import {fileTypeStream} from 'file-type';
+ *
+ * const url = 'https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg';
+ *
+ * const stream1 = got.stream(url);
+ * const stream2 = await fileTypeStream(stream1, {sampleSize: 1024});
+ *
+ * if (stream2.fileType && stream2.fileType.mime === 'image/jpeg') {
+ * 	// stream2 can be used to stream the JPEG image (from the very beginning of the stream)
+ * }
+ * ```
+ */
 export async function fileTypeStream(
   readableStream: ReadableStream,
   { sampleSize = minimumBytes }: StreamOptions = {}
 ): Promise<ReadableStreamWithFileType> {
   // eslint-disable-next-line node/no-unsupported-features/es-syntax
-  const { default: stream } = await import("node:stream");
+  const stream = await import("node:stream");
 
   return new Promise((resolve, reject) => {
     readableStream.on("error", reject);
@@ -2026,9 +2038,13 @@ export async function fileTypeStream(
       (async () => {
         try {
           // Set up output stream
-          const pass = new stream.PassThrough();
-          const outputStream = stream.pipeline
-            ? stream.pipeline(readableStream, pass, () => {})
+          const pass: PassThrough & {
+            fileType?: FileTypeResult;
+          } = new stream.PassThrough();
+          const outputStream: ReadableStreamWithFileType = stream.pipeline
+            ? stream.pipeline(readableStream, pass, () => {
+                // empty
+              })
             : readableStream.pipe(pass);
 
           // Read the input stream and detect the filetype
@@ -2062,6 +2078,7 @@ export async function fileTypeStream(
 export const supportedExtensions: ReadonlySet<FileExtension> = new Set(
   extensions
 );
+
 /**
  * Supported MIME types.
  */
