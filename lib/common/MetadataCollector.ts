@@ -16,7 +16,7 @@ import { IGenericTag, TagType, isSingleton, isUnique } from "./GenericTagTypes";
 import { CombinedTagMapper } from "./CombinedTagMapper";
 import { CommonTagMapper } from "./GenericTagMapper";
 import { toRatio } from "./Util";
-import { fileTypeFromBuffer } from "../file-type/core";
+import { fileTypeFromBuffer } from "../file-type";
 
 const debug = initDebug("music-metadata:collector");
 

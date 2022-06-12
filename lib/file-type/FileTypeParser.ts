@@ -4,424 +4,14 @@ import {
   stringToBytes,
   tarHeaderChecksumMatches,
   uint32SyncSafeToken,
+  checkUtil,
 } from "./util";
-import { extensions, mimeTypes } from "./supported";
-import { Readable as ReadableStream, PassThrough } from "node:stream";
-import { ITokenizer } from "../strtok3";
-
-export type FileExtension =
-  | "jpg"
-  | "png"
-  | "apng"
-  | "gif"
-  | "webp"
-  | "flif"
-  | "xcf"
-  | "cr2"
-  | "cr3"
-  | "orf"
-  | "arw"
-  | "dng"
-  | "nef"
-  | "rw2"
-  | "raf"
-  | "tif"
-  | "bmp"
-  | "icns"
-  | "jxr"
-  | "psd"
-  | "indd"
-  | "zip"
-  | "tar"
-  | "rar"
-  | "gz"
-  | "bz2"
-  | "7z"
-  | "dmg"
-  | "mp4"
-  | "mid"
-  | "mkv"
-  | "webm"
-  | "mov"
-  | "avi"
-  | "mpg"
-  | "mp2"
-  | "mp3"
-  | "m4a"
-  | "ogg"
-  | "opus"
-  | "flac"
-  | "wav"
-  | "qcp"
-  | "amr"
-  | "pdf"
-  | "epub"
-  | "mobi"
-  | "elf"
-  | "exe"
-  | "swf"
-  | "rtf"
-  | "woff"
-  | "woff2"
-  | "eot"
-  | "ttf"
-  | "otf"
-  | "ico"
-  | "flv"
-  | "ps"
-  | "xz"
-  | "sqlite"
-  | "nes"
-  | "crx"
-  | "xpi"
-  | "cab"
-  | "deb"
-  | "ar"
-  | "rpm"
-  | "Z"
-  | "lz"
-  | "cfb"
-  | "mxf"
-  | "mts"
-  | "wasm"
-  | "blend"
-  | "bpg"
-  | "docx"
-  | "pptx"
-  | "xlsx"
-  | "3gp"
-  | "3g2"
-  | "jp2"
-  | "jpm"
-  | "jpx"
-  | "mj2"
-  | "aif"
-  | "odt"
-  | "ods"
-  | "odp"
-  | "xml"
-  | "heic"
-  | "cur"
-  | "ktx"
-  | "ape"
-  | "wv"
-  | "asf"
-  | "dcm"
-  | "mpc"
-  | "ics"
-  | "glb"
-  | "pcap"
-  | "dsf"
-  | "lnk"
-  | "alias"
-  | "voc"
-  | "ac3"
-  | "m4b"
-  | "m4p"
-  | "m4v"
-  | "f4a"
-  | "f4b"
-  | "f4p"
-  | "f4v"
-  | "mie"
-  | "ogv"
-  | "ogm"
-  | "oga"
-  | "spx"
-  | "ogx"
-  | "arrow"
-  | "shp"
-  | "aac"
-  | "mp1"
-  | "it"
-  | "s3m"
-  | "xm"
-  | "ai"
-  | "skp"
-  | "avif"
-  | "eps"
-  | "lzh"
-  | "pgp"
-  | "asar"
-  | "stl"
-  | "chm"
-  | "3mf"
-  | "zst"
-  | "jxl"
-  | "vcf";
-
-export type MimeType =
-  | "image/jpeg"
-  | "image/png"
-  | "image/gif"
-  | "image/webp"
-  | "image/flif"
-  | "image/x-xcf"
-  | "image/x-canon-cr2"
-  | "image/x-canon-cr3"
-  | "image/tiff"
-  | "image/bmp"
-  | "image/icns"
-  | "image/vnd.ms-photo"
-  | "image/vnd.adobe.photoshop"
-  | "application/x-indesign"
-  | "application/epub+zip"
-  | "application/x-xpinstall"
-  | "application/vnd.oasis.opendocument.text"
-  | "application/vnd.oasis.opendocument.spreadsheet"
-  | "application/vnd.oasis.opendocument.presentation"
-  | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  | "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-  | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  | "application/zip"
-  | "application/x-tar"
-  | "application/x-rar-compressed"
-  | "application/gzip"
-  | "application/x-bzip2"
-  | "application/x-7z-compressed"
-  | "application/x-apple-diskimage"
-  | "video/mp4"
-  | "audio/midi"
-  | "video/x-matroska"
-  | "video/webm"
-  | "video/quicktime"
-  | "video/vnd.avi"
-  | "audio/vnd.wave"
-  | "audio/qcelp"
-  | "audio/x-ms-asf"
-  | "video/x-ms-asf"
-  | "application/vnd.ms-asf"
-  | "video/mpeg"
-  | "video/3gpp"
-  | "audio/mpeg"
-  | "audio/mp4" // RFC 4337
-  | "audio/opus"
-  | "video/ogg"
-  | "audio/ogg"
-  | "application/ogg"
-  | "audio/x-flac"
-  | "audio/ape"
-  | "audio/wavpack"
-  | "audio/amr"
-  | "application/pdf"
-  | "application/x-elf"
-  | "application/x-msdownload"
-  | "application/x-shockwave-flash"
-  | "application/rtf"
-  | "application/wasm"
-  | "font/woff"
-  | "font/woff2"
-  | "application/vnd.ms-fontobject"
-  | "font/ttf"
-  | "font/otf"
-  | "image/x-icon"
-  | "video/x-flv"
-  | "application/postscript"
-  | "application/eps"
-  | "application/x-xz"
-  | "application/x-sqlite3"
-  | "application/x-nintendo-nes-rom"
-  | "application/x-google-chrome-extension"
-  | "application/vnd.ms-cab-compressed"
-  | "application/x-deb"
-  | "application/x-unix-archive"
-  | "application/x-rpm"
-  | "application/x-compress"
-  | "application/x-lzip"
-  | "application/x-cfb"
-  | "application/x-mie"
-  | "application/x-apache-arrow"
-  | "application/mxf"
-  | "video/mp2t"
-  | "application/x-blender"
-  | "image/bpg"
-  | "image/jp2"
-  | "image/jpx"
-  | "image/jpm"
-  | "image/mj2"
-  | "audio/aiff"
-  | "application/xml"
-  | "application/x-mobipocket-ebook"
-  | "image/heif"
-  | "image/heif-sequence"
-  | "image/heic"
-  | "image/heic-sequence"
-  | "image/ktx"
-  | "application/dicom"
-  | "audio/x-musepack"
-  | "text/calendar"
-  | "text/vcard"
-  | "model/gltf-binary"
-  | "application/vnd.tcpdump.pcap"
-  | "audio/x-dsf" // Non-standard
-  | "application/x.ms.shortcut" // Invented by us
-  | "application/x.apple.alias" // Invented by us
-  | "audio/x-voc"
-  | "audio/vnd.dolby.dd-raw"
-  | "audio/x-m4a"
-  | "image/apng"
-  | "image/x-olympus-orf"
-  | "image/x-sony-arw"
-  | "image/x-adobe-dng"
-  | "image/x-nikon-nef"
-  | "image/x-panasonic-rw2"
-  | "image/x-fujifilm-raf"
-  | "video/x-m4v"
-  | "video/3gpp2"
-  | "application/x-esri-shape"
-  | "audio/aac"
-  | "audio/x-it"
-  | "audio/x-s3m"
-  | "audio/x-xm"
-  | "video/MP1S"
-  | "video/MP2P"
-  | "application/vnd.sketchup.skp"
-  | "image/avif"
-  | "application/x-lzh-compressed"
-  | "application/pgp-encrypted"
-  | "application/x-asar"
-  | "model/stl"
-  | "application/vnd.ms-htmlhelp"
-  | "model/3mf"
-  | "image/jxl"
-  | "application/zstd";
-
-export interface FileTypeResult {
-  /**
-   * One of the supported [file types](https://github.com/sindresorhus/file-type#supported-file-types).
-   */
-  readonly ext: FileExtension;
-
-  /**
-   * The detected [MIME type](https://en.wikipedia.org/wiki/Internet_media_type).
-   */
-  readonly mime: MimeType;
-}
-
-export type ReadableStreamWithFileType = ReadableStream & {
-  readonly fileType?: FileTypeResult;
-};
-
-export interface StreamOptions {
-  /**
-   * The default sample size in bytes.
-   * @default 4100
-   */
-  readonly sampleSize?: number;
-}
+import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
+import { FileTypeResult } from "./type";
 
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
-/**
- * Detect the file type of a Node.js [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable).
- *
- * The file type is detected by checking the [magic number](https://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files) of the buffer.
- * @param stream - A readable stream representing file data.
- * @returns The detected file type and MIME type, or `undefined` when there is no match.
- */
-export async function fileTypeFromStream(
-  stream: ReadableStream
-): Promise<FileTypeResult | undefined> {
-  const tokenizer = await strtok3.fromStream(stream);
-  try {
-    return await fileTypeFromTokenizer(tokenizer);
-  } finally {
-    await tokenizer.close();
-  }
-}
-
-/**
- * Detect the file type of a `Buffer`, `Uint8Array`, or `ArrayBuffer`.
- *
- * The file type is detected by checking the [magic number](https://en.wikipedia.org/wiki/Magic_number_(programming)#Magic_numbers_in_files) of the buffer.
- *
- * If file access is available, it is recommended to use `.fromFile()` instead.
- * @param buffer - An Uint8Array or Buffer representing file data. It works best if the buffer contains the entire file, it may work with a smaller portion as well.
- * @returns The detected file type and MIME type, or `undefined` when there is no match.
- */
-export async function fileTypeFromBuffer(
-  input: Uint8Array | ArrayBuffer
-): Promise<FileTypeResult | undefined> {
-  if (!(input instanceof Uint8Array || input instanceof ArrayBuffer)) {
-    throw new TypeError(
-      `Expected the \`input\` argument to be of type \`Uint8Array\` or \`Buffer\` or \`ArrayBuffer\`, got \`${typeof input}\``
-    );
-  }
-
-  const buffer = input instanceof Uint8Array ? input : new Uint8Array(input);
-
-  if (!(buffer && buffer.length > 1)) {
-    return;
-  }
-
-  return fileTypeFromTokenizer(strtok3.fromBuffer(buffer));
-}
-
-function checkUtil(
-  buffer: Buffer,
-  headers: any[],
-  options?: { mask?: number[]; offset: any }
-) {
-  options = {
-    offset: 0,
-    ...options,
-  };
-
-  for (const [index, header] of headers.entries()) {
-    // If a bitmask is set
-    if (options.mask) {
-      // If header doesn't equal `buf` with bits masked off
-      if (header !== (options.mask[index] & buffer[index + options.offset])) {
-        return false;
-      }
-    } else if (header !== buffer[index + options.offset]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * Detect the file type from an [`ITokenizer`](https://github.com/Borewit/strtok3#tokenizer) source.
- *
- * This method is used internally, but can also be used for a special "tokenizer" reader.
- *
- * A tokenizer propagates the internal read functions, allowing alternative transport mechanisms, to access files, to be implemented and used.
- * @param tokenizer - File source implementing the tokenizer interface.
- * @returns The detected file type and MIME type, or `undefined` when there is no match.
- *
- * An example is [`@tokenizer/http`](https://github.com/Borewit/tokenizer-http), which requests data using [HTTP-range-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
- * A difference with a conventional stream and the [*tokenizer*](https://github.com/Borewit/strtok3#tokenizer), is that it is able to *ignore* (seek, fast-forward) in the stream. For example,
- * you may only need and read the first 6 bytes, and the last 128 bytes, which may be an advantage in case reading the entire file would take longer.
- *
- * @example
- * ```
- * import {makeTokenizer} from '@tokenizer/http';
- * import {fileTypeFromTokenizer} from 'file-type';
- *
- * const audioTrackUrl = 'https://test-audio.netlify.com/Various%20Artists%20-%202009%20-%20netBloc%20Vol%2024_%20tiuqottigeloot%20%5BMP3-V2%5D/01%20-%20Diablo%20Swing%20Orchestra%20-%20Heroines.mp3';
- *
- * const httpTokenizer = await makeTokenizer(audioTrackUrl);
- * const fileType = await fileTypeFromTokenizer(httpTokenizer);
- *
- * console.log(fileType);
- * //=> {ext: 'mp3', mime: 'audio/mpeg'}
- * ```
- */
-export async function fileTypeFromTokenizer(
-  tokenizer: ITokenizer
-): Promise<FileTypeResult | undefined> {
-  try {
-    return new FileTypeParser().parse(tokenizer);
-  } catch (error) {
-    if (!(error instanceof strtok3.EndOfStreamError)) {
-      throw error;
-    }
-  }
-}
-
-class FileTypeParser {
+export class FileTypeParser {
   buffer: Buffer;
   tokenizer: strtok3.ITokenizer;
 
@@ -446,7 +36,6 @@ class FileTypeParser {
     await tokenizer.peekBuffer(this.buffer, { length: 12, mayBeLess: true });
 
     // -- 2-byte signatures --
-
     if (this.check([0x42, 0x4d])) {
       return {
         ext: "bmp",
@@ -502,7 +91,6 @@ class FileTypeParser {
     }
 
     // -- 3-byte signatures --
-
     if (this.check([0x47, 0x49, 0x46])) {
       return {
         ext: "gif",
@@ -572,7 +160,6 @@ class FileTypeParser {
     }
 
     // -- 4-byte signatures --
-
     if (this.checkString("FLIF")) {
       return {
         ext: "flif",
@@ -846,7 +433,6 @@ class FileTypeParser {
     }
 
     //
-
     // File Type Box (https://en.wikipedia.org/wiki/ISO_base_media_file_format)
     // It's not required to be first, but it's recommended to be. Almost all ISO base media files start with `ftyp` box.
     // `ftyp` box must contain a brand major identifier, which must consist of ISO 8859-1 printable characters.
@@ -1045,8 +631,8 @@ class FileTypeParser {
         const msb = await tokenizer.peekNumber(Token.UINT8);
         let mask = 0x80;
         let ic = 0; // 0 = A, 1 = B, 2 = C, 3
-        // = D
 
+        // = D
         while ((msb & mask) === 0) {
           ++ic;
           mask >>= 1;
@@ -1071,7 +657,7 @@ class FileTypeParser {
       async function readChildren(level: number, children: number) {
         while (children > 0) {
           const element = await readElement();
-          if (element.id === 0x42_82) {
+          if (element.id === 17026) {
             const rawValue = await tokenizer.readToken(
               new Token.StringType(element.len, "utf-8")
             );
@@ -1186,7 +772,6 @@ class FileTypeParser {
     }
 
     // -- 5-byte signatures --
-
     if (this.check([0x4f, 0x54, 0x54, 0x4f, 0x00])) {
       return {
         ext: "otf",
@@ -1247,7 +832,7 @@ class FileTypeParser {
       //  MPEG-PS, MPEG-1 Part 1
       if (this.check([0x21], { offset: 4, mask: [0xf1] })) {
         return {
-          ext: "mpg", // May also be .ps, .mpeg
+          ext: "mpg",
           mime: "video/MP1S",
         };
       }
@@ -1255,7 +840,7 @@ class FileTypeParser {
       // MPEG-PS, MPEG-2 Part 1
       if (this.check([0x44], { offset: 4, mask: [0xc4] })) {
         return {
-          ext: "mpg", // May also be .mpg, .m2p, .vob or .sub
+          ext: "mpg",
           mime: "video/MP2P",
         };
       }
@@ -1269,7 +854,6 @@ class FileTypeParser {
     }
 
     // -- 6-byte signatures --
-
     if (this.check([0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00])) {
       return {
         ext: "xz",
@@ -1309,7 +893,6 @@ class FileTypeParser {
     }
 
     // -- 7-byte signatures --
-
     if (this.checkString("BLENDER")) {
       return {
         ext: "blend",
@@ -1334,16 +917,13 @@ class FileTypeParser {
     }
 
     // -- 8-byte signatures --
-
     if (this.check([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
       // APNG format (https://wiki.mozilla.org/APNG_Specification)
       // 1. Find the first IDAT (image data) chunk (49 44 41 54)
       // 2. Check if there is an "acTL" chunk before the IDAT one (61 63 54 4C)
-
       // Offset calculated as follows:
       // - 8 bytes: PNG signature
       // - 4 (length) + 4 (chunk type) + 13 (chunk data) + 4 (CRC): IHDR chunk
-
       await tokenizer.ignore(8); // ignore PNG signature
 
       async function readChunkHeader() {
@@ -1420,7 +1000,6 @@ class FileTypeParser {
     }
 
     // -- 9-byte signatures --
-
     if (this.check([0x49, 0x49, 0x52, 0x4f, 0x08, 0x00, 0x00, 0x00, 0x18])) {
       return {
         ext: "orf",
@@ -1436,7 +1015,6 @@ class FileTypeParser {
     }
 
     // -- 12-byte signatures --
-
     if (
       this.check([
         0x49, 0x49, 0x55, 0x00, 0x18, 0x00, 0x00, 0x00, 0x88, 0xe7, 0x74, 0xd8,
@@ -1566,7 +1144,6 @@ class FileTypeParser {
       ])
     ) {
       // JPEG-2000 family
-
       await tokenizer.ignore(20);
       const type = await tokenizer.readToken(new Token.StringType(4, "ascii"));
       switch (type) {
@@ -1618,7 +1195,6 @@ class FileTypeParser {
     }
 
     // -- Unsafe signatures --
-
     if (
       this.check([0x0, 0x0, 0x1, 0xba]) ||
       this.check([0x0, 0x0, 0x1, 0xb3])
@@ -1665,7 +1241,6 @@ class FileTypeParser {
     });
 
     // -- 15-byte signatures --
-
     if (this.checkString("BEGIN:")) {
       if (this.checkString("VCARD", { offset: 6 })) {
         return {
@@ -1917,12 +1492,12 @@ class FileTypeParser {
     );
     this.tokenizer.ignore(10);
     switch (tagId) {
-      case 50_341:
+      case 50341:
         return {
           ext: "arw",
           mime: "image/x-sony-arw",
         };
-      case 50_706:
+      case 50706:
         return {
           ext: "dng",
           mime: "image/x-adobe-dng",
@@ -1994,91 +1569,3 @@ class FileTypeParser {
     }
   }
 }
-
-/**
- * Returns a `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
- *
- * This method can be handy to put in between a stream, but it comes with a price.
- * Internally `stream()` builds up a buffer of `sampleSize` bytes, used as a sample, to determine the file type.
- * The sample size impacts the file detection resolution.
- * A smaller sample size will result in lower probability of the best file type detection.
- *
- * **Note:** This method is only available when using Node.js.
- * **Note:** Requires Node.js 14 or later.
- * @param readableStream - A [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable) containing a file to examine.
- * @returns A `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
- *
- * @example
- * ```
- * import got from 'got';
- * import {fileTypeStream} from 'file-type';
- *
- * const url = 'https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg';
- *
- * const stream1 = got.stream(url);
- * const stream2 = await fileTypeStream(stream1, {sampleSize: 1024});
- *
- * if (stream2.fileType && stream2.fileType.mime === 'image/jpeg') {
- * 	// stream2 can be used to stream the JPEG image (from the very beginning of the stream)
- * }
- * ```
- */
-export async function fileTypeStream(
-  readableStream: ReadableStream,
-  { sampleSize = minimumBytes }: StreamOptions = {}
-): Promise<ReadableStreamWithFileType> {
-  // eslint-disable-next-line node/no-unsupported-features/es-syntax
-  const stream = await import("node:stream");
-
-  return new Promise((resolve, reject) => {
-    readableStream.on("error", reject);
-
-    readableStream.once("readable", () => {
-      (async () => {
-        try {
-          // Set up output stream
-          const pass: PassThrough & {
-            fileType?: FileTypeResult;
-          } = new stream.PassThrough();
-          const outputStream: ReadableStreamWithFileType = stream.pipeline
-            ? stream.pipeline(readableStream, pass, () => {
-                // empty
-              })
-            : readableStream.pipe(pass);
-
-          // Read the input stream and detect the filetype
-          const chunk =
-            readableStream.read(sampleSize) ||
-            readableStream.read() ||
-            Buffer.alloc(0);
-          try {
-            const fileType = await fileTypeFromBuffer(chunk);
-            pass.fileType = fileType;
-          } catch (error) {
-            if (error instanceof strtok3.EndOfStreamError) {
-              pass.fileType = undefined;
-            } else {
-              reject(error);
-            }
-          }
-
-          resolve(outputStream);
-        } catch (error) {
-          reject(error);
-        }
-      })();
-    });
-  });
-}
-
-/**
- * Supported file extensions.
- */
-export const supportedExtensions: ReadonlySet<FileExtension> = new Set(
-  extensions
-);
-
-/**
- * Supported MIME types.
- */
-export const supportedMimeTypes: ReadonlySet<MimeType> = new Set(mimeTypes);

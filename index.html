@@ -8,8 +8,12 @@
   </head>
   <body>
     <script type="module">
-      import { parseBuffer } from "./lib/core";
-      parseBuffer(new ArrayBuffer(0));
+      import { parseBuffer } from "./lib";
+
+      async function onload() {
+        await parseBuffer(new ArrayBuffer(0));
+        console.log("parsed");
+      }
     </script>
   </body>
 </html>

@@ -47,3 +47,28 @@ export const uint32SyncSafeToken: IGetToken<number> = {
     (buffer[offset] << 21),
   len: 4,
 };
+
+export function checkUtil(
+  buffer: Buffer,
+  headers: any[],
+  options?: { mask?: number[]; offset: any }
+) {
+  options = {
+    offset: 0,
+    ...options,
+  };
+
+  for (const [index, header] of headers.entries()) {
+    // If a bitmask is set
+    if (options.mask) {
+      // If header doesn't equal `buf` with bits masked off
+      if (header !== (options.mask[index] & buffer[index + options.offset])) {
+        return false;
+      }
+    } else if (header !== buffer[index + options.offset]) {
+      return false;
+    }
+  }
+
+  return true;
+}
