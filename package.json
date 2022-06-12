@@ -81,7 +81,8 @@
     "lint:md": "remark -u preset-lint-recommended .",
     "test": "run-s test:vitest",
     "test:vitest": "vitest --run",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:buildsize": "vite build"
   },
   "dependencies": {
     "content-type": "^1.0.4",
@@ -109,6 +110,7 @@
     "remark-preset-lint-recommended": "^6.1.2",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3",
+    "vite": "^2.9.12",
     "vitest": "^0.14.2"
   },
   "engines": {
@@ -121,21 +123,5 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
-  },
-  "nyc": {
-    "exclude": [
-      "test/**/*.ts",
-      "src/**/*.js"
-    ],
-    "extension": [
-      ".ts"
-    ],
-    "sourceMap": true,
-    "instrument": true,
-    "reporter": [
-      "lcov",
-      "text"
-    ],
-    "report-dir": "coverage"
   }
 }

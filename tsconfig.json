@@ -3,10 +3,11 @@
   // "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "inlineSources": false,
-    "module": "CommonJS",
-    // "module": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "target": "ESNext",
+    "declaration": true,
+    "sourceMap": true,
     "skipLibCheck": true
 
     // "strict": true,

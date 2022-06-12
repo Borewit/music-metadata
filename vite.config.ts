@@ -1,6 +1,9 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  build: {
+    outDir: "./vite-out",
+  },
   test: {
     include: [
       "test/test-*.ts",
