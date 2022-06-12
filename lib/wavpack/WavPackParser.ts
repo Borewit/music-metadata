@@ -4,7 +4,8 @@ import { APEv2Parser } from "../apev2/APEv2Parser";
 import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
 
-import { IBlockHeader, IMetadataId, WavPack } from "./WavPackToken";
+import { BlockHeader, BlockHeaderToken } from "./BlockHeader";
+import { MetadataId, MetadataIdToken } from "./MetadataId";
 
 import initDebug from "debug";
 
@@ -35,14 +36,14 @@ export class WavPackParser extends BasicParser {
       const blockId = await this.tokenizer.peekToken<string>(FourCcToken);
       if (blockId !== "wvpk") break;
 
-      const header = await this.tokenizer.readToken<IBlockHeader>(
-        WavPack.BlockHeaderToken
+      const header = await this.tokenizer.readToken<BlockHeader>(
+        BlockHeaderToken
       );
       if (header.BlockID !== "wvpk")
         throw new Error("Invalid WavPack Block-ID");
 
       debug(
-        `WavPack header blockIndex=${header.blockIndex}, len=${WavPack.BlockHeaderToken.len}`
+        `WavPack header blockIndex=${header.blockIndex}, len=${BlockHeaderToken.len}`
       );
 
       if (header.blockIndex === 0 && !this.metadata.format.container) {
@@ -66,7 +67,7 @@ export class WavPackParser extends BasicParser {
         this.metadata.setFormat("codec", header.flags.isDSD ? "DSD" : "PCM");
       }
 
-      const ignoreBytes = header.blockSize - (WavPack.BlockHeaderToken.len - 8);
+      const ignoreBytes = header.blockSize - (BlockHeaderToken.len - 8);
 
       await (header.blockIndex === 0
         ? this.parseMetadataSubBlock(header, ignoreBytes)
@@ -77,7 +78,7 @@ export class WavPackParser extends BasicParser {
     } while (
       !this.tokenizer.fileInfo.size ||
       this.tokenizer.fileInfo.size - this.tokenizer.position >=
-        WavPack.BlockHeaderToken.len
+        BlockHeaderToken.len
     );
     this.metadata.setFormat(
       "bitrate",
@@ -90,13 +91,11 @@ export class WavPackParser extends BasicParser {
    * @param remainingLength
    */
   private async parseMetadataSubBlock(
-    header: IBlockHeader,
+    header: BlockHeader,
     remainingLength: number
   ): Promise<void> {
-    while (remainingLength > WavPack.MetadataIdToken.len) {
-      const id = await this.tokenizer.readToken<IMetadataId>(
-        WavPack.MetadataIdToken
-      );
+    while (remainingLength > MetadataIdToken.len) {
+      const id = await this.tokenizer.readToken<MetadataId>(MetadataIdToken);
       const dataSizeInWords = await this.tokenizer.readNumber(
         id.largeBlock ? Token.UINT24_LE : Token.UINT8
       );
@@ -147,7 +146,7 @@ export class WavPackParser extends BasicParser {
       }
 
       remainingLength -=
-        WavPack.MetadataIdToken.len +
+        MetadataIdToken.len +
         (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) +
         dataSizeInWords * 2;
       debug(`remainingLength=${remainingLength}`);
