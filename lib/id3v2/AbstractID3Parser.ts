@@ -1,4 +1,4 @@
-import { EndOfStreamError, ITokenizer } from "../strtok3/core";
+import { EndOfStreamError, ITokenizer } from "../strtok3";
 import initDebug from "debug";
 
 import { ID3v2Header } from "./ID3v2Token";

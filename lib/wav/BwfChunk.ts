@@ -1,4 +1,4 @@
-import { IGetToken } from "../strtok3/core";
+import { IGetToken } from "../strtok3";
 import * as Token from "../token-types";
 
 export interface IBroadcastAudioExtensionChunk {

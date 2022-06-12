@@ -1,4 +1,4 @@
-import { ITokenizer } from "../../strtok3/core";
+import { ITokenizer } from "../../strtok3";
 import initDebug from "debug";
 
 import { IPageHeader } from "../Ogg";

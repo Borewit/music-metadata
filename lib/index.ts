@@ -11,7 +11,7 @@ export { parseStream } from "./parseStream";
 export { parseFile } from "./parseFile";
 export { orderTags } from "./orderTags";
 export { ratingToStars } from "./ratingToStars";
-export { IFileInfo } from "./strtok3/core";
+export { IFileInfo } from "./strtok3";
 
 export {
   IAudioMetadata,

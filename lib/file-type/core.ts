@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import * as strtok3 from "../strtok3/core";
+import * as strtok3 from "../strtok3";
 import {
   stringToBytes,
   tarHeaderChecksumMatches,
@@ -7,7 +7,7 @@ import {
 } from "./util";
 import { extensions, mimeTypes } from "./supported";
 import { Readable as ReadableStream, PassThrough } from "node:stream";
-import { ITokenizer } from "../strtok3/core";
+import { ITokenizer } from "../strtok3";
 
 export type FileExtension =
   | "jpg"

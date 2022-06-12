@@ -1,6 +1,6 @@
 // ASF Objects
 
-import { IGetToken, ITokenizer } from "../strtok3/core";
+import { IGetToken, ITokenizer } from "../strtok3";
 
 import * as util from "../common/Util";
 import { IPicture, ITag } from "../type";

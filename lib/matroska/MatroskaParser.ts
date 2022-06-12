@@ -1,6 +1,6 @@
 import { Float32_BE, Float64_BE, StringType, UINT8 } from "../token-types";
 import initDebug from "debug";
-import { ITokenizer } from "../strtok3/core";
+import { ITokenizer } from "../strtok3";
 
 import { INativeMetadataCollector } from "../common/MetadataCollector";
 import { IOptions, ITrackInfo } from "../type";

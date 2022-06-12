@@ -1,5 +1,5 @@
 import * as Token from "../../token-types";
-import { ITokenizer } from "../../strtok3/core";
+import { ITokenizer } from "../../strtok3";
 
 import { IPageHeader } from "../Ogg";
 import { VorbisParser } from "../vorbis/VorbisParser";

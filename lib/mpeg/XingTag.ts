@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken, ITokenizer } from "../strtok3/core";
+import { IGetToken, ITokenizer } from "../strtok3";
 import * as util from "../common/Util";
 import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";
 

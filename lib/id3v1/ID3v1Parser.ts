@@ -1,6 +1,6 @@
 import initDebug from "debug";
 import { StringType, UINT8 } from "../token-types";
-import { IGetToken } from "../strtok3/core";
+import { IGetToken } from "../strtok3";
 
 import * as util from "../common/Util";
 import { BasicParser } from "../common/BasicParser";
