@@ -4,12 +4,13 @@ import * as Token from "../token-types";
 import initDebug from "debug";
 
 import * as riff from "../riff/RiffChunk";
-import * as WaveChunk from "./../wav/WaveChunk";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import * as util from "../common/Util";
 import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
-import { BroadcastAudioExtensionChunk } from "../wav/BwfChunk";
+import { IWaveFormat, Format, WaveFormat } from "./WaveFormat";
+import { IFactChunk, FactChunk } from "./FactChunk";
+import { BroadcastAudioExtensionChunk } from "./BwfChunk";
 
 const debug = initDebug("music-metadata:parser:RIFF");
 
@@ -25,7 +26,7 @@ const debug = initDebug("music-metadata:parser:RIFF");
  * ToDo: Split WAVE part from RIFF parser
  */
 export class WaveParser extends BasicParser {
-  private fact: WaveChunk.IFactChunk;
+  private fact: IFactChunk;
 
   private blockAlign: number;
   private header: riff.IChunkHeader;
@@ -77,17 +78,15 @@ export class WaveParser extends BasicParser {
 
         case "fact": // extended Format chunk,
           this.metadata.setFormat("lossless", false);
-          this.fact = await this.tokenizer.readToken(
-            new WaveChunk.FactChunk(header)
-          );
+          this.fact = await this.tokenizer.readToken(new FactChunk(header));
           break;
 
         case "fmt ": // The Util Chunk, non-PCM Formats
-          const fmt = await this.tokenizer.readToken<WaveChunk.IWaveFormat>(
-            new WaveChunk.Format(header)
+          const fmt = await this.tokenizer.readToken<IWaveFormat>(
+            new Format(header)
           );
 
-          let subFormat = WaveChunk.WaveFormat[fmt.wFormatTag];
+          let subFormat = WaveFormat[fmt.wFormatTag];
           if (!subFormat) {
             debug("WAVE/non-PCM format=" + fmt.wFormatTag);
             subFormat = "non-PCM (" + fmt.wFormatTag + ")";
