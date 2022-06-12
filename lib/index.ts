@@ -1,11 +1,17 @@
-import * as Stream from "stream";
-import * as strtok3 from "./strtok3";
+import { selectCover } from "./selectCover";
+import { parseFromTokenizer } from "./parseFromTokenizer";
+import { parseBuffer } from "./parseBuffer";
+import { parseStream } from "./parseStream";
+import { parseFile } from "./parseFile";
 
-import * as Core from "./core";
-import { ParserFactory } from "./ParserFactory";
-import { IAudioMetadata, IOptions } from "./type";
-import initDebug from "debug";
-import { RandomFileReader } from "./common/RandomFileReader";
+export { selectCover } from "./selectCover";
+export { parseFromTokenizer } from "./parseFromTokenizer";
+export { parseBuffer } from "./parseBuffer";
+export { parseStream } from "./parseStream";
+export { parseFile } from "./parseFile";
+export { orderTags } from "./orderTags";
+export { ratingToStars } from "./ratingToStars";
+export { IFileInfo } from "./strtok3/core";
 
 export {
   IAudioMetadata,
@@ -19,89 +25,13 @@ export {
   IChapter,
 } from "./type";
 
-const debug = initDebug("music-metadata:parser");
-
-export {
-  parseFromTokenizer,
-  parseBuffer,
-  IFileInfo,
-  selectCover,
-} from "./core";
-
-/**
- * Parse audio from Node Stream.Readable
- * @param stream - Stream to read the audio track from
- * @param fileInfo - File information object or MIME-type, e.g.: 'audio/mpeg'
- * @param options - Parsing options
- * @returns Metadata
- */
-export async function parseStream(
-  stream: Stream.Readable,
-  fileInfo?: strtok3.IFileInfo | string,
-  options: IOptions = {}
-): Promise<IAudioMetadata> {
-  const tokenizer = await strtok3.fromStream(
-    stream,
-    typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo
-  );
-  return Core.parseFromTokenizer(tokenizer, options);
-}
-
-/**
- * Parse audio from Node file
- * @param filePath - Media file to read meta-data from
- * @param options - Parsing options
- * @returns Metadata
- */
-export async function parseFile(
-  filePath: string,
-  options: IOptions = {}
-): Promise<IAudioMetadata> {
-  debug(`parseFile: ${filePath}`);
-
-  const fileTokenizer = await strtok3.fromFile(filePath);
-
-  const fileReader = await RandomFileReader.init(
-    filePath,
-    fileTokenizer.fileInfo.size
-  );
-  try {
-    await Core.scanAppendingHeaders(fileReader, options);
-  } finally {
-    await fileReader.close();
-  }
-
-  try {
-    const parserName = ParserFactory.getParserIdForExtension(filePath);
-    if (!parserName) debug(" Parser could not be determined by file extension");
-
-    return await ParserFactory.parse(fileTokenizer, parserName, options);
-  } finally {
-    await fileTokenizer.close();
-  }
-}
-
-/**
- * Create a dictionary ordered by their tag id (key)
- * @param nativeTags - List of tags
- * @returns Tags indexed by id
- */
-export const orderTags = Core.orderTags;
-
-/**
- * Convert rating to 1-5 star rating
- * @param rating - Normalized rating [0..1] (common.rating[n].rating)
- * @returns Number of stars: 1, 2, 3, 4 or 5 stars
- */
-export const ratingToStars = Core.ratingToStars;
-
 /**
  * Define default module exports
  */
 export default {
   parseStream,
   parseFile,
-  parseFromTokenizer: Core.parseFromTokenizer,
-  parseBuffer: Core.parseBuffer,
-  selectCover: Core.selectCover,
+  parseFromTokenizer,
+  parseBuffer,
+  selectCover,
 };
