@@ -7,15 +7,30 @@ import { Genres } from "../id3v1/ID3v1Parser";
 import { IChapter, ITrackInfo, TrackType } from "../type";
 
 import { Atom } from "./Atom";
-import * as AtomToken from "./AtomToken";
+
+import { encoderDict } from "./encoder";
+import { IAtomHeader, Header } from "./AtomHeader";
+import { IAtomFtyp, ftyp } from "./AtomFtyp";
+import { ITrackHeaderAtom, TrackHeaderAtom } from "./AtomTrackHeader";
+import { DataAtom } from "./AtomData";
+import { IAtomMdhd, MdhdAtom } from "./AtomMdhd";
+import { IAtomMvhd, MvhdAtom } from "./AtomMvhd";
+import { INameAtom, NameAtom } from "./AtomName";
+import { StcoAtom } from "./AtomStco";
+import { StscAtom } from "./AtomStsc";
+import { IAtomStsd, StsdAtom } from "./AtomStsd";
+import { IStszAtom, StszAtom } from "./AtomStsz";
+import { SttsAtom } from "./AtomStts";
+import { ITableAtom } from "./AtomTable";
+import { ChapterText } from "./ChapterText";
+import { ISampleDescription } from "./SampleDescription";
+import { ISampleToChunk } from "./SampleToChunk";
+import { SoundSampleDescriptionV0 } from "./SoundSampleDescriptionV0";
+import { SoundSampleDescriptionVersion } from "./SoundSampleDescriptionVersion";
+import { ITimeToSampleToken } from "./TimeToSampleToken";
 
 const debug = initDebug("music-metadata:parser:MP4");
 const tagFormat = "iTunes";
-
-interface IEncoder {
-  lossy: boolean;
-  format: string;
-}
 
 interface ISoundSampleDescription {
   dataFormat: string;
@@ -35,78 +50,18 @@ interface ISoundSampleDescription {
   };
 }
 
-interface ITrackDescription extends AtomToken.ITrackHeaderAtom {
+interface ITrackDescription extends ITrackHeaderAtom {
   soundSampleDescription: ISoundSampleDescription[];
   timeScale: number;
   chapterList?: number[];
   chunkOffsetTable?: number[];
   sampleSize?: number;
   sampleSizeTable?: number[];
-  sampleToChunkTable?: AtomToken.ISampleToChunk[];
-  timeToSampleTable?: AtomToken.ITimeToSampleToken[];
+  sampleToChunkTable?: ISampleToChunk[];
+  timeToSampleTable?: ITimeToSampleToken[];
 }
 
 type IAtomParser = (payloadLength: number) => Promise<any>;
-
-const encoderDict: { [dataFormatId: string]: IEncoder } = {
-  raw: {
-    lossy: false,
-    format: "raw",
-  },
-  MAC3: {
-    lossy: true,
-    format: "MACE 3:1",
-  },
-  MAC6: {
-    lossy: true,
-    format: "MACE 6:1",
-  },
-  ima4: {
-    lossy: true,
-    format: "IMA 4:1",
-  },
-  ulaw: {
-    lossy: true,
-    format: "uLaw 2:1",
-  },
-  alaw: {
-    lossy: true,
-    format: "uLaw 2:1",
-  },
-  Qclp: {
-    lossy: true,
-    format: "QUALCOMM PureVoice",
-  },
-  ".mp3": {
-    lossy: true,
-    format: "MPEG-1 layer 3",
-  },
-  alac: {
-    lossy: false,
-    format: "ALAC",
-  },
-  "ac-3": {
-    lossy: true,
-    format: "AC-3",
-  },
-  mp4a: {
-    lossy: true,
-    format: "MPEG-4/AAC",
-  },
-  mp4s: {
-    lossy: true,
-    format: "MP4S",
-  },
-  // Closed Captioning Media, https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-SW87
-  c608: {
-    lossy: true,
-    format: "CEA-608",
-  },
-  c708: {
-    lossy: true,
-    format: "CEA-708",
-  },
-};
 
 function distinct(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
@@ -155,9 +110,7 @@ export class MP4Parser extends BasicParser {
 
     while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
       try {
-        const token = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(
-          AtomToken.Header
-        );
+        const token = await this.tokenizer.peekToken<IAtomHeader>(Header);
         if (token.name === "\0\0\0\0") {
           const errMsg = `Error at offset=${this.tokenizer.position}: box.id=0`;
           debug(errMsg);
@@ -311,15 +264,15 @@ export class MP4Parser extends BasicParser {
             return this.parseValueAtom(tagKey, child);
 
           case "name": // name atom (optional)
-            const name = await this.tokenizer.readToken<AtomToken.INameAtom>(
-              new AtomToken.NameAtom(payLoadLength)
+            const name = await this.tokenizer.readToken<INameAtom>(
+              new NameAtom(payLoadLength)
             );
             tagKey += ":" + name.name;
             break;
 
           case "mean": // name atom (optional)
-            const mean = await this.tokenizer.readToken<AtomToken.INameAtom>(
-              new AtomToken.NameAtom(payLoadLength)
+            const mean = await this.tokenizer.readToken<INameAtom>(
+              new NameAtom(payLoadLength)
             );
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
@@ -347,9 +300,7 @@ export class MP4Parser extends BasicParser {
 
   private async parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
     const dataAtom = await this.tokenizer.readToken(
-      new AtomToken.DataAtom(
-        Number(metaAtom.header.length) - AtomToken.Header.len
-      )
+      new DataAtom(Number(metaAtom.header.length) - Header.len)
     );
 
     if (dataAtom.type.set !== 0) {
@@ -436,9 +387,7 @@ export class MP4Parser extends BasicParser {
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
      */
     mvhd: async (len: number) => {
-      const mvhd = await this.tokenizer.readToken<AtomToken.IAtomMvhd>(
-        new AtomToken.MvhdAtom(len)
-      );
+      const mvhd = await this.tokenizer.readToken<IAtomMvhd>(new MvhdAtom(len));
       this.metadata.setFormat("creationTime", mvhd.creationTime);
       this.metadata.setFormat("modificationTime", mvhd.modificationTime);
     },
@@ -448,8 +397,8 @@ export class MP4Parser extends BasicParser {
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25615
      */
     mdhd: async (len: number) => {
-      const mdhd_data = await this.tokenizer.readToken<AtomToken.IAtomMdhd>(
-        new AtomToken.MdhdAtom(len)
+      const mdhd_data = await this.tokenizer.readToken<IAtomMdhd>(
+        new MdhdAtom(len)
       );
       // this.parse_mxhd(mdhd_data, this.currentTrack);
       const td = this.getTrackDescription();
@@ -472,8 +421,8 @@ export class MP4Parser extends BasicParser {
     },
 
     tkhd: async (len: number) => {
-      const track = (await this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(
-        new AtomToken.TrackHeaderAtom(len)
+      const track = (await this.tokenizer.readToken<ITrackHeaderAtom>(
+        new TrackHeaderAtom(len)
       )) as ITrackDescription;
       this.tracks.push(track);
     },
@@ -510,10 +459,8 @@ export class MP4Parser extends BasicParser {
     ftyp: async (len: number) => {
       const types = [];
       while (len > 0) {
-        const ftype = await this.tokenizer.readToken<AtomToken.IAtomFtyp>(
-          AtomToken.ftyp
-        );
-        len -= AtomToken.ftyp.len;
+        const ftype = await this.tokenizer.readToken<IAtomFtyp>(ftyp);
+        len -= ftyp.len;
         const value = ftype.type.replace(/\W/g, "");
         if (value.length > 0) {
           types.push(value); // unshift for backward compatibility
@@ -528,9 +475,7 @@ export class MP4Parser extends BasicParser {
      * Parse sample description atom
      */
     stsd: async (len: number) => {
-      const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(
-        new AtomToken.StsdAtom(len)
-      );
+      const stsd = await this.tokenizer.readToken<IAtomStsd>(new StsdAtom(len));
       const trackDescription = this.getTrackDescription();
       trackDescription.soundSampleDescription = stsd.table.map((dfEntry) =>
         this.parseSoundSampleDescription(dfEntry)
@@ -541,9 +486,9 @@ export class MP4Parser extends BasicParser {
      * sample-to-Chunk Atoms
      */
     stsc: async (len: number) => {
-      const stsc = await this.tokenizer.readToken<
-        AtomToken.ITableAtom<AtomToken.ISampleToChunk>
-      >(new AtomToken.StscAtom(len));
+      const stsc = await this.tokenizer.readToken<ITableAtom<ISampleToChunk>>(
+        new StscAtom(len)
+      );
       this.getTrackDescription().sampleToChunkTable = stsc.entries;
     },
 
@@ -552,8 +497,8 @@ export class MP4Parser extends BasicParser {
      */
     stts: async (len: number) => {
       const stts = await this.tokenizer.readToken<
-        AtomToken.ITableAtom<AtomToken.ITimeToSampleToken>
-      >(new AtomToken.SttsAtom(len));
+        ITableAtom<ITimeToSampleToken>
+      >(new SttsAtom(len));
       this.getTrackDescription().timeToSampleTable = stts.entries;
     },
 
@@ -561,9 +506,7 @@ export class MP4Parser extends BasicParser {
      * Parse sample-sizes atom ('stsz')
      */
     stsz: async (len: number) => {
-      const stsz = await this.tokenizer.readToken<AtomToken.IStszAtom>(
-        new AtomToken.StszAtom(len)
-      );
+      const stsz = await this.tokenizer.readToken<IStszAtom>(new StszAtom(len));
       const td = this.getTrackDescription();
       td.sampleSize = stsz.sampleSize;
       td.sampleSizeTable = stsz.entries;
@@ -573,8 +516,8 @@ export class MP4Parser extends BasicParser {
      * Parse chunk-offset atom ('stco')
      */
     stco: async (len: number) => {
-      const stco = await this.tokenizer.readToken<AtomToken.ITableAtom<number>>(
-        new AtomToken.StcoAtom(len)
+      const stco = await this.tokenizer.readToken<ITableAtom<number>>(
+        new StcoAtom(len)
       );
       this.getTrackDescription().chunkOffsetTable = stco.entries; // remember chunk offsets
     },
@@ -592,7 +535,7 @@ export class MP4Parser extends BasicParser {
    * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-128916
    */
   private parseSoundSampleDescription(
-    sampleDescription: AtomToken.ISampleDescription
+    sampleDescription: ISampleDescription
   ): ISoundSampleDescription {
     const ssd: ISoundSampleDescription = {
       dataFormat: sampleDescription.dataFormat,
@@ -600,15 +543,15 @@ export class MP4Parser extends BasicParser {
     };
 
     let offset = 0;
-    const version = AtomToken.SoundSampleDescriptionVersion.get(
+    const version = SoundSampleDescriptionVersion.get(
       sampleDescription.description,
       offset
     );
-    offset += AtomToken.SoundSampleDescriptionVersion.len;
+    offset += SoundSampleDescriptionVersion.len;
 
     if (version.version === 0 || version.version === 1) {
       // Sound Sample Description (Version 0)
-      ssd.description = AtomToken.SoundSampleDescriptionV0.get(
+      ssd.description = SoundSampleDescriptionV0.get(
         sampleDescription.description,
         offset
       );
@@ -643,9 +586,7 @@ export class MP4Parser extends BasicParser {
       len -= nextChunkLen + sampleSize;
       if (len < 0) throw new Error("Chapter chunk exceeding token length");
       await this.tokenizer.ignore(nextChunkLen);
-      const title = await this.tokenizer.readToken(
-        new AtomToken.ChapterText(sampleSize)
-      );
+      const title = await this.tokenizer.readToken(new ChapterText(sampleSize));
       debug(`Chapter ${i + 1}: ${title}`);
       const chapter = {
         title,
@@ -713,7 +654,7 @@ export class MP4Parser extends BasicParser {
 
   private getSamplesPerChunk(
     chunkId: number,
-    stcTable: AtomToken.ISampleToChunk[]
+    stcTable: ISampleToChunk[]
   ): number {
     for (let i = 0; i < stcTable.length - 1; ++i) {
       if (

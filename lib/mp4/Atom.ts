@@ -1,7 +1,7 @@
 import { ITokenizer } from "../strtok3";
 import initDebug from "debug";
-
-import * as AtomToken from "./AtomToken";
+import { Header, IAtomHeader } from "./AtomHeader";
+import { ExtendedSize } from "./SoundSampleDescriptionVersion";
 
 export type AtomDataHandler = (atom: Atom, remaining: number) => Promise<void>;
 
@@ -17,12 +17,10 @@ export class Atom {
     // Parse atom header
     const offset = tokenizer.position;
     // debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
-    const header = await tokenizer.readToken<AtomToken.IAtomHeader>(
-      AtomToken.Header
-    );
+    const header = await tokenizer.readToken<IAtomHeader>(Header);
     const extended = header.length === BigInt(1);
     if (extended) {
-      header.length = await tokenizer.readToken<bigint>(AtomToken.ExtendedSize);
+      header.length = await tokenizer.readToken<bigint>(ExtendedSize);
     }
     const atomBean = new Atom(header, header.length === BigInt(1), parent);
     const payloadLength = atomBean.getPayloadLength(remaining);
@@ -37,7 +35,7 @@ export class Atom {
   public readonly atomPath: string;
 
   public constructor(
-    public readonly header: AtomToken.IAtomHeader,
+    public readonly header: IAtomHeader,
     public extended: boolean,
     public readonly parent: Atom
   ) {
