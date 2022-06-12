@@ -3,7 +3,8 @@ import * as fromBuffer from "../strtok3/fromBuffer";
 import * as Token from "../token-types";
 import initDebug from "debug";
 
-import * as riff from "../riff/RiffChunk";
+import { IChunkHeader, Header } from "../riff/RiffHeader";
+import { ListInfoTagValue } from "../riff/RiffInfo";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import * as util from "../common/Util";
 import { FourCcToken } from "../common/FourCC";
@@ -29,12 +30,10 @@ export class WaveParser extends BasicParser {
   private fact: IFactChunk;
 
   private blockAlign: number;
-  private header: riff.IChunkHeader;
+  private header: IChunkHeader;
 
   public async parse(): Promise<void> {
-    const riffHeader = await this.tokenizer.readToken<riff.IChunkHeader>(
-      riff.Header
-    );
+    const riffHeader = await this.tokenizer.readToken<IChunkHeader>(Header);
     debug(
       `pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`
     );
@@ -58,11 +57,9 @@ export class WaveParser extends BasicParser {
   }
 
   public async readWaveChunk(remaining: number): Promise<void> {
-    while (remaining >= riff.Header.len) {
-      const header = await this.tokenizer.readToken<riff.IChunkHeader>(
-        riff.Header
-      );
-      remaining -= riff.Header.len + header.chunkSize;
+    while (remaining >= Header.len) {
+      const header = await this.tokenizer.readToken<IChunkHeader>(Header);
+      remaining -= Header.len + header.chunkSize;
       if (header.chunkSize > remaining) {
         this.metadata.addWarning("Data chunk size exceeds file size");
       }
@@ -182,7 +179,7 @@ export class WaveParser extends BasicParser {
     }
   }
 
-  public async parseListTag(listHeader: riff.IChunkHeader): Promise<void> {
+  public async parseListTag(listHeader: IChunkHeader): Promise<void> {
     const listType = await this.tokenizer.readToken(
       new Token.StringType(4, "binary")
     );
@@ -205,10 +202,8 @@ export class WaveParser extends BasicParser {
 
   private async parseRiffInfoTags(chunkSize): Promise<void> {
     while (chunkSize >= 8) {
-      const header = await this.tokenizer.readToken<riff.IChunkHeader>(
-        riff.Header
-      );
-      const valueToken = new riff.ListInfoTagValue(header);
+      const header = await this.tokenizer.readToken<IChunkHeader>(Header);
+      const valueToken = new ListInfoTagValue(header);
       const value = await this.tokenizer.readToken(valueToken);
       this.addTag(header.chunkID, util.stripNulls(value));
       chunkSize -= 8 + valueToken.len;
