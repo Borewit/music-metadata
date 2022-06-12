@@ -3,9 +3,11 @@ import initDebug from "debug";
 
 import { IOptions } from "../../type";
 import { INativeMetadataCollector } from "../../common/MetadataCollector";
-import * as Ogg from "../Ogg";
 
-import { IdentificationHeader } from "./Theora";
+import { IPageHeader } from "../Header";
+import { IPageConsumer } from "../PageConsumer";
+
+import { IdentificationHeader } from "./TheoraIdHeader";
 
 const debug = initDebug("music-metadata:parser:ogg:theora");
 
@@ -13,7 +15,7 @@ const debug = initDebug("music-metadata:parser:ogg:theora");
  * Ref:
  * - https://theora.org/doc/Theora.pdf
  */
-export class TheoraParser implements Ogg.IPageConsumer {
+export class TheoraParser implements IPageConsumer {
   constructor(
     private metadata: INativeMetadataCollector,
     options: IOptions,
@@ -25,7 +27,7 @@ export class TheoraParser implements Ogg.IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public parsePage(header: Ogg.IPageHeader, pageData: Buffer) {
+  public parsePage(header: IPageHeader, pageData: Buffer) {
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     }
@@ -35,7 +37,7 @@ export class TheoraParser implements Ogg.IPageConsumer {
     debug("flush");
   }
 
-  public calculateDuration(header: Ogg.IPageHeader) {
+  public calculateDuration(header: IPageHeader) {
     debug("duration calculation not implemented");
   }
 
@@ -44,7 +46,7 @@ export class TheoraParser implements Ogg.IPageConsumer {
    * @param {IPageHeader} header
    * @param {Buffer} pageData
    */
-  protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
+  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
     debug("First Ogg/Theora page");
     this.metadata.setFormat("codec", "Theora");
     const idHeader = IdentificationHeader.get(pageData, 0);

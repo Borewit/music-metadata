@@ -3,7 +3,10 @@ import initDebug from "debug";
 import { ITokenizer, IGetToken } from "../strtok3";
 
 import * as util from "../common/Util";
-import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/Vorbis";
+import {
+  IVorbisPicture,
+  VorbisPictureToken,
+} from "../ogg/vorbis/VorbisPicture";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 import { FourCcToken } from "../common/FourCC";
 import { VorbisParser } from "../ogg/vorbis/VorbisParser";

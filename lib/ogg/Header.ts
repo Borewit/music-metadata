@@ -1,3 +1,9 @@
+import * as Token from "../token-types";
+import { IGetToken } from "../strtok3";
+
+import * as util from "../common/Util";
+import { FourCcToken } from "../common/FourCC";
+
 /**
  * Page header
  * Ref: https://www.xiph.org/ogg/doc/framing.html#page_header
@@ -53,26 +59,25 @@ export interface IPageHeader {
   page_segments: number;
 }
 
-export interface ISegmentTable {
-  totalPageSize: number;
-}
+export const Header: IGetToken<IPageHeader> = {
+  len: 27,
 
-export interface IPageConsumer {
-  /**
-   * Parse Ogg page
-   * @param {IPageHeader} header Ogg page header
-   * @param {Buffer} pageData Ogg page data
-   */
-  parsePage(header: IPageHeader, pageData: Uint8Array);
+  get: (buf, off): IPageHeader => {
+    return {
+      capturePattern: FourCcToken.get(buf, off),
+      version: Token.UINT8.get(buf, off + 4),
 
-  /**
-   * Calculate duration of provided header
-   * @param header Ogg header
-   */
-  calculateDuration(header: IPageHeader);
-
-  /**
-   * Force to parse pending segments
-   */
-  flush();
-}
+      headerType: {
+        continued: util.getBit(buf, off + 5, 0),
+        firstPage: util.getBit(buf, off + 5, 1),
+        lastPage: util.getBit(buf, off + 5, 2),
+      },
+      // packet_flag: buf.readUInt8(off + 5),
+      absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
+      streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
+      pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
+      pageChecksum: Token.UINT32_LE.get(buf, off + 22),
+      page_segments: Token.UINT8.get(buf, off + 26),
+    };
+  },
+};

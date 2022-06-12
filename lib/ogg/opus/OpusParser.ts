@@ -1,12 +1,12 @@
 import * as Token from "../../token-types";
 import { ITokenizer } from "../../strtok3";
 
-import { IPageHeader } from "../Ogg";
+import { IPageHeader } from "../Header";
 import { VorbisParser } from "../vorbis/VorbisParser";
 import { IOptions } from "../../type";
 import { INativeMetadataCollector } from "../../common/MetadataCollector";
 
-import * as Opus from "./Opus";
+import { IIdHeader, IdHeader } from "./OpusIdHeader";
 
 /**
  * Opus parser
@@ -14,7 +14,7 @@ import * as Opus from "./Opus";
  * Used by OggParser
  */
 export class OpusParser extends VorbisParser {
-  private idHeader: Opus.IIdHeader;
+  private idHeader: IIdHeader;
   private lastPos: number = -1;
 
   constructor(
@@ -33,7 +33,7 @@ export class OpusParser extends VorbisParser {
   protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
     this.metadata.setFormat("codec", "Opus");
     // Parse Opus ID Header
-    this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
+    this.idHeader = new IdHeader(pageData.length).get(pageData, 0);
     if (this.idHeader.magicSignature !== "OpusHead")
       throw new Error("Illegal ogg/Opus magic-signature");
     this.metadata.setFormat("sampleRate", this.idHeader.inputSampleRate);

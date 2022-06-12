@@ -4,7 +4,7 @@ import * as path from "path";
 import { Parsers } from "./metadata-parsers";
 import * as mm from "../lib";
 import { samplePath } from "./util";
-import { IdHeader } from "../lib/ogg/opus/Opus";
+import { IdHeader } from "../lib/ogg/opus/OpusIdHeader";
 
 const oggSamplePath = path.join(samplePath, "ogg");
 
