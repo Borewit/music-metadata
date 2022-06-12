@@ -4,7 +4,7 @@ import { BufferTokenizer } from "./BufferTokenizer";
 import { IFileInfo } from "./types";
 export { EndOfStreamError } from "../peek-readable";
 export { ITokenizer, IFileInfo } from "./types";
-export { IToken, IGetToken } from "../@tokenizer/token";
+export { IToken, IGetToken } from "../token-types";
 
 /**
  * Construct ReadStreamTokenizer from given Stream.

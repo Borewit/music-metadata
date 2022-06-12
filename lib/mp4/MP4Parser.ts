@@ -1,6 +1,6 @@
 import initDebug from "debug";
 import * as Token from "../token-types";
-import { IGetToken } from "../@tokenizer/token";
+import { IGetToken } from "../token-types";
 
 import { BasicParser } from "../common/BasicParser";
 import { Genres } from "../id3v1/ID3v1Parser";
