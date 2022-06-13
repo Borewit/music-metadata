@@ -17,7 +17,7 @@ export interface IWarningCollector {
    * Register parser warning
    * @param warning
    */
-  addWarning(warning: string);
+  addWarning(warning: string): void;
 }
 
 export interface INativeMetadataCollector extends IWarningCollector {

@@ -10,7 +10,7 @@ const t = assert;
 describe("Parse FLAC", () => {
   const flacFilePath = path.join(samplePath, "flac");
 
-  function checkFormat(format) {
+  function checkFormat(format: mm.IFormat) {
     t.strictEqual(format.container, "FLAC", "format.container");
     t.strictEqual(format.codec, "FLAC", "format.codec");
     t.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
@@ -24,7 +24,7 @@ describe("Parse FLAC", () => {
     );
   }
 
-  function checkCommon(common) {
+  function checkCommon(common: mm.ICommonTagsResult) {
     t.strictEqual(common.title, "Brian Eno", "common.title");
     t.deepEqual(common.artists, ["MGMT"], "common.artists");
     t.strictEqual(common.albumartist, undefined, "common.albumartist");
@@ -45,7 +45,7 @@ describe("Parse FLAC", () => {
     );
   }
 
-  function checkNative(vorbis) {
+  function checkNative(vorbis: mm.INativeTagDict) {
     // Compare expectedCommonTags with result.common
     t.deepEqual(vorbis.TITLE, ["Brian Eno"], "vorbis.TITLE");
     t.deepEqual(vorbis.ARTIST, ["MGMT"], "vorbis.ARTIST");

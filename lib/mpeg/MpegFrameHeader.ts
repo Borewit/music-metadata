@@ -3,6 +3,25 @@ import initDebug from "debug";
 
 const debug = initDebug("music-metadata:parser:mpeg");
 
+type UInt4 =
+  | 0x0
+  | 0x1
+  | 0x2
+  | 0x3
+  | 0x4
+  | 0x5
+  | 0x6
+  | 0x7
+  | 0x8
+  | 0x9
+  | 0xa
+  | 0xb
+  | 0xc
+  | 0xd
+  | 0xe
+  | 0xf;
+type UInt2 = 0 | 1 | 2 | 3;
+
 type MPEG4Channel =
   | "front-center"
   | "front-left"
@@ -96,7 +115,7 @@ export class MpegFrameHeader {
   public static SyncByte1 = 0xff;
   public static SyncByte2 = 0xe0;
 
-  public static VersionID = [2.5, null, 2, 1];
+  public static VersionID: [2.5, null, 2, 1] = [2.5, null, 2, 1];
   public static LayerDescription = [0, 3, 2, 1];
   public static ChannelMode = [
     "stereo",
@@ -141,7 +160,7 @@ export class MpegFrameHeader {
   // D(16): Protection bit
   public isProtectedByCRC: boolean;
   // E(15,12): Bitrate index
-  public bitrateIndex: number;
+  public bitrateIndex: UInt4;
   // F(11,10): Sampling rate frequency index
   public sampRateFreqIndex: number;
   // G(9): Padding bit
@@ -159,7 +178,7 @@ export class MpegFrameHeader {
   // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
   public emphasis: number;
 
-  public version: number;
+  public version: 1 | 2 | 2.5 | 4 | null;
   public channelMode: string;
   public bitrate: number;
   public samplingRate: number;
@@ -172,7 +191,7 @@ export class MpegFrameHeader {
 
   public mp4ChannelConfig: MPEG4ChannelConfiguration;
 
-  public constructor(buf: Buffer, off: number) {
+  public constructor(buf: Uint8Array, off: number) {
     // B(20,19): MPEG Audio versionIndex ID
     this.versionIndex = common.getBitAllignedNumber(buf, off + 1, 3, 2);
     // C(18,17): Layer description
@@ -223,10 +242,15 @@ export class MpegFrameHeader {
     return [null, 4, 1, 1][this.layer];
   }
 
-  private parseMpegHeader(buf: Buffer, off: number): void {
+  private parseMpegHeader(buf: Uint8Array, off: number): void {
     this.container = "MPEG";
     // E(15,12): Bitrate index
-    this.bitrateIndex = common.getBitAllignedNumber(buf, off + 2, 0, 4);
+    this.bitrateIndex = common.getBitAllignedNumber(
+      buf,
+      off + 2,
+      0,
+      4
+    ) as UInt4;
     // F(11,10): Sampling rate frequency index
     this.sampRateFreqIndex = common.getBitAllignedNumber(buf, off + 2, 4, 2);
     // G(9): Padding bit
@@ -263,7 +287,7 @@ export class MpegFrameHeader {
     }
   }
 
-  private parseAdtsHeader(buf: Buffer, off: number): void {
+  private parseAdtsHeader(buf: Uint8Array, off: number): void {
     debug(`layer=0 => ADTS`);
     this.version = this.versionIndex === 2 ? 4 : 2;
     this.container = "ADTS/MPEG-" + this.version;
@@ -297,12 +321,22 @@ export class MpegFrameHeader {
       // reserved
       return;
     }
-    const codecIndex = `${Math.floor(this.version)}${this.layer}`;
+    type CodecIndex = "11" | "12" | "13" | "21" | "22" | "23";
+    const codecIndex: CodecIndex = `${Math.floor(this.version)}${
+      this.layer
+    }` as CodecIndex;
     return MpegFrameHeader.bitrate_index[this.bitrateIndex][codecIndex];
   }
 
   private calcSamplingRate(): number {
     if (this.sampRateFreqIndex === 0x03) return null; // 'reserved'
+    if (this.version === 4) return null;
+    if (
+      this.sampRateFreqIndex !== 0 &&
+      this.sampRateFreqIndex !== 1 &&
+      this.sampRateFreqIndex !== 2
+    )
+      return null;
     return MpegFrameHeader.sampling_rate_freq_index[this.version][
       this.sampRateFreqIndex
     ];
@@ -315,7 +349,7 @@ export class MpegFrameHeader {
 export const FrameHeader = {
   len: 4,
 
-  get: (buf, off): MpegFrameHeader => {
+  get: (buf: Uint8Array, off: number): MpegFrameHeader => {
     return new MpegFrameHeader(buf, off);
   },
 };

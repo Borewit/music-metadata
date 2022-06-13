@@ -58,7 +58,7 @@ describe("MIME & extension mapping", () => {
   });
 
   it("should map on extension as well", () => {
-    const prom = [];
+    const prom: Promise<void | mm.IAudioMetadata>[] = [];
 
     audioExtension.forEach((extension) => {
       const streamReader = new SourceStream(buf);

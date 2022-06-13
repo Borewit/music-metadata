@@ -5,6 +5,7 @@ import * as mm from "../lib";
 import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
 import { VorbisTagMapper } from "../lib/ogg/vorbis/VorbisTagMapper";
 import { samplePath } from "./util";
+import { INativeTags } from "../lib/type";
 
 describe("Discogs mappings", () => {
   const discogs_tags = [
@@ -51,7 +52,7 @@ describe("Discogs mappings", () => {
   describe("Track mapping: Beth Hart - Sinner's Prayer", () => {
     function checkTags(
       metadata: mm.IAudioMetadata,
-      tagType,
+      tagType: keyof INativeTags,
       getTagName: (tag: string) => string
     ) {
       const native = mm.orderTags(metadata.native[tagType]);
@@ -210,7 +211,7 @@ describe("Discogs mappings", () => {
       const filename = "Discogs - Beth Hart - Sinner's Prayer [APEv2].flac";
       const filePath = path.join(samplePath, filename);
 
-      function checkNative(id3v23) {
+      function checkNative(id3v23: { "TXXX:CATALOGID": "PRAR931391" }) {
         // Compare expectedCommonTags with result.common
         assert.deepEqual(id3v23["TXXX:CATALOGID"], "PRAR931391");
       }
@@ -234,7 +235,7 @@ describe("Discogs mappings", () => {
   describe("Track mapping: Yasmin Levy - Mi Korasón.flac'", () => {
     function checkTags(
       metadata: mm.IAudioMetadata,
-      tagType,
+      tagType: keyof INativeTags,
       getTagName: (tag: string) => string
     ) {
       const native = mm.orderTags(metadata.native[tagType]);

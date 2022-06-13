@@ -11,7 +11,7 @@ const oggSamplePath = path.join(samplePath, "ogg");
 describe("Parse Ogg", function () {
   // this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
 
-  function check_Nirvana_In_Bloom_commonTags(common) {
+  function check_Nirvana_In_Bloom_commonTags(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, "In Bloom", "common.title");
     assert.strictEqual(common.artist, "Nirvana", "common.artist");
     assert.strictEqual(common.albumartist, "Nirvana", "common.albumartist");
@@ -36,7 +36,7 @@ describe("Parse Ogg", function () {
     assert.deepEqual(common.isrc, ["USGF19942502"], "common.isrc");
   }
 
-  function check_Nirvana_In_Bloom_VorbisTags(vorbis) {
+  function check_Nirvana_In_Bloom_VorbisTags(vorbis: mm.INativeTagDict) {
     assert.deepEqual(vorbis.TRACKNUMBER, ["2"], "vorbis.TRACKNUMBER");
     assert.deepEqual(vorbis.TRACKTOTAL, ["12"], "vorbis.TRACKTOTAL");
     assert.deepEqual(vorbis.ALBUM, ["Nevermind"], "vorbis.ALBUM");
@@ -92,7 +92,7 @@ describe("Parse Ogg", function () {
     describe("decode: Nirvana - In Bloom - 2-sec.ogg", () => {
       const filePath = path.join(samplePath, "Nirvana - In Bloom - 2-sec.ogg");
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         assert.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
         assert.strictEqual(format.duration, 2.0, "format.duration = 2.0 sec");
         assert.strictEqual(
@@ -198,7 +198,7 @@ describe("Parse Ogg", function () {
     describe("decode: Nirvana - In Bloom - 2-sec.opus", () => {
       const filePath = path.join(samplePath, "Nirvana - In Bloom - 2-sec.opus");
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         assert.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
         assert.strictEqual(
           format.numberOfSamples,
@@ -241,7 +241,7 @@ describe("Parse Ogg", function () {
     describe("decode: 'female_scrub.spx'", () => {
       const filePath = path.join(samplePath, "female_scrub.spx");
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         assert.strictEqual(format.container, "Ogg", "format.container");
         assert.strictEqual(format.codec, "Speex 1.0beta1");
         assert.strictEqual(

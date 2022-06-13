@@ -300,6 +300,11 @@ export interface ICommonTagsResult {
   replaygain_track_minmax?: number[];
 
   /**
+   * minimum & maximum global gain values across a set of files scanned as an album
+   */
+  replaygain_album_minmax?: number[];
+
+  /**
    * The initial key of the music in the file, e.g. "A Minor".
    * Ref: https://docs.microsoft.com/en-us/windows/win32/wmformat/wm-initialkey
    */

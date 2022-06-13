@@ -10,7 +10,7 @@ it('invalid "Date" frame should not cause crash', () => {
   const filename = "bug-id3v2-unknownframe.mp3";
   const filePath = path.join(samplePath, filename);
 
-  function checkCommon(common) {
+  function checkCommon(common: mm.ICommonTagsResult) {
     t.strictEqual(common.title, "One", "common.title");
     t.strictEqual(common.artist, "Coheed And Cambria", "common.artist");
     t.strictEqual(common.album, "Year Of The Black Rainbow", "common.album");

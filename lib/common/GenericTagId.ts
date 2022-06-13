@@ -31,7 +31,7 @@ export type GenericTagId =
   | "producer"
   | "djmixer"
   | "mixer"
-  | "publisher"
+  // | "publisher"
   | "label"
   | "grouping"
   | "subtitle"

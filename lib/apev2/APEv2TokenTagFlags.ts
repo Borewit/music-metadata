@@ -8,7 +8,7 @@ export interface ITagFlags {
   dataType: DataType;
 }
 
-export function parseTagFlags(flags): ITagFlags {
+export function parseTagFlags(flags: number): ITagFlags {
   return {
     containsHeader: isBitSet(flags, 31),
     containsFooter: isBitSet(flags, 30),
@@ -23,6 +23,6 @@ export function parseTagFlags(flags): ITagFlags {
  * @param bit 0 is least significant bit (LSB)
  * @return {boolean} true if bit is 1; otherwise false
  */
-export function isBitSet(num, bit): boolean {
+export function isBitSet(num: number, bit: number): boolean {
   return (num & (1 << bit)) !== 0;
 }

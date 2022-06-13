@@ -29,7 +29,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
   it("parse a ID3v2.3", async () => {
     const filePath = path.join(samplePath, "id3v2.3.mp3");
 
-    function checkFormat(format) {
+    function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
       assert.strictEqual(
         format.duration,
@@ -57,7 +57,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       assert.strictEqual(format.codecProfile, "CBR", "format.codecProfile");
     }
 
-    function checkCommon(common) {
+    function checkCommon(common: mm.ICommonTagsResult) {
       assert.strictEqual(common.title, "Home", "common.title");
       assert.deepEqual(
         common.artists,

@@ -27,5 +27,5 @@ export abstract class BasicParser implements ITokenParser {
     return this;
   }
 
-  public abstract parse();
+  public abstract parse(): Promise<void>;
 }

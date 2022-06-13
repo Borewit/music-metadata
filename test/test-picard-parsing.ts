@@ -407,7 +407,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     it("should map FLAC/Vorbis", async () => {
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
-      function checkFormat(format) {
+      function checkFormat(format: IFormat) {
         t.strictEqual(format.container, "FLAC", "format.container");
         t.strictEqual(format.codec, "FLAC", "format.codec");
         t.strictEqual(
@@ -611,7 +611,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         "MusicBrainz - Beth Hart - Sinner's Prayer.ape"
       );
 
-      function checkFormat(format) {
+      function checkFormat(format: IFormat) {
         t.strictEqual(
           format.duration,
           2.1229931972789116,
@@ -640,7 +640,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         "MusicBrainz - Beth Hart - Sinner's Prayer.wv"
       );
 
-      function checkFormat(format) {
+      function checkFormat(format: IFormat) {
         t.strictEqual(
           format.duration,
           2.1229931972789116,
@@ -801,7 +801,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3"
       );
 
-      function checkFormat(format) {
+      function checkFormat(format: IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3"], "format.tagTypes");
         t.deepEqual(format.container, "MPEG", "format.container");
         t.deepEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
@@ -1130,7 +1130,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
     }
 
-    function checkCommonTags(common) {
+    function checkCommonTags(common: ICommonTagsResult) {
       t.strictEqual(common.picture[0].format, "image/jpeg", "picture format");
       t.strictEqual(common.picture[0].data.length, 98008, "picture length");
     }

@@ -1,3 +1,4 @@
+import { ICommonTagsResult } from "../type";
 import { GenericTagId } from "./GenericTagId";
 
 export type TagType =
@@ -12,8 +13,8 @@ export type TagType =
   | "exif"
   | "matroska";
 
-export interface IGenericTag {
-  id: GenericTagId;
+export interface IGenericTag<Id extends GenericTagId = GenericTagId> {
+  id: Id;
   value: any;
 }
 

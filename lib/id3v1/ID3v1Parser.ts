@@ -52,7 +52,7 @@ export class ID3v1Parser extends BasicParser {
         "comment",
         "track",
         "year",
-      ]) {
+      ] as const) {
         if (header[id] && header[id] !== "") this.addTag(id, header[id]);
       }
       const genre = ID3v1Parser.getGenre(header.genre);

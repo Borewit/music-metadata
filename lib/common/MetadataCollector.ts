@@ -125,7 +125,7 @@ export class MetadataCollector implements INativeMetadataCollector {
     this.quality.warnings.push({ message: warning });
   }
 
-  public postMap(tagType: TagType | "artificial", tag: IGenericTag) {
+  public postMap(tagType: TagType | "artificial", tag: IGenericTag): void {
     // Common tag (alias) found
 
     // check if we need to do something special with common tag
@@ -154,7 +154,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         ) {
           if (
             !this.common.artists ||
-            this.common.artists.indexOf(tag.value) === -1
+            this.common.artists.indexOf((tag as any).value) === -1
           ) {
             // Fill artist using artists source
             const artists = (this.common.artists || []).concat([tag.value]);
@@ -225,11 +225,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "replaygain_track_minmax":
-        tag.value = tag.value.split(",").map((v) => parseInt(v, 10));
+        tag.value = tag.value.split(",").map((v: string) => parseInt(v, 10));
         break;
 
       case "replaygain_undo":
-        const minMix = tag.value.split(",").map((v) => parseInt(v, 10));
+        const minMix = tag.value.split(",").map((v: string) => parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1],
@@ -321,7 +321,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
     if (isSingleton(tag.id)) {
       if (prio1 <= prio0) {
-        this.common[tag.id] = tag.value;
+        (this.common[tag.id] as any) = tag.value;
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(
@@ -332,15 +332,15 @@ export class MetadataCollector implements INativeMetadataCollector {
       if (prio1 === prio0) {
         if (
           !isUnique(tag.id) ||
-          this.common[tag.id].indexOf(tag.value) === -1
+          (this.common[tag.id] as any).indexOf(tag.value) === -1
         ) {
-          this.common[tag.id].push(tag.value);
+          (this.common[tag.id] as any).push(tag.value);
         } else {
           debug(`Ignore duplicate value: ${tagType}.${tag.id} = ${tag.value}`);
         }
         // no effect? this.commonOrigin[tag.id] = prio1;
       } else if (prio1 < prio0) {
-        this.common[tag.id] = [tag.value];
+        (this.common[tag.id] as any) = [tag.value];
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(

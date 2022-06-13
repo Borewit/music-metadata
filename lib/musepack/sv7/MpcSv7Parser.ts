@@ -45,7 +45,7 @@ export class MpcSv7Parser extends BasicParser {
     );
   }
 
-  private async skipAudioData(frameCount): Promise<void> {
+  private async skipAudioData(frameCount: number): Promise<void> {
     while (frameCount-- > 0) {
       const frameLength = await this.bitreader.read(20);
       this.audioLength += 20 + frameLength;

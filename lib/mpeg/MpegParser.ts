@@ -25,14 +25,14 @@ export class MpegParser extends AbstractID3Parser {
   private countSkipFrameData: number = 0;
   private totalDataLength = 0;
 
-  private audioFrameHeader;
+  private audioFrameHeader: MpegFrameHeader;
   private bitrates: number[] = [];
   private offset: number;
-  private frame_size;
+  private frame_size: number;
   private crc: number;
 
   private calculateEofDuration: boolean = false;
-  private samplesPerFrame;
+  private samplesPerFrame: number;
 
   private buf_frame_header = Buffer.alloc(4);
 
@@ -418,7 +418,7 @@ export class MpegParser extends AbstractID3Parser {
     this.countSkipFrameData += frameDataLeft;
   }
 
-  private areAllSame(array) {
+  private areAllSame(array: number[]) {
     const first = array[0];
     return array.every((element) => {
       return element === first;

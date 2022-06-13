@@ -39,7 +39,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     const pic = new VorbisPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
-  constructor(public len) {}
+  constructor(public len: number) {}
 
   public get(buffer: Buffer, offset: number): IVorbisPicture {
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];

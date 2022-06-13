@@ -80,7 +80,7 @@ describe("Parse ASF", () => {
   describe("parse", () => {
     const asfFilePath = path.join(samplePath, "asf");
 
-    function checkFormat(format) {
+    function checkFormat(format: mm.IFormat) {
       assert.strictEqual(format.container, "ASF/audio", "format.container");
       assert.strictEqual(
         format.codec,
@@ -96,7 +96,7 @@ describe("Parse ASF", () => {
       assert.strictEqual(format.bitrate, 192639, "format.bitrate");
     }
 
-    function checkCommon(common) {
+    function checkCommon(common: mm.ICommonTagsResult) {
       assert.strictEqual(common.title, "Don't Bring Me Down", "common.title");
       assert.deepEqual(
         common.artist,

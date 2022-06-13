@@ -6,7 +6,7 @@ export interface ISegmentTable {
 }
 
 export class SegmentTable implements IGetToken<ISegmentTable> {
-  private static sum(buf: number[], off: number, len: number): number {
+  private static sum(buf: Uint8Array, off: number, len: number): number {
     let s: number = 0;
     for (let i = off; i < off + len; ++i) {
       s += buf[i];
@@ -20,7 +20,7 @@ export class SegmentTable implements IGetToken<ISegmentTable> {
     this.len = header.page_segments;
   }
 
-  public get(buf, off): ISegmentTable {
+  public get(buf: Uint8Array, off: number): ISegmentTable {
     return {
       totalPageSize: SegmentTable.sum(buf, off, this.len),
     };

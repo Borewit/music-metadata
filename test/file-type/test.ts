@@ -25,7 +25,7 @@ const types = [...supportedExtensions].filter((ext) => !missingTests.has(ext));
 
 // Define an entry here only if the fixture has a different
 // name than `fixture` or if you want multiple fixtures
-const names = {
+const names: { [key in FileExtension]?: string[] } = {
   aac: [
     "fixture-adts-mpeg2",
     "fixture-adts-mpeg4",
@@ -122,7 +122,7 @@ const names = {
 
 // Define an entry here only if the file type has potential
 // for false-positives
-const falsePositives = {
+const falsePositives: { [key in FileExtension]?: string[] } = {
   png: ["fixture-corrupt"],
 };
 

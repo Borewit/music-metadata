@@ -12,7 +12,7 @@ const mp4Samples = path.join(samplePath, "mp4");
 
 describe("Parse MPEG-4 files with iTunes metadata", () => {
   describe("Parse MPEG-4 files (.m4a)", () => {
-    function checkFormat(format) {
+    function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.lossless, false);
       assert.deepEqual(format.container, "M4A/isom/iso2", "container");
       assert.deepEqual(format.codec, "MPEG-4/AAC", "codec");
@@ -29,7 +29,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       assert.approximately(format.bitrate, 148000, 500, "Calculate bit-rate");
     }
 
-    function checkCommon(common) {
+    function checkCommon(common: mm.ICommonTagsResult) {
       t.strictEqual(common.title, "Voodoo People (Pendulum Remix)", "title");
       t.strictEqual(common.artist, "The Prodigy", "artist");
       t.strictEqual(common.albumartist, "Pendulum", "albumartist");
@@ -46,7 +46,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       t.strictEqual(common.picture[1].data.length, 196450, "picture 1 length");
     }
 
-    function checkNativeTags(native) {
+    function checkNativeTags(native: mm.INativeTagDict) {
       t.ok(native, "Native m4a tags should be present");
 
       t.deepEqual(native.trkn, ["1/12"], "m4a.trkn");

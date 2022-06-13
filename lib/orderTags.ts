@@ -7,7 +7,7 @@ import { INativeTagDict, ITag } from "./type";
  */
 
 export function orderTags(nativeTags: ITag[]): INativeTagDict {
-  const tags = {};
+  const tags: INativeTagDict = {};
   for (const tag of nativeTags) {
     (tags[tag.id] = tags[tag.id] || []).push(tag.value);
   }
