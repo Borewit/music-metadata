@@ -8,12 +8,12 @@
     "target": "ESNext",
     "declaration": true,
     "sourceMap": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
 
     // "strict": true,
 
     /* strict options */
-    // "alwaysStrict": true,
+    "alwaysStrict": true,
     // "noImplicitAny": true,
     // "noImplicitThis": true,
     // "strictBindCallApply": true,
