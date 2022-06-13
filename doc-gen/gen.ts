@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 
-import { commonTags } from "../lib/common/GenericTagTypes";
+import { commonTags } from "../lib/common/GenericTagInfo";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 
 import * as markDown from "./MarkDown";

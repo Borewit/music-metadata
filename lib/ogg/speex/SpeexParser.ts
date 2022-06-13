@@ -4,7 +4,7 @@ import initDebug from "debug";
 import { IPageHeader } from "../Header";
 import { VorbisParser } from "../vorbis/VorbisParser";
 import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/MetadataCollector";
+import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
 import { Header } from "./SpeexHeader";
 

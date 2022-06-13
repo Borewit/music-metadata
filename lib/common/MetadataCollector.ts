@@ -12,11 +12,13 @@ import {
 } from "../type";
 
 import initDebug from "debug";
-import { IGenericTag, TagType, isSingleton, isUnique } from "./GenericTagTypes";
+import { IGenericTag, TagType } from "./GenericTagTypes";
 import { CombinedTagMapper } from "./CombinedTagMapper";
 import { CommonTagMapper } from "./GenericTagMapper";
 import { toRatio } from "./Util";
 import { fileTypeFromBuffer } from "../file-type";
+import { INativeMetadataCollector } from "./INativeMetadataCollector";
+import { isSingleton, isUnique } from "./GenericTagInfo";
 
 const debug = initDebug("music-metadata:collector");
 
@@ -32,40 +34,6 @@ const TagPriority: TagType[] = [
   "iTunes",
   "ID3v1",
 ];
-
-/**
- * Combines all generic-tag-mappers for each tag type
- */
-
-export interface IWarningCollector {
-  /**
-   * Register parser warning
-   * @param warning
-   */
-  addWarning(warning: string);
-}
-
-export interface INativeMetadataCollector extends IWarningCollector {
-  /**
-   * Only use this for reading
-   */
-  readonly format: IFormat;
-
-  readonly native: INativeTags;
-
-  readonly quality: IQualityInformation;
-
-  /**
-   * @returns {boolean} true if one or more tags have been found
-   */
-  hasAny(): boolean;
-
-  setFormat(key: FormatId, value: any): void;
-
-  addTag(tagType: TagType, tagId: string, value: any): void;
-
-  addStreamInfo(streamInfo: ITrackInfo): void;
-}
 
 /**
  * Provided to the parser to uodate the metadata result.

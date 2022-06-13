@@ -5,7 +5,7 @@ import { StringType } from "../token-types";
 
 import * as util from "../common/Util";
 import { IOptions, IRandomReader, IApeHeader } from "../type";
-import { INativeMetadataCollector } from "../common/MetadataCollector";
+import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { BasicParser } from "../common/BasicParser";
 import { IDescriptor, DescriptorParser } from "./APEv2TokenDescriptor";
 import { IFooter, TagFooter } from "./APEv2TokenFooter";

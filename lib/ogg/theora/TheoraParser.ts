@@ -2,7 +2,7 @@ import { ITokenizer } from "../../strtok3";
 import initDebug from "debug";
 
 import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/MetadataCollector";
+import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
 import { IPageHeader } from "../Header";
 import { IPageConsumer } from "../PageConsumer";

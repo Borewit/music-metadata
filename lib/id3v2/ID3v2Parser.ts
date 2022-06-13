@@ -10,7 +10,7 @@ import { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 import {
   INativeMetadataCollector,
   IWarningCollector,
-} from "../common/MetadataCollector";
+} from "../common/INativeMetadataCollector";
 import { ID3v2Header, IID3v2header } from "./ID3v2Header";
 import { ExtendedHeader } from "./ExtendedHeader";
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";

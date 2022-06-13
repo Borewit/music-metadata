@@ -1,6 +1,6 @@
 import { INativeTagMap } from "../common/GenericTagTypes";
 import { CommonTagMapper } from "../common/GenericTagMapper";
-import { INativeMetadataCollector } from "../common/MetadataCollector";
+import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { CaseInsensitiveTagMap } from "../common/CaseInsensitiveTagMap";
 import * as util from "../common/Util";
 

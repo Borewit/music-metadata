@@ -4,7 +4,7 @@ import { ITokenizer } from "../../strtok3";
 import { IPageHeader } from "../Header";
 import { VorbisParser } from "../vorbis/VorbisParser";
 import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/MetadataCollector";
+import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
 import { IIdHeader, IdHeader } from "./OpusIdHeader";
 
