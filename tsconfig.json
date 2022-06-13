@@ -15,7 +15,7 @@
     /* strict options */
     "alwaysStrict": true,
     // "noImplicitAny": true,
-    // "noImplicitThis": true,
+    "noImplicitThis": true,
     // "strictBindCallApply": true,
     // "strictFunctionTypes": true,
     // "strictNullChecks": true,
