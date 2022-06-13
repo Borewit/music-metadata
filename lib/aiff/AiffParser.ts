@@ -7,7 +7,7 @@ import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
 
-import * as AiffToken from "./AiffToken";
+import * as AiffToken from "./AiffTokenCommon";
 import * as iff from "../iff";
 
 const debug = initDebug("music-metadata:parser:aiff");
