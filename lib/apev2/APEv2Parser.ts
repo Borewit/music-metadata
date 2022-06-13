@@ -7,17 +7,11 @@ import * as util from "../common/Util";
 import { IOptions, IRandomReader, IApeHeader } from "../type";
 import { INativeMetadataCollector } from "../common/MetadataCollector";
 import { BasicParser } from "../common/BasicParser";
-import {
-  DataType,
-  DescriptorParser,
-  Header,
-  IDescriptor,
-  IFooter,
-  IHeader,
-  ITagItemHeader,
-  TagFooter,
-  TagItemHeader,
-} from "./APEv2Token";
+import { IDescriptor, DescriptorParser } from "./APEv2TokenDescriptor";
+import { IFooter, TagFooter } from "./APEv2TokenFooter";
+import { IHeader, Header } from "./APEv2TokenHeader";
+import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
+import { DataType } from "./DataType";
 
 const debug = initDebug("music-metadata:parser:APEv2");
 
