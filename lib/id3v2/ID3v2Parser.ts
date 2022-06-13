@@ -5,17 +5,15 @@ import * as util from "../common/Util";
 import { TagType } from "../common/GenericTagTypes";
 import { ITag, IOptions } from "../type";
 import { FrameParser } from "./FrameParser";
-import {
-  ExtendedHeader,
-  ID3v2Header,
-  ID3v2MajorVersion,
-  IID3v2header,
-  UINT32SYNCSAFE,
-} from "./ID3v2Token";
+
+import { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 import {
   INativeMetadataCollector,
   IWarningCollector,
 } from "../common/MetadataCollector";
+import { ID3v2Header, IID3v2header } from "./ID3v2Header";
+import { ExtendedHeader } from "./ExtendedHeader";
+import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
 
 interface IFrameFlags {
   status: {

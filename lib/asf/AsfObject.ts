@@ -7,7 +7,7 @@ import { IPicture, ITag } from "../type";
 import * as Token from "../token-types";
 import GUID from "./GUID";
 import { AsfUtil } from "./AsfUtil";
-import { AttachedPictureType } from "../id3v2/ID3v2Token";
+import { AttachedPictureType } from "../id3v2/AttachedPictureType";
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.

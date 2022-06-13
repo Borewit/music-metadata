@@ -1,7 +1,7 @@
 import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
 
-import { AttachedPictureType } from "../../id3v2/ID3v2Token";
+import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
 import { IPicture } from "../../type";
 
 /**

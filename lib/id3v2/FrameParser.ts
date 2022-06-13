@@ -2,11 +2,9 @@ import initDebug from "debug";
 import * as Token from "../token-types";
 
 import * as util from "../common/Util";
-import {
-  AttachedPictureType,
-  ID3v2MajorVersion,
-  TextEncodingToken,
-} from "./ID3v2Token";
+import { TextEncodingToken } from "./TextEncoding";
+import { AttachedPictureType } from "./AttachedPictureType";
+import { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 import { IWarningCollector } from "../common/MetadataCollector";
 import { Genres } from "../id3v1/ID3v1Parser";
 
