@@ -6,7 +6,7 @@ import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 
-import { ChunkHeader64, IChunkHeader64 } from "./DsdiffToken";
+import { ChunkHeader64, IChunkHeader64 } from "./ChunkHeader64";
 
 const debug = initDebug("music-metadata:parser:aiff");
 
