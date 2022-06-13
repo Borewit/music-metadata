@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken, EndOfStreamError } from "../strtok3/core";
+import { IGetToken, EndOfStreamError } from "../strtok3";
 import initDebug from "debug";
 
 import * as util from "../common/Util";
@@ -11,62 +11,19 @@ import { OpusParser } from "./opus/OpusParser";
 import { SpeexParser } from "./speex/SpeexParser";
 import { TheoraParser } from "./theora/TheoraParser";
 
-import * as Ogg from "./Ogg";
+import { SegmentTable, ISegmentTable } from "./SegmentTable";
+import { IPageHeader, Header } from "./Header";
+import { IPageConsumer } from "./PageConsumer";
 
 const debug = initDebug("music-metadata:parser:ogg");
-
-export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
-  private static sum(buf: number[], off: number, len: number): number {
-    let s: number = 0;
-    for (let i = off; i < off + len; ++i) {
-      s += buf[i];
-    }
-    return s;
-  }
-
-  public len: number;
-
-  constructor(header: Ogg.IPageHeader) {
-    this.len = header.page_segments;
-  }
-
-  public get(buf, off): Ogg.ISegmentTable {
-    return {
-      totalPageSize: SegmentTable.sum(buf, off, this.len),
-    };
-  }
-}
 
 /**
  * Parser for Ogg logical bitstream framing
  */
 export class OggParser extends BasicParser {
-  private static Header: IGetToken<Ogg.IPageHeader> = {
-    len: 27,
-
-    get: (buf, off): Ogg.IPageHeader => {
-      return {
-        capturePattern: FourCcToken.get(buf, off),
-        version: Token.UINT8.get(buf, off + 4),
-
-        headerType: {
-          continued: util.getBit(buf, off + 5, 0),
-          firstPage: util.getBit(buf, off + 5, 1),
-          lastPage: util.getBit(buf, off + 5, 2),
-        },
-        // packet_flag: buf.readUInt8(off + 5),
-        absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
-        streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
-        pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
-        pageChecksum: Token.UINT32_LE.get(buf, off + 22),
-        page_segments: Token.UINT8.get(buf, off + 26),
-      };
-    },
-  };
-
-  private header: Ogg.IPageHeader;
+  private header: IPageHeader;
   private pageNumber: number;
-  private pageConsumer: Ogg.IPageConsumer;
+  private pageConsumer: IPageConsumer;
 
   /**
    * Parse page
@@ -75,11 +32,9 @@ export class OggParser extends BasicParser {
   public async parse(): Promise<void> {
     debug("pos=%s, parsePage()", this.tokenizer.position);
     try {
-      let header: Ogg.IPageHeader;
+      let header: IPageHeader;
       do {
-        header = await this.tokenizer.readToken<Ogg.IPageHeader>(
-          OggParser.Header
-        );
+        header = await this.tokenizer.readToken<IPageHeader>(Header);
 
         if (header.capturePattern !== "OggS")
           throw new Error("Invalid Ogg capture pattern");
@@ -93,7 +48,7 @@ export class OggParser extends BasicParser {
           header.capturePattern
         );
 
-        const segmentTable = await this.tokenizer.readToken<Ogg.ISegmentTable>(
+        const segmentTable = await this.tokenizer.readToken<ISegmentTable>(
           new SegmentTable(header)
         );
         debug("totalPageSize=%s", segmentTable.totalPageSize);

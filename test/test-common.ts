@@ -1,7 +1,7 @@
 import { describe, assert, it } from "vitest";
 import * as path from "path";
 
-import { commonTags, isSingleton } from "../lib/common/GenericTagTypes";
+import { commonTags, isSingleton } from "../lib/common/GenericTagInfo";
 import * as mm from "../lib";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 import { joinArtists } from "../lib/common/MetadataCollector";

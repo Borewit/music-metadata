@@ -1,12 +1,12 @@
-import { ITokenizer } from "../../strtok3/core";
+import { ITokenizer } from "../../strtok3";
 import initDebug from "debug";
 
-import { IPageHeader } from "../Ogg";
+import { IPageHeader } from "../Header";
 import { VorbisParser } from "../vorbis/VorbisParser";
 import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/MetadataCollector";
+import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
-import * as Speex from "./Speex";
+import { Header } from "./SpeexHeader";
 
 const debug = initDebug("music-metadata:parser:ogg:speex");
 
@@ -32,7 +32,7 @@ export class SpeexParser extends VorbisParser {
    */
   protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
     debug("First Ogg/Speex page");
-    const speexHeader = Speex.Header.get(pageData, 0);
+    const speexHeader = Header.get(pageData, 0);
     this.metadata.setFormat("codec", `Speex ${speexHeader.version}`);
     this.metadata.setFormat("numberOfChannels", speexHeader.nb_channels);
     this.metadata.setFormat("sampleRate", speexHeader.rate);

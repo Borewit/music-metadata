@@ -1,22 +1,17 @@
 import initDebug from "debug";
-import * as strtok3 from "../strtok3/core";
+import * as strtok3 from "../strtok3";
+import * as fromBuffer from "../strtok3/fromBuffer";
 import { StringType } from "../token-types";
 
 import * as util from "../common/Util";
 import { IOptions, IRandomReader, IApeHeader } from "../type";
-import { INativeMetadataCollector } from "../common/MetadataCollector";
+import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { BasicParser } from "../common/BasicParser";
-import {
-  DataType,
-  DescriptorParser,
-  Header,
-  IDescriptor,
-  IFooter,
-  IHeader,
-  ITagItemHeader,
-  TagFooter,
-  TagItemHeader,
-} from "./APEv2Token";
+import { IDescriptor, DescriptorParser } from "./APEv2TokenDescriptor";
+import { IFooter, TagFooter } from "./APEv2TokenFooter";
+import { IHeader, Header } from "./APEv2TokenHeader";
+import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
+import { DataType } from "./DataType";
 
 const debug = initDebug("music-metadata:parser:APEv2");
 
@@ -80,9 +75,9 @@ export class APEv2Parser extends BasicParser {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     if (footer.ID !== preamble)
       throw new Error("Unexpected APEv2 Footer ID preamble value.");
-    strtok3.fromBuffer(buffer);
+    fromBuffer.fromBuffer(buffer);
     const apeParser = new APEv2Parser();
-    apeParser.init(metadata, strtok3.fromBuffer(buffer), options);
+    apeParser.init(metadata, fromBuffer.fromBuffer(buffer), options);
     return apeParser.parseTags(footer);
   }
 

@@ -1,12 +1,13 @@
 import * as Token from "../token-types";
 import initDebug from "debug";
-import * as strtok3 from "../strtok3/core";
+import * as strtok3 from "../strtok3";
+import * as fromBuffer from "../strtok3/fromBuffer";
 
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
 
-import * as AiffToken from "./AiffToken";
+import * as AiffToken from "./AiffTokenCommon";
 import * as iff from "../iff";
 
 const debug = initDebug("music-metadata:parser:aiff");
@@ -88,7 +89,7 @@ export class AIFFParser extends BasicParser {
         const id3_data = await this.tokenizer.readToken<Uint8Array>(
           new Token.Uint8ArrayType(header.chunkSize)
         );
-        const rst = strtok3.fromBuffer(id3_data);
+        const rst = fromBuffer.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         return header.chunkSize;
 

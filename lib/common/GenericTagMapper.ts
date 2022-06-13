@@ -3,7 +3,8 @@ import { ITag } from "../type";
 import {
   INativeMetadataCollector,
   IWarningCollector,
-} from "./MetadataCollector";
+} from "./INativeMetadataCollector";
+import { GenericTagId } from "./GenericTagId";
 
 export interface IGenericTagMapper {
   /**
@@ -77,7 +78,7 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @tag  Native header tag
    * @return common tag name (alias)
    */
-  protected getCommonName(tag: string): generic.GenericTagId {
+  protected getCommonName(tag: string): GenericTagId {
     return this.tagMap[tag];
   }
 

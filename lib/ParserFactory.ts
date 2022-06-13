@@ -1,14 +1,11 @@
 import { IOptions, IAudioMetadata, ParserType } from "./type";
-import { ITokenizer } from "./strtok3/core";
-import { fileTypeFromBuffer } from "./file-type/core";
+import { ITokenizer } from "./strtok3";
+import { fileTypeFromBuffer } from "./file-type";
 import * as ContentType from "content-type";
 import * as MimeType from "media-typer";
 
 import initDebug from "debug";
-import {
-  INativeMetadataCollector,
-  MetadataCollector,
-} from "./common/MetadataCollector";
+import { MetadataCollector } from "./common/MetadataCollector";
 import { AIFFParser } from "./aiff/AiffParser";
 import { APEv2Parser } from "./apev2/APEv2Parser";
 import { AsfParser } from "./asf/AsfParser";
@@ -22,6 +19,7 @@ import { WavPackParser } from "./wavpack/WavPackParser";
 import { DsfParser } from "./dsf/DsfParser";
 import { DsdiffParser } from "./dsdiff/DsdiffParser";
 import { MatroskaParser } from "./matroska/MatroskaParser";
+import { INativeMetadataCollector } from "./common/INativeMetadataCollector";
 
 const debug = initDebug("music-metadata:parser:factory");
 

@@ -1,9 +1,9 @@
 import { describe, assert, it } from "vitest";
 import * as mm from "../lib";
 import * as path from "path";
-import GUID from "../lib/asf/GUID";
-import { AsfUtil } from "../lib/asf/AsfUtil";
-import { DataType } from "../lib/asf/AsfObject";
+import GUID, { HeaderObject } from "../lib/asf/GUID";
+import { getParserForAttr } from "../lib/asf/AsfUtil";
+import { DataType } from "../lib/asf/DataType";
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
@@ -15,7 +15,7 @@ describe("Parse ASF", () => {
         0x00, 0x62, 0xce, 0x6c,
       ]);
 
-      assert.deepEqual(GUID.HeaderObject.toBin(), Header_GUID);
+      assert.deepEqual(HeaderObject.toBin(), Header_GUID);
     });
 
     it("should construct GUID from string", () => {
@@ -70,7 +70,7 @@ describe("Parse ASF", () => {
     tests.forEach((test) => {
       const buf = Buffer.from(test.raw, "binary");
       assert.strictEqual(
-        Number(AsfUtil.getParserForAttr(DataType.QWord)(buf)),
+        Number(getParserForAttr(DataType.QWord)(buf)),
         test.expected,
         test.description
       );

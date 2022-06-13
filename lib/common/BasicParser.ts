@@ -1,8 +1,8 @@
-import { ITokenizer } from "../strtok3/core";
+import { ITokenizer } from "../strtok3";
 
 import { ITokenParser } from "../ParserFactory";
 import { IOptions, IPrivateOptions } from "../type";
-import { INativeMetadataCollector } from "./MetadataCollector";
+import { INativeMetadataCollector } from "./INativeMetadataCollector";
 
 export abstract class BasicParser implements ITokenParser {
   protected metadata: INativeMetadataCollector;

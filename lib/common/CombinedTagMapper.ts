@@ -9,7 +9,7 @@ import { MP4TagMapper } from "../mp4/MP4TagMapper";
 import { VorbisTagMapper } from "../ogg/vorbis/VorbisTagMapper";
 import { RiffInfoTagMapper } from "../riff/RiffInfoTagMap";
 import { ITag } from "../type";
-import { INativeMetadataCollector } from "./MetadataCollector";
+import { INativeMetadataCollector } from "./INativeMetadataCollector";
 import { MatroskaTagMapper } from "../matroska/MatroskaTagMapper";
 
 export class CombinedTagMapper {

@@ -1,14 +1,17 @@
-import * as strtok3 from "../strtok3/core";
+import * as strtok3 from "../strtok3";
+import * as fromBuffer from "../strtok3/fromBuffer";
 import * as Token from "../token-types";
 import initDebug from "debug";
 
-import * as riff from "../riff/RiffChunk";
-import * as WaveChunk from "./../wav/WaveChunk";
+import { IChunkHeader, Header } from "../riff/RiffHeader";
+import { ListInfoTagValue } from "../riff/RiffInfo";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import * as util from "../common/Util";
 import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
-import { BroadcastAudioExtensionChunk } from "../wav/BwfChunk";
+import { IWaveFormat, Format, WaveFormat } from "./WaveFormat";
+import { IFactChunk, FactChunk } from "./FactChunk";
+import { BroadcastAudioExtensionChunk } from "./BwfChunk";
 
 const debug = initDebug("music-metadata:parser:RIFF");
 
@@ -24,15 +27,13 @@ const debug = initDebug("music-metadata:parser:RIFF");
  * ToDo: Split WAVE part from RIFF parser
  */
 export class WaveParser extends BasicParser {
-  private fact: WaveChunk.IFactChunk;
+  private fact: IFactChunk;
 
   private blockAlign: number;
-  private header: riff.IChunkHeader;
+  private header: IChunkHeader;
 
   public async parse(): Promise<void> {
-    const riffHeader = await this.tokenizer.readToken<riff.IChunkHeader>(
-      riff.Header
-    );
+    const riffHeader = await this.tokenizer.readToken<IChunkHeader>(Header);
     debug(
       `pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`
     );
@@ -56,11 +57,9 @@ export class WaveParser extends BasicParser {
   }
 
   public async readWaveChunk(remaining: number): Promise<void> {
-    while (remaining >= riff.Header.len) {
-      const header = await this.tokenizer.readToken<riff.IChunkHeader>(
-        riff.Header
-      );
-      remaining -= riff.Header.len + header.chunkSize;
+    while (remaining >= Header.len) {
+      const header = await this.tokenizer.readToken<IChunkHeader>(Header);
+      remaining -= Header.len + header.chunkSize;
       if (header.chunkSize > remaining) {
         this.metadata.addWarning("Data chunk size exceeds file size");
       }
@@ -76,17 +75,15 @@ export class WaveParser extends BasicParser {
 
         case "fact": // extended Format chunk,
           this.metadata.setFormat("lossless", false);
-          this.fact = await this.tokenizer.readToken(
-            new WaveChunk.FactChunk(header)
-          );
+          this.fact = await this.tokenizer.readToken(new FactChunk(header));
           break;
 
         case "fmt ": // The Util Chunk, non-PCM Formats
-          const fmt = await this.tokenizer.readToken<WaveChunk.IWaveFormat>(
-            new WaveChunk.Format(header)
+          const fmt = await this.tokenizer.readToken<IWaveFormat>(
+            new Format(header)
           );
 
-          let subFormat = WaveChunk.WaveFormat[fmt.wFormatTag];
+          let subFormat = WaveFormat[fmt.wFormatTag];
           if (!subFormat) {
             debug("WAVE/non-PCM format=" + fmt.wFormatTag);
             subFormat = "non-PCM (" + fmt.wFormatTag + ")";
@@ -107,7 +104,7 @@ export class WaveParser extends BasicParser {
           const id3_data = await this.tokenizer.readToken<Uint8Array>(
             new Token.Uint8ArrayType(header.chunkSize)
           );
-          const rst = strtok3.fromBuffer(id3_data);
+          const rst = fromBuffer.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
 
@@ -182,7 +179,7 @@ export class WaveParser extends BasicParser {
     }
   }
 
-  public async parseListTag(listHeader: riff.IChunkHeader): Promise<void> {
+  public async parseListTag(listHeader: IChunkHeader): Promise<void> {
     const listType = await this.tokenizer.readToken(
       new Token.StringType(4, "binary")
     );
@@ -205,10 +202,8 @@ export class WaveParser extends BasicParser {
 
   private async parseRiffInfoTags(chunkSize): Promise<void> {
     while (chunkSize >= 8) {
-      const header = await this.tokenizer.readToken<riff.IChunkHeader>(
-        riff.Header
-      );
-      const valueToken = new riff.ListInfoTagValue(header);
+      const header = await this.tokenizer.readToken<IChunkHeader>(Header);
+      const valueToken = new ListInfoTagValue(header);
       const value = await this.tokenizer.readToken(valueToken);
       this.addTag(header.chunkID, util.stripNulls(value));
       chunkSize -= 8 + valueToken.len;

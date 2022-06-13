@@ -2,16 +2,15 @@ import * as Token from "../../token-types";
 import initDebug from "debug";
 
 import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/MetadataCollector";
-import * as Ogg from "../Ogg";
+import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+
+import { IPageHeader } from "../Header";
+import { IPageConsumer } from "../PageConsumer";
 
 import { VorbisDecoder } from "./VorbisDecoder";
-import {
-  CommonHeader,
-  IdentificationHeader,
-  IVorbisPicture,
-  VorbisPictureToken,
-} from "./Vorbis";
+import { CommonHeader } from "./VorbisCommonHeader";
+import { IdentificationHeader } from "./VorbisIdentificationHeader";
+import { IVorbisPicture, VorbisPictureToken } from "./VorbisPicture";
 
 const debug = initDebug("music-metadata:parser:ogg:vorbis1");
 
@@ -19,7 +18,7 @@ const debug = initDebug("music-metadata:parser:ogg:vorbis1");
  * Vorbis 1 Parser.
  * Used by OggParser
  */
-export class VorbisParser implements Ogg.IPageConsumer {
+export class VorbisParser implements IPageConsumer {
   private pageSegments: Buffer[] = [];
 
   constructor(
@@ -32,7 +31,7 @@ export class VorbisParser implements Ogg.IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public parsePage(header: Ogg.IPageHeader, pageData: Buffer) {
+  public parsePage(header: IPageHeader, pageData: Buffer) {
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
@@ -85,7 +84,7 @@ export class VorbisParser implements Ogg.IPageConsumer {
     this.metadata.addTag("vorbis", id, value);
   }
 
-  public calculateDuration(header: Ogg.IPageHeader) {
+  public calculateDuration(header: IPageHeader) {
     if (
       this.metadata.format.sampleRate &&
       header.absoluteGranulePosition >= 0
@@ -107,7 +106,7 @@ export class VorbisParser implements Ogg.IPageConsumer {
    * @param {IPageHeader} header
    * @param {Buffer} pageData
    */
-  protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
+  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
     this.metadata.setFormat("codec", "Vorbis I");
     debug("Parse first page");
     // Parse  Vorbis common header

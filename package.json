@@ -67,9 +67,10 @@
     "dist/**/*.d.ts"
   ],
   "scripts": {
+    "clean": "del-cli dist",
     "validate": "run-s format lint build test",
     "format": "prettier --write lib test doc-gen example",
-    "build": "run-s build:*",
+    "build": "run-s clean build:*",
     "build:lib": "tsc -p lib",
     "build:doc": "ts-node doc-gen/gen.ts",
     "lint": "run-s lint:*",
@@ -96,6 +97,7 @@
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "@typescript-eslint/parser": "^5.27.1",
     "c8": "^7.11.3",
+    "del-cli": "^4.0.1",
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-typescript": "^2.7.1",
