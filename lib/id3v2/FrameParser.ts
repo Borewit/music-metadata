@@ -113,6 +113,9 @@ export class FrameParser {
             .decodeString(uint8Array.slice(1), encoding)
             .replace(/\x00+$/, "");
         } catch (error) {
+          if (!(error instanceof Error)) {
+            throw error;
+          }
           this.warningCollector.addWarning(
             `id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`
           );

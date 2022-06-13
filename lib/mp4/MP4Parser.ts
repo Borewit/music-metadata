@@ -118,6 +118,9 @@ export class MP4Parser extends BasicParser {
           break;
         }
       } catch (error) {
+        if (!(error instanceof Error)) {
+          throw error;
+        }
         const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
         debug(errMsg);
         this.addWarning(errMsg);

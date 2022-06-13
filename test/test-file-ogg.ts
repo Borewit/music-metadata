@@ -186,6 +186,7 @@ describe("Parse Ogg", function () {
         try {
           const idHeader = new IdHeader(18);
         } catch (err) {
+          if (!(err instanceof Error)) throw err;
           assert.equal(
             err.message,
             "ID-header-page 0 should be at least 19 bytes long"

@@ -12,6 +12,7 @@ it("should reject files that can't be parsed", async () => {
     await mm.parseFile(filePath);
     assert.fail("Should reject a file which cannot be parsed");
   } catch (err) {
+    if (!(err instanceof Error)) throw err;
     assert.isDefined(err);
     assert.isDefined(err.message);
   }

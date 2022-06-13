@@ -163,6 +163,9 @@ export class MpegParser extends AbstractID3Parser {
     try {
       header = FrameHeader.get(this.buf_frame_header, 0);
     } catch (err) {
+      if (!(err instanceof Error)) {
+        throw err;
+      }
       await this.tokenizer.ignore(1);
       this.metadata.addWarning("Parse error: " + err.message);
       return false; // sync
