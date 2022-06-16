@@ -24,7 +24,7 @@
 
     /* @tsconfig/strictest options */
     "allowUnusedLabels": false,
-    // "allowUnreachableCode": false,
+    "allowUnreachableCode": false,
     // "exactOptionalPropertyTypes": true,
     // "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
