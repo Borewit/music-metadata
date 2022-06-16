@@ -21,7 +21,7 @@ describe("Parse 24-bit signed integer", () => {
 
     it("should decode", () => {
       const buf = Buffer.from(
-        "\x00\x00\x00\xff\xff\xff\xff\x00\x10\x00\x00\x80",
+        "\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x10\x00\x00\x80",
         "binary"
       );
 
@@ -48,7 +48,7 @@ describe("Parse 24-bit signed integer", () => {
 
     it("should decode", () => {
       const buf = Buffer.from(
-        "\x00\x00\x00\xff\xff\xff\x10\x00\xff\x80\x00\x00",
+        "\x00\x00\x00\xFF\xFF\xFF\x10\x00\xFF\x80\x00\x00",
         "binary"
       );
 

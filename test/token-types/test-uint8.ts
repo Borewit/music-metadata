@@ -19,7 +19,7 @@ describe("Parse 8-bit unsigned integer (UINT8)", () => {
   });
 
   it("should decode", () => {
-    const buf = Buffer.from("\x00\x1a\x01\xff", "binary");
+    const buf = Buffer.from("\x00\x1A\x01\xFF", "binary");
 
     assert.equal(Token.UINT8.get(buf, 0), 0);
     assert.equal(Token.UINT8.get(buf, 1), 26);

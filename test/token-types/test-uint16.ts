@@ -23,7 +23,7 @@ describe("Parse 16-bit unsigned integer", () => {
     });
 
     it("should decode", () => {
-      const buf = Buffer.from("\x1a\x00\x1a\x00\x1a\x00\x1a\x00", "binary");
+      const buf = Buffer.from("\x1A\x00\x1A\x00\x1A\x00\x1A\x00", "binary");
 
       assert.equal(Token.UINT16_LE.get(buf, 0), 0x001a);
       assert.equal(Token.UINT16_BE.get(buf, 2), 0x1a00);

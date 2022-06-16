@@ -279,12 +279,12 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x22");
 
         Token.INT8.put(b, 0, -0x22);
-        assert.strictEqual(b.toString("binary"), "\xde");
+        assert.strictEqual(b.toString("binary"), "\xDE");
       });
 
       it("should decode signed 8-bit integer (INT8)", async () => {
         const rst = await getTokenizerWithData(
-          "\x00\x7f\x80\xff\x81",
+          "\x00\x7F\x80\xFF\x81",
           tokenizerType
         );
 
@@ -314,15 +314,15 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00");
 
         Token.INT16_BE.put(b, 0, 0x0f0b);
-        assert.strictEqual(b.toString("binary"), "\x0f\x0b");
+        assert.strictEqual(b.toString("binary"), "\x0F\x0B");
 
         Token.INT16_BE.put(b, 0, -0x0f0b);
-        assert.strictEqual(b.toString("binary"), "\xf0\xf5");
+        assert.strictEqual(b.toString("binary"), "\xF0\xF5");
       });
 
       it("should decode signed 16-bit big-endian integer (INT16_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x0a\x1a\x00\x00\xff\xff\x80\x00",
+          "\x0A\x1A\x00\x00\xFF\xFF\x80\x00",
           tokenizerType
         );
 
@@ -349,15 +349,15 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00\x00");
 
         Token.INT24_BE.put(b, 0, 0x0f0ba0);
-        assert.strictEqual(b.toString("binary"), "\x0f\x0b\xa0");
+        assert.strictEqual(b.toString("binary"), "\x0F\x0B\xA0");
 
         Token.INT24_BE.put(b, 0, -0x0f0bcc);
-        assert.strictEqual(b.toString("binary"), "\xf0\xf4\x34");
+        assert.strictEqual(b.toString("binary"), "\xF0\xF4\x34");
       });
 
       it("should decode signed 24-bit big-endian integer (INT24_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x00\x00\x00\xff\xff\xff\x10\x00\xff\x80\x00\x00",
+          "\x00\x00\x00\xFF\xFF\xFF\x10\x00\xFF\x80\x00\x00",
           tokenizerType
         );
 
@@ -385,15 +385,15 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00\x00\x00");
 
         Token.INT32_BE.put(b, 0, 0x0f0bcca0);
-        assert.strictEqual(b.toString("binary"), "\x0f\x0b\xcc\xa0");
+        assert.strictEqual(b.toString("binary"), "\x0F\x0B\xCC\xA0");
 
         Token.INT32_BE.put(b, 0, -0x0f0bcca0);
-        assert.strictEqual(b.toString("binary"), "\xf0\xf4\x33\x60");
+        assert.strictEqual(b.toString("binary"), "\xF0\xF4\x33\x60");
       });
 
       it("should decode signed 32-bit big-endian integer (INT32_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x00\x00\x00\x00\xff\xff\xff\xff\x00\x10\x00\xff\x80\x00\x00\x00",
+          "\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x10\x00\xFF\x80\x00\x00\x00",
           tokenizerType
         );
 
@@ -419,11 +419,11 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00");
 
         Token.UINT8.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\xff");
+        assert.strictEqual(b.toString("binary"), "\xFF");
       });
 
       it("should decode unsigned 8-bit integer (UINT8)", async () => {
-        const rst = await getTokenizerWithData("\x00\x1a\xff", tokenizerType);
+        const rst = await getTokenizerWithData("\x00\x1A\xFF", tokenizerType);
 
         let value: number = await rst.readToken(Token.UINT8);
         assert.strictEqual(typeof value, "number");
@@ -442,26 +442,26 @@ for (const tokenizerType of tokenizerTests) {
 
         Token.UINT16_LE.put(b, 0, 0x00);
         Token.UINT16_LE.put(b, 2, 0xffaa);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\xaa\xff");
+        assert.strictEqual(b.toString("binary"), "\x00\x00\xAA\xFF");
       });
 
       it("should encode unsigned 16-bit little-endian integer (UINT16_BE)", () => {
         const b = Buffer.alloc(4);
         Token.UINT16_BE.put(b, 0, 0xf);
         Token.UINT16_BE.put(b, 2, 0xffaa);
-        assert.strictEqual(b.toString("binary"), "\x00\x0f\xff\xaa");
+        assert.strictEqual(b.toString("binary"), "\x00\x0F\xFF\xAA");
       });
 
       it("should encode unsigned 16-bit mixed little/big-endian integers", () => {
         const b = Buffer.alloc(4);
         Token.UINT16_BE.put(b, 0, 0xffaa);
         Token.UINT16_LE.put(b, 2, 0xffaa);
-        assert.strictEqual(b.toString("binary"), "\xff\xaa\xaa\xff");
+        assert.strictEqual(b.toString("binary"), "\xFF\xAA\xAA\xFF");
       });
 
       it("should decode unsigned mixed 16-bit big/little-endian integer", async () => {
         const rst = await getTokenizerWithData(
-          "\x1a\x00\x1a\x00\x1a\x00\x1a\x00",
+          "\x1A\x00\x1A\x00\x1A\x00\x1A\x00",
           tokenizerType
         );
 
@@ -488,10 +488,10 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00\x00");
 
         Token.UINT24_LE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\xff\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\xFF\x00\x00");
 
         Token.UINT24_LE.put(b, 0, 0xaabbcc);
-        assert.strictEqual(b.toString("binary"), "\xcc\xbb\xaa");
+        assert.strictEqual(b.toString("binary"), "\xCC\xBB\xAA");
       });
 
       it("should encode unsigned 24-bit big-endian integer (UINT24_BE)", () => {
@@ -501,15 +501,15 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00\x00");
 
         Token.UINT24_BE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\xff");
+        assert.strictEqual(b.toString("binary"), "\x00\x00\xFF");
 
         Token.UINT24_BE.put(b, 0, 0xaabbcc);
-        assert.strictEqual(b.toString("binary"), "\xaa\xbb\xcc");
+        assert.strictEqual(b.toString("binary"), "\xAA\xBB\xCC");
       });
 
       it("should decode signed 24-bit big/little-endian integer (UINT24_LE/INT24_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x1a\x1a\x00\x1a\x1a\x00\x1a\x1a\x00\x1a\x1a\x00",
+          "\x1A\x1A\x00\x1A\x1A\x00\x1A\x1A\x00\x1A\x1A\x00",
           tokenizerType
         );
 
@@ -536,10 +536,10 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00\x00\x00");
 
         Token.UINT32_LE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\xff\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\xFF\x00\x00\x00");
 
         Token.UINT32_LE.put(b, 0, 0xaabbccdd);
-        assert.strictEqual(b.toString("binary"), "\xdd\xcc\xbb\xaa");
+        assert.strictEqual(b.toString("binary"), "\xDD\xCC\xBB\xAA");
       });
 
       it("should encode unsigned 32-bit big-endian integer (INT32_BE)", () => {
@@ -549,15 +549,15 @@ for (const tokenizerType of tokenizerTests) {
         assert.strictEqual(b.toString("binary"), "\x00\x00\x00\x00");
 
         Token.UINT32_BE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00\xff");
+        assert.strictEqual(b.toString("binary"), "\x00\x00\x00\xFF");
 
         Token.UINT32_BE.put(b, 0, 0xaabbccdd);
-        assert.strictEqual(b.toString("binary"), "\xaa\xbb\xcc\xdd");
+        assert.strictEqual(b.toString("binary"), "\xAA\xBB\xCC\xDD");
       });
 
       it("should decode unsigned 32-bit little/big-endian integer (UINT32_LE/UINT32_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x1a\x00\x1a\x00\x1a\x00\x1a\x00\x1a\x00\x1a\x00\x1a\x00\x1a\x00",
+          "\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00",
           tokenizerType
         );
 
