@@ -23,7 +23,7 @@ it("should decode id3v2-duration-allframes", () => {
    */
   const filePath = path.join(samplePath, "id3v2-duration-allframes.mp3");
 
-  function checkFormat(format) {
+  function checkFormat(format: mm.IFormat) {
     t.deepEqual(format.tagTypes, ["ID3v2.3"], "format.tagTypes");
     t.strictEqual(format.bitrate, 256000, "format.bitrate");
     t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
@@ -38,7 +38,7 @@ it("should decode id3v2-duration-allframes", () => {
     t.strictEqual(format.tool, "LAME 3.98.4", "format.tool");
   }
 
-  function checkCommon(common) {
+  function checkCommon(common: mm.ICommonTagsResult) {
     t.strictEqual(common.title, "Turkish Rondo", "common.album");
     t.strictEqual(common.album, "Piano Classics", "common.title");
     t.strictEqual(common.year, 0, "common.year");

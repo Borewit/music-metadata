@@ -38,6 +38,6 @@ export const TagFooter: IGetToken<IFooter> = {
   },
 };
 
-export const TagField = (footer) => {
+export const TagField = (footer: { size: number }) => {
   return new Token.Uint8ArrayType(footer.size - TagFooter.len);
 };

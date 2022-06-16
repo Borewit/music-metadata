@@ -6,16 +6,16 @@ export interface IPageConsumer {
    * @param {IPageHeader} header Ogg page header
    * @param {Buffer} pageData Ogg page data
    */
-  parsePage(header: IPageHeader, pageData: Uint8Array);
+  parsePage(header: IPageHeader, pageData: Uint8Array): void;
 
   /**
    * Calculate duration of provided header
    * @param header Ogg header
    */
-  calculateDuration(header: IPageHeader);
+  calculateDuration(header: IPageHeader): void;
 
   /**
    * Force to parse pending segments
    */
-  flush();
+  flush(): void;
 }

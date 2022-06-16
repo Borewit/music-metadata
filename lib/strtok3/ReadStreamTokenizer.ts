@@ -106,7 +106,7 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
     return bytesRead;
   }
 
-  public async ignore(length: number): Promise<number> {
+  public override async ignore(length: number): Promise<number> {
     // debug(`ignore ${this.position}...${this.position + length - 1}`);
     const bufSize = Math.min(maxBufferSize, length);
     const buf = new Uint8Array(bufSize);

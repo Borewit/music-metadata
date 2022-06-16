@@ -117,7 +117,7 @@ describe("StreamReader", () => {
         this.buf = Buffer.from(data, "binary");
       }
 
-      public _read() {
+      public override _read() {
         if (this.lens.length === 0) {
           this.push(null); // push the EOF-signaling `null` chunk
           return;

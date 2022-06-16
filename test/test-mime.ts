@@ -58,7 +58,7 @@ describe("MIME & extension mapping", () => {
   });
 
   it("should map on extension as well", () => {
-    const prom = [];
+    const prom: Promise<void | mm.IAudioMetadata>[] = [];
 
     audioExtension.forEach((extension) => {
       const streamReader = new SourceStream(buf);
@@ -102,6 +102,7 @@ describe("MIME & extension mapping", () => {
         await mm.parseStream(streamReader, { mimeType: "audio/not-existing" });
         assert.fail("Should throw an Error");
       } catch (err) {
+        if (!(err instanceof Error)) throw err;
         assert.equal(err.message, "Failed to determine audio format");
       }
     });
@@ -115,6 +116,7 @@ describe("MIME & extension mapping", () => {
         await mm.parseStream(stream, { mimeType: "audio/not-existing" });
         assert.fail("Should throw an Error");
       } catch (err) {
+        if (!(err instanceof Error)) throw err;
         assert.equal(
           err.message,
           "Guessed MIME-type not supported: image/jpeg"

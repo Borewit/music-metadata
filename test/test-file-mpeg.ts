@@ -112,7 +112,7 @@ describe("Parse MPEG", () => {
 
       const filePath = path.join(samplePath, "04 - You Don't Know.mp3");
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.tagTypes");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         t.strictEqual(
@@ -132,7 +132,7 @@ describe("Parse MPEG", () => {
         // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
       }
 
-      function checkCommon(common) {
+      function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, "You Don't Know", "common.title");
         t.deepEqual(common.artists, ["Reel Big Fish"], "common.artists");
         t.strictEqual(
@@ -198,7 +198,7 @@ describe("Parse MPEG", () => {
 
       // this.timeout(15000); // It takes a long time to parse
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
@@ -213,7 +213,7 @@ describe("Parse MPEG", () => {
         // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
       }
 
-      function checkCommon(common) {
+      function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, "I'm Cool", "common.title");
         t.deepEqual(common.artists, ["Reel Big Fish"], "common.artists");
         t.strictEqual(
@@ -282,7 +282,7 @@ describe("Parse MPEG", () => {
        ------------------------------------------------------------------------*/
       const filePath = path.join(samplePath, "outofbounds.mp3");
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
         t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
         t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
@@ -305,7 +305,7 @@ describe("Parse MPEG", () => {
    * Related to issue #39
    */
   describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
-    function checkFormat(format: mm.IFormat, expectedDuration) {
+    function checkFormat(format: mm.IFormat, expectedDuration: number) {
       t.deepEqual(
         format.tagTypes,
         ["ID3v2.3", "ID3v2.4", "ID3v1"],

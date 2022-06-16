@@ -3,6 +3,7 @@ import * as path from "path";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
+import { ICommonTagsResult, IFormat } from "../lib";
 
 const t = assert;
 
@@ -10,14 +11,14 @@ const wavpackSamplePath = path.join(samplePath, "wavpack");
 
 describe("Parse WavPack (audio/x-wavpack)", () => {
   describe("codec: WavPack", () => {
-    function checkFormat(format) {
+    function checkFormat(format: IFormat) {
       t.strictEqual(format.container, "WavPack", "format.container");
       t.deepEqual(format.tagTypes, ["APEv2"], "format.tagTypes");
       t.approximately(format.duration, 2.123, 1 / 1000, "format.duration");
       t.strictEqual(format.codec, "PCM", "format.codecProfile");
     }
 
-    function checkCommon(common) {
+    function checkCommon(common: ICommonTagsResult) {
       t.strictEqual(common.title, "Sinner's Prayer", "common.title");
       t.deepEqual(
         common.artists,
@@ -41,7 +42,7 @@ describe("Parse WavPack (audio/x-wavpack)", () => {
   });
 
   describe("codec: DSD128", () => {
-    function checkFormat(format) {
+    function checkFormat(format: IFormat) {
       t.strictEqual(format.container, "WavPack", "format.container");
       t.strictEqual(format.codec, "DSD", "format.codecProfile");
       t.deepEqual(format.numberOfSamples, 564480, "format.numberOfSamples");
@@ -61,7 +62,7 @@ describe("Parse WavPack (audio/x-wavpack)", () => {
   });
 
   describe("codec: DSD128 compressed", () => {
-    function checkFormat(format) {
+    function checkFormat(format: IFormat) {
       t.strictEqual(format.container, "WavPack", "format.container");
       t.strictEqual(format.codec, "DSD", "format.codecProfile");
       t.deepEqual(format.numberOfSamples, 564480, "format.numberOfSamples");

@@ -20,7 +20,7 @@ describe("Picard mapping coverage", () => {
      * Picard mappings
      * Taken from: picard-release-1.4.2/picard/formats/asf.py
      */
-    const PicardMappings = {
+    const PicardMappings: Record<string, string> = {
       album: "WM/AlbumTitle",
       title: "Title",
       artist: "Author",
@@ -127,8 +127,7 @@ describe("Picard mapping coverage", () => {
 
     const apeTagMapper = new APEv2TagMapper();
 
-    for (const picNativeTag in PicardMappings) {
-      const picComTag = PicardMappings[picNativeTag];
+    for (const [picNativeTag, picComTag] of Object.entries(PicardMappings)) {
       const mmCommonTag = convertName(picComTag);
 
       assert.isDefined(
@@ -148,7 +147,7 @@ describe("Picard mapping coverage", () => {
      * Picard mappings
      * Taken from: picard-release-1.4.2/picard/formats/asf.py
      */
-    const PicardMappings = {
+    const PicardMappings: Record<string, string> = {
       // In same sequence as defined at http://id3.org/id3v2.4.0-frames
       TIT1: "grouping",
       TIT2: "title",
@@ -191,8 +190,7 @@ describe("Picard mapping coverage", () => {
 
     const id3v24TagMapper = new ID3v24TagMapper();
 
-    for (const picNativeTag in PicardMappings) {
-      const picComTag = PicardMappings[picNativeTag];
+    for (const [picNativeTag, picComTag] of Object.entries(PicardMappings)) {
       const mmCommonTag = convertName(picComTag);
 
       assert.isDefined(

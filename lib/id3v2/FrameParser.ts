@@ -54,7 +54,7 @@ export function parseGenre(origVal: string): string[] {
   }
   if (word) {
     if (genres.length === 0 && word.match(/^\d*$/)) {
-      word = Genres[word];
+      word = Genres[parseInt(word, 10)];
     }
     genres.push(word);
   }
@@ -65,7 +65,7 @@ function parseGenreCode(code: string): string {
   if (code === "RX") return "Remix";
   if (code === "CR") return "Cover";
   if (code.match(/^\d*$/)) {
-    return Genres[code];
+    return Genres[parseInt(code, 10)];
   }
 }
 
@@ -113,6 +113,9 @@ export class FrameParser {
             .decodeString(uint8Array.slice(1), encoding)
             .replace(/\x00+$/, "");
         } catch (error) {
+          if (!(error instanceof Error)) {
+            throw error;
+          }
           this.warningCollector.addWarning(
             `id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`
           );

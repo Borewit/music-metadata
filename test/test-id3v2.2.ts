@@ -200,12 +200,8 @@ describe("Post parse genre", () => {
       "((52)((RX)": ["(52)(RX)"],
       52: ["Electronic"],
     };
-    for (const test in tests) {
-      assert.deepStrictEqual(
-        parseGenre(test),
-        tests[test],
-        `parse genre: "${test}"`
-      );
+    for (const [test, value] of Object.entries(tests)) {
+      assert.deepStrictEqual(parseGenre(test), value, `parse genre: "${test}"`);
     }
   });
 });

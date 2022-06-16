@@ -151,8 +151,8 @@ export class WaveParser extends BasicParser {
           const bext = await this.tokenizer.readToken(
             BroadcastAudioExtensionChunk
           );
-          Object.keys(bext).forEach((key) => {
-            this.metadata.addTag("exif", "bext." + key, bext[key]);
+          Object.entries(bext).forEach(([key, value]) => {
+            this.metadata.addTag("exif", "bext." + key, value);
           });
           break;
 
@@ -200,7 +200,7 @@ export class WaveParser extends BasicParser {
     }
   }
 
-  private async parseRiffInfoTags(chunkSize): Promise<void> {
+  private async parseRiffInfoTags(chunkSize: number): Promise<void> {
     while (chunkSize >= 8) {
       const header = await this.tokenizer.readToken<IChunkHeader>(Header);
       const valueToken = new ListInfoTagValue(header);

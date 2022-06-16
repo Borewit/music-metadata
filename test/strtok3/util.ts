@@ -15,7 +15,7 @@ export class SourceStream extends Readable {
     super();
   }
 
-  public _read() {
+  public override _read() {
     /* ToDo: segment data
      const len = Math.min(
      this.min + Math.floor(Math.random() * (this.max - this.min)),

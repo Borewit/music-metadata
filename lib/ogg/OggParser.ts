@@ -114,7 +114,7 @@ export class OggParser extends BasicParser {
         if (this.header) {
           this.pageConsumer.calculateDuration(this.header);
         }
-      } else if (err.message.startsWith("FourCC")) {
+      } else if (err instanceof Error && err.message.startsWith("FourCC")) {
         if (this.pageNumber > 0) {
           // ignore this error: work-around if last OGG-page is not marked with last-page flag
           this.metadata.addWarning(

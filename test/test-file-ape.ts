@@ -6,7 +6,7 @@ import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
 describe("Parse APE (Monkey's Audio)", () => {
-  function checkFormat(format) {
+  function checkFormat(format: mm.IFormat) {
     assert.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample");
     assert.strictEqual(
       format.sampleRate,
@@ -21,7 +21,7 @@ describe("Parse APE (Monkey's Audio)", () => {
     assert.strictEqual(format.duration, 1.2134240362811792, "duration [sec]");
   }
 
-  function checkCommon(common) {
+  function checkCommon(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, "07. Shadow On The Sun", "common.title");
     assert.strictEqual(common.artist, "Audioslave", "common.artist");
     assert.deepEqual(

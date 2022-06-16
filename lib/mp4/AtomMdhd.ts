@@ -26,7 +26,7 @@ export interface IAtomMdhd extends IAtomMxhd {
  * - https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
  */
 export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
-  public constructor(public len: number) {
+  public constructor(public override len: number) {
     super(len, 24, "mdhd");
   }
 

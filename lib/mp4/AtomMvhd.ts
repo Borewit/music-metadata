@@ -72,7 +72,7 @@ export interface IAtomMvhd extends IAtomMxhd {
  * Token: Movie Header Atom
  */
 export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
-  public constructor(public len: number) {
+  public constructor(public override len: number) {
     super(len, 100, "mvhd");
   }
 

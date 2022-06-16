@@ -2,13 +2,14 @@ import { describe, assert, it } from "vitest";
 import * as path from "path";
 
 import * as mm from "../lib";
+import { IMetadataEvent } from "../lib/type";
 import { samplePath } from "./util";
 
 describe("Asynchronous observer updates", () => {
   const flacFilePath = path.join(samplePath, "flac.flac");
 
   it("decode a FLAC audio file", async () => {
-    const eventTags = [];
+    const eventTags: IMetadataEvent["tag"][] = [];
 
     await mm.parseFile(flacFilePath, {
       observer: (event) => {

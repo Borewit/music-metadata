@@ -14,7 +14,7 @@ export class SourceStream extends Readable {
     this.buf = Buffer.from(str, "latin1");
   }
 
-  public _read() {
+  public override _read() {
     this.push(this.buf);
     this.push(null); // push the EOF-signaling `null` chunk
   }

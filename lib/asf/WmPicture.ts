@@ -24,7 +24,7 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
     return pic.get(buffer, 0);
   }
 
-  constructor(public len) {}
+  constructor(public len: number) {}
 
   public get(buffer: Buffer, offset: number): IWmPicture {
     const typeId = buffer.readUInt8(offset++);

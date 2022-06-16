@@ -86,18 +86,30 @@ function distinct(value: any, index: number, self: any[]) {
  *   https://wiki.multimedia.cx/index.php/QuickTime_container
  */
 export class MP4Parser extends BasicParser {
-  private static read_BE_Integer(array: Uint8Array, signed: boolean): number {
-    const integerType =
-      (signed ? "INT" : "UINT") +
-      array.length * 8 +
-      (array.length > 1 ? "_BE" : "");
-    const token: IGetToken<number | bigint> = Token[integerType];
-    if (!token) {
-      throw new Error(
-        'Token for integer type not found: "' + integerType + '"'
-      );
+  private static read_BE_Integer(
+    array: Uint8Array,
+    signed: boolean
+  ): IGetToken<number | bigint> {
+    switch (array.length) {
+      case 1:
+        return signed ? Token.INT8 : Token.UINT8;
+      case 2:
+        return signed ? Token.INT16_BE : Token.UINT16_BE;
+      case 3:
+        return signed ? Token.INT24_BE : Token.UINT24_BE;
+      case 4:
+        return signed ? Token.INT32_BE : Token.UINT32_BE;
+      case 8:
+        return signed ? Token.INT64_BE : Token.UINT64_BE;
+      default:
+        throw new Error(
+          'Token for integer type not found: "' +
+            (signed ? "INT" : "UINT") +
+            array.length * 8 +
+            (array.length > 1 ? "_BE" : "") +
+            '"'
+        );
     }
-    return Number(token.get(array, 0));
   }
 
   private audioLengthInBytes: number;
@@ -118,6 +130,9 @@ export class MP4Parser extends BasicParser {
           break;
         }
       } catch (error) {
+        if (!(error instanceof Error)) {
+          throw error;
+        }
         const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
         debug(errMsg);
         this.addWarning(errMsg);
@@ -355,11 +370,20 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 21: // BE Signed Integer
-        this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, true));
+        this.addTag(
+          tagKey,
+          MP4Parser.read_BE_Integer(dataAtom.value, true).get(dataAtom.value, 0)
+        );
         break;
 
       case 22: // BE Unsigned Integer
-        this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, false));
+        this.addTag(
+          tagKey,
+          MP4Parser.read_BE_Integer(dataAtom.value, false).get(
+            dataAtom.value,
+            0
+          )
+        );
         break;
 
       case 65: // An 8-bit signed integer

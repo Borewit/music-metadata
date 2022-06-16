@@ -25,14 +25,14 @@ export class MpegParser extends AbstractID3Parser {
   private countSkipFrameData: number = 0;
   private totalDataLength = 0;
 
-  private audioFrameHeader;
+  private audioFrameHeader: MpegFrameHeader;
   private bitrates: number[] = [];
   private offset: number;
-  private frame_size;
+  private frame_size: number;
   private crc: number;
 
   private calculateEofDuration: boolean = false;
-  private samplesPerFrame;
+  private samplesPerFrame: number;
 
   private buf_frame_header = Buffer.alloc(4);
 
@@ -77,7 +77,7 @@ export class MpegParser extends AbstractID3Parser {
   /**
    * Called after file has been fully parsed, this allows, if present, to exclude the ID3v1.1 header length
    */
-  protected finalize() {
+  protected override finalize() {
     const format = this.metadata.format;
     const hasID3v1 = this.metadata.native.hasOwnProperty("ID3v1");
     if (format.duration && this.tokenizer.fileInfo.size) {
@@ -163,6 +163,9 @@ export class MpegParser extends AbstractID3Parser {
     try {
       header = FrameHeader.get(this.buf_frame_header, 0);
     } catch (err) {
+      if (!(err instanceof Error)) {
+        throw err;
+      }
       await this.tokenizer.ignore(1);
       this.metadata.addWarning("Parse error: " + err.message);
       return false; // sync
@@ -415,7 +418,7 @@ export class MpegParser extends AbstractID3Parser {
     this.countSkipFrameData += frameDataLeft;
   }
 
-  private areAllSame(array) {
+  private areAllSame(array: number[]) {
     const first = array[0];
     return array.every((element) => {
       return element === first;

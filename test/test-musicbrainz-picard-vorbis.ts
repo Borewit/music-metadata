@@ -8,14 +8,14 @@ it("MusicBrains/Picard tags in FLAC", async () => {
   const filename = "MusicBrainz-Picard-tags.flac";
   const filePath = path.join(samplePath, filename);
 
-  function checkFormat(format) {
+  function checkFormat(format: mm.IFormat) {
     assert.deepEqual(format.duration, 271.7733333333333, "format.duration");
     assert.deepEqual(format.sampleRate, 44100, "format.sampleRate");
     assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
     assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
   }
 
-  function checkCommonTags(common) {
+  function checkCommonTags(common: mm.ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
     assert.deepEqual(common.title, "Brian Eno", "common.tagtitle");
     assert.deepEqual(common.artist, "MGMT", "common.artist");
@@ -30,7 +30,7 @@ it("MusicBrains/Picard tags in FLAC", async () => {
     assert.deepEqual(common.disk, { no: 2, of: 2 }, "common.disk");
     assert.deepEqual(
       common.discsubtitle,
-      "Cogratulations",
+      "Cogratulations" as unknown as string[],
       "common.discsubtitle"
     );
     assert.deepEqual(common.date, "2011-09-11", "common.date");
@@ -90,7 +90,7 @@ it("MusicBrains/Picard tags in FLAC", async () => {
     assert.deepEqual(common.picture[0].data.length, 175668, "picture length");
   }
 
-  function checkNativeTags(vorbis) {
+  function checkNativeTags(vorbis: mm.INativeTagDict) {
     // Compare expectedCommonTags with result.vorbis
     assert.deepEqual(vorbis.TITLE, ["Brian Eno"], "vorbis: .TITLE");
     assert.deepEqual(vorbis.ARTIST, ["MGMT"], "vorbis: artist");

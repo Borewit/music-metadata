@@ -87,7 +87,7 @@ export class AsfTagMapper extends CommonTagMapper {
     super(["asf"], asfTagMap);
   }
 
-  protected postMap(tag: ITag): void {
+  protected override postMap(tag: ITag): void {
     switch (tag.id) {
       case "WM/SharedUserRating":
         const keys = tag.id.split(":");

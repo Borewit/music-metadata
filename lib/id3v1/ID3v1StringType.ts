@@ -7,7 +7,7 @@ export class Id3v1StringType extends StringType {
     super(len, "binary");
   }
 
-  public get(buf: Buffer, off: number): string {
+  public override get(buf: Buffer, off: number): string {
     let value = super.get(buf, off);
     value = util.trimRightNull(value);
     value = value.trim();

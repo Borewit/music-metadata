@@ -1,6 +1,6 @@
 import { Float32_BE, Float64_BE, StringType, UINT8 } from "../token-types";
 import initDebug from "debug";
-import { ITokenizer } from "../strtok3";
+import { EndOfStreamError, ITokenizer } from "../strtok3";
 
 import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { IOptions, ITrackInfo } from "../type";
@@ -54,7 +54,7 @@ export class MatroskaParser extends BasicParser {
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
    */
-  public init(
+  public override init(
     metadata: INativeMetadataCollector,
     tokenizer: ITokenizer,
     options: IOptions
@@ -177,7 +177,7 @@ export class MatroskaParser extends BasicParser {
       try {
         element = await this.readElement();
       } catch (error) {
-        if (error.message === "End-Of-Stream") {
+        if (error instanceof EndOfStreamError) {
           break;
         }
         throw error;

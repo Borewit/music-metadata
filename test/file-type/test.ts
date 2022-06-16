@@ -25,7 +25,7 @@ const types = [...supportedExtensions].filter((ext) => !missingTests.has(ext));
 
 // Define an entry here only if the fixture has a different
 // name than `fixture` or if you want multiple fixtures
-const names = {
+const names: { [key in FileExtension]?: string[] } = {
   aac: [
     "fixture-adts-mpeg2",
     "fixture-adts-mpeg4",
@@ -122,7 +122,7 @@ const names = {
 
 // Define an entry here only if the file type has potential
 // for false-positives
-const falsePositives = {
+const falsePositives: { [key in FileExtension]?: string[] } = {
   png: ["fixture-corrupt"],
 };
 
@@ -260,7 +260,7 @@ test(".stream() method - empty stream", async () => {
 test(".stream() method - short stream", async () => {
   const bufferA = Buffer.from([0, 1, 0, 1]);
   class MyStream extends stream.Readable {
-    _read() {
+    override _read() {
       this.push(bufferA);
       this.push(null);
     }
@@ -345,7 +345,7 @@ class BufferedStream extends stream.Readable {
     this.push(null);
   }
 
-  _read() {
+  override _read() {
     // empty
   }
 }

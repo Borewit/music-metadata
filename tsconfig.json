@@ -8,26 +8,26 @@
     "target": "ESNext",
     "declaration": true,
     "sourceMap": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
 
     // "strict": true,
 
     /* strict options */
-    // "alwaysStrict": true,
-    // "noImplicitAny": true,
-    // "noImplicitThis": true,
-    // "strictBindCallApply": true,
-    // "strictFunctionTypes": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
     // "strictNullChecks": true,
     // "strictPropertyInitialization": true,
-    // "useUnknownInCatchVariables": true,
+    "useUnknownInCatchVariables": true,
 
     /* @tsconfig/strictest options */
-    // "allowUnusedLabels": false,
-    // "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
     // "exactOptionalPropertyTypes": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
     // "noImplicitReturns": true,
     // "noPropertyAccessFromIndexSignature": true,
     // "noUncheckedIndexedAccess": true,
@@ -39,6 +39,6 @@
 
     // "esModuleInterop": true,
     // "skipLibCheck": true,
-    // "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true
   }
 }
