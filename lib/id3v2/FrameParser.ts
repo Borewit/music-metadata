@@ -415,7 +415,7 @@ export class FrameParser {
     const res: { [index: string]: string[] } = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
       const names: string[] = entries[i + 1].split(",");
-      res[entries[i]] = res.hasOwnProperty(entries[i])
+      res[entries[i]] = {}.hasOwnProperty.call(res, entries[i])
         ? res[entries[i]].concat(names)
         : names;
     }
