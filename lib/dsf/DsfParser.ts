@@ -46,7 +46,7 @@ export class DsfParser extends AbstractID3Parser {
       );
       debug(`Parsing chunk name=${chunkHeader.id} size=${chunkHeader.size}`);
       switch (chunkHeader.id) {
-        case "fmt ":
+        case "fmt ": {
           const formatChunk = await this.tokenizer.readToken<IFormatChunk>(
             FormatChunk
           );
@@ -64,6 +64,7 @@ export class DsfParser extends AbstractID3Parser {
             formatChunk.channelNum;
           this.metadata.setFormat("bitrate", bitrate);
           return; // We got what we want, stop further processing of chunks
+        }
         default:
           this.tokenizer.ignore(Number(chunkHeader.size) - ChunkHeader.len);
           break;

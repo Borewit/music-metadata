@@ -78,7 +78,8 @@ export class WaveParser extends BasicParser {
           this.fact = await this.tokenizer.readToken(new FactChunk(header));
           break;
 
-        case "fmt ": // The Util Chunk, non-PCM Formats
+        case "fmt ": {
+          // The Util Chunk, non-PCM Formats
           const fmt = await this.tokenizer.readToken<IWaveFormat>(
             new Format(header)
           );
@@ -98,17 +99,21 @@ export class WaveParser extends BasicParser {
           );
           this.blockAlign = fmt.nBlockAlign;
           break;
+        }
 
-        case "id3 ": // The way Picard, FooBar currently stores, ID3 meta-data
-        case "ID3 ": // The way Mp3Tags stores ID3 meta-data
+        case "id3 ":
+        case "ID3 ": {
+          // The way Picard, FooBar currently stores, ID3 meta-data
+          // The way Mp3Tags stores ID3 meta-data
           const id3_data = await this.tokenizer.readToken<Uint8Array>(
             new Token.Uint8ArrayType(header.chunkSize)
           );
           const rst = fromBuffer.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
-
-        case "data": // PCM-data
+        }
+        case "data": {
+          // PCM-data
           if (this.metadata.format.lossless !== false) {
             this.metadata.setFormat("lossless", true);
           }
@@ -146,8 +151,10 @@ export class WaveParser extends BasicParser {
           ); // ToDo: check me
           await this.tokenizer.ignore(header.chunkSize);
           break;
+        }
 
-        case "bext": // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
+        case "bext": {
+          // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
           const bext = await this.tokenizer.readToken(
             BroadcastAudioExtensionChunk
           );
@@ -155,6 +162,7 @@ export class WaveParser extends BasicParser {
             this.metadata.addTag("exif", "bext." + key, value);
           });
           break;
+        }
 
         case "\x00\x00\x00\x00": // padding ??
           debug(

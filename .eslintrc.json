@@ -53,13 +53,11 @@
   "rules": {
     /* eslint:recommended rules */
     /* https://github.com/eslint/eslint/blob/main/conf/eslint-recommended.js */
-    // "constructor-super": "error",
-    // "for-direction": "error",
-    // "getter-return": "error",
-    // "no-async-promise-executor": "error",
-    // "no-case-declarations": "error",
-    // "no-class-assign": "error",
-    // "no-compare-neg-zero": "error",
+    "for-direction": "error",
+    "no-async-promise-executor": "error",
+    "no-case-declarations": "error",
+    "no-class-assign": "error",
+    "no-compare-neg-zero": "error",
     // "no-cond-assign": "error",
     // "no-const-assign": "error",
     // "no-constant-condition": "error",

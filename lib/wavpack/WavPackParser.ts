@@ -110,7 +110,8 @@ export class WavPackParser extends BasicParser {
         case 0x0: // ID_DUMMY: could be used to pad WavPack blocks
           break;
 
-        case 0xe: // ID_DSD_BLOCK
+        case 0xe: {
+          // ID_DSD_BLOCK
           debug("ID_DSD_BLOCK");
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
           const mp = 1 << data.readUInt8(0);
@@ -123,6 +124,7 @@ export class WavPackParser extends BasicParser {
             header.totalSamples / samplingRate
           );
           break;
+        }
 
         case 0x24: // ID_ALT_TRAILER: maybe used to embed original ID3 tag header
           debug("ID_ALT_TRAILER: trailer for non-wav files");

@@ -70,7 +70,8 @@ export class AIFFParser extends BasicParser {
 
   public async readData(header: iff.IChunkHeader): Promise<number> {
     switch (header.chunkID) {
-      case "COMM": // The Common Chunk
+      case "COMM": {
+        // The Common Chunk
         const common = await this.tokenizer.readToken<AiffToken.ICommon>(
           new AiffToken.Common(header, this.isCompressed)
         );
@@ -84,15 +85,16 @@ export class AIFFParser extends BasicParser {
         );
         this.metadata.setFormat("codec", common.compressionName);
         return header.chunkSize;
-
-      case "ID3 ": // ID3-meta-data
+      }
+      case "ID3 ": {
+        // ID3-meta-data
         const id3_data = await this.tokenizer.readToken<Uint8Array>(
           new Token.Uint8ArrayType(header.chunkSize)
         );
         const rst = fromBuffer.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         return header.chunkSize;
-
+      }
       case "SSND": // Sound Data Chunk
         if (this.metadata.format.duration) {
           this.metadata.setFormat(

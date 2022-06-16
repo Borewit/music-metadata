@@ -106,7 +106,7 @@ export class FrameParser {
       case "MVIN":
       case "MVNM":
       case "PCS":
-      case "PCST":
+      case "PCST": {
         let text;
         try {
           text = util
@@ -157,6 +157,7 @@ export class FrameParser {
             output = this.major >= 4 ? this.splitValue(type, text) : [text];
         }
         break;
+      }
 
       case "TXXX":
         output = FrameParser.readIdentifierAndData(
@@ -292,7 +293,8 @@ export class FrameParser {
         output = { owner_identifier: output.id, data: output.data };
         break;
 
-      case "POPM": // Popularimeter
+      case "POPM": {
+        // Popularimeter
         fzero = util.findZero(uint8Array, offset, length, defaultEnc);
         const email = util.decodeString(
           uint8Array.slice(offset, fzero),
@@ -309,6 +311,7 @@ export class FrameParser {
               : undefined,
         };
         break;
+      }
 
       case "GEOB": {
         // General encapsulated object

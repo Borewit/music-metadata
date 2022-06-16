@@ -188,11 +188,12 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case "track":
       case "disk":
-      case "movementIndex":
+      case "movementIndex": {
         const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
         this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value);
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
         return;
+      }
 
       case "bpm":
       case "year":
@@ -200,14 +201,14 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = parseInt(tag.value, 10);
         break;
 
-      case "date":
+      case "date": {
         // ToDo: be more strict on 'YYYY...'
         const year = parseInt(tag.value.substr(0, 4), 10);
         if (!isNaN(year)) {
           this.common.year = year;
         }
         break;
-
+      }
       case "discogs_label_id":
       case "discogs_release_id":
       case "discogs_master_release_id":
@@ -228,14 +229,14 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = tag.value.split(",").map((v: string) => parseInt(v, 10));
         break;
 
-      case "replaygain_undo":
+      case "replaygain_undo": {
         const minMix = tag.value.split(",").map((v: string) => parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1],
         };
         break;
-
+      }
       case "gapless": // iTunes gap-less flag
       case "compilation":
       case "podcast":

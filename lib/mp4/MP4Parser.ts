@@ -278,22 +278,26 @@ export class MP4Parser extends BasicParser {
           case "data": // value atom
             return this.parseValueAtom(tagKey, child);
 
-          case "name": // name atom (optional)
+          case "name": {
+            // name atom (optional)
             const name = await this.tokenizer.readToken<INameAtom>(
               new NameAtom(payLoadLength)
             );
             tagKey += ":" + name.name;
             break;
+          }
 
-          case "mean": // name atom (optional)
+          case "mean": {
+            // name atom (optional)
             const mean = await this.tokenizer.readToken<INameAtom>(
               new NameAtom(payLoadLength)
             );
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
             break;
+          }
 
-          default:
+          default: {
             const dataAtom = await this.tokenizer.readToken<Buffer>(
               new Token.BufferType(payLoadLength)
             );
@@ -307,6 +311,7 @@ export class MP4Parser extends BasicParser {
                 " ascii=" +
                 dataAtom.toString("ascii")
             );
+          }
         }
       },
       metaAtom.getPayloadLength(0)
@@ -328,20 +333,20 @@ export class MP4Parser extends BasicParser {
       case 0: // reserved: Reserved for use where no type needs to be indicated
         switch (tagKey) {
           case "trkn":
-          case "disk":
+          case "disk": {
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
             this.addTag(tagKey, num + "/" + of);
             break;
-
-          case "gnre":
+          }
+          case "gnre": {
             const genreInt = Token.UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
             this.addTag(tagKey, genreStr);
             break;
-
+          }
           default:
           // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
           // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));

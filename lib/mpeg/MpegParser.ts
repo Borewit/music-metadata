@@ -318,21 +318,23 @@ export class MpegParser extends AbstractID3Parser {
     this.offset += InfoTagHeaderTag.len; // 12
 
     switch (headerTag) {
-      case "Info":
+      case "Info": {
         this.metadata.setFormat("codecProfile", "CBR");
         return this.readXingInfoHeader();
-
-      case "Xing":
+      }
+      case "Xing": {
         const infoTag = await this.readXingInfoHeader();
         const codecProfile = getVbrCodecProfile(infoTag.vbrScale);
         this.metadata.setFormat("codecProfile", codecProfile);
         return null;
+      }
 
-      case "Xtra":
+      case "Xtra": {
         // ToDo: ???
         break;
+      }
 
-      case "LAME":
+      case "LAME": {
         const version = await this.tokenizer.readToken(LameEncoderVersion);
         if (this.frame_size >= this.offset + LameEncoderVersion.len) {
           this.offset += LameEncoderVersion.len;
@@ -343,6 +345,7 @@ export class MpegParser extends AbstractID3Parser {
           this.metadata.addWarning("Corrupt LAME header");
           break;
         }
+      }
       // ToDo: ???
     }
 

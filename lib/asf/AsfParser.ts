@@ -80,7 +80,8 @@ export class AsfParser extends BasicParser {
       // Parse data part of the ASF Object
       debug("header GUID=%s", header.objectId.str);
       switch (header.objectId.str) {
-        case FilePropertiesObject.guid.str: // 3.2
+        case FilePropertiesObject.guid.str: {
+          // 3.2
           const fpo = await this.tokenizer.readToken<IFilePropertiesObject>(
             new FilePropertiesObject(header)
           );
@@ -91,22 +92,24 @@ export class AsfParser extends BasicParser {
           );
           this.metadata.setFormat("bitrate", fpo.maximumBitrate);
           break;
-
-        case StreamPropertiesObject.guid.str: // 3.3
+        }
+        case StreamPropertiesObject.guid.str: {
+          // 3.3
           const spo = await this.tokenizer.readToken<IStreamPropertiesObject>(
             new StreamPropertiesObject(header)
           );
           this.metadata.setFormat("container", "ASF/" + spo.streamType);
           break;
-
-        case HeaderExtensionObject.guid.str: // 3.4
+        }
+        case HeaderExtensionObject.guid.str: {
+          // 3.4
           const extHeader =
             await this.tokenizer.readToken<IHeaderExtensionObject>(
               new HeaderExtensionObject()
             );
           await this.parseExtensionObject(extHeader.extensionDataSize);
           break;
-
+        }
         case ContentDescriptionObjectState.guid.str: // 3.10
           tags = await this.tokenizer.readToken<ITag[]>(
             new ContentDescriptionObjectState(header)
@@ -121,7 +124,7 @@ export class AsfParser extends BasicParser {
           this.addTags(tags);
           break;
 
-        case CodecListObject.str:
+        case CodecListObject.str: {
           const codecs = await readCodecEntries(this.tokenizer);
           codecs.forEach((codec) => {
             this.metadata.addStreamInfo({
@@ -135,7 +138,7 @@ export class AsfParser extends BasicParser {
             .join("/");
           this.metadata.setFormat("codec", audioCodecs);
           break;
-
+        }
         case StreamBitratePropertiesObject.str:
           // ToDo?
           await this.tokenizer.ignore(
@@ -184,20 +187,23 @@ export class AsfParser extends BasicParser {
           );
           break;
 
-        case MetadataObjectState.guid.str: // 4.7
+        case MetadataObjectState.guid.str: {
+          // 4.7
           const moTags = await this.tokenizer.readToken<ITag[]>(
             new MetadataObjectState(header)
           );
           this.addTags(moTags);
           break;
+        }
 
-        case MetadataLibraryObjectState.guid.str: // 4.8
+        case MetadataLibraryObjectState.guid.str: {
+          // 4.8
           const mlTags = await this.tokenizer.readToken<ITag[]>(
             new MetadataLibraryObjectState(header)
           );
           this.addTags(mlTags);
           break;
-
+        }
         case PaddingObject.str:
           // ToDo: register bytes pad
           await this.tokenizer.ignore(remaining);
