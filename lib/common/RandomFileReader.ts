@@ -18,7 +18,7 @@ export class RandomFileReader implements IRandomReader {
    * @param offset {number} is the offset in the buffer to start writing at.
    * @param length {number}is an integer specifying the number of bytes to read.
    * @param position {number} is an argument specifying where to begin reading from in the file.
-   * @return {Promise<number>} bytes read
+   * @returns {Promise<number>} bytes read
    */
   public async randomRead(
     buffer: Buffer,

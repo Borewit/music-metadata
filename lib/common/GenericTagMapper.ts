@@ -21,7 +21,7 @@ export interface IGenericTagMapper {
    * Map native tag to generic tag
    * @param tag       Native tag
    * @param warnings  Register warnings
-   * @return Generic tag, if native tag could be mapped
+   * @returns Generic tag, if native tag could be mapped
    */
   mapGenericTag(
     tag: ITag,
@@ -58,7 +58,7 @@ export class CommonTagMapper implements IGenericTagMapper {
    * write common tags to
    * @param tag Native tag
    * @param warnings Register warnings
-   * @return common name
+   * @returns common name
    */
   public mapGenericTag(
     tag: ITag,
@@ -75,8 +75,8 @@ export class CommonTagMapper implements IGenericTagMapper {
 
   /**
    * Convert native tag key to common tag key
-   * @tag  Native header tag
-   * @return common tag name (alias)
+   * @param tag Native header tag
+   * @returns common tag name (alias)
    */
   protected getCommonName(tag: string): GenericTagId {
     return this.tagMap[tag];

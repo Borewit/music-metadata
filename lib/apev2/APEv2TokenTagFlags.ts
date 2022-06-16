@@ -21,7 +21,7 @@ export function parseTagFlags(flags: number): ITagFlags {
 /**
  * @param num {number}
  * @param bit 0 is least significant bit (LSB)
- * @return {boolean} true if bit is 1; otherwise false
+ * @returns {boolean} true if bit is 1; otherwise false
  */
 export function isBitSet(num: number, bit: number): boolean {
   return (num & (1 << bit)) !== 0;

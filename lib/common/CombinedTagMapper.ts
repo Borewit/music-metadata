@@ -37,7 +37,7 @@ export class CombinedTagMapper {
    * @param tagType Originating tag format
    * @param tag     Native tag to map to a generic tag id
    * @param warnings
-   * @return Generic tag result (output of this function)
+   * @returns Generic tag result (output of this function)
    */
   public mapTag(
     tagType: TagType,

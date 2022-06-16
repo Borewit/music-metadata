@@ -39,7 +39,7 @@ export class APEv2Parser extends BasicParser {
   /**
    * Calculate the media file duration
    * @param ah ApeHeader
-   * @return {number} duration in seconds
+   * @returns {number} duration in seconds
    */
   public static calculateDuration(ah: IHeader): number {
     let duration =

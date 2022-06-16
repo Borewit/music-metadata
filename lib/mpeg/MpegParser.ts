@@ -147,7 +147,7 @@ export class MpegParser extends AbstractID3Parser {
 
   /**
    * Combined ADTS & MPEG (MP2 & MP3) header handling
-   * @return {Promise<boolean>} true if parser should quit
+   * @returns {Promise<boolean>} true if parser should quit
    */
   private async parseCommonMpegHeader(): Promise<boolean> {
     if (this.frameCount === 0) {
@@ -184,7 +184,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   /**
-   * @return {Promise<boolean>} true if parser should quit
+   * @returns {Promise<boolean>} true if parser should quit
    */
   private async parseAudioFrameHeader(
     header: MpegFrameHeader

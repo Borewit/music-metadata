@@ -198,15 +198,15 @@
 
     /* plugin:jsdoc/recommended rules */
     /* https://github.com/gajus/eslint-plugin-jsdoc/blob/master/src/index.js#L58 */
-    // "jsdoc/check-access": "warn",
+    "jsdoc/check-access": "warn",
     // "jsdoc/check-alignment": "warn",
-    // "jsdoc/check-examples": "off",
+    "jsdoc/check-examples": "off",
     // "jsdoc/check-indentation": "off",
-    // "jsdoc/check-line-alignment": "off",
-    // "jsdoc/check-param-names": "warn",
-    // "jsdoc/check-property-names": "warn",
-    // "jsdoc/check-syntax": "off",
-    // "jsdoc/check-tag-names": "warn",
+    "jsdoc/check-line-alignment": "off",
+    "jsdoc/check-param-names": "warn",
+    "jsdoc/check-property-names": "warn",
+    "jsdoc/check-syntax": "off",
+    "jsdoc/check-tag-names": "warn",
     // "jsdoc/check-types": "warn",
     // "jsdoc/check-values": "warn",
     // "jsdoc/empty-tags": "warn",

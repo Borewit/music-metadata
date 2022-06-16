@@ -16,7 +16,7 @@ export class RandomUint8ArrayReader implements IRandomReader {
    * @param offset - Offset in the buffer to start writing at.
    * @param length - Integer specifying the number of bytes to read.
    * @param position - Specifies where to begin reading from in the file.
-   * @return Promise providing bytes read
+   * @returns Promise providing bytes read
    */
   public async randomRead(
     uint8Array: Uint8Array,

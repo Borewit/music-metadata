@@ -88,6 +88,7 @@ export class WavPackParser extends BasicParser {
 
   /**
    * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf, 3.0 Metadata Sub-blocks
+   * @param header
    * @param remainingLength
    */
   private async parseMetadataSubBlock(

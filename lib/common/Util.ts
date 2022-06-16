@@ -24,7 +24,7 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
  * @param start Offset in uint8Array
  * @param end Last position to parse in uint8Array
  * @param encoding The string encoding used
- * @return Absolute position on uint8Array where zero found
+ * @returns Absolute position on uint8Array where zero found
  */
 export function findZero(
   uint8Array: Uint8Array,
@@ -104,7 +104,7 @@ export function stripNulls(str: string): string {
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = lsb
  * @param len Length of number in bits
- * @return Decoded bit aligned number
+ * @returns Decoded bit aligned number
  */
 export function getBitAllignedNumber(
   source: Uint8Array,
@@ -138,7 +138,7 @@ export function getBitAllignedNumber(
  * @param source Byte Uint8Array
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is the least significant bit
- * @return True if bit is set
+ * @returns True if bit is set
  */
 export function isBitSet(
   source: Uint8Array,

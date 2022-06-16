@@ -26,8 +26,8 @@ export interface IExtendedLameHeader {
 
 /**
  * Info Tag
- * @link http://gabriel.mp3-tech.org/mp3infotag.html
- * @link https://github.com/quodlibet/mutagen/blob/abd58ee58772224334a18817c3fb31103572f70e/mutagen/mp3/_util.py#L112
+ * http://gabriel.mp3-tech.org/mp3infotag.html
+ * https://github.com/quodlibet/mutagen/blob/abd58ee58772224334a18817c3fb31103572f70e/mutagen/mp3/_util.py#L112
  */
 export const ExtendedLameHeader: IGetToken<IExtendedLameHeader> = {
   len: 27,

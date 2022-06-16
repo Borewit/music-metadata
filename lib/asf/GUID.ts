@@ -74,13 +74,13 @@ export default class GUID {
    * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
    * @returns Encoded Binary GUID
    */
-  public static encode(str: string): Buffer {
+  public static encode(guid: string): Buffer {
     const bin = Buffer.alloc(16);
-    bin.writeUInt32LE(parseInt(str.slice(0, 8), 16), 0);
-    bin.writeUInt16LE(parseInt(str.slice(9, 13), 16), 4);
-    bin.writeUInt16LE(parseInt(str.slice(14, 18), 16), 6);
-    Buffer.from(str.slice(19, 23), "hex").copy(bin, 8);
-    Buffer.from(str.slice(24), "hex").copy(bin, 10);
+    bin.writeUInt32LE(parseInt(guid.slice(0, 8), 16), 0);
+    bin.writeUInt16LE(parseInt(guid.slice(9, 13), 16), 4);
+    bin.writeUInt16LE(parseInt(guid.slice(14, 18), 16), 6);
+    Buffer.from(guid.slice(19, 23), "hex").copy(bin, 8);
+    Buffer.from(guid.slice(24), "hex").copy(bin, 10);
 
     return bin;
   }
