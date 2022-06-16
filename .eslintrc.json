@@ -245,8 +245,8 @@
     "jsdoc/require-yields": "warn",
     "jsdoc/require-yields-check": "warn",
     "jsdoc/sort-tags": "off",
-    // "jsdoc/tag-lines": "warn",
-    // "jsdoc/valid-types": "warn",
+    "jsdoc/tag-lines": "warn",
+    "jsdoc/valid-types": "warn",
 
     /* Duplicate with "plugin:jsdoc/recommended" */
     "jsdoc/check-alignment": "error",
