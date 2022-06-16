@@ -23,3 +23,5 @@ example/typescript/*.d.ts
 
 dist/
 vite-out/
+
+.eslintcache

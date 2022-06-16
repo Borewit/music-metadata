@@ -69,7 +69,7 @@
   "scripts": {
     "clean": "del-cli dist",
     "validate": "run-s format lint build test",
-    "format": "prettier --write lib test doc-gen example",
+    "format": "prettier --cache --write lib test doc-gen example",
     "build": "run-s clean build:*",
     "build:lib": "tsc -p lib",
     "build:doc": "ts-node doc-gen/gen.ts",
@@ -78,7 +78,7 @@
     "lint:type:lib": "tsc -p lib --noEmit",
     "lint:type:test": "tsc -p test --noEmit",
     "lint:type:doc-gen": "tsc -p doc-gen --noEmit",
-    "lint:eslint": "eslint lib/**/*.ts test/**/*.ts doc-gen/**/*.ts",
+    "lint:eslint": "eslint --cache lib/**/*.ts test/**/*.ts doc-gen/**/*.ts",
     "lint:md": "remark -u preset-lint-recommended .",
     "test": "run-s test:vitest",
     "test:vitest": "vitest --run",
@@ -96,9 +96,9 @@
     "@types/debug": "^4.1.7",
     "@types/media-typer": "^1.1.1",
     "@types/mime": "^2.0.3",
-    "@types/node": "^17.0.41",
-    "@typescript-eslint/eslint-plugin": "^5.27.1",
-    "@typescript-eslint/parser": "^5.27.1",
+    "@types/node": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.28.0",
+    "@typescript-eslint/parser": "^5.28.0",
     "c8": "^7.11.3",
     "del-cli": "^4.0.1",
     "eslint": "^8.17.0",
@@ -110,13 +110,13 @@
     "eslint-plugin-unicorn": "^42.0.0",
     "mime": "^3.0.0",
     "npm-run-all": "^4.1.5",
-    "prettier": "^2.6.2",
+    "prettier": "^2.7.1",
     "remark-cli": "^10.0.1",
     "remark-preset-lint-recommended": "^6.1.2",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3",
     "vite": "^2.9.12",
-    "vitest": "^0.14.2"
+    "vitest": "^0.15.1"
   },
   "engines": {
     "node": ">=10"
