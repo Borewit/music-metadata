@@ -62,7 +62,7 @@ export class FileTokenizer extends AbstractTokenizer {
     return res.bytesRead;
   }
 
-  public async close(): Promise<void> {
+  public override async close(): Promise<void> {
     return fs.close(this.fd);
   }
 }

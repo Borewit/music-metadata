@@ -54,7 +54,7 @@ export class MatroskaParser extends BasicParser {
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
    */
-  public init(
+  public override init(
     metadata: INativeMetadataCollector,
     tokenizer: ITokenizer,
     options: IOptions

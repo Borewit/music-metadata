@@ -77,7 +77,7 @@ export class MpegParser extends AbstractID3Parser {
   /**
    * Called after file has been fully parsed, this allows, if present, to exclude the ID3v1.1 header length
    */
-  protected finalize() {
+  protected override finalize() {
     const format = this.metadata.format;
     const hasID3v1 = this.metadata.native.hasOwnProperty("ID3v1");
     if (format.duration && this.tokenizer.fileInfo.size) {

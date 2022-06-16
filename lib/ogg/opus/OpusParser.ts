@@ -30,7 +30,7 @@ export class OpusParser extends VorbisParser {
    * @param {IPageHeader} header
    * @param {Buffer} pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
+  protected override parseFirstPage(header: IPageHeader, pageData: Buffer) {
     this.metadata.setFormat("codec", "Opus");
     // Parse Opus ID Header
     this.idHeader = new IdHeader(pageData.length).get(pageData, 0);
@@ -40,7 +40,7 @@ export class OpusParser extends VorbisParser {
     this.metadata.setFormat("numberOfChannels", this.idHeader.channelCount);
   }
 
-  protected parseFullPage(pageData: Buffer) {
+  protected override parseFullPage(pageData: Buffer) {
     const magicSignature = new Token.StringType(8, "ascii").get(pageData, 0);
     switch (magicSignature) {
       case "OpusTags":
@@ -53,7 +53,7 @@ export class OpusParser extends VorbisParser {
     }
   }
 
-  public calculateDuration(header: IPageHeader) {
+  public override calculateDuration(header: IPageHeader) {
     if (
       this.metadata.format.sampleRate &&
       header.absoluteGranulePosition >= 0

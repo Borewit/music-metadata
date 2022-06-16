@@ -7,7 +7,7 @@ import { ITimeToSampleToken, TimeToSampleToken } from "./TimeToSampleToken";
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25696
  */
 export class SttsAtom extends SimpleTableAtom<ITimeToSampleToken> {
-  public constructor(public len: number) {
+  public constructor(public override len: number) {
     super(len, TimeToSampleToken);
   }
 }

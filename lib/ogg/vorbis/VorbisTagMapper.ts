@@ -127,7 +127,7 @@ export class VorbisTagMapper extends CommonTagMapper {
     super(["vorbis"], vorbisTagMap);
   }
 
-  protected postMap(tag: ITag): void {
+  protected override postMap(tag: ITag): void {
     if (tag.id.indexOf("RATING:") === 0) {
       const keys = tag.id.split(":");
       tag.value = VorbisTagMapper.toRating(keys[1], tag.value);

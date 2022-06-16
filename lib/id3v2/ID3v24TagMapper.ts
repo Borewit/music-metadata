@@ -172,7 +172,10 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
    * @param warnings Wil be used to register (collect) warnings
    * @return Common value e.g. "Buena Vista Social Club"
    */
-  protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
+  protected override postMap(
+    tag: ITag,
+    warnings: INativeMetadataCollector
+  ): void {
     switch (tag.id) {
       case "UFID": // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === "http://musicbrainz.org") {
