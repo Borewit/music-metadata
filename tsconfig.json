@@ -26,7 +26,7 @@
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     // "exactOptionalPropertyTypes": true,
-    // "noFallthroughCasesInSwitch": true,
+    "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     // "noImplicitReturns": true,
     // "noPropertyAccessFromIndexSignature": true,
