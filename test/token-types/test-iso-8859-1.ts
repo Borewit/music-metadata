@@ -1,13 +1,13 @@
 import { describe, assert, it } from "vitest";
 import { AnsiStringType } from "../../lib/token-types";
 
-describe("Decode ANSI-string (ISO-8859-1)", () => {
-  function decode(v: string): string {
-    const buf = Buffer.from(v, "binary");
-    const ansiStr = new AnsiStringType(buf.length);
-    return ansiStr.get(buf);
-  }
+function decode(v: string): string {
+  const buf = Buffer.from(v, "binary");
+  const ansiStr = new AnsiStringType(buf.length);
+  return ansiStr.get(buf);
+}
 
+describe("Decode ANSI-string (ISO-8859-1)", () => {
   it("should decode", () => {
     assert.equal(
       decode(

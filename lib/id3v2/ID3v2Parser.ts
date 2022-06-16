@@ -262,7 +262,7 @@ export class ID3v2Parser {
           id: Buffer.from(uint8Array.slice(0, 3)).toString("ascii"),
           length: Token.UINT24_BE.get(uint8Array, 3),
         };
-        if (!header.id.match(/[A-Z0-9]{3}/g)) {
+        if (!header.id.match(/[\dA-Z]{3}/g)) {
           this.metadata.addWarning(
             `Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`
           );
@@ -279,7 +279,7 @@ export class ID3v2Parser {
           ),
           flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10)),
         };
-        if (!header.id.match(/[A-Z0-9]{4}/g)) {
+        if (!header.id.match(/[\dA-Z]{4}/g)) {
           this.metadata.addWarning(
             `Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`
           );

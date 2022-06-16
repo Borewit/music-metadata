@@ -51,6 +51,39 @@ const tokenizerTests: ITokenizerTest[] = [
   },
 ];
 
+async function peekOnData(tokenizer: strtok3.ITokenizer): Promise<void> {
+  assert.strictEqual(tokenizer.position, 0);
+
+  let value = await tokenizer.peekToken<number>(Token.UINT32_LE);
+  assert.strictEqual(typeof value, "number");
+  assert.strictEqual(value, 0x001a001a, "UINT24_LE #1");
+  assert.strictEqual(tokenizer.position, 0);
+
+  value = await tokenizer.peekToken(Token.UINT32_LE);
+  assert.strictEqual(typeof value, "number");
+  assert.strictEqual(value, 0x001a001a, "UINT24_LE sequential peek #2");
+  assert.strictEqual(tokenizer.position, 0);
+  value = await tokenizer.readToken(Token.UINT32_LE);
+
+  assert.strictEqual(typeof value, "number");
+  assert.strictEqual(value, 0x001a001a, "UINT24_LE #3");
+  assert.strictEqual(tokenizer.position, 4);
+  value = await tokenizer.readToken(Token.UINT32_BE);
+  assert.strictEqual(typeof value, "number");
+  assert.strictEqual(value, 0x1a001a00, "UINT32_BE #4");
+  assert.strictEqual(tokenizer.position, 8);
+  value = await tokenizer.readToken(Token.UINT32_LE);
+
+  assert.strictEqual(typeof value, "number");
+  assert.strictEqual(value, 0x001a001a, "UINT32_LE #5");
+  assert.strictEqual(tokenizer.position, 12);
+  value = await tokenizer.readToken(Token.UINT32_BE);
+
+  assert.strictEqual(typeof value, "number");
+  assert.strictEqual(value, 0x1a001a00, "UINT32_BE #6");
+  assert.strictEqual(tokenizer.position, 16);
+}
+
 for (const tokenizerType of tokenizerTests) {
   describe(tokenizerType.name, () => {
     describe("tokenizer read options", () => {
@@ -186,8 +219,8 @@ for (const tokenizerType of tokenizerTests) {
       try {
         await rst.readToken(Token.UINT8);
         assert.fail("Should reject due to end-of-stream");
-      } catch (err) {
-        assert.instanceOf(err, EndOfStreamError);
+      } catch (error) {
+        assert.instanceOf(error, EndOfStreamError);
       }
     });
 
@@ -206,8 +239,8 @@ for (const tokenizerType of tokenizerTests) {
       try {
         await rst.readToken(Token.UINT8);
         assert.fail("Should reject due to end-of-stream");
-      } catch (err) {
-        assert.instanceOf(err, EndOfStreamError);
+      } catch (error) {
+        assert.instanceOf(error, EndOfStreamError);
       }
     });
 
@@ -568,8 +601,8 @@ for (const tokenizerType of tokenizerTests) {
           assert.strictEqual(v, expected % 255, "offset=" + expected);
           ++expected;
         } while (true);
-      } catch (err) {
-        assert.instanceOf(err, EndOfStreamError);
+      } catch (error) {
+        assert.instanceOf(error, EndOfStreamError);
         assert.strictEqual(expected, size, "total number of parsed bytes");
       }
 
@@ -577,39 +610,6 @@ for (const tokenizerType of tokenizerTests) {
     }, 5000);
 
     it("Handle peek token", async () => {
-      async function peekOnData(tokenizer: strtok3.ITokenizer): Promise<void> {
-        assert.strictEqual(tokenizer.position, 0);
-
-        let value = await tokenizer.peekToken<number>(Token.UINT32_LE);
-        assert.strictEqual(typeof value, "number");
-        assert.strictEqual(value, 0x001a001a, "UINT24_LE #1");
-        assert.strictEqual(tokenizer.position, 0);
-
-        value = await tokenizer.peekToken(Token.UINT32_LE);
-        assert.strictEqual(typeof value, "number");
-        assert.strictEqual(value, 0x001a001a, "UINT24_LE sequential peek #2");
-        assert.strictEqual(tokenizer.position, 0);
-        value = await tokenizer.readToken(Token.UINT32_LE);
-
-        assert.strictEqual(typeof value, "number");
-        assert.strictEqual(value, 0x001a001a, "UINT24_LE #3");
-        assert.strictEqual(tokenizer.position, 4);
-        value = await tokenizer.readToken(Token.UINT32_BE);
-        assert.strictEqual(typeof value, "number");
-        assert.strictEqual(value, 0x1a001a00, "UINT32_BE #4");
-        assert.strictEqual(tokenizer.position, 8);
-        value = await tokenizer.readToken(Token.UINT32_LE);
-
-        assert.strictEqual(typeof value, "number");
-        assert.strictEqual(value, 0x001a001a, "UINT32_LE #5");
-        assert.strictEqual(tokenizer.position, 12);
-        value = await tokenizer.readToken(Token.UINT32_BE);
-
-        assert.strictEqual(typeof value, "number");
-        assert.strictEqual(value, 0x1a001a00, "UINT32_BE #6");
-        assert.strictEqual(tokenizer.position, 16);
-      }
-
       const rst = await tokenizerType.loadTokenizer("test1.dat");
 
       if (rst instanceof FileTokenizer) {
@@ -696,8 +696,8 @@ for (const tokenizerType of tokenizerTests) {
       try {
         await rst.readToken(Token.UINT8);
         assert.fail("Should reject due to end-of-stream");
-      } catch (err) {
-        assert.instanceOf(err, EndOfStreamError);
+      } catch (error) {
+        assert.instanceOf(error, EndOfStreamError);
       }
     });
 
@@ -728,8 +728,8 @@ for (const tokenizerType of tokenizerTests) {
       try {
         await tokenizer.peekNumber(Token.INT32_BE);
         assert.fail("Should throw Error: End-Of-File");
-      } catch (err) {
-        assert.instanceOf(err, EndOfStreamError);
+      } catch (error) {
+        assert.instanceOf(error, EndOfStreamError);
       }
       await tokenizer.close();
     });
@@ -787,8 +787,8 @@ for (const tokenizerType of tokenizerTests) {
         try {
           await tokenizer.readBuffer(buf);
           assert.fail("Should throw EOF");
-        } catch (err) {
-          assert.instanceOf(err, EndOfStreamError);
+        } catch (error) {
+          assert.instanceOf(error, EndOfStreamError);
         }
       });
 
@@ -803,8 +803,8 @@ for (const tokenizerType of tokenizerTests) {
         try {
           await rst.readToken(Token.INT32_BE);
           assert.fail("It should throw EndOfFile Error");
-        } catch (err) {
-          assert.instanceOf(err, EndOfStreamError);
+        } catch (error) {
+          assert.instanceOf(error, EndOfStreamError);
         }
       });
 
@@ -818,8 +818,8 @@ for (const tokenizerType of tokenizerTests) {
               .then((len) => {
                 assert.fail("It should throw EndOfFile Error");
               })
-              .catch((err) => {
-                assert.instanceOf(err, EndOfStreamError);
+              .catch((error) => {
+                assert.instanceOf(error, EndOfStreamError);
               });
           }
         );
@@ -831,8 +831,8 @@ for (const tokenizerType of tokenizerTests) {
         try {
           await rst.peekBuffer(buffer);
           assert.fail("It should throw EndOfFile Error");
-        } catch (err) {
-          assert.instanceOf(err, EndOfStreamError);
+        } catch (error) {
+          assert.instanceOf(error, EndOfStreamError);
         }
       });
     });
@@ -903,9 +903,9 @@ describe("fromStream with mayBeLess flag", () => {
       // Try to read 5 bytes from empty stream, with mayBeLess flag enabled
       const buffer = Buffer.alloc(5);
       await tokenizer.peekBuffer(buffer, { mayBeLess: false });
-    } catch (err) {
-      if (err instanceof Error) {
-        assert.strictEqual(err.message, "End-Of-Stream");
+    } catch (error) {
+      if (error instanceof Error) {
+        assert.strictEqual(error.message, "End-Of-Stream");
       } else {
         assert.fail("Expected: err instanceof Error");
       }

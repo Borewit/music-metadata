@@ -59,11 +59,11 @@ export class AIFFParser extends BasicParser {
         const bytesRead = await this.readData(chunkHeader);
         await this.tokenizer.ignore(nextChunk - bytesRead);
       }
-    } catch (err) {
-      if (err instanceof strtok3.EndOfStreamError) {
+    } catch (error) {
+      if (error instanceof strtok3.EndOfStreamError) {
         debug(`End-of-stream`);
       } else {
-        throw err;
+        throw error;
       }
     }
   }

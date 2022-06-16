@@ -102,8 +102,8 @@ export class OggParser extends BasicParser {
         }
         this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);
-    } catch (err) {
-      if (err instanceof EndOfStreamError) {
+    } catch (error) {
+      if (error instanceof EndOfStreamError) {
         this.metadata.addWarning(
           "Last OGG-page is not marked with last-page flag"
         );
@@ -114,7 +114,7 @@ export class OggParser extends BasicParser {
         if (this.header) {
           this.pageConsumer.calculateDuration(this.header);
         }
-      } else if (err instanceof Error && err.message.startsWith("FourCC")) {
+      } else if (error instanceof Error && error.message.startsWith("FourCC")) {
         if (this.pageNumber > 0) {
           // ignore this error: work-around if last OGG-page is not marked with last-page flag
           this.metadata.addWarning(
@@ -123,7 +123,7 @@ export class OggParser extends BasicParser {
           this.pageConsumer.flush();
         }
       } else {
-        throw err;
+        throw error;
       }
     }
   }

@@ -6,6 +6,12 @@ import { Readable } from "stream";
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 import { SourceStream } from "./util";
 
+async function readByteAsNumber(sr: StreamReader): Promise<number> {
+  const uint8Array = new Uint8Array(1);
+  await sr.read(uint8Array, 0, 1);
+  return uint8Array[0];
+}
+
 describe("StreamReader", () => {
   it("should throw an exception if constructor argument is not a stream", () => {
     class MyEmitter extends EventEmitter {}
@@ -49,18 +55,12 @@ describe("StreamReader", () => {
     try {
       await streamReader.read(uint8Array, 0, 1);
       assert.fail("Should reject due to end-of-stream");
-    } catch (err) {
-      assert.instanceOf(err, EndOfStreamError);
+    } catch (error) {
+      assert.instanceOf(error, EndOfStreamError);
     }
   });
 
   describe("concurrent reads", () => {
-    async function readByteAsNumber(sr: StreamReader): Promise<number> {
-      const uint8Array = new Uint8Array(1);
-      await sr.read(uint8Array, 0, 1);
-      return uint8Array[0];
-    }
-
     it("should support concurrent reads", () => {
       const sourceStream = new SourceStream(
         "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
@@ -338,8 +338,8 @@ describe("StreamReader", () => {
       try {
         await streamReader.read(uint8Array, 0, 17);
         assert.fail("Should throw an exception");
-      } catch (err: any) {
-        assert.strictEqual(err.message, "Stream closed");
+      } catch (error: any) {
+        assert.strictEqual(error.message, "Stream closed");
       }
     });
 
@@ -356,8 +356,8 @@ describe("StreamReader", () => {
       try {
         await streamReader.read(uint8Array, 0, 17);
         assert.fail("Should throw an exception");
-      } catch (err: any) {
-        assert.strictEqual(err.code, "ENOENT");
+      } catch (error: any) {
+        assert.strictEqual(error.code, "ENOENT");
       }
     });
   });

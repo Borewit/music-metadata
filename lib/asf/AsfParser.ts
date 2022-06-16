@@ -63,8 +63,8 @@ export class AsfParser extends BasicParser {
     }
     try {
       await this.parseObjectHeader(header.numberOfHeaderObjects);
-    } catch (err) {
-      debug("Error while parsing ASF: %s", err);
+    } catch (error) {
+      debug("Error while parsing ASF: %s", error);
     }
   }
 

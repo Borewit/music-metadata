@@ -23,11 +23,11 @@ export abstract class AbstractID3Parser extends BasicParser {
   public async parse(): Promise<void> {
     try {
       await this.parseID3v2();
-    } catch (err) {
-      if (err instanceof EndOfStreamError) {
+    } catch (error) {
+      if (error instanceof EndOfStreamError) {
         debug(`End-of-stream`);
       } else {
-        throw err;
+        throw error;
       }
     }
   }

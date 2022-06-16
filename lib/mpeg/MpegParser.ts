@@ -63,8 +63,8 @@ export class MpegParser extends AbstractID3Parser {
         await this.sync();
         quit = await this.parseCommonMpegHeader();
       }
-    } catch (err) {
-      if (err instanceof EndOfStreamError) {
+    } catch (error) {
+      if (error instanceof EndOfStreamError) {
         debug(`End-of-stream`);
         if (this.calculateEofDuration) {
           const numberOfSamples = this.frameCount * this.samplesPerFrame;
@@ -74,7 +74,7 @@ export class MpegParser extends AbstractID3Parser {
           this.metadata.setFormat("duration", duration);
         }
       } else {
-        throw err;
+        throw error;
       }
     }
   }
@@ -167,12 +167,12 @@ export class MpegParser extends AbstractID3Parser {
     let header: MpegFrameHeader;
     try {
       header = FrameHeader.get(this.buf_frame_header, 0);
-    } catch (err) {
-      if (!(err instanceof Error)) {
-        throw err;
+    } catch (error) {
+      if (!(error instanceof Error)) {
+        throw error;
       }
       await this.tokenizer.ignore(1);
-      this.metadata.addWarning("Parse error: " + err.message);
+      this.metadata.addWarning("Parse error: " + error.message);
       return false; // sync
     }
     await this.tokenizer.ignore(3);
