@@ -38,6 +38,12 @@ const minimumBytes = 4100; // A fair amount of file-types are detectable within 
  * ```
  */
 
+/**
+ *
+ * @param readableStream
+ * @param root0
+ * @param root0.sampleSize
+ */
 export async function fileTypeStream(
   readableStream: ReadableStream,
   { sampleSize = minimumBytes }: StreamOptions = {}

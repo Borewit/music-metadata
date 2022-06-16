@@ -1,7 +1,18 @@
+/**
+ *
+ * @param flags
+ * @param bitOffset
+ */
 export function isBitSet(flags: number, bitOffset: number): boolean {
   return getBitAllignedNumber(flags, bitOffset, 1) === 1;
 }
 
+/**
+ *
+ * @param flags
+ * @param bitOffset
+ * @param len
+ */
 export function getBitAllignedNumber(
   flags: number,
   bitOffset: number,

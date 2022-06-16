@@ -25,6 +25,10 @@ interface IPicture {
 
 const defaultEnc: util.StringEncoding = "latin1"; // latin1 == iso-8859-1;
 
+/**
+ *
+ * @param origVal
+ */
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
   const genres = [];
@@ -61,6 +65,10 @@ export function parseGenre(origVal: string): string[] {
   return genres;
 }
 
+/**
+ *
+ * @param code
+ */
 function parseGenreCode(code: string): string {
   if (code === "RX") return "Remix";
   if (code === "CR") return "Cover";

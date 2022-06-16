@@ -70,6 +70,10 @@ export class ID3v1Parser extends BasicParser {
   }
 }
 
+/**
+ *
+ * @param reader
+ */
 export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
     const tag = Buffer.alloc(3);

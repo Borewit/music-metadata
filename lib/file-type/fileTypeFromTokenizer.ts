@@ -31,6 +31,10 @@ import { FileTypeParser } from "./FileTypeParser";
  * ```
  */
 
+/**
+ *
+ * @param tokenizer
+ */
 export async function fileTypeFromTokenizer(
   tokenizer: ITokenizer
 ): Promise<FileTypeResult | undefined> {

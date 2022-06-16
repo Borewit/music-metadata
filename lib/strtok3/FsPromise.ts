@@ -12,6 +12,10 @@ export interface IReadResult {
 export const pathExists = fs.existsSync;
 export const createReadStream = fs.createReadStream;
 
+/**
+ *
+ * @param path
+ */
 export async function stat(path: fs.PathLike): Promise<fs.Stats> {
   return new Promise<fs.Stats>((resolve, reject) => {
     fs.stat(path, (err, stats) => {
@@ -21,6 +25,10 @@ export async function stat(path: fs.PathLike): Promise<fs.Stats> {
   });
 }
 
+/**
+ *
+ * @param fd
+ */
 export async function close(fd: number): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     fs.close(fd, (err) => {
@@ -30,6 +38,11 @@ export async function close(fd: number): Promise<void> {
   });
 }
 
+/**
+ *
+ * @param path
+ * @param mode
+ */
 export async function open(path: fs.PathLike, mode: fs.Mode): Promise<number> {
   return new Promise<number>((resolve, reject) => {
     fs.open(path, mode, (err, fd) => {
@@ -39,6 +52,14 @@ export async function open(path: fs.PathLike, mode: fs.Mode): Promise<number> {
   });
 }
 
+/**
+ *
+ * @param fd
+ * @param buffer
+ * @param offset
+ * @param length
+ * @param position
+ */
 export async function read(
   fd: number,
   buffer: Uint8Array,
@@ -54,6 +75,11 @@ export async function read(
   });
 }
 
+/**
+ *
+ * @param path
+ * @param data
+ */
 export async function writeFile(
   path: fs.PathLike,
   data: Buffer | string
@@ -66,10 +92,19 @@ export async function writeFile(
   });
 }
 
+/**
+ *
+ * @param path
+ * @param data
+ */
 export function writeFileSync(path: fs.PathLike, data: Buffer | string): void {
   fs.writeFileSync(path, data);
 }
 
+/**
+ *
+ * @param path
+ */
 export async function readFile(path: fs.PathLike): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
     fs.readFile(path, (err, buffer) => {

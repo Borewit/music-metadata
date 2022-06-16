@@ -31,6 +31,10 @@ export interface IXingInfoTag {
 //  * XING Header Tag
 //  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
 //  */
+/**
+ *
+ * @param tokenizer
+ */
 export async function readXingHeader(
   tokenizer: ITokenizer
 ): Promise<IXingInfoTag> {

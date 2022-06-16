@@ -14,6 +14,12 @@ export interface ITextEncoding {
   bom?: boolean;
 }
 
+/**
+ *
+ * @param buf
+ * @param off
+ * @param bit
+ */
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
 }
@@ -48,11 +54,19 @@ export function findZero(
   }
 }
 
+/**
+ *
+ * @param x
+ */
 export function trimRightNull(x: string): string {
   const pos0 = x.indexOf("\0");
   return pos0 === -1 ? x : x.substr(0, pos0);
 }
 
+/**
+ *
+ * @param uint8Array
+ */
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
   if ((l & 1) !== 0) throw new Error("Buffer length must be even");
@@ -66,6 +80,8 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
 
 /**
  * Decode string
+ * @param uint8Array
+ * @param encoding
  */
 export function decodeString(
   uint8Array: Uint8Array,
@@ -91,6 +107,10 @@ export function decodeString(
   return Buffer.from(uint8Array).toString(encoding);
 }
 
+/**
+ *
+ * @param str
+ */
 export function stripNulls(str: string): string {
   str = str.replace(/^\0+/g, "");
   str = str.replace(/\0+$/g, "");
@@ -148,6 +168,10 @@ export function isBitSet(
   return getBitAllignedNumber(source, byteOffset, bitOffset, 1) === 1;
 }
 
+/**
+ *
+ * @param str
+ */
 export function a2hex(str: string) {
   const arr = [];
   for (let i = 0, l = str.length; i < l; i++) {
@@ -160,6 +184,7 @@ export function a2hex(str: string) {
 /**
  * Convert power ratio to DB
  * ratio: [0..1]
+ * @param ratio
  */
 export function ratioToDb(ratio: number): number {
   return 10 * Math.log10(ratio);
@@ -168,6 +193,7 @@ export function ratioToDb(ratio: number): number {
 /**
  * Convert dB to ratio
  * db Decibels
+ * @param dB
  */
 export function dbToRatio(dB: number): number {
   return Math.pow(10, dB / 10);

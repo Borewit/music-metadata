@@ -1512,6 +1512,10 @@ export class FileTypeParser {
 }
 
 // Root element: EBML
+/**
+ *
+ * @param tokenizer
+ */
 async function readField(tokenizer: strtok3.ITokenizer) {
   const msb = await tokenizer.peekNumber(Token.UINT8);
   let mask = 0x80;
@@ -1528,6 +1532,10 @@ async function readField(tokenizer: strtok3.ITokenizer) {
   return id;
 }
 
+/**
+ *
+ * @param tokenizer
+ */
 async function readElement(tokenizer: strtok3.ITokenizer) {
   const id = await readField(tokenizer);
   const lengthField = await readField(tokenizer);
@@ -1539,6 +1547,12 @@ async function readElement(tokenizer: strtok3.ITokenizer) {
   };
 }
 
+/**
+ *
+ * @param tokenizer
+ * @param level
+ * @param children
+ */
 async function readChildren(
   tokenizer: strtok3.ITokenizer,
   level: number,
@@ -1558,6 +1572,10 @@ async function readChildren(
   }
 }
 
+/**
+ *
+ * @param tokenizer
+ */
 async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
   return {
     length: await tokenizer.readToken(Token.INT32_BE),
@@ -1565,6 +1583,10 @@ async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
   };
 }
 
+/**
+ *
+ * @param tokenizer
+ */
 async function readHeader(tokenizer: strtok3.ITokenizer) {
   const guid = Buffer.alloc(16);
   await tokenizer.readBuffer(guid);

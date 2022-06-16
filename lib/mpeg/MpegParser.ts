@@ -15,6 +15,10 @@ const debug = initDebug("music-metadata:parser:mpeg");
  */
 const maxPeekLen = 1024;
 
+/**
+ *
+ * @param vbrScale
+ */
 function getVbrCodecProfile(vbrScale: number): string {
   return "V" + Math.floor((100 - vbrScale) / 10);
 }
@@ -184,6 +188,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   /**
+   * @param header
    * @returns {Promise<boolean>} true if parser should quit
    */
   private async parseAudioFrameHeader(

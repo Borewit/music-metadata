@@ -90,6 +90,7 @@ export class FlacParser extends AbstractID3Parser {
 
   /**
    * Parse STREAMINFO
+   * @param dataLen
    */
   private async parseBlockStreamInfo(dataLen: number): Promise<void> {
     if (dataLen !== BlockStreamInfo.len)
@@ -115,6 +116,7 @@ export class FlacParser extends AbstractID3Parser {
   /**
    * Parse VORBIS_COMMENT
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
+   * @param dataLen
    */
   private async parseComment(dataLen: number): Promise<void> {
     const data = await this.tokenizer.readToken<Uint8Array>(

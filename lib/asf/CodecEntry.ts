@@ -13,6 +13,10 @@ export interface ICodecEntry {
   information: Buffer;
 }
 
+/**
+ *
+ * @param tokenizer
+ */
 async function readString(tokenizer: ITokenizer): Promise<string> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
   return (
@@ -23,6 +27,7 @@ async function readString(tokenizer: ITokenizer): Promise<string> {
 /**
  * 3.5: Read the Codec-List-Object, which provides user-friendly information about the codecs and formats used to encode the content found in the ASF file.
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
+ * @param tokenizer
  */
 export async function readCodecEntries(
   tokenizer: ITokenizer
@@ -35,6 +40,10 @@ export async function readCodecEntries(
   return entries;
 }
 
+/**
+ *
+ * @param tokenizer
+ */
 async function readInformation(tokenizer: ITokenizer): Promise<Buffer> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
   const buf = Buffer.alloc(length);

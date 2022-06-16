@@ -301,6 +301,9 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   /**
    * Convert native tag to common tags
+   * @param tagType
+   * @param tagId
+   * @param value
    */
   private toCommon(tagType: TagType, tagId: string, value: any) {
     const tag = { id: tagId, value };
@@ -314,6 +317,8 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   /**
    * Set generic tag
+   * @param tagType
+   * @param tag
    */
   private setGenericTag(tagType: TagType | "artificial", tag: IGenericTag) {
     debug(`common.${tag.id} = ${tag.value}`);
@@ -359,6 +364,10 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 }
 
+/**
+ *
+ * @param artists
+ */
 export function joinArtists(artists: string[]): string {
   if (artists.length > 2) {
     return (

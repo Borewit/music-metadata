@@ -12,6 +12,11 @@ interface ITagInfoDict {
 
 const combinedTagMapper = new CombinedTagMapper();
 
+/**
+ *
+ * @param nativeType
+ * @param commonTag
+ */
 function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const result: string[] = [];
 
@@ -24,6 +29,10 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   return result;
 }
 
+/**
+ *
+ * @param out
+ */
 function write(out: fs.WriteStream) {
   const json = fs.readFileSync(path.join(__dirname, "common.json"));
   const commonDescriptionDict: ITagInfoDict = JSON.parse(json as any);

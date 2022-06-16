@@ -7,10 +7,18 @@ export type AttributeParser = (
   buf: Buffer
 ) => boolean | string | number | bigint | Buffer;
 
+/**
+ *
+ * @param i
+ */
 export function getParserForAttr(i: DataType): AttributeParser {
   return attributeParsers[i];
 }
 
+/**
+ *
+ * @param uint8Array
+ */
 export function parseUnicodeAttr(uint8Array: Uint8Array): string {
   return util.stripNulls(util.decodeString(uint8Array, "utf16le"));
 }
@@ -25,22 +33,46 @@ export const attributeParsers: AttributeParser[] = [
   parseByteArrayAttr,
 ];
 
+/**
+ *
+ * @param buf
+ */
 export function parseByteArrayAttr(buf: Uint8Array): Buffer {
   return Buffer.from(buf);
 }
 
+/**
+ *
+ * @param buf
+ * @param offset
+ */
 export function parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
   return parseWordAttr(buf, offset) === 1;
 }
 
+/**
+ *
+ * @param buf
+ * @param offset
+ */
 export function parseDWordAttr(buf: Buffer, offset: number = 0): number {
   return buf.readUInt32LE(offset);
 }
 
+/**
+ *
+ * @param buf
+ * @param offset
+ */
 export function parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
   return Token.UINT64_LE.get(buf, offset);
 }
 
+/**
+ *
+ * @param buf
+ * @param offset
+ */
 export function parseWordAttr(buf: Buffer, offset: number = 0): number {
   return buf.readUInt16LE(offset);
 }

@@ -1,5 +1,9 @@
 import { IGetToken } from "../strtok3";
 
+/**
+ *
+ * @param str
+ */
 export function stringToBytes(str: string) {
   return [...str].map((character) => character.charCodeAt(0));
 }
@@ -48,6 +52,14 @@ export const uint32SyncSafeToken: IGetToken<number> = {
   len: 4,
 };
 
+/**
+ *
+ * @param buffer
+ * @param headers
+ * @param options
+ * @param options.mask
+ * @param options.offset
+ */
 export function checkUtil(
   buffer: Buffer,
   headers: any[],

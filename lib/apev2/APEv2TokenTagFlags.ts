@@ -8,6 +8,10 @@ export interface ITagFlags {
   dataType: DataType;
 }
 
+/**
+ *
+ * @param flags
+ */
 export function parseTagFlags(flags: number): ITagFlags {
   return {
     containsHeader: isBitSet(flags, 31),

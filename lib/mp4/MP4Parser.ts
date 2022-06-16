@@ -63,6 +63,12 @@ interface ITrackDescription extends ITrackHeaderAtom {
 
 type IAtomParser = (payloadLength: number) => Promise<any>;
 
+/**
+ *
+ * @param value
+ * @param index
+ * @param self
+ */
 function distinct(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
 }
@@ -414,6 +420,7 @@ export class MP4Parser extends BasicParser {
     /**
      * Parse movie header (mvhd) atom
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
+     * @param len
      */
     mvhd: async (len: number) => {
       const mvhd = await this.tokenizer.readToken<IAtomMvhd>(new MvhdAtom(len));
@@ -424,6 +431,7 @@ export class MP4Parser extends BasicParser {
     /**
      * Parse media header (mdhd) atom
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25615
+     * @param len
      */
     mdhd: async (len: number) => {
       const mdhd_data = await this.tokenizer.readToken<IAtomMdhd>(
@@ -459,6 +467,7 @@ export class MP4Parser extends BasicParser {
     /**
      * Parse mdat atom.
      * Will scan for chapters
+     * @param len
      */
     mdat: async (len: number) => {
       this.audioLengthInBytes = len;
@@ -502,6 +511,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * Parse sample description atom
+     * @param len
      */
     stsd: async (len: number) => {
       const stsd = await this.tokenizer.readToken<IAtomStsd>(new StsdAtom(len));
@@ -513,6 +523,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * sample-to-Chunk Atoms
+     * @param len
      */
     stsc: async (len: number) => {
       const stsc = await this.tokenizer.readToken<ITableAtom<ISampleToChunk>>(
@@ -523,6 +534,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * time to sample
+     * @param len
      */
     stts: async (len: number) => {
       const stts = await this.tokenizer.readToken<
@@ -533,6 +545,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * Parse sample-sizes atom ('stsz')
+     * @param len
      */
     stsz: async (len: number) => {
       const stsz = await this.tokenizer.readToken<IStszAtom>(new StszAtom(len));
@@ -543,6 +556,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * Parse chunk-offset atom ('stco')
+     * @param len
      */
     stco: async (len: number) => {
       const stco = await this.tokenizer.readToken<ITableAtom<number>>(

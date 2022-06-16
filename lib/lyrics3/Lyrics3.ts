@@ -2,6 +2,10 @@ import { IRandomReader } from "../type";
 
 export const endTag2 = "LYRICS200";
 
+/**
+ *
+ * @param reader
+ */
 export async function getLyricsHeaderLength(
   reader: IRandomReader
 ): Promise<number> {

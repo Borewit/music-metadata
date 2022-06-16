@@ -12,6 +12,7 @@ export abstract class FixedLengthAtom {
    *
    * @param {number} len Length as specified in the size field
    * @param {number} expLen Total length of sum of specified fields in the standard
+   * @param atomId
    */
   protected constructor(public len: number, expLen: number, atomId: string) {
     if (len < expLen) {
