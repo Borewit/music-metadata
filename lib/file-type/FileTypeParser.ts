@@ -626,51 +626,8 @@ export class FileTypeParser {
 
     // https://github.com/threatstack/libmagic/blob/master/magic/Magdir/matroska
     if (this.check([0x1a, 0x45, 0xdf, 0xa3])) {
-      // Root element: EBML
-      async function readField() {
-        const msb = await tokenizer.peekNumber(Token.UINT8);
-        let mask = 0x80;
-        let ic = 0; // 0 = A, 1 = B, 2 = C, 3
-
-        // = D
-        while ((msb & mask) === 0) {
-          ++ic;
-          mask >>= 1;
-        }
-
-        const id = Buffer.alloc(ic + 1);
-        await tokenizer.readBuffer(id);
-        return id;
-      }
-
-      async function readElement() {
-        const id = await readField();
-        const lengthField = await readField();
-        lengthField[0] ^= 0x80 >> (lengthField.length - 1);
-        const nrLength = Math.min(6, lengthField.length); // JavaScript can max read 6 bytes integer
-        return {
-          id: id.readUIntBE(0, id.length),
-          len: lengthField.readUIntBE(lengthField.length - nrLength, nrLength),
-        };
-      }
-
-      async function readChildren(level: number, children: number) {
-        while (children > 0) {
-          const element = await readElement();
-          if (element.id === 17026) {
-            const rawValue = await tokenizer.readToken(
-              new Token.StringType(element.len, "utf-8")
-            );
-            return rawValue.replace(/\00.*$/g, ""); // Return DocType
-          }
-
-          await tokenizer.ignore(element.len); // ignore payload
-          --children;
-        }
-      }
-
-      const re = await readElement();
-      const docType = await readChildren(1, re.len);
+      const re = await readElement(tokenizer);
+      const docType = await readChildren(tokenizer, 1, re.len);
 
       switch (docType) {
         case "webm":
@@ -926,15 +883,8 @@ export class FileTypeParser {
       // - 4 (length) + 4 (chunk type) + 13 (chunk data) + 4 (CRC): IHDR chunk
       await tokenizer.ignore(8); // ignore PNG signature
 
-      async function readChunkHeader() {
-        return {
-          length: await tokenizer.readToken(Token.INT32_BE),
-          type: await tokenizer.readToken(new Token.StringType(4, "binary")),
-        };
-      }
-
       do {
-        const chunk = await readChunkHeader();
+        const chunk = await readChunkHeader(tokenizer);
         if (chunk.length < 0) {
           return; // Invalid chunk length
         }
@@ -1030,19 +980,10 @@ export class FileTypeParser {
     if (
       this.check([0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9])
     ) {
-      async function readHeader() {
-        const guid = Buffer.alloc(16);
-        await tokenizer.readBuffer(guid);
-        return {
-          id: guid,
-          size: Number(await tokenizer.readToken(Token.UINT64_LE)),
-        };
-      }
-
       await tokenizer.ignore(30);
       // Search for header should be in first 1KB of file.
       while (tokenizer.position + 24 < tokenizer.fileInfo.size) {
-        const header = await readHeader();
+        const header = await readHeader(tokenizer);
         let payload = header.size - 24;
         if (
           checkUtil(
@@ -1568,4 +1509,67 @@ export class FileTypeParser {
       };
     }
   }
+}
+
+// Root element: EBML
+async function readField(tokenizer: strtok3.ITokenizer) {
+  const msb = await tokenizer.peekNumber(Token.UINT8);
+  let mask = 0x80;
+  let ic = 0; // 0 = A, 1 = B, 2 = C, 3
+
+  // = D
+  while ((msb & mask) === 0) {
+    ++ic;
+    mask >>= 1;
+  }
+
+  const id = Buffer.alloc(ic + 1);
+  await tokenizer.readBuffer(id);
+  return id;
+}
+
+async function readElement(tokenizer: strtok3.ITokenizer) {
+  const id = await readField(tokenizer);
+  const lengthField = await readField(tokenizer);
+  lengthField[0] ^= 0x80 >> (lengthField.length - 1);
+  const nrLength = Math.min(6, lengthField.length); // JavaScript can max read 6 bytes integer
+  return {
+    id: id.readUIntBE(0, id.length),
+    len: lengthField.readUIntBE(lengthField.length - nrLength, nrLength),
+  };
+}
+
+async function readChildren(
+  tokenizer: strtok3.ITokenizer,
+  level: number,
+  children: number
+) {
+  while (children > 0) {
+    const element = await readElement(tokenizer);
+    if (element.id === 17026) {
+      const rawValue = await tokenizer.readToken(
+        new Token.StringType(element.len, "utf-8")
+      );
+      return rawValue.replace(/\00.*$/g, ""); // Return DocType
+    }
+
+    await tokenizer.ignore(element.len); // ignore payload
+    --children;
+  }
+}
+
+async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
+  return {
+    length: await tokenizer.readToken(Token.INT32_BE),
+    type: await tokenizer.readToken(new Token.StringType(4, "binary")),
+  };
+}
+
+async function readHeader(tokenizer: strtok3.ITokenizer) {
+  const guid = Buffer.alloc(16);
+  await tokenizer.readBuffer(guid);
+  return {
+    id: guid,
+    size: Number(await tokenizer.readToken(Token.UINT64_LE)),
+  };
 }
