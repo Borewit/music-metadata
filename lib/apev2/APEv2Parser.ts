@@ -169,7 +169,7 @@ export class APEv2Parser extends BasicParser {
           const value = await this.tokenizer.readToken<string>(
             new StringType(tagItemHeader.size, "utf8")
           );
-          const values = value.split(/\x00/g);
+          const values = value.split(/\0/g);
 
           for (const val of values) {
             this.metadata.addTag(tagFormat, key, val);

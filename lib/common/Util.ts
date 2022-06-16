@@ -92,8 +92,8 @@ export function decodeString(
 }
 
 export function stripNulls(str: string): string {
-  str = str.replace(/^\x00+/g, "");
-  str = str.replace(/\x00+$/g, "");
+  str = str.replace(/^\0+/g, "");
+  str = str.replace(/\0+$/g, "");
   return str;
 }
 

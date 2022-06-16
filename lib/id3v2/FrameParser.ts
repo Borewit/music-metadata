@@ -111,7 +111,7 @@ export class FrameParser {
         try {
           text = util
             .decodeString(uint8Array.slice(1), encoding)
-            .replace(/\x00+$/, "");
+            .replace(/\0+$/, "");
         } catch (error) {
           if (!(error instanceof Error)) {
             throw error;
@@ -170,7 +170,7 @@ export class FrameParser {
           description: output.id,
           text: this.splitValue(
             type,
-            util.decodeString(output.data, encoding).replace(/\x00+$/, "")
+            util.decodeString(output.data, encoding).replace(/\0+$/, "")
           ),
         };
         break;
@@ -268,7 +268,7 @@ export class FrameParser {
 
         out.text = util
           .decodeString(uint8Array.slice(offset, length), encoding)
-          .replace(/\x00+$/, "");
+          .replace(/\0+$/, "");
 
         output = [out];
         break;
@@ -432,7 +432,7 @@ export class FrameParser {
   private splitValue(tag: string, text: string): string[] {
     let values: string[];
     if (this.major < 4) {
-      values = text.split(/\x00/g);
+      values = text.split(/\0/g);
       if (values.length > 1) {
         this.warningCollector.addWarning(
           `ID3v2.${this.major} ${tag} uses non standard null-separator.`
@@ -441,13 +441,13 @@ export class FrameParser {
         values = text.split(/\//g);
       }
     } else {
-      values = text.split(/\x00/g);
+      values = text.split(/\0/g);
     }
     return FrameParser.trimArray(values);
   }
 
   private static trimArray(values: string[]): string[] {
-    return values.map((value) => value.replace(/\x00+$/, "").trim());
+    return values.map((value) => value.replace(/\0+$/, "").trim());
   }
 
   private static readIdentifierAndData(
