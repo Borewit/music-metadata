@@ -23,7 +23,7 @@
     "useUnknownInCatchVariables": true,
 
     /* @tsconfig/strictest options */
-    // "allowUnusedLabels": false,
+    "allowUnusedLabels": false,
     // "allowUnreachableCode": false,
     // "exactOptionalPropertyTypes": true,
     // "noFallthroughCasesInSwitch": true,
