@@ -16,6 +16,7 @@ const combinedTagMapper = new CombinedTagMapper();
  *
  * @param nativeType
  * @param commonTag
+ * @returns
  */
 function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const result: string[] = [];

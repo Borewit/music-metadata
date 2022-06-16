@@ -68,6 +68,7 @@ type IAtomParser = (payloadLength: number) => Promise<any>;
  * @param value
  * @param index
  * @param self
+ * @returns
  */
 function distinct(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
@@ -270,8 +271,9 @@ export class MP4Parser extends BasicParser {
 
   /**
    * Parse data of Meta-item-list-atom (item of 'ilst' atom)
-   * @param metaAtom
    * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+   * @param metaAtom
+   * @returns
    */
   private parseMetadataItemData(metaAtom: Atom): Promise<void> {
     let tagKey = metaAtom.header.name;
@@ -574,8 +576,9 @@ export class MP4Parser extends BasicParser {
   };
 
   /**
-   * @param sampleDescription
    * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-128916
+   * @param sampleDescription
+   * @returns
    */
   private parseSoundSampleDescription(
     sampleDescription: ISampleDescription

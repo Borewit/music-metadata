@@ -18,6 +18,7 @@ const maxPeekLen = 1024;
 /**
  *
  * @param vbrScale
+ * @returns
  */
 function getVbrCodecProfile(vbrScale: number): string {
   return "V" + Math.floor((100 - vbrScale) / 10);

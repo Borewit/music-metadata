@@ -11,6 +11,7 @@ export interface ITagFlags {
 /**
  *
  * @param flags
+ * @returns
  */
 export function parseTagFlags(flags: number): ITagFlags {
   return {

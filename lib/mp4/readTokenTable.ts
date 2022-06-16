@@ -10,6 +10,7 @@ const debug = initDebug("music-metadata:parser:MP4:atom");
  * @param off
  * @param remainingLen
  * @param numberOfEntries
+ * @returns
  */
 export function readTokenTable<T>(
   buf: Buffer,

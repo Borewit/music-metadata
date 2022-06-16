@@ -19,6 +19,7 @@ export interface ITextEncoding {
  * @param buf
  * @param off
  * @param bit
+ * @returns
  */
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
@@ -57,6 +58,7 @@ export function findZero(
 /**
  *
  * @param x
+ * @returns
  */
 export function trimRightNull(x: string): string {
   const pos0 = x.indexOf("\0");
@@ -66,6 +68,7 @@ export function trimRightNull(x: string): string {
 /**
  *
  * @param uint8Array
+ * @returns
  */
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
@@ -82,6 +85,7 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
  * Decode string
  * @param uint8Array
  * @param encoding
+ * @returns
  */
 export function decodeString(
   uint8Array: Uint8Array,
@@ -110,6 +114,7 @@ export function decodeString(
 /**
  *
  * @param str
+ * @returns
  */
 export function stripNulls(str: string): string {
   str = str.replace(/^\0+/g, "");
@@ -171,6 +176,7 @@ export function isBitSet(
 /**
  *
  * @param str
+ * @returns
  */
 export function a2hex(str: string) {
   const arr = [];
@@ -185,6 +191,7 @@ export function a2hex(str: string) {
  * Convert power ratio to DB
  * ratio: [0..1]
  * @param ratio
+ * @returns
  */
 export function ratioToDb(ratio: number): number {
   return 10 * Math.log10(ratio);
@@ -194,6 +201,7 @@ export function ratioToDb(ratio: number): number {
  * Convert dB to ratio
  * db Decibels
  * @param dB
+ * @returns
  */
 export function dbToRatio(dB: number): number {
   return Math.pow(10, dB / 10);
@@ -202,6 +210,7 @@ export function dbToRatio(dB: number): number {
 /**
  * Convert replay gain to ratio and Decibel
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
+ * @returns
  */
 export function toRatio(value: string): IRatio {
   const ps = value.split(" ").map((p) => p.trim().toLowerCase());

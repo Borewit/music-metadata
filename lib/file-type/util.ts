@@ -3,6 +3,7 @@ import { IGetToken } from "../strtok3";
 /**
  *
  * @param str
+ * @returns
  */
 export function stringToBytes(str: string) {
   return [...str].map((character) => character.charCodeAt(0));
@@ -59,6 +60,7 @@ export const uint32SyncSafeToken: IGetToken<number> = {
  * @param options
  * @param options.mask
  * @param options.offset
+ * @returns
  */
 export function checkUtil(
   buffer: Buffer,

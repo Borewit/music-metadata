@@ -44,6 +44,7 @@ const windows1252 = [
  * @param buffer
  * @param offset
  * @param until
+ * @returns
  */
 function decodeAnsiStringType(
   buffer: Uint8Array,
@@ -62,6 +63,7 @@ function decodeAnsiStringType(
  * @param a
  * @param min
  * @param max
+ * @returns
  */
 function inRange(a: number, min: number, max: number): boolean {
   return min <= a && a <= max;
@@ -70,6 +72,7 @@ function inRange(a: number, min: number, max: number): boolean {
 /**
  *
  * @param cp
+ * @returns
  */
 function codePointToString(cp: number): string {
   if (cp <= 0xffff) {
@@ -83,6 +86,7 @@ function codePointToString(cp: number): string {
 /**
  *
  * @param bite
+ * @returns
  */
 function singleByteDecoder(bite: number): number {
   if (inRange(bite, 0x00, 0x7f)) {

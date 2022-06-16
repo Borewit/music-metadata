@@ -28,6 +28,7 @@ const defaultEnc: util.StringEncoding = "latin1"; // latin1 == iso-8859-1;
 /**
  *
  * @param origVal
+ * @returns
  */
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
@@ -68,6 +69,7 @@ export function parseGenre(origVal: string): string[] {
 /**
  *
  * @param code
+ * @returns
  */
 function parseGenreCode(code: string): string {
   if (code === "RX") return "Remix";
@@ -416,6 +418,7 @@ export class FrameParser {
   /**
    * Converts TMCL (Musician credits list) or TIPL (Involved people list)
    * @param entries
+   * @returns
    */
   private static functionList(entries: string[]): {
     [index: string]: string[];

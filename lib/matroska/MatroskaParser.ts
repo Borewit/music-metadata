@@ -53,6 +53,7 @@ export class MatroskaParser extends BasicParser {
    * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
+   * @returns
    */
   public override init(
     metadata: INativeMetadataCollector,

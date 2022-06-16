@@ -29,6 +29,7 @@ export class FlacParser extends AbstractID3Parser {
    * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
+   * @returns
    */
   public override init(
     metadata: INativeMetadataCollector,

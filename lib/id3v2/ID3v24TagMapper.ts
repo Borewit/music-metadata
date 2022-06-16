@@ -166,6 +166,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
     super(["ID3v2.3", "ID3v2.4"], id3v24TagMap);
   }
 
+  // eslint-disable-next-line jsdoc/require-returns-check
   /**
    * Handle post mapping exceptions / correction
    * @param tag to post map

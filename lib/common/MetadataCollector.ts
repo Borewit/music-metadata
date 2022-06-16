@@ -319,6 +319,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Set generic tag
    * @param tagType
    * @param tag
+   * @returns
    */
   private setGenericTag(tagType: TagType | "artificial", tag: IGenericTag) {
     debug(`common.${tag.id} = ${tag.value}`);
@@ -367,6 +368,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 /**
  *
  * @param artists
+ * @returns
  */
 export function joinArtists(artists: string[]): string {
   if (artists.length > 2) {
