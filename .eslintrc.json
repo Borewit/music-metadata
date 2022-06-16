@@ -93,10 +93,9 @@
     "no-useless-backreference": "error",
     "no-useless-catch": "error",
     "no-useless-escape": "error",
-    // "no-with": "error",
-    // "require-yield": "error",
-    // "use-isnan": "error",
-    // "valid-typeof": "error",
+    "no-with": "error",
+    "require-yield": "error",
+    "use-isnan": "error",
 
     "arrow-parens": ["off", "as-needed"],
     "comma-dangle": "off",
@@ -167,8 +166,6 @@
         "markers": ["/"]
       }
     ],
-    /* Duplicate with "eslint:recommended" */
-    "use-isnan": "error",
 
     /* plugin:import/recommended rules */
     /* https://github.com/import-js/eslint-plugin-import/blob/main/config/recommended.js */
