@@ -17,7 +17,7 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
    * Get file information, an HTTP-client may implement this doing a HEAD request
    * @returns Promise with file information
    */
-  public async getFileInfo(): Promise<IFileInfo> {
+  public getFileInfo(): IFileInfo {
     return this.fileInfo;
   }
 

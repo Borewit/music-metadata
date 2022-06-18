@@ -354,7 +354,7 @@ for (const tokenizerType of tokenizerTests) {
         await rst.close();
       });
 
-      it("should encode signed 24-bit big-endian integer (INT24_BE)", async () => {
+      it("should encode signed 24-bit big-endian integer (INT24_BE)", () => {
         const b = Buffer.alloc(3);
 
         Token.INT24_BE.put(b, 0, 0x00);
