@@ -223,7 +223,7 @@ for (const tokenizerType of tokenizerTests) {
       assert.strictEqual(value, 5, "0x05 == 5");
       // should decode string from chunk
       assert.strictEqual(rst.position, 1);
-      value = await rst.readToken(new Token.StringType(5, "utf-8"));
+      value = await rst.readToken(new Token.StringType(5, "utf8"));
       assert.strictEqual(typeof value, "string");
       assert.strictEqual(value, "peter");
       assert.strictEqual(rst.position, 6);
@@ -241,7 +241,7 @@ for (const tokenizerType of tokenizerTests) {
       // should decode UINT8 from chunk
       assert.strictEqual(rst.position, 0);
       const value: string | number = await rst.readToken(
-        new Token.StringType(5, "utf-8"),
+        new Token.StringType(5, "utf8"),
         1
       );
       assert.strictEqual(typeof value, "string");
@@ -703,7 +703,7 @@ for (const tokenizerType of tokenizerTests) {
       const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
       // should decode string from chunk
       assert.strictEqual(rst.position, 0);
-      const value = await rst.readToken(new Token.StringType(5, "utf-8"), 1);
+      const value = await rst.readToken(new Token.StringType(5, "utf8"), 1);
       assert.strictEqual(typeof value, "string");
       assert.strictEqual(value, "peter");
       assert.strictEqual(rst.position, 6);

@@ -376,7 +376,7 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        this.addTag(tagKey, dataAtom.value.toString("utf-8"));
+        this.addTag(tagKey, dataAtom.value.toString("utf8"));
         break;
 
       case 13: // JPEG
@@ -582,7 +582,7 @@ export class MP4Parser extends BasicParser {
 
     date: async (len: number) => {
       const date = await this.tokenizer.readToken(
-        new Token.StringType(len, "utf-8")
+        new Token.StringType(len, "utf8")
       );
       this.addTag("date", date);
     },

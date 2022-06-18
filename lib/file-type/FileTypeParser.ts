@@ -226,7 +226,7 @@ export class FileTypeParser {
           };
 
           zipHeader.filename = await tokenizer.readToken(
-            new Token.StringType(zipHeader.filenameLength, "utf-8")
+            new Token.StringType(zipHeader.filenameLength, "utf8")
           );
           await tokenizer.ignore(zipHeader.extraFieldLength);
 
@@ -294,7 +294,7 @@ export class FileTypeParser {
             zipHeader.compressedSize === zipHeader.uncompressedSize
           ) {
             const mimeType = await tokenizer.readToken(
-              new Token.StringType(zipHeader.compressedSize, "utf-8")
+              new Token.StringType(zipHeader.compressedSize, "utf8")
             );
             const trimmedMimeType = mimeType.trim();
 
@@ -1561,7 +1561,7 @@ async function readChildren(
     const element = await readElement(tokenizer);
     if (element.id === 17_026) {
       const rawValue = await tokenizer.readToken(
-        new Token.StringType(element.len, "utf-8")
+        new Token.StringType(element.len, "utf8")
       );
       return rawValue.replace(/\00.*$/g, ""); // Return DocType
     }

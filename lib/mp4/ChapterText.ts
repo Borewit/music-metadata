@@ -9,7 +9,7 @@ export class ChapterText implements IGetToken<string> {
 
   public get(buf: Buffer, off: number): string {
     const titleLen = Token.INT16_BE.get(buf, off + 0);
-    const str = new Token.StringType(titleLen, "utf-8");
+    const str = new Token.StringType(titleLen, "utf8");
     return str.get(buf, off + 2);
   }
 }
