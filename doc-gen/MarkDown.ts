@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 export class Row {
   constructor(public values: string[]) {}
@@ -45,7 +45,7 @@ export class Table {
   private calcColSizes(): number[] {
     const maxColSizes: number[] = [];
 
-    for (const row of this.rows.concat([this.header])) {
+    for (const row of [...this.rows, this.header]) {
       for (let ci = 0; ci < row.values.length; ++ci) {
         if (ci < maxColSizes.length) {
           maxColSizes[ci] = Math.max(maxColSizes[ci], row.values[ci].length);

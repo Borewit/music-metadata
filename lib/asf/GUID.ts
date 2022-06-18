@@ -76,9 +76,9 @@ export default class GUID {
    */
   public static encode(guid: string): Buffer {
     const bin = Buffer.alloc(16);
-    bin.writeUInt32LE(parseInt(guid.slice(0, 8), 16), 0);
-    bin.writeUInt16LE(parseInt(guid.slice(9, 13), 16), 4);
-    bin.writeUInt16LE(parseInt(guid.slice(14, 18), 16), 6);
+    bin.writeUInt32LE(Number.parseInt(guid.slice(0, 8), 16), 0);
+    bin.writeUInt16LE(Number.parseInt(guid.slice(9, 13), 16), 4);
+    bin.writeUInt16LE(Number.parseInt(guid.slice(14, 18), 16), 6);
     Buffer.from(guid.slice(19, 23), "hex").copy(bin, 8);
     Buffer.from(guid.slice(24), "hex").copy(bin, 10);
 

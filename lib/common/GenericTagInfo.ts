@@ -139,7 +139,7 @@ export const commonTags: ITagInfoMap = {
  */
 export function isSingleton(alias: GenericTagId): boolean {
   return (
-    {}.hasOwnProperty.call(commonTags, alias) && !commonTags[alias].multiple
+    Object.prototype.hasOwnProperty.call(commonTags, alias) && !commonTags[alias].multiple
   );
 }
 

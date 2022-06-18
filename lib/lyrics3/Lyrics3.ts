@@ -15,7 +15,7 @@ export async function getLyricsHeaderLength(
     const txt = buf.toString("binary");
     const tag = txt.substr(6);
     if (tag === endTag2) {
-      return parseInt(txt.substr(0, 6), 10) + 15;
+      return Number.parseInt(txt.substr(0, 6), 10) + 15;
     }
   }
   return 0;

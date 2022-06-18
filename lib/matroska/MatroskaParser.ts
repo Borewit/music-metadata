@@ -195,7 +195,7 @@ export class MatroskaParser extends BasicParser {
           const res = await this.parseContainer(
             type.container,
             element.len >= 0 ? this.tokenizer.position + element.len : -1,
-            path.concat([type.name])
+            [...path, type.name]
           );
           if (type.multiple) {
             if (!tree[type.name]) {

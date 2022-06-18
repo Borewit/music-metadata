@@ -14,7 +14,7 @@ export const FourCcToken: IToken<string> = {
     const id = buf.toString("binary", off, off + FourCcToken.len);
     switch (id) {
       default:
-        if (!id.match(validFourCC)) {
+        if (!validFourCC.test(id)) {
           throw new Error(
             `FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`
           );

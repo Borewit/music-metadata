@@ -1,11 +1,11 @@
 import * as Token from "../../lib/token-types";
 import { describe, assert, it } from "vitest";
 import * as strtok3 from "../../lib/strtok3";
-import Path from "path";
+import Path from "node:path";
 import * as fs from "../../lib/strtok3/FsPromise";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { EndOfStreamError } from "../../lib/peek-readable";
-import { PassThrough } from "stream";
+import { PassThrough } from "node:stream";
 
 interface ITokenizerTest {
   name: string;

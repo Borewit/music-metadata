@@ -79,7 +79,7 @@ const asfTagMap: INativeTagMap = {
 export class AsfTagMapper extends CommonTagMapper {
   public static toRating(rating: string): IRating {
     return {
-      rating: parseFloat(rating + 1) / 5,
+      rating: Number.parseFloat(rating + 1) / 5,
     };
   }
 

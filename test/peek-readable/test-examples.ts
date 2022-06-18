@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 
 import { describe, assert, it } from "vitest";
-import * as fs from "fs";
-import path from "path";
+import * as fs from "node:fs";
+import path from "node:path";
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 
 describe("Examples", () => {

@@ -155,7 +155,7 @@ export class MetadataCollector implements INativeMetadataCollector {
             !this.common.artists.includes((tag as any).value))
         ) {
           // Fill artist using artists source
-          const artists = (this.common.artists || []).concat([tag.value]);
+          const artists = [...(this.common.artists || []), tag.value];
           const value = joinArtists(artists);
           const artistTag: IGenericTag = { id: "artist", value };
           this.setGenericTag("artificial", artistTag);
@@ -195,13 +195,13 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "bpm":
       case "year":
       case "originalyear":
-        tag.value = parseInt(tag.value, 10);
+        tag.value = Number.parseInt(tag.value, 10);
         break;
 
       case "date": {
         // ToDo: be more strict on 'YYYY...'
-        const year = parseInt(tag.value.substr(0, 4), 10);
-        if (!isNaN(year)) {
+        const year = Number.parseInt(tag.value.substr(0, 4), 10);
+        if (!Number.isNaN(year)) {
           this.common.year = year;
         }
         break;
@@ -212,7 +212,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "discogs_artist_id":
       case "discogs_votes":
         tag.value =
-          typeof tag.value === "string" ? parseInt(tag.value, 10) : tag.value;
+          typeof tag.value === "string" ? Number.parseInt(tag.value, 10) : tag.value;
         break;
 
       case "replaygain_track_gain":
@@ -223,11 +223,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "replaygain_track_minmax":
-        tag.value = tag.value.split(",").map((v: string) => parseInt(v, 10));
+        tag.value = tag.value.split(",").map((v: string) => Number.parseInt(v, 10));
         break;
 
       case "replaygain_undo": {
-        const minMix = tag.value.split(",").map((v: string) => parseInt(v, 10));
+        const minMix = tag.value.split(",").map((v: string) => Number.parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1],
@@ -242,10 +242,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "isrc": // Only keep unique values
-        if (
-          this.common[tag.id] &&
-          this.common[tag.id].includes(tag.value)
-        )
+        if (this.common[tag.id] && this.common[tag.id].includes(tag.value))
           return;
         break;
 
@@ -370,9 +367,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 export function joinArtists(artists: string[]): string {
   if (artists.length > 2) {
     return (
-      artists.slice(0, artists.length - 1).join(", ") +
-      " & " +
-      artists[artists.length - 1]
+      artists.slice(0, -1).join(", ") + " & " + artists[artists.length - 1]
     );
   }
   return artists.join(" & ");

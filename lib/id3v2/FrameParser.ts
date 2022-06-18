@@ -58,8 +58,8 @@ export function parseGenre(origVal: string): string[] {
     }
   }
   if (word) {
-    if (genres.length === 0 && word.match(/^\d*$/)) {
-      word = Genres[parseInt(word, 10)];
+    if (genres.length === 0 && /^\d*$/.test(word)) {
+      word = Genres[Number.parseInt(word, 10)];
     }
     genres.push(word);
   }
@@ -74,8 +74,8 @@ export function parseGenre(origVal: string): string[] {
 function parseGenreCode(code: string): string {
   if (code === "RX") return "Remix";
   if (code === "CR") return "Cover";
-  if (code.match(/^\d*$/)) {
-    return Genres[parseInt(code, 10)];
+  if (/^\d*$/.test(code)) {
+    return Genres[Number.parseInt(code, 10)];
   }
 }
 
@@ -424,8 +424,8 @@ export class FrameParser {
     const res: { [index: string]: string[] } = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
       const names: string[] = entries[i + 1].split(",");
-      res[entries[i]] = {}.hasOwnProperty.call(res, entries[i])
-        ? res[entries[i]].concat(names)
+      res[entries[i]] = Object.prototype.hasOwnProperty.call(res, entries[i])
+        ? [...res[entries[i]], ...names]
         : names;
     }
     return res;
