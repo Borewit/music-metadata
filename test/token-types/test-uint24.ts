@@ -20,7 +20,7 @@ describe("Parse 24-bit unsigned integer", () => {
     });
 
     it("should decode", () => {
-      const buf = Buffer.from("\x00\x00\x00\x1A\x1A\x00\xFF\xFF\xFF", "binary");
+      const buf = Buffer.from("\u0000\u0000\u0000\u001A\u001A\u0000\u00FF\u00FF\u00FF", "binary");
       assert.strictEqual(Token.UINT24_BE.get(buf, 0), 0x000000);
       assert.strictEqual(Token.UINT24_BE.get(buf, 3), 0x1a1a00);
       assert.strictEqual(Token.UINT24_BE.get(buf, 6), 0xffffff);
@@ -42,7 +42,7 @@ describe("Parse 24-bit unsigned integer", () => {
     });
 
     it("should decode", () => {
-      const buf = Buffer.from("\x00\x00\x00\x1A\x1A\x00\xFF\xFF\xFF", "binary");
+      const buf = Buffer.from("\u0000\u0000\u0000\u001A\u001A\u0000\u00FF\u00FF\u00FF", "binary");
 
       assert.strictEqual(Token.UINT24_LE.get(buf, 0), 0x000000);
       assert.strictEqual(Token.UINT24_LE.get(buf, 3), 0x001a1a);

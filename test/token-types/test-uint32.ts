@@ -6,7 +6,7 @@ import * as util from "./util";
 
 describe("Parse 32-bit unsigned integer", () => {
   const decbuf = Buffer.from(
-    "\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00",
+    "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
     "binary"
   );
 

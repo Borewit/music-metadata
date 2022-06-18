@@ -24,7 +24,7 @@ describe("Parse 64-bit unsigned integer", () => {
 
     it("should decode", () => {
       const buf = Buffer.from(
-        "\x00\x00\x1A\x00\x1A\x00\x1A\x01\x00\x00\x1A\x00\x1A\x00\x1A\x02",
+        "\u0000\u0000\u001A\u0000\u001A\u0000\u001A\u0001\u0000\u0000\u001A\u0000\u001A\u0000\u001A\u0002",
         "binary"
       );
 
@@ -58,7 +58,7 @@ describe("Parse 64-bit unsigned integer", () => {
 
     it("should decode", () => {
       const buf = Buffer.from(
-        "\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00",
+        "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
         "binary"
       );
 

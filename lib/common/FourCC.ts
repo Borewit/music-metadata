@@ -1,7 +1,7 @@
 import * as util from "./Util";
 import { IToken } from "../strtok3";
 
-const validFourCC = /^[\x21-\x7E©][\0\x20-\x7E]{3}/;
+const validFourCC = /^[\u0021-\u007E©][\0\u0020-\u007E]{3}/;
 
 /**
  * Token for read FourCC

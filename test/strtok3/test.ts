@@ -90,7 +90,7 @@ for (const tokenizerType of tokenizerTests) {
       it("option.offset", async () => {
         const buf = Buffer.alloc(7);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         assert.strictEqual(
@@ -102,7 +102,7 @@ for (const tokenizerType of tokenizerTests) {
       it("option.length", async () => {
         const buf = Buffer.alloc(7);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         assert.strictEqual(await rst.readBuffer(buf, { length: 2 }), 2);
@@ -111,7 +111,7 @@ for (const tokenizerType of tokenizerTests) {
       it("default length", async () => {
         const buf = Buffer.alloc(6);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         assert.strictEqual(
@@ -123,7 +123,7 @@ for (const tokenizerType of tokenizerTests) {
 
       it("option.maybeLess = true", async () => {
         const buffer = Buffer.alloc(4);
-        const rst = await getTokenizerWithData("\x89\x54\x40", tokenizerType);
+        const rst = await getTokenizerWithData("\u0089\u0054\u0040", tokenizerType);
         const len = await rst.readBuffer(buffer, { mayBeLess: true });
         assert.strictEqual(
           len,
@@ -135,12 +135,12 @@ for (const tokenizerType of tokenizerTests) {
       it("option.position", async () => {
         const buffer = Buffer.alloc(5);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         const len = await rst.readBuffer(buffer, { position: 1 });
         assert.strictEqual(len, 5, "return value");
-        assert.strictEqual(buffer.toString("binary"), "\x02\x03\x04\x05\x06");
+        assert.strictEqual(buffer.toString("binary"), "\u0002\u0003\u0004\u0005\u0006");
       });
     });
 
@@ -148,7 +148,7 @@ for (const tokenizerType of tokenizerTests) {
       it("option.offset", async () => {
         const buf = Buffer.alloc(7);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         assert.strictEqual(
@@ -160,7 +160,7 @@ for (const tokenizerType of tokenizerTests) {
       it("option.length", async () => {
         const buf = Buffer.alloc(7);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         assert.strictEqual(await rst.peekBuffer(buf, { length: 2 }), 2);
@@ -169,7 +169,7 @@ for (const tokenizerType of tokenizerTests) {
       it("default length", async () => {
         const buf = Buffer.alloc(6);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         assert.strictEqual(
@@ -181,7 +181,7 @@ for (const tokenizerType of tokenizerTests) {
 
       it("option.maybeLess = true", async () => {
         const buffer = Buffer.alloc(4);
-        const rst = await getTokenizerWithData("\x89\x54\x40", tokenizerType);
+        const rst = await getTokenizerWithData("\u0089\u0054\u0040", tokenizerType);
         const len = await rst.peekBuffer(buffer, { mayBeLess: true });
         assert.strictEqual(
           len,
@@ -193,17 +193,17 @@ for (const tokenizerType of tokenizerTests) {
       it("option.position", async () => {
         const buffer = Buffer.alloc(5);
         const rst = await getTokenizerWithData(
-          "\x01\x02\x03\x04\x05\x06",
+          "\u0001\u0002\u0003\u0004\u0005\u0006",
           tokenizerType
         );
         const len = await rst.peekBuffer(buffer, { position: 1 });
         assert.strictEqual(len, 5, "return value");
-        assert.strictEqual(buffer.toString("binary"), "\x02\x03\x04\x05\x06");
+        assert.strictEqual(buffer.toString("binary"), "\u0002\u0003\u0004\u0005\u0006");
       });
     });
 
     it("should decode buffer", async () => {
-      const rst = await getTokenizerWithData("\x05peter", tokenizerType);
+      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
       // should decode UINT8 from chunk
       assert.strictEqual(rst.position, 0);
       let value: string | number = await rst.readToken(Token.UINT8);
@@ -225,7 +225,7 @@ for (const tokenizerType of tokenizerTests) {
     });
 
     it("should be able to read from an absolute offset", async () => {
-      const rst = await getTokenizerWithData("\x05peter", tokenizerType);
+      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
       // should decode UINT8 from chunk
       assert.strictEqual(rst.position, 0);
       const value: string | number = await rst.readToken(
@@ -245,7 +245,7 @@ for (const tokenizerType of tokenizerTests) {
     });
 
     it("should pick length from buffer, if length is not explicit defined", async () => {
-      const rst = await getTokenizerWithData("\x05peter", tokenizerType);
+      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
 
       const buf = Buffer.alloc(4);
 
@@ -273,18 +273,18 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(1);
 
         Token.INT8.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000");
 
         Token.INT8.put(b, 0, 0x22);
-        assert.strictEqual(b.toString("binary"), "\x22");
+        assert.strictEqual(b.toString("binary"), "\u0022");
 
         Token.INT8.put(b, 0, -0x22);
-        assert.strictEqual(b.toString("binary"), "\xDE");
+        assert.strictEqual(b.toString("binary"), "\u00DE");
       });
 
       it("should decode signed 8-bit integer (INT8)", async () => {
         const rst = await getTokenizerWithData(
-          "\x00\x7F\x80\xFF\x81",
+          "\u0000\u007F\u0080\u00FF\u0081",
           tokenizerType
         );
 
@@ -311,18 +311,18 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(2);
 
         Token.INT16_BE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000");
 
         Token.INT16_BE.put(b, 0, 0x0f0b);
-        assert.strictEqual(b.toString("binary"), "\x0F\x0B");
+        assert.strictEqual(b.toString("binary"), "\u000F\u000B");
 
         Token.INT16_BE.put(b, 0, -0x0f0b);
-        assert.strictEqual(b.toString("binary"), "\xF0\xF5");
+        assert.strictEqual(b.toString("binary"), "\u00F0\u00F5");
       });
 
       it("should decode signed 16-bit big-endian integer (INT16_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x0A\x1A\x00\x00\xFF\xFF\x80\x00",
+          "\u000A\u001A\u0000\u0000\u00FF\u00FF\u0080\u0000",
           tokenizerType
         );
 
@@ -346,18 +346,18 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(3);
 
         Token.INT24_BE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000");
 
         Token.INT24_BE.put(b, 0, 0x0f0ba0);
-        assert.strictEqual(b.toString("binary"), "\x0F\x0B\xA0");
+        assert.strictEqual(b.toString("binary"), "\u000F\u000B\u00A0");
 
         Token.INT24_BE.put(b, 0, -0x0f0bcc);
-        assert.strictEqual(b.toString("binary"), "\xF0\xF4\x34");
+        assert.strictEqual(b.toString("binary"), "\u00F0\u00F4\u0034");
       });
 
       it("should decode signed 24-bit big-endian integer (INT24_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x00\x00\x00\xFF\xFF\xFF\x10\x00\xFF\x80\x00\x00",
+          "\u0000\u0000\u0000\u00FF\u00FF\u00FF\u0010\u0000\u00FF\u0080\u0000\u0000",
           tokenizerType
         );
 
@@ -382,18 +382,18 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(4);
 
         Token.INT32_BE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000\u0000");
 
         Token.INT32_BE.put(b, 0, 0x0f0bcca0);
-        assert.strictEqual(b.toString("binary"), "\x0F\x0B\xCC\xA0");
+        assert.strictEqual(b.toString("binary"), "\u000F\u000B\u00CC\u00A0");
 
         Token.INT32_BE.put(b, 0, -0x0f0bcca0);
-        assert.strictEqual(b.toString("binary"), "\xF0\xF4\x33\x60");
+        assert.strictEqual(b.toString("binary"), "\u00F0\u00F4\u0033\u0060");
       });
 
       it("should decode signed 32-bit big-endian integer (INT32_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x00\x00\x00\x00\xFF\xFF\xFF\xFF\x00\x10\x00\xFF\x80\x00\x00\x00",
+          "\u0000\u0000\u0000\u0000\u00FF\u00FF\u00FF\u00FF\u0000\u0010\u0000\u00FF\u0080\u0000\u0000\u0000",
           tokenizerType
         );
 
@@ -416,14 +416,14 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(1);
 
         Token.UINT8.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000");
 
         Token.UINT8.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\xFF");
+        assert.strictEqual(b.toString("binary"), "\u00FF");
       });
 
       it("should decode unsigned 8-bit integer (UINT8)", async () => {
-        const rst = await getTokenizerWithData("\x00\x1A\xFF", tokenizerType);
+        const rst = await getTokenizerWithData("\u0000\u001A\u00FF", tokenizerType);
 
         let value: number = await rst.readToken(Token.UINT8);
         assert.strictEqual(typeof value, "number");
@@ -442,26 +442,26 @@ for (const tokenizerType of tokenizerTests) {
 
         Token.UINT16_LE.put(b, 0, 0x00);
         Token.UINT16_LE.put(b, 2, 0xffaa);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\xAA\xFF");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u00AA\u00FF");
       });
 
       it("should encode unsigned 16-bit little-endian integer (UINT16_BE)", () => {
         const b = Buffer.alloc(4);
         Token.UINT16_BE.put(b, 0, 0xf);
         Token.UINT16_BE.put(b, 2, 0xffaa);
-        assert.strictEqual(b.toString("binary"), "\x00\x0F\xFF\xAA");
+        assert.strictEqual(b.toString("binary"), "\u0000\u000F\u00FF\u00AA");
       });
 
       it("should encode unsigned 16-bit mixed little/big-endian integers", () => {
         const b = Buffer.alloc(4);
         Token.UINT16_BE.put(b, 0, 0xffaa);
         Token.UINT16_LE.put(b, 2, 0xffaa);
-        assert.strictEqual(b.toString("binary"), "\xFF\xAA\xAA\xFF");
+        assert.strictEqual(b.toString("binary"), "\u00FF\u00AA\u00AA\u00FF");
       });
 
       it("should decode unsigned mixed 16-bit big/little-endian integer", async () => {
         const rst = await getTokenizerWithData(
-          "\x1A\x00\x1A\x00\x1A\x00\x1A\x00",
+          "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
           tokenizerType
         );
 
@@ -485,31 +485,31 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(3);
 
         Token.UINT24_LE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000");
 
         Token.UINT24_LE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\xFF\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u00FF\u0000\u0000");
 
         Token.UINT24_LE.put(b, 0, 0xaabbcc);
-        assert.strictEqual(b.toString("binary"), "\xCC\xBB\xAA");
+        assert.strictEqual(b.toString("binary"), "\u00CC\u00BB\u00AA");
       });
 
       it("should encode unsigned 24-bit big-endian integer (UINT24_BE)", () => {
         const b = Buffer.alloc(3);
 
         Token.UINT24_BE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000");
 
         Token.UINT24_BE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\xFF");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u00FF");
 
         Token.UINT24_BE.put(b, 0, 0xaabbcc);
-        assert.strictEqual(b.toString("binary"), "\xAA\xBB\xCC");
+        assert.strictEqual(b.toString("binary"), "\u00AA\u00BB\u00CC");
       });
 
       it("should decode signed 24-bit big/little-endian integer (UINT24_LE/INT24_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x1A\x1A\x00\x1A\x1A\x00\x1A\x1A\x00\x1A\x1A\x00",
+          "\u001A\u001A\u0000\u001A\u001A\u0000\u001A\u001A\u0000\u001A\u001A\u0000",
           tokenizerType
         );
 
@@ -533,31 +533,31 @@ for (const tokenizerType of tokenizerTests) {
         const b = Buffer.alloc(4);
 
         Token.UINT32_LE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000\u0000");
 
         Token.UINT32_LE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\xFF\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u00FF\u0000\u0000\u0000");
 
         Token.UINT32_LE.put(b, 0, 0xaabbccdd);
-        assert.strictEqual(b.toString("binary"), "\xDD\xCC\xBB\xAA");
+        assert.strictEqual(b.toString("binary"), "\u00DD\u00CC\u00BB\u00AA");
       });
 
       it("should encode unsigned 32-bit big-endian integer (INT32_BE)", () => {
         const b = Buffer.alloc(4);
 
         Token.UINT32_BE.put(b, 0, 0x00);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00\x00");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000\u0000");
 
         Token.UINT32_BE.put(b, 0, 0xff);
-        assert.strictEqual(b.toString("binary"), "\x00\x00\x00\xFF");
+        assert.strictEqual(b.toString("binary"), "\u0000\u0000\u0000\u00FF");
 
         Token.UINT32_BE.put(b, 0, 0xaabbccdd);
-        assert.strictEqual(b.toString("binary"), "\xAA\xBB\xCC\xDD");
+        assert.strictEqual(b.toString("binary"), "\u00AA\u00BB\u00CC\u00DD");
       });
 
       it("should decode unsigned 32-bit little/big-endian integer (UINT32_LE/UINT32_BE)", async () => {
         const rst = await getTokenizerWithData(
-          "\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00\x1A\x00",
+          "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
           tokenizerType
         );
 
@@ -621,7 +621,7 @@ for (const tokenizerType of tokenizerTests) {
 
     it("Overlapping peeks", async () => {
       const rst = await getTokenizerWithData(
-        "\x01\x02\x03\x04\x05",
+        "\u0001\u0002\u0003\u0004\u0005",
         tokenizerType
       );
       const peekBuffer = Buffer.alloc(3);
@@ -632,38 +632,38 @@ for (const tokenizerType of tokenizerTests) {
       assert.strictEqual(3, len);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x01\x02\x03", "binary"),
+        Buffer.from("\u0001\u0002\u0003", "binary"),
         "Peek #1"
       );
       assert.strictEqual(rst.position, 0);
       len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #1
       assert.strictEqual(len, 1);
       assert.strictEqual(rst.position, 1);
-      assert.deepEqual(readBuffer, Buffer.from("\x01", "binary"), "Read #1");
+      assert.deepEqual(readBuffer, Buffer.from("\u0001", "binary"), "Read #1");
       len = await rst.peekBuffer(peekBuffer, { length: 3 }); // Peek #2
       assert.strictEqual(len, 3);
       assert.strictEqual(rst.position, 1);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x02\x03\x04", "binary"),
+        Buffer.from("\u0002\u0003\u0004", "binary"),
         "Peek #2"
       );
       len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #2
       assert.strictEqual(len, 1);
       assert.strictEqual(rst.position, 2);
-      assert.deepEqual(readBuffer, Buffer.from("\x02", "binary"), "Read #2");
+      assert.deepEqual(readBuffer, Buffer.from("\u0002", "binary"), "Read #2");
       len = await rst.peekBuffer(peekBuffer, { length: 3 }); // Peek #3
       assert.strictEqual(len, 3);
       assert.strictEqual(rst.position, 2);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x03\x04\x05", "binary"),
+        Buffer.from("\u0003\u0004\u0005", "binary"),
         "Peek #3"
       );
       len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #3
       assert.strictEqual(len, 1);
       assert.strictEqual(rst.position, 3);
-      assert.deepEqual(readBuffer, Buffer.from("\x03", "binary"), "Read #3");
+      assert.deepEqual(readBuffer, Buffer.from("\u0003", "binary"), "Read #3");
       len = await rst.peekBuffer(peekBuffer, { length: 2 }); // Peek #4
       assert.strictEqual(
         len,
@@ -673,19 +673,19 @@ for (const tokenizerType of tokenizerTests) {
       assert.strictEqual(rst.position, 3);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x04\x05\x05", "binary"),
+        Buffer.from("\u0004\u0005\u0005", "binary"),
         "Peek #4"
       );
       len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #4
       assert.strictEqual(len, 1);
       assert.strictEqual(rst.position, 4);
-      assert.deepEqual(readBuffer, Buffer.from("\x04", "binary"), "Read #4");
+      assert.deepEqual(readBuffer, Buffer.from("\u0004", "binary"), "Read #4");
 
       await rst.close();
     });
 
     it("should be able to read at position ahead", async () => {
-      const rst = await getTokenizerWithData("\x05peter", tokenizerType);
+      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
       // should decode string from chunk
       assert.strictEqual(rst.position, 0);
       const value = await rst.readToken(new Token.StringType(5, "utf-8"), 1);
@@ -702,7 +702,7 @@ for (const tokenizerType of tokenizerTests) {
     });
 
     it("should be able to peek at position ahead", async () => {
-      const rst = await getTokenizerWithData("\x05peter", tokenizerType);
+      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
       // should decode string from chunk
       assert.strictEqual(rst.position, 0);
       const value = await rst.peekToken(new Token.StringType(5, "latin1"), 1);
@@ -766,7 +766,7 @@ for (const tokenizerType of tokenizerTests) {
 
     describe("End-Of-File exception behaviour", () => {
       it("should not throw an Error if we read exactly until the end of the file", async () => {
-        const rst = await getTokenizerWithData("\x89\x54\x40", tokenizerType);
+        const rst = await getTokenizerWithData("\u0089\u0054\u0040", tokenizerType);
         const num = await rst.readToken(Token.UINT24_BE);
         assert.strictEqual(num, 9000000);
         await rst.close();
@@ -793,13 +793,13 @@ for (const tokenizerType of tokenizerTests) {
       });
 
       it("should not throw an Error if we read exactly until the end of the file", async () => {
-        const rst = await getTokenizerWithData("\x89\x54\x40", tokenizerType);
+        const rst = await getTokenizerWithData("\u0089\u0054\u0040", tokenizerType);
         const num = await rst.readToken(Token.UINT24_BE);
         assert.strictEqual(num, 9000000);
       });
 
       it("should be thrown if a token EOF reached in the middle of a token", async () => {
-        const rst = await getTokenizerWithData("\x89\x54\x40", tokenizerType);
+        const rst = await getTokenizerWithData("\u0089\u0054\u0040", tokenizerType);
         try {
           await rst.readToken(Token.INT32_BE);
           assert.fail("It should throw EndOfFile Error");
@@ -811,7 +811,7 @@ for (const tokenizerType of tokenizerTests) {
       it("should throw an EOF if we read to buffer", async () => {
         const buffer = Buffer.alloc(4);
 
-        return getTokenizerWithData("\x89\x54\x40", tokenizerType).then(
+        return getTokenizerWithData("\u0089\u0054\u0040", tokenizerType).then(
           (rst) => {
             return rst
               .readBuffer(buffer)
@@ -827,7 +827,7 @@ for (const tokenizerType of tokenizerTests) {
 
       it("should throw an EOF if we peek to buffer", async () => {
         const buffer = Buffer.alloc(4);
-        const rst = await getTokenizerWithData("\x89\x54\x40", tokenizerType);
+        const rst = await getTokenizerWithData("\u0089\u0054\u0040", tokenizerType);
         try {
           await rst.peekBuffer(buffer);
           assert.fail("It should throw EndOfFile Error");

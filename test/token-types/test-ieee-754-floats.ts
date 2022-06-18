@@ -21,7 +21,7 @@ describe("IEEE 754 floats", () => {
       });
 
       it("should decode", () => {
-        const buf = Buffer.from("\x55\x52", "binary");
+        const buf = Buffer.from("\u0055\u0052", "binary");
         assert.strictEqual(Token.Float16_BE.get(buf, 0), 85.125);
       });
     });
@@ -41,7 +41,7 @@ describe("IEEE 754 floats", () => {
       });
 
       it("should decode", () => {
-        const buf = Buffer.from("\x52\x55", "binary");
+        const buf = Buffer.from("\u0052\u0055", "binary");
         assert.strictEqual(Token.Float16_LE.get(buf, 0), 85.125);
       });
     });
@@ -63,7 +63,7 @@ describe("IEEE 754 floats", () => {
       });
 
       it("should decode", () => {
-        const buf = Buffer.from("\x42\xAA\x40\x00", "binary");
+        const buf = Buffer.from("\u0042\u00AA\u0040\u0000", "binary");
         assert.strictEqual(Token.Float32_BE.get(buf, 0), 85.125);
       });
     });
@@ -83,7 +83,7 @@ describe("IEEE 754 floats", () => {
       });
 
       it("should decode", () => {
-        const buf = Buffer.from("\x00\x40\xAA\x42", "binary");
+        const buf = Buffer.from("\u0000\u0040\u00AA\u0042", "binary");
         assert.strictEqual(Token.Float32_LE.get(buf, 0), 85.125);
       });
     });
@@ -105,7 +105,7 @@ describe("IEEE 754 floats", () => {
       });
 
       it("should decode", () => {
-        const buf = Buffer.from("\x40\x55\x48\x00\x00\x00\x00\x00", "binary");
+        const buf = Buffer.from("\u0040\u0055\u0048\u0000\u0000\u0000\u0000\u0000", "binary");
         assert.strictEqual(Token.Float64_BE.get(buf, 0), 85.125);
       });
     });
@@ -125,7 +125,7 @@ describe("IEEE 754 floats", () => {
       });
 
       it("should decode", () => {
-        const buf = Buffer.from("\x00\x00\x00\x00\x00\x48\x55\x40", "binary");
+        const buf = Buffer.from("\u0000\u0000\u0000\u0000\u0000\u0048\u0055\u0040", "binary");
         assert.strictEqual(Token.Float64_LE.get(buf, 0), 85.125);
       });
     });
@@ -148,7 +148,7 @@ describe("IEEE 754 floats", () => {
 
       it("should decode", () => {
         const buf = Buffer.from(
-          "\x40\x02\xAA\x40\x00\x00\x00\x00\x00\x00\x00\x00",
+          "\u0040\u0002\u00AA\u0040\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
           "binary"
         );
         assert.strictEqual(Token.Float80_BE.get(buf, 0), 85.125);
@@ -171,7 +171,7 @@ describe("IEEE 754 floats", () => {
 
       it.skip("should decode", () => {
         const buf = Buffer.from(
-          "\x00\x00\x00\x00\x00\x00\x00\x00\x40\xAA\x02\x40",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0040\u00AA\u0002\u0040",
           "binary"
         );
         assert.strictEqual(Token.Float80_LE.get(buf, 0), 85.125);

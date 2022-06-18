@@ -67,7 +67,7 @@ export class OggParser extends BasicParser {
             0
           );
           switch (id) {
-            case "\x01vorbis": // Ogg/Vorbis
+            case "\u0001vorbis": // Ogg/Vorbis
               debug("Set page consumer to Ogg/Vorbis");
               this.pageConsumer = new VorbisParser(this.metadata, this.options);
               break;
@@ -88,7 +88,7 @@ export class OggParser extends BasicParser {
               );
               break;
             case "fishead":
-            case "\x00theora": // Ogg/Theora
+            case "\u0000theora": // Ogg/Theora
               debug("Set page consumer to Ogg/Theora");
               this.pageConsumer = new TheoraParser(
                 this.metadata,

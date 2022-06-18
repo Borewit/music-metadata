@@ -164,7 +164,7 @@ export class WaveParser extends BasicParser {
           break;
         }
 
-        case "\x00\x00\x00\x00": // padding ??
+        case "\u0000\u0000\u0000\u0000": // padding ??
           debug(
             `Ignore padding chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`
           );

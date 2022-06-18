@@ -32,7 +32,7 @@ describe("StreamReader", () => {
   });
 
   it("read from a streamed data chunk", async () => {
-    const sourceStream = new SourceStream("\x05peter");
+    const sourceStream = new SourceStream("\u0005peter");
     const streamReader = new StreamReader(sourceStream);
 
     let uint8Array: Uint8Array;
@@ -63,7 +63,7 @@ describe("StreamReader", () => {
   describe("concurrent reads", () => {
     it("should support concurrent reads", () => {
       const sourceStream = new SourceStream(
-        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
+        "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009"
       );
       const streamReader = new StreamReader(sourceStream);
 
@@ -112,7 +112,7 @@ describe("StreamReader", () => {
 
         let data = "";
         for (let i = 0; i < this.nvals + 1; i++) {
-          data += "\x01\x02\x03\x04";
+          data += "\u0001\u0002\u0003\u0004";
         }
         this.buf = Buffer.from(data, "binary");
       }
@@ -159,7 +159,7 @@ describe("StreamReader", () => {
 
   describe("peek", () => {
     it("should be able to read a peeked chunk", async () => {
-      const sourceStream = new SourceStream("\x05peter");
+      const sourceStream = new SourceStream("\u0005peter");
       const streamReader = new StreamReader(sourceStream);
 
       const uint8Array = new Uint8Array(1);
@@ -173,7 +173,7 @@ describe("StreamReader", () => {
     });
 
     it("should be able to read a larger chunk overlapping the peeked chunk", async () => {
-      const sourceStream = new SourceStream("\x05peter");
+      const sourceStream = new SourceStream("\u0005peter");
       const streamReader = new StreamReader(sourceStream);
 
       const uint8Array = new Uint8Array(6).fill(0);
@@ -185,12 +185,12 @@ describe("StreamReader", () => {
       assert.strictEqual(bytesRead, 6, "Should overlap the peaked byte");
       assert.strictEqual(
         Buffer.from(uint8Array.buffer).toString("latin1"),
-        "\x05peter"
+        "\u0005peter"
       );
     });
 
     it("should be able to read a smaller chunk then the overlapping peeked chunk", async () => {
-      const sourceStream = new SourceStream("\x05peter");
+      const sourceStream = new SourceStream("\u0005peter");
       const streamReader = new StreamReader(sourceStream);
 
       const uint8Array = new Uint8Array(6).fill(0);
@@ -205,12 +205,12 @@ describe("StreamReader", () => {
       assert.strictEqual(bytesRead, 5, "Should read remaining 5 byte");
       assert.strictEqual(
         Buffer.from(uint8Array.buffer).toString("latin1"),
-        "\x05peter"
+        "\u0005peter"
       );
     });
 
     it("should be able to handle overlapping peeks", async () => {
-      const sourceStream = new SourceStream("\x01\x02\x03\x04\x05");
+      const sourceStream = new SourceStream("\u0001\u0002\u0003\u0004\u0005");
       const streamReader = new StreamReader(sourceStream);
 
       const peekBufferShort = new Uint8Array(1);
@@ -221,55 +221,55 @@ describe("StreamReader", () => {
       assert.equal(3, len);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x01\x02\x03", "binary"),
+        Buffer.from("\u0001\u0002\u0003", "binary"),
         "Peek #1"
       );
       len = await streamReader.peek(peekBufferShort, 0, 1); // Peek #2
       assert.equal(1, len);
       assert.deepEqual(
         peekBufferShort,
-        Buffer.from("\x01", "binary"),
+        Buffer.from("\u0001", "binary"),
         "Peek #2"
       );
       len = await streamReader.read(readBuffer, 0, 1); // Read #1
       assert.equal(len, 1);
-      assert.deepEqual(readBuffer, Buffer.from("\x01", "binary"), "Read #1");
+      assert.deepEqual(readBuffer, Buffer.from("\u0001", "binary"), "Read #1");
       len = await streamReader.peek(peekBuffer, 0, 3); // Peek #3
       assert.equal(len, 3);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x02\x03\x04", "binary"),
+        Buffer.from("\u0002\u0003\u0004", "binary"),
         "Peek #3"
       );
       len = await streamReader.read(readBuffer, 0, 1); // Read #2
       assert.equal(len, 1);
-      assert.deepEqual(readBuffer, Buffer.from("\x02", "binary"), "Read #2");
+      assert.deepEqual(readBuffer, Buffer.from("\u0002", "binary"), "Read #2");
       len = await streamReader.peek(peekBuffer, 0, 3); // Peek #3
       assert.equal(len, 3);
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x03\x04\x05", "binary"),
+        Buffer.from("\u0003\u0004\u0005", "binary"),
         "Peek #3"
       );
       len = await streamReader.read(readBuffer, 0, 1); // Read #3
       assert.equal(len, 1);
-      assert.deepEqual(readBuffer, Buffer.from("\x03", "binary"), "Read #3");
+      assert.deepEqual(readBuffer, Buffer.from("\u0003", "binary"), "Read #3");
       len = await streamReader.peek(peekBuffer, 0, 2); // Peek #4
       assert.equal(len, 2, "3 bytes requested to peek, only 2 bytes left");
       assert.deepEqual(
         peekBuffer,
-        Buffer.from("\x04\x05\x05", "binary"),
+        Buffer.from("\u0004\u0005\u0005", "binary"),
         "Peek #4"
       );
       len = await streamReader.read(readBuffer, 0, 1); // Read #4
       assert.equal(len, 1);
-      assert.deepEqual(readBuffer, Buffer.from("\x04", "binary"), "Read #4");
+      assert.deepEqual(readBuffer, Buffer.from("\u0004", "binary"), "Read #4");
     });
   });
 
   describe("EndOfStream Error", () => {
     it("should not throw an EndOfStream Error if we read exactly until the end of the stream", async () => {
-      const sourceStream = new SourceStream("\x89\x54\x40");
+      const sourceStream = new SourceStream("\u0089\u0054\u0040");
       const streamReader = new StreamReader(sourceStream);
 
       const res = new Uint8Array(3);
@@ -279,7 +279,7 @@ describe("StreamReader", () => {
     });
 
     it("should return a partial result from a stream if EOF is reached", async () => {
-      const sourceStream = new SourceStream("\x89\x54\x40");
+      const sourceStream = new SourceStream("\u0089\u0054\u0040");
       const streamReader = new StreamReader(sourceStream);
 
       const res = new Uint8Array(4);
@@ -289,7 +289,7 @@ describe("StreamReader", () => {
     });
 
     it("should return a partial result from a stream if EOF is reached", async () => {
-      const sourceStream = new SourceStream("\x89\x54\x40");
+      const sourceStream = new SourceStream("\u0089\u0054\u0040");
       const streamReader = new StreamReader(sourceStream);
 
       const res = new Uint8Array(4);

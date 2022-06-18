@@ -20,7 +20,7 @@ describe("Parse 16-bit signed integer", () => {
     });
 
     it("should decode", () => {
-      const buf = Buffer.from("\x0A\x1A\x00\x00\xFF\xFF\x80\x00", "binary");
+      const buf = Buffer.from("\u000A\u001A\u0000\u0000\u00FF\u00FF\u0080\u0000", "binary");
 
       assert.equal(Token.INT16_BE.get(buf, 0), 2586);
       assert.equal(Token.INT16_BE.get(buf, 2), 0);
@@ -44,7 +44,7 @@ describe("Parse 16-bit signed integer", () => {
     });
 
     it("should decode", () => {
-      const buf = Buffer.from("\x1A\x0A\x00\x00\xFF\xFF\x00\x80", "binary");
+      const buf = Buffer.from("\u001A\u000A\u0000\u0000\u00FF\u00FF\u0000\u0080", "binary");
 
       assert.equal(Token.INT16_LE.get(buf, 0), 2586);
       assert.equal(Token.INT16_LE.get(buf, 2), 0);
