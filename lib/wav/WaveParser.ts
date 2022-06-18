@@ -119,7 +119,7 @@ export class WaveParser extends BasicParser {
           }
 
           let chunkSize = header.chunkSize;
-          if (this.tokenizer.fileInfo.size) {
+          if (this.tokenizer.fileInfo.size > 0) {
             const calcRemaining =
               this.tokenizer.fileInfo.size - this.tokenizer.position;
             if (calcRemaining < chunkSize) {

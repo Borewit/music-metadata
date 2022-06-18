@@ -46,7 +46,7 @@ export class AIFFParser extends BasicParser {
 
     try {
       while (
-        !this.tokenizer.fileInfo.size ||
+        this.tokenizer.fileInfo.size === 0 ||
         this.tokenizer.fileInfo.size - this.tokenizer.position >= iff.Header.len
       ) {
         debug("Reading AIFF chunk at offset=" + this.tokenizer.position);

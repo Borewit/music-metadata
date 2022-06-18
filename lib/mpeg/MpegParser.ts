@@ -85,13 +85,13 @@ export class MpegParser extends AbstractID3Parser {
   protected override finalize() {
     const format = this.metadata.format;
     const hasID3v1 = {}.hasOwnProperty.call(this.metadata.native, "ID3v1");
-    if (format.duration && this.tokenizer.fileInfo.size) {
+    if (format.duration && this.tokenizer.fileInfo.size > 0) {
       const mpegSize =
         this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
       if (format.codecProfile && format.codecProfile[0] === "V") {
         this.metadata.setFormat("bitrate", (mpegSize * 8) / format.duration);
       }
-    } else if (this.tokenizer.fileInfo.size && format.codecProfile === "CBR") {
+    } else if (this.tokenizer.fileInfo.size > 0 && format.codecProfile === "CBR") {
       const mpegSize =
         this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
       const numberOfSamples =
@@ -239,7 +239,7 @@ export class MpegParser extends AbstractID3Parser {
         // Actual calculation will be done in finalize
         this.samplesPerFrame = samples_per_frame;
         this.metadata.setFormat("codecProfile", "CBR");
-        if (this.tokenizer.fileInfo.size) return true; // Will calculate duration based on the file size
+        if (this.tokenizer.fileInfo.size > 0) return true; // Will calculate duration based on the file size
       } else if (this.metadata.format.duration) {
         return true; // We already got the duration, stop processing MPEG stream any further
       }

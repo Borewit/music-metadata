@@ -141,7 +141,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
       return {
         mayBeLess: options.mayBeLess === true,
         offset: options.offset ? options.offset : 0,
-        length: options.length
+        length: options.length > 0
           ? options.length
           : uint8Array.length - (options.offset ? options.offset : 0),
         position: options.position ? options.position : this.position,

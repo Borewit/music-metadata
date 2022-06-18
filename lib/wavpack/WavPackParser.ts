@@ -76,7 +76,7 @@ export class WavPackParser extends BasicParser {
         this.audioDataSize += header.blockSize; // Count audio data for bit-rate calculation
       }
     } while (
-      !this.tokenizer.fileInfo.size ||
+      this.tokenizer.fileInfo.size === 0 ||
       this.tokenizer.fileInfo.size - this.tokenizer.position >=
         BlockHeaderToken.len
     );

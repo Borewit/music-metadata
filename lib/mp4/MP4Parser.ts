@@ -127,7 +127,11 @@ export class MP4Parser extends BasicParser {
 
     let remainingFileSize = this.tokenizer.fileInfo.size;
 
-    while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
+    while (
+      this.tokenizer.fileInfo.size === undefined ||
+      this.tokenizer.fileInfo.size === 0 ||
+      remainingFileSize > 0
+    ) {
       try {
         const token = await this.tokenizer.peekToken<IAtomHeader>(Header);
         if (token.name === "\0\0\0\0") {
@@ -185,7 +189,7 @@ export class MP4Parser extends BasicParser {
         this.metadata.addStreamInfo(streamInfo);
       });
 
-      if (trackFormats.length >= 1) {
+      if (trackFormats.length > 0) {
         formatList.push(trackFormats.join("/"));
       }
     });
@@ -196,13 +200,13 @@ export class MP4Parser extends BasicParser {
 
     const audioTracks = this.tracks.filter((track) => {
       return (
-        track.soundSampleDescription.length >= 1 &&
+        track.soundSampleDescription.length > 0 &&
         track.soundSampleDescription[0].description &&
         track.soundSampleDescription[0].description.numAudioChannels > 0
       );
     });
 
-    if (audioTracks.length >= 1) {
+    if (audioTracks.length > 0) {
       const audioTrack = audioTracks[0];
 
       const duration = audioTrack.duration / audioTrack.timeScale;

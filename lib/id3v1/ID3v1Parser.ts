@@ -17,7 +17,7 @@ export class ID3v1Parser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-    if (!this.tokenizer.fileInfo.size) {
+    if (this.tokenizer.fileInfo.size === 0) {
       debug("Skip checking for ID3v1 because the file-size is unknown");
       return;
     }
