@@ -265,7 +265,7 @@
     // "@typescript-eslint/no-unsafe-return": "error",
     "require-await": "off",
     "@typescript-eslint/require-await": "error",
-    // "@typescript-eslint/restrict-plus-operands": "error",
+    "@typescript-eslint/restrict-plus-operands": "error",
     // "@typescript-eslint/restrict-template-expressions": "error",
     // "@typescript-eslint/unbound-method": "error",
 
@@ -348,6 +348,12 @@
         "hoist": "all"
       }
     ],
+    
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/no-unused-expressions": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",

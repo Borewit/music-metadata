@@ -62,7 +62,7 @@ export const uint32SyncSafeToken: IGetToken<number> = {
 export function checkUtil(
   buffer: Buffer,
   headers: any[],
-  options?: { mask?: number[]; offset: any }
+  options?: { mask?: number[]; offset: number }
 ) {
   options = {
     offset: 0,

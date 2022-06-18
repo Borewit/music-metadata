@@ -25,7 +25,7 @@ export abstract class State<T> implements IGetToken<T> {
     } else {
       const parseAttr = getParserForAttr(valueType);
       if (!parseAttr) {
-        throw new Error("unexpected value headerType: " + valueType);
+        throw new Error(`unexpected value headerType: ${valueType}`);
       }
       tags.push({ id: name, value: parseAttr(data as Buffer) });
     }

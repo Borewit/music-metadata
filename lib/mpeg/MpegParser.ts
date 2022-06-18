@@ -21,7 +21,7 @@ const maxPeekLen = 1024;
  * @returns
  */
 function getVbrCodecProfile(vbrScale: number): string {
-  return "V" + Math.floor((100 - vbrScale) / 10);
+  return `V${Math.floor((100 - vbrScale) / 10)}`;
 }
 
 export class MpegParser extends AbstractID3Parser {
@@ -365,7 +365,7 @@ export class MpegParser extends AbstractID3Parser {
     const frameDataLeft = this.frame_size - this.offset;
     if (frameDataLeft < 0) {
       this.metadata.addWarning(
-        "Frame " + this.frameCount + "corrupt: negative frameDataLeft"
+        `Frame ${this.frameCount}corrupt: negative frameDataLeft`
       );
     } else {
       await this.skipFrameData(frameDataLeft);

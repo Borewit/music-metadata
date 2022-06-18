@@ -289,7 +289,7 @@ export class MpegFrameHeader {
   private parseAdtsHeader(buf: Uint8Array, off: number): void {
     debug(`layer=0 => ADTS`);
     this.version = this.versionIndex === 2 ? 4 : 2;
-    this.container = "ADTS/MPEG-" + this.version;
+    this.container = `ADTS/MPEG-${this.version}`;
     const profileIndex = common.getBitAllignedNumber(buf, off + 2, 0, 2);
     this.codec = "AAC";
     this.codecProfile = MPEG4.AudioObjectTypes[profileIndex];

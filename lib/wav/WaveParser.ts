@@ -86,8 +86,8 @@ export class WaveParser extends BasicParser {
 
           let subFormat = WaveFormat[fmt.wFormatTag];
           if (!subFormat) {
-            debug("WAVE/non-PCM format=" + fmt.wFormatTag);
-            subFormat = "non-PCM (" + fmt.wFormatTag + ")";
+            debug(`WAVE/non-PCM format=${fmt.wFormatTag}`);
+            subFormat = `non-PCM (${fmt.wFormatTag})`;
           }
           this.metadata.setFormat("codec", subFormat);
           this.metadata.setFormat("bitsPerSample", fmt.wBitsPerSample);
@@ -218,7 +218,7 @@ export class WaveParser extends BasicParser {
     }
 
     if (chunkSize !== 0) {
-      throw new Error("Illegal remaining size: " + chunkSize);
+      throw new Error(`Illegal remaining size: ${chunkSize}`);
     }
   }
 

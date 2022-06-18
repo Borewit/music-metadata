@@ -212,7 +212,7 @@ export class FrameParser {
 
             default:
               throw new Error(
-                "Warning: unexpected major versionIndex: " + this.major
+                `Warning: unexpected major versionIndex: ${this.major}`
               );
           }
 

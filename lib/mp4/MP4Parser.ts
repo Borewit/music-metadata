@@ -108,11 +108,9 @@ export class MP4Parser extends BasicParser {
         return signed ? Token.INT64_BE : Token.UINT64_BE;
       default:
         throw new Error(
-          'Token for integer type not found: "' +
-            (signed ? "INT" : "UINT") +
-            array.length * 8 +
-            (array.length > 1 ? "_BE" : "") +
-            '"'
+          `Token for integer type not found: "${signed ? "INT" : "UINT"}${
+            array.length * 8
+          }${array.length > 1 ? "_BE" : ""}"`
         );
     }
   }
@@ -334,7 +332,7 @@ export class MP4Parser extends BasicParser {
     );
 
     if (dataAtom.type.set !== 0) {
-      throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
+      throw new Error(`Unsupported type-set != 0: ${dataAtom.type.set}`);
     }
 
     // Use well-known-type table
@@ -347,7 +345,7 @@ export class MP4Parser extends BasicParser {
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
-            this.addTag(tagKey, num + "/" + of);
+            this.addTag(tagKey, `${num}/${of}`);
             break;
           }
           case "gnre": {

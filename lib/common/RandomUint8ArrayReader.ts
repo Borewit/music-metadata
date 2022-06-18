@@ -18,7 +18,7 @@ export class RandomUint8ArrayReader implements IRandomReader {
    * @param position - Specifies where to begin reading from in the file.
    * @returns Promise providing bytes read
    */
-  public  randomRead(
+  public randomRead(
     uint8Array: Uint8Array,
     offset: number,
     length: number,

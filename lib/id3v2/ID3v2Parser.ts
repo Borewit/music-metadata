@@ -103,7 +103,7 @@ export class ID3v2Parser {
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
-        throw new Error("Unexpected majorVer: " + majorVer);
+        throw new Error(`Unexpected majorVer: ${majorVer}`);
     }
   }
 
@@ -146,7 +146,7 @@ export class ID3v2Parser {
 
     this.id3Header = id3Header;
 
-    this.headerType = ("ID3v2." + id3Header.version.major) as TagType;
+    this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
     return id3Header.flags.isExtendedHeader
       ? this.parseExtendedHeader()
@@ -308,7 +308,7 @@ export class ID3v2Parser {
         break;
 
       default:
-        throw new Error("Unexpected majorVer: " + majorVer);
+        throw new Error(`Unexpected majorVer: ${majorVer}`);
     }
     return header;
   }

@@ -44,7 +44,7 @@ export class BufferTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns {Promise<number>}
    */
-  public  peekBuffer(
+  public peekBuffer(
     uint8Array: Uint8Array,
     options?: IReadChunkOptions
   ): Promise<number> {

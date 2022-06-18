@@ -613,7 +613,7 @@ for (const tokenizerType of tokenizerTests) {
       try {
         do {
           const v = await rst.readNumber(Token.UINT8);
-          assert.strictEqual(v, expected % 255, "offset=" + expected);
+          assert.strictEqual(v, expected % 255, `offset=${expected}`);
           ++expected;
         } while (true);
       } catch (error) {

@@ -180,7 +180,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
     switch (tag.id) {
       case "UFID": // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === "http://musicbrainz.org") {
-          tag.id += ":" + tag.value.owner_identifier;
+          tag.id += `:${tag.value.owner_identifier}`;
           tag.value = util.decodeString(
             tag.value.identifier as Uint8Array,
             "latin1"
@@ -193,7 +193,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
           // decode Windows Media Player
           case "AverageLevel":
           case "PeakValue":
-            tag.id += ":" + tag.value.owner_identifier;
+            tag.id += `:${tag.value.owner_identifier}`;
             tag.value =
               tag.value.data.length === 4
                 ? tag.value.data.readUInt32LE(0)
