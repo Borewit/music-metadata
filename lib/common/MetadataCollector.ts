@@ -249,8 +249,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case "isrc": // Only keep unique values
         if (
-          this.common[tag.id] &&
-          this.common[tag.id].includes(tag.value as string)
+          this.common[tag.id]?.includes(tag.value as string)
         )
           return;
         break;

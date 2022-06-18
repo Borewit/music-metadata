@@ -128,8 +128,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
     options?: IReadChunkOptions
   ): INormalizedReadChunkOptions {
     if (
-      options &&
-      options.position !== undefined &&
+      options?.position !== undefined &&
       options.position < this.position
     ) {
       throw new Error(

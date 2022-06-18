@@ -24,7 +24,7 @@ export class BufferTokenizer extends AbstractTokenizer {
     uint8Array: Uint8Array,
     options?: IReadChunkOptions
   ): Promise<number> {
-    if (options && options.position) {
+    if (options?.position) {
       if (options.position < this.position) {
         throw new Error(
           "`options.position` must be equal or greater than `tokenizer.position`"

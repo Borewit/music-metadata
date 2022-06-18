@@ -84,7 +84,7 @@ export class MatroskaParser extends BasicParser {
       }
 
       const audioTracks = matroska.segment.tracks;
-      if (audioTracks && audioTracks.entries) {
+      if (audioTracks?.entries) {
         for (const entry of audioTracks.entries) {
           const stream: ITrackInfo = {
             codecName: entry.codecID.replace("A_", "").replace("V_", ""),

@@ -93,7 +93,7 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
           normOptions.length
         );
       } catch (error) {
-        if (options && options.mayBeLess && error instanceof EndOfStreamError) {
+        if (options?.mayBeLess && error instanceof EndOfStreamError) {
           return 0;
         }
         throw error;

@@ -91,7 +91,7 @@ export class MpegParser extends AbstractID3Parser {
     if (format.duration && this.tokenizer.fileInfo.size > 0) {
       const mpegSize =
         this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
-      if (format.codecProfile && format.codecProfile[0] === "V") {
+      if (format.codecProfile?.startsWith("V")) {
         this.metadata.setFormat("bitrate", (mpegSize * 8) / format.duration);
       }
     } else if (

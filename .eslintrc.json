@@ -222,14 +222,14 @@
     "@typescript-eslint/prefer-for-of": "warn",
     "@typescript-eslint/prefer-function-type": "warn",
     "@typescript-eslint/prefer-includes": "warn",
-    // "@typescript-eslint/prefer-literal-enum-member": "warn",
-    // "@typescript-eslint/prefer-nullish-coalescing": "warn",
-    // "@typescript-eslint/prefer-optional-chain": "warn",
-    // "@typescript-eslint/prefer-reduce-type-parameter": "warn",
-    // "@typescript-eslint/prefer-return-this-type": "warn",
-    // "@typescript-eslint/prefer-string-starts-ends-with": "warn",
-    // "@typescript-eslint/prefer-ts-expect-error": "warn",
-    // "@typescript-eslint/unified-signatures": "warn",
+    "@typescript-eslint/prefer-literal-enum-member": "warn",
+    "@typescript-eslint/prefer-nullish-coalescing": "warn",
+    "@typescript-eslint/prefer-optional-chain": "warn",
+    "@typescript-eslint/prefer-reduce-type-parameter": "warn",
+    "@typescript-eslint/prefer-return-this-type": "warn",
+    "@typescript-eslint/prefer-string-starts-ends-with": "warn",
+    "@typescript-eslint/prefer-ts-expect-error": "warn",
+    "@typescript-eslint/unified-signatures": "warn",
 
     "@typescript-eslint/indent": [
       "off",
@@ -282,8 +282,6 @@
       "error",
       { "allowBoolean": true }
     ],
-    "@typescript-eslint/semi": ["error", "always"],
-    /* Duplicate with "plugin:@typescript-eslint/strict" */
-    "@typescript-eslint/unified-signatures": "error"
+    "@typescript-eslint/semi": ["error", "always"]
   }
 }

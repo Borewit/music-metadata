@@ -110,7 +110,7 @@ export class FrameParser {
     const out: IOut = {};
 
     debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
-    switch (type !== "TXXX" && type[0] === "T" ? "T*" : type) {
+    switch (type !== "TXXX" && type.startsWith("T") ? "T*" : type) {
       case "T*": // 4.2.1. Text information frames - details
       case "IPLS": // v2.3: Involved people list
       case "MVIN":
