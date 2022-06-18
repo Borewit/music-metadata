@@ -54,7 +54,7 @@ export async function fileTypeStream(
     readableStream.on("error", reject);
 
     readableStream.once("readable", () => {
-      (async () => {
+      void (async () => {
         try {
           // Set up output stream
           const pass: PassThrough & {

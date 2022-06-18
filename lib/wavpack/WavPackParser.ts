@@ -153,7 +153,7 @@ export class WavPackParser extends BasicParser {
         (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) +
         dataSizeInWords * 2;
       debug(`remainingLength=${remainingLength}`);
-      if (id.isOddSize) this.tokenizer.ignore(1);
+      if (id.isOddSize) void this.tokenizer.ignore(1);
     }
     if (remainingLength !== 0)
       throw new Error("metadata-sub-block should fit it remaining length");

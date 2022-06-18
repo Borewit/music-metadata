@@ -23,7 +23,7 @@ export class ID3v1Parser extends BasicParser {
     }
 
     if (this.options.apeHeader) {
-      this.tokenizer.ignore(
+      void this.tokenizer.ignore(
         this.options.apeHeader.offset - this.tokenizer.position
       );
       const apeParser = new APEv2Parser();

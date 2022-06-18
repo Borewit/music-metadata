@@ -1430,7 +1430,7 @@ export class FileTypeParser {
     const tagId = await this.tokenizer.readToken(
       bigEndian ? Token.UINT16_BE : Token.UINT16_LE
     );
-    this.tokenizer.ignore(10);
+    void this.tokenizer.ignore(10);
     switch (tagId) {
       case 50_341:
         return {

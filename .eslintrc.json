@@ -251,9 +251,9 @@
 
     /* plugin:@typescript-eslint/recommended-requiring-type-checking rules */
     /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/recommended-requiring-type-checking.ts */
-    // "@typescript-eslint/await-thenable": "error",
-    // "@typescript-eslint/no-floating-promises": "error",
-    // "@typescript-eslint/no-for-in-array": "error",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-for-in-array": "error",
     // "no-implied-eval": "off",
     // "@typescript-eslint/no-implied-eval": "error",
     // "@typescript-eslint/no-misused-promises": "error",

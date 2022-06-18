@@ -163,7 +163,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "picture":
-        this.postFixPicture(tag.value as IPicture).then((picture) => {
+        void this.postFixPicture(tag.value as IPicture).then((picture) => {
           if (picture !== null) {
             tag.value = picture;
             this.setGenericTag(tagType, tag);

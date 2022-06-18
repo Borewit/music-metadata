@@ -210,7 +210,7 @@ export class AsfParser extends BasicParser {
           break;
 
         case CompatibilityObject.str:
-          this.tokenizer.ignore(remaining);
+          void this.tokenizer.ignore(remaining);
           break;
 
         case ASF_Index_Placeholder_Object.str:
