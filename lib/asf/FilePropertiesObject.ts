@@ -1,7 +1,6 @@
 import * as util from "../common/Util";
 import * as Token from "../token-types";
 import GUID, { FilePropertiesObject as GUIDFilePropertiesObject } from "./GUID";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 
 /**
@@ -109,10 +108,6 @@ export interface IFilePropertiesObject {
  */
 export class FilePropertiesObject extends State<IFilePropertiesObject> {
   public static guid = GUIDFilePropertiesObject;
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 
   public get(buf: Buffer, off: number): IFilePropertiesObject {
     return {

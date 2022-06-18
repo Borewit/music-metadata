@@ -1,7 +1,6 @@
 import { ITag } from "../type";
 import { ExtendedContentDescriptionObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 
 /**
@@ -10,10 +9,6 @@ import { State } from "./State";
  */
 export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
   public static guid = ExtendedContentDescriptionObject;
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 
   public get(buf: Buffer, off: number): ITag[] {
     const tags: ITag[] = [];

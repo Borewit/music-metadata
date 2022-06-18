@@ -1,7 +1,6 @@
 import { ITag } from "../type";
 import { MetadataObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 
 /**
@@ -10,10 +9,6 @@ import { State } from "./State";
  */
 export class MetadataObjectState extends State<ITag[]> {
   public static guid = MetadataObject;
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 
   public get(uint8Array: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
