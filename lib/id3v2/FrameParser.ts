@@ -155,7 +155,7 @@ export class FrameParser {
           case "TCON":
             output = this.splitValue(type, text)
               .map((v) => parseGenre(v))
-              .reduce((acc, val) => acc.concat(val), []);
+              .flat();
             break;
           case "PCS":
           case "PCST":

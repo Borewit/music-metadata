@@ -95,7 +95,7 @@ function singleByteDecoder(bite: number): number {
 
   const codePoint = windows1252[bite - 0x80];
   if (codePoint === null) {
-    throw  new Error("invaliding encoding");
+    throw new Error("invaliding encoding");
   }
 
   return codePoint;

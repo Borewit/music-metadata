@@ -293,13 +293,12 @@ export class FileTypeParser {
             zipHeader.filename === "mimetype" &&
             zipHeader.compressedSize === zipHeader.uncompressedSize
           ) {
-            const mimeType = (
-              await tokenizer.readToken(
-                new Token.StringType(zipHeader.compressedSize, "utf-8")
-              )
-            ).trim();
+            const mimeType = await tokenizer.readToken(
+              new Token.StringType(zipHeader.compressedSize, "utf-8")
+            );
+            const trimmedMimeType = mimeType.trim();
 
-            switch (mimeType) {
+            switch (trimmedMimeType) {
               case "application/epub+zip":
                 return {
                   ext: "epub",

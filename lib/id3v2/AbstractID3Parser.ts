@@ -15,7 +15,8 @@ export abstract class AbstractID3Parser extends BasicParser {
   public static async startsWithID3v2Header(
     tokenizer: ITokenizer
   ): Promise<boolean> {
-    return (await tokenizer.peekToken(ID3v2Header)).fileIdentifier === "ID3";
+    const header = await tokenizer.peekToken(ID3v2Header);
+    return header.fileIdentifier === "ID3";
   }
 
   private id3parser = new ID3v2Parser();

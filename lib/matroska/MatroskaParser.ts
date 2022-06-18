@@ -103,17 +103,21 @@ export class MatroskaParser extends BasicParser {
           .filter((entry) => {
             return entry.trackType === TrackType.audio.valueOf();
           })
-          .reduce((acc, cur) => {
-            if (!acc) {
-              return cur;
+          // eslint-disable-next-line unicorn/no-array-reduce
+          .reduce((previousValue, currentValue) => {
+            if (!previousValue) {
+              return currentValue;
             }
-            if (!acc.flagDefault && cur.flagDefault) {
-              return cur;
+            if (!previousValue.flagDefault && currentValue.flagDefault) {
+              return currentValue;
             }
-            if (cur.trackNumber && cur.trackNumber < acc.trackNumber) {
-              return cur;
+            if (
+              currentValue.trackNumber &&
+              currentValue.trackNumber < previousValue.trackNumber
+            ) {
+              return currentValue;
             }
-            return acc;
+            return previousValue;
           }, null);
 
         if (audioTrack) {

@@ -53,13 +53,13 @@ describe("Examples", () => {
     ) {
       console.log("This is a JPEG file");
     } else {
-      throw  new Error("Expected a JPEG file");
+      throw new Error("Expected a JPEG file");
     }
     bytesRead = await streamReader.read(buffer, 0, 20); // Read JPEG header
     if (bytesRead === 20) {
       console.log("Got the JPEG header");
     } else {
-      throw new  Error("Failed to read JPEG header");
+      throw new Error("Failed to read JPEG header");
     }
   });
 });

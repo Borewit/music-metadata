@@ -23,7 +23,8 @@ export class DsdiffParser extends BasicParser {
     );
     if (header.chunkID !== "FRM8") throw new Error("Unexpected chunk-ID");
 
-    const type = (await this.tokenizer.readToken<string>(FourCcToken)).trim();
+    const fourCcToken = await this.tokenizer.readToken<string>(FourCcToken);
+    const type = fourCcToken.trim();
     switch (type) {
       case "DSD":
         this.metadata.setFormat("container", `DSDIFF/${type}`);
@@ -31,7 +32,7 @@ export class DsdiffParser extends BasicParser {
         return this.readFmt8Chunks(header.chunkSize - BigInt(FourCcToken.len));
 
       default:
-        throw new  Error(`Unsupported DSDIFF type: ${type}`);
+        throw new Error(`Unsupported DSDIFF type: ${type}`);
     }
   }
 
@@ -139,9 +140,10 @@ export class DsdiffParser extends BasicParser {
         }
         case "CMPR": {
           // 3.2.3 Compression Type Chunk
-          const compressionIdCode = (
-            await this.tokenizer.readToken<string>(FourCcToken)
-          ).trim();
+          const fourCcToken = await this.tokenizer.readToken<string>(
+            FourCcToken
+          );
+          const compressionIdCode = fourCcToken.trim();
           const count = await this.tokenizer.readToken<number>(Token.UINT8);
           const compressionName = await this.tokenizer.readToken<string>(
             new Token.StringType(count, "ascii")

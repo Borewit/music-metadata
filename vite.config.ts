@@ -15,6 +15,5 @@ export default defineConfig({
     exclude: ["test/test-*.d.ts"],
 
     isolate: false,
-    threads: false,
   },
 });

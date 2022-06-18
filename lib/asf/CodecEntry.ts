@@ -19,9 +19,10 @@ export interface ICodecEntry {
  */
 async function readString(tokenizer: ITokenizer): Promise<string> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  return (
-    await tokenizer.readToken(new Token.StringType(length * 2, "utf16le"))
-  ).replace("\0", "");
+  const str = await tokenizer.readToken(
+    new Token.StringType(length * 2, "utf16le")
+  );
+  return str.replace("\0", "");
 }
 
 /**
