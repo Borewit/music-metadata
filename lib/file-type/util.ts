@@ -15,10 +15,7 @@ export function stringToBytes(str: string) {
  * @param offset - TAR header offset.
  * @returns `true` if the TAR checksum is valid, otherwise `false`.
  */
-export function tarHeaderChecksumMatches(
-  buffer: Buffer,
-  offset = 0
-): boolean {
+export function tarHeaderChecksumMatches(buffer: Buffer, offset = 0): boolean {
   const readSum = Number.parseInt(
     buffer.toString("utf8", 148, 154).replace(/\0.*$/, "").trim(),
     8

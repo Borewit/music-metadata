@@ -7,7 +7,7 @@ export class IgnoreObjectState extends State<any> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): null {
+  public get(_buf: Buffer, _off: number): null {
     return null;
   }
 }

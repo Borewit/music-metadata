@@ -1,9 +1,7 @@
 import * as Token from "../token-types";
-import { IGetToken, EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../strtok3";
 import initDebug from "debug";
 
-import * as util from "../common/Util";
-import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
 
 import { VorbisParser } from "./vorbis/VorbisParser";

@@ -5,7 +5,6 @@ import { commonTags } from "../lib/common/GenericTagInfo";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 
 import * as markDown from "./MarkDown";
-import { fileURLToPath } from "node:url";
 
 interface ITagInfoDict {
   [key: string]: { description: string };

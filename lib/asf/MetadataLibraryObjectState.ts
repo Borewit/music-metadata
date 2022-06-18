@@ -1,4 +1,4 @@
-import GUID, { MetadataLibraryObject } from "./GUID";
+import { MetadataLibraryObject } from "./GUID";
 import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { MetadataObjectState } from "./MetadataObjectState";
 

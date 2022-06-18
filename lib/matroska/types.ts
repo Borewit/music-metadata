@@ -12,7 +12,7 @@ export enum DataType {
   float,
 }
 
-export interface IElementType<T> {
+export interface IElementType {
   readonly name: string;
   readonly value?: DataType;
   readonly container?: IContainerType;
@@ -20,7 +20,7 @@ export interface IElementType<T> {
 }
 
 export interface IContainerType {
-  [id: number]: IElementType<string | number | boolean | Buffer>;
+  [id: number]: IElementType;
 }
 
 export interface ITree {

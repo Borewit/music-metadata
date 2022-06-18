@@ -837,7 +837,7 @@ for (const tokenizerType of tokenizerTests) {
           (rst) => {
             return rst
               .readBuffer(buffer)
-              .then((len) => {
+              .then(() => {
                 assert.fail("It should throw EndOfFile Error");
               })
               .catch((error) => {

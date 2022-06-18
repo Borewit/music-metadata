@@ -1,6 +1,6 @@
 import * as util from "../common/Util";
 import * as Token from "../token-types";
-import GUID, { ExtendedStreamPropertiesObject } from "./GUID";
+import { ExtendedStreamPropertiesObject } from "./GUID";
 import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 

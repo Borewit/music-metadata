@@ -65,17 +65,6 @@ type IAtomParser = (payloadLength: number) => Promise<any>;
 
 /**
  *
- * @param value
- * @param index
- * @param self
- * @returns
- */
-function distinct(value: any, index: number, self: any[]) {
-  return self.indexOf(value) === index;
-}
-
-/**
- *
  * @param array
  * @returns
  */

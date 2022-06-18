@@ -242,12 +242,12 @@
     "@typescript-eslint/no-non-null-assertion": "warn",
     "@typescript-eslint/no-this-alias": "error",
     "@typescript-eslint/no-unnecessary-type-constraint": "error",
-    // "no-unused-vars": "off",
+    "no-unused-vars": "off",
     // "@typescript-eslint/no-unused-vars": "warn",
-    // "@typescript-eslint/no-var-requires": "error",
-    // "@typescript-eslint/prefer-as-const": "error",
-    // "@typescript-eslint/prefer-namespace-keyword": "error",
-    // "@typescript-eslint/triple-slash-reference": "error",
+    "@typescript-eslint/no-var-requires": "error",
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/prefer-namespace-keyword": "error",
+    "@typescript-eslint/triple-slash-reference": "error",
 
     /* plugin:@typescript-eslint/recommended-requiring-type-checking rules */
     /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/recommended-requiring-type-checking.ts */
@@ -349,26 +349,21 @@
       }
     ],
     "@typescript-eslint/no-unused-expressions": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-use-before-define": "off",
-    /* Duplicate with "plugin:@typescript-eslint/recommended" */
-    "@typescript-eslint/no-var-requires": "error",
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/prefer-for-of": "off",
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/prefer-function-type": "error",
-    /* Duplicate with "plugin:@typescript-eslint/recommended" */
-    "@typescript-eslint/prefer-namespace-keyword": "error",
     "@typescript-eslint/quotes": "off",
     "@typescript-eslint/semi": ["error", "always"],
-    /* Duplicate with "plugin:@typescript-eslint/recommended" */
-    "@typescript-eslint/triple-slash-reference": [
-      "error",
-      {
-        "path": "always",
-        "types": "prefer-import",
-        "lib": "always"
-      }
-    ],
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/unified-signatures": "error"
   }

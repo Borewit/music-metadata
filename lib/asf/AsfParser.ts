@@ -1,7 +1,7 @@
 import initDebug from "debug";
 
 import { ITag, TrackType } from "../type";
-import GUID, {
+import {
   ASF_Index_Placeholder_Object,
   CodecListObject,
   CompatibilityObject,

@@ -1,4 +1,3 @@
-import { ICommonTagsResult } from "../type";
 import { GenericTagId } from "./GenericTagId";
 
 export type TagType =

@@ -20,7 +20,6 @@ type UInt4 =
   | 0xd
   | 0xe
   | 0xf;
-type UInt2 = 0 | 1 | 2 | 3;
 
 type MPEG4Channel =
   | "front-center"

@@ -1,5 +1,5 @@
 import { ITag } from "../type";
-import GUID, { ExtendedContentDescriptionObject } from "./GUID";
+import { ExtendedContentDescriptionObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
 import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
