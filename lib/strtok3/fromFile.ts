@@ -1,6 +1,10 @@
 import * as fs from "./FsPromise";
 import { FileTokenizer } from "./FileTokenizer";
 
+/**
+ *
+ * @param sourceFilePath
+ */
 export async function fromFile(sourceFilePath: string): Promise<FileTokenizer> {
   const stat = await fs.stat(sourceFilePath);
   if (!stat.isFile) {

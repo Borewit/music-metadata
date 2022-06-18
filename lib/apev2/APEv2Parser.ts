@@ -15,6 +15,28 @@ import { DataType } from "./DataType";
 
 const debug = initDebug("music-metadata:parser:APEv2");
 
+/**
+ * APETag versionIndex history / supported formats
+ *
+ * 1.0 (1000) - Original APE tag spec.  Fully supported by this code.
+ * 2.0 (2000) - Refined APE tag spec (better streaming support, UTF StringEncoding). Fully supported by this code.
+ *
+ * Notes:
+ * - also supports reading of ID3v1.1 tags
+ * - all saving done in the APE Tag format using CURRENT_APE_TAG_VERSION
+ *
+ * APE File Format Overview: (pieces in order -- only valid for the latest versionIndex APE files)
+ *
+ * JUNK - any amount of "junk" before the APE_DESCRIPTOR (so people that put ID3v2 tags on the files aren't hosed)
+ * APE_DESCRIPTOR - defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
+ * APE_HEADER - describes all of the necessary information about the APE file
+ * SEEK TABLE - the table that represents seek offsets [optional]
+ * HEADER DATA - the pre-audio data from the original file [optional]
+ * APE FRAMES - the actual compressed audio (broken into frames for seekability)
+ * TERMINATING DATA - the post-audio data from the original file [optional]
+ * TAG - describes all the properties of the file [optional]
+ */
+
 const tagFormat = "APEv2";
 
 interface IApeInfo {
@@ -39,7 +61,7 @@ export class APEv2Parser extends BasicParser {
   /**
    * Calculate the media file duration
    * @param ah ApeHeader
-   * @return {number} duration in seconds
+   * @returns {number} duration in seconds
    */
   public static calculateDuration(ah: IHeader): number {
     let duration =
@@ -88,7 +110,7 @@ export class APEv2Parser extends BasicParser {
    */
   public async tryParseApeHeader(): Promise<void> {
     if (
-      this.tokenizer.fileInfo.size &&
+      this.tokenizer.fileInfo.size > 0 &&
       this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len
     ) {
       debug(`No APEv2 header found, end-of-file reached`);
@@ -101,7 +123,7 @@ export class APEv2Parser extends BasicParser {
       return this.parseTags(footer);
     } else {
       debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
-      if (this.tokenizer.fileInfo.size) {
+      if (this.tokenizer.fileInfo.size > 0) {
         // Try to read the APEv2 header using just the footer-header
         const remaining =
           this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
@@ -169,7 +191,7 @@ export class APEv2Parser extends BasicParser {
           const value = await this.tokenizer.readToken<string>(
             new StringType(tagItemHeader.size, "utf8")
           );
-          const values = value.split(/\x00/g);
+          const values = value.split(/\0/g);
 
           for (const val of values) {
             this.metadata.addTag(tagFormat, key, val);

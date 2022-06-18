@@ -1,7 +1,12 @@
 import { IGetToken } from "../strtok3";
 
+/**
+ *
+ * @param str
+ * @returns
+ */
 export function stringToBytes(str: string) {
-  return [...str].map((character) => character.charCodeAt(0));
+  return [...str].map((character) => character.codePointAt(0));
 }
 
 /**
@@ -10,10 +15,7 @@ export function stringToBytes(str: string) {
  * @param offset - TAR header offset.
  * @returns `true` if the TAR checksum is valid, otherwise `false`.
  */
-export function tarHeaderChecksumMatches(
-  buffer: Buffer,
-  offset: number = 0
-): boolean {
+export function tarHeaderChecksumMatches(buffer: Buffer, offset = 0): boolean {
   const readSum = Number.parseInt(
     buffer.toString("utf8", 148, 154).replace(/\0.*$/, "").trim(),
     8
@@ -48,10 +50,19 @@ export const uint32SyncSafeToken: IGetToken<number> = {
   len: 4,
 };
 
+/**
+ *
+ * @param buffer
+ * @param headers
+ * @param options
+ * @param options.mask
+ * @param options.offset
+ * @returns
+ */
 export function checkUtil(
   buffer: Buffer,
   headers: any[],
-  options?: { mask?: number[]; offset: any }
+  options?: { mask?: number[]; offset: number }
 ) {
   options = {
     offset: 0,

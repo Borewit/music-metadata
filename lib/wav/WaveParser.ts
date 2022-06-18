@@ -38,9 +38,9 @@ export class WaveParser extends BasicParser {
       `pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`
     );
     if (riffHeader.chunkID !== "RIFF") return; // Not RIFF format
-    return this.parseRiffChunk(riffHeader.chunkSize).catch((err) => {
-      if (!(err instanceof strtok3.EndOfStreamError)) {
-        throw err;
+    return this.parseRiffChunk(riffHeader.chunkSize).catch((error) => {
+      if (!(error instanceof strtok3.EndOfStreamError)) {
+        throw error;
       }
     });
   }
@@ -78,15 +78,16 @@ export class WaveParser extends BasicParser {
           this.fact = await this.tokenizer.readToken(new FactChunk(header));
           break;
 
-        case "fmt ": // The Util Chunk, non-PCM Formats
+        case "fmt ": {
+          // The Util Chunk, non-PCM Formats
           const fmt = await this.tokenizer.readToken<IWaveFormat>(
             new Format(header)
           );
 
           let subFormat = WaveFormat[fmt.wFormatTag];
           if (!subFormat) {
-            debug("WAVE/non-PCM format=" + fmt.wFormatTag);
-            subFormat = "non-PCM (" + fmt.wFormatTag + ")";
+            debug(`WAVE/non-PCM format=${fmt.wFormatTag}`);
+            subFormat = `non-PCM (${fmt.wFormatTag})`;
           }
           this.metadata.setFormat("codec", subFormat);
           this.metadata.setFormat("bitsPerSample", fmt.wBitsPerSample);
@@ -98,23 +99,27 @@ export class WaveParser extends BasicParser {
           );
           this.blockAlign = fmt.nBlockAlign;
           break;
+        }
 
-        case "id3 ": // The way Picard, FooBar currently stores, ID3 meta-data
-        case "ID3 ": // The way Mp3Tags stores ID3 meta-data
+        case "id3 ":
+        case "ID3 ": {
+          // The way Picard, FooBar currently stores, ID3 meta-data
+          // The way Mp3Tags stores ID3 meta-data
           const id3_data = await this.tokenizer.readToken<Uint8Array>(
             new Token.Uint8ArrayType(header.chunkSize)
           );
           const rst = fromBuffer.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
-
-        case "data": // PCM-data
+        }
+        case "data": {
+          // PCM-data
           if (this.metadata.format.lossless !== false) {
             this.metadata.setFormat("lossless", true);
           }
 
           let chunkSize = header.chunkSize;
-          if (this.tokenizer.fileInfo.size) {
+          if (this.tokenizer.fileInfo.size > 0) {
             const calcRemaining =
               this.tokenizer.fileInfo.size - this.tokenizer.position;
             if (calcRemaining < chunkSize) {
@@ -127,7 +132,7 @@ export class WaveParser extends BasicParser {
 
           const numberOfSamples = this.fact
             ? this.fact.dwSampleLength
-            : chunkSize === 0xffffffff
+            : chunkSize === 0xff_ff_ff_ff
             ? undefined
             : chunkSize / this.blockAlign;
           if (numberOfSamples) {
@@ -146,17 +151,20 @@ export class WaveParser extends BasicParser {
           ); // ToDo: check me
           await this.tokenizer.ignore(header.chunkSize);
           break;
+        }
 
-        case "bext": // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
+        case "bext": {
+          // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
           const bext = await this.tokenizer.readToken(
             BroadcastAudioExtensionChunk
           );
-          Object.entries(bext).forEach(([key, value]) => {
+          for (const [key, value] of Object.entries(bext)) {
             this.metadata.addTag("exif", "bext." + key, value);
-          });
+          }
           break;
+        }
 
-        case "\x00\x00\x00\x00": // padding ??
+        case "\u0000\u0000\u0000\u0000": // padding ??
           debug(
             `Ignore padding chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`
           );
@@ -192,7 +200,7 @@ export class WaveParser extends BasicParser {
       case "INFO":
         return this.parseRiffInfoTags(listHeader.chunkSize - 4);
 
-      case "adtl":
+      // case "adtl":
       default:
         this.metadata.addWarning("Ignore chunk: RIFF/WAVE/LIST/" + listType);
         debug("Ignoring chunkID=RIFF/WAVE/LIST/" + listType);
@@ -210,7 +218,7 @@ export class WaveParser extends BasicParser {
     }
 
     if (chunkSize !== 0) {
-      throw Error("Illegal remaining size: " + chunkSize);
+      throw new Error(`Illegal remaining size: ${chunkSize}`);
     }
   }
 

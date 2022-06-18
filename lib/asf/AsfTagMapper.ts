@@ -79,7 +79,7 @@ const asfTagMap: INativeTagMap = {
 export class AsfTagMapper extends CommonTagMapper {
   public static toRating(rating: string): IRating {
     return {
-      rating: parseFloat(rating + 1) / 5,
+      rating: Number.parseFloat(`${rating}1`) / 5,
     };
   }
 
@@ -89,11 +89,12 @@ export class AsfTagMapper extends CommonTagMapper {
 
   protected override postMap(tag: ITag): void {
     switch (tag.id) {
-      case "WM/SharedUserRating":
+      case "WM/SharedUserRating": {
         const keys = tag.id.split(":");
-        tag.value = AsfTagMapper.toRating(tag.value);
+        tag.value = AsfTagMapper.toRating(tag.value as string);
         tag.id = keys[0];
         break;
+      }
     }
   }
 }

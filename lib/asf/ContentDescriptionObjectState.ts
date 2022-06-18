@@ -1,7 +1,6 @@
 import { ITag } from "../type";
-import GUID, { ContentDescriptionObject } from "./GUID";
+import { ContentDescriptionObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 
 /**
@@ -18,10 +17,6 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
     "Description",
     "Rating",
   ];
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 
   public get(buf: Buffer, off: number): ITag[] {
     const tags: ITag[] = [];

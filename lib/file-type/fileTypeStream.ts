@@ -21,7 +21,6 @@ const minimumBytes = 4100; // A fair amount of file-types are detectable within 
  * **Note:** Requires Node.js 14 or later.
  * @param readableStream - A [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable) containing a file to examine.
  * @returns A `Promise` which resolves to the original readable stream argument, but with an added `fileType` property, which is an object like the one returned from `FileType.fromFile()`.
- *
  * @example
  * ```
  * import got from 'got';
@@ -38,6 +37,12 @@ const minimumBytes = 4100; // A fair amount of file-types are detectable within 
  * ```
  */
 
+/**
+ *
+ * @param readableStream
+ * @param root0
+ * @param root0.sampleSize
+ */
 export async function fileTypeStream(
   readableStream: ReadableStream,
   { sampleSize = minimumBytes }: StreamOptions = {}
@@ -49,7 +54,7 @@ export async function fileTypeStream(
     readableStream.on("error", reject);
 
     readableStream.once("readable", () => {
-      (async () => {
+      void (async () => {
         try {
           // Set up output stream
           const pass: PassThrough & {
@@ -67,7 +72,7 @@ export async function fileTypeStream(
             readableStream.read() ||
             Buffer.alloc(0);
           try {
-            const fileType = await fileTypeFromBuffer(chunk);
+            const fileType = await fileTypeFromBuffer(chunk as Buffer);
             pass.fileType = fileType;
           } catch (error) {
             if (error instanceof strtok3.EndOfStreamError) {

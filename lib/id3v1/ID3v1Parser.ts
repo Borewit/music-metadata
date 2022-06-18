@@ -17,13 +17,13 @@ export class ID3v1Parser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-    if (!this.tokenizer.fileInfo.size) {
+    if (this.tokenizer.fileInfo.size === 0) {
       debug("Skip checking for ID3v1 because the file-size is unknown");
       return;
     }
 
     if (this.options.apeHeader) {
-      this.tokenizer.ignore(
+      void this.tokenizer.ignore(
         this.options.apeHeader.offset - this.tokenizer.position
       );
       const apeParser = new APEv2Parser();
@@ -70,6 +70,10 @@ export class ID3v1Parser extends BasicParser {
   }
 }
 
+/**
+ *
+ * @param reader
+ */
 export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
     const tag = Buffer.alloc(3);

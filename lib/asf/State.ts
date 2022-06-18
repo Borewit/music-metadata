@@ -21,13 +21,13 @@ export abstract class State<T> implements IGetToken<T> {
     data: any
   ) {
     if (name === "WM/Picture") {
-      tags.push({ id: name, value: WmPictureToken.fromBuffer(data) });
+      tags.push({ id: name, value: WmPictureToken.fromBuffer(data as Buffer) });
     } else {
       const parseAttr = getParserForAttr(valueType);
       if (!parseAttr) {
-        throw new Error("unexpected value headerType: " + valueType);
+        throw new Error(`unexpected value headerType: ${valueType}`);
       }
-      tags.push({ id: name, value: parseAttr(data) });
+      tags.push({ id: name, value: parseAttr(data as Buffer) });
     }
   }
 }

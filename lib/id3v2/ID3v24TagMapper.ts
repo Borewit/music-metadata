@@ -166,11 +166,12 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
     super(["ID3v2.3", "ID3v2.4"], id3v24TagMap);
   }
 
+  // eslint-disable-next-line jsdoc/require-returns-check
   /**
    * Handle post mapping exceptions / correction
    * @param tag to post map
    * @param warnings Wil be used to register (collect) warnings
-   * @return Common value e.g. "Buena Vista Social Club"
+   * @returns Common value e.g. "Buena Vista Social Club"
    */
   protected override postMap(
     tag: ITag,
@@ -179,8 +180,11 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
     switch (tag.id) {
       case "UFID": // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === "http://musicbrainz.org") {
-          tag.id += ":" + tag.value.owner_identifier;
-          tag.value = util.decodeString(tag.value.identifier, "latin1"); // latin1 == iso-8859-1
+          tag.id += `:${tag.value.owner_identifier as string}`;
+          tag.value = util.decodeString(
+            tag.value.identifier as Uint8Array,
+            "latin1"
+          ); // latin1 == iso-8859-1
         }
         break;
 
@@ -189,7 +193,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
           // decode Windows Media Player
           case "AverageLevel":
           case "PeakValue":
-            tag.id += ":" + tag.value.owner_identifier;
+            tag.id += `:${tag.value.owner_identifier as string}`;
             tag.value =
               tag.value.data.length === 4
                 ? tag.value.data.readUInt32LE(0)
@@ -200,7 +204,9 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
             break;
           default:
             warnings.addWarning(
-              `Unknown PRIV owner-identifier: ${tag.value.owner_identifier}`
+              `Unknown PRIV owner-identifier: ${
+                tag.value.owner_identifier as unknown as string
+              }`
             );
         }
         break;

@@ -11,9 +11,7 @@ export interface ITagInfo {
   unique?: boolean;
 }
 
-export interface ITagInfoMap {
-  [index: string]: ITagInfo;
-}
+export type ITagInfoMap = Record<string, ITagInfo>;
 
 export const commonTags: ITagInfoMap = {
   year: { multiple: false },
@@ -138,7 +136,10 @@ export const commonTags: ITagInfoMap = {
  * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
  */
 export function isSingleton(alias: GenericTagId): boolean {
-  return commonTags.hasOwnProperty(alias) && !commonTags[alias].multiple;
+  return (
+    Object.prototype.hasOwnProperty.call(commonTags, alias) &&
+    !commonTags[alias].multiple
+  );
 }
 
 /**

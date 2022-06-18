@@ -62,7 +62,7 @@ export const ReplayGain: IGetToken<IReplayGain> = {
   get: (buf, off) => {
     const gain_type = common.getBitAllignedNumber(buf, off, 0, 3);
     const sign = common.getBitAllignedNumber(buf, off, 6, 1);
-    const gain_adj = common.getBitAllignedNumber(buf, off, 7, 9) / 10.0;
+    const gain_adj = common.getBitAllignedNumber(buf, off, 7, 9) / 10;
     if (gain_type > 0) {
       return {
         type: common.getBitAllignedNumber(buf, off, 0, 3),
@@ -70,6 +70,6 @@ export const ReplayGain: IGetToken<IReplayGain> = {
         adjustment: sign ? -gain_adj : gain_adj,
       };
     }
-    return undefined;
+    return;
   },
 };

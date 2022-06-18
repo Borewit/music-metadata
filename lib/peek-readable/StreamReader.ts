@@ -1,4 +1,4 @@
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import { EndOfStreamError } from "./EndOfFileStream";
 import { Deferred } from "./Deferred";
 
@@ -119,7 +119,7 @@ export class StreamReader {
     const readBuffer = this.s.read(length);
 
     if (readBuffer) {
-      buffer.set(readBuffer, offset);
+      buffer.set(readBuffer as Buffer, offset);
       return readBuffer.length;
     } else {
       const request = {
@@ -141,7 +141,7 @@ export class StreamReader {
    * @param request Deferred read request
    */
   private readDeferred(request: IReadRequest) {
-    const readBuffer = this.s.read(request.length);
+    const readBuffer: Buffer = this.s.read(request.length);
     if (readBuffer) {
       request.buffer.set(readBuffer, request.offset);
       request.deferred.resolve(readBuffer.length);

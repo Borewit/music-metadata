@@ -1,11 +1,11 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 export class Row {
   constructor(public values: string[]) {}
 }
 
 export class Table {
-  private static padEnd(value: string, size: number, pad: string = " ") {
+  private static padEnd(value: string, size: number, pad = " ") {
     while (value.length < size) {
       value += pad;
     }
@@ -18,9 +18,9 @@ export class Table {
     colSizes: number[]
   ) {
     const colValues: string[] = [];
-    for (let ci = 0; ci < colSizes.length; ++ci) {
+    for (const [ci, colSize] of colSizes.entries()) {
       const cellTxt = values.length > ci ? values[ci] : "";
-      colValues.push(Table.padEnd(cellTxt, colSizes[ci]));
+      colValues.push(Table.padEnd(cellTxt, colSize));
     }
     out.write("| " + colValues.join(" | ") + " |\n");
   }
@@ -45,7 +45,7 @@ export class Table {
   private calcColSizes(): number[] {
     const maxColSizes: number[] = [];
 
-    for (const row of this.rows.concat([this.header])) {
+    for (const row of [...this.rows, this.header]) {
       for (let ci = 0; ci < row.values.length; ++ci) {
         if (ci < maxColSizes.length) {
           maxColSizes[ci] = Math.max(maxColSizes[ci], row.values[ci].length);

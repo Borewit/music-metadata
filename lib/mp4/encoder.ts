@@ -3,7 +3,7 @@ export interface IEncoder {
   format: string;
 }
 
-export const encoderDict: { [dataFormatId: string]: IEncoder } = {
+export const encoderDict: Record<string, IEncoder> = {
   raw: {
     lossy: false,
     format: "raw",

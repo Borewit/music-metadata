@@ -14,6 +14,7 @@ export abstract class BasicParser implements ITokenParser {
    * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
+   * @returns
    */
   public init(
     metadata: INativeMetadataCollector,

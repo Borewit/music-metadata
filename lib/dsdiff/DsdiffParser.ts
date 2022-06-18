@@ -23,7 +23,8 @@ export class DsdiffParser extends BasicParser {
     );
     if (header.chunkID !== "FRM8") throw new Error("Unexpected chunk-ID");
 
-    const type = (await this.tokenizer.readToken<string>(FourCcToken)).trim();
+    const fourCcToken = await this.tokenizer.readToken<string>(FourCcToken);
+    const type = fourCcToken.trim();
     switch (type) {
       case "DSD":
         this.metadata.setFormat("container", `DSDIFF/${type}`);
@@ -31,7 +32,7 @@ export class DsdiffParser extends BasicParser {
         return this.readFmt8Chunks(header.chunkSize - BigInt(FourCcToken.len));
 
       default:
-        throw Error(`Unsupported DSDIFF type: ${type}`);
+        throw new Error(`Unsupported DSDIFF type: ${type}`);
     }
   }
 
@@ -54,27 +55,32 @@ export class DsdiffParser extends BasicParser {
     );
     const p0 = this.tokenizer.position;
     switch (header.chunkID.trim()) {
-      case "FVER": // 3.1 FORMAT VERSION CHUNK
+      case "FVER": {
+        // 3.1 FORMAT VERSION CHUNK
         const version = await this.tokenizer.readToken<number>(Token.UINT32_LE);
         debug(`DSDIFF version=${version}`);
         break;
+      }
 
-      case "PROP": // 3.2 PROPERTY CHUNK
+      case "PROP": {
+        // 3.2 PROPERTY CHUNK
         const propType = await this.tokenizer.readToken(FourCcToken);
         if (propType !== "SND ") throw new Error("Unexpected PROP-chunk ID");
         await this.handleSoundPropertyChunks(
           header.chunkSize - BigInt(FourCcToken.len)
         );
         break;
+      }
 
-      case "ID3": // Unofficial ID3 tag support
+      case "ID3": {
+        // Unofficial ID3 tag support
         const id3_data = await this.tokenizer.readToken<Uint8Array>(
           new Token.Uint8ArrayType(Number(header.chunkSize))
         );
         const rst = strtok3.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         break;
-
+      }
       default:
         debug(`Ignore chunk[ID=${header.chunkID}, size=${header.chunkSize}]`);
         break;
@@ -113,14 +119,16 @@ export class DsdiffParser extends BasicParser {
       );
       const p0 = this.tokenizer.position;
       switch (sndPropHeader.chunkID.trim()) {
-        case "FS": // 3.2.1 Sample Rate Chunk
+        case "FS": {
+          // 3.2.1 Sample Rate Chunk
           const sampleRate = await this.tokenizer.readToken<number>(
             Token.UINT32_BE
           );
           this.metadata.setFormat("sampleRate", sampleRate);
           break;
-
-        case "CHNL": // 3.2.2 Channels Chunk
+        }
+        case "CHNL": {
+          // 3.2.2 Channels Chunk
           const numChannels = await this.tokenizer.readToken<number>(
             Token.UINT16_BE
           );
@@ -129,11 +137,13 @@ export class DsdiffParser extends BasicParser {
             sndPropHeader.chunkSize - BigInt(Token.UINT16_BE.len)
           );
           break;
-
-        case "CMPR": // 3.2.3 Compression Type Chunk
-          const compressionIdCode = (
-            await this.tokenizer.readToken<string>(FourCcToken)
-          ).trim();
+        }
+        case "CMPR": {
+          // 3.2.3 Compression Type Chunk
+          const fourCcToken = await this.tokenizer.readToken<string>(
+            FourCcToken
+          );
+          const compressionIdCode = fourCcToken.trim();
           const count = await this.tokenizer.readToken<number>(Token.UINT8);
           const compressionName = await this.tokenizer.readToken<string>(
             new Token.StringType(count, "ascii")
@@ -147,8 +157,9 @@ export class DsdiffParser extends BasicParser {
             `${compressionIdCode} (${compressionName})`
           );
           break;
-
-        case "ABSS": // 3.2.4 Absolute Start Time Chunk
+        }
+        case "ABSS": {
+          // 3.2.4 Absolute Start Time Chunk
           const hours = await this.tokenizer.readToken<number>(Token.UINT16_BE);
           const minutes = await this.tokenizer.readToken<number>(Token.UINT8);
           const seconds = await this.tokenizer.readToken<number>(Token.UINT8);
@@ -157,15 +168,16 @@ export class DsdiffParser extends BasicParser {
           );
           debug(`ABSS ${hours}:${minutes}:${seconds}.${samples}`);
           break;
-
-        case "LSCO": // 3.2.5 Loudspeaker Configuration Chunk
+        }
+        case "LSCO": {
+          // 3.2.5 Loudspeaker Configuration Chunk
           const lsConfig = await this.tokenizer.readToken<number>(
             Token.UINT16_BE
           );
           debug(`LSCO lsConfig=${lsConfig}`);
           break;
-
-        case "COMT":
+        }
+        // case "COMT":
         default:
           debug(
             `Unknown sound-property-chunk[ID=${sndPropHeader.chunkID}, size=${sndPropHeader.chunkSize}]`

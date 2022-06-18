@@ -12,7 +12,7 @@ export interface IGetToken<V, VS extends Uint8Array = Uint8Array> {
    * Decode value from buffer at offset
    * @param array - Uint8Array to read the decoded value from
    * @param offset - Decode offset
-   * @return decoded value
+   * @returns decoded value
    */
   get(array: VS, offset: number): V;
 }
@@ -24,7 +24,7 @@ export interface IToken<V, VS extends Uint8Array = Uint8Array>
    * @param array - Uint8Array to write the encoded value to
    * @param offset - Buffer write offset
    * @param value - Value to decode of type T
-   * @return offset plus number of bytes written
+   * @returns offset plus number of bytes written
    */
   put(array: VS, offset: number, value: V): number;
 }

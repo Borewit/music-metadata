@@ -22,13 +22,14 @@ const debug = initDebug("music-metadata:parser:FLAC");
 export class FlacParser extends AbstractID3Parser {
   private vorbisParser: VorbisParser;
 
-  private padding: number = 0;
+  private padding = 0;
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
    * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
+   * @returns
    */
   public override init(
     metadata: INativeMetadataCollector,
@@ -54,7 +55,7 @@ export class FlacParser extends AbstractID3Parser {
       await this.parseDataBlock(blockHeader);
     } while (!blockHeader.lastBlock);
 
-    if (this.tokenizer.fileInfo.size && this.metadata.format.duration) {
+    if (this.tokenizer.fileInfo.size > 0 && this.metadata.format.duration) {
       const dataSize = this.tokenizer.fileInfo.size - this.tokenizer.position;
       this.metadata.setFormat(
         "bitrate",
@@ -82,7 +83,9 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.PICTURE:
         return this.parsePicture(blockHeader.length).then();
       default:
-        this.metadata.addWarning("Unknown block type: " + blockHeader.type);
+        this.metadata.addWarning(
+          `Unknown block type: ${blockHeader.type as unknown as string}`
+        );
     }
     // Ignore data block
     return this.tokenizer.ignore(blockHeader.length).then();
@@ -90,6 +93,7 @@ export class FlacParser extends AbstractID3Parser {
 
   /**
    * Parse STREAMINFO
+   * @param dataLen
    */
   private async parseBlockStreamInfo(dataLen: number): Promise<void> {
     if (dataLen !== BlockStreamInfo.len)
@@ -115,6 +119,7 @@ export class FlacParser extends AbstractID3Parser {
   /**
    * Parse VORBIS_COMMENT
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
+   * @param dataLen
    */
   private async parseComment(dataLen: number): Promise<void> {
     const data = await this.tokenizer.readToken<Uint8Array>(

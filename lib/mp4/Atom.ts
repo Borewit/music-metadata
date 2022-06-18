@@ -102,11 +102,11 @@ export class Atom {
           this.getPayloadLength(remaining) - 4
         );
 
-      case "mdhd": // Media header atom
-      case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
-      case "tkhd":
-      case "stsz":
-      case "mdat":
+      // case "mdhd": // Media header atom
+      // case "mvhd": // 'movie' => 'mvhd': movie header atom; child of Movie Atom
+      // case "tkhd":
+      // case "stsz":
+      // case "mdat":
       default:
         return dataHandler(this, remaining);
     }

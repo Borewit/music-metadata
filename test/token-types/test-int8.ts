@@ -19,7 +19,7 @@ describe("Parse 8-bit signed integer (INT8)", () => {
   });
 
   it("should decode", () => {
-    const buf = Buffer.from("\x00\x7f\x80\xff\x81", "binary");
+    const buf = Buffer.from("\u0000\u007F\u0080\u00FF\u0081", "binary");
 
     assert.strictEqual(Token.INT8.get(buf, 0), 0);
     assert.strictEqual(Token.INT8.get(buf, 1), 127);

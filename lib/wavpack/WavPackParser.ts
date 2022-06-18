@@ -76,7 +76,7 @@ export class WavPackParser extends BasicParser {
         this.audioDataSize += header.blockSize; // Count audio data for bit-rate calculation
       }
     } while (
-      !this.tokenizer.fileInfo.size ||
+      this.tokenizer.fileInfo.size === 0 ||
       this.tokenizer.fileInfo.size - this.tokenizer.position >=
         BlockHeaderToken.len
     );
@@ -88,6 +88,7 @@ export class WavPackParser extends BasicParser {
 
   /**
    * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf, 3.0 Metadata Sub-blocks
+   * @param header
    * @param remainingLength
    */
   private async parseMetadataSubBlock(
@@ -110,7 +111,8 @@ export class WavPackParser extends BasicParser {
         case 0x0: // ID_DUMMY: could be used to pad WavPack blocks
           break;
 
-        case 0xe: // ID_DSD_BLOCK
+        case 0xe: {
+          // ID_DSD_BLOCK
           debug("ID_DSD_BLOCK");
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
           const mp = 1 << data.readUInt8(0);
@@ -123,6 +125,7 @@ export class WavPackParser extends BasicParser {
             header.totalSamples / samplingRate
           );
           break;
+        }
 
         case 0x24: // ID_ALT_TRAILER: maybe used to embed original ID3 tag header
           debug("ID_ALT_TRAILER: trailer for non-wav files");
@@ -150,7 +153,7 @@ export class WavPackParser extends BasicParser {
         (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) +
         dataSizeInWords * 2;
       debug(`remainingLength=${remainingLength}`);
-      if (id.isOddSize) this.tokenizer.ignore(1);
+      if (id.isOddSize) void this.tokenizer.ignore(1);
     }
     if (remainingLength !== 0)
       throw new Error("metadata-sub-block should fit it remaining length");

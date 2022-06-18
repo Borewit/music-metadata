@@ -165,7 +165,7 @@ async function testFromBuffer(ext: FileExtension, name?: string) {
 async function testFalsePositive(ext: FileExtension, name?: string) {
   const file = path.join(__dirname, "fixture", `${name}.${ext}`);
 
-  await t.strictEqual(await fileTypeFromFile(file), undefined);
+  t.strictEqual(await fileTypeFromFile(file), undefined);
 
   const chunk = fs.readFileSync(file);
   t.strictEqual(await fileTypeFromBuffer(chunk), undefined);
@@ -188,7 +188,7 @@ async function loadEntireFile(
 ) {
   const buffer = [];
   for await (const chunk of readable) {
-    buffer.push(Buffer.from(chunk));
+    buffer.push(Buffer.from(chunk as ArrayBuffer));
   }
 
   return Buffer.concat(buffer);

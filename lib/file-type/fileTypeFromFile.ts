@@ -10,6 +10,10 @@ import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
  * @returns The detected file type and MIME type or `undefined` when there is no match.
  */
 
+/**
+ *
+ * @param path
+ */
 export async function fileTypeFromFile(
   path: string
 ): Promise<FileTypeResult | undefined> {

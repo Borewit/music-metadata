@@ -22,7 +22,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
   /**
    * Tokenizer-stream position
    */
-  public position: number = 0;
+  public position = 0;
 
   private numBuffer = new Uint8Array(8);
 
@@ -105,18 +105,18 @@ export abstract class AbstractTokenizer implements ITokenizer {
   /**
    * Ignore number of bytes, advances the pointer in under tokenizer-stream.
    * @param length - Number of bytes to ignore
-   * @return resolves the number of bytes ignored, equals length if this available, otherwise the number of bytes available
+   * @returns resolves the number of bytes ignored, equals length if this available, otherwise the number of bytes available
    */
-  public async ignore(length: number): Promise<number> {
+  public ignore(length: number): Promise<number> {
     if (this.fileInfo.size !== undefined) {
       const bytesLeft = this.fileInfo.size - this.position;
       if (length > bytesLeft) {
         this.position += bytesLeft;
-        return bytesLeft;
+        return Promise.resolve(bytesLeft);
       }
     }
     this.position += length;
-    return length;
+    return Promise.resolve(length);
   }
 
   public async close(): Promise<void> {
@@ -127,11 +127,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
     uint8Array: Uint8Array,
     options?: IReadChunkOptions
   ): INormalizedReadChunkOptions {
-    if (
-      options &&
-      options.position !== undefined &&
-      options.position < this.position
-    ) {
+    if (options?.position !== undefined && options.position < this.position) {
       throw new Error(
         "`options.position` must be equal or greater than `tokenizer.position`"
       );
@@ -141,9 +137,10 @@ export abstract class AbstractTokenizer implements ITokenizer {
       return {
         mayBeLess: options.mayBeLess === true,
         offset: options.offset ? options.offset : 0,
-        length: options.length
-          ? options.length
-          : uint8Array.length - (options.offset ? options.offset : 0),
+        length:
+          options.length > 0
+            ? options.length
+            : uint8Array.length - (options.offset ? options.offset : 0),
         position: options.position ? options.position : this.position,
       };
     }

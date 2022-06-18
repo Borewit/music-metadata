@@ -10,9 +10,8 @@ export class BufferTokenizer extends AbstractTokenizer {
    */
   constructor(private uint8Array: Uint8Array, fileInfo?: IFileInfo) {
     super(fileInfo);
-    this.fileInfo.size = this.fileInfo.size
-      ? this.fileInfo.size
-      : uint8Array.length;
+    this.fileInfo.size =
+      this.fileInfo.size > 0 ? this.fileInfo.size : uint8Array.length;
   }
 
   /**
@@ -25,7 +24,7 @@ export class BufferTokenizer extends AbstractTokenizer {
     uint8Array: Uint8Array,
     options?: IReadChunkOptions
   ): Promise<number> {
-    if (options && options.position) {
+    if (options?.position) {
       if (options.position < this.position) {
         throw new Error(
           "`options.position` must be equal or greater than `tokenizer.position`"
@@ -45,7 +44,7 @@ export class BufferTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns {Promise<number>}
    */
-  public async peekBuffer(
+  public peekBuffer(
     uint8Array: Uint8Array,
     options?: IReadChunkOptions
   ): Promise<number> {
@@ -65,7 +64,7 @@ export class BufferTokenizer extends AbstractTokenizer {
         ),
         normOptions.offset
       );
-      return bytes2read;
+      return Promise.resolve(bytes2read);
     }
   }
 

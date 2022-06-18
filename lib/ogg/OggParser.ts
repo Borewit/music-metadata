@@ -1,9 +1,7 @@
 import * as Token from "../token-types";
-import { IGetToken, EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../strtok3";
 import initDebug from "debug";
 
-import * as util from "../common/Util";
-import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
 
 import { VorbisParser } from "./vorbis/VorbisParser";
@@ -67,7 +65,7 @@ export class OggParser extends BasicParser {
             0
           );
           switch (id) {
-            case "\x01vorbis": // Ogg/Vorbis
+            case "\u0001vorbis": // Ogg/Vorbis
               debug("Set page consumer to Ogg/Vorbis");
               this.pageConsumer = new VorbisParser(this.metadata, this.options);
               break;
@@ -88,7 +86,7 @@ export class OggParser extends BasicParser {
               );
               break;
             case "fishead":
-            case "\x00theora": // Ogg/Theora
+            case "\u0000theora": // Ogg/Theora
               debug("Set page consumer to Ogg/Theora");
               this.pageConsumer = new TheoraParser(
                 this.metadata,
@@ -102,8 +100,8 @@ export class OggParser extends BasicParser {
         }
         this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);
-    } catch (err) {
-      if (err instanceof EndOfStreamError) {
+    } catch (error) {
+      if (error instanceof EndOfStreamError) {
         this.metadata.addWarning(
           "Last OGG-page is not marked with last-page flag"
         );
@@ -114,7 +112,7 @@ export class OggParser extends BasicParser {
         if (this.header) {
           this.pageConsumer.calculateDuration(this.header);
         }
-      } else if (err instanceof Error && err.message.startsWith("FourCC")) {
+      } else if (error instanceof Error && error.message.startsWith("FourCC")) {
         if (this.pageNumber > 0) {
           // ignore this error: work-around if last OGG-page is not marked with last-page flag
           this.metadata.addWarning(
@@ -123,7 +121,7 @@ export class OggParser extends BasicParser {
           this.pageConsumer.flush();
         }
       } else {
-        throw err;
+        throw error;
       }
     }
   }

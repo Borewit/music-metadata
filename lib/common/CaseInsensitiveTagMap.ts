@@ -12,8 +12,8 @@ export class CaseInsensitiveTagMap extends CommonTagMapper {
   }
 
   /**
-   * @tag  Native header tag
-   * @return common tag name (alias)
+   * @param tag Native header tag
+   * @returns common tag name (alias)
    */
   protected override getCommonName(tag: string) {
     return this.tagMap[tag.toUpperCase()];

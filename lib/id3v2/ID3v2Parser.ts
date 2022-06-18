@@ -103,7 +103,9 @@ export class ID3v2Parser {
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
-        throw new Error("Unexpected majorVer: " + majorVer);
+        throw new Error(
+          `Unexpected majorVer: ${majorVer as unknown as string}`
+        );
     }
   }
 
@@ -146,7 +148,7 @@ export class ID3v2Parser {
 
     this.id3Header = id3Header;
 
-    this.headerType = ("ID3v2." + id3Header.version.major) as TagType;
+    this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
     return id3Header.flags.isExtendedHeader
       ? this.parseExtendedHeader()
@@ -174,35 +176,56 @@ export class ID3v2Parser {
       new Token.Uint8ArrayType(dataLen)
     );
     for (const tag of this.parseMetadata(uint8Array)) {
-      if (tag.id === "TXXX") {
-        if (tag.value) {
-          for (const text of tag.value.text) {
+      switch (tag.id) {
+        case "TXXX": {
+          if (tag.value) {
+            for (const text of tag.value.text) {
+              this.addTag(
+                ID3v2Parser.makeDescriptionTagName(
+                  tag.id,
+                  tag.value.description as string
+                ),
+                text
+              );
+            }
+          }
+
+          break;
+        }
+        case "COM": {
+          for (const value of tag.value) {
             this.addTag(
-              ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description),
-              text
+              ID3v2Parser.makeDescriptionTagName(
+                tag.id,
+                value.description as string
+              ),
+              value.text
             );
           }
+
+          break;
         }
-      } else if (tag.id === "COM") {
-        for (const value of tag.value) {
-          this.addTag(
-            ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
-            value.text
-          );
+        case "COMM": {
+          for (const value of tag.value) {
+            this.addTag(
+              ID3v2Parser.makeDescriptionTagName(
+                tag.id,
+                value.description as string
+              ),
+              value
+            );
+          }
+
+          break;
         }
-      } else if (tag.id === "COMM") {
-        for (const value of tag.value) {
-          this.addTag(
-            ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
-            value
-          );
-        }
-      } else if (Array.isArray(tag.value)) {
-        for (const value of tag.value) {
-          this.addTag(tag.id, value);
-        }
-      } else {
-        this.addTag(tag.id, tag.value);
+        default:
+          if (Array.isArray(tag.value)) {
+            for (const value of tag.value) {
+              this.addTag(tag.id, value);
+            }
+          } else {
+            this.addTag(tag.id, tag.value);
+          }
       }
     }
   }
@@ -262,7 +285,7 @@ export class ID3v2Parser {
           id: Buffer.from(uint8Array.slice(0, 3)).toString("ascii"),
           length: Token.UINT24_BE.get(uint8Array, 3),
         };
-        if (!header.id.match(/[A-Z0-9]{3}/g)) {
+        if (!/[\dA-Z]{3}/g.test(header.id)) {
           this.metadata.addWarning(
             `Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`
           );
@@ -279,7 +302,7 @@ export class ID3v2Parser {
           ),
           flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10)),
         };
-        if (!header.id.match(/[A-Z0-9]{4}/g)) {
+        if (!/[\dA-Z]{4}/g.test(header.id)) {
           this.metadata.addWarning(
             `Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`
           );
@@ -287,7 +310,7 @@ export class ID3v2Parser {
         break;
 
       default:
-        throw new Error("Unexpected majorVer: " + majorVer);
+        throw new Error(`Unexpected majorVer: ${majorVer}`);
     }
     return header;
   }

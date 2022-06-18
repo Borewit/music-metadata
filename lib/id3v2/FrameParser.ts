@@ -25,11 +25,16 @@ interface IPicture {
 
 const defaultEnc: util.StringEncoding = "latin1"; // latin1 == iso-8859-1;
 
+/**
+ *
+ * @param origVal
+ * @returns
+ */
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
   const genres = [];
   let code: string;
-  let word: string = "";
+  let word = "";
   for (const c of origVal) {
     if (typeof code === "string") {
       if (c === "(" && code === "") {
@@ -53,19 +58,24 @@ export function parseGenre(origVal: string): string[] {
     }
   }
   if (word) {
-    if (genres.length === 0 && word.match(/^\d*$/)) {
-      word = Genres[parseInt(word, 10)];
+    if (genres.length === 0 && /^\d*$/.test(word)) {
+      word = Genres[Number.parseInt(word, 10)];
     }
     genres.push(word);
   }
   return genres;
 }
 
+/**
+ *
+ * @param code
+ * @returns
+ */
 function parseGenreCode(code: string): string {
   if (code === "RX") return "Remix";
   if (code === "CR") return "Cover";
-  if (code.match(/^\d*$/)) {
-    return Genres[parseInt(code, 10)];
+  if (/^\d*$/.test(code)) {
+    return Genres[Number.parseInt(code, 10)];
   }
 }
 
@@ -100,18 +110,18 @@ export class FrameParser {
     const out: IOut = {};
 
     debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
-    switch (type !== "TXXX" && type[0] === "T" ? "T*" : type) {
+    switch (type !== "TXXX" && type.startsWith("T") ? "T*" : type) {
       case "T*": // 4.2.1. Text information frames - details
       case "IPLS": // v2.3: Involved people list
       case "MVIN":
       case "MVNM":
       case "PCS":
-      case "PCST":
+      case "PCST": {
         let text;
         try {
           text = util
             .decodeString(uint8Array.slice(1), encoding)
-            .replace(/\x00+$/, "");
+            .replace(/\0+$/, "");
         } catch (error) {
           if (!(error instanceof Error)) {
             throw error;
@@ -125,7 +135,7 @@ export class FrameParser {
           case "TIPL": // Involved people list
           case "IPLS": // Involved people list
             output = this.splitValue(type, text);
-            output = FrameParser.functionList(output);
+            output = FrameParser.functionList(output as string[]);
             break;
           case "TRK":
           case "TRCK":
@@ -143,9 +153,7 @@ export class FrameParser {
             break;
           case "TCO":
           case "TCON":
-            output = this.splitValue(type, text)
-              .map((v) => parseGenre(v))
-              .reduce((acc, val) => acc.concat(val), []);
+            output = this.splitValue(type, text).flatMap((v) => parseGenre(v));
             break;
           case "PCS":
           case "PCST":
@@ -157,6 +165,7 @@ export class FrameParser {
             output = this.major >= 4 ? this.splitValue(type, text) : [text];
         }
         break;
+      }
 
       case "TXXX":
         output = FrameParser.readIdentifierAndData(
@@ -169,7 +178,9 @@ export class FrameParser {
           description: output.id,
           text: this.splitValue(
             type,
-            util.decodeString(output.data, encoding).replace(/\x00+$/, "")
+            util
+              .decodeString(output.data as Uint8Array, encoding)
+              .replace(/\0+$/, "")
           ),
         };
         break;
@@ -201,7 +212,9 @@ export class FrameParser {
 
             default:
               throw new Error(
-                "Warning: unexpected major versionIndex: " + this.major
+                `Warning: unexpected major versionIndex: ${
+                  this.major as unknown as string
+                }`
               );
           }
 
@@ -267,7 +280,7 @@ export class FrameParser {
 
         out.text = util
           .decodeString(uint8Array.slice(offset, length), encoding)
-          .replace(/\x00+$/, "");
+          .replace(/\0+$/, "");
 
         output = [out];
         break;
@@ -292,7 +305,8 @@ export class FrameParser {
         output = { owner_identifier: output.id, data: output.data };
         break;
 
-      case "POPM": // Popularimeter
+      case "POPM": {
+        // Popularimeter
         fzero = util.findZero(uint8Array, offset, length, defaultEnc);
         const email = util.decodeString(
           uint8Array.slice(offset, fzero),
@@ -309,6 +323,7 @@ export class FrameParser {
               : undefined,
         };
         break;
+      }
 
       case "GEOB": {
         // General encapsulated object
@@ -405,15 +420,14 @@ export class FrameParser {
   /**
    * Converts TMCL (Musician credits list) or TIPL (Involved people list)
    * @param entries
+   * @returns
    */
-  private static functionList(entries: string[]): {
-    [index: string]: string[];
-  } {
-    const res: { [index: string]: string[] } = {};
+  private static functionList(entries: string[]): Record<string, string[]> {
+    const res: Record<string, string[]> = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
       const names: string[] = entries[i + 1].split(",");
-      res[entries[i]] = res.hasOwnProperty(entries[i])
-        ? res[entries[i]].concat(names)
+      res[entries[i]] = Object.prototype.hasOwnProperty.call(res, entries[i])
+        ? [...res[entries[i]], ...names]
         : names;
     }
     return res;
@@ -429,7 +443,7 @@ export class FrameParser {
   private splitValue(tag: string, text: string): string[] {
     let values: string[];
     if (this.major < 4) {
-      values = text.split(/\x00/g);
+      values = text.split(/\0/g);
       if (values.length > 1) {
         this.warningCollector.addWarning(
           `ID3v2.${this.major} ${tag} uses non standard null-separator.`
@@ -438,13 +452,13 @@ export class FrameParser {
         values = text.split(/\//g);
       }
     } else {
-      values = text.split(/\x00/g);
+      values = text.split(/\0/g);
     }
     return FrameParser.trimArray(values);
   }
 
   private static trimArray(values: string[]): string[] {
-    return values.map((value) => value.replace(/\x00+$/, "").trim());
+    return values.map((value) => value.replace(/\0+$/, "").trim());
   }
 
   private static readIdentifierAndData(

@@ -8,6 +8,12 @@ import { IFileInfo } from "./types";
  * @returns BufferTokenizer
  */
 
+/**
+ *
+ * @param uint8Array
+ * @param fileInfo
+ * @returns
+ */
 export function fromBuffer(
   uint8Array: Uint8Array,
   fileInfo?: IFileInfo

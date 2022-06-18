@@ -14,6 +14,13 @@ export interface ITextEncoding {
   bom?: boolean;
 }
 
+/**
+ *
+ * @param buf
+ * @param off
+ * @param bit
+ * @returns
+ */
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
 }
@@ -24,7 +31,7 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
  * @param start Offset in uint8Array
  * @param end Last position to parse in uint8Array
  * @param encoding The string encoding used
- * @return Absolute position on uint8Array where zero found
+ * @returns Absolute position on uint8Array where zero found
  */
 export function findZero(
   uint8Array: Uint8Array,
@@ -48,11 +55,21 @@ export function findZero(
   }
 }
 
+/**
+ *
+ * @param x
+ * @returns
+ */
 export function trimRightNull(x: string): string {
   const pos0 = x.indexOf("\0");
-  return pos0 === -1 ? x : x.substr(0, pos0);
+  return pos0 === -1 ? x : x.slice(0, pos0);
 }
 
+/**
+ *
+ * @param uint8Array
+ * @returns
+ */
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
   if ((l & 1) !== 0) throw new Error("Buffer length must be even");
@@ -66,6 +83,9 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
 
 /**
  * Decode string
+ * @param uint8Array
+ * @param encoding
+ * @returns
  */
 export function decodeString(
   uint8Array: Uint8Array,
@@ -91,9 +111,14 @@ export function decodeString(
   return Buffer.from(uint8Array).toString(encoding);
 }
 
+/**
+ *
+ * @param str
+ * @returns
+ */
 export function stripNulls(str: string): string {
-  str = str.replace(/^\x00+/g, "");
-  str = str.replace(/\x00+$/g, "");
+  str = str.replace(/^\0+/g, "");
+  str = str.replace(/\0+$/g, "");
   return str;
 }
 
@@ -104,7 +129,7 @@ export function stripNulls(str: string): string {
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = lsb
  * @param len Length of number in bits
- * @return Decoded bit aligned number
+ * @returns Decoded bit aligned number
  */
 export function getBitAllignedNumber(
   source: Uint8Array,
@@ -112,7 +137,7 @@ export function getBitAllignedNumber(
   bitOffset: number,
   len: number
 ): number {
-  const byteOff = byteOffset + ~~(bitOffset / 8);
+  const byteOff = byteOffset + Math.trunc(bitOffset / 8);
   const bitOff = bitOffset % 8;
   let value = source[byteOff];
   value &= 0xff >> bitOff;
@@ -138,7 +163,7 @@ export function getBitAllignedNumber(
  * @param source Byte Uint8Array
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is the least significant bit
- * @return True if bit is set
+ * @returns True if bit is set
  */
 export function isBitSet(
   source: Uint8Array,
@@ -148,10 +173,15 @@ export function isBitSet(
   return getBitAllignedNumber(source, byteOffset, bitOffset, 1) === 1;
 }
 
+/**
+ *
+ * @param str
+ * @returns
+ */
 export function a2hex(str: string) {
   const arr = [];
   for (let i = 0, l = str.length; i < l; i++) {
-    const hex = Number(str.charCodeAt(i)).toString(16);
+    const hex = Number(str.codePointAt(i)).toString(16);
     arr.push(hex.length === 1 ? "0" + hex : hex);
   }
   return arr.join(" ");
@@ -160,6 +190,8 @@ export function a2hex(str: string) {
 /**
  * Convert power ratio to DB
  * ratio: [0..1]
+ * @param ratio
+ * @returns
  */
 export function ratioToDb(ratio: number): number {
   return 10 * Math.log10(ratio);
@@ -168,6 +200,8 @@ export function ratioToDb(ratio: number): number {
 /**
  * Convert dB to ratio
  * db Decibels
+ * @param dB
+ * @returns
  */
 export function dbToRatio(dB: number): number {
   return Math.pow(10, dB / 10);
@@ -176,12 +210,12 @@ export function dbToRatio(dB: number): number {
 /**
  * Convert replay gain to ratio and Decibel
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
+ * @returns
  */
 export function toRatio(value: string): IRatio {
   const ps = value.split(" ").map((p) => p.trim().toLowerCase());
-  // @ts-ignore
-  if (ps.length >= 1) {
-    const v = parseFloat(ps[0]);
+  if (ps.length > 0) {
+    const v = Number.parseFloat(ps[0]);
     return ps.length === 2 && ps[1] === "db"
       ? {
           dB: v,

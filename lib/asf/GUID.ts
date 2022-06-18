@@ -13,7 +13,7 @@
  * - https://github.com/dji-sdk/FFmpeg/blob/master/libavformat/asf.c
  */
 export default class GUID {
-  public static fromBin(bin: Buffer, offset: number = 0) {
+  public static fromBin(bin: Buffer, offset = 0) {
     return new GUID(this.decode(bin, offset));
   }
 
@@ -23,7 +23,7 @@ export default class GUID {
    * @param offset Read offset in bytes, default 0
    * @returns GUID as dashed hexadecimal representation
    */
-  public static decode(objectId: Buffer, offset: number = 0): string {
+  public static decode(objectId: Buffer, offset = 0): string {
     const guid =
       objectId.readUInt32LE(offset).toString(16) +
       "-" +
@@ -74,13 +74,13 @@ export default class GUID {
    * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
    * @returns Encoded Binary GUID
    */
-  public static encode(str: string): Buffer {
+  public static encode(guid: string): Buffer {
     const bin = Buffer.alloc(16);
-    bin.writeUInt32LE(parseInt(str.slice(0, 8), 16), 0);
-    bin.writeUInt16LE(parseInt(str.slice(9, 13), 16), 4);
-    bin.writeUInt16LE(parseInt(str.slice(14, 18), 16), 6);
-    Buffer.from(str.slice(19, 23), "hex").copy(bin, 8);
-    Buffer.from(str.slice(24), "hex").copy(bin, 10);
+    bin.writeUInt32LE(Number.parseInt(guid.slice(0, 8), 16), 0);
+    bin.writeUInt16LE(Number.parseInt(guid.slice(9, 13), 16), 4);
+    bin.writeUInt16LE(Number.parseInt(guid.slice(14, 18), 16), 6);
+    Buffer.from(guid.slice(19, 23), "hex").copy(bin, 8);
+    Buffer.from(guid.slice(24), "hex").copy(bin, 10);
 
     return bin;
   }

@@ -1,7 +1,6 @@
 import * as util from "../common/Util";
 import * as Token from "../token-types";
-import GUID, { ExtendedStreamPropertiesObject } from "./GUID";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
+import { ExtendedStreamPropertiesObject } from "./GUID";
 import { State } from "./State";
 
 export interface IStreamName {
@@ -44,10 +43,6 @@ export interface IExtendedStreamPropertiesObject {
  */
 export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPropertiesObject> {
   public static guid = ExtendedStreamPropertiesObject;
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 
   public get(buf: Buffer, off: number): IExtendedStreamPropertiesObject {
     return {

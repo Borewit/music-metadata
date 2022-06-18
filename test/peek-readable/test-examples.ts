@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
 
 import { describe, assert, it } from "vitest";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import { join } from "node:path";
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 
 describe("Examples", () => {
   it("first example", async () => {
     const readable = fs.createReadStream(
-      path.join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
+      join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
     );
     const streamReader = new StreamReader(readable);
     const uint8Array = new Uint8Array(16);
@@ -18,7 +18,7 @@ describe("Examples", () => {
 
   it("End-of-stream detection", async () => {
     const fileReadStream = fs.createReadStream(
-      path.join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
+      join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
     );
     const streamReader = new StreamReader(fileReadStream);
     const uint8Array = new Uint8Array(16);
@@ -39,7 +39,7 @@ describe("Examples", () => {
 
   it("peek", async () => {
     const fileReadStream = fs.createReadStream(
-      path.join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
+      join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
     );
     const streamReader = new StreamReader(fileReadStream);
     const buffer = Buffer.alloc(20);
@@ -53,13 +53,13 @@ describe("Examples", () => {
     ) {
       console.log("This is a JPEG file");
     } else {
-      throw Error("Expected a JPEG file");
+      throw new Error("Expected a JPEG file");
     }
     bytesRead = await streamReader.read(buffer, 0, 20); // Read JPEG header
     if (bytesRead === 20) {
       console.log("Got the JPEG header");
     } else {
-      throw Error("Failed to read JPEG header");
+      throw new Error("Failed to read JPEG header");
     }
   });
 });

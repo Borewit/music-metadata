@@ -15,7 +15,6 @@ import { FileTypeParser } from "./FileTypeParser";
  * An example is [`@tokenizer/http`](https://github.com/Borewit/tokenizer-http), which requests data using [HTTP-range-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
  * A difference with a conventional stream and the [*tokenizer*](https://github.com/Borewit/strtok3#tokenizer), is that it is able to *ignore* (seek, fast-forward) in the stream. For example,
  * you may only need and read the first 6 bytes, and the last 128 bytes, which may be an advantage in case reading the entire file would take longer.
- *
  * @example
  * ```
  * import {makeTokenizer} from '@tokenizer/http';
@@ -30,7 +29,6 @@ import { FileTypeParser } from "./FileTypeParser";
  * //=> {ext: 'mp3', mime: 'audio/mpeg'}
  * ```
  */
-
 export async function fileTypeFromTokenizer(
   tokenizer: ITokenizer
 ): Promise<FileTypeResult | undefined> {

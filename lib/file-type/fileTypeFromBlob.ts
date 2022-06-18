@@ -19,6 +19,10 @@ import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
  * ```
  */
 
+/**
+ *
+ * @param blob
+ */
 export async function fileTypeFromBlob(
   blob: Blob
 ): Promise<FileTypeResult | undefined> {

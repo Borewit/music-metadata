@@ -24,7 +24,7 @@ export class NameAtom implements IGetToken<INameAtom> {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      name: new Token.StringType(this.len - 4, "utf-8").get(buf, off + 4),
+      name: new Token.StringType(this.len - 4, "utf8").get(buf, off + 4),
     };
   }
 }

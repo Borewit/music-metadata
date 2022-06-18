@@ -22,7 +22,7 @@ export class StringType implements IGetToken<string, Buffer> {
 export class AnsiStringType implements IGetToken<string> {
   public constructor(public len: number) {}
 
-  public get(buffer: Buffer, offset: number = 0): string {
+  public get(buffer: Buffer, offset = 0): string {
     return decodeAnsiStringType(buffer, offset, offset + this.len);
   }
 }
@@ -39,6 +39,13 @@ const windows1252 = [
   246, 247, 248, 249, 250, 251, 252, 253, 254, 255,
 ] as const;
 
+/**
+ *
+ * @param buffer
+ * @param offset
+ * @param until
+ * @returns
+ */
 function decodeAnsiStringType(
   buffer: Uint8Array,
   offset: number,
@@ -51,19 +58,36 @@ function decodeAnsiStringType(
   return str;
 }
 
+/**
+ *
+ * @param a
+ * @param min
+ * @param max
+ * @returns
+ */
 function inRange(a: number, min: number, max: number): boolean {
   return min <= a && a <= max;
 }
 
+/**
+ *
+ * @param cp
+ * @returns
+ */
 function codePointToString(cp: number): string {
-  if (cp <= 0xffff) {
-    return String.fromCharCode(cp);
+  if (cp <= 0xff_ff) {
+    return String.fromCodePoint(cp);
   } else {
-    cp -= 0x10000;
-    return String.fromCharCode((cp >> 10) + 0xd800, (cp & 0x3ff) + 0xdc00);
+    cp -= 0x1_00_00;
+    return String.fromCodePoint((cp >> 10) + 0xd8_00, (cp & 0x3_ff) + 0xdc_00);
   }
 }
 
+/**
+ *
+ * @param bite
+ * @returns
+ */
 function singleByteDecoder(bite: number): number {
   if (inRange(bite, 0x00, 0x7f)) {
     return bite;
@@ -71,7 +95,7 @@ function singleByteDecoder(bite: number): number {
 
   const codePoint = windows1252[bite - 0x80];
   if (codePoint === null) {
-    throw Error("invaliding encoding");
+    throw new Error("invaliding encoding");
   }
 
   return codePoint;

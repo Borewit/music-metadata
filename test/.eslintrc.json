@@ -9,6 +9,7 @@ ESLint configuration
       {
         "devDependencies": true
       }
-    ]
+    ],
+    "jsdoc/require-jsdoc": "off"
   }
 }

@@ -1,5 +1,5 @@
 // Utility functions for testing
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 
 /**
  * A mock stream implementation that breaks up provided data into
@@ -7,7 +7,7 @@ import { Readable } from "stream";
  * data arriving with arbitrary packet boundaries.
  */
 export class SourceStream extends Readable {
-  public static FromString(str: string = ""): SourceStream {
+  public static FromString(str = ""): SourceStream {
     return new SourceStream(Buffer.from(str, "binary"));
   }
 

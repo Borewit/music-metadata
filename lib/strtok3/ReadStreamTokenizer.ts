@@ -1,9 +1,9 @@
 import { AbstractTokenizer } from "./AbstractTokenizer";
 import { EndOfStreamError, StreamReader } from "../peek-readable";
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import { IFileInfo, IReadChunkOptions } from "./types";
 
-const maxBufferSize = 256000;
+const maxBufferSize = 256_000;
 
 export class ReadStreamTokenizer extends AbstractTokenizer {
   private streamReader: StreamReader;
@@ -15,9 +15,9 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
 
   /**
    * Get file information, an HTTP-client may implement this doing a HEAD request
-   * @return Promise with file information
+   * @returns Promise with file information
    */
-  public async getFileInfo(): Promise<IFileInfo> {
+  public getFileInfo(): IFileInfo {
     return this.fileInfo;
   }
 
@@ -92,11 +92,11 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
           normOptions.offset,
           normOptions.length
         );
-      } catch (err) {
-        if (options && options.mayBeLess && err instanceof EndOfStreamError) {
+      } catch (error) {
+        if (options?.mayBeLess && error instanceof EndOfStreamError) {
           return 0;
         }
-        throw err;
+        throw error;
       }
       if (!normOptions.mayBeLess && bytesRead < normOptions.length) {
         throw new EndOfStreamError();

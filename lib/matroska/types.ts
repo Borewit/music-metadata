@@ -12,16 +12,14 @@ export enum DataType {
   float,
 }
 
-export interface IElementType<T> {
+export interface IElementType {
   readonly name: string;
   readonly value?: DataType;
   readonly container?: IContainerType;
   readonly multiple?: boolean;
 }
 
-export interface IContainerType {
-  [id: number]: IElementType<string | number | boolean | Buffer>;
-}
+export type IContainerType = Record<number, IElementType>;
 
 export interface ITree {
   [name: string]: string | number | boolean | Buffer | ITree | ITree[];

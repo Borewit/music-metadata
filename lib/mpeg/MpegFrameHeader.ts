@@ -20,7 +20,6 @@ type UInt4 =
   | 0xd
   | 0xe
   | 0xf;
-type UInt2 = 0 | 1 | 2 | 3;
 
 type MPEG4Channel =
   | "front-center"
@@ -55,17 +54,17 @@ const MPEG4 = {
    * https://wiki.multimedia.cx/index.php/MPEG-4_Audio#Sampling_Frequencies
    */
   SamplingFrequencies: [
-    96000,
-    88200,
-    64000,
-    48000,
-    44100,
-    32000,
-    24000,
-    22050,
-    16000,
-    12000,
-    11025,
+    96_000,
+    88_200,
+    64_000,
+    48_000,
+    44_100,
+    32_000,
+    24_000,
+    22_050,
+    16_000,
+    12_000,
+    11_025,
     8000,
     7350,
     undefined,
@@ -142,9 +141,9 @@ export class MpegFrameHeader {
   };
 
   private static sampling_rate_freq_index = {
-    1: { 0x00: 44100, 0x01: 48000, 0x02: 32000 },
-    2: { 0x00: 22050, 0x01: 24000, 0x02: 16000 },
-    2.5: { 0x00: 11025, 0x01: 12000, 0x02: 8000 },
+    1: { 0x00: 44_100, 0x01: 48_000, 0x02: 32_000 },
+    2: { 0x00: 22_050, 0x01: 24_000, 0x02: 16_000 },
+    2.5: { 0x00: 11_025, 0x01: 12_000, 0x02: 8000 },
   };
 
   private static samplesInFrameTable = [
@@ -290,7 +289,7 @@ export class MpegFrameHeader {
   private parseAdtsHeader(buf: Uint8Array, off: number): void {
     debug(`layer=0 => ADTS`);
     this.version = this.versionIndex === 2 ? 4 : 2;
-    this.container = "ADTS/MPEG-" + this.version;
+    this.container = `ADTS/MPEG-${this.version}`;
     const profileIndex = common.getBitAllignedNumber(buf, off + 2, 0, 2);
     this.codec = "AAC";
     this.codecProfile = MPEG4.AudioObjectTypes[profileIndex];

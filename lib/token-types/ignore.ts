@@ -10,7 +10,7 @@ export class IgnoreType implements IGetToken<void> {
   constructor(public len: number) {}
 
   // ToDo: don't read, but skip data
-  public get(array: Uint8Array, off: number) {
+  public get(_array: Uint8Array, _off: number) {
     // empty
   }
 }

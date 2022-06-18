@@ -63,8 +63,13 @@ interface ITrackDescription extends ITrackHeaderAtom {
 
 type IAtomParser = (payloadLength: number) => Promise<any>;
 
-function distinct(value: any, index: number, self: any[]) {
-  return self.indexOf(value) === index;
+/**
+ *
+ * @param array
+ * @returns
+ */
+function uniqueArray<T>(array: T[]): T[] {
+  return [...new Set(array)];
 }
 
 /*
@@ -103,11 +108,9 @@ export class MP4Parser extends BasicParser {
         return signed ? Token.INT64_BE : Token.UINT64_BE;
       default:
         throw new Error(
-          'Token for integer type not found: "' +
-            (signed ? "INT" : "UINT") +
-            array.length * 8 +
-            (array.length > 1 ? "_BE" : "") +
-            '"'
+          `Token for integer type not found: "${signed ? "INT" : "UINT"}${
+            array.length * 8
+          }${array.length > 1 ? "_BE" : ""}"`
         );
     }
   }
@@ -120,7 +123,11 @@ export class MP4Parser extends BasicParser {
 
     let remainingFileSize = this.tokenizer.fileInfo.size;
 
-    while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
+    while (
+      this.tokenizer.fileInfo.size === undefined ||
+      this.tokenizer.fileInfo.size === 0 ||
+      remainingFileSize > 0
+    ) {
       try {
         const token = await this.tokenizer.peekToken<IAtomHeader>(Header);
         if (token.name === "\0\0\0\0") {
@@ -152,10 +159,10 @@ export class MP4Parser extends BasicParser {
 
     // Post process metadata
     const formatList: string[] = [];
-    this.tracks.forEach((track) => {
+    for (const track of this.tracks) {
       const trackFormats: string[] = [];
 
-      track.soundSampleDescription.forEach((ssd) => {
+      for (const ssd of track.soundSampleDescription) {
         const streamInfo: ITrackInfo = {};
         const encoderInfo = encoderDict[ssd.dataFormat];
         if (encoderInfo) {
@@ -176,26 +183,26 @@ export class MP4Parser extends BasicParser {
           }
         }
         this.metadata.addStreamInfo(streamInfo);
-      });
+      }
 
-      if (trackFormats.length >= 1) {
+      if (trackFormats.length > 0) {
         formatList.push(trackFormats.join("/"));
       }
-    });
+    }
 
     if (formatList.length > 0) {
-      this.metadata.setFormat("codec", formatList.filter(distinct).join("+"));
+      this.metadata.setFormat("codec", uniqueArray(formatList).join("+"));
     }
 
     const audioTracks = this.tracks.filter((track) => {
       return (
-        track.soundSampleDescription.length >= 1 &&
+        track.soundSampleDescription.length > 0 &&
         track.soundSampleDescription[0].description &&
         track.soundSampleDescription[0].description.numAudioChannels > 0
       );
     });
 
-    if (audioTracks.length >= 1) {
+    if (audioTracks.length > 0) {
       const audioTrack = audioTracks[0];
 
       const duration = audioTrack.duration / audioTrack.timeScale;
@@ -264,8 +271,9 @@ export class MP4Parser extends BasicParser {
 
   /**
    * Parse data of Meta-item-list-atom (item of 'ilst' atom)
-   * @param metaAtom
    * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+   * @param metaAtom
+   * @returns
    */
   private parseMetadataItemData(metaAtom: Atom): Promise<void> {
     let tagKey = metaAtom.header.name;
@@ -278,22 +286,26 @@ export class MP4Parser extends BasicParser {
           case "data": // value atom
             return this.parseValueAtom(tagKey, child);
 
-          case "name": // name atom (optional)
+          case "name": {
+            // name atom (optional)
             const name = await this.tokenizer.readToken<INameAtom>(
               new NameAtom(payLoadLength)
             );
             tagKey += ":" + name.name;
             break;
+          }
 
-          case "mean": // name atom (optional)
+          case "mean": {
+            // name atom (optional)
             const mean = await this.tokenizer.readToken<INameAtom>(
               new NameAtom(payLoadLength)
             );
             // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
             tagKey += ":" + mean.name;
             break;
+          }
 
-          default:
+          default: {
             const dataAtom = await this.tokenizer.readToken<Buffer>(
               new Token.BufferType(payLoadLength)
             );
@@ -307,6 +319,7 @@ export class MP4Parser extends BasicParser {
                 " ascii=" +
                 dataAtom.toString("ascii")
             );
+          }
         }
       },
       metaAtom.getPayloadLength(0)
@@ -319,7 +332,7 @@ export class MP4Parser extends BasicParser {
     );
 
     if (dataAtom.type.set !== 0) {
-      throw new Error("Unsupported type-set != 0: " + dataAtom.type.set);
+      throw new Error(`Unsupported type-set != 0: ${dataAtom.type.set}`);
     }
 
     // Use well-known-type table
@@ -328,20 +341,20 @@ export class MP4Parser extends BasicParser {
       case 0: // reserved: Reserved for use where no type needs to be indicated
         switch (tagKey) {
           case "trkn":
-          case "disk":
+          case "disk": {
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
-            this.addTag(tagKey, num + "/" + of);
+            this.addTag(tagKey, `${num}/${of}`);
             break;
-
-          case "gnre":
+          }
+          case "gnre": {
             const genreInt = Token.UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
             this.addTag(tagKey, genreStr);
             break;
-
+          }
           default:
           // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
           // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
@@ -350,7 +363,7 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        this.addTag(tagKey, dataAtom.value.toString("utf-8"));
+        this.addTag(tagKey, dataAtom.value.toString("utf8"));
         break;
 
       case 13: // JPEG
@@ -405,10 +418,11 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private atomParsers: { [id: string]: IAtomParser } = {
+  private atomParsers: Record<string, IAtomParser> = {
     /**
      * Parse movie header (mvhd) atom
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
+     * @param len
      */
     mvhd: async (len: number) => {
       const mvhd = await this.tokenizer.readToken<IAtomMvhd>(new MvhdAtom(len));
@@ -419,6 +433,7 @@ export class MP4Parser extends BasicParser {
     /**
      * Parse media header (mdhd) atom
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25615
+     * @param len
      */
     mdhd: async (len: number) => {
       const mdhd_data = await this.tokenizer.readToken<IAtomMdhd>(
@@ -454,6 +469,7 @@ export class MP4Parser extends BasicParser {
     /**
      * Parse mdat atom.
      * Will scan for chapters
+     * @param len
      */
     mdat: async (len: number) => {
       this.audioLengthInBytes = len;
@@ -465,8 +481,8 @@ export class MP4Parser extends BasicParser {
         );
         if (trackWithChapters.length === 1) {
           const chapterTrackIds = trackWithChapters[0].chapterList;
-          const chapterTracks = this.tracks.filter(
-            (track) => chapterTrackIds.indexOf(track.trackId) !== -1
+          const chapterTracks = this.tracks.filter((track) =>
+            chapterTrackIds.includes(track.trackId)
           );
           if (chapterTracks.length === 1) {
             return this.parseChapterTrack(
@@ -491,12 +507,13 @@ export class MP4Parser extends BasicParser {
         }
       }
       debug(`ftyp: ${types.join("/")}`);
-      const x = types.filter(distinct).join("/");
+      const x = uniqueArray(types).join("/");
       this.metadata.setFormat("container", x);
     },
 
     /**
      * Parse sample description atom
+     * @param len
      */
     stsd: async (len: number) => {
       const stsd = await this.tokenizer.readToken<IAtomStsd>(new StsdAtom(len));
@@ -508,6 +525,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * sample-to-Chunk Atoms
+     * @param len
      */
     stsc: async (len: number) => {
       const stsc = await this.tokenizer.readToken<ITableAtom<ISampleToChunk>>(
@@ -518,6 +536,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * time to sample
+     * @param len
      */
     stts: async (len: number) => {
       const stts = await this.tokenizer.readToken<
@@ -528,6 +547,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * Parse sample-sizes atom ('stsz')
+     * @param len
      */
     stsz: async (len: number) => {
       const stsz = await this.tokenizer.readToken<IStszAtom>(new StszAtom(len));
@@ -538,6 +558,7 @@ export class MP4Parser extends BasicParser {
 
     /**
      * Parse chunk-offset atom ('stco')
+     * @param len
      */
     stco: async (len: number) => {
       const stco = await this.tokenizer.readToken<ITableAtom<number>>(
@@ -548,15 +569,16 @@ export class MP4Parser extends BasicParser {
 
     date: async (len: number) => {
       const date = await this.tokenizer.readToken(
-        new Token.StringType(len, "utf-8")
+        new Token.StringType(len, "utf8")
       );
       this.addTag("date", date);
     },
   };
 
   /**
-   * @param sampleDescription
    * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-128916
+   * @param sampleDescription
+   * @returns
    */
   private parseSoundSampleDescription(
     sampleDescription: ISampleDescription
@@ -580,7 +602,11 @@ export class MP4Parser extends BasicParser {
         offset
       );
     } else {
-      debug(`Warning: sound-sample-description ${version} not implemented`);
+      debug(
+        `Warning: sound-sample-description ${
+          version as unknown as string
+        } not implemented`
+      );
     }
     return ssd;
   }
@@ -590,14 +616,14 @@ export class MP4Parser extends BasicParser {
     track: ITrackDescription,
     len: number
   ): Promise<void> {
-    if (!chapterTrack.sampleSize) {
-      if (
-        chapterTrack.chunkOffsetTable.length !==
+    if (
+      !chapterTrack.sampleSize &&
+      chapterTrack.chunkOffsetTable.length !==
         chapterTrack.sampleSizeTable.length
-      )
-        throw new Error(
-          "Expected equal chunk-offset-table & sample-size-table length."
-        );
+    ) {
+      throw new Error(
+        "Expected equal chunk-offset-table & sample-size-table length."
+      );
     }
     const chapters: IChapter[] = [];
     for (let i = 0; i < chapterTrack.chunkOffsetTable.length && len > 0; ++i) {
@@ -630,9 +656,9 @@ export class MP4Parser extends BasicParser {
     chapterOffset: number
   ): number {
     let totalDuration = 0;
-    track.timeToSampleTable.forEach((e) => {
+    for (const e of track.timeToSampleTable) {
       totalDuration += e.count * e.duration;
-    });
+    }
     debug(`Total duration=${totalDuration}`);
 
     let chunkIndex = 0;

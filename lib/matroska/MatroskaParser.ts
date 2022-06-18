@@ -28,7 +28,7 @@ const debug = initDebug("music-metadata:parser:matroska");
  * WEBM VP8 AUDIO FILE
  */
 export class MatroskaParser extends BasicParser {
-  private padding: number = 0;
+  private padding = 0;
 
   private parserMap = new Map<DataType, (e: IHeader) => Promise<any>>();
 
@@ -53,6 +53,7 @@ export class MatroskaParser extends BasicParser {
    * @param {INativeMetadataCollector} metadata Output
    * @param {ITokenizer} tokenizer Input
    * @param {IOptions} options Parsing options
+   * @returns
    */
   public override init(
     metadata: INativeMetadataCollector,
@@ -74,15 +75,17 @@ export class MatroskaParser extends BasicParser {
     if (matroska.segment) {
       const info = matroska.segment.info;
       if (info) {
-        const timecodeScale = info.timecodeScale ? info.timecodeScale : 1000000;
-        const duration = (info.duration * timecodeScale) / 1000000000;
+        const timecodeScale = info.timecodeScale
+          ? info.timecodeScale
+          : 1_000_000;
+        const duration = (info.duration * timecodeScale) / 1_000_000_000;
         this.addTag("segment:title", info.title);
         this.metadata.setFormat("duration", duration);
       }
 
       const audioTracks = matroska.segment.tracks;
-      if (audioTracks && audioTracks.entries) {
-        audioTracks.entries.forEach((entry) => {
+      if (audioTracks?.entries) {
+        for (const entry of audioTracks.entries) {
           const stream: ITrackInfo = {
             codecName: entry.codecID.replace("A_", "").replace("V_", ""),
             codecSettings: entry.codecSettings,
@@ -96,23 +99,27 @@ export class MatroskaParser extends BasicParser {
             video: entry.video,
           };
           this.metadata.addStreamInfo(stream);
-        });
+        }
 
         const audioTrack = audioTracks.entries
           .filter((entry) => {
             return entry.trackType === TrackType.audio.valueOf();
           })
-          .reduce((acc, cur) => {
-            if (!acc) {
-              return cur;
+          // eslint-disable-next-line unicorn/no-array-reduce
+          .reduce((previousValue, currentValue) => {
+            if (!previousValue) {
+              return currentValue;
             }
-            if (!acc.flagDefault && cur.flagDefault) {
-              return cur;
+            if (!previousValue.flagDefault && currentValue.flagDefault) {
+              return currentValue;
             }
-            if (cur.trackNumber && cur.trackNumber < acc.trackNumber) {
-              return cur;
+            if (
+              currentValue.trackNumber &&
+              currentValue.trackNumber < previousValue.trackNumber
+            ) {
+              return currentValue;
             }
-            return acc;
+            return previousValue;
           }, null);
 
         if (audioTrack) {
@@ -131,24 +138,24 @@ export class MatroskaParser extends BasicParser {
         }
 
         if (matroska.segment.tags) {
-          matroska.segment.tags.tag.forEach((tag) => {
+          for (const tag of matroska.segment.tags.tag) {
             const target = tag.target;
             const targetType = target?.targetTypeValue
               ? TargetType[target.targetTypeValue]
               : target?.targetType
               ? target.targetType
               : "track";
-            tag.simpleTags.forEach((simpleTag) => {
+            for (const simpleTag of tag.simpleTags) {
               const value = simpleTag.string
                 ? simpleTag.string
                 : simpleTag.binary;
               this.addTag(`${targetType}:${simpleTag.name}`, value);
-            });
-          });
+            }
+          }
         }
 
         if (matroska.segment.attachments) {
-          matroska.segment.attachments.attachedFiles
+          for (const picture of matroska.segment.attachments.attachedFiles
             .filter((file) => file.mimeType.startsWith("image/"))
             .map((file) => {
               return {
@@ -157,10 +164,9 @@ export class MatroskaParser extends BasicParser {
                 description: file.description,
                 name: file.name,
               };
-            })
-            .forEach((picture) => {
-              this.addTag("picture", picture);
-            });
+            })) {
+            this.addTag("picture", picture);
+          }
         }
       }
     }
@@ -189,7 +195,7 @@ export class MatroskaParser extends BasicParser {
           const res = await this.parseContainer(
             type.container,
             element.len >= 0 ? this.tokenizer.position + element.len : -1,
-            path.concat([type.name])
+            [...path, type.name]
           );
           if (type.multiple) {
             if (!tree[type.name]) {
@@ -264,7 +270,7 @@ export class MatroskaParser extends BasicParser {
   private async readFloat(e: IHeader) {
     switch (e.len) {
       case 0:
-        return 0.0;
+        return 0;
       case 4:
         return this.tokenizer.readNumber(Float32_BE);
       case 8:
@@ -288,7 +294,7 @@ export class MatroskaParser extends BasicParser {
 
   private async readString(e: IHeader): Promise<string> {
     const rawString = await this.tokenizer.readToken(
-      new StringType(e.len, "utf-8")
+      new StringType(e.len, "utf8")
     );
     return rawString.replace(/\00.*$/g, "");
   }

@@ -53,7 +53,7 @@ export const INT24_LE: IToken<number> = {
   len: 3,
   get(array: Uint8Array, offset: number): number {
     const unsigned = UINT24_LE.get(array, offset);
-    return unsigned > 0x7fffff ? unsigned - 0x1000000 : unsigned;
+    return unsigned > 0x7f_ff_ff ? unsigned - 0x1_00_00_00 : unsigned;
   },
   put(array: Uint8Array, offset: number, value: number): number {
     const dataView = dv(array);
@@ -70,7 +70,7 @@ export const INT24_BE: IToken<number> = {
   len: 3,
   get(array: Uint8Array, offset: number): number {
     const unsigned = UINT24_BE.get(array, offset);
-    return unsigned > 0x7fffff ? unsigned - 0x1000000 : unsigned;
+    return unsigned > 0x7f_ff_ff ? unsigned - 0x1_00_00_00 : unsigned;
   },
   put(array: Uint8Array, offset: number, value: number): number {
     const dataView = dv(array);

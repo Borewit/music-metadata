@@ -1,32 +1,42 @@
-import * as path from "path";
-import * as fs from "fs";
+import { join } from "node:path";
+import * as fs from "node:fs";
 
 import { commonTags } from "../lib/common/GenericTagInfo";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 
 import * as markDown from "./MarkDown";
 
-interface ITagInfoDict {
-  [key: string]: { description: string };
-}
+type ITagInfoDict = Record<string, { description: string }>;
 
 const combinedTagMapper = new CombinedTagMapper();
 
+/**
+ *
+ * @param nativeType
+ * @param commonTag
+ * @returns
+ */
 function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const result: string[] = [];
 
   const tagMapper = combinedTagMapper.tagMappers[nativeType];
-  Object.keys(tagMapper.tagMap).forEach((nativeTag) => {
+  for (const nativeTag of Object.keys(tagMapper.tagMap)) {
     if (commonTag === tagMapper.tagMap[nativeTag]) {
       result.push(nativeTag);
     }
-  });
+  }
   return result;
 }
 
+/**
+ *
+ * @param out
+ */
 function write(out: fs.WriteStream) {
-  const json = fs.readFileSync(path.join(__dirname, "common.json"));
-  const commonDescriptionDict: ITagInfoDict = JSON.parse(json as any);
+  const json = fs.readFileSync(join(__dirname, "common.json"));
+  const commonDescriptionDict: ITagInfoDict = JSON.parse(
+    json as unknown as string
+  );
 
   const table = new markDown.Table();
 
@@ -57,7 +67,7 @@ function write(out: fs.WriteStream) {
 }
 
 const txt = fs.createWriteStream(
-  path.join(__dirname, "..", "doc", "common_metadata.md")
+  join(__dirname, "..", "doc", "common_metadata.md")
 );
 
 txt.write("# Common Metadata\n\n");

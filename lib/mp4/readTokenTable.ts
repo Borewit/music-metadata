@@ -3,6 +3,15 @@ import { IGetToken } from "../strtok3";
 
 const debug = initDebug("music-metadata:parser:MP4:atom");
 
+/**
+ *
+ * @param buf
+ * @param token
+ * @param off
+ * @param remainingLen
+ * @param numberOfEntries
+ * @returns
+ */
 export function readTokenTable<T>(
   buf: Buffer,
   token: IGetToken<T>,

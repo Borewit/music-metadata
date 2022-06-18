@@ -32,7 +32,7 @@ export class Common implements IGetToken<ICommon> {
 
   public get(buf: Buffer, off: number): ICommon {
     // see: https://cycling74.com/forums/aiffs-80-bit-sample-rate-value
-    const shift = buf.readUInt16BE(off + 8) - 16398;
+    const shift = buf.readUInt16BE(off + 8) - 16_398;
     const baseSampleRate = buf.readUInt16BE(off + 8 + 2);
 
     const res: ICommon = {

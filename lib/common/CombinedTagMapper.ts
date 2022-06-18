@@ -13,10 +13,10 @@ import { INativeMetadataCollector } from "./INativeMetadataCollector";
 import { MatroskaTagMapper } from "../matroska/MatroskaTagMapper";
 
 export class CombinedTagMapper {
-  public tagMappers: { [index: string]: IGenericTagMapper } = {};
+  public tagMappers: Record<string, IGenericTagMapper> = {};
 
   public constructor() {
-    [
+    for (const mapper of [
       new ID3v1TagMapper(),
       new ID3v22TagMapper(),
       new ID3v24TagMapper(),
@@ -27,9 +27,9 @@ export class CombinedTagMapper {
       new AsfTagMapper(),
       new RiffInfoTagMapper(),
       new MatroskaTagMapper(),
-    ].forEach((mapper) => {
+    ]) {
       this.registerTagMapper(mapper);
-    });
+    }
   }
 
   /**
@@ -37,7 +37,7 @@ export class CombinedTagMapper {
    * @param tagType Originating tag format
    * @param tag     Native tag to map to a generic tag id
    * @param warnings
-   * @return Generic tag result (output of this function)
+   * @returns Generic tag result (output of this function)
    */
   public mapTag(
     tagType: TagType,
