@@ -149,19 +149,16 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case "artists":
         if (
-          !this.common.artist ||
-          this.commonOrigin.artist === this.originPriority.artificial
+          (!this.common.artist ||
+            this.commonOrigin.artist === this.originPriority.artificial) &&
+          (!this.common.artists ||
+            this.common.artists.indexOf((tag as any).value) === -1)
         ) {
-          if (
-            !this.common.artists ||
-            this.common.artists.indexOf((tag as any).value) === -1
-          ) {
-            // Fill artist using artists source
-            const artists = (this.common.artists || []).concat([tag.value]);
-            const value = joinArtists(artists);
-            const artistTag: IGenericTag = { id: "artist", value };
-            this.setGenericTag("artificial", artistTag);
-          }
+          // Fill artist using artists source
+          const artists = (this.common.artists || []).concat([tag.value]);
+          const value = joinArtists(artists);
+          const artistTag: IGenericTag = { id: "artist", value };
+          this.setGenericTag("artificial", artistTag);
         }
         break;
 

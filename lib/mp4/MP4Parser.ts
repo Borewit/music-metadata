@@ -625,14 +625,14 @@ export class MP4Parser extends BasicParser {
     track: ITrackDescription,
     len: number
   ): Promise<void> {
-    if (!chapterTrack.sampleSize) {
-      if (
-        chapterTrack.chunkOffsetTable.length !==
+    if (
+      !chapterTrack.sampleSize &&
+      chapterTrack.chunkOffsetTable.length !==
         chapterTrack.sampleSizeTable.length
-      )
-        throw new Error(
-          "Expected equal chunk-offset-table & sample-size-table length."
-        );
+    ) {
+      throw new Error(
+        "Expected equal chunk-offset-table & sample-size-table length."
+      );
     }
     const chapters: IChapter[] = [];
     for (let i = 0; i < chapterTrack.chunkOffsetTable.length && len > 0; ++i) {
