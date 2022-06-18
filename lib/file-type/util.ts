@@ -6,7 +6,7 @@ import { IGetToken } from "../strtok3";
  * @returns
  */
 export function stringToBytes(str: string) {
-  return [...str].map((character) => character.charCodeAt(0));
+  return [...str].map((character) => character.codePointAt(0));
 }
 
 /**

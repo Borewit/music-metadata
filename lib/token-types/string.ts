@@ -76,10 +76,10 @@ function inRange(a: number, min: number, max: number): boolean {
  */
 function codePointToString(cp: number): string {
   if (cp <= 0xff_ff) {
-    return String.fromCharCode(cp);
+    return String.fromCodePoint(cp);
   } else {
     cp -= 0x1_00_00;
-    return String.fromCharCode((cp >> 10) + 0xd8_00, (cp & 0x3_ff) + 0xdc_00);
+    return String.fromCodePoint((cp >> 10) + 0xd8_00, (cp & 0x3_ff) + 0xdc_00);
   }
 }
 

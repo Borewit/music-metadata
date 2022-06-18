@@ -181,7 +181,7 @@ export function isBitSet(
 export function a2hex(str: string) {
   const arr = [];
   for (let i = 0, l = str.length; i < l; i++) {
-    const hex = Number(str.charCodeAt(i)).toString(16);
+    const hex = Number(str.codePointAt(i)).toString(16);
     arr.push(hex.length === 1 ? "0" + hex : hex);
   }
   return arr.join(" ");
