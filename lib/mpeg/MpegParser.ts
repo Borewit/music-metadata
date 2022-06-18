@@ -84,7 +84,10 @@ export class MpegParser extends AbstractID3Parser {
    */
   protected override finalize() {
     const format = this.metadata.format;
-    const hasID3v1 = Object.prototype.hasOwnProperty.call(this.metadata.native, "ID3v1");
+    const hasID3v1 = Object.prototype.hasOwnProperty.call(
+      this.metadata.native,
+      "ID3v1"
+    );
     if (format.duration && this.tokenizer.fileInfo.size > 0) {
       const mpegSize =
         this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);

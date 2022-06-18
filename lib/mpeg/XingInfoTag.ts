@@ -62,7 +62,9 @@ export async function readXingHeader(
     const match = xingInfoTag.lame.version.match(/\d+.\d+/g);
     if (match) {
       const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
-      const version = majorMinorVersion.split(".").map((n) => Number.parseInt(n, 10));
+      const version = majorMinorVersion
+        .split(".")
+        .map((n) => Number.parseInt(n, 10));
       if (version[0] >= 3 && version[1] >= 90) {
         xingInfoTag.lame.extended = await tokenizer.readToken(
           ExtendedLameHeader

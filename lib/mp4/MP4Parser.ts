@@ -494,8 +494,8 @@ export class MP4Parser extends BasicParser {
         );
         if (trackWithChapters.length === 1) {
           const chapterTrackIds = trackWithChapters[0].chapterList;
-          const chapterTracks = this.tracks.filter(
-            (track) => chapterTrackIds.includes(track.trackId)
+          const chapterTracks = this.tracks.filter((track) =>
+            chapterTrackIds.includes(track.trackId)
           );
           if (chapterTracks.length === 1) {
             return this.parseChapterTrack(

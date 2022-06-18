@@ -212,7 +212,9 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "discogs_artist_id":
       case "discogs_votes":
         tag.value =
-          typeof tag.value === "string" ? Number.parseInt(tag.value, 10) : tag.value;
+          typeof tag.value === "string"
+            ? Number.parseInt(tag.value, 10)
+            : tag.value;
         break;
 
       case "replaygain_track_gain":
@@ -223,11 +225,15 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "replaygain_track_minmax":
-        tag.value = tag.value.split(",").map((v: string) => Number.parseInt(v, 10));
+        tag.value = tag.value
+          .split(",")
+          .map((v: string) => Number.parseInt(v, 10));
         break;
 
       case "replaygain_undo": {
-        const minMix = tag.value.split(",").map((v: string) => Number.parseInt(v, 10));
+        const minMix = tag.value
+          .split(",")
+          .map((v: string) => Number.parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1],
