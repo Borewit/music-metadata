@@ -127,10 +127,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
     uint8Array: Uint8Array,
     options?: IReadChunkOptions
   ): INormalizedReadChunkOptions {
-    if (
-      options?.position !== undefined &&
-      options.position < this.position
-    ) {
+    if (options?.position !== undefined && options.position < this.position) {
       throw new Error(
         "`options.position` must be equal or greater than `tokenizer.position`"
       );

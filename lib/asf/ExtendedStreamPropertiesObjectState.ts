@@ -44,8 +44,6 @@ export interface IExtendedStreamPropertiesObject {
 export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPropertiesObject> {
   public static guid = ExtendedStreamPropertiesObject;
 
-
-
   public get(buf: Buffer, off: number): IExtendedStreamPropertiesObject {
     return {
       startTime: Token.UINT64_LE.get(buf, off),
