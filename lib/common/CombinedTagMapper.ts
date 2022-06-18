@@ -13,7 +13,7 @@ import { INativeMetadataCollector } from "./INativeMetadataCollector";
 import { MatroskaTagMapper } from "../matroska/MatroskaTagMapper";
 
 export class CombinedTagMapper {
-  public tagMappers: { [index: string]: IGenericTagMapper } = {};
+  public tagMappers: Record<string, IGenericTagMapper> = {};
 
   public constructor() {
     for (const mapper of [

@@ -17,6 +17,4 @@ export interface IGenericTag<Id extends GenericTagId = GenericTagId> {
   value: any;
 }
 
-export interface INativeTagMap {
-  [index: string]: GenericTagId;
-}
+export type INativeTagMap = Record<string, GenericTagId>;

@@ -6,9 +6,7 @@ import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 
 import * as markDown from "./MarkDown";
 
-interface ITagInfoDict {
-  [key: string]: { description: string };
-}
+type ITagInfoDict = Record<string, { description: string }>;
 
 const combinedTagMapper = new CombinedTagMapper();
 

@@ -422,10 +422,8 @@ export class FrameParser {
    * @param entries
    * @returns
    */
-  private static functionList(entries: string[]): {
-    [index: string]: string[];
-  } {
-    const res: { [index: string]: string[] } = {};
+  private static functionList(entries: string[]): Record<string, string[]> {
+    const res: Record<string, string[]> = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
       const names: string[] = entries[i + 1].split(",");
       res[entries[i]] = Object.prototype.hasOwnProperty.call(res, entries[i])

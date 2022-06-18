@@ -60,16 +60,12 @@ export class MetadataCollector implements INativeMetadataCollector {
   /**
    * Keeps track of origin priority for each mapped id
    */
-  private readonly commonOrigin: {
-    [id: string]: number;
-  } = {};
+  private readonly commonOrigin: Record<string, number> = {};
 
   /**
    * Maps a tag type to a priority
    */
-  private readonly originPriority: {
-    [tagType: string]: number;
-  } = {};
+  private readonly originPriority: Record<string, number> = {};
 
   private tagMapper = new CombinedTagMapper();
 

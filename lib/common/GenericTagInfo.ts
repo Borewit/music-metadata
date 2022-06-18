@@ -11,9 +11,7 @@ export interface ITagInfo {
   unique?: boolean;
 }
 
-export interface ITagInfoMap {
-  [index: string]: ITagInfo;
-}
+export type ITagInfoMap = Record<string, ITagInfo>;
 
 export const commonTags: ITagInfoMap = {
   year: { multiple: false },

@@ -198,13 +198,13 @@
 
     /* plugin:@typescript-eslint/strict rules */
     /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/strict.ts */
-    // "@typescript-eslint/array-type": "warn",
-    // "@typescript-eslint/ban-tslint-comment": "warn",
-    // "@typescript-eslint/class-literal-property-style": "warn",
-    // "@typescript-eslint/consistent-indexed-object-style": "warn",
-    // "@typescript-eslint/consistent-generic-constructors": "warn",
-    // "@typescript-eslint/consistent-type-assertions": "warn",
-    // "@typescript-eslint/consistent-type-definitions": "warn",
+    "@typescript-eslint/array-type": "warn",
+    "@typescript-eslint/ban-tslint-comment": "warn",
+    "@typescript-eslint/class-literal-property-style": "warn",
+    "@typescript-eslint/consistent-indexed-object-style": "warn",
+    "@typescript-eslint/consistent-generic-constructors": "warn",
+    "@typescript-eslint/consistent-type-assertions": "warn",
+    "@typescript-eslint/consistent-type-definitions": "warn",
     // "dot-notation": "off",
     // "@typescript-eslint/dot-notation": "warn",
     // "@typescript-eslint/no-base-to-string": "warn",
@@ -235,15 +235,6 @@
     // "@typescript-eslint/prefer-ts-expect-error": "warn",
     // "@typescript-eslint/unified-signatures": "warn",
 
-    /* Duplicate with "plugin:@typescript-eslint/strict" */
-    "@typescript-eslint/array-type": [
-      "error",
-      {
-        "default": "array"
-      }
-    ],
-    /* Duplicate with "plugin:@typescript-eslint/strict" */
-    "@typescript-eslint/consistent-type-assertions": "error",
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/dot-notation": "error",
     "@typescript-eslint/indent": [

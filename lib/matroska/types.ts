@@ -19,9 +19,7 @@ export interface IElementType {
   readonly multiple?: boolean;
 }
 
-export interface IContainerType {
-  [id: number]: IElementType;
-}
+export type IContainerType = Record<number, IElementType>;
 
 export interface ITree {
   [name: string]: string | number | boolean | Buffer | ITree | ITree[];

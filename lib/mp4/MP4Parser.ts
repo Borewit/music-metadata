@@ -418,7 +418,7 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private atomParsers: { [id: string]: IAtomParser } = {
+  private atomParsers: Record<string, IAtomParser> = {
     /**
      * Parse movie header (mvhd) atom
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
