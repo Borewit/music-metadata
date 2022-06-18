@@ -2,19 +2,34 @@
   "$schema": "https://json.schemastore.org/eslintrc",
   "env": {
     "browser": true,
-    "es6": true,
     "node": true
   },
   "extends": [
-    // "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
+    /* https://github.com/eslint/eslint/blob/main/conf/eslint-all.js */
+    // "eslint:all",
+    /* https://github.com/eslint/eslint/blob/main/conf/eslint-recommended.js */
+    "eslint:recommended",
+    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/all.ts */
+    // "plugin:@typescript-eslint/all",
+    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/base.ts */
+    // "plugin:@typescript-eslint/base",
+    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/eslint-recommended.ts */
+    // "plugin:@typescript-eslint/eslint-recommended",
+    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/recommended.ts */
     "plugin:@typescript-eslint/recommended",
+    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/recommended-requiring-type-checking.ts */
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
-    // "plugin:@typescript-eslint/strict",
+    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/strict.ts */
+    "plugin:@typescript-eslint/strict",
+    /* https://github.com/import-js/eslint-plugin-import/blob/main/config/recommended.js */
     "plugin:import/recommended",
+    /* https://github.com/import-js/eslint-plugin-import/blob/main/config/typescript.js */
     "plugin:import/typescript",
+    /* https://github.com/gajus/eslint-plugin-jsdoc/blob/master/src/index.js */
     "plugin:jsdoc/recommended",
+    /* https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/configs/recommended.js */
     "plugin:unicorn/recommended",
+    /* https://github.com/prettier/eslint-config-prettier/blob/main/index.js */
     "prettier"
   ],
   "ignorePatterns": [
@@ -25,22 +40,11 @@
     "test/strtok3/resources/*",
     "test/samples/**/*"
   ],
-  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.eslint.json",
-    "sourceType": "module"
+    "project": "./tsconfig.eslint.json"
   },
-  "plugins": [
-    "eslint-plugin-import",
-    "eslint-plugin-jsdoc",
-    "eslint-plugin-node",
-    "eslint-plugin-unicorn",
-    "@typescript-eslint"
-  ],
+  "plugins": ["eslint-plugin-node"],
   "settings": {
-    "import/parsers": {
-      "@typescript-eslint/parser": [".ts", ".tsx"]
-    },
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
@@ -53,52 +57,7 @@
     }
   },
   "rules": {
-    /* eslint:recommended rules */
-    /* https://github.com/eslint/eslint/blob/main/conf/eslint-recommended.js */
-    "for-direction": "error",
-    "no-async-promise-executor": "error",
-    "no-case-declarations": "error",
-    "no-class-assign": "error",
-    "no-compare-neg-zero": "error",
-    "no-cond-assign": "error",
-    "no-control-regex": "error",
-    "no-debugger": "error",
-    "no-delete-var": "error",
-    "no-dupe-else-if": "error",
-    "no-duplicate-case": "error",
-    "no-empty": "error",
-    "no-empty-character-class": "error",
-    "no-empty-pattern": "error",
-    "no-ex-assign": "error",
-    "no-extra-boolean-cast": "error",
-    // "no-extra-semi": "error",
-    "no-fallthrough": "error",
-    "no-global-assign": "error",
-    "no-inner-declarations": "error",
-    "no-invalid-regexp": "error",
-    "no-irregular-whitespace": "error",
-    // "no-loss-of-precision": "error",
-    "no-misleading-character-class": "error",
-    "no-mixed-spaces-and-tabs": "error",
-    "no-nonoctal-decimal-escape": "error",
-    "no-octal": "error",
-    "no-prototype-builtins": "error",
-    "no-regex-spaces": "error",
-    "no-self-assign": "error",
-    "no-shadow-restricted-names": "error",
-    "no-sparse-arrays": "error",
-    "no-unexpected-multiline": "error",
-    "no-unsafe-finally": "error",
-    "no-unsafe-optional-chaining": "error",
-    "no-unused-labels": "error",
-    // "no-unused-vars": "error",
-    "no-useless-backreference": "error",
-    "no-useless-catch": "error",
-    "no-useless-escape": "error",
-    "no-with": "error",
-    "require-yield": "error",
-    "use-isnan": "error",
-
+    /* eslint */
     "arrow-parens": ["off", "as-needed"],
     "comma-dangle": "off",
     "complexity": "off",
@@ -192,45 +151,7 @@
     "unicorn/prefer-module": "off",
     "unicorn/prevent-abbreviations": "off",
 
-    /* plugin:@typescript-eslint/strict rules */
-    /* https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/configs/strict.ts */
-    "@typescript-eslint/array-type": "warn",
-    "@typescript-eslint/ban-tslint-comment": "warn",
-    "@typescript-eslint/class-literal-property-style": "warn",
-    "@typescript-eslint/consistent-indexed-object-style": "warn",
-    "@typescript-eslint/consistent-generic-constructors": "warn",
-    "@typescript-eslint/consistent-type-assertions": "warn",
-    "@typescript-eslint/consistent-type-definitions": "warn",
-    "dot-notation": "off",
-    "@typescript-eslint/dot-notation": "warn",
-    "@typescript-eslint/no-base-to-string": "warn",
-    "@typescript-eslint/no-confusing-non-null-assertion": "warn",
-    "@typescript-eslint/no-duplicate-enum-values": "warn",
-    "@typescript-eslint/no-dynamic-delete": "warn",
-    "@typescript-eslint/no-extraneous-class": "warn",
-    "@typescript-eslint/no-invalid-void-type": "warn",
-    "@typescript-eslint/no-meaningless-void-operator": "warn",
-    "@typescript-eslint/no-non-null-asserted-nullish-coalescing": "warn",
-    "no-throw-literal": "off",
-    "@typescript-eslint/no-throw-literal": "warn",
-    // "@typescript-eslint/no-unnecessary-boolean-literal-compare": "warn",
-    // "@typescript-eslint/no-unnecessary-condition": "warn",
-    "@typescript-eslint/no-unnecessary-type-arguments": "warn",
-    "no-useless-constructor": "off",
-    "@typescript-eslint/no-useless-constructor": "warn",
-    "@typescript-eslint/non-nullable-type-assertion-style": "warn",
-    "@typescript-eslint/prefer-for-of": "warn",
-    "@typescript-eslint/prefer-function-type": "warn",
-    "@typescript-eslint/prefer-includes": "warn",
-    "@typescript-eslint/prefer-literal-enum-member": "warn",
-    "@typescript-eslint/prefer-nullish-coalescing": "warn",
-    "@typescript-eslint/prefer-optional-chain": "warn",
-    "@typescript-eslint/prefer-reduce-type-parameter": "warn",
-    "@typescript-eslint/prefer-return-this-type": "warn",
-    "@typescript-eslint/prefer-string-starts-ends-with": "warn",
-    "@typescript-eslint/prefer-ts-expect-error": "warn",
-    "@typescript-eslint/unified-signatures": "warn",
-
+    /* @typescript-eslint/eslint-plugin */
     "@typescript-eslint/indent": [
       "off",
       2,
