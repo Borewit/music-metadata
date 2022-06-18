@@ -126,12 +126,12 @@ export class AsfParser extends BasicParser {
 
         case CodecListObject.str: {
           const codecs = await readCodecEntries(this.tokenizer);
-          codecs.forEach((codec) => {
+          for (const codec of codecs) {
             this.metadata.addStreamInfo({
               type: codec.type.videoCodec ? TrackType.video : TrackType.audio,
               codecName: codec.codecName,
             });
-          });
+          }
           const audioCodecs = codecs
             .filter((codec) => codec.type.audioCodec)
             .map((codec) => codec.codecName)
@@ -166,9 +166,9 @@ export class AsfParser extends BasicParser {
   }
 
   private addTags(tags: ITag[]) {
-    tags.forEach((tag) => {
+    for (const tag of tags) {
       this.metadata.addTag(headerType, tag.id, tag.value);
-    });
+    }
   }
 
   private async parseExtensionObject(extensionSize: number): Promise<void> {

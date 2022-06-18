@@ -83,7 +83,7 @@ export class MatroskaParser extends BasicParser {
 
       const audioTracks = matroska.segment.tracks;
       if (audioTracks && audioTracks.entries) {
-        audioTracks.entries.forEach((entry) => {
+        for (const entry of audioTracks.entries) {
           const stream: ITrackInfo = {
             codecName: entry.codecID.replace("A_", "").replace("V_", ""),
             codecSettings: entry.codecSettings,
@@ -97,7 +97,7 @@ export class MatroskaParser extends BasicParser {
             video: entry.video,
           };
           this.metadata.addStreamInfo(stream);
-        });
+        }
 
         const audioTrack = audioTracks.entries
           .filter((entry) => {
@@ -132,24 +132,24 @@ export class MatroskaParser extends BasicParser {
         }
 
         if (matroska.segment.tags) {
-          matroska.segment.tags.tag.forEach((tag) => {
+          for (const tag of matroska.segment.tags.tag) {
             const target = tag.target;
             const targetType = target?.targetTypeValue
               ? TargetType[target.targetTypeValue]
               : target?.targetType
               ? target.targetType
               : "track";
-            tag.simpleTags.forEach((simpleTag) => {
+            for (const simpleTag of tag.simpleTags) {
               const value = simpleTag.string
                 ? simpleTag.string
                 : simpleTag.binary;
               this.addTag(`${targetType}:${simpleTag.name}`, value);
-            });
-          });
+            }
+          }
         }
 
         if (matroska.segment.attachments) {
-          matroska.segment.attachments.attachedFiles
+          for (const picture of matroska.segment.attachments.attachedFiles
             .filter((file) => file.mimeType.startsWith("image/"))
             .map((file) => {
               return {
@@ -158,10 +158,9 @@ export class MatroskaParser extends BasicParser {
                 description: file.description,
                 name: file.name,
               };
-            })
-            .forEach((picture) => {
-              this.addTag("picture", picture);
-            });
+            })) {
+            this.addTag("picture", picture);
+          }
         }
       }
     }

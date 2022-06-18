@@ -74,6 +74,15 @@ function distinct(value: any, index: number, self: any[]) {
   return self.indexOf(value) === index;
 }
 
+/**
+ *
+ * @param array
+ * @returns
+ */
+function uniqueArray<T>(array: T[]): T[] {
+  return [...new Set(array)];
+}
+
 /*
  * Parser for the MP4 (MPEG-4 Part 14) container format
  * Standard: ISO/IEC 14496-14
@@ -163,10 +172,10 @@ export class MP4Parser extends BasicParser {
 
     // Post process metadata
     const formatList: string[] = [];
-    this.tracks.forEach((track) => {
+    for (const track of this.tracks) {
       const trackFormats: string[] = [];
 
-      track.soundSampleDescription.forEach((ssd) => {
+      for (const ssd of track.soundSampleDescription) {
         const streamInfo: ITrackInfo = {};
         const encoderInfo = encoderDict[ssd.dataFormat];
         if (encoderInfo) {
@@ -187,15 +196,15 @@ export class MP4Parser extends BasicParser {
           }
         }
         this.metadata.addStreamInfo(streamInfo);
-      });
+      }
 
       if (trackFormats.length > 0) {
         formatList.push(trackFormats.join("/"));
       }
-    });
+    }
 
     if (formatList.length > 0) {
-      this.metadata.setFormat("codec", formatList.filter(distinct).join("+"));
+      this.metadata.setFormat("codec", uniqueArray(formatList).join("+"));
     }
 
     const audioTracks = this.tracks.filter((track) => {
@@ -511,7 +520,7 @@ export class MP4Parser extends BasicParser {
         }
       }
       debug(`ftyp: ${types.join("/")}`);
-      const x = types.filter(distinct).join("/");
+      const x = uniqueArray(types).join("/");
       this.metadata.setFormat("container", x);
     },
 
@@ -656,9 +665,9 @@ export class MP4Parser extends BasicParser {
     chapterOffset: number
   ): number {
     let totalDuration = 0;
-    track.timeToSampleTable.forEach((e) => {
+    for (const e of track.timeToSampleTable) {
       totalDuration += e.count * e.duration;
-    });
+    }
     debug(`Total duration=${totalDuration}`);
 
     let chunkIndex = 0;

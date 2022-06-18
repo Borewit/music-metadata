@@ -158,9 +158,9 @@ export class WaveParser extends BasicParser {
           const bext = await this.tokenizer.readToken(
             BroadcastAudioExtensionChunk
           );
-          Object.entries(bext).forEach(([key, value]) => {
+          for (const [key, value] of Object.entries(bext)) {
             this.metadata.addTag("exif", "bext." + key, value);
-          });
+          }
           break;
         }
 
@@ -218,7 +218,7 @@ export class WaveParser extends BasicParser {
     }
 
     if (chunkSize !== 0) {
-      throw new  Error("Illegal remaining size: " + chunkSize);
+      throw new Error("Illegal remaining size: " + chunkSize);
     }
   }
 

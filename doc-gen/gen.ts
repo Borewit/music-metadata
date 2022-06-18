@@ -22,11 +22,11 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const result: string[] = [];
 
   const tagMapper = combinedTagMapper.tagMappers[nativeType];
-  Object.keys(tagMapper.tagMap).forEach((nativeTag) => {
+  for (const nativeTag of Object.keys(tagMapper.tagMap)) {
     if (commonTag === tagMapper.tagMap[nativeTag]) {
       result.push(nativeTag);
     }
-  });
+  }
   return result;
 }
 
