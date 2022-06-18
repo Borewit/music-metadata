@@ -18,9 +18,9 @@ export class Table {
     colSizes: number[]
   ) {
     const colValues: string[] = [];
-    for (let ci = 0; ci < colSizes.length; ++ci) {
+    for (const [ci, colSize] of colSizes.entries()) {
       const cellTxt = values.length > ci ? values[ci] : "";
-      colValues.push(Table.padEnd(cellTxt, colSizes[ci]));
+      colValues.push(Table.padEnd(cellTxt, colSize));
     }
     out.write("| " + colValues.join(" | ") + " |\n");
   }
