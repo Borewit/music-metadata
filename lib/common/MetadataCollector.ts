@@ -200,7 +200,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case "date": {
         // ToDo: be more strict on 'YYYY...'
-        const year = Number.parseInt(tag.value.substr(0, 4), 10);
+        const year = Number.parseInt(tag.value.slice(0, 4), 10);
         if (!Number.isNaN(year)) {
           this.common.year = year;
         }

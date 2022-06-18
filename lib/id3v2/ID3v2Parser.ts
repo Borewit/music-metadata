@@ -174,35 +174,50 @@ export class ID3v2Parser {
       new Token.Uint8ArrayType(dataLen)
     );
     for (const tag of this.parseMetadata(uint8Array)) {
-      if (tag.id === "TXXX") {
-        if (tag.value) {
-          for (const text of tag.value.text) {
+      switch (tag.id) {
+        case "TXXX": {
+          if (tag.value) {
+            for (const text of tag.value.text) {
+              this.addTag(
+                ID3v2Parser.makeDescriptionTagName(
+                  tag.id,
+                  tag.value.description
+                ),
+                text
+              );
+            }
+          }
+
+          break;
+        }
+        case "COM": {
+          for (const value of tag.value) {
             this.addTag(
-              ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description),
-              text
+              ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
+              value.text
             );
           }
+
+          break;
         }
-      } else if (tag.id === "COM") {
-        for (const value of tag.value) {
-          this.addTag(
-            ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
-            value.text
-          );
+        case "COMM": {
+          for (const value of tag.value) {
+            this.addTag(
+              ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
+              value
+            );
+          }
+
+          break;
         }
-      } else if (tag.id === "COMM") {
-        for (const value of tag.value) {
-          this.addTag(
-            ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
-            value
-          );
-        }
-      } else if (Array.isArray(tag.value)) {
-        for (const value of tag.value) {
-          this.addTag(tag.id, value);
-        }
-      } else {
-        this.addTag(tag.id, tag.value);
+        default:
+          if (Array.isArray(tag.value)) {
+            for (const value of tag.value) {
+              this.addTag(tag.id, value);
+            }
+          } else {
+            this.addTag(tag.id, tag.value);
+          }
       }
     }
   }

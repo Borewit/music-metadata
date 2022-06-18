@@ -62,7 +62,7 @@ export function findZero(
  */
 export function trimRightNull(x: string): string {
   const pos0 = x.indexOf("\0");
-  return pos0 === -1 ? x : x.substr(0, pos0);
+  return pos0 === -1 ? x : x.slice(0, pos0);
 }
 
 /**
