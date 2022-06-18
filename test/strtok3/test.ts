@@ -729,7 +729,6 @@ for (const tokenizerType of tokenizerTests) {
     it("number", async () => {
       const tokenizer = await tokenizerType.loadTokenizer("test3.dat");
       assert.isDefined(tokenizer.fileInfo, "tokenizer.fileInfo");
-      // @ts-ignore
       await tokenizer.ignore(tokenizer.fileInfo.size - 4);
       const x = await tokenizer.peekNumber(Token.INT32_BE);
       assert.strictEqual(x, 33_752_069);
@@ -738,7 +737,6 @@ for (const tokenizerType of tokenizerTests) {
     it("should throw an Error if we reach EOF while peeking a number", async () => {
       const tokenizer = await tokenizerType.loadTokenizer("test3.dat");
       assert.isDefined(tokenizer.fileInfo, "tokenizer.fileInfo");
-      // @ts-ignore
       await tokenizer.ignore(tokenizer.fileInfo.size - 3);
       try {
         await tokenizer.peekNumber(Token.INT32_BE);
