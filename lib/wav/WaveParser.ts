@@ -132,7 +132,7 @@ export class WaveParser extends BasicParser {
 
           const numberOfSamples = this.fact
             ? this.fact.dwSampleLength
-            : chunkSize === 0xffffffff
+            : chunkSize === 0xff_ff_ff_ff
             ? undefined
             : chunkSize / this.blockAlign;
           if (numberOfSamples) {
@@ -200,7 +200,7 @@ export class WaveParser extends BasicParser {
       case "INFO":
         return this.parseRiffInfoTags(listHeader.chunkSize - 4);
 
-      case "adtl":
+      // case "adtl":
       default:
         this.metadata.addWarning("Ignore chunk: RIFF/WAVE/LIST/" + listType);
         debug("Ignoring chunkID=RIFF/WAVE/LIST/" + listType);

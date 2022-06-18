@@ -6,21 +6,21 @@ import { IChunkHeader } from "../iff";
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx
  */
 export enum WaveFormat {
-  PCM = 0x0001,
+  PCM = 0x00_01,
   // MPEG-4 and AAC Audio Types
-  ADPCM = 0x0002,
-  IEEE_FLOAT = 0x0003,
-  MPEG_ADTS_AAC = 0x1600,
-  MPEG_LOAS = 0x1602,
-  RAW_AAC1 = 0x00ff,
+  ADPCM = 0x00_02,
+  IEEE_FLOAT = 0x00_03,
+  MPEG_ADTS_AAC = 0x16_00,
+  MPEG_LOAS = 0x16_02,
+  RAW_AAC1 = 0x00_ff,
   // Dolby Audio Types
-  DOLBY_AC3_SPDIF = 0x0092,
-  DVM = 0x2000,
-  RAW_SPORT = 0x0240,
-  ESST_AC3 = 0x0241,
-  DRM = 0x0009,
-  DTS2 = 0x2001,
-  MPEG = 0x0050,
+  DOLBY_AC3_SPDIF = 0x00_92,
+  DVM = 0x20_00,
+  RAW_SPORT = 0x02_40,
+  ESST_AC3 = 0x02_41,
+  DRM = 0x00_09,
+  DTS2 = 0x20_01,
+  MPEG = 0x00_50,
 }
 
 /**

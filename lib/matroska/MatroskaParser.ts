@@ -75,8 +75,10 @@ export class MatroskaParser extends BasicParser {
     if (matroska.segment) {
       const info = matroska.segment.info;
       if (info) {
-        const timecodeScale = info.timecodeScale ? info.timecodeScale : 1000000;
-        const duration = (info.duration * timecodeScale) / 1000000000;
+        const timecodeScale = info.timecodeScale
+          ? info.timecodeScale
+          : 1_000_000;
+        const duration = (info.duration * timecodeScale) / 1_000_000_000;
         this.addTag("segment:title", info.title);
         this.metadata.setFormat("duration", duration);
       }
@@ -268,7 +270,7 @@ export class MatroskaParser extends BasicParser {
   private async readFloat(e: IHeader) {
     switch (e.len) {
       case 0:
-        return 0.0;
+        return 0;
       case 4:
         return this.tokenizer.readNumber(Float32_BE);
       case 8:

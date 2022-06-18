@@ -20,5 +20,5 @@ export function getBitAllignedNumber(
   bitOffset: number,
   len: number
 ): number {
-  return (flags >>> bitOffset) & (0xffffffff >>> (32 - len));
+  return (flags >>> bitOffset) & (0xff_ff_ff_ff >>> (32 - len));
 }

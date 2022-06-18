@@ -87,7 +87,7 @@ export class AsfParser extends BasicParser {
           );
           this.metadata.setFormat(
             "duration",
-            Number(fpo.playDuration / BigInt(1000)) / 10000 -
+            Number(fpo.playDuration / BigInt(1000)) / 10_000 -
               Number(fpo.preroll) / 1000
           );
           this.metadata.setFormat("bitrate", fpo.maximumBitrate);

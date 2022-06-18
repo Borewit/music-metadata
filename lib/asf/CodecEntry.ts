@@ -60,8 +60,8 @@ async function readCodecEntry(tokenizer: ITokenizer): Promise<ICodecEntry> {
   const type = await tokenizer.readNumber(Token.UINT16_LE);
   return {
     type: {
-      videoCodec: (type & 0x0001) === 0x0001,
-      audioCodec: (type & 0x0002) === 0x0002,
+      videoCodec: (type & 0x00_01) === 0x00_01,
+      audioCodec: (type & 0x00_02) === 0x00_02,
     },
     codecName: await readString(tokenizer),
     description: await readString(tokenizer),

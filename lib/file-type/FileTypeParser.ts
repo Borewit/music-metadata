@@ -1432,12 +1432,12 @@ export class FileTypeParser {
     );
     this.tokenizer.ignore(10);
     switch (tagId) {
-      case 50341:
+      case 50_341:
         return {
           ext: "arw",
           mime: "image/x-sony-arw",
         };
-      case 50706:
+      case 50_706:
         return {
           ext: "dng",
           mime: "image/x-adobe-dng",
@@ -1559,7 +1559,7 @@ async function readChildren(
 ) {
   while (children > 0) {
     const element = await readElement(tokenizer);
-    if (element.id === 17026) {
+    if (element.id === 17_026) {
       const rawValue = await tokenizer.readToken(
         new Token.StringType(element.len, "utf-8")
       );

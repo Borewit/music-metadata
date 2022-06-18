@@ -204,7 +204,7 @@ export class MpegParser extends AbstractID3Parser {
     );
     this.metadata.setFormat("bitrate", header.bitrate);
 
-    if (this.frameCount < 20 * 10000) {
+    if (this.frameCount < 20 * 10_000) {
       debug(
         "offset=%s MP%s bitrate=%s sample-rate=%s",
         this.tokenizer.position - 4,
@@ -220,7 +220,7 @@ export class MpegParser extends AbstractID3Parser {
 
     const samples_per_frame = header.calcSamplesPerFrame();
     debug(`samples_per_frame=${samples_per_frame}`);
-    const bps = samples_per_frame / 8.0;
+    const bps = samples_per_frame / 8;
     const fsize =
       (bps * header.bitrate) / header.samplingRate +
       (header.padding ? slot_size : 0);

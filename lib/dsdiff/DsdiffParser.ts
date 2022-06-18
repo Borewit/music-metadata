@@ -177,7 +177,7 @@ export class DsdiffParser extends BasicParser {
           debug(`LSCO lsConfig=${lsConfig}`);
           break;
         }
-        case "COMT":
+        // case "COMT":
         default:
           debug(
             `Unknown sound-property-chunk[ID=${sndPropHeader.chunkID}, size=${sndPropHeader.chunkSize}]`

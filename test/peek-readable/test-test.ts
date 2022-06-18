@@ -144,7 +144,7 @@ describe("StreamReader", () => {
         assert.strictEqual(bytesRead, 4);
         assert.strictEqual(
           new DataView(uint8Array.buffer).getUint32(0, false),
-          16909060
+          16_909_060
         );
         if (--s.nvals > 0) {
           return run();

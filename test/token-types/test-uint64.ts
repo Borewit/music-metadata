@@ -15,10 +15,10 @@ describe("Parse 64-bit unsigned integer", () => {
       Token.UINT64_BE.put(buf, 0, BigInt(0xff));
       util.checkBuffer(buf, "00000000000000ff");
 
-      Token.UINT64_BE.put(buf, 0, BigInt(0xaabbccddeeff));
+      Token.UINT64_BE.put(buf, 0, BigInt(0xaa_bb_cc_dd_ee_ff));
       util.checkBuffer(buf, "0000aabbccddeeff");
 
-      Token.UINT64_BE.put(buf, 0, BigInt(0x00123456789abcde));
+      Token.UINT64_BE.put(buf, 0, BigInt(0x00_12_34_56_78_9a_bc_de));
       util.checkBuffer(buf, "00123456789abcde");
     });
 
@@ -30,11 +30,11 @@ describe("Parse 64-bit unsigned integer", () => {
 
       assert.strictEqual(
         Token.UINT64_BE.get(buf, 0),
-        BigInt(0x00001a001a001a01)
+        BigInt(0x00_00_1a_00_1a_00_1a_01)
       );
       assert.strictEqual(
         Token.UINT64_BE.get(buf, 8),
-        BigInt(0x00001a001a001a02)
+        BigInt(0x00_00_1a_00_1a_00_1a_02)
       );
     });
   });
@@ -49,10 +49,10 @@ describe("Parse 64-bit unsigned integer", () => {
       Token.UINT64_LE.put(buf, 0, BigInt(0xff));
       util.checkBuffer(buf, "ff00000000000000");
 
-      Token.UINT64_LE.put(buf, 0, BigInt(0xaabbccddeeff));
+      Token.UINT64_LE.put(buf, 0, BigInt(0xaa_bb_cc_dd_ee_ff));
       util.checkBuffer(buf, "ffeeddccbbaa0000");
 
-      Token.UINT64_LE.put(buf, 0, BigInt(0x00123456789abcde));
+      Token.UINT64_LE.put(buf, 0, BigInt(0x00_12_34_56_78_9a_bc_de));
       util.checkBuffer(buf, "debc9a7856341200");
     });
 
@@ -63,8 +63,8 @@ describe("Parse 64-bit unsigned integer", () => {
       );
 
       it("little-endian", () => {
-        assert.strictEqual(Token.UINT64_LE.get(buf, 0), BigInt(0x001a001a));
-        assert.strictEqual(Token.UINT64_LE.get(buf, 8), BigInt(0x001a001a));
+        assert.strictEqual(Token.UINT64_LE.get(buf, 0), BigInt(0x00_1a_00_1a));
+        assert.strictEqual(Token.UINT64_LE.get(buf, 8), BigInt(0x00_1a_00_1a));
       });
     });
   });

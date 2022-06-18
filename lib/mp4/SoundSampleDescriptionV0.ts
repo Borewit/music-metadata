@@ -32,7 +32,7 @@ export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
       packetSize: Token.INT16_BE.get(buf, off + 6),
       sampleRate:
         Token.UINT16_BE.get(buf, off + 8) +
-        Token.UINT16_BE.get(buf, off + 10) / 10000,
+        Token.UINT16_BE.get(buf, off + 10) / 10_000,
     };
   },
 };
