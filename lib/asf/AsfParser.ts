@@ -159,7 +159,7 @@ export class AsfParser extends BasicParser {
             "Ignore ASF-Object-GUID: " + header.objectId.str
           );
           debug("Ignore ASF-Object-GUID: %s", header.objectId.str);
-          await this.tokenizer.readToken<void>(new IgnoreObjectState(header));
+          await this.tokenizer.readToken(new IgnoreObjectState(header));
       }
     } while (--numberOfObjectHeaders);
     // done
@@ -222,7 +222,7 @@ export class AsfParser extends BasicParser {
             "Ignore ASF-Object-GUID: " + header.objectId.str
           );
           // console.log("Ignore ASF-Object-GUID: %s", header.objectId.str);
-          await this.tokenizer.readToken<void>(new IgnoreObjectState(header));
+          await this.tokenizer.readToken(new IgnoreObjectState(header));
           break;
       }
       extensionSize -= header.objectSize;
