@@ -72,7 +72,7 @@ export async function fileTypeStream(
             readableStream.read() ||
             Buffer.alloc(0);
           try {
-            const fileType = await fileTypeFromBuffer(chunk);
+            const fileType = await fileTypeFromBuffer(chunk as Buffer);
             pass.fileType = fileType;
           } catch (error) {
             if (error instanceof strtok3.EndOfStreamError) {

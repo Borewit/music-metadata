@@ -135,7 +135,7 @@ export class FrameParser {
           case "TIPL": // Involved people list
           case "IPLS": // Involved people list
             output = this.splitValue(type, text);
-            output = FrameParser.functionList(output);
+            output = FrameParser.functionList(output as string[]);
             break;
           case "TRK":
           case "TRCK":
@@ -178,7 +178,9 @@ export class FrameParser {
           description: output.id,
           text: this.splitValue(
             type,
-            util.decodeString(output.data, encoding).replace(/\0+$/, "")
+            util
+              .decodeString(output.data as Uint8Array, encoding)
+              .replace(/\0+$/, "")
           ),
         };
         break;

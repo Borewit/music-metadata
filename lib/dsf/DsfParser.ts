@@ -66,7 +66,9 @@ export class DsfParser extends AbstractID3Parser {
           return; // We got what we want, stop further processing of chunks
         }
         default:
-          void this.tokenizer.ignore(Number(chunkHeader.size) - ChunkHeader.len);
+          void this.tokenizer.ignore(
+            Number(chunkHeader.size) - ChunkHeader.len
+          );
           break;
       }
       bytesRemaining -= chunkHeader.size;

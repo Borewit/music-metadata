@@ -2,13 +2,13 @@
 
 import { describe, assert, it } from "vitest";
 import * as fs from "node:fs";
-import path from "node:path";
+import { join } from "node:path";
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 
 describe("Examples", () => {
   it("first example", async () => {
     const readable = fs.createReadStream(
-      path.join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
+      join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
     );
     const streamReader = new StreamReader(readable);
     const uint8Array = new Uint8Array(16);
@@ -18,7 +18,7 @@ describe("Examples", () => {
 
   it("End-of-stream detection", async () => {
     const fileReadStream = fs.createReadStream(
-      path.join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
+      join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
     );
     const streamReader = new StreamReader(fileReadStream);
     const uint8Array = new Uint8Array(16);
@@ -39,7 +39,7 @@ describe("Examples", () => {
 
   it("peek", async () => {
     const fileReadStream = fs.createReadStream(
-      path.join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
+      join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg")
     );
     const streamReader = new StreamReader(fileReadStream);
     const buffer = Buffer.alloc(20);

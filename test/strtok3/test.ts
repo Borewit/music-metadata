@@ -1,7 +1,7 @@
 import * as Token from "../../lib/token-types";
 import { describe, assert, it } from "vitest";
 import * as strtok3 from "../../lib/strtok3";
-import Path from "node:path";
+import { join } from "node:path";
 import * as fs from "../../lib/strtok3/FsPromise";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { EndOfStreamError } from "../../lib/peek-readable";
@@ -13,7 +13,7 @@ interface ITokenizerTest {
 }
 
 function getResourcePath(testFile: string) {
-  return Path.join(__dirname, "resources", testFile);
+  return join(__dirname, "resources", testFile);
 }
 
 async function getTokenizerWithData(
@@ -36,14 +36,14 @@ const tokenizerTests: ITokenizerTest[] = [
   {
     name: "fromFile()",
     loadTokenizer: async (testFile) => {
-      return strtok3.fromFile(Path.join(__dirname, "resources", testFile));
+      return strtok3.fromFile(join(__dirname, "resources", testFile));
     },
   },
   {
     name: "fromBuffer()",
     loadTokenizer: async (testFile) => {
       return fs
-        .readFile(Path.join(__dirname, "resources", testFile))
+        .readFile(join(__dirname, "resources", testFile))
         .then((data) => {
           return strtok3.fromBuffer(data);
         });
@@ -604,7 +604,7 @@ for (const tokenizerType of tokenizerTests) {
       }
 
       const testFile = "test2.dat";
-      const pathTestFile = Path.join(__dirname, "resources", testFile);
+      const pathTestFile = join(__dirname, "resources", testFile);
       await fs.writeFile(pathTestFile, buf);
 
       const rst = await tokenizerType.loadTokenizer(testFile);
@@ -941,9 +941,7 @@ describe("fromStream with mayBeLess flag", () => {
 });
 
 it("should determine the file size using a file stream", async () => {
-  const stream = fs.createReadStream(
-    Path.join(__dirname, "resources", "test1.dat")
-  );
+  const stream = fs.createReadStream(join(__dirname, "resources", "test1.dat"));
   const tokenizer = await strtok3.fromStream(stream);
   assert.isDefined(tokenizer.fileInfo, "`fileInfo` should be defined");
   assert.strictEqual(tokenizer.fileInfo.size, 16, "fileInfo.size");

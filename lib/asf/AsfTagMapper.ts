@@ -91,7 +91,7 @@ export class AsfTagMapper extends CommonTagMapper {
     switch (tag.id) {
       case "WM/SharedUserRating": {
         const keys = tag.id.split(":");
-        tag.value = AsfTagMapper.toRating(tag.value);
+        tag.value = AsfTagMapper.toRating(tag.value as string);
         tag.id = keys[0];
         break;
       }

@@ -181,7 +181,7 @@ export class ID3v2Parser {
               this.addTag(
                 ID3v2Parser.makeDescriptionTagName(
                   tag.id,
-                  tag.value.description
+                  tag.value.description as string
                 ),
                 text
               );
@@ -193,7 +193,10 @@ export class ID3v2Parser {
         case "COM": {
           for (const value of tag.value) {
             this.addTag(
-              ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
+              ID3v2Parser.makeDescriptionTagName(
+                tag.id,
+                value.description as string
+              ),
               value.text
             );
           }
@@ -203,7 +206,10 @@ export class ID3v2Parser {
         case "COMM": {
           for (const value of tag.value) {
             this.addTag(
-              ID3v2Parser.makeDescriptionTagName(tag.id, value.description),
+              ID3v2Parser.makeDescriptionTagName(
+                tag.id,
+                value.description as string
+              ),
               value
             );
           }

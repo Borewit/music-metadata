@@ -1,4 +1,4 @@
-import path from "node:path";
+import { join } from "node:path";
 import * as fs from "node:fs";
 
 import { commonTags } from "../lib/common/GenericTagInfo";
@@ -35,8 +35,10 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
  * @param out
  */
 function write(out: fs.WriteStream) {
-  const json = fs.readFileSync(path.join(__dirname, "common.json"));
-  const commonDescriptionDict: ITagInfoDict = JSON.parse(json as any);
+  const json = fs.readFileSync(join(__dirname, "common.json"));
+  const commonDescriptionDict: ITagInfoDict = JSON.parse(
+    json as unknown as string
+  );
 
   const table = new markDown.Table();
 
@@ -67,7 +69,7 @@ function write(out: fs.WriteStream) {
 }
 
 const txt = fs.createWriteStream(
-  path.join(__dirname, "..", "doc", "common_metadata.md")
+  join(__dirname, "..", "doc", "common_metadata.md")
 );
 
 txt.write("# Common Metadata\n\n");

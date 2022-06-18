@@ -152,11 +152,11 @@ export class MetadataCollector implements INativeMetadataCollector {
           (!this.common.artist ||
             this.commonOrigin.artist === this.originPriority.artificial) &&
           (!this.common.artists ||
-            !this.common.artists.includes((tag as any).value))
+            !this.common.artists.includes(tag.value as string))
         ) {
           // Fill artist using artists source
           const artists = [...(this.common.artists || []), tag.value];
-          const value = joinArtists(artists);
+          const value = joinArtists(artists as string[]);
           const artistTag: IGenericTag = { id: "artist", value };
           this.setGenericTag("artificial", artistTag);
         }
@@ -172,22 +172,26 @@ export class MetadataCollector implements INativeMetadataCollector {
         return;
 
       case "totaltracks":
-        this.common.track.of = CommonTagMapper.toIntOrNull(tag.value);
+        this.common.track.of = CommonTagMapper.toIntOrNull(tag.value as string);
         return;
 
       case "totaldiscs":
-        this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value);
+        this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value as string);
         return;
 
       case "movementTotal":
-        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value);
+        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(
+          tag.value as string
+        );
         return;
 
       case "track":
       case "disk":
       case "movementIndex": {
         const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
-        this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value);
+        this.common[tag.id] = CommonTagMapper.normalizeTrack(
+          tag.value as string | number
+        );
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
         return;
       }
@@ -195,12 +199,12 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "bpm":
       case "year":
       case "originalyear":
-        tag.value = Number.parseInt(tag.value, 10);
+        tag.value = Number.parseInt(tag.value as string, 10);
         break;
 
       case "date": {
         // ToDo: be more strict on 'YYYY...'
-        const year = Number.parseInt(tag.value.slice(0, 4), 10);
+        const year = Number.parseInt((tag.value as string).slice(0, 4), 10);
         if (!Number.isNaN(year)) {
           this.common.year = year;
         }
@@ -221,7 +225,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "replaygain_track_peak":
       case "replaygain_album_gain":
       case "replaygain_album_peak":
-        tag.value = toRatio(tag.value);
+        tag.value = toRatio(tag.value as string);
         break;
 
       case "replaygain_track_minmax":
@@ -248,7 +252,10 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "isrc": // Only keep unique values
-        if (this.common[tag.id] && this.common[tag.id].includes(tag.value))
+        if (
+          this.common[tag.id] &&
+          this.common[tag.id].includes(tag.value as string)
+        )
           return;
         break;
 

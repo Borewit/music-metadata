@@ -188,7 +188,7 @@ async function loadEntireFile(
 ) {
   const buffer = [];
   for await (const chunk of readable) {
-    buffer.push(Buffer.from(chunk));
+    buffer.push(Buffer.from(chunk as ArrayBuffer));
   }
 
   return Buffer.concat(buffer);

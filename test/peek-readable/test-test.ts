@@ -1,7 +1,7 @@
 import { describe, assert, it, expect } from "vitest";
 import { EventEmitter } from "node:events";
 import * as fs from "node:fs";
-import Path from "node:path";
+import { join } from "node:path";
 import { Readable } from "node:stream";
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 import { SourceStream } from "./util";
@@ -19,7 +19,7 @@ describe("StreamReader", () => {
     const not_a_stream = new MyEmitter();
 
     expect(() => {
-      new StreamReader(not_a_stream as any);
+      new StreamReader(not_a_stream as unknown as Readable);
     }).to.throw("Expected an instance of stream.Readable");
   });
 
@@ -313,7 +313,7 @@ describe("StreamReader", () => {
   });
 
   describe("file-stream", () => {
-    const path_test3 = Path.join(__dirname, "resources", "test3.dat");
+    const path_test3 = join(__dirname, "resources", "test3.dat");
     const fileSize = 5;
     const uint8Array = new Uint8Array(17);
 
@@ -327,7 +327,7 @@ describe("StreamReader", () => {
   });
 
   describe("exception", () => {
-    const path_test3 = Path.join(__dirname, "resources", "test3.dat");
+    const path_test3 = join(__dirname, "resources", "test3.dat");
     const uint8Array = new Uint8Array(17);
 
     it("handle stream closed", async () => {
@@ -344,11 +344,7 @@ describe("StreamReader", () => {
     });
 
     it("handle stream error", async () => {
-      const path_test4 = Path.join(
-        __dirname,
-        "resources",
-        "file-does-not-exist"
-      );
+      const path_test4 = join(__dirname, "resources", "file-does-not-exist");
 
       const fileReadStream = fs.createReadStream(path_test4);
       const streamReader = new StreamReader(fileReadStream);

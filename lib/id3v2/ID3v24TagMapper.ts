@@ -181,7 +181,10 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
       case "UFID": // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === "http://musicbrainz.org") {
           tag.id += ":" + tag.value.owner_identifier;
-          tag.value = util.decodeString(tag.value.identifier, "latin1"); // latin1 == iso-8859-1
+          tag.value = util.decodeString(
+            tag.value.identifier as Uint8Array,
+            "latin1"
+          ); // latin1 == iso-8859-1
         }
         break;
 
