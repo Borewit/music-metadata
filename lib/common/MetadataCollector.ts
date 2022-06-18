@@ -152,7 +152,7 @@ export class MetadataCollector implements INativeMetadataCollector {
           (!this.common.artist ||
             this.commonOrigin.artist === this.originPriority.artificial) &&
           (!this.common.artists ||
-            this.common.artists.indexOf((tag as any).value) === -1)
+            !this.common.artists.includes((tag as any).value))
         ) {
           // Fill artist using artists source
           const artists = (this.common.artists || []).concat([tag.value]);
@@ -244,7 +244,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "isrc": // Only keep unique values
         if (
           this.common[tag.id] &&
-          this.common[tag.id].indexOf(tag.value) !== -1
+          this.common[tag.id].includes(tag.value)
         )
           return;
         break;
@@ -336,7 +336,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       if (prio1 === prio0) {
         if (
           !isUnique(tag.id) ||
-          (this.common[tag.id] as any).indexOf(tag.value) === -1
+          !(this.common[tag.id] as any).includes(tag.value)
         ) {
           (this.common[tag.id] as any).push(tag.value);
         } else {

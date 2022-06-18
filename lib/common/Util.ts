@@ -137,7 +137,7 @@ export function getBitAllignedNumber(
   bitOffset: number,
   len: number
 ): number {
-  const byteOff = byteOffset + ~~(bitOffset / 8);
+  const byteOff = byteOffset + Math.trunc(bitOffset / 8);
   const bitOff = bitOffset % 8;
   let value = source[byteOff];
   value &= 0xff >> bitOff;
