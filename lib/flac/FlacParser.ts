@@ -22,7 +22,7 @@ const debug = initDebug("music-metadata:parser:FLAC");
 export class FlacParser extends AbstractID3Parser {
   private vorbisParser: VorbisParser;
 
-  private padding: number = 0;
+  private padding = 0;
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).

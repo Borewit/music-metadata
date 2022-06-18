@@ -7,7 +7,7 @@ import { Readable } from "node:stream";
  * data arriving with arbitrary packet boundaries.
  */
 export class SourceStream extends Readable {
-  public static FromString(str: string = ""): SourceStream {
+  public static FromString(str = ""): SourceStream {
     return new SourceStream(Buffer.from(str, "binary"));
   }
 

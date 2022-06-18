@@ -13,7 +13,7 @@
  * - https://github.com/dji-sdk/FFmpeg/blob/master/libavformat/asf.c
  */
 export default class GUID {
-  public static fromBin(bin: Buffer, offset: number = 0) {
+  public static fromBin(bin: Buffer, offset = 0) {
     return new GUID(this.decode(bin, offset));
   }
 
@@ -23,7 +23,7 @@ export default class GUID {
    * @param offset Read offset in bytes, default 0
    * @returns GUID as dashed hexadecimal representation
    */
-  public static decode(objectId: Buffer, offset: number = 0): string {
+  public static decode(objectId: Buffer, offset = 0): string {
     const guid =
       objectId.readUInt32LE(offset).toString(16) +
       "-" +

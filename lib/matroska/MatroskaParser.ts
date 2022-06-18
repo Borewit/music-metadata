@@ -28,7 +28,7 @@ const debug = initDebug("music-metadata:parser:matroska");
  * WEBM VP8 AUDIO FILE
  */
 export class MatroskaParser extends BasicParser {
-  private padding: number = 0;
+  private padding = 0;
 
   private parserMap = new Map<DataType, (e: IHeader) => Promise<any>>();
 

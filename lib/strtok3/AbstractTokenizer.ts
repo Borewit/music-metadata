@@ -22,7 +22,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
   /**
    * Tokenizer-stream position
    */
-  public position: number = 0;
+  public position = 0;
 
   private numBuffer = new Uint8Array(8);
 

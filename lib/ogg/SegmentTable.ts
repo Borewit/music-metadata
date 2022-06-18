@@ -7,7 +7,7 @@ export interface ISegmentTable {
 
 export class SegmentTable implements IGetToken<ISegmentTable> {
   private static sum(buf: Uint8Array, off: number, len: number): number {
-    let s: number = 0;
+    let s = 0;
     for (let i = off; i < off + len; ++i) {
       s += buf[i];
     }

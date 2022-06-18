@@ -50,7 +50,7 @@ export function parseByteArrayAttr(buf: Uint8Array): Buffer {
  * @param offset
  * @returns
  */
-export function parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
+export function parseBoolAttr(buf: Buffer, offset = 0): boolean {
   return parseWordAttr(buf, offset) === 1;
 }
 
@@ -60,7 +60,7 @@ export function parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
  * @param offset
  * @returns
  */
-export function parseDWordAttr(buf: Buffer, offset: number = 0): number {
+export function parseDWordAttr(buf: Buffer, offset = 0): number {
   return buf.readUInt32LE(offset);
 }
 
@@ -70,7 +70,7 @@ export function parseDWordAttr(buf: Buffer, offset: number = 0): number {
  * @param offset
  * @returns
  */
-export function parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
+export function parseQWordAttr(buf: Buffer, offset = 0): bigint {
   return Token.UINT64_LE.get(buf, offset);
 }
 
@@ -80,6 +80,6 @@ export function parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
  * @param offset
  * @returns
  */
-export function parseWordAttr(buf: Buffer, offset: number = 0): number {
+export function parseWordAttr(buf: Buffer, offset = 0): number {
   return buf.readUInt16LE(offset);
 }

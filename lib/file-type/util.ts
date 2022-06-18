@@ -17,7 +17,7 @@ export function stringToBytes(str: string) {
  */
 export function tarHeaderChecksumMatches(
   buffer: Buffer,
-  offset: number = 0
+  offset = 0
 ): boolean {
   const readSum = Number.parseInt(
     buffer.toString("utf8", 148, 154).replace(/\0.*$/, "").trim(),

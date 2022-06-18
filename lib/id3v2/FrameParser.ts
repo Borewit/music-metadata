@@ -34,7 +34,7 @@ export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
   const genres = [];
   let code: string;
-  let word: string = "";
+  let word = "";
   for (const c of origVal) {
     if (typeof code === "string") {
       if (c === "(" && code === "") {

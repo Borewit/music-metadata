@@ -22,7 +22,7 @@ export class StringType implements IGetToken<string, Buffer> {
 export class AnsiStringType implements IGetToken<string> {
   public constructor(public len: number) {}
 
-  public get(buffer: Buffer, offset: number = 0): string {
+  public get(buffer: Buffer, offset = 0): string {
     return decodeAnsiStringType(buffer, offset, offset + this.len);
   }
 }

@@ -5,7 +5,7 @@ export class Row {
 }
 
 export class Table {
-  private static padEnd(value: string, size: number, pad: string = " ") {
+  private static padEnd(value: string, size: number, pad = " ") {
     while (value.length < size) {
       value += pad;
     }

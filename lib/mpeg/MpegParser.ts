@@ -25,9 +25,9 @@ function getVbrCodecProfile(vbrScale: number): string {
 }
 
 export class MpegParser extends AbstractID3Parser {
-  private frameCount: number = 0;
-  private syncFrameCount: number = -1;
-  private countSkipFrameData: number = 0;
+  private frameCount = 0;
+  private syncFrameCount = -1;
+  private countSkipFrameData = 0;
   private totalDataLength = 0;
 
   private audioFrameHeader: MpegFrameHeader;
@@ -36,7 +36,7 @@ export class MpegParser extends AbstractID3Parser {
   private frame_size: number;
   private crc: number;
 
-  private calculateEofDuration: boolean = false;
+  private calculateEofDuration = false;
   private samplesPerFrame: number;
 
   private buf_frame_header = Buffer.alloc(4);

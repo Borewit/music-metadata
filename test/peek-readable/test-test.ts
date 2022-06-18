@@ -102,7 +102,7 @@ describe("StreamReader", () => {
       public constructor(private lens: number[]) {
         super();
 
-        let len: number = 0;
+        let len = 0;
 
         for (const v of lens) {
           len += v;
