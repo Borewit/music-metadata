@@ -40,7 +40,7 @@ export class AIFFParser extends BasicParser {
         break;
 
       default:
-        throw Error("Unsupported AIFF type: " + type);
+        throw new Error("Unsupported AIFF type: " + type);
     }
     this.metadata.setFormat("lossless", !this.isCompressed);
 

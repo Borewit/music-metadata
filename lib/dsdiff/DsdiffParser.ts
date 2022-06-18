@@ -31,7 +31,7 @@ export class DsdiffParser extends BasicParser {
         return this.readFmt8Chunks(header.chunkSize - BigInt(FourCcToken.len));
 
       default:
-        throw Error(`Unsupported DSDIFF type: ${type}`);
+        throw new  Error(`Unsupported DSDIFF type: ${type}`);
     }
   }
 

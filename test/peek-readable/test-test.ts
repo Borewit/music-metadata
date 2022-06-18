@@ -1,7 +1,7 @@
 import { describe, assert, it, expect } from "vitest";
 import { EventEmitter } from "events";
 import * as fs from "fs";
-import * as Path from "path";
+import Path from "path";
 import { Readable } from "stream";
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 import { SourceStream } from "./util";

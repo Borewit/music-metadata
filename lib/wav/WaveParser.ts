@@ -218,7 +218,7 @@ export class WaveParser extends BasicParser {
     }
 
     if (chunkSize !== 0) {
-      throw Error("Illegal remaining size: " + chunkSize);
+      throw new  Error("Illegal remaining size: " + chunkSize);
     }
   }
 

@@ -1,7 +1,7 @@
 import * as Token from "../../lib/token-types";
 import { describe, assert, it } from "vitest";
 import * as strtok3 from "../../lib/strtok3";
-import * as Path from "path";
+import Path from "path";
 import * as fs from "../../lib/strtok3/FsPromise";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { EndOfStreamError } from "../../lib/peek-readable";
