@@ -83,7 +83,9 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.PICTURE:
         return this.parsePicture(blockHeader.length).then();
       default:
-        this.metadata.addWarning(`Unknown block type: ${blockHeader.type}`);
+        this.metadata.addWarning(
+          `Unknown block type: ${blockHeader.type as unknown as string}`
+        );
     }
     // Ignore data block
     return this.tokenizer.ignore(blockHeader.length).then();

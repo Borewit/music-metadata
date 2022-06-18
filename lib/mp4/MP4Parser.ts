@@ -602,7 +602,11 @@ export class MP4Parser extends BasicParser {
         offset
       );
     } else {
-      debug(`Warning: sound-sample-description ${version} not implemented`);
+      debug(
+        `Warning: sound-sample-description ${
+          version as unknown as string
+        } not implemented`
+      );
     }
     return ssd;
   }

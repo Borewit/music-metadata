@@ -103,7 +103,9 @@ export class ID3v2Parser {
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
-        throw new Error(`Unexpected majorVer: ${majorVer}`);
+        throw new Error(
+          `Unexpected majorVer: ${majorVer as unknown as string}`
+        );
     }
   }
 

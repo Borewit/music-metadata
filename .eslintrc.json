@@ -348,7 +348,7 @@
         "hoist": "all"
       }
     ],
-    
+
     "@typescript-eslint/no-unsafe-argument": "off",
     "@typescript-eslint/no-unsafe-assignment": "off",
     "@typescript-eslint/no-unsafe-call": "off",
@@ -369,6 +369,10 @@
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/prefer-function-type": "error",
     "@typescript-eslint/quotes": "off",
+    "@typescript-eslint/restrict-template-expressions": [
+      "error",
+      { "allowBoolean": true }
+    ],
     "@typescript-eslint/semi": ["error", "always"],
     /* Duplicate with "plugin:@typescript-eslint/strict" */
     "@typescript-eslint/unified-signatures": "error"

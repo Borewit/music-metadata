@@ -99,7 +99,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public setFormat(key: FormatId, value: any) {
-    debug(`format: ${key} = ${value}`);
+    debug(`format: ${key} = ${value as unknown as string}`);
     (this.format as any)[key] = value; // as any to override readonly
 
     if (this.opts.observer) {
@@ -111,7 +111,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public addTag(tagType: TagType, tagId: string, value: any) {
-    debug(`tag ${tagType}.${tagId} = ${value}`);
+    debug(`tag ${tagType}.${tagId} = ${value as unknown as string}`);
     if (!this.native[tagType]) {
       this.format.tagTypes.push(tagType);
       this.native[tagType] = [];
@@ -329,7 +329,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * @returns
    */
   private setGenericTag(tagType: TagType | "artificial", tag: IGenericTag) {
-    debug(`common.${tag.id} = ${tag.value}`);
+    debug(`common.${tag.id} = ${tag.value as unknown as string}`);
     const prio0 = this.commonOrigin[tag.id] || 1000;
     const prio1 = this.originPriority[tagType];
 
@@ -339,7 +339,9 @@ export class MetadataCollector implements INativeMetadataCollector {
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(
-          `Ignore native tag (singleton): ${tagType}.${tag.id} = ${tag.value}`
+          `Ignore native tag (singleton): ${tagType}.${tag.id} = ${
+            tag.value as unknown as string
+          }`
         );
       }
     } else {
@@ -350,7 +352,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         ) {
           (this.common[tag.id] as any).push(tag.value);
         } else {
-          debug(`Ignore duplicate value: ${tagType}.${tag.id} = ${tag.value}`);
+          debug(
+            `Ignore duplicate value: ${tagType}.${tag.id} = ${
+              tag.value as unknown as string
+            }`
+          );
         }
         // no effect? this.commonOrigin[tag.id] = prio1;
       } else if (prio1 < prio0) {
@@ -358,7 +364,9 @@ export class MetadataCollector implements INativeMetadataCollector {
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(
-          `Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value}`
+          `Ignore native tag (list): ${tagType}.${tag.id} = ${
+            tag.value as unknown as string
+          }`
         );
       }
     }
