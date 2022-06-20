@@ -1,76 +1,85 @@
-import { describe, assert, it } from "vitest";
+import { describe, test, expect } from "vitest";
+
+import { Readable } from "node:stream";
+import { get as getHttps } from "node:https";
+import { get as getHttp } from "node:http";
 
 import { parseStream } from "../lib";
-import { IHttpClient, HttpClient } from "./http-client";
 
 import { IFileInfo } from "../lib/strtok3";
 
-interface IHttpClientTest {
-  readonly name: string;
-  client: IHttpClient;
+interface IHttpResponse {
+  headers: Record<string, string>;
+  stream: Readable;
 }
 
-const clients: IHttpClientTest[] = [
-  {
-    name: "http",
-    client: new HttpClient(),
-  },
-];
+function getUrlResponse(url: string): Promise<IHttpResponse> {
+  return new Promise<IHttpResponse>((resolve, reject) => {
+    const request = url.startsWith("https") ? getHttps(url) : getHttp(url);
+
+    request.on("response", (response) =>
+      resolve({
+        headers: response.headers as Record<string, string>,
+        stream: response,
+      })
+    );
+    request.on("close", () => reject(new Error("close")));
+    request.on("error", (err) => reject(err));
+  });
+}
 
 // Skipped: https://github.com/Borewit/music-metadata/issues/160
 describe("HTTP streaming", function () {
-  // Increase time-out to 15 seconds because we retrieve files over HTTP(s)
-  // this.timeout(15 * 1000);
-  // this.retries(3); // Workaround for HTTP time-outs on Travis-CI
+  const url = "http://builds.tokyo.s3.amazonaws.com/sample.m4a";
 
-  describe("Stream HTTP using different clients", () => {
-    clients.forEach((test) => {
-      describe(`HTTP client: ${test.name}`, () => {
-        [true, false].forEach((hasContentLength) => {
-          it(
-            `Should be able to parse M4A ${
-              hasContentLength ? "with" : "without"
-            } content-length specified`,
-            async () => {
-              const url = "http://builds.tokyo.s3.amazonaws.com/sample.m4a";
+  test(
+    `Should be able to parse M4A with content-length specified`,
+    async () => {
+      const response = await getUrlResponse(url);
 
-              const response = await test.client.get(url);
+      const fileInfo: IFileInfo = {
+        mimeType: response.headers["content-type"],
+        size: Number.parseInt(response.headers["content-length"], 10), // Always pass this in production
+      };
 
-              const fileInfo: IFileInfo = {
-                mimeType: response.headers["content-type"],
-              };
-              if (hasContentLength) {
-                fileInfo.size = parseInt(
-                  response.headers["content-length"],
-                  10
-                ); // Always pass this in production
-              }
+      const tags = await parseStream(response.stream, fileInfo);
+      response.stream.destroy();
 
-              const tags = await parseStream(response.stream, fileInfo);
-              if (response.stream.destroy) {
-                response.stream.destroy(); // Node >= v8 only
-              }
-              assert.strictEqual(tags.format.container, "M4A/mp42/isom");
-              assert.strictEqual(tags.format.codec, "MPEG-4/AAC");
-              assert.strictEqual(tags.format.lossless, false);
+      expect(tags.format.container).toBe("M4A/mp42/isom");
+      expect(tags.format.codec).toBe("MPEG-4/AAC");
+      expect(tags.format.lossless).toBe(false);
 
-              assert.strictEqual(
-                tags.common.title,
-                'Super Mario Galaxy "Into The Galaxy"'
-              );
-              assert.strictEqual(
-                tags.common.artist,
-                'club nintendo CD "SUPER MARIO GALAXY"より'
-              );
-              assert.strictEqual(
-                tags.common.album,
-                "SUPER MARIO GALAXY ORIGINAL SOUNDTRACK"
-              );
-            },
-            15 * 1000
-          );
-        });
-      });
-    });
-  });
+      expect(tags.common.title).toBe('Super Mario Galaxy "Into The Galaxy"');
+      expect(tags.common.artist).toBe(
+        'club nintendo CD "SUPER MARIO GALAXY"より'
+      );
+      expect(tags.common.album).toBe("SUPER MARIO GALAXY ORIGINAL SOUNDTRACK");
+    },
+    15 * 1000
+  );
+
+  test(
+    `Should be able to parse M4A without content-length specified`,
+    async () => {
+      const response = await getUrlResponse(url);
+
+      const fileInfo: IFileInfo = {
+        mimeType: response.headers["content-type"],
+      };
+
+      const tags = await parseStream(response.stream, fileInfo);
+      response.stream.destroy();
+
+      expect(tags.format.container).toBe("M4A/mp42/isom");
+      expect(tags.format.codec).toBe("MPEG-4/AAC");
+      expect(tags.format.lossless).toBe(false);
+
+      expect(tags.common.title).toBe('Super Mario Galaxy "Into The Galaxy"');
+      expect(tags.common.artist).toBe(
+        'club nintendo CD "SUPER MARIO GALAXY"より'
+      );
+      expect(tags.common.album).toBe("SUPER MARIO GALAXY ORIGINAL SOUNDTRACK");
+    },
+    15 * 1000
+  );
 });
