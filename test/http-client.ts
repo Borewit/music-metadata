@@ -1,34 +1,29 @@
-import * as Stream from "stream";
-import * as https from "https";
-import * as http from "http";
+import { Readable } from "node:stream";
+import { get as getHttps } from "node:https";
+import { get as getHttp } from "node:http";
 
 export interface IHttpResponse {
-  headers: { [id: string]: string };
-  stream: Stream.Readable;
+  headers: Record<string, string>;
+  stream: Readable;
 }
 
-export interface IHttpClient {
+export interface HttpClient {
   get: (url: string) => Promise<IHttpResponse>;
 }
 
-export class HttpClient implements IHttpClient {
+export class NodeHttpClient implements HttpClient {
   public get(url: string): Promise<IHttpResponse> {
     return new Promise<IHttpResponse>((resolve, reject) => {
-      const request = (
-        (url.startsWith("https") ? https : http) as typeof http
-      ).get(url);
-      request.on("response", (resp) => {
+      const request = url.startsWith("https") ? getHttps(url) : getHttp(url);
+
+      request.on("response", (response) =>
         resolve({
-          headers: resp.headers as any,
-          stream: resp,
-        });
-      });
-      request.on("abort", () => {
-        reject(new Error("abort"));
-      });
-      request.on("error", (err) => {
-        reject(err);
-      });
+          headers: response.headers as Record<string, string>,
+          stream: response,
+        })
+      );
+      request.on("close", () => reject(new Error("close")));
+      request.on("error", (err) => reject(err));
     });
   }
 }
