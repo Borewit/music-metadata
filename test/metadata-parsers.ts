@@ -1,45 +1,42 @@
-import * as fs from "fs";
+import { createReadStream, readFileSync } from "node:fs";
 
-import * as mm from "../lib";
+import { parseFile, parseStream, parseBuffer } from "../lib";
 import { IAudioMetadata, IOptions } from "../lib/type";
 
-type ParseFileMethod = (
-  filePath: string,
-  mimeType?: string,
-  options?: IOptions
-) => Promise<IAudioMetadata>;
-
-interface IParser {
+interface Parser {
   description: string;
-  initParser: ParseFileMethod;
+  initParser: (
+    filePath: string,
+    mimeType?: string,
+    options?: IOptions
+  ) => Promise<IAudioMetadata>;
 }
 
 /**
  * Helps looping through different input styles
  */
-export const Parsers: IParser[] = [
+export const Parsers: Parser[] = [
   {
     description: "parseFile",
-    initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
-      return mm.parseFile(filePath, options);
+    initParser: (filePath, mimeType, options) => {
+      return parseFile(filePath, options);
     },
   },
   {
     description: "parseStream",
-    initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
-      const stream = fs.createReadStream(filePath);
-      return mm.parseStream(stream, { mimeType }, options).then((metadata) => {
-        stream.close();
-        return metadata;
-      });
+    initParser: async (filePath, mimeType, options) => {
+      const stream = createReadStream(filePath);
+      const metadata = await parseStream(stream, { mimeType }, options);
+      stream.close();
+      return metadata;
     },
   },
   {
     description: "parseBuffer",
-    initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
-      const buffer = fs.readFileSync(filePath);
+    initParser: (filePath, mimeType, options) => {
+      const buffer = readFileSync(filePath);
       const array = new Uint8Array(buffer);
-      return mm.parseBuffer(array, { mimeType }, options);
+      return parseBuffer(array, { mimeType }, options);
     },
   },
 ];
