@@ -1,19 +1,20 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { describe, test, expect } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile } from "../lib";
 import { IMetadataEvent } from "../lib/type";
 import { samplePath } from "./util";
 
 describe("Asynchronous observer updates", () => {
-  const flacFilePath = path.join(samplePath, "flac.flac");
+  const flacFilePath = join(samplePath, "flac.flac");
 
-  it("decode a FLAC audio file", async () => {
+  test("decode a FLAC audio file", async () => {
+    expect.assertions(1);
+
     const eventTags: IMetadataEvent["tag"][] = [];
 
-    await mm.parseFile(flacFilePath, {
+    await parseFile(flacFilePath, {
       observer: (event) => {
-        eventTags.push(event.tag);
         switch (typeof event.tag.value) {
           case "number":
           case "string":
@@ -22,10 +23,12 @@ describe("Asynchronous observer updates", () => {
           default:
             event.tag.value = null;
         }
+
+        eventTags.push(event.tag);
       },
     });
 
-    assert.deepEqual(eventTags, [
+    expect(eventTags).toStrictEqual([
       {
         id: "container",
         type: "format",
@@ -54,12 +57,12 @@ describe("Asynchronous observer updates", () => {
       {
         id: "sampleRate",
         type: "format",
-        value: 44100,
+        value: 44_100,
       },
       {
         id: "duration",
         type: "format",
-        value: 271.7733333333333,
+        value: 271.773_333_333_333_3,
       },
       {
         id: "album",
@@ -104,7 +107,7 @@ describe("Asynchronous observer updates", () => {
       {
         id: "bitrate",
         type: "format",
-        value: 3529.912181720061,
+        value: 3529.912_181_720_061,
       },
     ]);
   });
