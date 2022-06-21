@@ -1,6 +1,7 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, assert, it } from "vitest";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 import { samplePath, SourceStream } from "./util";
 import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
@@ -51,22 +52,22 @@ describe("Parse MPEG", () => {
     );
     t.strictEqual(
       metadata.format.bitrate,
-      128000,
+      128_000,
       "format.bitrate = 128 kbit/sec"
     );
     t.strictEqual(
       metadata.format.sampleRate,
-      44100,
+      44_100,
       "format.sampleRate = 44.1 kHz"
     );
     t.strictEqual(
       metadata.format.numberOfSamples,
-      23040,
+      23_040,
       "format.numberOfSamples = 23040"
     );
     t.strictEqual(
       metadata.format.duration,
-      0.5224489795918368,
+      0.522_448_979_591_836_8,
       "duration [seconds]"
     ); // validated 2017-04-09
   });
@@ -85,7 +86,7 @@ describe("Parse MPEG", () => {
         { mimeType: "audio/mpeg" },
         { duration: true }
       );
-    }, 10000);
+    }, 10_000);
 
     it("should sync efficient, from a file", async function () {
       // this.timeout(10000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
@@ -98,7 +99,7 @@ describe("Parse MPEG", () => {
       } finally {
         fs.unlinkSync(tmpFilePath);
       }
-    }, 10000);
+    }, 10_000);
   });
 
   describe("mpeg parsing fails for irrelevant attributes #14", () => {
@@ -114,14 +115,18 @@ describe("Parse MPEG", () => {
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.tagTypes");
-        t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
+        t.strictEqual(
+          format.sampleRate,
+          44_100,
+          "format.sampleRate = 44.1 kHz"
+        );
         t.strictEqual(
           format.numberOfSamples,
-          9098496,
+          9_098_496,
           "format.numberOfSamples"
         ); // FooBar says 3:26.329 seconds (9.099.119 samples)
         t.approximately(format.duration, 206.3, 1 / 10, "format.duration"); // FooBar says 3:26.329 seconds (9.099.119 samples)
-        t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
+        t.strictEqual(format.bitrate, 320_000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(
           format.numberOfChannels,
           2,
@@ -189,7 +194,7 @@ describe("Parse MPEG", () => {
       checkCommon(result.common);
       checkID3v23(mm.orderTags(result.native["ID3v2.3"]));
       checkID3v1(mm.orderTags(result.native.ID3v1));
-    }, 15000);
+    }, 15_000);
 
     it("should decode 07 - I'm Cool.mp3", async function () {
       // 'LAME3.91' found on position 81BCF=531407
@@ -200,10 +205,14 @@ describe("Parse MPEG", () => {
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
-        t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
+        t.strictEqual(
+          format.sampleRate,
+          44_100,
+          "format.sampleRate = 44.1 kHz"
+        );
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
         t.approximately(format.duration, 200.9, 1 / 10, "format.duration"); // FooBar says 3:26.329 seconds
-        t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
+        t.strictEqual(format.bitrate, 320_000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(
           format.numberOfChannels,
           2,
@@ -256,7 +265,7 @@ describe("Parse MPEG", () => {
       checkFormat(result.format);
       checkCommon(result.common);
       checkID3v23(mm.orderTags(result.native["ID3v2.3"]));
-    }, 15000);
+    }, 15_000);
   });
 
   /**
@@ -284,8 +293,12 @@ describe("Parse MPEG", () => {
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
-        t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
-        t.strictEqual(format.bitrate, 320000, "format.bitrate = 128 kbit/sec");
+        t.strictEqual(
+          format.sampleRate,
+          44_100,
+          "format.sampleRate = 44.1 kHz"
+        );
+        t.strictEqual(format.bitrate, 320_000, "format.bitrate = 128 kbit/sec");
         t.strictEqual(
           format.numberOfChannels,
           2,
@@ -315,8 +328,8 @@ describe("Parse MPEG", () => {
       t.deepEqual(format.container, "MPEG", "format.container");
       t.deepEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
       t.strictEqual(format.lossless, false, "format.lossless");
-      t.strictEqual(format.sampleRate, 44100, "format.sampleRate = 44.1 kHz");
-      t.strictEqual(format.bitrate, 320000, "format.bitrate = 160 kbit/sec");
+      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate = 44.1 kHz");
+      t.strictEqual(format.bitrate, 320_000, "format.bitrate = 160 kbit/sec");
       t.strictEqual(
         format.numberOfChannels,
         2,
@@ -328,7 +341,7 @@ describe("Parse MPEG", () => {
       const metadata = await mm.parseFile(
         path.join(issueDir, "id3-multi-02.mp3")
       );
-      checkFormat(metadata.format, 230.29551020408164);
+      checkFormat(metadata.format, 230.295_510_204_081_64);
     });
 
     /**
@@ -339,7 +352,7 @@ describe("Parse MPEG", () => {
       const metadata = await mm.parseFile(
         path.join(issueDir, "id3-multi-01.mp3")
       );
-      checkFormat(metadata.format, 0.1306122448979592);
+      checkFormat(metadata.format, 0.130_612_244_897_959_2);
     });
   });
 
@@ -437,14 +450,14 @@ describe("Parse MPEG", () => {
     describe("VBR read from Xing header", () => {
       const filePath = path.join(issueDir, "id3v2-xheader.mp3");
 
-      Parsers.forEach((parser) => {
+      for (const parser of Parsers) {
         it(parser.description, async () => {
           const metadata = await parser.initParser(filePath, "audio/mpeg", {
             duration: false,
           });
-          assert.strictEqual(metadata.format.duration, 0.4963265306122449);
+          assert.strictEqual(metadata.format.duration, 0.496_326_530_612_244_9);
         });
-      });
+      }
     });
 
     it("VBR: based on frame count if duration flag is set", async () => {

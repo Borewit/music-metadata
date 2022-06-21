@@ -1,5 +1,5 @@
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { TagType } from "../lib/common/GenericTagTypes";
@@ -79,11 +79,11 @@ const samples: IReplayGainSample[] = [
     tagType: "ID3v2.3",
     track: {
       gain: 0,
-      peak: 6.0,
+      peak: 6,
     },
     album: {
       gain: 0,
-      peak: 12.0,
+      peak: 12,
     },
   },
   {
@@ -179,11 +179,11 @@ const samples: IReplayGainSample[] = [
     tagType: "vorbis",
     track: {
       gain: -3.26,
-      peak: -5.19595,
+      peak: -5.195_95,
     },
     album: {
       gain: -3.26,
-      peak: -5.19595,
+      peak: -5.195_95,
     },
   },
 ];
@@ -194,7 +194,7 @@ const samples: IReplayGainSample[] = [
 describe("Test Replay-Gain", () => {
   const pathGainSamples = path.join(__dirname, "samples", "replay-gain");
 
-  samples.forEach((sample) => {
+  for (const sample of samples) {
     it(`Test ${sample.description}, mapping from tag header: ${sample.tagType}`, async () => {
       const filePath = path.join(pathGainSamples, sample.filename);
 
@@ -258,5 +258,5 @@ describe("Test Replay-Gain", () => {
         );
       }
     });
-  });
+  }
 });

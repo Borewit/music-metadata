@@ -1,7 +1,7 @@
 import { describe, assert, it } from "vitest";
 import * as mm from "../lib";
 
-import * as path from "path";
+import * as path from "node:path";
 import { samplePath } from "./util";
 
 const t = assert;
@@ -19,17 +19,17 @@ describe("Decode MP3/ID3v2.4", () => {
       );
       t.strictEqual(
         metadata.format.duration,
-        0.7836734693877551,
+        0.783_673_469_387_755_1,
         "format.format.duration"
       );
       t.strictEqual(
         metadata.format.sampleRate,
-        44100,
+        44_100,
         "format.sampleRate = 44.1 kHz"
       );
       t.strictEqual(
         metadata.format.bitrate,
-        128000,
+        128_000,
         "format.bitrate = 128 kbit/sec"
       );
       t.strictEqual(
@@ -74,7 +74,7 @@ describe("Decode MP3/ID3v2.4", () => {
       );
       t.strictEqual(
         metadata.common.picture[0].data.length,
-        80938,
+        80_938,
         "common.picture 0 length"
       );
       t.strictEqual(
@@ -84,7 +84,7 @@ describe("Decode MP3/ID3v2.4", () => {
       );
       t.strictEqual(
         metadata.common.picture[1].data.length,
-        80938,
+        80_938,
         "common.picture 1 length"
       );
     });

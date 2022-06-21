@@ -1,5 +1,6 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import { Parsers } from "./metadata-parsers";
 import * as mm from "../lib";
@@ -25,7 +26,7 @@ describe("Parse Ogg", function () {
       "image/jpeg",
       "picture format"
     );
-    assert.strictEqual(common.picture[0].data.length, 30966, "picture length");
+    assert.strictEqual(common.picture[0].data.length, 30_966, "picture length");
     assert.strictEqual(
       common.barcode,
       "0720642442524",
@@ -63,7 +64,7 @@ describe("Parse Ogg", function () {
     // test exact contents too
     assert.strictEqual(
       cover.data.length,
-      30966,
+      30_966,
       "vorbis.METADATA_BLOCK_PICTURE length"
     );
     assert.strictEqual(
@@ -94,10 +95,10 @@ describe("Parse Ogg", function () {
 
       function checkFormat(format: mm.IFormat) {
         assert.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
-        assert.strictEqual(format.duration, 2.0, "format.duration = 2.0 sec");
+        assert.strictEqual(format.duration, 2, "format.duration = 2.0 sec");
         assert.strictEqual(
           format.sampleRate,
-          44100,
+          44_100,
           "format.sampleRate = 44.1 kHz"
         );
         assert.strictEqual(
@@ -105,10 +106,10 @@ describe("Parse Ogg", function () {
           2,
           "format.numberOfChannels = 2 (stereo)"
         );
-        assert.strictEqual(format.bitrate, 64000, "bitrate = 64 kbit/sec");
+        assert.strictEqual(format.bitrate, 64_000, "bitrate = 64 kbit/sec");
       }
 
-      Parsers.forEach((parser) => {
+      for (const parser of Parsers) {
         it(parser.description, async () => {
           const metadata = await parser.initParser(filePath, "audio/ogg");
           checkFormat(metadata.format);
@@ -117,7 +118,7 @@ describe("Parse Ogg", function () {
           );
           check_Nirvana_In_Bloom_commonTags(metadata.common);
         });
-      });
+      }
     });
 
     it("should handle page not finalized with the lastPage flag", async () => {
@@ -129,7 +130,7 @@ describe("Parse Ogg", function () {
       // assert.strictEqual(format.duration, 2.0, 'format.duration = 2.0 sec');
       assert.strictEqual(
         format.sampleRate,
-        22050,
+        22_050,
         "format.sampleRate = 44.1 kHz"
       );
       assert.strictEqual(
@@ -137,7 +138,7 @@ describe("Parse Ogg", function () {
         2,
         "format.numberOfChannels = 2 (stereo)"
       );
-      assert.strictEqual(format.bitrate, 56000, "bitrate = 64 kbit/sec");
+      assert.strictEqual(format.bitrate, 56_000, "bitrate = 64 kbit/sec");
 
       // Following is part a page which is not correctly finalized with lastPage flag
       assert.isDefined(common.title, "should provide: metadata.common.title");
@@ -165,7 +166,7 @@ describe("Parse Ogg", function () {
       const { format, native } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, "Ogg", "format.container");
       assert.strictEqual(format.codec, "Vorbis I", "format.codec");
-      assert.strictEqual(format.sampleRate, 44100, "format.sampleRate");
+      assert.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
 
       const vorbis = mm.orderTags(native.vorbis);
       assert.deepEqual(vorbis.ALBUM, ["Dropsonde"]);
@@ -184,11 +185,11 @@ describe("Parse Ogg", function () {
     describe("components", () => {
       it("IdHeader should throw error if data is shorter than header", () => {
         try {
-          const idHeader = new IdHeader(18);
-        } catch (err) {
-          if (!(err instanceof Error)) throw err;
+          new IdHeader(18);
+        } catch (error) {
+          if (!(error instanceof Error)) throw error;
           assert.equal(
-            err.message,
+            error.message,
             "ID-header-page 0 should be at least 19 bytes long"
           );
         }
@@ -202,18 +203,18 @@ describe("Parse Ogg", function () {
         assert.deepEqual(format.tagTypes, ["vorbis"], "format.tagTypes");
         assert.strictEqual(
           format.numberOfSamples,
-          96000,
+          96_000,
           "format.numberOfSamples = 96000"
         );
         assert.approximately(
           format.duration,
-          2.0,
+          2,
           1 / 200,
           "format.duration = 2.0 sec"
         );
         assert.strictEqual(
           format.sampleRate,
-          44100,
+          44_100,
           "format.sampleRate = 44.1 kHz"
         );
         assert.strictEqual(
@@ -224,7 +225,7 @@ describe("Parse Ogg", function () {
         // assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
       }
 
-      Parsers.forEach((parser) => {
+      for (const parser of Parsers) {
         it(parser.description, async () => {
           const metadata = await parser.initParser(filePath, "audio/ogg");
           checkFormat(metadata.format);
@@ -233,7 +234,7 @@ describe("Parse Ogg", function () {
           );
           check_Nirvana_In_Bloom_commonTags(metadata.common);
         });
-      });
+      }
     });
   });
 
@@ -251,12 +252,12 @@ describe("Parse Ogg", function () {
         );
       }
 
-      Parsers.forEach((parser) => {
+      for (const parser of Parsers) {
         it(parser.description, async () => {
           const metadata = await parser.initParser(filePath, "audio/ogg");
           checkFormat(metadata.format);
         });
-      });
+      }
     });
 
     it("check for ogg-multipage-metadata-bug", () => {
@@ -292,7 +293,7 @@ describe("Parse Ogg", function () {
         );
         assert.strictEqual(
           result.common.picture[0].data.length,
-          207439,
+          207_439,
           "picture length"
         );
       });
@@ -307,10 +308,10 @@ describe("Parse Ogg", function () {
 
       assert.strictEqual(format.container, "Ogg", "format.container");
       assert.strictEqual(format.codec, "Opus", "format.codec");
-      assert.strictEqual(format.sampleRate, 48000, "format.sampleRate");
+      assert.strictEqual(format.sampleRate, 48_000, "format.sampleRate");
       assert.strictEqual(
         format.numberOfSamples,
-        253440,
+        253_440,
         "format.numberOfSamples"
       );
       assert.approximately(format.duration, 5.28, 1 / 200, "format.duration");
@@ -323,10 +324,10 @@ describe("Parse Ogg", function () {
 
       assert.strictEqual(format.container, "Ogg", "format.container");
       assert.strictEqual(format.codec, "Opus", "format.codec");
-      assert.strictEqual(format.sampleRate, 16000, "format.sampleRate");
+      assert.strictEqual(format.sampleRate, 16_000, "format.sampleRate");
       assert.strictEqual(
         format.numberOfSamples,
-        270720,
+        270_720,
         "format.numberOfSamples"
       );
       assert.approximately(format.duration, 5.64, 1 / 200, "format.duration");

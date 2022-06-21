@@ -1,4 +1,4 @@
-import * as Stream from "stream";
+import * as Stream from "node:stream";
 import * as strtok3 from "./strtok3";
 
 import * as parseFromTokenizer from "./parseFromTokenizer";

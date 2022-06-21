@@ -1,7 +1,7 @@
 // Utilities for testing
 
-import { Readable } from "stream";
-import * as path from "path";
+import { Readable } from "node:stream";
+import * as path from "node:path";
 
 /**
  * A mock readable-stream, using string to read from

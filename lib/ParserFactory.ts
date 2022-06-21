@@ -44,11 +44,16 @@ export interface ITokenParser {
   parse(): Promise<void>;
 }
 
+/**
+ *
+ * @param contentType
+ * @returns
+ */
 export function parseHttpContentType(contentType: string): {
   type: string;
   subtype: string;
   suffix?: string;
-  parameters: { [id: string]: string };
+  parameters: Record<string, string>;
 } {
   const type = ContentType.parse(contentType);
   const mime = MimeType.parse(type.type);
@@ -60,18 +65,25 @@ export function parseHttpContentType(contentType: string): {
   };
 }
 
+/**
+ *
+ * @param tokenizer
+ * @param parserId
+ * @param opts
+ */
 async function parse(
   tokenizer: ITokenizer,
   parserId: ParserType,
   opts: IOptions = {}
 ): Promise<IAudioMetadata> {
   // Parser found, execute parser
-  const parser = await ParserFactory.loadParser(parserId);
+  const parser = ParserFactory.loadParser(parserId);
   const metadata = new MetadataCollector(opts);
   await parser.init(metadata, tokenizer, opts).parse();
   return metadata.toCommonMetadata();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ParserFactory {
   /**
    * Parse metadata from tokenizer
@@ -83,7 +95,7 @@ export class ParserFactory {
     tokenizer: ITokenizer,
     opts: IOptions
   ): Promise<IAudioMetadata> {
-    const { mimeType, path, url } = await tokenizer.fileInfo;
+    const { mimeType, path, url } = tokenizer.fileInfo;
 
     // Resolve parser based on MIME-type or file extension
     const parserId =
@@ -134,7 +146,7 @@ export class ParserFactory {
 
   /**
    * @param filePath - Path, filename or extension to audio file
-   * @return Parser sub-module name
+   * @returns Parser sub-module name
    */
   public static getParserIdForExtension(filePath: string): ParserType {
     if (!filePath) return;
@@ -209,9 +221,7 @@ export class ParserFactory {
     }
   }
 
-  public static async loadParser(
-    moduleName: ParserType
-  ): Promise<ITokenParser> {
+  public static loadParser(moduleName: ParserType): ITokenParser {
     switch (moduleName) {
       case "aiff":
         return new AIFFParser();
@@ -241,7 +251,7 @@ export class ParserFactory {
       case "matroska":
         return new MatroskaParser();
       default:
-        throw new Error(`Unknown parser type: ${moduleName}`);
+        throw new Error(`Unknown parser type: ${String(moduleName)}`);
     }
   }
 
@@ -258,15 +268,14 @@ export class ParserFactory {
     let mime;
     try {
       mime = parseHttpContentType(httpContentType);
-    } catch (err) {
+    } catch {
       debug(`Invalid HTTP Content-Type header value: ${httpContentType}`);
       return;
     }
 
-    const subType =
-      mime.subtype.indexOf("x-") === 0
-        ? mime.subtype.substring(2)
-        : mime.subtype;
+    const subType = mime.subtype.startsWith("x-")
+      ? mime.subtype.slice(2)
+      : mime.subtype;
 
     switch (mime.type) {
       case "audio":

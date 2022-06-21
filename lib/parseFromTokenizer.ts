@@ -9,6 +9,12 @@ import { IAudioMetadata, IOptions } from "./type";
  * @returns Metadata
  */
 
+/**
+ *
+ * @param tokenizer
+ * @param options
+ * @returns
+ */
 export function parseFromTokenizer(
   tokenizer: strtok3.ITokenizer,
   options?: IOptions

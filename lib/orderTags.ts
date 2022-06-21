@@ -6,6 +6,11 @@ import { INativeTagDict, ITag } from "./type";
  * @returns tags indexed by id
  */
 
+/**
+ *
+ * @param nativeTags
+ * @returns
+ */
 export function orderTags(nativeTags: ITag[]): INativeTagDict {
   const tags: INativeTagDict = {};
   for (const tag of nativeTags) {

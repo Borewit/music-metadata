@@ -1,5 +1,5 @@
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
@@ -10,15 +10,15 @@ describe("Parse Musepack (.mpc)", () => {
   describe("Parse Musepack, SV7 with APEv2 header", () => {
     const filePath = path.join(mpcSamplePath, "apev2.sv7.mpc");
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(filePath, "audio/musepac");
         // Check format
         const format = metadata.format;
         assert.deepEqual(format.container, "Musepack, SV7");
-        assert.strictEqual(format.sampleRate, 44100);
-        assert.strictEqual(format.numberOfSamples, 11940);
-        assert.approximately(format.bitrate, 269649, 1);
+        assert.strictEqual(format.sampleRate, 44_100);
+        assert.strictEqual(format.numberOfSamples, 11_940);
+        assert.approximately(format.bitrate, 269_649, 1);
         assert.strictEqual(format.codec, "1.15");
 
         // Check generic metadata
@@ -33,7 +33,7 @@ describe("Parse Musepack (.mpc)", () => {
         assert.strictEqual(common.releasecountry, "GB");
         assert.deepEqual(common.track, { no: 9, of: 10 });
       });
-    });
+    }
   });
 
   describe("Handle APEv1 TAG header (no header, only footer)", () => {
@@ -42,14 +42,14 @@ describe("Parse Musepack (.mpc)", () => {
      */
     const filePath = path.join(mpcSamplePath, "apev2-no-header.sv7.mpc");
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(filePath, "audio/musepac");
         // Check format
         assert.deepEqual(metadata.format.container, "Musepack, SV7");
-        assert.strictEqual(metadata.format.sampleRate, 44100);
-        assert.strictEqual(metadata.format.numberOfSamples, 11940);
-        assert.approximately(metadata.format.bitrate, 269649, 1);
+        assert.strictEqual(metadata.format.sampleRate, 44_100);
+        assert.strictEqual(metadata.format.numberOfSamples, 11_940);
+        assert.approximately(metadata.format.bitrate, 269_649, 1);
         assert.strictEqual(metadata.format.codec, "1.15");
 
         // Check generic metadata
@@ -59,7 +59,7 @@ describe("Parse Musepack (.mpc)", () => {
         assert.strictEqual(metadata.common.date, "2004");
         assert.deepEqual(metadata.common.track, { no: 9, of: null });
       });
-    });
+    }
   });
 
   describe("Parse Musepack, SV8 with APEv2 header", () => {
@@ -68,16 +68,16 @@ describe("Parse Musepack (.mpc)", () => {
       "bach-goldberg-variatians-05.sv8.mpc"
     );
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(filePath, "audio/musepac");
         // Check format
         assert.deepEqual(metadata.format.container, "Musepack, SV8");
-        assert.strictEqual(metadata.format.sampleRate, 48000);
-        assert.strictEqual(metadata.format.numberOfSamples, 24000);
+        assert.strictEqual(metadata.format.sampleRate, 48_000);
+        assert.strictEqual(metadata.format.numberOfSamples, 24_000);
         assert.strictEqual(metadata.format.numberOfChannels, 2);
         assert.approximately(metadata.format.duration, 0.5, 1 / 2000);
-        assert.approximately(metadata.format.bitrate, 32368, 1);
+        assert.approximately(metadata.format.bitrate, 32_368, 1);
 
         // Check generic metadata
         assert.strictEqual(
@@ -95,6 +95,6 @@ describe("Parse Musepack (.mpc)", () => {
         assert.strictEqual(metadata.common.date, "2012-05-28");
         assert.deepEqual(metadata.common.track, { no: 5, of: 32 });
       });
-    });
+    }
   });
 });

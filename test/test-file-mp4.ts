@@ -1,6 +1,7 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, assert, it } from "vitest";
-import * as path from "path";
-import * as fs from "fs";
+import * as path from "node:path";
+import * as fs from "node:fs";
 
 import * as mm from "../lib";
 import { Parsers } from "./metadata-parsers";
@@ -17,16 +18,16 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       assert.deepEqual(format.container, "M4A/isom/iso2", "container");
       assert.deepEqual(format.codec, "MPEG-4/AAC", "codec");
       assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-      assert.deepEqual(format.sampleRate, 44100, "format.sampleRate");
+      assert.deepEqual(format.sampleRate, 44_100, "format.sampleRate");
       assert.deepEqual(format.tagTypes, ["iTunes"], "format.tagTypes");
       assert.approximately(format.duration, 2.206, 1 / 500, "format.duration");
       assert.strictEqual(
         format.sampleRate,
-        44100,
+        44_100,
         "format.sampleRate = 44.1 kHz"
       );
       assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
-      assert.approximately(format.bitrate, 148000, 500, "Calculate bit-rate");
+      assert.approximately(format.bitrate, 148_000, 500, "Calculate bit-rate");
     }
 
     function checkCommon(common: mm.ICommonTagsResult) {
@@ -41,9 +42,9 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       t.strictEqual(common.disk.of, 1, "disk of");
       t.strictEqual(common.genre[0], "Electronic", "genre");
       t.strictEqual(common.picture[0].format, "image/jpeg", "picture 0 format");
-      t.strictEqual(common.picture[0].data.length, 196450, "picture 0 length");
+      t.strictEqual(common.picture[0].data.length, 196_450, "picture 0 length");
       t.strictEqual(common.picture[1].format, "image/jpeg", "picture 1 format");
-      t.strictEqual(common.picture[1].data.length, 196450, "picture 1 length");
+      t.strictEqual(common.picture[1].data.length, 196_450, "picture 1 length");
     }
 
     function checkNativeTags(native: mm.INativeTagDict) {
@@ -77,10 +78,14 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
       // Check album art
       t.isDefined(native.covr);
       t.strictEqual(native.covr[0].format, "image/jpeg", "m4a.covr.format");
-      t.strictEqual(native.covr[0].data.length, 196450, "m4a.covr.data.length");
+      t.strictEqual(
+        native.covr[0].data.length,
+        196_450,
+        "m4a.covr.data.length"
+      );
     }
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const filePath = path.join(mp4Samples, "id4.m4a");
 
@@ -92,14 +97,14 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         checkCommon(metadata.common);
         checkNativeTags(mm.orderTags(native));
       });
-    });
+    }
   });
 
   /**
    * Ref: https://github.com/Borewit/music-metadata/issues/74
    */
   describe("should decode 8-byte unsigned integer", () => {
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const filePath = path.join(mp4Samples, "issue-74.m4a");
 
@@ -113,7 +118,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         );
         assert.deepEqual(format.codec, "MPEG-4/AAC", "format.codec");
         assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-        assert.deepEqual(format.sampleRate, 44100, "format.sampleRate");
+        assert.deepEqual(format.sampleRate, 44_100, "format.sampleRate");
         assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
 
         assert.isDefined(native.iTunes, "Native m4a tags should be present");
@@ -128,14 +133,14 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
           "youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV",
         ]);
       });
-    });
+    }
   });
 
   /**
    * Ref: https://github.com/Borewit/music-metadata/issues/79
    */
   describe("should be able to extract the composer and artist", () => {
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const filePath = path.join(mp4Samples, "issue-79.m4a");
 
@@ -145,7 +150,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         assert.deepEqual(format.container, "M4A/mp42/isom", "format.container");
         assert.deepEqual(format.codec, "MPEG-4/AAC", "format.codec");
         assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-        assert.deepEqual(format.sampleRate, 44100, "format.sampleRate");
+        assert.deepEqual(format.sampleRate, 44_100, "format.sampleRate");
         assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
 
         assert.strictEqual(common.title, "Uprising");
@@ -160,17 +165,17 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         assert.deepEqual(common.disk, { no: 1, of: 1 });
         assert.deepEqual(common.track, { no: 1, of: null });
       });
-    });
+    }
   });
 
   describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
     describe("audio book from issue issue #127", () => {
-      Parsers.forEach((parser) => {
+      for (const parser of Parsers) {
         it(parser.description, async () => {
           const filePath = path.join(mp4Samples, "issue-127.m4b");
 
           const metadata = await parser.initParser(filePath, "audio/mp4");
-          const { common, format } = metadata;
+          const { common, format, native } = metadata;
 
           assert.deepEqual(
             format.container,
@@ -189,19 +194,19 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
             "https://archive.org/details/glories_of_ireland_1801_librivox",
           ]);
 
-          const iTunes = mm.orderTags(metadata.native.iTunes);
+          const iTunes = mm.orderTags(native.iTunes);
           assert.deepEqual(iTunes.stik, [2], "iTunes.stik = 2 = Audiobook"); // Ref: http://www.zoyinc.com/?p=1004
         });
-      });
+      }
     });
 
-    describe("Parse chapters", async () => {
+    describe("Parse chapters", () => {
       /**
        * Source audio-book: https://librivox.org/the-babys-songbook-by-walter-crane/
        */
-      describe("BabysSongbook_librivox.m4b", async () => {
+      describe("BabysSongbook_librivox.m4b", () => {
         function checkMetadata(metadata: mm.IAudioMetadata) {
-          const { common, format } = metadata;
+          const { common, format, native } = metadata;
 
           assert.deepEqual(
             format.container,
@@ -228,66 +233,66 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
           );
           assert.isUndefined(common.comment, "common.comment");
 
-          const iTunes = mm.orderTags(metadata.native.iTunes);
+          const iTunes = mm.orderTags(native.iTunes);
           assert.deepEqual(iTunes.stik, [2], "iTunes.stik = 2 = Audiobook"); // Ref: http://www.zoyinc.com/?p=1004
 
           assert.deepEqual(format.chapters, [
             {
-              sampleOffset: 45056,
+              sampleOffset: 45_056,
               title: "01 - Baby's Opera: 01 - Girls and Boys",
             },
             {
-              sampleOffset: 2695168,
+              sampleOffset: 2_695_168,
               title: "02 - Baby's Opera: 02 - The Mulberry Bush",
             },
             {
-              sampleOffset: 5083136,
+              sampleOffset: 5_083_136,
               title: "03 - Baby's Opera: 03 - Oranges and Lemons",
             },
             {
-              sampleOffset: 8352768,
+              sampleOffset: 8_352_768,
               title: "04 - Baby's Opera: 04 - St. Paul's Steeple",
             },
             {
-              sampleOffset: 10544128,
+              sampleOffset: 10_544_128,
               title: "05 - Baby's Opera: 05 - My Lady's Garden",
             },
             {
-              sampleOffset: 12284928,
+              sampleOffset: 12_284_928,
               title: "06 - Baby's Opera: 12 - Dickory Dock",
             },
             {
-              sampleOffset: 14125056,
+              sampleOffset: 14_125_056,
               title: "07 - Baby's Opera: 22 - Baa!Baa!Black Sheep",
             },
             {
-              sampleOffset: 16410624,
+              sampleOffset: 16_410_624,
               title:
                 "08 - Baby's Bouquet: 01 - Dedication and Polly put the Kettle On",
             },
             {
-              sampleOffset: 19068928,
+              sampleOffset: 19_068_928,
               title: "09 - Baby's Bouquet: 02 - Hot Cross Buns",
             },
             {
-              sampleOffset: 21685248,
+              sampleOffset: 21_685_248,
               title:
                 "10 - Baby's Bouquet: 03 - The Little Woman and the Pedlar",
             },
             {
-              sampleOffset: 30461952,
+              sampleOffset: 30_461_952,
               title: "11 - Baby's Bouquet: 04 - The Little Disaster",
             },
             {
-              sampleOffset: 37761024,
+              sampleOffset: 37_761_024,
               title: "12 - Baby's Bouquet: 05 - The Old Woman of Norwich",
             },
             {
-              sampleOffset: 39628800,
+              sampleOffset: 39_628_800,
               title: "13 - Baby's Bouquet: 12 - Lucy Locket",
             },
             {
-              sampleOffset: 41500672,
+              sampleOffset: 41_500_672,
               title: "14 - Baby's Bouquet: 18 - The North Wind & the Robin",
             },
           ]);
@@ -327,7 +332,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
 
   describe("Parse MPEG-4 Video (.mp4)", () => {
     describe("Parse TV episode", () => {
-      Parsers.forEach((parser) => {
+      for (const parser of Parsers) {
         it(parser.description, async () => {
           const filePath = path.join(
             mp4Samples,
@@ -362,12 +367,12 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
           const iTunes = mm.orderTags(metadata.native.iTunes);
           assert.deepEqual(iTunes.stik, [10], "iTunes.stik = 10 = TV Show"); // Ref: http://www.zoyinc.com/?p=1004
         });
-      });
+      }
     });
   });
 
   describe("should support extended atom header", () => {
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const filePath = path.join(mp4Samples, "issue-133.m4a");
 
@@ -379,11 +384,11 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         );
         assert.deepEqual(metadata.format.codec, "MPEG-4/AAC", "format.codec");
       });
-    });
+    }
   });
 
   describe("Handle dashed atom-ID's", () => {
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const filePath = path.join(mp4Samples, "issue-151.m4a");
 
@@ -407,11 +412,11 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         assert.deepEqual(metadata.common.genre, ["Rock"]);
         assert.strictEqual(metadata.common.title, "Distraction");
       });
-    });
+    }
   });
 
   describe("Parse Trumpsta (Djuro Remix)", () => {
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const filePath = path.join(
           mp4Samples,
@@ -432,7 +437,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
         assert.deepEqual(metadata.common.artists, ["Contiez"]);
         assert.strictEqual(metadata.common.title, "Trumpsta (Djuro Remix)");
       });
-    });
+    }
   });
 
   /**
@@ -449,7 +454,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     assert.strictEqual(format.container, "M4A/mp42/isom", "format.container");
     assert.strictEqual(format.codec, "MPEG-4/AAC", "format.codec");
     assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    assert.deepEqual(format.sampleRate, 44100, "format.sampleRate");
+    assert.deepEqual(format.sampleRate, 44_100, "format.sampleRate");
     assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
     assert.deepEqual(format.tagTypes, ["iTunes"], "format.tagTypes");
 
@@ -472,13 +477,13 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     assert.strictEqual(format.codec, "MPEG-4/AAC", "format.codec");
     assert.approximately(
       format.duration,
-      224.00290249433107,
+      224.002_902_494_331_07,
       1 / 200,
       "format.duration"
     );
     assert.approximately(
       format.sampleRate,
-      44100,
+      44_100,
       1 / 200,
       "format.sampleRate"
     );
@@ -495,12 +500,12 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
   it("Extract creation and modified time", async () => {
     const filePath = path.join(mp4Samples, "Apple  voice memo.m4a");
 
-    const { format, quality, common, native } = await mm.parseFile(filePath);
+    const { format, native } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, "M4A/isom/mp42", "format.container");
     assert.strictEqual(format.codec, "MPEG-4/AAC", "format.codec");
     assert.approximately(format.duration, 1.024, 1 / 2000, "format.duration");
-    assert.strictEqual(format.sampleRate, 48000, "format.sampleRate");
+    assert.strictEqual(format.sampleRate, 48_000, "format.sampleRate");
 
     assert.strictEqual(
       format.creationTime.toISOString(),
@@ -530,7 +535,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     assert.strictEqual(format.container, "isom/iso2/mp41", "format.container");
     assert.strictEqual(format.codec, "MPEG-4/AAC", "format.codec");
     assert.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    assert.strictEqual(format.sampleRate, 44100, "format.sampleRate");
+    assert.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
     assert.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample");
     assert.approximately(format.duration, 360.8, 1 / 20, "format.duration");
   });
@@ -544,7 +549,7 @@ describe("Parse MPEG-4 files with iTunes metadata", () => {
     assert.strictEqual(format.container, "M4A/mp42/isom", "format.container");
     assert.strictEqual(format.codec, "MPEG-4/AAC", "format.codec");
     assert.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    assert.strictEqual(format.sampleRate, 48000, "format.sampleRate");
+    assert.strictEqual(format.sampleRate, 48_000, "format.sampleRate");
     assert.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample");
     assert.approximately(format.duration, 1563.16, 1 / 200, "format.duration");
 

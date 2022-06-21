@@ -1,5 +1,5 @@
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import { TrackType } from "../lib/type";
 import * as mm from "../lib";
@@ -80,7 +80,7 @@ describe("format.trackInfo", () => {
             },
             {
               audio: {
-                samplingFrequency: 44100,
+                samplingFrequency: 44_100,
               },
               codecName: "VORBIS",
               codecSettings: undefined,
@@ -128,7 +128,7 @@ describe("format.trackInfo", () => {
             {
               audio: {
                 channels: 2,
-                samplingFrequency: 48000,
+                samplingFrequency: 48_000,
               },
               codecName: "AAC",
               codecSettings: undefined,
@@ -214,8 +214,8 @@ describe("format.trackInfo", () => {
             },
             {
               audio: {
-                outputSamplingFrequency: 44100,
-                samplingFrequency: 22050,
+                outputSamplingFrequency: 44_100,
+                samplingFrequency: 22_050,
               },
               codecName: "AAC",
               codecSettings: undefined,
@@ -273,7 +273,7 @@ describe("format.trackInfo", () => {
               audio: {
                 bitDepth: 16,
                 channels: 2,
-                samplingFrequency: 48000,
+                samplingFrequency: 48_000,
               },
               codecName: "MPEG-4/AAC",
               type: TrackType.audio,
@@ -291,7 +291,7 @@ describe("format.trackInfo", () => {
               audio: {
                 bitDepth: 16,
                 channels: 2,
-                samplingFrequency: 48000,
+                samplingFrequency: 48_000,
               },
               codecName: "AC-3",
               type: TrackType.audio,

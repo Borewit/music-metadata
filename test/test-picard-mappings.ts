@@ -3,18 +3,18 @@ import { AsfTagMapper } from "../lib/asf/AsfTagMapper";
 import { APEv2TagMapper } from "../lib/apev2/APEv2TagMapper";
 import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
 
-describe("Picard mapping coverage", () => {
-  function convertName(picardName: string) {
-    switch (picardName) {
-      case "tracknumber":
-        return "track"; // ToDo: make consistent with Picard convention
-      case "discnumber":
-        return "disk"; // ToDo: make consistent with Picard convention
-      default:
-        return picardName;
-    }
+function convertName(picardName: string) {
+  switch (picardName) {
+    case "tracknumber":
+      return "track"; // ToDo: make consistent with Picard convention
+    case "discnumber":
+      return "disk"; // ToDo: make consistent with Picard convention
+    default:
+      return picardName;
   }
+}
 
+describe("Picard mapping coverage", () => {
   it("ASF", () => {
     /**
      * Picard mappings

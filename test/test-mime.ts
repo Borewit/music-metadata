@@ -1,44 +1,48 @@
 import { describe, assert, it } from "vitest";
 import * as mime from "mime";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { SourceStream, samplePath } from "./util";
 
 const t = assert;
 
+function handleError(extension: string, err: Error) {
+  switch (extension) {
+    case ".aac":
+    case ".m4a":
+    case ".flac":
+    case ".wav":
+    case ".ogg":
+      t.ok(
+        err.message.startsWith("FourCC"),
+        `Only FourCC error allowed, got: ${err.message}`
+      );
+      break;
+
+    default:
+      throw new Error("caught error parsing " + extension + ": " + err.message);
+  }
+}
+
+async function testFileType(sample: string, container: string) {
+  const stream = fs.createReadStream(path.join(samplePath, sample));
+  const metadata = await mm.parseStream(stream);
+  stream.close();
+  assert.equal(metadata.format.container, container);
+}
 describe("MIME & extension mapping", () => {
   const buf = Buffer.alloc(30).fill(0);
 
   const audioExtension = [".aac", ".mp3", ".ogg", ".wav", ".flac", ".m4a"]; // ToDo: ass ".ac3"
 
-  function handleError(extension: string, err: Error) {
-    switch (extension) {
-      case ".aac":
-      case ".m4a":
-      case ".flac":
-      case ".wav":
-      case ".ogg":
-        t.ok(
-          err.message.startsWith("FourCC"),
-          `Only FourCC error allowed, got: ${err.message}`
-        );
-        break;
-
-      default:
-        throw new Error(
-          "caught error parsing " + extension + ": " + err.message
-        );
-    }
-  }
-
   it("should reject an unknown file", () => {
     return mm
       .parseFile(path.join(__dirname, "..", "package.json"))
       .then(() => t.fail("Should reject extension"))
-      .catch((err) => {
-        t.strictEqual(err.message, "Failed to determine audio format");
+      .catch((error) => {
+        t.strictEqual(error.message, "Failed to determine audio format");
       });
   });
 
@@ -50,26 +54,26 @@ describe("MIME & extension mapping", () => {
         const mimeType = mime.getType(extension);
         t.isNotNull(mimeType, "extension: " + extension);
 
-        return mm.parseStream(streamReader, mimeType).catch((err) => {
-          handleError(extension, err);
+        return mm.parseStream(streamReader, mimeType).catch((error) => {
+          handleError(extension, error);
         });
       })
     );
   });
 
   it("should map on extension as well", () => {
-    const prom: Promise<void | mm.IAudioMetadata>[] = [];
+    const prom: Promise<mm.IAudioMetadata>[] = [];
 
-    audioExtension.forEach((extension) => {
+    for (const extension of audioExtension) {
       const streamReader = new SourceStream(buf);
       const res = mm
         .parseStream(streamReader, { path: extension })
-        .catch((err) => {
-          handleError(extension, err);
+        .catch((error) => {
+          handleError(extension, error);
         });
 
-      prom.push(res);
-    });
+      prom.push(res as Promise<mm.IAudioMetadata>);
+    }
 
     return Promise.all(prom);
   });
@@ -101,9 +105,9 @@ describe("MIME & extension mapping", () => {
       try {
         await mm.parseStream(streamReader, { mimeType: "audio/not-existing" });
         assert.fail("Should throw an Error");
-      } catch (err) {
-        if (!(err instanceof Error)) throw err;
-        assert.equal(err.message, "Failed to determine audio format");
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        assert.equal(error.message, "Failed to determine audio format");
       }
     });
 
@@ -115,21 +119,14 @@ describe("MIME & extension mapping", () => {
       try {
         await mm.parseStream(stream, { mimeType: "audio/not-existing" });
         assert.fail("Should throw an Error");
-      } catch (err) {
-        if (!(err instanceof Error)) throw err;
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
         assert.equal(
-          err.message,
+          error.message,
           "Guessed MIME-type not supported: image/jpeg"
         );
       }
     });
-
-    async function testFileType(sample: string, container: string) {
-      const stream = fs.createReadStream(path.join(samplePath, sample));
-      const metadata = await mm.parseStream(stream);
-      stream.close();
-      assert.equal(metadata.format.container, container);
-    }
 
     it("should recognize MP2", () => {
       return testFileType(

@@ -1,5 +1,5 @@
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 import * as strtok from "../lib/strtok3";
 
 import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
@@ -33,17 +33,17 @@ describe("Extract metadata from ID3v2.3 header", () => {
       assert.deepEqual(format.tagTypes, ["ID3v2.3", "ID3v1"], "format.type");
       assert.strictEqual(
         format.duration,
-        0.7836734693877551,
+        0.783_673_469_387_755_1,
         "format.duration"
       ); // FooBar says 0.732 seconds (32.727 samples)
       assert.strictEqual(
         format.sampleRate,
-        44100,
+        44_100,
         "format.sampleRate = 44.1 kHz"
       );
       assert.strictEqual(
         format.bitrate,
-        128000,
+        128_000,
         "format.bitrate = 128 kbit/sec"
       );
       assert.strictEqual(
@@ -87,7 +87,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       );
       assert.strictEqual(
         common.picture[0].data.length,
-        80938,
+        80_938,
         "common.picture length"
       );
     }
@@ -137,7 +137,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       assert.strictEqual(apic.format, "image/jpeg", "raw APIC format");
       assert.strictEqual(apic.type, "Cover (front)", "raw APIC tagTypes");
       assert.strictEqual(apic.description, "", "raw APIC description");
-      assert.strictEqual(apic.data.length, 80938, "raw APIC length");
+      assert.strictEqual(apic.data.length, 80_938, "raw APIC length");
     }
 
     const metadata = await mm.parseFile(filePath, { duration: true });
@@ -157,7 +157,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       function checkFormat(format: mm.IFormat) {
         assert.strictEqual(
           format.duration,
-          247.84979591836733,
+          247.849_795_918_367_33,
           "format.duration"
         );
         assert.deepEqual(format.tagTypes, ["ID3v2.3"], "format.tagTypes");
@@ -166,12 +166,12 @@ describe("Extract metadata from ID3v2.3 header", () => {
         assert.strictEqual(format.lossless, false, "format.lossless");
         assert.strictEqual(
           format.sampleRate,
-          44100,
+          44_100,
           "format.sampleRate = 44.1 kHz"
         );
         assert.strictEqual(
           format.bitrate,
-          128000,
+          128_000,
           "format.bitrate = 128 bit/sec"
         );
         assert.strictEqual(
@@ -261,13 +261,13 @@ describe("Extract metadata from ID3v2.3 header", () => {
     assert.deepEqual(common.comment, ["[DJSet]", "[All]"], "common.comment");
     assert.deepEqual(common.genre, ["Dance", "Classics"], "common.genre");
 
-    ["TPE1", "TCOM", "TCON"].forEach((tag) => {
+    for (const tag of ["TPE1", "TCOM", "TCON"]) {
       assert.includeDeepMembers(
         quality.warnings,
         [{ message: `ID3v2.3 ${tag} uses non standard null-separator.` }],
         `expect warning: null separator ID3v2.3 ${tag}`
       );
-    });
+    }
   });
 
   describe("4.2.1 Text information frames", () => {
@@ -363,7 +363,7 @@ describe("Extract metadata from ID3v2.3 header", () => {
       );
     });
 
-    describe("TXXX", async () => {
+    describe("TXXX", () => {
       it("Handle empty TXXX", async () => {
         const { format, quality, common } = await mm.parseFile(
           path.join(samplePath, "mp3", "issue-471.mp3")
@@ -373,12 +373,12 @@ describe("Extract metadata from ID3v2.3 header", () => {
         assert.strictEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
         assert.approximately(
           format.duration,
-          309.629387755102,
+          309.629_387_755_102,
           1 / 200,
           "format.duration"
         );
-        assert.strictEqual(format.sampleRate, 44100, "format.sampleRate");
-        assert.strictEqual(format.bitrate, 128000, "format.bitrate");
+        assert.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
+        assert.strictEqual(format.bitrate, 128_000, "format.bitrate");
 
         assert.includeDeepMembers(
           quality.warnings,
@@ -392,10 +392,10 @@ describe("Extract metadata from ID3v2.3 header", () => {
       });
     });
 
-    describe("PRIV", async () => {
+    describe("PRIV", () => {
       it("Handle empty PRIV tag", async () => {
         const filePath = path.join(samplePath, "mp3", "issue-691.mp3");
-        const { format, common, quality } = await mm.parseFile(filePath);
+        const { format, quality } = await mm.parseFile(filePath);
 
         assert.strictEqual(format.container, "MPEG", "format.container");
         assert.strictEqual(format.codec, "MPEG 1 Layer 3", "format.codec");

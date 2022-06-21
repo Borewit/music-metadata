@@ -1,5 +1,6 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
@@ -32,53 +33,53 @@ describe("Parse WavPack (audio/x-wavpack)", () => {
       "MusicBrainz - Beth Hart - Sinner's Prayer.wv"
     );
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(wv1, "audio/x-wavpack");
         checkFormat(metadata.format);
         checkCommon(metadata.common);
       });
-    });
+    }
   });
 
   describe("codec: DSD128", () => {
     function checkFormat(format: IFormat) {
       t.strictEqual(format.container, "WavPack", "format.container");
       t.strictEqual(format.codec, "DSD", "format.codecProfile");
-      t.deepEqual(format.numberOfSamples, 564480, "format.numberOfSamples");
-      t.strictEqual(format.sampleRate, 5644800, "format.sampleRate");
+      t.deepEqual(format.numberOfSamples, 564_480, "format.numberOfSamples");
+      t.strictEqual(format.sampleRate, 5_644_800, "format.sampleRate");
       t.strictEqual(format.duration, 0.1, "format.duration");
       t.deepEqual(format.tagTypes, [], "format.tagTypes");
     }
 
     const wv1 = path.join(wavpackSamplePath, "DSD128.wv");
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(wv1, "audio/x-wavpack");
         checkFormat(metadata.format);
       });
-    });
+    }
   });
 
   describe("codec: DSD128 compressed", () => {
     function checkFormat(format: IFormat) {
       t.strictEqual(format.container, "WavPack", "format.container");
       t.strictEqual(format.codec, "DSD", "format.codecProfile");
-      t.deepEqual(format.numberOfSamples, 564480, "format.numberOfSamples");
-      t.strictEqual(format.sampleRate, 5644800, "format.sampleRate");
+      t.deepEqual(format.numberOfSamples, 564_480, "format.numberOfSamples");
+      t.strictEqual(format.sampleRate, 5_644_800, "format.sampleRate");
       t.strictEqual(format.duration, 0.1, "format.duration");
       t.deepEqual(format.tagTypes, [], "format.tagTypes");
-      t.approximately(format.bitrate, 4810400, 1);
+      t.approximately(format.bitrate, 4_810_400, 1);
     }
 
     const wv1 = path.join(wavpackSamplePath, "DSD128 high compression.wv");
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(wv1, "audio/x-wavpack");
         checkFormat(metadata.format);
       });
-    });
+    }
   });
 });

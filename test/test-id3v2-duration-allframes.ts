@@ -1,7 +1,7 @@
-import { describe, assert, it } from "vitest";
+import { assert, it } from "vitest";
 import * as mm from "../lib";
 
-import * as path from "path";
+import * as path from "node:path";
 import { samplePath } from "./util";
 
 const t = assert;
@@ -25,9 +25,9 @@ it("should decode id3v2-duration-allframes", () => {
 
   function checkFormat(format: mm.IFormat) {
     t.deepEqual(format.tagTypes, ["ID3v2.3"], "format.tagTypes");
-    t.strictEqual(format.bitrate, 256000, "format.bitrate");
+    t.strictEqual(format.bitrate, 256_000, "format.bitrate");
     t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    t.strictEqual(format.sampleRate, 44100, "format.sampleRate");
+    t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
     t.strictEqual(
       format.duration,
       (57 * 1152) / format.sampleRate,

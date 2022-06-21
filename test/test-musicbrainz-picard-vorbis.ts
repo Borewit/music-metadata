@@ -1,5 +1,5 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { assert, it } from "vitest";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { samplePath } from "./util";
@@ -9,8 +9,8 @@ it("MusicBrains/Picard tags in FLAC", async () => {
   const filePath = path.join(samplePath, filename);
 
   function checkFormat(format: mm.IFormat) {
-    assert.deepEqual(format.duration, 271.7733333333333, "format.duration");
-    assert.deepEqual(format.sampleRate, 44100, "format.sampleRate");
+    assert.deepEqual(format.duration, 271.773_333_333_333_3, "format.duration");
+    assert.deepEqual(format.sampleRate, 44_100, "format.sampleRate");
     assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
     assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
   }
@@ -87,7 +87,7 @@ it("MusicBrains/Picard tags in FLAC", async () => {
 
     assert.isDefined(common.picture, "common.picture");
     assert.deepEqual(common.picture[0].format, "image/jpeg", "picture format");
-    assert.deepEqual(common.picture[0].data.length, 175668, "picture length");
+    assert.deepEqual(common.picture[0].data.length, 175_668, "picture length");
   }
 
   function checkNativeTags(vorbis: mm.INativeTagDict) {

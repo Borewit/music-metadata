@@ -1,5 +1,6 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { Parsers } from "./metadata-parsers";
@@ -12,14 +13,14 @@ describe("Parse MP3 files", () => {
     it("ISO/MPEG 1 Layer 1", async () => {
       // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l1
       const samples = [
-        { filename: "fl1.mp1", bitRate: 384, sampleRate: 32000, channels: 2 },
-        { filename: "fl2.mp1", bitRate: 384, sampleRate: 44100, channels: 2 },
-        { filename: "fl3.mp1", bitRate: 384, sampleRate: 48000, channels: 2 },
-        { filename: "fl4.mp1", bitRate: 32, sampleRate: 32000, channels: 1 },
-        { filename: "fl5.mp1", bitRate: 448, sampleRate: 48000, channels: 2 },
-        { filename: "fl6.mp1", bitRate: 384, sampleRate: 44100, channels: 2 },
-        { filename: "fl7.mp1", bitRate: 384, sampleRate: 44100, channels: 2 },
-        { filename: "fl8.mp1", bitRate: 384, sampleRate: 44100, channels: 2 },
+        { filename: "fl1.mp1", bitRate: 384, sampleRate: 32_000, channels: 2 },
+        { filename: "fl2.mp1", bitRate: 384, sampleRate: 44_100, channels: 2 },
+        { filename: "fl3.mp1", bitRate: 384, sampleRate: 48_000, channels: 2 },
+        { filename: "fl4.mp1", bitRate: 32, sampleRate: 32_000, channels: 1 },
+        { filename: "fl5.mp1", bitRate: 448, sampleRate: 48_000, channels: 2 },
+        { filename: "fl6.mp1", bitRate: 384, sampleRate: 44_100, channels: 2 },
+        { filename: "fl7.mp1", bitRate: 384, sampleRate: 44_100, channels: 2 },
+        { filename: "fl8.mp1", bitRate: 384, sampleRate: 44_100, channels: 2 },
       ];
 
       for (const sample of samples) {
@@ -54,13 +55,13 @@ describe("Parse MP3 files", () => {
     it("ISO/MPEG 1 Layer 2", async () => {
       // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l2
       const samples = [
-        { filename: "fl10.mp2", bitRate: 192, sampleRate: 32000, channels: 2 },
-        { filename: "fl11.mp2", bitRate: 192, sampleRate: 44100, channels: 2 },
-        { filename: "fl12.mp2", bitRate: 192, sampleRate: 48000, channels: 2 },
-        { filename: "fl13.mp2", bitRate: 32, sampleRate: 32000, channels: 1 },
-        { filename: "fl14.mp2", bitRate: 384, sampleRate: 48000, channels: 2 },
-        { filename: "fl15.mp2", bitRate: 384, sampleRate: 48000, channels: 2 },
-        { filename: "fl16.mp2", bitRate: 256, sampleRate: 48000, channels: 2 },
+        { filename: "fl10.mp2", bitRate: 192, sampleRate: 32_000, channels: 2 },
+        { filename: "fl11.mp2", bitRate: 192, sampleRate: 44_100, channels: 2 },
+        { filename: "fl12.mp2", bitRate: 192, sampleRate: 48_000, channels: 2 },
+        { filename: "fl13.mp2", bitRate: 32, sampleRate: 32_000, channels: 1 },
+        { filename: "fl14.mp2", bitRate: 384, sampleRate: 48_000, channels: 2 },
+        { filename: "fl15.mp2", bitRate: 384, sampleRate: 48_000, channels: 2 },
+        { filename: "fl16.mp2", bitRate: 256, sampleRate: 48_000, channels: 2 },
       ];
 
       for (const sample of samples) {
@@ -95,29 +96,29 @@ describe("Parse MP3 files", () => {
     // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l2
     it("ISO/MPEG 1 Layer 3", async () => {
       const samples = [
-        { filename: "compl.mp3", bitRate: 64, sampleRate: 48000, channels: 1 },
-        { filename: "he_32khz.mp3", sampleRate: 32000, channels: 1 },
-        { filename: "he_44khz.mp3", sampleRate: 44100, channels: 1 },
-        { filename: "he_48khz.mp3", sampleRate: 48000, channels: 1 },
-        { filename: "he_mode.mp3", sampleRate: 44100, channels: 1 },
+        { filename: "compl.mp3", bitRate: 64, sampleRate: 48_000, channels: 1 },
+        { filename: "he_32khz.mp3", sampleRate: 32_000, channels: 1 },
+        { filename: "he_44khz.mp3", sampleRate: 44_100, channels: 1 },
+        { filename: "he_48khz.mp3", sampleRate: 48_000, channels: 1 },
+        { filename: "he_mode.mp3", sampleRate: 44_100, channels: 1 },
         {
           filename: "hecommon.mp3",
           bitRate: 128,
-          sampleRate: 44100,
+          sampleRate: 44_100,
           channels: 2,
         },
-        { filename: "si.mp3", bitRate: 64, sampleRate: 44100, channels: 1 },
-        { filename: "si.mp3", bitRate: 64, sampleRate: 44100, channels: 1 },
+        { filename: "si.mp3", bitRate: 64, sampleRate: 44_100, channels: 1 },
+        { filename: "si.mp3", bitRate: 64, sampleRate: 44_100, channels: 1 },
         {
           filename: "si_huff.mp3",
           bitRate: 64,
-          sampleRate: 44100,
+          sampleRate: 44_100,
           channels: 1,
         },
         {
           filename: "sin1k0db.mp3",
           bitRate: 128,
-          sampleRate: 44100,
+          sampleRate: 44_100,
           channels: 2,
         },
       ];
@@ -168,7 +169,7 @@ describe("Parse MP3 files", () => {
       // therefore it start counting actual parsable frames ending up on ~66.86
       assert.approximately(result.format.duration, 200.5, 1 / 10);
     });
-  }, 15000);
+  }, 15_000);
 
   it("should be able to parse: Sleep Away.mp3", function () {
     // this.timeout(15000); // Parsing this file can take a bit longer
@@ -180,7 +181,7 @@ describe("Parse MP3 files", () => {
 
       assert.deepEqual(format.container, "MPEG", "format.container");
       assert.deepEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-      assert.strictEqual(format.sampleRate, 44100, "format.sampleRate");
+      assert.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
       assert.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
 
       assert.strictEqual(common.title, "Sleep Away");
@@ -192,9 +193,9 @@ describe("Parse MP3 files", () => {
       const picture = common.picture[0];
       assert.strictEqual(picture.description, "thumbnail");
       assert.strictEqual(picture.format, "image/jpeg");
-      assert.strictEqual(picture.data.length, 27852);
+      assert.strictEqual(picture.data.length, 27_852);
     });
-  }, 15000);
+  }, 15_000);
 
   // https://github.com/Borewit/music-metadata/issues/381
   it("should be able to handle empty ID3v2 tag", async () => {
@@ -282,7 +283,7 @@ describe("Parse MP3 files", () => {
     assert.strictEqual(format.container, "MPEG", "format.container");
     assert.strictEqual(format.codec, "MPEG 2 Layer 3", "format.codec");
     assert.approximately(format.duration, 817.92, 1 / 200, "format.duration");
-    assert.strictEqual(format.sampleRate, 22050, "format.sampleRate");
+    assert.strictEqual(format.sampleRate, 22_050, "format.sampleRate");
 
     assert.includeDeepMembers(
       quality.warnings,
@@ -306,12 +307,12 @@ describe("Parse MP3 files", () => {
       assert.strictEqual(format.lossless, false, "format.lossless");
       assert.strictEqual(
         format.sampleRate,
-        22050,
+        22_050,
         "format.sampleRate = 44.1 kHz"
       );
       assert.strictEqual(
         format.bitrate,
-        64000,
+        64_000,
         "format.bitrate = 128 kbit/sec"
       );
       assert.strictEqual(
@@ -332,7 +333,7 @@ describe("Parse MP3 files", () => {
       const filePath = path.join(mp3SamplePath, "Sleep Away.mp3");
 
       describe("duration=false", () => {
-        Parsers.forEach((parser) => {
+        for (const parser of Parsers) {
           it(parser.description, async () => {
             const metadata = await parser.initParser(filePath, "audio/mpeg", {
               duration: false,
@@ -342,13 +343,13 @@ describe("Parse MP3 files", () => {
               "Don't expect a duration"
             );
           });
-        });
+        }
       });
 
       describe("duration=true", function () {
         // this.timeout(15000); // Parsing this file can take a bit longer
 
-        Parsers.forEach((parser) => {
+        for (const parser of Parsers) {
           it(parser.description, async () => {
             const metadata = await parser.initParser(filePath, "audio/mpeg", {
               duration: true,
@@ -360,7 +361,7 @@ describe("Parse MP3 files", () => {
               "Expect a duration"
             );
           });
-        });
+        }
       });
     });
   });
@@ -453,8 +454,8 @@ describe("Parse MP3 files", () => {
         assert.strictEqual(format.tool, "LAME 3.99r", "format.tool");
         assert.approximately(
           format.trackPeakLevel,
-          0.21857,
-          5 / 1000000,
+          0.218_57,
+          5 / 1_000_000,
           "format.trackPeakLevel"
         );
         assert.strictEqual(format.trackGain, 6.8, "format.trackGain");

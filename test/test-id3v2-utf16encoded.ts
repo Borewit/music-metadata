@@ -1,5 +1,5 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { assert, it } from "vitest";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { samplePath } from "./util";
@@ -23,7 +23,11 @@ it("decode id3v2-utf16", async () => {
     "image/jpeg",
     "picture 0 format"
   );
-  assert.strictEqual(common.picture[0].data.length, 214219, "picture 0 length");
+  assert.strictEqual(
+    common.picture[0].data.length,
+    214_219,
+    "picture 0 length"
+  );
   assert.deepEqual(
     common.picture[0].data.slice(0, 2),
     Buffer.from([0xff, 0xd8]),

@@ -78,13 +78,14 @@
     "lint:type:lib": "tsc -p lib --noEmit",
     "lint:type:test": "tsc -p test --noEmit",
     "lint:type:doc-gen": "tsc -p doc-gen --noEmit",
-    "lint:eslint": "eslint --cache lib/**/*.ts test/**/*.ts doc-gen/**/*.ts",
-    "lint:eslint:fix": "eslint --cache --fix lib/**/*.ts test/**/*.ts doc-gen/**/*.ts",
+    "lint:eslint": "eslint --cache lib test doc-gen",
+    "lint:eslint:fix": "eslint --cache --fix lib test doc-gen",
     "lint:md": "remark -u preset-lint-recommended .",
     "test": "run-s test:vitest",
     "test:vitest": "vitest --run",
     "test:coverage": "vitest --coverage",
-    "test:buildsize": "vite build"
+    "test:buildsize": "vite build",
+    "watch:test": "vitest --watch"
   },
   "dependencies": {
     "content-type": "^1.0.4",

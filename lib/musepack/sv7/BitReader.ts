@@ -2,7 +2,7 @@ import { ITokenizer } from "../../strtok3";
 import * as Token from "../../token-types";
 
 export class BitReader {
-  public pos: number = 0;
+  public pos = 0;
   private dword: number = undefined;
 
   public constructor(private tokenizer: ITokenizer) {}

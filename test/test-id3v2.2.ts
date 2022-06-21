@@ -1,5 +1,5 @@
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
@@ -88,7 +88,7 @@ describe("ID3v2Parser", () => {
     );
     assert.strictEqual(
       metadata.common.picture[0].data.length,
-      99738,
+      99_738,
       "picture length"
     );
     assert.strictEqual(metadata.common.gapless, false, "common.gapless");
@@ -156,7 +156,7 @@ describe("ID3v2Parser", () => {
 
     assert.strictEqual(format.container, "MPEG", "format.container");
     assert.strictEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-    assert.strictEqual(format.sampleRate, 44100, "format.sampleRate");
+    assert.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
     const pics = common.picture;
     assert.strictEqual(pics[0].format, "image/jpeg", "picture format");
     assert.strictEqual(pics[0].type, "Cover (front)", "picture type");
@@ -166,7 +166,7 @@ describe("ID3v2Parser", () => {
     it("TBP (beats per minute)", async () => {
       const filePath = path.join(samplePath, "mp3", "Betty Lou.mp3");
 
-      const { format, common, native } = await mm.parseFile(filePath, {
+      const { format, common } = await mm.parseFile(filePath, {
         duration: true,
       });
       assert.strictEqual(format.container, "MPEG", "format.container");

@@ -1,5 +1,5 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { assert, it } from "vitest";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { samplePath } from "./util";
@@ -11,7 +11,7 @@ it("should MusicBrainz tags with id3v2.4", async () => {
   const metadata = await mm.parseFile(filePath, { duration: true });
   const { common, format } = metadata;
 
-  assert.deepEqual(format.duration, 0.7836734693877551, "format.duration");
+  assert.deepEqual(format.duration, 0.783_673_469_387_755_1, "format.duration");
 
   assert.deepEqual(common.title, "Home", "common.title");
   assert.deepEqual(common.artist, "Explosions in the Sky", "common.artist");
@@ -37,7 +37,7 @@ it("should MusicBrainz tags with id3v2.4", async () => {
   );
   assert.deepEqual(
     common.picture[0].data.length,
-    75818,
+    75_818,
     "common.picture 0 length"
   );
 
@@ -150,7 +150,7 @@ it("should MusicBrainz tags with id3v2.4", async () => {
     );
     assert.deepEqual(
       picTag.value.data.length,
-      75818,
+      75_818,
       "['ID3v2.4'].APIC #1 length"
     );
   }

@@ -35,7 +35,7 @@ const vorbisTagMap: INativeTagMap = {
   LYRICIST: "lyricist",
   WRITER: "writer",
   CONDUCTOR: "conductor",
-  // 'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
+  // 'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
   REMIXER: "remixer",
   ARRANGER: "arranger",
   ENGINEER: "engineer",
@@ -79,7 +79,7 @@ const vorbisTagMap: INativeTagMap = {
   ACOUSTID_ID: "acoustid_id",
   ACOUSTID_ID_FINGERPRINT: "acoustid_fingerprint",
   MUSICIP_PUID: "musicip_puid",
-  // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
+  // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
   WEBSITE: "website",
   NOTES: "notes",
   TOTALTRACKS: "totaltracks",
@@ -119,7 +119,7 @@ export class VorbisTagMapper extends CommonTagMapper {
   public static toRating(email: string, rating: string): IRating {
     return {
       source: email ? email.toLowerCase() : email,
-      rating: parseFloat(rating) * CommonTagMapper.maxRatingScore,
+      rating: Number.parseFloat(rating) * CommonTagMapper.maxRatingScore,
     };
   }
 
@@ -128,7 +128,7 @@ export class VorbisTagMapper extends CommonTagMapper {
   }
 
   protected override postMap(tag: ITag): void {
-    if (tag.id.indexOf("RATING:") === 0) {
+    if (tag.id.startsWith("RATING:")) {
       const keys = tag.id.split(":");
       tag.value = VorbisTagMapper.toRating(keys[1], tag.value);
       tag.id = keys[0];

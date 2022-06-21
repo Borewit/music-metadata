@@ -47,32 +47,32 @@ describe("shared utility functionality", () => {
           expected: "foo",
         },
         {
-          str: "derp\x00\x00",
+          str: "derp\u0000\u0000",
           expected: "derp",
         },
         {
-          str: "\x00\x00harkaaa\x00",
+          str: "\u0000\u0000harkaaa\u0000",
           expected: "harkaaa",
         },
         {
-          str: "\x00joystick",
+          str: "\u0000joystick",
           expected: "joystick",
         },
       ];
-      tests.forEach((test) => {
+      for (const test of tests) {
         t.strictEqual(util.stripNulls(test.str), test.expected);
-      });
+      }
     });
   });
 
   describe("FourCC token", () => {
     const testData: { fourCC: string; valid: boolean }[] = [
-      { fourCC: "\x00\x00\x00\x00", valid: false },
+      { fourCC: "\u0000\u0000\u0000\u0000", valid: false },
       { fourCC: "WAVE", valid: true },
       { fourCC: "fmt ", valid: true },
-      { fourCC: "fmt\x00", valid: true },
+      { fourCC: "fmt\u0000", valid: true },
       { fourCC: "----", valid: true }, // Used in MP4
-      { fourCC: "-\x00\x00\x00", valid: true }, // Used in MP4
+      { fourCC: "-\u0000\u0000\u0000", valid: true }, // Used in MP4
       { fourCC: "©nam", valid: true }, // Used in MP4
       { fourCC: "(c) ", valid: true }, // Used in AIFF
       { fourCC: " XML", valid: false },
@@ -88,7 +88,7 @@ describe("shared utility functionality", () => {
         try {
           fourCC = FourCcToken.get(buf, 0);
           valid = true;
-        } catch (e) {
+        } catch {
           valid = false;
         }
         t.strictEqual(
@@ -110,6 +110,6 @@ describe("shared utility functionality", () => {
   });
 
   it("a2hex", () => {
-    t.equal(util.a2hex("\x00\x01ABC\x02"), "00 01 41 42 43 02");
+    t.equal(util.a2hex("\u0000\u0001ABC\u0002"), "00 01 41 42 43 02");
   });
 });

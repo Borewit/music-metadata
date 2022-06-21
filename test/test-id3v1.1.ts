@@ -1,5 +1,6 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { Parsers } from "./metadata-parsers";
@@ -16,12 +17,12 @@ describe("Parsing MPEG / ID3v1", () => {
       assert.strictEqual(format.lossless, false, "format.lossless");
       assert.strictEqual(
         format.sampleRate,
-        44100,
+        44_100,
         "format.sampleRate = 44.1 kHz"
       );
       assert.strictEqual(
         format.bitrate,
-        160000,
+        160_000,
         "format.bitrate = 160 kbit/sec"
       );
       assert.strictEqual(
@@ -31,7 +32,7 @@ describe("Parsing MPEG / ID3v1", () => {
       );
       assert.strictEqual(
         format.duration,
-        241920 / format.sampleRate,
+        241_920 / format.sampleRate,
         "format.duration"
       );
     }
@@ -51,7 +52,7 @@ describe("Parsing MPEG / ID3v1", () => {
     /**
      * 241920 samples
      */
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, () => {
         return parser
           .initParser(fileBloodSugar, "audio/mpeg")
@@ -60,12 +61,12 @@ describe("Parsing MPEG / ID3v1", () => {
             checkCommon(metadata.common);
           });
       });
-    });
+    }
   });
 
   describe("it should skip id3v1 header if options.skipPostHeaders is set", () => {
     const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(
         parser.description,
         async function () {
@@ -79,9 +80,9 @@ describe("Parsing MPEG / ID3v1", () => {
             "format.tagTypes"
           );
         },
-        15000
+        15_000
       );
-    });
+    }
   });
 
   describe("should handle MP3 without any tags", () => {
@@ -98,12 +99,12 @@ describe("Parsing MPEG / ID3v1", () => {
       assert.strictEqual(format.lossless, false, "format.lossless");
       assert.strictEqual(
         format.sampleRate,
-        16000,
+        16_000,
         "format.sampleRate = 44.1 kHz"
       );
       assert.strictEqual(
         format.bitrate,
-        128000,
+        128_000,
         "format.bitrate = 128 kbit/sec"
       );
       assert.strictEqual(
@@ -113,12 +114,12 @@ describe("Parsing MPEG / ID3v1", () => {
       );
     }
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(filePath, "audio/mpeg");
         checkFormat(metadata.format);
       });
-    });
+    }
   });
 
   describe("should decode ID3v1.0 with undefined tags", () => {
@@ -133,7 +134,7 @@ describe("Parsing MPEG / ID3v1", () => {
     function checkFormat(format: mm.IFormat) {
       assert.strictEqual(
         format.duration,
-        33.38448979591837,
+        33.384_489_795_918_37,
         "format.duration (checked with foobar)"
       );
       assert.deepEqual(format.tagTypes, ["ID3v1"], "format.tagTypes");
@@ -142,7 +143,7 @@ describe("Parsing MPEG / ID3v1", () => {
       assert.strictEqual(format.lossless, false, "format.lossless");
       assert.strictEqual(
         format.sampleRate,
-        44100,
+        44_100,
         "format.sampleRate = 44.1 kHz"
       );
       // t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
@@ -169,14 +170,14 @@ describe("Parsing MPEG / ID3v1", () => {
       assert.isUndefined(common.comment, "common.comment");
     }
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(filePath, "audio/mpeg");
         assert.isDefined(metadata, "should provide metadata");
         checkFormat(metadata.format);
         checkCommon(metadata.common);
       });
-    });
+    }
   });
 
   /**
@@ -185,7 +186,7 @@ describe("Parsing MPEG / ID3v1", () => {
   it("should respect null terminated tag values correctly", () => {
     const filePath = path.join(samplePath, "issue_69.mp3");
 
-    Parsers.forEach((parser) => {
+    for (const parser of Parsers) {
       it(parser.description, async () => {
         const metadata = await parser.initParser(filePath, "audio/mpeg", {
           duration: true,
@@ -196,6 +197,6 @@ describe("Parsing MPEG / ID3v1", () => {
         assert.deepEqual(id3v1.album, ["Skupinove foto"], "id3v1.album");
         assert.deepEqual(id3v1.year, ["1988"], "id3v1.year");
       });
-    });
+    }
   });
 });

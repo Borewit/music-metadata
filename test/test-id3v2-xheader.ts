@@ -1,5 +1,5 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { assert, it } from "vitest";
+import * as path from "node:path";
 
 import * as mm from "../lib";
 import { samplePath } from "./util";
@@ -13,13 +13,13 @@ it("should be able to read id3v2 files with extended headers", () => {
   return mm.parseFile(filePath, { duration: true }).then((metadata) => {
     t.strictEqual(
       metadata.format.numberOfSamples,
-      10944,
+      10_944,
       "format.numberOfSamples"
     );
-    t.strictEqual(metadata.format.sampleRate, 22050, "format.sampleRate");
+    t.strictEqual(metadata.format.sampleRate, 22_050, "format.sampleRate");
     t.strictEqual(
       metadata.format.duration,
-      10944 / metadata.format.sampleRate,
+      10_944 / metadata.format.sampleRate,
       "format.duration"
     );
 

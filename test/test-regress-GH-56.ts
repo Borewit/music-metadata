@@ -1,5 +1,5 @@
 import { describe, assert, it } from "vitest";
-import * as path from "path";
+import * as path from "node:path";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
@@ -31,7 +31,7 @@ describe("should calculate duration for a CBR encoded MP3", () => {
 
   const filePath = path.join(samplePath, "regress-GH-56.mp3");
 
-  Parsers.forEach((parser) => {
+  for (const parser of Parsers) {
     it(parser.description, () => {
       return parser.initParser(filePath, "audio/mpeg").then((metadata) => {
         const expectedTags =
@@ -40,15 +40,15 @@ describe("should calculate duration for a CBR encoded MP3", () => {
             ? ["ID3v2.3", "APEv2"]
             : ["ID3v2.3"];
         t.deepEqual(metadata.format.tagTypes, expectedTags, "format.tagTypes");
-        t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");
+        t.strictEqual(metadata.format.sampleRate, 44_100, "format.sampleRate");
         t.strictEqual(
           metadata.format.duration,
-          16462080 / metadata.format.sampleRate,
+          16_462_080 / metadata.format.sampleRate,
           "format.duration"
         );
       });
     });
-  });
+  }
 
   it("_parseFile", () => {
     const parser = Parsers[0];
@@ -59,10 +59,10 @@ describe("should calculate duration for a CBR encoded MP3", () => {
           ? ["ID3v2.3", "APEv2"]
           : ["ID3v2.3"];
       t.deepEqual(metadata.format.tagTypes, expectedTags, "format.tagTypes");
-      t.strictEqual(metadata.format.sampleRate, 44100, "format.sampleRate");
+      t.strictEqual(metadata.format.sampleRate, 44_100, "format.sampleRate");
       t.strictEqual(
         metadata.format.duration,
-        16462080 / metadata.format.sampleRate,
+        16_462_080 / metadata.format.sampleRate,
         "format.duration"
       );
     });
