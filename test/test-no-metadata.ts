@@ -1,19 +1,22 @@
-import { assert, it } from "vitest";
-import * as path from "node:path";
+import { expect, test } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile } from "../lib";
 import { samplePath } from "./util";
 
-it("should reject files that can't be parsed", async () => {
-  const filePath = path.join(samplePath, "flac.flac.jpg");
+test("should reject files that can't be parsed", async () => {
+  const filePath = join(samplePath, "flac.flac.jpg");
 
+  const rejected = expect(() => parseFile(filePath)).rejects;
+  await rejected.toBeDefined();
+  await rejected.toHaveProperty("error.message");
   // Run with default options
   try {
-    await mm.parseFile(filePath);
-    assert.fail("Should reject a file which cannot be parsed");
+    await parseFile(filePath);
+    expect.fail("Should reject a file which cannot be parsed");
   } catch (error) {
     if (!(error instanceof Error)) throw error;
-    assert.isDefined(error);
-    assert.isDefined(error.message);
+    expect(error).toBeDefined();
+    expect(error.message).toBeDefined();
   }
 });
