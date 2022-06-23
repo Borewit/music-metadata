@@ -1,21 +1,18 @@
-import { assert, it } from "vitest";
-import * as path from "node:path";
+import { expect, test } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile } from "../lib";
 import { samplePath } from "./util";
 
-const t = assert;
-
-it("should decode non-ascii-characters", () => {
+test("should decode non-ascii-characters", async () => {
   const filename = "bug-non ascii chars.mp3";
-  const filePath = path.join(samplePath, filename);
+  const filePath = join(samplePath, filename);
 
-  return mm.parseFile(filePath).then((result) => {
-    t.deepEqual(result.common.artist, "Janelle Monáe", "common.artist");
-    t.deepEqual(
-      result.common.artists,
-      ["Janelle Monáe", "Roman Gianarthur", "Nate Wonder"],
-      "common.artists"
-    );
-  });
+  const result = await parseFile(filePath);
+  expect(result.common.artist, "common.artist").toBe("Janelle Monáe");
+  expect(result.common.artists, "common.artists").toStrictEqual([
+    "Janelle Monáe",
+    "Roman Gianarthur",
+    "Nate Wonder",
+  ]);
 });
