@@ -1,202 +1,135 @@
-/* eslint-disable unicorn/consistent-function-scoping */
-import { describe, assert, it } from "vitest";
-import * as path from "node:path";
+import { describe, test, expect } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { orderTags } from "../lib";
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
-describe("Parsing MPEG / ID3v1", () => {
-  const fileBloodSugar = path.join(samplePath, "id3v1_Blood_Sugar.mp3");
+const fileBloodSugar = join(samplePath, "id3v1_Blood_Sugar.mp3");
 
-  describe("should be able to read an ID3v1 tag", () => {
-    function checkFormat(format: mm.IFormat) {
-      assert.deepEqual(format.tagTypes, ["ID3v1"], "format.tagTypes");
-      assert.strictEqual(format.container, "MPEG", "format.container");
-      assert.strictEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-      assert.strictEqual(format.lossless, false, "format.lossless");
-      assert.strictEqual(
-        format.sampleRate,
-        44_100,
-        "format.sampleRate = 44.1 kHz"
-      );
-      assert.strictEqual(
-        format.bitrate,
-        160_000,
-        "format.bitrate = 160 kbit/sec"
-      );
-      assert.strictEqual(
-        format.numberOfChannels,
-        2,
-        "format.numberOfChannels 2 (stereo)"
-      );
-      assert.strictEqual(
-        format.duration,
-        241_920 / format.sampleRate,
-        "format.duration"
-      );
-    }
-
-    function checkCommon(common: mm.ICommonTagsResult) {
-      assert.strictEqual(common.title, "Blood Sugar", "common.title");
-      assert.strictEqual(common.artist, "Pendulum", "common.artist");
-      assert.strictEqual(common.album, "Blood Sugar (Single)", "common.album");
-      assert.isUndefined(common.albumartist, "common.albumartist");
-      assert.strictEqual(common.year, 2007, "common.year");
-      assert.strictEqual(common.track.no, 1, "common.track.no = 1 (ID3v1 tag)");
-      assert.strictEqual(common.track.of, null, "common.track.of = null");
-      assert.deepEqual(common.genre, ["Electronic"], "common.genre");
-      assert.deepEqual(common.comment, ["abcdefg"], "common.comment");
-    }
-
-    /**
-     * 241920 samples
-     */
-    for (const parser of Parsers) {
-      it(parser.description, () => {
-        return parser
-          .initParser(fileBloodSugar, "audio/mpeg")
-          .then((metadata) => {
-            checkFormat(metadata.format);
-            checkCommon(metadata.common);
-          });
-      });
-    }
-  });
-
-  describe("it should skip id3v1 header if options.skipPostHeaders is set", () => {
-    const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
-    for (const parser of Parsers) {
-      it(
-        parser.description,
-        async function () {
-          // this.timeout(15000); // Can take a bit longer
-          const metadata = await parser.initParser(filePath, "audio/mpeg", {
-            skipPostHeaders: true,
-          });
-          assert.deepEqual(
-            metadata.format.tagTypes,
-            ["ID3v2.3"],
-            "format.tagTypes"
-          );
-        },
-        15_000
-      );
-    }
-  });
-
-  describe("should handle MP3 without any tags", () => {
-    const filePath = path.join(
-      samplePath,
-      "silence-2s-16000 [no-tags].CBR-128.mp3"
-    );
-
-    function checkFormat(format: mm.IFormat) {
-      assert.deepEqual(format.tagTypes, [], "format.tagTypes");
-      assert.strictEqual(format.duration, 2.088, "format.duration");
-      assert.strictEqual(format.container, "MPEG", "format.container");
-      assert.strictEqual(format.codec, "MPEG 2 Layer 3", "format.codec");
-      assert.strictEqual(format.lossless, false, "format.lossless");
-      assert.strictEqual(
-        format.sampleRate,
-        16_000,
-        "format.sampleRate = 44.1 kHz"
-      );
-      assert.strictEqual(
-        format.bitrate,
-        128_000,
-        "format.bitrate = 128 kbit/sec"
-      );
-      assert.strictEqual(
-        format.numberOfChannels,
-        2,
-        "format.numberOfChannels 2 (stereo)"
-      );
-    }
-
-    for (const parser of Parsers) {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, "audio/mpeg");
-        checkFormat(metadata.format);
-      });
-    }
-  });
-
-  describe("should decode ID3v1.0 with undefined tags", () => {
-    /**
-     * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
-     */
-    const filePath = path.join(
-      samplePath,
-      "Luomo - Tessio (Spektre Remix) ID3v10.mp3"
-    );
-
-    function checkFormat(format: mm.IFormat) {
-      assert.strictEqual(
-        format.duration,
-        33.384_489_795_918_37,
-        "format.duration (checked with foobar)"
-      );
-      assert.deepEqual(format.tagTypes, ["ID3v1"], "format.tagTypes");
-      assert.deepEqual(format.container, "MPEG", "format.container");
-      assert.deepEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-      assert.strictEqual(format.lossless, false, "format.lossless");
-      assert.strictEqual(
-        format.sampleRate,
-        44_100,
-        "format.sampleRate = 44.1 kHz"
-      );
-      // t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
-      assert.strictEqual(
-        format.numberOfChannels,
-        2,
-        "format.numberOfChannels 2 (stereo)"
-      );
-    }
-
-    function checkCommon(common: mm.ICommonTagsResult) {
-      assert.strictEqual(
-        common.title,
-        "Luomo - Tessio (Spektre Remix)",
-        "common.title"
-      );
-      assert.isUndefined(common.artist, "common.artist");
-      assert.isUndefined(common.album, "common.album");
-      assert.strictEqual(common.albumartist, undefined, "common.albumartist");
-      assert.isUndefined(common.year, "common.year");
-      assert.strictEqual(common.track.no, null, "common.track.no = null");
-      assert.strictEqual(common.track.of, null, "common.track.of = null");
-      assert.isUndefined(common.genre, "common.genre");
-      assert.isUndefined(common.comment, "common.comment");
-    }
-
-    for (const parser of Parsers) {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, "audio/mpeg");
-        assert.isDefined(metadata, "should provide metadata");
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
-      });
-    }
-  });
-
+describe("should be able to read an ID3v1 tag", () => {
   /**
-   * Related issue: https://github.com/Borewit/music-metadata/issues/69
+   * 241920 samples
    */
-  it("should respect null terminated tag values correctly", () => {
-    const filePath = path.join(samplePath, "issue_69.mp3");
+  test.each(Parsers)("%j", async (parser) => {
+    const metadata = await parser.initParser(fileBloodSugar, "audio/mpeg");
+    const format = metadata.format;
+    const common = metadata.common;
 
-    for (const parser of Parsers) {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, "audio/mpeg", {
-          duration: true,
-        });
-        const id3v1 = mm.orderTags(metadata.native.ID3v1);
-        assert.deepEqual(id3v1.title, ["Skupinove foto"], "id3v1.title");
-        assert.deepEqual(id3v1.artist, ["Pavel Dobes"], "id3v1.artist");
-        assert.deepEqual(id3v1.album, ["Skupinove foto"], "id3v1.album");
-        assert.deepEqual(id3v1.year, ["1988"], "id3v1.year");
-      });
-    }
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v1"]);
+    expect(format.container, "format.container").toBe("MPEG");
+    expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+    expect(format.lossless, "format.lossless").toBe(false);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    expect(format.bitrate, "format.bitrate = 160 kbit/sec").toBe(160_000);
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
+      2
+    );
+    expect(format.duration, "format.duration").toBe(
+      241_920 / format.sampleRate
+    );
+
+    expect(common.title, "common.title").toBe("Blood Sugar");
+    expect(common.artist, "common.artist").toBe("Pendulum");
+    expect(common.album, "common.album").toBe("Blood Sugar (Single)");
+    expect(common.albumartist, "common.albumartist").toBeUndefined();
+    expect(common.year, "common.year").toBe(2007);
+    expect(common.track.no, "common.track.no = 1 (ID3v1 tag)").toBe(1);
+    expect(common.track.of, "common.track.of = null").toBeNull();
+    expect(common.genre, "common.genre").toStrictEqual(["Electronic"]);
+    expect(common.comment, "common.comment").toStrictEqual(["abcdefg"]);
+  });
+});
+
+describe("it should skip id3v1 header if options.skipPostHeaders is set", () => {
+  const filePath = join(samplePath, "07 - I'm Cool.mp3");
+
+  test.each(Parsers)("%j", async (parser) => {
+    const metadata = await parser.initParser(filePath, "audio/mpeg", {
+      skipPostHeaders: true,
+    });
+    expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual([
+      "ID3v2.3",
+    ]);
+  });
+});
+
+describe("should handle MP3 without any tags", () => {
+  const filePath = join(samplePath, "silence-2s-16000 [no-tags].CBR-128.mp3");
+
+  test.each(Parsers)("%j", async (parser) => {
+    const metadata = await parser.initParser(filePath, "audio/mpeg");
+    const format = metadata.format;
+
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual([]);
+    expect(format.duration, "format.duration").toBe(2.088);
+    expect(format.container, "format.container").toBe("MPEG");
+    expect(format.codec, "format.codec").toBe("MPEG 2 Layer 3");
+    expect(format.lossless, "format.lossless").toBe(false);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(16_000);
+    expect(format.bitrate, "format.bitrate = 128 kbit/sec").toBe(128_000);
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
+      2
+    );
+  });
+});
+
+describe("should decode ID3v1.0 with undefined tags", () => {
+  /**
+   * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
+   */
+  const filePath = join(
+    samplePath,
+    "Luomo - Tessio (Spektre Remix) ID3v10.mp3"
+  );
+
+  test.each(Parsers)("%j", async (parser) => {
+    const metadata = await parser.initParser(filePath, "audio/mpeg");
+
+    const format = metadata.format;
+    const common = metadata.common;
+
+    expect(metadata, "should provide metadata").toBeDefined();
+
+    expect(format.duration, "format.duration (checked with foobar)").toBe(
+      33.384_489_795_918_37
+    );
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v1"]);
+    expect(format.container, "format.container").toBe("MPEG");
+    expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+    expect(format.lossless, "format.lossless").toBe(false);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    // t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
+      2
+    );
+
+    expect(common.title, "common.title").toBe("Luomo - Tessio (Spektre Remix)");
+    expect(common.artist, "common.artist").toBeUndefined();
+    expect(common.album, "common.album").toBeUndefined();
+    expect(common.albumartist, "common.albumartist").toBeUndefined();
+    expect(common.year, "common.year").toBeUndefined();
+    expect(common.track.no, "common.track.no = null").toBeNull();
+    expect(common.track.of, "common.track.of = null").toBeNull();
+    expect(common.genre, "common.genre").toBeUndefined();
+    expect(common.comment, "common.comment").toBeUndefined();
+  });
+});
+
+/**
+ * Related issue: https://github.com/Borewit/music-metadata/issues/69
+ */
+describe("should respect null terminated tag values correctly", () => {
+  const filePath = join(samplePath, "issue_69.mp3");
+
+  test.each(Parsers)("%j", async (parser) => {
+    const metadata = await parser.initParser(filePath, "audio/mpeg", {
+      duration: true,
+    });
+    const id3v1 = orderTags(metadata.native.ID3v1);
+    expect(id3v1.title, "id3v1.title").toStrictEqual(["Skupinove foto"]);
+    expect(id3v1.artist, "id3v1.artist").toStrictEqual(["Pavel Dobes"]);
+    expect(id3v1.album, "id3v1.album").toStrictEqual(["Skupinove foto"]);
+    expect(id3v1.year, "id3v1.year").toStrictEqual(["1988"]);
   });
 });
