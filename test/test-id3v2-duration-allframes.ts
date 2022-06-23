@@ -1,12 +1,10 @@
-import { assert, it } from "vitest";
-import * as mm from "../lib";
+import { expect, test } from "vitest";
+import { parseFile } from "../lib";
 
-import * as path from "node:path";
+import { join } from "node:path";
 import { samplePath } from "./util";
 
-const t = assert;
-
-it("should decode id3v2-duration-allframes", () => {
+test("should decode id3v2-duration-allframes", async () => {
   /**
    * Audacity:         64512 samples (counts 56 frames??)
    * ---------------------------
@@ -21,37 +19,30 @@ it("should decode id3v2-duration-allframes", () => {
    * File is CBR. Bitrate of each frame is 256 kbps.
    * Exact length: 00:01
    */
-  const filePath = path.join(samplePath, "id3v2-duration-allframes.mp3");
+  const filePath = join(samplePath, "id3v2-duration-allframes.mp3");
 
-  function checkFormat(format: mm.IFormat) {
-    t.deepEqual(format.tagTypes, ["ID3v2.3"], "format.tagTypes");
-    t.strictEqual(format.bitrate, 256_000, "format.bitrate");
-    t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
-    t.strictEqual(
-      format.duration,
-      (57 * 1152) / format.sampleRate,
-      "format.duration (test duration=true)"
-    );
-    t.strictEqual(format.container, "MPEG", "format.container");
-    t.strictEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-    t.strictEqual(format.tool, "LAME 3.98.4", "format.tool");
-  }
+  const metadata = await parseFile(filePath, { duration: true });
+  const format = metadata.format;
+  const common = metadata.common;
 
-  function checkCommon(common: mm.ICommonTagsResult) {
-    t.strictEqual(common.title, "Turkish Rondo", "common.album");
-    t.strictEqual(common.album, "Piano Classics", "common.title");
-    t.strictEqual(common.year, 0, "common.year");
-    t.deepEqual(common.artist, "Aubrey Hilliard", "common.artist");
-    t.deepEqual(common.composer, ["Mozart"], "common.composer");
-    t.deepEqual(common.track, { no: 1, of: null }, "common.track");
-    t.deepEqual(common.genre, ["Classical"], "common.genre");
-    t.deepEqual(common.disk, { no: null, of: null }, "common.disk");
-    t.deepEqual(common.picture, undefined, "common.picture");
-  }
+  expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
+  expect(format.bitrate, "format.bitrate").toBe(256_000);
+  expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+  expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+  expect(format.duration, "format.duration (test duration=true)").toBe(
+    (57 * 1152) / format.sampleRate
+  );
+  expect(format.container, "format.container").toBe("MPEG");
+  expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+  expect(format.tool, "format.tool").toBe("LAME 3.98.4");
 
-  return mm.parseFile(filePath, { duration: true }).then((result) => {
-    checkFormat(result.format);
-    checkCommon(result.common);
-  });
+  expect(common.title, "common.album").toBe("Turkish Rondo");
+  expect(common.album, "common.title").toBe("Piano Classics");
+  expect(common.year, "common.year").toBe(0);
+  expect(common.artist, "common.artist").toBe("Aubrey Hilliard");
+  expect(common.composer, "common.composer").toStrictEqual(["Mozart"]);
+  expect(common.track, "common.track").toStrictEqual({ no: 1, of: null });
+  expect(common.genre, "common.genre").toStrictEqual(["Classical"]);
+  expect(common.disk, "common.disk").toStrictEqual({ no: null, of: null });
+  expect(common.picture, "common.picture").toBeUndefined();
 });
