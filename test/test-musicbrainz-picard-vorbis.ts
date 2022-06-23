@@ -1,185 +1,148 @@
-import { assert, it } from "vitest";
-import * as path from "node:path";
+import { expect, test } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile, orderTags } from "../lib";
 import { samplePath } from "./util";
 
-it("MusicBrains/Picard tags in FLAC", async () => {
+test("MusicBrains/Picard tags in FLAC", async () => {
   const filename = "MusicBrainz-Picard-tags.flac";
-  const filePath = path.join(samplePath, filename);
-
-  function checkFormat(format: mm.IFormat) {
-    assert.deepEqual(format.duration, 271.773_333_333_333_3, "format.duration");
-    assert.deepEqual(format.sampleRate, 44_100, "format.sampleRate");
-    assert.deepEqual(format.bitsPerSample, 16, "format.bitsPerSample");
-    assert.deepEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-  }
-
-  function checkCommonTags(common: mm.ICommonTagsResult) {
-    // Compare expectedCommonTags with result.common
-    assert.deepEqual(common.title, "Brian Eno", "common.tagtitle");
-    assert.deepEqual(common.artist, "MGMT", "common.artist");
-    assert.deepEqual(common.artists, ["MGMT"], "common.artist");
-    assert.deepEqual(common.albumartist, "MGMT", "common.albumartist");
-    assert.deepEqual(
-      common.album,
-      "Oracular Spectacular / Congratulations",
-      "common.album"
-    );
-    assert.deepEqual(common.track, { no: 7, of: 9 }, "common.track");
-    assert.deepEqual(common.disk, { no: 2, of: 2 }, "common.disk");
-    assert.deepEqual(
-      common.discsubtitle,
-      "Cogratulations" as unknown as string[],
-      "common.discsubtitle"
-    );
-    assert.deepEqual(common.date, "2011-09-11", "common.date");
-    assert.deepEqual(common.year, 2011, "common.year");
-    assert.deepEqual(common.releasecountry, "XE", "common.releasecountry");
-    assert.deepEqual(common.asin, "B0055U9LNC", "common.asin");
-    assert.deepEqual(common.barcode, "886979357723", "common.barcode");
-    assert.deepEqual(common.label, ["Sony Music"], "common.label");
-    assert.deepEqual(
-      common.catalognumber,
-      ["88697935772"],
-      "common.catalognumber"
-    );
-    assert.deepEqual(common.originalyear, 2011, "common.originalyear");
-    assert.deepEqual(common.originaldate, "2011-09-11", "common.originaldate");
-    assert.deepEqual(common.releasestatus, "official", "common.releasestatus");
-    assert.deepEqual(
-      common.releasetype,
-      ["album", "compilation"],
-      "common.releasetype"
-    );
-    assert.deepEqual(common.comment, ["EAC-Secure Mode"], "common.comment");
-    assert.deepEqual(common.genre, ["Alt. Rock"], "common.genre");
-    assert.deepEqual(
-      common.musicbrainz_albumid,
-      "6032dfc4-8880-4fea-b1c0-aaee52e1113c",
-      "common.musicbrainz_albumid"
-    );
-    assert.deepEqual(
-      common.musicbrainz_recordingid,
-      "b0c1d984-ba93-4167-880a-ac02255bf9e7",
-      "common.musicbrainz_recordingid"
-    );
-    assert.deepEqual(
-      common.musicbrainz_albumartistid,
-      ["c485632c-b784-4ee9-8ea1-c5fb365681fc"],
-      "common.musicbrainz_albumartistid"
-    );
-    assert.deepEqual(
-      common.musicbrainz_artistid,
-      ["c485632c-b784-4ee9-8ea1-c5fb365681fc"],
-      "common.musicbrainz_artistid"
-    );
-    assert.deepEqual(
-      common.musicbrainz_releasegroupid,
-      "9a3237f4-c2a5-467f-9a8e-fe1d247ff520",
-      "common.musicbrainz_releasegroupid"
-    );
-    assert.deepEqual(
-      common.musicbrainz_trackid,
-      "0f53f7a3-89df-4069-9357-d04252239b6d",
-      "common.musicbrainz_trackid"
-    );
-
-    assert.isDefined(common.picture, "common.picture");
-    assert.deepEqual(common.picture[0].format, "image/jpeg", "picture format");
-    assert.deepEqual(common.picture[0].data.length, 175_668, "picture length");
-  }
-
-  function checkNativeTags(vorbis: mm.INativeTagDict) {
-    // Compare expectedCommonTags with result.vorbis
-    assert.deepEqual(vorbis.TITLE, ["Brian Eno"], "vorbis: .TITLE");
-    assert.deepEqual(vorbis.ARTIST, ["MGMT"], "vorbis: artist");
-    assert.deepEqual(vorbis.ARTISTS, ["MGMT"], "vorbis: artist");
-    assert.deepEqual(vorbis.ALBUMARTIST, ["MGMT"], "vorbis: albumartist");
-    assert.deepEqual(
-      vorbis.ALBUM,
-      ["Oracular Spectacular / Congratulations"],
-      "vorbis: album"
-    );
-    assert.deepEqual(vorbis.TRACKNUMBER, ["7"], "vorbis: TRACK");
-    assert.deepEqual(vorbis.TRACKTOTAL, ["9"], "vorbis: TRACKTOTAL");
-    assert.deepEqual(vorbis.DISCNUMBER, ["2"], "vorbis: DISCNUMBER");
-    assert.deepEqual(vorbis.DISCTOTAL, ["2"], "vorbis: DISCTOTAL");
-    assert.deepEqual(
-      vorbis.DISCSUBTITLE,
-      ["Cogratulations"],
-      "vorbis: DISCSUBTITLE"
-    );
-    assert.deepEqual(vorbis.DATE, ["2011-09-11"], "vorbis: DATE");
-    assert.deepEqual(vorbis.RELEASECOUNTRY, ["XE"], "vorbis: RELEASECOUNTRY");
-    assert.deepEqual(vorbis.ASIN, ["B0055U9LNC"], "vorbis: ASIN");
-    assert.deepEqual(vorbis.BARCODE, ["886979357723"], "vorbis: BARCODE");
-    assert.deepEqual(vorbis.LABEL, ["Sony Music"], "vorbis: LABEL");
-    assert.deepEqual(
-      vorbis.CATALOGNUMBER,
-      ["88697935772"],
-      "vorbis: CATALOGNUMBER"
-    );
-    assert.deepEqual(vorbis.ORIGINALYEAR, ["2011"], "vorbis: ORIGINALYEAR");
-    assert.deepEqual(
-      vorbis.ORIGINALDATE,
-      ["2011-09-11"],
-      "vorbis: ORIGINALDATE"
-    );
-    assert.deepEqual(
-      vorbis.RELEASESTATUS,
-      ["official"],
-      "vorbis: RELEASESTATUS"
-    );
-    assert.deepEqual(
-      vorbis.RELEASETYPE,
-      ["album", "compilation"],
-      "vorbis: RELEASETYPE"
-    );
-    assert.deepEqual(vorbis.COMMENT, ["EAC-Secure Mode"], "vorbis: COMMENT");
-    assert.deepEqual(vorbis.GENRE, ["Alt. Rock"], "vorbis: GENRE");
-    assert.deepEqual(
-      vorbis.MUSICBRAINZ_ALBUMID,
-      ["6032dfc4-8880-4fea-b1c0-aaee52e1113c"],
-      "vorbis: MUSICBRAINZ_ALBUMID"
-    );
-    assert.deepEqual(
-      vorbis.MUSICBRAINZ_TRACKID,
-      ["b0c1d984-ba93-4167-880a-ac02255bf9e7"],
-      "vorbis: MUSICBRAINZ_RECORDINGID"
-    );
-    assert.deepEqual(
-      vorbis.MUSICBRAINZ_ALBUMARTISTID,
-      ["c485632c-b784-4ee9-8ea1-c5fb365681fc"],
-      "vorbis: MUSICBRAINZ_ALBUMARTISTID"
-    );
-    assert.deepEqual(
-      vorbis.MUSICBRAINZ_ARTISTID,
-      ["c485632c-b784-4ee9-8ea1-c5fb365681fc"],
-      "vorbis: MUSICBRAINZ_ARTISTID"
-    );
-    assert.deepEqual(
-      vorbis.MUSICBRAINZ_RELEASEGROUPID,
-      ["9a3237f4-c2a5-467f-9a8e-fe1d247ff520"],
-      "vorbis: MUSICBRAINZ_RELEASEGROUPID"
-    );
-    assert.deepEqual(
-      vorbis.MUSICBRAINZ_RELEASETRACKID,
-      ["0f53f7a3-89df-4069-9357-d04252239b6d"],
-      "vorbis: MUSICBRAINZ_RELEASETRACKID"
-    );
-
-    // t.deepEqual(common.picture[ 0 ].format, 'jpg', 'picture format')
-    // i.deepEqual(common.picture[ 0 ].data.length, 175668, 'picture length')
-  }
+  const filePath = join(samplePath, filename);
 
   // Run with default options
-  const metadata = await mm.parseFile(filePath);
-  assert.isDefined(metadata, "metadata");
-  assert.isDefined(metadata.common, "should include common tags");
-  assert.isDefined(metadata.native, "metadata.common");
-  assert.isDefined(metadata.native.vorbis, "should include native Vorbis tags");
-  checkFormat(metadata.format);
-  checkNativeTags(mm.orderTags(metadata.native.vorbis));
-  checkCommonTags(metadata.common);
+  const metadata = await parseFile(filePath);
+  expect(metadata, "metadata").toBeDefined();
+  expect(metadata.common, "should include common tags").toBeDefined();
+  expect(metadata.native, "metadata.common").toBeDefined();
+  expect(
+    metadata.native.vorbis,
+    "should include native Vorbis tags"
+  ).toBeDefined();
+
+  const format = metadata.format;
+  const common = metadata.common;
+  const native = orderTags(metadata.native.vorbis);
+
+  expect(format.duration, "format.duration").toBe(271.773_333_333_333_3);
+  expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+  expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
+  expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
+  // Compare expectedCommonTags with result.common
+  expect(common.title, "common.tagtitle").toBe("Brian Eno");
+  expect(common.artist, "common.artist").toBe("MGMT");
+  expect(common.artists, "common.artist").toStrictEqual(["MGMT"]);
+  expect(common.albumartist, "common.albumartist").toBe("MGMT");
+  expect(common.album, "common.album").toBe(
+    "Oracular Spectacular / Congratulations"
+  );
+  expect(common.track, "common.track").toStrictEqual({ no: 7, of: 9 });
+  expect(common.disk, "common.disk").toStrictEqual({ no: 2, of: 2 });
+  expect(common.discsubtitle, "common.discsubtitle").toBe("Cogratulations");
+  expect(common.date, "common.date").toBe("2011-09-11");
+  expect(common.year, "common.year").toBe(2011);
+  expect(common.releasecountry, "common.releasecountry").toBe("XE");
+  expect(common.asin, "common.asin").toBe("B0055U9LNC");
+  expect(common.barcode, "common.barcode").toBe("886979357723");
+  expect(common.label, "common.label").toStrictEqual(["Sony Music"]);
+  expect(common.catalognumber, "common.catalognumber").toStrictEqual([
+    "88697935772",
+  ]);
+  expect(common.originalyear, "common.originalyear").toBe(2011);
+  expect(common.originaldate, "common.originaldate").toBe("2011-09-11");
+  expect(common.releasestatus, "common.releasestatus").toBe("official");
+  expect(common.releasetype, "common.releasetype").toStrictEqual([
+    "album",
+    "compilation",
+  ]);
+  expect(common.comment, "common.comment").toStrictEqual(["EAC-Secure Mode"]);
+  expect(common.genre, "common.genre").toStrictEqual(["Alt. Rock"]);
+  expect(common.musicbrainz_albumid, "common.musicbrainz_albumid").toBe(
+    "6032dfc4-8880-4fea-b1c0-aaee52e1113c"
+  );
+  expect(common.musicbrainz_recordingid, "common.musicbrainz_recordingid").toBe(
+    "b0c1d984-ba93-4167-880a-ac02255bf9e7"
+  );
+  expect(
+    common.musicbrainz_albumartistid,
+    "common.musicbrainz_albumartistid"
+  ).toStrictEqual(["c485632c-b784-4ee9-8ea1-c5fb365681fc"]);
+  expect(
+    common.musicbrainz_artistid,
+    "common.musicbrainz_artistid"
+  ).toStrictEqual(["c485632c-b784-4ee9-8ea1-c5fb365681fc"]);
+  expect(
+    common.musicbrainz_releasegroupid,
+    "common.musicbrainz_releasegroupid"
+  ).toBe("9a3237f4-c2a5-467f-9a8e-fe1d247ff520");
+  expect(common.musicbrainz_trackid, "common.musicbrainz_trackid").toBe(
+    "0f53f7a3-89df-4069-9357-d04252239b6d"
+  );
+
+  expect(common.picture, "common.picture").toBeDefined();
+  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture[0].data.length, "picture length").toBe(175_668);
+
+  // Compare expectedCommonTags with result.vorbis
+  expect(native.TITLE, "vorbis: .TITLE").toStrictEqual(["Brian Eno"]);
+  expect(native.ARTIST, "vorbis: artist").toStrictEqual(["MGMT"]);
+  expect(native.ARTISTS, "vorbis: artist").toStrictEqual(["MGMT"]);
+  expect(native.ALBUMARTIST, "vorbis: albumartist").toStrictEqual(["MGMT"]);
+  expect(native.ALBUM, "vorbis: album").toStrictEqual([
+    "Oracular Spectacular / Congratulations",
+  ]);
+  expect(native.TRACKNUMBER, "vorbis: TRACK").toStrictEqual(["7"]);
+  expect(native.TRACKTOTAL, "vorbis: TRACKTOTAL").toStrictEqual(["9"]);
+  expect(native.DISCNUMBER, "vorbis: DISCNUMBER").toStrictEqual(["2"]);
+  expect(native.DISCTOTAL, "vorbis: DISCTOTAL").toStrictEqual(["2"]);
+  expect(native.DISCSUBTITLE, "vorbis: DISCSUBTITLE").toStrictEqual([
+    "Cogratulations",
+  ]);
+  expect(native.DATE, "vorbis: DATE").toStrictEqual(["2011-09-11"]);
+  expect(native.RELEASECOUNTRY, "vorbis: RELEASECOUNTRY").toStrictEqual(["XE"]);
+  expect(native.ASIN, "vorbis: ASIN").toStrictEqual(["B0055U9LNC"]);
+  expect(native.BARCODE, "vorbis: BARCODE").toStrictEqual(["886979357723"]);
+  expect(native.LABEL, "vorbis: LABEL").toStrictEqual(["Sony Music"]);
+  expect(native.CATALOGNUMBER, "vorbis: CATALOGNUMBER").toStrictEqual([
+    "88697935772",
+  ]);
+  expect(native.ORIGINALYEAR, "vorbis: ORIGINALYEAR").toStrictEqual(["2011"]);
+  expect(native.ORIGINALDATE, "vorbis: ORIGINALDATE").toStrictEqual([
+    "2011-09-11",
+  ]);
+  expect(native.RELEASESTATUS, "vorbis: RELEASESTATUS").toStrictEqual([
+    "official",
+  ]);
+  expect(native.RELEASETYPE, "vorbis: RELEASETYPE").toStrictEqual([
+    "album",
+    "compilation",
+  ]);
+  expect(native.COMMENT, "vorbis: COMMENT").toStrictEqual(["EAC-Secure Mode"]);
+  expect(native.GENRE, "vorbis: GENRE").toStrictEqual(["Alt. Rock"]);
+  expect(
+    native.MUSICBRAINZ_ALBUMID,
+    "vorbis: MUSICBRAINZ_ALBUMID"
+  ).toStrictEqual(["6032dfc4-8880-4fea-b1c0-aaee52e1113c"]);
+  expect(
+    native.MUSICBRAINZ_TRACKID,
+    "vorbis: MUSICBRAINZ_RECORDINGID"
+  ).toStrictEqual(["b0c1d984-ba93-4167-880a-ac02255bf9e7"]);
+  expect(
+    native.MUSICBRAINZ_ALBUMARTISTID,
+    "vorbis: MUSICBRAINZ_ALBUMARTISTID"
+  ).toStrictEqual(["c485632c-b784-4ee9-8ea1-c5fb365681fc"]);
+  expect(
+    native.MUSICBRAINZ_ARTISTID,
+    "vorbis: MUSICBRAINZ_ARTISTID"
+  ).toStrictEqual(["c485632c-b784-4ee9-8ea1-c5fb365681fc"]);
+  expect(
+    native.MUSICBRAINZ_RELEASEGROUPID,
+    "vorbis: MUSICBRAINZ_RELEASEGROUPID"
+  ).toStrictEqual(["9a3237f4-c2a5-467f-9a8e-fe1d247ff520"]);
+  expect(
+    native.MUSICBRAINZ_RELEASETRACKID,
+    "vorbis: MUSICBRAINZ_RELEASETRACKID"
+  ).toStrictEqual(["0f53f7a3-89df-4069-9357-d04252239b6d"]);
+
+  // t.deepEqual(common.picture[ 0 ].format, 'jpg', 'picture format')
+  // i.deepEqual(common.picture[ 0 ].data.length, 175668, 'picture length')
 });

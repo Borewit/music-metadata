@@ -170,7 +170,7 @@ export interface ICommonTagsResult {
   subtitle?: string[];
   description?: string[];
   longDescription?: string;
-  discsubtitle?: string[];
+  discsubtitle?: string;
   totaltracks?: string;
   totaldiscs?: string;
   movementTotal?: number;
