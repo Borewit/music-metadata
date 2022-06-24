@@ -1,18 +1,14 @@
-/* eslint-disable dot-notation, @typescript-eslint/dot-notation */
-import { describe, assert, it } from "vitest";
-import * as path from "node:path";
-import * as crypto from "node:crypto";
+import { describe, test, expect } from "vitest";
+import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { TagType } from "../lib/common/GenericTagTypes";
 import {
   ICommonTagsResult,
-  IFormat,
   INativeTagDict,
   parseFile,
   orderTags,
 } from "../lib";
 import { samplePath } from "./util";
-
-const t = assert;
 
 /**
  * Check if different header formats map to the same common output.
@@ -35,7 +31,7 @@ function hasOriginalData(inputTagType: TagType): boolean {
 }
 
 function calcHash(buf: Buffer): string {
-  const hash = crypto.createHash("md5");
+  const hash = createHash("md5");
   hash.update(buf);
   return hash.digest("hex");
 }
@@ -60,188 +56,156 @@ const performers = [
  */
 function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
   // Compare expectedCommonTags with result.common
-  t.strictEqual(
-    common.title,
-    "Sinner's Prayer",
-    inputTagType + " => common.title"
+  expect(common.title, inputTagType + " => common.title").toBe(
+    "Sinner's Prayer"
   );
-  t.strictEqual(
-    common.artist,
-    "Beth Hart & Joe Bonamassa",
-    inputTagType + " => common.artist"
+  expect(common.artist, inputTagType + " => common.artist").toBe(
+    "Beth Hart & Joe Bonamassa"
   );
 
   if (inputTagType === "asf") {
-    t.deepEqual(
-      common.artists,
-      ["Joe Bonamassa", "Beth Hart"],
-      inputTagType + " => common.artists"
-    );
-    t.deepEqual(
+    expect(common.artists, inputTagType + " => common.artists").toStrictEqual([
+      "Joe Bonamassa",
+      "Beth Hart",
+    ]);
+    expect(
       common.musicbrainz_artistid,
-      [
-        "984f8239-8fe1-4683-9c54-10ffb14439e9",
-        "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      ],
       inputTagType + " => common.musicbrainz_artistid"
-    );
+    ).toStrictEqual([
+      "984f8239-8fe1-4683-9c54-10ffb14439e9",
+      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    ]);
   } else {
-    t.deepEqual(
-      common.artists,
-      ["Beth Hart", "Joe Bonamassa"],
-      inputTagType + " => common.artists"
-    );
-    t.deepEqual(
+    expect(common.artists, inputTagType + " => common.artists").toStrictEqual([
+      "Beth Hart",
+      "Joe Bonamassa",
+    ]);
+    expect(
       common.musicbrainz_artistid,
-      [
-        "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-        "984f8239-8fe1-4683-9c54-10ffb14439e9",
-      ],
       inputTagType + " => common.musicbrainz_artistid"
-    );
+    ).toStrictEqual([
+      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+      "984f8239-8fe1-4683-9c54-10ffb14439e9",
+    ]);
   }
 
-  t.strictEqual(
-    common.albumartist,
-    "Beth Hart & Joe Bonamassa",
-    "common.albumartist"
+  expect(common.albumartist, "common.albumartist").toBe(
+    "Beth Hart & Joe Bonamassa"
   ); // ToDo: this is not set
-  t.deepEqual(
+  expect(
     common.albumartistsort,
-    "Hart, Beth & Bonamassa, Joe",
     inputTagType + " =>  common.albumartistsort"
-  );
-  t.strictEqual(
-    common.album,
-    "Don't Explain",
-    inputTagType + " => common.album = Don't Explain"
+  ).toBe("Hart, Beth & Bonamassa, Joe");
+  expect(common.album, inputTagType + " => common.album = Don't Explain").toBe(
+    "Don't Explain"
   );
   if (inputTagType === "asf") {
-    t.deepEqual(
-      common.track,
-      { no: 1, of: null },
-      inputTagType + " => common.track"
-    );
+    expect(common.track, inputTagType + " => common.track").toStrictEqual({
+      no: 1,
+      of: null,
+    });
   } else {
-    t.deepEqual(
-      common.track,
-      { no: 1, of: 10 },
-      inputTagType + " => common.track"
-    );
+    expect(common.track, inputTagType + " => common.track").toStrictEqual({
+      no: 1,
+      of: 10,
+    });
   }
-  t.deepEqual(common.disk, { no: 1, of: 1 }, inputTagType + " => common.disk");
+  expect(common.disk, inputTagType + " => common.disk").toStrictEqual({
+    no: 1,
+    of: 1,
+  });
   if (hasOriginalData(inputTagType)) {
-    t.strictEqual(
+    expect(
       common.originaldate,
-      "2011-09-26",
       inputTagType + " => common.originaldate = 2011-09-26"
-    );
+    ).toBe("2011-09-26");
   }
   if (hasReleaseData(inputTagType)) {
-    t.strictEqual(common.date, "2011-09-27", inputTagType + " => common.date");
+    expect(common.date, inputTagType + " => common.date").toBe("2011-09-27");
   }
-  t.strictEqual(common.year, 2011, inputTagType + " => common.year");
-  t.strictEqual(common.originalyear, 2011, inputTagType + " => common.year");
-  t.strictEqual(common.media, "CD", inputTagType + " => common.media = CD");
-  t.strictEqual(
-    common.barcode,
-    "804879313915",
-    inputTagType + " => common.barcode"
+  expect(common.year, inputTagType + " => common.year").toBe(2011);
+  expect(common.originalyear, inputTagType + " => common.year").toBe(2011);
+  expect(common.media, inputTagType + " => common.media = CD").toBe("CD");
+  expect(common.barcode, inputTagType + " => common.barcode").toBe(
+    "804879313915"
   );
   // ToDo?? t.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
-  t.deepEqual(
+  expect(
     common.label,
-    ["J&R Adventures"],
     inputTagType + " => common.label = 'J&R Adventures'"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["J&R Adventures"]);
+  expect(
     common.catalognumber,
-    ["PRAR931391"],
     inputTagType + " => common.catalognumber = PRAR931391"
-  );
-  t.strictEqual(
+  ).toStrictEqual(["PRAR931391"]);
+  expect(
     common.originalyear,
-    2011,
     inputTagType + " => common.originalyear = 2011"
-  );
-  t.strictEqual(
+  ).toBe(2011);
+  expect(
     common.releasestatus,
-    "official",
     inputTagType + " => common.releasestatus = official"
-  );
-  t.deepEqual(
+  ).toBe("official");
+  expect(
     common.releasetype,
-    ["album"],
     inputTagType + " => common.releasetype"
-  );
-  t.strictEqual(
+  ).toStrictEqual(["album"]);
+  expect(
     common.musicbrainz_albumid,
-    "e7050302-74e6-42e4-aba0-09efd5d431d8",
     inputTagType + " => common.musicbrainz_albumid"
-  );
-  t.strictEqual(
+  ).toBe("e7050302-74e6-42e4-aba0-09efd5d431d8");
+  expect(
     common.musicbrainz_recordingid,
-    "f151cb94-c909-46a8-ad99-fb77391abfb8",
     inputTagType + " => common.musicbrainz_recordingid"
-  );
+  ).toBe("f151cb94-c909-46a8-ad99-fb77391abfb8");
 
   if (inputTagType === "asf") {
-    t.deepEqual(
+    expect(
       common.musicbrainz_albumartistid,
-      [
-        "984f8239-8fe1-4683-9c54-10ffb14439e9",
-        "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      ],
       inputTagType + " => common.musicbrainz_albumartistid"
-    );
+    ).toStrictEqual([
+      "984f8239-8fe1-4683-9c54-10ffb14439e9",
+      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    ]);
   } else {
-    t.deepEqual(
+    expect(
       common.musicbrainz_albumartistid,
-      [
-        "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-        "984f8239-8fe1-4683-9c54-10ffb14439e9",
-      ],
       inputTagType + " => common.musicbrainz_albumartistid"
-    );
+    ).toStrictEqual([
+      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+      "984f8239-8fe1-4683-9c54-10ffb14439e9",
+    ]);
   }
 
-  t.strictEqual(
+  expect(
     common.musicbrainz_releasegroupid,
-    "e00305af-1c72-469b-9a7c-6dc665ca9adc",
     inputTagType + " => common.musicbrainz_releasegroupid"
-  );
-  t.strictEqual(
+  ).toBe("e00305af-1c72-469b-9a7c-6dc665ca9adc");
+  expect(
     common.musicbrainz_trackid,
-    "d062f484-253c-374b-85f7-89aab45551c7",
     inputTagType + " => common.musicbrainz_trackid"
-  );
-  t.strictEqual(common.asin, "B005NPEUB2", inputTagType + " => common.asin");
-  t.strictEqual(
-    common.acoustid_id,
-    "09c06fac-679a-45b1-8ea0-6ce532318363",
-    inputTagType + " => common.acoustid_id"
+  ).toBe("d062f484-253c-374b-85f7-89aab45551c7");
+  expect(common.asin, inputTagType + " => common.asin").toBe("B005NPEUB2");
+  expect(common.acoustid_id, inputTagType + " => common.acoustid_id").toBe(
+    "09c06fac-679a-45b1-8ea0-6ce532318363"
   );
 
   // Check front cover
-  t.strictEqual(common.picture[0].format, "image/jpeg", "picture format");
-  t.strictEqual(common.picture[0].data.length, 98_008, "picture length");
-  t.strictEqual(
-    calcHash(common.picture[0].data),
-    "c57bec49b36ebf422018f82273d1995a",
-    "hash front cover data"
+  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture[0].data.length, "picture length").toBe(98_008);
+  expect(calcHash(common.picture[0].data), "hash front cover data").toBe(
+    "c57bec49b36ebf422018f82273d1995a"
   );
 
   // Check back cover
-  t.strictEqual(common.picture[1].format, "image/png", "picture format");
-  t.strictEqual(common.picture[1].data.length, 120_291, "picture length");
-  t.strictEqual(
-    calcHash(common.picture[1].data),
-    "90ec686eb82e745e737b2c7aa706eeaa",
-    "hash back cover data"
+  expect(common.picture[1].format, "picture format").toBe("image/png");
+  expect(common.picture[1].data.length, "picture length").toBe(120_291);
+  expect(calcHash(common.picture[1].data), "hash back cover data").toBe(
+    "90ec686eb82e745e737b2c7aa706eeaa"
   );
 
   // ISRC
-  t.deepEqual(common.isrc, ["NLB931100460", "USMH51100098"], "ISRC's");
+  expect(common.isrc, "ISRC's").toStrictEqual(["NLB931100460", "USMH51100098"]);
 
   // Rating
   switch (inputTagType) {
@@ -250,13 +214,11 @@ function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
       break; // Skip rating tests for mapping type
 
     default:
-      t.isDefined(common.rating, `'${inputTagType}' has rating`);
-      t.approximately(
+      expect(common.rating, `'${inputTagType}' has rating`).toBeDefined();
+      expect(
         common.rating[0].rating,
-        0.6,
-        0.1,
         `'${inputTagType}': rating=3.0`
-      );
+      ).toBeCloseTo(0.6, 2);
   }
 }
 
@@ -266,571 +228,556 @@ function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
  */
 function checkVorbisTags(vorbis: INativeTagDict) {
   // Compare expectedCommonTags with result.common
-  t.deepEqual(vorbis.TITLE, ["Sinner's Prayer"], "vorbis.TITLE");
-  t.deepEqual(vorbis.ALBUM, ["Don't Explain"], "vorbis.TITLE");
-  t.deepEqual(vorbis.DATE, ["2011-09-27"], "vorbis.DATE");
-  t.deepEqual(vorbis.TRACKNUMBER, ["1"], "vorbis.TRACKNUMBER");
-  t.deepEqual(vorbis.PRODUCER, ["Roy Weisman"], "vorbis.PRODUCER");
-  t.deepEqual(
-    vorbis.ENGINEER,
-    ["James McCullagh", "Jared Kvitka"],
-    "vorbis.ENGINEER"
-  );
-  t.deepEqual(vorbis.LABEL, ["J&R Adventures"], "vorbis.LABEL");
-  t.deepEqual(vorbis.CATALOGNUMBER, ["PRAR931391"], "vorbis.CATALOGNUMBER");
-  t.deepEqual(
-    vorbis.ACOUSTID_ID,
-    ["09c06fac-679a-45b1-8ea0-6ce532318363"],
-    "vorbis.ACOUSTID_ID"
-  );
-  t.deepEqual(vorbis.ARTIST, ["Beth Hart & Joe Bonamassa"], "vorbis.ARTIST");
-  t.deepEqual(vorbis.ARTISTS, ["Beth Hart", "Joe Bonamassa"], "vorbis.ARTISTS");
-  t.deepEqual(
-    vorbis.ARTISTSORT,
-    ["Hart, Beth & Bonamassa, Joe"],
-    "vorbis.ARTISTSORT"
-  );
-  t.deepEqual(
-    vorbis.ALBUMARTIST,
-    ["Beth Hart & Joe Bonamassa"],
-    "vorbis.ALBUMARTIST"
-  );
-  t.deepEqual(
-    vorbis.ALBUMARTISTSORT,
-    ["Hart, Beth & Bonamassa, Joe"],
-    "vorbis.ALBUMARTISTSORT"
-  );
-  t.deepEqual(vorbis.ORIGINALDATE, ["2011-09-26"], "vorbis.ORIGINALDATE");
-  t.deepEqual(vorbis.SCRIPT, ["Latn"], "vorbis.SCRIPT");
-  t.deepEqual(vorbis.MEDIA, ["CD"], "vorbis.MEDIA");
-  t.deepEqual(
+  expect(vorbis.TITLE, "vorbis.TITLE").toStrictEqual(["Sinner's Prayer"]);
+  expect(vorbis.ALBUM, "vorbis.TITLE").toStrictEqual(["Don't Explain"]);
+  expect(vorbis.DATE, "vorbis.DATE").toStrictEqual(["2011-09-27"]);
+  expect(vorbis.TRACKNUMBER, "vorbis.TRACKNUMBER").toStrictEqual(["1"]);
+  expect(vorbis.PRODUCER, "vorbis.PRODUCER").toStrictEqual(["Roy Weisman"]);
+  expect(vorbis.ENGINEER, "vorbis.ENGINEER").toStrictEqual([
+    "James McCullagh",
+    "Jared Kvitka",
+  ]);
+  expect(vorbis.LABEL, "vorbis.LABEL").toStrictEqual(["J&R Adventures"]);
+  expect(vorbis.CATALOGNUMBER, "vorbis.CATALOGNUMBER").toStrictEqual([
+    "PRAR931391",
+  ]);
+  expect(vorbis.ACOUSTID_ID, "vorbis.ACOUSTID_ID").toStrictEqual([
+    "09c06fac-679a-45b1-8ea0-6ce532318363",
+  ]);
+  expect(vorbis.ARTIST, "vorbis.ARTIST").toStrictEqual([
+    "Beth Hart & Joe Bonamassa",
+  ]);
+  expect(vorbis.ARTISTS, "vorbis.ARTISTS").toStrictEqual([
+    "Beth Hart",
+    "Joe Bonamassa",
+  ]);
+  expect(vorbis.ARTISTSORT, "vorbis.ARTISTSORT").toStrictEqual([
+    "Hart, Beth & Bonamassa, Joe",
+  ]);
+  expect(vorbis.ALBUMARTIST, "vorbis.ALBUMARTIST").toStrictEqual([
+    "Beth Hart & Joe Bonamassa",
+  ]);
+  expect(vorbis.ALBUMARTISTSORT, "vorbis.ALBUMARTISTSORT").toStrictEqual([
+    "Hart, Beth & Bonamassa, Joe",
+  ]);
+  expect(vorbis.ORIGINALDATE, "vorbis.ORIGINALDATE").toStrictEqual([
+    "2011-09-26",
+  ]);
+  expect(vorbis.SCRIPT, "vorbis.SCRIPT").toStrictEqual(["Latn"]);
+  expect(vorbis.MEDIA, "vorbis.MEDIA").toStrictEqual(["CD"]);
+  expect(
     vorbis.MUSICBRAINZ_ALBUMID,
-    ["e7050302-74e6-42e4-aba0-09efd5d431d8"],
     "vorbis.MUSICBRAINZ_ALBUMID"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["e7050302-74e6-42e4-aba0-09efd5d431d8"]);
+  expect(
     vorbis.MUSICBRAINZ_ALBUMARTISTID,
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "vorbis.MUSICBRAINZ_ALBUMARTISTID"
-  );
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(
     vorbis.MUSICBRAINZ_ARTISTID,
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "vorbis.MUSICBRAINZ_ARTISTID"
-  );
-  t.deepEqual(vorbis.PERFORMER, performers, "vorbis.PERFORMER");
-  t.deepEqual(vorbis.ARRANGER, ["Jeff Bova"], "vorbis.ARRANGER");
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(vorbis.PERFORMER, "vorbis.PERFORMER").toStrictEqual(performers);
+  expect(vorbis.ARRANGER, "vorbis.ARRANGER").toStrictEqual(["Jeff Bova"]);
+  expect(
     vorbis.MUSICBRAINZ_ALBUMID,
-    ["e7050302-74e6-42e4-aba0-09efd5d431d8"],
     "vorbis.MUSICBRAINZ_ALBUMID"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["e7050302-74e6-42e4-aba0-09efd5d431d8"]);
+  expect(
     vorbis.MUSICBRAINZ_RELEASETRACKID,
-    ["d062f484-253c-374b-85f7-89aab45551c7"],
     "vorbis.MUSICBRAINZ_RELEASETRACKID"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["d062f484-253c-374b-85f7-89aab45551c7"]);
+  expect(
     vorbis.MUSICBRAINZ_RELEASEGROUPID,
-    ["e00305af-1c72-469b-9a7c-6dc665ca9adc"],
     "vorbis.MUSICBRAINZ_RELEASEGROUPID"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["e00305af-1c72-469b-9a7c-6dc665ca9adc"]);
+  expect(
     vorbis.MUSICBRAINZ_TRACKID,
-    ["f151cb94-c909-46a8-ad99-fb77391abfb8"],
     "vorbis.MUSICBRAINZ_TRACKID"
-  );
-  t.deepEqual(
-    vorbis.NOTES,
-    ["Medieval CUE Splitter (www.medieval.it)"],
-    "vorbis.NOTES"
-  );
-  t.deepEqual(vorbis.BARCODE, ["804879313915"], "vorbis.BARCODE");
-  t.deepEqual(vorbis.ASIN, ["B005NPEUB2"], "vorbis.ASIN");
-  t.deepEqual(vorbis.RELEASECOUNTRY, ["US"], "vorbis.RELEASECOUNTRY");
-  t.deepEqual(vorbis.RELEASESTATUS, ["official"], "vorbis.RELEASESTATUS");
+  ).toStrictEqual(["f151cb94-c909-46a8-ad99-fb77391abfb8"]);
+  expect(vorbis.NOTES, "vorbis.NOTES").toStrictEqual([
+    "Medieval CUE Splitter (www.medieval.it)",
+  ]);
+  expect(vorbis.BARCODE, "vorbis.BARCODE").toStrictEqual(["804879313915"]);
+  expect(vorbis.ASIN, "vorbis.ASIN").toStrictEqual(["B005NPEUB2"]);
+  expect(vorbis.RELEASECOUNTRY, "vorbis.RELEASECOUNTRY").toStrictEqual(["US"]);
+  expect(vorbis.RELEASESTATUS, "vorbis.RELEASESTATUS").toStrictEqual([
+    "official",
+  ]);
 
-  t.strictEqual(
+  expect(
     vorbis.METADATA_BLOCK_PICTURE[0].format,
-    "image/jpeg",
     "vorbis.METADATA_BLOCK_PICTURE.format = 'image/jpeg'"
-  );
-  t.strictEqual(
+  ).toBe("image/jpeg");
+  expect(
     vorbis.METADATA_BLOCK_PICTURE[0].type,
-    "Cover (front)",
     "vorbis.METADATA_BLOCK_PICTURE.type = 'Cover (front)'"
-  ); // ToDo: description??
+  ).toBe("Cover (front)"); // ToDo: description??
 
-  t.strictEqual(
+  expect(
     vorbis.METADATA_BLOCK_PICTURE[0].description,
-    "",
     "vorbis.METADATA_BLOCK_PICTURE.description"
-  );
-  t.strictEqual(
+  ).toBe("");
+  expect(
     vorbis.METADATA_BLOCK_PICTURE[0].data.length,
-    98_008,
     "vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes"
-  );
-  t.strictEqual(
+  ).toBe(98_008);
+  expect(
     calcHash(vorbis.METADATA_BLOCK_PICTURE[0].data),
-    "c57bec49b36ebf422018f82273d1995a",
     "Picture content"
-  );
+  ).toBe("c57bec49b36ebf422018f82273d1995a");
 }
 
 function checkApeTags(APEv2: INativeTagDict) {
   // Compare expectedCommonTags with result.common
-  t.deepEqual(APEv2.Title, ["Sinner's Prayer"], "APEv2.Title");
-  t.deepEqual(APEv2.Album, ["Don't Explain"], "APEv2.Album");
-  t.deepEqual(APEv2.Year, ["2011-09-27"], "APEv2.Year");
-  t.deepEqual(APEv2.Track, ["1/10"], "APEv2.Track");
-  t.deepEqual(APEv2.Disc, ["1/1"], "APEv2.Disc");
-  t.deepEqual(APEv2.Originalyear, ["2011"], "APEv2.Year");
-  t.deepEqual(APEv2.Originaldate, ["2011-09-26"], "APEv2.Originaldate");
-  t.deepEqual(APEv2.Label, ["J&R Adventures"], "APEv2.LABEL");
-  t.deepEqual(APEv2.CatalogNumber, ["PRAR931391"], "APEv2.CatalogNumber");
-  t.deepEqual(
-    APEv2.Acoustid_Id,
-    ["09c06fac-679a-45b1-8ea0-6ce532318363"],
-    "APEv2.Acoustid_Id"
-  );
-  t.deepEqual(APEv2.Artist, ["Beth Hart & Joe Bonamassa"], "APEv2.Artist");
-  t.deepEqual(APEv2.Artists, ["Beth Hart", "Joe Bonamassa"], "APEv2.Artists");
-  t.deepEqual(
-    APEv2.Artistsort,
-    ["Hart, Beth & Bonamassa, Joe"],
-    "APEv2.Artistsort"
-  );
-  t.deepEqual(
-    APEv2["Album Artist"],
-    ["Beth Hart & Joe Bonamassa"],
-    "APEv2.ALBUMARTIST"
-  );
-  t.deepEqual(
-    APEv2.Albumartistsort,
-    ["Hart, Beth & Bonamassa, Joe"],
-    "APEv2.Albumartistsort"
-  );
-  t.deepEqual(APEv2.Originaldate, ["2011-09-26"], "APEv2.ORIGINALDATE");
-  t.deepEqual(APEv2.Script, ["Latn"], "APEv2.Script");
-  t.deepEqual(APEv2.Media, ["CD"], "APEv2.Media");
-  t.deepEqual(
-    APEv2.Musicbrainz_Albumid,
-    ["e7050302-74e6-42e4-aba0-09efd5d431d8"],
-    "APEv2.Musicbrainz_Albumid"
-  );
-  t.deepEqual(
+  expect(APEv2.Title, "APEv2.Title").toStrictEqual(["Sinner's Prayer"]);
+  expect(APEv2.Album, "APEv2.Album").toStrictEqual(["Don't Explain"]);
+  expect(APEv2.Year, "APEv2.Year").toStrictEqual(["2011-09-27"]);
+  expect(APEv2.Track, "APEv2.Track").toStrictEqual(["1/10"]);
+  expect(APEv2.Disc, "APEv2.Disc").toStrictEqual(["1/1"]);
+  expect(APEv2.Originalyear, "APEv2.Year").toStrictEqual(["2011"]);
+  expect(APEv2.Originaldate, "APEv2.Originaldate").toStrictEqual([
+    "2011-09-26",
+  ]);
+  expect(APEv2.Label, "APEv2.LABEL").toStrictEqual(["J&R Adventures"]);
+  expect(APEv2.CatalogNumber, "APEv2.CatalogNumber").toStrictEqual([
+    "PRAR931391",
+  ]);
+  expect(APEv2.Acoustid_Id, "APEv2.Acoustid_Id").toStrictEqual([
+    "09c06fac-679a-45b1-8ea0-6ce532318363",
+  ]);
+  expect(APEv2.Artist, "APEv2.Artist").toStrictEqual([
+    "Beth Hart & Joe Bonamassa",
+  ]);
+  expect(APEv2.Artists, "APEv2.Artists").toStrictEqual([
+    "Beth Hart",
+    "Joe Bonamassa",
+  ]);
+  expect(APEv2.Artistsort, "APEv2.Artistsort").toStrictEqual([
+    "Hart, Beth & Bonamassa, Joe",
+  ]);
+  expect(APEv2["Album Artist"], "APEv2.ALBUMARTIST").toStrictEqual([
+    "Beth Hart & Joe Bonamassa",
+  ]);
+  expect(APEv2.Albumartistsort, "APEv2.Albumartistsort").toStrictEqual([
+    "Hart, Beth & Bonamassa, Joe",
+  ]);
+  expect(APEv2.Originaldate, "APEv2.ORIGINALDATE").toStrictEqual([
+    "2011-09-26",
+  ]);
+  expect(APEv2.Script, "APEv2.Script").toStrictEqual(["Latn"]);
+  expect(APEv2.Media, "APEv2.Media").toStrictEqual(["CD"]);
+  expect(APEv2.Musicbrainz_Albumid, "APEv2.Musicbrainz_Albumid").toStrictEqual([
+    "e7050302-74e6-42e4-aba0-09efd5d431d8",
+  ]);
+  expect(
     APEv2.Musicbrainz_Albumartistid,
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "APEv2.Musicbrainz_Albumartistid"
-  );
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(
     APEv2.Musicbrainz_Artistid,
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "APEv2.Musicbrainz_Artistid"
-  );
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
 
-  t.deepEqual(APEv2.Performer, performers, "APEv2.Performer");
-  t.deepEqual(APEv2.Producer, ["Roy Weisman"], "APEv2.PRODUCER");
-  t.deepEqual(
-    APEv2.Engineer,
-    ["James McCullagh", "Jared Kvitka"],
-    "APEv2.ENGINEER"
-  );
-  t.deepEqual(APEv2.Arranger, ["Jeff Bova"], "APEv2.ARRANGER");
+  expect(APEv2.Performer, "APEv2.Performer").toStrictEqual(performers);
+  expect(APEv2.Producer, "APEv2.PRODUCER").toStrictEqual(["Roy Weisman"]);
+  expect(APEv2.Engineer, "APEv2.ENGINEER").toStrictEqual([
+    "James McCullagh",
+    "Jared Kvitka",
+  ]);
+  expect(APEv2.Arranger, "APEv2.ARRANGER").toStrictEqual(["Jeff Bova"]);
 
-  t.deepEqual(
-    APEv2.Musicbrainz_Albumid,
-    ["e7050302-74e6-42e4-aba0-09efd5d431d8"],
-    "APEv2.Musicbrainz_Albumid"
-  );
-  t.deepEqual(
+  expect(APEv2.Musicbrainz_Albumid, "APEv2.Musicbrainz_Albumid").toStrictEqual([
+    "e7050302-74e6-42e4-aba0-09efd5d431d8",
+  ]);
+  expect(
     APEv2.musicbrainz_releasetrackid,
-    ["d062f484-253c-374b-85f7-89aab45551c7"],
     "APEv2.musicbrainz_releasetrackid"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["d062f484-253c-374b-85f7-89aab45551c7"]);
+  expect(
     APEv2.Musicbrainz_Releasegroupid,
-    ["e00305af-1c72-469b-9a7c-6dc665ca9adc"],
     "APEv2.Musicbrainz_Releasegroupid"
-  );
-  t.deepEqual(
-    APEv2.musicbrainz_trackid,
-    ["f151cb94-c909-46a8-ad99-fb77391abfb8"],
-    "APEv2.musicbrainz_trackid"
-  );
+  ).toStrictEqual(["e00305af-1c72-469b-9a7c-6dc665ca9adc"]);
+  expect(APEv2.musicbrainz_trackid, "APEv2.musicbrainz_trackid").toStrictEqual([
+    "f151cb94-c909-46a8-ad99-fb77391abfb8",
+  ]);
 
   // t.deepEqual(APEv2.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'APEv2.NOTES')
-  t.deepEqual(APEv2.Barcode, ["804879313915"], "APEv2.Barcode");
+  expect(APEv2.Barcode, "APEv2.Barcode").toStrictEqual(["804879313915"]);
   // ToDo: not set??? t.deepEqual(APEv2.ASIN, 'B005NPEUB2', 'APEv2.ASIN');
   // ToDo: not set??? t.deepEqual(APEv2.RELEASECOUNTRY, 'GB', 'APEv2.RELEASECOUNTRY');
-  t.deepEqual(
+  expect(
     APEv2.MUSICBRAINZ_ALBUMSTATUS,
-    ["official"],
     "APEv2.MUSICBRAINZ_ALBUMSTATUS"
-  );
+  ).toStrictEqual(["official"]);
 
-  t.deepEqual(APEv2.Arranger, ["Jeff Bova"], "APEv2.Arranger");
+  expect(APEv2.Arranger, "APEv2.Arranger").toStrictEqual(["Jeff Bova"]);
 
   // ToDo:
-  t.deepEqual(
-    APEv2["Cover Art (Front)"][0].format,
-    "image/jpeg",
-    "picture.format"
+  expect(APEv2["Cover Art (Front)"][0].format, "picture.format").toBe(
+    "image/jpeg"
   );
-  t.deepEqual(
-    APEv2["Cover Art (Front)"][0].description,
-    "front",
-    "picture.description"
+  expect(APEv2["Cover Art (Front)"][0].description, "picture.description").toBe(
+    "front"
   );
-  t.deepEqual(
-    APEv2["Cover Art (Front)"][0].data.length,
-    98_008,
-    "picture.data.length"
+  expect(APEv2["Cover Art (Front)"][0].data.length, "picture.data.length").toBe(
+    98_008
   );
 
-  t.deepEqual(
-    APEv2["Cover Art (Back)"][0].format,
-    "image/png",
-    "picture.format"
+  expect(APEv2["Cover Art (Back)"][0].format, "picture.format").toBe(
+    "image/png"
   );
-  t.deepEqual(
-    APEv2["Cover Art (Back)"][0].description,
-    "back",
-    "picture.description"
+  expect(APEv2["Cover Art (Back)"][0].description, "picture.description").toBe(
+    "back"
   );
-  t.deepEqual(
-    APEv2["Cover Art (Back)"][0].data.length,
-    120_291,
-    "picture.data.length"
+  expect(APEv2["Cover Art (Back)"][0].data.length, "picture.data.length").toBe(
+    120_291
   );
 }
 
 function checkID3Tags(native: INativeTagDict) {
-  t.deepEqual(
+  expect(
     native.TIT2,
-    ["Sinner's Prayer"],
     "id3v23.TIT2: Title/songname/content description"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["Sinner's Prayer"]);
+  expect(
     native.TPE1,
-    ["Beth Hart & Joe Bonamassa"],
     "id3v23.TPE1: Lead performer(s)/Soloist(s)"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+  expect(
     native.TPE2,
-    ["Beth Hart & Joe Bonamassa"],
     "id3v23.TPE2: Band/orchestra/accompaniment"
-  );
-  t.deepEqual(
-    native.TALB,
-    ["Don't Explain"],
-    "id3v23.TALB: Album/Movie/Show title"
-  );
-  t.deepEqual(native.TORY, ["2011"], "id3v23.TORY: Original release year");
-  t.deepEqual(native.TYER, ["2011"], "id3v23.TYER");
-  t.deepEqual(native.TPOS, ["1/1"], "id3v23.TPOS: Part of a set");
-  t.deepEqual(
+  ).toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+  expect(native.TALB, "id3v23.TALB: Album/Movie/Show title").toStrictEqual([
+    "Don't Explain",
+  ]);
+  expect(native.TORY, "id3v23.TORY: Original release year").toStrictEqual([
+    "2011",
+  ]);
+  expect(native.TYER, "id3v23.TYER").toStrictEqual(["2011"]);
+  expect(native.TPOS, "id3v23.TPOS: Part of a set").toStrictEqual(["1/1"]);
+  expect(
     native.TRCK,
-    ["1/10"],
     "id3v23.TRCK: Track number/Position in set"
-  );
-  t.deepEqual(native.TPUB, ["J&R Adventures"], "id3v23.TPUB: Publisher");
-  t.deepEqual(native.TMED, ["CD"], "id3v23.TMED: Media type");
-  t.deepEqual(
-    native.UFID[0],
+  ).toStrictEqual(["1/10"]);
+  expect(native.TPUB, "id3v23.TPUB: Publisher").toStrictEqual([
+    "J&R Adventures",
+  ]);
+  expect(native.TMED, "id3v23.TMED: Media type").toStrictEqual(["CD"]);
+  expect(native.UFID[0], "id3v23.UFID: Unique file identifier").toStrictEqual({
+    owner_identifier: "http://musicbrainz.org",
+    identifier: Buffer.from("f151cb94-c909-46a8-ad99-fb77391abfb8", "ascii"),
+  });
+
+  expect(native.IPLS, "id3v23.IPLS: Involved people list").toStrictEqual([
     {
-      owner_identifier: "http://musicbrainz.org",
-      identifier: Buffer.from("f151cb94-c909-46a8-ad99-fb77391abfb8", "ascii"),
+      arranger: ["Jeff Bova"],
+      "bass guitar": ["Carmine Rojas"],
+      drums: ["Anton Fig"],
+      engineer: ["James McCullagh", "Jared Kvitka"],
+      guitar: ["Blondie Chaplin", "Joe Bonamassa"],
+      keyboard: ["Arlan Schierbaum"],
+      orchestra: ["The Bovaland Orchestra"],
+      percussion: ["Anton Fig"],
+      piano: ["Beth Hart"],
+      producer: ["Roy Weisman"],
+      vocals: ["Beth Hart", "Joe Bonamassa"],
     },
-    "id3v23.UFID: Unique file identifier"
-  );
+  ]);
 
-  t.deepEqual(
-    native.IPLS,
-    [
-      {
-        arranger: ["Jeff Bova"],
-        "bass guitar": ["Carmine Rojas"],
-        drums: ["Anton Fig"],
-        engineer: ["James McCullagh", "Jared Kvitka"],
-        guitar: ["Blondie Chaplin", "Joe Bonamassa"],
-        keyboard: ["Arlan Schierbaum"],
-        orchestra: ["The Bovaland Orchestra"],
-        percussion: ["Anton Fig"],
-        piano: ["Beth Hart"],
-        producer: ["Roy Weisman"],
-        vocals: ["Beth Hart", "Joe Bonamassa"],
-      },
-    ],
-    "id3v23.IPLS: Involved people list"
-  );
-
-  t.deepEqual(native["TXXX:ASIN"], ["B005NPEUB2"], "id3v23.TXXX:ASIN");
-  t.deepEqual(
-    native["TXXX:Artists"],
-    ["Beth Hart", "Joe Bonamassa"],
-    "id3v23.TXXX:Artists"
-  );
-  t.deepEqual(native["TXXX:BARCODE"], ["804879313915"], "id3v23.TXXX:BARCODE");
-  t.deepEqual(
+  expect(native["TXXX:ASIN"], "id3v23.TXXX:ASIN").toStrictEqual(["B005NPEUB2"]);
+  expect(native["TXXX:Artists"], "id3v23.TXXX:Artists").toStrictEqual([
+    "Beth Hart",
+    "Joe Bonamassa",
+  ]);
+  expect(native["TXXX:BARCODE"], "id3v23.TXXX:BARCODE").toStrictEqual([
+    "804879313915",
+  ]);
+  expect(
     native["TXXX:CATALOGNUMBER"],
-    ["PRAR931391"],
     "id3v23.TXXX:CATALOGNUMBER"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["PRAR931391"]);
+  expect(
     native["TXXX:MusicBrainz Album Artist Id"],
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "id3v23.TXXX:MusicBrainz Album Artist Id"
-  );
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(
     native["TXXX:MusicBrainz Album Id"],
-    ["e7050302-74e6-42e4-aba0-09efd5d431d8"],
     "id3v23.TXXX:MusicBrainz Album Id"
-  );
+  ).toStrictEqual(["e7050302-74e6-42e4-aba0-09efd5d431d8"]);
   // ToDo?? t.strictEqual(id3v23['TXXX:MusicBrainz Album Release Country'], 'GB', 'id3v23.TXXX:MusicBrainz Album Release Country')
-  t.deepEqual(
+  expect(
     native["TXXX:MusicBrainz Album Status"],
-    ["official"],
     "id3v23.TXXX:MusicBrainz Album Status"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["official"]);
+  expect(
     native["TXXX:MusicBrainz Album Type"],
-    ["album"],
     "id3v23.TXXX:MusicBrainz Album Type"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["album"]);
+  expect(
     native["TXXX:MusicBrainz Artist Id"],
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "id3v23.TXXX:MusicBrainz Artist Id"
-  );
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(
     native["TXXX:MusicBrainz Release Group Id"],
-    ["e00305af-1c72-469b-9a7c-6dc665ca9adc"],
     "id3v23.TXXX.MusicBrainz Release Group Id"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["e00305af-1c72-469b-9a7c-6dc665ca9adc"]);
+  expect(
     native["TXXX:MusicBrainz Release Track Id"],
-    ["d062f484-253c-374b-85f7-89aab45551c7"],
     "id3v23.TXXX.MusicBrainz Release Track Id"
-  );
-  t.deepEqual(native["TXXX:SCRIPT"], ["Latn"], "id3v23.TXXX:SCRIPT");
-  t.deepEqual(
-    native["TXXX:originalyear"],
-    ["2011"],
-    "id3v23.TXXX:originalyear"
+  ).toStrictEqual(["d062f484-253c-374b-85f7-89aab45551c7"]);
+  expect(native["TXXX:SCRIPT"], "id3v23.TXXX:SCRIPT").toStrictEqual(["Latn"]);
+  expect(native["TXXX:originalyear"], "id3v23.TXXX:originalyear").toStrictEqual(
+    ["2011"]
   );
   // t.strictEqual(native.METADATA_BLOCK_PICTURE.format, 'image/jpeg', 'native.METADATA_BLOCK_PICTURE format')
   // t.strictEqual(native.METADATA_BLOCK_PICTURE.data.length, 98008, 'native.METADATA_BLOCK_PICTURE length')
 }
 
 function checkID3v24Tags(id3v24: INativeTagDict) {
-  t.deepEqual(id3v24.APIC[0].data.length, 98_008, "id3v24.APIC.data.length");
-  t.deepEqual(id3v24.APIC[0].description, "", "id3v24.APIC.data.description");
-  t.deepEqual(
-    id3v24.APIC[0].format,
-    "image/jpeg",
-    "id3v24.APIC.format = image/jpeg"
+  expect(id3v24.APIC[0].data.length, "id3v24.APIC.data.length").toBe(98_008);
+  expect(id3v24.APIC[0].description, "id3v24.APIC.data.description").toBe("");
+  expect(id3v24.APIC[0].format, "id3v24.APIC.format = image/jpeg").toBe(
+    "image/jpeg"
   );
-  t.deepEqual(
-    id3v24.APIC[0].type,
-    "Cover (front)",
-    "d3v24.APIC.type = Cover (front)"
+  expect(id3v24.APIC[0].type, "d3v24.APIC.type = Cover (front)").toBe(
+    "Cover (front)"
   );
 
-  t.deepEqual(
-    id3v24.TALB,
-    ["Don't Explain"],
-    "id3v24.TALB: Album/Movie/Show title"
-  );
-  t.deepEqual(id3v24.TDOR, ["2011-09-26"], "id3v24.TDOR");
-  t.deepEqual(id3v24.TDRC, ["2011-09-27"], "id3v24.DATE");
+  expect(id3v24.TALB, "id3v24.TALB: Album/Movie/Show title").toStrictEqual([
+    "Don't Explain",
+  ]);
+  expect(id3v24.TDOR, "id3v24.TDOR").toStrictEqual(["2011-09-26"]);
+  expect(id3v24.TDRC, "id3v24.DATE").toStrictEqual(["2011-09-27"]);
 
-  t.deepEqual(
-    id3v24.TIPL[0],
-    {
-      arranger: ["Jeff Bova"],
-      engineer: ["James McCullagh", "Jared Kvitka"],
-      producer: ["Roy Weisman"],
-    },
-    "event id3v24.TIPL"
-  );
+  expect(id3v24.TIPL[0], "event id3v24.TIPL").toStrictEqual({
+    arranger: ["Jeff Bova"],
+    engineer: ["James McCullagh", "Jared Kvitka"],
+    producer: ["Roy Weisman"],
+  });
 
-  t.deepEqual(
+  expect(
     id3v24.TIT2[0],
-    "Sinner's Prayer",
     "id3v24.TIT2: Title/songname/content description"
-  );
+  ).toBe("Sinner's Prayer");
 
-  t.deepEqual(
-    id3v24.TMCL[0],
-    {
-      "bass guitar": ["Carmine Rojas"],
-      drums: ["Anton Fig"],
-      guitar: ["Blondie Chaplin", "Joe Bonamassa"],
-      keyboard: ["Arlan Schierbaum"],
-      orchestra: ["The Bovaland Orchestra"],
-      percussion: ["Anton Fig"],
-      piano: ["Beth Hart"],
-      vocals: ["Beth Hart", "Joe Bonamassa"],
-    },
-    "event id3v24.TMCL"
-  );
+  expect(id3v24.TMCL[0], "event id3v24.TMCL").toStrictEqual({
+    "bass guitar": ["Carmine Rojas"],
+    drums: ["Anton Fig"],
+    guitar: ["Blondie Chaplin", "Joe Bonamassa"],
+    keyboard: ["Arlan Schierbaum"],
+    orchestra: ["The Bovaland Orchestra"],
+    percussion: ["Anton Fig"],
+    piano: ["Beth Hart"],
+    vocals: ["Beth Hart", "Joe Bonamassa"],
+  });
 
   // Lead performer(s)/Soloist(s)
-  t.deepEqual(id3v24.TMED, ["CD"], "id3v24.TMED");
-  t.deepEqual(
+  expect(id3v24.TMED, "id3v24.TMED").toStrictEqual(["CD"]);
+  expect(
     id3v24.TPE1,
-    ["Beth Hart & Joe Bonamassa"],
     "id3v24.TPE1: Lead performer(s)/Soloist(s)"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+  expect(
     id3v24.TPE2,
-    ["Beth Hart & Joe Bonamassa"],
     "id3v24.TPE1: Band/orchestra/accompaniment"
-  );
-  t.deepEqual(id3v24.TPOS, ["1/1"], "id3v24.TPOS");
-  t.deepEqual(id3v24.TPUB, ["J&R Adventures"], "id3v24.TPUB");
-  t.deepEqual(id3v24.TRCK, ["1/10"], "id3v24.TRCK");
+  ).toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+  expect(id3v24.TPOS, "id3v24.TPOS").toStrictEqual(["1/1"]);
+  expect(id3v24.TPUB, "id3v24.TPUB").toStrictEqual(["J&R Adventures"]);
+  expect(id3v24.TRCK, "id3v24.TRCK").toStrictEqual(["1/10"]);
 
-  t.deepEqual(id3v24.TSO2, ["Hart, Beth & Bonamassa, Joe"], "TSO2");
-  t.deepEqual(id3v24.TSOP, ["Hart, Beth & Bonamassa, Joe"], "TSOP");
+  expect(id3v24.TSO2, "TSO2").toStrictEqual(["Hart, Beth & Bonamassa, Joe"]);
+  expect(id3v24.TSOP, "TSOP").toStrictEqual(["Hart, Beth & Bonamassa, Joe"]);
 
-  t.deepEqual(
-    id3v24.UFID[0],
-    {
-      owner_identifier: "http://musicbrainz.org",
-      identifier: Buffer.from("f151cb94-c909-46a8-ad99-fb77391abfb8", "ascii"),
-    },
-    "id3v24.UFID: Unique file identifier"
-  );
+  expect(id3v24.UFID[0], "id3v24.UFID: Unique file identifier").toStrictEqual({
+    owner_identifier: "http://musicbrainz.org",
+    identifier: Buffer.from("f151cb94-c909-46a8-ad99-fb77391abfb8", "ascii"),
+  });
 
-  t.deepEqual(id3v24["TXXX:ASIN"], ["B005NPEUB2"], "id3v24.TXXX:ASIN");
-  t.deepEqual(
-    id3v24["TXXX:Artists"],
-    ["Beth Hart", "Joe Bonamassa"],
-    "id3v24.TXXX:Artists"
-  );
-  t.deepEqual(id3v24["TXXX:BARCODE"], ["804879313915"], "id3v24.TXXX:BARCODE");
-  t.deepEqual(
+  expect(id3v24["TXXX:ASIN"], "id3v24.TXXX:ASIN").toStrictEqual(["B005NPEUB2"]);
+  expect(id3v24["TXXX:Artists"], "id3v24.TXXX:Artists").toStrictEqual([
+    "Beth Hart",
+    "Joe Bonamassa",
+  ]);
+  expect(id3v24["TXXX:BARCODE"], "id3v24.TXXX:BARCODE").toStrictEqual([
+    "804879313915",
+  ]);
+  expect(
     id3v24["TXXX:CATALOGNUMBER"],
-    ["PRAR931391"],
     "id3v24.TXXX:CATALOGNUMBER"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["PRAR931391"]);
+  expect(
     id3v24["TXXX:MusicBrainz Album Artist Id"],
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "id3v24.TXXX:MusicBrainz Album Artist Id"
-  );
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(
     id3v24["TXXX:MusicBrainz Album Id"],
-    ["e7050302-74e6-42e4-aba0-09efd5d431d8"],
     "id3v24.TXXX:MusicBrainz Album Id"
-  );
+  ).toStrictEqual(["e7050302-74e6-42e4-aba0-09efd5d431d8"]);
   // ToDo?? t.deepEqual(id3v24['TXXX:MusicBrainz Album Release Country'], 'GB', 'id3v24.TXXX:MusicBrainz Album Release Country');
-  t.deepEqual(
+  expect(
     id3v24["TXXX:MusicBrainz Album Status"],
-    ["official"],
     "id3v24.TXXX:MusicBrainz Album Status"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["official"]);
+  expect(
     id3v24["TXXX:MusicBrainz Album Type"],
-    ["album"],
     "id3v24.TXXX:MusicBrainz Album Type"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["album"]);
+  expect(
     id3v24["TXXX:MusicBrainz Artist Id"],
-    [
-      "3fe817fc-966e-4ece-b00a-76be43e7e73c",
-      "984f8239-8fe1-4683-9c54-10ffb14439e9",
-    ],
     "id3v24.TXXX:MusicBrainz Artist Id"
-  );
-  t.deepEqual(
+  ).toStrictEqual([
+    "3fe817fc-966e-4ece-b00a-76be43e7e73c",
+    "984f8239-8fe1-4683-9c54-10ffb14439e9",
+  ]);
+  expect(
     id3v24["TXXX:MusicBrainz Release Group Id"],
-    ["e00305af-1c72-469b-9a7c-6dc665ca9adc"],
     "id3v24.TXXX.MusicBrainz Release Group Id"
-  );
-  t.deepEqual(
+  ).toStrictEqual(["e00305af-1c72-469b-9a7c-6dc665ca9adc"]);
+  expect(
     id3v24["TXXX:MusicBrainz Release Track Id"],
-    ["d062f484-253c-374b-85f7-89aab45551c7"],
     "id3v24.TXXX.MusicBrainz Release Track Id"
-  );
-  t.deepEqual(id3v24["TXXX:SCRIPT"], ["Latn"], "id3v24.TXXX:SCRIPT");
-  t.deepEqual(
-    id3v24["TXXX:originalyear"],
-    ["2011"],
-    "id3v24.TXXX:originalyear"
+  ).toStrictEqual(["d062f484-253c-374b-85f7-89aab45551c7"]);
+  expect(id3v24["TXXX:SCRIPT"], "id3v24.TXXX:SCRIPT").toStrictEqual(["Latn"]);
+  expect(id3v24["TXXX:originalyear"], "id3v24.TXXX:originalyear").toStrictEqual(
+    ["2011"]
   );
 }
 
+function checkITunesTags(iTunes: INativeTagDict) {
+  expect(iTunes["©nam"], "iTunes.©nam => common.title").toStrictEqual([
+    "Sinner's Prayer",
+  ]);
+  expect(iTunes["©ART"], "iTunes.@ART => common.artist").toStrictEqual([
+    "Beth Hart & Joe Bonamassa",
+  ]);
+  expect(iTunes["©alb"], "iTunes.©alb => common.album").toStrictEqual([
+    "Don't Explain",
+  ]);
+  expect(iTunes.soar, "iTunes.soar => common.artistsort").toStrictEqual([
+    "Hart, Beth & Bonamassa, Joe",
+  ]);
+  expect(iTunes.soaa, "iTunes.soaa => common.albumartistsort").toStrictEqual([
+    "Hart, Beth & Bonamassa, Joe",
+  ]);
+  expect(
+    iTunes["----:com.apple.iTunes:ARTISTS"],
+    "iTunes.----:com.apple.iTunes:ARTISTS => common.artists"
+  ).toStrictEqual(["Beth Hart", "Joe Bonamassa"]);
+  expect(iTunes.aART, "iTunes.aART => common.albumartist").toStrictEqual([
+    "Beth Hart & Joe Bonamassa",
+  ]);
+  expect(
+    iTunes["----:com.apple.iTunes:Band"],
+    "iTunes.----:com.apple.iTunes:Band => common.albumartist"
+  ).toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+  expect(iTunes.trkn, "iTunes.trkn => common.track").toStrictEqual(["1/10"]);
+  expect(iTunes.disk, "iTunes.trkn => common.disk").toStrictEqual(["1/1"]);
+  expect(
+    iTunes["----:com.apple.iTunes:ORIGINALDATE"],
+    "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.albumartistsort"
+  ).toStrictEqual(["2011-09-26"]);
+  expect(
+    iTunes["----:com.apple.iTunes:ORIGINALYEAR"],
+    "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.originalyear"
+  ).toStrictEqual(["2011"]);
+
+  expect(iTunes["----:com.apple.iTunes:ACOUSTID_ID"]).toStrictEqual([
+    "09c06fac-679a-45b1-8ea0-6ce532318363",
+  ]);
+  expect(iTunes["----:com.apple.iTunes:ARRANGER"]).toStrictEqual(["Jeff Bova"]);
+
+  expect(iTunes["----:com.apple.iTunes:NOTES"]).toStrictEqual([
+    "Medieval CUE Splitter (www.medieval.it)",
+  ]);
+  // ToDO
+}
+
+function checkAsfTags(native: INativeTagDict) {
+  expect(
+    native["WM/AlbumArtist"],
+    "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'"
+  ).toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+  expect(
+    native["WM/AlbumTitle"],
+    "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'"
+  ).toStrictEqual(["Don't Explain"]);
+  expect(
+    native["WM/ARTISTS"],
+    "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']"
+  ).toStrictEqual(["Joe Bonamassa", "Beth Hart"]);
+  expect(native["WM/Picture"], "Contains WM/Picture").toBeDefined();
+  expect(native["WM/Picture"].length, "Contains 1 WM/Picture").toBe(1);
+  // ToDO
+}
+
 describe("Vorbis mappings", () => {
-  it("should map FLAC/Vorbis", async () => {
+  test("should map FLAC/Vorbis", async () => {
     const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
-    function checkFormat(format: IFormat) {
-      t.strictEqual(format.container, "FLAC", "format.container");
-      t.strictEqual(format.codec, "FLAC", "format.codec");
-      t.strictEqual(
-        format.duration,
-        2.122_993_197_278_911_6,
-        "format.duration = 2.123 seconds"
-      );
-      t.strictEqual(
-        format.sampleRate,
-        44_100,
-        "format.sampleRate = 44100 samples/sec"
-      );
-      t.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample = 16 bits");
-      t.strictEqual(
-        format.numberOfChannels,
-        2,
-        "format.numberOfChannels = 2 channels"
-      );
-    }
-
     // Parse flac/Vorbis file
-    const metadata = await parseFile(path.join(samplePath, filename));
-    t.isDefined(metadata, "should return metadata");
-    t.isDefined(metadata.native, "should return metadata.native");
-    t.isDefined(metadata.native.vorbis, "should return metadata.native.vorbis");
-    checkFormat(metadata.format);
+    const metadata = await parseFile(join(samplePath, filename));
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
+      metadata.native.vorbis,
+      "should return metadata.native.vorbis"
+    ).toBeDefined();
+
+    const format = metadata.format;
+    expect(format.container, "format.container").toBe("FLAC");
+    expect(format.codec, "format.codec").toBe("FLAC");
+    expect(format.duration, "format.duration = 2.123 seconds").toBe(
+      2.122_993_197_278_911_6
+    );
+    expect(format.sampleRate, "format.sampleRate = 44100 samples/sec").toBe(
+      44_100
+    );
+    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+    expect(
+      format.numberOfChannels,
+      "format.numberOfChannels = 2 channels"
+    ).toBe(2);
+
     checkVorbisTags(orderTags(metadata.native.vorbis));
     checkCommonMapping("vorbis", metadata.common);
   });
 
-  it("should map ogg/Vorbis", async () => {
-    const filePath = path.join(
+  test("should map ogg/Vorbis", async () => {
+    const filePath = join(
       samplePath,
       "MusicBrainz - Beth Hart - Sinner's Prayer.ogg"
     );
 
     // Parse ogg/Vorbis file
     const metadata = await parseFile(filePath);
-    t.isDefined(metadata, "should return metadata");
-    t.isDefined(metadata.native, "should return metadata.native");
-    t.isDefined(metadata.native.vorbis, "should return metadata.native.vorbis");
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
+      metadata.native.vorbis,
+      "should return metadata.native.vorbis"
+    ).toBeDefined();
     // Check Vorbis native tags
     checkVorbisTags(orderTags(metadata.native.vorbis));
     // Check common mappings
@@ -839,213 +786,193 @@ describe("Vorbis mappings", () => {
 });
 
 describe("APEv2 header", () => {
-  it("should map Monkey's Audio / APEv2", async () => {
-    const filePath = path.join(
+  test("should map Monkey's Audio / APEv2", async () => {
+    const filePath = join(
       samplePath,
       "MusicBrainz - Beth Hart - Sinner's Prayer.ape"
     );
 
-    function checkFormat(format: IFormat) {
-      t.strictEqual(
-        format.duration,
-        2.122_993_197_278_911_6,
-        "format.duration = 2.123 seconds"
-      );
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
-      t.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample");
-      t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    }
-
     // Run with default options
     const metadata = await parseFile(filePath);
-    t.isDefined(metadata, "should return metadata");
-    t.isDefined(metadata.native, "should return metadata.native");
-    t.isDefined(metadata.native["APEv2"], "should include native APEv2 tags");
-    checkFormat(metadata.format);
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
+      metadata.native.APEv2,
+      "should include native APEv2 tags"
+    ).toBeDefined();
+
+    const format = metadata.format;
+    expect(format.duration, "format.duration = 2.123 seconds").toBe(
+      2.122_993_197_278_911_6
+    );
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+    expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
+    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
     checkApeTags(orderTags(metadata.native.APEv2));
     checkCommonMapping("APEv2", metadata.common);
   });
 
-  it("should map WavPack / APEv2", async () => {
-    const filePath = path.join(
+  test("should map WavPack / APEv2", async () => {
+    const filePath = join(
       samplePath,
       "wavpack",
       "MusicBrainz - Beth Hart - Sinner's Prayer.wv"
     );
 
-    function checkFormat(format: IFormat) {
-      t.strictEqual(
-        format.duration,
-        2.122_993_197_278_911_6,
-        "format.duration = 2.123 seconds"
-      );
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
-      t.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample");
-      t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    }
-
     // Run with default options
     const metadata = await parseFile(filePath);
-    t.isDefined(metadata, "should return metadata");
-    t.isDefined(metadata.native, "should return metadata.native");
-    t.isDefined(metadata.native["APEv2"], "should include native APEv2 tags");
-    checkFormat(metadata.format);
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
+      metadata.native.APEv2,
+      "should include native APEv2 tags"
+    ).toBeDefined();
+
+    const format = metadata.format;
+    expect(format.duration, "format.duration = 2.123 seconds").toBe(
+      2.122_993_197_278_911_6
+    );
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+    expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
+    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
     checkApeTags(orderTags(metadata.native.APEv2));
     checkCommonMapping("APEv2", metadata.common);
   });
 });
 
 describe("ID3v2.3 header", () => {
-  it("MP3 / ID3v2.3", () => {
-    const filePath = path.join(
+  test("MP3 / ID3v2.3", async () => {
+    const filePath = join(
       samplePath,
       "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3"
     );
 
     // Run with default options
-    return parseFile(filePath).then((metadata) => {
-      t.isDefined(metadata, "should return metadata");
-      t.isDefined(metadata.native, "should return metadata.native");
-      t.isDefined(
-        metadata.native["ID3v2.3"],
-        "should include native id3v2.3 tags"
-      );
+    const metadata = await parseFile(filePath);
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
+      metadata.native["ID3v2.3"],
+      "should include native id3v2.3 tags"
+    ).toBeDefined();
 
-      const format = metadata.format;
-      t.deepEqual(format.tagTypes, ["ID3v2.3"], "format.tagTypes");
-      t.deepEqual(format.container, "MPEG", "format.container");
-      t.deepEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-      t.strictEqual(
-        format.duration,
-        2.168_163_265_306_122_2,
-        "format.duration"
-      );
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate");
-      t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-      t.strictEqual(format.codecProfile, "V2", "format.codecProfile");
-      t.strictEqual(format.tool, "LAME 3.99r", "format.tool");
-      checkID3Tags(orderTags(metadata.native["ID3v2.3"]));
-      checkCommonMapping("ID3v2.3", metadata.common);
-    });
+    const format = metadata.format;
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
+    expect(format.container, "format.container").toBe("MPEG");
+    expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+    expect(format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+    expect(format.codecProfile, "format.codecProfile").toBe("V2");
+    expect(format.tool, "format.tool").toBe("LAME 3.99r");
+
+    checkID3Tags(orderTags(metadata.native["ID3v2.3"]));
+    checkCommonMapping("ID3v2.3", metadata.common);
   });
 
   /**
    * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
    * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
    */
-  it("should map RIFF/WAVE/PCM / ID3v2.3", () => {
-    const filePath = path.join(
+  test("should map RIFF/WAVE/PCM / ID3v2.3", async () => {
+    const filePath = join(
       samplePath,
       "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"
     );
 
     // Parse wma/asf file
-    return parseFile(filePath).then((result) => {
-      // Check wma format
-      const format = result.format;
-      // t.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
-      t.deepEqual(format.tagTypes, ["exif", "ID3v2.3"], "format.tagTypes)");
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate = 44.1 kHz");
-      t.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample = 16 bits");
-      t.strictEqual(
-        format.numberOfChannels,
-        2,
-        "format.numberOfChannels = 2 channels"
-      );
-      t.strictEqual(
-        format.numberOfSamples,
-        93_624,
-        "format.numberOfSamples = 88200"
-      );
-      t.strictEqual(
-        format.duration,
-        2.122_993_197_278_911_6,
-        "format.duration = 2 seconds"
-      );
-      // Check native tags
-      checkID3Tags(orderTags(result.native["ID3v2.3"]));
-      checkCommonMapping("ID3v2.3", result.common);
-    });
+    const result = await parseFile(filePath);
+    // Check wma format
+    const format = result.format;
+    // t.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
+    expect(format.tagTypes, "format.tagTypes)").toStrictEqual([
+      "exif",
+      "ID3v2.3",
+    ]);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+    expect(
+      format.numberOfChannels,
+      "format.numberOfChannels = 2 channels"
+    ).toBe(2);
+    expect(format.numberOfSamples, "format.numberOfSamples = 88200").toBe(
+      93_624
+    );
+    expect(format.duration, "format.duration = 2 seconds").toBe(
+      2.122_993_197_278_911_6
+    );
+    // Check native tags
+    checkID3Tags(orderTags(result.native["ID3v2.3"]));
+    checkCommonMapping("ID3v2.3", result.common);
   });
 });
 
 describe("ID3v2.4 header", () => {
-  it("should map MP3/ID3v2.4 header", async () => {
-    const filePath = path.join(
+  test("should map MP3/ID3v2.4 header", async () => {
+    const filePath = join(
       samplePath,
       "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3"
     );
 
-    function checkFormat(format: IFormat) {
-      t.deepEqual(format.tagTypes, ["ID3v2.4"], "format.tagTypes");
-      t.strictEqual(format.container, "MPEG", "format.container");
-      t.strictEqual(format.codec, "MPEG 1 Layer 3", "format.codec");
-      t.strictEqual(format.codecProfile, "V2", "format.codecProfile = V2");
-      t.strictEqual(format.tool, "LAME 3.99r", "format.tool");
-      t.strictEqual(
-        format.duration,
-        2.168_163_265_306_122_2,
-        "format.duration"
-      );
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate = 44.1 kHz");
-      t.strictEqual(format.numberOfChannels, 2, "format.numberOfChannels");
-    }
-
     // Run with default options
     const metadata = await parseFile(filePath);
 
-    t.isDefined(metadata, "should return metadata");
-    t.isDefined(metadata.native, "should return metadata.native");
-    t.isDefined(
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
       metadata.native["ID3v2.4"],
       "should include native id3v2.4 tags"
-    );
+    ).toBeDefined();
 
-    checkFormat(metadata.format);
+    const format = metadata.format;
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.4"]);
+    expect(format.container, "format.container").toBe("MPEG");
+    expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+    expect(format.codecProfile, "format.codecProfile = V2").toBe("V2");
+    expect(format.tool, "format.tool").toBe("LAME 3.99r");
+    expect(format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
     checkID3v24Tags(orderTags(metadata.native["ID3v2.4"]));
     checkCommonMapping("ID3v2.4", metadata.common);
   });
 
-  it("should parse AIFF/ID3v2.4 audio file", async () => {
-    const filePath = path.join(
+  test("should parse AIFF/ID3v2.4 audio file", async () => {
+    const filePath = join(
       samplePath,
       "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff"
     );
 
-    function checkFormat(format: IFormat) {
-      t.strictEqual(format.container, "AIFF", "format.container = 'AIFF'");
-      t.deepEqual(format.tagTypes, ["ID3v2.4"], "format.tagTypes = 'ID3v2.4'"); // ToDo
-      t.strictEqual(format.sampleRate, 44_100, "format.sampleRate = 44.1 kHz");
-      t.strictEqual(format.bitsPerSample, 16, "format.bitsPerSample = 16 bits");
-      t.strictEqual(
-        format.numberOfChannels,
-        2,
-        "format.numberOfChannels = 2 channels"
-      );
-      t.strictEqual(
-        format.numberOfSamples,
-        93_624,
-        "format.bitsPerSample = 93624"
-      );
-      t.strictEqual(
-        format.duration,
-        2.122_993_197_278_911_6,
-        "format.duration = ~2.123"
-      );
-    }
-
     // Parse wma/asf file
     const metadata = await parseFile(filePath);
-    t.isDefined(metadata, "should return metadata");
-    t.isDefined(metadata.native, "should return metadata.native");
-    t.isDefined(
+    expect(metadata, "should return metadata").toBeDefined();
+    expect(metadata.native, "should return metadata.native").toBeDefined();
+    expect(
       metadata.native["ID3v2.4"],
       "should include native id3v2.4 tags"
-    );
+    ).toBeDefined();
     // Check wma format
-    checkFormat(metadata.format);
+    const format = metadata.format;
+    expect(format.container, "format.container = 'AIFF'").toBe("AIFF");
+    expect(format.tagTypes, "format.tagTypes = 'ID3v2.4'").toStrictEqual([
+      "ID3v2.4",
+    ]); // ToDo
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+    expect(
+      format.numberOfChannels,
+      "format.numberOfChannels = 2 channels"
+    ).toBe(2);
+    expect(format.numberOfSamples, "format.bitsPerSample = 93624").toBe(93_624);
+    expect(format.duration, "format.duration = ~2.123").toBe(
+      2.122_993_197_278_911_6
+    );
+
     // Check ID3v2.4 native tags
     checkID3v24Tags(orderTags(metadata.native["ID3v2.4"]));
     // Check common tag mappings
@@ -1053,153 +980,65 @@ describe("ID3v2.4 header", () => {
   });
 });
 
-it("should map M4A / (Apple) iTunes header", async () => {
-  const filePath = path.join(
+test("should map M4A / (Apple) iTunes header", async () => {
+  const filePath = join(
     samplePath,
     "MusicBrainz - Beth Hart - Sinner's Prayer.m4a"
   );
 
-  function checkFormat(format: IFormat) {
-    t.deepEqual(format.tagTypes, ["iTunes"], "format.tagTypes");
-    t.strictEqual(format.container, "M4A/mp42/isom", "format.container");
-    t.strictEqual(format.codec, "ALAC", "format.codec");
-    t.strictEqual(format.lossless, true, "ALAC is a lossless format");
-    t.strictEqual(format.duration, 2.122_993_197_278_911_6, "format.duration");
-    t.strictEqual(format.sampleRate, 44_100, "format.sampleRate = 44.1 kHz");
-    // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
-    // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
-  }
-
-  function checkCommonTags(common: ICommonTagsResult) {
-    t.strictEqual(common.picture[0].format, "image/jpeg", "picture format");
-    t.strictEqual(common.picture[0].data.length, 98_008, "picture length");
-  }
-
-  function check_iTunes_Tags(iTunes: INativeTagDict) {
-    t.deepEqual(
-      iTunes["©nam"],
-      ["Sinner's Prayer"],
-      "iTunes.©nam => common.title"
-    );
-    t.deepEqual(
-      iTunes["©ART"],
-      ["Beth Hart & Joe Bonamassa"],
-      "iTunes.@ART => common.artist"
-    );
-    t.deepEqual(
-      iTunes["©alb"],
-      ["Don't Explain"],
-      "iTunes.©alb => common.album"
-    );
-    t.deepEqual(
-      iTunes.soar,
-      ["Hart, Beth & Bonamassa, Joe"],
-      "iTunes.soar => common.artistsort"
-    );
-    t.deepEqual(
-      iTunes.soaa,
-      ["Hart, Beth & Bonamassa, Joe"],
-      "iTunes.soaa => common.albumartistsort"
-    );
-    t.deepEqual(
-      iTunes["----:com.apple.iTunes:ARTISTS"],
-      ["Beth Hart", "Joe Bonamassa"],
-      "iTunes.----:com.apple.iTunes:ARTISTS => common.artists"
-    );
-    t.deepEqual(
-      iTunes.aART,
-      ["Beth Hart & Joe Bonamassa"],
-      "iTunes.aART => common.albumartist"
-    );
-    t.deepEqual(
-      iTunes["----:com.apple.iTunes:Band"],
-      ["Beth Hart & Joe Bonamassa"],
-      "iTunes.----:com.apple.iTunes:Band => common.albumartist"
-    );
-    t.deepEqual(iTunes.trkn, ["1/10"], "iTunes.trkn => common.track");
-    t.deepEqual(iTunes.disk, ["1/1"], "iTunes.trkn => common.disk");
-    t.deepEqual(
-      iTunes["----:com.apple.iTunes:ORIGINALDATE"],
-      ["2011-09-26"],
-      "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.albumartistsort"
-    );
-    t.deepEqual(
-      iTunes["----:com.apple.iTunes:ORIGINALYEAR"],
-      ["2011"],
-      "iTunes.----:com.apple.iTunes:ORIGINALDATE => common.originalyear"
-    );
-
-    t.deepEqual(iTunes["----:com.apple.iTunes:ACOUSTID_ID"], [
-      "09c06fac-679a-45b1-8ea0-6ce532318363",
-    ]);
-    t.deepEqual(iTunes["----:com.apple.iTunes:ARRANGER"], ["Jeff Bova"]);
-
-    t.deepEqual(iTunes["----:com.apple.iTunes:NOTES"], [
-      "Medieval CUE Splitter (www.medieval.it)",
-    ]);
-    // ToDO
-  }
-
   // Run with default options
   const metadata = await parseFile(filePath);
-  t.isDefined(metadata, "should return metadata");
-  t.isDefined(metadata.native, "should return metadata.native");
-  t.isDefined(metadata.native.iTunes, "should include native iTunes tags");
+  expect(metadata, "should return metadata").toBeDefined();
+  expect(metadata.native, "should return metadata.native").toBeDefined();
+  expect(
+    metadata.native.iTunes,
+    "should include native iTunes tags"
+  ).toBeDefined();
 
-  checkFormat(metadata.format);
-  check_iTunes_Tags(orderTags(metadata.native.iTunes));
-  checkCommonTags(metadata.common);
+  const format = metadata.format;
+  expect(format.tagTypes, "format.tagTypes").toStrictEqual(["iTunes"]);
+  expect(format.container, "format.container").toBe("M4A/mp42/isom");
+  expect(format.codec, "format.codec").toBe("ALAC");
+  expect(format.lossless, "ALAC is a lossless format").toBe(true);
+  expect(format.duration, "format.duration").toBe(2.122_993_197_278_911_6);
+  expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+  // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
+  // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
+
+  const common = metadata.common;
+  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture[0].data.length, "picture length").toBe(98_008);
+
+  checkITunesTags(orderTags(metadata.native.iTunes));
   checkCommonMapping("iTunes", metadata.common);
 });
 
-it("should map WMA/ASF header", async () => {
-  const filePath = path.join(
+test("should map WMA/ASF header", async () => {
+  const filePath = join(
     samplePath,
     "MusicBrainz - Beth Hart - Sinner's Prayer.wma"
   );
 
-  function checkFormat(format: IFormat) {
-    t.deepEqual(format.tagTypes, ["asf"], "format.tagTypes = asf");
-    t.strictEqual(format.bitrate, 320_000, "format.bitrate = 320000");
-    // ToDo t.strictEqual(format.container, "wma", "format.container = wma");
-    t.approximately(format.duration, 2.135, 1 / 10_000, "format.duration");
-    // ToDo t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-    // ToDo t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
-    // ToDo t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
-  }
-
-  function check_asf_Tags(native: INativeTagDict) {
-    t.deepEqual(
-      native["WM/AlbumArtist"],
-      ["Beth Hart & Joe Bonamassa"],
-      "asf.WM/AlbumArtist => common.albumartist = 'Beth Hart & Joe Bonamassa'"
-    );
-    t.deepEqual(
-      native["WM/AlbumTitle"],
-      ["Don't Explain"],
-      "asf.WM/AlbumTitle => common.albumtitle = 'Don't Explain'"
-    );
-    t.deepEqual(
-      native["WM/ARTISTS"],
-      ["Joe Bonamassa", "Beth Hart"],
-      "asf.WM/ARTISTS => common.artists = ['Joe Bonamassa', 'Beth Hart']"
-    );
-    t.isDefined(native["WM/Picture"], "Contains WM/Picture");
-    t.strictEqual(native["WM/Picture"].length, 1, "Contains 1 WM/Picture");
-    // ToDO
-  }
-
   // Parse wma/asf file
   const metadata = await parseFile(filePath);
 
-  t.isDefined(metadata, "should return metadata");
-  t.isDefined(metadata.native, "should return metadata.native");
-  t.isDefined(metadata.native.asf, "should include native asf tags");
+  expect(metadata, "should return metadata").toBeDefined();
+  expect(metadata.native, "should return metadata.native").toBeDefined();
+  expect(metadata.native.asf, "should include native asf tags").toBeDefined();
 
   // Check wma format
-  checkFormat(metadata.format);
+  const format = metadata.format;
+  expect(format.tagTypes, "format.tagTypes = asf").toStrictEqual(["asf"]);
+  expect(format.bitrate, "format.bitrate = 320000").toBe(320_000);
+  // expect(format.container, "format.container = wma").toBe("wma"); // ToDo
+  expect(format.duration, "format.duration").toBeCloseTo(2.135, 4);
+  // expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100); // ToDo
+  // expect(format.bitsPerSample, "format.bitsPerSample").toBe(16); // ToDo
+  // expect(format.numberOfChannels, "format.numberOfChannels").toBe(2); // ToDo
+
   // Check asf native tags
-  check_asf_Tags(orderTags(metadata.native.asf));
+  checkAsfTags(orderTags(metadata.native.asf));
   // Check common tag mappings
-  // ToDo checkCommonMapping(result.format.tagTypes, result.common);
+  // TODO
+  // checkCommonMapping(metadata.format.tagTypes[0], metadata.common);
 });
