@@ -11,6 +11,8 @@ export default defineConfig({
       "test/strtok3/test.ts",
       "test/peek-readable/test-*.ts",
       "test/file-type/test.ts",
+      "test/**/*.test.ts",
+      "lib/**/*.test.ts",
     ],
     exclude: ["test/test-*.d.ts"],
 
