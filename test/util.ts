@@ -7,8 +7,12 @@ import { join } from "node:path";
  * A mock readable-stream, using string to read from
  */
 export class SourceStream extends Readable {
-  constructor(private buf: Buffer) {
+  private buf: Uint8Array;
+
+  constructor(src: Uint8Array | string) {
     super();
+
+    this.buf = typeof src === "string" ? Buffer.from(src, "latin1") : src;
   }
 
   public override _read() {
