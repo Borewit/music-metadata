@@ -1,5 +1,6 @@
 import { IGetToken } from 'strtok3/lib/core';
 import * as Token from 'token-types';
+import { stripNulls } from '../common/Util';
 
 export interface IBroadcastAudioExtensionChunk {
   description: string;
@@ -22,11 +23,11 @@ export const BroadcastAudioExtensionChunk: IGetToken<IBroadcastAudioExtensionChu
 
   get: (uint8array, off) => {
     return {
-      description: new Token.StringType(256, 'ascii').get(uint8array, off).trim(),
-      originator: new Token.StringType(32, 'ascii').get(uint8array, off + 256).trim(),
-      originatorReference: new Token.StringType(32, 'ascii').get(uint8array, off + 288).trim(),
-      originationDate: new Token.StringType(10, 'ascii').get(uint8array, off + 320).trim(),
-      originationTime: new Token.StringType(8, 'ascii').get(uint8array, off + 330).trim(),
+      description: stripNulls(new Token.StringType(256, 'ascii').get(uint8array, off)).trim(),
+      originator: stripNulls(new Token.StringType(32, 'ascii').get(uint8array, off + 256)).trim(),
+      originatorReference: stripNulls(new Token.StringType(32, 'ascii').get(uint8array, off + 288)).trim(),
+      originationDate: stripNulls(new Token.StringType(10, 'ascii').get(uint8array, off + 320)).trim(),
+      originationTime: stripNulls(new Token.StringType(8, 'ascii').get(uint8array, off + 330)).trim(),
       timeReferenceLow: Token.UINT32_LE.get(uint8array, off + 338),
       timeReferenceHigh: Token.UINT32_LE.get(uint8array, off + 342),
       version: Token.UINT16_LE.get(uint8array, off + 346),
