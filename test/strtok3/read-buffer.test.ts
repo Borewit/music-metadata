@@ -44,6 +44,18 @@ describe.each(tokenizerCases)(
       expect(len, "return value").toBe(5);
       expect(buffer.toString("binary")).toBe("\u0002\u0003\u0004\u0005\u0006");
     });
+
+    test("should pick length from buffer, if length is not explicit defined", async () => {
+      const rst = await getTokenizerWithData("increment-6", bufIncr6, load);
+
+      const buf = Buffer.alloc(4);
+
+      // should decode UINT8 from chunk
+      expect(rst.position).toBe(0);
+      const bufferLength = await rst.readBuffer(buf);
+      expect(bufferLength).toBe(buf.length);
+      expect(rst.position).toBe(buf.length);
+    });
   }
 );
 

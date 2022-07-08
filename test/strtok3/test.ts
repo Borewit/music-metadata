@@ -108,18 +108,6 @@ async function peekOnData(tokenizer: ITokenizer): Promise<void> {
 
 for (const tokenizerType of tokenizerTests) {
   describe(tokenizerType.name, () => {
-    test("should pick length from buffer, if length is not explicit defined", async () => {
-      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
-
-      const buf = Buffer.alloc(4);
-
-      // should decode UINT8 from chunk
-      expect(rst.position).toBe(0);
-      const bufferLength = await rst.readBuffer(buf);
-      expect(bufferLength).toBe(buf.length);
-      expect(rst.position).toBe(buf.length);
-    });
-
     test("should contain fileSize if constructed from file-read-stream", async () => {
       // ToDo
       const rst = await tokenizerType.loadTokenizer("test1.dat");
