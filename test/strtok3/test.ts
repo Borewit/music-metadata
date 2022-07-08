@@ -1,10 +1,4 @@
-import {
-  UINT32_LE,
-  UINT32_BE,
-  INT32_BE,
-  UINT24_BE,
-  IgnoreType,
-} from "../../lib/token-types";
+import { UINT32_LE, UINT32_BE, IgnoreType } from "../../lib/token-types";
 import { describe, assert, test, expect } from "vitest";
 import {
   ITokenizer,
@@ -13,13 +7,7 @@ import {
   fromBuffer,
 } from "../../lib/strtok3";
 import { join } from "node:path";
-import {
-  writeFile,
-  createReadStream,
-  readFile,
-  stat as stat_1,
-} from "../../lib/strtok3/FsPromise";
-import { EndOfStreamError } from "../../lib/peek-readable";
+import { createReadStream, readFile } from "../../lib/strtok3/FsPromise";
 import { PassThrough } from "node:stream";
 
 interface ITokenizerTest {
@@ -29,15 +17,6 @@ interface ITokenizerTest {
 
 function getResourcePath(testFile: string) {
   return join(__dirname, "resources", testFile);
-}
-
-async function getTokenizerWithData(
-  testData: string,
-  tokenizerTest: ITokenizerTest
-): Promise<ITokenizer> {
-  const testPath = getResourcePath("tmp.dat");
-  await writeFile(testPath, Buffer.from(testData, "latin1"));
-  return tokenizerTest.loadTokenizer("tmp.dat");
 }
 
 const tokenizerTests: ITokenizerTest[] = [
@@ -66,91 +45,6 @@ const tokenizerTests: ITokenizerTest[] = [
 
 for (const tokenizerType of tokenizerTests) {
   describe(tokenizerType.name, () => {
-    describe("End-Of-File exception behaviour", () => {
-      test("should not throw an Error if we read exactly until the end of the file", async () => {
-        const rst = await getTokenizerWithData(
-          "\u0089\u0054\u0040",
-          tokenizerType
-        );
-        const num = await rst.readToken(UINT24_BE);
-        expect(num).toBe(9_000_000);
-        await rst.close();
-      });
-
-      test("readBuffer()", async () => {
-        const testFile = "test1.dat";
-
-        const stat = await stat_1(getResourcePath(testFile));
-        const tokenizer = await tokenizerType.loadTokenizer(testFile);
-        const buf = Buffer.alloc(stat.size);
-        const bytesRead = await tokenizer.readBuffer(buf);
-        assert.ok(
-          typeof bytesRead === "number",
-          "readBuffer promise should provide a number"
-        );
-        assert.strictEqual(stat.size, bytesRead);
-        try {
-          await tokenizer.readBuffer(buf);
-          assert.fail("Should throw EOF");
-        } catch (error) {
-          assert.instanceOf(error, EndOfStreamError);
-        }
-      });
-
-      test("should not throw an Error if we read exactly until the end of the file", async () => {
-        const rst = await getTokenizerWithData(
-          "\u0089\u0054\u0040",
-          tokenizerType
-        );
-        const num = await rst.readToken(UINT24_BE);
-        expect(num).toBe(9_000_000);
-      });
-
-      test("should be thrown if a token EOF reached in the middle of a token", async () => {
-        const rst = await getTokenizerWithData(
-          "\u0089\u0054\u0040",
-          tokenizerType
-        );
-        try {
-          await rst.readToken(INT32_BE);
-          assert.fail("It should throw EndOfFile Error");
-        } catch (error) {
-          assert.instanceOf(error, EndOfStreamError);
-        }
-      });
-
-      test("should throw an EOF if we read to buffer", async () => {
-        const buffer = Buffer.alloc(4);
-
-        return getTokenizerWithData("\u0089\u0054\u0040", tokenizerType).then(
-          (rst) => {
-            return rst
-              .readBuffer(buffer)
-              .then(() => {
-                assert.fail("It should throw EndOfFile Error");
-              })
-              .catch((error) => {
-                assert.instanceOf(error, EndOfStreamError);
-              });
-          }
-        );
-      });
-
-      test("should throw an EOF if we peek to buffer", async () => {
-        const buffer = Buffer.alloc(4);
-        const rst = await getTokenizerWithData(
-          "\u0089\u0054\u0040",
-          tokenizerType
-        );
-        try {
-          await rst.peekBuffer(buffer);
-          assert.fail("It should throw EndOfFile Error");
-        } catch (error) {
-          assert.instanceOf(error, EndOfStreamError);
-        }
-      });
-    });
-
     test("should be able to read from a file", async () => {
       const tokenizer = await tokenizerType.loadTokenizer("test1.dat");
       expect(tokenizer.fileInfo.size, "check file size property").toBe(16);
