@@ -102,37 +102,6 @@ async function peekOnData(tokenizer: ITokenizer): Promise<void> {
 
 for (const tokenizerType of tokenizerTests) {
   describe(tokenizerType.name, () => {
-    test("Transparency", async function () {
-      // this.timeout(5000);
-
-      const size = 10 * 1024;
-      const buf = Buffer.alloc(size);
-
-      for (let i = 0; i < size; ++i) {
-        buf[i] = i % 255;
-      }
-
-      const testFile = "test2.dat";
-      const pathTestFile = join(__dirname, "resources", testFile);
-      await writeFile(pathTestFile, buf);
-
-      const rst = await tokenizerType.loadTokenizer(testFile);
-      let expected = 0;
-
-      try {
-        do {
-          const v = await rst.readNumber(UINT8);
-          expect(v, `offset=${expected}`).toBe(expected % 255);
-          ++expected;
-        } while (true);
-      } catch (error) {
-        expect(error).toBeInstanceOf(EndOfStreamError);
-        expect(size, "total number of parsed bytes").toBe(expected);
-      }
-
-      await rst.close();
-    }, 5000);
-
     test("Handle peek token", async () => {
       const rst = await tokenizerType.loadTokenizer("test1.dat");
 
