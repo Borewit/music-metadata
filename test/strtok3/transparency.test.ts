@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeAll } from "vitest";
 import { UINT8 } from "../../lib/token-types";
 import { getTokenizerWithData, tokenizerCases } from "./util";
-import { join } from "node:path";
-import { writeFile } from "../../lib/strtok3/FsPromise";
 import { EndOfStreamError } from "../../lib/peek-readable";
+import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
 
 const size = 10 * 1024;
 const buf = Buffer.alloc(size);
@@ -20,7 +20,7 @@ beforeAll(async () => {
 
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   test("Transparency", async () => {
-    const rst = await getTokenizerWithData("transparency", buf, load);
+    const rst = await getTokenizerWithData("tmp-transparency", load);
     let expected = 0;
 
     try {

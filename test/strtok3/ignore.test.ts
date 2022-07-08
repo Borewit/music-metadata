@@ -8,15 +8,9 @@ import {
 } from "../../lib/token-types";
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
-const bufIncr5 = Buffer.from("\u0001\u0002\u0003\u0004\u0005", "ascii");
-const buf1A00 = Buffer.from([
-  0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a,
-  0x00, 0x1a, 0x00,
-]);
-
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   test("number", async () => {
-    const tokenizer = await getTokenizerWithData("increment-5", bufIncr5, load);
+    const tokenizer = await getTokenizerWithData("increment-5", load);
     expect(tokenizer.fileInfo, "tokenizer.fileInfo").toBeDefined();
     await tokenizer.ignore(tokenizer.fileInfo.size - 4);
     const x = await tokenizer.peekNumber(INT32_BE);
@@ -24,7 +18,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should throw an Error if we reach EOF while peeking a number", async () => {
-    const tokenizer = await getTokenizerWithData("increment-5", bufIncr5, load);
+    const tokenizer = await getTokenizerWithData("increment-5", load);
     expect(tokenizer.fileInfo, "tokenizer.fileInfo").toBeDefined();
     await tokenizer.ignore(tokenizer.fileInfo.size - 3);
     try {
@@ -37,7 +31,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should be able to handle multiple ignores", async () => {
-    const tokenizer = await getTokenizerWithData("1A00", buf1A00, load);
+    const tokenizer = await getTokenizerWithData("1A00", load);
     let value = await tokenizer.readToken(UINT32_LE);
     expect(typeof value).toBe("number");
     expect(value, "UINT24_LE #1").toBe(0x00_1a_00_1a);
@@ -50,7 +44,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should be able to ignore (skip)", async () => {
-    const tokenizer = await getTokenizerWithData("1A00", buf1A00, load);
+    const tokenizer = await getTokenizerWithData("1A00", load);
     expect(tokenizer.position).toBe(0);
     await tokenizer.ignore(4);
     expect(tokenizer.position).toBe(4);
@@ -67,7 +61,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should be able to parse the IgnoreType-token", async () => {
-    const tokenizer = await getTokenizerWithData("1A00", buf1A00, load);
+    const tokenizer = await getTokenizerWithData("1A00", load);
     await tokenizer.readToken(new IgnoreType(4));
     let value = await tokenizer.readToken(UINT32_BE);
     expect(typeof value).toBe("number");

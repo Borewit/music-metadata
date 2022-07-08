@@ -5,11 +5,7 @@ import {
   fromBuffer,
 } from "../../lib/strtok3";
 import { join } from "node:path";
-import {
-  writeFile,
-  createReadStream,
-  readFile,
-} from "../../lib/strtok3/FsPromise";
+import { createReadStream, readFile } from "../../lib/strtok3/FsPromise";
 
 export type LoadTokenizer = (testFile: string) => Promise<ITokenizer>;
 
@@ -19,12 +15,9 @@ export function getResourcePath(testFile: string) {
 
 export async function getTokenizerWithData(
   testName: string,
-  testData: Buffer,
   loadTokenizer: LoadTokenizer
 ): Promise<ITokenizer> {
-  const testFile = `tmp-${testName}.dat`;
-  const testPath = getResourcePath(testFile);
-  await writeFile(testPath, testData);
+  const testFile = `${testName}.dat`;
   return loadTokenizer(testFile);
 }
 

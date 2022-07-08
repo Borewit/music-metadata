@@ -14,37 +14,6 @@ import {
 } from "../../lib/token-types";
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
-const bufInt8 = Buffer.from("\u0000\u007F\u0080\u00FF\u0081", "ascii");
-const bufInt16 = Buffer.from(
-  "\u000A\u001A\u0000\u0000\u00FF\u00FF\u0080\u0000",
-  "ascii"
-);
-const bufInt24 = Buffer.from(
-  "\u0000\u0000\u0000\u00FF\u00FF\u00FF\u0010\u0000\u00FF\u0080\u0000\u0000",
-  "ascii"
-);
-const bufInt32 = Buffer.from(
-  "\u0000\u0000\u0000\u0000\u00FF\u00FF\u00FF\u00FF\u0000\u0010\u0000\u00FF\u0080\u0000\u0000\u0000",
-  "ascii"
-);
-const bufUint8 = Buffer.from("\u0000\u001A\u00FF", "ascii");
-const bufUint16 = Buffer.from(
-  "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
-  "ascii"
-);
-const bufUint24 = Buffer.from(
-  "\u001A\u001A\u0000\u001A\u001A\u0000\u001A\u001A\u0000\u001A\u001A\u0000",
-  "ascii"
-);
-const bufUint32 = Buffer.from(
-  "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
-  "ascii"
-);
-const buf1A00 = Buffer.from([
-  0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a,
-  0x00, 0x1a, 0x00,
-]);
-
 describe("encode binary numbers", () => {
   test("should encode signed 8-bit integer (INT8)", () => {
     const b = Buffer.alloc(1);
@@ -187,7 +156,7 @@ describe.each(tokenizerCases)(
   "decode binary numbers from %s",
   (_name, load) => {
     test("should decode signed 8-bit integer (INT8)", async () => {
-      const rst = await getTokenizerWithData("int8", bufInt8, load);
+      const rst = await getTokenizerWithData("int8", load);
 
       let value: number = await rst.readToken(INT8);
       expect(typeof value).toBe("number");
@@ -209,7 +178,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should decode signed 16-bit big-endian integer (INT16_BE)", async () => {
-      const rst = await getTokenizerWithData("int16", bufInt16, load);
+      const rst = await getTokenizerWithData("int16", load);
 
       let value: number = await rst.readToken(INT16_BE);
       expect(typeof value).toBe("number");
@@ -228,7 +197,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should decode signed 24-bit big-endian integer (INT24_BE)", async () => {
-      const rst = await getTokenizerWithData("int24", bufInt24, load);
+      const rst = await getTokenizerWithData("int24", load);
 
       let value: number = await rst.readToken(INT24_BE);
       expect(typeof value).toBe("number");
@@ -248,7 +217,7 @@ describe.each(tokenizerCases)(
     // ToDo: test decoding: INT24_LE
 
     test("should decode signed 32-bit big-endian integer (INT32_BE)", async () => {
-      const rst = await getTokenizerWithData("int32", bufInt32, load);
+      const rst = await getTokenizerWithData("int32", load);
 
       let value: number = await rst.readToken(INT32_BE);
       expect(typeof value).toBe("number");
@@ -266,7 +235,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should decode unsigned 8-bit integer (UINT8)", async () => {
-      const rst = await getTokenizerWithData("uint8", bufUint8, load);
+      const rst = await getTokenizerWithData("uint8", load);
 
       let value: number = await rst.readToken(UINT8);
       expect(typeof value).toBe("number");
@@ -281,7 +250,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should decode unsigned mixed 16-bit big/little-endian integer", async () => {
-      const rst = await getTokenizerWithData("uint16", bufUint16, load);
+      const rst = await getTokenizerWithData("uint16", load);
 
       let value: number = await rst.readToken(UINT16_LE);
       expect(typeof value).toBe("number");
@@ -300,7 +269,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should decode signed 24-bit big/little-endian integer (UINT24_LE/INT24_BE)", async () => {
-      const rst = await getTokenizerWithData("uint24", bufUint24, load);
+      const rst = await getTokenizerWithData("uint24", load);
 
       let value: number = await rst.readToken(UINT24_LE);
       expect(typeof value).toBe("number");
@@ -319,7 +288,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should decode unsigned 32-bit little/big-endian integer (UINT32_LE/UINT32_BE)", async () => {
-      const rst = await getTokenizerWithData("uint32", bufUint32, load);
+      const rst = await getTokenizerWithData("uint32", load);
 
       let value: number = await rst.readToken(UINT32_LE);
       expect(typeof value).toBe("number");
@@ -338,7 +307,7 @@ describe.each(tokenizerCases)(
     });
 
     test("should be able to read from a file", async () => {
-      const tokenizer = await getTokenizerWithData("1A00", buf1A00, load);
+      const tokenizer = await getTokenizerWithData("1A00", load);
       expect(tokenizer.fileInfo.size, "check file size property").toBe(16);
       let value = await tokenizer.readToken(UINT32_LE);
       expect(typeof value).toBe("number");

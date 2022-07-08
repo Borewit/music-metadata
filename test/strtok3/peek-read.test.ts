@@ -4,16 +4,9 @@ import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { UINT32_LE, UINT32_BE, StringType, UINT8 } from "../../lib/token-types";
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
-const bufIncr5 = Buffer.from("\u0001\u0002\u0003\u0004\u0005", "ascii");
-const bufPeter = Buffer.from("\u0005peter", "latin1");
-const buf1A00 = Buffer.from([
-  0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a,
-  0x00, 0x1a, 0x00,
-]);
-
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   test("Handle peek token", async () => {
-    const rst = await getTokenizerWithData("1A00", buf1A00, load);
+    const rst = await getTokenizerWithData("1A00", load);
 
     if (rst instanceof FileTokenizer) {
       expect(rst.fileInfo.size, "check file size property").toBe(16);
@@ -53,7 +46,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("Overlapping peeks", async () => {
-    const rst = await getTokenizerWithData("increment-5", bufIncr5, load);
+    const rst = await getTokenizerWithData("increment-5", load);
 
     const peekBuffer = Buffer.alloc(3);
     const readBuffer = Buffer.alloc(1);
@@ -96,7 +89,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should be able to read at position ahead", async () => {
-    const rst = await getTokenizerWithData("peter", bufPeter, load);
+    const rst = await getTokenizerWithData("peter", load);
     // should decode string from chunk
     expect(rst.position).toBe(0);
     const value = await rst.readToken(new StringType(5, "utf8"), 1);
@@ -113,7 +106,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should be able to peek at position ahead", async () => {
-    const rst = await getTokenizerWithData("peter", bufPeter, load);
+    const rst = await getTokenizerWithData("peter", load);
     // should decode string from chunk
     expect(rst.position).toBe(0);
     const value = await rst.peekToken(new StringType(5, "latin1"), 1);

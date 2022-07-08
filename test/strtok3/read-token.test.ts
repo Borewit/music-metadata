@@ -3,11 +3,9 @@ import { EndOfStreamError } from "../../lib/peek-readable";
 import { UINT8, StringType } from "../../lib/token-types";
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
-const bufPeter = Buffer.from("\u0005peter", "latin1");
-
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   test("should decode buffer", async () => {
-    const rst = await getTokenizerWithData("peter", bufPeter, load);
+    const rst = await getTokenizerWithData("peter", load);
     // should decode UINT8 from chunk
     expect(rst.position).toBe(0);
     let value: string | number = await rst.readToken(UINT8);
@@ -29,7 +27,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   });
 
   test("should be able to read from an absolute offset", async () => {
-    const rst = await getTokenizerWithData("peter", bufPeter, load);
+    const rst = await getTokenizerWithData("peter", load);
     // should decode UINT8 from chunk
     expect(rst.position).toBe(0);
     const value: string | number = await rst.readToken(
