@@ -1,6 +1,11 @@
 import { describe, test, expect } from "vitest";
 import { EndOfStreamError } from "../../lib/strtok3";
-import { UINT32_LE, UINT32_BE, INT32_BE } from "../../lib/token-types";
+import {
+  UINT32_LE,
+  UINT32_BE,
+  INT32_BE,
+  IgnoreType,
+} from "../../lib/token-types";
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 const bufIncr5 = Buffer.from("\u0001\u0002\u0003\u0004\u0005", "ascii");
@@ -59,5 +64,19 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
     expect(typeof value).toBe("number");
     expect(value, "UINT32_BE #4").toBe(0x1a_00_1a_00);
     await tokenizer.close();
+  });
+
+  test("should be able to parse the IgnoreType-token", async () => {
+    const tokenizer = await getTokenizerWithData("1A00", buf1A00, load);
+    await tokenizer.readToken(new IgnoreType(4));
+    let value = await tokenizer.readToken(UINT32_BE);
+    expect(typeof value).toBe("number");
+    expect(value, "UINT32_BE #2").toBe(0x1a_00_1a_00);
+    value = await tokenizer.readToken(UINT32_LE);
+    expect(typeof value).toBe("number");
+    expect(value, "UINT32_LE #3").toBe(0x00_1a_00_1a);
+    value = await tokenizer.readToken(UINT32_BE);
+    expect(typeof value).toBe("number");
+    expect(value, "UINT32_BE #4").toBe(0x1a_00_1a_00);
   });
 });

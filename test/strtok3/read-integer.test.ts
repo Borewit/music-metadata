@@ -40,6 +40,10 @@ const bufUint32 = Buffer.from(
   "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
   "ascii"
 );
+const buf1A00 = Buffer.from([
+  0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a,
+  0x00, 0x1a, 0x00,
+]);
 
 describe("encode binary numbers", () => {
   test("should encode signed 8-bit integer (INT8)", () => {
@@ -331,6 +335,23 @@ describe.each(tokenizerCases)(
       expect(value, "UINT32_BE #4").toBe(0x1a_00_1a_00);
 
       await rst.close();
+    });
+
+    test("should be able to read from a file", async () => {
+      const tokenizer = await getTokenizerWithData("1A00", buf1A00, load);
+      expect(tokenizer.fileInfo.size, "check file size property").toBe(16);
+      let value = await tokenizer.readToken(UINT32_LE);
+      expect(typeof value).toBe("number");
+      expect(value, "UINT24_LE #1").toBe(0x00_1a_00_1a);
+      value = await tokenizer.readToken(UINT32_BE);
+      expect(typeof value).toBe("number");
+      expect(value, "UINT32_BE #2").toBe(0x1a_00_1a_00);
+      value = await tokenizer.readToken(UINT32_LE);
+      expect(typeof value).toBe("number");
+      expect(value, "UINT32_LE #3").toBe(0x00_1a_00_1a);
+      value = await tokenizer.readToken(UINT32_BE);
+      expect(typeof value).toBe("number");
+      expect(value, "UINT32_BE #4").toBe(0x1a_00_1a_00);
     });
   }
 );
