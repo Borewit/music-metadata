@@ -19,16 +19,16 @@ export function getResourcePath(testFile: string) {
 
 export async function getTokenizerWithData(
   testName: string,
-  testData: string,
+  testData: Buffer,
   loadTokenizer: LoadTokenizer
 ): Promise<ITokenizer> {
   const testFile = `tmp-${testName}.dat`;
   const testPath = getResourcePath(testFile);
-  await writeFile(testPath, Buffer.from(testData, "latin1"));
+  await writeFile(testPath, testData);
   return loadTokenizer(testFile);
 }
 
-export const tokenizerTests: [string, LoadTokenizer][] = [
+export const tokenizerCases: [string, LoadTokenizer][] = [
   ["File", async (testFile) => fromFile(getResourcePath(testFile))],
   [
     "Stream",
