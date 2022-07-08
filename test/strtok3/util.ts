@@ -1,37 +1,41 @@
-// Utility functions for testing
-import { Readable } from "node:stream";
+import {
+  ITokenizer,
+  fromStream,
+  fromFile,
+  fromBuffer,
+} from "../../lib/strtok3";
+import { join } from "node:path";
+import {
+  writeFile,
+  createReadStream,
+  readFile,
+} from "../../lib/strtok3/FsPromise";
 
-/**
- * A mock stream implementation that breaks up provided data into
- * random-sized chunks and emits 'data' events. This is used to simulate
- * data arriving with arbitrary packet boundaries.
- */
-export class SourceStream extends Readable {
-  public static FromString(str = ""): SourceStream {
-    return new SourceStream(Buffer.from(str, "binary"));
-  }
+export type LoadTokenizer = (testFile: string) => Promise<ITokenizer>;
 
-  public constructor(private buf: Buffer) {
-    super();
-  }
-
-  public override _read() {
-    /* ToDo: segment data
-     const len = Math.min(
-     this.min + Math.floor(Math.random() * (this.max - this.min)),
-     this.buf.length
-     );
-
-     const b = this.buf.slice(0, len);
-
-     if (len < this.buf.length) {
-     this.buf = this.buf.slice(len, this.buf.length);
-     this.push(b);
-     } else {
-     this.push(null); // push the EOF-signaling `null` chunk
-     }*/
-
-    this.push(this.buf);
-    this.push(null); // push the EOF-signaling `null` chunk
-  }
+export function getResourcePath(testFile: string) {
+  return join(__dirname, "resources", testFile);
 }
+
+export async function getTokenizerWithData(
+  testName: string,
+  testData: string,
+  loadTokenizer: LoadTokenizer
+): Promise<ITokenizer> {
+  const testFile = `tmp-${testName}.dat`;
+  const testPath = getResourcePath(testFile);
+  await writeFile(testPath, Buffer.from(testData, "latin1"));
+  return loadTokenizer(testFile);
+}
+
+export const tokenizerTests: [string, LoadTokenizer][] = [
+  ["File", async (testFile) => fromFile(getResourcePath(testFile))],
+  [
+    "Stream",
+    async (testFile) => fromStream(createReadStream(getResourcePath(testFile))),
+  ],
+  [
+    "Buffer",
+    async (testFile) => fromBuffer(await readFile(getResourcePath(testFile))),
+  ],
+];
