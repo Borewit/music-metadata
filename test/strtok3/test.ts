@@ -108,14 +108,6 @@ async function peekOnData(tokenizer: ITokenizer): Promise<void> {
 
 for (const tokenizerType of tokenizerTests) {
   describe(tokenizerType.name, () => {
-    test("should contain fileSize if constructed from file-read-stream", async () => {
-      // ToDo
-      const rst = await tokenizerType.loadTokenizer("test1.dat");
-      expect(rst.fileInfo.size, " ReadStreamTokenizer.fileSize.size").toBe(16);
-
-      await rst.close();
-    });
-
     describe("Parsing binary numbers", () => {
       test("should encode signed 8-bit integer (INT8)", () => {
         const b = Buffer.alloc(1);
