@@ -1,8 +1,6 @@
 import {
   UINT32_LE,
   UINT32_BE,
-  UINT8,
-  StringType,
   INT32_BE,
   UINT24_BE,
   IgnoreType,
@@ -21,7 +19,6 @@ import {
   readFile,
   stat as stat_1,
 } from "../../lib/strtok3/FsPromise";
-import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { EndOfStreamError } from "../../lib/peek-readable";
 import { PassThrough } from "node:stream";
 
@@ -67,139 +64,8 @@ const tokenizerTests: ITokenizerTest[] = [
   },
 ];
 
-async function peekOnData(tokenizer: ITokenizer): Promise<void> {
-  expect(tokenizer.position).toBe(0);
-
-  let value = await tokenizer.peekToken<number>(UINT32_LE);
-  expect(typeof value).toBe("number");
-  expect(value, "UINT24_LE #1").toBe(0x00_1a_00_1a);
-  expect(tokenizer.position).toBe(0);
-
-  value = await tokenizer.peekToken(UINT32_LE);
-  expect(typeof value).toBe("number");
-  expect(value, "UINT24_LE sequential peek #2").toBe(0x00_1a_00_1a);
-  expect(tokenizer.position).toBe(0);
-  value = await tokenizer.readToken(UINT32_LE);
-
-  expect(typeof value).toBe("number");
-  expect(value, "UINT24_LE #3").toBe(0x00_1a_00_1a);
-  expect(tokenizer.position).toBe(4);
-  value = await tokenizer.readToken(UINT32_BE);
-  expect(typeof value).toBe("number");
-  expect(value, "UINT32_BE #4").toBe(0x1a_00_1a_00);
-  expect(tokenizer.position).toBe(8);
-  value = await tokenizer.readToken(UINT32_LE);
-
-  expect(typeof value).toBe("number");
-  expect(value, "UINT32_LE #5").toBe(0x00_1a_00_1a);
-  expect(tokenizer.position).toBe(12);
-  value = await tokenizer.readToken(UINT32_BE);
-
-  expect(typeof value).toBe("number");
-  expect(value, "UINT32_BE #6").toBe(0x1a_00_1a_00);
-  expect(tokenizer.position).toBe(16);
-}
-
 for (const tokenizerType of tokenizerTests) {
   describe(tokenizerType.name, () => {
-    test("Handle peek token", async () => {
-      const rst = await tokenizerType.loadTokenizer("test1.dat");
-
-      if (rst instanceof FileTokenizer) {
-        expect(rst.fileInfo.size, "check file size property").toBe(16);
-      }
-      await peekOnData(rst);
-      await rst.close();
-    });
-
-    test("Overlapping peeks", async () => {
-      const rst = await getTokenizerWithData(
-        "\u0001\u0002\u0003\u0004\u0005",
-        tokenizerType
-      );
-      const peekBuffer = Buffer.alloc(3);
-      const readBuffer = Buffer.alloc(1);
-
-      assert.strictEqual(0, rst.position);
-      let len = await rst.peekBuffer(peekBuffer, { length: 3 }); // Peek #1
-      assert.strictEqual(3, len);
-      assert.deepEqual(
-        peekBuffer,
-        Buffer.from("\u0001\u0002\u0003", "binary"),
-        "Peek #1"
-      );
-      expect(rst.position).toBe(0);
-      len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #1
-      expect(len).toBe(1);
-      expect(rst.position).toBe(1);
-      assert.deepEqual(readBuffer, Buffer.from("\u0001", "binary"), "Read #1");
-      len = await rst.peekBuffer(peekBuffer, { length: 3 }); // Peek #2
-      expect(len).toBe(3);
-      expect(rst.position).toBe(1);
-      assert.deepEqual(
-        peekBuffer,
-        Buffer.from("\u0002\u0003\u0004", "binary"),
-        "Peek #2"
-      );
-      len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #2
-      expect(len).toBe(1);
-      expect(rst.position).toBe(2);
-      assert.deepEqual(readBuffer, Buffer.from("\u0002", "binary"), "Read #2");
-      len = await rst.peekBuffer(peekBuffer, { length: 3 }); // Peek #3
-      expect(len).toBe(3);
-      expect(rst.position).toBe(2);
-      assert.deepEqual(
-        peekBuffer,
-        Buffer.from("\u0003\u0004\u0005", "binary"),
-        "Peek #3"
-      );
-      len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #3
-      expect(len).toBe(1);
-      expect(rst.position).toBe(3);
-      assert.deepEqual(readBuffer, Buffer.from("\u0003", "binary"), "Read #3");
-      len = await rst.peekBuffer(peekBuffer, { length: 2 }); // Peek #4
-      expect(len, "3 bytes requested to peek, only 2 bytes left").toBe(2);
-      expect(rst.position).toBe(3);
-      assert.deepEqual(
-        peekBuffer,
-        Buffer.from("\u0004\u0005\u0005", "binary"),
-        "Peek #4"
-      );
-      len = await rst.readBuffer(readBuffer, { length: 1 }); // Read #4
-      expect(len).toBe(1);
-      expect(rst.position).toBe(4);
-      assert.deepEqual(readBuffer, Buffer.from("\u0004", "binary"), "Read #4");
-
-      await rst.close();
-    });
-
-    test("should be able to read at position ahead", async () => {
-      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
-      // should decode string from chunk
-      expect(rst.position).toBe(0);
-      const value = await rst.readToken(new StringType(5, "utf8"), 1);
-      expect(typeof value).toBe("string");
-      expect(value).toBe("peter");
-      expect(rst.position).toBe(6);
-      // should should reject at the end of the stream
-      try {
-        await rst.readToken(UINT8);
-        assert.fail("Should reject due to end-of-stream");
-      } catch (error) {
-        assert.instanceOf(error, EndOfStreamError);
-      }
-    });
-
-    test("should be able to peek at position ahead", async () => {
-      const rst = await getTokenizerWithData("\u0005peter", tokenizerType);
-      // should decode string from chunk
-      expect(rst.position).toBe(0);
-      const value = await rst.peekToken(new StringType(5, "latin1"), 1);
-      expect(typeof value).toBe("string");
-      expect(value).toBe("peter");
-      expect(rst.position).toBe(0);
-    });
-
     test("number", async () => {
       const tokenizer = await tokenizerType.loadTokenizer("test3.dat");
       assert.isDefined(tokenizer.fileInfo, "tokenizer.fileInfo");
