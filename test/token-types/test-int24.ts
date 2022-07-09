@@ -1,61 +1,59 @@
 // Test reading int24 values.
 
-import { describe, assert, it } from "vitest";
-import * as Token from "../../lib/token-types";
-import * as util from "./util";
+import { describe, test, expect } from "vitest";
+import { INT24_LE, INT24_BE } from "../../lib/token-types";
+import { checkBuffer } from "./util";
 
 describe("Parse 24-bit signed integer", () => {
   describe("little-endian", () => {
-    it("should encode", () => {
+    test("should encode", () => {
       const buf = Buffer.alloc(3);
 
-      Token.INT24_LE.put(buf, 0, 0x00);
-      util.checkBuffer(buf, "000000");
+      INT24_LE.put(buf, 0, 0x00_00_00);
+      checkBuffer(buf, "000000");
 
-      Token.INT24_LE.put(buf, 0, 0x0f_0b_a0);
-      util.checkBuffer(buf, "a00b0f");
+      INT24_LE.put(buf, 0, 0x0f_0b_a0);
+      checkBuffer(buf, "a00b0f");
 
-      Token.INT24_LE.put(buf, 0, -0x0f_0b_cc);
-      util.checkBuffer(buf, "34f4f0");
+      INT24_LE.put(buf, 0, -0x0f_0b_cc);
+      checkBuffer(buf, "34f4f0");
     });
 
-    it("should decode", () => {
-      const buf = Buffer.from(
-        "\u0000\u0000\u0000\u00FF\u00FF\u00FF\u00FF\u0000\u0010\u0000\u0000\u0080",
-        "binary"
-      );
+    test("should decode", () => {
+      const buf = Buffer.from([
+        0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x10, 0x00, 0x00, 0x80,
+      ]);
 
-      assert.equal(Token.INT24_LE.get(buf, 0), 0);
-      assert.equal(Token.INT24_LE.get(buf, 3), -1);
-      assert.equal(Token.INT24_LE.get(buf, 6), 1_048_831);
-      assert.equal(Token.INT24_LE.get(buf, 9), -8_388_608);
+      expect(INT24_LE.get(buf, 0)).toBe(0);
+      expect(INT24_LE.get(buf, 3)).toBe(-1);
+      expect(INT24_LE.get(buf, 6)).toBe(1_048_831);
+      expect(INT24_LE.get(buf, 9)).toBe(-8_388_608);
     });
   });
 
   describe("big-endian", () => {
-    it("should encode", () => {
+    test("should encode", () => {
       const buf = Buffer.alloc(3);
 
-      Token.INT24_BE.put(buf, 0, 0x00);
-      util.checkBuffer(buf, "000000");
+      INT24_BE.put(buf, 0, 0x00_00_00);
+      checkBuffer(buf, "000000");
 
-      Token.INT24_BE.put(buf, 0, 0x0f_0b_a0);
-      util.checkBuffer(buf, "0f0ba0");
+      INT24_BE.put(buf, 0, 0x0f_0b_a0);
+      checkBuffer(buf, "0f0ba0");
 
-      Token.INT24_BE.put(buf, 0, -0x0f_0b_cc);
-      util.checkBuffer(buf, "f0f434");
+      INT24_BE.put(buf, 0, -0x0f_0b_cc);
+      checkBuffer(buf, "f0f434");
     });
 
-    it("should decode", () => {
-      const buf = Buffer.from(
-        "\u0000\u0000\u0000\u00FF\u00FF\u00FF\u0010\u0000\u00FF\u0080\u0000\u0000",
-        "binary"
-      );
+    test("should decode", () => {
+      const buf = Buffer.from([
+        0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x10, 0x00, 0xff, 0x80, 0x00, 0x00,
+      ]);
 
-      assert.equal(Token.INT24_BE.get(buf, 0), 0);
-      assert.equal(Token.INT24_BE.get(buf, 3), -1);
-      assert.equal(Token.INT24_BE.get(buf, 6), 1_048_831);
-      assert.equal(Token.INT24_BE.get(buf, 9), -8_388_608);
+      expect(INT24_BE.get(buf, 0)).toBe(0);
+      expect(INT24_BE.get(buf, 3)).toBe(-1);
+      expect(INT24_BE.get(buf, 6)).toBe(1_048_831);
+      expect(INT24_BE.get(buf, 9)).toBe(-8_388_608);
     });
   });
 });
