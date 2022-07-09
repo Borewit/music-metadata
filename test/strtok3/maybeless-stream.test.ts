@@ -1,4 +1,4 @@
-import { describe, assert, test, expect } from "vitest";
+import { describe, test, expect } from "vitest";
 import { fromStream } from "../../lib/strtok3";
 import { PassThrough } from "node:stream";
 
@@ -29,10 +29,10 @@ describe("fromStream with mayBeLess flag", () => {
       if (error instanceof Error) {
         expect(error.message).toBe("End-Of-Stream");
       } else {
-        assert.fail("Expected: err instanceof Error");
+        expect.fail("Expected: err instanceof Error");
       }
       return;
     }
-    assert.fail("Should throw End-Of-Stream error");
+    expect.fail("Should throw End-Of-Stream error");
   });
 });
