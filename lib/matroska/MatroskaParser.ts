@@ -75,9 +75,7 @@ export class MatroskaParser extends BasicParser {
     if (matroska.segment) {
       const info = matroska.segment.info;
       if (info) {
-        const timecodeScale = info.timecodeScale
-          ? info.timecodeScale
-          : 1_000_000;
+        const timecodeScale = info.timecodeScale ?? 1_000_000;
         const duration = (info.duration * timecodeScale) / 1_000_000_000;
         this.addTag("segment:title", info.title);
         this.metadata.setFormat("duration", duration);
@@ -142,13 +140,9 @@ export class MatroskaParser extends BasicParser {
             const target = tag.target;
             const targetType = target?.targetTypeValue
               ? TargetType[target.targetTypeValue]
-              : target?.targetType
-              ? target.targetType
-              : "track";
+              : target?.targetType ?? "track";
             for (const simpleTag of tag.simpleTags) {
-              const value = simpleTag.string
-                ? simpleTag.string
-                : simpleTag.binary;
+              const value = simpleTag.string ?? simpleTag.binary;
               this.addTag(`${targetType}:${simpleTag.name}`, value);
             }
           }

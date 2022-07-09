@@ -15,7 +15,7 @@ export async function fromStream(
   stream: Readable & { path?: PathLike },
   fileInfo?: IFileInfo
 ): Promise<ReadStreamTokenizer> {
-  fileInfo = fileInfo ? fileInfo : {};
+  fileInfo = fileInfo ?? {};
   if (stream.path) {
     const stat = await fs.stat(stream.path);
     fileInfo.path = stream.path.toString();

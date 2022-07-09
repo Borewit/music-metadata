@@ -18,7 +18,7 @@ export function selectCover(pictures?: IPicture[]): IPicture | null {
         cur.name &&
         cur.name.toLowerCase() in ["front", "cover", "cover (front)"]
     );
-    return picture ? picture : pictures[0] ? pictures[0] : null;
+    return picture ?? pictures[0] ?? null;
   }
   return null;
 }

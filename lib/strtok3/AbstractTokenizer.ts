@@ -16,7 +16,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
   public fileInfo: IFileInfo;
 
   protected constructor(fileInfo?: IFileInfo) {
-    this.fileInfo = fileInfo ? fileInfo : {};
+    this.fileInfo = fileInfo ?? {};
   }
 
   /**
@@ -136,12 +136,12 @@ export abstract class AbstractTokenizer implements ITokenizer {
     if (options) {
       return {
         mayBeLess: options.mayBeLess === true,
-        offset: options.offset ? options.offset : 0,
+        offset: options.offset ?? 0,
         length:
           options.length > 0
             ? options.length
-            : uint8Array.length - (options.offset ? options.offset : 0),
-        position: options.position ? options.position : this.position,
+            : uint8Array.length - (options.offset ?? 0),
+        position: options.position ?? this.position,
       };
     }
 

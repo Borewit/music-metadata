@@ -1492,12 +1492,12 @@ export class FileTypeParser {
 
       await this.tokenizer.ignore(ifdOffset);
       const fileType = await this.readTiffIFD(false);
-      return fileType
-        ? fileType
-        : {
-            ext: "tif",
-            mime: "image/tiff",
-          };
+      return (
+        fileType ?? {
+          ext: "tif",
+          mime: "image/tiff",
+        }
+      );
     }
 
     if (version === 43) {
