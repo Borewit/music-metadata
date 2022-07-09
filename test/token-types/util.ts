@@ -1,5 +1,5 @@
-import { assert } from "vitest";
+import { expect } from "vitest";
 
-export const checkBuffer = (uint8Array: Uint8Array, hexStr: string) => {
-  assert.equal(Buffer.from(uint8Array).toString("hex"), hexStr);
+export const checkBuffer = (buffer: Uint8Array, expected: string) => {
+  expect(Buffer.from(buffer).toString("hex")).toBe(expected);
 };

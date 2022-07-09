@@ -1,29 +1,23 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { expect, test } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile } from "../lib";
 import { samplePath } from "./util";
 
-const t = assert;
+test("should be able to read metadata with unknown encoding", async () => {
+  const filePath = join(samplePath, "bug-unkown encoding.mp3");
 
-it("should be able to read metadata with unknown encoding", () => {
-  const filename = "bug-unkown encoding.mp3";
-  const filePath = path.join(samplePath, filename);
+  const metadata = await parseFile(filePath);
+  const common = metadata.common;
 
-  return mm.parseFile(filePath).then((result) => {
-    t.strictEqual(result.common.title, "808", "title");
-    t.strictEqual(result.common.artist, "Benga", "artist");
-    t.strictEqual(result.common.albumartist, "Benga", "albumartist");
-    t.strictEqual(result.common.album, "Phaze One", "album");
-    t.strictEqual(result.common.year, 2010, "year");
-    t.strictEqual(result.common.track.no, 4, "track no");
-    t.strictEqual(result.common.track.of, 8, "track of");
-    t.strictEqual(result.common.genre[0], "Dubstep", "genre");
-    t.strictEqual(
-      result.common.picture[0].format,
-      "image/jpeg",
-      "picture format"
-    );
-    t.strictEqual(result.common.picture[0].data.length, 6761, "picture length");
-  });
+  expect(common.title, "title").toBe("808");
+  expect(common.artist, "artist").toBe("Benga");
+  expect(common.albumartist, "albumartist").toBe("Benga");
+  expect(common.album, "album").toBe("Phaze One");
+  expect(common.year, "year").toBe(2010);
+  expect(common.track.no, "track no").toBe(4);
+  expect(common.track.of, "track of").toBe(8);
+  expect(common.genre[0], "genre").toBe("Dubstep");
+  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture[0].data.length, "picture length").toBe(6761);
 });

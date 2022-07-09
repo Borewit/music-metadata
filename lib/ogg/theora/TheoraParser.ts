@@ -37,7 +37,7 @@ export class TheoraParser implements IPageConsumer {
     debug("flush");
   }
 
-  public calculateDuration(header: IPageHeader) {
+  public calculateDuration(_header: IPageHeader) {
     debug("duration calculation not implemented");
   }
 

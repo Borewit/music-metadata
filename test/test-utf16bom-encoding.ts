@@ -1,23 +1,22 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { expect, test } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile } from "../lib";
 import { samplePath } from "./util";
 
-const t = assert;
-
-it("should read utf16bom (big endian) encoded metadata correctly", () => {
+test("should read utf16bom (big endian) encoded metadata correctly", async () => {
   const filename = "bug-utf16bom-encoding.mp3";
-  const filePath = path.join(samplePath, filename);
+  const filePath = join(samplePath, filename);
 
-  return mm.parseFile(filePath).then((result) => {
-    t.equal(result.common.title, "It's All Over You Know", "title");
-    t.equal(result.common.artist, "The Apers", "artist");
-    t.deepEqual(result.common.artists, ["The Apers"], "artist");
-    t.equal(result.common.albumartist, "The Apers", "albumartist");
-    t.equal(result.common.album, "Reanimate My Heart", "album");
-    t.equal(result.common.year, 2007, "year");
-    t.deepEqual(result.common.track, { no: 1, of: null }, "track");
-    t.deepEqual(result.common.genre, ["Punk Rock"], "genre");
-  });
+  const metadata = await parseFile(filePath);
+  const common = metadata.common;
+
+  expect(common.title, "title").toBe("It's All Over You Know");
+  expect(common.artist, "artist").toBe("The Apers");
+  expect(common.artists, "artist").toStrictEqual(["The Apers"]);
+  expect(common.albumartist, "albumartist").toBe("The Apers");
+  expect(common.album, "album").toBe("Reanimate My Heart");
+  expect(common.year, "year").toBe(2007);
+  expect(common.track, "track").toStrictEqual({ no: 1, of: null });
+  expect(common.genre, "genre").toStrictEqual(["Punk Rock"]);
 });

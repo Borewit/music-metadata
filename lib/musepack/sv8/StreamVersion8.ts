@@ -63,7 +63,7 @@ const SH_part3: IGetToken<IStreamHeader3> = {
 
   get: (buf, off) => {
     return {
-      sampleFrequency: [44100, 48000, 37800, 32000][
+      sampleFrequency: [44_100, 48_000, 37_800, 32_000][
         util.getBitAllignedNumber(buf, off, 0, 3)
       ],
       maxUsedBands: util.getBitAllignedNumber(buf, off, 3, 5),
@@ -120,10 +120,7 @@ export class StreamReader {
     return streamHeader;
   }
 
-  private async readVariableSizeField(
-    len: number = 1,
-    hb: number = 0
-  ): Promise<IVarSize> {
+  private async readVariableSizeField(len = 1, hb = 0): Promise<IVarSize> {
     let n = await this.tokenizer.readNumber(Token.UINT8);
     if ((n & 0x80) === 0) {
       return { len, value: hb + n };

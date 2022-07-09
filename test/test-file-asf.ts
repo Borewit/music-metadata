@@ -1,207 +1,174 @@
-import { describe, assert, it } from "vitest";
-import * as mm from "../lib";
-import * as path from "path";
-import GUID, { HeaderObject } from "../lib/asf/GUID";
+import { describe, test, expect } from "vitest";
+import { orderTags, parseFile } from "../lib";
+import { join } from "node:path";
+import GUID from "../lib/asf/GUID";
 import { getParserForAttr } from "../lib/asf/AsfUtil";
 import { DataType } from "../lib/asf/DataType";
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
-describe("Parse ASF", () => {
-  describe("GUID", () => {
-    it("should construct GUID from string", () => {
-      const Header_GUID = Buffer.from([
-        0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa,
-        0x00, 0x62, 0xce, 0x6c,
-      ]);
+describe("GUID", () => {
+  test("should construct GUID from string", () => {
+    const HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
+    const HeaderGUID = Buffer.from([
+      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa,
+      0x00, 0x62, 0xce, 0x6c,
+    ]);
 
-      assert.deepEqual(HeaderObject.toBin(), Header_GUID);
-    });
+    expect(HeaderObject.toBin()).toStrictEqual(HeaderGUID);
+  });
 
-    it("should construct GUID from string", () => {
-      const guid_data = Buffer.from([
-        48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108,
-      ]);
-      assert.deepEqual(
-        GUID.fromBin(guid_data).str,
-        "75B22630-668E-11CF-A6D9-00AA0062CE6C"
+  test("should construct GUID from Buffer", () => {
+    const GUIDData = Buffer.from([
+      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa,
+      0x00, 0x62, 0xce, 0x6c,
+    ]);
+    const GUIDString = "75B22630-668E-11CF-A6D9-00AA0062CE6C";
+
+    expect(GUID.fromBin(GUIDData).str).toBe(GUIDString);
+  });
+});
+
+/**
+ * Trying Buffer.readUIntLE(0, 8)
+ * Where 8 is 2 bytes longer then maximum allowed of 6
+ */
+describe("should be able to roughly decode a 64-bit QWord", () => {
+  const tests: { raw: string; expected: number; description: string }[] = [
+    {
+      raw: "\u00FF\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+      expected: 0xff,
+      description: "8-bit",
+    },
+    {
+      raw: "\u00FF\u00FF\u0000\u0000\u0000\u0000\u0000\u0000",
+      expected: 0xff_ff,
+      description: "16-bit",
+    },
+    {
+      raw: "\u00FF\u00FF\u00FF\u00FF\u0000\u0000\u0000\u0000",
+      expected: 0xff_ff_ff_ff,
+      description: "32-bit",
+    },
+    {
+      raw: "\u00FF\u00FF\u00FF\u00FF\u00FF\u0000\u0000\u0000",
+      expected: 0xff_ff_ff_ff_ff,
+      description: "40-bit",
+    },
+    {
+      raw: "\u00FF\u00FF\u00FF\u00FF\u00FF\u00FF\u0000\u0000",
+      expected: 0xff_ff_ff_ff_ff_ff,
+      description: "48-bit",
+    },
+    {
+      raw: "\u00FF\u00FF\u00FF\u00FF\u00FF\u00FF\u000F\u0000",
+      expected: 0xf_ff_ff_ff_ff_ff_ff,
+      description: "52-bit",
+    },
+  ];
+
+  test.each(tests)("%#", ({ raw, expected, description }) => {
+    const buf = Buffer.from(raw, "binary");
+    expect(Number(getParserForAttr(DataType.QWord)(buf)), description).toBe(
+      expected
+    );
+  });
+});
+
+describe("parse", () => {
+  const asfFilePath = join(samplePath, "asf");
+
+  describe("should decode an ASF audio file (.wma)", () => {
+    test.each(Parsers)("%s", async (parser) => {
+      const metadata = await parser.initParser(
+        join(asfFilePath, "asf.wma"),
+        "audio/x-ms-wma"
       );
+      expect(metadata, "metadata").toBeDefined();
+      expect(metadata.native, "metadata.native").toBeDefined();
+      expect(
+        metadata.native.asf,
+        "should include native ASF tags"
+      ).toBeDefined();
+
+      const format = metadata.format;
+
+      expect(format.container, "format.container").toBe("ASF/audio");
+      expect(format.codec, "format.codec").toBe("Windows Media Audio 9.1");
+      expect(format.duration, "format.duration").toBeCloseTo(243.306, 3);
+      expect(format.bitrate, "format.bitrate").toBe(192_639);
+
+      const common = metadata.common;
+
+      expect(common.title, "common.title").toBe("Don't Bring Me Down");
+      expect(common.artist, "common.artist").toBe("Electric Light Orchestra");
+      expect(common.albumartist, "common.albumartist").toBe(
+        "Electric Light Orchestra"
+      );
+      expect(common.album, "common.album").toBe("Discovery");
+      expect(common.year, "common.year").toBe(2001);
+      expect(common.track, "common.track 9/0").toStrictEqual({
+        no: 9,
+        of: null,
+      });
+      expect(common.disk, "common.disk 0/0").toStrictEqual({
+        no: null,
+        of: null,
+      });
+      expect(common.genre, "common.genre").toStrictEqual(["Rock"]);
+
+      const native = orderTags(metadata.native.asf);
+
+      expect(native["WM/AlbumTitle"], "native: WM/AlbumTitle").toStrictEqual([
+        "Discovery",
+      ]);
+      expect(
+        native["WM/BeatsPerMinute"],
+        "native: WM/BeatsPerMinute"
+      ).toStrictEqual([117]);
+      expect(
+        native.REPLAYGAIN_TRACK_GAIN,
+        "native: REPLAYGAIN_TRACK_GAIN"
+      ).toStrictEqual(["-4.7 dB"]);
+    });
+  });
+
+  describe("should decode picture from", () => {
+    test.each(Parsers)("%s", async (parser) => {
+      const filePath = join(asfFilePath, "issue_57.wma");
+      const metadata = await parser.initParser(filePath, "audio/x-ms-wma");
+
+      const asf = orderTags(metadata.native.asf);
+
+      expect(asf["WM/Picture"][0]).toBeDefined();
+      expect(asf["WM/Picture"][0].data).toBeDefined();
     });
   });
 
   /**
-   * Trying Buffer.readUIntLE(0, 8)
-   * Where 8 is 2 bytes longer then maximum allowed of 6
+   * Related issue: https://github.com/Borewit/music-metadata/issues/68
    */
-  it("should be able to roughly decode a 64-bit QWord", () => {
-    const tests: { raw: string; expected: number; description: string }[] = [
-      {
-        raw: "\xFF\x00\x00\x00\x00\x00\x00\x00",
-        expected: 0xff,
-        description: "8-bit",
-      },
-      {
-        raw: "\xFF\xFF\x00\x00\x00\x00\x00\x00",
-        expected: 0xffff,
-        description: "16-bit",
-      },
-      {
-        raw: "\xFF\xFF\xFF\xFF\x00\x00\x00\x00",
-        expected: 0xffffffff,
-        description: "32-bit",
-      },
-      {
-        raw: "\xFF\xFF\xFF\xFF\xFF\x00\x00\x00",
-        expected: 0xffffffffff,
-        description: "40-bit",
-      },
-      {
-        raw: "\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00",
-        expected: 0xffffffffffff,
-        description: "48-bit",
-      },
-      {
-        raw: "\xFF\xFF\xFF\xFF\xFF\xFF\x0F\x00",
-        expected: 0xfffffffffffff,
-        description: "52-bit",
-      },
-    ];
+  test("should be able to parse truncated .wma file", async () => {
+    const filePath = join(asfFilePath, "13 Thirty Dirty Birds.wma");
 
-    tests.forEach((test) => {
-      const buf = Buffer.from(test.raw, "binary");
-      assert.strictEqual(
-        Number(getParserForAttr(DataType.QWord)(buf)),
-        test.expected,
-        test.description
-      );
-    });
-  });
+    const { format, common, native } = await parseFile(filePath);
 
-  describe("parse", () => {
-    const asfFilePath = path.join(samplePath, "asf");
+    expect(format.container, "format.container").toBe("ASF/audio");
+    expect(format.codec, "format.codec").toBe("Windows Media Audio 9");
+    expect(format.duration, "format.duration").toBeCloseTo(14.466, 4);
+    expect(format.bitrate, "format.bitrate").toBeCloseTo(128_639, 0);
 
-    function checkFormat(format: mm.IFormat) {
-      assert.strictEqual(format.container, "ASF/audio", "format.container");
-      assert.strictEqual(
-        format.codec,
-        "Windows Media Audio 9.1",
-        "format.codec"
-      );
-      assert.approximately(
-        format.duration,
-        243.306,
-        1 / 10000,
-        "format.duration"
-      );
-      assert.strictEqual(format.bitrate, 192639, "format.bitrate");
-    }
+    expect(common.title, "metadata.common.title").toBe("Thirty Dirty Birds");
+    expect(common.artist, "metadata.common.artist").toBe(
+      "The Red Hot Chili Peppers"
+    );
+    expect(common.date, "metadata.common.date").toBe("2003");
+    expect(common.label, "metadata.common.label").toStrictEqual(["Capitol"]);
+    expect(common.track.no, "metadata.common.track.no").toBe(13);
 
-    function checkCommon(common: mm.ICommonTagsResult) {
-      assert.strictEqual(common.title, "Don't Bring Me Down", "common.title");
-      assert.deepEqual(
-        common.artist,
-        "Electric Light Orchestra",
-        "common.artist"
-      );
-      assert.deepEqual(
-        common.albumartist,
-        "Electric Light Orchestra",
-        "common.albumartist"
-      );
-      assert.strictEqual(common.album, "Discovery", "common.album");
-      assert.strictEqual(common.year, 2001, "common.year");
-      assert.deepEqual(common.track, { no: 9, of: null }, "common.track 9/0");
-      assert.deepEqual(common.disk, { no: null, of: null }, "common.disk 0/0");
-      assert.deepEqual(common.genre, ["Rock"], "common.genre");
-    }
+    const asf = orderTags(native.asf);
+    // ToDo: Contains some WM/... tags which could be parsed / mapped better
 
-    function checkNative(native: mm.INativeTagDict) {
-      assert.deepEqual(
-        native["WM/AlbumTitle"],
-        ["Discovery"],
-        "native: WM/AlbumTitle"
-      );
-      assert.deepEqual(
-        native["WM/BeatsPerMinute"],
-        [117],
-        "native: WM/BeatsPerMinute"
-      );
-      assert.deepEqual(
-        native.REPLAYGAIN_TRACK_GAIN,
-        ["-4.7 dB"],
-        "native: REPLAYGAIN_TRACK_GAIN"
-      );
-    }
-
-    describe("should decode an ASF audio file (.wma)", () => {
-      Parsers.forEach((parser) => {
-        it(parser.description, async () => {
-          const metadata = await parser.initParser(
-            path.join(asfFilePath, "asf.wma"),
-            "audio/x-ms-wma"
-          );
-          assert.isDefined(metadata, "metadata");
-          checkFormat(metadata.format);
-          checkCommon(metadata.common);
-          assert.isDefined(metadata.native, "metadata.native");
-          assert.isDefined(
-            metadata.native.asf,
-            "should include native ASF tags"
-          );
-          checkNative(mm.orderTags(metadata.native.asf));
-        });
-      });
-    });
-
-    describe("should decode picture from", () => {
-      Parsers.forEach((parser) => {
-        it(parser.description, async () => {
-          const filePath = path.join(asfFilePath, "issue_57.wma");
-          const metadata = await parser.initParser(filePath, "audio/x-ms-wma");
-          const asf = mm.orderTags(metadata.native.asf);
-          assert.exists(asf["WM/Picture"][0], "ASF WM/Picture should be set");
-          const nativePicture = asf["WM/Picture"][0];
-          assert.exists(nativePicture.data);
-        });
-      });
-    });
-
-    /**
-     * Related issue: https://github.com/Borewit/music-metadata/issues/68
-     */
-    it("should be able to parse truncated .wma file", async () => {
-      const filePath = path.join(asfFilePath, "13 Thirty Dirty Birds.wma");
-
-      const { format, common, native } = await mm.parseFile(filePath);
-
-      assert.strictEqual(format.container, "ASF/audio", "format.container");
-      assert.strictEqual(format.codec, "Windows Media Audio 9", "format.codec");
-      assert.approximately(
-        format.duration,
-        14.466,
-        1 / 10000,
-        "format.duration"
-      );
-      assert.approximately(format.bitrate, 128639, 1, "format.bitrate");
-
-      const asf = mm.orderTags(native.asf);
-      // ToDo: Contains some WM/... tags which could be parsed / mapped better
-
-      assert.strictEqual(
-        common.title,
-        "Thirty Dirty Birds",
-        "metadata.common.title"
-      );
-      assert.strictEqual(
-        common.artist,
-        "The Red Hot Chili Peppers",
-        "metadata.common.artist"
-      );
-      assert.strictEqual(common.date, "2003", "metadata.common.date");
-      assert.deepEqual(common.label, ["Capitol"], "metadata.common.label");
-      assert.strictEqual(common.track.no, 13, "metadata.common.track.no");
-
-      assert.exists(asf);
-    });
+    expect(asf).toBeDefined();
   });
 });

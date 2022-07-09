@@ -12,7 +12,7 @@ export class VorbisDecoder {
   public readStringUtf8(): string {
     const len = this.readInt32();
     const value = Buffer.from(this.data).toString(
-      "utf-8",
+      "utf8",
       this.offset,
       this.offset + len
     );

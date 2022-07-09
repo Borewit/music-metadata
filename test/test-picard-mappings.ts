@@ -1,207 +1,201 @@
-import { describe, assert, it } from "vitest";
+import { expect, test } from "vitest";
 import { AsfTagMapper } from "../lib/asf/AsfTagMapper";
 import { APEv2TagMapper } from "../lib/apev2/APEv2TagMapper";
 import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
 
-describe("Picard mapping coverage", () => {
-  function convertName(picardName: string) {
-    switch (picardName) {
-      case "tracknumber":
-        return "track"; // ToDo: make consistent with Picard convention
-      case "discnumber":
-        return "disk"; // ToDo: make consistent with Picard convention
-      default:
-        return picardName;
-    }
+function convertName(picardName: string) {
+  switch (picardName) {
+    case "tracknumber":
+      return "track"; // ToDo: make consistent with Picard convention
+    case "discnumber":
+      return "disk"; // ToDo: make consistent with Picard convention
+    default:
+      return picardName;
   }
+}
 
-  it("ASF", () => {
-    /**
-     * Picard mappings
-     * Taken from: picard-release-1.4.2/picard/formats/asf.py
-     */
-    const PicardMappings: Record<string, string> = {
-      album: "WM/AlbumTitle",
-      title: "Title",
-      artist: "Author",
-      albumartist: "WM/AlbumArtist",
-      date: "WM/Year",
-      originaldate: "WM/OriginalReleaseTime",
-      originalyear: "WM/OriginalReleaseYear",
-      composer: "WM/Composer",
-      lyricist: "WM/Writer",
-      conductor: "WM/Conductor",
-      remixer: "WM/ModifiedBy",
-      producer: "WM/Producer",
-      grouping: "WM/ContentGroupDescription",
-      subtitle: "WM/SubTitle",
-      discsubtitle: "WM/SetSubTitle",
-      tracknumber: "WM/TrackNumber",
-      discnumber: "WM/PartOfSet",
-      comment: "Description",
-      genre: "WM/Genre",
-      bpm: "WM/BeatsPerMinute",
-      key: "WM/InitialKey",
-      script: "WM/Script",
-      language: "WM/Language",
-      mood: "WM/Mood",
-      isrc: "WM/ISRC",
-      copyright: "Copyright",
-      lyrics: "WM/Lyrics",
-      rating: "WM/SharedUserRating",
-      media: "WM/Media",
-      barcode: "WM/Barcode",
-      catalognumber: "WM/CatalogNo",
-      label: "WM/Publisher",
-      encodedby: "WM/EncodedBy",
-      encodersettings: "WM/EncodingSettings",
-      albumsort: "WM/AlbumSortOrder",
-      albumartistsort: "WM/AlbumArtistSortOrder",
-      artistsort: "WM/ArtistSortOrder",
-      titlesort: "WM/TitleSortOrder",
-      composersort: "WM/ComposerSortOrder",
-      musicbrainz_recordingid: "MusicBrainz/Track Id",
-      musicbrainz_trackid: "MusicBrainz/Release Track Id",
-      musicbrainz_albumid: "MusicBrainz/Album Id",
-      musicbrainz_artistid: "MusicBrainz/Artist Id",
-      musicbrainz_albumartistid: "MusicBrainz/Album Artist Id",
-      musicbrainz_trmid: "MusicBrainz/TRM Id",
-      musicbrainz_discid: "MusicBrainz/Disc Id",
-      musicbrainz_workid: "MusicBrainz/Work Id",
-      musicbrainz_releasegroupid: "MusicBrainz/Release Group Id",
-      musicip_puid: "MusicIP/PUID",
-      releasestatus: "MusicBrainz/Album Status",
-      releasetype: "MusicBrainz/Album Type",
-      releasecountry: "MusicBrainz/Album Release Country",
-      acoustid_id: "Acoustid/Id",
-      acoustid_fingerprint: "Acoustid/Fingerprint",
-      compilation: "WM/IsCompilation",
-      engineer: "WM/Engineer",
-      asin: "ASIN",
-      djmixer: "WM/DJMixer",
-      mixer: "WM/Mixer",
-      artists: "WM/ARTISTS",
-      work: "WM/Work",
-      website: "WM/AuthorURL",
-    };
+test("ASF", () => {
+  /**
+   * Picard mappings
+   * Taken from: picard-release-1.4.2/picard/formats/asf.py
+   */
+  const PicardMappings: Record<string, string> = {
+    album: "WM/AlbumTitle",
+    title: "Title",
+    artist: "Author",
+    albumartist: "WM/AlbumArtist",
+    date: "WM/Year",
+    originaldate: "WM/OriginalReleaseTime",
+    originalyear: "WM/OriginalReleaseYear",
+    composer: "WM/Composer",
+    lyricist: "WM/Writer",
+    conductor: "WM/Conductor",
+    remixer: "WM/ModifiedBy",
+    producer: "WM/Producer",
+    grouping: "WM/ContentGroupDescription",
+    subtitle: "WM/SubTitle",
+    discsubtitle: "WM/SetSubTitle",
+    tracknumber: "WM/TrackNumber",
+    discnumber: "WM/PartOfSet",
+    comment: "Description",
+    genre: "WM/Genre",
+    bpm: "WM/BeatsPerMinute",
+    key: "WM/InitialKey",
+    script: "WM/Script",
+    language: "WM/Language",
+    mood: "WM/Mood",
+    isrc: "WM/ISRC",
+    copyright: "Copyright",
+    lyrics: "WM/Lyrics",
+    rating: "WM/SharedUserRating",
+    media: "WM/Media",
+    barcode: "WM/Barcode",
+    catalognumber: "WM/CatalogNo",
+    label: "WM/Publisher",
+    encodedby: "WM/EncodedBy",
+    encodersettings: "WM/EncodingSettings",
+    albumsort: "WM/AlbumSortOrder",
+    albumartistsort: "WM/AlbumArtistSortOrder",
+    artistsort: "WM/ArtistSortOrder",
+    titlesort: "WM/TitleSortOrder",
+    composersort: "WM/ComposerSortOrder",
+    musicbrainz_recordingid: "MusicBrainz/Track Id",
+    musicbrainz_trackid: "MusicBrainz/Release Track Id",
+    musicbrainz_albumid: "MusicBrainz/Album Id",
+    musicbrainz_artistid: "MusicBrainz/Artist Id",
+    musicbrainz_albumartistid: "MusicBrainz/Album Artist Id",
+    musicbrainz_trmid: "MusicBrainz/TRM Id",
+    musicbrainz_discid: "MusicBrainz/Disc Id",
+    musicbrainz_workid: "MusicBrainz/Work Id",
+    musicbrainz_releasegroupid: "MusicBrainz/Release Group Id",
+    musicip_puid: "MusicIP/PUID",
+    releasestatus: "MusicBrainz/Album Status",
+    releasetype: "MusicBrainz/Album Type",
+    releasecountry: "MusicBrainz/Album Release Country",
+    acoustid_id: "Acoustid/Id",
+    acoustid_fingerprint: "Acoustid/Fingerprint",
+    compilation: "WM/IsCompilation",
+    engineer: "WM/Engineer",
+    asin: "ASIN",
+    djmixer: "WM/DJMixer",
+    mixer: "WM/Mixer",
+    artists: "WM/ARTISTS",
+    work: "WM/Work",
+    website: "WM/AuthorURL",
+  };
 
-    const asfTagMapper = new AsfTagMapper();
+  const tagMapper = new AsfTagMapper();
 
-    for (const picComTag in PicardMappings) {
-      const picNativeTag = PicardMappings[picComTag];
-      const mmCommonTag = convertName(picComTag);
+  for (const [picComTag, picNativeTag] of Object.entries(PicardMappings)) {
+    const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(
-        asfTagMapper.tagMap[picNativeTag],
-        "Is '" + picNativeTag + "' defined?"
-      );
-      assert.equal(
-        asfTagMapper.tagMap[picNativeTag],
-        mmCommonTag,
-        "Check Picard mapping for " + picNativeTag
-      );
-    }
-  });
+    expect(
+      tagMapper.tagMap[picNativeTag],
+      `Is '${picNativeTag}' defined?`
+    ).toBeDefined();
+    expect(
+      tagMapper.tagMap[picNativeTag],
+      `Check Picard mapping for ${picNativeTag}`
+    ).toBe(mmCommonTag);
+  }
+});
 
-  it("APEv2", () => {
-    /**
-     * Picard mappings
-     * Taken from: picard-release-1.4.2/picard/formats/apev2.py
-     */
-    const PicardMappings = {
-      "Album Artist": "albumartist",
-      MixArtist: "remixer",
-      Weblink: "website",
-      DiscSubtitle: "discsubtitle",
-      BPM: "bpm",
-      ISRC: "isrc",
-      CatalogNumber: "catalognumber",
-      Barcode: "barcode",
-      EncodedBy: "encodedby",
-      Language: "language",
-      MUSICBRAINZ_ALBUMSTATUS: "releasestatus",
-      MUSICBRAINZ_ALBUMTYPE: "releasetype",
-      musicbrainz_trackid: "musicbrainz_recordingid",
-      musicbrainz_releasetrackid: "musicbrainz_trackid",
-    };
+test("APEv2", () => {
+  /**
+   * Picard mappings
+   * Taken from: picard-release-1.4.2/picard/formats/apev2.py
+   */
+  const PicardMappings = {
+    albumartist: "ALBUM ARTIST",
+    remixer: "MIXARTIST",
+    website: "WEBLINK",
+    discsubtitle: "DISCSUBTITLE",
+    bpm: "BPM",
+    isrc: "ISRC",
+    catalognumber: "CATALOGNUMBER",
+    barcode: "BARCODE",
+    encodedby: "ENCODEDBY",
+    language: "LANGUAGE",
+    releasestatus: "MUSICBRAINZ_ALBUMSTATUS",
+    releasetype: "MUSICBRAINZ_ALBUMTYPE",
+    musicbrainz_recordingid: "MUSICBRAINZ_TRACKID",
+    musicbrainz_trackid: "MUSICBRAINZ_RELEASETRACKID",
+  };
 
-    const apeTagMapper = new APEv2TagMapper();
+  const tagMapper = new APEv2TagMapper();
 
-    for (const [picNativeTag, picComTag] of Object.entries(PicardMappings)) {
-      const mmCommonTag = convertName(picComTag);
+  for (const [picComTag, picNativeTag] of Object.entries(PicardMappings)) {
+    const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(
-        apeTagMapper.tagMap[picNativeTag.toUpperCase()],
-        "Is '" + picNativeTag + "' defined?"
-      );
-      assert.equal(
-        apeTagMapper.tagMap[picNativeTag.toUpperCase()],
-        mmCommonTag,
-        "Check Picard mapping for " + picNativeTag
-      );
-    }
-  });
+    expect(
+      tagMapper.tagMap[picNativeTag],
+      `Is '${picNativeTag}' defined?`
+    ).toBeDefined();
+    expect(
+      tagMapper.tagMap[picNativeTag],
+      `Check Picard mapping for ${picNativeTag}`
+    ).toBe(mmCommonTag);
+  }
+});
 
-  it("ID3v2.4.0", () => {
-    /**
-     * Picard mappings
-     * Taken from: picard-release-1.4.2/picard/formats/asf.py
-     */
-    const PicardMappings: Record<string, string> = {
-      // In same sequence as defined at http://id3.org/id3v2.4.0-frames
-      TIT1: "grouping",
-      TIT2: "title",
-      TIT3: "subtitle",
-      TALB: "album",
-      TSST: "discsubtitle",
-      TSRC: "isrc",
-      TPE1: "artist",
-      TPE2: "albumartist",
-      TPE3: "conductor",
-      TPE4: "remixer",
-      TEXT: "lyricist",
-      TCOM: "composer",
-      TENC: "encodedby",
-      TBPM: "bpm",
-      TKEY: "key",
-      TLAN: "language",
-      TCON: "genre",
-      TMED: "media",
-      TMOO: "mood",
-      TCOP: "copyright",
-      TPUB: "label",
-      TDOR: "originaldate",
-      TDRC: "date",
-      TSSE: "encodersettings",
-      TSOA: "albumsort",
-      TSOP: "artistsort",
-      TSOT: "titlesort",
-      WCOP: "license",
-      WOAR: "website",
-      COMM: "comment",
-      TOAL: "originalalbum",
-      TOPE: "originalartist",
+test("ID3v2.4.0", () => {
+  /**
+   * Picard mappings
+   * Taken from: picard-release-1.4.2/picard/formats/asf.py
+   */
+  const PicardMappings: Record<string, string> = {
+    // In same sequence as defined at http://id3.org/id3v2.4.0-frames
+    grouping: "TIT1",
+    title: "TIT2",
+    subtitle: "TIT3",
+    album: "TALB",
+    discsubtitle: "TSST",
+    isrc: "TSRC",
+    artist: "TPE1",
+    albumartist: "TPE2",
+    conductor: "TPE3",
+    remixer: "TPE4",
+    lyricist: "TEXT",
+    composer: "TCOM",
+    encodedby: "TENC",
+    bpm: "TBPM",
+    key: "TKEY",
+    language: "TLAN",
+    genre: "TCON",
+    media: "TMED",
+    mood: "TMOO",
+    copyright: "TCOP",
+    label: "TPUB",
+    originaldate: "TDOR",
+    date: "TDRC",
+    encodersettings: "TSSE",
+    albumsort: "TSOA",
+    artistsort: "TSOP",
+    titlesort: "TSOT",
+    license: "WCOP",
+    website: "WOAR",
+    comment: "COMM",
+    originalalbum: "TOAL",
+    originalartist: "TOPE",
 
-      // The following are informal iTunes extensions to id3v2:
-      TCMP: "compilation",
-      TSOC: "composersort",
-      TSO2: "albumartistsort",
-    };
+    // The following are informal iTunes extensions to id3v2:
+    compilation: "TCMP",
+    composersort: "TSOC",
+    albumartistsort: "TSO2",
+  };
 
-    const id3v24TagMapper = new ID3v24TagMapper();
+  const tagMapper = new ID3v24TagMapper();
 
-    for (const [picNativeTag, picComTag] of Object.entries(PicardMappings)) {
-      const mmCommonTag = convertName(picComTag);
+  for (const [picComTag, picNativeTag] of Object.entries(PicardMappings)) {
+    const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(
-        id3v24TagMapper.tagMap[picNativeTag],
-        "Is '" + picNativeTag + "' defined?"
-      );
-      assert.equal(
-        id3v24TagMapper.tagMap[picNativeTag],
-        mmCommonTag,
-        "Check Picard mapping for " + picNativeTag
-      );
-    }
-  });
+    expect(
+      tagMapper.tagMap[picNativeTag],
+      `Is '${picNativeTag}' defined?`
+    ).toBeDefined();
+    expect(
+      tagMapper.tagMap[picNativeTag],
+      `Check Picard mapping for ${picNativeTag}`
+    ).toBe(mmCommonTag);
+  }
 });

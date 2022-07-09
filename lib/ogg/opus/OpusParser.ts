@@ -15,7 +15,7 @@ import { IIdHeader, IdHeader } from "./OpusIdHeader";
  */
 export class OpusParser extends VorbisParser {
   private idHeader: IIdHeader;
-  private lastPos: number = -1;
+  private lastPos = -1;
 
   constructor(
     metadata: INativeMetadataCollector,
@@ -61,11 +61,11 @@ export class OpusParser extends VorbisParser {
       // Calculate duration
       const pos_48bit = header.absoluteGranulePosition - this.idHeader.preSkip;
       this.metadata.setFormat("numberOfSamples", pos_48bit);
-      this.metadata.setFormat("duration", pos_48bit / 48000);
+      this.metadata.setFormat("duration", pos_48bit / 48_000);
 
       if (
         this.lastPos !== -1 &&
-        this.tokenizer.fileInfo.size &&
+        this.tokenizer.fileInfo.size > 0 &&
         this.metadata.format.duration
       ) {
         const dataSize = this.tokenizer.fileInfo.size - this.lastPos;

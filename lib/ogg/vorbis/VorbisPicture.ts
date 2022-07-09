@@ -45,11 +45,11 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
 
     const mimeLen = Token.UINT32_BE.get(buffer, (offset += 4));
-    const format = buffer.toString("utf-8", (offset += 4), offset + mimeLen);
+    const format = buffer.toString("utf8", (offset += 4), offset + mimeLen);
 
     const descLen = Token.UINT32_BE.get(buffer, (offset += mimeLen));
     const description = buffer.toString(
-      "utf-8",
+      "utf8",
       (offset += 4),
       offset + descLen
     );

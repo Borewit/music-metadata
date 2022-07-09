@@ -1,262 +1,213 @@
-import { describe, assert, it } from "vitest";
-import * as path from "path";
+import { test, expect, describe } from "vitest";
+import { join } from "node:path";
 
-import * as mm from "../lib";
+import { parseFile } from "../lib";
 import { TagType } from "../lib/common/GenericTagTypes";
+import { samplePath } from "./util";
 
-interface IReplayGainSample {
-  description: string;
-  filename: string;
-  container: string;
-  tagType: TagType;
-  track?: {
-    gain: number;
-    peak: number;
-  };
-  album?: {
-    gain: number;
-    peak: number;
-  };
-}
+type ReplayGainSample = [
+  string,
+  TagType,
+  {
+    filename: string;
+    container: string;
+    track?: {
+      gain: number;
+      peak: number;
+    };
+    album?: {
+      gain: number;
+      peak: number;
+    };
+  }
+];
 
-const samples: IReplayGainSample[] = [
-  {
-    description: "album",
-    filename: "id3v23-txxx-album.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: -24,
-      peak: 0,
+const samples: ReplayGainSample[] = [
+  [
+    "album",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-album.mp3",
+      container: "MPEG",
+      track: { gain: -24, peak: 0 },
+      album: { gain: -12, peak: 0 },
     },
-    album: {
-      gain: -12,
-      peak: 0,
+  ],
+  [
+    "album-nopeak",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-album-nopeak.mp3",
+      container: "MPEG",
+      track: { gain: 24, peak: -12 },
+      album: { gain: 12, peak: 0 },
     },
-  },
-  {
-    description: "album-nopeak",
-    filename: "id3v23-txxx-album-nopeak.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: 24,
-      peak: -12,
+  ],
+  [
+    "case sensitivity",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-case.mp3",
+      container: "MPEG",
+      track: { gain: -12, peak: 0 },
+      album: { gain: -24, peak: 0 },
     },
-    album: {
-      gain: 12,
-      peak: 0,
+  ],
+  [
+    "latin-1",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-latin1.mp3",
+      container: "MPEG",
+      track: { gain: 12, peak: -6 },
     },
-  },
-  {
-    description: "case sensitivity",
-    filename: "id3v23-txxx-case.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: -12,
-      peak: 0,
+  ],
+  [
+    "peak",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-peak.mp3",
+      container: "MPEG",
+      track: { gain: 0, peak: 6 },
+      album: { gain: 0, peak: 12 },
     },
-    album: {
-      gain: -24,
-      peak: 0,
+  ],
+  [
+    "track",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-track.mp3",
+      container: "MPEG",
+      track: { gain: -12, peak: 0 },
+      album: { gain: -24, peak: 0 },
     },
-  },
-  {
-    description: "latin-1",
-    filename: "id3v23-txxx-latin1.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: 12,
-      peak: -6,
+  ],
+  [
+    "track-nopeak",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-track-nopeak.mp3",
+      container: "MPEG",
+      track: { gain: 12, peak: 0 },
+      album: { gain: 0, peak: 6 },
     },
-  },
-  {
-    description: "peak",
-    filename: "id3v23-txxx-peak.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: 0,
-      peak: 6.0,
+  ],
+  [
+    "track-only",
+    "ID3v2.3",
+    {
+      filename: "id3v23-txxx-track-only.mp3",
+      container: "MPEG",
+      track: { gain: 12, peak: -6 },
     },
-    album: {
-      gain: 0,
-      peak: 12.0,
+  ],
+  [
+    "album",
+    "ID3v2.4",
+    {
+      filename: "id3v24-txxx-album.mp3",
+      container: "MPEG",
+      track: { gain: -24, peak: 0 },
+      album: { gain: -12, peak: 0 },
     },
-  },
-  {
-    description: "track",
-    filename: "id3v23-txxx-track.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: -12,
-      peak: 0,
+  ],
+  [
+    "track",
+    "ID3v2.4",
+    {
+      filename: "id3v24-txxx-track.mp3",
+      container: "MPEG",
+      track: { gain: -12, peak: 0 },
+      album: { gain: -24, peak: 0 },
     },
-    album: {
-      gain: -24,
-      peak: 0,
+  ],
+  [
+    "track-only",
+    "ID3v2.4",
+    {
+      filename: "id3v24-txxx-track-only.mp3",
+      container: "MPEG",
+      track: { gain: 12, peak: -6 },
     },
-  },
-  {
-    description: "track-nopeak",
-    filename: "id3v23-txxx-track-nopeak.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: 12,
-      peak: 0,
+  ],
+  [
+    "utf8",
+    "ID3v2.4",
+    {
+      filename: "id3v24-txxx-track-only.mp3",
+      container: "MPEG",
+      track: { gain: 12, peak: -6 },
     },
-    album: {
-      gain: 0,
-      peak: 6,
+  ],
+  [
+    "utf8",
+    "vorbis",
+    {
+      filename: "vorbis.flac",
+      container: "FLAC",
+      track: { gain: -3.26, peak: -5.195_95 },
+      album: { gain: -3.26, peak: -5.195_95 },
     },
-  },
-  {
-    description: "track-only",
-    filename: "id3v23-txxx-track-only.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.3",
-    track: {
-      gain: 12,
-      peak: -6,
-    },
-  },
-  {
-    description: "album",
-    filename: "id3v24-txxx-album.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.4",
-    track: {
-      gain: -24,
-      peak: 0,
-    },
-    album: {
-      gain: -12,
-      peak: 0,
-    },
-  },
-  {
-    description: "track",
-    filename: "id3v24-txxx-track.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.4",
-    track: {
-      gain: -12,
-      peak: 0,
-    },
-    album: {
-      gain: -24,
-      peak: 0,
-    },
-  },
-  {
-    description: "track-only",
-    filename: "id3v24-txxx-track-only.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.4",
-    track: {
-      gain: 12,
-      peak: -6,
-    },
-  },
-  {
-    description: "utf8",
-    filename: "id3v24-txxx-track-only.mp3",
-    container: "MPEG",
-    tagType: "ID3v2.4",
-    track: {
-      gain: 12,
-      peak: -6,
-    },
-  },
-  {
-    description: "utf8",
-    filename: "vorbis.flac",
-    container: "FLAC",
-    tagType: "vorbis",
-    track: {
-      gain: -3.26,
-      peak: -5.19595,
-    },
-    album: {
-      gain: -3.26,
-      peak: -5.19595,
-    },
-  },
+  ],
 ];
 
 /**
  * Samples provided by: https://github.com/kepstin/replaygain-test-vectors
  */
+
 describe("Test Replay-Gain", () => {
-  const pathGainSamples = path.join(__dirname, "samples", "replay-gain");
+  const gainSamplesPath = join(samplePath, "replay-gain");
 
-  samples.forEach((sample) => {
-    it(`Test ${sample.description}, mapping from tag header: ${sample.tagType}`, async () => {
-      const filePath = path.join(pathGainSamples, sample.filename);
+  test.each(samples)(
+    "Test %s, mapping from tag header: %s",
+    async (_desc, tagType, sample) => {
+      const filePath = join(gainSamplesPath, sample.filename);
 
-      const metadata = await mm.parseFile(filePath);
+      const metadata = await parseFile(filePath);
       const { format, common } = metadata;
 
-      assert.strictEqual(
-        format.container,
-        sample.container,
-        "format.container"
-      );
-      assert.deepEqual(format.tagTypes, [sample.tagType], "format.tagTypes");
-
-      const d = 1 / 1000;
+      expect(format.container, "format.container").toBe(sample.container);
+      expect(format.tagTypes, "format.tagTypes").toStrictEqual([tagType]);
 
       if (sample.track) {
-        assert.approximately(
+        expect(
           common.replaygain_track_gain.dB,
-          sample.track.gain,
-          d,
           "replay-gain: track gain"
-        );
-        assert.approximately(
+        ).toBeCloseTo(sample.track.gain, 3);
+        expect(
           common.replaygain_track_peak.dB,
-          sample.track.peak,
-          d,
           "replay-gain: track peak"
-        );
+        ).toBeCloseTo(sample.track.peak, 3);
       } else {
-        assert.isUndefined(
+        expect(
           common.replaygain_track_gain,
           "replay-gain: track gain"
-        );
-        assert.isUndefined(
+        ).toBeUndefined();
+        expect(
           common.replaygain_track_peak,
           "replay-gain: track peak"
-        );
+        ).toBeUndefined();
       }
 
       if (sample.album) {
-        assert.approximately(
+        expect(
           common.replaygain_album_gain.dB,
-          sample.album.gain,
-          d,
           "replay-gain: album gain"
-        );
-        assert.approximately(
+        ).toBeCloseTo(sample.album.gain, 3);
+        expect(
           common.replaygain_album_peak.dB,
-          sample.album.peak,
-          d,
           "replay-gain: album peak"
-        );
+        ).toBeCloseTo(sample.album.peak, 3);
       } else {
-        assert.isUndefined(
+        expect(
           common.replaygain_album_gain,
           "replay-gain: album gain"
-        );
-        assert.isUndefined(
+        ).toBeUndefined();
+        expect(
           common.replaygain_album_peak,
           "replay-gain: album peak"
-        );
+        ).toBeUndefined();
       }
-    });
-  });
+    }
+  );
 });

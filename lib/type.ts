@@ -170,7 +170,7 @@ export interface ICommonTagsResult {
   subtitle?: string[];
   description?: string[];
   longDescription?: string;
-  discsubtitle?: string[];
+  discsubtitle?: string;
   totaltracks?: string;
   totaldiscs?: string;
   movementTotal?: number;
@@ -531,16 +531,12 @@ export interface IChapter {
 /**
  * Flat list of tags
  */
-export interface INativeTags {
-  [tagType: string]: ITag[];
-}
+export type INativeTags = Record<string, ITag[]>;
 
 /**
  * Tags ordered by tag-ID
  */
-export interface INativeTagDict {
-  [tagId: string]: any[];
-}
+export type INativeTagDict = Record<string, any[]>;
 
 export interface INativeAudioMetadata {
   format: IFormat;
@@ -677,7 +673,7 @@ export interface IRandomReader {
    * @param offset {number} is the offset in the buffer to start writing at.
    * @param length {number}is an integer specifying the number of bytes to read.
    * @param position {number} is an argument specifying where to begin reading from in the file.
-   * @return {Promise<number>} bytes read
+   * @returns {Promise<number>} bytes read
    */
   randomRead(
     buffer: Buffer,

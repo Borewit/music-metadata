@@ -1,14 +1,18 @@
 // Utilities for testing
 
-import { Readable } from "stream";
-import * as path from "path";
+import { Readable } from "node:stream";
+import { join } from "node:path";
 
 /**
  * A mock readable-stream, using string to read from
  */
 export class SourceStream extends Readable {
-  constructor(private buf: Buffer) {
+  private buf: Uint8Array;
+
+  constructor(src: Uint8Array | string) {
     super();
+
+    this.buf = typeof src === "string" ? Buffer.from(src, "latin1") : src;
   }
 
   public override _read() {
@@ -17,4 +21,4 @@ export class SourceStream extends Readable {
   }
 }
 
-export const samplePath = path.join(__dirname, "samples");
+export const samplePath = join(__dirname, "samples");

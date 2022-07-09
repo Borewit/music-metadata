@@ -10,7 +10,7 @@ const debug = initDebug("music-metadata:parser:musepack");
 
 export class MpcSv7Parser extends BasicParser {
   private bitreader: BitReader;
-  private audioLength: number = 0;
+  private audioLength = 0;
   private duration: number;
 
   public async parse(): Promise<void> {

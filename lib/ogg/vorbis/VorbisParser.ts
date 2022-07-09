@@ -78,7 +78,7 @@ export class VorbisParser implements IPageConsumer {
       value = VorbisPictureToken.fromBase64(value);
       debug(`Push picture: id=${id}, format=${value.format}`);
     } else {
-      debug(`Push tag: id=${id}, value=${value}`);
+      debug(`Push tag: id=${id}, value=${String(value)}`);
     }
 
     this.metadata.addTag("vorbis", id, value);
@@ -151,6 +151,8 @@ export class VorbisParser implements IPageConsumer {
 
   /**
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
+   * @param pageData
+   * @param offset
    */
   protected parseUserCommentList(pageData: Buffer, offset: number) {
     const strLen = Token.UINT32_LE.get(pageData, offset);

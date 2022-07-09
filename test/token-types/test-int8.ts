@@ -1,30 +1,30 @@
 // Test reading int8 values.
 
-import { describe, assert, it } from "vitest";
-import * as Token from "../../lib/token-types";
-import * as util from "./util";
+import { describe, test, expect } from "vitest";
+import { INT8 } from "../../lib/token-types";
+import { checkBuffer } from "./util";
 
 describe("Parse 8-bit signed integer (INT8)", () => {
-  it("should encode", () => {
+  test("should encode", () => {
     const buf = Buffer.alloc(1);
 
-    Token.INT8.put(buf, 0, 0x00);
-    util.checkBuffer(buf, "00");
+    INT8.put(buf, 0, 0x00);
+    checkBuffer(buf, "00");
 
-    Token.INT8.put(buf, 0, 0x22);
-    util.checkBuffer(buf, "22");
+    INT8.put(buf, 0, 0x22);
+    checkBuffer(buf, "22");
 
-    Token.INT8.put(buf, 0, -0x22);
-    util.checkBuffer(buf, "de");
+    INT8.put(buf, 0, -0x22);
+    checkBuffer(buf, "de");
   });
 
-  it("should decode", () => {
-    const buf = Buffer.from("\u0000\u007F\u0080\u00FF\u0081", "binary");
+  test("should decode", () => {
+    const buf = Buffer.from([0x00, 0x7f, 0x80, 0xff, 0x81]);
 
-    assert.strictEqual(Token.INT8.get(buf, 0), 0);
-    assert.strictEqual(Token.INT8.get(buf, 1), 127);
-    assert.strictEqual(Token.INT8.get(buf, 2), -128);
-    assert.strictEqual(Token.INT8.get(buf, 3), -1);
-    assert.strictEqual(Token.INT8.get(buf, 4), -127);
+    expect(INT8.get(buf, 0)).toBe(0);
+    expect(INT8.get(buf, 1)).toBe(127);
+    expect(INT8.get(buf, 2)).toBe(-128);
+    expect(INT8.get(buf, 3)).toBe(-1);
+    expect(INT8.get(buf, 4)).toBe(-127);
   });
 });

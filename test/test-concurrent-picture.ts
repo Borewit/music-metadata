@@ -1,23 +1,19 @@
-import { describe, assert, it } from "vitest";
-import * as mm from "../lib";
-import * as fs from "fs";
-import * as path from "path";
+import { test, expect } from "vitest";
+import { parseFile } from "../lib";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { samplePath } from "./util";
 
-const t = assert;
+const files = [
+  join(samplePath, "flac.flac"),
+  join(samplePath, "flac-bug.flac"),
+];
 
-it("should handle concurrent parsing of pictures", () => {
-  const files = [
-    path.join(samplePath, "flac.flac"),
-    path.join(__dirname, "samples", "flac-bug.flac"),
-  ];
-
-  return Promise.all<any>(
-    files.map((file) => {
-      return mm.parseFile(file).then((result) => {
-        const data = fs.readFileSync(file + ".jpg");
-        t.deepEqual(result.common.picture[0].data, data, "check picture");
-      });
-    })
-  );
-});
+test.each(files)(
+  "should handle concurrent parsing of pictures",
+  async (file) => {
+    const result = await parseFile(file);
+    const data = readFileSync(file + ".jpg");
+    expect(result.common.picture[0].data, "check picture").toEqual(data);
+  }
+);

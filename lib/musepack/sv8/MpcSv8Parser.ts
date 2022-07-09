@@ -9,7 +9,7 @@ import * as SV8 from "./StreamVersion8";
 const debug = initDebug("music-metadata:parser:musepack");
 
 export class MpcSv8Parser extends BasicParser {
-  private audioLength: number = 0;
+  private audioLength = 0;
 
   public async parse(): Promise<void> {
     const signature = await this.tokenizer.readToken(FourCcToken);
@@ -28,7 +28,8 @@ export class MpcSv8Parser extends BasicParser {
       );
 
       switch (header.key) {
-        case "SH": // Stream Header
+        case "SH": {
+          // Stream Header
           const sh = await sv8reader.readStreamHeader(header.payloadLength);
           this.metadata.setFormat("numberOfSamples", sh.sampleCount);
           this.metadata.setFormat("sampleRate", sh.sampleFrequency);
@@ -38,7 +39,7 @@ export class MpcSv8Parser extends BasicParser {
           );
           this.metadata.setFormat("numberOfChannels", sh.channelCount);
           break;
-
+        }
         case "AP": // Audio Packet
           this.audioLength += header.payloadLength;
           await this.tokenizer.ignore(header.payloadLength);
