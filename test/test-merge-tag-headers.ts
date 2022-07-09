@@ -31,10 +31,10 @@ describe("mergeTagHeaders option", () => {
     const id3v11 = metadata.native.ID3v1;
 
     expect(metadata.common.album).toBe(
-      id3v11.filter((tag) => tag.id === "album").at(-1).value
+      id3v11.filter((tag) => tag.id === "album").pop().value
     );
     expect(metadata.common.artist).toBe(
-      id3v24.filter((tag) => tag.id === "TPE1").at(-1).value
+      id3v24.filter((tag) => tag.id === "TPE1").pop().value
     );
   });
 });
