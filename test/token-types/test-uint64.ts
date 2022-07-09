@@ -1,71 +1,63 @@
 // Test writing and reading uint32 values in different endiannesses.
 
-import { describe, assert, it } from "vitest";
-import * as Token from "../../lib/token-types";
-import * as util from "./util";
+import { describe, test, expect } from "vitest";
+import { UINT64_BE, UINT64_LE } from "../../lib/token-types";
+import { checkBuffer } from "./util";
 
 describe("Parse 64-bit unsigned integer", () => {
   describe("big-endian", () => {
-    it("should encode", () => {
+    test("should encode", () => {
       const buf = Buffer.alloc(8);
 
-      Token.UINT64_BE.put(buf, 0, BigInt(0x00));
-      util.checkBuffer(buf, "0000000000000000");
+      UINT64_BE.put(buf, 0, 0x00_00_00_00_00_00_00_00n);
+      checkBuffer(buf, "0000000000000000");
 
-      Token.UINT64_BE.put(buf, 0, BigInt(0xff));
-      util.checkBuffer(buf, "00000000000000ff");
+      UINT64_BE.put(buf, 0, 0x00_00_00_00_00_00_00_ffn);
+      checkBuffer(buf, "00000000000000ff");
 
-      Token.UINT64_BE.put(buf, 0, BigInt(0xaa_bb_cc_dd_ee_ff));
-      util.checkBuffer(buf, "0000aabbccddeeff");
+      UINT64_BE.put(buf, 0, 0x00_00_aa_bb_cc_dd_ee_ffn);
+      checkBuffer(buf, "0000aabbccddeeff");
 
-      Token.UINT64_BE.put(buf, 0, BigInt(0x00_12_34_56_78_9a_bc_de));
-      util.checkBuffer(buf, "00123456789abcde");
+      UINT64_BE.put(buf, 0, 0x00_12_34_56_78_9a_bc_den);
+      checkBuffer(buf, "00123456789abcde");
     });
 
-    it("should decode", () => {
-      const buf = Buffer.from(
-        "\u0000\u0000\u001A\u0000\u001A\u0000\u001A\u0001\u0000\u0000\u001A\u0000\u001A\u0000\u001A\u0002",
-        "binary"
-      );
+    test("should decode", () => {
+      const buf = Buffer.from([
+        0x00, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x01, 0x00, 0x00, 0x1a, 0x00,
+        0x1a, 0x00, 0x1a, 0x02,
+      ]);
 
-      assert.strictEqual(
-        Token.UINT64_BE.get(buf, 0),
-        BigInt(0x00_00_1a_00_1a_00_1a_01)
-      );
-      assert.strictEqual(
-        Token.UINT64_BE.get(buf, 8),
-        BigInt(0x00_00_1a_00_1a_00_1a_02)
-      );
+      expect(UINT64_BE.get(buf, 0)).toBe(0x00_00_1a_00_1a_00_1a_01n);
+      expect(UINT64_BE.get(buf, 8)).toBe(0x00_00_1a_00_1a_00_1a_02n);
     });
   });
 
   describe("litle-endian", () => {
-    it("should encode", () => {
+    test("should encode", () => {
       const buf = Buffer.alloc(8);
 
-      Token.UINT64_LE.put(buf, 0, BigInt(0x00));
-      util.checkBuffer(buf, "0000000000000000");
+      UINT64_LE.put(buf, 0, 0x00_00_00_00_00_00_00_00n);
+      checkBuffer(buf, "0000000000000000");
 
-      Token.UINT64_LE.put(buf, 0, BigInt(0xff));
-      util.checkBuffer(buf, "ff00000000000000");
+      UINT64_LE.put(buf, 0, 0x00_00_00_00_00_00_00_ffn);
+      checkBuffer(buf, "ff00000000000000");
 
-      Token.UINT64_LE.put(buf, 0, BigInt(0xaa_bb_cc_dd_ee_ff));
-      util.checkBuffer(buf, "ffeeddccbbaa0000");
+      UINT64_LE.put(buf, 0, 0x00_00_aa_bb_cc_dd_ee_ffn);
+      checkBuffer(buf, "ffeeddccbbaa0000");
 
-      Token.UINT64_LE.put(buf, 0, BigInt(0x00_12_34_56_78_9a_bc_de));
-      util.checkBuffer(buf, "debc9a7856341200");
+      UINT64_LE.put(buf, 0, 0x00_12_34_56_78_9a_bc_den);
+      checkBuffer(buf, "debc9a7856341200");
     });
 
-    it("should decode", () => {
-      const buf = Buffer.from(
-        "\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000\u001A\u0000",
-        "binary"
-      );
+    test("should decode", () => {
+      const buf = Buffer.from([
+        0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00, 0x1a, 0x00,
+        0x1a, 0x00, 0x1a, 0x00,
+      ]);
 
-      it("little-endian", () => {
-        assert.strictEqual(Token.UINT64_LE.get(buf, 0), BigInt(0x00_1a_00_1a));
-        assert.strictEqual(Token.UINT64_LE.get(buf, 8), BigInt(0x00_1a_00_1a));
-      });
+      expect(UINT64_LE.get(buf, 0)).toBe(0x00_1a_00_1a_00_1a_00_1an);
+      expect(UINT64_LE.get(buf, 8)).toBe(0x00_1a_00_1a_00_1a_00_1an);
     });
   });
 });
