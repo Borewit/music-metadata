@@ -1,29 +1,29 @@
 // Test writing and reading uint8 values.
 
-import { describe, assert, it } from "vitest";
-import * as Token from "../../lib/token-types";
-import * as util from "./util";
+import { describe, test, expect } from "vitest";
+import { UINT8 } from "../../lib/token-types";
+import { checkBuffer } from "./util";
 
 describe("Parse 8-bit unsigned integer (UINT8)", () => {
-  it("should encode", () => {
+  test("should encode", () => {
     const buf = Buffer.alloc(1);
 
-    Token.UINT8.put(buf, 0, 0x00);
-    util.checkBuffer(buf, "00");
+    UINT8.put(buf, 0, 0x00);
+    checkBuffer(buf, "00");
 
-    Token.UINT8.put(buf, 0, 0x22);
-    util.checkBuffer(buf, "22");
+    UINT8.put(buf, 0, 0x22);
+    checkBuffer(buf, "22");
 
-    Token.UINT8.put(buf, 0, 0xff);
-    util.checkBuffer(buf, "ff");
+    UINT8.put(buf, 0, 0xff);
+    checkBuffer(buf, "ff");
   });
 
-  it("should decode", () => {
-    const buf = Buffer.from("\u0000\u001A\u0001\u00FF", "binary");
+  test("should decode", () => {
+    const buf = Buffer.from([0x00, 0x1a, 0x01, 0xff]);
 
-    assert.equal(Token.UINT8.get(buf, 0), 0);
-    assert.equal(Token.UINT8.get(buf, 1), 26);
-    assert.equal(Token.UINT8.get(buf, 2), 1);
-    assert.equal(Token.UINT8.get(buf, 3), 255);
+    expect(UINT8.get(buf, 0)).toBe(0);
+    expect(UINT8.get(buf, 1)).toBe(26);
+    expect(UINT8.get(buf, 2)).toBe(1);
+    expect(UINT8.get(buf, 3)).toBe(255);
   });
 });
