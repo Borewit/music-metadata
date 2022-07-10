@@ -1,6 +1,7 @@
 import { IGetToken } from "../strtok3";
 
 import { IChunkHeader } from "../iff";
+import { UINT16_LE, UINT32_LE } from "../token-types";
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx
@@ -57,14 +58,14 @@ export class Format implements IGetToken<IWaveFormat> {
     this.len = header.chunkSize;
   }
 
-  public get(buf: Buffer, off: number): IWaveFormat {
+  public get(buf: Uint8Array, off: number): IWaveFormat {
     return {
-      wFormatTag: buf.readUInt16LE(off),
-      nChannels: buf.readUInt16LE(off + 2),
-      nSamplesPerSec: buf.readUInt32LE(off + 4),
-      nAvgBytesPerSec: buf.readUInt32LE(off + 8),
-      nBlockAlign: buf.readUInt16LE(off + 12),
-      wBitsPerSample: buf.readUInt16LE(off + 14),
+      wFormatTag: UINT16_LE.get(buf, off),
+      nChannels: UINT16_LE.get(buf, off + 2),
+      nSamplesPerSec: UINT32_LE.get(buf, off + 4),
+      nAvgBytesPerSec: UINT32_LE.get(buf, off + 8),
+      nBlockAlign: UINT16_LE.get(buf, off + 12),
+      wBitsPerSample: UINT16_LE.get(buf, off + 14),
     };
   }
 }

@@ -1,6 +1,7 @@
 import { IGetToken } from "../strtok3";
 
 import { IChunkHeader } from "../iff";
+import { UINT32_LE } from "../token-types";
 
 export interface IFactChunk {
   dwSampleLength: number;
@@ -21,9 +22,9 @@ export class FactChunk implements IGetToken<IFactChunk> {
     this.len = header.chunkSize;
   }
 
-  public get(buf: Buffer, off: number): IFactChunk {
+  public get(buf: Uint8Array, off: number): IFactChunk {
     return {
-      dwSampleLength: buf.readUInt32LE(off),
+      dwSampleLength: UINT32_LE.get(buf, off),
     };
   }
 }

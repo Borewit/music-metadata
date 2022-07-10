@@ -10,10 +10,10 @@ export { IChunkHeader } from "../iff";
 export const Header: IGetToken<IChunkHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off): IChunkHeader => {
+  get: (buf: Uint8Array, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: buf.toString("binary", off, off + 4),
+      chunkID: new Token.StringType(4, "binary").get(buf, off),
       // Size
       chunkSize: Token.UINT32_LE.get(buf, 4),
     };
