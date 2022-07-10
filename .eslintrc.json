@@ -33,15 +33,16 @@
     "prettier"
   ],
   "ignorePatterns": [
-    "dest/**/*.d.ts",
+    "**/*.d.ts",
     "**/*.js",
+    "example/**/*",
     "test/file-type/fixture/*",
     "test/peek-readable/resources/*",
     "test/strtok3/resources/*",
     "test/samples/**/*"
   ],
   "parserOptions": {
-    "project": "./tsconfig.eslint.json"
+    "project": "./tsconfig.check.json"
   },
   "plugins": ["eslint-plugin-node"],
   "settings": {

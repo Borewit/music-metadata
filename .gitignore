@@ -25,3 +25,4 @@ dist/
 vite-out/
 
 .eslintcache
+tsconfig.check.tsbuildinfo
