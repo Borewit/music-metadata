@@ -28,34 +28,17 @@ test("should parse MPEG-1 Audio Layer II ", async () => {
    *
    * Using CBR calculation: 23392.29375; same as Mutagen
    */
-  const filePath = join(
-    samplePath,
-    "1971 - 003 - Sweet - Co-Co - CannaPower.mp2"
-  );
+  const filePath = join(samplePath, "1971 - 003 - Sweet - Co-Co - CannaPower.mp2");
 
   const metadata = await parseFile(filePath, { duration: true });
 
-  expect(metadata.format.tagTypes, "Tags: ID3v1 & ID3v2.3").toStrictEqual([
-    "ID3v2.3",
-    "ID3v1",
-  ]);
+  expect(metadata.format.tagTypes, "Tags: ID3v1 & ID3v2.3").toStrictEqual(["ID3v2.3", "ID3v1"]);
   expect(metadata.format.container, "format.container = MPEG").toBe("MPEG");
-  expect(metadata.format.codec, "format.codec = MPEG-1 Audio Layer II").toBe(
-    "MPEG 1 Layer 2"
-  );
-  expect(metadata.format.bitrate, "format.bitrate = 128 kbit/sec").toBe(
-    128_000
-  );
-  expect(metadata.format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(
-    44_100
-  );
-  expect(
-    metadata.format.numberOfSamples,
-    "format.numberOfSamples = 23040"
-  ).toBe(23_040);
-  expect(metadata.format.duration, "duration [seconds]").toBe(
-    0.522_448_979_591_836_8
-  ); // validated 2017-04-09
+  expect(metadata.format.codec, "format.codec = MPEG-1 Audio Layer II").toBe("MPEG 1 Layer 2");
+  expect(metadata.format.bitrate, "format.bitrate = 128 kbit/sec").toBe(128_000);
+  expect(metadata.format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+  expect(metadata.format.numberOfSamples, "format.numberOfSamples = 23040").toBe(23_040);
+  expect(metadata.format.duration, "duration [seconds]").toBe(0.522_448_979_591_836_8); // validated 2017-04-09
 });
 
 describe("MPEG frame sync efficiency", () => {
@@ -68,11 +51,7 @@ describe("MPEG frame sync efficiency", () => {
 
     const streamReader = new SourceStream(buf);
 
-    await parseStream(
-      streamReader,
-      { mimeType: "audio/mpeg" },
-      { duration: true }
-    );
+    await parseStream(streamReader, { mimeType: "audio/mpeg" }, { duration: true });
   }, 10_000);
 
   test("should sync efficient, from a file", async function () {
@@ -110,17 +89,12 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
     const id3v23 = orderTags(metadata.native["ID3v2.3"]);
     const id3v1 = orderTags(metadata.native.ID3v1);
 
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "ID3v1",
-    ]);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.numberOfSamples, "format.numberOfSamples").toBe(9_098_496); // FooBar says 3:26.329 seconds (9.099.119 samples)
     expect(format.duration, "format.duration").toBeCloseTo(206.3, 1); // FooBar says 3:26.329 seconds (9.099.119 samples)
     expect(format.bitrate, "format.bitrate = 128 kbit/sec").toBe(320_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
 
     // t.strictEqual(format.codec, 'LAME3.91', 'format.codec');
     // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
@@ -139,28 +113,20 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
 
     expect(id3v23.TPE2, "native: TPE2").toStrictEqual(["Reel Big Fish"]);
     expect(id3v23.TIT2, "native: TIT2").toStrictEqual(["You Don't Know"]);
-    expect(id3v23.TALB, "native: TALB").toStrictEqual([
-      "Why Do They Rock So Hard?",
-    ]);
+    expect(id3v23.TALB, "native: TALB").toStrictEqual(["Why Do They Rock So Hard?"]);
     expect(id3v23.TPE1, "native: TPE1").toStrictEqual(["Reel Big Fish"]);
     expect(id3v23.TCON, "native: TCON").toStrictEqual(["Ska-Punk"]);
     expect(id3v23.TYER, "native: TYER").toStrictEqual(["1998"]);
     expect(id3v23.TCOM, "native: TCOM").toStrictEqual(["CA"]); // ToDo: common property?
     expect(id3v23.TRCK, "native: TRCK").toStrictEqual(["04"]);
-    expect(id3v23.COMM, "native: COMM").toStrictEqual([
-      { description: "", language: "eng", text: "Jive" },
-    ]);
+    expect(id3v23.COMM, "native: COMM").toStrictEqual([{ description: "", language: "eng", text: "Jive" }]);
 
     expect(id3v1.artist, "id3v1.artist").toStrictEqual(["Reel Big Fish"]);
     expect(id3v1.title, "id3v1.title").toStrictEqual(["You Don't Know"]);
-    expect(id3v1.album, "id3v1.album").toStrictEqual([
-      "Why Do They Rock So Hard?",
-    ]);
+    expect(id3v1.album, "id3v1.album").toStrictEqual(["Why Do They Rock So Hard?"]);
     expect(id3v1.year, "(id3v1.year").toStrictEqual(["1998"]);
     expect(id3v1.track, "id3v1.track").toStrictEqual([4]);
-    expect(id3v1.comment, "id3v1.comment").toStrictEqual([
-      "000010DF 00000B5A 00007784",
-    ]);
+    expect(id3v1.comment, "id3v1.comment").toStrictEqual(["000010DF 00000B5A 00007784"]);
   }, 15_000);
 
   test("should decode 07 - I'm Cool.mp3", async function () {
@@ -180,9 +146,7 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
     // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
     expect(format.duration, "format.duration").toBeCloseTo(200.9, 1); // FooBar says 3:26.329 seconds
     expect(format.bitrate, "format.bitrate = 128 kbit/sec").toBe(320_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
     // t.strictEqual(format.codec, 'LAME3.98r', 'format.codec'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407
     // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
 
@@ -200,17 +164,13 @@ describe("mpeg parsing fails for irrelevant attributes #14", () => {
 
     expect(native.TPE2, "native: TPE2").toStrictEqual(["Reel Big Fish"]);
     expect(native.TIT2, "native: TIT2").toStrictEqual(["I'm Cool"]);
-    expect(native.TALB, "native: TALB").toStrictEqual([
-      "Why Do They Rock So Hard?",
-    ]);
+    expect(native.TALB, "native: TALB").toStrictEqual(["Why Do They Rock So Hard?"]);
     expect(native.TPE1, "native: TPE1").toStrictEqual(["Reel Big Fish"]);
     expect(native.TCON, "native: TCON").toStrictEqual(["Ska-Punk"]);
     expect(native.TYER, "native: TYER").toStrictEqual(["1998"]);
     expect(native.TCOM, "native: TCOM").toStrictEqual(["CA"]);
     expect(native.TRCK, "native: TRCK").toStrictEqual(["07"]);
-    expect(native.COMM, "native: COMM").toStrictEqual([
-      { description: "", language: "eng", text: "Jive" },
-    ]);
+    expect(native.COMM, "native: COMM").toStrictEqual([{ description: "", language: "eng", text: "Jive" }]);
   }, 15_000);
 });
 
@@ -242,9 +202,7 @@ describe("Handle corrupt MPEG-frames", () => {
     expect(format.tagTypes, "format.type").toStrictEqual(["ID3v2.3", "ID3v1"]);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitrate, "format.bitrate = 128 kbit/sec").toBe(320_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
   });
 });
 
@@ -258,20 +216,14 @@ describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
     const metadata = await parseFile(join(issueDir, "id3-multi-02.mp3"));
     const format = metadata.format;
 
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "ID3v2.4",
-      "ID3v1",
-    ]);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v2.4", "ID3v1"]);
     expect(format.duration, "format.duration").toBe(230.295_510_204_081_64);
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitrate, "format.bitrate = 160 kbit/sec").toBe(320_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
   });
 
   /**
@@ -282,20 +234,14 @@ describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
     const metadata = await parseFile(join(issueDir, "id3-multi-01.mp3"));
     const format = metadata.format;
 
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "ID3v2.4",
-      "ID3v1",
-    ]);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v2.4", "ID3v1"]);
     expect(format.duration, "format.duration").toBe(0.130_612_244_897_959_2);
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitrate, "format.bitrate = 160 kbit/sec").toBe(320_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
   });
 });
 
@@ -304,24 +250,15 @@ describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
  */
 describe("POPM decoding", () => {
   test("check mapping function", () => {
-    expect(
-      ID3v24TagMapper.toRating({ email: "user1@bla.com", rating: 0 }),
-      "unknown rating"
-    ).toStrictEqual({
+    expect(ID3v24TagMapper.toRating({ email: "user1@bla.com", rating: 0 }), "unknown rating").toStrictEqual({
       source: "user1@bla.com",
       rating: undefined,
     });
-    expect(
-      ID3v24TagMapper.toRating({ email: "user1@bla.com", rating: 1 }),
-      "lowest rating"
-    ).toStrictEqual({
+    expect(ID3v24TagMapper.toRating({ email: "user1@bla.com", rating: 1 }), "lowest rating").toStrictEqual({
       source: "user1@bla.com",
       rating: 0 / 255,
     });
-    expect(
-      ID3v24TagMapper.toRating({ email: "user1@bla.com", rating: 255 }),
-      "highest rating"
-    ).toStrictEqual({
+    expect(ID3v24TagMapper.toRating({ email: "user1@bla.com", rating: 255 }), "highest rating").toStrictEqual({
       source: "user1@bla.com",
       rating: 1,
     });
@@ -336,10 +273,7 @@ describe("POPM decoding", () => {
       rating: 128,
       counter: 0,
     });
-    expect(metadata.common.rating[0].rating, "Common rating").toBeCloseTo(
-      0.5,
-      2
-    );
+    expect(metadata.common.rating[0].rating, "Common rating").toBeCloseTo(0.5, 2);
   });
 
   test("from 'id3v2-lyrics.mp3'", async () => {
@@ -388,11 +322,7 @@ describe("Calculate / read duration", () => {
     const buffer = readFileSync(filePath);
     const stream = new SourceStream(buffer);
 
-    const metadata = await parseStream(
-      stream,
-      { mimeType: "audio/mpeg" },
-      { duration: true }
-    );
+    const metadata = await parseStream(stream, { mimeType: "audio/mpeg" }, { duration: true });
     expect(metadata.format.duration).toBeCloseTo(34.66, 2);
   });
 });

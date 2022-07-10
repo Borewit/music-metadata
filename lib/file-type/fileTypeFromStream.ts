@@ -10,9 +10,7 @@ import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
  * @param stream - A readable stream representing file data.
  * @returns The detected file type and MIME type, or `undefined` when there is no match.
  */
-export async function fileTypeFromStream(
-  stream: ReadableStream
-): Promise<FileTypeResult | undefined> {
+export async function fileTypeFromStream(stream: ReadableStream): Promise<FileTypeResult | undefined> {
   const tokenizer = await strtok3.fromStream(stream);
   try {
     return await fileTypeFromTokenizer(tokenizer);

@@ -14,12 +14,7 @@ export abstract class State<T> implements IGetToken<T> {
 
   public abstract get(buf: Buffer, off: number): T;
 
-  protected postProcessTag(
-    tags: ITag[],
-    name: string,
-    valueType: number,
-    data: any
-  ) {
+  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any) {
     if (name === "WM/Picture") {
       tags.push({ id: name, value: WmPictureToken.fromBuffer(data as Buffer) });
     } else {

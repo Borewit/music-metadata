@@ -7,15 +7,7 @@ import { IOptions, ITrackInfo } from "../type";
 import { ITokenParser } from "../ParserFactory";
 import { BasicParser } from "../common/BasicParser";
 
-import {
-  DataType,
-  IContainerType,
-  IHeader,
-  IMatroskaDoc,
-  ITree,
-  TargetType,
-  TrackType,
-} from "./types";
+import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
 import * as matroskaDtd from "./MatroskaDtd";
 
 const debug = initDebug("music-metadata:parser:matroska");
@@ -40,10 +32,7 @@ export class MatroskaParser extends BasicParser {
     this.parserMap.set(DataType.uint, (e) => this.readUint(e));
     this.parserMap.set(DataType.string, (e) => this.readString(e));
     this.parserMap.set(DataType.binary, (e) => this.readBuffer(e));
-    this.parserMap.set(
-      DataType.uid,
-      async (e) => (await this.readUint(e)) === 1
-    );
+    this.parserMap.set(DataType.uid, async (e) => (await this.readUint(e)) === 1);
     this.parserMap.set(DataType.bool, (e) => this.readFlag(e));
     this.parserMap.set(DataType.float, (e) => this.readFloat(e));
   }
@@ -55,11 +44,7 @@ export class MatroskaParser extends BasicParser {
    * @param {IOptions} options Parsing options
    * @returns
    */
-  public override init(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ): ITokenParser {
+  public override init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
     super.init(metadata, tokenizer, options);
     return this;
   }
@@ -111,28 +96,16 @@ export class MatroskaParser extends BasicParser {
             if (!previousValue.flagDefault && currentValue.flagDefault) {
               return currentValue;
             }
-            if (
-              currentValue.trackNumber &&
-              currentValue.trackNumber < previousValue.trackNumber
-            ) {
+            if (currentValue.trackNumber && currentValue.trackNumber < previousValue.trackNumber) {
               return currentValue;
             }
             return previousValue;
           }, null);
 
         if (audioTrack) {
-          this.metadata.setFormat(
-            "codec",
-            audioTrack.codecID.replace("A_", "")
-          );
-          this.metadata.setFormat(
-            "sampleRate",
-            audioTrack.audio.samplingFrequency
-          );
-          this.metadata.setFormat(
-            "numberOfChannels",
-            audioTrack.audio.channels
-          );
+          this.metadata.setFormat("codec", audioTrack.codecID.replace("A_", ""));
+          this.metadata.setFormat("sampleRate", audioTrack.audio.samplingFrequency);
+          this.metadata.setFormat("numberOfChannels", audioTrack.audio.channels);
         }
 
         if (matroska.segment.tags) {
@@ -166,11 +139,7 @@ export class MatroskaParser extends BasicParser {
     }
   }
 
-  private async parseContainer(
-    container: IContainerType,
-    posDone: number,
-    path: string[]
-  ): Promise<ITree> {
+  private async parseContainer(container: IContainerType, posDone: number, path: string[]): Promise<ITree> {
     const tree: ITree = {};
     while (this.tokenizer.position < posDone) {
       let element: IHeader;
@@ -209,11 +178,7 @@ export class MatroskaParser extends BasicParser {
             await this.tokenizer.ignore(element.len);
             break;
           default:
-            debug(
-              `parseEbml: path=${path.join(
-                "/"
-              )}, unknown element: id=${element.id.toString(16)}`
-            );
+            debug(`parseEbml: path=${path.join("/")}, unknown element: id=${element.id.toString(16)}`);
             this.padding += element.len;
             await this.tokenizer.ignore(element.len);
         }
@@ -287,9 +252,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   private async readString(e: IHeader): Promise<string> {
-    const rawString = await this.tokenizer.readToken(
-      new StringType(e.len, "utf8")
-    );
+    const rawString = await this.tokenizer.readToken(new StringType(e.len, "utf8"));
     return rawString.replace(/\00.*$/g, "");
   }
 

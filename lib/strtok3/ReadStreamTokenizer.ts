@@ -27,30 +27,21 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns Promise with number of bytes read
    */
-  public async readBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number> {
+  public async readBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
     const normOptions = this.normalizeOptions(uint8Array, options);
     const skipBytes = normOptions.position - this.position;
     if (skipBytes > 0) {
       await this.ignore(skipBytes);
       return this.readBuffer(uint8Array, options);
     } else if (skipBytes < 0) {
-      throw new Error(
-        "`options.position` must be equal or greater than `tokenizer.position`"
-      );
+      throw new Error("`options.position` must be equal or greater than `tokenizer.position`");
     }
 
     if (normOptions.length === 0) {
       return 0;
     }
 
-    const bytesRead = await this.streamReader.read(
-      uint8Array,
-      normOptions.offset,
-      normOptions.length
-    );
+    const bytesRead = await this.streamReader.read(uint8Array, normOptions.offset, normOptions.length);
     this.position += bytesRead;
     if ((!options || !options.mayBeLess) && bytesRead < normOptions.length) {
       throw new EndOfStreamError();
@@ -64,10 +55,7 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns Promise with number of bytes peeked
    */
-  public async peekBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number> {
+  public async peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
     const normOptions = this.normalizeOptions(uint8Array, options);
     let bytesRead = 0;
 
@@ -87,11 +75,7 @@ export class ReadStreamTokenizer extends AbstractTokenizer {
 
     if (normOptions.length > 0) {
       try {
-        bytesRead = await this.streamReader.peek(
-          uint8Array,
-          normOptions.offset,
-          normOptions.length
-        );
+        bytesRead = await this.streamReader.peek(uint8Array, normOptions.offset, normOptions.length);
       } catch (error) {
         if (options?.mayBeLess && error instanceof EndOfStreamError) {
           return 0;

@@ -33,12 +33,7 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
  * @param encoding The string encoding used
  * @returns Absolute position on uint8Array where zero found
  */
-export function findZero(
-  uint8Array: Uint8Array,
-  start: number,
-  end: number,
-  encoding?: StringEncoding
-): number {
+export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: StringEncoding): number {
   let i = start;
   if (encoding === "utf16le") {
     while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
@@ -87,25 +82,15 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
  * @param encoding
  * @returns
  */
-export function decodeString(
-  uint8Array: Uint8Array,
-  encoding: StringEncoding
-): string {
+export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): string {
   // annoying workaround for a double BOM issue
   // https://github.com/leetreveil/musicmetadata/issues/84
   if (uint8Array[0] === 0xff && uint8Array[1] === 0xfe) {
     // little endian
     return decodeString(uint8Array.subarray(2), encoding);
-  } else if (
-    encoding === "utf16le" &&
-    uint8Array[0] === 0xfe &&
-    uint8Array[1] === 0xff
-  ) {
+  } else if (encoding === "utf16le" && uint8Array[0] === 0xfe && uint8Array[1] === 0xff) {
     // BOM, indicating big endian decoding
-    if ((uint8Array.length & 1) !== 0)
-      throw new Error(
-        "Expected even number of octets for 16-bit unicode string"
-      );
+    if ((uint8Array.length & 1) !== 0) throw new Error("Expected even number of octets for 16-bit unicode string");
     return decodeString(swapBytes(uint8Array), encoding);
   }
   return Buffer.from(uint8Array).toString(encoding);
@@ -131,12 +116,7 @@ export function stripNulls(str: string): string {
  * @param len Length of number in bits
  * @returns Decoded bit aligned number
  */
-export function getBitAllignedNumber(
-  source: Uint8Array,
-  byteOffset: number,
-  bitOffset: number,
-  len: number
-): number {
+export function getBitAllignedNumber(source: Uint8Array, byteOffset: number, bitOffset: number, len: number): number {
   const byteOff = byteOffset + Math.trunc(bitOffset / 8);
   const bitOff = bitOffset % 8;
   let value = source[byteOff];
@@ -147,12 +127,7 @@ export function getBitAllignedNumber(
     value >>= 8 - bitOff - len;
   } else if (bitsLeft > 0) {
     value <<= bitsLeft;
-    value |= getBitAllignedNumber(
-      source,
-      byteOffset,
-      bitOffset + bitsRead,
-      bitsLeft
-    );
+    value |= getBitAllignedNumber(source, byteOffset, bitOffset + bitsRead, bitsLeft);
   }
   return value;
 }
@@ -165,11 +140,7 @@ export function getBitAllignedNumber(
  * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is the least significant bit
  * @returns True if bit is set
  */
-export function isBitSet(
-  source: Uint8Array,
-  byteOffset: number,
-  bitOffset: number
-): boolean {
+export function isBitSet(source: Uint8Array, byteOffset: number, bitOffset: number): boolean {
   return getBitAllignedNumber(source, byteOffset, bitOffset, 1) === 1;
 }
 

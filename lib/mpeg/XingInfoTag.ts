@@ -35,9 +35,7 @@ export interface IXingInfoTag {
  *
  * @param tokenizer
  */
-export async function readXingHeader(
-  tokenizer: ITokenizer
-): Promise<IXingInfoTag> {
+export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTag> {
   const flags = await tokenizer.readToken(XingHeaderFlags);
   const xingInfoTag: IXingInfoTag = {};
   if (flags.frames) {
@@ -62,13 +60,9 @@ export async function readXingHeader(
     const match = xingInfoTag.lame.version.match(/\d+.\d+/g);
     if (match) {
       const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
-      const version = majorMinorVersion
-        .split(".")
-        .map((n) => Number.parseInt(n, 10));
+      const version = majorMinorVersion.split(".").map((n) => Number.parseInt(n, 10));
       if (version[0] >= 3 && version[1] >= 90) {
-        xingInfoTag.lame.extended = await tokenizer.readToken(
-          ExtendedLameHeader
-        );
+        xingInfoTag.lame.extended = await tokenizer.readToken(ExtendedLameHeader);
       }
     }
   }

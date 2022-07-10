@@ -6,16 +6,8 @@ import { samplePath } from "./util";
 
 const skipCases: [string, { skipCovers?: boolean }, boolean][] = [
   ["should include cover-art if option.skipCovers is not defined", {}, true],
-  [
-    "NOT should include cover-art if option.skipCovers=true",
-    { skipCovers: true },
-    false,
-  ],
-  [
-    "should include cover-art if option.skipCovers=false",
-    { skipCovers: false },
-    true,
-  ],
+  ["NOT should include cover-art if option.skipCovers=true", { skipCovers: true }, false],
+  ["should include cover-art if option.skipCovers=false", { skipCovers: false }, true],
 ];
 
 describe("'skipCovers' in APE format", () => {
@@ -24,40 +16,22 @@ describe("'skipCovers' in APE format", () => {
     const metadata = await parseFile(file_ape, options);
     const native = orderTags(metadata.native.APEv2);
     // Native
-    expect(
-      native["Cover Art (Back)"] !== undefined,
-      "APEv2.'Cover Art (Back)'"
-    ).toBe(expectedDefined);
-    expect(
-      native["Cover Art (Front)"] !== undefined,
-      "APEv2.'Cover Art (Front)'"
-    ).toBe(expectedDefined);
+    expect(native["Cover Art (Back)"] !== undefined, "APEv2.'Cover Art (Back)'").toBe(expectedDefined);
+    expect(native["Cover Art (Front)"] !== undefined, "APEv2.'Cover Art (Front)'").toBe(expectedDefined);
     // Common
-    expect(
-      metadata.common.picture !== undefined,
-      "metadata.common.picture"
-    ).toBe(expectedDefined);
+    expect(metadata.common.picture !== undefined, "metadata.common.picture").toBe(expectedDefined);
   });
 });
 
 describe("'skipCovers' in FLAC/Vorbis format", () => {
-  const file_flac = join(
-    samplePath,
-    "MusicBrainz - Beth Hart - Sinner's Prayer.flac"
-  );
+  const file_flac = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac");
   test.each(skipCases)("%s", async (_description, options, expectedDefined) => {
     const metadata = await parseFile(file_flac, options);
     const vorbis = orderTags(metadata.native.vorbis);
     // Native
-    expect(
-      vorbis.METADATA_BLOCK_PICTURE !== undefined,
-      "vorbis.METADATA_BLOCK_PICTURE"
-    ).toBe(expectedDefined);
+    expect(vorbis.METADATA_BLOCK_PICTURE !== undefined, "vorbis.METADATA_BLOCK_PICTURE").toBe(expectedDefined);
     // Common
-    expect(
-      metadata.common.picture !== undefined,
-      "metadata.common.picture"
-    ).toBe(expectedDefined);
+    expect(metadata.common.picture !== undefined, "metadata.common.picture").toBe(expectedDefined);
   });
 });
 
@@ -69,10 +43,7 @@ describe("'skipCovers' in MP3/id3v2.2 format", () => {
     // Native
     expect(id3.PIC !== undefined, "id3v1.PIC").toBe(expectedDefined);
     // Common
-    expect(
-      metadata.common.picture !== undefined,
-      "metadata.common.picture"
-    ).toBe(expectedDefined);
+    expect(metadata.common.picture !== undefined, "metadata.common.picture").toBe(expectedDefined);
   });
 });
 
@@ -84,10 +55,7 @@ describe("'skipCovers' in M4A (id4) format", () => {
     // Native
     expect(iTunes.covr !== undefined, "iTunes.covr").toBe(expectedDefined);
     // Common
-    expect(
-      metadata.common.picture !== undefined,
-      "metadata.common.picture"
-    ).toBe(expectedDefined);
+    expect(metadata.common.picture !== undefined, "metadata.common.picture").toBe(expectedDefined);
   });
 });
 
@@ -97,14 +65,8 @@ describe("'skipCovers' in ogg format", () => {
     const metadata = await parseFile(file_ogg, options);
     const vorbis = orderTags(metadata.native.vorbis);
     // Native
-    expect(
-      vorbis.METADATA_BLOCK_PICTURE !== undefined,
-      "vorbis.METADATA_BLOCK_PICTURE"
-    ).toBe(expectedDefined);
+    expect(vorbis.METADATA_BLOCK_PICTURE !== undefined, "vorbis.METADATA_BLOCK_PICTURE").toBe(expectedDefined);
     // Common
-    expect(
-      metadata.common.picture !== undefined,
-      "metadata.common.picture"
-    ).toBe(expectedDefined);
+    expect(metadata.common.picture !== undefined, "metadata.common.picture").toBe(expectedDefined);
   });
 });

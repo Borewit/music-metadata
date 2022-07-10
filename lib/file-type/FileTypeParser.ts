@@ -1,11 +1,6 @@
 import * as Token from "../token-types";
 import * as strtok3 from "../strtok3";
-import {
-  stringToBytes,
-  tarHeaderChecksumMatches,
-  uint32SyncSafeToken,
-  checkUtil,
-} from "./util";
+import { stringToBytes, tarHeaderChecksumMatches, uint32SyncSafeToken, checkUtil } from "./util";
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
 import { FileTypeResult } from "./type";
 
@@ -67,10 +62,7 @@ export class FileTypeParser {
     if (this.check([0x25, 0x21])) {
       await tokenizer.peekBuffer(this.buffer, { length: 24, mayBeLess: true });
 
-      if (
-        this.checkString("PS-Adobe-", { offset: 2 }) &&
-        this.checkString(" EPSF-", { offset: 14 })
-      ) {
+      if (this.checkString("PS-Adobe-", { offset: 2 }) && this.checkString(" EPSF-", { offset: 14 })) {
         return {
           ext: "eps",
           mime: "application/eps",
@@ -149,10 +141,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      (this.buffer[0] === 0x43 || this.buffer[0] === 0x46) &&
-      this.check([0x57, 0x53], { offset: 1 })
-    ) {
+    if ((this.buffer[0] === 0x43 || this.buffer[0] === 0x46) && this.check([0x57, 0x53], { offset: 1 })) {
       return {
         ext: "swf",
         mime: "application/x-shockwave-flash",
@@ -225,9 +214,7 @@ export class FileTypeParser {
             extraFieldLength: this.buffer.readUInt16LE(28),
           };
 
-          zipHeader.filename = await tokenizer.readToken(
-            new Token.StringType(zipHeader.filenameLength, "utf8")
-          );
+          zipHeader.filename = await tokenizer.readToken(new Token.StringType(zipHeader.filenameLength, "utf8"));
           await tokenizer.ignore(zipHeader.extraFieldLength);
 
           // Assumes signed `.xpi` from addons.mozilla.org
@@ -238,10 +225,7 @@ export class FileTypeParser {
             };
           }
 
-          if (
-            zipHeader.filename.endsWith(".rels") ||
-            zipHeader.filename.endsWith(".xml")
-          ) {
+          if (zipHeader.filename.endsWith(".rels") || zipHeader.filename.endsWith(".xml")) {
             const type = zipHeader.filename.split("/")[0];
             switch (type) {
               case "_rels":
@@ -273,10 +257,7 @@ export class FileTypeParser {
             };
           }
 
-          if (
-            zipHeader.filename.startsWith("3D/") &&
-            zipHeader.filename.endsWith(".model")
-          ) {
+          if (zipHeader.filename.startsWith("3D/") && zipHeader.filename.endsWith(".model")) {
             return {
               ext: "3mf",
               mime: "model/3mf",
@@ -289,13 +270,8 @@ export class FileTypeParser {
           // - one entry named '[Content_Types].xml' or '_rels/.rels',
           // - one entry indicating specific type of file.
           // MS Office, OpenOffice and LibreOffice may put the parts in different order, so the check should not rely on it.
-          if (
-            zipHeader.filename === "mimetype" &&
-            zipHeader.compressedSize === zipHeader.uncompressedSize
-          ) {
-            const mimeType = await tokenizer.readToken(
-              new Token.StringType(zipHeader.compressedSize, "utf8")
-            );
+          if (zipHeader.filename === "mimetype" && zipHeader.compressedSize === zipHeader.uncompressedSize) {
+            const mimeType = await tokenizer.readToken(new Token.StringType(zipHeader.compressedSize, "utf8"));
             const trimmedMimeType = mimeType.trim();
 
             switch (trimmedMimeType) {
@@ -327,17 +303,12 @@ export class FileTypeParser {
           if (zipHeader.compressedSize === 0) {
             let nextHeaderIndex = -1;
 
-            while (
-              nextHeaderIndex < 0 &&
-              tokenizer.position < tokenizer.fileInfo.size
-            ) {
+            while (nextHeaderIndex < 0 && tokenizer.position < tokenizer.fileInfo.size) {
               await tokenizer.peekBuffer(this.buffer, { mayBeLess: true });
 
               nextHeaderIndex = this.buffer.indexOf("504B0304", 0, "hex");
               // Move position to the next header if found, skip the whole buffer otherwise
-              await tokenizer.ignore(
-                nextHeaderIndex >= 0 ? nextHeaderIndex : this.buffer.length
-              );
+              await tokenizer.ignore(nextHeaderIndex >= 0 ? nextHeaderIndex : this.buffer.length);
             }
           } else {
             await tokenizer.ignore(zipHeader.compressedSize);
@@ -418,12 +389,8 @@ export class FileTypeParser {
 
     if (
       this.check([0x50, 0x4b]) &&
-      (this.buffer[2] === 0x3 ||
-        this.buffer[2] === 0x5 ||
-        this.buffer[2] === 0x7) &&
-      (this.buffer[3] === 0x4 ||
-        this.buffer[3] === 0x6 ||
-        this.buffer[3] === 0x8)
+      (this.buffer[2] === 0x3 || this.buffer[2] === 0x5 || this.buffer[2] === 0x7) &&
+      (this.buffer[3] === 0x4 || this.buffer[3] === 0x6 || this.buffer[3] === 0x8)
     ) {
       return {
         ext: "zip",
@@ -442,10 +409,7 @@ export class FileTypeParser {
     ) {
       // They all can have MIME `video/mp4` except `application/mp4` special-case which is hard to detect.
       // For some cases, we're specific, everything else falls to `video/mp4` with `mp4` extension.
-      const brandMajor = this.buffer
-        .toString("binary", 8, 12)
-        .replace("\0", " ")
-        .trim();
+      const brandMajor = this.buffer.toString("binary", 8, 12).replace("\0", " ").trim();
       switch (brandMajor) {
         case "avif":
         case "avis":
@@ -504,8 +468,7 @@ export class FileTypeParser {
 
     if (
       this.checkString("wOFF") &&
-      (this.check([0x00, 0x01, 0x00, 0x00], { offset: 4 }) ||
-        this.checkString("OTTO", { offset: 4 }))
+      (this.check([0x00, 0x01, 0x00, 0x00], { offset: 4 }) || this.checkString("OTTO", { offset: 4 }))
     ) {
       return {
         ext: "woff",
@@ -515,8 +478,7 @@ export class FileTypeParser {
 
     if (
       this.checkString("wOF2") &&
-      (this.check([0x00, 0x01, 0x00, 0x00], { offset: 4 }) ||
-        this.checkString("OTTO", { offset: 4 }))
+      (this.check([0x00, 0x01, 0x00, 0x00], { offset: 4 }) || this.checkString("OTTO", { offset: 4 }))
     ) {
       return {
         ext: "woff2",
@@ -524,10 +486,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check([0xd4, 0xc3, 0xb2, 0xa1]) ||
-      this.check([0xa1, 0xb2, 0xc3, 0xd4])
-    ) {
+    if (this.check([0xd4, 0xc3, 0xb2, 0xa1]) || this.check([0xa1, 0xb2, 0xc3, 0xd4])) {
       return {
         ext: "pcap",
         mime: "application/vnd.tcpdump.pcap",
@@ -573,9 +532,7 @@ export class FileTypeParser {
     if (this.checkString("%PDF")) {
       await tokenizer.ignore(1350);
       const maxBufferSize = 10 * 1024 * 1024;
-      const buffer = Buffer.alloc(
-        Math.min(maxBufferSize, tokenizer.fileInfo.size)
-      );
+      const buffer = Buffer.alloc(Math.min(maxBufferSize, tokenizer.fileInfo.size));
       await tokenizer.readBuffer(buffer, { mayBeLess: true });
 
       // Check if this is an Adobe Illustrator file
@@ -831,10 +788,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check([0x52, 0x61, 0x72, 0x21, 0x1a, 0x7]) &&
-      (this.buffer[6] === 0x0 || this.buffer[6] === 0x1)
-    ) {
+    if (this.check([0x52, 0x61, 0x72, 0x21, 0x1a, 0x7]) && (this.buffer[6] === 0x0 || this.buffer[6] === 0x1)) {
       return {
         ext: "rar",
         mime: "application/x-rar-compressed",
@@ -937,10 +891,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check([0xef, 0xbb, 0xbf]) &&
-      this.checkString("<?xml", { offset: 3 })
-    ) {
+    if (this.check([0xef, 0xbb, 0xbf]) && this.checkString("<?xml", { offset: 3 })) {
       // UTF-8-BOM
       return {
         ext: "xml",
@@ -964,11 +915,7 @@ export class FileTypeParser {
     }
 
     // -- 12-byte signatures --
-    if (
-      this.check([
-        0x49, 0x49, 0x55, 0x00, 0x18, 0x00, 0x00, 0x00, 0x88, 0xe7, 0x74, 0xd8,
-      ])
-    ) {
+    if (this.check([0x49, 0x49, 0x55, 0x00, 0x18, 0x00, 0x00, 0x00, 0x88, 0xe7, 0x74, 0xd8])) {
       return {
         ext: "rw2",
         mime: "image/x-panasonic-rw2",
@@ -976,9 +923,7 @@ export class FileTypeParser {
     }
 
     // ASF_Header_Object first 80 bytes
-    if (
-      this.check([0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9])
-    ) {
+    if (this.check([0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9])) {
       await tokenizer.ignore(30);
       // Search for header should be in first 1KB of file.
       while (tokenizer.position + 24 < tokenizer.fileInfo.size) {
@@ -987,10 +932,7 @@ export class FileTypeParser {
         if (
           checkUtil(
             header.id,
-            [
-              0x91, 0x07, 0xdc, 0xb7, 0xb7, 0xa9, 0xcf, 0x11, 0x8e, 0xe6, 0x00,
-              0xc0, 0x0c, 0x20, 0x53, 0x65,
-            ]
+            [0x91, 0x07, 0xdc, 0xb7, 0xb7, 0xa9, 0xcf, 0x11, 0x8e, 0xe6, 0x00, 0xc0, 0x0c, 0x20, 0x53, 0x65]
           )
         ) {
           // Sync on Stream-Properties-Object (B7DC0791-A9B7-11CF-8EE6-00C00C205365)
@@ -1000,10 +942,7 @@ export class FileTypeParser {
           if (
             checkUtil(
               typeId,
-              [
-                0x40, 0x9e, 0x69, 0xf8, 0x4d, 0x5b, 0xcf, 0x11, 0xa8, 0xfd,
-                0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b,
-              ]
+              [0x40, 0x9e, 0x69, 0xf8, 0x4d, 0x5b, 0xcf, 0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b]
             )
           ) {
             // Found audio:
@@ -1016,10 +955,7 @@ export class FileTypeParser {
           if (
             checkUtil(
               typeId,
-              [
-                0xc0, 0xef, 0x19, 0xbc, 0x4d, 0x5b, 0xcf, 0x11, 0xa8, 0xfd,
-                0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b,
-              ]
+              [0xc0, 0xef, 0x19, 0xbc, 0x4d, 0x5b, 0xcf, 0x11, 0xa8, 0xfd, 0x00, 0x80, 0x5f, 0x5c, 0x44, 0x2b]
             )
           ) {
             // Found video:
@@ -1042,11 +978,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check([
-        0xab, 0x4b, 0x54, 0x58, 0x20, 0x31, 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a,
-      ])
-    ) {
+    if (this.check([0xab, 0x4b, 0x54, 0x58, 0x20, 0x31, 0x31, 0xbb, 0x0d, 0x0a, 0x1a, 0x0a])) {
       return {
         ext: "ktx",
         mime: "image/ktx",
@@ -1063,26 +995,14 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check(
-        [
-          0x27, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-          0x00,
-        ],
-        { offset: 2 }
-      )
-    ) {
+    if (this.check([0x27, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], { offset: 2 })) {
       return {
         ext: "shp",
         mime: "application/x-esri-shape",
       };
     }
 
-    if (
-      this.check([
-        0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a,
-      ])
-    ) {
+    if (this.check([0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a])) {
       // JPEG-2000 family
       await tokenizer.ignore(20);
       const type = await tokenizer.readToken(new Token.StringType(4, "ascii"));
@@ -1114,9 +1034,7 @@ export class FileTypeParser {
 
     if (
       this.check([0xff, 0x0a]) ||
-      this.check([
-        0x00, 0x00, 0x00, 0x0c, 0x4a, 0x58, 0x4c, 0x20, 0x0d, 0x0a, 0x87, 0x0a,
-      ])
+      this.check([0x00, 0x00, 0x00, 0x0c, 0x4a, 0x58, 0x4c, 0x20, 0x0d, 0x0a, 0x87, 0x0a])
     ) {
       return {
         ext: "jxl",
@@ -1135,10 +1053,7 @@ export class FileTypeParser {
     }
 
     // -- Unsafe signatures --
-    if (
-      this.check([0x0, 0x0, 0x1, 0xba]) ||
-      this.check([0x0, 0x0, 0x1, 0xb3])
-    ) {
+    if (this.check([0x0, 0x0, 0x1, 0xba]) || this.check([0x0, 0x0, 0x1, 0xb3])) {
       return {
         ext: "mpg",
         mime: "video/mpeg",
@@ -1240,12 +1155,7 @@ export class FileTypeParser {
       }
     }
 
-    if (
-      this.check([
-        0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02, 0x01,
-        0x01, 0x02,
-      ])
-    ) {
+    if (this.check([0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02, 0x01, 0x01, 0x02])) {
       return {
         ext: "mxf",
         mime: "application/mxf",
@@ -1268,10 +1178,7 @@ export class FileTypeParser {
     }
 
     // Blu-ray Disc Audio-Video (BDAV) MPEG-2 transport stream has 4-byte TP_extra_header before each 188-byte packet
-    if (
-      this.check([0x47], { offset: 4 }) &&
-      this.check([0x47], { offset: 196 })
-    ) {
+    if (this.check([0x47], { offset: 4 }) && this.check([0x47], { offset: 196 })) {
       return {
         ext: "mts",
         mime: "video/mp2t",
@@ -1298,8 +1205,8 @@ export class FileTypeParser {
 
     if (
       this.check([
-        0x4c, 0x00, 0x00, 0x00, 0x01, 0x14, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46,
+        0x4c, 0x00, 0x00, 0x00, 0x01, 0x14, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x46,
       ])
     ) {
       return {
@@ -1308,12 +1215,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check([
-        0x62, 0x6f, 0x6f, 0x6b, 0x00, 0x00, 0x00, 0x00, 0x6d, 0x61, 0x72, 0x6b,
-        0x00, 0x00, 0x00, 0x00,
-      ])
-    ) {
+    if (this.check([0x62, 0x6f, 0x6f, 0x6b, 0x00, 0x00, 0x00, 0x00, 0x6d, 0x61, 0x72, 0x6b, 0x00, 0x00, 0x00, 0x00])) {
       return {
         ext: "alias",
         mime: "application/x.apple.alias", // Invented by us
@@ -1332,12 +1234,7 @@ export class FileTypeParser {
       };
     }
 
-    if (
-      this.check([
-        0x06, 0x06, 0xed, 0xf5, 0xd8, 0x1d, 0x46, 0xe5, 0xbd, 0x31, 0xef, 0xe7,
-        0xfe, 0x74, 0xb7, 0x1d,
-      ])
-    ) {
+    if (this.check([0x06, 0x06, 0xed, 0xf5, 0xd8, 0x1d, 0x46, 0xe5, 0xbd, 0x31, 0xef, 0xe7, 0xfe, 0x74, 0xb7, 0x1d])) {
       return {
         ext: "indd",
         mime: "application/x-indesign",
@@ -1360,9 +1257,8 @@ export class FileTypeParser {
 
     if (
       this.check([
-        0xff, 0xfe, 0xff, 0x0e, 0x53, 0x00, 0x6b, 0x00, 0x65, 0x00, 0x74, 0x00,
-        0x63, 0x00, 0x68, 0x00, 0x55, 0x00, 0x70, 0x00, 0x20, 0x00, 0x4d, 0x00,
-        0x6f, 0x00, 0x64, 0x00, 0x65, 0x00, 0x6c, 0x00,
+        0xff, 0xfe, 0xff, 0x0e, 0x53, 0x00, 0x6b, 0x00, 0x65, 0x00, 0x74, 0x00, 0x63, 0x00, 0x68, 0x00, 0x55, 0x00,
+        0x70, 0x00, 0x20, 0x00, 0x4d, 0x00, 0x6f, 0x00, 0x64, 0x00, 0x65, 0x00, 0x6c, 0x00,
       ])
     ) {
       return {
@@ -1379,10 +1275,7 @@ export class FileTypeParser {
     }
 
     // Check MPEG 1 or 2 Layer 3 header, or 'layer 0' for ADTS (MPEG sync-word 0xFFE)
-    if (
-      this.buffer.length >= 2 &&
-      this.check([0xff, 0xe0], { offset: 0, mask: [0xff, 0xe0] })
-    ) {
+    if (this.buffer.length >= 2 && this.check([0xff, 0xe0], { offset: 0, mask: [0xff, 0xe0] })) {
       if (this.check([0x10], { offset: 1, mask: [0x16] })) {
         // Check for (ADTS) MPEG-2
         if (this.check([0x08], { offset: 1, mask: [0x08] })) {
@@ -1427,9 +1320,7 @@ export class FileTypeParser {
   }
 
   async readTiffTag(bigEndian: any): Promise<FileTypeResult> {
-    const tagId = await this.tokenizer.readToken(
-      bigEndian ? Token.UINT16_BE : Token.UINT16_LE
-    );
+    const tagId = await this.tokenizer.readToken(bigEndian ? Token.UINT16_BE : Token.UINT16_LE);
     void this.tokenizer.ignore(10);
     switch (tagId) {
       case 50_341:
@@ -1447,9 +1338,7 @@ export class FileTypeParser {
   }
 
   async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult> {
-    const numberOfTags = await this.tokenizer.readToken(
-      bigEndian ? Token.UINT16_BE : Token.UINT16_LE
-    );
+    const numberOfTags = await this.tokenizer.readToken(bigEndian ? Token.UINT16_BE : Token.UINT16_LE);
     for (let n = 0; n < numberOfTags; ++n) {
       const fileType = await this.readTiffTag(bigEndian);
       if (fileType) {
@@ -1459,14 +1348,8 @@ export class FileTypeParser {
   }
 
   async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult> {
-    const version = (bigEndian ? Token.UINT16_BE : Token.UINT16_LE).get(
-      this.buffer,
-      2
-    );
-    const ifdOffset = (bigEndian ? Token.UINT32_BE : Token.UINT32_LE).get(
-      this.buffer,
-      4
-    );
+    const version = (bigEndian ? Token.UINT16_BE : Token.UINT16_LE).get(this.buffer, 2);
+    const ifdOffset = (bigEndian ? Token.UINT32_BE : Token.UINT32_LE).get(this.buffer, 4);
 
     if (version === 42) {
       // TIFF file header
@@ -1480,8 +1363,7 @@ export class FileTypeParser {
 
         if (
           ifdOffset >= 8 &&
-          (this.check([0x1c, 0x00, 0xfe, 0x00], { offset: 8 }) ||
-            this.check([0x1f, 0x00, 0x0b, 0x00], { offset: 8 }))
+          (this.check([0x1c, 0x00, 0xfe, 0x00], { offset: 8 }) || this.check([0x1f, 0x00, 0x0b, 0x00], { offset: 8 }))
         ) {
           return {
             ext: "nef",
@@ -1552,17 +1434,11 @@ async function readElement(tokenizer: strtok3.ITokenizer) {
  * @param level
  * @param children
  */
-async function readChildren(
-  tokenizer: strtok3.ITokenizer,
-  level: number,
-  children: number
-) {
+async function readChildren(tokenizer: strtok3.ITokenizer, level: number, children: number) {
   while (children > 0) {
     const element = await readElement(tokenizer);
     if (element.id === 17_026) {
-      const rawValue = await tokenizer.readToken(
-        new Token.StringType(element.len, "utf8")
-      );
+      const rawValue = await tokenizer.readToken(new Token.StringType(element.len, "utf8"));
       return rawValue.replace(/\00.*$/g, ""); // Return DocType
     }
 

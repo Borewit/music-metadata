@@ -10,23 +10,13 @@ import { State } from "./State";
 export class ContentDescriptionObjectState extends State<ITag[]> {
   public static guid = ContentDescriptionObject;
 
-  private static contentDescTags = [
-    "Title",
-    "Author",
-    "Copyright",
-    "Description",
-    "Rating",
-  ];
+  private static contentDescTags = ["Title", "Author", "Copyright", "Description", "Rating"];
 
   public get(buf: Buffer, off: number): ITag[] {
     const tags: ITag[] = [];
 
     let pos = off + 10;
-    for (
-      let i = 0;
-      i < ContentDescriptionObjectState.contentDescTags.length;
-      ++i
-    ) {
+    for (let i = 0; i < ContentDescriptionObjectState.contentDescTags.length; ++i) {
       const length = buf.readUInt16LE(off + i * 2);
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];

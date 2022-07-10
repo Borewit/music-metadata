@@ -19,9 +19,7 @@ export interface ICodecEntry {
  */
 async function readString(tokenizer: ITokenizer): Promise<string> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const str = await tokenizer.readToken(
-    new Token.StringType(length * 2, "utf16le")
-  );
+  const str = await tokenizer.readToken(new Token.StringType(length * 2, "utf16le"));
   return str.replace("\0", "");
 }
 
@@ -30,9 +28,7 @@ async function readString(tokenizer: ITokenizer): Promise<string> {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
  * @param tokenizer
  */
-export async function readCodecEntries(
-  tokenizer: ITokenizer
-): Promise<ICodecEntry[]> {
+export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEntry[]> {
   const codecHeader = await tokenizer.readToken(CodecListObjectHeader);
   const entries: ICodecEntry[] = [];
   for (let i = 0; i < codecHeader.entryCount; ++i) {

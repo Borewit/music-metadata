@@ -34,21 +34,14 @@ export class OggParser extends BasicParser {
       do {
         header = await this.tokenizer.readToken<IPageHeader>(Header);
 
-        if (header.capturePattern !== "OggS")
-          throw new Error("Invalid Ogg capture pattern");
+        if (header.capturePattern !== "OggS") throw new Error("Invalid Ogg capture pattern");
         this.metadata.setFormat("container", "Ogg");
         this.header = header;
 
         this.pageNumber = header.pageSequenceNo;
-        debug(
-          "page#=%s, Ogg.id=%s",
-          header.pageSequenceNo,
-          header.capturePattern
-        );
+        debug("page#=%s, Ogg.id=%s", header.pageSequenceNo, header.capturePattern);
 
-        const segmentTable = await this.tokenizer.readToken<ISegmentTable>(
-          new SegmentTable(header)
-        );
+        const segmentTable = await this.tokenizer.readToken<ISegmentTable>(new SegmentTable(header));
         debug("totalPageSize=%s", segmentTable.totalPageSize);
         const pageData = await this.tokenizer.readToken<Uint8Array>(
           new Token.Uint8ArrayType(segmentTable.totalPageSize)
@@ -60,10 +53,7 @@ export class OggParser extends BasicParser {
           header.headerType.continued
         );
         if (header.headerType.firstPage) {
-          const id = new Token.StringType(7, "ascii").get(
-            Buffer.from(pageData),
-            0
-          );
+          const id = new Token.StringType(7, "ascii").get(Buffer.from(pageData), 0);
           switch (id) {
             case "\u0001vorbis": // Ogg/Vorbis
               debug("Set page consumer to Ogg/Vorbis");
@@ -71,28 +61,16 @@ export class OggParser extends BasicParser {
               break;
             case "OpusHea": // Ogg/Opus
               debug("Set page consumer to Ogg/Opus");
-              this.pageConsumer = new OpusParser(
-                this.metadata,
-                this.options,
-                this.tokenizer
-              );
+              this.pageConsumer = new OpusParser(this.metadata, this.options, this.tokenizer);
               break;
             case "Speex  ": // Ogg/Speex
               debug("Set page consumer to Ogg/Speex");
-              this.pageConsumer = new SpeexParser(
-                this.metadata,
-                this.options,
-                this.tokenizer
-              );
+              this.pageConsumer = new SpeexParser(this.metadata, this.options, this.tokenizer);
               break;
             case "fishead":
             case "\u0000theora": // Ogg/Theora
               debug("Set page consumer to Ogg/Theora");
-              this.pageConsumer = new TheoraParser(
-                this.metadata,
-                this.options,
-                this.tokenizer
-              );
+              this.pageConsumer = new TheoraParser(this.metadata, this.options, this.tokenizer);
               break;
             default:
               throw new Error("gg audio-codec not recognized (id=" + id + ")");
@@ -102,22 +80,16 @@ export class OggParser extends BasicParser {
       } while (!header.headerType.lastPage);
     } catch (error) {
       if (error instanceof EndOfStreamError) {
-        this.metadata.addWarning(
-          "Last OGG-page is not marked with last-page flag"
-        );
+        this.metadata.addWarning("Last OGG-page is not marked with last-page flag");
         debug(`End-of-stream`);
-        this.metadata.addWarning(
-          "Last OGG-page is not marked with last-page flag"
-        );
+        this.metadata.addWarning("Last OGG-page is not marked with last-page flag");
         if (this.header) {
           this.pageConsumer.calculateDuration(this.header);
         }
       } else if (error instanceof Error && error.message.startsWith("FourCC")) {
         if (this.pageNumber > 0) {
           // ignore this error: work-around if last OGG-page is not marked with last-page flag
-          this.metadata.addWarning(
-            "Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag"
-          );
+          this.metadata.addWarning("Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag");
           this.pageConsumer.flush();
         }
       } else {

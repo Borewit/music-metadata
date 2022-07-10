@@ -11,16 +11,10 @@ import { RandomFileReader } from "./common/RandomFileReader";
  * @param options - Parsing options
  * @returns Metadata
  */
-export async function parseFile(
-  filePath: string,
-  options: IOptions = {}
-): Promise<IAudioMetadata> {
+export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
   const fileTokenizer = await strtok3.fromFile(filePath);
 
-  const fileReader = await RandomFileReader.init(
-    filePath,
-    fileTokenizer.fileInfo.size
-  );
+  const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size);
   try {
     await scanAppendingHeaders.scanAppendingHeaders(fileReader, options);
   } finally {

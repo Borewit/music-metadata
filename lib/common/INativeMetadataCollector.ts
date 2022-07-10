@@ -1,10 +1,4 @@
-import {
-  FormatId,
-  IFormat,
-  INativeTags,
-  IQualityInformation,
-  ITrackInfo,
-} from "../type";
+import { FormatId, IFormat, INativeTags, IQualityInformation, ITrackInfo } from "../type";
 
 import { TagType } from "./GenericTagTypes";
 

@@ -19,9 +19,7 @@ export function readTokenTable<T>(
   remainingLen: number,
   numberOfEntries: number
 ): T[] {
-  debug(
-    `remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`
-  );
+  debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
 
   if (remainingLen === 0) return [];
 

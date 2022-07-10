@@ -117,8 +117,6 @@ test('Parse tag "(c) "', async () => {
 
   expect(common.album, "common.album").toBe("Hdtracks 2020 Hi-Res Sampler");
   expect(common.artists, "common.artists").toStrictEqual(["Chris Jones"]);
-  expect(common.encodersettings, "common.encodersettings").toBe(
-    "Lavf58.29.100"
-  );
+  expect(common.encodersettings, "common.encodersettings").toBe("Lavf58.29.100");
   expect(common.year, "common.year").toBe(2020);
 });

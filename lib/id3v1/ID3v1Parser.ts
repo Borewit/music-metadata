@@ -23,9 +23,7 @@ export class ID3v1Parser extends BasicParser {
     }
 
     if (this.options.apeHeader) {
-      void this.tokenizer.ignore(
-        this.options.apeHeader.offset - this.tokenizer.position
-      );
+      void this.tokenizer.ignore(this.options.apeHeader.offset - this.tokenizer.position);
       const apeParser = new APEv2Parser();
       apeParser.init(this.metadata, this.tokenizer, this.options);
       await apeParser.parseTags(this.options.apeHeader.footer);
@@ -36,32 +34,16 @@ export class ID3v1Parser extends BasicParser {
       debug("Already consumed the last 128 bytes");
       return;
     }
-    const header = await this.tokenizer.readToken<IId3v1Header>(
-      Iid3v1Token,
-      offset
-    );
+    const header = await this.tokenizer.readToken<IId3v1Header>(Iid3v1Token, offset);
     if (header) {
-      debug(
-        "ID3v1 header found at: pos=%s",
-        this.tokenizer.fileInfo.size - Iid3v1Token.len
-      );
-      for (const id of [
-        "title",
-        "artist",
-        "album",
-        "comment",
-        "track",
-        "year",
-      ] as const) {
+      debug("ID3v1 header found at: pos=%s", this.tokenizer.fileInfo.size - Iid3v1Token.len);
+      for (const id of ["title", "artist", "album", "comment", "track", "year"] as const) {
         if (header[id] && header[id] !== "") this.addTag(id, header[id]);
       }
       const genre = ID3v1Parser.getGenre(header.genre);
       if (genre) this.addTag("genre", genre);
     } else {
-      debug(
-        "ID3v1 header not found at: pos=%s",
-        this.tokenizer.fileInfo.size - Iid3v1Token.len
-      );
+      debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileInfo.size - Iid3v1Token.len);
     }
   }
 

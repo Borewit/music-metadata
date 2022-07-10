@@ -63,9 +63,7 @@ const SH_part3: IGetToken<IStreamHeader3> = {
 
   get: (buf, off) => {
     return {
-      sampleFrequency: [44_100, 48_000, 37_800, 32_000][
-        util.getBitAllignedNumber(buf, off, 0, 3)
-      ],
+      sampleFrequency: [44_100, 48_000, 37_800, 32_000][util.getBitAllignedNumber(buf, off, 0, 3)],
       maxUsedBands: util.getBitAllignedNumber(buf, off, 3, 5),
       channelCount: util.getBitAllignedNumber(buf, off + 1, 0, 4) + 1,
       msUsed: util.isBitSet(buf, off + 1, 4),

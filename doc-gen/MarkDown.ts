@@ -12,11 +12,7 @@ export class Table {
     return value;
   }
 
-  private static writeRow(
-    out: fs.WriteStream,
-    values: string[],
-    colSizes: number[]
-  ) {
+  private static writeRow(out: fs.WriteStream, values: string[], colSizes: number[]) {
     const colValues: string[] = [];
     for (const [ci, colSize] of colSizes.entries()) {
       const cellTxt = values.length > ci ? values[ci] : "";

@@ -3,9 +3,7 @@ import * as Token from "../token-types";
 import * as util from "../common/Util";
 import { DataType } from "./DataType";
 
-export type AttributeParser = (
-  buf: Buffer
-) => boolean | string | number | bigint | Buffer;
+export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
 
 /**
  *

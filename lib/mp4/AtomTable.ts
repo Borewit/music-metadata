@@ -18,13 +18,7 @@ export class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
       version: Token.INT8.get(buf, off + 0),
       flags: Token.INT24_BE.get(buf, off + 1),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(
-        buf,
-        this.token,
-        off + 8,
-        this.len - 8,
-        nrOfEntries
-      ),
+      entries: readTokenTable(buf, this.token, off + 8, this.len - 8, nrOfEntries),
     };
   }
 }

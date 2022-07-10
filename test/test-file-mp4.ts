@@ -57,15 +57,10 @@ describe("Parse MPEG-4 files (.m4a)", () => {
     expect(native["©ART"], "m4a.©ART").toStrictEqual(["The Prodigy"]);
     expect(native["©cmt"], "m4a.©cmt").toStrictEqual(["(Pendulum Remix)"]);
     expect(native["©wrt"], "m4a.©wrt").toStrictEqual(["Liam Howlett"]);
-    expect(
-      native["----:com.apple.iTunes:iTunNORM"],
-      "m4a.----:com.apple.iTunes:iTunNORM"
-    ).toStrictEqual([
+    expect(native["----:com.apple.iTunes:iTunNORM"], "m4a.----:com.apple.iTunes:iTunNORM").toStrictEqual([
       " 0000120A 00001299 00007365 0000712F 0002D88B 0002D88B 00007F2B 00007F2C 0003C770 0001F5C7",
     ]);
-    expect(native["©nam"], "m4a.©nam").toStrictEqual([
-      "Voodoo People (Pendulum Remix)",
-    ]);
+    expect(native["©nam"], "m4a.©nam").toStrictEqual(["Voodoo People (Pendulum Remix)"]);
     expect(native["©too"], "m4a.©too").toStrictEqual(["Lavf52.36.0"]);
     expect(native["©day"], "m4a.@day").toStrictEqual(["2005"]);
 
@@ -95,9 +90,7 @@ describe("should decode 8-byte unsigned integer", () => {
     expect(native.iTunes, "Native m4a tags should be present").toBeDefined();
     expect(native.iTunes.length).toBeGreaterThanOrEqual(1);
 
-    expect(common.album).toBe(
-      "Live at Tom's Bullpen in Dover, DE (2016-04-30)"
-    );
+    expect(common.album).toBe("Live at Tom's Bullpen in Dover, DE (2016-04-30)");
     expect(common.albumartist).toBe("They Say We're Sinking");
     expect(common.comment).toStrictEqual([
       "youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV",
@@ -149,9 +142,7 @@ describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
       expect(common.encodedby).toBe("Chapter and Verse V 1.5");
       expect(common.disk).toStrictEqual({ no: null, of: null });
       expect(common.track).toStrictEqual({ no: 1, of: null });
-      expect(common.comment).toStrictEqual([
-        "https://archive.org/details/glories_of_ireland_1801_librivox",
-      ]);
+      expect(common.comment).toStrictEqual(["https://archive.org/details/glories_of_ireland_1801_librivox"]);
 
       const iTunes = orderTags(native.iTunes);
       // Ref: http://www.zoyinc.com/?p=1004
@@ -168,11 +159,7 @@ describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
 
     test("from a stream", async () => {
       const stream = createReadStream(filePath);
-      const metadata = await parseStream(
-        stream,
-        { mimeType: "audio/mp4" },
-        { includeChapters: true }
-      );
+      const metadata = await parseStream(stream, { mimeType: "audio/mp4" }, { includeChapters: true });
       stream.close();
 
       const { common, format, native } = metadata;
@@ -230,8 +217,7 @@ describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
         },
         {
           sampleOffset: 16_410_624,
-          title:
-            "08 - Baby's Bouquet: 01 - Dedication and Polly put the Kettle On",
+          title: "08 - Baby's Bouquet: 01 - Dedication and Polly put the Kettle On",
         },
         {
           sampleOffset: 19_068_928,
@@ -275,9 +261,7 @@ describe("Parse MPEG-4 Video (.mp4)", () => {
       expect(metadata.common.tvShow).toBe("Mr. Pickles");
 
       expect(metadata.format.container, "format.container").toBe("mp42/isom");
-      expect(metadata.format.codec, "format.codec").toBe(
-        "MPEG-4/AAC+AC-3+CEA-608"
-      );
+      expect(metadata.format.codec, "format.codec").toBe("MPEG-4/AAC+AC-3+CEA-608");
       expect(metadata.common.artist).toBe("Mr. Pickles");
       expect(metadata.common.artists).toStrictEqual(["Mr. Pickles"]);
       expect(metadata.common.albumartist).toBe("Mr. Pickles");
@@ -355,10 +339,9 @@ test("Be able to handle garbage behind mdat root atom", async () => {
   expect(common.artist, "common.artist").toBe("Tool");
   expect(common.title, "common.title").toBe("Fear Inoculum");
 
-  expect(
-    quality.warnings,
-    "check for warning regarding box.id=0"
-  ).toContainEqual({ message: "Error at offset=117501: box.id=0" });
+  expect(quality.warnings, "check for warning regarding box.id=0").toContainEqual({
+    message: "Error at offset=117501: box.id=0",
+  });
 });
 
 // https://github.com/Borewit/music-metadata/issues/387
@@ -366,17 +349,12 @@ test("Handle box.id = 0000", async () => {
   const { format, common } = await parseFile(join(mp4Samples, "issue-387.m4a"));
   expect(format.container, "format.container").toBe("M4A/mp42/isom");
   expect(format.codec, "format.codec").toBe("MPEG-4/AAC");
-  expect(format.duration, "format.duration").toBeCloseTo(
-    224.002_902_494_331_07,
-    2
-  );
+  expect(format.duration, "format.duration").toBeCloseTo(224.002_902_494_331_07, 2);
   expect(format.sampleRate, "format.sampleRate").toBeCloseTo(44_100, 2);
 
   expect(common.artist, "common.artist").toBe("Chris Brown");
   expect(common.title, "common.title").toBe("Look At Me Now");
-  expect(common.album, "common.album").toBe(
-    "Look At Me Now (feat. Lil Wayne & Busta Rhymes) - Single"
-  );
+  expect(common.album, "common.album").toBe("Look At Me Now (feat. Lil Wayne & Busta Rhymes) - Single");
 });
 
 test("Extract creation and modified time", async () => {
@@ -389,12 +367,8 @@ test("Extract creation and modified time", async () => {
   expect(format.duration, "format.duration").toBeCloseTo(1.024, 3);
   expect(format.sampleRate, "format.sampleRate").toBe(48_000);
 
-  expect(format.creationTime.toISOString(), "format.modificationTime").toBe(
-    "2021-01-02T17:42:46.000Z"
-  );
-  expect(format.modificationTime.toISOString(), "format.modificationTime").toBe(
-    "2021-01-02T17:43:25.000Z"
-  );
+  expect(format.creationTime.toISOString(), "format.modificationTime").toBe("2021-01-02T17:42:46.000Z");
+  expect(format.modificationTime.toISOString(), "format.modificationTime").toBe("2021-01-02T17:43:25.000Z");
 
   const iTunes = orderTags(native.iTunes);
   expect(iTunes.date[0], "moov.udta.date").toBe("2021-01-02T17:42:05Z");

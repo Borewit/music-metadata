@@ -675,10 +675,5 @@ export interface IRandomReader {
    * @param position {number} is an argument specifying where to begin reading from in the file.
    * @returns {Promise<number>} bytes read
    */
-  randomRead(
-    buffer: Buffer,
-    offset: number,
-    length: number,
-    position: number
-  ): Promise<number>;
+  randomRead(buffer: Buffer, offset: number, length: number, position: number): Promise<number>;
 }

@@ -50,9 +50,7 @@ describe("HTTP streaming", function () {
       expect(tags.format.lossless).toBe(false);
 
       expect(tags.common.title).toBe('Super Mario Galaxy "Into The Galaxy"');
-      expect(tags.common.artist).toBe(
-        'club nintendo CD "SUPER MARIO GALAXY"より'
-      );
+      expect(tags.common.artist).toBe('club nintendo CD "SUPER MARIO GALAXY"より');
       expect(tags.common.album).toBe("SUPER MARIO GALAXY ORIGINAL SOUNDTRACK");
     },
     15 * 1000
@@ -75,9 +73,7 @@ describe("HTTP streaming", function () {
       expect(tags.format.lossless).toBe(false);
 
       expect(tags.common.title).toBe('Super Mario Galaxy "Into The Galaxy"');
-      expect(tags.common.artist).toBe(
-        'club nintendo CD "SUPER MARIO GALAXY"より'
-      );
+      expect(tags.common.artist).toBe('club nintendo CD "SUPER MARIO GALAXY"より');
       expect(tags.common.album).toBe("SUPER MARIO GALAXY ORIGINAL SOUNDTRACK");
     },
     15 * 1000

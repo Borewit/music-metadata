@@ -28,9 +28,7 @@ describe("Parse Philips DSDIFF", () => {
 
     const common = metadata.common;
 
-    expect(common.artist, "common.artist").toBe(
-      "CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim"
-    );
+    expect(common.artist, "common.artist").toBe("CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim");
     expect(common.title, "common.title").toBe("Kyrie");
     expect(common.album, "common.album").toBe("SPES");
     expect(common.genre, "common.genre").toStrictEqual(["Choral"]);

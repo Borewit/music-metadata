@@ -8,17 +8,13 @@ describe("BufferType", () => {
     const bufferTypeToken = new BufferType(2);
     const bufferResult = bufferTypeToken.get(source, 2);
 
-    expect(bufferResult, "should be 2 middle bytes: 0xb1, 0xb2").toEqual(
-      Buffer.from([0xb1, 0xb2])
-    );
+    expect(bufferResult, "should be 2 middle bytes: 0xb1, 0xb2").toEqual(Buffer.from([0xb1, 0xb2]));
 
     // Overwrite the result
     bufferResult[0] = 0xd1;
     bufferResult[1] = 0xd2;
 
-    expect(source, "should copy the data").not.toEqual(
-      Buffer.from([0xa1, 0xa2, 0xd1, 0xd2, 0xc1, 0xc2])
-    );
+    expect(source, "should copy the data").not.toEqual(Buffer.from([0xa1, 0xa2, 0xd1, 0xd2, 0xc1, 0xc2]));
   });
 });
 
@@ -29,17 +25,13 @@ describe("Uint8ArrayType", () => {
     const uint8ArrayType = new Uint8ArrayType(2);
     const bufferResult = uint8ArrayType.get(source, 2);
 
-    expect(bufferResult, "should be 2 middle bytes: 0xb1, 0xb2").toEqual(
-      Uint8Array.from([0xb1, 0xb2])
-    );
+    expect(bufferResult, "should be 2 middle bytes: 0xb1, 0xb2").toEqual(Uint8Array.from([0xb1, 0xb2]));
 
     // Overwrite the result
     bufferResult[0] = 0xd1;
     bufferResult[1] = 0xd2;
 
-    expect(source, "should not copy the data").toEqual(
-      Uint8Array.from([0xa1, 0xa2, 0xd1, 0xd2, 0xc1, 0xc2])
-    );
+    expect(source, "should not copy the data").toEqual(Uint8Array.from([0xa1, 0xa2, 0xd1, 0xd2, 0xc1, 0xc2]));
   });
 });
 
@@ -49,9 +41,6 @@ describe("StringType", () => {
 
     const stringType = new StringType(5, "utf8");
 
-    expect(
-      stringType.get(source, 0),
-      "should be 2 middle bytes: 0xb1, 0xb2"
-    ).toBe("peter");
+    expect(stringType.get(source, 0), "should be 2 middle bytes: 0xb1, 0xb2").toBe("peter");
   });
 });

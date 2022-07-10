@@ -16,9 +16,6 @@ export async function parseStream(
   fileInfo?: strtok3.IFileInfo | string,
   options: IOptions = {}
 ): Promise<IAudioMetadata> {
-  const tokenizer = await strtok3.fromStream(
-    stream,
-    typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo
-  );
+  const tokenizer = await strtok3.fromStream(stream, typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo);
   return parseFromTokenizer.parseFromTokenizer(tokenizer, options);
 }

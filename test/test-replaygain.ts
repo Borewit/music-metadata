@@ -30,14 +30,11 @@ describe("Decode replaygain tags", () => {
 
   test("should decode replaygain tags from FLAC/Vorbis", async () => {
     const metadata = await parseFile(filePath);
-    expect(
-      metadata.common.replaygain_track_gain,
-      "replaygain_track_gain.ratio"
-    ).toStrictEqual({ dB: -7.03, ratio: 0.198_152_702_580_509_8 });
-    expect(
-      metadata.common.replaygain_track_peak,
-      "replaygain_track_peak.ratio = -0.00371259 dB"
-    ).toStrictEqual({
+    expect(metadata.common.replaygain_track_gain, "replaygain_track_gain.ratio").toStrictEqual({
+      dB: -7.03,
+      ratio: 0.198_152_702_580_509_8,
+    });
+    expect(metadata.common.replaygain_track_peak, "replaygain_track_peak.ratio = -0.00371259 dB").toStrictEqual({
       dB: -0.003_712_589_329_636_550_3,
       ratio: 0.999_145_51,
     });

@@ -56,9 +56,7 @@ export const UINT24_LE: IToken<number> = {
   len: 3,
   get(array: Uint8Array, offset: number): number {
     const dataView = dv(array);
-    return (
-      dataView.getUint8(offset) + (dataView.getUint16(offset + 1, true) << 8)
-    );
+    return dataView.getUint8(offset) + (dataView.getUint16(offset + 1, true) << 8);
   },
   put(array: Uint8Array, offset: number, value: number): number {
     const dataView = dv(array);

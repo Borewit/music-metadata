@@ -9,10 +9,7 @@ const flacFilePath = join(samplePath, "flac");
 
 describe("decode flac.flac", () => {
   test.each(Parsers)("%s", async (parser) => {
-    const metadata = await parser.initParser(
-      join(samplePath, "flac.flac"),
-      "audio/flac"
-    );
+    const metadata = await parser.initParser(join(samplePath, "flac.flac"), "audio/flac");
 
     const format = metadata.format;
 
@@ -22,9 +19,7 @@ describe("decode flac.flac", () => {
     expect(format.duration, "format.duration").toBe(271.773_333_333_333_3);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitsPerSample, "format.bitsPerSample = 16 bit").toBe(16);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
 
     const common = metadata.common;
 
@@ -36,12 +31,8 @@ describe("decode flac.flac", () => {
     expect(common.track, "common.track").toStrictEqual({ no: 7, of: null });
     expect(common.disk, "common.disk").toStrictEqual({ no: null, of: null });
     expect(common.genre, "genre").toStrictEqual(["Alt. Rock"]);
-    expect(common.picture[0].format, "common.picture format").toBe(
-      "image/jpeg"
-    );
-    expect(common.picture[0].data.length, "common.picture length").toBe(
-      175_668
-    );
+    expect(common.picture[0].format, "common.picture format").toBe("image/jpeg");
+    expect(common.picture[0].data.length, "common.picture length").toBe(175_668);
 
     const vorbis = orderTags(metadata.native.vorbis);
 
@@ -51,34 +42,18 @@ describe("decode flac.flac", () => {
     expect(vorbis.DATE, "vorbis.DATE").toStrictEqual(["2010"]);
     expect(vorbis.TRACKNUMBER, "vorbis.TRACKNUMBER").toStrictEqual(["07"]);
     expect(vorbis.GENRE, "vorbis.GENRE").toStrictEqual(["Alt. Rock"]);
-    expect(vorbis.COMMENT, "vorbis.COMMENT").toStrictEqual([
-      "EAC-Secure Mode=should ignore equal sign",
-    ]);
+    expect(vorbis.COMMENT, "vorbis.COMMENT").toStrictEqual(["EAC-Secure Mode=should ignore equal sign"]);
 
     const picture = vorbis.METADATA_BLOCK_PICTURE[0];
 
-    expect(picture.type, "raw METADATA_BLOCK_PICTUREtype").toBe(
-      "Cover (front)"
-    );
-    expect(picture.format, "raw METADATA_BLOCK_PICTURE format").toBe(
-      "image/jpeg"
-    );
-    expect(picture.description, "raw METADATA_BLOCK_PICTURE description").toBe(
-      ""
-    );
+    expect(picture.type, "raw METADATA_BLOCK_PICTUREtype").toBe("Cover (front)");
+    expect(picture.format, "raw METADATA_BLOCK_PICTURE format").toBe("image/jpeg");
+    expect(picture.description, "raw METADATA_BLOCK_PICTURE description").toBe("");
     expect(picture.width, "raw METADATA_BLOCK_PICTURE width").toBe(450);
     expect(picture.height, "raw METADATA_BLOCK_PICTURE height").toBe(450);
-    expect(
-      picture.colour_depth,
-      "raw METADATA_BLOCK_PICTURE colour depth"
-    ).toBe(24);
-    expect(
-      picture.indexed_color,
-      "raw METADATA_BLOCK_PICTURE indexed_color"
-    ).toBe(0);
-    expect(picture.data.length, "raw METADATA_BLOCK_PICTURE length").toBe(
-      175_668
-    );
+    expect(picture.colour_depth, "raw METADATA_BLOCK_PICTURE colour depth").toBe(24);
+    expect(picture.indexed_color, "raw METADATA_BLOCK_PICTURE indexed_color").toBe(0);
+    expect(picture.data.length, "raw METADATA_BLOCK_PICTURE length").toBe(175_668);
   });
 });
 
@@ -87,10 +62,11 @@ describe("should be able to recognize a ID3v2 tag header prefixing a FLAC file",
 
   test.each(Parsers)("%s", async (parser) => {
     const metadata = await parser.initParser(filePath, "audio/flac");
-    expect(
-      metadata.format.tagTypes,
-      'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"'
-    ).toStrictEqual(["ID3v2.3", "vorbis", "ID3v1"]);
+    expect(metadata.format.tagTypes, 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"').toStrictEqual([
+      "ID3v2.3",
+      "vorbis",
+      "ID3v1",
+    ]);
   });
 });
 
@@ -111,9 +87,10 @@ test("should handle a corrupt data", () => {
   writeFileSync(tmpFilePath, buf);
 
   test.each(Parsers)("%s", async (parser) => {
-    await expect(
-      parser.initParser(tmpFilePath, "audio/flac")
-    ).rejects.toHaveProperty("message", "FourCC contains invalid characters");
+    await expect(parser.initParser(tmpFilePath, "audio/flac")).rejects.toHaveProperty(
+      "message",
+      "FourCC contains invalid characters"
+    );
     unlinkSync(tmpFilePath);
   });
 });
@@ -132,31 +109,15 @@ test("Support Vorbis METADATA_BLOCK_PICTURE tags", async () => {
   expect(format.container).toBe("FLAC");
   expect(format.tagTypes).toStrictEqual(["vorbis"]);
 
-  expect(
-    vorbis.METADATA_BLOCK_PICTURE,
-    "expect a Vorbis METADATA_BLOCK_PICTURE tag"
-  ).toBeDefined();
-  expect(
-    vorbis.METADATA_BLOCK_PICTURE.length,
-    "expect 2 Vorbis METADATA_BLOCK_PICTURE tags"
-  ).toBe(2);
+  expect(vorbis.METADATA_BLOCK_PICTURE, "expect a Vorbis METADATA_BLOCK_PICTURE tag").toBeDefined();
+  expect(vorbis.METADATA_BLOCK_PICTURE.length, "expect 2 Vorbis METADATA_BLOCK_PICTURE tags").toBe(2);
 
   expect(common.picture, "common.picture").toBeDefined();
   expect(common.picture, "common.picture.length").toHaveLength(2);
-  expect(common.picture[0], "ommon.picture[0].format").toHaveProperty(
-    "format",
-    "image/jpeg"
-  );
-  expect(common.picture[0].data, "ommon.picture[0].data.length").toHaveLength(
-    107_402
-  );
-  expect(common.picture[1], "ommon.picture[1].format").toHaveProperty(
-    "format",
-    "image/jpeg"
-  );
-  expect(common.picture[1].data, "ommon.picture[1].data.length").toHaveLength(
-    215_889
-  );
+  expect(common.picture[0], "ommon.picture[0].format").toHaveProperty("format", "image/jpeg");
+  expect(common.picture[0].data, "ommon.picture[0].data.length").toHaveLength(107_402);
+  expect(common.picture[1], "ommon.picture[1].format").toHaveProperty("format", "image/jpeg");
+  expect(common.picture[1].data, "ommon.picture[1].data.length").toHaveLength(215_889);
 });
 
 test("Handle FLAC with undefined duration (number of samples == 0)", async () => {
@@ -167,10 +128,7 @@ test("Handle FLAC with undefined duration (number of samples == 0)", async () =>
 });
 
 test('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async () => {
-  const filePath = join(
-    flacFilePath,
-    "14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac"
-  );
+  const filePath = join(flacFilePath, "14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac");
   const metadata = await parseFile(filePath);
   const format = metadata.format;
   const common = metadata.common;

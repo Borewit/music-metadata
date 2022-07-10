@@ -30,10 +30,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
     const rst = await getTokenizerWithData("peter", load);
     // should decode UINT8 from chunk
     expect(rst.position).toBe(0);
-    const value: string | number = await rst.readToken(
-      new StringType(5, "utf8"),
-      1
-    );
+    const value: string | number = await rst.readToken(new StringType(5, "utf8"), 1);
     expect(typeof value).toBe("string");
     expect(value).toBe("peter");
     expect(rst.position).toBe(6);

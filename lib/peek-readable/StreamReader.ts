@@ -44,11 +44,7 @@ export class StreamReader {
    * @param length - Number of bytes to read
    * @returns Number of bytes peeked
    */
-  public async peek(
-    uint8Array: Uint8Array,
-    offset: number,
-    length: number
-  ): Promise<number> {
+  public async peek(uint8Array: Uint8Array, offset: number, length: number): Promise<number> {
     const bytesRead = await this.read(uint8Array, offset, length);
     this.peekQueue.push(uint8Array.subarray(offset, offset + bytesRead)); // Put read data back to peek buffer
     return bytesRead;
@@ -61,11 +57,7 @@ export class StreamReader {
    * @param length - Number of bytes to read
    * @returns Number of bytes read
    */
-  public async read(
-    buffer: Uint8Array,
-    offset: number,
-    length: number
-  ): Promise<number> {
+  public async read(buffer: Uint8Array, offset: number, length: number): Promise<number> {
     if (length === 0) {
       return 0;
     }
@@ -92,11 +84,7 @@ export class StreamReader {
     // continue reading from stream if required
     while (remaining > 0 && !this.endOfStream) {
       const reqLen = Math.min(remaining, maxStreamReadSize);
-      const chunkLen = await this.readFromStream(
-        buffer,
-        offset + bytesRead,
-        reqLen
-      );
+      const chunkLen = await this.readFromStream(buffer, offset + bytesRead, reqLen);
       bytesRead += chunkLen;
       if (chunkLen < reqLen) break;
       remaining -= chunkLen;
@@ -111,11 +99,7 @@ export class StreamReader {
    * @param length Number of bytes to read
    * @returns Number of bytes read
    */
-  private async readFromStream(
-    buffer: Uint8Array,
-    offset: number,
-    length: number
-  ): Promise<number> {
+  private async readFromStream(buffer: Uint8Array, offset: number, length: number): Promise<number> {
     const readBuffer = this.s.read(length);
 
     if (readBuffer) {

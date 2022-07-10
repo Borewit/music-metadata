@@ -26,19 +26,10 @@ describe("Test patterns for ISO/MPEG ", () => {
       const { format } = await parseFile(filePath, { duration: true });
 
       expect(format.container, "format.container").toBe("MPEG");
-      expect(format.codec, `'${sample.filename}' format.codec`).toBe(
-        "MPEG 1 Layer 1"
-      );
-      expect(format.bitrate, `'${sample.filename}' format.bitrate`).toBe(
-        sample.bitRate * 1000
-      );
-      expect(format.sampleRate, `'${sample.filename}' format.sampleRate`).toBe(
-        sample.sampleRate
-      );
-      expect(
-        format.numberOfChannels,
-        `'${sample.filename}' format.channels`
-      ).toBe(sample.channels);
+      expect(format.codec, `'${sample.filename}' format.codec`).toBe("MPEG 1 Layer 1");
+      expect(format.bitrate, `'${sample.filename}' format.bitrate`).toBe(sample.bitRate * 1000);
+      expect(format.sampleRate, `'${sample.filename}' format.sampleRate`).toBe(sample.sampleRate);
+      expect(format.numberOfChannels, `'${sample.filename}' format.channels`).toBe(sample.channels);
     });
   });
 
@@ -59,19 +50,10 @@ describe("Test patterns for ISO/MPEG ", () => {
       const { format } = await parseFile(filePath, { duration: true });
 
       expect(format.container, "format.container").toBe("MPEG");
-      expect(format.codec, `'${sample.filename}' format.codec`).toBe(
-        "MPEG 1 Layer 2"
-      );
-      expect(format.bitrate, `'${sample.filename}' format.bitrate`).toBe(
-        sample.bitRate * 1000
-      );
-      expect(format.sampleRate, `'${sample.filename}' format.sampleRate`).toBe(
-        sample.sampleRate
-      );
-      expect(
-        format.numberOfChannels,
-        `'${sample.filename}' format.channels`
-      ).toBe(sample.channels);
+      expect(format.codec, `'${sample.filename}' format.codec`).toBe("MPEG 1 Layer 2");
+      expect(format.bitrate, `'${sample.filename}' format.bitrate`).toBe(sample.bitRate * 1000);
+      expect(format.sampleRate, `'${sample.filename}' format.sampleRate`).toBe(sample.sampleRate);
+      expect(format.numberOfChannels, `'${sample.filename}' format.channels`).toBe(sample.channels);
     });
   });
 
@@ -110,21 +92,12 @@ describe("Test patterns for ISO/MPEG ", () => {
       const { format } = await parseFile(filePath, { duration: true });
 
       expect(format.container, "format.container").toBe("MPEG");
-      expect(format.codec, `'${sample.filename}' format.codec`).toBe(
-        "MPEG 1 Layer 3"
-      );
+      expect(format.codec, `'${sample.filename}' format.codec`).toBe("MPEG 1 Layer 3");
       if (sample.bitRate) {
-        expect(format.bitrate, `'${sample.filename}' format.bitrate`).toBe(
-          sample.bitRate * 1000
-        );
+        expect(format.bitrate, `'${sample.filename}' format.bitrate`).toBe(sample.bitRate * 1000);
       }
-      expect(format.sampleRate, `'${sample.filename}' format.sampleRate`).toBe(
-        sample.sampleRate
-      );
-      expect(
-        format.numberOfChannels,
-        `'${sample.filename}' format.channels`
-      ).toBe(sample.channels);
+      expect(format.sampleRate, `'${sample.filename}' format.sampleRate`).toBe(sample.sampleRate);
+      expect(format.numberOfChannels, `'${sample.filename}' format.channels`).toBe(sample.channels);
     });
   });
 });
@@ -169,10 +142,7 @@ test("should be able to handle empty ID3v2 tag", async () => {
   const { format } = await parseFile(filePath);
 
   expect(format.container, "format.container").toBe("MPEG");
-  expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-    "ID3v2.3",
-    "ID3v1",
-  ]);
+  expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
 });
 
 // https://github.com/Borewit/music-metadata/issues/398
@@ -188,10 +158,9 @@ test("Handle empty picture tag", async () => {
   expect(common.track, "common.track,").toStrictEqual({ no: 21, of: null });
   expect(common.year, "common.year,").toBe(1998);
   expect(common.picture, "common.picturh").toBeUndefined();
-  expect(
-    quality.warnings,
-    "quality.warnings includes Empty picture tag found"
-  ).toContainEqual({ message: "Empty picture tag found" });
+  expect(quality.warnings, "quality.warnings includes Empty picture tag found").toContainEqual({
+    message: "Empty picture tag found",
+  });
 });
 
 // https://github.com/Borewit/music-metadata/issues/979
@@ -226,10 +195,7 @@ test("Handle preceding ADTS frame with (invalid) frame length of 0 bytes", async
   expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
   expect(format.codecProfile, "format.codecProfile").toBe("V2");
   expect(format.tool, "format.tool").toBe("LAME 3.97b");
-  expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-    "ID3v2.3",
-    "ID3v1",
-  ]);
+  expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
 
   expect(common.title, "common.title").toBe("Jan Pillemann Otze");
   expect(common.artist, "common.artist").toBe("Mickie Krause");
@@ -247,10 +213,9 @@ test("Able to handle corrupt LAME header", async () => {
   expect(format.duration, "format.duration").toBeCloseTo(817.92, 2);
   expect(format.sampleRate, "format.sampleRate").toBe(22_050);
 
-  expect(
-    quality.warnings,
-    "quality.warnings includes: 'Corrupt LAME header'"
-  ).toContainEqual({ message: "Corrupt LAME header" });
+  expect(quality.warnings, "quality.warnings includes: 'Corrupt LAME header'").toContainEqual({
+    message: "Corrupt LAME header",
+  });
 });
 
 describe("should handle incomplete MP3 file", () => {
@@ -258,19 +223,14 @@ describe("should handle incomplete MP3 file", () => {
 
   test("should decode from a file", async () => {
     const { format } = await parseFile(filePath);
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "ID3v1",
-    ]);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
     expect(format.duration, "format.duration").toBeCloseTo(61.73, 2);
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 2 Layer 3");
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(22_050);
     expect(format.bitrate, "format.bitrate = 128 kbit/sec").toBe(64_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
   });
 });
 
@@ -283,10 +243,7 @@ describe("Duration flag behaviour", () => {
         const metadata = await parser.initParser(filePath, "audio/mpeg", {
           duration: false,
         });
-        expect(
-          metadata.format.duration,
-          "Don't expect a duration"
-        ).toBeUndefined();
+        expect(metadata.format.duration, "Don't expect a duration").toBeUndefined();
       });
     });
 
@@ -295,10 +252,7 @@ describe("Duration flag behaviour", () => {
         const metadata = await parser.initParser(filePath, "audio/mpeg", {
           duration: true,
         });
-        expect(metadata.format.duration, "Expect a duration").toBeCloseTo(
-          200.5,
-          1
-        );
+        expect(metadata.format.duration, "Expect a duration").toBeCloseTo(200.5, 1);
       });
     });
   });
@@ -310,11 +264,7 @@ describe("MP3 with APEv2 footer header", () => {
 
     const metadata = await parseFile(filePath);
     expect(metadata.format.container).toBe("MPEG");
-    expect(metadata.format.tagTypes).toStrictEqual([
-      "ID3v2.3",
-      "APEv2",
-      "ID3v1",
-    ]);
+    expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
   });
 
   test('should be able to parse APEv1 header"', async () => {
@@ -324,11 +274,7 @@ describe("MP3 with APEv2 footer header", () => {
     });
 
     expect(format.container, "format.container").toBe("MPEG");
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "APEv2",
-      "ID3v1",
-    ]);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
 
     expect(common.title, "common.artist").toBe("Do They Know It's Christmas?");
     expect(common.artist, "common.artist").toBe("Band Aid");
@@ -364,10 +310,7 @@ describe("Handle Xing header", () => {
     const { format } = await parseFile(filePath, { duration: true });
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "ID3v1",
-    ]);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
   });
 
   describe("Lame extension", () => {
@@ -379,10 +322,7 @@ describe("Handle Xing header", () => {
       expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
       expect(format.codecProfile, "format.codecProfile").toBe("CBR");
       expect(format.tool, "format.tool").toBe("LAME 3.99r");
-      expect(format.trackPeakLevel, "format.trackPeakLevel").toBeCloseTo(
-        0.218_57,
-        5
-      );
+      expect(format.trackPeakLevel, "format.trackPeakLevel").toBeCloseTo(0.218_57, 5);
       expect(format.trackGain, "format.trackGain").toBe(6.8);
       expect(format.albumGain, "format.albumGain").toBeUndefined();
     });

@@ -16,10 +16,7 @@ export function stringToBytes(str: string) {
  * @returns `true` if the TAR checksum is valid, otherwise `false`.
  */
 export function tarHeaderChecksumMatches(buffer: Buffer, offset = 0): boolean {
-  const readSum = Number.parseInt(
-    buffer.toString("utf8", 148, 154).replace(/\0.*$/, "").trim(),
-    8
-  ); // Read sum in header
+  const readSum = Number.parseInt(buffer.toString("utf8", 148, 154).replace(/\0.*$/, "").trim(), 8); // Read sum in header
   if (Number.isNaN(readSum)) {
     return false;
   }
@@ -43,10 +40,7 @@ export function tarHeaderChecksumMatches(buffer: Buffer, offset = 0): boolean {
  */
 export const uint32SyncSafeToken: IGetToken<number> = {
   get: (buffer: Uint8Array, offset: number) =>
-    (buffer[offset + 3] & 0x7f) |
-    (buffer[offset + 2] << 7) |
-    (buffer[offset + 1] << 14) |
-    (buffer[offset] << 21),
+    (buffer[offset + 3] & 0x7f) | (buffer[offset + 2] << 7) | (buffer[offset + 1] << 14) | (buffer[offset] << 21),
   len: 4,
 };
 
@@ -59,11 +53,7 @@ export const uint32SyncSafeToken: IGetToken<number> = {
  * @param options.offset
  * @returns
  */
-export function checkUtil(
-  buffer: Buffer,
-  headers: any[],
-  options?: { mask?: number[]; offset: number }
-) {
+export function checkUtil(buffer: Buffer, headers: any[], options?: { mask?: number[]; offset: number }) {
   options = {
     offset: 0,
     ...options,

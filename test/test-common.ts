@@ -16,9 +16,7 @@ describe("GenericTagMap", () => {
     expect(commonTags).toBeDefined();
 
     // for each tag type
-    for (const [nativeType, tagMapper] of Object.entries(
-      combinedTagMapper.tagMappers
-    )) {
+    for (const [nativeType, tagMapper] of Object.entries(combinedTagMapper.tagMappers)) {
       for (const [nativeTag, commonType] of Object.entries(tagMapper.tagMap)) {
         expect(
           commonTags,
@@ -30,41 +28,27 @@ describe("GenericTagMap", () => {
 
   test("should be able to distinct singletons", () => {
     // common tags, singleton
-    expect(isSingleton("title"), 'common tag "title" is a singleton').toBe(
-      true
-    );
-    expect(isSingleton("artist"), 'common tag "artist" is a singleton').toBe(
-      true
-    );
-    expect(
-      isSingleton("artists"),
-      'common tag "artists" is not a singleton'
-    ).toBe(false);
+    expect(isSingleton("title"), 'common tag "title" is a singleton').toBe(true);
+    expect(isSingleton("artist"), 'common tag "artist" is a singleton').toBe(true);
+    expect(isSingleton("artists"), 'common tag "artists" is not a singleton').toBe(false);
   });
 
   describe("common.artist / common.artists mapping", () => {
     test("should be able to join artists", () => {
       expect(joinArtists(["David Bowie"])).toBe("David Bowie");
-      expect(joinArtists(["David Bowie", "Stevie Ray Vaughan"])).toBe(
-        "David Bowie & Stevie Ray Vaughan"
-      );
-      expect(joinArtists(["David Bowie", "Queen", "Mick Ronson"])).toBe(
-        "David Bowie, Queen & Mick Ronson"
-      );
+      expect(joinArtists(["David Bowie", "Stevie Ray Vaughan"])).toBe("David Bowie & Stevie Ray Vaughan");
+      expect(joinArtists(["David Bowie", "Queen", "Mick Ronson"])).toBe("David Bowie, Queen & Mick Ronson");
     });
 
     test("parse RIFF tags", async () => {
       const filePath = join(samplePath, "issue-89 no-artist.aiff");
 
       const metadata = await parseFile(filePath, { duration: true });
-      expect(
-        metadata.common.artists,
-        "common.artists directly via WM/ARTISTS"
-      ).toStrictEqual(["Beth Hart", "Joe Bonamassa"]);
-      expect(
-        metadata.common.artist,
-        "common.artist derived from common.artists"
-      ).toBe("Beth Hart & Joe Bonamassa");
+      expect(metadata.common.artists, "common.artists directly via WM/ARTISTS").toStrictEqual([
+        "Beth Hart",
+        "Joe Bonamassa",
+      ]);
+      expect(metadata.common.artist, "common.artist derived from common.artists").toBe("Beth Hart & Joe Bonamassa");
     });
   });
 });
@@ -96,24 +80,19 @@ describe("function selectCover()", () => {
     "monkeysaudio.ape",
   ];
 
-  test.each(multiCoverFiles)(
-    "Should pick the front cover",
-    async (multiCoverFile) => {
-      const filePath = join(samplePath, multiCoverFile);
+  test.each(multiCoverFiles)("Should pick the front cover", async (multiCoverFile) => {
+    const filePath = join(samplePath, multiCoverFile);
 
-      const metadata = await parseFile(filePath);
-      expect(metadata.common.picture.length).toBeGreaterThan(1);
+    const metadata = await parseFile(filePath);
+    expect(metadata.common.picture.length).toBeGreaterThan(1);
 
-      const cover = selectCover(metadata.common.picture);
-      if (cover.type) {
-        expect(cover.type, "cover.type").toBe("Cover (front)");
-      } else {
-        expect(cover.data, "First picture if no type is defined").toBe(
-          metadata.common.picture[0].data
-        );
-      }
+    const cover = selectCover(metadata.common.picture);
+    if (cover.type) {
+      expect(cover.type, "cover.type").toBe("Cover (front)");
+    } else {
+      expect(cover.data, "First picture if no type is defined").toBe(metadata.common.picture[0].data);
     }
-  );
+  });
 });
 
 describe("MimeType", () => {

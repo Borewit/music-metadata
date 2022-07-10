@@ -6,9 +6,7 @@ export const endTag2 = "LYRICS200";
  *
  * @param reader
  */
-export async function getLyricsHeaderLength(
-  reader: IRandomReader
-): Promise<number> {
+export async function getLyricsHeaderLength(reader: IRandomReader): Promise<number> {
   if (reader.fileSize >= 143) {
     const buf = Buffer.alloc(15);
     await reader.randomRead(buf, 0, buf.length, reader.fileSize - 143);

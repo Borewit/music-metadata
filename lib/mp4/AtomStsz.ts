@@ -25,13 +25,7 @@ export class StszAtom implements IGetToken<IStszAtom> {
       flags: Token.INT24_BE.get(buf, off + 1),
       sampleSize: Token.INT32_BE.get(buf, off + 4),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(
-        buf,
-        Token.INT32_BE,
-        off + 12,
-        this.len - 12,
-        nrOfEntries
-      ),
+      entries: readTokenTable(buf, Token.INT32_BE, off + 12, this.len - 12, nrOfEntries),
     };
   }
 }

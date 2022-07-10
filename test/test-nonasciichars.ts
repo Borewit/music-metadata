@@ -10,9 +10,5 @@ test("should decode non-ascii-characters", async () => {
 
   const result = await parseFile(filePath);
   expect(result.common.artist, "common.artist").toBe("Janelle Monáe");
-  expect(result.common.artists, "common.artists").toStrictEqual([
-    "Janelle Monáe",
-    "Roman Gianarthur",
-    "Nate Wonder",
-  ]);
+  expect(result.common.artists, "common.artists").toStrictEqual(["Janelle Monáe", "Roman Gianarthur", "Nate Wonder"]);
 });

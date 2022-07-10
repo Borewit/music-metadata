@@ -17,8 +17,7 @@ export interface IGetToken<V, VS extends Uint8Array = Uint8Array> {
   get(array: VS, offset: number): V;
 }
 
-export interface IToken<V, VS extends Uint8Array = Uint8Array>
-  extends IGetToken<V, VS> {
+export interface IToken<V, VS extends Uint8Array = Uint8Array> extends IGetToken<V, VS> {
   /**
    * Encode value to buffer
    * @param array - Uint8Array to write the encoded value to

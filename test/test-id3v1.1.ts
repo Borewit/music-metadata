@@ -22,12 +22,8 @@ describe("should be able to read an ID3v1 tag", () => {
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitrate, "format.bitrate = 160 kbit/sec").toBe(160_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
-    expect(format.duration, "format.duration").toBe(
-      241_920 / format.sampleRate
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
+    expect(format.duration, "format.duration").toBe(241_920 / format.sampleRate);
 
     expect(common.title, "common.title").toBe("Blood Sugar");
     expect(common.artist, "common.artist").toBe("Pendulum");
@@ -48,9 +44,7 @@ describe("it should skip id3v1 header if options.skipPostHeaders is set", () => 
     const metadata = await parser.initParser(filePath, "audio/mpeg", {
       skipPostHeaders: true,
     });
-    expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-    ]);
+    expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
   });
 });
 
@@ -68,9 +62,7 @@ describe("should handle MP3 without any tags", () => {
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(16_000);
     expect(format.bitrate, "format.bitrate = 128 kbit/sec").toBe(128_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
   });
 });
 
@@ -78,10 +70,7 @@ describe("should decode ID3v1.0 with undefined tags", () => {
   /**
    * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
    */
-  const filePath = join(
-    samplePath,
-    "Luomo - Tessio (Spektre Remix) ID3v10.mp3"
-  );
+  const filePath = join(samplePath, "Luomo - Tessio (Spektre Remix) ID3v10.mp3");
 
   test.each(Parsers)("%j", async (parser) => {
     const metadata = await parser.initParser(filePath, "audio/mpeg");
@@ -91,18 +80,14 @@ describe("should decode ID3v1.0 with undefined tags", () => {
 
     expect(metadata, "should provide metadata").toBeDefined();
 
-    expect(format.duration, "format.duration (checked with foobar)").toBe(
-      33.384_489_795_918_37
-    );
+    expect(format.duration, "format.duration (checked with foobar)").toBe(33.384_489_795_918_37);
     expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v1"]);
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     // t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 bit/sec');
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
 
     expect(common.title, "common.title").toBe("Luomo - Tessio (Spektre Remix)");
     expect(common.artist, "common.artist").toBeUndefined();

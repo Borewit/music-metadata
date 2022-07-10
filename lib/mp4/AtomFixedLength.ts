@@ -16,13 +16,9 @@ export abstract class FixedLengthAtom {
    */
   protected constructor(public len: number, expLen: number, atomId: string) {
     if (len < expLen) {
-      throw new Error(
-        `Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`
-      );
+      throw new Error(`Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`);
     } else if (len > expLen) {
-      debug(
-        `Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`
-      );
+      debug(`Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`);
     }
   }
 }

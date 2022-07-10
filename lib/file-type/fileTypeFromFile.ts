@@ -14,9 +14,7 @@ import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
  *
  * @param path
  */
-export async function fileTypeFromFile(
-  path: string
-): Promise<FileTypeResult | undefined> {
+export async function fileTypeFromFile(path: string): Promise<FileTypeResult | undefined> {
   const tokenizer = await strtok3.fromFile(path);
   try {
     return await fileTypeFromTokenizer(tokenizer);

@@ -80,10 +80,7 @@ export async function read(
  * @param path
  * @param data
  */
-export async function writeFile(
-  path: fs.PathLike,
-  data: Buffer | string
-): Promise<void> {
+export async function writeFile(path: fs.PathLike, data: Buffer | string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     fs.writeFile(path, data, (err) => {
       if (err) reject(err);

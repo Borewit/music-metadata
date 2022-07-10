@@ -8,10 +8,7 @@ import { samplePath } from "./util";
 const wavpackSamplePath = join(samplePath, "wavpack");
 
 describe("codec: WavPack", () => {
-  const wv1 = join(
-    wavpackSamplePath,
-    "MusicBrainz - Beth Hart - Sinner's Prayer.wv"
-  );
+  const wv1 = join(wavpackSamplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
   test.each(Parsers)("%j", async (parser) => {
     const metadata = await parser.initParser(wv1, "audio/x-wavpack");
@@ -24,10 +21,7 @@ describe("codec: WavPack", () => {
     expect(format.codec, "format.codecProfile").toBe("PCM");
 
     expect(common.title, "common.title").toBe("Sinner's Prayer");
-    expect(common.artists, "common.artist").toStrictEqual([
-      "Beth Hart",
-      "Joe Bonamassa",
-    ]);
+    expect(common.artists, "common.artist").toStrictEqual(["Beth Hart", "Joe Bonamassa"]);
   });
 });
 

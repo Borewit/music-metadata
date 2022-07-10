@@ -9,10 +9,7 @@ import { samplePath } from "./util";
 
 // Extract metadata from ID3v2.3 header
 test("should parse a raw ID3v2.3 header", async () => {
-  const filePath = join(
-    samplePath,
-    "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23"
-  );
+  const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
 
   const metadata = new MetadataCollector({});
 
@@ -45,15 +42,9 @@ test("parse a ID3v2.3", async () => {
   expect(format.codecProfile, "format.codecProfile").toBe("CBR");
 
   expect(common.title, "common.title").toBe("Home");
-  expect(common.artists, "common.artists").toStrictEqual([
-    "Explosions In The Sky",
-    "Another",
-    "And Another",
-  ]);
+  expect(common.artists, "common.artists").toStrictEqual(["Explosions In The Sky", "Another", "And Another"]);
   expect(common.albumartist, "common.albumartist").toBe("Soundtrack");
-  expect(common.album, "common.album").toBe(
-    "Friday Night Lights [Original Movie Soundtrack]"
-  );
+  expect(common.album, "common.album").toBe("Friday Night Lights [Original Movie Soundtrack]");
   expect(common.year, "common.year").toBe(2004);
   expect(common.track.no, "common.track.no").toBe(5);
   expect(common.track.of, "common.track.of").toBeNull();
@@ -64,24 +55,14 @@ test("parse a ID3v2.3", async () => {
   expect(common.picture[0].data.length, "common.picture length").toBe(80_938);
 
   expect(id3v11.title, "id3v11.title").toStrictEqual(["Home"]);
-  expect(id3v11.album, "id3v11.album").toStrictEqual([
-    "Friday Night Lights [Original",
-  ]);
-  expect(id3v11.artist, "id3v11.artist").toStrictEqual([
-    "Explosions In The Sky/Another/",
-  ]);
+  expect(id3v11.album, "id3v11.album").toStrictEqual(["Friday Night Lights [Original"]);
+  expect(id3v11.artist, "id3v11.artist").toStrictEqual(["Explosions In The Sky/Another/"]);
   expect(id3v11.genre, "id3v11.genre").toStrictEqual(["Soundtrack"]);
   expect(id3v11.track, "id3v11.track").toStrictEqual([5]);
   expect(id3v11.year, "id3v11.year").toStrictEqual(["2004"]);
 
-  expect(id3v23.TALB, "native: TALB").toStrictEqual([
-    "Friday Night Lights [Original Movie Soundtrack]",
-  ]);
-  expect(id3v23.TPE1, "native: TPE1").toStrictEqual([
-    "Explosions In The Sky",
-    "Another",
-    "And Another",
-  ]);
+  expect(id3v23.TALB, "native: TALB").toStrictEqual(["Friday Night Lights [Original Movie Soundtrack]"]);
+  expect(id3v23.TPE1, "native: TPE1").toStrictEqual(["Explosions In The Sky", "Another", "And Another"]);
   expect(id3v23.TPE2, "native: TPE2").toStrictEqual(["Soundtrack"]);
   expect(id3v23.TCOM, "native: TCOM").toStrictEqual(["Explosions in the Sky"]);
   expect(id3v23.TPOS, "native: TPOS").toStrictEqual(["1/1"]);
@@ -89,9 +70,7 @@ test("parse a ID3v2.3", async () => {
   expect(id3v23.TIT2, "native: TIT2").toStrictEqual(["Home"]);
   expect(id3v23.TRCK, "native: TRCK").toStrictEqual(["5"]);
   expect(id3v23.TYER, "native: TYER").toStrictEqual(["2004"]);
-  expect(id3v23["TXXX:PERFORMER"], "native: TXXX:PERFORMER").toStrictEqual([
-    "Explosions In The Sky",
-  ]);
+  expect(id3v23["TXXX:PERFORMER"], "native: TXXX:PERFORMER").toStrictEqual(["Explosions In The Sky"]);
 
   const apic = id3v23.APIC[0];
   expect(apic.format, "raw APIC format").toBe("image/jpeg");
@@ -119,9 +98,7 @@ describe("corrupt header / tags", () => {
     expect(format.lossless, "format.lossless").toBe(false);
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitrate, "format.bitrate = 128 bit/sec").toBe(128_000);
-    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(
-      2
-    );
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
 
     expect(common.title, "common.title").toBe("Strawberry");
     expect(common.artist, "common.artist").toBe("Union Youth");
@@ -141,11 +118,7 @@ describe("corrupt header / tags", () => {
     const filePath = join(samplePath, "issue_56.mp3");
 
     const metadata = await parseFile(filePath, { duration: true });
-    expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual([
-      "ID3v2.3",
-      "APEv2",
-      "ID3v1",
-    ]);
+    expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
     // ToDo: has hale APEv2 tag header
   });
 });
@@ -163,16 +136,10 @@ test("slash delimited fields", async () => {
   expect(metadata.native["ID3v2.3"], "Expect ID3v2.3 tag").toBeDefined();
   const id3v23 = orderTags(metadata.native["ID3v2.3"]);
   // It should not split the id3v23.TIT2 tag (containing '/')
-  expect(id3v23.TIT2, "id3v23.TIT2").toStrictEqual([
-    "Their / They're / Therapy",
-  ]);
+  expect(id3v23.TIT2, "id3v23.TIT2").toStrictEqual(["Their / They're / Therapy"]);
   // The artist name is actually "Their / They're / There"
   // Specification: http://id3.org/id3v2.3.0#line-455
-  expect(id3v23.TPE1, "id3v23.TPE1").toStrictEqual([
-    "Their",
-    "They're",
-    "There",
-  ]);
+  expect(id3v23.TPE1, "id3v23.TPE1").toStrictEqual(["Their", "They're", "There"]);
 });
 
 test("null delimited fields (non-standard)", async () => {
@@ -185,25 +152,14 @@ test("null delimited fields (non-standard)", async () => {
   expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
 
   const id3v23 = orderTags(native["ID3v2.3"]);
-  expect(id3v23.TPE1, "null separated id3v23.TPE1").toStrictEqual([
-    "2 Unlimited2",
-    "Ray",
-    "Anita",
-  ]);
+  expect(id3v23.TPE1, "null separated id3v23.TPE1").toStrictEqual(["2 Unlimited2", "Ray", "Anita"]);
 
-  expect(common.artists, "common.artists").toStrictEqual([
-    "2 Unlimited2",
-    "Ray",
-    "Anita",
-  ]);
+  expect(common.artists, "common.artists").toStrictEqual(["2 Unlimited2", "Ray", "Anita"]);
   expect(common.comment, "common.comment").toStrictEqual(["[DJSet]", "[All]"]);
   expect(common.genre, "common.genre").toStrictEqual(["Dance", "Classics"]);
 
   for (const tag of ["TPE1", "TCOM", "TCON"]) {
-    expect(
-      quality.warnings,
-      `expect warning: null separator ID3v2.3 ${tag}`
-    ).toContainEqual({
+    expect(quality.warnings, `expect warning: null separator ID3v2.3 ${tag}`).toContainEqual({
       message: `ID3v2.3 ${tag} uses non standard null-separator.`,
     });
   }
@@ -216,10 +172,7 @@ describe("4.2.1 Text information frames", () => {
     const { format, common } = await parseFile(filePath);
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 2 Layer 3");
-    expect(common.genre, "common.genre").toStrictEqual([
-      "Electronic",
-      "Pop-Folk",
-    ]);
+    expect(common.genre, "common.genre").toStrictEqual(["Electronic", "Pop-Folk"]);
   });
 });
 
@@ -237,9 +190,7 @@ describe("Decode frames", () => {
   describe("4.3.2 WXXX: User defined URL link frame", () => {
     // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
     test("decoding #1", async () => {
-      const metadata = await parseFile(
-        join(samplePath, "bug-unkown encoding.mp3")
-      );
+      const metadata = await parseFile(join(samplePath, "bug-unkown encoding.mp3"));
       const id3v23 = orderTags(metadata.native["ID3v2.3"]);
       expect(id3v23.WXXX[0]).toStrictEqual({
         description: "Tempa at bleep",
@@ -283,34 +234,24 @@ describe("Decode frames", () => {
     expect(common.title, "common.title").toBe("test");
 
     const id3v2 = orderTags(native["ID3v2.3"]);
-    expect(id3v2.GEOB[0].type, "ID3v2.GEOB[0].type").toBe(
-      "application/octet-stream"
-    );
+    expect(id3v2.GEOB[0].type, "ID3v2.GEOB[0].type").toBe("application/octet-stream");
     expect(id3v2.GEOB[0].filename, "ID3v2.GEOB[0].filename").toBe("");
-    expect(id3v2.GEOB[0].description, "ID3v2.GEOB[0].description").toBe(
-      "Serato Overview"
-    );
+    expect(id3v2.GEOB[0].description, "ID3v2.GEOB[0].description").toBe("Serato Overview");
   });
 
   describe("TXXX", () => {
     test("Handle empty TXXX", async () => {
-      const { format, quality, common } = await parseFile(
-        join(samplePath, "mp3", "issue-471.mp3")
-      );
+      const { format, quality, common } = await parseFile(join(samplePath, "mp3", "issue-471.mp3"));
 
       expect(format.container, "format.container").toBe("MPEG");
       expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
-      expect(format.duration, "format.duration").toBeCloseTo(
-        309.629_387_755_102,
-        2
-      );
+      expect(format.duration, "format.duration").toBeCloseTo(309.629_387_755_102, 2);
       expect(format.sampleRate, "format.sampleRate").toBe(44_100);
       expect(format.bitrate, "format.bitrate").toBe(128_000);
 
-      expect(
-        quality.warnings,
-        "quality.warnings includes: 'id3v2.3 header has empty tag type=TXXX'"
-      ).toContainEqual({ message: "id3v2.3 header has empty tag type=TXXX" });
+      expect(quality.warnings, "quality.warnings includes: 'id3v2.3 header has empty tag type=TXXX'").toContainEqual({
+        message: "id3v2.3 header has empty tag type=TXXX",
+      });
 
       expect(common.title, "common.title").toBe("Between Worlds");
       expect(common.artist, "common.artist").toBe("Roger Subirana");
@@ -330,8 +271,7 @@ describe("Decode frames", () => {
         expect.arrayContaining([
           { message: "id3v2.3 header has empty tag type=PRIV" },
           {
-            message:
-              "Invalid ID3v2.3 frame-header-ID: \u0000\u0000\u0000\u0000",
+            message: "Invalid ID3v2.3 frame-header-ID: \u0000\u0000\u0000\u0000",
           },
         ])
       );
@@ -346,18 +286,9 @@ describe("Decode frames", () => {
     expect(
       native["ID3v2.3"].map((tag) => tag.id),
       "Decode id3v2.3 TAG names"
-    ).toStrictEqual([
-      "TP1\u0000",
-      "TP2\u0000",
-      "TAL\u0000",
-      "TEN\u0000",
-      "TIT2",
-    ]);
+    ).toStrictEqual(["TP1\u0000", "TP2\u0000", "TAL\u0000", "TEN\u0000", "TIT2"]);
 
-    expect(
-      quality.warnings,
-      "Warning invalid ID: TP1\u0000, TP2\u0000, TAL\u0000 & TEN\u0000"
-    ).toEqual(
+    expect(quality.warnings, "Warning invalid ID: TP1\u0000, TP2\u0000, TAL\u0000 & TEN\u0000").toEqual(
       expect.arrayContaining([
         { message: "Invalid ID3v2.3 frame-header-ID: TP1\u0000" },
         { message: "Invalid ID3v2.3 frame-header-ID: TP2\u0000" },

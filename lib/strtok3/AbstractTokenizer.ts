@@ -32,10 +32,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @param options - Additional read options
    * @returns Promise with number of bytes read
    */
-  public abstract readBuffer(
-    buffer: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number>;
+  public abstract readBuffer(buffer: Uint8Array, options?: IReadChunkOptions): Promise<number>;
 
   /**
    * Peek (read ahead) buffer from tokenizer
@@ -43,10 +40,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @param options - Peek behaviour options
    * @returns Promise with number of bytes read
    */
-  public abstract peekBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number>;
+  public abstract peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number>;
 
   /**
    * Read a token from the tokenizer-stream
@@ -54,10 +48,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @param position - If provided, the desired position in the tokenizer-stream
    * @returns Promise with token data
    */
-  public async readToken<Value>(
-    token: IGetToken<Value>,
-    position: number = this.position
-  ): Promise<Value> {
+  public async readToken<Value>(token: IGetToken<Value>, position: number = this.position): Promise<Value> {
     const uint8Array = Buffer.alloc(token.len);
     const len = await this.readBuffer(uint8Array, { position });
     if (len < token.len) throw new EndOfStreamError();
@@ -70,10 +61,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @param position - Offset where to begin reading within the file. If position is null, data will be read from the current file position.
    * @returns Promise with token data
    */
-  public async peekToken<Value>(
-    token: IGetToken<Value>,
-    position: number = this.position
-  ): Promise<Value> {
+  public async peekToken<Value>(token: IGetToken<Value>, position: number = this.position): Promise<Value> {
     const uint8Array = Buffer.alloc(token.len);
     const len = await this.peekBuffer(uint8Array, { position });
     if (len < token.len) throw new EndOfStreamError();
@@ -123,24 +111,16 @@ export abstract class AbstractTokenizer implements ITokenizer {
     // empty
   }
 
-  protected normalizeOptions(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): INormalizedReadChunkOptions {
+  protected normalizeOptions(uint8Array: Uint8Array, options?: IReadChunkOptions): INormalizedReadChunkOptions {
     if (options?.position !== undefined && options.position < this.position) {
-      throw new Error(
-        "`options.position` must be equal or greater than `tokenizer.position`"
-      );
+      throw new Error("`options.position` must be equal or greater than `tokenizer.position`");
     }
 
     if (options) {
       return {
         mayBeLess: options.mayBeLess === true,
         offset: options.offset ?? 0,
-        length:
-          options.length > 0
-            ? options.length
-            : uint8Array.length - (options.offset ?? 0),
+        length: options.length > 0 ? options.length : uint8Array.length - (options.offset ?? 0),
         position: options.position ?? this.position,
       };
     }

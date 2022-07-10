@@ -20,9 +20,6 @@ export async function parseBuffer(
   const bufferReader = new RandomUint8ArrayReader(uint8Array);
   await scanAppendingHeaders(bufferReader, options);
 
-  const tokenizer = strtok3.fromBuffer(
-    uint8Array,
-    typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo
-  );
+  const tokenizer = strtok3.fromBuffer(uint8Array, typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo);
   return parseFromTokenizer(tokenizer, options);
 }

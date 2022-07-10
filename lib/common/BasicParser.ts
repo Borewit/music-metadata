@@ -16,11 +16,7 @@ export abstract class BasicParser implements ITokenParser {
    * @param {IOptions} options Parsing options
    * @returns
    */
-  public init(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ): ITokenParser {
+  public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
     this.metadata = metadata;
     this.tokenizer = tokenizer;
     this.options = options;

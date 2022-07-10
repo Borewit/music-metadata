@@ -41,11 +41,7 @@ describe("ASF", () => {
 
 describe("Matroska", () => {
   test("WebM", async () => {
-    const filePath = join(
-      samplePath,
-      "matroska",
-      "big-buck-bunny_trailer-short.vp8.webm"
-    );
+    const filePath = join(samplePath, "matroska", "big-buck-bunny_trailer-short.vp8.webm");
     const { format } = await parseFile(filePath);
 
     expect(format.trackInfo[0], "format.trackInfo").toStrictEqual({
@@ -83,11 +79,7 @@ describe("Matroska", () => {
   });
 
   test("matroska-test-w1-test5-short.mkv", async () => {
-    const filePath = join(
-      samplePath,
-      "matroska",
-      "matroska-test-w1-test5-short.mkv"
-    );
+    const filePath = join(samplePath, "matroska", "matroska-test-w1-test5-short.mkv");
     const { format } = await parseFile(filePath);
 
     const expectedList: ITrackInfo[] = [
@@ -237,20 +229,14 @@ describe("Matroska", () => {
     ];
 
     for (const i of expectedList.keys()) {
-      expect(format.trackInfo[i], "format.trackInfo").toStrictEqual(
-        expectedList[i]
-      );
+      expect(format.trackInfo[i], "format.trackInfo").toStrictEqual(expectedList[i]);
     }
   });
 });
 
 describe("MPEG-4", () => {
   test('.mp4: "Mr. Pickles S02E07 My Dear Boy.mp4"', async () => {
-    const filePath = join(
-      samplePath,
-      "mp4",
-      "Mr. Pickles S02E07 My Dear Boy.mp4"
-    );
+    const filePath = join(samplePath, "mp4", "Mr. Pickles S02E07 My Dear Boy.mp4");
     const { format } = await parseFile(filePath);
 
     const expectedList: ITrackInfo[] = [
@@ -287,9 +273,7 @@ describe("MPEG-4", () => {
     ];
 
     for (const i of expectedList.keys()) {
-      expect(format.trackInfo[i], "format.trackInfo").toStrictEqual(
-        expectedList[i]
-      );
+      expect(format.trackInfo[i], "format.trackInfo").toStrictEqual(expectedList[i]);
     }
   });
 });

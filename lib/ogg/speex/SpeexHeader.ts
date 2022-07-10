@@ -44,9 +44,7 @@ export const Header: IGetToken<IHeader> = {
   get: (buf: Buffer, off) => {
     return {
       speex: new Token.StringType(8, "ascii").get(buf, off + 0),
-      version: util.trimRightNull(
-        new Token.StringType(20, "ascii").get(buf, off + 8)
-      ),
+      version: util.trimRightNull(new Token.StringType(20, "ascii").get(buf, off + 8)),
       version_id: buf.readInt32LE(off + 28),
       header_size: buf.readInt32LE(off + 32),
       rate: buf.readInt32LE(off + 36),

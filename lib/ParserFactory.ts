@@ -30,11 +30,7 @@ export interface ITokenParser {
    * @param tokenizer - Input
    * @param options - Parsing options
    */
-  init(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ): ITokenParser;
+  init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser;
 
   /**
    * Parse audio track.
@@ -71,11 +67,7 @@ export function parseHttpContentType(contentType: string): {
  * @param parserId
  * @param opts
  */
-async function parse(
-  tokenizer: ITokenizer,
-  parserId: ParserType,
-  opts: IOptions = {}
-): Promise<IAudioMetadata> {
+async function parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
   // Parser found, execute parser
   const parser = ParserFactory.loadParser(parserId);
   const metadata = new MetadataCollector(opts);
@@ -91,10 +83,7 @@ export class ParserFactory {
    * @param opts - Options
    * @returns Native metadata
    */
-  public static async parseOnContentType(
-    tokenizer: ITokenizer,
-    opts: IOptions
-  ): Promise<IAudioMetadata> {
+  public static async parseOnContentType(tokenizer: ITokenizer, opts: IOptions): Promise<IAudioMetadata> {
     const { mimeType, path, url } = tokenizer.fileInfo;
 
     // Resolve parser based on MIME-type or file extension
@@ -110,11 +99,7 @@ export class ParserFactory {
     return this.parse(tokenizer, parserId, opts);
   }
 
-  public static async parse(
-    tokenizer: ITokenizer,
-    parserId: ParserType,
-    opts: IOptions
-  ): Promise<IAudioMetadata> {
+  public static async parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions): Promise<IAudioMetadata> {
     if (!parserId) {
       // Parser could not be determined on MIME-type or extension
       debug("Guess parser on content...");
@@ -129,14 +114,10 @@ export class ParserFactory {
         if (!guessedType) {
           throw new Error("Failed to determine audio format");
         }
-        debug(
-          `Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`
-        );
+        debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
         parserId = ParserFactory.getParserIdForMimeType(guessedType.mime);
         if (!parserId) {
-          throw new Error(
-            "Guessed MIME-type not supported: " + guessedType.mime
-          );
+          throw new Error("Guessed MIME-type not supported: " + guessedType.mime);
         }
       }
     }
@@ -151,8 +132,7 @@ export class ParserFactory {
   public static getParserIdForExtension(filePath: string): ParserType {
     if (!filePath) return;
 
-    const extension =
-      this.getExtension(filePath).toLocaleLowerCase() || filePath;
+    const extension = this.getExtension(filePath).toLocaleLowerCase() || filePath;
 
     switch (extension) {
       case ".mp2":
@@ -273,9 +253,7 @@ export class ParserFactory {
       return;
     }
 
-    const subType = mime.subtype.startsWith("x-")
-      ? mime.subtype.slice(2)
-      : mime.subtype;
+    const subType = mime.subtype.startsWith("x-") ? mime.subtype.slice(2) : mime.subtype;
 
     switch (mime.type) {
       case "audio":

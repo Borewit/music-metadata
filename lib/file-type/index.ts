@@ -6,10 +6,4 @@ export { fileTypeFromBuffer } from "./fileTypeFromBuffer";
 export { fileTypeFromStream } from "./fileTypeFromStream";
 export { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
 export { fileTypeStream } from "./fileTypeStream";
-export {
-  FileExtension,
-  MimeType,
-  FileTypeResult,
-  ReadableStreamWithFileType,
-  StreamOptions,
-} from "./type";
+export { FileExtension, MimeType, FileTypeResult, ReadableStreamWithFileType, StreamOptions } from "./type";

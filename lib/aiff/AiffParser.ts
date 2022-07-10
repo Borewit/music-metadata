@@ -24,8 +24,7 @@ export class AIFFParser extends BasicParser {
 
   public async parse(): Promise<void> {
     const header = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
-    if (header.chunkID !== "FORM")
-      throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
+    if (header.chunkID !== "FORM") throw new Error("Invalid Chunk-ID, expected 'FORM'"); // Not AIFF format
 
     const type = await this.tokenizer.readToken<string>(FourCcToken);
     switch (type) {
@@ -50,9 +49,7 @@ export class AIFFParser extends BasicParser {
         this.tokenizer.fileInfo.size - this.tokenizer.position >= iff.Header.len
       ) {
         debug(`Reading AIFF chunk at offset=${this.tokenizer.position}`);
-        const chunkHeader = await this.tokenizer.readToken<iff.IChunkHeader>(
-          iff.Header
-        );
+        const chunkHeader = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
 
         debug(`Chunk id=${chunkHeader.chunkID}`);
         const nextChunk = 2 * Math.round(chunkHeader.chunkSize / 2);
@@ -79,28 +76,20 @@ export class AIFFParser extends BasicParser {
         this.metadata.setFormat("sampleRate", common.sampleRate);
         this.metadata.setFormat("numberOfChannels", common.numChannels);
         this.metadata.setFormat("numberOfSamples", common.numSampleFrames);
-        this.metadata.setFormat(
-          "duration",
-          common.numSampleFrames / common.sampleRate
-        );
+        this.metadata.setFormat("duration", common.numSampleFrames / common.sampleRate);
         this.metadata.setFormat("codec", common.compressionName);
         return header.chunkSize;
       }
       case "ID3 ": {
         // ID3-meta-data
-        const id3_data = await this.tokenizer.readToken<Uint8Array>(
-          new Token.Uint8ArrayType(header.chunkSize)
-        );
+        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
         const rst = fromBuffer.fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         return header.chunkSize;
       }
       case "SSND": // Sound Data Chunk
         if (this.metadata.format.duration) {
-          this.metadata.setFormat(
-            "bitrate",
-            (8 * header.chunkSize) / this.metadata.format.duration
-          );
+          this.metadata.setFormat("bitrate", (8 * header.chunkSize) / this.metadata.format.duration);
         }
         return 0;
 

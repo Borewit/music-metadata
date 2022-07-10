@@ -1,8 +1,6 @@
 import { IGetToken } from "../strtok3";
 
-import GUID, {
-  HeaderExtensionObject as GUIDHeaderExtensionObject,
-} from "./GUID";
+import GUID, { HeaderExtensionObject as GUIDHeaderExtensionObject } from "./GUID";
 
 export interface IHeaderExtensionObject {
   reserved1: GUID;
@@ -14,9 +12,7 @@ export interface IHeaderExtensionObject {
  * 3.4: Header Extension Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_4
  */
-export class HeaderExtensionObject
-  implements IGetToken<IHeaderExtensionObject>
-{
+export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> {
   public static guid = GUIDHeaderExtensionObject;
 
   public len: number;

@@ -48,11 +48,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     const format = buffer.toString("utf8", (offset += 4), offset + mimeLen);
 
     const descLen = Token.UINT32_BE.get(buffer, (offset += mimeLen));
-    const description = buffer.toString(
-      "utf8",
-      (offset += 4),
-      offset + descLen
-    );
+    const description = buffer.toString("utf8", (offset += 4), offset + descLen);
 
     const width = Token.UINT32_BE.get(buffer, (offset += descLen));
     const height = Token.UINT32_BE.get(buffer, (offset += 4));

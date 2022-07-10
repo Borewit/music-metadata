@@ -5,11 +5,7 @@ import { IAudioMetadata, IOptions } from "../lib/type";
 
 interface Parser {
   description: string;
-  initParser: (
-    filePath: string,
-    mimeType?: string,
-    options?: IOptions
-  ) => Promise<IAudioMetadata>;
+  initParser: (filePath: string, mimeType?: string, options?: IOptions) => Promise<IAudioMetadata>;
 }
 
 /**

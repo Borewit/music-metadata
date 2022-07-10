@@ -1,9 +1,6 @@
 import * as generic from "./GenericTagTypes";
 import { ITag } from "../type";
-import {
-  INativeMetadataCollector,
-  IWarningCollector,
-} from "./INativeMetadataCollector";
+import { INativeMetadataCollector, IWarningCollector } from "./INativeMetadataCollector";
 import { GenericTagId } from "./GenericTagId";
 
 export interface IGenericTagMapper {
@@ -23,10 +20,7 @@ export interface IGenericTagMapper {
    * @param warnings  Register warnings
    * @returns Generic tag, if native tag could be mapped
    */
-  mapGenericTag(
-    tag: ITag,
-    warnings: INativeMetadataCollector
-  ): generic.IGenericTag;
+  mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag;
 }
 
 export class CommonTagMapper implements IGenericTagMapper {
@@ -48,10 +42,7 @@ export class CommonTagMapper implements IGenericTagMapper {
     };
   }
 
-  public constructor(
-    public tagTypes: generic.TagType[],
-    public tagMap: generic.INativeTagMap
-  ) {}
+  public constructor(public tagTypes: generic.TagType[], public tagMap: generic.INativeTagMap) {}
 
   /**
    * Process and set common tags
@@ -60,10 +51,7 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @param warnings Register warnings
    * @returns common name
    */
-  public mapGenericTag(
-    tag: ITag,
-    warnings: IWarningCollector
-  ): generic.IGenericTag {
+  public mapGenericTag(tag: ITag, warnings: IWarningCollector): generic.IGenericTag {
     tag = { id: tag.id, value: tag.value }; // clone object
 
     this.postMap(tag, warnings);

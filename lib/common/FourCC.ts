@@ -15,9 +15,7 @@ export const FourCcToken: IToken<string> = {
     switch (id) {
       default:
         if (!validFourCC.test(id)) {
-          throw new Error(
-            `FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`
-          );
+          throw new Error(`FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`);
         }
     }
     return id;

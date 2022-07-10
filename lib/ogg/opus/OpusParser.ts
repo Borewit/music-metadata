@@ -17,11 +17,7 @@ export class OpusParser extends VorbisParser {
   private idHeader: IIdHeader;
   private lastPos = -1;
 
-  constructor(
-    metadata: INativeMetadataCollector,
-    options: IOptions,
-    private tokenizer: ITokenizer
-  ) {
+  constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
     super(metadata, options);
   }
 
@@ -34,8 +30,7 @@ export class OpusParser extends VorbisParser {
     this.metadata.setFormat("codec", "Opus");
     // Parse Opus ID Header
     this.idHeader = new IdHeader(pageData.length).get(pageData, 0);
-    if (this.idHeader.magicSignature !== "OpusHead")
-      throw new Error("Illegal ogg/Opus magic-signature");
+    if (this.idHeader.magicSignature !== "OpusHead") throw new Error("Illegal ogg/Opus magic-signature");
     this.metadata.setFormat("sampleRate", this.idHeader.inputSampleRate);
     this.metadata.setFormat("numberOfChannels", this.idHeader.channelCount);
   }
@@ -54,25 +49,15 @@ export class OpusParser extends VorbisParser {
   }
 
   public override calculateDuration(header: IPageHeader) {
-    if (
-      this.metadata.format.sampleRate &&
-      header.absoluteGranulePosition >= 0
-    ) {
+    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
       const pos_48bit = header.absoluteGranulePosition - this.idHeader.preSkip;
       this.metadata.setFormat("numberOfSamples", pos_48bit);
       this.metadata.setFormat("duration", pos_48bit / 48_000);
 
-      if (
-        this.lastPos !== -1 &&
-        this.tokenizer.fileInfo.size > 0 &&
-        this.metadata.format.duration
-      ) {
+      if (this.lastPos !== -1 && this.tokenizer.fileInfo.size > 0 && this.metadata.format.duration) {
         const dataSize = this.tokenizer.fileInfo.size - this.lastPos;
-        this.metadata.setFormat(
-          "bitrate",
-          (8 * dataSize) / this.metadata.format.duration
-        );
+        this.metadata.setFormat("bitrate", (8 * dataSize) / this.metadata.format.duration);
       }
     }
   }

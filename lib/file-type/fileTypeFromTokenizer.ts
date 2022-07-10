@@ -29,9 +29,7 @@ import { FileTypeParser } from "./FileTypeParser";
  * //=> {ext: 'mp3', mime: 'audio/mpeg'}
  * ```
  */
-export async function fileTypeFromTokenizer(
-  tokenizer: ITokenizer
-): Promise<FileTypeResult | undefined> {
+export async function fileTypeFromTokenizer(tokenizer: ITokenizer): Promise<FileTypeResult | undefined> {
   try {
     return new FileTypeParser().parse(tokenizer);
   } catch (error) {

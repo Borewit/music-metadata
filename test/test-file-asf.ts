@@ -11,8 +11,7 @@ describe("GUID", () => {
   test("should construct GUID from string", () => {
     const HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
     const HeaderGUID = Buffer.from([
-      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa,
-      0x00, 0x62, 0xce, 0x6c,
+      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c,
     ]);
 
     expect(HeaderObject.toBin()).toStrictEqual(HeaderGUID);
@@ -20,8 +19,7 @@ describe("GUID", () => {
 
   test("should construct GUID from Buffer", () => {
     const GUIDData = Buffer.from([
-      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa,
-      0x00, 0x62, 0xce, 0x6c,
+      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c,
     ]);
     const GUIDString = "75B22630-668E-11CF-A6D9-00AA0062CE6C";
 
@@ -69,9 +67,7 @@ describe("should be able to roughly decode a 64-bit QWord", () => {
 
   test.each(tests)("%#", ({ raw, expected, description }) => {
     const buf = Buffer.from(raw, "binary");
-    expect(Number(getParserForAttr(DataType.QWord)(buf)), description).toBe(
-      expected
-    );
+    expect(Number(getParserForAttr(DataType.QWord)(buf)), description).toBe(expected);
   });
 });
 
@@ -80,16 +76,10 @@ describe("parse", () => {
 
   describe("should decode an ASF audio file (.wma)", () => {
     test.each(Parsers)("%s", async (parser) => {
-      const metadata = await parser.initParser(
-        join(asfFilePath, "asf.wma"),
-        "audio/x-ms-wma"
-      );
+      const metadata = await parser.initParser(join(asfFilePath, "asf.wma"), "audio/x-ms-wma");
       expect(metadata, "metadata").toBeDefined();
       expect(metadata.native, "metadata.native").toBeDefined();
-      expect(
-        metadata.native.asf,
-        "should include native ASF tags"
-      ).toBeDefined();
+      expect(metadata.native.asf, "should include native ASF tags").toBeDefined();
 
       const format = metadata.format;
 
@@ -102,9 +92,7 @@ describe("parse", () => {
 
       expect(common.title, "common.title").toBe("Don't Bring Me Down");
       expect(common.artist, "common.artist").toBe("Electric Light Orchestra");
-      expect(common.albumartist, "common.albumartist").toBe(
-        "Electric Light Orchestra"
-      );
+      expect(common.albumartist, "common.albumartist").toBe("Electric Light Orchestra");
       expect(common.album, "common.album").toBe("Discovery");
       expect(common.year, "common.year").toBe(2001);
       expect(common.track, "common.track 9/0").toStrictEqual({
@@ -119,17 +107,9 @@ describe("parse", () => {
 
       const native = orderTags(metadata.native.asf);
 
-      expect(native["WM/AlbumTitle"], "native: WM/AlbumTitle").toStrictEqual([
-        "Discovery",
-      ]);
-      expect(
-        native["WM/BeatsPerMinute"],
-        "native: WM/BeatsPerMinute"
-      ).toStrictEqual([117]);
-      expect(
-        native.REPLAYGAIN_TRACK_GAIN,
-        "native: REPLAYGAIN_TRACK_GAIN"
-      ).toStrictEqual(["-4.7 dB"]);
+      expect(native["WM/AlbumTitle"], "native: WM/AlbumTitle").toStrictEqual(["Discovery"]);
+      expect(native["WM/BeatsPerMinute"], "native: WM/BeatsPerMinute").toStrictEqual([117]);
+      expect(native.REPLAYGAIN_TRACK_GAIN, "native: REPLAYGAIN_TRACK_GAIN").toStrictEqual(["-4.7 dB"]);
     });
   });
 
@@ -159,9 +139,7 @@ describe("parse", () => {
     expect(format.bitrate, "format.bitrate").toBeCloseTo(128_639, 0);
 
     expect(common.title, "metadata.common.title").toBe("Thirty Dirty Birds");
-    expect(common.artist, "metadata.common.artist").toBe(
-      "The Red Hot Chili Peppers"
-    );
+    expect(common.artist, "metadata.common.artist").toBe("The Red Hot Chili Peppers");
     expect(common.date, "metadata.common.date").toBe("2003");
     expect(common.label, "metadata.common.label").toStrictEqual(["Capitol"]);
     expect(common.track.no, "metadata.common.track.no").toBe(13);

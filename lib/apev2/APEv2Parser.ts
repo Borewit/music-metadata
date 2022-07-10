@@ -64,8 +64,7 @@ export class APEv2Parser extends BasicParser {
    * @returns {number} duration in seconds
    */
   public static calculateDuration(ah: IHeader): number {
-    let duration =
-      ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
+    let duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
     duration += ah.finalFrameBlocks;
     return duration / ah.sampleRate;
   }
@@ -75,10 +74,7 @@ export class APEv2Parser extends BasicParser {
    * @param reader
    * @param offset
    */
-  public static async findApeFooterOffset(
-    reader: IRandomReader,
-    offset: number
-  ): Promise<IApeHeader> {
+  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader> {
     // Search for APE footer header at the end of the file
     const apeBuf = Buffer.alloc(TagFooter.len);
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
@@ -89,14 +85,9 @@ export class APEv2Parser extends BasicParser {
     }
   }
 
-  private static parseTagFooter(
-    metadata: INativeMetadataCollector,
-    buffer: Buffer,
-    options: IOptions
-  ): Promise<void> {
+  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, options: IOptions): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    if (footer.ID !== preamble)
-      throw new Error("Unexpected APEv2 Footer ID preamble value.");
+    if (footer.ID !== preamble) throw new Error("Unexpected APEv2 Footer ID preamble value.");
     fromBuffer.fromBuffer(buffer);
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, fromBuffer.fromBuffer(buffer), options);
@@ -109,10 +100,7 @@ export class APEv2Parser extends BasicParser {
    * Parse APEv1 / APEv2 header if header signature found
    */
   public async tryParseApeHeader(): Promise<void> {
-    if (
-      this.tokenizer.fileInfo.size > 0 &&
-      this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len
-    ) {
+    if (this.tokenizer.fileInfo.size > 0 && this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len) {
       debug(`No APEv2 header found, end-of-file reached`);
       return;
     }
@@ -125,8 +113,7 @@ export class APEv2Parser extends BasicParser {
       debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
       if (this.tokenizer.fileInfo.size > 0) {
         // Try to read the APEv2 header using just the footer-header
-        const remaining =
-          this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
+        const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
         const buffer = Buffer.alloc(remaining);
         await this.tokenizer.readBuffer(buffer);
         return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
@@ -135,16 +122,12 @@ export class APEv2Parser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-    const descriptor = await this.tokenizer.readToken<IDescriptor>(
-      DescriptorParser
-    );
+    const descriptor = await this.tokenizer.readToken<IDescriptor>(DescriptorParser);
 
     if (descriptor.ID !== "MAC ") throw new Error("Unexpected descriptor ID");
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
-    const header = await (lenExp > 0
-      ? this.parseDescriptorExpansion(lenExp)
-      : this.parseHeader());
+    const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
 
     await this.tokenizer.ignore(header.forwardBytes);
     return this.tryParseApeHeader();
@@ -155,42 +138,32 @@ export class APEv2Parser extends BasicParser {
 
     let bytesRemaining = footer.size - TagFooter.len;
 
-    debug(
-      `Parse APE tags at offset=${this.tokenizer.position}, size=${bytesRemaining}`
-    );
+    debug(`Parse APE tags at offset=${this.tokenizer.position}, size=${bytesRemaining}`);
 
     for (let i = 0; i < footer.fields; i++) {
       if (bytesRemaining < TagItemHeader.len) {
         this.metadata.addWarning(
-          `APEv2 Tag-header: ${
-            footer.fields - i
-          } items remaining, but no more tag data to read.`
+          `APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`
         );
         break;
       }
 
       // Only APEv2 tag has tag item headers
-      const tagItemHeader = await this.tokenizer.readToken<ITagItemHeader>(
-        TagItemHeader
-      );
+      const tagItemHeader = await this.tokenizer.readToken<ITagItemHeader>(TagItemHeader);
       bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
 
       await this.tokenizer.peekBuffer(keyBuffer, {
         length: Math.min(keyBuffer.length, bytesRemaining),
       });
       let zero = util.findZero(keyBuffer, 0, keyBuffer.length);
-      const key = await this.tokenizer.readToken<string>(
-        new StringType(zero, "ascii")
-      );
+      const key = await this.tokenizer.readToken<string>(new StringType(zero, "ascii"));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
 
       switch (tagItemHeader.flags.dataType) {
         case DataType.text_utf8: {
           // utf-8 text-string
-          const value = await this.tokenizer.readToken<string>(
-            new StringType(tagItemHeader.size, "utf8")
-          );
+          const value = await this.tokenizer.readToken<string>(new StringType(tagItemHeader.size, "utf8"));
           const values = value.split(/\0/g);
 
           for (const val of values) {
@@ -224,18 +197,14 @@ export class APEv2Parser extends BasicParser {
 
         case DataType.reserved:
           debug(`Ignore external info ${key}`);
-          this.metadata.addWarning(
-            `APEv2 header declares a reserved datatype for "${key}"`
-          );
+          this.metadata.addWarning(`APEv2 header declares a reserved datatype for "${key}"`);
           await this.tokenizer.ignore(tagItemHeader.size);
           break;
       }
     }
   }
 
-  private async parseDescriptorExpansion(
-    lenExp: number
-  ): Promise<{ forwardBytes: number }> {
+  private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
     await this.tokenizer.ignore(lenExp);
     return this.parseHeader();
   }

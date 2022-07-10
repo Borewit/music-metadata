@@ -23,9 +23,7 @@ export class MpcSv8Parser extends BasicParser {
 
     do {
       const header = await sv8reader.readPacketHeader();
-      debug(
-        `packet-header key=${header.key}, payloadLength=${header.payloadLength}`
-      );
+      debug(`packet-header key=${header.key}, payloadLength=${header.payloadLength}`);
 
       switch (header.key) {
         case "SH": {
@@ -33,10 +31,7 @@ export class MpcSv8Parser extends BasicParser {
           const sh = await sv8reader.readStreamHeader(header.payloadLength);
           this.metadata.setFormat("numberOfSamples", sh.sampleCount);
           this.metadata.setFormat("sampleRate", sh.sampleFrequency);
-          this.metadata.setFormat(
-            "duration",
-            sh.sampleCount / sh.sampleFrequency
-          );
+          this.metadata.setFormat("duration", sh.sampleCount / sh.sampleFrequency);
           this.metadata.setFormat("numberOfChannels", sh.channelCount);
           break;
         }
@@ -54,15 +49,8 @@ export class MpcSv8Parser extends BasicParser {
           break;
 
         case "SE": // Stream End
-          this.metadata.setFormat(
-            "bitrate",
-            (this.audioLength * 8) / this.metadata.format.duration
-          );
-          return APEv2Parser.tryParseApeHeader(
-            this.metadata,
-            this.tokenizer,
-            this.options
-          );
+          this.metadata.setFormat("bitrate", (this.audioLength * 8) / this.metadata.format.duration);
+          return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:
           throw new Error(`Unexpected header: ${header.key}`);

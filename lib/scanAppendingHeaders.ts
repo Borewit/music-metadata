@@ -8,10 +8,7 @@ import { getLyricsHeaderLength } from "./lyrics3/Lyrics3";
  * @param randomReader
  * @param options
  */
-export async function scanAppendingHeaders(
-  randomReader: IRandomReader,
-  options: IPrivateOptions = {}
-) {
+export async function scanAppendingHeaders(randomReader: IRandomReader, options: IPrivateOptions = {}) {
   let apeOffset = randomReader.fileSize;
   if (await hasID3v1Header(randomReader)) {
     apeOffset -= 128;
@@ -19,8 +16,5 @@ export async function scanAppendingHeaders(
     apeOffset -= lyricsLen;
   }
 
-  options.apeHeader = await APEv2Parser.findApeFooterOffset(
-    randomReader,
-    apeOffset
-  );
+  options.apeHeader = await APEv2Parser.findApeFooterOffset(randomReader, apeOffset);
 }

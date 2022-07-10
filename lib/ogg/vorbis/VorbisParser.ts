@@ -21,10 +21,7 @@ const debug = initDebug("music-metadata:parser:ogg:vorbis1");
 export class VorbisParser implements IPageConsumer {
   private pageSegments: Buffer[] = [];
 
-  constructor(
-    protected metadata: INativeMetadataCollector,
-    protected options: IOptions
-  ) {}
+  constructor(protected metadata: INativeMetadataCollector, protected options: IOptions) {}
 
   /**
    * Vorbis 1 parser
@@ -85,19 +82,10 @@ export class VorbisParser implements IPageConsumer {
   }
 
   public calculateDuration(header: IPageHeader) {
-    if (
-      this.metadata.format.sampleRate &&
-      header.absoluteGranulePosition >= 0
-    ) {
+    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
-      this.metadata.setFormat(
-        "numberOfSamples",
-        header.absoluteGranulePosition
-      );
-      this.metadata.setFormat(
-        "duration",
-        this.metadata.format.numberOfSamples / this.metadata.format.sampleRate
-      );
+      this.metadata.setFormat("numberOfSamples", header.absoluteGranulePosition);
+      this.metadata.setFormat("duration", this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
     }
   }
 
@@ -111,8 +99,7 @@ export class VorbisParser implements IPageConsumer {
     debug("Parse first page");
     // Parse  Vorbis common header
     const commonHeader = CommonHeader.get(pageData, 0);
-    if (commonHeader.vorbis !== "vorbis")
-      throw new Error("Metadata does not look like Vorbis");
+    if (commonHeader.vorbis !== "vorbis") throw new Error("Metadata does not look like Vorbis");
     if (commonHeader.packetType === 1) {
       const idHeader = IdentificationHeader.get(pageData, CommonHeader.len);
 
@@ -125,20 +112,13 @@ export class VorbisParser implements IPageConsumer {
         idHeader.bitrateNominal,
         idHeader.channelMode
       );
-    } else
-      throw new Error(
-        "First Ogg page should be type 1: the identification header"
-      );
+    } else throw new Error("First Ogg page should be type 1: the identification header");
   }
 
   protected parseFullPage(pageData: Buffer) {
     // New page
     const commonHeader = CommonHeader.get(pageData, 0);
-    debug(
-      "Parse full page: type=%s, byteLength=%s",
-      commonHeader.packetType,
-      pageData.byteLength
-    );
+    debug("Parse full page: type=%s, byteLength=%s", commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
       case 3: //  type 3: comment header
         return this.parseUserCommentList(pageData, CommonHeader.len);

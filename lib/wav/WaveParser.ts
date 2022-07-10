@@ -34,9 +34,7 @@ export class WaveParser extends BasicParser {
 
   public async parse(): Promise<void> {
     const riffHeader = await this.tokenizer.readToken<IChunkHeader>(Header);
-    debug(
-      `pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`
-    );
+    debug(`pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`);
     if (riffHeader.chunkID !== "RIFF") return; // Not RIFF format
     return this.parseRiffChunk(riffHeader.chunkSize).catch((error) => {
       if (!(error instanceof strtok3.EndOfStreamError)) {
@@ -65,9 +63,7 @@ export class WaveParser extends BasicParser {
       }
 
       this.header = header;
-      debug(
-        `pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`
-      );
+      debug(`pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`);
       switch (header.chunkID) {
         case "LIST":
           await this.parseListTag(header);
@@ -80,9 +76,7 @@ export class WaveParser extends BasicParser {
 
         case "fmt ": {
           // The Util Chunk, non-PCM Formats
-          const fmt = await this.tokenizer.readToken<IWaveFormat>(
-            new Format(header)
-          );
+          const fmt = await this.tokenizer.readToken<IWaveFormat>(new Format(header));
 
           let subFormat = WaveFormat[fmt.wFormatTag];
           if (!subFormat) {
@@ -93,10 +87,7 @@ export class WaveParser extends BasicParser {
           this.metadata.setFormat("bitsPerSample", fmt.wBitsPerSample);
           this.metadata.setFormat("sampleRate", fmt.nSamplesPerSec);
           this.metadata.setFormat("numberOfChannels", fmt.nChannels);
-          this.metadata.setFormat(
-            "bitrate",
-            fmt.nBlockAlign * fmt.nSamplesPerSec * 8
-          );
+          this.metadata.setFormat("bitrate", fmt.nBlockAlign * fmt.nSamplesPerSec * 8);
           this.blockAlign = fmt.nBlockAlign;
           break;
         }
@@ -105,9 +96,7 @@ export class WaveParser extends BasicParser {
         case "ID3 ": {
           // The way Picard, FooBar currently stores, ID3 meta-data
           // The way Mp3Tags stores ID3 meta-data
-          const id3_data = await this.tokenizer.readToken<Uint8Array>(
-            new Token.Uint8ArrayType(header.chunkSize)
-          );
+          const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
           const rst = fromBuffer.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
@@ -120,12 +109,9 @@ export class WaveParser extends BasicParser {
 
           let chunkSize = header.chunkSize;
           if (this.tokenizer.fileInfo.size > 0) {
-            const calcRemaining =
-              this.tokenizer.fileInfo.size - this.tokenizer.position;
+            const calcRemaining = this.tokenizer.fileInfo.size - this.tokenizer.position;
             if (calcRemaining < chunkSize) {
-              this.metadata.addWarning(
-                "data chunk length exceeding file length"
-              );
+              this.metadata.addWarning("data chunk length exceeding file length");
               chunkSize = calcRemaining;
             }
           }
@@ -137,17 +123,12 @@ export class WaveParser extends BasicParser {
             : chunkSize / this.blockAlign;
           if (numberOfSamples) {
             this.metadata.setFormat("numberOfSamples", numberOfSamples);
-            this.metadata.setFormat(
-              "duration",
-              numberOfSamples / this.metadata.format.sampleRate
-            );
+            this.metadata.setFormat("duration", numberOfSamples / this.metadata.format.sampleRate);
           }
 
           this.metadata.setFormat(
             "bitrate",
-            this.metadata.format.numberOfChannels *
-              this.blockAlign *
-              this.metadata.format.sampleRate
+            this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate
           ); // ToDo: check me
           await this.tokenizer.ignore(header.chunkSize);
           break;
@@ -155,9 +136,7 @@ export class WaveParser extends BasicParser {
 
         case "bext": {
           // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
-          const bext = await this.tokenizer.readToken(
-            BroadcastAudioExtensionChunk
-          );
+          const bext = await this.tokenizer.readToken(BroadcastAudioExtensionChunk);
           for (const [key, value] of Object.entries(bext)) {
             this.metadata.addTag("exif", "bext." + key, value);
           }
@@ -165,17 +144,13 @@ export class WaveParser extends BasicParser {
         }
 
         case "\u0000\u0000\u0000\u0000": // padding ??
-          debug(
-            `Ignore padding chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`
-          );
+          debug(`Ignore padding chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`);
           this.metadata.addWarning("Ignore chunk: RIFF/" + header.chunkID);
           await this.tokenizer.ignore(header.chunkSize);
           break;
 
         default:
-          debug(
-            `Ignore chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`
-          );
+          debug(`Ignore chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`);
           this.metadata.addWarning("Ignore chunk: RIFF/" + header.chunkID);
           await this.tokenizer.ignore(header.chunkSize);
       }
@@ -188,14 +163,8 @@ export class WaveParser extends BasicParser {
   }
 
   public async parseListTag(listHeader: IChunkHeader): Promise<void> {
-    const listType = await this.tokenizer.readToken(
-      new Token.StringType(4, "binary")
-    );
-    debug(
-      "pos=%s, parseListTag: chunkID=RIFF/WAVE/LIST/%s",
-      this.tokenizer.position,
-      listType
-    );
+    const listType = await this.tokenizer.readToken(new Token.StringType(4, "binary"));
+    debug("pos=%s, parseListTag: chunkID=RIFF/WAVE/LIST/%s", this.tokenizer.position, listType);
     switch (listType) {
       case "INFO":
         return this.parseRiffInfoTags(listHeader.chunkSize - 4);

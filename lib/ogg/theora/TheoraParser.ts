@@ -16,11 +16,7 @@ const debug = initDebug("music-metadata:parser:ogg:theora");
  * - https://theora.org/doc/Theora.pdf
  */
 export class TheoraParser implements IPageConsumer {
-  constructor(
-    private metadata: INativeMetadataCollector,
-    options: IOptions,
-    private tokenizer: ITokenizer
-  ) {}
+  constructor(private metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {}
 
   /**
    * Vorbis 1 parser

@@ -11,9 +11,7 @@ test("should throw an exception if constructor argument is not a stream", () => 
 
   const notStream = new MyEmitter();
 
-  expect(() => new StreamReader(notStream as any)).toThrowError(
-    "Expected an instance of stream.Readable"
-  );
+  expect(() => new StreamReader(notStream as any)).toThrowError("Expected an instance of stream.Readable");
 });
 
 test("should be able to handle 0 byte read request", async () => {
@@ -45,16 +43,12 @@ test("read from a streamed data chunk", async () => {
 
   // should should reject at the end of the stream
   uint8Array = new Uint8Array(1);
-  await expect(() =>
-    streamReader.read(uint8Array, 0, 1)
-  ).rejects.toBeInstanceOf(EndOfStreamError);
+  await expect(() => streamReader.read(uint8Array, 0, 1)).rejects.toBeInstanceOf(EndOfStreamError);
 });
 
 describe("concurrent reads", () => {
   test("should support concurrent reads", async () => {
-    const sourceStream = new SourceStream(
-      "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009"
-    );
+    const sourceStream = new SourceStream("\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009");
     const streamReader = new StreamReader(sourceStream);
 
     for (let i = 0; i < 10; ++i) {
@@ -88,9 +82,7 @@ describe("disjoint", () => {
       super();
 
       this.nvals = Math.floor(lens.reduce((a, b) => a + b) / 4);
-      const data = Array.from({ length: this.nvals }, () => [
-        0x01, 0x02, 0x03, 0x04,
-      ]).flat();
+      const data = Array.from({ length: this.nvals }, () => [0x01, 0x02, 0x03, 0x04]).flat();
 
       this.buf = Buffer.from(data);
     }
@@ -118,9 +110,7 @@ describe("disjoint", () => {
       let bytesRead = await reader.read(buffer, 0, 4);
       while ((bytesRead = await reader.read(buffer, 0, 4))) {
         expect(bytesRead).toBe(4);
-        expect(new DataView(buffer.buffer).getUint32(0, false)).toBe(
-          16_909_060
-        );
+        expect(new DataView(buffer.buffer).getUint32(0, false)).toBe(16_909_060);
       }
     } catch (error) {
       expect(error).toBeInstanceOf(EndOfStreamError);
@@ -154,9 +144,7 @@ describe("peek", () => {
     expect(uint8Array[0], "0x05 == 5").toBe(5);
     bytesRead = await streamReader.read(uint8Array, 0, 6);
     expect(bytesRead, "Should overlap the peaked byte").toBe(6);
-    expect(Buffer.from(uint8Array.buffer).toString("latin1")).toBe(
-      "\u0005peter"
-    );
+    expect(Buffer.from(uint8Array.buffer).toString("latin1")).toBe("\u0005peter");
   });
 
   test("should be able to read a smaller chunk then the overlapping peeked chunk", async () => {
@@ -173,9 +161,7 @@ describe("peek", () => {
     expect(uint8Array[0], "0x05 == 5").toBe(5);
     bytesRead = await streamReader.read(uint8Array, 1, 5);
     expect(bytesRead, "Should read remaining 5 byte").toBe(5);
-    expect(Buffer.from(uint8Array.buffer).toString("latin1")).toBe(
-      "\u0005peter"
-    );
+    expect(Buffer.from(uint8Array.buffer).toString("latin1")).toBe("\u0005peter");
   });
 
   test("should be able to handle overlapping peeks", async () => {
@@ -293,9 +279,7 @@ describe("exception", () => {
     const streamReader = new StreamReader(fileReadStream);
     fileReadStream.close(); // Sabotage stream
 
-    await expect(() => streamReader.read(uint8Array, 0, 17)).rejects.toThrow(
-      "Stream closed"
-    );
+    await expect(() => streamReader.read(uint8Array, 0, 17)).rejects.toThrow("Stream closed");
   });
 
   test("handle stream error", async () => {
@@ -304,8 +288,6 @@ describe("exception", () => {
     const fileReadStream = createReadStream(path_test4);
     const streamReader = new StreamReader(fileReadStream);
 
-    await expect(() =>
-      streamReader.read(uint8Array, 0, 17)
-    ).rejects.toHaveProperty("code", "ENOENT");
+    await expect(() => streamReader.read(uint8Array, 0, 17)).rejects.toHaveProperty("code", "ENOENT");
   });
 });
