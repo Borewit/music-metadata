@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "incremental": true,
 
-    // "types": ["content-type", "debug", "media-typer", "mime"],
+    "lib": ["ESNext"],
 
     // "strict": true,
 

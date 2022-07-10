@@ -1,8 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/eslintrc",
+  "root": true,
   "env": {
-    "browser": true,
-    "node": true
+    "browser": false,
+    "node": false
   },
   "extends": [
     /* https://github.com/eslint/eslint/blob/main/conf/eslint-all.js */
@@ -49,11 +50,7 @@
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": [
-          "lib/tsconfig.json",
-          "test/tsconfig.json",
-          "doc-gen/tsconfig.json"
-        ]
+        "project": ["lib/tsconfig.json", "test/tsconfig.json", "doc-gen/tsconfig.json"]
       }
     }
   },
@@ -61,6 +58,7 @@
     /* extends "extends" */
     /* eslint */
     "no-constant-condition": ["error", { "checkLoops": false }],
+    "no-undef": "warn",
 
     /* eslint-plugin-import */
     "import/no-unresolved": ["error", { "caseSensitiveStrict": true }],
@@ -84,10 +82,7 @@
     "unicorn/prevent-abbreviations": "off",
 
     /* @typescript-eslint/eslint-plugin */
-    "@typescript-eslint/no-empty-function": [
-      "error",
-      { "allow": ["constructors"] }
-    ],
+    "@typescript-eslint/no-empty-function": ["error", { "allow": ["constructors"] }],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unnecessary-boolean-literal-compare": "off",
     "@typescript-eslint/no-unnecessary-condition": "off",
@@ -146,10 +141,7 @@
     "spaced-comment": ["error", "always", { "markers": ["/"] }],
 
     /* eslint-plugin-import */
-    "import/no-extraneous-dependencies": [
-      "error",
-      { "devDependencies": false }
-    ],
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": false }],
 
     /* eslint-plugin-node */
     "node/no-extraneous-import": "error",
@@ -157,10 +149,7 @@
     /* @typescript-eslint/eslint-plugin */
     "@typescript-eslint/no-shadow": ["error", { "hoist": "all" }],
     "@typescript-eslint/no-unused-expressions": "error",
-    "@typescript-eslint/restrict-template-expressions": [
-      "error",
-      { "allowBoolean": true }
-    ],
+    "@typescript-eslint/restrict-template-expressions": ["error", { "allowBoolean": true }],
     "@typescript-eslint/semi": ["error", "always"]
   }
 }
