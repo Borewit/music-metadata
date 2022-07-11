@@ -53,7 +53,7 @@ export class OggParser extends BasicParser {
           header.headerType.continued
         );
         if (header.headerType.firstPage) {
-          const id = new Token.StringType(7, "ascii").get(Buffer.from(pageData), 0);
+          const id = new Token.StringType(7, "ascii").get(pageData, 0);
           switch (id) {
             case "\u0001vorbis": // Ogg/Vorbis
               debug("Set page consumer to Ogg/Vorbis");

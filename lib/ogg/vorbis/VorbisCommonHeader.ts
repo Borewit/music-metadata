@@ -28,9 +28,9 @@ export interface ICommonHeader {
 export const CommonHeader: IGetToken<ICommonHeader> = {
   len: 7,
 
-  get: (buf: Buffer, off): ICommonHeader => {
+  get: (buf: Uint8Array, off): ICommonHeader => {
     return {
-      packetType: buf.readUInt8(off),
+      packetType: Token.UINT8.get(buf, off),
       vorbis: new Token.StringType(6, "ascii").get(buf, off + 1),
     };
   },
