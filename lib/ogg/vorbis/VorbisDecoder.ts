@@ -1,4 +1,5 @@
 import * as Token from "../../token-types";
+import { Utf8StringType } from "../../token-types/string";
 
 export class VorbisDecoder {
   constructor(private readonly data: Uint8Array, private offset: number) {}
@@ -11,7 +12,7 @@ export class VorbisDecoder {
 
   public readStringUtf8(): string {
     const len = this.readInt32();
-    const value = Buffer.from(this.data).toString("utf8", this.offset, this.offset + len);
+    const value = new Utf8StringType(len).get(this.data, this.offset);
     this.offset += len;
     return value;
   }

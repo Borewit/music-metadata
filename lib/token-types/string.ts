@@ -1,3 +1,4 @@
+import { TextDecoder } from "node:util";
 import { IGetToken } from "./type";
 
 /**
@@ -8,6 +9,18 @@ export class StringType implements IGetToken<string, Buffer> {
 
   public get(uint8Array: Uint8Array, offset: number): string {
     return Buffer.from(uint8Array).toString(this.encoding, offset, offset + this.len);
+  }
+}
+
+/**
+ * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
+ */
+export class Utf8StringType implements IGetToken<string> {
+  static decoder = new TextDecoder("utf8");
+  public constructor(public len: number) {}
+
+  public get(uint8Array: Uint8Array, offset: number): string {
+    return Utf8StringType.decoder.decode(uint8Array.subarray(offset, offset + this.len));
   }
 }
 

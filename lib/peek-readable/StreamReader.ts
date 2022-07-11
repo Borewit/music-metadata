@@ -100,10 +100,10 @@ export class StreamReader {
    * @returns Number of bytes read
    */
   private async readFromStream(buffer: Uint8Array, offset: number, length: number): Promise<number> {
-    const readBuffer = this.s.read(length);
+    const readBuffer: Uint8Array = this.s.read(length);
 
     if (readBuffer) {
-      buffer.set(readBuffer as Buffer, offset);
+      buffer.set(readBuffer, offset);
       return readBuffer.length;
     } else {
       const request = {
@@ -125,7 +125,7 @@ export class StreamReader {
    * @param request Deferred read request
    */
   private readDeferred(request: IReadRequest) {
-    const readBuffer: Buffer = this.s.read(request.length);
+    const readBuffer: Uint8Array = this.s.read(request.length);
     if (readBuffer) {
       request.buffer.set(readBuffer, request.offset);
       request.deferred.resolve(readBuffer.length);

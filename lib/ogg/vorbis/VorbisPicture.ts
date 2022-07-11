@@ -3,6 +3,8 @@ import { IGetToken } from "../../strtok3";
 
 import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
 import { IPicture } from "../../type";
+import { Utf8StringType } from "../../token-types/string";
+import { getUint8ArrayFromBase64String } from "../../common/Util";
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
@@ -35,20 +37,20 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     return this.fromBuffer(Buffer.from(base64str, "base64"));
   }
 
-  public static fromBuffer(buffer: Buffer): IVorbisPicture {
+  public static fromBuffer(buffer: Uint8Array): IVorbisPicture {
     const pic = new VorbisPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
   constructor(public len: number) {}
 
-  public get(buffer: Buffer, offset: number): IVorbisPicture {
+  public get(buffer: Uint8Array, offset: number): IVorbisPicture {
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
 
     const mimeLen = Token.UINT32_BE.get(buffer, (offset += 4));
-    const format = buffer.toString("utf8", (offset += 4), offset + mimeLen);
+    const format = new Utf8StringType(mimeLen).get(buffer, (offset += 4));
 
     const descLen = Token.UINT32_BE.get(buffer, (offset += mimeLen));
-    const description = buffer.toString("utf8", (offset += 4), offset + descLen);
+    const description = new Utf8StringType(descLen).get(buffer, (offset += 4));
 
     const width = Token.UINT32_BE.get(buffer, (offset += descLen));
     const height = Token.UINT32_BE.get(buffer, (offset += 4));
