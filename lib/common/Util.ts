@@ -199,16 +199,3 @@ export function toRatio(value: string): IRatio {
         };
   }
 }
-
-/**
- * Convert base64 encoded string to Uint8Array
- * @param base64 base64 encoded string
- * @returns decoded bytes array
- */
-export async function getUint8ArrayFromBase64String(base64: string): Promise<Uint8Array> {
-  // node
-  // return Buffer.from(base64, "base64");
-  const binary_string = atob(base64);
-  const arrayBuffer = await new Blob([binary_string], { type: "text/plain" }).arrayBuffer();
-  return new Uint8Array(arrayBuffer);
-}

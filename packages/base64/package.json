@@ -1,0 +1,34 @@
+{
+    "name": "base64",
+    "description": "base64 encoding",
+    "version": "1.0.0",
+    "author": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        "browser": {
+            "types": "./dist/index-b.d.ts",
+            "default": "./dist/index-b.js"
+        },
+        "default": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "all": "npm run lint && npm run test && npm run build",
+        "build": "tsc",
+        "lint": "eslint",
+        "test": "vitest --run"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.3",
+        "@typescript-eslint/eslint-plugin": "^5.30.5",
+        "@typescript-eslint/parser": "^5.30.5",
+        "eslint": "^8.19.0",
+        "eslint-config-prettier": "^8.5.0",
+        "typescript": "^4.7.4",
+        "vitest": "^0.18.0"
+    },
+    "license": "MIT"
+}
