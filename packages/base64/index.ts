@@ -4,7 +4,6 @@
  * @param base64 base64 encoded string
  * @returns decoded bytes array
  */
-// eslint-disable-next-line @typescript-eslint/require-await
-export async function getUint8ArrayFromBase64String(base64: string): Promise<Uint8Array> {
-  return Uint8Array.from(Buffer.from(base64, "base64"));
+export function getUint8ArrayFromBase64String(base64: string): Uint8Array {
+  return new Uint8Array(Buffer.from(base64, "base64").buffer);
 }

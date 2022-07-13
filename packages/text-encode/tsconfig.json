@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  // "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    "inlineSources": false,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ESNext",
+    "declaration": true,
+    "skipLibCheck": true,
+
+    "lib": ["DOM", "ESNext"],
+
+    "outDir": "dist",
+
+    "strict": true,
+
+    /* @tsconfig/strictest options */
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    // "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    // "noImplicitReturns": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "noUncheckedIndexedAccess": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+
+    // "importsNotUsedAsValues": "error",
+    // "checkJs": true,
+
+    // "esModuleInterop": true,
+    // "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["index.ts", "index-b.ts"]
+}
