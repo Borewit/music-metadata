@@ -22,7 +22,7 @@ export interface IFooter {
 export const TagFooter: IGetToken<IFooter> = {
   len: 32,
 
-  get: (buf: Buffer, off) => {
+  get: (buf: Uint8Array, off) => {
     return {
       // should equal 'APETAGEX'
       ID: new Token.StringType(8, "ascii").get(buf, off),

@@ -76,7 +76,7 @@ export class APEv2Parser extends BasicParser {
    */
   public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader> {
     // Search for APE footer header at the end of the file
-    const apeBuf = Buffer.alloc(TagFooter.len);
+    const apeBuf = new Uint8Array(TagFooter.len);
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
     const tagFooter = TagFooter.get(apeBuf, 0);
     if (tagFooter.ID === "APETAGEX") {
@@ -85,7 +85,11 @@ export class APEv2Parser extends BasicParser {
     }
   }
 
-  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, options: IOptions): Promise<void> {
+  private static parseTagFooter(
+    metadata: INativeMetadataCollector,
+    buffer: Uint8Array,
+    options: IOptions
+  ): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     if (footer.ID !== preamble) throw new Error("Unexpected APEv2 Footer ID preamble value.");
     fromBuffer.fromBuffer(buffer);
@@ -182,7 +186,7 @@ export class APEv2Parser extends BasicParser {
             zero = util.findZero(picData, 0, picData.length);
             const description = picData.toString("utf8", 0, zero);
 
-            const data = Buffer.from(picData.slice(zero + 1));
+            const data = Buffer.from(picData.subarray(zero + 1));
             this.metadata.addTag(tagFormat, key, {
               description,
               data,
