@@ -82,7 +82,8 @@
     "test:vitest": "vitest --run",
     "test:coverage": "vitest --coverage",
     "test:buildsize": "vite build",
-    "watch:test": "vitest --watch"
+    "watch:test": "vitest --watch",
+    "watch:typescript": "tsc -p tsconfig.check.json -w"
   },
   "dependencies": {
     "content-type": "^1.0.4",

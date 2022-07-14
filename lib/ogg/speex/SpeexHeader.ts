@@ -41,23 +41,23 @@ export interface IHeader {
 export const Header: IGetToken<IHeader> = {
   len: 80,
 
-  get: (buf: Buffer, off) => {
+  get: (buf: Uint8Array, off) => {
     return {
       speex: new Token.StringType(8, "ascii").get(buf, off + 0),
       version: util.trimRightNull(new Token.StringType(20, "ascii").get(buf, off + 8)),
-      version_id: buf.readInt32LE(off + 28),
-      header_size: buf.readInt32LE(off + 32),
-      rate: buf.readInt32LE(off + 36),
-      mode: buf.readInt32LE(off + 40),
-      mode_bitstream_version: buf.readInt32LE(off + 44),
-      nb_channels: buf.readInt32LE(off + 48),
-      bitrate: buf.readInt32LE(off + 52),
-      frame_size: buf.readInt32LE(off + 56),
-      vbr: buf.readInt32LE(off + 60),
-      frames_per_packet: buf.readInt32LE(off + 64),
-      extra_headers: buf.readInt32LE(off + 68),
-      reserved1: buf.readInt32LE(off + 72),
-      reserved2: buf.readInt32LE(off + 76),
+      version_id: Token.INT32_LE.get(buf, off + 28),
+      header_size: Token.INT32_LE.get(buf, off + 32),
+      rate: Token.INT32_LE.get(buf, off + 36),
+      mode: Token.INT32_LE.get(buf, off + 40),
+      mode_bitstream_version: Token.INT32_LE.get(buf, off + 44),
+      nb_channels: Token.INT32_LE.get(buf, off + 48),
+      bitrate: Token.INT32_LE.get(buf, off + 52),
+      frame_size: Token.INT32_LE.get(buf, off + 56),
+      vbr: Token.INT32_LE.get(buf, off + 60),
+      frames_per_packet: Token.INT32_LE.get(buf, off + 64),
+      extra_headers: Token.INT32_LE.get(buf, off + 68),
+      reserved1: Token.INT32_LE.get(buf, off + 72),
+      reserved2: Token.INT32_LE.get(buf, off + 76),
     };
   },
 };

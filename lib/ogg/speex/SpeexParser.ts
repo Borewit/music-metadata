@@ -23,10 +23,10 @@ export class SpeexParser extends VorbisParser {
 
   /**
    * Parse first Speex Ogg page
-   * @param {IPageHeader} header
-   * @param {Buffer} pageData
+   * @param header
+   * @param pageData
    */
-  protected override parseFirstPage(header: IPageHeader, pageData: Buffer) {
+  protected override parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
     debug("First Ogg/Speex page");
     const speexHeader = Header.get(pageData, 0);
     this.metadata.setFormat("codec", `Speex ${speexHeader.version}`);

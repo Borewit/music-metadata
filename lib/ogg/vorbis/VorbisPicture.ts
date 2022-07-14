@@ -58,6 +58,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     const indexed_color = Token.UINT32_BE.get(buffer, (offset += 4));
 
     const picDataLen = Token.UINT32_BE.get(buffer, (offset += 4));
+    // eslint-disable-next-line no-undef
     const data = Buffer.from(buffer.slice((offset += 4), offset + picDataLen));
 
     return {
