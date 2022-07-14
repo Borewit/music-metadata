@@ -109,7 +109,7 @@ export interface IFilePropertiesObject {
 export class FilePropertiesObject extends State<IFilePropertiesObject> {
   public static guid = GUIDFilePropertiesObject;
 
-  public get(buf: Buffer, off: number): IFilePropertiesObject {
+  public get(buf: Uint8Array, off: number): IFilePropertiesObject {
     return {
       fileId: GUID.fromBin(buf, off),
       fileSize: Token.UINT64_LE.get(buf, off + 16),

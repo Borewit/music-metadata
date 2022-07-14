@@ -2,6 +2,8 @@ import { IGetToken } from "../strtok3";
 
 import { IPicture } from "../type";
 import { AttachedPictureType } from "../id3v2/AttachedPictureType";
+import { INT32_LE, StringType, UINT16_BE, UINT8 } from "../token-types";
+import { getUint8ArrayFromBase64String } from "../compat/base64";
 
 export interface IWmPicture extends IPicture {
   type: string;
@@ -16,37 +18,37 @@ export interface IWmPicture extends IPicture {
  */
 export class WmPictureToken implements IGetToken<IWmPicture> {
   public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(Buffer.from(base64str, "base64"));
+    return this.fromBuffer(getUint8ArrayFromBase64String(base64str));
   }
 
-  public static fromBuffer(buffer: Buffer): IWmPicture {
+  public static fromBuffer(buffer: Uint8Array): IWmPicture {
     const pic = new WmPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
 
   constructor(public len: number) {}
 
-  public get(buffer: Buffer, offset: number): IWmPicture {
-    const typeId = buffer.readUInt8(offset++);
-    const size = buffer.readInt32LE(offset);
+  public get(buffer: Uint8Array, offset: number): IWmPicture {
+    const typeId = UINT8.get(buffer, offset++);
+    const size = INT32_LE.get(buffer, offset);
     let index = 5;
 
-    while (buffer.readUInt16BE(index) !== 0) {
+    while (UINT16_BE.get(buffer, index) !== 0) {
       index += 2;
     }
-    const format = buffer.slice(5, index).toString("utf16le");
+    const format = new StringType(index - 5, "utf16le").get(buffer, 5);
 
-    while (buffer.readUInt16BE(index) !== 0) {
+    while (UINT16_BE.get(buffer, index) !== 0) {
       index += 2;
     }
-    const description = buffer.slice(5, index).toString("utf16le");
+    const description = new StringType(index - 5, "utf16le").get(buffer, 5);
 
     return {
       type: AttachedPictureType[typeId],
       format,
       description,
       size,
-      data: buffer.slice(index + 4),
+      data: Buffer.from(buffer.slice(index + 4)),
     };
   }
 }

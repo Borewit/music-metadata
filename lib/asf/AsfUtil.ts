@@ -3,7 +3,7 @@ import * as Token from "../token-types";
 import * as util from "../common/Util";
 import { DataType } from "./DataType";
 
-export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
+export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Buffer;
 
 /**
  *
@@ -48,7 +48,7 @@ export function parseByteArrayAttr(buf: Uint8Array): Buffer {
  * @param offset
  * @returns
  */
-export function parseBoolAttr(buf: Buffer, offset = 0): boolean {
+export function parseBoolAttr(buf: Uint8Array, offset = 0): boolean {
   return parseWordAttr(buf, offset) === 1;
 }
 
@@ -58,8 +58,8 @@ export function parseBoolAttr(buf: Buffer, offset = 0): boolean {
  * @param offset
  * @returns
  */
-export function parseDWordAttr(buf: Buffer, offset = 0): number {
-  return buf.readUInt32LE(offset);
+export function parseDWordAttr(buf: Uint8Array, offset = 0): number {
+  return Token.UINT32_LE.get(buf, offset);
 }
 
 /**
@@ -68,7 +68,7 @@ export function parseDWordAttr(buf: Buffer, offset = 0): number {
  * @param offset
  * @returns
  */
-export function parseQWordAttr(buf: Buffer, offset = 0): bigint {
+export function parseQWordAttr(buf: Uint8Array, offset = 0): bigint {
   return Token.UINT64_LE.get(buf, offset);
 }
 
@@ -78,6 +78,6 @@ export function parseQWordAttr(buf: Buffer, offset = 0): bigint {
  * @param offset
  * @returns
  */
-export function parseWordAttr(buf: Buffer, offset = 0): number {
-  return buf.readUInt16LE(offset);
+export function parseWordAttr(buf: Uint8Array, offset = 0): number {
+  return Token.UINT16_LE.get(buf, offset);
 }

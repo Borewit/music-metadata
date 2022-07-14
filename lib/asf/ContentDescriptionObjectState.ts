@@ -2,6 +2,7 @@ import { ITag } from "../type";
 import { ContentDescriptionObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
 import { State } from "./State";
+import { UINT16_LE } from "../token-types";
 
 /**
  * 3.10 Content Description Object (optional, one only)
@@ -12,12 +13,12 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
 
   private static contentDescTags = ["Title", "Author", "Copyright", "Description", "Rating"];
 
-  public get(buf: Buffer, off: number): ITag[] {
+  public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
 
     let pos = off + 10;
     for (let i = 0; i < ContentDescriptionObjectState.contentDescTags.length; ++i) {
-      const length = buf.readUInt16LE(off + i * 2);
+      const length = UINT16_LE.get(buf, off + i * 2);
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;

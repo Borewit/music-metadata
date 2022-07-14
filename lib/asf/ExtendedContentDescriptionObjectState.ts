@@ -2,6 +2,7 @@ import { ITag } from "../type";
 import { ExtendedContentDescriptionObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
 import { State } from "./State";
+import { UINT16_LE } from "../token-types";
 
 /**
  * 3.11 Extended Content Description Object (optional, one only)
@@ -10,18 +11,18 @@ import { State } from "./State";
 export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
   public static guid = ExtendedContentDescriptionObject;
 
-  public get(buf: Buffer, off: number): ITag[] {
+  public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
-    const attrCount = buf.readUInt16LE(off);
+    const attrCount = UINT16_LE.get(buf, off);
     let pos = off + 2;
     for (let i = 0; i < attrCount; i += 1) {
-      const nameLen = buf.readUInt16LE(pos);
+      const nameLen = UINT16_LE.get(buf, pos);
       pos += 2;
       const name = parseUnicodeAttr(buf.slice(pos, pos + nameLen));
       pos += nameLen;
-      const valueType = buf.readUInt16LE(pos);
+      const valueType = UINT16_LE.get(buf, pos);
       pos += 2;
-      const valueLen = buf.readUInt16LE(pos);
+      const valueLen = UINT16_LE.get(buf, pos);
       pos += 2;
       const value = buf.slice(pos, pos + valueLen);
       pos += valueLen;

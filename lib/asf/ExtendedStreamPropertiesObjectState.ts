@@ -44,17 +44,17 @@ export interface IExtendedStreamPropertiesObject {
 export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPropertiesObject> {
   public static guid = ExtendedStreamPropertiesObject;
 
-  public get(buf: Buffer, off: number): IExtendedStreamPropertiesObject {
+  public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
     return {
       startTime: Token.UINT64_LE.get(buf, off),
       endTime: Token.UINT64_LE.get(buf, off + 8),
-      dataBitrate: buf.readInt32LE(off + 12),
-      bufferSize: buf.readInt32LE(off + 16),
-      initialBufferFullness: buf.readInt32LE(off + 20),
-      alternateDataBitrate: buf.readInt32LE(off + 24),
-      alternateBufferSize: buf.readInt32LE(off + 28),
-      alternateInitialBufferFullness: buf.readInt32LE(off + 32),
-      maximumObjectSize: buf.readInt32LE(off + 36),
+      dataBitrate: Token.INT32_LE.get(buf, off + 12),
+      bufferSize: Token.INT32_LE.get(buf, off + 16),
+      initialBufferFullness: Token.INT32_LE.get(buf, off + 20),
+      alternateDataBitrate: Token.INT32_LE.get(buf, off + 24),
+      alternateBufferSize: Token.INT32_LE.get(buf, off + 28),
+      alternateInitialBufferFullness: Token.INT32_LE.get(buf, off + 32),
+      maximumObjectSize: Token.INT32_LE.get(buf, off + 36),
       flags: {
         // ToDo, check flag positions
         reliableFlag: util.getBit(buf, off + 40, 0),
@@ -62,11 +62,11 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
         resendLiveCleanpointsFlag: util.getBit(buf, off + 40, 2),
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-      streamNumber: buf.readInt16LE(off + 42),
-      streamLanguageId: buf.readInt16LE(off + 44),
-      averageTimePerFrame: buf.readInt32LE(off + 52),
-      streamNameCount: buf.readInt32LE(off + 54),
-      payloadExtensionSystems: buf.readInt32LE(off + 56),
+      streamNumber: Token.INT16_LE.get(buf, off + 42),
+      streamLanguageId: Token.INT16_LE.get(buf, off + 44),
+      averageTimePerFrame: Token.INT32_LE.get(buf, off + 52),
+      streamNameCount: Token.INT32_LE.get(buf, off + 54),
+      payloadExtensionSystems: Token.INT32_LE.get(buf, off + 56),
       streamNames: [], // ToDo
       streamPropertiesObject: null,
     };

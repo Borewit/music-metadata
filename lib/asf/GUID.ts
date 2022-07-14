@@ -1,3 +1,6 @@
+import { fromHexString, toHexString } from "../compat/hex";
+import { UINT16_BE, UINT16_LE, UINT32_LE } from "../token-types";
+
 /**
  * Ref:
  * - https://tools.ietf.org/html/draft-fleischman-asf-01, Appendix A: ASF GUIDs
@@ -13,7 +16,7 @@
  * - https://github.com/dji-sdk/FFmpeg/blob/master/libavformat/asf.c
  */
 export default class GUID {
-  public static fromBin(bin: Buffer, offset = 0) {
+  public static fromBin(bin: Uint8Array, offset = 0) {
     return new GUID(this.decode(bin, offset));
   }
 
@@ -23,17 +26,17 @@ export default class GUID {
    * @param offset Read offset in bytes, default 0
    * @returns GUID as dashed hexadecimal representation
    */
-  public static decode(objectId: Buffer, offset = 0): string {
+  public static decode(objectId: Uint8Array, offset = 0): string {
     const guid =
-      objectId.readUInt32LE(offset).toString(16) +
+      UINT32_LE.get(objectId, offset).toString(16) +
       "-" +
-      objectId.readUInt16LE(offset + 4).toString(16) +
+      UINT16_LE.get(objectId, offset + 4).toString(16) +
       "-" +
-      objectId.readUInt16LE(offset + 6).toString(16) +
+      UINT16_LE.get(objectId, offset + 6).toString(16) +
       "-" +
-      objectId.readUInt16BE(offset + 8).toString(16) +
+      UINT16_BE.get(objectId, offset + 8).toString(16) +
       "-" +
-      objectId.slice(offset + 10, offset + 16).toString("hex");
+      toHexString(objectId.slice(offset + 10, offset + 16));
 
     return guid.toUpperCase();
   }
@@ -68,14 +71,16 @@ export default class GUID {
    * @returns Encoded Binary GUID
    */
   public static encode(guid: string): Buffer {
-    const bin = Buffer.alloc(16);
-    bin.writeUInt32LE(Number.parseInt(guid.slice(0, 8), 16), 0);
-    bin.writeUInt16LE(Number.parseInt(guid.slice(9, 13), 16), 4);
-    bin.writeUInt16LE(Number.parseInt(guid.slice(14, 18), 16), 6);
-    Buffer.from(guid.slice(19, 23), "hex").copy(bin, 8);
-    Buffer.from(guid.slice(24), "hex").copy(bin, 10);
+    const buf = new ArrayBuffer(16);
+    const dv = new DataView(buf);
+    const u8 = new Uint8Array(buf);
+    dv.setUint32(0, Number.parseInt(guid.slice(0, 8), 16), true);
+    dv.setUint16(4, Number.parseInt(guid.slice(9, 13), 16), true);
+    dv.setUint16(6, Number.parseInt(guid.slice(14, 18), 16), true);
+    u8.set(fromHexString(guid.slice(19, 23)), 8);
+    u8.set(fromHexString(guid.slice(24)), 10);
 
-    return bin;
+    return Buffer.from(buf);
   }
 
   public constructor(public str: string) {}

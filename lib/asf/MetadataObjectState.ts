@@ -2,6 +2,7 @@ import { ITag } from "../type";
 import { MetadataObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
 import { State } from "./State";
+import { UINT16_LE, UINT32_LE } from "../token-types";
 
 /**
  * 4.7  Metadata Object (optional, 0 or 1)
@@ -12,20 +13,19 @@ export class MetadataObjectState extends State<ITag[]> {
 
   public get(uint8Array: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
-    const buf = Buffer.from(uint8Array);
-    const descriptionRecordsCount = buf.readUInt16LE(off);
+    const descriptionRecordsCount = UINT16_LE.get(uint8Array, off);
     let pos = off + 2;
     for (let i = 0; i < descriptionRecordsCount; i += 1) {
       pos += 4;
-      const nameLen = buf.readUInt16LE(pos);
+      const nameLen = UINT16_LE.get(uint8Array, pos);
       pos += 2;
-      const dataType = buf.readUInt16LE(pos);
+      const dataType = UINT16_LE.get(uint8Array, pos);
       pos += 2;
-      const dataLen = buf.readUInt32LE(pos);
+      const dataLen = UINT32_LE.get(uint8Array, pos);
       pos += 4;
-      const name = parseUnicodeAttr(buf.slice(pos, pos + nameLen));
+      const name = parseUnicodeAttr(uint8Array.slice(pos, pos + nameLen));
       pos += nameLen;
-      const data = buf.slice(pos, pos + dataLen);
+      const data = uint8Array.slice(pos, pos + dataLen);
       pos += dataLen;
       this.postProcessTag(tags, name, dataType, data);
     }

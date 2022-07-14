@@ -29,6 +29,7 @@ import { SoundSampleDescriptionV0 } from "./SoundSampleDescriptionV0";
 import { SoundSampleDescriptionVersion } from "./SoundSampleDescriptionVersion";
 import { ITimeToSampleToken } from "./TimeToSampleToken";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
+import { toHexString } from "../compat/hex";
 
 const debug = initDebug("music-metadata:parser:MP4");
 const tagFormat = "iTunes";
@@ -292,7 +293,7 @@ export class MP4Parser extends BasicParser {
                 "[" +
                 child.header.name +
                 "] => value=" +
-                [...dataAtom].map((i) => ("0" + i.toString(16)).slice(-2)).join("") +
+                toHexString(dataAtom) +
                 " ascii=" +
                 decodeLatin1(dataAtom)
             );

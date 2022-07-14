@@ -10,7 +10,7 @@ export interface ICodecEntry {
   };
   codecName: string;
   description: string;
-  information: Buffer;
+  information: Uint8Array;
 }
 
 /**
@@ -41,11 +41,11 @@ export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEnt
  *
  * @param tokenizer
  */
-async function readInformation(tokenizer: ITokenizer): Promise<Buffer> {
+async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
   const buf = Buffer.alloc(length);
   await tokenizer.readBuffer(buf);
-  return buf;
+  return Uint8Array.from(buf);
 }
 
 /**
