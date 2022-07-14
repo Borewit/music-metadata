@@ -196,7 +196,7 @@ export class FrameParser {
           pic.description = util.decodeString(uint8Array.slice(offset, fzero), encoding);
           offset = fzero + nullTerminatorLength;
 
-          pic.data = Buffer.from(uint8Array.slice(offset, length));
+          pic.data = uint8Array.slice(offset, length);
           output = pic;
         }
         break;

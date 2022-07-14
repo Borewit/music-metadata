@@ -11,6 +11,7 @@ import { INativeMetadataCollector, IWarningCollector } from "../common/INativeMe
 import { ID3v2Header, IID3v2header } from "./ID3v2Header";
 import { ExtendedHeader } from "./ExtendedHeader";
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+import { decodeLatin1 } from "../compat/text-decoder";
 
 interface IFrameFlags {
   status: {
@@ -232,7 +233,7 @@ export class ID3v2Parser {
     switch (majorVer) {
       case 2:
         header = {
-          id: Buffer.from(uint8Array.slice(0, 3)).toString("ascii"),
+          id: decodeLatin1(uint8Array.slice(0, 3)),
           length: Token.UINT24_BE.get(uint8Array, 3),
         };
         if (!/[\dA-Z]{3}/g.test(header.id)) {
@@ -243,7 +244,7 @@ export class ID3v2Parser {
       case 3:
       case 4:
         header = {
-          id: Buffer.from(uint8Array.slice(0, 4)).toString("ascii"),
+          id: decodeLatin1(uint8Array.slice(0, 4)),
           length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
           flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10)),
         };
