@@ -5,6 +5,7 @@ import { APEv2Parser } from "../apev2/APEv2Parser";
 import { IRandomReader } from "../type";
 import { Genres } from "./ID3v1Genres";
 import { IId3v1Header, Iid3v1Token } from "./ID3v1Header";
+import { decodeLatin1 } from "../compat/text-decoder";
 
 const debug = initDebug("music-metadata:parser:ID3v1");
 
@@ -58,9 +59,9 @@ export class ID3v1Parser extends BasicParser {
  */
 export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
-    const tag = Buffer.alloc(3);
+    const tag = new Uint8Array(3);
     await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
-    return tag.toString("binary") === "TAG";
+    return decodeLatin1(tag) === "TAG";
   }
   return false;
 }
