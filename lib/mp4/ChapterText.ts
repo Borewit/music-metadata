@@ -7,7 +7,7 @@ import { IGetToken } from "../strtok3";
 export class ChapterText implements IGetToken<string> {
   public constructor(public len: number) {}
 
-  public get(buf: Buffer, off: number): string {
+  public get(buf: Uint8Array, off: number): string {
     const titleLen = Token.INT16_BE.get(buf, off + 0);
     const str = new Token.StringType(titleLen, "utf8");
     return str.get(buf, off + 2);

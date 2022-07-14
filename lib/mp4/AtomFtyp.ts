@@ -8,7 +8,7 @@ export interface IAtomFtyp {
 export const ftyp: IGetToken<IAtomFtyp> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): IAtomFtyp => {
+  get: (buf: Uint8Array, off: number): IAtomFtyp => {
     return {
       type: new Token.StringType(4, "ascii").get(buf, off),
     };
@@ -18,7 +18,7 @@ export const ftyp: IGetToken<IAtomFtyp> = {
 export const tkhd: IGetToken<IAtomFtyp> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): IAtomFtyp => {
+  get: (buf: Uint8Array, off: number): IAtomFtyp => {
     return {
       type: new Token.StringType(4, "ascii").get(buf, off),
     };

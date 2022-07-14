@@ -15,7 +15,7 @@ export interface IAtomStsd {
 export class StsdAtom implements IGetToken<IAtomStsd> {
   public constructor(public len: number) {}
 
-  public get(buf: Buffer, off: number): IAtomStsd {
+  public get(buf: Uint8Array, off: number): IAtomStsd {
     const header = stsdHeader.get(buf, off);
     off += stsdHeader.len;
 

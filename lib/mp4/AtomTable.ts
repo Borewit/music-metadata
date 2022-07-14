@@ -11,7 +11,7 @@ export interface ITableAtom<T> extends IVersionAndFlags {
 export class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
   public constructor(public len: number, private token: IGetToken<T>) {}
 
-  public get(buf: Buffer, off: number): ITableAtom<T> {
+  public get(buf: Uint8Array, off: number): ITableAtom<T> {
     const nrOfEntries = Token.INT32_BE.get(buf, off + 4);
 
     return {

@@ -24,7 +24,7 @@ export interface ISoundSampleDescriptionV0 {
 export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
   len: 12,
 
-  get(buf: Buffer, off: number): ISoundSampleDescriptionV0 {
+  get(buf: Uint8Array, off: number): ISoundSampleDescriptionV0 {
     return {
       numAudioChannels: Token.INT16_BE.get(buf, off + 0),
       sampleSize: Token.INT16_BE.get(buf, off + 2),

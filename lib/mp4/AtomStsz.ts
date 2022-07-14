@@ -17,7 +17,7 @@ export interface IStszAtom extends ITableAtom<number> {
 export class StszAtom implements IGetToken<IStszAtom> {
   public constructor(public len: number) {}
 
-  public get(buf: Buffer, off: number): IStszAtom {
+  public get(buf: Uint8Array, off: number): IStszAtom {
     const nrOfEntries = Token.INT32_BE.get(buf, off + 8);
 
     return {

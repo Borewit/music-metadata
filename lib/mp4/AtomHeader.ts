@@ -11,7 +11,7 @@ export interface IAtomHeader {
 export const Header: IToken<IAtomHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off: number): IAtomHeader => {
+  get: (buf: Uint8Array, off: number): IAtomHeader => {
     const length = Token.UINT32_BE.get(buf, off);
     if (length < 0) throw new Error("Invalid atom header length");
 
@@ -21,7 +21,7 @@ export const Header: IToken<IAtomHeader> = {
     };
   },
 
-  put: (buf: Buffer, off: number, hdr: IAtomHeader) => {
+  put: (buf: Uint8Array, off: number, hdr: IAtomHeader) => {
     Token.UINT32_BE.put(buf, off, Number(hdr.length));
     return FourCcToken.put(buf, off + 4, hdr.name);
   },

@@ -18,7 +18,7 @@ export interface ISampleDescription {
 export class SampleDescriptionTable implements IGetToken<ISampleDescription> {
   public constructor(public len: number) {}
 
-  public get(buf: Buffer, off: number): ISampleDescription {
+  public get(buf: Uint8Array, off: number): ISampleDescription {
     return {
       dataFormat: FourCcToken.get(buf, off),
       dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10),

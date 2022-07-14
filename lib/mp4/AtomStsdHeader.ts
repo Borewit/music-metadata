@@ -16,7 +16,7 @@ export interface IAtomStsdHeader extends IVersionAndFlags {
 export const stsdHeader: IGetToken<IAtomStsdHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off: number): IAtomStsdHeader => {
+  get: (buf: Uint8Array, off: number): IAtomStsdHeader => {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),

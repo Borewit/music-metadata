@@ -19,7 +19,7 @@ export interface ISoundSampleDescriptionVersion {
 export const SoundSampleDescriptionVersion: IGetToken<ISoundSampleDescriptionVersion> = {
   len: 8,
 
-  get(buf: Buffer, off: number): ISoundSampleDescriptionVersion {
+  get(buf: Uint8Array, off: number): ISoundSampleDescriptionVersion {
     return {
       version: Token.INT16_BE.get(buf, off),
       revision: Token.INT16_BE.get(buf, off + 2),

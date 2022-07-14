@@ -28,6 +28,7 @@ import { ISampleToChunk } from "./SampleToChunk";
 import { SoundSampleDescriptionV0 } from "./SoundSampleDescriptionV0";
 import { SoundSampleDescriptionVersion } from "./SoundSampleDescriptionVersion";
 import { ITimeToSampleToken } from "./TimeToSampleToken";
+import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
 
 const debug = initDebug("music-metadata:parser:MP4");
 const tagFormat = "iTunes";
@@ -284,16 +285,16 @@ export class MP4Parser extends BasicParser {
           }
 
           default: {
-            const dataAtom = await this.tokenizer.readToken<Buffer>(new Token.BufferType(payLoadLength));
+            const dataAtom = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
             this.addWarning(
               "Unsupported meta-item: " +
                 tagKey +
                 "[" +
                 child.header.name +
                 "] => value=" +
-                dataAtom.toString("hex") +
+                [...dataAtom].map((i) => ("0" + i.toString(16)).slice(-2)).join("") +
                 " ascii=" +
-                dataAtom.toString("ascii")
+                decodeLatin1(dataAtom)
             );
           }
         }
@@ -337,7 +338,7 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        this.addTag(tagKey, dataAtom.value.toString("utf8"));
+        this.addTag(tagKey, decodeUtf8(dataAtom.value));
         break;
 
       case 13: // JPEG
@@ -365,15 +366,15 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 65: // An 8-bit signed integer
-        this.addTag(tagKey, dataAtom.value.readInt8(0));
+        this.addTag(tagKey, Token.INT8.get(dataAtom.value, 0));
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        this.addTag(tagKey, dataAtom.value.readInt16BE(0));
+        this.addTag(tagKey, Token.INT16_BE.get(dataAtom.value, 0));
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        this.addTag(tagKey, dataAtom.value.readInt32BE(0));
+        this.addTag(tagKey, Token.INT32_BE.get(dataAtom.value, 0));
         break;
 
       default:

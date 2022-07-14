@@ -13,7 +13,7 @@ export interface ISampleToChunk {
 export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
   len: 12,
 
-  get(buf: Buffer, off: number): ISampleToChunk {
+  get(buf: Uint8Array, off: number): ISampleToChunk {
     return {
       firstChunk: Token.INT32_BE.get(buf, off),
       samplesPerChunk: Token.INT32_BE.get(buf, off + 4),
