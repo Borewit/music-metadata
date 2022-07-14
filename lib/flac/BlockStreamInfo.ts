@@ -43,7 +43,7 @@ export interface IBlockStreamInfo {
 export const BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
   len: 34,
 
-  get: (buf: Buffer, off: number): IBlockStreamInfo => {
+  get: (buf: Uint8Array, off: number): IBlockStreamInfo => {
     return {
       // The minimum block size (in samples) used in the stream.
       minimumBlockSize: UINT16_BE.get(buf, off),
