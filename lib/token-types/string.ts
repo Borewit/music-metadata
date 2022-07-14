@@ -25,6 +25,18 @@ export class Utf8StringType implements IGetToken<string> {
 }
 
 /**
+ * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
+ */
+ export class Latin1StringType implements IGetToken<string> {
+  static decoder = new TextDecoder("latin1");
+  public constructor(public len: number) {}
+
+  public get(uint8Array: Uint8Array, offset: number): string {
+    return Latin1StringType.decoder.decode(uint8Array.subarray(offset, offset + this.len));
+  }
+}
+
+/**
  * ANSI Latin 1 String
  * Using windows-1252 / ISO 8859-1 decoding
  */

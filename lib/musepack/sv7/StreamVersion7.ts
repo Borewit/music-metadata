@@ -2,6 +2,7 @@ import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
 
 import * as util from "../../common/Util";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * MusePack stream version 7 format specification
@@ -43,7 +44,7 @@ export const Header: IGetToken<IHeader> = {
   get: (buf, off) => {
     const header = {
       // word 0
-      signature: Buffer.from(buf).toString("latin1", off, off + 3),
+      signature: new Latin1StringType(3).get(buf, off),
       // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
       streamMinorVersion: util.getBitAllignedNumber(buf, off + 3, 0, 4),
       streamMajorVersion: util.getBitAllignedNumber(buf, off + 3, 4, 4),
