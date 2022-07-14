@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/consistent-function-scoping */
 import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 

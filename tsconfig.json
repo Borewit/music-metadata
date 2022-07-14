@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "incremental": true,
 
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
 
     // "strict": true,
 

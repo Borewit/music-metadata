@@ -85,7 +85,6 @@
     "watch:test": "vitest --watch"
   },
   "dependencies": {
-    "base64": "file:packages/base64",
     "content-type": "^1.0.4",
     "debug": "^4.3.4",
     "ieee754": "^1.2.1",

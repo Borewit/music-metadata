@@ -5,5 +5,5 @@
  * @returns decoded bytes array
  */
 export function getUint8ArrayFromBase64String(base64: string): Uint8Array {
-  return new Uint8Array(Buffer.from(base64, "base64").buffer);
+  return new Uint8Array(Buffer.from(base64, "base64"));
 }

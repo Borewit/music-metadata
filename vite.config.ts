@@ -17,6 +17,7 @@ export default defineConfig({
       "packages/**/*.test.ts",
     ],
     exclude: ["test/test-*.d.ts"],
+    environment: "jsdom",
 
     isolate: false,
     reporters: ["verbose"],

@@ -4,7 +4,7 @@ import { IGetToken } from "../../strtok3";
 import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
 import { IPicture } from "../../type";
 import { Utf8StringType } from "../../token-types/string";
-import { getUint8ArrayFromBase64String } from "base64";
+import { getUint8ArrayFromBase64String } from "../../compat/base64";
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
@@ -34,7 +34,7 @@ export interface IVorbisPicture extends IPicture {
  */
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
   public static fromBase64(base64str: string): IVorbisPicture {
-    return this.fromBuffer(getUint8ArrayFromBase64String(base64str, "base64"));
+    return this.fromBuffer(getUint8ArrayFromBase64String(base64str));
   }
 
   public static fromBuffer(buffer: Uint8Array): IVorbisPicture {
