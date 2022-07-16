@@ -27,7 +27,7 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader> = {
 
   get: (buf, off): IAsfObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
+      objectId: GUID.fromBin(new Token.Uint8ArrayType(16).get(buf, off)),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
     };
   },

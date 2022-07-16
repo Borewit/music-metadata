@@ -16,5 +16,5 @@ export {
 } from "./float";
 
 export { IgnoreType } from "./ignore";
-export { Uint8ArrayType, BufferType } from "./buffer";
+export { Uint8ArrayType } from "./buffer";
 export { AnsiStringType } from "./string";

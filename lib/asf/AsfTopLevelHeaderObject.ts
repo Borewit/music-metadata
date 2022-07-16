@@ -21,7 +21,7 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
+      objectId: GUID.fromBin(new Token.Uint8ArrayType(16).get(buf, off)),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24),
       // Reserved: 2 bytes
