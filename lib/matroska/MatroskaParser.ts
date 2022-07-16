@@ -10,6 +10,7 @@ import { BasicParser } from "../common/BasicParser";
 import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
 import * as matroskaDtd from "./MatroskaDtd";
 import { Utf8StringType } from "../token-types/string";
+import { readUintBE } from "../compat/buffer";
 
 const debug = initDebug("music-metadata:parser:matroska");
 
@@ -188,7 +189,7 @@ export class MatroskaParser extends BasicParser {
     return tree;
   }
 
-  private async readVintData(maxLength: number): Promise<Buffer> {
+  private async readVintData(maxLength: number): Promise<Uint8Array> {
     const msb = await this.tokenizer.peekNumber(UINT8);
     let mask = 0x80;
     let oc = 1;
@@ -201,7 +202,7 @@ export class MatroskaParser extends BasicParser {
       ++oc;
       mask >>= 1;
     }
-    const id = Buffer.alloc(oc);
+    const id = new Uint8Array(oc);
     await this.tokenizer.readBuffer(id);
     return id;
   }
@@ -212,12 +213,12 @@ export class MatroskaParser extends BasicParser {
     lenField[0] ^= 0x80 >> (lenField.length - 1);
     const nrLen = Math.min(6, lenField.length); // JavaScript can max read 6 bytes integer
     return {
-      id: id.readUIntBE(0, id.length),
-      len: lenField.readUIntBE(lenField.length - nrLen, nrLen),
+      id: readUintBE(id, 0, id.length),
+      len: readUintBE(lenField, lenField.length - nrLen, nrLen),
     };
   }
 
-  private isMaxValue(vintData: Buffer) {
+  private isMaxValue(vintData: Uint8Array) {
     if (vintData.length === this.ebmlMaxSizeLength) {
       for (let n = 1; n < this.ebmlMaxSizeLength; ++n) {
         if (vintData[n] !== 0xff) return false;
@@ -249,7 +250,7 @@ export class MatroskaParser extends BasicParser {
   private async readUint(e: IHeader): Promise<number> {
     const buf = await this.readBuffer(e);
     const nrLen = Math.min(6, e.len); // JavaScript can max read 6 bytes integer
-    return buf.readUIntBE(e.len - nrLen, nrLen);
+    return readUintBE(buf, e.len - nrLen, nrLen);
   }
 
   private async readString(e: IHeader): Promise<string> {
@@ -257,8 +258,8 @@ export class MatroskaParser extends BasicParser {
     return rawString.replace(/\00.*$/g, "");
   }
 
-  private async readBuffer(e: IHeader): Promise<Buffer> {
-    const buf = Buffer.alloc(e.len);
+  private async readBuffer(e: IHeader): Promise<Uint8Array> {
+    const buf = new Uint8Array(e.len);
     await this.tokenizer.readBuffer(buf);
     return buf;
   }

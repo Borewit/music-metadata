@@ -10,7 +10,7 @@ import { samplePath } from "./util";
 describe("GUID", () => {
   test("should construct GUID from string", () => {
     const HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
-    const HeaderGUID = Buffer.from([
+    const HeaderGUID = Uint8Array.from([
       0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c,
     ]);
 

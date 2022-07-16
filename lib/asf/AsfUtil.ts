@@ -3,7 +3,7 @@ import * as Token from "../token-types";
 import * as util from "../common/Util";
 import { DataType } from "./DataType";
 
-export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Buffer;
+export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Uint8Array;
 
 /**
  *
@@ -38,8 +38,8 @@ export const attributeParsers: AttributeParser[] = [
  * @param buf
  * @returns
  */
-export function parseByteArrayAttr(buf: Uint8Array): Buffer {
-  return Buffer.from(buf);
+export function parseByteArrayAttr(buf: Uint8Array): Uint8Array {
+  return buf;
 }
 
 /**

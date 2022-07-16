@@ -70,7 +70,7 @@ export default class GUID {
    * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
    * @returns Encoded Binary GUID
    */
-  public static encode(guid: string): Buffer {
+  public static encode(guid: string): Uint8Array {
     const buf = new ArrayBuffer(16);
     const dv = new DataView(buf);
     const u8 = new Uint8Array(buf);
@@ -80,7 +80,7 @@ export default class GUID {
     u8.set(fromHexString(guid.slice(19, 23)), 8);
     u8.set(fromHexString(guid.slice(24)), 10);
 
-    return Buffer.from(buf);
+    return u8;
   }
 
   public constructor(public str: string) {}
@@ -89,7 +89,7 @@ export default class GUID {
     return this.str === guid.str;
   }
 
-  public toBin(): Buffer {
+  public toBin(): Uint8Array {
     return GUID.encode(this.str);
   }
 }

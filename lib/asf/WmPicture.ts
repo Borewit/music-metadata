@@ -49,7 +49,7 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
       format,
       description,
       size,
-      data: Buffer.from(buffer.slice(index + 4)),
+      data: new Uint8Array(buffer.slice(index + 4)),
     };
   }
 }

@@ -12,6 +12,7 @@ import { IHeader, Header } from "./APEv2TokenHeader";
 import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
 import { DataType } from "./DataType";
 import { Latin1StringType, Utf8StringType } from "../token-types/string";
+import { decodeUtf8 } from "../compat/text-decoder";
 
 const debug = initDebug("music-metadata:parser:APEv2");
 
@@ -118,7 +119,7 @@ export class APEv2Parser extends BasicParser {
       if (this.tokenizer.fileInfo.size > 0) {
         // Try to read the APEv2 header using just the footer-header
         const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
-        const buffer = Buffer.alloc(remaining);
+        const buffer = new Uint8Array(remaining);
         await this.tokenizer.readBuffer(buffer);
         return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
       }
@@ -138,7 +139,7 @@ export class APEv2Parser extends BasicParser {
   }
 
   public async parseTags(footer: IFooter): Promise<void> {
-    const keyBuffer = Buffer.alloc(256); // maximum tag key length
+    const keyBuffer = new Uint8Array(256); // maximum tag key length
 
     let bytesRemaining = footer.size - TagFooter.len;
 
@@ -180,13 +181,13 @@ export class APEv2Parser extends BasicParser {
           if (this.options.skipCovers) {
             await this.tokenizer.ignore(tagItemHeader.size);
           } else {
-            const picData = Buffer.alloc(tagItemHeader.size);
+            const picData = new Uint8Array(tagItemHeader.size);
             await this.tokenizer.readBuffer(picData);
 
             zero = util.findZero(picData, 0, picData.length);
-            const description = picData.toString("utf8", 0, zero);
+            const description = decodeUtf8(picData.subarray(0, zero));
 
-            const data = Buffer.from(picData.subarray(zero + 1));
+            const data = new Uint8Array(picData.subarray(zero + 1));
             this.metadata.addTag(tagFormat, key, {
               description,
               data,

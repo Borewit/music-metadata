@@ -104,7 +104,7 @@ export class ParserFactory {
       // Parser could not be determined on MIME-type or extension
       debug("Guess parser on content...");
 
-      const buf = Buffer.alloc(4100);
+      const buf = new Uint8Array(4100);
       await tokenizer.peekBuffer(buf, { mayBeLess: true });
       if (tokenizer.fileInfo.path) {
         parserId = this.getParserIdForExtension(tokenizer.fileInfo.path);

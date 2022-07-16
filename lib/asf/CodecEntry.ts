@@ -44,9 +44,9 @@ export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEnt
  */
 async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const buf = Buffer.alloc(length);
+  const buf = new Uint8Array(length);
   await tokenizer.readBuffer(buf);
-  return Uint8Array.from(buf);
+  return buf;
 }
 
 /**

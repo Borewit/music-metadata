@@ -39,7 +39,7 @@ export class MpegParser extends AbstractID3Parser {
   private calculateEofDuration = false;
   private samplesPerFrame: number;
 
-  private buf_frame_header = Buffer.alloc(4);
+  private buf_frame_header = new Uint8Array(4);
 
   /**
    * Number of bytes already parsed since beginning of stream / file
@@ -47,7 +47,7 @@ export class MpegParser extends AbstractID3Parser {
   private mpegOffset: number;
 
   private syncPeek = {
-    buf: Buffer.alloc(maxPeekLen),
+    buf: new Uint8Array(maxPeekLen),
     len: 0,
   };
 
@@ -251,7 +251,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async parseAdts(header: MpegFrameHeader): Promise<boolean> {
-    const buf = Buffer.alloc(3);
+    const buf = new Uint8Array(3);
     await this.tokenizer.readBuffer(buf);
     header.frameLength += common.getBitAllignedNumber(buf, 0, 0, 11);
     this.totalDataLength += header.frameLength;

@@ -15,7 +15,7 @@ export interface IXingInfoTag {
    */
   streamSize?: number;
 
-  toc?: Buffer;
+  toc?: Uint8Array;
 
   /**
    * the number of header data bytes (from original file)
@@ -46,7 +46,7 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
     xingInfoTag.streamSize = await tokenizer.readToken(Token.UINT32_BE);
   }
   if (flags.toc) {
-    xingInfoTag.toc = Buffer.alloc(100);
+    xingInfoTag.toc = new Uint8Array(100);
     await tokenizer.readBuffer(xingInfoTag.toc);
   }
   if (flags.vbrScale) {

@@ -1,5 +1,4 @@
 import initDebug from "debug";
-import * as Token from "../token-types";
 
 import { ITokenParser } from "../ParserFactory";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
