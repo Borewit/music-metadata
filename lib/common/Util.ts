@@ -1,4 +1,6 @@
-import { Blob } from "node:buffer";
+import { getBase64UrlStringFromUint8Array } from "../compat/base64";
+import { toHexString } from "../compat/hex";
+import { decodeLatin1, decodeUtf16le, decodeUtf8 } from "../compat/text-decoder";
 import { IRatio } from "../type";
 
 export type StringEncoding =
@@ -94,7 +96,21 @@ export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): 
     if ((uint8Array.length & 1) !== 0) throw new Error("Expected even number of octets for 16-bit unicode string");
     return decodeString(swapBytes(uint8Array), encoding);
   }
-  return Buffer.from(uint8Array).toString(encoding);
+
+  switch (encoding) {
+    case "ascii":
+    case "latin1":
+      return decodeLatin1(uint8Array);
+    case "utf8":
+      return decodeUtf8(uint8Array);
+    case "ucs2":
+    case "utf16le":
+      return decodeUtf16le(uint8Array);
+    case "hex":
+      return toHexString(uint8Array);
+    case "base64url":
+      return getBase64UrlStringFromUint8Array(uint8Array);
+  }
 }
 
 /**
