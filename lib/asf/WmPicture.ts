@@ -10,7 +10,7 @@ export interface IWmPicture extends IPicture {
   format: string;
   description: string;
   size: number;
-  data: Buffer;
+  data: Uint8Array;
 }
 
 /**

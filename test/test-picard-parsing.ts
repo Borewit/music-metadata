@@ -25,7 +25,7 @@ function hasOriginalData(inputTagType: TagType): boolean {
   }
 }
 
-function calcHash(buf: Buffer): string {
+function calcHash(buf: Uint8Array): string {
   const hash = createHash("md5");
   hash.update(buf);
   return hash.digest("hex");
