@@ -62,7 +62,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @returns Promise with token data
    */
   public async peekToken<Value>(token: IGetToken<Value>, position: number = this.position): Promise<Value> {
-    const uint8Array = Buffer.alloc(token.len);
+    const uint8Array = new Uint8Array(token.len);
     const len = await this.peekBuffer(uint8Array, { position });
     if (len < token.len) throw new EndOfStreamError();
     return token.get(uint8Array, 0);

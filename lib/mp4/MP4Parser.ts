@@ -347,7 +347,7 @@ export class MP4Parser extends BasicParser {
         if (this.options.skipCovers) break;
         this.addTag(tagKey, {
           format: "image/jpeg",
-          data: Buffer.from(dataAtom.value),
+          data: new Uint8Array(dataAtom.value),
         });
         break;
 
@@ -355,7 +355,7 @@ export class MP4Parser extends BasicParser {
         if (this.options.skipCovers) break;
         this.addTag(tagKey, {
           format: "image/png",
-          data: Buffer.from(dataAtom.value),
+          data: new Uint8Array(dataAtom.value),
         });
         break;
 

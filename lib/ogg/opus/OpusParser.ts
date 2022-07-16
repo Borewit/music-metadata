@@ -1,4 +1,3 @@
-import * as Token from "../../token-types";
 import { ITokenizer } from "../../strtok3";
 
 import { IPageHeader } from "../Header";
