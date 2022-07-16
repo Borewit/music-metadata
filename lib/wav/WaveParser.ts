@@ -12,6 +12,7 @@ import { BasicParser } from "../common/BasicParser";
 import { IWaveFormat, Format, WaveFormat } from "./WaveFormat";
 import { IFactChunk, FactChunk } from "./FactChunk";
 import { BroadcastAudioExtensionChunk } from "./BwfChunk";
+import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:RIFF");
 
@@ -163,7 +164,7 @@ export class WaveParser extends BasicParser {
   }
 
   public async parseListTag(listHeader: IChunkHeader): Promise<void> {
-    const listType = await this.tokenizer.readToken(new Token.StringType(4, "binary"));
+    const listType = await this.tokenizer.readToken(new Latin1StringType(4));
     debug("pos=%s, parseListTag: chunkID=RIFF/WAVE/LIST/%s", this.tokenizer.position, listType);
     switch (listType) {
       case "INFO":

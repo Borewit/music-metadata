@@ -2,6 +2,7 @@ import * as Token from "../token-types";
 import { ITokenizer } from "../strtok3";
 import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";
 import { XingHeaderFlags } from "./XingHeaderFlags";
+import { Latin1StringType } from "../token-types/string";
 
 export interface IXingInfoTag {
   /**
@@ -51,11 +52,11 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
   if (flags.vbrScale) {
     xingInfoTag.vbrScale = await tokenizer.readToken(Token.UINT32_BE);
   }
-  const lameTag = await tokenizer.peekToken(new Token.StringType(4, "ascii"));
+  const lameTag = await tokenizer.peekToken(new Latin1StringType(4));
   if (lameTag === "LAME") {
     await tokenizer.ignore(4);
     xingInfoTag.lame = {
-      version: await tokenizer.readToken(new Token.StringType(5, "ascii")),
+      version: await tokenizer.readToken(new Latin1StringType(5)),
     };
     const match = xingInfoTag.lame.version.match(/\d+.\d+/g);
     if (match) {

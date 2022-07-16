@@ -1,5 +1,6 @@
 import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * 6.2 Identification Header
@@ -33,7 +34,7 @@ export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
 
   get: (buf: Uint8Array, off): IIdentificationHeader => {
     return {
-      id: new Token.StringType(7, "ascii").get(buf, off),
+      id: new Latin1StringType(7).get(buf, off),
       vmaj: Token.UINT8.get(buf, off + 7),
       vmin: Token.UINT8.get(buf, off + 8),
       vrev: Token.UINT8.get(buf, off + 9),

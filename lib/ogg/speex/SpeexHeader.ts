@@ -2,6 +2,7 @@ import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
 
 import * as util from "../../common/Util";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * Speex Header Packet
@@ -43,8 +44,8 @@ export const Header: IGetToken<IHeader> = {
 
   get: (buf: Uint8Array, off) => {
     return {
-      speex: new Token.StringType(8, "ascii").get(buf, off + 0),
-      version: util.trimRightNull(new Token.StringType(20, "ascii").get(buf, off + 8)),
+      speex: new Latin1StringType(8).get(buf, off + 0),
+      version: util.trimRightNull(new Latin1StringType(20).get(buf, off + 8)),
       version_id: Token.INT32_LE.get(buf, off + 28),
       header_size: Token.INT32_LE.get(buf, off + 32),
       rate: Token.INT32_LE.get(buf, off + 36),

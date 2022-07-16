@@ -4,17 +4,6 @@ import { IGetToken } from "./type";
 /**
  * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
  */
-export class StringType implements IGetToken<string, Buffer> {
-  public constructor(public len: number, public encoding: BufferEncoding) {}
-
-  public get(uint8Array: Uint8Array, offset: number): string {
-    return Buffer.from(uint8Array).toString(this.encoding, offset, offset + this.len);
-  }
-}
-
-/**
- * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
- */
 export class Utf8StringType implements IGetToken<string> {
   static decoder = new TextDecoder("utf8");
   public constructor(public len: number) {}
@@ -27,7 +16,19 @@ export class Utf8StringType implements IGetToken<string> {
 /**
  * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
  */
- export class Latin1StringType implements IGetToken<string> {
+export class Utf16LEStringType implements IGetToken<string> {
+  static decoder = new TextDecoder("utf-16le");
+  public constructor(public len: number) {}
+
+  public get(uint8Array: Uint8Array, offset: number): string {
+    return Utf16LEStringType.decoder.decode(uint8Array.subarray(offset, offset + this.len));
+  }
+}
+
+/**
+ * Consume a fixed number of bytes from the stream and return a string with a specified encoding.
+ */
+export class Latin1StringType implements IGetToken<string> {
   static decoder = new TextDecoder("latin1");
   public constructor(public len: number) {}
 
@@ -43,7 +44,7 @@ export class Utf8StringType implements IGetToken<string> {
 export class AnsiStringType implements IGetToken<string> {
   public constructor(public len: number) {}
 
-  public get(buffer: Buffer, offset = 0): string {
+  public get(buffer: Uint8Array, offset = 0): string {
     return decodeAnsiStringType(buffer, offset, offset + this.len);
   }
 }

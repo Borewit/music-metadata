@@ -7,6 +7,7 @@ import { IOptions } from "../../type";
 import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
 import { IIdHeader, IdHeader } from "./OpusIdHeader";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * Opus parser
@@ -36,7 +37,7 @@ export class OpusParser extends VorbisParser {
   }
 
   protected override parseFullPage(pageData: Uint8Array) {
-    const magicSignature = new Token.StringType(8, "ascii").get(pageData, 0);
+    const magicSignature = new Latin1StringType(8).get(pageData, 0);
     switch (magicSignature) {
       case "OpusTags":
         this.parseUserCommentList(pageData, 8);

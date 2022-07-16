@@ -17,4 +17,4 @@ export {
 
 export { IgnoreType } from "./ignore";
 export { Uint8ArrayType, BufferType } from "./buffer";
-export { StringType, AnsiStringType } from "./string";
+export { AnsiStringType } from "./string";

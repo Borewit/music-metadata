@@ -1,5 +1,6 @@
 import { describe, test, expect } from "vitest";
-import { BufferType, StringType, Uint8ArrayType } from "../../lib/token-types";
+import { BufferType, Uint8ArrayType } from "../../lib/token-types";
+import { Utf8StringType } from "../../lib/token-types/string";
 
 describe("BufferType", () => {
   test("Should copy data fom the source array", () => {
@@ -39,7 +40,7 @@ describe("StringType", () => {
   test("decode from Buffer", () => {
     const source = new Uint8Array(Buffer.from("peter", "utf8"));
 
-    const stringType = new StringType(5, "utf8");
+    const stringType = new Utf8StringType(5);
 
     expect(stringType.get(source, 0), "should be 2 middle bytes: 0xb1, 0xb2").toBe("peter");
   });

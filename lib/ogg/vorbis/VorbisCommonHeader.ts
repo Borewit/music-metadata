@@ -1,5 +1,6 @@
 import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * Vorbis 1 decoding tokens
@@ -31,7 +32,7 @@ export const CommonHeader: IGetToken<ICommonHeader> = {
   get: (buf: Uint8Array, off): ICommonHeader => {
     return {
       packetType: Token.UINT8.get(buf, off),
-      vorbis: new Token.StringType(6, "ascii").get(buf, off + 1),
+      vorbis: new Latin1StringType(6).get(buf, off + 1),
     };
   },
 };

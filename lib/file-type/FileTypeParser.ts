@@ -6,6 +6,7 @@ import { FileTypeResult } from "./type";
 import { encodeUtf8 } from "../compat/text-encoder";
 import { indexOf, isSubArray, readUintBE } from "../compat/buffer";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
+import { Latin1StringType, Utf8StringType } from "../token-types/string";
 
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
@@ -217,7 +218,7 @@ export class FileTypeParser {
             extraFieldLength: Token.UINT16_LE.get(this.buffer, 28),
           };
 
-          zipHeader.filename = await tokenizer.readToken(new Token.StringType(zipHeader.filenameLength, "utf8"));
+          zipHeader.filename = await tokenizer.readToken(new Utf8StringType(zipHeader.filenameLength));
           await tokenizer.ignore(zipHeader.extraFieldLength);
 
           // Assumes signed `.xpi` from addons.mozilla.org
@@ -274,7 +275,7 @@ export class FileTypeParser {
           // - one entry indicating specific type of file.
           // MS Office, OpenOffice and LibreOffice may put the parts in different order, so the check should not rely on it.
           if (zipHeader.filename === "mimetype" && zipHeader.compressedSize === zipHeader.uncompressedSize) {
-            const mimeType = await tokenizer.readToken(new Token.StringType(zipHeader.compressedSize, "utf8"));
+            const mimeType = await tokenizer.readToken(new Utf8StringType(zipHeader.compressedSize));
             const trimmedMimeType = mimeType.trim();
 
             switch (trimmedMimeType) {
@@ -815,7 +816,7 @@ export class FileTypeParser {
 
     if (this.checkString("!<arch>")) {
       await tokenizer.ignore(8);
-      const str = await tokenizer.readToken(new Token.StringType(13, "ascii"));
+      const str = await tokenizer.readToken(new Latin1StringType(13));
       if (str === "debian-binary") {
         return {
           ext: "deb",
@@ -1008,7 +1009,7 @@ export class FileTypeParser {
     if (this.check([0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a])) {
       // JPEG-2000 family
       await tokenizer.ignore(20);
-      const type = await tokenizer.readToken(new Token.StringType(4, "ascii"));
+      const type = await tokenizer.readToken(new Latin1StringType(4));
       switch (type) {
         case "jp2 ":
           return {
@@ -1441,7 +1442,7 @@ async function readChildren(tokenizer: strtok3.ITokenizer, level: number, childr
   while (children > 0) {
     const element = await readElement(tokenizer);
     if (element.id === 17_026) {
-      const rawValue = await tokenizer.readToken(new Token.StringType(element.len, "utf8"));
+      const rawValue = await tokenizer.readToken(new Utf8StringType(element.len));
       return rawValue.replace(/\00.*$/g, ""); // Return DocType
     }
 
@@ -1457,7 +1458,7 @@ async function readChildren(tokenizer: strtok3.ITokenizer, level: number, childr
 async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
   return {
     length: await tokenizer.readToken(Token.INT32_BE),
-    type: await tokenizer.readToken(new Token.StringType(4, "binary")),
+    type: await tokenizer.readToken(new Latin1StringType(4)),
   };
 }
 

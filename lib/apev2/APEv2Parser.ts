@@ -1,7 +1,6 @@
 import initDebug from "debug";
 import * as strtok3 from "../strtok3";
 import * as fromBuffer from "../strtok3/fromBuffer";
-import { StringType } from "../token-types";
 
 import * as util from "../common/Util";
 import { IOptions, IRandomReader, IApeHeader } from "../type";
@@ -12,6 +11,7 @@ import { IFooter, TagFooter } from "./APEv2TokenFooter";
 import { IHeader, Header } from "./APEv2TokenHeader";
 import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
 import { DataType } from "./DataType";
+import { Latin1StringType, Utf8StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:APEv2");
 
@@ -160,14 +160,14 @@ export class APEv2Parser extends BasicParser {
         length: Math.min(keyBuffer.length, bytesRemaining),
       });
       let zero = util.findZero(keyBuffer, 0, keyBuffer.length);
-      const key = await this.tokenizer.readToken<string>(new StringType(zero, "ascii"));
+      const key = await this.tokenizer.readToken<string>(new Latin1StringType(zero));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
 
       switch (tagItemHeader.flags.dataType) {
         case DataType.text_utf8: {
           // utf-8 text-string
-          const value = await this.tokenizer.readToken<string>(new StringType(tagItemHeader.size, "utf8"));
+          const value = await this.tokenizer.readToken<string>(new Utf8StringType(tagItemHeader.size));
           const values = value.split(/\0/g);
 
           for (const val of values) {

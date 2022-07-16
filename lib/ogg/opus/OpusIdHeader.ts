@@ -1,5 +1,6 @@
 import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * Opus ID Header interface
@@ -53,7 +54,7 @@ export class IdHeader implements IGetToken<IIdHeader> {
 
   public get(buf: Uint8Array, off: number): IIdHeader {
     return {
-      magicSignature: new Token.StringType(8, "ascii").get(buf, off + 0),
+      magicSignature: new Latin1StringType(8).get(buf, off + 0),
       version: Token.UINT8.get(buf, off + 8),
       channelCount: Token.UINT8.get(buf, off + 9),
       preSkip: Token.INT16_LE.get(buf, off + 10),

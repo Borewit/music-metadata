@@ -6,12 +6,13 @@ import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 
 import { MpcSv8Parser } from "./sv8/MpcSv8Parser";
 import { MpcSv7Parser } from "./sv7/MpcSv7Parser";
+import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:musepack");
 
 class MusepackParser extends AbstractID3Parser {
   public async postId3v2Parse(): Promise<void> {
-    const signature = await this.tokenizer.peekToken(new Token.StringType(3, "binary"));
+    const signature = await this.tokenizer.peekToken(new Latin1StringType(3));
     let mpcParser: ITokenParser;
     switch (signature) {
       case "MP+": {

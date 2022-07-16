@@ -1,6 +1,7 @@
 import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
 import { IVersionAndFlags } from "./VersionAndFlags";
+import { Utf8StringType } from "../token-types/string";
 
 /**
  * Data Atom Structure ('data')
@@ -24,7 +25,7 @@ export class NameAtom implements IGetToken<INameAtom> {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
-      name: new Token.StringType(this.len - 4, "utf8").get(buf, off + 4),
+      name: new Utf8StringType(this.len - 4).get(buf, off + 4),
     };
   }
 }

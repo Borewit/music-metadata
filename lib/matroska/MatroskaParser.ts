@@ -1,4 +1,4 @@
-import { Float32_BE, Float64_BE, StringType, UINT8 } from "../token-types";
+import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
 import initDebug from "debug";
 import { EndOfStreamError, ITokenizer } from "../strtok3";
 
@@ -9,6 +9,7 @@ import { BasicParser } from "../common/BasicParser";
 
 import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
 import * as matroskaDtd from "./MatroskaDtd";
+import { Utf8StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:matroska");
 
@@ -252,7 +253,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   private async readString(e: IHeader): Promise<string> {
-    const rawString = await this.tokenizer.readToken(new StringType(e.len, "utf8"));
+    const rawString = await this.tokenizer.readToken(new Utf8StringType(e.len));
     return rawString.replace(/\00.*$/g, "");
   }
 

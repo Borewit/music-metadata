@@ -1,6 +1,7 @@
 import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
 import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
+import { Latin1StringType } from "../token-types/string";
 
 export interface IFooter {
   // should equal 'APETAGEX'
@@ -25,7 +26,7 @@ export const TagFooter: IGetToken<IFooter> = {
   get: (buf: Uint8Array, off) => {
     return {
       // should equal 'APETAGEX'
-      ID: new Token.StringType(8, "ascii").get(buf, off),
+      ID: new Latin1StringType(8).get(buf, off),
       // equals CURRENT_APE_TAG_VERSION
       version: Token.UINT32_LE.get(buf, off + 8),
       // the complete size of the tag, including this footer (excludes header)

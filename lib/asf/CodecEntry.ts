@@ -1,6 +1,7 @@
 import { ITokenizer } from "../strtok3";
 
 import * as Token from "../token-types";
+import { Utf16LEStringType } from "../token-types/string";
 import { CodecListObjectHeader } from "./CodecListObjectHeader";
 
 export interface ICodecEntry {
@@ -19,7 +20,7 @@ export interface ICodecEntry {
  */
 async function readString(tokenizer: ITokenizer): Promise<string> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const str = await tokenizer.readToken(new Token.StringType(length * 2, "utf16le"));
+  const str = await tokenizer.readToken(new Utf16LEStringType(length * 2));
   return str.replace("\0", "");
 }
 

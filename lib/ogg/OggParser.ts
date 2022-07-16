@@ -12,6 +12,7 @@ import { TheoraParser } from "./theora/TheoraParser";
 import { SegmentTable, ISegmentTable } from "./SegmentTable";
 import { IPageHeader, Header } from "./Header";
 import { IPageConsumer } from "./PageConsumer";
+import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:ogg");
 
@@ -53,7 +54,7 @@ export class OggParser extends BasicParser {
           header.headerType.continued
         );
         if (header.headerType.firstPage) {
-          const id = new Token.StringType(7, "ascii").get(pageData, 0);
+          const id = new Latin1StringType(7).get(pageData, 0);
           switch (id) {
             case "\u0001vorbis": // Ogg/Vorbis
               debug("Set page consumer to Ogg/Vorbis");

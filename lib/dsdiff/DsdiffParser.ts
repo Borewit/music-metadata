@@ -7,6 +7,7 @@ import { BasicParser } from "../common/BasicParser";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 
 import { ChunkHeader64, IChunkHeader64 } from "./ChunkHeader64";
+import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:aiff");
 
@@ -115,7 +116,7 @@ export class DsdiffParser extends BasicParser {
           const fourCcToken = await this.tokenizer.readToken<string>(FourCcToken);
           const compressionIdCode = fourCcToken.trim();
           const count = await this.tokenizer.readToken<number>(Token.UINT8);
-          const compressionName = await this.tokenizer.readToken<string>(new Token.StringType(count, "ascii"));
+          const compressionName = await this.tokenizer.readToken<string>(new Latin1StringType(count));
           if (compressionIdCode === "DSD") {
             this.metadata.setFormat("lossless", true);
             this.metadata.setFormat("bitsPerSample", 1);

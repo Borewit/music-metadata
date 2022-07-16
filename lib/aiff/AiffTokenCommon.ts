@@ -3,6 +3,7 @@ import { IGetToken } from "../strtok3";
 
 import { FourCcToken } from "../common/FourCC";
 import * as iff from "../iff";
+import { Latin1StringType } from "../token-types/string";
 
 /**
  * The Common Chunk.
@@ -46,7 +47,7 @@ export class Common implements IGetToken<ICommon> {
         const strLen = Token.INT8.get(buf, off + 22);
         const padding = (strLen + 1) % 2;
         if (23 + strLen + padding === this.len) {
-          res.compressionName = new Token.StringType(strLen, "binary").get(buf, off + 23);
+          res.compressionName = new Latin1StringType(strLen).get(buf, off + 23);
         } else {
           throw new Error("Illegal pstring length");
         }

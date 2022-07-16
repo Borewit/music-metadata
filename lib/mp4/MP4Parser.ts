@@ -30,6 +30,7 @@ import { SoundSampleDescriptionVersion } from "./SoundSampleDescriptionVersion";
 import { ITimeToSampleToken } from "./TimeToSampleToken";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
 import { toHexString } from "../compat/hex";
+import { Utf8StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:MP4");
 const tagFormat = "iTunes";
@@ -513,7 +514,7 @@ export class MP4Parser extends BasicParser {
     },
 
     date: async (len: number) => {
-      const date = await this.tokenizer.readToken(new Token.StringType(len, "utf8"));
+      const date = await this.tokenizer.readToken(new Utf8StringType(len));
       this.addTag("date", date);
     },
   };

@@ -2,8 +2,9 @@ import { IGetToken } from "../strtok3";
 
 import { IPicture } from "../type";
 import { AttachedPictureType } from "../id3v2/AttachedPictureType";
-import { INT32_LE, StringType, UINT16_BE, UINT8 } from "../token-types";
+import { INT32_LE, UINT16_BE, UINT8 } from "../token-types";
 import { getUint8ArrayFromBase64String } from "../compat/base64";
+import { Utf16LEStringType } from "../token-types/string";
 
 export interface IWmPicture extends IPicture {
   type: string;
@@ -36,12 +37,12 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
     while (UINT16_BE.get(buffer, index) !== 0) {
       index += 2;
     }
-    const format = new StringType(index - 5, "utf16le").get(buffer, 5);
+    const format = new Utf16LEStringType(index - 5).get(buffer, 5);
 
     while (UINT16_BE.get(buffer, index) !== 0) {
       index += 2;
     }
-    const description = new StringType(index - 5, "utf16le").get(buffer, 5);
+    const description = new Utf16LEStringType(index - 5).get(buffer, 5);
 
     return {
       type: AttachedPictureType[typeId],

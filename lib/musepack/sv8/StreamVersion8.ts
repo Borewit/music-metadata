@@ -3,10 +3,11 @@ import { ITokenizer, IGetToken } from "../../strtok3";
 import initDebug from "debug";
 
 import * as util from "../../common/Util";
+import { Latin1StringType } from "../../token-types/string";
 
 const debug = initDebug("music-metadata:parser:musepack:sv8");
 
-const PacketKey = new Token.StringType(2, "binary");
+const PacketKey = new Latin1StringType(2);
 
 interface IVarSize {
   len: number;

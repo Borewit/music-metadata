@@ -1,5 +1,6 @@
 import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
+import { Latin1StringType } from "../token-types/string";
 
 export interface IAtomHeader {
   length: bigint;
@@ -15,7 +16,7 @@ export const Header: IGetToken<IAtomHeader> = {
 
     return {
       length: BigInt(length),
-      name: new Token.StringType(4, "binary").get(buf, off + 4),
+      name: new Latin1StringType(4).get(buf, off + 4),
     };
   },
 
