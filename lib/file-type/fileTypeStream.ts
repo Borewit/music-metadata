@@ -63,9 +63,9 @@ export async function fileTypeStream(
             : readableStream.pipe(pass);
 
           // Read the input stream and detect the filetype
-          const chunk = readableStream.read(sampleSize) || readableStream.read() || Buffer.alloc(0);
+          const chunk = readableStream.read(sampleSize) || readableStream.read() || new Uint8Array(0);
           try {
-            const fileType = await fileTypeFromBuffer(chunk as Buffer);
+            const fileType = await fileTypeFromBuffer(chunk as Uint8Array);
             pass.fileType = fileType;
           } catch (error) {
             if (error instanceof strtok3.EndOfStreamError) {

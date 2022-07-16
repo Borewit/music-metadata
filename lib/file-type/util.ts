@@ -1,3 +1,4 @@
+import { decodeUtf8 } from "../compat/text-decoder";
 import { IGetToken } from "../strtok3";
 
 /**
@@ -15,8 +16,8 @@ export function stringToBytes(str: string) {
  * @param offset - TAR header offset.
  * @returns `true` if the TAR checksum is valid, otherwise `false`.
  */
-export function tarHeaderChecksumMatches(buffer: Buffer, offset = 0): boolean {
-  const readSum = Number.parseInt(buffer.toString("utf8", 148, 154).replace(/\0.*$/, "").trim(), 8); // Read sum in header
+export function tarHeaderChecksumMatches(buffer: Uint8Array, offset = 0): boolean {
+  const readSum = Number.parseInt(decodeUtf8(buffer.subarray(148, 154)).replace(/\0.*$/, "").trim(), 8); // Read sum in header
   if (Number.isNaN(readSum)) {
     return false;
   }
@@ -53,7 +54,7 @@ export const uint32SyncSafeToken: IGetToken<number> = {
  * @param options.offset
  * @returns
  */
-export function checkUtil(buffer: Buffer, headers: any[], options?: { mask?: number[]; offset: number }) {
+export function checkUtil(buffer: Uint8Array, headers: any[], options?: { mask?: number[]; offset: number }) {
   options = {
     offset: 0,
     ...options,
