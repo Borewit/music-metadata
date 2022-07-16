@@ -77,20 +77,20 @@ export function readUintBE(uint8array: Uint8Array, offset: number, length: numbe
       return UINT32_BE.get(uint8array, offset);
     case 5:
       return (
-        (uint8array[offset] << 32) +
-        (uint8array[offset + 1] << 24) +
-        (uint8array[offset + 2] << 16) +
-        (uint8array[offset + 3] << 8) +
+        uint8array[offset] * 256 ** 4 +
+        uint8array[offset + 1] * 256 ** 3 +
+        uint8array[offset + 2] * 256 ** 2 +
+        uint8array[offset + 3] * 256 ** 1 +
         uint8array[offset + 4]
       );
 
     case 6:
       return (
-        (uint8array[offset] << 40) +
-        (uint8array[offset + 1] << 32) +
-        (uint8array[offset + 2] << 24) +
-        (uint8array[offset + 3] << 16) +
-        (uint8array[offset + 4] << 8) +
+        uint8array[offset] * 256 ** 5 +
+        uint8array[offset + 1] * 256 ** 4 +
+        uint8array[offset + 2] * 256 ** 3 +
+        uint8array[offset + 3] * 256 ** 2 +
+        uint8array[offset + 4] * 256 ** 1 +
         uint8array[offset + 5]
       );
     default:
