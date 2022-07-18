@@ -304,7 +304,7 @@ function checkID3Tags(native: INativeTagDict) {
   expect(native.TMED, "id3v23.TMED: Media type").toStrictEqual(["CD"]);
   expect(native.UFID[0], "id3v23.UFID: Unique file identifier").toStrictEqual({
     owner_identifier: "http://musicbrainz.org",
-    identifier: Buffer.from("f151cb94-c909-46a8-ad99-fb77391abfb8", "ascii"),
+    identifier: new TextEncoder().encode("f151cb94-c909-46a8-ad99-fb77391abfb8"),
   });
 
   expect(native.IPLS, "id3v23.IPLS: Involved people list").toStrictEqual([
@@ -395,7 +395,7 @@ function checkID3v24Tags(id3v24: INativeTagDict) {
 
   expect(id3v24.UFID[0], "id3v24.UFID: Unique file identifier").toStrictEqual({
     owner_identifier: "http://musicbrainz.org",
-    identifier: Buffer.from("f151cb94-c909-46a8-ad99-fb77391abfb8", "ascii"),
+    identifier: new TextEncoder().encode("f151cb94-c909-46a8-ad99-fb77391abfb8"),
   });
 
   expect(id3v24["TXXX:ASIN"], "id3v24.TXXX:ASIN").toStrictEqual(["B005NPEUB2"]);

@@ -5,6 +5,7 @@ import { CaseInsensitiveTagMap } from "../common/CaseInsensitiveTagMap";
 import * as util from "../common/Util";
 
 import { IRating, ITag } from "../type";
+import { UINT32_LE } from "../token-types";
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -185,7 +186,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
           case "AverageLevel":
           case "PeakValue":
             tag.id += `:${tag.value.owner_identifier as string}`;
-            tag.value = tag.value.data.length === 4 ? tag.value.data.readUInt32LE(0) : null;
+            tag.value = tag.value.data.length === 4 ? UINT32_LE.get(tag.value.data, 0) : null;
             if (tag.value === null) {
               warnings.addWarning(`Failed to parse PRIV:PeakValue`);
             }

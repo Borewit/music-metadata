@@ -67,7 +67,7 @@ test("should MusicBrainz tags with id3v2.4", async () => {
       {
         id: "PRIV",
         value: {
-          data: Buffer.from([0x02, 0x00, 0x00, 0x00]),
+          data: new Uint8Array([0x02, 0x00, 0x00, 0x00]),
           owner_identifier: "AverageLevel",
         },
       },
@@ -78,7 +78,7 @@ test("should MusicBrainz tags with id3v2.4", async () => {
       {
         id: "PRIV",
         value: {
-          data: Buffer.from([0x08, 0x00, 0x00, 0x00]),
+          data: new Uint8Array([0x08, 0x00, 0x00, 0x00]),
           owner_identifier: "PeakValue",
         },
       },
@@ -184,7 +184,7 @@ test("should MusicBrainz tags with id3v2.4", async () => {
       {
         id: "UFID",
         value: {
-          identifier: Buffer.from([
+          identifier: new Uint8Array([
             0x38, 0x34, 0x38, 0x35, 0x31, 0x31, 0x35, 0x30, 0x2d, 0x61, 0x31, 0x39, 0x36, 0x2d, 0x34, 0x38, 0x66, 0x61,
             0x2d, 0x61, 0x64, 0x61, 0x35, 0x2d, 0x31, 0x61, 0x30, 0x31, 0x32, 0x62, 0x31, 0x63, 0x64, 0x39, 0x65, 0x64,
           ]),
