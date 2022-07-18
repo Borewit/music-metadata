@@ -58,7 +58,6 @@
     /* extends "extends" */
     /* eslint */
     "no-constant-condition": ["error", { "checkLoops": false }],
-    "no-undef": "warn",
 
     /* eslint-plugin-import */
     "import/no-unresolved": ["error", { "caseSensitiveStrict": true }],
