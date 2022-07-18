@@ -1,7 +1,7 @@
-import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
 
 import { IChunkHeader } from "../iff";
+import { Latin1StringType } from "../token-types/string";
 
 /**
  * Token to parse RIFF-INFO tag value
@@ -15,9 +15,6 @@ export class ListInfoTagValue implements IGetToken<string> {
   }
 
   public get(buf: Uint8Array, off: number): string {
-    return new Token.StringType(this.tagHeader.chunkSize, "ascii").get(
-      buf,
-      off
-    );
+    return new Latin1StringType(this.tagHeader.chunkSize).get(buf, off);
   }
 }

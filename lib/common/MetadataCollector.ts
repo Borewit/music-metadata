@@ -86,11 +86,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public addStreamInfo(streamInfo: ITrackInfo) {
-    debug(
-      `streamInfo: type=${TrackType[streamInfo.type]}, codec=${
-        streamInfo.codecName
-      }`
-    );
+    debug(`streamInfo: type=${TrackType[streamInfo.type]}, codec=${streamInfo.codecName}`);
     this.format.trackInfo.push(streamInfo);
   }
 
@@ -145,10 +141,8 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case "artists":
         if (
-          (!this.common.artist ||
-            this.commonOrigin.artist === this.originPriority.artificial) &&
-          (!this.common.artists ||
-            !this.common.artists.includes(tag.value as string))
+          (!this.common.artist || this.commonOrigin.artist === this.originPriority.artificial) &&
+          (!this.common.artists || !this.common.artists.includes(tag.value as string))
         ) {
           // Fill artist using artists source
           const artists = [...(this.common.artists || []), tag.value];
@@ -176,18 +170,14 @@ export class MetadataCollector implements INativeMetadataCollector {
         return;
 
       case "movementTotal":
-        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(
-          tag.value as string
-        );
+        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value as string);
         return;
 
       case "track":
       case "disk":
       case "movementIndex": {
         const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
-        this.common[tag.id] = CommonTagMapper.normalizeTrack(
-          tag.value as string | number
-        );
+        this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value as string | number);
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
         return;
       }
@@ -211,10 +201,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       case "discogs_master_release_id":
       case "discogs_artist_id":
       case "discogs_votes":
-        tag.value =
-          typeof tag.value === "string"
-            ? Number.parseInt(tag.value, 10)
-            : tag.value;
+        tag.value = typeof tag.value === "string" ? Number.parseInt(tag.value, 10) : tag.value;
         break;
 
       case "replaygain_track_gain":
@@ -225,15 +212,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case "replaygain_track_minmax":
-        tag.value = tag.value
-          .split(",")
-          .map((v: string) => Number.parseInt(v, 10));
+        tag.value = tag.value.split(",").map((v: string) => Number.parseInt(v, 10));
         break;
 
       case "replaygain_undo": {
-        const minMix = tag.value
-          .split(",")
-          .map((v: string) => Number.parseInt(v, 10));
+        const minMix = tag.value.split(",").map((v: string) => Number.parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1],
@@ -330,36 +313,21 @@ export class MetadataCollector implements INativeMetadataCollector {
         (this.common[tag.id] as any) = tag.value;
         this.commonOrigin[tag.id] = prio1;
       } else {
-        return debug(
-          `Ignore native tag (singleton): ${tagType}.${tag.id} = ${
-            tag.value as unknown as string
-          }`
-        );
+        return debug(`Ignore native tag (singleton): ${tagType}.${tag.id} = ${tag.value as unknown as string}`);
       }
     } else {
       if (prio1 === prio0) {
-        if (
-          !isUnique(tag.id) ||
-          !(this.common[tag.id] as any).includes(tag.value)
-        ) {
+        if (!isUnique(tag.id) || !(this.common[tag.id] as any).includes(tag.value)) {
           (this.common[tag.id] as any).push(tag.value);
         } else {
-          debug(
-            `Ignore duplicate value: ${tagType}.${tag.id} = ${
-              tag.value as unknown as string
-            }`
-          );
+          debug(`Ignore duplicate value: ${tagType}.${tag.id} = ${tag.value as unknown as string}`);
         }
         // no effect? this.commonOrigin[tag.id] = prio1;
       } else if (prio1 < prio0) {
         (this.common[tag.id] as any) = [tag.value];
         this.commonOrigin[tag.id] = prio1;
       } else {
-        return debug(
-          `Ignore native tag (list): ${tagType}.${tag.id} = ${
-            tag.value as unknown as string
-          }`
-        );
+        return debug(`Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value as unknown as string}`);
       }
     }
     if (this.opts.observer) {
@@ -379,9 +347,7 @@ export class MetadataCollector implements INativeMetadataCollector {
  */
 export function joinArtists(artists: string[]): string {
   if (artists.length > 2) {
-    return (
-      artists.slice(0, -1).join(", ") + " & " + artists[artists.length - 1]
-    );
+    return artists.slice(0, -1).join(", ") + " & " + artists[artists.length - 1];
   }
   return artists.join(" & ");
 }

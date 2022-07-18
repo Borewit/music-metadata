@@ -39,7 +39,7 @@ export class MpegParser extends AbstractID3Parser {
   private calculateEofDuration = false;
   private samplesPerFrame: number;
 
-  private buf_frame_header = Buffer.alloc(4);
+  private buf_frame_header = new Uint8Array(4);
 
   /**
    * Number of bytes already parsed since beginning of stream / file
@@ -47,7 +47,7 @@ export class MpegParser extends AbstractID3Parser {
   private mpegOffset: number;
 
   private syncPeek = {
-    buf: Buffer.alloc(maxPeekLen),
+    buf: new Uint8Array(maxPeekLen),
     len: 0,
   };
 
@@ -84,24 +84,15 @@ export class MpegParser extends AbstractID3Parser {
    */
   protected override finalize() {
     const format = this.metadata.format;
-    const hasID3v1 = Object.prototype.hasOwnProperty.call(
-      this.metadata.native,
-      "ID3v1"
-    );
+    const hasID3v1 = Object.prototype.hasOwnProperty.call(this.metadata.native, "ID3v1");
     if (format.duration && this.tokenizer.fileInfo.size > 0) {
-      const mpegSize =
-        this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
+      const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
       if (format.codecProfile?.startsWith("V")) {
         this.metadata.setFormat("bitrate", (mpegSize * 8) / format.duration);
       }
-    } else if (
-      this.tokenizer.fileInfo.size > 0 &&
-      format.codecProfile === "CBR"
-    ) {
-      const mpegSize =
-        this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
-      const numberOfSamples =
-        Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
+    } else if (this.tokenizer.fileInfo.size > 0 && format.codecProfile === "CBR") {
+      const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
+      const numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
       this.metadata.setFormat("numberOfSamples", numberOfSamples);
       const duration = numberOfSamples / format.sampleRate;
       debug("Calculate CBR duration based on file size: %s", duration);
@@ -126,11 +117,7 @@ export class MpegParser extends AbstractID3Parser {
           this.buf_frame_header[0] = MpegFrameHeader.SyncByte1;
           this.buf_frame_header[1] = this.syncPeek.buf[bo];
           await this.tokenizer.ignore(bo);
-          debug(
-            `Sync at offset=${this.tokenizer.position - 1}, frameCount=${
-              this.frameCount
-            }`
-          );
+          debug(`Sync at offset=${this.tokenizer.position - 1}, frameCount=${this.frameCount}`);
           if (this.syncFrameCount === this.frameCount) {
             debug(`Re-synced MPEG stream, frameCount=${this.frameCount}`);
             this.frameCount = 0;
@@ -189,22 +176,15 @@ export class MpegParser extends AbstractID3Parser {
     this.metadata.setFormat("sampleRate", header.samplingRate);
 
     this.frameCount++;
-    return header.version >= 2 && header.layer === 0
-      ? this.parseAdts(header)
-      : this.parseAudioFrameHeader(header);
+    return header.version >= 2 && header.layer === 0 ? this.parseAdts(header) : this.parseAudioFrameHeader(header);
   }
 
   /**
    * @param header
    * @returns {Promise<boolean>} true if parser should quit
    */
-  private async parseAudioFrameHeader(
-    header: MpegFrameHeader
-  ): Promise<boolean> {
-    this.metadata.setFormat(
-      "numberOfChannels",
-      header.channelMode === "mono" ? 1 : 2
-    );
+  private async parseAudioFrameHeader(header: MpegFrameHeader): Promise<boolean> {
+    this.metadata.setFormat("numberOfChannels", header.channelMode === "mono" ? 1 : 2);
     this.metadata.setFormat("bitrate", header.bitrate);
 
     if (this.frameCount < 20 * 10_000) {
@@ -224,9 +204,7 @@ export class MpegParser extends AbstractID3Parser {
     const samples_per_frame = header.calcSamplesPerFrame();
     debug(`samples_per_frame=${samples_per_frame}`);
     const bps = samples_per_frame / 8;
-    const fsize =
-      (bps * header.bitrate) / header.samplingRate +
-      (header.padding ? slot_size : 0);
+    const fsize = (bps * header.bitrate) / header.samplingRate + (header.padding ? slot_size : 0);
     this.frame_size = Math.floor(fsize);
 
     this.audioFrameHeader = header;
@@ -273,33 +251,25 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async parseAdts(header: MpegFrameHeader): Promise<boolean> {
-    const buf = Buffer.alloc(3);
+    const buf = new Uint8Array(3);
     await this.tokenizer.readBuffer(buf);
     header.frameLength += common.getBitAllignedNumber(buf, 0, 0, 11);
     this.totalDataLength += header.frameLength;
     this.samplesPerFrame = 1024;
 
     const framesPerSec = header.samplingRate / this.samplesPerFrame;
-    const bytesPerFrame =
-      this.frameCount === 0 ? 0 : this.totalDataLength / this.frameCount;
+    const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalDataLength / this.frameCount;
     const bitrate = 8 * bytesPerFrame * framesPerSec + 0.5;
     this.metadata.setFormat("bitrate", bitrate);
 
-    debug(
-      `frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`
-    );
-    await this.tokenizer.ignore(
-      header.frameLength > 7 ? header.frameLength - 7 : 1
-    );
+    debug(`frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`);
+    await this.tokenizer.ignore(header.frameLength > 7 ? header.frameLength - 7 : 1);
 
     // Consume remaining header and frame data
     if (this.frameCount === 3) {
       this.metadata.setFormat("codecProfile", header.codecProfile);
       if (header.mp4ChannelConfig) {
-        this.metadata.setFormat(
-          "numberOfChannels",
-          header.mp4ChannelConfig.length
-        );
+        this.metadata.setFormat("numberOfChannels", header.mp4ChannelConfig.length);
       }
       if (this.options.duration) {
         this.calculateEofDuration = true;
@@ -364,9 +334,7 @@ export class MpegParser extends AbstractID3Parser {
     // ToDo: promise duration???
     const frameDataLeft = this.frame_size - this.offset;
     if (frameDataLeft < 0) {
-      this.metadata.addWarning(
-        `Frame ${this.frameCount}corrupt: negative frameDataLeft`
-      );
+      this.metadata.addWarning(`Frame ${this.frameCount}corrupt: negative frameDataLeft`);
     } else {
       await this.skipFrameData(frameDataLeft);
     }
@@ -383,32 +351,17 @@ export class MpegParser extends AbstractID3Parser {
     this.offset += this.tokenizer.position - offset;
 
     if (infoTag.lame) {
-      this.metadata.setFormat(
-        "tool",
-        "LAME " + common.stripNulls(infoTag.lame.version)
-      );
+      this.metadata.setFormat("tool", "LAME " + common.stripNulls(infoTag.lame.version));
       if (infoTag.lame.extended) {
         // this.metadata.setFormat('trackGain', infoTag.lame.extended.track_gain);
-        this.metadata.setFormat(
-          "trackPeakLevel",
-          infoTag.lame.extended.track_peak
-        );
+        this.metadata.setFormat("trackPeakLevel", infoTag.lame.extended.track_peak);
         if (infoTag.lame.extended.track_gain) {
-          this.metadata.setFormat(
-            "trackGain",
-            infoTag.lame.extended.track_gain.adjustment
-          );
+          this.metadata.setFormat("trackGain", infoTag.lame.extended.track_gain.adjustment);
         }
         if (infoTag.lame.extended.album_gain) {
-          this.metadata.setFormat(
-            "albumGain",
-            infoTag.lame.extended.album_gain.adjustment
-          );
+          this.metadata.setFormat("albumGain", infoTag.lame.extended.album_gain.adjustment);
         }
-        this.metadata.setFormat(
-          "duration",
-          infoTag.lame.extended.music_length / 1000
-        );
+        this.metadata.setFormat("duration", infoTag.lame.extended.music_length / 1000);
       }
     }
 
@@ -427,8 +380,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async skipFrameData(frameDataLeft: number): Promise<void> {
-    if (frameDataLeft < 0)
-      throw new Error("frame-data-left cannot be negative");
+    if (frameDataLeft < 0) throw new Error("frame-data-left cannot be negative");
     await this.tokenizer.ignore(frameDataLeft);
     this.countSkipFrameData += frameDataLeft;
   }

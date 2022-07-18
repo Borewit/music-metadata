@@ -5,6 +5,7 @@ import { CaseInsensitiveTagMap } from "../common/CaseInsensitiveTagMap";
 import * as util from "../common/Util";
 
 import { IRating, ITag } from "../type";
+import { UINT32_LE } from "../token-types";
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -155,10 +156,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
   public static toRating(popm: any): IRating {
     return {
       source: popm.email,
-      rating:
-        popm.rating > 0
-          ? ((popm.rating - 1) / 254) * CommonTagMapper.maxRatingScore
-          : undefined,
+      rating: popm.rating > 0 ? ((popm.rating - 1) / 254) * CommonTagMapper.maxRatingScore : undefined,
     };
   }
 
@@ -173,18 +171,12 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
    * @param warnings Wil be used to register (collect) warnings
    * @returns Common value e.g. "Buena Vista Social Club"
    */
-  protected override postMap(
-    tag: ITag,
-    warnings: INativeMetadataCollector
-  ): void {
+  protected override postMap(tag: ITag, warnings: INativeMetadataCollector): void {
     switch (tag.id) {
       case "UFID": // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === "http://musicbrainz.org") {
           tag.id += `:${tag.value.owner_identifier as string}`;
-          tag.value = util.decodeString(
-            tag.value.identifier as Uint8Array,
-            "latin1"
-          ); // latin1 == iso-8859-1
+          tag.value = util.decodeString(tag.value.identifier as Uint8Array, "latin1"); // latin1 == iso-8859-1
         }
         break;
 
@@ -194,20 +186,13 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
           case "AverageLevel":
           case "PeakValue":
             tag.id += `:${tag.value.owner_identifier as string}`;
-            tag.value =
-              tag.value.data.length === 4
-                ? tag.value.data.readUInt32LE(0)
-                : null;
+            tag.value = tag.value.data.length === 4 ? UINT32_LE.get(tag.value.data, 0) : null;
             if (tag.value === null) {
               warnings.addWarning(`Failed to parse PRIV:PeakValue`);
             }
             break;
           default:
-            warnings.addWarning(
-              `Unknown PRIV owner-identifier: ${
-                tag.value.owner_identifier as unknown as string
-              }`
-            );
+            warnings.addWarning(`Unknown PRIV owner-identifier: ${tag.value.owner_identifier as unknown as string}`);
         }
         break;
 

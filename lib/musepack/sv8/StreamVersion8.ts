@@ -3,10 +3,11 @@ import { ITokenizer, IGetToken } from "../../strtok3";
 import initDebug from "debug";
 
 import * as util from "../../common/Util";
+import { Latin1StringType } from "../../token-types/string";
 
 const debug = initDebug("music-metadata:parser:musepack:sv8");
 
-const PacketKey = new Token.StringType(2, "binary");
+const PacketKey = new Latin1StringType(2);
 
 interface IVarSize {
   len: number;
@@ -63,9 +64,7 @@ const SH_part3: IGetToken<IStreamHeader3> = {
 
   get: (buf, off) => {
     return {
-      sampleFrequency: [44_100, 48_000, 37_800, 32_000][
-        util.getBitAllignedNumber(buf, off, 0, 3)
-      ],
+      sampleFrequency: [44_100, 48_000, 37_800, 32_000][util.getBitAllignedNumber(buf, off, 0, 3)],
       maxUsedBands: util.getBitAllignedNumber(buf, off, 3, 5),
       channelCount: util.getBitAllignedNumber(buf, off + 1, 0, 4) + 1,
       msUsed: util.isBitSet(buf, off + 1, 4),

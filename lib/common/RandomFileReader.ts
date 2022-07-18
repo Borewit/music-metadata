@@ -20,12 +20,7 @@ export class RandomFileReader implements IRandomReader {
    * @param position {number} is an argument specifying where to begin reading from in the file.
    * @returns {Promise<number>} bytes read
    */
-  public async randomRead(
-    buffer: Buffer,
-    offset: number,
-    length: number,
-    position: number
-  ): Promise<number> {
+  public async randomRead(buffer: Uint8Array, offset: number, length: number, position: number): Promise<number> {
     const result = await this.fileHandle.read(buffer, offset, length, position);
     return result.bytesRead;
   }
@@ -34,10 +29,7 @@ export class RandomFileReader implements IRandomReader {
     return this.fileHandle.close();
   }
 
-  public static async init(
-    filePath: string,
-    fileSize: number
-  ): Promise<RandomFileReader> {
+  public static async init(filePath: string, fileSize: number): Promise<RandomFileReader> {
     const fileHandle = await fs.promises.open(filePath, "r");
     return new RandomFileReader(fileHandle, filePath, fileSize);
   }

@@ -2,10 +2,7 @@ import { Uint8ArrayType } from "../token-types";
 import initDebug from "debug";
 import { ITokenizer } from "../strtok3";
 
-import {
-  IVorbisPicture,
-  VorbisPictureToken,
-} from "../ogg/vorbis/VorbisPicture";
+import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/VorbisPicture";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 import { FourCcToken } from "../common/FourCC";
 import { VorbisParser } from "../ogg/vorbis/VorbisParser";
@@ -31,11 +28,7 @@ export class FlacParser extends AbstractID3Parser {
    * @param {IOptions} options Parsing options
    * @returns
    */
-  public override init(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ): ITokenParser {
+  public override init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
     super.init(metadata, tokenizer, options);
     this.vorbisParser = new VorbisParser(metadata, options);
     return this;
@@ -57,10 +50,7 @@ export class FlacParser extends AbstractID3Parser {
 
     if (this.tokenizer.fileInfo.size > 0 && this.metadata.format.duration) {
       const dataSize = this.tokenizer.fileInfo.size - this.tokenizer.position;
-      this.metadata.setFormat(
-        "bitrate",
-        (8 * dataSize) / this.metadata.format.duration
-      );
+      this.metadata.setFormat("bitrate", (8 * dataSize) / this.metadata.format.duration);
     }
   }
 
@@ -83,9 +73,7 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.PICTURE:
         return this.parsePicture(blockHeader.length).then();
       default:
-        this.metadata.addWarning(
-          `Unknown block type: ${blockHeader.type as unknown as string}`
-        );
+        this.metadata.addWarning(`Unknown block type: ${blockHeader.type as unknown as string}`);
     }
     // Ignore data block
     return this.tokenizer.ignore(blockHeader.length).then();
@@ -96,12 +84,9 @@ export class FlacParser extends AbstractID3Parser {
    * @param dataLen
    */
   private async parseBlockStreamInfo(dataLen: number): Promise<void> {
-    if (dataLen !== BlockStreamInfo.len)
-      throw new Error("Unexpected block-stream-info length");
+    if (dataLen !== BlockStreamInfo.len) throw new Error("Unexpected block-stream-info length");
 
-    const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(
-      BlockStreamInfo
-    );
+    const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(BlockStreamInfo);
     this.metadata.setFormat("container", "FLAC");
     this.metadata.setFormat("codec", "FLAC");
     this.metadata.setFormat("lossless", true);
@@ -109,10 +94,7 @@ export class FlacParser extends AbstractID3Parser {
     this.metadata.setFormat("bitsPerSample", streamInfo.bitsPerSample);
     this.metadata.setFormat("sampleRate", streamInfo.sampleRate);
     if (streamInfo.totalSamples > 0) {
-      this.metadata.setFormat(
-        "duration",
-        streamInfo.totalSamples / streamInfo.sampleRate
-      );
+      this.metadata.setFormat("duration", streamInfo.totalSamples / streamInfo.sampleRate);
     }
   }
 
@@ -122,9 +104,7 @@ export class FlacParser extends AbstractID3Parser {
    * @param dataLen
    */
   private async parseComment(dataLen: number): Promise<void> {
-    const data = await this.tokenizer.readToken<Uint8Array>(
-      new Uint8ArrayType(dataLen)
-    );
+    const data = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(dataLen));
     const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
@@ -138,9 +118,7 @@ export class FlacParser extends AbstractID3Parser {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     } else {
-      const picture = await this.tokenizer.readToken<IVorbisPicture>(
-        new VorbisPictureToken(dataLen)
-      );
+      const picture = await this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen));
       this.vorbisParser.addTag("METADATA_BLOCK_PICTURE", picture);
     }
   }

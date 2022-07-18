@@ -7,7 +7,7 @@ import { IGetToken } from "../strtok3";
 export const SecondsSinceMacEpoch: IGetToken<Date> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): Date => {
+  get: (buf: Uint8Array, off: number): Date => {
     const secondsSinceUnixEpoch = Token.UINT32_BE.get(buf, off) - 2_082_844_800;
     return new Date(secondsSinceUnixEpoch * 1000);
   },

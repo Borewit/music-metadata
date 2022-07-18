@@ -12,9 +12,7 @@ const debug = initDebug("music-metadata:parser:ID3");
  * Abstract parser which tries take ID3v2 and ID3v1 headers.
  */
 export abstract class AbstractID3Parser extends BasicParser {
-  public static async startsWithID3v2Header(
-    tokenizer: ITokenizer
-  ): Promise<boolean> {
+  public static async startsWithID3v2Header(tokenizer: ITokenizer): Promise<boolean> {
     const header = await tokenizer.peekToken(ID3v2Header);
     return header.fileIdentifier === "ID3";
   }
@@ -45,18 +43,13 @@ export abstract class AbstractID3Parser extends BasicParser {
   private async parseID3v2(): Promise<void> {
     await this.tryReadId3v2Headers();
 
-    debug(
-      "End of ID3v2 header, go to MPEG-parser: pos=%s",
-      this.tokenizer.position
-    );
+    debug("End of ID3v2 header, go to MPEG-parser: pos=%s", this.tokenizer.position);
     await this.postId3v2Parse();
     if (this.options.skipPostHeaders && this.metadata.hasAny()) {
       this.finalize();
     } else {
       const id3v1parser = new ID3v1Parser();
-      await id3v1parser
-        .init(this.metadata, this.tokenizer, this.options)
-        .parse();
+      await id3v1parser.init(this.metadata, this.tokenizer, this.options).parse();
       this.finalize();
     }
   }

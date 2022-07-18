@@ -13,11 +13,7 @@ import { IPicture } from "./type";
  */
 export function selectCover(pictures?: IPicture[]): IPicture | null {
   if (pictures) {
-    const picture = pictures?.find(
-      (cur) =>
-        cur.name &&
-        cur.name.toLowerCase() in ["front", "cover", "cover (front)"]
-    );
+    const picture = pictures?.find((cur) => cur.name && cur.name.toLowerCase() in ["front", "cover", "cover (front)"]);
     return picture ?? pictures[0] ?? null;
   }
   return null;

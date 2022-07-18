@@ -9,7 +9,7 @@ export interface ITimeToSampleToken {
 export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
   len: 8,
 
-  get(buf: Buffer, off: number): ITimeToSampleToken {
+  get(buf: Uint8Array, off: number): ITimeToSampleToken {
     return {
       count: Token.INT32_BE.get(buf, off + 0),
       duration: Token.INT32_BE.get(buf, off + 4),

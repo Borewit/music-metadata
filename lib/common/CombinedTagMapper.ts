@@ -39,11 +39,7 @@ export class CombinedTagMapper {
    * @param warnings
    * @returns Generic tag result (output of this function)
    */
-  public mapTag(
-    tagType: TagType,
-    tag: ITag,
-    warnings: INativeMetadataCollector
-  ): IGenericTag {
+  public mapTag(tagType: TagType, tag: ITag, warnings: INativeMetadataCollector): IGenericTag {
     const tagMapper = this.tagMappers[tagType];
     if (tagMapper) {
       return this.tagMappers[tagType].mapGenericTag(tag, warnings);

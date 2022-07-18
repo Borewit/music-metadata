@@ -71,15 +71,11 @@ describe("Parse Musepack, SV8 with APEv2 header", () => {
     expect(metadata.format.bitrate).toBeCloseTo(32_368, -1);
 
     // Check generic metadata
-    expect(metadata.common.title).toBe(
-      "Goldberg Variations, BWV 988: Variatio 4 a 1 Clav."
-    );
+    expect(metadata.common.title).toBe("Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.");
     expect(metadata.common.artist).toBe("Johann Sebastian Bach");
     expect(metadata.common.artists).toStrictEqual(["Johann Sebastian Bach"]);
     expect(metadata.common.isrc).toStrictEqual(["QMNYZ1200005"]);
-    expect(metadata.common.license).toBe(
-      "https://creativecommons.org/publicdomain/zero/1.0/"
-    );
+    expect(metadata.common.license).toBe("https://creativecommons.org/publicdomain/zero/1.0/");
     expect(metadata.common.album).toBe("Open Goldberg Variations");
     expect(metadata.common.date).toBe("2012-05-28");
     expect(metadata.common.track).toStrictEqual({ no: 5, of: 32 });

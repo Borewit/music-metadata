@@ -35,14 +35,8 @@ const filePath = join(samplePath, "regress-GH-56.mp3");
 test.each(Parsers)("%s", async (parser) => {
   const metadata = await parser.initParser(filePath, "audio/mpeg");
   const expectedTags =
-    parser.description === "parseFile" || parser.description === "parseBuffer"
-      ? ["ID3v2.3", "APEv2"]
-      : ["ID3v2.3"];
-  expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(
-    expectedTags
-  );
+    parser.description === "parseFile" || parser.description === "parseBuffer" ? ["ID3v2.3", "APEv2"] : ["ID3v2.3"];
+  expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(expectedTags);
   expect(metadata.format.sampleRate, "format.sampleRate").toBe(44_100);
-  expect(metadata.format.duration, "format.duration").toBe(
-    16_462_080 / metadata.format.sampleRate
-  );
+  expect(metadata.format.duration, "format.duration").toBe(16_462_080 / metadata.format.sampleRate);
 });

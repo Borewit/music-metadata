@@ -89,14 +89,8 @@ test("ASF", () => {
   for (const [picComTag, picNativeTag] of Object.entries(PicardMappings)) {
     const mmCommonTag = convertName(picComTag);
 
-    expect(
-      tagMapper.tagMap[picNativeTag],
-      `Is '${picNativeTag}' defined?`
-    ).toBeDefined();
-    expect(
-      tagMapper.tagMap[picNativeTag],
-      `Check Picard mapping for ${picNativeTag}`
-    ).toBe(mmCommonTag);
+    expect(tagMapper.tagMap[picNativeTag], `Is '${picNativeTag}' defined?`).toBeDefined();
+    expect(tagMapper.tagMap[picNativeTag], `Check Picard mapping for ${picNativeTag}`).toBe(mmCommonTag);
   }
 });
 
@@ -127,14 +121,8 @@ test("APEv2", () => {
   for (const [picComTag, picNativeTag] of Object.entries(PicardMappings)) {
     const mmCommonTag = convertName(picComTag);
 
-    expect(
-      tagMapper.tagMap[picNativeTag],
-      `Is '${picNativeTag}' defined?`
-    ).toBeDefined();
-    expect(
-      tagMapper.tagMap[picNativeTag],
-      `Check Picard mapping for ${picNativeTag}`
-    ).toBe(mmCommonTag);
+    expect(tagMapper.tagMap[picNativeTag], `Is '${picNativeTag}' defined?`).toBeDefined();
+    expect(tagMapper.tagMap[picNativeTag], `Check Picard mapping for ${picNativeTag}`).toBe(mmCommonTag);
   }
 });
 
@@ -189,13 +177,7 @@ test("ID3v2.4.0", () => {
   for (const [picComTag, picNativeTag] of Object.entries(PicardMappings)) {
     const mmCommonTag = convertName(picComTag);
 
-    expect(
-      tagMapper.tagMap[picNativeTag],
-      `Is '${picNativeTag}' defined?`
-    ).toBeDefined();
-    expect(
-      tagMapper.tagMap[picNativeTag],
-      `Check Picard mapping for ${picNativeTag}`
-    ).toBe(mmCommonTag);
+    expect(tagMapper.tagMap[picNativeTag], `Is '${picNativeTag}' defined?`).toBeDefined();
+    expect(tagMapper.tagMap[picNativeTag], `Check Picard mapping for ${picNativeTag}`).toBe(mmCommonTag);
   }
 });

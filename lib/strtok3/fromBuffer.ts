@@ -14,9 +14,6 @@ import { IFileInfo } from "./types";
  * @param fileInfo
  * @returns
  */
-export function fromBuffer(
-  uint8Array: Uint8Array,
-  fileInfo?: IFileInfo
-): BufferTokenizer {
+export function fromBuffer(uint8Array: Uint8Array, fileInfo?: IFileInfo): BufferTokenizer {
   return new BufferTokenizer(uint8Array, fileInfo);
 }

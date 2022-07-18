@@ -2,28 +2,8 @@ export { IToken, IGetToken } from "./type";
 
 // Primitive types
 
-export {
-  UINT8,
-  UINT16_LE,
-  UINT16_BE,
-  UINT24_LE,
-  UINT24_BE,
-  UINT32_LE,
-  UINT32_BE,
-  UINT64_LE,
-  UINT64_BE,
-} from "./uint";
-export {
-  INT8,
-  INT16_LE,
-  INT16_BE,
-  INT24_LE,
-  INT24_BE,
-  INT32_LE,
-  INT32_BE,
-  INT64_LE,
-  INT64_BE,
-} from "./int";
+export { UINT8, UINT16_LE, UINT16_BE, UINT24_LE, UINT24_BE, UINT32_LE, UINT32_BE, UINT64_LE, UINT64_BE } from "./uint";
+export { INT8, INT16_LE, INT16_BE, INT24_LE, INT24_BE, INT32_LE, INT32_BE, INT64_LE, INT64_BE } from "./int";
 export {
   Float16_LE,
   Float16_BE,
@@ -36,5 +16,5 @@ export {
 } from "./float";
 
 export { IgnoreType } from "./ignore";
-export { Uint8ArrayType, BufferType } from "./buffer";
-export { StringType, AnsiStringType } from "./string";
+export { Uint8ArrayType } from "./buffer";
+export { AnsiStringType } from "./string";

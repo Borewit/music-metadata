@@ -1,10 +1,7 @@
 import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
 import { IAtomStsdHeader, stsdHeader } from "./AtomStsdHeader";
-import {
-  ISampleDescription,
-  SampleDescriptionTable,
-} from "./SampleDescription";
+import { ISampleDescription, SampleDescriptionTable } from "./SampleDescription";
 
 export interface IAtomStsd {
   header: IAtomStsdHeader;
@@ -18,7 +15,7 @@ export interface IAtomStsd {
 export class StsdAtom implements IGetToken<IAtomStsd> {
   public constructor(public len: number) {}
 
-  public get(buf: Buffer, off: number): IAtomStsd {
+  public get(buf: Uint8Array, off: number): IAtomStsd {
     const header = stsdHeader.get(buf, off);
     off += stsdHeader.len;
 

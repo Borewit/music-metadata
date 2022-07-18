@@ -25,7 +25,7 @@ export interface IDataAtom {
   /**
    * An array of bytes containing the value of the metadata.
    */
-  value: Buffer;
+  value: Uint8Array;
 }
 
 /**
@@ -41,9 +41,7 @@ export class DataAtom implements IGetToken<IDataAtom> {
         type: Token.UINT24_BE.get(buf, off + 1),
       },
       locale: Token.UINT24_BE.get(buf, off + 4),
-      value: Buffer.from(
-        new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8)
-      ),
+      value: new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8),
     };
   }
 }

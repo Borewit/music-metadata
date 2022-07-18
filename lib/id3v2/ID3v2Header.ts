@@ -4,6 +4,7 @@ import { IGetToken } from "../strtok3";
 
 import * as util from "../common/Util";
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+import { Latin1StringType } from "../token-types/string";
 
 /**
  * ID3v2 tag header
@@ -37,10 +38,10 @@ export interface IID3v2header {
 export const ID3v2Header: IGetToken<IID3v2header> = {
   len: 10,
 
-  get: (buf: Buffer, off): IID3v2header => {
+  get: (buf: Uint8Array, off): IID3v2header => {
     return {
       // ID3v2/file identifier   "ID3"
-      fileIdentifier: new Token.StringType(3, "ascii").get(buf, off),
+      fileIdentifier: new Latin1StringType(3).get(buf, off),
       // ID3v2 versionIndex
       version: {
         major: Token.INT8.get(buf, off + 3) as ID3v2MajorVersion,

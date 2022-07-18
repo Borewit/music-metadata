@@ -2,6 +2,7 @@ import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
 
 import { IChunkHeader } from "../iff";
+import { Latin1StringType } from "../token-types/string";
 export { IChunkHeader } from "../iff";
 
 /**
@@ -10,10 +11,10 @@ export { IChunkHeader } from "../iff";
 export const Header: IGetToken<IChunkHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off): IChunkHeader => {
+  get: (buf: Uint8Array, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: buf.toString("binary", off, off + 4),
+      chunkID: new Latin1StringType(4).get(buf, off),
       // Size
       chunkSize: Token.UINT32_LE.get(buf, 4),
     };

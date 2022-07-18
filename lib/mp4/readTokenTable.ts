@@ -13,15 +13,13 @@ const debug = initDebug("music-metadata:parser:MP4:atom");
  * @returns
  */
 export function readTokenTable<T>(
-  buf: Buffer,
+  buf: Uint8Array,
   token: IGetToken<T>,
   off: number,
   remainingLen: number,
   numberOfEntries: number
 ): T[] {
-  debug(
-    `remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`
-  );
+  debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
 
   if (remainingLen === 0) return [];
 

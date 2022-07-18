@@ -15,9 +15,6 @@ import { IAudioMetadata, IOptions } from "./type";
  * @param options
  * @returns
  */
-export function parseFromTokenizer(
-  tokenizer: strtok3.ITokenizer,
-  options?: IOptions
-): Promise<IAudioMetadata> {
+export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, options?: IOptions): Promise<IAudioMetadata> {
   return ParserFactory.parseOnContentType(tokenizer, options);
 }

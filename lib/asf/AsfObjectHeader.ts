@@ -22,12 +22,12 @@ export interface IAsfObjectHeader {
  * Token for: 3.1 Header Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_1
  */
-export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Buffer> = {
+export const HeaderObjectToken: IGetToken<IAsfObjectHeader> = {
   len: 24,
 
   get: (buf, off): IAsfObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
+      objectId: GUID.fromBin(new Token.Uint8ArrayType(16).get(buf, off)),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
     };
   },

@@ -2,7 +2,7 @@ import { State } from "./State";
 
 // ToDo: use ignore type
 export class IgnoreObjectState extends State<any> {
-  public get(_buf: Buffer, _off: number): null {
+  public get(_buf: Uint8Array, _off: number): null {
     return null;
   }
 }

@@ -18,16 +18,8 @@ export class RandomUint8ArrayReader implements IRandomReader {
    * @param position - Specifies where to begin reading from in the file.
    * @returns Promise providing bytes read
    */
-  public randomRead(
-    uint8Array: Uint8Array,
-    offset: number,
-    length: number,
-    position: number
-  ): Promise<number> {
-    uint8Array.set(
-      this.uint8Array.subarray(position, position + length),
-      offset
-    );
+  public randomRead(uint8Array: Uint8Array, offset: number, length: number, position: number): Promise<number> {
+    uint8Array.set(this.uint8Array.subarray(position, position + length), offset);
     return Promise.resolve(length);
   }
 }

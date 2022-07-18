@@ -20,9 +20,7 @@ describe("Parse 24-bit unsigned integer", () => {
     });
 
     test("should decode", () => {
-      const buf = Buffer.from([
-        0x00, 0x00, 0x00, 0x1a, 0x1a, 0x00, 0xff, 0xff, 0xff,
-      ]);
+      const buf = Buffer.from([0x00, 0x00, 0x00, 0x1a, 0x1a, 0x00, 0xff, 0xff, 0xff]);
       expect(UINT24_BE.get(buf, 0)).toBe(0x00_00_00);
       expect(UINT24_BE.get(buf, 3)).toBe(0x1a_1a_00);
       expect(UINT24_BE.get(buf, 6)).toBe(0xff_ff_ff);
@@ -44,9 +42,7 @@ describe("Parse 24-bit unsigned integer", () => {
     });
 
     test("should decode", () => {
-      const buf = Buffer.from([
-        0x00, 0x00, 0x00, 0x1a, 0x1a, 0x00, 0xff, 0xff, 0xff,
-      ]);
+      const buf = Buffer.from([0x00, 0x00, 0x00, 0x1a, 0x1a, 0x00, 0xff, 0xff, 0xff]);
 
       expect(UINT24_LE.get(buf, 0)).toBe(0x00_00_00);
       expect(UINT24_LE.get(buf, 3)).toBe(0x00_1a_1a);

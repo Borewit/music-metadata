@@ -23,9 +23,7 @@ import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
  *
  * @param blob
  */
-export async function fileTypeFromBlob(
-  blob: Blob
-): Promise<FileTypeResult | undefined> {
+export async function fileTypeFromBlob(blob: Blob): Promise<FileTypeResult | undefined> {
   const buffer = await blob.arrayBuffer();
   return fileTypeFromBuffer(new Uint8Array(buffer));
 }

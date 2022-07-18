@@ -2,6 +2,7 @@ import * as Token from "../../token-types";
 import { IGetToken } from "../../strtok3";
 
 import * as util from "../../common/Util";
+import { Latin1StringType } from "../../token-types/string";
 
 /**
  * MusePack stream version 7 format specification
@@ -43,7 +44,7 @@ export const Header: IGetToken<IHeader> = {
   get: (buf, off) => {
     const header = {
       // word 0
-      signature: Buffer.from(buf).toString("latin1", off, off + 3),
+      signature: new Latin1StringType(3).get(buf, off),
       // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
       streamMinorVersion: util.getBitAllignedNumber(buf, off + 3, 0, 4),
       streamMajorVersion: util.getBitAllignedNumber(buf, off + 3, 4, 4),
@@ -51,9 +52,7 @@ export const Header: IGetToken<IHeader> = {
       frameCount: Token.UINT32_LE.get(buf, off + 4),
       // word 2
       maxLevel: Token.UINT16_LE.get(buf, off + 8),
-      sampleFrequency: [44_100, 48_000, 37_800, 32_000][
-        util.getBitAllignedNumber(buf, off + 10, 0, 2)
-      ],
+      sampleFrequency: [44_100, 48_000, 37_800, 32_000][util.getBitAllignedNumber(buf, off + 10, 0, 2)],
       link: util.getBitAllignedNumber(buf, off + 10, 2, 2),
       profile: util.getBitAllignedNumber(buf, off + 10, 4, 4),
       maxBand: util.getBitAllignedNumber(buf, off + 11, 0, 6),
@@ -70,9 +69,7 @@ export const Header: IGetToken<IHeader> = {
       trueGapless: util.isBitSet(buf, off + 23, 0),
     };
 
-    header.lastFrameLength = header.trueGapless
-      ? (Token.UINT32_LE.get(buf, 20) >>> 20) & 0x7_ff
-      : 0;
+    header.lastFrameLength = header.trueGapless ? (Token.UINT32_LE.get(buf, 20) >>> 20) & 0x7_ff : 0;
 
     return header;
   },

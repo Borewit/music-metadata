@@ -76,7 +76,7 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
     super(len, 100, "mvhd");
   }
 
-  public get(buf: Buffer, off: number): IAtomMvhd {
+  public get(buf: Uint8Array, off: number): IAtomMvhd {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),

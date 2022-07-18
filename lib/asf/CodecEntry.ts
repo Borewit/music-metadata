@@ -1,6 +1,7 @@
 import { ITokenizer } from "../strtok3";
 
 import * as Token from "../token-types";
+import { Utf16LEStringType } from "../token-types/string";
 import { CodecListObjectHeader } from "./CodecListObjectHeader";
 
 export interface ICodecEntry {
@@ -10,7 +11,7 @@ export interface ICodecEntry {
   };
   codecName: string;
   description: string;
-  information: Buffer;
+  information: Uint8Array;
 }
 
 /**
@@ -19,9 +20,7 @@ export interface ICodecEntry {
  */
 async function readString(tokenizer: ITokenizer): Promise<string> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const str = await tokenizer.readToken(
-    new Token.StringType(length * 2, "utf16le")
-  );
+  const str = await tokenizer.readToken(new Utf16LEStringType(length * 2));
   return str.replace("\0", "");
 }
 
@@ -30,9 +29,7 @@ async function readString(tokenizer: ITokenizer): Promise<string> {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
  * @param tokenizer
  */
-export async function readCodecEntries(
-  tokenizer: ITokenizer
-): Promise<ICodecEntry[]> {
+export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEntry[]> {
   const codecHeader = await tokenizer.readToken(CodecListObjectHeader);
   const entries: ICodecEntry[] = [];
   for (let i = 0; i < codecHeader.entryCount; ++i) {
@@ -45,9 +42,9 @@ export async function readCodecEntries(
  *
  * @param tokenizer
  */
-async function readInformation(tokenizer: ITokenizer): Promise<Buffer> {
+async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const buf = Buffer.alloc(length);
+  const buf = new Uint8Array(length);
   await tokenizer.readBuffer(buf);
   return buf;
 }

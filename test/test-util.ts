@@ -8,26 +8,15 @@ describe("find zero", () => {
     ["ascii", [0xff, 0xff, 0xff, 0x00], 3],
     ["ascii", [0xff, 0xff, 0x00, 0xff, 0xff], 2],
     ["ascii", [0xff, 0xff, 0xff, 0xff, 0xff], 5],
-    [
-      "utf16le",
-      [0x68, 0x00, 0x65, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x6f, 0x00, 0x00, 0x00],
-      10,
-    ],
-    [
-      "utf16le",
-      [0x00, 0x68, 0x00, 0x65, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00],
-      8,
-    ],
+    ["utf16le", [0x68, 0x00, 0x65, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x6f, 0x00, 0x00, 0x00], 10],
+    ["utf16le", [0x00, 0x68, 0x00, 0x65, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x00], 8],
   ];
 
-  test.each(cases)(
-    "find terminator in %s encoded",
-    (encoding, data, expected) => {
-      const buf = Buffer.from(data);
-      const actual = findZero(buf, 0, buf.length, encoding);
-      expect(actual).toBe(expected);
-    }
-  );
+  test.each(cases)("find terminator in %s encoded", (encoding, data, expected) => {
+    const buf = Buffer.from(data);
+    const actual = findZero(buf, 0, buf.length, encoding);
+    expect(actual).toBe(expected);
+  });
 });
 
 describe("strip nulls", () => {
@@ -68,11 +57,11 @@ describe("FourCC token", () => {
     expect(() => FourCcToken.get(buf, 0)).toThrowError();
   });
 
-  test("should be able to encode FourCC token", () => {
-    const buffer = Buffer.alloc(4);
-    FourCcToken.put(buffer, 0, "abcd");
-    expect(buffer.toString("binary")).toBe("abcd");
-  });
+  // test("should be able to encode FourCC token", () => {
+  //   const buffer = Buffer.alloc(4);
+  //   FourCcToken.put(buffer, 0, "abcd");
+  //   expect(buffer.toString("binary")).toBe("abcd");
+  // });
 });
 
 test("a2hex", () => {

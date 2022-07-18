@@ -1,10 +1,10 @@
 import { AbstractTokenizer } from "./AbstractTokenizer";
 import { EndOfStreamError } from "../peek-readable";
-import * as fs from "./FsPromise";
+import * as fs from "node:fs/promises";
 import { IFileInfo, IReadChunkOptions } from "./types";
 
 export class FileTokenizer extends AbstractTokenizer {
-  public constructor(private fd: number, fileInfo: IFileInfo) {
+  public constructor(private fd: fs.FileHandle, fileInfo: IFileInfo) {
     super(fileInfo);
   }
 
@@ -14,24 +14,12 @@ export class FileTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns Promise number of bytes read
    */
-  public async readBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number> {
+  public async readBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
     const normOptions = this.normalizeOptions(uint8Array, options);
     this.position = normOptions.position;
-    const res = await fs.read(
-      this.fd,
-      uint8Array,
-      normOptions.offset,
-      normOptions.length,
-      normOptions.position
-    );
+    const res = await this.fd.read(uint8Array, normOptions.offset, normOptions.length, normOptions.position);
     this.position += res.bytesRead;
-    if (
-      res.bytesRead < normOptions.length &&
-      (!options || !options.mayBeLess)
-    ) {
+    if (res.bytesRead < normOptions.length && (!options || !options.mayBeLess)) {
       throw new EndOfStreamError();
     }
     return res.bytesRead;
@@ -43,19 +31,10 @@ export class FileTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns Promise number of bytes read
    */
-  public async peekBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number> {
+  public async peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
     const normOptions = this.normalizeOptions(uint8Array, options);
 
-    const res = await fs.read(
-      this.fd,
-      uint8Array,
-      normOptions.offset,
-      normOptions.length,
-      normOptions.position
-    );
+    const res = await this.fd.read(uint8Array, normOptions.offset, normOptions.length, normOptions.position);
     if (!normOptions.mayBeLess && res.bytesRead < normOptions.length) {
       throw new EndOfStreamError();
     }
@@ -63,6 +42,6 @@ export class FileTokenizer extends AbstractTokenizer {
   }
 
   public override async close(): Promise<void> {
-    return fs.close(this.fd);
+    return this.fd.close();
   }
 }

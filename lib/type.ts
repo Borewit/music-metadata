@@ -16,7 +16,7 @@ export interface IPicture {
   /**
    * Image data
    */
-  data: Buffer;
+  data: Uint8Array;
   /**
    * Optional description
    */
@@ -394,7 +394,7 @@ export interface IAudioTrack {
   samplingFrequency?: number;
   outputSamplingFrequency?: number;
   channels?: number;
-  channelPositions?: Buffer;
+  channelPositions?: Uint8Array;
   bitDepth?: number;
 }
 
@@ -407,7 +407,7 @@ export interface IVideoTrack {
   displayHeight?: number;
   displayUnit?: number;
   aspectRatioType?: number;
-  colourSpace?: Buffer;
+  colourSpace?: Uint8Array;
   gammaValue?: number;
 }
 
@@ -489,7 +489,7 @@ export interface IFormat {
   /**
    * 16-byte MD5 of raw audio
    */
-  readonly audioMD5?: Buffer;
+  readonly audioMD5?: Uint8Array;
 
   /**
    * Chapters in audio stream
@@ -675,10 +675,5 @@ export interface IRandomReader {
    * @param position {number} is an argument specifying where to begin reading from in the file.
    * @returns {Promise<number>} bytes read
    */
-  randomRead(
-    buffer: Buffer,
-    offset: number,
-    length: number,
-    position: number
-  ): Promise<number>;
+  randomRead(buffer: Uint8Array, offset: number, length: number, position: number): Promise<number>;
 }

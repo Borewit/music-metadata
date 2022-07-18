@@ -9,8 +9,9 @@
     "declaration": true,
     "sourceMap": true,
     "skipLibCheck": true,
+    "incremental": true,
 
-    // "types": ["content-type", "debug", "media-typer", "mime"],
+    "lib": ["ESNext", "DOM"],
 
     // "strict": true,
 

@@ -1,7 +1,8 @@
 import { describe, test, expect } from "vitest";
 import { EndOfStreamError } from "../../lib/strtok3";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
-import { UINT32_LE, UINT32_BE, StringType, UINT8 } from "../../lib/token-types";
+import { UINT32_LE, UINT32_BE, UINT8 } from "../../lib/token-types";
+import { Latin1StringType, Utf8StringType } from "../../lib/token-types/string";
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
@@ -92,7 +93,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
     const rst = await getTokenizerWithData("peter", load);
     // should decode string from chunk
     expect(rst.position).toBe(0);
-    const value = await rst.readToken(new StringType(5, "utf8"), 1);
+    const value = await rst.readToken(new Utf8StringType(5), 1);
     expect(typeof value).toBe("string");
     expect(value).toBe("peter");
     expect(rst.position).toBe(6);
@@ -109,7 +110,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
     const rst = await getTokenizerWithData("peter", load);
     // should decode string from chunk
     expect(rst.position).toBe(0);
-    const value = await rst.peekToken(new StringType(5, "latin1"), 1);
+    const value = await rst.peekToken(new Latin1StringType(5), 1);
     expect(typeof value).toBe("string");
     expect(value).toBe("peter");
     expect(rst.position).toBe(0);

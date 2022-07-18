@@ -26,9 +26,7 @@ describe("ID3v2Parser", () => {
     expect(id3v22.TP1, "['ID3v2.2'].TP1").toStrictEqual(["RushJet1"]);
     expect(id3v22.TRK, "['ID3v2.2'].TRK").toStrictEqual(["2/15"]);
     expect(id3v22.TYE, "['ID3v2.2'].TYE").toStrictEqual(["2011"]);
-    expect(id3v22["COM:iTunPGAP"], "['ID3v2.2']['COM:iTunPGAP']").toStrictEqual(
-      ["0"]
-    );
+    expect(id3v22["COM:iTunPGAP"], "['ID3v2.2']['COM:iTunPGAP']").toStrictEqual(["0"]);
     expect(id3v22.TEN, "['ID3v2.2'].TEN").toStrictEqual(["iTunes 10.2.2.14"]);
     expect(id3v22["COM:iTunNORM"], "COM:iTunNORM").toStrictEqual([
       " 00000308 00000000 00001627 00000000 00006FD6 00000000 00007F21 00000000 0000BE68 00000000",
@@ -40,9 +38,7 @@ describe("ID3v2Parser", () => {
     expect(id3v22.PIC, "['ID3v2.2'].PIC").toBeDefined();
     expect(id3v22.TCO, "['ID3v2.2'].TCO").toStrictEqual(["Chiptune"]);
     expect(id3v22.TAL, "['ID3v2.2'].TAL").toStrictEqual(["Forgotten Music"]);
-    expect(id3v22.TT2, "['ID3v2.2'].TT2").toStrictEqual([
-      "Ancient Ruin Adventure",
-    ]);
+    expect(id3v22.TT2, "['ID3v2.2'].TT2").toStrictEqual(["Ancient Ruin Adventure"]);
 
     expect(id3v22.COM, "['ID3v2.2']['COM']").toStrictEqual([
       "UBI025, 23.05.2011, http://ubiktune.org/releases/ubi025-rushjet1-forgotten-music",
@@ -65,27 +61,18 @@ describe("ID3v2Parser", () => {
     expect(metadata.common.track.no, "track no").toBe(1);
     expect(metadata.common.track.of, "track of").toBe(11);
     expect(metadata.common.genre, "genre").toStrictEqual(["Alternative"]);
-    expect(metadata.common.picture[0].format, "picture format").toBe(
-      "image/jpeg"
-    );
-    expect(metadata.common.picture[0].data.length, "picture length").toBe(
-      99_738
-    );
+    expect(metadata.common.picture[0].format, "picture format").toBe("image/jpeg");
+    expect(metadata.common.picture[0].data.length, "picture length").toBe(99_738);
     expect(metadata.common.gapless, "common.gapless").toBe(false);
     expect(metadata.common.comment, "common.comment").toBeUndefined();
 
-    expect(
-      metadata.native["ID3v2.2"],
-      "Native id3v2.2 tags should be present"
-    ).toBeDefined();
+    expect(metadata.native["ID3v2.2"], "Native id3v2.2 tags should be present").toBeDefined();
     const id3v22 = orderTags(metadata.native["ID3v2.2"]);
 
     expect(id3v22.TP1, "['ID3v2.2'].TP1").toStrictEqual(["Shiny Toy Guns"]);
     expect(id3v22.TRK, "['ID3v2.2'].TRK").toStrictEqual(["1/11"]);
     expect(id3v22.TYE, "['ID3v2.2'].TYE").toStrictEqual(["2006"]);
-    expect(id3v22["COM:iTunPGAP"], "['ID3v2.2']['COM:iTunPGAP']").toStrictEqual(
-      ["0"]
-    );
+    expect(id3v22["COM:iTunPGAP"], "['ID3v2.2']['COM:iTunPGAP']").toStrictEqual(["0"]);
     expect(id3v22.TEN, "['ID3v2.2'].TEN").toStrictEqual(["iTunes v7.0.2.16"]);
     expect(id3v22["COM:iTunNORM"], "COM:iTunNORM").toStrictEqual([
       " 0000299C 0000291D 0000DBE0 0000D6BA 0003C378 0003C2C1 0000902A 00008F1B 00012FC6 00015FBC",

@@ -15,10 +15,6 @@ export function isBitSet(flags: number, bitOffset: number): boolean {
  * @param len
  * @returns
  */
-export function getBitAllignedNumber(
-  flags: number,
-  bitOffset: number,
-  len: number
-): number {
+export function getBitAllignedNumber(flags: number, bitOffset: number, len: number): number {
   return (flags >>> bitOffset) & (0xff_ff_ff_ff >>> (32 - len));
 }

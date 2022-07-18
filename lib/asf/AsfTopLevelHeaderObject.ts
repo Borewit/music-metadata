@@ -16,15 +16,12 @@ export interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
  * Token for: 3. ASF top-level Header Object
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3
  */
-export const TopLevelHeaderObjectToken: IGetToken<
-  IAsfTopLevelObjectHeader,
-  Buffer
-> = {
+export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader> = {
   len: 30,
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
+      objectId: GUID.fromBin(new Token.Uint8ArrayType(16).get(buf, off)),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24),
       // Reserved: 2 bytes

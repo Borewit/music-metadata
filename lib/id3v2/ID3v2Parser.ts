@@ -7,13 +7,11 @@ import { ITag, IOptions } from "../type";
 import { FrameParser } from "./FrameParser";
 
 import { ID3v2MajorVersion } from "./ID3v2MajorVersion";
-import {
-  INativeMetadataCollector,
-  IWarningCollector,
-} from "../common/INativeMetadataCollector";
+import { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
 import { ID3v2Header, IID3v2header } from "./ID3v2Header";
 import { ExtendedHeader } from "./ExtendedHeader";
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+import { decodeLatin1 } from "../compat/text-decoder";
 
 interface IFrameFlags {
   status: {
@@ -103,9 +101,7 @@ export class ID3v2Parser {
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
-        throw new Error(
-          `Unexpected majorVer: ${majorVer as unknown as string}`
-        );
+        throw new Error(`Unexpected majorVer: ${majorVer as unknown as string}`);
     }
   }
 
@@ -115,10 +111,7 @@ export class ID3v2Parser {
    * @param description e.g. iTunPGAP
    * @returns string e.g. COM:iTunPGAP
    */
-  private static makeDescriptionTagName(
-    tag: string,
-    description: string
-  ): string {
+  private static makeDescriptionTagName(tag: string, description: string): string {
     return tag + (description ? ":" + description : "");
   }
 
@@ -129,11 +122,7 @@ export class ID3v2Parser {
   private headerType: TagType;
   private options: IOptions;
 
-  public async parse(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ): Promise<void> {
+  public async parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
     this.tokenizer = tokenizer;
     this.metadata = metadata;
     this.options = options;
@@ -141,18 +130,14 @@ export class ID3v2Parser {
     const id3Header = await this.tokenizer.readToken(ID3v2Header);
 
     if (id3Header.fileIdentifier !== "ID3") {
-      throw new Error(
-        "expected ID3-header file-identifier 'ID3' was not found"
-      );
+      throw new Error("expected ID3-header file-identifier 'ID3' was not found");
     }
 
     this.id3Header = id3Header;
 
     this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
-    return id3Header.flags.isExtendedHeader
-      ? this.parseExtendedHeader()
-      : this.parseId3Data(id3Header.size);
+    return id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size);
   }
 
   public async parseExtendedHeader(): Promise<void> {
@@ -163,30 +148,19 @@ export class ID3v2Parser {
       : this.parseId3Data(this.id3Header.size - extendedHeader.size);
   }
 
-  public async parseExtendedHeaderData(
-    dataRemaining: number,
-    extendedHeaderSize: number
-  ): Promise<void> {
+  public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
     await this.tokenizer.ignore(dataRemaining);
     return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
-    const uint8Array = await this.tokenizer.readToken(
-      new Token.Uint8ArrayType(dataLen)
-    );
+    const uint8Array = await this.tokenizer.readToken(new Token.Uint8ArrayType(dataLen));
     for (const tag of this.parseMetadata(uint8Array)) {
       switch (tag.id) {
         case "TXXX": {
           if (tag.value) {
             for (const text of tag.value.text) {
-              this.addTag(
-                ID3v2Parser.makeDescriptionTagName(
-                  tag.id,
-                  tag.value.description as string
-                ),
-                text
-              );
+              this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description as string), text);
             }
           }
 
@@ -194,26 +168,14 @@ export class ID3v2Parser {
         }
         case "COM": {
           for (const value of tag.value) {
-            this.addTag(
-              ID3v2Parser.makeDescriptionTagName(
-                tag.id,
-                value.description as string
-              ),
-              value.text
-            );
+            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description as string), value.text);
           }
 
           break;
         }
         case "COMM": {
           for (const value of tag.value) {
-            this.addTag(
-              ID3v2Parser.makeDescriptionTagName(
-                tag.id,
-                value.description as string
-              ),
-              value
-            );
+            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description as string), value);
           }
 
           break;
@@ -241,23 +203,15 @@ export class ID3v2Parser {
     while (true) {
       if (offset === data.length) break;
 
-      const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(
-        this.id3Header.version.major
-      );
+      const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
         this.metadata.addWarning("Illegal ID3v2 tag length");
         break;
       }
 
-      const frameHeaderBytes = data.slice(
-        offset,
-        (offset += frameHeaderLength)
-      );
-      const frameHeader = this.readFrameHeader(
-        frameHeaderBytes,
-        this.id3Header.version.major
-      );
+      const frameHeaderBytes = data.slice(offset, (offset += frameHeaderLength));
+      const frameHeader = this.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
       const frameDataBytes = data.slice(offset, (offset += frameHeader.length));
       const values = ID3v2Parser.readFrameData(
@@ -274,38 +228,28 @@ export class ID3v2Parser {
     return tags;
   }
 
-  private readFrameHeader(
-    uint8Array: Uint8Array,
-    majorVer: number
-  ): IFrameHeader {
+  private readFrameHeader(uint8Array: Uint8Array, majorVer: number): IFrameHeader {
     let header: IFrameHeader;
     switch (majorVer) {
       case 2:
         header = {
-          id: Buffer.from(uint8Array.slice(0, 3)).toString("ascii"),
+          id: decodeLatin1(uint8Array.slice(0, 3)),
           length: Token.UINT24_BE.get(uint8Array, 3),
         };
         if (!/[\dA-Z]{3}/g.test(header.id)) {
-          this.metadata.addWarning(
-            `Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`
-          );
+          this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
         }
         break;
 
       case 3:
       case 4:
         header = {
-          id: Buffer.from(uint8Array.slice(0, 4)).toString("ascii"),
-          length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(
-            uint8Array,
-            4
-          ),
+          id: decodeLatin1(uint8Array.slice(0, 4)),
+          length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
           flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10)),
         };
         if (!/[\dA-Z]{4}/g.test(header.id)) {
-          this.metadata.addWarning(
-            `Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`
-          );
+          this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
         }
         break;
 

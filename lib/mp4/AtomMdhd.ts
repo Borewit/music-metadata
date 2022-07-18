@@ -30,7 +30,7 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
     super(len, 24, "mdhd");
   }
 
-  public get(buf: Buffer, off: number): IAtomMdhd {
+  public get(buf: Uint8Array, off: number): IAtomMdhd {
     return {
       version: Token.UINT8.get(buf, off + 0),
       flags: Token.UINT24_BE.get(buf, off + 1),

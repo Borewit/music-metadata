@@ -284,6 +284,4 @@ export const extensions: FileExtension[] = [
 /**
  * Supported file extensions.
  */
-export const supportedExtensions: ReadonlySet<FileExtension> = new Set(
-  extensions
-);
+export const supportedExtensions: ReadonlySet<FileExtension> = new Set(extensions);

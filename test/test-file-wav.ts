@@ -23,20 +23,14 @@ test("should parse LIST-INFO (EXIF)", async () => {
   expect(format.container, "format.container").toBe("WAVE");
   expect(format.codec, "format.codec").toBe("PCM");
   expect(format.lossless).toBe(true);
-  expect(
-    format.tagTypes,
-    "format.tagTypes = ['exif', 'ID3v2.3']"
-  ).toStrictEqual(["exif", "ID3v2.3"]);
+  expect(format.tagTypes, "format.tagTypes = ['exif', 'ID3v2.3']").toStrictEqual(["exif", "ID3v2.3"]);
   expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
   expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
-  expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(
-    2
-  );
+  expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
   expect(format.numberOfSamples, "format.numberOfSamples = 93624").toBe(93_624);
-  expect(
-    format.duration,
-    "format.duration = ~2.123 seconds (checked with Adobe Audition)"
-  ).toBe(2.122_993_197_278_911_6);
+  expect(format.duration, "format.duration = ~2.123 seconds (checked with Adobe Audition)").toBe(
+    2.122_993_197_278_911_6
+  );
 
   // Check native tags
   const native = orderTags(metadata.native.exif);
@@ -69,39 +63,23 @@ test("should map RIFF tags to common", async () => {
   expect(format.bitsPerSample).toBe(24);
   expect(format.sampleRate).toBe(48_000);
   expect(format.numberOfSamples).toBe(13_171);
-  expect(format.duration, "~2.274 (checked with Adobe Audition)").toBe(
-    0.274_395_833_333_333_34
-  );
+  expect(format.duration, "~2.274 (checked with Adobe Audition)").toBe(0.274_395_833_333_333_34);
   expect(format.tagTypes).toStrictEqual(["exif"]);
 
   const native = orderTags(metadata.native.exif);
-  expect(native.IART, "exif.IART: Original Artist").toStrictEqual([
-    "Wolfgang Amadeus Mozart",
-  ]);
-  expect(native.ICMS, "exif.ICMS: Commissioned").toStrictEqual([
-    "Louis Walker",
-  ]);
+  expect(native.IART, "exif.IART: Original Artist").toStrictEqual(["Wolfgang Amadeus Mozart"]);
+  expect(native.ICMS, "exif.ICMS: Commissioned").toStrictEqual(["Louis Walker"]);
   expect(native.ICMT, "exif.ICMT: Comments").toStrictEqual(["Comments here!"]);
   expect(native.ICOP).toStrictEqual(["Copyright 2018"]);
   expect(native.ICRD).toStrictEqual(["2018-04-26T13:26:19-05:00"]);
   expect(native.IENG, "exif.IENG: Engineer").toStrictEqual(["Engineer"]);
-  expect(native.IARL, "exif.IARL: Archival Location").toStrictEqual([
-    "https://github.com/borewit/music-metadata",
-  ]);
+  expect(native.IARL, "exif.IARL: Archival Location").toStrictEqual(["https://github.com/borewit/music-metadata"]);
   expect(native.IGNR, "exif.IGNR: Genre").toStrictEqual(["Blues"]);
-  expect(native.IKEY, "exif.IKEY: Keywords").toStrictEqual([
-    "neat; cool; riff; tags",
-  ]);
+  expect(native.IKEY, "exif.IKEY: Keywords").toStrictEqual(["neat; cool; riff; tags"]);
   expect(native.IMED, "exif.IMED: Original Medium").toStrictEqual(["CD"]);
-  expect(native.INAM, "exif.INAM: Display Title").toStrictEqual([
-    "The Magic Flute",
-  ]);
-  expect(native.IPRD, "exif.IPRD: Product").toStrictEqual([
-    "La clemenzo di Tito",
-  ]);
-  expect(native.ISBJ, "exif.ISBJ: Subject").toStrictEqual([
-    "An opera in two acts",
-  ]);
+  expect(native.INAM, "exif.INAM: Display Title").toStrictEqual(["The Magic Flute"]);
+  expect(native.IPRD, "exif.IPRD: Product").toStrictEqual(["La clemenzo di Tito"]);
+  expect(native.ISBJ, "exif.ISBJ: Subject").toStrictEqual(["An opera in two acts"]);
   expect(native.ISFT).toStrictEqual(["Adobe Audition CC 2018.1 (Macintosh)"]);
   expect(native.ISRC, "exif.ISRC Source Supplier").toStrictEqual(["Foo Bar"]);
   expect(native.ITCH, "exif.ITCH: Technician").toStrictEqual(["Technician"]);
@@ -131,9 +109,7 @@ test("should handle be able to handle odd chunk & padding", async () => {
   expect(format.sampleRate).toBe(48_000);
   expect(format.bitsPerSample).toBe(24);
   expect(format.numberOfSamples).toBe(363_448);
-  expect(metadata.format.duration, "file's duration").toBe(
-    format.numberOfSamples / format.sampleRate
-  );
+  expect(metadata.format.duration, "file's duration").toBe(format.numberOfSamples / format.sampleRate);
 });
 
 describe("non-PCM", () => {
@@ -148,9 +124,7 @@ describe("non-PCM", () => {
       expect(format.sampleRate).toBe(22_050);
       expect(format.bitsPerSample).toBe(4);
       expect(format.numberOfSamples).toBe(4_660_260);
-      expect(metadata.format.duration, "file's duration is 3'31\"").toBe(
-        format.numberOfSamples / format.sampleRate
-      );
+      expect(metadata.format.duration, "file's duration is 3'31\"").toBe(format.numberOfSamples / format.sampleRate);
     });
   });
 });

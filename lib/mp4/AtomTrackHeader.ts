@@ -61,7 +61,7 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
 export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
   public constructor(public len: number) {}
 
-  public get(buf: Buffer, off: number): ITrackHeaderAtom {
+  public get(buf: Uint8Array, off: number): ITrackHeaderAtom {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),

@@ -136,10 +136,7 @@ export const commonTags: ITagInfoMap = {
  * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
  */
 export function isSingleton(alias: GenericTagId): boolean {
-  return (
-    Object.prototype.hasOwnProperty.call(commonTags, alias) &&
-    !commonTags[alias].multiple
-  );
+  return Object.prototype.hasOwnProperty.call(commonTags, alias) && !commonTags[alias].multiple;
 }
 
 /**

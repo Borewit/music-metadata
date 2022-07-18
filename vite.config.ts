@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -13,8 +14,10 @@ export default defineConfig({
       "test/file-type/test.ts",
       "test/**/*.test.ts",
       "lib/**/*.test.ts",
+      "packages/**/*.test.ts",
     ],
     exclude: ["test/test-*.d.ts"],
+    environment: "jsdom",
 
     isolate: false,
     reporters: ["verbose"],

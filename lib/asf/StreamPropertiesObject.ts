@@ -1,6 +1,4 @@
-import GUID, {
-  StreamPropertiesObject as GUIDStreamPropertiesObject,
-} from "./GUID";
+import GUID, { StreamPropertiesObject as GUIDStreamPropertiesObject } from "./GUID";
 import { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 
@@ -30,7 +28,7 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): IStreamPropertiesObject {
+  public get(buf: Uint8Array, off: number): IStreamPropertiesObject {
     return {
       streamType: GUID.decodeMediaType(GUID.fromBin(buf, off)),
       errorCorrectionType: GUID.fromBin(buf, off + 8),

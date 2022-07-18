@@ -10,8 +10,7 @@ export class BufferTokenizer extends AbstractTokenizer {
    */
   constructor(private uint8Array: Uint8Array, fileInfo?: IFileInfo) {
     super(fileInfo);
-    this.fileInfo.size =
-      this.fileInfo.size > 0 ? this.fileInfo.size : uint8Array.length;
+    this.fileInfo.size = this.fileInfo.size > 0 ? this.fileInfo.size : uint8Array.length;
   }
 
   /**
@@ -20,15 +19,10 @@ export class BufferTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns {Promise<number>}
    */
-  public async readBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number> {
+  public async readBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
     if (options?.position) {
       if (options.position < this.position) {
-        throw new Error(
-          "`options.position` must be equal or greater than `tokenizer.position`"
-        );
+        throw new Error("`options.position` must be equal or greater than `tokenizer.position`");
       }
       this.position = options.position;
     }
@@ -44,24 +38,15 @@ export class BufferTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns {Promise<number>}
    */
-  public peekBuffer(
-    uint8Array: Uint8Array,
-    options?: IReadChunkOptions
-  ): Promise<number> {
+  public peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
     const normOptions = this.normalizeOptions(uint8Array, options);
 
-    const bytes2read = Math.min(
-      this.uint8Array.length - normOptions.position,
-      normOptions.length
-    );
+    const bytes2read = Math.min(this.uint8Array.length - normOptions.position, normOptions.length);
     if (!normOptions.mayBeLess && bytes2read < normOptions.length) {
       throw new EndOfStreamError();
     } else {
       uint8Array.set(
-        this.uint8Array.subarray(
-          normOptions.position,
-          normOptions.position + bytes2read
-        ),
+        this.uint8Array.subarray(normOptions.position, normOptions.position + bytes2read),
         normOptions.offset
       );
       return Promise.resolve(bytes2read);

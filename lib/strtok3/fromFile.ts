@@ -1,4 +1,4 @@
-import * as fs from "./FsPromise";
+import * as fs from "node:fs/promises";
 import { FileTokenizer } from "./FileTokenizer";
 
 /**

@@ -15,12 +15,7 @@ import { streamToBuffer } from "./util";
 // Define an entry here only if the fixture has a different
 // name than `fixture` or if you want multiple fixtures
 const names: Record<FileExtension, string[]> = {
-  aac: [
-    "fixture-adts-mpeg2",
-    "fixture-adts-mpeg4",
-    "fixture-adts-mpeg4-2",
-    "fixture-id3v2",
-  ],
+  aac: ["fixture-adts-mpeg2", "fixture-adts-mpeg4", "fixture-adts-mpeg4-2", "fixture-id3v2"],
   asar: ["fixture", "fixture2"],
   arw: ["fixture-sony-zv-e10"],
   cr3: ["fixture"],
@@ -34,13 +29,7 @@ const names: Record<FileExtension, string[]> = {
   mov: ["fixture", "fixture-mjpeg", "fixture-moov"],
   mp2: ["fixture", "fixture-mpa"],
   mp3: ["fixture", "fixture-mp2l3", "fixture-ffe3"],
-  mp4: [
-    "fixture-imovie",
-    "fixture-isom",
-    "fixture-isomv2",
-    "fixture-mp4v2",
-    "fixture-dash",
-  ],
+  mp4: ["fixture-imovie", "fixture-isom", "fixture-isomv2", "fixture-mp4v2", "fixture-dash"],
   mts: ["fixture-raw", "fixture-bdav"],
   tif: ["fixture-big-endian", "fixture-little-endian"],
   gz: ["fixture.tar"],
@@ -75,13 +64,7 @@ const names: Record<FileExtension, string[]> = {
     "fixture-sequence",
   ],
   eps: ["fixture", "fixture2"],
-  cfb: [
-    "fixture.msi",
-    "fixture.xls",
-    "fixture.doc",
-    "fixture.ppt",
-    "fixture-2.doc",
-  ],
+  cfb: ["fixture.msi", "fixture.xls", "fixture.doc", "fixture.ppt", "fixture-2.doc"],
   asf: ["fixture", "fixture.wma", "fixture.wmv"],
   ai: [
     "fixture-normal", // Normal AI
@@ -209,10 +192,7 @@ const falsePositives: Partial<Record<FileExtension, string[]>> = {
   png: ["fixture-corrupt"],
 };
 
-async function checkBufferLike(
-  type: FileExtension,
-  bufferLike: Uint8Array | ArrayBuffer | Buffer
-) {
+async function checkBufferLike(type: FileExtension, bufferLike: Uint8Array | ArrayBuffer | Buffer) {
   const fileType = await fileTypeFromBuffer(bufferLike);
   expect(fileType.ext).toBe(type);
   expect(fileType.mime).toBeTypeOf("string");
@@ -222,9 +202,8 @@ const cases = Object.entries(names).flatMap(([type, typenames]) =>
   typenames.map((name) => [name, type] as [string, FileExtension])
 );
 
-const falsePositivesCases = Object.entries(falsePositives).flatMap(
-  ([type, typenames]) =>
-    typenames.map((name) => [name, type] as [string, FileExtension])
+const falsePositivesCases = Object.entries(falsePositives).flatMap(([type, typenames]) =>
+  typenames.map((name) => [name, type] as [string, FileExtension])
 );
 
 describe.each(cases)("%s.%s", (name, type) => {
@@ -239,10 +218,7 @@ describe.each(cases)("%s.%s", (name, type) => {
     const chunk = readFileSync(filePath);
     await checkBufferLike(type, chunk);
     await checkBufferLike(type, new Uint8Array(chunk));
-    await checkBufferLike(
-      type,
-      chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
-    );
+    await checkBufferLike(type, chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength));
   });
 
   test("fromStream", async () => {
@@ -257,10 +233,7 @@ describe.each(cases)("%s.%s", (name, type) => {
     const readableStream = await fileTypeStream(createReadStream(filePath));
     const fileStream = createReadStream(filePath);
 
-    const [bufferA, bufferB] = await Promise.all([
-      streamToBuffer(readableStream),
-      streamToBuffer(fileStream),
-    ]);
+    const [bufferA, bufferB] = await Promise.all([streamToBuffer(readableStream), streamToBuffer(fileStream)]);
 
     expect(bufferA.equals(bufferB)).toBe(true);
   });
@@ -274,9 +247,7 @@ describe.each(falsePositivesCases)("%s.%s", (name, type) => {
 
     await expect(fileTypeFromFile(filePath)).resolves.toBeUndefined();
     await expect(fileTypeFromBuffer(chunk)).resolves.toBeUndefined();
-    await expect(
-      fileTypeFromBuffer(new Uint8Array(chunk))
-    ).resolves.toBeUndefined();
+    await expect(fileTypeFromBuffer(new Uint8Array(chunk))).resolves.toBeUndefined();
     await expect(fileTypeFromBuffer(chunk.buffer)).resolves.toBeUndefined();
   });
 });
@@ -288,22 +259,14 @@ test("validate the input argument type", async () => {
 });
 
 test("odd file sizes", async () => {
-  const oddFileSizes = [
-    1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 255, 256, 257, 511, 512, 513,
-  ];
+  const oddFileSizes = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 255, 256, 257, 511, 512, 513];
 
   for (const size of oddFileSizes) {
     const buffer = Buffer.alloc(size);
     const stream = new SourceStream(buffer);
 
-    await expect(
-      fileTypeFromBuffer(buffer),
-      `fromBuffer: File size: ${size} bytes`
-    ).resolves.not.toThrow();
+    await expect(fileTypeFromBuffer(buffer), `fromBuffer: File size: ${size} bytes`).resolves.not.toThrow();
 
-    await expect(
-      fileTypeFromStream(stream),
-      `fromStream: File size: ${size} bytes`
-    ).resolves.not.toThrow();
+    await expect(fileTypeFromStream(stream), `fromStream: File size: ${size} bytes`).resolves.not.toThrow();
   }
 });

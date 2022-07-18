@@ -1,8 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/eslintrc",
+  "root": true,
   "env": {
     "browser": true,
-    "node": true
+    "node": false
   },
   "extends": [
     /* https://github.com/eslint/eslint/blob/main/conf/eslint-all.js */
@@ -33,26 +34,23 @@
     "prettier"
   ],
   "ignorePatterns": [
-    "dest/**/*.d.ts",
+    "**/*.d.ts",
     "**/*.js",
+    "example/**/*",
     "test/file-type/fixture/*",
     "test/peek-readable/resources/*",
     "test/strtok3/resources/*",
     "test/samples/**/*"
   ],
   "parserOptions": {
-    "project": "./tsconfig.eslint.json"
+    "project": "./tsconfig.check.json"
   },
   "plugins": ["eslint-plugin-node"],
   "settings": {
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": [
-          "lib/tsconfig.json",
-          "test/tsconfig.json",
-          "doc-gen/tsconfig.json"
-        ]
+        "project": ["lib/tsconfig.json", "test/tsconfig.json", "doc-gen/tsconfig.json"]
       }
     }
   },
@@ -83,10 +81,7 @@
     "unicorn/prevent-abbreviations": "off",
 
     /* @typescript-eslint/eslint-plugin */
-    "@typescript-eslint/no-empty-function": [
-      "error",
-      { "allow": ["constructors"] }
-    ],
+    "@typescript-eslint/no-empty-function": ["error", { "allow": ["constructors"] }],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unnecessary-boolean-literal-compare": "off",
     "@typescript-eslint/no-unnecessary-condition": "off",
@@ -128,6 +123,42 @@
     "no-extra-bind": "error",
     "no-new-func": "error",
     "no-new-wrappers": "error",
+    // "no-restricted-imports": [
+    //   "warning",
+    //   "assert",
+    //   "buffer",
+    //   "child_process",
+    //   "cluster",
+    //   "crypto",
+    //   "dgram",
+    //   "dns",
+    //   "domain",
+    //   "events",
+    //   "freelist",
+    //   "fs",
+    //   "http",
+    //   "https",
+    //   "module",
+    //   "net",
+    //   "os",
+    //   "path",
+    //   "punycode",
+    //   "querystring",
+    //   "readline",
+    //   "repl",
+    //   "smalloc",
+    //   "stream",
+    //   "string_decoder",
+    //   "sys",
+    //   "timers",
+    //   "tls",
+    //   "tracing",
+    //   "tty",
+    //   "url",
+    //   "util",
+    //   "vm",
+    //   "zlib"
+    // ],
     "no-return-await": "error",
     "no-sequences": "error",
     "no-template-curly-in-string": "error",
@@ -145,10 +176,7 @@
     "spaced-comment": ["error", "always", { "markers": ["/"] }],
 
     /* eslint-plugin-import */
-    "import/no-extraneous-dependencies": [
-      "error",
-      { "devDependencies": false }
-    ],
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": false }],
 
     /* eslint-plugin-node */
     "node/no-extraneous-import": "error",
@@ -156,10 +184,7 @@
     /* @typescript-eslint/eslint-plugin */
     "@typescript-eslint/no-shadow": ["error", { "hoist": "all" }],
     "@typescript-eslint/no-unused-expressions": "error",
-    "@typescript-eslint/restrict-template-expressions": [
-      "error",
-      { "allowBoolean": true }
-    ],
+    "@typescript-eslint/restrict-template-expressions": ["error", { "allowBoolean": true }],
     "@typescript-eslint/semi": ["error", "always"]
   }
 }

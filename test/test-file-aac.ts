@@ -24,10 +24,7 @@ function checkFormat(
   expect(format.numberOfChannels, "format.numberOfChannels").toBe(channels);
   expect(format.bitrate, "format.bitrate").toBeCloseTo(bitrate, -3);
   expect(format.numberOfSamples, "format.numberOfSamples").toBe(samples);
-  expect(format.duration, "format.duration").toBeCloseTo(
-    samples / sampleRate,
-    1
-  );
+  expect(format.duration, "format.duration").toBeCloseTo(samples / sampleRate, 1);
 }
 
 describe("parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit", () => {
@@ -37,16 +34,7 @@ describe("parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit", () => {
       duration: true,
     });
 
-    checkFormat(
-      metadata.format,
-      "ADTS/MPEG-4",
-      "AAC",
-      "AAC LC",
-      16_000,
-      1,
-      20_399,
-      256_000
-    );
+    checkFormat(metadata.format, "ADTS/MPEG-4", "AAC", "AAC LC", 16_000, 1, 20_399, 256_000);
   });
 });
 
@@ -57,15 +45,6 @@ describe("parse: adts-mpeg4-2.aac: AAC-LC, 44.1 kHz, 2 channels", () => {
       duration: true,
     });
 
-    checkFormat(
-      metadata.format,
-      "ADTS/MPEG-4",
-      "AAC",
-      "AAC LC",
-      44_100,
-      2,
-      128_000,
-      14_336
-    );
+    checkFormat(metadata.format, "ADTS/MPEG-4", "AAC", "AAC LC", 44_100, 2, 128_000, 14_336);
   });
 });

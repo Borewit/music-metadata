@@ -1,5 +1,5 @@
-import * as Token from "../token-types";
 import { IGetToken } from "../strtok3";
+import { Latin1StringType } from "../token-types/string";
 
 export interface IAtomFtyp {
   type: string;
@@ -8,9 +8,9 @@ export interface IAtomFtyp {
 export const ftyp: IGetToken<IAtomFtyp> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): IAtomFtyp => {
+  get: (buf: Uint8Array, off: number): IAtomFtyp => {
     return {
-      type: new Token.StringType(4, "ascii").get(buf, off),
+      type: new Latin1StringType(4).get(buf, off),
     };
   },
 };
@@ -18,9 +18,9 @@ export const ftyp: IGetToken<IAtomFtyp> = {
 export const tkhd: IGetToken<IAtomFtyp> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): IAtomFtyp => {
+  get: (buf: Uint8Array, off: number): IAtomFtyp => {
     return {
-      type: new Token.StringType(4, "ascii").get(buf, off),
+      type: new Latin1StringType(4).get(buf, off),
     };
   },
 };

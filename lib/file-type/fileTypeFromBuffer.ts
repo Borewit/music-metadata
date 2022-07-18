@@ -11,9 +11,7 @@ import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
  * @param input - An Uint8Array or Buffer representing file data. It works best if the buffer contains the entire file, it may work with a smaller portion as well.
  * @returns The detected file type and MIME type, or `undefined` when there is no match.
  */
-export async function fileTypeFromBuffer(
-  input: Uint8Array | ArrayBuffer
-): Promise<FileTypeResult | undefined> {
+export async function fileTypeFromBuffer(input: Uint8Array | ArrayBuffer): Promise<FileTypeResult | undefined> {
   if (!(input instanceof Uint8Array || input instanceof ArrayBuffer)) {
     throw new TypeError(
       `Expected the \`input\` argument to be of type \`Uint8Array\` or \`Buffer\` or \`ArrayBuffer\`, got \`${typeof input}\``

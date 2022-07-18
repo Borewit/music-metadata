@@ -20,10 +20,7 @@ describe("Matroska audio (.mka)", () => {
   });
 
   test('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', async () => {
-    const mkaPath = join(
-      matroskaSamplePath,
-      "02 - Poxfil - Solid Ground (5 sec).mka"
-    );
+    const mkaPath = join(matroskaSamplePath, "02 - Poxfil - Solid Ground (5 sec).mka");
 
     const metadata = await parseFile(mkaPath, { duration: false });
     const format = metadata.format;
@@ -41,27 +38,20 @@ describe("Matroska audio (.mka)", () => {
     expect(common.artist, "common.artist").toBe("Poxfil");
     expect(common.artistsort, "common.artistsort").toBe("Poxfil");
     expect(common.label, "common.label").toStrictEqual(["blocSonic"]);
-    expect(common.musicbrainz_albumid, "common.musicbrainz_albumid").toBe(
-      "abf39f57-0b01-4b51-9c1e-b21e8ada5091"
+    expect(common.musicbrainz_albumid, "common.musicbrainz_albumid").toBe("abf39f57-0b01-4b51-9c1e-b21e8ada5091");
+    expect(common.musicbrainz_artistid, "common.musicbrainz_artistid").toStrictEqual([
+      "ee315b01-df5e-451e-8cd6-90a9f1faaf51",
+    ]);
+    expect(common.musicbrainz_recordingid, "common.musicbrainz_recordingid").toBe(
+      "209dbf50-509d-4ac3-aec5-e96da99dfdd9"
     );
-    expect(
-      common.musicbrainz_artistid,
-      "common.musicbrainz_artistid"
-    ).toStrictEqual(["ee315b01-df5e-451e-8cd6-90a9f1faaf51"]);
-    expect(
-      common.musicbrainz_recordingid,
-      "common.musicbrainz_recordingid"
-    ).toBe("209dbf50-509d-4ac3-aec5-e96da99dfdd9");
     expect(common.track, "common.track").toStrictEqual({ no: 2, of: 10 });
   });
 });
 
 describe("WebM", () => {
   test('parse: "big-buck-bunny_trailer-short.vp8.webm"', async () => {
-    const webmPath = join(
-      matroskaSamplePath,
-      "big-buck-bunny_trailer-short.vp8.webm"
-    );
+    const webmPath = join(matroskaSamplePath, "big-buck-bunny_trailer-short.vp8.webm");
 
     const metadata = await parseFile(webmPath, { duration: false });
     const format = metadata.format;
@@ -76,22 +66,13 @@ describe("WebM", () => {
     // common metadata
     expect(common.title, "common.title").toBe("Big Buck Bunny");
     expect(common.picture, "common.picture").toBeDefined();
-    expect(common.picture[0].format, "common.picture[0].format").toBe(
-      "image/jpeg"
-    );
-    expect(common.picture[0].description, "common.picture[0].description").toBe(
-      "Poster"
-    );
-    expect(common.picture[0].name, "common.picture[0].name").toBe(
-      "Big buck bunny poster.jpg"
-    );
+    expect(common.picture[0].format, "common.picture[0].format").toBe("image/jpeg");
+    expect(common.picture[0].description, "common.picture[0].description").toBe("Poster");
+    expect(common.picture[0].name, "common.picture[0].name").toBe("Big buck bunny poster.jpg");
   });
 
   test('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {
-    const webmPath = join(
-      matroskaSamplePath,
-      "02 - Poxfil - Solid Ground (5 sec).opus.webm"
-    );
+    const webmPath = join(matroskaSamplePath, "02 - Poxfil - Solid Ground (5 sec).opus.webm");
 
     const metadata = await parseFile(webmPath, { duration: false });
     const format = metadata.format;
@@ -107,9 +88,7 @@ describe("WebM", () => {
     expect(common.artist, "common.artist").toBe("Poxfil");
     expect(common.track, "common.track").toStrictEqual({ no: 2, of: 10 });
     expect(common.encodedby, "common.encodersettings").toBe("Max 0.8b");
-    expect(common.encodersettings, "common.encodersettings").toBe(
-      "--bitrate 96 --vbr"
-    );
+    expect(common.encodersettings, "common.encodersettings").toBe("--bitrate 96 --vbr");
   });
 
   test('should parse "My Baby Boy.webm"', async () => {
@@ -129,12 +108,8 @@ describe("WebM", () => {
     expect(common.track, "common.track").toStrictEqual({ no: 2, of: 13 });
     expect(common.disk, "common.disk").toStrictEqual({ no: 1, of: 1 });
     expect(common.genre, "common.genre").toStrictEqual(["Folk"]);
-    expect(common.encodedby, "common.encodersettings").toBe(
-      "opusenc from opus-tools 0.2"
-    );
-    expect(common.encodersettings, "common.encodersettings").toBe(
-      "--bitrate 96 --vbr"
-    );
+    expect(common.encodedby, "common.encodersettings").toBe("opusenc from opus-tools 0.2");
+    expect(common.encodersettings, "common.encodersettings").toBe("--bitrate 96 --vbr");
   });
 
   test("shoud ignore trailing null characters", async () => {
@@ -149,10 +124,7 @@ describe("WebM", () => {
 // https://github.com/Borewit/music-metadata/issues/384
 describe("Multiple audio tracks", () => {
   test('parse: "matroska-test-w1-test5-short.mkv"', async () => {
-    const mkvPath = join(
-      matroskaSamplePath,
-      "matroska-test-w1-test5-short.mkv"
-    );
+    const mkvPath = join(matroskaSamplePath, "matroska-test-w1-test5-short.mkv");
 
     const metadata = await parseFile(mkvPath);
     const format = metadata.format;

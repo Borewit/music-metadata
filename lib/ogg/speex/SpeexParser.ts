@@ -17,20 +17,16 @@ const debug = initDebug("music-metadata:parser:ogg:speex");
  * - https://tools.ietf.org/html/rfc5574
  */
 export class SpeexParser extends VorbisParser {
-  constructor(
-    metadata: INativeMetadataCollector,
-    options: IOptions,
-    private tokenizer: ITokenizer
-  ) {
+  constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
     super(metadata, options);
   }
 
   /**
    * Parse first Speex Ogg page
-   * @param {IPageHeader} header
-   * @param {Buffer} pageData
+   * @param header
+   * @param pageData
    */
-  protected override parseFirstPage(header: IPageHeader, pageData: Buffer) {
+  protected override parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
     debug("First Ogg/Speex page");
     const speexHeader = Header.get(pageData, 0);
     this.metadata.setFormat("codec", `Speex ${speexHeader.version}`);

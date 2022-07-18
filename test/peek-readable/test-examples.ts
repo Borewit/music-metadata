@@ -25,10 +25,7 @@ test("End-of-stream detection", async () => {
     while ((await streamReader.read(uint8Array, 0, 1)) > 0);
     expect.fail("Should throw EndOfStreamError");
   } catch (error) {
-    expect(
-      error,
-      "Expect `error` to be instance of `EndOfStreamError`"
-    ).toBeInstanceOf(EndOfStreamError);
+    expect(error, "Expect `error` to be instance of `EndOfStreamError`").toBeInstanceOf(EndOfStreamError);
   }
 });
 

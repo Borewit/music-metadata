@@ -19,19 +19,16 @@ const debug = initDebug("music-metadata:parser:ogg:vorbis1");
  * Used by OggParser
  */
 export class VorbisParser implements IPageConsumer {
-  private pageSegments: Buffer[] = [];
+  private pageSegments: Uint8Array[] = [];
 
-  constructor(
-    protected metadata: INativeMetadataCollector,
-    protected options: IOptions
-  ) {}
+  constructor(protected metadata: INativeMetadataCollector, protected options: IOptions) {}
 
   /**
    * Vorbis 1 parser
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public parsePage(header: IPageHeader, pageData: Buffer) {
+  public parsePage(header: IPageHeader, pageData: Uint8Array) {
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
@@ -44,8 +41,7 @@ export class VorbisParser implements IPageConsumer {
       if (header.headerType.lastPage || !header.headerType.continued) {
         // Flush page segments
         if (this.pageSegments.length > 0) {
-          const fullPage = Buffer.concat(this.pageSegments);
-          this.parseFullPage(fullPage);
+          this.flush();
         }
         // Reset page segments
         this.pageSegments = header.headerType.lastPage ? [] : [pageData];
@@ -57,10 +53,19 @@ export class VorbisParser implements IPageConsumer {
   }
 
   public flush() {
-    this.parseFullPage(Buffer.concat(this.pageSegments));
+    const fullPageSize = this.pageSegments.reduce((p, c) => p + c.byteLength, 0);
+    const fullPage = new Uint8Array(fullPageSize);
+
+    let pos = 0;
+    for (const pageSegment of this.pageSegments) {
+      fullPage.set(pageSegment, pos);
+      pos += pageSegment.byteLength;
+    }
+
+    this.parseFullPage(fullPage);
   }
 
-  public parseUserComment(pageData: Buffer, offset: number): number {
+  public parseUserComment(pageData: Uint8Array, offset: number): number {
     const decoder = new VorbisDecoder(pageData, offset);
     const tag = decoder.parseUserComment();
 
@@ -85,34 +90,24 @@ export class VorbisParser implements IPageConsumer {
   }
 
   public calculateDuration(header: IPageHeader) {
-    if (
-      this.metadata.format.sampleRate &&
-      header.absoluteGranulePosition >= 0
-    ) {
+    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
-      this.metadata.setFormat(
-        "numberOfSamples",
-        header.absoluteGranulePosition
-      );
-      this.metadata.setFormat(
-        "duration",
-        this.metadata.format.numberOfSamples / this.metadata.format.sampleRate
-      );
+      this.metadata.setFormat("numberOfSamples", header.absoluteGranulePosition);
+      this.metadata.setFormat("duration", this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
     }
   }
 
   /**
    * Parse first Ogg/Vorbis page
-   * @param {IPageHeader} header
-   * @param {Buffer} pageData
+   * @param header
+   * @param pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
+  protected parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat("codec", "Vorbis I");
     debug("Parse first page");
     // Parse  Vorbis common header
     const commonHeader = CommonHeader.get(pageData, 0);
-    if (commonHeader.vorbis !== "vorbis")
-      throw new Error("Metadata does not look like Vorbis");
+    if (commonHeader.vorbis !== "vorbis") throw new Error("Metadata does not look like Vorbis");
     if (commonHeader.packetType === 1) {
       const idHeader = IdentificationHeader.get(pageData, CommonHeader.len);
 
@@ -125,20 +120,13 @@ export class VorbisParser implements IPageConsumer {
         idHeader.bitrateNominal,
         idHeader.channelMode
       );
-    } else
-      throw new Error(
-        "First Ogg page should be type 1: the identification header"
-      );
+    } else throw new Error("First Ogg page should be type 1: the identification header");
   }
 
-  protected parseFullPage(pageData: Buffer) {
+  protected parseFullPage(pageData: Uint8Array) {
     // New page
     const commonHeader = CommonHeader.get(pageData, 0);
-    debug(
-      "Parse full page: type=%s, byteLength=%s",
-      commonHeader.packetType,
-      pageData.byteLength
-    );
+    debug("Parse full page: type=%s, byteLength=%s", commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
       case 3: //  type 3: comment header
         return this.parseUserCommentList(pageData, CommonHeader.len);
@@ -154,7 +142,7 @@ export class VorbisParser implements IPageConsumer {
    * @param pageData
    * @param offset
    */
-  protected parseUserCommentList(pageData: Buffer, offset: number) {
+  protected parseUserCommentList(pageData: Uint8Array, offset: number) {
     const strLen = Token.UINT32_LE.get(pageData, offset);
     offset += 4;
     // const vendorString = new Token.StringType(strLen, 'utf-8').get(pageData, offset);

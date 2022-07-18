@@ -12,22 +12,17 @@ export abstract class State<T> implements IGetToken<T> {
     this.len = Number(header.objectSize) - HeaderObjectToken.len;
   }
 
-  public abstract get(buf: Buffer, off: number): T;
+  public abstract get(buf: Uint8Array, off: number): T;
 
-  protected postProcessTag(
-    tags: ITag[],
-    name: string,
-    valueType: number,
-    data: any
-  ) {
+  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any) {
     if (name === "WM/Picture") {
-      tags.push({ id: name, value: WmPictureToken.fromBuffer(data as Buffer) });
+      tags.push({ id: name, value: WmPictureToken.fromBuffer(data as Uint8Array) });
     } else {
       const parseAttr = getParserForAttr(valueType);
       if (!parseAttr) {
         throw new Error(`unexpected value headerType: ${valueType}`);
       }
-      tags.push({ id: name, value: parseAttr(data as Buffer) });
+      tags.push({ id: name, value: parseAttr(data as Uint8Array) });
     }
   }
 }

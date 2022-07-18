@@ -5,6 +5,7 @@ import { APEv2Parser } from "../apev2/APEv2Parser";
 import { IRandomReader } from "../type";
 import { Genres } from "./ID3v1Genres";
 import { IId3v1Header, Iid3v1Token } from "./ID3v1Header";
+import { decodeLatin1 } from "../compat/text-decoder";
 
 const debug = initDebug("music-metadata:parser:ID3v1");
 
@@ -23,9 +24,7 @@ export class ID3v1Parser extends BasicParser {
     }
 
     if (this.options.apeHeader) {
-      void this.tokenizer.ignore(
-        this.options.apeHeader.offset - this.tokenizer.position
-      );
+      void this.tokenizer.ignore(this.options.apeHeader.offset - this.tokenizer.position);
       const apeParser = new APEv2Parser();
       apeParser.init(this.metadata, this.tokenizer, this.options);
       await apeParser.parseTags(this.options.apeHeader.footer);
@@ -36,32 +35,16 @@ export class ID3v1Parser extends BasicParser {
       debug("Already consumed the last 128 bytes");
       return;
     }
-    const header = await this.tokenizer.readToken<IId3v1Header>(
-      Iid3v1Token,
-      offset
-    );
+    const header = await this.tokenizer.readToken<IId3v1Header>(Iid3v1Token, offset);
     if (header) {
-      debug(
-        "ID3v1 header found at: pos=%s",
-        this.tokenizer.fileInfo.size - Iid3v1Token.len
-      );
-      for (const id of [
-        "title",
-        "artist",
-        "album",
-        "comment",
-        "track",
-        "year",
-      ] as const) {
+      debug("ID3v1 header found at: pos=%s", this.tokenizer.fileInfo.size - Iid3v1Token.len);
+      for (const id of ["title", "artist", "album", "comment", "track", "year"] as const) {
         if (header[id] && header[id] !== "") this.addTag(id, header[id]);
       }
       const genre = ID3v1Parser.getGenre(header.genre);
       if (genre) this.addTag("genre", genre);
     } else {
-      debug(
-        "ID3v1 header not found at: pos=%s",
-        this.tokenizer.fileInfo.size - Iid3v1Token.len
-      );
+      debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileInfo.size - Iid3v1Token.len);
     }
   }
 
@@ -76,9 +59,9 @@ export class ID3v1Parser extends BasicParser {
  */
 export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
-    const tag = Buffer.alloc(3);
+    const tag = new Uint8Array(3);
     await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
-    return tag.toString("binary") === "TAG";
+    return decodeLatin1(tag) === "TAG";
   }
   return false;
 }

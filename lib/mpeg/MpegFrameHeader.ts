@@ -3,23 +3,7 @@ import initDebug from "debug";
 
 const debug = initDebug("music-metadata:parser:mpeg");
 
-type UInt4 =
-  | 0x0
-  | 0x1
-  | 0x2
-  | 0x3
-  | 0x4
-  | 0x5
-  | 0x6
-  | 0x7
-  | 0x8
-  | 0x9
-  | 0xa
-  | 0xb
-  | 0xc
-  | 0xd
-  | 0xe
-  | 0xf;
+type UInt4 = 0x0 | 0x1 | 0x2 | 0x3 | 0x4 | 0x5 | 0x6 | 0x7 | 0x8 | 0x9 | 0xa | 0xb | 0xc | 0xd | 0xe | 0xf;
 
 type MPEG4Channel =
   | "front-center"
@@ -84,24 +68,8 @@ const MPEG4_ChannelConfigurations: MPEG4ChannelConfiguration[] = [
   ["front-center", "front-left", "front-right"],
   ["front-center", "front-left", "front-right", "back-center"],
   ["front-center", "front-left", "front-right", "back-left", "back-right"],
-  [
-    "front-center",
-    "front-left",
-    "front-right",
-    "back-left",
-    "back-right",
-    "LFE-channel",
-  ],
-  [
-    "front-center",
-    "front-left",
-    "front-right",
-    "side-left",
-    "side-right",
-    "back-left",
-    "back-right",
-    "LFE-channel",
-  ],
+  ["front-center", "front-left", "front-right", "back-left", "back-right", "LFE-channel"],
+  ["front-center", "front-left", "front-right", "side-left", "side-right", "back-left", "back-right", "LFE-channel"],
 ];
 
 /**
@@ -116,12 +84,7 @@ export class MpegFrameHeader {
 
   public static VersionID: [2.5, null, 2, 1] = [2.5, null, 2, 1];
   public static LayerDescription = [0, 3, 2, 1];
-  public static ChannelMode = [
-    "stereo",
-    "joint_stereo",
-    "dual_channel",
-    "mono",
-  ];
+  public static ChannelMode = ["stereo", "joint_stereo", "dual_channel", "mono"];
 
   private static bitrate_index = {
     0x01: { 11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8 },
@@ -194,10 +157,7 @@ export class MpegFrameHeader {
     // B(20,19): MPEG Audio versionIndex ID
     this.versionIndex = common.getBitAllignedNumber(buf, off + 1, 3, 2);
     // C(18,17): Layer description
-    this.layer =
-      MpegFrameHeader.LayerDescription[
-        common.getBitAllignedNumber(buf, off + 1, 5, 2)
-      ];
+    this.layer = MpegFrameHeader.LayerDescription[common.getBitAllignedNumber(buf, off + 1, 5, 2)];
 
     if (this.versionIndex > 1 && this.layer === 0) {
       this.parseAdtsHeader(buf, off); // Audio Data Transport Stream (ADTS)
@@ -214,9 +174,7 @@ export class MpegFrameHeader {
   }
 
   public calcSamplesPerFrame(): number {
-    return MpegFrameHeader.samplesInFrameTable[this.version === 1 ? 0 : 1][
-      this.layer
-    ];
+    return MpegFrameHeader.samplesInFrameTable[this.version === 1 ? 0 : 1][this.layer];
   }
 
   public calculateSideInfoLength(): number {
@@ -244,12 +202,7 @@ export class MpegFrameHeader {
   private parseMpegHeader(buf: Uint8Array, off: number): void {
     this.container = "MPEG";
     // E(15,12): Bitrate index
-    this.bitrateIndex = common.getBitAllignedNumber(
-      buf,
-      off + 2,
-      0,
-      4
-    ) as UInt4;
+    this.bitrateIndex = common.getBitAllignedNumber(buf, off + 2, 0, 4) as UInt4;
     // F(11,10): Sampling rate frequency index
     this.sampRateFreqIndex = common.getBitAllignedNumber(buf, off + 2, 4, 2);
     // G(9): Padding bit
@@ -296,12 +249,7 @@ export class MpegFrameHeader {
 
     debug(`MPEG-4 audio-codec=${this.codec}`);
 
-    const samplingFrequencyIndex = common.getBitAllignedNumber(
-      buf,
-      off + 2,
-      2,
-      4
-    );
+    const samplingFrequencyIndex = common.getBitAllignedNumber(buf, off + 2, 2, 4);
     this.samplingRate = MPEG4.SamplingFrequencies[samplingFrequencyIndex];
     debug(`sampling-rate=${this.samplingRate}`);
 
@@ -321,24 +269,15 @@ export class MpegFrameHeader {
       return;
     }
     type CodecIndex = "11" | "12" | "13" | "21" | "22" | "23";
-    const codecIndex: CodecIndex = `${Math.floor(this.version)}${
-      this.layer
-    }` as CodecIndex;
+    const codecIndex: CodecIndex = `${Math.floor(this.version)}${this.layer}` as CodecIndex;
     return MpegFrameHeader.bitrate_index[this.bitrateIndex][codecIndex];
   }
 
   private calcSamplingRate(): number {
     if (this.sampRateFreqIndex === 0x03) return null; // 'reserved'
     if (this.version === 4) return null;
-    if (
-      this.sampRateFreqIndex !== 0 &&
-      this.sampRateFreqIndex !== 1 &&
-      this.sampRateFreqIndex !== 2
-    )
-      return null;
-    return MpegFrameHeader.sampling_rate_freq_index[this.version][
-      this.sampRateFreqIndex
-    ];
+    if (this.sampRateFreqIndex !== 0 && this.sampRateFreqIndex !== 1 && this.sampRateFreqIndex !== 2) return null;
+    return MpegFrameHeader.sampling_rate_freq_index[this.version][this.sampRateFreqIndex];
   }
 }
 

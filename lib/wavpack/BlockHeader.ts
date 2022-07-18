@@ -48,8 +48,7 @@ export interface BlockHeader {
 }
 
 const SampleRates = [
-  6000, 8000, 9600, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100,
-  48_000, 64_000, 88_200, 96_000, 192_000, -1,
+  6000, 8000, 9600, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000, 64_000, 88_200, 96_000, 192_000, -1,
 ];
 
 /**
@@ -73,17 +72,15 @@ export const BlockHeaderToken: IGetToken<BlockHeader> = {
       //  0x402 (1026) to 0x410 are valid for decode
       version: Token.UINT16_LE.get(buf, off + 8),
       //  40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
-      totalSamples:
-        /* replace with bigint? (Token.UINT8.get(buf, off + 11) << 32) + */ Token.UINT32_LE.get(
-          buf,
-          off + 12
-        ),
+      totalSamples: /* replace with bigint? (Token.UINT8.get(buf, off + 11) << 32) + */ Token.UINT32_LE.get(
+        buf,
+        off + 12
+      ),
       // 40-bit block_index
-      blockIndex:
-        /* replace with bigint? (Token.UINT8.get(buf, off + 10) << 32) + */ Token.UINT32_LE.get(
-          buf,
-          off + 16
-        ),
+      blockIndex: /* replace with bigint? (Token.UINT8.get(buf, off + 10) << 32) + */ Token.UINT32_LE.get(
+        buf,
+        off + 16
+      ),
       // 40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
       blockSamples: Token.UINT32_LE.get(buf, off + 20),
       // various flags for id and decoding

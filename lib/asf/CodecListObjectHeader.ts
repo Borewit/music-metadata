@@ -1,4 +1,5 @@
 import { IGetToken } from "../strtok3";
+import { UINT16_LE } from "../token-types";
 
 /**
  * 3.5: The Codec-List-Object interface.
@@ -13,9 +14,9 @@ interface ICodecListObjectHeader {
  */
 export const CodecListObjectHeader: IGetToken<ICodecListObjectHeader> = {
   len: 20,
-  get: (buf: Buffer, off: number): ICodecListObjectHeader => {
+  get: (buf: Uint8Array, off: number): ICodecListObjectHeader => {
     return {
-      entryCount: buf.readUInt16LE(off + 16),
+      entryCount: UINT16_LE.get(buf, off + 16),
     };
   },
 };

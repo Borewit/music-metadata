@@ -66,7 +66,7 @@ export interface ITokenizer {
    * @param options - Read behaviour options
    * @returns Promise with number of bytes read
    */
-  peekBuffer(buffer: Buffer, options?: IReadChunkOptions): Promise<number>;
+  peekBuffer(buffer: Uint8Array, options?: IReadChunkOptions): Promise<number>;
 
   /**
    * Peek (read ahead) buffer from tokenizer
@@ -74,7 +74,7 @@ export interface ITokenizer {
    * @param options - Additional read options
    * @returns Promise with number of bytes read
    */
-  readBuffer(buffer: Buffer, options?: IReadChunkOptions): Promise<number>;
+  readBuffer(buffer: Uint8Array, options?: IReadChunkOptions): Promise<number>;
 
   /**
    * Peek a token from the tokenizer-stream.
@@ -82,11 +82,7 @@ export interface ITokenizer {
    * @param position - Offset where to begin reading within the file. If position is null, data will be read from the current file position.
    * @param maybeless - If set, will not throw an EOF error if the less then the requested length could be read.
    */
-  peekToken<T>(
-    token: IGetToken<T>,
-    position?: number | null,
-    maybeless?: boolean
-  ): Promise<T>;
+  peekToken<T>(token: IGetToken<T>, position?: number | null, maybeless?: boolean): Promise<T>;
 
   /**
    * Read a token from the tokenizer-stream.

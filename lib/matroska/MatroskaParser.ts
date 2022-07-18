@@ -1,4 +1,4 @@
-import { Float32_BE, Float64_BE, StringType, UINT8 } from "../token-types";
+import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
 import initDebug from "debug";
 import { EndOfStreamError, ITokenizer } from "../strtok3";
 
@@ -7,16 +7,10 @@ import { IOptions, ITrackInfo } from "../type";
 import { ITokenParser } from "../ParserFactory";
 import { BasicParser } from "../common/BasicParser";
 
-import {
-  DataType,
-  IContainerType,
-  IHeader,
-  IMatroskaDoc,
-  ITree,
-  TargetType,
-  TrackType,
-} from "./types";
+import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
 import * as matroskaDtd from "./MatroskaDtd";
+import { Utf8StringType } from "../token-types/string";
+import { readUintBE } from "../compat/buffer";
 
 const debug = initDebug("music-metadata:parser:matroska");
 
@@ -40,10 +34,7 @@ export class MatroskaParser extends BasicParser {
     this.parserMap.set(DataType.uint, (e) => this.readUint(e));
     this.parserMap.set(DataType.string, (e) => this.readString(e));
     this.parserMap.set(DataType.binary, (e) => this.readBuffer(e));
-    this.parserMap.set(
-      DataType.uid,
-      async (e) => (await this.readUint(e)) === 1
-    );
+    this.parserMap.set(DataType.uid, async (e) => (await this.readUint(e)) === 1);
     this.parserMap.set(DataType.bool, (e) => this.readFlag(e));
     this.parserMap.set(DataType.float, (e) => this.readFloat(e));
   }
@@ -55,11 +46,7 @@ export class MatroskaParser extends BasicParser {
    * @param {IOptions} options Parsing options
    * @returns
    */
-  public override init(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ): ITokenParser {
+  public override init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
     super.init(metadata, tokenizer, options);
     return this;
   }
@@ -111,28 +98,16 @@ export class MatroskaParser extends BasicParser {
             if (!previousValue.flagDefault && currentValue.flagDefault) {
               return currentValue;
             }
-            if (
-              currentValue.trackNumber &&
-              currentValue.trackNumber < previousValue.trackNumber
-            ) {
+            if (currentValue.trackNumber && currentValue.trackNumber < previousValue.trackNumber) {
               return currentValue;
             }
             return previousValue;
           }, null);
 
         if (audioTrack) {
-          this.metadata.setFormat(
-            "codec",
-            audioTrack.codecID.replace("A_", "")
-          );
-          this.metadata.setFormat(
-            "sampleRate",
-            audioTrack.audio.samplingFrequency
-          );
-          this.metadata.setFormat(
-            "numberOfChannels",
-            audioTrack.audio.channels
-          );
+          this.metadata.setFormat("codec", audioTrack.codecID.replace("A_", ""));
+          this.metadata.setFormat("sampleRate", audioTrack.audio.samplingFrequency);
+          this.metadata.setFormat("numberOfChannels", audioTrack.audio.channels);
         }
 
         if (matroska.segment.tags) {
@@ -166,11 +141,7 @@ export class MatroskaParser extends BasicParser {
     }
   }
 
-  private async parseContainer(
-    container: IContainerType,
-    posDone: number,
-    path: string[]
-  ): Promise<ITree> {
+  private async parseContainer(container: IContainerType, posDone: number, path: string[]): Promise<ITree> {
     const tree: ITree = {};
     while (this.tokenizer.position < posDone) {
       let element: IHeader;
@@ -209,11 +180,7 @@ export class MatroskaParser extends BasicParser {
             await this.tokenizer.ignore(element.len);
             break;
           default:
-            debug(
-              `parseEbml: path=${path.join(
-                "/"
-              )}, unknown element: id=${element.id.toString(16)}`
-            );
+            debug(`parseEbml: path=${path.join("/")}, unknown element: id=${element.id.toString(16)}`);
             this.padding += element.len;
             await this.tokenizer.ignore(element.len);
         }
@@ -222,7 +189,7 @@ export class MatroskaParser extends BasicParser {
     return tree;
   }
 
-  private async readVintData(maxLength: number): Promise<Buffer> {
+  private async readVintData(maxLength: number): Promise<Uint8Array> {
     const msb = await this.tokenizer.peekNumber(UINT8);
     let mask = 0x80;
     let oc = 1;
@@ -235,7 +202,7 @@ export class MatroskaParser extends BasicParser {
       ++oc;
       mask >>= 1;
     }
-    const id = Buffer.alloc(oc);
+    const id = new Uint8Array(oc);
     await this.tokenizer.readBuffer(id);
     return id;
   }
@@ -246,12 +213,12 @@ export class MatroskaParser extends BasicParser {
     lenField[0] ^= 0x80 >> (lenField.length - 1);
     const nrLen = Math.min(6, lenField.length); // JavaScript can max read 6 bytes integer
     return {
-      id: id.readUIntBE(0, id.length),
-      len: lenField.readUIntBE(lenField.length - nrLen, nrLen),
+      id: readUintBE(id, 0, id.length),
+      len: readUintBE(lenField, lenField.length - nrLen, nrLen),
     };
   }
 
-  private isMaxValue(vintData: Buffer) {
+  private isMaxValue(vintData: Uint8Array) {
     if (vintData.length === this.ebmlMaxSizeLength) {
       for (let n = 1; n < this.ebmlMaxSizeLength; ++n) {
         if (vintData[n] !== 0xff) return false;
@@ -283,18 +250,16 @@ export class MatroskaParser extends BasicParser {
   private async readUint(e: IHeader): Promise<number> {
     const buf = await this.readBuffer(e);
     const nrLen = Math.min(6, e.len); // JavaScript can max read 6 bytes integer
-    return buf.readUIntBE(e.len - nrLen, nrLen);
+    return readUintBE(buf, e.len - nrLen, nrLen);
   }
 
   private async readString(e: IHeader): Promise<string> {
-    const rawString = await this.tokenizer.readToken(
-      new StringType(e.len, "utf8")
-    );
+    const rawString = await this.tokenizer.readToken(new Utf8StringType(e.len));
     return rawString.replace(/\00.*$/g, "");
   }
 
-  private async readBuffer(e: IHeader): Promise<Buffer> {
-    const buf = Buffer.alloc(e.len);
+  private async readBuffer(e: IHeader): Promise<Uint8Array> {
+    const buf = new Uint8Array(e.len);
     await this.tokenizer.readBuffer(buf);
     return buf;
   }

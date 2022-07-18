@@ -16,9 +16,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
     const tokenizer = await getTokenizerWithData("1A00", load);
     const buf = Buffer.alloc(16);
     const bytesRead = await tokenizer.readBuffer(buf);
-    expect(typeof bytesRead, "readBuffer promise should provide a number").toBe(
-      "number"
-    );
+    expect(typeof bytesRead, "readBuffer promise should provide a number").toBe("number");
     expect(bytesRead).toBe(16);
     try {
       await tokenizer.readBuffer(buf);
