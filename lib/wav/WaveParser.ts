@@ -1,7 +1,7 @@
 import * as strtok3 from "../strtok3";
 import * as fromBuffer from "../strtok3/fromBuffer";
 import * as Token from "../token-types";
-import initDebug from "debug";
+import initDebug from "../debug";
 
 import { IChunkHeader, Header } from "../riff/RiffHeader";
 import { ListInfoTagValue } from "../riff/RiffInfo";

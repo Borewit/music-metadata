@@ -7,7 +7,7 @@ import { BasicParser } from "../common/BasicParser";
 import { BlockHeader, BlockHeaderToken } from "./BlockHeader";
 import { MetadataId, MetadataIdToken } from "./MetadataId";
 
-import initDebug from "debug";
+import initDebug from "../debug";
 import { toHexString } from "../compat/hex";
 
 const debug = initDebug("music-metadata:parser:WavPack");

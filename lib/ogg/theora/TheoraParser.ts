@@ -1,5 +1,5 @@
 import type { ITokenizer } from "../../strtok3";
-import initDebug from "debug";
+import initDebug from "../../debug";
 
 import type { IOptions } from "../../type";
 import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";

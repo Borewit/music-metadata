@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import initDebug from "debug";
+import initDebug from "../debug";
 import * as strtok3 from "../strtok3";
 
 import { FourCcToken } from "../common/FourCC";

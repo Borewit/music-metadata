@@ -1,5 +1,5 @@
 import { EndOfStreamError, ITokenizer } from "../strtok3";
-import initDebug from "debug";
+import initDebug from "../debug";
 
 import { ID3v2Header } from "./ID3v2Header";
 import { ID3v2Parser } from "./ID3v2Parser";

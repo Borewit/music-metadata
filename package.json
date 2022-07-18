@@ -87,12 +87,10 @@
     "watch:typescript": "tsc -p tsconfig.check.json -w"
   },
   "dependencies": {
-    "debug": "^4.3.4",
     "ieee754": "^1.2.1",
     "media-typer": "^1.1.0"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.7",
     "@types/media-typer": "^1.1.1",
     "@types/node": "^18.0.6",
     "@typescript-eslint/eslint-plugin": "^5.30.6",

@@ -4,7 +4,7 @@ import { fileTypeFromBuffer } from "./file-type";
 import * as ContentType from "./content-type";
 import * as MimeType from "media-typer";
 
-import initDebug from "debug";
+import initDebug from "./debug";
 import { MetadataCollector } from "./common/MetadataCollector";
 import { AIFFParser } from "./aiff/AiffParser";
 import { APEv2Parser } from "./apev2/APEv2Parser";

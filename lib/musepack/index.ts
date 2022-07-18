@@ -1,4 +1,4 @@
-import initDebug from "debug";
+import initDebug from "../debug";
 
 import type { ITokenParser } from "../ParserFactory";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";

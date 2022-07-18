@@ -1,4 +1,4 @@
-import initDebug from "debug";
+import initDebug from "../debug";
 import * as Token from "../token-types";
 
 import * as util from "../common/Util";

@@ -11,7 +11,7 @@ import {
   TrackType,
 } from "../type";
 
-import initDebug from "debug";
+import initDebug from "../debug";
 import type { IGenericTag, TagType } from "./GenericTagTypes";
 import { CombinedTagMapper } from "./CombinedTagMapper";
 import { CommonTagMapper } from "./GenericTagMapper";

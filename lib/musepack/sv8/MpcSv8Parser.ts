@@ -1,4 +1,4 @@
-import initDebug from "debug";
+import initDebug from "../../debug";
 
 import { BasicParser } from "../../common/BasicParser";
 import { APEv2Parser } from "../../apev2/APEv2Parser";
