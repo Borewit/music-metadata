@@ -1,4 +1,4 @@
-import { IPicture } from "./type";
+import type { IPicture } from "./type";
 
 /**
  * Select most likely cover image.

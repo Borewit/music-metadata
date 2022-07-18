@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
-import { TagType } from "../lib/common/GenericTagTypes";
+import type { TagType } from "../lib/common/GenericTagTypes";
 import { ICommonTagsResult, INativeTagDict, parseFile, orderTags } from "../lib";
 import { samplePath } from "./util";
 

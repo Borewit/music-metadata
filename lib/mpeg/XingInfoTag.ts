@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3";
 import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";
 import { XingHeaderFlags } from "./XingHeaderFlags";
 import { Latin1StringType } from "../token-types/string";

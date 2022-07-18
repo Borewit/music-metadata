@@ -1,5 +1,5 @@
 import { UINT8 } from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import { Id3v1StringType } from "./ID3v1StringType";
 
 /**

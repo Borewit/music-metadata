@@ -1,6 +1,6 @@
-import { FileExtension } from "./FileExtension";
-import { MimeType } from "./MimeType";
-import { Readable as ReadableStream } from "node:stream";
+import type { FileExtension } from "./FileExtension";
+import type { MimeType } from "./MimeType";
+import type { Readable as ReadableStream } from "node:stream";
 
 export { FileExtension } from "./FileExtension";
 export { MimeType } from "./MimeType";

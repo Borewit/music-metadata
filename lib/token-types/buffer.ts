@@ -1,4 +1,4 @@
-import { IGetToken } from "./type";
+import type { IGetToken } from "./type";
 
 export class Uint8ArrayType implements IGetToken<Uint8Array> {
   public constructor(public len: number) {}

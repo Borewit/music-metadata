@@ -1,5 +1,5 @@
 import * as Token from "../../token-types";
-import { ITokenizer, IGetToken } from "../../strtok3";
+import type { ITokenizer, IGetToken } from "../../strtok3";
 import initDebug from "debug";
 
 import * as util from "../../common/Util";

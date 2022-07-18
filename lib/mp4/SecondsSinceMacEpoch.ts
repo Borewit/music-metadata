@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 /**
  * Timestamp stored in seconds since Mac Epoch (1 January 1904)

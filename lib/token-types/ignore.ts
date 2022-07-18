@@ -1,4 +1,4 @@
-import { IGetToken } from "./type";
+import type { IGetToken } from "./type";
 
 /**
  * Ignore a given number of bytes

@@ -1,5 +1,5 @@
 import { decodeLatin1 } from "../compat/text-decoder";
-import { IRandomReader } from "../type";
+import type { IRandomReader } from "../type";
 
 export const endTag2 = "LYRICS200";
 

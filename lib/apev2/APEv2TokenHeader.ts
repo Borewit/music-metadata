@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 /**
  * APE_HEADER: describes all of the necessary information about the APE file

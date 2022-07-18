@@ -2,7 +2,7 @@ import * as strtok3 from "./strtok3";
 
 import * as scanAppendingHeaders from "./scanAppendingHeaders";
 import { ParserFactory } from "./ParserFactory";
-import { IAudioMetadata, IOptions } from "./type";
+import type { IAudioMetadata, IOptions } from "./type";
 import { RandomFileReader } from "./common/RandomFileReader";
 
 /**

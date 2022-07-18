@@ -1,11 +1,11 @@
-import { ITokenizer } from "../../strtok3";
+import type { ITokenizer } from "../../strtok3";
 import initDebug from "debug";
 
-import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { IOptions } from "../../type";
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
-import { IPageHeader } from "../Header";
-import { IPageConsumer } from "../PageConsumer";
+import type { IPageHeader } from "../Header";
+import type { IPageConsumer } from "../PageConsumer";
 
 import { IdentificationHeader } from "./TheoraIdHeader";
 

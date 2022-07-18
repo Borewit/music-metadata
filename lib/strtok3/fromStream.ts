@@ -1,8 +1,8 @@
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import * as fs from "node:fs/promises";
-import { PathLike } from "node:fs";
+import type { PathLike } from "node:fs";
 import { ReadStreamTokenizer } from "./ReadStreamTokenizer";
-import { IFileInfo } from "./types";
+import type { IFileInfo } from "./types";
 
 /**
  * Construct ReadStreamTokenizer from given Stream.

@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 /**
  * Sample-to-Chunk ('stsc') atom table entry interface

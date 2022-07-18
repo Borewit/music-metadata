@@ -1,5 +1,5 @@
 import { BufferTokenizer } from "./BufferTokenizer";
-import { IFileInfo } from "./types";
+import type { IFileInfo } from "./types";
 
 /**
  * Construct ReadStreamTokenizer from given Buffer.

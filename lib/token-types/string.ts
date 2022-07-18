@@ -1,5 +1,4 @@
-import { TextDecoder } from "node:util";
-import { IGetToken } from "./type";
+import type { IGetToken } from "./type";
 
 /**
  * Consume a fixed number of bytes from the stream and return a string with a specified encoding.

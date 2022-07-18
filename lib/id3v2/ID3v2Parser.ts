@@ -1,13 +1,13 @@
-import { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3";
 import * as Token from "../token-types";
 
 import * as util from "../common/Util";
-import { TagType } from "../common/GenericTagTypes";
-import { ITag, IOptions } from "../type";
+import type { TagType } from "../common/GenericTagTypes";
+import type { ITag, IOptions } from "../type";
 import { FrameParser } from "./FrameParser";
 
-import { ID3v2MajorVersion } from "./ID3v2MajorVersion";
-import { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
+import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
+import type { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
 import { ID3v2Header, IID3v2header } from "./ID3v2Header";
 import { ExtendedHeader } from "./ExtendedHeader";
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";

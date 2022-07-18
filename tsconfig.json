@@ -37,7 +37,7 @@
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
 
-    // "importsNotUsedAsValues": "error",
+    "importsNotUsedAsValues": "error",
     // "checkJs": true,
 
     // "esModuleInterop": true,

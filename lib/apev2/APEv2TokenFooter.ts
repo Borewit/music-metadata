@@ -1,5 +1,5 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
 import { Latin1StringType } from "../token-types/string";
 

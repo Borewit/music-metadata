@@ -1,6 +1,6 @@
 import * as strtok3 from "../strtok3";
-import { ITokenizer } from "../strtok3";
-import { FileTypeResult } from "./type";
+import type { ITokenizer } from "../strtok3";
+import type { FileTypeResult } from "./type";
 import { FileTypeParser } from "./FileTypeParser";
 
 /**

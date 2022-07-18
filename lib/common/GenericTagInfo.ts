@@ -1,4 +1,4 @@
-import { GenericTagId } from "./GenericTagId";
+import type { GenericTagId } from "./GenericTagId";
 
 export interface ITagInfo {
   /**

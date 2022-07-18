@@ -1,4 +1,4 @@
-import { INativeTagDict, ITag } from "./type";
+import type { INativeTagDict, ITag } from "./type";
 
 /**
  * Create a dictionary ordered by their tag id (key)

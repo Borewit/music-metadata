@@ -1,6 +1,6 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
-import { IChunkHeader } from "../iff";
+import type { IChunkHeader } from "../iff";
 import { UINT16_LE, UINT32_LE } from "../token-types";
 
 /**

@@ -12,12 +12,12 @@ import {
 } from "../type";
 
 import initDebug from "debug";
-import { IGenericTag, TagType } from "./GenericTagTypes";
+import type { IGenericTag, TagType } from "./GenericTagTypes";
 import { CombinedTagMapper } from "./CombinedTagMapper";
 import { CommonTagMapper } from "./GenericTagMapper";
 import { toRatio } from "./Util";
 import { fileTypeFromBuffer } from "../file-type";
-import { INativeMetadataCollector } from "./INativeMetadataCollector";
+import type { INativeMetadataCollector } from "./INativeMetadataCollector";
 import { isSingleton, isUnique } from "./GenericTagInfo";
 
 const debug = initDebug("music-metadata:collector");

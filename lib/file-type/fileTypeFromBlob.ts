@@ -1,4 +1,4 @@
-import { FileTypeResult } from "./type";
+import type { FileTypeResult } from "./type";
 import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
 
 /**

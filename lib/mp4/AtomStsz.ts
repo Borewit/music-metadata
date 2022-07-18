@@ -1,6 +1,6 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
-import { ITableAtom } from "./AtomTable";
+import type { IGetToken } from "../strtok3";
+import type { ITableAtom } from "./AtomTable";
 import { readTokenTable } from "./readTokenTable";
 
 /**

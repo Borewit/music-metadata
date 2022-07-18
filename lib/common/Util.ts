@@ -1,7 +1,7 @@
 import { getBase64UrlStringFromUint8Array } from "../compat/base64";
 import { toHexString } from "../compat/hex";
 import { decodeLatin1, decodeUtf16le, decodeUtf8 } from "../compat/text-decoder";
-import { IRatio } from "../type";
+import type { IRatio } from "../type";
 
 export type StringEncoding =
   | "ascii" // Use  'utf-8' or latin1 instead

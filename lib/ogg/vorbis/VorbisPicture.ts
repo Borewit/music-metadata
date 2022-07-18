@@ -1,8 +1,8 @@
 import * as Token from "../../token-types";
-import { IGetToken } from "../../strtok3";
+import type { IGetToken } from "../../strtok3";
 
 import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
-import { IPicture } from "../../type";
+import type { IPicture } from "../../type";
 import { Utf8StringType } from "../../token-types/string";
 import { getUint8ArrayFromBase64String } from "../../compat/base64";
 

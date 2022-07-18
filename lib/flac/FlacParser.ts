@@ -1,14 +1,14 @@
 import { Uint8ArrayType } from "../token-types";
 import initDebug from "debug";
-import { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3";
 
 import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/VorbisPicture";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 import { FourCcToken } from "../common/FourCC";
 import { VorbisParser } from "../ogg/vorbis/VorbisParser";
-import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
-import { IOptions } from "../type";
-import { ITokenParser } from "../ParserFactory";
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { IOptions } from "../type";
+import type { ITokenParser } from "../ParserFactory";
 import { VorbisDecoder } from "../ogg/vorbis/VorbisDecoder";
 import { BlockType } from "./BlockType";
 import { BlockHeader, IBlockHeader } from "./BlockHeader";

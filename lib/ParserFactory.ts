@@ -1,5 +1,5 @@
-import { IOptions, IAudioMetadata, ParserType } from "./type";
-import { ITokenizer } from "./strtok3";
+import type { IOptions, IAudioMetadata, ParserType } from "./type";
+import type { ITokenizer } from "./strtok3";
 import { fileTypeFromBuffer } from "./file-type";
 import * as ContentType from "content-type";
 import * as MimeType from "media-typer";
@@ -19,7 +19,7 @@ import { WavPackParser } from "./wavpack/WavPackParser";
 import { DsfParser } from "./dsf/DsfParser";
 import { DsdiffParser } from "./dsdiff/DsdiffParser";
 import { MatroskaParser } from "./matroska/MatroskaParser";
-import { INativeMetadataCollector } from "./common/INativeMetadataCollector";
+import type { INativeMetadataCollector } from "./common/INativeMetadataCollector";
 
 const debug = initDebug("music-metadata:parser:factory");
 

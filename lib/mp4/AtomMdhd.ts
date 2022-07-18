@@ -1,6 +1,6 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
-import { IAtomMxhd } from "./AtomMxhd";
+import type { IGetToken } from "../strtok3";
+import type { IAtomMxhd } from "./AtomMxhd";
 import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
 import { FixedLengthAtom } from "./AtomFixedLength";
 

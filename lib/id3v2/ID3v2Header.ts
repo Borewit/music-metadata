@@ -1,6 +1,6 @@
-import { ID3v2MajorVersion } from "./ID3v2MajorVersion";
+import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 import * as util from "../common/Util";
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";

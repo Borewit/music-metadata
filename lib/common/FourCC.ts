@@ -1,5 +1,5 @@
 import * as util from "./Util";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import { Latin1StringType } from "../token-types/string";
 
 const validFourCC = /^[\u0021-\u007E©][\0\u0020-\u007E]{3}/;

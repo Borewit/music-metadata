@@ -1,5 +1,5 @@
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 import * as util from "../common/Util";
 

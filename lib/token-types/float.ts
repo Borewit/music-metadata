@@ -1,5 +1,5 @@
 import * as ieee754 from "ieee754";
-import { IToken } from "./type";
+import type { IToken } from "./type";
 import { dv } from "./dataview";
 
 /**

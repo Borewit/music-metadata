@@ -2,7 +2,7 @@ import * as Token from "../token-types";
 import * as strtok3 from "../strtok3";
 import { stringToBytes, tarHeaderChecksumMatches, uint32SyncSafeToken, checkUtil } from "./util";
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
-import { FileTypeResult } from "./type";
+import type { FileTypeResult } from "./type";
 import { encodeUtf8 } from "../compat/text-encoder";
 import { indexOf, isSubArray, readUintBE } from "../compat/buffer";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";

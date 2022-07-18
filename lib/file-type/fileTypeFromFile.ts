@@ -1,5 +1,5 @@
 import * as strtok3 from "../strtok3";
-import { FileTypeResult } from "./type";
+import type { FileTypeResult } from "./type";
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
 
 /**

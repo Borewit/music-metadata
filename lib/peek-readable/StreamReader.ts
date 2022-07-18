@@ -1,4 +1,4 @@
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { EndOfStreamError } from "./EndOfFileStream";
 import { Deferred } from "./Deferred";
 

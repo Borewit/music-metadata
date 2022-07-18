@@ -1,6 +1,6 @@
 import initDebug from "debug";
 
-import { ITokenParser } from "../ParserFactory";
+import type { ITokenParser } from "../ParserFactory";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 
 import { MpcSv8Parser } from "./sv8/MpcSv8Parser";

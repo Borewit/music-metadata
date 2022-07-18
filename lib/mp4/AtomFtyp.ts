@@ -1,4 +1,4 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import { Latin1StringType } from "../token-types/string";
 
 export interface IAtomFtyp {

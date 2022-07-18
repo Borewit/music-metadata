@@ -1,4 +1,4 @@
-import { IToken } from "./type";
+import type { IToken } from "./type";
 import { dv } from "./dataview";
 import { UINT24_BE, UINT24_LE } from "./uint";
 

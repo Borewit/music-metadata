@@ -1,4 +1,4 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import { UINT16_LE } from "../token-types";
 
 /**
