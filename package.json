@@ -87,13 +87,11 @@
     "watch:typescript": "tsc -p tsconfig.check.json -w"
   },
   "dependencies": {
-    "content-type": "^1.0.4",
     "debug": "^4.3.4",
     "ieee754": "^1.2.1",
     "media-typer": "^1.1.0"
   },
   "devDependencies": {
-    "@types/content-type": "^1.1.5",
     "@types/debug": "^4.1.7",
     "@types/media-typer": "^1.1.1",
     "@types/node": "^18.0.6",
