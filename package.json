@@ -87,7 +87,6 @@
     "watch:typescript": "tsc -p tsconfig.check.json -w"
   },
   "dependencies": {
-    "ieee754": "^1.2.1",
     "media-typer": "^1.1.0"
   },
   "devDependencies": {

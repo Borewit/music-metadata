@@ -1,4 +1,4 @@
-import * as ieee754 from "ieee754";
+import * as ieee754 from "../ieee754";
 import type { IToken } from "./type";
 import { dv } from "./dataview";
 
