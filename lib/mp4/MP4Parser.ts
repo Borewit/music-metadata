@@ -1,6 +1,6 @@
 import initDebug from "debug";
 import * as Token from "../token-types";
-import { IGetToken } from "../token-types";
+import type { IGetToken } from "../token-types";
 
 import { BasicParser } from "../common/BasicParser";
 import { Genres } from "../id3v1/ID3v1Genres";
@@ -21,13 +21,13 @@ import { StscAtom } from "./AtomStsc";
 import { IAtomStsd, StsdAtom } from "./AtomStsd";
 import { IStszAtom, StszAtom } from "./AtomStsz";
 import { SttsAtom } from "./AtomStts";
-import { ITableAtom } from "./AtomTable";
+import type { ITableAtom } from "./AtomTable";
 import { ChapterText } from "./ChapterText";
-import { ISampleDescription } from "./SampleDescription";
-import { ISampleToChunk } from "./SampleToChunk";
+import type { ISampleDescription } from "./SampleDescription";
+import type { ISampleToChunk } from "./SampleToChunk";
 import { SoundSampleDescriptionV0 } from "./SoundSampleDescriptionV0";
 import { SoundSampleDescriptionVersion } from "./SoundSampleDescriptionVersion";
-import { ITimeToSampleToken } from "./TimeToSampleToken";
+import type { ITimeToSampleToken } from "./TimeToSampleToken";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
 import { toHexString } from "../compat/hex";
 import { Utf8StringType } from "../token-types/string";

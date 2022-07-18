@@ -2,7 +2,7 @@ import initDebug from "debug";
 
 import { BasicParser } from "../common/BasicParser";
 import { APEv2Parser } from "../apev2/APEv2Parser";
-import { IRandomReader } from "../type";
+import type { IRandomReader } from "../type";
 import { Genres } from "./ID3v1Genres";
 import { IId3v1Header, Iid3v1Token } from "./ID3v1Header";
 import { decodeLatin1 } from "../compat/text-decoder";

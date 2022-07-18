@@ -1,6 +1,6 @@
-import { FormatId, IFormat, INativeTags, IQualityInformation, ITrackInfo } from "../type";
+import type { FormatId, IFormat, INativeTags, IQualityInformation, ITrackInfo } from "../type";
 
-import { TagType } from "./GenericTagTypes";
+import type { TagType } from "./GenericTagTypes";
 
 /**
  * Combines all generic-tag-mappers for each tag type

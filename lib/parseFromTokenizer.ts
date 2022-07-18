@@ -1,6 +1,6 @@
-import * as strtok3 from "./strtok3";
+import type * as strtok3 from "./strtok3";
 import { ParserFactory } from "./ParserFactory";
-import { IAudioMetadata, IOptions } from "./type";
+import type { IAudioMetadata, IOptions } from "./type";
 
 /**
  * Parse audio from ITokenizer source

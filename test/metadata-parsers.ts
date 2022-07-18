@@ -1,7 +1,7 @@
 import { createReadStream, readFileSync } from "node:fs";
 
 import { parseFile, parseStream, parseBuffer } from "../lib";
-import { IAudioMetadata, IOptions } from "../lib/type";
+import type { IAudioMetadata, IOptions } from "../lib/type";
 
 interface Parser {
   description: string;

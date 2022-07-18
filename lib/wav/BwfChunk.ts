@@ -1,4 +1,4 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import * as Token from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 

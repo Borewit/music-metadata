@@ -1,4 +1,4 @@
-import { DataType } from "./DataType";
+import type { DataType } from "./DataType";
 
 export interface ITagFlags {
   containsHeader: boolean;

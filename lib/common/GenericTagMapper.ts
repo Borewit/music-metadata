@@ -1,7 +1,7 @@
-import * as generic from "./GenericTagTypes";
-import { ITag } from "../type";
-import { INativeMetadataCollector, IWarningCollector } from "./INativeMetadataCollector";
-import { GenericTagId } from "./GenericTagId";
+import type * as generic from "./GenericTagTypes";
+import type { ITag } from "../type";
+import type { INativeMetadataCollector, IWarningCollector } from "./INativeMetadataCollector";
+import type { GenericTagId } from "./GenericTagId";
 
 export interface IGenericTagMapper {
   /**

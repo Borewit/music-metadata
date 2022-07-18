@@ -1,7 +1,7 @@
 import * as strtok3 from "../strtok3";
-import { Readable as ReadableStream, PassThrough } from "node:stream";
+import type { Readable as ReadableStream, PassThrough } from "node:stream";
 import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
-import { StreamOptions, ReadableStreamWithFileType, FileTypeResult } from "./type";
+import type { StreamOptions, ReadableStreamWithFileType, FileTypeResult } from "./type";
 
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 

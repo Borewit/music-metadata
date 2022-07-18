@@ -1,5 +1,5 @@
 import GUID, { StreamPropertiesObject as GUIDStreamPropertiesObject } from "./GUID";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
+import type { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
 
 /**

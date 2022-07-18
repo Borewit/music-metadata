@@ -1,4 +1,4 @@
-import { IVersionAndFlags } from "./VersionAndFlags";
+import type { IVersionAndFlags } from "./VersionAndFlags";
 
 /**
  * Common interface for the mvhd (Movie Header) & mdhd (Media) atom

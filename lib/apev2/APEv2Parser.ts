@@ -1,10 +1,10 @@
 import initDebug from "debug";
-import * as strtok3 from "../strtok3";
+import type * as strtok3 from "../strtok3";
 import * as fromBuffer from "../strtok3/fromBuffer";
 
 import * as util from "../common/Util";
-import { IOptions, IRandomReader, IApeHeader } from "../type";
-import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { IOptions, IRandomReader, IApeHeader } from "../type";
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { BasicParser } from "../common/BasicParser";
 import { IDescriptor, DescriptorParser } from "./APEv2TokenDescriptor";
 import { IFooter, TagFooter } from "./APEv2TokenFooter";

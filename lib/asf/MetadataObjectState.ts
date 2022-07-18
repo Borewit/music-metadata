@@ -1,4 +1,4 @@
-import { ITag } from "../type";
+import type { ITag } from "../type";
 import { MetadataObject } from "./GUID";
 import { parseUnicodeAttr } from "./AsfUtil";
 import { State } from "./State";

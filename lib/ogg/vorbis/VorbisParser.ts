@@ -1,11 +1,11 @@
 import * as Token from "../../token-types";
 import initDebug from "debug";
 
-import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { IOptions } from "../../type";
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
-import { IPageHeader } from "../Header";
-import { IPageConsumer } from "../PageConsumer";
+import type { IPageHeader } from "../Header";
+import type { IPageConsumer } from "../PageConsumer";
 
 import { VorbisDecoder } from "./VorbisDecoder";
 import { CommonHeader } from "./VorbisCommonHeader";

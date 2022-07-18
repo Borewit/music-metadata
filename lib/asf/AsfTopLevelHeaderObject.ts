@@ -1,8 +1,8 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 import * as Token from "../token-types";
 import GUID from "./GUID";
-import { IAsfObjectHeader } from "./AsfObjectHeader";
+import type { IAsfObjectHeader } from "./AsfObjectHeader";
 
 /**
  * Interface for: 3. ASF top-level Header Object

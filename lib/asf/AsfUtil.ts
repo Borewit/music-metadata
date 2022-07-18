@@ -1,7 +1,7 @@
 import * as Token from "../token-types";
 
 import * as util from "../common/Util";
-import { DataType } from "./DataType";
+import type { DataType } from "./DataType";
 
 export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Uint8Array;
 

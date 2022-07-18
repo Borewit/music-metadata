@@ -11,7 +11,7 @@ import { TheoraParser } from "./theora/TheoraParser";
 
 import { SegmentTable, ISegmentTable } from "./SegmentTable";
 import { IPageHeader, Header } from "./Header";
-import { IPageConsumer } from "./PageConsumer";
+import type { IPageConsumer } from "./PageConsumer";
 import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:ogg");

@@ -1,8 +1,8 @@
 import { UINT24_BE } from "../token-types";
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
 import * as util from "../common/Util";
-import { BlockType } from "./BlockType";
+import type { BlockType } from "./BlockType";
 
 /**
  * METADATA_BLOCK_DATA

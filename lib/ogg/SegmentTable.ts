@@ -1,5 +1,5 @@
-import { IGetToken } from "../strtok3";
-import { IPageHeader } from "./Header";
+import type { IGetToken } from "../strtok3";
+import type { IPageHeader } from "./Header";
 
 export interface ISegmentTable {
   totalPageSize: number;

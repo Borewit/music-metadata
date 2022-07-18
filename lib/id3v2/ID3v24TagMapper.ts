@@ -1,10 +1,10 @@
-import { INativeTagMap } from "../common/GenericTagTypes";
+import type { INativeTagMap } from "../common/GenericTagTypes";
 import { CommonTagMapper } from "../common/GenericTagMapper";
-import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { CaseInsensitiveTagMap } from "../common/CaseInsensitiveTagMap";
 import * as util from "../common/Util";
 
-import { IRating, ITag } from "../type";
+import type { IRating, ITag } from "../type";
 import { UINT32_LE } from "../token-types";
 
 /**

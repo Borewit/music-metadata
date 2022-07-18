@@ -1,6 +1,6 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
-import { IChunkHeader } from "../iff";
+import type { IChunkHeader } from "../iff";
 import { Latin1StringType } from "../token-types/string";
 
 /**

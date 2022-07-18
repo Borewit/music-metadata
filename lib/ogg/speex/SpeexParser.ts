@@ -1,10 +1,10 @@
-import { ITokenizer } from "../../strtok3";
+import type { ITokenizer } from "../../strtok3";
 import initDebug from "debug";
 
-import { IPageHeader } from "../Header";
+import type { IPageHeader } from "../Header";
 import { VorbisParser } from "../vorbis/VorbisParser";
-import { IOptions } from "../../type";
-import { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { IOptions } from "../../type";
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
 import { Header } from "./SpeexHeader";
 

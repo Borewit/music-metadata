@@ -1,4 +1,4 @@
-import { IRandomReader } from "../type";
+import type { IRandomReader } from "../type";
 
 /**
  * Provides abstract Uint8Array access via the IRandomRead interface

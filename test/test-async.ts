@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
 import { parseFile } from "../lib";
-import { IMetadataEvent } from "../lib/type";
+import type { IMetadataEvent } from "../lib/type";
 import { samplePath } from "./util";
 
 describe("Asynchronous observer updates", () => {

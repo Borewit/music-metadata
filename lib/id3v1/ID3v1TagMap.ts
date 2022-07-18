@@ -1,4 +1,4 @@
-import { INativeTagMap } from "../common/GenericTagTypes";
+import type { INativeTagMap } from "../common/GenericTagTypes";
 import { CommonTagMapper } from "../common/GenericTagMapper";
 
 /**

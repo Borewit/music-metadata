@@ -1,4 +1,4 @@
-import * as fs from "node:fs";
+import type * as fs from "node:fs";
 
 export class Row {
   constructor(public values: string[]) {}

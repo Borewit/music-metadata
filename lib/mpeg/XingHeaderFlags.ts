@@ -1,4 +1,4 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 import * as util from "../common/Util";
 
 export interface IXingHeaderFlags {

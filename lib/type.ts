@@ -1,7 +1,7 @@
-import { TagType } from "./common/GenericTagTypes";
-import { IFooter } from "./apev2/APEv2TokenFooter";
-import { TrackType } from "./matroska/types";
-import { GenericTagId } from "./common/GenericTagId";
+import type { TagType } from "./common/GenericTagTypes";
+import type { IFooter } from "./apev2/APEv2TokenFooter";
+import type { TrackType } from "./matroska/types";
+import type { GenericTagId } from "./common/GenericTagId";
 
 export { TrackType } from "./matroska/types";
 

@@ -1,4 +1,4 @@
-import { IPageHeader } from "./Header";
+import type { IPageHeader } from "./Header";
 
 export interface IPageConsumer {
   /**

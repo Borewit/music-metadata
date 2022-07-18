@@ -1,4 +1,4 @@
-import { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3";
 import initDebug from "debug";
 import { Header, IAtomHeader } from "./AtomHeader";
 import { ExtendedSize } from "./SoundSampleDescriptionVersion";

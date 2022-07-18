@@ -1,6 +1,6 @@
 import * as Token from "../token-types";
-import { IGetToken } from "../strtok3";
-import { IVersionAndFlags } from "./VersionAndFlags";
+import type { IGetToken } from "../strtok3";
+import type { IVersionAndFlags } from "./VersionAndFlags";
 import { Utf8StringType } from "../token-types/string";
 
 /**

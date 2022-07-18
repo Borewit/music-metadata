@@ -1,6 +1,6 @@
-import { IGetToken } from "../strtok3";
+import type { IGetToken } from "../strtok3";
 
-import { ITag } from "../type";
+import type { ITag } from "../type";
 import { getParserForAttr } from "./AsfUtil";
 import { HeaderObjectToken, IAsfObjectHeader } from "./AsfObjectHeader";
 import { WmPictureToken } from "./WmPicture";

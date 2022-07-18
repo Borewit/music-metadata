@@ -1,6 +1,6 @@
 import * as strtok3 from "../strtok3";
-import { Readable as ReadableStream } from "node:stream";
-import { FileTypeResult } from "./type";
+import type { Readable as ReadableStream } from "node:stream";
+import type { FileTypeResult } from "./type";
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
 
 /**

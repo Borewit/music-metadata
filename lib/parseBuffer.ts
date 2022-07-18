@@ -1,5 +1,5 @@
 import * as strtok3 from "./strtok3";
-import { IAudioMetadata, IOptions } from "./type";
+import type { IAudioMetadata, IOptions } from "./type";
 import { RandomUint8ArrayReader } from "./common/RandomUint8ArrayReader";
 import { scanAppendingHeaders } from "./scanAppendingHeaders";
 import { parseFromTokenizer } from "./parseFromTokenizer";

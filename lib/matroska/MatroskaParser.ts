@@ -2,9 +2,9 @@ import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
 import initDebug from "debug";
 import { EndOfStreamError, ITokenizer } from "../strtok3";
 
-import { INativeMetadataCollector } from "../common/INativeMetadataCollector";
-import { IOptions, ITrackInfo } from "../type";
-import { ITokenParser } from "../ParserFactory";
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { IOptions, ITrackInfo } from "../type";
+import type { ITokenParser } from "../ParserFactory";
 import { BasicParser } from "../common/BasicParser";
 
 import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";

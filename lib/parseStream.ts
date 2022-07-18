@@ -1,8 +1,8 @@
-import * as Stream from "node:stream";
+import type * as Stream from "node:stream";
 import * as strtok3 from "./strtok3";
 
 import * as parseFromTokenizer from "./parseFromTokenizer";
-import { IAudioMetadata, IOptions } from "./type";
+import type { IAudioMetadata, IOptions } from "./type";
 
 /**
  * Parse audio from Node Stream.Readable
