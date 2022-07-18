@@ -1,4 +1,4 @@
-import initDebug from "debug";
+import initDebug from "../debug";
 
 const debug = initDebug("music-metadata:parser:MP4:atom");
 

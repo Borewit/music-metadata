@@ -173,7 +173,7 @@
     "radix": "error",
     "semi": "error",
     "space-in-parens": ["error", "never"],
-    "spaced-comment": ["error", "always", { "markers": ["/"] }],
+    "spaced-comment": ["error", "always", { "markers": ["/", "!"] }],
 
     /* eslint-plugin-import */
     "import/no-extraneous-dependencies": ["error", { "devDependencies": false }],

@@ -11,9 +11,15 @@
       import { parseBuffer } from "./lib";
 
       async function onload() {
-        await parseBuffer(new ArrayBuffer(0));
-        console.log("parsed");
+        console.log("preparse");
+
+        const data = await fetch("./sample.aac");
+        const parsed = await parseBuffer(new Uint8Array(await data.arrayBuffer()));
+        console.log("parsed", parsed);
       }
+      console.log("do javascript");
+
+      onload();
     </script>
   </body>
 </html>

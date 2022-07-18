@@ -1,5 +1,5 @@
 import * as common from "../common/Util";
-import initDebug from "debug";
+import initDebug from "../debug";
 
 const debug = initDebug("music-metadata:parser:mpeg");
 

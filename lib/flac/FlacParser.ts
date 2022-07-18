@@ -1,5 +1,5 @@
 import { Uint8ArrayType } from "../token-types";
-import initDebug from "debug";
+import initDebug from "../debug";
 import type { ITokenizer } from "../strtok3";
 
 import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/VorbisPicture";

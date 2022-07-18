@@ -1,4 +1,4 @@
-import initDebug from "debug";
+import initDebug from "../debug";
 import type * as strtok3 from "../strtok3";
 import * as fromBuffer from "../strtok3/fromBuffer";
 

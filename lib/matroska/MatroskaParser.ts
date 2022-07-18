@@ -1,5 +1,5 @@
 import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
-import initDebug from "debug";
+import initDebug from "../debug";
 import { EndOfStreamError, ITokenizer } from "../strtok3";
 
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";

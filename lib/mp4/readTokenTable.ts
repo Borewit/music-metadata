@@ -1,4 +1,4 @@
-import initDebug from "debug";
+import initDebug from "../debug";
 import type { IGetToken } from "../strtok3";
 
 const debug = initDebug("music-metadata:parser:MP4:atom");

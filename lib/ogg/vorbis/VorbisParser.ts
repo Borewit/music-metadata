@@ -1,5 +1,5 @@
 import * as Token from "../../token-types";
-import initDebug from "debug";
+import initDebug from "../../debug";
 
 import type { IOptions } from "../../type";
 import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";

@@ -1,6 +1,6 @@
 import * as Token from "../../token-types";
 import type { ITokenizer, IGetToken } from "../../strtok3";
-import initDebug from "debug";
+import initDebug from "../../debug";
 
 import * as util from "../../common/Util";
 import { Latin1StringType } from "../../token-types/string";
