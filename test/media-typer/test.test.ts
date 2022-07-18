@@ -1,122 +1,117 @@
+import { describe, expect, it } from "vitest";
+import { format, parse, test } from "../../lib/media-typer";
 
-var assert = require('assert')
-var typer = require('..')
-
-var invalidTypes = [
-  ' ',
-  'null',
-  'undefined',
-  '/',
-  'text/;plain',
+const invalidTypes = [
+  " ",
+  "null",
+  "undefined",
+  "/",
+  "text/;plain",
   'text/"plain"',
-  'text/p£ain',
-  'text/(plain)',
-  'text/@plain',
-  'text/plain,wrong'
-]
+  "text/p£ain",
+  "text/(plain)",
+  "text/@plain",
+  "text/plain,wrong",
+];
 
-describe('typer.format(obj)', function () {
-  it('should format basic type', function () {
-    var str = typer.format({ type: 'text', subtype: 'html' })
-    assert.strictEqual(str, 'text/html')
-  })
+describe("typer.format(obj)", function () {
+  it("should format basic type", function () {
+    const str = format({ type: "text", subtype: "html" });
+    expect(str).toBe("text/html");
+  });
 
-  it('should format type with suffix', function () {
-    var str = typer.format({ type: 'image', subtype: 'svg', suffix: 'xml' })
-    assert.strictEqual(str, 'image/svg+xml')
-  })
+  it("should format type with suffix", function () {
+    const str = format({ type: "image", subtype: "svg", suffix: "xml" });
+    expect(str).toBe("image/svg+xml");
+  });
 
-  it('should require argument', function () {
-    assert.throws(typer.format.bind(null), /obj.*required/)
-  })
+  it("should require argument", function () {
+    expect(() => (format as unknown as (n?: unknown) => void)(), "obj.*required").toThrow();
+  });
 
-  it('should reject non-objects', function () {
-    assert.throws(typer.format.bind(null, 7), /obj.*required/)
-  })
+  it("should reject non-objects", function () {
+    expect(() => (format as unknown as (n?: unknown) => void)(7), "obj.*required").toThrow();
+  });
 
-  it('should require type', function () {
-    assert.throws(typer.format.bind(null, {}), /invalid type/)
-  })
+  it("should require type", function () {
+    expect(() => (format as unknown as (n?: unknown) => void)({}), "invalid type").toThrow();
+  });
 
-  it('should reject invalid type', function () {
-    assert.throws(typer.format.bind(null, { type: 'text/' }), /invalid type/)
-  })
+  it("should reject invalid type", function () {
+    expect(() => (format as unknown as (n?: unknown) => void)({ type: "text/" }), "invalid type").toThrow();
+  });
 
-  it('should require subtype', function () {
-    assert.throws(typer.format.bind(null, { type: 'text' }), /invalid subtype/)
-  })
+  it("should require subtype", function () {
+    expect(() => (format as unknown as (n?: unknown) => void)({ type: "text" }), "invalid subtype").toThrow();
+  });
 
-  it('should reject invalid subtype', function () {
-    var obj = { type: 'text', subtype: 'html/' }
-    assert.throws(typer.format.bind(null, obj), /invalid subtype/)
-  })
+  it("should reject invalid subtype", function () {
+    const obj = { type: "text", subtype: "html/" };
+    expect(() => (format as unknown as (n?: unknown) => void)(obj), "invalid subtype").toThrow();
+  });
 
-  it('should reject invalid suffix', function () {
-    var obj = { type: 'image', subtype: 'svg', suffix: 'xml\\' }
-    assert.throws(typer.format.bind(null, obj), /invalid suffix/)
-  })
-})
+  it("should reject invalid suffix", function () {
+    const obj = { type: "image", subtype: "svg", suffix: "xml\\" };
+    expect(() => (format as unknown as (n?: unknown) => void)(obj), "invalid suffix").toThrow();
+  });
+});
 
-describe('typer.parse(string)', function () {
-  it('should parse basic type', function () {
-    var type = typer.parse('text/html')
-    assert.strictEqual(type.type, 'text')
-    assert.strictEqual(type.subtype, 'html')
-  })
+describe("typer.parse(string)", function () {
+  it("should parse basic type", function () {
+    const type = parse("text/html");
+    expect(type.type).toBe("text");
+    expect(type.subtype).toBe("html");
+  });
 
-  it('should parse with suffix', function () {
-    var type = typer.parse('image/svg+xml')
-    assert.strictEqual(type.type, 'image')
-    assert.strictEqual(type.subtype, 'svg')
-    assert.strictEqual(type.suffix, 'xml')
-  })
+  it("should parse with suffix", function () {
+    const type = parse("image/svg+xml");
+    expect(type.type).toBe("image");
+    expect(type.subtype).toBe("svg");
+    expect(type.suffix).toBe("xml");
+  });
 
-  it('should lower-case type', function () {
-    var type = typer.parse('IMAGE/SVG+XML')
-    assert.strictEqual(type.type, 'image')
-    assert.strictEqual(type.subtype, 'svg')
-    assert.strictEqual(type.suffix, 'xml')
-  })
+  it("should lower-case type", function () {
+    const type = parse("IMAGE/SVG+XML");
+    expect(type.type).toBe("image");
+    expect(type.subtype).toBe("svg");
+    expect(type.suffix).toBe("xml");
+  });
 
-  invalidTypes.forEach(function (type) {
-    it('should throw on invalid media type ' + JSON.stringify(type), function () {
-      assert.throws(typer.parse.bind(null, type), /invalid media type/)
-    })
-  })
+  it.each(invalidTypes)("should throw on invalid media type %s", function (type) {
+    expect(() => (parse as unknown as (n?: unknown) => void)(type), "invalid media type").toThrow();
+  });
 
-  it('should require argument', function () {
-    assert.throws(typer.parse.bind(null), /string.*required/)
-  })
+  it("should require argument", function () {
+    expect(() => (parse as unknown as (n?: unknown) => void)(), "string.*required").toThrow();
+  });
 
-  it('should reject non-strings', function () {
-    assert.throws(typer.parse.bind(null, 7), /string.*required/)
-  })
-})
+  it("should reject non-strings", function () {
+    expect(() => (parse as unknown as (n?: unknown) => void)(7), "string.*required").toThrow();
+  });
+});
 
-describe('typer.test(string)', function () {
-  it('should pass basic type', function () {
-    assert.strictEqual(typer.test('text/html'), true)
-  })
+describe("typer.test(string)", function () {
+  it("should pass basic type", function () {
+    expect(test("text/html")).toBe(true);
+  });
 
-  it('should pass with suffix', function () {
-    assert.strictEqual(typer.test('image/svg+xml'), true)
-  })
+  it("should pass with suffix", function () {
+    expect(test("image/svg+xml")).toBe(true);
+  });
 
-  it('should pass upper-case type', function () {
-    assert.strictEqual(typer.test('IMAGE/SVG+XML'), true)
-  })
+  it("should pass upper-case type", function () {
+    expect(test("IMAGE/SVG+XML")).toBe(true);
+  });
 
-  invalidTypes.forEach(function (type) {
-    it('should fail invalid media type ' + JSON.stringify(type), function () {
-      assert.strictEqual(typer.test(type), false)
-    })
-  })
+  it.each(invalidTypes)("should fail invalid media type %s", function (type) {
+    expect(test(type)).toBe(false);
+  });
 
-  it('should require argument', function () {
-    assert.throws(typer.test.bind(null), /string.*required/)
-  })
+  it("should require argument", function () {
+    expect(() => (test as unknown as (n?: unknown) => void)(), "string.*required").toThrow();
+  });
 
-  it('should reject non-strings', function () {
-    assert.throws(typer.test.bind(null, 7), /string.*required/)
-  })
-})
+  it("should reject non-strings", function () {
+    expect(() => (test as unknown as (n?: unknown) => void)(7), "string.*required").toThrow();
+  });
+});
