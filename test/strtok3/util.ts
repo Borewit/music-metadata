@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { createReadStream } from "node:fs";
 import { readFile } from "node:fs/promises";
 
-export type LoadTokenizer = (testFile: string) => Promise<ITokenizer>;
+type LoadTokenizer = (testFile: string) => Promise<ITokenizer>;
 
-export function getResourcePath(testFile: string) {
+function getResourcePath(testFile: string) {
   return join(__dirname, "resources", testFile);
 }
 

@@ -7,6 +7,7 @@ ESLint configuration
     "node": true
   },
   "rules": {
+    "no-restricted-imports": "off",
     "import/no-extraneous-dependencies": [
       "error",
       {
