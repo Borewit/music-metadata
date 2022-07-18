@@ -1,7 +1,7 @@
 import type { IOptions, IAudioMetadata, ParserType } from "./type";
 import type { ITokenizer } from "./strtok3";
 import { fileTypeFromBuffer } from "./file-type";
-import * as ContentType from "content-type";
+import * as ContentType from "./content-type";
 import * as MimeType from "media-typer";
 
 import initDebug from "debug";

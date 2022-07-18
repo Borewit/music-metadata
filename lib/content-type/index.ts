@@ -1,23 +1,15 @@
-/*!
- * content-type
- * Copyright(c) 2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-"use strict";
-
 export interface ParsedMediaType {
   type: string;
-  parameters: { [key: string]: string };
+  parameters: Record<string, string>;
 }
 
 export interface MediaType {
   type: string;
-  parameters?: { [key: string]: string } | undefined;
+  parameters?: Record<string, string> | undefined;
 }
 
 export interface RequestLike {
-  headers: { [header: string]: string | string[] | undefined };
+  headers: Record<string, string | string[] | undefined>;
 }
 
 export interface ResponseLike {
@@ -29,19 +21,16 @@ export interface ResponseLike {
  *
  * parameter     = token "=" ( token / quoted-string )
  * token         = 1*tchar
- * tchar         = "!" / "#" / "$" / "%" / "&" / "'" / "*"
- *               / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
- *               / DIGIT / ALPHA
- *               ; any VCHAR, except delimiters
+ * tchar         = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA ; any VCHAR, except delimiters
  * quoted-string = DQUOTE *( qdtext / quoted-pair ) DQUOTE
  * qdtext        = HTAB / SP / %x21 / %x23-5B / %x5D-7E / obs-text
  * obs-text      = %x80-FF
  * quoted-pair   = "\" ( HTAB / SP / VCHAR / obs-text )
  */
-var PARAM_REGEXP =
-  /; *([!#$%&'*+.^_`|~0-9A-Za-z-]+) *= *("(?:[\u000b\u0020\u0021\u0023-\u005b\u005d-\u007e\u0080-\u00ff]|\\[\u000b\u0020-\u00ff])*"|[!#$%&'*+.^_`|~0-9A-Za-z-]+) */g; // eslint-disable-line no-control-regex
-var TEXT_REGEXP = /^[\u000b\u0020-\u007e\u0080-\u00ff]+$/; // eslint-disable-line no-control-regex
-var TOKEN_REGEXP = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
+const PARAM_REGEXP =
+  /; *([\w!#$%&'*+.^`|~-]+) *= *("(?:[\u000B !\u0023-\u005B\u005D-\u007E\u0080-\u00FF]|\\[\u000B\u0020-\u00FF])*"|[\w!#$%&'*+.^`|~-]+) */g; // eslint-disable-line no-control-regex
+const TEXT_REGEXP = /^[\u000B\u0020-\u007E\u0080-\u00FF]+$/; // eslint-disable-line no-control-regex
+const TOKEN_REGEXP = /^[\w!#$%&'*+.^`|~-]+$/;
 
 /**
  * RegExp to match quoted-pair in RFC 7230 sec 3.2.6
@@ -49,12 +38,12 @@ var TOKEN_REGEXP = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
  * quoted-pair = "\" ( HTAB / SP / VCHAR / obs-text )
  * obs-text    = %x80-FF
  */
-var QESC_REGEXP = /\\([\u000b\u0020-\u00ff])/g; // eslint-disable-line no-control-regex
+const QESC_REGEXP = /\\([\u000B\u0020-\u00FF])/g; // eslint-disable-line no-control-regex
 
 /**
  * RegExp to match chars that must be quoted-pair in RFC 7230 sec 3.2.6
  */
-var QUOTE_REGEXP = /([\\"])/g;
+const QUOTE_REGEXP = /(["\\])/g;
 
 /**
  * RegExp to match type in RFC 7231 sec 3.1.1.1
@@ -63,91 +52,84 @@ var QUOTE_REGEXP = /([\\"])/g;
  * type       = token
  * subtype    = token
  */
-var TYPE_REGEXP = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+\/[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
+const TYPE_REGEXP = /^[\w!#$%&'*+.^`|~-]+\/[\w!#$%&'*+.^`|~-]+$/;
 
 /**
  * Module exports.
  * @public
  */
 
-exports.format = format;
-exports.parse = parse;
-
 /**
  * Format object to media type.
- *
- * @param {object} obj
- * @return {string}
+ * @param obj
+ * @returns
  * @public
  */
-
-function format(obj: MediaType): string {
+export function format(obj: MediaType): string {
   if (!obj || typeof obj !== "object") {
     throw new TypeError("argument obj is required");
   }
 
-  var parameters = obj.parameters;
-  var type = obj.type;
+  const parameters = obj.parameters;
+  const type = obj.type;
 
   if (!type || !TYPE_REGEXP.test(type)) {
     throw new TypeError("invalid type");
   }
 
-  var string = type;
+  let formatted = type;
 
   // append parameters
   if (parameters && typeof parameters === "object") {
-    var param;
-    var params = Object.keys(parameters).sort();
+    const params = Object.keys(parameters).sort();
 
-    for (var i = 0; i < params.length; i++) {
-      param = params[i];
-
+    for (const param of params) {
       if (!TOKEN_REGEXP.test(param)) {
         throw new TypeError("invalid parameter name");
       }
 
-      string += "; " + param + "=" + qstring(parameters[param]);
+      formatted += "; " + param + "=" + qstring(parameters[param]);
     }
   }
 
-  return string;
+  return formatted;
 }
 
 /**
  * Parse media type to object.
- *
- * @param {string|object} string
- * @return {Object}
+ * @param contentString
+ * @returns
  * @public
  */
-
-function parse(string: RequestLike | ResponseLike | string): ParsedMediaType {
-  if (!string) {
+export function parse(contentString: RequestLike | ResponseLike | string): ParsedMediaType {
+  if (!contentString) {
     throw new TypeError("argument string is required");
   }
 
   // support req/res-like objects as argument
-  var header = typeof string === "object" ? getcontenttype(string) : string;
+  const header = typeof contentString === "object" ? getcontenttype(contentString) : contentString;
 
   if (typeof header !== "string") {
     throw new TypeError("argument string is required to be a string");
   }
 
-  var index = header.indexOf(";");
-  var type = index !== -1 ? header.substr(0, index).trim() : header.trim();
+  let index = header.indexOf(";");
+  const type = index !== -1 ? header.slice(0, Math.max(0, index)).trim() : header.trim();
 
   if (!TYPE_REGEXP.test(type)) {
     throw new TypeError("invalid media type");
   }
 
-  var obj = new ContentType(type.toLowerCase());
+  const obj: ParsedMediaType = {
+    type: type.toLowerCase(),
+    parameters: Object.create(null),
+  };
 
   // parse parameters
   if (index !== -1) {
-    var key;
-    var match;
-    var value;
+    let key;
+    let match;
+    let value;
 
     PARAM_REGEXP.lastIndex = index;
 
@@ -160,9 +142,9 @@ function parse(string: RequestLike | ResponseLike | string): ParsedMediaType {
       key = match[1].toLowerCase();
       value = match[2];
 
-      if (value[0] === '"') {
+      if (value.startsWith('"')) {
         // remove quotes and escapes
-        value = value.substr(1, value.length - 2).replace(QESC_REGEXP, "$1");
+        value = value.slice(1, 1 + value.length - 2).replace(QESC_REGEXP, "$1");
       }
 
       obj.parameters[key] = value;
@@ -178,21 +160,19 @@ function parse(string: RequestLike | ResponseLike | string): ParsedMediaType {
 
 /**
  * Get content-type from req/res objects.
- *
- * @param {object}
- * @return {Object}
+ * @param obj
+ * @returns
  * @private
  */
+function getcontenttype(obj: RequestLike | ResponseLike) {
+  let header;
 
-function getcontenttype(obj) {
-  var header;
-
-  if (typeof obj.getHeader === "function") {
+  if ("getHeader" in obj && typeof obj.getHeader === "function") {
     // res-like
     header = obj.getHeader("content-type");
-  } else if (typeof obj.headers === "object") {
+  } else if ("headers" in obj && typeof obj.headers === "object") {
     // req-like
-    header = obj.headers && obj.headers["content-type"];
+    header = obj.headers?.["content-type"];
   }
 
   if (typeof header !== "string") {
@@ -204,14 +184,12 @@ function getcontenttype(obj) {
 
 /**
  * Quote a string if necessary.
- *
- * @param {string} val
- * @return {string}
+ * @param val
+ * @returns
  * @private
  */
-
-function qstring(val) {
-  var str = String(val);
+function qstring(val: string) {
+  const str = String(val);
 
   // no need to quote tokens
   if (TOKEN_REGEXP.test(str)) {
@@ -223,13 +201,4 @@ function qstring(val) {
   }
 
   return '"' + str.replace(QUOTE_REGEXP, "\\$1") + '"';
-}
-
-/**
- * Class to represent a content type.
- * @private
- */
-function ContentType(type) {
-  this.parameters = Object.create(null);
-  this.type = type;
 }
