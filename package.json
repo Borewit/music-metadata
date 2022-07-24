@@ -79,7 +79,6 @@
     "build": "npm run clean && npm run compile && npm run doc-gen",
     "start": "npm-run-all compile lint cover-test",
     "test-coverage": "nyc npm run test",
-    "send-coveralls": "nyc report --reporter=text-lcov | coveralls",
     "send-codacy": "nyc report --reporter=text-lcov | codacy-coverage",
     "doc-gen": "node doc-gen/gen.js"
   },
@@ -103,7 +102,6 @@
     "@typescript-eslint/parser": "^5.30.7",
     "chai": "^4.3.6",
     "chai-as-promised": "^7.1.1",
-    "coveralls": "^3.1.1",
     "del-cli": "5.0.0",
     "eslint": "^8.20.0",
     "eslint-config-prettier": "^8.5.0",
