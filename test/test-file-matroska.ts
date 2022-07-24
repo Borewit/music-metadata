@@ -1,7 +1,11 @@
 import * as path from 'path';
 import * as mm from '../lib';
-import { assert } from 'chai';
+import { assert, expect, use } from 'chai';
 import { samplePath } from './util';
+
+import * as chaiAsPromised from 'chai-as-promised';
+
+use(chaiAsPromised);
 
 describe('Matroska formats', () => {
 
@@ -155,6 +159,17 @@ describe('Matroska formats', () => {
       assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
     });
 
+  });
+
+  describe('Handle corrupt Matroska file', () => {
+
+    const mkvPath = path.join(matroskaSamplePath, 'corrupt.mkv');
+
+    // Ensure similar issue (CVE-2022-36313) as found in file-type, does not occur here
+    // https://nvd.nist.gov/vuln/detail/CVE-2022-36313
+    it('Be able to hande CVE-2022-36313 sample', async () => {
+      await expect(mm.parseFile(mkvPath)).to.be.rejectedWith(Error);
+    });
 
   });
 
