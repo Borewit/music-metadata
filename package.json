@@ -87,13 +87,14 @@
     "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.4",
     "debug": "^4.3.4",
-    "file-type": "16.5.4",
+    "file-type": "^16.5.4",
     "media-typer": "^1.1.0",
     "strtok3": "^6.3.0",
     "token-types": "^4.2.0"
   },
   "devDependencies": {
     "@types/chai": "^4.3.1",
+    "@types/chai-as-promised": "^7.1.5",
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^9.1.0",
@@ -101,6 +102,7 @@
     "@typescript-eslint/eslint-plugin": "^5.30.4",
     "@typescript-eslint/parser": "^5.30.4",
     "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
     "coveralls": "^3.1.1",
     "del-cli": "4.0.1",
     "eslint": "^8.19.0",
