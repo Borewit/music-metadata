@@ -128,6 +128,8 @@ export class WaveParser extends BasicParser {
           Object.keys(bext).forEach(key => {
             this.metadata.addTag('exif', 'bext.' + key, bext[key]);
           });
+          const bextRemaining = header.chunkSize - BroadcastAudioExtensionChunk.len;
+          await this.tokenizer.ignore(bextRemaining);
           break;
 
         case '\x00\x00\x00\x00': // padding ??

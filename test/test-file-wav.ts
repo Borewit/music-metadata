@@ -178,5 +178,22 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.approximately(format.duration, 2478 / 16000, 5 / 1000, 'format.duration');
   });
 
+  // https://github.com/Borewit/music-metadata/issues/1163
+  it('Support chunk size larger then BWF extension', async () => {
+    // const filePath = path.join(wavSamples, 'unreadable-tags.wav');
+    const filePath = path.join(wavSamples, 'issue-1163.bwf');
+    const {format, common, native} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'WAVE', 'format.container');
+    assert.strictEqual(format.codec, 'PCM', 'format.codec');
+
+    assert.strictEqual(common.artist, 'Some Composer', 'common.artists');
+    assert.strictEqual(common.title, 'Title Redacted', 'common.title');
+    assert.deepStrictEqual(common.track, {no: 1, of: 12}, 'common.track');
+
+    const exif = mm.orderTags(native.exif);
+    assert.deepStrictEqual(exif['bext.originator'], ['Pro Tools'], 'BWF: exif.bext.originator');
+  });
+
 });
 
