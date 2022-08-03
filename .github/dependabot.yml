@@ -1,0 +1,41 @@
+version: 2
+updates:
+
+  # CommonJS
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "04:00"
+    open-pull-requests-limit: 12
+    labels:
+      - dependencies
+      - CJS
+    target-branch: "master"
+    versioning-strategy: increase
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: [ "version-update:semver-patch" ]
+      - dependency-name: "@types/jasmine"
+        update-types: [ "version-update:semver-patch" ]
+      - dependency-name: "file-type"
+        versions: [ "17.x" ] # file-type ≥ 17 requires ES-Module
+      - dependency-name: "mocha"
+        versions: [ "10.x" ]
+      - dependency-name: "strtok3"
+        versions: [ "7.x" ] # strtok3 ≥ 7 requires ES-Module
+      - dependency-name: "token-types"
+        versions: [ "5.x" ] # token-types ≥ 5 requires ES-Module
+
+  # TypeScript Module
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      time: "06:00"
+    open-pull-requests-limit: 12
+    versioning-strategy: increase
+    target-branch: "es-module"
+    labels:
+      - dependencies
+      - ESM
