@@ -22,6 +22,10 @@ updates:
         versions: [ "17.x" ] # file-type ≥ 17 requires ES-Module
       - dependency-name: "mocha"
         versions: [ "10.x" ]
+      - dependency-name: "strtok3"
+        versions: [ "7.x" ] # strtok3 ≥ 7 requires ES-Module
+      - dependency-name: "token-types"
+        versions: [ "5.x" ] # token-types ≥ 5 requires ES-Module
 
   # TypeScript Module
   - package-ecosystem: npm
