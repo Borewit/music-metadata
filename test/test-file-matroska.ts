@@ -4,7 +4,7 @@ import  { assert, expect, use } from 'chai';
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised from 'chai-as-promised';
 
 use(chaiAsPromised);
 

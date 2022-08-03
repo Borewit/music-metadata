@@ -1,6 +1,6 @@
-import { IGetToken } from 'strtok3/lib/core.js';
+import { IGetToken } from 'strtok3/core';
 import * as Token from 'token-types';
-import { stripNulls } from '../common/Util';
+import { stripNulls } from '../common/Util.js';
 
 export interface IBroadcastAudioExtensionChunk {
   description: string;

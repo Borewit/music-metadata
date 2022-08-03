@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "inlineSources": false,
-    "module": "ES2020",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "target": "ES2019",
     "esModuleInterop": true,
     "baseUrl": ".",
