@@ -114,15 +114,11 @@ yarn add music-metadata
 
 ### Import music-metadata
 
-Import music-metadata in JavaScript:
+Import music-metadata:
 ```JavaScript
-const mm = require('music-metadata');
+import { parseFile } from 'music-metadata';
 ```
-
-This is how it's done in TypeScript:
-```ts
-import * as mm from 'music-metadata';
-```
+Import the methods you need, like `parseFile` in this example.
 
 ### Module Functions
 
@@ -136,19 +132,19 @@ Direct file access tends to be a little faster, because it can 'jump' to various
 
 Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
 
-```
+```ts
 parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
 ```
 
 Example:
 ```js
-const mm = require('music-metadata');
-const util = require('util');
+import { parseFile } from 'music-metadata';
+import { inspect } from 'util';
 
 (async () => {
   try {
-    const metadata = await mm.parseFile('../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
-    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+    const metadata = await parseFile('../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
+    console.log(inspect(metadata, { showHidden: false, depth: null }));
   } catch (error) {
     console.error(error.message);
   }
@@ -168,11 +164,11 @@ parseStream(stream: Stream.Readable, fileInfo?: IFileInfo | string, opts?: IOpti
 
 Example:
 ```js
-const mm = require('music-metadata');
+import { parseStream } from 'music-metadata';
 
 (async () => {
   try {
-    const metadata = await mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838});
+    const metadata = await parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838});
     console.log(metadata);
   } catch (error) {
     console.error(error.message);
@@ -190,9 +186,11 @@ parseBuffer(buffer: Buffer, fileInfo?: IFileInfo | string, opts?: IOptions = {})
 
 Example:
 ```js
+import { parseBuffer } from 'music-metadata';
+
 (async () => {
   try {
-    const metadata = mm.parseBuffer(someBuffer, 'audio/mpeg');
+    const metadata = parseBuffer(someBuffer, 'audio/mpeg');
     console.log(metadata);
   } catch (error) {
     console.error(error.message);
@@ -215,6 +213,21 @@ Utility to Converts the native tags to a dictionary index on the tag identifier
 orderTags(nativeTags: ITag[]): [tagId: string]: any[]
 ```
 
+```js
+import { parseFile, orderTags } from 'music-metadata';
+import { inspect } from 'util';
+
+(async () => {
+  try {
+    const metadata = await parseFile('../test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
+    const orderedTags = orderTags(metadata.native['ID3v2.3']);
+    console.log(inspect(orderedTags, { showHidden: false, depth: null }));
+  } catch (error) {
+    console.error(error.message);
+  }
+})();
+```
+
 #### ratingToStars function
    
    Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
@@ -231,11 +244,11 @@ export function selectCover(pictures?: IPicture[]): IPicture | null
 ```
 
 ```js
-import * as mm from 'music-metadata';
+import { parseFile, selectCover } from 'music-metadata';
 
 (async () => {
-  const {common} = await mm.parseFile(filePath);
-  const cover = mm.selectCover(common.picture); // pick the cover image
+  const {common} = await parseFile(filePath);
+  const cover = selectCover(common.picture); // pick the cover image
 }
 )();
  ```
@@ -327,11 +340,15 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 
 In order to read the duration of a stream (with the exception of file streams), in some cases you should pass the size of the file in bytes.
 ```js
-mm.parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838}, {duration: true})
-  .then( function (metadata) {
-     console.log(util.inspect(metadata, {showHidden: false, depth: null}));
-     someReadStream.close();
-   });
+import { parseStream } from 'music-metadata';
+import { inspect } from 'util';
+
+(async () => {
+    const metadata = await parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838}, {duration: true});
+    console.log(inspect(metadata, {showHidden: false, depth: null}));
+    someReadStream.close();
+  }
+)();
 ```
 
 ### Access cover art
@@ -379,20 +396,18 @@ img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
     1.  Using recursion
 
         ```js
-        const mm = require('music-metadata')
+        import { parseFile } from 'music-metadata';
         
         function parseFiles(audioFiles) {
           
           const audioFile = audioFiles.shift();
           
           if (audioFile) {
-            return mm.parseFile(audioFile).then(metadata => {
+            return parseFile(audioFile).then(metadata => {
               // Do great things with the metadata
               return parseFiles(audioFiles); // process rest of the files AFTER we are finished
             })
           }
-          
-          return Promise.resolve();
         }
         
         ```
@@ -402,7 +417,7 @@ img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
         Use [async/await](https://javascript.info/async-await)
         
         ```js
-        const mm = require('music-metadata');
+        import { parseFile } from 'music-metadata';
         
         // it is required to declare the function 'async' to allow the use of await
         async function parseFiles(audioFiles) {
@@ -410,7 +425,7 @@ img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             for (const audioFile of audioFiles) {
             
                 // await will ensure the metadata parsing is completed before we move on to the next file
-                const metadata = await mm.parseFile(audioFile);
+                const metadata = await parseFile(audioFile);
                 // Do great things with the metadata
             }
         }
