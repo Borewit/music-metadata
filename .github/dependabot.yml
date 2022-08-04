@@ -5,7 +5,7 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
+      interval: daily
       time: "04:00"
     open-pull-requests-limit: 12
     labels:
@@ -31,7 +31,7 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
+      interval: daily
       time: "06:00"
     open-pull-requests-limit: 12
     versioning-strategy: increase
