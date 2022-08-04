@@ -11,7 +11,7 @@ describe('Parse MP3 files', () => {
 
   describe('Test patterns for ISO/MPEG ', () => {
 
-    it('ISO/MPEG 1 Layer 1', async () => {
+    it.skip('ISO/MPEG 1 Layer 1', async () => {
 
       // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l1
       const samples = [
