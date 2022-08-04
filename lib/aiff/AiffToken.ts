@@ -47,11 +47,15 @@ export class Common implements IGetToken<ICommon> {
       res.compressionType = FourCcToken.get(buf, off + 18);
       if (this.len > 22) {
         const strLen = buf.readInt8(off + 22);
-        const padding = (strLen + 1) % 2;
-        if (23 + strLen + padding === this.len) {
-          res.compressionName = new Token.StringType(strLen, 'binary').get(buf, off + 23);
+        if (strLen > 0) {
+          const padding = (strLen + 1) % 2;
+          if (23 + strLen + padding === this.len) {
+            res.compressionName = new Token.StringType(strLen, 'binary').get(buf, off + 23);
+          } else {
+            throw new Error('Illegal pstring length');
+          }
         } else {
-          throw new Error('Illegal pstring length');
+          res.compressionName = undefined;
         }
       }
     } else {
