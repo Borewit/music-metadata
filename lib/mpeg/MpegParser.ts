@@ -1,10 +1,10 @@
 import * as Token from 'token-types';
-import { EndOfStreamError } from 'strtok3/lib/core';
+import { EndOfStreamError } from 'strtok3/core';
 import initDebug from 'debug';
 
-import * as common from '../common/Util';
-import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
-import { InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag';
+import * as common from '../common/Util.js';
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
+import { InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag.js';
 
 const debug = initDebug('music-metadata:parser:mpeg');
 

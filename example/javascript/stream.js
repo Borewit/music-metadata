@@ -1,6 +1,6 @@
-const https = require('https');
-const util = require('util');
-const mm = require('../../lib'); // music-metadata
+import https from 'https';
+import { inspect } from 'util';
+import { parseStream } from '../../lib/index.js';  // music-metadata
 
 const audioUrl = 'https://github.com/Borewit/music-metadata/raw/master/test/samples/MusicBrainz%20-%20Beth%20Hart%20-%20Sinner\'s%20Prayer%20%5Bid3v2.3%5D.V2.mp3';
 
@@ -25,8 +25,8 @@ function httpGet (url) {
   try {
     // Stream MP3 sample file from GitHub via HTTP
     const stream = await httpGet(audioUrl);
-    const metadata = await mm.parseStream(stream);
-    console.log(util.inspect(metadata, { showHidden: false, depth: null }));
+    const metadata = await parseStream(stream);
+    console.log(inspect(metadata, { showHidden: false, depth: null }));
   } catch(error) {
     // Oops, something went wrong
     console.error(error.message);

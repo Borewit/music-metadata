@@ -1,10 +1,10 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import * as mm from '../lib';
-import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
-import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper';
-import { samplePath } from './util';
+import * as mm from '../lib/index.js';
+import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
+import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper.js';
+import { samplePath } from './util.js';
 
 describe('Discogs mappings', () => {
 

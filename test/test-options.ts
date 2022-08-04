@@ -1,15 +1,16 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
+import { samplePath } from './util.js';
 
-import * as mm from '../lib';
+import * as mm from '../lib/index.js';
 
 describe('Parser options', () => {
 
-  const file_ape = path.join(__dirname, 'samples', 'monkeysaudio.ape');
-  const file_flac = path.join(__dirname, 'samples', 'MusicBrainz - Beth Hart - Sinner\'s Prayer.flac');
-  const file_id3v22 = path.join(__dirname, 'samples', 'id3v2.2.mp3');
-  const file_m4a = path.join(__dirname, 'samples', 'mp4', 'id4.m4a');
-  const file_ogg = path.join(__dirname, 'samples', 'Nirvana - In Bloom - 2-sec.ogg');
+  const file_ape = path.join(samplePath, 'monkeysaudio.ape');
+  const file_flac = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.flac');
+  const file_id3v22 = path.join(samplePath, 'id3v2.2.mp3');
+  const file_m4a = path.join(samplePath, 'mp4', 'id4.m4a');
+  const file_ogg = path.join(samplePath, 'Nirvana - In Bloom - 2-sec.ogg');
 
   describe('option \'skipCovers\'', () => {
 

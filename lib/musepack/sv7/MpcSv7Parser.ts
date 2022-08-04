@@ -1,10 +1,9 @@
 import initDebug from 'debug';
 
-import { BasicParser } from '../../common/BasicParser';
-import { APEv2Parser } from '../../apev2/APEv2Parser';
-
-import { BitReader } from './BitReader';
-import * as SV7 from './StreamVersion7';
+import { BasicParser } from '../../common/BasicParser.js';
+import { APEv2Parser } from '../../apev2/APEv2Parser.js';
+import { BitReader } from './BitReader.js';
+import * as SV7 from './StreamVersion7.js';
 
 const debug = initDebug('music-metadata:parser:musepack');
 

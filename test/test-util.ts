@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 
-import * as util from '../lib/common/Util';
-import { FourCcToken } from '../lib/common/FourCC';
+import * as util from '../lib/common/Util.js';
+import { FourCcToken } from '../lib/common/FourCC.js';
 
 const t = assert;
 

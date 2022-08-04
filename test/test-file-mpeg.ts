@@ -1,11 +1,11 @@
 import { assert } from 'chai';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
-import { samplePath, SourceStream } from './util';
-import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
-import { Parsers } from './metadata-parsers';
-import * as mm from '../lib';
+import { samplePath, SourceStream } from './util.js';
+import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
+import { Parsers } from './metadata-parsers.js';
+import * as mm from '../lib/index.js';
 
 const t = assert;
 

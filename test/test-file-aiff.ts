@@ -1,8 +1,8 @@
-import * as path from 'path';
-import { Parsers } from './metadata-parsers';
+import path from 'node:path';
+import { Parsers } from './metadata-parsers.js';
 import { assert } from 'chai';
-import * as mm from '../lib';
-import { samplePath } from './util';
+import * as mm from '../lib/index.js';
+import { samplePath} from './util.js';
 
 describe('Parse AIFF (Audio Interchange File Format)', () => {
 

@@ -1,5 +1,5 @@
-import {INativeTagMap} from '../common/GenericTagTypes';
-import {CommonTagMapper} from '../common/GenericTagMapper';
+import {INativeTagMap} from '../common/GenericTagTypes.js';
+import {CommonTagMapper} from '../common/GenericTagMapper.js';
 
 /**
  * RIFF Info Tags; part of the EXIF 2.3

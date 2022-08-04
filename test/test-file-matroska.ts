@@ -1,9 +1,10 @@
-import * as path from 'path';
-import * as mm from '../lib';
-import { assert, expect, use } from 'chai';
-import { samplePath } from './util';
+import path from 'node:path';
+import  { assert, expect, use } from 'chai';
 
-import * as chaiAsPromised from 'chai-as-promised';
+import * as mm from '../lib/index.js';
+import { samplePath } from './util.js';
+
+import chaiAsPromised from 'chai-as-promised';
 
 use(chaiAsPromised);
 

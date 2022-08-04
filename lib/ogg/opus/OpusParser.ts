@@ -1,12 +1,12 @@
 import * as Token from 'token-types';
-import {ITokenizer} from 'strtok3/lib/core';
+import {ITokenizer} from 'strtok3/core';
 
-import {IPageHeader} from '../Ogg';
-import {VorbisParser} from '../vorbis/VorbisParser';
-import {IOptions} from '../../type';
-import {INativeMetadataCollector} from '../../common/MetadataCollector';
+import {IPageHeader} from '../Ogg.js';
+import {VorbisParser} from '../vorbis/VorbisParser.js';
+import {IOptions} from '../../type.js';
+import {INativeMetadataCollector} from '../../common/MetadataCollector.js';
 
-import * as Opus from './Opus';
+import * as Opus from './Opus.js';
 
 /**
  * Opus parser

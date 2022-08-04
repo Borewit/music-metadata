@@ -1,16 +1,16 @@
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
 import initDebug from 'debug';
-import { ITokenizer, IGetToken } from 'strtok3/lib/core';
+import { ITokenizer, IGetToken } from 'strtok3/core';
 
-import * as util from '../common/Util';
-import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis';
-import { AbstractID3Parser } from '../id3v2/AbstractID3Parser';
-import { FourCcToken } from '../common/FourCC';
-import { VorbisParser } from '../ogg/vorbis/VorbisParser';
-import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { IOptions } from '../type';
-import { ITokenParser } from '../ParserFactory';
-import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder';
+import * as util from '../common/Util.js';
+import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
+import { FourCcToken } from '../common/FourCC.js';
+import { VorbisParser } from '../ogg/vorbis/VorbisParser.js';
+import { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import { IOptions } from '../type.js';
+import { ITokenParser } from '../ParserFactory.js';
+import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder.js';
 
 const debug = initDebug('music-metadata:parser:FLAC');
 

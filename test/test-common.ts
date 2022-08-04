@@ -1,13 +1,13 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import { commonTags, isSingleton } from '../lib/common/GenericTagTypes';
-import * as mm from '../lib';
-import { CombinedTagMapper } from '../lib/common/CombinedTagMapper';
-import { joinArtists } from '../lib/common/MetadataCollector';
-import { parseHttpContentType } from '../lib/ParserFactory';
+import { commonTags, isSingleton } from '../lib/common/GenericTagTypes.js';
+import * as mm from '../lib/index.js';
+import { CombinedTagMapper } from '../lib/common/CombinedTagMapper.js';
+import { joinArtists } from '../lib/common/MetadataCollector.js';
+import { parseHttpContentType } from '../lib/ParserFactory.js';
 
-import { samplePath } from './util';
+import { samplePath } from './util.js';
 
 describe('GenericTagMap', () => {
 
@@ -45,7 +45,7 @@ describe('GenericTagMap', () => {
 
     it('parse RIFF tags', async () => {
 
-      const filePath = path.join(__dirname, 'samples', 'issue-89 no-artist.aiff');
+      const filePath = path.join(samplePath, 'issue-89 no-artist.aiff');
 
       const metadata = await mm.parseFile(filePath, {duration: true});
       assert.deepEqual(metadata.common.artists, ['Beth Hart', 'Joe Bonamassa'], 'common.artists directly via WM/ARTISTS');

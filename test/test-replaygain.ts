@@ -1,9 +1,9 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { assert } from 'chai';
+import path from 'node:path';
 
-import * as mm from '../lib';
-import { samplePath } from './util';
-import { ratioToDb, dbToRatio, toRatio } from '../lib/common/Util';
+import * as mm from '../lib/index.js';
+import { samplePath } from './util.js';
+import { ratioToDb, dbToRatio, toRatio } from '../lib/common/Util.js';
 
 describe('Decode replaygain tags', () => {
 

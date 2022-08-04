@@ -1,10 +1,10 @@
 import { assert, expect } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import { Parsers } from './metadata-parsers';
-import * as mm from '../lib';
-import { samplePath } from './util';
-import { IdHeader } from '../lib/ogg/opus/Opus';
+import { Parsers } from './metadata-parsers.js';
+import * as mm from '../lib/index.js';
+import { samplePath } from './util.js';
+import { IdHeader } from '../lib/ogg/opus/Opus.js';
 
 const oggSamplePath = path.join(samplePath, 'ogg');
 

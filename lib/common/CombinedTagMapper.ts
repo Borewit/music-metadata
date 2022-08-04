@@ -1,16 +1,16 @@
-import { ID3v1TagMapper } from '../id3v1/ID3v1TagMap';
-import { ID3v24TagMapper } from '../id3v2/ID3v24TagMapper';
-import { AsfTagMapper } from '../asf/AsfTagMapper';
-import { IGenericTag, TagType } from './GenericTagTypes';
-import { ID3v22TagMapper } from '../id3v2/ID3v22TagMapper';
-import { APEv2TagMapper } from '../apev2/APEv2TagMapper';
-import { IGenericTagMapper } from './GenericTagMapper';
-import { MP4TagMapper } from '../mp4/MP4TagMapper';
-import { VorbisTagMapper } from '../ogg/vorbis/VorbisTagMapper';
-import { RiffInfoTagMapper } from '../riff/RiffInfoTagMap';
-import { ITag } from '../type';
-import { INativeMetadataCollector } from './MetadataCollector';
-import { MatroskaTagMapper } from '../matroska/MatroskaTagMapper';
+import { ID3v1TagMapper } from '../id3v1/ID3v1TagMap.js';
+import { ID3v24TagMapper } from '../id3v2/ID3v24TagMapper.js';
+import { AsfTagMapper } from '../asf/AsfTagMapper.js';
+import { IGenericTag, TagType } from './GenericTagTypes.js';
+import { ID3v22TagMapper } from '../id3v2/ID3v22TagMapper.js';
+import { APEv2TagMapper } from '../apev2/APEv2TagMapper.js';
+import { IGenericTagMapper } from './GenericTagMapper.js';
+import { MP4TagMapper } from '../mp4/MP4TagMapper.js';
+import { VorbisTagMapper } from '../ogg/vorbis/VorbisTagMapper.js';
+import { RiffInfoTagMapper } from '../riff/RiffInfoTagMap.js';
+import { ITag } from '../type.js';
+import { INativeMetadataCollector } from './MetadataCollector.js';
+import { MatroskaTagMapper } from '../matroska/MatroskaTagMapper.js';
 
 export class CombinedTagMapper {
 

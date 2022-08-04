@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import { IGetToken } from 'strtok3/core';
 
 /**
  * 6.2 Identification Header

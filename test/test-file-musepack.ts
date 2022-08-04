@@ -1,8 +1,8 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 describe('Parse Musepack (.mpc)', () => {
 

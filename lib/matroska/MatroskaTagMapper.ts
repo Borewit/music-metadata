@@ -1,5 +1,5 @@
-import { INativeTagMap } from '../common/GenericTagTypes';
-import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap';
+import {INativeTagMap} from '../common/GenericTagTypes.js';
+import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
 
 /**
  * EBML Tag map

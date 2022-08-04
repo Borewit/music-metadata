@@ -1,24 +1,26 @@
-import { IOptions, IAudioMetadata, ParserType } from './type';
-import { ITokenizer } from 'strtok3/lib/core';
-import * as FileType from 'file-type/core';
-import * as ContentType from 'content-type';
-import * as MimeType from 'media-typer';
-
+import { fileTypeFromBuffer } from 'file-type';
+import ContentType from 'content-type';
+import MimeType from 'media-typer';
 import initDebug from 'debug';
-import { INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector';
-import { AIFFParser } from './aiff/AiffParser';
-import { APEv2Parser } from './apev2/APEv2Parser';
-import { AsfParser } from './asf/AsfParser';
-import { FlacParser } from './flac/FlacParser';
-import { MP4Parser } from './mp4/MP4Parser';
-import { MpegParser } from './mpeg/MpegParser';
-import MusepackParser from './musepack';
-import { OggParser } from './ogg/OggParser';
-import { WaveParser } from './wav/WaveParser';
-import { WavPackParser } from './wavpack/WavPackParser';
-import { DsfParser } from './dsf/DsfParser';
-import { DsdiffParser } from './dsdiff/DsdiffParser';
-import { MatroskaParser } from './matroska/MatroskaParser';
+import { Buffer } from 'node:buffer';
+
+import { INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
+import { AIFFParser } from './aiff/AiffParser.js';
+import { APEv2Parser } from './apev2/APEv2Parser.js';
+import { AsfParser } from './asf/AsfParser.js';
+import { FlacParser } from './flac/FlacParser.js';
+import { MP4Parser } from './mp4/MP4Parser.js';
+import { MpegParser } from './mpeg/MpegParser.js';
+import MusepackParser from './musepack/index.js';
+import { OggParser } from './ogg/OggParser.js';
+import { WaveParser } from './wav/WaveParser.js';
+import { WavPackParser } from './wavpack/WavPackParser.js';
+import { DsfParser } from './dsf/DsfParser.js';
+import { DsdiffParser } from './dsdiff/DsdiffParser.js';
+import { MatroskaParser } from './matroska/MatroskaParser.js';
+
+import { IOptions, IAudioMetadata, ParserType } from './type.js';
+import { ITokenizer } from 'strtok3/core';
 
 const debug = initDebug('music-metadata:parser:factory');
 
@@ -93,7 +95,7 @@ export class ParserFactory {
         parserId = this.getParserIdForExtension(tokenizer.fileInfo.path);
       }
       if (!parserId) {
-        const guessedType = await FileType.fromBuffer(buf);
+        const guessedType = await fileTypeFromBuffer(buf);
         if (!guessedType) {
           throw new Error('Failed to determine audio format');
         }

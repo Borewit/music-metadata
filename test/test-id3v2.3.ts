@@ -1,11 +1,11 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 import * as strtok from 'strtok3';
 
-import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser';
-import { MetadataCollector } from '../lib/common/MetadataCollector';
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
+import { MetadataCollector } from '../lib/common/MetadataCollector.js';
+import * as mm from '../lib/index.js';
+import { samplePath } from './util.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
 

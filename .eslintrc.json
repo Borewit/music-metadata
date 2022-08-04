@@ -1,7 +1,7 @@
 {
   "env": {
     "browser": true,
-    "es6": true,
+    "es2021": true,
     "node": true
   },
   "extends": [
@@ -191,7 +191,7 @@
     "no-unused-labels": "error",
     "no-use-before-define": "off",
     "no-var": "error",
-    "node/file-extension-in-import": ["off"],
+    "node/file-extension-in-import": ["error", "always"],
     "node/no-extraneous-import": "error",
     "object-shorthand": "error",
     "one-var": [

@@ -1,5 +1,6 @@
-import * as util from './Util';
-import { IToken } from 'strtok3/lib/core';
+import { IToken } from 'strtok3/core';
+
+import * as util from './Util.js';
 
 const validFourCC = /^[\x21-\x7e©][\x20-\x7e\x00()]{3}/;
 

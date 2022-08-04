@@ -1,17 +1,16 @@
 import * as Stream from 'stream';
 import * as strtok3 from 'strtok3';
-
-import * as Core from './core';
-import { ParserFactory } from './ParserFactory';
-import { IAudioMetadata, IOptions } from './type';
 import initDebug from 'debug';
-import { RandomFileReader } from './common/RandomFileReader';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type';
+import { parseFromTokenizer, scanAppendingHeaders } from './core.js';
+import { ParserFactory } from './ParserFactory.js';
+import { IAudioMetadata, IOptions } from './type.js';
+import { RandomFileReader } from './common/RandomFileReader.js';
 
-const debug = initDebug("music-metadata:parser");
+export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type.js';
+export { parseFromTokenizer, parseBuffer, selectCover, orderTags, ratingToStars, IFileInfo } from './core.js';
 
-export { parseFromTokenizer, parseBuffer, IFileInfo, selectCover } from './core';
+const debug = initDebug('music-metadata:parser');
 
 /**
  * Parse audio from Node Stream.Readable
@@ -22,7 +21,7 @@ export { parseFromTokenizer, parseBuffer, IFileInfo, selectCover } from './core'
  */
 export async function parseStream(stream: Stream.Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
   const tokenizer = await strtok3.fromStream(stream, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo);
-  return Core.parseFromTokenizer(tokenizer, options);
+  return parseFromTokenizer(tokenizer, options);
 }
 
 /**
@@ -39,7 +38,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
   const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size);
   try {
-    await Core.scanAppendingHeaders(fileReader, options);
+    await scanAppendingHeaders(fileReader, options);
   } finally {
     await fileReader.close();
   }
@@ -54,28 +53,3 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
     await fileTokenizer.close();
   }
 }
-
-/**
- * Create a dictionary ordered by their tag id (key)
- * @param nativeTags - List of tags
- * @returns Tags indexed by id
- */
-export const orderTags = Core.orderTags;
-
-/**
- * Convert rating to 1-5 star rating
- * @param rating - Normalized rating [0..1] (common.rating[n].rating)
- * @returns Number of stars: 1, 2, 3, 4 or 5 stars
- */
-export const ratingToStars = Core.ratingToStars;
-
-/**
- * Define default module exports
- */
-export default {
-  parseStream,
-  parseFile,
-  parseFromTokenizer: Core.parseFromTokenizer,
-  parseBuffer: Core.parseBuffer,
-  selectCover: Core.selectCover
-};

@@ -1,8 +1,10 @@
-import { GenericTagId, TagType } from './common/GenericTagTypes';
-import { IFooter } from './apev2/APEv2Token';
-import { TrackType } from './matroska/types';
+import { Buffer } from 'node:buffer';
 
-export { TrackType } from './matroska/types';
+import { GenericTagId, TagType } from './common/GenericTagTypes.js';
+import { IFooter } from './apev2/APEv2Token.js';
+import { TrackType } from './matroska/types.js';
+
+export { TrackType } from './matroska/types.js';
 
 /**
  * Attached picture, typically used for cover art

@@ -1,8 +1,10 @@
 import { assert } from 'chai';
-import * as path from 'path';
-import { Parsers } from './metadata-parsers';
-import { IFormat } from '../lib';
-import { samplePath } from './util';
+import path from 'node:path';
+
+import { Parsers } from './metadata-parsers.js';
+
+import { IFormat } from '../lib/index.js';
+import { samplePath } from './util.js';
 
 const aacSamplePath = path.join(samplePath, 'aac');
 

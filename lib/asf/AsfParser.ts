@@ -1,9 +1,9 @@
 import initDebug from 'debug';
 
-import { ITag, TrackType } from '../type';
-import GUID from './GUID';
-import * as AsfObject from './AsfObject';
-import { BasicParser } from '../common/BasicParser';
+import { ITag, TrackType } from '../type.js';
+import GUID from './GUID.js';
+import * as AsfObject from './AsfObject.js';
+import { BasicParser } from '../common/BasicParser.js';
 
 const debug = initDebug('music-metadata:parser:ASF');
 const headerType = 'asf';

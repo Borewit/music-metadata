@@ -1,5 +1,5 @@
-import { IGetToken } from 'strtok3/lib/core';
-import * as common from '../common/Util';
+import { IGetToken } from 'strtok3/core';
+import * as common from '../common/Util.js';
 
 export interface IReplayGain {
   type: NameCode;

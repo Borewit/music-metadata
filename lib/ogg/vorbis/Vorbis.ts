@@ -1,8 +1,9 @@
 import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
 
-import {AttachedPictureType} from '../../id3v2/ID3v2Token';
-import {IPicture} from '../../type';
+import { AttachedPictureType } from '../../id3v2/ID3v2Token.js';
+
+import { IPicture } from '../../type.js';
+import { IGetToken } from 'strtok3/core';
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
@@ -40,6 +41,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     const pic = new VorbisPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
+
   constructor(public len) {
   }
 

@@ -1,10 +1,10 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import * as mm from '../lib';
-import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser';
-import { parseGenre } from '../lib/id3v2/FrameParser';
-import { samplePath } from './util';
+import * as mm from '../lib/index.js';
+import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
+import { parseGenre } from '../lib/id3v2/FrameParser.js';
+import { samplePath } from './util.js';
 
 describe('ID3v2Parser', () => {
 
@@ -46,7 +46,7 @@ describe('ID3v2Parser', () => {
   it('should decode file \'id3v2.2.mp3\'', async () => {
 
     const filename = 'id3v2.2.mp3';
-    const filePath = path.join(__dirname, 'samples', filename);
+    const filePath = path.join(samplePath, filename);
 
     const metadata = await mm.parseFile(filePath, {duration: true});
     assert.strictEqual(metadata.common.title, 'You Are The One', 'title');

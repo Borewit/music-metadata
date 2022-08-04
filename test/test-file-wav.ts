@@ -1,10 +1,10 @@
 import { assert } from 'chai';
-import * as path from 'path';
+import path from 'node:path';
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import * as mm from '../lib/index.js';
+import { samplePath } from './util.js';
 
-import { IFormat, INativeTagDict } from '../lib/type';
+import { IFormat, INativeTagDict } from '../lib/index.js';
 
 const wavSamples = path.join(samplePath, 'wav');
 
@@ -61,7 +61,7 @@ describe('Parse RIFF/WAVE audio format', () => {
   it('should map RIFF tags to common', async () => {
 
     // Metadata edited with Adobe Audition CC 2018.1
-    const filePath = path.join(__dirname, 'samples', 'riff_adobe_audition.wav');
+    const filePath = path.join(samplePath, 'riff_adobe_audition.wav');
 
     const metadata = await mm.parseFile(filePath);
     const format = metadata.format;
