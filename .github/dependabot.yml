@@ -1,6 +1,8 @@
 version: 2
 updates:
 
+# Trigger change as requested in ticket 1760351.
+
   # CommonJS
   - package-ecosystem: npm
     directory: "/"
