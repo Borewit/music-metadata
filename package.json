@@ -102,7 +102,7 @@
     "@types/chai-as-promised": "^7.1.5",
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
-    "@types/mocha": "^9.1.0",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^18.7.13",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
     "@typescript-eslint/parser": "^5.35.1",
