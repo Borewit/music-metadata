@@ -55,6 +55,7 @@ Following tag header formats are supported:
 *   [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
 *   [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 *   [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+*   [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
 
 It allows many tags to be accessed in audio format, and tag format independent way.
 
