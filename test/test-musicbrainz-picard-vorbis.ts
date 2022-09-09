@@ -1,15 +1,17 @@
 import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile, orderTags } from "../lib";
+import { orderTags } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("MusicBrains/Picard tags in FLAC", async () => {
+test.each(Parsers)("MusicBrains/Picard tags in FLAC", async (parser) => {
   const filename = "MusicBrainz-Picard-tags.flac";
   const filePath = join(samplePath, filename);
 
   // Run with default options
-  const metadata = await parseFile(filePath);
+  const metadata = await parser.initParser(filePath);
+
   expect(metadata, "metadata").toBeDefined();
   expect(metadata.common, "should include common tags").toBeDefined();
   expect(metadata.native, "metadata.common").toBeDefined();

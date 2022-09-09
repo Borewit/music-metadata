@@ -1,13 +1,13 @@
 import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("should be able to read metadata with unknown encoding", async () => {
+test.each(Parsers)("should be able to read metadata with unknown encoding", async (parser) => {
   const filePath = join(samplePath, "bug-unkown encoding.mp3");
 
-  const metadata = await parseFile(filePath);
+  const metadata = await parser.initParser(filePath);
   const common = metadata.common;
 
   expect(common.title, "title").toBe("808");

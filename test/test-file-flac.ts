@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { orderTags, parseFile } from "../lib";
+import { orderTags } from "../lib";
 import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { Parsers } from "./metadata-parsers";
@@ -98,10 +98,10 @@ test("should handle a corrupt data", () => {
 /**
  * Issue: https://github.com/Borewit/music-metadata/issues/266
  */
-test("Support Vorbis METADATA_BLOCK_PICTURE tags", async () => {
+test.each(Parsers)("Support Vorbis METADATA_BLOCK_PICTURE tags", async (parser) => {
   const filePath = join(samplePath, "issue-266.flac");
 
-  const metadata = await parseFile(filePath);
+  const metadata = await parser.initParser(filePath);
   const format = metadata.format;
   const common = metadata.common;
   const vorbis = orderTags(metadata.native.vorbis);
@@ -120,16 +120,16 @@ test("Support Vorbis METADATA_BLOCK_PICTURE tags", async () => {
   expect(common.picture[1].data, "ommon.picture[1].data.length").toHaveLength(215_889);
 });
 
-test("Handle FLAC with undefined duration (number of samples == 0)", async () => {
+test.each(Parsers)("Handle FLAC with undefined duration (number of samples == 0)", async (parser) => {
   const filePath = join(flacFilePath, "test-unknown-duration.flac");
-  const metadata = await parseFile(filePath);
+  const metadata = await parser.initParser(filePath);
 
   expect(metadata.format.duration, "format.duration").toBeUndefined();
 });
 
-test('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async () => {
+test.each(Parsers)('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async (parser) => {
   const filePath = join(flacFilePath, "14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac");
-  const metadata = await parseFile(filePath);
+  const metadata = await parser.initParser(filePath);
   const format = metadata.format;
   const common = metadata.common;
 

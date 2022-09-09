@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 import { Parsers } from "./metadata-parsers";
-import { IFormat, parseFile } from "../lib";
+import type { IFormat } from "../lib";
 import { samplePath } from "./util";
 
 // Parse AIFF (Audio Interchange File Format)
@@ -103,10 +103,10 @@ describe("Parse perverse Files", () => {
 });
 
 // Issue: https://github.com/Borewit/music-metadata/issues/643
-test('Parse tag "(c) "', async () => {
+test.each(Parsers)('Parse tag "(c) ": %s', async (parser) => {
   const filePath = join(aiffSamplePath, "No Sanctuary Here.aiff");
 
-  const metadata = await parseFile(filePath);
+  const metadata = await parser.initParser(filePath);
 
   const format = metadata.format;
 

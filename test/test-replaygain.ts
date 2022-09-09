@@ -1,11 +1,11 @@
 import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
 import { ratioToDb, dbToRatio, toRatio } from "../lib/common/Util";
+import { Parsers } from "./metadata-parsers";
 
-describe("Decode replaygain tags", () => {
+describe.each(Parsers)("Decode replaygain tags", (parser) => {
   const filePath = join(samplePath, "04 Long Drive.flac");
 
   test("Convert ratio to dB", () => {
@@ -29,7 +29,7 @@ describe("Decode replaygain tags", () => {
   });
 
   test("should decode replaygain tags from FLAC/Vorbis", async () => {
-    const metadata = await parseFile(filePath);
+    const metadata = await parser.initParser(filePath);
     expect(metadata.common.replaygain_track_gain, "replaygain_track_gain.ratio").toStrictEqual({
       dB: -7.03,
       ratio: 0.198_152_702_580_509_8,

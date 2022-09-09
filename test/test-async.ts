@@ -1,11 +1,11 @@
 import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import type { IMetadataEvent } from "../lib/type";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-describe("Asynchronous observer updates", () => {
+describe.each(Parsers)("Asynchronous observer updates", (parser) => {
   const flacFilePath = join(samplePath, "flac.flac");
 
   test("decode a FLAC audio file", async () => {
@@ -13,7 +13,7 @@ describe("Asynchronous observer updates", () => {
 
     const eventTags: IMetadataEvent["tag"][] = [];
 
-    await parseFile(flacFilePath, {
+    await parser.initParser(flacFilePath, "audio/flac", {
       observer: (event) => {
         switch (typeof event.tag.value) {
           case "number":

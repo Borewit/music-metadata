@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { orderTags, parseFile } from "../lib";
+import { orderTags } from "../lib";
 import { join } from "node:path";
 import GUID from "../lib/asf/GUID";
 import { getParserForAttr } from "../lib/asf/AsfUtil";
@@ -128,10 +128,10 @@ describe("parse", () => {
   /**
    * Related issue: https://github.com/Borewit/music-metadata/issues/68
    */
-  test("should be able to parse truncated .wma file", async () => {
+  test.each(Parsers)("should be able to parse truncated .wma file", async (parser) => {
     const filePath = join(asfFilePath, "13 Thirty Dirty Birds.wma");
 
-    const { format, common, native } = await parseFile(filePath);
+    const { format, common, native } = await parser.initParser(filePath);
 
     expect(format.container, "format.container").toBe("ASF/audio");
     expect(format.codec, "format.codec").toBe("Windows Media Audio 9");

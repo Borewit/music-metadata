@@ -1,14 +1,14 @@
 import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-describe("Parse Sony DSF (DSD Stream File)", () => {
+describe.each(Parsers)("Parse Sony DSF (DSD Stream File)", (parser) => {
   test("parse: 2L-110_stereo-5644k-1b_04.dsf", async () => {
     const dsfFilePath = join(samplePath, "dsf", "2L-110_stereo-5644k-1b_04_0.1-sec.dsf");
 
-    const metadata = await parseFile(dsfFilePath, { duration: false });
+    const metadata = await parser.initParser(dsfFilePath, "audio/dsf", { duration: false });
 
     // format chunk information
     expect(metadata.format.container).toBe("DSF");
