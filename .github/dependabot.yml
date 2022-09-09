@@ -1,8 +1,6 @@
 version: 2
 updates:
 
-# Trigger change as requested in ticket 1760351.
-
   # CommonJS
   - package-ecosystem: npm
     directory: "/"
@@ -29,7 +27,6 @@ updates:
       - dependency-name: "token-types"
         versions: [ ">=5.x" ]
 
-  # TypeScript Module
   - package-ecosystem: npm
     directory: "/"
     schedule:
