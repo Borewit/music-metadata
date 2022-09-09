@@ -214,10 +214,18 @@ describe.each(cases)("%s.%s", (name, type) => {
     expect(fileType.mime).toBeTypeOf("string");
   });
 
-  test("fromBuffer", async () => {
+  test("fromBuffer Buffer", async () => {
     const chunk = readFileSync(filePath);
     await checkBufferLike(type, chunk);
+  });
+
+  test("fromBuffer Uint8Array", async () => {
+    const chunk = readFileSync(filePath);
     await checkBufferLike(type, new Uint8Array(chunk));
+  });
+
+  test.skip("fromBuffer ArrayBuffer.slice", async () => {
+    const chunk = readFileSync(filePath);
     await checkBufferLike(type, chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength));
   });
 
@@ -242,12 +250,22 @@ describe.each(cases)("%s.%s", (name, type) => {
 describe.each(falsePositivesCases)("%s.%s", (name, type) => {
   const filePath = join(__dirname, "fixture", `${name}.${type}`);
 
-  test(`false positive - ${type}`, async () => {
-    const chunk = readFileSync(filePath);
-
+  test(`false positive - from file`, async () => {
     await expect(fileTypeFromFile(filePath)).resolves.toBeUndefined();
+  });
+
+  test(`false positive - from buffer Buffer`, async () => {
+    const chunk = readFileSync(filePath);
     await expect(fileTypeFromBuffer(chunk)).resolves.toBeUndefined();
+  });
+
+  test(`false positive - from buffer Uint8Array`, async () => {
+    const chunk = readFileSync(filePath);
     await expect(fileTypeFromBuffer(new Uint8Array(chunk))).resolves.toBeUndefined();
+  });
+
+  test.skip(`false positive - from buffer ArrayBufferLike`, async () => {
+    const chunk = readFileSync(filePath);
     await expect(fileTypeFromBuffer(chunk.buffer)).resolves.toBeUndefined();
   });
 });
