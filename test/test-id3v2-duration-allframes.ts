@@ -1,10 +1,10 @@
 import { expect, test } from "vitest";
-import { parseFile } from "../lib";
 
 import { join } from "node:path";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("should decode id3v2-duration-allframes", async () => {
+test.each(Parsers)("should decode id3v2-duration-allframes", async (parser) => {
   /**
    * Audacity:         64512 samples (counts 56 frames??)
    * ---------------------------
@@ -21,7 +21,7 @@ test("should decode id3v2-duration-allframes", async () => {
    */
   const filePath = join(samplePath, "id3v2-duration-allframes.mp3");
 
-  const metadata = await parseFile(filePath, { duration: true });
+  const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
   const format = metadata.format;
   const common = metadata.common;
 

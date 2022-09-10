@@ -1,14 +1,14 @@
 import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("decode id3v2-utf16", async () => {
+test.each(Parsers)("decode id3v2-utf16", async (parser) => {
   const filename = "id3v2-utf16.mp3";
   const filePath = join(samplePath, filename);
 
-  const metadata = await parseFile(filePath, { duration: true });
+  const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
   const { common } = metadata;
 
   expect(common.title, "title").toBe("Redial (Feat. LeafRunner and Nowacking)");
