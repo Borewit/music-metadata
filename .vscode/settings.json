@@ -6,6 +6,7 @@
         "FLAC",
         "matroska",
         "TXXX",
+        "UFID",
         "vorbis"
     ]
 }

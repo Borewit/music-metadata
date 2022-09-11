@@ -2,15 +2,16 @@ import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
 import { ITrackInfo, TrackType } from "../lib/type";
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
+describe.each(Parsers)("parser: %s", (parser) => {
 describe("ASF", () => {
   const asfPath = join(samplePath, "asf");
 
   test("wma", async () => {
     const filePath = join(asfPath, "issue_57.wma");
-    const { format } = await parseFile(filePath);
+    const { format } = await parser.initParser(filePath);
 
     expect(format.trackInfo, "format.trackInfo").toMatchObject([
       {
@@ -22,7 +23,7 @@ describe("ASF", () => {
 
   test("elephant.asf", async () => {
     const filePath = join(asfPath, "elephant.asf");
-    const { format } = await parseFile(filePath);
+    const { format } = await parser.initParser(filePath);
 
     expect(format.trackInfo, "format.trackInfo").toEqual(
       expect.arrayContaining([
@@ -42,7 +43,7 @@ describe("ASF", () => {
 describe("Matroska", () => {
   test("WebM", async () => {
     const filePath = join(samplePath, "matroska", "big-buck-bunny_trailer-short.vp8.webm");
-    const { format } = await parseFile(filePath);
+    const { format } = await parser.initParser(filePath);
 
     expect(format.trackInfo[0], "format.trackInfo").toStrictEqual({
       audio: undefined,
@@ -80,7 +81,7 @@ describe("Matroska", () => {
 
   test("matroska-test-w1-test5-short.mkv", async () => {
     const filePath = join(samplePath, "matroska", "matroska-test-w1-test5-short.mkv");
-    const { format } = await parseFile(filePath);
+    const { format } = await parser.initParser(filePath);
 
     const expectedList: ITrackInfo[] = [
       {
@@ -237,7 +238,7 @@ describe("Matroska", () => {
 describe("MPEG-4", () => {
   test('.mp4: "Mr. Pickles S02E07 My Dear Boy.mp4"', async () => {
     const filePath = join(samplePath, "mp4", "Mr. Pickles S02E07 My Dear Boy.mp4");
-    const { format } = await parseFile(filePath);
+    const { format } = await parser.initParser(filePath);
 
     const expectedList: ITrackInfo[] = [
       {
@@ -276,4 +277,5 @@ describe("MPEG-4", () => {
       expect(format.trackInfo[i], "format.trackInfo").toStrictEqual(expectedList[i]);
     }
   });
+});
 });
