@@ -1,22 +1,14 @@
 import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("should reject files that can't be parsed", async () => {
+test.each(Parsers)("should reject files that can't be parsed", async (_, parser) => {
   const filePath = join(samplePath, "flac.flac.jpg");
 
-  const rejected = expect(() => parseFile(filePath)).rejects;
+  // Run with default options
+  const rejected = expect(() => parser(filePath)).rejects;
   await rejected.toBeDefined();
   await rejected.toHaveProperty("error.message");
-  // Run with default options
-  try {
-    await parseFile(filePath);
-    expect.fail("Should reject a file which cannot be parsed");
-  } catch (error) {
-    if (!(error instanceof Error)) throw error;
-    expect(error).toBeDefined();
-    expect(error.message).toBeDefined();
-  }
 });

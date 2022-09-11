@@ -6,11 +6,11 @@ import { samplePath } from "./util";
 
 const mpcSamplePath = join(samplePath, "mpc");
 
-describe("Parse Musepack, SV7 with APEv2 header", () => {
-  const filePath = join(mpcSamplePath, "apev2.sv7.mpc");
+describe.each(Parsers)("parse %s", (_, parser) => {
+  test("Parse Musepack, SV7 with APEv2 header", async () => {
+    const filePath = join(mpcSamplePath, "apev2.sv7.mpc");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/musepac");
+    const metadata = await parser(filePath, "audio/musepac");
     // Check format
     const format = metadata.format;
     expect(format.container).toBe("Musepack, SV7");
@@ -31,16 +31,14 @@ describe("Parse Musepack, SV7 with APEv2 header", () => {
     expect(common.releasecountry).toBe("GB");
     expect(common.track).toStrictEqual({ no: 9, of: 10 });
   });
-});
 
-describe("Handle APEv1 TAG header (no header, only footer)", () => {
-  /**
-   * In this sample the APEv2 header is not present, only the APEv2 footer
-   */
-  const filePath = join(mpcSamplePath, "apev2-no-header.sv7.mpc");
+  test("Handle APEv1 TAG header (no header, only footer)", async () => {
+    /**
+     * In this sample the APEv2 header is not present, only the APEv2 footer
+     */
+    const filePath = join(mpcSamplePath, "apev2-no-header.sv7.mpc");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/musepac");
+    const metadata = await parser(filePath, "audio/musepac");
     // Check format
     expect(metadata.format.container).toBe("Musepack, SV7");
     expect(metadata.format.sampleRate).toBe(44_100);
@@ -55,13 +53,11 @@ describe("Handle APEv1 TAG header (no header, only footer)", () => {
     expect(metadata.common.date).toBe("2004");
     expect(metadata.common.track).toStrictEqual({ no: 9, of: null });
   });
-});
 
-describe("Parse Musepack, SV8 with APEv2 header", () => {
-  const filePath = join(mpcSamplePath, "bach-goldberg-variatians-05.sv8.mpc");
+  test("Parse Musepack, SV8 with APEv2 header", async () => {
+    const filePath = join(mpcSamplePath, "bach-goldberg-variatians-05.sv8.mpc");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/musepac");
+    const metadata = await parser(filePath, "audio/musepac");
     // Check format
     expect(metadata.format.container).toBe("Musepack, SV8");
     expect(metadata.format.sampleRate).toBe(48_000);

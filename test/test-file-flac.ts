@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { orderTags, parseFile } from "../lib";
+import { orderTags } from "../lib";
 import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { Parsers } from "./metadata-parsers";
@@ -8,8 +8,8 @@ import { samplePath } from "./util";
 const flacFilePath = join(samplePath, "flac");
 
 describe("decode flac.flac", () => {
-  test.each(Parsers)("%s", async (parser) => {
-    const metadata = await parser.initParser(join(samplePath, "flac.flac"), "audio/flac");
+  test.each(Parsers)("%s", async (_, parser) => {
+    const metadata = await parser(join(samplePath, "flac.flac"), "audio/flac");
 
     const format = metadata.format;
 
@@ -60,8 +60,8 @@ describe("decode flac.flac", () => {
 describe("should be able to recognize a ID3v2 tag header prefixing a FLAC file", () => {
   const filePath = join(samplePath, "a kind of magic.flac");
 
-  test.each(Parsers)("%s", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/flac");
+  test.each(Parsers)("%s", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/flac");
     expect(metadata.format.tagTypes, 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"').toStrictEqual([
       "ID3v2.3",
       "vorbis",
@@ -73,8 +73,8 @@ describe("should be able to recognize a ID3v2 tag header prefixing a FLAC file",
 describe("should be able to determine the bit-rate", () => {
   const filePath = join(samplePath, "04 Long Drive.flac");
 
-  test.each(Parsers)("%s", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/flac");
+  test.each(Parsers)("%s", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/flac");
     expect(metadata.format.bitrate).toBeCloseTo(496_000, -3);
   });
 });
@@ -86,8 +86,8 @@ test("should handle a corrupt data", () => {
 
   writeFileSync(tmpFilePath, buf);
 
-  test.each(Parsers)("%s", async (parser) => {
-    await expect(parser.initParser(tmpFilePath, "audio/flac")).rejects.toHaveProperty(
+  test.each(Parsers)("%s", async (_, parser) => {
+    await expect(parser(tmpFilePath, "audio/flac")).rejects.toHaveProperty(
       "message",
       "FourCC contains invalid characters"
     );
@@ -98,10 +98,10 @@ test("should handle a corrupt data", () => {
 /**
  * Issue: https://github.com/Borewit/music-metadata/issues/266
  */
-test("Support Vorbis METADATA_BLOCK_PICTURE tags", async () => {
+test.each(Parsers)("Support Vorbis METADATA_BLOCK_PICTURE tags", async (_, parser) => {
   const filePath = join(samplePath, "issue-266.flac");
 
-  const metadata = await parseFile(filePath);
+  const metadata = await parser(filePath);
   const format = metadata.format;
   const common = metadata.common;
   const vorbis = orderTags(metadata.native.vorbis);
@@ -120,16 +120,16 @@ test("Support Vorbis METADATA_BLOCK_PICTURE tags", async () => {
   expect(common.picture[1].data, "ommon.picture[1].data.length").toHaveLength(215_889);
 });
 
-test("Handle FLAC with undefined duration (number of samples == 0)", async () => {
+test.each(Parsers)("Handle FLAC with undefined duration (number of samples == 0)", async (_, parser) => {
   const filePath = join(flacFilePath, "test-unknown-duration.flac");
-  const metadata = await parseFile(filePath);
+  const metadata = await parser(filePath);
 
   expect(metadata.format.duration, "format.duration").toBeUndefined();
 });
 
-test('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async () => {
+test.each(Parsers)('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async (_, parser) => {
   const filePath = join(flacFilePath, "14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac");
-  const metadata = await parseFile(filePath);
+  const metadata = await parser(filePath);
   const format = metadata.format;
   const common = metadata.common;
 

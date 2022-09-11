@@ -1,14 +1,14 @@
 import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("should be able to read id3v2 files with extended headers", async () => {
+test.each(Parsers)("should be able to read id3v2 files with extended headers", async (_, parser) => {
   const filename = "id3v2-xheader.mp3";
   const filePath = join(samplePath, filename);
 
-  const metadata = await parseFile(filePath, { duration: true });
+  const metadata = await parser(filePath, "audio/mp3", { duration: true });
   const format = metadata.format;
   const common = metadata.common;
 

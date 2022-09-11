@@ -1,8 +1,8 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
 const expectedLyrics = [
   "The way we're living makes no sense",
@@ -68,8 +68,10 @@ const expectedLyrics = [
   "Happened?",
 ];
 
-test("should be able to read id3v2 files with lyrics", async () => {
-  const filePath = join(samplePath, "id3v2-lyrics.mp3");
-  const metadata = await parseFile(filePath);
-  expect(metadata.common.lyrics, "Check lyrics").toStrictEqual(expectedLyrics);
+describe.each(Parsers)("parse %s", (_, parser) => {
+  test("should be able to read id3v2 files with lyrics", async () => {
+    const filePath = join(samplePath, "id3v2-lyrics.mp3");
+    const metadata = await parser(filePath);
+    expect(metadata.common.lyrics, "Check lyrics").toStrictEqual(expectedLyrics);
+  });
 });

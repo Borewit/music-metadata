@@ -2,12 +2,13 @@ import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
 import { commonTags, isSingleton } from "../lib/common/GenericTagInfo";
-import { parseFile, ratingToStars, selectCover } from "../lib";
+import { ratingToStars, selectCover } from "../lib";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 import { joinArtists } from "../lib/common/MetadataCollector";
 import { parseHttpContentType } from "../lib/ParserFactory";
 
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
 describe("GenericTagMap", () => {
   const combinedTagMapper = new CombinedTagMapper();
@@ -40,10 +41,10 @@ describe("GenericTagMap", () => {
       expect(joinArtists(["David Bowie", "Queen", "Mick Ronson"])).toBe("David Bowie, Queen & Mick Ronson");
     });
 
-    test("parse RIFF tags", async () => {
+    test.each(Parsers)("parse RIFF tags %s", async (_, parser) => {
       const filePath = join(samplePath, "issue-89 no-artist.aiff");
 
-      const metadata = await parseFile(filePath, { duration: true });
+      const metadata = await parser(filePath, "audio/aiff", { duration: true });
       expect(metadata.common.artists, "common.artists directly via WM/ARTISTS").toStrictEqual([
         "Beth Hart",
         "Joe Bonamassa",
@@ -65,7 +66,7 @@ describe("Convert rating", () => {
   });
 });
 
-describe("function selectCover()", () => {
+describe.each(Parsers)("function selectCover() %s", (_, parser) => {
   const multiCoverFiles = [
     "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3",
     "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav",
@@ -80,11 +81,12 @@ describe("function selectCover()", () => {
     "monkeysaudio.ape",
   ];
 
-  test.each(multiCoverFiles)("Should pick the front cover", async (multiCoverFile) => {
+  test.each(multiCoverFiles)("Should pick the front cover %s", async (multiCoverFile) => {
     const filePath = join(samplePath, multiCoverFile);
 
-    const metadata = await parseFile(filePath);
-    expect(metadata.common.picture.length).toBeGreaterThan(1);
+    const metadata = await parser(filePath);
+
+    expect(metadata.common.picture.length).toBeGreaterThanOrEqual(1);
 
     const cover = selectCover(metadata.common.picture);
     if (cover.type) {

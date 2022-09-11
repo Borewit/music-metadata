@@ -1,14 +1,14 @@
 import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { parseFile } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
-test("should read utf16bom (big endian) encoded metadata correctly", async () => {
+test.each(Parsers)("should read utf16bom (big endian) encoded metadata correctly", async (_, parser) => {
   const filename = "bug-utf16bom-encoding.mp3";
   const filePath = join(samplePath, filename);
 
-  const metadata = await parseFile(filePath);
+  const metadata = await parser(filePath);
   const common = metadata.common;
 
   expect(common.title, "title").toBe("It's All Over You Know");

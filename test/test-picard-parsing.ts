@@ -2,8 +2,9 @@ import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import type { TagType } from "../lib/common/GenericTagTypes";
-import { ICommonTagsResult, INativeTagDict, parseFile, orderTags } from "../lib";
+import { ICommonTagsResult, INativeTagDict, orderTags } from "../lib";
 import { samplePath } from "./util";
+import { Parsers } from "./metadata-parsers";
 
 /**
  * Check if different header formats map to the same common output.
@@ -475,233 +476,235 @@ function checkAsfTags(native: INativeTagDict) {
   // ToDO
 }
 
-describe("Vorbis mappings", () => {
-  test("should map FLAC/Vorbis", async () => {
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
+describe.each(Parsers)("parser: %s", (description, parser) => {
+  describe("Vorbis mappings", () => {
+    test("should map FLAC/Vorbis", async () => {
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
-    // Parse flac/Vorbis file
-    const metadata = await parseFile(join(samplePath, filename));
-    expect(metadata, "should return metadata").toBeDefined();
-    expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native.vorbis, "should return metadata.native.vorbis").toBeDefined();
+      // Parse flac/Vorbis file
+      const metadata = await parser(join(samplePath, filename));
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native.vorbis, "should return metadata.native.vorbis").toBeDefined();
 
-    const format = metadata.format;
-    expect(format.container, "format.container").toBe("FLAC");
-    expect(format.codec, "format.codec").toBe("FLAC");
-    expect(format.duration, "format.duration = 2.123 seconds").toBe(2.122_993_197_278_911_6);
-    expect(format.sampleRate, "format.sampleRate = 44100 samples/sec").toBe(44_100);
-    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
-    expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
+      const format = metadata.format;
+      expect(format.container, "format.container").toBe("FLAC");
+      expect(format.codec, "format.codec").toBe("FLAC");
+      expect(format.duration, "format.duration = 2.123 seconds").toBe(2.122_993_197_278_911_6);
+      expect(format.sampleRate, "format.sampleRate = 44100 samples/sec").toBe(44_100);
+      expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+      expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
 
-    checkVorbisTags(orderTags(metadata.native.vorbis));
-    checkCommonMapping("vorbis", metadata.common);
+      checkVorbisTags(orderTags(metadata.native.vorbis));
+      checkCommonMapping("vorbis", metadata.common);
+    });
+
+    test("should map ogg/Vorbis", async () => {
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
+
+      // Parse ogg/Vorbis file
+      const metadata = await parser(filePath);
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native.vorbis, "should return metadata.native.vorbis").toBeDefined();
+      // Check Vorbis native tags
+      checkVorbisTags(orderTags(metadata.native.vorbis));
+      // Check common mappings
+      checkCommonMapping("vorbis", metadata.common);
+    });
   });
 
-  test("should map ogg/Vorbis", async () => {
-    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
+  describe.skipIf(description === "stream" || description === "buffer")("APEv2 header", () => {
+    test("should map Monkey's Audio / APEv2", async () => {
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
-    // Parse ogg/Vorbis file
-    const metadata = await parseFile(filePath);
-    expect(metadata, "should return metadata").toBeDefined();
-    expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native.vorbis, "should return metadata.native.vorbis").toBeDefined();
-    // Check Vorbis native tags
-    checkVorbisTags(orderTags(metadata.native.vorbis));
-    // Check common mappings
-    checkCommonMapping("vorbis", metadata.common);
+      // Run with default options
+      const metadata = await parser(filePath);
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native.APEv2, "should include native APEv2 tags").toBeDefined();
+
+      const format = metadata.format;
+      expect(format.duration, "format.duration = 2.123 seconds").toBe(2.122_993_197_278_911_6);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
+      checkApeTags(orderTags(metadata.native.APEv2));
+      checkCommonMapping("APEv2", metadata.common);
+    });
+
+    test("should map WavPack / APEv2", async () => {
+      const filePath = join(samplePath, "wavpack", "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
+
+      // Run with default options
+      const metadata = await parser(filePath);
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native.APEv2, "should include native APEv2 tags").toBeDefined();
+
+      const format = metadata.format;
+      expect(format.duration, "format.duration = 2.123 seconds").toBe(2.122_993_197_278_911_6);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
+      checkApeTags(orderTags(metadata.native.APEv2));
+      checkCommonMapping("APEv2", metadata.common);
+    });
   });
-});
 
-describe("APEv2 header", () => {
-  test("should map Monkey's Audio / APEv2", async () => {
-    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
+  describe("ID3v2.3 header", () => {
+    test("MP3 / ID3v2.3", async () => {
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
+
+      // Run with default options
+      const metadata = await parser(filePath);
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native["ID3v2.3"], "should include native id3v2.3 tags").toBeDefined();
+
+      const format = metadata.format;
+      expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
+      expect(format.container, "format.container").toBe("MPEG");
+      expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+      expect(format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+      expect(format.codecProfile, "format.codecProfile").toBe("V2");
+      expect(format.tool, "format.tool").toBe("LAME 3.99r");
+
+      checkID3Tags(orderTags(metadata.native["ID3v2.3"]));
+      checkCommonMapping("ID3v2.3", metadata.common);
+    });
+
+    /**
+     * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
+     * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
+     */
+    test("should map RIFF/WAVE/PCM / ID3v2.3", async () => {
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
+
+      // Parse wma/asf file
+      const result = await parser(filePath);
+      // Check wma format
+      const format = result.format;
+      // t.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
+      expect(format.tagTypes, "format.tagTypes)").toStrictEqual(["exif", "ID3v2.3"]);
+      expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+      expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+      expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
+      expect(format.numberOfSamples, "format.numberOfSamples = 88200").toBe(93_624);
+      expect(format.duration, "format.duration = 2 seconds").toBe(2.122_993_197_278_911_6);
+      // Check native tags
+      checkID3Tags(orderTags(result.native["ID3v2.3"]));
+      checkCommonMapping("ID3v2.3", result.common);
+    });
+  });
+
+  describe("ID3v2.4 header", () => {
+    test("should map MP3/ID3v2.4 header", async () => {
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
+
+      // Run with default options
+      const metadata = await parser(filePath);
+
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native["ID3v2.4"], "should include native id3v2.4 tags").toBeDefined();
+
+      const format = metadata.format;
+      expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.4"]);
+      expect(format.container, "format.container").toBe("MPEG");
+      expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
+      expect(format.codecProfile, "format.codecProfile = V2").toBe("V2");
+      expect(format.tool, "format.tool").toBe("LAME 3.99r");
+      expect(format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
+      expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+
+      checkID3v24Tags(orderTags(metadata.native["ID3v2.4"]));
+      checkCommonMapping("ID3v2.4", metadata.common);
+    });
+
+    test("should parse AIFF/ID3v2.4 audio file", async () => {
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
+
+      // Parse wma/asf file
+      const metadata = await parser(filePath);
+      expect(metadata, "should return metadata").toBeDefined();
+      expect(metadata.native, "should return metadata.native").toBeDefined();
+      expect(metadata.native["ID3v2.4"], "should include native id3v2.4 tags").toBeDefined();
+      // Check wma format
+      const format = metadata.format;
+      expect(format.container, "format.container = 'AIFF'").toBe("AIFF");
+      expect(format.tagTypes, "format.tagTypes = 'ID3v2.4'").toStrictEqual(["ID3v2.4"]); // ToDo
+      expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+      expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+      expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
+      expect(format.numberOfSamples, "format.bitsPerSample = 93624").toBe(93_624);
+      expect(format.duration, "format.duration = ~2.123").toBe(2.122_993_197_278_911_6);
+
+      // Check ID3v2.4 native tags
+      checkID3v24Tags(orderTags(metadata.native["ID3v2.4"]));
+      // Check common tag mappings
+      checkCommonMapping("ID3v2.4", metadata.common);
+    });
+  });
+
+  test("should map M4A / (Apple) iTunes header", async () => {
+    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     // Run with default options
-    const metadata = await parseFile(filePath);
+    const metadata = await parser(filePath);
     expect(metadata, "should return metadata").toBeDefined();
     expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native.APEv2, "should include native APEv2 tags").toBeDefined();
+    expect(metadata.native.iTunes, "should include native iTunes tags").toBeDefined();
 
     const format = metadata.format;
-    expect(format.duration, "format.duration = 2.123 seconds").toBe(2.122_993_197_278_911_6);
-    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
-    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
-    expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
-    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["iTunes"]);
+    expect(format.container, "format.container").toBe("M4A/mp42/isom");
+    expect(format.codec, "format.codec").toBe("ALAC");
+    expect(format.lossless, "ALAC is a lossless format").toBe(true);
+    expect(format.duration, "format.duration").toBe(2.122_993_197_278_911_6);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
+    // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
 
-    checkApeTags(orderTags(metadata.native.APEv2));
-    checkCommonMapping("APEv2", metadata.common);
+    const common = metadata.common;
+    expect(common.picture[0].format, "picture format").toBe("image/jpeg");
+    expect(common.picture[0].data.length, "picture length").toBe(98_008);
+
+    checkITunesTags(orderTags(metadata.native.iTunes));
+    checkCommonMapping("iTunes", metadata.common);
   });
 
-  test("should map WavPack / APEv2", async () => {
-    const filePath = join(samplePath, "wavpack", "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
-
-    // Run with default options
-    const metadata = await parseFile(filePath);
-    expect(metadata, "should return metadata").toBeDefined();
-    expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native.APEv2, "should include native APEv2 tags").toBeDefined();
-
-    const format = metadata.format;
-    expect(format.duration, "format.duration = 2.123 seconds").toBe(2.122_993_197_278_911_6);
-    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
-    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
-    expect(format.bitsPerSample, "format.bitsPerSample").toBe(16);
-    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
-
-    checkApeTags(orderTags(metadata.native.APEv2));
-    checkCommonMapping("APEv2", metadata.common);
-  });
-});
-
-describe("ID3v2.3 header", () => {
-  test("MP3 / ID3v2.3", async () => {
-    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
-
-    // Run with default options
-    const metadata = await parseFile(filePath);
-    expect(metadata, "should return metadata").toBeDefined();
-    expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native["ID3v2.3"], "should include native id3v2.3 tags").toBeDefined();
-
-    const format = metadata.format;
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
-    expect(format.container, "format.container").toBe("MPEG");
-    expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
-    expect(format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
-    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
-    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
-    expect(format.codecProfile, "format.codecProfile").toBe("V2");
-    expect(format.tool, "format.tool").toBe("LAME 3.99r");
-
-    checkID3Tags(orderTags(metadata.native["ID3v2.3"]));
-    checkCommonMapping("ID3v2.3", metadata.common);
-  });
-
-  /**
-   * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
-   * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
-   */
-  test("should map RIFF/WAVE/PCM / ID3v2.3", async () => {
-    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
+  test("should map WMA/ASF header", async () => {
+    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     // Parse wma/asf file
-    const result = await parseFile(filePath);
-    // Check wma format
-    const format = result.format;
-    // t.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
-    expect(format.tagTypes, "format.tagTypes)").toStrictEqual(["exif", "ID3v2.3"]);
-    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
-    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
-    expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
-    expect(format.numberOfSamples, "format.numberOfSamples = 88200").toBe(93_624);
-    expect(format.duration, "format.duration = 2 seconds").toBe(2.122_993_197_278_911_6);
-    // Check native tags
-    checkID3Tags(orderTags(result.native["ID3v2.3"]));
-    checkCommonMapping("ID3v2.3", result.common);
-  });
-});
-
-describe("ID3v2.4 header", () => {
-  test("should map MP3/ID3v2.4 header", async () => {
-    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
-
-    // Run with default options
-    const metadata = await parseFile(filePath);
+    const metadata = await parser(filePath);
 
     expect(metadata, "should return metadata").toBeDefined();
     expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native["ID3v2.4"], "should include native id3v2.4 tags").toBeDefined();
+    expect(metadata.native.asf, "should include native asf tags").toBeDefined();
 
-    const format = metadata.format;
-    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.4"]);
-    expect(format.container, "format.container").toBe("MPEG");
-    expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
-    expect(format.codecProfile, "format.codecProfile = V2").toBe("V2");
-    expect(format.tool, "format.tool").toBe("LAME 3.99r");
-    expect(format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
-    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
-    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
-
-    checkID3v24Tags(orderTags(metadata.native["ID3v2.4"]));
-    checkCommonMapping("ID3v2.4", metadata.common);
-  });
-
-  test("should parse AIFF/ID3v2.4 audio file", async () => {
-    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
-
-    // Parse wma/asf file
-    const metadata = await parseFile(filePath);
-    expect(metadata, "should return metadata").toBeDefined();
-    expect(metadata.native, "should return metadata.native").toBeDefined();
-    expect(metadata.native["ID3v2.4"], "should include native id3v2.4 tags").toBeDefined();
     // Check wma format
     const format = metadata.format;
-    expect(format.container, "format.container = 'AIFF'").toBe("AIFF");
-    expect(format.tagTypes, "format.tagTypes = 'ID3v2.4'").toStrictEqual(["ID3v2.4"]); // ToDo
-    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
-    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
-    expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
-    expect(format.numberOfSamples, "format.bitsPerSample = 93624").toBe(93_624);
-    expect(format.duration, "format.duration = ~2.123").toBe(2.122_993_197_278_911_6);
+    expect(format.tagTypes, "format.tagTypes = asf").toStrictEqual(["asf"]);
+    expect(format.bitrate, "format.bitrate = 320000").toBe(320_000);
+    // expect(format.container, "format.container = wma").toBe("wma"); // ToDo
+    expect(format.duration, "format.duration").toBeCloseTo(2.135, 4);
+    // expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100); // ToDo
+    // expect(format.bitsPerSample, "format.bitsPerSample").toBe(16); // ToDo
+    // expect(format.numberOfChannels, "format.numberOfChannels").toBe(2); // ToDo
 
-    // Check ID3v2.4 native tags
-    checkID3v24Tags(orderTags(metadata.native["ID3v2.4"]));
+    // Check asf native tags
+    checkAsfTags(orderTags(metadata.native.asf));
     // Check common tag mappings
-    checkCommonMapping("ID3v2.4", metadata.common);
+    // TODO
+    // checkCommonMapping(metadata.format.tagTypes[0], metadata.common);
   });
-});
-
-test("should map M4A / (Apple) iTunes header", async () => {
-  const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
-
-  // Run with default options
-  const metadata = await parseFile(filePath);
-  expect(metadata, "should return metadata").toBeDefined();
-  expect(metadata.native, "should return metadata.native").toBeDefined();
-  expect(metadata.native.iTunes, "should include native iTunes tags").toBeDefined();
-
-  const format = metadata.format;
-  expect(format.tagTypes, "format.tagTypes").toStrictEqual(["iTunes"]);
-  expect(format.container, "format.container").toBe("M4A/mp42/isom");
-  expect(format.codec, "format.codec").toBe("ALAC");
-  expect(format.lossless, "ALAC is a lossless format").toBe(true);
-  expect(format.duration, "format.duration").toBe(2.122_993_197_278_911_6);
-  expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
-  // t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
-  // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
-
-  const common = metadata.common;
-  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
-  expect(common.picture[0].data.length, "picture length").toBe(98_008);
-
-  checkITunesTags(orderTags(metadata.native.iTunes));
-  checkCommonMapping("iTunes", metadata.common);
-});
-
-test("should map WMA/ASF header", async () => {
-  const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
-
-  // Parse wma/asf file
-  const metadata = await parseFile(filePath);
-
-  expect(metadata, "should return metadata").toBeDefined();
-  expect(metadata.native, "should return metadata.native").toBeDefined();
-  expect(metadata.native.asf, "should include native asf tags").toBeDefined();
-
-  // Check wma format
-  const format = metadata.format;
-  expect(format.tagTypes, "format.tagTypes = asf").toStrictEqual(["asf"]);
-  expect(format.bitrate, "format.bitrate = 320000").toBe(320_000);
-  // expect(format.container, "format.container = wma").toBe("wma"); // ToDo
-  expect(format.duration, "format.duration").toBeCloseTo(2.135, 4);
-  // expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100); // ToDo
-  // expect(format.bitsPerSample, "format.bitsPerSample").toBe(16); // ToDo
-  // expect(format.numberOfChannels, "format.numberOfChannels").toBe(2); // ToDo
-
-  // Check asf native tags
-  checkAsfTags(orderTags(metadata.native.asf));
-  // Check common tag mappings
-  // TODO
-  // checkCommonMapping(metadata.format.tagTypes[0], metadata.common);
 });
