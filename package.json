@@ -69,6 +69,7 @@
   "scripts": {
     "clean": "del-cli dist",
     "validate": "run-s format lint build test",
+    "node-ci": "run-s lint build test:coverage",
     "format": "prettier --cache --write lib test doc-gen example",
     "build": "run-s clean build:*",
     "build:lib": "tsc -p tsconfig.build.json",
@@ -81,7 +82,7 @@
     "lint:md": "remark -u preset-lint-recommended .",
     "test": "run-s test:vitest",
     "test:vitest": "vitest --run",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest --run --coverage",
     "test:buildsize": "vite build",
     "watch:test": "vitest --watch",
     "watch:typescript": "tsc -p tsconfig.check.json -w"
@@ -90,6 +91,7 @@
     "@types/node": "^18.7.16",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
+    "@vitest/coverage-c8": "^0.23.2",
     "c8": "^7.12.0",
     "del-cli": "^5.0.0",
     "eslint": "^8.23.0",
