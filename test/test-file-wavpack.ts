@@ -9,8 +9,8 @@ const wavpackSamplePath = join(samplePath, "wavpack");
 describe("codec: WavPack", () => {
   const wv1 = join(wavpackSamplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(wv1, "audio/x-wavpack");
+  test.each(Parsers)("parser: %s", async (_, parser) => {
+    const metadata = await parser(wv1, "audio/x-wavpack");
     const format = metadata.format;
     const common = metadata.common;
 
@@ -26,8 +26,8 @@ describe("codec: WavPack", () => {
 
 describe("codec: DSD128", () => {
   const wv1 = join(wavpackSamplePath, "DSD128.wv");
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(wv1, "audio/x-wavpack");
+  test.each(Parsers)("parser: %s", async (_, parser) => {
+    const metadata = await parser(wv1, "audio/x-wavpack");
     const format = metadata.format;
 
     expect(format.container, "format.container").toBe("WavPack");
@@ -41,8 +41,8 @@ describe("codec: DSD128", () => {
 
 describe("codec: DSD128 compressed", () => {
   const wv1 = join(wavpackSamplePath, "DSD128 high compression.wv");
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(wv1, "audio/x-wavpack");
+  test.each(Parsers)("parser: %s", async (_, parser) => {
+    const metadata = await parser(wv1, "audio/x-wavpack");
     const format = metadata.format;
 
     expect(format.container, "format.container").toBe("WavPack");

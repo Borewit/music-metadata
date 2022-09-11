@@ -39,14 +39,14 @@ describe("Mapping definitions", () => {
     expect(vorbisMapper.tagMap).toHaveProperty(tag);
   });
 });
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   describe("Track mapping: Beth Hart - Sinner's Prayer %s", () => {
     test("ID3v2.3/ID3v2.4", async () => {
       const filename = "Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3";
       const filePath = join(samplePath, filename);
 
       // Run with default options
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
 
       expect(metadata.common, "should include common tags").toBeTruthy();
       expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -106,7 +106,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, filename);
 
       // Run with default options
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
 
       expect(metadata.common, "should include common tags").toBeTruthy();
       expect(metadata.format.tagTypes).toStrictEqual(["vorbis"]);
@@ -159,7 +159,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   describe("Track mapping: Yasmin Levy - Mi Korasón.flac'", () => {
     test("Vorbis/FLAC tags", async () => {
       const filename = "Discogs - Yasmin Levy - Mi Korasón.flac";
-      const metadata = await parser.initParser(join(samplePath, filename));
+      const metadata = await parser(join(samplePath, filename));
 
       expect(metadata.common, "should include common tags").toBeTruthy();
       expect(metadata.format.tagTypes).toStrictEqual(["vorbis"]);

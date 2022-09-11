@@ -7,7 +7,7 @@ import { parseGenre } from "../lib/id3v2/FrameParser";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-describe.each(Parsers)("ID3v2Parser %s", (parser) => {
+describe.each(Parsers)("ID3v2Parser %s", (_, parser) => {
   const mp3Path = join(samplePath, "mp3");
 
   test("should be able to remove unsynchronisation bytes from buffer", () => {
@@ -20,7 +20,7 @@ describe.each(Parsers)("ID3v2Parser %s", (parser) => {
 
   test("should normalize ID3v2.2 comments correctly", async () => {
     const filePath = join(samplePath, "issue_66.mp3");
-    const metadata = await parser.initParser(filePath, "audio/mp3", { duration: true });
+    const metadata = await parser(filePath, "audio/mp3", { duration: true });
 
     const id3v22 = orderTags(metadata.native["ID3v2.2"]);
 
@@ -54,7 +54,7 @@ describe.each(Parsers)("ID3v2Parser %s", (parser) => {
     const filename = "id3v2.2.mp3";
     const filePath = join(__dirname, "samples", filename);
 
-    const metadata = await parser.initParser(filePath, "audio/mp3", { duration: true });
+    const metadata = await parser(filePath, "audio/mp3", { duration: true });
     expect(metadata.common.title, "title").toBe("You Are The One");
     expect(metadata.common.artist, "artist").toBe("Shiny Toy Guns");
     expect(metadata.common.album, "album").toBe("We Are Pilots");
@@ -138,7 +138,7 @@ describe.each(Parsers)("ID3v2Parser %s", (parser) => {
 
   test("05 I Believe You.mp3", async () => {
     const filePath = join(mp3Path, "issue-641.mp3");
-    const { format, common } = await parser.initParser(filePath);
+    const { format, common } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -152,7 +152,7 @@ describe.each(Parsers)("ID3v2Parser %s", (parser) => {
     test("TBP (beats per minute)", async () => {
       const filePath = join(samplePath, "mp3", "Betty Lou.mp3");
 
-      const { format, common } = await parser.initParser(filePath, "audio/mp3", {
+      const { format, common } = await parser(filePath, "audio/mp3", {
         duration: true,
       });
       expect(format.container, "format.container").toBe("MPEG");

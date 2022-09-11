@@ -476,13 +476,13 @@ function checkAsfTags(native: INativeTagDict) {
   // ToDO
 }
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (description, parser) => {
   describe("Vorbis mappings", () => {
     test("should map FLAC/Vorbis", async () => {
       const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
       // Parse flac/Vorbis file
-      const metadata = await parser.initParser(join(samplePath, filename));
+      const metadata = await parser(join(samplePath, filename));
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
       expect(metadata.native.vorbis, "should return metadata.native.vorbis").toBeDefined();
@@ -503,7 +503,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
 
       // Parse ogg/Vorbis file
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
       expect(metadata.native.vorbis, "should return metadata.native.vorbis").toBeDefined();
@@ -514,12 +514,12 @@ describe.each(Parsers)("parser: %s", (parser) => {
     });
   });
 
-  describe.skipIf(parser.description === "parseStream" || parser.description === "parseBuffer")("APEv2 header", () => {
+  describe.skipIf(description === "stream" || description === "buffer")("APEv2 header", () => {
     test("should map Monkey's Audio / APEv2", async () => {
       const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
       // Run with default options
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
       expect(metadata.native.APEv2, "should include native APEv2 tags").toBeDefined();
@@ -539,7 +539,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, "wavpack", "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
       // Run with default options
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
       expect(metadata.native.APEv2, "should include native APEv2 tags").toBeDefined();
@@ -561,7 +561,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
 
       // Run with default options
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
       expect(metadata.native["ID3v2.3"], "should include native id3v2.3 tags").toBeDefined();
@@ -588,7 +588,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
       // Parse wma/asf file
-      const result = await parser.initParser(filePath);
+      const result = await parser(filePath);
       // Check wma format
       const format = result.format;
       // t.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
@@ -609,7 +609,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
 
       // Run with default options
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
 
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
@@ -633,7 +633,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
       // Parse wma/asf file
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       expect(metadata, "should return metadata").toBeDefined();
       expect(metadata.native, "should return metadata.native").toBeDefined();
       expect(metadata.native["ID3v2.4"], "should include native id3v2.4 tags").toBeDefined();
@@ -658,7 +658,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     // Run with default options
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
     expect(metadata, "should return metadata").toBeDefined();
     expect(metadata.native, "should return metadata.native").toBeDefined();
     expect(metadata.native.iTunes, "should include native iTunes tags").toBeDefined();
@@ -685,7 +685,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     // Parse wma/asf file
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
 
     expect(metadata, "should return metadata").toBeDefined();
     expect(metadata.native, "should return metadata.native").toBeDefined();

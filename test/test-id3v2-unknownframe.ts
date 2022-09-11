@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-test.each(Parsers)('invalid "Date" frame should not cause crash', async (parser) => {
+test.each(Parsers)('invalid "Date" frame should not cause crash', async (_, parser) => {
   const filename = "bug-id3v2-unknownframe.mp3";
   const filePath = join(samplePath, filename);
 
-  const metadata = await parser.initParser(filePath, "audio/mp3", { duration: true });
+  const metadata = await parser(filePath, "audio/mp3", { duration: true });
   const common = metadata.common;
 
   expect(common.title, "common.title").toBe("One");

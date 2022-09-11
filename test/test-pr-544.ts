@@ -7,9 +7,9 @@ import { Parsers } from "./metadata-parsers";
 // Add, change and fix some mappings #pr-544
 // https://github.com/Borewit/music-metadata/pull/544
 
-test.each(Parsers)("mp3-id3v24", async (parser) => {
+test.each(Parsers)("mp3-id3v24", async (_, parser) => {
   const filePath = join(samplePath, "mp3", "pr-544-id3v24.mp3");
-  const metadata = await parser.initParser(filePath);
+  const metadata = await parser(filePath);
 
   const common = metadata.common;
   expect(common.movement, "metadata.common.movement").toBe("Movement Name");
@@ -37,9 +37,9 @@ test.each(Parsers)("mp3-id3v24", async (parser) => {
   expect(common.originalalbum, "metadata.common.originalalbum").toBe("Original Album");
 });
 
-test.each(Parsers)("mp4", async (parser) => {
+test.each(Parsers)("mp4", async (_, parser) => {
   const filePath = join(samplePath, "mp4", "pr-544.m4a");
-  const metadata = await parser.initParser(filePath);
+  const metadata = await parser(filePath);
 
   const common = metadata.common;
   expect(common.movement, "metadata.common.movement").toBe("Movement Name");

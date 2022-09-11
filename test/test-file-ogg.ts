@@ -47,11 +47,11 @@ function check_Nirvana_In_Bloom_VorbisTags(vorbis: INativeTagDict) {
   expect(cover.data[cover.data.length - 2], "vorbis.METADATA_BLOCK_PICTURE data -2").toBe(255);
 }
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   describe("Parsing Ogg/Vorbis", () => {
     test("decode: Nirvana - In Bloom - 2-sec.ogg", async () => {
       const filePath = join(samplePath, "Nirvana - In Bloom - 2-sec.ogg");
-      const metadata = await parser.initParser(filePath, "audio/ogg");
+      const metadata = await parser(filePath, "audio/ogg");
 
       const format = metadata.format;
 
@@ -68,7 +68,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("should handle page not finalized with the lastPage flag", async () => {
       const filePath = join(samplePath, "issue_62.ogg");
 
-      const { format, common, quality } = await parser.initParser(filePath);
+      const { format, common, quality } = await parser(filePath);
 
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["vorbis"]);
       // expect(format.duration, 'format.duration = 2.0 sec').toBe(2.0);
@@ -92,7 +92,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("should not fail on an Ogg/Vorbis 'Setup header'", async () => {
       const filePath = join(samplePath, "issue_70.ogg");
 
-      const { format, native } = await parser.initParser(filePath);
+      const { format, native } = await parser(filePath);
       expect(format.container, "format.container").toBe("Ogg");
       expect(format.codec, "format.codec").toBe("Vorbis I");
       expect(format.sampleRate, "format.sampleRate").toBe(44_100);
@@ -124,7 +124,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
     test("decode: Nirvana - In Bloom - 2-sec.opus", async () => {
       const filePath = join(samplePath, "Nirvana - In Bloom - 2-sec.opus");
-      const metadata = await parser.initParser(filePath, "audio/ogg");
+      const metadata = await parser(filePath, "audio/ogg");
 
       const format = metadata.format;
 
@@ -143,7 +143,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   describe("Parsing Ogg/Speex", () => {
     test("decode: 'female_scrub.spx'", async () => {
       const filePath = join(samplePath, "female_scrub.spx");
-      const metadata = await parser.initParser(filePath, "audio/ogg");
+      const metadata = await parser(filePath, "audio/ogg");
       const format = metadata.format;
 
       expect(format.container, "format.container").toBe("Ogg");
@@ -154,7 +154,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("check for ogg-multipage-metadata-bug", async () => {
       const filePath = join(samplePath, "ogg-multipagemetadata-bug.ogg");
 
-      const result = await parser.initParser(filePath);
+      const result = await parser(filePath);
       expect(result.common.title, "title").toBe("Modestep - To The Stars (Break the Noize & The Autobots Remix)");
       expect(result.common.artist, "artist").toBe("Break The Noize & The Autobots");
       expect(result.common.albumartist, "albumartist").toBe("Modestep");
@@ -174,7 +174,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("with proper last page header", async () => {
       const filePath = join(oggSamplePath, "last-page.oga");
 
-      const { format } = await parser.initParser(filePath);
+      const { format } = await parser(filePath);
 
       expect(format.container, "format.container").toBe("Ogg");
       expect(format.codec, "format.codec").toBe("Opus");
@@ -186,7 +186,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("with no last page", async () => {
       const filePath = join(oggSamplePath, "no-last-page.oga");
 
-      const { format, quality } = await parser.initParser(filePath);
+      const { format, quality } = await parser(filePath);
 
       expect(format.container, "format.container").toBe("Ogg");
       expect(format.codec, "format.codec").toBe("Opus");

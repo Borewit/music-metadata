@@ -11,8 +11,8 @@ describe("should be able to read an ID3v1 tag", () => {
   /**
    * 241920 samples
    */
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(fileBloodSugar, "audio/mpeg");
+  test.each(Parsers)("%j", async (_, parser) => {
+    const metadata = await parser(fileBloodSugar, "audio/mpeg");
     const format = metadata.format;
     const common = metadata.common;
 
@@ -40,8 +40,8 @@ describe("should be able to read an ID3v1 tag", () => {
 describe("it should skip id3v1 header if options.skipPostHeaders is set", () => {
   const filePath = join(samplePath, "07 - I'm Cool.mp3");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/mpeg", {
+  test.each(Parsers)("%j", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/mpeg", {
       skipPostHeaders: true,
     });
     expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
@@ -51,8 +51,8 @@ describe("it should skip id3v1 header if options.skipPostHeaders is set", () => 
 describe("should handle MP3 without any tags", () => {
   const filePath = join(samplePath, "silence-2s-16000 [no-tags].CBR-128.mp3");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/mpeg");
+  test.each(Parsers)("%j", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/mpeg");
     const format = metadata.format;
 
     expect(format.tagTypes, "format.tagTypes").toStrictEqual([]);
@@ -72,8 +72,8 @@ describe("should decode ID3v1.0 with undefined tags", () => {
    */
   const filePath = join(samplePath, "Luomo - Tessio (Spektre Remix) ID3v10.mp3");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/mpeg");
+  test.each(Parsers)("%j", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/mpeg");
 
     const format = metadata.format;
     const common = metadata.common;
@@ -107,8 +107,8 @@ describe("should decode ID3v1.0 with undefined tags", () => {
 describe("should respect null terminated tag values correctly", () => {
   const filePath = join(samplePath, "issue_69.mp3");
 
-  test.each(Parsers)("%j", async (parser) => {
-    const metadata = await parser.initParser(filePath, "audio/mpeg", {
+  test.each(Parsers)("%j", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/mpeg", {
       duration: true,
     });
     const id3v1 = orderTags(metadata.native.ID3v1);

@@ -6,13 +6,13 @@ import { Parsers } from "./metadata-parsers";
 
 const issueDir = join(samplePath);
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   /**
    * issue_77_empty_tag.mp3 (metadata of: 'Like Spinning Plates (Live)'):
    * Has an empty ID3v2.3 tag and a ID3v1 tag.
    */
   test("should ignore empty tag headers", async () => {
-    const metadata = await parser.initParser(join(issueDir, "issue_77_empty_tag.mp3"));
+    const metadata = await parser(join(issueDir, "issue_77_empty_tag.mp3"));
     expect(metadata.common.title).toBe("Like Spinning Plates (Live)");
     expect(metadata.common.album).toBe("I Might Be Wrong");
     expect(metadata.common.artist).toBe("Radiohead");
@@ -27,7 +27,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
      * - Artist in ID3v1 is different than in ID3v2.4
      */
     test("should merge multiple headers information when true", async () => {
-      const metadata = await parser.initParser(testSample);
+      const metadata = await parser(testSample);
       const id3v24 = metadata.native["ID3v2.4"];
       const id3v11 = metadata.native.ID3v1;
 

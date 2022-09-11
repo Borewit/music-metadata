@@ -6,7 +6,7 @@ import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
 import { Parsers } from "./metadata-parsers";
 import { orderTags } from "../lib";
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (description, parser) => {
   test("should parse MPEG-1 Audio Layer II ", async () => {
     /**
      * No errors found in file.
@@ -30,7 +30,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
      */
     const filePath = join(samplePath, "1971 - 003 - Sweet - Co-Co - CannaPower.mp2");
 
-    const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+    const metadata = await parser(filePath, "audio/mpeg", { duration: true });
 
     expect(metadata.format.tagTypes, "Tags: ID3v1 & ID3v2.3").toStrictEqual(["ID3v2.3", "ID3v1"]);
     expect(metadata.format.container, "format.container = MPEG").toBe("MPEG");
@@ -51,7 +51,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       // sync errors and assumption it is VBR (which is caused by the
       // funny 224 kbps frame)
 
-      await parser.initParser(tmpFilePath, "audio/mpeg", { duration: true });
+      await parser(tmpFilePath, "audio/mpeg", { duration: true });
     }, 10_000);
   });
 
@@ -67,7 +67,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
       const filePath = join(samplePath, "04 - You Don't Know.mp3");
 
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: true });
 
       const format = metadata.format;
       const common = metadata.common;
@@ -120,7 +120,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
       const filePath = join(samplePath, "07 - I'm Cool.mp3");
 
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: true });
 
       const format = metadata.format;
       const common = metadata.common;
@@ -181,7 +181,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
        Exact length: 00:00
        ------------------------------------------------------------------------*/
       const filePath = join(samplePath, "outofbounds.mp3");
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: true });
       const format = metadata.format;
 
       expect(format.tagTypes, "format.type").toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -198,12 +198,12 @@ describe.each(Parsers)("parser: %s", (parser) => {
    */
   describe("Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1", () => {
     test("should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1", async () => {
-      if (parser.description === "parseBuffer") {
-        await expect(parser.initParser(join(issueDir, "id3-multi-02.mp3"))).rejects.toBeDefined();
+      if (description === "buffer") {
+        await expect(parser(join(issueDir, "id3-multi-02.mp3"))).rejects.toBeDefined();
         return;
       }
 
-      const metadata = await parser.initParser(join(issueDir, "id3-multi-02.mp3"));
+      const metadata = await parser(join(issueDir, "id3-multi-02.mp3"));
       const format = metadata.format;
 
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v2.4", "ID3v1"]);
@@ -221,7 +221,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
      */
     test("should decode mp3_01 with 2x ID3v2.4 header", async () => {
       // ToDo: currently second ID3v2.4 is overwritten. Either make both headers accessible or generate warning
-      const metadata = await parser.initParser(join(issueDir, "id3-multi-01.mp3"));
+      const metadata = await parser(join(issueDir, "id3-multi-01.mp3"));
       const format = metadata.format;
 
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v2.4", "ID3v1"]);
@@ -256,7 +256,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
     test("from 'Yeahs-It's Blitz!.mp3'", async () => {
       const filePath = join(issueDir, "02-Yeahs-It's Blitz! 2.mp3");
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: false });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: false });
       const idv23 = orderTags(metadata.native["ID3v2.3"]);
       expect(idv23.POPM[0], "ID3v2.3 POPM").toStrictEqual({
         email: "no@email",
@@ -267,7 +267,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     });
 
     test("from 'id3v2-lyrics.mp3'", async () => {
-      const metadata = await parser.initParser(join(issueDir, "id3v2-lyrics.mp3"), "audio/mpeg", {
+      const metadata = await parser(join(issueDir, "id3v2-lyrics.mp3"), "audio/mpeg", {
         duration: false,
       });
       const idv23 = orderTags(metadata.native["ID3v2.3"]);
@@ -284,7 +284,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("decode POPM without a counter field", async () => {
       const filePath = join(issueDir, "issue-100.mp3");
 
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: true });
       const idv23 = orderTags(metadata.native["ID3v2.3"]);
       expect(idv23.POPM[0], "ID3v2.3 POPM").toStrictEqual({
         counter: undefined,
@@ -297,7 +297,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   describe("Calculate / read duration", () => {
     test("VBR read from Xing header", async () => {
       const filePath = join(issueDir, "id3v2-xheader.mp3");
-      const metadata = await parser.initParser(filePath, "audio/mpeg", {
+      const metadata = await parser(filePath, "audio/mpeg", {
         duration: false,
       });
       expect(metadata.format.duration).toBe(0.496_326_530_612_244_9);
@@ -307,14 +307,14 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(issueDir, "Dethklok-mergeTagHeaders.mp3");
       // Wrap stream around buffer, to prevent the `stream.path` is provided
 
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: true });
       expect(metadata.format.duration).toBeCloseTo(34.66, 1);
     });
   });
 
   test("It should be able to decode MPEG 2.5 Layer III", async () => {
     const filePath = join(issueDir, "mp3", "issue-347.mp3");
-    const { format } = await parser.initParser(filePath);
+    const { format } = await parser(filePath);
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 2.5 Layer 3");
     expect(format.codecProfile, "format.codec").toBe("CBR");

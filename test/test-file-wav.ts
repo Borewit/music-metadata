@@ -7,7 +7,7 @@ import { Parsers } from "./metadata-parsers";
 
 const wavSamples = join(samplePath, "wav");
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   /**
    * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
    * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
@@ -17,7 +17,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const filePath = join(samplePath, filename);
 
     // Parse wma/asf file
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
 
     // Check wma format
     const format = metadata.format;
@@ -48,7 +48,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("should be able to handle complex nested chunk structures", async () => {
     const filePath = join(samplePath, "issue_75.wav");
 
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
     expect(metadata.format.container, "format.container").toBe("WAVE");
     expect(metadata.format.codec, "format.codec").toBe("PCM");
   });
@@ -57,7 +57,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     // Metadata edited with Adobe Audition CC 2018.1
     const filePath = join(__dirname, "samples", "riff_adobe_audition.wav");
 
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
     const format = metadata.format;
     expect(format.lossless).toBe(true);
     expect(format.container, "format.container").toBe("WAVE");
@@ -103,7 +103,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("should handle be able to handle odd chunk & padding", async () => {
     const filePath = join(samplePath, "issue-161.wav");
 
-    const metadata = await parser.initParser(filePath, "audio/wave", { duration: true });
+    const metadata = await parser(filePath, "audio/wave", { duration: true });
     const format = metadata.format;
     expect(format.container, "format.container").toBe("WAVE");
     expect(format.codec, "format.codec").toBe("PCM");
@@ -118,7 +118,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("should parse Microsoft 4-bit ADPCM encoded", () => {
       const filePath = join(samplePath, "issue-92.wav");
 
-      return parser.initParser(filePath, "audio/wave", { duration: true }).then((metadata) => {
+      return parser(filePath, "audio/wave", { duration: true }).then((metadata) => {
         const format = metadata.format;
         expect(format.container, "format.container").toBe("WAVE");
         expect(format.codec, "format.codec").toBe("ADPCM");
@@ -135,7 +135,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("should handle missing chunk-size", async () => {
     const filePath = join(wavSamples, "ffmpeg-missing-chunksize.wav");
 
-    const { format } = await parser.initParser(filePath);
+    const { format } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("WAVE");
     expect(format.codec, "format.codec").toBe("PCM");
@@ -146,7 +146,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("should handle odd list-type ID in LIST chunk", async () => {
     const filePath = join(wavSamples, "odd-list-type.wav");
 
-    const { format } = await parser.initParser(filePath);
+    const { format } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("WAVE");
     expect(format.codec, "format.codec").toBe("PCM");
@@ -158,7 +158,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("Duration despite wrong chunk size", async () => {
     const filePath = join(wavSamples, "issue-819.wav");
 
-    const { format } = await parser.initParser(filePath);
+    const { format } = await parser(filePath);
 
     expect(format.container).toBe("WAVE");
     expect(format.codec).toBe("PCM");

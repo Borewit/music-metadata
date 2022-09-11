@@ -155,14 +155,14 @@ const samples: ReplayGainSample[] = [
  * Samples provided by: https://github.com/kepstin/replaygain-test-vectors
  */
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   describe("Test Replay-Gain", () => {
     const gainSamplesPath = join(samplePath, "replay-gain");
 
     test.each(samples)("Test %s, mapping from tag header: %s", async (_desc, tagType, sample) => {
       const filePath = join(gainSamplesPath, sample.filename);
 
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       const { format, common } = metadata;
 
       expect(format.container, "format.container").toBe(sample.container);

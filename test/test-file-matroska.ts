@@ -5,12 +5,12 @@ import { Parsers } from "./metadata-parsers";
 
 const matroskaSamplePath = join(samplePath, "matroska");
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   describe("Matroska audio (.mka)", () => {
     test('parse: "alac-in-matroska-short.mka"', async () => {
       const mkaPath = join(matroskaSamplePath, "alac-in-matroska-short.mka");
 
-      const { format } = await parser.initParser(mkaPath, "audio/matroska", { duration: false });
+      const { format } = await parser(mkaPath, "audio/matroska", { duration: false });
 
       // format chunk information
       expect(format.container, "format.container").toBe("EBML/matroska");
@@ -23,7 +23,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', async () => {
       const mkaPath = join(matroskaSamplePath, "02 - Poxfil - Solid Ground (5 sec).mka");
 
-      const metadata = await parser.initParser(mkaPath, "audio/matroska", { duration: false });
+      const metadata = await parser(mkaPath, "audio/matroska", { duration: false });
       const format = metadata.format;
       const common = metadata.common;
 
@@ -54,7 +54,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test('parse: "big-buck-bunny_trailer-short.vp8.webm"', async () => {
       const webmPath = join(matroskaSamplePath, "big-buck-bunny_trailer-short.vp8.webm");
 
-      const metadata = await parser.initParser(webmPath, "audio/webm", { duration: false });
+      const metadata = await parser(webmPath, "audio/webm", { duration: false });
       const format = metadata.format;
       const common = metadata.common;
 
@@ -75,7 +75,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {
       const webmPath = join(matroskaSamplePath, "02 - Poxfil - Solid Ground (5 sec).opus.webm");
 
-      const metadata = await parser.initParser(webmPath, "audio/webm", { duration: false });
+      const metadata = await parser(webmPath, "audio/webm", { duration: false });
       const format = metadata.format;
       const common = metadata.common;
 
@@ -95,7 +95,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test('should parse "My Baby Boy.webm"', async () => {
       const filePath = join(matroskaSamplePath, "My Baby Boy.webm");
 
-      const metadata = await parser.initParser(filePath, "audio/webm", { duration: true });
+      const metadata = await parser(filePath, "audio/webm", { duration: true });
       const format = metadata.format;
       const common = metadata.common;
       // const native = metadata.native;
@@ -115,7 +115,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
     test("shoud ignore trailing null characters", async () => {
       const webmPath = join(matroskaSamplePath, "fixture-null.webm");
-      const metadata = await parser.initParser(webmPath, "audio/webm", { duration: false });
+      const metadata = await parser(webmPath, "audio/webm", { duration: false });
       const format = metadata.format;
 
       expect(format.container, "format.container").toBe("EBML/webm");
@@ -127,7 +127,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test('parse: "matroska-test-w1-test5-short.mkv"', async () => {
       const mkvPath = join(matroskaSamplePath, "matroska-test-w1-test5-short.mkv");
 
-      const metadata = await parser.initParser(mkvPath);
+      const metadata = await parser(mkvPath);
       const format = metadata.format;
       const common = metadata.common;
 
@@ -150,7 +150,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const mkvPath = join(matroskaSamplePath, "stream.weba");
 
     test("Parse stream", async () => {
-      const metadata = await parser.initParser(mkvPath);
+      const metadata = await parser(mkvPath);
       const format = metadata.format;
 
       expect(format.container, "format.container").toBe("EBML/webm");

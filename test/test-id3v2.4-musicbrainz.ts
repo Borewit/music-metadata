@@ -4,12 +4,12 @@ import { join } from "node:path";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   test("should MusicBrainz tags with id3v2.4", async () => {
     const filename = "id3v2.4-musicbrainz.mp3";
     const filePath = join(samplePath, filename);
 
-    const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+    const metadata = await parser(filePath, "audio/mpeg", { duration: true });
     const { common, format } = metadata;
 
     expect(format.duration, "format.duration").toBe(0.783_673_469_387_755_1);

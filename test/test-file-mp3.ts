@@ -7,7 +7,7 @@ import { samplePath } from "./util";
 
 const mp3SamplePath = join(samplePath, "mp3");
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (description, parser) => {
   describe("Test patterns for ISO/MPEG ", () => {
     test("ISO/MPEG 1 Layer 1", () => {
       // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l1
@@ -24,7 +24,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
       test.each(samples)("samples", async (sample) => {
         const filePath = join(mp3SamplePath, "layer1", sample.filename);
-        const { format } = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+        const { format } = await parser(filePath, "audio/mpeg", { duration: true });
 
         expect(format.container, "format.container").toBe("MPEG");
         expect(format.codec, `'${sample.filename}' format.codec`).toBe("MPEG 1 Layer 1");
@@ -48,7 +48,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
       test.each(samples)("samples", async (sample) => {
         const filePath = join(mp3SamplePath, "layer2", sample.filename);
-        const { format } = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+        const { format } = await parser(filePath, "audio/mpeg", { duration: true });
 
         expect(format.container, "format.container").toBe("MPEG");
         expect(format.codec, `'${sample.filename}' format.codec`).toBe("MPEG 1 Layer 2");
@@ -90,7 +90,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
       test.each(samples)("samples", async (sample) => {
         const filePath = join(mp3SamplePath, "layer3", sample.filename);
-        const { format } = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+        const { format } = await parser(filePath, "audio/mpeg", { duration: true });
 
         expect(format.container, "format.container").toBe("MPEG");
         expect(format.codec, `'${sample.filename}' format.codec`).toBe("MPEG 1 Layer 3");
@@ -106,7 +106,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("should handle audio-frame-header-bug", async () => {
     const filePath = join(samplePath, "audio-frame-header-bug.mp3");
 
-    const result = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+    const result = await parser(filePath, "audio/mpeg", { duration: true });
 
     // FooBar: 3:20.556 (8.844.527 samples); 44100 Hz => 200.5561678004535 seconds
     // t.strictEqual(result.format.duration, 200.59591666666665); // previous
@@ -118,7 +118,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
   test("should be able to parse: Sleep Away.mp3", async function () {
     const filePath = join(mp3SamplePath, "Sleep Away.mp3");
-    const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+    const metadata = await parser(filePath, "audio/mpeg", { duration: true });
 
     const { format, common } = metadata;
     expect(format.container, "format.container").toBe("MPEG");
@@ -140,7 +140,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   // https://github.com/Borewit/music-metadata/issues/381
   test("should be able to handle empty ID3v2 tag", async () => {
     const filePath = join(mp3SamplePath, "issue-381.mp3");
-    const { format } = await parser.initParser(filePath);
+    const { format } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -149,7 +149,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   // https://github.com/Borewit/music-metadata/issues/398
   test("Handle empty picture tag", async () => {
     const filePath = join(mp3SamplePath, "empty-picture-tag.mp3");
-    const { format, common, quality } = await parser.initParser(filePath);
+    const { format, common, quality } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -168,7 +168,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("Handle odd number of octets for 16 bit unicide string", async () => {
     // TLEN as invalid encode 16 bit unicode string
     const filePath = join(mp3SamplePath, "issue-979.mp3");
-    const { format, common, quality } = await parser.initParser(filePath, "audio/mp3", {
+    const { format, common, quality } = await parser(filePath, "audio/mp3", {
       duration: true,
     });
 
@@ -189,8 +189,8 @@ describe.each(Parsers)("parser: %s", (parser) => {
   // https://github.com/Borewit/music-metadata/issues/430
   test("Handle preceding ADTS frame with (invalid) frame length of 0 bytes", async () => {
     const filePath = join(mp3SamplePath, "adts-0-frame.mp3");
-    const { format, common } = await parser.initParser(filePath, "audio/mp3", { duration: true });
-    await parser.initParser(filePath);
+    const { format, common } = await parser(filePath, "audio/mp3", { duration: true });
+    await parser(filePath);
 
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -205,7 +205,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
   test("Able to handle corrupt LAME header", async () => {
     const filePath = join(mp3SamplePath, "issue-554.mp3");
-    const { format, quality } = await parser.initParser(filePath, "audio/mp3", {
+    const { format, quality } = await parser(filePath, "audio/mp3", {
       duration: true,
     });
 
@@ -223,7 +223,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const filePath = join(samplePath, "incomplete.mp3");
 
     test("should decode from a file", async () => {
-      const { format } = await parser.initParser(filePath);
+      const { format } = await parser(filePath);
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
       expect(format.duration, "format.duration").toBeCloseTo(61.73, 2);
       expect(format.container, "format.container").toBe("MPEG");
@@ -240,14 +240,14 @@ describe.each(Parsers)("parser: %s", (parser) => {
       const filePath = join(mp3SamplePath, "Sleep Away.mp3");
 
       test("duration=false", async () => {
-        const metadata = await parser.initParser(filePath, "audio/mpeg", {
+        const metadata = await parser(filePath, "audio/mpeg", {
           duration: false,
         });
         expect(metadata.format.duration, "Don't expect a duration").toBeUndefined();
       });
 
       test("duration=true", async function () {
-        const metadata = await parser.initParser(filePath, "audio/mpeg", {
+        const metadata = await parser(filePath, "audio/mpeg", {
           duration: true,
         });
         expect(metadata.format.duration, "Expect a duration").toBeCloseTo(200.5, 1);
@@ -259,10 +259,10 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("should be able to parse APEv2 header", async () => {
       const filePath = join(samplePath, "issue_56.mp3");
 
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
       expect(metadata.format.container).toBe("MPEG");
 
-      if (parser.description !== "parseStream") {
+      if (description !== "stream") {
         expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
       } else {
         expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -271,13 +271,13 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
     test('should be able to parse APEv1 header"', async () => {
       const filePath = join(mp3SamplePath, "issue-362.apev1.mp3");
-      const { format, common } = await parser.initParser(filePath, "audio/mp3", {
+      const { format, common } = await parser(filePath, "audio/mp3", {
         duration: true,
       });
 
       expect(format.container, "format.container").toBe("MPEG");
 
-      if (parser.description !== "parseStream") {
+      if (description !== "stream") {
         expect(format.tagTypes).toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
       } else {
         expect(format.tagTypes).toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -289,7 +289,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
       expect(common.album, "common.album").toBe("Now That's What I Call Xmas");
       expect(common.year, "common.year").toBe(2006);
 
-      if (parser.description !== "parseStream") {
+      if (description !== "stream") {
         expect(common.comment, "common.comment").toStrictEqual([
           "TunNORM",
           " 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467",
@@ -305,10 +305,10 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("should be able to parse APEv2 header followed by a Lyrics3v2 header", async () => {
       const filePath = join(mp3SamplePath, "APEv2+Lyrics3v2.mp3");
 
-      const { format, native } = await parser.initParser(filePath);
+      const { format, native } = await parser(filePath);
       expect(format.container).toBe("MPEG");
 
-      if (parser.description !== "parseStream") {
+      if (description !== "stream") {
         expect(format.tagTypes).toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
 
         const ape = orderTags(native.APEv2);
@@ -325,7 +325,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   describe("Handle Xing header", () => {
     test("Handle Xing header, without LAME extension", async () => {
       const filePath = join(mp3SamplePath, "Solace.mp3");
-      const { format } = await parser.initParser(filePath, "audio/mp3", { duration: true });
+      const { format } = await parser(filePath, "audio/mp3", { duration: true });
       expect(format.container, "format.container").toBe("MPEG");
       expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -334,7 +334,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     describe("Lame extension", () => {
       test("track peak", async () => {
         const filePath = join(mp3SamplePath, "lame-peak.mp3");
-        const { format } = await parser.initParser(filePath, "audio/mp3", { duration: true });
+        const { format } = await parser(filePath, "audio/mp3", { duration: true });
 
         expect(format.container, "format.container").toBe("MPEG");
         expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -349,7 +349,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("Handle invalid LAME version", async () => {
       const filePath = join(mp3SamplePath, "issue-828.mp3");
 
-      const { format } = await parser.initParser(filePath);
+      const { format } = await parser(filePath);
 
       expect(format.container).toBe("MPEG");
       expect(format.codec).toBe("MPEG 1 Layer 3");

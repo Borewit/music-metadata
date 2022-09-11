@@ -41,10 +41,10 @@ describe("GenericTagMap", () => {
       expect(joinArtists(["David Bowie", "Queen", "Mick Ronson"])).toBe("David Bowie, Queen & Mick Ronson");
     });
 
-    test.each(Parsers)("parse RIFF tags %s", async (parser) => {
+    test.each(Parsers)("parse RIFF tags %s", async (_, parser) => {
       const filePath = join(samplePath, "issue-89 no-artist.aiff");
 
-      const metadata = await parser.initParser(filePath, "audio/aiff", { duration: true });
+      const metadata = await parser(filePath, "audio/aiff", { duration: true });
       expect(metadata.common.artists, "common.artists directly via WM/ARTISTS").toStrictEqual([
         "Beth Hart",
         "Joe Bonamassa",
@@ -66,7 +66,7 @@ describe("Convert rating", () => {
   });
 });
 
-describe.each(Parsers)("function selectCover() %s", (parser) => {
+describe.each(Parsers)("function selectCover() %s", (_, parser) => {
   const multiCoverFiles = [
     "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3",
     "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav",
@@ -84,7 +84,7 @@ describe.each(Parsers)("function selectCover() %s", (parser) => {
   test.each(multiCoverFiles)("Should pick the front cover %s", async (multiCoverFile) => {
     const filePath = join(samplePath, multiCoverFile);
 
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
 
     expect(metadata.common.picture.length).toBeGreaterThanOrEqual(1);
 

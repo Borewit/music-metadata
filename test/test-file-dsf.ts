@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-describe.each(Parsers)("Parse Sony DSF (DSD Stream File)", (parser) => {
+describe.each(Parsers)("Parse Sony DSF (DSD Stream File): %s", (_, parser) => {
   test("parse: 2L-110_stereo-5644k-1b_04.dsf", async () => {
     const dsfFilePath = join(samplePath, "dsf", "2L-110_stereo-5644k-1b_04_0.1-sec.dsf");
 
-    const metadata = await parser.initParser(dsfFilePath, "audio/dsf", { duration: false });
+    const metadata = await parser(dsfFilePath, "audio/dsf", { duration: false });
 
     // format chunk information
     expect(metadata.format.container).toBe("DSF");

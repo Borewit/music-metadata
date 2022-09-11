@@ -8,10 +8,10 @@ import { samplePath } from "./util";
 const mp4Samples = join(samplePath, "mp4");
 
 describe("Parse MPEG-4 files (.m4a)", () => {
-  test.each(Parsers)("%j", async (parser) => {
+  test.each(Parsers)("%j", async (_, parser) => {
     const filePath = join(mp4Samples, "id4.m4a");
 
-    const metadata = await parser.initParser(filePath, "audio/mp4");
+    const metadata = await parser(filePath, "audio/mp4");
 
     const format = metadata.format;
 
@@ -74,10 +74,10 @@ describe("Parse MPEG-4 files (.m4a)", () => {
  * Ref: https://github.com/Borewit/music-metadata/issues/74
  */
 describe("should decode 8-byte unsigned integer", () => {
-  test.each(Parsers)("%j", async (parser) => {
+  test.each(Parsers)("%j", async (_, parser) => {
     const filePath = join(mp4Samples, "issue-74.m4a");
 
-    const metadata = await parser.initParser(filePath, "audio/mp4");
+    const metadata = await parser(filePath, "audio/mp4");
     const { format, common, native } = metadata;
 
     expect(format.container, "format.container").toBe("isom/iso2/mp41");
@@ -101,10 +101,10 @@ describe("should decode 8-byte unsigned integer", () => {
  * Ref: https://github.com/Borewit/music-metadata/issues/79
  */
 describe("should be able to extract the composer and artist", () => {
-  test.each(Parsers)("%j", async (parser) => {
+  test.each(Parsers)("%j", async (_, parser) => {
     const filePath = join(mp4Samples, "issue-79.m4a");
 
-    const metadata = await parser.initParser(filePath, "audio/mp4");
+    const metadata = await parser(filePath, "audio/mp4");
     const { common, format } = metadata;
 
     expect(format.container, "format.container").toBe("M4A/mp42/isom");
@@ -126,10 +126,10 @@ describe("should be able to extract the composer and artist", () => {
 
 describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
   describe("audio book from issue issue #127", () => {
-    test.each(Parsers)("%j", async (parser) => {
+    test.each(Parsers)("%j", async (_, parser) => {
       const filePath = join(mp4Samples, "issue-127.m4b");
 
-      const metadata = await parser.initParser(filePath, "audio/mp4");
+      const metadata = await parser(filePath, "audio/mp4");
       const { common, format, native } = metadata;
 
       expect(format.container, "format.container").toBe("M4A/3gp5/isom");
@@ -156,8 +156,8 @@ describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
 
     const filePath = join(mp4Samples, "BabysSongbook_librivox.m4b");
 
-    test.each(Parsers)("from a stream", async (parser) => {
-      const metadata = await parser.initParser(filePath, "audio/mp4", { includeChapters: true });
+    test.each(Parsers)("from a %s", async (_, parser) => {
+      const metadata = await parser(filePath, "audio/mp4", { includeChapters: true });
 
       const { common, format, native } = metadata;
 
@@ -247,10 +247,10 @@ describe("Parse MPEG-4 Audio Book files (.m4b)", () => {
 
 describe("Parse MPEG-4 Video (.mp4)", () => {
   describe("Parse TV episode", () => {
-    test.each(Parsers)("%j", async (parser) => {
+    test.each(Parsers)("%j", async (_, parser) => {
       const filePath = join(mp4Samples, "Mr. Pickles S02E07 My Dear Boy.mp4");
 
-      const metadata = await parser.initParser(filePath, "video/mp4");
+      const metadata = await parser(filePath, "video/mp4");
       expect(metadata.common.title).toBe("My Dear Boy");
       expect(metadata.common.tvEpisode).toBe(7);
       expect(metadata.common.tvEpisodeId).toBe("017");
@@ -272,20 +272,20 @@ describe("Parse MPEG-4 Video (.mp4)", () => {
 });
 
 describe("should support extended atom header", () => {
-  test.each(Parsers)("%j", async (parser) => {
+  test.each(Parsers)("%j", async (_, parser) => {
     const filePath = join(mp4Samples, "issue-133.m4a");
 
-    const metadata = await parser.initParser(filePath, "video/mp4");
+    const metadata = await parser(filePath, "video/mp4");
     expect(metadata.format.container, "format.container").toBe("M4A/mp42/isom");
     expect(metadata.format.codec, "format.codec").toBe("MPEG-4/AAC");
   });
 });
 
 describe("Handle dashed atom-ID's", () => {
-  test.each(Parsers)("%j", async (parser) => {
+  test.each(Parsers)("%j", async (_, parser) => {
     const filePath = join(mp4Samples, "issue-151.m4a");
 
-    const metadata = await parser.initParser(filePath, "video/mp4");
+    const metadata = await parser(filePath, "video/mp4");
     expect(metadata.format.container, "format.container").toBe("mp42/isom");
     expect(metadata.format.codec, "format.codec").toBe("MPEG-4/AAC+MP4S");
 
@@ -300,10 +300,10 @@ describe("Handle dashed atom-ID's", () => {
 });
 
 describe("Parse Trumpsta (Djuro Remix)", () => {
-  test.each(Parsers)("%j", async (parser) => {
+  test.each(Parsers)("%j", async (_, parser) => {
     const filePath = join(mp4Samples, "01. Trumpsta (Djuro Remix).m4a");
 
-    const metadata = await parser.initParser(filePath, "audio/m4a");
+    const metadata = await parser(filePath, "audio/m4a");
     expect(metadata.format.container, "format.container").toBe("M4A/mp42/isom");
     expect(metadata.format.codec, "format.codec").toBe("MPEG-4/AAC");
 
@@ -315,7 +315,7 @@ describe("Parse Trumpsta (Djuro Remix)", () => {
   });
 });
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (description, parser) => {
   /**
    * Related issue: https://github.com/Borewit/music-metadata/issues/318
    */
@@ -325,7 +325,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
      */
     const m4aFile = join(mp4Samples, "issue-318.m4a");
 
-    const metadata = await parser.initParser(m4aFile);
+    const metadata = await parser(m4aFile);
     const { format, common, quality } = metadata;
     expect(format.container, "format.container").toBe("M4A/mp42/isom");
     expect(format.codec, "format.codec").toBe("MPEG-4/AAC");
@@ -344,7 +344,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
   // https://github.com/Borewit/music-metadata/issues/387
   test("Handle box.id = 0000", async () => {
-    const { format, common } = await parser.initParser(join(mp4Samples, "issue-387.m4a"));
+    const { format, common } = await parser(join(mp4Samples, "issue-387.m4a"));
     expect(format.container, "format.container").toBe("M4A/mp42/isom");
     expect(format.codec, "format.codec").toBe("MPEG-4/AAC");
     expect(format.duration, "format.duration").toBeCloseTo(224.002_902_494_331_07, 2);
@@ -358,7 +358,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("Extract creation and modified time", async () => {
     const filePath = join(mp4Samples, "Apple  voice memo.m4a");
 
-    const { format, native } = await parser.initParser(filePath);
+    const { format, native } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("M4A/isom/mp42");
     expect(format.codec, "format.codec").toBe("MPEG-4/AAC");
@@ -376,7 +376,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("Select the audio track from mp4", async () => {
     const filePath = join(mp4Samples, "issue-744.mp4");
 
-    const { format } = await parser.initParser(filePath);
+    const { format } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("isom/iso2/mp41");
     expect(format.codec, "format.codec").toBe("MPEG-4/AAC");
@@ -390,11 +390,11 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("Handle 0 length box", async () => {
     const filePath = join(mp4Samples, "issue-749.m4a");
 
-    if (parser.description === "parseStream") {
-      await expect(parser.initParser(filePath)).rejects.toBeDefined();
+    if (description === "stream") {
+      await expect(parser(filePath)).rejects.toBeDefined();
       return;
     }
-    const { format, common } = await parser.initParser(filePath);
+    const { format, common } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("M4A/mp42/isom");
     expect(format.codec, "format.codec").toBe("MPEG-4/AAC");

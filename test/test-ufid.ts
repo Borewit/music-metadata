@@ -5,11 +5,11 @@ import { orderTags } from "../lib";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   test("ID3v2.4", async () => {
     const filePath = join(samplePath, "29 - Dominator.mp3");
 
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
     const nativeTags = orderTags(metadata.native["ID3v2.3"]);
 
     expect(nativeTags.UFID.length).toBe(1);

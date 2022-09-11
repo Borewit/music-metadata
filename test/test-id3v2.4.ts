@@ -4,12 +4,12 @@ import { join } from "node:path";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
   test("should decode id3v2.4", async () => {
     const filename = "id3v2.4.mp3";
     const filePath = join(samplePath, filename);
 
-    const metadata = await parser.initParser(filePath, "audio/mp3", { duration: true });
+    const metadata = await parser(filePath, "audio/mp3", { duration: true });
 
     const format = metadata.format;
     const common = metadata.common;
@@ -42,7 +42,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   // Issue: https://github.com/Borewit/music-metadata/issues/502
   test("COMM mapping", async () => {
     const filePath = join(samplePath, "mp3", "issue-502.mp3");
-    const { common } = await parser.initParser(filePath);
+    const { common } = await parser(filePath);
     expect(common.comment, "common.comment").toStrictEqual(["CLEAN"]);
   });
 
@@ -50,7 +50,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const filename = "id3v2.4.mp3";
     const filePath = join(samplePath, filename);
 
-    const result = await parser.initParser(filePath, "audio/mp3", {
+    const result = await parser(filePath, "audio/mp3", {
       duration: true,
       skipCovers: true,
     });
@@ -62,7 +62,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     const filename = "issue-802.mp3";
     const filePath = join(samplePath, "mp3", filename);
 
-    const { common, native } = await parser.initParser(filePath);
+    const { common, native } = await parser(filePath);
     const id3v24 = native["ID3v2.4"];
     expect(id3v24, "ID3v2.4 presence").toBeDefined();
     expect(

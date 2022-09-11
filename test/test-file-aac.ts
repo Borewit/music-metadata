@@ -27,21 +27,19 @@ function checkFormat(
   expect(format.duration, "format.duration").toBeCloseTo(samples / sampleRate, 1);
 }
 
-describe("parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit", () => {
-  test.each(Parsers)("parser: %s", async (parser) => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
+  test("parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit", async () => {
     const filePath = join(aacSamplePath, "adts-mpeg4.aac");
-    const metadata = await parser.initParser(filePath, "audio/aac", {
+    const metadata = await parser(filePath, "audio/aac", {
       duration: true,
     });
 
     checkFormat(metadata.format, "ADTS/MPEG-4", "AAC", "AAC LC", 16_000, 1, 20_399, 256_000);
   });
-});
 
-describe("parse: adts-mpeg4-2.aac: AAC-LC, 44.1 kHz, 2 channels", () => {
-  test.each(Parsers)("parser: %s", async (parser) => {
+  test("parse: adts-mpeg4-2.aac: AAC-LC, 44.1 kHz, 2 channels", async () => {
     const filePath = join(aacSamplePath, "adts-mpeg4-2.aac");
-    const metadata = await parser.initParser(filePath, "audio/aac", {
+    const metadata = await parser(filePath, "audio/aac", {
       duration: true,
     });
 

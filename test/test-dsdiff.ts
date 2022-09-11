@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-describe.each(Parsers)("Parse Philips DSDIFF %s", (parser) => {
-  test.skipIf(parser.description === "parseBuffer")("parse: DSD64.dff", async () => {
+describe.each(Parsers)("parser: %s", (description, parser) => {
+  test.skipIf(description === "buffer")("parse: Philips DSDIFF DSD64.dff", async () => {
     const filePath = join(samplePath, "dsdiff", "DSD64.dff");
 
-    const metadata = await parser.initParser(filePath, "audio/dff", { duration: false });
+    const metadata = await parser(filePath, "audio/dff", { duration: false });
 
     // format chunk information
     const format = metadata.format;

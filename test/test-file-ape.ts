@@ -6,9 +6,9 @@ import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
 describe("Parse APE (Monkey's Audio)", () => {
-  test.each(Parsers)("parser: %s", async (parser) => {
+  test.each(Parsers)("parser: %s", async (_, parser) => {
     const filePath = join(samplePath, "monkeysaudio.ape");
-    const metadata = await parser.initParser(filePath, "audio/ape");
+    const metadata = await parser(filePath, "audio/ape");
 
     expect(metadata, "metadata should be defined").toBeDefined();
     expect(metadata.native, "metadata.native should be defined").toBeDefined();
@@ -48,9 +48,9 @@ describe("Parse APE (Monkey's Audio)", () => {
 });
 
 describe("Parse APEv2 header", () => {
-  test.each(Parsers)("Handle APEv2 with item count to high(issue #331) %s", async (parser) => {
+  test.each(Parsers)("Handle APEv2 with item count to high(issue #331) %s", async (description, parser) => {
     const filePath = join(samplePath, "mp3", "issue-331.apev2.mp3");
-    const metadata = await parser.initParser(filePath, "audio/mp3", { duration: false });
+    const metadata = await parser(filePath, "audio/mp3", { duration: false });
 
     const format = metadata.format;
 
@@ -62,7 +62,7 @@ describe("Parse APEv2 header", () => {
     expect(format.sampleRate, "format.sampleRate").toBe(44_100);
 
     // TODO: if stream, cant parse
-    if (parser.description === "parseStream") {
+    if (description === "stream") {
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.4", "ID3v1"]);
     } else {
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.4", "APEv2", "ID3v1"]);
@@ -75,7 +75,7 @@ describe("Parse APEv2 header", () => {
     expect(common.artist, "common.artist").toBe("Criminal Vibes");
 
     // TODO: if stream, cant parse
-    if (parser.description === "parseStream") {
+    if (description === "stream") {
       expect(common.title, "common.title").toBe("Push The Feeling On");
     } else {
       expect(common.title, "common.title").toBe("Push The Feeling On (Groove Phenomenon Remix)");
@@ -84,7 +84,7 @@ describe("Parse APEv2 header", () => {
     const quality = metadata.quality;
 
     // TODO: if stream, cant parse
-    if (parser.description === "parseStream") {
+    if (description === "stream") {
       expect(
         quality.warnings.filter((warning) => {
           return warning.message === "APEv2 Tag-header: 1 items remaining, but no more tag data to read.";

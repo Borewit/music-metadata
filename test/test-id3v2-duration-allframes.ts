@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
 
-test.each(Parsers)("should decode id3v2-duration-allframes", async (parser) => {
+test.each(Parsers)("should decode id3v2-duration-allframes", async (_, parser) => {
   /**
    * Audacity:         64512 samples (counts 56 frames??)
    * ---------------------------
@@ -21,7 +21,7 @@ test.each(Parsers)("should decode id3v2-duration-allframes", async (parser) => {
    */
   const filePath = join(samplePath, "id3v2-duration-allframes.mp3");
 
-  const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+  const metadata = await parser(filePath, "audio/mpeg", { duration: true });
   const format = metadata.format;
   const common = metadata.common;
 

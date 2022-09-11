@@ -21,11 +21,11 @@ test("should parse a raw ID3v2.3 header", async () => {
   expect(id3v23.UFID, "check if ID3v2.3-UFID is set").toBeDefined();
 });
 
-describe.each(Parsers)("parser: %s", (parser) => {
+describe.each(Parsers)("parser: %s", (description, parser) => {
   test("parse a ID3v2.3", async () => {
     const filePath = join(samplePath, "id3v2.3.mp3");
 
-    const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+    const metadata = await parser(filePath, "audio/mpeg", { duration: true });
 
     const format = metadata.format;
     const common = metadata.common;
@@ -88,7 +88,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
        */
       const filePath = join(samplePath, "04-Strawberry.mp3");
 
-      const metadata = await parser.initParser(filePath);
+      const metadata = await parser(filePath);
 
       const format = metadata.format;
       const common = metadata.common;
@@ -119,9 +119,9 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("should decode PeakValue without data", async () => {
       const filePath = join(samplePath, "issue_56.mp3");
 
-      const metadata = await parser.initParser(filePath, "audio/mpeg", { duration: true });
+      const metadata = await parser(filePath, "audio/mpeg", { duration: true });
 
-      if (parser.description !== "parseStream") {
+      if (description !== "stream") {
         expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "APEv2", "ID3v1"]);
       } else {
         expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3", "ID3v1"]);
@@ -139,7 +139,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("slash delimited fields", async () => {
     const filePath = join(samplePath, "Their - They're - Therapy - 1sec.mp3");
 
-    const metadata = await parser.initParser(filePath);
+    const metadata = await parser(filePath);
     expect(metadata.native["ID3v2.3"], "Expect ID3v2.3 tag").toBeDefined();
     const id3v23 = orderTags(metadata.native["ID3v2.3"]);
     // It should not split the id3v23.TIT2 tag (containing '/')
@@ -152,7 +152,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   test("null delimited fields (non-standard)", async () => {
     const filePath = join(samplePath, "mp3", "null-separator.id3v2.3.mp3");
 
-    const { format, common, native, quality } = await parser.initParser(filePath);
+    const { format, common, native, quality } = await parser(filePath);
 
     expect(format.container, "format.container").toBe("MPEG");
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -176,7 +176,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     // http://id3.org/id3v2.3.0#line-299
     test("TCON: Content type (genres)", async () => {
       const filePath = join(samplePath, "mp3", "tcon.mp3");
-      const { format, common } = await parser.initParser(filePath);
+      const { format, common } = await parser(filePath);
       expect(format.container, "format.container").toBe("MPEG");
       expect(format.codec, "format.codec").toBe("MPEG 2 Layer 3");
       expect(common.genre, "common.genre").toStrictEqual(["Electronic", "Pop-Folk"]);
@@ -186,7 +186,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
   describe("Decode frames", () => {
     // http://id3.org/id3v2.3.0#URL_link_frames_-_details
     test("4.3.1 WCOM: Commercial information", async () => {
-      const metadata = await parser.initParser(join(samplePath, "id3v2-lyrics.mp3"));
+      const metadata = await parser(join(samplePath, "id3v2-lyrics.mp3"));
       const id3v23 = orderTags(metadata.native["ID3v2.3"]);
       expect(id3v23.WCOM[0]).toBe(
         /* eslint-disable-next-line max-len */
@@ -197,7 +197,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     describe("4.3.2 WXXX: User defined URL link frame", () => {
       // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
       test("decoding #1", async () => {
-        const metadata = await parser.initParser(join(samplePath, "bug-unkown encoding.mp3"));
+        const metadata = await parser(join(samplePath, "bug-unkown encoding.mp3"));
         const id3v23 = orderTags(metadata.native["ID3v2.3"]);
         expect(id3v23.WXXX[0]).toStrictEqual({
           description: "Tempa at bleep",
@@ -205,10 +205,10 @@ describe.each(Parsers)("parser: %s", (parser) => {
         });
       });
 
-      test.skipIf(parser.description === "parseBuffer")("decoding #2", async () => {
+      test.skipIf(description === "buffer")("decoding #2", async () => {
         const filePath = join(samplePath, "mp3", "issue-453.mp3");
 
-        const metadata = await parser.initParser(filePath);
+        const metadata = await parser(filePath);
         expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3", "ID3v1"]);
 
         const id3 = orderTags(metadata.native["ID3v2.3"]);
@@ -221,7 +221,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
     // http://id3.org/id3v2.3.0#Music_CD_identifier
     test("4.5 MCDI: Music CD identifier", async () => {
-      const metadata = await parser.initParser(join(samplePath, "04-Strawberry.mp3"));
+      const metadata = await parser(join(samplePath, "04-Strawberry.mp3"));
       const id3v23 = orderTags(metadata.native["ID3v2.3"]);
       expect(id3v23.MCDI[0], "TOC").toHaveLength(804);
     });
@@ -231,9 +231,9 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("4.16 GEOB: General encapsulated object", async () => {
       const filePath = join(samplePath, "mp3", "issue-406-geob.mp3");
 
-      const { format, common, native } = await parser.initParser(filePath);
+      const { format, common, native } = await parser(filePath);
 
-      await parser.initParser(filePath);
+      await parser(filePath);
 
       expect(format.container, "format.container").toBe("MPEG");
       expect(format.tagTypes, "format.tagTypes").toStrictEqual(["ID3v2.3"]);
@@ -248,7 +248,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
 
     describe("TXXX", () => {
       test("Handle empty TXXX", async () => {
-        const { format, quality, common } = await parser.initParser(join(samplePath, "mp3", "issue-471.mp3"));
+        const { format, quality, common } = await parser(join(samplePath, "mp3", "issue-471.mp3"));
 
         expect(format.container, "format.container").toBe("MPEG");
         expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -269,7 +269,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     describe("PRIV", () => {
       test("Handle empty PRIV tag", async () => {
         const filePath = join(samplePath, "mp3", "issue-691.mp3");
-        const { format, quality } = await parser.initParser(filePath);
+        const { format, quality } = await parser(filePath);
 
         expect(format.container, "format.container").toBe("MPEG");
         expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
@@ -288,7 +288,7 @@ describe.each(Parsers)("parser: %s", (parser) => {
     test("Handle ID32.2 tag ID's in ID32.3 header", async () => {
       const filePath = join(samplePath, "mp3", "issue-795.mp3");
 
-      const { native, quality, common } = await parser.initParser(filePath);
+      const { native, quality, common } = await parser(filePath);
       expect(native["ID3v2.3"], "native['ID3v2.3']").toBeDefined();
       expect(
         native["ID3v2.3"].map((tag) => tag.id),
