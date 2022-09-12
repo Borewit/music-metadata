@@ -1,15 +1,16 @@
 import { test, expect } from "vitest";
-import { wrapResult } from "./result";
+import { isSuccess, wrapResult } from "./result";
 
 test("result wrap success", () => {
-  expect(wrapResult(() => 5)).toEqual([true, 5]);
+  const maybeUndefined: string | undefined = "abc";
+  const result = wrapResult(() => maybeUndefined.toUpperCase());
+  expect(result).toBe("ABC");
 });
 
 test("result wrap failure", () => {
   const maybeUndefined: string | undefined = undefined;
   const result = wrapResult(() => maybeUndefined.toUpperCase());
-  expect(result[0]).toBe(false);
-  expect(result[1]).toBeInstanceOf(TypeError);
+  expect(result).toBeInstanceOf(TypeError);
 });
 
 test("result wrap failure with primary", () => {
@@ -17,6 +18,16 @@ test("result wrap failure with primary", () => {
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw 42;
   });
-  expect(result).toEqual([false, new Error("wrap failure")]);
-  expect(result[1].cause).toBe(42);
+  expect(result).toEqual(new Error("wrap failure"));
+  expect(result.cause).toBe(42);
+});
+
+test("result is success", () => {
+  expect(isSuccess(5)).toBe(true);
+  expect(isSuccess("abc")).toBe(true);
+});
+
+test("result is failure", () => {
+  expect(isSuccess(new Error("this is error"))).toBe(false);
+  expect(isSuccess(new RangeError("out of bounds"))).toBe(false);
 });
