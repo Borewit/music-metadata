@@ -1,3 +1,5 @@
+import { wrapResult } from "../../result/result";
+import type { Reader } from "../types";
 import { dataview } from "./util";
 
 export const UINT8_SIZE = 1;
@@ -8,8 +10,8 @@ export const UINT8_SIZE = 1;
  * @param offset
  * @returns 8 bit unsigned integer
  */
-export const readUint8 = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getUint8(offset);
+export const readUint8: Reader<number> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getUint8(offset));
 };
 
 export const UINT16_SIZE = 2;
@@ -20,8 +22,8 @@ export const UINT16_SIZE = 2;
  * @param offset
  * @returns 16 bit unsigned integer little endian
  */
-export const readUint16le = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getUint16(offset, true);
+export const readUint16le: Reader<number> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getUint16(offset, true));
 };
 
 /**
@@ -30,8 +32,8 @@ export const readUint16le = (buffer: Uint8Array, offset: number) => {
  * @param offset
  * @returns 16 bit unsigned integer big endian
  */
-export const readUint16be = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getUint16(offset);
+export const readUint16be: Reader<number> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getUint16(offset));
 };
 
 export const UINT24_SIZE = 3;
@@ -42,10 +44,10 @@ export const UINT24_SIZE = 3;
  * @param offset
  * @returns 24 bit unsigned integer little endian
  */
-export const readUint24le = (buffer: Uint8Array, offset: number) => {
+export const readUint24le: Reader<number> = (buffer, offset) => {
   const view = dataview(buffer);
 
-  return view.getUint8(offset) + (view.getUint16(offset + 1, true) << 8);
+  return wrapResult(() => view.getUint8(offset) + (view.getUint16(offset + 1, true) << 8));
 };
 
 /**
@@ -54,10 +56,10 @@ export const readUint24le = (buffer: Uint8Array, offset: number) => {
  * @param offset
  * @returns 24 bit unsigned integer big endian
  */
-export const readUint24be = (buffer: Uint8Array, offset: number) => {
+export const readUint24be: Reader<number> = (buffer, offset) => {
   const view = dataview(buffer);
 
-  return (view.getUint16(offset) << 8) + view.getUint8(offset + 2);
+  return wrapResult(() => (view.getUint16(offset) << 8) + view.getUint8(offset + 2));
 };
 
 export const UINT32_SIZE = 4;
@@ -68,8 +70,8 @@ export const UINT32_SIZE = 4;
  * @param offset
  * @returns 32 bit unsigned integer little endian
  */
-export const readUint32le = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getUint32(offset, true);
+export const readUint32le: Reader<number> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getUint32(offset, true));
 };
 
 /**
@@ -78,8 +80,8 @@ export const readUint32le = (buffer: Uint8Array, offset: number) => {
  * @param offset
  * @returns 32 bit unsigned integer big endian
  */
-export const readUint32be = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getUint32(offset);
+export const readUint32be: Reader<number> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getUint32(offset));
 };
 
 export const UINT64_SIZE = 8;
@@ -90,8 +92,8 @@ export const UINT64_SIZE = 8;
  * @param offset
  * @returns 64 bit unsigned integer little endian
  */
-export const readUint64le = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getBigUint64(offset, true);
+export const readUint64le: Reader<bigint> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getBigUint64(offset, true));
 };
 
 /**
@@ -100,6 +102,6 @@ export const readUint64le = (buffer: Uint8Array, offset: number) => {
  * @param offset
  * @returns 64 bit unsigned integer big endian
  */
-export const readUint64be = (buffer: Uint8Array, offset: number) => {
-  return dataview(buffer).getBigUint64(offset);
+export const readUint64be: Reader<bigint> = (buffer, offset) => {
+  return wrapResult(() => dataview(buffer).getBigUint64(offset));
 };

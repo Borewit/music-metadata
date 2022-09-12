@@ -17,11 +17,12 @@ test("decode 16 bit big endian floating point number", () => {
     0b0000_0000,
   ]);
 
-  expect(readFloat16be(buffer, FLOAT16_SIZE * 0)).toBe(85.125);
-  expect(readFloat16be(buffer, FLOAT16_SIZE * 1)).toBe(-85.125);
-  expect(readFloat16be(buffer, FLOAT16_SIZE * 2)).toBe(1);
-  expect(readFloat16be(buffer, FLOAT16_SIZE * 3)).toBe(0);
-  expect(readFloat16be(buffer, FLOAT16_SIZE * 4)).toBe(Number.NEGATIVE_INFINITY);
+  expect(readFloat16be(buffer, FLOAT16_SIZE * 0)).toEqual([true, 85.125]);
+  expect(readFloat16be(buffer, FLOAT16_SIZE * 1)).toEqual([true, -85.125]);
+  expect(readFloat16be(buffer, FLOAT16_SIZE * 2)).toEqual([true, 1]);
+  expect(readFloat16be(buffer, FLOAT16_SIZE * 3)).toEqual([true, 0]);
+  expect(readFloat16be(buffer, FLOAT16_SIZE * 4)).toEqual([true, Number.NEGATIVE_INFINITY]);
+  expect(readFloat16be(buffer, FLOAT16_SIZE * 5)[0]).toEqual(false);
 });
 
 test("decode 16 bit little endian floating point number", () => {
@@ -30,11 +31,12 @@ test("decode 16 bit little endian floating point number", () => {
     0b0111_1100,
   ]);
 
-  expect(readFloat16le(buffer, FLOAT16_SIZE * 0)).toBe(85.125);
-  expect(readFloat16le(buffer, FLOAT16_SIZE * 1)).toBe(-85.125);
-  expect(readFloat16le(buffer, FLOAT16_SIZE * 2)).toBe(1);
-  expect(readFloat16le(buffer, FLOAT16_SIZE * 3)).toBe(-0);
-  expect(readFloat16le(buffer, FLOAT16_SIZE * 4)).toBe(Number.POSITIVE_INFINITY);
+  expect(readFloat16le(buffer, FLOAT16_SIZE * 0)).toEqual([true, 85.125]);
+  expect(readFloat16le(buffer, FLOAT16_SIZE * 1)).toEqual([true, -85.125]);
+  expect(readFloat16le(buffer, FLOAT16_SIZE * 2)).toEqual([true, 1]);
+  expect(readFloat16le(buffer, FLOAT16_SIZE * 3)).toEqual([true, -0]);
+  expect(readFloat16le(buffer, FLOAT16_SIZE * 4)).toEqual([true, Number.POSITIVE_INFINITY]);
+  expect(readFloat16le(buffer, FLOAT16_SIZE * 5)[0]).toEqual(false);
 });
 
 test("decode 32 bit big endian floating point number", () => {
@@ -44,11 +46,12 @@ test("decode 32 bit big endian floating point number", () => {
     0b0000_0000, 0b0000_0000,
   ]);
 
-  expect(readFloat32be(buffer, FLOAT32_SIZE * 0)).toBe(85.125);
-  expect(readFloat32be(buffer, FLOAT32_SIZE * 1)).toBe(-85.125);
-  expect(readFloat32be(buffer, FLOAT32_SIZE * 2)).toBe(1);
-  expect(readFloat32be(buffer, FLOAT32_SIZE * 3)).toBe(0);
-  expect(readFloat32be(buffer, FLOAT32_SIZE * 4)).toBe(Number.NEGATIVE_INFINITY);
+  expect(readFloat32be(buffer, FLOAT32_SIZE * 0)).toEqual([true, 85.125]);
+  expect(readFloat32be(buffer, FLOAT32_SIZE * 1)).toEqual([true, -85.125]);
+  expect(readFloat32be(buffer, FLOAT32_SIZE * 2)).toEqual([true, 1]);
+  expect(readFloat32be(buffer, FLOAT32_SIZE * 3)).toEqual([true, 0]);
+  expect(readFloat32be(buffer, FLOAT32_SIZE * 4)).toEqual([true, Number.NEGATIVE_INFINITY]);
+  expect(readFloat32be(buffer, FLOAT32_SIZE * 5)[0]).toEqual(false);
 });
 
 test("decode 32 bit little endian floating point number", () => {
@@ -58,11 +61,12 @@ test("decode 32 bit little endian floating point number", () => {
     0b1000_0000, 0b0111_1111,
   ]);
 
-  expect(readFloat32le(buffer, FLOAT32_SIZE * 0)).toBe(85.125);
-  expect(readFloat32le(buffer, FLOAT32_SIZE * 1)).toBe(-85.125);
-  expect(readFloat32le(buffer, FLOAT32_SIZE * 2)).toBe(1);
-  expect(readFloat32le(buffer, FLOAT32_SIZE * 3)).toBe(-0);
-  expect(readFloat32le(buffer, FLOAT32_SIZE * 4)).toBe(Number.POSITIVE_INFINITY);
+  expect(readFloat32le(buffer, FLOAT32_SIZE * 0)).toEqual([true, 85.125]);
+  expect(readFloat32le(buffer, FLOAT32_SIZE * 1)).toEqual([true, -85.125]);
+  expect(readFloat32le(buffer, FLOAT32_SIZE * 2)).toEqual([true, 1]);
+  expect(readFloat32le(buffer, FLOAT32_SIZE * 3)).toEqual([true, -0]);
+  expect(readFloat32le(buffer, FLOAT32_SIZE * 4)).toEqual([true, Number.POSITIVE_INFINITY]);
+  expect(readFloat32le(buffer, FLOAT32_SIZE * 5)[0]).toEqual(false);
 });
 
 test("decode 64 bit big endian floating point number", () => {
@@ -74,11 +78,12 @@ test("decode 64 bit big endian floating point number", () => {
     0b0000_0000, 0b0000_0000, 0b0000_0000, 0b0000_0000,
   ]);
 
-  expect(readFloat64be(buffer, FLOAT64_SIZE * 0)).toBe(85.125);
-  expect(readFloat64be(buffer, FLOAT64_SIZE * 1)).toBe(-85.125);
-  expect(readFloat64be(buffer, FLOAT64_SIZE * 2)).toBe(1);
-  expect(readFloat64be(buffer, FLOAT64_SIZE * 3)).toBe(-0);
-  expect(readFloat64be(buffer, FLOAT64_SIZE * 4)).toBe(Number.POSITIVE_INFINITY);
+  expect(readFloat64be(buffer, FLOAT64_SIZE * 0)).toEqual([true, 85.125]);
+  expect(readFloat64be(buffer, FLOAT64_SIZE * 1)).toEqual([true, -85.125]);
+  expect(readFloat64be(buffer, FLOAT64_SIZE * 2)).toEqual([true, 1]);
+  expect(readFloat64be(buffer, FLOAT64_SIZE * 3)).toEqual([true, -0]);
+  expect(readFloat64be(buffer, FLOAT64_SIZE * 4)).toEqual([true, Number.POSITIVE_INFINITY]);
+  expect(readFloat64be(buffer, FLOAT64_SIZE * 5)[0]).toEqual(false);
 });
 
 test("decode 64 bit little endian floating point number", () => {
@@ -90,9 +95,10 @@ test("decode 64 bit little endian floating point number", () => {
     0b0000_0000, 0b0000_0000, 0b1111_0000, 0b0111_1111,
   ]);
 
-  expect(readFloat64le(buffer, FLOAT64_SIZE * 0)).toBe(85.125);
-  expect(readFloat64le(buffer, FLOAT64_SIZE * 1)).toBe(-85.125);
-  expect(readFloat64le(buffer, FLOAT64_SIZE * 2)).toBe(1);
-  expect(readFloat64le(buffer, FLOAT64_SIZE * 3)).toBe(-0);
-  expect(readFloat64le(buffer, FLOAT64_SIZE * 4)).toBe(Number.POSITIVE_INFINITY);
+  expect(readFloat64le(buffer, FLOAT64_SIZE * 0)).toEqual([true, 85.125]);
+  expect(readFloat64le(buffer, FLOAT64_SIZE * 1)).toEqual([true, -85.125]);
+  expect(readFloat64le(buffer, FLOAT64_SIZE * 2)).toEqual([true, 1]);
+  expect(readFloat64le(buffer, FLOAT64_SIZE * 3)).toEqual([true, -0]);
+  expect(readFloat64le(buffer, FLOAT64_SIZE * 4)).toEqual([true, Number.POSITIVE_INFINITY]);
+  expect(readFloat64le(buffer, FLOAT64_SIZE * 5)[0]).toEqual(false);
 });
