@@ -68,7 +68,7 @@
   ],
   "scripts": {
     "clean": "del-cli dist",
-    "validate": "run-s format lint build test",
+    "validate": "run-s format lint build test:coverage",
     "node-ci": "run-s lint build test:coverage",
     "format": "prettier --cache --write lib test doc-gen example",
     "build": "run-s clean build:*",
