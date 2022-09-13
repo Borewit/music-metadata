@@ -1,4 +1,4 @@
-import { wrapResult } from "../../result/result";
+import { Result, wrapResult } from "../../result/result";
 import { dataview } from "./util";
 
 export const FLOAT16_SIZE = 2;
@@ -9,7 +9,7 @@ export const FLOAT16_SIZE = 2;
  * @param offset
  * @returns float
  */
-export const readFloat16be = (buffer: Uint8Array, offset: number): number | RangeError => {
+export const readFloat16be = (buffer: Uint8Array, offset: number): Result<number, RangeError> => {
   if (buffer.byteLength < offset + FLOAT16_SIZE) return new RangeError("offset is outside the bounds of the DataView");
   return getFloat16(buffer, offset);
 };
@@ -20,7 +20,7 @@ export const readFloat16be = (buffer: Uint8Array, offset: number): number | Rang
  * @param offset
  * @returns float
  */
-export const readFloat16le = (buffer: Uint8Array, offset: number): number | RangeError => {
+export const readFloat16le = (buffer: Uint8Array, offset: number): Result<number, RangeError> => {
   if (buffer.byteLength < offset + FLOAT16_SIZE) return new RangeError("offset is outside the bounds of the DataView");
   return getFloat16(buffer, offset, true);
 };
@@ -33,7 +33,7 @@ export const FLOAT32_SIZE = 4;
  * @param offset
  * @returns float
  */
-export const readFloat32be = (buffer: Uint8Array, offset: number): number | RangeError => {
+export const readFloat32be = (buffer: Uint8Array, offset: number): Result<number, RangeError> => {
   return wrapResult(() => dataview(buffer).getFloat32(offset));
 };
 
@@ -43,7 +43,7 @@ export const readFloat32be = (buffer: Uint8Array, offset: number): number | Rang
  * @param offset
  * @returns float
  */
-export const readFloat32le = (buffer: Uint8Array, offset: number): number | RangeError => {
+export const readFloat32le = (buffer: Uint8Array, offset: number): Result<number, RangeError> => {
   return wrapResult(() => dataview(buffer).getFloat32(offset, true));
 };
 
@@ -55,7 +55,7 @@ export const FLOAT64_SIZE = 8;
  * @param offset
  * @returns float
  */
-export const readFloat64be = (buffer: Uint8Array, offset: number): number | RangeError => {
+export const readFloat64be = (buffer: Uint8Array, offset: number): Result<number, RangeError> => {
   return wrapResult(() => dataview(buffer).getFloat64(offset));
 };
 
@@ -65,13 +65,13 @@ export const readFloat64be = (buffer: Uint8Array, offset: number): number | Rang
  * @param offset
  * @returns float
  */
-export const readFloat64le = (buffer: Uint8Array, offset: number): number | RangeError => {
+export const readFloat64le = (buffer: Uint8Array, offset: number): Result<number, RangeError> => {
   return wrapResult(() => dataview(buffer).getFloat64(offset, true));
 };
 
 // read functions
 
-const getFloat16 = (buffer: Uint8Array, offset: number, littleEndian?: boolean) => {
+const getFloat16 = (buffer: Uint8Array, offset: number, littleEndian?: boolean): number => {
   /*
    * seee_eeff ffff_ffff
    * e: 5, f: 10
