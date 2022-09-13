@@ -187,5 +187,13 @@
     "@typescript-eslint/no-unused-expressions": "error",
     "@typescript-eslint/restrict-template-expressions": ["error", { "allowBoolean": true }],
     "@typescript-eslint/semi": ["error", "always"]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+      }
+    }
+  ]
 }
