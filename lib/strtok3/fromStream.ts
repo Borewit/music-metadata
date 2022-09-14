@@ -1,8 +1,10 @@
-import type { Readable } from "node:stream";
-import * as fs from "node:fs/promises";
-import type { PathLike } from "node:fs";
+import { stat as fs_stat } from "node:fs/promises";
+
 import { ReadStreamTokenizer } from "./ReadStreamTokenizer";
+
 import type { IFileInfo } from "./types";
+import type { PathLike } from "node:fs";
+import type { Readable } from "node:stream";
 
 /**
  * Construct ReadStreamTokenizer from given Stream.
@@ -17,7 +19,7 @@ export async function fromStream(
 ): Promise<ReadStreamTokenizer> {
   fileInfo = fileInfo ?? {};
   if (stream.path) {
-    const stat = await fs.stat(stream.path);
+    const stat = await fs_stat(stream.path);
     fileInfo.path = stream.path.toString();
     fileInfo.size = stat.size;
   }

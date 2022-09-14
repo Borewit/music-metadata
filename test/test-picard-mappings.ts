@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
-import { AsfTagMapper } from "../lib/asf/AsfTagMapper";
+
 import { APEv2TagMapper } from "../lib/apev2/APEv2TagMapper";
+import { AsfTagMapper } from "../lib/asf/AsfTagMapper";
 import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
 
 function convertName(picardName: string) {

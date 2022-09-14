@@ -1,8 +1,9 @@
-import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { describe, expect, test } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 const expectedLyrics = [
   "The way we're living makes no sense",

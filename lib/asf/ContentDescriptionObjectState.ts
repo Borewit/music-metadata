@@ -1,8 +1,11 @@
-import type { ITag } from "../type";
-import { ContentDescriptionObject } from "./GUID";
-import { parseUnicodeAttr } from "./AsfUtil";
-import { State } from "./State";
 import { UINT16_LE } from "../token-types";
+
+import { parseUnicodeAttr } from "./AsfUtil";
+import { ContentDescriptionObject } from "./GUID";
+import { State } from "./State";
+
+import type { ITag } from "../type";
+
 
 /**
  * 3.10 Content Description Object (optional, one only)

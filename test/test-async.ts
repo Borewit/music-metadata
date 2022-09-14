@@ -1,9 +1,11 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import type { IMetadataEvent } from "../lib/type";
-import { samplePath } from "./util";
+import { describe, test, expect } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
+
+import type { IMetadataEvent } from "../lib/type";
 
 describe.each(Parsers)("Asynchronous observer updates", (_, parser) => {
   const flacFilePath = join(samplePath, "flac.flac");

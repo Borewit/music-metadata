@@ -1,11 +1,12 @@
-import type { INativeTagMap } from "../common/GenericTagTypes";
-import { CommonTagMapper } from "../common/GenericTagMapper";
-import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { CaseInsensitiveTagMap } from "../common/CaseInsensitiveTagMap";
-import * as util from "../common/Util";
-
-import type { IRating, ITag } from "../type";
+import { CommonTagMapper } from "../common/GenericTagMapper";
+import { decodeString } from "../common/Util";
 import { UINT32_LE } from "../token-types";
+
+import type { INativeTagMap } from "../common/GenericTagTypes";
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { IRating, ITag } from "../type";
+
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -176,7 +177,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
       case "UFID": // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === "http://musicbrainz.org") {
           tag.id += `:${tag.value.owner_identifier as string}`;
-          tag.value = util.decodeString(tag.value.identifier as Uint8Array, "latin1"); // latin1 == iso-8859-1
+          tag.value = decodeString(tag.value.identifier as Uint8Array, "latin1"); // latin1 == iso-8859-1
         }
         break;
 

@@ -1,8 +1,9 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { describe, test, expect } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("Parse Sony DSF (DSD Stream File): %s", (_, parser) => {
   test("parse: 2L-110_stereo-5644k-1b_04.dsf", async () => {

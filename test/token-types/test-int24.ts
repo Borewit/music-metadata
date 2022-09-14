@@ -1,7 +1,9 @@
 // Test reading int24 values.
 
 import { describe, test, expect } from "vitest";
+
 import { INT24_LE, INT24_BE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 24-bit signed integer", () => {

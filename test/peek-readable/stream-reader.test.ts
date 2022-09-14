@@ -1,8 +1,10 @@
-import { describe, test, expect } from "vitest";
 import { EventEmitter } from "node:events";
 import { createReadStream } from "node:fs";
 import { join } from "node:path";
 import { Readable } from "node:stream";
+
+import { describe, test, expect } from "vitest";
+
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 import { SourceStream } from "../util";
 

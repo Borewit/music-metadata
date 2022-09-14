@@ -1,4 +1,5 @@
 import { test, expect } from "vitest";
+
 import { readBuffer } from "./buffer";
 
 test("decode uint8array", () => {

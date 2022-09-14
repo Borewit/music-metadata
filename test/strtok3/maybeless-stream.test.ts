@@ -1,6 +1,8 @@
-import { describe, test, expect } from "vitest";
-import { fromStream } from "../../lib/strtok3";
 import { PassThrough } from "node:stream";
+
+import { describe, test, expect } from "vitest";
+
+import { fromStream } from "../../lib/strtok3";
 
 describe("fromStream with mayBeLess flag", () => {
   test("mayBeLess=true", async () => {

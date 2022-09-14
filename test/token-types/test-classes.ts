@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+
 import { Uint8ArrayType } from "../../lib/token-types";
 import { Utf8StringType } from "../../lib/token-types/string";
 

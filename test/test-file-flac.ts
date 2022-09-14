@@ -1,7 +1,10 @@
-import { describe, test, expect } from "vitest";
-import { orderTags } from "../lib";
 import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
+
+import { describe, test, expect } from "vitest";
+
+import { orderTags } from "../lib";
+
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 

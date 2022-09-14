@@ -1,6 +1,7 @@
-import type { Readable } from "node:stream";
-import { EndOfStreamError } from "./EndOfFileStream";
 import { Deferred } from "./Deferred";
+import { EndOfStreamError } from "./EndOfFileStream";
+
+import type { Readable } from "node:stream";
 
 export { EndOfStreamError } from "./EndOfFileStream";
 

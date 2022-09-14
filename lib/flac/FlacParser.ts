@@ -1,18 +1,20 @@
-import { Uint8ArrayType } from "../token-types";
-import initDebug from "../debug";
-import type { ITokenizer } from "../strtok3";
 
-import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/VorbisPicture";
-import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 import { FourCcToken } from "../common/FourCC";
-import { VorbisParser } from "../ogg/vorbis/VorbisParser";
-import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
-import type { IOptions } from "../type";
-import type { ITokenParser } from "../ParserFactory";
+import initDebug from "../debug";
+import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 import { VorbisDecoder } from "../ogg/vorbis/VorbisDecoder";
-import { BlockType } from "./BlockType";
+import { VorbisParser } from "../ogg/vorbis/VorbisParser";
+import { IVorbisPicture, VorbisPictureToken } from "../ogg/vorbis/VorbisPicture";
+import { Uint8ArrayType } from "../token-types";
+
 import { BlockHeader, IBlockHeader } from "./BlockHeader";
 import { BlockStreamInfo, IBlockStreamInfo } from "./BlockStreamInfo";
+import { BlockType } from "./BlockType";
+
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { ITokenParser } from "../ParserFactory";
+import type { ITokenizer } from "../strtok3";
+import type { IOptions } from "../type";
 
 const debug = initDebug("music-metadata:parser:FLAC");
 

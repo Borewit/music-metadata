@@ -1,17 +1,19 @@
-import type { ITokenizer } from "../strtok3";
-import * as Token from "../token-types";
-
-import * as util from "../common/Util";
-import type { TagType } from "../common/GenericTagTypes";
-import type { ITag, IOptions } from "../type";
-import { FrameParser } from "./FrameParser";
-
-import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
-import type { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
-import { ID3v2Header, IID3v2header } from "./ID3v2Header";
-import { ExtendedHeader } from "./ExtendedHeader";
-import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+import { getBit } from "../common/Util";
 import { decodeLatin1 } from "../compat/text-decoder";
+import { Uint8ArrayType, UINT24_BE, UINT32_BE } from "../token-types";
+
+import { ExtendedHeader } from "./ExtendedHeader";
+import { FrameParser } from "./FrameParser";
+import { ID3v2Header, IID3v2header } from "./ID3v2Header";
+import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+
+import type { TagType } from "../common/GenericTagTypes";
+import type { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
+import type { ITokenizer } from "../strtok3";
+import type { ITag, IOptions } from "../type";
+import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
+
+
 
 interface IFrameFlags {
   status: {
@@ -66,16 +68,16 @@ export class ID3v2Parser {
   private static readFrameFlags(b: Uint8Array): IFrameFlags {
     return {
       status: {
-        tag_alter_preservation: util.getBit(b, 0, 6),
-        file_alter_preservation: util.getBit(b, 0, 5),
-        read_only: util.getBit(b, 0, 4),
+        tag_alter_preservation: getBit(b, 0, 6),
+        file_alter_preservation: getBit(b, 0, 5),
+        read_only: getBit(b, 0, 4),
       },
       format: {
-        grouping_identity: util.getBit(b, 1, 7),
-        compression: util.getBit(b, 1, 3),
-        encryption: util.getBit(b, 1, 2),
-        unsynchronisation: util.getBit(b, 1, 1),
-        data_length_indicator: util.getBit(b, 1, 0),
+        grouping_identity: getBit(b, 1, 7),
+        compression: getBit(b, 1, 3),
+        encryption: getBit(b, 1, 2),
+        unsynchronisation: getBit(b, 1, 1),
+        data_length_indicator: getBit(b, 1, 0),
       },
     };
   }
@@ -154,7 +156,7 @@ export class ID3v2Parser {
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
-    const uint8Array = await this.tokenizer.readToken(new Token.Uint8ArrayType(dataLen));
+    const uint8Array = await this.tokenizer.readToken(new Uint8ArrayType(dataLen));
     for (const tag of this.parseMetadata(uint8Array)) {
       switch (tag.id) {
         case "TXXX": {
@@ -234,7 +236,7 @@ export class ID3v2Parser {
       case 2:
         header = {
           id: decodeLatin1(uint8Array.slice(0, 3)),
-          length: Token.UINT24_BE.get(uint8Array, 3),
+          length: UINT24_BE.get(uint8Array, 3),
         };
         if (!/[\dA-Z]{3}/g.test(header.id)) {
           this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
@@ -245,7 +247,7 @@ export class ID3v2Parser {
       case 4:
         header = {
           id: decodeLatin1(uint8Array.slice(0, 4)),
-          length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
+          length: (majorVer === 4 ? UINT32SYNCSAFE : UINT32_BE).get(uint8Array, 4),
           flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10)),
         };
         if (!/[\dA-Z]{4}/g.test(header.id)) {

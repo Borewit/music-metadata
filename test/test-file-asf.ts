@@ -1,9 +1,12 @@
-import { describe, test, expect } from "vitest";
-import { orderTags } from "../lib";
 import { join } from "node:path";
-import GUID from "../lib/asf/GUID";
+
+import { describe, test, expect } from "vitest";
+
+import { orderTags } from "../lib";
 import { getParserForAttr } from "../lib/asf/AsfUtil";
 import { DataType } from "../lib/asf/DataType";
+import GUID from "../lib/asf/GUID";
+
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 

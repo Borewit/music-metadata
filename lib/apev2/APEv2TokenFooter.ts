@@ -1,7 +1,9 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
-import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
+import { UINT32_LE, Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
+
+import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IFooter {
   // should equal 'APETAGEX'
@@ -28,17 +30,17 @@ export const TagFooter: IGetToken<IFooter> = {
       // should equal 'APETAGEX'
       ID: new Latin1StringType(8).get(buf, off),
       // equals CURRENT_APE_TAG_VERSION
-      version: Token.UINT32_LE.get(buf, off + 8),
+      version: UINT32_LE.get(buf, off + 8),
       // the complete size of the tag, including this footer (excludes header)
-      size: Token.UINT32_LE.get(buf, off + 12),
+      size: UINT32_LE.get(buf, off + 12),
       // the number of fields in the tag
-      fields: Token.UINT32_LE.get(buf, off + 16),
+      fields: UINT32_LE.get(buf, off + 16),
       // reserved for later use (must be zero),
-      flags: parseTagFlags(Token.UINT32_LE.get(buf, off + 20)),
+      flags: parseTagFlags(UINT32_LE.get(buf, off + 20)),
     };
   },
 };
 
 export const TagField = (footer: { size: number }) => {
-  return new Token.Uint8ArrayType(footer.size - TagFooter.len);
+  return new Uint8ArrayType(footer.size - TagFooter.len);
 };

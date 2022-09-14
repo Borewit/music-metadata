@@ -1,7 +1,9 @@
-import * as Token from "../token-types";
+import { INT32_BE, INT8, INT24_BE } from "../token-types";
+
+import { readTokenTable } from "./readTokenTable";
+
 import type { IGetToken } from "../strtok3";
 import type { ITableAtom } from "./AtomTable";
-import { readTokenTable } from "./readTokenTable";
 
 /**
  * Sample-size ('stsz') atom interface
@@ -18,14 +20,14 @@ export class StszAtom implements IGetToken<IStszAtom> {
   public constructor(public len: number) {}
 
   public get(buf: Uint8Array, off: number): IStszAtom {
-    const nrOfEntries = Token.INT32_BE.get(buf, off + 8);
+    const nrOfEntries = INT32_BE.get(buf, off + 8);
 
     return {
-      version: Token.INT8.get(buf, off),
-      flags: Token.INT24_BE.get(buf, off + 1),
-      sampleSize: Token.INT32_BE.get(buf, off + 4),
+      version: INT8.get(buf, off),
+      flags: INT24_BE.get(buf, off + 1),
+      sampleSize: INT32_BE.get(buf, off + 4),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(buf, Token.INT32_BE, off + 12, this.len - 12, nrOfEntries),
+      entries: readTokenTable(buf, INT32_BE, off + 12, this.len - 12, nrOfEntries),
     };
   }
 }

@@ -1,6 +1,8 @@
-import * as strtok3 from "../strtok3";
-import type { FileTypeResult } from "./type";
+import { fromBuffer } from "../strtok3";
+
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
+
+import type { FileTypeResult } from "./type";
 
 /**
  * Detect the file type of a `Buffer`, `Uint8Array`, or `ArrayBuffer`.
@@ -24,5 +26,5 @@ export async function fileTypeFromBuffer(input: Uint8Array | ArrayBuffer): Promi
     return;
   }
 
-  return fileTypeFromTokenizer(strtok3.fromBuffer(buffer));
+  return fileTypeFromTokenizer(fromBuffer(buffer));
 }

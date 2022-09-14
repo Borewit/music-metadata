@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { INT64_LE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
 /**
@@ -25,8 +26,8 @@ export const DsdChunk: IGetToken<IDsdChunk> = {
 
   get: (buf: Uint8Array, off: number): IDsdChunk => {
     return {
-      fileSize: Token.INT64_LE.get(buf, off),
-      metadataPointer: Token.INT64_LE.get(buf, off + 8),
+      fileSize: INT64_LE.get(buf, off),
+      metadataPointer: INT64_LE.get(buf, off + 8),
     };
   },
 };

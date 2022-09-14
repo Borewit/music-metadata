@@ -1,8 +1,10 @@
-import * as Token from "../token-types";
+import { UINT8, UINT24_BE, UINT32_BE, UINT16_BE } from "../token-types";
+
+import { FixedLengthAtom } from "./AtomFixedLength";
+import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
+
 import type { IGetToken } from "../strtok3";
 import type { IAtomMxhd } from "./AtomMxhd";
-import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
-import { FixedLengthAtom } from "./AtomFixedLength";
 
 /**
  * Interface for the parsed Movie Header Atom (mvhd)
@@ -78,23 +80,23 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
 
   public get(buf: Uint8Array, off: number): IAtomMvhd {
     return {
-      version: Token.UINT8.get(buf, off),
-      flags: Token.UINT24_BE.get(buf, off + 1),
+      version: UINT8.get(buf, off),
+      flags: UINT24_BE.get(buf, off + 1),
       creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
       modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
-      timeScale: Token.UINT32_BE.get(buf, off + 12),
-      duration: Token.UINT32_BE.get(buf, off + 16),
-      preferredRate: Token.UINT32_BE.get(buf, off + 20),
-      preferredVolume: Token.UINT16_BE.get(buf, off + 24),
+      timeScale: UINT32_BE.get(buf, off + 12),
+      duration: UINT32_BE.get(buf, off + 16),
+      preferredRate: UINT32_BE.get(buf, off + 20),
+      preferredVolume: UINT16_BE.get(buf, off + 24),
       // ignore reserver: 10 bytes
       // ignore matrix structure: 36 bytes
-      previewTime: Token.UINT32_BE.get(buf, off + 72),
-      previewDuration: Token.UINT32_BE.get(buf, off + 76),
-      posterTime: Token.UINT32_BE.get(buf, off + 80),
-      selectionTime: Token.UINT32_BE.get(buf, off + 84),
-      selectionDuration: Token.UINT32_BE.get(buf, off + 88),
-      currentTime: Token.UINT32_BE.get(buf, off + 92),
-      nextTrackID: Token.UINT32_BE.get(buf, off + 96),
+      previewTime: UINT32_BE.get(buf, off + 72),
+      previewDuration: UINT32_BE.get(buf, off + 76),
+      posterTime: UINT32_BE.get(buf, off + 80),
+      selectionTime: UINT32_BE.get(buf, off + 84),
+      selectionDuration: UINT32_BE.get(buf, off + 88),
+      currentTime: UINT32_BE.get(buf, off + 92),
+      nextTrackID: UINT32_BE.get(buf, off + 96),
     };
   }
 }

@@ -1,7 +1,9 @@
 // Test writing and reading uint32 values in different endiannesses.
 
 import { describe, test, expect } from "vitest";
+
 import { UINT32_BE, UINT32_LE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 32-bit unsigned integer", () => {

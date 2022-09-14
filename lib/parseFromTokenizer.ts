@@ -1,5 +1,6 @@
-import type * as strtok3 from "./strtok3";
 import { ParserFactory } from "./ParserFactory";
+
+import type * as strtok3 from "./strtok3";
 import type { IAudioMetadata, IOptions } from "./type";
 
 /**

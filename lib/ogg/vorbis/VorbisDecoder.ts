@@ -1,11 +1,11 @@
-import * as Token from "../../token-types";
+import { UINT32_LE } from "../../token-types";
 import { Utf8StringType } from "../../token-types/string";
 
 export class VorbisDecoder {
   constructor(private readonly data: Uint8Array, private offset: number) {}
 
   public readInt32(): number {
-    const value = Token.UINT32_LE.get(this.data, this.offset);
+    const value = UINT32_LE.get(this.data, this.offset);
     this.offset += 4;
     return value;
   }

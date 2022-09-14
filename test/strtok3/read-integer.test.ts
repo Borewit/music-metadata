@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+
 import {
   UINT32_LE,
   UINT32_BE,
@@ -12,6 +13,7 @@ import {
   UINT24_LE,
   UINT24_BE,
 } from "../../lib/token-types";
+
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 describe("encode binary numbers", () => {

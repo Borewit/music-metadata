@@ -1,10 +1,15 @@
-import { describe, test, expect } from "vitest";
-import { join } from "node:path";
 import { createHash } from "node:crypto";
-import type { TagType } from "../lib/common/GenericTagTypes";
+import { join } from "node:path";
+
+import { describe, test, expect } from "vitest";
+
+
 import { ICommonTagsResult, INativeTagDict, orderTags } from "../lib";
-import { samplePath } from "./util";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
+
+import type { TagType } from "../lib/common/GenericTagTypes";
 
 /**
  * Check if different header formats map to the same common output.

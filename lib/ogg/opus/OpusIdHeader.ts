@@ -1,6 +1,7 @@
-import * as Token from "../../token-types";
-import type { IGetToken } from "../../strtok3";
+import { UINT8, INT16_LE, INT32_LE } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
+
+import type { IGetToken } from "../../strtok3";
 
 /**
  * Opus ID Header interface
@@ -55,12 +56,12 @@ export class IdHeader implements IGetToken<IIdHeader> {
   public get(buf: Uint8Array, off: number): IIdHeader {
     return {
       magicSignature: new Latin1StringType(8).get(buf, off + 0),
-      version: Token.UINT8.get(buf, off + 8),
-      channelCount: Token.UINT8.get(buf, off + 9),
-      preSkip: Token.INT16_LE.get(buf, off + 10),
-      inputSampleRate: Token.INT32_LE.get(buf, off + 12),
-      outputGain: Token.INT16_LE.get(buf, off + 16),
-      channelMapping: Token.UINT8.get(buf, off + 18),
+      version: UINT8.get(buf, off + 8),
+      channelCount: UINT8.get(buf, off + 9),
+      preSkip: INT16_LE.get(buf, off + 10),
+      inputSampleRate: INT32_LE.get(buf, off + 12),
+      outputGain: INT16_LE.get(buf, off + 16),
+      channelMapping: UINT8.get(buf, off + 18),
     };
   }
 }

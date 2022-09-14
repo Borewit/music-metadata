@@ -1,5 +1,6 @@
-import * as util from "../common/Util";
-import * as Token from "../token-types";
+import { getBit } from "../common/Util";
+import { UINT64_LE, INT32_LE, INT16_LE } from "../token-types";
+
 import { ExtendedStreamPropertiesObject } from "./GUID";
 import { State } from "./State";
 
@@ -46,27 +47,27 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
 
   public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
     return {
-      startTime: Token.UINT64_LE.get(buf, off),
-      endTime: Token.UINT64_LE.get(buf, off + 8),
-      dataBitrate: Token.INT32_LE.get(buf, off + 12),
-      bufferSize: Token.INT32_LE.get(buf, off + 16),
-      initialBufferFullness: Token.INT32_LE.get(buf, off + 20),
-      alternateDataBitrate: Token.INT32_LE.get(buf, off + 24),
-      alternateBufferSize: Token.INT32_LE.get(buf, off + 28),
-      alternateInitialBufferFullness: Token.INT32_LE.get(buf, off + 32),
-      maximumObjectSize: Token.INT32_LE.get(buf, off + 36),
+      startTime: UINT64_LE.get(buf, off),
+      endTime: UINT64_LE.get(buf, off + 8),
+      dataBitrate: INT32_LE.get(buf, off + 12),
+      bufferSize: INT32_LE.get(buf, off + 16),
+      initialBufferFullness: INT32_LE.get(buf, off + 20),
+      alternateDataBitrate: INT32_LE.get(buf, off + 24),
+      alternateBufferSize: INT32_LE.get(buf, off + 28),
+      alternateInitialBufferFullness: INT32_LE.get(buf, off + 32),
+      maximumObjectSize: INT32_LE.get(buf, off + 36),
       flags: {
         // ToDo, check flag positions
-        reliableFlag: util.getBit(buf, off + 40, 0),
-        seekableFlag: util.getBit(buf, off + 40, 1),
-        resendLiveCleanpointsFlag: util.getBit(buf, off + 40, 2),
+        reliableFlag: getBit(buf, off + 40, 0),
+        seekableFlag: getBit(buf, off + 40, 1),
+        resendLiveCleanpointsFlag: getBit(buf, off + 40, 2),
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-      streamNumber: Token.INT16_LE.get(buf, off + 42),
-      streamLanguageId: Token.INT16_LE.get(buf, off + 44),
-      averageTimePerFrame: Token.INT32_LE.get(buf, off + 52),
-      streamNameCount: Token.INT32_LE.get(buf, off + 54),
-      payloadExtensionSystems: Token.INT32_LE.get(buf, off + 56),
+      streamNumber: INT16_LE.get(buf, off + 42),
+      streamLanguageId: INT16_LE.get(buf, off + 44),
+      averageTimePerFrame: INT32_LE.get(buf, off + 52),
+      streamNameCount: INT32_LE.get(buf, off + 54),
+      payloadExtensionSystems: INT32_LE.get(buf, off + 56),
       streamNames: [], // ToDo
       streamPropertiesObject: null,
     };

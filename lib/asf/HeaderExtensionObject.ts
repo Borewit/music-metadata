@@ -1,7 +1,8 @@
-import type { IGetToken } from "../strtok3";
 import { UINT16_LE, UINT32_LE } from "../token-types";
 
 import GUID, { HeaderExtensionObject as GUIDHeaderExtensionObject } from "./GUID";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IHeaderExtensionObject {
   reserved1: GUID;

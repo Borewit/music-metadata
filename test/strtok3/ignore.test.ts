@@ -1,6 +1,8 @@
 import { describe, test, expect } from "vitest";
+
 import { EndOfStreamError } from "../../lib/strtok3";
 import { UINT32_LE, UINT32_BE, INT32_BE, IgnoreType } from "../../lib/token-types";
+
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {

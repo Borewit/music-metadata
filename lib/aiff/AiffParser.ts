@@ -1,14 +1,15 @@
-import * as Token from "../token-types";
-import initDebug from "../debug";
-import * as strtok3 from "../strtok3";
-import * as fromBuffer from "../strtok3/fromBuffer";
-
-import { ID3v2Parser } from "../id3v2/ID3v2Parser";
-import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
+import { FourCcToken } from "../common/FourCC";
+import initDebug from "../debug";
+import { ID3v2Parser } from "../id3v2/ID3v2Parser";
+import * as iff from "../iff";
+import { EndOfStreamError } from "../strtok3";
+import { fromBuffer } from "../strtok3/fromBuffer";
+import { Uint8ArrayType } from "../token-types";
+
 
 import * as AiffToken from "./AiffTokenCommon";
-import * as iff from "../iff";
+
 
 const debug = initDebug("music-metadata:parser:aiff");
 
@@ -57,7 +58,7 @@ export class AIFFParser extends BasicParser {
         await this.tokenizer.ignore(nextChunk - bytesRead);
       }
     } catch (error) {
-      if (error instanceof strtok3.EndOfStreamError) {
+      if (error instanceof EndOfStreamError) {
         debug(`End-of-stream`);
       } else {
         throw error;
@@ -82,8 +83,8 @@ export class AIFFParser extends BasicParser {
       }
       case "ID3 ": {
         // ID3-meta-data
-        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
-        const rst = fromBuffer.fromBuffer(id3_data);
+        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(header.chunkSize));
+        const rst = fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         return header.chunkSize;
       }

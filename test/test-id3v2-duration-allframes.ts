@@ -1,8 +1,9 @@
+import { join } from "node:path";
+
 import { expect, test } from "vitest";
 
-import { join } from "node:path";
-import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 test.each(Parsers)("should decode id3v2-duration-allframes", async (_, parser) => {
   /**

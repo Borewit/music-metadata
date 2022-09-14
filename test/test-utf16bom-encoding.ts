@@ -1,8 +1,9 @@
-import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { expect, test } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 test.each(Parsers)("should read utf16bom (big endian) encoded metadata correctly", async (_, parser) => {
   const filename = "bug-utf16bom-encoding.mp3";

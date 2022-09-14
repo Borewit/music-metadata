@@ -1,7 +1,9 @@
-import type { ITokenizer } from "../strtok3";
 import initDebug from "../debug";
+
 import { Header, IAtomHeader } from "./AtomHeader";
 import { ExtendedSize } from "./SoundSampleDescriptionVersion";
+
+import type { ITokenizer } from "../strtok3";
 
 export type AtomDataHandler = (atom: Atom, remaining: number) => Promise<void>;
 

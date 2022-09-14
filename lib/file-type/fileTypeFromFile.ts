@@ -1,6 +1,8 @@
-import * as strtok3 from "../strtok3";
-import type { FileTypeResult } from "./type";
+import { fromFile } from "../strtok3";
+
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
+
+import type { FileTypeResult } from "./type";
 
 /**
  * Detect the file type of a file path.
@@ -15,7 +17,7 @@ import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
  * @param path
  */
 export async function fileTypeFromFile(path: string): Promise<FileTypeResult | undefined> {
-  const tokenizer = await strtok3.fromFile(path);
+  const tokenizer = await fromFile(path);
   try {
     return await fileTypeFromTokenizer(tokenizer);
   } finally {

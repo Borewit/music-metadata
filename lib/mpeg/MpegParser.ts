@@ -1,12 +1,13 @@
-import * as Token from "../token-types";
-import { EndOfStreamError } from "../strtok3";
-import initDebug from "../debug";
 
-import * as common from "../common/Util";
+import { getBitAllignedNumber, stripNulls } from "../common/Util";
+import initDebug from "../debug";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
-import { InfoTagHeaderTag, LameEncoderVersion } from "./XingTag";
-import { IXingInfoTag, readXingHeader } from "./XingInfoTag";
+import { EndOfStreamError } from "../strtok3";
+import { INT16_BE, Uint8ArrayType } from "../token-types";
+
 import { FrameHeader, MpegFrameHeader } from "./MpegFrameHeader";
+import { IXingInfoTag, readXingHeader } from "./XingInfoTag";
+import { InfoTagHeaderTag, LameEncoderVersion } from "./XingTag";
 
 const debug = initDebug("music-metadata:parser:mpeg");
 
@@ -253,7 +254,7 @@ export class MpegParser extends AbstractID3Parser {
   private async parseAdts(header: MpegFrameHeader): Promise<boolean> {
     const buf = new Uint8Array(3);
     await this.tokenizer.readBuffer(buf);
-    header.frameLength += common.getBitAllignedNumber(buf, 0, 0, 11);
+    header.frameLength += getBitAllignedNumber(buf, 0, 0, 11);
     this.totalDataLength += header.frameLength;
     this.samplesPerFrame = 1024;
 
@@ -281,7 +282,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async parseCrc(): Promise<void> {
-    this.crc = await this.tokenizer.readNumber(Token.INT16_BE);
+    this.crc = await this.tokenizer.readNumber(INT16_BE);
     this.offset += 2;
     return this.skipSideInformation();
   }
@@ -289,7 +290,7 @@ export class MpegParser extends AbstractID3Parser {
   private async skipSideInformation(): Promise<void> {
     const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
     // side information
-    await this.tokenizer.readToken(new Token.Uint8ArrayType(sideinfo_length));
+    await this.tokenizer.readToken(new Uint8ArrayType(sideinfo_length));
     this.offset += sideinfo_length;
     await this.readXtraInfoHeader();
     return;
@@ -351,7 +352,7 @@ export class MpegParser extends AbstractID3Parser {
     this.offset += this.tokenizer.position - offset;
 
     if (infoTag.lame) {
-      this.metadata.setFormat("tool", "LAME " + common.stripNulls(infoTag.lame.version));
+      this.metadata.setFormat("tool", "LAME " + stripNulls(infoTag.lame.version));
       if (infoTag.lame.extended) {
         // this.metadata.setFormat('trackGain', infoTag.lame.extended.track_gain);
         this.metadata.setFormat("trackPeakLevel", infoTag.lame.extended.track_peak);

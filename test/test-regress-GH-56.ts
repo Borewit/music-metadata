@@ -1,5 +1,6 @@
-import { expect, test } from "vitest";
 import { join } from "node:path";
+
+import { expect, test } from "vitest";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";

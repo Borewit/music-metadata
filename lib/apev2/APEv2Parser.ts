@@ -1,18 +1,20 @@
-import initDebug from "../debug";
-import type * as strtok3 from "../strtok3";
-import * as fromBuffer from "../strtok3/fromBuffer";
-
-import * as util from "../common/Util";
-import type { IOptions, IRandomReader, IApeHeader } from "../type";
-import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import { BasicParser } from "../common/BasicParser";
+import { findZero } from "../common/Util";
+import { decodeUtf8 } from "../compat/text-decoder";
+import initDebug from "../debug";
+import { fromBuffer } from "../strtok3/fromBuffer";
+import { Latin1StringType, Utf8StringType } from "../token-types/string";
+
 import { IDescriptor, DescriptorParser } from "./APEv2TokenDescriptor";
 import { IFooter, TagFooter } from "./APEv2TokenFooter";
 import { IHeader, Header } from "./APEv2TokenHeader";
 import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
 import { DataType } from "./DataType";
-import { Latin1StringType, Utf8StringType } from "../token-types/string";
-import { decodeUtf8 } from "../compat/text-decoder";
+
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { ITokenizer } from "../strtok3";
+import type { IOptions, IRandomReader, IApeHeader } from "../type";
+
 
 const debug = initDebug("music-metadata:parser:APEv2");
 
@@ -51,7 +53,7 @@ const preamble = "APETAGEX";
 export class APEv2Parser extends BasicParser {
   public static tryParseApeHeader(
     metadata: INativeMetadataCollector,
-    tokenizer: strtok3.ITokenizer,
+    tokenizer: ITokenizer,
     options: IOptions
   ) {
     const apeParser = new APEv2Parser();
@@ -93,9 +95,9 @@ export class APEv2Parser extends BasicParser {
   ): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     if (footer.ID !== preamble) throw new Error("Unexpected APEv2 Footer ID preamble value.");
-    fromBuffer.fromBuffer(buffer);
+    fromBuffer(buffer);
     const apeParser = new APEv2Parser();
-    apeParser.init(metadata, fromBuffer.fromBuffer(buffer), options);
+    apeParser.init(metadata, fromBuffer(buffer), options);
     return apeParser.parseTags(footer);
   }
 
@@ -160,7 +162,7 @@ export class APEv2Parser extends BasicParser {
       await this.tokenizer.peekBuffer(keyBuffer, {
         length: Math.min(keyBuffer.length, bytesRemaining),
       });
-      let zero = util.findZero(keyBuffer, 0, keyBuffer.length);
+      let zero = findZero(keyBuffer, 0, keyBuffer.length);
       const key = await this.tokenizer.readToken<string>(new Latin1StringType(zero));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
@@ -184,7 +186,7 @@ export class APEv2Parser extends BasicParser {
             const picData = new Uint8Array(tagItemHeader.size);
             await this.tokenizer.readBuffer(picData);
 
-            zero = util.findZero(picData, 0, picData.length);
+            zero = findZero(picData, 0, picData.length);
             const description = decodeUtf8(picData.subarray(0, zero));
 
             const data = new Uint8Array(picData.subarray(zero + 1));

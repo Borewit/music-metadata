@@ -1,9 +1,9 @@
-import type { IGetToken } from "../strtok3";
-
-import type { ITag } from "../type";
-import { getParserForAttr } from "./AsfUtil";
 import { HeaderObjectToken, IAsfObjectHeader } from "./AsfObjectHeader";
+import { getParserForAttr } from "./AsfUtil";
 import { WmPictureToken } from "./WmPicture";
+
+import type { IGetToken } from "../strtok3";
+import type { ITag } from "../type";
 
 export abstract class State<T> implements IGetToken<T> {
   public len: number;

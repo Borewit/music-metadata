@@ -1,7 +1,8 @@
-import type { IGetToken } from "../strtok3";
+import { Latin1StringType } from "../token-types/string";
 
 import type { IChunkHeader } from "../iff";
-import { Latin1StringType } from "../token-types/string";
+import type { IGetToken } from "../strtok3";
+
 
 /**
  * Token to parse RIFF-INFO tag value

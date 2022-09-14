@@ -1,7 +1,9 @@
-import type { IGetToken } from "../strtok3";
 
-import * as Token from "../token-types";
+import { Uint8ArrayType, UINT64_LE } from "../token-types";
+
 import GUID from "./GUID";
+
+import type { IGetToken } from "../strtok3";
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575
@@ -27,8 +29,8 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader> = {
 
   get: (buf, off): IAsfObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.Uint8ArrayType(16).get(buf, off)),
-      objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
+      objectId: GUID.fromBin(new Uint8ArrayType(16).get(buf, off)),
+      objectSize: Number(UINT64_LE.get(buf, off + 16)),
     };
   },
 };

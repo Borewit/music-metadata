@@ -1,7 +1,9 @@
 // Test reading int64 values.
 
 import { describe, test, expect } from "vitest";
+
 import { INT64_BE, INT64_LE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 64-bit signed integer", () => {
@@ -20,9 +22,7 @@ describe("Parse 64-bit signed integer", () => {
     });
 
     test("should decode", () => {
-      let buf: Buffer;
-
-      buf = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+      let buf: Buffer = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
       expect(INT64_BE.get(buf, 0)).toBe(0n);
 
       buf = Buffer.from([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
@@ -51,9 +51,7 @@ describe("Parse 64-bit signed integer", () => {
     });
 
     test("should decode", () => {
-      let buf: Buffer;
-
-      buf = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+      let buf: Buffer  = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
       expect(INT64_LE.get(buf, 0)).toBe(0n);
 
       buf = Buffer.from([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);

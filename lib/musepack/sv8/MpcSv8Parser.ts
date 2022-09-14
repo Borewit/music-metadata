@@ -1,10 +1,10 @@
+
+import { APEv2Parser } from "../../apev2/APEv2Parser";
+import { BasicParser } from "../../common/BasicParser";
+import { FourCcToken } from "../../common/FourCC";
 import initDebug from "../../debug";
 
-import { BasicParser } from "../../common/BasicParser";
-import { APEv2Parser } from "../../apev2/APEv2Parser";
-import { FourCcToken } from "../../common/FourCC";
-
-import * as SV8 from "./StreamVersion8";
+import { StreamReader } from "./StreamVersion8";
 
 const debug = initDebug("music-metadata:parser:musepack");
 
@@ -19,7 +19,7 @@ export class MpcSv8Parser extends BasicParser {
   }
 
   private async parsePacket(): Promise<void> {
-    const sv8reader = new SV8.StreamReader(this.tokenizer);
+    const sv8reader = new StreamReader(this.tokenizer);
 
     do {
       const header = await sv8reader.readPacketHeader();

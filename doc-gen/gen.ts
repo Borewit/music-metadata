@@ -1,10 +1,10 @@
+import { WriteStream, readFileSync, createWriteStream } from "node:fs";
 import { join } from "node:path";
-import * as fs from "node:fs";
 
-import { commonTags } from "../lib/common/GenericTagInfo";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
+import { commonTags } from "../lib/common/GenericTagInfo";
 
-import * as markDown from "./MarkDown";
+import { Table, Row } from "./MarkDown";
 
 type ITagInfoDict = Record<string, { description: string }>;
 
@@ -32,13 +32,13 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
  *
  * @param out
  */
-function write(out: fs.WriteStream) {
-  const json = fs.readFileSync(join(__dirname, "common.json"));
+function write(out: WriteStream) {
+  const json = readFileSync(join(__dirname, "common.json"));
   const commonDescriptionDict: ITagInfoDict = JSON.parse(json as unknown as string);
 
-  const table = new markDown.Table();
+  const table = new Table();
 
-  table.header = new markDown.Row(["Common tag", "n", "Description"]);
+  table.header = new Row(["Common tag", "n", "Description"]);
 
   for (const nativeType in combinedTagMapper.tagMappers) {
     table.header.values.push(nativeType);
@@ -50,7 +50,7 @@ function write(out: fs.WriteStream) {
     // console.log('common-tag: key=%s, description=%s', commonTagKey, tagInfo.description)
     const multiplicity = commonTags[commonTagKey].multiple ? "*" : "1";
 
-    const row = new markDown.Row([commonTagKey, multiplicity, tagInfo.description]);
+    const row = new Row([commonTagKey, multiplicity, tagInfo.description]);
     for (const nativeType in combinedTagMapper.tagMappers) {
       row.values.push(getNativeSourceTags(nativeType, commonTagKey).join(", "));
     }
@@ -60,7 +60,7 @@ function write(out: fs.WriteStream) {
   table.writeTo(out);
 }
 
-const txt = fs.createWriteStream(join(__dirname, "..", "doc", "common_metadata.md"));
+const txt = createWriteStream(join(__dirname, "..", "doc", "common_metadata.md"));
 
 txt.write("# Common Metadata\n\n");
 txt.write("Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n");

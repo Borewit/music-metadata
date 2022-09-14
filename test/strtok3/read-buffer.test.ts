@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 describe.each(tokenizerCases)("tokenizer from %s read options", (_name, load) => {

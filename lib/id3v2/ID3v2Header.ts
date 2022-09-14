@@ -1,10 +1,11 @@
-import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
-
-import * as util from "../common/Util";
-import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+import { getBit } from "../common/Util";
+import { INT8 } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
+
+import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
+
+import type { IGetToken } from "../strtok3";
+import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 
 /**
  * ID3v2 tag header
@@ -44,18 +45,18 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
       fileIdentifier: new Latin1StringType(3).get(buf, off),
       // ID3v2 versionIndex
       version: {
-        major: Token.INT8.get(buf, off + 3) as ID3v2MajorVersion,
-        revision: Token.INT8.get(buf, off + 4),
+        major: INT8.get(buf, off + 3) as ID3v2MajorVersion,
+        revision: INT8.get(buf, off + 4),
       },
       // ID3v2 flags
       flags: {
         // Unsynchronisation
-        unsynchronisation: util.getBit(buf, off + 5, 7),
+        unsynchronisation: getBit(buf, off + 5, 7),
         // Extended header
-        isExtendedHeader: util.getBit(buf, off + 5, 6),
+        isExtendedHeader: getBit(buf, off + 5, 6),
         // Experimental indicator
-        expIndicator: util.getBit(buf, off + 5, 5),
-        footer: util.getBit(buf, off + 5, 4),
+        expIndicator: getBit(buf, off + 5, 5),
+        footer: getBit(buf, off + 5, 4),
       },
       size: UINT32SYNCSAFE.get(buf, off + 6),
     };

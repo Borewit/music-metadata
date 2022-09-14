@@ -1,14 +1,15 @@
-import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
-import { commonTags, isSingleton } from "../lib/common/GenericTagInfo";
+import { describe, expect, test } from "vitest";
+
 import { ratingToStars, selectCover } from "../lib";
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
+import { commonTags, isSingleton } from "../lib/common/GenericTagInfo";
 import { joinArtists } from "../lib/common/MetadataCollector";
 import { parseHttpContentType } from "../lib/ParserFactory";
 
-import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe("GenericTagMap", () => {
   const combinedTagMapper = new CombinedTagMapper();

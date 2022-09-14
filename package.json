@@ -83,7 +83,7 @@
     "test": "run-s test:vitest",
     "test:vitest": "vitest --run",
     "test:coverage": "vitest --run --coverage",
-    "test:buildsize": "vite build",
+    "test:build-size": "vite build",
     "watch:test": "vitest --watch",
     "watch:typescript": "tsc -p tsconfig.check.json -w"
   },

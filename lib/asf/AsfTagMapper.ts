@@ -1,5 +1,6 @@
-import type { INativeTagMap } from "../common/GenericTagTypes";
 import { CommonTagMapper } from "../common/GenericTagMapper";
+
+import type { INativeTagMap } from "../common/GenericTagTypes";
 import type { IRating, ITag } from "../type";
 
 /**

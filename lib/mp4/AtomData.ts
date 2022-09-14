@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { UINT8, UINT24_BE, Uint8ArrayType } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
 /**
@@ -37,11 +38,11 @@ export class DataAtom implements IGetToken<IDataAtom> {
   public get(buf: Uint8Array, off: number): IDataAtom {
     return {
       type: {
-        set: Token.UINT8.get(buf, off + 0),
-        type: Token.UINT24_BE.get(buf, off + 1),
+        set: UINT8.get(buf, off + 0),
+        type: UINT24_BE.get(buf, off + 1),
       },
-      locale: Token.UINT24_BE.get(buf, off + 4),
-      value: new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8),
+      locale: UINT24_BE.get(buf, off + 4),
+      value: new Uint8ArrayType(this.len - 8).get(buf, off + 8),
     };
   }
 }

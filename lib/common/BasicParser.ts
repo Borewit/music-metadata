@@ -1,6 +1,5 @@
-import type { ITokenizer } from "../strtok3";
-
 import type { ITokenParser } from "../ParserFactory";
+import type { ITokenizer } from "../strtok3";
 import type { IOptions, IPrivateOptions } from "../type";
 import type { INativeMetadataCollector } from "./INativeMetadataCollector";
 

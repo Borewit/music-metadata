@@ -1,7 +1,8 @@
-import { ITokenizer, fromStream, fromFile, fromBuffer } from "../../lib/strtok3";
-import { join } from "node:path";
 import { createReadStream } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { ITokenizer, fromStream, fromFile, fromBuffer } from "../../lib/strtok3";
 
 type LoadTokenizer = (testFile: string) => Promise<ITokenizer>;
 

@@ -1,7 +1,9 @@
 // Test writing and reading uint16 values in different endiannesses.
 
 import { describe, test, expect } from "vitest";
+
 import { UINT16_LE, UINT16_BE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 16-bit unsigned integer", () => {

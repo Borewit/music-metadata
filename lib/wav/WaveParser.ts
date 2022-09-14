@@ -1,18 +1,19 @@
-import * as strtok3 from "../strtok3";
-import * as fromBuffer from "../strtok3/fromBuffer";
-import * as Token from "../token-types";
+import { BasicParser } from "../common/BasicParser";
+import { FourCcToken } from "../common/FourCC";
+import { stripNulls } from "../common/Util";
 import initDebug from "../debug";
-
+import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import { IChunkHeader, Header } from "../riff/RiffHeader";
 import { ListInfoTagValue } from "../riff/RiffInfo";
-import { ID3v2Parser } from "../id3v2/ID3v2Parser";
-import * as util from "../common/Util";
-import { FourCcToken } from "../common/FourCC";
-import { BasicParser } from "../common/BasicParser";
-import { IWaveFormat, Format, WaveFormat } from "./WaveFormat";
-import { IFactChunk, FactChunk } from "./FactChunk";
-import { BroadcastAudioExtensionChunk } from "./BwfChunk";
+import { EndOfStreamError } from "../strtok3";
+import { fromBuffer } from "../strtok3/fromBuffer";
+import { Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
+
+import { BroadcastAudioExtensionChunk } from "./BwfChunk";
+import { IFactChunk, FactChunk } from "./FactChunk";
+import { IWaveFormat, Format, WaveFormat } from "./WaveFormat";
+
 
 const debug = initDebug("music-metadata:parser:RIFF");
 
@@ -38,7 +39,7 @@ export class WaveParser extends BasicParser {
     debug(`pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`);
     if (riffHeader.chunkID !== "RIFF") return; // Not RIFF format
     return this.parseRiffChunk(riffHeader.chunkSize).catch((error) => {
-      if (!(error instanceof strtok3.EndOfStreamError)) {
+      if (!(error instanceof EndOfStreamError)) {
         throw error;
       }
     });
@@ -97,8 +98,8 @@ export class WaveParser extends BasicParser {
         case "ID3 ": {
           // The way Picard, FooBar currently stores, ID3 meta-data
           // The way Mp3Tags stores ID3 meta-data
-          const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
-          const rst = fromBuffer.fromBuffer(id3_data);
+          const id3_data = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(header.chunkSize));
+          const rst = fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
         }
@@ -183,7 +184,7 @@ export class WaveParser extends BasicParser {
       const header = await this.tokenizer.readToken<IChunkHeader>(Header);
       const valueToken = new ListInfoTagValue(header);
       const value = await this.tokenizer.readToken(valueToken);
-      this.addTag(header.chunkID, util.stripNulls(value));
+      this.addTag(header.chunkID, stripNulls(value));
       chunkSize -= 8 + valueToken.len;
     }
 

@@ -1,7 +1,8 @@
-import * as Token from "../token-types";
+import { FourCcToken } from "../common/FourCC";
+import { UINT64_LE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
-import { FourCcToken } from "../common/FourCC";
 
 /**
  * Common interface for the common chunk DSD header
@@ -27,7 +28,7 @@ export const ChunkHeader: IGetToken<IChunkHeader> = {
   get: (buf: Uint8Array, off: number): IChunkHeader => {
     return {
       id: FourCcToken.get(buf, off),
-      size: Token.UINT64_LE.get(buf, off + 4),
+      size: UINT64_LE.get(buf, off + 4),
     };
   },
 };

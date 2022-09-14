@@ -1,25 +1,25 @@
-import type { IOptions, IAudioMetadata, ParserType } from "./type";
-import type { ITokenizer } from "./strtok3";
-import { fileTypeFromBuffer } from "./file-type";
-import * as ContentType from "./content-type";
-import * as MimeType from "./media-typer";
-
-import initDebug from "./debug";
-import { MetadataCollector } from "./common/MetadataCollector";
 import { AIFFParser } from "./aiff/AiffParser";
 import { APEv2Parser } from "./apev2/APEv2Parser";
 import { AsfParser } from "./asf/AsfParser";
+import { MetadataCollector } from "./common/MetadataCollector";
+import { parse as ContentType_parse } from "./content-type";
+import initDebug from "./debug";
+import { DsdiffParser } from "./dsdiff/DsdiffParser";
+import { DsfParser } from "./dsf/DsfParser";
+import { fileTypeFromBuffer } from "./file-type";
 import { FlacParser } from "./flac/FlacParser";
+import { MatroskaParser } from "./matroska/MatroskaParser";
+import { parse as MimeType_parse } from "./media-typer";
 import { MP4Parser } from "./mp4/MP4Parser";
 import { MpegParser } from "./mpeg/MpegParser";
 import MusepackParser from "./musepack";
 import { OggParser } from "./ogg/OggParser";
 import { WaveParser } from "./wav/WaveParser";
 import { WavPackParser } from "./wavpack/WavPackParser";
-import { DsfParser } from "./dsf/DsfParser";
-import { DsdiffParser } from "./dsdiff/DsdiffParser";
-import { MatroskaParser } from "./matroska/MatroskaParser";
+
 import type { INativeMetadataCollector } from "./common/INativeMetadataCollector";
+import type { ITokenizer } from "./strtok3";
+import type { IOptions, IAudioMetadata, ParserType } from "./type";
 
 const debug = initDebug("music-metadata:parser:factory");
 
@@ -51,8 +51,8 @@ export function parseHttpContentType(contentType: string): {
   suffix?: string;
   parameters: Record<string, string>;
 } {
-  const type = ContentType.parse(contentType);
-  const mime = MimeType.parse(type.type);
+  const type = ContentType_parse(contentType);
+  const mime = MimeType_parse(type.type);
   return {
     type: mime.type,
     subtype: mime.subtype,

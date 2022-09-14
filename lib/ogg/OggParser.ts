@@ -1,18 +1,18 @@
-import * as Token from "../token-types";
-import { EndOfStreamError } from "../strtok3";
-import initDebug from "../debug";
-
 import { BasicParser } from "../common/BasicParser";
+import initDebug from "../debug";
+import { EndOfStreamError } from "../strtok3";
+import { Uint8ArrayType } from "../token-types";
+import { Latin1StringType } from "../token-types/string";
 
-import { VorbisParser } from "./vorbis/VorbisParser";
+import { IPageHeader, Header } from "./Header";
 import { OpusParser } from "./opus/OpusParser";
+import { SegmentTable, ISegmentTable } from "./SegmentTable";
 import { SpeexParser } from "./speex/SpeexParser";
 import { TheoraParser } from "./theora/TheoraParser";
+import { VorbisParser } from "./vorbis/VorbisParser";
 
-import { SegmentTable, ISegmentTable } from "./SegmentTable";
-import { IPageHeader, Header } from "./Header";
 import type { IPageConsumer } from "./PageConsumer";
-import { Latin1StringType } from "../token-types/string";
+
 
 const debug = initDebug("music-metadata:parser:ogg");
 
@@ -45,7 +45,7 @@ export class OggParser extends BasicParser {
         const segmentTable = await this.tokenizer.readToken<ISegmentTable>(new SegmentTable(header));
         debug("totalPageSize=%s", segmentTable.totalPageSize);
         const pageData = await this.tokenizer.readToken<Uint8Array>(
-          new Token.Uint8ArrayType(segmentTable.totalPageSize)
+          new Uint8ArrayType(segmentTable.totalPageSize)
         );
         debug(
           "firstPage=%s, lastPage=%s, continued=%s",

@@ -1,6 +1,7 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
+import { UINT32_BE } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IAtomHeader {
   length: bigint;
@@ -11,7 +12,7 @@ export const Header: IGetToken<IAtomHeader> = {
   len: 8,
 
   get: (buf: Uint8Array, off: number): IAtomHeader => {
-    const length = Token.UINT32_BE.get(buf, off);
+    const length = UINT32_BE.get(buf, off);
     if (length < 0) throw new Error("Invalid atom header length");
 
     return {

@@ -1,7 +1,9 @@
 import { describe, test, expect } from "vitest";
+
 import { EndOfStreamError } from "../../lib/peek-readable";
 import { UINT8 } from "../../lib/token-types";
 import { Utf8StringType } from "../../lib/token-types/string";
+
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {

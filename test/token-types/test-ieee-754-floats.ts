@@ -1,6 +1,7 @@
 // Test writing and reading uint8 values.
 
 import { describe, test, expect } from "vitest";
+
 import {
   Float16_BE,
   Float16_LE,
@@ -11,6 +12,7 @@ import {
   Float80_BE,
   Float80_LE,
 } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("16-bit (half precision)", () => {

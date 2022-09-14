@@ -1,9 +1,10 @@
-import * as Token from "../../token-types";
-import type { ITokenizer, IGetToken } from "../../strtok3";
+import { getBitAllignedNumber, isBitSet } from "../../common/Util";
 import initDebug from "../../debug";
-
-import * as util from "../../common/Util";
+import { UINT32_LE, UINT8 } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
+
+import type { ITokenizer, IGetToken } from "../../strtok3";
+
 
 const debug = initDebug("music-metadata:parser:musepack:sv8");
 
@@ -37,8 +38,8 @@ const SH_part1: IGetToken<IStreamHeader1> = {
 
   get: (buf, off) => {
     return {
-      crc: Token.UINT32_LE.get(buf, off),
-      streamVersion: Token.UINT8.get(buf, off + 4),
+      crc: UINT32_LE.get(buf, off),
+      streamVersion: UINT8.get(buf, off + 4),
     };
   },
 };
@@ -64,11 +65,11 @@ const SH_part3: IGetToken<IStreamHeader3> = {
 
   get: (buf, off) => {
     return {
-      sampleFrequency: [44_100, 48_000, 37_800, 32_000][util.getBitAllignedNumber(buf, off, 0, 3)],
-      maxUsedBands: util.getBitAllignedNumber(buf, off, 3, 5),
-      channelCount: util.getBitAllignedNumber(buf, off + 1, 0, 4) + 1,
-      msUsed: util.isBitSet(buf, off + 1, 4),
-      audioBlockFrames: util.getBitAllignedNumber(buf, off + 1, 5, 3),
+      sampleFrequency: [44_100, 48_000, 37_800, 32_000][getBitAllignedNumber(buf, off, 0, 3)],
+      maxUsedBands: getBitAllignedNumber(buf, off, 3, 5),
+      channelCount: getBitAllignedNumber(buf, off + 1, 0, 4) + 1,
+      msUsed: isBitSet(buf, off + 1, 4),
+      audioBlockFrames: getBitAllignedNumber(buf, off + 1, 5, 3),
     };
   },
 };
@@ -120,7 +121,7 @@ export class StreamReader {
   }
 
   private async readVariableSizeField(len = 1, hb = 0): Promise<IVarSize> {
-    let n = await this.tokenizer.readNumber(Token.UINT8);
+    let n = await this.tokenizer.readNumber(UINT8);
     if ((n & 0x80) === 0) {
       return { len, value: hb + n };
     }

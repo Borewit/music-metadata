@@ -1,13 +1,12 @@
-import * as Token from "../token-types";
-import initDebug from "../debug";
-import * as strtok3 from "../strtok3";
-
-import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
+import { FourCcToken } from "../common/FourCC";
+import initDebug from "../debug";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
+import { fromBuffer } from "../strtok3";
+import { UINT32_LE, Uint8ArrayType, UINT32_BE, UINT16_BE, UINT8 } from "../token-types";
+import { Latin1StringType } from "../token-types/string";
 
 import { ChunkHeader64, IChunkHeader64 } from "./ChunkHeader64";
-import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:aiff");
 
@@ -52,7 +51,7 @@ export class DsdiffParser extends BasicParser {
     switch (header.chunkID.trim()) {
       case "FVER": {
         // 3.1 FORMAT VERSION CHUNK
-        const version = await this.tokenizer.readToken<number>(Token.UINT32_LE);
+        const version = await this.tokenizer.readToken<number>(UINT32_LE);
         debug(`DSDIFF version=${version}`);
         break;
       }
@@ -67,8 +66,8 @@ export class DsdiffParser extends BasicParser {
 
       case "ID3": {
         // Unofficial ID3 tag support
-        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(Number(header.chunkSize)));
-        const rst = strtok3.fromBuffer(id3_data);
+        const id3_data = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(Number(header.chunkSize)));
+        const rst = fromBuffer(id3_data);
         await new ID3v2Parser().parse(this.metadata, rst, this.options);
         break;
       }
@@ -100,22 +99,22 @@ export class DsdiffParser extends BasicParser {
       switch (sndPropHeader.chunkID.trim()) {
         case "FS": {
           // 3.2.1 Sample Rate Chunk
-          const sampleRate = await this.tokenizer.readToken<number>(Token.UINT32_BE);
+          const sampleRate = await this.tokenizer.readToken<number>(UINT32_BE);
           this.metadata.setFormat("sampleRate", sampleRate);
           break;
         }
         case "CHNL": {
           // 3.2.2 Channels Chunk
-          const numChannels = await this.tokenizer.readToken<number>(Token.UINT16_BE);
+          const numChannels = await this.tokenizer.readToken<number>(UINT16_BE);
           this.metadata.setFormat("numberOfChannels", numChannels);
-          await this.handleChannelChunks(sndPropHeader.chunkSize - BigInt(Token.UINT16_BE.len));
+          await this.handleChannelChunks(sndPropHeader.chunkSize - BigInt(UINT16_BE.len));
           break;
         }
         case "CMPR": {
           // 3.2.3 Compression Type Chunk
           const fourCcToken = await this.tokenizer.readToken<string>(FourCcToken);
           const compressionIdCode = fourCcToken.trim();
-          const count = await this.tokenizer.readToken<number>(Token.UINT8);
+          const count = await this.tokenizer.readToken<number>(UINT8);
           const compressionName = await this.tokenizer.readToken<string>(new Latin1StringType(count));
           if (compressionIdCode === "DSD") {
             this.metadata.setFormat("lossless", true);
@@ -126,16 +125,16 @@ export class DsdiffParser extends BasicParser {
         }
         case "ABSS": {
           // 3.2.4 Absolute Start Time Chunk
-          const hours = await this.tokenizer.readToken<number>(Token.UINT16_BE);
-          const minutes = await this.tokenizer.readToken<number>(Token.UINT8);
-          const seconds = await this.tokenizer.readToken<number>(Token.UINT8);
-          const samples = await this.tokenizer.readToken<number>(Token.UINT32_BE);
+          const hours = await this.tokenizer.readToken<number>(UINT16_BE);
+          const minutes = await this.tokenizer.readToken<number>(UINT8);
+          const seconds = await this.tokenizer.readToken<number>(UINT8);
+          const samples = await this.tokenizer.readToken<number>(UINT32_BE);
           debug(`ABSS ${hours}:${minutes}:${seconds}.${samples}`);
           break;
         }
         case "LSCO": {
           // 3.2.5 Loudspeaker Configuration Chunk
-          const lsConfig = await this.tokenizer.readToken<number>(Token.UINT16_BE);
+          const lsConfig = await this.tokenizer.readToken<number>(UINT16_BE);
           debug(`LSCO lsConfig=${lsConfig}`);
           break;
         }

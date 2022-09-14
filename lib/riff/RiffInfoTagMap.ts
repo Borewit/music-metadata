@@ -1,5 +1,6 @@
-import type { INativeTagMap } from "../common/GenericTagTypes";
 import { CommonTagMapper } from "../common/GenericTagMapper";
+
+import type { INativeTagMap } from "../common/GenericTagTypes";
 
 /**
  * RIFF Info Tags; part of the EXIF 2.3

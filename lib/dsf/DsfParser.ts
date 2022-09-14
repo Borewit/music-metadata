@@ -1,7 +1,7 @@
 import initDebug from "../debug";
-
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
+
 import { ChunkHeader, IChunkHeader } from "./ChunkHeader";
 import { IDsdChunk, DsdChunk } from "./DsdChunk";
 import { IFormatChunk, FormatChunk } from "./FormatChunk";

@@ -115,7 +115,7 @@
     "new-parens": "error",
     "no-caller": "error",
     "no-console": "error",
-    "no-duplicate-imports": "error",
+    "no-duplicate-imports": "off",
     "no-eval": "error",
     "no-extra-bind": "error",
     "no-new-func": "error",
@@ -140,7 +140,8 @@
     /* eslint-plugin-import */
     "import/first": "error",
     "import/newline-after-import": "error",
-    "import/no-cycle": ["error", { "ignoreExternal": true }],
+    // "import/no-cycle": ["error", { "ignoreExternal": true }],
+    "import/no-duplicates": "error",
     "import/no-extraneous-dependencies": ["error", { "devDependencies": false }],
     "import/no-namespace": "warn",
     "import/no-nodejs-modules": "warn",

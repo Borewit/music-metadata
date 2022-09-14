@@ -1,8 +1,10 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
+import { UINT32_LE } from "../token-types";
+import { Latin1StringType } from "../token-types/string";
 
 import type { IChunkHeader } from "../iff";
-import { Latin1StringType } from "../token-types/string";
+import type { IGetToken } from "../strtok3";
+
+
 export { IChunkHeader } from "../iff";
 
 /**
@@ -16,7 +18,7 @@ export const Header: IGetToken<IChunkHeader> = {
       // Group-ID
       chunkID: new Latin1StringType(4).get(buf, off),
       // Size
-      chunkSize: Token.UINT32_LE.get(buf, 4),
+      chunkSize: UINT32_LE.get(buf, 4),
     };
   },
 };

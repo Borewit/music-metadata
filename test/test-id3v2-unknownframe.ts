@@ -1,8 +1,9 @@
-import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { expect, test } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 test.each(Parsers)('invalid "Date" frame should not cause crash', async (_, parser) => {
   const filename = "bug-id3v2-unknownframe.mp3";

@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { decodeLatin1, decodeUtf16le, decodeUtf8 } from "../../lib/compat/text-decoder";
 import { encodeUtf8 } from "../../lib/compat/text-encoder";
 

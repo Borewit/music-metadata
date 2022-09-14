@@ -1,6 +1,7 @@
 import GUID, { StreamPropertiesObject as GUIDStreamPropertiesObject } from "./GUID";
-import type { IAsfObjectHeader } from "./AsfObjectHeader";
 import { State } from "./State";
+
+import type { IAsfObjectHeader } from "./AsfObjectHeader";
 
 /**
  * Interface for: 3.3 Stream Properties Object (mandatory, one per stream)

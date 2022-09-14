@@ -1,7 +1,9 @@
-import * as strtok3 from "../strtok3";
-import type { Readable as ReadableStream } from "node:stream";
-import type { FileTypeResult } from "./type";
+import { fromStream } from "../strtok3";
+
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
+
+import type { FileTypeResult } from "./type";
+import type { Readable as ReadableStream } from "node:stream";
 
 /**
  * Detect the file type of a Node.js [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable).
@@ -11,7 +13,7 @@ import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
  * @returns The detected file type and MIME type, or `undefined` when there is no match.
  */
 export async function fileTypeFromStream(stream: ReadableStream): Promise<FileTypeResult | undefined> {
-  const tokenizer = await strtok3.fromStream(stream);
+  const tokenizer = await fromStream(stream);
   try {
     return await fileTypeFromTokenizer(tokenizer);
   } finally {

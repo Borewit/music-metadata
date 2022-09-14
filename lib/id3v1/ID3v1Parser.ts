@@ -1,12 +1,14 @@
-import initDebug from "../debug";
 
-import { BasicParser } from "../common/BasicParser";
 import { APEv2Parser } from "../apev2/APEv2Parser";
-import type { IRandomReader } from "../type";
+import { BasicParser } from "../common/BasicParser";
+import { decodeLatin1 } from "../compat/text-decoder";
+import initDebug from "../debug";
+import { EndOfStreamError } from "../peek-readable";
+
 import { Genres } from "./ID3v1Genres";
 import { ID3V1_SIZE, readId3v1Header } from "./ID3v1Header";
-import { decodeLatin1 } from "../compat/text-decoder";
-import { EndOfStreamError } from "../peek-readable";
+
+import type { IRandomReader } from "../type";
 
 const debug = initDebug("music-metadata:parser:ID3v1");
 

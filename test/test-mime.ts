@@ -1,8 +1,10 @@
-import { describe, test, expect } from "vitest";
 import { createReadStream, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { describe, test, expect } from "vitest";
+
 import { parseStream, parseFile } from "../lib";
+
 import { SourceStream, samplePath } from "./util";
 
 // ToDo: ass ".ac3"

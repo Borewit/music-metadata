@@ -1,4 +1,5 @@
 import { test, expect } from "vitest";
+
 import { supportedExtensions, supportedMimeTypes, FileExtension, MimeType } from "../../lib/file-type";
 
 test("supportedExtensions.has", () => {

@@ -1,4 +1,5 @@
 import { decodeLatin1, decodeUtf16le, decodeUtf8 } from "../../compat/text-decoder";
+
 import type { Result } from "../../result/result";
 
 /**

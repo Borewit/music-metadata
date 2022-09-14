@@ -1,8 +1,9 @@
+import { join } from "node:path";
+
 import { test, expect, describe } from "vitest";
 
-import { join } from "node:path";
-import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("parser: %s", (_, parser) => {
   test("should decode id3v2.4", async () => {

@@ -1,8 +1,10 @@
 import { describe, test, expect } from "vitest";
+
 import { EndOfStreamError } from "../../lib/strtok3";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { UINT32_LE, UINT32_BE, UINT8 } from "../../lib/token-types";
 import { Latin1StringType, Utf8StringType } from "../../lib/token-types/string";
+
 import { getTokenizerWithData, tokenizerCases } from "./util";
 
 describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {

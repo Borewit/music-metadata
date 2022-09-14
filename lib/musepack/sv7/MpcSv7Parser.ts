@@ -1,7 +1,7 @@
+import { APEv2Parser } from "../../apev2/APEv2Parser";
+import { BasicParser } from "../../common/BasicParser";
 import initDebug from "../../debug";
 
-import { BasicParser } from "../../common/BasicParser";
-import { APEv2Parser } from "../../apev2/APEv2Parser";
 
 import { BitReader } from "./BitReader";
 import * as SV7 from "./StreamVersion7";

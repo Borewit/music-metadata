@@ -1,8 +1,9 @@
-import { expect, test } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { expect, test } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 test.each(Parsers)("should reject files that can't be parsed", async (_, parser) => {
   const filePath = join(samplePath, "flac.flac.jpg");

@@ -1,5 +1,6 @@
-import type { INativeTagMap } from "../common/GenericTagTypes";
 import { CaseInsensitiveTagMap } from "../common/CaseInsensitiveTagMap";
+
+import type { INativeTagMap } from "../common/GenericTagTypes";
 
 /**
  * ID3v2.2 tag mappings

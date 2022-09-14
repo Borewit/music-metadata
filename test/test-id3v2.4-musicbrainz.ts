@@ -1,8 +1,9 @@
-import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { describe, expect, test } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("parser: %s", (_, parser) => {
   test("should MusicBrainz tags with id3v2.4", async () => {

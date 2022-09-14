@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 
-import { findZero, stripNulls, a2hex } from "../lib/common/Util";
 import { FourCcToken } from "../lib/common/FourCC";
+import { findZero, stripNulls, a2hex } from "../lib/common/Util";
 
 describe("find zero", () => {
   const cases: ["ascii" | "utf16le", number[], number][] = [

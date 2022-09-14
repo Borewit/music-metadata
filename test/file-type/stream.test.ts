@@ -1,11 +1,14 @@
-import { nextTick } from "node:process";
 import { Buffer } from "node:buffer";
-import { join } from "node:path";
 import { createReadStream } from "node:fs";
+import { join } from "node:path";
+import { nextTick } from "node:process";
 import { Readable } from "node:stream";
+
 import { test, expect } from "vitest";
+
 import { fileTypeStream } from "../../lib/file-type";
 import { SourceStream } from "../util";
+
 import { streamToBuffer } from "./util";
 
 test(".stream() method - empty stream", async () => {
