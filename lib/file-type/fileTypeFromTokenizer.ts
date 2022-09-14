@@ -1,7 +1,9 @@
-import * as strtok3 from "../strtok3";
+import { EndOfStreamError } from "../strtok3";
+
+import { FileTypeParser } from "./FileTypeParser";
+
 import type { ITokenizer } from "../strtok3";
 import type { FileTypeResult } from "./type";
-import { FileTypeParser } from "./FileTypeParser";
 
 /**
  * Detect the file type from an [`ITokenizer`](https://github.com/Borewit/strtok3#tokenizer) source.
@@ -33,7 +35,7 @@ export async function fileTypeFromTokenizer(tokenizer: ITokenizer): Promise<File
   try {
     return new FileTypeParser().parse(tokenizer);
   } catch (error) {
-    if (!(error instanceof strtok3.EndOfStreamError)) {
+    if (!(error instanceof EndOfStreamError)) {
       throw error;
     }
   }

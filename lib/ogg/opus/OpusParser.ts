@@ -1,12 +1,12 @@
-import type { ITokenizer } from "../../strtok3";
-
-import type { IPageHeader } from "../Header";
+import { Latin1StringType } from "../../token-types/string";
 import { VorbisParser } from "../vorbis/VorbisParser";
-import type { IOptions } from "../../type";
-import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
 
 import { IIdHeader, IdHeader } from "./OpusIdHeader";
-import { Latin1StringType } from "../../token-types/string";
+
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { ITokenizer } from "../../strtok3";
+import type { IOptions } from "../../type";
+import type { IPageHeader } from "../Header";
 
 /**
  * Opus parser

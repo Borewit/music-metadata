@@ -1,6 +1,6 @@
-import * as Token from "../token-types";
+import { stripNulls, decodeString } from "../common/Util";
+import { UINT32_LE, UINT64_LE, UINT16_LE } from "../token-types";
 
-import * as util from "../common/Util";
 import type { DataType } from "./DataType";
 
 export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Uint8Array;
@@ -20,7 +20,7 @@ export function getParserForAttr(i: DataType): AttributeParser {
  * @returns
  */
 export function parseUnicodeAttr(uint8Array: Uint8Array): string {
-  return util.stripNulls(util.decodeString(uint8Array, "utf16le"));
+  return stripNulls(decodeString(uint8Array, "utf16le"));
 }
 
 export const attributeParsers: AttributeParser[] = [
@@ -59,7 +59,7 @@ export function parseBoolAttr(buf: Uint8Array, offset = 0): boolean {
  * @returns
  */
 export function parseDWordAttr(buf: Uint8Array, offset = 0): number {
-  return Token.UINT32_LE.get(buf, offset);
+  return UINT32_LE.get(buf, offset);
 }
 
 /**
@@ -69,7 +69,7 @@ export function parseDWordAttr(buf: Uint8Array, offset = 0): number {
  * @returns
  */
 export function parseQWordAttr(buf: Uint8Array, offset = 0): bigint {
-  return Token.UINT64_LE.get(buf, offset);
+  return UINT64_LE.get(buf, offset);
 }
 
 /**
@@ -79,5 +79,5 @@ export function parseQWordAttr(buf: Uint8Array, offset = 0): bigint {
  * @returns
  */
 export function parseWordAttr(buf: Uint8Array, offset = 0): number {
-  return Token.UINT16_LE.get(buf, offset);
+  return UINT16_LE.get(buf, offset);
 }

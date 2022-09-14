@@ -1,17 +1,9 @@
-import initDebug from "../debug";
-
-import { ITag, TrackType } from "../type";
-import {
-  ASF_Index_Placeholder_Object,
-  CodecListObject,
-  CompatibilityObject,
-  HeaderObject,
-  PaddingObject,
-  StreamBitratePropertiesObject,
-} from "./GUID";
 import { BasicParser } from "../common/BasicParser";
-import { IAsfTopLevelObjectHeader, TopLevelHeaderObjectToken } from "./AsfTopLevelHeaderObject";
+import initDebug from "../debug";
+import { ITag, TrackType } from "../type";
+
 import { IAsfObjectHeader, HeaderObjectToken } from "./AsfObjectHeader";
+import { IAsfTopLevelObjectHeader, TopLevelHeaderObjectToken } from "./AsfTopLevelHeaderObject";
 import { readCodecEntries } from "./CodecEntry";
 import { ContentDescriptionObjectState } from "./ContentDescriptionObjectState";
 import { ExtendedContentDescriptionObjectState } from "./ExtendedContentDescriptionObjectState";
@@ -20,6 +12,14 @@ import {
   IExtendedStreamPropertiesObject,
 } from "./ExtendedStreamPropertiesObjectState";
 import { FilePropertiesObject, IFilePropertiesObject } from "./FilePropertiesObject";
+import {
+  ASF_Index_Placeholder_Object,
+  CodecListObject,
+  CompatibilityObject,
+  HeaderObject,
+  PaddingObject,
+  StreamBitratePropertiesObject,
+} from "./GUID";
 import { HeaderExtensionObject, IHeaderExtensionObject } from "./HeaderExtensionObject";
 import { IgnoreObjectState } from "./IgnoreObjectState";
 import { MetadataLibraryObjectState } from "./MetadataLibraryObjectState";

@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { INT32_LE, INT64_LE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
 export enum ChannelType {
@@ -64,14 +65,14 @@ export const FormatChunk: IGetToken<IFormatChunk> = {
 
   get: (buf: Uint8Array, off: number): IFormatChunk => {
     return {
-      formatVersion: Token.INT32_LE.get(buf, off),
-      formatID: Token.INT32_LE.get(buf, off + 4),
-      channelType: Token.INT32_LE.get(buf, off + 8),
-      channelNum: Token.INT32_LE.get(buf, off + 12),
-      samplingFrequency: Token.INT32_LE.get(buf, off + 16),
-      bitsPerSample: Token.INT32_LE.get(buf, off + 20),
-      sampleCount: Token.INT64_LE.get(buf, off + 24),
-      blockSizePerChannel: Token.INT32_LE.get(buf, off + 32),
+      formatVersion: INT32_LE.get(buf, off),
+      formatID: INT32_LE.get(buf, off + 4),
+      channelType: INT32_LE.get(buf, off + 8),
+      channelNum: INT32_LE.get(buf, off + 12),
+      samplingFrequency: INT32_LE.get(buf, off + 16),
+      bitsPerSample: INT32_LE.get(buf, off + 20),
+      sampleCount: INT64_LE.get(buf, off + 24),
+      blockSizePerChannel: INT32_LE.get(buf, off + 32),
     };
   },
 };

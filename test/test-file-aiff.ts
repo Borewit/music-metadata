@@ -1,8 +1,11 @@
-import { describe, expect, test } from "vitest";
 import { join } from "node:path";
+
+import { describe, expect, test } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
-import type { IFormat } from "../lib";
 import { samplePath } from "./util";
+
+import type { IFormat } from "../lib";
 
 // Parse AIFF (Audio Interchange File Format)
 

@@ -1,8 +1,8 @@
-import type * as Stream from "node:stream";
+import { parseFromTokenizer as parseFromTokenizer_parseFromTokenizer } from "./parseFromTokenizer";
 import * as strtok3 from "./strtok3";
 
-import * as parseFromTokenizer from "./parseFromTokenizer";
 import type { IAudioMetadata, IOptions } from "./type";
+import type * as Stream from "node:stream";
 
 /**
  * Parse audio from Node Stream.Readable
@@ -17,5 +17,5 @@ export async function parseStream(
   options: IOptions = {}
 ): Promise<IAudioMetadata> {
   const tokenizer = await strtok3.fromStream(stream, typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo);
-  return parseFromTokenizer.parseFromTokenizer(tokenizer, options);
+  return parseFromTokenizer_parseFromTokenizer(tokenizer, options);
 }

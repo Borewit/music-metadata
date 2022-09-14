@@ -1,7 +1,9 @@
 import { Buffer } from "node:buffer";
-import { join } from "node:path";
 import { readFileSync, createReadStream } from "node:fs";
+import { join } from "node:path";
+
 import { test, expect, describe } from "vitest";
+
 import {
   fileTypeFromBuffer,
   fileTypeFromStream,
@@ -10,6 +12,7 @@ import {
   FileExtension,
 } from "../../lib/file-type";
 import { SourceStream } from "../util";
+
 import { streamToBuffer } from "./util";
 
 // Define an entry here only if the fixture has a different

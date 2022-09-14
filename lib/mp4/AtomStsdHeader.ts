@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { UINT8, UINT24_BE, UINT32_BE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 import type { IVersionAndFlags } from "./VersionAndFlags";
 
@@ -18,9 +19,9 @@ export const stsdHeader: IGetToken<IAtomStsdHeader> = {
 
   get: (buf: Uint8Array, off: number): IAtomStsdHeader => {
     return {
-      version: Token.UINT8.get(buf, off),
-      flags: Token.UINT24_BE.get(buf, off + 1),
-      numberOfEntries: Token.UINT32_BE.get(buf, off + 4),
+      version: UINT8.get(buf, off),
+      flags: UINT24_BE.get(buf, off + 1),
+      numberOfEntries: UINT32_BE.get(buf, off + 4),
     };
   },
 };

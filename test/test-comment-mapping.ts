@@ -1,8 +1,9 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { describe, test, expect } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 /**
  * Ensure the mapping of native comment field to the common comment field is done correctly

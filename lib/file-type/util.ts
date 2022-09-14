@@ -1,4 +1,5 @@
 import { decodeUtf8 } from "../compat/text-decoder";
+
 import type { IGetToken } from "../strtok3";
 
 /**

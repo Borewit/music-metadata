@@ -1,8 +1,10 @@
-import { test, expect, describe } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { samplePath } from "./util";
+
+import { test, expect, describe } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 const files = ["flac.flac", "flac-bug.flac"];
 

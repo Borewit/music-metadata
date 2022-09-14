@@ -1,10 +1,12 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { Parsers } from "./metadata-parsers";
+import { describe, test, expect } from "vitest";
+
 import { ICommonTagsResult, INativeTagDict, orderTags } from "../lib";
-import { samplePath } from "./util";
 import { IdHeader } from "../lib/ogg/opus/OpusIdHeader";
+
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 const oggSamplePath = join(samplePath, "ogg");
 

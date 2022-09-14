@@ -1,8 +1,10 @@
-import * as Token from "../token-types";
-import type { ITokenizer } from "../strtok3";
+import { UINT32_BE } from "../token-types";
+import { Latin1StringType } from "../token-types/string";
+
 import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";
 import { XingHeaderFlags } from "./XingHeaderFlags";
-import { Latin1StringType } from "../token-types/string";
+
+import type { ITokenizer } from "../strtok3";
 
 export interface IXingInfoTag {
   /**
@@ -40,17 +42,17 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
   const flags = await tokenizer.readToken(XingHeaderFlags);
   const xingInfoTag: IXingInfoTag = {};
   if (flags.frames) {
-    xingInfoTag.numFrames = await tokenizer.readToken(Token.UINT32_BE);
+    xingInfoTag.numFrames = await tokenizer.readToken(UINT32_BE);
   }
   if (flags.bytes) {
-    xingInfoTag.streamSize = await tokenizer.readToken(Token.UINT32_BE);
+    xingInfoTag.streamSize = await tokenizer.readToken(UINT32_BE);
   }
   if (flags.toc) {
     xingInfoTag.toc = new Uint8Array(100);
     await tokenizer.readBuffer(xingInfoTag.toc);
   }
   if (flags.vbrScale) {
-    xingInfoTag.vbrScale = await tokenizer.readToken(Token.UINT32_BE);
+    xingInfoTag.vbrScale = await tokenizer.readToken(UINT32_BE);
   }
   const lameTag = await tokenizer.peekToken(new Latin1StringType(4));
   if (lameTag === "LAME") {

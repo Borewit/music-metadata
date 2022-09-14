@@ -1,9 +1,11 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
+import { describe, test, expect } from "vitest";
+
 import { ITrackInfo, TrackType } from "../lib/type";
-import { samplePath } from "./util";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("parser: %s", (_, parser) => {
   describe("ASF", () => {

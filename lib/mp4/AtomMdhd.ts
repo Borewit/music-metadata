@@ -1,8 +1,10 @@
-import * as Token from "../token-types";
+import { UINT8, UINT24_BE, UINT32_BE, UINT16_BE } from "../token-types";
+
+import { FixedLengthAtom } from "./AtomFixedLength";
+import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
+
 import type { IGetToken } from "../strtok3";
 import type { IAtomMxhd } from "./AtomMxhd";
-import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
-import { FixedLengthAtom } from "./AtomFixedLength";
 
 /**
  * Interface for the parsed Movie Header Atom (mdhd)
@@ -32,14 +34,14 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
 
   public get(buf: Uint8Array, off: number): IAtomMdhd {
     return {
-      version: Token.UINT8.get(buf, off + 0),
-      flags: Token.UINT24_BE.get(buf, off + 1),
+      version: UINT8.get(buf, off + 0),
+      flags: UINT24_BE.get(buf, off + 1),
       creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
       modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
-      timeScale: Token.UINT32_BE.get(buf, off + 12),
-      duration: Token.UINT32_BE.get(buf, off + 16),
-      language: Token.UINT16_BE.get(buf, off + 20),
-      quality: Token.UINT16_BE.get(buf, off + 22),
+      timeScale: UINT32_BE.get(buf, off + 12),
+      duration: UINT32_BE.get(buf, off + 16),
+      language: UINT16_BE.get(buf, off + 20),
+      quality: UINT16_BE.get(buf, off + 22),
     };
   }
 }

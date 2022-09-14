@@ -1,4 +1,5 @@
 import { test, expect } from "vitest";
+
 import { isSuccess, wrapResult } from "./result";
 
 test("result wrap success", () => {

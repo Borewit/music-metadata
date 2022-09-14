@@ -1,8 +1,8 @@
-import { selectCover } from "./selectCover";
-import { parseFromTokenizer } from "./parseFromTokenizer";
 import { parseBuffer } from "./parseBuffer";
-import { parseStream } from "./parseStream";
 import { parseFile } from "./parseFile";
+import { parseFromTokenizer } from "./parseFromTokenizer";
+import { parseStream } from "./parseStream";
+import { selectCover } from "./selectCover";
 
 export { selectCover } from "./selectCover";
 export { parseFromTokenizer } from "./parseFromTokenizer";

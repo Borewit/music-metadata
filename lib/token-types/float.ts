@@ -1,6 +1,8 @@
-import * as ieee754 from "../ieee754";
-import type { IToken } from "./type";
+import { read, write } from "../ieee754";
+
 import { dv } from "./dataview";
+
+import type { IToken } from "./type";
 
 /**
  * IEEE 754 16-bit (half precision) float, big endian
@@ -8,10 +10,10 @@ import { dv } from "./dataview";
 export const Float16_BE: IToken<number> = {
   len: 2,
   get(dataView: Uint8Array, offset: number): number {
-    return ieee754.read(dataView, offset, false, 10, this.len);
+    return read(dataView, offset, false, 10, this.len);
   },
   put(dataView: Uint8Array, offset: number, value: number): number {
-    ieee754.write(dataView, value, offset, false, 10, this.len);
+    write(dataView, value, offset, false, 10, this.len);
     return offset + this.len;
   },
 };
@@ -22,10 +24,10 @@ export const Float16_BE: IToken<number> = {
 export const Float16_LE: IToken<number> = {
   len: 2,
   get(array: Uint8Array, offset: number): number {
-    return ieee754.read(array, offset, true, 10, this.len);
+    return read(array, offset, true, 10, this.len);
   },
   put(array: Uint8Array, offset: number, value: number): number {
-    ieee754.write(array, value, offset, true, 10, this.len);
+    write(array, value, offset, true, 10, this.len);
     return offset + this.len;
   },
 };
@@ -92,10 +94,10 @@ export const Float64_LE: IToken<number> = {
 export const Float80_BE: IToken<number> = {
   len: 10,
   get(array: Uint8Array, offset: number): number {
-    return ieee754.read(array, offset, false, 63, this.len);
+    return read(array, offset, false, 63, this.len);
   },
   put(array: Uint8Array, offset: number, value: number): number {
-    ieee754.write(array, value, offset, false, 63, this.len);
+    write(array, value, offset, false, 63, this.len);
     return offset + this.len;
   },
 };
@@ -106,10 +108,10 @@ export const Float80_BE: IToken<number> = {
 export const Float80_LE: IToken<number> = {
   len: 10,
   get(array: Uint8Array, offset: number): number {
-    return ieee754.read(array, offset, true, 63, this.len);
+    return read(array, offset, true, 63, this.len);
   },
   put(array: Uint8Array, offset: number, value: number): number {
-    ieee754.write(array, value, offset, true, 63, this.len);
+    write(array, value, offset, true, 63, this.len);
     return offset + this.len;
   },
 };

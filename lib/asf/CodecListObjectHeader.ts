@@ -1,5 +1,6 @@
-import type { IGetToken } from "../strtok3";
 import { UINT16_LE } from "../token-types";
+
+import type { IGetToken } from "../strtok3";
 
 /**
  * 3.5: The Codec-List-Object interface.

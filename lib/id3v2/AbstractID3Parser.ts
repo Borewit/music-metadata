@@ -1,10 +1,10 @@
-import { EndOfStreamError, ITokenizer } from "../strtok3";
+import { BasicParser } from "../common/BasicParser";
 import initDebug from "../debug";
+import { ID3v1Parser } from "../id3v1/ID3v1Parser";
+import { EndOfStreamError, ITokenizer } from "../strtok3";
 
 import { ID3v2Header } from "./ID3v2Header";
 import { ID3v2Parser } from "./ID3v2Parser";
-import { ID3v1Parser } from "../id3v1/ID3v1Parser";
-import { BasicParser } from "../common/BasicParser";
 
 const debug = initDebug("music-metadata:parser:ID3");
 

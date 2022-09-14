@@ -1,12 +1,12 @@
-import { describe, test, expect } from "vitest";
-
-import type { Readable } from "node:stream";
-import { get as getHttps } from "node:https";
 import { get as getHttp } from "node:http";
+import { get as getHttps } from "node:https";
+
+import { describe, test, expect } from "vitest";
 
 import { parseStream } from "../lib";
 
 import type { IFileInfo } from "../lib/strtok3";
+import type { Readable } from "node:stream";
 
 interface IHttpResponse {
   headers: Record<string, string>;

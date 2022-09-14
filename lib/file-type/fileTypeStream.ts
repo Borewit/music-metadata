@@ -1,7 +1,9 @@
-import * as strtok3 from "../strtok3";
-import type { Readable as ReadableStream, PassThrough } from "node:stream";
+import { EndOfStreamError } from "../strtok3";
+
 import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
+
 import type { StreamOptions, ReadableStreamWithFileType, FileTypeResult } from "./type";
+import type { Readable as ReadableStream, PassThrough } from "node:stream";
 
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
@@ -68,7 +70,7 @@ export async function fileTypeStream(
             const fileType = await fileTypeFromBuffer(chunk as Uint8Array);
             pass.fileType = fileType;
           } catch (error) {
-            if (error instanceof strtok3.EndOfStreamError) {
+            if (error instanceof EndOfStreamError) {
               pass.fileType = undefined;
             } else {
               reject(error);

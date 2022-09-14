@@ -1,14 +1,12 @@
-import * as Token from "../token-types";
-
 import { APEv2Parser } from "../apev2/APEv2Parser";
-import { FourCcToken } from "../common/FourCC";
 import { BasicParser } from "../common/BasicParser";
+import { FourCcToken } from "../common/FourCC";
+import { toHexString } from "../compat/hex";
+import initDebug from "../debug";
+import { UINT24_LE, UINT8 } from "../token-types";
 
 import { BlockHeader, BlockHeaderToken } from "./BlockHeader";
 import { MetadataId, MetadataIdToken } from "./MetadataId";
-
-import initDebug from "../debug";
-import { toHexString } from "../compat/hex";
 
 const debug = initDebug("music-metadata:parser:WavPack");
 
@@ -76,7 +74,7 @@ export class WavPackParser extends BasicParser {
   private async parseMetadataSubBlock(header: BlockHeader, remainingLength: number): Promise<void> {
     while (remainingLength > MetadataIdToken.len) {
       const id = await this.tokenizer.readToken<MetadataId>(MetadataIdToken);
-      const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
+      const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? UINT24_LE : UINT8);
       const data = new Uint8Array(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
       await this.tokenizer.readBuffer(data);
       debug(
@@ -92,7 +90,7 @@ export class WavPackParser extends BasicParser {
           // ID_DSD_BLOCK
           debug("ID_DSD_BLOCK");
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
-          const mp = 1 << Token.UINT8.get(data, 0);
+          const mp = 1 << UINT8.get(data, 0);
           const samplingRate = header.flags.samplingRate * mp * 8; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
           if (!header.flags.isDSD) throw new Error("Only expect DSD block if DSD-flag is set");
           this.metadata.setFormat("sampleRate", samplingRate);
@@ -117,8 +115,7 @@ export class WavPackParser extends BasicParser {
           break;
       }
 
-      remainingLength -=
-        MetadataIdToken.len + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) + dataSizeInWords * 2;
+      remainingLength -= MetadataIdToken.len + (id.largeBlock ? UINT24_LE.len : UINT8.len) + dataSizeInWords * 2;
       debug(`remainingLength=${remainingLength}`);
       if (id.isOddSize) void this.tokenizer.ignore(1);
     }

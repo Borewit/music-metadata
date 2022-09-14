@@ -1,7 +1,9 @@
 // Test reading int16 values.
 
 import { describe, test, expect } from "vitest";
+
 import { INT16_BE, INT16_LE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 16-bit signed integer", () => {

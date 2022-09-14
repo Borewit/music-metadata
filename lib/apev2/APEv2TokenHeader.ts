@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { UINT16_LE, UINT32_LE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
 /**
@@ -32,21 +33,21 @@ export const Header: IGetToken<IHeader> = {
   get: (buf, off) => {
     return {
       // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-      compressionLevel: Token.UINT16_LE.get(buf, off),
+      compressionLevel: UINT16_LE.get(buf, off),
       // any format flags (for future use)
-      formatFlags: Token.UINT16_LE.get(buf, off + 2),
+      formatFlags: UINT16_LE.get(buf, off + 2),
       // the number of audio blocks in one frame
-      blocksPerFrame: Token.UINT32_LE.get(buf, off + 4),
+      blocksPerFrame: UINT32_LE.get(buf, off + 4),
       // the number of audio blocks in the final frame
-      finalFrameBlocks: Token.UINT32_LE.get(buf, off + 8),
+      finalFrameBlocks: UINT32_LE.get(buf, off + 8),
       // the total number of frames
-      totalFrames: Token.UINT32_LE.get(buf, off + 12),
+      totalFrames: UINT32_LE.get(buf, off + 12),
       // the bits per sample (typically 16)
-      bitsPerSample: Token.UINT16_LE.get(buf, off + 16),
+      bitsPerSample: UINT16_LE.get(buf, off + 16),
       // the number of channels (1 or 2)
-      channel: Token.UINT16_LE.get(buf, off + 18),
+      channel: UINT16_LE.get(buf, off + 18),
       // the sample rate (typically 44100)
-      sampleRate: Token.UINT32_LE.get(buf, off + 20),
+      sampleRate: UINT32_LE.get(buf, off + 20),
     };
   },
 };

@@ -1,6 +1,8 @@
-import * as util from "./Util";
-import type { IGetToken } from "../strtok3";
 import { Latin1StringType } from "../token-types/string";
+
+import { a2hex } from "./Util";
+
+import type { IGetToken } from "../strtok3";
 
 const validFourCC = /^[\u0021-\u007E©][\0\u0020-\u007E]{3}/;
 
@@ -16,7 +18,7 @@ export const FourCcToken: IGetToken<string> = {
     switch (id) {
       default:
         if (!validFourCC.test(id)) {
-          throw new Error(`FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`);
+          throw new Error(`FourCC contains invalid characters: ${a2hex(id)} "${id}"`);
         }
     }
     return id;

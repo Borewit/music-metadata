@@ -1,7 +1,7 @@
+import { getBitAllignedNumber } from "../common/Util";
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "../token-types";
-import type { IGetToken } from "../strtok3";
 
-import * as util from "../common/Util";
+import type { IGetToken } from "../strtok3";
 
 /**
  * METADATA_BLOCK_DATA
@@ -62,14 +62,14 @@ export const BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
       sampleRate: UINT24_BE.get(buf, off + 10) >> 4,
       // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
       // (number of channels)-1. FLAC supports from 1 to 8 channels
-      channels: util.getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
+      channels: getBitAllignedNumber(buf, off + 12, 4, 3) + 1,
       // bits per sample)-1.
       // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
-      bitsPerSample: util.getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
+      bitsPerSample: getBitAllignedNumber(buf, off + 12, 7, 5) + 1,
       // Total samples in stream.
       // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
       // A value of zero here means the number of total samples is unknown.
-      totalSamples: util.getBitAllignedNumber(buf, off + 13, 4, 36),
+      totalSamples: getBitAllignedNumber(buf, off + 13, 4, 36),
       // the MD5 hash of the file (see notes for usage... it's a littly tricky)
       fileMD5: new Uint8ArrayType(16).get(buf, off + 18),
     };

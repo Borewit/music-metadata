@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { INT16_BE, UINT16_BE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
 export interface ISoundSampleDescriptionV0 {
@@ -26,11 +27,11 @@ export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
 
   get(buf: Uint8Array, off: number): ISoundSampleDescriptionV0 {
     return {
-      numAudioChannels: Token.INT16_BE.get(buf, off + 0),
-      sampleSize: Token.INT16_BE.get(buf, off + 2),
-      compressionId: Token.INT16_BE.get(buf, off + 4),
-      packetSize: Token.INT16_BE.get(buf, off + 6),
-      sampleRate: Token.UINT16_BE.get(buf, off + 8) + Token.UINT16_BE.get(buf, off + 10) / 10_000,
+      numAudioChannels: INT16_BE.get(buf, off + 0),
+      sampleSize: INT16_BE.get(buf, off + 2),
+      compressionId: INT16_BE.get(buf, off + 4),
+      packetSize: INT16_BE.get(buf, off + 6),
+      sampleRate: UINT16_BE.get(buf, off + 8) + UINT16_BE.get(buf, off + 10) / 10_000,
     };
   },
 };

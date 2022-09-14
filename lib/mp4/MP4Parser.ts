@@ -1,18 +1,28 @@
-import initDebug from "../debug";
-import * as Token from "../token-types";
-import type { IGetToken } from "../token-types";
-
 import { BasicParser } from "../common/BasicParser";
+import { toHexString } from "../compat/hex";
+import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
+import initDebug from "../debug";
 import { Genres } from "../id3v1/ID3v1Genres";
+import {
+  INT8,
+  UINT8,
+  INT16_BE,
+  UINT16_BE,
+  INT24_BE,
+  UINT24_BE,
+  INT32_BE,
+  UINT32_BE,
+  INT64_BE,
+  UINT64_BE,
+  Uint8ArrayType,
+} from "../token-types";
+import { Utf8StringType } from "../token-types/string";
 import { IChapter, ITrackInfo, TrackType } from "../type";
 
 import { Atom } from "./Atom";
-
-import { encoderDict } from "./encoder";
-import { IAtomHeader, Header } from "./AtomHeader";
-import { IAtomFtyp, ftyp } from "./AtomFtyp";
-import { ITrackHeaderAtom, TrackHeaderAtom } from "./AtomTrackHeader";
 import { DataAtom } from "./AtomData";
+import { IAtomFtyp, ftyp } from "./AtomFtyp";
+import { IAtomHeader, Header } from "./AtomHeader";
 import { IAtomMdhd, MdhdAtom } from "./AtomMdhd";
 import { IAtomMvhd, MvhdAtom } from "./AtomMvhd";
 import { INameAtom, NameAtom } from "./AtomName";
@@ -21,16 +31,17 @@ import { StscAtom } from "./AtomStsc";
 import { IAtomStsd, StsdAtom } from "./AtomStsd";
 import { IStszAtom, StszAtom } from "./AtomStsz";
 import { SttsAtom } from "./AtomStts";
-import type { ITableAtom } from "./AtomTable";
+import { ITrackHeaderAtom, TrackHeaderAtom } from "./AtomTrackHeader";
 import { ChapterText } from "./ChapterText";
-import type { ISampleDescription } from "./SampleDescription";
-import type { ISampleToChunk } from "./SampleToChunk";
+import { encoderDict } from "./encoder";
 import { SoundSampleDescriptionV0 } from "./SoundSampleDescriptionV0";
 import { SoundSampleDescriptionVersion } from "./SoundSampleDescriptionVersion";
+
+import type { IGetToken } from "../token-types";
+import type { ITableAtom } from "./AtomTable";
+import type { ISampleDescription } from "./SampleDescription";
+import type { ISampleToChunk } from "./SampleToChunk";
 import type { ITimeToSampleToken } from "./TimeToSampleToken";
-import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
-import { toHexString } from "../compat/hex";
-import { Utf8StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:MP4");
 const tagFormat = "iTunes";
@@ -97,15 +108,15 @@ export class MP4Parser extends BasicParser {
   private static read_BE_Integer(array: Uint8Array, signed: boolean): IGetToken<number | bigint> {
     switch (array.length) {
       case 1:
-        return signed ? Token.INT8 : Token.UINT8;
+        return signed ? INT8 : UINT8;
       case 2:
-        return signed ? Token.INT16_BE : Token.UINT16_BE;
+        return signed ? INT16_BE : UINT16_BE;
       case 3:
-        return signed ? Token.INT24_BE : Token.UINT24_BE;
+        return signed ? INT24_BE : UINT24_BE;
       case 4:
-        return signed ? Token.INT32_BE : Token.UINT32_BE;
+        return signed ? INT32_BE : UINT32_BE;
       case 8:
-        return signed ? Token.INT64_BE : Token.UINT64_BE;
+        return signed ? INT64_BE : UINT64_BE;
       default:
         throw new Error(
           `Token for integer type not found: "${signed ? "INT" : "UINT"}${array.length * 8}${
@@ -287,7 +298,7 @@ export class MP4Parser extends BasicParser {
           }
 
           default: {
-            const dataAtom = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
+            const dataAtom = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(payLoadLength));
             this.addWarning(
               "Unsupported meta-item: " +
                 tagKey +
@@ -319,14 +330,14 @@ export class MP4Parser extends BasicParser {
         switch (tagKey) {
           case "trkn":
           case "disk": {
-            const num = Token.UINT8.get(dataAtom.value, 3);
-            const of = Token.UINT8.get(dataAtom.value, 5);
+            const num = UINT8.get(dataAtom.value, 3);
+            const of = UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
             this.addTag(tagKey, `${num}/${of}`);
             break;
           }
           case "gnre": {
-            const genreInt = Token.UINT8.get(dataAtom.value, 1);
+            const genreInt = UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
             this.addTag(tagKey, genreStr);
@@ -368,15 +379,15 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 65: // An 8-bit signed integer
-        this.addTag(tagKey, Token.INT8.get(dataAtom.value, 0));
+        this.addTag(tagKey, INT8.get(dataAtom.value, 0));
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        this.addTag(tagKey, Token.INT16_BE.get(dataAtom.value, 0));
+        this.addTag(tagKey, INT16_BE.get(dataAtom.value, 0));
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        this.addTag(tagKey, Token.INT32_BE.get(dataAtom.value, 0));
+        this.addTag(tagKey, INT32_BE.get(dataAtom.value, 0));
         break;
 
       default:
@@ -415,9 +426,9 @@ export class MP4Parser extends BasicParser {
       const td = this.getTrackDescription();
 
       const trackIds: number[] = [];
-      while (len >= Token.UINT32_BE.len) {
-        trackIds.push(await this.tokenizer.readNumber(Token.UINT32_BE));
-        len -= Token.UINT32_BE.len;
+      while (len >= UINT32_BE.len) {
+        trackIds.push(await this.tokenizer.readNumber(UINT32_BE));
+        len -= UINT32_BE.len;
       }
 
       td.chapterList = trackIds;

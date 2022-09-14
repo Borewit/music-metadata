@@ -1,16 +1,15 @@
-import * as Token from "../../token-types";
 import initDebug from "../../debug";
+import { UINT32_LE } from "../../token-types";
 
-import type { IOptions } from "../../type";
-import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
-
-import type { IPageHeader } from "../Header";
-import type { IPageConsumer } from "../PageConsumer";
-
-import { VorbisDecoder } from "./VorbisDecoder";
 import { CommonHeader } from "./VorbisCommonHeader";
+import { VorbisDecoder } from "./VorbisDecoder";
 import { IdentificationHeader } from "./VorbisIdentificationHeader";
 import { IVorbisPicture, VorbisPictureToken } from "./VorbisPicture";
+
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { IOptions } from "../../type";
+import type { IPageHeader } from "../Header";
+import type { IPageConsumer } from "../PageConsumer";
 
 const debug = initDebug("music-metadata:parser:ogg:vorbis1");
 
@@ -143,11 +142,11 @@ export class VorbisParser implements IPageConsumer {
    * @param offset
    */
   protected parseUserCommentList(pageData: Uint8Array, offset: number) {
-    const strLen = Token.UINT32_LE.get(pageData, offset);
+    const strLen = UINT32_LE.get(pageData, offset);
     offset += 4;
     // const vendorString = new Token.StringType(strLen, 'utf-8').get(pageData, offset);
     offset += strLen;
-    let userCommentListLength = Token.UINT32_LE.get(pageData, offset);
+    let userCommentListLength = UINT32_LE.get(pageData, offset);
     offset += 4;
 
     while (userCommentListLength-- > 0) {

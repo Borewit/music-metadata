@@ -1,9 +1,12 @@
-import { describe, test, expect, beforeAll } from "vitest";
-import { UINT8 } from "../../lib/token-types";
-import { getTokenizerWithData, tokenizerCases } from "./util";
-import { EndOfStreamError } from "../../lib/peek-readable";
-import { join } from "node:path";
 import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { describe, test, expect, beforeAll } from "vitest";
+
+import { EndOfStreamError } from "../../lib/peek-readable";
+import { UINT8 } from "../../lib/token-types";
+
+import { getTokenizerWithData, tokenizerCases } from "./util";
 
 const size = 10 * 1024;
 const buf = Buffer.alloc(size);

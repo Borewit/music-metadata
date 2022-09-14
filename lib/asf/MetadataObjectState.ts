@@ -1,8 +1,10 @@
-import type { ITag } from "../type";
-import { MetadataObject } from "./GUID";
-import { parseUnicodeAttr } from "./AsfUtil";
-import { State } from "./State";
 import { UINT16_LE, UINT32_LE } from "../token-types";
+
+import { parseUnicodeAttr } from "./AsfUtil";
+import { MetadataObject } from "./GUID";
+import { State } from "./State";
+
+import type { ITag } from "../type";
 
 /**
  * 4.7  Metadata Object (optional, 0 or 1)

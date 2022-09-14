@@ -1,7 +1,7 @@
+import { getBit, getBitAllignedNumber } from "../common/Util";
 import { UINT24_BE } from "../token-types";
-import type { IGetToken } from "../strtok3";
 
-import * as util from "../common/Util";
+import type { IGetToken } from "../strtok3";
 import type { BlockType } from "./BlockType";
 
 /**
@@ -22,8 +22,8 @@ export const BlockHeader: IGetToken<IBlockHeader> = {
 
   get: (buf: Uint8Array, off: number): IBlockHeader => {
     return {
-      lastBlock: util.getBit(buf, off, 7),
-      type: util.getBitAllignedNumber(buf, off, 1, 7),
+      lastBlock: getBit(buf, off, 7),
+      type: getBitAllignedNumber(buf, off, 1, 7),
       length: UINT24_BE.get(buf, off + 1),
     };
   },

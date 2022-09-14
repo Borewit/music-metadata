@@ -1,8 +1,9 @@
-import type { ITokenizer } from "../strtok3";
-
-import * as Token from "../token-types";
+import { UINT16_LE } from "../token-types";
 import { Utf16LEStringType } from "../token-types/string";
+
 import { CodecListObjectHeader } from "./CodecListObjectHeader";
+
+import type { ITokenizer } from "../strtok3";
 
 export interface ICodecEntry {
   type: {
@@ -19,7 +20,7 @@ export interface ICodecEntry {
  * @param tokenizer
  */
 async function readString(tokenizer: ITokenizer): Promise<string> {
-  const length = await tokenizer.readNumber(Token.UINT16_LE);
+  const length = await tokenizer.readNumber(UINT16_LE);
   const str = await tokenizer.readToken(new Utf16LEStringType(length * 2));
   return str.replace("\0", "");
 }
@@ -43,7 +44,7 @@ export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEnt
  * @param tokenizer
  */
 async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
-  const length = await tokenizer.readNumber(Token.UINT16_LE);
+  const length = await tokenizer.readNumber(UINT16_LE);
   const buf = new Uint8Array(length);
   await tokenizer.readBuffer(buf);
   return buf;
@@ -54,7 +55,7 @@ async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
  * @param tokenizer
  */
 async function readCodecEntry(tokenizer: ITokenizer): Promise<ICodecEntry> {
-  const type = await tokenizer.readNumber(Token.UINT16_LE);
+  const type = await tokenizer.readNumber(UINT16_LE);
   return {
     type: {
       videoCodec: (type & 0x00_01) === 0x00_01,

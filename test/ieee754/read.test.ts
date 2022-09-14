@@ -1,5 +1,6 @@
-import { read, write } from "../../lib/ieee754";
 import { test, expect } from "vitest";
+
+import { read, write } from "../../lib/ieee754";
 
 const EPSILON = 0.000_01;
 

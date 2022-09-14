@@ -1,9 +1,9 @@
-import * as strtok3 from "./strtok3";
-
-import * as scanAppendingHeaders from "./scanAppendingHeaders";
-import { ParserFactory } from "./ParserFactory";
-import type { IAudioMetadata, IOptions } from "./type";
 import { RandomFileReader } from "./common/RandomFileReader";
+import { ParserFactory } from "./ParserFactory";
+import { scanAppendingHeaders } from "./scanAppendingHeaders";
+import { fromFile } from "./strtok3";
+
+import type { IAudioMetadata, IOptions } from "./type";
 
 /**
  * Parse audio from Node file
@@ -12,11 +12,11 @@ import { RandomFileReader } from "./common/RandomFileReader";
  * @returns Metadata
  */
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
-  const fileTokenizer = await strtok3.fromFile(filePath);
+  const fileTokenizer = await fromFile(filePath);
 
   const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size);
   try {
-    await scanAppendingHeaders.scanAppendingHeaders(fileReader, options);
+    await scanAppendingHeaders(fileReader, options);
   } finally {
     await fileReader.close();
   }

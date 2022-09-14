@@ -1,8 +1,9 @@
-import * as Token from "../token-types";
+import { FourCcToken } from "../common/FourCC";
+import { INT64_BE } from "../token-types";
+
+import type { IChunkHeader64 } from "../iff";
 import type { IGetToken } from "../strtok3";
 
-import { FourCcToken } from "../common/FourCC";
-import type { IChunkHeader64 } from "../iff";
 export { IChunkHeader64 } from "../iff";
 
 /**
@@ -18,7 +19,7 @@ export const ChunkHeader64: IGetToken<IChunkHeader64> = {
       // Group-ID
       chunkID: FourCcToken.get(buf, off),
       // Size
-      chunkSize: Token.INT64_BE.get(buf, off + 4),
+      chunkSize: INT64_BE.get(buf, off + 4),
     };
   },
 };

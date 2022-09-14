@@ -1,8 +1,9 @@
-import { test, expect } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { test, expect } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 // Add, change and fix some mappings #pr-544
 // https://github.com/Borewit/music-metadata/pull/544

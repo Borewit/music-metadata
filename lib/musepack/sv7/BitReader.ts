@@ -1,5 +1,6 @@
+import { UINT32_LE } from "../../token-types";
+
 import type { ITokenizer } from "../../strtok3";
-import * as Token from "../../token-types";
 
 export class BitReader {
   public pos = 0;
@@ -13,7 +14,7 @@ export class BitReader {
    */
   public async read(bits: number): Promise<number> {
     while (this.dword === undefined) {
-      this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
+      this.dword = await this.tokenizer.readToken(UINT32_LE);
     }
 
     let out = this.dword;
@@ -28,7 +29,7 @@ export class BitReader {
         this.dword = undefined;
         return out & ((1 << bits) - 1);
       } else {
-        this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
+        this.dword = await this.tokenizer.readToken(UINT32_LE);
         if (this.pos) {
           out <<= this.pos;
           out |= this.dword >>> (32 - this.pos);

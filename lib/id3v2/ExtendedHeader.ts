@@ -1,7 +1,7 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
+import { getBit } from "../common/Util";
+import { UINT32_BE, UINT16_BE } from "../token-types";
 
-import * as util from "../common/Util";
+import type { IGetToken } from "../strtok3";
 
 export interface IExtendedHeader {
   // Extended header size
@@ -19,13 +19,13 @@ export const ExtendedHeader: IGetToken<IExtendedHeader> = {
   get: (buf, off): IExtendedHeader => {
     return {
       // Extended header size
-      size: Token.UINT32_BE.get(buf, off),
+      size: UINT32_BE.get(buf, off),
       // Extended Flags
-      extendedFlags: Token.UINT16_BE.get(buf, off + 4),
+      extendedFlags: UINT16_BE.get(buf, off + 4),
       // Size of padding
-      sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
+      sizeOfPadding: UINT32_BE.get(buf, off + 6),
       // CRC data present
-      crcDataPresent: util.getBit(buf, off + 4, 31),
+      crcDataPresent: getBit(buf, off + 4, 31),
     };
   },
 };

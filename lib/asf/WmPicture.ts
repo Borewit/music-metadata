@@ -1,10 +1,10 @@
-import type { IGetToken } from "../strtok3";
-
-import type { IPicture } from "../type";
+import { getUint8ArrayFromBase64String } from "../compat/base64";
 import { AttachedPictureType } from "../id3v2/AttachedPictureType";
 import { INT32_LE, UINT16_BE, UINT8 } from "../token-types";
-import { getUint8ArrayFromBase64String } from "../compat/base64";
 import { Utf16LEStringType } from "../token-types/string";
+
+import type { IGetToken } from "../strtok3";
+import type { IPicture } from "../type";
 
 export interface IWmPicture extends IPicture {
   type: string;

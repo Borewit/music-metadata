@@ -1,8 +1,8 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
-
-import * as util from "../common/Util";
 import { FourCcToken } from "../common/FourCC";
+import { getBit } from "../common/Util";
+import { UINT8, UINT64_LE, UINT32_LE } from "../token-types";
+
+import type { IGetToken } from "../strtok3";
 
 /**
  * Page header
@@ -65,19 +65,19 @@ export const Header: IGetToken<IPageHeader> = {
   get: (buf, off): IPageHeader => {
     return {
       capturePattern: FourCcToken.get(buf, off),
-      version: Token.UINT8.get(buf, off + 4),
+      version: UINT8.get(buf, off + 4),
 
       headerType: {
-        continued: util.getBit(buf, off + 5, 0),
-        firstPage: util.getBit(buf, off + 5, 1),
-        lastPage: util.getBit(buf, off + 5, 2),
+        continued: getBit(buf, off + 5, 0),
+        firstPage: getBit(buf, off + 5, 1),
+        lastPage: getBit(buf, off + 5, 2),
       },
       // packet_flag: buf.readUInt8(off + 5),
-      absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
-      streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
-      pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
-      pageChecksum: Token.UINT32_LE.get(buf, off + 22),
-      page_segments: Token.UINT8.get(buf, off + 26),
+      absoluteGranulePosition: Number(UINT64_LE.get(buf, off + 6)),
+      streamSerialNumber: UINT32_LE.get(buf, off + 14),
+      pageSequenceNo: UINT32_LE.get(buf, off + 18),
+      pageChecksum: UINT32_LE.get(buf, off + 22),
+      page_segments: UINT8.get(buf, off + 26),
     };
   },
 };

@@ -1,9 +1,11 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { describe, test, expect } from "vitest";
+
 import { ratioToDb, dbToRatio, toRatio } from "../lib/common/Util";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("Decode replaygain tags", (_, parser) => {
   const filePath = join(samplePath, "04 Long Drive.flac");

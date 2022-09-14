@@ -1,5 +1,6 @@
 /* eslint-disable unicorn/text-encoding-identifier-case */
 import { describe, test, expect } from "vitest";
+
 import { parse } from "../../lib/content-type";
 
 describe("contentType.parse(string)", function () {

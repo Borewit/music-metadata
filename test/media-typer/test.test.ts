@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { format, parse, test } from "../../lib/media-typer";
 
 const invalidTypes = [

@@ -1,10 +1,10 @@
-import * as Token from "../../token-types";
-import type { IGetToken } from "../../strtok3";
-
-import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
-import type { IPicture } from "../../type";
-import { Utf8StringType } from "../../token-types/string";
 import { getUint8ArrayFromBase64String } from "../../compat/base64";
+import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
+import { UINT32_BE } from "../../token-types";
+import { Utf8StringType } from "../../token-types/string";
+
+import type { IGetToken } from "../../strtok3";
+import type { IPicture } from "../../type";
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
@@ -44,20 +44,20 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
   constructor(public len: number) {}
 
   public get(buffer: Uint8Array, offset: number): IVorbisPicture {
-    const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
+    const type = AttachedPictureType[UINT32_BE.get(buffer, offset)];
 
-    const mimeLen = Token.UINT32_BE.get(buffer, (offset += 4));
+    const mimeLen = UINT32_BE.get(buffer, (offset += 4));
     const format = new Utf8StringType(mimeLen).get(buffer, (offset += 4));
 
-    const descLen = Token.UINT32_BE.get(buffer, (offset += mimeLen));
+    const descLen = UINT32_BE.get(buffer, (offset += mimeLen));
     const description = new Utf8StringType(descLen).get(buffer, (offset += 4));
 
-    const width = Token.UINT32_BE.get(buffer, (offset += descLen));
-    const height = Token.UINT32_BE.get(buffer, (offset += 4));
-    const colour_depth = Token.UINT32_BE.get(buffer, (offset += 4));
-    const indexed_color = Token.UINT32_BE.get(buffer, (offset += 4));
+    const width = UINT32_BE.get(buffer, (offset += descLen));
+    const height = UINT32_BE.get(buffer, (offset += 4));
+    const colour_depth = UINT32_BE.get(buffer, (offset += 4));
+    const indexed_color = UINT32_BE.get(buffer, (offset += 4));
 
-    const picDataLen = Token.UINT32_BE.get(buffer, (offset += 4));
+    const picDataLen = UINT32_BE.get(buffer, (offset += 4));
     // eslint-disable-next-line no-undef
     const data = Buffer.from(buffer.slice((offset += 4), offset + picDataLen));
 

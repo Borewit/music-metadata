@@ -1,6 +1,7 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
 import { FourCcToken } from "../common/FourCC";
+import { UINT16_BE, Uint8ArrayType } from "../token-types";
+
+import type { IGetToken } from "../strtok3";
 
 /**
  * Atom: Sample Description Atom ('stsd')
@@ -21,8 +22,8 @@ export class SampleDescriptionTable implements IGetToken<ISampleDescription> {
   public get(buf: Uint8Array, off: number): ISampleDescription {
     return {
       dataFormat: FourCcToken.get(buf, off),
-      dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10),
-      description: new Token.Uint8ArrayType(this.len - 12).get(buf, off + 12),
+      dataReferenceIndex: UINT16_BE.get(buf, off + 10),
+      description: new Uint8ArrayType(this.len - 12).get(buf, off + 12),
     };
   }
 }

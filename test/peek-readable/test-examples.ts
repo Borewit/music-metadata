@@ -1,6 +1,8 @@
-import { expect, test } from "vitest";
 import { createReadStream } from "node:fs";
 import { join } from "node:path";
+
+import { expect, test } from "vitest";
+
 import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
 
 const filePath = join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg");

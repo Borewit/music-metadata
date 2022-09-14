@@ -1,5 +1,6 @@
+import { getBitAllignedNumber } from "../common/Util";
+
 import type { IGetToken } from "../strtok3";
-import * as common from "../common/Util";
 
 export interface IReplayGain {
   type: NameCode;
@@ -60,13 +61,13 @@ export const ReplayGain: IGetToken<IReplayGain> = {
   len: 2,
 
   get: (buf, off) => {
-    const gain_type = common.getBitAllignedNumber(buf, off, 0, 3);
-    const sign = common.getBitAllignedNumber(buf, off, 6, 1);
-    const gain_adj = common.getBitAllignedNumber(buf, off, 7, 9) / 10;
+    const gain_type = getBitAllignedNumber(buf, off, 0, 3);
+    const sign = getBitAllignedNumber(buf, off, 6, 1);
+    const gain_adj = getBitAllignedNumber(buf, off, 7, 9) / 10;
     if (gain_type > 0) {
       return {
-        type: common.getBitAllignedNumber(buf, off, 0, 3),
-        origin: common.getBitAllignedNumber(buf, off, 3, 3),
+        type: getBitAllignedNumber(buf, off, 0, 3),
+        origin: getBitAllignedNumber(buf, off, 3, 3),
         adjustment: sign ? -gain_adj : gain_adj,
       };
     }

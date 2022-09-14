@@ -1,16 +1,16 @@
-import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
+import { BasicParser } from "../common/BasicParser";
+import { readUintBE } from "../compat/buffer";
 import initDebug from "../debug";
 import { EndOfStreamError, ITokenizer } from "../strtok3";
+import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
+import { Utf8StringType } from "../token-types/string";
+
+import { elements } from "./MatroskaDtd";
+import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
 
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
-import type { IOptions, ITrackInfo } from "../type";
 import type { ITokenParser } from "../ParserFactory";
-import { BasicParser } from "../common/BasicParser";
-
-import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
-import * as matroskaDtd from "./MatroskaDtd";
-import { Utf8StringType } from "../token-types/string";
-import { readUintBE } from "../compat/buffer";
+import type { IOptions, ITrackInfo } from "../type";
 
 const debug = initDebug("music-metadata:parser:matroska");
 
@@ -52,11 +52,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-    const matroska = (await this.parseContainer(
-      matroskaDtd.elements,
-      this.tokenizer.fileInfo.size,
-      []
-    )) as any as IMatroskaDoc;
+    const matroska = (await this.parseContainer(elements, this.tokenizer.fileInfo.size, [])) as any as IMatroskaDoc;
 
     this.metadata.setFormat("container", `EBML/${matroska.ebml.docType}`);
     if (matroska.segment) {

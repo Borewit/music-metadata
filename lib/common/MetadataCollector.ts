@@ -1,3 +1,5 @@
+import initDebug from "../debug";
+import { fileTypeFromBuffer } from "../file-type";
 import {
   FormatId,
   IAudioMetadata,
@@ -11,14 +13,13 @@ import {
   TrackType,
 } from "../type";
 
-import initDebug from "../debug";
-import type { IGenericTag, TagType } from "./GenericTagTypes";
 import { CombinedTagMapper } from "./CombinedTagMapper";
+import { isSingleton, isUnique } from "./GenericTagInfo";
 import { CommonTagMapper } from "./GenericTagMapper";
 import { toRatio } from "./Util";
-import { fileTypeFromBuffer } from "../file-type";
+
+import type { IGenericTag, TagType } from "./GenericTagTypes";
 import type { INativeMetadataCollector } from "./INativeMetadataCollector";
-import { isSingleton, isUnique } from "./GenericTagInfo";
 
 const debug = initDebug("music-metadata:collector");
 

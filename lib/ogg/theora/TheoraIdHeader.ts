@@ -1,6 +1,7 @@
-import * as Token from "../../token-types";
-import type { IGetToken } from "../../strtok3";
+import { UINT8, UINT16_BE, UINT24_BE } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
+
+import type { IGetToken } from "../../strtok3";
 
 /**
  * 6.2 Identification Header
@@ -35,13 +36,13 @@ export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
   get: (buf: Uint8Array, off): IIdentificationHeader => {
     return {
       id: new Latin1StringType(7).get(buf, off),
-      vmaj: Token.UINT8.get(buf, off + 7),
-      vmin: Token.UINT8.get(buf, off + 8),
-      vrev: Token.UINT8.get(buf, off + 9),
-      vmbw: Token.UINT16_BE.get(buf, off + 10),
-      vmbh: Token.UINT16_BE.get(buf, off + 17),
-      nombr: Token.UINT24_BE.get(buf, off + 37),
-      nqual: Token.UINT8.get(buf, off + 40),
+      vmaj: UINT8.get(buf, off + 7),
+      vmin: UINT8.get(buf, off + 8),
+      vrev: UINT8.get(buf, off + 9),
+      vmbw: UINT16_BE.get(buf, off + 10),
+      vmbh: UINT16_BE.get(buf, off + 17),
+      nombr: UINT24_BE.get(buf, off + 37),
+      nqual: UINT8.get(buf, off + 40),
     };
   },
 };

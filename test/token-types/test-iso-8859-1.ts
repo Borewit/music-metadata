@@ -1,12 +1,13 @@
 import { describe, test, expect } from "vitest";
+
 import { AnsiStringType } from "../../lib/token-types";
 
 describe("Decode ANSI-string (ISO-8859-1)", () => {
   test("should decode", () => {
     const ansiString = new AnsiStringType(16);
-    let buf: Buffer;
-
-    buf = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f]);
+    let buf: Buffer = Buffer.from([
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    ]);
     expect(ansiString.get(buf, 0), "0x0_").toBe(
       "\0\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F"
     );

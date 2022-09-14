@@ -1,12 +1,14 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
+
+import { describe, test, expect } from "vitest";
+
+import { orderTags } from "../lib";
+import { MetadataCollector } from "../lib/common/MetadataCollector";
+import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
 import { fromFile } from "../lib/strtok3";
 
-import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
-import { MetadataCollector } from "../lib/common/MetadataCollector";
-import { orderTags } from "../lib";
-import { samplePath } from "./util";
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 // Extract metadata from ID3v2.3 header
 test("should parse a raw ID3v2.3 header", async () => {

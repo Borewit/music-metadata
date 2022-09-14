@@ -1,7 +1,9 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
+import { UINT32_BE } from "../token-types";
+
 import { IAtomStsdHeader, stsdHeader } from "./AtomStsdHeader";
 import { ISampleDescription, SampleDescriptionTable } from "./SampleDescription";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IAtomStsd {
   header: IAtomStsdHeader;
@@ -22,8 +24,8 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
     const table: ISampleDescription[] = [];
 
     for (let n = 0; n < header.numberOfEntries; ++n) {
-      const size = Token.UINT32_BE.get(buf, off); // Sample description size
-      off += Token.UINT32_BE.len;
+      const size = UINT32_BE.get(buf, off); // Sample description size
+      off += UINT32_BE.len;
       table.push(new SampleDescriptionTable(size).get(buf, off));
       off += size;
     }

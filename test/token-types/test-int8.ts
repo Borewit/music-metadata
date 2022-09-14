@@ -1,7 +1,9 @@
 // Test reading int8 values.
 
 import { describe, test, expect } from "vitest";
+
 import { INT8 } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 8-bit signed integer (INT8)", () => {

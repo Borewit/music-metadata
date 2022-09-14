@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { INT32_BE } from "../token-types";
+
 import type { IGetToken } from "../strtok3";
 
 /**
@@ -15,9 +16,9 @@ export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
 
   get(buf: Uint8Array, off: number): ISampleToChunk {
     return {
-      firstChunk: Token.INT32_BE.get(buf, off),
-      samplesPerChunk: Token.INT32_BE.get(buf, off + 4),
-      sampleDescriptionId: Token.INT32_BE.get(buf, off + 8),
+      firstChunk: INT32_BE.get(buf, off),
+      samplesPerChunk: INT32_BE.get(buf, off + 4),
+      sampleDescriptionId: INT32_BE.get(buf, off + 8),
     };
   },
 };

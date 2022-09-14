@@ -1,4 +1,5 @@
-import * as Token from "../token-types";
+import { INT32_BE } from "../token-types";
+
 import { SimpleTableAtom } from "./AtomTable";
 
 /**
@@ -7,6 +8,6 @@ import { SimpleTableAtom } from "./AtomTable";
  */
 export class StcoAtom extends SimpleTableAtom<number> {
   public constructor(public override len: number) {
-    super(len, Token.INT32_BE);
+    super(len, INT32_BE);
   }
 }

@@ -1,7 +1,9 @@
 // Test writing and reading uint8 values.
 
 import { describe, test, expect } from "vitest";
+
 import { UINT8 } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 8-bit unsigned integer (UINT8)", () => {

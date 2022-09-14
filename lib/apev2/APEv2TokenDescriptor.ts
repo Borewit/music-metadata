@@ -1,7 +1,7 @@
-import * as Token from "../token-types";
-import type { IGetToken } from "../strtok3";
-
 import { FourCcToken } from "../common/FourCC";
+import { UINT32_LE, Uint8ArrayType } from "../token-types";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IDescriptor {
   // should equal 'MAC '
@@ -37,23 +37,23 @@ export const DescriptorParser: IGetToken<IDescriptor> = {
       // should equal 'MAC '
       ID: FourCcToken.get(buf, off),
       // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-      version: Token.UINT32_LE.get(buf, off + 4) / 1000,
+      version: UINT32_LE.get(buf, off + 4) / 1000,
       // the number of descriptor bytes (allows later expansion of this header)
-      descriptorBytes: Token.UINT32_LE.get(buf, off + 8),
+      descriptorBytes: UINT32_LE.get(buf, off + 8),
       // the number of header APE_HEADER bytes
-      headerBytes: Token.UINT32_LE.get(buf, off + 12),
+      headerBytes: UINT32_LE.get(buf, off + 12),
       // the number of header APE_HEADER bytes
-      seekTableBytes: Token.UINT32_LE.get(buf, off + 16),
+      seekTableBytes: UINT32_LE.get(buf, off + 16),
       // the number of header data bytes (from original file)
-      headerDataBytes: Token.UINT32_LE.get(buf, off + 20),
+      headerDataBytes: UINT32_LE.get(buf, off + 20),
       // the number of bytes of APE frame data
-      apeFrameDataBytes: Token.UINT32_LE.get(buf, off + 24),
+      apeFrameDataBytes: UINT32_LE.get(buf, off + 24),
       // the high order number of APE frame data bytes
-      apeFrameDataBytesHigh: Token.UINT32_LE.get(buf, off + 28),
+      apeFrameDataBytesHigh: UINT32_LE.get(buf, off + 28),
       // the terminating data of the file (not including tag data)
-      terminatingDataBytes: Token.UINT32_LE.get(buf, off + 32),
+      terminatingDataBytes: UINT32_LE.get(buf, off + 32),
       // the MD5 hash of the file (see notes for usage... it's a little tricky)
-      fileMD5: new Token.Uint8ArrayType(16).get(buf, off + 36),
+      fileMD5: new Uint8ArrayType(16).get(buf, off + 36),
     };
   },
 };

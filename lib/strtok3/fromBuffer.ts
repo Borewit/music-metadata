@@ -1,4 +1,5 @@
 import { BufferTokenizer } from "./BufferTokenizer";
+
 import type { IFileInfo } from "./types";
 
 /**

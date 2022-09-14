@@ -1,8 +1,9 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
+import { describe, test, expect } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("parser: %s", (description, parser) => {
   test.skipIf(description === "buffer")("parse: Philips DSDIFF DSD64.dff", async () => {

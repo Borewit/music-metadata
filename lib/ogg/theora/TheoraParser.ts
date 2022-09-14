@@ -1,13 +1,12 @@
-import type { ITokenizer } from "../../strtok3";
 import initDebug from "../../debug";
 
-import type { IOptions } from "../../type";
-import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import { IdentificationHeader } from "./TheoraIdHeader";
 
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { ITokenizer } from "../../strtok3";
+import type { IOptions } from "../../type";
 import type { IPageHeader } from "../Header";
 import type { IPageConsumer } from "../PageConsumer";
-
-import { IdentificationHeader } from "./TheoraIdHeader";
 
 const debug = initDebug("music-metadata:parser:ogg:theora");
 

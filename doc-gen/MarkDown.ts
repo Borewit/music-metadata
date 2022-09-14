@@ -1,4 +1,4 @@
-import type * as fs from "node:fs";
+import type { WriteStream } from "node:fs";
 
 export class Row {
   constructor(public values: string[]) {}
@@ -12,7 +12,7 @@ export class Table {
     return value;
   }
 
-  private static writeRow(out: fs.WriteStream, values: string[], colSizes: number[]) {
+  private static writeRow(out: WriteStream, values: string[], colSizes: number[]) {
     const colValues: string[] = [];
     for (const [ci, colSize] of colSizes.entries()) {
       const cellTxt = values.length > ci ? values[ci] : "";
@@ -29,7 +29,7 @@ export class Table {
   public rows: Row[] = [];
   public header?: Row;
 
-  public writeTo(out: fs.WriteStream) {
+  public writeTo(out: WriteStream) {
     const colSizes = this.calcColSizes();
     Table.writeRow(out, this.header.values, colSizes);
     out.write(Table.lineToString(colSizes));

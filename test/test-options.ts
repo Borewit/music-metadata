@@ -1,9 +1,11 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
+import { describe, test, expect } from "vitest";
+
 import { orderTags } from "../lib";
-import { samplePath } from "./util";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("parser: %s", (_, parser) => {
   const skipCases: [string, { skipCovers?: boolean }, boolean][] = [

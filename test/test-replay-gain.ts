@@ -1,9 +1,11 @@
-import { test, expect, describe } from "vitest";
 import { join } from "node:path";
 
-import type { TagType } from "../lib/common/GenericTagTypes";
-import { samplePath } from "./util";
+import { test, expect, describe } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
+
+import type { TagType } from "../lib/common/GenericTagTypes";
 
 type ReplayGainSample = [
   string,

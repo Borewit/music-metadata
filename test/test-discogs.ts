@@ -1,11 +1,13 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
+
+import { describe, test, expect } from "vitest";
 
 import { orderTags } from "../lib";
 import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
 import { VorbisTagMapper } from "../lib/ogg/vorbis/VorbisTagMapper";
-import { samplePath } from "./util";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 const discogs_tags = [
   "DISCOGS_ARTIST_ID",

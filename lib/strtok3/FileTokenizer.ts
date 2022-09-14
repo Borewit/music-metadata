@@ -1,7 +1,9 @@
-import { AbstractTokenizer } from "./AbstractTokenizer";
 import { EndOfStreamError } from "../peek-readable";
-import type * as fs from "node:fs/promises";
+
+import { AbstractTokenizer } from "./AbstractTokenizer";
+
 import type { IFileInfo, IReadChunkOptions } from "./types";
+import type * as fs from "node:fs/promises";
 
 export class FileTokenizer extends AbstractTokenizer {
   public constructor(private fd: fs.FileHandle, fileInfo: IFileInfo) {

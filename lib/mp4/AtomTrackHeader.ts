@@ -1,7 +1,9 @@
-import * as Token from "../token-types";
+import { UINT8, UINT24_BE, UINT32_BE, UINT16_BE } from "../token-types";
+
+import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
+
 import type { IGetToken } from "../strtok3";
 import type { IVersionAndFlags } from "./VersionAndFlags";
-import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
 
 /**
  * Track Header Atoms interface
@@ -63,16 +65,16 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
 
   public get(buf: Uint8Array, off: number): ITrackHeaderAtom {
     return {
-      version: Token.UINT8.get(buf, off),
-      flags: Token.UINT24_BE.get(buf, off + 1),
+      version: UINT8.get(buf, off),
+      flags: UINT24_BE.get(buf, off + 1),
       creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
       modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
-      trackId: Token.UINT32_BE.get(buf, off + 12),
+      trackId: UINT32_BE.get(buf, off + 12),
       // reserved 4 bytes
-      duration: Token.UINT32_BE.get(buf, off + 20),
-      layer: Token.UINT16_BE.get(buf, off + 24),
-      alternateGroup: Token.UINT16_BE.get(buf, off + 26),
-      volume: Token.UINT16_BE.get(buf, off + 28), // ToDo: fixed point
+      duration: UINT32_BE.get(buf, off + 20),
+      layer: UINT16_BE.get(buf, off + 24),
+      alternateGroup: UINT16_BE.get(buf, off + 26),
+      volume: UINT16_BE.get(buf, off + 28), // ToDo: fixed point
       // ToDo: add remaining fields
     };
   }

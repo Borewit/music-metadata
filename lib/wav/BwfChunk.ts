@@ -1,6 +1,7 @@
-import type { IGetToken } from "../strtok3";
-import * as Token from "../token-types";
+import { UINT32_LE, UINT16_LE, Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IBroadcastAudioExtensionChunk {
   description: string;
@@ -28,14 +29,14 @@ export const BroadcastAudioExtensionChunk: IGetToken<IBroadcastAudioExtensionChu
       originatorReference: new Latin1StringType(32).get(uint8array, off + 288).trim(),
       originationDate: new Latin1StringType(10).get(uint8array, off + 320).trim(),
       originationTime: new Latin1StringType(8).get(uint8array, off + 330).trim(),
-      timeReferenceLow: Token.UINT32_LE.get(uint8array, off + 338),
-      timeReferenceHigh: Token.UINT32_LE.get(uint8array, off + 342),
-      version: Token.UINT16_LE.get(uint8array, off + 346),
-      umid: new Token.Uint8ArrayType(64).get(uint8array, off + 348),
-      loudnessValue: Token.UINT16_LE.get(uint8array, off + 412),
-      maxTruePeakLevel: Token.UINT16_LE.get(uint8array, off + 414),
-      maxMomentaryLoudness: Token.UINT16_LE.get(uint8array, off + 416),
-      maxShortTermLoudness: Token.UINT16_LE.get(uint8array, off + 418),
+      timeReferenceLow: UINT32_LE.get(uint8array, off + 338),
+      timeReferenceHigh: UINT32_LE.get(uint8array, off + 342),
+      version: UINT16_LE.get(uint8array, off + 346),
+      umid: new Uint8ArrayType(64).get(uint8array, off + 348),
+      loudnessValue: UINT16_LE.get(uint8array, off + 412),
+      maxTruePeakLevel: UINT16_LE.get(uint8array, off + 414),
+      maxMomentaryLoudness: UINT16_LE.get(uint8array, off + 416),
+      maxShortTermLoudness: UINT16_LE.get(uint8array, off + 418),
     };
   },
 };

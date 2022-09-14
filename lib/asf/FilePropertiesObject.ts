@@ -1,5 +1,6 @@
-import * as util from "../common/Util";
-import * as Token from "../token-types";
+import { getBit } from "../common/Util";
+import { UINT64_LE, UINT32_LE } from "../token-types";
+
 import GUID, { FilePropertiesObject as GUIDFilePropertiesObject } from "./GUID";
 import { State } from "./State";
 
@@ -112,20 +113,20 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
   public get(buf: Uint8Array, off: number): IFilePropertiesObject {
     return {
       fileId: GUID.fromBin(buf, off),
-      fileSize: Token.UINT64_LE.get(buf, off + 16),
-      creationDate: Token.UINT64_LE.get(buf, off + 24),
-      dataPacketsCount: Token.UINT64_LE.get(buf, off + 32),
-      playDuration: Token.UINT64_LE.get(buf, off + 40),
-      sendDuration: Token.UINT64_LE.get(buf, off + 48),
-      preroll: Token.UINT64_LE.get(buf, off + 56),
+      fileSize: UINT64_LE.get(buf, off + 16),
+      creationDate: UINT64_LE.get(buf, off + 24),
+      dataPacketsCount: UINT64_LE.get(buf, off + 32),
+      playDuration: UINT64_LE.get(buf, off + 40),
+      sendDuration: UINT64_LE.get(buf, off + 48),
+      preroll: UINT64_LE.get(buf, off + 56),
       flags: {
-        broadcast: util.getBit(buf, off + 64, 24),
-        seekable: util.getBit(buf, off + 64, 25),
+        broadcast: getBit(buf, off + 64, 24),
+        seekable: getBit(buf, off + 64, 25),
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-      minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
-      maximumDataPacketSize: Token.UINT32_LE.get(buf, off + 72),
-      maximumBitrate: Token.UINT32_LE.get(buf, off + 76),
+      minimumDataPacketSize: UINT32_LE.get(buf, off + 68),
+      maximumDataPacketSize: UINT32_LE.get(buf, off + 72),
+      maximumBitrate: UINT32_LE.get(buf, off + 76),
     };
   }
 }

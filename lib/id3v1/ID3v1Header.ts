@@ -1,8 +1,10 @@
-import { UINT8 } from "../token-types";
-import type { IGetToken } from "../strtok3";
-import { Id3v1StringType, readId3v1String } from "./ID3v1StringType";
 import { readUint8 } from "../parser/base/unsigned-integer";
 import { isSuccess } from "../result/result";
+import { UINT8 } from "../token-types";
+
+import { Id3v1StringType, readId3v1String } from "./ID3v1StringType";
+
+import type { IGetToken } from "../strtok3";
 
 /**
  * ID3v1 tag header interface
@@ -51,7 +53,7 @@ export const Iid3v1Token: IGetToken<IId3v1Header> = {
   },
 };
 
-type Id3v1Header = {
+interface Id3v1Header {
   header: "TAG";
   title: string | undefined;
   artist: string | undefined;
@@ -61,7 +63,7 @@ type Id3v1Header = {
   zeroByte: number | undefined;
   track: number | undefined;
   genre: number | undefined;
-};
+}
 
 export const ID3V1_SIZE = 128;
 

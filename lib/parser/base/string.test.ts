@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+
 import { readLatin1String, readUtf16leString, readUtf8String } from "./string";
 
 describe("decode latin1 encoding", () => {

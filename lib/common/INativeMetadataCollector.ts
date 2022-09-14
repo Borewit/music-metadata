@@ -1,5 +1,4 @@
 import type { FormatId, IFormat, INativeTags, IQualityInformation, ITrackInfo } from "../type";
-
 import type { TagType } from "./GenericTagTypes";
 
 /**

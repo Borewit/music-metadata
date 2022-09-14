@@ -1,12 +1,14 @@
-import * as Token from "../token-types";
-import * as strtok3 from "../strtok3";
-import { stringToBytes, tarHeaderChecksumMatches, uint32SyncSafeToken, checkUtil } from "./util";
-import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
-import type { FileTypeResult } from "./type";
-import { encodeUtf8 } from "../compat/text-encoder";
 import { indexOf, isSubArray, readUintBE } from "../compat/buffer";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
+import { encodeUtf8 } from "../compat/text-encoder";
+import * as strtok3 from "../strtok3";
+import { UINT32_LE, UINT16_LE, UINT16_BE, UINT32_BE, UINT8, INT32_BE, UINT64_LE } from "../token-types";
 import { Latin1StringType, Utf8StringType } from "../token-types/string";
+
+import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
+import { stringToBytes, tarHeaderChecksumMatches, uint32SyncSafeToken, checkUtil } from "./util";
+
+import type { FileTypeResult } from "./type";
 
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
@@ -212,10 +214,10 @@ export class FileTypeParser {
             filenameLength: number;
             extraFieldLength: number;
           } = {
-            compressedSize: Token.UINT32_LE.get(this.buffer, 18),
-            uncompressedSize: Token.UINT32_LE.get(this.buffer, 22),
-            filenameLength: Token.UINT16_LE.get(this.buffer, 26),
-            extraFieldLength: Token.UINT16_LE.get(this.buffer, 28),
+            compressedSize: UINT32_LE.get(this.buffer, 18),
+            uncompressedSize: UINT32_LE.get(this.buffer, 22),
+            filenameLength: UINT16_LE.get(this.buffer, 26),
+            extraFieldLength: UINT16_LE.get(this.buffer, 28),
           };
 
           zipHeader.filename = await tokenizer.readToken(new Utf8StringType(zipHeader.filenameLength));
@@ -1140,7 +1142,7 @@ export class FileTypeParser {
 
     if (this.check([0x04, 0x00, 0x00, 0x00]) && this.buffer.length >= 16) {
       // Rough & quick check Pickle/ASAR
-      const jsonSize = Token.UINT32_LE.get(this.buffer, 12);
+      const jsonSize = UINT32_LE.get(this.buffer, 12);
       if (jsonSize > 12 && this.buffer.length >= jsonSize + 16) {
         try {
           const header = decodeUtf8(this.buffer.slice(16, jsonSize + 16));
@@ -1324,7 +1326,7 @@ export class FileTypeParser {
   }
 
   async readTiffTag(bigEndian: any): Promise<FileTypeResult> {
-    const tagId = await this.tokenizer.readToken(bigEndian ? Token.UINT16_BE : Token.UINT16_LE);
+    const tagId = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
     void this.tokenizer.ignore(10);
     switch (tagId) {
       case 50_341:
@@ -1342,7 +1344,7 @@ export class FileTypeParser {
   }
 
   async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult> {
-    const numberOfTags = await this.tokenizer.readToken(bigEndian ? Token.UINT16_BE : Token.UINT16_LE);
+    const numberOfTags = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
     for (let n = 0; n < numberOfTags; ++n) {
       const fileType = await this.readTiffTag(bigEndian);
       if (fileType) {
@@ -1352,8 +1354,8 @@ export class FileTypeParser {
   }
 
   async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult> {
-    const version = (bigEndian ? Token.UINT16_BE : Token.UINT16_LE).get(this.buffer, 2);
-    const ifdOffset = (bigEndian ? Token.UINT32_BE : Token.UINT32_LE).get(this.buffer, 4);
+    const version = (bigEndian ? UINT16_BE : UINT16_LE).get(this.buffer, 2);
+    const ifdOffset = (bigEndian ? UINT32_BE : UINT32_LE).get(this.buffer, 4);
 
     if (version === 42) {
       // TIFF file header
@@ -1402,7 +1404,7 @@ export class FileTypeParser {
  * @param tokenizer
  */
 async function readField(tokenizer: strtok3.ITokenizer) {
-  const msb = await tokenizer.peekNumber(Token.UINT8);
+  const msb = await tokenizer.peekNumber(UINT8);
   let mask = 0x80;
   let ic = 0; // 0 = A, 1 = B, 2 = C, 3
 
@@ -1457,7 +1459,7 @@ async function readChildren(tokenizer: strtok3.ITokenizer, level: number, childr
  */
 async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
   return {
-    length: await tokenizer.readToken(Token.INT32_BE),
+    length: await tokenizer.readToken(INT32_BE),
     type: await tokenizer.readToken(new Latin1StringType(4)),
   };
 }
@@ -1471,6 +1473,6 @@ async function readHeader(tokenizer: strtok3.ITokenizer) {
   await tokenizer.readBuffer(guid);
   return {
     id: guid,
-    size: Number(await tokenizer.readToken(Token.UINT64_LE)),
+    size: Number(await tokenizer.readToken(UINT64_LE)),
   };
 }

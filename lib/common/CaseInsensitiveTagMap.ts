@@ -1,5 +1,6 @@
-import type { INativeTagMap, TagType } from "./GenericTagTypes";
 import { CommonTagMapper } from "./GenericTagMapper";
+
+import type { INativeTagMap, TagType } from "./GenericTagTypes";
 
 export class CaseInsensitiveTagMap extends CommonTagMapper {
   public constructor(tagTypes: TagType[], tagMap: INativeTagMap) {

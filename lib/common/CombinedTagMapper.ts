@@ -1,16 +1,17 @@
-import { ID3v1TagMapper } from "../id3v1/ID3v1TagMap";
-import { ID3v24TagMapper } from "../id3v2/ID3v24TagMapper";
-import { AsfTagMapper } from "../asf/AsfTagMapper";
-import type { IGenericTag, TagType } from "./GenericTagTypes";
-import { ID3v22TagMapper } from "../id3v2/ID3v22TagMapper";
 import { APEv2TagMapper } from "../apev2/APEv2TagMapper";
-import type { IGenericTagMapper } from "./GenericTagMapper";
+import { AsfTagMapper } from "../asf/AsfTagMapper";
+import { ID3v1TagMapper } from "../id3v1/ID3v1TagMap";
+import { ID3v22TagMapper } from "../id3v2/ID3v22TagMapper";
+import { ID3v24TagMapper } from "../id3v2/ID3v24TagMapper";
+import { MatroskaTagMapper } from "../matroska/MatroskaTagMapper";
 import { MP4TagMapper } from "../mp4/MP4TagMapper";
 import { VorbisTagMapper } from "../ogg/vorbis/VorbisTagMapper";
 import { RiffInfoTagMapper } from "../riff/RiffInfoTagMap";
+
 import type { ITag } from "../type";
+import type { IGenericTagMapper } from "./GenericTagMapper";
+import type { IGenericTag, TagType } from "./GenericTagTypes";
 import type { INativeMetadataCollector } from "./INativeMetadataCollector";
-import { MatroskaTagMapper } from "../matroska/MatroskaTagMapper";
 
 export class CombinedTagMapper {
   public tagMappers: Record<string, IGenericTagMapper> = {};

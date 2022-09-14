@@ -1,7 +1,8 @@
-import type { IPrivateOptions, IRandomReader } from "./type";
 import { APEv2Parser } from "./apev2/APEv2Parser";
 import { hasID3v1Header } from "./id3v1/ID3v1Parser";
 import { getLyricsHeaderLength } from "./lyrics3/Lyrics3";
+
+import type { IPrivateOptions, IRandomReader } from "./type";
 
 /**
  *

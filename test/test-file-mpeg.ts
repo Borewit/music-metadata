@@ -1,10 +1,12 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
-import { samplePath } from "./util";
-import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
-import { Parsers } from "./metadata-parsers";
+import { describe, test, expect } from "vitest";
+
 import { orderTags } from "../lib";
+import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
+
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("parser: %s", (description, parser) => {
   test("should parse MPEG-1 Audio Layer II ", async () => {

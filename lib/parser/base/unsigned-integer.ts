@@ -1,4 +1,5 @@
 import { Result, wrapResult } from "../../result/result";
+
 import { dataview } from "./util";
 
 export const UINT8_SIZE = 1;

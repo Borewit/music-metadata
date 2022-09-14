@@ -1,5 +1,6 @@
-import type { FileTypeResult } from "./type";
 import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
+
+import type { FileTypeResult } from "./type";
 
 /**
  * Detect the file type of a [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob).

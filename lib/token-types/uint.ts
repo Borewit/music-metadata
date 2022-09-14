@@ -1,5 +1,6 @@
-import type { IToken } from "./type";
 import { dv } from "./dataview";
+
+import type { IToken } from "./type";
 
 /**
  * 8-bit unsigned integer

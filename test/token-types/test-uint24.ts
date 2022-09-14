@@ -1,7 +1,9 @@
 // Test writing and reading uint24 values in different endiannesses.
 
 import { describe, test, expect } from "vitest";
+
 import { UINT24_BE, UINT24_LE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 24-bit unsigned integer", () => {

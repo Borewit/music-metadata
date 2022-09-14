@@ -1,6 +1,5 @@
-import type { IGetToken } from "../strtok3";
-
 import type * as util from "../common/Util";
+import type { IGetToken } from "../strtok3";
 
 export interface ITextEncoding {
   encoding: util.StringEncoding;

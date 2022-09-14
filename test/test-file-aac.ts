@@ -1,8 +1,11 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
+
+import { describe, test, expect } from "vitest";
+
 import { Parsers } from "./metadata-parsers";
-import type { IFormat } from "../lib";
 import { samplePath } from "./util";
+
+import type { IFormat } from "../lib";
 
 const aacSamplePath = join(samplePath, "aac");
 

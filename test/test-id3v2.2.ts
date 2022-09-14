@@ -1,11 +1,13 @@
-import { describe, test, expect } from "vitest";
 import { join } from "node:path";
 
+import { describe, test, expect } from "vitest";
+
 import { orderTags } from "../lib";
-import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
 import { parseGenre } from "../lib/id3v2/FrameParser";
-import { samplePath } from "./util";
+import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
+
 import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 describe.each(Parsers)("ID3v2Parser %s", (_, parser) => {
   const mp3Path = join(samplePath, "mp3");

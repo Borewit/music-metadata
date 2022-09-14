@@ -1,11 +1,11 @@
 import initDebug from "../debug";
+import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
+import { Latin1StringType } from "../token-types/string";
+
+import { MpcSv7Parser } from "./sv7/MpcSv7Parser";
+import { MpcSv8Parser } from "./sv8/MpcSv8Parser";
 
 import type { ITokenParser } from "../ParserFactory";
-import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
-
-import { MpcSv8Parser } from "./sv8/MpcSv8Parser";
-import { MpcSv7Parser } from "./sv7/MpcSv7Parser";
-import { Latin1StringType } from "../token-types/string";
 
 const debug = initDebug("music-metadata:parser:musepack");
 

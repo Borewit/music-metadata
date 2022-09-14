@@ -1,7 +1,9 @@
 // Test reading int32 values.
 
 import { describe, test, expect } from "vitest";
+
 import { INT32_BE, INT32_LE } from "../../lib/token-types";
+
 import { checkBuffer } from "./util";
 
 describe("Parse 32-bit signed integer", () => {

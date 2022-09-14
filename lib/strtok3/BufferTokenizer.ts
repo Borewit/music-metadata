@@ -1,6 +1,8 @@
-import type { IFileInfo, IReadChunkOptions } from "./types";
 import { EndOfStreamError } from "../peek-readable";
+
 import { AbstractTokenizer } from "./AbstractTokenizer";
+
+import type { IFileInfo, IReadChunkOptions } from "./types";
 
 export class BufferTokenizer extends AbstractTokenizer {
   /**
