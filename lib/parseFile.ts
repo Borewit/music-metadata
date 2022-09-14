@@ -3,9 +3,7 @@ import { ParserFactory } from "./ParserFactory";
 import { scanAppendingHeaders } from "./scanAppendingHeaders";
 import { fromFile } from "./strtok3";
 
-
 import type { IAudioMetadata, IOptions } from "./type";
-
 
 /**
  * Parse audio from Node file

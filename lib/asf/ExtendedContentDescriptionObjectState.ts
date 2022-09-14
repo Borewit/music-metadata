@@ -6,7 +6,6 @@ import { State } from "./State";
 
 import type { ITag } from "../type";
 
-
 /**
  * 3.11 Extended Content Description Object (optional, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_11

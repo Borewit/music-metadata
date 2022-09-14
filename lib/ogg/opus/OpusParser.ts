@@ -8,8 +8,6 @@ import type { ITokenizer } from "../../strtok3";
 import type { IOptions } from "../../type";
 import type { IPageHeader } from "../Header";
 
-
-
 /**
  * Opus parser
  * Internet Engineering Task Force (IETF) - RFC 6716

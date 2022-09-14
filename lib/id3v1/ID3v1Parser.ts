@@ -1,4 +1,3 @@
-
 import { APEv2Parser } from "../apev2/APEv2Parser";
 import { BasicParser } from "../common/BasicParser";
 import { decodeLatin1 } from "../compat/text-decoder";

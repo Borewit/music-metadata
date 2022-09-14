@@ -8,7 +8,6 @@ import type { IOptions } from "../../type";
 import type { IPageHeader } from "../Header";
 import type { IPageConsumer } from "../PageConsumer";
 
-
 const debug = initDebug("music-metadata:parser:ogg:theora");
 
 /**

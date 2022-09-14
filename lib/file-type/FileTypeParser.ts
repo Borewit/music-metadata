@@ -10,7 +10,6 @@ import { stringToBytes, tarHeaderChecksumMatches, uint32SyncSafeToken, checkUtil
 
 import type { FileTypeResult } from "./type";
 
-
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
 export class FileTypeParser {

@@ -15,7 +15,6 @@ import type { INativeMetadataCollector } from "../common/INativeMetadataCollecto
 import type { ITokenizer } from "../strtok3";
 import type { IOptions, IRandomReader, IApeHeader } from "../type";
 
-
 const debug = initDebug("music-metadata:parser:APEv2");
 
 /**
@@ -51,11 +50,7 @@ interface IApeInfo {
 const preamble = "APETAGEX";
 
 export class APEv2Parser extends BasicParser {
-  public static tryParseApeHeader(
-    metadata: INativeMetadataCollector,
-    tokenizer: ITokenizer,
-    options: IOptions
-  ) {
+  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions) {
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, tokenizer, options);
     return apeParser.tryParseApeHeader();

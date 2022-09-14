@@ -5,10 +5,8 @@ import { toHexString } from "../compat/hex";
 import initDebug from "../debug";
 import { UINT24_LE, UINT8 } from "../token-types";
 
-
 import { BlockHeader, BlockHeaderToken } from "./BlockHeader";
 import { MetadataId, MetadataIdToken } from "./MetadataId";
-
 
 const debug = initDebug("music-metadata:parser:WavPack");
 
@@ -117,8 +115,7 @@ export class WavPackParser extends BasicParser {
           break;
       }
 
-      remainingLength -=
-        MetadataIdToken.len + (id.largeBlock ? UINT24_LE.len : UINT8.len) + dataSizeInWords * 2;
+      remainingLength -= MetadataIdToken.len + (id.largeBlock ? UINT24_LE.len : UINT8.len) + dataSizeInWords * 2;
       debug(`remainingLength=${remainingLength}`);
       if (id.isOddSize) void this.tokenizer.ignore(1);
     }

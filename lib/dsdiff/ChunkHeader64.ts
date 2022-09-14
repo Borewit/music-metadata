@@ -4,7 +4,6 @@ import { INT64_BE } from "../token-types";
 import type { IChunkHeader64 } from "../iff";
 import type { IGetToken } from "../strtok3";
 
-
 export { IChunkHeader64 } from "../iff";
 
 /**

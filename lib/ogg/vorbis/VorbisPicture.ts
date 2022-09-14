@@ -6,7 +6,6 @@ import { Utf8StringType } from "../../token-types/string";
 import type { IGetToken } from "../../strtok3";
 import type { IPicture } from "../../type";
 
-
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
  * Ref: https://wiki.xiph.org/VorbisComment#METADATA_BLOCK_PICTURE

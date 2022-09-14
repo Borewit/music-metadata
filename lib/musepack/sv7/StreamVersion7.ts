@@ -4,7 +4,6 @@ import { Latin1StringType } from "../../token-types/string";
 
 import type { IGetToken } from "../../strtok3";
 
-
 /**
  * MusePack stream version 7 format specification
  * http://trac.musepack.net/musepack/wiki/SV7Specification

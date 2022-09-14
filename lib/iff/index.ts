@@ -3,7 +3,6 @@ import { UINT32_BE } from "../token-types";
 
 import type { IGetToken } from "../strtok3";
 
-
 /**
  * "EA IFF 85" Standard for Interchange Format Files
  * Ref: http://www.martinreddy.net/gfx/2d/IFF.txt

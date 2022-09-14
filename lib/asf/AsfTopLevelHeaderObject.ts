@@ -1,4 +1,3 @@
-
 import { Uint8ArrayType, UINT64_LE, UINT32_LE } from "../token-types";
 
 import GUID from "./GUID";

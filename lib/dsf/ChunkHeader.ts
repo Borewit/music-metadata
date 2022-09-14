@@ -3,7 +3,6 @@ import { UINT64_LE } from "../token-types";
 
 import type { IGetToken } from "../strtok3";
 
-
 /**
  * Common interface for the common chunk DSD header
  */

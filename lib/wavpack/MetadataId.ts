@@ -2,7 +2,6 @@ import { getBitAllignedNumber, isBitSet } from "./util";
 
 import type { IGetToken } from "../strtok3";
 
-
 export interface MetadataId {
   /**
    * metadata function id

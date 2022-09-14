@@ -13,7 +13,6 @@ import { VorbisParser } from "./vorbis/VorbisParser";
 
 import type { IPageConsumer } from "./PageConsumer";
 
-
 const debug = initDebug("music-metadata:parser:ogg");
 
 /**
@@ -44,9 +43,7 @@ export class OggParser extends BasicParser {
 
         const segmentTable = await this.tokenizer.readToken<ISegmentTable>(new SegmentTable(header));
         debug("totalPageSize=%s", segmentTable.totalPageSize);
-        const pageData = await this.tokenizer.readToken<Uint8Array>(
-          new Uint8ArrayType(segmentTable.totalPageSize)
-        );
+        const pageData = await this.tokenizer.readToken<Uint8Array>(new Uint8ArrayType(segmentTable.totalPageSize));
         debug(
           "firstPage=%s, lastPage=%s, continued=%s",
           header.headerType.firstPage,

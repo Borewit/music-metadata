@@ -14,7 +14,6 @@ import { BroadcastAudioExtensionChunk } from "./BwfChunk";
 import { IFactChunk, FactChunk } from "./FactChunk";
 import { IWaveFormat, Format, WaveFormat } from "./WaveFormat";
 
-
 const debug = initDebug("music-metadata:parser:RIFF");
 
 /**

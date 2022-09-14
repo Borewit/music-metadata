@@ -21,7 +21,6 @@ import { toRatio } from "./Util";
 import type { IGenericTag, TagType } from "./GenericTagTypes";
 import type { INativeMetadataCollector } from "./INativeMetadataCollector";
 
-
 const debug = initDebug("music-metadata:collector");
 
 const TagPriority: TagType[] = [

@@ -1,4 +1,3 @@
-
 import { FourCcToken } from "../common/FourCC";
 import initDebug from "../debug";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";

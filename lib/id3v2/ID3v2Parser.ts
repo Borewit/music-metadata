@@ -13,8 +13,6 @@ import type { ITokenizer } from "../strtok3";
 import type { ITag, IOptions } from "../type";
 import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 
-
-
 interface IFrameFlags {
   status: {
     tag_alter_preservation: boolean;

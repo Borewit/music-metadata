@@ -1,4 +1,3 @@
-
 import { getBitAllignedNumber, stripNulls } from "../common/Util";
 import initDebug from "../debug";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";

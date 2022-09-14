@@ -3,7 +3,6 @@ import { UINT32_BE, UINT16_BE } from "../token-types";
 
 import type { IGetToken } from "../strtok3";
 
-
 export interface IExtendedHeader {
   // Extended header size
   size: number;

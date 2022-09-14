@@ -13,7 +13,6 @@ import type { IGenericTagMapper } from "./GenericTagMapper";
 import type { IGenericTag, TagType } from "./GenericTagTypes";
 import type { INativeMetadataCollector } from "./INativeMetadataCollector";
 
-
 export class CombinedTagMapper {
   public tagMappers: Record<string, IGenericTagMapper> = {};
 

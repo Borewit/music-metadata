@@ -5,7 +5,6 @@ import { Latin1StringType } from "../../token-types/string";
 
 import type { ITokenizer, IGetToken } from "../../strtok3";
 
-
 const debug = initDebug("music-metadata:parser:musepack:sv8");
 
 const PacketKey = new Latin1StringType(2);

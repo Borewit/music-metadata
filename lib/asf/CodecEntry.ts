@@ -1,4 +1,3 @@
-
 import { UINT16_LE } from "../token-types";
 import { Utf16LEStringType } from "../token-types/string";
 

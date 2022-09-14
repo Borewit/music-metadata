@@ -8,7 +8,6 @@ import { IdHeader } from "../lib/ogg/opus/OpusIdHeader";
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
-
 const oggSamplePath = join(samplePath, "ogg");
 
 // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)

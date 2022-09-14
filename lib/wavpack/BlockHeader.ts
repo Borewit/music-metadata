@@ -5,7 +5,6 @@ import { getBitAllignedNumber, isBitSet } from "./util";
 
 import type { IGetToken } from "../strtok3";
 
-
 /**
  * WavPack Block Header
  *
@@ -74,15 +73,9 @@ export const BlockHeaderToken: IGetToken<BlockHeader> = {
       //  0x402 (1026) to 0x410 are valid for decode
       version: UINT16_LE.get(buf, off + 8),
       //  40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
-      totalSamples: /* replace with bigint? (Token.UINT8.get(buf, off + 11) << 32) + */ UINT32_LE.get(
-        buf,
-        off + 12
-      ),
+      totalSamples: /* replace with bigint? (Token.UINT8.get(buf, off + 11) << 32) + */ UINT32_LE.get(buf, off + 12),
       // 40-bit block_index
-      blockIndex: /* replace with bigint? (Token.UINT8.get(buf, off + 10) << 32) + */ UINT32_LE.get(
-        buf,
-        off + 16
-      ),
+      blockIndex: /* replace with bigint? (Token.UINT8.get(buf, off + 10) << 32) + */ UINT32_LE.get(buf, off + 16),
       // 40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
       blockSamples: UINT32_LE.get(buf, off + 20),
       // various flags for id and decoding

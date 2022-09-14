@@ -6,7 +6,6 @@ import { XingHeaderFlags } from "./XingHeaderFlags";
 
 import type { ITokenizer } from "../strtok3";
 
-
 export interface IXingInfoTag {
   /**
    * total bit stream frames from Vbr header data

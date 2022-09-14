@@ -7,7 +7,6 @@ import type { INativeTagMap } from "../common/GenericTagTypes";
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import type { IRating, ITag } from "../type";
 
-
 /**
  * ID3v2.3/ID3v2.4 tag mappings
  */

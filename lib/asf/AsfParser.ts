@@ -1,4 +1,3 @@
-
 import { BasicParser } from "../common/BasicParser";
 import initDebug from "../debug";
 import { ITag, TrackType } from "../type";

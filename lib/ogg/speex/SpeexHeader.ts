@@ -4,7 +4,6 @@ import { Latin1StringType } from "../../token-types/string";
 
 import type { IGetToken } from "../../strtok3";
 
-
 /**
  * Speex Header Packet
  * Ref: https://www.speex.org/docs/manual/speex-manual/node8.html#SECTION00830000000000000000

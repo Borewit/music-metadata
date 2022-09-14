@@ -7,9 +7,7 @@ import { EndOfStreamError } from "../strtok3";
 import { fromBuffer } from "../strtok3/fromBuffer";
 import { Uint8ArrayType } from "../token-types";
 
-
 import * as AiffToken from "./AiffTokenCommon";
-
 
 const debug = initDebug("music-metadata:parser:aiff");
 

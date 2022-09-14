@@ -6,7 +6,6 @@ import { State } from "./State";
 
 import type { ITag } from "../type";
 
-
 /**
  * 4.7  Metadata Object (optional, 0 or 1)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/04_objects_in_the_asf_header_extension_object.html#4_7

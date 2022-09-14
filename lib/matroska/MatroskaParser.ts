@@ -12,8 +12,6 @@ import type { INativeMetadataCollector } from "../common/INativeMetadataCollecto
 import type { ITokenParser } from "../ParserFactory";
 import type { IOptions, ITrackInfo } from "../type";
 
-
-
 const debug = initDebug("music-metadata:parser:matroska");
 
 /**
@@ -54,11 +52,7 @@ export class MatroskaParser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-    const matroska = (await this.parseContainer(
-      elements,
-      this.tokenizer.fileInfo.size,
-      []
-    )) as any as IMatroskaDoc;
+    const matroska = (await this.parseContainer(elements, this.tokenizer.fileInfo.size, [])) as any as IMatroskaDoc;
 
     this.metadata.setFormat("container", `EBML/${matroska.ebml.docType}`);
     if (matroska.segment) {

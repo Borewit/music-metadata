@@ -5,8 +5,6 @@ import { Latin1StringType } from "../token-types/string";
 import type * as iff from "../iff";
 import type { IGetToken } from "../strtok3";
 
-
-
 /**
  * The Common Chunk.
  * Describes fundamental parameters of the waveform data such as sample rate, bit resolution, and how many channels of
