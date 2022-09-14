@@ -45,7 +45,7 @@
   "parserOptions": {
     "project": "./tsconfig.check.json"
   },
-  "plugins": ["eslint-plugin-node"],
+  "plugins": ["node", "strict-null-checks"],
   "settings": {
     "import/resolver": {
       "typescript": {
@@ -181,6 +181,8 @@
 
     /* eslint-plugin-node */
     "node/no-extraneous-import": "error",
+
+    "strict-null-checks/all": "warn",
 
     /* @typescript-eslint/eslint-plugin */
     "@typescript-eslint/no-shadow": ["error", { "hoist": "all" }],
