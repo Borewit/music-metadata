@@ -59,9 +59,6 @@
     /* eslint */
     "no-constant-condition": ["error", { "checkLoops": false }],
 
-    /* eslint-plugin-import */
-    "import/no-unresolved": ["error", { "caseSensitiveStrict": true }],
-
     /* eslint-plugin-jsdoc */
     "jsdoc/newline-after-description": ["error", "never"],
     "jsdoc/check-alignment": "error",
@@ -123,42 +120,7 @@
     "no-extra-bind": "error",
     "no-new-func": "error",
     "no-new-wrappers": "error",
-    "no-restricted-imports": [
-      "warn",
-      "node:assert",
-      "node:buffer",
-      "node:child_process",
-      "node:cluster",
-      "node:crypto",
-      "node:dgram",
-      "node:dns",
-      "node:domain",
-      "node:events",
-      "node:freelist",
-      "node:fs",
-      "node:http",
-      "node:https",
-      "node:module",
-      "node:net",
-      "node:os",
-      "node:path",
-      "node:punycode",
-      "node:querystring",
-      "node:readline",
-      "node:repl",
-      "node:smalloc",
-      "node:stream",
-      "node:string_decoder",
-      "node:sys",
-      "node:timers",
-      "node:tls",
-      "node:tracing",
-      "node:tty",
-      "node:url",
-      "node:util",
-      "node:vm",
-      "node:zlib"
-    ],
+
     "no-return-await": "error",
     "no-sequences": "error",
     "no-template-curly-in-string": "error",
@@ -176,12 +138,32 @@
     "spaced-comment": ["error", "always", { "markers": ["/", "!"] }],
 
     /* eslint-plugin-import */
+    "import/first": "error",
+    "import/newline-after-import": "error",
+    "import/no-cycle": ["error", { "ignoreExternal": true }],
     "import/no-extraneous-dependencies": ["error", { "devDependencies": false }],
+    "import/no-namespace": "warn",
+    "import/no-nodejs-modules": "warn",
+    "import/no-self-import": "error",
+    "import/no-unassigned-import": "error",
     "import/no-unused-modules": ["warn", { "unusedExports": true }],
+    "import/no-useless-path-segments": ["error", { "noUselessIndex": true }],
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "parent", ["sibling", "index"], "type"],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
 
     /* eslint-plugin-node */
     "node/no-extraneous-import": "error",
 
+    /* eslint-plugin-strict-null-checks */
     "strict-null-checks/all": "warn",
 
     /* @typescript-eslint/eslint-plugin */
@@ -190,11 +172,16 @@
     "@typescript-eslint/restrict-template-expressions": ["error", { "allowBoolean": true }],
     "@typescript-eslint/semi": ["error", "always"]
   },
+
   "overrides": [
     {
-      "files": ["**/*.test.ts"],
+      "files": ["test/**/*.ts", "**/*.test.ts"],
+      "env": { "node": true },
       "rules": {
-        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+        "import/no-nodejs-modules": "off",
+
+        "jsdoc/require-jsdoc": "off"
       }
     }
   ]
