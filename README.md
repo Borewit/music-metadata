@@ -90,8 +90,8 @@ import * as mm from 'music-metadata/lib/core';
 ```
 
 | function                                             | `music-metadata`           | `music-metadata/lib/core`  |
-| -----------------------------------------------------| ---------------------------|----------------------------|
-| [`parseBuffer`](#parsefile-function)                 | ✓                          | ✓                          |
+|------------------------------------------------------| ---------------------------|----------------------------|
+| [`parseBuffer`](#parsebuffer-function)               | ✓                          | ✓                          |
 | [`parseStream`](#parsestream-function) *             | ✓                          | ✓                          |
 | [`parseFromTokenizer`](#parsefromtokenizer-function) | ✓                          | ✓                          |
 | [`parseFile`](#parsefile-function)                   | ✓                          |                            |
