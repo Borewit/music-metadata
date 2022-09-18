@@ -136,9 +136,21 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
 
     assert.strictEqual(common.album, 'Hdtracks 2020 Hi-Res Sampler', 'common.album');
-    assert.deepEqual(common.artists, ['Chris Jones'], 'common.artists');
+    assert.deepStrictEqual(common.artists, ['Chris Jones'], 'common.artists');
     assert.strictEqual(common.encodersettings, 'Lavf58.29.100', 'common.encodersettings');
     assert.strictEqual(common.year, 2020, 'common.year');
+  });
+
+  it('text chunks', async () => {
+
+    const filePath = path.join(aiffSamplePath, 'M1F1-AlawC-AFsp.aif');
+
+    const {format, common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'AIFF-C', 'format.container');
+    assert.strictEqual(format.codec, 'Alaw 2:1', 'format.codec');
+
+    assert.deepStrictEqual(common.comment, ['AFspdate: 2003-01-30 03:28:34 UTC', 'user: kabal@CAPELLA' ,'program: CopyAudio'], 'common.comment');
   });
 
 });

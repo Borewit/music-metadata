@@ -11,6 +11,7 @@ import { RiffInfoTagMapper } from '../riff/RiffInfoTagMap';
 import { ITag } from '../type';
 import { INativeMetadataCollector } from './MetadataCollector';
 import { MatroskaTagMapper } from '../matroska/MatroskaTagMapper';
+import { AiffTagMapper } from '../aiff/AiffTagMap';
 
 export class CombinedTagMapper {
 
@@ -27,7 +28,8 @@ export class CombinedTagMapper {
       new APEv2TagMapper(),
       new AsfTagMapper(),
       new RiffInfoTagMapper(),
-      new MatroskaTagMapper()
+      new MatroskaTagMapper(),
+      new AiffTagMapper()
     ].forEach(mapper => {
       this.registerTagMapper(mapper);
     });
