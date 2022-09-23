@@ -3,7 +3,8 @@
   "root": true,
   "env": {
     "browser": true,
-    "node": false
+    "es2021": true,
+    "node": true
   },
   "extends": [
     /* https://github.com/eslint/eslint/blob/main/conf/eslint-all.js */
@@ -128,6 +129,11 @@
     "no-undef-init": "error",
     "no-underscore-dangle": "error",
     "no-unused-expressions": "error",
+    "no-unused-labels": "error",
+    "no-use-before-define": "off",
+    "no-var": "error",
+    "node/file-extension-in-import": ["error", "always"],
+    "node/no-extraneous-import": "error",
     "object-shorthand": "error",
     "one-var": ["error", "never"],
     "prefer-object-spread": "error",

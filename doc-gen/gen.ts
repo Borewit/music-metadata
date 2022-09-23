@@ -1,5 +1,6 @@
 import { WriteStream, readFileSync, createWriteStream } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from 'node:url';
 
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 import { commonTags } from "../lib/common/GenericTagInfo";
@@ -9,6 +10,8 @@ import { Table, Row } from "./MarkDown";
 type ITagInfoDict = Record<string, { description: string }>;
 
 const combinedTagMapper = new CombinedTagMapper();
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 /**
  *
@@ -60,7 +63,7 @@ function write(out: WriteStream) {
   table.writeTo(out);
 }
 
-const txt = createWriteStream(join(__dirname, "..", "doc", "common_metadata.md"));
+const txt = createWriteStream(join(dirname, "..", "doc", "common_metadata.md"));
 
 txt.write("# Common Metadata\n\n");
 txt.write("Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n");

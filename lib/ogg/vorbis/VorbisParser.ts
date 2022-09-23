@@ -33,7 +33,7 @@ export class VorbisParser implements IPageConsumer {
     } else {
       if (header.headerType.continued) {
         if (this.pageSegments.length === 0) {
-          throw new Error("Cannot continue on previous page");
+          throw new Error('Cannot continue on previous page');
         }
         this.pageSegments.push(pageData);
       }
@@ -125,7 +125,7 @@ export class VorbisParser implements IPageConsumer {
   protected parseFullPage(pageData: Uint8Array) {
     // New page
     const commonHeader = CommonHeader.get(pageData, 0);
-    debug("Parse full page: type=%s, byteLength=%s", commonHeader.packetType, pageData.byteLength);
+    debug('Parse full page: type=%s, byteLength=%s', commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
       case 3: //  type 3: comment header
         return this.parseUserCommentList(pageData, CommonHeader.len);

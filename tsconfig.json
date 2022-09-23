@@ -12,6 +12,10 @@
     "incremental": true,
 
     "lib": ["ESNext", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "strtok3/core": ["node_modules/strtok3/lib/core"]
+    },
 
     // "strict": true,
 
