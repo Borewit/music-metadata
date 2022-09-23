@@ -51,6 +51,19 @@ describe("Parse AIFF-C", () => {
     const metadata = await parser(filePath, "audio/aiff");
     checkFormat(metadata.format, "Alaw 2:1", 8000, 2, 16, 23_493);
   });
+
+      // Issue: https://github.com/Borewit/music-metadata/issues/1211
+      it('Uncompressed AIFC', async () => {
+
+        const filePath = path.join(aiffSamplePath, 'hit-broken.aif');
+  
+        const {format} = await mm.parseFile(filePath);
+  
+        assert.strictEqual(format.container, 'AIFF-C', 'format.container');
+        assert.strictEqual(format.codec, '32-bit floating point IEEE 32-bit float', 'format.codec');
+        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      });
+  
 });
 
 describe("Parse perverse Files", () => {
