@@ -25,7 +25,7 @@ describe("should be able to read an ID3v1 tag", () => {
     expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
     expect(format.bitrate, "format.bitrate = 160 kbit/sec").toBe(160_000);
     expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
-    expect(format.duration, "format.duration").toBe(241_920 / format.sampleRate);
+    expect(format.duration, "format.duration").toBe(241_920 / 44_100);
 
     expect(common.title, "common.title").toBe("Blood Sugar");
     expect(common.artist, "common.artist").toBe("Pendulum");

@@ -64,8 +64,8 @@ describe.each(Parsers)("ID3v2Parser %s", (_, parser) => {
     expect(metadata.common.track.no, "track no").toBe(1);
     expect(metadata.common.track.of, "track of").toBe(11);
     expect(metadata.common.genre, "genre").toStrictEqual(["Alternative"]);
-    expect(metadata.common.picture[0].format, "picture format").toBe("image/jpeg");
-    expect(metadata.common.picture[0].data.length, "picture length").toBe(99_738);
+    expect(metadata.common.picture![0].format, "picture format").toBe("image/jpeg");
+    expect(metadata.common.picture![0].data.length, "picture length").toBe(99_738);
     expect(metadata.common.gapless, "common.gapless").toBe(false);
     expect(metadata.common.comment, "common.comment").toBeUndefined();
 
@@ -146,8 +146,8 @@ describe.each(Parsers)("ID3v2Parser %s", (_, parser) => {
     expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
     expect(format.sampleRate, "format.sampleRate").toBe(44_100);
     const pics = common.picture;
-    expect(pics[0].format, "picture format").toBe("image/jpeg");
-    expect(pics[0].type, "picture type").toBe("Cover (front)");
+    expect(pics![0].format, "picture format").toBe("image/jpeg");
+    expect(pics![0].type, "picture type").toBe("Cover (front)");
   });
 
   describe("Tag mapping", () => {

@@ -13,7 +13,7 @@ export class Atom {
   public static async readAtom(
     tokenizer: ITokenizer,
     dataHandler: AtomDataHandler,
-    parent: Atom,
+    parent: Atom | null,
     remaining: number
   ): Promise<Atom> {
     // Parse atom header
@@ -36,7 +36,11 @@ export class Atom {
   public readonly children: Atom[];
   public readonly atomPath: string;
 
-  public constructor(public readonly header: IAtomHeader, public extended: boolean, public readonly parent: Atom) {
+  public constructor(
+    public readonly header: IAtomHeader,
+    public extended: boolean,
+    public readonly parent: Atom | null
+  ) {
     this.children = [];
     this.atomPath = (this.parent ? this.parent.atomPath + "." : "") + this.header.name;
   }

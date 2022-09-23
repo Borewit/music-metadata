@@ -14,7 +14,7 @@ const debug = initDebug("music-metadata:parser:WavPack");
  * WavPack Parser
  */
 export class WavPackParser extends BasicParser {
-  private audioDataSize: number;
+  private audioDataSize = 0;
 
   public async parse(): Promise<void> {
     this.audioDataSize = 0;

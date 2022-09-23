@@ -16,10 +16,10 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
     expect(common.title, "title").toBe("Redial (Feat. LeafRunner and Nowacking)");
     expect(common.artist, "artist 0").toBe("YourEnigma");
     expect(common.year, "year").toBe(2014);
-    expect(common.picture[0].format, "picture 0 format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "picture 0 length").toBe(214_219);
-    expect(common.picture[0].data[0], "picture 0 JFIF magic header").toBe(0xff);
-    expect(common.picture[0].data[1], "picture 0 JFIF magic header").toBe(0xd8);
+    expect(common.picture![0].format, "picture 0 format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "picture 0 length").toBe(214_219);
+    expect(common.picture![0].data[0], "picture 0 JFIF magic header").toBe(0xff);
+    expect(common.picture![0].data[1], "picture 0 JFIF magic header").toBe(0xd8);
 
     const native = metadata.native["ID3v2.3"];
     expect(native, "Native id3v2.3 tags should be present").toBeTruthy();

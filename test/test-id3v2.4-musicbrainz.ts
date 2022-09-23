@@ -24,8 +24,8 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
     expect(common.track, "common.track").toStrictEqual({ no: 5, of: 14 });
     expect(common.disk, "common.disk").toStrictEqual({ no: 1, of: 1 });
     expect(common.genre, "common.genre").toStrictEqual(["Soundtrack", "OST"]);
-    expect(common.picture[0].format, "common.picture 0 format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "common.picture 0 length").toBe(75_818);
+    expect(common.picture![0].format, "common.picture 0 format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "common.picture 0 length").toBe(75_818);
 
     expect(common.barcode, "common.barcode").toBe("602498644102");
     expect(common.isrc, "common.isrc").toStrictEqual(["USUG10400421"]);
@@ -49,7 +49,7 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
     const native = metadata.native["ID3v2.4"];
     expect(native, "Native id3v2.4 tags should be present").toBeDefined();
 
-    const nativeExpected: [number, { id: string; value: any }, string][] = [
+    const nativeExpected: [number, { id: string; value: any } | undefined, string][] = [
       [0, { id: "TIT2", value: "Home" }, "['ID3v2.4'].TIT2"],
       [1, { id: "TPE1", value: "Explosions in the Sky" }, "['ID3v2.4'].TPE1"],
       [2, { id: "TRCK", value: "5/14" }, "['ID3v2.4'].TRCK"],

@@ -72,7 +72,7 @@ export class APEv2Parser extends BasicParser {
    * @param reader
    * @param offset
    */
-  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader> {
+  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader | undefined> {
     // Search for APE footer header at the end of the file
     const apeBuf = new Uint8Array(TagFooter.len);
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);

@@ -21,8 +21,8 @@ function check_Nirvana_In_Bloom_commonTags(common: ICommonTagsResult) {
   expect(common.track, "common.track").toStrictEqual({ no: 2, of: 12 });
   expect(common.disk, "common.disk").toStrictEqual({ no: 1, of: 1 });
   expect(common.genre, "genre").toStrictEqual(["Grunge", "Alternative"]);
-  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
-  expect(common.picture[0].data.length, "picture length").toBe(30_966);
+  expect(common.picture![0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture![0].data.length, "picture length").toBe(30_966);
   expect(common.barcode, "common.barcode (including leading zero)").toBe("0720642442524");
   expect(common.asin, "common.asin").toBe("B000003TA4");
   expect(common.catalognumber, "common.asin").toStrictEqual(["GED24425"]);
@@ -166,9 +166,9 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
       expect(result.common.track.of, "track of").toBe(5);
       expect(result.common.disk.no, "disk no").toBe(1);
       expect(result.common.disk.of, "disk of").toBe(1);
-      expect(result.common.genre[0], "genre").toBe("Dubstep");
-      expect(result.common.picture[0].format, "picture format").toBe("image/jpeg");
-      expect(result.common.picture[0].data.length, "picture length").toBe(207_439);
+      expect(result.common.genre![0], "genre").toBe("Dubstep");
+      expect(result.common.picture![0].format, "picture format").toBe("image/jpeg");
+      expect(result.common.picture![0].data.length, "picture length").toBe(207_439);
     });
   });
 

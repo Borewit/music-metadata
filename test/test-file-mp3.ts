@@ -131,9 +131,9 @@ describe.each(Parsers)("parser: %s", (description, parser) => {
     expect(common.artist).toBe("Bob Acri");
     expect(common.composer).toStrictEqual(["Robert R. Acri"]);
     expect(common.genre).toStrictEqual(["Jazz"]);
-    expect(common.picture.length, "should contain the cover").toBe(1);
+    expect(common.picture!.length, "should contain the cover").toBe(1);
 
-    const picture = common.picture[0];
+    const picture = common.picture![0];
     expect(picture.description).toBe("thumbnail");
     expect(picture.format).toBe("image/jpeg");
     expect(picture.data.length).toBe(27_852);

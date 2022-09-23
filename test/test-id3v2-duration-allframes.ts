@@ -30,7 +30,7 @@ test.each(Parsers)("should decode id3v2-duration-allframes", async (_, parser) =
   expect(format.bitrate, "format.bitrate").toBe(256_000);
   expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
   expect(format.sampleRate, "format.sampleRate").toBe(44_100);
-  expect(format.duration, "format.duration (test duration=true)").toBe((57 * 1152) / format.sampleRate);
+  expect(format.duration, "format.duration (test duration=true)").toBe((57 * 1152) / 44_100);
   expect(format.container, "format.container").toBe("MPEG");
   expect(format.codec, "format.codec").toBe("MPEG 1 Layer 3");
   expect(format.tool, "format.tool").toBe("LAME 3.98.4");

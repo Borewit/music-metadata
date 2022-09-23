@@ -201,7 +201,7 @@ export function dbToRatio(dB: number): number {
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
  * @returns
  */
-export function toRatio(value: string): IRatio {
+export function toRatio(value: string): IRatio | undefined {
   const ps = value.split(" ").map((p) => p.trim().toLowerCase());
   if (ps.length > 0) {
     const v = Number.parseFloat(ps[0]);

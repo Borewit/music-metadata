@@ -34,10 +34,10 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
     expect(common.track, "common.track").toStrictEqual({ no: 5, of: null });
     expect(common.disk, "common.disk").toStrictEqual({ no: 1, of: 1 });
     expect(common.genre, "common.genres").toStrictEqual(["Soundtrack", "OST"]);
-    expect(common.picture[0].format, "common.picture 0 format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "common.picture 0 length").toBe(80_938);
-    expect(common.picture[1].format, "common.picture 1 format").toBe("image/jpeg");
-    expect(common.picture[1].data.length, "common.picture 1 length").toBe(80_938);
+    expect(common.picture![0].format, "common.picture 0 format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "common.picture 0 length").toBe(80_938);
+    expect(common.picture![1].format, "common.picture 1 format").toBe("image/jpeg");
+    expect(common.picture![1].data.length, "common.picture 1 length").toBe(80_938);
   });
 
   // Issue: https://github.com/Borewit/music-metadata/issues/502

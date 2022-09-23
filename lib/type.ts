@@ -42,7 +42,7 @@ export interface IRating {
   /**
    * Rating [0..1]
    */
-  rating: number;
+  rating: number | undefined;
 }
 
 export interface ICommonTagsResult {
@@ -333,7 +333,7 @@ export interface ICommonTagsResult {
   /**
    * Movement Index/Total
    */
-  movementIndex: { no?: number; of?: number };
+  movementIndex: { no: number | null; of: number | null };
   /**
    * Podcast Identifier
    */
@@ -412,16 +412,16 @@ export interface IVideoTrack {
 }
 
 export interface ITrackInfo {
-  type?: TrackType;
+  type?: TrackType | undefined;
   codecName?: string;
-  codecSettings?: string;
-  flagEnabled?: boolean;
-  flagDefault?: boolean;
-  flagLacing?: boolean;
-  name?: string;
-  language?: string;
-  audio?: IAudioTrack;
-  video?: IVideoTrack;
+  codecSettings?: string | undefined;
+  flagEnabled?: boolean | undefined;
+  flagDefault?: boolean | undefined;
+  flagLacing?: boolean | undefined;
+  name?: string | undefined;
+  language?: string | undefined;
+  audio?: IAudioTrack | undefined;
+  video?: IVideoTrack | undefined;
 }
 
 export interface IFormat {
@@ -622,7 +622,7 @@ export interface IApeHeader extends IOptions {
 }
 
 export interface IPrivateOptions extends IOptions {
-  apeHeader?: IApeHeader;
+  apeHeader?: IApeHeader | undefined;
 }
 
 /**

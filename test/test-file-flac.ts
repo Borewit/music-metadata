@@ -34,8 +34,8 @@ describe("decode flac.flac", () => {
     expect(common.track, "common.track").toStrictEqual({ no: 7, of: null });
     expect(common.disk, "common.disk").toStrictEqual({ no: null, of: null });
     expect(common.genre, "genre").toStrictEqual(["Alt. Rock"]);
-    expect(common.picture[0].format, "common.picture format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "common.picture length").toBe(175_668);
+    expect(common.picture![0].format, "common.picture format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "common.picture length").toBe(175_668);
 
     const vorbis = orderTags(metadata.native.vorbis);
 
@@ -117,10 +117,10 @@ test.each(Parsers)("Support Vorbis METADATA_BLOCK_PICTURE tags", async (_, parse
 
   expect(common.picture, "common.picture").toBeDefined();
   expect(common.picture, "common.picture.length").toHaveLength(2);
-  expect(common.picture[0], "ommon.picture[0].format").toHaveProperty("format", "image/jpeg");
-  expect(common.picture[0].data, "ommon.picture[0].data.length").toHaveLength(107_402);
-  expect(common.picture[1], "ommon.picture[1].format").toHaveProperty("format", "image/jpeg");
-  expect(common.picture[1].data, "ommon.picture[1].data.length").toHaveLength(215_889);
+  expect(common.picture![0], "ommon.picture[0].format").toHaveProperty("format", "image/jpeg");
+  expect(common.picture![0].data, "ommon.picture[0].data.length").toHaveLength(107_402);
+  expect(common.picture![1], "ommon.picture[1].format").toHaveProperty("format", "image/jpeg");
+  expect(common.picture![1].data, "ommon.picture[1].data.length").toHaveLength(215_889);
 });
 
 test.each(Parsers)("Handle FLAC with undefined duration (number of samples == 0)", async (_, parser) => {

@@ -54,9 +54,9 @@ describe.each(Parsers)("parser: %s", (description, parser) => {
     expect(common.track.of, "common.track.of").toBeNull();
     expect(common.disk.no, "common.disk.no").toBe(1);
     expect(common.disk.of, "common.disk.of").toBe(1);
-    expect(common.genre[0], "common.genre").toBe("Soundtrack");
-    expect(common.picture[0].format, "common.picture format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "common.picture length").toBe(80_938);
+    expect(common.genre![0], "common.genre").toBe("Soundtrack");
+    expect(common.picture![0].format, "common.picture format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "common.picture length").toBe(80_938);
 
     expect(id3v11.title, "id3v11.title").toStrictEqual(["Home"]);
     expect(id3v11.album, "id3v11.album").toStrictEqual(["Friday Night Lights [Original"]);

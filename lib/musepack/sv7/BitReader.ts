@@ -4,7 +4,7 @@ import type { ITokenizer } from "../../strtok3";
 
 export class BitReader {
   public pos = 0;
-  private dword: number = undefined;
+  private dword: number | undefined;
 
   public constructor(private tokenizer: ITokenizer) {}
 

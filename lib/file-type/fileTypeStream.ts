@@ -56,7 +56,7 @@ export async function fileTypeStream(
         try {
           // Set up output stream
           const pass: PassThrough & {
-            fileType?: FileTypeResult;
+            fileType?: FileTypeResult | undefined;
           } = new stream.PassThrough();
           const outputStream: ReadableStreamWithFileType = stream.pipeline
             ? stream.pipeline(readableStream, pass, () => {

@@ -20,13 +20,13 @@ export interface IGenericTagMapper {
    * @param warnings  Register warnings
    * @returns Generic tag, if native tag could be mapped
    */
-  mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag;
+  mapGenericTag(tag: ITag, warnings: INativeMetadataCollector): generic.IGenericTag | null;
 }
 
 export class CommonTagMapper implements IGenericTagMapper {
   public static maxRatingScore = 1;
 
-  public static toIntOrNull(str: string): number {
+  public static toIntOrNull(str: string): number | null {
     const cleaned = Number.parseInt(str, 10);
     return Number.isNaN(cleaned) ? null : cleaned;
   }
@@ -51,7 +51,7 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @param warnings Register warnings
    * @returns common name
    */
-  public mapGenericTag(tag: ITag, warnings: IWarningCollector): generic.IGenericTag {
+  public mapGenericTag(tag: ITag, warnings: IWarningCollector): generic.IGenericTag | null {
     tag = { id: tag.id, value: tag.value }; // clone object
 
     this.postMap(tag, warnings);

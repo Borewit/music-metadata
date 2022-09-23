@@ -9,7 +9,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   test("number", async () => {
     const tokenizer = await getTokenizerWithData("increment-5", load);
     expect(tokenizer.fileInfo, "tokenizer.fileInfo").toBeDefined();
-    await tokenizer.ignore(tokenizer.fileInfo.size - 4);
+    await tokenizer.ignore(tokenizer.fileInfo.size! - 4);
     const x = await tokenizer.peekNumber(INT32_BE);
     expect(x).toBe(33_752_069);
   });
@@ -17,7 +17,7 @@ describe.each(tokenizerCases)("tokenizer from %s", (_name, load) => {
   test("should throw an Error if we reach EOF while peeking a number", async () => {
     const tokenizer = await getTokenizerWithData("increment-5", load);
     expect(tokenizer.fileInfo, "tokenizer.fileInfo").toBeDefined();
-    await tokenizer.ignore(tokenizer.fileInfo.size - 3);
+    await tokenizer.ignore(tokenizer.fileInfo.size! - 3);
     try {
       await tokenizer.peekNumber(INT32_BE);
       expect.fail("Should throw Error: End-Of-File");

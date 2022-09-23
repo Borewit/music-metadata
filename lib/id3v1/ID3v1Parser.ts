@@ -12,7 +12,7 @@ import type { IRandomReader } from "../type";
 const debug = initDebug("music-metadata:parser:ID3v1");
 
 export class ID3v1Parser extends BasicParser {
-  private static getGenre(genreIndex: number): string {
+  private static getGenre(genreIndex: number): string | undefined {
     if (genreIndex < Genres.length) {
       return Genres[genreIndex];
     }

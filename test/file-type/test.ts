@@ -197,8 +197,8 @@ const falsePositives: Partial<Record<FileExtension, string[]>> = {
 
 async function checkBufferLike(type: FileExtension, bufferLike: Uint8Array | ArrayBuffer | Buffer) {
   const fileType = await fileTypeFromBuffer(bufferLike);
-  expect(fileType.ext).toBe(type);
-  expect(fileType.mime).toBeTypeOf("string");
+  expect(fileType!.ext).toBe(type);
+  expect(fileType!.mime).toBeTypeOf("string");
 }
 
 const cases = Object.entries(names).flatMap(([type, typenames]) =>
@@ -213,8 +213,8 @@ describe.each(cases)("%s.%s", (name, type) => {
   const filePath = join(__dirname, "fixture", `${name}.${type}`);
   test("fromFile", async () => {
     const fileType = await fileTypeFromFile(filePath);
-    expect(fileType.ext).toBe(type);
-    expect(fileType.mime).toBeTypeOf("string");
+    expect(fileType!.ext).toBe(type);
+    expect(fileType!.mime).toBeTypeOf("string");
   });
 
   test("fromBuffer Buffer", async () => {
@@ -236,8 +236,8 @@ describe.each(cases)("%s.%s", (name, type) => {
     const fileType = await fileTypeFromStream(createReadStream(filePath));
 
     expect(fileType, `identify ${name}.${type}`).toBeTruthy();
-    expect(fileType.ext, "fileType.ext").toBe(type);
-    expect(fileType.mime, "fileType.mime").toBeTypeOf("string");
+    expect(fileType!.ext, "fileType.ext").toBe(type);
+    expect(fileType!.mime, "fileType.mime").toBeTypeOf("string");
   });
 
   test("fileTypeStream", async () => {

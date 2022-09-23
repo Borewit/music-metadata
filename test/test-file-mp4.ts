@@ -39,11 +39,11 @@ describe("Parse MPEG-4 files (.m4a)", () => {
     expect(common.track.of, "track of").toBe(12);
     expect(common.disk.no, "disk no").toBe(1);
     expect(common.disk.of, "disk of").toBe(1);
-    expect(common.genre[0], "genre").toBe("Electronic");
-    expect(common.picture[0].format, "picture 0 format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "picture 0 length").toBe(196_450);
-    expect(common.picture[1].format, "picture 1 format").toBe("image/jpeg");
-    expect(common.picture[1].data.length, "picture 1 length").toBe(196_450);
+    expect(common.genre![0], "genre").toBe("Electronic");
+    expect(common.picture![0].format, "picture 0 format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "picture 0 length").toBe(196_450);
+    expect(common.picture![1].format, "picture 1 format").toBe("image/jpeg");
+    expect(common.picture![1].data.length, "picture 1 length").toBe(196_450);
 
     const native = orderTags(metadata.native.iTunes);
     expect(native, "Native m4a tags should be present").toBeTruthy();
@@ -367,8 +367,8 @@ describe.each(Parsers)("parser: %s", (description, parser) => {
     expect(format.duration, "format.duration").toBeCloseTo(1.024, 3);
     expect(format.sampleRate, "format.sampleRate").toBe(48_000);
 
-    expect(format.creationTime.toISOString(), "format.modificationTime").toBe("2021-01-02T17:42:46.000Z");
-    expect(format.modificationTime.toISOString(), "format.modificationTime").toBe("2021-01-02T17:43:25.000Z");
+    expect(format.creationTime!.toISOString(), "format.modificationTime").toBe("2021-01-02T17:42:46.000Z");
+    expect(format.modificationTime!.toISOString(), "format.modificationTime").toBe("2021-01-02T17:43:25.000Z");
 
     const iTunes = orderTags(native.iTunes);
     expect(iTunes.date[0], "moov.udta.date").toBe("2021-01-02T17:42:05Z");

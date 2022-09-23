@@ -62,5 +62,5 @@ test(".stream() method - sampleSize option", async () => {
     sampleSize: 4100,
   });
   expect(stream.fileType, "file-type can be determined with a sampleSize of 4100").toBeTypeOf("object");
-  expect(stream.fileType.mime).toBe("video/ogg");
+  expect(stream.fileType!.mime).toBe("video/ogg");
 });

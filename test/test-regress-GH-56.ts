@@ -38,5 +38,5 @@ test.each(Parsers)("%s", async (description, parser) => {
   const expectedTags = description === "file" || description === "buffer" ? ["ID3v2.3", "APEv2"] : ["ID3v2.3"];
   expect(metadata.format.tagTypes, "format.tagTypes").toStrictEqual(expectedTags);
   expect(metadata.format.sampleRate, "format.sampleRate").toBe(44_100);
-  expect(metadata.format.duration, "format.duration").toBe(16_462_080 / metadata.format.sampleRate);
+  expect(metadata.format.duration, "format.duration").toBe(16_462_080 / 44_100);
 });

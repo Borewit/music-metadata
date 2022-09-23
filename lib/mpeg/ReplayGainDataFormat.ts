@@ -57,7 +57,7 @@ enum ReplayGainOriginator {
  *
  * https://github.com/Borewit/music-metadata/wiki/Replay-Gain-Data-Format
  */
-export const ReplayGain: IGetToken<IReplayGain> = {
+export const ReplayGain: IGetToken<IReplayGain | undefined> = {
   len: 2,
 
   get: (buf, off) => {

@@ -13,7 +13,7 @@ import type { FileTypeResult } from "./type";
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
 export class FileTypeParser {
-  buffer: Uint8Array;
+  buffer: Uint8Array = new Uint8Array(minimumBytes);
   tokenizer: strtok3.ITokenizer;
 
   check(header: number[], options?: { offset: number; mask?: number[] }) {
@@ -24,7 +24,7 @@ export class FileTypeParser {
     return this.check(stringToBytes(header), options);
   }
 
-  async parse(tokenizer: strtok3.ITokenizer): Promise<FileTypeResult> {
+  async parse(tokenizer: strtok3.ITokenizer): Promise<FileTypeResult | undefined> {
     this.buffer = new Uint8Array(minimumBytes);
 
     // Keep reading until EOF if the file size is unknown.
@@ -1325,7 +1325,7 @@ export class FileTypeParser {
     }
   }
 
-  async readTiffTag(bigEndian: any): Promise<FileTypeResult> {
+  async readTiffTag(bigEndian: any): Promise<FileTypeResult | undefined> {
     const tagId = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
     void this.tokenizer.ignore(10);
     switch (tagId) {
@@ -1343,7 +1343,7 @@ export class FileTypeParser {
     }
   }
 
-  async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult> {
+  async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult | undefined> {
     const numberOfTags = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
     for (let n = 0; n < numberOfTags; ++n) {
       const fileType = await this.readTiffTag(bigEndian);
@@ -1353,7 +1353,7 @@ export class FileTypeParser {
     }
   }
 
-  async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult> {
+  async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult | undefined> {
     const version = (bigEndian ? UINT16_BE : UINT16_LE).get(this.buffer, 2);
     const ifdOffset = (bigEndian ? UINT32_BE : UINT32_LE).get(this.buffer, 4);
 

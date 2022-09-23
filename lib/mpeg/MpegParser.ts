@@ -295,7 +295,7 @@ export class MpegParser extends AbstractID3Parser {
     return;
   }
 
-  private async readXtraInfoHeader(): Promise<IXingInfoTag> {
+  private async readXtraInfoHeader(): Promise<IXingInfoTag | null> {
     const headerTag = await this.tokenizer.readToken(InfoTagHeaderTag);
     this.offset += InfoTagHeaderTag.len; // 12
 

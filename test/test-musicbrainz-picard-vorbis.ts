@@ -67,8 +67,8 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
     expect(common.musicbrainz_trackid, "common.musicbrainz_trackid").toBe("0f53f7a3-89df-4069-9357-d04252239b6d");
 
     expect(common.picture, "common.picture").toBeDefined();
-    expect(common.picture[0].format, "picture format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "picture length").toBe(175_668);
+    expect(common.picture![0].format, "picture format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "picture length").toBe(175_668);
 
     // Compare expectedCommonTags with result.vorbis
     expect(native.TITLE, "vorbis: .TITLE").toStrictEqual(["Brian Eno"]);

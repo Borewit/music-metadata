@@ -13,6 +13,6 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
     const path = join(samplePath, file);
     const result = await parser(path);
     const data = readFileSync(path + ".jpg");
-    expect(result.common.picture[0].data, "check picture").toEqual(data);
+    expect(result.common.picture![0].data, "check picture").toEqual(data);
   });
 });

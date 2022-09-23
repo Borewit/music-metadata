@@ -32,7 +32,7 @@ const compressionTypes: Record<string, string> = {
  * - http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Docs/AIFF-1.3.pdf
  */
 export class AIFFParser extends BasicParser {
-  private isCompressed: boolean;
+  private isCompressed = false;
 
   public async parse(): Promise<void> {
     const header = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);

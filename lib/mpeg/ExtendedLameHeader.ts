@@ -18,7 +18,7 @@ export interface IExtendedLameHeader {
   revision: number;
   vbr_method: number;
   lowpass_filter: number;
-  track_peak?: number;
+  track_peak: number | undefined;
   track_gain: IReplayGain;
   album_gain: IReplayGain;
   music_length: number;

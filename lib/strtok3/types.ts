@@ -4,45 +4,45 @@ export interface IFileInfo {
   /**
    * File size in bytes
    */
-  size?: number;
+  size?: number | undefined;
   /**
    * MIME-type of file
    */
-  mimeType?: string;
+  mimeType?: string | undefined;
 
   /**
    * File path
    */
-  path?: string;
+  path?: string | undefined;
 
   /**
    * File URL
    */
-  url?: string;
+  url?: string | undefined;
 }
 
 export interface IReadChunkOptions {
   /**
    * The offset in the buffer to start writing at; default is 0
    */
-  offset?: number;
+  offset?: number | undefined;
 
   /**
    * Number of bytes to read.
    */
-  length?: number;
+  length?: number | undefined;
 
   /**
    * Position where to begin reading from the file.
    * Default it is `tokenizer.position`.
    * Position may not be less then `tokenizer.position`.
    */
-  position?: number;
+  position?: number | undefined;
 
   /**
    * If set, will not throw an EOF error if not all of the requested data could be read
    */
-  mayBeLess?: boolean;
+  mayBeLess?: boolean | undefined;
 }
 
 /**

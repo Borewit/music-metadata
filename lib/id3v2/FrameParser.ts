@@ -34,7 +34,7 @@ const defaultEnc: util.StringEncoding = "latin1"; // latin1 == iso-8859-1;
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
   const genres = [];
-  let code: string;
+  let code: string | undefined;
   let word = "";
   for (const c of origVal) {
     if (typeof code === "string") {
@@ -72,7 +72,7 @@ export function parseGenre(origVal: string): string[] {
  * @param code
  * @returns
  */
-function parseGenreCode(code: string): string {
+function parseGenreCode(code: string): string | undefined {
   if (code === "RX") return "Remix";
   if (code === "CR") return "Cover";
   if (/^\d*$/.test(code)) {
