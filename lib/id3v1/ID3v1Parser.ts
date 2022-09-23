@@ -2,7 +2,7 @@ import { APEv2Parser } from "../apev2/APEv2Parser";
 import { BasicParser } from "../common/BasicParser";
 import { decodeLatin1 } from "../compat/text-decoder";
 import initDebug from "../debug";
-import { EndOfStreamError } from "../peek-readable";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 
 import { Genres } from "./ID3v1Genres";
 import { ID3V1_SIZE, readId3v1Header } from "./ID3v1Header";

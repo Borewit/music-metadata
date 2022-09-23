@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 
-import { EndOfStreamError } from "../../lib/peek-readable";
+import { EndOfStreamError } from "../../lib/peek-readable/EndOfFileStream";
 import { UINT8 } from "../../lib/token-types";
 import { Utf8StringType } from "../../lib/token-types/string";
 

@@ -1,7 +1,7 @@
 import { BasicParser } from "../common/BasicParser";
 import { readUintBE } from "../compat/buffer";
 import initDebug from "../debug";
-import { EndOfStreamError } from "../peek-readable";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
 import { Utf8StringType } from "../token-types/string";
 

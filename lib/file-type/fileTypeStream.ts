@@ -1,4 +1,4 @@
-import { EndOfStreamError } from "../peek-readable";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 
 import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
 

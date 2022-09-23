@@ -3,7 +3,7 @@ import { FourCcToken } from "../common/FourCC";
 import { stripNulls } from "../common/Util";
 import initDebug from "../debug";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
-import { EndOfStreamError } from "../peek-readable";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { IChunkHeader, Header } from "../riff/RiffHeader";
 import { ListInfoTagValue } from "../riff/RiffInfo";
 import { fromBuffer } from "../strtok3/fromBuffer";

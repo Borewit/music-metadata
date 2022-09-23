@@ -1,7 +1,7 @@
 import { BasicParser } from "../common/BasicParser";
 import initDebug from "../debug";
 import { ID3v1Parser } from "../id3v1/ID3v1Parser";
-import { EndOfStreamError } from "../peek-readable";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 
 import { ID3v2Header } from "./ID3v2Header";
 import { ID3v2Parser } from "./ID3v2Parser";

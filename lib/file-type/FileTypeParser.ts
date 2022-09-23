@@ -1,7 +1,7 @@
 import { indexOf, isSubArray, readUintBE } from "../compat/buffer";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
 import { encodeUtf8 } from "../compat/text-encoder";
-import {  EndOfStreamError } from "../peek-readable";
+import {  EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { UINT32_LE, UINT16_LE, UINT16_BE, UINT32_BE, UINT8, INT32_BE, UINT64_LE } from "../token-types";
 import { Latin1StringType, Utf8StringType } from "../token-types/string";
 

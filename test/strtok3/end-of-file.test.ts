@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 
-import { EndOfStreamError } from "../../lib/peek-readable";
+import { EndOfStreamError } from "../../lib/peek-readable/EndOfFileStream";
 import { INT32_BE, UINT24_BE } from "../../lib/token-types";
 
 import { getTokenizerWithData, tokenizerCases } from "./util";
