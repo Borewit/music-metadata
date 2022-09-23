@@ -135,14 +135,17 @@ test.each(Parsers)('Parse tag "(c) ": %s', async (_, parser) => {
   expect(common.year, "common.year").toBe(2020);
 });
 
-it('text chunks', async () => {
+test("text chunks", async () => {
+  const filePath = join(aiffSamplePath, "M1F1-AlawC-AFsp.aif");
 
-  const filePath = path.join(aiffSamplePath, 'M1F1-AlawC-AFsp.aif');
+  const { format, common } = await parseFile(filePath);
 
-  const {format, common} = await mm.parseFile(filePath);
+  expect(format.container, "format.container").toBe("AIFF-C");
+  expect(format.codec, "format.codec").toBe("Alaw 2:1");
 
-  assert.strictEqual(format.container, 'AIFF-C', 'format.container');
-  assert.strictEqual(format.codec, 'Alaw 2:1', 'format.codec');
-
-  assert.deepStrictEqual(common.comment, ['AFspdate: 2003-01-30 03:28:34 UTC', 'user: kabal@CAPELLA' ,'program: CopyAudio'], 'common.comment');
+  expect(common.comment, "common.comment").toEqual([
+    "AFspdate: 2003-01-30 03:28:34 UTC",
+    "user: kabal@CAPELLA",
+    "program: CopyAudio",
+  ]);
 });

@@ -16,10 +16,10 @@ export const FourCcToken: IGetToken<string> = {
   get: (buf: Uint8Array, off: number): string => {
     const id = new Latin1StringType(4).get(buf, off);
 
-        if (!validFourCC.test(id)) {
-          throw new Error(`FourCC contains invalid characters: ${a2hex(id)} "${id}"`);
-        }
-    
+    if (!validFourCC.test(id)) {
+      throw new Error(`FourCC contains invalid characters: ${a2hex(id)} "${id}"`);
+    }
+
     return id;
   },
 

@@ -23,8 +23,6 @@ import type { INativeMetadataCollector } from "./INativeMetadataCollector";
 
 const debug = initDebug("music-metadata:collector");
 
-
-
 const TagPriority: TagType[] = [
   "matroska",
   "APEv2",
@@ -34,7 +32,8 @@ const TagPriority: TagType[] = [
   "ID3v2.2",
   "exif",
   "asf",
-  "iTunes", 'AIFF',
+  "iTunes",
+  "AIFF",
   "ID3v1",
 ];
 

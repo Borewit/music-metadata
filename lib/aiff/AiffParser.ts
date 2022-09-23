@@ -6,6 +6,7 @@ import * as iff from "../iff";
 import { EndOfStreamError } from "../strtok3";
 import { fromBuffer } from "../strtok3/fromBuffer";
 import { Uint8ArrayType } from "../token-types";
+import { Latin1StringType } from "../token-types/string";
 
 import * as AiffToken from "./AiffTokenCommon";
 
@@ -103,10 +104,10 @@ export class AIFFParser extends BasicParser {
         }
         return 0;
 
-      case 'NAME': // Sample name chunk
-      case 'AUTH': // Author chunk
-      case '(c) ': // Copyright chunk
-      case 'ANNO': // Annotation chunk
+      case "NAME": // Sample name chunk
+      case "AUTH": // Author chunk
+      case "(c) ": // Copyright chunk
+      case "ANNO": // Annotation chunk
         return this.readTextChunk(header);
 
       default:
@@ -116,11 +117,13 @@ export class AIFFParser extends BasicParser {
   }
 
   public async readTextChunk(header: iff.IChunkHeader): Promise<number> {
-    const value = await this.tokenizer.readToken(new Token.StringType(header.chunkSize, 'ascii'));
-    value.split('\0').map(v => v.trim()).filter(v => v && v.length > 0).forEach(v => {
-      this.metadata.addTag('AIFF', header.chunkID, v.trim());
-    });
+    const value = await this.tokenizer.readToken(new Latin1StringType(header.chunkSize));
+    for (const item of value
+      .split("\0")
+      .map((v) => v.trim())
+      .filter((v) => v && v.length > 0)) {
+      this.metadata.addTag("AIFF", header.chunkID, item.trim());
+    }
     return header.chunkSize;
   }
-
 }
