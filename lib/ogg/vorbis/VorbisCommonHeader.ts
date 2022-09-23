@@ -1,7 +1,7 @@
 import { UINT8 } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
 
-import type { IGetToken } from "../../strtok3";
+import type { IGetToken } from "../../token-types";
 
 /**
  * Vorbis 1 decoding tokens

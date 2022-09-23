@@ -2,7 +2,8 @@ import { UINT32_LE } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 
 import type { IChunkHeader } from "../iff";
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 export { IChunkHeader } from "../iff";
 

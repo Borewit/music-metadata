@@ -3,7 +3,7 @@ import { AttachedPictureType } from "../../id3v2/AttachedPictureType";
 import { UINT32_BE } from "../../token-types";
 import { Utf8StringType } from "../../token-types/string";
 
-import type { IGetToken } from "../../strtok3";
+import type { IGetToken } from "../../token-types";
 import type { IPicture } from "../../type";
 
 /**

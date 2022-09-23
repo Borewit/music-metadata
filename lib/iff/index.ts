@@ -1,7 +1,8 @@
 import { FourCcToken } from "../common/FourCC";
 import { UINT32_BE } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 /**
  * "EA IFF 85" Standard for Interchange Format Files

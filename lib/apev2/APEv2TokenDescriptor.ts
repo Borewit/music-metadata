@@ -1,7 +1,8 @@
 import { FourCcToken } from "../common/FourCC";
 import { UINT32_LE, Uint8ArrayType } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 export interface IDescriptor {
   // should equal 'MAC '

@@ -3,7 +3,7 @@ import { Utf16LEStringType } from "../token-types/string";
 
 import { CodecListObjectHeader } from "./CodecListObjectHeader";
 
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 
 export interface ICodecEntry {
   type: {

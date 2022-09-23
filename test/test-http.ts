@@ -5,7 +5,7 @@ import { describe, test, expect } from "vitest";
 
 import { parseStream } from "../lib";
 
-import type { IFileInfo } from "../lib/strtok3";
+import type { IFileInfo } from "../lib/strtok3/types";
 import type { Readable } from "node:stream";
 
 interface IHttpResponse {

@@ -1,7 +1,7 @@
 import { UINT32_LE } from "../token-types";
 
 import type { IChunkHeader } from "../iff";
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 export interface IFactChunk {
   dwSampleLength: number;

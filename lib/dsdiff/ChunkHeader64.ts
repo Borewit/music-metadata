@@ -2,7 +2,8 @@ import { FourCcToken } from "../common/FourCC";
 import { INT64_BE } from "../token-types";
 
 import type { IChunkHeader64 } from "../iff";
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 export { IChunkHeader64 } from "../iff";
 

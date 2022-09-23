@@ -1,6 +1,6 @@
 import { UINT64_BE, INT16_BE, INT32_BE } from "../token-types";
 
-import type { IToken, IGetToken } from "../strtok3";
+import type { IToken, IGetToken } from "../token-types";
 
 /**
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap1/qtff1.html#//apple_ref/doc/uid/TP40000939-CH203-38190

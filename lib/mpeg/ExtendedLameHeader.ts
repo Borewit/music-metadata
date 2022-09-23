@@ -7,7 +7,8 @@ import { UINT32_BE, UINT8, UINT16_BE } from "../token-types";
 
 import { ReplayGain, IReplayGain } from "./ReplayGainDataFormat";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 /**
  * LAME Tag, extends the Xing header format

@@ -1,4 +1,5 @@
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 import type { IPageHeader } from "./Header";
 
 export interface ISegmentTable {

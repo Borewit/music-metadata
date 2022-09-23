@@ -1,6 +1,7 @@
 import { INT32_BE } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 /**
  * Sample-to-Chunk ('stsc') atom table entry interface

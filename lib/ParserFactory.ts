@@ -18,7 +18,7 @@ import { WaveParser } from "./wav/WaveParser";
 import { WavPackParser } from "./wavpack/WavPackParser";
 
 import type { INativeMetadataCollector } from "./common/INativeMetadataCollector";
-import type { ITokenizer } from "./strtok3";
+import type { ITokenizer } from "./strtok3/types";
 import type { IOptions, IAudioMetadata, ParserType } from "./type";
 
 const debug = initDebug("music-metadata:parser:factory");

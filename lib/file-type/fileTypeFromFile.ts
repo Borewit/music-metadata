@@ -1,4 +1,4 @@
-import { fromFile } from "../strtok3";
+import { fromFile } from "../strtok3/fromFile";
 
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
 

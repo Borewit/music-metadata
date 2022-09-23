@@ -1,8 +1,8 @@
-import { EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../peek-readable";
 
 import { FileTypeParser } from "./FileTypeParser";
 
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 import type { FileTypeResult } from "./type";
 
 /**

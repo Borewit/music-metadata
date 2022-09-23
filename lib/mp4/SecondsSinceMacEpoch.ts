@@ -1,6 +1,7 @@
 import { UINT32_BE } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 /**
  * Timestamp stored in seconds since Mac Epoch (1 January 1904)

@@ -2,7 +2,7 @@ import { BasicParser } from "../common/BasicParser";
 import { FourCcToken } from "../common/FourCC";
 import initDebug from "../debug";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
-import { fromBuffer } from "../strtok3";
+import { fromBuffer } from "../strtok3/fromBuffer";
 import { UINT32_LE, Uint8ArrayType, UINT32_BE, UINT16_BE, UINT8 } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 

@@ -1,7 +1,7 @@
 import { RandomFileReader } from "./common/RandomFileReader";
 import { ParserFactory } from "./ParserFactory";
 import { scanAppendingHeaders } from "./scanAppendingHeaders";
-import { fromFile } from "./strtok3";
+import { fromFile } from "./strtok3/fromFile";
 
 import type { IAudioMetadata, IOptions } from "./type";
 

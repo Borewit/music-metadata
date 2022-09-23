@@ -1,7 +1,8 @@
 import { getBit, getBitAllignedNumber } from "../common/Util";
 import { UINT24_BE } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 import type { BlockType } from "./BlockType";
 
 /**

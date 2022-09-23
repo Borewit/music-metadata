@@ -1,4 +1,4 @@
-import { EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../peek-readable";
 
 import { fileTypeFromBuffer } from "./fileTypeFromBuffer";
 

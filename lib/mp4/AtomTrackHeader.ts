@@ -2,7 +2,8 @@ import { UINT8, UINT24_BE, UINT32_BE, UINT16_BE } from "../token-types";
 
 import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 import type { IVersionAndFlags } from "./VersionAndFlags";
 
 /**

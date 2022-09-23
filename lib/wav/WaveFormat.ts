@@ -1,7 +1,7 @@
 import { UINT16_LE, UINT32_LE } from "../token-types";
 
 import type { IChunkHeader } from "../iff";
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx

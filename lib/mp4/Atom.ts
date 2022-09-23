@@ -3,7 +3,7 @@ import initDebug from "../debug";
 import { Header, IAtomHeader } from "./AtomHeader";
 import { ExtendedSize } from "./SoundSampleDescriptionVersion";
 
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 
 export type AtomDataHandler = (atom: Atom, remaining: number) => Promise<void>;
 

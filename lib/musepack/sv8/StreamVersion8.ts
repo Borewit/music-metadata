@@ -3,7 +3,8 @@ import initDebug from "../../debug";
 import { UINT32_LE, UINT8 } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
 
-import type { ITokenizer, IGetToken } from "../../strtok3";
+import type { ITokenizer } from "../../strtok3/types";
+import type { IGetToken } from "../../token-types";
 
 const debug = initDebug("music-metadata:parser:musepack:sv8");
 

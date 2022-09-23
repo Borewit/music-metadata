@@ -1,7 +1,8 @@
 import { UINT8, UINT24_BE } from "../token-types";
 import { Utf8StringType } from "../token-types/string";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 import type { IVersionAndFlags } from "./VersionAndFlags";
 
 /**

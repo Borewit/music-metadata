@@ -1,8 +1,9 @@
 import { RandomUint8ArrayReader } from "./common/RandomUint8ArrayReader";
 import { parseFromTokenizer } from "./parseFromTokenizer";
 import { scanAppendingHeaders } from "./scanAppendingHeaders";
-import * as strtok3 from "./strtok3";
+import { fromBuffer } from "./strtok3/fromBuffer";
 
+import type { IFileInfo } from "./strtok3/types";
 import type { IAudioMetadata, IOptions } from "./type";
 
 /**
@@ -15,12 +16,12 @@ import type { IAudioMetadata, IOptions } from "./type";
  */
 export async function parseBuffer(
   uint8Array: Uint8Array,
-  fileInfo?: strtok3.IFileInfo | string,
+  fileInfo?: IFileInfo | string,
   options: IOptions = {}
 ): Promise<IAudioMetadata> {
   const bufferReader = new RandomUint8ArrayReader(uint8Array);
   await scanAppendingHeaders(bufferReader, options);
 
-  const tokenizer = strtok3.fromBuffer(uint8Array, typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo);
+  const tokenizer = fromBuffer(uint8Array, typeof fileInfo === "string" ? { mimeType: fileInfo } : fileInfo);
   return parseFromTokenizer(tokenizer, options);
 }

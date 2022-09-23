@@ -2,7 +2,8 @@ import { FourCcToken } from "../common/FourCC";
 import { getBit } from "../common/Util";
 import { UINT8, UINT64_LE, UINT32_LE } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 
 /**
  * Page header

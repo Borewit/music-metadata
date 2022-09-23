@@ -12,7 +12,7 @@ import { BlockType } from "./BlockType";
 
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import type { ITokenParser } from "../ParserFactory";
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 import type { IOptions } from "../type";
 
 const debug = initDebug("music-metadata:parser:FLAC");

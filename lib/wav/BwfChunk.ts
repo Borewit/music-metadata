@@ -2,7 +2,7 @@ import { stripNulls } from "../common/Util";
 import { UINT32_LE, UINT16_LE, Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 export interface IBroadcastAudioExtensionChunk {
   description: string;

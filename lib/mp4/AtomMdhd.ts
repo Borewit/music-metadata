@@ -3,7 +3,8 @@ import { UINT8, UINT24_BE, UINT32_BE, UINT16_BE } from "../token-types";
 import { FixedLengthAtom } from "./AtomFixedLength";
 import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
+
 import type { IAtomMxhd } from "./AtomMxhd";
 
 /**

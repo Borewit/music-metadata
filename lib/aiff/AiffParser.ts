@@ -3,7 +3,7 @@ import { FourCcToken } from "../common/FourCC";
 import initDebug from "../debug";
 import { ID3v2Parser } from "../id3v2/ID3v2Parser";
 import * as iff from "../iff";
-import { EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../peek-readable";
 import { fromBuffer } from "../strtok3/fromBuffer";
 import { Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
