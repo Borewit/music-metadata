@@ -6,7 +6,7 @@ import { parse as ContentType_parse } from "./content-type";
 import initDebug from "./debug";
 import { DsdiffParser } from "./dsdiff/DsdiffParser";
 import { DsfParser } from "./dsf/DsfParser";
-import { fileTypeFromBuffer } from "./file-type";
+import { fileTypeFromBuffer } from "./file-type/fileTypeFromBuffer";
 import { FlacParser } from "./flac/FlacParser";
 import { MatroskaParser } from "./matroska/MatroskaParser";
 import { parse as MimeType_parse } from "./media-typer";

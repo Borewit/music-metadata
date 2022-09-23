@@ -4,16 +4,15 @@ import { join } from "node:path";
 
 import { test, expect, describe } from "vitest";
 
-import {
-  fileTypeFromBuffer,
-  fileTypeFromStream,
-  fileTypeFromFile,
-  fileTypeStream,
-  FileExtension,
-} from "../../lib/file-type";
+import { fileTypeFromBuffer } from "../../lib/file-type/fileTypeFromBuffer";
+import { fileTypeFromFile } from "../../lib/file-type/fileTypeFromFile";
+import { fileTypeFromStream } from "../../lib/file-type/fileTypeFromStream";
+import { fileTypeStream } from "../../lib/file-type/fileTypeStream";
 import { SourceStream } from "../util";
 
 import { streamToBuffer } from "./util";
+
+import type { FileExtension } from "../../lib/file-type/type";
 
 // Define an entry here only if the fixture has a different
 // name than `fixture` or if you want multiple fixtures
