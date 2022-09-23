@@ -78,6 +78,7 @@
     "build": "run-s clean build:lib",
     "build:lib": "tsc -p tsconfig.build.json",
     "build:doc": "ts-node doc-gen/gen.ts",
+    "build:bundle": "vite build",
     "lint": "run-s lint:*",
     "lint:type": "tsc -p tsconfig.check.json",
     "lint:eslint": "eslint --cache lib test doc-gen",
@@ -87,7 +88,6 @@
     "test": "run-s test:vitest",
     "test:vitest": "vitest --run",
     "test:coverage": "vitest --run --coverage",
-    "test:build-size": "vite build",
     "watch:test": "vitest --watch",
     "watch:typescript": "tsc -p tsconfig.check.json -w"
   },
