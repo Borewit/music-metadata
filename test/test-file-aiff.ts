@@ -2,10 +2,10 @@ import { join } from "node:path";
 
 import { describe, expect, test } from "vitest";
 
+import { IFormat, parseFile } from "../lib";
+
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
-
-import type { IFormat } from "../lib";
 
 // Parse AIFF (Audio Interchange File Format)
 
@@ -52,18 +52,16 @@ describe("Parse AIFF-C", () => {
     checkFormat(metadata.format, "Alaw 2:1", 8000, 2, 16, 23_493);
   });
 
-      // Issue: https://github.com/Borewit/music-metadata/issues/1211
-      it('Uncompressed AIFC', async () => {
+  // Issue: https://github.com/Borewit/music-metadata/issues/1211
+  test("Uncompressed AIFC", async () => {
+    const filePath = join(aiffSamplePath, "hit-broken.aif");
 
-        const filePath = path.join(aiffSamplePath, 'hit-broken.aif');
-  
-        const {format} = await mm.parseFile(filePath);
-  
-        assert.strictEqual(format.container, 'AIFF-C', 'format.container');
-        assert.strictEqual(format.codec, '32-bit floating point IEEE 32-bit float', 'format.codec');
-        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-      });
-  
+    const { format } = await parseFile(filePath);
+
+    expect(format.container, "format.container").toBe("AIFF-C");
+    expect(format.codec, "format.codec").toBe("32-bit floating point IEEE 32-bit float");
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+  });
 });
 
 describe("Parse perverse Files", () => {

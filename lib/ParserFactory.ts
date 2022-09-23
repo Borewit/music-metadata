@@ -191,9 +191,6 @@ export class ParserFactory {
 
       case ".dff":
         return "dsdiff";
-        
-      case '.dff':
-        return 'dsdiff';
 
       case ".mka":
       case ".mkv":

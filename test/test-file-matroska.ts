@@ -2,6 +2,8 @@ import { join } from "node:path";
 
 import { describe, test, expect } from "vitest";
 
+import { parseFile } from "../lib";
+
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
 
@@ -159,18 +161,15 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
       expect(format.codec, "format.codec").toBe("OPUS");
       expect(format.numberOfChannels, "format.numberOfChannels").toBe(1);
     });
-
   });
 
-  describe('Handle corrupt Matroska file', () => {
-
-    const mkvPath = path.join(matroskaSamplePath, 'corrupt.mkv');
+  describe("Handle corrupt Matroska file", () => {
+    const mkvPath = join(matroskaSamplePath, "corrupt.mkv");
 
     // Ensure similar issue (CVE-2022-36313) as found in file-type, does not occur here
     // https://nvd.nist.gov/vuln/detail/CVE-2022-36313
-    it('Be able to hande CVE-2022-36313 sample', async () => {
-      await expect(mm.parseFile(mkvPath)).to.be.rejectedWith(Error);
+    test("Be able to hande CVE-2022-36313 sample", async () => {
+      await expect(parseFile(mkvPath)).rejects.toThrow(Error);
     });
-
   });
 });

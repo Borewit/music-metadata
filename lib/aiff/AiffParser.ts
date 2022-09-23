@@ -11,16 +11,16 @@ import * as AiffToken from "./AiffTokenCommon";
 
 const debug = initDebug("music-metadata:parser:aiff");
 
-const compressionTypes = {
-  NONE:	'not compressed	PCM	Apple Computer',
-  sowt:	'PCM (byte swapped)',
-  fl32:	'32-bit floating point IEEE 32-bit float',
-  fl64:	'64-bit floating point IEEE 64-bit float	Apple Computer',
-  alaw:	'ALaw 2:1	8-bit ITU-T G.711 A-law',
-  ulaw:	'µLaw 2:1	8-bit ITU-T G.711 µ-law	Apple Computer',
-  ULAW:	'CCITT G.711 u-law 8-bit ITU-T G.711 µ-law',
-  ALAW:	'CCITT G.711 A-law 8-bit ITU-T G.711 A-law',
-  FL32:	'Float 32	IEEE 32-bit float '
+const compressionTypes: Record<string, string> = {
+  NONE: "not compressed	PCM	Apple Computer",
+  sowt: "PCM (byte swapped)",
+  fl32: "32-bit floating point IEEE 32-bit float",
+  fl64: "64-bit floating point IEEE 64-bit float	Apple Computer",
+  alaw: "ALaw 2:1	8-bit ITU-T G.711 A-law",
+  ulaw: "µLaw 2:1	8-bit ITU-T G.711 µ-law	Apple Computer",
+  ULAW: "CCITT G.711 u-law 8-bit ITU-T G.711 µ-law",
+  ALAW: "CCITT G.711 A-law 8-bit ITU-T G.711 A-law",
+  FL32: "Float 32	IEEE 32-bit float ",
 };
 
 /**
@@ -88,7 +88,7 @@ export class AIFFParser extends BasicParser {
         this.metadata.setFormat("numberOfChannels", common.numChannels);
         this.metadata.setFormat("numberOfSamples", common.numSampleFrames);
         this.metadata.setFormat("duration", common.numSampleFrames / common.sampleRate);
-        this.metadata.setFormat('codec', common.compressionName ?? compressionTypes[common.compressionType]);
+        this.metadata.setFormat("codec", common.compressionName ?? compressionTypes[common.compressionType]);
         return header.chunkSize;
       }
       case "ID3 ": {

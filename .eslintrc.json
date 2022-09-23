@@ -132,8 +132,6 @@
     "no-unused-labels": "error",
     "no-use-before-define": "off",
     "no-var": "error",
-    "node/file-extension-in-import": ["error", "always"],
-    "node/no-extraneous-import": "error",
     "object-shorthand": "error",
     "one-var": ["error", "never"],
     "prefer-object-spread": "error",
@@ -168,6 +166,7 @@
     ],
 
     /* eslint-plugin-node */
+    // "node/file-extension-in-import": ["error", "always"],
     "node/no-extraneous-import": "error",
 
     /* eslint-plugin-strict-null-checks */

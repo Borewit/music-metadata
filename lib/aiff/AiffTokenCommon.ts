@@ -46,14 +46,14 @@ export class Common implements IGetToken<ICommon> {
       if (this.len > 22) {
         const strLen = INT8.get(buf, off + 22);
         if (strLen > 0) {
-                  const padding = (strLen + 1) % 2;
-        if (23 + strLen + padding === this.len) {
-          res.compressionName = new Latin1StringType(strLen).get(buf, off + 23);
+          const padding = (strLen + 1) % 2;
+          if (23 + strLen + padding === this.len) {
+            res.compressionName = new Latin1StringType(strLen).get(buf, off + 23);
+          } else {
+            throw new Error("Illegal pstring length");
+          }
         } else {
-          throw new Error("Illegal pstring length");
-        }
-      } else {
-        res.compressionName = undefined;
+          res.compressionName = undefined;
         }
       }
     } else {

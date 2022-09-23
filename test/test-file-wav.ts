@@ -2,7 +2,7 @@ import { join } from "node:path";
 
 import { describe, test, expect } from "vitest";
 
-import { orderTags } from "../lib";
+import { orderTags, parseFile } from "../lib";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
@@ -169,20 +169,19 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
   });
 
   // https://github.com/Borewit/music-metadata/issues/1163
-  it('Support chunk size larger then BWF extension', async () => {
+  test("Support chunk size larger then BWF extension", async () => {
     // const filePath = path.join(wavSamples, 'unreadable-tags.wav');
-    const filePath = path.join(wavSamples, 'issue-1163.bwf');
-    const {format, common, native} = await mm.parseFile(filePath);
+    const filePath = join(wavSamples, "issue-1163.bwf");
+    const { format, common, native } = await parseFile(filePath);
 
-    assert.strictEqual(format.container, 'WAVE', 'format.container');
-    assert.strictEqual(format.codec, 'PCM', 'format.codec');
+    expect(format.container, "format.container").toBe("WAVE");
+    expect(format.codec, "format.codec").toBe("PCM");
 
-    assert.strictEqual(common.artist, 'Some Composer', 'common.artists');
-    assert.strictEqual(common.title, 'Title Redacted', 'common.title');
-    assert.deepStrictEqual(common.track, {no: 1, of: 12}, 'common.track');
+    expect(common.artist, "common.artists").toBe("Some Composer");
+    expect(common.title, "common.title").toBe("Title Redacted");
+    expect(common.track, "common.track").toEqual({ no: 1, of: 12 });
 
-    const exif = mm.orderTags(native.exif);
-    assert.deepStrictEqual(exif['bext.originator'], ['Pro Tools'], 'BWF: exif.bext.originator');
+    const exif = orderTags(native.exif);
+    expect(exif["bext.originator"], "BWF: exif.bext.originator").toEqual(["Pro Tools"]);
   });
-
 });

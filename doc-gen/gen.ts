@@ -1,6 +1,6 @@
 import { WriteStream, readFileSync, createWriteStream } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from 'node:url';
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
 import { commonTags } from "../lib/common/GenericTagInfo";
@@ -11,7 +11,7 @@ type ITagInfoDict = Record<string, { description: string }>;
 
 const combinedTagMapper = new CombinedTagMapper();
 const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
+const filedirname = dirname(filename);
 
 /**
  *
@@ -36,7 +36,7 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
  * @param out
  */
 function write(out: WriteStream) {
-  const json = readFileSync(join(__dirname, "common.json"));
+  const json = readFileSync(join(filedirname, "common.json"));
   const commonDescriptionDict: ITagInfoDict = JSON.parse(json as unknown as string);
 
   const table = new Table();
@@ -63,7 +63,7 @@ function write(out: WriteStream) {
   table.writeTo(out);
 }
 
-const txt = createWriteStream(join(dirname, "..", "doc", "common_metadata.md"));
+const txt = createWriteStream(join(filedirname, "..", "doc", "common_metadata.md"));
 
 txt.write("# Common Metadata\n\n");
 txt.write("Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n");
