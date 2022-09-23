@@ -142,6 +142,7 @@
     "spaced-comment": ["error", "always", { "markers": ["/", "!"] }],
 
     /* eslint-plugin-import */
+    "import/extensions": "error",
     "import/first": "error",
     "import/newline-after-import": "error",
     // "import/no-cycle": ["error", { "ignoreExternal": true }],
