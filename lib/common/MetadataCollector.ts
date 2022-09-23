@@ -52,7 +52,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   public readonly common: ICommonTagsResult = {
     track: { no: null, of: null },
     disk: { no: null, of: null },
-    movementIndex: {no: null, of: null},
+    movementIndex: { no: null, of: null },
   };
 
   public readonly quality: IQualityInformation = {

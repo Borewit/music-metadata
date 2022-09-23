@@ -99,7 +99,11 @@ export class ParserFactory {
     return this.parse(tokenizer, parserId, opts);
   }
 
-  public static async parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions | undefined): Promise<IAudioMetadata> {
+  public static async parse(
+    tokenizer: ITokenizer,
+    parserId: ParserType,
+    opts: IOptions | undefined
+  ): Promise<IAudioMetadata> {
     if (!parserId) {
       // Parser could not be determined on MIME-type or extension
       debug("Guess parser on content...");
@@ -129,7 +133,7 @@ export class ParserFactory {
    * @param filePath - Path, filename or extension to audio file
    * @returns Parser sub-module name
    */
-  public static getParserIdForExtension(filePath: string): ParserType |undefined{
+  public static getParserIdForExtension(filePath: string): ParserType | undefined {
     if (!filePath) return;
 
     const extension = this.getExtension(filePath).toLocaleLowerCase() || filePath;

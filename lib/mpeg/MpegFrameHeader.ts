@@ -61,7 +61,7 @@ const MPEG4 = {
    */
 };
 
-const MPEG4_ChannelConfigurations: (MPEG4ChannelConfiguration|undefined)[] = [
+const MPEG4_ChannelConfigurations: (MPEG4ChannelConfiguration | undefined)[] = [
   undefined,
   ["front-center"],
   ["front-left", "front-right"],

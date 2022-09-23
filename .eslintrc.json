@@ -190,7 +190,8 @@
 
         "jsdoc/require-jsdoc": "off",
 
-        "@typescript-eslint/no-non-null-assertion": "off"
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unnecessary-type-assertion": "off"
       }
     }
   ]

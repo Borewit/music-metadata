@@ -1325,7 +1325,7 @@ export class FileTypeParser {
     }
   }
 
-  async readTiffTag(bigEndian: any): Promise<FileTypeResult|undefined> {
+  async readTiffTag(bigEndian: any): Promise<FileTypeResult | undefined> {
     const tagId = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
     void this.tokenizer.ignore(10);
     switch (tagId) {
@@ -1343,7 +1343,7 @@ export class FileTypeParser {
     }
   }
 
-  async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult|undefined> {
+  async readTiffIFD(bigEndian: boolean): Promise<FileTypeResult | undefined> {
     const numberOfTags = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
     for (let n = 0; n < numberOfTags; ++n) {
       const fileType = await this.readTiffTag(bigEndian);
@@ -1353,7 +1353,7 @@ export class FileTypeParser {
     }
   }
 
-  async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult|undefined> {
+  async readTiffHeader(bigEndian: boolean): Promise<FileTypeResult | undefined> {
     const version = (bigEndian ? UINT16_BE : UINT16_LE).get(this.buffer, 2);
     const ifdOffset = (bigEndian ? UINT32_BE : UINT32_LE).get(this.buffer, 4);
 
