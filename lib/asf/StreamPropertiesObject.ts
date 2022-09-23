@@ -10,7 +10,7 @@ export interface IStreamPropertiesObject {
   /**
    * Stream Type
    */
-  streamType: string;
+  streamType: string | undefined;
 
   /**
    * Error Correction Type

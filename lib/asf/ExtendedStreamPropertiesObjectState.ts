@@ -35,7 +35,7 @@ export interface IExtendedStreamPropertiesObject {
   streamNameCount: number;
   payloadExtensionSystems: number;
   streamNames: IStreamName[];
-  streamPropertiesObject: number;
+  streamPropertiesObject: number | null;
 }
 
 /**

@@ -48,7 +48,7 @@ export interface ITokenParser {
 export function parseHttpContentType(contentType: string): {
   type: string;
   subtype: string;
-  suffix?: string;
+  suffix: string | undefined;
   parameters: Record<string, string>;
 } {
   const type = ContentType_parse(contentType);
@@ -83,7 +83,7 @@ export class ParserFactory {
    * @param opts - Options
    * @returns Native metadata
    */
-  public static async parseOnContentType(tokenizer: ITokenizer, opts: IOptions): Promise<IAudioMetadata> {
+  public static async parseOnContentType(tokenizer: ITokenizer, opts: IOptions | undefined): Promise<IAudioMetadata> {
     const { mimeType, path, url } = tokenizer.fileInfo;
 
     // Resolve parser based on MIME-type or file extension
@@ -99,7 +99,7 @@ export class ParserFactory {
     return this.parse(tokenizer, parserId, opts);
   }
 
-  public static async parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions): Promise<IAudioMetadata> {
+  public static async parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions | undefined): Promise<IAudioMetadata> {
     if (!parserId) {
       // Parser could not be determined on MIME-type or extension
       debug("Guess parser on content...");
@@ -129,7 +129,7 @@ export class ParserFactory {
    * @param filePath - Path, filename or extension to audio file
    * @returns Parser sub-module name
    */
-  public static getParserIdForExtension(filePath: string): ParserType {
+  public static getParserIdForExtension(filePath: string): ParserType |undefined{
     if (!filePath) return;
 
     const extension = this.getExtension(filePath).toLocaleLowerCase() || filePath;
@@ -244,7 +244,7 @@ export class ParserFactory {
    * @param httpContentType - HTTP Content-Type, extension, path or filename
    * @returns Parser sub-module name
    */
-  private static getParserIdForMimeType(httpContentType: string): ParserType {
+  private static getParserIdForMimeType(httpContentType: string): ParserType | undefined {
     let mime;
     try {
       mime = parseHttpContentType(httpContentType);

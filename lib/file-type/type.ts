@@ -18,7 +18,7 @@ export interface FileTypeResult {
 }
 
 export type ReadableStreamWithFileType = ReadableStream & {
-  readonly fileType?: FileTypeResult;
+  readonly fileType?: FileTypeResult|undefined;
 };
 
 export interface StreamOptions {

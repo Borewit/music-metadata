@@ -5,7 +5,7 @@ import { isSuccess, Result } from "../result/result";
 import { Latin1StringType } from "../token-types/string";
 
 export class Id3v1StringType extends Latin1StringType {
-  public override get(buf: Uint8Array, off: number): string {
+  public override get(buf: Uint8Array, off: number): string | undefined {
     let value = super.get(buf, off);
     value = trimRightNull(value);
     value = value.trim();

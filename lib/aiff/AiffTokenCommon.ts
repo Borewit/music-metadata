@@ -16,7 +16,7 @@ export interface ICommon {
   sampleSize: number;
   sampleRate: number;
   compressionType?: string;
-  compressionName?: string;
+  compressionName?: string | undefined;
 }
 
 export class Common implements IGetToken<ICommon> {

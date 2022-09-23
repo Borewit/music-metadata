@@ -10,7 +10,7 @@ test("result wrap success", () => {
 
 test("result wrap failure", () => {
   const maybeUndefined: string | undefined = undefined;
-  const result = wrapResult(() => maybeUndefined.toUpperCase());
+  const result = wrapResult(() => maybeUndefined!.toUpperCase());
   expect(result).toBeInstanceOf(TypeError);
 });
 

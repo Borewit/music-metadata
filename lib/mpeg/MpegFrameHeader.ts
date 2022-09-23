@@ -61,7 +61,7 @@ const MPEG4 = {
    */
 };
 
-const MPEG4_ChannelConfigurations: MPEG4ChannelConfiguration[] = [
+const MPEG4_ChannelConfigurations: (MPEG4ChannelConfiguration|undefined)[] = [
   undefined,
   ["front-center"],
   ["front-left", "front-right"],
@@ -177,7 +177,7 @@ export class MpegFrameHeader {
     return MpegFrameHeader.samplesInFrameTable[this.version === 1 ? 0 : 1][this.layer];
   }
 
-  public calculateSideInfoLength(): number {
+  public calculateSideInfoLength(): number | undefined {
     if (this.layer !== 3) return 2;
     if (this.channelModeIndex === 3) {
       // mono
@@ -260,7 +260,7 @@ export class MpegFrameHeader {
     this.frameLength = getBitAllignedNumber(buf, off + 3, 6, 2) << 11;
   }
 
-  private calcBitrate(): number {
+  private calcBitrate(): number | undefined {
     if (
       this.bitrateIndex === 0x00 || // free
       this.bitrateIndex === 0x0f
@@ -273,7 +273,7 @@ export class MpegFrameHeader {
     return MpegFrameHeader.bitrate_index[this.bitrateIndex][codecIndex];
   }
 
-  private calcSamplingRate(): number {
+  private calcSamplingRate(): number | null {
     if (this.sampRateFreqIndex === 0x03) return null; // 'reserved'
     if (this.version === 4) return null;
     if (this.sampRateFreqIndex !== 0 && this.sampRateFreqIndex !== 1 && this.sampRateFreqIndex !== 2) return null;

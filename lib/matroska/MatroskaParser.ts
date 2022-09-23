@@ -6,7 +6,7 @@ import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
 import { Utf8StringType } from "../token-types/string";
 
 import { elements } from "./MatroskaDtd";
-import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from "./types";
+import { DataType, IContainerType, IHeader, IMatroskaDoc, ITrackEntry, ITree, TargetType, TrackType } from "./types";
 
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import type { ITokenParser } from "../ParserFactory";
@@ -87,7 +87,7 @@ export class MatroskaParser extends BasicParser {
             return entry.trackType === TrackType.audio.valueOf();
           })
           // eslint-disable-next-line unicorn/no-array-reduce
-          .reduce((previousValue, currentValue) => {
+          .reduce<ITrackEntry | null>((previousValue, currentValue) => {
             if (!previousValue) {
               return currentValue;
             }

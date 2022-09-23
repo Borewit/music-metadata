@@ -42,7 +42,7 @@ const TagPriority: TagType[] = [
  * Responsible for triggering async updates
  */
 export class MetadataCollector implements INativeMetadataCollector {
-  public readonly format: IFormat = {
+  public readonly format: IFormat & { tagTypes: TagType[]; trackInfo: ITrackInfo[] } = {
     tagTypes: [],
     trackInfo: [],
   };
@@ -52,7 +52,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   public readonly common: ICommonTagsResult = {
     track: { no: null, of: null },
     disk: { no: null, of: null },
-    movementIndex: {},
+    movementIndex: {no: null, of: null},
   };
 
   public readonly quality: IQualityInformation = {
@@ -262,7 +262,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Fix some common issues with picture object
    * @param picture Picture
    */
-  private async postFixPicture(picture: IPicture): Promise<IPicture> {
+  private async postFixPicture(picture: IPicture): Promise<IPicture | null> {
     if (picture.data && picture.data.length > 0) {
       if (!picture.format) {
         const fileType = await fileTypeFromBuffer(picture.data);

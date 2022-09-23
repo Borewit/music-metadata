@@ -143,6 +143,6 @@ export function isSingleton(alias: GenericTagId): boolean {
  * @param alias Common (generic) tag
  * @returns {boolean|*} true if given alias is a singleton or explicitly marked as unique
  */
-export function isUnique(alias: GenericTagId): boolean {
+export function isUnique(alias: GenericTagId): boolean | undefined {
   return !commonTags[alias].multiple || commonTags[alias].unique;
 }
