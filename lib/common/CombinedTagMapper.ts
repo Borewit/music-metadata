@@ -12,6 +12,7 @@ import type { ITag } from "../type";
 import type { IGenericTagMapper } from "./GenericTagMapper";
 import type { IGenericTag, TagType } from "./GenericTagTypes";
 import type { INativeMetadataCollector } from "./INativeMetadataCollector";
+import { AiffTagMapper } from '../aiff/AiffTagMap.js';
 
 export class CombinedTagMapper {
   public tagMappers: Record<string, IGenericTagMapper> = {};
@@ -28,6 +29,7 @@ export class CombinedTagMapper {
       new AsfTagMapper(),
       new RiffInfoTagMapper(),
       new MatroskaTagMapper(),
+            new AiffTagMapper()
     ]) {
       this.registerTagMapper(mapper);
     }

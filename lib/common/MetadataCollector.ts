@@ -23,6 +23,8 @@ import type { INativeMetadataCollector } from "./INativeMetadataCollector";
 
 const debug = initDebug("music-metadata:collector");
 
+
+
 const TagPriority: TagType[] = [
   "matroska",
   "APEv2",
@@ -32,7 +34,7 @@ const TagPriority: TagType[] = [
   "ID3v2.2",
   "exif",
   "asf",
-  "iTunes",
+  "iTunes", 'AIFF',
   "ID3v1",
 ];
 
@@ -76,7 +78,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       this.originPriority[tagType] = priority++;
     }
     this.originPriority.artificial = 500; // Filled using alternative tags
-    this.originPriority.id3v1 = 600; // Consider worst due to field length limit
+    this.originPriority.id3v1 = 600; // Consider as the worst because of the field length limit
   }
 
   /**

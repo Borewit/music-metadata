@@ -1,7 +1,7 @@
 {
   "name": "music-metadata",
   "description": "Music metadata parser for Node.js, supporting virtual any audio and tag format.",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
@@ -125,7 +125,7 @@
     "vitest": "^0.23.2"
   },
   "engines": {
-    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+    "node": "^14.13.1 || >=16.0.0"
   },
   "repository": {
     "type": "git",

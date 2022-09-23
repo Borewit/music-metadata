@@ -19,15 +19,14 @@ updates:
       - dependency-name: "@types/jasmine"
         update-types: [ "version-update:semver-patch" ]
       - dependency-name: "file-type"
-        versions: [ "17.x" ]
+        versions: [ ">=17.x" ]
       - dependency-name: "mocha"
-        versions: [ "10.x" ]
+        versions: [ ">=10.x" ]
       - dependency-name: "strtok3"
-        versions: [ "7.x" ]
+        versions: [ ">=7.x" ]
       - dependency-name: "token-types"
-        versions: [ "5.x" ]
+        versions: [ ">=5.x" ]
 
-  # TypeScript Module
   - package-ecosystem: npm
     directory: "/"
     schedule:

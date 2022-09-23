@@ -62,7 +62,6 @@ export class AIFFParser extends BasicParser {
         debug(`Reading AIFF chunk at offset=${this.tokenizer.position}`);
         const chunkHeader = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
 
-        debug(`Chunk id=${chunkHeader.chunkID}`);
         const nextChunk = 2 * Math.round(chunkHeader.chunkSize / 2);
         const bytesRead = await this.readData(chunkHeader);
         await this.tokenizer.ignore(nextChunk - bytesRead);
@@ -104,8 +103,24 @@ export class AIFFParser extends BasicParser {
         }
         return 0;
 
+      case 'NAME': // Sample name chunk
+      case 'AUTH': // Author chunk
+      case '(c) ': // Copyright chunk
+      case 'ANNO': // Annotation chunk
+        return this.readTextChunk(header);
+
       default:
+        debug(`Ignore chunk id=${header.chunkID}, size=${header.chunkSize}`);
         return 0;
     }
   }
+
+  public async readTextChunk(header: iff.IChunkHeader): Promise<number> {
+    const value = await this.tokenizer.readToken(new Token.StringType(header.chunkSize, 'ascii'));
+    value.split('\0').map(v => v.trim()).filter(v => v && v.length > 0).forEach(v => {
+      this.metadata.addTag('AIFF', header.chunkID, v.trim());
+    });
+    return header.chunkSize;
+  }
+
 }

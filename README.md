@@ -55,6 +55,7 @@ Following tag header formats are supported:
 *   [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
 *   [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 *   [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+*   [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
 
 It allows many tags to be accessed in audio format, and tag format independent way.
 
@@ -79,7 +80,7 @@ Support for encoding / format details:
 
 Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJS) to [pure ECMAScript Module (ESM)](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
 JavaScript is compliant with [ECMAScript 2019 (ES10)](https://en.wikipedia.org/wiki/ECMAScript#10th_Edition_%E2%80%93_ECMAScript_2019).
-Requires Node.js ≥ 12.20 engine.
+Requires Node.js ≥ 14.13.1 engine.
 
 ### Browser Support
 
@@ -91,8 +92,8 @@ import * as mm from 'music-metadata/lib/core';
 ```
 
 | function                                             | `music-metadata`           | `music-metadata/lib/core`  |
-| -----------------------------------------------------| ---------------------------|----------------------------|
-| [`parseBuffer`](#parsefile-function)                 | ✓                          | ✓                          |
+|------------------------------------------------------| ---------------------------|----------------------------|
+| [`parseBuffer`](#parsebuffer-function)               | ✓                          | ✓                          |
 | [`parseStream`](#parsestream-function) *             | ✓                          | ✓                          |
 | [`parseFromTokenizer`](#parsefromtokenizer-function) | ✓                          | ✓                          |
 | [`parseFile`](#parsefile-function)                   | ✓                          |                            |
