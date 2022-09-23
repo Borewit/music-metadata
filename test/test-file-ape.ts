@@ -35,10 +35,10 @@ describe("Parse APE (Monkey's Audio)", () => {
     expect(common.genre, "common.genre").toStrictEqual(["Alternative"]);
     expect(common.track, "common.track").toStrictEqual({ no: 7, of: null });
     expect(common.disk, "common.disk").toStrictEqual({ no: 3, of: null });
-    expect(common.picture[0].format, "common.picture 0 format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "common.picture 0 length").toBe(48_658);
-    expect(common.picture[1].format, "common.picture 1 format").toBe("image/jpeg");
-    expect(common.picture[1].data.length, "common.picture 1 length").toBe(48_658);
+    expect(common.picture![0].format, "common.picture 0 format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "common.picture 0 length").toBe(48_658);
+    expect(common.picture![1].format, "common.picture 1 format").toBe("image/jpeg");
+    expect(common.picture![1].data.length, "common.picture 1 length").toBe(48_658);
 
     const native = orderTags(metadata.native.APEv2);
 

@@ -171,16 +171,16 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
       expect(format.tagTypes, "format.tagTypes").toStrictEqual([tagType]);
 
       if (sample.track) {
-        expect(common.replaygain_track_gain.dB, "replay-gain: track gain").toBeCloseTo(sample.track.gain, 3);
-        expect(common.replaygain_track_peak.dB, "replay-gain: track peak").toBeCloseTo(sample.track.peak, 3);
+        expect(common.replaygain_track_gain!.dB, "replay-gain: track gain").toBeCloseTo(sample.track.gain, 3);
+        expect(common.replaygain_track_peak!.dB, "replay-gain: track peak").toBeCloseTo(sample.track.peak, 3);
       } else {
         expect(common.replaygain_track_gain, "replay-gain: track gain").toBeUndefined();
         expect(common.replaygain_track_peak, "replay-gain: track peak").toBeUndefined();
       }
 
       if (sample.album) {
-        expect(common.replaygain_album_gain.dB, "replay-gain: album gain").toBeCloseTo(sample.album.gain, 3);
-        expect(common.replaygain_album_peak.dB, "replay-gain: album peak").toBeCloseTo(sample.album.peak, 3);
+        expect(common.replaygain_album_gain!.dB, "replay-gain: album gain").toBeCloseTo(sample.album.gain, 3);
+        expect(common.replaygain_album_peak!.dB, "replay-gain: album peak").toBeCloseTo(sample.album.peak, 3);
       } else {
         expect(common.replaygain_album_gain, "replay-gain: album gain").toBeUndefined();
         expect(common.replaygain_album_peak, "replay-gain: album peak").toBeUndefined();

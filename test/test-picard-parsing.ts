@@ -136,14 +136,14 @@ function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
   expect(common.acoustid_id, inputTagType + " => common.acoustid_id").toBe("09c06fac-679a-45b1-8ea0-6ce532318363");
 
   // Check front cover
-  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
-  expect(common.picture[0].data.length, "picture length").toBe(98_008);
-  expect(calcHash(common.picture[0].data), "hash front cover data").toBe("c57bec49b36ebf422018f82273d1995a");
+  expect(common.picture![0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture![0].data.length, "picture length").toBe(98_008);
+  expect(calcHash(common.picture![0].data), "hash front cover data").toBe("c57bec49b36ebf422018f82273d1995a");
 
   // Check back cover
-  expect(common.picture[1].format, "picture format").toBe("image/png");
-  expect(common.picture[1].data.length, "picture length").toBe(120_291);
-  expect(calcHash(common.picture[1].data), "hash back cover data").toBe("90ec686eb82e745e737b2c7aa706eeaa");
+  expect(common.picture![1].format, "picture format").toBe("image/png");
+  expect(common.picture![1].data.length, "picture length").toBe(120_291);
+  expect(calcHash(common.picture![1].data), "hash back cover data").toBe("90ec686eb82e745e737b2c7aa706eeaa");
 
   // ISRC
   expect(common.isrc, "ISRC's").toStrictEqual(["NLB931100460", "USMH51100098"]);
@@ -156,7 +156,7 @@ function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
 
     default:
       expect(common.rating, `'${inputTagType}' has rating`).toBeDefined();
-      expect(common.rating[0].rating, `'${inputTagType}': rating=3.0`).toBeCloseTo(0.6, 2);
+      expect(common.rating![0].rating, `'${inputTagType}': rating=3.0`).toBeCloseTo(0.6, 2);
   }
 }
 
@@ -678,8 +678,8 @@ describe.each(Parsers)("parser: %s", (description, parser) => {
     // t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
 
     const common = metadata.common;
-    expect(common.picture[0].format, "picture format").toBe("image/jpeg");
-    expect(common.picture[0].data.length, "picture length").toBe(98_008);
+    expect(common.picture![0].format, "picture format").toBe("image/jpeg");
+    expect(common.picture![0].data.length, "picture length").toBe(98_008);
 
     checkITunesTags(orderTags(metadata.native.iTunes));
     checkCommonMapping("iTunes", metadata.common);

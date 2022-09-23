@@ -71,9 +71,9 @@ describe.each(Parsers)("parser: %s", (_, parser) => {
       // common metadata
       expect(common.title, "common.title").toBe("Big Buck Bunny");
       expect(common.picture, "common.picture").toBeDefined();
-      expect(common.picture[0].format, "common.picture[0].format").toBe("image/jpeg");
-      expect(common.picture[0].description, "common.picture[0].description").toBe("Poster");
-      expect(common.picture[0].name, "common.picture[0].name").toBe("Big buck bunny poster.jpg");
+      expect(common.picture![0].format, "common.picture[0].format").toBe("image/jpeg");
+      expect(common.picture![0].description, "common.picture[0].description").toBe("Poster");
+      expect(common.picture![0].name, "common.picture[0].name").toBe("Big buck bunny poster.jpg");
     });
 
     test('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {

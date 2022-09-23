@@ -21,7 +21,7 @@ function checkFormat(
 ) {
   const lossless = codec === "PCM";
   const dataFormat = lossless ? "AIFF" : "AIFF-C";
-  const duration = samples / format.sampleRate;
+  const duration = samples / sampleRate;
 
   expect(format.container, "format.container").toBe(dataFormat);
   expect(format.lossless, "format.lossless").toBe(lossless);

@@ -414,14 +414,14 @@ export interface IVideoTrack {
 export interface ITrackInfo {
   type?: TrackType;
   codecName?: string;
-  codecSettings?: string;
-  flagEnabled?: boolean;
-  flagDefault?: boolean;
-  flagLacing?: boolean;
-  name?: string;
-  language?: string;
-  audio?: IAudioTrack;
-  video?: IVideoTrack;
+  codecSettings?: string | undefined;
+  flagEnabled?: boolean | undefined;
+  flagDefault?: boolean | undefined;
+  flagLacing?: boolean | undefined;
+  name?: string | undefined;
+  language?: string | undefined;
+  audio?: IAudioTrack | undefined;
+  video?: IVideoTrack | undefined;
 }
 
 export interface IFormat {

@@ -4,21 +4,21 @@ export interface IFileInfo {
   /**
    * File size in bytes
    */
-  size?: number;
+  size?: number | undefined;
   /**
    * MIME-type of file
    */
-  mimeType?: string;
+  mimeType?: string | undefined;
 
   /**
    * File path
    */
-  path?: string;
+  path?: string | undefined;
 
   /**
    * File URL
    */
-  url?: string;
+  url?: string | undefined;
 }
 
 export interface IReadChunkOptions {

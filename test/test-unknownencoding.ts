@@ -18,7 +18,7 @@ test.each(Parsers)("should be able to read metadata with unknown encoding", asyn
   expect(common.year, "year").toBe(2010);
   expect(common.track.no, "track no").toBe(4);
   expect(common.track.of, "track of").toBe(8);
-  expect(common.genre[0], "genre").toBe("Dubstep");
-  expect(common.picture[0].format, "picture format").toBe("image/jpeg");
-  expect(common.picture[0].data.length, "picture length").toBe(6761);
+  expect(common.genre![0], "genre").toBe("Dubstep");
+  expect(common.picture![0].format, "picture format").toBe("image/jpeg");
+  expect(common.picture![0].data.length, "picture length").toBe(6761);
 });

@@ -265,7 +265,7 @@ describe.each(Parsers)("parser: %s", (description, parser) => {
         rating: 128,
         counter: 0,
       });
-      expect(metadata.common.rating[0].rating, "Common rating").toBeCloseTo(0.5, 2);
+      expect(metadata.common.rating![0].rating, "Common rating").toBeCloseTo(0.5, 2);
     });
 
     test("from 'id3v2-lyrics.mp3'", async () => {
@@ -280,7 +280,7 @@ describe.each(Parsers)("parser: %s", (description, parser) => {
         counter: 0,
       });
       // Common rating value
-      expect(metadata.common.rating[0].rating, "Common rating").toBe(1);
+      expect(metadata.common.rating![0].rating, "Common rating").toBe(1);
     });
 
     test("decode POPM without a counter field", async () => {

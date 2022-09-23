@@ -57,7 +57,7 @@ describe("GenericTagMap", () => {
 
 describe("Convert rating", () => {
   test("should convert rating to stars", () => {
-    expect(ratingToStars(undefined as number)).toBe(0);
+    expect(ratingToStars(undefined as unknown as number)).toBe(0);
     expect(ratingToStars(0)).toBe(1);
     expect(ratingToStars(0.1)).toBe(1);
     expect(ratingToStars(0.2)).toBe(2);
@@ -87,13 +87,13 @@ describe.each(Parsers)("function selectCover() %s", (_, parser) => {
 
     const metadata = await parser(filePath);
 
-    expect(metadata.common.picture.length).toBeGreaterThanOrEqual(1);
+    expect(metadata.common.picture!.length).toBeGreaterThanOrEqual(1);
 
-    const cover = selectCover(metadata.common.picture);
+    const cover = selectCover(metadata.common.picture)!;
     if (cover.type) {
       expect(cover.type, "cover.type").toBe("Cover (front)");
     } else {
-      expect(cover.data, "First picture if no type is defined").toBe(metadata.common.picture[0].data);
+      expect(cover.data, "First picture if no type is defined").toBe(metadata.common.picture![0].data);
     }
   });
 });

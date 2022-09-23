@@ -27,7 +27,7 @@ export class Table {
   }
 
   public rows: Row[] = [];
-  public header?: Row;
+  public header = new Row([]);
 
   public writeTo(out: WriteStream) {
     const colSizes = this.calcColSizes();
