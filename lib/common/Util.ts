@@ -1,19 +1,30 @@
-import { IRatio } from '../type';
+import { getBase64UrlStringFromUint8Array } from "../compat/base64";
+import { toHexString } from "../compat/hex";
+import { decodeLatin1, decodeUtf16le, decodeUtf8 } from "../compat/text-decoder";
+
+import type { IRatio } from "../type";
 
 export type StringEncoding =
-  'ascii' // Use  'utf-8' or latin1 instead
-  | 'utf8' // alias: 'utf-8'
-  | 'utf16le' // alias: 'ucs2', 'ucs-2'
-  | 'ucs2' //  'utf16le'
-  | 'base64url'
-  | 'latin1' // Same as ISO-8859-1 (alias: 'binary')
-  | 'hex';
+  | "ascii" // Use  'utf-8' or latin1 instead
+  | "utf8" // alias: 'utf-8'
+  | "utf16le" // alias: 'ucs2', 'ucs-2'
+  | "ucs2" //  'utf16le'
+  | "base64url"
+  | "latin1" // Same as ISO-8859-1 (alias: 'binary')
+  | "hex";
 
 export interface ITextEncoding {
   encoding: StringEncoding;
   bom?: boolean;
 }
 
+/**
+ *
+ * @param buf
+ * @param off
+ * @param bit
+ * @returns
+ */
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
 }
@@ -24,11 +35,11 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
  * @param start Offset in uint8Array
  * @param end Last position to parse in uint8Array
  * @param encoding The string encoding used
- * @return Absolute position on uint8Array where zero found
+ * @returns Absolute position on uint8Array where zero found
  */
 export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: StringEncoding): number {
   let i = start;
-  if (encoding === 'utf16le') {
+  if (encoding === "utf16le") {
     while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
       if (i >= end) return end;
       i += 2;
@@ -43,14 +54,24 @@ export function findZero(uint8Array: Uint8Array, start: number, end: number, enc
   }
 }
 
+/**
+ *
+ * @param x
+ * @returns
+ */
 export function trimRightNull(x: string): string {
-  const pos0 = x.indexOf('\0');
-  return pos0 === -1 ? x : x.substr(0, pos0);
+  const pos0 = x.indexOf("\0");
+  return pos0 === -1 ? x : x.slice(0, pos0);
 }
 
+/**
+ *
+ * @param uint8Array
+ * @returns
+ */
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
-  if ((l & 1) !== 0) throw new Error('Buffer length must be even');
+  if ((l & 1) !== 0) throw new Error("Buffer length must be even");
   for (let i = 0; i < l; i += 2) {
     const a = uint8Array[i];
     uint8Array[i] = uint8Array[i + 1];
@@ -59,27 +80,48 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   return uint8Array;
 }
 
-
 /**
  * Decode string
+ * @param uint8Array
+ * @param encoding
+ * @returns
  */
 export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): string {
   // annoying workaround for a double BOM issue
   // https://github.com/leetreveil/musicmetadata/issues/84
-  if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) { // little endian
+  if (uint8Array[0] === 0xff && uint8Array[1] === 0xfe) {
+    // little endian
     return decodeString(uint8Array.subarray(2), encoding);
-  } else if (encoding === 'utf16le' &&  uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
+  } else if (encoding === "utf16le" && uint8Array[0] === 0xfe && uint8Array[1] === 0xff) {
     // BOM, indicating big endian decoding
-    if ((uint8Array.length & 1) !== 0)
-      throw new Error('Expected even number of octets for 16-bit unicode string');
+    if ((uint8Array.length & 1) !== 0) throw new Error("Expected even number of octets for 16-bit unicode string");
     return decodeString(swapBytes(uint8Array), encoding);
   }
-  return Buffer.from(uint8Array).toString(encoding);
+
+  switch (encoding) {
+    case "ascii":
+    case "latin1":
+      return decodeLatin1(uint8Array);
+    case "utf8":
+      return decodeUtf8(uint8Array);
+    case "ucs2":
+    case "utf16le":
+      return decodeUtf16le(uint8Array);
+    case "hex":
+      return toHexString(uint8Array);
+    case "base64url":
+      return getBase64UrlStringFromUint8Array(uint8Array);
+  }
 }
 
+/**
+ *
+ * @param str
+ * @returns
+ */
 export function stripNulls(str: string): string {
-  str = str.replace(/^\x00+/g, '');
-  str = str.replace(/\x00+$/g, '');
+  str = str.replace(/^\0+/g, "");
+  str = str.replace(/\0+$/g, "");
   return str;
 }
 
@@ -90,17 +132,17 @@ export function stripNulls(str: string): string {
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = lsb
  * @param len Length of number in bits
- * @return Decoded bit aligned number
+ * @returns Decoded bit aligned number
  */
 export function getBitAllignedNumber(source: Uint8Array, byteOffset: number, bitOffset: number, len: number): number {
-  const byteOff = byteOffset + ~~(bitOffset / 8);
+  const byteOff = byteOffset + Math.trunc(bitOffset / 8);
   const bitOff = bitOffset % 8;
   let value = source[byteOff];
   value &= 0xff >> bitOff;
   const bitsRead = 8 - bitOff;
   const bitsLeft = len - bitsRead;
   if (bitsLeft < 0) {
-    value >>= (8 - bitOff - len);
+    value >>= 8 - bitOff - len;
   } else if (bitsLeft > 0) {
     value <<= bitsLeft;
     value |= getBitAllignedNumber(source, byteOffset, bitOffset + bitsRead, bitsLeft);
@@ -114,24 +156,31 @@ export function getBitAllignedNumber(source: Uint8Array, byteOffset: number, bit
  * @param source Byte Uint8Array
  * @param byteOffset Starting offset in bytes
  * @param bitOffset Starting offset in bits: 0 = most significant bit, 7 is the least significant bit
- * @return True if bit is set
+ * @returns True if bit is set
  */
 export function isBitSet(source: Uint8Array, byteOffset: number, bitOffset: number): boolean {
   return getBitAllignedNumber(source, byteOffset, bitOffset, 1) === 1;
 }
 
+/**
+ *
+ * @param str
+ * @returns
+ */
 export function a2hex(str: string) {
   const arr = [];
   for (let i = 0, l = str.length; i < l; i++) {
-    const hex = Number(str.charCodeAt(i)).toString(16);
-    arr.push(hex.length === 1 ? '0' + hex : hex);
+    const hex = Number(str.codePointAt(i)).toString(16);
+    arr.push(hex.length === 1 ? "0" + hex : hex);
   }
-  return arr.join(' ');
+  return arr.join(" ");
 }
 
 /**
  * Convert power ratio to DB
  * ratio: [0..1]
+ * @param ratio
+ * @returns
  */
 export function ratioToDb(ratio: number): number {
   return 10 * Math.log10(ratio);
@@ -140,6 +189,8 @@ export function ratioToDb(ratio: number): number {
 /**
  * Convert dB to ratio
  * db Decibels
+ * @param dB
+ * @returns
  */
 export function dbToRatio(dB: number): number {
   return Math.pow(10, dB / 10);
@@ -148,18 +199,20 @@ export function dbToRatio(dB: number): number {
 /**
  * Convert replay gain to ratio and Decibel
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
+ * @returns
  */
 export function toRatio(value: string): IRatio {
-  const ps = value.split(' ').map(p => p.trim().toLowerCase());
-  // @ts-ignore
-  if (ps.length >= 1) {
-    const v = parseFloat(ps[0]);
-    return ps.length === 2 && ps[1] === 'db' ? {
-      dB: v,
-      ratio: dbToRatio(v)
-    } : {
-      dB: ratioToDb(v),
-      ratio: v
-    };
+  const ps = value.split(" ").map((p) => p.trim().toLowerCase());
+  if (ps.length > 0) {
+    const v = Number.parseFloat(ps[0]);
+    return ps.length === 2 && ps[1] === "db"
+      ? {
+          dB: v,
+          ratio: dbToRatio(v),
+        }
+      : {
+          dB: ratioToDb(v),
+          ratio: v,
+        };
   }
 }

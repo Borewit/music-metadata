@@ -1,19 +1,18 @@
-import {assert} from 'chai';
-import * as mm from '../lib';
-import * as fs from 'fs';
-import * as path from 'path';
-import { samplePath } from './util';
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-const t = assert;
+import { test, expect, describe } from "vitest";
 
-it("should handle concurrent parsing of pictures", () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  const files = [path.join(samplePath, 'flac.flac'), path.join(__dirname, 'samples', 'flac-bug.flac')];
+const files = ["flac.flac", "flac-bug.flac"];
 
-  return Promise.all<any>(files.map(file => {
-    return mm.parseFile(file).then(result => {
-      const data = fs.readFileSync(file + '.jpg');
-      t.deepEqual(result.common.picture[0].data, data, 'check picture');
-    });
-  }));
+describe.each(Parsers)("parser: %s", (_, parser) => {
+  test.each(files)("should handle concurrent parsing of pictures %s", async (file) => {
+    const path = join(samplePath, file);
+    const result = await parser(path);
+    const data = readFileSync(path + ".jpg");
+    expect(result.common.picture[0].data, "check picture").toEqual(data);
+  });
 });

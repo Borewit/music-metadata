@@ -1,166 +1,143 @@
-import { assert } from 'chai';
-import * as mm from '../lib';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import { writeFileSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
 
-const t = assert;
+import { describe, test, expect } from "vitest";
 
-describe('Parse FLAC', () => {
+import { orderTags } from "../lib";
 
-  const flacFilePath = path.join(samplePath, 'flac');
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  function checkFormat(format) {
-    t.strictEqual(format.container, 'FLAC', 'format.container');
-    t.strictEqual(format.codec, 'FLAC', 'format.codec');
-    t.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
-    t.strictEqual(format.duration, 271.7733333333333, 'format.duration');
-    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-    t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bit');
-    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
-  }
+const flacFilePath = join(samplePath, "flac");
 
-  function checkCommon(common) {
-    t.strictEqual(common.title, 'Brian Eno', 'common.title');
-    t.deepEqual(common.artists, ['MGMT'], 'common.artists');
-    t.strictEqual(common.albumartist, undefined, 'common.albumartist');
-    t.strictEqual(common.album, 'Congratulations', 'common.album');
-    t.strictEqual(common.year, 2010, 'common.year');
-    t.deepEqual(common.track, {no: 7, of: null}, 'common.track');
-    t.deepEqual(common.disk, {no: null, of: null}, 'common.disk');
-    t.deepEqual(common.genre, ['Alt. Rock'], 'genre');
-    t.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture format');
-    t.strictEqual(common.picture[0].data.length, 175668, 'common.picture length');
-  }
+describe("decode flac.flac", () => {
+  test.each(Parsers)("%s", async (_, parser) => {
+    const metadata = await parser(join(samplePath, "flac.flac"), "audio/flac");
 
-  function checkNative(vorbis) {
+    const format = metadata.format;
+
+    expect(format.container, "format.container").toBe("FLAC");
+    expect(format.codec, "format.codec").toBe("FLAC");
+    expect(format.tagTypes, "format.tagTypes").toStrictEqual(["vorbis"]);
+    expect(format.duration, "format.duration").toBe(271.773_333_333_333_3);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    expect(format.bitsPerSample, "format.bitsPerSample = 16 bit").toBe(16);
+    expect(format.numberOfChannels, "format.numberOfChannels 2 (stereo)").toBe(2);
+
+    const common = metadata.common;
+
+    expect(common.title, "common.title").toBe("Brian Eno");
+    expect(common.artists, "common.artists").toStrictEqual(["MGMT"]);
+    expect(common.albumartist, "common.albumartist").toBeUndefined();
+    expect(common.album, "common.album").toBe("Congratulations");
+    expect(common.year, "common.year").toBe(2010);
+    expect(common.track, "common.track").toStrictEqual({ no: 7, of: null });
+    expect(common.disk, "common.disk").toStrictEqual({ no: null, of: null });
+    expect(common.genre, "genre").toStrictEqual(["Alt. Rock"]);
+    expect(common.picture[0].format, "common.picture format").toBe("image/jpeg");
+    expect(common.picture[0].data.length, "common.picture length").toBe(175_668);
+
+    const vorbis = orderTags(metadata.native.vorbis);
+
     // Compare expectedCommonTags with result.common
-    t.deepEqual(vorbis.TITLE, ['Brian Eno'], 'vorbis.TITLE');
-    t.deepEqual(vorbis.ARTIST, ['MGMT'], 'vorbis.ARTIST');
-    t.deepEqual(vorbis.DATE, ['2010'], 'vorbis.DATE');
-    t.deepEqual(vorbis.TRACKNUMBER, ['07'], 'vorbis.TRACKNUMBER');
-    t.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis.GENRE');
-    t.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode=should ignore equal sign'], 'vorbis.COMMENT');
-    const pic = vorbis.METADATA_BLOCK_PICTURE[0];
+    expect(vorbis.TITLE, "vorbis.TITLE").toStrictEqual(["Brian Eno"]);
+    expect(vorbis.ARTIST, "vorbis.ARTIST").toStrictEqual(["MGMT"]);
+    expect(vorbis.DATE, "vorbis.DATE").toStrictEqual(["2010"]);
+    expect(vorbis.TRACKNUMBER, "vorbis.TRACKNUMBER").toStrictEqual(["07"]);
+    expect(vorbis.GENRE, "vorbis.GENRE").toStrictEqual(["Alt. Rock"]);
+    expect(vorbis.COMMENT, "vorbis.COMMENT").toStrictEqual(["EAC-Secure Mode=should ignore equal sign"]);
 
-    t.strictEqual(pic.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype');
-    t.strictEqual(pic.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format');
-    t.strictEqual(pic.description, '', 'raw METADATA_BLOCK_PICTURE description');
-    t.strictEqual(pic.width, 450, 'raw METADATA_BLOCK_PICTURE width');
-    t.strictEqual(pic.height, 450, 'raw METADATA_BLOCK_PICTURE height');
-    t.strictEqual(pic.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth');
-    t.strictEqual(pic.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color');
-    t.strictEqual(pic.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
-  }
+    const picture = vorbis.METADATA_BLOCK_PICTURE[0];
 
-  describe('decode flac.flac', () => {
-
-    Parsers.forEach(parser => {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(path.join(samplePath, 'flac.flac'), 'audio/flac');
-        checkFormat(metadata.format);
-        checkCommon(metadata.common);
-        checkNative(mm.orderTags(metadata.native.vorbis));
-      });
-    });
-
+    expect(picture.type, "raw METADATA_BLOCK_PICTUREtype").toBe("Cover (front)");
+    expect(picture.format, "raw METADATA_BLOCK_PICTURE format").toBe("image/jpeg");
+    expect(picture.description, "raw METADATA_BLOCK_PICTURE description").toBe("");
+    expect(picture.width, "raw METADATA_BLOCK_PICTURE width").toBe(450);
+    expect(picture.height, "raw METADATA_BLOCK_PICTURE height").toBe(450);
+    expect(picture.colour_depth, "raw METADATA_BLOCK_PICTURE colour depth").toBe(24);
+    expect(picture.indexed_color, "raw METADATA_BLOCK_PICTURE indexed_color").toBe(0);
+    expect(picture.data.length, "raw METADATA_BLOCK_PICTURE length").toBe(175_668);
   });
+});
 
-  describe('should be able to recognize a ID3v2 tag header prefixing a FLAC file', () => {
+describe("should be able to recognize a ID3v2 tag header prefixing a FLAC file", () => {
+  const filePath = join(samplePath, "a kind of magic.flac");
 
-    const filePath = path.join(samplePath, 'a kind of magic.flac');
-
-    Parsers.forEach(parser => {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, 'audio/flac');
-        t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
-      });
-    });
-
+  test.each(Parsers)("%s", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/flac");
+    expect(metadata.format.tagTypes, 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"').toStrictEqual([
+      "ID3v2.3",
+      "vorbis",
+      "ID3v1",
+    ]);
   });
+});
 
-  describe('should be able to determine the bit-rate', () => {
+describe("should be able to determine the bit-rate", () => {
+  const filePath = join(samplePath, "04 Long Drive.flac");
 
-    const filePath = path.join(samplePath, '04 Long Drive.flac');
-
-    Parsers.forEach(parser => {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, 'audio/flac');
-        assert.approximately(496000, metadata.format.bitrate, 500);
-      });
-    });
-
+  test.each(Parsers)("%s", async (_, parser) => {
+    const metadata = await parser(filePath, "audio/flac");
+    expect(metadata.format.bitrate).toBeCloseTo(496_000, -3);
   });
+});
 
-  describe('handle corrupt FLAC data', () => {
+test("should handle a corrupt data", () => {
+  const emptyStreamSize = 10 * 1024;
+  const buf = Buffer.alloc(emptyStreamSize).fill(0);
+  const tmpFilePath = join(samplePath, "zeroes.flac");
 
-    it('should handle a corrupt data', () => {
+  writeFileSync(tmpFilePath, buf);
 
-      const emptyStreamSize = 10 * 1024;
-      const buf = Buffer.alloc(emptyStreamSize).fill(0);
-      const tmpFilePath = path.join(samplePath, 'zeroes.flac');
-
-      fs.writeFileSync(tmpFilePath, buf);
-
-      Parsers.forEach(parser => {
-        it(parser.description, () => {
-          return parser.initParser(tmpFilePath, 'audio/flac').then(() => {
-            t.fail('Should reject');
-            fs.unlinkSync(tmpFilePath);
-          }).catch(err => {
-            t.strictEqual(err.message, 'FourCC contains invalid characters');
-            return fs.unlinkSync(tmpFilePath);
-          });
-        });
-      });
-    });
+  test.each(Parsers)("%s", async (_, parser) => {
+    await expect(parser(tmpFilePath, "audio/flac")).rejects.toHaveProperty(
+      "message",
+      "FourCC contains invalid characters"
+    );
+    unlinkSync(tmpFilePath);
   });
+});
 
-  /**
-   * Issue: https://github.com/Borewit/music-metadata/issues/266
-   */
-  it('Support Vorbis METADATA_BLOCK_PICTURE tags', async () => {
+/**
+ * Issue: https://github.com/Borewit/music-metadata/issues/266
+ */
+test.each(Parsers)("Support Vorbis METADATA_BLOCK_PICTURE tags", async (_, parser) => {
+  const filePath = join(samplePath, "issue-266.flac");
 
-    const filePath = path.join(samplePath, 'issue-266.flac');
+  const metadata = await parser(filePath);
+  const format = metadata.format;
+  const common = metadata.common;
+  const vorbis = orderTags(metadata.native.vorbis);
 
-    const metadata = await mm.parseFile(filePath);
-    const {format, common} = metadata;
+  expect(format.container).toBe("FLAC");
+  expect(format.tagTypes).toStrictEqual(["vorbis"]);
 
-    assert.strictEqual(format.container, 'FLAC');
-    assert.deepEqual(format.tagTypes, ['vorbis']);
+  expect(vorbis.METADATA_BLOCK_PICTURE, "expect a Vorbis METADATA_BLOCK_PICTURE tag").toBeDefined();
+  expect(vorbis.METADATA_BLOCK_PICTURE.length, "expect 2 Vorbis METADATA_BLOCK_PICTURE tags").toBe(2);
 
-    const vorbis = mm.orderTags(metadata.native.vorbis);
-    assert.isDefined(vorbis.METADATA_BLOCK_PICTURE, 'expect a Vorbis METADATA_BLOCK_PICTURE tag');
-    assert.deepEqual(vorbis.METADATA_BLOCK_PICTURE.length, 2, 'expect 2 Vorbis METADATA_BLOCK_PICTURE tags');
+  expect(common.picture, "common.picture").toBeDefined();
+  expect(common.picture, "common.picture.length").toHaveLength(2);
+  expect(common.picture[0], "ommon.picture[0].format").toHaveProperty("format", "image/jpeg");
+  expect(common.picture[0].data, "ommon.picture[0].data.length").toHaveLength(107_402);
+  expect(common.picture[1], "ommon.picture[1].format").toHaveProperty("format", "image/jpeg");
+  expect(common.picture[1].data, "ommon.picture[1].data.length").toHaveLength(215_889);
+});
 
-    assert.isDefined(common.picture, 'common.picture');
-    assert.deepEqual(common.picture.length, 2, 'common.picture.length');
-    assert.deepEqual(common.picture[0].format, 'image/jpeg', 'ommon.picture[0].format');
-    assert.deepEqual(common.picture[0].data.length, 107402, 'ommon.picture[0].data.length');
-    assert.deepEqual(common.picture[1].format, 'image/jpeg', 'ommon.picture[1].format');
-    assert.deepEqual(common.picture[1].data.length, 215889, 'ommon.picture[1].data.length');
-  });
+test.each(Parsers)("Handle FLAC with undefined duration (number of samples == 0)", async (_, parser) => {
+  const filePath = join(flacFilePath, "test-unknown-duration.flac");
+  const metadata = await parser(filePath);
 
-  it('Handle FLAC with undefined duration (number of samples == 0)', async() => {
+  expect(metadata.format.duration, "format.duration").toBeUndefined();
+});
 
-    const filePath = path.join(flacFilePath, 'test-unknown-duration.flac');
+test.each(Parsers)('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async (_, parser) => {
+  const filePath = join(flacFilePath, "14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac");
+  const metadata = await parser(filePath);
+  const format = metadata.format;
+  const common = metadata.common;
 
-    const {format} = await mm.parseFile(filePath);
+  expect(format.container, "format.container").toBe("FLAC");
+  expect(format.codec, "format.codec").toBe("FLAC");
 
-    assert.isUndefined(format.duration, 'format.duration');
-  });
-
-
-  it('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async () => {
-
-    const filePath = path.join(flacFilePath, '14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac');
-    const {format, common} = await mm.parseFile(filePath);
-
-    assert.strictEqual(format.container, 'FLAC', 'format.container');
-    assert.strictEqual(format.codec, 'FLAC', 'format.codec');
-
-    assert.strictEqual(common.albumartist, 'Various Artists', 'common.albumartist');
-  });
-
+  expect(common.albumartist, "common.albumartist").toBe("Various Artists");
 });

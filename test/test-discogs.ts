@@ -1,241 +1,212 @@
-import { assert } from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper';
-import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper';
-import { samplePath } from './util';
+import { describe, test, expect } from "vitest";
 
-describe('Discogs mappings', () => {
+import { orderTags } from "../lib";
+import { ID3v24TagMapper } from "../lib/id3v2/ID3v24TagMapper";
+import { VorbisTagMapper } from "../lib/ogg/vorbis/VorbisTagMapper";
 
-  const discogs_tags = [
-    'DISCOGS_ARTIST_ID',
-    'DISCOGS_ARTISTS',
-    'DISCOGS_ARTIST_NAME',
-    'DISCOGS_ALBUM_ARTISTS',
-    'DISCOGS_CATALOG',
-    'DISCOGS_COUNTRY',
-    'DISCOGS_DATE',
-    'DISCOGS_LABEL',
-    'DISCOGS_LABEL_ID',
-    'DISCOGS_MASTER_RELEASE_ID',
-    'DISCOGS_RATING',
-    'DISCOGS_RELEASED',
-    'DISCOGS_RELEASE_ID',
-    'DISCOGS_VOTES'];
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  describe('Mapping definitions', () => {
+const discogs_tags = [
+  "DISCOGS_ARTIST_ID",
+  "DISCOGS_ARTISTS",
+  "DISCOGS_ARTIST_NAME",
+  "DISCOGS_ALBUM_ARTISTS",
+  "DISCOGS_CATALOG",
+  "DISCOGS_COUNTRY",
+  "DISCOGS_DATE",
+  "DISCOGS_LABEL",
+  "DISCOGS_LABEL_ID",
+  "DISCOGS_MASTER_RELEASE_ID",
+  "DISCOGS_RATING",
+  "DISCOGS_RELEASED",
+  "DISCOGS_RELEASE_ID",
+  "DISCOGS_VOTES",
+];
 
-    it('should map ID3v2.3/ID3v2.4 tags', () => {
+describe("Mapping definitions", () => {
+  const id3v24Mapper = new ID3v24TagMapper();
+  const vorbisMapper = new VorbisTagMapper();
 
-      const mapper = new ID3v24TagMapper();
-
-      // Each Discogs tag should be mapped
-      for (const tag of discogs_tags) {
-        const tagName = 'TXXX:' + tag;
-        assert.isDefined(mapper.tagMap[tagName], 'Discogs/ID3v2.4 tag: ' + tagName);
-      }
-    });
-
-    it('should map Vorbis/FLAC tags', () => {
-
-      const mapper = new VorbisTagMapper();
-
-      // Each Discogs tag should be mapped
-      for (const tag of discogs_tags) {
-        assert.isDefined(mapper.tagMap[tag], 'Discog/Vorbis tag: ' + tag);
-      }
-    });
+  test.each(discogs_tags)("should map Discogs/ID3v2.3/ID3v2.4 tag: %s", (tag) => {
+    // Each Discogs tag should be mapped
+    const tagName = "TXXX:" + tag;
+    expect(id3v24Mapper.tagMap).toHaveProperty(tagName);
   });
 
-  describe('Track mapping: Beth Hart - Sinner\'s Prayer', () => {
+  test.each(discogs_tags)("should map Discog/Vorbis/FLAC tag: %s", (tag) => {
+    // Each Discogs tag should be mapped
+    expect(vorbisMapper.tagMap).toHaveProperty(tag);
+  });
+});
+describe.each(Parsers)("parser: %s", (_, parser) => {
+  describe("Track mapping: Beth Hart - Sinner's Prayer %s", () => {
+    test("ID3v2.3/ID3v2.4", async () => {
+      const filename = "Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3";
+      const filePath = join(samplePath, filename);
 
-    function checkTags(metadata: mm.IAudioMetadata, tagType, getTagName: (tag: string) => string) {
+      // Run with default options
+      const metadata = await parser(filePath);
 
-      const native = mm.orderTags(metadata.native[tagType]);
-      const common = metadata.common;
+      expect(metadata.common, "should include common tags").toBeTruthy();
+      expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3", "ID3v1"]);
 
-      let tagName: string;
+      const id3v23 = orderTags(metadata.native["ID3v2.3"]);
+
+      expect(metadata.format.duration, "format.duration").toBe(2.168_163_265_306_122_2);
+      expect(metadata.format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(metadata.format.bitrate, "format.bitrate").toBeCloseTo(156_000, -3);
+      expect(metadata.format.numberOfChannels, "format.numberOfChannels").toBe(2);
 
       // Expect basic common tags
-      assert.deepEqual(common.album, 'Don\'t Explain', 'common.album');
-      assert.deepEqual(common.artist, 'Beth Hart, Joe Bonamassa', 'common.artist');
+      expect(metadata.common.album, "common.album").toBe("Don't Explain");
+      expect(metadata.common.artist, "common.artist").toBe("Beth Hart, Joe Bonamassa");
 
       // Check discogs, DISCOGS_RELEASE_ID
-      tagName = getTagName('DISCOGS_RELEASE_ID');
-      assert.deepEqual(native[tagName], ['4204665'], tagType + '/' + tagName);
-      assert.strictEqual(common.discogs_release_id, 4204665, +tagType + '/' + tagName + ' => common.discogs_release_id');
+      expect(id3v23["TXXX:DISCOGS_RELEASE_ID"], "id3v23/TXXX:DISCOGS_RELEASE_ID").toStrictEqual(["4204665"]);
+      expect(metadata.common.discogs_release_id, "id3v23/TXXX:DISCOGS_RELEASE_ID => common.discogs_release_id").toBe(
+        4_204_665
+      );
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
-      tagName = getTagName('DISCOGS_ARTIST_ID');
-      assert.deepEqual(native[tagName], ['389157', '900313'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_artist_id, [389157, 900313], tagType + '/' + tagName + ' => common.discogs_artist_id');
+      expect(id3v23["TXXX:DISCOGS_ARTIST_ID"], "id3v23/TXXX:DISCOGS_ARTIST_ID").toStrictEqual(["389157", "900313"]);
+      expect(
+        metadata.common.discogs_artist_id,
+        "id3v23/TXXX:DISCOGS_ARTIST_ID => common.discogs_release_id"
+      ).toStrictEqual([389_157, 900_313]);
 
       // Check Discogs-tag: DISCOGS_ALBUM_ARTISTS
-      tagName = getTagName('DISCOGS_ALBUM_ARTISTS');
-      assert.deepEqual(native[tagName], ['Beth Hart', 'Joe Bonamassa'], tagType + '/' + tagName);
-      assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], tagType + '/' + tagName + ' => common.artists');
+      expect(id3v23["TXXX:DISCOGS_ALBUM_ARTISTS"], "id3v23/TXXX:DISCOGS_ALBUM_ARTISTS").toStrictEqual([
+        "Beth Hart",
+        "Joe Bonamassa",
+      ]);
+      expect(metadata.common.artists, "id3v23/TXXX:DISCOGS_ALBUM_ARTISTS => common.discogs_release_id").toStrictEqual([
+        "Beth Hart",
+        "Joe Bonamassa",
+      ]);
 
       // Check Discogs-tag: DISCOGS_VOTES
-      tagName = getTagName('DISCOGS_VOTES');
-      assert.deepEqual(native[tagName], ['9'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_votes, 9, tagType + '/' + tagName + ' => common.discogs_votes');
+      expect(id3v23["TXXX:DISCOGS_VOTES"], "id3v23/TXXX:DISCOGS_VOTES").toStrictEqual(["9"]);
+      expect(metadata.common.discogs_votes, "id3v23/TXXX:DISCOGS_VOTES => common.discogs_release_id").toStrictEqual(9);
 
       // Check Discogs-tag: STYLE
-      tagName = getTagName('STYLE');
-      assert.deepEqual(native[tagName], ['Blues Rock'], tagType + '/' + tagName);
+      expect(id3v23["TXXX:STYLE"], "id3v23/TXXX:STYLE").toStrictEqual(["Blues Rock"]);
+      expect(metadata.common.genre, "id3v23/TXXX:STYLE => common.genre").toStrictEqual(["Rock;Blues", "Blues Rock"]);
+      expect(id3v23.TCON, `id3v23/TCON`).toStrictEqual(["Rock;Blues"]); // ToDo: why different in Vorbis
 
-      switch (tagType) {
+      // Check discogs, CATALOGID mapping
+      expect(id3v23["TXXX:CATALOGID"], "id3v23/TXXX:CATALOGID").toStrictEqual(["PRAR931391"]);
+      expect(metadata.common.catalognumber, "id3v23/TXXX:CATALOGID => common.catalognumber").toStrictEqual([
+        "PRAR931391",
+      ]);
+    });
 
-        case 'id3v23':
-          assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], tagType + '/' + tagName + ' => common.genre');
-          assert.deepEqual(native.TCON, ['Rock;Blues'], tagType + '/TCON'); // ToDo: why different in Vorbis
-          break;
-
-        case 'vorbis':
-          assert.deepEqual(common.genre, ['Rock', 'Blues', 'Blues Rock'], tagType + '/' + tagName + ' => common.genre');
-          assert.deepEqual(native.GENRE, ['Rock', 'Blues'], tagType + '/GENRE');
-          assert.deepEqual(native.STYLE, ['Blues Rock'], tagType + '/STYLE');
-          break;
-      }
-    }
-
-    it('ID3v2.3/ID3v2.4', async () => {
-
-      const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [id3v2.3].mp3';
-      const filePath = path.join(samplePath, filename);
+    test("Vorbis/FLAC", async () => {
+      const filename = "Discogs - Beth Hart - Sinner's Prayer [APEv2].flac";
+      const filePath = join(samplePath, filename);
 
       // Run with default options
-      const metadata = await mm.parseFile(filePath);
-      const {common, format} = metadata;
+      const metadata = await parser(filePath);
 
-      assert.ok(metadata.common, 'should include common tags');
-      assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1']);
+      expect(metadata.common, "should include common tags").toBeTruthy();
+      expect(metadata.format.tagTypes).toStrictEqual(["vorbis"]);
 
-      const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+      expect(metadata.format.duration, "format.duration").toBe(2.122_993_197_278_911_6);
+      expect(metadata.format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(metadata.format.bitsPerSample, "format.bitsPerSample").toBe(16);
+      expect(metadata.format.numberOfChannels, "format.numberOfChannels").toBe(2);
 
-      // t.deepEqual(format.numberOfSamples, 93624, "format.numberOfSamples");
-      assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
-      assert.deepEqual(format.duration, 2.1681632653061222, 'format.duration');
-      assert.approximately(format.bitrate, 156000, 1000, 'format.bitrate');
-      assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      const vorbis = orderTags(metadata.native.vorbis);
 
       // Expect basic common tags
-      assert.deepEqual(common.album, 'Don\'t Explain', 'common.album');
-      assert.deepEqual(common.artist, 'Beth Hart, Joe Bonamassa', 'common.artist');
+      expect(metadata.common.album, "common.album").toBe("Don't Explain");
+      expect(metadata.common.artist, "common.artist").toBe("Beth Hart, Joe Bonamassa");
 
       // Check discogs, DISCOGS_RELEASE_ID
-      assert.deepEqual(id3v23['TXXX:DISCOGS_RELEASE_ID'], ['4204665'], 'id3v23/TXXX:DISCOGS_RELEASE_ID');
-      assert.strictEqual(common.discogs_release_id, 4204665, 'id3v23/TXXX:DISCOGS_RELEASE_ID: => common.discogs_release_id');
+      expect(vorbis.DISCOGS_RELEASE_ID, "vorbis/DISCOGS_RELEASE_ID").toStrictEqual(["4204665"]);
+      expect(metadata.common.discogs_release_id, "vorbis/DISCOGS_RELEASE_ID => common.discogs_release_id").toBe(
+        4_204_665
+      );
 
-      // Check discogs, CATALOGID mapping
-      assert.deepEqual(id3v23['TXXX:CATALOGID'], ['PRAR931391'], 'id3v23/TXXX:CATALOGID: PRAR931391');
-      assert.deepEqual(common.catalognumber, ['PRAR931391'], 'id3v23/TXXX:CATALOGID => common.catalognumber');
+      // Check Discogs-tag: DISCOGS_ARTIST_ID
+      expect(vorbis.DISCOGS_ARTIST_ID, "vorbis/DISCOGS_ARTIST_ID").toStrictEqual(["389157", "900313"]);
+      expect(metadata.common.discogs_artist_id, "vorbis/DISCOGS_ARTIST_ID => common.discogs_release_id").toStrictEqual([
+        389_157, 900_313,
+      ]);
 
-      // Check discogs, CATALOGID mapping
-      assert.deepEqual(id3v23.TCON, ['Rock;Blues'], 'id3v23/TCON');
-      assert.deepEqual(id3v23['TXXX:STYLE'], ['Blues Rock'], 'id3v23/TXXX:STYLE');
-      assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], 'id3v23/TXXX:STYLE => common.genre');
+      // Check Discogs-tag: DISCOGS_ALBUM_ARTISTS
+      expect(vorbis.DISCOGS_ALBUM_ARTISTS, "vorbis/DISCOGS_ALBUM_ARTISTS").toStrictEqual([
+        "Beth Hart",
+        "Joe Bonamassa",
+      ]);
+      expect(metadata.common.artists, "vorbis/DISCOGS_ALBUM_ARTISTS => common.discogs_release_id").toStrictEqual([
+        "Beth Hart",
+        "Joe Bonamassa",
+      ]);
+
+      // Check Discogs-tag: DISCOGS_VOTES
+      expect(vorbis.DISCOGS_VOTES, "vorbis/DISCOGS_VOTES").toStrictEqual(["9"]);
+      expect(metadata.common.discogs_votes, "vorbis/DISCOGS_VOTES => common.discogs_release_id").toStrictEqual(9);
+
+      // Check Discogs-tag: STYLE
+      expect(vorbis.STYLE, "vorbis/STYLE").toStrictEqual(["Blues Rock"]);
+      expect(metadata.common.genre, `vorbis/STYLE => common.genre`).toStrictEqual(["Rock", "Blues", "Blues Rock"]);
+      expect(vorbis.GENRE, `vorbis/GENRE`).toStrictEqual(["Rock", "Blues"]);
+      expect(vorbis.STYLE, `vorbis/STYLE`).toStrictEqual(["Blues Rock"]);
     });
-
-    it('Vorbis/FLAC', async () => {
-
-      const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [APEv2].flac';
-      const filePath = path.join(samplePath, filename);
-
-      function checkNative(id3v23) {
-        // Compare expectedCommonTags with result.common
-        assert.deepEqual(id3v23['TXXX:CATALOGID'], 'PRAR931391');
-      }
-
-      // Run with default options
-      const metadata = await mm.parseFile(filePath);
-
-      assert.ok(metadata.common, 'should include common tags');
-      assert.deepEqual(metadata.format.tagTypes, ['vorbis']);
-
-      const format = metadata.format;
-      assert.deepEqual(format.duration, 2.1229931972789116, 'format.duration');
-      assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
-      assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-      assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-
-      checkTags(metadata, 'vorbis', tag => tag);
-    });
-
   });
 
-  describe('Track mapping: Yasmin Levy - Mi Korasón.flac\'', () => {
+  describe("Track mapping: Yasmin Levy - Mi Korasón.flac'", () => {
+    test("Vorbis/FLAC tags", async () => {
+      const filename = "Discogs - Yasmin Levy - Mi Korasón.flac";
+      const metadata = await parser(join(samplePath, filename));
 
-    function checkTags(metadata: mm.IAudioMetadata, tagType, getTagName: (tag: string) => string) {
+      expect(metadata.common, "should include common tags").toBeTruthy();
+      expect(metadata.format.tagTypes).toStrictEqual(["vorbis"]);
 
-      const native = mm.orderTags(metadata.native[tagType]);
-      const common = metadata.common;
+      const native = orderTags(metadata.native.vorbis);
 
-      // Search for Discogs tags (DISCOGS_*)
-      const discogs_tags_found: string[] = [];
-      for (const tag in native) {
-        if (tag.lastIndexOf('DISCOGS_', 0) >= 0) {
-          discogs_tags.push(tag);
-        }
+      // Each Discogs tag should be mapped
+      for (const tag of Object.keys(native).filter((t) => t.includes("DISCOGS_"))) {
+        expect(discogs_tags.includes(tag), `Discog/Vorbis tag: ${tag}`).toBe(true);
       }
 
       // Make sure we parse the correct song
-      assert.deepEqual(common.album, 'Sentir', 'common.album');
-      assert.deepEqual(common.artist, 'Yasmin Levy', 'common.artist');
-
-      // Each Discogs tag should be mapped
-      for (const tag of discogs_tags_found) {
-        assert.isTrue(discogs_tags.indexOf(tag) !== -1, 'Discog/Vorbis tag: ' + tag);
-      }
-
-      let tagName;
+      expect(metadata.common.album, "common.album").toBe("Sentir");
+      expect(metadata.common.artist, "common.artist").toBe("Yasmin Levy");
 
       // Check Discogs-tag: DISCOGS_RELEASE_ID
-      tagName = getTagName('DISCOGS_RELEASE_ID');
-      assert.deepEqual(native[tagName], ['3520814'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_release_id, 3520814, tagType + '/' + tagName + ' => common.discogs_release_id');
+      expect(native.DISCOGS_RELEASE_ID, "vorbis/DISCOGS_RELEASE_ID").toStrictEqual(["3520814"]);
+      expect(metadata.common.discogs_release_id, "vorbis/DISCOGS_RELEASE_ID => common.discogs_release_id").toBe(
+        3_520_814
+      );
 
       // Check Discogs-tag: DISCOGS_MASTER_RELEASE_ID
-      tagName = getTagName('DISCOGS_MASTER_RELEASE_ID');
-      assert.deepEqual(native[tagName], ['461710'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_master_release_id, 461710, tagType + '/' + tagName + ' => common.discogs_master_release_id');
+      expect(native.DISCOGS_MASTER_RELEASE_ID, "vorbis/DISCOGS_MASTER_RELEASE_ID").toStrictEqual(["461710"]);
+      expect(
+        metadata.common.discogs_master_release_id,
+        "vorbis/DISCOGS_MASTER_RELEASE_ID => common.discogs_master_release_id"
+      ).toBe(461_710);
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
-      tagName = getTagName('DISCOGS_ARTIST_ID');
-      assert.deepEqual(native[tagName], ['467650'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_artist_id, [467650], tagType + '/' + tagName + ' => common.discogs_artist_id');
+      expect(native.DISCOGS_ARTIST_ID, "vorbis/DISCOGS_ARTIST_ID").toStrictEqual(["467650"]);
+      expect(metadata.common.discogs_artist_id, "vorbis/DISCOGS_ARTIST_ID => common.discogs_artist_id").toStrictEqual([
+        467_650,
+      ]);
 
-      // tagName = getTagName("DISCOGS_ALBUM_ARTISTS");
-      // t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
-      // t.deepEqual(common.artists, ["Yasmin Levy", "Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
       // Check Discogs-tag: DISCOGS_ARTIST_NAME ToDo: test multiple artists
-      tagName = getTagName('DISCOGS_ARTIST_NAME');
-      assert.deepEqual(native[tagName], ['Yasmin Levy'], tagType + '/' + tagName);
-      assert.deepEqual(common.artists, ['Yasmin Levy'], tagType + '/' + tagName + ' => common.artists'); // ToDo? remove duplicates
+      expect(native.DISCOGS_ARTIST_NAME, "vorbis/DISCOGS_ARTIST_NAME").toStrictEqual(["Yasmin Levy"]);
+      expect(metadata.common.artists, "vorbis/DISCOGS_ARTIST_NAME => common.artists").toStrictEqual(["Yasmin Levy"]); // ToDo? remove duplicates
+
       // Check Discogs-tag: DISCOGS_DATE
-      tagName = getTagName('DISCOGS_DATE');
-      assert.deepEqual(native[tagName], ['2009'], tagType + '/' + tagName);
-      // ToDo? t.deepEqual(common.originaldate, "2009", "Vorbis/DISCOGS_DATE: => common.originaldate");
+      expect(native.DISCOGS_DATE, "vorbis/DISCOGS_DATE").toStrictEqual(["2009"]);
+      expect(metadata.common.originaldate, "vorbis/DISCOGS_DATE => common.originaldate").not.toBe("2009"); // Why is not "2009"
+
       // Check Discogs: DISCOGS_CATALOG
-      tagName = getTagName('DISCOGS_CATALOG');
-      assert.deepEqual(native[tagName], ['450010'], tagType + '/' + tagName);
-      assert.deepEqual(common.catalognumber, ['450010'], tagType + '/' + tagName + ' => common.catalognumber');
-
-    }
-
-    it('Vorbis/FLAC tags', async () => {
-
-      const filename = 'Discogs - Yasmin Levy - Mi Korasón.flac';
-
-      const metadata = await mm.parseFile(path.join(samplePath, filename));
-
-      assert.ok(metadata.common, 'should include common tags');
-      assert.deepEqual(metadata.format.tagTypes, ['vorbis']);
-
-      checkTags(metadata, 'vorbis', tag => tag);
+      expect(native.DISCOGS_CATALOG, "vorbis/DISCOGS_CATALOG").toStrictEqual(["450010"]);
+      expect(metadata.common.catalognumber, "vorbis/DISCOGS_CATALOG => common.catalognumber").toStrictEqual(["450010"]);
     });
-
   });
-
 });

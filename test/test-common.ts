@@ -1,136 +1,130 @@
-import { assert } from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import { commonTags, isSingleton } from '../lib/common/GenericTagTypes';
-import * as mm from '../lib';
-import { CombinedTagMapper } from '../lib/common/CombinedTagMapper';
-import { joinArtists } from '../lib/common/MetadataCollector';
-import { parseHttpContentType } from '../lib/ParserFactory';
+import { describe, expect, test } from "vitest";
 
-import { samplePath } from './util';
+import { ratingToStars, selectCover } from "../lib";
+import { CombinedTagMapper } from "../lib/common/CombinedTagMapper";
+import { commonTags, isSingleton } from "../lib/common/GenericTagInfo";
+import { joinArtists } from "../lib/common/MetadataCollector";
+import { parseHttpContentType } from "../lib/ParserFactory";
 
-describe('GenericTagMap', () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
+describe("GenericTagMap", () => {
   const combinedTagMapper = new CombinedTagMapper();
 
-  it('Check if each native tag, is mapped to a valid common type', () => {
-
-    assert.isDefined(commonTags);
+  test("Check if each native tag, is mapped to a valid common type", () => {
+    expect(commonTags).toBeDefined();
 
     // for each tag type
-    for (const nativeType in combinedTagMapper.tagMappers) {
-      const tagMapper = combinedTagMapper.tagMappers[nativeType];
-      for (const nativeTag in tagMapper.tagMap) {
-        const commonType = tagMapper.tagMap[nativeTag];
-        assert.isDefined(commonTags[commonType], 'Unknown common tagTypes in mapping ' + nativeType + '.' + nativeTag + ' => ' + commonType);
+    for (const [nativeType, tagMapper] of Object.entries(combinedTagMapper.tagMappers)) {
+      for (const [nativeTag, commonType] of Object.entries(tagMapper.tagMap)) {
+        expect(
+          commonTags,
+          `Unknown common tagTypes in mapping ${nativeType}.${nativeTag} => ${commonType}`
+        ).toHaveProperty(commonType);
       }
     }
   });
 
-  it('should be able to distinct singletons', () => {
-
+  test("should be able to distinct singletons", () => {
     // common tags, singleton
-    assert.ok(isSingleton('title'), 'common tag "title" is a singleton');
-    assert.ok(isSingleton('artist'), 'common tag "artist" is a singleton');
-    assert.ok(!isSingleton('artists'), 'common tag "artists" is not a singleton');
+    expect(isSingleton("title"), 'common tag "title" is a singleton').toBe(true);
+    expect(isSingleton("artist"), 'common tag "artist" is a singleton').toBe(true);
+    expect(isSingleton("artists"), 'common tag "artists" is not a singleton').toBe(false);
   });
 
-  describe('common.artist / common.artists mapping', () => {
-
-    it('should be able to join artists', () => {
-      assert.equal(joinArtists(['David Bowie']), 'David Bowie');
-      assert.equal(joinArtists(['David Bowie', 'Stevie Ray Vaughan']), 'David Bowie & Stevie Ray Vaughan');
-      assert.equal(joinArtists(['David Bowie', 'Queen', 'Mick Ronson']), 'David Bowie, Queen & Mick Ronson');
+  describe("common.artist / common.artists mapping", () => {
+    test("should be able to join artists", () => {
+      expect(joinArtists(["David Bowie"])).toBe("David Bowie");
+      expect(joinArtists(["David Bowie", "Stevie Ray Vaughan"])).toBe("David Bowie & Stevie Ray Vaughan");
+      expect(joinArtists(["David Bowie", "Queen", "Mick Ronson"])).toBe("David Bowie, Queen & Mick Ronson");
     });
 
-    it('parse RIFF tags', async () => {
+    test.each(Parsers)("parse RIFF tags %s", async (_, parser) => {
+      const filePath = join(samplePath, "issue-89 no-artist.aiff");
 
-      const filePath = path.join(__dirname, 'samples', 'issue-89 no-artist.aiff');
-
-      const metadata = await mm.parseFile(filePath, {duration: true});
-      assert.deepEqual(metadata.common.artists, ['Beth Hart', 'Joe Bonamassa'], 'common.artists directly via WM/ARTISTS');
-      assert.strictEqual(metadata.common.artist, 'Beth Hart & Joe Bonamassa', 'common.artist derived from common.artists');
+      const metadata = await parser(filePath, "audio/aiff", { duration: true });
+      expect(metadata.common.artists, "common.artists directly via WM/ARTISTS").toStrictEqual([
+        "Beth Hart",
+        "Joe Bonamassa",
+      ]);
+      expect(metadata.common.artist, "common.artist derived from common.artists").toBe("Beth Hart & Joe Bonamassa");
     });
   });
 });
 
-describe('Convert rating', () => {
-
-  it('should convert rating to stars', () => {
-
-    assert.equal(mm.ratingToStars(undefined), 0);
-    assert.equal(mm.ratingToStars(0), 1);
-    assert.equal(mm.ratingToStars(0.1), 1);
-    assert.equal(mm.ratingToStars(0.2), 2);
-    assert.equal(mm.ratingToStars(0.5), 3);
-    assert.equal(mm.ratingToStars(0.75), 4);
-    assert.equal(mm.ratingToStars(1), 5);
-
+describe("Convert rating", () => {
+  test("should convert rating to stars", () => {
+    expect(ratingToStars(undefined as number)).toBe(0);
+    expect(ratingToStars(0)).toBe(1);
+    expect(ratingToStars(0.1)).toBe(1);
+    expect(ratingToStars(0.2)).toBe(2);
+    expect(ratingToStars(0.5)).toBe(3);
+    expect(ratingToStars(0.75)).toBe(4);
+    expect(ratingToStars(1)).toBe(5);
   });
-
 });
 
-describe('function selectCover()', () => {
-
+describe.each(Parsers)("function selectCover() %s", (_, parser) => {
   const multiCoverFiles = [
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].V2.mp3',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].aiff',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer.ape',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer.flac',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a',
-    'MusicBrainz - Beth Hart - Sinner\'s Prayer.ogg',
-    'id3v2.4.mp3',
-    'issue-266.flac',
-    'monkeysaudio.ape'
+    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3",
+    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav",
+    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3",
+    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff",
+    "MusicBrainz - Beth Hart - Sinner's Prayer.ape",
+    "MusicBrainz - Beth Hart - Sinner's Prayer.flac",
+    "MusicBrainz - Beth Hart - Sinner's Prayer.m4a",
+    "MusicBrainz - Beth Hart - Sinner's Prayer.ogg",
+    "id3v2.4.mp3",
+    "issue-266.flac",
+    "monkeysaudio.ape",
   ];
 
-  it('Should pick the front cover', async () => {
-    for (const multiCoverFile of multiCoverFiles) {
-      const filePath = path.join(samplePath, multiCoverFile);
-      const {common} = await mm.parseFile(filePath);
-      assert.isTrue(common.picture.length > 1);
-      const cover = mm.selectCover(common.picture);
-      if (cover.type) {
-        assert.equal(cover.type, 'Cover (front)', 'cover.type');
-      } else {
-        assert.equal(cover.data, common.picture[0].data, 'First picture if no type is defined');
-      }
+  test.each(multiCoverFiles)("Should pick the front cover %s", async (multiCoverFile) => {
+    const filePath = join(samplePath, multiCoverFile);
+
+    const metadata = await parser(filePath);
+
+    expect(metadata.common.picture.length).toBeGreaterThanOrEqual(1);
+
+    const cover = selectCover(metadata.common.picture);
+    if (cover.type) {
+      expect(cover.type, "cover.type").toBe("Cover (front)");
+    } else {
+      expect(cover.data, "First picture if no type is defined").toBe(metadata.common.picture[0].data);
     }
   });
-
 });
 
-describe('MimeType', () => {
-
-  it('should be able to decode basic MIME-types', () => {
-    const mime = parseHttpContentType('audio/mpeg');
-    assert.equal(mime.type, 'audio');
-    assert.equal(mime.subtype, 'mpeg');
+describe("MimeType", () => {
+  test("should be able to decode basic MIME-types", () => {
+    const mime = parseHttpContentType("audio/mpeg");
+    expect(mime.type).toBe("audio");
+    expect(mime.subtype).toBe("mpeg");
   });
 
-  it('should be able to decode MIME-type parameters', () => {
-    {
-      const mime = parseHttpContentType('message/external-body; access-type=URL');
-      assert.equal(mime.type, 'message');
-      assert.equal(mime.subtype, 'external-body');
-      assert.deepEqual(mime.parameters, {'access-type': 'URL'});
-    }
-
-    {
-      const mime = parseHttpContentType('Text/HTML;Charset="utf-8"');
-      assert.equal(mime.type, 'text');
-      assert.equal(mime.subtype, 'html');
-      assert.deepEqual(mime.parameters, {charset: 'utf-8'});
-    }
+  test("should be able to decode MIME-type parameters", () => {
+    const mime = parseHttpContentType("message/external-body; access-type=URL");
+    expect(mime.type).toBe("message");
+    expect(mime.subtype).toBe("external-body");
+    expect(mime.parameters).toHaveProperty("access-type", "URL");
   });
 
-  it('should be able to decode MIME-type suffix', () => {
-    const mime = parseHttpContentType('application/xhtml+xml');
-    assert.equal(mime.type, 'application');
-    assert.equal(mime.subtype, 'xhtml');
-    assert.equal(mime.suffix, 'xml');
+  test("should be able to decode case MIME-type", () => {
+    const mime = parseHttpContentType('Text/HTML;Charset="utf-8"');
+
+    expect(mime.type).toBe("text");
+    expect(mime.subtype).toBe("html");
+    // eslint-disable-next-line unicorn/text-encoding-identifier-case
+    expect(mime.parameters).toHaveProperty("charset", "utf-8");
   });
 
+  test("should be able to decode MIME-type suffix", () => {
+    const mime = parseHttpContentType("application/xhtml+xml");
+    expect(mime.type).toBe("application");
+    expect(mime.subtype).toBe("xhtml");
+    expect(mime.suffix).toBe("xml");
+  });
 });

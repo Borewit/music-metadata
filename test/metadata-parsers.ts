@@ -1,39 +1,43 @@
-import * as fs from 'fs';
+import { createReadStream, readFileSync } from "node:fs";
 
-import * as mm from '../lib';
-import { IAudioMetadata, IOptions } from '../lib/type';
+import { parseFile, parseStream, parseBuffer } from "../lib";
 
-type ParseFileMethod = (filePath: string, mimeType?: string, options?: IOptions) => Promise<IAudioMetadata>;
+import type { IAudioMetadata, IOptions } from "../lib/type";
 
-interface IParser {
-  description: string;
-  initParser: ParseFileMethod;
-}
+type Parser = [
+  description: "file" | "stream" | "buffer",
+  initParser: (filePath: string, mimeType?: string, options?: IOptions) => Promise<IAudioMetadata>
+];
 
 /**
  * Helps looping through different input styles
+ * @param filePath
+ * @param mimeType
+ * @param options
+ * @returns
  */
-export const Parsers: IParser[] = [
-  {
-    description: 'parseFile',
-    initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
-      return mm.parseFile(filePath, options);
-    }
-  }, {
-    description: 'parseStream',
-    initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
-      const stream = fs.createReadStream(filePath);
-      return mm.parseStream(stream, {mimeType}, options).then(metadata => {
-        stream.close();
-        return metadata;
-      });
-    }
-  }, {
-    description: 'parseBuffer',
-    initParser: (filePath: string, mimeType?: string, options?: IOptions) => {
-      const buffer = fs.readFileSync(filePath);
+export const Parsers: Parser[] = [
+  [
+    "file",
+    (filePath, mimeType, options) => {
+      return parseFile(filePath, options);
+    },
+  ],
+  [
+    "stream",
+    async (filePath, mimeType, options) => {
+      const stream = createReadStream(filePath);
+      const metadata = await parseStream(stream, { mimeType }, options);
+      stream.close();
+      return metadata;
+    },
+  ],
+  [
+    "buffer",
+    (filePath, mimeType, options) => {
+      const buffer = readFileSync(filePath);
       const array = new Uint8Array(buffer);
-      return mm.parseBuffer(array, {mimeType}, options);
-    }
-  }
+      return parseBuffer(array, { mimeType }, options);
+    },
+  ],
 ];

@@ -1,120 +1,122 @@
-import { assert } from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import { samplePath } from './util';
-import * as mm from '../lib';
+import { describe, test, expect } from "vitest";
 
-const t = assert;
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
 /**
  * Ensure the mapping of native comment field to the common comment field is done correctly
  * Ref: https://github.com/Borewit/music-metadata/issues/50
  */
-describe('Mapping of common comment tag', () => {
+describe.each(Parsers)("Mapping of common comment tag", (_, parser) => {
+  describe("Vorbis", () => {
+    test("FLAC/Vorbis", async () => {
+      expect.assertions(1);
 
-  describe('Vorbis', () => {
-
-    it('FLAC/Vorbis', async () => {
-
-      const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.flac');
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac");
 
       // Parse flac/Vorbis file
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
 
-    it('should map ogg/Vorbis', async () => {
+    test("should map ogg/Vorbis", async () => {
+      expect.assertions(1);
 
-      const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.ogg');
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
 
       // Parse ogg/Vorbis file
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
   });
 
-  describe('APEv2 header', async () => {
+  describe("APEv2 header", () => {
+    test("Monkey's Audio / APEv2", async () => {
+      expect.assertions(1);
 
-    it('Monkey\'s Audio / APEv2', async () => {
-
-      const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.ape');
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
       // Run with default options
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
 
-    it('WavPack / APEv2', async () => {
+    test("WavPack / APEv2", async () => {
+      expect.assertions(1);
 
-      const filePath = path.join(samplePath, 'wavpack', 'MusicBrainz - Beth Hart - Sinner\'s Prayer.wv');
+      const filePath = join(samplePath, "wavpack", "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
       // Run with default options
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
   });
 
-  describe('ID3v2.3 header', async () => {
+  describe("ID3v2.3 header", () => {
+    test("MP3 / ID3v2.3", async () => {
+      expect.assertions(1);
 
-    it('MP3 / ID3v2.3', async () => {
-
-      const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
 
       // Run with default options
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
 
-    it('RIFF/WAVE/PCM / ID3v2.3', async () => {
+    test("RIFF/WAVE/PCM / ID3v2.3", async () => {
+      expect.assertions(1);
 
-      const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav');
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
   });
 
-  describe('ID3v2.4 header', () => {
+  describe("ID3v2.4 header", () => {
+    test("MP3/ID3v2.4 header", async () => {
+      expect.assertions(1);
 
-    it('MP3/ID3v2.4 header', async () => {
-
-      const filename = 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].V2.mp3';
-      const filePath = path.join(samplePath, filename);
-
-      // Run with default options
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
-    });
-
-    it('should parse AIFF/ID3v2.4 audio file', async () => {
-
-      const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].aiff');
+      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3";
+      const filePath = join(samplePath, filename);
 
       // Run with default options
-      const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, ['Test 123']);
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
     });
 
+    test("should parse AIFF/ID3v2.4 audio file", async () => {
+      expect.assertions(1);
+
+      const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
+
+      // Run with default options
+      const metadata = await parser(filePath);
+      expect(metadata.common.comment).toStrictEqual(["Test 123"]);
+    });
   });
 
-  it('should map M4A / (Apple) iTunes header', async () => {
+  test("should map M4A / (Apple) iTunes header", async () => {
+    expect.assertions(1);
 
-    const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a');
+    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     // Run with default options
-    const metadata = await mm.parseFile(filePath);
+    const metadata = await parser(filePath);
     // Aggregation of '----:com.apple.iTunes:NOTES' & '©cmt'
-    t.deepEqual(metadata.common.comment, ['Medieval CUE Splitter (www.medieval.it)', 'Test 123']);
+    expect(metadata.common.comment).toStrictEqual(["Medieval CUE Splitter (www.medieval.it)", "Test 123"]);
   });
 
-  it('should map WMA/ASF header', async () => {
+  test("should map WMA/ASF header", async () => {
+    expect.assertions(1);
 
     // ToDo: update sample file
-    const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.wma');
+    const filePath = join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     // Parse wma/asf file
-    const metadata = await mm.parseFile(filePath);
-    t.deepEqual(metadata.common.comment, ['Test 123']);
+    const metadata = await parser(filePath);
+    expect(metadata.common.comment).toStrictEqual(["Test 123"]);
   });
-
 });

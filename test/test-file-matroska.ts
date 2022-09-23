@@ -1,161 +1,163 @@
-import * as path from 'path';
-import * as mm from '../lib';
-import { assert } from 'chai';
-import { samplePath } from './util';
+import { join } from "node:path";
 
-describe('Matroska formats', () => {
+import { describe, test, expect } from "vitest";
 
-  const matroskaSamplePath = path.join(samplePath, 'matroska');
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  function verifyTrackSolidGround(common: mm.ICommonTagsResult) {
-    // Common mapped EBML tags
-    assert.strictEqual(common.title, 'Solid Ground', 'common.title');
-    assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
-    assert.strictEqual(common.artistsort, 'Poxfil', 'common.artistsort');
-    assert.deepEqual(common.label, ['blocSonic'], 'common.label');
-    assert.strictEqual(common.musicbrainz_albumid, 'abf39f57-0b01-4b51-9c1e-b21e8ada5091', 'common.musicbrainz_albumid');
-    assert.deepEqual(common.musicbrainz_artistid, ['ee315b01-df5e-451e-8cd6-90a9f1faaf51'], 'common.musicbrainz_artistid');
-    assert.strictEqual(common.musicbrainz_recordingid, '209dbf50-509d-4ac3-aec5-e96da99dfdd9', 'common.musicbrainz_recordingid');
-    assert.deepEqual(common.track, {no: 2, of: 10}, 'common.track');
-  }
+const matroskaSamplePath = join(samplePath, "matroska");
 
-  describe('Matroska audio (.mka)', () => {
+describe.each(Parsers)("parser: %s", (_, parser) => {
+  describe("Matroska audio (.mka)", () => {
+    test('parse: "alac-in-matroska-short.mka"', async () => {
+      const mkaPath = join(matroskaSamplePath, "alac-in-matroska-short.mka");
 
-    it('parse: "alac-in-matroska-short.mka"', async () => {
-
-      const mkaPath = path.join(matroskaSamplePath, 'alac-in-matroska-short.mka');
-
-      const {format} = await mm.parseFile(mkaPath, {duration: false});
+      const { format } = await parser(mkaPath, "audio/matroska", { duration: false });
 
       // format chunk information
-      assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
-      assert.strictEqual(format.codec, 'ALAC', 'format.codec');
-      assert.approximately(format.duration, 196608 / 41000, 1 / 100000, 'format.duration');
-      assert.strictEqual(format.sampleRate, 41000, 'format.sampleRate');
-      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      expect(format.container, "format.container").toBe("EBML/matroska");
+      expect(format.codec, "format.codec").toBe("ALAC");
+      expect(format.duration, "format.duration").toBeCloseTo(196_608 / 41_000, 5);
+      expect(format.sampleRate, "format.sampleRate").toBe(41_000);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
     });
 
-    it('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', async () => {
+    test('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', async () => {
+      const mkaPath = join(matroskaSamplePath, "02 - Poxfil - Solid Ground (5 sec).mka");
 
-      const mkaPath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).mka');
-
-      const {format, common} = await mm.parseFile(mkaPath, {duration: false});
+      const metadata = await parser(mkaPath, "audio/matroska", { duration: false });
+      const format = metadata.format;
+      const common = metadata.common;
 
       // format chunk information
-      assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
-      assert.strictEqual(format.codec, 'AAC', 'format.codec');
-      assert.approximately(format.duration, 221184 / 44100, 1 / 100000, 'format.duration');
-      assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      expect(format.container, "format.container").toBe("EBML/matroska");
+      expect(format.codec, "format.codec").toBe("AAC");
+      expect(format.duration, "format.duration").toBeCloseTo(221_184 / 44_100, 5);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
 
-      verifyTrackSolidGround(common);
+      // Common mapped EBML tags
+      expect(common.title, "common.title").toBe("Solid Ground");
+      expect(common.artist, "common.artist").toBe("Poxfil");
+      expect(common.artistsort, "common.artistsort").toBe("Poxfil");
+      expect(common.label, "common.label").toStrictEqual(["blocSonic"]);
+      expect(common.musicbrainz_albumid, "common.musicbrainz_albumid").toBe("abf39f57-0b01-4b51-9c1e-b21e8ada5091");
+      expect(common.musicbrainz_artistid, "common.musicbrainz_artistid").toStrictEqual([
+        "ee315b01-df5e-451e-8cd6-90a9f1faaf51",
+      ]);
+      expect(common.musicbrainz_recordingid, "common.musicbrainz_recordingid").toBe(
+        "209dbf50-509d-4ac3-aec5-e96da99dfdd9"
+      );
+      expect(common.track, "common.track").toStrictEqual({ no: 2, of: 10 });
     });
   });
 
-  describe('WebM', () => {
+  describe("WebM", () => {
+    test('parse: "big-buck-bunny_trailer-short.vp8.webm"', async () => {
+      const webmPath = join(matroskaSamplePath, "big-buck-bunny_trailer-short.vp8.webm");
 
-    it('parse: "big-buck-bunny_trailer-short.vp8.webm"', async () => {
-
-      const webmPath = path.join(matroskaSamplePath, 'big-buck-bunny_trailer-short.vp8.webm');
-
-      const {format, common} = await mm.parseFile(webmPath, {duration: false});
+      const metadata = await parser(webmPath, "audio/webm", { duration: false });
+      const format = metadata.format;
+      const common = metadata.common;
 
       // format chunk information
-      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
-      assert.strictEqual(format.codec, 'VORBIS', 'format.codec');
-      assert.approximately(format.duration, 7.143, 1 / 100000, 'format.duration');
-      assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      expect(format.container, "format.container").toBe("EBML/webm");
+      expect(format.codec, "format.codec").toBe("VORBIS");
+      expect(format.duration, "format.duration").toBeCloseTo(7.143, 5);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
 
       // common metadata
-      assert.strictEqual(common.title, 'Big Buck Bunny', 'common.title');
-      assert.isDefined(common.picture, 'common.picture');
-      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture[0].format');
-      assert.strictEqual(common.picture[0].description, 'Poster', 'common.picture[0].description');
-      assert.strictEqual(common.picture[0].name, 'Big buck bunny poster.jpg', 'common.picture[0].name');
+      expect(common.title, "common.title").toBe("Big Buck Bunny");
+      expect(common.picture, "common.picture").toBeDefined();
+      expect(common.picture[0].format, "common.picture[0].format").toBe("image/jpeg");
+      expect(common.picture[0].description, "common.picture[0].description").toBe("Poster");
+      expect(common.picture[0].name, "common.picture[0].name").toBe("Big buck bunny poster.jpg");
     });
 
-    it('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {
+    test('parse: "02 - Poxfil - Solid Ground (5 sec).opus.webm"', async () => {
+      const webmPath = join(matroskaSamplePath, "02 - Poxfil - Solid Ground (5 sec).opus.webm");
 
-      const webmPath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).opus.webm');
-
-      const {format, common} = await mm.parseFile(webmPath, {duration: false});
+      const metadata = await parser(webmPath, "audio/webm", { duration: false });
+      const format = metadata.format;
+      const common = metadata.common;
 
       // format chunk information
-      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
-      assert.strictEqual(format.codec, 'OPUS', 'format.codec');
-      assert.approximately(format.duration, 5.006509896, 1 / 100000, 'format.duration');
-      assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      expect(format.container, "format.container").toBe("EBML/webm");
+      expect(format.codec, "format.codec").toBe("OPUS");
+      expect(format.duration, "format.duration").toBeCloseTo(5.006_51, 5);
+      expect(format.sampleRate, "format.sampleRate").toBe(44_100);
 
-      assert.strictEqual(common.title, 'Solid Ground', 'common.title');
-      assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
-      assert.deepStrictEqual(common.track, {no: 2, of: 10}, 'common.track');
-      assert.strictEqual(common.encodedby, 'Max 0.8b', 'common.encodersettings');
-      assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
+      expect(common.title, "common.title").toBe("Solid Ground");
+      expect(common.artist, "common.artist").toBe("Poxfil");
+      expect(common.track, "common.track").toStrictEqual({ no: 2, of: 10 });
+      expect(common.encodedby, "common.encodersettings").toBe("Max 0.8b");
+      expect(common.encodersettings, "common.encodersettings").toBe("--bitrate 96 --vbr");
     });
 
-    it('should parse "My Baby Boy.webm"', async () => {
+    test('should parse "My Baby Boy.webm"', async () => {
+      const filePath = join(matroskaSamplePath, "My Baby Boy.webm");
 
-      const filePath = path.join(matroskaSamplePath, 'My Baby Boy.webm');
+      const metadata = await parser(filePath, "audio/webm", { duration: true });
+      const format = metadata.format;
+      const common = metadata.common;
+      // const native = metadata.native;
 
-      const {format, common, native} = await mm.parseFile(filePath, {duration: true});
-      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
-      assert.strictEqual(format.codec, 'OPUS', 'format.codec');
+      expect(format.container, "format.container").toBe("EBML/webm");
+      expect(format.codec, "format.codec").toBe("OPUS");
 
-      assert.strictEqual(common.title, 'My Baby Boy', 'common.title');
-      assert.strictEqual(common.artist, 'theAngelcy', 'common.artist');
-      assert.strictEqual(common.albumartist, 'theAngelcy', 'common.albumartist');
-      assert.deepStrictEqual(common.track, {no: 2, of: 13}, 'common.track');
-      assert.deepStrictEqual(common.disk, {no: 1, of: 1}, 'common.disk');
-      assert.deepStrictEqual(common.genre, ['Folk'], 'common.genre');
-      assert.strictEqual(common.encodedby, 'opusenc from opus-tools 0.2', 'common.encodersettings');
-      assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
+      expect(common.title, "common.title").toBe("My Baby Boy");
+      expect(common.artist, "common.artist").toBe("theAngelcy");
+      expect(common.albumartist, "common.albumartist").toBe("theAngelcy");
+      expect(common.track, "common.track").toStrictEqual({ no: 2, of: 13 });
+      expect(common.disk, "common.disk").toStrictEqual({ no: 1, of: 1 });
+      expect(common.genre, "common.genre").toStrictEqual(["Folk"]);
+      expect(common.encodedby, "common.encodersettings").toBe("opusenc from opus-tools 0.2");
+      expect(common.encodersettings, "common.encodersettings").toBe("--bitrate 96 --vbr");
     });
 
-    it('shoud ignore trailing null characters', async () => {
-      const webmPath = path.join(matroskaSamplePath, 'fixture-null.webm');
-      const {format} = await mm.parseFile(webmPath, {duration: false});
-      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
-    });
+    test("shoud ignore trailing null characters", async () => {
+      const webmPath = join(matroskaSamplePath, "fixture-null.webm");
+      const metadata = await parser(webmPath, "audio/webm", { duration: false });
+      const format = metadata.format;
 
+      expect(format.container, "format.container").toBe("EBML/webm");
+    });
   });
 
   // https://github.com/Borewit/music-metadata/issues/384
-  describe('Multiple audio tracks', () => {
+  describe("Multiple audio tracks", () => {
+    test('parse: "matroska-test-w1-test5-short.mkv"', async () => {
+      const mkvPath = join(matroskaSamplePath, "matroska-test-w1-test5-short.mkv");
 
-    it('parse: "matroska-test-w1-test5-short.mkv"', async () => {
+      const metadata = await parser(mkvPath);
+      const format = metadata.format;
+      const common = metadata.common;
 
-      const mkvPath = path.join(matroskaSamplePath, 'matroska-test-w1-test5-short.mkv');
+      expect(format.container, "format.container").toBe("EBML/matroska");
+      expect(format.tagTypes, "format.tagTypes").toStrictEqual(["matroska"]);
 
-      const {format, common} = await mm.parseFile(mkvPath);
+      expect(format.codec, "format.codec").toBe("AAC");
+      expect(format.duration, "format.duration").toBeCloseTo(3.417, 5);
+      expect(format.sampleRate, "format.sampleRate").toBe(48_000);
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
 
-      assert.deepEqual(format.container, 'EBML/matroska', 'format.container');
-      assert.deepEqual(format.tagTypes, [ 'matroska' ], 'format.tagTypes');
-
-      assert.deepEqual(format.codec, 'AAC', 'format.codec');
-      assert.approximately(format.duration, 3.417, 1 / 100000, 'format.duration');
-      assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
-      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-
-      assert.deepEqual(common.title, 'Elephant Dreams', 'common.title');
-      assert.deepEqual(common.album, 'Matroska Test Files - Wave 1', 'common.album');
+      expect(common.title, "common.title").toBe("Elephant Dreams");
+      expect(common.album, "common.album").toBe("Matroska Test Files - Wave 1");
     });
-
   });
 
   // https://www.matroska.org/technical/streaming.html
   // https://github.com/Borewit/music-metadata/issues/765
-  describe('Parse Matroska Stream', () => {
+  describe("Parse Matroska Stream", () => {
+    const mkvPath = join(matroskaSamplePath, "stream.weba");
 
-    const mkvPath = path.join(matroskaSamplePath, 'stream.weba');
+    test("Parse stream", async () => {
+      const metadata = await parser(mkvPath);
+      const format = metadata.format;
 
-    it('Parse stream', async () => {
-      const {format} = await mm.parseFile(mkvPath);
-      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
-      assert.strictEqual(format.codec, 'OPUS', 'format.codec');
-      assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
+      expect(format.container, "format.container").toBe("EBML/webm");
+      expect(format.codec, "format.codec").toBe("OPUS");
+      expect(format.numberOfChannels, "format.numberOfChannels").toBe(1);
     });
-
-
   });
-
 });

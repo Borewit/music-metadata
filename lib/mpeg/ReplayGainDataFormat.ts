@@ -1,5 +1,6 @@
-import { IGetToken } from 'strtok3/lib/core';
-import * as common from '../common/Util';
+import { getBitAllignedNumber } from "../common/Util";
+
+import type { IGetToken } from "../strtok3";
 
 export interface IReplayGain {
   type: NameCode;
@@ -18,11 +19,11 @@ enum NameCode {
   /**
    * Radio Gain Adjustment
    */
-  radio = 1 ,
+  radio = 1,
   /**
    * Audiophile Gain Adjustment
    */
-  audiophile = 2
+  audiophile = 2,
 }
 
 /**
@@ -48,7 +49,7 @@ enum ReplayGainOriginator {
   /**
    * Set by simple RMS average
    */
-  rms_average = 4
+  rms_average = 4,
 }
 
 /**
@@ -60,16 +61,16 @@ export const ReplayGain: IGetToken<IReplayGain> = {
   len: 2,
 
   get: (buf, off) => {
-    const gain_type = common.getBitAllignedNumber(buf, off, 0, 3);
-    const sign = common.getBitAllignedNumber(buf, off, 6, 1);
-    const gain_adj = common.getBitAllignedNumber(buf, off, 7, 9) / 10.0;
+    const gain_type = getBitAllignedNumber(buf, off, 0, 3);
+    const sign = getBitAllignedNumber(buf, off, 6, 1);
+    const gain_adj = getBitAllignedNumber(buf, off, 7, 9) / 10;
     if (gain_type > 0) {
       return {
-        type: common.getBitAllignedNumber(buf, off, 0, 3),
-        origin: common.getBitAllignedNumber(buf, off, 3, 3),
-        adjustment: (sign ? -gain_adj : gain_adj)
+        type: getBitAllignedNumber(buf, off, 0, 3),
+        origin: getBitAllignedNumber(buf, off, 3, 3),
+        adjustment: sign ? -gain_adj : gain_adj,
       };
     }
-    return undefined;
-  }
+    return;
+  },
 };

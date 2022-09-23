@@ -1,26 +1,21 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { expect, test } from "vitest";
 
-const t = assert;
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-it('invalid "Date" frame should not cause crash', () => {
-  const filename = 'bug-id3v2-unknownframe.mp3';
-  const filePath = path.join(samplePath, filename);
+test.each(Parsers)('invalid "Date" frame should not cause crash', async (_, parser) => {
+  const filename = "bug-id3v2-unknownframe.mp3";
+  const filePath = join(samplePath, filename);
 
-  function checkCommon(common) {
-    t.strictEqual(common.title, 'One', 'common.title');
-    t.strictEqual(common.artist, 'Coheed And Cambria', 'common.artist');
-    t.strictEqual(common.album, 'Year Of The Black Rainbow', 'common.album');
-    t.strictEqual(common.year, 2010, 'common.year');
-    t.deepEqual(common.track, {no: 1, of: null}, 'common.track');
-    t.deepEqual(common.genre, ['Progressive Rock'], 'common.genre');
-  }
+  const metadata = await parser(filePath, "audio/mp3", { duration: true });
+  const common = metadata.common;
 
-  return mm.parseFile(filePath, {duration: true}).then(metadata => {
-    checkCommon(metadata.common);
-  });
-
+  expect(common.title, "common.title").toBe("One");
+  expect(common.artist, "common.artist").toBe("Coheed And Cambria");
+  expect(common.album, "common.album").toBe("Year Of The Black Rainbow");
+  expect(common.year, "common.year").toBe(2010);
+  expect(common.track, "common.track").toStrictEqual({ no: 1, of: null });
+  expect(common.genre, "common.genre").toStrictEqual(["Progressive Rock"]);
 });

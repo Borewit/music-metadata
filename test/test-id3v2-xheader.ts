@@ -1,24 +1,22 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { expect, test } from "vitest";
 
-const t = assert;
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-it("should be able to read id3v2 files with extended headers", () => {
+test.each(Parsers)("should be able to read id3v2 files with extended headers", async (_, parser) => {
+  const filename = "id3v2-xheader.mp3";
+  const filePath = join(samplePath, filename);
 
-  const filename = 'id3v2-xheader.mp3';
-  const filePath = path.join(samplePath, filename);
+  const metadata = await parser(filePath, "audio/mp3", { duration: true });
+  const format = metadata.format;
+  const common = metadata.common;
 
-  return mm.parseFile(filePath, {duration: true}).then(metadata => {
-    t.strictEqual(metadata.format.numberOfSamples, 10944, 'format.numberOfSamples');
-    t.strictEqual(metadata.format.sampleRate, 22050, 'format.sampleRate');
-    t.strictEqual(metadata.format.duration, 10944 / metadata.format.sampleRate, 'format.duration');
-
-    t.strictEqual(metadata.common.title, 'title', 'common.title');
-    t.deepEqual(metadata.common.track, {no: null, of: null}, 'common.track');
-    t.deepEqual(metadata.common.disk, {no: null, of: null}, 'common.disk');
-  });
-
+  expect(format.numberOfSamples, "format.numberOfSamples").toBe(10_944);
+  expect(format.sampleRate, "format.sampleRate").toBe(22_050);
+  expect(format.duration, "format.duration").toBe(10_944 / format.sampleRate);
+  expect(common.title, "common.title").toBe("title");
+  expect(common.track, "common.track").toStrictEqual({ no: null, of: null });
+  expect(common.disk, "common.disk").toStrictEqual({ no: null, of: null });
 });

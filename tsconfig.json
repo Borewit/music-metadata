@@ -1,8 +1,47 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  // "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "inlineSources": false,
-    "module": "commonjs",
+    "module": "ESNext",
     "moduleResolution": "node",
-    "target": "ES2017"
+    "target": "ESNext",
+    "declaration": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "incremental": true,
+
+    "lib": ["ESNext", "DOM"],
+
+    // "strict": true,
+
+    /* strict options */
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    // "strictNullChecks": true,
+    // "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true,
+
+    /* @tsconfig/strictest options */
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    // "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    // "noImplicitReturns": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "noUncheckedIndexedAccess": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+
+    "importsNotUsedAsValues": "error",
+    // "checkJs": true,
+
+    // "esModuleInterop": true,
+    // "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   }
 }

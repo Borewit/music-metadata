@@ -1,47 +1,83 @@
-import * as Token from 'token-types';
+import { stripNulls, decodeString } from "../common/Util";
+import { UINT32_LE, UINT64_LE, UINT16_LE } from "../token-types";
 
-import * as util from '../common/Util';
-import { DataType } from './AsfObject';
+import type { DataType } from "./DataType";
 
-export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
+export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Uint8Array;
 
-export class AsfUtil {
+/**
+ *
+ * @param i
+ * @returns
+ */
+export function getParserForAttr(i: DataType): AttributeParser {
+  return attributeParsers[i];
+}
 
-  public static getParserForAttr(i: DataType): AttributeParser {
-    return AsfUtil.attributeParsers[i];
-  }
+/**
+ *
+ * @param uint8Array
+ * @returns
+ */
+export function parseUnicodeAttr(uint8Array: Uint8Array): string {
+  return stripNulls(decodeString(uint8Array, "utf16le"));
+}
 
-  public static parseUnicodeAttr(uint8Array: Uint8Array): string {
-    return util.stripNulls(util.decodeString(uint8Array, 'utf16le'));
-  }
+export const attributeParsers: AttributeParser[] = [
+  parseUnicodeAttr,
+  parseByteArrayAttr,
+  parseBoolAttr,
+  parseDWordAttr,
+  parseQWordAttr,
+  parseWordAttr,
+  parseByteArrayAttr,
+];
 
-  private static attributeParsers: AttributeParser[] = [
-    AsfUtil.parseUnicodeAttr,
-    AsfUtil.parseByteArrayAttr,
-    AsfUtil.parseBoolAttr,
-    AsfUtil.parseDWordAttr,
-    AsfUtil.parseQWordAttr,
-    AsfUtil.parseWordAttr,
-    AsfUtil.parseByteArrayAttr
-  ];
+/**
+ *
+ * @param buf
+ * @returns
+ */
+export function parseByteArrayAttr(buf: Uint8Array): Uint8Array {
+  return buf;
+}
 
-  private static parseByteArrayAttr(buf: Uint8Array): Buffer {
-    return Buffer.from(buf);
-  }
+/**
+ *
+ * @param buf
+ * @param offset
+ * @returns
+ */
+export function parseBoolAttr(buf: Uint8Array, offset = 0): boolean {
+  return parseWordAttr(buf, offset) === 1;
+}
 
-  private static parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
-    return AsfUtil.parseWordAttr(buf, offset) === 1;
-  }
+/**
+ *
+ * @param buf
+ * @param offset
+ * @returns
+ */
+export function parseDWordAttr(buf: Uint8Array, offset = 0): number {
+  return UINT32_LE.get(buf, offset);
+}
 
-  private static parseDWordAttr(buf: Buffer, offset: number = 0): number {
-    return buf.readUInt32LE(offset);
-  }
+/**
+ *
+ * @param buf
+ * @param offset
+ * @returns
+ */
+export function parseQWordAttr(buf: Uint8Array, offset = 0): bigint {
+  return UINT64_LE.get(buf, offset);
+}
 
-  private static parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
-    return Token.UINT64_LE.get(buf, offset);
-  }
-
-  private static parseWordAttr(buf: Buffer, offset: number = 0): number {
-    return buf.readUInt16LE(offset);
-  }
+/**
+ *
+ * @param buf
+ * @param offset
+ * @returns
+ */
+export function parseWordAttr(buf: Uint8Array, offset = 0): number {
+  return UINT16_LE.get(buf, offset);
 }

@@ -1,22 +1,21 @@
-import * as Token from 'token-types';
-import { IGetToken } from 'strtok3/lib/core';
+import { FourCcToken } from "../common/FourCC";
+import { UINT32_BE } from "../token-types";
 
-import { FourCcToken } from '../common/FourCC';
+import type { IGetToken } from "../strtok3";
 
 /**
  * "EA IFF 85" Standard for Interchange Format Files
  * Ref: http://www.martinreddy.net/gfx/2d/IFF.txt
  */
 export interface IChunkHeader {
-
   /**
    * A chunk ID (ie, 4 ASCII bytes)
    */
-  chunkID: string,
+  chunkID: string;
   /**
    * Number of data bytes following this data header
    */
-  chunkSize: number
+  chunkSize: number;
 }
 
 /**
@@ -24,15 +23,14 @@ export interface IChunkHeader {
  * Ref: http://www.martinreddy.net/gfx/2d/IFF.txt
  */
 export interface IChunkHeader64 {
-
   /**
    * A chunk ID (ie, 4 ASCII bytes)
    */
-  chunkID: string,
+  chunkID: string;
   /**
    * Number of data bytes following this data header
    */
-  chunkSize: bigint
+  chunkSize: bigint;
 }
 
 /**
@@ -46,8 +44,7 @@ export const Header: IGetToken<IChunkHeader> = {
       // Chunk type ID
       chunkID: FourCcToken.get(buf, off),
       // Chunk size
-      chunkSize: Number(BigInt(Token.UINT32_BE.get(buf, off + 4)))
+      chunkSize: Number(BigInt(UINT32_BE.get(buf, off + 4))),
     };
-  }
+  },
 };
-

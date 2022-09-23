@@ -1,19 +1,15 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { expect, test } from "vitest";
 
-it("should reject files that can't be parsed", async () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  const filePath = path.join(samplePath, 'flac.flac.jpg');
+test.each(Parsers)("should reject files that can't be parsed", async (_, parser) => {
+  const filePath = join(samplePath, "flac.flac.jpg");
 
   // Run with default options
-  try {
-    await mm.parseFile(filePath);
-    assert.fail('Should reject a file which cannot be parsed');
-  } catch (err) {
-    assert.isDefined(err);
-    assert.isDefined(err.message);
-  }
+  const rejected = expect(() => parser(filePath)).rejects;
+  await rejected.toBeDefined();
+  await rejected.toHaveProperty("error.message");
 });

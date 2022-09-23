@@ -1,182 +1,170 @@
-import { assert } from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { describe, test, expect } from "vitest";
 
-import { IFormat, INativeTagDict } from '../lib/type';
+import { orderTags } from "../lib";
 
-const wavSamples = path.join(samplePath, 'wav');
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-describe('Parse RIFF/WAVE audio format', () => {
+const wavSamples = join(samplePath, "wav");
 
-  function checkExifTags(exif: INativeTagDict) {
-
-    assert.deepEqual(exif.IART, ['Beth Hart & Joe Bonamassa'], 'exif.IART');
-    assert.deepEqual(exif.ICRD, ['2011'], 'exif.ICRD');
-    assert.deepEqual(exif.INAM, ['Sinner\'s Prayer'], 'exif.INAM');
-    assert.deepEqual(exif.IPRD, ['Don\'t Explain'], 'exif.IPRD');
-    assert.deepEqual(exif.ITRK, ['1/10'], 'exif.ITRK');
-  }
-
+describe.each(Parsers)("parser: %s", (_, parser) => {
   /**
    * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
    * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
    */
-  it('should parse LIST-INFO (EXIF)', async () => {
-
-    const filename = 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav';
-    const filePath = path.join(samplePath, filename);
-
-    function checkFormat(format: IFormat) {
-      assert.deepEqual(format.container, 'WAVE', 'format.container');
-      assert.deepEqual(format.codec, 'PCM', 'format.codec');
-      assert.strictEqual(format.lossless, true);
-      assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
-      assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-      assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
-      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
-      assert.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-      assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
-    }
+  test("should parse LIST-INFO (EXIF)", async () => {
+    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
+    const filePath = join(samplePath, filename);
 
     // Parse wma/asf file
-    const metadata = await mm.parseFile(filePath);
+    const metadata = await parser(filePath);
+
     // Check wma format
-    checkFormat(metadata.format);
+    const format = metadata.format;
+
+    expect(format.container, "format.container").toBe("WAVE");
+    expect(format.codec, "format.codec").toBe("PCM");
+    expect(format.lossless).toBe(true);
+    expect(format.tagTypes, "format.tagTypes = ['exif', 'ID3v2.3']").toStrictEqual(["exif", "ID3v2.3"]);
+    expect(format.sampleRate, "format.sampleRate = 44.1 kHz").toBe(44_100);
+    expect(format.bitsPerSample, "format.bitsPerSample = 16 bits").toBe(16);
+    expect(format.numberOfChannels, "format.numberOfChannels = 2 channels").toBe(2);
+    expect(format.numberOfSamples, "format.numberOfSamples = 93624").toBe(93_624);
+    expect(format.duration, "format.duration = ~2.123 seconds (checked with Adobe Audition)").toBe(
+      2.122_993_197_278_911_6
+    );
+
     // Check native tags
-    checkExifTags(mm.orderTags(metadata.native.exif));
+    const native = orderTags(metadata.native.exif);
+
+    expect(native.IART, "exif.IART").toStrictEqual(["Beth Hart & Joe Bonamassa"]);
+    expect(native.ICRD, "exif.ICRD").toStrictEqual(["2011"]);
+    expect(native.INAM, "exif.INAM").toStrictEqual(["Sinner's Prayer"]);
+    expect(native.IPRD, "exif.IPRD").toStrictEqual(["Don't Explain"]);
+    expect(native.ITRK, "exif.ITRK").toStrictEqual(["1/10"]);
   });
 
   // Issue https://github.com/Borewit/music-metadata/issues/75
-  it('should be able to handle complex nested chunk structures', async () => {
+  test("should be able to handle complex nested chunk structures", async () => {
+    const filePath = join(samplePath, "issue_75.wav");
 
-    const filePath = path.join(samplePath, 'issue_75.wav');
-
-    const metadata = await mm.parseFile(filePath);
-    assert.deepEqual(metadata.format.container, 'WAVE', 'format.container');
-    assert.deepEqual(metadata.format.codec, 'PCM', 'format.codec');
+    const metadata = await parser(filePath);
+    expect(metadata.format.container, "format.container").toBe("WAVE");
+    expect(metadata.format.codec, "format.codec").toBe("PCM");
   });
 
-  it('should map RIFF tags to common', async () => {
-
+  test("should map RIFF tags to common", async () => {
     // Metadata edited with Adobe Audition CC 2018.1
-    const filePath = path.join(__dirname, 'samples', 'riff_adobe_audition.wav');
+    const filePath = join(__dirname, "samples", "riff_adobe_audition.wav");
 
-    const metadata = await mm.parseFile(filePath);
+    const metadata = await parser(filePath);
     const format = metadata.format;
-    assert.strictEqual(format.lossless, true);
-    assert.deepEqual(format.container, 'WAVE', 'format.container');
-    assert.deepEqual(format.codec, 'PCM', 'format.codec');
-    assert.deepEqual(format.bitsPerSample, 24);
-    assert.deepEqual(format.sampleRate, 48000);
-    assert.deepEqual(format.numberOfSamples, 13171);
-    assert.deepEqual(format.duration, 0.27439583333333334, '~2.274 (checked with Adobe Audition)');
-    assert.deepEqual(format.tagTypes, ['exif']);
+    expect(format.lossless).toBe(true);
+    expect(format.container, "format.container").toBe("WAVE");
+    expect(format.codec, "format.codec").toBe("PCM");
+    expect(format.bitsPerSample).toBe(24);
+    expect(format.sampleRate).toBe(48_000);
+    expect(format.numberOfSamples).toBe(13_171);
+    expect(format.duration, "~2.274 (checked with Adobe Audition)").toBe(0.274_395_833_333_333_34);
+    expect(format.tagTypes).toStrictEqual(["exif"]);
 
-    const exif = mm.orderTags(metadata.native.exif);
-    assert.deepEqual(exif.IART, ['Wolfgang Amadeus Mozart'], 'exif.IART: Original Artist');
-    assert.deepEqual(exif.ICMS, ['Louis Walker'], 'exif.ICMS: Commissioned');
-    assert.deepEqual(exif.ICMT, ['Comments here!'], 'exif.ICMT: Comments');
-    assert.deepEqual(exif.ICOP, ['Copyright 2018']);
-    assert.deepEqual(exif.ICRD, ['2018-04-26T13:26:19-05:00']);
-    assert.deepEqual(exif.IENG, ['Engineer'], 'exif.IENG: Engineer');
-    assert.deepEqual(exif.IARL, ['https://github.com/borewit/music-metadata'], 'exif.IARL: Archival Location');
-    assert.deepEqual(exif.IGNR, ['Blues'], 'exif.IGNR: Genre');
-    assert.deepEqual(exif.IKEY, ['neat; cool; riff; tags'], 'exif.IKEY: Keywords');
-    assert.deepEqual(exif.IMED, ['CD'], 'exif.IMED: Original Medium');
-    assert.deepEqual(exif.INAM, ['The Magic Flute'], 'exif.INAM: Display Title');
-    assert.deepEqual(exif.IPRD, ['La clemenzo di Tito'], 'exif.IPRD: Product');
-    assert.deepEqual(exif.ISBJ, ['An opera in two acts'], 'exif.ISBJ: Subject');
-    assert.deepEqual(exif.ISFT, ['Adobe Audition CC 2018.1 (Macintosh)']);
-    assert.deepEqual(exif.ISRC, ['Foo Bar'], 'exif.ISRC Source Supplier');
-    assert.deepEqual(exif.ITCH, ['Technician'], 'exif.ITCH: Technician');
+    const native = orderTags(metadata.native.exif);
+    expect(native.IART, "exif.IART: Original Artist").toStrictEqual(["Wolfgang Amadeus Mozart"]);
+    expect(native.ICMS, "exif.ICMS: Commissioned").toStrictEqual(["Louis Walker"]);
+    expect(native.ICMT, "exif.ICMT: Comments").toStrictEqual(["Comments here!"]);
+    expect(native.ICOP).toStrictEqual(["Copyright 2018"]);
+    expect(native.ICRD).toStrictEqual(["2018-04-26T13:26:19-05:00"]);
+    expect(native.IENG, "exif.IENG: Engineer").toStrictEqual(["Engineer"]);
+    expect(native.IARL, "exif.IARL: Archival Location").toStrictEqual(["https://github.com/borewit/music-metadata"]);
+    expect(native.IGNR, "exif.IGNR: Genre").toStrictEqual(["Blues"]);
+    expect(native.IKEY, "exif.IKEY: Keywords").toStrictEqual(["neat; cool; riff; tags"]);
+    expect(native.IMED, "exif.IMED: Original Medium").toStrictEqual(["CD"]);
+    expect(native.INAM, "exif.INAM: Display Title").toStrictEqual(["The Magic Flute"]);
+    expect(native.IPRD, "exif.IPRD: Product").toStrictEqual(["La clemenzo di Tito"]);
+    expect(native.ISBJ, "exif.ISBJ: Subject").toStrictEqual(["An opera in two acts"]);
+    expect(native.ISFT).toStrictEqual(["Adobe Audition CC 2018.1 (Macintosh)"]);
+    expect(native.ISRC, "exif.ISRC Source Supplier").toStrictEqual(["Foo Bar"]);
+    expect(native.ITCH, "exif.ITCH: Technician").toStrictEqual(["Technician"]);
 
     const common = metadata.common;
-    assert.deepEqual(common.artists, ['Wolfgang Amadeus Mozart']);
-    assert.deepEqual(common.title, 'The Magic Flute');
-    assert.deepEqual(common.album, 'La clemenzo di Tito');
-    assert.deepEqual(common.date, '2018-04-26T13:26:19-05:00');
-    assert.deepEqual(common.year, 2018);
-    assert.deepEqual(common.encodedby, 'Adobe Audition CC 2018.1 (Macintosh)');
-    assert.deepEqual(common.comment, ['Comments here!']);
-    assert.deepEqual(common.genre, ['Blues']);
-    assert.deepEqual(common.engineer, ['Engineer']);
-    assert.deepEqual(common.technician, ['Technician']);
-    assert.deepEqual(common.media, 'CD');
+    expect(common.artists).toStrictEqual(["Wolfgang Amadeus Mozart"]);
+    expect(common.title).toBe("The Magic Flute");
+    expect(common.album).toBe("La clemenzo di Tito");
+    expect(common.date).toBe("2018-04-26T13:26:19-05:00");
+    expect(common.year).toBe(2018);
+    expect(common.encodedby).toBe("Adobe Audition CC 2018.1 (Macintosh)");
+    expect(common.comment).toStrictEqual(["Comments here!"]);
+    expect(common.genre).toStrictEqual(["Blues"]);
+    expect(common.engineer).toStrictEqual(["Engineer"]);
+    expect(common.technician).toStrictEqual(["Technician"]);
+    expect(common.media).toBe("CD");
   });
 
-  it('should handle be able to handle odd chunk & padding', async () => {
+  test("should handle be able to handle odd chunk & padding", async () => {
+    const filePath = join(samplePath, "issue-161.wav");
 
-    const filePath = path.join(samplePath, 'issue-161.wav');
-
-    const metadata = await mm.parseFile(filePath, {duration: true});
+    const metadata = await parser(filePath, "audio/wave", { duration: true });
     const format = metadata.format;
-    assert.strictEqual(format.container, 'WAVE', 'format.container');
-    assert.strictEqual(format.codec, 'PCM', 'format.codec');
-    assert.strictEqual(format.lossless, true);
-    assert.strictEqual(format.sampleRate, 48000);
-    assert.strictEqual(format.bitsPerSample, 24);
-    assert.strictEqual(format.numberOfSamples, 363448);
-    assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration');
+    expect(format.container, "format.container").toBe("WAVE");
+    expect(format.codec, "format.codec").toBe("PCM");
+    expect(format.lossless).toBe(true);
+    expect(format.sampleRate).toBe(48_000);
+    expect(format.bitsPerSample).toBe(24);
+    expect(format.numberOfSamples).toBe(363_448);
+    expect(metadata.format.duration, "file's duration").toBe(format.numberOfSamples / format.sampleRate);
   });
 
-  describe('non-PCM', () => {
+  describe("non-PCM", () => {
+    test("should parse Microsoft 4-bit ADPCM encoded", () => {
+      const filePath = join(samplePath, "issue-92.wav");
 
-    it('should parse Microsoft 4-bit ADPCM encoded', () => {
-
-      const filePath = path.join(samplePath, 'issue-92.wav');
-
-      return mm.parseFile(filePath, {duration: true}).then(metadata => {
+      return parser(filePath, "audio/wave", { duration: true }).then((metadata) => {
         const format = metadata.format;
-        assert.strictEqual(format.container, 'WAVE', 'format.container');
-        assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
-        assert.strictEqual(format.lossless, false);
-        assert.strictEqual(format.sampleRate, 22050);
-        assert.strictEqual(format.bitsPerSample, 4);
-        assert.strictEqual(format.numberOfSamples, 4660260);
-        assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
+        expect(format.container, "format.container").toBe("WAVE");
+        expect(format.codec, "format.codec").toBe("ADPCM");
+        expect(format.lossless).toBe(false);
+        expect(format.sampleRate).toBe(22_050);
+        expect(format.bitsPerSample).toBe(4);
+        expect(format.numberOfSamples).toBe(4_660_260);
+        expect(metadata.format.duration, "file's duration is 3'31\"").toBe(format.numberOfSamples / format.sampleRate);
       });
     });
-
   });
 
   // https://github.com/Borewit/music-metadata/issues/707
-  it('should handle missing chunk-size', async () => {
+  test("should handle missing chunk-size", async () => {
+    const filePath = join(wavSamples, "ffmpeg-missing-chunksize.wav");
 
-    const filePath = path.join(wavSamples, 'ffmpeg-missing-chunksize.wav');
+    const { format } = await parser(filePath);
 
-    const {format} = await mm.parseFile(filePath);
-
-    assert.strictEqual(format.container, 'WAVE', 'format.container');
-    assert.strictEqual(format.codec, 'PCM', 'format.codec');
-    assert.strictEqual(format.duration, 27648 / 44100, 'format.duration');
-    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    expect(format.container, "format.container").toBe("WAVE");
+    expect(format.codec, "format.codec").toBe("PCM");
+    expect(format.duration, "format.duration").toBe(27_648 / 44_100);
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
   });
 
-  it('should handle odd list-type ID in LIST chunk', async () => {
+  test("should handle odd list-type ID in LIST chunk", async () => {
+    const filePath = join(wavSamples, "odd-list-type.wav");
 
-    const filePath = path.join(wavSamples, 'odd-list-type.wav');
+    const { format } = await parser(filePath);
 
-    const {format} = await mm.parseFile(filePath);
-
-    assert.strictEqual(format.container, 'WAVE', 'format.container');
-    assert.strictEqual(format.codec, 'PCM', 'format.codec');
-    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-    assert.approximately(format.duration, 3 / 44100, 1 / 20000, 'format.duration');
+    expect(format.container, "format.container").toBe("WAVE");
+    expect(format.codec, "format.codec").toBe("PCM");
+    expect(format.sampleRate, "format.sampleRate").toBe(44_100);
+    expect(format.duration, "format.duration").toBeCloseTo(3 / 44_100, 4);
   });
 
   // https://github.com/Borewit/music-metadata/issues/819
-  it('Duration despite wrong chunk size', async () => {
-    const filePath = path.join(wavSamples, 'issue-819.wav');
+  test("Duration despite wrong chunk size", async () => {
+    const filePath = join(wavSamples, "issue-819.wav");
 
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await parser(filePath);
 
-    assert.strictEqual(format.container, 'WAVE');
-    assert.strictEqual(format.codec, 'PCM');
-    // assert.strictEqual(format.numberOfSamples, 2158080, 'format.numberOfSamples');
-    assert.approximately(format.duration, 2478 / 16000, 5 / 1000, 'format.duration');
+    expect(format.container).toBe("WAVE");
+    expect(format.codec).toBe("PCM");
+    // expect(format.numberOfSamples, 'format.numberOfSamples').toBe(2158080);
+    expect(format.duration, "format.duration").toBeCloseTo(2478 / 16_000, 2);
   });
-
 });
-

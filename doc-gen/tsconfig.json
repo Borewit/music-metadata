@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "sourceMap": true
+    "module": "CommonJS",
+    "esModuleInterop": true
   }
 }
-

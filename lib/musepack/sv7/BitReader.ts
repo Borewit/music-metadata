@@ -1,29 +1,27 @@
-import { ITokenizer } from 'strtok3/lib/core';
-import * as Token from 'token-types';
+import { UINT32_LE } from "../../token-types";
+
+import type { ITokenizer } from "../../strtok3";
 
 export class BitReader {
-
-  public pos: number = 0;
+  public pos = 0;
   private dword: number = undefined;
 
-  public constructor(private tokenizer: ITokenizer) {
-  }
+  public constructor(private tokenizer: ITokenizer) {}
 
   /**
    *
    * @param bits 1..30 bits
    */
   public async read(bits: number): Promise<number> {
-
     while (this.dword === undefined) {
-      this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
+      this.dword = await this.tokenizer.readToken(UINT32_LE);
     }
 
     let out = this.dword;
     this.pos += bits;
 
     if (this.pos < 32) {
-      out >>>= (32 - this.pos);
+      out >>>= 32 - this.pos;
       return out & ((1 << bits) - 1);
     } else {
       this.pos -= 32;
@@ -31,7 +29,7 @@ export class BitReader {
         this.dword = undefined;
         return out & ((1 << bits) - 1);
       } else {
-        this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
+        this.dword = await this.tokenizer.readToken(UINT32_LE);
         if (this.pos) {
           out <<= this.pos;
           out |= this.dword >>> (32 - this.pos);
@@ -42,9 +40,8 @@ export class BitReader {
   }
 
   public async ignore(bits: number): Promise<number> {
-
     if (this.pos > 0) {
-      const remaining =  32 - this.pos;
+      const remaining = 32 - this.pos;
       this.dword = undefined;
       bits -= remaining;
       this.pos = 0;
@@ -55,5 +52,4 @@ export class BitReader {
     await this.tokenizer.ignore(numOfWords * 4);
     return this.read(remainder);
   }
-
 }

@@ -3,21 +3,30 @@ export interface IHeader {
   len: number;
 }
 
-export enum DataType { 'string', uint, uid, bool, binary, float}
+export enum DataType {
+  "string",
+  uint,
+  uid,
+  bool,
+  binary,
+  float,
+}
 
-export interface IElementType<T> {
+export interface IElementType {
   readonly name: string;
   readonly value?: DataType;
   readonly container?: IContainerType;
   readonly multiple?: boolean;
 }
 
-export interface IContainerType { [id: number]: IElementType<string | number | boolean | Buffer>; }
+export type IContainerType = Record<number, IElementType>;
 
-export interface ITree { [name: string]: string | number | boolean | Buffer | ITree | ITree[]; }
+export interface ITree {
+  [name: string]: string | number | boolean | Uint8Array | ITree | ITree[];
+}
 
 export interface ISeekHead {
-  id?: Buffer;
+  id?: Uint8Array;
   position?: number;
 }
 
@@ -26,7 +35,7 @@ export interface IMetaSeekInformation {
 }
 
 export interface ISegmentInformation {
-  uid?: Buffer;
+  uid?: Uint8Array;
   timecodeScale?: number;
   duration?: number;
   dateUTC?: number;
@@ -36,7 +45,7 @@ export interface ISegmentInformation {
 }
 
 export interface ITrackEntry {
-  uid?: Buffer;
+  uid?: Uint8Array;
   trackNumber?: number;
   trackType?: TrackType;
   audio?: ITrackAudio;
@@ -49,7 +58,7 @@ export interface ITrackEntry {
   name?: string;
   language?: string;
   codecID?: string;
-  codecPrivate?: Buffer;
+  codecPrivate?: Uint8Array;
   codecName?: string;
   codecSettings?: string;
   codecInfoUrl?: string;
@@ -67,7 +76,7 @@ export interface ITrackVideo {
   displayHeight?: number;
   displayUnit?: number;
   aspectRatioType?: number;
-  colourSpace?: Buffer;
+  colourSpace?: Uint8Array;
   gammaValue?: number;
 }
 
@@ -75,13 +84,13 @@ export interface ITrackAudio {
   samplingFrequency?: number;
   outputSamplingFrequency?: number;
   channels?: number;
-  channelPositions?: Buffer;
+  channelPositions?: Uint8Array;
   bitDepth?: number;
 }
 
 export interface ICuePoint {
   cueTime?: number;
-  cueTrackPositions: ICueTrackPosition[]
+  cueTrackPositions: ICueTrackPosition[];
 }
 
 export interface ICueTrackPosition {
@@ -101,8 +110,9 @@ export interface ICueReference {
 
 export interface ISimpleTag {
   name?: string;
-  'string'?: string;
-  binary?: Buffer;
+  // eslint-disable-next-line id-denylist
+  string?: string;
+  binary?: Uint8Array;
   language?: string;
   default?: boolean;
 }
@@ -114,7 +124,7 @@ export enum TargetType {
   part = 40,
   album = 50,
   edition = 60,
-  collection = 70
+  collection = 70,
 }
 
 export enum TrackType {
@@ -122,22 +132,22 @@ export enum TrackType {
   audio = 0x02,
   complex = 0x03,
   logo = 0x04,
-  subtitle= 0x11,
+  subtitle = 0x11,
   button = 0x12,
-  control = 0x20
+  control = 0x20,
 }
 
 export interface ITarget {
-  trackUID?: Buffer;
-  chapterUID?: Buffer;
-  attachmentUID?: Buffer;
+  trackUID?: Uint8Array;
+  chapterUID?: Uint8Array;
+  attachmentUID?: Uint8Array;
   targetTypeValue?: TargetType;
   targetType?: string;
 }
 
 export interface ITag {
   target: ITarget;
-  simpleTags: ISimpleTag[]
+  simpleTags: ISimpleTag[];
 }
 
 export interface ITags {
@@ -152,7 +162,7 @@ export interface IAttachmedFile {
   description?: string;
   name: string;
   mimeType: string;
-  data: Buffer;
+  data: Uint8Array;
   uid: string;
 }
 
@@ -162,12 +172,12 @@ export interface IAttachments {
 
 export interface IMatroskaSegment {
   metaSeekInfo?: IMetaSeekInformation;
-  seekHeads?: ISeekHead[]
+  seekHeads?: ISeekHead[];
   info?: ISegmentInformation;
   tracks?: ITrackElement;
   tags?: ITags;
   cues?: ICuePoint[];
-  attachments?: IAttachments
+  attachments?: IAttachments;
 }
 
 export interface IEbmlElements {
@@ -181,9 +191,9 @@ export interface IEbmlElements {
 }
 
 export interface IEbmlDoc {
-  ebml: IEbmlElements
+  ebml: IEbmlElements;
 }
 
 export interface IMatroskaDoc extends IEbmlDoc {
-  segment: IMatroskaSegment
+  segment: IMatroskaSegment;
 }

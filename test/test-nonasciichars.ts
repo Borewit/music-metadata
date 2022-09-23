@@ -1,19 +1,16 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { expect, test } from "vitest";
 
-const t = assert;
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-it("should decode non-ascii-characters", () => {
+test.each(Parsers)("should decode non-ascii-characters", async (_, parser) => {
+  const filename = "bug-non ascii chars.mp3";
+  const filePath = join(samplePath, filename);
 
-  const filename = 'bug-non ascii chars.mp3';
-  const filePath = path.join(samplePath, filename);
+  const result = await parser(filePath);
 
-  return mm.parseFile(filePath).then(result => {
-    t.deepEqual(result.common.artist, 'Janelle Monáe', 'common.artist');
-    t.deepEqual(result.common.artists, ['Janelle Monáe', 'Roman Gianarthur', 'Nate Wonder'], 'common.artists');
-  });
-
+  expect(result.common.artist, "common.artist").toBe("Janelle Monáe");
+  expect(result.common.artists, "common.artists").toStrictEqual(["Janelle Monáe", "Roman Gianarthur", "Nate Wonder"]);
 });

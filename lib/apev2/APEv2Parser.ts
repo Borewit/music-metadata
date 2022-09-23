@@ -1,37 +1,56 @@
-import initDebug from 'debug';
-import * as strtok3 from 'strtok3/lib/core';
-import { StringType } from 'token-types';
+import { BasicParser } from "../common/BasicParser";
+import { findZero } from "../common/Util";
+import { decodeUtf8 } from "../compat/text-decoder";
+import initDebug from "../debug";
+import { fromBuffer } from "../strtok3/fromBuffer";
+import { Latin1StringType, Utf8StringType } from "../token-types/string";
 
-import * as util from '../common/Util';
-import { IOptions, IRandomReader, IApeHeader } from '../type';
-import { INativeMetadataCollector } from '../common/MetadataCollector';
-import { BasicParser } from '../common/BasicParser';
-import {
-  DataType,
-  DescriptorParser,
-  Header,
-  IDescriptor,
-  IFooter,
-  IHeader, ITagItemHeader,
-  TagFooter,
-  TagItemHeader
-} from './APEv2Token';
+import { IDescriptor, DescriptorParser } from "./APEv2TokenDescriptor";
+import { IFooter, TagFooter } from "./APEv2TokenFooter";
+import { IHeader, Header } from "./APEv2TokenHeader";
+import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
+import { DataType } from "./DataType";
 
-const debug = initDebug('music-metadata:parser:APEv2');
+import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
+import type { ITokenizer } from "../strtok3";
+import type { IOptions, IRandomReader, IApeHeader } from "../type";
 
-const tagFormat = 'APEv2';
+const debug = initDebug("music-metadata:parser:APEv2");
+
+/**
+ * APETag versionIndex history / supported formats
+ *
+ * 1.0 (1000) - Original APE tag spec.  Fully supported by this code.
+ * 2.0 (2000) - Refined APE tag spec (better streaming support, UTF StringEncoding). Fully supported by this code.
+ *
+ * Notes:
+ * - also supports reading of ID3v1.1 tags
+ * - all saving done in the APE Tag format using CURRENT_APE_TAG_VERSION
+ *
+ * APE File Format Overview: (pieces in order -- only valid for the latest versionIndex APE files)
+ *
+ * JUNK - any amount of "junk" before the APE_DESCRIPTOR (so people that put ID3v2 tags on the files aren't hosed)
+ * APE_DESCRIPTOR - defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
+ * APE_HEADER - describes all of the necessary information about the APE file
+ * SEEK TABLE - the table that represents seek offsets [optional]
+ * HEADER DATA - the pre-audio data from the original file [optional]
+ * APE FRAMES - the actual compressed audio (broken into frames for seekability)
+ * TERMINATING DATA - the post-audio data from the original file [optional]
+ * TAG - describes all the properties of the file [optional]
+ */
+
+const tagFormat = "APEv2";
 
 interface IApeInfo {
-  descriptor?: IDescriptor,
-  header?: IHeader,
-  footer?: IFooter
+  descriptor?: IDescriptor;
+  header?: IHeader;
+  footer?: IFooter;
 }
 
-const preamble = 'APETAGEX';
+const preamble = "APETAGEX";
 
 export class APEv2Parser extends BasicParser {
-
-  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
+  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions) {
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, tokenizer, options);
     return apeParser.tryParseApeHeader();
@@ -40,7 +59,7 @@ export class APEv2Parser extends BasicParser {
   /**
    * Calculate the media file duration
    * @param ah ApeHeader
-   * @return {number} duration in seconds
+   * @returns {number} duration in seconds
    */
   public static calculateDuration(ah: IHeader): number {
     let duration = ah.totalFrames > 1 ? ah.blocksPerFrame * (ah.totalFrames - 1) : 0;
@@ -55,21 +74,25 @@ export class APEv2Parser extends BasicParser {
    */
   public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader> {
     // Search for APE footer header at the end of the file
-    const apeBuf = Buffer.alloc(TagFooter.len);
+    const apeBuf = new Uint8Array(TagFooter.len);
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
     const tagFooter = TagFooter.get(apeBuf, 0);
-    if (tagFooter.ID === 'APETAGEX') {
+    if (tagFooter.ID === "APETAGEX") {
       debug(`APE footer header at offset=${offset}`);
-      return {footer: tagFooter, offset: offset - tagFooter.size};
+      return { footer: tagFooter, offset: offset - tagFooter.size };
     }
   }
 
-  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Buffer, options: IOptions): Promise<void> {
+  private static parseTagFooter(
+    metadata: INativeMetadataCollector,
+    buffer: Uint8Array,
+    options: IOptions
+  ): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    if (footer.ID !== preamble) throw new Error('Unexpected APEv2 Footer ID preamble value.');
-    strtok3.fromBuffer(buffer);
+    if (footer.ID !== preamble) throw new Error("Unexpected APEv2 Footer ID preamble value.");
+    fromBuffer(buffer);
     const apeParser = new APEv2Parser();
-    apeParser.init(metadata, strtok3.fromBuffer(buffer), options);
+    apeParser.init(metadata, fromBuffer(buffer), options);
     return apeParser.parseTags(footer);
   }
 
@@ -79,8 +102,7 @@ export class APEv2Parser extends BasicParser {
    * Parse APEv1 / APEv2 header if header signature found
    */
   public async tryParseApeHeader(): Promise<void> {
-
-    if (this.tokenizer.fileInfo.size && this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len) {
+    if (this.tokenizer.fileInfo.size > 0 && this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len) {
       debug(`No APEv2 header found, end-of-file reached`);
       return;
     }
@@ -91,10 +113,10 @@ export class APEv2Parser extends BasicParser {
       return this.parseTags(footer);
     } else {
       debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
-      if (this.tokenizer.fileInfo.size) {
+      if (this.tokenizer.fileInfo.size > 0) {
         // Try to read the APEv2 header using just the footer-header
         const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
-        const buffer = Buffer.alloc(remaining);
+        const buffer = new Uint8Array(remaining);
         await this.tokenizer.readBuffer(buffer);
         return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
       }
@@ -102,10 +124,9 @@ export class APEv2Parser extends BasicParser {
   }
 
   public async parse(): Promise<void> {
-
     const descriptor = await this.tokenizer.readToken<IDescriptor>(DescriptorParser);
 
-    if (descriptor.ID !== 'MAC ') throw new Error('Unexpected descriptor ID');
+    if (descriptor.ID !== "MAC ") throw new Error("Unexpected descriptor ID");
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
@@ -115,8 +136,7 @@ export class APEv2Parser extends BasicParser {
   }
 
   public async parseTags(footer: IFooter): Promise<void> {
-
-    const keyBuffer = Buffer.alloc(256); // maximum tag key length
+    const keyBuffer = new Uint8Array(256); // maximum tag key length
 
     let bytesRemaining = footer.size - TagFooter.len;
 
@@ -124,7 +144,9 @@ export class APEv2Parser extends BasicParser {
 
     for (let i = 0; i < footer.fields; i++) {
       if (bytesRemaining < TagItemHeader.len) {
-        this.metadata.addWarning(`APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`);
+        this.metadata.addWarning(
+          `APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`
+        );
         break;
       }
 
@@ -132,16 +154,19 @@ export class APEv2Parser extends BasicParser {
       const tagItemHeader = await this.tokenizer.readToken<ITagItemHeader>(TagItemHeader);
       bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
 
-      await this.tokenizer.peekBuffer(keyBuffer, {length: Math.min(keyBuffer.length, bytesRemaining)});
-      let zero = util.findZero(keyBuffer, 0, keyBuffer.length);
-      const key = await this.tokenizer.readToken<string>(new StringType(zero, 'ascii'));
+      await this.tokenizer.peekBuffer(keyBuffer, {
+        length: Math.min(keyBuffer.length, bytesRemaining),
+      });
+      let zero = findZero(keyBuffer, 0, keyBuffer.length);
+      const key = await this.tokenizer.readToken<string>(new Latin1StringType(zero));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
 
       switch (tagItemHeader.flags.dataType) {
-        case DataType.text_utf8: { // utf-8 text-string
-          const value = await this.tokenizer.readToken<string>(new StringType(tagItemHeader.size, 'utf8'));
-          const values = value.split(/\x00/g);
+        case DataType.text_utf8: {
+          // utf-8 text-string
+          const value = await this.tokenizer.readToken<string>(new Utf8StringType(tagItemHeader.size));
+          const values = value.split(/\0/g);
 
           for (const val of values) {
             this.metadata.addTag(tagFormat, key, val);
@@ -153,16 +178,16 @@ export class APEv2Parser extends BasicParser {
           if (this.options.skipCovers) {
             await this.tokenizer.ignore(tagItemHeader.size);
           } else {
-            const picData = Buffer.alloc(tagItemHeader.size);
+            const picData = new Uint8Array(tagItemHeader.size);
             await this.tokenizer.readBuffer(picData);
 
-            zero = util.findZero(picData, 0, picData.length);
-            const description = picData.toString('utf8', 0, zero);
+            zero = findZero(picData, 0, picData.length);
+            const description = decodeUtf8(picData.subarray(0, zero));
 
-            const data = Buffer.from(picData.slice(zero + 1));
+            const data = new Uint8Array(picData.subarray(zero + 1));
             this.metadata.addTag(tagFormat, key, {
               description,
-              data
+              data,
             });
           }
           break;
@@ -189,17 +214,20 @@ export class APEv2Parser extends BasicParser {
   private async parseHeader(): Promise<{ forwardBytes: number }> {
     const header = await this.tokenizer.readToken(Header);
     // ToDo before
-    this.metadata.setFormat('lossless', true);
-    this.metadata.setFormat('container', 'Monkey\'s Audio');
+    this.metadata.setFormat("lossless", true);
+    this.metadata.setFormat("container", "Monkey's Audio");
 
-    this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
-    this.metadata.setFormat('sampleRate', header.sampleRate);
-    this.metadata.setFormat('numberOfChannels', header.channel);
-    this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
+    this.metadata.setFormat("bitsPerSample", header.bitsPerSample);
+    this.metadata.setFormat("sampleRate", header.sampleRate);
+    this.metadata.setFormat("numberOfChannels", header.channel);
+    this.metadata.setFormat("duration", APEv2Parser.calculateDuration(header));
 
     return {
-      forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
-        this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
+      forwardBytes:
+        this.ape.descriptor.seekTableBytes +
+        this.ape.descriptor.headerDataBytes +
+        this.ape.descriptor.apeFrameDataBytes +
+        this.ape.descriptor.terminatingDataBytes,
     };
   }
 }

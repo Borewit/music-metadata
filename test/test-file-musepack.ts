@@ -1,102 +1,80 @@
-import { assert } from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import { Parsers } from './metadata-parsers';
-import { samplePath } from './util';
+import { describe, test, expect } from "vitest";
 
-describe('Parse Musepack (.mpc)', () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  const mpcSamplePath = path.join(samplePath, 'mpc');
+const mpcSamplePath = join(samplePath, "mpc");
 
-  describe('Parse Musepack, SV7 with APEv2 header', () => {
+describe.each(Parsers)("parse %s", (_, parser) => {
+  test("Parse Musepack, SV7 with APEv2 header", async () => {
+    const filePath = join(mpcSamplePath, "apev2.sv7.mpc");
 
-    const filePath = path.join(mpcSamplePath, 'apev2.sv7.mpc');
+    const metadata = await parser(filePath, "audio/musepac");
+    // Check format
+    const format = metadata.format;
+    expect(format.container).toBe("Musepack, SV7");
+    expect(format.sampleRate).toBe(44_100);
+    expect(format.numberOfSamples).toBe(11_940);
+    expect(format.bitrate).toBeCloseTo(269_649, -1);
+    expect(format.codec).toBe("1.15");
 
-    Parsers.forEach(parser => {
-      it(parser.description, async () => {
-
-        const metadata = await parser.initParser(filePath, 'audio/musepac');
-        // Check format
-        const format = metadata.format;
-        assert.deepEqual(format.container, 'Musepack, SV7');
-        assert.strictEqual(format.sampleRate, 44100);
-        assert.strictEqual(format.numberOfSamples, 11940);
-        assert.approximately(format.bitrate, 269649, 1);
-        assert.strictEqual(format.codec, '1.15');
-
-        // Check generic metadata
-        const common = metadata.common;
-        assert.strictEqual(common.title, 'God Inside');
-        assert.strictEqual(common.artist, 'Faze Action');
-        assert.strictEqual(common.album, 'Broad Souls');
-        assert.strictEqual(common.date, '2004-05-03');
-        assert.strictEqual(common.barcode, '802085273528');
-        assert.deepEqual(common.catalognumber, ['LUNECD35']);
-        assert.strictEqual(common.media, 'CD');
-        assert.strictEqual(common.releasecountry, 'GB');
-        assert.deepEqual(common.track, {no: 9, of: 10});
-      });
-    });
-
+    // Check generic metadata
+    const common = metadata.common;
+    expect(common.title).toBe("God Inside");
+    expect(common.artist).toBe("Faze Action");
+    expect(common.album).toBe("Broad Souls");
+    expect(common.date).toBe("2004-05-03");
+    expect(common.barcode).toBe("802085273528");
+    expect(common.catalognumber).toStrictEqual(["LUNECD35"]);
+    expect(common.media).toBe("CD");
+    expect(common.releasecountry).toBe("GB");
+    expect(common.track).toStrictEqual({ no: 9, of: 10 });
   });
 
-  describe('Handle APEv1 TAG header (no header, only footer)', () => {
-
+  test("Handle APEv1 TAG header (no header, only footer)", async () => {
     /**
      * In this sample the APEv2 header is not present, only the APEv2 footer
      */
-    const filePath = path.join(mpcSamplePath, 'apev2-no-header.sv7.mpc');
+    const filePath = join(mpcSamplePath, "apev2-no-header.sv7.mpc");
 
-    Parsers.forEach(parser => {
-      it(parser.description, async () => {
+    const metadata = await parser(filePath, "audio/musepac");
+    // Check format
+    expect(metadata.format.container).toBe("Musepack, SV7");
+    expect(metadata.format.sampleRate).toBe(44_100);
+    expect(metadata.format.numberOfSamples).toBe(11_940);
+    expect(metadata.format.bitrate).toBeCloseTo(269_649, -1);
+    expect(metadata.format.codec).toBe("1.15");
 
-        const metadata = await parser.initParser(filePath, 'audio/musepac');
-        // Check format
-        assert.deepEqual(metadata.format.container, 'Musepack, SV7');
-        assert.strictEqual(metadata.format.sampleRate, 44100);
-        assert.strictEqual(metadata.format.numberOfSamples, 11940);
-        assert.approximately(metadata.format.bitrate, 269649, 1);
-        assert.strictEqual(metadata.format.codec, '1.15');
-
-        // Check generic metadata
-        assert.strictEqual(metadata.common.title, 'God Inside');
-        assert.strictEqual(metadata.common.artist, 'Faze Action');
-        assert.strictEqual(metadata.common.album, 'Broad Souls');
-        assert.strictEqual(metadata.common.date, '2004');
-        assert.deepEqual(metadata.common.track, {no: 9, of: null});
-      });
-    });
-
+    // Check generic metadata
+    expect(metadata.common.title).toBe("God Inside");
+    expect(metadata.common.artist).toBe("Faze Action");
+    expect(metadata.common.album).toBe("Broad Souls");
+    expect(metadata.common.date).toBe("2004");
+    expect(metadata.common.track).toStrictEqual({ no: 9, of: null });
   });
 
-  describe('Parse Musepack, SV8 with APEv2 header', () => {
+  test("Parse Musepack, SV8 with APEv2 header", async () => {
+    const filePath = join(mpcSamplePath, "bach-goldberg-variatians-05.sv8.mpc");
 
-    const filePath = path.join(mpcSamplePath, 'bach-goldberg-variatians-05.sv8.mpc');
+    const metadata = await parser(filePath, "audio/musepac");
+    // Check format
+    expect(metadata.format.container).toBe("Musepack, SV8");
+    expect(metadata.format.sampleRate).toBe(48_000);
+    expect(metadata.format.numberOfSamples).toBe(24_000);
+    expect(metadata.format.numberOfChannels).toBe(2);
+    expect(metadata.format.duration).toBeCloseTo(0.5, 3);
+    expect(metadata.format.bitrate).toBeCloseTo(32_368, -1);
 
-    Parsers.forEach(parser => {
-      it(parser.description, async () => {
-
-        const metadata = await parser.initParser(filePath, 'audio/musepac');
-        // Check format
-        assert.deepEqual(metadata.format.container, 'Musepack, SV8');
-        assert.strictEqual(metadata.format.sampleRate, 48000);
-        assert.strictEqual(metadata.format.numberOfSamples, 24000);
-        assert.strictEqual(metadata.format.numberOfChannels, 2);
-        assert.approximately(metadata.format.duration, 0.5, 1 / 2000);
-        assert.approximately(metadata.format.bitrate, 32368, 1);
-
-        // Check generic metadata
-        assert.strictEqual(metadata.common.title, 'Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.');
-        assert.strictEqual(metadata.common.artist, 'Johann Sebastian Bach');
-        assert.deepEqual(metadata.common.artists, ['Johann Sebastian Bach']);
-        assert.deepEqual(metadata.common.isrc, ['QMNYZ1200005']);
-        assert.deepEqual(metadata.common.license, 'https://creativecommons.org/publicdomain/zero/1.0/');
-        assert.strictEqual(metadata.common.album, 'Open Goldberg Variations');
-        assert.strictEqual(metadata.common.date, '2012-05-28');
-        assert.deepEqual(metadata.common.track, {no: 5, of: 32});
-      });
-    });
-
+    // Check generic metadata
+    expect(metadata.common.title).toBe("Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.");
+    expect(metadata.common.artist).toBe("Johann Sebastian Bach");
+    expect(metadata.common.artists).toStrictEqual(["Johann Sebastian Bach"]);
+    expect(metadata.common.isrc).toStrictEqual(["QMNYZ1200005"]);
+    expect(metadata.common.license).toBe("https://creativecommons.org/publicdomain/zero/1.0/");
+    expect(metadata.common.album).toBe("Open Goldberg Variations");
+    expect(metadata.common.date).toBe("2012-05-28");
+    expect(metadata.common.track).toStrictEqual({ no: 5, of: 32 });
   });
-
 });

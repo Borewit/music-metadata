@@ -1,12 +1,12 @@
-import * as Token from 'token-types';
-import {ITokenizer} from 'strtok3/lib/core';
+import { Latin1StringType } from "../../token-types/string";
+import { VorbisParser } from "../vorbis/VorbisParser";
 
-import {IPageHeader} from '../Ogg';
-import {VorbisParser} from '../vorbis/VorbisParser';
-import {IOptions} from '../../type';
-import {INativeMetadataCollector} from '../../common/MetadataCollector';
+import { IIdHeader, IdHeader } from "./OpusIdHeader";
 
-import * as Opus from './Opus';
+import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
+import type { ITokenizer } from "../../strtok3";
+import type { IOptions } from "../../type";
+import type { IPageHeader } from "../Header";
 
 /**
  * Opus parser
@@ -14,9 +14,8 @@ import * as Opus from './Opus';
  * Used by OggParser
  */
 export class OpusParser extends VorbisParser {
-
-  private idHeader: Opus.IIdHeader;
-  private lastPos: number = -1;
+  private idHeader: IIdHeader;
+  private lastPos = -1;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
     super(metadata, options);
@@ -24,24 +23,22 @@ export class OpusParser extends VorbisParser {
 
   /**
    * Parse first Opus Ogg page
-   * @param {IPageHeader} header
-   * @param {Buffer} pageData
+   * @param header
+   * @param pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
-    this.metadata.setFormat('codec', 'Opus');
+  protected override parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
+    this.metadata.setFormat("codec", "Opus");
     // Parse Opus ID Header
-    this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
-    if (this.idHeader.magicSignature !== "OpusHead")
-      throw new Error("Illegal ogg/Opus magic-signature");
-    this.metadata.setFormat('sampleRate', this.idHeader.inputSampleRate);
-    this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
+    this.idHeader = new IdHeader(pageData.length).get(pageData, 0);
+    if (this.idHeader.magicSignature !== "OpusHead") throw new Error("Illegal ogg/Opus magic-signature");
+    this.metadata.setFormat("sampleRate", this.idHeader.inputSampleRate);
+    this.metadata.setFormat("numberOfChannels", this.idHeader.channelCount);
   }
 
-  protected parseFullPage(pageData: Buffer) {
-    const magicSignature = new Token.StringType(8, 'ascii').get(pageData, 0);
+  protected override parseFullPage(pageData: Uint8Array) {
+    const magicSignature = new Latin1StringType(8).get(pageData, 0);
     switch (magicSignature) {
-
-      case 'OpusTags':
+      case "OpusTags":
         this.parseUserCommentList(pageData, 8);
         this.lastPos = this.tokenizer.position - pageData.length;
         break;
@@ -51,18 +48,17 @@ export class OpusParser extends VorbisParser {
     }
   }
 
-  public calculateDuration(header: IPageHeader) {
+  public override calculateDuration(header: IPageHeader) {
     if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
       const pos_48bit = header.absoluteGranulePosition - this.idHeader.preSkip;
-      this.metadata.setFormat('numberOfSamples', pos_48bit);
-      this.metadata.setFormat('duration', pos_48bit / 48000);
+      this.metadata.setFormat("numberOfSamples", pos_48bit);
+      this.metadata.setFormat("duration", pos_48bit / 48_000);
 
-      if (this.lastPos !== -1 && this.tokenizer.fileInfo.size && this.metadata.format.duration) {
+      if (this.lastPos !== -1 && this.tokenizer.fileInfo.size > 0 && this.metadata.format.duration) {
         const dataSize = this.tokenizer.fileInfo.size - this.lastPos;
-        this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
+        this.metadata.setFormat("bitrate", (8 * dataSize) / this.metadata.format.duration);
       }
     }
   }
-
 }

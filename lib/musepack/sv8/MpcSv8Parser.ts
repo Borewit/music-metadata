@@ -1,57 +1,54 @@
-import initDebug from 'debug';
+import { APEv2Parser } from "../../apev2/APEv2Parser";
+import { BasicParser } from "../../common/BasicParser";
+import { FourCcToken } from "../../common/FourCC";
+import initDebug from "../../debug";
 
-import { BasicParser } from '../../common/BasicParser';
-import { APEv2Parser } from '../../apev2/APEv2Parser';
-import { FourCcToken } from '../../common/FourCC';
+import { StreamReader } from "./StreamVersion8";
 
-import * as SV8 from './StreamVersion8';
-
-const debug = initDebug('music-metadata:parser:musepack');
+const debug = initDebug("music-metadata:parser:musepack");
 
 export class MpcSv8Parser extends BasicParser {
-
-  private audioLength: number = 0;
+  private audioLength = 0;
 
   public async parse(): Promise<void> {
-
     const signature = await this.tokenizer.readToken(FourCcToken);
-    if (signature !== 'MPCK') throw new Error('Invalid Magic number');
-    this.metadata.setFormat('container', 'Musepack, SV8');
+    if (signature !== "MPCK") throw new Error("Invalid Magic number");
+    this.metadata.setFormat("container", "Musepack, SV8");
     return this.parsePacket();
   }
 
   private async parsePacket(): Promise<void> {
-
-    const sv8reader = new SV8.StreamReader(this.tokenizer);
+    const sv8reader = new StreamReader(this.tokenizer);
 
     do {
       const header = await sv8reader.readPacketHeader();
       debug(`packet-header key=${header.key}, payloadLength=${header.payloadLength}`);
 
       switch (header.key) {
-        case 'SH': // Stream Header
+        case "SH": {
+          // Stream Header
           const sh = await sv8reader.readStreamHeader(header.payloadLength);
-          this.metadata.setFormat('numberOfSamples', sh.sampleCount);
-          this.metadata.setFormat('sampleRate', sh.sampleFrequency);
-          this.metadata.setFormat('duration', sh.sampleCount / sh.sampleFrequency);
-          this.metadata.setFormat('numberOfChannels', sh.channelCount);
+          this.metadata.setFormat("numberOfSamples", sh.sampleCount);
+          this.metadata.setFormat("sampleRate", sh.sampleFrequency);
+          this.metadata.setFormat("duration", sh.sampleCount / sh.sampleFrequency);
+          this.metadata.setFormat("numberOfChannels", sh.channelCount);
           break;
-
-        case 'AP': // Audio Packet
+        }
+        case "AP": // Audio Packet
           this.audioLength += header.payloadLength;
           await this.tokenizer.ignore(header.payloadLength);
           break;
 
-        case 'RG': // Replaygain
-        case 'EI': // Encoder Info
-        case 'SO': // Seek Table Offset
-        case 'ST': // Seek Table
-        case 'CT': // Chapter-Tag
+        case "RG": // Replaygain
+        case "EI": // Encoder Info
+        case "SO": // Seek Table Offset
+        case "ST": // Seek Table
+        case "CT": // Chapter-Tag
           await this.tokenizer.ignore(header.payloadLength);
           break;
 
-        case 'SE': // Stream End
-          this.metadata.setFormat('bitrate', this.audioLength * 8 / this.metadata.format.duration);
+        case "SE": // Stream End
+          this.metadata.setFormat("bitrate", (this.audioLength * 8) / this.metadata.format.duration);
           return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:

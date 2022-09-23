@@ -1,34 +1,30 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { describe, test, expect } from "vitest";
 
-describe('Parse Sony DSF (DSD Stream File)', () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  const dsfSamplePath = path.join(samplePath, 'dsf');
+describe.each(Parsers)("Parse Sony DSF (DSD Stream File): %s", (_, parser) => {
+  test("parse: 2L-110_stereo-5644k-1b_04.dsf", async () => {
+    const dsfFilePath = join(samplePath, "dsf", "2L-110_stereo-5644k-1b_04_0.1-sec.dsf");
 
-  it('parse: 2L-110_stereo-5644k-1b_04.dsf', async () => {
-
-    const dsfFilePath = path.join(dsfSamplePath, '2L-110_stereo-5644k-1b_04_0.1-sec.dsf');
-
-    const metadata = await mm.parseFile(dsfFilePath, {duration: false});
+    const metadata = await parser(dsfFilePath, "audio/dsf", { duration: false });
 
     // format chunk information
-    assert.strictEqual(metadata.format.container, 'DSF');
-    assert.strictEqual(metadata.format.lossless, true);
-    assert.strictEqual(metadata.format.numberOfChannels, 2);
-    assert.strictEqual(metadata.format.bitsPerSample, 1);
-    assert.strictEqual(metadata.format.sampleRate, 5644800);
-    assert.strictEqual(Number(metadata.format.numberOfSamples), 564480);
-    assert.strictEqual(metadata.format.duration, 0.1);
-    assert.strictEqual(metadata.format.bitrate, 11289600);
-    assert.deepStrictEqual(metadata.format.tagTypes, ['ID3v2.3']);
+    expect(metadata.format.container).toBe("DSF");
+    expect(metadata.format.lossless).toBe(true);
+    expect(metadata.format.numberOfChannels).toBe(2);
+    expect(metadata.format.bitsPerSample).toBe(1);
+    expect(metadata.format.sampleRate).toBe(5_644_800);
+    expect(metadata.format.numberOfSamples).toBe(564_480n);
+    expect(metadata.format.duration).toBe(0.1);
+    expect(metadata.format.bitrate).toBe(11_289_600);
+    expect(metadata.format.tagTypes).toStrictEqual(["ID3v2.3"]);
 
     // ID3v2 chunk information
-    assert.strictEqual(metadata.common.title, 'Kyrie');
-    assert.strictEqual(metadata.common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim');
-    assert.deepStrictEqual(metadata.common.track, {no: 4, of: 12});
+    expect(metadata.common.title).toBe("Kyrie");
+    expect(metadata.common.artist).toBe("CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim");
+    expect(metadata.common.track).toStrictEqual({ no: 4, of: 12 });
   });
-
 });

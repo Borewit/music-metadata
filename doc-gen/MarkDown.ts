@@ -1,38 +1,35 @@
-import * as fs from 'fs';
+import type { WriteStream } from "node:fs";
 
 export class Row {
-  constructor(public values: string[]) {
-  }
+  constructor(public values: string[]) {}
 }
 
 export class Table {
-
-  private static padEnd(value: string, size: number, pad: string = ' ') {
+  private static padEnd(value: string, size: number, pad = " ") {
     while (value.length < size) {
       value += pad;
     }
     return value;
   }
 
-  private static writeRow(out: fs.WriteStream, values: string[], colSizes: number[]) {
+  private static writeRow(out: WriteStream, values: string[], colSizes: number[]) {
     const colValues: string[] = [];
-    for (let ci = 0; ci < colSizes.length; ++ci) {
-      const cellTxt = values.length > ci ? values[ci] : '';
-      colValues.push(Table.padEnd(cellTxt, colSizes[ci]));
+    for (const [ci, colSize] of colSizes.entries()) {
+      const cellTxt = values.length > ci ? values[ci] : "";
+      colValues.push(Table.padEnd(cellTxt, colSize));
     }
-    out.write('| ' + colValues.join(' | ') + ' |\n');
+    out.write("| " + colValues.join(" | ") + " |\n");
   }
 
   private static lineToString(colSizes: number[]): string {
-
-    const colValues = colSizes.map(size => Table.padEnd('-', size, '-'));
-    return '|-' + colValues.join('-|-') + '-|\n';
+    const colValues = colSizes.map((size) => Table.padEnd("-", size, "-"));
+    return "|-" + colValues.join("-|-") + "-|\n";
   }
 
   public rows: Row[] = [];
   public header?: Row;
 
-  public writeTo(out: fs.WriteStream) {
+  public writeTo(out: WriteStream) {
     const colSizes = this.calcColSizes();
     Table.writeRow(out, this.header.values, colSizes);
     out.write(Table.lineToString(colSizes));
@@ -42,10 +39,9 @@ export class Table {
   }
 
   private calcColSizes(): number[] {
-
     const maxColSizes: number[] = [];
 
-    for (const row of this.rows.concat([this.header])) {
+    for (const row of [...this.rows, this.header]) {
       for (let ci = 0; ci < row.values.length; ++ci) {
         if (ci < maxColSizes.length) {
           maxColSizes[ci] = Math.max(maxColSizes[ci], row.values[ci].length);

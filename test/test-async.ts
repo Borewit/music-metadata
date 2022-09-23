@@ -1,113 +1,116 @@
-import { assert } from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { describe, test, expect } from "vitest";
 
-describe('Asynchronous observer updates', () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  const flacFilePath = path.join(samplePath, 'flac.flac');
+import type { IMetadataEvent } from "../lib/type";
 
-  it('decode a FLAC audio file', async () => {
+describe.each(Parsers)("Asynchronous observer updates", (_, parser) => {
+  const flacFilePath = join(samplePath, "flac.flac");
 
-    const eventTags = [];
+  test("decode a FLAC audio file", async () => {
+    expect.assertions(1);
 
-    await mm.parseFile(flacFilePath, {
-      observer: (event => {
-        eventTags.push(event.tag);
+    const eventTags: IMetadataEvent["tag"][] = [];
+
+    await parser(flacFilePath, "audio/flac", {
+      observer: (event) => {
         switch (typeof event.tag.value) {
-          case 'number':
-          case 'string':
-          case 'boolean':
+          case "number":
+          case "string":
+          case "boolean":
             break;
           default:
             event.tag.value = null;
         }
-      })
+
+        eventTags.push(event.tag);
+      },
     });
 
-    assert.deepEqual(eventTags, [
+    expect(eventTags).toStrictEqual([
       {
-        id: 'container',
-        type: 'format',
-        value: 'FLAC'
+        id: "container",
+        type: "format",
+        value: "FLAC",
       },
       {
-        id: 'codec',
-        type: 'format',
-        value: 'FLAC'
+        id: "codec",
+        type: "format",
+        value: "FLAC",
       },
       {
-        id: 'lossless',
-        type: 'format',
-        value: true
+        id: "lossless",
+        type: "format",
+        value: true,
       },
       {
-        id: 'numberOfChannels',
-        type: 'format',
-        value: 2
+        id: "numberOfChannels",
+        type: "format",
+        value: 2,
       },
       {
-        id: 'bitsPerSample',
-        type: 'format',
-        value: 16
+        id: "bitsPerSample",
+        type: "format",
+        value: 16,
       },
       {
-        id: 'sampleRate',
-        type: 'format',
-        value: 44100
+        id: "sampleRate",
+        type: "format",
+        value: 44_100,
       },
       {
-        id: 'duration',
-        type: 'format',
-        value: 271.7733333333333
+        id: "duration",
+        type: "format",
+        value: 271.773_333_333_333_3,
       },
       {
-        id: 'album',
-        type: 'common',
-        value: 'Congratulations'
+        id: "album",
+        type: "common",
+        value: "Congratulations",
       },
       {
-        id: 'artists',
-        type: 'common',
-        value: 'MGMT'
+        id: "artists",
+        type: "common",
+        value: "MGMT",
       },
       {
-        id: 'artist',
-        type: 'common',
-        value: 'MGMT'
+        id: "artist",
+        type: "common",
+        value: "MGMT",
       },
       {
-        id: 'comment',
-        type: 'common',
-        value: 'EAC-Secure Mode=should ignore equal sign'
+        id: "comment",
+        type: "common",
+        value: "EAC-Secure Mode=should ignore equal sign",
       },
       {
-        id: 'genre',
-        type: 'common',
-        value: 'Alt. Rock'
+        id: "genre",
+        type: "common",
+        value: "Alt. Rock",
       },
       {
-        id: 'title',
-        type: 'common',
-        value: 'Brian Eno'
+        id: "title",
+        type: "common",
+        value: "Brian Eno",
       },
       {
-        id: 'date',
-        type: 'common',
-        value: '2010'
+        id: "date",
+        type: "common",
+        value: "2010",
       },
       {
-        id: 'picture',
-        type: 'common',
-        value: null
+        id: "picture",
+        type: "common",
+        value: null,
       },
       {
-        id: 'bitrate',
-        type: 'format',
-        value: 3529.912181720061
-      }
+        id: "bitrate",
+        type: "format",
+        value: 3529.912_181_720_061,
+      },
     ]);
   });
-
 });

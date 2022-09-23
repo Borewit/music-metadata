@@ -1,37 +1,38 @@
-import {assert} from 'chai';
-import * as path from 'path';
+import { join } from "node:path";
 
-import * as mm from '../lib';
-import { samplePath } from './util';
+import { describe, test, expect } from "vitest";
 
-describe('Parse Philips DSDIFF', () => {
+import { Parsers } from "./metadata-parsers";
+import { samplePath } from "./util";
 
-  const dsdiffamplePath = path.join(samplePath, 'dsdiff');
+describe.each(Parsers)("parser: %s", (description, parser) => {
+  test.skipIf(description === "buffer")("parse: Philips DSDIFF DSD64.dff", async () => {
+    const filePath = join(samplePath, "dsdiff", "DSD64.dff");
 
-  it('parse: DSD64.dff', async () => {
-
-    const filePath = path.join(dsdiffamplePath, 'DSD64.dff');
-
-    const {format, common} = await mm.parseFile(filePath, {duration: false});
+    const metadata = await parser(filePath, "audio/dff", { duration: false });
 
     // format chunk information
-    assert.strictEqual(format.container, 'DSDIFF/DSD');
-    assert.deepEqual(format.lossless, true);
-    assert.deepEqual(format.tagTypes, ['ID3v2.3']);
-    assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-    assert.deepEqual(format.bitsPerSample, 1, 'format.bitsPerSample');
-    assert.deepEqual(format.sampleRate, 2822400, 'format.sampleRate [Hz]');
-    assert.deepEqual(format.numberOfSamples, 300800, 'format.numberOfSamples');
-    assert.deepEqual(format.duration, 300800 / 2822400, 'format.duration');
-    assert.deepEqual(format.bitrate, 5644800, 'format.bitrate');
-    assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'TAG headers');
+    const format = metadata.format;
+
+    expect(format.container).toBe("DSDIFF/DSD");
+    expect(format.lossless).toBe(true);
+    expect(format.tagTypes).toStrictEqual(["ID3v2.3"]);
+    expect(format.numberOfChannels, "format.numberOfChannels").toBe(2);
+    expect(format.bitsPerSample, "format.bitsPerSample").toBe(1);
+    expect(format.sampleRate, "format.sampleRate [Hz]").toBe(2_822_400);
+    expect(format.numberOfSamples, "format.numberOfSamples").toBe(300_800);
+    expect(format.duration, "format.duration").toBe(300_800 / 2_822_400);
+    expect(format.bitrate, "format.bitrate").toBe(5_644_800);
+    expect(format.tagTypes, "TAG headers").toStrictEqual(["ID3v2.3"]);
 
     // ID3v2 chunk information
-    assert.strictEqual(common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim', 'common.artist');
-    assert.strictEqual(common.title, 'Kyrie', 'common.title');
-    assert.strictEqual(common.album, 'SPES', 'common.album');
-    assert.deepEqual(common.genre, ['Choral'], 'common.genre');
-    assert.deepEqual(common.track, {no: 4, of: 12}, 'common.track');
-  });
 
+    const common = metadata.common;
+
+    expect(common.artist, "common.artist").toBe("CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim");
+    expect(common.title, "common.title").toBe("Kyrie");
+    expect(common.album, "common.album").toBe("SPES");
+    expect(common.genre, "common.genre").toStrictEqual(["Choral"]);
+    expect(common.track, "common.track").toStrictEqual({ no: 4, of: 12 });
+  });
 });

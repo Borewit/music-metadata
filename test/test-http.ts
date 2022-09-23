@@ -1,67 +1,81 @@
-import { assert } from 'chai';
+import { get as getHttp } from "node:http";
+import { get as getHttps } from "node:https";
 
-import { parseStream } from '../lib';
-import { IHttpClient, HttpClient } from './http-client';
+import { describe, test, expect } from "vitest";
 
-import { IFileInfo } from 'strtok3';
+import { parseStream } from "../lib";
 
-interface IHttpClientTest {
-  readonly name: string;
-  client: IHttpClient;
+import type { IFileInfo } from "../lib/strtok3";
+import type { Readable } from "node:stream";
+
+interface IHttpResponse {
+  headers: Record<string, string>;
+  stream: Readable;
 }
 
-const clients: IHttpClientTest[] = [
-  {
-    name: 'http',
-    client: new HttpClient()
-  }
-];
+function getUrlResponse(url: string): Promise<IHttpResponse> {
+  return new Promise<IHttpResponse>((resolve, reject) => {
+    const request = url.startsWith("https") ? getHttps(url) : getHttp(url);
+
+    request.on("response", (response) =>
+      resolve({
+        headers: response.headers as Record<string, string>,
+        stream: response,
+      })
+    );
+    request.on("close", () => reject(new Error("close")));
+    request.on("error", (err) => reject(err));
+  });
+}
 
 // Skipped: https://github.com/Borewit/music-metadata/issues/160
-describe('HTTP streaming', function() {
+describe("HTTP streaming", function () {
+  const url = "http://builds.tokyo.s3.amazonaws.com/sample.m4a";
 
-  // Increase time-out to 15 seconds because we retrieve files over HTTP(s)
-  this.timeout(15 * 1000);
-  this.retries(3); // Workaround for HTTP time-outs on Travis-CI
+  test(
+    `Should be able to parse M4A with content-length specified`,
+    async () => {
+      const response = await getUrlResponse(url);
 
-  describe('Stream HTTP using different clients', () => {
+      const fileInfo: IFileInfo = {
+        mimeType: response.headers["content-type"],
+        size: Number.parseInt(response.headers["content-length"], 10), // Always pass this in production
+      };
 
-    clients.forEach(test => {
+      const tags = await parseStream(response.stream, fileInfo);
+      response.stream.destroy();
 
-      describe(`HTTP client: ${test.name}`, () => {
+      expect(tags.format.container).toBe("M4A/mp42/isom");
+      expect(tags.format.codec).toBe("MPEG-4/AAC");
+      expect(tags.format.lossless).toBe(false);
 
-        [true, false].forEach(hasContentLength => {
+      expect(tags.common.title).toBe('Super Mario Galaxy "Into The Galaxy"');
+      expect(tags.common.artist).toBe('club nintendo CD "SUPER MARIO GALAXY"より');
+      expect(tags.common.album).toBe("SUPER MARIO GALAXY ORIGINAL SOUNDTRACK");
+    },
+    15 * 1000
+  );
 
-          it(`Should be able to parse M4A ${hasContentLength ? 'with' : 'without'} content-length specified`, async () => {
+  test(
+    `Should be able to parse M4A without content-length specified`,
+    async () => {
+      const response = await getUrlResponse(url);
 
-            const url = 'http://builds.tokyo.s3.amazonaws.com/sample.m4a';
+      const fileInfo: IFileInfo = {
+        mimeType: response.headers["content-type"],
+      };
 
-            const response = await test.client.get(url);
+      const tags = await parseStream(response.stream, fileInfo);
+      response.stream.destroy();
 
-            const fileInfo: IFileInfo = {
-              mimeType: response.headers['content-type']
-            };
-            if (hasContentLength) {
-              fileInfo.size = parseInt(response.headers['content-length'], 10); // Always pass this in production
-            }
+      expect(tags.format.container).toBe("M4A/mp42/isom");
+      expect(tags.format.codec).toBe("MPEG-4/AAC");
+      expect(tags.format.lossless).toBe(false);
 
-            const tags = await parseStream(response.stream, fileInfo);
-            if (response.stream.destroy) {
-              response.stream.destroy(); // Node >= v8 only
-            }
-            assert.strictEqual(tags.format.container, 'M4A/mp42/isom');
-            assert.strictEqual(tags.format.codec, 'MPEG-4/AAC');
-            assert.strictEqual(tags.format.lossless, false);
-
-            assert.strictEqual(tags.common.title, 'Super Mario Galaxy "Into The Galaxy"');
-            assert.strictEqual(tags.common.artist, 'club nintendo CD "SUPER MARIO GALAXY"より');
-            assert.strictEqual(tags.common.album, 'SUPER MARIO GALAXY ORIGINAL SOUNDTRACK');
-          });
-
-        });
-
-      });
-    });
-  });
-
+      expect(tags.common.title).toBe('Super Mario Galaxy "Into The Galaxy"');
+      expect(tags.common.artist).toBe('club nintendo CD "SUPER MARIO GALAXY"より');
+      expect(tags.common.album).toBe("SUPER MARIO GALAXY ORIGINAL SOUNDTRACK");
+    },
+    15 * 1000
+  );
 });
