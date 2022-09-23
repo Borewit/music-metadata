@@ -188,7 +188,9 @@
         "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
         "import/no-nodejs-modules": "off",
 
-        "jsdoc/require-jsdoc": "off"
+        "jsdoc/require-jsdoc": "off",
+
+        "@typescript-eslint/no-non-null-assertion": "off"
       }
     }
   ]
