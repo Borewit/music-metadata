@@ -2,7 +2,6 @@ import { Latin1StringType } from "../token-types/string";
 
 import type { IGetToken } from "../token-types";
 
-
 export interface IAtomFtyp {
   type: string;
 }

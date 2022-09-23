@@ -3,7 +3,6 @@ import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * METADATA_BLOCK_DATA
  * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo

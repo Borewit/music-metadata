@@ -2,7 +2,6 @@ import { UINT16_LE, UINT32_LE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * APE_HEADER: describes all of the necessary information about the APE file
  */

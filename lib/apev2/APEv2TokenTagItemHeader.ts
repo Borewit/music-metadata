@@ -4,7 +4,6 @@ import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * APE Tag v2.0 Item Header
  */

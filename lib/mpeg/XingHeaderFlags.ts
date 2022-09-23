@@ -2,7 +2,6 @@ import { isBitSet } from "../common/Util";
 
 import type { IGetToken } from "../token-types";
 
-
 export interface IXingHeaderFlags {
   frames: boolean;
   bytes: boolean;

@@ -5,7 +5,6 @@ import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
 
 import type { IGetToken } from "../token-types";
 
-
 export interface IFooter {
   // should equal 'APETAGEX'
   ID: string;

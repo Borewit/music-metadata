@@ -9,7 +9,6 @@ import { ReplayGain, IReplayGain } from "./ReplayGainDataFormat";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * LAME Tag, extends the Xing header format
  * First added in LAME 3.12 for VBR

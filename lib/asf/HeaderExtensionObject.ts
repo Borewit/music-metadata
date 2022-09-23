@@ -4,7 +4,6 @@ import GUID, { HeaderExtensionObject as GUIDHeaderExtensionObject } from "./GUID
 
 import type { IGetToken } from "../token-types";
 
-
 export interface IHeaderExtensionObject {
   reserved1: GUID;
   reserved2: number;

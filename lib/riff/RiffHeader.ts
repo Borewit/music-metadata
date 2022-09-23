@@ -4,7 +4,6 @@ import { Latin1StringType } from "../token-types/string";
 import type { IChunkHeader } from "../iff";
 import type { IGetToken } from "../token-types";
 
-
 export { IChunkHeader } from "../iff";
 
 /**

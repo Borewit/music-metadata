@@ -2,7 +2,6 @@ import { UINT16_LE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * 3.5: The Codec-List-Object interface.
  */

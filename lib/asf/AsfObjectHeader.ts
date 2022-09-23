@@ -4,7 +4,6 @@ import GUID from "./GUID";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575
  */

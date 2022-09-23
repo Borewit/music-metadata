@@ -4,7 +4,6 @@ import { UINT8, UINT64_LE, UINT32_LE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Page header
  * Ref: https://www.xiph.org/ogg/doc/framing.html#page_header

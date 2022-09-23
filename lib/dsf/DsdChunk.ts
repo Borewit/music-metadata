@@ -2,7 +2,6 @@ import { INT64_LE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Interface to DSD payload chunk
  */

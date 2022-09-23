@@ -2,7 +2,6 @@ import { UINT8, UINT24_BE, Uint8ArrayType } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Data Atom Structure ('data')
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW32

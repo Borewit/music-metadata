@@ -2,7 +2,6 @@ import { INT16_BE, UINT16_BE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 export interface ISoundSampleDescriptionV0 {
   numAudioChannels: number;
   /**

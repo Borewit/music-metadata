@@ -4,7 +4,6 @@ import { FixedLengthAtom } from "./AtomFixedLength";
 import { SecondsSinceMacEpoch } from "./SecondsSinceMacEpoch";
 
 import type { IGetToken } from "../token-types";
-
 import type { IAtomMxhd } from "./AtomMxhd";
 
 /**

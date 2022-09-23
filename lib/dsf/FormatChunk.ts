@@ -2,7 +2,6 @@ import { INT32_LE, INT64_LE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 export enum ChannelType {
   mono = 1,
   stereo = 2,

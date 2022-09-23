@@ -2,7 +2,6 @@ import { decodeUtf8 } from "../compat/text-decoder";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  *
  * @param str

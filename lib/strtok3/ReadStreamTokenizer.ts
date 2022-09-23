@@ -1,5 +1,5 @@
-import { EndOfStreamError,  } from "../peek-readable/EndOfFileStream";
-import {  StreamReader } from "../peek-readable/StreamReader";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
+import { StreamReader } from "../peek-readable/StreamReader";
 
 import { AbstractTokenizer } from "./AbstractTokenizer";
 

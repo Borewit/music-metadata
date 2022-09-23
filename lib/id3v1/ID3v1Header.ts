@@ -6,7 +6,6 @@ import { Id3v1StringType, readId3v1String } from "./ID3v1StringType";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * ID3v1 tag header interface
  */

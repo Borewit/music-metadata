@@ -3,7 +3,6 @@ import { Latin1StringType } from "../token-types/string";
 import type { IChunkHeader } from "../iff";
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Token to parse RIFF-INFO tag value
  */

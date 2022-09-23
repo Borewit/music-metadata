@@ -3,7 +3,6 @@ import { UINT16_BE, Uint8ArrayType } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Atom: Sample Description Atom ('stsd')
  */

@@ -2,7 +2,6 @@ import { INT32_BE } from "../token-types";
 
 import type { IGetToken } from "../token-types";
 
-
 export interface ITimeToSampleToken {
   count: number;
   duration: number;

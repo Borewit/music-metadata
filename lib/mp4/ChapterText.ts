@@ -3,7 +3,6 @@ import { Utf8StringType } from "../token-types/string";
 
 import type { IGetToken } from "../token-types";
 
-
 /**
  * Token used to decode text-track from 'mdat' atom (raw data stream)
  */

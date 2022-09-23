@@ -5,7 +5,6 @@ import { ISampleDescription, SampleDescriptionTable } from "./SampleDescription"
 
 import type { IGetToken } from "../token-types";
 
-
 export interface IAtomStsd {
   header: IAtomStsdHeader;
   table: ISampleDescription[];
