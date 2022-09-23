@@ -3,7 +3,7 @@ import { UINT32_BE } from "../token-types";
 import { IAtomStsdHeader, stsdHeader } from "./AtomStsdHeader";
 import { ISampleDescription, SampleDescriptionTable } from "./SampleDescription";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 export interface IAtomStsd {
   header: IAtomStsdHeader;

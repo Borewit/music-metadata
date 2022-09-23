@@ -4,7 +4,7 @@ import { VorbisParser } from "../vorbis/VorbisParser";
 import { IIdHeader, IdHeader } from "./OpusIdHeader";
 
 import type { INativeMetadataCollector } from "../../common/INativeMetadataCollector";
-import type { ITokenizer } from "../../strtok3";
+import type { ITokenizer } from "../../strtok3/types";
 import type { IOptions } from "../../type";
 import type { IPageHeader } from "../Header";
 

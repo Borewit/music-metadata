@@ -2,7 +2,7 @@ import { INT32_BE, INT8, INT24_BE } from "../token-types";
 
 import { readTokenTable } from "./readTokenTable";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 import type { ITableAtom } from "./AtomTable";
 
 /**

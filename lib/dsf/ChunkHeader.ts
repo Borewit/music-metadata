@@ -1,7 +1,7 @@
 import { FourCcToken } from "../common/FourCC";
 import { UINT64_LE } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * Common interface for the common chunk DSD header

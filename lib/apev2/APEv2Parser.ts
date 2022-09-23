@@ -12,7 +12,7 @@ import { TagItemHeader, ITagItemHeader } from "./APEv2TokenTagItemHeader";
 import { DataType } from "./DataType";
 
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 import type { IOptions, IRandomReader, IApeHeader } from "../type";
 
 const debug = initDebug("music-metadata:parser:APEv2");

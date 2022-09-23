@@ -3,7 +3,8 @@ import { join } from "node:path";
 
 import { expect, test } from "vitest";
 
-import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
+import { EndOfStreamError } from "../../lib/peek-readable/EndOfFileStream";
+import { StreamReader } from "../../lib/peek-readable/StreamReader";
 
 const filePath = join(__dirname, "resources", "JPEG_example_JPG_RIP_001.jpg");
 

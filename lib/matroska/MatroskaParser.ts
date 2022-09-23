@@ -1,7 +1,7 @@
 import { BasicParser } from "../common/BasicParser";
 import { readUintBE } from "../compat/buffer";
 import initDebug from "../debug";
-import { EndOfStreamError, ITokenizer } from "../strtok3";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { Float32_BE, Float64_BE, UINT8 } from "../token-types";
 import { Utf8StringType } from "../token-types/string";
 
@@ -10,6 +10,7 @@ import { DataType, IContainerType, IHeader, IMatroskaDoc, ITrackEntry, ITree, Ta
 
 import type { INativeMetadataCollector } from "../common/INativeMetadataCollector";
 import type { ITokenParser } from "../ParserFactory";
+import type { ITokenizer } from "../strtok3/types";
 import type { IOptions, ITrackInfo } from "../type";
 
 const debug = initDebug("music-metadata:parser:matroska");

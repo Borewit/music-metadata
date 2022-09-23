@@ -3,7 +3,7 @@ import { UINT32_LE, UINT16_LE, Uint8ArrayType } from "../token-types";
 
 import { getBitAllignedNumber, isBitSet } from "./util";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * WavPack Block Header

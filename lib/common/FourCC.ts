@@ -2,7 +2,7 @@ import { Latin1StringType } from "../token-types/string";
 
 import { a2hex } from "./Util";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 const validFourCC = /^[\u0021-\u007E©][\0\u0020-\u007E]{3}/;
 

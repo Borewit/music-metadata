@@ -3,7 +3,7 @@ import { Latin1StringType } from "../token-types/string";
 
 import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 export interface IFooter {
   // should equal 'APETAGEX'

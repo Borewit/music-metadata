@@ -3,7 +3,7 @@ import { AttachedPictureType } from "../id3v2/AttachedPictureType";
 import { INT32_LE, UINT16_BE, UINT8 } from "../token-types";
 import { Utf16LEStringType } from "../token-types/string";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 import type { IPicture } from "../type";
 
 export interface IWmPicture extends IPicture {

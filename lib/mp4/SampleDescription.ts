@@ -1,7 +1,7 @@
 import { FourCcToken } from "../common/FourCC";
 import { UINT16_BE, Uint8ArrayType } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * Atom: Sample Description Atom ('stsd')

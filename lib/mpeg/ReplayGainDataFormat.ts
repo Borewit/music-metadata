@@ -1,6 +1,6 @@
 import { getBitAllignedNumber } from "../common/Util";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 export interface IReplayGain {
   type: NameCode;

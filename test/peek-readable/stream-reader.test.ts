@@ -5,7 +5,8 @@ import { Readable } from "node:stream";
 
 import { describe, test, expect } from "vitest";
 
-import { EndOfStreamError, StreamReader } from "../../lib/peek-readable";
+import { EndOfStreamError } from "../../lib/peek-readable/EndOfFileStream";
+import { StreamReader } from "../../lib/peek-readable/StreamReader";
 import { SourceStream } from "../util";
 
 test("should throw an exception if constructor argument is not a stream", () => {

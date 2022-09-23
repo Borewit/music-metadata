@@ -1,20 +1,21 @@
 import { indexOf, isSubArray, readUintBE } from "../compat/buffer";
 import { decodeLatin1, decodeUtf8 } from "../compat/text-decoder";
 import { encodeUtf8 } from "../compat/text-encoder";
-import * as strtok3 from "../strtok3";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { UINT32_LE, UINT16_LE, UINT16_BE, UINT32_BE, UINT8, INT32_BE, UINT64_LE } from "../token-types";
 import { Latin1StringType, Utf8StringType } from "../token-types/string";
 
 import { fileTypeFromTokenizer } from "./fileTypeFromTokenizer";
 import { stringToBytes, tarHeaderChecksumMatches, uint32SyncSafeToken, checkUtil } from "./util";
 
+import type { ITokenizer } from "../strtok3/types";
 import type { FileTypeResult } from "./type";
 
 const minimumBytes = 4100; // A fair amount of file-types are detectable within this range.
 
 export class FileTypeParser {
   buffer: Uint8Array = new Uint8Array(minimumBytes);
-  tokenizer: strtok3.ITokenizer;
+  tokenizer: ITokenizer;
 
   check(header: number[], options?: { offset: number; mask?: number[] }) {
     return checkUtil(this.buffer, header, options);
@@ -24,7 +25,7 @@ export class FileTypeParser {
     return this.check(stringToBytes(header), options);
   }
 
-  async parse(tokenizer: strtok3.ITokenizer): Promise<FileTypeResult | undefined> {
+  async parse(tokenizer: ITokenizer): Promise<FileTypeResult | undefined> {
     this.buffer = new Uint8Array(minimumBytes);
 
     // Keep reading until EOF if the file size is unknown.
@@ -321,7 +322,7 @@ export class FileTypeParser {
           }
         }
       } catch (error) {
-        if (!(error instanceof strtok3.EndOfStreamError)) {
+        if (!(error instanceof EndOfStreamError)) {
           throw error;
         }
       }
@@ -1403,7 +1404,7 @@ export class FileTypeParser {
  *
  * @param tokenizer
  */
-async function readField(tokenizer: strtok3.ITokenizer) {
+async function readField(tokenizer: ITokenizer) {
   const msb = await tokenizer.peekNumber(UINT8);
   let mask = 0x80;
   let ic = 0; // 0 = A, 1 = B, 2 = C, 3
@@ -1423,7 +1424,7 @@ async function readField(tokenizer: strtok3.ITokenizer) {
  *
  * @param tokenizer
  */
-async function readElement(tokenizer: strtok3.ITokenizer) {
+async function readElement(tokenizer: ITokenizer) {
   const id = await readField(tokenizer);
   const lengthField = await readField(tokenizer);
   lengthField[0] ^= 0x80 >> (lengthField.length - 1);
@@ -1440,7 +1441,7 @@ async function readElement(tokenizer: strtok3.ITokenizer) {
  * @param level
  * @param children
  */
-async function readChildren(tokenizer: strtok3.ITokenizer, level: number, children: number) {
+async function readChildren(tokenizer: ITokenizer, level: number, children: number) {
   while (children > 0) {
     const element = await readElement(tokenizer);
     if (element.id === 17_026) {
@@ -1457,7 +1458,7 @@ async function readChildren(tokenizer: strtok3.ITokenizer, level: number, childr
  *
  * @param tokenizer
  */
-async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
+async function readChunkHeader(tokenizer: ITokenizer) {
   return {
     length: await tokenizer.readToken(INT32_BE),
     type: await tokenizer.readToken(new Latin1StringType(4)),
@@ -1468,7 +1469,7 @@ async function readChunkHeader(tokenizer: strtok3.ITokenizer) {
  *
  * @param tokenizer
  */
-async function readHeader(tokenizer: strtok3.ITokenizer) {
+async function readHeader(tokenizer: ITokenizer) {
   const guid = new Uint8Array(16);
   await tokenizer.readBuffer(guid);
   return {

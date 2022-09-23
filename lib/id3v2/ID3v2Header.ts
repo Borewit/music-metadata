@@ -4,7 +4,7 @@ import { Latin1StringType } from "../token-types/string";
 
 import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 
 /**

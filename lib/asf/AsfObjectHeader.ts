@@ -2,7 +2,7 @@ import { Uint8ArrayType, UINT64_LE } from "../token-types";
 
 import GUID from "./GUID";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575

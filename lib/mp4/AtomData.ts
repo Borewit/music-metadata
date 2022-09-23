@@ -1,6 +1,6 @@
 import { UINT8, UINT24_BE, Uint8ArrayType } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * Data Atom Structure ('data')

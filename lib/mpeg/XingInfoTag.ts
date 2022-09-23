@@ -4,7 +4,7 @@ import { Latin1StringType } from "../token-types/string";
 import { ExtendedLameHeader, IExtendedLameHeader } from "./ExtendedLameHeader";
 import { XingHeaderFlags } from "./XingHeaderFlags";
 
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 
 export interface IXingInfoTag {
   /**

@@ -2,7 +2,7 @@ import { UINT32_LE } from "../token-types";
 
 import { ITagFlags, parseTagFlags } from "./APEv2TokenTagFlags";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * APE Tag v2.0 Item Header

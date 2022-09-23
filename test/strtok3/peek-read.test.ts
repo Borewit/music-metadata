@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 
-import { EndOfStreamError } from "../../lib/strtok3";
+import { EndOfStreamError } from "../../lib/peek-readable/EndOfFileStream";
 import { FileTokenizer } from "../../lib/strtok3/FileTokenizer";
 import { UINT32_LE, UINT32_BE, UINT8 } from "../../lib/token-types";
 import { Latin1StringType, Utf8StringType } from "../../lib/token-types/string";

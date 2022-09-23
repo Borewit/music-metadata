@@ -1,6 +1,9 @@
 import { test, expect } from "vitest";
 
-import { supportedExtensions, supportedMimeTypes, FileExtension, MimeType } from "../../lib/file-type";
+import { supportedExtensions } from "../../lib/file-type/FileExtension";
+import { supportedMimeTypes } from "../../lib/file-type/MimeType";
+
+import type { FileExtension, MimeType } from "../../lib/file-type/type";
 
 test("supportedExtensions.has", () => {
   expect(supportedExtensions.has("jpg")).toBe(true);

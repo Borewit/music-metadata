@@ -1,7 +1,7 @@
 import { getBitAllignedNumber, stripNulls } from "../common/Util";
 import initDebug from "../debug";
 import { AbstractID3Parser } from "../id3v2/AbstractID3Parser";
-import { EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { INT16_BE, Uint8ArrayType } from "../token-types";
 
 import { FrameHeader, MpegFrameHeader } from "./MpegFrameHeader";

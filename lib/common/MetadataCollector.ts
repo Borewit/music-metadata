@@ -1,5 +1,5 @@
 import initDebug from "../debug";
-import { fileTypeFromBuffer } from "../file-type";
+import { fileTypeFromBuffer } from "../file-type/fileTypeFromBuffer";
 import {
   FormatId,
   IAudioMetadata,

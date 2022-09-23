@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, test, expect, beforeAll } from "vitest";
 
-import { EndOfStreamError } from "../../lib/peek-readable";
+import { EndOfStreamError } from "../../lib/peek-readable/EndOfFileStream";
 import { UINT8 } from "../../lib/token-types";
 
 import { getTokenizerWithData, tokenizerCases } from "./util";

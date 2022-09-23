@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 
 import { test, expect } from "vitest";
 
-import { fileTypeStream } from "../../lib/file-type";
+import { fileTypeStream } from "../../lib/file-type/fileTypeStream";
 import { SourceStream } from "../util";
 
 import { streamToBuffer } from "./util";

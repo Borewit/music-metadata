@@ -5,7 +5,7 @@ import { describe, test, expect } from "vitest";
 import { orderTags } from "../lib";
 import { MetadataCollector } from "../lib/common/MetadataCollector";
 import { ID3v2Parser } from "../lib/id3v2/ID3v2Parser";
-import { fromFile } from "../lib/strtok3";
+import { fromFile } from "../lib/strtok3/fromFile";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";

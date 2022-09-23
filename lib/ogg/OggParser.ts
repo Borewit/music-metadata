@@ -1,6 +1,6 @@
 import { BasicParser } from "../common/BasicParser";
 import initDebug from "../debug";
-import { EndOfStreamError } from "../strtok3";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 import { Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 

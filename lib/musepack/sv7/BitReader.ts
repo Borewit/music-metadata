@@ -1,6 +1,6 @@
 import { UINT32_LE } from "../../token-types";
 
-import type { ITokenizer } from "../../strtok3";
+import type { ITokenizer } from "../../strtok3/types";
 
 export class BitReader {
   public pos = 0;

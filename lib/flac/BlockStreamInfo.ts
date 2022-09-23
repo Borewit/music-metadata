@@ -1,7 +1,7 @@
 import { getBitAllignedNumber } from "../common/Util";
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from "../token-types";
 
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * METADATA_BLOCK_DATA

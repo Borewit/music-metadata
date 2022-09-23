@@ -3,7 +3,7 @@ import { UINT16_BE, UINT32_BE, INT8 } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 
 import type * as iff from "../iff";
-import type { IGetToken } from "../strtok3";
+import type { IGetToken } from "../token-types";
 
 /**
  * The Common Chunk.

@@ -2,7 +2,7 @@ import { trimRightNull } from "../../common/Util";
 import { INT32_LE } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
 
-import type { IGetToken } from "../../strtok3";
+import type { IGetToken } from "../../token-types";
 
 /**
  * Speex Header Packet

@@ -9,7 +9,7 @@ import { UINT32SYNCSAFE } from "./UINT32SYNCSAFE";
 
 import type { TagType } from "../common/GenericTagTypes";
 import type { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
-import type { ITokenizer } from "../strtok3";
+import type { ITokenizer } from "../strtok3/types";
 import type { ITag, IOptions } from "../type";
 import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 

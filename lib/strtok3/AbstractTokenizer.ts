@@ -1,4 +1,4 @@
-import { EndOfStreamError } from "../peek-readable";
+import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
 
 import type { IToken, IGetToken } from "../token-types";
 import type { ITokenizer, IFileInfo, IReadChunkOptions } from "./types";

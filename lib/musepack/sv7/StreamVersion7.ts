@@ -2,7 +2,7 @@ import { getBitAllignedNumber, isBitSet } from "../../common/Util";
 import { UINT32_LE, UINT16_LE } from "../../token-types";
 import { Latin1StringType } from "../../token-types/string";
 
-import type { IGetToken } from "../../strtok3";
+import type { IGetToken } from "../../token-types";
 
 /**
  * MusePack stream version 7 format specification
