@@ -141,6 +141,8 @@ export class WaveParser extends BasicParser {
           for (const [key, value] of Object.entries(bext)) {
             this.metadata.addTag("exif", "bext." + key, value);
           }
+          const bextRemaining = header.chunkSize - BroadcastAudioExtensionChunk.len;
+          await this.tokenizer.ignore(bextRemaining);
           break;
         }
 

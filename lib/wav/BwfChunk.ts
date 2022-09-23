@@ -2,6 +2,7 @@ import { UINT32_LE, UINT16_LE, Uint8ArrayType } from "../token-types";
 import { Latin1StringType } from "../token-types/string";
 
 import type { IGetToken } from "../strtok3";
+import { stripNulls } from '../common/Util';
 
 export interface IBroadcastAudioExtensionChunk {
   description: string;
@@ -24,11 +25,11 @@ export const BroadcastAudioExtensionChunk: IGetToken<IBroadcastAudioExtensionChu
 
   get: (uint8array, off) => {
     return {
-      description: new Latin1StringType(256).get(uint8array, off).trim(),
-      originator: new Latin1StringType(32).get(uint8array, off + 256).trim(),
-      originatorReference: new Latin1StringType(32).get(uint8array, off + 288).trim(),
-      originationDate: new Latin1StringType(10).get(uint8array, off + 320).trim(),
-      originationTime: new Latin1StringType(8).get(uint8array, off + 330).trim(),
+      description: stripNulls(new Latin1StringType(256).get(uint8array, off)).trim(),
+      originator: stripNulls(new Latin1StringType(32).get(uint8array, off + 256)).trim(),
+      originatorReference:stripNulls( new Latin1StringType(32).get(uint8array, off + 288)).trim(),
+      originationDate: stripNulls(new Latin1StringType(10).get(uint8array, off + 320)).trim(),
+      originationTime: stripNulls(new Latin1StringType(8).get(uint8array, off + 330)).trim(),
       timeReferenceLow: UINT32_LE.get(uint8array, off + 338),
       timeReferenceHigh: UINT32_LE.get(uint8array, off + 342),
       version: UINT16_LE.get(uint8array, off + 346),
