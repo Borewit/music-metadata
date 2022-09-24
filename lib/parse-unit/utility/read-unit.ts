@@ -11,30 +11,39 @@ const assertResult = <Value>(result: Result<Value, Error>): Value => {
 
 /**
  * Read a token from the tokenizer-stream
- * @param tokenizer - The token to read
- * @param unit - If provided, the desired position in the tokenizer-stream
- * @param unit.0 - If provided, the desired position in the tokenizer-stream
- * @param unit.1 - If provided, the desired position in the tokenizer-stream
+ * @param unit - The token to read
+ * @param buffer - If provided, the desired position in the tokenizer-stream
+ * @param offset - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const readUnit = async <Value>(tokenizer: ITokenizer, [size, reader]: Unit<Value, Error>): Promise<Value> => {
-  const uint8Array = new Uint8Array(size);
-  const len = await tokenizer.readBuffer(uint8Array);
-  if (len < size) throw new EndOfStreamError();
-  return assertResult(reader(uint8Array, 0));
+export const readUnitFromBuffer = <T>(unit: Unit<T, Error>, buffer: Uint8Array, offset: number): T => {
+  return assertResult(unit[1](buffer, offset));
 };
 
 /**
  * Read a token from the tokenizer-stream
  * @param tokenizer - The token to read
  * @param unit - If provided, the desired position in the tokenizer-stream
- * @param unit.0 - If provided, the desired position in the tokenizer-stream
- * @param unit.1 - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const peekUnit = async <Value>(tokenizer: ITokenizer, [size, reader]: Unit<Value, Error>): Promise<Value> => {
-  const uint8Array = new Uint8Array(size);
-  const len = await tokenizer.peekBuffer(uint8Array);
+export const readUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit<T, Error>): Promise<T> => {
+  const [size] = unit;
+  const buffer = new Uint8Array(size);
+  const len = await tokenizer.readBuffer(buffer);
   if (len < size) throw new EndOfStreamError();
-  return assertResult(reader(uint8Array, 0));
+  return readUnitFromBuffer(unit, buffer, 0);
+};
+
+/**
+ * Read a token from the tokenizer-stream
+ * @param tokenizer - The token to read
+ * @param unit - If provided, the desired position in the tokenizer-stream
+ * @returns Promise with token data
+ */
+export const peekUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit<T, Error>): Promise<T> => {
+  const [size] = unit;
+  const buffer = new Uint8Array(size);
+  const len = await tokenizer.peekBuffer(buffer);
+  if (len < size) throw new EndOfStreamError();
+  return readUnitFromBuffer(unit, buffer, 0);
 };
