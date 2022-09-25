@@ -35,7 +35,7 @@ export const sequenceToObject = <
 
       const results2 = {} as UnitsMapObject<Units, Obj>;
       for (const key in obj) {
-        if (!Object.hasOwn(obj, key)) continue;
+        if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
         results2[key] = (results as UnitsResult<Units>)[obj[key]];
       }
       return results2;
