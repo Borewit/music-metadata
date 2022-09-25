@@ -15,17 +15,16 @@ const buffer = new Uint8Array([
 test("unit: units sequence", async () => {
   const tokenizer = new BufferTokenizer(buffer);
 
-  await expect(readUnitFromTokenizer(tokenizer, sequence(u8, latin1(2), skip(3), u8))).resolves.toEqual([
-    0x00,
-    "\u0001\u007F",
-    undefined,
-    0xe6,
-  ]);
+  const result: Promise<[number, string, undefined, number]> = readUnitFromTokenizer(
+    tokenizer,
+    sequence(u8, latin1(2), skip(3), u8)
+  );
+  await expect(result).resolves.toEqual([0x00, "\u0001\u007F", undefined, 0xe6]);
 
-  await expect(readUnitFromTokenizer(tokenizer, sequence(u8, skip(3), latin1(5), u8))).resolves.toEqual([
-    0x47,
-    undefined,
-    "\u004B\u002E\u0063\u005A\u006D",
-    0xdd,
-  ]);
+  const result2: Promise<[number, undefined, string, number]> = readUnitFromTokenizer(
+    tokenizer,
+    sequence(u8, skip(3), latin1(5), u8)
+  );
+
+  await expect(result2).resolves.toEqual([0x47, undefined, "\u004B\u002E\u0063\u005A\u006D", 0xdd]);
 });

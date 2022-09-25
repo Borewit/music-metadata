@@ -1,6 +1,12 @@
 import type { Unit } from "../type/unit";
 
-export const sequence = <T>(...units: Unit<T, Error>[]): Unit<T[], Error> => {
+type UnitsValue<Units extends readonly [] | readonly Unit<unknown, Error>[]> = {
+  [key in keyof Units]: Units[key] extends Unit<infer U, Error> ? U : never;
+};
+
+export const sequence = <Units extends readonly [] | readonly Unit<unknown, Error>[]>(
+  ...units: Units
+): Unit<UnitsValue<Units>, Error> => {
   let totalSize = 0;
   for (const [size] of units) {
     totalSize += size;
@@ -16,7 +22,7 @@ export const sequence = <T>(...units: Unit<T, Error>[]): Unit<T[], Error> => {
         results.push(result);
         offset += size;
       }
-      return results;
+      return results as UnitsValue<Units>;
     },
   ];
 };
