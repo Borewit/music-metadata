@@ -1,13 +1,18 @@
 import { test, expect, describe } from "vitest";
 
-import { NoReturn } from "../../../errors/no-return";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { Id3v1Header, id3v1Header } from "../header";
 
-type ValidCase = [description: string, source: number[], expected: Id3v1Header];
-const validCases: ValidCase[] = [
+test("ID3v1 header size = 128", () => {
+  const [size] = id3v1Header;
+
+  expect(size).toBe(128);
+});
+
+type Case = [description: string, source: number[], expected: Id3v1Header];
+const cases: Case[] = [
   [
     "parse ID3v1 header",
     [
@@ -80,10 +85,6 @@ const validCases: ValidCase[] = [
       genre: 15,
     },
   ],
-];
-
-type InalidCase = [description: string, source: number[], expected: Error];
-const invalidCases: InalidCase[] = [
   [
     "header is not 'TAG'",
     [
@@ -110,28 +111,27 @@ const invalidCases: InalidCase[] = [
       // genre
       0x0f,
     ],
-    new NoReturn(),
+    {
+      header: "AAA",
+      title: "The Song",
+      artist: "The Singer",
+      album: "The Record",
+      year: "1234",
+      comment: "Here is comment.Here is comm",
+      zeroByte: 0,
+      track: 16,
+      genre: 15,
+    },
   ],
 ];
 
 describe("unit: ID3v1 header", () => {
-  test.each(validCases)("%s", async (_, bytes, expected) => {
+  test.each(cases)("%s", async (_, bytes, expected) => {
     const buffer = new Uint8Array(bytes);
     const tokenizer = new BufferTokenizer(buffer);
     const result = readUnitFromTokenizer(tokenizer, id3v1Header);
 
     await expect(result).resolves.toEqual(expected);
-
-    // all bytes are read
-    await expect(readUnitFromTokenizer(tokenizer, u8)).rejects.toThrow();
-  });
-
-  test.each(invalidCases)("invalid: %s", async (_, bytes, expected) => {
-    const buffer = new Uint8Array(bytes);
-    const tokenizer = new BufferTokenizer(buffer);
-    const result = readUnitFromTokenizer(tokenizer, id3v1Header);
-
-    await expect(result).rejects.toThrow(expected);
 
     // all bytes are read
     await expect(readUnitFromTokenizer(tokenizer, u8)).rejects.toThrow();

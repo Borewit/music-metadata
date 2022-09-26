@@ -1,4 +1,3 @@
-import { NoReturn } from "../../errors/no-return";
 import { map } from "../combinate/map";
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { bytes } from "../primitive/bytes";
@@ -26,7 +25,7 @@ export interface Id3v1Header {
   genre: number;
 }
 
-export const id3v1Header: Unit<Id3v1Header, RangeError | NoReturn> = map(
+export const id3v1Header: Unit<Id3v1Header, RangeError> = map(
   sequenceToObject(
     {
       header: 0,
@@ -35,24 +34,21 @@ export const id3v1Header: Unit<Id3v1Header, RangeError | NoReturn> = map(
       album: 3,
       year: 4,
       comment: 5,
-      track: 6,
-      genre: 7,
+      genre: 6,
     },
     id3v1String(3),
     id3v1String(30),
     id3v1String(30),
     id3v1String(30),
     id3v1String(4),
-    id3v1String(28),
-    bytes(2),
+    bytes(30),
     u8
   ),
   (value) => {
-    if (value.header !== "TAG") return new NoReturn();
-    const track = value.track;
+    const track = value.comment;
 
-    const comment = track[0] === 0 ? "" : readUnitFromBuffer(id3v1String(2), track, 0);
+    const comment = readUnitFromBuffer(id3v1String(30), track, 0);
 
-    return { ...value, comment: value.comment + comment, zeroByte: track[0], track: track[1] };
+    return { ...value, comment, zeroByte: track[28], track: track[29] };
   }
 );
