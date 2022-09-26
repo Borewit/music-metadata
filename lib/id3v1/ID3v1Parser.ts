@@ -2,10 +2,10 @@ import { APEv2Parser } from "../apev2/APEv2Parser";
 import { BasicParser } from "../common/BasicParser";
 import { decodeLatin1 } from "../compat/text-decoder";
 import initDebug from "../debug";
-import { EndOfStreamError } from "../peek-readable/EndOfFileStream";
+import { id3v1Header } from "../parse-unit/id3v1/header";
+import { readUnitFromTokenizer } from "../parse-unit/utility/read-unit";
 
 import { Genres } from "./ID3v1Genres";
-import { ID3V1_SIZE, readId3v1Header } from "./ID3v1Header";
 
 import type { IRandomReader } from "../type";
 
@@ -32,25 +32,24 @@ export class ID3v1Parser extends BasicParser {
       await apeParser.parseTags(this.options.apeHeader.footer);
     }
 
-    const offset = this.tokenizer.fileInfo.size - ID3V1_SIZE;
+    const offset = this.tokenizer.fileInfo.size - id3v1Header[0];
     if (this.tokenizer.position > offset) {
       debug("Already consumed the last 128 bytes");
       return;
     }
-    const uint8Array = new Uint8Array(ID3V1_SIZE);
-    const len = await this.tokenizer.readBuffer(uint8Array, { position: offset });
-    if (len < ID3V1_SIZE) throw new EndOfStreamError();
-    const header = readId3v1Header(uint8Array, 0);
 
-    if (header) {
-      debug("ID3v1 header found at: pos=%s", this.tokenizer.fileInfo.size - ID3V1_SIZE);
+    await this.tokenizer.ignore(offset - this.tokenizer.position);
+    const header = await readUnitFromTokenizer(this.tokenizer, id3v1Header);
+
+    if (header && header.header === "TAG") {
+      debug("ID3v1 header found at: pos=%s", offset);
       for (const id of ["title", "artist", "album", "comment", "track", "year"] as const) {
         if (header[id] && header[id] !== "") this.addTag(id, header[id]);
       }
       const genre = ID3v1Parser.getGenre(header.genre);
       if (genre) this.addTag("genre", genre);
     } else {
-      debug("ID3v1 header not found at: pos=%s", this.tokenizer.fileInfo.size - ID3V1_SIZE);
+      debug("ID3v1 header not found at: pos=%s", offset);
     }
   }
 
