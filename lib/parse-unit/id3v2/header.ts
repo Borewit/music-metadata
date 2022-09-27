@@ -7,7 +7,7 @@ import { u32beSyncsafe } from "./syncsafe";
 
 import type { Unit } from "../type/unit";
 
-type ID3v2MajorVersion = 2 | 3 | 4;
+export type ID3v2MajorVersion = 2 | 3 | 4;
 
 /**
  * ID3v2 tag header
