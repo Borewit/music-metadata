@@ -1,6 +1,6 @@
 import { extendedHeaderSize } from "../parse-unit/id3v2/extended-header-size";
 import { frameHeader as id3v2FrameHeader, ID3v2FrameHeader } from "../parse-unit/id3v2/frame-header";
-import { header as id3v2Header, Id3v2header } from "../parse-unit/id3v2/header";
+import { header as id3v2Header, Id3v2header, ID3v2MajorVersion } from "../parse-unit/id3v2/header";
 import { bytes } from "../parse-unit/primitive/bytes";
 import { readUnitFromBuffer, readUnitFromTokenizer } from "../parse-unit/utility/read-unit";
 
@@ -10,7 +10,6 @@ import type { TagType } from "../common/GenericTagTypes";
 import type { INativeMetadataCollector, IWarningCollector } from "../common/INativeMetadataCollector";
 import type { ITokenizer } from "../strtok3/types";
 import type { ITag, IOptions } from "../type";
-import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
 
 export class ID3v2Parser {
   public static removeUnsyncBytes(buffer: Uint8Array): Uint8Array {

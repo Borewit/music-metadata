@@ -1,13 +1,14 @@
-import * as util from "../common/Util";
+import { StringEncoding, decodeString, findZero } from "../common/Util";
 import initDebug from "../debug";
 import { Genres } from "../id3v1/ID3v1Genres";
-import { UINT32_BE, UINT8 } from "../token-types";
+import { u32be, u8 } from "../parse-unit/primitive/integer";
+import { readUnitFromBuffer } from "../parse-unit/utility/read-unit";
 
 import { AttachedPictureType } from "./AttachedPictureType";
 import { TextEncodingToken } from "./TextEncoding";
 
 import type { IWarningCollector } from "../common/INativeMetadataCollector";
-import type { ID3v2MajorVersion } from "./ID3v2MajorVersion";
+import type { ID3v2MajorVersion } from "../parse-unit/id3v2/header";
 
 const debug = initDebug("music-metadata:id3v2:frame-parser");
 
@@ -24,7 +25,7 @@ interface IPicture {
   data?: Uint8Array;
 }
 
-const defaultEnc: util.StringEncoding = "latin1"; // latin1 == iso-8859-1;
+const defaultEnc: StringEncoding = "latin1"; // latin1 == iso-8859-1;
 
 /**
  *
@@ -111,7 +112,7 @@ export class FrameParser {
       case "PCST": {
         let text;
         try {
-          text = util.decodeString(uint8Array.slice(1), encoding).replace(/\0+$/, "");
+          text = decodeString(uint8Array.slice(1), encoding).replace(/\0+$/, "");
         } catch (error) {
           if (!(error instanceof Error)) {
             throw error;
@@ -161,7 +162,7 @@ export class FrameParser {
         output = FrameParser.readIdentifierAndData(uint8Array, offset + 1, length, encoding);
         output = {
           description: output.id,
-          text: this.splitValue(type, util.decodeString(output.data as Uint8Array, encoding).replace(/\0+$/, "")),
+          text: this.splitValue(type, decodeString(output.data as Uint8Array, encoding).replace(/\0+$/, "")),
         };
         break;
 
@@ -174,13 +175,13 @@ export class FrameParser {
 
           switch (this.major) {
             case 2:
-              pic.format = util.decodeString(uint8Array.slice(offset, offset + 3), "latin1"); // 'latin1'; // latin1 == iso-8859-1;
+              pic.format = decodeString(uint8Array.slice(offset, offset + 3), "latin1"); // 'latin1'; // latin1 == iso-8859-1;
               offset += 3;
               break;
             case 3:
             case 4:
-              fzero = util.findZero(uint8Array, offset, length, defaultEnc);
-              pic.format = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+              fzero = findZero(uint8Array, offset, length, defaultEnc);
+              pic.format = decodeString(uint8Array.slice(offset, fzero), defaultEnc);
               offset = fzero + 1;
               break;
 
@@ -193,8 +194,8 @@ export class FrameParser {
           pic.type = AttachedPictureType[uint8Array[offset]];
           offset += 1;
 
-          fzero = util.findZero(uint8Array, offset, length, encoding);
-          pic.description = util.decodeString(uint8Array.slice(offset, fzero), encoding);
+          fzero = findZero(uint8Array, offset, length, encoding);
+          pic.description = decodeString(uint8Array.slice(offset, fzero), encoding);
           offset = fzero + nullTerminatorLength;
 
           pic.data = uint8Array.slice(offset, length);
@@ -204,7 +205,7 @@ export class FrameParser {
 
       case "CNT":
       case "PCNT":
-        output = UINT32_BE.get(uint8Array, 0);
+        output = readUnitFromBuffer(u32be, uint8Array, 0);
         break;
 
       case "SYLT":
@@ -217,9 +218,9 @@ export class FrameParser {
 
         output = [];
         while (offset < length) {
-          const txt = uint8Array.slice(offset, (offset = util.findZero(uint8Array, offset, length, encoding)));
+          const txt = uint8Array.slice(offset, (offset = findZero(uint8Array, offset, length, encoding)));
           offset += 5; // push offset forward one +  4 byte timestamp
-          output.push(util.decodeString(txt, encoding));
+          output.push(decodeString(txt, encoding));
         }
         break;
 
@@ -229,14 +230,14 @@ export class FrameParser {
       case "COMM":
         offset += 1;
 
-        out.language = util.decodeString(uint8Array.slice(offset, offset + 3), defaultEnc);
+        out.language = decodeString(uint8Array.slice(offset, offset + 3), defaultEnc);
         offset += 3;
 
-        fzero = util.findZero(uint8Array, offset, length, encoding);
-        out.description = util.decodeString(uint8Array.slice(offset, fzero), encoding);
+        fzero = findZero(uint8Array, offset, length, encoding);
+        out.description = decodeString(uint8Array.slice(offset, fzero), encoding);
         offset = fzero + nullTerminatorLength;
 
-        out.text = util.decodeString(uint8Array.slice(offset, length), encoding).replace(/\0+$/, "");
+        out.text = decodeString(uint8Array.slice(offset, length), encoding).replace(/\0+$/, "");
 
         output = [out];
         break;
@@ -253,28 +254,28 @@ export class FrameParser {
 
       case "POPM": {
         // Popularimeter
-        fzero = util.findZero(uint8Array, offset, length, defaultEnc);
-        const email = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        fzero = findZero(uint8Array, offset, length, defaultEnc);
+        const email = decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         offset = fzero + 1;
         const dataLen = length - offset;
         output = {
           email,
-          rating: UINT8.get(uint8Array, offset),
-          counter: dataLen >= 5 ? UINT32_BE.get(uint8Array, offset + 1) : undefined,
+          rating: readUnitFromBuffer(u8, uint8Array, offset),
+          counter: dataLen >= 5 ? readUnitFromBuffer(u32be, uint8Array, offset + 1) : undefined,
         };
         break;
       }
 
       case "GEOB": {
         // General encapsulated object
-        fzero = util.findZero(uint8Array, offset + 1, length, encoding);
-        const mimeType = util.decodeString(uint8Array.slice(offset + 1, fzero), defaultEnc);
+        fzero = findZero(uint8Array, offset + 1, length, encoding);
+        const mimeType = decodeString(uint8Array.slice(offset + 1, fzero), defaultEnc);
         offset = fzero + 1;
-        fzero = util.findZero(uint8Array, offset, length - offset, encoding);
-        const filename = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        fzero = findZero(uint8Array, offset, length - offset, encoding);
+        const filename = decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         offset = fzero + 1;
-        fzero = util.findZero(uint8Array, offset, length - offset, encoding);
-        const description = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        fzero = findZero(uint8Array, offset, length - offset, encoding);
+        const description = decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         output = {
           type: mimeType,
           filename,
@@ -294,25 +295,25 @@ export class FrameParser {
       case "WPAY":
       case "WPUB":
         // Decode URL
-        output = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        output = decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         break;
 
       case "WXXX": {
         // Decode URL
-        fzero = util.findZero(uint8Array, offset + 1, length, encoding);
-        const description = util.decodeString(uint8Array.slice(offset + 1, fzero), encoding);
+        fzero = findZero(uint8Array, offset + 1, length, encoding);
+        const description = decodeString(uint8Array.slice(offset + 1, fzero), encoding);
         offset = fzero + (encoding === "utf16le" ? 2 : 1);
         output = {
           description,
-          url: util.decodeString(uint8Array.slice(offset, length), defaultEnc),
+          url: decodeString(uint8Array.slice(offset, length), defaultEnc),
         };
         break;
       }
 
       case "WFD":
       case "WFED":
-        output = util.decodeString(
-          uint8Array.slice(offset + 1, util.findZero(uint8Array, offset + 1, length, encoding)),
+        output = decodeString(
+          uint8Array.slice(offset + 1, findZero(uint8Array, offset + 1, length, encoding)),
           encoding
         );
         break;
@@ -386,17 +387,17 @@ export class FrameParser {
     uint8Array: Uint8Array,
     offset: number,
     length: number,
-    encoding: util.StringEncoding
+    encoding: StringEncoding
   ): { id: string; data: Uint8Array } {
-    const fzero = util.findZero(uint8Array, offset, length, encoding);
+    const fzero = findZero(uint8Array, offset, length, encoding);
 
-    const id = util.decodeString(uint8Array.slice(offset, fzero), encoding);
+    const id = decodeString(uint8Array.slice(offset, fzero), encoding);
     offset = fzero + FrameParser.getNullTerminatorLength(encoding);
 
     return { id, data: uint8Array.slice(offset, length) };
   }
 
-  private static getNullTerminatorLength(enc: util.StringEncoding): number {
+  private static getNullTerminatorLength(enc: StringEncoding): number {
     return enc === "utf16le" ? 2 : 1;
   }
 }
