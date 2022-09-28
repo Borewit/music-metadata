@@ -14,7 +14,7 @@ export type ID3v2MajorVersion = 2 | 3 | 4;
  * Ref: http://id3.org/id3v2.3.0#ID3v2_header
  * ToDo
  */
-export interface IID3v2header {
+export interface Id3v2header {
   // ID3v2/file identifier   "ID3"
   fileIdentifier: string;
   // ID3v2 versionIndex
@@ -47,7 +47,7 @@ const flags = map(u8, (value) => {
   };
 });
 
-export const header: Unit<IID3v2header, RangeError> = sequenceToObject(
+export const header: Unit<Id3v2header, RangeError> = sequenceToObject(
   {
     fileIdentifier: 0,
     major: 1,

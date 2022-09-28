@@ -3,7 +3,7 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { header, IID3v2header } from "../header";
+import { header, Id3v2header } from "../header";
 
 test("ID3v2 header size = 10", () => {
   const [size] = header;
@@ -11,7 +11,7 @@ test("ID3v2 header size = 10", () => {
   expect(size).toBe(10);
 });
 
-type Case = [description: string, source: number[], expected: IID3v2header];
+type Case = [description: string, source: number[], expected: Id3v2header];
 const cases: Case[] = [
   [
     "parse ID3v2.2 header",
