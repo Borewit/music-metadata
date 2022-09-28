@@ -30,6 +30,16 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
 }
 
 /**
+ *
+ * @param bits
+ * @param offset
+ * @returns
+ */
+export function isNumberBitSet(bits: number, offset: number): boolean {
+  return (bits & (1 << offset)) !== 0;
+}
+
+/**
  * Found delimiting zero in uint8Array
  * @param uint8Array Uint8Array to find the zero delimiter in
  * @param start Offset in uint8Array

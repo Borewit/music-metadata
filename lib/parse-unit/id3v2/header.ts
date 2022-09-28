@@ -1,3 +1,4 @@
+import { isNumberBitSet } from "../../common/Util";
 import { map } from "../combinate/map";
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { u8 } from "../primitive/integer";
@@ -34,16 +35,12 @@ export interface Id3v2header {
   size: number;
 }
 
-const isBitSet = (bits: number, offsetRight: number): boolean => {
-  return !!(bits & (1 << offsetRight));
-};
-
 const flags = map(u8, (value) => {
   return {
-    unsynchronisation: isBitSet(value, 7),
-    isExtendedHeader: isBitSet(value, 6),
-    expIndicator: isBitSet(value, 5),
-    footer: isBitSet(value, 4),
+    unsynchronisation: isNumberBitSet(value, 7),
+    isExtendedHeader: isNumberBitSet(value, 6),
+    expIndicator: isNumberBitSet(value, 5),
+    footer: isNumberBitSet(value, 4),
   };
 });
 
