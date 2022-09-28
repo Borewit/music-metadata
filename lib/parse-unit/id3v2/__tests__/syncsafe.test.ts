@@ -19,7 +19,6 @@ const cases: Case[] = [
   ["parse invalid integer", [0x80, 0x80, 0x80, 0x80], 0x00_00_00_00],
 ];
 
-
 describe("unit: sync safe unsigned integer 32bit big endian", () => {
   test.each(cases)("%s", async (_, bytes, expected) => {
     const buffer = new Uint8Array(bytes);
