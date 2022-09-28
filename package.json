@@ -124,7 +124,7 @@
     "remark-cli": "^11.0.0",
     "remark-preset-lint-recommended": "^6.1.2",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.4"
   },
   "engines": {
     "node": "^14.13.1 || >=16.0.0"
