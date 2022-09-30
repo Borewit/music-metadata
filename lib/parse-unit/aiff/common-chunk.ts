@@ -1,9 +1,9 @@
-import { skip } from "../../../dist/parse-unit/primitive/skip";
 import { map } from "../combinate/map";
 import { sequence } from "../combinate/sequence";
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { fourCc } from "../iff/four-cc";
 import { u16be, u32be } from "../primitive/integer";
+import { skip } from "../primitive/skip";
 
 import { f80 } from "./float80";
 import { pstring } from "./pstring";
