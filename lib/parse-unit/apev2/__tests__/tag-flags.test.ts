@@ -28,7 +28,7 @@ const cases: Case[] = [
   ],
   [
     "header flag",
-    [0x80, 0x00, 0x00, 0x00],
+    [0x00, 0x00, 0x00, 0x80],
     {
       containsHeader: true,
       containsFooter: false,
@@ -39,7 +39,7 @@ const cases: Case[] = [
   ],
   [
     "footer flag",
-    [0x40, 0x00, 0x00, 0x00],
+    [0x00, 0x00, 0x00, 0x40],
     {
       containsHeader: false,
       containsFooter: true,
@@ -50,7 +50,7 @@ const cases: Case[] = [
   ],
   [
     "read only flag",
-    [0x00, 0x00, 0x00, 0x01],
+    [0x01, 0x00, 0x00, 0x00],
     {
       containsHeader: false,
       containsFooter: false,
@@ -61,7 +61,7 @@ const cases: Case[] = [
   ],
   [
     "data type",
-    [0x00, 0x00, 0x00, 0x06],
+    [0x06, 0x00, 0x00, 0x00],
     {
       containsHeader: false,
       containsFooter: false,
@@ -72,7 +72,7 @@ const cases: Case[] = [
   ],
   [
     "all flags set",
-    [0xc0, 0x00, 0x00, 0x07],
+    [0x07, 0x00, 0x00, 0xc0],
     {
       containsHeader: true,
       containsFooter: true,

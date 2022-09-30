@@ -1,6 +1,6 @@
 import { isNumberBitSet } from "../../common/Util";
 import { map } from "../combinate/map";
-import { u32be } from "../primitive/integer";
+import { u32le } from "../primitive/integer";
 
 import type { Unit } from "../type/unit";
 
@@ -14,7 +14,7 @@ export interface ApeTagFlags {
   dataType: DataType;
 }
 
-export const tagFlags: Unit<ApeTagFlags, RangeError> = map(u32be, (value) => {
+export const tagFlags: Unit<ApeTagFlags, RangeError> = map(u32le, (value) => {
   return {
     containsHeader: isNumberBitSet(value, 31),
     containsFooter: isNumberBitSet(value, 30),
