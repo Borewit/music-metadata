@@ -1,7 +1,7 @@
-import type { IFooter } from "./apev2/APEv2TokenFooter";
 import type { GenericTagId } from "./common/GenericTagId";
 import type { TagType } from "./common/GenericTagTypes";
 import type { TrackType } from "./matroska/types";
+import type { ApeFooter } from "./parse-unit/apev2/footer";
 
 export { TrackType } from "./matroska/types";
 
@@ -618,7 +618,7 @@ export interface IApeHeader extends IOptions {
   /**
    * APEv1 / APEv2 header offset
    */
-  footer: IFooter;
+  footer: ApeFooter;
 }
 
 export interface IPrivateOptions extends IOptions {
