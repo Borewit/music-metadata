@@ -33,7 +33,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @param options - Additional read options
    * @returns Promise with number of bytes read
    */
-  public abstract readBuffer(buffer: Uint8Array, options?: IReadChunkOptions): Promise<number>;
+  public abstract readBuffer(buffer: Uint8Array, options?: IReadChunkOptions): number | Promise<number>;
 
   /**
    * Peek (read ahead) buffer from tokenizer
@@ -41,7 +41,7 @@ export abstract class AbstractTokenizer implements ITokenizer {
    * @param options - Peek behaviour options
    * @returns Promise with number of bytes read
    */
-  public abstract peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number>;
+  public abstract peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): number | Promise<number>;
 
   /**
    * Read a token from the tokenizer-stream

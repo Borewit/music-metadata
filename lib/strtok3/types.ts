@@ -66,7 +66,7 @@ export interface ITokenizer {
    * @param options - Read behaviour options
    * @returns Promise with number of bytes read
    */
-  peekBuffer(buffer: Uint8Array, options?: IReadChunkOptions): Promise<number>;
+  peekBuffer(buffer: Uint8Array, options?: IReadChunkOptions): number | Promise<number>;
 
   /**
    * Peek (read ahead) buffer from tokenizer
@@ -74,7 +74,7 @@ export interface ITokenizer {
    * @param options - Additional read options
    * @returns Promise with number of bytes read
    */
-  readBuffer(buffer: Uint8Array, options?: IReadChunkOptions): Promise<number>;
+  readBuffer(buffer: Uint8Array, options?: IReadChunkOptions): number | Promise<number>;
 
   /**
    * Peek a token from the tokenizer-stream.
