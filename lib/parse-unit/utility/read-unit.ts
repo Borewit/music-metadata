@@ -1,5 +1,6 @@
 import { EndOfStreamError } from "../../peek-readable/EndOfFileStream";
 
+import type { BufferTokenizer } from "../../strtok3/BufferTokenizer";
 import type { ITokenizer } from "../../strtok3/types";
 import type { Result } from "../type/result";
 import type { Unit } from "../type/unit";
@@ -44,6 +45,34 @@ export const peekUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit
   const [size] = unit;
   const buffer = new Uint8Array(size);
   const len = await tokenizer.peekBuffer(buffer);
+  if (len < size) throw new EndOfStreamError();
+  return readUnitFromBuffer(unit, buffer, 0);
+};
+
+/**
+ * Read a token from the buffer tokenizer-stream
+ * @param tokenizer - The token to read
+ * @param unit - If provided, the desired position in the tokenizer-stream
+ * @returns Promise with token data
+ */
+export const readUnitFromBufferTokenizer = <T>(tokenizer: BufferTokenizer, unit: Unit<T, Error>): T => {
+  const [size] = unit;
+  const buffer = new Uint8Array(size);
+  const len = tokenizer.readBuffer(buffer);
+  if (len < size) throw new EndOfStreamError();
+  return readUnitFromBuffer(unit, buffer, 0);
+};
+
+/**
+ * Read a token from the buffer tokenizer-stream
+ * @param tokenizer - The token to read
+ * @param unit - If provided, the desired position in the tokenizer-stream
+ * @returns Promise with token data
+ */
+export const peekUnitFromBufferTokenizer = <T>(tokenizer: BufferTokenizer, unit: Unit<T, Error>): T => {
+  const [size] = unit;
+  const buffer = new Uint8Array(size);
+  const len = tokenizer.peekBuffer(buffer);
   if (len < size) throw new EndOfStreamError();
   return readUnitFromBuffer(unit, buffer, 0);
 };
