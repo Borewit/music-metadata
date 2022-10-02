@@ -6,3 +6,5 @@ export const skip = (length: number): Unit<undefined, never> => [
     return;
   },
 ];
+
+export const pad = <T, E extends Error>(unit: Unit<T, E>, length: number): Unit<T, E> => [length, unit[1]];
