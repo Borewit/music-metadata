@@ -3,10 +3,7 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import {
-  extendedStreamPropertiesObject,
-  type ExtendedStreamPropertiesObject,
-} from "../extended-stream-properties";
+import { extendedStreamPropertiesObject, type ExtendedStreamPropertiesObject } from "../extended-stream-properties";
 
 describe("unit size: extended stream properties object", () => {
   test("extended stream properties object", () => {
@@ -35,7 +32,7 @@ const cases: Case[] = [
       0x01, 0x02, 0x03, 0x07,
       // alternate buffer size
       0x01, 0x02, 0x03, 0x08,
-            // alternate initial buffer fullness
+      // alternate initial buffer fullness
       0x01, 0x02, 0x03, 0x09,
       // maximum object size
       0x01, 0x02, 0x03, 0x0a,
@@ -74,7 +71,7 @@ const cases: Case[] = [
       streamNameCount: 0x03_f0,
       payloadExtensionSystems: 0x04_f0,
       streamNames: [],
-      streamPropertiesObject:  null,
+      streamPropertiesObject: null,
     },
   ],
 ];

@@ -1,8 +1,10 @@
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { u32le } from "../primitive/integer";
 import { skip } from "../primitive/skip";
-import type { Unit } from "../type/unit";
+
 import { asfObjectHeader, AsfObjectHeader } from "./object-header";
+
+import type { Unit } from "../type/unit";
 
 /**
  * Interface for: 3. ASF top-level Header Object
