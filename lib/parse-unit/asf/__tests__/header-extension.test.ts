@@ -4,7 +4,7 @@ import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { GUID } from "../guid";
-import { headerExtensionObject, type HeaderExtensionObject } from "../header-extension-object";
+import { headerExtensionObject, type HeaderExtensionObject } from "../header-extension";
 
 describe("unit size: header extension object", () => {
   test("header extension object", () => {

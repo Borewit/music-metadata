@@ -4,7 +4,7 @@ import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { GUID } from "../guid";
-import { streamPropertiesObject, type StreamPropertiesObject } from "../stream-properties-object";
+import { streamPropertiesObject, type StreamPropertiesObject } from "../stream-properties";
 
 describe("unit size: stream properties object", () => {
   test("stream properties object size excludes header", () => {

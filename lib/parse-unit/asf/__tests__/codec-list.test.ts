@@ -3,7 +3,7 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { codecListObject, type CodecListObject } from "../codec-list-object";
+import { codecListObject, type CodecListObject } from "../codec-list";
 import { GUID } from "../guid";
 
 describe("unit size: codec list object", () => {

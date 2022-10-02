@@ -3,7 +3,7 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { filePropertiesObject, type FilePropertiesObject } from "../file-properties-object";
+import { filePropertiesObject, type FilePropertiesObject } from "../file-properties";
 import { GUID } from "../guid";
 
 describe("unit size: file properties object", () => {

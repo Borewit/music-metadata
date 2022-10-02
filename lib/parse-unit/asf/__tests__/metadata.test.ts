@@ -4,7 +4,7 @@ import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { GUID } from "../guid";
-import { metadataObject } from "../metadata-object";
+import { metadataObject } from "../metadata";
 
 import type { ITag } from "../../../type";
 

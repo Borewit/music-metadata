@@ -4,7 +4,7 @@ import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { GUID } from "../guid";
-import { asfTopLevelHeaderObject, type AsfTopLevelHeaderObject } from "../top-level-header-object";
+import { asfTopLevelHeaderObject, type AsfTopLevelHeaderObject } from "../top-level-header";
 
 describe("unit size: ASF object header", () => {
   test("ASF object header size = 16", () => {

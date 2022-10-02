@@ -3,7 +3,7 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { extendedContentDescriptionObject } from "../extended-content-description-object";
+import { extendedContentDescriptionObject } from "../extended-content-description";
 
 import type { ITag } from "../../../type";
 

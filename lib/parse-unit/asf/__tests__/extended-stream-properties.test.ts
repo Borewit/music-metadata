@@ -6,7 +6,7 @@ import { readUnitFromTokenizer } from "../../utility/read-unit";
 import {
   extendedStreamPropertiesObject,
   type ExtendedStreamPropertiesObject,
-} from "../extended-stream-properties-object";
+} from "../extended-stream-properties";
 
 describe("unit size: extended stream properties object", () => {
   test("extended stream properties object", () => {
