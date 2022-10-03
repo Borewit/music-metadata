@@ -3,76 +3,9 @@ import { join } from "node:path";
 import { describe, test, expect } from "vitest";
 
 import { orderTags } from "../lib";
-import { getParserForAttr } from "../lib/asf/AsfUtil";
-import { DataType } from "../lib/asf/DataType";
-import GUID from "../lib/asf/GUID";
 
 import { Parsers } from "./metadata-parsers";
 import { samplePath } from "./util";
-
-describe("GUID", () => {
-  test("should construct GUID from string", () => {
-    const HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");
-    const HeaderGUID = Uint8Array.from([
-      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c,
-    ]);
-
-    expect(HeaderObject.toBin()).toStrictEqual(HeaderGUID);
-  });
-
-  test("should construct GUID from Buffer", () => {
-    const GUIDData = Buffer.from([
-      0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c,
-    ]);
-    const GUIDString = "75B22630-668E-11CF-A6D9-00AA0062CE6C";
-
-    expect(GUID.fromBin(GUIDData).str).toBe(GUIDString);
-  });
-});
-
-/**
- * Trying Buffer.readUIntLE(0, 8)
- * Where 8 is 2 bytes longer then maximum allowed of 6
- */
-describe("should be able to roughly decode a 64-bit QWord", () => {
-  const tests: { raw: string; expected: number; description: string }[] = [
-    {
-      raw: "\u00FF\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
-      expected: 0xff,
-      description: "8-bit",
-    },
-    {
-      raw: "\u00FF\u00FF\u0000\u0000\u0000\u0000\u0000\u0000",
-      expected: 0xff_ff,
-      description: "16-bit",
-    },
-    {
-      raw: "\u00FF\u00FF\u00FF\u00FF\u0000\u0000\u0000\u0000",
-      expected: 0xff_ff_ff_ff,
-      description: "32-bit",
-    },
-    {
-      raw: "\u00FF\u00FF\u00FF\u00FF\u00FF\u0000\u0000\u0000",
-      expected: 0xff_ff_ff_ff_ff,
-      description: "40-bit",
-    },
-    {
-      raw: "\u00FF\u00FF\u00FF\u00FF\u00FF\u00FF\u0000\u0000",
-      expected: 0xff_ff_ff_ff_ff_ff,
-      description: "48-bit",
-    },
-    {
-      raw: "\u00FF\u00FF\u00FF\u00FF\u00FF\u00FF\u000F\u0000",
-      expected: 0xf_ff_ff_ff_ff_ff_ff,
-      description: "52-bit",
-    },
-  ];
-
-  test.each(tests)("%#", ({ raw, expected, description }) => {
-    const buf = Buffer.from(raw, "binary");
-    expect(Number(getParserForAttr(DataType.QWord)(buf)), description).toBe(expected);
-  });
-});
 
 describe.each(Parsers)("parse %s", (_, parser) => {
   const asfFilePath = join(samplePath, "asf");
