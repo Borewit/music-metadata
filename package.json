@@ -83,7 +83,7 @@
     "lint": "run-s lint:*",
     "lint:type": "tsc -p tsconfig.check.json",
     "lint:eslint": "eslint --cache lib test doc-gen",
-    "lint:format": "prettier --cache --check lib test doc-gen example",
+    "lint:format": "prettier --check lib test doc-gen example",
     "lint:eslint:fix": "eslint --cache --fix lib test doc-gen",
     "lint:md": "remark -u preset-lint-recommended .",
     "test": "run-s test:vitest",
