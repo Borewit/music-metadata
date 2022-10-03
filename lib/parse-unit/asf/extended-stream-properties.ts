@@ -2,6 +2,7 @@ import { isNumberBitSet } from "../../common/Util";
 import { map } from "../combinate/map";
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { u16le, u32be, u32le, u64le } from "../primitive/integer";
+import { pad } from "../primitive/skip";
 import { val } from "../primitive/value";
 
 import type { Unit } from "../type/unit";
@@ -41,49 +42,53 @@ export interface ExtendedStreamPropertiesObject {
   streamPropertiesObject: number | null;
 }
 
-export const extendedStreamPropertiesObject: Unit<ExtendedStreamPropertiesObject, RangeError> = sequenceToObject(
-  {
-    startTime: 0,
-    endTime: 1,
-    dataBitrate: 2,
-    bufferSize: 3,
-    initialBufferFullness: 4,
-    alternateDataBitrate: 5,
-    alternateBufferSize: 6,
-    alternateInitialBufferFullness: 7,
-    maximumObjectSize: 8,
-    flags: 9,
-    streamNumber: 10,
-    streamLanguageId: 11,
-    averageTimePerFrame: 12,
-    streamNameCount: 13,
-    payloadExtensionSystems: 14,
-    streamNames: 15, // ToDo
-    streamPropertiesObject: 16,
-  },
-  u64le,
-  u64le,
-  u32le,
-  u32le,
-  u32le,
-  u32le,
-  u32le,
-  u32le,
-  u32le,
-  map(u32be, (value) => {
-    return {
-      // ToDo, check flag positions
-      reliable: isNumberBitSet(value, 31),
-      seekable: isNumberBitSet(value, 30),
-      noCleanpoints: isNumberBitSet(value, 29),
-      resendLiveCleanpoints: isNumberBitSet(value, 28),
-    };
-  }),
-  u16le,
-  u16le,
-  u64le,
-  u16le,
-  u16le,
-  val([]), // ToDo
-  val(null)
-);
+export const extendedStreamPropertiesObject = (size: number): Unit<ExtendedStreamPropertiesObject, RangeError> =>
+  pad(
+    sequenceToObject(
+      {
+        startTime: 0,
+        endTime: 1,
+        dataBitrate: 2,
+        bufferSize: 3,
+        initialBufferFullness: 4,
+        alternateDataBitrate: 5,
+        alternateBufferSize: 6,
+        alternateInitialBufferFullness: 7,
+        maximumObjectSize: 8,
+        flags: 9,
+        streamNumber: 10,
+        streamLanguageId: 11,
+        averageTimePerFrame: 12,
+        streamNameCount: 13,
+        payloadExtensionSystems: 14,
+        streamNames: 15, // ToDo
+        streamPropertiesObject: 16,
+      },
+      u64le,
+      u64le,
+      u32le,
+      u32le,
+      u32le,
+      u32le,
+      u32le,
+      u32le,
+      u32le,
+      map(u32be, (value) => {
+        return {
+          // ToDo, check flag positions
+          reliable: isNumberBitSet(value, 31),
+          seekable: isNumberBitSet(value, 30),
+          noCleanpoints: isNumberBitSet(value, 29),
+          resendLiveCleanpoints: isNumberBitSet(value, 28),
+        };
+      }),
+      u16le,
+      u16le,
+      u64le,
+      u16le,
+      u16le,
+      val([]), // ToDo
+      val(null)
+    ),
+    size
+  );

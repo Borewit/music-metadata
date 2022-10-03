@@ -1,10 +1,10 @@
 import { stripNulls } from "../../common/Util";
 import { map } from "../combinate/map";
 import { sequence } from "../combinate/sequence";
-import { bytes } from "../primitive/bytes";
+import { bytesTokenizer } from "../primitive/bytes";
 import { u16le } from "../primitive/integer";
 import { utf16le } from "../primitive/string";
-import { readUnitFromBuffer } from "../utility/read-unit";
+import { readUnitFromBufferTokenizer } from "../utility/read-unit";
 
 import type { ITag } from "../../type";
 
@@ -15,23 +15,21 @@ import type { ITag } from "../../type";
 
 export const contentDescriptionObject = (size: number) =>
   map(
-    sequence(u16le, u16le, u16le, u16le, u16le, bytes(size - 10)),
+    sequence(u16le, u16le, u16le, u16le, u16le, bytesTokenizer(size - 10)),
     ([titleSize, authorSize, copyrightSize, descriptionSize, ratingSize, data]) => {
       const tags: ITag[] = [];
-      let offset = 0;
 
-      for (const [id, strSize] of Object.entries({
-        Title: titleSize,
-        Author: authorSize,
-        Copyright: copyrightSize,
-        Description: descriptionSize,
-        Rating: ratingSize,
-      })) {
+      for (const [id, strSize] of [
+        ["Title", titleSize],
+        ["Author", authorSize],
+        ["Copyright", copyrightSize],
+        ["Description", descriptionSize],
+        ["Rating", ratingSize],
+      ] as const) {
         tags.push({
           id,
-          value: stripNulls(readUnitFromBuffer(utf16le(strSize), data, offset)),
+          value: stripNulls(readUnitFromBufferTokenizer(data, utf16le(strSize))),
         });
-        offset += strSize;
       }
 
       return tags;

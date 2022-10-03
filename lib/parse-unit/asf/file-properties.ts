@@ -2,7 +2,7 @@ import { isNumberBitSet } from "../../common/Util";
 import { map } from "../combinate/map";
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { u32le, u64le } from "../primitive/integer";
-import { skip } from "../primitive/skip";
+import { pad } from "../primitive/skip";
 
 import { guid, GUID } from "./guid";
 
@@ -107,35 +107,37 @@ export interface FilePropertiesObject {
 }
 
 export const filePropertiesObject = (size: number) =>
-  sequenceToObject(
-    {
-      fileId: 0,
-      fileSize: 1,
-      creationDate: 2,
-      dataPacketsCount: 3,
-      playDuration: 4,
-      sendDuration: 5,
-      preroll: 6,
-      flags: 7,
-      minimumDataPacketSize: 8,
-      maximumDataPacketSize: 9,
-      maximumBitrate: 10,
-    },
-    guid,
-    u64le,
-    u64le,
-    u64le,
-    u64le,
-    u64le,
-    u64le,
-    map(u32le, (value) => {
-      return {
-        broadcast: isNumberBitSet(value, 24),
-        seekable: isNumberBitSet(value, 25),
-      };
-    }),
-    u32le,
-    u32le,
-    u32le,
-    skip(size - 80)
+  pad(
+    sequenceToObject(
+      {
+        fileId: 0,
+        fileSize: 1,
+        creationDate: 2,
+        dataPacketsCount: 3,
+        playDuration: 4,
+        sendDuration: 5,
+        preroll: 6,
+        flags: 7,
+        minimumDataPacketSize: 8,
+        maximumDataPacketSize: 9,
+        maximumBitrate: 10,
+      },
+      guid,
+      u64le,
+      u64le,
+      u64le,
+      u64le,
+      u64le,
+      u64le,
+      map(u32le, (value) => {
+        return {
+          broadcast: isNumberBitSet(value, 24),
+          seekable: isNumberBitSet(value, 25),
+        };
+      }),
+      u32le,
+      u32le,
+      u32le
+    ),
+    size
   );

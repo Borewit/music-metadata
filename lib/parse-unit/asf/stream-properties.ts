@@ -1,6 +1,6 @@
 import { map } from "../combinate/map";
 import { sequenceToObject } from "../combinate/sequence-to-object";
-import { skip } from "../primitive/skip";
+import { pad } from "../primitive/skip";
 
 import {
   AudioMedia,
@@ -32,14 +32,16 @@ export interface StreamPropertiesObject {
 }
 
 export const streamPropertiesObject = (size: number): Unit<StreamPropertiesObject, RangeError> =>
-  sequenceToObject(
-    {
-      streamType: 0,
-      errorCorrectionType: 1,
-    },
-    map(guid, (value) => decodeMediaType(value)),
-    guid,
-    skip(size - 32)
+  pad(
+    sequenceToObject(
+      {
+        streamType: 0,
+        errorCorrectionType: 1,
+      },
+      map(guid, (value) => decodeMediaType(value)),
+      guid
+    ),
+    size
   );
 
 /**

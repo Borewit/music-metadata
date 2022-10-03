@@ -7,7 +7,7 @@ import { extendedStreamPropertiesObject, type ExtendedStreamPropertiesObject } f
 
 describe("unit size: extended stream properties object", () => {
   test("extended stream properties object", () => {
-    const [size] = extendedStreamPropertiesObject;
+    const [size] = extendedStreamPropertiesObject(64);
 
     expect(size).toBe(64);
   });
@@ -80,7 +80,7 @@ describe("unit: extended stream properties object", () => {
   test.each(cases)("%s", async (_, bytes, expected) => {
     const buffer = new Uint8Array(bytes);
     const tokenizer = new BufferTokenizer(buffer);
-    const result = readUnitFromTokenizer(tokenizer, extendedStreamPropertiesObject);
+    const result = readUnitFromTokenizer(tokenizer, extendedStreamPropertiesObject(buffer.length));
 
     await expect(result).resolves.toEqual(expected);
 
