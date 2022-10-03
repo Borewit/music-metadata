@@ -32,7 +32,7 @@ export interface CodecListObject {
 
 const parseString = (tokenizer: BufferTokenizer) => {
   const length = readUnitFromBufferTokenizer(tokenizer, u16le);
-  return readUnitFromBufferTokenizer(tokenizer, utf16le(length * 2));
+  return readUnitFromBufferTokenizer(tokenizer, utf16le(length * 2)).replace(/\0$/, "");
 };
 
 export const codecListObject = (size: number): Unit<CodecListObject, RangeError> =>
@@ -47,8 +47,8 @@ export const codecListObject = (size: number): Unit<CodecListObject, RangeError>
       const information = readUnitFromBufferTokenizer(tokenizer, bytes(informationLen));
 
       codecs.push({
-        audioCodec: isNumberBitSet(type, 0),
-        videoCodec: isNumberBitSet(type, 1),
+        videoCodec: isNumberBitSet(type, 0),
+        audioCodec: isNumberBitSet(type, 1),
 
         codecName,
         description,
