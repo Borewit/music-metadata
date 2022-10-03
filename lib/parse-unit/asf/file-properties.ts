@@ -1,15 +1,18 @@
-import { getBit } from "../common/Util";
-import { UINT64_LE, UINT32_LE } from "../token-types";
+import { isNumberBitSet } from "../../common/Util";
+import { map } from "../combinate/map";
+import { sequenceToObject } from "../combinate/sequence-to-object";
+import { u32le, u64le } from "../primitive/integer";
+import { pad } from "../primitive/skip";
 
-import GUID, { FilePropertiesObject as GUIDFilePropertiesObject } from "./GUID";
-import { State } from "./State";
+import { guid, GUID } from "./guid";
 
 /**
- * Interface for: 3.2: File Properties Object (mandatory, one only)
+ * 3.2: File Properties Object (mandatory, one only)
  *
  * The File Properties Object defines the global characteristics of the combined digital media streams found within the Data Object.
+ * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_2
  */
-export interface IFilePropertiesObject {
+export interface FilePropertiesObject {
   /**
    * Specifies the unique identifier for this file.
    * The value of this field shall be regenerated every time the file is modified in any way.
@@ -103,30 +106,38 @@ export interface IFilePropertiesObject {
   maximumBitrate: number;
 }
 
-/**
- * Token for: 3.2: File Properties Object (mandatory, one only)
- * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_2
- */
-export class FilePropertiesObject extends State<IFilePropertiesObject> {
-  public static guid = GUIDFilePropertiesObject;
-
-  public get(buf: Uint8Array, off: number): IFilePropertiesObject {
-    return {
-      fileId: GUID.fromBin(buf, off),
-      fileSize: UINT64_LE.get(buf, off + 16),
-      creationDate: UINT64_LE.get(buf, off + 24),
-      dataPacketsCount: UINT64_LE.get(buf, off + 32),
-      playDuration: UINT64_LE.get(buf, off + 40),
-      sendDuration: UINT64_LE.get(buf, off + 48),
-      preroll: UINT64_LE.get(buf, off + 56),
-      flags: {
-        broadcast: getBit(buf, off + 64, 24),
-        seekable: getBit(buf, off + 64, 25),
+export const filePropertiesObject = (size: number) =>
+  pad(
+    sequenceToObject(
+      {
+        fileId: 0,
+        fileSize: 1,
+        creationDate: 2,
+        dataPacketsCount: 3,
+        playDuration: 4,
+        sendDuration: 5,
+        preroll: 6,
+        flags: 7,
+        minimumDataPacketSize: 8,
+        maximumDataPacketSize: 9,
+        maximumBitrate: 10,
       },
-      // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-      minimumDataPacketSize: UINT32_LE.get(buf, off + 68),
-      maximumDataPacketSize: UINT32_LE.get(buf, off + 72),
-      maximumBitrate: UINT32_LE.get(buf, off + 76),
-    };
-  }
-}
+      guid,
+      u64le,
+      u64le,
+      u64le,
+      u64le,
+      u64le,
+      u64le,
+      map(u32le, (value) => {
+        return {
+          broadcast: isNumberBitSet(value, 24),
+          seekable: isNumberBitSet(value, 25),
+        };
+      }),
+      u32le,
+      u32le,
+      u32le
+    ),
+    size
+  );

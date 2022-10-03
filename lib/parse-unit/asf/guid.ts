@@ -1,5 +1,8 @@
-import { fromHexString, toHexString } from "../compat/hex";
-import { UINT16_BE, UINT16_LE, UINT32_LE } from "../token-types";
+import { toFixedHexString, toHexString } from "../../compat/hex";
+import { map } from "../combinate/map";
+import { sequence } from "../combinate/sequence";
+import { bytes } from "../primitive/bytes";
+import { u16be, u16le, u32le } from "../primitive/integer";
 
 /**
  * Ref:
@@ -15,84 +18,26 @@ import { UINT16_BE, UINT16_LE, UINT32_LE } from "../token-types";
  * - http://drang.s4.xrea.com/program/tips/id3tag/wmp/10_asf_guids.html
  * - https://github.com/dji-sdk/FFmpeg/blob/master/libavformat/asf.c
  */
-export default class GUID {
-  public static fromBin(bin: Uint8Array, offset = 0) {
-    return new GUID(this.decode(bin, offset));
-  }
-
-  /**
-   * Decode GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
-   * @param objectId Binary GUID
-   * @param offset Read offset in bytes, default 0
-   * @returns GUID as dashed hexadecimal representation
-   */
-  public static decode(objectId: Uint8Array, offset = 0): string {
-    const guid =
-      UINT32_LE.get(objectId, offset).toString(16) +
-      "-" +
-      UINT16_LE.get(objectId, offset + 4).toString(16) +
-      "-" +
-      UINT16_LE.get(objectId, offset + 6).toString(16) +
-      "-" +
-      UINT16_BE.get(objectId, offset + 8).toString(16) +
-      "-" +
-      toHexString(objectId.slice(offset + 10, offset + 16));
-
-    return guid.toUpperCase();
-  }
-
-  /**
-   * Decode stream type
-   * @param mediaType Media type GUID
-   * @returns Media type
-   */
-  public static decodeMediaType(
-    mediaType: GUID
-  ): "audio" | "video" | "command" | "degradable-jpeg" | "file-transfer" | "binary" | undefined {
-    switch (mediaType.str) {
-      case AudioMedia.str:
-        return "audio";
-      case VideoMedia.str:
-        return "video";
-      case CommandMedia.str:
-        return "command";
-      case Degradable_JPEG_Media.str:
-        return "degradable-jpeg";
-      case FileTransferMedia.str:
-        return "file-transfer";
-      case BinaryMedia.str:
-        return "binary";
-    }
-  }
-
-  /**
-   * Encode GUID
-   * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
-   * @returns Encoded Binary GUID
-   */
-  public static encode(guid: string): Uint8Array {
-    const buf = new ArrayBuffer(16);
-    const dv = new DataView(buf);
-    const u8 = new Uint8Array(buf);
-    dv.setUint32(0, Number.parseInt(guid.slice(0, 8), 16), true);
-    dv.setUint16(4, Number.parseInt(guid.slice(9, 13), 16), true);
-    dv.setUint16(6, Number.parseInt(guid.slice(14, 18), 16), true);
-    u8.set(fromHexString(guid.slice(19, 23)), 8);
-    u8.set(fromHexString(guid.slice(24)), 10);
-
-    return u8;
-  }
-
-  public constructor(public str: string) {}
-
-  public equals(guid: GUID) {
-    return this.str === guid.str;
-  }
-
-  public toBin(): Uint8Array {
-    return GUID.encode(this.str);
-  }
+export class GUID {
+  constructor(public str: string) {}
 }
+
+/**
+ * Decode GUID in format like "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
+ */
+export const guid = map(sequence(u32le, u16le, u16le, u16be, bytes(6)), ([data1, data2, data3, data4a, data4b]) => {
+  return new GUID(
+    [
+      toFixedHexString(data1, 8),
+      toFixedHexString(data2, 4),
+      toFixedHexString(data3, 4),
+      toFixedHexString(data4a, 4),
+      toHexString(data4b),
+    ]
+      .join("-")
+      .toUpperCase()
+  );
+});
 
 // 10.1 Top-level ASF object GUIDs
 export const HeaderObject = new GUID("75B22630-668E-11CF-A6D9-00AA0062CE6C");

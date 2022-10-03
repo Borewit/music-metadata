@@ -1,10 +1,14 @@
+export const toFixedHexString = (data: number, length: number) => {
+  return data.toString(16).padStart(length, "0");
+};
+
 /**
  * Convert Uint8Array to 00-ff strings
  * @param uint8array bytes data
  * @returns hex string
  */
 export function toHexString(uint8array: Uint8Array): string {
-  return [...uint8array].map((i) => ("0" + i.toString(16)).slice(-2)).join("");
+  return [...uint8array].map((i) => toFixedHexString(i, 2)).join("");
 }
 
 /**

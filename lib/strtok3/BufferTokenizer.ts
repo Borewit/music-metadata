@@ -21,7 +21,7 @@ export class BufferTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns {Promise<number>}
    */
-  public async readBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
+  public readBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): number {
     if (options?.position) {
       if (options.position < this.position) {
         throw new Error("`options.position` must be equal or greater than `tokenizer.position`");
@@ -29,7 +29,7 @@ export class BufferTokenizer extends AbstractTokenizer {
       this.position = options.position;
     }
 
-    const bytesRead = await this.peekBuffer(uint8Array, options);
+    const bytesRead = this.peekBuffer(uint8Array, options);
     this.position += bytesRead;
     return bytesRead;
   }
@@ -40,7 +40,7 @@ export class BufferTokenizer extends AbstractTokenizer {
    * @param options - Read behaviour options
    * @returns {Promise<number>}
    */
-  public peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): Promise<number> {
+  public peekBuffer(uint8Array: Uint8Array, options?: IReadChunkOptions): number {
     const normOptions = this.normalizeOptions(uint8Array, options);
 
     const bytes2read = Math.min(this.uint8Array.length - normOptions.position, normOptions.length);
@@ -51,7 +51,7 @@ export class BufferTokenizer extends AbstractTokenizer {
         this.uint8Array.subarray(normOptions.position, normOptions.position + bytes2read),
         normOptions.offset
       );
-      return Promise.resolve(bytes2read);
+      return bytes2read;
     }
   }
 

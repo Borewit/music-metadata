@@ -48,20 +48,40 @@ export function isNumberBitSet(bits: number, offset: number): boolean {
  * @returns Absolute position on uint8Array where zero found
  */
 export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: StringEncoding): number {
+  return encoding === "utf16le" ? findZero2(uint8Array, start, end) : findZero1(uint8Array, start, end);
+}
+
+/**
+ * Found delimiting zero in uint8Array
+ * @param uint8Array Uint8Array to find the zero delimiter in
+ * @param start Offset in uint8Array
+ * @param end Last position to parse in uint8Array
+ * @returns Absolute position on uint8Array where zero found
+ */
+export function findZero1(uint8Array: Uint8Array, start: number, end: number): number {
   let i = start;
-  if (encoding === "utf16le") {
-    while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
-      if (i >= end) return end;
-      i += 2;
-    }
-    return i;
-  } else {
-    while (uint8Array[i] !== 0) {
-      if (i >= end) return end;
-      i++;
-    }
-    return i;
+
+  while (uint8Array[i] !== 0) {
+    if (i >= end) return end;
+    i++;
   }
+  return i;
+}
+
+/**
+ * Found delimiting zero zero in uint8Array
+ * @param uint8Array Uint8Array to find the zero delimiter in
+ * @param start Offset in uint8Array
+ * @param end Last position to parse in uint8Array
+ * @returns Absolute position on uint8Array where zero found
+ */
+export function findZero2(uint8Array: Uint8Array, start: number, end: number): number {
+  let i = start;
+  while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
+    if (i >= end) return end;
+    i += 2;
+  }
+  return i;
 }
 
 /**

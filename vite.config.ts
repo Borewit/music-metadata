@@ -22,7 +22,7 @@ export default defineConfig(() => {
 
       isolate: false,
       threads: false,
-      reporters: ["verbose"],
+      reporters: ["default"],
     },
   };
 });
