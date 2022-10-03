@@ -1,5 +1,6 @@
 import { BasicParser } from "../common/BasicParser";
 import initDebug from "../debug";
+import { codecListObject } from "../parse-unit/asf/codec-list";
 import { contentDescriptionObject } from "../parse-unit/asf/content-description";
 import { extendedContentDescriptionObject } from "../parse-unit/asf/extended-content-description";
 import { extendedStreamPropertiesObject } from "../parse-unit/asf/extended-stream-properties";
@@ -27,8 +28,6 @@ import { streamPropertiesObject } from "../parse-unit/asf/stream-properties";
 import { asfTopLevelHeaderObject } from "../parse-unit/asf/top-level-header";
 import { readUnitFromTokenizer } from "../parse-unit/utility/read-unit";
 import { ITag, TrackType } from "../type";
-
-import { readCodecEntries } from "./CodecEntry";
 
 const debug = initDebug("music-metadata:parser:ASF");
 const headerType = "asf";
@@ -102,15 +101,15 @@ export class AsfParser extends BasicParser {
         }
 
         case CodecListObject.str: {
-          const codecs = await readCodecEntries(this.tokenizer);
+          const { codecs } = await readUnitFromTokenizer(this.tokenizer, codecListObject(bodySize));
           for (const codec of codecs) {
             this.metadata.addStreamInfo({
-              type: codec.type.videoCodec ? TrackType.video : TrackType.audio,
+              type: codec.videoCodec ? TrackType.video : TrackType.audio,
               codecName: codec.codecName,
             });
           }
           const audioCodecs = codecs
-            .filter((codec) => codec.type.audioCodec)
+            .filter((codec) => codec.audioCodec)
             .map((codec) => codec.codecName)
             .join("/");
           this.metadata.setFormat("codec", audioCodecs);
