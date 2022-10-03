@@ -23,7 +23,8 @@ const cases: Case[] = [
       0x11, 0x00, 0x00, 0x00, 0x00, 0xff, 0x07, 0x00, 0x00, 0x01, 0x02,
     ],
     {
-      header: { id: new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978"), size: 0x11_22_33_44 },
+      id: new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978"),
+      size: 0x11_22_33_44,
       numberOfHeaderObjects: 0x07_ff,
     },
   ],

@@ -8,7 +8,7 @@ import { headerExtensionObject, type HeaderExtensionObject } from "../header-ext
 
 describe("unit size: header extension object", () => {
   test("header extension object", () => {
-    const [size] = headerExtensionObject(22);
+    const [size] = headerExtensionObject;
 
     expect(size).toBe(22);
   });
@@ -38,7 +38,7 @@ describe("unit: header extension object", () => {
   test.each(cases)("%s", async (_, bytes, expected) => {
     const buffer = new Uint8Array(bytes);
     const tokenizer = new BufferTokenizer(buffer);
-    const result = readUnitFromTokenizer(tokenizer, headerExtensionObject(22));
+    const result = readUnitFromTokenizer(tokenizer, headerExtensionObject);
 
     await expect(result).resolves.toEqual(expected);
 

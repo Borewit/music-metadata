@@ -1,6 +1,5 @@
 import { sequenceToObject } from "../combinate/sequence-to-object";
 import { u16le, u32le } from "../primitive/integer";
-import { pad } from "../primitive/skip";
 
 import { guid, GUID } from "./guid";
 
@@ -16,17 +15,13 @@ export interface HeaderExtensionObject {
   extensionDataSize: number;
 }
 
-export const headerExtensionObject = (size: number): Unit<HeaderExtensionObject, RangeError> =>
-  pad(
-    sequenceToObject(
-      {
-        reserved1: 0,
-        reserved2: 1,
-        extensionDataSize: 2,
-      },
-      guid,
-      u16le,
-      u32le
-    ),
-    size
-  );
+export const headerExtensionObject: Unit<HeaderExtensionObject, RangeError> = sequenceToObject(
+  {
+    reserved1: 0,
+    reserved2: 1,
+    extensionDataSize: 2,
+  },
+  guid,
+  u16le,
+  u32le
+);
