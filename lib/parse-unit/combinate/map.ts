@@ -1,7 +1,10 @@
 import type { Result } from "../type/result";
 import type { Unit } from "../type/unit";
 
-type MapUnit = <T, U, E extends Error>(unit: Unit<T, E>, fn: (value: T) => Result<U, E>) => Unit<U, E>;
+type MapUnit = <T, U, E extends Error, F extends Error>(
+  unit: Unit<T, E>,
+  fn: (value: T) => Result<U, F>
+) => Unit<U, E | F>;
 
 export const map: MapUnit = ([size, reader], fn) => {
   return [
