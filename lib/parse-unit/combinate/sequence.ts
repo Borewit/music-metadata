@@ -1,14 +1,16 @@
 import type { Unit } from "../type/unit";
 
-type UnitsValue<Units extends readonly [] | readonly Unit<unknown, Error>[]> = {
+type UnitsTupleBase = readonly [] | readonly Unit<unknown, Error>[];
+
+type UnitsValue<Units extends UnitsTupleBase> = {
   [key in keyof Units]: Units[key] extends Unit<infer U, Error> ? U : never;
 };
 
-type UnitsErrorUnion<Units extends readonly [] | readonly unknown[]> = {
+type UnitsErrorUnion<Units extends UnitsTupleBase> = {
   [key in keyof Units]: Units[key] extends Unit<unknown, infer E> ? E : never;
 }[number];
 
-export const sequence = <Units extends readonly [] | readonly Unit<unknown, Error>[]>(
+export const sequence = <Units extends UnitsTupleBase>(
   ...units: Units
 ): Unit<UnitsValue<Units>, UnitsErrorUnion<Units>> => {
   let totalSize = 0;

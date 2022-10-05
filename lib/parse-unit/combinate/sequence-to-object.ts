@@ -1,23 +1,24 @@
 import type { Unit } from "../type/unit";
 
-type TupleIndex<T extends readonly [] | readonly unknown[]> = Extract<keyof T, number>;
+type UnitsTupleBase = readonly [] | readonly Unit<unknown, Error>[];
 
-type UnitsResult<Units extends readonly [] | readonly Unit<unknown, Error>[]> = {
+type TupleIndex<T extends UnitsTupleBase> = Extract<keyof T, number>;
+
+type UnitsIndexRecord<Units extends UnitsTupleBase> = Record<string, TupleIndex<Units>>;
+
+type UnitsResult<Units extends UnitsTupleBase> = {
   [key in keyof Units]: Units[key] extends Unit<infer U, Error> ? U : never;
 };
 
-type UnitsMapObject<Units extends readonly [] | readonly unknown[], Obj extends Record<string, TupleIndex<Units>>> = {
+type UnitsMapObject<Units extends UnitsTupleBase, Obj extends UnitsIndexRecord<Units>> = {
   [key in keyof Obj]: Units[Obj[key]] extends Unit<infer U, Error> ? U : never;
 };
 
-type UnitsErrorUnion<Units extends readonly [] | readonly unknown[]> = {
+type UnitsErrorUnion<Units extends UnitsTupleBase> = {
   [key in keyof Units]: Units[key] extends Unit<unknown, infer E> ? E : never;
 }[number];
 
-export const sequenceToObject = <
-  Units extends readonly [] | readonly Unit<unknown, Error>[],
-  Obj extends Record<string, TupleIndex<Units>>
->(
+export const sequenceToObject = <Units extends UnitsTupleBase, Obj extends UnitsIndexRecord<Units>>(
   obj: Obj,
   ...units: Units
 ): Unit<UnitsMapObject<Units, Obj>, UnitsErrorUnion<Units>> => {
