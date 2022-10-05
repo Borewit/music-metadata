@@ -5,8 +5,8 @@ import type { ITokenizer } from "../../strtok3/types";
 import type { Result } from "../type/result";
 import type { Unit } from "../type/unit";
 
-const assertResult = <Value>(result: Result<Value, Error>): Value => {
-  if (result instanceof Error) throw result;
+const assertResult = <T, E extends Error>(result: Result<T, E>): T => {
+  if (result instanceof Error) throw result as Error;
   return result;
 };
 
@@ -17,7 +17,7 @@ const assertResult = <Value>(result: Result<Value, Error>): Value => {
  * @param offset - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const readUnitFromBuffer = <T>(unit: Unit<T, Error>, buffer: Uint8Array, offset: number): T => {
+export const readUnitFromBuffer = <T, E extends Error>(unit: Unit<T, E>, buffer: Uint8Array, offset: number): T => {
   return assertResult(unit[1](buffer, offset));
 };
 
@@ -27,7 +27,10 @@ export const readUnitFromBuffer = <T>(unit: Unit<T, Error>, buffer: Uint8Array, 
  * @param unit - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const readUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit<T, Error>): Promise<T> => {
+export const readUnitFromTokenizer = async <T, E extends Error>(
+  tokenizer: ITokenizer,
+  unit: Unit<T, E>
+): Promise<T> => {
   const [size] = unit;
   const buffer = new Uint8Array(size);
   const len = await tokenizer.readBuffer(buffer);
@@ -41,7 +44,10 @@ export const readUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit
  * @param unit - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const peekUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit<T, Error>): Promise<T> => {
+export const peekUnitFromTokenizer = async <T, E extends Error>(
+  tokenizer: ITokenizer,
+  unit: Unit<T, E>
+): Promise<T> => {
   const [size] = unit;
   const buffer = new Uint8Array(size);
   const len = await tokenizer.peekBuffer(buffer);
@@ -55,7 +61,7 @@ export const peekUnitFromTokenizer = async <T>(tokenizer: ITokenizer, unit: Unit
  * @param unit - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const readUnitFromBufferTokenizer = <T>(tokenizer: BufferTokenizer, unit: Unit<T, Error>): T => {
+export const readUnitFromBufferTokenizer = <T, E extends Error>(tokenizer: BufferTokenizer, unit: Unit<T, E>): T => {
   const [size] = unit;
   const buffer = new Uint8Array(size);
   const len = tokenizer.readBuffer(buffer);
@@ -69,7 +75,7 @@ export const readUnitFromBufferTokenizer = <T>(tokenizer: BufferTokenizer, unit:
  * @param unit - If provided, the desired position in the tokenizer-stream
  * @returns Promise with token data
  */
-export const peekUnitFromBufferTokenizer = <T>(tokenizer: BufferTokenizer, unit: Unit<T, Error>): T => {
+export const peekUnitFromBufferTokenizer = <T, E extends Error>(tokenizer: BufferTokenizer, unit: Unit<T, E>): T => {
   const [size] = unit;
   const buffer = new Uint8Array(size);
   const len = tokenizer.peekBuffer(buffer);
