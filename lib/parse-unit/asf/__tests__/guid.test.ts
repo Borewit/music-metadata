@@ -54,9 +54,9 @@ import {
 describe("GUID class", () => {
   test("str property", () => {
     const guidStr = "B503BF5F-2EA9-CF11-8EE3-00C00C205365";
-    const result = new GUID(guidStr);
+    const result = guidStr;
 
-    expect(result.str).toBe(guidStr);
+    expect(result).toBe(guidStr);
   });
 });
 
@@ -73,7 +73,7 @@ const cases: Case[] = [
   [
     "parse GUID",
     [0xaa, 0xbb, 0xcc, 0xdd, 0x11, 0x22, 0x44, 0x55, 0x0f, 0x1e, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78],
-    new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978"),
+    "DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978" as GUID,
   ],
   [
     "header object",

@@ -4,7 +4,7 @@ import { latin1 } from "../primitive/string";
 import type { Nominal } from "../type/nominal";
 import type { Unit } from "../type/unit";
 
-type FourCC = Nominal<string, "Four-CC">;
+export type FourCC = Nominal<string, "Four-CC">;
 
 const validFourCC = /^[\u0021-\u007E©][\0\u0020-\u007E]{3}/;
 

@@ -3,8 +3,9 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { GUID } from "../guid";
 import { asfTopLevelHeaderObject, type AsfTopLevelHeaderObject } from "../top-level-header";
+
+import type { GUID } from "../guid";
 
 describe("unit size: ASF object header", () => {
   test("ASF object header size = 16", () => {
@@ -23,7 +24,7 @@ const cases: Case[] = [
       0x11, 0x00, 0x00, 0x00, 0x00, 0xff, 0x07, 0x00, 0x00, 0x01, 0x02,
     ],
     {
-      id: new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978"),
+      id: "DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978" as GUID,
       size: 0x11_22_33_44,
       numberOfHeaderObjects: 0x07_ff,
     },

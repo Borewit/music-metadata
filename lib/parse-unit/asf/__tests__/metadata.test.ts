@@ -3,10 +3,10 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { GUID } from "../guid";
 import { metadataObject } from "../metadata";
 
 import type { ITag } from "../../../type";
+import type { GUID } from "../guid";
 
 describe("unit size: content description object", () => {
   test("content description object", () => {
@@ -59,7 +59,7 @@ const cases: Case[] = [
           data: new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa]),
         },
       },
-      { id: "GUID", value: new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978") },
+      { id: "GUID", value: "DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978" as GUID },
     ],
   ],
 ];

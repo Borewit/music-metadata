@@ -52,18 +52,18 @@ export const streamPropertiesObject = (size: number): Unit<StreamPropertiesObjec
 const decodeMediaType = (
   mediaType: GUID
 ): "audio" | "video" | "command" | "degradable-jpeg" | "file-transfer" | "binary" | undefined => {
-  switch (mediaType.str) {
-    case AudioMedia.str:
+  switch (mediaType) {
+    case AudioMedia:
       return "audio";
-    case VideoMedia.str:
+    case VideoMedia:
       return "video";
-    case CommandMedia.str:
+    case CommandMedia:
       return "command";
-    case Degradable_JPEG_Media.str:
+    case Degradable_JPEG_Media:
       return "degradable-jpeg";
-    case FileTransferMedia.str:
+    case FileTransferMedia:
       return "file-transfer";
-    case BinaryMedia.str:
+    case BinaryMedia:
       return "binary";
   }
 };

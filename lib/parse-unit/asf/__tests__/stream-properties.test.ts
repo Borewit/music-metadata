@@ -3,8 +3,9 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { GUID } from "../guid";
 import { streamPropertiesObject, type StreamPropertiesObject } from "../stream-properties";
+
+import type { GUID } from "../guid";
 
 describe("unit size: stream properties object", () => {
   test("stream properties object size excludes header", () => {
@@ -29,7 +30,7 @@ const cases: Case[] = [
     ],
     {
       streamType: "audio",
-      errorCorrectionType: new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978"),
+      errorCorrectionType: "DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978" as GUID,
     },
   ],
 ];

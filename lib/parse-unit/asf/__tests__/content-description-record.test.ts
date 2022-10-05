@@ -4,7 +4,8 @@ import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { ContentDescriptionRecord, contentDescriptionRecord } from "../content-description-record";
-import { GUID } from "../guid";
+
+import type { GUID } from "../guid";
 
 describe("unit size: content description record", () => {
   test("string type", () => {
@@ -81,7 +82,7 @@ const cases: Case[] = [
     "WM/GUID",
     6,
     [0xaa, 0xbb, 0xcc, 0xdd, 0x11, 0x22, 0x44, 0x55, 0x0f, 0x1e, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78],
-    new GUID("DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978"),
+    "DDCCBBAA-2211-5544-0F1E-2D3C4B5A6978" as GUID,
   ],
 ];
 

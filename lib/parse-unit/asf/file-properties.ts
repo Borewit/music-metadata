@@ -6,6 +6,8 @@ import { pad } from "../primitive/skip";
 
 import { guid, GUID } from "./guid";
 
+import type { Unit } from "../type/unit";
+
 /**
  * 3.2: File Properties Object (mandatory, one only)
  *
@@ -106,7 +108,7 @@ export interface FilePropertiesObject {
   maximumBitrate: number;
 }
 
-export const filePropertiesObject = (size: number) =>
+export const filePropertiesObject = (size: number): Unit<FilePropertiesObject, RangeError> =>
   pad(
     sequenceToObject(
       {

@@ -3,8 +3,9 @@ import { test, expect, describe } from "vitest";
 import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
-import { GUID } from "../guid";
 import { headerExtensionObject, type HeaderExtensionObject } from "../header-extension";
+
+import type { GUID } from "../guid";
 
 describe("unit size: header extension object", () => {
   test("header extension object", () => {
@@ -27,7 +28,7 @@ const cases: Case[] = [
       0x04, 0x03, 0x02, 0x01,
     ],
     {
-      reserved1: new GUID("ABD3D211-A9BA-11CF-8EE6-00C00C205365"),
+      reserved1: "ABD3D211-A9BA-11CF-8EE6-00C00C205365" as GUID,
       reserved2: 0x00_06,
       extensionDataSize: 0x01_02_03_04,
     },

@@ -4,7 +4,8 @@ import { BufferTokenizer } from "../../../strtok3/BufferTokenizer";
 import { u8 } from "../../primitive/integer";
 import { readUnitFromTokenizer } from "../../utility/read-unit";
 import { codecListObject, type CodecListObject } from "../codec-list";
-import { GUID } from "../guid";
+
+import type { GUID } from "../guid";
 
 describe("unit size: codec list object", () => {
   test("codec list object", () => {
@@ -43,7 +44,7 @@ const cases: Case[] = [
       0x04, 0x00, 0x01, 0x02, 0x03, 0x04,
     ],
     {
-      reserved: new GUID("86D15241-311D-11D0-A3A4-00A0C90348F6"),
+      reserved: "86D15241-311D-11D0-A3A4-00A0C90348F6" as GUID,
       codecEntriesCount: 0x00_00_00_02,
       codecs: [
         {
