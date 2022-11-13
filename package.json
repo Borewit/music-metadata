@@ -92,7 +92,7 @@
     "token-types": "^4.2.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.3",
+    "@types/chai": "^4.3.4",
     "@types/chai-as-promised": "^7.1.5",
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
@@ -100,7 +100,7 @@
     "@types/node": "^18.11.9",
     "@typescript-eslint/eslint-plugin": "^5.42.1",
     "@typescript-eslint/parser": "^5.42.0",
-    "chai": "^4.3.6",
+    "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
     "del-cli": "5.0.0",
     "eslint": "^8.27.0",
