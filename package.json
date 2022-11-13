@@ -118,7 +118,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-unicorn": "^44.0.2",
     "mime": "^3.0.0",
-    "mocha": "^10.0.0",
+    "mocha": "^10.1.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.7.1",
     "remark-cli": "^11.0.0",
