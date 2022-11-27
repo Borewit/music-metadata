@@ -66,8 +66,10 @@ export class Atom {
 
       case 'meta': // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         // meta has 4 bytes of padding, ignore
-        await tokenizer.ignore(4);
-        return this.readAtoms(tokenizer, dataHandler, this.getPayloadLength(remaining) - 4);
+        const peekHeader = await tokenizer.peekToken(AtomToken.Header);
+        const paddingLength = peekHeader.name === 'hdlr' ? 0 : 4;
+        await tokenizer.ignore(paddingLength);
+        return this.readAtoms(tokenizer, dataHandler, this.getPayloadLength(remaining) - paddingLength);
 
       case 'mdhd': // Media header atom
       case 'mvhd': // 'movie' => 'mvhd': movie header atom; child of Movie Atom
