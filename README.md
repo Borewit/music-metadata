@@ -192,7 +192,7 @@ import { parseBuffer } from 'music-metadata';
 
 (async () => {
   try {
-    const metadata = parseBuffer(someBuffer, 'audio/mpeg');
+    const metadata = await parseBuffer(someBuffer, 'audio/mpeg');
     console.log(metadata);
   } catch (error) {
     console.error(error.message);
