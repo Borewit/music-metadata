@@ -21,10 +21,10 @@ body:
       description: Note that music-metadata switch to pure ESM in version 8!
       multiple: false
       options:
-        - CommonJS modules (CJS)
-        - ECMAScript modules (ESM)
-      validations:
-        required: false
+        - CommonJS modules (CJS), music-medata ≥ version 8
+        - ECMAScript modules (ESM), music-medata ≤ version 7
+    validations:
+      required: false
   - type: textarea
     attributes:
       label: Current Behavior
