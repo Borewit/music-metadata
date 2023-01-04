@@ -1,0 +1,18 @@
+name: ❓ Question
+description: Question or other type of issue
+labels: [question]
+body:
+  - type: checkboxes
+    attributes:
+      label: Has the question been asked before?
+      description: Please search existing issues to avoid creating duplicates.
+      options:
+        - label: I have searched the existing issues
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Question
+      description: Describe your question
+    validations:
+      required: true
