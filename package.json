@@ -111,7 +111,7 @@
     "chai-as-promised": "^7.1.1",
     "del-cli": "5.0.0",
     "eslint": "^8.28.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-prettier": "^8.6.0",
     "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsdoc": "^39.6.2",
