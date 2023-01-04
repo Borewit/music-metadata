@@ -58,9 +58,11 @@ export class MatroskaParser extends BasicParser {
       const info = matroska.segment.info;
       if (info) {
         const timecodeScale = info.timecodeScale ? info.timecodeScale : 1000000;
-        const duration = info.duration * timecodeScale / 1000000000;
-        this.addTag('segment:title', info.title);
-        this.metadata.setFormat('duration', duration);
+        if (typeof info.duration === 'number') {
+          const duration = info.duration * timecodeScale / 1000000000;
+          this.addTag('segment:title', info.title);
+          this.metadata.setFormat('duration', duration);
+        }
       }
 
       const audioTracks = matroska.segment.tracks;

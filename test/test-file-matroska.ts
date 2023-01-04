@@ -173,4 +173,15 @@ describe('Matroska formats', () => {
 
   });
 
+  // https://github.com/Borewit/music-metadata/issues/1463
+  it('Handle Matroska file without duration', () => {
+
+    it('sample"', async () => {
+      const filePath = path.join(matroskaSamplePath, 'no-duration.webm');
+      const {format} = await mm.parseFile(filePath);
+      assert.isNotNaN(format.duration, 'Duration should not be NaN');
+      assert.isUndefined(format.duration, 'Duration is not defined');
+    });
+  });
+
 });
