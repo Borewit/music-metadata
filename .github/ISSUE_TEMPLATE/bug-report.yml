@@ -37,3 +37,10 @@ body:
       description: A concise description of what you expected to happen.
     validations:
       required: false
+  - type: checkboxes
+    attributes:
+      label: Attached audio sample?
+      description: Most bugs require an audio sample to reproduce the issue. This can be zipped, and uploaded to the issue. Please try to make the sample file as small as possible. If your sample really cannot be shared you may send it by e-mail to the {repository owner}@xs4all.nl.
+      options:
+        - label: I have provided sufficient information to reproduce the issue
+          required: true
