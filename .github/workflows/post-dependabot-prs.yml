@@ -1,0 +1,22 @@
+  name: Dependabot Pull Request
+  on: pull_request_target
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+      steps:
+        - name: Fetch Dependabot metadata
+          id: dependabot-metadata
+          uses: dependabot/fetch-metadata@v1
+          with:
+            github-token: "${{ secrets.GITHUB_TOKEN }}"
+        - name: Add dev-dependencies label
+          uses: actions-ecosystem/action-add-labels@v1
+          if: ${{ steps.dependabot-metadata.outputs.dependency-type == 'direct:development' }}
+          with:
+            labels: dev-dependencies
+        - name: Remove dependencies label
+          uses: actions-ecosystem/action-remove-labels@v1
+          if: ${{ steps.dependabot-metadata.outputs.dependency-type == 'direct:development' }}
+          with:
+            labels: dependencies
