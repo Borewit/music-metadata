@@ -119,7 +119,7 @@ export class WaveParser extends BasicParser {
             this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
           }
 
-          this.metadata.setFormat('bitrate', this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate); // ToDo: check me
+          this.metadata.setFormat('bitrate', this.blockAlign * this.metadata.format.sampleRate * 8); // ToDo: check me
           await this.tokenizer.ignore(header.chunkSize);
           break;
 
