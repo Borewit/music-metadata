@@ -119,7 +119,11 @@ export class WaveParser extends BasicParser {
             this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
           }
 
-          this.metadata.setFormat('bitrate', this.metadata.format.numberOfChannels * this.blockAlign * this.metadata.format.sampleRate); // ToDo: check me
+          if (this.metadata.format.codec === 'ADPCM') { // ADPCM is 4 bits lossy encoding resulting in 352kbps
+            this.metadata.setFormat('bitrate', 352000);
+          } else {
+            this.metadata.setFormat('bitrate', this.blockAlign * this.metadata.format.sampleRate * 8);
+          }
           await this.tokenizer.ignore(header.chunkSize);
           break;
 
