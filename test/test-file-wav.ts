@@ -35,6 +35,7 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
+      assert.strictEqual(format.bitrate, 1411200, 'format.bitrate = 1411200 bits/s')
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
       assert.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
       assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
@@ -70,6 +71,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepEqual(format.codec, 'PCM', 'format.codec');
     assert.deepEqual(format.bitsPerSample, 24);
     assert.deepEqual(format.sampleRate, 48000);
+    assert.strictEqual(format.bitrate, 2304000, 'format.bitrate = 2304000 bits/s')
     assert.deepEqual(format.numberOfSamples, 13171);
     assert.deepEqual(format.duration, 0.27439583333333334, '~2.274 (checked with Adobe Audition)');
     assert.deepEqual(format.tagTypes, ['exif']);
@@ -117,6 +119,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.lossless, true);
     assert.strictEqual(format.sampleRate, 48000);
     assert.strictEqual(format.bitsPerSample, 24);
+    assert.strictEqual(format.bitrate, 2304000, 'format.bitrate = 2304000 bits/s')
     assert.strictEqual(format.numberOfSamples, 363448);
     assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration');
   });
@@ -133,6 +136,7 @@ describe('Parse RIFF/WAVE audio format', () => {
         assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
         assert.strictEqual(format.lossless, false);
         assert.strictEqual(format.sampleRate, 22050);
+        assert.strictEqual(format.bitrate, 352000, 'format.bitrate = 352000 bits/s')
         assert.strictEqual(format.bitsPerSample, 4);
         assert.strictEqual(format.numberOfSamples, 4660260);
         assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
@@ -152,6 +156,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
     assert.strictEqual(format.duration, 27648 / 44100, 'format.duration');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.strictEqual(format.bitrate, 1411200, 'format.bitrate = 1411200 bits/s')
   });
 
   it('should handle odd list-type ID in LIST chunk', async () => {
@@ -163,6 +168,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.strictEqual(format.bitrate, 2116800, 'format.bitrate = 2116800 bits/s')
     assert.approximately(format.duration, 3 / 44100, 1 / 20000, 'format.duration');
   });
 
@@ -174,6 +180,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
     assert.strictEqual(format.container, 'WAVE');
     assert.strictEqual(format.codec, 'PCM');
+    assert.strictEqual(format.bitrate, 256000, 'format.bitrate = 256000 bits/s')
     // assert.strictEqual(format.numberOfSamples, 2158080, 'format.numberOfSamples');
     assert.approximately(format.duration, 2478 / 16000, 5 / 1000, 'format.duration');
   });
