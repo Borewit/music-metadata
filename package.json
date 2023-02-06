@@ -103,7 +103,7 @@
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^10.0.0",
-    "@types/node": "^18.11.18",
+    "@types/node": "^18.11.19",
     "@typescript-eslint/eslint-plugin": "^5.48.0",
     "@typescript-eslint/parser": "^5.48.1",
     "c8": "^7.12.0",
