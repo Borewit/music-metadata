@@ -12,6 +12,7 @@ export const riffInfoTagMap: INativeTagMap = {
   TITL: 'title',
   IPRD: 'album', // Product
   ITRK: 'track',
+  IPRT: 'track', // Additional tag for track index
   COMM: 'comment', // Comments
   ICMT: 'comment', // Country
   ICNT: 'releasecountry',
