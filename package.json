@@ -133,8 +133,7 @@
   },
   "nyc": {
     "exclude": [
-      "test/**/*.ts",
-      "src/**/*.js"
+      "test/**/*.ts"
     ],
     "extension": [
       ".ts"
