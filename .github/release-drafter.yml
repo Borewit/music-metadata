@@ -4,18 +4,25 @@
 name-template: 'v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 categories:
-  - title: ':rocket: Enhancements'
+  - title: 🚀 Enhancements
     labels:
-      - 'enhancement'
-  - title: ':bug: Bug Fixes'
+      - enhancement
+  - title: 🎨 Improvements
     labels:
-      - 'bug'
-  - title: ':arrow_up: Dependencies'
+      - improvement
+  - title: 🐛 Bug Fixes
     labels:
-      - 'dependencies'
+      - bug
+  - title: 🔧 Under the hood
+    labels:
+      - debt
+      - dev-dependencies
+  - title: ⬆️ Dependencies
+    labels:
+      - dependencies
 exclude-labels:
-  - 'DevOps'
-  - 'dev-dependencies'
+  - DevOps
+  - dev-dependencies
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 version-resolver:
