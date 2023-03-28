@@ -202,5 +202,13 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepStrictEqual(exif['bext.originator'], ['Pro Tools'], 'BWF: exif.bext.originator');
   });
 
+  // https://github.com/Borewit/music-metadata/pull/1572
+  it("Should map 'IPRT' RIFF Tag to common", async () => {
+    const filePath = path.join(wavSamples, 'riff-iprt-tag.wav');
+    const { common } = await mm.parseFile(filePath);
+
+    assert.strictEqual(common.track.no, 1, 'common.track.no');
+    assert.strictEqual(common.track.of, 2, 'common.track.no');
+  });
 });
 
