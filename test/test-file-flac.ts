@@ -173,7 +173,7 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.strictEqual(format.container, "FLAC", "format.container");
     assert.strictEqual(format.codec, "FLAC", "format.codec");
 
-    assert.strictEqual(common.lyrics && common.lyrics[0] && common.lyrics[0].length > 0, true);
+    assert.strictEqual(common.lyrics instanceof Array && common.lyrics[0] && common.lyrics[0].length > 0, true);
     assert.strictEqual(
       common.lyrics[0],
       "Burning interest as if it's incense\r\n" +
