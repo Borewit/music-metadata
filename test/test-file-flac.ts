@@ -163,6 +163,76 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.strictEqual(common.albumartist, 'Various Artists', 'common.albumartist');
   });
 
+  it('Support additional FLAC comment TAG mapping "UNSYNCEDLYRICS"', async () => {
+    const filePath = path.join(
+      flacFilePath,
+      "Sister City - Swan Dive - 01 Attenborough Blues.flac"
+    );
+    const { format, common, native } = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, "FLAC", "format.container");
+    assert.strictEqual(format.codec, "FLAC", "format.codec");
+
+    assert.strictEqual(common.lyrics && common.lyrics[0] && common.lyrics[0].length > 0, true);
+    assert.strictEqual(
+      common.lyrics[0],
+      "Burning interest as if it's incense\r\n" +
+      "Taking in the scent\r\n" +
+      "Of someone else's cigarette\r\n" +
+      "Water to the lungs\r\n" +
+      "Words on the tips of our tongues\r\n" +
+      "I've left but I'm still leaving \r\n" +
+      "Got caught between the floor, the walls, and ceiling\r\n" +
+      "\r\n" +
+      "Swore I saw the closing, the floating\r\n" +
+      "The atoning final moments, I've seen the omens \r\n" +
+      "The symbols and speech\r\n" +
+      "How every “us” only ever meant “me”\r\n" +
+      "Opposite my musings\r\n" +
+      "Is a four letter word I call choosing\r\n" +
+      "And I'm still reconstructing a plan\r\n" +
+      "The first in a long line of last stands\r\n" +
+      "\r\n" +
+      "Always fighting something back\r\n" +
+      "Like there’s something in that \r\n" +
+      "\r\n" +
+      "For the moment it's a miracle\r\n" +
+      "To be so unapologetically material\r\n" +
+      "On the shoulders of giants\r\n" +
+      "We are the weight that breaks the backs of better men\r\n" +
+      "For the moment it's a prison cell\r\n" +
+      "Make yourself comfortable and maybe even sleep a spell\r\n" +
+      "We'll speak but we don't have to do it now\r\n" +
+      "\r\n" +
+      "Shout out to my silhouettes \r\n" +
+      "The shadows as our sustenance \r\n" +
+      "Steady while the sun ascends \r\n" +
+      "It's a slap across the face\r\n" +
+      "Toward starting to consider another way\r\n" +
+      "And getting better but it's still hard to concentrate\r\n" +
+      "On days as days\r\n" +
+      "\r\n" +
+      "Rather than a contest\r\n" +
+      "Who best can cut their losses\r\n" +
+      "\r\n" +
+      "For the moment it's a miracle\r\n" +
+      "To be so unapologetically material\r\n" +
+      "On the shoulders of giants\r\n" +
+      "We are the weight that breaks the backs of better men\r\n" +
+      "For the moment it's a prison cell\r\n" +
+      "Make yourself comfortable and maybe even sleep a spell\r\n" +
+      "We'll speak but we don't have to do it now\r\n" +
+      "\r\n" +
+      "If there's dignity in indignation, then I'm a shining example of greatness\r\n" +
+      "But if there's integrity in integration, then I'm a sad excuse for \r\n" +
+      "\r\n" +
+      "A primate blessed with common sense\r\n" +
+      "With empathy and with arrogance\r\n" +
+      "I am swinging from the trees\r\n" +
+      "I am crawling out of the sea"
+    );
+  });
+
   it('RATING mapping', async () => {
 
     const filePath = path.join(samplePath, 'rating', 'testcase.flac');

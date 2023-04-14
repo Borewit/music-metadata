@@ -27,6 +27,7 @@ const vorbisTagMap: INativeTagMap = {
   GENRE: 'genre',
   METADATA_BLOCK_PICTURE: 'picture',
   COMPOSER: 'composer',
+  UNSYNCEDLYRICS: 'lyrics',
   LYRICS: 'lyrics',
   ALBUMSORT: 'albumsort',
   TITLESORT: 'titlesort',
