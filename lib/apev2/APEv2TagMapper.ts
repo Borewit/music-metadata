@@ -13,6 +13,7 @@ const apev2TagMap: INativeTagMap = {
   Year: 'date',
   Originalyear: 'originalyear',
   Originaldate: 'originaldate',
+  Releasedate: 'releasedate',
   Comment: 'comment',
   Track: 'track',
   Disc: 'disk',
