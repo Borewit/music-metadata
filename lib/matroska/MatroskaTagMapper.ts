@@ -10,6 +10,7 @@ const ebmlTagMap: INativeTagMap = {
   'album:ARTISTSORT': 'albumartistsort',
   'album:TITLE': 'album',
   'album:DATE_RECORDED': 'originaldate',
+  'album:DATE_RELEASED': 'releasedate',
   'album:PART_NUMBER': 'disk',
   'album:TOTAL_PARTS': 'totaltracks',
   'track:ARTIST': 'artist',
