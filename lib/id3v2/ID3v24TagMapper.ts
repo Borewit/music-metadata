@@ -93,6 +93,7 @@ const id3v24TagMap: INativeTagMap = {
   TDRC: 'date', // date YYYY-MM-DD
   TYER: 'year',
   TDOR: 'originaldate',
+  TDRL: 'releasedate',
   // 'TMCL:instrument': 'performer:instrument',
   'TIPL:arranger': 'arranger',
   'TIPL:engineer': 'engineer',
