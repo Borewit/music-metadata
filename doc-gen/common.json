@@ -1,6 +1,6 @@
 {
   "year": {
-    "description": "Release year"
+    "description": "Year"
   },
   "track": {
     "description": "Track number on the media, e.g. `{no: 1, of: 2}`"
@@ -48,13 +48,16 @@
     "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
   },
   "date": {
-    "description": "Release date"
+    "description": "Date, formatted like: YYYY-MM-DD"
   },
   "originaldate": {
     "description": "Original (initial) release date, formatted like: YYYY-MM-DD"
   },
   "originalyear": {
     "description": "Original (initial) release year"
+  },
+    "releasedate": {
+    "description": "Release date, formatted like: YYYY-MM-DD"
   },
   "comment": {
     "description": "Comments"
