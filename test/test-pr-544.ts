@@ -400,9 +400,7 @@ describe('Add, change and fix some mappings #pr-544', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
-
-        t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
+        t.strictEqual(metadata.common.releasedate, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
       });
     });
 
@@ -412,7 +410,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
 
       return mm.parseFile(filePath).then(metadata => {
         t.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
-
         t.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
       });
     });

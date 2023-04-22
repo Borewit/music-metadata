@@ -93,7 +93,6 @@ const id3v24TagMap: INativeTagMap = {
   TDRC: 'date', // date YYYY-MM-DD
   TYER: 'year',
   TDOR: 'originaldate',
-  TDRL: 'releasedate',
   // 'TMCL:instrument': 'performer:instrument',
   'TIPL:arranger': 'arranger',
   'TIPL:engineer': 'engineer',
@@ -146,7 +145,7 @@ const id3v24TagMap: INativeTagMap = {
   PCST: 'podcast',
   TCAT: 'category',
   TDES: 'description',
-  TDRL: 'date',
+  TDRL: 'releasedate',
   TGID: 'podcastId',
   TKWD: 'keywords',
   WFED: 'podcasturl'
