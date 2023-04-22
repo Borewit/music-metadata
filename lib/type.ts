@@ -74,7 +74,7 @@ export interface ICommonTagsResult {
    */
   album?: string;
   /**
-   * Release data
+   * Date
    */
   date?: string;
   /**
@@ -82,9 +82,13 @@ export interface ICommonTagsResult {
    */
   originaldate?: string;
   /**
-   * Original release yeat
+   * Original release year
    */
   originalyear?: number;
+  /**
+   * Release date
+   */
+  releasedate?: string;
   /**
    * List of comments
    */
