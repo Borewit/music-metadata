@@ -17,6 +17,7 @@ export type GenericTagId =
   | 'date'
   | 'originaldate'
   | 'originalyear'
+  | 'releasedate'
   | 'comment'
   | 'genre'
   | 'picture'
