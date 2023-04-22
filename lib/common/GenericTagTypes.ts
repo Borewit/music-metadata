@@ -150,6 +150,7 @@ export const commonTags: ITagInfoMap = {
   date: {multiple: false},
   originaldate: {multiple: false},
   originalyear: {multiple: false},
+  releasedate: {multiple: false},
   comment: {multiple: true, unique: false},
   genre: {multiple: true, unique: true},
   picture: {multiple: true, unique: true},
