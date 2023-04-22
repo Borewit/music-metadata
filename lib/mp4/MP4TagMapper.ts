@@ -92,6 +92,7 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:ARTISTS': 'artists',
   '----:com.apple.iTunes:ORIGINALDATE': 'originaldate',
   '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear',
+  '----:com.apple.iTunes:RELEASEDATE': 'releasedate',
   // '----:com.apple.iTunes:PERFORMER': 'performer'
   desc: 'description',
   ldes: 'longDescription',
