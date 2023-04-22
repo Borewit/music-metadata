@@ -20,6 +20,7 @@ const vorbisTagMap: INativeTagMap = {
   DATE: 'date',
   ORIGINALDATE: 'originaldate',
   ORIGINALYEAR: 'originalyear',
+  RELEASEDATE: 'releasedate',
   COMMENT: 'comment',
   TRACKNUMBER: 'track',
   DISCNUMBER: 'disk',
