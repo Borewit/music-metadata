@@ -98,7 +98,7 @@
     "token-types": "^5.0.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.4",
+    "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
