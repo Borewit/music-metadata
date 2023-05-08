@@ -97,7 +97,7 @@
     "@types/debug": "^4.1.7",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^18.15.11",
+    "@types/node": "^20.1.0",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "chai": "^4.3.7",
