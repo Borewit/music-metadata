@@ -114,7 +114,7 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.3",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsdoc": "^40.1.0",
+    "eslint-plugin-jsdoc": "^46.7.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-unicorn": "^46.0.0",
     "mime": "^3.0.0",
