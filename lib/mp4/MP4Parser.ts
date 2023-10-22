@@ -213,14 +213,24 @@ export class MP4Parser extends BasicParser {
     if (audioTracks.length >= 1) {
       const audioTrack = audioTracks[0];
 
-      const duration = audioTrack.duration / audioTrack.timeScale;
-      this.metadata.setFormat('duration', duration); // calculate duration in seconds
+      if (audioTrack.timeScale > 0) {
+        const duration = audioTrack.duration / audioTrack.timeScale; // calculate duration in seconds
+        this.metadata.setFormat('duration', duration);
+      }
 
       const ssd = audioTrack.soundSampleDescription[0];
       if (ssd.description) {
         this.metadata.setFormat('sampleRate', ssd.description.sampleRate);
         this.metadata.setFormat('bitsPerSample', ssd.description.sampleSize);
         this.metadata.setFormat('numberOfChannels', ssd.description.numAudioChannels);
+
+        if (audioTrack.timeScale === 0 && audioTrack.timeToSampleTable.length > 0) {
+          const totalSampleSize = audioTrack.timeToSampleTable
+            .map(ttstEntry => ttstEntry.count * ttstEntry.duration)
+            .reduce((total, sampleSize) => total + sampleSize);
+          const duration = totalSampleSize / ssd.description.sampleRate;
+          this.metadata.setFormat('duration', duration);
+        }
       }
       const encoderInfo = encoderDict[ssd.dataFormat];
       if (encoderInfo) {
@@ -484,7 +494,7 @@ export class MP4Parser extends BasicParser {
     },
 
     /**
-     * time to sample
+     * time-to-sample table
      */
     stts: async (len: number) => {
       const stts = await this.tokenizer.readToken<AtomToken.ITableAtom<AtomToken.ITimeToSampleToken>>(new AtomToken.SttsAtom(len));
