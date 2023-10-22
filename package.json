@@ -94,7 +94,7 @@
   "devDependencies": {
     "@types/chai": "^4.3.9",
     "@types/chai-as-promised": "^7.1.7",
-    "@types/debug": "^4.1.7",
+    "@types/debug": "^4.1.10",
     "@types/file-type": "^10.9.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.15.11",
