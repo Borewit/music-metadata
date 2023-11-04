@@ -264,6 +264,31 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(id3v2.GEOB[0].description, 'Serato Overview', 'ID3v2.GEOB[0].description');
     });
 
+    it('4.18 POPM', async () => {
+
+      // Rating (stars) assigned with Winamp 5.666 Media Library.
+      const testCaseFiles = [
+        {file: 'testcase-0star.mp3', stars: undefined},
+        {file: 'testcase-1star.mp3', stars: 1},
+        {file: 'testcase-2star.mp3', stars: 2},
+        {file: 'testcase-3star.mp3', stars: 3},
+        {file: 'testcase-4star.mp3', stars: 4},
+        {file: 'testcase-5star.mp3', stars: 5}
+      ];
+
+      for (const testCaseFile of testCaseFiles) {
+        const filePath = path.join(samplePath, 'rating', testCaseFile.file);
+        const {common} = await mm.parseFile(filePath);
+        if (common.rating === undefined) {
+          assert.isUndefined(common.rating, 'Expect no rating property to be present in: ' + testCaseFile.file);
+        } else {
+          assert.isDefined(common.rating, 'Expect rating property to be present in: ' + testCaseFile.file);
+          assert.equal(Math.round(common.rating[0].rating * 4 + 1), testCaseFile.stars, 'ID3v2.3 rating conversion in: ' + testCaseFile.file);
+          assert.equal(mm.ratingToStars(common.rating[0].rating), testCaseFile.stars, 'ID3v2.3 rating conversion in: ' + testCaseFile.file);
+        }
+      }
+    });
+
     describe('TXXX', async () => {
 
       it('Handle empty TXXX', async () => {
