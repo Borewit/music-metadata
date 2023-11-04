@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Install production dependencies, check node engine compatiblity
+      - name: Install production dependencies, check node engine compatibility
         run: yarn install --production=true
 
       - name: Install development dependencies
@@ -52,10 +52,10 @@ jobs:
     steps:
 
       - name: 'Checkout the repository'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Test with Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -63,7 +63,7 @@ jobs:
         run: yarn install --ignore-engines
 
       - name: Download build
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build
 
@@ -71,7 +71,7 @@ jobs:
         run: yarn run test-coverage
 
       - name: Coveralls Parallel
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.github_token }}
           flag-name: run-${{ matrix.test_number }}
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.github_token }}
           parallel-finished: true
