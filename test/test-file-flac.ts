@@ -7,7 +7,7 @@ import { samplePath } from './util';
 
 const t = assert;
 
-describe('Parse FLAC', () => {
+describe('Parse FLAC Vorbis comment', () => {
 
   const flacFilePath = path.join(samplePath, 'flac');
 
@@ -151,7 +151,6 @@ describe('Parse FLAC', () => {
     assert.isUndefined(format.duration, 'format.duration');
   });
 
-
   it('Support additional Vorbis comment TAG mapping "ALMBUM ARTIST"', async () => {
 
     const filePath = path.join(flacFilePath, '14. Samuel L. Jackson and John Travolta - Personality Goes a Long Way.flac');
@@ -163,4 +162,15 @@ describe('Parse FLAC', () => {
     assert.strictEqual(common.albumartist, 'Various Artists', 'common.albumartist');
   });
 
+  it('RATING mapping', async () => {
+
+    const filePath = path.join(samplePath, 'rating', 'testcase.flac');
+    const {common} = await mm.parseFile(filePath);
+
+    assert.isDefined(common.rating, 'Expect rating property to be present');
+    assert.equal(common.rating[0].rating, 0.80, 'Vorbis tag rating score of 80%');
+    assert.equal(mm.ratingToStars(common.rating[0].rating), 4, 'Vorbis tag rating conversion');
+  });
+
 });
+

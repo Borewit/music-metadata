@@ -117,11 +117,11 @@ const vorbisTagMap: INativeTagMap = {
 
 export class VorbisTagMapper extends CommonTagMapper {
 
-  public static toRating(email: string, rating: string): IRating {
+  public static toRating(email: string, rating: string, maxScore: number): IRating {
 
     return {
       source: email ? email.toLowerCase() : email,
-      rating: parseFloat(rating) * CommonTagMapper.maxRatingScore
+      rating: (parseFloat(rating) / maxScore) * CommonTagMapper.maxRatingScore
     };
   }
 
@@ -130,10 +130,12 @@ export class VorbisTagMapper extends CommonTagMapper {
   }
 
   protected postMap(tag: ITag): void {
-
-    if (tag.id.indexOf('RATING:') === 0) {
+    if (tag.id === 'RATING') {
+      // The way Winamp 5.666 assigns rating
+      tag.value = VorbisTagMapper.toRating(undefined, tag.value, 100);
+    } else if (tag.id.indexOf('RATING:') === 0) {
       const keys = tag.id.split(':');
-      tag.value = VorbisTagMapper.toRating(keys[1], tag.value);
+      tag.value = VorbisTagMapper.toRating(keys[1], tag.value, 1);
       tag.id = keys[0];
     }
 

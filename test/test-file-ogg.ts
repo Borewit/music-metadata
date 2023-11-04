@@ -203,6 +203,15 @@ describe('Parse Ogg', function() {
 
   });
 
+  it('RATING mapping', async () => {
+
+    const filePath = path.join(samplePath, 'rating', 'testcase.opus');
+    const {common} = await mm.parseFile(filePath);
+
+    assert.isDefined(common.rating, 'Expect rating property to be present');
+    assert.equal(common.rating[0].rating, 0.80, 'Vorbis tag rating score of 80%');
+    assert.equal(mm.ratingToStars(common.rating[0].rating), 4, 'Vorbis tag rating conversion');
+  });
 
   describe('Calculate duration', () => {
 
