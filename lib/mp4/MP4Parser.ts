@@ -296,14 +296,14 @@ export class MP4Parser extends BasicParser {
           return this.parseValueAtom(tagKey, child);
 
         case 'name': // name atom (optional)
+        case 'mean':
           const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
           tagKey += ':' + name.name;
           break;
 
-        case 'mean': // name atom (optional)
-          const mean = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
-          // console.log("  %s[%s] = %s", tagKey, header.name, mean.name);
-          tagKey += ':' + mean.name;
+        case 'rate':
+          const rate = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
+          tagKey += ':' + rate.name;
           break;
 
         default:
@@ -340,6 +340,11 @@ export class MP4Parser extends BasicParser {
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
             this.addTag(tagKey, genreStr);
+            break;
+
+          case 'rate':
+            const rate = new Token.StringType(2, 'ascii').get(dataAtom.value, 0);
+            this.addTag(tagKey, rate);
             break;
 
           default:

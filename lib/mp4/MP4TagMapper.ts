@@ -1,5 +1,7 @@
 import {INativeTagMap} from '../common/GenericTagTypes';
 import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap';
+import {ITag} from "../type";
+import {INativeMetadataCollector} from "../common/MetadataCollector";
 
 /**
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
@@ -104,7 +106,8 @@ const mp4TagMap: INativeTagMap = {
   hdvd: 'hdVideo',
   keyw: 'keywords',
   shwm: 'showMovement',
-  stik: 'stik'
+  stik: 'stik',
+  rate: 'rating'
 };
 
 export const tagType = 'iTunes';
@@ -112,7 +115,20 @@ export const tagType = 'iTunes';
 export class MP4TagMapper extends CaseInsensitiveTagMap {
 
   public constructor() {
-    super([tagType],  mp4TagMap);
+    super([tagType], mp4TagMap);
+  }
+
+  protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
+
+    switch (tag.id) {
+
+      case 'rate':
+        tag.value = {
+          source: undefined,
+          rating: parseFloat(tag.value) / 100
+        };
+        break;
+    }
   }
 
 }

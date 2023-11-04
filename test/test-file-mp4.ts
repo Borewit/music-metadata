@@ -460,4 +460,14 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual('S2E32 : Audio', common.title, 'common.title');
   });
 
+  it('moov.udta.meta.ilst.rate mapping', async () => {
+
+    const filePath = path.join(samplePath, 'rating', 'testcase.m4a');
+    const {format, common, native} = await mm.parseFile(filePath);
+
+    assert.isDefined(common.rating, 'Expect rating property to be present');
+    assert.equal(common.rating[0].rating, 0.80, 'Vorbis tag rating score of 80%');
+    assert.equal(mm.ratingToStars(common.rating[0].rating), 4, 'Vorbis tag rating conversion');
+  });
+
 });
