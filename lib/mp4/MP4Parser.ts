@@ -297,13 +297,9 @@ export class MP4Parser extends BasicParser {
 
         case 'name': // name atom (optional)
         case 'mean':
+        case 'rate':
           const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
           tagKey += ':' + name.name;
-          break;
-
-        case 'rate':
-          const rate = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
-          tagKey += ':' + rate.name;
           break;
 
         default:
@@ -343,13 +339,12 @@ export class MP4Parser extends BasicParser {
             break;
 
           case 'rate':
-            const rate = new Token.StringType(2, 'ascii').get(dataAtom.value, 0);
+            const rate = dataAtom.value.toString('ascii');
             this.addTag(tagKey, rate);
             break;
 
           default:
-          // console.log("  reserved-data: name=%s, len=%s, set=%s, type=%s, locale=%s, value{ hex=%s, ascii=%s }",
-          // header.name, header.length, dataAtom.type.set, dataAtom.type.type, dataAtom.locale, dataAtom.value.toString('hex'), dataAtom.value.toString('ascii'));
+            debug('unknown proprietary value type for: ' + metaAtom.atomPath);
         }
         break;
 
