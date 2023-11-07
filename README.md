@@ -100,6 +100,44 @@ import * as mm from 'music-metadata/lib/core';
 ### Sponsor
 [Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
 
+## Dependencies
+
+Dependency diagram:
+```mermaid
+graph TD;
+    MM(music-metadata)-->S(strtok3)
+    MM-->TY(token-types)
+    MM-->FT(file-type)
+    S(strtok3)-->P(peek-readable)
+    S-->TO("@tokenizer/token")
+    TY-->TO
+    TY-->IE("ieee754")
+    FT-->RWNS(readable-web-to-node-stream)
+    FT-->S
+    FT-->TY
+    TY-->NB(node:buffer)
+    RWNS-->RS(readable-stream)
+    RS-->SD(string_decoder)
+    SD-->SB(safe-buffer)
+    RS-->UD(util-deprecate)
+    RS-->I(inherits)
+    style NB fill:#F88,stroke:#A44
+    style SB fill:#F88,stroke:#A44
+    style SD fill:#CCC,stroke:#888
+    style IE fill:#CCC,stroke:#888
+    style UD fill:#CCC,stroke:#888
+    style I fill:#CCC,stroke:#888
+```
+
+Dependency list:
+* [tokenizer-token](https://github.com/Borewit/tokenizer-token)
+* [strtok3](https://github.com/Borewit/strtok3)
+* [token-types](https://github.com/Borewit/token-types)
+* [file-type](https://github.com/sindresorhus/file-type)
+* [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
+* [peek-readable](https://github.com/Borewit/peek-readable)
+* [readable-web-to-node-stream](https://github.com/Borewit/readable-web-to-node-stream)
+
 ## Usage
 
 ### Installation
