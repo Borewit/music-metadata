@@ -557,6 +557,10 @@ export class MP4Parser extends BasicParser {
     }
     const chapters: IChapter[] = [];
     for (let i = 0; i < chapterTrack.chunkOffsetTable.length && len > 0; ++i) {
+      const start = chapterTrack.timeToSampleTable
+        .slice(0, i)
+        .reduce((acc, cur) => acc + cur.duration, 0);
+
       const chunkOffset = chapterTrack.chunkOffsetTable[i];
       const nextChunkLen = chunkOffset - this.tokenizer.position;
       const sampleSize = chapterTrack.sampleSize > 0 ? chapterTrack.sampleSize : chapterTrack.sampleSizeTable[i];
@@ -567,6 +571,8 @@ export class MP4Parser extends BasicParser {
       debug(`Chapter ${i + 1}: ${title}`);
       const chapter = {
         title,
+        timeScale: chapterTrack.timeScale,
+        start,
         sampleOffset: this.findSampleOffset(track, this.tokenizer.position)
       };
       debug(`Chapter title=${chapter.title}, offset=${chapter.sampleOffset}/${this.tracks[0].duration}`);
