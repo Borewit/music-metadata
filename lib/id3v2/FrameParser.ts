@@ -36,7 +36,7 @@ export function parseGenre(origVal: string): string[] {
         code = undefined;
       } else if (c === ')') {
         if (word !== '') {
-          genres.push(word);
+          genres.push(word.split(";"));
           word = '';
         }
         const genre = parseGenreCode(code);

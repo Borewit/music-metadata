@@ -1,11 +1,8 @@
 {
-  "name": "music-metadata",
+  "name": "@vorelli/music-metadata",
   "description": "Music metadata parser for Node.js, supporting virtual any audio and tag format.",
-  "version": "8.1.4",
-  "author": {
-    "name": "Borewit",
-    "url": "https://github.com/Borewit"
-  },
+  "version": "8.1.42",
+  "author": "Borewit (https://github.com/Borewit)",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/Borewit"
@@ -136,5 +133,13 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
+  },
+  "homepage": "https://github.com/borewit/music-metadata#readme",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "example": "example",
+    "lib": "lib",
+    "test": "test"
   }
 }
