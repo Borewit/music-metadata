@@ -100,7 +100,7 @@
     "@types/node": "^20.8.9",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "chai": "^4.3.10",
+    "chai": "^4.4.1",
     "chai-as-promised": "^7.1.1",
     "del-cli": "5.1.0",
     "eslint": "^8.53.0",
