@@ -36,7 +36,7 @@ export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
     this.len = header.page_segments;
   }
 
-  public get(buf: Uint8Array, off: number): Ogg.ISegmentTable {
+  public get(buf, off): Ogg.ISegmentTable {
     return {
       totalPageSize: SegmentTable.sum(buf, off, this.len)
     };
@@ -120,6 +120,11 @@ export class OggParser extends BasicParser {
               break;
             default:
               throw new OggContentError(`gg audio-codec not recognized (id=${id})`);
+              const flacId = new Token.StringType(4, 'ascii').get(Buffer.from(pageData), 1);
+              if (flacId === 'FLAC') {
+                throw new OggContentError('Crap, we don\'t have a page consumer for Ogg/FLAC yet.');
+              }
+              throw new OggContentError('gg audio-codec not recognized (id=' + id + ')');
           }
         }
         await this.pageConsumer.parsePage(header, pageData);

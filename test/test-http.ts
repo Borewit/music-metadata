@@ -50,3 +50,20 @@ describe('HTTP streaming', function() {
   });
 
 });
+
+it('Stream Ogg/FLAC from radioparadise.com', async () => {
+
+  const url = 'http://stream.radioparadise.com/global-flac';
+
+  const response = await clients[0].client.get(url);
+
+  const fileInfo: IFileInfo = {
+    mimeType: response.headers['content-type']
+  };
+
+  const tags = await parseStream(response.stream, fileInfo);
+  if (response.stream.destroy) {
+    response.stream.destroy(); // Node >= v8 only
+  }
+  assert.strictEqual(tags.format.container, 'Ogg/FLAC');
+});
