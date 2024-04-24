@@ -114,6 +114,10 @@ export class OggParser extends BasicParser {
               this.pageConsumer = new TheoraParser(this.metadata, this.options, this.tokenizer);
               break;
             default:
+              const flacId = new Token.StringType(4, 'ascii').get(Buffer.from(pageData), 1);
+              if (flacId === 'FLAC') {
+                throw new Error('Crap, we don\'t have a page consumer for Ogg/FLAC yet.');
+              }
               throw new Error('gg audio-codec not recognized (id=' + id + ')');
           }
         }
