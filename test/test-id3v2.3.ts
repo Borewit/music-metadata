@@ -79,6 +79,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(id3v23.TRCK, ['5'], 'native: TRCK');
       assert.deepEqual(id3v23.TYER, ['2004'], 'native: TYER');
       assert.deepEqual(id3v23['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
+      assert.deepEqual(id3v23['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
 
       const apic = id3v23.APIC[0];
       assert.strictEqual(apic.format, 'image/jpeg', 'raw APIC format');
@@ -243,6 +244,31 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.equal(id3v23.MCDI[0].length, 804, 'TOC');
     });
 
+    // https://id3.org/id3v2.3.0#Unsychronised_lyrics.2Ftext_transcription
+    it('4.9 Unsychronised lyrics/text transcription', async () => {
+      const {native, common} = await mm.parseFile(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3'));
+      const lyrics =  "Lord, have mercy, Lord, have mercy on me\nLord, have mercy, Lord, have mercy on me\n" +
+          "Well, if I've done somebody wrong\nLord, have mercy if you please\n\n" +
+          "I used to have plenty of money\nThe finest clothes in town\n" +
+          "Bad luck and trouble overtook me\nAnd God, look at me now\n\n" +
+          "Please have mercy, Lord, have mercy on me\nAnd if I've done somebody wrong\nLord, have mercy if you please\n\n" +
+          "Keep on working, my child\nOh, in the morning, oh\nLord, have mercy\n\nIf I've been a bad girl, baby\nYeah, I'll change my ways\n" +
+          "Don't want bad luck and trouble\nOn me all my days\n\n" +
+          "Please have mercy, Lord, have mercy on me\nAnd if I've done somebody wrong\nLord, have mercy if you please\n" +
+          "Have mercy on me";
+      const id3v23 = mm.orderTags(native['ID3v2.3']);
+      assert.isDefined(id3v23.USLT, 'Should contain ID3v2.3 USLT tag');
+      assert.deepEqual(id3v23.USLT[0], {
+        description: "Sinner's Prayer",
+        language: "eng",
+        text: lyrics
+      });
+      // Check mapping to common IDv2.3 tag
+      assert.isDefined(common.lyrics, 'Should map tag id3v23.USLT to common.lyrics');
+      assert.strictEqual(common.lyrics[0], lyrics);
+
+    });
+
     // http://id3.org/id3v2.3.0#General_encapsulated_object
     // Issue: https://github.com/Borewit/music-metadata/issues/406
     it('4.16 GEOB: General encapsulated object', async () => {
@@ -313,7 +339,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       it('Handle empty PRIV tag', async () => {
 
         const filePath = path.join(samplePath, 'mp3', 'issue-691.mp3');
-        const {format, common, quality} = await mm.parseFile(filePath);
+        const {format, quality} = await mm.parseFile(filePath);
 
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
@@ -322,6 +348,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
           {message: 'id3v2.3 header has empty tag type=PRIV'},
           {message: 'Invalid ID3v2.3 frame-header-ID: \u0000\u0000\u0000\u0000'}
         ], 'quality.warnings includes');
+
       });
 
     });
