@@ -73,4 +73,31 @@ describe("Decode MP3/ID3v2.4", () => {
     t.includeDeepMembers(common.isrc, ['DEAE61300058'], 'ISRC');
   });
 
+  // https://id3.org/id3v2.4.0-frame
+  it('4.8. Unsynchronised lyrics/text transcription', async () => {
+    const {common, native} = await mm.parseFile(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].V2.mp3'));
+    const lyrics =  "Lord, have mercy, Lord, have mercy on me\nLord, have mercy, Lord, have mercy on me\n" +
+        "Well, if I've done somebody wrong\nLord, have mercy if you please\n\n" +
+        "I used to have plenty of money\nThe finest clothes in town\n" +
+        "Bad luck and trouble overtook me\nAnd God, look at me now\n\n" +
+        "Please have mercy, Lord, have mercy on me\nAnd if I've done somebody wrong\nLord, have mercy if you please\n\n" +
+        "Keep on working, my child\nOh, in the morning, oh\nLord, have mercy\n\nIf I've been a bad girl, baby\nYeah, I'll change my ways\n" +
+        "Don't want bad luck and trouble\nOn me all my days\n\n" +
+        "Please have mercy, Lord, have mercy on me\nAnd if I've done somebody wrong\nLord, have mercy if you please\n" +
+        "Have mercy on me";
+
+    // Check native IDv2.4 tag
+    const id3v23 = mm.orderTags(native['ID3v2.4']);
+    assert.isDefined(id3v23.USLT, 'Should contain ID3v2.4 USLT tag');
+    assert.deepEqual(id3v23.USLT[0], {
+      description: "Sinner's Prayer",
+      language: "eng",
+      text: lyrics
+    });
+
+    // Check mapping to common IDv2.3 tag
+    assert.isDefined(common.lyrics, 'Should map tag id3v23.USLT to common.lyrics');
+    assert.strictEqual(common.lyrics[0], lyrics);
+  });
+
 });
