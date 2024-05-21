@@ -25,7 +25,7 @@ const id3v24TagMap: INativeTagMap = {
   TCON: 'genre',
   APIC: 'picture',
   TCOM: 'composer',
-  'USLT:description': 'lyrics',
+  USLT: 'lyrics',
   TSOA: 'albumsort',
   TSOT: 'titlesort',
   TOAL: 'originalalbum',
@@ -199,11 +199,15 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
         break;
 
       case 'COMM':
-        tag.value = tag.value ? tag.value.text : null;
+        tag.value = tag.value?.text;
         break;
 
       case 'POPM':
         tag.value = ID3v24TagMapper.toRating(tag.value);
+        break;
+
+      case 'USLT':
+        tag.value = tag.value?.text;
         break;
 
       default:
