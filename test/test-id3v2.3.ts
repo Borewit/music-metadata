@@ -373,6 +373,18 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.strictEqual(common.title, 'FDP (Clean Edit)', 'common.title');
     });
 
+    it('GRP1', async () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'herbal-tea-GRP1.mp3');
+
+      const {native, common} = await mm.parseFile(filePath);
+      assert.isDefined(native['ID3v2.4'], 'Expect ID3v2.4 tag header to be present');
+      const grp1Tags = native['ID3v2.4'].filter(tag => tag.id==='GRP1');
+      assert.strictEqual(grp1Tags.length, 1, 'Expect ID3v2.4 GRP1 tag be present');
+      assert.strictEqual(grp1Tags[0].value, 'GRP1-Test', 'Expect ID3v2.4 GRP1 value');
+
+      assert.deepStrictEqual(common.grouping, 'GRP1-Test', 'Mapping ID3v2.4 GRP1 => common.grouping');
+    });
 
   });
 

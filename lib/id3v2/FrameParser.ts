@@ -96,6 +96,7 @@ export class FrameParser {
     debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
       case 'T*': // 4.2.1. Text information frames - details
+      case 'GRP1': // iTunes-specific ID3v2 grouping field
       case 'IPLS': // v2.3: Involved people list
       case 'MVIN':
       case 'MVNM':
