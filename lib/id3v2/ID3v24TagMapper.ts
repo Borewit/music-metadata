@@ -148,7 +148,9 @@ const id3v24TagMap: INativeTagMap = {
   TDRL: 'releasedate',
   TGID: 'podcastId',
   TKWD: 'keywords',
-  WFED: 'podcasturl'
+  WFED: 'podcasturl',
+
+  GRP1: 'grouping'
 };
 
 export class ID3v24TagMapper extends CaseInsensitiveTagMap {
