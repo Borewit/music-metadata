@@ -23,7 +23,7 @@ describe('Parse ASF', () => {
 
     it('should construct GUID from string', () => {
 
-      const guid_data = Buffer.from([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
+      const guid_data = new Uint8Array([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
       assert.deepEqual(GUID.fromBin(guid_data).str, '75B22630-668E-11CF-A6D9-00AA0062CE6C');
     });
   });

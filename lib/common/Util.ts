@@ -1,10 +1,11 @@
+import { StringType } from 'token-types';
 import { IRatio } from '../type.js';
 
 export type StringEncoding =
-  'ascii' // Use  'utf-8' or latin1 instead
+  'ascii' // Use 'utf-8' or latin1 instead
   | 'utf8' // alias: 'utf-8'
-  | 'utf16le' // alias: 'ucs2', 'ucs-2'
-  | 'ucs2' //  'utf16le'
+  | 'utf-16le' // alias: 'ucs2', 'ucs-2'
+  | 'ucs2' // 'utf-16le'
   | 'base64url'
   | 'latin1' // Same as ISO-8859-1 (alias: 'binary')
   | 'hex';
@@ -28,7 +29,7 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
  */
 export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: StringEncoding): number {
   let i = start;
-  if (encoding === 'utf16le') {
+  if (encoding === 'utf-16le') {
     while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
       if (i >= end) return end;
       i += 2;
@@ -68,13 +69,13 @@ export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): 
   // https://github.com/leetreveil/musicmetadata/issues/84
   if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) { // little endian
     return decodeString(uint8Array.subarray(2), encoding);
-  } else if (encoding === 'utf16le' &&  uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
+  } else if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
     // BOM, indicating big endian decoding
     if ((uint8Array.length & 1) !== 0)
       throw new Error('Expected even number of octets for 16-bit unicode string');
     return decodeString(swapBytes(uint8Array), encoding);
   }
-  return Buffer.from(uint8Array).toString(encoding);
+  return new StringType(uint8Array.length, encoding).get(uint8Array, 0);
 }
 
 export function stripNulls(str: string): string {
