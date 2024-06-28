@@ -28,12 +28,12 @@ describe('shared utility functionality', () => {
 
     it('find terminator in utf16le encoded string', () => {
       const buf = Buffer.from([0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x00, 0x00]);
-      t.equal(findZero(buf, 0, buf.length, 'utf16le'), 10);
+      t.equal(findZero(buf, 0, buf.length, 'utf-16le'), 10);
     });
 
     it('find terminator in utf16be encoded string', () => {
       const buf = Buffer.from([0x00, 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x00]);
-      t.equal(findZero(buf, 0, buf.length, 'utf16le'), 8);
+      t.equal(findZero(buf, 0, buf.length, 'utf-16le'), 8);
     });
 
   });

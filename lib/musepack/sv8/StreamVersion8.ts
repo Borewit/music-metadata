@@ -6,7 +6,7 @@ import * as util from '../../common/Util.js';
 
 const debug = initDebug('music-metadata:parser:musepack:sv8');
 
-const PacketKey = new Token.StringType(2, 'binary');
+const PacketKey = new Token.StringType(2, 'latin1');
 
 interface IVarSize {
   len: number,

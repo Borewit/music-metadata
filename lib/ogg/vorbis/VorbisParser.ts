@@ -26,7 +26,7 @@ export class VorbisParser implements IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public parsePage(header: IPageHeader, pageData: Buffer) {
+  public async parsePage(header: IPageHeader, pageData: Buffer): Promise<void> {
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
@@ -40,7 +40,7 @@ export class VorbisParser implements IPageConsumer {
         // Flush page segments
         if (this.pageSegments.length > 0) {
           const fullPage = Buffer.concat(this.pageSegments);
-          this.parseFullPage(fullPage);
+          await this.parseFullPage(fullPage);
         }
         // Reset page segments
         this.pageSegments = header.headerType.lastPage ? [] : [pageData];
@@ -51,20 +51,20 @@ export class VorbisParser implements IPageConsumer {
     }
   }
 
-  public flush() {
-    this.parseFullPage(Buffer.concat(this.pageSegments));
+  public async flush(): Promise<void> {
+    await this.parseFullPage(Buffer.concat(this.pageSegments));
   }
 
-  public parseUserComment(pageData: Buffer, offset: number): number {
+  public async parseUserComment(pageData: Buffer, offset: number): Promise<number> {
     const decoder = new VorbisDecoder(pageData, offset);
     const tag = decoder.parseUserComment();
 
-    this.addTag(tag.key, tag.value);
+    await this.addTag(tag.key, tag.value);
 
     return tag.len;
   }
 
-  public addTag(id: string, value: string | IVorbisPicture) {
+  public async addTag(id: string, value: string | IVorbisPicture): Promise<void> {
     if (id === 'METADATA_BLOCK_PICTURE' && (typeof value === 'string')) {
       if (this.options.skipCovers) {
         debug(`Ignore picture`);
@@ -76,7 +76,7 @@ export class VorbisParser implements IPageConsumer {
       debug(`Push tag: id=${id}, value=${value}`);
     }
 
-    this.metadata.addTag('vorbis', id, value);
+    await this.metadata.addTag('vorbis', id, value);
   }
 
   public calculateDuration(header: IPageHeader) {
@@ -109,14 +109,14 @@ export class VorbisParser implements IPageConsumer {
     } else throw new Error('First Ogg page should be type 1: the identification header');
   }
 
-  protected parseFullPage(pageData: Buffer) {
+  protected async parseFullPage(pageData: Buffer): Promise<void> {
     // New page
     const commonHeader = CommonHeader.get(pageData, 0);
     debug('Parse full page: type=%s, byteLength=%s', commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
 
       case 3: //  type 3: comment header
-        return this.parseUserCommentList(pageData, CommonHeader.len);
+        return await this.parseUserCommentList(pageData, CommonHeader.len);
 
       case 1: // type 1: the identification header
       case 5: // type 5: setup header type
@@ -127,7 +127,7 @@ export class VorbisParser implements IPageConsumer {
   /**
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
    */
-  protected parseUserCommentList(pageData: Buffer, offset: number) {
+  protected async parseUserCommentList(pageData: Buffer, offset: number): Promise<void> {
 
     const strLen = Token.UINT32_LE.get(pageData, offset);
     offset += 4;
@@ -137,7 +137,7 @@ export class VorbisParser implements IPageConsumer {
     offset += 4;
 
     while (userCommentListLength-- > 0) {
-      offset += this.parseUserComment(pageData, offset);
+      offset += (await this.parseUserComment(pageData, offset));
     }
   }
 }

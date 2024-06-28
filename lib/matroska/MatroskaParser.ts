@@ -60,7 +60,7 @@ export class MatroskaParser extends BasicParser {
         const timecodeScale = info.timecodeScale ? info.timecodeScale : 1000000;
         if (typeof info.duration === 'number') {
           const duration = info.duration * timecodeScale / 1000000000;
-          this.addTag('segment:title', info.title);
+          await this.addTag('segment:title', info.title);
           this.metadata.setFormat('duration', duration);
         }
       }
@@ -108,29 +108,25 @@ export class MatroskaParser extends BasicParser {
         }
 
         if (matroska.segment.tags) {
-          matroska.segment.tags.tag.forEach(tag => {
+          await Promise.all(matroska.segment.tags.tag.map(async (tag) => {
             const target = tag.target;
             const targetType = target?.targetTypeValue ? TargetType[target.targetTypeValue] : (target?.targetType ? target.targetType : 'track');
-            tag.simpleTags.forEach(simpleTag => {
+            await Promise.all(tag.simpleTags.map(async (simpleTag) => {
               const value = simpleTag.string ? simpleTag.string : simpleTag.binary;
-              this.addTag(`${targetType}:${simpleTag.name}`, value);
-            });
-          });
+              await this.addTag(`${targetType}:${simpleTag.name}`, value);
+            }));
+          }));
         }
 
         if (matroska.segment.attachments) {
-          matroska.segment.attachments.attachedFiles
+          await Promise.all(matroska.segment.attachments.attachedFiles
             .filter(file => file.mimeType.startsWith('image/'))
-            .map(file => {
-              return {
-                data: file.data,
-                format: file.mimeType,
-                description: file.description,
-                name: file.name
-              };
-            }).forEach(picture => {
-              this.addTag('picture', picture);
-            });
+            .map(file => this.addTag('picture', {
+              data: file.data,
+              format: file.mimeType,
+              description: file.description,
+              name: file.name
+            })));
         }
       }
     }
@@ -255,7 +251,7 @@ export class MatroskaParser extends BasicParser {
     return buf;
   }
 
-  private addTag(tagId: string, value: any) {
-    this.metadata.addTag('matroska', tagId, value);
+  private async addTag(tagId: string, value: any): Promise<void> {
+    await this.metadata.addTag('matroska', tagId, value);
   }
 }

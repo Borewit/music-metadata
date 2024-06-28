@@ -50,7 +50,7 @@ export class Common implements IGetToken<ICommon> {
         if (strLen > 0) {
           const padding = (strLen + 1) % 2;
           if (23 + strLen + padding === this.len) {
-            res.compressionName = new Token.StringType(strLen, 'binary').get(buf, off + 23);
+            res.compressionName = new Token.StringType(strLen, 'latin1').get(buf, off + 23);
           } else {
             throw new Error('Illegal pstring length');
           }

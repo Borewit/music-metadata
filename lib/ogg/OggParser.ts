@@ -117,7 +117,7 @@ export class OggParser extends BasicParser {
               throw new Error('gg audio-codec not recognized (id=' + id + ')');
           }
         }
-        this.pageConsumer.parsePage(header, pageData);
+        await this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);
     } catch (err) {
       if (err instanceof EndOfStreamError) {
@@ -131,7 +131,7 @@ export class OggParser extends BasicParser {
         if (this.pageNumber > 0) {
           // ignore this error: work-around if last OGG-page is not marked with last-page flag
           this.metadata.addWarning('Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag');
-          this.pageConsumer.flush();
+          await this.pageConsumer.flush();
         }
       } else {
         throw err;

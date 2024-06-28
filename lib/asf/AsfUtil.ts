@@ -13,7 +13,7 @@ export class AsfUtil {
   }
 
   public static parseUnicodeAttr(uint8Array: Uint8Array): string {
-    return util.stripNulls(util.decodeString(uint8Array, 'utf16le'));
+    return util.stripNulls(util.decodeString(uint8Array, 'utf-16le'));
   }
 
   private static attributeParsers: AttributeParser[] = [

@@ -47,7 +47,7 @@ export interface INativeMetadataCollector extends IWarningCollector {
 
   setFormat(key: FormatId, value: any): void;
 
-  addTag(tagType: TagType, tagId: string, value: any): void;
+  addTag(tagType: TagType, tagId: string, value: any): Promise<void>;
 
   addStreamInfo(streamInfo: ITrackInfo): void;
 }
@@ -121,7 +121,7 @@ export class MetadataCollector implements INativeMetadataCollector {
     }
   }
 
-  public addTag(tagType: TagType, tagId: string, value: any) {
+  public async addTag(tagType: TagType, tagId: string, value: any): Promise<void> {
     debug(`tag ${tagType}.${tagId} = ${value}`);
     if (!this.native[tagType]) {
       this.format.tagTypes.push(tagType);
@@ -129,14 +129,14 @@ export class MetadataCollector implements INativeMetadataCollector {
     }
     this.native[tagType].push({id: tagId, value});
 
-    this.toCommon(tagType, tagId, value);
+    await this.toCommon(tagType, tagId, value);
   }
 
   public addWarning(warning: string) {
     this.quality.warnings.push({message: warning});
   }
 
-  public postMap(tagType: TagType | 'artificial', tag: IGenericTag) {
+  public async postMap(tagType: TagType | 'artificial', tag: IGenericTag): Promise<void> {
 
     // Common tag (alias) found
 
@@ -149,7 +149,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
         if (this.commonOrigin.artist === this.originPriority[tagType]) {
           // Assume the artist field is used as artists
-          return this.postMap('artificial', {id: 'artists', value: tag.value});
+          return await this.postMap('artificial', {id: 'artists', value: tag.value});
         }
 
         if (!this.common.artists) {
@@ -171,13 +171,12 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'picture':
-        this.postFixPicture(tag.value as IPicture).then(picture => {
+        return await this.postFixPicture(tag.value as IPicture).then(picture => {
           if (picture !== null) {
             tag.value = picture;
             this.setGenericTag(tagType, tag);
           }
         });
-        return;
 
       case 'totaltracks':
         this.common.track.of = CommonTagMapper.toIntOrNull(tag.value);
@@ -278,7 +277,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Fix some common issues with picture object
    * @param picture Picture
    */
-  private async postFixPicture(picture: IPicture): Promise<IPicture> {
+  private async postFixPicture(picture: IPicture): Promise<IPicture | null> {
     if (picture.data && picture.data.length > 0) {
       if (!picture.format) {
         const fileType = await fileTypeFromBuffer(picture.data);
@@ -302,14 +301,14 @@ export class MetadataCollector implements INativeMetadataCollector {
   /**
    * Convert native tag to common tags
    */
-  private toCommon(tagType: TagType, tagId: string, value: any) {
+  private async toCommon(tagType: TagType, tagId: string, value: any): Promise<void> {
 
     const tag = {id: tagId, value};
 
     const genericTag = this.tagMapper.mapTag(tagType, tag, this);
 
     if (genericTag) {
-      this.postMap(tagType, genericTag);
+      await this.postMap(tagType, genericTag);
     }
   }
 

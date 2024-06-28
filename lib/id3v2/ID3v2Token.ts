@@ -141,9 +141,9 @@ export const TextEncodingToken: IGetToken<ITextEncoding> = {
       case 0x00:
         return {encoding: 'latin1'}; // binary
       case 0x01:
-        return {encoding: 'utf16le', bom: true};
+        return {encoding: 'utf-16le', bom: true};
       case 0x02:
-        return {encoding: 'utf16le', bom: false};
+        return {encoding: 'utf-16le', bom: false};
       case 0x03:
         return {encoding: 'utf8', bom: false};
       default:

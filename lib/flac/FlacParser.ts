@@ -68,11 +68,11 @@ export class FlacParser extends AbstractID3Parser {
     }
   }
 
-  private parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
+  private async parseDataBlock(blockHeader: IBlockHeader): Promise<void> {
     debug(`blockHeader type=${blockHeader.type}, length=${blockHeader.length}`);
     switch (blockHeader.type) {
       case BlockType.STREAMINFO:
-        return this.parseBlockStreamInfo(blockHeader.length);
+        return await this.parseBlockStreamInfo(blockHeader.length);
       case BlockType.PADDING:
         this.padding += blockHeader.length;
         break;
@@ -81,11 +81,12 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.SEEKTABLE:
         break;
       case BlockType.VORBIS_COMMENT:
-        return this.parseComment(blockHeader.length);
+        return await this.parseComment(blockHeader.length);
       case BlockType.CUESHEET:
         break;
       case BlockType.PICTURE:
-        return this.parsePicture(blockHeader.length).then();
+        await this.parsePicture(blockHeader.length);
+        return
       default:
         this.metadata.addWarning('Unknown block type: ' + blockHeader.type);
     }
@@ -122,10 +123,11 @@ export class FlacParser extends AbstractID3Parser {
     const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
+    const tags = new Array(commentListLength)
     for (let i = 0; i < commentListLength; i++) {
-      const tag = decoder.parseUserComment();
-      this.vorbisParser.addTag(tag.key, tag.value);
+      tags[i] = decoder.parseUserComment();
     }
+    await Promise.all(tags.map(tag => this.vorbisParser.addTag(tag.key, tag.value)));
   }
 
   private async parsePicture(dataLen: number) {
