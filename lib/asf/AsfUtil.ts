@@ -26,8 +26,8 @@ export class AsfUtil {
     AsfUtil.parseByteArrayAttr
   ];
 
-  private static parseByteArrayAttr(buf: Uint8Array): Buffer {
-    return Buffer.from(buf);
+  private static parseByteArrayAttr(buf: Uint8Array): Uint8Array {
+    return new Uint8Array(buf);
   }
 
   private static parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
@@ -35,7 +35,7 @@ export class AsfUtil {
   }
 
   private static parseDWordAttr(buf: Buffer, offset: number = 0): number {
-    return buf.readUInt32LE(offset);
+    return Token.UINT32_LE.get(buf, offset);
   }
 
   private static parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
@@ -43,6 +43,6 @@ export class AsfUtil {
   }
 
   private static parseWordAttr(buf: Buffer, offset: number = 0): number {
-    return buf.readUInt16LE(offset);
+    return Token.UINT16_LE.get(buf, offset);
   }
 }
