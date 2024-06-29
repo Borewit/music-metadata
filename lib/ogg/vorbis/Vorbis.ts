@@ -34,10 +34,10 @@ export interface IVorbisPicture extends IPicture {
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 
   public static fromBase64(base64str: string): IVorbisPicture {
-    return this.fromBuffer(Buffer.from(base64str, 'base64'));
+    return this.fromBuffer(Uint8Array.from(atob(base64str), c => c.charCodeAt(0)));
   }
 
-  public static fromBuffer(buffer: Buffer): IVorbisPicture {
+  public static fromBuffer(buffer: Uint8Array): IVorbisPicture {
     const pic = new VorbisPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
@@ -45,15 +45,15 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
   constructor(public len) {
   }
 
-  public get(buffer: Buffer, offset: number): IVorbisPicture {
+  public get(buffer: Uint8Array, offset: number): IVorbisPicture {
 
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
 
     const mimeLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
+    const format =  new Token.StringType(mimeLen, 'utf-8').get(buffer, offset += 4);
 
     const descLen = Token.UINT32_BE.get(buffer, offset += mimeLen);
-    const description = buffer.toString('utf-8', offset += 4, offset + descLen);
+    const description = new Token.StringType(descLen, 'utf-8').get(buffer, offset += 4);
 
     const width = Token.UINT32_BE.get(buffer, offset += descLen);
     const height = Token.UINT32_BE.get(buffer, offset += 4);
