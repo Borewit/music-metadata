@@ -83,7 +83,7 @@ export class WavPackParser extends BasicParser {
         case 0xe: // ID_DSD_BLOCK
           debug('ID_DSD_BLOCK');
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
-          const mp = 1 << data.readUInt8(0);
+          const mp = 1 << Token.UINT8.get(data, 0);
           const samplingRate = header.flags.samplingRate * mp * 8; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
           if (!header.flags.isDSD)
             throw new Error('Only expect DSD block if DSD-flag is set');
