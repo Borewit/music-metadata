@@ -157,7 +157,7 @@ export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
     const tag = Buffer.alloc(3);
     await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
-    return tag.toString('binary') === 'TAG';
+    return tag.toString('latin1') === 'TAG';
   }
   return false;
 }

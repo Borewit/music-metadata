@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer';
 import * as util from '../common/Util.js';
 import { DataType } from './AsfObject.js';
 
-export type AttributeParser = (buf: Buffer) => boolean | string | number | bigint | Buffer;
+export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Uint8Array;
 
 export class AsfUtil {
 

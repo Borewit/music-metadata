@@ -13,7 +13,7 @@ export const Header: IGetToken<IChunkHeader> = {
   get: (buf: Buffer, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: buf.toString('binary', off, off + 4),
+      chunkID: buf.toString('latin1', off, off + 4),
       // Size
       chunkSize: Token.UINT32_LE.get(buf, 4)
     };
