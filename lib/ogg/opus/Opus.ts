@@ -55,12 +55,12 @@ export class IdHeader implements IGetToken<IIdHeader> {
   public get(buf, off): IIdHeader {
     return {
       magicSignature: new Token.StringType(8, 'ascii').get(buf, off + 0),
-      version: buf.readUInt8(off + 8),
-      channelCount: buf.readUInt8(off + 9),
-      preSkip: buf.readInt16LE(off + 10),
-      inputSampleRate: buf.readInt32LE(off + 12),
-      outputGain: buf.readInt16LE(off + 16),
-      channelMapping: buf.readUInt8(off + 18)
+      version: Token.UINT8.get(buf, off + 8),
+      channelCount: Token.UINT8.get(buf, off + 9),
+      preSkip: Token.UINT16_LE.get(buf, off + 10),
+      inputSampleRate: Token.UINT32_LE.get(buf, off + 12),
+      outputGain: Token.UINT16_LE.get(buf, off + 16),
+      channelMapping: Token.UINT8.get(buf, off + 18)
     };
   }
 }
