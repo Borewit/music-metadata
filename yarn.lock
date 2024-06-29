@@ -4666,6 +4666,11 @@ typescript@^5.4.5:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.4.5.tgz#42ccef2c571fdbd0f6718b1d1f5e6e5ef006f611"
   integrity sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==
 
+uint8array-extras@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/uint8array-extras/-/uint8array-extras-1.2.0.tgz#36a3138ba2d1c0bce9ab824f6f16bc783c20118f"
+  integrity sha512-+J8XoVf9Y/vyCz8Xp7kGRb6dVuC5qIIWibNrpIoYVcjJqBzdb+tbS2XunRO4dxPj0YGy1G+TvrQU2EYjF0LiBA==
+
 unbox-primitive@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/unbox-primitive/-/unbox-primitive-1.0.2.tgz#29032021057d5e6cdbd08c5129c226dff8ed6f9e"
