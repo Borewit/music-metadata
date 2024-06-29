@@ -10,12 +10,12 @@ export { IChunkHeader } from '../iff/index.js';
 export const Header: IGetToken<IChunkHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off): IChunkHeader => {
+  get: (buf: Uint8Array, off): IChunkHeader => {
     return {
       // Group-ID
-      chunkID: buf.toString('latin1', off, off + 4),
+      chunkID: new Token.StringType(4, 'latin1').get(buf, off),
       // Size
-      chunkSize: Token.UINT32_LE.get(buf, 4)
+      chunkSize: Token.UINT32_LE.get(buf, off + 4)
     };
   }
 };
