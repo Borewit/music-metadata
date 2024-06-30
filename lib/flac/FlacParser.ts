@@ -72,7 +72,7 @@ export class FlacParser extends AbstractID3Parser {
     debug(`blockHeader type=${blockHeader.type}, length=${blockHeader.length}`);
     switch (blockHeader.type) {
       case BlockType.STREAMINFO:
-        return await this.parseBlockStreamInfo(blockHeader.length);
+        return this.parseBlockStreamInfo(blockHeader.length);
       case BlockType.PADDING:
         this.padding += blockHeader.length;
         break;
@@ -81,12 +81,12 @@ export class FlacParser extends AbstractID3Parser {
       case BlockType.SEEKTABLE:
         break;
       case BlockType.VORBIS_COMMENT:
-        return await this.parseComment(blockHeader.length);
+        return this.parseComment(blockHeader.length);
       case BlockType.CUESHEET:
         break;
       case BlockType.PICTURE:
         await this.parsePicture(blockHeader.length);
-        return
+        return;
       default:
         this.metadata.addWarning('Unknown block type: ' + blockHeader.type);
     }
@@ -123,7 +123,7 @@ export class FlacParser extends AbstractID3Parser {
     const decoder = new VorbisDecoder(data, 0);
     decoder.readStringUtf8(); // vendor (skip)
     const commentListLength = decoder.readInt32();
-    const tags = new Array(commentListLength)
+    const tags = new Array(commentListLength);
     for (let i = 0; i < commentListLength; i++) {
       tags[i] = decoder.parseUserComment();
     }

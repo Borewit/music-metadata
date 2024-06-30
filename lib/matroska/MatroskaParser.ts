@@ -108,10 +108,10 @@ export class MatroskaParser extends BasicParser {
         }
 
         if (matroska.segment.tags) {
-          await Promise.all(matroska.segment.tags.tag.map(async (tag) => {
+          await Promise.all(matroska.segment.tags.tag.map(async tag => {
             const target = tag.target;
             const targetType = target?.targetTypeValue ? TargetType[target.targetTypeValue] : (target?.targetType ? target.targetType : 'track');
-            await Promise.all(tag.simpleTags.map(async (simpleTag) => {
+            await Promise.all(tag.simpleTags.map(async simpleTag => {
               const value = simpleTag.string ? simpleTag.string : simpleTag.binary;
               await this.addTag(`${targetType}:${simpleTag.name}`, value);
             }));

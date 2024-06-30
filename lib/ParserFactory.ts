@@ -2,7 +2,6 @@ import { fileTypeFromBuffer } from 'file-type';
 import ContentType from 'content-type';
 import MimeType from 'media-typer';
 import initDebug from 'debug';
-import { Buffer } from 'node:buffer';
 
 import { INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { AIFFParser } from './aiff/AiffParser.js';

@@ -148,7 +148,7 @@ export class ID3v2Parser {
     for (const tag of this.parseMetadata(uint8Array)) {
       if (tag.id === 'TXXX') {
         if (tag.value) {
-          await Promise.all(tag.value.text.map((text) =>
+          await Promise.all(tag.value.text.map(text =>
             this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text)
           ));
         }
