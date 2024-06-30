@@ -6,8 +6,6 @@ import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
-const t = assert;
-
 const mp4Samples = path.join(samplePath, 'mp4');
 
 describe('Parse MPEG-4 files with iTunes metadata', () => {
@@ -28,45 +26,45 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     }
 
     function checkCommon(common) {
-      t.strictEqual(common.title, 'Voodoo People (Pendulum Remix)', 'title');
-      t.strictEqual(common.artist, 'The Prodigy', 'artist');
-      t.strictEqual(common.albumartist, 'Pendulum', 'albumartist');
-      t.strictEqual(common.album, 'Voodoo People', 'album');
-      t.strictEqual(common.year, 2005, 'year');
-      t.strictEqual(common.track.no, 1, 'track no');
-      t.strictEqual(common.track.of, 12, 'track of');
-      t.strictEqual(common.disk.no, 1, 'disk no');
-      t.strictEqual(common.disk.of, 1, 'disk of');
-      t.strictEqual(common.genre[0], 'Electronic', 'genre');
-      t.strictEqual(common.picture[0].format, 'image/jpeg', 'picture 0 format');
-      t.strictEqual(common.picture[0].data.length, 196450, 'picture 0 length');
-      t.strictEqual(common.picture[1].format, 'image/jpeg', 'picture 1 format');
-      t.strictEqual(common.picture[1].data.length, 196450, 'picture 1 length');
+      assert.strictEqual(common.title, 'Voodoo People (Pendulum Remix)', 'title');
+      assert.strictEqual(common.artist, 'The Prodigy', 'artist');
+      assert.strictEqual(common.albumartist, 'Pendulum', 'albumartist');
+      assert.strictEqual(common.album, 'Voodoo People', 'album');
+      assert.strictEqual(common.year, 2005, 'year');
+      assert.strictEqual(common.track.no, 1, 'track no');
+      assert.strictEqual(common.track.of, 12, 'track of');
+      assert.strictEqual(common.disk.no, 1, 'disk no');
+      assert.strictEqual(common.disk.of, 1, 'disk of');
+      assert.strictEqual(common.genre[0], 'Electronic', 'genre');
+      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture 0 format');
+      assert.strictEqual(common.picture[0].data.length, 196450, 'picture 0 length');
+      assert.strictEqual(common.picture[1].format, 'image/jpeg', 'picture 1 format');
+      assert.strictEqual(common.picture[1].data.length, 196450, 'picture 1 length');
     }
 
     function checkNativeTags(native) {
 
-      t.ok(native, 'Native m4a tags should be present');
+      assert.ok(native, 'Native m4a tags should be present');
 
-      t.deepEqual(native.trkn, ['1/12'], 'm4a.trkn');
-      t.deepEqual(native.disk, ['1/1'], 'm4a.disk');
-      t.deepEqual(native.tmpo, [0], 'm4a.tmpo');
-      t.deepEqual(native.gnre, ['Electronic'], 'm4a.gnre');
-      t.deepEqual(native.stik, [1], 'm4a.stik');
-      t.deepEqual(native['©alb'], ['Voodoo People'], 'm4a.©alb');
-      t.deepEqual(native.aART, ['Pendulum'], 'm4a.aART');
-      t.deepEqual(native['©ART'], ['The Prodigy'], 'm4a.©ART');
-      t.deepEqual(native['©cmt'], ['(Pendulum Remix)'], 'm4a.©cmt');
-      t.deepEqual(native['©wrt'], ['Liam Howlett'], 'm4a.©wrt');
-      t.deepEqual(native['----:com.apple.iTunes:iTunNORM'], [' 0000120A 00001299 00007365 0000712F 0002D88B 0002D88B 00007F2B 00007F2C 0003C770 0001F5C7'], 'm4a.----:com.apple.iTunes:iTunNORM');
-      t.deepEqual(native['©nam'], ['Voodoo People (Pendulum Remix)'], 'm4a.©nam');
-      t.deepEqual(native['©too'], ['Lavf52.36.0'], 'm4a.©too');
-      t.deepEqual(native['©day'], ['2005'], 'm4a.@day');
+      assert.deepEqual(native.trkn, ['1/12'], 'm4a.trkn');
+      assert.deepEqual(native.disk, ['1/1'], 'm4a.disk');
+      assert.deepEqual(native.tmpo, [0], 'm4a.tmpo');
+      assert.deepEqual(native.gnre, ['Electronic'], 'm4a.gnre');
+      assert.deepEqual(native.stik, [1], 'm4a.stik');
+      assert.deepEqual(native['©alb'], ['Voodoo People'], 'm4a.©alb');
+      assert.deepEqual(native.aART, ['Pendulum'], 'm4a.aART');
+      assert.deepEqual(native['©ART'], ['The Prodigy'], 'm4a.©ART');
+      assert.deepEqual(native['©cmt'], ['(Pendulum Remix)'], 'm4a.©cmt');
+      assert.deepEqual(native['©wrt'], ['Liam Howlett'], 'm4a.©wrt');
+      assert.deepEqual(native['----:com.apple.iTunes:iTunNORM'], [' 0000120A 00001299 00007365 0000712F 0002D88B 0002D88B 00007F2B 00007F2C 0003C770 0001F5C7'], 'm4a.----:com.apple.iTunes:iTunNORM');
+      assert.deepEqual(native['©nam'], ['Voodoo People (Pendulum Remix)'], 'm4a.©nam');
+      assert.deepEqual(native['©too'], ['Lavf52.36.0'], 'm4a.©too');
+      assert.deepEqual(native['©day'], ['2005'], 'm4a.@day');
 
       // Check album art
-      t.isDefined(native.covr);
-      t.strictEqual(native.covr[0].format, 'image/jpeg', 'm4a.covr.format');
-      t.strictEqual(native.covr[0].data.length, 196450, 'm4a.covr.data.length');
+      assert.isDefined(native.covr);
+      assert.strictEqual(native.covr[0].format, 'image/jpeg', 'm4a.covr.format');
+      assert.strictEqual(native.covr[0].data.length, 196450, 'm4a.covr.data.length');
     }
 
     Parsers.forEach(parser => {
@@ -76,7 +74,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         const metadata = await parser.initParser(filePath, 'audio/mp4');
         const native = metadata.native.iTunes;
-        t.ok(native, 'Native m4a tags should be present');
+        assert.ok(native, 'Native m4a tags should be present');
 
         checkFormat(metadata.format);
         checkCommon(metadata.common);

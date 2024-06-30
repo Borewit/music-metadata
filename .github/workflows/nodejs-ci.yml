@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 22.x
 
       - name: Install production dependencies, check node engine compatibility
         run: yarn install --production=true
@@ -50,7 +50,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x, 20.x]
+        node-version: [16.x, 18.x, 20.x, 22.x]
 
     steps:
 
