@@ -116,7 +116,7 @@ export class VorbisParser implements IPageConsumer {
     switch (commonHeader.packetType) {
 
       case 3: //  type 3: comment header
-        return await this.parseUserCommentList(pageData, CommonHeader.len);
+        return this.parseUserCommentList(pageData, CommonHeader.len);
 
       case 1: // type 1: the identification header
       case 5: // type 5: setup header type

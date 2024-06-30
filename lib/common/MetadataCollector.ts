@@ -149,7 +149,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
         if (this.commonOrigin.artist === this.originPriority[tagType]) {
           // Assume the artist field is used as artists
-          return await this.postMap('artificial', {id: 'artists', value: tag.value});
+          return this.postMap('artificial', {id: 'artists', value: tag.value});
         }
 
         if (!this.common.artists) {
@@ -171,7 +171,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'picture':
-        return await this.postFixPicture(tag.value as IPicture).then(picture => {
+        return this.postFixPicture(tag.value as IPicture).then(picture => {
           if (picture !== null) {
             tag.value = picture;
             this.setGenericTag(tagType, tag);

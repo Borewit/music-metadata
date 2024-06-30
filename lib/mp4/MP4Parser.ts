@@ -351,7 +351,7 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-      await this.addTag(tagKey, dataAtom.value.toString('utf-8'));
+        await this.addTag(tagKey, dataAtom.value.toString('utf-8'));
         break;
 
       case 13: // JPEG
