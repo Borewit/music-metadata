@@ -190,7 +190,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
           case 'AverageLevel':
           case 'PeakValue':
             tag.id += ':' + tag.value.owner_identifier;
-            tag.value = tag.value.data.length === 4 ? tag.value.data.readUInt32LE(0) : null;
+            tag.value = tag.value.data.length === 4 ? new DataView(tag.value.data.buffer).getUint32(0) : null;
             if (tag.value === null) {
               warnings.addWarning(`Failed to parse PRIV:PeakValue`);
             }

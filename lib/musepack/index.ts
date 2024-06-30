@@ -12,7 +12,7 @@ const debug = initDebug('music-metadata:parser:musepack');
 class MusepackParser extends AbstractID3Parser {
 
   public async postId3v2Parse(): Promise<void> {
-    const signature = await this.tokenizer.peekToken(new Token.StringType(3, 'binary'));
+    const signature = await this.tokenizer.peekToken(new Token.StringType(3, 'latin1'));
     let mpcParser: ITokenParser;
     switch (signature) {
       case 'MP+': {

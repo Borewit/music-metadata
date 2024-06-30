@@ -23,7 +23,7 @@ describe('Parse ASF', () => {
 
     it('should construct GUID from string', () => {
 
-      const guid_data = Buffer.from([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
+      const guid_data = new Uint8Array([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
       assert.deepEqual(GUID.fromBin(guid_data).str, '75B22630-668E-11CF-A6D9-00AA0062CE6C');
     });
   });
@@ -34,41 +34,41 @@ describe('Parse ASF', () => {
    */
   it('should be able to roughly decode a 64-bit QWord', () => {
 
-    const tests: { raw: string, expected: number, description: string }[] = [
+    const tests: { raw: number[], expected: number, description: string }[] = [
       {
-        raw: '\xFF\x00\x00\x00\x00\x00\x00\x00',
+        raw: [0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
         expected: 0xFF,
         description: '8-bit'
       },
       {
-        raw: '\xFF\xFF\x00\x00\x00\x00\x00\x00',
+        raw: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
         expected: 0xFFFF,
         description: '16-bit'
       },
       {
-        raw: '\xFF\xFF\xFF\xFF\x00\x00\x00\x00',
+        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00],
         expected: 0xFFFFFFFF,
         description: '32-bit'
       },
       {
-        raw: '\xFF\xFF\xFF\xFF\xFF\x00\x00\x00',
+        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00],
         expected: 0xFFFFFFFFFF,
         description: '40-bit'
       },
       {
-        raw: '\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00',
+        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00],
         expected: 0xFFFFFFFFFFFF,
         description: '48-bit'
       },
       {
-        raw: '\xFF\xFF\xFF\xFF\xFF\xFF\x0F\x00',
+        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F, 0x00],
         expected: 0xFFFFFFFFFFFFF,
         description: '52-bit'
       }
     ];
 
     tests.forEach(test => {
-      const buf = Buffer.from(test.raw, 'binary');
+      const buf = Uint8Array.from(test.raw);
       assert.strictEqual(Number(AsfUtil.getParserForAttr(DataType.QWord)(buf)), test.expected, test.description);
     });
 

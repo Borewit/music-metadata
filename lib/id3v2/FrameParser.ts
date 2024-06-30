@@ -22,7 +22,7 @@ interface IPicture {
   data?: Uint8Array;
 }
 
-const defaultEnc: util.StringEncoding = 'latin1'; // latin1 == iso-8859-1;
+const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
 
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
@@ -286,7 +286,7 @@ export class FrameParser {
         // Decode URL
         fzero = util.findZero(uint8Array, offset + 1, length, encoding);
         const description = util.decodeString(uint8Array.slice(offset + 1, fzero), encoding);
-        offset = fzero + (encoding === 'utf16le' ? 2 : 1);
+        offset = fzero + (encoding === 'utf-16le' ? 2 : 1);
         output = {description, url: util.decodeString(uint8Array.slice(offset, length), defaultEnc)};
         break;
       }
@@ -370,7 +370,7 @@ export class FrameParser {
   }
 
   private static getNullTerminatorLength(enc: util.StringEncoding): number {
-    return enc === 'utf16le' ? 2 : 1;
+    return enc === 'utf-16le' ? 2 : 1;
   }
 
 }

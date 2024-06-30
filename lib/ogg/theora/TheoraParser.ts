@@ -22,13 +22,13 @@ export class TheoraParser implements Ogg.IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public parsePage(header: Ogg.IPageHeader, pageData: Buffer) {
+  public async parsePage(header: Ogg.IPageHeader, pageData: Buffer): Promise<void> {
     if (header.headerType.firstPage) {
-      this.parseFirstPage(header, pageData);
+      await this.parseFirstPage(header, pageData);
     }
   }
 
-  public flush() {
+  public async flush(): Promise<void> {
     debug('flush');
   }
 
@@ -41,7 +41,7 @@ export class TheoraParser implements Ogg.IPageConsumer {
    * @param {IPageHeader} header
    * @param {Buffer} pageData
    */
-  protected parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer) {
+  protected async parseFirstPage(header: Ogg.IPageHeader, pageData: Buffer): Promise<void> {
     debug('First Ogg/Theora page');
     this.metadata.setFormat('codec', 'Theora');
     const idHeader = IdentificationHeader.get(pageData, 0);

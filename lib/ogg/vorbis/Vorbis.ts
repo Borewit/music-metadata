@@ -34,10 +34,10 @@ export interface IVorbisPicture extends IPicture {
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 
   public static fromBase64(base64str: string): IVorbisPicture {
-    return this.fromBuffer(Buffer.from(base64str, 'base64'));
+    return this.fromBuffer(Uint8Array.from(atob(base64str), c => c.charCodeAt(0)));
   }
 
-  public static fromBuffer(buffer: Buffer): IVorbisPicture {
+  public static fromBuffer(buffer: Uint8Array): IVorbisPicture {
     const pic = new VorbisPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
@@ -45,15 +45,15 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
   constructor(public len) {
   }
 
-  public get(buffer: Buffer, offset: number): IVorbisPicture {
+  public get(buffer: Uint8Array, offset: number): IVorbisPicture {
 
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
 
     const mimeLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const format = buffer.toString('utf-8', offset += 4, offset + mimeLen);
+    const format =  new Token.StringType(mimeLen, 'utf-8').get(buffer, offset += 4);
 
     const descLen = Token.UINT32_BE.get(buffer, offset += mimeLen);
-    const description = buffer.toString('utf-8', offset += 4, offset + descLen);
+    const description = new Token.StringType(descLen, 'utf-8').get(buffer, offset += 4);
 
     const width = Token.UINT32_BE.get(buffer, offset += descLen);
     const height = Token.UINT32_BE.get(buffer, offset += 4);
@@ -103,9 +103,9 @@ export interface ICommonHeader {
 export const CommonHeader: IGetToken<ICommonHeader> = {
   len: 7,
 
-  get: (buf: Buffer, off): ICommonHeader => {
+  get: (buf: Uint8Array, off): ICommonHeader => {
     return {
-      packetType: buf.readUInt8(off),
+      packetType: Token.UINT8.get(buf, off),
       vorbis: new Token.StringType(6, 'ascii').get(buf, off + 1)
     };
   }
@@ -132,14 +132,13 @@ export const IdentificationHeader: IGetToken<IFormatInfo> = {
   len: 23,
 
   get: (uint8Array, off): IFormatInfo => {
-    const dataView = new DataView(uint8Array.buffer, uint8Array.byteOffset);
     return {
-      version: dataView.getUint32(off + 0, true),
-      channelMode: dataView.getUint8(off + 4),
-      sampleRate: dataView.getUint32(off + 5, true),
-      bitrateMax: dataView.getUint32(off + 9, true),
-      bitrateNominal: dataView.getUint32(off + 13, true),
-      bitrateMin: dataView.getUint32(off + 17, true)
+      version: Token.UINT32_LE.get(uint8Array, off + 0),
+      channelMode: Token.UINT8.get(uint8Array, off + 4),
+      sampleRate: Token.UINT32_LE.get(uint8Array, off + 5),
+      bitrateMax: Token.UINT32_LE.get(uint8Array, off + 9),
+      bitrateNominal: Token.UINT32_LE.get(uint8Array, off + 13),
+      bitrateMin: Token.UINT32_LE.get(uint8Array, off + 17)
     };
   }
 };

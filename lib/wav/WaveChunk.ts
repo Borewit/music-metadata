@@ -1,5 +1,6 @@
 import { IGetToken } from 'strtok3/core';
 import { IChunkHeader } from '../iff/index.js';
+import * as Token from 'token-types';
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx
@@ -58,14 +59,14 @@ export class Format implements IGetToken<IWaveFormat> {
     this.len = header.chunkSize;
   }
 
-  public get(buf: Buffer, off: number): IWaveFormat {
+  public get(buf: Uint8Array, off: number): IWaveFormat {
     return {
-      wFormatTag: buf.readUInt16LE(off),
-      nChannels: buf.readUInt16LE(off + 2),
-      nSamplesPerSec: buf.readUInt32LE(off + 4),
-      nAvgBytesPerSec: buf.readUInt32LE(off + 8),
-      nBlockAlign: buf.readUInt16LE(off + 12),
-      wBitsPerSample: buf.readUInt16LE(off + 14)
+      wFormatTag: Token.UINT16_LE.get(buf, off),
+      nChannels: Token.UINT16_LE.get(buf,off + 2),
+      nSamplesPerSec: Token.UINT32_LE.get(buf,off + 4),
+      nAvgBytesPerSec: Token.UINT32_LE.get(buf,off + 8),
+      nBlockAlign: Token.UINT16_LE.get(buf,off + 12),
+      wBitsPerSample: Token.UINT16_LE.get(buf,off + 14)
     };
   }
 }
@@ -92,7 +93,7 @@ export class FactChunk implements IGetToken<IFactChunk> {
 
   public get(buf: Buffer, off: number): IFactChunk {
     return {
-      dwSampleLength: buf.readUInt32LE(off)
+      dwSampleLength: Token.UINT32_LE.get(buf, off)
     };
   }
 

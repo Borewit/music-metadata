@@ -148,30 +148,28 @@ export class ID3v2Parser {
     for (const tag of this.parseMetadata(uint8Array)) {
       if (tag.id === 'TXXX') {
         if (tag.value) {
-          for (const text of tag.value.text) {
-            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text);
-          }
+          await Promise.all(tag.value.text.map(text =>
+            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text)
+          ));
         }
       } else if (tag.id === 'COM') {
-        for (const value of tag.value) {
-          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text);
-        }
+        await Promise.all(tag.value.map(value =>
+          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text)
+        ));
       } else if (tag.id === 'COMM') {
-        for (const value of tag.value) {
-          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value);
-        }
+        await Promise.all(tag.value.map(value =>
+          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value)
+        ));
       } else if (Array.isArray(tag.value)) {
-        for (const value of tag.value) {
-          this.addTag(tag.id, value);
-        }
+        await Promise.all(tag.value.map(value => this.addTag(tag.id, value)));
       } else {
-        this.addTag(tag.id, tag.value);
+        await this.addTag(tag.id, tag.value);
       }
     }
   }
 
-  private addTag(id: string, value: any) {
-    this.metadata.addTag(this.headerType, id, value);
+  private async addTag(id: string, value: any): Promise<void> {
+    await this.metadata.addTag(this.headerType, id, value);
   }
 
   private parseMetadata(data: Uint8Array): ITag[] {

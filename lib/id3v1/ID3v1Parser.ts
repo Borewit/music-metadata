@@ -72,7 +72,7 @@ const Iid3v1Token: IGetToken<IId3v1Header> = {
    * @param off Offset in buffer in bytes
    * @returns ID3v1.1 header if first 3 bytes equals 'TAG', otherwise null is returned
    */
-  get: (buf: Buffer, off): IId3v1Header => {
+  get: (buf: Uint8Array, off): IId3v1Header => {
     const header = new Id3v1StringType(3).get(buf, off);
     return header === 'TAG' ? {
       header,
@@ -93,10 +93,10 @@ const Iid3v1Token: IGetToken<IId3v1Header> = {
 class Id3v1StringType extends StringType {
 
   constructor(len: number) {
-    super(len, 'binary');
+    super(len, 'latin1');
   }
 
-  public get(buf: Buffer, off: number): string {
+  public get(buf: Uint8Array, off: number): string {
     let value = super.get(buf, off);
     value = util.trimRightNull(value);
     value = value.trim();
@@ -137,18 +137,18 @@ export class ID3v1Parser extends BasicParser {
       debug('ID3v1 header found at: pos=%s', this.tokenizer.fileInfo.size - Iid3v1Token.len);
       for (const id of ['title', 'artist', 'album', 'comment', 'track', 'year']) {
         if (header[id] && header[id] !== '')
-          this.addTag(id, header[id]);
+          await this.addTag(id, header[id]);
       }
       const genre = ID3v1Parser.getGenre(header.genre);
       if (genre)
-        this.addTag('genre', genre);
+        await this.addTag('genre', genre);
     } else {
       debug('ID3v1 header not found at: pos=%s', this.tokenizer.fileInfo.size - Iid3v1Token.len);
     }
   }
 
-  private addTag(id: string, value: any) {
-    this.metadata.addTag('ID3v1', id, value);
+  private async addTag(id: string, value: any): Promise<void> {
+    await this.metadata.addTag('ID3v1', id, value);
   }
 
 }
@@ -157,7 +157,7 @@ export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
     const tag = Buffer.alloc(3);
     await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
-    return tag.toString('binary') === 'TAG';
+    return tag.toString('latin1') === 'TAG';
   }
   return false;
 }

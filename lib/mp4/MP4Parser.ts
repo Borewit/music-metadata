@@ -8,6 +8,7 @@ import * as AtomToken from './AtomToken.js';
 import { IChapter, ITrackInfo, TrackType } from '../type.js';
 
 import { IGetToken } from '@tokenizer/token';
+import { uint8ArrayToHex, uint8ArrayToString } from 'uint8array-extras';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -271,8 +272,8 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private addTag(id: string, value: any) {
-    this.metadata.addTag(tagFormat, id, value);
+  private async addTag(id: string, value: any): Promise<void> {
+    await this.metadata.addTag(tagFormat, id, value);
   }
 
   private addWarning(message: string) {
@@ -303,8 +304,8 @@ export class MP4Parser extends BasicParser {
           break;
 
         default:
-          const dataAtom = await this.tokenizer.readToken<Buffer>(new Token.BufferType(payLoadLength));
-          this.addWarning('Unsupported meta-item: ' + tagKey + '[' + child.header.name + '] => value=' + dataAtom.toString('hex') + ' ascii=' + dataAtom.toString('ascii'));
+          const uint8Array = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
+          this.addWarning('Unsupported meta-item: ' + tagKey + '[' + child.header.name + '] => value=' + uint8ArrayToHex(uint8Array) + ' ascii=' + uint8ArrayToString(uint8Array, 'ascii'));
       }
 
     }, metaAtom.getPayloadLength(0));
@@ -328,19 +329,19 @@ export class MP4Parser extends BasicParser {
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
-            this.addTag(tagKey, num + '/' + of);
+            await this.addTag(tagKey, num + '/' + of);
             break;
 
           case 'gnre':
             const genreInt = Token.UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
-            this.addTag(tagKey, genreStr);
+            await this.addTag(tagKey, genreStr);
             break;
 
           case 'rate':
             const rate = dataAtom.value.toString('ascii');
-            this.addTag(tagKey, rate);
+            await this.addTag(tagKey, rate);
             break;
 
           default:
@@ -350,13 +351,13 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        this.addTag(tagKey, dataAtom.value.toString('utf-8'));
+        await this.addTag(tagKey, dataAtom.value.toString('utf-8'));
         break;
 
       case 13: // JPEG
         if (this.options.skipCovers)
           break;
-        this.addTag(tagKey, {
+        await this.addTag(tagKey, {
           format: 'image/jpeg',
           data: Buffer.from(dataAtom.value)
         });
@@ -365,30 +366,30 @@ export class MP4Parser extends BasicParser {
       case 14: // PNG
         if (this.options.skipCovers)
           break;
-        this.addTag(tagKey, {
+        await this.addTag(tagKey, {
           format: 'image/png',
           data: Buffer.from(dataAtom.value)
         });
         break;
 
       case 21: // BE Signed Integer
-        this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, true));
+        await this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, true));
         break;
 
       case 22: // BE Unsigned Integer
-        this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, false));
+        await this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, false));
         break;
 
       case 65: // An 8-bit signed integer
-        this.addTag(tagKey, dataAtom.value.readInt8(0));
+        await this.addTag(tagKey, dataAtom.value.readInt8(0));
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        this.addTag(tagKey, dataAtom.value.readInt16BE(0));
+        await this.addTag(tagKey, dataAtom.value.readInt16BE(0));
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        this.addTag(tagKey, dataAtom.value.readInt32BE(0));
+        await this.addTag(tagKey, dataAtom.value.readInt32BE(0));
         break;
 
       default:
@@ -521,7 +522,7 @@ export class MP4Parser extends BasicParser {
 
     date: async (len: number) => {
       const date = await this.tokenizer.readToken(new Token.StringType(len, 'utf-8'));
-      this.addTag('date', date);
+      await this.addTag('date', date);
     }
   };
 
