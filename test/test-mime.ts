@@ -6,8 +6,6 @@ import fs from 'node:fs';
 import * as mm from '../lib/index.js';
 import { SourceStream, samplePath } from './util.js';
 
-const t = assert;
-
 describe('MIME & extension mapping', () => {
 
   const buf = Buffer.alloc(30).fill(0);
@@ -21,7 +19,7 @@ describe('MIME & extension mapping', () => {
       case '.flac':
       case '.wav':
       case '.ogg':
-        t.ok(err.message.startsWith('FourCC'), `Only FourCC error allowed, got: ${err.message}`);
+        assert.ok(err.message.startsWith('FourCC'), `Only FourCC error allowed, got: ${err.message}`);
         break;
 
       default:
@@ -32,9 +30,9 @@ describe('MIME & extension mapping', () => {
   it('should reject an unknown file', () => {
 
     return mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))
-      .then(() => t.fail('Should reject extension'))
+      .then(() => assert.fail('Should reject extension'))
       .catch(err => {
-        t.strictEqual(err.message, 'Guessed MIME-type not supported: image/jpeg');
+        assert.strictEqual(err.message, 'Guessed MIME-type not supported: image/jpeg');
       });
 
   });
@@ -45,7 +43,7 @@ describe('MIME & extension mapping', () => {
       const streamReader = new SourceStream(buf);
       // Convert extension to MIME-Type
       const mimeType = mime.getType(extension);
-      t.isNotNull(mimeType, 'extension: ' + extension);
+      assert.isNotNull(mimeType, 'extension: ' + extension);
 
       return mm.parseStream(streamReader, mimeType)
         .catch(err => {

@@ -1,4 +1,4 @@
-![Node.js CI](https://github.com/Borewit/music-metadata/workflows/Node.js%20CI/badge.svg)
+[![Node.js CI](https://github.com/Borewit/music-metadata/actions/workflows/nodejs-ci.yml/badge.svg?branch=master)](https://github.com/Borewit/music-metadata/actions?query=branch%3Amaster)
 [![Build status](https://ci.appveyor.com/api/projects/status/tgtqynlon8t99qq5/branch/master?svg=true)](https://ci.appveyor.com/project/Borewit/music-metadata/branch/master)
 [![NPM version](https://img.shields.io/npm/v/music-metadata.svg)](https://npmjs.org/package/music-metadata)
 [![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmcharts.com/compare/music-metadata,jsmediatags,musicmetadata,node-id3,mp3-parser,id3-parser,wav-file-info?start=600)
@@ -25,12 +25,12 @@ Supports any common audio and tagging format.
 | AAC           | ADTS / Advanced Audio Coding    | [:link:](https://en.wikipedia.org/wiki/Advanced_Audio_Coding)      | <img src="https://svgshare.com/i/UT8.svg" width="40" alt="AAC logo">                                                                          |
 | APE           | Monkey's Audio                  | [:link:](https://wikipedia.org/wiki/Monkey's_Audio)                | <img src="https://foreverhits.files.wordpress.com/2015/05/ape_audio.jpg" width="40" alt="Monkey's Audio logo">                                |
 | ASF           | Advanced Systems Format         | [:link:](https://wikipedia.org/wiki/Advanced_Systems_Format)       |                                                                                                                                               |
-| BWF           | Broadcast Wave Format           | [:link:](https://en.wikipedia.org/wiki/Broadcast_Wave_Format)      |                                                                                                                                               |  
+| BWF           | Broadcast Wave Format           | [:link:](https://en.wikipedia.org/wiki/Broadcast_Wave_Format)      |                                                                                                                                               |
 | DSDIFF        | Philips DSDIFF                  | [:link:](https://wikipedia.org/wiki/Direct_Stream_Digital)         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/DSDlogo.svg" width="80" alt="DSD logo">                                         |
 | DSF           | Sony's DSD Stream File          | [:link:](https://wikipedia.org/wiki/Direct_Stream_Digital)         | <img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/DSDlogo.svg" width="80" alt="DSD logo">                                         |
 | FLAC          | Free Lossless Audio Codec       | [:link:](https://wikipedia.org/wiki/FLAC)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/FLAC_logo_vector.svg" width="80" alt="FLAC logo">                               |
 | MP2           | MPEG-1 Audio Layer II           | [:link:](https://wikipedia.org/wiki/MPEG-1_Audio_Layer_II)         |                                                                                                                                               |
-| Matroska      | Matroska (EBML), mka, mkv       | [:link:](https://wikipedia.org/wiki/Matroska)                      | <img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/Matroska_2010.svg" width="80" alt="Matroska logo">                              |                                                                                      
+| Matroska      | Matroska (EBML), mka, mkv       | [:link:](https://wikipedia.org/wiki/Matroska)                      | <img src="https://upload.wikimedia.org/wikipedia/commons/1/1a/Matroska_2010.svg" width="80" alt="Matroska logo">                              |
 | MP3           | MPEG-1 / MPEG-2 Audio Layer III | [:link:](https://wikipedia.org/wiki/MP3)                           | <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/Mp3.svg" width="80" alt="MP3 logo">                                             |
 | MPC           | Musepack SV7                    | [:link:](https://wikipedia.org/wiki/Musepack)                      | <img src="https://www.musepack.net/pictures/musepack_logo.png" width="80" alt="musepack logo">                                                |
 | MPEG 4        | mp4, m4a, m4v                   | [:link:](https://wikipedia.org/wiki/MPEG-4)                        | <img src="https://svgshare.com/i/UU3.svg" width="80" alt="mpeg 4 logo">                                                                       |
@@ -40,7 +40,7 @@ Supports any common audio and tagging format.
 | Theora        |                                 | [:link:](https://en.wikipedia.org/wiki/Theora)                     | <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/Theora_logo_2007.svg" width="70" alt="Theora logo">                             |
 | Vorbis        | Vorbis audio compression        | [:link:](https://wikipedia.org/wiki/Ogg_Vorbis)                    | <img src="https://upload.wikimedia.org/wikipedia/commons/8/8d/Xiph.Org_logo_square.svg" width="70" alt="Vorbis logo">                         |
 | WAV           | RIFF WAVE                       | [:link:](https://wikipedia.org/wiki/WAV)                           |                                                                                                                                               |
-| WebM          | webm                            | [:link:](https://wikipedia.org/wiki/WebM)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/3/34/WebM_logo.svg" width="80" alt="Matroska logo">                                  |                                                                                      
+| WebM          | webm                            | [:link:](https://wikipedia.org/wiki/WebM)                          | <img src="https://upload.wikimedia.org/wikipedia/commons/3/34/WebM_logo.svg" width="80" alt="Matroska logo">                                  |
 | WV            | WavPack                         | [:link:](https://wikipedia.org/wiki/WavPack)                       | <img src="http://www.wavpack.com/wavpacklogo.svg" width="60" alt="WavPack logo">                                                              |
 | WMA           | Windows Media Audio             | [:link:](https://wikipedia.org/wiki/Windows_Media_Audio)           | <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Windows_Media_Player_simplified_logo.svg" width="40" alt="Windows Media logo">  |
 
@@ -68,7 +68,7 @@ Support for encoding / format details:
 *   [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
 *   Duration
 *   Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
-  
+
 
 ## Online demo's
 *   [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
@@ -83,7 +83,7 @@ Requires Node.js ≥ 14.13.1 engine.
 
 ### Browser Support
 
-Although music-metadata is designed to run the node.js. [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) can be used on the browser side. 
+Although music-metadata is designed to run the node.js. [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) can be used on the browser side.
 
 To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
 ```js
@@ -193,7 +193,7 @@ import { inspect } from 'util';
 #### parseStream function
 
 Parses the provided audio stream for metadata.
-It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). 
+It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
 An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
 
@@ -268,9 +268,9 @@ import { inspect } from 'util';
 ```
 
 #### ratingToStars function
-   
+
    Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
-   
+
    ```ts
    ratingToStars(rating: number): number
    ```
@@ -301,19 +301,19 @@ import { parseFile, selectCover } from 'music-metadata';
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
-    
+
 ### Metadata result
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
 *   [`metadata.format`](#metadataformat) Audio format information
-*   [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information. 
-*   [`metadata.trackInfo`](#metadatatrackInfo) Is a generic (abstract) way of reading metadata information. 
+*   [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information.
+*   [`metadata.trackInfo`](#metadatatrackInfo) Is a generic (abstract) way of reading metadata information.
 *   `metadata.native` List of native (original) tags found in the parsed audio file.
-  
+
 #### `metadata.format`
 
-The questionmark `?` indicates the property is optional. 
-  
+The questionmark `?` indicates the property is optional.
+
 Audio format information. Defined in the TypeScript `IFormat` interface:
 *   `format.container?: string` Audio encoding format. e.g.: 'flac'
 *   `format.codec?` Name of the codec (algorithm used for the audio compression)
@@ -333,11 +333,11 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 #### `metadata.trackInfo`
 
 To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental** `metadata.trackInfo` has been added,
-    
+
 `metadata.trackInfo` is either `undefined` or has an **array** of [trackInfo](#trackinfo)
-  
+
 ##### trackInfo
-  
+
 Audio format information. Defined in the TypeScript `IFormat` interface:
 *   `trackInfo.type?: TrackType` Track type
 *   `trackInfo.codecName?: string` Codec name
@@ -370,7 +370,7 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 *   `videoTrack.aspectRatioType?: number`
 *   `videoTrack.colourSpace?: Buffer`
 *   `videoTrack.gammaValue?: number`
-  
+
 #### `metadata.common`
 
 [Common tag documentation](doc/common_metadata.md) is automatically generated.
@@ -436,11 +436,11 @@ img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
 
         ```js
         import { parseFile } from 'music-metadata';
-        
+
         function parseFiles(audioFiles) {
-          
+
           const audioFile = audioFiles.shift();
-          
+
           if (audioFile) {
             return parseFile(audioFile).then(metadata => {
               // Do great things with the metadata
@@ -448,21 +448,21 @@ img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
             })
           }
         }
-        
+
         ```
 
     2.  Use async/await
-        
+
         Use [async/await](https://javascript.info/async-await)
-        
+
         ```js
         import { parseFile } from 'music-metadata';
-        
+
         // it is required to declare the function 'async' to allow the use of await
         async function parseFiles(audioFiles) {
-        
+
             for (const audioFile of audioFiles) {
-            
+
                 // await will ensure the metadata parsing is completed before we move on to the next file
                 const metadata = await parseFile(audioFile);
                 // Do great things with the metadata

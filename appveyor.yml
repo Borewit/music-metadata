@@ -11,7 +11,7 @@ install:
   # Get the latest stable version of Node.js or io.js
   - ps: Install-Product node $env:nodejs_version
   # install modules
-  - yarn install
+  - yarn install --ignore-engines
 
 build_script:
   - yarn run lint
