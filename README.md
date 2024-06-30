@@ -1,4 +1,4 @@
-![Node.js CI](https://github.com/Borewit/music-metadata/workflows/Node.js%20CI/badge.svg)
+[![Node.js CI](https://github.com/Borewit/music-metadata/actions/workflows/nodejs-ci.yml/badge.svg?branch=master)](https://github.com/Borewit/music-metadata/actions?query=branch%3Amaster)
 [![Build status](https://ci.appveyor.com/api/projects/status/tgtqynlon8t99qq5/branch/master?svg=true)](https://ci.appveyor.com/project/Borewit/music-metadata/branch/master)
 [![NPM version](https://img.shields.io/npm/v/music-metadata.svg)](https://npmjs.org/package/music-metadata)
 [![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmcharts.com/compare/music-metadata,jsmediatags,musicmetadata,node-id3,mp3-parser,id3-parser,wav-file-info?start=600)
