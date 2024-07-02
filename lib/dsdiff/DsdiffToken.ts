@@ -1,9 +1,9 @@
 import * as Token from 'token-types';
 import { IGetToken } from 'strtok3/core';
-
 import { FourCcToken } from '../common/FourCC.js';
-import { IChunkHeader64 } from '../iff/index.js';
-export { IChunkHeader64 } from '../iff/index.js';
+
+import type { IChunkHeader64 } from '../iff/index.ts';
+export type { IChunkHeader64 } from '../iff/index.ts';
 
 /**
  * DSDIFF chunk header

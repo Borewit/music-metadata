@@ -7,9 +7,9 @@ import { APEv2Parser } from './apev2/APEv2Parser.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
-import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
+import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.ts';
 
-export { IFileInfo } from 'strtok3/core';
+export type { IFileInfo } from 'strtok3/core';
 
 /**
  * Parse audio from Node Stream.Readable

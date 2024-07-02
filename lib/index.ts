@@ -4,11 +4,11 @@ import initDebug from 'debug';
 
 import { parseFromTokenizer, scanAppendingHeaders } from './core.js';
 import { ParserFactory } from './ParserFactory.js';
-import { IAudioMetadata, IOptions } from './type.js';
+import type { IAudioMetadata, IOptions } from './type.ts';
 import { RandomFileReader } from './common/RandomFileReader.js';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type.js';
-export { parseFromTokenizer, parseBuffer, selectCover, orderTags, ratingToStars, IFileInfo } from './core.js';
+export type { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type.ts';
+export { parseFromTokenizer, parseBuffer, selectCover, orderTags, ratingToStars, type IFileInfo } from './core.js';
 
 const debug = initDebug('music-metadata:parser');
 
