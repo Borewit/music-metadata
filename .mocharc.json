@@ -1,7 +1,7 @@
 {
-  "extension": ["ts", "tsx"],
+  "extension": ["ts"],
   "watch-files": ["lib/**/*.ts", "test/**/*.ts"],
   "spec": ["test/test-*.ts"],
-  "loader": ["ts-node/esm"],
-  "extensions": ["ts", "tsx"]
+  "import": ["tsx"],
+  "extensions": ["ts"]
 }

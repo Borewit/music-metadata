@@ -6,6 +6,7 @@
     "target": "ES2019",
     "esModuleInterop": true,
     "baseUrl": ".",
+    "outDir": "dist",
     "paths": {
       "strtok3/core": ["node_modules/strtok3/lib/core"]
     }
