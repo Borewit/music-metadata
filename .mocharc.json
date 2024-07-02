@@ -1,7 +1,0 @@
-{
-  "extension": ["ts"],
-  "watch-files": ["lib/**/*.ts", "test/**/*.ts"],
-  "spec": ["test/test-*.ts"],
-  "import": ["tsx"],
-  "extensions": ["ts"]
-}
