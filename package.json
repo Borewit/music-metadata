@@ -95,7 +95,7 @@
     "file-type": "^18.6.0",
     "media-typer": "^1.1.0",
     "strtok3": "^7.0.0",
-    "token-types": "^5.0.1",
+    "token-types": "^6.0.0",
     "uint8array-extras": "^1.2.0"
   },
   "devDependencies": {

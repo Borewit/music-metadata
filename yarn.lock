@@ -4514,6 +4514,14 @@ token-types@^5.0.1:
     "@tokenizer/token" "^0.3.0"
     ieee754 "^1.2.1"
 
+token-types@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/token-types/-/token-types-6.0.0.tgz#1ab26be1ef9c434853500c071acfe5c8dd6544a3"
+  integrity sha512-lbDrTLVsHhOMljPscd0yitpozq7Ga2M5Cvez5AjGg8GASBjtt6iERCAJ93yommPmz62fb45oFIXHEZ3u9bfJEA==
+  dependencies:
+    "@tokenizer/token" "^0.3.0"
+    ieee754 "^1.2.1"
+
 trim-newlines@^4.0.2:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/trim-newlines/-/trim-newlines-4.1.1.tgz#28c88deb50ed10c7ba6dc2474421904a00139125"
