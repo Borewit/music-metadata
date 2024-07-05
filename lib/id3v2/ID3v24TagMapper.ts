@@ -1,10 +1,11 @@
-import { INativeTagMap } from '../common/GenericTagTypes.js';
+import { UINT32_LE } from 'token-types';
 import { CommonTagMapper } from '../common/GenericTagMapper.js';
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
-import * as util from '../common/Util.js';
+import { decodeString } from '../common/Util.js';
 
-import { INativeMetadataCollector } from '../common/MetadataCollector.js';
-import { IRating, ITag } from '../type.js';
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
+import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import type { IRating, ITag } from '../type.js';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -171,7 +172,6 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
    * Handle post mapping exceptions / correction
    * @param tag to post map
    * @param warnings Wil be used to register (collect) warnings
-   * @return Common value e.g. "Buena Vista Social Club"
    */
   protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
 
@@ -180,7 +180,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
       case 'UFID': // decode MusicBrainz Recording Id
         if (tag.value.owner_identifier === 'http://musicbrainz.org') {
           tag.id += ':' + tag.value.owner_identifier;
-          tag.value = util.decodeString(tag.value.identifier, 'latin1'); // latin1 == iso-8859-1
+          tag.value = decodeString(tag.value.identifier, 'latin1'); // latin1 == iso-8859-1
         }
         break;
 
@@ -190,7 +190,7 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
           case 'AverageLevel':
           case 'PeakValue':
             tag.id += ':' + tag.value.owner_identifier;
-            tag.value = tag.value.data.length === 4 ? new DataView(tag.value.data.buffer).getUint32(0) : null;
+            tag.value = tag.value.data.length === 4 ? UINT32_LE.get(tag.value.data, 0) : null;
             if (tag.value === null) {
               warnings.addWarning(`Failed to parse PRIV:PeakValue`);
             }
