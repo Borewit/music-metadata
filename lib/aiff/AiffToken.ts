@@ -1,10 +1,9 @@
 import * as Token from 'token-types';
-import { Buffer } from 'node:buffer';
 
 import { FourCcToken } from '../common/FourCC.js';
 import * as iff from '../iff/index.js';
 
-import { IGetToken } from 'strtok3';
+import type { IGetToken } from 'strtok3';
 
 /**
  * The Common Chunk.
@@ -30,7 +29,7 @@ export class Common implements IGetToken<ICommon> {
     this.len = header.chunkSize;
   }
 
-  public get(buf: Buffer, off: number): ICommon {
+  public get(buf: Uint8Array, off: number): ICommon {
 
     // see: https://cycling74.com/forums/aiffs-80-bit-sample-rate-value
     const shift = Token.UINT16_BE.get(buf, off + 8) - 16398;

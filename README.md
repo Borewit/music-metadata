@@ -115,7 +115,6 @@ graph TD;
     FT-->RWNS(readable-web-to-node-stream)
     FT-->S
     FT-->TY
-    TY-->NB(node:buffer)
     RWNS-->RS(readable-stream)
     RS-->SD(string_decoder)
     SD-->SB(safe-buffer)

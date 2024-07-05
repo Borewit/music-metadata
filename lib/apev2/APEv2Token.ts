@@ -1,6 +1,5 @@
 import * as Token from 'token-types';
 import { IGetToken } from 'strtok3/core';
-import { Buffer } from 'node:buffer';
 
 import { FourCcToken } from '../common/FourCC.js';
 
@@ -158,7 +157,7 @@ export const Header: IGetToken<IHeader> = {
 export const TagFooter: IGetToken<IFooter> = {
   len: 32,
 
-  get: (buf: Buffer, off) => {
+  get: (buf, off) => {
     return {
       // should equal 'APETAGEX'
       ID: new Token.StringType(8, 'ascii').get(buf, off),

@@ -1,5 +1,4 @@
 import * as Token from 'token-types';
-import { Buffer } from 'node:buffer';
 
 import * as util from '../common/Util.js';
 import { DataType } from './AsfObject.js';
@@ -30,19 +29,19 @@ export class AsfUtil {
     return new Uint8Array(buf);
   }
 
-  private static parseBoolAttr(buf: Buffer, offset: number = 0): boolean {
+  private static parseBoolAttr(buf: Uint8Array, offset: number = 0): boolean {
     return AsfUtil.parseWordAttr(buf, offset) === 1;
   }
 
-  private static parseDWordAttr(buf: Buffer, offset: number = 0): number {
+  private static parseDWordAttr(buf: Uint8Array, offset: number = 0): number {
     return Token.UINT32_LE.get(buf, offset);
   }
 
-  private static parseQWordAttr(buf: Buffer, offset: number = 0): bigint {
+  private static parseQWordAttr(buf: Uint8Array, offset: number = 0): bigint {
     return Token.UINT64_LE.get(buf, offset);
   }
 
-  private static parseWordAttr(buf: Buffer, offset: number = 0): number {
+  private static parseWordAttr(buf: Uint8Array, offset: number = 0): number {
     return Token.UINT16_LE.get(buf, offset);
   }
 }
