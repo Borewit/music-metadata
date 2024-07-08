@@ -1,7 +1,7 @@
 // ASF Objects
 
 import * as Token from 'token-types';
-import { IGetToken, ITokenizer } from 'strtok3/core';
+import type { IGetToken, ITokenizer } from 'strtok3';
 
 import * as util from '../common/Util.js';
 import { IPicture, ITag } from '../type.js';

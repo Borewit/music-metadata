@@ -1,4 +1,4 @@
-import { ITokenizer } from 'strtok3/core';
+import type { ITokenizer } from 'strtok3';
 
 import { ITokenParser } from '../ParserFactory.js';
 import { IOptions, IPrivateOptions } from '../type.js';

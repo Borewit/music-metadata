@@ -1,4 +1,4 @@
-import * as strtok3 from 'strtok3/core';
+import * as strtok3 from 'strtok3';
 
 import { ParserFactory } from './ParserFactory.js';
 import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader.js';
@@ -9,7 +9,7 @@ import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 
-export { IFileInfo } from 'strtok3/core';
+export { IFileInfo } from 'strtok3';
 
 export type AnyWebStream<G> = NodeReadableStream<G> | ReadableStream<G>;
 
@@ -25,7 +25,7 @@ export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAu
   if (blob instanceof File) {
     fileInfo.path = (blob as File).name;
   }
-  return parseWebStream(blob.stream(), fileInfo, options);
+  return parseWebStream(blob.stream() as any, fileInfo, options);
 }
 
 /**

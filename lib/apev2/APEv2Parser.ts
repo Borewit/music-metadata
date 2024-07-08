@@ -1,5 +1,5 @@
 import initDebug from 'debug';
-import * as strtok3 from 'strtok3/core';
+import * as strtok3 from 'strtok3';
 import { StringType } from 'token-types';
 import { uint8ArrayToString } from 'uint8array-extras';
 

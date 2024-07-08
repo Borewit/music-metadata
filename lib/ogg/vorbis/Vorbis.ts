@@ -3,7 +3,7 @@ import * as Token from 'token-types';
 import { AttachedPictureType } from '../../id3v2/ID3v2Token.js';
 
 import { IPicture } from '../../type.js';
-import { IGetToken } from 'strtok3/core';
+import type { IGetToken } from 'strtok3';
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE

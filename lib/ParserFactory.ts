@@ -19,7 +19,7 @@ import { DsdiffParser } from './dsdiff/DsdiffParser.js';
 import { MatroskaParser } from './matroska/MatroskaParser.js';
 
 import { IOptions, IAudioMetadata, ParserType } from './type.js';
-import { ITokenizer } from 'strtok3/core';
+import type { ITokenizer } from 'strtok3';
 
 const debug = initDebug('music-metadata:parser:factory');
 

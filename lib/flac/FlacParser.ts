@@ -1,6 +1,6 @@
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
 import initDebug from 'debug';
-import { ITokenizer, IGetToken } from 'strtok3/core';
+import type { ITokenizer, IGetToken } from 'strtok3';
 
 import * as util from '../common/Util.js';
 import { IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
