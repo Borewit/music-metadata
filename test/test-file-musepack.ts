@@ -13,9 +13,9 @@ describe('Parse Musepack (.mpc)', () => {
     const filePath = path.join(mpcSamplePath, 'apev2.sv7.mpc');
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
-        const metadata = await parser.initParser(filePath, 'audio/musepac');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         const format = metadata.format;
         assert.deepEqual(format.container, 'Musepack, SV7');
@@ -48,9 +48,9 @@ describe('Parse Musepack (.mpc)', () => {
     const filePath = path.join(mpcSamplePath, 'apev2-no-header.sv7.mpc');
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
-        const metadata = await parser.initParser(filePath, 'audio/musepac');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(metadata.format.container, 'Musepack, SV7');
         assert.strictEqual(metadata.format.sampleRate, 44100);
@@ -74,9 +74,9 @@ describe('Parse Musepack (.mpc)', () => {
     const filePath = path.join(mpcSamplePath, 'bach-goldberg-variatians-05.sv8.mpc');
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
-        const metadata = await parser.initParser(filePath, 'audio/musepac');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(metadata.format.container, 'Musepack, SV8');
         assert.strictEqual(metadata.format.sampleRate, 48000);

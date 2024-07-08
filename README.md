@@ -190,7 +190,10 @@ import { inspect } from 'util';
 
 #### parseStream function
 
+_Only available for Node.js._
+
 Parses the provided audio stream for metadata.
+The stream should be of type [Node.js Readable](https://nodejs.org/api/stream.html#class-streamreadable).
 It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
 An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
@@ -211,6 +214,41 @@ import { parseStream } from 'music-metadata';
     console.error(error.message);
   }
 })();
+```
+
+#### parseWebStream function
+
+Parses the provided audio web stream for metadata.
+The stream should be of type [ReadableStream<Uint8Array>](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream).
+It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
+An extension (e.g.: `.mp3`), filename or path will also work.
+If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
+
+```ts
+parseWebStream(stream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+```
+
+#### parseBlob function
+
+Parse an audio file from a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) or [File](https://developer.mozilla.org/en-US/docs/Web/API/File).
+
+```js
+const musicMetadata = require('music-metadata');
+
+let blob;
+
+musicMetadata.parseBlob(blob).then(metadata => {
+    // metadata has all the metadata found in the blob or file
+  });
+```
+Or with async/await if you prefer:
+```js
+(async () => {
+  let blob; // File or Blob
+
+  const metadata = await musicMetadata.parseBlob(blob);
+  // metadata has all the metadata found in the blob or file
+});
 ```
 
 #### parseBuffer function

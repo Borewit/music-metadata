@@ -68,11 +68,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     }
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
         const filePath = path.join(mp4Samples, 'id4.m4a');
 
-        const metadata = await parser.initParser(filePath, 'audio/mp4');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
         const native = metadata.native.iTunes;
         assert.ok(native, 'Native m4a tags should be present');
 
@@ -89,11 +89,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   describe('should decode 8-byte unsigned integer', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
         const filePath = path.join(mp4Samples, 'issue-74.m4a');
 
-        const metadata = await parser.initParser(filePath, 'audio/mp4');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
         const {format, common, native} = metadata;
 
         assert.deepEqual(format.container, 'isom/iso2/mp41', 'format.container');
@@ -118,11 +118,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   describe('should be able to extract the composer and artist', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
         const filePath = path.join(mp4Samples, 'issue-79.m4a');
 
-        const metadata = await parser.initParser(filePath, 'audio/mp4');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
         const {common, format} = metadata;
 
         assert.deepEqual(format.container, 'M4A/mp42/isom', 'format.container');
@@ -148,11 +148,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     describe('audio book from issue issue #127', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, async () => {
+        it(parser.description, async function(){
 
           const filePath = path.join(mp4Samples, 'issue-127.m4b');
 
-          const metadata = await parser.initParser(filePath, 'audio/mp4');
+          const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
           const {common, format} = metadata;
 
           assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
@@ -288,11 +288,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     describe('Parse TV episode', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, async () => {
+        it(parser.description, async function(){
 
           const filePath = path.join(mp4Samples, 'Mr. Pickles S02E07 My Dear Boy.mp4');
 
-          const metadata = await parser.initParser(filePath, 'video/mp4');
+          const metadata = await parser.initParser(() => this.skip(), filePath, 'video/mp4');
           assert.deepEqual(metadata.common.title, 'My Dear Boy');
           assert.deepEqual(metadata.common.tvEpisode, 7);
           assert.deepEqual(metadata.common.tvEpisodeId, '017');
@@ -316,11 +316,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   describe('should support extended atom header', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
-        const metadata = await parser.initParser(filePath, 'video/mp4');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'video/mp4');
         assert.deepEqual(metadata.format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
       });
@@ -330,11 +330,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   describe('Handle dashed atom-ID\'s', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
 
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
-        const metadata = await parser.initParser(filePath, 'video/mp4');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'video/mp4');
         assert.deepEqual(metadata.format.container, 'mp42/isom', 'format.container');
         assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
 
@@ -353,10 +353,10 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   describe('Parse Trumpsta (Djuro Remix)', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
+      it(parser.description, async function(){
         const filePath = path.join(mp4Samples, '01. Trumpsta (Djuro Remix).m4a');
 
-        const metadata = await parser.initParser(filePath, 'audio/m4a');
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/m4a');
         assert.deepEqual(metadata.format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(metadata.format.codec, 'MPEG-4/AAC', 'format.codec');
 

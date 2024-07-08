@@ -1,4 +1,3 @@
-import { Readable } from 'stream';
 import * as strtok3 from 'strtok3/core';
 
 import { ParserFactory } from './ParserFactory.js';
@@ -7,19 +6,37 @@ import { APEv2Parser } from './apev2/APEv2Parser.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
-import { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
+import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
+import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 
 export { IFileInfo } from 'strtok3/core';
 
+export type AnyWebStream<G> = NodeReadableStream<G> | ReadableStream<G>;
+
 /**
- * Parse audio from Node Stream.Readable
- * @param stream - Stream to read the audio track from
+ * Parse Web API File
+ * Requires Blob to be able to stream using a ReadableStreamBYOBReader, only available since Node.js ≥ 20
+ * @param blob - Blob to parse
+ * @param options - Parsing options
+ * @returns Metadata
+ */
+export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAudioMetadata> {
+  const fileInfo: strtok3.IFileInfo = {mimeType: blob.type, size: blob.size};
+  if (blob instanceof File) {
+    fileInfo.path = (blob as File).name;
+  }
+  return parseWebStream(blob.stream(), fileInfo, options);
+}
+
+/**
+ * Parse audio from Web Stream.Readable
+ * @param webStream - WebStream to read the audio track from
  * @param options - Parsing options
  * @param fileInfo - File information object or MIME-type string
  * @returns Metadata
  */
-export function parseStream(stream: Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  return parseFromTokenizer(strtok3.fromStream(stream, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo), options);
+export function parseWebStream(webStream: AnyWebStream<Uint8Array>, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+  return parseFromTokenizer(strtok3.fromWebStream(webStream as any, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo), options);
 }
 
 /**
