@@ -144,7 +144,7 @@ export const Header: IToken<IAtomHeader> = {
 
     return {
       length: BigInt(length),
-      name: new Token.StringType(4, 'binary').get(buf, off + 4)
+      name: new Token.StringType(4, 'latin1').get(buf, off + 4)
     };
   },
 

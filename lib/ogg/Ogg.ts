@@ -64,7 +64,7 @@ export interface IPageConsumer {
    * @param {IPageHeader} header Ogg page header
    * @param {Buffer} pageData Ogg page data
    */
-  parsePage(header: IPageHeader, pageData: Uint8Array);
+  parsePage(header: IPageHeader, pageData: Uint8Array): Promise<void>;
 
   /**
    * Calculate duration of provided header
@@ -75,5 +75,5 @@ export interface IPageConsumer {
   /**
    * Force to parse pending segments
    */
-  flush();
+  flush(): Promise<void>;
 }

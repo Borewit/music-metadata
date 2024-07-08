@@ -1,3 +1,5 @@
+import {hexToUint8Array, uint8ArrayToHex} from 'uint8array-extras';
+
 /**
  * Ref:
  * - https://tools.ietf.org/html/draft-fleischman-asf-01, Appendix A: ASF GUIDs
@@ -66,7 +68,7 @@ export default class GUID {
 
   public static ASF_Index_Placeholder_Object  = new GUID("D9AADE20-7C17-4F9C-BC28-8555DD98E2A2");
 
-  public static fromBin(bin: Buffer, offset: number = 0) {
+  public static fromBin(bin: Uint8Array, offset: number = 0) {
     return new GUID(this.decode(bin, offset));
   }
 
@@ -76,12 +78,13 @@ export default class GUID {
    * @param offset Read offset in bytes, default 0
    * @returns GUID as dashed hexadecimal representation
    */
-  public static decode(objectId: Buffer, offset: number = 0): string {
-    const guid = objectId.readUInt32LE(offset).toString(16) + "-" +
-      objectId.readUInt16LE(offset + 4).toString(16) + "-" +
-      objectId.readUInt16LE(offset + 6).toString(16) + "-" +
-      objectId.readUInt16BE(offset + 8).toString(16) + "-" +
-      objectId.slice(offset + 10, offset + 16).toString('hex');
+  public static decode(objectId: Uint8Array, offset: number = 0): string {
+    const view = new DataView(objectId.buffer, offset);
+    const guid = view.getUint32(0, true).toString(16) + "-" +
+      view.getUint16(4, true).toString(16) + "-" +
+      view.getUint16(6, true).toString(16) + "-" +
+      view.getUint16(8).toString(16) + "-" +
+      uint8ArrayToHex(objectId.slice(offset + 10, offset + 16));
 
     return guid.toUpperCase();
   }
@@ -107,13 +110,14 @@ export default class GUID {
    * @param guid GUID like: "B503BF5F-2EA9-CF11-8EE3-00C00C205365"
    * @returns Encoded Binary GUID
    */
-  public static encode(str: string): Buffer {
-    const bin = Buffer.alloc(16);
-    bin.writeUInt32LE(parseInt(str.slice(0, 8), 16), 0);
-    bin.writeUInt16LE(parseInt(str.slice(9, 13), 16), 4);
-    bin.writeUInt16LE(parseInt(str.slice(14, 18), 16), 6);
-    Buffer.from(str.slice(19, 23), "hex").copy(bin, 8);
-    Buffer.from(str.slice(24), "hex").copy(bin, 10);
+  public static encode(str: string): Uint8Array {
+    const bin = new Uint8Array(16);
+    const view = new DataView(bin.buffer);
+    view.setUint32(0, parseInt(str.slice(0, 8), 16), true);
+    view.setUint16(4, parseInt(str.slice(9, 13), 16), true);
+    view.setUint16(6, parseInt(str.slice(14, 18), 16), true);
+    bin.set(hexToUint8Array(str.slice(19, 23)), 8);
+    bin.set(hexToUint8Array(str.slice(24)), 10);
 
     return bin;
   }
@@ -125,7 +129,7 @@ export default class GUID {
     return this.str === guid.str;
   }
 
-  public toBin(): Buffer {
+  public toBin(): Uint8Array {
     return GUID.encode(this.str);
   }
 

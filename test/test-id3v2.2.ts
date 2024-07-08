@@ -11,8 +11,8 @@ describe('ID3v2Parser', () => {
   const mp3Path = path.join(samplePath, 'mp3');
 
   it('should be able to remove unsynchronisation bytes from buffer', () => {
-    const expected = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
-    const sample = Buffer.from([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
+    const expected = Uint8Array.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
+    const sample = Uint8Array.from([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
     const output = ID3v2Parser.removeUnsyncBytes(sample);
     assert.deepEqual(output, expected, 'bytes');
   });

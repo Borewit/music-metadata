@@ -57,7 +57,7 @@ export class OggParser extends BasicParser {
           firstPage: util.getBit(buf, off + 5, 1),
           lastPage: util.getBit(buf, off + 5, 2)
         },
-        // packet_flag: buf.readUInt8(off + 5),
+        // packet_flag: Token.UINT8.get(buf, off + 5),
         absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
         streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
         pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
@@ -117,7 +117,7 @@ export class OggParser extends BasicParser {
               throw new Error('gg audio-codec not recognized (id=' + id + ')');
           }
         }
-        this.pageConsumer.parsePage(header, pageData);
+        await this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);
     } catch (err) {
       if (err instanceof EndOfStreamError) {
@@ -131,7 +131,7 @@ export class OggParser extends BasicParser {
         if (this.pageNumber > 0) {
           // ignore this error: work-around if last OGG-page is not marked with last-page flag
           this.metadata.addWarning('Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag');
-          this.pageConsumer.flush();
+          await this.pageConsumer.flush();
         }
       } else {
         throw err;

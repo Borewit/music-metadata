@@ -12,7 +12,7 @@ const dirname = path.dirname(filename);
  */
 export class SourceStream extends Readable {
 
-  constructor(private buf: Buffer) {
+  constructor(private buf: Uint8Array) {
     super();
   }
 

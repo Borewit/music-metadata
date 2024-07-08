@@ -60,12 +60,12 @@ export class AsfParser extends BasicParser {
 
         case AsfObject.ContentDescriptionObjectState.guid.str: // 3.10
           tags = await this.tokenizer.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header));
-          this.addTags(tags);
+          await this.addTags(tags);
           break;
 
         case AsfObject.ExtendedContentDescriptionObjectState.guid.str: // 3.11
           tags = await this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header));
-          this.addTags(tags);
+          await this.addTags(tags);
           break;
 
         case GUID.CodecListObject.str:
@@ -100,10 +100,8 @@ export class AsfParser extends BasicParser {
     // done
   }
 
-  private addTags(tags: ITag[]) {
-    tags.forEach(tag => {
-      this.metadata.addTag(headerType, tag.id, tag.value);
-    });
+  private async addTags(tags: ITag[]): Promise<void> {
+    await Promise.all(tags.map(({ id, value }) => this.metadata.addTag(headerType, id, value)));
   }
 
   private async parseExtensionObject(extensionSize: number): Promise<void> {
@@ -122,12 +120,12 @@ export class AsfParser extends BasicParser {
 
         case AsfObject.MetadataObjectState.guid.str: // 4.7
           const moTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header));
-          this.addTags(moTags);
+          await this.addTags(moTags);
           break;
 
         case AsfObject.MetadataLibraryObjectState.guid.str: // 4.8
           const mlTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header));
-          this.addTags(mlTags);
+          await this.addTags(mlTags);
           break;
 
         case GUID.PaddingObject.str:

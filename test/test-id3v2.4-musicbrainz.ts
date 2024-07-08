@@ -66,11 +66,11 @@ it('should MusicBrainz tags with id3v2.4', async () => {
 
   assert.deepEqual(native[i++], {
     id: 'PRIV',
-    value: {data: Buffer.from([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
+    value: {data: Uint8Array.from([0x02, 0x00, 0x00, 0x00]), owner_identifier: 'AverageLevel'}
   }, '[\'ID3v2.4\'].PRIV.AverageLevel');
   assert.deepEqual(native[i++], {
     id: 'PRIV',
-    value: {data: Buffer.from([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
+    value: {data: Uint8Array.from([0x08, 0x00, 0x00, 0x00]), owner_identifier: 'PeakValue'}
   }, '[\'ID3v2.4\'].PRIV.PeakValue');
   assert.deepEqual(native[i++], {id: 'TCOM', value: 'Explosions in the Sky'}, '[\'ID3v2.4\'].TCOM');
   assert.deepEqual(native[i++], {id: 'TDOR', value: '2004-10-12'}, '[\'ID3v2.4\'].TDOR');

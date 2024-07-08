@@ -2,7 +2,6 @@ import { fileTypeFromBuffer } from 'file-type';
 import ContentType from 'content-type';
 import MimeType from 'media-typer';
 import initDebug from 'debug';
-import { Buffer } from 'node:buffer';
 
 import { INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { AIFFParser } from './aiff/AiffParser.js';
@@ -89,7 +88,7 @@ export class ParserFactory {
       // Parser could not be determined on MIME-type or extension
       debug('Guess parser on content...');
 
-      const buf = Buffer.alloc(4100);
+      const buf = new Uint8Array(4100);
       await tokenizer.peekBuffer(buf, {mayBeLess: true});
       if (tokenizer.fileInfo.path) {
         parserId = this.getParserIdForExtension(tokenizer.fileInfo.path);

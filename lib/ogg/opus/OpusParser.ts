@@ -37,12 +37,12 @@ export class OpusParser extends VorbisParser {
     this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
   }
 
-  protected parseFullPage(pageData: Buffer) {
+  protected async parseFullPage(pageData: Buffer): Promise<void> {
     const magicSignature = new Token.StringType(8, 'ascii').get(pageData, 0);
     switch (magicSignature) {
 
       case 'OpusTags':
-        this.parseUserCommentList(pageData, 8);
+        await this.parseUserCommentList(pageData, 8);
         this.lastPos = this.tokenizer.position - pageData.length;
         break;
 

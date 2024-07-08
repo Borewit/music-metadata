@@ -28,7 +28,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     }
   }
 
-  function calcHash(buf: Buffer): string {
+  function calcHash(buf: Uint8Array): string {
     const hash = crypto.createHash('md5');
     hash.update(buf);
     return hash.digest('hex');

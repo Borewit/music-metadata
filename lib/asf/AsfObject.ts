@@ -2,13 +2,13 @@
 
 import * as Token from 'token-types';
 import { IGetToken, ITokenizer } from 'strtok3/core';
-import { Buffer } from 'node:buffer';
 
 import * as util from '../common/Util.js';
 import { IPicture, ITag } from '../type.js';
 import GUID from './GUID.js';
 import { AsfUtil } from './AsfUtil.js';
 import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
+import { base64ToUint8Array } from 'uint8array-extras';
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
@@ -68,13 +68,13 @@ export interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
  * Token for: 3. ASF top-level Header Object
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3
  */
-export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Buffer> = {
+export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Uint8Array> = {
 
   len: 30,
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
+      objectId: GUID.fromBin(buf, off),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
       // Reserved: 2 bytes
@@ -86,13 +86,13 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Buff
  * Token for: 3.1 Header Object (mandatory, one only)
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_1
  */
-export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Buffer> = {
+export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Uint8Array> = {
 
   len: 24,
 
   get: (buf, off): IAsfObjectHeader => {
     return {
-      objectId: GUID.fromBin(new Token.BufferType(16).get(buf, off)),
+      objectId: GUID.fromBin(buf, off),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16))
     };
   }
@@ -106,7 +106,7 @@ export abstract class State<T> implements IGetToken<T> {
     this.len = Number(header.objectSize) - HeaderObjectToken.len;
   }
 
-  public abstract get(buf: Buffer, off: number): T;
+  public abstract get(buf: Uint8Array, off: number): T;
 
   protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any) {
     if (name === 'WM/Picture') {
@@ -128,7 +128,7 @@ export class IgnoreObjectState extends State<any> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): null {
+  public get(buf: Uint8Array, off: number): null {
     return null;
   }
 }
@@ -245,7 +245,7 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): IFilePropertiesObject {
+  public get(buf: Uint8Array, off: number): IFilePropertiesObject {
 
     return {
       fileId: GUID.fromBin(buf, off),
@@ -296,7 +296,7 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): IStreamPropertiesObject {
+  public get(buf: Uint8Array, off: number): IStreamPropertiesObject {
 
     return {
       streamType: GUID.decodeMediaType(GUID.fromBin(buf, off)),
@@ -326,11 +326,12 @@ export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> 
     this.len = 22;
   }
 
-  public get(buf: Buffer, off: number): IHeaderExtensionObject {
+  public get(buf: Uint8Array, off: number): IHeaderExtensionObject {
+    const view = new DataView(buf.buffer, off);
     return {
       reserved1: GUID.fromBin(buf, off),
-      reserved2: buf.readUInt16LE(off + 16),
-      extensionDataSize: buf.readUInt32LE(off + 18)
+      reserved2: view.getUint16(16, true),
+      extensionDataSize: view.getUint16(18, true)
     };
   }
 }
@@ -348,9 +349,10 @@ interface ICodecListObjectHeader {
  */
 const CodecListObjectHeader: IGetToken<ICodecListObjectHeader> = {
   len: 20,
-  get: (buf: Buffer, off: number): ICodecListObjectHeader => {
+  get: (buf: Uint8Array, off: number): ICodecListObjectHeader => {
+    const view = new DataView(buf.buffer, off);
     return {
-      entryCount: buf.readUInt16LE(off + 16)
+      entryCount: view.getUint16(16, true)
     };
   }
 };
@@ -362,12 +364,12 @@ export interface ICodecEntry {
   },
   codecName: string,
   description: string,
-  information: Buffer
+  information: Uint8Array
 }
 
 async function readString(tokenizer: ITokenizer): Promise<string> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  return (await tokenizer.readToken(new Token.StringType(length * 2, 'utf16le'))).replace('\0', '');
+  return (await tokenizer.readToken(new Token.StringType(length * 2, 'utf-16le'))).replace('\0', '');
 }
 
 /**
@@ -383,9 +385,9 @@ export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEnt
   return entries;
 }
 
-async function readInformation(tokenizer: ITokenizer): Promise<Buffer> {
+async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
   const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const buf = Buffer.alloc(length);
+  const buf = new Uint8Array(length);
   await tokenizer.readBuffer(buf);
   return buf;
 }
@@ -421,17 +423,17 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): ITag[] {
-
+  public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
 
-    let pos = off + 10;
+    const view = new DataView(buf.buffer, off);
+    let pos = 10;
     for (let i = 0; i < ContentDescriptionObjectState.contentDescTags.length; ++i) {
-      const length = buf.readUInt16LE(off + i * 2);
+      const length = view.getUint16(i * 2, true);
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;
-        tags.push({id: tagName, value: AsfUtil.parseUnicodeAttr(buf.slice(pos, end))});
+        tags.push({id: tagName, value: AsfUtil.parseUnicodeAttr(buf.slice(off + pos, off + end))});
         pos = end;
       }
     }
@@ -451,20 +453,21 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
     super(header);
   }
 
-  public get(buf: Buffer, off: number): ITag[] {
+  public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
-    const attrCount = buf.readUInt16LE(off);
-    let pos = off + 2;
+    const view = new DataView(buf.buffer, off);
+    const attrCount = view.getUint16(0, true);
+    let pos = 2;
     for (let i = 0; i < attrCount; i += 1) {
-      const nameLen = buf.readUInt16LE(pos);
+      const nameLen = view.getUint16(pos, true);
       pos += 2;
-      const name = AsfUtil.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
+      const name = AsfUtil.parseUnicodeAttr(buf.slice(off + pos, off + pos + nameLen));
       pos += nameLen;
-      const valueType = buf.readUInt16LE(pos);
+      const valueType = view.getUint16(pos, true);
       pos += 2;
-      const valueLen = buf.readUInt16LE(pos);
+      const valueLen = view.getUint16(pos, true);
       pos += 2;
-      const value = buf.slice(pos, pos + valueLen);
+      const value = buf.slice(off + pos, off + pos + valueLen);
       pos += valueLen;
       this.postProcessTag(tags, name, valueType, value);
     }
@@ -518,28 +521,29 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
     super(header);
   }
 
-  public get(buf: Buffer, off: number): IExtendedStreamPropertiesObject {
+  public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
+    const view = new DataView(buf.buffer, off);
     return {
       startTime: Token.UINT64_LE.get(buf, off),
       endTime: Token.UINT64_LE.get(buf, off + 8),
-      dataBitrate: buf.readInt32LE(off + 12),
-      bufferSize: buf.readInt32LE(off + 16),
-      initialBufferFullness: buf.readInt32LE(off + 20),
-      alternateDataBitrate: buf.readInt32LE(off + 24),
-      alternateBufferSize: buf.readInt32LE(off + 28),
-      alternateInitialBufferFullness: buf.readInt32LE(off + 32),
-      maximumObjectSize: buf.readInt32LE(off + 36),
+      dataBitrate: view.getInt32(12, true),
+      bufferSize: view.getInt32(16, true),
+      initialBufferFullness: view.getInt32(20, true),
+      alternateDataBitrate: view.getInt32(24, true),
+      alternateBufferSize: view.getInt32(28, true),
+      alternateInitialBufferFullness: view.getInt32(32, true),
+      maximumObjectSize: view.getInt32(36, true),
       flags: { // ToDo, check flag positions
         reliableFlag: util.getBit(buf, off + 40, 0),
         seekableFlag: util.getBit(buf, off + 40, 1),
         resendLiveCleanpointsFlag: util.getBit(buf, off + 40, 2)
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-      streamNumber: buf.readInt16LE(off + 42),
-      streamLanguageId: buf.readInt16LE(off + 44),
-      averageTimePerFrame: buf.readInt32LE(off + 52),
-      streamNameCount: buf.readInt32LE(off + 54),
-      payloadExtensionSystems: buf.readInt32LE(off + 56),
+      streamNumber: view.getInt16(42, true),
+      streamLanguageId: view.getInt16(44, true),
+      averageTimePerFrame: view.getInt32(52, true),
+      streamNameCount: view.getInt32(54, true),
+      payloadExtensionSystems: view.getInt32(56, true),
       streamNames: [], // ToDo
       streamPropertiesObject: null
     };
@@ -560,20 +564,21 @@ export class MetadataObjectState extends State<ITag[]> {
 
   public get(uint8Array: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
-    const buf = Buffer.from(uint8Array);
-    const descriptionRecordsCount = buf.readUInt16LE(off);
-    let pos = off + 2;
+
+    const view = new DataView(uint8Array.buffer, off);
+    const descriptionRecordsCount = view.getUint16(0, true);
+    let pos =2;
     for (let i = 0; i < descriptionRecordsCount; i += 1) {
       pos += 4;
-      const nameLen = buf.readUInt16LE(pos);
+      const nameLen = view.getUint16(pos, true);
       pos += 2;
-      const dataType = buf.readUInt16LE(pos);
+      const dataType = view.getUint16(pos, true);
       pos += 2;
-      const dataLen = buf.readUInt32LE(pos);
+      const dataLen = view.getUint32(pos, true);
       pos += 4;
-      const name = AsfUtil.parseUnicodeAttr(buf.slice(pos, pos + nameLen));
+      const name = AsfUtil.parseUnicodeAttr(uint8Array.slice(off + pos, off + pos + nameLen));
       pos += nameLen;
-      const data = buf.slice(pos, pos + dataLen);
+      const data = uint8Array.slice(off + pos, off + pos + dataLen);
       pos += dataLen;
       this.postProcessTag(tags, name, dataType, data);
     }
@@ -596,7 +601,7 @@ export interface IWmPicture extends IPicture {
   format: string,
   description: string,
   size: number
-  data: Buffer;
+  data: Uint8Array;
 }
 
 /**
@@ -605,10 +610,10 @@ export interface IWmPicture extends IPicture {
 export class WmPictureToken implements IGetToken<IWmPicture> {
 
   public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(Buffer.from(base64str, 'base64'));
+    return this.fromBuffer(base64ToUint8Array(base64str));
   }
 
-  public static fromBuffer(buffer: Buffer): IWmPicture {
+  public static fromBuffer(buffer: Uint8Array): IWmPicture {
     const pic = new WmPictureToken(buffer.length);
     return pic.get(buffer, 0);
   }
@@ -616,21 +621,22 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
   constructor(public len) {
   }
 
-  public get(buffer: Buffer, offset: number): IWmPicture {
+  public get(buffer: Uint8Array, offset: number): IWmPicture {
+    const view = new DataView(buffer.buffer, offset);
 
-    const typeId = buffer.readUInt8(offset++);
-    const size = buffer.readInt32LE(offset);
+    const typeId = view.getUint8(0);
+    const size = view.getInt32(1, true);
     let index = 5;
 
-    while (buffer.readUInt16BE(index) !== 0) {
+    while (view.getUint16(index) !== 0) {
       index += 2;
     }
-    const format = buffer.slice(5, index).toString('utf16le');
+    const format = new Token.StringType(index - 5, 'utf-16le').get(buffer, 5);
 
-    while (buffer.readUInt16BE(index) !== 0) {
+    while (view.getUint16(index) !== 0) {
       index += 2;
     }
-    const description = buffer.slice(5, index).toString('utf16le');
+    const description = new Token.StringType(index - 5, 'utf-16le').get(buffer, 5);
 
     return {
       type: AttachedPictureType[typeId],

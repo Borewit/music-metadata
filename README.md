@@ -105,28 +105,26 @@ import * as mm from 'music-metadata/lib/core';
 Dependency diagram:
 ```mermaid
 graph TD;
-    MM(music-metadata)-->S(strtok3)
-    MM-->TY(token-types)
-    MM-->FT(file-type)
+    MMN("music-metadata (Node.js entry point)")-->MMP
+    MMN-->FTN
+    MMP("music-metadata (primary entry point)")-->S(strtok3)
+    MMP-->TY(token-types)
+    MMP-->FTP
+    MMP-->UAE
+    FTN("file-type (Node.js entry point)")-->FTP
+    FTP("file-type (primary entry point)")-->S
     S(strtok3)-->P(peek-readable)
-    S-->TO("@tokenizer/token")
-    TY-->TO
+    S(strtok3)-->TO("@tokenizer/token")
+    TY(token-types)-->TO
     TY-->IE("ieee754")
-    FT-->RWNS(readable-web-to-node-stream)
-    FT-->S
-    FT-->TY
-    TY-->NB(node:buffer)
-    RWNS-->RS(readable-stream)
-    RS-->SD(string_decoder)
-    SD-->SB(safe-buffer)
-    RS-->UD(util-deprecate)
-    RS-->I(inherits)
-    style NB fill:#F88,stroke:#A44
-    style SB fill:#F88,stroke:#A44
-    style SD fill:#CCC,stroke:#888
+    FTP-->TY
+    NS("node:stream")
+    FTN-->NS
+    FTP-->UAE(uint8array-extras)
+    style NS fill:#F88,stroke:#A44
     style IE fill:#CCC,stroke:#888
-    style UD fill:#CCC,stroke:#888
-    style I fill:#CCC,stroke:#888
+    style FTN fill:#FAA,stroke:#A44
+    style MMN fill:#FAA,stroke:#A44
 ```
 
 Dependency list:

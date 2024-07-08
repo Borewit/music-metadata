@@ -1,4 +1,4 @@
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import path from 'node:path';
 
 import { commonTags, isSingleton } from '../lib/common/GenericTagTypes.js';
@@ -90,7 +90,7 @@ describe('function selectCover()', () => {
     for (const multiCoverFile of multiCoverFiles) {
       const filePath = path.join(samplePath, multiCoverFile);
       const {common} = await mm.parseFile(filePath);
-      assert.isTrue(common.picture.length > 1);
+      expect(common.picture).to.have.lengthOf.above(1, multiCoverFile);
       const cover = mm.selectCover(common.picture);
       if (cover.type) {
         assert.equal(cover.type, 'Cover (front)', 'cover.type');

@@ -17,7 +17,7 @@ it("decode id3v2-utf16", async () => {
   assert.strictEqual(common.year, 2014, 'year');
   assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture 0 format');
   assert.strictEqual(common.picture[0].data.length, 214219, 'picture 0 length');
-  assert.deepEqual(common.picture[0].data.slice(0, 2), Buffer.from([0xFF, 0xD8]), 'picture 0 JFIF magic header');
+  assert.deepEqual(common.picture[0].data.slice(0, 2), Uint8Array.from([0xFF, 0xD8]), 'picture 0 JFIF magic header');
 
   const native = metadata.native['ID3v2.3'];
   assert.ok(native, 'Native id3v2.3 tags should be present');
