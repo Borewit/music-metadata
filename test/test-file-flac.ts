@@ -99,7 +99,7 @@ describe('Parse FLAC Vorbis comment', () => {
     it('should handle a corrupt data', () => {
 
       const emptyStreamSize = 10 * 1024;
-      const buf = Buffer.alloc(emptyStreamSize).fill(0);
+      const buf = new Uint8Array(emptyStreamSize).fill(0);
       const tmpFilePath = path.join(samplePath, 'zeroes.flac');
 
       fs.writeFileSync(tmpFilePath, buf);

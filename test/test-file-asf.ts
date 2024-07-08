@@ -13,7 +13,7 @@ describe('Parse ASF', () => {
   describe('GUID', () => {
     it('should construct GUID from string', () => {
 
-      const Header_GUID = Buffer.from([
+      const Header_GUID = Uint8Array.from([
         0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
         0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
       ]);

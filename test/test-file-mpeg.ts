@@ -48,7 +48,7 @@ describe('Parse MPEG', () => {
   describe('MPEG frame sync efficiency', () => {
 
     const emptyStreamSize = 5 * 1024 * 1024;
-    const buf = Buffer.alloc(emptyStreamSize).fill(0);
+    const buf = new Uint8Array(emptyStreamSize).fill(0);
 
     it('should sync efficient from a stream', async function() {
 
