@@ -246,8 +246,8 @@ describe('Parse MP3 files', () => {
 
         Parsers
           .forEach(parser => {
-            it(parser.description, async () => {
-              const metadata = await parser.initParser(filePath, 'audio/mpeg', {duration: false});
+            it(parser.description, async function(){
+              const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
               assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
             });
           });
@@ -259,8 +259,8 @@ describe('Parse MP3 files', () => {
 
         Parsers
           .forEach(parser => {
-            it(parser.description, async () => {
-              const metadata = await parser.initParser(filePath, 'audio/mpeg', {duration: true});
+            it(parser.description, async function(){
+              const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
               assert.approximately(metadata.format.duration, 200.5, 1 / 10, 'Expect a duration');
             });
           });

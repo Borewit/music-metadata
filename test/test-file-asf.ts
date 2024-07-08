@@ -106,8 +106,8 @@ describe('Parse ASF', () => {
     describe('should decode an ASF audio file (.wma)', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, async () => {
-          const metadata = await parser.initParser(path.join(asfFilePath, 'asf.wma'), 'audio/x-ms-wma');
+        it(parser.description, async function(){
+          const metadata = await parser.initParser(() => this.skip(), path.join(asfFilePath, 'asf.wma'), 'audio/x-ms-wma');
           assert.isDefined(metadata, 'metadata');
           checkFormat(metadata.format);
           checkCommon(metadata.common);
@@ -122,9 +122,9 @@ describe('Parse ASF', () => {
     describe('should decode picture from', () => {
 
       Parsers.forEach(parser => {
-        it(parser.description, async () => {
+        it(parser.description, async function(){
           const filePath = path.join(asfFilePath, 'issue_57.wma');
-          const metadata = await parser.initParser(filePath, 'audio/x-ms-wma');
+          const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/x-ms-wma');
           const asf = mm.orderTags(metadata.native.asf);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
           const nativePicture = asf['WM/Picture'][0];

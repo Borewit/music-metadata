@@ -58,8 +58,8 @@ describe('Parse FLAC Vorbis comment', () => {
   describe('decode flac.flac', () => {
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(path.join(samplePath, 'flac.flac'), 'audio/flac');
+      it(parser.description, async function(){
+        const metadata = await parser.initParser(this.skip(), path.join(samplePath, 'flac.flac'), 'audio/flac');
         checkFormat(metadata.format);
         checkCommon(metadata.common);
         checkNative(mm.orderTags(metadata.native.vorbis));
@@ -73,8 +73,8 @@ describe('Parse FLAC Vorbis comment', () => {
     const filePath = path.join(samplePath, 'a kind of magic.flac');
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, 'audio/flac');
+      it(parser.description, async function(){
+        const metadata = await parser.initParser(this.skip(), filePath, 'audio/flac');
         t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
       });
     });
@@ -86,8 +86,8 @@ describe('Parse FLAC Vorbis comment', () => {
     const filePath = path.join(samplePath, '04 Long Drive.flac');
 
     Parsers.forEach(parser => {
-      it(parser.description, async () => {
-        const metadata = await parser.initParser(filePath, 'audio/flac');
+      it(parser.description, async function(){
+        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/flac');
         assert.approximately(496000, metadata.format.bitrate, 500);
       });
     });
@@ -105,8 +105,8 @@ describe('Parse FLAC Vorbis comment', () => {
       fs.writeFileSync(tmpFilePath, buf);
 
       Parsers.forEach(parser => {
-        it(parser.description, () => {
-          return parser.initParser(tmpFilePath, 'audio/flac').then(() => {
+        it(parser.description, async function(){
+          return parser.initParser(() => this.skip(), tmpFilePath, 'audio/flac').then(() => {
             t.fail('Should reject');
             fs.unlinkSync(tmpFilePath);
           }).catch(err => {
