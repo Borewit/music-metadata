@@ -1,6 +1,6 @@
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import initDebug from 'debug';
-import { ITokenizer } from 'strtok3/core';
+import type { ITokenizer } from 'strtok3';
 
 import { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';

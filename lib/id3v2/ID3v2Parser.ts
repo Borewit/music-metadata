@@ -1,4 +1,4 @@
-import { ITokenizer } from 'strtok3/core';
+import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';

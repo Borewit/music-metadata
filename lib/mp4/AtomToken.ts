@@ -3,7 +3,7 @@ import initDebug from 'debug';
 
 import { FourCcToken } from '../common/FourCC.js';
 
-import { IToken, IGetToken } from 'strtok3/core';
+import type { IToken, IGetToken } from 'strtok3';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
 

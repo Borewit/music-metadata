@@ -3,7 +3,7 @@ import { StringType, UINT8 } from 'token-types';
 
 import * as util from '../common/Util.js';
 
-import { IGetToken } from 'strtok3/core';
+import type { IGetToken } from 'strtok3';
 import { BasicParser } from '../common/BasicParser.js';
 import { APEv2Parser } from '../apev2/APEv2Parser.js';
 import { IRandomReader } from '../type.js';

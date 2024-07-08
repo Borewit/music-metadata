@@ -1,4 +1,4 @@
-import { IGetToken } from 'strtok3/core';
+import type { IGetToken } from 'strtok3';
 import * as Token from 'token-types';
 import { stripNulls } from '../common/Util.js';
 
