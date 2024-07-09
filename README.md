@@ -11,9 +11,15 @@
 
 # music-metadata
 
-Stream and file based music metadata parser for [node.js](https://nodejs.org/).
+Stream and file based music metadata parser for [node.js](https://nodejs.org/) and browser projects.
 Supports any common audio and tagging format.
-[TypeScript](https://www.typescriptlang.org/) definitions are included.
+
+## Compatibility
+
+Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJS) to [pure ECMAScript Module (ESM)](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+JavaScript is compliant with [ECMAScript 2019 (ES10)](https://en.wikipedia.org/wiki/ECMAScript#10th_Edition_%E2%80%93_ECMAScript_2019).
+Requires Node.js ≥ 16 engine.
+Primarily designed for [Node.js](https://nodejs.org/), but has also been designed for browser compatibility. 
 
 ## Features
 
@@ -47,14 +53,14 @@ Supports any common audio and tagging format.
 ### Supported tag headers
 
 Following tag header formats are supported:
-*   [APE](https://wikipedia.org/wiki/APE_tag)
-*   [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
-*   EXIF 2.3
-*   [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
-*   [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
-*   [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
-*   [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
-*   [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
+* [APE](https://wikipedia.org/wiki/APE_tag)
+* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
+* EXIF 2.3
+* [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
+* [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
+* [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+* [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+* [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
 
 It allows many tags to be accessed in audio format, and tag format independent way.
 
@@ -64,38 +70,16 @@ Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](
 ### Audio format & encoding details
 
 Support for encoding / format details:
-*   [Bit rate](https://wikipedia.org/wiki/Bit_rate)
-*   [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
-*   Duration
-*   Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
+* [Bit rate](https://wikipedia.org/wiki/Bit_rate)
+* [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
+* Duration
+* Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
 
 
 ## Online demo's
-*   [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.com/)
-*   [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
+* [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://https://audio-tag-analyzer.netlify.app/)
+* [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
 
-
-## Compatibility
-
-Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJS) to [pure ECMAScript Module (ESM)](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
-JavaScript is compliant with [ECMAScript 2019 (ES10)](https://en.wikipedia.org/wiki/ECMAScript#10th_Edition_%E2%80%93_ECMAScript_2019).
-Requires Node.js ≥ 14.13.1 engine.
-
-### Browser Support
-
-Although music-metadata is designed to run the node.js. [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) can be used on the browser side.
-
-To avoid Node `fs` dependency inclusion, you may use a sub-module inclusion:
-```js
-import * as mm from 'music-metadata/lib/core';
-```
-
-| function                                             | `music-metadata`           | `music-metadata/lib/core`  |
-|------------------------------------------------------| ---------------------------|----------------------------|
-| [`parseBuffer`](#parsebuffer-function)               | ✓                          | ✓                          |
-| [`parseStream`](#parsestream-function) *             | ✓                          | ✓                          |
-| [`parseFromTokenizer`](#parsefromtokenizer-function) | ✓                          | ✓                          |
-| [`parseFile`](#parsefile-function)                   | ✓                          |                            |
 
 ### Sponsor
 [Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
@@ -278,7 +262,7 @@ This is a low level function, reading from a [strtok3](https://github.com/Borewi
 [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is depended on this function.
 
 This also enables special read modules like:
-*   [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
+* [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
 
 #### orderTags function
 
@@ -329,11 +313,11 @@ import { parseFile, selectCover } from 'music-metadata';
  ```
 
 ### Options
-*   `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
-*   `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
-*   `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-*   `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
-*   `includeChapters` default: `false`, if set to `true`, it will parse chapters (currently only MP4 files). _experimental functionality_
+- `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
+- `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
+- `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
+- `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
+- `includeChapters` default: `false`, if set to `true`, it will parse chapters (currently only MP4 files). _experimental functionality_
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.
@@ -341,71 +325,71 @@ To enforce parsing the entire file if needed you should set `duration` to `true`
 ### Metadata result
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
-*   [`metadata.format`](#metadataformat) Audio format information
-*   [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information.
-*   [`metadata.trackInfo`](#metadatatrackInfo) Is a generic (abstract) way of reading metadata information.
-*   `metadata.native` List of native (original) tags found in the parsed audio file.
+- [`metadata.format`](#metadataformat) Audio format information
+- [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information.
+- [`metadata.trackInfo`](#metadatatrackInfo) Is a generic (abstract) way of reading metadata information.
+- `metadata.native` List of native (original) tags found in the parsed audio file.
 
 #### `metadata.format`
 
 The questionmark `?` indicates the property is optional.
 
 Audio format information. Defined in the TypeScript `IFormat` interface:
-*   `format.container?: string` Audio encoding format. e.g.: 'flac'
-*   `format.codec?` Name of the codec (algorithm used for the audio compression)
-*   `format.codecProfile?: string` Codec profile / settings
-*   `format.tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
-*   `format.duration?: number` Duration in seconds
-*   `format.bitrate?: number` Number bits per second of encoded audio file
-*   `format.sampleRate?: number` Sampling rate in Samples per second (S/s)
-*   `format.bitsPerSample?: number` Audio bit depth
-*   `format.lossless?: boolean` True if lossless,  false for lossy encoding
-*   `format.numberOfChannels?: number` Number of audio channels
-*   `format.creationTime?: Date` Track creation time
-*   `format.modificationTime?: Date` Track modification / tag update time
-*   `format.trackGain?: number` Track gain in dB
-*   `format.albumGain?: number` Album gain in dB
+- `format.container?: string` Audio encoding format. e.g.: 'flac'
+- `format.codec?` Name of the codec (algorithm used for the audio compression)
+- `format.codecProfile?: string` Codec profile / settings
+- `format.tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
+- `format.duration?: number` Duration in seconds
+- `format.bitrate?: number` Number bits per second of encoded audio file
+- `format.sampleRate?: number` Sampling rate in Samples per second (S/s)
+- `format.bitsPerSample?: number` Audio bit depth
+- `format.lossless?: boolean` True if lossless,  false for lossy encoding
+- `format.numberOfChannels?: number` Number of audio channels
+- `format.creationTime?: Date` Track creation time
+- `format.modificationTime?: Date` Track modification / tag update time
+- `format.trackGain?: number` Track gain in dB
+- `format.albumGain?: number` Album gain in dB
 
 #### `metadata.trackInfo`
 
-To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental** `metadata.trackInfo` has been added,
+To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental*- `metadata.trackInfo` has been added,
 
 `metadata.trackInfo` is either `undefined` or has an **array** of [trackInfo](#trackinfo)
 
 ##### trackInfo
 
 Audio format information. Defined in the TypeScript `IFormat` interface:
-*   `trackInfo.type?: TrackType` Track type
-*   `trackInfo.codecName?: string` Codec name
-*   `trackInfo.codecSettings?: string` Codec settings
-*   `trackInfo.flagEnabled?: boolean` Set if the track is usable, default: `true`
-*   `trackInfo.flagDefault?: boolean` Set if that track (audio, video or subs) SHOULD be active if no language found matches the user preference.
-*   `trackInfo.flagLacing?: boolean` Set if the track **may** contain blocks using lacing
-*   `trackInfo.name?: string` A human-readable track name.
-*   `trackInfo.language?: string` Specifies the language of the track
-*   `trackInfo.audio?: IAudioTrack`, see [`trackInfo.audioTrack`](#trackinfoaudiotrack)
-*   `trackInfo.video?: IVideoTrack`, see [`trackInfo.videoTrack`](#trackinfovideotrack)
+- `trackInfo.type?: TrackType` Track type
+- `trackInfo.codecName?: string` Codec name
+- `trackInfo.codecSettings?: string` Codec settings
+- `trackInfo.flagEnabled?: boolean` Set if the track is usable, default: `true`
+- `trackInfo.flagDefault?: boolean` Set if that track (audio, video or subs) SHOULD be active if no language found matches the user preference.
+- `trackInfo.flagLacing?: boolean` Set if the track **may** contain blocks using lacing
+- `trackInfo.name?: string` A human-readable track name.
+- `trackInfo.language?: string` Specifies the language of the track
+- `trackInfo.audio?: IAudioTrack`, see [`trackInfo.audioTrack`](#trackinfoaudiotrack)
+- `trackInfo.video?: IVideoTrack`, see [`trackInfo.videoTrack`](#trackinfovideotrack)
 
 ##### `trackInfo.audioTrack`
 
-*   `audioTrack.samplingFrequency?: number`
-*   `audioTrack.outputSamplingFrequency?: number`
-*   `audioTrack.channels?: number`
-*   `audioTrack.channelPositions?: Buffer`
-*   `audioTrack.bitDepth?: number`
+- `audioTrack.samplingFrequency?: number`
+- `audioTrack.outputSamplingFrequency?: number`
+- `audioTrack.channels?: number`
+- `audioTrack.channelPositions?: Buffer`
+- `audioTrack.bitDepth?: number`
 
 ##### `trackInfo.videoTrack`
 
-*   `videoTrack.flagInterlaced?: boolean`
-*   `videoTrack.stereoMode?: number`
-*   `videoTrack.pixelWidth?: number`
-*   `videoTrack.pixelHeight?: number`
-*   `videoTrack.displayWidth?: number`
-*   `videoTrack.displayHeight?: number`
-*   `videoTrack.displayUnit?: number`
-*   `videoTrack.aspectRatioType?: number`
-*   `videoTrack.colourSpace?: Buffer`
-*   `videoTrack.gammaValue?: number`
+- `videoTrack.flagInterlaced?: boolean`
+- `videoTrack.stereoMode?: number`
+- `videoTrack.pixelWidth?: number`
+- `videoTrack.pixelHeight?: number`
+- `videoTrack.displayWidth?: number`
+- `videoTrack.displayHeight?: number`
+- `videoTrack.displayUnit?: number`
+- `videoTrack.aspectRatioType?: number`
+- `videoTrack.colourSpace?: Buffer`
+- `videoTrack.gammaValue?: number`
 
 #### `metadata.common`
 
