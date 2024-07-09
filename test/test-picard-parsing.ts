@@ -334,7 +334,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(native.TMED, ['CD'], 'id3v23.TMED: Media type');
       assert.deepEqual(native.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
-        identifier: Buffer.from('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+        identifier: new TextEncoder().encode('f151cb94-c909-46a8-ad99-fb77391abfb8')
       }, 'id3v23.UFID: Unique file identifier');
 
       assert.deepEqual(native.IPLS, [{
@@ -472,7 +472,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
       assert.deepEqual(id3v24.UFID[0], {
         owner_identifier: 'http://musicbrainz.org',
-        identifier: Buffer.from('f151cb94-c909-46a8-ad99-fb77391abfb8', 'ascii')
+        identifier: new TextEncoder().encode('f151cb94-c909-46a8-ad99-fb77391abfb8')
       }, 'id3v24.UFID: Unique file identifier');
 
       assert.deepEqual(id3v24['TXXX:ASIN'], ['B005NPEUB2'], 'id3v24.TXXX:ASIN');

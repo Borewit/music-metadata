@@ -159,6 +159,7 @@
     ],
     "new-parens": "error",
     "no-bitwise": "off",
+    "no-buffer-constructor": "error",
     "no-caller": "error",
     "no-cond-assign": "error",
     "no-console": "error",
@@ -175,6 +176,13 @@
     "no-new-wrappers": "error",
     "no-redeclare": "error",
     "no-return-await": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.object.name='Buffer'][callee.property.name='from']",
+        "message": "Use of Buffer.from is forbidden."
+      }
+    ],
     "no-sequences": "error",
     "no-shadow": "off",
     "no-sparse-arrays": "error",

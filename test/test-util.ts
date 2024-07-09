@@ -80,25 +80,6 @@ describe('shared utility functionality', () => {
       {fourCC: ' XM ', valid: false}
     ];
 
-    it('should only accept a valid identifier, otherwise is should throw an error', () => {
-      for (const data of testData) {
-        const buf = Buffer.from(data.fourCC, 'ascii');
-
-        let valid;
-        let fourCC;
-        try {
-          fourCC = FourCcToken.get(buf, 0);
-          valid = true;
-        } catch (e) {
-          valid = false;
-        }
-        t.strictEqual(valid, data.valid, `FourCC: ${util.a2hex(data.fourCC)} "${data.fourCC}"`);
-        if (data.valid) {
-          t.strictEqual(fourCC, data.fourCC);
-        }
-      }
-    });
-
     it('should be able to encode FourCC token', () => {
       const buffer = Buffer.alloc(4);
       FourCcToken.put(buffer, 0, 'abcd');

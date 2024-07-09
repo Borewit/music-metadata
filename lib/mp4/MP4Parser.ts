@@ -340,7 +340,7 @@ export class MP4Parser extends BasicParser {
             break;
 
           case 'rate':
-            const rate = dataAtom.value.toString('ascii');
+            const rate = new TextDecoder('ascii').decode(dataAtom.value);
             await this.addTag(tagKey, rate);
             break;
 
@@ -351,7 +351,7 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        await this.addTag(tagKey, dataAtom.value.toString('utf-8'));
+        await this.addTag(tagKey, new TextDecoder('utf-8').decode(dataAtom.value));
         break;
 
       case 13: // JPEG
@@ -359,7 +359,7 @@ export class MP4Parser extends BasicParser {
           break;
         await this.addTag(tagKey, {
           format: 'image/jpeg',
-          data: Buffer.from(dataAtom.value)
+          data: Uint8Array.from(dataAtom.value)
         });
         break;
 
@@ -368,7 +368,7 @@ export class MP4Parser extends BasicParser {
           break;
         await this.addTag(tagKey, {
           format: 'image/png',
-          data: Buffer.from(dataAtom.value)
+          data: Uint8Array.from(dataAtom.value)
         });
         break;
 
@@ -381,15 +381,15 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 65: // An 8-bit signed integer
-        await this.addTag(tagKey, dataAtom.value.readInt8(0));
+        await this.addTag(tagKey, Token.UINT8.get(dataAtom.value,0));
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        await this.addTag(tagKey, dataAtom.value.readInt16BE(0));
+        await this.addTag(tagKey, Token.UINT16_BE.get(dataAtom.value,0));
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        await this.addTag(tagKey, dataAtom.value.readInt32BE(0));
+        await this.addTag(tagKey, Token.UINT32_BE.get(dataAtom.value,0));
         break;
 
       default:
