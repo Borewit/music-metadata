@@ -145,13 +145,20 @@ Import the methods you need, like `parseFile` in this example.
 
 ### Module Functions
 
-There are two ways to parse (read) audio tracks:
-1) Audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile)
-2) Using [Node.js streams](https://nodejs.org/api/stream.html) using the [parseStream function](#parseStream).
+There are multiple ways to parse (read) audio tracks:
+1. In Node.js, audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile-function)
+1. By parsing from a Web stream using the [parseStream function](#parsewebstream-function).
+1. By parsing a (Web API) [Blob](https://developer.mozilla.org/docs/Web/API/Blob) or a [File](https://developer.mozilla.org/docs/Web/API/File) using the [parseBlob function](#parseblob-function).
+1. From a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)  using the [parseBuffer function](#parsebuffer-function).
+1. Via your own, or a third-party [strtok3](https://github.com/Borewit/strtok3) ITokenizer using the [parseFromTokenizer function](#parsefromtokenizer-function).
 
 Direct file access tends to be a little faster, because it can 'jump' to various parts in the file without being obliged to read intermediate data.
 
 #### parseFile function
+
+This method can only be used if the JavaScript engine is Node.js.
+To read from a [File](https://developer.mozilla.org/docs/Web/API/File), 
+please see [fileTypeFromBlob(blob)](#parseblob-function).
 
 Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
 
