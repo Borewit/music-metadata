@@ -84,6 +84,8 @@ Support for encoding / format details:
 ### Sponsor
 [Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
 
+<a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
+
 ## Dependencies
 
 Dependency diagram:
