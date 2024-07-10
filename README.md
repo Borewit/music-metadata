@@ -181,7 +181,7 @@ import { inspect } from 'util';
 
 #### parseStream function
 
-_Only available for Node.js._
+_Only available using a Node.js JavaScript engines._
 
 Parses the provided audio stream for metadata.
 The stream should be of type [Node.js Readable](https://nodejs.org/api/stream.html#class-streamreadable).
@@ -220,6 +220,8 @@ parseWebStream(stream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | string
 ```
 
 #### parseBlob function
+
+_This method can only be used if with a Node.js JavaScript engine._
 
 Parse an audio file from a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) or [File](https://developer.mozilla.org/en-US/docs/Web/API/File).
 
