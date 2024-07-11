@@ -92,7 +92,7 @@
     "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.5",
     "debug": "^4.3.4",
-    "file-type": "^19.1.0",
+    "file-type": "^19.1.1",
     "media-typer": "^1.1.0",
     "strtok3": "^7.1.0",
     "token-types": "^6.0.0",
