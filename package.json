@@ -6,10 +6,13 @@
     "name": "Borewit",
     "url": "https://github.com/Borewit"
   },
-  "funding": {
+  "funding": [{
     "type": "github",
     "url": "https://github.com/sponsors/Borewit"
-  },
+  }, {
+    "type": "buymeacoffee",
+    "url": "https://buymeacoffee.com/borewit"
+  }],
   "type": "module",
   "exports": {
     ".": {
