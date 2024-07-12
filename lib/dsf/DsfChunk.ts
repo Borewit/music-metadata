@@ -123,7 +123,7 @@ export interface IFormatChunk {
 export const FormatChunk: IGetToken<IFormatChunk> = {
   len: 40,
 
-  get: (buf: Buffer, off: number): IFormatChunk => {
+  get: (buf: Uint8Array, off: number): IFormatChunk => {
     return {
       formatVersion: Token.INT32_LE.get(buf, off),
       formatID: Token.INT32_LE.get(buf, off + 4),

@@ -81,9 +81,9 @@ describe('shared utility functionality', () => {
     ];
 
     it('should be able to encode FourCC token', () => {
-      const buffer = Buffer.alloc(4);
+      const buffer = new Uint8Array(4);
       FourCcToken.put(buffer, 0, 'abcd');
-      t.deepEqual(buffer.toString('latin1'), 'abcd');
+      t.deepEqual(new TextDecoder('latin1').decode(buffer), 'abcd');
     });
 
   });

@@ -91,7 +91,7 @@ export class FactChunk implements IGetToken<IFactChunk> {
     this.len = header.chunkSize;
   }
 
-  public get(buf: Buffer, off: number): IFactChunk {
+  public get(buf: Uint8Array, off: number): IFactChunk {
     return {
       dwSampleLength: Token.UINT32_LE.get(buf, off)
     };

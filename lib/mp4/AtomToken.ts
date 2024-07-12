@@ -137,7 +137,7 @@ export interface IMovieHeaderAtom extends IVersionAndFlags {
 export const Header: IToken<IAtomHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off: number): IAtomHeader => {
+  get: (buf: Uint8Array, off: number): IAtomHeader => {
     const length = Token.UINT32_BE.get(buf, off);
     if (length < 0)
       throw new Error('Invalid atom header length');
@@ -148,7 +148,7 @@ export const Header: IToken<IAtomHeader> = {
     };
   },
 
-  put: (buf: Buffer, off: number, hdr: IAtomHeader) => {
+  put: (buf: Uint8Array, off: number, hdr: IAtomHeader) => {
     Token.UINT32_BE.put(buf, off, Number(hdr.length));
     return FourCcToken.put(buf, off + 4, hdr.name);
   }
@@ -162,7 +162,7 @@ export const ExtendedSize: IToken<bigint> = Token.UINT64_BE;
 export const ftyp: IGetToken<IAtomFtyp> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): IAtomFtyp => {
+  get: (buf: Uint8Array, off: number): IAtomFtyp => {
     return {
       type: new Token.StringType(4, 'ascii').get(buf, off)
     };
@@ -172,7 +172,7 @@ export const ftyp: IGetToken<IAtomFtyp> = {
 export const tkhd: IGetToken<IAtomFtyp> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): IAtomFtyp => {
+  get: (buf: Uint8Array, off: number): IAtomFtyp => {
     return {
       type: new Token.StringType(4, 'ascii').get(buf, off)
     };
@@ -185,7 +185,7 @@ export const tkhd: IGetToken<IAtomFtyp> = {
 export const mhdr: IGetToken<IMovieHeaderAtom> = {
   len: 8,
 
-  get: (buf: Buffer, off: number): IMovieHeaderAtom => {
+  get: (buf: Uint8Array, off: number): IMovieHeaderAtom => {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
@@ -204,6 +204,7 @@ export abstract class FixedLengthAtom {
    *
    * @param {number} len Length as specified in the size field
    * @param {number} expLen Total length of sum of specified fields in the standard
+   * @param atomId Atom ID
    */
   protected constructor(public len: number, expLen: number, atomId: string) {
     if (len < expLen) {
@@ -235,7 +236,7 @@ export interface IAtomMdhd extends IAtomMxhd {
 const SecondsSinceMacEpoch: IGetToken<Date> = {
   len: 4,
 
-  get: (buf: Buffer, off: number): Date => {
+  get: (buf: Uint8Array, off: number): Date => {
     const secondsSinceUnixEpoch = Token.UINT32_BE.get(buf, off) - 2082844800;
     return new Date(secondsSinceUnixEpoch * 1000);
   }};
@@ -252,7 +253,7 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
     super(len, 24, 'mdhd');
   }
 
-  public get(buf: Buffer, off: number): IAtomMdhd {
+  public get(buf: Uint8Array, off: number): IAtomMdhd {
     return {
       version: Token.UINT8.get(buf, off + 0),
       flags: Token.UINT24_BE.get(buf, off + 1),
@@ -275,7 +276,7 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
     super(len, 100, 'mvhd');
   }
 
-  public get(buf: Buffer, off: number): IAtomMvhd {
+  public get(buf: Uint8Array, off: number): IAtomMvhd {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
@@ -367,7 +368,7 @@ export class NameAtom implements IGetToken<INameAtom> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): INameAtom {
+  public get(buf: Uint8Array, off: number): INameAtom {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
@@ -438,7 +439,7 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): ITrackHeaderAtom {
+  public get(buf: Uint8Array, off: number): ITrackHeaderAtom {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
@@ -469,7 +470,7 @@ interface IAtomStsdHeader extends IVersionAndFlags {
 const stsdHeader: IGetToken<IAtomStsdHeader> = {
   len: 8,
 
-  get: (buf: Buffer, off: number): IAtomStsdHeader => {
+  get: (buf: Uint8Array, off: number): IAtomStsdHeader => {
     return {
       version: Token.UINT8.get(buf, off),
       flags: Token.UINT24_BE.get(buf, off + 1),
@@ -501,7 +502,7 @@ class SampleDescriptionTable implements IGetToken<ISampleDescription> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): ISampleDescription {
+  public get(buf: Uint8Array, off: number): ISampleDescription {
 
     return {
       dataFormat: FourCcToken.get(buf, off),
@@ -520,7 +521,7 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): IAtomStsd {
+  public get(buf: Uint8Array, off: number): IAtomStsd {
 
     const header = stsdHeader.get(buf, off);
     off += stsdHeader.len;
@@ -555,7 +556,7 @@ export const SoundSampleDescriptionVersion: IGetToken<ISoundSampleDescriptionVer
 
   len: 8,
 
-  get(buf: Buffer, off: number): ISoundSampleDescriptionVersion {
+  get(buf: Uint8Array, off: number): ISoundSampleDescriptionVersion {
     return {
       version: Token.INT16_BE.get(buf, off),
       revision: Token.INT16_BE.get(buf, off + 2),
@@ -588,7 +589,7 @@ export const SoundSampleDescriptionV0: IGetToken<ISoundSampleDescriptionV0> = {
 
   len: 12,
 
-  get(buf: Buffer, off: number): ISoundSampleDescriptionV0 {
+  get(buf: Uint8Array, off: number): ISoundSampleDescriptionV0 {
     return {
       numAudioChannels: Token.INT16_BE.get(buf, off + 0),
       sampleSize: Token.INT16_BE.get(buf, off + 2),
@@ -609,7 +610,7 @@ class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
   public constructor(public len: number, private token: IGetToken<T>) {
   }
 
-  public get(buf: Buffer, off: number): ITableAtom<T> {
+  public get(buf: Uint8Array, off: number): ITableAtom<T> {
 
     const nrOfEntries = Token.INT32_BE.get(buf, off + 4);
 
@@ -631,7 +632,7 @@ export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
 
   len: 8,
 
-  get(buf: Buffer, off: number): ITimeToSampleToken {
+  get(buf: Uint8Array, off: number): ITimeToSampleToken {
     return {
       count: Token.INT32_BE.get(buf, off + 0),
       duration: Token.INT32_BE.get(buf, off + 4)
@@ -663,7 +664,7 @@ export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
 
   len: 12,
 
-  get(buf: Buffer, off: number): ISampleToChunk {
+  get(buf: Uint8Array, off: number): ISampleToChunk {
     return {
       firstChunk: Token.INT32_BE.get(buf, off),
       samplesPerChunk: Token.INT32_BE.get(buf, off + 4),
@@ -698,7 +699,7 @@ export class StszAtom implements IGetToken<IStszAtom> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): IStszAtom {
+  public get(buf: Uint8Array, off: number): IStszAtom {
 
     const nrOfEntries = Token.INT32_BE.get(buf, off + 8);
 
@@ -730,14 +731,14 @@ export class ChapterText implements IGetToken<string> {
   public constructor(public len: number) {
   }
 
-  public get(buf: Buffer, off: number): string {
+  public get(buf: Uint8Array, off: number): string {
     const titleLen = Token.INT16_BE.get(buf, off + 0);
     const str = new Token.StringType(titleLen, 'utf-8');
     return str.get(buf, off + 2);
   }
 }
 
-function readTokenTable<T>(buf: Buffer, token: IGetToken<T>, off: number, remainingLen: number, numberOfEntries: number): T[] {
+function readTokenTable<T>(buf: Uint8Array, token: IGetToken<T>, off: number, remainingLen: number, numberOfEntries: number): T[] {
 
   debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
 

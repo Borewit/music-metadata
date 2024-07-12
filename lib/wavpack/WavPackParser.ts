@@ -6,6 +6,7 @@ import { BasicParser } from '../common/BasicParser.js';
 import { IBlockHeader, IMetadataId, WavPack } from './WavPackToken.js';
 
 import initDebug from 'debug';
+import { uint8ArrayToHex } from 'uint8array-extras';
 
 const debug = initDebug('music-metadata:parser:WavPack');
 
@@ -67,13 +68,14 @@ export class WavPackParser extends BasicParser {
 
   /**
    * Ref: http://www.wavpack.com/WavPack5FileFormat.pdf, 3.0 Metadata Sub-blocks
+   * @param header Header
    * @param remainingLength
    */
   private async parseMetadataSubBlock(header: IBlockHeader, remainingLength: number): Promise<void> {
     while (remainingLength > WavPack.MetadataIdToken.len) {
       const id = await this.tokenizer.readToken<IMetadataId>(WavPack.MetadataIdToken);
       const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
-      const data = Buffer.alloc(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
+      const data = new Uint8Array(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
       await this.tokenizer.readBuffer(data);
       debug(`Metadata Sub-Blocks functionId=0x${id.functionId.toString(16)}, id.largeBlock=${id.largeBlock},data-size=${data.length}`);
       switch (id.functionId) {
@@ -100,7 +102,7 @@ export class WavPackParser extends BasicParser {
           break;
 
         case 0x2f: // ID_BLOCK_CHECKSUM
-          debug(`ID_BLOCK_CHECKSUM: checksum=${data.toString('hex')}`);
+          debug(`ID_BLOCK_CHECKSUM: checksum=${uint8ArrayToHex(data)}`);
           break;
 
         default:

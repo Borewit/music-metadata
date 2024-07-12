@@ -31,7 +31,7 @@ export interface IIdentificationHeader {
 export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
   len: 42,
 
-  get: (buf: Buffer, off): IIdentificationHeader => {
+  get: (buf: Uint8Array, off): IIdentificationHeader => {
     return {
       id: new Token.StringType(7, 'ascii').get(buf, off),
       vmaj: Token.UINT8.get(buf, off + 7),
