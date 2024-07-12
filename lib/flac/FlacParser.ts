@@ -191,7 +191,7 @@ class Metadata {
   public static BlockHeader: IGetToken<IBlockHeader> = {
     len: 4,
 
-    get: (buf: Buffer, off: number): IBlockHeader => {
+    get: (buf: Uint8Array, off: number): IBlockHeader => {
       return {
         lastBlock: util.getBit(buf, off, 7),
         type: util.getBitAllignedNumber(buf, off, 1, 7),
@@ -207,7 +207,7 @@ class Metadata {
   public static BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
     len: 34,
 
-    get: (buf: Buffer, off: number): IBlockStreamInfo => {
+    get: (buf: Uint8Array, off: number): IBlockStreamInfo => {
       return {
         // The minimum block size (in samples) used in the stream.
         minimumBlockSize: UINT16_BE.get(buf, off),

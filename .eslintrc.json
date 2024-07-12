@@ -48,10 +48,14 @@
           },
           "Symbol": {
             "message": "Avoid using the `Symbol` type. Did you mean `symbol`?"
+          },
+          "Buffer": {
+            "message": "Do not use Node.js specific Buffer type, use Uint8Array"
           }
         }
       }
     ],
+
     "@typescript-eslint/consistent-type-assertions": "error",
     "@typescript-eslint/dot-notation": "error",
     "@typescript-eslint/indent": [
@@ -176,11 +180,11 @@
     "no-new-wrappers": "error",
     "no-redeclare": "error",
     "no-return-await": "error",
-    "no-restricted-syntax": [
+    "no-restricted-globals": ["error", "Buffer"],
+    "no-restricted-imports": [
       "error",
       {
-        "selector": "CallExpression[callee.object.name='Buffer'][callee.property.name='from']",
-        "message": "Use of Buffer.from is forbidden."
+        "paths": ["node:buffer"]
       }
     ],
     "no-sequences": "error",

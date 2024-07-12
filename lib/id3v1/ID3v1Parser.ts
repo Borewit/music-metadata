@@ -155,9 +155,9 @@ export class ID3v1Parser extends BasicParser {
 
 export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
   if (reader.fileSize >= 128) {
-    const tag = Buffer.alloc(3);
+    const tag = new Uint8Array(3);
     await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
-    return tag.toString('latin1') === 'TAG';
+    return new TextDecoder('latin1').decode(tag) === 'TAG';
   }
   return false;
 }

@@ -87,7 +87,7 @@ export interface IID3v2header {
 export const ID3v2Header: IGetToken<IID3v2header> = {
   len: 10,
 
-  get: (buf: Buffer, off): IID3v2header => {
+  get: (buf: Uint8Array, off): IID3v2header => {
     return {
       // ID3v2/file identifier   "ID3"
       fileIdentifier: new Token.StringType(3, 'ascii').get(buf, off),

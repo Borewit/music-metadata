@@ -16,7 +16,7 @@ const debug = debugInit('music-metadata:parser:ogg:vorbis1');
  */
 export class VorbisParser implements IPageConsumer {
 
-  private pageSegments: Buffer[] = [];
+  private pageSegments: Uint8Array[] = [];
 
   constructor(protected metadata: INativeMetadataCollector, protected options: IOptions) {
   }
@@ -26,7 +26,7 @@ export class VorbisParser implements IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public async parsePage(header: IPageHeader, pageData: Buffer): Promise<void> {
+  public async parsePage(header: IPageHeader, pageData: Uint8Array): Promise<void> {
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
@@ -39,7 +39,7 @@ export class VorbisParser implements IPageConsumer {
       if (header.headerType.lastPage || !header.headerType.continued) {
         // Flush page segments
         if (this.pageSegments.length > 0) {
-          const fullPage = Buffer.concat(this.pageSegments);
+          const fullPage = VorbisParser.mergeUint8Arrays(this.pageSegments);
           await this.parseFullPage(fullPage);
         }
         // Reset page segments
@@ -51,11 +51,23 @@ export class VorbisParser implements IPageConsumer {
     }
   }
 
-  public async flush(): Promise<void> {
-    await this.parseFullPage(Buffer.concat(this.pageSegments));
+  private static mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
+    const totalSize = arrays.reduce((acc, e) => acc + e.length, 0);
+    const merged = new Uint8Array(totalSize);
+
+    arrays.forEach((array, i, _arrays) => {
+      const offset = _arrays.slice(0, i).reduce((acc, e) => acc + e.length, 0);
+      merged.set(array, offset);
+    });
+
+    return merged;
   }
 
-  public async parseUserComment(pageData: Buffer, offset: number): Promise<number> {
+  public async flush(): Promise<void> {
+    await this.parseFullPage(VorbisParser.mergeUint8Arrays(this.pageSegments));
+  }
+
+  public async parseUserComment(pageData: Uint8Array, offset: number): Promise<number> {
     const decoder = new VorbisDecoder(pageData, offset);
     const tag = decoder.parseUserComment();
 
@@ -92,7 +104,7 @@ export class VorbisParser implements IPageConsumer {
    * @param header
    * @param pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
+  protected parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat('codec', 'Vorbis I');
     debug('Parse first page');
     // Parse  Vorbis common header
@@ -109,7 +121,7 @@ export class VorbisParser implements IPageConsumer {
     } else throw new Error('First Ogg page should be type 1: the identification header');
   }
 
-  protected async parseFullPage(pageData: Buffer): Promise<void> {
+  protected async parseFullPage(pageData: Uint8Array): Promise<void> {
     // New page
     const commonHeader = CommonHeader.get(pageData, 0);
     debug('Parse full page: type=%s, byteLength=%s', commonHeader.packetType, pageData.byteLength);
@@ -127,7 +139,7 @@ export class VorbisParser implements IPageConsumer {
   /**
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
    */
-  protected async parseUserCommentList(pageData: Buffer, offset: number): Promise<void> {
+  protected async parseUserCommentList(pageData: Uint8Array, offset: number): Promise<void> {
 
     const strLen = Token.UINT32_LE.get(pageData, offset);
     offset += 4;

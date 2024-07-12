@@ -25,9 +25,9 @@ export class OpusParser extends VorbisParser {
   /**
    * Parse first Opus Ogg page
    * @param {IPageHeader} header
-   * @param {Buffer} pageData
+   * @param {Uint8Array} pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Buffer) {
+  protected parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat('codec', 'Opus');
     // Parse Opus ID Header
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
@@ -37,7 +37,7 @@ export class OpusParser extends VorbisParser {
     this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
   }
 
-  protected async parseFullPage(pageData: Buffer): Promise<void> {
+  protected async parseFullPage(pageData: Uint8Array): Promise<void> {
     const magicSignature = new Token.StringType(8, 'ascii').get(pageData, 0);
     switch (magicSignature) {
 
