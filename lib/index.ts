@@ -1,3 +1,7 @@
+/**
+ * Node.js specific entry point.
+ */
+
 import * as Stream from 'stream';
 import * as strtok3 from 'strtok3';
 import initDebug from 'debug';

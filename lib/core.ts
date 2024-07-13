@@ -1,3 +1,7 @@
+/**
+ * Primary entry point, Node.js specific entry point is index.ts
+ */
+
 import * as strtok3 from 'strtok3';
 
 import { ParserFactory } from './ParserFactory.js';
