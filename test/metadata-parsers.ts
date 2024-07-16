@@ -33,7 +33,7 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseBlob',
     initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
-      if (nodeMajorVersion < 120) {
+      if (nodeMajorVersion < 20) {
         skipTest();
       }
       const buffer = fs.readFileSync(filePath);
