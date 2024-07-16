@@ -1,7 +1,5 @@
+# Project
 node_modules/
-.idea/
-*.iml
-src/
 test/**/*.js
 test/**/*.js.map
 test/**/*.d.ts
@@ -15,3 +13,16 @@ test/_test-issues.ts
 coverage/
 .nyc_output/
 test/samples/zeroes.flac
+
+#IntelliJ IDEA:
+.idea
+*.iml
+
+# Yarn:
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
