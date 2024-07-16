@@ -1,6 +1,6 @@
 # Test against the latest version of this Node.js version
 environment:
-  nodejs_version: "16"
+  nodejs_version: "22"
 
 version: $(package_version)-{build}
 
@@ -11,7 +11,7 @@ install:
   # Get the latest stable version of Node.js or io.js
   - ps: Install-Product node $env:nodejs_version
   # install modules
-  - yarn install --ignore-engines
+  - yarn install
 
 build_script:
   - yarn run lint

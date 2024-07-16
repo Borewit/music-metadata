@@ -1,9 +1,9 @@
 name: Node.js CI
 on:
-  push:
-    branches: ['master']
   pull_request:
-    branches: ['master']
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
 
 jobs:
 
@@ -19,11 +19,11 @@ jobs:
         with:
           node-version: 22.x
 
-      - name: Install production dependencies, check node engine compatibility
-        run: yarn install --production=true
+      - name: Enable Corepack
+        run: corepack enable
 
-      - name: Install development dependencies
-        run: yarn install --production=false --ignore-engines
+      - name: Yarn install
+        run: yarn install
 
       - name: Build & Code analysis
         run: yarn run lint
@@ -48,6 +48,9 @@ jobs:
 
     needs: build
 
+    env:
+      YARN_IGNORE_NODE: 1
+
     strategy:
       matrix:
         node-version: [16.x, 18.x, 20.x, 22.x]
@@ -62,8 +65,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: yarn install --ignore-engines
+        run: yarn install
 
       - name: Download build
         uses: actions/download-artifact@v4
