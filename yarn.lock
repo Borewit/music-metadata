@@ -3241,6 +3241,11 @@ peek-readable@^5.1.1:
   resolved "https://registry.yarnpkg.com/peek-readable/-/peek-readable-5.1.1.tgz#7dbeafa1ce271a3eba3fba808883bdb03769b822"
   integrity sha512-4hEOSH7KeEaZpMDF/xfm1W9fS5rT7Ett3BkXWHqAEzRLLwLaHkwOL+GvvpIEh9UrvX9BDhzfkvteslgraoH69w==
 
+peek-readable@^5.1.3:
+  version "5.1.3"
+  resolved "https://registry.yarnpkg.com/peek-readable/-/peek-readable-5.1.3.tgz#08993b35dd87502ae5e6028498663abed2dcc009"
+  integrity sha512-kCsc9HwH5RgVA3H3VqkWFyGQwsxUxLdiSX1d5nqAm7hnMFjNFX1VhBLmJoUY0hZNc8gmDNgBkLjfhiWPsziXWA==
+
 picocolors@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/picocolors/-/picocolors-1.0.1.tgz#a8ad579b571952f0e5d25892de5445bcfe25aaa1"
@@ -4395,6 +4400,14 @@ strtok3@^7.1.0:
   dependencies:
     "@tokenizer/token" "^0.3.0"
     peek-readable "^5.1.1"
+
+strtok3@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/strtok3/-/strtok3-8.0.0.tgz#0b44ef1032f791e36091ea2365fa8590dc695b4c"
+  integrity sha512-YzsSP+kli3q1tTA04HsfY1GqIapi3vEMN38jJ+aLpFyoev0onI/RuZWBGkQgc7ORynb3LW4cSOP3XtsKV21X6Q==
+  dependencies:
+    "@tokenizer/token" "^0.3.0"
+    peek-readable "^5.1.3"
 
 supports-color@^5.3.0:
   version "5.5.0"

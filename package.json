@@ -6,13 +6,16 @@
     "name": "Borewit",
     "url": "https://github.com/Borewit"
   },
-  "funding": [{
-    "type": "github",
-    "url": "https://github.com/sponsors/Borewit"
-  }, {
-    "type": "buymeacoffee",
-    "url": "https://buymeacoffee.com/borewit"
-  }],
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/Borewit"
+    },
+    {
+      "type": "buymeacoffee",
+      "url": "https://buymeacoffee.com/borewit"
+    }
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -97,7 +100,7 @@
     "debug": "^4.3.4",
     "file-type": "^19.1.1",
     "media-typer": "^1.1.0",
-    "strtok3": "^7.1.0",
+    "strtok3": "^8.0.0",
     "token-types": "^6.0.0",
     "uint8array-extras": "^1.3.0"
   },

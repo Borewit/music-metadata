@@ -29,7 +29,7 @@ export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAu
   if (blob instanceof File) {
     fileInfo.path = (blob as File).name;
   }
-  return parseWebStream(blob.stream() as any, fileInfo, options);
+  return parseWebStream(blob.stream(), fileInfo, options);
 }
 
 /**
@@ -40,7 +40,7 @@ export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAu
  * @returns Metadata
  */
 export function parseWebStream(webStream: AnyWebStream<Uint8Array>, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  return parseFromTokenizer(strtok3.fromWebStream(webStream as any, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo), options);
+  return parseFromTokenizer(strtok3.fromWebStream(webStream as any, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo}), options);
 }
 
 /**
@@ -56,7 +56,7 @@ export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: strtok3.IFi
   const bufferReader = new RandomUint8ArrayReader(uint8Array);
   await scanAppendingHeaders(bufferReader, options);
 
-  const tokenizer = strtok3.fromBuffer(uint8Array, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo);
+  const tokenizer = strtok3.fromBuffer(uint8Array, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
   return parseFromTokenizer(tokenizer, options);
 }
 
