@@ -53,14 +53,14 @@ Primarily designed for [Node.js](https://nodejs.org/), but has also been designe
 ### Supported tag headers
 
 Following tag header formats are supported:
-* [APE](https://wikipedia.org/wiki/APE_tag)
-* [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
-* EXIF 2.3
-* [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
-* [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
-* [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
-* [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
-* [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
+- [APE](https://wikipedia.org/wiki/APE_tag)
+- [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
+- EXIF 2.3
+- [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
+- [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
+- [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
+- [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
+- [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
 
 It allows many tags to be accessed in audio format, and tag format independent way.
 
@@ -70,15 +70,15 @@ Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](
 ### Audio format & encoding details
 
 Support for encoding / format details:
-* [Bit rate](https://wikipedia.org/wiki/Bit_rate)
-* [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
-* Duration
-* Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
+- [Bit rate](https://wikipedia.org/wiki/Bit_rate)
+- [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
+- Duration
+- Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
 
 
 ## Online demo's
-* [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.app/)
-* [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
+- [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.app/)
+- [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
 
 
 ### Sponsor
@@ -114,13 +114,13 @@ graph TD;
 ```
 
 Dependency list:
-* [tokenizer-token](https://github.com/Borewit/tokenizer-token)
-* [strtok3](https://github.com/Borewit/strtok3)
-* [token-types](https://github.com/Borewit/token-types)
-* [file-type](https://github.com/sindresorhus/file-type)
-* [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
-* [peek-readable](https://github.com/Borewit/peek-readable)
-* [readable-web-to-node-stream](https://github.com/Borewit/readable-web-to-node-stream)
+- [tokenizer-token](https://github.com/Borewit/tokenizer-token)
+- [strtok3](https://github.com/Borewit/strtok3)
+- [token-types](https://github.com/Borewit/token-types)
+- [file-type](https://github.com/sindresorhus/file-type)
+- [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
+- [peek-readable](https://github.com/Borewit/peek-readable)
+- [readable-web-to-node-stream](https://github.com/Borewit/readable-web-to-node-stream)
 
 ## Usage
 
@@ -273,7 +273,7 @@ This is a low level function, reading from a [strtok3](https://github.com/Borewi
 [music-metadata-browser](https://github.com/Borewit/music-metadata-browser) is depended on this function.
 
 This also enables special read modules like:
-* [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
+- [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
 
 #### orderTags function
 
