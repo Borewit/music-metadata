@@ -24,7 +24,7 @@ const debug = initDebug('music-metadata:parser');
  * @returns Metadata
  */
 export async function parseStream(stream: Stream.Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  const tokenizer = await strtok3.fromStream(stream, typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo);
+  const tokenizer = await strtok3.fromStream(stream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
   return parseFromTokenizer(tokenizer, options);
 }
 
