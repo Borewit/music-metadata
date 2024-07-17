@@ -2284,14 +2284,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:^19.1.1":
-  version: 19.1.1
-  resolution: "file-type@npm:19.1.1"
+"file-type@npm:^19.2.0":
+  version: 19.2.0
+  resolution: "file-type@npm:19.2.0"
   dependencies:
-    strtok3: "npm:^7.1.0"
+    strtok3: "npm:^8.0.0"
     token-types: "npm:^6.0.0"
     uint8array-extras: "npm:^1.3.0"
-  checksum: 10c0/621f6f5ac9f2c0fad1c5ac0a77d715953fbe7e5441e595443857b7aede0ae8dfb80e29b4f1d7000c6bca49a6e1d5c711c5265fd3d6f81c40361fc61a0ba415c4
+  checksum: 10c0/202ed0222da1f2b389ae5a38815781b7218413b2efb298268acadb767233bc83b5250e2075f17b10db1e91d53f38c3fba6982951b0bec1069f8bc83018482a36
   languageName: node
   linkType: hard
 
@@ -4321,7 +4321,7 @@ __metadata:
     eslint-plugin-jsdoc: "npm:^48.7.0"
     eslint-plugin-node: "npm:^11.1.0"
     eslint-plugin-unicorn: "npm:^54.0.0"
-    file-type: "npm:^19.1.1"
+    file-type: "npm:^19.2.0"
     media-typer: "npm:^1.1.0"
     mime: "npm:^4.0.4"
     mocha: "npm:^10.6.0"
@@ -6320,16 +6320,6 @@ __metadata:
     "@tokenizer/token": "npm:^0.3.0"
     peek-readable: "npm:^5.0.0"
   checksum: 10c0/63a72b10a302719242bfd31ca53955a06bb091dfec46ef14ca10c4b17ab15780ed8365cd5b270cfbde92d571f677539957add436e4bf9cccdf9977b40d762583
-  languageName: node
-  linkType: hard
-
-"strtok3@npm:^7.1.0":
-  version: 7.1.1
-  resolution: "strtok3@npm:7.1.1"
-  dependencies:
-    "@tokenizer/token": "npm:^0.3.0"
-    peek-readable: "npm:^5.1.3"
-  checksum: 10c0/40c659917d12b925a2ae0781b5a6a6573a5fc99a08e2185ba93fc1e303e7e28935f8b3b83942fd39d0adf9ce1e9e4a3a3f6d984bc6376c14feb93a121fea454a
   languageName: node
   linkType: hard
 
