@@ -17,15 +17,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.x
-
-      - name: Enable Corepack
-        run: corepack enable
+          node-version: 20.x
 
       - name: Yarn install
         run: yarn install
 
-      - name: Build & Code analysis
+      - name: Static code analysis
         run: yarn run lint
 
       - name: Build
@@ -53,7 +50,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x, 22.x]
+        node-version: [16.x, 18.x, 20.x, 22.5.1]
 
     steps:
 
