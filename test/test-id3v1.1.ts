@@ -32,7 +32,7 @@ describe('Parsing MPEG / ID3v1', () => {
       assert.strictEqual(common.track.no, 1, 'common.track.no = 1 (ID3v1 tag)');
       assert.strictEqual(common.track.of, null, 'common.track.of = null');
       assert.deepEqual(common.genre, ['Electronic'], 'common.genre');
-      assert.deepEqual(common.comment, ['abcdefg'], 'common.comment');
+      assert.deepEqual(common.comment, [{text: 'abcdefg'}], 'common.comment');
     }
 
     /**

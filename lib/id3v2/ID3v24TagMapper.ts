@@ -200,16 +200,8 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
         }
         break;
 
-      case 'COMM':
-        tag.value = tag.value?.text;
-        break;
-
       case 'POPM':
         tag.value = ID3v24TagMapper.toRating(tag.value);
-        break;
-
-      case 'USLT':
-        tag.value = tag.value?.text;
         break;
 
       default:

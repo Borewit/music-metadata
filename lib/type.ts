@@ -1,8 +1,10 @@
 import { GenericTagId, TagType } from './common/GenericTagTypes.js';
 import { IFooter } from './apev2/APEv2Token.js';
 import { TrackType } from './matroska/types.js';
+import { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
 
 export { TrackType } from './matroska/types.js';
+export { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
 
 /**
  * Attached picture, typically used for cover art
@@ -90,7 +92,7 @@ export interface ICommonTagsResult {
   /**
    * List of comments
    */
-  comment?: string[];
+  comment?: IComment[];
   /**
    * Genre
    */
@@ -104,9 +106,9 @@ export interface ICommonTagsResult {
    */
   composer?: string[];
   /**
-   * Lyrics
+   * Synchronized lyrics
    */
-  lyrics?: string[];
+  lyrics?: ILyricsTag[];
   /**
    * Album title, formatted for alphabetic ordering
    */
@@ -564,7 +566,6 @@ export interface IAudioMetadata extends INativeAudioMetadata {
    * Metadata, form independent interface
    */
   common: ICommonTagsResult;
-
 }
 
 /**
@@ -688,4 +689,28 @@ export interface IRandomReader {
    * @return {Promise<number>} bytes read
    */
   randomRead(buffer: Uint8Array, offset: number, length: number, position: number): Promise<number>;
+}
+
+interface ILyricsText {
+  text: string;
+  timestamp?: number;
+}
+
+export interface IComment {
+  descriptor?: string;
+  language?: string;
+  text?: string;
+}
+
+export interface ILyricsTag extends IComment {
+  contentType: LyricsContentType;
+  timeStampFormat: TimestampFormat;
+  /**
+   * Un-synchronized lyrics
+   */
+  text?: string;
+  /**
+   * Synchronized lyrics
+   */
+  syncText: ILyricsText[];
 }

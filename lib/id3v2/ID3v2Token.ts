@@ -44,6 +44,25 @@ export interface IExtendedHeader {
 }
 
 /**
+ * https://id3.org/id3v2.3.0#Synchronised_lyrics.2Ftext
+ */
+export enum LyricsContentType {
+  other = 0,
+  lyrics = 1,
+  text = 2,
+  movement_part = 3,
+  events = 4,
+  chord = 5,
+  trivia_pop = 6
+}
+
+export enum TimestampFormat {
+  notSynchronized0,
+  mpegFrameNumber = 1,
+  milliseconds = 2
+}
+
+/**
  * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.
  * 4 * %0xxxxxxx
  */
@@ -150,5 +169,52 @@ export const TextEncodingToken: IGetToken<ITextEncoding> = {
         return {encoding: 'utf8', bom: false};
 
     }
+  }
+};
+
+/**
+ * `USLT` frame fields
+ */
+export interface ITextHeader {
+  encoding: ITextEncoding;
+  language: string;
+}
+
+/**
+ * Used to read first portion of `SYLT` frame
+ */
+export const TextHeader: IGetToken<ITextHeader> = {
+  len: 4,
+
+  get: (uint8Array: Uint8Array, off: number): ITextHeader => {
+    return {
+      encoding: TextEncodingToken.get(uint8Array, off),
+      language: new Token.StringType(3, 'latin1').get(uint8Array, off + 1)
+    };
+  }
+};
+
+/**
+ * SYLT` frame fields
+ */
+export interface ISyncTextHeader extends ITextHeader {
+  contentType: LyricsContentType;
+  timeStampFormat: TimestampFormat;
+}
+
+/**
+ * Used to read first portion of `SYLT` frame
+ */
+export const SyncTextHeader: IGetToken<ISyncTextHeader> = {
+  len: 6,
+
+  get: (uint8Array: Uint8Array, off: number): ISyncTextHeader => {
+    const text = TextHeader.get(uint8Array, off);
+    return {
+      encoding: text.encoding,
+      language: text.language,
+      timeStampFormat: Token.UINT8.get(uint8Array, off + 4),
+      contentType: Token.UINT8.get(uint8Array, off + 5)
+    };
   }
 };

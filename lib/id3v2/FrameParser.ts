@@ -2,10 +2,11 @@ import initDebug from 'debug';
 import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';
-import { AttachedPictureType, ID3v2MajorVersion, TextEncodingToken } from './ID3v2Token.js';
+import { AttachedPictureType, ID3v2MajorVersion, TextEncodingToken, SyncTextHeader, TextHeader, ITextEncoding } from './ID3v2Token.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 
 import { IWarningCollector } from '../common/MetadataCollector.js';
+import { IComment, ILyricsTag } from '../type.js';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -91,7 +92,6 @@ export class FrameParser {
     let output: any = []; // ToDo
     const nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
     let fzero: number;
-    const out: IOut = {};
 
     debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
@@ -195,19 +195,36 @@ export class FrameParser {
         break;
 
       case 'SYLT':
-        // skip text encoding (1 byte),
-        //      language (3 bytes),
-        //      time stamp format (1 byte),
-        //      content tagTypes (1 byte),
-        //      content descriptor (1 byte)
-        offset += 7;
+        const syltHeader = SyncTextHeader.get(uint8Array, 0);
+        offset += SyncTextHeader.len;
 
-        output = [];
+        const result: ILyricsTag = {
+          descriptor: '',
+          language: syltHeader.language,
+          contentType: syltHeader.contentType,
+          timeStampFormat: syltHeader.timeStampFormat,
+          syncText: []
+        };
+
+        let readSyllables = false;
         while (offset < length) {
-          const txt = uint8Array.slice(offset, offset = util.findZero(uint8Array, offset, length, encoding));
-          offset += 5; // push offset forward one +  4 byte timestamp
-          output.push(util.decodeString(txt, encoding));
+
+          const nullStr = FrameParser.readNullTerminatedString(uint8Array.subarray(offset), syltHeader.encoding);
+          offset += nullStr.len;
+
+          if (readSyllables) {
+            const timestamp = Token.UINT32_BE.get(uint8Array, offset);
+            offset += Token.UINT32_BE.len;
+            result.syncText.push({
+              text: nullStr.text,
+              timestamp
+            });
+          } else {
+            result.descriptor = nullStr.text;
+            readSyllables = true;
+          }
         }
+        output = result;
         break;
 
       case 'ULT':
@@ -215,18 +232,21 @@ export class FrameParser {
       case 'COM':
       case 'COMM':
 
-        offset += 1;
+        const textHeader = TextHeader.get(uint8Array, offset);
+        offset += TextHeader.len;
 
-        out.language = util.decodeString(uint8Array.slice(offset, offset + 3), defaultEnc);
-        offset += 3;
+        const descriptorStr = FrameParser.readNullTerminatedString(uint8Array.subarray(offset), textHeader.encoding);
+        offset += descriptorStr.len;
 
-        fzero = util.findZero(uint8Array, offset, length, encoding);
-        out.description = util.decodeString(uint8Array.slice(offset, fzero), encoding);
-        offset = fzero + nullTerminatorLength;
+        const textStr = FrameParser.readNullTerminatedString(uint8Array.subarray(offset), textHeader.encoding);
 
-        out.text = util.decodeString(uint8Array.slice(offset, length), encoding).replace(/\x00+$/, '');
+        const comment: IComment = {
+          language: textHeader.language,
+          descriptor: descriptorStr.text,
+          text: textStr.text
+        };
 
-        output = [out];
+        output = comment;
         break;
 
       case 'UFID':
@@ -308,6 +328,16 @@ export class FrameParser {
     }
 
     return output;
+  }
+
+  protected static readNullTerminatedString(uint8Array: Uint8Array, encoding: ITextEncoding): {text: string, len: number} {
+    let offset = encoding.bom ? 2 : 0;
+    const txt = uint8Array.slice(offset, offset = util.findZero(uint8Array, offset, uint8Array.length, encoding.encoding));
+    offset += encoding.encoding === 'utf-16le' ? 2 : 1;
+    return {
+      text: util.decodeString(txt, encoding.encoding),
+      len: offset
+    };
   }
 
   protected static fixPictureMimeType(pictureType: string): string {

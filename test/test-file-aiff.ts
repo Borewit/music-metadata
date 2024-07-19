@@ -42,7 +42,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       it(parser.description, async function(){
         // AIFF-C file, stereo A-law data (compression type: alaw)
         // Source: http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Samples.html
-        const metadata = await parser.initParser(this.skip(), path.join(aiffSamplePath, 'M1F1-AlawC-AFsp.aif'), 'audio/aiff');
+        const metadata = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'M1F1-AlawC-AFsp.aif'), 'audio/aiff');
         checkFormat(metadata.format, 'Alaw 2:1', 8000, 2, 16, 23493);
       });
     });
@@ -150,7 +150,11 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
     assert.strictEqual(format.container, 'AIFF-C', 'format.container');
     assert.strictEqual(format.codec, 'Alaw 2:1', 'format.codec');
 
-    assert.deepStrictEqual(common.comment, ['AFspdate: 2003-01-30 03:28:34 UTC', 'user: kabal@CAPELLA' ,'program: CopyAudio'], 'common.comment');
+    assert.deepStrictEqual(common.comment, [
+      {text: 'AFspdate: 2003-01-30 03:28:34 UTC'},
+      {text: 'user: kabal@CAPELLA'},
+      {text: 'program: CopyAudio'}
+    ], 'common.comment');
   });
 
 });

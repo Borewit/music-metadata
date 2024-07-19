@@ -37,7 +37,9 @@ it('MusicBrains/Picard tags in FLAC', async () => {
     assert.deepEqual(common.originaldate, '2011-09-11', 'common.originaldate');
     assert.deepEqual(common.releasestatus, 'official', 'common.releasestatus');
     assert.deepEqual(common.releasetype, ['album', 'compilation'], 'common.releasetype');
-    assert.deepEqual(common.comment, ['EAC-Secure Mode'], 'common.comment');
+    assert.deepEqual(common.comment, [{
+      text: "EAC-Secure Mode"
+    }], 'common.comment');
     assert.deepEqual(common.genre, ['Alt. Rock'], 'common.genre');
     assert.deepEqual(common.musicbrainz_albumid, '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'common.musicbrainz_albumid');
     assert.deepEqual(common.musicbrainz_recordingid, 'b0c1d984-ba93-4167-880a-ac02255bf9e7', 'common.musicbrainz_recordingid');

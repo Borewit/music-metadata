@@ -379,7 +379,13 @@ describe('Add, change and fix some mappings #pr-544', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
+        t.deepEqual(metadata.common.comment, [
+          {
+            descriptor: "",
+            language: "eng",
+            text: "Tagged with Mp3tag v3.01"
+          }
+        ], 'metadata.common.comment');
       });
     });
 
@@ -388,7 +394,7 @@ describe('Add, change and fix some mappings #pr-544', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.deepEqual(metadata.common.comment, ['Tagged with Mp3tag v3.01'], 'metadata.common.comment');
+        t.deepEqual(metadata.common.comment, [{text: 'Tagged with Mp3tag v3.01'}], 'metadata.common.comment');
       });
     });
   });
