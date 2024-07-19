@@ -15,13 +15,8 @@ describe('Asynchronous observer updates', () => {
     await mm.parseFile(flacFilePath, {
       observer: (event => {
         eventTags.push(event.tag);
-        switch (typeof event.tag.value) {
-          case 'number':
-          case 'string':
-          case 'boolean':
-            break;
-          default:
-            event.tag.value = null;
+        if (event.tag.id === 'picture') {
+          event.tag.value = null;
         }
       })
     });
@@ -80,7 +75,7 @@ describe('Asynchronous observer updates', () => {
       {
         id: 'comment',
         type: 'common',
-        value: 'EAC-Secure Mode=should ignore equal sign'
+        value: {text: 'EAC-Secure Mode=should ignore equal sign'}
       },
       {
         id: 'genre',

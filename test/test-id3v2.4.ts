@@ -44,7 +44,28 @@ describe("Decode MP3/ID3v2.4", () => {
 
     const filePath = path.join(samplePath, 'mp3', 'issue-502.mp3');
     const {common} = await mm.parseFile(filePath);
-    assert.deepEqual(common.comment, ['CLEAN'], 'common.comment');
+    assert.deepEqual(common.comment, [
+      {
+        descriptor: "iTunPGAP",
+        language: "eng",
+        text: "0"
+      },
+      {
+        descriptor: "iTunNORM",
+        language: "eng",
+        text: " 000003B5 000003DA 00002F21 00003563 000023B6 0000D74E 00007267 000077A0 0000D7B6 0000D7B6"
+      },
+      {
+        descriptor: "iTunSMPB",
+        language: "eng",
+        text: " 00000000 00000210 0000084C 00000000006E6BA4 00000000 00641054 00000000 00000000 00000000 00000000 00000000 00000000"
+      },
+      {
+        descriptor: "",
+        language: "eng",
+        text: "CLEAN"
+      }
+    ], 'common.comment');
   });
 
   it("should respect skipCovers-flag", () => {
@@ -88,14 +109,16 @@ describe("Decode MP3/ID3v2.4", () => {
     const id3v23 = mm.orderTags(native['ID3v2.4']);
     assert.isDefined(id3v23.USLT, 'Should contain ID3v2.4 USLT tag');
     assert.deepEqual(id3v23.USLT[0], {
-      description: "Sinner's Prayer",
-      language: "eng",
+      descriptor: "Sinner's Prayer",
+      language: 'eng',
       text: lyrics
     });
 
     // Check mapping to common IDv2.3 tag
     assert.isDefined(common.lyrics, 'Should map tag id3v23.USLT to common.lyrics');
-    assert.strictEqual(common.lyrics[0], lyrics);
+    assert.strictEqual(common.lyrics[0].descriptor, "Sinner's Prayer", 'common.lyrics[0].descriptor');
+    assert.strictEqual(common.lyrics[0].language, 'eng', 'common.lyrics[0].language');
+    assert.strictEqual(common.lyrics[0].text, lyrics);
   });
 
 });

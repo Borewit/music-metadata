@@ -101,7 +101,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepEqual(common.date, '2018-04-26T13:26:19-05:00');
     assert.deepEqual(common.year, 2018);
     assert.deepEqual(common.encodedby, 'Adobe Audition CC 2018.1 (Macintosh)');
-    assert.deepEqual(common.comment, ['Comments here!']);
+    assert.deepEqual(common.comment, [{text: 'Comments here!'}]);
     assert.deepEqual(common.genre, ['Blues']);
     assert.deepEqual(common.engineer, ['Engineer']);
     assert.deepEqual(common.technician, ['Technician']);

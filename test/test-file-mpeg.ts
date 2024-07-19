@@ -111,7 +111,11 @@ describe('Parse MPEG', () => {
         t.strictEqual(common.disk.no, null, 'common.disk.no');
         t.strictEqual(common.disk.of, null, 'common.disk.of');
         t.deepEqual(common.genre, ['Ska-Punk'], 'common.genre');
-        t.deepEqual(common.comment, ['Jive'], 'common.genre');
+        t.deepEqual(common.comment, [{
+          descriptor: "",
+          language: "eng",
+          text: "Jive"
+        }], 'common.genre');
       }
 
       function checkID3v1(id3v1: mm.INativeTagDict) {
@@ -134,7 +138,7 @@ describe('Parse MPEG', () => {
         t.deepEqual(id3v23.TYER, ['1998'], 'native: TYER');
         t.deepEqual(id3v23.TCOM, ['CA'], 'native: TCOM'); // ToDo: common property?
         t.deepEqual(id3v23.TRCK, ['04'], 'native: TRCK');
-        t.deepEqual(id3v23.COMM, [{description: '', language: 'eng', text: 'Jive'}], 'native: COMM');
+        t.deepEqual(id3v23.COMM, [{descriptor: '', language: 'eng', text: 'Jive'}], 'native: COMM');
       }
 
       const result = await mm.parseFile(filePath, {duration: true});
@@ -175,7 +179,7 @@ describe('Parse MPEG', () => {
         t.strictEqual(common.disk.no, null, 'common.disk.no');
         t.strictEqual(common.disk.of, null, 'common.disk.of');
         t.deepEqual(common.genre, ['Ska-Punk'], 'common.genre');
-        t.deepEqual(common.comment, ['Jive'], 'common.genre');
+        t.deepEqual(common.comment, [{descriptor: '', language: 'eng', text: 'Jive'}], 'common.comment');
       }
 
       function checkID3v23(native: mm.INativeTagDict) {
@@ -187,7 +191,7 @@ describe('Parse MPEG', () => {
         t.deepEqual(native.TYER, ['1998'], 'native: TYER');
         t.deepEqual(native.TCOM, ['CA'], 'native: TCOM');
         t.deepEqual(native.TRCK, ['07'], 'native: TRCK');
-        t.deepEqual(native.COMM, [{description: '', language: 'eng', text: 'Jive'}], 'native: COMM');
+        t.deepEqual(native.COMM, [{descriptor: '', language: 'eng', text: 'Jive'}], 'native: COMM');
       }
 
       const result = await mm.parseFile(filePath, {duration: true});

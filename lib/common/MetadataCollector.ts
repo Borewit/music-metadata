@@ -251,6 +251,15 @@ export class MetadataCollector implements INativeMetadataCollector {
           return;
         break;
 
+      case 'comment':
+        if (typeof tag.value === 'string') {
+          tag.value = {text: tag.value};
+        }
+        if (tag.value.descriptor === 'iTunPGAP') {
+          this.setGenericTag(tagType, {id: 'gapless', value: tag.value.text === '1'});
+        }
+        break;
+
       default:
       // nothing to do
     }

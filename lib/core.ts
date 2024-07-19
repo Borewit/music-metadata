@@ -15,6 +15,8 @@ import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 
 export { IFileInfo } from 'strtok3';
 
+export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
+
 export type AnyWebStream<G> = NodeReadableStream<G> | ReadableStream<G>;
 
 /**

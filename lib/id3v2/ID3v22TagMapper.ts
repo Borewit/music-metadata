@@ -30,12 +30,6 @@ export const id3v22TagMap: INativeTagMap = {
   TEN: 'encodedby',
   TSS: 'encodersettings',
   WAR: 'website',
-  'COM:iTunPGAP': 'gapless'
-  /* ToDo: iTunes tags:
-  'COM:iTunNORM': ,
-  'COM:iTunSMPB': 'encoder delay',
-  'COM:iTunes_CDDB_IDs'
-  */,
 
   PCS: 'podcast',
   TCP: "compilation",

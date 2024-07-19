@@ -154,10 +154,6 @@ export class ID3v2Parser {
             await this.handleTag(tag, tag.value.text, () => tag.value.description);
           }
           break;
-        case 'COM':
-        case 'COMM':
-          await this.handleTag(tag, tag.value, value => value.description, tag.id === 'COM' ? value => value.text : value => value);
-          break;
         default:
           await (Array.isArray(tag.value) ? Promise.all(tag.value.map(value => this.addTag(tag.id, value))) : this.addTag(tag.id, tag.value));
       }

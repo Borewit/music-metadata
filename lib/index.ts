@@ -11,7 +11,7 @@ import { ParserFactory } from './ParserFactory.js';
 import { IAudioMetadata, IOptions } from './type.js';
 import { RandomFileReader } from './common/RandomFileReader.js';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter } from './type.js';
+export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
 export { parseFromTokenizer, parseBuffer, parseBlob, parseWebStream, selectCover, orderTags, ratingToStars, IFileInfo } from './core.js';
 
 const debug = initDebug('music-metadata:parser');

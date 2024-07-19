@@ -107,7 +107,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         assert.deepEqual(common.album, 'Live at Tom\'s Bullpen in Dover, DE (2016-04-30)');
         assert.deepEqual(common.albumartist, 'They Say We\'re Sinking');
-        assert.deepEqual(common.comment, ['youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV']);
+        assert.deepEqual(common.comment, [{text: 'youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV'}]);
       });
     });
   });
@@ -164,7 +164,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
           assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
           assert.deepEqual(common.disk, {no: null, of: null});
           assert.deepEqual(common.track, {no: 1, of: null});
-          assert.deepEqual(common.comment, ['https://archive.org/details/glories_of_ireland_1801_librivox']);
+          assert.deepEqual(common.comment, [{text: 'https://archive.org/details/glories_of_ireland_1801_librivox'}]);
 
           const iTunes = mm.orderTags(metadata.native.iTunes);
           assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
@@ -412,7 +412,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
     const filePath = path.join(mp4Samples, 'Apple  voice memo.m4a');
 
-    const {format, quality, common, native} = await mm.parseFile(filePath);
+    const {format, native} = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'M4A/isom/mp42', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -461,7 +461,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   it('moov.udta.meta.ilst.rate mapping', async () => {
 
     const filePath = path.join(samplePath, 'rating', 'testcase.m4a');
-    const {format, common, native} = await mm.parseFile(filePath);
+    const {common} = await mm.parseFile(filePath);
 
     assert.isDefined(common.rating, 'Expect rating property to be present');
     assert.equal(common.rating[0].rating, 0.80, 'Vorbis tag rating score of 80%');

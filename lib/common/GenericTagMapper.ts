@@ -5,7 +5,7 @@ import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector
 export interface IGenericTagMapper {
 
   /**
-   * Which tagType it able to map to the generic mapping format
+   * Which tagType is able to map to the generic mapping format
    */
   tagTypes: generic.TagType[];
 

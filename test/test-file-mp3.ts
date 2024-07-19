@@ -296,7 +296,7 @@ describe('Parse MP3 files', () => {
       assert.deepEqual(common.artists, ['Band Aid'], 'common.artists');
       assert.strictEqual(common.album, 'Now That\'s What I Call Xmas', 'common.album');
       assert.strictEqual(common.year, 2006, 'common.year');
-      assert.deepEqual(common.comment, ['TunNORM', ' 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467'], 'common.comment');
+      assert.deepEqual(common.comment, [{text: 'TunNORM'}, {text:' 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467'}], 'common.comment');
       assert.deepEqual(common.genre, ['General Holiday'], 'common.genre');
       assert.deepEqual(common.track.no, 2, 'common.track.no');
     });
