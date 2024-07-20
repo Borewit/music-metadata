@@ -148,26 +148,26 @@ export class ID3v2Parser {
   public async parseId3Data(dataLen: number): Promise<void> {
     const uint8Array = await this.tokenizer.readToken(new Token.Uint8ArrayType(dataLen));
     for (const tag of this.parseMetadata(uint8Array)) {
-      if (tag.id === 'TXXX') {
-        if (tag.value) {
-          await Promise.all(tag.value.text.map(text =>
-            this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, tag.value.description), text)
-          ));
-        }
-      } else if (tag.id === 'COM') {
-        await Promise.all(tag.value.map(value =>
-          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value.text)
-        ));
-      } else if (tag.id === 'COMM') {
-        await Promise.all(tag.value.map(value =>
-          this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, value.description), value)
-        ));
-      } else if (Array.isArray(tag.value)) {
-        await Promise.all(tag.value.map(value => this.addTag(tag.id, value)));
-      } else {
-        await this.addTag(tag.id, tag.value);
+      switch (tag.id) {
+        case 'TXXX':
+          if (tag.value) {
+            await this.handleTag(tag, tag.value.text, () => tag.value.description);
+          }
+          break;
+        case 'COM':
+        case 'COMM':
+          await this.handleTag(tag, tag.value, value => value.description, tag.id === 'COM' ? value => value.text : value => value);
+          break;
+        default:
+          await (Array.isArray(tag.value) ? Promise.all(tag.value.map(value => this.addTag(tag.id, value))) : this.addTag(tag.id, tag.value));
       }
     }
+  }
+
+  private async handleTag(tag: ITag, values: any[], descriptor: (x: any) => string, resolveValue: (x: any) => string = value => value): Promise<void> {
+    await Promise.all(values.map(value =>
+      this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, descriptor(value)), resolveValue(value))
+    ));
   }
 
   private async addTag(id: string, value: any): Promise<void> {
