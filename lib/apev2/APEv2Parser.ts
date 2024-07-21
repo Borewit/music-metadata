@@ -60,8 +60,13 @@ export class APEv2Parser extends BasicParser {
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
     const tagFooter = TagFooter.get(apeBuf, 0);
     if (tagFooter.ID === 'APETAGEX') {
-      debug(`APE footer header at offset=${offset}`);
-      return {footer: tagFooter, offset: offset - tagFooter.size};
+      if (tagFooter.flags.isHeader) {
+        debug(`APE Header found at offset=${offset - TagFooter.len}`);
+      } else {
+        debug(`APE Footer found at offset=${offset - TagFooter.len}`);
+        offset -= tagFooter.size;
+      }
+      return {footer: tagFooter, offset};
     }
   }
 
