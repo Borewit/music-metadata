@@ -1473,6 +1473,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"debug@npm:^4.3.6":
+  version: 4.3.6
+  resolution: "debug@npm:4.3.6"
+  dependencies:
+    ms: "npm:2.1.2"
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 10c0/3293416bff072389c101697d4611c402a6bacd1900ac20c0492f61a9cdd6b3b29750fc7f5e299f8058469ef60ff8fb79b86395a30374fbd2490113c1c7112285
+  languageName: node
+  linkType: hard
+
 "decamelize-keys@npm:^1.1.0":
   version: 1.1.1
   resolution: "decamelize-keys@npm:1.1.1"
@@ -4286,7 +4298,7 @@ __metadata:
     chai: "npm:^5.1.1"
     chai-as-promised: "npm:^8.0.0"
     content-type: "npm:^1.0.5"
-    debug: "npm:^4.3.4"
+    debug: "npm:^4.3.6"
     del-cli: "npm:^5.1.0"
     eslint: "npm:^9.7.0"
     eslint-config-prettier: "npm:^9.1.0"
