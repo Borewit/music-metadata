@@ -481,7 +481,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
+"@types/node@npm:*, @types/node@npm:^22.0.2":
   version: 22.0.2
   resolution: "@types/node@npm:22.0.2"
   dependencies:
@@ -490,7 +490,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.0.0, @types/node@npm:^20.14.11":
+"@types/node@npm:^20.0.0":
   version: 20.14.13
   resolution: "@types/node@npm:20.14.13"
   dependencies:
@@ -4037,7 +4037,7 @@ __metadata:
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/debug": "npm:^4.1.12"
     "@types/mocha": "npm:^10.0.7"
-    "@types/node": "npm:^20.14.11"
+    "@types/node": "npm:^22.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^7.16.1"
     "@typescript-eslint/parser": "npm:^7.16.1"
     c8: "npm:^10.1.2"
