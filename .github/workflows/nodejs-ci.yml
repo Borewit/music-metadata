@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: 20.x
 
+      - name: Enable Corepack
+        run: corepack enable yarn
+
       - name: Yarn install
         run: yarn install
 
@@ -63,7 +66,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Enable Corepack
-        run: corepack enable
+        run: corepack enable yarn
 
       - name: Install dependencies
         run: yarn install
