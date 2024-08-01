@@ -378,10 +378,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chai@npm:^4.3.16":
-  version: 4.3.16
-  resolution: "@types/chai@npm:4.3.16"
-  checksum: 10c0/745d4a9be429d5d86a7ab26064610b8957fe12dd80e94dc7d0707cf3db1c889e3ffe0d73d69bb15e6d376bf4462a7a75e9d8fc1051750b5d656d6cfe459829b7
+"@types/chai@npm:^4.3.17":
+  version: 4.3.17
+  resolution: "@types/chai@npm:4.3.17"
+  checksum: 10c0/322a74489cdfde9c301b593d086c539584924c4c92689a858e0930708895a5ab229c31c64ac26b137615ef3ffbff1866851c280c093e07b3d3de05983d3793e0
   languageName: node
   linkType: hard
 
@@ -4274,7 +4274,7 @@ __metadata:
     "@eslint/eslintrc": "npm:^3.1.0"
     "@eslint/js": "npm:^9.7.0"
     "@tokenizer/token": "npm:^0.3.0"
-    "@types/chai": "npm:^4.3.16"
+    "@types/chai": "npm:^4.3.17"
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/debug": "npm:^4.1.12"
     "@types/file-type": "npm:^10.9.1"
