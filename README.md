@@ -451,7 +451,9 @@ export interface IPicture {
 
 To assign `img` HTML-object you can do something like:
 ```js
-img.src = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+import {uint8ArrayToBase64} from 'uint8array-extras';
+
+img.src = `data:${picture.format};base64,${uint8ArrayToBase64(picture.data)}`;
 ```
 
 ## Frequently Asked Questions
