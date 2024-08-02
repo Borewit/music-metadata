@@ -490,12 +490,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.0.0, @types/node@npm:^20.14.11":
+"@types/node@npm:^20.0.0":
   version: 20.14.13
   resolution: "@types/node@npm:20.14.13"
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10c0/10bb3ece675308742301c652ab8c6cb88b1ebddebed22316103c58f94fe7eff131edd5f679e487c19077fadb6b5e6b1ad9a60a2cee2869aa1f20452b9761d570
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^22.0.3":
+  version: 22.0.3
+  resolution: "@types/node@npm:22.0.3"
+  dependencies:
+    undici-types: "npm:~6.11.1"
+  checksum: 10c0/9d734bcaf6079dfaffd6315bb845f24f5d7348f8945c3b3b9c227c76a653dbac2140620821cd717f69012fafd37ec8938df9799d1feae07161671b54be23d920
   languageName: node
   linkType: hard
 
@@ -4037,7 +4046,7 @@ __metadata:
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/debug": "npm:^4.1.12"
     "@types/mocha": "npm:^10.0.7"
-    "@types/node": "npm:^20.14.11"
+    "@types/node": "npm:^22.0.3"
     "@typescript-eslint/eslint-plugin": "npm:^7.16.1"
     "@typescript-eslint/parser": "npm:^7.16.1"
     c8: "npm:^10.1.2"
