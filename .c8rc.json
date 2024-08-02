@@ -2,5 +2,7 @@
   "reporter": [
     "lcov",
     "text"
-  ]
+  ],
+  "include": ["lib/**"],
+  "exclude": [".yarn/**"]
 }
