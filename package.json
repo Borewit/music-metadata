@@ -125,7 +125,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^48.7.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-unicorn": "^54.0.0",
+    "eslint-plugin-unicorn": "^55.0.0",
     "globals": "^15.8.0",
     "mime": "^4.0.4",
     "mocha": "^10.6.0",
