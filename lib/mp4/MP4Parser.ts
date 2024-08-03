@@ -133,6 +133,8 @@ function distinct(value: any, index: number, self: any[]) {
  */
 export class MP4Parser extends BasicParser {
 
+  static parseTypes = ['mp4']
+
   private static read_BE_Integer(array: Uint8Array, signed: boolean): number {
     const integerType = (signed ? 'INT' : 'UINT') + array.length * 8 + (array.length > 1 ? '_BE' : '');
     const token: IGetToken<number | bigint> = Token[integerType];

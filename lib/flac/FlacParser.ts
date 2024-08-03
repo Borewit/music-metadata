@@ -30,6 +30,8 @@ enum BlockType {
 
 export class FlacParser extends AbstractID3Parser {
 
+  static parseTypes = ['flac'];
+
   private vorbisParser: VorbisParser;
 
   private padding: number = 0;

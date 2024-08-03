@@ -12,6 +12,8 @@ const debug = initDebug('music-metadata:parser:DSF');
  */
 export class DsfParser extends AbstractID3Parser {
 
+  static parseTypes = ['dsf']
+
   public async postId3v2Parse(): Promise<void> {
 
     const p0 = this.tokenizer.position; // mark start position, normally 0

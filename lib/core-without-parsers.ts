@@ -4,15 +4,16 @@
 
 import * as strtok3 from 'strtok3';
 
-import { parseBlob as parseBlobWithoutParsers, parseBuffer as  parseBufferWithoutParsers, parseFromTokenizer as parseFromTokenizerWithoutParsers, parseWebStream as parseWebStreamWithoutParsers } from './core-without-parsers.js'
-import { ALL_PARSERS } from './parsers.js'
 import { ParserFactory } from './ParserFactory.js';
+import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader.js';
 import { APEv2Parser } from './apev2/APEv2Parser.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
 import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
+
+export { ALL_PARSERS } from './parsers.js'
 
 export { IFileInfo } from 'strtok3';
 
@@ -28,11 +29,11 @@ export type AnyWebStream<G> = NodeReadableStream<G> | ReadableStream<G>;
  * @returns Metadata
  */
 export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAudioMetadata> {
-  if (!options.parsers) {
-    options.parsers = ALL_PARSERS;
+  const fileInfo: strtok3.IFileInfo = {mimeType: blob.type, size: blob.size};
+  if (blob instanceof File) {
+    fileInfo.path = (blob as File).name;
   }
-
-  return parseBlobWithoutParsers(blob, options);
+  return parseWebStream(blob.stream(), fileInfo, options);
 }
 
 /**
@@ -43,11 +44,7 @@ export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAu
  * @returns Metadata
  */
 export function parseWebStream(webStream: AnyWebStream<Uint8Array>, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  if (!options.parsers) {
-    options.parsers = ALL_PARSERS;
-  }
-  
-  return parseWebStreamWithoutParsers(webStream, fileInfo, options);
+  return parseFromTokenizer(strtok3.fromWebStream(webStream as any, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo}), options);
 }
 
 /**
@@ -59,11 +56,12 @@ export function parseWebStream(webStream: AnyWebStream<Uint8Array>, fileInfo?: s
  * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
  */
 export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  if (!options.parsers) {
-    options.parsers = ALL_PARSERS;
-  }
-  
-  return parseBufferWithoutParsers(uint8Array, fileInfo, options);
+
+  const bufferReader = new RandomUint8ArrayReader(uint8Array);
+  await scanAppendingHeaders(bufferReader, options);
+
+  const tokenizer = strtok3.fromBuffer(uint8Array, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
+  return parseFromTokenizer(tokenizer, options);
 }
 
 /**
@@ -73,10 +71,6 @@ export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: strtok3.IFi
  * @returns Metadata
  */
 export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, options?: IOptions): Promise<IAudioMetadata> {
-  if (!options.parsers) {
-    options.parsers = ALL_PARSERS;
-  }
-  
   return ParserFactory.parseOnContentType(tokenizer, options);
 }
 

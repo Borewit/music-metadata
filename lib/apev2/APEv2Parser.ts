@@ -32,6 +32,8 @@ const preamble = 'APETAGEX';
 
 export class APEv2Parser extends BasicParser {
 
+  static parseTypes = ['apev2'];
+
   public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, tokenizer, options);

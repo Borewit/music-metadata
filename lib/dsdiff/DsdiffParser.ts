@@ -17,6 +17,7 @@ const debug = initDebug('music-metadata:parser:aiff');
  * - http://www.sonicstudio.com/pdf/dsd/DSDIFF_1.5_Spec.pdf
  */
 export class DsdiffParser extends BasicParser {
+  static parseTypes = ['dsdiff'];
 
   public async parse(): Promise<void> {
 

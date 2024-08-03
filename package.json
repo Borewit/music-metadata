@@ -21,7 +21,8 @@
     ".": {
       "node": "./lib/index.js",
       "default": "./lib/core.js"
-    }
+    },
+    "./parsers": "./lib/parsers.js"
   },
   "types": "lib/index.d.ts",
   "files": [
