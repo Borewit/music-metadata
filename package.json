@@ -22,6 +22,10 @@
       "node": "./lib/index.js",
       "default": "./lib/core.js"
     },
+    "./without-parsers": {
+      "node": "./lib/index-without-parsers.js",
+      "default": "./lib/core-without-parsers.js"
+    },
     "./parsers": "./lib/parsers.js"
   },
   "types": "lib/index.d.ts",
