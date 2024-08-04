@@ -20,6 +20,8 @@ const headerType = 'asf';
  */
 export class AsfParser extends BasicParser {
 
+  static parseTypes = ['asf']
+  
   public async parse() {
     const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
     if (!header.objectId.equals(GUID.HeaderObject)) {

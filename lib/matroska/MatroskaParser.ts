@@ -22,6 +22,8 @@ const debug = initDebug('music-metadata:parser:matroska');
  */
 export class MatroskaParser extends BasicParser {
 
+  static parseTypes = ['matroska'];
+
   private padding: number = 0;
 
   private parserMap = new Map<DataType, (e: IHeader) => Promise<any>>();

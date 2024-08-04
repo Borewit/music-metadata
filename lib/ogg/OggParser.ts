@@ -44,6 +44,8 @@ export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
  */
 export class OggParser extends BasicParser {
 
+  static parseTypes = ['ogg'];
+
   private static Header: IGetToken<Ogg.IPageHeader> = {
     len: 27,
 

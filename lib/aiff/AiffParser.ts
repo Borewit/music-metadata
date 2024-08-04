@@ -32,6 +32,8 @@ const compressionTypes = {
  */
 export class AIFFParser extends BasicParser {
 
+  static parseTypes = ['aiff']
+
   private isCompressed: boolean;
 
   public async parse(): Promise<void> {

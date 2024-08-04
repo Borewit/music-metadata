@@ -9,6 +9,8 @@ const debug = initDebug('music-metadata:parser:musepack');
 
 export class MpcSv8Parser extends BasicParser {
 
+  static parseTypes = ['musepack'];
+
   private audioLength: number = 0;
 
   public async parse(): Promise<void> {

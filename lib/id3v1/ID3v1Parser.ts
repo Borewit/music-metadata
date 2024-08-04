@@ -106,6 +106,8 @@ class Id3v1StringType extends StringType {
 
 export class ID3v1Parser extends BasicParser {
 
+  static parseTypes = ['not-publicly-exposed'];
+
   private static getGenre(genreIndex: number): string {
     if (genreIndex < Genres.length) {
       return Genres[genreIndex];

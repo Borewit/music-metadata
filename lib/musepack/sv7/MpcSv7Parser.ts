@@ -9,6 +9,8 @@ const debug = initDebug('music-metadata:parser:musepack');
 
 export class MpcSv7Parser extends BasicParser {
 
+  static parseTypes = ['musepack'];
+
   private bitreader: BitReader;
   private audioLength: number = 0;
   private duration: number;

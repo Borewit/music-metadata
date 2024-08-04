@@ -2,6 +2,7 @@ import { GenericTagId, TagType } from './common/GenericTagTypes.js';
 import { IFooter } from './apev2/APEv2Token.js';
 import { TrackType } from './matroska/types.js';
 import { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
+import { BasicParserConstructor } from './common/BasicParser.js';
 
 export { TrackType } from './matroska/types.js';
 export { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
@@ -614,6 +615,11 @@ export interface IOptions {
    * Set observer for async callbacks to common or format.
    */
   observer?: Observer;
+
+  /**
+   * Parsers for specific formats
+   */
+  parsers?: BasicParserConstructor[];
 }
 
 export interface IApeHeader extends IOptions {

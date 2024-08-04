@@ -25,6 +25,8 @@ const debug = initDebug('music-metadata:parser:RIFF');
  */
 export class WaveParser extends BasicParser {
 
+  static parseTypes = ['riff'];
+
   private fact: WaveChunk.IFactChunk;
 
   private blockAlign: number;

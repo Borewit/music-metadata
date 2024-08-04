@@ -277,6 +277,8 @@ function getVbrCodecProfile(vbrScale: number): string {
 
 export class MpegParser extends AbstractID3Parser {
 
+  static parseTypes = ['adts', 'mpeg'];
+
   private frameCount: number = 0;
   private syncFrameCount: number = -1;
   private countSkipFrameData: number = 0;

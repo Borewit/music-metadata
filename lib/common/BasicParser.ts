@@ -5,6 +5,7 @@ import { IOptions, IPrivateOptions } from '../type.js';
 import { INativeMetadataCollector } from './MetadataCollector.js';
 
 export abstract class BasicParser implements ITokenParser {
+  static parseTypes: string[]
 
   protected metadata: INativeMetadataCollector;
   protected tokenizer: ITokenizer;
@@ -27,4 +28,10 @@ export abstract class BasicParser implements ITokenParser {
 
   public abstract parse();
 
+}
+
+export interface BasicParserConstructor {
+  parseTypes: string[]
+
+  new(): BasicParser;
 }

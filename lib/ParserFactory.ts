@@ -54,7 +54,15 @@ export function parseHttpContentType(contentType: string): { type: string, subty
 
 async function parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions = {}): Promise<IAudioMetadata> {
   // Parser found, execute parser
-  const parser = await ParserFactory.loadParser(parserId);
+
+  const parserClass = opts.parsers?.find(parser => parser.parseTypes?.includes(parserId));
+  if (!parserClass) {
+    throw new Error(`Unknown parser type: ${parserId}`);
+  }
+
+  const parser = new parserClass()
+
+  // const parser = ParserFactory.loadParser(parserId);
   const metadata = new MetadataCollector(opts);
   await parser.init(metadata, tokenizer, opts).parse();
   return metadata.toCommonMetadata();
@@ -187,27 +195,27 @@ export class ParserFactory {
     }
   }
 
-  public static async loadParser(moduleName: ParserType): Promise<ITokenParser> {
-    switch (moduleName) {
-      case 'aiff': return new AIFFParser();
-      case 'adts':
-      case 'mpeg':
-        return new MpegParser();
-      case 'apev2': return new APEv2Parser();
-      case 'asf': return new AsfParser();
-      case 'dsf': return new DsfParser();
-      case 'dsdiff': return new DsdiffParser();
-      case 'flac': return new FlacParser();
-      case 'mp4': return new MP4Parser();
-      case 'musepack': return new MusepackParser();
-      case 'ogg': return new OggParser();
-      case 'riff': return new WaveParser();
-      case 'wavpack': return new WavPackParser();
-      case 'matroska': return new MatroskaParser();
-      default:
-        throw new Error(`Unknown parser type: ${moduleName}`);
-    }
-  }
+  // public static loadParser(moduleName: ParserType): ITokenParser {
+  //   switch (moduleName) {
+  //     case 'aiff': return new AIFFParser();
+  //     case 'adts':
+  //     case 'mpeg':
+  //       return new MpegParser();
+  //     case 'apev2': return new APEv2Parser();
+  //     case 'asf': return new AsfParser();
+  //     case 'dsf': return new DsfParser();
+  //     case 'dsdiff': return new DsdiffParser();
+  //     case 'flac': return new FlacParser();
+  //     case 'mp4': return new MP4Parser();
+  //     case 'musepack': return new MusepackParser();
+  //     case 'ogg': return new OggParser();
+  //     case 'riff': return new WaveParser();
+  //     case 'wavpack': return new WavPackParser();
+  //     case 'matroska': return new MatroskaParser();
+  //     default:
+  //       throw new Error(`Unknown parser type: ${moduleName}`);
+  //   }
+  // }
 
   private static getExtension(fname: string): string {
     const i = fname.lastIndexOf('.');
