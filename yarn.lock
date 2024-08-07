@@ -1904,9 +1904,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^48.7.0":
-  version: 48.10.2
-  resolution: "eslint-plugin-jsdoc@npm:48.10.2"
+"eslint-plugin-jsdoc@npm:^49.0.0":
+  version: 49.0.0
+  resolution: "eslint-plugin-jsdoc@npm:49.0.0"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.46.0"
     are-docs-informative: "npm:^0.0.2"
@@ -1921,7 +1921,7 @@ __metadata:
     synckit: "npm:^0.9.1"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/b0954db45fc087b36b984f550236a7c2d8386bf3bc57477f2c95c24a612922bb81b1ffee598226b5004e50890e2e6fada33432db38111a0c40bdbc759614382e
+  checksum: 10c0/d5d55ac12fc04494ed509abf7561ec9e0b6a76e903406f5200c8be41cbee011b1b48493bcc0005ccab74a69b9a22b352980d1272c9734e7bd8d240a01e104a5e
   languageName: node
   linkType: hard
 
@@ -4020,7 +4020,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     eslint-import-resolver-typescript: "npm:^3.6.1"
     eslint-plugin-import: "npm:^2.29.1"
-    eslint-plugin-jsdoc: "npm:^48.7.0"
+    eslint-plugin-jsdoc: "npm:^49.0.0"
     eslint-plugin-node: "npm:^11.1.0"
     eslint-plugin-unicorn: "npm:^55.0.0"
     file-type: "npm:^19.2.0"
