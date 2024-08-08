@@ -4031,7 +4031,7 @@ __metadata:
     prettier: "npm:^3.3.3"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-markdown-style-guide: "npm:^6.0.0"
-    strtok3: "npm:^8.0.0"
+    strtok3: "npm:^8.0.2"
     token-types: "npm:^6.0.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.5.3"
@@ -5840,6 +5840,16 @@ __metadata:
     "@tokenizer/token": "npm:^0.3.0"
     peek-readable: "npm:^5.1.3"
   checksum: 10c0/a5ff7213a677a206dddebd23645b7ccbb54995707c916abc18bea49d347235fd2e50cf673e971b3f2c3f4f023b2a89451c23820bdd77c790460168d692e6f7e5
+  languageName: node
+  linkType: hard
+
+"strtok3@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "strtok3@npm:8.0.2"
+  dependencies:
+    "@tokenizer/token": "npm:^0.3.0"
+    peek-readable: "npm:^5.1.3"
+  checksum: 10c0/e07ef83b445bd5ade6490b61415599f0df3bd3224e990d4f6b1e73519eeef4b1ec41de1573f49c51280ea89021af3b8d2fe09ee884e50c5e681eac9d5caacbac
   languageName: node
   linkType: hard
 
