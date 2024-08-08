@@ -1,12 +1,12 @@
 import {
-  FormatId,
-  IAudioMetadata, ICommonTagsResult,
-  IFormat,
-  INativeTags, IOptions, IQualityInformation, IPicture, ITrackInfo, TrackType
+  type FormatId,
+  type IAudioMetadata, type ICommonTagsResult,
+  type IFormat,
+  type INativeTags, type IOptions, type IQualityInformation, type IPicture, type ITrackInfo, TrackType, type IComment, type AnyTagValue
 } from '../type.js';
 
 import initDebug from 'debug';
-import { IGenericTag, TagType, isSingleton, isUnique } from './GenericTagTypes.js';
+import { type IGenericTag, type TagType, isSingleton, isUnique } from './GenericTagTypes.js';
 import { CombinedTagMapper } from './CombinedTagMapper.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
 import { toRatio } from './Util.js';
@@ -45,9 +45,9 @@ export interface INativeMetadataCollector extends IWarningCollector {
    */
   hasAny(): boolean;
 
-  setFormat(key: FormatId, value: any): void;
+  setFormat(key: FormatId, value: AnyTagValue): void;
 
-  addTag(tagType: TagType, tagId: string, value: any): Promise<void>;
+  addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void>;
 
   addStreamInfo(streamInfo: ITrackInfo): void;
 }
@@ -92,7 +92,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   private tagMapper = new CombinedTagMapper();
 
   public constructor(private opts: IOptions) {
-    let priority: number = 1;
+    let priority = 1;
     for (const tagType of TagPriority) {
       this.originPriority[tagType] = priority++;
     }
@@ -112,16 +112,16 @@ export class MetadataCollector implements INativeMetadataCollector {
     this.format.trackInfo.push(streamInfo);
   }
 
-  public setFormat(key: FormatId, value: any) {
+  public setFormat(key: FormatId, value: AnyTagValue) {
     debug(`format: ${key} = ${value}`);
-    (this.format as any)[key] = value; // as any to override readonly
+    (this.format as unknown as { [id: string]: unknown; })[key] = value; // as any to override readonly
 
     if (this.opts.observer) {
       this.opts.observer({metadata: this, tag: {type: 'format', id: key, value}});
     }
   }
 
-  public async addTag(tagType: TagType, tagId: string, value: any): Promise<void> {
+  public async addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
     debug(`tag ${tagType}.${tagId} = ${value}`);
     if (!this.native[tagType]) {
       this.format.tagTypes.push(tagType);
@@ -160,9 +160,9 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case 'artists':
         if (!this.common.artist || this.commonOrigin.artist === this.originPriority.artificial) {
-          if (!this.common.artists || this.common.artists.indexOf(tag.value) === -1) {
+          if (!this.common.artists || this.common.artists.indexOf(tag.value as string) === -1) {
             // Fill artist using artists source
-            const artists = (this.common.artists || []).concat([tag.value]);
+            const artists = (this.common.artists || []).concat([tag.value as string]);
             const value = joinArtists(artists);
             const artistTag: IGenericTag = {id: 'artist', value};
             this.setGenericTag('artificial', artistTag);
@@ -179,65 +179,68 @@ export class MetadataCollector implements INativeMetadataCollector {
         });
 
       case 'totaltracks':
-        this.common.track.of = CommonTagMapper.toIntOrNull(tag.value);
+        this.common.track.of = CommonTagMapper.toIntOrNull(tag.value as string);
         return;
 
       case 'totaldiscs':
-        this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value);
+        this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value as string);
         return;
 
       case 'movementTotal':
-        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value);
+        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value as string);
         return;
 
       case 'track':
       case 'disk':
-      case 'movementIndex':
+      case 'movementIndex': {
         const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
-        this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value);
+        this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value as string);
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
         return;
+      }
 
       case 'bpm':
       case 'year':
       case 'originalyear':
-        tag.value = parseInt(tag.value, 10);
+        tag.value = Number.parseInt(tag.value as string, 10);
         break;
 
-      case 'date':
+      case 'date': {
         // ToDo: be more strict on 'YYYY...'
-        const year = parseInt(tag.value.substr(0, 4), 10);
-        if (!isNaN(year)) {
+        const year = Number.parseInt((tag.value as string).substr(0, 4), 10);
+        if (!Number.isNaN(year)) {
           this.common.year = year;
         }
         break;
+      }
 
       case 'discogs_label_id':
       case 'discogs_release_id':
       case 'discogs_master_release_id':
       case 'discogs_artist_id':
       case 'discogs_votes':
-        tag.value = typeof tag.value === 'string' ? parseInt(tag.value, 10) : tag.value;
+        tag.value = typeof tag.value === 'string' ? Number.parseInt(tag.value, 10) : tag.value;
         break;
 
       case 'replaygain_track_gain':
       case 'replaygain_track_peak':
       case 'replaygain_album_gain':
       case 'replaygain_album_peak':
-        tag.value = toRatio(tag.value);
+        tag.value = toRatio(tag.value as string);
         break;
 
       case 'replaygain_track_minmax':
-        tag.value = tag.value.split(',').map(v => parseInt(v, 10));
+        tag.value = (tag.value as string).split(',').map(v => Number.parseInt(v, 10));
         break;
 
-      case 'replaygain_undo':
-        const minMix = tag.value.split(',').map(v => parseInt(v, 10));
+      case 'replaygain_undo': {
+        const minMix = (tag.value as string).split(',').map(v => Number.parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1]
         };
         break;
+      }
 
       case 'gapless': // iTunes gap-less flag
       case 'compilation':
@@ -247,7 +250,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'isrc': // Only keep unique values
-        if (this.common[tag.id] && this.common[tag.id].indexOf(tag.value) !== -1)
+        if (this.common[tag.id] && this.common[tag.id].indexOf(tag.value as string) !== -1)
           return;
         break;
 
@@ -255,8 +258,8 @@ export class MetadataCollector implements INativeMetadataCollector {
         if (typeof tag.value === 'string') {
           tag.value = {text: tag.value};
         }
-        if (tag.value.descriptor === 'iTunPGAP') {
-          this.setGenericTag(tagType, {id: 'gapless', value: tag.value.text === '1'});
+        if ((tag.value as IComment).descriptor === 'iTunPGAP') {
+          this.setGenericTag(tagType, {id: 'gapless', value: (tag.value as IComment).text === '1'});
         }
         break;
 
@@ -303,14 +306,14 @@ export class MetadataCollector implements INativeMetadataCollector {
       }
       return picture;
     }
-    this.addWarning(`Empty picture tag found`);
+    this.addWarning("Empty picture tag found");
     return null;
   }
 
   /**
    * Convert native tag to common tags
    */
-  private async toCommon(tagType: TagType, tagId: string, value: any): Promise<void> {
+  private async toCommon(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
 
     const tag = {id: tagId, value};
 
@@ -361,7 +364,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
 export function joinArtists(artists: string[]): string {
   if (artists.length > 2) {
-    return artists.slice(0, artists.length - 1).join(', ') + ' & ' + artists[artists.length - 1];
+    return `${artists.slice(0, artists.length - 1).join(', ')} & ${artists[artists.length - 1]}`;
   }
   return artists.join(' & ');
 }

@@ -1,6 +1,6 @@
 import initDebug from 'debug';
 
-import { ITag, TrackType } from '../type.js';
+import { type ITag, TrackType } from '../type.js';
 import GUID from './GUID.js';
 import * as AsfObject from './AsfObject.js';
 import { BasicParser } from '../common/BasicParser.js';
@@ -23,7 +23,7 @@ export class AsfParser extends BasicParser {
   public async parse() {
     const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
     if (!header.objectId.equals(GUID.HeaderObject)) {
-      throw new Error('expected asf header; but was not found; got: ' + header.objectId.str);
+      throw new Error(`expected asf header; but was not found; got: ${header.objectId.str}`);
     }
     try {
       await this.parseObjectHeader(header.numberOfHeaderObjects);
@@ -33,7 +33,6 @@ export class AsfParser extends BasicParser {
   }
 
   private async parseObjectHeader(numberOfObjectHeaders: number): Promise<void> {
-
     let tags: ITag[];
     do {
       // Parse common header of the ASF Object (3.1)
@@ -42,21 +41,24 @@ export class AsfParser extends BasicParser {
       debug('header GUID=%s', header.objectId.str);
       switch (header.objectId.str) {
 
-        case AsfObject.FilePropertiesObject.guid.str: // 3.2
+        case AsfObject.FilePropertiesObject.guid.str: { // 3.2
           const fpo = await this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header));
           this.metadata.setFormat('duration',  Number(fpo.playDuration / BigInt(1000)) / 10000 - Number(fpo.preroll) / 1000);
           this.metadata.setFormat('bitrate', fpo.maximumBitrate);
           break;
+        }
 
-        case AsfObject.StreamPropertiesObject.guid.str: // 3.3
+        case AsfObject.StreamPropertiesObject.guid.str: { // 3.3
           const spo = await this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header));
-          this.metadata.setFormat('container', 'ASF/' + spo.streamType);
+          this.metadata.setFormat('container', `ASF/${spo.streamType}`);
           break;
+        }
 
-        case AsfObject.HeaderExtensionObject.guid.str: // 3.4
+        case AsfObject.HeaderExtensionObject.guid.str: { // 3.4
           const extHeader = await this.tokenizer.readToken<AsfObject.IHeaderExtensionObject>(new AsfObject.HeaderExtensionObject());
           await this.parseExtensionObject(extHeader.extensionDataSize);
           break;
+        }
 
         case AsfObject.ContentDescriptionObjectState.guid.str: // 3.10
           tags = await this.tokenizer.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header));
@@ -68,7 +70,7 @@ export class AsfParser extends BasicParser {
           await this.addTags(tags);
           break;
 
-        case GUID.CodecListObject.str:
+        case GUID.CodecListObject.str: {
           const codecs = await AsfObject.readCodecEntries(this.tokenizer);
           codecs.forEach(codec => {
             this.metadata.addStreamInfo({
@@ -79,6 +81,7 @@ export class AsfParser extends BasicParser {
           const audioCodecs = codecs.filter(codec => codec.type.audioCodec).map(codec => codec.codecName).join('/');
           this.metadata.setFormat('codec', audioCodecs);
           break;
+        }
 
         case GUID.StreamBitratePropertiesObject.str:
           // ToDo?
@@ -92,7 +95,7 @@ export class AsfParser extends BasicParser {
           break;
 
         default:
-          this.metadata.addWarning('Ignore ASF-Object-GUID: ' + header.objectId.str);
+          this.metadata.addWarning(`Ignore ASF-Object-GUID: ${header.objectId.str}`);
           debug('Ignore ASF-Object-GUID: %s', header.objectId.str);
           await this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
       }
@@ -105,7 +108,6 @@ export class AsfParser extends BasicParser {
   }
 
   private async parseExtensionObject(extensionSize: number): Promise<void> {
-
     do {
       // Parse common header of the ASF Object (3.1)
       const header = await this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken);
@@ -118,15 +120,17 @@ export class AsfParser extends BasicParser {
           await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header));
           break;
 
-        case AsfObject.MetadataObjectState.guid.str: // 4.7
+        case AsfObject.MetadataObjectState.guid.str: { // 4.7
           const moTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header));
           await this.addTags(moTags);
           break;
+        }
 
-        case AsfObject.MetadataLibraryObjectState.guid.str: // 4.8
+        case AsfObject.MetadataLibraryObjectState.guid.str: { // 4.8
           const mlTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header));
           await this.addTags(mlTags);
           break;
+        }
 
         case GUID.PaddingObject.str:
           // ToDo: register bytes pad
@@ -142,7 +146,7 @@ export class AsfParser extends BasicParser {
           break;
 
         default:
-          this.metadata.addWarning('Ignore ASF-Object-GUID: ' + header.objectId.str);
+          this.metadata.addWarning(`Ignore ASF-Object-GUID: ${header.objectId.str}`);
           // console.log("Ignore ASF-Object-GUID: %s", header.objectId.str);
           await this.tokenizer.readToken<void>(new AsfObject.IgnoreObjectState(header));
           break;

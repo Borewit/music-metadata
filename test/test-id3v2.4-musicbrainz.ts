@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
+import type { IPicture } from '../lib/index.js';
 
 it('should MusicBrainz tags with id3v2.4', async () => {
 
@@ -58,10 +59,11 @@ it('should MusicBrainz tags with id3v2.4', async () => {
   {
     const picTag = native[i++];
     assert.strictEqual(picTag.id, 'APIC', '[\'ID3v2.4\'].APIC #1');
-    assert.deepEqual(picTag.value.format, 'image/jpeg', '[\'ID3v2.4\'].APIC #1 format');
-    assert.deepEqual(picTag.value.type, 'Cover (front)', '[\'ID3v2.4\'].APIC #1 tagTypes');
-    assert.deepEqual(picTag.value.description, '', '[\'ID3v2.4\'].APIC #1 description');
-    assert.deepEqual(picTag.value.data.length, 75818, '[\'ID3v2.4\'].APIC #1 length');
+    const pic = picTag.value as IPicture;
+    assert.deepEqual(pic.format, 'image/jpeg', '[\'ID3v2.4\'].APIC #1 format');
+    assert.deepEqual(pic.type, 'Cover (front)', '[\'ID3v2.4\'].APIC #1 tagTypes');
+    assert.deepEqual(pic.description, '', '[\'ID3v2.4\'].APIC #1 description');
+    assert.deepEqual(pic.data.length, 75818, '[\'ID3v2.4\'].APIC #1 length');
   }
 
   assert.deepEqual(native[i++], {

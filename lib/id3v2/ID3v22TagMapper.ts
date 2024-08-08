@@ -1,4 +1,4 @@
-import {INativeTagMap} from '../common/GenericTagTypes.js';
+import type {INativeTagMap} from '../common/GenericTagTypes.js';
 import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap.js';
 
 /**

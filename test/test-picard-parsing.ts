@@ -1,10 +1,10 @@
 /* eslint-disable dot-notation, @typescript-eslint/dot-notation */
 import { assert } from 'chai';
 import path from 'node:path';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
-import { TagType } from '../lib/common/GenericTagTypes.js';
-import { ICommonTagsResult, IFormat, INativeTagDict, parseFile, orderTags } from '../lib/index.js';
+import type { TagType } from '../lib/common/GenericTagTypes.js';
+import { type ICommonTagsResult, type IFormat, type INativeTagDict, parseFile, orderTags, type IPicture } from '../lib/index.js';
 import { samplePath } from './util.js';
 
 /**
@@ -54,55 +54,55 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
    */
   function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
-    assert.strictEqual(common.title, 'Sinner\'s Prayer', inputTagType + ' => common.title');
-    assert.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', inputTagType + ' => common.artist');
+    assert.strictEqual(common.title, 'Sinner\'s Prayer', `${inputTagType} => common.title`);
+    assert.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', `${inputTagType} => common.artist`);
 
     if (inputTagType === 'asf') {
-      assert.deepEqual(common.artists, ['Joe Bonamassa', 'Beth Hart'], inputTagType + ' => common.artists');
-      assert.deepEqual(common.musicbrainz_artistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], inputTagType + ' => common.musicbrainz_artistid');
+      assert.deepEqual(common.artists, ['Joe Bonamassa', 'Beth Hart'], `${inputTagType} => common.artists`);
+      assert.deepEqual(common.musicbrainz_artistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], `${inputTagType} => common.musicbrainz_artistid`);
     } else {
-      assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], inputTagType + ' => common.artists');
-      assert.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], inputTagType + ' => common.musicbrainz_artistid');
+      assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], `${inputTagType} => common.artists`);
+      assert.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_artistid`);
     }
 
     assert.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist'); // ToDo: this is not set
-    assert.deepEqual(common.albumartistsort, 'Hart, Beth & Bonamassa, Joe', inputTagType + ' =>  common.albumartistsort');
-    assert.strictEqual(common.album, 'Don\'t Explain', inputTagType + ' => common.album = Don\'t Explain');
+    assert.deepEqual(common.albumartistsort, 'Hart, Beth & Bonamassa, Joe', `${inputTagType} =>  common.albumartistsort`);
+    assert.strictEqual(common.album, 'Don\'t Explain', `${inputTagType} => common.album = Don\'t Explain`);
     if (inputTagType === 'asf') {
-      assert.deepEqual(common.track, {no: 1, of: null}, inputTagType + ' => common.track');
+      assert.deepEqual(common.track, {no: 1, of: null}, `${inputTagType} => common.track`);
     } else {
-      assert.deepEqual(common.track, {no: 1, of: 10}, inputTagType + ' => common.track');
+      assert.deepEqual(common.track, {no: 1, of: 10}, `${inputTagType} => common.track`);
     }
-    assert.deepEqual(common.disk, {no: 1, of: 1}, inputTagType + ' => common.disk');
+    assert.deepEqual(common.disk, {no: 1, of: 1}, `${inputTagType} => common.disk`);
     if (hasOriginalData(inputTagType)) {
-      assert.strictEqual(common.originaldate, '2011-09-26', inputTagType + ' => common.originaldate = 2011-09-26');
+      assert.strictEqual(common.originaldate, '2011-09-26', `${inputTagType} => common.originaldate = 2011-09-26`);
     }
     if (hasReleaseData(inputTagType)) {
-      assert.strictEqual(common.date, '2011-09-27', inputTagType + ' => common.date');
+      assert.strictEqual(common.date, '2011-09-27', `${inputTagType} => common.date`);
     }
-    assert.strictEqual(common.year, 2011, inputTagType + ' => common.year');
-    assert.strictEqual(common.originalyear, 2011, inputTagType + ' => common.year');
-    assert.strictEqual(common.media, 'CD', inputTagType + ' => common.media = CD');
-    assert.strictEqual(common.barcode, '804879313915', inputTagType + ' => common.barcode');
+    assert.strictEqual(common.year, 2011, `${inputTagType} => common.year`);
+    assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.year`);
+    assert.strictEqual(common.media, 'CD', `${inputTagType} => common.media = CD`);
+    assert.strictEqual(common.barcode, '804879313915', `${inputTagType} => common.barcode`);
     // ToDo?? assert.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
-    assert.deepEqual(common.label, ['J&R Adventures'], inputTagType + ' => common.label = \'J&R Adventures\'');
-    assert.deepEqual(common.catalognumber, ['PRAR931391'], inputTagType + ' => common.catalognumber = PRAR931391');
-    assert.strictEqual(common.originalyear, 2011, inputTagType + ' => common.originalyear = 2011');
-    assert.strictEqual(common.releasestatus, 'official', inputTagType + ' => common.releasestatus = official');
-    assert.deepEqual(common.releasetype, ['album'], inputTagType + ' => common.releasetype');
-    assert.strictEqual(common.musicbrainz_albumid, 'e7050302-74e6-42e4-aba0-09efd5d431d8', inputTagType + ' => common.musicbrainz_albumid');
-    assert.strictEqual(common.musicbrainz_recordingid, 'f151cb94-c909-46a8-ad99-fb77391abfb8', inputTagType + ' => common.musicbrainz_recordingid');
+    assert.deepEqual(common.label, ['J&R Adventures'], `${inputTagType} => common.label = \'J&R Adventures\'`);
+    assert.deepEqual(common.catalognumber, ['PRAR931391'], `${inputTagType} => common.catalognumber = PRAR931391`);
+    assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.originalyear = 2011`);
+    assert.strictEqual(common.releasestatus, 'official', `${inputTagType} => common.releasestatus = official`);
+    assert.deepEqual(common.releasetype, ['album'], `${inputTagType} => common.releasetype`);
+    assert.strictEqual(common.musicbrainz_albumid, 'e7050302-74e6-42e4-aba0-09efd5d431d8', `${inputTagType} => common.musicbrainz_albumid`);
+    assert.strictEqual(common.musicbrainz_recordingid, 'f151cb94-c909-46a8-ad99-fb77391abfb8', `${inputTagType} => common.musicbrainz_recordingid`);
 
     if (inputTagType === 'asf') {
-      assert.deepEqual(common.musicbrainz_albumartistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], inputTagType + ' => common.musicbrainz_albumartistid');
+      assert.deepEqual(common.musicbrainz_albumartistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], `${inputTagType} => common.musicbrainz_albumartistid`);
     } else {
-      assert.deepEqual(common.musicbrainz_albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], inputTagType + ' => common.musicbrainz_albumartistid');
+      assert.deepEqual(common.musicbrainz_albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_albumartistid`);
     }
 
-    assert.strictEqual(common.musicbrainz_releasegroupid, 'e00305af-1c72-469b-9a7c-6dc665ca9adc', inputTagType + ' => common.musicbrainz_releasegroupid');
-    assert.strictEqual(common.musicbrainz_trackid, 'd062f484-253c-374b-85f7-89aab45551c7', inputTagType + ' => common.musicbrainz_trackid');
-    assert.strictEqual(common.asin, 'B005NPEUB2', inputTagType + ' => common.asin');
-    assert.strictEqual(common.acoustid_id, '09c06fac-679a-45b1-8ea0-6ce532318363', inputTagType + ' => common.acoustid_id');
+    assert.strictEqual(common.musicbrainz_releasegroupid, 'e00305af-1c72-469b-9a7c-6dc665ca9adc', `${inputTagType} => common.musicbrainz_releasegroupid`);
+    assert.strictEqual(common.musicbrainz_trackid, 'd062f484-253c-374b-85f7-89aab45551c7', `${inputTagType} => common.musicbrainz_trackid`);
+    assert.strictEqual(common.asin, 'B005NPEUB2', `${inputTagType} => common.asin`);
+    assert.strictEqual(common.acoustid_id, '09c06fac-679a-45b1-8ea0-6ce532318363', `${inputTagType} => common.acoustid_id`);
 
     // Check front cover
     assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
@@ -170,12 +170,13 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(vorbis.RELEASECOUNTRY, ['US'], 'vorbis.RELEASECOUNTRY');
       assert.deepEqual(vorbis.RELEASESTATUS, ['official'], 'vorbis.RELEASESTATUS');
 
-      assert.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE.format = \'image/jpeg\'');
-      assert.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].type, 'Cover (front)', 'vorbis.METADATA_BLOCK_PICTURE.type = \'Cover (front)\''); // ToDo: description??
+      const picture = vorbis.METADATA_BLOCK_PICTURE[0] as IPicture;
+      assert.strictEqual(picture.format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE.format = \'image/jpeg\'');
+      assert.strictEqual(picture.type, 'Cover (front)', 'vorbis.METADATA_BLOCK_PICTURE.type = \'Cover (front)\''); // ToDo: description??
 
-      assert.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
-      assert.strictEqual(vorbis.METADATA_BLOCK_PICTURE[0].data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
-      assert.strictEqual(calcHash(vorbis.METADATA_BLOCK_PICTURE[0].data), 'c57bec49b36ebf422018f82273d1995a', 'Picture content');
+      assert.strictEqual(picture.description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
+      assert.strictEqual(picture.data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
+      assert.strictEqual(calcHash(picture.data), 'c57bec49b36ebf422018f82273d1995a', 'Picture content');
     }
 
     it('should map FLAC/Vorbis', async () => {
@@ -262,14 +263,15 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
       assert.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.Arranger');
 
-      // ToDo:
-      assert.deepEqual(APEv2['Cover Art (Front)'][0].format, 'image/jpeg', 'picture.format');
-      assert.deepEqual(APEv2['Cover Art (Front)'][0].description, 'front', 'picture.description');
-      assert.deepEqual(APEv2['Cover Art (Front)'][0].data.length, 98008, 'picture.data.length');
+      const coverFront = APEv2['Cover Art (Front)'][0] as IPicture;
+      assert.deepEqual(coverFront.format, 'image/jpeg', 'picture.format');
+      assert.deepEqual(coverFront.description, 'front', 'picture.description');
+      assert.deepEqual(coverFront.data.length, 98008, 'picture.data.length');
 
-      assert.deepEqual(APEv2['Cover Art (Back)'][0].format, 'image/png', 'picture.format');
-      assert.deepEqual(APEv2['Cover Art (Back)'][0].description, 'back', 'picture.description');
-      assert.deepEqual(APEv2['Cover Art (Back)'][0].data.length, 120291, 'picture.data.length');
+      const coverBack = APEv2['Cover Art (Back)'][0] as IPicture;
+      assert.deepEqual(coverBack.format, 'image/png', 'picture.format');
+      assert.deepEqual(coverBack.description, 'back', 'picture.description');
+      assert.deepEqual(coverBack.data.length, 120291, 'picture.data.length');
     }
 
     it('should map Monkey\'s Audio / APEv2', async () => {
@@ -288,7 +290,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       const metadata = await parseFile(filePath);
       assert.isDefined(metadata, 'should return metadata');
       assert.isDefined(metadata.native, 'should return metadata.native');
-      assert.isDefined(metadata.native['APEv2'], 'should include native APEv2 tags');
+      assert.isDefined(metadata.native.APEv2, 'should include native APEv2 tags');
       checkFormat(metadata.format);
       checkApeTags(orderTags(metadata.native.APEv2));
       checkCommonMapping('APEv2', metadata.common);
@@ -310,7 +312,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       const metadata = await parseFile(filePath);
       assert.isDefined(metadata, 'should return metadata');
       assert.isDefined(metadata.native, 'should return metadata.native');
-      assert.isDefined(metadata.native['APEv2'], 'should include native APEv2 tags');
+      assert.isDefined(metadata.native.APEv2, 'should include native APEv2 tags');
       checkFormat(metadata.format);
       checkApeTags(orderTags(metadata.native.APEv2));
       checkCommonMapping('APEv2', metadata.common);
@@ -431,10 +433,11 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
     function checkID3Tags(id3v24: INativeTagDict) {
 
-      assert.deepEqual(id3v24.APIC[0].data.length, 98008, 'id3v24.APIC.data.length');
-      assert.deepEqual(id3v24.APIC[0].description, '', 'id3v24.APIC.data.description');
-      assert.deepEqual(id3v24.APIC[0].format, 'image/jpeg', 'id3v24.APIC.format = image/jpeg');
-      assert.deepEqual(id3v24.APIC[0].type, 'Cover (front)', 'd3v24.APIC.type = Cover (front)');
+      const picture = id3v24.APIC[0] as IPicture;
+      assert.deepEqual(picture.data.length, 98008, 'id3v24.APIC.data.length');
+      assert.deepEqual(picture.description, '', 'id3v24.APIC.data.description');
+      assert.deepEqual(picture.format, 'image/jpeg', 'id3v24.APIC.format = image/jpeg');
+      assert.deepEqual(picture.type, 'Cover (front)', 'd3v24.APIC.type = Cover (front)');
 
       assert.deepEqual(id3v24.TALB, ['Don\'t Explain'], 'id3v24.TALB: Album/Movie/Show title');
       assert.deepEqual(id3v24.TDOR, ['2011-09-26'], 'id3v24.TDOR');

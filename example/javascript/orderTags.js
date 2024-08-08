@@ -1,5 +1,5 @@
 import { parseFile, orderTags } from '../../lib/index.js';  // music-metadata
-import { inspect } from 'util';
+import { inspect } from 'node:util';
 
 (async () => {
   try {

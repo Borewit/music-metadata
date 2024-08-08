@@ -4,11 +4,10 @@ import * as Token from 'token-types';
 import type { IGetToken, ITokenizer } from 'strtok3';
 
 import * as util from '../common/Util.js';
-import { IPicture, ITag } from '../type.js';
+import type { AnyTagValue, IPicture, ITag } from '../type.js';
 import GUID from './GUID.js';
-import { AsfUtil } from './AsfUtil.js';
+import { getParserForAttr, parseUnicodeAttr } from './AsfUtil.js';
 import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
-import { base64ToUint8Array } from 'uint8array-extras';
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
@@ -17,27 +16,27 @@ export enum DataType {
   /**
    * Unicode string. The data consists of a sequence of Unicode characters.
    */
-  UnicodeString,
+  UnicodeString = 0,
   /**
    * BYTE array. The type of data is implementation-specific.
    */
-  ByteArray,
+  ByteArray = 1,
   /**
    * BOOL. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer. Only 0x0000 or 0x0001 are permitted values.
    */
-  Bool,
+  Bool = 2,
   /**
    * DWORD. The data is 4 bytes long and should be interpreted as a 32-bit unsigned integer.
    */
-  DWord,
+  DWord = 3,
   /**
    * QWORD. The data is 8 bytes long and should be interpreted as a 64-bit unsigned integer.
    */
-  QWord,
+  QWord = 4,
   /**
    * WORD. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer.
    */
-  Word
+  Word = 5
 }
 
 /**
@@ -108,25 +107,21 @@ export abstract class State<T> implements IGetToken<T> {
 
   public abstract get(buf: Uint8Array, off: number): T;
 
-  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: any) {
+  protected postProcessTag(tags: ITag[], name: string, valueType: number, data: AnyTagValue) {
     if (name === 'WM/Picture') {
-      tags.push({id: name, value: WmPictureToken.fromBuffer(data)});
+      tags.push({id: name, value: WmPictureToken.fromBuffer(data as Uint8Array)});
     } else {
-      const parseAttr = AsfUtil.getParserForAttr(valueType);
+      const parseAttr = getParserForAttr(valueType);
       if (!parseAttr) {
-        throw new Error('unexpected value headerType: ' + valueType);
+        throw new Error(`unexpected value headerType: ${valueType}`);
       }
-      tags.push({id: name, value: parseAttr(data)});
+      tags.push({id: name, value: parseAttr(data as Uint8Array)});
     }
   }
 }
 
 // ToDo: use ignore type
-export class IgnoreObjectState extends State<any> {
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
+export class IgnoreObjectState extends State<unknown> {
 
   public get(buf: Uint8Array, off: number): null {
     return null;
@@ -241,10 +236,6 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
 
   public static guid = GUID.FilePropertiesObject;
 
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
-
   public get(buf: Uint8Array, off: number): IFilePropertiesObject {
 
     return {
@@ -291,10 +282,6 @@ export interface IStreamPropertiesObject {
 export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
 
   public static guid = GUID.StreamPropertiesObject;
-
-  public constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 
   public get(buf: Uint8Array, off: number): IStreamPropertiesObject {
 
@@ -419,10 +406,6 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
 
   private static contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
 
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
-
   public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
 
@@ -433,7 +416,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;
-        tags.push({id: tagName, value: AsfUtil.parseUnicodeAttr(buf.slice(off + pos, off + end))});
+        tags.push({id: tagName, value: parseUnicodeAttr(buf.slice(off + pos, off + end))});
         pos = end;
       }
     }
@@ -449,10 +432,6 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
 
   public static guid = GUID.ExtendedContentDescriptionObject;
 
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
-
   public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
     const view = new DataView(buf.buffer, off);
@@ -461,7 +440,7 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
     for (let i = 0; i < attrCount; i += 1) {
       const nameLen = view.getUint16(pos, true);
       pos += 2;
-      const name = AsfUtil.parseUnicodeAttr(buf.slice(off + pos, off + pos + nameLen));
+      const name = parseUnicodeAttr(buf.slice(off + pos, off + pos + nameLen));
       pos += nameLen;
       const valueType = view.getUint16(pos, true);
       pos += 2;
@@ -517,10 +496,6 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
 
   public static guid = GUID.ExtendedStreamPropertiesObject;
 
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
-
   public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
     const view = new DataView(buf.buffer, off);
     return {
@@ -558,10 +533,6 @@ export class MetadataObjectState extends State<ITag[]> {
 
   public static guid = GUID.MetadataObject;
 
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
-
   public get(uint8Array: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
 
@@ -576,7 +547,7 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += 2;
       const dataLen = view.getUint32(pos, true);
       pos += 4;
-      const name = AsfUtil.parseUnicodeAttr(uint8Array.slice(off + pos, off + pos + nameLen));
+      const name = parseUnicodeAttr(uint8Array.slice(off + pos, off + pos + nameLen));
       pos += nameLen;
       const data = uint8Array.slice(off + pos, off + pos + dataLen);
       pos += dataLen;
@@ -587,13 +558,11 @@ export class MetadataObjectState extends State<ITag[]> {
 }
 
 // 4.8	Metadata Library Object (optional, 0 or 1)
+
+// biome-ignore lint/complexity/noStaticOnlyClass: Extends a non-static class
 export class MetadataLibraryObjectState extends MetadataObjectState {
 
   public static guid = GUID.MetadataLibraryObject;
-
-  constructor(header: IAsfObjectHeader) {
-    super(header);
-  }
 }
 
 export interface IWmPicture extends IPicture {
@@ -608,10 +577,6 @@ export interface IWmPicture extends IPicture {
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd757977(v=vs.85).aspx
  */
 export class WmPictureToken implements IGetToken<IWmPicture> {
-
-  public static fromBase64(base64str: string): IPicture {
-    return this.fromBuffer(base64ToUint8Array(base64str));
-  }
 
   public static fromBuffer(buffer: Uint8Array): IWmPicture {
     const pic = new WmPictureToken(buffer.length);

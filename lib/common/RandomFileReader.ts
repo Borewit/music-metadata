@@ -1,6 +1,6 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 
-import { IRandomReader } from '../type.js';
+import type { IRandomReader } from '../type.js';
 
 /**
  * Provides abstract file access via the IRandomRead interface

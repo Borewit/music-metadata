@@ -2,7 +2,7 @@ import * as Token from 'token-types';
 
 import { AttachedPictureType } from '../../id3v2/ID3v2Token.js';
 
-import { IPicture } from '../../type.js';
+import type { IPicture } from '../../type.js';
 import type { IGetToken } from 'strtok3';
 
 /**
@@ -34,7 +34,7 @@ export interface IVorbisPicture extends IPicture {
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 
   public static fromBase64(base64str: string): IVorbisPicture {
-    return this.fromBuffer(Uint8Array.from(atob(base64str), c => c.charCodeAt(0)));
+    return VorbisPictureToken.fromBuffer(Uint8Array.from(atob(base64str), c => c.charCodeAt(0)));
   }
 
   public static fromBuffer(buffer: Uint8Array): IVorbisPicture {
@@ -49,19 +49,26 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
 
-    const mimeLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const format =  new Token.StringType(mimeLen, 'utf-8').get(buffer, offset += 4);
-
-    const descLen = Token.UINT32_BE.get(buffer, offset += mimeLen);
-    const description = new Token.StringType(descLen, 'utf-8').get(buffer, offset += 4);
-
-    const width = Token.UINT32_BE.get(buffer, offset += descLen);
-    const height = Token.UINT32_BE.get(buffer, offset += 4);
-    const colour_depth = Token.UINT32_BE.get(buffer, offset += 4);
-    const indexed_color = Token.UINT32_BE.get(buffer, offset += 4);
-
-    const picDataLen = Token.UINT32_BE.get(buffer, offset += 4);
-    const data = Uint8Array.from(buffer.slice(offset += 4, offset + picDataLen));
+    offset += 4;
+    const mimeLen = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const format =  new Token.StringType(mimeLen, 'utf-8').get(buffer, offset);
+    offset += mimeLen;
+    const descLen = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const description = new Token.StringType(descLen, 'utf-8').get(buffer, offset);
+    offset += descLen
+    const width = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const height = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const colour_depth = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const indexed_color = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const picDataLen = Token.UINT32_BE.get(buffer, offset);
+    offset += 4;
+    const data = Uint8Array.from(buffer.slice(offset, offset + picDataLen));
 
     return {
       type,

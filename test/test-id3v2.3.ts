@@ -7,6 +7,8 @@ import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 import { LyricsContentType, TimestampFormat, type ILyricsTag } from '../lib/core.js';
+import type { IPicture } from '../lib/index.js';
+import type { IGeneralEncapsulatedObject } from '../lib/id3v2/FrameParser.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
 
@@ -82,7 +84,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(id3v23['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
       assert.deepEqual(id3v23['TXXX:PERFORMER'], ['Explosions In The Sky'], 'native: TXXX:PERFORMER');
 
-      const apic = id3v23.APIC[0];
+      const apic = id3v23.APIC[0] as IPicture;
       assert.strictEqual(apic.format, 'image/jpeg', 'raw APIC format');
       assert.strictEqual(apic.type, 'Cover (front)', 'raw APIC tagTypes');
       assert.strictEqual(apic.description, '', 'raw APIC description');
@@ -254,7 +256,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
     it('4.5 MCDI: Music CD identifier', async () => {
       const metadata = await mm.parseFile(path.join(samplePath, '04-Strawberry.mp3'));
       const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
-      assert.equal(id3v23.MCDI[0].length, 804, 'TOC');
+      assert.equal((id3v23.MCDI[0] as string).length, 804, 'TOC');
     });
 
     // https://id3.org/id3v2.3.0#Unsychronised_lyrics.2Ftext_transcription
@@ -364,9 +366,10 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
       assert.isDefined(native['ID3v2.3'], 'Presence of ID3v2.3 tag header');
       const id3v2 = mm.orderTags(native['ID3v2.3']);
-      assert.deepEqual(id3v2.GEOB[0].type, 'application/octet-stream', 'ID3v2.GEOB[0].type');
-      assert.deepEqual(id3v2.GEOB[0].filename, '', 'ID3v2.GEOB[0].filename');
-      assert.deepEqual(id3v2.GEOB[0].description, 'Serato Overview', 'ID3v2.GEOB[0].description');
+      const geob = id3v2.GEOB[0] as IGeneralEncapsulatedObject;
+      assert.deepEqual(geob.type, 'application/octet-stream', 'ID3v2.GEOB[0].type');
+      assert.deepEqual(geob.filename, '', 'ID3v2.GEOB[0].filename');
+      assert.deepEqual(geob.description, 'Serato Overview', 'ID3v2.GEOB[0].description');
     });
 
     it('4.18 POPM', async () => {
@@ -385,11 +388,11 @@ describe('Extract metadata from ID3v2.3 header', () => {
         const filePath = path.join(samplePath, 'rating', testCaseFile.file);
         const {common} = await mm.parseFile(filePath);
         if (common.rating === undefined) {
-          assert.isUndefined(common.rating, 'Expect no rating property to be present in: ' + testCaseFile.file);
+          assert.isUndefined(common.rating, `Expect no rating property to be present in: ${testCaseFile.file}`);
         } else {
-          assert.isDefined(common.rating, 'Expect rating property to be present in: ' + testCaseFile.file);
-          assert.equal(Math.round(common.rating[0].rating * 4 + 1), testCaseFile.stars, 'ID3v2.3 rating conversion in: ' + testCaseFile.file);
-          assert.equal(mm.ratingToStars(common.rating[0].rating), testCaseFile.stars, 'ID3v2.3 rating conversion in: ' + testCaseFile.file);
+          assert.isDefined(common.rating, `Expect rating property to be present in: ${testCaseFile.file}`);
+          assert.equal(Math.round(common.rating[0].rating * 4 + 1), testCaseFile.stars, `ID3v2.3 rating conversion in: ${testCaseFile.file}`);
+          assert.equal(mm.ratingToStars(common.rating[0].rating), testCaseFile.stars, `ID3v2.3 rating conversion in: ${testCaseFile.file}`);
         }
       }
     });

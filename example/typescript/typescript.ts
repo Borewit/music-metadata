@@ -1,5 +1,5 @@
 import { parseFile } from '../../lib/index.js';
-import { inspect } from 'util';
+import { inspect } from 'node:util';
 
 (async () => {
   try {

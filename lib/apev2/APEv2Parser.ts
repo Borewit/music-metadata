@@ -4,16 +4,16 @@ import { StringType } from 'token-types';
 import { uint8ArrayToString } from 'uint8array-extras';
 
 import * as util from '../common/Util.js';
-import { IOptions, IRandomReader, IApeHeader } from '../type.js';
-import { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import type { IOptions, IRandomReader, IApeHeader } from '../type.js';
+import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
 import {
   DataType,
   DescriptorParser,
   Header,
-  IDescriptor,
-  IFooter,
-  IHeader, ITagItemHeader,
+  type IDescriptor,
+  type IFooter,
+  type IHeader, type ITagItemHeader,
   TagFooter,
   TagItemHeader
 } from './APEv2Token.js';
@@ -87,7 +87,7 @@ export class APEv2Parser extends BasicParser {
   public async tryParseApeHeader(): Promise<void> {
 
     if (this.tokenizer.fileInfo.size && this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len) {
-      debug(`No APEv2 header found, end-of-file reached`);
+      debug("No APEv2 header found, end-of-file reached");
       return;
     }
 
@@ -95,7 +95,7 @@ export class APEv2Parser extends BasicParser {
     if (footer.ID === preamble) {
       await this.tokenizer.ignore(TagFooter.len);
       return this.parseTags(footer);
-    } else {
+    }
       debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
       if (this.tokenizer.fileInfo.size) {
         // Try to read the APEv2 header using just the footer-header
@@ -104,7 +104,6 @@ export class APEv2Parser extends BasicParser {
         await this.tokenizer.readBuffer(buffer);
         return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
       }
-    }
   }
 
   public async parse(): Promise<void> {

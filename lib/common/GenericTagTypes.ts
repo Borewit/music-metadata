@@ -1,8 +1,10 @@
+import type { AnyTagValue } from '../type.js';
+
 export type TagType = 'vorbis' | 'ID3v1' | 'ID3v2.2' | 'ID3v2.3' | 'ID3v2.4' | 'APEv2' | 'asf' | 'iTunes' | 'exif' | 'matroska' | 'AIFF';
 
 export interface IGenericTag {
-  id: GenericTagId,
-  value: any
+  id: GenericTagId;
+  value: AnyTagValue;
 }
 
 export type GenericTagId =
@@ -262,7 +264,7 @@ export const commonTags: ITagInfoMap = {
  * @returns {boolean|*} true if given alias is mapped as a singleton', otherwise false
  */
 export function isSingleton(alias: GenericTagId): boolean {
-  return commonTags.hasOwnProperty(alias) && !commonTags[alias].multiple;
+  return commonTags[alias] && !commonTags[alias].multiple;
 }
 
 /**

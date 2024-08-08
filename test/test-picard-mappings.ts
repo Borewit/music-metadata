@@ -93,8 +93,8 @@ describe('Picard mapping coverage', () => {
       const picNativeTag = PicardMappings[picComTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(asfTagMapper.tagMap[picNativeTag], 'Is \'' + picNativeTag + '\' defined?');
-      assert.equal(asfTagMapper.tagMap[picNativeTag], mmCommonTag, 'Check Picard mapping for ' + picNativeTag);
+      assert.isDefined(asfTagMapper.tagMap[picNativeTag], `Is \'${picNativeTag}\' defined?`);
+      assert.equal(asfTagMapper.tagMap[picNativeTag], mmCommonTag, `Check Picard mapping for ${picNativeTag}`);
     }
 
   });
@@ -128,8 +128,8 @@ describe('Picard mapping coverage', () => {
       const picComTag = PicardMappings[picNativeTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(apeTagMapper.tagMap[picNativeTag.toUpperCase()], 'Is \'' + picNativeTag + '\' defined?');
-      assert.equal(apeTagMapper.tagMap[picNativeTag.toUpperCase()], mmCommonTag, 'Check Picard mapping for ' + picNativeTag);
+      assert.isDefined(apeTagMapper.tagMap[picNativeTag.toUpperCase()], `Is \'${picNativeTag}\' defined?`);
+      assert.equal(apeTagMapper.tagMap[picNativeTag.toUpperCase()], mmCommonTag, `Check Picard mapping for ${picNativeTag}`);
     }
 
   });
@@ -187,8 +187,8 @@ describe('Picard mapping coverage', () => {
       const picComTag = PicardMappings[picNativeTag];
       const mmCommonTag = convertName(picComTag);
 
-      assert.isDefined(id3v24TagMapper.tagMap[picNativeTag], 'Is \'' + picNativeTag + '\' defined?');
-      assert.equal(id3v24TagMapper.tagMap[picNativeTag], mmCommonTag, 'Check Picard mapping for ' + picNativeTag);
+      assert.isDefined(id3v24TagMapper.tagMap[picNativeTag], `Is \'${picNativeTag}\' defined?`);
+      assert.equal(id3v24TagMapper.tagMap[picNativeTag], mmCommonTag, `Check Picard mapping for ${picNativeTag}`);
     }
 
   });

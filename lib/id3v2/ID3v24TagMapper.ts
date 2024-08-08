@@ -6,6 +6,7 @@ import { decodeString } from '../common/Util.js';
 import type { INativeTagMap } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import type { IRating, ITag } from '../type.js';
+import type { ICustomDataTag, IIdentifierTag, IPopularimeter } from './FrameParser.js';
 
 /**
  * ID3v2.3/ID3v2.4 tag mappings
@@ -156,7 +157,7 @@ const id3v24TagMap: INativeTagMap = {
 
 export class ID3v24TagMapper extends CaseInsensitiveTagMap {
 
-  public static toRating(popm: any): IRating {
+  public static toRating(popm: IPopularimeter): IRating {
 
     return {
       source: popm.email,
@@ -177,31 +178,36 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
 
     switch (tag.id) {
 
-      case 'UFID': // decode MusicBrainz Recording Id
-        if (tag.value.owner_identifier === 'http://musicbrainz.org') {
-          tag.id += ':' + tag.value.owner_identifier;
-          tag.value = decodeString(tag.value.identifier, 'latin1'); // latin1 == iso-8859-1
+      case 'UFID': {
+        // decode MusicBrainz Recording Id
+        const idTag= tag.value as IIdentifierTag;
+        if (idTag.owner_identifier === 'http://musicbrainz.org') {
+          tag.id += `:${idTag.owner_identifier}`;
+          tag.value = decodeString(idTag.identifier, 'latin1'); // latin1 == iso-8859-1
         }
+      }
         break;
 
-      case 'PRIV':
-        switch (tag.value.owner_identifier) {
+      case 'PRIV': {
+        const customTag = tag.value as ICustomDataTag;
+        switch(customTag.owner_identifier) {
           // decode Windows Media Player
           case 'AverageLevel':
           case 'PeakValue':
-            tag.id += ':' + tag.value.owner_identifier;
-            tag.value = tag.value.data.length === 4 ? UINT32_LE.get(tag.value.data, 0) : null;
+            tag.id += `:${customTag.owner_identifier}`;
+            tag.value = customTag.data.length === 4 ? UINT32_LE.get(customTag.data, 0) : null;
             if (tag.value === null) {
-              warnings.addWarning(`Failed to parse PRIV:PeakValue`);
+              warnings.addWarning('Failed to parse PRIV:PeakValue');
             }
             break;
           default:
-            warnings.addWarning(`Unknown PRIV owner-identifier: ${tag.value.owner_identifier}`);
+            warnings.addWarning(`Unknown PRIV owner-identifier: ${customTag.data}`);
         }
+      }
         break;
 
       case 'POPM':
-        tag.value = ID3v24TagMapper.toRating(tag.value);
+        tag.value = ID3v24TagMapper.toRating(tag.value as IPopularimeter);
         break;
 
       default:

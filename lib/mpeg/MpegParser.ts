@@ -4,7 +4,7 @@ import initDebug from 'debug';
 
 import * as common from '../common/Util.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
-import { InfoTagHeaderTag, IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag.js';
+import { InfoTagHeaderTag, type IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag.js';
 
 const debug = initDebug('music-metadata:parser:mpeg');
 
@@ -72,26 +72,26 @@ class MpegFrameHeader {
   public static ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
 
   private static bitrate_index = {
-    0x01: {11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8},
-    0x02: {11: 64, 12: 48, 13: 40, 21: 48, 22: 16, 23: 16},
-    0x03: {11: 96, 12: 56, 13: 48, 21: 56, 22: 24, 23: 24},
-    0x04: {11: 128, 12: 64, 13: 56, 21: 64, 22: 32, 23: 32},
-    0x05: {11: 160, 12: 80, 13: 64, 21: 80, 22: 40, 23: 40},
-    0x06: {11: 192, 12: 96, 13: 80, 21: 96, 22: 48, 23: 48},
-    0x07: {11: 224, 12: 112, 13: 96, 21: 112, 22: 56, 23: 56},
-    0x08: {11: 256, 12: 128, 13: 112, 21: 128, 22: 64, 23: 64},
-    0x09: {11: 288, 12: 160, 13: 128, 21: 144, 22: 80, 23: 80},
-    0x0A: {11: 320, 12: 192, 13: 160, 21: 160, 22: 96, 23: 96},
-    0x0B: {11: 352, 12: 224, 13: 192, 21: 176, 22: 112, 23: 112},
-    0x0C: {11: 384, 12: 256, 13: 224, 21: 192, 22: 128, 23: 128},
-    0x0D: {11: 416, 12: 320, 13: 256, 21: 224, 22: 144, 23: 144},
-    0x0E: {11: 448, 12: 384, 13: 320, 21: 256, 22: 160, 23: 160}
+    1: {11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8},
+    2: {11: 64, 12: 48, 13: 40, 21: 48, 22: 16, 23: 16},
+    3: {11: 96, 12: 56, 13: 48, 21: 56, 22: 24, 23: 24},
+    4: {11: 128, 12: 64, 13: 56, 21: 64, 22: 32, 23: 32},
+    5: {11: 160, 12: 80, 13: 64, 21: 80, 22: 40, 23: 40},
+    6: {11: 192, 12: 96, 13: 80, 21: 96, 22: 48, 23: 48},
+    7: {11: 224, 12: 112, 13: 96, 21: 112, 22: 56, 23: 56},
+    8: {11: 256, 12: 128, 13: 112, 21: 128, 22: 64, 23: 64},
+    9: {11: 288, 12: 160, 13: 128, 21: 144, 22: 80, 23: 80},
+    10: {11: 320, 12: 192, 13: 160, 21: 160, 22: 96, 23: 96},
+    11: {11: 352, 12: 224, 13: 192, 21: 176, 22: 112, 23: 112},
+    12: {11: 384, 12: 256, 13: 224, 21: 192, 22: 128, 23: 128},
+    13: {11: 416, 12: 320, 13: 256, 21: 224, 22: 144, 23: 144},
+    14: {11: 448, 12: 384, 13: 320, 21: 256, 22: 160, 23: 160}
   };
 
   private static sampling_rate_freq_index = {
-    1: {0x00: 44100, 0x01: 48000, 0x02: 32000},
-    2: {0x00: 22050, 0x01: 24000, 0x02: 16000},
-    2.5: {0x00: 11025, 0x01: 12000, 0x02: 8000}
+    1: {0: 44100, 1: 48000, 2: 32000},
+    2: {0: 22050, 1: 24000, 2: 16000},
+    2.5: {0: 11025, 1: 12000, 2: 8000}
   };
 
   private static samplesInFrameTable = [
@@ -168,13 +168,13 @@ class MpegFrameHeader {
       // mono
       if (this.version === 1) {
         return 17;
-      } else if (this.version === 2 || this.version === 2.5) {
+      }if (this.version === 2 || this.version === 2.5) {
         return 9;
       }
     } else {
       if (this.version === 1) {
         return 32;
-      } else if (this.version === 2 || this.version === 2.5) {
+      }if (this.version === 2 || this.version === 2.5) {
         return 17;
       }
     }
@@ -225,9 +225,9 @@ class MpegFrameHeader {
   }
 
   private parseAdtsHeader(buf: Uint8Array, off: number): void {
-    debug(`layer=0 => ADTS`);
+    debug("layer=0 => ADTS");
     this.version = this.versionIndex === 2 ? 4 : 2;
-    this.container = 'ADTS/MPEG-' + this.version;
+    this.container = `ADTS/MPEG-${this.version}`;
     const profileIndex = common.getBitAllignedNumber(buf, off + 2, 0, 2);
     this.codec = 'AAC';
     this.codecProfile = MPEG4.AudioObjectTypes[profileIndex];
@@ -272,14 +272,14 @@ const FrameHeader = {
 };
 
 function getVbrCodecProfile(vbrScale: number): string {
-  return 'V' + Math.floor((100 - vbrScale) / 10);
+  return `V${Math.floor((100 - vbrScale) / 10)}`;
 }
 
 export class MpegParser extends AbstractID3Parser {
 
-  private frameCount: number = 0;
-  private syncFrameCount: number = -1;
-  private countSkipFrameData: number = 0;
+  private frameCount = 0;
+  private syncFrameCount = -1;
+  private countSkipFrameData = 0;
   private totalDataLength = 0;
 
   private audioFrameHeader;
@@ -288,7 +288,7 @@ export class MpegParser extends AbstractID3Parser {
   private frame_size;
   private crc: number;
 
-  private calculateEofDuration: boolean = false;
+  private calculateEofDuration = false;
   private samplesPerFrame;
 
   private buf_frame_header = new Uint8Array(4);
@@ -318,7 +318,7 @@ export class MpegParser extends AbstractID3Parser {
       }
     } catch (err) {
       if (err instanceof EndOfStreamError) {
-        debug(`End-of-stream`);
+        debug("End-of-stream");
         if (this.calculateEofDuration) {
           const numberOfSamples = this.frameCount * this.samplesPerFrame;
           this.metadata.setFormat('numberOfSamples', numberOfSamples);
@@ -338,7 +338,7 @@ export class MpegParser extends AbstractID3Parser {
   protected finalize() {
 
     const format = this.metadata.format;
-    const hasID3v1 = this.metadata.native.hasOwnProperty('ID3v1');
+    const hasID3v1 = !!this.metadata.native.ID3v1;
     if (format.duration && this.tokenizer.fileInfo.size) {
       const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
       if (format.codecProfile && format.codecProfile[0] === 'V') {
@@ -377,7 +377,7 @@ export class MpegParser extends AbstractID3Parser {
           }
           this.syncFrameCount = this.frameCount;
           return; // sync
-        } else {
+        }
           gotFirstSync = false;
           bo = this.syncPeek.buf.indexOf(MpegFrameHeader.SyncByte1, bo);
           if (bo === -1) {
@@ -386,11 +386,9 @@ export class MpegParser extends AbstractID3Parser {
             }
             await this.tokenizer.ignore(this.syncPeek.len);
             break; // continue with next buffer
-          } else {
+          }
             ++bo;
             gotFirstSync = true;
-          }
-        }
       }
     }
   }
@@ -412,7 +410,7 @@ export class MpegParser extends AbstractID3Parser {
       header = FrameHeader.get(this.buf_frame_header, 0);
     } catch (err) {
       await this.tokenizer.ignore(1);
-      this.metadata.addWarning('Parse error: ' + err.message);
+      this.metadata.addWarning(`Parse error: ${err.message}`);
       return false; // sync
     }
     await this.tokenizer.ignore(3);
@@ -487,10 +485,9 @@ export class MpegParser extends AbstractID3Parser {
     if (header.isProtectedByCRC) {
       await this.parseCrc();
       return false;
-    } else {
+    }
       await this.skipSideInformation();
       return false;
-    }
   }
 
   private async parseAdts(header: MpegFrameHeader): Promise<boolean> {
@@ -549,34 +546,35 @@ export class MpegParser extends AbstractID3Parser {
         this.metadata.setFormat('codecProfile', 'CBR');
         return this.readXingInfoHeader();
 
-      case 'Xing':
+      case 'Xing': {
         const infoTag = await this.readXingInfoHeader();
         const codecProfile = getVbrCodecProfile(infoTag.vbrScale);
         this.metadata.setFormat('codecProfile', codecProfile);
         return null;
+      }
 
       case 'Xtra':
         // ToDo: ???
         break;
 
-      case 'LAME':
+      case 'LAME': {
         const version = await this.tokenizer.readToken(LameEncoderVersion);
         if (this.frame_size >= this.offset + LameEncoderVersion.len) {
           this.offset += LameEncoderVersion.len;
-          this.metadata.setFormat('tool', 'LAME ' + version);
+          this.metadata.setFormat('tool', `LAME ${version}`);
           await this.skipFrameData(this.frame_size - this.offset);
           return null;
-        } else {
+        }
           this.metadata.addWarning('Corrupt LAME header');
           break;
-        }
+      }
       // ToDo: ???
     }
 
     // ToDo: promise duration???
     const frameDataLeft = this.frame_size - this.offset;
     if (frameDataLeft < 0) {
-      this.metadata.addWarning('Frame ' + this.frameCount + 'corrupt: negative frameDataLeft');
+      this.metadata.addWarning(`Frame ${this.frameCount}corrupt: negative frameDataLeft`);
     } else {
       await this.skipFrameData(frameDataLeft);
     }
@@ -595,7 +593,7 @@ export class MpegParser extends AbstractID3Parser {
     this.offset += this.tokenizer.position - offset;
 
     if (infoTag.lame) {
-      this.metadata.setFormat('tool', 'LAME ' + common.stripNulls(infoTag.lame.version));
+      this.metadata.setFormat('tool', `LAME ${common.stripNulls(infoTag.lame.version)}`);
       if (infoTag.lame.extended) {
         // this.metadata.setFormat('trackGain', infoTag.lame.extended.track_gain);
         this.metadata.setFormat('trackPeakLevel', infoTag.lame.extended.track_peak);

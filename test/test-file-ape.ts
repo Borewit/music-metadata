@@ -4,6 +4,7 @@ import path from 'node:path';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
+import type { IPicture } from '../lib/index.js';
 
 describe('Parse APE (Monkey\'s Audio)', () => {
 
@@ -34,8 +35,8 @@ describe('Parse APE (Monkey\'s Audio)', () => {
   function checkNative(ape: mm.INativeTagDict) {
     assert.deepEqual(ape.ENSEMBLE, ['Audioslave']);
     assert.deepEqual(ape.Artist, ['Audioslave', 'Chris Cornell']);
-    assert.strictEqual(ape['Cover Art (Front)'][0].data.length, 48658, 'raw cover art (front) length');
-    assert.strictEqual(ape['Cover Art (Back)'][0].data.length, 48658, 'raw cover art (front) length');
+    assert.strictEqual((ape['Cover Art (Front)'][0] as IPicture).data.length, 48658, 'raw cover art (front) length');
+    assert.strictEqual((ape['Cover Art (Back)'][0] as IPicture).data.length, 48658, 'raw cover art (front) length');
   }
 
   Parsers.forEach(parser => {

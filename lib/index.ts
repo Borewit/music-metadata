@@ -2,13 +2,13 @@
  * Node.js specific entry point.
  */
 
-import * as Stream from 'stream';
-import * as strtok3 from 'strtok3';
+import type { Readable } from 'node:stream';
+import { fromFile, fromStream, type IFileInfo } from 'strtok3';
 import initDebug from 'debug';
 
 import { parseFromTokenizer, scanAppendingHeaders } from './core.js';
-import { ParserFactory } from './ParserFactory.js';
-import { IAudioMetadata, IOptions } from './type.js';
+import { getParserIdForExtension, parse } from './ParserFactory.js';
+import type { IAudioMetadata, IOptions } from './type.js';
 import { RandomFileReader } from './common/RandomFileReader.js';
 
 export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
@@ -23,8 +23,8 @@ const debug = initDebug('music-metadata:parser');
  * @param options - Parsing options
  * @returns Metadata
  */
-export async function parseStream(stream: Stream.Readable, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  const tokenizer = await strtok3.fromStream(stream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
+export async function parseStream(stream: Readable, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const tokenizer = await fromStream(stream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
   return parseFromTokenizer(tokenizer, options);
 }
 
@@ -38,7 +38,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
   debug(`parseFile: ${filePath}`);
 
-  const fileTokenizer = await strtok3.fromFile(filePath);
+  const fileTokenizer = await fromFile(filePath);
 
   const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size);
   try {
@@ -48,11 +48,11 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   }
 
   try {
-    const parserName = ParserFactory.getParserIdForExtension(filePath);
+    const parserName = getParserIdForExtension(filePath);
     if (!parserName)
       debug(' Parser could not be determined by file extension');
 
-    return await ParserFactory.parse(fileTokenizer, parserName, options);
+    return await parse(fileTokenizer, parserName, options);
   } finally {
     await fileTokenizer.close();
   }

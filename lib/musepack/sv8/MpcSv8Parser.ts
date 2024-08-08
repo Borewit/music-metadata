@@ -9,7 +9,7 @@ const debug = initDebug('music-metadata:parser:musepack');
 
 export class MpcSv8Parser extends BasicParser {
 
-  private audioLength: number = 0;
+  private audioLength = 0;
 
   public async parse(): Promise<void> {
 
@@ -28,13 +28,14 @@ export class MpcSv8Parser extends BasicParser {
       debug(`packet-header key=${header.key}, payloadLength=${header.payloadLength}`);
 
       switch (header.key) {
-        case 'SH': // Stream Header
+        case 'SH': { // Stream Header
           const sh = await sv8reader.readStreamHeader(header.payloadLength);
           this.metadata.setFormat('numberOfSamples', sh.sampleCount);
           this.metadata.setFormat('sampleRate', sh.sampleFrequency);
           this.metadata.setFormat('duration', sh.sampleCount / sh.sampleFrequency);
           this.metadata.setFormat('numberOfChannels', sh.channelCount);
           break;
+        }
 
         case 'AP': // Audio Packet
           this.audioLength += header.payloadLength;

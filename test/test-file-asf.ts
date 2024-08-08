@@ -2,11 +2,12 @@ import { assert } from 'chai';
 import * as mm from '../lib/index.js';
 import path from 'node:path';
 import GUID from '../lib/asf/GUID.js';
-import { AsfUtil } from '../lib/asf/AsfUtil.js';
+import { getParserForAttr } from '../lib/asf/AsfUtil.js';
 import { DataType } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
 
 import { samplePath } from './util.js';
+import type { IPicture } from '../lib/index.js';
 
 describe('Parse ASF', () => {
 
@@ -69,7 +70,7 @@ describe('Parse ASF', () => {
 
     tests.forEach(test => {
       const buf = Uint8Array.from(test.raw);
-      assert.strictEqual(Number(AsfUtil.getParserForAttr(DataType.QWord)(buf)), test.expected, test.description);
+      assert.strictEqual(Number(getParserForAttr(DataType.QWord)(buf)), test.expected, test.description);
     });
 
   });
@@ -128,7 +129,7 @@ describe('Parse ASF', () => {
           const asf = mm.orderTags(metadata.native.asf);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
           const nativePicture = asf['WM/Picture'][0];
-          assert.exists(nativePicture.data);
+          assert.exists((nativePicture as IPicture).data);
         });
       });
 

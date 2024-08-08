@@ -3,7 +3,7 @@ export interface IHeader {
   len: number;
 }
 
-export enum DataType { 'string', uint, uid, bool, binary, float}
+export enum DataType { 'string' = 0, uint = 1, uid = 2, bool = 3, binary = 4, float = 5}
 
 export interface IElementType<T> {
   readonly name: string;
@@ -15,6 +15,8 @@ export interface IElementType<T> {
 export interface IContainerType { [id: number]: IElementType<string | number | boolean | Uint8Array>; }
 
 export interface ITree { [name: string]: string | number | boolean | Uint8Array | ITree | ITree[]; }
+
+export type ValueType = string | number | Uint8Array | boolean | ITree | ITree[];
 
 export interface ISeekHead {
   id?: Uint8Array;

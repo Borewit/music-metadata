@@ -2,13 +2,13 @@ import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import initDebug from 'debug';
 import type { ITokenizer } from 'strtok3';
 
-import { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
 import * as matroskaDtd from './MatroskaDtd.js';
-import { DataType, IContainerType, IHeader, IMatroskaDoc, ITree, TargetType, TrackType } from './types.js';
+import { DataType, type IContainerType, type IHeader, type IMatroskaDoc, type ITree, TargetType, TrackType, type ValueType } from './types.js';
 
-import { IOptions, ITrackInfo } from '../type.js';
-import { ITokenParser } from '../ParserFactory.js';
+import type { AnyTagValue, IOptions, ITrackInfo } from '../type.js';
+import type { ITokenParser } from '../ParserFactory.js';
 import * as Token from 'token-types';
 
 const debug = initDebug('music-metadata:parser:matroska');
@@ -22,9 +22,9 @@ const debug = initDebug('music-metadata:parser:matroska');
  */
 export class MatroskaParser extends BasicParser {
 
-  private padding: number = 0;
+  private padding = 0;
 
-  private parserMap = new Map<DataType, (e: IHeader) => Promise<any>>();
+  private parserMap = new Map<DataType, (e: IHeader) => Promise<ValueType>>();
 
   private ebmlMaxIDLength = 4;
   private ebmlMaxSizeLength = 8;
@@ -52,7 +52,7 @@ export class MatroskaParser extends BasicParser {
 
   public async parse(): Promise<void> {
     const containerSize = this.tokenizer.fileInfo.size ?? Number.MAX_SAFE_INTEGER;
-    const matroska = await this.parseContainer(matroskaDtd.elements, containerSize, []) as any as IMatroskaDoc;
+    const matroska = await this.parseContainer(matroskaDtd.elements, containerSize, []) as unknown as IMatroskaDoc;
 
     this.metadata.setFormat('container', `EBML/${matroska.ebml.docType}`);
     if (matroska.segment) {
@@ -68,7 +68,7 @@ export class MatroskaParser extends BasicParser {
       }
 
       const audioTracks = matroska.segment.tracks;
-      if (audioTracks && audioTracks.entries) {
+      if (audioTracks?.entries) {
 
         audioTracks.entries.forEach(entry => {
           const stream: ITrackInfo = {
@@ -241,7 +241,7 @@ export class MatroskaParser extends BasicParser {
     return buf;
   }
 
-  private async addTag(tagId: string, value: any): Promise<void> {
+  private async addTag(tagId: string, value: AnyTagValue): Promise<void> {
     await this.metadata.addTag('matroska', tagId, value);
   }
 

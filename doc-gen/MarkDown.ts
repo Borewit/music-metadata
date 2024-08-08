@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import type * as fs from 'node:fs';
 
 export class Row {
   constructor(public values: string[]) {
@@ -7,7 +7,7 @@ export class Row {
 
 export class Table {
 
-  private static padEnd(value: string, size: number, pad: string = ' ') {
+  private static padEnd(value: string, size: number, pad = ' ') {
     while (value.length < size) {
       value += pad;
     }
@@ -20,13 +20,13 @@ export class Table {
       const cellTxt = values.length > ci ? values[ci] : '';
       colValues.push(Table.padEnd(cellTxt, colSizes[ci]));
     }
-    out.write('| ' + colValues.join(' | ') + ' |\n');
+    out.write(`| ${colValues.join(' | ')} |\n`);
   }
 
   private static lineToString(colSizes: number[]): string {
 
     const colValues = colSizes.map(size => Table.padEnd('-', size, '-'));
-    return '|-' + colValues.join('-|-') + '-|\n';
+    return `|-${colValues.join('-|-')}-|\n`;
   }
 
   public rows: Row[] = [];

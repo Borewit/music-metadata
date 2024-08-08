@@ -10,9 +10,9 @@ it("should handle concurrent parsing of pictures", () => {
 
   const files = [path.join(samplePath, 'flac.flac'), path.join(samplePath, 'flac-bug.flac')];
 
-  return Promise.all<any>(files.map(file => {
+  return Promise.all<void>(files.map(file => {
     return mm.parseFile(file).then(result => {
-      const data = fs.readFileSync(file + '.jpg');
+      const data = fs.readFileSync(`${file}.jpg`);
       t.deepEqual(result.common.picture[0].data, data, 'check picture');
     });
   }));

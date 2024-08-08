@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import * as path from 'path';
+import * as path from 'node:path';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 

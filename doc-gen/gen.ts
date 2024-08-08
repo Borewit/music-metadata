@@ -30,8 +30,8 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
 
 function write(out: fs.WriteStream) {
 
-  const json = fs.readFileSync(path.join(dirname, 'common.json'));
-  const commonDescriptionDict: ITagInfoDict = JSON.parse(json as any);
+  const json = fs.readFileSync(path.join(dirname, 'common.json'), {encoding: 'utf-8'});
+  const commonDescriptionDict: ITagInfoDict = JSON.parse(json);
 
   const table = new markDown.Table();
 

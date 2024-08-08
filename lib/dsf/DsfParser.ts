@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
-import { ChunkHeader, DsdChunk, FormatChunk, IChunkHeader, IDsdChunk, IFormatChunk } from './DsfChunk.js';
+import { ChunkHeader, DsdChunk, FormatChunk, type IChunkHeader, type IDsdChunk, type IFormatChunk } from './DsfChunk.js';
 import { ID3v2Parser } from "../id3v2/ID3v2Parser.js";
 
 const debug = initDebug('music-metadata:parser:DSF');
@@ -21,7 +21,7 @@ export class DsfParser extends AbstractID3Parser {
     this.metadata.setFormat('lossless', true);
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);
     if (dsdChunk.metadataPointer === BigInt(0)) {
-      debug(`No ID3v2 tag present`);
+      debug("No ID3v2 tag present");
     } else {
       debug(`expect ID3v2 at offset=${dsdChunk.metadataPointer}`);
       await this.parseChunks(dsdChunk.fileSize - chunkHeader.size);
@@ -36,7 +36,7 @@ export class DsfParser extends AbstractID3Parser {
       const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
       debug(`Parsing chunk name=${chunkHeader.id} size=${chunkHeader.size}`);
       switch (chunkHeader.id) {
-        case 'fmt ':
+        case 'fmt ': {
           const formatChunk = await this.tokenizer.readToken<IFormatChunk>(FormatChunk);
           this.metadata.setFormat('numberOfChannels', formatChunk.channelNum);
           this.metadata.setFormat('sampleRate', formatChunk.samplingFrequency);
@@ -46,6 +46,7 @@ export class DsfParser extends AbstractID3Parser {
           const bitrate = formatChunk.bitsPerSample * formatChunk.samplingFrequency * formatChunk.channelNum;
           this.metadata.setFormat('bitrate', bitrate);
           return; // We got what we want, stop further processing of chunks
+        }
         default:
           this.tokenizer.ignore(Number(chunkHeader.size) - ChunkHeader.len);
           break;

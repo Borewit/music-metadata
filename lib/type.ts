@@ -1,10 +1,12 @@
-import { GenericTagId, TagType } from './common/GenericTagTypes.js';
-import { IFooter } from './apev2/APEv2Token.js';
-import { TrackType } from './matroska/types.js';
-import { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
+import type { GenericTagId, TagType } from './common/GenericTagTypes.js';
+import type { IFooter } from './apev2/APEv2Token.js';
+import type { TrackType } from './matroska/types.js';
+import type { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
 
 export { TrackType } from './matroska/types.js';
 export { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
+
+export type AnyTagValue = unknown;
 
 /**
  * Attached picture, typically used for cover art
@@ -513,8 +515,8 @@ export interface IFormat {
 }
 
 export interface ITag {
-  id: string,
-  value: any
+  id: string;
+  value: AnyTagValue;
 }
 
 export interface IChapter {
@@ -540,7 +542,7 @@ export interface INativeTags {
  * Tags ordered by tag-ID
  */
 export interface INativeTagDict {
-  [tagId: string]: any[];
+  [tagId: string]: AnyTagValue[];
 }
 
 export interface INativeAudioMetadata {
@@ -658,7 +660,7 @@ export interface IMetadataEvent {
     /**
      * Tag value
      */
-    value: any
+    value: AnyTagValue
   };
 
   /**

@@ -8,27 +8,27 @@ import * as util from '../common/Util.js';
  * Ref: http://id3.org/id3v2.3.0#Attached_picture
  */
 export enum AttachedPictureType {
-  'Other',
-  "32x32 pixels 'file icon' (PNG only)",
-  'Other file icon',
-  'Cover (front)',
-  'Cover (back)',
-  'Leaflet page',
-  'Media (e.g. label side of CD)',
-  'Lead artist/lead performer/soloist',
-  'Artist/performer',
-  'Conductor',
-  'Band/Orchestra',
-  'Composer',
-  'Lyricist/text writer',
-  'Recording Location',
-  'During recording',
-  'During performance',
-  'Movie/video screen capture',
-  'A bright coloured fish',
-  'Illustration',
-  'Band/artist logotype',
-  'Publisher/Studio logotype'
+  'Other' = 0,
+  "32x32 pixels 'file icon' (PNG only)" = 1,
+  'Other file icon' = 2,
+  'Cover (front)' = 3,
+  'Cover (back)' = 4,
+  'Leaflet page' = 5,
+  'Media (e.g. label side of CD)' = 6,
+  'Lead artist/lead performer/soloist' = 7,
+  'Artist/performer' = 8,
+  'Conductor' = 9,
+  'Band/Orchestra' = 10,
+  'Composer' = 11,
+  'Lyricist/text writer' = 12,
+  'Recording Location' = 13,
+  'During recording' = 14,
+  'During performance' = 15,
+  'Movie/video screen capture' = 16,
+  'A bright coloured fish' = 17,
+  'Illustration' = 18,
+  'Band/artist logotype' = 19,
+  'Publisher/Studio logotype' = 20
 }
 
 export type ID3v2MajorVersion = 2 | 3 | 4;
@@ -57,7 +57,7 @@ export enum LyricsContentType {
 }
 
 export enum TimestampFormat {
-  notSynchronized0,
+  notSynchronized0 = 0,
   mpegFrameNumber = 1,
   milliseconds = 2
 }

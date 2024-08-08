@@ -1,0 +1,53 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+	"organizeImports": {
+		"enabled": false
+	},
+	"formatter": {
+		"enabled": false
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"correctness": {
+				"noConstantCondition": "warn"
+			},
+			"style": {
+				"noParameterAssign": "off"
+			},
+			"recommended": true,
+			"complexity": {
+				"noForEach": "off"
+			},
+			"suspicious": {
+				"noEmptyBlockStatements": "error",
+				"noControlCharactersInRegex": "off"
+			},
+			"nursery": {
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"node:buffer": "Use Uint8Array instead of Buffer"
+						}
+					}
+				},
+				"useConsistentBuiltinInstantiation": "error",
+				"useThrowNewError": "error",
+				"useThrowOnlyError": "error",
+				"useErrorMessage": "error"
+			}
+		}
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"ignore": [
+			"./coverage",
+			"./yarn",
+			"./lib/**/*.d.ts",
+			"./lib/**/*.js",
+			"./test/**/*.d.ts",
+			"./test/**/*.js"
+		]
+	}
+}

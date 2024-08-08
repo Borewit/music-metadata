@@ -22,7 +22,7 @@ describe('GenericTagMap', () => {
       const tagMapper = combinedTagMapper.tagMappers[nativeType];
       for (const nativeTag in tagMapper.tagMap) {
         const commonType = tagMapper.tagMap[nativeTag];
-        assert.isDefined(commonTags[commonType], 'Unknown common tagTypes in mapping ' + nativeType + '.' + nativeTag + ' => ' + commonType);
+        assert.isDefined(commonTags[commonType], `Unknown common tagTypes in mapping ${nativeType}.${nativeTag} => ${commonType}`);
       }
     }
   });

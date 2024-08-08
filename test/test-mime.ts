@@ -23,7 +23,7 @@ describe('MIME & extension mapping', () => {
         break;
 
       default:
-        throw new Error('caught error parsing ' + extension + ': ' + err.message);
+        throw new Error(`caught error parsing ${extension}: ${err.message}`);
     }
   }
 
@@ -43,7 +43,7 @@ describe('MIME & extension mapping', () => {
       const streamReader = new SourceStream(buf);
       // Convert extension to MIME-Type
       const mimeType = mime.getType(extension);
-      assert.isNotNull(mimeType, 'extension: ' + extension);
+      assert.isNotNull(mimeType, `extension: ${extension}`);
 
       return mm.parseStream(streamReader, mimeType)
         .catch(err => {

@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import { IGetToken, EndOfStreamError } from 'strtok3';
+import { type IGetToken, EndOfStreamError } from 'strtok3';
 import initDebug from 'debug';
 
 import * as util from '../common/Util.js';
@@ -11,14 +11,14 @@ import { OpusParser } from './opus/OpusParser.js';
 import { SpeexParser } from './speex/SpeexParser.js';
 import { TheoraParser } from './theora/TheoraParser.js';
 
-import * as Ogg from './Ogg.js';
+import type * as Ogg from './Ogg.js';
 
 const debug = initDebug('music-metadata:parser:ogg');
 
 export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
 
   private static sum(buf: number[], off: number, len: number): number {
-    let s: number = 0;
+    let s = 0;
     for (let i = off; i < off + len; ++i) {
       s += buf[i];
     }
@@ -114,7 +114,7 @@ export class OggParser extends BasicParser {
               this.pageConsumer = new TheoraParser(this.metadata, this.options, this.tokenizer);
               break;
             default:
-              throw new Error('gg audio-codec not recognized (id=' + id + ')');
+              throw new Error(`gg audio-codec not recognized (id=${id})`);
           }
         }
         await this.pageConsumer.parsePage(header, pageData);
@@ -122,7 +122,7 @@ export class OggParser extends BasicParser {
     } catch (err) {
       if (err instanceof EndOfStreamError) {
         this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
-        debug(`End-of-stream`);
+        debug("End-of-stream");
         this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
         if (this.header) {
           this.pageConsumer.calculateDuration(this.header);

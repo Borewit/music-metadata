@@ -1,8 +1,8 @@
 import type { ITokenizer } from 'strtok3';
 
-import { ITokenParser } from '../ParserFactory.js';
-import { IOptions, IPrivateOptions } from '../type.js';
-import { INativeMetadataCollector } from './MetadataCollector.js';
+import type { ITokenParser } from '../ParserFactory.js';
+import type { IOptions, IPrivateOptions } from '../type.js';
+import type { INativeMetadataCollector } from './MetadataCollector.js';
 
 export abstract class BasicParser implements ITokenParser {
 

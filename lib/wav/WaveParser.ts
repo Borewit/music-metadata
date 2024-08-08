@@ -8,7 +8,8 @@ import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
 import * as util from '../common/Util.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
-import { BroadcastAudioExtensionChunk } from '../wav/BwfChunk.js';
+import { BroadcastAudioExtensionChunk } from './BwfChunk.js';
+import type { AnyTagValue } from '../type.js';
 
 const debug = initDebug('music-metadata:parser:RIFF');
 
@@ -76,13 +77,13 @@ export class WaveParser extends BasicParser {
           this.fact = await this.tokenizer.readToken(new WaveChunk.FactChunk(header));
           break;
 
-        case 'fmt ': // The Util Chunk, non-PCM Formats
+        case 'fmt ': { // The Util Chunk, non-PCM Formats
           const fmt = await this.tokenizer.readToken<WaveChunk.IWaveFormat>(new WaveChunk.Format(header));
 
           let subFormat = WaveChunk.WaveFormat[fmt.wFormatTag];
           if (!subFormat) {
-            debug('WAVE/non-PCM format=' + fmt.wFormatTag);
-            subFormat = 'non-PCM (' + fmt.wFormatTag + ')';
+            debug(`WAVE/non-PCM format=${fmt.wFormatTag}`);
+            subFormat = `non-PCM (${fmt.wFormatTag})`;
           }
           this.metadata.setFormat('codec', subFormat);
           this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
@@ -91,15 +92,17 @@ export class WaveParser extends BasicParser {
           this.metadata.setFormat('bitrate', fmt.nBlockAlign * fmt.nSamplesPerSec * 8);
           this.blockAlign = fmt.nBlockAlign;
           break;
+        }
 
         case 'id3 ': // The way Picard, FooBar currently stores, ID3 meta-data
-        case 'ID3 ': // The way Mp3Tags stores ID3 meta-data
+        case 'ID3 ': { // The way Mp3Tags stores ID3 meta-data
           const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
           const rst = strtok3.fromBuffer(id3_data);
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
+        }
 
-        case 'data': // PCM-data
+        case 'data': { // PCM-data
           if (this.metadata.format.lossless !== false) {
             this.metadata.setFormat('lossless', true);
           }
@@ -126,25 +129,27 @@ export class WaveParser extends BasicParser {
           }
           await this.tokenizer.ignore(header.chunkSize);
           break;
+        }
 
-        case 'bext': // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
+        case 'bext': { // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
           const bext = await this.tokenizer.readToken(BroadcastAudioExtensionChunk);
           Object.keys(bext).forEach(key => {
-            this.metadata.addTag('exif', 'bext.' + key, bext[key]);
+            this.metadata.addTag('exif', `bext.${key}`, bext[key]);
           });
           const bextRemaining = header.chunkSize - BroadcastAudioExtensionChunk.len;
           await this.tokenizer.ignore(bextRemaining);
           break;
+        }
 
         case '\x00\x00\x00\x00': // padding ??
           debug(`Ignore padding chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`);
-          this.metadata.addWarning('Ignore chunk: RIFF/' + header.chunkID);
+          this.metadata.addWarning(`Ignore chunk: RIFF/${header.chunkID}`);
           await this.tokenizer.ignore(header.chunkSize);
           break;
 
         default:
           debug(`Ignore chunk: RIFF/${header.chunkID} of ${header.chunkSize} bytes`);
-          this.metadata.addWarning('Ignore chunk: RIFF/' + header.chunkID);
+          this.metadata.addWarning(`Ignore chunk: RIFF/${header.chunkID}`);
           await this.tokenizer.ignore(header.chunkSize);
       }
 
@@ -161,11 +166,9 @@ export class WaveParser extends BasicParser {
     switch (listType) {
       case 'INFO':
         return this.parseRiffInfoTags(listHeader.chunkSize - 4);
-
-      case 'adtl':
       default:
-        this.metadata.addWarning('Ignore chunk: RIFF/WAVE/LIST/' + listType);
-        debug('Ignoring chunkID=RIFF/WAVE/LIST/' + listType);
+        this.metadata.addWarning(`Ignore chunk: RIFF/WAVE/LIST/${listType}`);
+        debug(`Ignoring chunkID=RIFF/WAVE/LIST/${listType}`);
         return this.tokenizer.ignore(listHeader.chunkSize - 4).then();
     }
   }
@@ -180,11 +183,11 @@ export class WaveParser extends BasicParser {
     }
 
     if (chunkSize !== 0) {
-      throw Error('Illegal remaining size: ' + chunkSize);
+      throw new Error(`Illegal remaining size: ${chunkSize}`);
     }
   }
 
-  private addTag(id: string, value: any) {
+  private addTag(id: string, value: AnyTagValue) {
     this.metadata.addTag('exif', id, value);
   }
 
