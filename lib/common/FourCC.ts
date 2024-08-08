@@ -1,4 +1,4 @@
-import { IToken } from 'strtok3';
+import type { IToken } from 'strtok3';
 import { stringToUint8Array, uint8ArrayToString } from 'uint8array-extras';
 
 import * as util from './Util.js';

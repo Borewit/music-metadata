@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { Parsers } from './metadata-parsers.js';
 
-import { IFormat } from '../lib/index.js';
+import type { IFormat } from '../lib/index.js';
 import { samplePath } from './util.js';
 
 const aacSamplePath = path.join(samplePath, 'aac');
@@ -22,7 +22,7 @@ describe('Parse ADTS/AAC', () => {
     assert.approximately(format.duration, samples / sampleRate, 0.1, 'format.duration');
   }
 
-  describe('parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit', function(){
+  describe('parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit', ()=> {
 
     Parsers.forEach(parser => {
       it(parser.description, async function (){

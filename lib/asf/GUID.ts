@@ -68,8 +68,8 @@ export default class GUID {
 
   public static ASF_Index_Placeholder_Object  = new GUID("D9AADE20-7C17-4F9C-BC28-8555DD98E2A2");
 
-  public static fromBin(bin: Uint8Array, offset: number = 0) {
-    return new GUID(this.decode(bin, offset));
+  public static fromBin(bin: Uint8Array, offset = 0) {
+    return new GUID(GUID.decode(bin, offset));
   }
 
   /**
@@ -78,13 +78,9 @@ export default class GUID {
    * @param offset Read offset in bytes, default 0
    * @returns GUID as dashed hexadecimal representation
    */
-  public static decode(objectId: Uint8Array, offset: number = 0): string {
+  public static decode(objectId: Uint8Array, offset = 0): string {
     const view = new DataView(objectId.buffer, offset);
-    const guid = view.getUint32(0, true).toString(16) + "-" +
-      view.getUint16(4, true).toString(16) + "-" +
-      view.getUint16(6, true).toString(16) + "-" +
-      view.getUint16(8).toString(16) + "-" +
-      uint8ArrayToHex(objectId.slice(offset + 10, offset + 16));
+    const guid = `${view.getUint32(0, true).toString(16)}-${view.getUint16(4, true).toString(16)}-${view.getUint16(6, true).toString(16)}-${view.getUint16(8).toString(16)}-${uint8ArrayToHex(objectId.slice(offset + 10, offset + 16))}`;
 
     return guid.toUpperCase();
   }
@@ -113,9 +109,9 @@ export default class GUID {
   public static encode(str: string): Uint8Array {
     const bin = new Uint8Array(16);
     const view = new DataView(bin.buffer);
-    view.setUint32(0, parseInt(str.slice(0, 8), 16), true);
-    view.setUint16(4, parseInt(str.slice(9, 13), 16), true);
-    view.setUint16(6, parseInt(str.slice(14, 18), 16), true);
+    view.setUint32(0, Number.parseInt(str.slice(0, 8), 16), true);
+    view.setUint16(4, Number.parseInt(str.slice(9, 13), 16), true);
+    view.setUint16(6, Number.parseInt(str.slice(14, 18), 16), true);
     bin.set(hexToUint8Array(str.slice(19, 23)), 8);
     bin.set(hexToUint8Array(str.slice(24)), 10);
 

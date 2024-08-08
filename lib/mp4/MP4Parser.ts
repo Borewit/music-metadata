@@ -5,9 +5,9 @@ import { BasicParser } from '../common/BasicParser.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 import { Atom } from './Atom.js';
 import * as AtomToken from './AtomToken.js';
-import { IChapter, ITrackInfo, TrackType } from '../type.js';
+import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
 
-import { IGetToken } from '@tokenizer/token';
+import type { IGetToken } from '@tokenizer/token';
 import { uint8ArrayToHex, uint8ArrayToString } from 'uint8array-extras';
 
 const debug = initDebug('music-metadata:parser:MP4');
@@ -47,7 +47,7 @@ interface ITrackDescription extends AtomToken.ITrackHeaderAtom {
   timeToSampleTable?: AtomToken.ITimeToSampleToken[];
 }
 
-type IAtomParser = (payloadLength: number) => Promise<any>;
+type IAtomParser = (payloadLength: number) => Promise<void>;
 
 const encoderDict: { [dataFormatId: string]: IEncoder; } = {
   raw: {
@@ -109,7 +109,7 @@ const encoderDict: { [dataFormatId: string]: IEncoder; } = {
   }
 };
 
-function distinct(value: any, index: number, self: any[]) {
+function distinct(value: AnyTagValue, index: number, self: AnyTagValue[]) {
   return self.indexOf(value) === index;
 }
 
@@ -137,7 +137,7 @@ export class MP4Parser extends BasicParser {
     const integerType = (signed ? 'INT' : 'UINT') + array.length * 8 + (array.length > 1 ? '_BE' : '');
     const token: IGetToken<number | bigint> = Token[integerType];
     if (!token) {
-      throw new Error('Token for integer type not found: "' + integerType + '"');
+      throw new Error(`Token for integer type not found: "${integerType}"`);
     }
     return Number(token.get(array, 0));
   }
@@ -256,10 +256,9 @@ export class MP4Parser extends BasicParser {
 
     if (this.atomParsers[atom.header.name]) {
       return this.atomParsers[atom.header.name](remaining);
-    } else {
+    }
       debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
       await this.tokenizer.ignore(remaining);
-    }
   }
 
   private getTrackDescription(): ITrackDescription {
@@ -272,12 +271,12 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private async addTag(id: string, value: any): Promise<void> {
+  private async addTag(id: string, value: AnyTagValue): Promise<void> {
     await this.metadata.addTag(tagFormat, id, value);
   }
 
   private addWarning(message: string) {
-    debug('Warning: ' + message);
+    debug(`Warning: ${message}`);
     this.metadata.addWarning(message);
   }
 
@@ -298,14 +297,16 @@ export class MP4Parser extends BasicParser {
 
         case 'name': // name atom (optional)
         case 'mean':
-        case 'rate':
+        case 'rate': {
           const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
-          tagKey += ':' + name.name;
+          tagKey += `:${name.name}`;
           break;
+        }
 
-        default:
+        default: {
           const uint8Array = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
-          this.addWarning('Unsupported meta-item: ' + tagKey + '[' + child.header.name + '] => value=' + uint8ArrayToHex(uint8Array) + ' ascii=' + uint8ArrayToString(uint8Array, 'ascii'));
+          this.addWarning(`Unsupported meta-item: ${tagKey}[${child.header.name}] => value=${uint8ArrayToHex(uint8Array)} ascii=${uint8ArrayToString(uint8Array, 'ascii')}`);
+        }
       }
 
     }, metaAtom.getPayloadLength(0));
@@ -315,7 +316,7 @@ export class MP4Parser extends BasicParser {
     const dataAtom = await this.tokenizer.readToken(new AtomToken.DataAtom(Number(metaAtom.header.length) - AtomToken.Header.len));
 
     if (dataAtom.type.set !== 0) {
-      throw new Error('Unsupported type-set != 0: ' + dataAtom.type.set);
+      throw new Error(`Unsupported type-set != 0: ${dataAtom.type.set}`);
     }
 
     // Use well-known-type table
@@ -325,27 +326,30 @@ export class MP4Parser extends BasicParser {
       case 0: // reserved: Reserved for use where no type needs to be indicated
         switch (tagKey) {
           case 'trkn':
-          case 'disk':
+          case 'disk': {
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
-            await this.addTag(tagKey, num + '/' + of);
+            await this.addTag(tagKey, `${num}/${of}`);
             break;
+          }
 
-          case 'gnre':
+          case 'gnre': {
             const genreInt = Token.UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
             await this.addTag(tagKey, genreStr);
             break;
+          }
 
-          case 'rate':
+          case 'rate': {
             const rate = new TextDecoder('ascii').decode(dataAtom.value);
             await this.addTag(tagKey, rate);
             break;
+          }
 
           default:
-            debug('unknown proprietary value type for: ' + metaAtom.atomPath);
+            debug(`unknown proprietary value type for: ${metaAtom.atomPath}`);
         }
         break;
 

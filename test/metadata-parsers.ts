@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
 import * as mm from '../lib/index.js';
-import { IAudioMetadata, IOptions } from '../lib/index.js';
+import type { IAudioMetadata, IOptions } from '../lib/index.js';
 
 type ParseFileMethod = (skipTest: () => void, filePath: string, mimeType?: string, options?: IOptions) => Promise<IAudioMetadata>;
 

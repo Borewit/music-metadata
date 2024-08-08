@@ -1,7 +1,7 @@
-import { INativeTagMap } from '../../common/GenericTagTypes.js';
+import type { INativeTagMap } from '../../common/GenericTagTypes.js';
 import { CommonTagMapper } from '../../common/GenericTagMapper.js';
 
-import { IRating, ITag } from '../../type.js';
+import type { IRating, ITag } from '../../type.js';
 
 /**
  * Vorbis tag mappings
@@ -123,7 +123,7 @@ export class VorbisTagMapper extends CommonTagMapper {
 
     return {
       source: email ? email.toLowerCase() : email,
-      rating: (parseFloat(rating) / maxScore) * CommonTagMapper.maxRatingScore
+      rating: (Number.parseFloat(rating) / maxScore) * CommonTagMapper.maxRatingScore
     };
   }
 
@@ -134,10 +134,10 @@ export class VorbisTagMapper extends CommonTagMapper {
   protected postMap(tag: ITag): void {
     if (tag.id === 'RATING') {
       // The way Winamp 5.666 assigns rating
-      tag.value = VorbisTagMapper.toRating(undefined, tag.value, 100);
+      tag.value = VorbisTagMapper.toRating(undefined, tag.value as string, 100);
     } else if (tag.id.indexOf('RATING:') === 0) {
       const keys = tag.id.split(':');
-      tag.value = VorbisTagMapper.toRating(keys[1], tag.value, 1);
+      tag.value = VorbisTagMapper.toRating(keys[1], tag.value as string, 1);
       tag.id = keys[0];
     }
 

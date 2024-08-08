@@ -24,8 +24,11 @@ jobs:
       - name: Yarn install
         run: yarn install
 
-      - name: Static code analysis
-        run: yarn run lint
+      - name: Lint TypeScript
+        run: yarn run lint-ts
+
+      - name: Lint Markdown
+        run: yarn run lint-md
 
       - name: Build
         run: yarn run build

@@ -1,10 +1,10 @@
 import * as Token from 'token-types';
-import {ITokenizer} from 'strtok3';
+import type {ITokenizer} from 'strtok3';
 
-import {IPageHeader} from '../Ogg.js';
+import type {IPageHeader} from '../Ogg.js';
 import {VorbisParser} from '../vorbis/VorbisParser.js';
-import {IOptions} from '../../type.js';
-import {INativeMetadataCollector} from '../../common/MetadataCollector.js';
+import type {IOptions} from '../../type.js';
+import type {INativeMetadataCollector} from '../../common/MetadataCollector.js';
 
 import * as Opus from './Opus.js';
 
@@ -16,7 +16,7 @@ import * as Opus from './Opus.js';
 export class OpusParser extends VorbisParser {
 
   private idHeader: Opus.IIdHeader;
-  private lastPos: number = -1;
+  private lastPos = -1;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
     super(metadata, options);

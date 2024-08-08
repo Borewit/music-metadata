@@ -2,11 +2,11 @@ import * as Token from 'token-types';
 import debugInit from 'debug';
 
 import { VorbisDecoder } from './VorbisDecoder.js';
-import { CommonHeader, IdentificationHeader, IVorbisPicture, VorbisPictureToken } from './Vorbis.js';
+import { CommonHeader, IdentificationHeader, type IVorbisPicture, VorbisPictureToken } from './Vorbis.js';
 
-import { IPageConsumer, IPageHeader } from '../Ogg.js';
-import { IOptions } from '../../type.js';
-import { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import type { IPageConsumer, IPageHeader } from '../Ogg.js';
+import type { IOptions } from '../../type.js';
+import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 
 const debug = debugInit('music-metadata:parser:ogg:vorbis1');
 
@@ -79,7 +79,7 @@ export class VorbisParser implements IPageConsumer {
   public async addTag(id: string, value: string | IVorbisPicture): Promise<void> {
     if (id === 'METADATA_BLOCK_PICTURE' && (typeof value === 'string')) {
       if (this.options.skipCovers) {
-        debug(`Ignore picture`);
+        debug("Ignore picture");
         return;
       }
       value = VorbisPictureToken.fromBase64(value);

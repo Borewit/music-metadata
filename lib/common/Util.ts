@@ -1,5 +1,5 @@
 import { StringType } from 'token-types';
-import { IRatio } from '../type.js';
+import type { IRatio } from '../type.js';
 
 export type StringEncoding =
   'ascii' // Use 'utf-8' or latin1 instead
@@ -35,13 +35,12 @@ export function findZero(uint8Array: Uint8Array, start: number, end: number, enc
       i += 2;
     }
     return i;
-  } else {
+  }
     while (uint8Array[i] !== 0) {
       if (i >= end) return end;
       i++;
     }
     return i;
-  }
 }
 
 export function trimRightNull(x: string): string {
@@ -69,7 +68,7 @@ export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): 
   // https://github.com/leetreveil/musicmetadata/issues/84
   if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) { // little endian
     return decodeString(uint8Array.subarray(2), encoding);
-  } else if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
+  }if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
     // BOM, indicating big endian decoding
     if ((uint8Array.length & 1) !== 0)
       throw new Error('Expected even number of octets for 16-bit unicode string');
@@ -125,7 +124,7 @@ export function a2hex(str: string) {
   const arr = [];
   for (let i = 0, l = str.length; i < l; i++) {
     const hex = Number(str.charCodeAt(i)).toString(16);
-    arr.push(hex.length === 1 ? '0' + hex : hex);
+    arr.push(hex.length === 1 ? `0${hex}` : hex);
   }
   return arr.join(' ');
 }
@@ -143,7 +142,7 @@ export function ratioToDb(ratio: number): number {
  * db Decibels
  */
 export function dbToRatio(dB: number): number {
-  return Math.pow(10, dB / 10);
+  return 10 ** (dB / 10);
 }
 
 /**
@@ -154,7 +153,7 @@ export function toRatio(value: string): IRatio {
   const ps = value.split(' ').map(p => p.trim().toLowerCase());
   // @ts-ignore
   if (ps.length >= 1) {
-    const v = parseFloat(ps[0]);
+    const v = Number.parseFloat(ps[0]);
     return ps.length === 2 && ps[1] === 'db' ? {
       dB: v,
       ratio: dbToRatio(v)

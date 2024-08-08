@@ -1,5 +1,5 @@
 import type { IGetToken } from 'strtok3';
-import { IChunkHeader } from '../iff/index.js';
+import type { IChunkHeader } from '../iff/index.js';
 import * as Token from 'token-types';
 
 /**

@@ -6,7 +6,7 @@ import * as util from '../common/Util.js';
 import type { IGetToken } from 'strtok3';
 import { BasicParser } from '../common/BasicParser.js';
 import { APEv2Parser } from '../apev2/APEv2Parser.js';
-import { IRandomReader } from '../type.js';
+import type { AnyTagValue, IRandomReader } from '../type.js';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
 
@@ -147,7 +147,7 @@ export class ID3v1Parser extends BasicParser {
     }
   }
 
-  private async addTag(id: string, value: any): Promise<void> {
+  private async addTag(id: string, value: AnyTagValue): Promise<void> {
     await this.metadata.addTag('ID3v1', id, value);
   }
 

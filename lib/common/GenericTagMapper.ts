@@ -1,6 +1,6 @@
-import * as generic from './GenericTagTypes.js';
-import {ITag} from '../type.js';
-import { INativeMetadataCollector, IWarningCollector } from './MetadataCollector.js';
+import type * as generic from './GenericTagTypes.js';
+import type {ITag} from '../type.js';
+import type { INativeMetadataCollector, IWarningCollector } from './MetadataCollector.js';
 
 export interface IGenericTagMapper {
 
@@ -28,8 +28,8 @@ export class CommonTagMapper implements IGenericTagMapper {
   public static maxRatingScore = 1;
 
   public static toIntOrNull(str: string): number {
-    const cleaned = parseInt(str, 10);
-    return isNaN(cleaned) ? null : cleaned;
+    const cleaned = Number.parseInt(str, 10);
+    return Number.isNaN(cleaned) ? null : cleaned;
   }
 
   // TODO: a string of 1of1 would fail to be converted
@@ -38,8 +38,8 @@ export class CommonTagMapper implements IGenericTagMapper {
   public static normalizeTrack(origVal: number | string) {
     const split = origVal.toString().split('/');
     return {
-      no: parseInt(split[0], 10) || null,
-      of: parseInt(split[1], 10) || null
+      no: Number.parseInt(split[0], 10) || null,
+      of: Number.parseInt(split[1], 10) || null
     };
   }
 

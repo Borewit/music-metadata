@@ -32,8 +32,8 @@ describe('Discogs mappings', () => {
 
       // Each Discogs tag should be mapped
       for (const tag of discogs_tags) {
-        const tagName = 'TXXX:' + tag;
-        assert.isDefined(mapper.tagMap[tagName], 'Discogs/ID3v2.4 tag: ' + tagName);
+        const tagName = `TXXX:${tag}`;
+        assert.isDefined(mapper.tagMap[tagName], `Discogs/ID3v2.4 tag: ${tagName}`);
       }
     });
 
@@ -43,7 +43,7 @@ describe('Discogs mappings', () => {
 
       // Each Discogs tag should be mapped
       for (const tag of discogs_tags) {
-        assert.isDefined(mapper.tagMap[tag], 'Discog/Vorbis tag: ' + tag);
+        assert.isDefined(mapper.tagMap[tag], `Discog/Vorbis tag: ${tag}`);
       }
     });
   });
@@ -63,39 +63,39 @@ describe('Discogs mappings', () => {
 
       // Check discogs, DISCOGS_RELEASE_ID
       tagName = getTagName('DISCOGS_RELEASE_ID');
-      assert.deepEqual(native[tagName], ['4204665'], tagType + '/' + tagName);
-      assert.strictEqual(common.discogs_release_id, 4204665, +tagType + '/' + tagName + ' => common.discogs_release_id');
+      assert.deepEqual(native[tagName], ['4204665'], `${tagType}/${tagName}`);
+      assert.strictEqual(common.discogs_release_id, 4204665, `${+tagType}/${tagName} => common.discogs_release_id`);
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
       tagName = getTagName('DISCOGS_ARTIST_ID');
-      assert.deepEqual(native[tagName], ['389157', '900313'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_artist_id, [389157, 900313], tagType + '/' + tagName + ' => common.discogs_artist_id');
+      assert.deepEqual(native[tagName], ['389157', '900313'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.discogs_artist_id, [389157, 900313], `${tagType}/${tagName} => common.discogs_artist_id`);
 
       // Check Discogs-tag: DISCOGS_ALBUM_ARTISTS
       tagName = getTagName('DISCOGS_ALBUM_ARTISTS');
-      assert.deepEqual(native[tagName], ['Beth Hart', 'Joe Bonamassa'], tagType + '/' + tagName);
-      assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], tagType + '/' + tagName + ' => common.artists');
+      assert.deepEqual(native[tagName], ['Beth Hart', 'Joe Bonamassa'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], `${tagType}/${tagName} => common.artists`);
 
       // Check Discogs-tag: DISCOGS_VOTES
       tagName = getTagName('DISCOGS_VOTES');
-      assert.deepEqual(native[tagName], ['9'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_votes, 9, tagType + '/' + tagName + ' => common.discogs_votes');
+      assert.deepEqual(native[tagName], ['9'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.discogs_votes, 9, `${tagType}/${tagName} => common.discogs_votes`);
 
       // Check Discogs-tag: STYLE
       tagName = getTagName('STYLE');
-      assert.deepEqual(native[tagName], ['Blues Rock'], tagType + '/' + tagName);
+      assert.deepEqual(native[tagName], ['Blues Rock'], `${tagType}/${tagName}`);
 
       switch (tagType) {
 
         case 'id3v23':
-          assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], tagType + '/' + tagName + ' => common.genre');
-          assert.deepEqual(native.TCON, ['Rock;Blues'], tagType + '/TCON'); // ToDo: why different in Vorbis
+          assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
+          assert.deepEqual(native.TCON, ['Rock;Blues'], `${tagType}/TCON`); // ToDo: why different in Vorbis
           break;
 
         case 'vorbis':
-          assert.deepEqual(common.genre, ['Rock', 'Blues', 'Blues Rock'], tagType + '/' + tagName + ' => common.genre');
-          assert.deepEqual(native.GENRE, ['Rock', 'Blues'], tagType + '/GENRE');
-          assert.deepEqual(native.STYLE, ['Blues Rock'], tagType + '/STYLE');
+          assert.deepEqual(common.genre, ['Rock', 'Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
+          assert.deepEqual(native.GENRE, ['Rock', 'Blues'], `${tagType}/GENRE`);
+          assert.deepEqual(native.STYLE, ['Blues Rock'], `${tagType}/STYLE`);
           break;
       }
     }
@@ -186,41 +186,41 @@ describe('Discogs mappings', () => {
 
       // Each Discogs tag should be mapped
       for (const tag of discogs_tags_found) {
-        assert.isTrue(discogs_tags.indexOf(tag) !== -1, 'Discog/Vorbis tag: ' + tag);
+        assert.isTrue(discogs_tags.indexOf(tag) !== -1, `Discog/Vorbis tag: ${tag}`);
       }
 
-      let tagName;
+      let tagName: string;
 
       // Check Discogs-tag: DISCOGS_RELEASE_ID
       tagName = getTagName('DISCOGS_RELEASE_ID');
-      assert.deepEqual(native[tagName], ['3520814'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_release_id, 3520814, tagType + '/' + tagName + ' => common.discogs_release_id');
+      assert.deepEqual(native[tagName], ['3520814'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.discogs_release_id, 3520814, `${tagType}/${tagName} => common.discogs_release_id`);
 
       // Check Discogs-tag: DISCOGS_MASTER_RELEASE_ID
       tagName = getTagName('DISCOGS_MASTER_RELEASE_ID');
-      assert.deepEqual(native[tagName], ['461710'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_master_release_id, 461710, tagType + '/' + tagName + ' => common.discogs_master_release_id');
+      assert.deepEqual(native[tagName], ['461710'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.discogs_master_release_id, 461710, `${tagType}/${tagName} => common.discogs_master_release_id`);
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
       tagName = getTagName('DISCOGS_ARTIST_ID');
-      assert.deepEqual(native[tagName], ['467650'], tagType + '/' + tagName);
-      assert.deepEqual(common.discogs_artist_id, [467650], tagType + '/' + tagName + ' => common.discogs_artist_id');
+      assert.deepEqual(native[tagName], ['467650'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.discogs_artist_id, [467650], `${tagType}/${tagName} => common.discogs_artist_id`);
 
       // tagName = getTagName("DISCOGS_ALBUM_ARTISTS");
       // t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
       // t.deepEqual(common.artists, ["Yasmin Levy", "Yasmin Levy"], tagType + "/" + tagName + " => common.artists"); // ToDo? remove duplicates
       // Check Discogs-tag: DISCOGS_ARTIST_NAME ToDo: test multiple artists
       tagName = getTagName('DISCOGS_ARTIST_NAME');
-      assert.deepEqual(native[tagName], ['Yasmin Levy'], tagType + '/' + tagName);
-      assert.deepEqual(common.artists, ['Yasmin Levy'], tagType + '/' + tagName + ' => common.artists'); // ToDo? remove duplicates
+      assert.deepEqual(native[tagName], ['Yasmin Levy'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.artists, ['Yasmin Levy'], `${tagType}/${tagName} => common.artists`); // ToDo? remove duplicates
       // Check Discogs-tag: DISCOGS_DATE
       tagName = getTagName('DISCOGS_DATE');
-      assert.deepEqual(native[tagName], ['2009'], tagType + '/' + tagName);
+      assert.deepEqual(native[tagName], ['2009'], `${tagType}/${tagName}`);
       // ToDo? t.deepEqual(common.originaldate, "2009", "Vorbis/DISCOGS_DATE: => common.originaldate");
       // Check Discogs: DISCOGS_CATALOG
       tagName = getTagName('DISCOGS_CATALOG');
-      assert.deepEqual(native[tagName], ['450010'], tagType + '/' + tagName);
-      assert.deepEqual(common.catalognumber, ['450010'], tagType + '/' + tagName + ' => common.catalognumber');
+      assert.deepEqual(native[tagName], ['450010'], `${tagType}/${tagName}`);
+      assert.deepEqual(common.catalognumber, ['450010'], `${tagType}/${tagName} => common.catalognumber`);
 
     }
 

@@ -13,7 +13,7 @@ describe('HTTP streaming', function() {
   this.timeout(15 * 1000);
   this.retries(3); // Workaround for HTTP time-outs on Travis-CI
 
-  describe(`Stream HTTP using fetch()`, () => {
+  describe("Stream HTTP using fetch()", () => {
 
     [true, false].forEach(hasContentLength => {
 

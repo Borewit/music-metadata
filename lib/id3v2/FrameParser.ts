@@ -2,19 +2,13 @@ import initDebug from 'debug';
 import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';
-import { AttachedPictureType, ID3v2MajorVersion, TextEncodingToken, SyncTextHeader, TextHeader, ITextEncoding } from './ID3v2Token.js';
+import { AttachedPictureType, type ID3v2MajorVersion, type ITextEncoding, SyncTextHeader, TextEncodingToken, TextHeader } from './ID3v2Token.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 
-import { IWarningCollector } from '../common/MetadataCollector.js';
-import { IComment, ILyricsTag } from '../type.js';
+import type { IWarningCollector } from '../common/MetadataCollector.js';
+import type { IComment, ILyricsTag } from '../type.js';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
-
-interface IOut {
-  language?: string,
-  description?: string,
-  text?: string,
-}
 
 interface IPicture {
   type?: string,
@@ -23,13 +17,44 @@ interface IPicture {
   data?: Uint8Array;
 }
 
+interface ICustomTag {
+  owner_identifier: string;
+}
+
+export interface ICustomDataTag extends ICustomTag {
+  data: Uint8Array;
+}
+
+export interface IIdentifierTag extends ICustomTag {
+  identifier: Uint8Array;
+}
+
+export interface ITextTag {
+  description: string;
+  text: string[];
+}
+
+export interface IPopularimeter {
+  email: string;
+  rating: number;
+  counter: number;
+}
+
+
+export interface IGeneralEncapsulatedObject {
+  type: string;
+  filename: string;
+  description: string;
+  data: Uint8Array;
+}
+
 const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
 
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
   const genres = [];
   let code: string;
-  let word: string = '';
+  let word = '';
   for (const c of origVal) {
     if (typeof code === 'string') {
       if (c === '(' && code === '') {
@@ -89,7 +114,7 @@ export class FrameParser {
     const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
     const length = uint8Array.length;
     let offset = 0;
-    let output: any = []; // ToDo
+    let output: unknown = []; // ToDo
     const nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
     let fzero: number;
 
@@ -101,8 +126,8 @@ export class FrameParser {
       case 'MVIN':
       case 'MVNM':
       case 'PCS':
-      case 'PCST':
-        let text;
+      case 'PCST': {
+        let text: string;
         try {
           text = util.decodeString(uint8Array.slice(1), encoding).replace(/\x00+$/, '');
         } catch (error) {
@@ -112,8 +137,7 @@ export class FrameParser {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list
           case 'IPLS': // Involved people list
-            output = this.splitValue(type, text);
-            output = FrameParser.functionList(output);
+            output = FrameParser.functionList(this.splitValue(type, text));
             break;
           case 'TRK':
           case 'TRCK':
@@ -143,14 +167,17 @@ export class FrameParser {
             output = this.major >= 4 ? this.splitValue(type, text) : [text];
         }
         break;
+      }
 
-      case 'TXXX':
-        output = FrameParser.readIdentifierAndData(uint8Array, offset + 1, length, encoding);
-        output = {
-          description: output.id,
-          text: this.splitValue(type, util.decodeString(output.data, encoding).replace(/\x00+$/, ''))
+      case 'TXXX': {
+        const idAndData = FrameParser.readIdentifierAndData(uint8Array, offset + 1, length, encoding);
+        const textTag = {
+          description: idAndData.id,
+          text: this.splitValue(type, util.decodeString(idAndData.data, encoding).replace(/\x00+$/, ''))
         };
+        output = textTag;
         break;
+      }
 
       case 'PIC':
       case 'APIC':
@@ -172,7 +199,7 @@ export class FrameParser {
               break;
 
             default:
-              throw new Error('Warning: unexpected major versionIndex: ' + this.major);
+              throw new Error(`Warning: unexpected major versionIndex: ${this.major}`);
           }
 
           pic.format = FrameParser.fixPictureMimeType(pic.format);
@@ -194,7 +221,7 @@ export class FrameParser {
         output = Token.UINT32_BE.get(uint8Array, 0);
         break;
 
-      case 'SYLT':
+      case 'SYLT': {
         const syltHeader = SyncTextHeader.get(uint8Array, 0);
         offset += SyncTextHeader.len;
 
@@ -226,11 +253,12 @@ export class FrameParser {
         }
         output = result;
         break;
+      }
 
       case 'ULT':
       case 'USLT':
       case 'COM':
-      case 'COMM':
+      case 'COMM': {
 
         const textHeader = TextHeader.get(uint8Array, offset);
         offset += TextHeader.len;
@@ -248,18 +276,21 @@ export class FrameParser {
 
         output = comment;
         break;
+      }
 
-      case 'UFID':
-        output = FrameParser.readIdentifierAndData(uint8Array, offset, length, defaultEnc);
-        output = {owner_identifier: output.id, identifier: output.data};
+      case 'UFID': {
+        const ufid = FrameParser.readIdentifierAndData(uint8Array, offset, length, defaultEnc);
+        output = {owner_identifier: ufid.id, identifier: ufid.data} as IIdentifierTag;
         break;
+      }
 
-      case 'PRIV': // private frame
-        output = FrameParser.readIdentifierAndData(uint8Array, offset, length, defaultEnc);
-        output = {owner_identifier: output.id, data: output.data};
+      case 'PRIV': { // private frame
+        const priv = FrameParser.readIdentifierAndData(uint8Array, offset, length, defaultEnc);
+        output = {owner_identifier: priv.id, data: priv.data} as ICustomDataTag;
         break;
+      }
 
-      case 'POPM': // Popularimeter
+      case 'POPM': { // Popularimeter
         fzero = util.findZero(uint8Array, offset, length, defaultEnc);
         const email = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         offset = fzero + 1;
@@ -270,6 +301,7 @@ export class FrameParser {
           counter: dataLen >= 5 ? Token.UINT32_BE.get(uint8Array, offset + 1) : undefined
         };
         break;
+      }
 
       case 'GEOB': {  // General encapsulated object
         fzero = util.findZero(uint8Array, offset + 1, length, encoding);
@@ -280,12 +312,14 @@ export class FrameParser {
         offset = fzero + 1;
         fzero = util.findZero(uint8Array, offset, length - offset, encoding);
         const description = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
-        output = {
+
+        const geob: IGeneralEncapsulatedObject = {
           type: mimeType,
           filename,
           description,
           data: uint8Array.slice(offset + 1, length)
         };
+        output = geob;
         break;
       }
 
@@ -323,17 +357,25 @@ export class FrameParser {
       }
 
       default:
-        debug('Warning: unsupported id3v2-tag-type: ' + type);
+        debug(`Warning: unsupported id3v2-tag-type: ${type}`);
         break;
     }
 
     return output;
   }
 
-  protected static readNullTerminatedString(uint8Array: Uint8Array, encoding: ITextEncoding): {text: string, len: number} {
-    let offset = encoding.bom ? 2 : 0;
-    const txt = uint8Array.slice(offset, offset = util.findZero(uint8Array, offset, uint8Array.length, encoding.encoding));
-    offset += encoding.encoding === 'utf-16le' ? 2 : 1;
+  protected static readNullTerminatedString(uint8Array: Uint8Array, encoding: ITextEncoding): { text: string, len: number } {
+    let offset = encoding.bom ? 2: 0;
+
+    const zeroIndex = util.findZero(uint8Array, offset, uint8Array.length, encoding.encoding);
+    const txt = uint8Array.slice(offset, zeroIndex);
+
+    if (encoding.encoding === 'utf-16le') {
+      offset = zeroIndex + 2;
+    } else {
+      offset = zeroIndex + 1;
+    }
+
     return {
       text: util.decodeString(txt, encoding.encoding),
       len: offset
@@ -359,7 +401,7 @@ export class FrameParser {
     const res: { [index: string]: string[] } = {};
     for (let i = 0; i + 1 < entries.length; i += 2) {
       const names: string[] = entries[i + 1].split(',');
-      res[entries[i]] = res.hasOwnProperty(entries[i]) ? res[entries[i]].concat(names) : names;
+      res[entries[i]] = res[entries[i]] ? res[entries[i]].concat(names) : names;
     }
     return res;
   }

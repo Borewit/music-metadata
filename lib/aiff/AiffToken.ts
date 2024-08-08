@@ -1,7 +1,7 @@
 import * as Token from 'token-types';
 
 import { FourCcToken } from '../common/FourCC.js';
-import * as iff from '../iff/index.js';
+import type * as iff from '../iff/index.js';
 
 import type { IGetToken } from 'strtok3';
 

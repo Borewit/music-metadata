@@ -1,5 +1,5 @@
-import https from 'https';
-import { inspect } from 'util';
+import https from 'node:https';
+import { inspect } from 'node:util';
 import { parseStream } from '../../lib/index.js';  // music-metadata
 
 const audioUrl = 'https://github.com/Borewit/music-metadata/raw/master/test/samples/MusicBrainz%20-%20Beth%20Hart%20-%20Sinner\'s%20Prayer%20%5Bid3v2.3%5D.V2.mp3';
@@ -15,7 +15,7 @@ function httpGet (url) {
           resolve(httpGet(res.headers.location));
           break;
         default:
-          reject(new Error('Unexpected status-code:' + res.statusCode));
+          reject(new Error(`Unexpected status-code:${res.statusCode}`));
       }
     });
   });

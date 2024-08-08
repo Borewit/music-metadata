@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 import * as Token from 'token-types';
 
-import { ITokenParser } from '../ParserFactory.js';
+import type { ITokenParser } from '../ParserFactory.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 
 import { MpcSv8Parser } from './sv8/MpcSv8Parser.js';

@@ -25,7 +25,7 @@ describe('Decode replaygain tags', () => {
       dB: -7.03,
       ratio: 0.1981527025805098
     });
-    assert.deepEqual(toRatio('xxx'), {dB: NaN, ratio: NaN});
+    assert.deepEqual(toRatio('xxx'), {dB: Number.NaN, ratio: Number.NaN});
   });
 
   it('should decode replaygain tags from FLAC/Vorbis', async () => {

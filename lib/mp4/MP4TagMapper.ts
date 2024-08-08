@@ -1,7 +1,7 @@
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
-import { INativeTagMap } from '../common/GenericTagTypes.js';
-import {ITag} from "../type.js";
-import {INativeMetadataCollector} from "../common/MetadataCollector.js";
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
+import type {ITag} from "../type.js";
+import type {INativeMetadataCollector} from "../common/MetadataCollector.js";
 
 /**
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
@@ -126,7 +126,7 @@ export class MP4TagMapper extends CaseInsensitiveTagMap {
       case 'rate':
         tag.value = {
           source: undefined,
-          rating: parseFloat(tag.value) / 100
+          rating: Number.parseFloat(tag.value as string) / 100
         };
         break;
     }

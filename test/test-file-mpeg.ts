@@ -6,6 +6,7 @@ import { samplePath, SourceStream } from './util.js';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 import { Parsers } from './metadata-parsers.js';
 import * as mm from '../lib/index.js';
+import type { IPopularimeter } from '../lib/id3v2/FrameParser.js';
 
 const t = assert;
 
@@ -284,15 +285,15 @@ describe('Parse MPEG', () => {
 
     it('check mapping function', () => {
 
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 0}), {
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 0} as IPopularimeter), {
         source: 'user1@bla.com',
         rating: undefined
       }, 'unknown rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1}), {
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1} as IPopularimeter), {
         source: 'user1@bla.com',
         rating: 0 / 255
       }, 'lowest rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255}), {
+      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255} as IPopularimeter), {
         source: 'user1@bla.com',
         rating: 1
       }, 'highest rating');

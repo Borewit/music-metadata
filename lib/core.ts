@@ -2,22 +2,19 @@
  * Primary entry point, Node.js specific entry point is index.ts
  */
 
-import * as strtok3 from 'strtok3';
+import {type AnyWebByteStream, type IFileInfo, type ITokenizer, fromWebStream, fromBuffer} from 'strtok3';
 
-import { ParserFactory } from './ParserFactory.js';
+import { parseOnContentType } from './ParserFactory.js';
 import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader.js';
 import { APEv2Parser } from './apev2/APEv2Parser.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
 import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
-import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 
 export { IFileInfo } from 'strtok3';
 
 export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
-
-export type AnyWebStream<G> = NodeReadableStream<G> | ReadableStream<G>;
 
 /**
  * Parse Web API File
@@ -27,11 +24,11 @@ export type AnyWebStream<G> = NodeReadableStream<G> | ReadableStream<G>;
  * @returns Metadata
  */
 export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAudioMetadata> {
-  const fileInfo: strtok3.IFileInfo = {mimeType: blob.type, size: blob.size};
+  const fileInfo: IFileInfo = {mimeType: blob.type, size: blob.size};
   if (blob instanceof File) {
     fileInfo.path = (blob as File).name;
   }
-  return parseWebStream(blob.stream(), fileInfo, options);
+  return parseWebStream(blob.stream() as AnyWebByteStream, fileInfo, options);
 }
 
 /**
@@ -41,8 +38,8 @@ export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAu
  * @param fileInfo - File information object or MIME-type string
  * @returns Metadata
  */
-export function parseWebStream(webStream: AnyWebStream<Uint8Array>, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  return parseFromTokenizer(strtok3.fromWebStream(webStream as any, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo}), options);
+export function parseWebStream(webStream: AnyWebByteStream, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+  return parseFromTokenizer(fromWebStream(webStream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo}), options);
 }
 
 /**
@@ -53,12 +50,12 @@ export function parseWebStream(webStream: AnyWebStream<Uint8Array>, fileInfo?: s
  * @returns Metadata
  * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
  */
-export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: strtok3.IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
 
   const bufferReader = new RandomUint8ArrayReader(uint8Array);
   await scanAppendingHeaders(bufferReader, options);
 
-  const tokenizer = strtok3.fromBuffer(uint8Array, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
+  const tokenizer = fromBuffer(uint8Array, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
   return parseFromTokenizer(tokenizer, options);
 }
 
@@ -68,8 +65,8 @@ export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: strtok3.IFi
  * @param options - Parsing options
  * @returns Metadata
  */
-export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, options?: IOptions): Promise<IAudioMetadata> {
-  return ParserFactory.parseOnContentType(tokenizer, options);
+export function parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): Promise<IAudioMetadata> {
+  return parseOnContentType(tokenizer, options);
 }
 
 /**
@@ -78,10 +75,15 @@ export function parseFromTokenizer(tokenizer: strtok3.ITokenizer, options?: IOpt
  * @returns tags indexed by id
  */
 export function orderTags(nativeTags: ITag[]): INativeTagDict {
-  const tags = {};
-  for (const tag of nativeTags) {
-    (tags[tag.id] = (tags[tag.id] || [])).push(tag.value);
+  const tags: INativeTagDict = {};
+
+  for (const { id, value } of nativeTags) {
+    if (!tags[id]) {
+      tags[id] = [];
+    }
+    tags[id].push(value);
   }
+
   return tags;
 }
 

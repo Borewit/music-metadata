@@ -4,7 +4,7 @@ import path from 'node:path';
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
-import { IFormat, INativeTagDict } from '../lib/index.js';
+import type { IFormat, INativeTagDict } from '../lib/index.js';
 
 const wavSamples = path.join(samplePath, 'wav');
 

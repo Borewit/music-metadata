@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import path from 'node:path';
 
 import * as mm from '../lib/index.js';
-import { TagType } from '../lib/common/GenericTagTypes.js';
+import type { TagType } from '../lib/common/GenericTagTypes.js';
 import { samplePath } from './util.js';
 
 interface IReplayGainSample {

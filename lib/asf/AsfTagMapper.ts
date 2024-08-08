@@ -1,6 +1,6 @@
-import {INativeTagMap} from '../common/GenericTagTypes.js';
+import type {INativeTagMap} from '../common/GenericTagTypes.js';
 import {CommonTagMapper} from '../common/GenericTagMapper.js';
-import {IRating, ITag} from '../type.js';
+import type {IRating, ITag} from '../type.js';
 
 /**
  * ASF Metadata tag mappings.
@@ -81,7 +81,7 @@ export class AsfTagMapper extends CommonTagMapper {
   public static toRating(rating: string): IRating {
 
     return {
-      rating: parseFloat(rating + 1) / 5
+      rating: Number.parseFloat(rating + 1) / 5
     };
   }
 
@@ -92,11 +92,12 @@ export class AsfTagMapper extends CommonTagMapper {
   protected postMap(tag: ITag): void {
 
     switch (tag.id) {
-      case 'WM/SharedUserRating':
+      case 'WM/SharedUserRating': {
         const keys = tag.id.split(':');
-        tag.value = AsfTagMapper.toRating(tag.value);
+        tag.value = AsfTagMapper.toRating(tag.value as string);
         tag.id = keys[0];
         break;
+      }
     }
 
   }

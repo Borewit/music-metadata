@@ -1,4 +1,4 @@
-import { EndOfStreamError, ITokenizer } from 'strtok3';
+import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import initDebug from 'debug';
 
 import { ID3v2Header } from './ID3v2Token.js';
@@ -24,7 +24,7 @@ export abstract class AbstractID3Parser extends BasicParser {
       await this.parseID3v2();
     } catch (err) {
       if (err instanceof EndOfStreamError) {
-        debug(`End-of-stream`);
+        debug("End-of-stream");
       } else {
         throw err;
       }

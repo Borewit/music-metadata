@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import { ITokenizer, IGetToken } from 'strtok3';
+import type { ITokenizer, IGetToken } from 'strtok3';
 import initDebug from 'debug';
 
 import * as util from '../../common/Util.js';
@@ -100,7 +100,7 @@ export class StreamReader {
 
   public async readStreamHeader(size: number): Promise<IStreamHeader> {
 
-    const streamHeader: IStreamHeader = {} as any;
+    const streamHeader: IStreamHeader = {} as unknown as IStreamHeader;
     debug(`Reading SH at offset=${this.tokenizer.position}`);
 
     const part1 = await this.tokenizer.readToken(SH_part1);
@@ -124,7 +124,7 @@ export class StreamReader {
     return streamHeader;
   }
 
-  private async readVariableSizeField(len: number = 1, hb: number = 0): Promise<IVarSize> {
+  private async readVariableSizeField(len = 1, hb = 0): Promise<IVarSize> {
     let n = await this.tokenizer.readNumber(Token.UINT8);
     if ((n & 0x80) === 0) {
       return {len, value: hb + n};
