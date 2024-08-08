@@ -113,7 +113,7 @@
     "@types/debug": "^4.1.12",
     "@types/mocha": "^10.0.7",
     "@types/node": "^22.1.0",
-    "@typescript-eslint/eslint-plugin": "^7.16.1",
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
     "@typescript-eslint/parser": "^7.16.1",
     "c8": "^10.1.2",
     "chai": "^5.1.1",
