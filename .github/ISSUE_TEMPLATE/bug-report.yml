@@ -15,16 +15,6 @@ body:
       description: The version of music-metadata which you found the bug in
     validations:
       required: false
-  - type: dropdown
-    attributes:
-      label: JavaScript module eco system
-      description: Note that music-metadata switch to pure ESM in version 8!
-      multiple: false
-      options:
-        - CommonJS modules (CJS), music-medata ≤ version 7
-        - ECMAScript modules (ESM), music-medata ≥ version 8
-    validations:
-      required: false
   - type: textarea
     attributes:
       label: Current Behavior
