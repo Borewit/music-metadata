@@ -15,7 +15,7 @@ const maxPeekLen = 1024;
 
 type MPEG4Channel = 'front-center' | 'front-left' | 'front-right' | 'side-left' | 'side-right' | 'back-left' | 'back-right' | 'back-center' | 'LFE-channel';
 
-type MPEG4ChannelConfiguration = MPEG4Channel[];
+type MPEG4ChannelConfiguration = MPEG4Channel[] | undefined;
 
 /**
  * MPEG-4 Audio definitions
@@ -38,7 +38,7 @@ const MPEG4 = {
    * https://wiki.multimedia.cx/index.php/MPEG-4_Audio#Sampling_Frequencies
    */
   SamplingFrequencies: [
-    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350, undefined, undefined, -1]
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350, null, null, -1]
 
   /**
    * Channel Configurations
@@ -71,7 +71,7 @@ class MpegFrameHeader {
   public static LayerDescription = [0, 3, 2, 1];
   public static ChannelMode = ['stereo', 'joint_stereo', 'dual_channel', 'mono'];
 
-  private static bitrate_index = {
+  private static bitrate_index: { [bitrate_index: number]: { [codec_index: number]: number; }; } = {
     1: {11: 32, 12: 32, 13: 32, 21: 32, 22: 8, 23: 8},
     2: {11: 64, 12: 48, 13: 40, 21: 48, 22: 16, 23: 16},
     3: {11: 96, 12: 56, 13: 48, 21: 56, 22: 24, 23: 24},
@@ -88,7 +88,7 @@ class MpegFrameHeader {
     14: {11: 448, 12: 384, 13: 320, 21: 256, 22: 160, 23: 160}
   };
 
-  private static sampling_rate_freq_index = {
+  private static sampling_rate_freq_index: { [sample_rate_index: number]: { [index: number]: number; }; } = {
     1: {0: 44100, 1: 48000, 2: 32000},
     2: {0: 22050, 1: 24000, 2: 16000},
     2.5: {0: 11025, 1: 12000, 2: 8000}
@@ -107,34 +107,34 @@ class MpegFrameHeader {
   // D(16): Protection bit
   public isProtectedByCRC: boolean;
   // E(15,12): Bitrate index
-  public bitrateIndex: number;
+  public bitrateIndex: number | null = null;
   // F(11,10): Sampling rate frequency index
-  public sampRateFreqIndex: number;
+  public sampRateFreqIndex: number | null = null;
   // G(9): Padding bit
-  public padding: boolean;
+  public padding: boolean | null = null;
   // H(8): Private bit
-  public privateBit: boolean;
+  public privateBit: boolean | null = null;
   // I(7,6): Channel Mode
-  public channelModeIndex: number;
+  public channelModeIndex?: number | null = null;
   // J(5,4): Mode extension (Only used in Joint stereo)
-  public modeExtension: number;
+  public modeExtension: number | null = null;
   // K(3): Copyright
-  public isCopyrighted: boolean;
+  public isCopyrighted?: boolean;
   // L(2): Original
-  public isOriginalMedia: boolean;
+  public isOriginalMedia: boolean | null = null;
   // M(3): The original bit indicates, if it is set, that the frame is located on its original media.
-  public emphasis: number;
+  public emphasis?: number;
 
-  public version: number;
-  public channelMode: string;
-  public bitrate: number;
-  public samplingRate: number;
+  public version: number | null = null;
+  public channelMode?: string;
+  public bitrate: number | null = null;
+  public samplingRate: number | null = null;
 
-  public container: string;
-  public codec: string;
-  public codecProfile: string;
+  public container?: string;
+  public codec?: string;
+  public codecProfile?: string;
 
-  public frameLength: number;
+  public frameLength = 0;
 
   public mp4ChannelConfig: MPEG4ChannelConfiguration;
 
@@ -154,15 +154,15 @@ class MpegFrameHeader {
     this.isProtectedByCRC = !common.isBitSet(buf, off + 1, 7);
   }
 
-  public calcDuration(numFrames: number): number {
-    return numFrames * this.calcSamplesPerFrame() / this.samplingRate;
+  public calcDuration(numFrames: number): number | null {
+    return this.samplingRate == null ? null : (numFrames * this.calcSamplesPerFrame() / this.samplingRate);
   }
 
   public calcSamplesPerFrame(): number {
     return MpegFrameHeader.samplesInFrameTable[this.version === 1 ? 0 : 1][this.layer];
   }
 
-  public calculateSideInfoLength(): number {
+  public calculateSideInfoLength(): number | null {
     if (this.layer !== 3) return 2;
     if (this.channelModeIndex === 3) {
       // mono
@@ -178,9 +178,10 @@ class MpegFrameHeader {
         return 17;
       }
     }
+    return null;
   }
 
-  public calcSlotSize(): number {
+  public calcSlotSize(): number | null {
     return [null, 4, 1, 1][this.layer];
   }
 
@@ -240,22 +241,25 @@ class MpegFrameHeader {
 
     const channelIndex = common.getBitAllignedNumber(buf, off + 2, 7, 3);
     this.mp4ChannelConfig = MPEG4_ChannelConfigurations[channelIndex];
-    debug(`channel-config=${this.mp4ChannelConfig.join('+')}`);
+    debug(`channel-config=${this.mp4ChannelConfig ? this.mp4ChannelConfig.join('+') : '?'}`);
 
     this.frameLength = common.getBitAllignedNumber(buf, off + 3, 6, 2) << 11;
   }
 
-  private calcBitrate(): number {
+  private calcBitrate(): number | null {
     if (this.bitrateIndex === 0x00 || // free
       this.bitrateIndex === 0x0F) { // reserved
-      return;
+      return null;
     }
-    const codecIndex = `${Math.floor(this.version)}${this.layer}`;
-    return MpegFrameHeader.bitrate_index[this.bitrateIndex][codecIndex];
+    if (this.version && this.bitrateIndex) {
+      const codecIndex = 10 * Math.floor(this.version) + this.layer;
+      return MpegFrameHeader.bitrate_index[this.bitrateIndex][codecIndex];
+    }
+    return null;
   }
 
-  private calcSamplingRate(): number {
-    if (this.sampRateFreqIndex === 0x03) return null; // 'reserved'
+  private calcSamplingRate(): number | null {
+    if (this.sampRateFreqIndex === 0x03 || this.version === null || this.sampRateFreqIndex == null) return null; // 'reserved'
     return MpegFrameHeader.sampling_rate_freq_index[this.version][this.sampRateFreqIndex];
   }
 }
@@ -266,7 +270,7 @@ class MpegFrameHeader {
 const FrameHeader = {
   len: 4,
 
-  get: (buf, off): MpegFrameHeader => {
+  get: (buf: Uint8Array, off: number): MpegFrameHeader => {
     return new MpegFrameHeader(buf, off);
   }
 };
@@ -282,21 +286,21 @@ export class MpegParser extends AbstractID3Parser {
   private countSkipFrameData = 0;
   private totalDataLength = 0;
 
-  private audioFrameHeader;
+  private audioFrameHeader? : MpegFrameHeader;
   private bitrates: number[] = [];
-  private offset: number;
-  private frame_size;
-  private crc: number;
+  private offset = 0;
+  private frame_size = 0;
+  private crc: number | null = null;
 
   private calculateEofDuration = false;
-  private samplesPerFrame;
+  private samplesPerFrame: number | null = null;
 
   private buf_frame_header = new Uint8Array(4);
 
   /**
    * Number of bytes already parsed since beginning of stream / file
    */
-  private mpegOffset: number;
+  private mpegOffset: number | null = null;
 
   private syncPeek = {
     buf: new Uint8Array(maxPeekLen),
@@ -320,11 +324,15 @@ export class MpegParser extends AbstractID3Parser {
       if (err instanceof EndOfStreamError) {
         debug("End-of-stream");
         if (this.calculateEofDuration) {
-          const numberOfSamples = this.frameCount * this.samplesPerFrame;
-          this.metadata.setFormat('numberOfSamples', numberOfSamples);
-          const duration = numberOfSamples / this.metadata.format.sampleRate;
-          debug(`Calculate duration at EOF: ${duration} sec.`, duration);
-          this.metadata.setFormat('duration', duration);
+          if (this.samplesPerFrame !== null) {
+            const numberOfSamples = this.frameCount * this.samplesPerFrame;
+            this.metadata.setFormat('numberOfSamples', numberOfSamples);
+            if (this.metadata.format.sampleRate) {
+              const duration = numberOfSamples / this.metadata.format.sampleRate;
+              debug(`Calculate duration at EOF: ${duration} sec.`, duration);
+              this.metadata.setFormat('duration', duration);
+            }
+          }
         }
       } else {
         throw err;
@@ -339,18 +347,24 @@ export class MpegParser extends AbstractID3Parser {
 
     const format = this.metadata.format;
     const hasID3v1 = !!this.metadata.native.ID3v1;
-    if (format.duration && this.tokenizer.fileInfo.size) {
-      const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
-      if (format.codecProfile && format.codecProfile[0] === 'V') {
-        this.metadata.setFormat('bitrate', mpegSize * 8 / format.duration);
+    if (this.mpegOffset !== null) {
+      if (format.duration && this.tokenizer.fileInfo.size) {
+        const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
+        if (format.codecProfile && format.codecProfile[0] === 'V') {
+          this.metadata.setFormat('bitrate', mpegSize * 8 / format.duration);
+        }
+      } else if (this.tokenizer.fileInfo.size && format.codecProfile === 'CBR') {
+        const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
+        if (this.frame_size !== null && this.samplesPerFrame !== null) {
+          const numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
+          this.metadata.setFormat('numberOfSamples', numberOfSamples);
+          if (format.sampleRate) {
+            const duration = numberOfSamples / format.sampleRate;
+            debug("Calculate CBR duration based on file size: %s", duration);
+            this.metadata.setFormat('duration', duration);
+          }
+        }
       }
-    } else if (this.tokenizer.fileInfo.size && format.codecProfile === 'CBR') {
-      const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
-      const numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
-      this.metadata.setFormat('numberOfSamples', numberOfSamples);
-      const duration = numberOfSamples / format.sampleRate;
-      debug("Calculate CBR duration based on file size: %s", duration);
-      this.metadata.setFormat('duration', duration);
     }
   }
 
@@ -410,8 +424,10 @@ export class MpegParser extends AbstractID3Parser {
       header = FrameHeader.get(this.buf_frame_header, 0);
     } catch (err) {
       await this.tokenizer.ignore(1);
-      this.metadata.addWarning(`Parse error: ${err.message}`);
-      return false; // sync
+      if (err instanceof Error) {
+        this.metadata.addWarning(`Parse error: ${err.message}`);
+        return false; // sync
+      }throw err;
     }
     await this.tokenizer.ignore(3);
 
@@ -421,7 +437,7 @@ export class MpegParser extends AbstractID3Parser {
     this.metadata.setFormat('sampleRate', header.samplingRate);
 
     this.frameCount++;
-    return header.version >= 2 && header.layer === 0 ? this.parseAdts(header) : this.parseAudioFrameHeader(header);
+    return header.version !== null && header.version >= 2 && header.layer === 0 ? this.parseAdts(header) : this.parseAudioFrameHeader(header);
   }
 
   /**
@@ -443,12 +459,15 @@ export class MpegParser extends AbstractID3Parser {
     const samples_per_frame = header.calcSamplesPerFrame();
     debug(`samples_per_frame=${samples_per_frame}`);
     const bps = samples_per_frame / 8.0;
-    const fsize = (bps * header.bitrate / header.samplingRate) +
-      ((header.padding) ? slot_size : 0);
-    this.frame_size = Math.floor(fsize);
+    if (header.bitrate !== null && header.samplingRate != null) {
+      const fsize = (bps * header.bitrate / header.samplingRate) + ((header.padding) ? slot_size : 0);
+      this.frame_size = Math.floor(fsize);
+    }
 
     this.audioFrameHeader = header;
-    this.bitrates.push(header.bitrate);
+    if (header.bitrate !== null) {
+      this.bitrates.push(header.bitrate);
+    }
 
     // xtra header only exists in first frame
     if (this.frameCount === 1) {
@@ -497,12 +516,14 @@ export class MpegParser extends AbstractID3Parser {
     this.totalDataLength += header.frameLength;
     this.samplesPerFrame = 1024;
 
-    const framesPerSec = header.samplingRate / this.samplesPerFrame;
-    const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalDataLength / this.frameCount;
-    const bitrate = 8 * bytesPerFrame * framesPerSec + 0.5;
-    this.metadata.setFormat('bitrate', bitrate);
+    if (header.samplingRate !== null) {
+      const framesPerSec = header.samplingRate / this.samplesPerFrame;
+      const bytesPerFrame = this.frameCount === 0 ? 0 : this.totalDataLength / this.frameCount;
+      const bitrate = 8 * bytesPerFrame * framesPerSec + 0.5;
+      this.metadata.setFormat('bitrate', bitrate);
+      debug(`frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`);
+    }
 
-    debug(`frame-count=${this.frameCount}, size=${header.frameLength} bytes, bit-rate=${bitrate}`);
     await this.tokenizer.ignore(header.frameLength > 7 ? header.frameLength - 7 : 1);
 
     // Consume remaining header and frame data
@@ -527,15 +548,19 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async skipSideInformation(): Promise<void> {
-    const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
-    // side information
-    await this.tokenizer.readToken(new Token.Uint8ArrayType(sideinfo_length));
-    this.offset += sideinfo_length;
-    await this.readXtraInfoHeader();
-    return;
+    if (this.audioFrameHeader) {
+      const sideinfo_length = this.audioFrameHeader.calculateSideInfoLength();
+      if (sideinfo_length !== null) {
+        await this.tokenizer.readToken(new Token.Uint8ArrayType(sideinfo_length));
+        // side information
+        this.offset += sideinfo_length;
+        await this.readXtraInfoHeader();
+        return;
+      }
+    }
   }
 
-  private async readXtraInfoHeader(): Promise<IXingInfoTag> {
+  private async readXtraInfoHeader(): Promise<IXingInfoTag | null> {
 
     const headerTag = await this.tokenizer.readToken(InfoTagHeaderTag);
     this.offset += InfoTagHeaderTag.len;  // 12
@@ -548,8 +573,10 @@ export class MpegParser extends AbstractID3Parser {
 
       case 'Xing': {
         const infoTag = await this.readXingInfoHeader();
-        const codecProfile = getVbrCodecProfile(infoTag.vbrScale);
-        this.metadata.setFormat('codecProfile', codecProfile);
+        if (infoTag.vbrScale !== null) {
+          const codecProfile = getVbrCodecProfile(infoTag.vbrScale);
+          this.metadata.setFormat('codecProfile', codecProfile);
+        }
         return null;
       }
 
@@ -559,7 +586,7 @@ export class MpegParser extends AbstractID3Parser {
 
       case 'LAME': {
         const version = await this.tokenizer.readToken(LameEncoderVersion);
-        if (this.frame_size >= this.offset + LameEncoderVersion.len) {
+        if (this.frame_size !== null && this.frame_size >= this.offset + LameEncoderVersion.len) {
           this.offset += LameEncoderVersion.len;
           this.metadata.setFormat('tool', `LAME ${version}`);
           await this.skipFrameData(this.frame_size - this.offset);
@@ -607,7 +634,7 @@ export class MpegParser extends AbstractID3Parser {
       }
     }
 
-    if (infoTag.streamSize) {
+    if (infoTag.streamSize && this.audioFrameHeader && infoTag.numFrames !== null) {
       const duration = this.audioFrameHeader.calcDuration(infoTag.numFrames);
       this.metadata.setFormat('duration', duration);
       debug('Get duration from Xing header: %s', this.metadata.format.duration);
@@ -627,7 +654,7 @@ export class MpegParser extends AbstractID3Parser {
     this.countSkipFrameData += frameDataLeft;
   }
 
-  private areAllSame(array) {
+  private areAllSame(array: unknown[]) {
     const first = array[0];
     return array.every(element => {
       return element === first;

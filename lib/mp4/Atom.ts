@@ -10,7 +10,7 @@ const debug = initDebug('music-metadata:parser:MP4:Atom');
 
 export class Atom {
 
-  public static async readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler, parent: Atom, remaining: number): Promise<Atom> {
+  public static async readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler, parent: Atom | null, remaining: number): Promise<Atom> {
 
     // Parse atom header
     const offset = tokenizer.position;
@@ -30,7 +30,7 @@ export class Atom {
   public readonly children: Atom[];
   public readonly atomPath: string;
 
-  public constructor(public readonly header: AtomToken.IAtomHeader, public extended: boolean, public readonly parent: Atom) {
+  public constructor(public readonly header: AtomToken.IAtomHeader, public extended: boolean, public readonly parent: Atom | null) {
     this.children = [];
     this.atomPath = (this.parent ? `${this.parent.atomPath}.` : '') + this.header.name;
   }

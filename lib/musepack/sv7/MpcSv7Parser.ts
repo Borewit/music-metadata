@@ -9,9 +9,9 @@ const debug = initDebug('music-metadata:parser:musepack');
 
 export class MpcSv7Parser extends BasicParser {
 
-  private bitreader: BitReader;
+  private bitreader: BitReader = null as unknown as BitReader;
   private audioLength = 0;
-  private duration: number;
+  private duration: number | null = null;
 
   public async parse(): Promise<void> {
 
@@ -34,7 +34,7 @@ export class MpcSv7Parser extends BasicParser {
     return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
   }
 
-  private async skipAudioData(frameCount): Promise<void> {
+  private async skipAudioData(frameCount: number): Promise<void> {
     while (frameCount-- > 0) {
       const frameLength = await this.bitreader.read(20);
       this.audioLength += 20 + frameLength;
@@ -43,6 +43,8 @@ export class MpcSv7Parser extends BasicParser {
     // last frame
     const lastFrameLength = await this.bitreader.read(11);
     this.audioLength += lastFrameLength;
-    this.metadata.setFormat('bitrate', this.audioLength / this.duration);
+    if (this.duration !== null) {
+      this.metadata.setFormat('bitrate', this.audioLength / this.duration);
+    }
   }
 }

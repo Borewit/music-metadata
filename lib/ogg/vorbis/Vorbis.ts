@@ -42,7 +42,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     return pic.get(buffer, 0);
   }
 
-  constructor(public len) {
+  constructor(public len: number) {
   }
 
   public get(buffer: Uint8Array, offset: number): IVorbisPicture {

@@ -74,8 +74,12 @@ export class DsdiffParser extends BasicParser {
       }
 
       case 'DSD':
-        this.metadata.setFormat('numberOfSamples', Number(header.chunkSize * BigInt(8) / BigInt(this.metadata.format.numberOfChannels)));
-        this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
+        if (this.metadata.format.numberOfChannels) {
+          this.metadata.setFormat('numberOfSamples', Number(header.chunkSize * BigInt(8) / BigInt(this.metadata.format.numberOfChannels)));
+        }
+        if (this.metadata.format.numberOfSamples && this.metadata.format.sampleRate) {
+          this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
+        }
         break;
 
       default:

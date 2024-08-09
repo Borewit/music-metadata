@@ -28,19 +28,19 @@ export interface IXingInfoTag {
   /**
    * total bit stream frames from Vbr header data
    */
-  numFrames?: number,
+  numFrames: number | null,
 
   /**
    * Actual stream size = file size - header(s) size [bytes]
    */
-  streamSize?: number,
+  streamSize: number | null,
 
   toc?: Uint8Array;
 
   /**
    * the number of header data bytes (from original file)
    */
-  vbrScale?: number;
+  vbrScale: number | null;
 
   lame?: {
     version: string;
@@ -71,7 +71,7 @@ export const XingHeaderFlags: IGetToken<IXingHeaderFlags> = {
 //  */
 export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTag> {
   const flags = await tokenizer.readToken(XingHeaderFlags);
-  const xingInfoTag: IXingInfoTag = {};
+  const xingInfoTag: IXingInfoTag = {numFrames: null, streamSize: null, vbrScale: null};
   if (flags.frames) {
     xingInfoTag.numFrames = await tokenizer.readToken(Token.UINT32_BE);
   }
@@ -92,8 +92,8 @@ export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTa
       version: await tokenizer.readToken(new Token.StringType(5, 'ascii'))
     };
     const match = xingInfoTag.lame.version.match(/\d+.\d+/g);
-    if (match) {
-      const majorMinorVersion = xingInfoTag.lame.version.match(/\d+.\d+/g)[0]; // e.g. 3.97
+    if (match !== null) {
+      const majorMinorVersion = match[0]; // e.g. 3.97
       const version = majorMinorVersion.split('.').map(n => Number.parseInt(n, 10));
       if (version[0] >= 3 && version[1] >= 90) {
         xingInfoTag.lame.extended = await tokenizer.readToken(ExtendedLameHeader);

@@ -50,11 +50,11 @@ export const Genres = [
  */
 interface IId3v1Header {
   header: string,
-  title: string,
-  artist: string,
-  album: string,
-  year: string,
-  comment: string,
+  title?: string,
+  artist?: string,
+  album?: string,
+  year?: string,
+  comment?: string,
   zeroByte: number,
   track: number,
   genre: number
@@ -64,7 +64,7 @@ interface IId3v1Header {
  * Spec: http://id3.org/ID3v1
  * Wiki: https://en.wikipedia.org/wiki/ID3
  */
-const Iid3v1Token: IGetToken<IId3v1Header> = {
+const Iid3v1Token: IGetToken<IId3v1Header | null> = {
   len: 128,
 
   /**
@@ -72,7 +72,7 @@ const Iid3v1Token: IGetToken<IId3v1Header> = {
    * @param off Offset in buffer in bytes
    * @returns ID3v1.1 header if first 3 bytes equals 'TAG', otherwise null is returned
    */
-  get: (buf: Uint8Array, off): IId3v1Header => {
+  get: (buf: Uint8Array, off): IId3v1Header | null => {
     const header = new Id3v1StringType(3).get(buf, off);
     return header === 'TAG' ? {
       header,
@@ -90,14 +90,16 @@ const Iid3v1Token: IGetToken<IId3v1Header> = {
   }
 };
 
-class Id3v1StringType extends StringType {
+class Id3v1StringType implements IGetToken<string | undefined> {
 
-  constructor(len: number) {
-    super(len, 'latin1');
+  private stringType;
+
+  constructor(public len: number) {
+    this.stringType = new StringType(len, 'latin1');
   }
 
-  public get(buf: Uint8Array, off: number): string {
-    let value = super.get(buf, off);
+  public get(buf: Uint8Array, off: number): string | undefined {
+    let value = this.stringType.get(buf, off);
     value = util.trimRightNull(value);
     value = value.trim();
     return value.length > 0 ? value : undefined;
@@ -106,7 +108,7 @@ class Id3v1StringType extends StringType {
 
 export class ID3v1Parser extends BasicParser {
 
-  private static getGenre(genreIndex: number): string {
+  private static getGenre(genreIndex: number): string | undefined {
     if (genreIndex < Genres.length) {
       return Genres[genreIndex];
     }
@@ -132,10 +134,11 @@ export class ID3v1Parser extends BasicParser {
       debug('Already consumed the last 128 bytes');
       return;
     }
-    const header = await this.tokenizer.readToken<IId3v1Header>(Iid3v1Token, offset);
+    const header = await this.tokenizer.readToken<IId3v1Header | null>(Iid3v1Token, offset);
     if (header) {
       debug('ID3v1 header found at: pos=%s', this.tokenizer.fileInfo.size - Iid3v1Token.len);
-      for (const id of ['title', 'artist', 'album', 'comment', 'track', 'year']) {
+      const props: Array<keyof IId3v1Header> = ['title', 'artist', 'album', 'comment', 'track', 'year'];
+      for (const id of props) {
         if (header[id] && header[id] !== '')
           await this.addTag(id, header[id]);
       }

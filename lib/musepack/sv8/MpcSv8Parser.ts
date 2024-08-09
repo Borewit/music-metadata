@@ -51,7 +51,9 @@ export class MpcSv8Parser extends BasicParser {
           break;
 
         case 'SE': // Stream End
-          this.metadata.setFormat('bitrate', this.audioLength * 8 / this.metadata.format.duration);
+          if (this.metadata.format.duration) {
+            this.metadata.setFormat('bitrate', this.audioLength * 8 / this.metadata.format.duration);
+          }
           return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:

@@ -26,7 +26,7 @@ interface IFrameFlags {
 
 interface IFrameHeader {
   id: string,
-  length?: number;
+  length: number;
   flags?: IFrameFlags;
 }
 
@@ -86,10 +86,10 @@ export class ID3v2Parser {
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       case 3:
       case 4:
-        if (frameHeader.flags.format.unsynchronisation) {
+        if (frameHeader.flags?.format.unsynchronisation) {
           uint8Array = ID3v2Parser.removeUnsyncBytes(uint8Array);
         }
-        if (frameHeader.flags.format.data_length_indicator) {
+        if (frameHeader.flags?.format.data_length_indicator) {
           uint8Array = uint8Array.slice(4, uint8Array.length);
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
@@ -108,12 +108,12 @@ export class ID3v2Parser {
     return tag + (description ? `:${description}` : '');
   }
 
-  private tokenizer: ITokenizer;
-  private id3Header: IID3v2header;
-  private metadata: INativeMetadataCollector;
+  private tokenizer: ITokenizer = undefined as unknown as ITokenizer;
+  private id3Header: IID3v2header = undefined as unknown as IID3v2header;
+  private metadata: INativeMetadataCollector = undefined as unknown as INativeMetadataCollector;
 
-  private headerType: TagType;
-  private options: IOptions;
+  private headerType: TagType= undefined as unknown as TagType;
+  private options: IOptions= undefined as unknown as IOptions;
 
   public async parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
 

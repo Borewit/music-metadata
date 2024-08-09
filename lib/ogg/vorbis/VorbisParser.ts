@@ -95,7 +95,7 @@ export class VorbisParser implements IPageConsumer {
     if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
       // Calculate duration
       this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition);
-      this.metadata.setFormat('duration', this.metadata.format.numberOfSamples / this.metadata.format.sampleRate);
+      this.metadata.setFormat('duration', header.absoluteGranulePosition / this.metadata.format.sampleRate);
     }
   }
 

@@ -12,9 +12,9 @@ import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
 import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
 
-export { IFileInfo } from 'strtok3';
+export type { IFileInfo } from 'strtok3';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
+export { type IAudioMetadata, type IOptions, type ITag, type INativeTagDict, type ICommonTagsResult, type IFormat, type IPicture, type IRatio, type IChapter, type ILyricsTag, LyricsContentType, TimestampFormat, IMetadataEventTag, IMetadataEvent } from './type.js';
 
 /**
  * Parse Web API File
@@ -92,7 +92,7 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
  * @param rating Normalized rating [0..1] (common.rating[n].rating)
  * @returns Number of stars: 1, 2, 3, 4 or 5 stars
  */
-export function ratingToStars(rating: number): number {
+export function ratingToStars(rating: number | undefined): number {
   return rating === undefined ? 0 : 1 + Math.round(rating * 4);
 }
 

@@ -92,10 +92,13 @@ describe('function selectCover()', () => {
       const {common} = await mm.parseFile(filePath);
       expect(common.picture).to.have.lengthOf.above(1, multiCoverFile);
       const cover = mm.selectCover(common.picture);
-      if (cover.type) {
-        assert.equal(cover.type, 'Cover (front)', 'cover.type');
-      } else {
-        assert.equal(cover.data, common.picture[0].data, 'First picture if no type is defined');
+      assert.isDefined(cover, 'Cover');
+      if (cover) {
+        if (cover.type) {
+          assert.equal(cover.type, 'Cover (front)', 'cover.type');
+        } else {
+          assert.equal(cover.data, common.picture[0].data, 'First picture if no type is defined');
+        }
       }
     }
   });

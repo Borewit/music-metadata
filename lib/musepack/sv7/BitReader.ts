@@ -4,7 +4,7 @@ import * as Token from 'token-types';
 export class BitReader {
 
   public pos = 0;
-  private dword: number = undefined;
+  private dword: number | null = null;
 
   public constructor(private tokenizer: ITokenizer) {
   }
@@ -15,7 +15,7 @@ export class BitReader {
    */
   public async read(bits: number): Promise<number> {
 
-    while (this.dword === undefined) {
+    while (this.dword === null) {
       this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
     }
 
@@ -28,7 +28,7 @@ export class BitReader {
     }
       this.pos -= 32;
       if (this.pos === 0) {
-        this.dword = undefined;
+        this.dword = null;
         return out & ((1 << bits) - 1);
       }
         this.dword = await this.tokenizer.readToken(Token.UINT32_LE);
@@ -43,7 +43,7 @@ export class BitReader {
 
     if (this.pos > 0) {
       const remaining =  32 - this.pos;
-      this.dword = undefined;
+      this.dword = null;
       bits -= remaining;
       this.pos = 0;
     }
