@@ -22,7 +22,7 @@ interface ISoundSampleDescription {
   dataFormat: string;
   dataReferenceIndex: number;
   description?: {
-    numAudioChannels?: number;
+    numAudioChannels: number;
     /**
      * Number of bits in each uncompressed sound sample
      */
@@ -32,19 +32,19 @@ interface ISoundSampleDescription {
      */
     compressionId?: number;
     packetSize?: number;
-    sampleRate?: number;
+    sampleRate: number;
   };
 }
 
 interface ITrackDescription extends AtomToken.ITrackHeaderAtom {
   soundSampleDescription: ISoundSampleDescription[];
   timeScale: number;
-  chapterList?: number[];
-  chunkOffsetTable?: number[];
-  sampleSize?: number;
-  sampleSizeTable?: number[];
-  sampleToChunkTable?: AtomToken.ISampleToChunk[];
-  timeToSampleTable?: AtomToken.ITimeToSampleToken[];
+  chapterList: number[];
+  chunkOffsetTable: number[];
+  sampleSize: number;
+  sampleSizeTable: number[];
+  sampleToChunkTable: AtomToken.ISampleToChunk[];
+  timeToSampleTable: AtomToken.ITimeToSampleToken[];
 }
 
 type IAtomParser = (payloadLength: number) => Promise<void>;
@@ -135,21 +135,21 @@ export class MP4Parser extends BasicParser {
 
   private static read_BE_Integer(array: Uint8Array, signed: boolean): number {
     const integerType = (signed ? 'INT' : 'UINT') + array.length * 8 + (array.length > 1 ? '_BE' : '');
-    const token: IGetToken<number | bigint> = Token[integerType];
+    const token: IGetToken<number | bigint> = (Token as unknown as { [id: string]: IGetToken<number | bigint> })[integerType];
     if (!token) {
       throw new Error(`Token for integer type not found: "${integerType}"`);
     }
     return Number(token.get(array, 0));
   }
 
-  private audioLengthInBytes: number;
-  private tracks: ITrackDescription[];
+  private audioLengthInBytes: number | undefined;
+  private tracks: ITrackDescription[] = [];
 
   public async parse(): Promise<void> {
 
     this.tracks = [];
 
-    let remainingFileSize = this.tokenizer.fileInfo.size;
+    let remainingFileSize = this.tokenizer.fileInfo.size || 0;
 
     while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
       try {
@@ -161,9 +161,11 @@ export class MP4Parser extends BasicParser {
           break;
         }
       } catch (error) {
-        const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
-        debug(errMsg);
-        this.addWarning(errMsg);
+        if (error instanceof Error) {
+          const errMsg = `Error at offset=${this.tokenizer.position}: ${error.message}`;
+          debug(errMsg);
+          this.addWarning(errMsg);
+        } else throw error;
         break;
       }
       const rootAtom = await Atom.readAtom(this.tokenizer, (atom, remaining) => this.handleAtom(atom, remaining), null, remainingFileSize);

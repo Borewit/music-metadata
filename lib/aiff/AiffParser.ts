@@ -8,20 +8,9 @@ import { BasicParser } from '../common/BasicParser.js';
 
 import * as AiffToken from './AiffToken.js';
 import * as iff from '../iff/index.js';
+import { type CompressionTypeCode, compressionTypes } from './AiffToken.js';
 
 const debug = initDebug('music-metadata:parser:aiff');
-
-const compressionTypes = {
-  NONE:	'not compressed	PCM	Apple Computer',
-  sowt:	'PCM (byte swapped)',
-  fl32:	'32-bit floating point IEEE 32-bit float',
-  fl64:	'64-bit floating point IEEE 64-bit float	Apple Computer',
-  alaw:	'ALaw 2:1	8-bit ITU-T G.711 A-law',
-  ulaw:	'µLaw 2:1	8-bit ITU-T G.711 µ-law	Apple Computer',
-  ULAW:	'CCITT G.711 u-law 8-bit ITU-T G.711 µ-law',
-  ALAW:	'CCITT G.711 A-law 8-bit ITU-T G.711 A-law',
-  FL32:	'Float 32	IEEE 32-bit float '
-};
 
 /**
  * AIFF - Audio Interchange File Format
@@ -32,7 +21,7 @@ const compressionTypes = {
  */
 export class AIFFParser extends BasicParser {
 
-  private isCompressed: boolean;
+  private isCompressed: boolean | null = null;
 
   public async parse(): Promise<void> {
 
@@ -80,13 +69,18 @@ export class AIFFParser extends BasicParser {
     switch (header.chunkID) {
 
       case 'COMM': { // The Common Chunk
+        if (this.isCompressed === null) {
+          throw new Error('Failed to parse AIFF.COMM chunk when compression type is unknown');
+        }
         const common = await this.tokenizer.readToken<AiffToken.ICommon>(new AiffToken.Common(header, this.isCompressed));
         this.metadata.setFormat('bitsPerSample', common.sampleSize);
         this.metadata.setFormat('sampleRate', common.sampleRate);
         this.metadata.setFormat('numberOfChannels', common.numChannels);
         this.metadata.setFormat('numberOfSamples', common.numSampleFrames);
         this.metadata.setFormat('duration', common.numSampleFrames / common.sampleRate);
-        this.metadata.setFormat('codec', common.compressionName ?? compressionTypes[common.compressionType]);
+        if (common.compressionName || common.compressionType) {
+          this.metadata.setFormat('codec', common.compressionName ?? compressionTypes[common.compressionType as CompressionTypeCode]);
+        }
         return header.chunkSize;
       }
 

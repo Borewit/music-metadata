@@ -11,8 +11,7 @@ import { getParserIdForExtension, parse } from './ParserFactory.js';
 import type { IAudioMetadata, IOptions } from './type.js';
 import { RandomFileReader } from './common/RandomFileReader.js';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
-export { parseFromTokenizer, parseBuffer, parseBlob, parseWebStream, selectCover, orderTags, ratingToStars, IFileInfo } from './core.js';
+export * from './core.js';
 
 const debug = initDebug('music-metadata:parser');
 
@@ -40,7 +39,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
   const fileTokenizer = await fromFile(filePath);
 
-  const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size);
+  const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size as number);
   try {
     await scanAppendingHeaders(fileReader, options);
   } finally {

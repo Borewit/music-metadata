@@ -5,6 +5,20 @@ import type * as iff from '../iff/index.js';
 
 import type { IGetToken } from 'strtok3';
 
+export const compressionTypes = {
+  NONE:	'not compressed	PCM	Apple Computer',
+  sowt:	'PCM (byte swapped)',
+  fl32:	'32-bit floating point IEEE 32-bit float',
+  fl64:	'64-bit floating point IEEE 64-bit float	Apple Computer',
+  alaw:	'ALaw 2:1	8-bit ITU-T G.711 A-law',
+  ulaw:	'µLaw 2:1	8-bit ITU-T G.711 µ-law	Apple Computer',
+  ULAW:	'CCITT G.711 u-law 8-bit ITU-T G.711 µ-law',
+  ALAW:	'CCITT G.711 A-law 8-bit ITU-T G.711 A-law',
+  FL32:	'Float 32	IEEE 32-bit float '
+};
+
+export type CompressionTypeCode = keyof typeof compressionTypes;
+
 /**
  * The Common Chunk.
  * Describes fundamental parameters of the waveform data such as sample rate, bit resolution, and how many channels of
@@ -15,7 +29,7 @@ export interface ICommon {
   numSampleFrames: number,
   sampleSize: number,
   sampleRate: number,
-  compressionType?: string,
+  compressionType?: CompressionTypeCode,
   compressionName?: string
 }
 
@@ -43,7 +57,7 @@ export class Common implements IGetToken<ICommon> {
     };
 
     if (this.isAifc) {
-      res.compressionType = FourCcToken.get(buf, off + 18);
+      res.compressionType = FourCcToken.get(buf, off + 18) as CompressionTypeCode;
       if (this.len > 22) {
         const strLen = Token.UINT8.get(buf, off + 22);
         if (strLen > 0) {

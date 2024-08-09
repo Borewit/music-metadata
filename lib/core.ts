@@ -12,9 +12,9 @@ import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
 import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
 
-export { IFileInfo } from 'strtok3';
+export type { IFileInfo } from 'strtok3';
 
-export { IAudioMetadata, IOptions, ITag, INativeTagDict, ICommonTagsResult, IFormat, IPicture, IRatio, IChapter, ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
+export { type IAudioMetadata, type IOptions, type ITag, type INativeTagDict, type ICommonTagsResult, type IFormat, type IPicture, type IRatio, type IChapter, type ILyricsTag, LyricsContentType, TimestampFormat } from './type.js';
 
 /**
  * Parse Web API File

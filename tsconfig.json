@@ -5,6 +5,8 @@
     "moduleResolution": "node16",
     "target": "ES2019",
     "esModuleInterop": true,
+    "strict": false,
+    "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {
       "strtok3/core": ["node_modules/strtok3/lib/core"]
