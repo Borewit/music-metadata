@@ -119,10 +119,10 @@ const vorbisTagMap: INativeTagMap = {
 
 export class VorbisTagMapper extends CommonTagMapper {
 
-  public static toRating(email: string, rating: string, maxScore: number): IRating {
+  public static toRating(email: string | undefined | null, rating: string, maxScore: number): IRating {
 
     return {
-      source: email ? email.toLowerCase() : email,
+      source: email ? email.toLowerCase() : undefined,
       rating: (Number.parseFloat(rating) / maxScore) * CommonTagMapper.maxRatingScore
     };
   }

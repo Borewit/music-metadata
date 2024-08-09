@@ -2,7 +2,7 @@ import * as Token from 'token-types';
 
 export class VorbisDecoder {
 
-  constructor(private readonly data: Uint8Array, private offset) {
+  constructor(private readonly data: Uint8Array, private offset: number) {
   }
 
   public readInt32(): number {

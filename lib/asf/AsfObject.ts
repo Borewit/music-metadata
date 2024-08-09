@@ -266,7 +266,7 @@ export interface IStreamPropertiesObject {
   /**
    * Stream Type
    */
-  streamType: string,
+  streamType: string | undefined,
 
   /**
    * Error Correction Type
@@ -485,7 +485,7 @@ export interface IExtendedStreamPropertiesObject {
   streamNameCount: number,
   payloadExtensionSystems: number,
   streamNames: IStreamName[],
-  streamPropertiesObject: number
+  streamPropertiesObject: number | null
 }
 
 /**
@@ -583,7 +583,7 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
     return pic.get(buffer, 0);
   }
 
-  constructor(public len) {
+  constructor(public len: number) {
   }
 
   public get(buffer: Uint8Array, offset: number): IWmPicture {

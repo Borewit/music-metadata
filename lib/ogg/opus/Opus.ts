@@ -52,7 +52,7 @@ export class IdHeader implements IGetToken<IIdHeader> {
     }
   }
 
-  public get(buf, off): IIdHeader {
+  public get(buf: Uint8Array, off: number): IIdHeader {
     return {
       magicSignature: new Token.StringType(8, 'ascii').get(buf, off + 0),
       version: Token.UINT8.get(buf, off + 8),

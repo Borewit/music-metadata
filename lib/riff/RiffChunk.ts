@@ -2,7 +2,7 @@ import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
 import type { IChunkHeader } from '../iff/index.js';
 
-export { IChunkHeader } from '../iff/index.js';
+export { type IChunkHeader } from '../iff/index.js';
 
 /**
  * Common RIFF chunk header
@@ -32,7 +32,7 @@ export class ListInfoTagValue implements IGetToken<string> {
     this.len += this.len & 1; // if it is an odd length, round up to even
   }
 
-  public get(buf, off): string {
+  public get(buf: Uint8Array, off: number): string {
     return new Token.StringType(this.tagHeader.chunkSize, 'ascii').get(buf, off);
   }
 }

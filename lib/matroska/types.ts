@@ -39,9 +39,9 @@ export interface ISegmentInformation {
 
 export interface ITrackEntry {
   uid?: Uint8Array;
-  trackNumber?: number;
+  trackNumber: number;
   trackType?: TrackType;
-  audio?: ITrackAudio;
+  audio: ITrackAudio;
   video?: ITrackVideo;
   flagEnabled?: boolean;
   flagDefault?: boolean;
@@ -50,7 +50,7 @@ export interface ITrackEntry {
   trackTimecodeScale?: number;
   name?: string;
   language?: string;
-  codecID?: string;
+  codecID: string;
   codecPrivate?: Uint8Array;
   codecName?: string;
   codecSettings?: string;
@@ -129,6 +129,8 @@ export enum TrackType {
   control = 0x20
 }
 
+export type TrackTypeKey = keyof TrackType;
+
 export interface ITarget {
   trackUID?: Uint8Array;
   chapterUID?: Uint8Array;
@@ -159,7 +161,7 @@ export interface IAttachmedFile {
 }
 
 export interface IAttachments {
-  attachedFiles?: IAttachmedFile[];
+  attachedFiles: IAttachmedFile[];
 }
 
 export interface IMatroskaSegment {

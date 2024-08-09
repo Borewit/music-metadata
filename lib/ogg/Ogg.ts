@@ -70,7 +70,7 @@ export interface IPageConsumer {
    * Calculate duration of provided header
    * @param header Ogg header
    */
-  calculateDuration(header: IPageHeader);
+  calculateDuration(header: IPageHeader): void;
 
   /**
    * Force to parse pending segments

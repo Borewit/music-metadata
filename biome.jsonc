@@ -10,7 +10,8 @@
 		"enabled": true,
 		"rules": {
 			"correctness": {
-				"noConstantCondition": "warn"
+				"noConstantCondition": "warn",
+				"noUnusedImports": "error"
 			},
 			"style": {
 				"noParameterAssign": "off"

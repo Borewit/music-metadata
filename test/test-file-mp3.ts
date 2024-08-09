@@ -5,6 +5,21 @@ import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
+/**
+ * Duration in seconds of
+ * Audecity 3:20.568
+ * FooBar: 3:20.556 (8.844.527 samples); 44100 Hz => 200.5561678004535 seconds
+ *
+ * t.strictEqual(result.format.duration, 200.59591666666665); // previous
+ * t.strictEqual(result.format.duration, 200.5561678004535); // FooBar
+ *
+ *  If MPEG Layer II is accepted, it will give back third frame with a different frame length;
+ *  therefore it start counting actual parsable frames ending up on ~66.86
+ *  Changed to 200.25469387755103 after `MpegParser.frameLength` was correctly set
+ *
+ */
+const durationSleepAwayMp3 = 200.3;
+
 describe('Parse MP3 files', () => {
 
   const mp3SamplePath = path.join(samplePath, 'mp3');
@@ -98,13 +113,7 @@ describe('Parse MP3 files', () => {
     const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
 
     return mm.parseFile(filePath, {duration: true}).then(result => {
-      // FooBar: 3:20.556 (8.844.527 samples); 44100 Hz => 200.5561678004535 seconds
-      // t.strictEqual(result.format.duration, 200.59591666666665); // previous
-      // t.strictEqual(result.format.duration, 200.5561678004535); // FooBar
-
-      // If MPEG Layer II is accepted, it will give back third frame with a different frame length;
-      // therefore it start counting actual parsable frames ending up on ~66.86
-      assert.approximately(result.format.duration, 200.5, 1 / 10);
+      assert.approximately(result.format.duration, durationSleepAwayMp3, 1 / 10);
     });
   });
 
@@ -261,7 +270,7 @@ describe('Parse MP3 files', () => {
           .forEach(parser => {
             it(parser.description, async function(){
               const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
-              assert.approximately(metadata.format.duration, 200.5, 1 / 10, 'Expect a duration');
+              assert.approximately(metadata.format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
             });
           });
       });

@@ -15,7 +15,7 @@ import * as Opus from './Opus.js';
  */
 export class OpusParser extends VorbisParser {
 
-  private idHeader: Opus.IIdHeader;
+  private idHeader: Opus.IIdHeader = null as unknown as Opus.IIdHeader;
   private lastPos = -1;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {

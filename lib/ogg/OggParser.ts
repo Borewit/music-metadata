@@ -17,10 +17,11 @@ const debug = initDebug('music-metadata:parser:ogg');
 
 export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
 
-  private static sum(buf: number[], off: number, len: number): number {
+  private static sum(buf: Uint8Array, off: number, len: number): number {
+    const dv = new DataView(buf.buffer, 0);
     let s = 0;
     for (let i = off; i < off + len; ++i) {
-      s += buf[i];
+      s += dv.getUint8(i);
     }
     return s;
   }
@@ -31,7 +32,7 @@ export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
     this.len = header.page_segments;
   }
 
-  public get(buf, off): Ogg.ISegmentTable {
+  public get(buf: Uint8Array, off: number): Ogg.ISegmentTable {
     return {
       totalPageSize: SegmentTable.sum(buf, off, this.len)
     };
@@ -67,9 +68,9 @@ export class OggParser extends BasicParser {
     }
   };
 
-  private header: Ogg.IPageHeader;
-  private pageNumber: number;
-  private pageConsumer: Ogg.IPageConsumer;
+  private header: Ogg.IPageHeader = null as unknown as Ogg.IPageHeader;
+  private pageNumber = 0;
+  private pageConsumer: Ogg.IPageConsumer = null as unknown as Ogg.IPageConsumer;
 
   /**
    * Parse page
@@ -120,22 +121,22 @@ export class OggParser extends BasicParser {
         await this.pageConsumer.parsePage(header, pageData);
       } while (!header.headerType.lastPage);
     } catch (err) {
-      if (err instanceof EndOfStreamError) {
-        this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
-        debug("End-of-stream");
-        this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
-        if (this.header) {
-          this.pageConsumer.calculateDuration(this.header);
+      if (err instanceof Error) {
+        if (err instanceof EndOfStreamError) {
+          this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
+          debug("End-of-stream");
+          this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
+          if (this.header) {
+            this.pageConsumer.calculateDuration(this.header);
+          }
+        } else if (err.message.startsWith('FourCC')) {
+          if (this.pageNumber > 0) {
+            // ignore this error: work-around if last OGG-page is not marked with last-page flag
+            this.metadata.addWarning('Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag');
+            await this.pageConsumer.flush();
+          }
         }
-      } else if (err.message.startsWith('FourCC')) {
-        if (this.pageNumber > 0) {
-          // ignore this error: work-around if last OGG-page is not marked with last-page flag
-          this.metadata.addWarning('Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag');
-          await this.pageConsumer.flush();
-        }
-      } else {
-        throw err;
-      }
+      } else throw err;
     }
   }
 

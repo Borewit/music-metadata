@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
+import type { IMetadataEventTag } from '../lib/type.js';
 
 describe('Asynchronous observer updates', () => {
 
@@ -10,7 +11,7 @@ describe('Asynchronous observer updates', () => {
 
   it('decode a FLAC audio file', async () => {
 
-    const eventTags = [];
+    const eventTags: IMetadataEventTag[] = [];
 
     await mm.parseFile(flacFilePath, {
       observer: (event => {

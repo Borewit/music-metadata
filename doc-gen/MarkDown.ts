@@ -34,7 +34,7 @@ export class Table {
 
   public writeTo(out: fs.WriteStream) {
     const colSizes = this.calcColSizes();
-    Table.writeRow(out, this.header.values, colSizes);
+    Table.writeRow(out, (this.header as Row).values, colSizes);
     out.write(Table.lineToString(colSizes));
     for (const row of this.rows) {
       Table.writeRow(out, row.values, colSizes);
@@ -45,7 +45,7 @@ export class Table {
 
     const maxColSizes: number[] = [];
 
-    for (const row of this.rows.concat([this.header])) {
+    for (const row of this.rows.concat([this.header as Row])) {
       for (let ci = 0; ci < row.values.length; ++ci) {
         if (ci < maxColSizes.length) {
           maxColSizes[ci] = Math.max(maxColSizes[ci], row.values[ci].length);

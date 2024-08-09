@@ -3,12 +3,12 @@ import * as Token from 'token-types';
 import initDebug from 'debug';
 
 import * as riff from '../riff/RiffChunk.js';
-import * as WaveChunk from './../wav/WaveChunk.js';
+import * as WaveChunk from './WaveChunk.js';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
 import * as util from '../common/Util.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
-import { BroadcastAudioExtensionChunk } from './BwfChunk.js';
+import { BroadcastAudioExtensionChunk, type IBroadcastAudioExtensionChunk } from './BwfChunk.js';
 import type { AnyTagValue } from '../type.js';
 
 const debug = initDebug('music-metadata:parser:RIFF');
@@ -26,10 +26,9 @@ const debug = initDebug('music-metadata:parser:RIFF');
  */
 export class WaveParser extends BasicParser {
 
-  private fact: WaveChunk.IFactChunk;
-
-  private blockAlign: number;
-  private header: riff.IChunkHeader;
+  private fact: WaveChunk.IFactChunk | undefined;
+  private blockAlign = 0;
+  private header: riff.IChunkHeader | undefined;
 
   public async parse(): Promise<void> {
 
@@ -119,12 +118,14 @@ export class WaveParser extends BasicParser {
           const numberOfSamples = this.fact ? this.fact.dwSampleLength : (chunkSize === 0xffffffff ? undefined : chunkSize / this.blockAlign);
           if (numberOfSamples) {
             this.metadata.setFormat('numberOfSamples', numberOfSamples);
-            this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
+            if (this.metadata.format.sampleRate) {
+              this.metadata.setFormat('duration', numberOfSamples / this.metadata.format.sampleRate);
+            }
           }
 
           if (this.metadata.format.codec === 'ADPCM') { // ADPCM is 4 bits lossy encoding resulting in 352kbps
             this.metadata.setFormat('bitrate', 352000);
-          } else {
+          } else if (this.metadata.format.sampleRate) {
             this.metadata.setFormat('bitrate', this.blockAlign * this.metadata.format.sampleRate * 8);
           }
           await this.tokenizer.ignore(header.chunkSize);
@@ -134,7 +135,7 @@ export class WaveParser extends BasicParser {
         case 'bext': { // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
           const bext = await this.tokenizer.readToken(BroadcastAudioExtensionChunk);
           Object.keys(bext).forEach(key => {
-            this.metadata.addTag('exif', `bext.${key}`, bext[key]);
+            this.metadata.addTag('exif', `bext.${key}`, bext[key as keyof IBroadcastAudioExtensionChunk]);
           });
           const bextRemaining = header.chunkSize - BroadcastAudioExtensionChunk.len;
           await this.tokenizer.ignore(bextRemaining);
@@ -153,7 +154,7 @@ export class WaveParser extends BasicParser {
           await this.tokenizer.ignore(header.chunkSize);
       }
 
-      if (this.header.chunkSize % 2 === 1) {
+      if ((this.header as riff.IChunkHeader).chunkSize % 2 === 1) {
         debug('Read odd padding byte'); // https://wiki.multimedia.cx/index.php/RIFF
         await this.tokenizer.ignore(1);
       }
@@ -173,7 +174,7 @@ export class WaveParser extends BasicParser {
     }
   }
 
-  private async parseRiffInfoTags(chunkSize): Promise<void> {
+  private async parseRiffInfoTags(chunkSize: number): Promise<void> {
     while (chunkSize >= 8) {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
       const valueToken = new riff.ListInfoTagValue(header);

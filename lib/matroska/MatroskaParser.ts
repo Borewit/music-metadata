@@ -1,11 +1,11 @@
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import initDebug from 'debug';
-import type { ITokenizer } from 'strtok3';
+import { EndOfStreamError, type ITokenizer } from 'strtok3';
 
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
 import * as matroskaDtd from './MatroskaDtd.js';
-import { DataType, type IContainerType, type IHeader, type IMatroskaDoc, type ITree, TargetType, TrackType, type ValueType } from './types.js';
+import { DataType, type IContainerType, type IHeader, type IMatroskaDoc, type ITrackEntry, type ITree, TargetType, TrackType, type ValueType } from './types.js';
 
 import type { AnyTagValue, IOptions, ITrackInfo } from '../type.js';
 import type { ITokenParser } from '../ParserFactory.js';
@@ -87,19 +87,11 @@ export class MatroskaParser extends BasicParser {
         });
 
         const audioTrack = audioTracks.entries
-          .filter(entry => {
-            return entry.trackType === TrackType.audio.valueOf();
-          })
-          .reduce((acc, cur) => {
-            if (!acc) {
-              return cur;
-            }
-            if (!acc.flagDefault && cur.flagDefault) {
-              return cur;
-            }
-            if (cur.trackNumber && cur.trackNumber < acc.trackNumber) {
-              return cur;
-            }
+          .filter(entry => entry.trackType === TrackType.audio)
+          .reduce((acc: ITrackEntry | null, cur: ITrackEntry): ITrackEntry => {
+            if (!acc) return cur;
+            if (cur.flagDefault && !acc.flagDefault) return cur;
+            if (cur.trackNumber < acc.trackNumber) return cur;
             return acc;
           }, null);
 
@@ -141,7 +133,7 @@ export class MatroskaParser extends BasicParser {
       try {
         element = await this.readElement();
       } catch (error) {
-        if (error.message === 'End-Of-Stream') {
+        if (error instanceof EndOfStreamError) {
           break;
         }
         throw error;
@@ -160,7 +152,10 @@ export class MatroskaParser extends BasicParser {
             tree[type.name] = res;
           }
         } else {
-          tree[type.name] = await this.parserMap.get(type.value)(element);
+          const parser = this.parserMap.get(type.value as DataType);
+          if (typeof parser === 'function') {
+            tree[type.name] = await parser(element);
+          }
         }
       } else {
         switch (element.id) {

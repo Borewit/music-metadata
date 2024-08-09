@@ -58,10 +58,10 @@ describe('Parse Ogg', function() {
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
-        assert.strictEqual(format.duration, 2.0, 'format.duration = 2.0 sec');
-        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+        assert.strictEqual(format.duration, 2.0, 'format.duration [seconds]');
+        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate [hz]');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
-        assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
+        assert.strictEqual(format.bitrate, 64000, 'format.bitrate [bit/sec]');
       }
 
       Parsers.forEach(parser => {
