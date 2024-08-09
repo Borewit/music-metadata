@@ -333,6 +333,7 @@ export class FrameParser {
       case 'WPAY':
       case 'WPUB':
         // Decode URL
+        fzero = util.findZero(uint8Array, offset + 1, length, encoding);
         output = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         break;
 
