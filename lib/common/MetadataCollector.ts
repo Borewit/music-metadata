@@ -26,7 +26,7 @@ export interface IWarningCollector {
    * Register parser warning
    * @param warning
    */
-  addWarning(warning: string);
+  addWarning(warning: string): void;
 }
 
 export interface INativeMetadataCollector extends IWarningCollector {
@@ -68,7 +68,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   public readonly common: ICommonTagsResult = {
     track: {no: null, of: null},
     disk: {no: null, of: null},
-    movementIndex: {}
+    movementIndex: {no: null, of: null}
   };
 
   public readonly quality: IQualityInformation = {
@@ -91,7 +91,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   private tagMapper = new CombinedTagMapper();
 
-  public constructor(private opts: IOptions) {
+  public constructor(private opts?: IOptions) {
     let priority = 1;
     for (const tagType of TagPriority) {
       this.originPriority[tagType] = priority++;
@@ -108,7 +108,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public addStreamInfo(streamInfo: ITrackInfo) {
-    debug(`streamInfo: type=${TrackType[streamInfo.type]}, codec=${streamInfo.codecName}`);
+    debug(`streamInfo: type=${streamInfo.type ? TrackType[streamInfo.type] : '?'}, codec=${streamInfo.codecName}`);
     this.format.trackInfo.push(streamInfo);
   }
 
@@ -116,7 +116,7 @@ export class MetadataCollector implements INativeMetadataCollector {
     debug(`format: ${key} = ${value}`);
     (this.format as unknown as { [id: string]: unknown; })[key] = value; // as any to override readonly
 
-    if (this.opts.observer) {
+    if (this.opts?.observer) {
       this.opts.observer({metadata: this, tag: {type: 'format', id: key, value}});
     }
   }
@@ -249,10 +249,12 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = tag.value === '1' || tag.value === 1; // boolean
         break;
 
-      case 'isrc': // Only keep unique values
-        if (this.common[tag.id] && this.common[tag.id].indexOf(tag.value as string) !== -1)
+      case 'isrc': { // Only keep unique values
+        const commonTag = this.common[tag.id];
+        if (commonTag && commonTag.indexOf(tag.value as string) !== -1)
           return;
         break;
+      }
 
       case 'comment':
         if (typeof tag.value === 'string') {
@@ -335,27 +337,27 @@ export class MetadataCollector implements INativeMetadataCollector {
 
     if (isSingleton(tag.id)) {
       if (prio1 <= prio0) {
-        this.common[tag.id] = tag.value;
+        (this.common[tag.id] as unknown) = tag.value;
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(`Ignore native tag (singleton): ${tagType}.${tag.id} = ${tag.value}`);
       }
     } else {
       if (prio1 === prio0) {
-        if (!isUnique(tag.id) || this.common[tag.id].indexOf(tag.value) === -1) {
-          this.common[tag.id].push(tag.value);
+        if (!isUnique(tag.id) || (this.common[tag.id] as unknown[]).indexOf(tag.value) === -1) {
+          (this.common[tag.id] as unknown[]).push(tag.value);
         } else {
           debug(`Ignore duplicate value: ${tagType}.${tag.id} = ${tag.value}`);
         }
         // no effect? this.commonOrigin[tag.id] = prio1;
       } else if (prio1 < prio0) {
-        this.common[tag.id] = [tag.value];
+        (this.common[tag.id] as unknown[])= [tag.value];
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(`Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value}`);
       }
     }
-    if (this.opts.observer) {
+    if (this.opts?.observer) {
       this.opts.observer({metadata: this, tag: {type: 'common', id: tag.id, value: tag.value}});
     }
     // ToDo: trigger metadata event

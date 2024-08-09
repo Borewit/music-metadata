@@ -30,7 +30,7 @@ enum BlockType {
 
 export class FlacParser extends AbstractID3Parser {
 
-  private vorbisParser: VorbisParser;
+  private vorbisParser: VorbisParser | undefined;
 
   private padding = 0;
 
@@ -127,7 +127,7 @@ export class FlacParser extends AbstractID3Parser {
     for (let i = 0; i < commentListLength; i++) {
       tags[i] = decoder.parseUserComment();
     }
-    await Promise.all(tags.map(tag => this.vorbisParser.addTag(tag.key, tag.value)));
+    await Promise.all(tags.map(tag => (this.vorbisParser as VorbisParser).addTag(tag.key, tag.value)));
   }
 
   private async parsePicture(dataLen: number) {
@@ -135,7 +135,7 @@ export class FlacParser extends AbstractID3Parser {
       return this.tokenizer.ignore(dataLen);
     }
       const picture = await this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen));
-      this.vorbisParser.addTag('METADATA_BLOCK_PICTURE', picture);
+      (this.vorbisParser as VorbisParser).addTag('METADATA_BLOCK_PICTURE', picture);
   }
 }
 

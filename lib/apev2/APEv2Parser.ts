@@ -54,7 +54,7 @@ export class APEv2Parser extends BasicParser {
    * @param reader
    * @param offset
    */
-  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader> {
+  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader | undefined> {
     // Search for APE footer header at the end of the file
     const apeBuf = new Uint8Array(TagFooter.len);
     await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
@@ -199,6 +199,10 @@ export class APEv2Parser extends BasicParser {
     this.metadata.setFormat('sampleRate', header.sampleRate);
     this.metadata.setFormat('numberOfChannels', header.channel);
     this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
+
+    if (!this.ape.descriptor) {
+      throw new Error('Missing APE descriptor');
+    }
 
     return {
       forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +

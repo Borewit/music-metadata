@@ -53,8 +53,8 @@ const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
   const genres = [];
-  let code: string;
-  let word = '';
+  let code: string | undefined;
+  let word: string | undefined = '';
   for (const c of origVal) {
     if (typeof code === 'string') {
       if (c === '(' && code === '') {
@@ -79,20 +79,22 @@ export function parseGenre(origVal: string): string[] {
   }
   if (word) {
     if (genres.length === 0 && word.match(/^\d*$/)) {
-      word = Genres[word];
+      word = parseGenreCode(word);
     }
-    genres.push(word);
+    if (word) {
+      genres.push(word);
+    }
   }
   return genres;
 }
 
-function parseGenreCode(code: string): string {
+function parseGenreCode(code: string): string | undefined{
   if (code === 'RX')
     return 'Remix';
   if (code === 'CR')
     return 'Cover';
   if (code.match(/^\d*$/)) {
-    return Genres[code];
+    return Genres[Number.parseInt(code)];
   }
 }
 
@@ -131,7 +133,10 @@ export class FrameParser {
         try {
           text = util.decodeString(uint8Array.slice(1), encoding).replace(/\x00+$/, '');
         } catch (error) {
-          this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
+          if (error instanceof Error) {
+            this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
+            break;
+          }throw error;
         }
         switch (type) {
           case 'TMCL': // Musician credits list

@@ -1,4 +1,4 @@
-import type { GenericTagId, TagType } from './common/GenericTagTypes.js';
+import type { TagType } from './common/GenericTagTypes.js';
 import type { IFooter } from './apev2/APEv2Token.js';
 import type { TrackType } from './matroska/types.js';
 import type { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
@@ -45,7 +45,7 @@ export interface IRating {
   /**
    * Rating [0..1]
    */
-  rating: number;
+  rating?: number;
 }
 
 export interface ICommonTagsResult {
@@ -159,6 +159,10 @@ export interface ICommonTagsResult {
    * Engineer(s)
    */
   engineer?: string[];
+  /**
+   * Publisher(s)
+   */
+  publisher?: string[];
   /**
    * Producer(s)
    */
@@ -302,9 +306,14 @@ export interface ICommonTagsResult {
   };
 
   /**
-   * minimum & maximum global gain values across a set of files scanned as an album
+   * minimum & maximum global gain values across a set of file
    */
   replaygain_track_minmax?: number[];
+
+  /**
+   * minimum & maximum global gain values across a set of files scanned as an album
+   */
+  replaygain_album_minmax?: number[];
 
   /**
    * The initial key of the music in the file, e.g. "A Minor".
@@ -335,7 +344,7 @@ export interface ICommonTagsResult {
   /**
    * Movement Index/Total
    */
-  movementIndex: { no?: number, of?: number };
+  movementIndex: { no: number | null, of: number | null };
   /**
    * Podcast Identifier
    */
@@ -438,7 +447,7 @@ export interface IFormat {
   /**
    * List of tags found in parsed audio file
    */
-  readonly tagTypes?: TagType[],
+  readonly tagTypes: TagType[],
 
   /**
    * Duration in seconds
@@ -655,7 +664,7 @@ export interface IMetadataEvent {
     /**
      * Tag id
      */
-    id: GenericTagId | FormatId
+    id: keyof ICommonTagsResult | FormatId
 
     /**
      * Tag value

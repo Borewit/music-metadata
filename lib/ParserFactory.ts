@@ -62,7 +62,7 @@ export function parseHttpContentType(contentType: string): IContentType {
  * @param opts - Options
  * @returns Native metadata
  */
-export async function parseOnContentType(tokenizer: ITokenizer, opts: IOptions): Promise<IAudioMetadata> {
+export async function parseOnContentType(tokenizer: ITokenizer, opts?: IOptions): Promise<IAudioMetadata> {
 
   const { mimeType, path, url } = tokenizer.fileInfo;
 
@@ -76,34 +76,33 @@ export async function parseOnContentType(tokenizer: ITokenizer, opts: IOptions):
   return parse(tokenizer, parserId, opts);
 }
 
-export async function parse(tokenizer: ITokenizer, parserId: ParserType, opts: IOptions): Promise<IAudioMetadata> {
+export async function parse(tokenizer: ITokenizer, parserId?: ParserType, opts?: IOptions): Promise<IAudioMetadata> {
 
-  let id = parserId;
-  if (!id) {
+  if (!parserId) {
     // Parser could not be determined on MIME-type or extension
     debug('Guess parser on content...');
 
     const buf = new Uint8Array(4100);
     await tokenizer.peekBuffer(buf, {mayBeLess: true});
     if (tokenizer.fileInfo.path) {
-      id = getParserIdForExtension(tokenizer.fileInfo.path);
+      parserId = getParserIdForExtension(tokenizer.fileInfo.path);
     }
-    if (!id) {
+    if (!parserId) {
       const guessedType = await fileTypeFromBuffer(buf);
       if (!guessedType) {
         throw new Error('Failed to determine audio format');
       }
       debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
-      id = getParserIdForMimeType(guessedType.mime);
-      if (!id) {
+      parserId = getParserIdForMimeType(guessedType.mime);
+      if (!parserId) {
         throw new Error(`Guessed MIME-type not supported: ${guessedType.mime}`);
       }
     }
   }
   // Parser found, execute parser
-  const parser = await loadParser(id);
+  const parser = await loadParser(parserId);
   const metadata = new MetadataCollector(opts);
-  await parser.init(metadata, tokenizer, opts).parse();
+  await parser.init(metadata, tokenizer, opts ?? {}).parse();
   return metadata.toCommonMetadata();
 }
 
@@ -111,7 +110,7 @@ export async function parse(tokenizer: ITokenizer, parserId: ParserType, opts: I
  * @param filePath - Path, filename or extension to audio file
  * @return Parser submodule name
  */
-export function getParserIdForExtension(filePath: string): ParserType {
+export function getParserIdForExtension(filePath: string | undefined): ParserType | undefined {
   if (!filePath)
     return;
 
@@ -216,9 +215,10 @@ function getExtension(fname: string): string {
  * @param httpContentType - HTTP Content-Type, extension, path or filename
  * @returns Parser submodule name
  */
-function getParserIdForMimeType(httpContentType: string): ParserType {
+function getParserIdForMimeType(httpContentType: string | undefined): ParserType | undefined{
 
   let mime: IContentType;
+  if (!httpContentType) return;
   try {
     mime = parseHttpContentType(httpContentType);
   } catch (err) {

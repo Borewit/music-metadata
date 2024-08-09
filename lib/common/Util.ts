@@ -10,11 +10,6 @@ export type StringEncoding =
   | 'latin1' // Same as ISO-8859-1 (alias: 'binary')
   | 'hex';
 
-export interface ITextEncoding {
-  encoding: StringEncoding;
-  bom?: boolean;
-}
-
 export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
   return (buf[off] & (1 << bit)) !== 0;
 }
@@ -149,7 +144,7 @@ export function dbToRatio(dB: number): number {
  * Convert replay gain to ratio and Decibel
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
  */
-export function toRatio(value: string): IRatio {
+export function toRatio(value: string): IRatio | undefined {
   const ps = value.split(' ').map(p => p.trim().toLowerCase());
   // @ts-ignore
   if (ps.length >= 1) {

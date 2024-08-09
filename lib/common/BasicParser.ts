@@ -6,9 +6,9 @@ import type { INativeMetadataCollector } from './MetadataCollector.js';
 
 export abstract class BasicParser implements ITokenParser {
 
-  protected metadata: INativeMetadataCollector;
-  protected tokenizer: ITokenizer;
-  protected options: IPrivateOptions;
+  protected metadata: INativeMetadataCollector = undefined as unknown as INativeMetadataCollector;
+  protected tokenizer: ITokenizer = undefined as unknown as ITokenizer;
+  protected options: IPrivateOptions = undefined as unknown as IPrivateOptions;
 
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
@@ -25,6 +25,6 @@ export abstract class BasicParser implements ITokenParser {
     return this;
   }
 
-  public abstract parse();
+  public abstract parse(): Promise<void>;
 
 }
