@@ -15,7 +15,7 @@ categories:
       - bug
   - title: 🔧 Under the hood
     labels:
-      - debt
+      - technical debt
       - dev-dependencies
   - title: ⬆️ Dependencies
     labels:
