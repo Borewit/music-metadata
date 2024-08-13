@@ -174,6 +174,7 @@ export const matroskaDtd: IElementType = {
         // Cueing Data
         0x1c53bb6b: {
           name: 'cues',
+          ignore: true,
           container: {
             0xbb: {
               name: 'cuePoint',
@@ -289,7 +290,6 @@ export const matroskaDtd: IElementType = {
             }
           }
         }
-
       }
     }
   }
