@@ -1,4 +1,4 @@
-import { DataType, type IContainerType } from './types.js';
+import { DataType, type IElementType } from '../ebml/types.js';
 
 /**
  * Elements of document type description
@@ -6,285 +6,291 @@ import { DataType, type IContainerType } from './types.js';
  * Extended with:
  * - https://www.matroska.org/technical/specs/index.html
  */
-export const elements: IContainerType = {
-  440786851: { // 5.1
-    name: 'ebml',
-    container: {
-      17030: {name: 'ebmlVersion', value: DataType.uint}, // 5.1.1
-      17143: {name: 'ebmlReadVersion', value: DataType.uint}, // 5.1.2
-      17138: {name: 'ebmlMaxIDWidth', value: DataType.uint}, // 5.1.3
-      17139: {name: 'ebmlMaxSizeWidth', value: DataType.uint}, // 5.1.4
-      17026: {name: 'docType', value: DataType.string}, // 5.1.5
-      17031: {name: 'docTypeVersion', value: DataType.uint}, // 5.1.6
-      17029: {name: 'docTypeReadVersion', value: DataType.uint} // 5.1.7
-    }
-  },
+export const matroskaDtd: IElementType = {
+  name: 'dtd',
+  container: {
+    440786851: { // 5.1
+      name: 'ebml',
+      container: {
+        17030: {name: 'ebmlVersion', value: DataType.uint}, // 5.1.1
+        17143: {name: 'ebmlReadVersion', value: DataType.uint}, // 5.1.2
+        17138: {name: 'ebmlMaxIDWidth', value: DataType.uint}, // 5.1.3
+        17139: {name: 'ebmlMaxSizeWidth', value: DataType.uint}, // 5.1.4
+        17026: {name: 'docType', value: DataType.string}, // 5.1.5
+        17031: {name: 'docTypeVersion', value: DataType.uint}, // 5.1.6
+        17029: {name: 'docTypeReadVersion', value: DataType.uint} // 5.1.7
+      }
+    },
 
-  // Matroska segments
-  408125543: {
-    name: 'segment',
-    container: {
+    // Matroska segments
+    408125543: {
+      name: 'segment',
+      container: {
 
-      // Meta Seek Information
-      290298740: {
-        name: 'seekHead',
-        container: {
-          19899: {
-            name: 'seek',
-            container: {
-              21419: {name: 'seekId', value: DataType.binary},
-              21420: {name: 'seekPosition', value: DataType.uint}
+        // Meta Seek Information
+        290298740: {
+          name: 'seekHead',
+          container: {
+            19899: {
+              name: 'seek',
+              container: {
+                21419: {name: 'seekId', value: DataType.binary},
+                21420: {name: 'seekPosition', value: DataType.uint}
+              }
             }
           }
-        }
-      },
+        },
 
-      // Segment Information
-      357149030: {
-        name: 'info',
-        container: {
-          29604: {name: 'uid', value: DataType.uid},
-          29572: {name: 'filename', value: DataType.string},
-          3979555: {name: 'prevUID', value: DataType.uid},
-          3965867: {name: 'prevFilename', value: DataType.string},
-          4110627: {name: 'nextUID', value: DataType.uid},
-          4096955: {name: 'nextFilename', value: DataType.string},
-          2807729: {name: 'timecodeScale', value: DataType.uint},
-          17545: {name: 'duration', value: DataType.float},
-          17505: {name: 'dateUTC', value: DataType.uint},
-          31657: {name: 'title', value: DataType.string},
-          19840: {name: 'muxingApp', value: DataType.string},
-          22337: {name: 'writingApp', value: DataType.string}
-        }
-      },
+        // Segment Information
+        357149030: {
+          name: 'info',
+          container: {
+            0x73a4: {name: 'uid', value: DataType.uid},
+            0x7384: {name: 'filename', value: DataType.string},
+            0x3cb923: {name: 'prevUID', value: DataType.uid},
+            0x3c83ab: {name: 'prevFilename', value: DataType.string},
+            0x3eb923: {name: 'nextUID', value: DataType.uid},
+            0x3e83bb: {name: 'nextFilename', value: DataType.string},
+            0x2ad7b1: {name: 'timecodeScale', value: DataType.uint},
+            0x4489: {name: 'duration', value: DataType.float},
+            0x4461: {name: 'dateUTC', value: DataType.uint},
+            0x7ba9: {name: 'title', value: DataType.string},
+            0x4d80: {name: 'muxingApp', value: DataType.string},
+            0x5741: {name: 'writingApp', value: DataType.string}
+          }
+        },
 
-      // Cluster
-      524531317: {
-        name: 'cluster',
-        multiple: true,
-        container: {
-          231: {name: 'timecode', value: DataType.uid},
-          163: {name: 'unknown', value: DataType.binary},
-          167: {name: 'position', value: DataType.uid},
-          171: {name: 'prevSize', value: DataType.uid}
-        }
-      },
+        // Cluster
+        0x1f43b675: {
+          name: 'cluster',
+          multiple: true,
+          container: {
+            0xe7: {name: 'timecode', value: DataType.uid},
+            0x58d7: {name: 'silentTracks ', multiple: true},
+            0xa7: {name: 'position', value: DataType.uid},
+            0xab: {name: 'prevSize', value: DataType.uid},
+            0xa0: {name: 'blockGroup', ignore: true},
+            0xa3: {name: 'simpleBlock', ignore: true}
+          }
+        },
 
-      // Track
-      374648427: {
-        name: 'tracks',
-        container: {
-          174: {
-            name: 'entries',
-            multiple: true,
-            container: {
-              215: {name: 'trackNumber', value: DataType.uint},
-              29637: {name: 'uid', value: DataType.uid},
-              131: {name: 'trackType', value: DataType.uint},
-              185: {name: 'flagEnabled', value: DataType.bool},
-              136: {name: 'flagDefault', value: DataType.bool},
-              21930: {name: 'flagForced', value: DataType.bool}, // extended
-              156: {name: 'flagLacing', value: DataType.bool},
-              28135: {name: 'minCache', value: DataType.uint},
-              28136: {name: 'maxCache', value: DataType.uint},
-              2352003: {name: 'defaultDuration', value: DataType.uint},
-              2306383: {name: 'timecodeScale', value: DataType.float},
-              21358: {name: 'name', value: DataType.string},
-              2274716: {name: 'language', value: DataType.string},
-              134: {name: 'codecID', value: DataType.string},
-              25506: {name: 'codecPrivate', value: DataType.binary},
-              2459272: {name: 'codecName', value: DataType.string},
-              3839639: {name: 'codecSettings', value: DataType.string},
-              3883072: {name: 'codecInfoUrl', value: DataType.string},
-              2536000: {name: 'codecDownloadUrl', value: DataType.string},
-              170: {name: 'codecDecodeAll', value: DataType.bool},
-              28587: {name: 'trackOverlay', value: DataType.uint},
+        // Track
+        0x1654ae6b: {
+          name: 'tracks',
+          container: {
+            0xae: {
+              name: 'entries',
+              multiple: true,
+              container: {
+                0xd7: {name: 'trackNumber', value: DataType.uint},
+                0x73c5: {name: 'uid', value: DataType.uid},
+                0x83: {name: 'trackType', value: DataType.uint},
+                0xb9: {name: 'flagEnabled', value: DataType.bool},
+                0x88: {name: 'flagDefault', value: DataType.bool},
+                0x55aa: {name: 'flagForced', value: DataType.bool}, // extended
+                0x9c: {name: 'flagLacing', value: DataType.bool},
+                0x6de7: {name: 'minCache', value: DataType.uint},
+                0x6de8: {name: 'maxCache', value: DataType.uint},
+                0x23e383: {name: 'defaultDuration', value: DataType.uint},
+                0x23314f: {name: 'timecodeScale', value: DataType.float},
+                0x536e: {name: 'name', value: DataType.string},
+                0x22b59c: {name: 'language', value: DataType.string},
+                0x86: {name: 'codecID', value: DataType.string},
+                0x63a2: {name: 'codecPrivate', value: DataType.binary},
+                0x258688: {name: 'codecName', value: DataType.string},
+                0x3a9697: {name: 'codecSettings', value: DataType.string},
+                0x3b4040: {name: 'codecInfoUrl', value: DataType.string},
+                0x26b240: {name: 'codecDownloadUrl', value: DataType.string},
+                0xaa: {name: 'codecDecodeAll', value: DataType.bool},
+                0x6fab: {name: 'trackOverlay', value: DataType.uint},
 
-              // Video
-              224: {
-                name: 'video',
-                container: {
-                  154: {name: 'flagInterlaced', value: DataType.bool},
-                  21432: {name: 'stereoMode', value: DataType.uint},
-                  176: {name: 'pixelWidth', value: DataType.uint},
-                  186: {name: 'pixelHeight', value: DataType.uint},
-                  21680: {name: 'displayWidth', value: DataType.uint},
-                  21690: {name: 'displayHeight', value: DataType.uint},
-                  21683: {name: 'aspectRatioType', value: DataType.uint},
-                  3061028: {name: 'colourSpace', value: DataType.uint},
-                  3126563: {name: 'gammaValue', value: DataType.float}
-                }
-              },
-
-              // Audio
-              225: {
-                name: 'audio',
-                container: {
-                  181: {name: 'samplingFrequency', value: DataType.float},
-                  30901: {name: 'outputSamplingFrequency', value: DataType.float},
-                  159: {name: 'channels', value: DataType.uint}, // https://www.matroska.org/technical/specs/index.html
-                  148: {name: 'channels', value: DataType.uint},
-                  32123: {name: 'channelPositions', value: DataType.binary},
-                  25188: {name: 'bitDepth', value: DataType.uint}
-                }
-              },
-
-              // Content Encoding
-              28032: {
-                name: 'contentEncodings',
-                container: {
-                  25152: {
-                    name: 'contentEncoding',
-                    container: {
-                      20529: {name: 'order', value: DataType.uint},
-                      20530: {name: 'scope', value: DataType.bool},
-                      20531: {name: 'type', value: DataType.uint},
-                      20532: {
-                        name: 'contentEncoding',
-                        container: {
-                          16980: {name: 'contentCompAlgo', value: DataType.uint},
-                          16981: {name: 'contentCompSettings', value: DataType.binary}
-                        }
-                      },
-                      20533: {
-                        name: 'contentEncoding',
-                        container: {
-                          18401: {name: 'contentEncAlgo', value: DataType.uint},
-                          18402: {name: 'contentEncKeyID', value: DataType.binary},
-                          18403: {name: 'contentSignature ', value: DataType.binary},
-                          18404: {name: 'ContentSigKeyID  ', value: DataType.binary},
-                          18405: {name: 'contentSigAlgo ', value: DataType.uint},
-                          18406: {name: 'contentSigHashAlgo ', value: DataType.uint}
-                        }
-                      },
-                      25188: {name: 'bitDepth', value: DataType.uint}
-                    }
+                // Video
+                0xe0: {
+                  name: 'video',
+                  container: {
+                    0x9a: {name: 'flagInterlaced', value: DataType.bool},
+                    0x53b8: {name: 'stereoMode', value: DataType.uint},
+                    0xb0: {name: 'pixelWidth', value: DataType.uint},
+                    0xba: {name: 'pixelHeight', value: DataType.uint},
+                    0x54b0: {name: 'displayWidth', value: DataType.uint},
+                    0x54ba: {name: 'displayHeight', value: DataType.uint},
+                    0x54b3: {name: 'aspectRatioType', value: DataType.uint},
+                    0x2eb524: {name: 'colourSpace', value: DataType.uint},
+                    0x2fb523: {name: 'gammaValue', value: DataType.float}
                   }
-                }
-              }
-            }
-          }
-        }
-      },
+                },
 
-      // Cueing Data
-      475249515: {
-        name: 'cues',
-        container: {
-          187: {
-            name: 'cuePoint',
-            container: {
-              179: {name: 'cueTime', value: DataType.uid},
-              183: {
-                name: 'positions',
-                container: {
-                  247: {name: 'track', value: DataType.uint},
-                  241: {name: 'clusterPosition', value: DataType.uint},
-                  21368: {name: 'blockNumber', value: DataType.uint},
-                  234: {name: 'codecState', value: DataType.uint},
-                  219: {
-                    name: 'reference', container: {
-                      150: {name: 'time', value: DataType.uint},
-                      151: {name: 'cluster', value: DataType.uint},
-                      21343: {name: 'number', value: DataType.uint},
-                      235: {name: 'codecState', value: DataType.uint}
-                    }
-                  },
-                  240: {name: 'relativePosition', value: DataType.uint} // extended
-                }
-              }
-            }
-          }
-        }
-      },
+                // Audio
+                0xe1: {
+                  name: 'audio',
+                  container: {
+                    0xb5: {name: 'samplingFrequency', value: DataType.float},
+                    0x78b5: {name: 'outputSamplingFrequency', value: DataType.float},
+                    0x9f: {name: 'channels', value: DataType.uint}, // https://www.matroska.org/technical/specs/index.html
+                    0x94: {name: 'channels', value: DataType.uint},
+                    0x7d7b: {name: 'channelPositions', value: DataType.binary},
+                    0x6264: {name: 'bitDepth', value: DataType.uint}
+                  }
+                },
 
-      // Attachment
-      423732329: {
-        name: 'attachments',
-        container: {
-          24999: {
-            name: 'attachedFiles',
-            multiple: true,
-            container: {
-              18046: {name: 'description', value: DataType.string},
-              18030:  {name: 'name', value: DataType.string},
-              18016:  {name: 'mimeType', value: DataType.string},
-              18012: {name: 'data', value: DataType.binary},
-              18094: {name: 'uid', value: DataType.uid}
-            }
-          }
-        }
-      },
-
-      // Chapters
-      272869232: {
-        name: 'chapters',
-        container: {
-          17849: {
-            name: 'editionEntry',
-            container: {
-              182: {
-                name: 'chapterAtom',
-                container: {
-                  29636: {name: 'uid', value: DataType.uid},
-                  145: {name: 'timeStart', value: DataType.uint},
-                  146: {name: 'timeEnd', value: DataType.uid},
-                  152: {name: 'hidden', value: DataType.bool},
-                  17816: {name: 'enabled', value: DataType.uid},
-                  143: {name: 'track', container:  {
-                    137: {name: 'trackNumber', value: DataType.uid},
-                    128: {
-                      name: 'display', container: {
-                        133: {name: 'string', value: DataType.string},
-                        17276: {name: 'language ', value: DataType.string},
-                        17278: {name: 'country ', value: DataType.string}
+                // Content Encoding
+                0x6d80: {
+                  name: 'contentEncodings',
+                  container: {
+                    0x6240: {
+                      name: 'contentEncoding',
+                      container: {
+                        0x5031: {name: 'order', value: DataType.uint},
+                        0x5032: {name: 'scope', value: DataType.bool},
+                        0x5033: {name: 'type', value: DataType.uint},
+                        0x5034: {
+                          name: 'contentEncoding',
+                          container: {
+                            0x4254: {name: 'contentCompAlgo', value: DataType.uint},
+                            0x4255: {name: 'contentCompSettings', value: DataType.binary}
+                          }
+                        },
+                        0x5035: {
+                          name: 'contentEncoding',
+                          container: {
+                            0x47e1: {name: 'contentEncAlgo', value: DataType.uint},
+                            0x47e2: {name: 'contentEncKeyID', value: DataType.binary},
+                            0x47e3: {name: 'contentSignature ', value: DataType.binary},
+                            0x47e4: {name: 'ContentSigKeyID  ', value: DataType.binary},
+                            0x47e5: {name: 'contentSigAlgo ', value: DataType.uint},
+                            0x47e6: {name: 'contentSigHashAlgo ', value: DataType.uint}
+                          }
+                        },
+                        0x6264: {name: 'bitDepth', value: DataType.uint}
                       }
                     }
                   }
+                }
+              }
+            }
+          }
+        },
+
+        // Cueing Data
+        0x1c53bb6b: {
+          name: 'cues',
+          container: {
+            0xbb: {
+              name: 'cuePoint',
+              container: {
+                0xb3: {name: 'cueTime', value: DataType.uid},
+                0xb7: {
+                  name: 'positions',
+                  container: {
+                    0xf7: {name: 'track', value: DataType.uint},
+                    0xf1: {name: 'clusterPosition', value: DataType.uint},
+                    0x5378: {name: 'blockNumber', value: DataType.uint},
+                    0xea: {name: 'codecState', value: DataType.uint},
+                    0xdb: {
+                      name: 'reference', container: {
+                        0x96: {name: 'time', value: DataType.uint},
+                        0x97: {name: 'cluster', value: DataType.uint},
+                        0x535f: {name: 'number', value: DataType.uint},
+                        0xeb: {name: 'codecState', value: DataType.uint}
+                      }
+                    },
+                    0xf0: {name: 'relativePosition', value: DataType.uint} // extended
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        // Attachment
+        0x1941a469: {
+          name: 'attachments',
+          container: {
+            0x61a7: {
+              name: 'attachedFiles',
+              multiple: true,
+              container: {
+                0x467e: {name: 'description', value: DataType.string},
+                0x466e: {name: 'name', value: DataType.string},
+                0x4660: {name: 'mimeType', value: DataType.string},
+                0x465c: {name: 'data', value: DataType.binary},
+                0x46ae: {name: 'uid', value: DataType.uid}
+              }
+            }
+          }
+        },
+
+        // Chapters
+        0x1043a770: {
+          name: 'chapters',
+          container: {
+            0x45b9: {
+              name: 'editionEntry',
+              container: {
+                0xb6: {
+                  name: 'chapterAtom',
+                  container: {
+                    0x73c4: {name: 'uid', value: DataType.uid},
+                    0x91: {name: 'timeStart', value: DataType.uint},
+                    0x92: {name: 'timeEnd', value: DataType.uid},
+                    0x98: {name: 'hidden', value: DataType.bool},
+                    0x4598: {name: 'enabled', value: DataType.uid},
+                    0x8f: {
+                      name: 'track', container: {
+                        0x89: {name: 'trackNumber', value: DataType.uid},
+                        0x80: {
+                          name: 'display', container: {
+                            0x85: {name: 'string', value: DataType.string},
+                            0x437c: {name: 'language ', value: DataType.string},
+                            0x437e: {name: 'country ', value: DataType.string}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        // Tagging
+        0x1254c367: {
+          name: 'tags',
+          container: {
+            0x7373: {
+              name: 'tag',
+              multiple: true,
+              container: {
+                0x63c0: {
+                  name: 'target',
+                  container: {
+                    0x63c5: {name: 'tagTrackUID', value: DataType.uid},
+                    0x63c4: {name: 'tagChapterUID', value: DataType.uint},
+                    0x63c6: {name: 'tagAttachmentUID', value: DataType.uid},
+                    0x63ca: {name: 'targetType', value: DataType.string}, // extended
+                    0x68ca: {name: 'targetTypeValue', value: DataType.uint}, // extended
+                    0x63c9: {name: 'tagEditionUID', value: DataType.uid} // extended
+                  }
+                },
+                0x67c8: {
+                  name: 'simpleTags',
+                  multiple: true,
+                  container: {
+                    0x45a3: {name: 'name', value: DataType.string},
+                    0x4487: {name: 'string', value: DataType.string},
+                    0x4485: {name: 'binary', value: DataType.binary},
+                    0x447a: {name: 'language', value: DataType.string}, // extended
+                    0x447b: {name: 'languageIETF', value: DataType.string}, // extended
+                    0x4484: {name: 'default', value: DataType.bool} // extended
                   }
                 }
               }
             }
           }
         }
-      },
 
-      // Tagging
-      307544935: {
-        name: 'tags',
-        container: {
-          29555: {
-            name: 'tag',
-            multiple: true,
-            container: {
-              25536: {
-                name: 'target',
-                container: {
-                  25541: {name: 'tagTrackUID', value: DataType.uid},
-                  25540: {name: 'tagChapterUID', value: DataType.uint},
-                  25542: {name: 'tagAttachmentUID', value: DataType.uid},
-                  25546: {name: 'targetType', value: DataType.string}, // extended
-                  26826: {name: 'targetTypeValue', value: DataType.uint}, // extended
-                  25545: {name: 'tagEditionUID', value: DataType.uid} // extended
-                }
-              },
-              26568: {
-                name: 'simpleTags',
-                multiple: true,
-                container: {
-                  17827: {name: 'name', value: DataType.string},
-                  17543: {name: 'string', value: DataType.string},
-                  17541: {name: 'binary', value: DataType.binary},
-                  17530: {name: 'language', value: DataType.string}, // extended
-                  17531: {name: 'languageIETF', value: DataType.string}, // extended
-                  17540: {name: 'default', value: DataType.bool} // extended
-                }
-              }
-            }
-          }
-        }
       }
-
     }
   }
 };

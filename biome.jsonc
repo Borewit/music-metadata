@@ -14,10 +14,12 @@
 				"noUnusedImports": "error"
 			},
 			"style": {
-				"noParameterAssign": "off"
+				"noParameterAssign": "off",
+				"useConst": "error"
 			},
 			"recommended": true,
 			"complexity": {
+				"useSimpleNumberKeys": "off", // In some files we want to use hexadecimal keys
 				"noForEach": "off"
 			},
 			"suspicious": {
