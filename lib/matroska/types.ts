@@ -1,22 +1,4 @@
-export interface IHeader {
-  id: number;
-  len: number;
-}
-
-export enum DataType { 'string' = 0, uint = 1, uid = 2, bool = 3, binary = 4, float = 5}
-
-export interface IElementType<T> {
-  readonly name: string;
-  readonly value?: DataType;
-  readonly container?: IContainerType;
-  readonly multiple?: boolean;
-}
-
-export interface IContainerType { [id: number]: IElementType<string | number | boolean | Uint8Array>; }
-
-export interface ITree { [name: string]: string | number | boolean | Uint8Array | ITree | ITree[]; }
-
-export type ValueType = string | number | Uint8Array | boolean | ITree | ITree[];
+import type { IEbmlDoc } from '../ebml/types.js';
 
 export interface ISeekHead {
   id?: Uint8Array;
@@ -172,20 +154,6 @@ export interface IMatroskaSegment {
   tags?: ITags;
   cues?: ICuePoint[];
   attachments?: IAttachments
-}
-
-export interface IEbmlElements {
-  version?: number;
-  readVersion?: number;
-  maxIDWidth?: number;
-  maxSizeWidth?: number;
-  docType?: string;
-  docTypeVersion?: number;
-  docTypeReadVersion?: number;
-}
-
-export interface IEbmlDoc {
-  ebml: IEbmlElements
 }
 
 export interface IMatroskaDoc extends IEbmlDoc {
