@@ -85,7 +85,7 @@
     "compile-doc": "tsc -p doc-gen",
     "compile": "yarn run  compile-src && yarn compile-test && yarn compile-doc",
     "lint-ts": "biome check",
-    "lint-md": "yarn run remark -u preset-lint-markdown-style-guide .",
+    "lint-md": "yarn run remark -u remark-preset-lint-consistent .",
     "lint": "yarn run lint-ts && yarn run lint-md",
     "test": "mocha",
     "build": "yarn run clean && yarn compile && yarn run doc-gen",
@@ -120,7 +120,7 @@
     "mocha": "^10.7.3",
     "prettier": "^3.3.3",
     "remark-cli": "^12.0.1",
-    "remark-preset-lint-markdown-style-guide": "^6.0.0",
+    "remark-preset-lint-consistent": "^6.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   },
