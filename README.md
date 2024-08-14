@@ -11,8 +11,14 @@
 
 # music-metadata
 
-Stream and file based music metadata parser for [node.js](https://nodejs.org/) and browser projects.
-Supports any common audio and tagging format.
+Key features:
+* **Comprehensive Format Support**: Supports popular audio formats like MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
+* **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
+* **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
+* **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
+* **Cross-Platform**: Works in both [Node.js](https://nodejs.org/) and browser environments with the help of bundlers like [Webpack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/introduction/).
+
+The [`music-metadata`](https://github.com/Borewit/music-metadata) module is ideal for developers working on media applications, music players, or any project that requires access to detailed audio file metadata.
 
 ## Compatibility
 
@@ -20,6 +26,15 @@ Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJ
 JavaScript is compliant with [ECMAScript 2019 (ES10)](https://en.wikipedia.org/wiki/ECMAScript#10th_Edition_%E2%80%93_ECMAScript_2019).
 Requires Node.js ≥ 16 engine.
 Primarily designed for [Node.js](https://nodejs.org/), but has also been designed for browser compatibility. 
+
+## Sponsor
+If you appreciate my work and want to support the development of open-source projects like [music-metadata](https://github.com/Borewit/music-metadata), [file-type](https://github.com/sindresorhus/file-type), and [listFix()](https://github.com/Borewit/listFix), consider becoming a sponsor or making a small contribution.
+Your support helps sustain ongoing development and improvements.
+[Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
+
+or
+
+<a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
 
 ## Features
 
@@ -80,11 +95,6 @@ Support for encoding / format details:
 - [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.app/)
 - [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
 
-
-### Sponsor
-[Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
-
-<a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
 
 ## Dependencies
 
