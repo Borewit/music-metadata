@@ -23,9 +23,10 @@ The [`music-metadata`](https://github.com/Borewit/music-metadata) module is idea
 ## Compatibility
 
 Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJS) to [pure ECMAScript Module (ESM)](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
-JavaScript is compliant with [ECMAScript 2019 (ES10)](https://en.wikipedia.org/wiki/ECMAScript#10th_Edition_%E2%80%93_ECMAScript_2019).
-Requires Node.js ≥ 16 engine.
-Primarily designed for [Node.js](https://nodejs.org/), but has also been designed for browser compatibility. 
+The distributed JavaScript codebase is compliant with the [ECMAScript 2020 (11th Edition)](https://en.wikipedia.org/wiki/ECMAScript_version_history#11th_Edition_%E2%80%93_ECMAScript_2020) standard.
+
+This module requires a [Node.js ≥ 16](https://nodejs.org/en/about/previous-releases) engine.
+It can also be used in a browser environment when bundled with a module bundler.
 
 ## Sponsor
 If you appreciate my work and want to support the development of open-source projects like [music-metadata](https://github.com/Borewit/music-metadata), [file-type](https://github.com/sindresorhus/file-type), and [listFix()](https://github.com/Borewit/listFix), consider becoming a sponsor or making a small contribution.
@@ -202,7 +203,7 @@ An extension (e.g.: `.mp3`), filename or path will also work.
 If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
 
 ```ts
-parseStream(stream: Stream.Readable, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>`
+parseStream(stream: Stream.Readable, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
 Example:
