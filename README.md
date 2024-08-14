@@ -372,7 +372,7 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 
 #### `metadata.trackInfo`
 
-To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental*- `metadata.trackInfo` has been added,
+To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental**- `metadata.trackInfo` has been added,
 
 `metadata.trackInfo` is either `undefined` or has an **array** of [trackInfo](#trackinfo)
 
@@ -493,29 +493,29 @@ img.src = `data:${picture.format};base64,${uint8ArrayToBase64(picture.data)}`;
 
         ```
 
-    2.  Use async/await
+    1. Use async/await
 
-        Use [async/await](https://javascript.info/async-await)
+       Use [async/await](https://javascript.info/async-await)
 
-        ```js
-        import { parseFile } from 'music-metadata';
+       ```js
+       import { parseFile } from 'music-metadata';
 
-        // it is required to declare the function 'async' to allow the use of await
-        async function parseFiles(audioFiles) {
+       // it is required to declare the function 'async' to allow the use of await
+       async function parseFiles(audioFiles) {
 
-            for (const audioFile of audioFiles) {
+           for (const audioFile of audioFiles) {
 
-                // await will ensure the metadata parsing is completed before we move on to the next file
-                const metadata = await parseFile(audioFile);
-                // Do great things with the metadata
-            }
-        }
-        ```
+               // await will ensure the metadata parsing is completed before we move on to the next file
+               const metadata = await parseFile(audioFile);
+               // Do great things with the metadata
+           }
+       }
+       ```
 
-    3.  Use a specialized module to traverse files
+    1. Use a specialized module to traverse files
 
-        There are specialized modules to traversing (walking) files and directory,
-        like [walk](https://www.npmjs.com/package/walk).
+       There are specialized modules to traversing (walking) files and directory,
+       like [walk](https://www.npmjs.com/package/walk).
 
 ## Licence
 
