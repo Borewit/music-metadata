@@ -24,7 +24,6 @@ export interface IElementType {
   readonly value?: DataType;
   readonly container?: { [id: number]: IElementType; };
   readonly multiple?: boolean;
-  readonly ignore?: boolean;
 }
 
 export interface IEbmlDoc {

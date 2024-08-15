@@ -14,10 +14,21 @@ export interface ILinkedElementType extends IElementType {
   readonly container?: { [id: number]: ILinkedElementType; };
 }
 
+export enum ParseAction {
+  ReadNext = 0,           // Continue reading the next elements
+  IgnoreElement = 2,      // Ignore (do not read) this element
+  SkipSiblings = 3,       // Skip all remaining elements at the same level
+  TerminateParsing = 4,   // Terminate the parsing process
+  SkipElement = 5         // Consider the element has read, assume position is at the next element
+}
+
 /**
  * @return true, to quit the parser
  */
-export type ElementListener = (dtdElement: ILinkedElementType, value: ValueType) => Promise<boolean>;
+export type IElementListener = {
+  startNext: (dtdElement: ILinkedElementType) => ParseAction,
+  elementValue: (dtdElement: ILinkedElementType, value: ValueType, offset: number) => Promise<void>
+}
 
 /**
  * Extensible Binary Meta Language (EBML) iterator
@@ -34,7 +45,6 @@ export class EbmlIterator {
 
   private ebmlMaxIDLength = 4;
   private ebmlMaxSizeLength = 8;
-  private cancel = false;
 
   /**
    * @param {ITokenizer} tokenizer Input
@@ -49,17 +59,17 @@ export class EbmlIterator {
     this.parserMap.set(DataType.float, e => this.readFloat(e));
   }
 
-  public async iterate(dtdElement: IElementType, posDone: number, listener: ElementListener): Promise<ITree> {
-    this.cancel = false;
+  public async iterate(dtdElement: IElementType, posDone: number, listener: IElementListener): Promise<ITree> {
     return this.parseContainer(linkParents(dtdElement), posDone, listener);
   }
 
-  private async parseContainer(dtdElement: ILinkedElementType, posDone: number, listener: ElementListener): Promise<ITree> {
+  private async parseContainer(dtdElement: ILinkedElementType, posDone: number, listener: IElementListener): Promise<ITree> {
     const tree: ITree = {};
-    while (this.tokenizer.position < posDone && !this.cancel) {
+    while (this.tokenizer.position < posDone) {
       let element: IHeader;
+      const elementPosition= this.tokenizer.position;
       try {
-        element = await this.readElement();
+       element = await this.readElement();
       } catch (error) {
         if (error instanceof EndOfStreamError) {
           break;
@@ -68,35 +78,53 @@ export class EbmlIterator {
       }
       const child = (dtdElement.container as { [id: number]: ILinkedElementType; })[element.id];
       if (child) {
-        if (child.ignore) {
-          debug(`Ignore element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container}`);
-          await this.tokenizer.ignore(element.len);
-        } else {
-          if (element.id === 0x1F43B675) {
-            // Hack to ignore remaining segment, when cluster element received
-            // await this.tokenizer.ignore(posDone - this.tokenizer.position);
-            // break;
-          }
-          debug(`Reading element: name=${getElementPath(child)}{id=0x${element.id}, container=${!!child.container}}`);
-          if (child.container) {
-            const res = await this.parseContainer(child, element.len >= 0 ? this.tokenizer.position + element.len : -1, listener);
-            if (child.multiple) {
-              if (!tree[child.name]) {
-                tree[child.name] = [];
+        const action = listener.startNext(child);
+        switch (action) {
+          case ParseAction.ReadNext: {
+            if (element.id === 0x1F43B675) {
+              // Hack to ignore remaining segment, when cluster element received
+              // await this.tokenizer.ignore(posDone - this.tokenizer.position);
+              // break;
+            }
+            debug(`Read element: name=${getElementPath(child)}{id=0x${element.id.toString(16)}, container=${!!child.container}} at position=${elementPosition}`);
+            if (child.container) {
+              const res = await this.parseContainer(child, element.len >= 0 ? this.tokenizer.position + element.len : -1, listener);
+              if (child.multiple) {
+                if (!tree[child.name]) {
+                  tree[child.name] = [];
+                }
+                (tree[child.name] as ITree[]).push(res);
+              } else {
+                tree[child.name] = res;
               }
-              (tree[child.name] as ITree[]).push(res);
+              await listener.elementValue(child, res, elementPosition);
             } else {
-              tree[child.name] = res;
+              const parser = this.parserMap.get(child.value as DataType);
+              if (typeof parser === 'function') {
+                const value = await parser(element);
+                tree[child.name] = value;
+                await listener.elementValue(child, value, elementPosition);
+              }
             }
-            this.cancel = await listener(child, res);
-          } else {
-            const parser = this.parserMap.get(child.value as DataType);
-            if (typeof parser === 'function') {
-              const value = await parser(element);
-              tree[child.name] = value;
-              this.cancel = await listener(child, value);
-            }
-          }
+          } break;
+
+          case ParseAction.SkipElement:
+            debug(`Go to next element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            break;
+
+          case ParseAction.IgnoreElement:
+            debug(`Ignore element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            await this.tokenizer.ignore(element.len);
+            break;
+
+          case ParseAction.SkipSiblings:
+            debug(`Ignore remaining container, at: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            await this.tokenizer.ignore(posDone - this.tokenizer.position);
+            break;
+
+          case ParseAction.TerminateParsing:
+            debug(`Terminate parsing at element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            return tree;
         }
       } else {
         switch (element.id) {
@@ -105,7 +133,7 @@ export class EbmlIterator {
             await this.tokenizer.ignore(element.len);
             break;
           default:
-            debug(`parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)}`);
+            debug(`parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)} at position=${elementPosition}`);
             this.padding += element.len;
             await this.tokenizer.ignore(element.len);
         }

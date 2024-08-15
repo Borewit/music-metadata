@@ -1,12 +1,12 @@
 import type { IEbmlDoc } from '../ebml/types.js';
 
-export interface ISeekHead {
-  id?: Uint8Array;
-  position?: number;
+export interface ISeek {
+  id: Uint8Array;
+  position: number;
 }
 
-export interface IMetaSeekInformation {
-  seekHeads: ISeekHead[];
+export interface ISeekHead {
+  seek: ISeek[];
 }
 
 export interface ISegmentInformation {
@@ -147,8 +147,8 @@ export interface IAttachments {
 }
 
 export interface IMatroskaSegment {
-  metaSeekInfo?: IMetaSeekInformation;
-  seekHeads?: ISeekHead[]
+  metaSeekInfo?: ISeekHead;
+  seekHeads?: ISeek[]
   info?: ISegmentInformation;
   tracks?: ITrackElement;
   tags?: ITags;
