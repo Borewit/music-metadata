@@ -27,15 +27,16 @@ export const matroskaDtd: IElementType = {
       name: 'segment',
       container: {
 
-        // Meta Seek Information
+        // Meta Seek Information (also known as MetaSeek)
         0x114d9b74: {
           name: 'seekHead',
           container: {
             0x4dbb: {
               name: 'seek',
+              multiple: true,
               container: {
-                0x53ab: {name: 'seekId', value: DataType.binary},
-                0x53ac: {name: 'seekPosition', value: DataType.uint}
+                0x53ab: {name: 'id', value: DataType.binary},
+                0x53ac: {name: 'position', value: DataType.uint}
               }
             }
           }
@@ -69,8 +70,8 @@ export const matroskaDtd: IElementType = {
             0x58d7: {name: 'silentTracks ', multiple: true},
             0xa7: {name: 'position', value: DataType.uid},
             0xab: {name: 'prevSize', value: DataType.uid},
-            0xa0: {name: 'blockGroup', ignore: true},
-            0xa3: {name: 'simpleBlock', ignore: true}
+            0xa0: {name: 'blockGroup'},
+            0xa3: {name: 'simpleBlock'}
           }
         },
 
@@ -174,7 +175,6 @@ export const matroskaDtd: IElementType = {
         // Cueing Data
         0x1c53bb6b: {
           name: 'cues',
-          ignore: true,
           container: {
             0xbb: {
               name: 'cuePoint',

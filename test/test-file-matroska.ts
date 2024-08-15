@@ -102,7 +102,7 @@ describe('Matroska formats', () => {
 
       const filePath = path.join(matroskaSamplePath, 'My Baby Boy.webm');
 
-      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      const {format, common} = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
 
@@ -181,17 +181,6 @@ describe('Matroska formats', () => {
     const {format} = await mm.parseFile(filePath);
     assert.strictEqual(format.container, 'EBML/webm', 'format.container');
     assert.isUndefined(format.duration, 'format.duration');
-  });
-
-  it('parse: 1 GB', async () => {
-
-    const mkvPath = 'C:\\Users\\Maarten Gerbrands\\Downloads\\lg-uhd-secret-garden.mkv';
-    const metadata = await mm.parseFile(mkvPath);
-    assert.isDefined(metadata, 'determine file-type');
-    assert.strictEqual(metadata.format.container, 'EBML/matroska', 'fileType.mime');
-    assert.strictEqual(metadata.format.codec, 'AC3', 'format.codec');
-    assert.strictEqual(metadata.format.sampleRate, 48000, 'metadata.format.sampleRate');
-    assert.approximately(metadata.format.duration, 184.69, 0.01, 'metadata.format.duration');
   });
 
 });
