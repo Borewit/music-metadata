@@ -9,40 +9,40 @@ import { DataType, type IElementType } from '../ebml/types.js';
 export const matroskaDtd: IElementType = {
   name: 'dtd',
   container: {
-    440786851: { // 5.1
+    0x1a45dfa3: { // 5.1
       name: 'ebml',
       container: {
-        17030: {name: 'ebmlVersion', value: DataType.uint}, // 5.1.1
-        17143: {name: 'ebmlReadVersion', value: DataType.uint}, // 5.1.2
-        17138: {name: 'ebmlMaxIDWidth', value: DataType.uint}, // 5.1.3
-        17139: {name: 'ebmlMaxSizeWidth', value: DataType.uint}, // 5.1.4
-        17026: {name: 'docType', value: DataType.string}, // 5.1.5
-        17031: {name: 'docTypeVersion', value: DataType.uint}, // 5.1.6
-        17029: {name: 'docTypeReadVersion', value: DataType.uint} // 5.1.7
+        0x4286: {name: 'ebmlVersion', value: DataType.uint}, // 5.1.1
+        0x42f7: {name: 'ebmlReadVersion', value: DataType.uint}, // 5.1.2
+        0x42f2: {name: 'ebmlMaxIDWidth', value: DataType.uint}, // 5.1.3
+        0x42f3: {name: 'ebmlMaxSizeWidth', value: DataType.uint}, // 5.1.4
+        0x4282: {name: 'docType', value: DataType.string}, // 5.1.5
+        0x4287: {name: 'docTypeVersion', value: DataType.uint}, // 5.1.6
+        0x4285: {name: 'docTypeReadVersion', value: DataType.uint} // 5.1.7
       }
     },
 
     // Matroska segments
-    408125543: {
+    0x18538067: {
       name: 'segment',
       container: {
 
         // Meta Seek Information
-        290298740: {
+        0x114d9b74: {
           name: 'seekHead',
           container: {
-            19899: {
+            0x4dbb: {
               name: 'seek',
               container: {
-                21419: {name: 'seekId', value: DataType.binary},
-                21420: {name: 'seekPosition', value: DataType.uint}
+                0x53ab: {name: 'seekId', value: DataType.binary},
+                0x53ac: {name: 'seekPosition', value: DataType.uint}
               }
             }
           }
         },
 
         // Segment Information
-        357149030: {
+        0x1549a966: {
           name: 'info',
           container: {
             0x73a4: {name: 'uid', value: DataType.uid},
