@@ -4,7 +4,7 @@ import type { ITokenizer } from 'strtok3';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { matroskaDtd } from './MatroskaDtd.js';
-import { type IAttachments, type ISegmentInformation, type ITags, type ITrackElement, type ITrackEntry, TargetType, TrackType } from './types.js';
+import { type IAttachments, type ISeekHead, type ISegmentInformation, type ITags, type ITrackElement, type ITrackEntry, TargetType, TrackType } from './types.js';
 
 import type { AnyTagValue, IOptions, ITrackInfo } from '../type.js';
 import type { ITokenParser } from '../ParserFactory.js';
@@ -21,6 +21,14 @@ const debug = initDebug('music-metadata:parser:matroska');
  */
 export class MatroskaParser extends BasicParser {
 
+  private seekHead: ISeekHead | undefined;
+  private seekHeadOffset = 0;
+  /**
+   * Use index to skip multiple segment/cluster elements at once.
+   * Significant performance impact
+   */
+  private flagUseIndexToSkipClusters = false;
+
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
    * @param {INativeMetadataCollector} metadata Output
@@ -29,6 +37,7 @@ export class MatroskaParser extends BasicParser {
    */
   public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
     super.init(metadata, tokenizer, options);
+    this.flagUseIndexToSkipClusters = options.mkvUseIndex ?? false;
     return this;
   }
 
@@ -46,16 +55,31 @@ export class MatroskaParser extends BasicParser {
             debug(`Skip element: name=${element.name}, id=0x${element.id.toString(16)}`);
             return ParseAction.IgnoreElement;
           case 0x1f43b675: // cluster
+            if (this.flagUseIndexToSkipClusters && this.seekHead) {
+              const index = this.seekHead.seek.find(index => index.position + this.seekHeadOffset > this.tokenizer.position);
+              if (index) {
+                // Go to next index position
+                const ignoreSize = index.position + this.seekHeadOffset - this.tokenizer.position;
+                debug(`Use index to go to next position, ignoring ${ignoreSize} bytes`);
+                this.tokenizer.ignore(ignoreSize);
+                return ParseAction.SkipElement;
+              }
+            }
             return ParseAction.IgnoreElement;
           default:
             return ParseAction.ReadNext;
         }
       },
-      elementValue: async (element, value) => {
+      elementValue: async (element, value, offset) => {
         debug(`Received: name=${element.name}, value=${value}`);
         switch (element.id) {
           case 0x4282: // docType
             this.metadata.setFormat('container', `EBML/${value}`);
+            break;
+
+          case 0x114d9b74:
+            this.seekHead = value as unknown as ISeekHead
+            this.seekHeadOffset = offset;
             break;
 
           case 0x1549a966: { // Info (Segment Information)

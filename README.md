@@ -338,7 +338,11 @@ import { parseFile, selectCover } from 'music-metadata';
 - `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
 - `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
 - `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
-- `includeChapters` default: `false`, if set to `true`, it will parse chapters (currently only MP4 files). _experimental functionality_
+- `mkvUseIndex` default: `false`, if set to `true`, in Matroska based files, use the _SeekHead_ element index to skip _segment/cluster_ elements.. 
+  _experimental functionality_
+  Can have a significant performance impact if enabled.
+  Possible side effect can be that certain metadata maybe skipped, depending on the index.
+  If there is no _SeekHead_ element present in the Matroska file, this flag has no effect.
 
 Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
 To enforce parsing the entire file if needed you should set `duration` to `true`.

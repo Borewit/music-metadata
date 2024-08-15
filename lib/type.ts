@@ -625,6 +625,16 @@ export interface IOptions {
    * Set observer for async callbacks to common or format.
    */
   observer?: Observer;
+
+  /**
+   * In Matroska based files, use the  _SeekHead_ element index to skip _segment/cluster_ elements.
+   * By default, disabled
+   * Can have a significant performance impact if enabled.
+   * Possible side effect can be that certain metadata maybe skipped, depending on the index.
+   * If there is no _SeekHead_ element present in the Matroska file, this flag has no effect
+   * Ref: https://www.matroska.org/technical/diagram.html
+   */
+  mkvUseIndex?: boolean;
 }
 
 export interface IApeHeader extends IOptions {
