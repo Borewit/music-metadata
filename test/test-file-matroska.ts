@@ -102,7 +102,7 @@ describe('Matroska formats', () => {
 
       const filePath = path.join(matroskaSamplePath, 'My Baby Boy.webm');
 
-      const {format, common, native} = await mm.parseFile(filePath, {duration: true});
+      const {format, common} = await mm.parseFile(filePath, {duration: true});
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
 
@@ -116,7 +116,7 @@ describe('Matroska formats', () => {
       assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
 
-    it('shoud ignore trailing null characters', async () => {
+    it('should ignore trailing null characters', async () => {
       const webmPath = path.join(matroskaSamplePath, 'fixture-null.webm');
       const {format} = await mm.parseFile(webmPath, {duration: false});
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
@@ -175,14 +175,12 @@ describe('Matroska formats', () => {
   });
 
   // https://github.com/Borewit/music-metadata/issues/1463
-  it('Handle Matroska file without duration', () => {
+  it('Handle Matroska file without duration', async () => {
 
-    it('sample"', async () => {
-      const filePath = path.join(matroskaSamplePath, 'no-duration.webm');
-      const {format} = await mm.parseFile(filePath);
-      assert.isNotNaN(format.duration, 'Duration should not be NaN');
-      assert.isUndefined(format.duration, 'Duration is not defined');
-    });
+    const filePath = path.join(matroskaSamplePath, 'no-duration.webm');
+    const {format} = await mm.parseFile(filePath);
+    assert.strictEqual(format.container, 'EBML/webm', 'format.container');
+    assert.isUndefined(format.duration, 'format.duration');
   });
 
 });
