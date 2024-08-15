@@ -40,11 +40,11 @@ describe('Matroska formats', () => {
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     });
 
-    it('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', async () => {
+    async function parsePoxfile(options?: mm.IOptions) {
 
       const mkaPath = path.join(matroskaSamplePath, '02 - Poxfil - Solid Ground (5 sec).mka');
 
-      const {format, common} = await mm.parseFile(mkaPath, {duration: false});
+      const {format, common} = await mm.parseFile(mkaPath, options);
 
       // format chunk information
       assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
@@ -54,6 +54,14 @@ describe('Matroska formats', () => {
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
 
       verifyTrackSolidGround(common);
+    }
+
+    it('parse: "02 - Poxfil - Solid Ground (5 sec).mka"', () => {
+      return parsePoxfile();
+    });
+
+    it('parse: "02 - Poxfil - Solid Ground (5 sec).mka" with `mkvUseIndex` flag', () => {
+      return parsePoxfile({mkvUseIndex: true});
     });
   });
 
@@ -116,7 +124,7 @@ describe('Matroska formats', () => {
       assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
 
-    it('should ignore trailing null characters', async () => {
+    it('shoud ignore trailing null characters', async () => {
       const webmPath = path.join(matroskaSamplePath, 'fixture-null.webm');
       const {format} = await mm.parseFile(webmPath, {duration: false});
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
@@ -127,11 +135,10 @@ describe('Matroska formats', () => {
   // https://github.com/Borewit/music-metadata/issues/384
   describe('Multiple audio tracks', () => {
 
-    it('parse: "matroska-test-w1-test5-short.mkv"', async () => {
-
+    async function parse(options?: mm.IOptions) {
       const mkvPath = path.join(matroskaSamplePath, 'matroska-test-w1-test5-short.mkv');
 
-      const {format, common} = await mm.parseFile(mkvPath);
+      const {format, common} = await mm.parseFile(mkvPath, options);
 
       assert.deepEqual(format.container, 'EBML/matroska', 'format.container');
       assert.deepEqual(format.tagTypes, [ 'matroska' ], 'format.tagTypes');
@@ -143,6 +150,14 @@ describe('Matroska formats', () => {
 
       assert.deepEqual(common.title, 'Elephant Dreams', 'common.title');
       assert.deepEqual(common.album, 'Matroska Test Files - Wave 1', 'common.album');
+    }
+
+    it('parse: "matroska-test-w1-test5-short.mkv"', () => {
+      return parse();
+    });
+
+    it('parse: "matroska-test-w1-test5-short.mkv `mkvUseIndex` flag', () => {
+      return parse({mkvUseIndex: true});
     });
 
   });
@@ -155,6 +170,13 @@ describe('Matroska formats', () => {
 
     it('Parse stream', async () => {
       const {format} = await mm.parseFile(mkvPath);
+      assert.strictEqual(format.container, 'EBML/webm', 'format.container');
+      assert.strictEqual(format.codec, 'OPUS', 'format.codec');
+      assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
+    });
+
+    it('Parse stream with `mkvUseIndex` flag', async () => {
+      const {format} = await mm.parseFile(mkvPath, {mkvUseIndex: true});
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
       assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
