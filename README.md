@@ -12,11 +12,11 @@
 # music-metadata
 
 Key features:
-* **Comprehensive Format Support**: Supports popular audio formats like MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
-* **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
-* **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
-* **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
-* **Cross-Platform**: Works in both [Node.js](https://nodejs.org/) and browser environments with the help of bundlers like [Webpack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/introduction/).
+- **Comprehensive Format Support**: Supports popular audio formats like MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
+- **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
+- **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
+- **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
+- **Cross-Platform**: Works in both [Node.js](https://nodejs.org/) and browser environments with the help of bundlers like [Webpack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/introduction/).
 
 The [`music-metadata`](https://github.com/Borewit/music-metadata) module is ideal for developers working on media applications, music players, or any project that requires access to detailed audio file metadata.
 
@@ -96,43 +96,6 @@ Support for encoding / format details:
 - [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer/master/src/assets/icon/audio-tag-analyzer.svg" width="40">Audio Tag Analyzer](https://audio-tag-analyzer.netlify.app/)
 - [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
 
-
-## Dependencies
-
-Dependency diagram:
-```mermaid
-graph TD;
-    MMN("music-metadata (Node.js entry point)")-->MMP
-    MMN-->FTN
-    MMP("music-metadata (primary entry point)")-->S(strtok3)
-    MMP-->TY(token-types)
-    MMP-->FTP
-    MMP-->UAE
-    FTN("file-type (Node.js entry point)")-->FTP
-    FTP("file-type (primary entry point)")-->S
-    S(strtok3)-->P(peek-readable)
-    S(strtok3)-->TO("@tokenizer/token")
-    TY(token-types)-->TO
-    TY-->IE("ieee754")
-    FTP-->TY
-    NS("node:stream")
-    FTN-->NS
-    FTP-->UAE(uint8array-extras)
-    style NS fill:#F88,stroke:#A44
-    style IE fill:#CCC,stroke:#888
-    style FTN fill:#FAA,stroke:#A44
-    style MMN fill:#FAA,stroke:#A44
-```
-
-Dependency list:
-- [tokenizer-token](https://github.com/Borewit/tokenizer-token)
-- [strtok3](https://github.com/Borewit/strtok3)
-- [token-types](https://github.com/Borewit/token-types)
-- [file-type](https://github.com/sindresorhus/file-type)
-- [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
-- [peek-readable](https://github.com/Borewit/peek-readable)
-- [readable-web-to-node-stream](https://github.com/Borewit/readable-web-to-node-stream)
-
 ## Usage
 
 ### Installation
@@ -146,146 +109,401 @@ or using [yarn](https://yarnpkg.com/):
 yarn add music-metadata
 ```
 
-### Import music-metadata
+## API Documentation
 
-Import music-metadata:
-```JavaScript
-import { parseFile } from 'music-metadata';
-```
-Import the methods you need, like `parseFile` in this example.
+### Overview
 
-### Module Functions
+**Node.js specific** functions to read an audio file or stream:
+1. **File Parsing**: Parse audio files directly from the filesystem using the [parseFile function](#parsefile-function)
+1. **Stream Parsing**: Parse audio metadata from a Node.js [Readable stream](https://nodejs.org/api/stream.html#class-streamreadable) using the [parseStream function](#parsewebstream-function).
+
+**Cross-platform** functions available to read an audio file or stream:
 
 There are multiple ways to parse (read) audio tracks:
-1. In Node.js, audio (music) files can be parsed using direct file access using the [parseFile function](#parsefile-function)
-1. By parsing from a Web stream using the [parseStream function](#parsewebstream-function).
-1. By parsing a (Web API) [Blob](https://developer.mozilla.org/docs/Web/API/Blob) or a [File](https://developer.mozilla.org/docs/Web/API/File) using the [parseBlob function](#parseblob-function).
-1. From a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)  using the [parseBuffer function](#parsebuffer-function).
-1. Via your own, or a third-party [strtok3](https://github.com/Borewit/strtok3) ITokenizer using the [parseFromTokenizer function](#parsefromtokenizer-function).
+1. **Web Stream Parsing**: Parse audio data from a web-compatible [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream) using the [parseWebStream function](#parsewebstream-function).
+1. **Blob Parsing**: Parse audio metadata from a (Web API) [Blob](https://developer.mozilla.org/docs/Web/API/Blob) or [File](https://developer.mozilla.org/docs/Web/API/File) using the [parseBlob function](#parseblob-function).
+1. **Buffer Parsing**: Parse audio metadata from a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) or [Buffer](https://nodejs.org/api/buffer.html) using the [parseBuffer function](#parsebuffer-function).
+1. **Tokenizer Parsing:** Use a custom or third-party [strtok3](https://github.com/Borewit/strtok3) `ITokenizer` to parse using the [parseFromTokenizer function](#parsefromtokenizer-function).
 
-Direct file access tends to be a little faster, because it can 'jump' to various parts in the file without being obliged to read intermediate data.
+> [!NOTE]
+> Direct file access in Node.js is generally faster because it can 'jump' to various parts of the file without reading intermediate data.
 
-#### parseFile function
+### Node.js specific function
+These functions are tailored for Node.js environments and leverage Node.js-specific APIs,
+making them incompatible with browser-based JavaScript engines.
 
-This method can only be used if the JavaScript engine is Node.js.
-To read from a [File](https://developer.mozilla.org/docs/Web/API/File), 
-please see [fileTypeFromBlob(blob)](#parseblob-function).
+#### `parseFile` function
 
-Parses the specified file (`filePath`) and returns a promise with the metadata result (`IAudioMetadata`).
+The `parseFile` function is intended for extracting metadata from audio files on the local filesystem in a Node.js environment.
+It reads the specified file, parses its audio metadata, and returns a promise that resolves with this information.
 
+##### Syntax
 ```ts
-parseFile(filePath: string, opts: IOptions = {}): Promise<IAudioMetadata>`
+parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata>
 ```
 
-Example:
+##### Parameters
+
+- `filePath`: `string`
+
+  The path to the media file from which metadata should be extracted.
+  This should be a valid path to an audio file on the local filesystem.
+
+- `options`: [IOptions](#ioptions-interface) (optional)
+
+  An optional configuration object that allows customization of the parsing process.
+  These options can include whether to calculate the file's duration, skip embedded cover art, 
+  or other parsing behaviors.
+
+##### Returns
+
+- `Promise<IAudioMetadata>`: 
+
+  A promise that resolves to an IAudioMetadata object containing metadata about the audio file.
+  The metadata includes details such as the file format, codec, duration, bit rate, and any embedded tags like album, artist, or track information.
+
+##### Usage Notes
+
+- This function is **Node.js-only** and relies on Node.js-specific APIs to access the filesystem.
+
+- For browser environments, consider using the [parseBlob](#parseblob-function) to parse [File object](https://developer.mozilla.org/en-US/docs/Web/API/File) objects.
+
+##### Example:
+
+The following example demonstrates how to use the parseFile function to read metadata from an audio file:
 ```js
 import { parseFile } from 'music-metadata';
 import { inspect } from 'util';
 
 (async () => {
   try {
-    const metadata = await parseFile('../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
+    const filePath = '../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3';
+    const metadata = await parseFile(filePath);
+
+    // Output the parsed metadata to the console in a readable format
     console.log(inspect(metadata, { showHidden: false, depth: null }));
   } catch (error) {
-    console.error(error.message);
+    console.error('Error parsing metadata:', error.message);
   }
 })();
 ```
 
-#### parseStream function
+#### `parseStream` function
 
-_Only available using a Node.js JavaScript engines._
+The parseStream function is used to parse metadata from an audio track provided as a Node.js [`Readable`](https://nodejs.org/api/stream.html#class-streamreadable) stream.
+This is particularly useful for processing audio data that is being streamed or piped from another source, such as a web server or file system.
 
-Parses the provided audio stream for metadata.
-The stream should be of type [Node.js Readable](https://nodejs.org/api/stream.html#class-streamreadable).
-It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
-An extension (e.g.: `.mp3`), filename or path will also work.
-If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
-
+##### Syntax:
 ```ts
-parseStream(stream: Stream.Readable, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
+parseStream(stream: Readable, fileInfo?: IFileInfo | string, options?: IOptions): Promise<IAudioMetadata>
 ```
 
-Example:
+##### Parameters:
+
+- `stream`: `Readable`:
+  
+   The Node.js [Readable](https://nodejs.org/api/stream.html#class-streamreadable) stream from which the audio data is read.
+   This stream should provide the raw audio data to be analyzed.
+
+- `fileInfo`: `IFileInfo` (optional)
+
+  An object containing file-related information or a string representing the MIME-type of the audio stream.
+  The fileInfo parameter can help the parser to correctly identify the audio format and may include:
+
+  - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
+    
+     If provided, it is assumed the streamed file content is to be the MIME-type. 
+     If not provided, the parser will attempt to determine the format based on the content of the stream.
+  
+  - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
+  
+  - `path`: A string representing the file path or filename, which can also assist in determining the format.
+
+- `options`: `IOptions` (optional)
+  
+   An optional object containing additional parsing options.
+   These options allow you to customize the parsing process,
+   such as whether to calculate the duration or skip cover art extraction.
+
+##### Returns
+
+- `Promise<IAudioMetadata>`:
+ 
+  A promise that resolves to an `IAudioMetadata` object containing detailed metadata about the audio stream.
+  This metadata includes information about the format, codec, duration, bitrate, and any embedded tags such as artist, album, or track information.
+
+##### Usage Notes
+- This function is only available in Node.js environments, as it relies on the [Node.js stream API](https://nodejs.org/api/stream.html).
+
+##### Example:
+
+The following example demonstrates how to use the `parseStream` function to read metadata from an audio stream:
 ```js
 import { parseStream } from 'music-metadata';
+import { createReadStream } from 'fs';
 
 (async () => {
   try {
-    const metadata = await parseStream(someReadStream, {mimeType: 'audio/mpeg', size: 26838});
+    // Create a readable stream from a file
+    const audioStream = createReadStream('path/to/audio/file.mp3');
+
+    // Parse the metadata from the stream
+    const metadata = await parseStream(audioStream, { mimeType: 'audio/mpeg'});
+
+    // Log the parsed metadata
     console.log(metadata);
   } catch (error) {
-    console.error(error.message);
+    console.error('Error parsing metadata:', error.message);
+  }
+})();
+
+```
+
+### Cross-platform functions
+These functions are designed to be cross-platform,
+meaning it can be used in both Node.js and web browsers.
+
+#### `parseWebStream` function
+
+The parseWebStream function is used to extract metadata from an audio track provided as a web-compatible ReadableStream.
+This function is ideal for applications running in web environments, such as browsers,
+where audio data is streamed over the network or read from other web-based sources.
+
+
+##### Syntax
+```ts
+parseWebStream(webStream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | string, options?: IOptions): Promise<IAudioMetadata>
+```
+
+##### Parameters
+
+- `webStream`: `ReadableStream<Uint8Array>`
+
+  A [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream) that provides the audio data to be parsed.
+  This stream should emit Uint8Array chunks, representing the raw audio data.
+
+- `fileInfo`: `IFileInfo` (optional)
+
+  An object containing file-related information or a string representing the MIME-type of the audio stream.
+  The fileInfo parameter can help the parser to correctly identify the audio format and may include:
+
+    - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
+
+      If provided, it is assumed the streamed file content is to be the MIME-type.
+      If not provided, the parser will attempt to determine the format based on the content of the stream.
+
+    - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
+
+    - `path`: A string representing the file path or filename, which can also assist in determining the format.
+
+- `options`: `IOptions` (optional)
+
+  An optional object containing additional parsing options.
+  These options allow you to customize the parsing process,
+  such as whether to calculate the duration or skip cover art extraction.
+
+##### Returns
+
+- `Promise<IAudioMetadata>`:
+
+  A promise that resolves to an `IAudioMetadata` object containing detailed metadata about the audio stream.
+  This metadata includes information about the format, codec, duration, bitrate, and any embedded tags such as artist, album, or track information.
+
+##### Example
+Here’s an example of how to use the `parseWebStream` function to extract metadata from an audio stream in a web application:
+
+```js
+import { parseWebStream } from 'music-metadata';
+
+(async () => {
+try {
+// Assuming you have a ReadableStream of an audio file
+const response = await fetch('https://example.com/path/to/audio/file.mp3');
+const webStream = response.body;
+
+    // Parse the metadata from the web stream
+    const metadata = await parseWebStream(webStream, 'audio/mpeg');
+
+    // Log the parsed metadata
+    console.log(metadata);
+} catch (error) {
+console.error('Error parsing metadata:', error.message);
+}
+})();
+```
+
+The example uses the [`fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to retrieve an audio file from a URL.
+The `response.body` provides a [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream) that is then passed to `parseWebStream`.
+
+#### `parseBlob` function
+
+Parses metadata from an audio file represented as a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob). 
+This function is suitable for use in environments that support the ReadableStreamBYOBReader, which is **available in Node.js 20** and above.
+
+##### Syntax
+```ts
+parseBlob(blob: Blob, options?: IOptions = {}): Promise<IAudioMetadata>
+```
+
+##### Parameters
+ 
+- `blob`: [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
+  
+   The Blob object containing the audio data to be parsed.
+   This can be a file or any binary data. If the Blob is an instance of File, its name will be used as the file path in the metadata.
+
+- `options`: [IOptions](#ioptions-interface) (optional)
+  
+  An optional configuration object that specifies parsing options.
+
+##### Returns 
+
+- `Promise<IAudioMetadata>`:
+
+  A promise that resolves to the metadata of the audio file.
+
+##### Example
+
+```js
+import { parseBlob } from 'music-metadata';
+
+(async () => {
+  const fileInput = document.querySelector('input[type="file"]');
+  const file = fileInput.files[0];
+  
+  try {
+    const metadata = await parseBlob(file);
+    console.log(metadata);
+  } catch (error) {
+    console.error('Error parsing metadata:', error.message);
   }
 })();
 ```
 
-#### parseWebStream function
+#### `parseBuffer` function
 
-Parses the provided audio web stream for metadata.
-The stream should be of type [ReadableStream<Uint8Array>](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream).
-It is recommended to provide the corresponding [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types).
-An extension (e.g.: `.mp3`), filename or path will also work.
-If the MIME-type or filename (via `fileInfo.path`) is not provided, or not understood, music-metadata will try to derive the type from the content.
+Parses metadata from an audio file where the audio data is held in a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) or [Buffer](https://nodejs.org/api/buffer.html).
+This function is particularly useful when you already have audio data in memory.
 
-```ts
-parseWebStream(stream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>`
-```
-
-#### parseBlob function
-
-_This method can only be used if with a Node.js JavaScript engine._
-
-Parse an audio file from a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) or [File](https://developer.mozilla.org/en-US/docs/Web/API/File).
-
-```js
-const musicMetadata = require('music-metadata');
-
-let blob;
-
-musicMetadata.parseBlob(blob).then(metadata => {
-    // metadata has all the metadata found in the blob or file
-  });
-```
-Or with async/await if you prefer:
-```js
-(async () => {
-  let blob; // File or Blob
-
-  const metadata = await musicMetadata.parseBlob(blob);
-  // metadata has all the metadata found in the blob or file
-});
-```
-
-#### parseBuffer function
-
-Parse metadata from an audio file, where the audio file is held in a [Buffer](https://nodejs.org/api/buffer.html).
-
+##### Syntax
 ```ts
 parseBuffer(buffer: Uint8Array, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
 ```
 
-Example:
+##### Parameters
+- `uint8Array`: [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)
+
+  A [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) containing the audio data to be parsed.
+
+- `fileInfo`: `IFileInfo` | `string` (optional)
+  
+  An object containing file information such as mimeType and size.
+  Alternatively, you can pass a MIME-type string directly.
+  This helps the parser understand the format of the audio data.
+
+- `options`: [IOptions](#ioptions-interface) (optional)
+
+  An optional configuration object that specifies parsing options.
+
+##### Returns
+- `Promise<IAudioMetadata>`:
+  
+  A promise that resolves to the metadata of the audio file.
+
+
+##### Example
+
 ```js
 import { parseBuffer } from 'music-metadata';
+import fs from 'fs';
 
 (async () => {
+  const buffer = fs.readFileSync('path/to/audio/file.mp3');
+
   try {
-    const metadata = await parseBuffer(someBuffer, 'audio/mpeg');
+    const metadata = await parseBuffer(buffer, { mimeType: 'audio/mpeg' });
     console.log(metadata);
   } catch (error) {
-    console.error(error.message);
+    console.error('Error parsing metadata:', error.message);
   }
 })();
 ```
 
-#### parseFromTokenizer function
-This is a low level function, reading from a [strtok3](https://github.com/Borewit/strtok3) ITokenizer interface.
+#### `parseFromTokenizer` function
+Parses metadata from an audio source that implements the [strtok3](https://github.com/Borewit/strtok3) ITokenizer interface.
+This is a low-level function that provides flexibility for advanced use cases,
+such as parsing metadata from streaming audio or custom data sources.
 
 This also enables special read modules like:
 - [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
 
-#### orderTags function
+##### Syntax
+```ts
+parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): Promise<IAudioMetadata>
+```
+
+##### Parameters
+- `tokenizer: ITokenizer`
+
+  An instance of an ITokenizer that provides access to the audio data.
+  The tokenizer abstracts the reading process, enabling support for various types of sources, including streams, buffers, or custom data readers.
+
+- `options`: [IOptions](#ioptions-interface) (optional)
+
+  An optional configuration object that specifies parsing options.
+
+##### Returns
+- `Promise<IAudioMetadata>`:
+
+  A promise that resolves to the metadata of the audio source, including information like the title, artist, album, and more.
+
+
+##### Example
+````js
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import { S3Client } from '@aws-sdk/client-s3';
+import { makeTokenizer } from '@tokenizer/s3';
+import { parseFromTokenizer as mmParseFromTokenizer } from 'music-metadata';
+
+// Configure the S3 client
+const s3 = new S3Client({
+  region: 'eu-west-2',
+  credentials: fromNodeProviderChain(),
+});
+
+// Helper function to create a tokenizer for S3 objects
+async function makeS3TestDataTokenizer(key, options) {
+  return await makeTokenizer(s3, {
+    Bucket: 'music-metadata',
+    Key: key,
+  }, options);
+}
+
+// Function to read and log metadata from an S3 object
+async function readMetadata() {
+  try {
+    // Create a tokenizer for the specified S3 object
+    const tokenizer = await makeS3TestDataTokenizer('path/to/audio/file.mp3', { disableChunked: false });
+
+    // Parse the metadata from the tokenizer
+    const metadata = await mmParseFromTokenizer(tokenizer);
+
+    // Log the retrieved metadata
+    console.log(metadata);
+  } catch (error) {
+    console.error('Error parsing metadata:', error.message);
+  }
+}
+
+// Execute the metadata reading function
+readMetadata();
+````
+##### Additional Resources
+- [strtok3](https://github.com/Borewit/strtok3) - Learn more about the `ITokenizer` interface and how to implement it for various use cases.
+- [AWS SDK for JavaScript](https://aws.amazon.com/sdk-for-javascript/) - Documentation on using the AWS SDK to interact with S3 and other AWS services.
+- [@tokenizer/s3](https://github.com/Borewit/tokenizer-s3) - Example of `ITokenizer` implementation.
+
+#### `orderTags` function
 
 Utility to Converts the native tags to a dictionary index on the tag identifier
 
@@ -308,14 +526,14 @@ import { inspect } from 'util';
 })();
 ```
 
-#### ratingToStars function
+#### `ratingToStars` function
 
    Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
 
    ```ts
    ratingToStars(rating: number): number
    ```
-#### selectCover function
+#### `selectCover` function
 
 Select cover image based on image type field, otherwise the first picture in file.
 
@@ -333,21 +551,33 @@ import { parseFile, selectCover } from 'music-metadata';
 )();
  ```
 
-### Options
-- `duration`: default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
-- `observer: (update: MetadataEvent) => void;`: Will be called after each change to `common` (generic) tag, or `format` properties.
-- `skipCovers`: default: `false`, if set to `true`, it will not return embedded cover-art (images).
-- `skipPostHeaders? boolean` default: `false`, if set to `true`, it will not search all the entire track for additional headers. Only recommenced to use in combination with streams.
-- `mkvUseIndex` default: `false`, if set to `true`, in Matroska based files, use the _SeekHead_ element index to skip _segment/cluster_ elements.. 
-  _experimental functionality_
-  Can have a significant performance impact if enabled.
-  Possible side effect can be that certain metadata maybe skipped, depending on the index.
-  If there is no _SeekHead_ element present in the Matroska file, this flag has no effect.
+### `IOptions` Interface
+- `duration`: `boolean` (default: `false`)
 
-Although in most cases duration is included, in some cases it requires `music-metadata` parsing the entire file.
-To enforce parsing the entire file if needed you should set `duration` to `true`.
+  If set to `true`, the parser will analyze the entire media file, if necessary, to determine its duration.
+  This option ensures accurate duration calculation but may increase processing time for large files.
 
-### Metadata result
+- `observer`: `(update: MetadataEvent) => void;`:
+
+  A callback function that is invoked whenever there is an update to the common (generic) tag or format properties during parsing.
+  This allows for real-time updates on metadata changes.
+ 
+- `skipCovers`: `boolean` (default: `false`)
+  
+  If set to `true`, the parser will skip the extraction of embedded cover art (images) from the media file.
+  This can be useful to avoid processing unnecessary data if cover images are not required.
+ 
+- `mkvUseIndex`: `boolean` (default: `false`)
+  
+  If set to true, the parser will use the SeekHead element index to skip segment/cluster elements in Matroska-based files. This is an experimental feature and can significantly impact performance. It may also result in some metadata being skipped if it is not indexed.
+  If the SeekHead element is absent in the Matroska file, this flag has no effect.
+
+> [!NOTE]
+> - The `duration` option is typically included in most cases, but setting it to true ensures that the entire file is parsed if necessary to get an accurate duration.
+> - Using `mkvUseIndex` can improve performance in Matroska files, but be aware of potential side effects, such as missing metadata due to skipped elements.
+
+
+### `IAudioMetadata` interface
 
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
 - [`metadata.format`](#metadataformat) Audio format information
@@ -471,6 +701,42 @@ import {uint8ArrayToBase64} from 'uint8array-extras';
 img.src = `data:${picture.format};base64,${uint8ArrayToBase64(picture.data)}`;
 ```
 
+## Dependencies
+
+Dependency diagram:
+```mermaid
+graph TD;
+    MMN("music-metadata (Node.js entry point)")-->MMP
+    MMN-->FTN
+    MMP("music-metadata (primary entry point)")-->S(strtok3)
+    MMP-->TY(token-types)
+    MMP-->FTP
+    MMP-->UAE
+    FTN("file-type (Node.js entry point)")-->FTP
+    FTP("file-type (primary entry point)")-->S
+    S(strtok3)-->P(peek-readable)
+    S(strtok3)-->TO("@tokenizer/token")
+    TY(token-types)-->TO
+    TY-->IE("ieee754")
+    FTP-->TY
+    NS("node:stream")
+    FTN-->NS
+    FTP-->UAE(uint8array-extras)
+    style NS fill:#F88,stroke:#A44
+    style IE fill:#CCC,stroke:#888
+    style FTN fill:#FAA,stroke:#A44
+    style MMN fill:#FAA,stroke:#A44
+```
+
+Dependency list:
+- [tokenizer-token](https://github.com/Borewit/tokenizer-token)
+- [strtok3](https://github.com/Borewit/strtok3)
+- [token-types](https://github.com/Borewit/token-types)
+- [file-type](https://github.com/sindresorhus/file-type)
+- [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
+- [peek-readable](https://github.com/Borewit/peek-readable)
+
+
 ## Frequently Asked Questions
 
 1.  How can I traverse (a long) list of files?
@@ -517,16 +783,11 @@ img.src = `data:${picture.format};base64,${uint8ArrayToBase64(picture.data)}`;
        }
        ```
 
-    1. Use a specialized module to traverse files
-
-       There are specialized modules to traversing (walking) files and directory,
-       like [walk](https://www.npmjs.com/package/walk).
-
 ## Licence
 
 The MIT License (MIT)
 
-Copyright © 2022 Borewit
+Copyright © 2024 Borewit
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
