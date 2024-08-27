@@ -379,10 +379,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chai@npm:*, @types/chai@npm:^4.3.16":
+"@types/chai@npm:*":
   version: 4.3.17
   resolution: "@types/chai@npm:4.3.17"
   checksum: 10c0/322a74489cdfde9c301b593d086c539584924c4c92689a858e0930708895a5ab229c31c64ac26b137615ef3ffbff1866851c280c093e07b3d3de05983d3793e0
+  languageName: node
+  linkType: hard
+
+"@types/chai@npm:^4.3.18":
+  version: 4.3.18
+  resolution: "@types/chai@npm:4.3.18"
+  checksum: 10c0/e6b86d8c32b1d2bce1e62b8c22a29182c4e5866ede4a93cc862386d881e11bfd2ef20b12fc4ef5fa1202fe21f15a11b43738e14691779c3dcb493bd40494b232
   languageName: node
   linkType: hard
 
@@ -2592,7 +2599,7 @@ __metadata:
   dependencies:
     "@biomejs/biome": "npm:1.8.3"
     "@tokenizer/token": "npm:^0.3.0"
-    "@types/chai": "npm:^4.3.16"
+    "@types/chai": "npm:^4.3.18"
     "@types/chai-as-promised": "npm:^7.1.8"
     "@types/content-type": "npm:^1.1.8"
     "@types/debug": "npm:^4.1.12"
