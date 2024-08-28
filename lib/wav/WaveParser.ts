@@ -10,6 +10,7 @@ import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { BroadcastAudioExtensionChunk, type IBroadcastAudioExtensionChunk } from './BwfChunk.js';
 import type { AnyTagValue } from '../type.js';
+import { WaveContentError } from './WaveChunk.js';
 
 const debug = initDebug('music-metadata:parser:RIFF');
 
@@ -50,7 +51,7 @@ export class WaveParser extends BasicParser {
       case 'WAVE':
         return this.readWaveChunk(chunkSize - FourCcToken.len);
       default:
-        throw new Error(`Unsupported RIFF format: RIFF/${type}`);
+        throw new WaveContentError(`Unsupported RIFF format: RIFF/${type}`);
     }
   }
 
@@ -184,7 +185,7 @@ export class WaveParser extends BasicParser {
     }
 
     if (chunkSize !== 0) {
-      throw new Error(`Illegal remaining size: ${chunkSize}`);
+      throw new WaveContentError(`Illegal remaining size: ${chunkSize}`);
     }
   }
 

@@ -1,5 +1,6 @@
 import { StringType } from 'token-types';
 import type { IRatio } from '../type.js';
+import { FieldDecodingError } from '../ParseError.js';
 
 export type StringEncoding =
   'ascii' // Use 'utf-8' or latin1 instead
@@ -45,7 +46,7 @@ export function trimRightNull(x: string): string {
 
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
-  if ((l & 1) !== 0) throw new Error('Buffer length must be even');
+  if ((l & 1) !== 0) throw new FieldDecodingError('Buffer length must be even');
   for (let i = 0; i < l; i += 2) {
     const a = uint8Array[i];
     uint8Array[i] = uint8Array[i + 1];
@@ -53,7 +54,6 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   }
   return uint8Array;
 }
-
 
 /**
  * Decode string
@@ -66,7 +66,7 @@ export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): 
   }if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
     // BOM, indicating big endian decoding
     if ((uint8Array.length & 1) !== 0)
-      throw new Error('Expected even number of octets for 16-bit unicode string');
+      throw new FieldDecodingError('Expected even number of octets for 16-bit unicode string');
     return decodeString(swapBytes(uint8Array), encoding);
   }
   return new StringType(uint8Array.length, encoding).get(uint8Array, 0);

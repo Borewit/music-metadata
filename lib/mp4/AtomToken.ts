@@ -4,8 +4,12 @@ import initDebug from 'debug';
 import { FourCcToken } from '../common/FourCC.js';
 
 import type { IToken, IGetToken } from 'strtok3';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
+
+export class Mp4ContentError extends makeUnexpectedFileContentError('MP4'){
+}
 
 interface IVersionAndFlags {
   /**
@@ -140,7 +144,7 @@ export const Header: IToken<IAtomHeader> = {
   get: (buf: Uint8Array, off: number): IAtomHeader => {
     const length = Token.UINT32_BE.get(buf, off);
     if (length < 0)
-      throw new Error('Invalid atom header length');
+      throw new Mp4ContentError('Invalid atom header length');
 
     return {
       length: BigInt(length),
@@ -208,7 +212,7 @@ export abstract class FixedLengthAtom {
    */
   protected constructor(public len: number, expLen: number, atomId: string) {
     if (len < expLen) {
-      throw new Error(`Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`);
+      throw new Mp4ContentError(`Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`);
     }if (len > expLen) {
       debug(`Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`);
     }
@@ -745,7 +749,7 @@ function readTokenTable<T>(buf: Uint8Array, token: IGetToken<T>, off: number, re
   if (remainingLen === 0)
     return [];
 
-  if (remainingLen !== numberOfEntries * token.len) throw new Error('mismatch number-of-entries with remaining atom-length');
+  if (remainingLen !== numberOfEntries * token.len) throw new Mp4ContentError('mismatch number-of-entries with remaining atom-length');
 
   const entries: T[] = [];
   // parse offset-table

@@ -3,7 +3,7 @@ import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';
 import type { TagType } from '../common/GenericTagTypes.js';
-import { FrameParser, type ITextTag } from './FrameParser.js';
+import { FrameParser, Id3v2ContentError, type ITextTag } from './FrameParser.js';
 import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
 
 import type { ITag, IOptions, AnyTagValue } from '../type.js';
@@ -58,7 +58,7 @@ export class ID3v2Parser {
       case 4:
         return 10;
       default:
-        throw new Error('header versionIndex is incorrect');
+        throw makeUnexpectedMajorVersionError(majorVer);
     }
   }
 
@@ -94,7 +94,7 @@ export class ID3v2Parser {
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
-        throw new Error(`Unexpected majorVer: ${majorVer}`);
+        throw makeUnexpectedMajorVersionError(majorVer);
     }
   }
 
@@ -124,7 +124,7 @@ export class ID3v2Parser {
     const id3Header = await this.tokenizer.readToken(ID3v2Header);
 
     if (id3Header.fileIdentifier !== 'ID3') {
-      throw new Error('expected ID3-header file-identifier \'ID3\' was not found');
+      throw new Id3v2ContentError('expected ID3-header file-identifier \'ID3\' was not found');
     }
 
     this.id3Header = id3Header;
@@ -225,9 +225,13 @@ export class ID3v2Parser {
         break;
 
       default:
-        throw new Error(`Unexpected majorVer: ${majorVer}`);
+        throw makeUnexpectedMajorVersionError(majorVer);
     }
     return header;
   }
-
 }
+
+function makeUnexpectedMajorVersionError(majorVer: number) {
+  throw new Id3v2ContentError(`Unexpected majorVer: ${majorVer}`);
+}
+

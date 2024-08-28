@@ -16,6 +16,8 @@ export type { IFileInfo } from 'strtok3';
 
 export { type IAudioMetadata, type IOptions, type ITag, type INativeTagDict, type ICommonTagsResult, type IFormat, type IPicture, type IRatio, type IChapter, type ILyricsTag, LyricsContentType, TimestampFormat, IMetadataEventTag, IMetadataEvent } from './type.js';
 
+export type * from './ParseError.js'
+
 /**
  * Parse Web API File
  * Requires Blob to be able to stream using a ReadableStreamBYOBReader, only available since Node.js ≥ 20

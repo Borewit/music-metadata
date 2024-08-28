@@ -3,8 +3,12 @@ import initDebug from 'debug';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { ChunkHeader, DsdChunk, FormatChunk, type IChunkHeader, type IDsdChunk, type IFormatChunk } from './DsfChunk.js';
 import { ID3v2Parser } from "../id3v2/ID3v2Parser.js";
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:DSF');
+
+export class DsdContentParseError extends makeUnexpectedFileContentError('DSD'){
+}
 
 /**
  * DSF (dsd stream file) File Parser
@@ -16,7 +20,7 @@ export class DsfParser extends AbstractID3Parser {
 
     const p0 = this.tokenizer.position; // mark start position, normally 0
     const chunkHeader = await this.tokenizer.readToken<IChunkHeader>(ChunkHeader);
-    if (chunkHeader.id !== 'DSD ') throw new Error('Invalid chunk signature');
+    if (chunkHeader.id !== 'DSD ') throw new DsdContentParseError('Invalid chunk signature');
     this.metadata.setFormat('container', 'DSF');
     this.metadata.setFormat('lossless', true);
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);

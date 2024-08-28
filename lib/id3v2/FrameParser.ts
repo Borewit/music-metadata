@@ -7,6 +7,7 @@ import { Genres } from '../id3v1/ID3v1Parser.js';
 
 import type { IWarningCollector } from '../common/MetadataCollector.js';
 import type { IComment, ILyricsTag } from '../type.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -204,7 +205,7 @@ export class FrameParser {
               break;
 
             default:
-              throw new Error(`Warning: unexpected major versionIndex: ${this.major}`);
+              throw makeUnexpectedMajorVersionError(this.major);
           }
 
           pic.format = FrameParser.fixPictureMimeType(pic.format);
@@ -451,4 +452,11 @@ export class FrameParser {
     return enc === 'utf-16le' ? 2 : 1;
   }
 
+}
+
+export class Id3v2ContentError extends makeUnexpectedFileContentError('id3v2'){
+}
+
+function makeUnexpectedMajorVersionError(majorVer: number) {
+  throw new Id3v2ContentError(`Unexpected majorVer: ${majorVer}`);
 }

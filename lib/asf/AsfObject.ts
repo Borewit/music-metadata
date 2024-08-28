@@ -8,6 +8,10 @@ import type { AnyTagValue, IPicture, ITag } from '../type.js';
 import GUID from './GUID.js';
 import { getParserForAttr, parseUnicodeAttr } from './AsfUtil.js';
 import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
+
+export class AsfContentParseError extends makeUnexpectedFileContentError('ASF'){
+}
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
@@ -113,7 +117,7 @@ export abstract class State<T> implements IGetToken<T> {
     } else {
       const parseAttr = getParserForAttr(valueType);
       if (!parseAttr) {
-        throw new Error(`unexpected value headerType: ${valueType}`);
+        throw new AsfContentParseError(`unexpected value headerType: ${valueType}`);
       }
       tags.push({id: name, value: parseAttr(data as Uint8Array)});
     }

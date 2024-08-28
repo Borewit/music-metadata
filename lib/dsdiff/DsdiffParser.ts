@@ -7,8 +7,13 @@ import { BasicParser } from '../common/BasicParser.js';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
 
 import { ChunkHeader64, type IChunkHeader64 } from './DsdiffToken.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:aiff');
+
+export class DsdiffContentParseError extends makeUnexpectedFileContentError('DSDIFF'){
+}
+
 
 /**
  * DSDIFF - Direct Stream Digital Interchange File Format (Phillips)
@@ -21,7 +26,7 @@ export class DsdiffParser extends BasicParser {
   public async parse(): Promise<void> {
 
     const header = await this.tokenizer.readToken<IChunkHeader64>(ChunkHeader64);
-    if (header.chunkID !== 'FRM8') throw new Error('Unexpected chunk-ID');
+    if (header.chunkID !== 'FRM8') throw new DsdiffContentParseError('Unexpected chunk-ID');
 
     const type = (await this.tokenizer.readToken<string>(FourCcToken)).trim();
     switch (type) {
@@ -32,7 +37,7 @@ export class DsdiffParser extends BasicParser {
         return this.readFmt8Chunks(header.chunkSize - BigInt(FourCcToken.len));
 
       default:
-        throw new Error(`Unsupported DSDIFF type: ${type}`);
+        throw new DsdiffContentParseError(`Unsupported DSDIFF type: ${type}`);
     }
   }
 
@@ -61,7 +66,7 @@ export class DsdiffParser extends BasicParser {
 
       case 'PROP': { // 3.2 PROPERTY CHUNK
         const propType = await this.tokenizer.readToken(FourCcToken);
-        if (propType !== 'SND ') throw new Error('Unexpected PROP-chunk ID');
+        if (propType !== 'SND ') throw new DsdiffContentParseError('Unexpected PROP-chunk ID');
         await this.handleSoundPropertyChunks(header.chunkSize - BigInt(FourCcToken.len));
         break;
       }

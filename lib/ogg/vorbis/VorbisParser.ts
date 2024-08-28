@@ -7,8 +7,12 @@ import { CommonHeader, IdentificationHeader, type IVorbisPicture, VorbisPictureT
 import type { IPageConsumer, IPageHeader } from '../Ogg.js';
 import type { IOptions } from '../../type.js';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import { makeUnexpectedFileContentError } from '../../ParseError.js';
 
 const debug = debugInit('music-metadata:parser:ogg:vorbis1');
+
+export class VorbisContentError extends makeUnexpectedFileContentError('Vorbis'){
+}
 
 /**
  * Vorbis 1 Parser.
@@ -32,7 +36,7 @@ export class VorbisParser implements IPageConsumer {
     } else {
       if (header.headerType.continued) {
         if (this.pageSegments.length === 0) {
-          throw new Error('Cannot continue on previous page');
+          throw new VorbisContentError('Cannot continue on previous page');
         }
         this.pageSegments.push(pageData);
       }
@@ -110,7 +114,7 @@ export class VorbisParser implements IPageConsumer {
     // Parse  Vorbis common header
     const commonHeader = CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis')
-      throw new Error('Metadata does not look like Vorbis');
+      throw new VorbisContentError('Metadata does not look like Vorbis');
     if (commonHeader.packetType === 1) {
       const idHeader = IdentificationHeader.get(pageData, CommonHeader.len);
 
@@ -118,7 +122,7 @@ export class VorbisParser implements IPageConsumer {
       this.metadata.setFormat('bitrate', idHeader.bitrateNominal);
       this.metadata.setFormat('numberOfChannels', idHeader.channelMode);
       debug('sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s', idHeader.sampleRate, idHeader.bitrateNominal, idHeader.channelMode);
-    } else throw new Error('First Ogg page should be type 1: the identification header');
+    } else throw new VorbisContentError('First Ogg page should be type 1: the identification header');
   }
 
   protected async parseFullPage(pageData: Uint8Array): Promise<void> {
