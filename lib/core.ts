@@ -1,10 +1,10 @@
 /**
- * Primary entry point, Node.js specific entry point is index.ts
+ * Primary entry point, Node.js specific entry point is MusepackParser.ts
  */
 
 import {type AnyWebByteStream, type IFileInfo, type ITokenizer, fromWebStream, fromBuffer} from 'strtok3';
 
-import { parseOnContentType } from './ParserFactory.js';
+import { ParserFactory } from './ParserFactory.js';
 import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader.js';
 import { APEv2Parser } from './apev2/APEv2Parser.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
@@ -68,7 +68,8 @@ export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: IFileInfo |
  * @returns Metadata
  */
 export function parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): Promise<IAudioMetadata> {
-  return parseOnContentType(tokenizer, options);
+  const parserFactory = new ParserFactory();
+  return parserFactory.parse(tokenizer, undefined, options)
 }
 
 /**

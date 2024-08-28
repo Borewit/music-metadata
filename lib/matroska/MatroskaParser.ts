@@ -1,13 +1,10 @@
 import initDebug from 'debug';
-import type { ITokenizer } from 'strtok3';
 
-import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { matroskaDtd } from './MatroskaDtd.js';
 import { type IAttachments, type ISeekHead, type ISegmentInformation, type ITags, type ITrackElement, type ITrackEntry, TargetType, TrackType } from './types.js';
 
-import type { AnyTagValue, IOptions, ITrackInfo } from '../type.js';
-import type { ITokenParser } from '../ParserFactory.js';
+import type { AnyTagValue, ITrackInfo } from '../type.js';
 import { EbmlIterator, ParseAction } from '../ebml/EbmlIterator.js';
 
 const debug = initDebug('music-metadata:parser:matroska');
@@ -27,19 +24,7 @@ export class MatroskaParser extends BasicParser {
    * Use index to skip multiple segment/cluster elements at once.
    * Significant performance impact
    */
-  private flagUseIndexToSkipClusters = false;
-
-  /**
-   * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
-   * @param {INativeMetadataCollector} metadata Output
-   * @param {ITokenizer} tokenizer Input
-   * @param {IOptions} options Parsing options
-   */
-  public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
-    super.init(metadata, tokenizer, options);
-    this.flagUseIndexToSkipClusters = options.mkvUseIndex ?? false;
-    return this;
-  }
+  private flagUseIndexToSkipClusters = this.options.mkvUseIndex ?? false;
 
   public async parse(): Promise<void> {
 

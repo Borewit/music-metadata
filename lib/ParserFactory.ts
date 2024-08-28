@@ -4,35 +4,41 @@ import { type MediaType, parse as mimeTypeParse } from 'media-typer';
 import initDebug from 'debug';
 
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
-import { AIFFParser } from './aiff/AiffParser.js';
-import { APEv2Parser } from './apev2/APEv2Parser.js';
-import { AsfParser } from './asf/AsfParser.js';
-import { FlacParser } from './flac/FlacParser.js';
-import { MP4Parser } from './mp4/MP4Parser.js';
-import { MpegParser } from './mpeg/MpegParser.js';
-import MusepackParser from './musepack/index.js';
-import { OggParser } from './ogg/OggParser.js';
-import { WaveParser } from './wav/WaveParser.js';
-import { WavPackParser } from './wavpack/WavPackParser.js';
-import { DsfParser } from './dsf/DsfParser.js';
-import { DsdiffParser } from './dsdiff/DsdiffParser.js';
-import { MatroskaParser } from './matroska/MatroskaParser.js';
 
 import type { IAudioMetadata, IOptions, ParserType } from './type.js';
 import type { ITokenizer } from 'strtok3';
-import { CouldNotDetermineFileTypeError, InternalParserError, UnsupportedFileTypeError } from './ParseError.js';
+import { mpegParserLoader } from './mpeg/MpegLoader.js';
+import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
+import { apeParserLoader } from './apev2/Apev2Loader.js';
+import { asfParserLoader } from './asf/AsfLoader.js';
+import { dsdiffParserLoader } from './dsdiff/DsdiffLoader.js';
+import { aiffParserLoader } from './aiff/AiffLoader.js';
+import { dsfParserLoader } from './dsf/DsfLoader.js';
+import { flacParserLoader } from './flac/FlacLoader.js';
+import { matroskaParserLoader } from './matroska/MatroskaLoader.js';
+import { mp4ParserLoader } from './mp4/Mp4Loader.js';
+import { musepackParserLoader } from './musepack/MusepackLoader.js';
+import { oggParserLoader } from './ogg/OggLoader.js';
+import { wavpackParserLoader } from './wavpack/WavPackLoader.js';
+import { riffParserLoader } from './wav/WaveLoader.js';
 
 const debug = initDebug('music-metadata:parser:factory');
 
-export interface ITokenParser {
+export interface IParserLoader {
+  /**
+   * Returns a list of supported file extensions
+   */
+  extensions: string[]
+
+  parserType: ParserType;
 
   /**
-   * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
-   * @param metadata - Output
-   * @param tokenizer - Input
-   * @param options - Parsing options
+   * Lazy load the parser
    */
-  init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser;
+  load(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<ITokenParser>
+}
+
+export interface ITokenParser {
 
   /**
    * Parse audio track.
@@ -57,152 +63,82 @@ export function parseHttpContentType(contentType: string): IContentType {
   } as IContentType;
 }
 
-/**
- * Parse metadata from tokenizer
- * @param tokenizer - Tokenizer
- * @param opts - Options
- * @returns Native metadata
- */
-export async function parseOnContentType(tokenizer: ITokenizer, opts?: IOptions): Promise<IAudioMetadata> {
+export class ParserFactory {
 
-  const { mimeType, path, url } = tokenizer.fileInfo;
+  parsers: IParserLoader[] = [];
 
-  // Resolve parser based on MIME-type or file extension
-  const parserId = getParserIdForMimeType(mimeType) || getParserIdForExtension(path) || getParserIdForExtension(url);
-
-  if (!parserId) {
-    debug(`No parser found for MIME-type / extension: ${mimeType}`);
+  constructor() {
+    [
+      flacParserLoader,
+      mpegParserLoader,
+      apeParserLoader,
+      mp4ParserLoader,
+      matroskaParserLoader,
+      riffParserLoader,
+      oggParserLoader,
+      asfParserLoader,
+      aiffParserLoader,
+      wavpackParserLoader,
+      musepackParserLoader,
+      dsfParserLoader,
+      dsdiffParserLoader
+    ].forEach(parser => this.registerParser(parser));
   }
 
-  return parse(tokenizer, parserId, opts);
-}
+  registerParser(parser: IParserLoader): void {
+    this.parsers.push(parser);
+  }
 
-export async function parse(tokenizer: ITokenizer, parserId?: ParserType, opts?: IOptions): Promise<IAudioMetadata> {
+  async parse(tokenizer: ITokenizer, parserLoader: IParserLoader | undefined, opts?: IOptions): Promise<IAudioMetadata> {
 
-  if (!parserId) {
-    if (tokenizer.fileInfo.path) {
-      parserId = getParserIdForExtension(tokenizer.fileInfo.path);
-    }
-    if (!parserId) {
-      // Parser could not be determined on MIME-type or extension
-      debug('Guess parser on content...');
+    if (!parserLoader) {
       const buf = new Uint8Array(4100);
-      await tokenizer.peekBuffer(buf, {mayBeLess: true});
-      const guessedType = await fileTypeFromBuffer(buf);
-      if (!guessedType) {
-        throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
+      if (tokenizer.fileInfo.mimeType) {
+        parserLoader = this.findLoaderForType(getParserIdForMimeType(tokenizer.fileInfo.mimeType));
       }
-      debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
-      parserId = getParserIdForMimeType(guessedType.mime);
-      if (!parserId) {
-        throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${guessedType.mime}`);
+      if (!parserLoader && tokenizer.fileInfo.path) {
+        parserLoader = this.findLoaderForExtension(tokenizer.fileInfo.path);
+      }
+      if (!parserLoader) {
+        // Parser could not be determined on MIME-type or extension
+        debug('Guess parser on content...');
+        await tokenizer.peekBuffer(buf, {mayBeLess: true});
+
+        const guessedType = await fileTypeFromBuffer(buf);
+        if (!guessedType || !guessedType.mime) {
+          throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
+        }
+        debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
+        parserLoader = this.findLoaderForType(getParserIdForMimeType(guessedType.mime));
+        if (!parserLoader) {
+          throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${guessedType.mime}`);
+        }
       }
     }
+    // Parser found, execute parser
+    debug(`Loading ${parserLoader.parserType} parser...`);
+    const metadata = new MetadataCollector(opts);
+    const parser = await parserLoader.load(metadata, tokenizer, opts ?? {});
+    debug(`Parser ${parserLoader.parserType} loaded`);
+    await parser.parse();
+    return metadata.toCommonMetadata();
   }
-  // Parser found, execute parser
-  const parser = await loadParser(parserId);
-  const metadata = new MetadataCollector(opts);
-  await parser.init(metadata, tokenizer, opts ?? {}).parse();
-  return metadata.toCommonMetadata();
-}
 
-/**
- * @param filePath - Path, filename or extension to audio file
- * @return Parser submodule name
- */
-export function getParserIdForExtension(filePath: string | undefined): ParserType | undefined {
-  if (!filePath)
-    return;
+  /**
+   * @param filePath - Path, filename or extension to audio file
+   * @return Parser submodule name
+   */
+ findLoaderForExtension(filePath: string | undefined): IParserLoader | undefined {
+    if (!filePath)
+      return;
 
-  const extension = getExtension(filePath).toLocaleLowerCase() || filePath;
+    const extension = getExtension(filePath).toLocaleLowerCase() || filePath;
 
-  switch (extension) {
-
-    case '.mp2':
-    case '.mp3':
-    case '.m2a':
-    case '.aac': // Assume it is ADTS-container
-      return 'mpeg';
-
-    case '.ape':
-      return 'apev2';
-
-    case '.mp4':
-    case '.m4a':
-    case '.m4b':
-    case '.m4pa':
-    case '.m4v':
-    case '.m4r':
-    case '.3gp':
-      return 'mp4';
-
-    case '.wma':
-    case '.wmv':
-    case '.asf':
-      return 'asf';
-
-    case '.flac':
-      return 'flac';
-
-    case '.ogg':
-    case '.ogv':
-    case '.oga':
-    case '.ogm':
-    case '.ogx':
-    case '.opus': // recommended filename extension for Ogg Opus
-    case '.spx': // recommended filename extension for Ogg Speex
-      return 'ogg';
-
-    case '.aif':
-    case '.aiff':
-    case '.aifc':
-      return 'aiff';
-
-    case '.wav':
-    case '.bwf': // Broadcast Wave Format
-      return 'riff';
-
-    case '.wv':
-    case '.wvp':
-      return 'wavpack';
-
-    case '.mpc':
-      return 'musepack';
-
-    case '.dsf':
-      return 'dsf';
-
-    case '.dff':
-      return 'dsdiff';
-
-    case '.mka':
-    case '.mkv':
-    case '.mk3d':
-    case '.mks':
-    case '.webm':
-      return 'matroska';
+    return this.parsers.find(parser => parser.extensions.indexOf(extension) !== -1);
   }
-}
 
-export async function loadParser(moduleName: ParserType): Promise<ITokenParser> {
-  switch (moduleName) {
-    case 'aiff': return new AIFFParser();
-    case 'adts':
-    case 'mpeg':
-      return new MpegParser();
-    case 'apev2': return new APEv2Parser();
-    case 'asf': return new AsfParser();
-    case 'dsf': return new DsfParser();
-    case 'dsdiff': return new DsdiffParser();
-    case 'flac': return new FlacParser();
-    case 'mp4': return new MP4Parser();
-    case 'musepack': return new MusepackParser();
-    case 'ogg': return new OggParser();
-    case 'riff': return new WaveParser();
-    case 'wavpack': return new WavPackParser();
-    case 'matroska': return new MatroskaParser();
-    default:
-      throw new InternalParserError(`Unknown parser type: ${moduleName}`);
+  findLoaderForType(moduleName: ParserType| undefined): IParserLoader | undefined {
+    return moduleName ? this.parsers.find(parser => parser.parserType === moduleName) : undefined;
   }
 }
 
@@ -215,7 +151,7 @@ function getExtension(fname: string): string {
  * @param httpContentType - HTTP Content-Type, extension, path or filename
  * @returns Parser submodule name
  */
-function getParserIdForMimeType(httpContentType: string | undefined): ParserType | undefined{
+function getParserIdForMimeType(httpContentType: string | undefined): ParserType | undefined {
 
   let mime: IContentType;
   if (!httpContentType) return;
@@ -239,7 +175,7 @@ function getParserIdForMimeType(httpContentType: string | undefined): ParserType
 
         case 'aac':
         case 'aacp':
-          return 'adts';
+          return 'mpeg'; // adts
 
         case 'flac':
           return 'flac';

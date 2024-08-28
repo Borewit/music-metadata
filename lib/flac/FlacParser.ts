@@ -1,15 +1,12 @@
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
 import initDebug from 'debug';
-import type { ITokenizer, IGetToken } from 'strtok3';
+import type { IGetToken } from 'strtok3';
 
 import * as util from '../common/Util.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { VorbisParser } from '../ogg/vorbis/VorbisParser.js';
-import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
-import type { IOptions } from '../type.js';
-import type { ITokenParser } from '../ParserFactory.js';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 
@@ -34,21 +31,9 @@ enum BlockType {
 
 export class FlacParser extends AbstractID3Parser {
 
-  private vorbisParser: VorbisParser | undefined;
+  private vorbisParser = new VorbisParser(this.metadata, this.options);
 
   private padding = 0;
-
-  /**
-   * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
-   * @param {INativeMetadataCollector} metadata Output
-   * @param {ITokenizer} tokenizer Input
-   * @param {IOptions} options Parsing options
-   */
-  public init(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): ITokenParser {
-    super.init(metadata, tokenizer, options);
-    this.vorbisParser = new VorbisParser(metadata, options);
-    return this;
-  }
 
   public async postId3v2Parse(): Promise<void> {
 

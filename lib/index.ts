@@ -7,7 +7,7 @@ import { fromFile, fromStream, type IFileInfo } from 'strtok3';
 import initDebug from 'debug';
 
 import { parseFromTokenizer, scanAppendingHeaders } from './core.js';
-import { getParserIdForExtension, parse } from './ParserFactory.js';
+import { ParserFactory } from './ParserFactory.js';
 import type { IAudioMetadata, IOptions } from './type.js';
 import { RandomFileReader } from './common/RandomFileReader.js';
 
@@ -46,12 +46,14 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
     await fileReader.close();
   }
 
+  const parserFactory = new ParserFactory();
+
   try {
-    const parserName = getParserIdForExtension(filePath);
-    if (!parserName)
+    const parserLoader = parserFactory.findLoaderForExtension(filePath);
+    if (!parserLoader)
       debug(' Parser could not be determined by file extension');
 
-    return await parse(fileTokenizer, parserName, options);
+    return await parserFactory.parse(fileTokenizer, parserLoader, options);
   } finally {
     await fileTokenizer.close();
   }
