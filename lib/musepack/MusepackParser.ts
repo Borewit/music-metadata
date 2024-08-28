@@ -10,7 +10,7 @@ import { MusepackContentError } from './MusepackConentError.js';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
-class MusepackParser extends AbstractID3Parser {
+export class MusepackParser extends AbstractID3Parser {
 
   public async postId3v2Parse(): Promise<void> {
     const signature = await this.tokenizer.peekToken(new Token.StringType(3, 'latin1'));
@@ -18,22 +18,19 @@ class MusepackParser extends AbstractID3Parser {
     switch (signature) {
       case 'MP+': {
         debug('Stream-version 7');
-        mpcParser = new MpcSv7Parser();
+        mpcParser = new MpcSv7Parser(this.metadata, this.tokenizer, this.options);
         break;
       }
       case 'MPC': {
         debug('Stream-version 8');
-        mpcParser = new MpcSv8Parser();
+        mpcParser = new MpcSv8Parser(this.metadata, this.tokenizer, this.options);
         break;
       }
       default: {
         throw new MusepackContentError('Invalid signature prefix');
       }
     }
-    mpcParser.init(this.metadata, this.tokenizer, this.options);
     return mpcParser.parse();
   }
 
 }
-
-export default MusepackParser;

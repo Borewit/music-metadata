@@ -3,10 +3,11 @@ import { StringType, UINT8 } from 'token-types';
 
 import * as util from '../common/Util.js';
 
-import type { IGetToken } from 'strtok3';
+import type { IGetToken, ITokenizer } from 'strtok3';
 import { BasicParser } from '../common/BasicParser.js';
 import { APEv2Parser } from '../apev2/APEv2Parser.js';
-import type { AnyTagValue, IRandomReader } from '../type.js';
+import type { AnyTagValue, IApeHeader, IPrivateOptions, IRandomReader } from '../type.js';
+import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
 
@@ -108,6 +109,13 @@ class Id3v1StringType implements IGetToken<string | undefined> {
 
 export class ID3v1Parser extends BasicParser {
 
+  private apeHeader: IApeHeader | undefined;
+
+  public constructor(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IPrivateOptions) {
+    super(metadata, tokenizer, options);
+    this.apeHeader = options.apeHeader;
+  }
+
   private static getGenre(genreIndex: number): string | undefined {
     if (genreIndex < Genres.length) {
       return Genres[genreIndex];
@@ -122,11 +130,10 @@ export class ID3v1Parser extends BasicParser {
       return;
     }
 
-    if (this.options.apeHeader) {
-      this.tokenizer.ignore(this.options.apeHeader.offset - this.tokenizer.position);
-      const apeParser = new APEv2Parser();
-      apeParser.init(this.metadata, this.tokenizer, this.options);
-      await apeParser.parseTags(this.options.apeHeader.footer);
+    if (this.apeHeader) {
+      this.tokenizer.ignore(this.apeHeader.offset - this.tokenizer.position);
+      const apeParser = new APEv2Parser(this.metadata, this.tokenizer, this.options);
+      await apeParser.parseTags(this.apeHeader.footer);
     }
 
     const offset = this.tokenizer.fileInfo.size - Iid3v1Token.len;

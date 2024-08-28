@@ -37,8 +37,7 @@ export class ApeContentError extends makeUnexpectedFileContentError('APEv2'){
 export class APEv2Parser extends BasicParser {
 
   public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
-    const apeParser = new APEv2Parser();
-    apeParser.init(metadata, tokenizer, options);
+    const apeParser = new APEv2Parser(metadata, tokenizer, options);
     return apeParser.tryParseApeHeader();
   }
 
@@ -78,8 +77,7 @@ export class APEv2Parser extends BasicParser {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
     if (footer.ID !== preamble) throw new ApeContentError('Unexpected APEv2 Footer ID preamble value');
     strtok3.fromBuffer(buffer);
-    const apeParser = new APEv2Parser();
-    apeParser.init(metadata, strtok3.fromBuffer(buffer), options);
+    const apeParser = new APEv2Parser(metadata, strtok3.fromBuffer(buffer), options);
     return apeParser.parseTags(footer);
   }
 

@@ -48,8 +48,8 @@ export abstract class AbstractID3Parser extends BasicParser {
     if (this.options.skipPostHeaders && this.metadata.hasAny()) {
       this.finalize();
     } else {
-      const id3v1parser = new ID3v1Parser();
-      await id3v1parser.init(this.metadata, this.tokenizer, this.options).parse();
+      const id3v1parser = new ID3v1Parser(this.metadata, this.tokenizer, this.options);
+      await id3v1parser.parse();
       this.finalize();
     }
 
