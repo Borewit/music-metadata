@@ -9,6 +9,7 @@ import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../
 
 import type { IGetToken } from '@tokenizer/token';
 import { uint8ArrayToHex, uint8ArrayToString } from 'uint8array-extras';
+import { Mp4ContentError } from './AtomToken.js';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -137,7 +138,7 @@ export class MP4Parser extends BasicParser {
     const integerType = (signed ? 'INT' : 'UINT') + array.length * 8 + (array.length > 1 ? '_BE' : '');
     const token: IGetToken<number | bigint> = (Token as unknown as { [id: string]: IGetToken<number | bigint> })[integerType];
     if (!token) {
-      throw new Error(`Token for integer type not found: "${integerType}"`);
+      throw new Mp4ContentError(`Token for integer type not found: "${integerType}"`);
     }
     return Number(token.get(array, 0));
   }
@@ -318,7 +319,7 @@ export class MP4Parser extends BasicParser {
     const dataAtom = await this.tokenizer.readToken(new AtomToken.DataAtom(Number(metaAtom.header.length) - AtomToken.Header.len));
 
     if (dataAtom.type.set !== 0) {
-      throw new Error(`Unsupported type-set != 0: ${dataAtom.type.set}`);
+      throw new Mp4ContentError(`Unsupported type-set != 0: ${dataAtom.type.set}`);
     }
 
     // Use well-known-type table
@@ -568,7 +569,7 @@ export class MP4Parser extends BasicParser {
       const nextChunkLen = chunkOffset - this.tokenizer.position;
       const sampleSize = chapterTrack.sampleSize > 0 ? chapterTrack.sampleSize : chapterTrack.sampleSizeTable[i];
       len -= nextChunkLen + sampleSize;
-      if (len < 0) throw new Error('Chapter chunk exceeding token length');
+      if (len < 0) throw new Mp4ContentError('Chapter chunk exceeding token length');
       await this.tokenizer.ignore(nextChunkLen);
       const title = await this.tokenizer.readToken(new AtomToken.ChapterText(sampleSize));
       debug(`Chapter ${i + 1}: ${title}`);

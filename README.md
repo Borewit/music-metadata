@@ -504,6 +504,33 @@ readMetadata();
 - [AWS SDK for JavaScript](https://aws.amazon.com/sdk-for-javascript/) - Documentation on using the AWS SDK to interact with S3 and other AWS services.
 - [@tokenizer/s3](https://github.com/Borewit/tokenizer-s3) - Example of `ITokenizer` implementation.
 
+### Handling Parse Errors
+
+`music-metadata` provides a robust and extensible error handling system with custom error classes that inherit from the standard JavaScript `Error`.
+All possible parsing errors are part of a union type `UnionOfParseErrors`, ensuring that every error scenario is accounted for in your code.
+
+#### Union of Parse Errors 
+
+All parsing errors extend from the base class `ParseError` and are included in the `UnionOfParseErrors` type:
+```ts
+export type UnionOfParseErrors =
+  | CouldNotDetermineFileTypeError
+  | UnsupportedFileTypeError
+  | UnexpectedFileContentError
+  | FieldDecodingError
+  | InternalParserError;
+```
+
+#### Error Types
+ 
+- `CouldNotDetermineFileTypeError`: Raised when the file type cannot be determined.
+- `UnsupportedFileTypeError`: Raised when an unsupported file type is encountered.
+- `UnexpectedFileContentError`: Raised when the file content does not match the expected format.
+- `FieldDecodingError`: Raised when a specific field in the file cannot be decoded.
+- `InternalParserError`: Raised for internal parser errors.
+
+### Other functions
+
 #### `orderTags` function
 
 Utility to Converts the native tags to a dictionary index on the tag identifier

@@ -4,6 +4,8 @@ import { type ITag, TrackType } from '../type.js';
 import GUID from './GUID.js';
 import * as AsfObject from './AsfObject.js';
 import { BasicParser } from '../common/BasicParser.js';
+import { AsfContentParseError } from './AsfObject.js';
+
 
 const debug = initDebug('music-metadata:parser:ASF');
 const headerType = 'asf';
@@ -23,7 +25,7 @@ export class AsfParser extends BasicParser {
   public async parse() {
     const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
     if (!header.objectId.equals(GUID.HeaderObject)) {
-      throw new Error(`expected asf header; but was not found; got: ${header.objectId.str}`);
+      throw new AsfContentParseError(`expected asf header; but was not found; got: ${header.objectId.str}`);
     }
     try {
       await this.parseObjectHeader(header.numberOfHeaderObjects);

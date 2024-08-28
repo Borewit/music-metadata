@@ -12,6 +12,7 @@ import type { ITag } from '../type.js';
 import type { INativeMetadataCollector } from './MetadataCollector.js';
 import { MatroskaTagMapper } from '../matroska/MatroskaTagMapper.js';
 import { AiffTagMapper } from '../aiff/AiffTagMap.js';
+import { InternalParserError } from '../ParseError.js';
 
 export class CombinedTagMapper {
 
@@ -47,7 +48,7 @@ export class CombinedTagMapper {
     if (tagMapper) {
       return this.tagMappers[tagType].mapGenericTag(tag, warnings);
     }
-    throw new Error(`No generic tag mapper defined for tag-format: ${tagType}`);
+    throw new InternalParserError(`No generic tag mapper defined for tag-format: ${tagType}`);
   }
 
   private registerTagMapper(genericTagMapper: IGenericTagMapper) {

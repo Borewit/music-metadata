@@ -1,5 +1,6 @@
 import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import { makeUnexpectedFileContentError } from '../../ParseError.js';
 
 /**
  * Opus ID Header interface
@@ -40,6 +41,9 @@ export interface IIdHeader {
   channelMapping: number
 }
 
+export class OpusContentError extends makeUnexpectedFileContentError('Opus'){
+}
+
 /**
  * Opus ID Header parser
  * Ref: https://wiki.xiph.org/OggOpus#ID_Header
@@ -48,7 +52,7 @@ export class IdHeader implements IGetToken<IIdHeader> {
 
   constructor(public len: number) {
     if (len < 19) {
-      throw new Error("ID-header-page 0 should be at least 19 bytes long");
+      throw new OpusContentError('ID-header-page 0 should be at least 19 bytes long');
     }
   }
 

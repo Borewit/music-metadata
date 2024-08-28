@@ -5,6 +5,7 @@ import fs from 'node:fs';
 
 import * as mm from '../lib/index.js';
 import { SourceStream, samplePath } from './util.js';
+import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from '../lib/ParseError.js';
 
 describe('MIME & extension mapping', () => {
 
@@ -97,6 +98,7 @@ describe('MIME & extension mapping', () => {
         assert.fail('Should throw an Error');
       } catch (err) {
         assert.equal(err.message, 'Failed to determine audio format');
+        assert.instanceOf(err, CouldNotDetermineFileTypeError);
       }
 
     });
@@ -111,6 +113,7 @@ describe('MIME & extension mapping', () => {
         assert.fail('Should throw an Error');
       } catch (err) {
         assert.equal(err.message, 'Guessed MIME-type not supported: image/jpeg');
+        assert.instanceOf(err, UnsupportedFileTypeError);
       }
     });
 

@@ -1,6 +1,6 @@
 import { fileTypeFromBuffer } from 'file-type';
 import ContentType from 'content-type';
-import {parse as mimeTypeParse, type MediaType} from 'media-typer';
+import { type MediaType, parse as mimeTypeParse } from 'media-typer';
 import initDebug from 'debug';
 
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
@@ -18,8 +18,9 @@ import { DsfParser } from './dsf/DsfParser.js';
 import { DsdiffParser } from './dsdiff/DsdiffParser.js';
 import { MatroskaParser } from './matroska/MatroskaParser.js';
 
-import type { IOptions, IAudioMetadata, ParserType } from './type.js';
+import type { IAudioMetadata, IOptions, ParserType } from './type.js';
 import type { ITokenizer } from 'strtok3';
+import { CouldNotDetermineFileTypeError, InternalParserError, UnsupportedFileTypeError } from './ParseError.js';
 
 const debug = initDebug('music-metadata:parser:factory');
 
@@ -79,23 +80,22 @@ export async function parseOnContentType(tokenizer: ITokenizer, opts?: IOptions)
 export async function parse(tokenizer: ITokenizer, parserId?: ParserType, opts?: IOptions): Promise<IAudioMetadata> {
 
   if (!parserId) {
-    // Parser could not be determined on MIME-type or extension
-    debug('Guess parser on content...');
-
-    const buf = new Uint8Array(4100);
-    await tokenizer.peekBuffer(buf, {mayBeLess: true});
     if (tokenizer.fileInfo.path) {
       parserId = getParserIdForExtension(tokenizer.fileInfo.path);
     }
     if (!parserId) {
+      // Parser could not be determined on MIME-type or extension
+      debug('Guess parser on content...');
+      const buf = new Uint8Array(4100);
+      await tokenizer.peekBuffer(buf, {mayBeLess: true});
       const guessedType = await fileTypeFromBuffer(buf);
       if (!guessedType) {
-        throw new Error('Failed to determine audio format');
+        throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
       }
       debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
       parserId = getParserIdForMimeType(guessedType.mime);
       if (!parserId) {
-        throw new Error(`Guessed MIME-type not supported: ${guessedType.mime}`);
+        throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${guessedType.mime}`);
       }
     }
   }
@@ -202,7 +202,7 @@ export async function loadParser(moduleName: ParserType): Promise<ITokenParser> 
     case 'wavpack': return new WavPackParser();
     case 'matroska': return new MatroskaParser();
     default:
-      throw new Error(`Unknown parser type: ${moduleName}`);
+      throw new InternalParserError(`Unknown parser type: ${moduleName}`);
   }
 }
 

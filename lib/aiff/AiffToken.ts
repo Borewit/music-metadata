@@ -4,6 +4,7 @@ import { FourCcToken } from '../common/FourCC.js';
 import type * as iff from '../iff/index.js';
 
 import type { IGetToken } from 'strtok3';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 export const compressionTypes = {
   NONE:	'not compressed	PCM	Apple Computer',
@@ -18,6 +19,9 @@ export const compressionTypes = {
 };
 
 export type CompressionTypeCode = keyof typeof compressionTypes;
+
+export class AiffContentError extends makeUnexpectedFileContentError('AIFF'){
+}
 
 /**
  * The Common Chunk.
@@ -39,7 +43,7 @@ export class Common implements IGetToken<ICommon> {
 
   public constructor(header: iff.IChunkHeader, private isAifc: boolean) {
     const minimumChunkSize = isAifc ? 22 : 18;
-    if (header.chunkSize < minimumChunkSize) throw new Error(`COMMON CHUNK size should always be at least ${minimumChunkSize}`);
+    if (header.chunkSize < minimumChunkSize) throw new AiffContentError(`COMMON CHUNK size should always be at least ${minimumChunkSize}`);
     this.len = header.chunkSize;
   }
 
@@ -65,7 +69,7 @@ export class Common implements IGetToken<ICommon> {
           if (23 + strLen + padding === this.len) {
             res.compressionName = new Token.StringType(strLen, 'latin1').get(buf, off + 23);
           } else {
-            throw new Error('Illegal pstring length');
+            throw new AiffContentError('Illegal pstring length');
           }
         } else {
           res.compressionName = undefined;

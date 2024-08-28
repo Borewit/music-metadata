@@ -4,6 +4,7 @@ import { BasicParser } from '../../common/BasicParser.js';
 import { APEv2Parser } from '../../apev2/APEv2Parser.js';
 import { FourCcToken } from '../../common/FourCC.js';
 import * as SV8 from './StreamVersion8.js';
+import { MusepackContentError } from '../MusepackConentError.js';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
@@ -14,7 +15,7 @@ export class MpcSv8Parser extends BasicParser {
   public async parse(): Promise<void> {
 
     const signature = await this.tokenizer.readToken(FourCcToken);
-    if (signature !== 'MPCK') throw new Error('Invalid Magic number');
+    if (signature !== 'MPCK') throw new MusepackContentError('Invalid Magic number');
     this.metadata.setFormat('container', 'Musepack, SV8');
     return this.parsePacket();
   }
@@ -57,7 +58,7 @@ export class MpcSv8Parser extends BasicParser {
           return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:
-          throw new Error(`Unexpected header: ${header.key}`);
+          throw new MusepackContentError(`Unexpected header: ${header.key}`);
       }
     } while (true);
   }

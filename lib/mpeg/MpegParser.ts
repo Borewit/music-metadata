@@ -5,8 +5,12 @@ import initDebug from 'debug';
 import * as common from '../common/Util.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { InfoTagHeaderTag, type IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:mpeg');
+
+export class MpegContentError extends makeUnexpectedFileContentError('MPEG'){
+}
 
 /**
  * Cache buffer size used for searching synchronization preabmle
@@ -214,14 +218,14 @@ class MpegFrameHeader {
     // Calculate bitrate
     const bitrateInKbps = this.calcBitrate();
     if (!bitrateInKbps) {
-      throw new Error('Cannot determine bit-rate');
+      throw new MpegContentError('Cannot determine bit-rate');
     }
     this.bitrate = bitrateInKbps * 1000;
 
     // Calculate sampling rate
     this.samplingRate = this.calcSamplingRate();
     if (this.samplingRate == null) {
-      throw new Error('Cannot determine sampling-rate');
+      throw new MpegContentError('Cannot determine sampling-rate');
     }
   }
 
@@ -453,7 +457,7 @@ export class MpegParser extends AbstractID3Parser {
     }
     const slot_size = header.calcSlotSize();
     if (slot_size === null) {
-      throw new Error('invalid slot_size');
+      throw new MpegContentError('invalid slot_size');
     }
 
     const samples_per_frame = header.calcSamplesPerFrame();
@@ -649,7 +653,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async skipFrameData(frameDataLeft: number): Promise<void> {
-    if (frameDataLeft < 0) throw new Error('frame-data-left cannot be negative');
+    if (frameDataLeft < 0) throw new MpegContentError('frame-data-left cannot be negative');
     await this.tokenizer.ignore(frameDataLeft);
     this.countSkipFrameData += frameDataLeft;
   }

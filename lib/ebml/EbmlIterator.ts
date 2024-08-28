@@ -5,8 +5,12 @@ import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import { DataType, type IElementType, type IHeader, type ITree, type ValueType } from './types.js';
 
 import * as Token from 'token-types';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:ebml');
+
+export class EbmlContentError extends makeUnexpectedFileContentError('EBML'){
+}
 
 export interface ILinkedElementType extends IElementType {
   id: number;
@@ -150,7 +154,7 @@ export class EbmlIterator {
     // Calculate VINT_WIDTH
     while ((msb & mask) === 0) {
       if (oc > maxLength) {
-        throw new Error('VINT value exceeding maximum size');
+        throw new EbmlContentError('VINT value exceeding maximum size');
       }
       ++oc;
       mask >>= 1;
@@ -181,7 +185,7 @@ export class EbmlIterator {
       case 10:
         return this.tokenizer.readNumber(Float64_BE);
       default:
-        throw new Error(`Invalid IEEE-754 float length: ${e.len}`);
+        throw new EbmlContentError(`Invalid IEEE-754 float length: ${e.len}`);
     }
   }
 

@@ -7,6 +7,7 @@ import type {IOptions} from '../../type.js';
 import type {INativeMetadataCollector} from '../../common/MetadataCollector.js';
 
 import * as Opus from './Opus.js';
+import { OpusContentError } from './Opus.js';
 
 /**
  * Opus parser
@@ -32,7 +33,7 @@ export class OpusParser extends VorbisParser {
     // Parse Opus ID Header
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
     if (this.idHeader.magicSignature !== "OpusHead")
-      throw new Error("Illegal ogg/Opus magic-signature");
+      throw new OpusContentError("Illegal ogg/Opus magic-signature");
     this.metadata.setFormat('sampleRate', this.idHeader.inputSampleRate);
     this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
   }

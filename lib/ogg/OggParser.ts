@@ -12,6 +12,10 @@ import { SpeexParser } from './speex/SpeexParser.js';
 import { TheoraParser } from './theora/TheoraParser.js';
 
 import type * as Ogg from './Ogg.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
+
+export class OggContentError extends makeUnexpectedFileContentError('Ogg'){
+}
 
 const debug = initDebug('music-metadata:parser:ogg');
 
@@ -83,7 +87,7 @@ export class OggParser extends BasicParser {
       do {
         header = await this.tokenizer.readToken<Ogg.IPageHeader>(OggParser.Header);
 
-        if (header.capturePattern !== 'OggS') throw new Error('Invalid Ogg capture pattern');
+        if (header.capturePattern !== 'OggS') throw new OggContentError('Invalid Ogg capture pattern');
         this.metadata.setFormat('container', 'Ogg');
         this.header = header;
 
@@ -115,7 +119,7 @@ export class OggParser extends BasicParser {
               this.pageConsumer = new TheoraParser(this.metadata, this.options, this.tokenizer);
               break;
             default:
-              throw new Error(`gg audio-codec not recognized (id=${id})`);
+              throw new OggContentError(`gg audio-codec not recognized (id=${id})`);
           }
         }
         await this.pageConsumer.parsePage(header, pageData);

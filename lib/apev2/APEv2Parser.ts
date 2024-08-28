@@ -17,6 +17,7 @@ import {
   TagFooter,
   TagItemHeader
 } from './APEv2Token.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 
@@ -29,6 +30,9 @@ interface IApeInfo {
 }
 
 const preamble = 'APETAGEX';
+
+export class ApeContentError extends makeUnexpectedFileContentError('APEv2'){
+}
 
 export class APEv2Parser extends BasicParser {
 
@@ -72,7 +76,7 @@ export class APEv2Parser extends BasicParser {
 
   private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Uint8Array, options: IOptions): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    if (footer.ID !== preamble) throw new Error('Unexpected APEv2 Footer ID preamble value.');
+    if (footer.ID !== preamble) throw new ApeContentError('Unexpected APEv2 Footer ID preamble value');
     strtok3.fromBuffer(buffer);
     const apeParser = new APEv2Parser();
     apeParser.init(metadata, strtok3.fromBuffer(buffer), options);
@@ -110,7 +114,7 @@ export class APEv2Parser extends BasicParser {
 
     const descriptor = await this.tokenizer.readToken<IDescriptor>(DescriptorParser);
 
-    if (descriptor.ID !== 'MAC ') throw new Error('Unexpected descriptor ID');
+    if (descriptor.ID !== 'MAC ') throw new ApeContentError('Unexpected descriptor ID');
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
@@ -201,7 +205,7 @@ export class APEv2Parser extends BasicParser {
     this.metadata.setFormat('duration', APEv2Parser.calculateDuration(header));
 
     if (!this.ape.descriptor) {
-      throw new Error('Missing APE descriptor');
+      throw new ApeContentError('Missing APE descriptor');
     }
 
     return {

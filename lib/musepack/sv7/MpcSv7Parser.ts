@@ -4,6 +4,7 @@ import { BasicParser } from '../../common/BasicParser.js';
 import { APEv2Parser } from '../../apev2/APEv2Parser.js';
 import { BitReader } from './BitReader.js';
 import * as SV7 from './StreamVersion7.js';
+import { MusepackContentError } from '../MusepackConentError.js';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
@@ -17,7 +18,7 @@ export class MpcSv7Parser extends BasicParser {
 
     const header = await this.tokenizer.readToken<SV7.IHeader>(SV7.Header);
 
-    if (header.signature !== 'MP+') throw new Error('Unexpected magic number');
+    if (header.signature !== 'MP+') throw new MusepackContentError('Unexpected magic number');
     debug(`stream-version=${header.streamMajorVersion}.${header.streamMinorVersion}`);
     this.metadata.setFormat('container', 'Musepack, SV7');
     this.metadata.setFormat('sampleRate', header.sampleFrequency);

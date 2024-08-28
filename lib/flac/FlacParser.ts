@@ -11,8 +11,12 @@ import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import type { IOptions } from '../type.js';
 import type { ITokenParser } from '../ParserFactory.js';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:FLAC');
+
+class FlacContentError extends makeUnexpectedFileContentError('FLAC'){
+}
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -50,7 +54,7 @@ export class FlacParser extends AbstractID3Parser {
 
     const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
     if (fourCC.toString() !== 'fLaC') {
-      throw new Error('Invalid FLAC preamble');
+      throw new FlacContentError('Invalid FLAC preamble');
     }
 
     let blockHeader: IBlockHeader;
@@ -100,7 +104,7 @@ export class FlacParser extends AbstractID3Parser {
   private async parseBlockStreamInfo(dataLen: number): Promise<void> {
 
     if (dataLen !== BlockStreamInfo.len)
-      throw new Error('Unexpected block-stream-info length');
+      throw new FlacContentError('Unexpected block-stream-info length');
 
     const streamInfo = await this.tokenizer.readToken<IBlockStreamInfo>(BlockStreamInfo);
     this.metadata.setFormat('container', 'FLAC');

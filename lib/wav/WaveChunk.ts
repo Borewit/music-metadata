@@ -1,6 +1,10 @@
 import type { IGetToken } from 'strtok3';
 import type { IChunkHeader } from '../iff/index.js';
 import * as Token from 'token-types';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
+
+export class WaveContentError extends makeUnexpectedFileContentError('Wave'){
+}
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx
@@ -55,7 +59,7 @@ export class Format implements IGetToken<IWaveFormat> {
 
   public constructor(header: IChunkHeader) {
     if (header.chunkSize < 16)
-      throw new Error('Invalid chunk size');
+      throw new WaveContentError('Invalid chunk size');
     this.len = header.chunkSize;
   }
 
@@ -86,7 +90,7 @@ export class FactChunk implements IGetToken<IFactChunk> {
 
   public constructor(header: IChunkHeader) {
     if (header.chunkSize < 4) {
-      throw new Error('Invalid fact chunk size.');
+      throw new WaveContentError('Invalid fact chunk size.');
     }
     this.len = header.chunkSize;
   }

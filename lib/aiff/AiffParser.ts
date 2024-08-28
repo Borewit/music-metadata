@@ -7,8 +7,8 @@ import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
 
 import * as AiffToken from './AiffToken.js';
+import { AiffContentError, type CompressionTypeCode, compressionTypes } from './AiffToken.js';
 import * as iff from '../iff/index.js';
-import { type CompressionTypeCode, compressionTypes } from './AiffToken.js';
 
 const debug = initDebug('music-metadata:parser:aiff');
 
@@ -27,7 +27,7 @@ export class AIFFParser extends BasicParser {
 
     const header = await this.tokenizer.readToken<iff.IChunkHeader>(iff.Header);
     if (header.chunkID !== 'FORM')
-      throw new Error('Invalid Chunk-ID, expected \'FORM\''); // Not AIFF format
+      throw new AiffContentError('Invalid Chunk-ID, expected \'FORM\''); // Not AIFF format
 
     const type = await this.tokenizer.readToken<string>(FourCcToken);
     switch (type) {
@@ -43,7 +43,7 @@ export class AIFFParser extends BasicParser {
         break;
 
       default:
-        throw new Error(`Unsupported AIFF type: ${type}`);
+        throw new AiffContentError(`Unsupported AIFF type: ${type}`);
     }
     this.metadata.setFormat('lossless', !this.isCompressed);
 
@@ -70,7 +70,7 @@ export class AIFFParser extends BasicParser {
 
       case 'COMM': { // The Common Chunk
         if (this.isCompressed === null) {
-          throw new Error('Failed to parse AIFF.COMM chunk when compression type is unknown');
+          throw new AiffContentError('Failed to parse AIFF.COMM chunk when compression type is unknown');
         }
         const common = await this.tokenizer.readToken<AiffToken.ICommon>(new AiffToken.Common(header, this.isCompressed));
         this.metadata.setFormat('bitsPerSample', common.sampleSize);
