@@ -43,7 +43,7 @@ export function parseWebStream(webStream: AnyWebByteStream, fileInfo?: IFileInfo
 }
 
 /**
- * Parse audio from Node Buffer
+ * Parse audio from memory
  * @param uint8Array - Uint8Array holding audio data
  * @param fileInfo - File information object or MIME-type string
  * @param options - Parsing options
