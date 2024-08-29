@@ -11,3 +11,12 @@ updates:
     target-branch: master
     labels:
       - dependencies
+    groups:
+      remark:
+        dependency-type: "development"
+        patterns:
+          - "remark*"
+      types:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
