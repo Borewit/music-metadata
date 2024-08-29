@@ -19,14 +19,23 @@
   "type": "module",
   "exports": {
     ".": {
-      "node": "./lib/index.js",
-      "default": "./lib/core.js"
+      "node": {
+        "import": "./lib/index.js",
+        "require": "./lib/node.cjs",
+        "types": "./lib/index.d.ts"
+      },
+      "default": {
+        "import": "./lib/core.js",
+        "require": "./lib/default.cjs",
+        "types": "./lib/core.d.ts"
+      }
     }
   },
   "types": "lib/index.d.ts",
   "files": [
     "lib/**/*.js",
-    "lib/**/*.d.ts"
+    "lib/**/*.d.ts",
+    "lib/*.cjs"
   ],
   "keywords": [
     "music",
