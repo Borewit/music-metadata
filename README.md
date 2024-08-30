@@ -783,7 +783,7 @@ const { loadMusicMetadata } = require('music-metadata');
 ```
 
 > [!NOTE]
-> The `loadMusicMetadata` function is experimental and is not currently covered by any TypeScript typings.
+> The `loadMusicMetadata` function is experimental.
 
 ## Frequently Asked Questions
 
