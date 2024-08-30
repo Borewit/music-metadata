@@ -122,3 +122,5 @@ export async function scanAppendingHeaders(randomReader: IRandomReader, options:
 
   options.apeHeader = await APEv2Parser.findApeFooterOffset(randomReader, apeOffset);
 }
+
+export declare function loadMusicMetadata(): Promise<typeof import('music-metadata')>;
