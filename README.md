@@ -31,14 +31,14 @@ The distributed JavaScript codebase is compliant with the [ECMAScript 2020 (11th
 This module requires a [Node.js ≥ 16](https://nodejs.org/en/about/previous-releases) engine.
 It can also be used in a browser environment when bundled with a module bundler.
 
-## Sponsor
-If you appreciate my work and want to support the development of open-source projects like [music-metadata](https://github.com/Borewit/music-metadata), [file-type](https://github.com/sindresorhus/file-type), and [listFix()](https://github.com/Borewit/listFix), consider becoming a sponsor or making a small contribution.
-Your support helps sustain ongoing development and improvements.
-[Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
+## Support the Project
+If you find this project useful and would like to support its development, consider sponsoring or contributing:
 
-or
+- [Become a sponsor to Borewit](https://github.com/sponsors/Borewit)
 
-<a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
+- Buy me a coffee:
+
+  <a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
 
 ## Features
 
