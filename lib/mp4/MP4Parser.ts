@@ -246,7 +246,6 @@ export class MP4Parser extends BasicParser {
   }
 
   public async handleAtom(atom: Atom, remaining: number): Promise<void> {
-
     if (atom.parent) {
       switch (atom.parent.header.name) {
         case 'ilst':
