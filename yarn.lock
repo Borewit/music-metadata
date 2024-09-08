@@ -1293,15 +1293,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:^19.4.1":
-  version: 19.4.1
-  resolution: "file-type@npm:19.4.1"
+"file-type@npm:^19.5.0":
+  version: 19.5.0
+  resolution: "file-type@npm:19.5.0"
   dependencies:
     get-stream: "npm:^9.0.1"
     strtok3: "npm:^8.1.0"
     token-types: "npm:^6.0.0"
     uint8array-extras: "npm:^1.3.0"
-  checksum: 10c0/77d186edf030e4fe34b29f707c25e71a11c67f234cc2020c8acb87b9124a4d25afa24ac73bad2e1679bc958f357d29cd1607fad5709b853b5b8edb1ca8fcddba
+  checksum: 10c0/725a9dc71782afa9013db395205400256aa2ab059de9d859a17626ac3fa06218419accf1cbc887af36c009c4d658bda0313428d684a3932ea3f68323d5f75c27
   languageName: node
   linkType: hard
 
@@ -2612,7 +2612,7 @@ __metadata:
     content-type: "npm:^1.0.5"
     debug: "npm:^4.3.4"
     del-cli: "npm:^5.1.0"
-    file-type: "npm:^19.4.1"
+    file-type: "npm:^19.5.0"
     media-typer: "npm:^1.1.0"
     mime: "npm:^4.0.4"
     mocha: "npm:^10.7.3"
