@@ -1054,6 +1054,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"debug@npm:^4.3.7":
+  version: 4.3.7
+  resolution: "debug@npm:4.3.7"
+  dependencies:
+    ms: "npm:^2.1.3"
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 10c0/1471db19c3b06d485a622d62f65947a19a23fbd0dd73f7fd3eafb697eec5360cde447fb075919987899b1a2096e85d35d4eb5a4de09a57600ac9cf7e6c8e768b
+  languageName: node
+  linkType: hard
+
 "decamelize-keys@npm:^1.1.0":
   version: 1.1.1
   resolution: "decamelize-keys@npm:1.1.1"
@@ -2610,7 +2622,7 @@ __metadata:
     chai: "npm:^5.1.1"
     chai-as-promised: "npm:^8.0.0"
     content-type: "npm:^1.0.5"
-    debug: "npm:^4.3.4"
+    debug: "npm:^4.3.7"
     del-cli: "npm:^5.1.0"
     file-type: "npm:^19.5.0"
     media-typer: "npm:^1.1.0"
