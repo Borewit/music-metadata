@@ -26,7 +26,7 @@ Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJ
 The distributed JavaScript codebase is compliant with the [ECMAScript 2020 (11th Edition)](https://en.wikipedia.org/wiki/ECMAScript_version_history#11th_Edition_%E2%80%93_ECMAScript_2020) standard.
 
 > [!NOTE]
-> See also [CommonJS Backward Compatibility](#commonjs-backward-compatibility)
+> See also [CommonJS backward Compatibility](#commonjs-backward-compatibility)
 
 This module requires a [Node.js ≥ 16](https://nodejs.org/en/about/previous-releases) engine.
 It can also be used in a browser environment when bundled with a module bundler.
@@ -768,7 +768,7 @@ Dependency list:
 - [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
 - [peek-readable](https://github.com/Borewit/peek-readable)
 
-## CommonJS Backward compatibility
+## CommonJS backward compatibility
 
 For legacy CommonJS projects needing to load the `music-metadata` ESM module, you can use the `loadMusicMetadata` function:
 ```js
