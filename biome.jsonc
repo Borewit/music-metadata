@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+	"$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
 	"organizeImports": {
 		"enabled": false
 	},
@@ -15,7 +15,10 @@
 			},
 			"style": {
 				"noParameterAssign": "off",
-				"useConst": "error"
+				"useConst": "error",
+				"useConsistentBuiltinInstantiation": "error",
+				"useThrowNewError": "error",
+				"useThrowOnlyError": "error"
 			},
 			"recommended": true,
 			"complexity": {
@@ -24,7 +27,8 @@
 			},
 			"suspicious": {
 				"noEmptyBlockStatements": "error",
-				"noControlCharactersInRegex": "off"
+				"noControlCharactersInRegex": "off",
+				"useErrorMessage": "error"
 			},
 			"nursery": {
 				"noRestrictedImports": {
@@ -34,11 +38,7 @@
 							"node:buffer": "Use Uint8Array instead of Buffer"
 						}
 					}
-				},
-				"useConsistentBuiltinInstantiation": "error",
-				"useThrowNewError": "error",
-				"useThrowOnlyError": "error",
-				"useErrorMessage": "error"
+				}
 			}
 		}
 	},
