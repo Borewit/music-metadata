@@ -108,7 +108,7 @@
     "debug": "^4.3.7",
     "file-type": "^19.5.0",
     "media-typer": "^1.1.0",
-    "strtok3": "^9.0.0",
+    "strtok3": "^9.0.1",
     "token-types": "^6.0.0",
     "uint8array-extras": "^1.4.0"
   },
