@@ -2631,7 +2631,7 @@ __metadata:
     prettier: "npm:^3.3.3"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.0"
-    strtok3: "npm:^9.0.0"
+    strtok3: "npm:^9.0.1"
     token-types: "npm:^6.0.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.5.3"
@@ -2876,10 +2876,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"peek-readable@npm:^5.2.0":
-  version: 5.2.0
-  resolution: "peek-readable@npm:5.2.0"
-  checksum: 10c0/7647d56786c94fc7f5f39923ef5f6ed1da7be92a2c221b743db74f1517821b1e944cc965d8f018a7e6984d969b6ced8a0c421aece7996c0b1981eac9daa4c323
+"peek-readable@npm:^5.3.1":
+  version: 5.3.1
+  resolution: "peek-readable@npm:5.3.1"
+  checksum: 10c0/49f628e4728887230c158699e422ebb10747f5e02aee930ec10634fa7142e74e67d3fb3a780e7a9b9f092c61bf185f07d167c099b2359b22a58cee3dbfe0e43b
   languageName: node
   linkType: hard
 
@@ -3579,13 +3579,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "strtok3@npm:9.0.0"
+"strtok3@npm:^9.0.1":
+  version: 9.0.1
+  resolution: "strtok3@npm:9.0.1"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
-    peek-readable: "npm:^5.2.0"
-  checksum: 10c0/7d7cde9c5a3b195131f3652c8b0cb20d96e80b10d30a19294379e4302d0d4952bdc24a516c8a6cfa82bcb96f5b47e49ec917e8cc23c81052044a2ec41d15fb30
+    peek-readable: "npm:^5.3.1"
+  checksum: 10c0/ab96030c3d30899fc885ed87b305086b6421d64c1a2b9f5240c6ecffde7b819e174d67bd3b1ecc14a10f539c7a818a0ac47386b4bbb2fa913f673b6ed1c0eb78
   languageName: node
   linkType: hard
 
