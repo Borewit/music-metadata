@@ -512,12 +512,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.7.5":
-  version: 22.7.5
-  resolution: "@types/node@npm:22.7.5"
+"@types/node@npm:^22.7.9":
+  version: 22.7.9
+  resolution: "@types/node@npm:22.7.9"
   dependencies:
     undici-types: "npm:~6.19.2"
-  checksum: 10c0/cf11f74f1a26053ec58066616e3a8685b6bcd7259bc569738b8f752009f9f0f7f85a1b2d24908e5b0f752482d1e8b6babdf1fbb25758711ec7bb9500bfcd6e60
+  checksum: 10c0/2d1917702b9d9ede8e4d8151cd8b1af8bc147d543486474ffbe0742e38764ea73105939e6a767addf7a4c39e842e16eae762bff90617d7b7f9ee3fbbb2d23bfa
   languageName: node
   linkType: hard
 
@@ -2361,7 +2361,7 @@ __metadata:
     "@types/debug": "npm:^4.1.12"
     "@types/media-typer": "npm:^1.1.3"
     "@types/mocha": "npm:^10.0.9"
-    "@types/node": "npm:^22.7.5"
+    "@types/node": "npm:^22.7.9"
     c8: "npm:^10.1.2"
     chai: "npm:^5.1.1"
     chai-as-promised: "npm:^8.0.0"
