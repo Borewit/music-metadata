@@ -313,10 +313,10 @@ export class FrameParser {
         fzero = util.findZero(uint8Array, offset + 1, length, encoding);
         const mimeType = util.decodeString(uint8Array.slice(offset + 1, fzero), defaultEnc);
         offset = fzero + 1;
-        fzero = util.findZero(uint8Array, offset, length - offset, encoding);
+        fzero = util.findZero(uint8Array, offset, length, encoding);
         const filename = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
         offset = fzero + 1;
-        fzero = util.findZero(uint8Array, offset, length - offset, encoding);
+        fzero = util.findZero(uint8Array, offset, length, encoding);
         const description = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
 
         const geob: IGeneralEncapsulatedObject = {
