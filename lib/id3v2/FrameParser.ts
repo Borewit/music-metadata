@@ -318,12 +318,13 @@ export class FrameParser {
         offset = fzero + 1;
         fzero = util.findZero(uint8Array, offset, length, encoding);
         const description = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        offset = fzero + 1;
 
         const geob: IGeneralEncapsulatedObject = {
           type: mimeType,
           filename,
           description,
-          data: uint8Array.slice(offset + 1, length)
+          data: uint8Array.slice(offset, length)
         };
         output = geob;
         break;
