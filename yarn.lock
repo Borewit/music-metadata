@@ -393,10 +393,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chai@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "@types/chai@npm:5.0.0"
-  checksum: 10c0/fcce55f2bbb8485fc860a1dcbac17c1a685b598cfc91a55d37b65b1642b921cf736caa8cce9dcc530830d900f78ab95cf43db4e118db34a5176f252cacd9e1e8
+"@types/chai@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "@types/chai@npm:5.0.1"
+  dependencies:
+    "@types/deep-eql": "npm:*"
+  checksum: 10c0/82cb718101d37698e35fb03e2a983a442303065bfcb9b9e8b50b49fdad2fa5759c14dabfa5cb4a4bfa5c6aff1f05377d6ab4310bae0cfbf7d3138f94c969f441
   languageName: node
   linkType: hard
 
@@ -422,6 +424,13 @@ __metadata:
   dependencies:
     "@types/ms": "npm:*"
   checksum: 10c0/5dcd465edbb5a7f226e9a5efd1f399c6172407ef5840686b73e3608ce135eeca54ae8037dcd9f16bdb2768ac74925b820a8b9ecc588a58ca09eca6acabe33e2f
+  languageName: node
+  linkType: hard
+
+"@types/deep-eql@npm:*":
+  version: 4.0.2
+  resolution: "@types/deep-eql@npm:4.0.2"
+  checksum: 10c0/bf3f811843117900d7084b9d0c852da9a044d12eb40e6de73b552598a6843c21291a8a381b0532644574beecd5e3491c5ff3a0365ab86b15d59862c025384844
   languageName: node
   linkType: hard
 
@@ -780,16 +789,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chai@npm:^5.1.1":
-  version: 5.1.1
-  resolution: "chai@npm:5.1.1"
+"chai@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "chai@npm:5.1.2"
   dependencies:
     assertion-error: "npm:^2.0.1"
     check-error: "npm:^2.1.1"
     deep-eql: "npm:^5.0.1"
     loupe: "npm:^3.1.0"
     pathval: "npm:^2.0.0"
-  checksum: 10c0/e7f00e5881e3d5224f08fe63966ed6566bd9fdde175863c7c16dd5240416de9b34c4a0dd925f4fd64ad56256ca6507d32cf6131c49e1db65c62578eb31d4566c
+  checksum: 10c0/6c04ff8495b6e535df9c1b062b6b094828454e9a3c9493393e55b2f4dbff7aa2a29a4645133cad160fb00a16196c4dc03dc9bb37e1f4ba9df3b5f50d7533a736
   languageName: node
   linkType: hard
 
@@ -2355,7 +2364,7 @@ __metadata:
   dependencies:
     "@biomejs/biome": "npm:1.9.4"
     "@tokenizer/token": "npm:^0.3.0"
-    "@types/chai": "npm:^5.0.0"
+    "@types/chai": "npm:^5.0.1"
     "@types/chai-as-promised": "npm:^8.0.1"
     "@types/content-type": "npm:^1.1.8"
     "@types/debug": "npm:^4.1.12"
@@ -2363,7 +2372,7 @@ __metadata:
     "@types/mocha": "npm:^10.0.9"
     "@types/node": "npm:^22.7.5"
     c8: "npm:^10.1.2"
-    chai: "npm:^5.1.1"
+    chai: "npm:^5.1.2"
     chai-as-promised: "npm:^8.0.0"
     content-type: "npm:^1.0.5"
     debug: "npm:^4.3.7"
