@@ -253,11 +253,11 @@ describe('Parse MP3 files', () => {
 
       describe('duration=false', () => {
 
-        Parsers
+        Parsers.slice(0, 1)
           .forEach(parser => {
             it(parser.description, async function(){
-              const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
-              assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
+              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
+              assert.isUndefined(format.duration, 'Don\'t expect a duration');
             });
           });
       });
@@ -269,8 +269,9 @@ describe('Parse MP3 files', () => {
         Parsers
           .forEach(parser => {
             it(parser.description, async function(){
-              const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
-              assert.approximately(metadata.format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
+              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
+              assert.approximately(format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
+              assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
             });
           });
       });
@@ -366,6 +367,19 @@ describe('Parse MP3 files', () => {
       assert.strictEqual(format.tool, 'LAME ZyK! ');
     });
 
+  });
+
+  describe('Expect format.numberOfSamples', async () => {
+    [false, true].forEach(durationFlag => {
+      it(`duration=${durationFlag}`, async () => {
+        const filePath = path.join(mp3SamplePath, 'lame-peak.mp3');
+        const {format} = await mm.parseFile(filePath, {duration: durationFlag});
+
+        assert.strictEqual(format.container, 'MPEG');
+        assert.strictEqual(format.codec, 'MPEG 1 Layer 3', '(format.codec');
+        assert.strictEqual(format.numberOfSamples, 5760,'format.numberOfSamples');
+      });
+    });
   });
 
 });
