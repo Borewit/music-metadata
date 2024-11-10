@@ -357,12 +357,13 @@ export class MpegParser extends AbstractID3Parser {
         if (format.codecProfile && format.codecProfile[0] === 'V') {
           this.metadata.setFormat('bitrate', mpegSize * 8 / format.duration);
         }
-      } else if (this.tokenizer.fileInfo.size && format.codecProfile === 'CBR') {
+      }
+      if (this.tokenizer.fileInfo.size && format.codecProfile === 'CBR') {
         const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
         if (this.frame_size !== null && this.samplesPerFrame !== null) {
           const numberOfSamples = Math.round(mpegSize / this.frame_size) * this.samplesPerFrame;
           this.metadata.setFormat('numberOfSamples', numberOfSamples);
-          if (format.sampleRate) {
+          if (format.sampleRate && !format.duration) {
             const duration = numberOfSamples / format.sampleRate;
             debug("Calculate CBR duration based on file size: %s", duration);
             this.metadata.setFormat('duration', duration);
