@@ -3,7 +3,7 @@ import type { IGetToken } from 'strtok3';
 
 import { FourCcToken } from '../common/FourCC.js';
 import type { IChunkHeader64 } from '../iff/index.js';
-export { type IChunkHeader64 } from '../iff/index.js';
+export type { IChunkHeader64 } from '../iff/index.js';
 
 /**
  * DSDIFF chunk header
