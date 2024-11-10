@@ -11,6 +11,7 @@ import { CombinedTagMapper } from './CombinedTagMapper.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
 import { toRatio } from './Util.js';
 import { fileTypeFromBuffer } from 'file-type';
+import { parseLrc } from '../lrc/LyricsParser.js';
 
 const debug = initDebug('music-metadata:collector');
 
@@ -262,6 +263,12 @@ export class MetadataCollector implements INativeMetadataCollector {
         }
         if ((tag.value as IComment).descriptor === 'iTunPGAP') {
           this.setGenericTag(tagType, {id: 'gapless', value: (tag.value as IComment).text === '1'});
+        }
+        break;
+
+      case 'lyrics':
+        if (typeof tag.value === 'string') {
+          tag.value = parseLrc(tag.value);
         }
         break;
 

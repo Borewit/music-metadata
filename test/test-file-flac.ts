@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import * as path from 'node:path';
 
 import * as mm from '../lib/index.js';
+import { LyricsContentType, TimestampFormat } from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
@@ -171,6 +172,28 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.isDefined(common.rating, 'Expect rating property to be present');
     assert.equal(common.rating[0].rating, 0.80, 'Vorbis tag rating score of 80%');
     assert.equal(mm.ratingToStars(common.rating[0].rating), 4, 'Vorbis tag rating conversion');
+  });
+
+  it('Should decode LRC lyrics', async () => {
+
+    const filePath = path.join(flacFilePath, 'Dance In The Game - ZAQ - LRC.flac');
+    const {common} = await mm.parseFile(filePath);
+
+    assert.isArray(common.lyrics, 'common.lyrics');
+    assert.strictEqual(common.lyrics.length, 1, 'common.lyrics.length');
+    const lrcLyrics = common.lyrics[0];
+    assert.strictEqual(lrcLyrics.contentType, LyricsContentType.lyrics, 'lrcLyrics.contentType');
+    assert.strictEqual(lrcLyrics.timeStampFormat, TimestampFormat.milliseconds, 'lrcLyrics.timeStampFormat');
+    assert.isArray(lrcLyrics.syncText, 'lrcLyrics.syncText');
+    assert.strictEqual(lrcLyrics.syncText.length, 39, 'lrcLyrics.syncText.length');
+    assert.strictEqual(lrcLyrics.syncText[0].timestamp, 0, 'syncText[0].timestamp');
+    assert.strictEqual(lrcLyrics.syncText[0].text, '作词 : ZAQ', 'lrcLyrics.syncText[0].text');
+    assert.strictEqual(lrcLyrics.syncText[1].timestamp, 300, 'syncText[1].timestamp');
+    assert.strictEqual(lrcLyrics.syncText[1].text, '作曲 : ZAQ', 'lrcLyrics.syncText[1].text');
+
+    const syncText = lrcLyrics.syncText
+    assert.isArray(common.lyrics, 'common.lyrics');
+
   });
 
 });

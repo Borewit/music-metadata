@@ -81,8 +81,13 @@ Following tag header formats are supported:
 - [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 - [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
 - [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
-
-It allows many tags to be accessed in audio format, and tag format independent way.
+ 
+Following lyric formats are supported:
+- [LRC](https://en.wikipedia.org/wiki/LRC_(file_format))
+- Synchronized lyrics (SYLT)
+- Unsynchronized lyrics (USULT)
+[
+It allows many tags to be]() accessed in audio format, and tag format independent way.
 
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
 [ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain) tags are supported.
