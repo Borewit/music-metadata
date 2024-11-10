@@ -2,7 +2,7 @@ import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
 import type { IChunkHeader } from '../iff/index.js';
 
-export { type IChunkHeader } from '../iff/index.js';
+export type { IChunkHeader } from '../iff/index.js';
 
 /**
  * Common RIFF chunk header

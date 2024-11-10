@@ -563,7 +563,6 @@ export class MetadataObjectState extends State<ITag[]> {
 
 // 4.8	Metadata Library Object (optional, 0 or 1)
 
-// biome-ignore lint/complexity/noStaticOnlyClass: Extends a non-static class
 export class MetadataLibraryObjectState extends MetadataObjectState {
 
   public static guid = GUID.MetadataLibraryObject;
