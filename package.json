@@ -85,7 +85,9 @@
     "info",
     "parse",
     "parser",
-    "bwf"
+    "bwf",
+    "slt",
+    "lyrics"
   ],
   "scripts": {
     "clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts' 'src/**/*.d.ts' 'test/**/*.js' 'test/**/*.js.map' 'test/**/*.js' 'test/**/*.js.map' 'doc-gen/**/*.js' 'doc-gen/**/*.js.map'",

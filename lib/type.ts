@@ -716,7 +716,7 @@ export interface IRandomReader {
   randomRead(buffer: Uint8Array, offset: number, length: number, position: number): Promise<number>;
 }
 
-interface ILyricsText {
+export interface ILyricsText {
   text: string;
   timestamp?: number;
 }
