@@ -276,7 +276,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
       const id3v23 = mm.orderTags(native['ID3v2.3']);
       assert.isDefined(id3v23.USLT, 'Should contain ID3v2.3 USLT tag');
-      assert.strictEqual(id3v23.USLT.length,1, 'id3v23.USLT.length');
+      assert.strictEqual(id3v23.USLT.length, 1, 'id3v23.USLT.length');
       const uslt = id3v23.USLT[0] as ILyricsTag;
       assert.strictEqual(uslt.descriptor, "Sinner's Prayer", 'id3v23.USLT.description');
       assert.strictEqual(uslt.language, "eng", 'id3v23.USLT.language');
@@ -350,27 +350,69 @@ describe('Extract metadata from ID3v2.3 header', () => {
         }], 'id3v23.sylt.syncText');
     });
 
-    // http://id3.org/id3v2.3.0#General_encapsulated_object
-    // Issue: https://github.com/Borewit/music-metadata/issues/406
-    it('4.16 GEOB: General encapsulated object', async () => {
+    describe('4.16 GEOB', async () => {
 
-      const filePath = path.join(samplePath, 'mp3', 'issue-406-geob.mp3');
+      // http://id3.org/id3v2.3.0#General_encapsulated_object
+      // Issue: https://github.com/Borewit/music-metadata/issues/406
+      it('Decode Serato DJ meta-data', async () => {
 
-      const {format, common, native} = await mm.parseFile(filePath);
+        const filePath = path.join(samplePath, 'mp3', 'issue-406-geob.mp3');
 
-      await mm.parseFile(filePath);
+        const {format, common, native} = await mm.parseFile(filePath);
 
-      assert.strictEqual(format.container, 'MPEG', 'format.container');
-      assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
-      assert.strictEqual(common.title, 'test', 'common.title');
+        await mm.parseFile(filePath);
 
-      assert.isDefined(native['ID3v2.3'], 'Presence of ID3v2.3 tag header');
-      const id3v2 = mm.orderTags(native['ID3v2.3']);
-      const geob = id3v2.GEOB[0] as IGeneralEncapsulatedObject;
-      assert.deepEqual(geob.type, 'application/octet-stream', 'ID3v2.GEOB[0].type');
-      assert.deepEqual(geob.filename, '', 'ID3v2.GEOB[0].filename');
-      assert.deepEqual(geob.description, 'Serato Overview', 'ID3v2.GEOB[0].description');
+        assert.strictEqual(format.container, 'MPEG', 'format.container');
+        assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
+        assert.strictEqual(common.title, 'test', 'common.title');
+
+        assert.isDefined(native['ID3v2.3'], 'Presence of ID3v2.3 tag header');
+        const id3v2 = mm.orderTags(native['ID3v2.3']);
+
+        assert.isArray(id3v2.GEOB, 'id3v2.GEOB');
+        assert.strictEqual(id3v2.GEOB.length, 7, 'id3v2.GEOB.length');
+        id3v2.GEOB.forEach(geobObj => {
+          const geob = geobObj as IGeneralEncapsulatedObject;
+
+          assert.strictEqual(geob.type, 'application/octet-stream', 'ID3v2.GEOB.type');
+          assert.strictEqual(geob.filename, '', 'ID3v2.GEOB.filename');
+          assert.isString(geob.description, 'ID3v2.GEOB.description');
+
+          // For decoding Serato tags, see : https://github.com/Holzhaus/serato-tags
+          switch (geob.description) {
+            case 'Serato Overview':
+              assert.deepEqual(geob.data.subarray(0, 2), new Uint8Array([0x01, 0x05]), 'Serato Overview');
+              break;
+
+            case 'Serato Analysis':
+              assert.deepEqual(geob.data[0], 2, 'Serato Analysis, major version');
+              assert.deepEqual(geob.data[1], 1, 'Serato Analysis, minor version');
+              break;
+
+            case 'Serato Autotags':
+            case 'Serato Markers2':
+              assert.deepEqual(geob.data.subarray(0, 2), new Uint8Array([0x01, 0x01]), geob.description);
+              break;
+
+            case 'Serato Markers_':
+              assert.deepEqual(geob.data.subarray(0, 2), new Uint8Array([0x02, 0x05]), 'Serato Markers_');
+              break;
+
+            case 'Serato BeatGrid':
+              assert.deepEqual(geob.data.subarray(0, 2), new Uint8Array([0x01, 0x00]), geob.description);
+              break;
+
+            case 'Serato Offsets_':
+              assert.deepEqual(geob.data.subarray(0, 2), new Uint8Array([0x01, 0x02]), geob.description);
+              break;
+
+            default:
+              assert.fail(`Unexpected GEOB.description ${geob.description}`);
+          }
+        });
+      });
     });
+
 
     it('4.18 POPM', async () => {
 
