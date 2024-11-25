@@ -126,7 +126,7 @@
     "@types/node": "^22.9.0",
     "c8": "^10.1.2",
     "chai": "^5.1.2",
-    "chai-as-promised": "^8.0.0",
+    "chai-as-promised": "^8.0.1",
     "del-cli": "^6.0.0",
     "mime": "^4.0.4",
     "mocha": "^10.8.2",
