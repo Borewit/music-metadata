@@ -12,21 +12,24 @@ import type { IGeneralEncapsulatedObject } from '../lib/id3v2/FrameParser.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
 
-  it('should parse a raw ID3v2.3 header', () => {
+  it('should parse a raw ID3v2.3 header', async () => {
 
     const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.id3v23');
 
     const metadata = new MetadataCollector({});
 
-    return strtok.fromFile(filePath).then(tokenizer => {
-      return new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
+    const tokenizer = await strtok.fromFile(filePath);
+    try {
+      return await new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
 
         assert.strictEqual(33, metadata.native['ID3v2.3'].length);
 
         const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
         assert.isDefined(id3v23.UFID, 'check if ID3v2.3-UFID is set');
       });
-    });
+    } finally {
+      await tokenizer.close();
+    }
   });
 
   it('parse a ID3v2.3', async () => {
