@@ -256,8 +256,8 @@ describe('Parse MP3 files', () => {
         Parsers.slice(0, 1)
           .forEach(parser => {
             it(parser.description, async function(){
-              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
-              assert.isUndefined(format.duration, 'Don\'t expect a duration');
+              const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
+              assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
             });
           });
       });
@@ -269,7 +269,8 @@ describe('Parse MP3 files', () => {
         Parsers
           .forEach(parser => {
             it(parser.description, async function(){
-              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
+              const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
+              const { format } = metadata;
               assert.approximately(format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
               assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
             });

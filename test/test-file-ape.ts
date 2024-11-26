@@ -41,7 +41,7 @@ describe('Parse APE (Monkey\'s Audio)', () => {
 
   Parsers.forEach(parser => {
     it(parser.description, async function(){
-      const metadata = await parser.initParser(() => this.skip(), path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape');
+      const {metadata} = await parser.initParser(() => this.skip(), path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape');
       assert.isDefined(metadata, 'metadata should be defined');
       checkFormat(metadata.format);
       checkCommon(metadata.common);

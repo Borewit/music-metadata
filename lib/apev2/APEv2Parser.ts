@@ -4,7 +4,7 @@ import { StringType } from 'token-types';
 import { uint8ArrayToString } from 'uint8array-extras';
 
 import * as util from '../common/Util.js';
-import type { IOptions, IRandomReader, IApeHeader } from '../type.js';
+import type { IOptions, IApeHeader } from '../type.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
 import {
@@ -18,6 +18,7 @@ import {
   TagItemHeader
 } from './APEv2Token.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import type { IRandomAccessTokenizer } from 'strtok3';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 
@@ -54,13 +55,15 @@ export class APEv2Parser extends BasicParser {
 
   /**
    * Calculates the APEv1 / APEv2 first field offset
-   * @param reader
+   * @param tokenizer
    * @param offset
    */
-  public static async findApeFooterOffset(reader: IRandomReader, offset: number): Promise<IApeHeader | undefined> {
+  public static async findApeFooterOffset(tokenizer: IRandomAccessTokenizer, offset: number): Promise<IApeHeader | undefined> {
     // Search for APE footer header at the end of the file
     const apeBuf = new Uint8Array(TagFooter.len);
-    await reader.randomRead(apeBuf, 0, TagFooter.len, offset - TagFooter.len);
+    const position = tokenizer.position;
+    await tokenizer.readBuffer(apeBuf, {position: offset - TagFooter.len});
+    tokenizer.setPosition(position);
     const tagFooter = TagFooter.get(apeBuf, 0);
     if (tagFooter.ID === 'APETAGEX') {
       if (tagFooter.flags.isHeader) {

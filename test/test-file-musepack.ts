@@ -15,9 +15,9 @@ describe('Parse Musepack (.mpc)', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
 
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
-        const format = metadata.format;
+        const { format, common } = metadata;
         assert.deepEqual(format.container, 'Musepack, SV7');
         assert.strictEqual(format.sampleRate, 44100);
         assert.strictEqual(format.numberOfSamples, 11940);
@@ -25,7 +25,6 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(format.codec, '1.15');
 
         // Check generic metadata
-        const common = metadata.common;
         assert.strictEqual(common.title, 'God Inside');
         assert.strictEqual(common.artist, 'Faze Action');
         assert.strictEqual(common.album, 'Broad Souls');
@@ -50,20 +49,21 @@ describe('Parse Musepack (.mpc)', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
 
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
+        const { format, common } = metadata;
         // Check format
-        assert.deepEqual(metadata.format.container, 'Musepack, SV7');
-        assert.strictEqual(metadata.format.sampleRate, 44100);
-        assert.strictEqual(metadata.format.numberOfSamples, 11940);
-        assert.approximately(metadata.format.bitrate, 269649, 1);
-        assert.strictEqual(metadata.format.codec, '1.15');
+        assert.deepEqual(format.container, 'Musepack, SV7');
+        assert.strictEqual(format.sampleRate, 44100);
+        assert.strictEqual(format.numberOfSamples, 11940);
+        assert.approximately(format.bitrate, 269649, 1);
+        assert.strictEqual(format.codec, '1.15');
 
         // Check generic metadata
-        assert.strictEqual(metadata.common.title, 'God Inside');
-        assert.strictEqual(metadata.common.artist, 'Faze Action');
-        assert.strictEqual(metadata.common.album, 'Broad Souls');
-        assert.strictEqual(metadata.common.date, '2004');
-        assert.deepEqual(metadata.common.track, {no: 9, of: null});
+        assert.strictEqual(common.title, 'God Inside');
+        assert.strictEqual(common.artist, 'Faze Action');
+        assert.strictEqual(common.album, 'Broad Souls');
+        assert.strictEqual(common.date, '2004');
+        assert.deepEqual(common.track, {no: 9, of: null});
       });
     });
 
@@ -76,24 +76,25 @@ describe('Parse Musepack (.mpc)', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
 
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
+        const { format, common } = metadata;
         // Check format
-        assert.deepEqual(metadata.format.container, 'Musepack, SV8');
-        assert.strictEqual(metadata.format.sampleRate, 48000);
-        assert.strictEqual(metadata.format.numberOfSamples, 24000);
-        assert.strictEqual(metadata.format.numberOfChannels, 2);
-        assert.approximately(metadata.format.duration, 0.5, 1 / 2000);
-        assert.approximately(metadata.format.bitrate, 32368, 1);
+        assert.deepEqual(format.container, 'Musepack, SV8');
+        assert.strictEqual(format.sampleRate, 48000);
+        assert.strictEqual(format.numberOfSamples, 24000);
+        assert.strictEqual(format.numberOfChannels, 2);
+        assert.approximately(format.duration, 0.5, 1 / 2000);
+        assert.approximately(format.bitrate, 32368, 1);
 
         // Check generic metadata
-        assert.strictEqual(metadata.common.title, 'Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.');
-        assert.strictEqual(metadata.common.artist, 'Johann Sebastian Bach');
-        assert.deepEqual(metadata.common.artists, ['Johann Sebastian Bach']);
-        assert.deepEqual(metadata.common.isrc, ['QMNYZ1200005']);
-        assert.deepEqual(metadata.common.license, 'https://creativecommons.org/publicdomain/zero/1.0/');
-        assert.strictEqual(metadata.common.album, 'Open Goldberg Variations');
-        assert.strictEqual(metadata.common.date, '2012-05-28');
-        assert.deepEqual(metadata.common.track, {no: 5, of: 32});
+        assert.strictEqual(common.title, 'Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.');
+        assert.strictEqual(common.artist, 'Johann Sebastian Bach');
+        assert.deepEqual(common.artists, ['Johann Sebastian Bach']);
+        assert.deepEqual(common.isrc, ['QMNYZ1200005']);
+        assert.deepEqual(common.license, 'https://creativecommons.org/publicdomain/zero/1.0/');
+        assert.strictEqual(common.album, 'Open Goldberg Variations');
+        assert.strictEqual(common.date, '2012-05-28');
+        assert.deepEqual(common.track, {no: 5, of: 32});
       });
     });
 

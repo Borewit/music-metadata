@@ -3,10 +3,10 @@ import { StringType, UINT8 } from 'token-types';
 
 import * as util from '../common/Util.js';
 
-import type { IGetToken, ITokenizer } from 'strtok3';
+import type { IGetToken, IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import { BasicParser } from '../common/BasicParser.js';
 import { APEv2Parser } from '../apev2/APEv2Parser.js';
-import type { AnyTagValue, IApeHeader, IPrivateOptions, IRandomReader } from '../type.js';
+import type { AnyTagValue, IApeHeader, IPrivateOptions } from '../type.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
@@ -160,13 +160,14 @@ export class ID3v1Parser extends BasicParser {
   private async addTag(id: string, value: AnyTagValue): Promise<void> {
     await this.metadata.addTag('ID3v1', id, value);
   }
-
 }
 
-export async function hasID3v1Header(reader: IRandomReader): Promise<boolean> {
-  if (reader.fileSize >= 128) {
+export async function hasID3v1Header(tokenizer: IRandomAccessTokenizer): Promise<boolean> {
+  if (tokenizer.fileInfo.size >= 128) {
     const tag = new Uint8Array(3);
-    await reader.randomRead(tag, 0, tag.length, reader.fileSize - 128);
+    const position = tokenizer.position;
+    await tokenizer.readBuffer(tag, {position: tokenizer.fileInfo.size - 128});
+    tokenizer.setPosition(position); // Restore tokenizer position
     return new TextDecoder('latin1').decode(tag) === 'TAG';
   }
   return false;

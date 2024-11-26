@@ -12,7 +12,8 @@ describe('Adaptive Multi-Rate (AMR) audio file', () => {
     describe('parser.description', () => {
 
       it('parse: sample.amr', async function () {
-        const  {format} = await parser.initParser(() => this.skip(), path.join(amrPath, 'sample.amr'), 'audio/amr', {duration: true});
+        const {metadata} = await parser.initParser(() => this.skip(), path.join(amrPath, 'sample.amr'), 'audio/amr', {duration: true});
+        const {format} = metadata;
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate');
         assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
         assert.strictEqual(format.bitrate, 64000, 'format.bitrate');
@@ -20,7 +21,8 @@ describe('Adaptive Multi-Rate (AMR) audio file', () => {
       });
 
       it('parse: gs-16b-1c-8000hz.amr', async function () {
-        const {format} = await parser.initParser(() => this.skip(), path.join(amrPath, 'gs-16b-1c-8000hz.amr'), 'audio/amr', {duration: true});
+        const {metadata} = await parser.initParser(() => this.skip(), path.join(amrPath, 'gs-16b-1c-8000hz.amr'), 'audio/amr', {duration: true});
+        const {format} = metadata;
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate');
         assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
         assert.strictEqual(format.bitrate, 64000, 'format.bitrate');
@@ -29,7 +31,8 @@ describe('Adaptive Multi-Rate (AMR) audio file', () => {
 
 
       it('parse: ff-16b-1c-8000hz.amr', async function () {
-        const {format} = await parser.initParser(() => this.skip(), path.join(amrPath, 'ff-16b-1c-8000hz.amr'), 'audio/amr', {duration: true});
+        const {metadata} = await parser.initParser(() => this.skip(), path.join(amrPath, 'ff-16b-1c-8000hz.amr'), 'audio/amr', {duration: true});
+        const {format} = metadata;
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate');
         assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
         assert.strictEqual(format.bitrate, 64000, 'format.bitrate');

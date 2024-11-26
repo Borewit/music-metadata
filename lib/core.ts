@@ -2,15 +2,14 @@
  * Primary entry point, Node.js specific entry point is MusepackParser.ts
  */
 
-import {type AnyWebByteStream, type IFileInfo, type ITokenizer, fromWebStream, fromBuffer} from 'strtok3';
+import { type AnyWebByteStream, type IFileInfo, type ITokenizer, fromWebStream, fromBuffer, type IRandomAccessTokenizer } from 'strtok3';
 
 import { ParserFactory } from './ParserFactory.js';
-import { RandomUint8ArrayReader } from './common/RandomUint8ArrayReader.js';
 import { APEv2Parser } from './apev2/APEv2Parser.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
-import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, IRandomReader, ITag } from './type.js';
+import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, ITag } from './type.js';
 
 export type { IFileInfo } from 'strtok3';
 
@@ -53,9 +52,6 @@ export function parseWebStream(webStream: AnyWebByteStream, fileInfo?: IFileInfo
  * Ref: https://github.com/Borewit/strtok3/blob/e6938c81ff685074d5eb3064a11c0b03ca934c1d/src/index.ts#L15
  */
 export async function parseBuffer(uint8Array: Uint8Array, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-
-  const bufferReader = new RandomUint8ArrayReader(uint8Array);
-  await scanAppendingHeaders(bufferReader, options);
 
   const tokenizer = fromBuffer(uint8Array, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
   return parseFromTokenizer(tokenizer, options);
@@ -112,16 +108,16 @@ export function selectCover(pictures?: IPicture[]): IPicture | null {
   }) : null;
 }
 
-export async function scanAppendingHeaders(randomReader: IRandomReader, options: IPrivateOptions = {}) {
+export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, options: IPrivateOptions = {}) {
 
-  let apeOffset = randomReader.fileSize;
-  if (await hasID3v1Header(randomReader)) {
+  let apeOffset = tokenizer.fileInfo.size;
+  if (await hasID3v1Header(tokenizer)) {
     apeOffset -= 128;
-    const lyricsLen = await getLyricsHeaderLength(randomReader);
+    const lyricsLen = await getLyricsHeaderLength(tokenizer);
     apeOffset -= lyricsLen;
   }
 
-  options.apeHeader = await APEv2Parser.findApeFooterOffset(randomReader, apeOffset);
+  options.apeHeader = await APEv2Parser.findApeFooterOffset(tokenizer, apeOffset);
 }
 
 export declare function loadMusicMetadata(): Promise<typeof import('music-metadata')>;

@@ -40,10 +40,9 @@ describe('Parsing MPEG / ID3v1', () => {
      */
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        return parser.initParser(() => this.skip(), fileBloodSugar, 'audio/mpeg').then(metadata => {
-          checkFormat(metadata.format);
-          checkCommon(metadata.common);
-        });
+        const { metadata } = await parser.initParser(() => this.skip(), fileBloodSugar, 'audio/mpeg');
+        checkFormat(metadata.format);
+        checkCommon(metadata.common);
       });
     });
   });
@@ -54,7 +53,7 @@ describe('Parsing MPEG / ID3v1', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
         this.timeout(15000); // Can take a bit longer
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {skipPostHeaders: true});
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {skipPostHeaders: true});
         assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
       });
     });
@@ -77,7 +76,7 @@ describe('Parsing MPEG / ID3v1', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
         checkFormat(metadata.format);
       });
     });
@@ -115,7 +114,7 @@ describe('Parsing MPEG / ID3v1', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
         assert.isDefined(metadata, 'should provide metadata');
         checkFormat(metadata.format);
         checkCommon(metadata.common);
@@ -133,7 +132,7 @@ describe('Parsing MPEG / ID3v1', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
+        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
         const id3v1 = mm.orderTags(metadata.native.ID3v1);
         assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
         assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');

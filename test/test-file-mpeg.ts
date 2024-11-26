@@ -343,7 +343,7 @@ describe('Parse MPEG', () => {
       Parsers
         .forEach(parser => {
           it(parser.description, async function(){
-            const metadata = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
+            const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
             assert.strictEqual(metadata.format.duration, 0.4963265306122449);
           });
         });
