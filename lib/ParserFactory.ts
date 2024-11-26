@@ -6,7 +6,7 @@ import initDebug from 'debug';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 
 import type { IAudioMetadata, IOptions, ParserType } from './type.js';
-import type { ITokenizer } from 'strtok3';
+import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import { mpegParserLoader } from './mpeg/MpegLoader.js';
 import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
 import { apeParserLoader } from './apev2/Apev2Loader.js';
@@ -22,6 +22,7 @@ import { oggParserLoader } from './ogg/OggLoader.js';
 import { wavpackParserLoader } from './wavpack/WavPackLoader.js';
 import { riffParserLoader } from './wav/WaveLoader.js';
 import { amrParserLoader } from './amr/AmrLoader.js';
+import { scanAppendingHeaders } from './core.js';
 
 const debug = initDebug('music-metadata:parser:factory');
 
@@ -92,6 +93,13 @@ export class ParserFactory {
   }
 
   async parse(tokenizer: ITokenizer, parserLoader: IParserLoader | undefined, opts?: IOptions): Promise<IAudioMetadata> {
+
+    if (tokenizer.supportsRandomAccess()) {
+      debug('tokenizer supports random-access, scanning for appending headers');
+      await scanAppendingHeaders(tokenizer as IRandomAccessTokenizer, opts);
+    } else {
+      debug('tokenizer does not support random-access, cannot scan for appending headers');
+    }
 
     if (!parserLoader) {
       const buf = new Uint8Array(4100);

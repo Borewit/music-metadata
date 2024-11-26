@@ -6,10 +6,9 @@ import type { Readable } from 'node:stream';
 import { fromFile, fromStream, type IFileInfo } from 'strtok3';
 import initDebug from 'debug';
 
-import { parseFromTokenizer, scanAppendingHeaders } from './core.js';
+import { parseFromTokenizer, } from './core.js';
 import { ParserFactory } from './ParserFactory.js';
 import type { IAudioMetadata, IOptions } from './type.js';
-import { RandomFileReader } from './common/RandomFileReader.js';
 
 export * from './core.js';
 
@@ -38,13 +37,6 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   debug(`parseFile: ${filePath}`);
 
   const fileTokenizer = await fromFile(filePath);
-
-  const fileReader = await RandomFileReader.init(filePath, fileTokenizer.fileInfo.size as number);
-  try {
-    await scanAppendingHeaders(fileReader, options);
-  } finally {
-    await fileReader.close();
-  }
 
   const parserFactory = new ParserFactory();
 
