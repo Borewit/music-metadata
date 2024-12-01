@@ -422,7 +422,7 @@ export class MpegParser extends AbstractID3Parser {
       this.mpegOffset = this.tokenizer.position - 1;
     }
 
-    await this.tokenizer.peekBuffer(this.buf_frame_header, {offset: 1, length: 3});
+    await this.tokenizer.peekBuffer(this.buf_frame_header.subarray(1), {length: 3});
 
     let header: MpegFrameHeader;
     try {
