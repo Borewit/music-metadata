@@ -2393,7 +2393,7 @@ __metadata:
     mocha: "npm:^10.8.2"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.0"
-    strtok3: "npm:^10.0.0"
+    strtok3: "npm:^10.0.1"
     token-types: "npm:^6.0.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.7.2"
@@ -3222,13 +3222,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "strtok3@npm:10.0.0"
+"strtok3@npm:^10.0.1":
+  version: 10.0.1
+  resolution: "strtok3@npm:10.0.1"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
     peek-readable: "npm:^5.3.1"
-  checksum: 10c0/a9b3b37b4b65766bba8448098895ee1e175e1f592833aa41852ca745aa35a9de01a2da23ff929d2ee4eb55d3e14f59073ff3d1105fde789ebfb4a2f09e8642df
+  checksum: 10c0/476ccea29feebef1659d825e71a5e054b80486617139966217f53fd197d9d78d2d6f1e3be52cad7bc7ff71e164d38696adc60f883705fb440be1162a3ce6cb9b
   languageName: node
   linkType: hard
 
