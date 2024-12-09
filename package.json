@@ -107,7 +107,7 @@
   "dependencies": {
     "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.5",
-    "debug": "^4.3.7",
+    "debug": "^4.4.0",
     "file-type": "^19.6.0",
     "link": "^2.1.1",
     "media-typer": "^1.1.0",
