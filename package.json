@@ -128,7 +128,7 @@
     "chai": "^5.1.2",
     "chai-as-promised": "^8.0.1",
     "del-cli": "^6.0.0",
-    "mime": "^4.0.4",
+    "mime": "^4.0.6",
     "mocha": "^11.0.1",
     "remark-cli": "^12.0.1",
     "remark-preset-lint-consistent": "^6.0.0",
