@@ -2165,12 +2165,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "mime@npm:4.0.4"
+"mime@npm:^4.0.6":
+  version: 4.0.6
+  resolution: "mime@npm:4.0.6"
   bin:
     mime: bin/cli.js
-  checksum: 10c0/3046e425ed616613af8c7f4b268ff33ab564baeb24a117ef00475cbb23fbae91369ff2d9918cc6408162b0016bde34ea8cc4041b830fc2c45a8ecaf5b7e3e26f
+  checksum: 10c0/1797b1c6da4cdb817fc18a4b8d99d6034885946f3d3680c2e4eb18bf19d4a64b42559f1eae0d1607e216f584311f9f806b5bfa1426baebeae4807bec5e14188a
   languageName: node
   linkType: hard
 
@@ -2359,7 +2359,7 @@ __metadata:
     file-type: "npm:^19.6.0"
     link: "npm:^2.1.1"
     media-typer: "npm:^1.1.0"
-    mime: "npm:^4.0.4"
+    mime: "npm:^4.0.6"
     mocha: "npm:^11.0.1"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.0"
