@@ -791,49 +791,49 @@ const { loadMusicMetadata } = require('music-metadata');
 
 ## Frequently Asked Questions
 
-1.  How can I traverse (a long) list of files?
+###  How can I traverse (a long) list of files?
 
-    What is important that file parsing should be done in a sequential manner.
-    In a plain loop, due to the asynchronous character (like most JavaScript functions), it would cause all the files to run in parallel which is will cause your application to hang in no time.
-    There are multiple ways of achieving this:
+What is important that file parsing should be done in a sequential manner.
+In a plain loop, due to the asynchronous character (like most JavaScript functions), it would cause all the files to run in parallel which is will cause your application to hang in no time.
+There are multiple ways of achieving this:
 
-    1.  Using recursion
+1.  Using recursion
 
-        ```js
-        import { parseFile } from 'music-metadata';
+    ```js
+    import { parseFile } from 'music-metadata';
 
-        function parseFiles(audioFiles) {
+    function parseFiles(audioFiles) {
 
-          const audioFile = audioFiles.shift();
+      const audioFile = audioFiles.shift();
 
-          if (audioFile) {
-            return parseFile(audioFile).then(metadata => {
-              // Do great things with the metadata
-              return parseFiles(audioFiles); // process rest of the files AFTER we are finished
-            })
-          }
-        }
+      if (audioFile) {
+        return parseFile(audioFile).then(metadata => {
+          // Do great things with the metadata
+          return parseFiles(audioFiles); // process rest of the files AFTER we are finished
+        })
+      }
+    }
 
-        ```
+    ```
 
-    1. Use async/await
+1. Use async/await
 
-       Use [async/await](https://javascript.info/async-await)
+   Use [async/await](https://javascript.info/async-await)
 
-       ```js
-       import { parseFile } from 'music-metadata';
+   ```js
+   import { parseFile } from 'music-metadata';
 
-       // it is required to declare the function 'async' to allow the use of await
-       async function parseFiles(audioFiles) {
+   // it is required to declare the function 'async' to allow the use of await
+   async function parseFiles(audioFiles) {
 
-           for (const audioFile of audioFiles) {
+       for (const audioFile of audioFiles) {
 
-               // await will ensure the metadata parsing is completed before we move on to the next file
-               const metadata = await parseFile(audioFile);
-               // Do great things with the metadata
-           }
+           // await will ensure the metadata parsing is completed before we move on to the next file
+           const metadata = await parseFile(audioFile);
+           // Do great things with the metadata
        }
-       ```
+   }
+   ```
 
 ## Licence
 
