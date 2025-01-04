@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 import * as mm from '../lib/index.js';
 import type { IAudioMetadata, IOptions } from '../lib/index.js';
+import { makeReadableByteFileStream } from './util.js';
 
 type ParseFileMethod = (skipTest: () => void, filePath: string, mimeType?: string, options?: IOptions) => Promise<{metadata: IAudioMetadata, randomRead: boolean}>;
 
@@ -27,14 +28,29 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseStream (Node.js)',
     initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
-      const stream = fs.createReadStream(filePath);
+      const nodeStream = fs.createReadStream(filePath);
       try {
         return {
-          metadata: await mm.parseStream(stream, {mimeType: mimeType}, options),
+          metadata: await mm.parseStream(nodeStream, {mimeType: mimeType}, options),
           randomRead: false
         };
       } finally {
-        stream.close();
+        nodeStream.close();
+      }
+    }
+  }, {
+    description: 'parseWebStream',
+    initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+      const webStream = await makeReadableByteFileStream(filePath);
+      try {
+        return {
+          // ToDo: add unit tests, where the fileSize is not provided (passed)
+          metadata: await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options),
+          randomRead: false
+        };
+      } finally {
+        await webStream.stream.cancel()
+        await webStream.closeFile();
       }
     }
   }, {

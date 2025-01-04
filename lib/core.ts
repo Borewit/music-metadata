@@ -39,8 +39,13 @@ export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAu
  * @param fileInfo - File information object or MIME-type string
  * @returns Metadata
  */
-export function parseWebStream(webStream: AnyWebByteStream, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  return parseFromTokenizer(fromWebStream(webStream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo}), options);
+export async function parseWebStream(webStream: AnyWebByteStream, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+  const tokenizer = fromWebStream(webStream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
+  try {
+    return await parseFromTokenizer(tokenizer, options);
+  } finally {
+    await tokenizer.close();
+  }
 }
 
 /**
