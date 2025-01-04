@@ -210,8 +210,8 @@ parseStream(stream: Readable, fileInfo?: IFileInfo | string, options?: IOptions)
 
 - `stream`: `Readable`:
   
-   The Node.js [Readable](https://nodejs.org/api/stream.html#class-streamreadable) stream from which the audio data is read.
-   This stream should provide the raw audio data to be analyzed.
+  The Node.js [Readable](https://nodejs.org/api/stream.html#class-streamreadable) stream from which the audio data is read.
+  This stream should provide the raw audio data to be analyzed.
 
 - `fileInfo`: `IFileInfo` (optional)
 
@@ -220,8 +220,8 @@ parseStream(stream: Readable, fileInfo?: IFileInfo | string, options?: IOptions)
 
   - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
     
-     If provided, it is assumed the streamed file content is to be the MIME-type. 
-     If not provided, the parser will attempt to determine the format based on the content of the stream.
+    If provided, it is assumed the streamed file content is to be the MIME-type. 
+    If not provided, the parser will attempt to determine the format based on the content of the stream.
   
   - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
   
@@ -229,9 +229,9 @@ parseStream(stream: Readable, fileInfo?: IFileInfo | string, options?: IOptions)
 
 - `options`: `IOptions` (optional)
   
-   An optional object containing additional parsing options.
-   These options allow you to customize the parsing process,
-   such as whether to calculate the duration or skip cover art extraction.
+  An optional object containing additional parsing options.
+  These options allow you to customize the parsing process,
+  such as whether to calculate the duration or skip cover art extraction.
 
 ##### Returns
 
