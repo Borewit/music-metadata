@@ -1,7 +1,7 @@
 import type { IGetToken } from 'strtok3';
 import { getBitAllignedNumber } from '../common/Util.js';
 
-interface IFrameHeader {
+export interface IFrameHeader {
   frameType: number;
 }
 

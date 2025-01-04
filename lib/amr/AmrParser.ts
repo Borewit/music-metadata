@@ -1,7 +1,8 @@
 import { BasicParser } from '../common/BasicParser.js';
 import { AnsiStringType } from 'token-types';
 import initDebug from 'debug';
-import { FrameHeader } from './AmrToken.js';
+import { FrameHeader, type IFrameHeader } from './AmrToken.js';
+import { EndOfStreamError } from 'strtok3';
 
 const debug = initDebug('music-metadata:parser:AMR');
 
@@ -34,9 +35,16 @@ export class AmrParser extends BasicParser {
     const assumedFileLength = this.tokenizer.fileInfo?.size ?? Number.MAX_SAFE_INTEGER;
 
     if (this.options.duration) {
+      let header: IFrameHeader;
       while (this.tokenizer.position < assumedFileLength) {
 
-        const header = await this.tokenizer.readToken(FrameHeader);
+        try {
+         header = await this.tokenizer.readToken(FrameHeader);
+        } catch(error) {
+          if (error instanceof EndOfStreamError)
+            break;
+          throw error;
+        }
 
         /* first byte is rate mode. each rate mode has frame of given length. look it up. */
         const size = m_block_size[header.frameType];
@@ -49,7 +57,6 @@ export class AmrParser extends BasicParser {
         } else {
           debug(`Found no-data frame, frame-type: ${header.frameType}. Skipping`);
         }
-
       }
       this.metadata.setFormat('duration', frames * 0.02);
     }
