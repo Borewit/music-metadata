@@ -9,7 +9,7 @@ describe('Adaptive Multi-Rate (AMR) audio file', () => {
 
   Parsers.forEach(parser => {
 
-    describe('parser.description', () => {
+    describe(parser.description, () => {
 
       it('parse: sample.amr', async function () {
         const {metadata} = await parser.initParser(() => this.skip(), path.join(amrPath, 'sample.amr'), 'audio/amr', {duration: true});
