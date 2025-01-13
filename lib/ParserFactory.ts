@@ -21,7 +21,6 @@ import { musepackParserLoader } from './musepack/MusepackLoader.js';
 import { oggParserLoader } from './ogg/OggLoader.js';
 import { wavpackParserLoader } from './wavpack/WavPackLoader.js';
 import { riffParserLoader } from './wav/WaveLoader.js';
-import { amrParserLoader } from './amr/AmrLoader.js';
 import { scanAppendingHeaders } from './core.js';
 
 const debug = initDebug('music-metadata:parser:factory');
@@ -83,8 +82,7 @@ export class ParserFactory {
       wavpackParserLoader,
       musepackParserLoader,
       dsfParserLoader,
-      dsdiffParserLoader,
-      amrParserLoader
+      dsdiffParserLoader
     ].forEach(parser => this.registerParser(parser));
   }
 
