@@ -46,7 +46,7 @@ jobs:
 
   test:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     needs: build
 
@@ -55,6 +55,7 @@ jobs:
 
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         node-version: [16.x, 18.x, 20.x, 22.x]
 
     steps:
