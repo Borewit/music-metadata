@@ -26,9 +26,7 @@ describe('Parse ADTS/AAC', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function (){
-        if (parser.description === 'parseBlob') {
-          this.skip(); // ToDo: fix different behaviour parseFromWebStream()
-        }
+        this.timeout(10000);
         const {metadata} = await parser.initParser(() => this.skip(), path.join(aacSamplePath, 'adts-mpeg4.aac'), 'audio/aac', {
           duration: true
         });

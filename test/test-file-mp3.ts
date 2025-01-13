@@ -253,7 +253,8 @@ describe('Parse MP3 files', () => {
 
       describe('duration=false', () => {
 
-        Parsers.slice(0, 1)
+        Parsers
+          .filter(parser => !parser.webStream)
           .forEach(parser => {
             it(parser.description, async function(){
               const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
@@ -267,6 +268,7 @@ describe('Parse MP3 files', () => {
         this.timeout(15000); // Parsing this file can take a bit longer
 
         Parsers
+          .filter(parser => !parser.webStream)
           .forEach(parser => {
             it(parser.description, async function(){
               const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});

@@ -23,6 +23,8 @@ describe('HTTP streaming', function() {
           this.skip(); // Fetch is only available since Node.js version 20
         }
 
+        this.timeout(10000);
+
         const url = 'http://builds.tokyo.s3.amazonaws.com/sample.m4a';
 
         const response = await fetch(url);
