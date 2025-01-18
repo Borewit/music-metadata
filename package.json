@@ -90,11 +90,11 @@
     "lyrics"
   ],
   "scripts": {
-    "clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts' 'src/**/*.d.ts' 'test/**/*.js' 'test/**/*.js.map' 'test/**/*.js' 'test/**/*.js.map' 'doc-gen/**/*.js' 'doc-gen/**/*.js.map'",
+    "clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts' 'test/**/*.js' 'test/**/*.js.map' 'test/**/*.js' 'test/**/*.js.map' 'doc-gen/**/*.js' 'doc-gen/**/*.js.map'",
     "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
-    "compile": "yarn run  compile-src && yarn compile-test && yarn compile-doc",
+    "compile": "yarn run compile-src && yarn compile-test && yarn compile-doc",
     "lint-ts": "biome check",
     "lint-md": "yarn run remark -u remark-preset-lint-consistent .",
     "lint": "yarn run lint-ts && yarn run lint-md",
