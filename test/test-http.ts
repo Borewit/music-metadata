@@ -7,11 +7,7 @@ import type { IFileInfo } from 'strtok3';
 const [nodeMajorVersion] = process.versions.node.split('.').map(Number);
 
 // Skipped: https://github.com/Borewit/music-metadata/issues/160
-describe('HTTP streaming', function() {
-
-  // Increase time-out to 15 seconds because we retrieve files over HTTP(s)
-  this.timeout(15 * 1000);
-  this.retries(3); // Workaround for HTTP time-outs on Travis-CI
+describe('HTTP streaming', () => {
 
   describe("Stream HTTP using fetch()", () => {
 
@@ -22,8 +18,6 @@ describe('HTTP streaming', function() {
         if (nodeMajorVersion < 20) {
           this.skip(); // Fetch is only available since Node.js version 20
         }
-
-        this.timeout(10000);
 
         const url = 'http://builds.tokyo.s3.amazonaws.com/sample.m4a';
 
@@ -47,6 +41,6 @@ describe('HTTP streaming', function() {
         assert.strictEqual(tags.common.album, 'SUPER MARIO GALAXY ORIGINAL SOUNDTRACK');
       });
     });
-  });
+  }).retries(3); // Workaround for HTTP time-outs on Travis-CI
 
 });

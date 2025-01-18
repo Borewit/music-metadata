@@ -8,9 +8,7 @@ import { IdHeader } from '../lib/ogg/opus/Opus.js';
 
 const oggSamplePath = path.join(samplePath, 'ogg');
 
-describe('Parse Ogg', function() {
-
-  this.timeout(15000); // It takes a log time to parse, due to sync errors and assumption it is VBR (which is caused by the funny 224 kbps frame)
+describe('Parse Ogg', () => {
 
   function check_Nirvana_In_Bloom_commonTags(common) {
     assert.strictEqual(common.title, 'In Bloom', 'common.title');
@@ -66,10 +64,10 @@ describe('Parse Ogg', function() {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
-          checkFormat(metadata.format);
-          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-          check_Nirvana_In_Bloom_commonTags(metadata.common);
+          const { format, native, common } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
+          checkFormat(format);
+          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(native.vorbis));
+          check_Nirvana_In_Bloom_commonTags(common);
         });
       });
 
@@ -149,10 +147,10 @@ describe('Parse Ogg', function() {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
-          checkFormat(metadata.format);
-          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(metadata.native.vorbis));
-          check_Nirvana_In_Bloom_commonTags(metadata.common);
+          const { format, native, common } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
+          checkFormat(format);
+          check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(native.vorbis));
+          check_Nirvana_In_Bloom_commonTags(common);
         });
       });
 
@@ -173,8 +171,8 @@ describe('Parse Ogg', function() {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
-          checkFormat(metadata.format);
+          const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
+          checkFormat(format);
         });
       });
 

@@ -106,9 +106,7 @@ describe('Parse MP3 files', () => {
 
   });
 
-  it('should handle audio-frame-header-bug', function() {
-
-    this.timeout(15000); // It takes a long time to parse
+  it('should handle audio-frame-header-bug', () => {
 
     const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
 
@@ -117,9 +115,7 @@ describe('Parse MP3 files', () => {
     });
   });
 
-  it('should be able to parse: Sleep Away.mp3', function() {
-
-    this.timeout(15000); // Parsing this file can take a bit longer
+  it('should be able to parse: Sleep Away.mp3', () => {
 
     const filePath = path.join(mp3SamplePath, 'Sleep Away.mp3');
 
@@ -257,8 +253,8 @@ describe('Parse MP3 files', () => {
           .filter(parser => !parser.webStream)
           .forEach(parser => {
             it(parser.description, async function(){
-              const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
-              assert.isUndefined(metadata.format.duration, 'Don\'t expect a duration');
+              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
+              assert.isUndefined(format.duration, 'Don\'t expect a duration');
             });
           });
       });
@@ -271,8 +267,7 @@ describe('Parse MP3 files', () => {
           .filter(parser => !parser.webStream)
           .forEach(parser => {
             it(parser.description, async function(){
-              const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
-              const { format } = metadata;
+              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
               assert.approximately(format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
               assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
             });

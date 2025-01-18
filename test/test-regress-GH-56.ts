@@ -34,30 +34,30 @@ describe('should calculate duration for a CBR encoded MP3', () => {
 
   Parsers.forEach(parser => {
     it(parser.description, async function(){
-      const { metadata, randomRead } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
-      const expectedTags = randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
-      t.deepEqual(metadata.format.tagTypes, expectedTags, 'format.tagTypes');
-      t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate');
-      t.strictEqual(metadata.format.duration, 16462080 / metadata.format.sampleRate, 'format.duration');
+      const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+      const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+      t.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
+      t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      t.strictEqual(format.duration, 16462080 / format.sampleRate, 'format.duration');
     });
   });
 
   it('_parseFile', async function(){
     const parser = Parsers[0];
-    const { metadata, randomRead } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
-    const expectedTags = randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
-    t.deepEqual(metadata.format.tagTypes, expectedTags, 'format.tagTypes');
-    t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate');
-    t.strictEqual(metadata.format.duration, 16462080 / metadata.format.sampleRate, 'format.duration');
+    const { format} = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+    const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+    t.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    t.strictEqual(format.duration, 16462080 / format.sampleRate, 'format.duration');
   });
 
   it('debug single', async function(){
     const parser =  Parsers[3];
-    const { metadata, randomRead } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
-    const expectedTags = randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
-    t.deepEqual(metadata.format.tagTypes, expectedTags, 'format.tagTypes');
-    t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate');
-    t.strictEqual(metadata.format.duration, 16462080 / metadata.format.sampleRate, 'format.duration');
+    const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+    const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+    t.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    t.strictEqual(format.duration, 16462080 / format.sampleRate, 'format.duration');
   });
 
 });

@@ -30,8 +30,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       it(parser.description, async function(){
         // AIFF file, AIFF file, stereo 8-bit data
         // Source: http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Samples.html
-        const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'M1F1-int8-AFsp.aif'), 'audio/aiff');
-        checkFormat(metadata.format, 'PCM', 8000, 2, 8, 23493);
+        const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'M1F1-int8-AFsp.aif'), 'audio/aiff');
+        checkFormat(format, 'PCM', 8000, 2, 8, 23493);
       });
     });
   });
@@ -42,8 +42,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       it(parser.description, async function(){
         // AIFF-C file, stereo A-law data (compression type: alaw)
         // Source: http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/AIFF/Samples.html
-        const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'M1F1-AlawC-AFsp.aif'), 'audio/aiff');
-        checkFormat(metadata.format, 'Alaw 2:1', 8000, 2, 16, 23493);
+        const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'M1F1-AlawC-AFsp.aif'), 'audio/aiff');
+        checkFormat(format, 'Alaw 2:1', 8000, 2, 16, 23493);
       });
     });
 
@@ -67,8 +67,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Pmiscck.aif'), 'audio/aiff');
-          checkFormat(metadata.format, ULAW, 8000, 1, 16, 9);
+          const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Pmiscck.aif'), 'audio/aiff');
+          checkFormat(format, ULAW, 8000, 1, 16, 9);
         });
       });
     });
@@ -77,8 +77,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Pnossnd.aif'), 'audio/aiff');
-          checkFormat(metadata.format, ULAW, 8000, 1, 16, 0);
+          const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Pnossnd.aif'), 'audio/aiff');
+          checkFormat(format, ULAW, 8000, 1, 16, 0);
         });
       });
     });
@@ -87,8 +87,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Poffset.aif'), 'audio/aiff');
-          checkFormat(metadata.format, ULAW, 8000, 1, 16, 9);
+          const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Poffset.aif'), 'audio/aiff');
+          checkFormat(format, ULAW, 8000, 1, 16, 9);
         });
       });
     });
@@ -97,8 +97,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Porder.aif'), 'audio/aiff');
-          checkFormat(metadata.format, ULAW, 8000, 1, 16, 9);
+          const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Porder.aif'), 'audio/aiff');
+          checkFormat(format, ULAW, 8000, 1, 16, 9);
         });
       });
     });
@@ -107,8 +107,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Ptjunk.aif'), 'audio/aiff');
-          checkFormat(metadata.format, ULAW, 8000, 1, 16, 9);
+          const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Ptjunk.aif'), 'audio/aiff');
+          checkFormat(format, ULAW, 8000, 1, 16, 9);
         });
       });
     });
@@ -117,8 +117,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { metadata } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Fnonull.aif'), 'audio/aiff');
-          checkFormat(metadata.format, ULAW, 8000, 1, 16, 9);
+          const { format } = await parser.initParser(() => this.skip(), path.join(aiffSamplePath, 'Fnonull.aif'), 'audio/aiff');
+          checkFormat(format, ULAW, 8000, 1, 16, 9);
         });
       });
     });
