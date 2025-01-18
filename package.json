@@ -146,5 +146,5 @@
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
   },
-  "packageManager": "yarn@4.3.1"
+  "packageManager": "yarn@4.6.0"
 }
