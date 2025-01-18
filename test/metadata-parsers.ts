@@ -4,37 +4,33 @@ import * as mm from '../lib/index.js';
 import type { IAudioMetadata, IOptions } from '../lib/index.js';
 import { makeReadableByteFileStream } from './util.js';
 
-type ParseFileMethod = (skipTest: () => void, filePath: string, mimeType?: string, options?: IOptions) => Promise<{metadata: IAudioMetadata, randomRead: boolean}>;
+type ParseFileMethod = (skipTest: () => void, filePath: string, mimeType?: string, options?: IOptions) => Promise<IAudioMetadata>;
 
 interface IParser {
   description: string;
   webStream?: true;
+  randomRead?: true
   initParser: ParseFileMethod;
 }
 
 const [nodeMajorVersion] = process.versions.node.split('.').map(Number);
 
 /**
- * Helps looping through different input styles
+ * Helps to loop through different input styles
  */
 export const Parsers: IParser[] = [
   {
     description: 'parseFile',
-    initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
-      return {
-        metadata: await mm.parseFile(filePath, options),
-        randomRead: true
-      };
+    randomRead: true,
+    initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+      return mm.parseFile(filePath, options);
     }
   }, {
     description: 'parseStream (Node.js)',
     initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const nodeStream = fs.createReadStream(filePath);
       try {
-        return {
-          metadata: await mm.parseStream(nodeStream, {mimeType: mimeType}, options),
-          randomRead: false
-        };
+        return await mm.parseStream(nodeStream, {mimeType: mimeType}, options);
       } finally {
         nodeStream.close();
       }
@@ -45,11 +41,7 @@ export const Parsers: IParser[] = [
     initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const webStream = await makeReadableByteFileStream(filePath);
       try {
-        return {
-          // ToDo: add unit tests, where the fileSize is not provided (passed)
-          metadata: await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options),
-          randomRead: false,
-        };
+        return await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options);
       } finally {
         await webStream.stream.cancel()
         await webStream.closeFile();
@@ -58,25 +50,20 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseBlob',
     webStream: true,
-    initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       if (nodeMajorVersion < 20) {
         skipTest();
       }
       const buffer = fs.readFileSync(filePath);
-      return {
-        metadata: await mm.parseBlob(new Blob([buffer], {type: mimeType}), options),
-        randomRead: false,
-      };
+      return mm.parseBlob(new Blob([buffer], {type: mimeType}), options);
     }
   }, {
     description: 'parseBuffer',
-    initParser: async(skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    randomRead: true,
+    initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const buffer = fs.readFileSync(filePath);
       const array = new Uint8Array(buffer);
-      return {
-        metadata: await mm.parseBuffer(array, {mimeType}, options),
-        randomRead: true
-      };
+      return mm.parseBuffer(array, {mimeType}, options);
     }
   }
 ];

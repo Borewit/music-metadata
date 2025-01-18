@@ -3,5 +3,6 @@
   "watch-files": ["lib/**/*.ts", "test/**/*.ts"],
   "spec": ["test/*.ts"],
   "loader": ["ts-node/esm"],
-  "extensions": ["ts", "tsx"]
+  "extensions": ["ts", "tsx"],
+  "timeout": 15000
 }

@@ -15,9 +15,8 @@ describe('Parse Musepack (.mpc)', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
 
-        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
+        const { format, common } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
-        const { format, common } = metadata;
         assert.deepEqual(format.container, 'Musepack, SV7');
         assert.strictEqual(format.sampleRate, 44100);
         assert.strictEqual(format.numberOfSamples, 11940);
@@ -49,8 +48,7 @@ describe('Parse Musepack (.mpc)', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
 
-        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
-        const { format, common } = metadata;
+        const { format, common } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(format.container, 'Musepack, SV7');
         assert.strictEqual(format.sampleRate, 44100);
@@ -76,8 +74,7 @@ describe('Parse Musepack (.mpc)', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
 
-        const { metadata } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
-        const { format, common } = metadata;
+        const { format, common } = await parser.initParser(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(format.container, 'Musepack, SV8');
         assert.strictEqual(format.sampleRate, 48000);
