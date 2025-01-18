@@ -2363,7 +2363,7 @@ __metadata:
     mocha: "npm:^11.0.1"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.0"
-    strtok3: "npm:^10.0.1"
+    strtok3: "npm:10.1.0-beta.2"
     token-types: "npm:^6.0.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.7.3"
@@ -2563,6 +2563,13 @@ __metadata:
   version: 5.3.1
   resolution: "peek-readable@npm:5.3.1"
   checksum: 10c0/49f628e4728887230c158699e422ebb10747f5e02aee930ec10634fa7142e74e67d3fb3a780e7a9b9f092c61bf185f07d167c099b2359b22a58cee3dbfe0e43b
+  languageName: node
+  linkType: hard
+
+"peek-readable@npm:^5.4.0-beta.3":
+  version: 5.4.0-beta.3
+  resolution: "peek-readable@npm:5.4.0-beta.3"
+  checksum: 10c0/4b0d75878b3096b3eca80213ad5c09b5db482b33300ea07557e665083eb7d2cb86d02fe0dec672a9b8a5f3e37bc111ffa56f837a24a3c426308386ed56ba46d4
   languageName: node
   linkType: hard
 
@@ -3183,13 +3190,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^10.0.1":
-  version: 10.0.1
-  resolution: "strtok3@npm:10.0.1"
+"strtok3@npm:10.1.0-beta.2":
+  version: 10.1.0-beta.2
+  resolution: "strtok3@npm:10.1.0-beta.2"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
-    peek-readable: "npm:^5.3.1"
-  checksum: 10c0/476ccea29feebef1659d825e71a5e054b80486617139966217f53fd197d9d78d2d6f1e3be52cad7bc7ff71e164d38696adc60f883705fb440be1162a3ce6cb9b
+    peek-readable: "npm:^5.4.0-beta.3"
+  checksum: 10c0/0956b02561d3f930f5b6884a2eed7bd4c523c85fb2d14c946cf0a2690c790b281cbececa7c3dace44a870e4175b63c0faf68d6fb8e86771fd52ddd8c916f8561
   languageName: node
   linkType: hard
 

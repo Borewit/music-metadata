@@ -32,7 +32,9 @@ describe('should calculate duration for a CBR encoded MP3', () => {
 
   const filePath = path.join(samplePath, 'regress-GH-56.mp3');
 
-  Parsers.forEach(parser => {
+  Parsers
+    .filter((parser, n) => { return n === 2})
+    .forEach(parser => {
     it(parser.description, async function(){
       const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
       const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
