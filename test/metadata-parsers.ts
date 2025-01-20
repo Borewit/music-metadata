@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import * as mm from '../lib/index.js';
 import type { IAudioMetadata, IOptions } from '../lib/index.js';
-import { makeReadableByteFileStream } from './util.js';
+import { makeByteReadableStreamFromFile } from './util.js';
 
 type ParseFileMethod = (skipTest: () => void, filePath: string, mimeType?: string, options?: IOptions) => Promise<IAudioMetadata>;
 
@@ -39,7 +39,7 @@ export const Parsers: IParser[] = [
     description: 'parseWebStream',
     webStream: true,
     initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
-      const webStream = await makeReadableByteFileStream(filePath);
+      const webStream = await makeByteReadableStreamFromFile(filePath);
       try {
         return await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options);
       } finally {
