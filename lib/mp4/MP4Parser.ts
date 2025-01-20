@@ -259,8 +259,8 @@ export class MP4Parser extends BasicParser {
     if (this.atomParsers[atom.header.name]) {
       return this.atomParsers[atom.header.name](remaining);
     }
-      debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
-      await this.tokenizer.ignore(remaining);
+    debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
+    await this.tokenizer.ignore(remaining);
   }
 
   private getTrackDescription(): ITrackDescription {
