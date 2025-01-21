@@ -37,57 +37,115 @@ export async function makeByteReadableStreamFromFile(filename: string): Promise<
   };
 }
 
-function makeByteReadableStreamFromNodeReadable(nodeReadable: Readable): ReadableStream<Uint8Array> {
+export function makeByteReadableStreamFromNodeReadable(nodeReadable: Readable): ReadableStream<Uint8Array> {
+  let leftoverChunk: Uint8Array | null = null;
+
   return new ReadableStream<Uint8Array>({
     type: 'bytes',
     start(controller: ReadableByteStreamController) {
-      const onData = (chunk: Buffer) => {
-        if (controller.byobRequest) {
-          const view = (controller.byobRequest as ReadableStreamBYOBRequest).view;
-          const bytesToCopy = Math.min(view.byteLength, chunk.byteLength);
+      // Process any leftover data from previous read
+      const processLeftover = () => {
+        while (leftoverChunk) {
+          const byobRequest = controller.byobRequest;
+          if (byobRequest) {
+            const view = (controller.byobRequest as ReadableStreamBYOBRequest).view;
+            const bytesToCopy = Math.min(view.byteLength, leftoverChunk.length);
 
-          new Uint8Array(view.buffer, view.byteOffset, view.byteLength)
-            .set(new Uint8Array(chunk.buffer, chunk.byteOffset, bytesToCopy));
+            console.log(`[DEBUG] leftoverChunk length: ${leftoverChunk?.length}`);
+            console.log(`[DEBUG] BYOB request size: ${view.byteLength}`);
 
-          (controller.byobRequest as ReadableStreamBYOBRequest).respond(bytesToCopy);
+            // Copy leftoverChunk into the BYOB buffer
+            new Uint8Array(view.buffer, view.byteOffset, bytesToCopy).set(
+              leftoverChunk.subarray(0, bytesToCopy)
+            );
 
-          if (bytesToCopy < chunk.byteLength) {
-            controller.enqueue(chunk.subarray(bytesToCopy));
+            (controller.byobRequest as ReadableStreamBYOBRequest).respond(bytesToCopy);
+
+            // Update leftoverChunk with unprocessed data
+            if (bytesToCopy < leftoverChunk.length) {
+              leftoverChunk = leftoverChunk.subarray(bytesToCopy);
+            } else {
+              leftoverChunk = null;
+            }
+          } else {
+            // No BYOB request, enqueue leftover data
+            controller.enqueue(leftoverChunk);
+            leftoverChunk = null;
           }
-        } else {
-          controller.enqueue(new Uint8Array(chunk));
+        }
+
+        // If no leftoverChunk, resume Node.js stream
+        if (controller.desiredSize !== null && controller.desiredSize > 0 && nodeReadable.isPaused()) {
+          nodeReadable.resume();
         }
       };
 
+      const onData = (chunk: Buffer) => {
+        if (leftoverChunk) {
+          // Combine leftover data with new chunk
+          const combined = new Uint8Array(leftoverChunk.length + chunk.length);
+          combined.set(leftoverChunk);
+          combined.set(chunk, leftoverChunk.length);
+          leftoverChunk = combined;
+        } else {
+          leftoverChunk = new Uint8Array(chunk);
+        }
+
+        processLeftover();  // Process leftover data immediately
+      };
+
       const onEnd = () => {
+        if (leftoverChunk) {
+          controller.enqueue(leftoverChunk);
+          leftoverChunk = null;
+        }
         controller.close();
-        cleanup();
       };
 
       const onError = (err: Error) => {
         controller.error(err);
-        cleanup();
-      };
-
-      const cleanup = () => {
-        nodeReadable.off('data', onData);
-        nodeReadable.off('end', onEnd);
-        nodeReadable.off('error', onError);
       };
 
       nodeReadable.on('data', onData);
       nodeReadable.on('end', onEnd);
       nodeReadable.on('error', onError);
+
       nodeReadable.resume();
     },
-    pull(controller) {
-      if (nodeReadable.isPaused()) {
+    pull(controller: ReadableByteStreamController) {
+      // If there's leftover data, process it
+      if (leftoverChunk) {
+        const byobRequest = controller.byobRequest;
+        if (byobRequest) {
+          const view = (controller.byobRequest as ReadableStreamBYOBRequest).view;
+
+          const bytesToCopy = Math.min(view.byteLength, leftoverChunk.length);
+
+          new Uint8Array(view.buffer, view.byteOffset, bytesToCopy).set(
+            leftoverChunk.subarray(0, bytesToCopy)
+          );
+
+          (controller.byobRequest as ReadableStreamBYOBRequest).respond(bytesToCopy);
+
+          if (bytesToCopy < leftoverChunk.length) {
+            leftoverChunk = leftoverChunk.subarray(bytesToCopy);
+          } else {
+            leftoverChunk = null;
+          }
+        } else {
+          controller.enqueue(leftoverChunk);
+          leftoverChunk = null;
+        }
+      }
+
+      // Always resume the Node.js stream if paused
+      if (!leftoverChunk && nodeReadable.isPaused()) {
         nodeReadable.resume();
       }
     },
     cancel(reason) {
       nodeReadable.destroy(reason);
-    }
+    },
   });
 }
 
