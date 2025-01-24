@@ -5,11 +5,11 @@ import { BasicParser } from '../common/BasicParser.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 import { Atom } from './Atom.js';
 import * as AtomToken from './AtomToken.js';
+import { Mp4ContentError } from './AtomToken.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
 
 import type { IGetToken } from '@tokenizer/token';
 import { uint8ArrayToHex, uint8ArrayToString } from 'uint8array-extras';
-import { Mp4ContentError } from './AtomToken.js';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -545,14 +545,16 @@ export class MP4Parser extends BasicParser {
     };
 
     let offset = 0;
-    const version = AtomToken.SoundSampleDescriptionVersion.get(sampleDescription.description, offset);
-    offset += AtomToken.SoundSampleDescriptionVersion.len;
+    if (sampleDescription.description) {
+      const version = AtomToken.SoundSampleDescriptionVersion.get(sampleDescription.description, offset);
+      offset += AtomToken.SoundSampleDescriptionVersion.len;
 
-    if (version.version === 0 || version.version === 1) {
-      // Sound Sample Description (Version 0)
-      ssd.description = AtomToken.SoundSampleDescriptionV0.get(sampleDescription.description, offset);
-    } else {
-      debug(`Warning: sound-sample-description ${version} not implemented`);
+      if (version.version === 0 || version.version === 1) {
+        // Sound Sample Description (Version 0)
+        ssd.description = AtomToken.SoundSampleDescriptionV0.get(sampleDescription.description, offset);
+      } else {
+        debug(`Warning: sound-sample-description ${version} not implemented`);
+      }
     }
     return ssd;
   }
