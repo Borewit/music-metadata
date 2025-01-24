@@ -489,7 +489,7 @@ const stsdHeader: IGetToken<IAtomStsdHeader> = {
 export interface ISampleDescription {
   dataFormat: string;
   dataReferenceIndex: number;
-  description: Uint8Array;
+  description: Uint8Array | undefined;
 }
 
 export interface IAtomStsd {
@@ -499,7 +499,7 @@ export interface IAtomStsd {
 
 /**
  * Atom: Sample Description Atom ('stsd')
- * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
+ * Ref: https://developer.apple.com/documentation/quicktime-file-format/sample_description_atom
  */
 class SampleDescriptionTable implements IGetToken<ISampleDescription> {
 
@@ -507,11 +507,11 @@ class SampleDescriptionTable implements IGetToken<ISampleDescription> {
   }
 
   public get(buf: Uint8Array, off: number): ISampleDescription {
-
+    const descrLen = this.len - 12;
     return {
       dataFormat: FourCcToken.get(buf, off),
       dataReferenceIndex: Token.UINT16_BE.get(buf, off + 10),
-      description: new Token.Uint8ArrayType(this.len - 12).get(buf, off + 12)
+      description: descrLen > 0 ? new Token.Uint8ArrayType(descrLen).get(buf, off + 12) : undefined
     };
   }
 }
@@ -535,7 +535,7 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
     for (let n = 0; n < header.numberOfEntries; ++n) {
       const size = Token.UINT32_BE.get(buf, off); // Sample description size
       off += Token.UINT32_BE.len;
-      table.push(new SampleDescriptionTable(size).get(buf, off));
+      table.push(new SampleDescriptionTable(size - Token.UINT32_BE.len).get(buf, off));
       off += size;
     }
 

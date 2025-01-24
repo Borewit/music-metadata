@@ -473,4 +473,14 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.equal(mm.ratingToStars(common.rating[0].rating), 4, 'Vorbis tag rating conversion');
   });
 
+  it('\'stsd\' atom: Handle empty sample entry description', async () => {
+
+    const filePath = path.join(mp4Samples, 'frag_bunny.mp4');
+    const {format, common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'mp42/avc1/iso5', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.strictEqual(common.title, undefined, 'common.title');
+  });
+
 });
