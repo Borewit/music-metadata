@@ -26,7 +26,7 @@ describe('Parse ADTS/AAC', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function (){
-        const {format} = await parser.initParser(() => this.skip(), path.join(aacSamplePath, 'adts-mpeg4.aac'), 'audio/aac', {
+        const {format} = await parser.parse(() => this.skip(), path.join(aacSamplePath, 'adts-mpeg4.aac'), 'audio/aac', {
           duration: true
         });
         checkFormat(format, 'ADTS/MPEG-4', 'AAC', 'AAC LC', 16000, 1, 20399, 256000);
@@ -38,7 +38,7 @@ describe('Parse ADTS/AAC', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const {format} = await parser.initParser(() => this.skip(), path.join(aacSamplePath, 'adts-mpeg4-2.aac'), 'audio/aac', {
+        const {format} = await parser.parse(() => this.skip(), path.join(aacSamplePath, 'adts-mpeg4-2.aac'), 'audio/aac', {
           duration: true
         });
         checkFormat(format, 'ADTS/MPEG-4', 'AAC', 'AAC LC', 44100, 2, 128000, 14336);

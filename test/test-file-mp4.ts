@@ -74,7 +74,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         const filePath = path.join(mp4Samples, 'id4.m4a');
 
-        const { native, format, common } = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
+        const { native, format, common } = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
         assert.ok(native, 'Native m4a tags should be present');
 
         checkFormat(format);
@@ -94,7 +94,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         const filePath = path.join(mp4Samples, 'issue-74.m4a');
 
-        const {format, common, native} = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
+        const {format, common, native} = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
 
         assert.deepEqual(format.container, 'isom/iso2/mp41', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -122,7 +122,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         const filePath = path.join(mp4Samples, 'issue-79.m4a');
 
-        const {common, format} = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
+        const {common, format} = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
 
         assert.deepEqual(format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -151,7 +151,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
           const filePath = path.join(mp4Samples, 'issue-127.m4b');
 
-          const { common, format, native} = await parser.initParser(() => this.skip(), filePath, 'audio/mp4');
+          const { common, format, native} = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
 
           assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -292,7 +292,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
           const filePath = path.join(mp4Samples, 'Mr. Pickles S02E07 My Dear Boy.mp4');
 
-          const { common, format, native } = await parser.initParser(() => this.skip(), filePath, 'video/mp4');
+          const { common, format, native } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
           assert.deepEqual(common.title, 'My Dear Boy');
           assert.deepEqual(common.tvEpisode, 7);
           assert.deepEqual(common.tvEpisodeId, '017');
@@ -320,7 +320,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
-        const { format } = await parser.initParser(() => this.skip(), filePath, 'video/mp4');
+        const { format } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
         assert.deepEqual(format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
       });
@@ -336,7 +336,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
-        const { format, common } = await parser.initParser(() => this.skip(), filePath, 'video/mp4');
+        const { format, common } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
         assert.deepEqual(format.container, 'mp42/isom', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
 
@@ -360,7 +360,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
       it(parser.description, async function(){
         const filePath = path.join(mp4Samples, '01. Trumpsta (Djuro Remix).m4a');
 
-        const { format, common } = await parser.initParser(() => this.skip(), filePath, 'audio/m4a');
+        const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/m4a');
 
         assert.deepEqual(format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');

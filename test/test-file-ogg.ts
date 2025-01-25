@@ -64,7 +64,7 @@ describe('Parse Ogg', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { format, native, common } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
+          const { format, native, common } = await parser.parse(() => this.skip(), filePath, 'audio/ogg');
           checkFormat(format);
           check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(native.vorbis));
           check_Nirvana_In_Bloom_commonTags(common);
@@ -147,7 +147,7 @@ describe('Parse Ogg', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { format, native, common } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
+          const { format, native, common } = await parser.parse(() => this.skip(), filePath, 'audio/ogg');
           checkFormat(format);
           check_Nirvana_In_Bloom_VorbisTags(mm.orderTags(native.vorbis));
           check_Nirvana_In_Bloom_commonTags(common);
@@ -171,7 +171,7 @@ describe('Parse Ogg', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/ogg');
+          const { format } = await parser.parse(() => this.skip(), filePath, 'audio/ogg');
           checkFormat(format);
         });
       });

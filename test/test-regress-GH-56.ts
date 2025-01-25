@@ -34,7 +34,7 @@ describe('should calculate duration for a CBR encoded MP3', () => {
 
   Parsers.forEach(parser => {
     it(parser.description, async function(){
-      const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+      const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
       const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
       t.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
       t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -44,7 +44,7 @@ describe('should calculate duration for a CBR encoded MP3', () => {
 
   it('_parseFile', async function(){
     const parser = Parsers[0];
-    const { format} = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+    const { format} = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
     const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
     t.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -53,7 +53,7 @@ describe('should calculate duration for a CBR encoded MP3', () => {
 
   it('debug single', async function(){
     const parser =  Parsers[3];
-    const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg');
+    const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
     const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
     t.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
     t.strictEqual(format.sampleRate, 44100, 'format.sampleRate');

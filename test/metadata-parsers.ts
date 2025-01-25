@@ -10,7 +10,7 @@ interface IParser {
   description: string;
   webStream?: true;
   randomRead?: true
-  initParser: ParseFileMethod;
+  parse: ParseFileMethod;
 }
 
 const [nodeMajorVersion] = process.versions.node.split('.').map(Number);
@@ -22,12 +22,12 @@ export const Parsers: IParser[] = [
   {
     description: 'parseFile',
     randomRead: true,
-    initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       return mm.parseFile(filePath, options);
     }
   }, {
     description: 'parseStream (Node.js)',
-    initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const nodeStream = fs.createReadStream(filePath);
       try {
         return await mm.parseStream(nodeStream, {mimeType: mimeType}, options);
@@ -38,19 +38,18 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseWebStream',
     webStream: true,
-    initParser: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const webStream = await makeReadableByteFileStream(filePath);
       try {
         return await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options);
       } finally {
-        await webStream.stream.cancel()
-        await webStream.closeFile();
+        await webStream.stream.cancel();
       }
     }
   }, {
     description: 'parseBlob',
     webStream: true,
-    initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       if (nodeMajorVersion < 20) {
         skipTest();
       }
@@ -60,7 +59,7 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseBuffer',
     randomRead: true,
-    initParser: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const buffer = fs.readFileSync(filePath);
       const array = new Uint8Array(buffer);
       return mm.parseBuffer(array, {mimeType}, options);

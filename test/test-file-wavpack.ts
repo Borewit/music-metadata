@@ -28,7 +28,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const { format, common } = await parser.initParser(() => this.skip(), wv1, 'audio/x-wavpack');
+        const { format, common } = await parser.parse(() => this.skip(), wv1, 'audio/x-wavpack');
         checkFormat(format);
         checkCommon(common);
       });
@@ -50,7 +50,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const { format } = await parser.initParser(() => this.skip(), wv1, 'audio/x-wavpack');
+        const { format } = await parser.parse(() => this.skip(), wv1, 'audio/x-wavpack');
         checkFormat(format);
       });
     });
@@ -72,7 +72,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const { format } = await parser.initParser(() => this.skip(), wv1, 'audio/x-wavpack');
+        const { format } = await parser.parse(() => this.skip(), wv1, 'audio/x-wavpack');
         checkFormat(format);
       });
     });
