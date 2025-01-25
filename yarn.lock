@@ -2350,6 +2350,7 @@ __metadata:
     media-typer: "npm:^1.1.0"
     mime: "npm:^4.0.6"
     mocha: "npm:^11.1.0"
+    node-readable-to-web-readable-stream: "npm:^0.3.1"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.2.1"
@@ -2384,6 +2385,13 @@ __metadata:
   bin:
     node-gyp: bin/node-gyp.js
   checksum: 10c0/00630d67dbd09a45aee0a5d55c05e3916ca9e6d427ee4f7bc392d2d3dc5fad7449b21fc098dd38260a53d9dcc9c879b36704a1994235d4707e7271af7e9a835b
+  languageName: node
+  linkType: hard
+
+"node-readable-to-web-readable-stream@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "node-readable-to-web-readable-stream@npm:0.3.1"
+  checksum: 10c0/0034cc725399057444eec20a5b09413c164f37a10d073176b7889bc7926545f85bc30f12026ec997a30d18a8793248776e5bb370b213cab9f0f5f53b68d9fdb5
   languageName: node
   linkType: hard
 

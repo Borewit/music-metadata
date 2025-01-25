@@ -253,7 +253,7 @@ describe('Parse MP3 files', () => {
           .filter(parser => !parser.webStream)
           .forEach(parser => {
             it(parser.description, async function(){
-              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
+              const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
               assert.isUndefined(format.duration, 'Don\'t expect a duration');
             });
           });
@@ -267,7 +267,7 @@ describe('Parse MP3 files', () => {
           .filter(parser => !parser.webStream)
           .forEach(parser => {
             it(parser.description, async function(){
-              const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
+              const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
               assert.approximately(format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
               assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
             });

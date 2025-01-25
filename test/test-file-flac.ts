@@ -60,7 +60,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const {format, common, native} = await parser.initParser(() => this.skip(), path.join(samplePath, 'flac.flac'), 'audio/flac');
+        const {format, common, native} = await parser.parse(() => this.skip(), path.join(samplePath, 'flac.flac'), 'audio/flac');
         checkFormat(format);
         checkCommon(common);
         checkNative(mm.orderTags(native.vorbis));
@@ -75,7 +75,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const {format} = await parser.initParser(() => this.skip(), filePath, 'audio/flac');
+        const {format} = await parser.parse(() => this.skip(), filePath, 'audio/flac');
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
       });
     });
@@ -88,7 +88,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
     Parsers.forEach(parser => {
       it(parser.description, async function(){
-        const {format} = await parser.initParser(() => this.skip(), filePath, 'audio/flac');
+        const {format} = await parser.parse(() => this.skip(), filePath, 'audio/flac');
         assert.approximately(496000, format.bitrate, 500);
       });
     });
@@ -107,7 +107,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
       Parsers.forEach(parser => {
         it(parser.description, async function(){
-          return parser.initParser(() => this.skip(), tmpFilePath, 'audio/flac').then(() => {
+          return parser.parse(() => this.skip(), tmpFilePath, 'audio/flac').then(() => {
             t.fail('Should reject');
             fs.unlinkSync(tmpFilePath);
           }).catch(err => {

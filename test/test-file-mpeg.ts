@@ -336,7 +336,7 @@ describe('Parse MPEG', () => {
       Parsers
         .forEach(parser => {
           it(parser.description, async function(){
-            const { format } = await parser.initParser(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
+            const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
             assert.strictEqual(format.duration, 0.4963265306122449);
           });
         });

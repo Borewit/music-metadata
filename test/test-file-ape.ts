@@ -41,7 +41,7 @@ describe('Parse APE (Monkey\'s Audio)', () => {
 
   Parsers.forEach(parser => {
     it(parser.description, async function(){
-      const {format, common, native} = await parser.initParser(() => this.skip(), path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape');
+      const {format, common, native} = await parser.parse(() => this.skip(), path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape');
       checkFormat(format);
       checkCommon(common);
       assert.isDefined(native, 'metadata.native should be defined');
