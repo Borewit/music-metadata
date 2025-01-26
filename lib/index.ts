@@ -23,7 +23,12 @@ const debug = initDebug('music-metadata:parser');
  */
 export async function parseStream(stream: Readable, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
   const tokenizer = await fromStream(stream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
-  return parseFromTokenizer(tokenizer, options);
+  try {
+    return await parseFromTokenizer(tokenizer, options);
+  }
+  finally {
+    await tokenizer.close();
+  }
 }
 
 /**
