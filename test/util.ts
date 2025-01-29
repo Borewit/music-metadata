@@ -1,6 +1,6 @@
 // Utilities for testing
 
-import { createReadStream, openAsBlob } from 'node:fs';
+import { createReadStream, openAsBlob, type ReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -46,3 +46,20 @@ export async function makeDefaultReadableStreamFromFile(filename: string, _delay
 }
 
 export const samplePath = path.join(dirname, 'samples');
+
+/** Wait for the file descriptor to close, including when parsing stops before EOF. */
+export async function closeReadStream(stream: ReadStream): Promise<void> {
+  if (stream.closed) {
+    return;
+  }
+  const closed = new Promise<void>(resolve => {
+    const ignoreError = () => undefined;
+    stream.on('error', ignoreError);
+    stream.once('close', () => {
+      stream.off('error', ignoreError);
+      resolve();
+    });
+  });
+  stream.destroy();
+  await closed;
+}
