@@ -32,7 +32,14 @@ export const Parsers: IParser[] = [
       try {
         return await mm.parseStream(nodeStream, {mimeType: mimeType}, options);
       } finally {
-        nodeStream.close();
+        await new Promise<void>((resolve, reject) => {
+          nodeStream.close(err => {
+            if (err)
+              reject(err);
+            else
+              resolve();
+          });
+        });
       }
     }
   }, {
