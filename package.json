@@ -111,7 +111,7 @@
     "file-type": "^19.6.0",
     "link": "^2.1.1",
     "media-typer": "^1.1.0",
-    "strtok3": "^10.0.1",
+    "strtok3": "^10.1.1",
     "token-types": "^6.0.0",
     "uint8array-extras": "^1.4.0"
   },
