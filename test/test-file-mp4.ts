@@ -23,7 +23,12 @@ import {
 } from '../lib/mp4/AtomToken.js';
 import { MP4Parser } from '../lib/mp4/MP4Parser.js';
 import { Parsers } from './metadata-parsers.js';
-import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samplePath } from './util.js';
+import {
+  closeReadStream,
+  makeByteReadableStreamFromFile,
+  makeDefaultReadableStreamFromFile,
+  samplePath
+} from './util.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
@@ -2480,22 +2485,18 @@ describe('Parse MPEG-4', () => {
         const filePath = path.join(mp4Samples, 'BabysSongbook_librivox.m4b');
 
         it('from a file', async () => {
-          let metadata: mm.IAudioMetadata;
-          const stream = fs.createReadStream(filePath);
-          try {
-            metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
-          } finally {
-            stream.close();
-          }
+          const metadata = await mm.parseFile(filePath, { includeChapters: true });
           checkMetadata(metadata);
         });
 
         it('from a stream', async () => {
           const stream = fs.createReadStream(filePath);
-          const metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
-          stream.close();
-
-          checkMetadata(metadata);
+          try {
+            const metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
+            checkMetadata(metadata);
+          } finally {
+            await closeReadStream(stream);
+          }
         });
       });
     });

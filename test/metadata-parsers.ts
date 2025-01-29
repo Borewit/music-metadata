@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import type { IAudioMetadata, IOptions } from '../lib/index.js';
 import * as mm from '../lib/index.js';
-import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile } from './util.js';
+import { closeReadStream, makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile } from './util.js';
 
 type ParseFileMethod = (
   skipTest: () => void,
@@ -36,7 +36,7 @@ export const Parsers: IParser[] = [
       try {
         return await mm.parseStream(nodeStream, { mimeType: mimeType }, options);
       } finally {
-        nodeStream.close();
+        await closeReadStream(nodeStream);
       }
     }
   },

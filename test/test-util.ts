@@ -1,12 +1,29 @@
+import { createReadStream } from 'node:fs';
 import { textDecode } from '@borewit/text-codec';
 import { assert } from 'chai';
 import { FourCcToken } from '../lib/common/FourCC.js';
 import * as util from '../lib/common/Util.js';
 import { dbToRatio, ratioToDb, toRatio } from '../lib/common/Util.js';
 
+import { closeReadStream } from './util.js';
+
 const t = assert;
 
 describe('shared utility functionality', () => {
+  it('awaits file stream closure before EOF and tolerates repeated cleanup', async () => {
+    const stream = createReadStream(new URL('./samples/mp4/BabysSongbook_librivox.m4b', import.meta.url));
+    await closeReadStream(stream);
+    assert.isTrue(stream.closed);
+    assert.isFalse(stream.readableEnded);
+    await closeReadStream(stream);
+  });
+
+  it('waits for close without reporting a cleanup-time stream error', async () => {
+    const stream = createReadStream(new URL('./samples/does-not-exist', import.meta.url));
+    await closeReadStream(stream);
+    assert.isTrue(stream.closed);
+  });
+
   describe('splitText', () => {
     it('counts nonempty values and preserves the context with multi-character separators', () => {
       const reservations: [number, string][] = [];
