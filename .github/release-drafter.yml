@@ -47,5 +47,5 @@ template: |
 
   $CHANGES
 
-  ## NPM release
+  ## 📦 NPM release
   NPM release: [$REPOSITORY@$RESOLVED_VERSION](https://www.npmjs.com/package/$REPOSITORY/v/$RESOLVED_VERSION)
