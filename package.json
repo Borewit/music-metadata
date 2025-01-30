@@ -111,7 +111,7 @@
     "file-type": "^19.6.0",
     "link": "^2.1.1",
     "media-typer": "^1.1.0",
-    "strtok3": "10.1.1",
+    "strtok3": "^10.1.2",
     "token-types": "^6.0.0",
     "uint8array-extras": "^1.4.0"
   },
@@ -136,7 +136,7 @@
     "typescript": "^5.7.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18"
   },
   "repository": {
     "type": "git",
