@@ -27,7 +27,7 @@ The distributed JavaScript codebase is compliant with the [ECMAScript 2020 (11th
 > [!NOTE]
 > See also [CommonJS backward Compatibility](#commonjs-backward-compatibility)
 
-This module requires a [Node.js ≥ 16](https://nodejs.org/en/about/previous-releases) engine.
+This module requires a [Node.js ≥ 18](https://nodejs.org/en/about/previous-releases) engine.
 It can also be used in a browser environment when bundled with a module bundler.
 
 ## Support the Project
