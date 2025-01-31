@@ -351,8 +351,8 @@ describe('Parse MPEG', () => {
       const stream = new SourceStream(buffer);
 
       const metadata = await mm.parseStream(stream, {mimeType: 'audio/mpeg'}, {duration: true});
-      // Changed expected result from 34.66 to 34.64, after updating strtok3
-      assert.approximately(metadata.format.duration, 34.64, 5 / 1000);
+      // Changed expected result from 34.66 to 34.64, to 34,69 (strtok3@10.2.0) after updating strtok3
+      assert.approximately(metadata.format.duration, 34.69, 5 / 1000);
     });
 
   });
