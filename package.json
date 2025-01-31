@@ -139,8 +139,7 @@
     "node": ">=18"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/borewit/music-metadata.git"
+    "type": "https://github.com/borewit/music-metadata.git"
   },
   "license": "MIT",
   "bugs": {
