@@ -2351,7 +2351,7 @@ __metadata:
     mime: "npm:^4.0.6"
     mocha: "npm:^11.1.0"
     remark-cli: "npm:^12.0.1"
-    remark-preset-lint-consistent: "npm:^6.0.0"
+    remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.2.0"
     token-types: "npm:^6.0.0"
     ts-node: "npm:^10.9.2"
@@ -2889,9 +2889,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"remark-preset-lint-consistent@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "remark-preset-lint-consistent@npm:6.0.0"
+"remark-preset-lint-consistent@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "remark-preset-lint-consistent@npm:6.0.1"
   dependencies:
     remark-lint: "npm:^10.0.0"
     remark-lint-blockquote-indentation: "npm:^4.0.0"
@@ -2908,7 +2908,7 @@ __metadata:
     remark-lint-strong-marker: "npm:^4.0.0"
     remark-lint-table-cell-padding: "npm:^5.0.0"
     unified: "npm:^11.0.0"
-  checksum: 10c0/f20064bc2dab161fa463a82186b107ac9596cf9e8c308e6cf41de94a5039fe601498de7cff8dc74459d0f0a4247424cc1398407fe2f7404dfebb9e6dd2c62180
+  checksum: 10c0/08755494b4097cc11c3f8f354346f8b9319aacdef91c877f19a6ca2722b4de59d636d859bdb129d3a16eb50a7bf594ad3215d560c9063452da28a09d37c2cc37
   languageName: node
   linkType: hard
 
