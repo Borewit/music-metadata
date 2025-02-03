@@ -6,6 +6,8 @@ test/**/*.d.ts
 lib/**/*.js
 lib/**/*.js.map
 lib/**/*.d.ts
+!lib/cjs-core.d.ts
+!lib/cjs-node.d.ts
 doc-gen/**/*.js
 doc-gen/**/*.map
 test/samples/originals

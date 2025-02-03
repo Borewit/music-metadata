@@ -18,20 +18,27 @@
   ],
   "type": "module",
   "exports": {
-    ".": {
+    "import": {
       "node": {
-        "import": "./lib/index.js",
-        "require": "./lib/node.cjs",
+        "default": "./lib/index.js",
         "types": "./lib/index.d.ts"
       },
       "default": {
-        "import": "./lib/core.js",
-        "require": "./lib/default.cjs",
+        "default": "./lib/core.js",
         "types": "./lib/core.d.ts"
+      }
+    },
+    "require": {
+      "node": {
+        "default": "./lib/cjs-node.js",
+        "types": "./lib/cjs-node.d.ts"
+      },
+      "default": {
+        "default": "./lib/cjs-core.js",
+        "types": "./lib/cjs-core.d.ts"
       }
     }
   },
-  "types": "lib/index.d.ts",
   "files": [
     "lib/**/*.js",
     "lib/**/*.d.ts",
@@ -90,7 +97,7 @@
     "lyrics"
   ],
   "scripts": {
-    "clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts' 'test/**/*.js' 'test/**/*.js.map' 'test/**/*.js' 'test/**/*.js.map' 'doc-gen/**/*.js' 'doc-gen/**/*.js.map'",
+    "clean": "del-cli 'lib/**/*.js' 'lib/**/*.js.map' 'lib/**/*.d.ts' '!lib/cjs-core.d.ts' '!lib/cjs-node.d.ts' 'test/**/*.js' 'test/**/*.js.map' 'test/**/*.js' 'test/**/*.js.map' 'doc-gen/**/*.js' 'doc-gen/**/*.js.map'",
     "compile-src": "tsc -p lib",
     "compile-test": "tsc -p test",
     "compile-doc": "tsc -p doc-gen",
