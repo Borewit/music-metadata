@@ -21,11 +21,13 @@
     ".": {
       "node": {
         "import": "./lib/index.js",
+        "module-sync": "./lib/index.js",
         "require": "./lib/node.cjs",
         "types": "./lib/index.d.ts"
       },
       "default": {
         "import": "./lib/core.js",
+        "module-sync": "./lib/index.js",
         "require": "./lib/default.cjs",
         "types": "./lib/core.d.ts"
       }
