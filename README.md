@@ -771,17 +771,30 @@ Dependency list:
 
 ## CommonJS backward compatibility
 
-For legacy CommonJS projects needing to load the `music-metadata` ESM module, you can use the `loadMusicMetadata` function:
+Using Node.js ≥ 22, which is support loading ESM module via require 
 ```js
-const { loadMusicMetadata } = require('music-metadata');
+const mm = require('music-metadata');
+```
+
+For older Node.js version < 22, you need to dynamically import **music-metadata**:
+```js
+(async () => {
+  // Dynamically loads the ESM module in a CommonJS project
+  const mm = await import('music-metadata');
+})();
+```
+
+For CommonJS TypeScript projects, using a Node.js version < 22, you can use [load-esm](https://github.com/Borewit/load-esm):
+
+This method shall replace the embedded CJS loader `loadMusicMetadata()` function.
+
+```js
+import {loadEsm} from 'load-esm';
 
 (async () => {
   // Dynamically loads the ESM module in a CommonJS project
-  const mm = await loadMusicMetadata();
-
-  const metadata = await mm.parseFile('/path/to/your/file');
+  const mm = await loadEsm<typeof import('music-metadata')>('music-metadata');
 })();
-
 ```
 
 > [!NOTE]
