@@ -27,7 +27,7 @@
       },
       "default": {
         "import": "./lib/core.js",
-        "module-sync": "./lib/index.js",
+        "module-sync": "./lib/core.js",
         "require": "./lib/default.cjs",
         "types": "./lib/core.d.ts"
       }
