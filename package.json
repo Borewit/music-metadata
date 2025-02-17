@@ -21,21 +21,18 @@
     "node": {
       "import": "./lib/index.js",
       "module-sync": "./lib/index.js",
-      "require": "./lib/node.cjs",
       "types": "./lib/index.d.ts"
     },
     "default": {
       "import": "./lib/core.js",
       "module-sync": "./lib/core.js",
-      "require": "./lib/default.cjs",
       "types": "./lib/core.d.ts"
     }
   },
   "types": "lib/index.d.ts",
   "files": [
     "lib/**/*.js",
-    "lib/**/*.d.ts",
-    "lib/*.cjs"
+    "lib/**/*.d.ts"
   ],
   "keywords": [
     "music",
