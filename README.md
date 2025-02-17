@@ -786,7 +786,7 @@ For older Node.js version < 22, you need to dynamically import **music-metadata*
 
 For CommonJS TypeScript projects, using a Node.js version < 22, you can use [load-esm](https://github.com/Borewit/load-esm):
 
-This method shall replace the embedded CJS loader `loadMusicMetadata()` function.
+This method shall has replaced the embedded CJS loader function: `loadMusicMetadata()`.
 
 ```js
 import {loadEsm} from 'load-esm';
@@ -796,9 +796,6 @@ import {loadEsm} from 'load-esm';
   const mm = await loadEsm<typeof import('music-metadata')>('music-metadata');
 })();
 ```
-
-> [!NOTE]
-> The `loadMusicMetadata` function is experimental.
 
 ## Frequently Asked Questions
 

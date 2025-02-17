@@ -124,5 +124,3 @@ export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, op
 
   options.apeHeader = await APEv2Parser.findApeFooterOffset(tokenizer, apeOffset);
 }
-
-export declare function loadMusicMetadata(): Promise<typeof import('music-metadata')>;
