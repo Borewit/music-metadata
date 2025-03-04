@@ -2,12 +2,7 @@
 
 ## Supported Versions
 
-In principal only the latest version will be used to address security updates.
-
-| Version    | Supported          |
-| ---------- | ------------------ |
-| < 7.12.15  | :x:                |
-| >= 7.12.15 | :white_check_mark: |
+In principle only the latest version will be used to address security updates.
        
 ## Reporting a Vulnerability
 
