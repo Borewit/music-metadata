@@ -843,6 +843,13 @@ There are multiple ways of achieving this:
    }
    ```
 
+### Using music-metadata with TypeScript and module-resolution set to bundler.
+
+If the TypeScript compiler option [`moduleResolution`](https://www.typescriptlang.org/tsconfig/#moduleResolution)
+is set to `"bundler"`, it does not set the ECMAScript `"node"` condition, causing the Node specific function fail to import.
+
+This is the case using Next.js. See [issue #2370](https://github.com/Borewit/music-metadata/issues/2370) how to resolve that.
+
 ## Licence
 
 This project is licensed under the [MIT License](LICENSE.txt). Feel free to use, modify, and distribute as needed.
