@@ -2350,7 +2350,7 @@ __metadata:
     media-typer: "npm:^1.1.0"
     mime: "npm:^4.0.6"
     mocha: "npm:^11.1.0"
-    node-readable-to-web-readable-stream: "npm:^0.3.1"
+    node-readable-to-web-readable-stream: "npm:^0.4.0"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.2.1"
@@ -2388,10 +2388,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-readable-to-web-readable-stream@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "node-readable-to-web-readable-stream@npm:0.3.1"
-  checksum: 10c0/0034cc725399057444eec20a5b09413c164f37a10d073176b7889bc7926545f85bc30f12026ec997a30d18a8793248776e5bb370b213cab9f0f5f53b68d9fdb5
+"node-readable-to-web-readable-stream@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "node-readable-to-web-readable-stream@npm:0.4.0"
+  checksum: 10c0/446d257f1eab223c9171418f559d928a1707e85911068451cb8f3246555312affec446842b2d1ca1e1c785d7232da12f1e8ff7ef31e944fc7bf3debdb301846c
   languageName: node
   linkType: hard
 

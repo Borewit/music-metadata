@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stat } from 'node:fs/promises';
-import { makeByteReadableStreamFromNodeReadable } from 'node-readable-to-web-readable-stream';
+import { makeByteReadableStreamFromNodeReadable, makeDefaultReadableStreamFromNodeReadable } from 'node-readable-to-web-readable-stream';
 import { createReadStream } from 'node:fs';
 
 const filename = fileURLToPath(import.meta.url);
@@ -25,7 +25,7 @@ export class SourceStream extends Readable {
   }
 }
 
-export async function makeReadableByteFileStream(filename: string, delay = 0) {
+export async function makeByteReadableStreamFromFile(filename: string, delay = 0) {
 
   const fileInfo = await stat(filename);
   const nodeStream = createReadStream(filename);
@@ -33,6 +33,17 @@ export async function makeReadableByteFileStream(filename: string, delay = 0) {
   return {
     fileSize: fileInfo.size,
     stream: makeByteReadableStreamFromNodeReadable(nodeStream)
+  };
+}
+
+export async function makeDefaultReadableStreamFromFile(filename: string, delay = 0) {
+
+  const fileInfo = await stat(filename);
+  const nodeStream = createReadStream(filename);
+
+  return {
+    fileSize: fileInfo.size,
+    stream: makeDefaultReadableStreamFromNodeReadable(nodeStream)
   };
 }
 
