@@ -124,3 +124,11 @@ export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, op
 
   options.apeHeader = await APEv2Parser.findApeFooterOffset(tokenizer, apeOffset);
 }
+
+/**
+ * Implementation only available when loaded as Node.js
+ * This method will throw an Error, always.
+ */
+export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
+  throw new Error('To load Web API File objects use parseBlob instead. For loading files, you need to import with the "node" condition is set.');
+}
