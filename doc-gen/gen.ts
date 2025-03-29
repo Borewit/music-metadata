@@ -2,7 +2,7 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { commonTags } from '../lib/common/GenericTagTypes.js';
+import { commonTagsKeys, isSingleton } from '../lib/common/GenericTagTypes.js';
 import { CombinedTagMapper } from '../lib/common/CombinedTagMapper.js';
 
 import * as markDown from './MarkDown.js';
@@ -41,12 +41,12 @@ function write(out: fs.WriteStream) {
     table.header.values.push(nativeType);
   }
 
-  for (const commonTagKey of Object.keys(commonTags)) {
+  for (const commonTagKey of commonTagsKeys) {
     const tagInfo = commonDescriptionDict[commonTagKey];
     if (!tagInfo)
       throw new Error(`${commonTagKey} not found`);
     // console.log('common-tag: key=%s, description=%s', commonTagKey, tagInfo.description)
-    const multiplicity = commonTags[commonTagKey].multiple ? '*' : '1';
+    const multiplicity = isSingleton(commonTagKey) ? '1' : '*';
 
     const row = new markDown.Row([commonTagKey, multiplicity, tagInfo.description]);
     for (const nativeType in combinedTagMapper.tagMappers) {
