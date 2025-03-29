@@ -6,6 +6,7 @@
     "target": "ES2020",
     "esModuleInterop": true,
     "baseUrl": ".",
-    "erasableSyntaxOnly": false
+    "erasableSyntaxOnly": true,
+    "libReplacement": false,
   }
 }

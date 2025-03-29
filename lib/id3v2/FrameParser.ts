@@ -100,13 +100,18 @@ function parseGenreCode(code: string): string | undefined{
 }
 
 export class FrameParser {
+  private major: ID3v2MajorVersion;
+
+  private warningCollector: IWarningCollector;
 
   /**
    * Create id3v2 frame parser
    * @param major - Major version, e.g. (4) for  id3v2.4
    * @param warningCollector - Used to collect decode issue
    */
-  constructor(private major: ID3v2MajorVersion, private warningCollector: IWarningCollector) {
+  constructor(major: ID3v2MajorVersion, warningCollector: IWarningCollector) {
+    this.major = major;
+    this.warningCollector = warningCollector;
   }
 
   public readData(uint8Array: Uint8Array, type: string, includeCovers: boolean) {

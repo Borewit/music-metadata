@@ -18,8 +18,11 @@ const debug = initDebug('music-metadata:parser:ogg:speex');
  */
 export class SpeexParser extends VorbisParser {
 
-  constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
+  private tokenizer: ITokenizer;
+
+  constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     super(metadata, options);
+    this.tokenizer = tokenizer;
   }
 
   /**

@@ -41,7 +41,10 @@ export class Common implements IGetToken<ICommon> {
 
   public len: number;
 
-  public constructor(header: iff.IChunkHeader, private isAifc: boolean) {
+  private isAifc: boolean;
+
+  public constructor(header: iff.IChunkHeader, isAifc: boolean) {
+    this.isAifc = isAifc;
     const minimumChunkSize = isAifc ? 22 : 18;
     if (header.chunkSize < minimumChunkSize) throw new AiffContentError(`COMMON CHUNK size should always be at least ${minimumChunkSize}`);
     this.len = header.chunkSize;

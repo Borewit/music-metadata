@@ -93,9 +93,12 @@ const Iid3v1Token: IGetToken<IId3v1Header | null> = {
 
 class Id3v1StringType implements IGetToken<string | undefined> {
 
+  public len: number;
+
   private stringType;
 
-  constructor(public len: number) {
+  constructor(len: number) {
+    this.len = len;
     this.stringType = new StringType(len, 'latin1');
   }
 

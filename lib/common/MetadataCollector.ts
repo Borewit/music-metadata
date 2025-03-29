@@ -92,7 +92,10 @@ export class MetadataCollector implements INativeMetadataCollector {
 
   private tagMapper = new CombinedTagMapper();
 
-  public constructor(private opts?: IOptions) {
+  private opts?: IOptions;
+
+  public constructor(opts?: IOptions) {
+    this.opts = opts;
     let priority = 1;
     for (const tagType of TagPriority) {
       this.originPriority[tagType] = priority++;

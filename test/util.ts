@@ -14,9 +14,11 @@ const dirname = path.dirname(filename);
  * A mock readable-stream, using string to read from
  */
 export class SourceStream extends Readable {
+  private buf: Uint8Array;
 
-  constructor(private buf: Uint8Array) {
+  constructor(buf: Uint8Array) {
     super();
+    this.buf = buf;
   }
 
   public _read() {

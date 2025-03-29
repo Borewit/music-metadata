@@ -84,8 +84,17 @@ interface IStreamHeader extends IStreamHeader1, IStreamHeader3 {
 }
 
 export class StreamReader {
+  private _tokenizer: ITokenizer;
 
-  public constructor(private tokenizer: ITokenizer) {
+  public get tokenizer(): ITokenizer {
+    return this._tokenizer;
+  }
+  public set tokenizer(value: ITokenizer) {
+    this._tokenizer = value;
+  }
+
+  public constructor(_tokenizer: ITokenizer) {
+    this._tokenizer = _tokenizer;
   }
 
   public async readPacketHeader(): Promise<IPacketHeader> {

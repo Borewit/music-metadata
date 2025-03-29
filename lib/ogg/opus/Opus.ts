@@ -49,11 +49,14 @@ export class OpusContentError extends makeUnexpectedFileContentError('Opus'){
  * Ref: https://wiki.xiph.org/OggOpus#ID_Header
  */
 export class IdHeader implements IGetToken<IIdHeader> {
+  public len: number;
 
-  constructor(public len: number) {
+  constructor(len: number) {
     if (len < 19) {
       throw new OpusContentError('ID-header-page 0 should be at least 19 bytes long');
     }
+
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): IIdHeader {

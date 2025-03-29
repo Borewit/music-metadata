@@ -18,9 +18,11 @@ export class OpusParser extends VorbisParser {
 
   private idHeader: Opus.IIdHeader = null as unknown as Opus.IIdHeader;
   private lastPos = -1;
+  private tokenizer: ITokenizer;
 
-  constructor(metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
+  constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     super(metadata, options);
+    this.tokenizer = tokenizer;
   }
 
   /**

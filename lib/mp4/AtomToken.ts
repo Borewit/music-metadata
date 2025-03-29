@@ -204,18 +204,22 @@ export const mhdr: IGetToken<IMovieHeaderAtom> = {
  * Issue: https://github.com/Borewit/music-metadata/issues/120
  */
 export abstract class FixedLengthAtom {
+  public len: number;
+
   /**
    *
    * @param {number} len Length as specified in the size field
    * @param {number} expLen Total length of sum of specified fields in the standard
    * @param atomId Atom ID
    */
-  protected constructor(public len: number, expLen: number, atomId: string) {
+  protected constructor(len: number, expLen: number, atomId: string) {
     if (len < expLen) {
       throw new Mp4ContentError(`Atom ${atomId} expected to be ${expLen}, but specifies ${len} bytes long.`);
     }if (len > expLen) {
       debug(`Warning: atom ${atomId} expected to be ${expLen}, but was actually ${len} bytes long.`);
     }
+
+    this.len = len;
   }
 }
 
@@ -252,8 +256,7 @@ const SecondsSinceMacEpoch: IGetToken<Date> = {
  * - https://wiki.multimedia.cx/index.php/QuickTime_container#mdhd
  */
 export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
-
-  public constructor(public len: number) {
+  public constructor(len: number) {
     super(len, 24, 'mdhd');
   }
 
@@ -276,7 +279,7 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
  */
 export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
     super(len, 100, 'mvhd');
   }
 
@@ -335,8 +338,10 @@ export interface IDataAtom {
  * Data Atom Structure
  */
 export class DataAtom implements IGetToken<IDataAtom> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): IDataAtom {
@@ -368,8 +373,10 @@ export interface INameAtom extends IVersionAndFlags {
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW31
  */
 export class NameAtom implements IGetToken<INameAtom> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): INameAtom {
@@ -439,8 +446,10 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
 export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): ITrackHeaderAtom {
@@ -502,8 +511,10 @@ export interface IAtomStsd {
  * Ref: https://developer.apple.com/documentation/quicktime-file-format/sample_description_atom
  */
 class SampleDescriptionTable implements IGetToken<ISampleDescription> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): ISampleDescription {
@@ -521,8 +532,10 @@ class SampleDescriptionTable implements IGetToken<ISampleDescription> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25691
  */
 export class StsdAtom implements IGetToken<IAtomStsd> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): IAtomStsd {
@@ -610,8 +623,12 @@ export interface ITableAtom<T> extends IVersionAndFlags {
 }
 
 class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
+  public len: number;
+  private token: IGetToken<T>
 
-  public constructor(public len: number, private token: IGetToken<T>) {
+  public constructor(len: number, token: IGetToken<T>) {
+    this.len = len;
+    this.token = token;
   }
 
   public get(buf: Uint8Array, off: number): ITableAtom<T> {
@@ -650,7 +667,7 @@ export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25696
  */
 export class SttsAtom extends SimpleTableAtom<ITimeToSampleToken> {
-  public constructor(public len: number) {
+  public constructor(len: number) {
     super(len, TimeToSampleToken);
   }
 }
@@ -682,7 +699,7 @@ export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25706
  */
 export class StscAtom extends SimpleTableAtom<ISampleToChunk> {
-  public constructor(public len: number) {
+  public constructor(len: number) {
     super(len, SampleToChunkToken);
   }
 }
@@ -699,8 +716,10 @@ export interface IStszAtom extends ITableAtom<number> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25710
  */
 export class StszAtom implements IGetToken<IStszAtom> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): IStszAtom {
@@ -722,8 +741,11 @@ export class StszAtom implements IGetToken<IStszAtom> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25715
  */
 export class StcoAtom extends SimpleTableAtom<number> {
-  public constructor(public len: number) {
+  public len: number;
+
+  public constructor(len: number) {
     super(len, Token.INT32_BE);
+    this.len = len;
   }
 }
 
@@ -731,8 +753,10 @@ export class StcoAtom extends SimpleTableAtom<number> {
  * Token used to decode text-track from 'mdat' atom (raw data stream)
  */
 export class ChapterText implements IGetToken<string> {
+  public len: number;
 
-  public constructor(public len: number) {
+  public constructor(len: number) {
+    this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): string {

@@ -52,11 +52,14 @@ export class EbmlIterator {
   private ebmlMaxIDLength = 4;
   private ebmlMaxSizeLength = 8;
 
+  private tokenizer: ITokenizer;
+
   /**
    * @param {ITokenizer} tokenizer Input
    * @param tokenizer
    */
-  constructor(private tokenizer: ITokenizer) {
+  constructor(tokenizer: ITokenizer) {
+    this.tokenizer = tokenizer;
     this.parserMap.set(DataType.uint, e => this.readUint(e));
     this.parserMap.set(DataType.string, e => this.readString(e));
     this.parserMap.set(DataType.binary, e => this.readBuffer(e));
