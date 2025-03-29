@@ -60,6 +60,7 @@ export class MpcSv8Parser extends BasicParser {
         default:
           throw new MusepackContentError(`Unexpected header: ${header.key}`);
       }
+    // biome-ignore lint/correctness/noConstantCondition: break is handled in the switch statement
     } while (true);
   }
 }
