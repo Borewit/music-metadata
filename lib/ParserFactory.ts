@@ -34,9 +34,9 @@ export interface IParserLoader {
   parserType: ParserType;
 
   /**
-   * Lazy load the parser
+   * Lazy load the parser implementation class.
    */
-  load(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<ITokenParser>
+  load(): Promise<new (metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions) => ITokenParser>;
 }
 
 export interface ITokenParser {
@@ -126,7 +126,8 @@ export class ParserFactory {
     // Parser found, execute parser
     debug(`Loading ${parserLoader.parserType} parser...`);
     const metadata = new MetadataCollector(opts);
-    const parser = await parserLoader.load(metadata, tokenizer, opts ?? {});
+    const ParserImpl = await parserLoader.load();
+    const parser = new ParserImpl(metadata, tokenizer, opts ?? {});
     debug(`Parser ${parserLoader.parserType} loaded`);
     await parser.parse();
     return metadata.toCommonMetadata();
