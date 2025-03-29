@@ -91,33 +91,43 @@ export interface ISimpleTag {
   default?: boolean;
 }
 
-export enum TargetType {
-  shot = 10,
-  scene = 20,
-  track = 30,
-  part = 40,
-  album = 50,
-  edition = 60,
-  collection = 70
+export const TargetType = {
+  10: 'shot',
+  20: 'scene',
+  30: 'track',
+  40: 'part',
+  50: 'album',
+  60: 'edition',
+  70: 'collection'
 }
 
-export enum TrackType {
-  video = 0x01,
-  audio = 0x02,
-  complex = 0x03,
-  logo = 0x04,
-  subtitle= 0x11,
-  button = 0x12,
-  control = 0x20
-}
+export const TrackType = {
+  video: 0x01,
+  audio: 0x02,
+  complex: 0x03,
+  logo: 0x04,
+  subtitle: 0x11,
+  button: 0x12,
+  control: 0x20
+};
+export type TrackType = typeof TrackType[keyof typeof TrackType];
+export type TrackTypeKey = keyof typeof TrackType;
 
-export type TrackTypeKey = keyof TrackType;
+export const TrackTypeValueToKeyMap: Record<TrackType, TrackTypeKey> = {
+  [TrackType.video]: 'video',
+  [TrackType.audio]: 'audio',
+  [TrackType.complex]: 'complex',
+  [TrackType.logo]: 'logo',
+  [TrackType.subtitle]: 'subtitle',
+  [TrackType.button]: 'button',
+  [TrackType.control]: 'control'
+}
 
 export interface ITarget {
   trackUID?: Uint8Array;
   chapterUID?: Uint8Array;
   attachmentUID?: Uint8Array;
-  targetTypeValue?: TargetType;
+  targetTypeValue?: keyof typeof TargetType;
   targetType?: string;
 }
 

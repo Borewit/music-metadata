@@ -19,15 +19,16 @@ class FlacContentError extends makeUnexpectedFileContentError('FLAC'){
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
  * ref: https://xiph.org/flac/format.html#metadata_block
  */
-enum BlockType {
-  STREAMINFO = 0,
-  PADDING = 1,
-  APPLICATION = 2,
-  SEEKTABLE = 3,
-  VORBIS_COMMENT = 4,
-  CUESHEET = 5,
-  PICTURE = 6
-}
+const BlockType = {
+  STREAMINFO: 0, // STREAMINFO
+  PADDING: 1, // PADDING
+  APPLICATION: 2, // APPLICATION
+  SEEKTABLE: 3, // SEEKTABLE
+  VORBIS_COMMENT: 4, // VORBIS_COMMENT
+  CUESHEET: 5, // CUESHEET
+  PICTURE: 6 // PICTURE
+};
+type BlockType = typeof BlockType[keyof typeof BlockType];
 
 export class FlacParser extends AbstractID3Parser {
 

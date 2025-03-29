@@ -16,32 +16,33 @@ export class AsfContentParseError extends makeUnexpectedFileContentError('ASF'){
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
  */
-export enum DataType {
+export const DataType = {
   /**
    * Unicode string. The data consists of a sequence of Unicode characters.
    */
-  UnicodeString = 0,
+  UnicodeString: 0,
   /**
    * BYTE array. The type of data is implementation-specific.
    */
-  ByteArray = 1,
+  ByteArray: 1,
   /**
    * BOOL. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer. Only 0x0000 or 0x0001 are permitted values.
    */
-  Bool = 2,
+  Bool: 2,
   /**
    * DWORD. The data is 4 bytes long and should be interpreted as a 32-bit unsigned integer.
    */
-  DWord = 3,
+  DWord: 3,
   /**
    * QWORD. The data is 8 bytes long and should be interpreted as a 64-bit unsigned integer.
    */
-  QWord = 4,
+  QWord: 4,
   /**
    * WORD. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer.
    */
-  Word = 5
+  Word: 5
 }
+export type DataType = typeof DataType[keyof typeof DataType]
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575
@@ -607,7 +608,7 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
     const description = new Token.StringType(index - 5, 'utf-16le').get(buffer, 5);
 
     return {
-      type: AttachedPictureType[typeId],
+      type: AttachedPictureType[typeId as keyof typeof AttachedPictureType],
       format,
       description,
       size,

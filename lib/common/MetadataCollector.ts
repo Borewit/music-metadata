@@ -2,7 +2,7 @@ import {
   type FormatId,
   type IAudioMetadata, type ICommonTagsResult,
   type IFormat,
-  type INativeTags, type IOptions, type IQualityInformation, type IPicture, type ITrackInfo, TrackType, type IComment, type AnyTagValue
+  type INativeTags, type IOptions, type IQualityInformation, type IPicture, type ITrackInfo, TrackTypeValueToKeyMap, type IComment, type AnyTagValue
 } from '../type.js';
 
 import initDebug from 'debug';
@@ -109,7 +109,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public addStreamInfo(streamInfo: ITrackInfo) {
-    debug(`streamInfo: type=${streamInfo.type ? TrackType[streamInfo.type] : '?'}, codec=${streamInfo.codecName}`);
+    debug(`streamInfo: type=${streamInfo.type ? TrackTypeValueToKeyMap[streamInfo.type] : '?'}, codec=${streamInfo.codecName}`);
     this.format.trackInfo.push(streamInfo);
   }
 

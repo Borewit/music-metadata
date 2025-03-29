@@ -47,7 +47,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
 
   public get(buffer: Uint8Array, offset: number): IVorbisPicture {
 
-    const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset)];
+    const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset) as keyof typeof AttachedPictureType];
 
     offset += 4;
     const mimeLen = Token.UINT32_BE.get(buffer, offset);

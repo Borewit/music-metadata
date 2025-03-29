@@ -99,7 +99,8 @@
     "build": "yarn run clean && yarn compile && yarn run doc-gen",
     "test-coverage": "c8 yarn run test",
     "send-codacy": "c8 report --reporter=text-lcov | codacy-coverage",
-    "doc-gen": "yarn node doc-gen/gen.js"
+    "doc-gen": "yarn node doc-gen/gen.js",
+    "typecheck": "tsc --project ./lib/tsconfig.json --noEmit && tsc --project ./test/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@tokenizer/token": "^0.3.0",

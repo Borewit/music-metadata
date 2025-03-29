@@ -18,13 +18,15 @@ export interface ILinkedElementType extends IElementType {
   readonly container?: { [id: number]: ILinkedElementType; };
 }
 
-export enum ParseAction {
-  ReadNext = 0,           // Continue reading the next elements
-  IgnoreElement = 2,      // Ignore (do not read) this element
-  SkipSiblings = 3,       // Skip all remaining elements at the same level
-  TerminateParsing = 4,   // Terminate the parsing process
-  SkipElement = 5         // Consider the element has read, assume position is at the next element
-}
+export const ParseAction = {
+  ReadNext: 0,           // Continue reading the next elements
+  IgnoreElement: 2,      // Ignore (do not read) this element
+  SkipSiblings: 3,       // Skip all remaining elements at the same level
+  TerminateParsing: 4,   // Terminate the parsing process
+  SkipElement: 5         // Consider the element has read, assume position is at the next element
+} as const;
+
+export type ParseAction = typeof ParseAction[keyof typeof ParseAction];
 
 /**
  * @return true, to quit the parser

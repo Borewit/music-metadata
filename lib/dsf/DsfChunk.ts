@@ -60,16 +60,16 @@ export const DsdChunk: IGetToken<IDsdChunk> = {
     };
   }
 };
-
-export enum ChannelType {
-  mono = 1,
-  stereo = 2,
-  channels = 3,
-  quad = 4,
-  '4 channels' = 5,
-  '5 channels' = 6,
-  '5.1 channels' = 7
+export const ChannelType = {
+  mono: 1,
+  stereo: 2,
+  channels: 3,
+  quad: 4,
+  '4 channels': 5,
+  '5 channels': 6,
+  '5.1 channels': 7
 }
+export type ChannelType = typeof ChannelType[keyof typeof ChannelType];
 
 /**
  * Interface to format chunk payload chunk
