@@ -3,7 +3,7 @@ import type { IFooter } from './apev2/APEv2Token.js';
 import type { TrackType } from './matroska/types.js';
 import type { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
 
-export { TrackType } from './matroska/types.js';
+export { TrackType, TrackTypeValueToKeyMap } from './matroska/types.js';
 export { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
 
 export type AnyTagValue = unknown;

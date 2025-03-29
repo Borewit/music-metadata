@@ -210,7 +210,7 @@ export class FrameParser {
 
           pic.format = FrameParser.fixPictureMimeType(pic.format);
 
-          pic.type = AttachedPictureType[uint8Array[offset]];
+          pic.type = AttachedPictureType[uint8Array[offset] as keyof typeof AttachedPictureType];
           offset += 1;
 
           fzero = util.findZero(uint8Array, offset, length, encoding);

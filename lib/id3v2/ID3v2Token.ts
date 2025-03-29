@@ -7,28 +7,28 @@ import * as util from '../common/Util.js';
  * The picture type according to the ID3v2 APIC frame
  * Ref: http://id3.org/id3v2.3.0#Attached_picture
  */
-export enum AttachedPictureType {
-  'Other' = 0,
-  "32x32 pixels 'file icon' (PNG only)" = 1,
-  'Other file icon' = 2,
-  'Cover (front)' = 3,
-  'Cover (back)' = 4,
-  'Leaflet page' = 5,
-  'Media (e.g. label side of CD)' = 6,
-  'Lead artist/lead performer/soloist' = 7,
-  'Artist/performer' = 8,
-  'Conductor' = 9,
-  'Band/Orchestra' = 10,
-  'Composer' = 11,
-  'Lyricist/text writer' = 12,
-  'Recording Location' = 13,
-  'During recording' = 14,
-  'During performance' = 15,
-  'Movie/video screen capture' = 16,
-  'A bright coloured fish' = 17,
-  'Illustration' = 18,
-  'Band/artist logotype' = 19,
-  'Publisher/Studio logotype' = 20
+export const AttachedPictureType = {
+  0: 'Other',
+  1: "32x32 pixels 'file icon' (PNG only)",
+  2: 'Other file icon',
+  3: 'Cover (front)',
+  4: 'Cover (back)',
+  5: 'Leaflet page',
+  6: 'Media (e.g. label side of CD)',
+  7: 'Lead artist/lead performer/soloist',
+  8: 'Artist/performer',
+  9: 'Conductor',
+  10: 'Band/Orchestra',
+  11: 'Composer',
+  12: 'Lyricist/text writer',
+  13: 'Recording Location',
+  14: 'During recording',
+  15: 'During performance',
+  16: 'Movie/video screen capture',
+  17: 'A bright coloured fish',
+  18: 'Illustration',
+  19: 'Band/artist logotype',
+  20: 'Publisher/Studio logotype'
 }
 
 export type ID3v2MajorVersion = 2 | 3 | 4;
@@ -46,21 +46,23 @@ export interface IExtendedHeader {
 /**
  * https://id3.org/id3v2.3.0#Synchronised_lyrics.2Ftext
  */
-export enum LyricsContentType {
-  other = 0,
-  lyrics = 1,
-  text = 2,
-  movement_part = 3,
-  events = 4,
-  chord = 5,
-  trivia_pop = 6
-}
+export const LyricsContentType = {
+  other: 0,
+  lyrics: 1,
+  text: 2,
+  movement_part: 3,
+  events: 4,
+  chord: 5,
+  trivia_pop: 6,
+};
+export type LyricsContentType = typeof LyricsContentType[keyof typeof LyricsContentType];
 
-export enum TimestampFormat {
-  notSynchronized0 = 0,
-  mpegFrameNumber = 1,
-  milliseconds = 2
-}
+export const TimestampFormat = {
+  notSynchronized0: 0,
+  mpegFrameNumber: 1,
+  milliseconds: 2
+};
+export type TimestampFormat = typeof TimestampFormat[keyof typeof TimestampFormat];
 
 /**
  * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.

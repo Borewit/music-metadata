@@ -1,6 +1,14 @@
 export interface ITree { [name: string]: string | number | boolean | Uint8Array | ITree | ITree[]; }
 
-export enum DataType { 'string' = 0, uint = 1, uid = 2, bool = 3, binary = 4, float = 5}
+export const DataType = {
+  string: 0,
+  uint: 1,
+  uid: 2,
+  bool: 3,
+  binary: 4,
+  float: 5,
+} as const;
+export type DataType = typeof DataType[keyof typeof DataType];
 
 export type ValueType = string | number | Uint8Array | boolean | ITree | ITree[];
 

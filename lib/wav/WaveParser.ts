@@ -80,7 +80,7 @@ export class WaveParser extends BasicParser {
         case 'fmt ': { // The Util Chunk, non-PCM Formats
           const fmt = await this.tokenizer.readToken<WaveChunk.IWaveFormat>(new WaveChunk.Format(header));
 
-          let subFormat = WaveChunk.WaveFormat[fmt.wFormatTag];
+          let subFormat = WaveChunk.WaveFormatNameMap[fmt.wFormatTag];
           if (!subFormat) {
             debug(`WAVE/non-PCM format=${fmt.wFormatTag}`);
             subFormat = `non-PCM (${fmt.wFormatTag})`;

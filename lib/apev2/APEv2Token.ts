@@ -83,12 +83,13 @@ export interface IFooter {
   flags: ITagFlags // ToDo: what is this???
 }
 
-export enum DataType {
-  text_utf8 = 0,
-  binary = 1,
-  external_info = 2,
-  reserved = 3
+export const DataType = {
+  text_utf8: 0,
+  binary: 1,
+  external_info: 2,
+  reserved: 3
 }
+export type DataType = typeof DataType[keyof typeof DataType]
 
 /**
  * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
