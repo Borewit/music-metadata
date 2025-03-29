@@ -1,7 +1,10 @@
 import type * as fs from 'node:fs';
 
 export class Row {
-  constructor(public values: string[]) {
+  public values: string[];
+
+  constructor(values: string[]) {
+    this.values = values;
   }
 }
 
