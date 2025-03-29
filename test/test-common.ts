@@ -1,7 +1,7 @@
 import { assert, expect } from 'chai';
 import path from 'node:path';
 
-import { commonTags, isSingleton } from '../lib/common/GenericTagTypes.js';
+import { commonTagsKeys, isSingleton } from '../lib/common/GenericTagTypes.js';
 import * as mm from '../lib/index.js';
 import { CombinedTagMapper } from '../lib/common/CombinedTagMapper.js';
 import { joinArtists } from '../lib/common/MetadataCollector.js';
@@ -14,15 +14,12 @@ describe('GenericTagMap', () => {
   const combinedTagMapper = new CombinedTagMapper();
 
   it('Check if each native tag, is mapped to a valid common type', () => {
-
-    assert.isDefined(commonTags);
-
     // for each tag type
     for (const nativeType in combinedTagMapper.tagMappers) {
       const tagMapper = combinedTagMapper.tagMappers[nativeType];
       for (const nativeTag in tagMapper.tagMap) {
         const commonType = tagMapper.tagMap[nativeTag];
-        assert.isDefined(commonTags[commonType], `Unknown common tagTypes in mapping ${nativeType}.${nativeTag} => ${commonType}`);
+        assert.isTrue(commonTagsKeys.includes(commonType), `Unknown common tagTypes in mapping ${nativeType}.${nativeTag} => ${commonType}`);
       }
     }
   });
