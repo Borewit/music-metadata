@@ -30,7 +30,14 @@ export class Atom {
   public readonly children: Atom[];
   public readonly atomPath: string;
 
-  public constructor(public readonly header: AtomToken.IAtomHeader, public extended: boolean, public readonly parent: Atom | null) {
+  public readonly header: AtomToken.IAtomHeader;
+  public extended: boolean;
+  public readonly parent: Atom | null;
+
+  public constructor(header: AtomToken.IAtomHeader, extended: boolean, parent: Atom | null) {
+    this.header = header;
+    this.extended = extended;
+    this.parent = parent;
     this.children = [];
     this.atomPath = (this.parent ? `${this.parent.atomPath}.` : '') + this.header.name;
   }

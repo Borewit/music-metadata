@@ -118,7 +118,10 @@ export default class GUID {
     return bin;
   }
 
-  public constructor(public str: string) {
+  public str: string;
+
+  public constructor(str: string) {
+    this.str = str;
   }
 
   public equals(guid: GUID) {

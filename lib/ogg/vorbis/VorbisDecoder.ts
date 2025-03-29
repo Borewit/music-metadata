@@ -1,8 +1,13 @@
 import * as Token from 'token-types';
 
 export class VorbisDecoder {
+  private readonly data: Uint8Array;
 
-  constructor(private readonly data: Uint8Array, private offset: number) {
+  private offset: number;
+
+  constructor(data: Uint8Array, offset: number) {
+    this.data = data;
+    this.offset = offset;
   }
 
   public readInt32(): number {

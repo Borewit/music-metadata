@@ -43,7 +43,13 @@ export class CommonTagMapper implements IGenericTagMapper {
     };
   }
 
-  public constructor(public tagTypes: generic.TagType[], public tagMap: generic.INativeTagMap) {
+  public tagTypes: generic.TagType[];
+
+  public tagMap: generic.INativeTagMap;
+
+  public constructor(tagTypes: generic.TagType[], tagMap: generic.INativeTagMap) {
+    this.tagTypes = tagTypes;
+    this.tagMap = tagMap;
   }
 
   /**

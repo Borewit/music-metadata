@@ -14,7 +14,13 @@ const debug = initDebug('music-metadata:parser:ogg:theora');
  */
 export class TheoraParser implements Ogg.IPageConsumer {
 
-  constructor(private metadata: INativeMetadataCollector, options: IOptions, private tokenizer: ITokenizer) {
+  private metadata: INativeMetadataCollector;
+
+  private tokenizer: ITokenizer
+
+  constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
+    this.metadata = metadata;
+    this.tokenizer = tokenizer;
   }
 
   /**

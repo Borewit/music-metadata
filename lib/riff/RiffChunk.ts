@@ -27,7 +27,10 @@ export class ListInfoTagValue implements IGetToken<string> {
 
   public len: number;
 
-  public constructor(private tagHeader: IChunkHeader) {
+  private tagHeader: IChunkHeader;
+
+  public constructor(tagHeader: IChunkHeader) {
+    this.tagHeader = tagHeader;
     this.len = tagHeader.chunkSize;
     this.len += this.len & 1; // if it is an odd length, round up to even
   }

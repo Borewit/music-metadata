@@ -6,6 +6,12 @@ import type { INativeMetadataCollector } from './MetadataCollector.js';
 
 export abstract class BasicParser implements ITokenParser {
 
+  protected readonly metadata: INativeMetadataCollector;
+
+  protected readonly tokenizer: ITokenizer;
+  
+  protected readonly options: IOptions;
+
   /**
    * Initialize parser with output (metadata), input (tokenizer) & parsing options (options).
    * @param {INativeMetadataCollector} metadata Output
@@ -13,10 +19,13 @@ export abstract class BasicParser implements ITokenParser {
    * @param {IOptions} options Parsing options
    */
   constructor(
-    protected readonly metadata: INativeMetadataCollector,
-    protected readonly tokenizer: ITokenizer,
-    protected readonly options: IOptions
+    metadata: INativeMetadataCollector,
+    tokenizer: ITokenizer,
+    options: IOptions
   ) {
+    this.metadata = metadata;
+    this.tokenizer = tokenizer;
+    this.options = options;
   }
 
   public abstract parse(): Promise<void>;

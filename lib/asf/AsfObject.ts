@@ -587,7 +587,10 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
     return pic.get(buffer, 0);
   }
 
-  constructor(public len: number) {
+  public len: number;
+
+  constructor(len: number) {
+    this.len = len;
   }
 
   public get(buffer: Uint8Array, offset: number): IWmPicture {

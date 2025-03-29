@@ -5,8 +5,10 @@ export class BitReader {
 
   public pos = 0;
   private dword: number | null = null;
+  private tokenizer: ITokenizer;
 
-  public constructor(private tokenizer: ITokenizer) {
+  public constructor(tokenizer: ITokenizer) {
+    this.tokenizer = tokenizer;
   }
 
   /**

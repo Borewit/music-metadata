@@ -22,7 +22,13 @@ export class VorbisParser implements IPageConsumer {
 
   private pageSegments: Uint8Array[] = [];
 
-  constructor(protected metadata: INativeMetadataCollector, protected options: IOptions) {
+  protected metadata: INativeMetadataCollector;
+
+  protected options: IOptions;
+
+  constructor(metadata: INativeMetadataCollector, options: IOptions) {
+    this.metadata = metadata;
+    this.options = options;
   }
 
   /**

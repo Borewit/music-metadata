@@ -25,8 +25,11 @@ export class UnsupportedFileTypeError extends makeParseError('UnsupportedFileTyp
 
 // Concrete error class representing unexpected file content.
 class UnexpectedFileContentError extends makeParseError('UnexpectedFileContentError') {
-  constructor(public readonly fileType: string, message: string) {
+  public readonly fileType: string;
+
+  constructor(fileType: string, message: string) {
     super(message);
+    this.fileType = fileType;
   }
 
   // Override toString to include file type information.
