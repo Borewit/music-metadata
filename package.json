@@ -16,7 +16,7 @@
       "url": "https://buymeacoffee.com/borewit"
     }
   ],
-  "sideEffects": false,  
+  "sideEffects": false,
   "type": "module",
   "exports": {
     "node": {
