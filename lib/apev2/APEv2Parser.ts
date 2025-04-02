@@ -62,6 +62,10 @@ export class APEv2Parser extends BasicParser {
     // Search for APE footer header at the end of the file
     const apeBuf = new Uint8Array(TagFooter.len);
     const position = tokenizer.position;
+    if (offset <= TagFooter.len) {
+      debug(`Offset is too small to read APE footer: offset=${offset}`);
+      return undefined;
+    }
     if (offset > TagFooter.len) {
       await tokenizer.readBuffer(apeBuf, {position: offset - TagFooter.len});
       tokenizer.setPosition(position);
