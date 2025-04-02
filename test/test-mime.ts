@@ -1,4 +1,4 @@
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import mime from 'mime';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -28,14 +28,8 @@ describe('MIME & extension mapping', () => {
     }
   }
 
-  it('should reject an unknown file', () => {
-
-    return mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))
-      .then(() => assert.fail('Should reject extension'))
-      .catch(err => {
-        assert.strictEqual(err.message, 'Guessed MIME-type not supported: image/jpeg');
-      });
-
+  it('should reject an unknown file', async () => {
+    await expect(mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))).to.be.rejectedWith(UnsupportedFileTypeError, 'Guessed MIME-type not supported: image/jpeg: ');
   });
 
   it('should map MIME-types', () => {

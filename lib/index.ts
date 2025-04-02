@@ -6,7 +6,7 @@ import type { Readable } from 'node:stream';
 import { fromFile, fromStream, type IFileInfo } from 'strtok3';
 import initDebug from 'debug';
 
-import { parseFromTokenizer, } from './core.js';
+import { CouldNotDetermineFileTypeError, parseFromTokenizer, UnsupportedFileTypeError } from './core.js';
 import { ParserFactory } from './ParserFactory.js';
 import type { IAudioMetadata, IOptions } from './type.js';
 
@@ -48,9 +48,16 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   try {
     const parserLoader = parserFactory.findLoaderForExtension(filePath);
     if (!parserLoader)
-      debug(' Parser could not be determined by file extension');
+      debug('Parser could not be determined by file extension');
 
-    return await parserFactory.parse(fileTokenizer, parserLoader, options);
+    try {
+      return await parserFactory.parse(fileTokenizer, parserLoader, options);
+    } catch(error) {
+      if (error instanceof CouldNotDetermineFileTypeError || error instanceof UnsupportedFileTypeError) {
+        error.message += `: ${filePath}`;
+      }
+      throw error;
+    }
   } finally {
     await fileTokenizer.close();
   }
