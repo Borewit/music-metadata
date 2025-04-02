@@ -62,17 +62,19 @@ export class APEv2Parser extends BasicParser {
     // Search for APE footer header at the end of the file
     const apeBuf = new Uint8Array(TagFooter.len);
     const position = tokenizer.position;
-    await tokenizer.readBuffer(apeBuf, {position: offset - TagFooter.len});
-    tokenizer.setPosition(position);
-    const tagFooter = TagFooter.get(apeBuf, 0);
-    if (tagFooter.ID === 'APETAGEX') {
-      if (tagFooter.flags.isHeader) {
-        debug(`APE Header found at offset=${offset - TagFooter.len}`);
-      } else {
-        debug(`APE Footer found at offset=${offset - TagFooter.len}`);
-        offset -= tagFooter.size;
+    if (offset > TagFooter.len) {
+      await tokenizer.readBuffer(apeBuf, {position: offset - TagFooter.len});
+      tokenizer.setPosition(position);
+      const tagFooter = TagFooter.get(apeBuf, 0);
+      if (tagFooter.ID === 'APETAGEX') {
+        if (tagFooter.flags.isHeader) {
+          debug(`APE Header found at offset=${offset - TagFooter.len}`);
+        } else {
+          debug(`APE Footer found at offset=${offset - TagFooter.len}`);
+          offset -= tagFooter.size;
+        }
+        return {footer: tagFooter, offset};
       }
-      return {footer: tagFooter, offset};
     }
   }
 
