@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import * as mm from '../lib/index.js';
 import { SourceStream, samplePath } from './util.js';
 import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from '../lib/ParseError.js';
+import { getSupportedMimeTypes } from '../lib/index.js';
 
 describe('MIME & extension mapping', () => {
 
@@ -187,6 +188,12 @@ describe('MIME & extension mapping', () => {
       return testFileType(path.join('matroska', '02 - Poxfil - Solid Ground (5 sec).opus.webm'), 'EBML/webm');
     });
 
+  });
+
+  it('Supported MIME type list', () => {
+    const mimeTypes = getSupportedMimeTypes();
+    expect(mimeTypes).to.contain('audio/flac');
+    expect(mimeTypes).to.contain('audio/x-flac');
   });
 
 });

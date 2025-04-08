@@ -133,3 +133,10 @@ export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, op
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
   throw new Error('To load Web API File objects use parseBlob instead. For loading files, you need to import with the "node" condition is set.');
 }
+
+/**
+ * Return a list of supported mime-types
+ */
+export function getSupportedMimeTypes(): string[] {
+  return new ParserFactory().getSupportedMimeTypes();
+}
