@@ -584,6 +584,10 @@ import { parseFile, selectCover } from 'music-metadata';
 )();
  ```
 
+#### `getSupportedMimeTypes` function
+
+Returns a list of supported MIME-types. This may include some MIME-types which are not formally recognized.
+
 ### `IOptions` Interface
 - `duration`: `boolean` (default: `false`)
 

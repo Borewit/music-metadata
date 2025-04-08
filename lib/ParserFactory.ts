@@ -31,6 +31,8 @@ export interface IParserLoader {
    */
   extensions: string[]
 
+  mimeTypes: string[]
+
   parserType: ParserType;
 
   /**
@@ -102,7 +104,7 @@ export class ParserFactory {
     if (!parserLoader) {
       const buf = new Uint8Array(4100);
       if (tokenizer.fileInfo.mimeType) {
-        parserLoader = this.findLoaderForType(getParserIdForMimeType(tokenizer.fileInfo.mimeType));
+        parserLoader = this.findLoaderForContentType(tokenizer.fileInfo.mimeType);
       }
       if (!parserLoader && tokenizer.fileInfo.path) {
         parserLoader = this.findLoaderForExtension(tokenizer.fileInfo.path);
@@ -117,7 +119,7 @@ export class ParserFactory {
           throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
         }
         debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
-        parserLoader = this.findLoaderForType(getParserIdForMimeType(guessedType.mime));
+        parserLoader = this.findLoaderForContentType(guessedType.mime);
         if (!parserLoader) {
           throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${guessedType.mime}`);
         }
@@ -137,7 +139,7 @@ export class ParserFactory {
    * @param filePath - Path, filename or extension to audio file
    * @return Parser submodule name
    */
- findLoaderForExtension(filePath: string | undefined): IParserLoader | undefined {
+  findLoaderForExtension(filePath: string | undefined): IParserLoader | undefined {
     if (!filePath)
       return;
 
@@ -146,124 +148,35 @@ export class ParserFactory {
     return this.parsers.find(parser => parser.extensions.indexOf(extension) !== -1);
   }
 
-  findLoaderForType(moduleName: ParserType| undefined): IParserLoader | undefined {
-    return moduleName ? this.parsers.find(parser => parser.parserType === moduleName) : undefined;
+  findLoaderForContentType(httpContentType: string): IParserLoader | undefined {
+
+    let mime: IContentType;
+    if (!httpContentType) return;
+    try {
+      mime = parseHttpContentType(httpContentType);
+    } catch (err) {
+      debug(`Invalid HTTP Content-Type header value: ${httpContentType}`);
+      return;
+    }
+
+    const subType = mime.subtype.indexOf('x-') === 0 ? mime.subtype.substring(2) : mime.subtype;
+
+    return this.parsers.find(parser => parser.mimeTypes.find(loader => loader.indexOf(`${mime.type}/${subType}`) !== -1));
+  }
+
+  public getSupportedMimeTypes(): string[] {
+    const mimeTypeSet = new Set<string>();
+    this.parsers.forEach(loader => {
+      loader.mimeTypes.forEach(mimeType => {
+        mimeTypeSet.add(mimeType);
+        mimeTypeSet.add(mimeType.replace('/', '/x-'));
+      });
+    });
+    return Array.from(mimeTypeSet);
   }
 }
 
 function getExtension(fname: string): string {
   const i = fname.lastIndexOf('.');
   return i === -1 ? '' : fname.slice(i);
-}
-
-/**
- * @param httpContentType - HTTP Content-Type, extension, path or filename
- * @returns Parser submodule name
- */
-function getParserIdForMimeType(httpContentType: string | undefined): ParserType | undefined {
-
-  let mime: IContentType;
-  if (!httpContentType) return;
-  try {
-    mime = parseHttpContentType(httpContentType);
-  } catch (err) {
-    debug(`Invalid HTTP Content-Type header value: ${httpContentType}`);
-    return;
-  }
-
-  const subType = mime.subtype.indexOf('x-') === 0 ? mime.subtype.substring(2) : mime.subtype;
-
-  switch (mime.type) {
-
-    case 'audio':
-      switch (subType) {
-
-        case 'mp3': // Incorrect MIME-type, Chrome, in Web API File object
-        case 'mpeg':
-          return 'mpeg';
-
-        case 'aac':
-        case 'aacp':
-          return 'mpeg'; // adts
-
-        case 'flac':
-          return 'flac';
-
-        case 'ape':
-        case 'monkeys-audio':
-          return 'apev2';
-
-        case 'mp4':
-        case 'm4a':
-          return 'mp4';
-
-        case 'ogg': // RFC 7845
-        case 'opus': // RFC 6716
-        case 'speex': // RFC 5574
-          return 'ogg';
-
-        case 'ms-wma':
-        case 'ms-wmv':
-        case 'ms-asf':
-          return 'asf';
-
-        case 'aiff':
-        case 'aif':
-        case 'aifc':
-          return 'aiff';
-
-        case 'vnd.wave':
-        case 'wav':
-        case 'wave':
-          return 'riff';
-
-        case 'wavpack':
-          return 'wavpack';
-
-        case 'musepack':
-          return 'musepack';
-
-        case 'matroska':
-        case 'webm':
-          return 'matroska';
-
-        case 'dsf':
-          return 'dsf';
-
-        case 'amr':
-          return 'amr';
-      }
-      break;
-
-    case 'video':
-      switch (subType) {
-
-        case 'ms-asf':
-        case 'ms-wmv':
-          return 'asf';
-
-        case 'm4v':
-        case 'mp4':
-          return 'mp4';
-
-        case 'ogg':
-          return 'ogg';
-
-        case 'matroska':
-        case 'webm':
-          return 'matroska';
-      }
-      break;
-
-    case 'application':
-      switch (subType) {
-
-        case 'vnd.ms-asf':
-          return 'asf';
-
-        case 'ogg':
-          return 'ogg';
-      }
-      break;
-  }
 }
