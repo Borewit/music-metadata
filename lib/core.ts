@@ -16,7 +16,7 @@ export type { IFileInfo } from 'strtok3';
 export { type IAudioMetadata, type IOptions, type ITag, type INativeTagDict, type ICommonTagsResult, type IFormat, type IPicture, type IRatio, type IChapter, type ILyricsTag, LyricsContentType, TimestampFormat, IMetadataEventTag, IMetadataEvent } from './type.js';
 export { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
 
-export type * from './ParseError.js'
+export * from './ParseError.js'
 
 /**
  * Parse Web API File
