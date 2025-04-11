@@ -10,6 +10,7 @@ import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 
 import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, ITag } from './type.js';
+import type { Readable } from 'node:stream';
 
 export type { IFileInfo } from 'strtok3';
 
@@ -131,7 +132,15 @@ export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, op
  * This method will throw an Error, always.
  */
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
-  throw new Error('To load Web API File objects use parseBlob instead. For loading files, you need to import with the "node" condition is set.');
+  throw new Error('This function require a Node engine. To load Web API File objects use parseBlob instead.');
+}
+
+/**
+ * Implementation only available when loaded as Node.js
+ * This method will throw an Error, always.
+ */
+export async function parseStream(stream: Readable, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+  throw new Error('This function require a Node engine.');
 }
 
 /**
