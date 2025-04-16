@@ -1689,15 +1689,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"link@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "link@npm:2.1.1"
-  bin:
-    link: dist/cli.js
-  checksum: 10c0/2ab956715e77c4fb9d78e16172301b59e2c03611feae4df33f50a70351445da050bea4010c682a0e187a09b5f2ee4462bab842153c2767a3b018de00b0e8282a
-  languageName: node
-  linkType: hard
-
 "load-plugin@npm:^6.0.0":
   version: 6.0.3
   resolution: "load-plugin@npm:6.0.3"
@@ -2340,7 +2331,6 @@ __metadata:
     debug: "npm:^4.4.0"
     del-cli: "npm:^6.0.0"
     file-type: "npm:^20.4.1"
-    link: "npm:^2.1.1"
     media-typer: "npm:^1.1.0"
     mime: "npm:^4.0.7"
     mocha: "npm:^11.1.0"
