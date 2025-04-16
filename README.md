@@ -788,9 +788,10 @@ For older Node.js version < 22, you need to dynamically import **music-metadata*
 })();
 ```
 
-For CommonJS TypeScript projects, using a Node.js version < 22, you can use [load-esm](https://github.com/Borewit/load-esm):
+For CommonJS TypeScript projects, I recommend to avoid using `commonjs` for the TypeScript compiler `module` option, 
+and either use `node16` or `nodenext`, which enable utilizing [dynamic import](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Operators/import).
 
-This method shall has replaced the embedded CJS loader function: `loadMusicMetadata()`.
+If you do want to use the classic `commonjs` option, this is how you can get the _dynamic import_ to work.
 
 ```js
 import {loadEsm} from 'load-esm';
@@ -800,6 +801,8 @@ import {loadEsm} from 'load-esm';
   const mm = await loadEsm<typeof import('music-metadata')>('music-metadata');
 })();
 ```
+
+When you use Node.js version ≥ 22, which supports loading ESM modules via require, this compensates for that issue.
 
 ## Frequently Asked Questions
 
