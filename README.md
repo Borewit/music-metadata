@@ -1,4 +1,4 @@
-[![Node.js CI](https://github.com/Borewit/music-metadata/actions/workflows/nodejs-ci.yml/badge.svg?branch=master)](https://github.com/Borewit/music-metadata/actions?query=branch%3Amaster)
+[![CI](https://github.com/Borewit/music-metadata/actions/workflows/ci.yml/badge.svg)](https://github.com/Borewit/music-metadata/actions/workflows/ci.yml)
 [![NPM version](https://img.shields.io/npm/v/music-metadata.svg)](https://npmjs.org/package/music-metadata)
 [![npm downloads](http://img.shields.io/npm/dm/music-metadata.svg)](https://npmcharts.com/compare/music-metadata?start=600&interval=30)
 [![Coverage Status](https://coveralls.io/repos/github/Borewit/music-metadata/badge.svg?branch=master)](https://coveralls.io/github/Borewit/music-metadata?branch=master)
