@@ -87,7 +87,7 @@
     "description": "Composer"
   },
   "lyrics": {
-    "description": "Lyricist"
+    "description": "Lyrics"
   },
   "albumsort": {
     "description": "Album title, formatted for alphabetic ordering"
