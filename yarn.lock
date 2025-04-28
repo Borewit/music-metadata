@@ -1210,15 +1210,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:^20.4.1":
-  version: 20.4.1
-  resolution: "file-type@npm:20.4.1"
+"file-type@npm:^20.5.0":
+  version: 20.5.0
+  resolution: "file-type@npm:20.5.0"
   dependencies:
     "@tokenizer/inflate": "npm:^0.2.6"
     strtok3: "npm:^10.2.0"
     token-types: "npm:^6.0.0"
     uint8array-extras: "npm:^1.4.0"
-  checksum: 10c0/ae6f65e537205a9a3e07ae574de74ed5210aa78899d6478351a466f97e3f17096b93d74cb97f3fce7488bc8486a21e449ab076ec358ed06984f4a9a8f48a9f55
+  checksum: 10c0/9b13d7e4eca79752008f036712a42df78393f05b88b9013c5754b04d3eb90b051cb692836a04acf7d2c696cb9f28077ddf8ebd6830175807f14fddf837d63be3
   languageName: node
   linkType: hard
 
@@ -2330,7 +2330,7 @@ __metadata:
     content-type: "npm:^1.0.5"
     debug: "npm:^4.4.0"
     del-cli: "npm:^6.0.0"
-    file-type: "npm:^20.4.1"
+    file-type: "npm:^20.5.0"
     media-typer: "npm:^1.1.0"
     mime: "npm:^4.0.7"
     mocha: "npm:^11.1.0"
