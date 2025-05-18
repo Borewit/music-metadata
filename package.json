@@ -137,9 +137,7 @@
   "engines": {
     "node": ">=18"
   },
-  "repository": {
-    "type": "github:Borewit/music-metadata"
-  },
+  "repository": "github:Borewit/music-metadata",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
