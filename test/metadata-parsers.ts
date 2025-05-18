@@ -56,6 +56,7 @@ export const Parsers: IParser[] = [
     }
   }, {
     description: 'parseBlob',
+    randomRead: true,
     parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       if (nodeMajorVersion < 20) {
         skipTest();
