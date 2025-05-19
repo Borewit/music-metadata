@@ -60,12 +60,12 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseBlob',
     webStream: true,
-    parse: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       if (nodeMajorVersion < 20) {
         skipTest();
       }
-      const buffer = fs.readFileSync(filePath);
-      return mm.parseBlob(new Blob([buffer], {type: mimeType}), options);
+      const blob = await fs.openAsBlob(filePath, {type: mimeType});
+      return mm.parseBlob(blob, options);
     }
   }, {
     description: 'parseBuffer',
