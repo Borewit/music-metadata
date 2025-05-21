@@ -8,7 +8,6 @@ type ParseFileMethod = (skipTest: () => void, filePath: string, mimeType?: strin
 
 interface IParser {
   description: string;
-  webStream?: true;
   randomRead?: true
   parse: ParseFileMethod;
 }
@@ -37,7 +36,6 @@ export const Parsers: IParser[] = [
     }
   }, {
     description: 'parseWebStream from byte ReadableStream',
-    webStream: true,
     parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const webStream = await makeByteReadableStreamFromFile(filePath);
       try {
@@ -48,7 +46,6 @@ export const Parsers: IParser[] = [
     }
   }, {
     description: 'parseWebStream from default ReadableStream',
-    webStream: true,
     parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const webStream = await makeDefaultReadableStreamFromFile(filePath);
       try {
@@ -59,7 +56,6 @@ export const Parsers: IParser[] = [
     }
   }, {
     description: 'parseBlob',
-    webStream: true,
     parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       if (nodeMajorVersion < 20) {
         skipTest();

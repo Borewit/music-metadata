@@ -249,9 +249,7 @@ describe('Parse MP3 files', () => {
 
       describe('duration=false', () => {
 
-        Parsers
-          .filter(parser => !parser.webStream)
-          .forEach(parser => {
+        Parsers.forEach(parser => {
             it(parser.description, async function(){
               const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
               assert.isUndefined(format.duration, 'Don\'t expect a duration');
@@ -263,9 +261,7 @@ describe('Parse MP3 files', () => {
 
         this.timeout(15000); // Parsing this file can take a bit longer
 
-        Parsers
-          .filter(parser => !parser.webStream)
-          .forEach(parser => {
+        Parsers.forEach(parser => {
             it(parser.description, async function(){
               const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
               assert.approximately(format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
