@@ -114,7 +114,7 @@ export class ParserFactory {
         debug('Guess parser on content...');
         await tokenizer.peekBuffer(buf, {mayBeLess: true});
 
-        const guessedType = await fileTypeFromBuffer(buf);
+        const guessedType = await fileTypeFromBuffer(buf, {mpegOffsetTolerance: 10});
         if (!guessedType || !guessedType.mime) {
           throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
         }
