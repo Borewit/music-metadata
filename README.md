@@ -751,7 +751,6 @@ graph TD;
     MMP-->UAE
     FTN("file-type (Node.js entry point)")-->FTP
     FTP("file-type (primary entry point)")-->S
-    S(strtok3)-->P(peek-readable)
     S(strtok3)-->TO("@tokenizer/token")
     TY(token-types)-->TO
     TY-->IE("ieee754")
@@ -771,7 +770,6 @@ Dependency list:
 - [token-types](https://github.com/Borewit/token-types)
 - [file-type](https://github.com/sindresorhus/file-type)
 - [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
-- [peek-readable](https://github.com/Borewit/peek-readable)
 
 ## CommonJS backward compatibility
 
