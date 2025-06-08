@@ -415,10 +415,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/content-type@npm:^1.1.8":
-  version: 1.1.8
-  resolution: "@types/content-type@npm:1.1.8"
-  checksum: 10c0/5115a68f9eeb2139f7598519245a47c7e39cae0965c5ea64067190f934e6d1568d6fec0643b113b54351a9472f8b810958b8040af53b15c82d2b2ca46d9af2be
+"@types/content-type@npm:^1.1.9":
+  version: 1.1.9
+  resolution: "@types/content-type@npm:1.1.9"
+  checksum: 10c0/d8b198257862991880d38985ad9871241db18b21ec728bddc78e4c61e0f987cc037dae6c5f9bd2bcc08f41de74ad371180af2fcdefeafe25d0ccae0c3fceb7fd
   languageName: node
   linkType: hard
 
@@ -525,12 +525,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.15.19":
-  version: 22.15.19
-  resolution: "@types/node@npm:22.15.19"
+"@types/node@npm:^22.15.30":
+  version: 22.15.30
+  resolution: "@types/node@npm:22.15.30"
   dependencies:
     undici-types: "npm:~6.21.0"
-  checksum: 10c0/8ef52fa1a91b1c8891616d46f3921a9f3c65ad1c6bb62db7899c8c28643c13bf9d607a2403b1e5aceb3e6fa6749efc9e0ba5c39618a4872da6946437b0edbfbe
+  checksum: 10c0/ca330ac0e7fd502686d6df115fcc606aba46fd334220f749bbba2f639accdadcb23f7900603ceccdc8240be736739cad5c0b87c0fa92c9255a4dff245f07d664
   languageName: node
   linkType: hard
 
@@ -2324,11 +2324,11 @@ __metadata:
     "@tokenizer/token": "npm:^0.3.0"
     "@types/chai": "npm:^5.2.2"
     "@types/chai-as-promised": "npm:^8.0.2"
-    "@types/content-type": "npm:^1.1.8"
+    "@types/content-type": "npm:^1.1.9"
     "@types/debug": "npm:^4.1.12"
     "@types/media-typer": "npm:^1.1.3"
     "@types/mocha": "npm:^10.0.10"
-    "@types/node": "npm:^22.15.19"
+    "@types/node": "npm:^22.15.30"
     c8: "npm:^10.1.3"
     chai: "npm:^5.2.0"
     chai-as-promised: "npm:^8.0.1"
