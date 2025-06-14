@@ -186,13 +186,15 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.strictEqual(lrcLyrics.timeStampFormat, TimestampFormat.milliseconds, 'lrcLyrics.timeStampFormat');
     assert.isArray(lrcLyrics.syncText, 'lrcLyrics.syncText');
     assert.strictEqual(lrcLyrics.syncText.length, 39, 'lrcLyrics.syncText.length');
-    assert.strictEqual(lrcLyrics.syncText[0].timestamp, 0, 'syncText[0].timestamp');
+    assert.strictEqual(lrcLyrics.syncText[0].timestamp, 0, 'syncText[0].timestamp, decode [00:00.00]');
     assert.strictEqual(lrcLyrics.syncText[0].text, '作词 : ZAQ', 'lrcLyrics.syncText[0].text');
-    assert.strictEqual(lrcLyrics.syncText[1].timestamp, 300, 'syncText[1].timestamp');
+    assert.strictEqual(lrcLyrics.syncText[1].timestamp, 300, 'syncText[1].timestamp, decode [00:00.30]');
     assert.strictEqual(lrcLyrics.syncText[1].text, '作曲 : ZAQ', 'lrcLyrics.syncText[1].text');
-    assert.strictEqual(lrcLyrics.syncText[4].timestamp, 6240, 'syncText[4].timestamp');
+    assert.strictEqual(lrcLyrics.syncText[3].timestamp, 920, 'syncText[3].timestamp, decode [00:00.920]');
+    assert.strictEqual(lrcLyrics.syncText[3].text, '歪んだ憂いが飛び交う中で失い失い', 'lrcLyrics.syncText[3].text');
+    assert.strictEqual(lrcLyrics.syncText[4].timestamp, 6240, 'syncText[4].timestamp, decode [00:06.240]');
     assert.strictEqual(lrcLyrics.syncText[4].text, '膝をつく道化', 'syncText[4].text');
-    assert.strictEqual(lrcLyrics.syncText[7].timestamp, 24395, 'syncText[7].timestamp');
+    assert.strictEqual(lrcLyrics.syncText[7].timestamp, 24395, 'syncText[7].timestamp, decode [00:24.395]');
     assert.strictEqual(lrcLyrics.syncText[7].text, '昨日の自分に興味なんかない', 'syncText[7].text');
 
     const syncText = lrcLyrics.syncText
