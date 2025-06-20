@@ -1,8 +1,6 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
-	"organizeImports": {
-		"enabled": false
-	},
+	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"assist": { "actions": { "source": { "organizeImports": "off" } } },
 	"formatter": {
 		"enabled": false
 	},
@@ -18,7 +16,24 @@
 				"useConst": "error",
 				"useConsistentBuiltinInstantiation": "error",
 				"useThrowNewError": "error",
-				"useThrowOnlyError": "error"
+				"useThrowOnlyError": "error",
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error",
+				"noUnusedTemplateLiteral": "error",
+				"useNumberNamespace": "error",
+				"noInferrableTypes": "error",
+				"noUselessElse": "error",
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"node:buffer": "Use Uint8Array instead of Buffer"
+						}
+					}
+				}
 			},
 			"recommended": true,
 			"complexity": {
@@ -30,27 +45,19 @@
 				"noControlCharactersInRegex": "off",
 				"useErrorMessage": "error"
 			},
-			"nursery": {
-				"noRestrictedImports": {
-					"level": "error",
-					"options": {
-						"paths": {
-							"node:buffer": "Use Uint8Array instead of Buffer"
-						}
-					}
-				}
-			}
+			"nursery": {}
 		}
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"ignore": [
-			"./coverage",
-			"./yarn",
-			"./lib/**/*.d.ts",
-			"./lib/**/*.js",
-			"./test/**/*.d.ts",
-			"./test/**/*.js"
+		"includes": [
+			"**",
+			"!coverage",
+			"!yarn",
+			"!lib/**/*.d.ts",
+			"!lib/**/*.js",
+			"!test/**/*.d.ts",
+			"!test/**/*.js"
 		]
 	}
 }
