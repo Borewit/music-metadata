@@ -67,19 +67,6 @@ describe('shared utility functionality', () => {
 
   describe('FourCC token', () => {
 
-    const testData: { fourCC: string, valid: boolean }[] = [
-      {fourCC: '\x00\x00\x00\x00', valid: false},
-      {fourCC: 'WAVE', valid: true},
-      {fourCC: 'fmt ', valid: true},
-      {fourCC: 'fmt\x00', valid: true},
-      {fourCC: '----', valid: true}, // Used in MP4
-      {fourCC: '-\x00\x00\x00', valid: true}, // Used in MP4
-      {fourCC: '©nam', valid: true}, // Used in MP4
-      {fourCC: '(c) ', valid: true}, // Used in AIFF
-      {fourCC: ' XML', valid: false},
-      {fourCC: ' XM ', valid: false}
-    ];
-
     it('should be able to encode FourCC token', () => {
       const buffer = new Uint8Array(4);
       FourCcToken.put(buffer, 0, 'abcd');

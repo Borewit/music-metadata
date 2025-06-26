@@ -35,12 +35,12 @@ const preamble = 'APETAGEX';
 export class ApeContentError extends makeUnexpectedFileContentError('APEv2'){
 }
 
-export class APEv2Parser extends BasicParser {
+export function tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
+  const apeParser = new APEv2Parser(metadata, tokenizer, options);
+  return apeParser.tryParseApeHeader();
+}
 
-  public static tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
-    const apeParser = new APEv2Parser(metadata, tokenizer, options);
-    return apeParser.tryParseApeHeader();
-  }
+export class APEv2Parser extends BasicParser {
 
   /**
    * Calculate the media file duration

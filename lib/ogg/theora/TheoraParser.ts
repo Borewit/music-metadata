@@ -18,7 +18,7 @@ export class TheoraParser implements Ogg.IPageConsumer {
 
   private tokenizer: ITokenizer
 
-  constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
+  constructor(metadata: INativeMetadataCollector, _options: IOptions, tokenizer: ITokenizer) {
     this.metadata = metadata;
     this.tokenizer = tokenizer;
   }
@@ -38,16 +38,14 @@ export class TheoraParser implements Ogg.IPageConsumer {
     debug('flush');
   }
 
-  public calculateDuration(header: Ogg.IPageHeader) {
+  public calculateDuration(_header: Ogg.IPageHeader) {
     debug('duration calculation not implemented');
   }
 
   /**
    * Parse first Theora Ogg page. the initial identification header packet
-   * @param {IPageHeader} header
-   * @param {Buffer} pageData
    */
-  protected async parseFirstPage(header: Ogg.IPageHeader, pageData: Uint8Array): Promise<void> {
+  protected async parseFirstPage(_header: Ogg.IPageHeader, pageData: Uint8Array): Promise<void> {
     debug('First Ogg/Theora page');
     this.metadata.setFormat('codec', 'Theora');
     const idHeader = IdentificationHeader.get(pageData, 0);

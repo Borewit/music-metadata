@@ -231,7 +231,7 @@ function readUIntBeAsBigInt(buf: Uint8Array, len: number): bigint {
   try {
     normalizedNumber.set(cleanNumber, 8 - len);
     return Token.UINT64_BE.get(normalizedNumber, 0);
-  } catch(error) {
+  } catch(_error) {
     return BigInt(-1);
   }
 }

@@ -114,7 +114,7 @@ export class VorbisParser implements IPageConsumer {
    * @param header
    * @param pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
+  protected parseFirstPage(_header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat('codec', 'Vorbis I');
     debug('Parse first page');
     // Parse  Vorbis common header

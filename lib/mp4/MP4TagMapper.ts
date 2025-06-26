@@ -119,7 +119,7 @@ export class MP4TagMapper extends CaseInsensitiveTagMap {
     super([tagType], mp4TagMap);
   }
 
-  protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
+  protected postMap(tag: ITag, _warnings: INativeMetadataCollector): void {
 
     switch (tag.id) {
 

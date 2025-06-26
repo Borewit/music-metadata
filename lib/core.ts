@@ -131,7 +131,7 @@ export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, op
  * Implementation only available when loaded as Node.js
  * This method will throw an Error, always.
  */
-export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
+export async function parseFile(_filePath: string, _options: IOptions = {}): Promise<IAudioMetadata> {
   throw new Error('This function require a Node engine. To load Web API File objects use parseBlob instead.');
 }
 
@@ -139,7 +139,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
  * Implementation only available when loaded as Node.js
  * This method will throw an Error, always.
  */
-export async function parseStream(stream: Readable, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
+export async function parseStream(_stream: Readable, _fileInfo?: IFileInfo | string, _options: IOptions = {}): Promise<IAudioMetadata> {
   throw new Error('This function require a Node engine.');
 }
 

@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 
 import { BasicParser } from '../../common/BasicParser.js';
-import { APEv2Parser } from '../../apev2/APEv2Parser.js';
+import { tryParseApeHeader } from '../../apev2/APEv2Parser.js';
 import { FourCcToken } from '../../common/FourCC.js';
 import * as SV8 from './StreamVersion8.js';
 import { MusepackContentError } from '../MusepackConentError.js';
@@ -55,7 +55,7 @@ export class MpcSv8Parser extends BasicParser {
           if (this.metadata.format.duration) {
             this.metadata.setFormat('bitrate', this.audioLength * 8 / this.metadata.format.duration);
           }
-          return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
+          return tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:
           throw new MusepackContentError(`Unexpected header: ${header.key}`);

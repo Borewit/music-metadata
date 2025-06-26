@@ -30,7 +30,7 @@ export class OpusParser extends VorbisParser {
    * @param {IPageHeader} header
    * @param {Uint8Array} pageData
    */
-  protected parseFirstPage(header: IPageHeader, pageData: Uint8Array) {
+  protected parseFirstPage(_header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat('codec', 'Opus');
     // Parse Opus ID Header
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);

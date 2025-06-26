@@ -1,6 +1,6 @@
 import * as Token from 'token-types';
 
-import { APEv2Parser } from '../apev2/APEv2Parser.js';
+import { tryParseApeHeader } from '../apev2/APEv2Parser.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { BlockHeaderToken, type IBlockHeader, type IMetadataId, MetadataIdToken } from './WavPackToken.js';
@@ -29,7 +29,7 @@ export class WavPackParser extends BasicParser {
     await this.parseWavPackBlocks();
     // try to parse APEv2 header
 
-    return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
+    return tryParseApeHeader(this.metadata, this.tokenizer, this.options);
   }
 
   public async parseWavPackBlocks(): Promise<void> {

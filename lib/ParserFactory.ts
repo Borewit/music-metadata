@@ -154,7 +154,7 @@ export class ParserFactory {
     if (!httpContentType) return;
     try {
       mime = parseHttpContentType(httpContentType);
-    } catch (err) {
+    } catch (_err) {
       debug(`Invalid HTTP Content-Type header value: ${httpContentType}`);
       return;
     }
