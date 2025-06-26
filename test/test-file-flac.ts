@@ -197,7 +197,7 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.strictEqual(lrcLyrics.syncText[7].timestamp, 24395, 'syncText[7].timestamp, decode [00:24.395]');
     assert.strictEqual(lrcLyrics.syncText[7].text, '昨日の自分に興味なんかない', 'syncText[7].text');
 
-    const syncText = lrcLyrics.syncText
+    const _syncText = lrcLyrics.syncText
     assert.isArray(common.lyrics, 'common.lyrics');
 
   });

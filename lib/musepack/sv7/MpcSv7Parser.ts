@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 
 import { BasicParser } from '../../common/BasicParser.js';
-import { APEv2Parser } from '../../apev2/APEv2Parser.js';
+import { tryParseApeHeader } from '../../apev2/APEv2Parser.js';
 import { BitReader } from './BitReader.js';
 import * as SV7 from './StreamVersion7.js';
 import { MusepackContentError } from '../MusepackConentError.js';
@@ -32,7 +32,7 @@ export class MpcSv7Parser extends BasicParser {
     this.metadata.setFormat('codec', (version / 100).toFixed(2));
     await this.skipAudioData(header.frameCount);
     debug(`End of audio stream, switching to APEv2, offset=${this.tokenizer.position}`);
-    return APEv2Parser.tryParseApeHeader(this.metadata, this.tokenizer, this.options);
+    return tryParseApeHeader(this.metadata, this.tokenizer, this.options);
   }
 
   private async skipAudioData(frameCount: number): Promise<void> {

@@ -125,7 +125,7 @@ describe('Parse Ogg', () => {
 
       it('IdHeader should throw error if data is shorter than header', () => {
         try {
-          const idHeader = new IdHeader(18);
+          const _idHeader = new IdHeader(18);
         } catch (err) {
           expect(err.message).to.equal('ID-header-page 0 should be at least 19 bytes long');
         }

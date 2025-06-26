@@ -128,7 +128,7 @@ export abstract class State<T> implements IGetToken<T> {
 // ToDo: use ignore type
 export class IgnoreObjectState extends State<unknown> {
 
-  public get(buf: Uint8Array, off: number): null {
+  public get(_buf: Uint8Array, _off: number): null {
     return null;
   }
 }

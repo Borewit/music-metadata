@@ -143,7 +143,7 @@ describe('Discogs mappings', () => {
       const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [APEv2].flac';
       const filePath = path.join(samplePath, filename);
 
-      function checkNative(id3v23) {
+      function _checkNative(id3v23) {
         // Compare expectedCommonTags with result.common
         assert.deepEqual(id3v23['TXXX:CATALOGID'], 'PRAR931391');
       }

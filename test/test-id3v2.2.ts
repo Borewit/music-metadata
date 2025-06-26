@@ -141,7 +141,7 @@ describe('ID3v2Parser', () => {
 
       const filePath = path.join(samplePath, 'mp3', 'Betty Lou.mp3');
 
-      const {format, common, native} = await mm.parseFile(filePath, {duration: true});
+      const {format, common} = await mm.parseFile(filePath, {duration: true});
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
 

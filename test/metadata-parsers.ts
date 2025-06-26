@@ -21,12 +21,12 @@ export const Parsers: IParser[] = [
   {
     description: 'parseFile',
     randomRead: true,
-    parse: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: (_skipTest, filePath: string, _mimeType?: string, options?: IOptions) => {
       return mm.parseFile(filePath, options);
     }
   }, {
     description: 'parseStream (Node.js)',
-    parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: async (_skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const nodeStream = fs.createReadStream(filePath);
       try {
         return await mm.parseStream(nodeStream, {mimeType: mimeType}, options);
@@ -36,7 +36,7 @@ export const Parsers: IParser[] = [
     }
   }, {
     description: 'parseWebStream from byte ReadableStream',
-    parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: async (_skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const webStream = await makeByteReadableStreamFromFile(filePath);
       try {
         return await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options);
@@ -46,7 +46,7 @@ export const Parsers: IParser[] = [
     }
   }, {
     description: 'parseWebStream from default ReadableStream',
-    parse: async (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: async (_skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const webStream = await makeDefaultReadableStreamFromFile(filePath);
       try {
         return await mm.parseWebStream(webStream.stream, {mimeType: mimeType, size: webStream.fileSize}, options);
@@ -66,7 +66,7 @@ export const Parsers: IParser[] = [
   }, {
     description: 'parseBuffer',
     randomRead: true,
-    parse: (skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
+    parse: (_skipTest, filePath: string, mimeType?: string, options?: IOptions) => {
       const buffer = fs.readFileSync(filePath);
       const array = new Uint8Array(buffer);
       return mm.parseBuffer(array, {mimeType}, options);

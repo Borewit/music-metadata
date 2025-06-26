@@ -27,7 +27,7 @@ export class SourceStream extends Readable {
   }
 }
 
-export async function makeByteReadableStreamFromFile(filename: string, delay = 0) {
+export async function makeByteReadableStreamFromFile(filename: string, _delay = 0) {
 
   const fileInfo = await stat(filename);
   const nodeStream = createReadStream(filename);
@@ -38,7 +38,7 @@ export async function makeByteReadableStreamFromFile(filename: string, delay = 0
   };
 }
 
-export async function makeDefaultReadableStreamFromFile(filename: string, delay = 0) {
+export async function makeDefaultReadableStreamFromFile(filename: string, _delay = 0) {
 
   const fileInfo = await stat(filename);
   const nodeStream = createReadStream(filename);
