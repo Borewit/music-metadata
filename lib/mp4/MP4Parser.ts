@@ -46,6 +46,7 @@ interface ITrackDescription extends AtomToken.ITrackHeaderAtom {
   sampleSizeTable: number[];
   sampleToChunkTable: AtomToken.ISampleToChunk[];
   timeToSampleTable: AtomToken.ITimeToSampleToken[];
+  fragments: {trackRun: AtomToken.ITrackRunBox, header: AtomToken.ITrackFragmentHeaderBox}[];
 }
 
 type IAtomParser = (payloadLength: number) => Promise<void>;
@@ -146,6 +147,10 @@ export class MP4Parser extends BasicParser {
   private audioLengthInBytes: number | undefined;
   private tracks: ITrackDescription[] = [];
 
+  private getTrackById(trackId: number): ITrackDescription | undefined {
+    return this.tracks.find(track => track.trackId === trackId);
+  }
+
   public async parse(): Promise<void> {
 
     this.tracks = [];
@@ -218,8 +223,30 @@ export class MP4Parser extends BasicParser {
       const audioTrack = audioTracks[0];
 
       if (audioTrack.timeScale > 0) {
-        const duration = audioTrack.duration / audioTrack.timeScale; // calculate duration in seconds
-        this.metadata.setFormat('duration', duration);
+        if (audioTrack.duration > 0) {
+          debug('Using duration defined on audio track');
+          const duration = audioTrack.duration / audioTrack.timeScale; // calculate duration in seconds
+          this.metadata.setFormat('duration', duration);
+        } else if (audioTrack.fragments.length > 0) {
+          debug('Calculate duration defined in track fragments');
+
+          let totalTimeUnits = 0;
+
+          for (const fragment of audioTrack.fragments) {
+            const defaultDuration = fragment.header.defaultSampleDuration;
+
+            for (const sample of fragment.trackRun.samples) {
+              const dur = sample.sampleDuration ?? defaultDuration;
+
+              if (dur == null) {
+                throw new Error("Missing sampleDuration and no default_sample_duration in tfhd");
+              }
+
+              totalTimeUnits += dur;
+            }
+          }
+          this.metadata.setFormat('duration', totalTimeUnits / audioTrack.timeScale);
+        }
       }
 
       const ssd = audioTrack.soundSampleDescription[0];
@@ -251,6 +278,11 @@ export class MP4Parser extends BasicParser {
         case 'ilst':
         case '<id>':
           return this.parseMetadataItemData(atom);
+        case 'moof':
+          switch(atom.header.name) {
+            case 'traf':
+              return this.parseTrackFragmentBox(atom);
+          }
       }
     }
 
@@ -387,20 +419,56 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 65: // An 8-bit signed integer
-        await this.addTag(tagKey, Token.UINT8.get(dataAtom.value,0));
+        await this.addTag(tagKey, Token.UINT8.get(dataAtom.value, 0));
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        await this.addTag(tagKey, Token.UINT16_BE.get(dataAtom.value,0));
+        await this.addTag(tagKey, Token.UINT16_BE.get(dataAtom.value, 0));
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        await this.addTag(tagKey, Token.UINT32_BE.get(dataAtom.value,0));
+        await this.addTag(tagKey, Token.UINT32_BE.get(dataAtom.value, 0));
         break;
 
       default:
         this.addWarning(`atom key=${tagKey}, has unknown well-known-type (data-type): ${dataAtom.type.type}`);
     }
+  }
+
+  private parseTrackFragmentBox(trafBox: Atom): Promise<void> {
+    let tfhd: AtomToken.ITrackFragmentHeaderBox;
+    return trafBox.readAtoms(this.tokenizer, async (child, remaining) => {
+      const payLoadLength = child.getPayloadLength(remaining);
+      switch (child.header.name) {
+
+        case 'tfhd': { // TrackFragmentHeaderBox
+          const fragmentHeaderBox = new AtomToken.TrackFragmentHeaderBox(child.getPayloadLength(remaining));
+          tfhd = await this.tokenizer.readToken(fragmentHeaderBox);
+          break;
+        }
+
+        case 'tfdt': // TrackFragmentBaseMediaDecodeTimeBo
+          await this.tokenizer.ignore(payLoadLength);
+          break;
+
+        case 'trun': { // TrackRunBox
+          const trackRunBox = new AtomToken.TrackRunBox(payLoadLength);
+          const trun = await this.tokenizer.readToken(trackRunBox);
+          if (tfhd) {
+            const track = this.getTrackById(tfhd.trackId);
+            track?.fragments.push({header: tfhd, trackRun: trun});
+          }
+          break;
+        }
+
+
+        default: {
+          debug(`Unexpected box: ${child.header.name}`);
+          await this.tokenizer.ignore(payLoadLength);
+        }
+      }
+
+    }, trafBox.getPayloadLength(0));
   }
 
   private atomParsers: { [id: string]: IAtomParser; } = {
@@ -443,6 +511,7 @@ export class MP4Parser extends BasicParser {
 
     tkhd: async (len: number) => {
       const track = (await this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(new AtomToken.TrackHeaderAtom(len))) as ITrackDescription;
+      track.fragments = [];
       this.tracks.push(track);
     },
 
@@ -592,12 +661,6 @@ export class MP4Parser extends BasicParser {
   }
 
   private findSampleOffset(track: ITrackDescription, chapterOffset: number): number {
-
-    let totalDuration = 0;
-    track.timeToSampleTable.forEach(e => {
-      totalDuration += e.count * e.duration;
-    });
-    debug(`Total duration=${totalDuration}`);
 
     let chunkIndex = 0;
     while (chunkIndex < track.chunkOffsetTable.length && track.chunkOffsetTable[chunkIndex] < chapterOffset) {

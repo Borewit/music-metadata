@@ -71,6 +71,7 @@ export class Atom {
       case '<id>':
       case 'ilst':
       case 'tref':
+      case 'moof':
         return this.readAtoms(tokenizer, dataHandler, this.getPayloadLength(remaining));
 
       case 'meta': { // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
