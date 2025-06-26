@@ -503,4 +503,14 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(common.title, undefined, 'common.title');
   });
 
+  it('should be able handle fragmented duration', async () => {
+
+    const filePath = path.join(mp4Samples, 'fragmented-duration.mp4');
+    const {format} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'isom/iso6/iso2/avc1/mp41', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.approximately(format.duration, 96.98331065759638, 1 / 1000000, 'format.duration');
+  });
+
 });

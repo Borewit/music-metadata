@@ -5,6 +5,7 @@ import { FourCcToken } from '../common/FourCC.js';
 
 import type { IToken, IGetToken } from 'strtok3';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import * as util from '../common/Util.js';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
 
@@ -783,4 +784,174 @@ function readTokenTable<T>(buf: Uint8Array, token: IGetToken<T>, off: number, re
   }
 
   return entries;
+}
+
+interface ITrackFragmentHeaderBoxFlags {
+  baseDataOffsetPresent: boolean;
+  sampleDescriptionIndexPresent: boolean;
+  defaultSampleDurationPresent: boolean;
+  defaultSampleSizePresent: boolean;
+  defaultSampleFlagsPresent: boolean;
+  defaultDurationIsEmpty: boolean;
+  defaultBaseIsMoof: boolean;
+}
+
+export interface ITrackFragmentHeaderBox {
+  version: number;
+  flags: ITrackFragmentHeaderBoxFlags;
+  trackId: number;
+  baseDataOffset?: bigint;
+  sampleDescriptionIndex?: number;
+  defaultSampleDuration?: number;
+  defaultSampleSize?: number;
+  defaultSampleFlags?: number;
+}
+
+/**
+ * Sample-size ('tfhd') TrackFragmentHeaderBox
+ */
+export class TrackFragmentHeaderBox implements IGetToken<ITrackFragmentHeaderBox> {
+  public len: number;
+
+  public constructor(len: number) {
+    this.len = len;
+  }
+
+  public get(buf: Uint8Array, off: number): ITrackFragmentHeaderBox {
+
+    const flagOffset = off + 1;
+    const header: ITrackFragmentHeaderBox = {
+      version: Token.INT8.get(buf, off),
+      flags: {
+        baseDataOffsetPresent: util.getBit(buf, flagOffset + 2, 0),
+        sampleDescriptionIndexPresent: util.getBit(buf, flagOffset + 2, 1),
+        defaultSampleDurationPresent: util.getBit(buf, flagOffset + 2, 3),
+        defaultSampleSizePresent: util.getBit(buf, flagOffset + 2, 4),
+        defaultSampleFlagsPresent: util.getBit(buf, flagOffset + 2, 5),
+        defaultDurationIsEmpty: util.getBit(buf, flagOffset, 0),
+        defaultBaseIsMoof: util.getBit(buf, flagOffset, 1)
+      },
+      trackId: Token.UINT32_BE.get(buf, 4)
+    };
+
+    let dynOffset = 8;
+    if (header.flags.baseDataOffsetPresent) {
+      header.baseDataOffset = Token.UINT64_BE.get(buf, dynOffset);
+      dynOffset += 8;
+    }
+    if (header.flags.sampleDescriptionIndexPresent) {
+      header.sampleDescriptionIndex = Token.UINT32_BE.get(buf, dynOffset);
+      dynOffset += 4;
+    }
+    if (header.flags.defaultSampleDurationPresent) {
+      header.defaultSampleDuration = Token.UINT32_BE.get(buf, dynOffset);
+      dynOffset += 4;
+    }
+    if (header.flags.defaultSampleSizePresent) {
+      header.defaultSampleSize = Token.UINT32_BE.get(buf, dynOffset);
+      dynOffset += 4;
+    }
+    if (header.flags.defaultSampleFlagsPresent) {
+      header.defaultSampleFlags = Token.UINT32_BE.get(buf, dynOffset);
+    }
+
+    return header;
+  }
+}
+
+
+interface ITrackRunBoxFlags {
+  dataOffsetPresent: boolean
+  firstSampleFlagsPresent: boolean;
+  sampleDurationPresent: boolean;
+  sampleSizePresent: boolean;
+  sampleFlagsPresent: boolean;
+  sampleCompositionTimeOffsetsPresent: boolean;
+}
+
+/**
+ * trun atom
+ */
+export interface ITrackRunBox {
+  version: number;
+  flags: ITrackRunBoxFlags;
+  samples: ITrackRunBoxSample[];
+  sampleCount: number;
+  dataOffset?: number;
+  firstSampleFlags?: number;
+}
+
+interface ITrackRunBoxSample {
+  sampleDuration?: number;
+  sampleSize?: number;
+  sampleFlags?: number;
+  sampleCompositionTimeOffset?: number;
+}
+
+/**
+ * Sample-size ('trun') TrackRunBox
+ */
+export class TrackRunBox implements IGetToken<ITrackRunBox> {
+  public len: number;
+
+  public constructor(len: number) {
+    this.len = len;
+  }
+
+  public get(buf: Uint8Array, off: number): ITrackRunBox {
+
+    const flagOffset = off + 1;
+
+    const trun: ITrackRunBox = {
+      version: Token.INT8.get(buf, off),
+      flags: {
+        dataOffsetPresent: util.getBit(buf, flagOffset + 2, 0),
+        firstSampleFlagsPresent: util.getBit(buf, flagOffset + 2, 2),
+        sampleDurationPresent: util.getBit(buf, flagOffset + 1, 0),
+        sampleSizePresent: util.getBit(buf, flagOffset + 1, 1),
+        sampleFlagsPresent: util.getBit(buf, flagOffset + 1, 2),
+        sampleCompositionTimeOffsetsPresent: util.getBit(buf, flagOffset + 1, 3)
+      },
+      sampleCount: Token.UINT32_BE.get(buf, off + 4),
+      samples: []
+    }
+
+    let dynOffset = off + 8;
+
+    if (trun.flags.dataOffsetPresent) {
+      trun.dataOffset = Token.UINT32_BE.get(buf, dynOffset);
+      dynOffset += 4;
+    }
+    if (trun.flags.firstSampleFlagsPresent) {
+      trun.firstSampleFlags = Token.UINT32_BE.get(buf, dynOffset);
+      dynOffset += 4;
+    }
+
+    for(let n= 0; n < trun.sampleCount; ++n) {
+      if (dynOffset >= this.len) {
+        debug("TrackRunBox size mismatch");
+        break;
+      }
+      const sample: ITrackRunBoxSample = {};
+      if (trun.flags.sampleDurationPresent) {
+        sample.sampleDuration = Token.UINT32_BE.get(buf, dynOffset);
+        dynOffset += 4;
+      }
+      if (trun.flags.sampleSizePresent) {
+        sample.sampleSize = Token.UINT32_BE.get(buf, dynOffset);
+        dynOffset += 4;
+      }
+      if (trun.flags.sampleFlagsPresent) {
+        sample.sampleFlags = Token.UINT32_BE.get(buf, dynOffset);
+        dynOffset += 4;
+      }
+      if (trun.flags.sampleCompositionTimeOffsetsPresent) {
+        sample.sampleCompositionTimeOffset = Token.UINT32_BE.get(buf, dynOffset);
+        dynOffset += 4;
+      }
+      trun.samples.push(sample);
+    }
+
+    return trun;
+  }
 }
