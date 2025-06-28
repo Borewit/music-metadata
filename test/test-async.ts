@@ -24,6 +24,16 @@ describe('Asynchronous observer updates', () => {
 
     assert.deepEqual(eventTags, [
       {
+        id: 'hasAudio',
+        type: 'format',
+        value: true
+      },
+      {
+        id: 'hasVideo',
+        type: 'format',
+        value: false
+      },
+      {
         id: 'container',
         type: 'format',
         value: 'FLAC'

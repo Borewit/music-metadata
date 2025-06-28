@@ -35,15 +35,17 @@ describe('Parse MPEG', () => {
      */
     const filePath = path.join(samplePath, '1971 - 003 - Sweet - Co-Co - CannaPower.mp2');
 
-    const metadata = await mm.parseFile(filePath, {duration: true});
+    const {format} = await mm.parseFile(filePath, {duration: true});
 
-    t.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1'], 'Tags: ID3v1 & ID3v2.3');
-    t.strictEqual(metadata.format.container, 'MPEG', 'format.container = MPEG');
-    t.strictEqual(metadata.format.codec, 'MPEG 1 Layer 2', 'format.codec = MPEG-1 Audio Layer II');
-    t.strictEqual(metadata.format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
-    t.strictEqual(metadata.format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-    t.strictEqual(metadata.format.numberOfSamples, 23040, 'format.numberOfSamples = 23040');
-    t.strictEqual(metadata.format.duration, 0.5224489795918368, 'duration [seconds]'); // validated 2017-04-09
+    t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'Tags: ID3v1 & ID3v2.3');
+    t.strictEqual(format.container, 'MPEG', 'format.container = MPEG');
+    t.strictEqual(format.codec, 'MPEG 1 Layer 2', 'format.codec = MPEG-1 Audio Layer II');
+    t.strictEqual(format.bitrate, 128000, 'format.bitrate = 128 kbit/sec');
+    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+    t.strictEqual(format.numberOfSamples, 23040, 'format.numberOfSamples = 23040');
+    t.strictEqual(format.duration, 0.5224489795918368, 'duration [seconds]'); // validated 2017-04-09
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
   });
 
   describe('MPEG frame sync efficiency', () => {

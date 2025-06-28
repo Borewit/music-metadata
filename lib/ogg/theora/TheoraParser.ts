@@ -50,6 +50,7 @@ export class TheoraParser implements Ogg.IPageConsumer {
     this.metadata.setFormat('codec', 'Theora');
     const idHeader = IdentificationHeader.get(pageData, 0);
     this.metadata.setFormat('bitrate', idHeader.nombr);
+    this.metadata.setAudioOnly();
   }
 
 }

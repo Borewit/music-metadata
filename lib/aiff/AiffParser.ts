@@ -46,6 +46,7 @@ export class AIFFParser extends BasicParser {
         throw new AiffContentError(`Unsupported AIFF type: ${type}`);
     }
     this.metadata.setFormat('lossless', !this.isCompressed);
+    this.metadata.setAudioOnly();
 
     try {
       while (!this.tokenizer.fileInfo.size || this.tokenizer.fileInfo.size - this.tokenizer.position >= iff.Header.len) {

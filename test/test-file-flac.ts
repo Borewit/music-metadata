@@ -7,53 +7,53 @@ import { LyricsContentType, TimestampFormat } from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
-const t = assert;
-
 describe('Parse FLAC Vorbis comment', () => {
 
   const flacFilePath = path.join(samplePath, 'flac');
 
   function checkFormat(format) {
-    t.strictEqual(format.container, 'FLAC', 'format.container');
-    t.strictEqual(format.codec, 'FLAC', 'format.codec');
-    t.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
-    t.strictEqual(format.duration, 271.7733333333333, 'format.duration');
-    t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-    t.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bit');
-    t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
+    assert.strictEqual(format.container, 'FLAC', 'format.container');
+    assert.strictEqual(format.codec, 'FLAC', 'format.codec');
+    assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
+    assert.strictEqual(format.duration, 271.7733333333333, 'format.duration');
+    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
+    assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bit');
+    assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
 
   function checkCommon(common) {
-    t.strictEqual(common.title, 'Brian Eno', 'common.title');
-    t.deepEqual(common.artists, ['MGMT'], 'common.artists');
-    t.strictEqual(common.albumartist, undefined, 'common.albumartist');
-    t.strictEqual(common.album, 'Congratulations', 'common.album');
-    t.strictEqual(common.year, 2010, 'common.year');
-    t.deepEqual(common.track, {no: 7, of: null}, 'common.track');
-    t.deepEqual(common.disk, {no: null, of: null}, 'common.disk');
-    t.deepEqual(common.genre, ['Alt. Rock'], 'genre');
-    t.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture format');
-    t.strictEqual(common.picture[0].data.length, 175668, 'common.picture length');
+    assert.strictEqual(common.title, 'Brian Eno', 'common.title');
+    assert.deepEqual(common.artists, ['MGMT'], 'common.artists');
+    assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
+    assert.strictEqual(common.album, 'Congratulations', 'common.album');
+    assert.strictEqual(common.year, 2010, 'common.year');
+    assert.deepEqual(common.track, {no: 7, of: null}, 'common.track');
+    assert.deepEqual(common.disk, {no: null, of: null}, 'common.disk');
+    assert.deepEqual(common.genre, ['Alt. Rock'], 'genre');
+    assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture format');
+    assert.strictEqual(common.picture[0].data.length, 175668, 'common.picture length');
   }
 
   function checkNative(vorbis) {
     // Compare expectedCommonTags with result.common
-    t.deepEqual(vorbis.TITLE, ['Brian Eno'], 'vorbis.TITLE');
-    t.deepEqual(vorbis.ARTIST, ['MGMT'], 'vorbis.ARTIST');
-    t.deepEqual(vorbis.DATE, ['2010'], 'vorbis.DATE');
-    t.deepEqual(vorbis.TRACKNUMBER, ['07'], 'vorbis.TRACKNUMBER');
-    t.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis.GENRE');
-    t.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode=should ignore equal sign'], 'vorbis.COMMENT');
+    assert.deepEqual(vorbis.TITLE, ['Brian Eno'], 'vorbis.TITLE');
+    assert.deepEqual(vorbis.ARTIST, ['MGMT'], 'vorbis.ARTIST');
+    assert.deepEqual(vorbis.DATE, ['2010'], 'vorbis.DATE');
+    assert.deepEqual(vorbis.TRACKNUMBER, ['07'], 'vorbis.TRACKNUMBER');
+    assert.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis.GENRE');
+    assert.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode=should ignore equal sign'], 'vorbis.COMMENT');
     const pic = vorbis.METADATA_BLOCK_PICTURE[0];
 
-    t.strictEqual(pic.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype');
-    t.strictEqual(pic.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format');
-    t.strictEqual(pic.description, '', 'raw METADATA_BLOCK_PICTURE description');
-    t.strictEqual(pic.width, 450, 'raw METADATA_BLOCK_PICTURE width');
-    t.strictEqual(pic.height, 450, 'raw METADATA_BLOCK_PICTURE height');
-    t.strictEqual(pic.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth');
-    t.strictEqual(pic.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color');
-    t.strictEqual(pic.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
+    assert.strictEqual(pic.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype');
+    assert.strictEqual(pic.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format');
+    assert.strictEqual(pic.description, '', 'raw METADATA_BLOCK_PICTURE description');
+    assert.strictEqual(pic.width, 450, 'raw METADATA_BLOCK_PICTURE width');
+    assert.strictEqual(pic.height, 450, 'raw METADATA_BLOCK_PICTURE height');
+    assert.strictEqual(pic.colour_depth, 24, 'raw METADATA_BLOCK_PICTURE colour depth');
+    assert.strictEqual(pic.indexed_color, 0, 'raw METADATA_BLOCK_PICTURE indexed_color');
+    assert.strictEqual(pic.data.length, 175668, 'raw METADATA_BLOCK_PICTURE length');
   }
 
   describe('decode flac.flac', () => {
@@ -76,7 +76,7 @@ describe('Parse FLAC Vorbis comment', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
         const {format} = await parser.parse(() => this.skip(), filePath, 'audio/flac');
-        t.deepEqual(format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
+        assert.deepEqual(format.tagTypes, ['ID3v2.3', 'vorbis', 'ID3v1'], 'File has 3 tag types: "vorbis", "ID3v2.3" & "ID3v1"');
       });
     });
 
@@ -108,10 +108,10 @@ describe('Parse FLAC Vorbis comment', () => {
       Parsers.forEach(parser => {
         it(parser.description, async function(){
           return parser.parse(() => this.skip(), tmpFilePath, 'audio/flac').then(() => {
-            t.fail('Should reject');
+            assert.fail('Should reject');
             fs.unlinkSync(tmpFilePath);
           }).catch(err => {
-            t.strictEqual(err.message, 'FourCC contains invalid characters');
+            assert.strictEqual(err.message, 'FourCC contains invalid characters');
             return fs.unlinkSync(tmpFilePath);
           });
         });
@@ -131,6 +131,8 @@ describe('Parse FLAC Vorbis comment', () => {
 
     assert.strictEqual(format.container, 'FLAC');
     assert.deepEqual(format.tagTypes, ['vorbis']);
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
 
     const vorbis = mm.orderTags(metadata.native.vorbis);
     assert.isDefined(vorbis.METADATA_BLOCK_PICTURE, 'expect a Vorbis METADATA_BLOCK_PICTURE tag');
@@ -160,6 +162,8 @@ describe('Parse FLAC Vorbis comment', () => {
 
     assert.strictEqual(format.container, 'FLAC', 'format.container');
     assert.strictEqual(format.codec, 'FLAC', 'format.codec');
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
 
     assert.strictEqual(common.albumartist, 'Various Artists', 'common.albumartist');
   });
@@ -177,7 +181,10 @@ describe('Parse FLAC Vorbis comment', () => {
   it('Should decode LRC lyrics', async () => {
 
     const filePath = path.join(flacFilePath, 'Dance In The Game - ZAQ - LRC.flac');
-    const {common} = await mm.parseFile(filePath);
+    const {format, common} = await mm.parseFile(filePath);
+
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
 
     assert.isArray(common.lyrics, 'common.lyrics');
     assert.strictEqual(common.lyrics.length, 1, 'common.lyrics.length');

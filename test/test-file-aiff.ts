@@ -22,6 +22,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
     assert.strictEqual(format.numberOfSamples, samples, `format.numberOfSamples = ${samples} samples`);
     assert.strictEqual(format.duration, duration, `format.duration = ${duration} sec.`);
     assert.strictEqual(format.codec, compressionType, `format.codec = ${compressionType}`);
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
 
   describe('Parse AIFF', () => {

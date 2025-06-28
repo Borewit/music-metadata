@@ -84,6 +84,8 @@ describe('Parse ASF', () => {
       assert.strictEqual(format.codec, 'Windows Media Audio 9.1', 'format.codec');
       assert.approximately(format.duration, 243.306, 1 / 10000, 'format.duration');
       assert.strictEqual(format.bitrate, 192639, 'format.bitrate');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
     }
 
     function checkCommon(common) {
@@ -147,6 +149,8 @@ describe('Parse ASF', () => {
       assert.strictEqual(format.codec, 'Windows Media Audio 9', 'format.codec');
       assert.approximately(format.duration, 14.466, 1 / 10000, 'format.duration');
       assert.approximately(format.bitrate, 128639, 1, 'format.bitrate');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
 
       const asf = mm.orderTags(native.asf);
       // ToDo: Contains some WM/... tags which could be parsed / mapped better

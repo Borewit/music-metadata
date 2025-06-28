@@ -38,6 +38,8 @@ describe('Matroska formats', () => {
       assert.approximately(format.duration, 196608 / 41000, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 41000, 'format.sampleRate');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
     });
 
     async function parsePoxfile(options?: mm.IOptions) {
@@ -52,6 +54,8 @@ describe('Matroska formats', () => {
       assert.approximately(format.duration, 221184 / 44100, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
 
       verifyTrackSolidGround(common);
     }
@@ -78,6 +82,8 @@ describe('Matroska formats', () => {
       assert.strictEqual(format.codec, 'VORBIS', 'format.codec');
       assert.approximately(format.duration, 7.143, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isTrue(format.hasVideo, 'format.hasVideo');
 
       // common metadata
       assert.strictEqual(common.title, 'Big Buck Bunny', 'common.title');
@@ -98,6 +104,8 @@ describe('Matroska formats', () => {
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
       assert.approximately(format.duration, 5.006509896, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
 
       assert.strictEqual(common.title, 'Solid Ground', 'common.title');
       assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
@@ -113,6 +121,8 @@ describe('Matroska formats', () => {
       const {format, common} = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
 
       assert.strictEqual(common.title, 'My Baby Boy', 'common.title');
       assert.strictEqual(common.artist, 'theAngelcy', 'common.artist');

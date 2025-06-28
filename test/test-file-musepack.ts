@@ -22,6 +22,8 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(format.numberOfSamples, 11940);
         assert.approximately(format.bitrate, 269649, 1);
         assert.strictEqual(format.codec, '1.15');
+        assert.isTrue(format.hasAudio, 'format.hasAudio');
+        assert.isFalse(format.hasVideo, 'format.hasAudio');
 
         // Check generic metadata
         assert.strictEqual(common.title, 'God Inside');

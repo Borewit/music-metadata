@@ -39,6 +39,7 @@ export class SpeexParser extends VorbisParser {
     if (speexHeader.bitrate !== -1) {
       this.metadata.setFormat('bitrate', speexHeader.bitrate);
     }
+    this.metadata.setAudioOnly();
   }
 
 }

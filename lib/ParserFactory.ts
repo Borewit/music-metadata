@@ -5,7 +5,7 @@ import initDebug from 'debug';
 
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 
-import type { IAudioMetadata, IOptions, ParserType } from './type.js';
+import { type IAudioMetadata, type IOptions, type ParserType, TrackType } from './type.js';
 import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import { mpegParserLoader } from './mpeg/MpegLoader.js';
 import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
@@ -132,6 +132,14 @@ export class ParserFactory {
     const parser = new ParserImpl(metadata, tokenizer, opts ?? {});
     debug(`Parser ${parserLoader.parserType} loaded`);
     await parser.parse();
+    if (metadata.format.trackInfo) {
+      if (metadata.format.hasAudio === undefined) {
+        metadata.setFormat('hasAudio', !!metadata.format.trackInfo.find(track => track.type === TrackType.audio));
+      }
+      if (metadata.format.hasVideo === undefined) {
+        metadata.setFormat('hasVideo', !!metadata.format.trackInfo.find(track => track.type === TrackType.video));
+      }
+    }
     return metadata.toCommonMetadata();
   }
 

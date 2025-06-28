@@ -20,6 +20,8 @@ describe('Parse ADTS/AAC', () => {
     assert.approximately(format.bitrate, bitrate, 500, 'format.bitrate');
     assert.strictEqual(format.numberOfSamples, samples, `format.numberOfSamples = ${samples} samples`);
     assert.approximately(format.duration, samples / sampleRate, 0.1, 'format.duration');
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
 
   describe('parse: adts-mpeg4.aac AAC-LC, 16.0 kHz, 2 channels, 3 kBit', ()=> {
