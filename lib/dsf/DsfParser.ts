@@ -23,6 +23,7 @@ export class DsfParser extends AbstractID3Parser {
     if (chunkHeader.id !== 'DSD ') throw new DsdContentParseError('Invalid chunk signature');
     this.metadata.setFormat('container', 'DSF');
     this.metadata.setFormat('lossless', true);
+    this.metadata.setAudioOnly();
     const dsdChunk = await this.tokenizer.readToken<IDsdChunk>(DsdChunk);
     if (dsdChunk.metadataPointer === BigInt(0)) {
       debug("No ID3v2 tag present");

@@ -64,7 +64,6 @@ export class Atom {
       // "Container" atoms, contains nested atoms
       case 'moov': // The Movie Atom: contains other atoms
       case 'udta': // User defined atom
-      case 'trak':
       case 'mdia': // Media atom
       case 'minf': // Media Information Atom
       case 'stbl': // The Sample Table Atom

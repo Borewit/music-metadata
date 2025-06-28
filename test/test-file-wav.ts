@@ -39,6 +39,8 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
       assert.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
       assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
     }
 
     // Parse wma/asf file

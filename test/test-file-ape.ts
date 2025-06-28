@@ -13,6 +13,8 @@ describe('Parse APE (Monkey\'s Audio)', () => {
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]');
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
     assert.strictEqual(format.duration, 1.2134240362811792, 'duration [sec]');
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
 
   function checkCommon(common) {
@@ -70,6 +72,8 @@ describe('Parse APEv2 header', () => {
     assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.deepEqual(format.tagTypes, ['ID3v2.4', 'APEv2', 'ID3v1'], 'format.tagTypes');
     assert.strictEqual(format.bitrate, 320000, 'format.bitrate');
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
 
     assert.strictEqual(common.artist, 'Criminal Vibes', 'common.artist');
     assert.strictEqual(common.title, 'Push The Feeling On (Groove Phenomenon Remix)', 'common.title');

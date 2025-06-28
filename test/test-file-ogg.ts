@@ -60,6 +60,8 @@ describe('Parse Ogg', () => {
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate [hz]');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
         assert.strictEqual(format.bitrate, 64000, 'format.bitrate [bit/sec]');
+        assert.isTrue(format.hasAudio, 'format.hasAudio');
+        assert.isFalse(format.hasVideo, 'format.hasAudio');
       }
 
       Parsers.forEach(parser => {
@@ -84,6 +86,8 @@ describe('Parse Ogg', () => {
       assert.strictEqual(format.sampleRate, 22050, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
       assert.strictEqual(format.bitrate, 56000, 'bitrate = 64 kbit/sec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
 
       // Following is part a page which is not correctly finalized with lastPage flag
       assert.isDefined(common.title, 'should provide: metadata.common.title');
@@ -104,6 +108,8 @@ describe('Parse Ogg', () => {
       assert.strictEqual(format.container, 'Ogg', 'format.container');
       assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
 
       const vorbis = mm.orderTags(native.vorbis);
       assert.deepEqual(vorbis.ALBUM, ['Dropsonde']);
@@ -142,6 +148,8 @@ describe('Parse Ogg', () => {
         assert.approximately(format.duration, 2.0, 1 / 200, 'format.duration = 2.0 sec');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
+        assert.isTrue(format.hasAudio, 'format.hasAudio');
+        assert.isFalse(format.hasVideo, 'format.hasAudio');
         // assert.strictEqual(format.bitrate, 64000, 'bitrate = 64 kbit/sec');
       }
 
@@ -167,6 +175,8 @@ describe('Parse Ogg', () => {
         assert.strictEqual(format.container, 'Ogg', 'format.container');
         assert.strictEqual(format.codec, 'Speex 1.0beta1');
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
+        assert.isTrue(format.hasAudio, 'format.hasAudio');
+        assert.isFalse(format.hasVideo, 'format.hasAudio');
       }
 
       Parsers.forEach(parser => {

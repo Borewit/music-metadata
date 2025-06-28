@@ -126,6 +126,7 @@ export class APEv2Parser extends BasicParser {
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
 
+    this.metadata.setAudioOnly();
     await this.tokenizer.ignore(header.forwardBytes);
     return this.tryParseApeHeader();
   }

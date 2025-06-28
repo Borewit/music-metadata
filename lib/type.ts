@@ -399,7 +399,9 @@ export type FormatId =
   | 'creationTime'
   | 'trackPeakLevel'
   | 'trackGain'
-  | 'albumGain';
+  | 'albumGain'
+  | 'hasAudio'
+  | 'hasVideo';
 
 export interface IAudioTrack {
   samplingFrequency?: number;
@@ -521,6 +523,16 @@ export interface IFormat {
   readonly trackGain?: number;
   readonly trackPeakLevel?: number;
   readonly albumGain?: number;
+
+  /**
+   * Indicates if the audio files contains an audio stream
+   */
+  hasAudio?: boolean;
+
+  /**
+   * Indicates if the media files contains a video stream
+   */
+  hasVideo?: boolean;
 }
 
 export interface ITag {

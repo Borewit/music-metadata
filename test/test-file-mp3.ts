@@ -47,6 +47,8 @@ describe('Parse MP3 files', () => {
         assert.strictEqual(format.bitrate, sample.bitRate * 1000, `'${sample.filename}' format.bitrate`);
         assert.strictEqual(format.sampleRate, sample.sampleRate, `'${sample.filename}' format.sampleRate`);
         assert.strictEqual(format.numberOfChannels, sample.channels, `'${sample.filename}' format.channels`);
+        assert.isTrue(format.hasAudio, 'format.hasAudio');
+        assert.isFalse(format.hasVideo, 'format.hasAudio');
       }
 
     });

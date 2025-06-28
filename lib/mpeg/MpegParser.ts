@@ -317,6 +317,7 @@ export class MpegParser extends AbstractID3Parser {
   public async postId3v2Parse(): Promise<void> {
 
     this.metadata.setFormat('lossless', false);
+    this.metadata.setAudioOnly();
 
     try {
       let quit = false;

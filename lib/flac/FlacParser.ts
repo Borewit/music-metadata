@@ -43,6 +43,8 @@ export class FlacParser extends AbstractID3Parser {
       throw new FlacContentError('Invalid FLAC preamble');
     }
 
+    this.metadata.setAudioOnly();
+
     let blockHeader: IBlockHeader;
     do {
       // Read block header

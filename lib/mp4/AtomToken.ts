@@ -174,16 +174,6 @@ export const ftyp: IGetToken<IAtomFtyp> = {
   }
 };
 
-export const tkhd: IGetToken<IAtomFtyp> = {
-  len: 4,
-
-  get: (buf: Uint8Array, off: number): IAtomFtyp => {
-    return {
-      type: new Token.StringType(4, 'ascii').get(buf, off)
-    };
-  }
-};
-
 /**
  * Token: Movie Header Atom
  */
@@ -223,6 +213,7 @@ export abstract class FixedLengthAtom {
     this.len = len;
   }
 }
+
 
 /**
  * Interface for the parsed Movie Header Atom (mdhd)
@@ -443,7 +434,7 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
 
 
 /**
- * Track Header Atoms structure
+ * Track Header Atoms structure (`tkhd`)
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
 export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
@@ -953,5 +944,62 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
     }
 
     return trun;
+  }
+}
+
+export interface IHandlerBox {
+  version: number;
+  flags: number;
+  componentType: string;
+  handlerType: string;
+  componentName: string;
+}
+
+/**
+ * HandlerBox (`hdlr`)
+ */
+export class HandlerBox implements IGetToken<IHandlerBox> {
+  public len: number;
+
+  public constructor(len: number) {
+    this.len = len;
+  }
+
+  public get(buf: Uint8Array, off: number): IHandlerBox {
+
+    const _flagOffset = off + 1;
+
+    const charTypeToken = new Token.StringType(4, 'utf-8');
+
+    return {
+      version: Token.INT8.get(buf, off),
+      flags: Token.UINT24_BE.get(buf, off + 1),
+      componentType: charTypeToken.get(buf, off + 4),
+      handlerType: charTypeToken.get(buf, off + 8),
+      componentName: new Token.StringType(this.len - 28, 'utf-8').get(buf, off + 28),
+    }
+
+  }
+}
+
+/**
+ * Chapter Track Reference Box (`chap`)
+ */
+export class ChapterTrackReferenceBox implements IGetToken<number[]> {
+  public len: number;
+
+  public constructor(len: number) {
+    this.len = len;
+  }
+
+  public get(buf: Uint8Array, off: number): number[] {
+
+    let dynOffset = 0;
+    const trackIds: number[] = [];
+    while (dynOffset < this.len) {
+      trackIds.push(Token.UINT32_BE.get(buf, off + dynOffset));
+      dynOffset += 4;
+    }
+    return trackIds;
   }
 }

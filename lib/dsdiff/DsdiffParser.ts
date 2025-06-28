@@ -28,6 +28,8 @@ export class DsdiffParser extends BasicParser {
     const header = await this.tokenizer.readToken<IChunkHeader64>(ChunkHeader64);
     if (header.chunkID !== 'FRM8') throw new DsdiffContentParseError('Unexpected chunk-ID');
 
+    this.metadata.setAudioOnly();
+
     const type = (await this.tokenizer.readToken<string>(FourCcToken)).trim();
     switch (type) {
 

@@ -38,6 +38,7 @@ export class OpusParser extends VorbisParser {
       throw new OpusContentError("Illegal ogg/Opus magic-signature");
     this.metadata.setFormat('sampleRate', this.idHeader.inputSampleRate);
     this.metadata.setFormat('numberOfChannels', this.idHeader.channelCount);
+    this.metadata.setAudioOnly();
   }
 
   protected async parseFullPage(pageData: Uint8Array): Promise<void> {
