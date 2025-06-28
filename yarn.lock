@@ -76,9 +76,51 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@biomejs/biome@npm:^2.0.5":
+  version: 2.0.6
+  resolution: "@biomejs/biome@npm:2.0.6"
+  dependencies:
+    "@biomejs/cli-darwin-arm64": "npm:2.0.6"
+    "@biomejs/cli-darwin-x64": "npm:2.0.6"
+    "@biomejs/cli-linux-arm64": "npm:2.0.6"
+    "@biomejs/cli-linux-arm64-musl": "npm:2.0.6"
+    "@biomejs/cli-linux-x64": "npm:2.0.6"
+    "@biomejs/cli-linux-x64-musl": "npm:2.0.6"
+    "@biomejs/cli-win32-arm64": "npm:2.0.6"
+    "@biomejs/cli-win32-x64": "npm:2.0.6"
+  dependenciesMeta:
+    "@biomejs/cli-darwin-arm64":
+      optional: true
+    "@biomejs/cli-darwin-x64":
+      optional: true
+    "@biomejs/cli-linux-arm64":
+      optional: true
+    "@biomejs/cli-linux-arm64-musl":
+      optional: true
+    "@biomejs/cli-linux-x64":
+      optional: true
+    "@biomejs/cli-linux-x64-musl":
+      optional: true
+    "@biomejs/cli-win32-arm64":
+      optional: true
+    "@biomejs/cli-win32-x64":
+      optional: true
+  bin:
+    biome: bin/biome
+  checksum: 10c0/eafaf3981580314c08085542152396f3417637d08d7b8aaee6a5173a978435d7688b1b6b547096e3a9d3573f03cfe526f7342dd341143c322c03d545df126f18
+  languageName: node
+  linkType: hard
+
 "@biomejs/cli-darwin-arm64@npm:2.0.5":
   version: 2.0.5
   resolution: "@biomejs/cli-darwin-arm64@npm:2.0.5"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@biomejs/cli-darwin-arm64@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-darwin-arm64@npm:2.0.6"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
@@ -90,9 +132,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@biomejs/cli-darwin-x64@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-darwin-x64@npm:2.0.6"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
 "@biomejs/cli-linux-arm64-musl@npm:2.0.5":
   version: 2.0.5
   resolution: "@biomejs/cli-linux-arm64-musl@npm:2.0.5"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@biomejs/cli-linux-arm64-musl@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.0.6"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
@@ -104,9 +160,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@biomejs/cli-linux-arm64@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-linux-arm64@npm:2.0.6"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
 "@biomejs/cli-linux-x64-musl@npm:2.0.5":
   version: 2.0.5
   resolution: "@biomejs/cli-linux-x64-musl@npm:2.0.5"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@biomejs/cli-linux-x64-musl@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-linux-x64-musl@npm:2.0.6"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
@@ -118,6 +188,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@biomejs/cli-linux-x64@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-linux-x64@npm:2.0.6"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
 "@biomejs/cli-win32-arm64@npm:2.0.5":
   version: 2.0.5
   resolution: "@biomejs/cli-win32-arm64@npm:2.0.5"
@@ -125,9 +202,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@biomejs/cli-win32-arm64@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-win32-arm64@npm:2.0.6"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
 "@biomejs/cli-win32-x64@npm:2.0.5":
   version: 2.0.5
   resolution: "@biomejs/cli-win32-x64@npm:2.0.5"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@biomejs/cli-win32-x64@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@biomejs/cli-win32-x64@npm:2.0.6"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2343,7 +2434,7 @@ __metadata:
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.3.1"
-    token-types: "npm:^6.0.0"
+    token-types: "npm:^6.0.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
     uint8array-extras: "npm:^1.4.0"
@@ -3284,6 +3375,17 @@ __metadata:
     "@tokenizer/token": "npm:^0.3.0"
     ieee754: "npm:^1.2.1"
   checksum: 10c0/5bf5eba51d63f71f301659ff70ce10ca43e7038364883437d8b4541cc98377e3e56109b11720e25fe51047014efaccdff90eaf6de9a78270483578814b838ab9
+  languageName: node
+  linkType: hard
+
+"token-types@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "token-types@npm:6.0.1"
+  dependencies:
+    "@biomejs/biome": "npm:^2.0.5"
+    "@tokenizer/token": "npm:^0.3.0"
+    ieee754: "npm:^1.2.1"
+  checksum: 10c0/2e68f252fe540001e570b4dc7753c205e11f30e0dffb99f879b4e76d7d91e65ca81a5ca6f2b66bcff710f7a86b0a0118938c40d094d63e3090985b6d9d5c13f8
   languageName: node
   linkType: hard
 
