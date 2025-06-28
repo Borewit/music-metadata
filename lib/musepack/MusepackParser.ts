@@ -30,6 +30,9 @@ export class MusepackParser extends AbstractID3Parser {
         throw new MusepackContentError('Invalid signature prefix');
       }
     }
+
+    this.metadata.setAudioOnly();
+
     return mpcParser.parse();
   }
 

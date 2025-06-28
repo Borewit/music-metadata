@@ -37,6 +37,7 @@ export class WaveParser extends BasicParser {
     debug(`pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`);
     if (riffHeader.chunkID !== 'RIFF')
       return; // Not RIFF format
+    this.metadata.setAudioOnly();
     return this.parseRiffChunk(riffHeader.chunkSize).catch(err => {
       if (!(err instanceof strtok3.EndOfStreamError)) {
         throw err;

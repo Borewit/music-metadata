@@ -174,16 +174,6 @@ export const ftyp: IGetToken<IAtomFtyp> = {
   }
 };
 
-export const tkhd: IGetToken<IAtomFtyp> = {
-  len: 4,
-
-  get: (buf: Uint8Array, off: number): IAtomFtyp => {
-    return {
-      type: new Token.StringType(4, 'ascii').get(buf, off)
-    };
-  }
-};
-
 /**
  * Token: Movie Header Atom
  */
@@ -223,6 +213,7 @@ export abstract class FixedLengthAtom {
     this.len = len;
   }
 }
+
 
 /**
  * Interface for the parsed Movie Header Atom (mdhd)
@@ -443,7 +434,7 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
 
 
 /**
- * Track Header Atoms structure
+ * Track Header Atoms structure (`tkhd`)
  * Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25550
  */
 export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
@@ -976,7 +967,7 @@ export class HandlerBox implements IGetToken<IHandlerBox> {
 
   public get(buf: Uint8Array, off: number): IHandlerBox {
 
-    const flagOffset = off + 1;
+    const _flagOffset = off + 1;
 
     const charTypeToken = new Token.StringType(4, 'utf-8');
 
@@ -991,3 +982,24 @@ export class HandlerBox implements IGetToken<IHandlerBox> {
   }
 }
 
+/**
+ * Chapter Track Reference Box (`chap`)
+ */
+export class ChapterTrackReferenceBox implements IGetToken<number[]> {
+  public len: number;
+
+  public constructor(len: number) {
+    this.len = len;
+  }
+
+  public get(buf: Uint8Array, off: number): number[] {
+
+    let dynOffset = 0;
+    const trackIds: number[] = [];
+    while (dynOffset < this.len) {
+      trackIds.push(Token.UINT32_BE.get(buf, off + dynOffset));
+      dynOffset += 4;
+    }
+    return trackIds;
+  }
+}

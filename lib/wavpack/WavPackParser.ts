@@ -23,6 +23,8 @@ export class WavPackParser extends BasicParser {
 
   public async parse(): Promise<void> {
 
+    this.metadata.setAudioOnly();
+
     this.audioDataSize = 0;
 
     // First parse all WavPack blocks

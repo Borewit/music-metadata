@@ -2,7 +2,7 @@ import {
   type FormatId,
   type IAudioMetadata, type ICommonTagsResult,
   type IFormat,
-  type INativeTags, type IOptions, type IQualityInformation, type IPicture, type ITrackInfo, TrackTypeValueToKeyMap, type IComment, type AnyTagValue
+  type INativeTags, type IOptions, type IQualityInformation, type IPicture, type ITrackInfo, TrackTypeValueToKeyMap, type IComment, type AnyTagValue, 
 } from '../type.js';
 
 import initDebug from 'debug';
@@ -51,6 +51,8 @@ export interface INativeMetadataCollector extends IWarningCollector {
   addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void>;
 
   addStreamInfo(streamInfo: ITrackInfo): void;
+
+  setAudioOnly(): void;
 }
 
 /**
@@ -123,6 +125,11 @@ export class MetadataCollector implements INativeMetadataCollector {
     if (this.opts?.observer) {
       this.opts.observer({metadata: this, tag: {type: 'format', id: key, value}});
     }
+  }
+
+  public setAudioOnly() {
+    this.setFormat('hasAudio', true);
+    this.setFormat('hasVideo', false);
   }
 
   public async addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
