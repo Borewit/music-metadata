@@ -955,3 +955,39 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
     return trun;
   }
 }
+
+export interface IHandlerBox {
+  version: number;
+  flags: number;
+  componentType: string;
+  handlerType: string;
+  componentName: string;
+}
+
+/**
+ * HandlerBox (`hdlr`)
+ */
+export class HandlerBox implements IGetToken<IHandlerBox> {
+  public len: number;
+
+  public constructor(len: number) {
+    this.len = len;
+  }
+
+  public get(buf: Uint8Array, off: number): IHandlerBox {
+
+    const flagOffset = off + 1;
+
+    const charTypeToken = new Token.StringType(4, 'utf-8');
+
+    return {
+      version: Token.INT8.get(buf, off),
+      flags: Token.UINT24_BE.get(buf, off + 1),
+      componentType: charTypeToken.get(buf, off + 4),
+      handlerType: charTypeToken.get(buf, off + 8),
+      componentName: new Token.StringType(this.len - 28, 'utf-8').get(buf, off + 28),
+    }
+
+  }
+}
+

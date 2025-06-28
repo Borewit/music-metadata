@@ -278,6 +278,12 @@ export class MP4Parser extends BasicParser {
         case 'ilst':
         case '<id>':
           return this.parseMetadataItemData(atom);
+         case 'moov':
+           switch(atom.header.name) {
+             case 'trak':
+               return this.parseTrackBox(atom);
+           }
+           break;
         case 'moof':
           switch(atom.header.name) {
             case 'traf':
@@ -435,6 +441,21 @@ export class MP4Parser extends BasicParser {
     }
   }
 
+  private parseTrackBox(trakBox: Atom): Promise<void> {
+    let tfhd: AtomToken.ITrackFragmentHeaderBox;
+    return trakBox.readAtoms(this.tokenizer, async (child, remaining) => {
+      const payLoadLength = child.getPayloadLength(remaining);
+      switch (child.header.name) {
+
+        default: {
+          debug(`Unexpected box: ${child.header.name}`);
+          await this.tokenizer.ignore(payLoadLength);
+        }
+      }
+
+    }, trakBox.getPayloadLength(0));
+  }
+
   private parseTrackFragmentBox(trafBox: Atom): Promise<void> {
     let tfhd: AtomToken.ITrackFragmentHeaderBox;
     return trafBox.readAtoms(this.tokenizer, async (child, remaining) => {
@@ -509,8 +530,13 @@ export class MP4Parser extends BasicParser {
       td.chapterList = trackIds;
     },
 
+    hdlr: async (len: number) => {
+      const handlerBox = await this.tokenizer.readToken(new AtomToken.HandlerBox(len));
+      debug('handlerBox');
+    },
+
     tkhd: async (len: number) => {
-      const track = (await this.tokenizer.readToken<AtomToken.ITrackHeaderAtom>(new AtomToken.TrackHeaderAtom(len))) as ITrackDescription;
+      const track = (await this.tokenizer.readToken(new AtomToken.TrackHeaderAtom(len))) as ITrackDescription;
       track.fragments = [];
       this.tracks.push(track);
     },
