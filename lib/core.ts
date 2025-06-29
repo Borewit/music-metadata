@@ -84,10 +84,7 @@ export function orderTags(nativeTags: ITag[]): INativeTagDict {
   const tags: INativeTagDict = {};
 
   for (const { id, value } of nativeTags) {
-    if (!tags[id]) {
-      tags[id] = [];
-    }
-    tags[id].push(value);
+    (tags[id] ||= []).push(value);
   }
 
   return tags;
