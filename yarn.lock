@@ -41,7 +41,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@biomejs/biome@npm:2.0.6, @biomejs/biome@npm:^2.0.5":
+"@biomejs/biome@npm:2.0.6":
   version: 2.0.6
   resolution: "@biomejs/biome@npm:2.0.6"
   dependencies:
@@ -2343,7 +2343,7 @@ __metadata:
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.3.1"
-    token-types: "npm:^6.0.1"
+    token-types: "npm:^6.0.2"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
     uint8array-extras: "npm:^1.4.0"
@@ -3287,14 +3287,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-types@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "token-types@npm:6.0.1"
+"token-types@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "token-types@npm:6.0.2"
   dependencies:
-    "@biomejs/biome": "npm:^2.0.5"
     "@tokenizer/token": "npm:^0.3.0"
     ieee754: "npm:^1.2.1"
-  checksum: 10c0/2e68f252fe540001e570b4dc7753c205e11f30e0dffb99f879b4e76d7d91e65ca81a5ca6f2b66bcff710f7a86b0a0118938c40d094d63e3090985b6d9d5c13f8
+  checksum: 10c0/767be102a748169e44e5710d015562a8510577f3a5601cec2bb32bea9f3d39904db62db36bb06d89ac17dbf8459784740bf10e721d2edf6fe5456a13921ecb65
   languageName: node
   linkType: hard
 
