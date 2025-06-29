@@ -43,7 +43,8 @@
 			"suspicious": {
 				"noEmptyBlockStatements": "error",
 				"noControlCharactersInRegex": "off",
-				"useErrorMessage": "error"
+				"useErrorMessage": "error",
+				"noAssignInExpressions": "off"
 			},
 			"nursery": {}
 		}
