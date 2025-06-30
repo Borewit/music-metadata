@@ -6,7 +6,7 @@ import * as util from '../common/Util.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { FourCcToken } from '../common/FourCC.js';
-import { VorbisParser } from '../ogg/vorbis/VorbisParser.js';
+import { VorbisStream } from '../ogg/vorbis/VorbisStream.js';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 
@@ -32,7 +32,7 @@ type BlockType = typeof BlockType[keyof typeof BlockType];
 
 export class FlacParser extends AbstractID3Parser {
 
-  private vorbisParser = new VorbisParser(this.metadata, this.options);
+  private vorbisParser = new VorbisStream(this.metadata, this.options);
 
   private padding = 0;
 
@@ -119,7 +119,7 @@ export class FlacParser extends AbstractID3Parser {
     for (let i = 0; i < commentListLength; i++) {
       tags[i] = decoder.parseUserComment();
     }
-    await Promise.all(tags.map(tag => (this.vorbisParser as VorbisParser).addTag(tag.key, tag.value)));
+    await Promise.all(tags.map(tag => (this.vorbisParser as VorbisStream).addTag(tag.key, tag.value)));
   }
 
   private async parsePicture(dataLen: number) {
@@ -127,7 +127,7 @@ export class FlacParser extends AbstractID3Parser {
       return this.tokenizer.ignore(dataLen);
     }
       const picture = await this.tokenizer.readToken<IVorbisPicture>(new VorbisPictureToken(dataLen));
-      (this.vorbisParser as VorbisParser).addTag('METADATA_BLOCK_PICTURE', picture);
+      (this.vorbisParser as VorbisStream).addTag('METADATA_BLOCK_PICTURE', picture);
   }
 }
 

@@ -4,7 +4,7 @@ import debugInit from 'debug';
 import { VorbisDecoder } from './VorbisDecoder.js';
 import { CommonHeader, IdentificationHeader, type IVorbisPicture, VorbisPictureToken } from './Vorbis.js';
 
-import type { IPageConsumer, IPageHeader } from '../Ogg.js';
+import type { IPageConsumer, IPageHeader } from '../OggToken.js';
 import type { IOptions } from '../../type.js';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
@@ -16,15 +16,14 @@ export class VorbisContentError extends makeUnexpectedFileContentError('Vorbis')
 
 /**
  * Vorbis 1 Parser.
- * Used by OggParser
+ * Used by OggStream
  */
-export class VorbisParser implements IPageConsumer {
+export class VorbisStream implements IPageConsumer {
 
   private pageSegments: Uint8Array[] = [];
-
   protected metadata: INativeMetadataCollector;
-
   protected options: IOptions;
+  protected lastPageHeader?: IPageHeader;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions) {
     this.metadata = metadata;
@@ -37,6 +36,7 @@ export class VorbisParser implements IPageConsumer {
    * @param pageData Page data
    */
   public async parsePage(header: IPageHeader, pageData: Uint8Array): Promise<void> {
+    this.lastPageHeader = header;
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
@@ -49,15 +49,12 @@ export class VorbisParser implements IPageConsumer {
       if (header.headerType.lastPage || !header.headerType.continued) {
         // Flush page segments
         if (this.pageSegments.length > 0) {
-          const fullPage = VorbisParser.mergeUint8Arrays(this.pageSegments);
+          const fullPage = VorbisStream.mergeUint8Arrays(this.pageSegments);
           await this.parseFullPage(fullPage);
         }
         // Reset page segments
         this.pageSegments = header.headerType.lastPage ? [] : [pageData];
       }
-    }
-    if (header.headerType.lastPage) {
-      this.calculateDuration(header);
     }
   }
 
@@ -74,7 +71,7 @@ export class VorbisParser implements IPageConsumer {
   }
 
   public async flush(): Promise<void> {
-    await this.parseFullPage(VorbisParser.mergeUint8Arrays(this.pageSegments));
+    await this.parseFullPage(VorbisStream.mergeUint8Arrays(this.pageSegments));
   }
 
   public async parseUserComment(pageData: Uint8Array, offset: number): Promise<number> {
@@ -101,11 +98,11 @@ export class VorbisParser implements IPageConsumer {
     await this.metadata.addTag('vorbis', id, value);
   }
 
-  public calculateDuration(header: IPageHeader) {
-    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
+  public calculateDuration() {
+    if (this.lastPageHeader && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
       // Calculate duration
-      this.metadata.setFormat('numberOfSamples', header.absoluteGranulePosition);
-      this.metadata.setFormat('duration', header.absoluteGranulePosition / this.metadata.format.sampleRate);
+      this.metadata.setFormat('numberOfSamples', this.lastPageHeader.absoluteGranulePosition);
+      this.metadata.setFormat('duration', this.lastPageHeader.absoluteGranulePosition / this.metadata.format.sampleRate);
     }
   }
 
@@ -116,7 +113,7 @@ export class VorbisParser implements IPageConsumer {
    */
   protected parseFirstPage(_header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat('codec', 'Vorbis I');
-    this.metadata.setAudioOnly();
+    this.metadata.setFormat('hasAudio', true);
     debug('Parse first page');
     // Parse  Vorbis common header
     const commonHeader = CommonHeader.get(pageData, 0);

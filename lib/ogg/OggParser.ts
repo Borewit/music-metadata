@@ -1,47 +1,90 @@
 import * as Token from 'token-types';
-import { type IGetToken, EndOfStreamError } from 'strtok3';
+import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import initDebug from 'debug';
 
-import * as util from '../common/Util.js';
-import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
 
-import { VorbisParser } from './vorbis/VorbisParser.js';
-import { OpusParser } from './opus/OpusParser.js';
-import { SpeexParser } from './speex/SpeexParser.js';
-import { TheoraParser } from './theora/TheoraParser.js';
+import { VorbisStream } from './vorbis/VorbisStream.js';
+import { OpusStream } from './opus/OpusStream.js';
+import { SpeexStream } from './speex/SpeexStream.js';
+import { TheoraStream } from './theora/TheoraStream.js';
 
-import type * as Ogg from './Ogg.js';
+import type * as Ogg from './OggToken.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import { type IPageConsumer, type IPageHeader, PageHeader, SegmentTable } from './OggToken.js';
+import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import type { IOptions } from '../type.js';
 
 export class OggContentError extends makeUnexpectedFileContentError('Ogg'){
 }
 
 const debug = initDebug('music-metadata:parser:ogg');
 
-export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
+class OggStream {
 
-  private static sum(buf: Uint8Array, off: number, len: number): number {
-    const dv = new DataView(buf.buffer, 0);
-    let s = 0;
-    for (let i = off; i < off + len; ++i) {
-      s += dv.getUint8(i);
+  private metadata: INativeMetadataCollector;
+  public streamSerial: number;
+  private pageNumber = 0;
+  public closed = false;
+  private options: IOptions;
+  public pageConsumer?: IPageConsumer;
+
+  constructor(metadata: INativeMetadataCollector, streamSerial: number, options: IOptions) {
+    this.metadata = metadata;
+    this.streamSerial = streamSerial;
+    this.options = options;
+  }
+
+  public async parsePage(tokenizer: ITokenizer, header: IPageHeader) {
+
+    this.pageNumber = header.pageSequenceNo;
+    debug('serial=%s page#=%s, Ogg.id=%s', header.streamSerialNumber, header.pageSequenceNo, header.capturePattern);
+
+    const segmentTable = await tokenizer.readToken<Ogg.ISegmentTable>(new SegmentTable(header));
+    debug('totalPageSize=%s', segmentTable.totalPageSize);
+    const pageData = await tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(segmentTable.totalPageSize));
+    debug('firstPage=%s, lastPage=%s, continued=%s', header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
+
+    if (header.headerType.firstPage) {
+      const idData = pageData.slice(0, 7); // Copy this portion
+      switch (idData[0]) {
+        case 0x01:
+        case 0x80:
+          idData[0] = 0x5F; // underscore
+          break;
+      }
+      const id = new TextDecoder('latin1').decode(idData);
+      switch (id) {
+        case '_vorbis': // Ogg/Vorbis
+          debug(`Set Ogg stream serial ${header.streamSerialNumber}, codec=Vorbis`);
+          this.pageConsumer = new VorbisStream(this.metadata, this.options);
+          break;
+        case 'OpusHea': // Ogg/Opus
+          debug('Set page consumer to Ogg/Opus');
+          this.pageConsumer = new OpusStream(this.metadata, this.options, tokenizer);
+          break;
+        case 'Speex  ': // Ogg/Speex
+          debug('Set page consumer to Ogg/Speex');
+          this.pageConsumer = new SpeexStream(this.metadata, this.options, tokenizer);
+          break;
+        case 'fishead':
+        case '_theora': // Ogg/Theora
+          debug('Set page consumer to Ogg/Theora');
+          this.pageConsumer = new TheoraStream(this.metadata, this.options, tokenizer);
+          break;
+        default:
+          throw new OggContentError(`Ogg codec not recognized (id=${id})`);
+      }
     }
-    return s;
+
+    if (header.headerType.lastPage) {
+      this.closed = true;
+    }
+
+    if (this.pageConsumer) {
+      await this.pageConsumer.parsePage(header, pageData);
+    } else throw new Error('pageConsumer should be initialized');
   }
-
-  public len: number;
-
-  constructor(header: Ogg.IPageHeader) {
-    this.len = header.page_segments;
-  }
-
-  public get(buf: Uint8Array, off: number): Ogg.ISegmentTable {
-    return {
-      totalPageSize: SegmentTable.sum(buf, off, this.len)
-    };
-  }
-
 }
 
 /**
@@ -49,99 +92,44 @@ export class SegmentTable implements IGetToken<Ogg.ISegmentTable> {
  */
 export class OggParser extends BasicParser {
 
-  private static Header: IGetToken<Ogg.IPageHeader> = {
-    len: 27,
-
-    get: (buf, off): Ogg.IPageHeader => {
-      return {
-        capturePattern: FourCcToken.get(buf, off),
-        version: Token.UINT8.get(buf, off + 4),
-
-        headerType: {
-          continued: util.getBit(buf, off + 5, 0),
-          firstPage: util.getBit(buf, off + 5, 1),
-          lastPage: util.getBit(buf, off + 5, 2)
-        },
-        // packet_flag: Token.UINT8.get(buf, off + 5),
-        absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
-        streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
-        pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
-        pageChecksum: Token.UINT32_LE.get(buf, off + 22),
-        page_segments: Token.UINT8.get(buf, off + 26)
-      };
-    }
-  };
-
-  private header: Ogg.IPageHeader = null as unknown as Ogg.IPageHeader;
-  private pageNumber = 0;
-  private pageConsumer: Ogg.IPageConsumer = null as unknown as Ogg.IPageConsumer;
+  private streams = new Map<number, OggStream>();
 
   /**
    * Parse page
    * @returns {Promise<void>}
    */
   public async parse(): Promise<void> {
+    this.streams = new Map<number, OggStream>();
     debug('pos=%s, parsePage()', this.tokenizer.position);
+
+    let header: IPageHeader;
     try {
-      let header: Ogg.IPageHeader;
       do {
-        header = await this.tokenizer.readToken<Ogg.IPageHeader>(OggParser.Header);
+        header = await this.tokenizer.readToken<IPageHeader>(PageHeader);
 
         if (header.capturePattern !== 'OggS') throw new OggContentError('Invalid Ogg capture pattern');
         this.metadata.setFormat('container', 'Ogg');
-        this.header = header;
 
-        this.pageNumber = header.pageSequenceNo;
-        debug('page#=%s, Ogg.id=%s', header.pageSequenceNo, header.capturePattern);
-
-        const segmentTable = await this.tokenizer.readToken<Ogg.ISegmentTable>(new SegmentTable(header));
-        debug('totalPageSize=%s', segmentTable.totalPageSize);
-        const pageData = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(segmentTable.totalPageSize));
-        debug('firstPage=%s, lastPage=%s, continued=%s', header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
-        if (header.headerType.firstPage) {
-          const id = new TextDecoder('ascii').decode(pageData.subarray(0, 7));
-          switch (id) {
-            case '\x01vorbis': // Ogg/Vorbis
-              debug('Set page consumer to Ogg/Vorbis');
-              this.pageConsumer = new VorbisParser(this.metadata, this.options);
-              break;
-            case 'OpusHea': // Ogg/Opus
-              debug('Set page consumer to Ogg/Opus');
-              this.pageConsumer = new OpusParser(this.metadata, this.options, this.tokenizer);
-              break;
-            case 'Speex  ': // Ogg/Speex
-              debug('Set page consumer to Ogg/Speex');
-              this.pageConsumer = new SpeexParser(this.metadata, this.options, this.tokenizer);
-              break;
-            case 'fishead':
-            case '\x00theora': // Ogg/Theora
-              debug('Set page consumer to Ogg/Theora');
-              this.pageConsumer = new TheoraParser(this.metadata, this.options, this.tokenizer);
-              break;
-            default:
-              throw new OggContentError(`gg audio-codec not recognized (id=${id})`);
-          }
+        let stream = this.streams.get(header.streamSerialNumber);
+        if (!stream) {
+          stream = new OggStream(this.metadata, header.streamSerialNumber, this.options);
+          this.streams.set(header.streamSerialNumber, stream);
         }
-        await this.pageConsumer.parsePage(header, pageData);
-      } while (!header.headerType.lastPage);
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err instanceof EndOfStreamError) {
-          this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
-          debug("End-of-stream");
-          this.metadata.addWarning('Last OGG-page is not marked with last-page flag');
-          if (this.header) {
-            this.pageConsumer.calculateDuration(this.header);
-          }
-        } else if (err.message.startsWith('FourCC')) {
-          if (this.pageNumber > 0) {
-            // ignore this error: work-around if last OGG-page is not marked with last-page flag
-            this.metadata.addWarning('Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag');
-            await this.pageConsumer.flush();
-          }
-        }
+        await stream.parsePage(this.tokenizer, header);
+      } while (![...this.streams.values()].every(item => item.closed));
+    } catch(err) {
+      if (err instanceof EndOfStreamError) {
+        debug("Reached end-of-stream");
+      } else if (err instanceof OggContentError) {
+        this.metadata.addWarning(`Corrupt Ogg content at ${this.tokenizer.position}`);
       } else throw err;
     }
+    for (const stream of this.streams.values()) {
+      if (!stream.closed) {
+        this.metadata.addWarning(`End-of-stream reached before reaching last page in Ogg stream serial=${stream.streamSerial}`);
+        await stream.pageConsumer?.flush();
+      }
+      stream.pageConsumer?.calculateDuration();
+    }
   }
-
 }

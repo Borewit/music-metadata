@@ -1,8 +1,8 @@
 import type { ITokenizer } from 'strtok3';
 import initDebug from 'debug';
 
-import type { IPageHeader } from '../Ogg.js';
-import { VorbisParser } from '../vorbis/VorbisParser.js';
+import type { IPageHeader } from '../OggToken.js';
+import { VorbisStream } from '../vorbis/VorbisStream.js';
 import * as Speex from './Speex.js';
 
 import type { IOptions } from '../../type.js';
@@ -16,7 +16,7 @@ const debug = initDebug('music-metadata:parser:ogg:speex');
  * - https://www.speex.org/docs/manual/speex-manual/
  * - https://tools.ietf.org/html/rfc5574
  */
-export class SpeexParser extends VorbisParser {
+export class SpeexStream extends VorbisStream {
 
   private tokenizer: ITokenizer;
 

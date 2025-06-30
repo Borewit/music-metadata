@@ -1,8 +1,8 @@
 import * as Token from 'token-types';
 import type {ITokenizer} from 'strtok3';
 
-import type {IPageHeader} from '../Ogg.js';
-import {VorbisParser} from '../vorbis/VorbisParser.js';
+import type {IPageHeader} from '../OggToken.js';
+import {VorbisStream} from '../vorbis/VorbisStream.js';
 import type {IOptions} from '../../type.js';
 import type {INativeMetadataCollector} from '../../common/MetadataCollector.js';
 
@@ -12,9 +12,9 @@ import { OpusContentError } from './Opus.js';
 /**
  * Opus parser
  * Internet Engineering Task Force (IETF) - RFC 6716
- * Used by OggParser
+ * Used by OggStream
  */
-export class OpusParser extends VorbisParser {
+export class OpusStream extends VorbisStream {
 
   private idHeader: Opus.IIdHeader = null as unknown as Opus.IIdHeader;
   private lastPos = -1;
@@ -55,10 +55,10 @@ export class OpusParser extends VorbisParser {
     }
   }
 
-  public calculateDuration(header: IPageHeader) {
-    if (this.metadata.format.sampleRate && header.absoluteGranulePosition >= 0) {
+  public calculateDuration() {
+    if (this.lastPageHeader && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
       // Calculate duration
-      const pos_48bit = header.absoluteGranulePosition - this.idHeader.preSkip;
+      const pos_48bit = this.lastPageHeader.absoluteGranulePosition - this.idHeader.preSkip;
       this.metadata.setFormat('numberOfSamples', pos_48bit);
       this.metadata.setFormat('duration', pos_48bit / 48000);
 
