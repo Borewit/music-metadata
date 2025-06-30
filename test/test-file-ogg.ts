@@ -72,12 +72,11 @@ describe('Parse Ogg', () => {
           check_Nirvana_In_Bloom_commonTags(common);
         });
       });
-
     });
 
     it('should handle page not finalized with the lastPage flag', async () => {
 
-      const filePath = path.join(samplePath, 'issue_62.ogg');
+      const filePath = path.join(oggSamplePath, 'issue_62.ogg');
 
       const {format, common, quality} = await mm.parseFile(filePath);
 
@@ -94,7 +93,10 @@ describe('Parse Ogg', () => {
       assert.equal(common.title, 'Al-Fatihah', 'metadata.common.title');
       assert.equal(common.artist, 'Mishary Alafasi - www.TvQuran.com', 'metadata.common.artist');
 
-      assert.includeDeepMembers(quality.warnings, [{message: 'Invalid FourCC ID, maybe last OGG-page is not marked with last-page flag'}]);
+      assert.includeDeepMembers(quality.warnings, [
+        {message: 'Corrupt Ogg content at 333'},
+        {message: 'End-of-stream reached before reaching last page in Ogg stream serial=0'}
+      ]);
     });
 
     /**
@@ -102,7 +104,7 @@ describe('Parse Ogg', () => {
      */
     it('should not fail on an Ogg/Vorbis \'Setup header\'', async () => {
 
-      const filePath = path.join(samplePath, 'issue_70.ogg');
+      const filePath = path.join(oggSamplePath, 'issue_70.ogg');
 
       const {format, native} = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'Ogg', 'format.container');
@@ -211,6 +213,21 @@ describe('Parse Ogg', () => {
 
   });
 
+  describe('Parsing Ogg/Theora', () => {
+
+    it('Parse short.ogv', async () => {
+
+      const filePath = path.join(oggSamplePath, 'short.ogv');
+
+      const {format} = await mm.parseFile(filePath);
+
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isTrue(format.hasVideo, 'format.hasAudio');
+      assert.approximately(format.duration, 5.758548752834467, 1/1000000, 'format.duration');
+    });
+
+  });
+
   it('RATING mapping', async () => {
 
     const filePath = path.join(samplePath, 'rating', 'testcase.opus');
@@ -248,10 +265,9 @@ describe('Parse Ogg', () => {
       assert.strictEqual(format.numberOfSamples, 270720, 'format.numberOfSamples');
       assert.approximately(format.duration, 5.64, 1 / 200, 'format.duration');
 
-      assert.includeDeepMembers(quality.warnings, [{message: 'Last OGG-page is not marked with last-page flag'}]);
+      assert.includeDeepMembers(quality.warnings, [{message: 'End-of-stream reached before reaching last page in Ogg stream serial=0'}]);
     });
 
   });
-
 
 });
