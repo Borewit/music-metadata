@@ -10,7 +10,7 @@ describe('Parser options', () => {
   const file_flac = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.flac');
   const file_id3v22 = path.join(samplePath, 'id3v2.2.mp3');
   const file_m4a = path.join(samplePath, 'mp4', 'id4.m4a');
-  const file_ogg = path.join(samplePath, 'Nirvana - In Bloom - 2-sec.ogg');
+  const file_ogg = path.join(samplePath, 'ogg', 'nirvana-2sec.vorbis.ogg');
 
   describe('option \'skipCovers\'', () => {
 
