@@ -48,6 +48,49 @@ describe('Parse Ogg', () => {
     assert.strictEqual(cover.data[cover.data.length - 2], 255, 'vorbis.METADATA_BLOCK_PICTURE data -2');
   }
 
+  describe('Different Ogg formats', () => {
+
+    it('should handle Ogg/Vorbis', async () => {
+      const filePath = path.join(oggSamplePath, 'audio.vorbis.ogg');
+      const {format} = await mm.parseFile(filePath);
+      assert.deepEqual(format.codec, 'Vorbis I', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
+    });
+
+    it('should handle Ogg/Speex', async () => {
+      const filePath = path.join(oggSamplePath, 'audio.speex.ogg');
+      const {format} = await mm.parseFile(filePath);
+      assert.deepEqual(format.codec, 'Speex 1.2.0', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
+    });
+
+    it('should handle Ogg/Opus', async () => {
+      const filePath = path.join(oggSamplePath, 'audio.opus.ogg');
+      const {format} = await mm.parseFile(filePath);
+      assert.deepEqual(format.codec, 'Opus', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
+    });
+
+    it('should handle Ogg/FLAC', async () => {
+      const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+      const {format} = await mm.parseFile(filePath);
+      assert.deepEqual(format.codec, 'FLAC', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
+    });
+
+    it('should handle Ogg/Theora', async () => {
+      const filePath = path.join(oggSamplePath, 'short.ogv');
+      const {format} = await mm.parseFile(filePath);
+      assert.deepEqual(format.codec, 'Vorbis I', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isTrue(format.hasVideo, 'format.hasVideo');
+    });
+  });
+
   describe('Parsing Ogg/Vorbis', () => {
 
     describe('decode: Nirvana - In Bloom - 2-sec.ogg', () => {
@@ -226,6 +269,23 @@ describe('Parse Ogg', () => {
       assert.approximately(format.duration, 5.758548752834467, 1/1000000, 'format.duration');
     });
 
+  });
+
+  describe('Parsing Ogg/Flac', () => {
+
+    it('Parse audio.flac.ogg', async () => {
+
+      const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+      const {format} = await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'FLAC', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
+      assert.isTrue(format.lossless, 'format.lossless');
+      assert.strictEqual(format.sampleRate, 44100, 'format.bitrate');
+      assert.strictEqual(format.duration, undefined, 'format.duration');
+    });
   });
 
   it('RATING mapping', async () => {

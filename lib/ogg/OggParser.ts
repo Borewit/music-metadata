@@ -14,6 +14,7 @@ import { makeUnexpectedFileContentError } from '../ParseError.js';
 import { type IPageConsumer, type IPageHeader, PageHeader, SegmentTable } from './OggToken.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import type { IOptions } from '../type.js';
+import { FlacStream } from './flac/FlacStream.js';
 
 export class OggContentError extends makeUnexpectedFileContentError('Ogg'){
 }
@@ -47,15 +48,12 @@ class OggStream {
 
     if (header.headerType.firstPage) {
       const idData = pageData.slice(0, 7); // Copy this portion
-      switch (idData[0]) {
-        case 0x01:
-        case 0x80:
-          idData[0] = 0x5F; // underscore
-          break;
-      }
-      const id = new TextDecoder('latin1').decode(idData);
-      switch (id) {
-        case '_vorbis': // Ogg/Vorbis
+      const asciiId = Array.from(idData)
+        .filter(b => b >= 32 && b <= 126) // Keep only printable ASCII
+        .map(b => String.fromCharCode(b))
+        .join('');
+      switch (asciiId) {
+        case 'vorbis': // Ogg/Vorbis
           debug(`Set Ogg stream serial ${header.streamSerialNumber}, codec=Vorbis`);
           this.pageConsumer = new VorbisStream(this.metadata, this.options);
           break;
@@ -68,12 +66,16 @@ class OggStream {
           this.pageConsumer = new SpeexStream(this.metadata, this.options, tokenizer);
           break;
         case 'fishead':
-        case '_theora': // Ogg/Theora
+        case 'theora': // Ogg/Theora
           debug('Set page consumer to Ogg/Theora');
           this.pageConsumer = new TheoraStream(this.metadata, this.options, tokenizer);
           break;
+        case 'FLAC': // Ogg/Theora
+          debug('Set page consumer to Vorbis');
+          this.pageConsumer = new FlacStream(this.metadata, this.options, tokenizer);
+          break;
         default:
-          throw new OggContentError(`Ogg codec not recognized (id=${id})`);
+          throw new OggContentError(`Ogg codec not recognized (id=${asciiId}`);
       }
     }
 

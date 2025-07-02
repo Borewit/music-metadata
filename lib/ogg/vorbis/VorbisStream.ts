@@ -108,7 +108,7 @@ export class VorbisStream implements IPageConsumer {
 
   /**
    * Parse first Ogg/Vorbis page
-   * @param header
+   * @param _header
    * @param pageData
    */
   protected parseFirstPage(_header: IPageHeader, pageData: Uint8Array) {

@@ -24,16 +24,6 @@ describe('Asynchronous observer updates', () => {
 
     assert.deepEqual(eventTags, [
       {
-        id: 'hasAudio',
-        type: 'format',
-        value: true
-      },
-      {
-        id: 'hasVideo',
-        type: 'format',
-        value: false
-      },
-      {
         id: 'container',
         type: 'format',
         value: 'FLAC'
@@ -42,6 +32,11 @@ describe('Asynchronous observer updates', () => {
         id: 'codec',
         type: 'format',
         value: 'FLAC'
+      },
+      {
+        id: 'hasAudio',
+        type: 'format',
+        value: true
       },
       {
         id: 'lossless',
@@ -112,6 +107,11 @@ describe('Asynchronous observer updates', () => {
         id: 'bitrate',
         type: 'format',
         value: 3529.912181720061
+      },
+      {
+        id: 'hasVideo',
+        type: 'format',
+        value: false
       }
     ]);
   });
