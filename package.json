@@ -114,7 +114,7 @@
     "uint8array-extras": "^1.4.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.6",
+    "@biomejs/biome": "2.1.1",
     "@types/chai": "^5.2.2",
     "@types/chai-as-promised": "^8.0.2",
     "@types/content-type": "^1.1.9",
