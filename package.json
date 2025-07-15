@@ -98,6 +98,7 @@
     "lint": "yarn run lint:ts && yarn run lint:md",
     "test": "mocha",
     "build": "yarn run clean && yarn compile && yarn run doc-gen",
+    "prepublishOnly": "yarn run build",
     "test-coverage": "c8 yarn run test",
     "send-codacy": "c8 report --reporter=text-lcov | codacy-coverage",
     "doc-gen": "yarn node doc-gen/gen.js",
