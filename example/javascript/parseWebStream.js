@@ -7,8 +7,7 @@ import { parseWebStream } from 'music-metadata';
 
     // Extract the Content-Length header and convert it to a number
     const contentLength = response.headers.get('Content-Length');
-    const contentType = response.headers.get('Content-Type');
-    const size = contentLength ? parseInt(contentLength, 10) : undefined;
+    const size = contentLength ? Number.parseInt(contentLength, 10) : undefined;
 
     // Parse the metadata from the web stream
     const metadata = await parseWebStream(response.body, {
