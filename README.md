@@ -179,11 +179,11 @@ parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata>
 The following example demonstrates how to use the parseFile function to read metadata from an audio file:
 ```js
 import { parseFile } from 'music-metadata';
-import { inspect } from 'util';
+import { inspect } from 'node:util';
 
 (async () => {
   try {
-    const filePath = '../music-metadata/test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3';
+    const filePath = 'test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3';
     const metadata = await parseFile(filePath);
 
     // Output the parsed metadata to the console in a readable format
@@ -322,19 +322,25 @@ Here’s an example of how to use the `parseWebStream` function to extract metad
 import { parseWebStream } from 'music-metadata';
 
 (async () => {
-try {
-// Assuming you have a ReadableStream of an audio file
-const response = await fetch('https://example.com/path/to/audio/file.mp3');
-const webStream = response.body;
+  try {
+    // Fetch the audio file
+    const response = await fetch('https://github.com/Borewit/test-audio/raw/refs/heads/master/Various%20Artists%20-%202008%20-%20netBloc%20Vol%2013%20-%20Color%20in%20a%20World%20of%20Monochrome%20%5BAAC-40%5D/1.02.%20Solid%20Ground.m4a');
+
+    // Extract the Content-Length header and convert it to a number
+    const contentLength = response.headers.get('Content-Length');
+    const contentType = response.headers.get('Content-Type');
+    const size = contentLength ? parseInt(contentLength, 10) : undefined;
 
     // Parse the metadata from the web stream
-    const metadata = await parseWebStream(webStream, 'audio/mpeg');
+    const metadata = await parseWebStream(response.body, {
+      mimeType: response.headers.get('Content-Type'),
+      size // Important to pass the content-length
+    });
 
-    // Log the parsed metadata
     console.log(metadata);
-} catch (error) {
-console.error('Error parsing metadata:', error.message);
-}
+  } catch (error) {
+    console.error('Error parsing metadata:', error.message);
+  }
 })();
 ```
 
@@ -591,23 +597,31 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
 ### `IOptions` Interface
 - `duration`: `boolean` (default: `false`)
 
-  If set to `true`, the parser will analyze the entire media file, if necessary, to determine its duration.
-  This option ensures accurate duration calculation but may increase processing time for large files.
+  When `true`, the parser will read the entire media file _if necessary_ to determine the duration.
+  This is only applicable in cases where duration cannot be reliably inferred without full file analysis.
+  Note that enabling this option **does not guarantee** that duration will be available,
+  only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
+
+- `mkvUseIndex`: `boolean` (default: `false`)
+
+  When `true`, the parser uses the SeekHead index in Matroska (MKV) files to skip segment and cluster elements.
+  This experimental feature can improve performance, but:
+  - Metadata not listed in the SeekHead may be skipped.
+  - If the SeekHead is missing, this option has no effect.
 
 - `observer`: `(update: MetadataEvent) => void;`:
 
-  A callback function that is invoked whenever there is an update to the common (generic) tag or format properties during parsing.
-  This allows for real-time updates on metadata changes.
+  Callback function triggered when common tags or format properties are updated during parsing.
+  Allows real-time monitoring of metadata as it becomes available.
  
 - `skipCovers`: `boolean` (default: `false`)
-  
-  If set to `true`, the parser will skip the extraction of embedded cover art (images) from the media file.
-  This can be useful to avoid processing unnecessary data if cover images are not required.
+
+  When `true`, embedded cover art (images) will not be extracted.
+  Useful for reducing memory and processing when cover images are unnecessary.
  
-- `mkvUseIndex`: `boolean` (default: `false`)
-  
-  If set to true, the parser will use the SeekHead element index to skip segment/cluster elements in Matroska-based files. This is an experimental feature and can significantly impact performance. It may also result in some metadata being skipped if it is not indexed.
-  If the SeekHead element is absent in the Matroska file, this flag has no effect.
+- `skipPostHeaders`: `boolean` (default: `false`)
+  When `true`, tag headers located at the end of the file will not be read.
+  This is particularly beneficial for streaming input, as it avoids the need to read the entire stream.
 
 > [!NOTE]
 > - The `duration` option is typically included in most cases, but setting it to true ensures that the entire file is parsed if necessary to get an accurate duration.
