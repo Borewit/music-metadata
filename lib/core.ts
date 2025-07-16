@@ -2,7 +2,7 @@
  * Primary entry point, Node.js specific entry point is MusepackParser.ts
  */
 
-import { type AnyWebByteStream, type IFileInfo, type ITokenizer, fromWebStream, fromBuffer, type IRandomAccessTokenizer } from 'strtok3';
+import { type AnyWebByteStream, type IFileInfo, type ITokenizer, fromWebStream, fromBuffer, type IRandomAccessTokenizer, fromBlob } from 'strtok3';
 
 import { ParserFactory } from './ParserFactory.js';
 import { APEv2Parser } from './apev2/APEv2Parser.js';
@@ -27,11 +27,12 @@ export * from './ParseError.js'
  * @returns Metadata
  */
 export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAudioMetadata> {
-  const fileInfo: IFileInfo = {mimeType: blob.type, size: blob.size};
-  if (blob instanceof File) {
-    fileInfo.path = (blob as File).name;
+  const tokenizer = fromBlob(blob);
+  try {
+    return await parseFromTokenizer(tokenizer, options);
+  } finally {
+    await tokenizer.close();
   }
-  return parseWebStream(blob.stream() as AnyWebByteStream, fileInfo, options);
 }
 
 /**
