@@ -47,6 +47,7 @@ class OggStream {
     debug('firstPage=%s, lastPage=%s, continued=%s', header.headerType.firstPage, header.headerType.lastPage, header.headerType.continued);
 
     if (header.headerType.firstPage) {
+      this.metadata.setFormat('container', 'Ogg');
       const idData = pageData.slice(0, 7); // Copy this portion
       const asciiId = Array.from(idData)
         .filter(b => b >= 32 && b <= 126) // Keep only printable ASCII
@@ -109,7 +110,6 @@ export class OggParser extends BasicParser {
         header = await this.tokenizer.readToken<IPageHeader>(PageHeader);
 
         if (header.capturePattern !== 'OggS') throw new OggContentError('Invalid Ogg capture pattern');
-        this.metadata.setFormat('container', 'Ogg');
 
         let stream = this.streams.get(header.streamSerialNumber);
         if (!stream) {

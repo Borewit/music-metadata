@@ -489,12 +489,12 @@ export class MpegParser extends AbstractID3Parser {
         this.samplesPerFrame = samples_per_frame;
         this.metadata.setFormat('codecProfile', 'CBR');
         if (this.tokenizer.fileInfo.size)
-          return true; // Will calculate duration based on the file size
+          return false; // Will calculate duration based on the file size
       } else if (this.metadata.format.duration) {
-        return true; // We already got the duration, stop processing MPEG stream any further
+        return false; // We already got the duration, stop processing MPEG stream any further
       }
       if (!this.options.duration) {
-        return true; // Enforce duration not enabled, stop processing entire stream
+        return false; // Enforce duration not enabled, stop processing entire stream
       }
     }
 
@@ -541,7 +541,7 @@ export class MpegParser extends AbstractID3Parser {
       if (this.options.duration) {
         this.calculateEofDuration = true;
       } else {
-        return true; // Stop parsing after the third frame
+        // return true; // Stop parsing after the third frame
       }
     }
     return false;
