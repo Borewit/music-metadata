@@ -113,6 +113,11 @@ export class SegmentTable implements IGetToken<ISegmentTable> {
 export interface IPageConsumer {
 
   /**
+   * Need to parse to end to be able to calculate the duration
+   */
+  durationOnLastPage: boolean;
+
+  /**
    * Parse Ogg page
    * @param header Ogg page header
    * @param pageData Ogg page data

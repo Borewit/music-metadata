@@ -25,7 +25,7 @@ class OggStream {
 
   private metadata: INativeMetadataCollector;
   public streamSerial: number;
-  private pageNumber = 0;
+  public pageNumber = 0;
   public closed = false;
   private options: IOptions;
   public pageConsumer?: IPageConsumer;
@@ -102,7 +102,6 @@ export class OggParser extends BasicParser {
    */
   public async parse(): Promise<void> {
     this.streams = new Map<number, OggStream>();
-    debug('pos=%s, parsePage()', this.tokenizer.position);
 
     let header: IPageHeader;
     try {
@@ -118,6 +117,12 @@ export class OggParser extends BasicParser {
           this.streams.set(header.streamSerialNumber, stream);
         }
         await stream.parsePage(this.tokenizer, header);
+
+        if (stream.pageNumber > 12 && !(this.options.duration && [...this.streams.values()].find(stream => stream.pageConsumer?.durationOnLastPage)) ) {
+          debug("Stop processing Ogg stream");
+          break;
+        }
+
       } while (![...this.streams.values()].every(item => item.closed));
     } catch(err) {
       if (err instanceof EndOfStreamError) {

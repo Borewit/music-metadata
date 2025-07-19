@@ -23,6 +23,7 @@ export class OpusStream extends VorbisStream {
   constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     super(metadata, options);
     this.tokenizer = tokenizer;
+    this.durationOnLastPage = true;
   }
 
   /**
