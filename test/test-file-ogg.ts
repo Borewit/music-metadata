@@ -262,7 +262,7 @@ describe('Parse Ogg', () => {
 
       const filePath = path.join(oggSamplePath, 'short.ogv');
 
-      const {format} = await mm.parseFile(filePath);
+      const {format} = await mm.parseFile(filePath, {duration: true});
 
       assert.isTrue(format.hasAudio, 'format.hasAudio');
       assert.isTrue(format.hasVideo, 'format.hasAudio');

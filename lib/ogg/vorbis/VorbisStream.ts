@@ -24,6 +24,7 @@ export class VorbisStream implements IPageConsumer {
   protected metadata: INativeMetadataCollector;
   protected options: IOptions;
   protected lastPageHeader?: IPageHeader;
+  public durationOnLastPage = true;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions) {
     this.metadata = metadata;

@@ -15,6 +15,7 @@ const debug = initDebug('music-metadata:parser:ogg:theora');
 export class TheoraStream implements Ogg.IPageConsumer {
 
   private metadata: INativeMetadataCollector;
+  public durationOnLastPage = false;
 
   private tokenizer: ITokenizer
 

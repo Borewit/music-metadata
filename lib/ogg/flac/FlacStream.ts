@@ -21,6 +21,7 @@ export class FlacStream implements Ogg.IPageConsumer {
   private options: IOptions;
   private tokenizer: ITokenizer;
   private flacParser: FlacParser;
+  public durationOnLastPage = false;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     this.metadata = metadata;
