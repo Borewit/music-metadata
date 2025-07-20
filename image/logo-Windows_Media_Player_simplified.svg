@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="150"
+   height="150"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <g
+     transform="translate(-479.28571,-622.93359)"
+     id="layer1">
+    <path
+       d="m 145,75 -14.0625,0 c 0,30.89731 -25.04019,55.9375 -55.9375,55.9375 L 75,145 c 38.65993,0 70,-31.34007 70,-70 z"
+       transform="translate(479.28571,622.93359)"
+       id="path2861"
+       style="fill:#ffe204;fill-opacity:1;stroke:none" />
+    <path
+       d="m 75,19.0625 c 30.89731,0 55.9375,25.040194 55.9375,55.9375 L 145,75 C 145,36.340068 113.65993,5 75,5 l 0,14.0625 z"
+       transform="translate(479.28571,622.93359)"
+       id="path2866"
+       style="fill:#00a51d;fill-opacity:1;stroke:none" />
+    <path
+       d="m 5,75 c 0,38.65993 31.340068,70 70,70 l 0,-14.0625 C 44.102694,130.9375 19.0625,105.89731 19.0625,75 L 5,75 z"
+       transform="translate(479.28571,622.93359)"
+       id="path2864"
+       style="fill:#1a6ae9;fill-opacity:1;stroke:none" />
+    <path
+       d="m 5,75 14.0625,0 C 19.0625,44.102694 44.102694,19.0625 75,19.0625 L 75,5 C 36.340068,5 5,36.340068 5,75 z"
+       transform="translate(479.28571,622.93359)"
+       id="path2844"
+       style="fill:#ff2a04;fill-opacity:1;stroke:none" />
+    <path
+       d="m 534.85259,667.08503 c -2.1268,0.13338 -3.97262,2.10227 -3.96866,4.23324 l 0,53.23295 c 0.004,1.48609 0.8547,2.94108 2.14793,3.6732 1.29324,0.73212 2.97862,0.71291 4.25484,-0.0485 l 44.76648,-26.61648 c 1.25373,-0.74628 2.06818,-2.17891 2.06818,-3.63794 0,-1.45903 -0.81445,-2.89166 -2.06818,-3.63794 L 537.2867,667.69353 c -0.72572,-0.44077 -1.58635,-0.65593 -2.43411,-0.60852 z"
+       id="path2868"
+       style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:10;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Andale Mono;-inkscape-font-specification:Andale Mono" />
+  </g>
+</svg>
