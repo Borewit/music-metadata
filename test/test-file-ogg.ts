@@ -93,9 +93,9 @@ describe('Parse Ogg', () => {
 
   describe('Parsing Ogg/Vorbis', () => {
 
-    describe('decode: Nirvana - In Bloom - 2-sec.ogg', () => {
+    describe('decode: nirvana-2sec.vorbis.ogg', () => {
 
-      const filePath = path.join(samplePath, 'Nirvana - In Bloom - 2-sec.ogg');
+      const filePath = path.join(oggSamplePath, 'nirvana-2sec.vorbis.ogg');
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -168,6 +168,32 @@ describe('Parse Ogg', () => {
       assert.deepEqual(vorbis.REPLAYGAIN_ALBUM_GAIN, ['0.440000 dB']);
     });
 
+    it('check for ogg-multipage-metadata-bug', async () => {
+
+      const filePath = path.join(oggSamplePath, 'ogg-multipagemetadata-bug.ogg');
+
+      const {format, common} = await mm.parseFile(filePath)
+
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
+      assert.isTrue(format.hasAudio, 'format.hasAudio');
+      assert.isFalse(format.hasVideo, 'format.hasAudio');
+
+      assert.strictEqual(common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
+      assert.strictEqual(common.artist, 'Break The Noize & The Autobots', 'artist');
+      assert.strictEqual(common.albumartist, 'Modestep', 'albumartist');
+      assert.strictEqual(common.album, 'To The Stars', 'album');
+      assert.strictEqual(common.date, '2011-01-01', 'year');
+      assert.strictEqual(common.track.no, 2, 'track no');
+      assert.strictEqual(common.track.of, 5, 'track of');
+      assert.strictEqual(common.disk.no, 1, 'disk no');
+      assert.strictEqual(common.disk.of, 1, 'disk of');
+      assert.strictEqual(common.genre[0], 'Dubstep', 'genre');
+      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
+      assert.strictEqual(common.picture[0].data.length, 207439, 'picture length');
+
+    });
+
   });
 
   describe('Parsing Ogg/Opus', () => {
@@ -183,9 +209,9 @@ describe('Parse Ogg', () => {
       });
     });
 
-    describe('decode: Nirvana - In Bloom - 2-sec.opus', () => {
+    describe('decode: nirvana-2sec.opus.ogg', () => {
 
-      const filePath = path.join(samplePath, 'Nirvana - In Bloom - 2-sec.opus');
+      const filePath = path.join(oggSamplePath, 'nirvana-2sec.opus.ogg');
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -229,27 +255,6 @@ describe('Parse Ogg', () => {
           const { format } = await parser.parse(() => this.skip(), filePath, 'audio/ogg');
           checkFormat(format);
         });
-      });
-
-    });
-
-    it('check for ogg-multipage-metadata-bug', () => {
-
-      const filePath = path.join(samplePath, 'ogg-multipagemetadata-bug.ogg');
-
-      return mm.parseFile(filePath).then(result => {
-        assert.strictEqual(result.common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
-        assert.strictEqual(result.common.artist, 'Break The Noize & The Autobots', 'artist');
-        assert.strictEqual(result.common.albumartist, 'Modestep', 'albumartist');
-        assert.strictEqual(result.common.album, 'To The Stars', 'album');
-        assert.strictEqual(result.common.date, '2011-01-01', 'year');
-        assert.strictEqual(result.common.track.no, 2, 'track no');
-        assert.strictEqual(result.common.track.of, 5, 'track of');
-        assert.strictEqual(result.common.disk.no, 1, 'disk no');
-        assert.strictEqual(result.common.disk.of, 1, 'disk of');
-        assert.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
-        assert.strictEqual(result.common.picture[0].format, 'image/jpeg', 'picture format');
-        assert.strictEqual(result.common.picture[0].data.length, 207439, 'picture length');
       });
 
     });
