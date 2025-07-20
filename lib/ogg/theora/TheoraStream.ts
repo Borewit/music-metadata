@@ -17,11 +17,8 @@ export class TheoraStream implements Ogg.IPageConsumer {
   private metadata: INativeMetadataCollector;
   public durationOnLastPage = false;
 
-  private tokenizer: ITokenizer
-
-  constructor(metadata: INativeMetadataCollector, _options: IOptions, tokenizer: ITokenizer) {
+  constructor(metadata: INativeMetadataCollector, _options: IOptions, _tokenizer: ITokenizer) {
     this.metadata = metadata;
-    this.tokenizer = tokenizer;
   }
 
   /**
