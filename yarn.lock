@@ -2210,8 +2210,8 @@ __metadata:
     node-readable-to-web-readable-stream: "npm:^0.4.2"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
-    strtok3: "npm:^10.3.2"
-    token-types: "npm:^6.0.3"
+    strtok3: "npm:^10.3.4"
+    token-types: "npm:^6.0.4"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
     uint8array-extras: "npm:^1.4.0"
@@ -3053,12 +3053,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^10.2.2, strtok3@npm:^10.3.2":
+"strtok3@npm:^10.2.2":
   version: 10.3.2
   resolution: "strtok3@npm:10.3.2"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
   checksum: 10c0/cbdc2686cfd6127cf726f8ad5f81ebf100bc4609a5fd620f9ba111cda92b7baf789e71337c99978965730eac0645ef1b6dc5d673ac5171f51d776527b9432ce1
+  languageName: node
+  linkType: hard
+
+"strtok3@npm:^10.3.4":
+  version: 10.3.4
+  resolution: "strtok3@npm:10.3.4"
+  dependencies:
+    "@tokenizer/token": "npm:^0.3.0"
+  checksum: 10c0/277ab69e417f4545e364ffaf9d560c991f531045dbace32d77b5c822cccd76a608b782785a2c60595274288d4d32dced184a5c21dc20348791da697127dc69a8
   languageName: node
   linkType: hard
 
@@ -3138,13 +3147,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-types@npm:^6.0.0, token-types@npm:^6.0.3":
+"token-types@npm:^6.0.0":
   version: 6.0.3
   resolution: "token-types@npm:6.0.3"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
     ieee754: "npm:^1.2.1"
   checksum: 10c0/9fbd60754329cef6a793a81e62cb81880a52619b05c3ee96bb8b0f698e8f515c0e3d3159fc3b9cdec55271b6b839cba63cd6d387be4b4f63c1e4f222eb34a858
+  languageName: node
+  linkType: hard
+
+"token-types@npm:^6.0.4":
+  version: 6.0.4
+  resolution: "token-types@npm:6.0.4"
+  dependencies:
+    "@tokenizer/token": "npm:^0.3.0"
+    ieee754: "npm:^1.2.1"
+  checksum: 10c0/09bac2346a48d5172201e87e967753c7df25ee0f762401932476fe2930f028212dbdc8a17507f03901e148a9f8d9a060001d15ce88bef75ad66c33f9bf3d0310
   languageName: node
   linkType: hard
 
