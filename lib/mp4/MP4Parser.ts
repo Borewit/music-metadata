@@ -11,6 +11,8 @@ import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../
 import type { IGetToken } from '@tokenizer/token';
 import { uint8ArrayToHex, uint8ArrayToString } from 'uint8array-extras';
 
+import { TextDecoder } from '@kayahr/text-encoding';
+
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
 

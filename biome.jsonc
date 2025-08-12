@@ -34,6 +34,14 @@
 							"node:buffer": "Use Uint8Array instead of Buffer"
 						}
 					}
+				},
+				"noRestrictedGlobals": {
+					"level": "error",
+					"options": {
+						"deniedGlobals": {
+							"TextDecoder": "Replace with @kayahr/text-encoding"
+						}
+					}
 				}
 			},
 			"recommended": true,

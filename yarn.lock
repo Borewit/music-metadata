@@ -194,6 +194,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kayahr/text-encoding@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@kayahr/text-encoding@npm:2.0.1"
+  checksum: 10c0/1bb7f677eaac834b63a4e30f39421c53faab515db7bff072fd8b9c5b1b5a6f1694680b9241cd0e85dbf4b61cacc62653e16130f0469fe073388afb9783faa4bc
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -2198,6 +2205,7 @@ __metadata:
   resolution: "music-metadata@workspace:."
   dependencies:
     "@biomejs/biome": "npm:2.1.4"
+    "@kayahr/text-encoding": "npm:^2.0.1"
     "@tokenizer/token": "npm:^0.3.0"
     "@types/chai": "npm:^5.2.2"
     "@types/chai-as-promised": "npm:^8.0.2"
@@ -2220,7 +2228,7 @@ __metadata:
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.3.4"
-    token-types: "npm:^6.0.4"
+    token-types: "npm:^6.1.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
     uint8array-extras: "npm:^1.4.0"
@@ -3166,13 +3174,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-types@npm:^6.0.4":
-  version: 6.0.4
-  resolution: "token-types@npm:6.0.4"
+"token-types@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "token-types@npm:6.1.0"
   dependencies:
+    "@kayahr/text-encoding": "npm:^2.0.1"
     "@tokenizer/token": "npm:^0.3.0"
     ieee754: "npm:^1.2.1"
-  checksum: 10c0/09bac2346a48d5172201e87e967753c7df25ee0f762401932476fe2930f028212dbdc8a17507f03901e148a9f8d9a060001d15ce88bef75ad66c33f9bf3d0310
+  checksum: 10c0/3611f516db2ab6ac2497aad4baba700c9a0edf4f1fadb029d1657cd24100be04e8202f9fec96194778873188a53a01424464f31a358fd9a656e4f739a2f5c3fd
   languageName: node
   linkType: hard
 

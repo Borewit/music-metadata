@@ -1,4 +1,5 @@
 import type {IRandomAccessTokenizer} from 'strtok3';
+import { TextDecoder } from '@kayahr/text-encoding';
 
 export const endTag2 = 'LYRICS200';
 

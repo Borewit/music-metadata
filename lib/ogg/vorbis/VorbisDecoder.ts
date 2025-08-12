@@ -1,4 +1,5 @@
 import * as Token from 'token-types';
+import { TextDecoder } from '@kayahr/text-encoding';
 
 export class VorbisDecoder {
   private readonly data: Uint8Array;

@@ -2,6 +2,7 @@ import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
 
 import * as util from '../../common/Util.js';
+import { TextDecoder } from '@kayahr/text-encoding';
 
 /**
  * MusePack stream version 7 format specification
