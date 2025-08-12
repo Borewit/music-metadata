@@ -3,6 +3,8 @@ import { assert } from 'chai';
 import * as util from '../lib/common/Util.js';
 import { FourCcToken } from '../lib/common/FourCC.js';
 
+import { TextDecoder } from '@kayahr/text-encoding';
+
 const t = assert;
 
 describe('shared utility functionality', () => {

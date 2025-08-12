@@ -106,13 +106,14 @@
     "update-biome": "yarn add -D --exact @biomejs/biome && npx @biomejs/biome migrate --write"
   },
   "dependencies": {
+    "@kayahr/text-encoding": "^2.0.1",
     "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.5",
     "debug": "^4.4.1",
     "file-type": "^21.0.0",
     "media-typer": "^1.1.0",
     "strtok3": "^10.3.4",
-    "token-types": "^6.0.4",
+    "token-types": "^6.1.0",
     "uint8array-extras": "^1.4.0"
   },
   "devDependencies": {

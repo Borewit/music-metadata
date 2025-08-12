@@ -9,6 +9,8 @@ import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header,
 import type { ITag, IOptions, AnyTagValue } from '../type.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 
+import { TextDecoder } from '@kayahr/text-encoding';
+
 interface IFrameFlags {
   status: {
     tag_alter_preservation: boolean,

@@ -9,6 +9,8 @@ import { APEv2Parser } from '../apev2/APEv2Parser.js';
 import type { AnyTagValue, IApeHeader, IPrivateOptions } from '../type.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 
+import { TextDecoder } from '@kayahr/text-encoding';
+
 const debug = initDebug('music-metadata:parser:ID3v1');
 
 /**
