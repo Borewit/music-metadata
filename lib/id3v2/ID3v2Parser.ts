@@ -9,7 +9,7 @@ import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header,
 import type { ITag, IOptions, AnyTagValue } from '../type.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 
-import { TextDecoder } from '@kayahr/text-encoding';
+import { textDecode } from '@borewit/text-codec';
 
 interface IFrameFlags {
   status: {
@@ -31,8 +31,6 @@ interface IFrameHeader {
   length: number;
   flags?: IFrameFlags;
 }
-
-const asciiDecoder = new TextDecoder('ascii');
 
 export class ID3v2Parser {
 
@@ -206,7 +204,7 @@ export class ID3v2Parser {
 
       case 2:
         header = {
-          id: asciiDecoder.decode(uint8Array.slice(0, 3)),
+          id: textDecode(uint8Array.slice(0, 3), 'ascii'),
           length: Token.UINT24_BE.get(uint8Array, 3)
         };
         if (!header.id.match(/[A-Z0-9]{3}/g)) {
@@ -217,7 +215,7 @@ export class ID3v2Parser {
       case 3:
       case 4:
         header = {
-          id: asciiDecoder.decode(uint8Array.slice(0, 4)),
+          id: textDecode(uint8Array.slice(0, 4), 'ascii'),
           length: (majorVer === 4 ?  UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
           flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10))
         };

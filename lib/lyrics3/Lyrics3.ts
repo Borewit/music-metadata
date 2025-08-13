@@ -1,5 +1,5 @@
 import type {IRandomAccessTokenizer} from 'strtok3';
-import { TextDecoder } from '@kayahr/text-encoding';
+import { textDecode } from '@borewit/text-codec';
 
 export const endTag2 = 'LYRICS200';
 
@@ -10,7 +10,7 @@ export async function getLyricsHeaderLength(tokenizer: IRandomAccessTokenizer): 
     const position = tokenizer.position;
     await tokenizer.readBuffer(buf, {position: fileSize - 143});
     tokenizer.setPosition(position); // Restore position
-    const txt = new TextDecoder('latin1').decode(buf);
+    const txt = textDecode(buf, 'latin1');
     const tag = txt.slice(6);
     if (tag === endTag2) {
       return Number.parseInt(txt.slice(0, 6), 10) + 15;

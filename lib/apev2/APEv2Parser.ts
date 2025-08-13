@@ -18,7 +18,7 @@ import {
 } from './APEv2Token.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import type { IRandomAccessTokenizer } from 'strtok3';
-import { TextDecoder } from '@kayahr/text-encoding';
+import { textDecode } from '@borewit/text-codec';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 
@@ -172,7 +172,7 @@ export class APEv2Parser extends BasicParser {
             await this.tokenizer.readBuffer(picData);
 
             zero = util.findZero(picData, 0, picData.length);
-            const description = new TextDecoder('utf-8').decode(picData.slice(0, zero));
+            const description = textDecode(picData.slice(0, zero), 'utf-8');
             const data = picData.slice(zero + 1);
 
             await this.metadata.addTag(tagFormat, key, {

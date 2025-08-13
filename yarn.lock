@@ -121,6 +121,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@borewit/text-codec@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@borewit/text-codec@npm:0.1.0"
+  checksum: 10c0/2c316990180d4b2ef6204a9ea759895f6ba4dd690560311e37f376601ca25c43d365a7dd2060aa695b7027ad225792f11d755adc18a02b882cd2b74b00fc6f53
+  languageName: node
+  linkType: hard
+
 "@cspotcode/source-map-support@npm:^0.8.0":
   version: 0.8.1
   resolution: "@cspotcode/source-map-support@npm:0.8.1"
@@ -191,13 +198,6 @@ __metadata:
     "@jridgewell/resolve-uri": "npm:^3.1.0"
     "@jridgewell/sourcemap-codec": "npm:^1.4.14"
   checksum: 10c0/fb547ba31658c4d74eb17e7389f4908bf7c44cef47acb4c5baa57289daf68e6fe53c639f41f751b3923aca67010501264f70e7b49978ad1f040294b22c37b333
-  languageName: node
-  linkType: hard
-
-"@kayahr/text-encoding@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "@kayahr/text-encoding@npm:2.0.1"
-  checksum: 10c0/1bb7f677eaac834b63a4e30f39421c53faab515db7bff072fd8b9c5b1b5a6f1694680b9241cd0e85dbf4b61cacc62653e16130f0469fe073388afb9783faa4bc
   languageName: node
   linkType: hard
 
@@ -2205,7 +2205,7 @@ __metadata:
   resolution: "music-metadata@workspace:."
   dependencies:
     "@biomejs/biome": "npm:2.1.4"
-    "@kayahr/text-encoding": "npm:^2.0.1"
+    "@borewit/text-codec": "npm:^0.1.0"
     "@tokenizer/token": "npm:^0.3.0"
     "@types/chai": "npm:^5.2.2"
     "@types/chai-as-promised": "npm:^8.0.2"
@@ -2228,7 +2228,7 @@ __metadata:
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
     strtok3: "npm:^10.3.4"
-    token-types: "npm:^6.1.0"
+    token-types: "npm:^6.1.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.9.2"
   languageName: unknown
@@ -3173,14 +3173,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-types@npm:^6.1.0":
-  version: 6.1.0
-  resolution: "token-types@npm:6.1.0"
+"token-types@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "token-types@npm:6.1.1"
   dependencies:
-    "@kayahr/text-encoding": "npm:^2.0.1"
+    "@borewit/text-codec": "npm:^0.1.0"
     "@tokenizer/token": "npm:^0.3.0"
     ieee754: "npm:^1.2.1"
-  checksum: 10c0/3611f516db2ab6ac2497aad4baba700c9a0edf4f1fadb029d1657cd24100be04e8202f9fec96194778873188a53a01424464f31a358fd9a656e4f739a2f5c3fd
+  checksum: 10c0/e2405e7789d41693a09c478b53c47ffadd735a5f4c826d9885787d022ab10e26cc4a67b03593285748bf3b0c0237e0ea2ab268abcb953ea314727201d0f6504d
   languageName: node
   linkType: hard
 
