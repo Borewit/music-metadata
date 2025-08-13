@@ -1,7 +1,6 @@
 import initDebug from 'debug';
 import * as strtok3 from 'strtok3';
 import { StringType } from 'token-types';
-import { uint8ArrayToString } from 'uint8array-extras';
 
 import * as util from '../common/Util.js';
 import type { IOptions, IApeHeader } from '../type.js';
@@ -19,6 +18,7 @@ import {
 } from './APEv2Token.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import type { IRandomAccessTokenizer } from 'strtok3';
+import { TextDecoder } from '@kayahr/text-encoding';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 
@@ -172,7 +172,7 @@ export class APEv2Parser extends BasicParser {
             await this.tokenizer.readBuffer(picData);
 
             zero = util.findZero(picData, 0, picData.length);
-            const description = uint8ArrayToString(picData.slice(0, zero));
+            const description = new TextDecoder('utf-8').decode(picData.slice(0, zero));
             const data = picData.slice(zero + 1);
 
             await this.metadata.addTag(tagFormat, key, {

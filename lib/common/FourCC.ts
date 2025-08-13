@@ -1,5 +1,5 @@
 import type { IToken } from 'strtok3';
-import { stringToUint8Array, uint8ArrayToString } from 'uint8array-extras';
+import { TextDecoder, TextEncoder } from '@kayahr/text-encoding';
 
 import * as util from './Util.js';
 import { InternalParserError, FieldDecodingError } from '../ParseError.js';
@@ -14,7 +14,7 @@ export const FourCcToken: IToken<string> = {
   len: 4,
 
   get: (buf: Uint8Array, off: number): string => {
-    const id = uint8ArrayToString(buf.slice(off, off + FourCcToken.len), 'latin1');
+    const id =  new TextDecoder('latin1').decode(buf.slice(off, off + FourCcToken.len));
     if (!id.match(validFourCC)) {
       throw new FieldDecodingError(`FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`);
     }
@@ -22,7 +22,7 @@ export const FourCcToken: IToken<string> = {
   },
 
   put: (buffer: Uint8Array, offset: number, id: string) => {
-    const str = stringToUint8Array(id);
+    const str = new TextEncoder('latin1').encode(id);
     if (str.length !== 4)
       throw new InternalParserError('Invalid length');
     buffer.set(str, offset);

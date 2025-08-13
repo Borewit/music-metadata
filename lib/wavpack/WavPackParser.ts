@@ -6,7 +6,7 @@ import { BasicParser } from '../common/BasicParser.js';
 import { BlockHeaderToken, type IBlockHeader, type IMetadataId, MetadataIdToken } from './WavPackToken.js';
 
 import initDebug from 'debug';
-import { uint8ArrayToHex } from 'uint8array-extras';
+import { uint8ArrayToHex } from '../common/Util.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 const debug = initDebug('music-metadata:parser:WavPack');

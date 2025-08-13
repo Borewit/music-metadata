@@ -9,7 +9,7 @@ import { ChapterTrackReferenceBox, Mp4ContentError, } from './AtomToken.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
 
 import type { IGetToken } from '@tokenizer/token';
-import { uint8ArrayToHex, uint8ArrayToString } from 'uint8array-extras';
+import { uint8ArrayToHex } from '../common/Util.js';
 
 import { TextDecoder } from '@kayahr/text-encoding';
 
@@ -356,7 +356,7 @@ export class MP4Parser extends BasicParser {
 
         default: {
           const uint8Array = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
-          this.addWarning(`Unsupported meta-item: ${tagKey}[${child.header.name}] => value=${uint8ArrayToHex(uint8Array)} ascii=${uint8ArrayToString(uint8Array, 'ascii')}`);
+          this.addWarning(`Unsupported meta-item: ${tagKey}[${child.header.name}] => value=${uint8ArrayToHex(uint8Array)} ascii=${new TextDecoder('ascii').decode(uint8Array)}`);
         }
       }
 
