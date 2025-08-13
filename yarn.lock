@@ -2231,7 +2231,6 @@ __metadata:
     token-types: "npm:^6.1.0"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.9.2"
-    uint8array-extras: "npm:^1.4.0"
   languageName: unknown
   linkType: soft
 
