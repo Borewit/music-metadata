@@ -11,7 +11,7 @@ import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../
 import type { IGetToken } from '@tokenizer/token';
 import { uint8ArrayToHex } from '../common/Util.js';
 
-import { TextDecoder } from '@kayahr/text-encoding';
+import { textDecode } from '@borewit/text-codec';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
@@ -356,7 +356,7 @@ export class MP4Parser extends BasicParser {
 
         default: {
           const uint8Array = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
-          this.addWarning(`Unsupported meta-item: ${tagKey}[${child.header.name}] => value=${uint8ArrayToHex(uint8Array)} ascii=${new TextDecoder('ascii').decode(uint8Array)}`);
+          this.addWarning(`Unsupported meta-item: ${tagKey}[${child.header.name}] => value=${uint8ArrayToHex(uint8Array)} ascii=${textDecode(uint8Array, 'ascii')}`);
         }
       }
 
@@ -394,7 +394,7 @@ export class MP4Parser extends BasicParser {
           }
 
           case 'rate': {
-            const rate = new TextDecoder('ascii').decode(dataAtom.value);
+            const rate = textDecode(dataAtom.value, 'ascii');
             await this.addTag(tagKey, rate);
             break;
           }
@@ -406,7 +406,7 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        await this.addTag(tagKey, new TextDecoder('utf-8').decode(dataAtom.value));
+        await this.addTag(tagKey, textDecode(dataAtom.value));
         break;
 
       case 13: // JPEG
