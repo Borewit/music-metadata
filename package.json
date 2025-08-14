@@ -106,7 +106,7 @@
     "update-biome": "yarn add -D --exact @biomejs/biome && npx @biomejs/biome migrate --write"
   },
   "dependencies": {
-    "@borewit/text-codec": "^0.1.0",
+    "@borewit/text-codec": "^0.1.1",
     "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.5",
     "debug": "^4.4.1",
