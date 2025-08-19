@@ -85,7 +85,7 @@ export class ParserFactory {
       musepackParserLoader,
       dsfParserLoader,
       dsdiffParserLoader
-    ].forEach(parser => this.registerParser(parser));
+    ].forEach(parser => {this.registerParser(parser)});
   }
 
   registerParser(parser: IParserLoader): void {

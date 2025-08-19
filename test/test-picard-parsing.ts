@@ -67,7 +67,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
     assert.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist'); // ToDo: this is not set
     assert.deepEqual(common.albumartistsort, 'Hart, Beth & Bonamassa, Joe', `${inputTagType} =>  common.albumartistsort`);
-    assert.strictEqual(common.album, 'Don\'t Explain', `${inputTagType} => common.album = Don\'t Explain`);
+    assert.strictEqual(common.album, 'Don\'t Explain', `${inputTagType} => common.album = Don't Explain`);
     if (inputTagType === 'asf') {
       assert.deepEqual(common.track, {no: 1, of: null}, `${inputTagType} => common.track`);
     } else {
@@ -85,7 +85,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     assert.strictEqual(common.media, 'CD', `${inputTagType} => common.media = CD`);
     assert.strictEqual(common.barcode, '804879313915', `${inputTagType} => common.barcode`);
     // ToDo?? assert.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
-    assert.deepEqual(common.label, ['J&R Adventures'], `${inputTagType} => common.label = \'J&R Adventures\'`);
+    assert.deepEqual(common.label, ['J&R Adventures'], `${inputTagType} => common.label = 'J&R Adventures'`);
     assert.deepEqual(common.catalognumber, ['PRAR931391'], `${inputTagType} => common.catalognumber = PRAR931391`);
     assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.originalyear = 2011`);
     assert.strictEqual(common.releasestatus, 'official', `${inputTagType} => common.releasestatus = official`);

@@ -146,7 +146,6 @@ export function dbToRatio(dB: number): number {
  */
 export function toRatio(value: string): IRatio | undefined {
   const ps = value.split(' ').map(p => p.trim().toLowerCase());
-  // @ts-ignore
   if (ps.length >= 1) {
     const v = Number.parseFloat(ps[0]);
     return ps.length === 2 && ps[1] === 'db' ? {
