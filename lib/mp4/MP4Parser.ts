@@ -9,7 +9,7 @@ import { ChapterTrackReferenceBox, Mp4ContentError, } from './AtomToken.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
 
 import type { IGetToken } from '@tokenizer/token';
-import { uint8ArrayToHex } from '../common/Util.js';
+import { uint8ArrayToHex } from 'uint8array-extras';
 
 import { textDecode } from '@borewit/text-codec';
 
