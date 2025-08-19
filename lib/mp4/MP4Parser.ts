@@ -453,7 +453,7 @@ export class MP4Parser extends BasicParser {
   }
 
   private async parseTrackBox(trakBox: Atom): Promise<void> {
-    // @ts-ignore
+    // @ts-expect-error
     const track: ITrackDescription = {
       media: {},
       fragments: []
