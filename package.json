@@ -113,7 +113,8 @@
     "file-type": "^21.0.0",
     "media-typer": "^1.1.0",
     "strtok3": "^10.3.4",
-    "token-types": "^6.1.1"
+    "token-types": "^6.1.1",
+    "uint8array-extras": "^1.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.4",

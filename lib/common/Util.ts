@@ -158,20 +158,3 @@ export function toRatio(value: string): IRatio | undefined {
     };
   }
 }
-
-const byteToHexLookupTable = Array.from({length: 256}, (_, index) => index.toString(16).padStart(2, '0'));
-
-export function uint8ArrayToHex(array: Uint8Array): string {
-
-    // Concatenating a string is faster than using an array.
-  let hexString = '';
-
-  // eslint-disable-next-line unicorn/no-for-loop -- Max performance is critical.
-  for (let index = 0; index < array.length; index++) {
-    hexString += byteToHexLookupTable[array[index]];
-  }
-
-  return hexString;
-}
-
-
