@@ -2219,7 +2219,7 @@ __metadata:
     token-types: "npm:^6.1.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.9.2"
-    uint8array-extras: "npm:^1.4.1"
+    uint8array-extras: "npm:^1.5.0"
   languageName: unknown
   linkType: soft
 
@@ -3226,10 +3226,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uint8array-extras@npm:^1.4.0, uint8array-extras@npm:^1.4.1":
+"uint8array-extras@npm:^1.4.0":
   version: 1.4.1
   resolution: "uint8array-extras@npm:1.4.1"
   checksum: 10c0/28419bd94bc43ea013054d0fcdc2ab14f944c178861039bf2997d09e114f4114fd83aeecbee3b57b33cdf21a51808e45638635d8af10336caea005b1b269f919
+  languageName: node
+  linkType: hard
+
+"uint8array-extras@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "uint8array-extras@npm:1.5.0"
+  checksum: 10c0/0e74641ac7dadb02eadefc1ccdadba6010e007757bda824960de3c72bbe2b04e6d3af75648441f412148c4103261d54fcb60be45a2863beb76643a55fddba3bd
   languageName: node
   linkType: hard
 
