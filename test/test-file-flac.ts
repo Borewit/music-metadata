@@ -209,6 +209,67 @@ describe('Parse FLAC Vorbis comment', () => {
 
   });
 
+  it('Should decode unsynced lyrics', async () => {
+    const filePath = path.join(flacFilePath, '01. Make It Out Alive.flac');
+    const {format, common, native} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, "FLAC", "format.container");
+    assert.strictEqual(format.codec, "FLAC", "format.codec");
+
+    assert.isArray(common.lyrics, 'common.lyrics');
+    assert.isNotEmpty(common.lyrics, 'common.lyrics');
+
+    const unsyncedLyrics = common.lyrics[0].text;
+    assert.strictEqual(
+      unsyncedLyrics,
+      "Run away, run away, run away\r\n" +
+      "You don't know who to run from\r\n" +
+      "Nowhere to go, don't wanna go, nowhere to go\r\n" +
+      "No road is left to run on\r\n" +
+      "I was born, I was born with horns\r\n" +
+      "Demons couldn't shake me up\r\n" +
+      "Bring it on, bring it on, bring it on\r\n" +
+      "'Cause we haven't had enough\r\n" +
+      "Won't give up the fight\r\n" +
+      "Make it out alive\r\n" +
+      "Set this world on fire now\r\n" +
+      "Whoa (whoa), whoa (whoa)\r\n" +
+      "Don't give up, it's gonna be alright\r\n" +
+      "'Cause I won't let you burn out\r\n" +
+      "Whoa (whoa), whoa (whoa)\r\n" +
+      "We gotta make it out alive\r\n" +
+      "Tonight, tonight, tonight\r\n" +
+      "I'm screaming on the inside, I was\r\n" +
+      "Trying to hide, trying to hide, trying to hide\r\n" +
+      "Now I'm ready for this ride\r\n" +
+      "Gotta face, gotta face the unknown\r\n" +
+      "It's the only way to live\r\n" +
+      "I'm ready to go, ready to go, ready to go\r\n" +
+      "Somewhere I've never been\r\n" +
+      "Won't give up the fight\r\n" +
+      "Make it out alive\r\n" +
+      "Set this world on fire now\r\n" +
+      "Whoa (whoa), whoa (whoa)\r\n" +
+      "Don't give up, it's gonna be alright\r\n" +
+      "'Cause I won't let you burn out\r\n" +
+      "Whoa (whoa), whoa (whoa)\r\n" +
+      "We gotta make it out alive\r\n" +
+      "...\r\n" +
+      "Make it out alive\r\n" +
+      "Set this world on fire now\r\n" +
+      "Whoa (whoa), whoa (whoa)\r\n" +
+      "Don't give up, it's gonna be alright\r\n" +
+      "'Cause I won't let you burn out\r\n" +
+      "Whoa (whoa), whoa (whoa)\r\n" +
+      "We gotta make it out alive\r\n" +
+      "Whoa (oh, yeah), whoa (oh, yeah)\r\n" +
+      "We gotta make it out alive\r\n" +
+      "Whoa (oh, yeah), whoa (oh, yeah)\r\n" +
+      "We gotta make it out alive\r",
+      'common.lyrics[0].text'
+    );
+  })
+
   it('Should map ENCODER to common.tool', async () => {
 
     const filePath = path.join(flacFilePath, 'Lavf.flac');
@@ -237,4 +298,3 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
 });
-
