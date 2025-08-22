@@ -1,7 +1,7 @@
 import type { INativeTagMap } from '../../common/GenericTagTypes.js';
 import { CommonTagMapper } from '../../common/GenericTagMapper.js';
 
-import type { IRating, ITag } from '../../type.js';
+import { LyricsContentType, TimestampFormat, type ILyricsTag, type IRating, type ITag } from '../../type.js';
 
 /**
  * Vorbis tag mappings
@@ -127,6 +127,15 @@ export class VorbisTagMapper extends CommonTagMapper {
     };
   }
 
+  public static toUnsyncedLyrics(lyrics: string): ILyricsTag {
+    return {
+      contentType: LyricsContentType.lyrics,
+      timeStampFormat: TimestampFormat.notSynchronized0,
+      text: lyrics,
+      syncText: [],
+    }
+  }
+
   public constructor() {
     super(['vorbis'], vorbisTagMap);
   }
@@ -139,6 +148,13 @@ export class VorbisTagMapper extends CommonTagMapper {
       const keys = tag.id.split(':');
       tag.value = VorbisTagMapper.toRating(keys[1], tag.value as string, 1);
       tag.id = keys[0];
+    } else if (tag.id === 'LYRICS') {
+      // Check if the content as a timestamp in it
+      // Support both [00:00.00] and [00:00] formats
+      const timestampRegex = /\[\d+:\d+(\.\d+)?]/;
+      if (!timestampRegex.test(tag.value as string)) {
+        tag.value = VorbisTagMapper.toUnsyncedLyrics(tag.value as string);
+      }
     }
   }
 }
