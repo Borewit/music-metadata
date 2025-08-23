@@ -149,7 +149,7 @@ export class VorbisTagMapper extends CommonTagMapper {
       tag.value = VorbisTagMapper.toRating(keys[1], tag.value as string, 1);
       tag.id = keys[0];
     } else if (tag.id === 'LYRICS') {
-      // Check if the content as a timestamp in it
+      // Check if the content has a timestamp in it
       // Support both [00:00.00] and [00:00] formats
       const timestampRegex = /\[\d+:\d+(\.\d+)?]/;
       if (!timestampRegex.test(tag.value as string)) {
