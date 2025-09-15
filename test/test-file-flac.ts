@@ -212,7 +212,7 @@ describe('Parse FLAC Vorbis comment', () => {
   it('Should map ENCODER to common.tool', async () => {
 
     const filePath = path.join(flacFilePath, 'Lavf.flac');
-    const {format, common, native} = await mm.parseFile(filePath);
+    const {format, native} = await mm.parseFile(filePath);
 
 
     assert.isTrue(format.hasAudio, 'format.hasAudio');
@@ -227,7 +227,7 @@ describe('Parse FLAC Vorbis comment', () => {
   it('Should decode the vendor from the VORBIS-COMMENT tag header', async () => {
 
     const filePath = path.join(flacFilePath, 'libFLAC.flac');
-    const {format, common, native} = await mm.parseFile(filePath);
+    const {format} = await mm.parseFile(filePath);
 
     assert.isTrue(format.hasAudio, 'format.hasAudio');
     assert.isFalse(format.hasVideo, 'format.hasAudio');
