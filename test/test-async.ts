@@ -64,6 +64,11 @@ describe('Asynchronous observer updates', () => {
         value: 271.7733333333333
       },
       {
+        id: 'tool',
+        type: 'format',
+        value: 'reference libFLAC 1.2.1 20070917'
+      },
+      {
         id: 'album',
         type: 'common',
         value: 'Congratulations'

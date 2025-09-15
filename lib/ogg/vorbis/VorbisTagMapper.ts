@@ -140,7 +140,5 @@ export class VorbisTagMapper extends CommonTagMapper {
       tag.value = VorbisTagMapper.toRating(keys[1], tag.value as string, 1);
       tag.id = keys[0];
     }
-
   }
-
 }

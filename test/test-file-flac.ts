@@ -209,5 +209,32 @@ describe('Parse FLAC Vorbis comment', () => {
 
   });
 
+  it('Should map ENCODER to common.tool', async () => {
+
+    const filePath = path.join(flacFilePath, 'Lavf.flac');
+    const {format, common, native} = await mm.parseFile(filePath);
+
+
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
+    assert.strictEqual(format.container, 'FLAC');
+
+    const vorbis = mm.orderTags(native.vorbis);
+    assert.deepEqual(vorbis.ENCODER, [ 'Lavf62.3.100' ]);
+    assert.strictEqual(format.tool, 'Lavf62.3.100');
+  });
+
+  it('Should decode the vendor from the VORBIS-COMMENT tag header', async () => {
+
+    const filePath = path.join(flacFilePath, 'libFLAC.flac');
+    const {format, common, native} = await mm.parseFile(filePath);
+
+    assert.isTrue(format.hasAudio, 'format.hasAudio');
+    assert.isFalse(format.hasVideo, 'format.hasAudio');
+    assert.strictEqual(format.container, 'FLAC');
+
+    assert.strictEqual(format.tool, 'reference libFLAC 1.4.2 20221022');
+  });
+
 });
 
