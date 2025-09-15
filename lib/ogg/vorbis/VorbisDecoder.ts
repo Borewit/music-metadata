@@ -29,8 +29,8 @@ export class VorbisDecoder {
     const v = this.readStringUtf8();
     const idx = v.indexOf('=');
     return {
-      key: v.slice(0, idx).toUpperCase(),
-      value: v.slice(idx + 1),
+      key: v.substring(0, idx).toUpperCase(),
+      value: v.substring(idx + 1),
       len: this.offset - offset0
     };
   }

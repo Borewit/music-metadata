@@ -137,7 +137,7 @@ export class FrameParser {
       case 'PCST': {
         let text: string;
         try {
-          text = util.decodeString(uint8Array.slice(1), encoding).replace(/\x00+$/, '');
+          text = util.decodeString(uint8Array.subarray(1), encoding).replace(/\x00+$/, '');
         } catch (error) {
           if (error instanceof Error) {
             this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
@@ -199,13 +199,13 @@ export class FrameParser {
 
           switch (this.major) {
             case 2:
-              pic.format = util.decodeString(uint8Array.slice(offset, offset + 3), 'latin1'); // 'latin1'; // latin1 == iso-8859-1;
+              pic.format = util.decodeString(uint8Array.subarray(offset, offset + 3), 'latin1'); // 'latin1'; // latin1 == iso-8859-1;
               offset += 3;
               break;
             case 3:
             case 4:
               fzero = util.findZero(uint8Array, offset, length, defaultEnc);
-              pic.format = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+              pic.format = util.decodeString(uint8Array.subarray(offset, fzero), defaultEnc);
               offset = fzero + 1;
               break;
 
@@ -219,10 +219,10 @@ export class FrameParser {
           offset += 1;
 
           fzero = util.findZero(uint8Array, offset, length, encoding);
-          pic.description = util.decodeString(uint8Array.slice(offset, fzero), encoding);
+          pic.description = util.decodeString(uint8Array.subarray(offset, fzero), encoding);
           offset = fzero + nullTerminatorLength;
 
-          pic.data = uint8Array.slice(offset, length);
+          pic.data = uint8Array.subarray(offset, length);
           output = pic;
         }
         break;
@@ -303,7 +303,7 @@ export class FrameParser {
 
       case 'POPM': { // Popularimeter
         fzero = util.findZero(uint8Array, offset, length, defaultEnc);
-        const email = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        const email = util.decodeString(uint8Array.subarray(offset, fzero), defaultEnc);
         offset = fzero + 1;
         const dataLen = length - offset;
         output = {
@@ -316,20 +316,20 @@ export class FrameParser {
 
       case 'GEOB': {  // General encapsulated object
         fzero = util.findZero(uint8Array, offset + 1, length, encoding);
-        const mimeType = util.decodeString(uint8Array.slice(offset + 1, fzero), defaultEnc);
+        const mimeType = util.decodeString(uint8Array.subarray(offset + 1, fzero), defaultEnc);
         offset = fzero + 1;
         fzero = util.findZero(uint8Array, offset, length, encoding);
-        const filename = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        const filename = util.decodeString(uint8Array.subarray(offset, fzero), defaultEnc);
         offset = fzero + 1;
         fzero = util.findZero(uint8Array, offset, length, encoding);
-        const description = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        const description = util.decodeString(uint8Array.subarray(offset, fzero), defaultEnc);
         offset = fzero + 1;
 
         const geob: IGeneralEncapsulatedObject = {
           type: mimeType,
           filename,
           description,
-          data: uint8Array.slice(offset, length)
+          data: uint8Array.subarray(offset, length)
         };
         output = geob;
         break;
@@ -346,26 +346,26 @@ export class FrameParser {
       case 'WPUB':
         // Decode URL
         fzero = util.findZero(uint8Array, offset + 1, length, encoding);
-        output = util.decodeString(uint8Array.slice(offset, fzero), defaultEnc);
+        output = util.decodeString(uint8Array.subarray(offset, fzero), defaultEnc);
         break;
 
       case 'WXXX': {
         // Decode URL
         fzero = util.findZero(uint8Array, offset + 1, length, encoding);
-        const description = util.decodeString(uint8Array.slice(offset + 1, fzero), encoding);
+        const description = util.decodeString(uint8Array.subarray(offset + 1, fzero), encoding);
         offset = fzero + (encoding === 'utf-16le' ? 2 : 1);
-        output = {description, url: util.decodeString(uint8Array.slice(offset, length), defaultEnc)};
+        output = {description, url: util.decodeString(uint8Array.subarray(offset, length), defaultEnc)};
         break;
       }
 
       case 'WFD':
       case 'WFED':
-        output = util.decodeString(uint8Array.slice(offset + 1, util.findZero(uint8Array, offset + 1, length, encoding)), encoding);
+        output = util.decodeString(uint8Array.subarray(offset + 1, util.findZero(uint8Array, offset + 1, length, encoding)), encoding);
         break;
 
       case 'MCDI': {
         // Music CD identifier
-        output = uint8Array.slice(0, length);
+        output = uint8Array.subarray(0, length);
         break;
       }
 
@@ -381,7 +381,7 @@ export class FrameParser {
     let offset = encoding.bom ? 2: 0;
 
     const zeroIndex = util.findZero(uint8Array, offset, uint8Array.length, encoding.encoding);
-    const txt = uint8Array.slice(offset, zeroIndex);
+    const txt = uint8Array.subarray(offset, zeroIndex);
 
     if (encoding.encoding === 'utf-16le') {
       offset = zeroIndex + 2;
@@ -448,10 +448,10 @@ export class FrameParser {
   private static readIdentifierAndData(uint8Array: Uint8Array, offset: number, length: number, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
     const fzero = util.findZero(uint8Array, offset, length, encoding);
 
-    const id = util.decodeString(uint8Array.slice(offset, fzero), encoding);
+    const id = util.decodeString(uint8Array.subarray(offset, fzero), encoding);
     offset = fzero + FrameParser.getNullTerminatorLength(encoding);
 
-    return {id, data: uint8Array.slice(offset, length)};
+    return {id, data: uint8Array.subarray(offset, length)};
   }
 
   private static getNullTerminatorLength(enc: util.StringEncoding): number {

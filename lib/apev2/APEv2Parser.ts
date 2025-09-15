@@ -172,8 +172,8 @@ export class APEv2Parser extends BasicParser {
             await this.tokenizer.readBuffer(picData);
 
             zero = util.findZero(picData, 0, picData.length);
-            const description = textDecode(picData.slice(0, zero), 'utf-8');
-            const data = picData.slice(zero + 1);
+            const description = textDecode(picData.subarray(0, zero), 'utf-8');
+            const data = picData.subarray(zero + 1);
 
             await this.metadata.addTag(tagFormat, key, {
               description,

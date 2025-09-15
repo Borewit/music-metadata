@@ -48,7 +48,7 @@ class OggStream {
 
     if (header.headerType.firstPage) {
       this.metadata.setFormat('container', 'Ogg');
-      const idData = pageData.slice(0, 7); // Copy this portion
+      const idData = pageData.subarray(0, 7); // Copy this portion
       const asciiId = Array.from(idData)
         .filter(b => b >= 32 && b <= 126) // Keep only printable ASCII
         .map(b => String.fromCharCode(b))

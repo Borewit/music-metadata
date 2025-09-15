@@ -421,7 +421,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;
-        tags.push({id: tagName, value: parseUnicodeAttr(buf.slice(off + pos, off + end))});
+        tags.push({id: tagName, value: parseUnicodeAttr(buf.subarray(off + pos, off + end))});
         pos = end;
       }
     }
@@ -445,13 +445,13 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
     for (let i = 0; i < attrCount; i += 1) {
       const nameLen = view.getUint16(pos, true);
       pos += 2;
-      const name = parseUnicodeAttr(buf.slice(off + pos, off + pos + nameLen));
+      const name = parseUnicodeAttr(buf.subarray(off + pos, off + pos + nameLen));
       pos += nameLen;
       const valueType = view.getUint16(pos, true);
       pos += 2;
       const valueLen = view.getUint16(pos, true);
       pos += 2;
-      const value = buf.slice(off + pos, off + pos + valueLen);
+      const value = buf.subarray(off + pos, off + pos + valueLen);
       pos += valueLen;
       this.postProcessTag(tags, name, valueType, value);
     }
@@ -552,9 +552,9 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += 2;
       const dataLen = view.getUint32(pos, true);
       pos += 4;
-      const name = parseUnicodeAttr(uint8Array.slice(off + pos, off + pos + nameLen));
+      const name = parseUnicodeAttr(uint8Array.subarray(off + pos, off + pos + nameLen));
       pos += nameLen;
-      const data = uint8Array.slice(off + pos, off + pos + dataLen);
+      const data = uint8Array.subarray(off + pos, off + pos + dataLen);
       pos += dataLen;
       this.postProcessTag(tags, name, dataType, data);
     }

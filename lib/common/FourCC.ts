@@ -14,7 +14,7 @@ export const FourCcToken: IToken<string> = {
   len: 4,
 
   get: (buf: Uint8Array, off: number): string => {
-    const id =  textDecode(buf.slice(off, off + FourCcToken.len), 'latin1');
+    const id =  textDecode(buf.subarray(off, off + FourCcToken.len), 'latin1');
     if (!id.match(validFourCC)) {
       throw new FieldDecodingError(`FourCC contains invalid characters: ${util.a2hex(id)} "${id}"`);
     }
