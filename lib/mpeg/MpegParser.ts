@@ -482,7 +482,7 @@ export class MpegParser extends AbstractID3Parser {
       return false;
     }
 
-    if (this.frameCount === 3) {
+    if (this.frameCount === 4) {
       // the stream is CBR if the first 3 frame bitrates are the same
       if (this.areAllSame(this.bitrates)) {
         // Actual calculation will be done in finalize

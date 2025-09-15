@@ -79,6 +79,17 @@ describe("Decode MP3/ID3v2.4", () => {
 
   });
 
+  it('Support PCNT variable length', async () => {
+    const filePath = path.join(samplePath, 'mp3', 'issue-2497.mp3');
+
+    const metadata = await mm.parseFile(filePath, {duration: true});
+    const {format, common} = metadata;
+
+    assert.deepEqual(format.container, 'MPEG', 'format.container');
+    assert.deepEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+    assert.deepEqual(common.playCounter, 48, 'format.playCounter');
+  });
+
   it("Map TXXX:ISRC", async () => {
 
     const filename = 'issue-802.mp3';

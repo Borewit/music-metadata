@@ -1,6 +1,7 @@
 import { StringType } from 'token-types';
 import type { IRatio } from '../type.js';
 import { FieldDecodingError } from '../ParseError.js';
+import { getUintBE } from 'uint8array-extras';
 
 export type StringEncoding =
   'ascii' // Use 'utf-8' or latin1 instead
@@ -156,4 +157,22 @@ export function toRatio(value: string): IRatio | undefined {
       ratio: v
     };
   }
+}
+
+/**
+ * Decode a big-endian unsigned integer from a Uint8Array.
+ * Supports dynamic length (1–8 bytes).
+ */
+export function decodeUintBE(uint8Array: Uint8Array): number {
+  if (uint8Array.length === 0) {
+    throw new Error("decodeUintBE: empty Uint8Array");
+  }
+
+  const view = new DataView(
+    uint8Array.buffer,
+    uint8Array.byteOffset,
+    uint8Array.byteLength
+  );
+
+  return getUintBE(view);
 }

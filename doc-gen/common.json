@@ -331,5 +331,8 @@
   },
   "longDescription": {
     "description": "Long description or synopsis"
+  },
+  "playCounter": {
+    "description": "This is simply a counter of the number of times a file has been played. The value supposed to be increased every time the file begins to play."
   }
 }

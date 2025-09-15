@@ -108,13 +108,12 @@ describe('Parse MP3 files', () => {
 
   });
 
-  it('should handle audio-frame-header-bug', () => {
+  it('should handle audio-frame-header-bug', async () => {
 
     const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
 
-    return mm.parseFile(filePath, {duration: true}).then(result => {
-      assert.approximately(result.format.duration, durationSleepAwayMp3, 1 / 10);
-    });
+    const result = await mm.parseFile(filePath, {duration: true});
+    assert.approximately(result.format.duration, durationSleepAwayMp3, 1 / 10);
   });
 
   it('should be able to parse: Sleep Away.mp3', () => {
