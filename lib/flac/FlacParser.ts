@@ -112,13 +112,21 @@ export class FlacParser extends AbstractID3Parser {
    */
   public async parseComment(data: Uint8Array): Promise<void> {
     const decoder = new VorbisDecoder(data, 0);
-    decoder.readStringUtf8(); // vendor (skip)
+    const vendor = decoder.readStringUtf8();
+    if (vendor.length > 0) {
+      this.metadata.setFormat('tool', vendor);
+    }
     const commentListLength = decoder.readInt32();
     const tags = new Array(commentListLength);
     for (let i = 0; i < commentListLength; i++) {
       tags[i] = decoder.parseUserComment();
     }
-    await Promise.all(tags.map(tag => this.addTag(tag.key, tag.value)));
+    await Promise.all(tags.map(tag => {
+      if (tag.key==='ENCODER') {
+        this.metadata.setFormat('tool', tag.value);
+      }
+      return this.addTag(tag.key, tag.value);
+    }));
   }
 
   private async parsePicture(dataLen: number) {
