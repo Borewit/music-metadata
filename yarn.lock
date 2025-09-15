@@ -2040,12 +2040,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime@npm:^4.0.7":
-  version: 4.0.7
-  resolution: "mime@npm:4.0.7"
+"mime@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "mime@npm:4.1.0"
   bin:
     mime: bin/cli.js
-  checksum: 10c0/2fd22ee2012a3f1dcac7dd06b7dc314dd677ebcefb14355b7c9453f0092af6eabbe9d754d9849d2a1f346ddd53d716a851379be05386f7a6ccb40af4bd61f32b
+  checksum: 10c0/3b8602e50dff1049aea8bb2d4c65afc55bf7f3eb5c17fd2bcb315b8c8ae225a7553297d424d3621757c24cdba99e930ecdc4108467009cdc7ed55614cd55031d
   languageName: node
   linkType: hard
 
@@ -2210,7 +2210,7 @@ __metadata:
     del-cli: "npm:^6.0.0"
     file-type: "npm:^21.0.0"
     media-typer: "npm:^1.1.0"
-    mime: "npm:^4.0.7"
+    mime: "npm:^4.1.0"
     mocha: "npm:^11.7.1"
     node-readable-to-web-readable-stream: "npm:^0.4.2"
     remark-cli: "npm:^12.0.1"
