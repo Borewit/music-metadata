@@ -119,7 +119,8 @@ export type GenericTagId =
   | 'movementTotal'
   | 'podcastId'
   | 'showMovement'
-  | 'stik';
+  | 'stik'
+  | 'playCounter';
 
 export interface INativeTagMap {
   [index: string]: GenericTagId;
@@ -260,7 +261,8 @@ const commonTags: ITagInfoMap = {
   movementTotal: defaultTagInfo,
   podcastId: defaultTagInfo,
   showMovement: defaultTagInfo,
-  stik: defaultTagInfo
+  stik: defaultTagInfo,
+  playCounter: defaultTagInfo
 };
 
 export const commonTagsKeys = /* @__PURE__ */ Object.keys(commonTags) as (keyof ICommonTagsResult)[];

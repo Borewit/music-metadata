@@ -367,6 +367,8 @@ export interface ICommonTagsResult {
    * https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata#user-content-media-type-stik
    */
   stik?: number;
+
+  playCounter?: number;
 }
 
 export interface IRatio {

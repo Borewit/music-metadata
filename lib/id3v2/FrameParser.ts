@@ -8,6 +8,7 @@ import { Genres } from '../id3v1/ID3v1Parser.js';
 import type { IWarningCollector } from '../common/MetadataCollector.js';
 import type { IComment, ILyricsTag } from '../type.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import { decodeUintBE } from '../common/Util.js';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -229,7 +230,7 @@ export class FrameParser {
 
       case 'CNT':
       case 'PCNT':
-        output = Token.UINT32_BE.get(uint8Array, 0);
+        output = decodeUintBE(uint8Array);
         break;
 
       case 'SYLT': {
@@ -305,11 +306,11 @@ export class FrameParser {
         fzero = util.findZero(uint8Array, offset, length, defaultEnc);
         const email = util.decodeString(uint8Array.subarray(offset, fzero), defaultEnc);
         offset = fzero + 1;
-        const dataLen = length - offset;
+        const valueLen = length - offset - 1;
         output = {
           email,
           rating: Token.UINT8.get(uint8Array, offset),
-          counter: dataLen >= 5 ? Token.UINT32_BE.get(uint8Array, offset + 1) : undefined
+          counter: valueLen > 0 ? util.decodeUintBE(uint8Array.subarray(offset + 1)) : undefined
         };
         break;
       }
