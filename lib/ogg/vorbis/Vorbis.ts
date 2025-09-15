@@ -71,7 +71,7 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
     offset += 4;
     const picDataLen = Token.UINT32_BE.get(buffer, offset);
     offset += 4;
-    const data = Uint8Array.from(buffer.slice(offset, offset + picDataLen));
+    const data = buffer.slice(offset, offset + picDataLen);
 
     return {
       type,

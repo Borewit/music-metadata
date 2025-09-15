@@ -186,5 +186,5 @@ export class ParserFactory {
 
 function getExtension(fname: string): string {
   const i = fname.lastIndexOf('.');
-  return i === -1 ? '' : fname.slice(i);
+  return i === -1 ? '' : fname.substring(i);
 }

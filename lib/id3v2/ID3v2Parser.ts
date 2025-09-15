@@ -47,7 +47,7 @@ export class ID3v2Parser {
     if (readI < buffer.length) {
       buffer[writeI++] = buffer[readI];
     }
-    return buffer.slice(0, writeI);
+    return buffer.subarray(0, writeI);
   }
 
   private static getFrameHeaderLength(majorVer: number): number {
@@ -90,7 +90,7 @@ export class ID3v2Parser {
           uint8Array = ID3v2Parser.removeUnsyncBytes(uint8Array);
         }
         if (frameHeader.flags?.format.data_length_indicator) {
-          uint8Array = uint8Array.slice(4, uint8Array.length);
+          uint8Array = uint8Array.subarray(4, uint8Array.length);
         }
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
       default:
@@ -184,11 +184,11 @@ export class ID3v2Parser {
         break;
       }
 
-      const frameHeaderBytes = data.slice(offset, offset + frameHeaderLength);
+      const frameHeaderBytes = data.subarray(offset, offset + frameHeaderLength);
       offset += frameHeaderLength;
       const frameHeader = this.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
 
-      const frameDataBytes = data.slice(offset, offset + frameHeader.length);
+      const frameDataBytes = data.subarray(offset, offset + frameHeader.length);
       offset += frameHeader.length;
       const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers, this.metadata);
       if (values) {
@@ -204,7 +204,7 @@ export class ID3v2Parser {
 
       case 2:
         header = {
-          id: textDecode(uint8Array.slice(0, 3), 'ascii'),
+          id: textDecode(uint8Array.subarray(0, 3), 'ascii'),
           length: Token.UINT24_BE.get(uint8Array, 3)
         };
         if (!header.id.match(/[A-Z0-9]{3}/g)) {
@@ -215,9 +215,9 @@ export class ID3v2Parser {
       case 3:
       case 4:
         header = {
-          id: textDecode(uint8Array.slice(0, 4), 'ascii'),
+          id: textDecode(uint8Array.subarray(0, 4), 'ascii'),
           length: (majorVer === 4 ?  UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
-          flags: ID3v2Parser.readFrameFlags(uint8Array.slice(8, 10))
+          flags: ID3v2Parser.readFrameFlags(uint8Array.subarray(8, 10))
         };
         if (!header.id.match(/[A-Z0-9]{4}/g)) {
           this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
