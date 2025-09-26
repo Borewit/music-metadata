@@ -351,6 +351,19 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     });
   });
 
+  describe('Parse Apple’s QuickTime File Format', () => {
+
+    Parsers.forEach(parser => {
+      it(parser.description, async ()=> {
+
+        const filePath = path.join(mp4Samples, 'sample_640x360.mov');
+        const {format} = await mm.parseFile(filePath);
+        assert.strictEqual(format.container, 'qt');
+      });
+    });
+
+  });
+
   describe('should support extended atom header', () => {
 
     Parsers.forEach(parser => {
