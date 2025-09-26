@@ -59,6 +59,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         node-version: [18.x, 20.x, 22.x, 24.x]
 
+    environment: ci
+
     steps:
 
       - name: 'Checkout the repository'
@@ -83,12 +85,15 @@ jobs:
       - name: Test with Node.js ${{ matrix.node-version }}
         run: yarn run test-coverage
 
-      - name: Coveralls Parallel
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.github_token }}
-          flag-name: run-${{ matrix.test_number }}
-          parallel: true
+      # Upload each job's coverage to Codacy as a PARTIAL report
+      - name: Upload partial coverage to Codacy
+        # Use bash even on Windows runners
+        shell: bash
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        run: |
+          curl -Ls https://coverage.codacy.com/get.sh -o get.sh
+          bash get.sh report --partial -r coverage/lcov.info
 
   test-bun:
     name: Test with Bun
@@ -121,12 +126,17 @@ jobs:
       - name: Test with Node.js ${{ matrix.node-version }}
         run: bun run --bun test
 
-  finish:
-    needs: test
+  codacy-finalize:
+    environment: ci
+    name: Finalize Codacy coverage
+    # Include every job that uploads partial coverage
+    needs: [ test ]  # add test-bun if it uploads coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.github_token }}
-          parallel-finished: true
+      - name: Tell Codacy we're done (merge all partials)
+        shell: bash
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        run: |
+          curl -Ls https://coverage.codacy.com/get.sh -o get.sh
+          bash get.sh final
