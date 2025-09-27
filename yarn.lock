@@ -144,6 +144,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@epic-web/invariant@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@epic-web/invariant@npm:1.0.0"
+  checksum: 10c0/72dbeb026e4e4eb3bc9c65739b91408ca77ab7d603a2494fa2eff3790ec22892c4caba751cffdf30f5ccf0e7ba79c1e9c96cf0a357404b9432bf1365baac23ca
+  languageName: node
+  linkType: hard
+
 "@isaacs/cliui@npm:^8.0.2":
   version: 8.0.2
   resolution: "@isaacs/cliui@npm:8.0.2"
@@ -914,6 +921,19 @@ __metadata:
   version: 1.1.1
   resolution: "create-require@npm:1.1.1"
   checksum: 10c0/157cbc59b2430ae9a90034a5f3a1b398b6738bf510f713edc4d4e45e169bc514d3d99dd34d8d01ca7ae7830b5b8b537e46ae8f3c8f932371b0875c0151d7ec91
+  languageName: node
+  linkType: hard
+
+"cross-env@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "cross-env@npm:10.0.0"
+  dependencies:
+    "@epic-web/invariant": "npm:^1.0.0"
+    cross-spawn: "npm:^7.0.6"
+  bin:
+    cross-env: dist/bin/cross-env.js
+    cross-env-shell: dist/bin/cross-env-shell.js
+  checksum: 10c0/d16ffc3734106577d57b6253d81ab50294623bd59f96e161033eaf99c1c308ffbaba8463c23a6c0f72e841eff467cb7007a0a551f27554fcf2bbf6598cd828f9
   languageName: node
   linkType: hard
 
@@ -2200,6 +2220,7 @@ __metadata:
     chai: "npm:^6.0.1"
     chai-as-promised: "npm:^8.0.2"
     content-type: "npm:^1.0.5"
+    cross-env: "npm:^10.0.0"
     debug: "npm:^4.4.3"
     del-cli: "npm:^6.0.0"
     file-type: "npm:^21.0.0"
