@@ -602,6 +602,9 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   Note that enabling this option **does not guarantee** that duration will be available,
   only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
 
+- `includeChapters`: `boolean` (default: `false`)
+  When `true`, the MP4 parser scans the `mdat` atom for chapters.
+
 - `mkvUseIndex`: `boolean` (default: `false`)
 
   When `true`, the parser uses the SeekHead index in Matroska (MKV) files to skip segment and cluster elements.
