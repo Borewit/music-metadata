@@ -291,6 +291,8 @@ export class MP4Parser extends BasicParser {
            switch(atom.header.name) {
              case 'trak':
                return this.parseTrackBox(atom);
+             case 'udta':
+               return this.parseTrackBox(atom);
            }
            break;
         case 'moof':
