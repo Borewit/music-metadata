@@ -1,5 +1,24 @@
 import { type ILyricsText, type ILyricsTag, LyricsContentType, TimestampFormat } from '../type.js';
 
+// Shared timestamp regex for LRC format
+const TIMESTAMP_REGEX = /\[(\d{2}):(\d{2})\.(\d{2,3})]/;
+
+export function parseLyrics(input: string): ILyricsTag {
+  if (TIMESTAMP_REGEX.test(input)) {
+    return parseLrc(input);
+  }
+  return toUnsyncedLyrics(input);
+}
+
+export function toUnsyncedLyrics(lyrics: string): ILyricsTag {
+  return {
+    contentType: LyricsContentType.lyrics,
+    timeStampFormat: TimestampFormat.notSynchronized,
+    text: lyrics.trim(),
+    syncText: [],
+  };
+}
+
 /**
  * Parse LRC (Lyrics) formatted text
  * Ref: https://en.wikipedia.org/wiki/LRC_(file_format)
@@ -9,39 +28,26 @@ export function parseLrc(lrcString: string): ILyricsTag {
   const lines = lrcString.split('\n');
   const syncText: ILyricsText[] = [];
 
-  // Regular expression to match LRC timestamps (e.g., [00:45.52] or [00:45.520])
-  const timestampRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
-
   for (const line of lines) {
-    const match = line.match(timestampRegex);
-
+    const match = line.match(TIMESTAMP_REGEX);
     if (match) {
       const minutes = Number.parseInt(match[1], 10);
       const seconds = Number.parseInt(match[2], 10);
-      const millisecondsStr = match[3];
-      let milliseconds: number;
-      if (millisecondsStr.length === 3) {
-        //  (e.g., .521 = 521 millseconds)
-        milliseconds = Number.parseInt(millisecondsStr, 10);
-      } else {
-        //  (e.g., .52 = 520 millseconds)
-        milliseconds = Number.parseInt(millisecondsStr, 10) * 10;
-      }
+      const ms = match[3].length === 3
+        ? Number.parseInt(match[3], 10)
+        : Number.parseInt(match[3], 10) * 10;
 
-      // Convert the timestamp to milliseconds, as per TimestampFormat.milliseconds
-      const timestamp = (minutes * 60 + seconds) * 1000 + milliseconds;
-
-      // Get the text portion of the line (e.g., "あの蝶は自由になれたかな")
-      const text = line.replace(timestampRegex, '').trim();
+      const timestamp = (minutes * 60 + seconds) * 1000 + ms;
+      const text = line.replace(TIMESTAMP_REGEX, '').trim();
 
       syncText.push({ timestamp, text });
     }
   }
 
-  // Creating the ILyricsTag object
   return {
     contentType: LyricsContentType.lyrics,
     timeStampFormat: TimestampFormat.milliseconds,
+    text: syncText.map(line => line.text).join('\n'),
     syncText,
   };
 }

@@ -265,7 +265,7 @@ describe('Parse FLAC Vorbis comment', () => {
       "Whoa (oh, yeah), whoa (oh, yeah)\r\n" +
       "We gotta make it out alive\r\n" +
       "Whoa (oh, yeah), whoa (oh, yeah)\r\n" +
-      "We gotta make it out alive\r",
+      "We gotta make it out alive",
       'common.lyrics[0].text'
     );
   })
