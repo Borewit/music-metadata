@@ -96,7 +96,7 @@ function parseGenreCode(code: string): string | undefined{
   if (code === 'CR')
     return 'Cover';
   if (code.match(/^\d*$/)) {
-    return Genres[Number.parseInt(code)];
+    return Genres[Number.parseInt(code, 10)];
   }
 }
 

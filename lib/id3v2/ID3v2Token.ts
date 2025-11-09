@@ -58,7 +58,7 @@ export const LyricsContentType = {
 export type LyricsContentType = typeof LyricsContentType[keyof typeof LyricsContentType];
 
 export const TimestampFormat = {
-  notSynchronized0: 0,
+  notSynchronized: 0,
   mpegFrameNumber: 1,
   milliseconds: 2
 };
