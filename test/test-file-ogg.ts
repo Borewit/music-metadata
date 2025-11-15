@@ -322,7 +322,7 @@ describe('Parse Ogg', () => {
 
       const filePath = path.join(oggSamplePath, 'no-last-page.oga');
 
-      const {format, quality} = await mm.parseFile(filePath);
+      const {format, quality} = await mm.parseFile(filePath, {duration: true});
 
       assert.strictEqual(format.container, 'Ogg', 'format.container');
       assert.strictEqual(format.codec, 'Opus', 'format.codec');
@@ -334,5 +334,36 @@ describe('Parse Ogg', () => {
     });
 
   });
+
+  // Issue: https://github.com/Borewit/music-metadata/issues/2518
+  describe('Ogg/Opus duration', async() => {
+
+    it('duration-flag=false', async() => {
+
+      const filePath = path.join(oggSamplePath, 'issue-2518.ogg');
+      const {format} = await mm.parseFile(filePath);
+
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'Opus', 'format.codec');
+      assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
+      assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+      assert.isUndefined(format.duration, 'format.duration');
+    });
+
+    it('duration-flag=true', async() => {
+
+      const filePath = path.join(oggSamplePath, 'issue-2518.ogg');
+      const {format} = await mm.parseFile(filePath, {duration: true});
+
+      assert.strictEqual(format.container, 'Ogg', 'format.container');
+      assert.strictEqual(format.codec, 'Opus', 'format.codec');
+      assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
+      assert.strictEqual(format.numberOfSamples, 843840, 'format.numberOfSamples');
+      assert.strictEqual(format.duration, 17.58, 'format.duration');
+    });
+
+  });
+
+
 
 });

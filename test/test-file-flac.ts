@@ -211,7 +211,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
   it('Should decode unsynced lyrics', async () => {
     const filePath = path.join(flacFilePath, '01. Make It Out Alive.flac');
-    const {format, common, native} = await mm.parseFile(filePath);
+    const {format, common} = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, "FLAC", "format.container");
     assert.strictEqual(format.codec, "FLAC", "format.codec");

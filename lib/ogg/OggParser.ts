@@ -103,6 +103,7 @@ export class OggParser extends BasicParser {
    */
   public async parse(): Promise<void> {
     this.streams = new Map<number, OggStream>();
+    let enfOfStream = false;
 
     let header: IPageHeader;
     try {
@@ -127,6 +128,7 @@ export class OggParser extends BasicParser {
     } catch(err) {
       if (err instanceof EndOfStreamError) {
         debug("Reached end-of-stream");
+        enfOfStream = true;
       } else if (err instanceof OggContentError) {
         this.metadata.addWarning(`Corrupt Ogg content at ${this.tokenizer.position}`);
       } else throw err;
@@ -136,7 +138,7 @@ export class OggParser extends BasicParser {
         this.metadata.addWarning(`End-of-stream reached before reaching last page in Ogg stream serial=${stream.streamSerial}`);
         await stream.pageConsumer?.flush();
       }
-      stream.pageConsumer?.calculateDuration();
+      stream.pageConsumer?.calculateDuration(enfOfStream);
     }
   }
 }

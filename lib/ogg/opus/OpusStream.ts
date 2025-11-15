@@ -56,8 +56,8 @@ export class OpusStream extends VorbisStream {
     }
   }
 
-  public calculateDuration() {
-    if (this.lastPageHeader && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
+  public calculateDuration(enfOfStream: boolean) {
+    if (this.lastPageHeader && (enfOfStream || this.lastPageHeader.headerType.lastPage) && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
       // Calculate duration
       const pos_48bit = this.lastPageHeader.absoluteGranulePosition - this.idHeader.preSkip;
       this.metadata.setFormat('numberOfSamples', pos_48bit);
