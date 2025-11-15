@@ -127,7 +127,7 @@ export interface IPageConsumer {
   /**
    * Calculate duration of provided header
    */
-  calculateDuration(): void;
+  calculateDuration(enfOfStream: boolean): void;
 
   /**
    * Force to parse pending segments
