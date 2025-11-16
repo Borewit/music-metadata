@@ -150,7 +150,7 @@ export class MP4Parser extends BasicParser {
     return Number(token.get(array, 0));
   }
 
-  private audioLengthInBytes: number | undefined;
+  private audioLengthInBytes = 0;
   private tracks = new Map<number, ITrackDescription>();
   private hasVideoTrack = false;
   private hasAudioTrack = true;
@@ -160,6 +160,7 @@ export class MP4Parser extends BasicParser {
 
     this.hasVideoTrack = false;
     this.hasAudioTrack = true;
+    this.audioLengthInBytes = 0;
     this.tracks.clear();
 
     let remainingFileSize = this.tokenizer.fileInfo.size || 0;
@@ -609,7 +610,7 @@ export class MP4Parser extends BasicParser {
      */
     mdat: async (len: number) => {
 
-      this.audioLengthInBytes = len;
+      this.audioLengthInBytes += len;
       this.calculateBitRate();
 
       if (this.options.includeChapters) {

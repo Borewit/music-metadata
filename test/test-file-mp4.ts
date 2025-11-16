@@ -569,6 +569,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.duration, 96.98331065759638, 1 / 1000000, 'format.duration');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
+    assert.approximately(format.bitrate, 1449779,1 ,'format.bitrate (over multiple mdat boxes)');
   });
 
 });
