@@ -5,7 +5,7 @@ import { BasicParser } from '../common/BasicParser.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 import { Atom } from './Atom.js';
 import * as AtomToken from './AtomToken.js';
-import { ChapterTrackReferenceBox, Mp4ContentError, } from './AtomToken.js';
+import { ChapterTrackReferenceBox, Mp4ContentError } from './AtomToken.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
 
 import type { IGetToken } from '@tokenizer/token';
@@ -52,7 +52,16 @@ interface ITrackDescription {
   sampleToChunkTable: AtomToken.ISampleToChunk[];
   timeToSampleTable: AtomToken.ITimeToSampleToken[];
   handler: AtomToken.IHandlerBox;
-  fragments: {trackRun: AtomToken.ITrackRunBox, header: AtomToken.ITrackFragmentHeaderBox}[];
+  fragments: { trackRun: AtomToken.ITrackRunBox, header: AtomToken.ITrackFragmentHeaderBox }[];
+
+  isAudio(): boolean;
+
+  isVideo(): boolean;
+
+  samples?: number;
+  sampleRate?: number;
+  duration?: number;
+  sizeInBytes?: number;
 }
 
 type IAtomParser = (payloadLength: number) => Promise<void>;
@@ -150,7 +159,6 @@ export class MP4Parser extends BasicParser {
     return Number(token.get(array, 0));
   }
 
-  private audioLengthInBytes = 0;
   private tracks = new Map<number, ITrackDescription>();
   private hasVideoTrack = false;
   private hasAudioTrack = true;
@@ -160,7 +168,6 @@ export class MP4Parser extends BasicParser {
 
     this.hasVideoTrack = false;
     this.hasAudioTrack = true;
-    this.audioLengthInBytes = 0;
     this.tracks.clear();
 
     let remainingFileSize = this.tokenizer.fileInfo.size || 0;
@@ -227,32 +234,45 @@ export class MP4Parser extends BasicParser {
       return track.soundSampleDescription.length >= 1 && track.soundSampleDescription[0].description && track.soundSampleDescription[0].description.numAudioChannels > 0;
     });
 
-    if (audioTracks.length >= 1) {
-      const audioTrack = audioTracks[0];
-
+    // Calculate duration and bitrate of audio tracks
+    for (const audioTrack of audioTracks) {
       if (audioTrack.media.header && audioTrack.media.header.timeScale > 0) {
+        audioTrack.sampleRate = audioTrack.media.header.timeScale;
         if (audioTrack.media.header.duration > 0) {
           debug('Using duration defined on audio track');
-          const duration = audioTrack.media.header.duration / audioTrack.media.header.timeScale; // calculate duration in seconds
-          this.metadata.setFormat('duration', duration);
-        } else if (audioTrack.fragments.length > 0) {
+          audioTrack.samples = audioTrack.media.header.duration;
+          audioTrack.duration = audioTrack.samples / audioTrack.sampleRate;
+        }
+
+        if (audioTrack.fragments.length > 0) {
           debug('Calculate duration defined in track fragments');
 
           let totalTimeUnits = 0;
+          audioTrack.sizeInBytes = 0;
           for (const fragment of audioTrack.fragments) {
-            const defaultDuration = fragment.header.defaultSampleDuration;
 
             for (const sample of fragment.trackRun.samples) {
-              const dur = sample.sampleDuration ?? defaultDuration;
-
-              if (dur == null) {
-                throw new Error("Missing sampleDuration and no default_sample_duration in tfhd");
+              const dur = sample.sampleDuration ?? fragment.header.defaultSampleDuration ?? 0;
+              const size = sample.sampleSize ?? fragment.header.defaultSampleSize ?? 0;
+              if (dur === 0) {
+                throw new Error("Missing sampleDuration and no defaultSampleDuration in track fragment header");
+              }
+              if (size === 0) {
+                throw new Error("Missing sampleSize and no defaultSampleSize in track fragment header");
               }
 
               totalTimeUnits += dur;
+              audioTrack.sizeInBytes += size;
             }
           }
-          this.metadata.setFormat('duration', totalTimeUnits / audioTrack.media.header.timeScale);
+          if (!audioTrack.samples) {
+            audioTrack.samples = totalTimeUnits;
+          }
+          if (!audioTrack.duration) {
+            audioTrack.duration = totalTimeUnits / audioTrack.sampleRate;
+          }
+        } else if (audioTrack.sampleSizeTable.length > 0) {
+          audioTrack.sizeInBytes = audioTrack.sampleSizeTable.reduce((sum, n) => sum + n, 0);
         }
       }
 
@@ -266,16 +286,23 @@ export class MP4Parser extends BasicParser {
           const totalSampleSize = audioTrack.timeToSampleTable
             .map(ttstEntry => ttstEntry.count * ttstEntry.duration)
             .reduce((total, sampleSize) => total + sampleSize);
-          const duration = totalSampleSize / ssd.description.sampleRate;
-          this.metadata.setFormat('duration', duration);
+          audioTrack.duration = totalSampleSize / ssd.description.sampleRate;
         }
       }
       const encoderInfo = encoderDict[ssd.dataFormat];
       if (encoderInfo) {
         this.metadata.setFormat('lossless', !encoderInfo.lossy);
       }
+    }
 
-      this.calculateBitRate();
+    if (audioTracks.length >= 1) {
+      const firstAudioTrack = audioTracks[0];
+      if (firstAudioTrack.duration) {
+        this.metadata.setFormat('duration', firstAudioTrack.duration);
+        if (firstAudioTrack.sizeInBytes) {
+          this.metadata.setFormat('bitrate', 8 * firstAudioTrack.sizeInBytes / firstAudioTrack.duration);
+        }
+      }
     }
 
     this.metadata.setFormat('hasAudio', this.hasAudioTrack);
@@ -288,16 +315,16 @@ export class MP4Parser extends BasicParser {
         case 'ilst':
         case '<id>':
           return this.parseMetadataItemData(atom);
-         case 'moov':
-           switch(atom.header.name) {
-             case 'trak':
-               return this.parseTrackBox(atom);
-             case 'udta':
-               return this.parseTrackBox(atom);
-           }
-           break;
+        case 'moov':
+          switch (atom.header.name) {
+            case 'trak':
+              return this.parseTrackBox(atom);
+            case 'udta':
+              return this.parseTrackBox(atom);
+          }
+          break;
         case 'moof':
-          switch(atom.header.name) {
+          switch (atom.header.name) {
             case 'traf':
               return this.parseTrackFragmentBox(atom);
           }
@@ -317,12 +344,6 @@ export class MP4Parser extends BasicParser {
     // ToDo: pick the right track, not the last track!!!!
     const tracks = [...this.tracks.values()];
     return tracks[tracks.length - 1];
-  }
-
-  private calculateBitRate() {
-    if (this.audioLengthInBytes && this.metadata.format.duration) {
-      this.metadata.setFormat('bitrate', 8 * this.audioLengthInBytes / this.metadata.format.duration);
-    }
   }
 
   private async addTag(id: string, value: AnyTagValue): Promise<void> {
@@ -478,15 +499,14 @@ export class MP4Parser extends BasicParser {
 
         case 'hdlr': // TrackHeaderBox
           track.handler = await this.tokenizer.readToken(new AtomToken.HandlerBox(payLoadLength));
-          switch (track.handler.handlerType) {
-            case 'audi':
-              debug('Contains audio track');
-              this.hasAudioTrack = true;
-              break;
-            case 'vide':
-              debug('Contains video track');
-              this.hasVideoTrack = true;
-              break;
+
+          track.isAudio = () => track.handler.handlerType === 'audi' || track.handler.handlerType === 'soun';
+          track.isVideo = () => track.handler.handlerType === 'vide';
+
+          if (track.isAudio()) {
+            this.hasAudioTrack = true;
+          } else if (track.isVideo()) {
+            this.hasVideoTrack = true;
           }
           break;
 
@@ -497,9 +517,9 @@ export class MP4Parser extends BasicParser {
         }
 
         case 'stco': {
-           const stco = await this.tokenizer.readToken(new AtomToken.StcoAtom(payLoadLength));
-           track.chunkOffsetTable = stco.entries; // remember chunk offsets
-           break;
+          const stco = await this.tokenizer.readToken(new AtomToken.StcoAtom(payLoadLength));
+          track.chunkOffsetTable = stco.entries; // remember chunk offsets
+          break;
         }
 
         case 'stsc': { // sample-to-Chunk box
@@ -609,9 +629,6 @@ export class MP4Parser extends BasicParser {
      * Will scan for chapters
      */
     mdat: async (len: number) => {
-
-      this.audioLengthInBytes += len;
-      this.calculateBitRate();
 
       if (this.options.includeChapters) {
         const trackWithChapters = [...this.tracks.values()].filter(track => track.chapterList);

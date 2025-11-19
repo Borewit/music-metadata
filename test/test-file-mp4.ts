@@ -569,7 +569,19 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.duration, 96.98331065759638, 1 / 1000000, 'format.duration');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
-    assert.approximately(format.bitrate, 1449779,1 ,'format.bitrate (over multiple mdat boxes)');
+    assert.approximately(format.bitrate, 127947,1/2 ,'format.bitrate');
+  });
+
+  it('bitrate id4.m4a', async () => {
+
+    const filePath = path.join(mp4Samples, 'id4.m4a');
+    const {format} = await mm.parseFile(filePath, {duration: true});
+
+    assert.strictEqual(format.container, 'M4A/isom/iso2', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
+    assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
+    assert.approximately(format.bitrate, 147916,1,'format.bitrate');
   });
 
 });
