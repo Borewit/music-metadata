@@ -110,7 +110,7 @@
     "@tokenizer/token": "^0.3.0",
     "content-type": "^1.0.5",
     "debug": "^4.4.3",
-    "file-type": "^21.1.0",
+    "file-type": "^21.1.1",
     "media-typer": "^1.1.0",
     "strtok3": "^10.3.4",
     "token-types": "^6.1.1",
