@@ -377,4 +377,24 @@ describe('Parse MP3 files', () => {
     });
   });
 
+  it('should parse id3v2 Chapters', async () => {
+    const filePath = path.join(mp3SamplePath, 'chapters.mp3');
+
+    const {format, common, native} = await mm.parseFile(filePath, {includeChapters: true});
+
+    assert.strictEqual(format.container, 'MPEG');
+    assert.strictEqual(format.codec, 'MPEG 2 Layer 3');
+    assert.strictEqual(common.artist, 'Borewit', 'common.artist');
+
+    assert.isDefined(format.chapters, 'format.chapters');
+    assert.strictEqual(format.chapters.length, 3, 'format.chapters.length');
+    assert.strictEqual(format.chapters[0].title, 'Introduction','format.chapters[0].title');
+    assert.deepEqual(format.chapters[0].url, {url: 'https://github.com/Borewit/music-metadata', description: ''}, 'format.chapters[0].url');
+    assert.isDefined(format.chapters[0].image,'format.chapters[0].image,');
+    assert.strictEqual(format.chapters[0].image.data.length,689, 'format.chapters[0].image.data.length');
+    assert.strictEqual(format.chapters[0].start, 0,'format.chapters[0].start');
+    assert.strictEqual(format.chapters[0].end, 1.0,'format.chapters[0].end');
+    assert.isUndefined(format.chapters[0].sampleOffset,'format.chapters[0].sampleOffset');
+  });
+
 });

@@ -73,7 +73,7 @@ Following tag header formats are supported:
 - [APE](https://wikipedia.org/wiki/APE_tag)
 - [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)
 - EXIF 2.3
-- [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0) & [ID3v2.4](http://id3.org/id3v2.4.0-frames)
+- [ID3](https://wikipedia.org/wiki/ID3): ID3v1, ID3v1.1, ID3v2.2, [ID3v2.3](http://id3.org/id3v2.3.0), [ID3v2.4](http://id3.org/id3v2.4.0-frames) and [ID3v2 Chapters 1.0](https://mutagen-specs.readthedocs.io/en/latest/id3/id3v2-chapters-1.0.html)
 - [iTunes](https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata)
 - [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 - [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
