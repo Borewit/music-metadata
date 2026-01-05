@@ -182,7 +182,7 @@ export class FrameParser {
       }
 
       case 'TXXX': {
-        const idAndData = FrameParser.readIdentifierAndData(uint8Array, offset + 1, length, encoding);
+        const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
         const textTag = {
           description: idAndData.id,
           text: this.splitValue(type, util.decodeString(idAndData.data, encoding).replace(/\x00+$/, ''))
@@ -291,13 +291,13 @@ export class FrameParser {
       }
 
       case 'UFID': {
-        const ufid = FrameParser.readIdentifierAndData(uint8Array, offset, length, defaultEnc);
+        const ufid = FrameParser.readIdentifierAndData(uint8Array.subarray(offset), defaultEnc);
         output = {owner_identifier: ufid.id, identifier: ufid.data} as IIdentifierTag;
         break;
       }
 
       case 'PRIV': { // private frame
-        const priv = FrameParser.readIdentifierAndData(uint8Array, offset, length, defaultEnc);
+        const priv = FrameParser.readIdentifierAndData(uint8Array.subarray(offset), defaultEnc);
         output = {owner_identifier: priv.id, data: priv.data} as ICustomDataTag;
         break;
       }
@@ -446,19 +446,18 @@ export class FrameParser {
     return values.map(value => value.replace(/\x00+$/, '').trim());
   }
 
-  private static readIdentifierAndData(uint8Array: Uint8Array, offset: number, length: number, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
-    const fzero = util.findZero(uint8Array, offset, length, encoding);
+  private static readIdentifierAndData(uint8Array: Uint8Array, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
+    const fzero = util.findZero(uint8Array, 0, uint8Array.length, encoding);
 
-    const id = util.decodeString(uint8Array.subarray(offset, fzero), encoding);
-    offset = fzero + FrameParser.getNullTerminatorLength(encoding);
+    const id = util.decodeString(uint8Array.subarray(0, fzero), encoding);
+    const offset = fzero + FrameParser.getNullTerminatorLength(encoding);
 
-    return {id, data: uint8Array.subarray(offset, length)};
+    return {id, data: uint8Array.subarray(offset)};
   }
 
   private static getNullTerminatorLength(enc: util.StringEncoding): number {
     return enc === 'utf-16le' ? 2 : 1;
   }
-
 }
 
 export class Id3v2ContentError extends makeUnexpectedFileContentError('id3v2'){
