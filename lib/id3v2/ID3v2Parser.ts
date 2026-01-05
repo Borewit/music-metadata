@@ -5,7 +5,7 @@ import type { TagType } from '../common/GenericTagTypes.js';
 import { FrameParser, Id3v2ContentError, type ITextTag } from './FrameParser.js';
 import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header } from './ID3v2Token.js';
 
-import type { ITag, IOptions, AnyTagValue } from '../type.js';
+import type { ITag, IOptions, AnyTagValue, IChapter } from '../type.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 
 import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
@@ -101,7 +101,11 @@ export class ID3v2Parser {
 
     this.headerType = (`ID3v2.${id3Header.version.major}`) as TagType;
 
-    return id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size);
+    await (id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size));
+
+    // Post process
+    const chapters = ID3v2Parser.mapId3v2Chapters(this.metadata.native[this.headerType], this.metadata.format.sampleRate);
+    this.metadata.setFormat('chapters', chapters);
   }
 
   public async parseExtendedHeader(): Promise<void> {
@@ -168,6 +172,60 @@ export class ID3v2Parser {
     return tags;
   }
 
+  /**
+   * Convert parsed ID3v2 chapter frames (CHAP / CTOC) to generic `format.chapters`.
+   *
+   * This function expects the `native` tags already to contain parsed `CHAP` and `CTOC` frame values,
+   * as produced by `FrameParser.readData`.
+   */
+  private static mapId3v2Chapters(
+    id3Tags: ITag[],
+    sampleRate?: number
+  ): IChapter[] | undefined {
+
+    const chapFrames = id3Tags.filter(t => t.id === 'CHAP') as any[] | undefined;
+    if (!chapFrames?.length) return;
+
+    const tocFrames = id3Tags.filter(t => t.id === 'CTOC') as any[] | undefined;
+    const topLevelToc = tocFrames?.find(t => t.value.flags?.topLevel);
+
+    const chapterById = new Map<string, any>();
+    for (const chap of chapFrames) {
+      chapterById.set(chap.value.label, chap.value);
+    }
+
+    const orderedIds: string[] | undefined =
+      topLevelToc?.value.childElementIds;
+
+    const chapters: IChapter[] = [];
+
+    const source = orderedIds ?? [...chapterById.keys()];
+
+    for (const id of source) {
+      const chap = chapterById.get(id);
+      if (!chap) continue;
+
+      const frames = chap.frames;
+      const title = frames.get('TIT2');
+      if (!title) continue; // title is required
+
+      chapters.push({
+        id,
+        title,
+        url: frames.get('WXXX'),
+        start: chap.info.startTime / 1000,
+        end: chap.info.endTime / 1000,
+        image: frames.get('APIC')
+      });
+    }
+
+    // If no ordered CTOC, sort by time
+    if (!orderedIds) {
+      chapters.sort((a, b) => a.start - b.start);
+    }
+
+    return chapters.length ? chapters : undefined;
+  }
 }
 
 function makeUnexpectedMajorVersionError(majorVer: number): never {

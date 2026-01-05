@@ -542,25 +542,54 @@ export interface ITag {
   value: AnyTagValue;
 }
 
+export interface IUrl {
+  url: string;
+  description: string;
+}
+
 export interface IChapter {
+
+  /**
+   * Internal chapter reference
+   */
+  id?: string;
+
   /**
    * Chapter title
    */
   title: string;
+
+  /**
+   * URL
+   */
+  url?: IUrl;
+
   /**
    * Audio offset in sample number, 0 is the first sample.
    * Duration offset is sampleOffset / format.sampleRate
    */
-  sampleOffset: number;
+  sampleOffset?: number;
   /**
    * Timestamp where the chapter starts
    * Chapter timestamp is start/timeScale in seconds.
    */
   start: number;
+
   /**
-   * Time value that indicates the time scale for chapter tracks, the number of time units that pass per second in its time coordinate system.
+   * Timestamp where the chapter end
+   * Chapter timestamp is start/timeScale in seconds.
    */
-  timeScale: number;
+  end?: number;
+
+  /**
+   * Time value that indicates the timescale for chapter tracks, the number of time units that pass per second in its time coordinate system.
+   */
+  timeScale?: number;
+
+  /**
+   * Picture
+   */
+  image?: IPicture;
 }
 
 /**

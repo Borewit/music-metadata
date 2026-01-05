@@ -9,6 +9,8 @@ import type { IWarningCollector } from '../common/MetadataCollector.js';
 import type { IComment, ILyricsTag } from '../type.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import { decodeUintBE } from '../common/Util.js';
+import { ChapterInfo, type IChapterInfo } from './ID3v2ChapterToken.js';
+import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
@@ -48,6 +50,24 @@ export interface IGeneralEncapsulatedObject {
   filename: string;
   description: string;
   data: Uint8Array;
+}
+
+export type Chapter = {
+  label: string;
+  info: IChapterInfo;
+  frames: Map<string, unknown>,
+}
+
+export type TableOfContents = {
+  label: string;
+  flags: {
+    /** If set, this is the top-level table of contents */
+    topLevel: boolean;
+    /** If set, the child element IDs are in a defined order */
+    ordered: boolean;
+  };
+  childElementIds: string[];
+  frames: Map<string, unknown>;
 }
 
 const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
@@ -156,6 +176,9 @@ export class FrameParser {
           case 'TRK':
           case 'TRCK':
           case 'TPOS':
+          case 'TIT1':
+          case 'TIT2':
+          case 'TIT3':
             output = text;
             break;
           case 'TCOM':
@@ -185,11 +208,10 @@ export class FrameParser {
 
       case 'TXXX': {
         const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
-        const textTag = {
+        output = {
           description: idAndData.id,
           text: this.splitValue(type, util.decodeString(idAndData.data, encoding).replace(/\x00+$/, ''))
         };
-        output = textTag;
         break;
       }
 
@@ -391,6 +413,79 @@ export class FrameParser {
       case 'MCDI': {
         // Music CD identifier
         output = uint8Array.subarray(0, length);
+        break;
+      }
+
+      // ID3v2 Chapters 1.0
+      // https://mutagen-specs.readthedocs.io/en/latest/id3/id3v2-chapters-1.0.html#chapter-frame
+      case 'CHAP': { //  // Chapter frame
+        debug("Reading CHAP");
+        fzero = util.findZero(uint8Array, defaultEnc);
+
+        const chapter: Chapter = {
+          label: util.decodeString(uint8Array.subarray(0, fzero), defaultEnc),
+          info: ChapterInfo.get(uint8Array, fzero + 1),
+          frames: new Map()
+        };
+        offset += fzero + 1 + ChapterInfo.len;
+
+        while (offset < length) {
+          const subFrame = readFrameHeader(uint8Array.subarray(offset), this.major, this.warningCollector);
+          const headerSize = getFrameHeaderLength(this.major);
+          offset += headerSize;
+          const subOutput = this.readData(uint8Array.subarray(offset, offset + subFrame.length), subFrame.id, includeCovers);
+          offset += subFrame.length;
+
+          chapter.frames.set(subFrame.id, subOutput);
+        }
+        output = chapter;
+        break;
+      }
+
+      // ID3v2 Chapters 1.0
+      // https://mutagen-specs.readthedocs.io/en/latest/id3/id3v2-chapters-1.0.html#table-of-contents-frame
+      case 'CTOC': { // Table of contents frame
+        debug('Reading CTOC');
+
+        // Element ID (null-terminated latin1)
+        const idEnd = util.findZero(uint8Array, defaultEnc);
+        const label = util.decodeString(uint8Array.subarray(0, idEnd), defaultEnc);
+        offset = idEnd + 1;
+
+        // Flags
+        const flags = uint8Array[offset++];
+        const topLevel = (flags & 0x02) !== 0;
+        const ordered = (flags & 0x01) !== 0;
+
+        // Child element IDs
+        const entryCount = uint8Array[offset++];
+        const childElementIds: string[] = [];
+        for (let i = 0; i < entryCount && offset < length; i++) {
+          const end = util.findZero(uint8Array.subarray(offset), defaultEnc);
+          const childId = util.decodeString(uint8Array.subarray(offset, offset + end), defaultEnc);
+          childElementIds.push(childId);
+          offset += end + 1;
+        }
+
+        const toc: TableOfContents = {
+          label,
+          flags: { topLevel, ordered },
+          childElementIds,
+          frames: new Map()
+        };
+
+        // Optional embedded sub-frames (e.g. TIT2) follow after the child list
+        while (offset < length) {
+          const subFrame = readFrameHeader(uint8Array.subarray(offset), this.major, this.warningCollector);
+          const headerSize = getFrameHeaderLength(this.major);
+          offset += headerSize;
+          const subOutput = this.readData(uint8Array.subarray(offset, offset + subFrame.length), subFrame.id, includeCovers);
+          offset += subFrame.length;
+
+          toc.frames.set(subFrame.id, subOutput);
+        }
+
+        output = toc;
         break;
       }
 
