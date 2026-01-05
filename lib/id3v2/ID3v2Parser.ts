@@ -1,15 +1,14 @@
 import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
-import * as util from '../common/Util.js';
 import type { TagType } from '../common/GenericTagTypes.js';
 import { FrameParser, Id3v2ContentError, type ITextTag } from './FrameParser.js';
-import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
+import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header } from './ID3v2Token.js';
 
 import type { ITag, IOptions, AnyTagValue } from '../type.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 
-import { textDecode } from '@borewit/text-codec';
+import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
 
 interface IFrameFlags {
   status: {
@@ -48,35 +47,6 @@ export class ID3v2Parser {
       buffer[writeI++] = buffer[readI];
     }
     return buffer.subarray(0, writeI);
-  }
-
-  private static getFrameHeaderLength(majorVer: number): number {
-    switch (majorVer) {
-      case 2:
-        return 6;
-      case 3:
-      case 4:
-        return 10;
-      default:
-        throw makeUnexpectedMajorVersionError(majorVer);
-    }
-  }
-
-  private static readFrameFlags(b: Uint8Array): IFrameFlags {
-    return {
-      status: {
-        tag_alter_preservation: util.getBit(b, 0, 6),
-        file_alter_preservation: util.getBit(b, 0, 5),
-        read_only: util.getBit(b, 0, 4)
-      },
-      format: {
-        grouping_identity: util.getBit(b, 1, 7),
-        compression: util.getBit(b, 1, 3),
-        encryption: util.getBit(b, 1, 2),
-        unsynchronisation: util.getBit(b, 1, 1),
-        data_length_indicator: util.getBit(b, 1, 0)
-      }
-    };
   }
 
   private static readFrameData(uint8Array: Uint8Array, frameHeader: IFrameHeader, majorVer: ID3v2MajorVersion, includeCovers: boolean, warningCollector: IWarningCollector) {
@@ -177,7 +147,7 @@ export class ID3v2Parser {
     while (true) {
       if (offset === data.length) break;
 
-      const frameHeaderLength = ID3v2Parser.getFrameHeaderLength(this.id3Header.version.major);
+      const frameHeaderLength = getFrameHeaderLength(this.id3Header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
         this.metadata.addWarning('Illegal ID3v2 tag length');
@@ -186,7 +156,7 @@ export class ID3v2Parser {
 
       const frameHeaderBytes = data.subarray(offset, offset + frameHeaderLength);
       offset += frameHeaderLength;
-      const frameHeader = this.readFrameHeader(frameHeaderBytes, this.id3Header.version.major);
+      const frameHeader = readFrameHeader(frameHeaderBytes, this.id3Header.version.major, this.metadata);
 
       const frameDataBytes = data.subarray(offset, offset + frameHeader.length);
       offset += frameHeader.length;
@@ -198,37 +168,6 @@ export class ID3v2Parser {
     return tags;
   }
 
-  private readFrameHeader(uint8Array: Uint8Array, majorVer: number): IFrameHeader {
-    let header: IFrameHeader;
-    switch (majorVer) {
-
-      case 2:
-        header = {
-          id: textDecode(uint8Array.subarray(0, 3), 'ascii'),
-          length: Token.UINT24_BE.get(uint8Array, 3)
-        };
-        if (!header.id.match(/[A-Z0-9]{3}/g)) {
-          this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
-        }
-        break;
-
-      case 3:
-      case 4:
-        header = {
-          id: textDecode(uint8Array.subarray(0, 4), 'ascii'),
-          length: (majorVer === 4 ?  UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
-          flags: ID3v2Parser.readFrameFlags(uint8Array.subarray(8, 10))
-        };
-        if (!header.id.match(/[A-Z0-9]{4}/g)) {
-          this.metadata.addWarning(`Invalid ID3v2.${this.id3Header.version.major} frame-header-ID: ${header.id}`);
-        }
-        break;
-
-      default:
-        throw makeUnexpectedMajorVersionError(majorVer);
-    }
-    return header;
-  }
 }
 
 function makeUnexpectedMajorVersionError(majorVer: number) {

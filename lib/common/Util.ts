@@ -64,7 +64,8 @@ export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): 
   // https://github.com/leetreveil/musicmetadata/issues/84
   if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) { // little endian
     return decodeString(uint8Array.subarray(2), encoding);
-  }if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
+  }
+  if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
     // BOM, indicating big endian decoding
     if ((uint8Array.length & 1) !== 0)
       throw new FieldDecodingError('Expected even number of octets for 16-bit unicode string');
