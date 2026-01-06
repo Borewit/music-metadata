@@ -137,7 +137,7 @@ export class FrameParser {
         debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         let text: string;
         try {
-          text = util.decodeString(uint8Array.subarray(1), encoding).replace(/\x00+$/, '');
+          text = FrameParser.trimNullPadding(util.decodeString(uint8Array.subarray(1), encoding));
         } catch (error) {
           if (error instanceof Error) {
             this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
@@ -167,7 +167,7 @@ export class FrameParser {
             break;
           case 'TCO':
           case 'TCON':
-            output = this.splitValue(type, text).map(v => parseGenre(v)).reduce((acc, val) => acc.concat(val), []);
+            output = this.splitValue(type, text).flatMap(v => parseGenre(v));
             break;
           case 'PCS':
           case 'PCST':
@@ -187,7 +187,7 @@ export class FrameParser {
         const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
         const textTag = {
           description: idAndData.id,
-          text: this.splitValue(type, util.decodeString(idAndData.data, encoding).replace(/\x00+$/, ''))
+          text: this.splitValue(type, FrameParser.trimNullPadding(util.decodeString(idAndData.data, encoding)))
         };
         output = textTag;
         break;
@@ -276,6 +276,11 @@ export class FrameParser {
       case 'COM':
       case 'COMM': {
 
+        if (uint8Array.length < TextHeader.len) {
+          this.warningCollector.addWarning(`id3v2.${this.major} type=${type} frame too short for text header`);
+          break;
+        }
+
         const textHeader = TextHeader.get(uint8Array, offset);
         offset += TextHeader.len;
 
@@ -307,18 +312,26 @@ export class FrameParser {
       }
 
       case 'POPM': { // Popularimeter
-        uint8Array = uint8Array.subarray(offset);
-        const emailStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
-        const email = emailStr.text;
-        uint8Array = uint8Array.subarray(emailStr.len);
-        const valueLen = uint8Array.length - Token.UINT8.len;
-        output = {
-          email,
-          rating: Token.UINT8.get(uint8Array, 0),
-          counter: valueLen > 0 ? util.decodeUintBE(uint8Array.subarray(Token.UINT8.len)) : undefined
-        };
-        break;
-      }
+  uint8Array = uint8Array.subarray(offset);
+  const emailStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
+  const email = emailStr.text;
+  uint8Array = uint8Array.subarray(emailStr.len);
+
+  if (uint8Array.length === 0) {
+    this.warningCollector.addWarning(`id3v2.${this.major} type=${type} POPM frame missing rating byte`);
+    output = { email, rating: 0, counter: undefined };
+    break;
+  }
+
+  const rating = Token.UINT8.get(uint8Array, 0);
+  const counterBytes = uint8Array.subarray(Token.UINT8.len);
+  output = {
+    email,
+    rating,
+    counter: counterBytes.length > 0 ? decodeUintBE(counterBytes) : undefined
+  };
+  break;
+}
 
       case 'GEOB': {  // General encapsulated object
         const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
@@ -367,7 +380,7 @@ export class FrameParser {
         const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
         const description = descriptionStr.text;
         uint8Array = uint8Array.subarray(descriptionStr.len);
-        output = {description, url: util.decodeString(uint8Array, defaultEnc).replace(/\x00+$/, '')};
+        output = {description, url: FrameParser.trimNullPadding(util.decodeString(uint8Array, defaultEnc))};
         break;
       }
 
@@ -396,17 +409,26 @@ export class FrameParser {
   }
 
   protected static readNullTerminatedString(uint8Array: Uint8Array, encoding: ITextEncoding): { text: string, len: number } {
-    const bomSize = encoding.bom ? 2: 0;
-    uint8Array = uint8Array.subarray(bomSize);
+  const bomSize = encoding.bom ? 2 : 0;
+  const originalLen = uint8Array.length;
+  uint8Array = uint8Array.subarray(bomSize);
 
-    const zeroIndex = util.findZero(uint8Array, encoding.encoding);
-    const txt = uint8Array.subarray(0, zeroIndex);
-
+  const zeroIndex = util.findZero(uint8Array, encoding.encoding);
+  if (zeroIndex === -1) {
+    // No terminator found, decode full buffer
     return {
-      text: util.decodeString(txt, encoding.encoding),
-      len: bomSize + zeroIndex + FrameParser.getNullTerminatorLength(encoding.encoding)
+      text: util.decodeString(uint8Array, encoding.encoding),
+      len: originalLen
     };
   }
+
+  const txt = uint8Array.subarray(0, zeroIndex);
+
+  return {
+    text: util.decodeString(txt, encoding.encoding),
+    len: bomSize + zeroIndex + FrameParser.getNullTerminatorLength(encoding.encoding)
+  };
+}
 
   protected static fixPictureMimeType(pictureType: string): string {
     pictureType = pictureType.toLocaleLowerCase();
@@ -455,8 +477,16 @@ export class FrameParser {
   }
 
   private static trimArray(values: string[]): string[] {
-    return values.map(value => value.replace(/\x00+$/, '').trim());
+  return values.map(value => FrameParser.trimNullPadding(value).trim());
+}
+
+private static trimNullPadding(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 0) {
+    end--;
   }
+  return end === value.length ? value : value.slice(0, end);
+}
 
   private static readIdentifierAndData(uint8Array: Uint8Array, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
     const idStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom: false});
@@ -464,7 +494,7 @@ export class FrameParser {
   }
 
   private static getNullTerminatorLength(enc: util.StringEncoding): number {
-    return enc === 'utf-16le' ? 2 : 1;
+    return enc.startsWith('utf-16') ? 2 : 1;
   }
 }
 
