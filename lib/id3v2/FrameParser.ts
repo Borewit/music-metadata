@@ -51,6 +51,7 @@ export interface IGeneralEncapsulatedObject {
 }
 
 const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
+const urlEnc: ITextEncoding = {encoding: defaultEnc, bom: false};
 
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
@@ -120,11 +121,14 @@ export class FrameParser {
       this.warningCollector.addWarning(`id3v2.${this.major} header has empty tag type=${type}`);
       return;
     }
+    const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
     const length = uint8Array.length;
     let offset = 0;
     let output: unknown = []; // ToDo
+    const nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
+    let fzero: number;
 
-    debug(`Parsing tag type=${type}`);
+    debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
       case 'T*': // 4.2.1. Text information frames - details
       case 'GRP1': // iTunes-specific ID3v2 grouping field
@@ -133,8 +137,6 @@ export class FrameParser {
       case 'MVNM':
       case 'PCS':
       case 'PCST': {
-        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
-        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         let text: string;
         try {
           text = FrameParser.trimNullPadding(util.decodeString(uint8Array.subarray(1), encoding));
@@ -167,7 +169,7 @@ export class FrameParser {
             break;
           case 'TCO':
           case 'TCON':
-            output = this.splitValue(type, text).flatMap(v => parseGenre(v));
+            output = this.splitValue(type, text).map(v => parseGenre(v)).reduce((acc, val) => acc.concat(val), []);
             break;
           case 'PCS':
           case 'PCST':
@@ -182,12 +184,10 @@ export class FrameParser {
       }
 
       case 'TXXX': {
-        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
-        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
         const textTag = {
           description: idAndData.id,
-          text: this.splitValue(type, FrameParser.trimNullPadding(util.decodeString(idAndData.data, encoding)))
+          text: this.splitValue(type, util.decodeString(idAndData.data, encoding).replace(/\x00+$/, ''))
         };
         output = textTag;
         break;
@@ -196,8 +196,6 @@ export class FrameParser {
       case 'PIC':
       case 'APIC':
         if (includeCovers) {
-          const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
-          debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
           const pic: IPicture = {};
 
           uint8Array = uint8Array.subarray(1);
@@ -208,11 +206,10 @@ export class FrameParser {
               uint8Array = uint8Array.subarray(3);
               break;
             case 3:
-            case 4: {
-              const formatStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
-              pic.format = formatStr.text;
-              uint8Array = uint8Array.subarray(formatStr.len);
-            }
+            case 4:
+              fzero = util.findZero(uint8Array, defaultEnc);
+              pic.format = util.decodeString(uint8Array.subarray(0, fzero), defaultEnc);
+              uint8Array = uint8Array.subarray(fzero + 1);
               break;
 
             default:
@@ -224,9 +221,9 @@ export class FrameParser {
           pic.type = AttachedPictureType[uint8Array[0] as keyof typeof AttachedPictureType];
           uint8Array = uint8Array.subarray(1);
 
-          const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
-          pic.description = descriptionStr.text;
-          uint8Array = uint8Array.subarray(descriptionStr.len);
+          fzero = util.findZero(uint8Array, encoding);
+          pic.description = util.decodeString(uint8Array.subarray(0, fzero), encoding);
+          uint8Array = uint8Array.subarray(fzero + nullTerminatorLength);
           pic.data = uint8Array;
           output = pic;
         }
@@ -276,11 +273,6 @@ export class FrameParser {
       case 'COM':
       case 'COMM': {
 
-        if (uint8Array.length < TextHeader.len) {
-          this.warningCollector.addWarning(`id3v2.${this.major} type=${type} frame too short for text header`);
-          break;
-        }
-
         const textHeader = TextHeader.get(uint8Array, offset);
         offset += TextHeader.len;
 
@@ -300,20 +292,21 @@ export class FrameParser {
       }
 
       case 'UFID': {
-        const ufid = FrameParser.readIdentifierAndData(uint8Array.subarray(offset), defaultEnc);
+        const ufid = FrameParser.readIdentifierAndData(uint8Array, defaultEnc);
         output = {owner_identifier: ufid.id, identifier: ufid.data} as IIdentifierTag;
         break;
       }
 
       case 'PRIV': { // private frame
-        const priv = FrameParser.readIdentifierAndData(uint8Array.subarray(offset), defaultEnc);
+        const priv = FrameParser.readIdentifierAndData(uint8Array, defaultEnc);
         output = {owner_identifier: priv.id, data: priv.data} as ICustomDataTag;
         break;
       }
 
       case 'POPM': { // Popularimeter
         uint8Array = uint8Array.subarray(offset);
-        const emailStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
+
+        const emailStr = FrameParser.readNullTerminatedString(uint8Array, urlEnc);
         const email = emailStr.text;
         uint8Array = uint8Array.subarray(emailStr.len);
 
@@ -334,18 +327,19 @@ export class FrameParser {
       }
 
       case 'GEOB': {  // General encapsulated object
-        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
-        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
+        // [encoding] <MIME> 0x00 <filename> 0x00/0x00 0x00 <description> 0x00/0x00 0x00 <data>
+        const {encoding: geobEncoding, bom: geobBom} = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
-        const mimeTypeStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
+
+        const mimeTypeStr = FrameParser.readNullTerminatedString(uint8Array, urlEnc);
         const mimeType = mimeTypeStr.text;
         uint8Array = uint8Array.subarray(mimeTypeStr.len);
 
-        const filenameStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+        const filenameStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: geobEncoding, bom: geobBom});
         const filename = filenameStr.text;
         uint8Array = uint8Array.subarray(filenameStr.len);
 
-        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: geobEncoding, bom: geobBom});
         const description = descriptionStr.text;
         uint8Array = uint8Array.subarray(descriptionStr.len);
 
@@ -369,27 +363,28 @@ export class FrameParser {
       case 'WPAY':
       case 'WPUB':
         // Decode URL
-        output = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false}).text;
+        output = FrameParser.readNullTerminatedString(uint8Array, urlEnc).text;
         break;
 
       case 'WXXX': {
-        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
-        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
-        // Decode URL
+        // [encoding] <description> 0x00/0x00 0x00 <url>
+        const {encoding: wxxxEncoding, bom: wxxxBom} = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
-        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+
+        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: wxxxEncoding, bom: wxxxBom});
         const description = descriptionStr.text;
         uint8Array = uint8Array.subarray(descriptionStr.len);
+
+        // URL is always ISO-8859-1
         output = {description, url: FrameParser.trimNullPadding(util.decodeString(uint8Array, defaultEnc))};
         break;
       }
 
       case 'WFD':
       case 'WFED': {
-        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
-        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
+        const {encoding: wfdEncoding, bom: wfdBom} = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
-        output = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom}).text;
+        output = FrameParser.readNullTerminatedString(uint8Array, {encoding: wfdEncoding, bom: wfdBom}).text;
         break;
       }
 
@@ -413,9 +408,8 @@ export class FrameParser {
     const valueArray = uint8Array.subarray(bomSize);
 
     const zeroIndex = util.findZero(valueArray, encoding.encoding);
-
-    // findZero returns valueArray.length when no terminator is found
     if (zeroIndex >= valueArray.length) {
+      // No terminator found, decode full buffer remainder
       return {
         text: util.decodeString(valueArray, encoding.encoding),
         len: originalLen
@@ -423,7 +417,6 @@ export class FrameParser {
     }
 
     const txt = valueArray.subarray(0, zeroIndex);
-
     return {
       text: util.decodeString(txt, encoding.encoding),
       len: bomSize + zeroIndex + FrameParser.getNullTerminatorLength(encoding.encoding)
