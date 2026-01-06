@@ -120,12 +120,11 @@ export class FrameParser {
       this.warningCollector.addWarning(`id3v2.${this.major} header has empty tag type=${type}`);
       return;
     }
-    const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
     const length = uint8Array.length;
     let offset = 0;
     let output: unknown = []; // ToDo
 
-    debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
+    debug(`Parsing tag type=${type}`);
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
       case 'T*': // 4.2.1. Text information frames - details
       case 'GRP1': // iTunes-specific ID3v2 grouping field
@@ -134,6 +133,8 @@ export class FrameParser {
       case 'MVNM':
       case 'PCS':
       case 'PCST': {
+        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         let text: string;
         try {
           text = util.decodeString(uint8Array.subarray(1), encoding).replace(/\x00+$/, '');
@@ -181,6 +182,8 @@ export class FrameParser {
       }
 
       case 'TXXX': {
+        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
         const textTag = {
           description: idAndData.id,
@@ -193,6 +196,8 @@ export class FrameParser {
       case 'PIC':
       case 'APIC':
         if (includeCovers) {
+          const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+          debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
           const pic: IPicture = {};
 
           uint8Array = uint8Array.subarray(1);
@@ -316,6 +321,8 @@ export class FrameParser {
       }
 
       case 'GEOB': {  // General encapsulated object
+        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         uint8Array = uint8Array.subarray(1);
         const mimeTypeStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
         const mimeType = mimeTypeStr.text;
@@ -349,24 +356,30 @@ export class FrameParser {
       case 'WPAY':
       case 'WPUB':
         // Decode URL
-        output = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom}).text;
+        output = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false}).text;
         break;
 
       case 'WXXX': {
+        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         // Decode URL
         uint8Array = uint8Array.subarray(1);
         const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
         const description = descriptionStr.text;
         uint8Array = uint8Array.subarray(descriptionStr.len);
-        output = {description, url: util.decodeString(uint8Array, defaultEnc)};
+        output = {description, url: util.decodeString(uint8Array, defaultEnc).replace(/\x00+$/, '')};
         break;
       }
 
       case 'WFD':
       case 'WFED':
+        {
+        const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+        debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
         uint8Array = uint8Array.subarray(1);
         output = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom}).text;
         break;
+        }
 
       case 'MCDI': {
         // Music CD identifier
