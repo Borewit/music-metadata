@@ -328,18 +328,18 @@ export class FrameParser {
 
       case 'GEOB': {  // General encapsulated object
         // [encoding] <MIME> 0x00 <filename> 0x00/0x00 0x00 <description> 0x00/0x00 0x00 <data>
-        const {encoding: geobEncoding, bom: geobBom} = TextEncodingToken.get(uint8Array, 0);
+        const encoding = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
 
         const mimeTypeStr = FrameParser.readNullTerminatedString(uint8Array, urlEnc);
         const mimeType = mimeTypeStr.text;
         uint8Array = uint8Array.subarray(mimeTypeStr.len);
 
-        const filenameStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: geobEncoding, bom: geobBom});
+        const filenameStr = FrameParser.readNullTerminatedString(uint8Array, encoding);
         const filename = filenameStr.text;
         uint8Array = uint8Array.subarray(filenameStr.len);
 
-        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: geobEncoding, bom: geobBom});
+        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, encoding);
         const description = descriptionStr.text;
         uint8Array = uint8Array.subarray(descriptionStr.len);
 
@@ -368,10 +368,10 @@ export class FrameParser {
 
       case 'WXXX': {
         // [encoding] <description> 0x00/0x00 0x00 <url>
-        const {encoding: wxxxEncoding, bom: wxxxBom} = TextEncodingToken.get(uint8Array, 0);
+        const encoding = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
 
-        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: wxxxEncoding, bom: wxxxBom});
+        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, encoding);
         const description = descriptionStr.text;
         uint8Array = uint8Array.subarray(descriptionStr.len);
 
@@ -382,9 +382,9 @@ export class FrameParser {
 
       case 'WFD':
       case 'WFED': {
-        const {encoding: wfdEncoding, bom: wfdBom} = TextEncodingToken.get(uint8Array, 0);
+        const encoding = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
-        output = FrameParser.readNullTerminatedString(uint8Array, {encoding: wfdEncoding, bom: wfdBom}).text;
+        output = FrameParser.readNullTerminatedString(uint8Array, encoding).text;
         break;
       }
 

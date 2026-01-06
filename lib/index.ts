@@ -52,7 +52,7 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
     try {
       return await parserFactory.parse(fileTokenizer, parserLoader, options);
-    } catch(error: any) {
+    } catch(error: unknown) {
       if (error instanceof CouldNotDetermineFileTypeError || error instanceof UnsupportedFileTypeError) {
         error.message += `: ${filePath}`;
       }
