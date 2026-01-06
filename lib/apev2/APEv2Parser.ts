@@ -150,7 +150,7 @@ export class APEv2Parser extends BasicParser {
       bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
 
       await this.tokenizer.peekBuffer(keyBuffer, {length: Math.min(keyBuffer.length, bytesRemaining)});
-      let zero = util.findZero(keyBuffer, 0, keyBuffer.length);
+      let zero = util.findZero(keyBuffer);
       const key = await this.tokenizer.readToken<string>(new StringType(zero, 'ascii'));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
@@ -171,7 +171,7 @@ export class APEv2Parser extends BasicParser {
             const picData = new Uint8Array(tagItemHeader.size);
             await this.tokenizer.readBuffer(picData);
 
-            zero = util.findZero(picData, 0, picData.length);
+            zero = util.findZero(picData);
             const description = textDecode(picData.subarray(0, zero), 'utf-8');
             const data = picData.subarray(zero + 1);
 

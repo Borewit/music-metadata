@@ -19,22 +19,20 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
 /**
  * Found delimiting zero in uint8Array
  * @param uint8Array Uint8Array to find the zero delimiter in
- * @param start Offset in uint8Array
- * @param end Last position to parse in uint8Array
  * @param encoding The string encoding used
  * @return Absolute position on uint8Array where zero found
  */
-export function findZero(uint8Array: Uint8Array, start: number, end: number, encoding?: StringEncoding): number {
-  let i = start;
+export function findZero(uint8Array: Uint8Array, encoding?: StringEncoding): number {
+  let i = 0;
   if (encoding === 'utf-16le') {
     while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
-      if (i >= end) return end;
+      if (i >= uint8Array.length) return uint8Array.length;
       i += 2;
     }
     return i;
   }
     while (uint8Array[i] !== 0) {
-      if (i >= end) return end;
+      if (i >= uint8Array.length) return uint8Array.length;
       i++;
     }
     return i;
@@ -42,7 +40,7 @@ export function findZero(uint8Array: Uint8Array, start: number, end: number, enc
 
 export function trimRightNull(x: string): string {
   const pos0 = x.indexOf('\0');
-  return pos0 === -1 ? x : x.substr(0, pos0);
+  return pos0 === -1 ? x : x.substring(0, pos0);
 }
 
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
