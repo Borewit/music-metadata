@@ -287,14 +287,12 @@ export class MpegParser extends AbstractID3Parser {
 
   private frameCount = 0;
   private syncFrameCount = -1;
-  private countSkipFrameData = 0;
   private totalDataLength = 0;
 
   private audioFrameHeader? : MpegFrameHeader;
   private bitrates: number[] = [];
   private offset = 0;
   private frame_size = 0;
-  private crc: number | null = null;
 
   private calculateEofDuration = false;
   private samplesPerFrame: number | null = null;
@@ -548,8 +546,8 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async parseCrc(): Promise<void> {
-    this.crc = await this.tokenizer.readNumber(Token.INT16_BE);
-    this.offset += 2;
+    await this.tokenizer.ignore(Token.INT16_BE.len); // Ignore CRC
+    this.offset += Token.INT16_BE.len;
     return this.skipSideInformation();
   }
 
@@ -657,7 +655,6 @@ export class MpegParser extends AbstractID3Parser {
   private async skipFrameData(frameDataLeft: number): Promise<void> {
     if (frameDataLeft < 0) throw new MpegContentError('frame-data-left cannot be negative');
     await this.tokenizer.ignore(frameDataLeft);
-    this.countSkipFrameData += frameDataLeft;
   }
 
   private areAllSame(array: unknown[]) {

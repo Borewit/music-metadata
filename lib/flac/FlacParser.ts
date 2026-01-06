@@ -19,8 +19,6 @@ export class FlacParser extends AbstractID3Parser {
 
   private vorbisParser = new VorbisStream(this.metadata, this.options);
 
-  private padding = 0;
-
   public async postId3v2Parse(): Promise<void> {
 
     const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
@@ -49,8 +47,7 @@ export class FlacParser extends AbstractID3Parser {
       case Flac.BlockType.STREAMINFO:
         return this.readBlockStreamInfo(blockHeader.length);
       case Flac.BlockType.PADDING:
-        this.padding += blockHeader.length;
-        break;
+         break;
       case Flac.BlockType.APPLICATION:
         break;
       case Flac.BlockType.SEEKTABLE:

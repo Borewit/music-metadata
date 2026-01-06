@@ -45,8 +45,6 @@ export type IElementListener = {
  */
 export class EbmlIterator {
 
-  private padding = 0;
-
   private parserMap = new Map<DataType, (e: IHeader) => Promise<ValueType>>();
 
   private ebmlMaxIDLength = 4;
@@ -138,12 +136,10 @@ export class EbmlIterator {
       } else {
         switch (element.id) {
           case 0xec: // void
-            this.padding += element.len;
             await this.tokenizer.ignore(element.len);
             break;
           default:
             debug(`parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)} at position=${elementPosition}`);
-            this.padding += element.len;
             await this.tokenizer.ignore(element.len);
         }
       }
@@ -241,7 +237,7 @@ function linkParents(element: IElementType): ILinkedElementType {
     Object.keys(element.container)
       .map(id => {
         const child = (element.container as { [id: string]: ILinkedElementType; })[id];
-        child.id = Number.parseInt(id);
+        child.id = Number.parseInt(id, 10);
         return child;
       }).forEach(child => {
         child.parent = element as ILinkedElementType;
