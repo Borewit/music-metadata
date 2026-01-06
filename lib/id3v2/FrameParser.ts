@@ -124,8 +124,6 @@ export class FrameParser {
     const length = uint8Array.length;
     let offset = 0;
     let output: unknown = []; // ToDo
-    const nullTerminatorLength = FrameParser.getNullTerminatorLength(encoding);
-    let fzero: number;
 
     debug(`Parsing tag type=${type}, encoding=${encoding}, bom=${bom}`);
     switch (type !== 'TXXX' && type[0] === 'T' ? 'T*' : type) {
@@ -143,7 +141,8 @@ export class FrameParser {
           if (error instanceof Error) {
             this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
             break;
-          }throw error;
+          }
+          throw error;
         }
         switch (type) {
           case 'TMCL': // Musician credits list
@@ -204,10 +203,11 @@ export class FrameParser {
               uint8Array = uint8Array.subarray(3);
               break;
             case 3:
-            case 4:
-              fzero = util.findZero(uint8Array, defaultEnc);
-              pic.format = util.decodeString(uint8Array.subarray(0, fzero), defaultEnc);
-              uint8Array = uint8Array.subarray(fzero + 1);
+            case 4: {
+                const formatStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
+                pic.format = formatStr.text;
+                uint8Array = uint8Array.subarray(formatStr.len);
+              }
               break;
 
             default:
@@ -219,9 +219,9 @@ export class FrameParser {
           pic.type = AttachedPictureType[uint8Array[0] as keyof typeof AttachedPictureType];
           uint8Array = uint8Array.subarray(1);
 
-          fzero = util.findZero(uint8Array, encoding);
-          pic.description = util.decodeString(uint8Array.subarray(0, fzero), encoding);
-          uint8Array = uint8Array.subarray(fzero + nullTerminatorLength);
+          const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+          pic.description = descriptionStr.text;
+          uint8Array = uint8Array.subarray(descriptionStr.len);
           pic.data = uint8Array;
           output = pic;
         }
@@ -303,9 +303,9 @@ export class FrameParser {
 
       case 'POPM': { // Popularimeter
         uint8Array = uint8Array.subarray(offset);
-        fzero = util.findZero(uint8Array, defaultEnc);
-        const email = util.decodeString(uint8Array.subarray(0, fzero), defaultEnc);
-        uint8Array = uint8Array.subarray(fzero + 1); // ToDo: replace 1 with  nullTerminatorLength
+        const emailStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
+        const email = emailStr.text;
+        uint8Array = uint8Array.subarray(emailStr.len);
         const valueLen = uint8Array.length - Token.UINT8.len;
         output = {
           email,
@@ -317,15 +317,17 @@ export class FrameParser {
 
       case 'GEOB': {  // General encapsulated object
         uint8Array = uint8Array.subarray(1);
-        fzero = util.findZero(uint8Array, encoding);
-        const mimeType = util.decodeString(uint8Array.subarray(0, fzero), defaultEnc);
-        uint8Array = uint8Array.subarray(fzero + 1); // ToDo: replace 1 with  nullTerminatorLength
-        fzero = util.findZero(uint8Array, encoding);
-        const filename = util.decodeString(uint8Array.subarray(0, fzero), defaultEnc);
-        uint8Array = uint8Array.subarray(fzero + 1); // ToDo: replace 1 with  nullTerminatorLength
-        fzero = util.findZero(uint8Array, encoding);
-        const description = util.decodeString(uint8Array.subarray(0, fzero), defaultEnc);
-        uint8Array = uint8Array.subarray(fzero + 1); // ToDo: replace 1 with  nullTerminatorLength
+        const mimeTypeStr = FrameParser.readNullTerminatedString(uint8Array, {encoding: defaultEnc, bom: false});
+        const mimeType = mimeTypeStr.text;
+        uint8Array = uint8Array.subarray(mimeTypeStr.len);
+
+        const filenameStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+        const filename = filenameStr.text;
+        uint8Array = uint8Array.subarray(filenameStr.len);
+
+        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+        const description = descriptionStr.text;
+        uint8Array = uint8Array.subarray(descriptionStr.len);
 
         const geob: IGeneralEncapsulatedObject = {
           type: mimeType,
@@ -347,16 +349,15 @@ export class FrameParser {
       case 'WPAY':
       case 'WPUB':
         // Decode URL
-        fzero = util.findZero(uint8Array, encoding);
-        output = util.decodeString(uint8Array.subarray(0, fzero), encoding);
+        output = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom}).text;
         break;
 
       case 'WXXX': {
         // Decode URL
         uint8Array = uint8Array.subarray(1);
-        fzero = util.findZero(uint8Array, encoding);
-        const description = util.decodeString(uint8Array.subarray(0, fzero), encoding);
-        uint8Array = uint8Array.subarray(fzero + nullTerminatorLength);
+        const descriptionStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom});
+        const description = descriptionStr.text;
+        uint8Array = uint8Array.subarray(descriptionStr.len);
         output = {description, url: util.decodeString(uint8Array, defaultEnc)};
         break;
       }
@@ -364,7 +365,7 @@ export class FrameParser {
       case 'WFD':
       case 'WFED':
         uint8Array = uint8Array.subarray(1);
-        output = util.decodeString(uint8Array.subarray(0, util.findZero(uint8Array, encoding)), encoding);
+        output = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom}).text;
         break;
 
       case 'MCDI': {
@@ -445,12 +446,8 @@ export class FrameParser {
   }
 
   private static readIdentifierAndData(uint8Array: Uint8Array, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
-    const fzero = util.findZero(uint8Array, encoding);
-
-    const id = util.decodeString(uint8Array.subarray(0, fzero), encoding);
-    const offset = fzero + FrameParser.getNullTerminatorLength(encoding);
-
-    return {id, data: uint8Array.subarray(offset)};
+    const idStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom: false});
+    return {id: idStr.text, data: uint8Array.subarray(idStr.len)};
   }
 
   private static getNullTerminatorLength(enc: util.StringEncoding): number {
