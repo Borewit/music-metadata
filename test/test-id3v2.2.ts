@@ -76,7 +76,7 @@ describe('ID3v2Parser', () => {
     assert.strictEqual(metadata.common.track.of, 11, 'track of');
     assert.deepEqual(metadata.common.genre, ['Alternative'], 'genre');
     assert.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'picture format');
-    assert.strictEqual(metadata.common.picture[0].data.length, 99738, 'picture length');
+    assert.strictEqual(metadata.common.picture[0].data.length, 99738, 'picture length (verified with Mp3Tag)');
     assert.strictEqual(metadata.common.gapless, false, 'common.gapless');
     assert.deepEqual(metadata.common.comment, [
       {
