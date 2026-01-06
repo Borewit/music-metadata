@@ -17,25 +17,27 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
 }
 
 /**
- * Found delimiting zero in uint8Array
+ * Find delimiting zero in uint8Array
  * @param uint8Array Uint8Array to find the zero delimiter in
  * @param encoding The string encoding used
- * @return Absolute position on uint8Array where zero found
+ * @return position in uint8Array where zero found, or uint8Array.length if not found
  */
 export function findZero(uint8Array: Uint8Array, encoding?: StringEncoding): number {
-  let i = 0;
+  const len = uint8Array.length;
+
   if (encoding === 'utf-16le') {
-    while (uint8Array[i] !== 0 || uint8Array[i + 1] !== 0) {
-      if (i >= uint8Array.length) return uint8Array.length;
-      i += 2;
+    // Look for 0x00 0x00 on even boundary
+    for (let i = 0; i + 1 < len; i += 2) {
+      if (uint8Array[i] === 0 && uint8Array[i + 1] === 0) return i;
     }
-    return i;
+    return len;
   }
-    while (uint8Array[i] !== 0) {
-      if (i >= uint8Array.length) return uint8Array.length;
-      i++;
-    }
-    return i;
+
+  // latin1 / utf8 / utf16be (caller typically handles utf16be separately or via decode)
+  for (let i = 0; i < len; i++) {
+    if (uint8Array[i] === 0) return i;
+  }
+  return len;
 }
 
 export function trimRightNull(x: string): string {
