@@ -170,7 +170,7 @@ export class ID3v2Parser {
 
 }
 
-function makeUnexpectedMajorVersionError(majorVer: number) {
+function makeUnexpectedMajorVersionError(majorVer: number): never {
   throw new Id3v2ContentError(`Unexpected majorVer: ${majorVer}`);
 }
 

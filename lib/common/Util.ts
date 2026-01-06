@@ -26,7 +26,7 @@ export function findZero(uint8Array: Uint8Array, encoding?: StringEncoding): num
   const len = uint8Array.length;
 
   if (encoding === 'utf-16le') {
-    // Look for 0x00 0x00 on even boundary
+    // Look for 0x00 0x00 on 2-byte boundary
     for (let i = 0; i + 1 < len; i += 2) {
       if (uint8Array[i] === 0 && uint8Array[i + 1] === 0) return i;
     }
