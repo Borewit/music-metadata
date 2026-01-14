@@ -5,7 +5,7 @@ import type { IGetToken, ITokenizer } from 'strtok3';
 
 import * as util from '../common/Util.js';
 import type { AnyTagValue, IPicture, ITag } from '../type.js';
-import GUID from './GUID.js';
+import AsfGuid from './AsfGuid.js';
 import { getParserForAttr, parseUnicodeAttr } from './AsfUtil.js';
 import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
@@ -52,7 +52,7 @@ export interface IAsfObjectHeader {
   /**
    * A GUID that identifies the object. 128 bits
    */
-  objectId: GUID,
+  objectId: AsfGuid,
 
   /**
    * The size of the object (64-bits)
@@ -78,7 +78,7 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Uint
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
     return {
-      objectId: GUID.fromBin(buf, off),
+      objectId: AsfGuid.fromBin(buf, off),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
       // Reserved: 2 bytes
@@ -96,7 +96,7 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Uint8Array> = {
 
   get: (buf, off): IAsfObjectHeader => {
     return {
-      objectId: GUID.fromBin(buf, off),
+      objectId: AsfGuid.fromBin(buf, off),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16))
     };
   }
@@ -145,7 +145,7 @@ export interface IFilePropertiesObject {
    * The value of this field shall be regenerated every time the file is modified in any way.
    * The value of this field shall be identical to the value of the File ID field of the Data Object.
    */
-  fileId: GUID,
+  fileId: AsfGuid,
 
   /**
    * Specifies the size, in bytes, of the entire file.
@@ -239,12 +239,12 @@ export interface IFilePropertiesObject {
  */
 export class FilePropertiesObject extends State<IFilePropertiesObject> {
 
-  public static guid = GUID.FilePropertiesObject;
+  public static guid = AsfGuid.FilePropertiesObject;
 
   public get(buf: Uint8Array, off: number): IFilePropertiesObject {
 
     return {
-      fileId: GUID.fromBin(buf, off),
+      fileId: AsfGuid.fromBin(buf, off),
       fileSize: Token.UINT64_LE.get(buf, off + 16),
       creationDate: Token.UINT64_LE.get(buf, off + 24),
       dataPacketsCount: Token.UINT64_LE.get(buf, off + 32),
@@ -276,7 +276,7 @@ export interface IStreamPropertiesObject {
   /**
    * Error Correction Type
    */
-  errorCorrectionType: GUID,
+  errorCorrectionType: AsfGuid,
 
 }
 
@@ -286,20 +286,20 @@ export interface IStreamPropertiesObject {
  */
 export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
 
-  public static guid = GUID.StreamPropertiesObject;
+  public static guid = AsfGuid.StreamPropertiesObject;
 
   public get(buf: Uint8Array, off: number): IStreamPropertiesObject {
 
     return {
-      streamType: GUID.decodeMediaType(GUID.fromBin(buf, off)),
-      errorCorrectionType: GUID.fromBin(buf, off + 8)
+      streamType: AsfGuid.decodeMediaType(AsfGuid.fromBin(buf, off)),
+      errorCorrectionType: AsfGuid.fromBin(buf, off + 8)
       // ToDo
     };
   }
 }
 
 export interface IHeaderExtensionObject {
-  reserved1: GUID,
+  reserved1: AsfGuid,
   reserved2: number,
   extensionDataSize: number
 }
@@ -310,7 +310,7 @@ export interface IHeaderExtensionObject {
  */
 export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> {
 
-  public static guid = GUID.HeaderExtensionObject;
+  public static guid = AsfGuid.HeaderExtensionObject;
 
   public len: number;
 
@@ -321,7 +321,7 @@ export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> 
   public get(buf: Uint8Array, off: number): IHeaderExtensionObject {
     const view = new DataView(buf.buffer, off);
     return {
-      reserved1: GUID.fromBin(buf, off),
+      reserved1: AsfGuid.fromBin(buf, off),
       reserved2: view.getUint16(16, true),
       extensionDataSize: view.getUint16(18, true)
     };
@@ -407,7 +407,7 @@ async function readCodecEntry(tokenizer: ITokenizer): Promise<ICodecEntry> {
  */
 export class ContentDescriptionObjectState extends State<ITag[]> {
 
-  public static guid = GUID.ContentDescriptionObject;
+  public static guid = AsfGuid.ContentDescriptionObject;
 
   private static contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
 
@@ -435,7 +435,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
  */
 export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
 
-  public static guid = GUID.ExtendedContentDescriptionObject;
+  public static guid = AsfGuid.ExtendedContentDescriptionObject;
 
   public get(buf: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
@@ -499,7 +499,7 @@ export interface IExtendedStreamPropertiesObject {
  */
 export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPropertiesObject> {
 
-  public static guid = GUID.ExtendedStreamPropertiesObject;
+  public static guid = AsfGuid.ExtendedStreamPropertiesObject;
 
   public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
     const view = new DataView(buf.buffer, off);
@@ -536,7 +536,7 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
  */
 export class MetadataObjectState extends State<ITag[]> {
 
-  public static guid = GUID.MetadataObject;
+  public static guid = AsfGuid.MetadataObject;
 
   public get(uint8Array: Uint8Array, off: number): ITag[] {
     const tags: ITag[] = [];
@@ -566,7 +566,7 @@ export class MetadataObjectState extends State<ITag[]> {
 
 export class MetadataLibraryObjectState extends MetadataObjectState {
 
-  public static guid = GUID.MetadataLibraryObject;
+  public static guid = AsfGuid.MetadataLibraryObject;
 }
 
 export interface IWmPicture extends IPicture {

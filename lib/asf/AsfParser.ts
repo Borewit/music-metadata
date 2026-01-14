@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 
 import { type ITag, TrackType } from '../type.js';
-import GUID from './GUID.js';
+import AsfGuid from './AsfGuid.js';
 import * as AsfObject from './AsfObject.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { AsfContentParseError } from './AsfObject.js';
@@ -24,7 +24,7 @@ export class AsfParser extends BasicParser {
 
   public async parse() {
     const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
-    if (!header.objectId.equals(GUID.HeaderObject)) {
+    if (!header.objectId.equals(AsfGuid.HeaderObject)) {
       throw new AsfContentParseError(`expected asf header; but was not found; got: ${header.objectId.str}`);
     }
     try {
@@ -72,7 +72,7 @@ export class AsfParser extends BasicParser {
           await this.addTags(tags);
           break;
 
-        case GUID.CodecListObject.str: {
+        case AsfGuid.CodecListObject.str: {
           const codecs = await AsfObject.readCodecEntries(this.tokenizer);
           codecs.forEach(codec => {
             this.metadata.addStreamInfo({
@@ -85,12 +85,12 @@ export class AsfParser extends BasicParser {
           break;
         }
 
-        case GUID.StreamBitratePropertiesObject.str:
+        case AsfGuid.StreamBitratePropertiesObject.str:
           // ToDo?
           await this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
           break;
 
-        case GUID.PaddingObject.str:
+        case AsfGuid.PaddingObject.str:
           // ToDo: register bytes pad
           debug('Padding: %s bytes', header.objectSize - AsfObject.HeaderObjectToken.len);
           await this.tokenizer.ignore(header.objectSize - AsfObject.HeaderObjectToken.len);
@@ -134,16 +134,16 @@ export class AsfParser extends BasicParser {
           break;
         }
 
-        case GUID.PaddingObject.str:
+        case AsfGuid.PaddingObject.str:
           // ToDo: register bytes pad
           await this.tokenizer.ignore(remaining);
           break;
 
-        case GUID.CompatibilityObject.str:
+        case AsfGuid.CompatibilityObject.str:
           await this.tokenizer.ignore(remaining);
           break;
 
-        case GUID.ASF_Index_Placeholder_Object.str:
+        case AsfGuid.ASF_Index_Placeholder_Object.str:
           await this.tokenizer.ignore(remaining);
           break;
 
