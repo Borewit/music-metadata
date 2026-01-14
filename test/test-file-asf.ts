@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import * as mm from '../lib/index.js';
 import path from 'node:path';
-import GUID from '../lib/asf/GUID.js';
+import AsfGuid from '../lib/asf/AsfGuid.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
 import { DataType } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
@@ -19,13 +19,13 @@ describe('Parse ASF', () => {
         0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
       ]);
 
-      assert.deepEqual(GUID.HeaderObject.toBin(), Header_GUID);
+      assert.deepEqual(AsfGuid.HeaderObject.toBin(), Header_GUID);
     });
 
     it('should construct GUID from string', () => {
 
       const guid_data = new Uint8Array([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
-      assert.deepEqual(GUID.fromBin(guid_data).str, '75B22630-668E-11CF-A6D9-00AA0062CE6C');
+      assert.deepEqual(AsfGuid.fromBin(guid_data).str, '75B22630-668E-11CF-A6D9-00AA0062CE6C');
     });
   });
 
