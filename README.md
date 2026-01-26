@@ -9,6 +9,8 @@
 
 # music-metadata
 
+<img src="image/logo-music-metadata.jpg" width="60%" style="display: block; margin: auto;" alt="logo">
+
 Key features:
 - **Comprehensive Format Support**: Supports popular audio formats like MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
 - **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
