@@ -120,7 +120,7 @@
     "win-guid": "^0.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.11",
+    "@biomejs/biome": "2.3.13",
     "@types/chai": "^5.2.3",
     "@types/chai-as-promised": "^8.0.2",
     "@types/content-type": "^1.1.9",
