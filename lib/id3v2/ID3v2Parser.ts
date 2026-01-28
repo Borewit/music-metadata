@@ -104,7 +104,7 @@ export class ID3v2Parser {
     await (id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size));
 
     // Post process
-    const chapters = ID3v2Parser.mapId3v2Chapters(this.metadata.native[this.headerType], this.metadata.format.sampleRate);
+    const chapters = ID3v2Parser.mapId3v2Chapters(this.metadata.native[this.headerType]);
     this.metadata.setFormat('chapters', chapters);
   }
 
@@ -178,10 +178,9 @@ export class ID3v2Parser {
    * This function expects the `native` tags already to contain parsed `CHAP` and `CTOC` frame values,
    * as produced by `FrameParser.readData`.
    */
-  private static mapId3v2Chapters(
-    id3Tags: ITag[],
-    sampleRate?: number
-  ): IChapter[] | undefined {
+  private static mapId3v2Chapters(id3Tags?: ITag[]): IChapter[] | undefined {
+
+    if (!id3Tags) return;
 
     const chapFrames = id3Tags.filter(t => t.id === 'CHAP') as any[] | undefined;
     if (!chapFrames?.length) return;

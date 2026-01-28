@@ -24,6 +24,14 @@ describe('Parse MP3 files', () => {
 
   const mp3SamplePath = path.join(samplePath, 'mp3');
 
+  it('should handle MP3 without any tags', async () => {
+    const filePath = path.join(mp3SamplePath, 'notags.mp3');
+    const {format, native} = await mm.parseFile(filePath, {includeChapters: true});
+    assert.strictEqual(format.container, 'MPEG');
+    assert.strictEqual(format.codec, 'MPEG 2 Layer 3');
+    assert.strictEqual(Object.keys(native).length, 0, 'Should be empty');
+  });
+
   describe('Test patterns for ISO/MPEG ', () => {
 
     it.skip('ISO/MPEG 1 Layer 1', async () => {
