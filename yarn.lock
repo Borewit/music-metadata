@@ -2233,7 +2233,7 @@ __metadata:
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.9.3"
     uint8array-extras: "npm:^1.5.0"
-    win-guid: "npm:^0.2.0"
+    win-guid: "npm:^0.2.1"
   languageName: unknown
   linkType: soft
 
@@ -3604,10 +3604,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"win-guid@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "win-guid@npm:0.2.0"
-  checksum: 10c0/b0734ea10fda4fcc0dc28a740e2f55c0e8c2687a8ea182498df3b7dadf8cf19700c22ebb839fde2f66f48c50153e1c0f3df76437661a4129553ce1c68379bf4b
+"win-guid@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "win-guid@npm:0.2.1"
+  checksum: 10c0/4ef31b8553f9f6c775f71f8cda399b6089444657c8dec9cf3ffb4c4f074fb6a11806d7e7bcc4a1fa92015bcb54f1085ae860e9b9a9dca83129bdb3cd90f8c54a
   languageName: node
   linkType: hard
 
