@@ -117,7 +117,7 @@
     "strtok3": "^10.3.4",
     "token-types": "^6.1.2",
     "uint8array-extras": "^1.5.0",
-    "win-guid": "^0.2.0"
+    "win-guid": "^0.2.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.13",
