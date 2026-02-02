@@ -150,6 +150,19 @@ describe('ID3v2Parser', () => {
 
       assert.strictEqual(common.bpm, 177, 'common.bpm,');
     });
+
+    it('iTunes-specific v2.2 grouping tag', async () => {
+
+      const filePath = path.join(samplePath, 'mp3', 'issue-2574.mp3');
+
+      const {native, common} = await mm.parseFile(filePath);
+      assert.isDefined(native['ID3v2.2'], 'Expect ID3v2.2 tag header to be present');
+      const gp1Tags = native['ID3v2.2'].filter(tag => tag.id === 'GP1');
+      assert.strictEqual(gp1Tags.length, 1, 'Expect ID3v2.2 GP1 tag to be present');
+      assert.strictEqual(gp1Tags[0].value, 'Official Live Recording', 'Expect ID3v2.2 GP1 value');
+
+      assert.deepStrictEqual(common.grouping, 'Official Live Recording', 'Mapping ID3v2.2 GP1 => common.grouping');
+    });
   });
 
 });
