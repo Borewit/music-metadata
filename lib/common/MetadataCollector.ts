@@ -181,6 +181,31 @@ export class MetadataCollector implements INativeMetadataCollector {
         }
         break;
 
+      case 'albumartist':
+
+        if (this.commonOrigin.albumartist === this.originPriority[tagType]) {
+          // Assume the albumartist field is used as albumartists
+          return this.postMap('artificial', {id: 'albumartists', value: tag.value});
+        }
+
+        if (!this.common.albumartists) {
+          // Fill albumartists using albumartist source
+          this.setGenericTag('artificial', {id: 'albumartists', value: tag.value});
+        }
+        break;
+
+      case 'albumartists':
+        if (!this.common.albumartist || this.commonOrigin.albumartist === this.originPriority.artificial) {
+          if (!this.common.albumartists || this.common.albumartists.indexOf(tag.value as string) === -1) {
+            // Fill albumartist using albumartists source
+            const albumartists = (this.common.albumartists || []).concat([tag.value as string]);
+            const value = joinArtists(albumartists);
+            const albumartistTag: IGenericTag = {id: 'albumartist', value};
+            this.setGenericTag('artificial', albumartistTag);
+          }
+        }
+        break;
+
       case 'picture':
         return this.postFixPicture(tag.value as IPicture).then(picture => {
           if (picture !== null) {
