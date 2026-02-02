@@ -15,6 +15,7 @@ export type GenericTagId =
   | 'artist'
   | 'artists'
   | 'albumartist'
+  | 'albumartists'
   | 'album'
   | 'date'
   | 'originaldate'
@@ -153,6 +154,7 @@ const commonTags: ITagInfoMap = {
   artist: defaultTagInfo,
   artists: {multiple: true, unique: true},
   albumartist: defaultTagInfo,
+  albumartists: {multiple: true, unique: true},
   album: defaultTagInfo,
   date: defaultTagInfo,
   originaldate: defaultTagInfo,

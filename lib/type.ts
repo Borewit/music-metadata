@@ -68,9 +68,13 @@ export interface ICommonTagsResult {
    */
   artists?: string[];
   /**
-   * Track album artists
+   * Track album artist
    */
   albumartist?: string;
+  /**
+   * Track album artists, aims to capture every album artist in a different string.
+   */
+  albumartists?: string[];
   /**
    * Album title
    */
