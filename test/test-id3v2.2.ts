@@ -161,7 +161,7 @@ describe('ID3v2Parser', () => {
       assert.strictEqual(gp1Tags.length, 1, 'Expect ID3v2.2 GP1 tag to be present');
       assert.strictEqual(gp1Tags[0].value, 'Official Live Recording', 'Expect ID3v2.2 GP1 value');
 
-      assert.deepStrictEqual(common.grouping, 'Official Live Recording', 'Mapping ID3v2.2 GP1 => common.grouping');
+      assert.strictEqual(common.grouping, 'Official Live Recording', 'Mapping ID3v2.2 GP1 => common.grouping');
     });
   });
 
