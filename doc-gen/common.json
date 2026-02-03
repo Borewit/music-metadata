@@ -21,7 +21,7 @@
     "description": "Literal written album artist e.g.: `\"Beth Hart & Joe Bonamassa\"`"
   },
   "albumartists": {
-    "description": "Album artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tag, this is automatically filled with `common.albumartist"
+    "description": "Album artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tags, this is automatically filled with `common.albumartist`"
   },
   "album": {
     "description": "Album title"
