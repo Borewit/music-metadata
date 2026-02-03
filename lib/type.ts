@@ -68,7 +68,7 @@ export interface ICommonTagsResult {
    */
   artists?: string[];
   /**
-   * Track album artist
+  * Track album artist. Contains the first album artist if multiple null-separated ones exist, or maybe several album artists written in a single string.
    */
   albumartist?: string;
   /**
