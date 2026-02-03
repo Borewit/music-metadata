@@ -69,6 +69,14 @@ describe('Parse FLAC Vorbis comment', () => {
 
   });
 
+  it('should support multiple album artists (separate Vorbis tags)', async () => {
+    const filePath = path.join(samplePath, 'flac-multiple-album-artists-tags.flac');
+    const {common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(common.albumartist, 'Album Artist One', 'common.albumartist');
+    assert.deepEqual(common.albumartists, ['Album Artist One', 'Album Artist Two'], 'common.albumartists');
+  });
+
   describe('should be able to recognize a ID3v2 tag header prefixing a FLAC file', () => {
 
     const filePath = path.join(samplePath, 'a kind of magic.flac');
