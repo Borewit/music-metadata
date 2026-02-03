@@ -103,6 +103,14 @@ describe("Decode MP3/ID3v2.4", () => {
     assert.includeDeepMembers(common.isrc, ['DEAE61300058'], 'ISRC');
   });
 
+  it('should support multiple album artists (TPE2)', async () => {
+    const filePath = path.join(samplePath, 'id3v2.4-with-multiple-album-artists-null-separated.mp3');
+    const {common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(common.albumartist, 'ArtistOne', 'common.albumartist');
+    assert.deepEqual(common.albumartists, ['ArtistOne', 'ArtistTwo'], 'common.albumartists');
+  });
+
   // https://id3.org/id3v2.4.0-frame
   it('4.8. Unsynchronised lyrics/text transcription', async () => {
     const {common, native} = await mm.parseFile(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.4].V2.mp3'));
