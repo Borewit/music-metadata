@@ -157,54 +157,16 @@ export class MetadataCollector implements INativeMetadataCollector {
     switch (tag.id) {
 
       case 'artist':
-
-        if (this.commonOrigin.artist === this.originPriority[tagType]) {
-          // Assume the artist field is used as artists
-          return this.postMap('artificial', {id: 'artists', value: tag.value});
-        }
-
-        if (!this.common.artists) {
-          // Fill artists using artist source
-          this.setGenericTag('artificial', {id: 'artists', value: tag.value});
-        }
-        break;
-
-      case 'artists':
-        if (!this.common.artist || this.commonOrigin.artist === this.originPriority.artificial) {
-          if (!this.common.artists || this.common.artists.indexOf(tag.value as string) === -1) {
-            // Fill artist using artists source
-            const artists = (this.common.artists || []).concat([tag.value as string]);
-            const value = joinArtists(artists);
-            const artistTag: IGenericTag = {id: 'artist', value};
-            this.setGenericTag('artificial', artistTag);
-          }
-        }
-        break;
+        return this.handleSingularArtistTag(tagType, tag, 'artist', 'artists');
 
       case 'albumartist':
+        return this.handleSingularArtistTag(tagType, tag, 'albumartist', 'albumartists');
 
-        if (this.commonOrigin.albumartist === this.originPriority[tagType]) {
-          // Assume the albumartist field is used as albumartists
-          return this.postMap('artificial', {id: 'albumartists', value: tag.value});
-        }
-
-        if (!this.common.albumartists) {
-          // Fill albumartists using albumartist source
-          this.setGenericTag('artificial', {id: 'albumartists', value: tag.value});
-        }
-        break;
+      case 'artists':
+        return this.handlePluralArtistTag(tagType, tag, 'artist', 'artists');
 
       case 'albumartists':
-        if (!this.common.albumartist || this.commonOrigin.albumartist === this.originPriority.artificial) {
-          if (!this.common.albumartists || this.common.albumartists.indexOf(tag.value as string) === -1) {
-            // Fill albumartist using albumartists source
-            const albumartists = (this.common.albumartists || []).concat([tag.value as string]);
-            const value = joinArtists(albumartists);
-            const albumartistTag: IGenericTag = {id: 'albumartist', value};
-            this.setGenericTag('artificial', albumartistTag);
-          }
-        }
-        break;
+        return this.handlePluralArtistTag(tagType, tag, 'albumartist', 'albumartists');
 
       case 'picture':
         return this.postFixPicture(tag.value as IPicture).then(picture => {
@@ -327,6 +289,49 @@ export class MetadataCollector implements INativeMetadataCollector {
       quality: this.quality,
       common: this.common
     };
+  }
+
+  /**
+   * Handle singular artist tags (artist, albumartist) and cross-populate to plural form
+   */
+  private handleSingularArtistTag(
+    tagType: TagType | 'artificial',
+    tag: IGenericTag,
+    singularId: 'artist' | 'albumartist',
+    pluralId: 'artists' | 'albumartists'
+  ): Promise<void> | void {
+    if (this.commonOrigin[singularId] === this.originPriority[tagType]) {
+      // Assume the singular field is used as plural (multiple values from same source)
+      return this.postMap('artificial', {id: pluralId, value: tag.value});
+    }
+
+    if (!this.common[pluralId]) {
+      // Fill plural using singular source
+      this.setGenericTag('artificial', {id: pluralId, value: tag.value});
+    }
+
+    this.setGenericTag(tagType, tag);
+  }
+
+  /**
+   * Handle plural artist tags (artists, albumartists) and cross-populate to singular form
+   */
+  private handlePluralArtistTag(
+    tagType: TagType | 'artificial',
+    tag: IGenericTag,
+    singularId: 'artist' | 'albumartist',
+    pluralId: 'artists' | 'albumartists'
+  ): void {
+    if (!this.common[singularId] || this.commonOrigin[singularId] === this.originPriority.artificial) {
+      if (!this.common[pluralId] || this.common[pluralId].indexOf(tag.value as string) === -1) {
+        // Fill singular using plural source
+        const values = (this.common[pluralId] || []).concat([tag.value as string]);
+        const value = joinArtists(values);
+        this.setGenericTag('artificial', {id: singularId, value});
+      }
+    }
+
+    this.setGenericTag(tagType, tag);
   }
 
   /**
