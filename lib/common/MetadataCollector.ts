@@ -15,6 +15,9 @@ import { parseLyrics } from '../lrc/LyricsParser.js';
 
 const debug = initDebug('music-metadata:collector');
 
+type SingularArtistId = 'artist' | 'albumartist';
+type PluralArtistId = 'artists' | 'albumartists';
+
 const TagPriority: TagType[] = ['matroska', 'APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'AIFF', 'ID3v1'];
 
 /**
@@ -297,8 +300,8 @@ export class MetadataCollector implements INativeMetadataCollector {
   private handleSingularArtistTag(
     tagType: TagType | 'artificial',
     tag: IGenericTag,
-    singularId: 'artist' | 'albumartist',
-    pluralId: 'artists' | 'albumartists'
+    singularId: SingularArtistId,
+    pluralId: PluralArtistId
   ): Promise<void> | void {
     if (this.commonOrigin[singularId] === this.originPriority[tagType]) {
       // Assume the singular field is used as plural (multiple values from same source)
@@ -319,8 +322,8 @@ export class MetadataCollector implements INativeMetadataCollector {
   private handlePluralArtistTag(
     tagType: TagType | 'artificial',
     tag: IGenericTag,
-    singularId: 'artist' | 'albumartist',
-    pluralId: 'artists' | 'albumartists'
+    singularId: SingularArtistId,
+    pluralId: PluralArtistId
   ): void {
     if (!this.common[singularId] || this.commonOrigin[singularId] === this.originPriority.artificial) {
       if (!this.common[pluralId] || this.common[pluralId].indexOf(tag.value as string) === -1) {
