@@ -194,6 +194,25 @@ describe('Parse Ogg', () => {
 
     });
 
+    // https://github.com/Borewit/music-metadata/issues/2518
+    describe('calculate duration', () => {
+
+      it('should not calculate duration, when the duration flag is not set', async () => {
+        const filePath = path.join(oggSamplePath, 'issue_70.ogg');
+        const {format} = await mm.parseFile(filePath);
+        assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
+        assert.isUndefined(format.duration, 'format.duration');
+      });
+
+      it('should calculate duration, when the duration flag is set', async () => {
+        const filePath = path.join(oggSamplePath, 'issue_70.ogg');
+        const {format} = await mm.parseFile(filePath, {duration: true});
+        assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
+        assert.approximately(format.duration, 1.32, 0.005, 'format.duration');
+      });
+
+    });
+
   });
 
   describe('Parsing Ogg/Opus', () => {

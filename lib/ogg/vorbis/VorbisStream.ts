@@ -99,8 +99,8 @@ export class VorbisStream implements IPageConsumer {
     await this.metadata.addTag('vorbis', id, value);
   }
 
-  public calculateDuration(_enfOfStream: boolean) {
-    if (this.lastPageHeader && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
+  public calculateDuration(enfOfStream: boolean) {
+    if (this.lastPageHeader && (enfOfStream || this.lastPageHeader.headerType.lastPage) && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
       // Calculate duration
       this.metadata.setFormat('numberOfSamples', this.lastPageHeader.absoluteGranulePosition);
       this.metadata.setFormat('duration', this.lastPageHeader.absoluteGranulePosition / this.metadata.format.sampleRate);
