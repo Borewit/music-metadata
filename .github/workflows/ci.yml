@@ -30,8 +30,8 @@ jobs:
       - name: Lint Markdown
         run: yarn run lint:md
 
-      - name: Build
-        run: yarn run build
+      - name: Build with source maps
+        run: yarn run build:dev
 
       - name: Upload build
         uses: actions/upload-artifact@v4
