@@ -34,7 +34,7 @@ jobs:
         run: yarn run build:dev
 
       - name: Upload build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build
           path: |
@@ -53,6 +53,10 @@ jobs:
 
     env:
       YARN_IGNORE_NODE: 1
+
+    permissions:
+      contents: read
+      id-token: write
 
     strategy:
       matrix:
@@ -76,19 +80,23 @@ jobs:
         run: yarn install
 
       - name: Download build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build
 
       - name: Test with Node.js ${{ matrix.node-version }}
         run: yarn run test-coverage
 
-      - name: Coveralls Parallel
-        uses: coverallsapp/github-action@v2
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
         with:
-          github-token: ${{ secrets.github_token }}
-          flag-name: run-${{ matrix.test_number }}
-          parallel: true
+          use_oidc: true
+          files: ./coverage/lcov.info
+          root_dir: ${{ github.workspace }}
+          disable_search: true
+          flags: ${{ matrix.os }}-node${{ matrix.node-version }}
+          fail_ci_if_error: false
+          verbose: true
 
   test-bun:
     name: Test with Bun
@@ -121,12 +129,3 @@ jobs:
       - name: Test with Node.js ${{ matrix.node-version }}
         run: bun run --bun test
 
-  finish:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.github_token }}
-          parallel-finished: true
