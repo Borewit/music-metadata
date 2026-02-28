@@ -683,6 +683,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"balanced-match@npm:^4.0.2":
+  version: 4.0.4
+  resolution: "balanced-match@npm:4.0.4"
+  checksum: 10c0/07e86102a3eb2ee2a6a1a89164f29d0dbaebd28f2ca3f5ca786f36b8b23d9e417eb3be45a4acf754f837be5ac0a2317de90d3fcb7f4f4dc95720a1f36b26a17b
+  languageName: node
+  linkType: hard
+
 "binary-extensions@npm:^2.0.0":
   version: 2.3.0
   resolution: "binary-extensions@npm:2.3.0"
@@ -696,6 +703,15 @@ __metadata:
   dependencies:
     balanced-match: "npm:^1.0.0"
   checksum: 10c0/6d117a4c793488af86b83172deb6af143e94c17bc53b0b3cec259733923b4ca84679d506ac261f4ba3c7ed37c46018e2ff442f9ce453af8643ecd64f4a54e6cf
+  languageName: node
+  linkType: hard
+
+"brace-expansion@npm:^5.0.2":
+  version: 5.0.4
+  resolution: "brace-expansion@npm:5.0.4"
+  dependencies:
+    balanced-match: "npm:^4.0.2"
+  checksum: 10c0/359cbcfa80b2eb914ca1f3440e92313fbfe7919ee6b274c35db55bec555aded69dac5ee78f102cec90c35f98c20fa43d10936d0cd9978158823c249257e1643a
   languageName: node
   linkType: hard
 
@@ -722,9 +738,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"c8@npm:^10.1.3":
-  version: 10.1.3
-  resolution: "c8@npm:10.1.3"
+"c8@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "c8@npm:11.0.0"
   dependencies:
     "@bcoe/v8-coverage": "npm:^1.0.1"
     "@istanbuljs/schema": "npm:^0.1.3"
@@ -733,7 +749,7 @@ __metadata:
     istanbul-lib-coverage: "npm:^3.2.0"
     istanbul-lib-report: "npm:^3.0.1"
     istanbul-reports: "npm:^3.1.6"
-    test-exclude: "npm:^7.0.1"
+    test-exclude: "npm:^8.0.0"
     v8-to-istanbul: "npm:^9.0.0"
     yargs: "npm:^17.7.2"
     yargs-parser: "npm:^21.1.1"
@@ -744,7 +760,7 @@ __metadata:
       optional: true
   bin:
     c8: bin/c8.js
-  checksum: 10c0/1265ddbcb0e624fe200978e9263faf948cb9694ce8e6b858adbb14f1186de2e6c451aa4aabb821e9eb7f1972859e14691eaf2ff12ad96be7a3fc0e39946fc569
+  checksum: 10c0/94b0cf8756715ca8fedb9331c61ebda0c5bbd63c5eeea523d18904af790f6f197a02f547c066fa2d8d0544bb9f9547a6a67d653f3575953139c74ca915771963
   languageName: node
   linkType: hard
 
@@ -1259,7 +1275,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.4.1, glob@npm:^10.4.5":
+"glob@npm:^10.0.0, glob@npm:^10.2.2, glob@npm:^10.4.5":
   version: 10.5.0
   resolution: "glob@npm:10.5.0"
   dependencies:
@@ -1272,6 +1288,17 @@ __metadata:
   bin:
     glob: dist/esm/bin.mjs
   checksum: 10c0/100705eddbde6323e7b35e1d1ac28bcb58322095bd8e63a7d0bef1a2cdafe0d0f7922a981b2b48369a4f8c1b077be5c171804534c3509dfe950dde15fbe6d828
+  languageName: node
+  linkType: hard
+
+"glob@npm:^13.0.6":
+  version: 13.0.6
+  resolution: "glob@npm:13.0.6"
+  dependencies:
+    minimatch: "npm:^10.2.2"
+    minipass: "npm:^7.1.3"
+    path-scurry: "npm:^2.0.2"
+  checksum: 10c0/269c236f11a9b50357fe7a8c6aadac667e01deb5242b19c84975628f05f4438d8ee1354bb62c5d6c10f37fd59911b54d7799730633a2786660d8c69f1d18120a
   languageName: node
   linkType: hard
 
@@ -1651,6 +1678,13 @@ __metadata:
   version: 10.4.3
   resolution: "lru-cache@npm:10.4.3"
   checksum: 10c0/ebd04fbca961e6c1d6c0af3799adcc966a1babe798f685bb84e6599266599cd95d94630b10262f5424539bc4640107e8a33aa28585374abf561d30d16f4b39fb
+  languageName: node
+  linkType: hard
+
+"lru-cache@npm:^11.0.0":
+  version: 11.2.6
+  resolution: "lru-cache@npm:11.2.6"
+  checksum: 10c0/73bbffb298760e71b2bfe8ebc16a311c6a60ceddbba919cfedfd8635c2d125fbfb5a39b71818200e67973b11f8d59c5a9e31d6f90722e340e90393663a66e5cd
   languageName: node
   linkType: hard
 
@@ -2061,6 +2095,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimatch@npm:^10.2.2":
+  version: 10.2.4
+  resolution: "minimatch@npm:10.2.4"
+  dependencies:
+    brace-expansion: "npm:^5.0.2"
+  checksum: 10c0/35f3dfb7b99b51efd46afd378486889f590e7efb10e0f6a10ba6800428cf65c9a8dedb74427d0570b318d749b543dc4e85f06d46d2858bc8cac7e1eb49a95945
+  languageName: node
+  linkType: hard
+
 "minimatch@npm:^9.0.0, minimatch@npm:^9.0.4, minimatch@npm:^9.0.5":
   version: 9.0.5
   resolution: "minimatch@npm:9.0.5"
@@ -2144,6 +2187,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minipass@npm:^7.1.3":
+  version: 7.1.3
+  resolution: "minipass@npm:7.1.3"
+  checksum: 10c0/539da88daca16533211ea5a9ee98dc62ff5742f531f54640dd34429e621955e91cc280a91a776026264b7f9f6735947629f920944e9c1558369e8bf22eb33fbb
+  languageName: node
+  linkType: hard
+
 "minizlib@npm:^3.0.1":
   version: 3.0.2
   resolution: "minizlib@npm:3.0.2"
@@ -2215,7 +2265,7 @@ __metadata:
     "@types/media-typer": "npm:^1.1.3"
     "@types/mocha": "npm:^10.0.10"
     "@types/node": "npm:^25.2.0"
-    c8: "npm:^10.1.3"
+    c8: "npm:^11.0.0"
     chai: "npm:^6.2.2"
     chai-as-promised: "npm:^8.0.2"
     content-type: "npm:^1.0.5"
@@ -2417,6 +2467,16 @@ __metadata:
     lru-cache: "npm:^10.2.0"
     minipass: "npm:^5.0.0 || ^6.0.2 || ^7.0.0"
   checksum: 10c0/32a13711a2a505616ae1cc1b5076801e453e7aae6ac40ab55b388bb91b9d0547a52f5aaceff710ea400205f18691120d4431e520afbe4266b836fadede15872d
+  languageName: node
+  linkType: hard
+
+"path-scurry@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "path-scurry@npm:2.0.2"
+  dependencies:
+    lru-cache: "npm:^11.0.0"
+    minipass: "npm:^7.1.2"
+  checksum: 10c0/b35ad37cf6557a87fd057121ce2be7695380c9138d93e87ae928609da259ea0a170fac6f3ef1eb3ece8a068e8b7f2f3adf5bb2374cf4d4a57fe484954fcc9482
   languageName: node
   linkType: hard
 
@@ -3112,14 +3172,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"test-exclude@npm:^7.0.1":
-  version: 7.0.1
-  resolution: "test-exclude@npm:7.0.1"
+"test-exclude@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "test-exclude@npm:8.0.0"
   dependencies:
     "@istanbuljs/schema": "npm:^0.1.2"
-    glob: "npm:^10.4.1"
-    minimatch: "npm:^9.0.4"
-  checksum: 10c0/6d67b9af4336a2e12b26a68c83308c7863534c65f27ed4ff7068a56f5a58f7ac703e8fc80f698a19bb154fd8f705cdf7ec347d9512b2c522c737269507e7b263
+    glob: "npm:^13.0.6"
+    minimatch: "npm:^10.2.2"
+  checksum: 10c0/f2b613cb5ddc05d1357892f5da965a6f7af42b19a6b2fc30c9b93cb74adf5059a3a9f29818adb75c96c1747b3934caac90a9058f73ce0640ea101de828a11600
   languageName: node
   linkType: hard
 
