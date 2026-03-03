@@ -30,18 +30,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@biomejs/biome@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/biome@npm:2.4.0"
+"@biomejs/biome@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/biome@npm:2.4.5"
   dependencies:
-    "@biomejs/cli-darwin-arm64": "npm:2.4.0"
-    "@biomejs/cli-darwin-x64": "npm:2.4.0"
-    "@biomejs/cli-linux-arm64": "npm:2.4.0"
-    "@biomejs/cli-linux-arm64-musl": "npm:2.4.0"
-    "@biomejs/cli-linux-x64": "npm:2.4.0"
-    "@biomejs/cli-linux-x64-musl": "npm:2.4.0"
-    "@biomejs/cli-win32-arm64": "npm:2.4.0"
-    "@biomejs/cli-win32-x64": "npm:2.4.0"
+    "@biomejs/cli-darwin-arm64": "npm:2.4.5"
+    "@biomejs/cli-darwin-x64": "npm:2.4.5"
+    "@biomejs/cli-linux-arm64": "npm:2.4.5"
+    "@biomejs/cli-linux-arm64-musl": "npm:2.4.5"
+    "@biomejs/cli-linux-x64": "npm:2.4.5"
+    "@biomejs/cli-linux-x64-musl": "npm:2.4.5"
+    "@biomejs/cli-win32-arm64": "npm:2.4.5"
+    "@biomejs/cli-win32-x64": "npm:2.4.5"
   dependenciesMeta:
     "@biomejs/cli-darwin-arm64":
       optional: true
@@ -61,62 +61,62 @@ __metadata:
       optional: true
   bin:
     biome: bin/biome
-  checksum: 10c0/c10de983720ac20df56755f42f48b2b56fcc1082d364193f1410d07b62c4b7c3437abdbc9cfd60f2a65cd0f3baa7abf8d09a85cd6962b1363f77034e877c13b3
+  checksum: 10c0/5466d0f69c30bbe1912f3f5f307dd31293e054c8b307c21f1df22edad415de34cf46842b0bd57e150cfc6dc6d698e848f6cd26fc7155d685aa8323e4ead7538e
   languageName: node
   linkType: hard
 
-"@biomejs/cli-darwin-arm64@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-darwin-arm64@npm:2.4.0"
+"@biomejs/cli-darwin-arm64@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-darwin-arm64@npm:2.4.5"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-darwin-x64@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-darwin-x64@npm:2.4.0"
+"@biomejs/cli-darwin-x64@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-darwin-x64@npm:2.4.5"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-arm64-musl@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.4.0"
+"@biomejs/cli-linux-arm64-musl@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-linux-arm64-musl@npm:2.4.5"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-arm64@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-linux-arm64@npm:2.4.0"
+"@biomejs/cli-linux-arm64@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-linux-arm64@npm:2.4.5"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-x64-musl@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-linux-x64-musl@npm:2.4.0"
+"@biomejs/cli-linux-x64-musl@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-linux-x64-musl@npm:2.4.5"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@biomejs/cli-linux-x64@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-linux-x64@npm:2.4.0"
+"@biomejs/cli-linux-x64@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-linux-x64@npm:2.4.5"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@biomejs/cli-win32-arm64@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-win32-arm64@npm:2.4.0"
+"@biomejs/cli-win32-arm64@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-win32-arm64@npm:2.4.5"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@biomejs/cli-win32-x64@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@biomejs/cli-win32-x64@npm:2.4.0"
+"@biomejs/cli-win32-x64@npm:2.4.5":
+  version: 2.4.5
+  resolution: "@biomejs/cli-win32-x64@npm:2.4.5"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -2205,7 +2205,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "music-metadata@workspace:."
   dependencies:
-    "@biomejs/biome": "npm:2.4.0"
+    "@biomejs/biome": "npm:2.4.5"
     "@borewit/text-codec": "npm:^0.2.1"
     "@tokenizer/token": "npm:^0.3.0"
     "@types/chai": "npm:^5.2.3"
