@@ -3,7 +3,7 @@ import { assert } from 'chai';
 import * as util from '../lib/common/Util.js';
 import { FourCcToken } from '../lib/common/FourCC.js';
 
-import { textDecode } from '@borewit/text-codec';
+import { latin1toString } from '@exodus/bytes/single-byte.js';
 
 const t = assert;
 
@@ -72,7 +72,7 @@ describe('shared utility functionality', () => {
     it('should be able to encode FourCC token', () => {
       const buffer = new Uint8Array(4);
       FourCcToken.put(buffer, 0, 'abcd');
-      t.deepEqual(textDecode(buffer, 'latin1'), 'abcd');
+      t.deepEqual(latin1toString(buffer), 'abcd');
     });
 
   });

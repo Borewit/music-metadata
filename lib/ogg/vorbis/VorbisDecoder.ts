@@ -1,5 +1,5 @@
 import * as Token from 'token-types';
-import { textDecode } from '@borewit/text-codec';
+import { TextDecoder } from '@exodus/bytes/encoding.js';
 
 export class VorbisDecoder {
   private readonly data: Uint8Array;
@@ -19,7 +19,7 @@ export class VorbisDecoder {
 
   public readStringUtf8(): string {
     const len = this.readInt32();
-    const value = textDecode(this.data.subarray(this.offset, this.offset + len), 'utf-8');
+    const value = new TextDecoder().decode(this.data.subarray(this.offset, this.offset + len));
     this.offset += len;
     return value;
   }
