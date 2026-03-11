@@ -22,3 +22,4 @@ test/samples/zeroes.flac
 .pnp.*
 .yarn
 yarn-error.log
+package-lock
