@@ -2,9 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "sourceMap": false,
-    "inlineSources": false,
-    "declaration": true,
-    "strict": true
+    "inlineSources": false
   }
 }
 
