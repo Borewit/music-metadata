@@ -3,7 +3,7 @@ import * as Token from 'token-types';
 import * as util from '../common/Util.js';
 import { UINT32SYNCSAFE, type ID3v2MajorVersion } from './ID3v2Token.js';
 import type { IWarningCollector } from '../common/MetadataCollector.js';
-import { textDecode } from '@borewit/text-codec';
+import { TextDecoder } from '@exodus/bytes/encoding.js';
 import { Id3v2ContentError } from './FrameParser.js';
 
 export interface IFrameFlags {
@@ -77,7 +77,7 @@ export function readFrameHeader(uint8Array: Uint8Array, majorVer: ID3v2MajorVers
 
 function parseFrameHeaderV22(uint8Array: Uint8Array, majorVer: 2, warningCollector: IWarningCollector): IFrameHeader {
   const header: IFrameHeader = {
-    id: textDecode(uint8Array.subarray(0, 3), 'ascii'),
+    id: new TextDecoder('ascii').decode(uint8Array.subarray(0, 3)),
     length: Token.UINT24_BE.get(uint8Array, 3)
   };
 
@@ -90,7 +90,7 @@ function parseFrameHeaderV22(uint8Array: Uint8Array, majorVer: 2, warningCollect
 
 function parseFrameHeaderV23V24(uint8Array: Uint8Array, majorVer: 3 | 4, warningCollector: IWarningCollector): IFrameHeader {
   const header: IFrameHeader = {
-    id: textDecode(uint8Array.subarray(0, 4), 'ascii'),
+    id: new TextDecoder('ascii').decode(uint8Array.subarray(0, 4)),
     length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
     flags: readFrameFlags(uint8Array.subarray(8, 10))
   };

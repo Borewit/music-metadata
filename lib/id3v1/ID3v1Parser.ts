@@ -9,7 +9,7 @@ import { APEv2Parser } from '../apev2/APEv2Parser.js';
 import type { AnyTagValue, IApeHeader, IPrivateOptions } from '../type.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 
-import { textDecode } from '@borewit/text-codec';
+import { latin1toString } from '@exodus/bytes/single-byte.js';
 
 const debug = initDebug('music-metadata:parser:ID3v1');
 
@@ -173,7 +173,7 @@ export async function hasID3v1Header(tokenizer: IRandomAccessTokenizer): Promise
     const position = tokenizer.position;
     await tokenizer.readBuffer(tag, {position: tokenizer.fileInfo.size - 128});
     tokenizer.setPosition(position); // Restore tokenizer position
-    return textDecode(tag, 'latin1') === 'TAG';
+    return latin1toString(tag) === 'TAG';
   }
   return false;
 }
