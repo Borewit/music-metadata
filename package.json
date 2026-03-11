@@ -104,7 +104,7 @@
     "build:dev": "yarn run clean && yarn compile:dev && yarn run doc-gen",
     "build:prod": "yarn run clean && yarn compile:prod && yarn run doc-gen",
     "build": "yarn run build:prod",
-    "prepublishOnly": "yarn run build",
+    "prepublishOnly": "yarn run build:prod",
     "test-coverage": "c8 yarn run test",
     "send-codacy": "c8 report --reporter=text-lcov | codacy-coverage",
     "doc-gen": "yarn node doc-gen/gen.js",
