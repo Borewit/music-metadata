@@ -27,11 +27,7 @@ export class AsfParser extends BasicParser {
     if (!header.objectId.equals(AsfGuid.HeaderObject)) {
       throw new AsfContentParseError(`expected asf header; but was not found; got: ${header.objectId.str}`);
     }
-    try {
-      await this.parseObjectHeader(header.numberOfHeaderObjects);
-    } catch (err) {
-      debug('Error while parsing ASF: %s', err);
-    }
+    await this.parseObjectHeader(header.numberOfHeaderObjects);
   }
 
   private async parseObjectHeader(numberOfObjectHeaders: number): Promise<void> {
@@ -114,6 +110,9 @@ export class AsfParser extends BasicParser {
       // Parse common header of the ASF Object (3.1)
       const header = await this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken);
       const remaining = header.objectSize - AsfObject.HeaderObjectToken.len;
+      if (remaining < 0) {
+        throw new AsfContentParseError(`Invalid ASF header object size: ${header.objectSize}`);
+      }
       // Parse data part of the ASF Object
       switch (header.objectId.str) {
 

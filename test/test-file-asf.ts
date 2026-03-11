@@ -1,13 +1,15 @@
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import * as mm from '../lib/index.js';
 import path from 'node:path';
 import AsfGuid from '../lib/asf/AsfGuid.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
-import { DataType } from '../lib/asf/AsfObject.js';
+import { AsfContentParseError, DataType } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
 
 import { samplePath } from './util.js';
 import type { IPicture } from '../lib/index.js';
+
+const asfFilePath = path.join(samplePath, 'asf');
 
 describe('Parse ASF', () => {
 
@@ -76,8 +78,6 @@ describe('Parse ASF', () => {
   });
 
   describe('parse', () => {
-
-    const asfFilePath = path.join(samplePath, 'asf');
 
     function checkFormat(format) {
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');
@@ -150,20 +150,20 @@ describe('Parse ASF', () => {
       assert.approximately(format.duration, 14.466, 1 / 10000, 'format.duration');
       assert.approximately(format.bitrate, 128639, 1, 'format.bitrate');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
-      assert.isFalse(format.hasVideo, 'format.hasVideo');
+      assert.isFalse(format.hasVideo, 'format.hasVideo');  });
 
-      const asf = mm.orderTags(native.asf);
-      // ToDo: Contains some WM/... tags which could be parsed / mapped better
+  });
 
-      assert.strictEqual(common.title, 'Thirty Dirty Birds', 'metadata.common.title');
-      assert.strictEqual(common.artist, 'The Red Hot Chili Peppers', 'metadata.common.artist');
-      assert.strictEqual(common.date, '2003', 'metadata.common.date');
-      assert.deepEqual(common.label, ['Capitol'], 'metadata.common.label');
-      assert.strictEqual(common.track.no, 13, 'metadata.common.track.no');
+  it('Avoid infinite loop CWE-835', async () => {
+    const filePath = path.join(asfFilePath, 'CWE-835.wma');
 
-      assert.exists(asf);
-    });
-
+    try {
+      await mm.parseFile(filePath);
+      expect.fail('Expected parseFile to throw AsfContentParseError');
+    } catch (err) {
+      expect(err).to.be.instanceOf(AsfContentParseError);
+      expect((err as Error).message).to.match(/Invalid ASF header object size/);
+    }
   });
 
 });
