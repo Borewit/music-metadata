@@ -118,7 +118,7 @@
     "debug": "^4.4.3",
     "file-type": "^21.3.4",
     "media-typer": "^1.1.0",
-    "strtok3": "^10.3.4",
+    "strtok3": "^10.3.5",
     "token-types": "^6.1.2",
     "uint8array-extras": "^1.5.0",
     "win-guid": "^0.2.1"
