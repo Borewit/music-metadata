@@ -1,8 +1,12 @@
 import path from 'node:path';
 import { Parsers } from './metadata-parsers.js';
-import { assert } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import { assert, expect, use } from 'chai';
 import * as mm from '../lib/index.js';
 import { samplePath} from './util.js';
+import { UnexpectedFileContentError } from '../lib/index.js';
+
+use(chaiAsPromised);
 
 describe('Parse AIFF (Audio Interchange File Format)', () => {
 
@@ -158,6 +162,15 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       {text: 'user: kabal@CAPELLA'},
       {text: 'program: CopyAudio'}
     ], 'common.comment');
+  });
+
+  it('Protect against CWE-835 with 0 chunk length', async () => {
+    const filePath = path.join(aiffSamplePath, 'CWE-835-01.aiff');
+
+    await expect(mm.parseFile(filePath)).to.be.rejectedWith(
+      UnexpectedFileContentError,
+      /COMMON CHUNK size should always be at least 22/
+    );
   });
 
 });
