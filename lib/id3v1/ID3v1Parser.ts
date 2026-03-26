@@ -135,8 +135,8 @@ export class ID3v1Parser extends BasicParser {
       return;
     }
 
-    if (this.apeHeader) {
-      this.tokenizer.ignore(this.apeHeader.offset - this.tokenizer.position);
+    if (this.apeHeader && this.tokenizer.supportsRandomAccess()) {
+      (this.tokenizer as IRandomAccessTokenizer).setPosition(this.apeHeader.offset);
       const apeParser = new APEv2Parser(this.metadata, this.tokenizer, this.options);
       await apeParser.parseTags(this.apeHeader.footer);
     }
