@@ -77,11 +77,15 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Uint
   len: 30,
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
+    const base = HeaderObjectToken.get(buf, off);
+    if (base.objectSize < TopLevelHeaderObjectToken.len) {
+      throw new AsfContentParseError(`Invalid ASF top-level header object size: ${base.objectSize}`);
+    }
+
     return {
-      objectId: AsfGuid.fromBin(buf, off),
-      objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
+      ...base,
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
-      // Reserved: 2 bytes
+      // reserved: 2 bytes
     };
   }
 };
@@ -95,10 +99,15 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Uint8Array> = {
   len: 24,
 
   get: (buf, off): IAsfObjectHeader => {
-    return {
+    const objectSize = Token.UINT64_LE.get(buf, off + 16);
+    if (objectSize < BigInt(HeaderObjectToken.len) || objectSize > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new AsfContentParseError(`Invalid ASF header object size: ${objectSize}`);
+    }
+    const header = {
       objectId: AsfGuid.fromBin(buf, off),
-      objectSize: Number(Token.UINT64_LE.get(buf, off + 16))
+      objectSize: Number(objectSize)
     };
+    return header;
   }
 };
 
@@ -107,7 +116,7 @@ export abstract class State<T> implements IGetToken<T> {
   public len: number;
 
   constructor(header: IAsfObjectHeader) {
-    this.len = Number(header.objectSize) - HeaderObjectToken.len;
+    this.len = header.objectSize - HeaderObjectToken.len;
   }
 
   public abstract get(buf: Uint8Array, off: number): T;
@@ -122,14 +131,6 @@ export abstract class State<T> implements IGetToken<T> {
       }
       tags.push({id: name, value: parseAttr(data as Uint8Array)});
     }
-  }
-}
-
-// ToDo: use ignore type
-export class IgnoreObjectState extends State<unknown> {
-
-  public get(_buf: Uint8Array, _off: number): null {
-    return null;
   }
 }
 
@@ -359,45 +360,88 @@ export interface ICodecEntry {
   information: Uint8Array
 }
 
-async function readString(tokenizer: ITokenizer): Promise<string> {
-  const length = await tokenizer.readNumber(Token.UINT16_LE);
-  return (await tokenizer.readToken(new Token.StringType(length * 2, 'utf-16le'))).replace('\0', '');
+class BoundedReader {
+  public remaining: number;
+
+  public constructor(private readonly tokenizer: ITokenizer, size: number) {
+    this.remaining = size;
+  }
+
+  public async readToken<T>(token: IGetToken<T>): Promise<T> {
+    this.ensureAvailable(token.len);
+    const value = await this.tokenizer.readToken(token);
+    this.remaining -= token.len;
+    return value;
+  }
+
+  public async readNumber(token: IGetToken<number>): Promise<number> {
+    return this.readToken(token);
+  }
+
+  public async readBuffer(length: number): Promise<Uint8Array> {
+    this.ensureAvailable(length);
+    const buffer = new Uint8Array(length);
+    await this.tokenizer.readBuffer(buffer);
+    this.remaining -= length;
+    return buffer;
+  }
+
+  public async ignoreRemaining(): Promise<void> {
+    const ignored = await this.tokenizer.ignore(this.remaining);
+    if (ignored !== this.remaining) {
+      throw new AsfContentParseError(`Unexpected end of ASF Codec List Object; missing ${this.remaining - ignored} bytes`);
+    }
+    this.remaining = 0;
+  }
+
+  private ensureAvailable(length: number): void {
+    if (length > this.remaining) {
+      throw new AsfContentParseError(
+        `ASF Codec List field size ${length} exceeds remaining object payload size ${this.remaining}`
+      );
+    }
+  }
+}
+
+async function readString(reader: BoundedReader): Promise<string> {
+  const length = await reader.readNumber(Token.UINT16_LE);
+  return (await reader.readToken(new Token.StringType(length * 2, 'utf-16le'))).replace('\0', '');
 }
 
 /**
  * 3.5: Read the Codec-List-Object, which provides user-friendly information about the codecs and formats used to encode the content found in the ASF file.
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
  */
-export async function readCodecEntries(tokenizer: ITokenizer): Promise<ICodecEntry[]> {
-  const codecHeader = await tokenizer.readToken(CodecListObjectHeader);
+export async function readCodecEntries(tokenizer: ITokenizer, payloadSize: number): Promise<ICodecEntry[]> {
+  const reader = new BoundedReader(tokenizer, payloadSize);
+  const codecHeader = await reader.readToken(CodecListObjectHeader);
   const entries: ICodecEntry[] = [];
   for (let i = 0; i < codecHeader.entryCount; ++i) {
-    entries.push(await readCodecEntry(tokenizer));
+    entries.push(await readCodecEntry(reader));
   }
+  await reader.ignoreRemaining();
   return entries;
 }
 
-async function readInformation(tokenizer: ITokenizer): Promise<Uint8Array> {
-  const length = await tokenizer.readNumber(Token.UINT16_LE);
-  const buf = new Uint8Array(length);
-  await tokenizer.readBuffer(buf);
-  return buf;
+async function readInformation(reader: BoundedReader): Promise<Uint8Array> {
+  const length = await reader.readNumber(Token.UINT16_LE);
+  return reader.readBuffer(length);
 }
 
 /**
  * Read Codec-Entries
- * @param tokenizer
+ * @param reader
  */
-async function readCodecEntry(tokenizer: ITokenizer): Promise<ICodecEntry> {
-  const type = await tokenizer.readNumber(Token.UINT16_LE);
+async function readCodecEntry(reader: BoundedReader): Promise<ICodecEntry> {
+  const type = await reader.readNumber(Token.UINT16_LE);
   return {
     type: {
       videoCodec: (type & 0x0001) === 0x0001,
       audioCodec: (type & 0x0002) === 0x0002
     },
-    codecName: await readString(tokenizer),
-    description: await readString(tokenizer),
-    information: await readInformation(tokenizer)
+    codecName: await readString(reader),
+    description: await readString(reader),
+    information: await readInformation(reader)
   };
 }
 

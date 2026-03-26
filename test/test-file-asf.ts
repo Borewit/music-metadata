@@ -1,15 +1,60 @@
 import { assert, expect } from 'chai';
+import { Readable } from 'node:stream';
+import { fromBuffer } from 'strtok3';
 import * as mm from '../lib/index.js';
 import path from 'node:path';
 import AsfGuid from '../lib/asf/AsfGuid.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
-import { AsfContentParseError, DataType, HeaderExtensionObject } from '../lib/asf/AsfObject.js';
+import { AsfContentParseError, DataType, HeaderExtensionObject, HeaderObjectToken, readCodecEntries, TopLevelHeaderObjectToken } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
 
 import { samplePath } from './util.js';
 import type { IPicture } from '../lib/index.js';
 
 const asfFilePath = path.join(samplePath, 'asf');
+const asfMimeType = { mimeType: 'audio/ms-wma' };
+
+function writeObjectHeader(data: Uint8Array, offset: number, objectId: AsfGuid, objectSize: number): void {
+  data.set(objectId.toBin(), offset);
+  new DataView(data.buffer).setBigUint64(offset + 16, BigInt(objectSize), true);
+}
+
+function writeTopLevelHeader(data: Uint8Array, objectSize: number, childCount: number): void {
+  writeObjectHeader(data, 0, AsfGuid.HeaderObject, objectSize);
+  new DataView(data.buffer).setUint32(24, childCount, true);
+}
+
+function createSingleObjectAsf(
+  objectId: AsfGuid,
+  objectSize: number,
+  actualObjectSize = HeaderObjectToken.len,
+  topLevelPayloadSize = objectSize
+): Uint8Array {
+  const data = new Uint8Array(TopLevelHeaderObjectToken.len + actualObjectSize);
+  writeTopLevelHeader(data, TopLevelHeaderObjectToken.len + topLevelPayloadSize, 1);
+  writeObjectHeader(data, TopLevelHeaderObjectToken.len, objectId, objectSize);
+  return data;
+}
+
+function createHeaderExtensionAsf(extensionDataSize: number, enclosingDataSize: number): Uint8Array {
+  const extensionHeaderSize = new HeaderExtensionObject().len;
+  const extensionObjectSize = HeaderObjectToken.len + extensionHeaderSize + enclosingDataSize;
+  const data = createSingleObjectAsf(
+    HeaderExtensionObject.guid,
+    extensionObjectSize,
+    extensionObjectSize
+  );
+  new DataView(data.buffer).setUint32(
+    TopLevelHeaderObjectToken.len + HeaderObjectToken.len + 18,
+    extensionDataSize,
+    true
+  );
+  return data;
+}
+
+function createUnknownSizeStream(data: Uint8Array): Readable {
+  return Readable.from([Buffer.from(data)], { objectMode: false });
+}
 
 describe('Parse ASF', () => {
 
@@ -161,16 +206,192 @@ describe('Parse ASF', () => {
 
   });
 
-  it('Avoid infinite loop CWE-835', async () => {
-    const filePath = path.join(asfFilePath, 'CWE-835.wma');
+  describe('security hardening', () => {
 
-    try {
-      await mm.parseFile(filePath);
-      expect.fail('Expected parseFile to throw AsfContentParseError');
-    } catch (err) {
-      expect(err).to.be.instanceOf(AsfContentParseError);
-      expect((err as Error).message).to.match(/Invalid ASF header object size/);
+    it('rejects a top-level header smaller than 30 bytes', () => {
+      const header = new Uint8Array(TopLevelHeaderObjectToken.len);
+      header.set(AsfGuid.HeaderObject.toBin());
+      new DataView(header.buffer).setBigUint64(16, 29n, true);
+
+      expect(() => TopLevelHeaderObjectToken.get(header, 0))
+        .to.throw(AsfContentParseError, /Invalid ASF top-level header object size: 29/);
+    });
+
+    it('rejects object sizes that cannot be represented safely', () => {
+      const header = new Uint8Array(HeaderObjectToken.len);
+      header.set(AsfGuid.PaddingObject.toBin());
+      new DataView(header.buffer).setBigUint64(16, BigInt(Number.MAX_SAFE_INTEGER) + 1n, true);
+
+      expect(() => HeaderObjectToken.get(header, 0))
+        .to.throw(AsfContentParseError, /Invalid ASF header object size: 9007199254740992/);
+    });
+
+    it('rejects a top-level header with no child objects', async () => {
+      const header = new Uint8Array(TopLevelHeaderObjectToken.len);
+      writeTopLevelHeader(header, TopLevelHeaderObjectToken.len, 0);
+
+      await expect(mm.parseBuffer(header, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Unrealistic number of ASF header objects: 0/
+      );
+    });
+
+    it('rejects child objects outside the top-level header boundary', async () => {
+      const data = createSingleObjectAsf(
+        AsfGuid.PaddingObject,
+        HeaderObjectToken.len + 1,
+        HeaderObjectToken.len,
+        HeaderObjectToken.len
+      );
+
+      await expect(mm.parseBuffer(data, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /ASF header object size 25 exceeds remaining header payload size 24/
+      );
+    });
+
+    it('rejects unaccounted bytes in the top-level header payload', async () => {
+      const data = createSingleObjectAsf(
+        AsfGuid.PaddingObject,
+        HeaderObjectToken.len,
+        HeaderObjectToken.len,
+        HeaderObjectToken.len + 1
+      );
+
+      await expect(mm.parseBuffer(data, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /ASF header child objects leave 1 payload byte\(s\) unaccounted/
+      );
+    });
+
+    it('translates truncated ignored stream payloads to an ASF parse error', async () => {
+      const objectSize = HeaderObjectToken.len + 10;
+      const actualObjectSize = HeaderObjectToken.len + 5;
+      const stream = createUnknownSizeStream(
+        createSingleObjectAsf(AsfGuid.PaddingObject, objectSize, actualObjectSize)
+      );
+
+      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Unexpected end of ASF Padding Object/
+      );
+    });
+
+    for (const { description, declaredSize, enclosingSize } of [
+      { description: 'data outside the object boundary', declaredSize: 24, enclosingSize: 0 },
+      { description: 'undeclared bytes inside the object boundary', declaredSize: 0, enclosingSize: 1 }
+    ]) {
+      it(`rejects Header Extension ${description}`, async () => {
+        const data = createHeaderExtensionAsf(declaredSize, enclosingSize);
+
+        await expect(mm.parseBuffer(data, asfMimeType)).to.be.rejectedWith(
+          AsfContentParseError,
+          new RegExp(`ASF extension data size ${declaredSize} does not match enclosing payload size ${enclosingSize}`)
+        );
+      });
     }
+
+    it('bounds Codec List entries to their containing object', async () => {
+      const codecListSize = 24 + 20;
+      const paddingSize = 24;
+      const data = new Uint8Array(TopLevelHeaderObjectToken.len + codecListSize + paddingSize);
+      const codecListOffset = TopLevelHeaderObjectToken.len;
+      const paddingOffset = codecListOffset + codecListSize;
+      data.set(AsfGuid.HeaderObject.toBin());
+      data.set(AsfGuid.CodecListObject.toBin(), codecListOffset);
+      data.set(AsfGuid.PaddingObject.toBin(), paddingOffset);
+      const view = new DataView(data.buffer);
+      view.setBigUint64(16, BigInt(data.length), true);
+      view.setUint32(24, 2, true);
+      view.setBigUint64(codecListOffset + 16, BigInt(codecListSize), true);
+      view.setUint16(codecListOffset + 24 + 16, 1, true);
+      view.setBigUint64(paddingOffset + 16, BigInt(paddingSize), true);
+
+      await expect(mm.parseBuffer(data, { mimeType: 'audio/ms-wma' })).to.be.rejectedWith(
+        AsfContentParseError,
+        /Invalid ASF Codec List Object/
+      );
+    });
+
+    it('rejects a truncated large Codec List without allocating its declared size', async () => {
+      const codecListHeader = new Uint8Array(20);
+
+      await expect(readCodecEntries(fromBuffer(codecListHeader), 2 ** 32)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Unexpected end of ASF Codec List Object/
+      );
+    });
+
+    it('caps retained Codec List metadata for streams with an unknown size', async () => {
+      const payloadSize = 16 * 1024 * 1024 + 1;
+      const objectSize = 24 + payloadSize;
+      const stream = createUnknownSizeStream(createSingleObjectAsf(AsfGuid.CodecListObject, objectSize));
+
+      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Codec List Object payload size 16777217 exceeds allocation limit 16777216/
+      );
+    });
+
+    it('rejects object payloads larger than the known remaining input', async () => {
+      const payloadSize = 16 * 1024 * 1024 + 1;
+      const objectSize = 24 + payloadSize;
+      const data = createSingleObjectAsf(AsfGuid.FilePropertiesObject, objectSize);
+
+      await expect(mm.parseBuffer(data, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /payload size 16777217 exceeds available input size 0/
+      );
+    });
+
+    it('caps object allocations for streams with an unknown size', async () => {
+      const payloadSize = 16 * 1024 * 1024 + 1;
+      const objectSize = 24 + payloadSize;
+      const stream = createUnknownSizeStream(createSingleObjectAsf(AsfGuid.FilePropertiesObject, objectSize));
+      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /File Properties Object payload size 16777217 exceeds allocation limit 16777216/
+      );
+    });
+
+    it('caps nested object allocations for streams with an unknown size', async () => {
+      const nestedPayloadSize = 16 * 1024 * 1024 + 1;
+      const nestedObjectSize = 24 + nestedPayloadSize;
+      const extensionObjectSize = 24 + 22 + nestedObjectSize;
+      const extensionOffset = TopLevelHeaderObjectToken.len;
+      const nestedOffset = extensionOffset + 24 + 22;
+      const data = new Uint8Array(nestedOffset + 24);
+      writeTopLevelHeader(data, TopLevelHeaderObjectToken.len + extensionObjectSize, 1);
+      writeObjectHeader(data, extensionOffset, HeaderExtensionObject.guid, extensionObjectSize);
+      writeObjectHeader(data, nestedOffset, AsfGuid.MetadataObject, nestedObjectSize);
+      const view = new DataView(data.buffer);
+      view.setUint32(extensionOffset + 24 + 18, nestedObjectSize, true);
+
+      const stream = createUnknownSizeStream(data);
+      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Metadata Object payload size 16777217 exceeds allocation limit 16777216/
+      );
+    });
+
+    it('Avoid infinite loop CWE-835', async () => {
+      const filePath = path.join(asfFilePath, 'CWE-835.wma');
+
+      await expect(mm.parseFile(filePath)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Invalid ASF header object size/
+      );
+    });
+
+    it('numberOfObjectHeaders=4294967295', async () => {
+      const filePath = path.join(asfFilePath, 'max-numberOfObjectHeaders.wma');
+
+      await expect(mm.parseFile(filePath)).to.be.rejectedWith(
+        AsfContentParseError,
+        /Unrealistic number of ASF header objects/
+      );
+    });
+
   });
 
 });

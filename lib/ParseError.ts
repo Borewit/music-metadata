@@ -24,7 +24,7 @@ export class UnsupportedFileTypeError extends makeParseError('UnsupportedFileTyp
 }
 
 // Concrete error class representing unexpected file content.
-class UnexpectedFileContentError extends makeParseError('UnexpectedFileContentError') {
+export class UnexpectedFileContentError extends makeParseError('UnexpectedFileContentError') {
   public readonly fileType: string;
 
   constructor(fileType: string, message: string) {
