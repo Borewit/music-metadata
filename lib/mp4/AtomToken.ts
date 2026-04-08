@@ -241,6 +241,14 @@ const SecondsSinceMacEpoch: IGetToken<Date> = {
     return new Date(secondsSinceUnixEpoch * 1000);
   }};
 
+const SecondsSinceMacEpoch64: IGetToken<Date> = {
+  len: 8,
+
+  get: (buf: Uint8Array, off: number): Date => {
+    const secondsSinceUnixEpoch = Number(Token.UINT64_BE.get(buf, off)) - 2082844800;
+    return new Date(secondsSinceUnixEpoch * 1000);
+  }};
+
 /**
  * Token: Media Header Atom
  * Ref:
@@ -253,9 +261,27 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
   }
 
   public get(buf: Uint8Array, off: number): IAtomMdhd {
+    const version = Token.UINT8.get(buf, off + 0);
+    const flags = Token.UINT24_BE.get(buf, off + 1);
+
+    if (version === 1) {
+      // Version 1: 64-bit creation/modification times and duration
+      return {
+        version,
+        flags,
+        creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
+        modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
+        timeScale: Token.UINT32_BE.get(buf, off + 20),
+        duration: Number(Token.UINT64_BE.get(buf, off + 24)),
+        language: Token.UINT16_BE.get(buf, off + 32),
+        quality: Token.UINT16_BE.get(buf, off + 34)
+      };
+    }
+
+    // Version 0: 32-bit fields
     return {
-      version: Token.UINT8.get(buf, off + 0),
-      flags: Token.UINT24_BE.get(buf, off + 1),
+      version,
+      flags,
       creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
       modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
       timeScale: Token.UINT32_BE.get(buf, off + 12),
@@ -276,16 +302,43 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
   }
 
   public get(buf: Uint8Array, off: number): IAtomMvhd {
+    const version = Token.UINT8.get(buf, off);
+    const flags = Token.UINT24_BE.get(buf, off + 1);
+
+    if (version === 1) {
+      // Version 1: 64-bit creation/modification times and duration
+      return {
+        version,
+        flags,
+        creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
+        modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
+        timeScale: Token.UINT32_BE.get(buf, off + 20),
+        duration: Number(Token.UINT64_BE.get(buf, off + 24)),
+        preferredRate: Token.UINT32_BE.get(buf, off + 32),
+        preferredVolume: Token.UINT16_BE.get(buf, off + 36),
+        // ignore reserved: 10 bytes
+        // ignore matrix structure: 36 bytes
+        previewTime: Token.UINT32_BE.get(buf, off + 84),
+        previewDuration: Token.UINT32_BE.get(buf, off + 88),
+        posterTime: Token.UINT32_BE.get(buf, off + 92),
+        selectionTime: Token.UINT32_BE.get(buf, off + 96),
+        selectionDuration: Token.UINT32_BE.get(buf, off + 100),
+        currentTime: Token.UINT32_BE.get(buf, off + 104),
+        nextTrackID: Token.UINT32_BE.get(buf, off + 108)
+      };
+    }
+
+    // Version 0: 32-bit fields
     return {
-      version: Token.UINT8.get(buf, off),
-      flags: Token.UINT24_BE.get(buf, off + 1),
+      version,
+      flags,
       creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
       modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
       timeScale: Token.UINT32_BE.get(buf, off + 12),
       duration: Token.UINT32_BE.get(buf, off + 16),
       preferredRate: Token.UINT32_BE.get(buf, off + 20),
       preferredVolume: Token.UINT16_BE.get(buf, off + 24),
-      // ignore reserver: 10 bytes
+      // ignore reserved: 10 bytes
       // ignore matrix structure: 36 bytes
       previewTime: Token.UINT32_BE.get(buf, off + 72),
       previewDuration: Token.UINT32_BE.get(buf, off + 76),
