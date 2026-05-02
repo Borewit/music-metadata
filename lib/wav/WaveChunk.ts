@@ -11,9 +11,10 @@ export class WaveContentError extends makeUnexpectedFileContentError('Wave'){
  */
 export const WaveFormat = {
   PCM: 0x0001,
-  // MPEG-4 and AAC Audio Types
   ADPCM: 0x0002,
   IEEE_FLOAT: 0x0003,
+  GSM_MS: 0x0031,
+  // MPEG-4 and AAC Audio Types
   MPEG_ADTS_AAC: 0x1600,
   MPEG_LOAS: 0x1602,
   RAW_AAC1: 0x00FF,
@@ -32,6 +33,7 @@ export const WaveFormatNameMap = {
   [WaveFormat.PCM]: 'PCM',
   [WaveFormat.ADPCM]: 'ADPCM',
   [WaveFormat.IEEE_FLOAT]: 'IEEE_FLOAT',
+  [WaveFormat.GSM_MS]: 'GSM_MS',
   [WaveFormat.MPEG_ADTS_AAC]: 'MPEG_ADTS_AAC',
   [WaveFormat.MPEG_LOAS]: 'MPEG_LOAS',
   [WaveFormat.RAW_AAC1]: 'RAW_AAC1',
