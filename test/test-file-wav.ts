@@ -145,6 +145,72 @@ describe('Parse RIFF/WAVE audio format', () => {
       });
     });
 
+    it('should parse A-law encoded (wFormatTag=0x0006)', async () => {
+      const filePath = path.join(wavSamples, 'alaw.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'ALAW', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 8);
+      assert.strictEqual(format.bitrate, 705600, 'format.bitrate = 705600 bits/s');
+    });
+
+    it('should parse μ-law encoded (wFormatTag=0x0007)', async () => {
+      const filePath = path.join(wavSamples, 'mulaw.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'MULAW', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 8);
+      assert.strictEqual(format.bitrate, 705600, 'format.bitrate = 705600 bits/s');
+    });
+
+    it('should parse IMA/DVI ADPCM encoded (wFormatTag=0x0011)', async () => {
+      const filePath = path.join(wavSamples, 'dvi_adpcm.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'DVI_ADPCM', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 4);
+    });
+
+    it('should parse GSM 06.10 encoded (wFormatTag=0x0031)', async () => {
+      const filePath = path.join(wavSamples, 'gsm610.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'GSM610', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 8000);
+      assert.strictEqual(format.numberOfChannels, 1);
+    });
+
+    it('should parse MPEG Layer 3 encoded (wFormatTag=0x0055)', async () => {
+      const filePath = path.join(wavSamples, 'mpeglayer3.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'MPEGLAYER3', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+    });
+
+    it('should parse EXTENSIBLE-wrapped 24-bit PCM (wFormatTag=0xFFFE)', async () => {
+      const filePath = path.join(wavSamples, 'extensible.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'EXTENSIBLE', 'format.codec');
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 24);
+      assert.strictEqual(format.bitrate, 2116800, 'format.bitrate = 2116800 bits/s');
+    });
+
   });
 
   // https://github.com/Borewit/music-metadata/issues/707
