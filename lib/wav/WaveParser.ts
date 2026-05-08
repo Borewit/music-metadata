@@ -29,6 +29,7 @@ export class WaveParser extends BasicParser {
 
   private fact: WaveChunk.IFactChunk | undefined;
   private blockAlign = 0;
+  private avgBytesPerSec = 0;
   private header: riff.IChunkHeader | undefined;
 
   public async parse(): Promise<void> {
@@ -90,8 +91,8 @@ export class WaveParser extends BasicParser {
           this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
           this.metadata.setFormat('sampleRate', fmt.nSamplesPerSec);
           this.metadata.setFormat('numberOfChannels', fmt.nChannels);
-          this.metadata.setFormat('bitrate', fmt.nBlockAlign * fmt.nSamplesPerSec * 8);
           this.blockAlign = fmt.nBlockAlign;
+          this.avgBytesPerSec = fmt.nAvgBytesPerSec;
           break;
         }
 
@@ -125,10 +126,10 @@ export class WaveParser extends BasicParser {
             }
           }
 
-          if (this.metadata.format.codec === 'ADPCM') { // ADPCM is 4 bits lossy encoding resulting in 352kbps
-            this.metadata.setFormat('bitrate', 352000);
-          } else if (this.metadata.format.sampleRate) {
-            this.metadata.setFormat('bitrate', this.blockAlign * this.metadata.format.sampleRate * 8);
+          if (this.avgBytesPerSec > 0) {
+            this.metadata.setFormat('bitrate', this.avgBytesPerSec * 8);
+          } else if (this.metadata.format.duration) {
+            this.metadata.setFormat('bitrate', chunkSize * 8 / this.metadata.format.duration);
           }
           await this.tokenizer.ignore(header.chunkSize);
           break;

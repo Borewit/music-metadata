@@ -138,7 +138,7 @@ describe('Parse RIFF/WAVE audio format', () => {
         assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
         assert.strictEqual(format.lossless, false);
         assert.strictEqual(format.sampleRate, 22050);
-        assert.strictEqual(format.bitrate, 352000, 'format.bitrate = 352000 bits/s');
+        assert.strictEqual(format.bitrate, 89240, 'format.bitrate = 89240 bits/s');
         assert.strictEqual(format.bitsPerSample, 4);
         assert.strictEqual(format.numberOfSamples, 4660260);
         assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
@@ -178,6 +178,7 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.sampleRate, 44100);
       assert.strictEqual(format.numberOfChannels, 2);
       assert.strictEqual(format.bitsPerSample, 4);
+      assert.strictEqual(format.bitrate, 128000, 'format.bitrate = 128000 bits/s');
     });
 
     it('should parse GSM 06.10 encoded (wFormatTag=0x0031)', async () => {
@@ -188,8 +189,13 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.lossless, false);
       assert.strictEqual(format.sampleRate, 8000);
       assert.strictEqual(format.numberOfChannels, 1);
+      assert.strictEqual(format.bitrate, 13000, 'format.bitrate = 13000 bits/s');
     });
 
+  /**
+   * ffmpeg's libmp3lame in WAV container leaves nAvgBytesPerSec=0;
+   * the parser falls back to dataSize × 8 / duration
+   */
     it('should parse MPEG Layer 3 encoded (wFormatTag=0x0055)', async () => {
       const filePath = path.join(wavSamples, 'mpeglayer3.wav');
       const {format} = await mm.parseFile(filePath);
@@ -198,6 +204,7 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.lossless, false);
       assert.strictEqual(format.sampleRate, 44100);
       assert.strictEqual(format.numberOfChannels, 2);
+      assert.approximately(format.bitrate ?? 0, 128000, 10000, 'format.bitrate ≈ 128000 bits/s');
     });
 
     it('should parse EXTENSIBLE-wrapped 24-bit PCM (wFormatTag=0xFFFE)', async () => {
