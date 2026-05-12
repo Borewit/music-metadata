@@ -114,7 +114,7 @@
   "dependencies": {
     "@borewit/text-codec": "^0.2.2",
     "@tokenizer/token": "^0.3.0",
-    "content-type": "^1.0.5",
+    "content-type": "^2.0.0",
     "debug": "^4.4.3",
     "file-type": "^21.3.4",
     "media-typer": "^1.1.0",
