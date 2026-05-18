@@ -29,8 +29,7 @@ export const WaveFormat = {
   DRM: 0x0009,
   DTS2: 0x2001,
   MPEG: 0x0050,
-  MPEGLAYER3: 0x0055,
-  EXTENSIBLE: 0xFFFE
+  MPEGLAYER3: 0x0055
 };
 export type WaveFormat = typeof WaveFormat[keyof typeof WaveFormat];
 
@@ -52,8 +51,7 @@ export const WaveFormatNameMap = {
   [WaveFormat.DRM]: 'DRM',
   [WaveFormat.DTS2]: 'DTS2',
   [WaveFormat.MPEG]: 'MPEG',
-  [WaveFormat.MPEGLAYER3]: 'MPEGLAYER3',
-  [WaveFormat.EXTENSIBLE]: 'EXTENSIBLE'
+  [WaveFormat.MPEGLAYER3]: 'MPEGLAYER3'
 };
 
 /**

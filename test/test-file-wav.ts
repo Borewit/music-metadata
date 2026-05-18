@@ -192,10 +192,10 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.bitrate, 13000, 'format.bitrate = 13000 bits/s');
     });
 
-  /**
-   * ffmpeg's libmp3lame in WAV container leaves nAvgBytesPerSec=0;
-   * the parser falls back to dataSize × 8 / duration
-   */
+    /**
+     * FFmpeg's libmp3lame in WAV container leaves nAvgBytesPerSec=0;
+     * the parser falls back to dataSize × 8 / duration
+     */
     it('should parse MPEG Layer 3 encoded (wFormatTag=0x0055)', async () => {
       const filePath = path.join(wavSamples, 'mpeglayer3.wav');
       const {format} = await mm.parseFile(filePath);
@@ -205,17 +205,6 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.sampleRate, 44100);
       assert.strictEqual(format.numberOfChannels, 2);
       assert.approximately(format.bitrate ?? 0, 128000, 10000, 'format.bitrate ≈ 128000 bits/s');
-    });
-
-    it('should parse EXTENSIBLE-wrapped 24-bit PCM (wFormatTag=0xFFFE)', async () => {
-      const filePath = path.join(wavSamples, 'extensible.wav');
-      const {format} = await mm.parseFile(filePath);
-      assert.strictEqual(format.container, 'WAVE', 'format.container');
-      assert.strictEqual(format.codec, 'EXTENSIBLE', 'format.codec');
-      assert.strictEqual(format.sampleRate, 44100);
-      assert.strictEqual(format.numberOfChannels, 2);
-      assert.strictEqual(format.bitsPerSample, 24);
-      assert.strictEqual(format.bitrate, 2116800, 'format.bitrate = 2116800 bits/s');
     });
 
   });
