@@ -11,9 +11,13 @@ export class WaveContentError extends makeUnexpectedFileContentError('Wave'){
  */
 export const WaveFormat = {
   PCM: 0x0001,
-  // MPEG-4 and AAC Audio Types
   ADPCM: 0x0002,
   IEEE_FLOAT: 0x0003,
+  ALAW: 0x0006,
+  MULAW: 0x0007,
+  DVI_ADPCM: 0x0011,
+  GSM610: 0x0031,
+  // MPEG-4 and AAC Audio Types
   MPEG_ADTS_AAC: 0x1600,
   MPEG_LOAS: 0x1602,
   RAW_AAC1: 0x00FF,
@@ -24,7 +28,8 @@ export const WaveFormat = {
   ESST_AC3: 0x0241,
   DRM: 0x0009,
   DTS2: 0x2001,
-  MPEG: 0x0050
+  MPEG: 0x0050,
+  MPEGLAYER3: 0x0055
 };
 export type WaveFormat = typeof WaveFormat[keyof typeof WaveFormat];
 
@@ -32,6 +37,10 @@ export const WaveFormatNameMap = {
   [WaveFormat.PCM]: 'PCM',
   [WaveFormat.ADPCM]: 'ADPCM',
   [WaveFormat.IEEE_FLOAT]: 'IEEE_FLOAT',
+  [WaveFormat.ALAW]: 'ALAW',
+  [WaveFormat.MULAW]: 'MULAW',
+  [WaveFormat.DVI_ADPCM]: 'DVI_ADPCM',
+  [WaveFormat.GSM610]: 'GSM610',
   [WaveFormat.MPEG_ADTS_AAC]: 'MPEG_ADTS_AAC',
   [WaveFormat.MPEG_LOAS]: 'MPEG_LOAS',
   [WaveFormat.RAW_AAC1]: 'RAW_AAC1',
@@ -41,7 +50,8 @@ export const WaveFormatNameMap = {
   [WaveFormat.ESST_AC3]: 'ESST_AC3',
   [WaveFormat.DRM]: 'DRM',
   [WaveFormat.DTS2]: 'DTS2',
-  [WaveFormat.MPEG]: 'MPEG'
+  [WaveFormat.MPEG]: 'MPEG',
+  [WaveFormat.MPEGLAYER3]: 'MPEGLAYER3'
 };
 
 /**

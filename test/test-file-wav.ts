@@ -138,11 +138,73 @@ describe('Parse RIFF/WAVE audio format', () => {
         assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
         assert.strictEqual(format.lossless, false);
         assert.strictEqual(format.sampleRate, 22050);
-        assert.strictEqual(format.bitrate, 352000, 'format.bitrate = 352000 bits/s');
+        assert.strictEqual(format.bitrate, 89240, 'format.bitrate = 89240 bits/s');
         assert.strictEqual(format.bitsPerSample, 4);
         assert.strictEqual(format.numberOfSamples, 4660260);
         assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
       });
+    });
+
+    it('should parse A-law encoded (wFormatTag=0x0006)', async () => {
+      const filePath = path.join(wavSamples, 'alaw.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'ALAW', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 8);
+      assert.strictEqual(format.bitrate, 705600, 'format.bitrate = 705600 bits/s');
+    });
+
+    it('should parse μ-law encoded (wFormatTag=0x0007)', async () => {
+      const filePath = path.join(wavSamples, 'mulaw.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'MULAW', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 8);
+      assert.strictEqual(format.bitrate, 705600, 'format.bitrate = 705600 bits/s');
+    });
+
+    it('should parse IMA/DVI ADPCM encoded (wFormatTag=0x0011)', async () => {
+      const filePath = path.join(wavSamples, 'dvi_adpcm.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'DVI_ADPCM', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.strictEqual(format.bitsPerSample, 4);
+      assert.strictEqual(format.bitrate, 128000, 'format.bitrate = 128000 bits/s');
+    });
+
+    it('should parse GSM 06.10 encoded (wFormatTag=0x0031)', async () => {
+      const filePath = path.join(wavSamples, 'gsm610.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'GSM610', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 8000);
+      assert.strictEqual(format.numberOfChannels, 1);
+      assert.strictEqual(format.bitrate, 13000, 'format.bitrate = 13000 bits/s');
+    });
+
+    /**
+     * FFmpeg's libmp3lame in WAV container leaves nAvgBytesPerSec=0;
+     * the parser falls back to dataSize × 8 / duration
+     */
+    it('should parse MPEG Layer 3 encoded (wFormatTag=0x0055)', async () => {
+      const filePath = path.join(wavSamples, 'mpeglayer3.wav');
+      const {format} = await mm.parseFile(filePath);
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'MPEGLAYER3', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+      assert.strictEqual(format.sampleRate, 44100);
+      assert.strictEqual(format.numberOfChannels, 2);
+      assert.approximately(format.bitrate ?? 0, 128000, 10000, 'format.bitrate ≈ 128000 bits/s');
     });
 
   });
