@@ -48,4 +48,22 @@ describe('Parse ADTS/AAC', () => {
     });
   });
 
+  describe('parse: adts-sf-escape.aac: explicit sampling-frequency index (15)', () => {
+    // When the ADTS sampling-frequency index is the escape value (15), the rate is
+    // not encoded in the fixed header and cannot be derived from the lookup table.
+    // It must surface as an unknown rate, never as a bogus negative value that
+    // propagates into a negative bitrate (issue #2644).
+    Parsers.forEach(parser => {
+      it(parser.description, async function(){
+        const {format} = await parser.parse(() => this.skip(), path.join(aacSamplePath, 'adts-sf-escape.aac'), 'audio/aac', {
+          duration: true
+        });
+        assert.strictEqual(format.container, 'ADTS/MPEG-4', 'format.container');
+        assert.strictEqual(format.codec, 'AAC', 'format.codec');
+        assert.isNotOk(format.sampleRate, 'format.sampleRate should be unknown, not a negative value');
+        assert.isAtLeast(format.bitrate ?? 0, 0, 'format.bitrate must never be negative');
+      });
+    });
+  });
+
 });
