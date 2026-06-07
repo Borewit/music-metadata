@@ -1826,10 +1826,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"media-typer@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "media-typer@npm:1.1.0"
-  checksum: 10c0/7b4baa40b25964bb90e2121ee489ec38642127e48d0cc2b6baa442688d3fde6262bfdca86d6bbf6ba708784afcac168c06840c71facac70e390f5f759ac121b9
+"media-typer@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "media-typer@npm:2.0.0"
+  checksum: 10c0/8b404e5e16dff1d83a211b23811425be7b33b32fc8ae0fdae757572ba54a05e7e3f6074af283a29d5f2b55920c4c321d54d7fa36703cd460f392e98c68cf09ff
   languageName: node
   linkType: hard
 
@@ -2279,7 +2279,7 @@ __metadata:
     debug: "npm:^4.4.3"
     del-cli: "npm:^7.0.0"
     file-type: "npm:^21.3.4"
-    media-typer: "npm:^1.1.0"
+    media-typer: "npm:^2.0.0"
     mime: "npm:^4.1.0"
     mocha: "npm:^11.7.5"
     node-readable-to-web-readable-stream: "npm:^0.4.2"
