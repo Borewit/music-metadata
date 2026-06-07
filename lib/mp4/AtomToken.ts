@@ -7,6 +7,8 @@ import type { IToken, IGetToken } from 'strtok3';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import * as util from '../common/Util.js';
 
+import { FieldDecodingError } from '../ParseError.js';
+
 const debug = initDebug('music-metadata:parser:MP4:atom');
 
 export class Mp4ContentError extends makeUnexpectedFileContentError('MP4'){
@@ -264,31 +266,35 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
     const version = Token.UINT8.get(buf, off + 0);
     const flags = Token.UINT24_BE.get(buf, off + 1);
 
-    if (version === 1) {
-      // Version 1: 64-bit creation/modification times and duration
-      return {
-        version,
-        flags,
-        creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
-        modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
-        timeScale: Token.UINT32_BE.get(buf, off + 20),
-        duration: Number(Token.UINT64_BE.get(buf, off + 24)),
-        language: Token.UINT16_BE.get(buf, off + 32),
-        quality: Token.UINT16_BE.get(buf, off + 34)
-      };
-    }
+    switch (version) {
 
-    // Version 0: 32-bit fields
-    return {
-      version,
-      flags,
-      creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
-      modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
-      timeScale: Token.UINT32_BE.get(buf, off + 12),
-      duration: Token.UINT32_BE.get(buf, off + 16),
-      language: Token.UINT16_BE.get(buf, off + 20),
-      quality: Token.UINT16_BE.get(buf, off + 22)
-    };
+      case 0:
+        // Version 0: 32-bit fields
+        return {
+          version,
+          flags,
+          creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
+          modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
+          timeScale: Token.UINT32_BE.get(buf, off + 12),
+          duration: Token.UINT32_BE.get(buf, off + 16),
+          language: Token.UINT16_BE.get(buf, off + 20),
+          quality: Token.UINT16_BE.get(buf, off + 22)
+        };
+
+      case 1:
+        return {
+          version,
+          flags,
+          creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
+          modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
+          timeScale: Token.UINT32_BE.get(buf, off + 20),
+          duration: Number(Token.UINT64_BE.get(buf, off + 24)),
+          language: Token.UINT16_BE.get(buf, off + 32),
+          quality: Token.UINT16_BE.get(buf, off + 34)
+        };
+      default:
+        throw new FieldDecodingError('Invalid mdhd version header');
+    }
   }
 }
 
