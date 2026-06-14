@@ -149,6 +149,56 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
     });
 
+    /**
+     * In ID3v2.3 the frame format flag byte uses `%ijk00000`; bits 0-4 are reserved.
+     * They must not be interpreted as the ID3v2.4 `unsynchronisation` (bit 1) and
+     * `data_length_indicator` (bit 0) flags, otherwise the frame payload gets corrupted.
+     * Issue: https://github.com/Borewit/music-metadata/issues/2647
+     */
+    it('should ignore reserved frame-format-flag bits in ID3v2.3 frames', async () => {
+
+      const jpegMagic = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // start of a JPEG file
+
+      // Build an ID3v2.3 APIC frame body: <enc><mime\0><type><desc\0><image-data>
+      const mime = new TextEncoder().encode('image/jpeg');
+      const frameBody = new Uint8Array([
+        0x00,           // text encoding: ISO-8859-1
+        ...mime, 0x00,  // MIME type, null-terminated
+        0x03,           // picture type: Cover (front)
+        0x00,           // empty description, null-terminated
+        ...jpegMagic    // (truncated) image data
+      ]);
+
+      // ID3v2.3 frame header: 4-char ID, UINT32_BE size, 2 flag bytes.
+      // The second flag byte has its reserved bit 0 set (0x01). Under the ID3v2.4
+      // layout this is `data_length_indicator`, which would strip the first 4 bytes.
+      const frameHeader = new Uint8Array([
+        0x41, 0x50, 0x49, 0x43,                                 // 'APIC'
+        (frameBody.length >>> 24) & 0xff, (frameBody.length >>> 16) & 0xff,
+        (frameBody.length >>> 8) & 0xff, frameBody.length & 0xff, // size (UINT32_BE)
+        0x00,                                                    // status flags
+        0x01                                                     // format flags: reserved bit 0 set
+      ]);
+
+      const tagBodyLength = frameHeader.length + frameBody.length;
+      // ID3v2 header: "ID3", major=3, revision=0, flags=0, syncsafe size (4 x 7-bit).
+      const id3Header = new Uint8Array([
+        0x49, 0x44, 0x33,       // 'ID3'
+        0x03, 0x00,             // version 2.3.0
+        0x00,                   // header flags
+        (tagBodyLength >>> 21) & 0x7f, (tagBodyLength >>> 14) & 0x7f,
+        (tagBodyLength >>> 7) & 0x7f, tagBodyLength & 0x7f       // syncsafe size
+      ]);
+
+      const buffer = new Uint8Array([...id3Header, ...frameHeader, ...frameBody]);
+
+      const {common} = await mm.parseBuffer(buffer, {mimeType: 'audio/mpeg'});
+
+      assert.isDefined(common.picture, 'common.picture should be present');
+      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture[0].format');
+      assert.deepEqual(common.picture[0].data, jpegMagic, 'common.picture[0].data (uncorrupted)');
+    });
+
   });
 
   /**
