@@ -39,7 +39,27 @@ export function getFrameHeaderLength(majorVer: number): 6 | 10 {
   }
 }
 
-function readFrameFlags(b: Uint8Array): IFrameFlags {
+function readFrameFlags(b: Uint8Array, majorVer: 3 | 4): IFrameFlags {
+  // ID3v2.3 and ID3v2.4 use different bit layouts for the frame status and format flags.
+  if (majorVer === 3) {
+    // ID3v2.3: status `%abc00000`, format `%ijk00000` (https://id3.org/id3v2.3.0)
+    return {
+      status: {
+        tag_alter_preservation: util.getBit(b, 0, 7),
+        file_alter_preservation: util.getBit(b, 0, 6),
+        read_only: util.getBit(b, 0, 5)
+      },
+      format: {
+        compression: util.getBit(b, 1, 7),
+        encryption: util.getBit(b, 1, 6),
+        grouping_identity: util.getBit(b, 1, 5),
+        // Unsynchronisation and data-length-indicator do not exist as per-frame flags in ID3v2.3.
+        unsynchronisation: false,
+        data_length_indicator: false
+      }
+    };
+  }
+  // ID3v2.4: status `%0abc0000`, format `%0h00kmnp` (https://id3.org/id3v2.4.0-structure)
   return {
     status: {
       tag_alter_preservation: util.getBit(b, 0, 6),
@@ -47,7 +67,7 @@ function readFrameFlags(b: Uint8Array): IFrameFlags {
       read_only: util.getBit(b, 0, 4)
     },
     format: {
-      grouping_identity: util.getBit(b, 1, 7),
+      grouping_identity: util.getBit(b, 1, 6),
       compression: util.getBit(b, 1, 3),
       encryption: util.getBit(b, 1, 2),
       unsynchronisation: util.getBit(b, 1, 1),
@@ -92,7 +112,7 @@ function parseFrameHeaderV23V24(uint8Array: Uint8Array, majorVer: 3 | 4, warning
   const header: IFrameHeader = {
     id: textDecode(uint8Array.subarray(0, 4), 'ascii'),
     length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),
-    flags: readFrameFlags(uint8Array.subarray(8, 10))
+    flags: readFrameFlags(uint8Array.subarray(8, 10), majorVer)
   };
 
   if (!header.id.match(/^[A-Z0-9]{4}$/)) {
