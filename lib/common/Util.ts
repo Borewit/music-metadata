@@ -7,6 +7,7 @@ export type StringEncoding =
   'ascii' // Use 'utf-8' or latin1 instead
   | 'utf8' // alias: 'utf-8'
   | 'utf-16le' // alias: 'ucs2', 'ucs-2'
+  | 'utf-16be'
   | 'ucs2' // 'utf-16le'
   | 'base64url'
   | 'latin1' // Same as ISO-8859-1 (alias: 'binary')
@@ -25,7 +26,7 @@ export function getBit(buf: Uint8Array, off: number, bit: number): boolean {
 export function findZero(uint8Array: Uint8Array, encoding?: StringEncoding): number {
   const len = uint8Array.length;
 
-  if (encoding === 'utf-16le') {
+  if (encoding === 'utf-16le' || encoding === 'utf-16be') {
     // Look for 0x00 0x00 on 2-byte boundary
     for (let i = 0; i + 1 < len; i += 2) {
       if (uint8Array[i] === 0 && uint8Array[i + 1] === 0) return i;
@@ -70,6 +71,12 @@ export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): 
     if ((uint8Array.length & 1) !== 0)
       throw new FieldDecodingError('Expected even number of octets for 16-bit unicode string');
     return decodeString(swapBytes(uint8Array), encoding);
+  }
+  if (encoding === 'utf-16be') {
+    // There is no native UTF-16BE decoder; swap to UTF-16LE and decode that.
+    if ((uint8Array.length & 1) !== 0)
+      throw new FieldDecodingError('Expected even number of octets for 16-bit unicode string');
+    return new StringType(uint8Array.length, 'utf-16le').get(swapBytes(Uint8Array.from(uint8Array)), 0);
   }
   return new StringType(uint8Array.length, encoding).get(uint8Array, 0);
 }
