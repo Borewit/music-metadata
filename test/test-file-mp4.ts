@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
+import { TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
@@ -582,6 +583,50 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
     assert.approximately(format.bitrate, 147916,1,'format.bitrate');
+  });
+
+});
+
+describe('Track Header (tkhd) atom', () => {
+
+  const MAC_EPOCH_OFFSET = 2082844800; // seconds between 1904-01-01 and 1970-01-01
+
+  it('reads version 1 (64-bit) creation time, modification time, track ID and duration at the right offsets', () => {
+    const buf = new Uint8Array(64);
+    const view = new DataView(buf.buffer);
+    buf[0] = 1; // version
+    buf[3] = 0x07; // flags (track enabled, in movie, in preview)
+    view.setBigUint64(4, BigInt(MAC_EPOCH_OFFSET + 1_500_000_000)); // creation time
+    view.setBigUint64(12, BigInt(MAC_EPOCH_OFFSET + 1_600_000_000)); // modification time
+    view.setUint32(20, 7); // track ID
+    view.setBigUint64(28, BigInt(5_000_000_000)); // duration (exceeds 32 bits)
+
+    const header = new TrackHeaderAtom(buf.length).get(buf, 0);
+
+    assert.strictEqual(header.version, 1, 'version');
+    assert.strictEqual(header.trackId, 7, 'trackId');
+    assert.strictEqual(header.duration, 5_000_000_000, 'duration');
+    assert.strictEqual(header.creationTime.getTime(), 1_500_000_000 * 1000, 'creationTime');
+    assert.strictEqual(header.modificationTime.getTime(), 1_600_000_000 * 1000, 'modificationTime');
+  });
+
+  it('reads version 0 (32-bit) track ID and duration', () => {
+    const buf = new Uint8Array(64);
+    const view = new DataView(buf.buffer);
+    buf[0] = 0; // version
+    buf[3] = 0x07; // flags
+    view.setUint32(4, MAC_EPOCH_OFFSET + 1000); // creation time
+    view.setUint32(8, MAC_EPOCH_OFFSET + 2000); // modification time
+    view.setUint32(12, 3); // track ID
+    view.setUint32(20, 12345); // duration
+
+    const header = new TrackHeaderAtom(buf.length).get(buf, 0);
+
+    assert.strictEqual(header.version, 0, 'version');
+    assert.strictEqual(header.trackId, 3, 'trackId');
+    assert.strictEqual(header.duration, 12345, 'duration');
+    assert.strictEqual(header.creationTime.getTime(), 1000 * 1000, 'creationTime');
+    assert.strictEqual(header.modificationTime.getTime(), 2000 * 1000, 'modificationTime');
   });
 
 });

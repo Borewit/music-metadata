@@ -504,9 +504,30 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
   }
 
   public get(buf: Uint8Array, off: number): ITrackHeaderAtom {
+    const version = Token.UINT8.get(buf, off);
+    const flags = Token.UINT24_BE.get(buf, off + 1);
+
+    if (version === 1) {
+      // Version 1: 64-bit creation/modification times and duration
+      return {
+        version,
+        flags,
+        creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
+        modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
+        trackId: Token.UINT32_BE.get(buf, off + 20),
+        // reserved 4 bytes
+        duration: Number(Token.UINT64_BE.get(buf, off + 28)),
+        layer: Token.UINT16_BE.get(buf, off + 36),
+        alternateGroup: Token.UINT16_BE.get(buf, off + 38),
+        volume: Token.UINT16_BE.get(buf, off + 40) // ToDo: fixed point
+        // ToDo: add remaining fields
+      };
+    }
+
+    // Version 0: 32-bit fields
     return {
-      version: Token.UINT8.get(buf, off),
-      flags: Token.UINT24_BE.get(buf, off + 1),
+      version,
+      flags,
       creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
       modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
       trackId: Token.UINT32_BE.get(buf, off + 12),
