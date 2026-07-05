@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
 	"assist": { "actions": { "source": { "organizeImports": "off" } } },
 	"formatter": {
 		"enabled": false
@@ -44,7 +44,7 @@
 					}
 				}
 			},
-			"recommended": true,
+			"preset": "recommended",
 			"complexity": {
 				"useSimpleNumberKeys": "off", // In some files we want to use hexadecimal keys
 				"noForEach": "off"
@@ -61,13 +61,9 @@
 	"files": {
 		"ignoreUnknown": true,
 		"includes": [
-			"**",
-			"!coverage",
-			"!yarn",
-			"!lib/**/*.d.ts",
-			"!lib/**/*.js",
-			"!test/**/*.d.ts",
-			"!test/**/*.js"
+			"lib/**/*.ts",
+			"test/**/*.ts",
+			"doc-gen/**/*.ts"
 		]
 	}
 }
