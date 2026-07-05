@@ -13,22 +13,22 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
   describe('Parse MPEG-4 files (.m4a)', () => {
 
-    function checkFormat(format) {
+    function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.lossless, false);
       assert.deepEqual(format.container, 'M4A/isom/iso2', 'container');
       assert.deepEqual(format.codec, 'MPEG-4/AAC', 'codec');
       assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
       assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
-      assert.approximately(format.duration, 2.206, 1 / 500, 'format.duration');
+      assert.approximately(format.duration!, 2.206, 1 / 500, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.deepEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-      assert.approximately(format.bitrate, 148000, 500, 'Calculate bit-rate');
+      assert.approximately(format.bitrate!, 148000, 500, 'Calculate bit-rate');
       assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
       assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
     }
 
-    function checkCommon(common) {
+    function checkCommon(common: mm.ICommonTagsResult) {
       assert.strictEqual(common.title, 'Voodoo People (Pendulum Remix)', 'title');
       assert.strictEqual(common.artist, 'The Prodigy', 'artist');
       assert.strictEqual(common.albumartist, 'Pendulum', 'albumartist');
@@ -38,14 +38,14 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
       assert.strictEqual(common.track.of, 12, 'track of');
       assert.strictEqual(common.disk.no, 1, 'disk no');
       assert.strictEqual(common.disk.of, 1, 'disk of');
-      assert.strictEqual(common.genre[0], 'Electronic', 'genre');
-      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture 0 format');
-      assert.strictEqual(common.picture[0].data.length, 196450, 'picture 0 length');
-      assert.strictEqual(common.picture[1].format, 'image/jpeg', 'picture 1 format');
-      assert.strictEqual(common.picture[1].data.length, 196450, 'picture 1 length');
+      assert.strictEqual(common.genre![0], 'Electronic', 'genre');
+      assert.strictEqual(common.picture![0].format, 'image/jpeg', 'picture 0 format');
+      assert.strictEqual(common.picture![0].data.length, 196450, 'picture 0 length');
+      assert.strictEqual(common.picture![1].format, 'image/jpeg', 'picture 1 format');
+      assert.strictEqual(common.picture![1].data.length, 196450, 'picture 1 length');
     }
 
-    function checkNativeTags(native) {
+    function checkNativeTags(native: mm.INativeTagDict) {
 
       assert.ok(native, 'Native m4a tags should be present');
 
@@ -66,8 +66,8 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
       // Check album art
       assert.isDefined(native.covr);
-      assert.strictEqual(native.covr[0].format, 'image/jpeg', 'm4a.covr.format');
-      assert.strictEqual(native.covr[0].data.length, 196450, 'm4a.covr.data.length');
+      assert.strictEqual((native.covr[0] as mm.IPicture).format, 'image/jpeg', 'm4a.covr.format');
+      assert.strictEqual((native.covr[0] as mm.IPicture).data.length, 196450, 'm4a.covr.data.length');
     }
 
     Parsers.forEach(parser => {
@@ -189,7 +189,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
           assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-          assert.approximately(format.duration, 991.213, 1 / 500, 'format.duration');
+          assert.approximately(format.duration!, 991.213, 1 / 500, 'format.duration');
           assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
           assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
@@ -464,8 +464,8 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     const {format, common} = await mm.parseFile(path.join(mp4Samples, 'issue-387.m4a'));
     assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-    assert.approximately(format.duration, 224.00290249433107, 1 / 200, 'format.duration');
-    assert.approximately(format.sampleRate, 44100, 1 / 200, 'format.sampleRate');
+    assert.approximately(format.duration!, 224.00290249433107, 1 / 200, 'format.duration');
+    assert.approximately(format.sampleRate!, 44100, 1 / 200, 'format.sampleRate');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
@@ -483,14 +483,14 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
     assert.strictEqual(format.container, 'M4A/isom/mp42', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-    assert.approximately(format.duration, 1.024, 1 / 2000, 'format.duration');
+    assert.approximately(format.duration!, 1.024, 1 / 2000, 'format.duration');
     assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
 
-    assert.strictEqual(format.creationTime.toISOString(), '2021-01-02T17:42:46.000Z', 'format.modificationTime');
-    assert.strictEqual(format.modificationTime.toISOString(), '2021-01-02T17:43:25.000Z', 'format.modificationTime');
+    assert.strictEqual(format.creationTime!.toISOString(), '2021-01-02T17:42:46.000Z', 'format.modificationTime');
+    assert.strictEqual(format.modificationTime!.toISOString(), '2021-01-02T17:43:25.000Z', 'format.modificationTime');
 
     const iTunes = mm.orderTags(native.iTunes);
     assert.strictEqual(iTunes.date[0], '2021-01-02T17:42:05Z', 'moov.udta.date');
@@ -508,7 +508,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-    assert.approximately(format.duration, 360.8, 1 / 20, 'format.duration');
+    assert.approximately(format.duration!, 360.8, 1 / 20, 'format.duration');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, true, 'format.hasVideo');
 
@@ -526,7 +526,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
     assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-    assert.approximately(format.duration, 1563.16, 1 / 200, 'format.duration');
+    assert.approximately(format.duration!, 1563.16, 1 / 200, 'format.duration');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
@@ -555,7 +555,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, true, 'format.hasVideo');
-    assert.approximately(format.duration, 60.13968253968254, 1 / 1000000, 'format.duration');
+    assert.approximately(format.duration!, 60.13968253968254, 1 / 1000000, 'format.duration');
 
     assert.strictEqual(common.title, undefined, 'common.title');
   });
@@ -567,10 +567,10 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
     assert.strictEqual(format.container, 'isom/iso6/iso2/avc1/mp41', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-    assert.approximately(format.duration, 96.98331065759638, 1 / 1000000, 'format.duration');
+    assert.approximately(format.duration!, 96.98331065759638, 1 / 1000000, 'format.duration');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
-    assert.approximately(format.bitrate, 127947,1/2 ,'format.bitrate');
+    assert.approximately(format.bitrate!, 127947,1/2 ,'format.bitrate');
   });
 
   it('bitrate id4.m4a', async () => {
@@ -582,7 +582,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
-    assert.approximately(format.bitrate, 147916,1,'format.bitrate');
+    assert.approximately(format.bitrate!, 147916,1,'format.bitrate');
   });
 
   // https://github.com/Borewit/music-metadata/issues/2672
@@ -598,7 +598,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
-    assert.approximately(format.duration, 4, 1 / 1000, 'format.duration');
+    assert.approximately(format.duration!, 4, 1 / 1000, 'format.duration');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
   });

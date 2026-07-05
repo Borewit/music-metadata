@@ -20,7 +20,7 @@ describe('Parse Musepack (.mpc)', () => {
         assert.deepEqual(format.container, 'Musepack, SV7');
         assert.strictEqual(format.sampleRate, 44100);
         assert.strictEqual(format.numberOfSamples, 11940);
-        assert.approximately(format.bitrate, 269649, 1);
+        assert.approximately(format.bitrate!, 269649, 1);
         assert.strictEqual(format.codec, '1.15');
         assert.isTrue(format.hasAudio, 'format.hasAudio');
         assert.isFalse(format.hasVideo, 'format.hasAudio');
@@ -55,7 +55,7 @@ describe('Parse Musepack (.mpc)', () => {
         assert.deepEqual(format.container, 'Musepack, SV7');
         assert.strictEqual(format.sampleRate, 44100);
         assert.strictEqual(format.numberOfSamples, 11940);
-        assert.approximately(format.bitrate, 269649, 1);
+        assert.approximately(format.bitrate!, 269649, 1);
         assert.strictEqual(format.codec, '1.15');
 
         // Check generic metadata
@@ -82,8 +82,8 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(format.sampleRate, 48000);
         assert.strictEqual(format.numberOfSamples, 24000);
         assert.strictEqual(format.numberOfChannels, 2);
-        assert.approximately(format.duration, 0.5, 1 / 2000);
-        assert.approximately(format.bitrate, 32368, 1);
+        assert.approximately(format.duration!, 0.5, 1 / 2000);
+        assert.approximately(format.bitrate!, 32368, 1);
 
         // Check generic metadata
         assert.strictEqual(common.title, 'Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.');
