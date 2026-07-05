@@ -12,7 +12,7 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -62,7 +62,7 @@ jobs:
     steps:
 
       - name: 'Checkout the repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Test with Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -102,7 +102,7 @@ jobs:
     steps:
 
       - name: 'Checkout the repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install bun
         uses: oven-sh/setup-bun@v2
