@@ -13,7 +13,7 @@ it("should handle concurrent parsing of pictures", () => {
   return Promise.all<void>(files.map(file => {
     return mm.parseFile(file).then(result => {
       const data = fs.readFileSync(`${file}.jpg`);
-      t.deepEqual(result.common.picture[0].data, data, 'check picture');
+      t.deepEqual(result.common.picture![0].data, data, 'check picture');
     });
   }));
 });
