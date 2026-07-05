@@ -123,7 +123,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.bitsPerSample, 24);
     assert.strictEqual(format.bitrate, 2304000, 'format.bitrate = 2304000 bits/s');
     assert.strictEqual(format.numberOfSamples, 363448);
-    assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration');
+    assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, 'file\'s duration');
   });
 
   describe('non-PCM', () => {
@@ -141,7 +141,7 @@ describe('Parse RIFF/WAVE audio format', () => {
         assert.strictEqual(format.bitrate, 89240, 'format.bitrate = 89240 bits/s');
         assert.strictEqual(format.bitsPerSample, 4);
         assert.strictEqual(format.numberOfSamples, 4660260);
-        assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration is 3\'31"');
+        assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, 'file\'s duration is 3\'31"');
       });
     });
 
@@ -233,7 +233,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.strictEqual(format.bitrate, 2116800, 'format.bitrate = 2116800 bits/s');
-    assert.approximately(format.duration, 3 / 44100, 1 / 20000, 'format.duration');
+    assert.approximately(format.duration!, 3 / 44100, 1 / 20000, 'format.duration');
   });
 
   // https://github.com/Borewit/music-metadata/issues/819
@@ -246,7 +246,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.codec, 'PCM');
     assert.strictEqual(format.bitrate, 256000, 'format.bitrate = 256000 bits/s');
     // assert.strictEqual(format.numberOfSamples, 2158080, 'format.numberOfSamples');
-    assert.approximately(format.duration, 2478 / 16000, 5 / 1000, 'format.duration');
+    assert.approximately(format.duration!, 2478 / 16000, 5 / 1000, 'format.duration');
   });
 
   // https://github.com/Borewit/music-metadata/issues/1163

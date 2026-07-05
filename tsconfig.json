@@ -3,7 +3,11 @@
     "module": "node16",
     "moduleResolution": "node16",
     "target": "ES2020",
-    "esModuleInterop": true,
-    "baseUrl": "."
+    "esModuleInterop": true
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "types": ["node", "mocha"]
+    }
   }
 }

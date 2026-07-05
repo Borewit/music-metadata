@@ -50,7 +50,7 @@ describe('Discogs mappings', () => {
 
   describe('Track mapping: Beth Hart - Sinner\'s Prayer', () => {
 
-    function checkTags(metadata: mm.IAudioMetadata, tagType, getTagName: (tag: string) => string) {
+    function checkTags(metadata: mm.IAudioMetadata, tagType: string, getTagName: (tag: string) => string) {
 
       const native = mm.orderTags(metadata.native[tagType]);
       const common = metadata.common;
@@ -117,7 +117,7 @@ describe('Discogs mappings', () => {
       // t.deepEqual(format.numberOfSamples, 93624, "format.numberOfSamples");
       assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.deepEqual(format.duration, 2.1681632653061222, 'format.duration');
-      assert.approximately(format.bitrate, 156000, 1000, 'format.bitrate');
+      assert.approximately(format.bitrate as number, 156000, 1000, 'format.bitrate');
       assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
 
       // Expect basic common tags
@@ -143,11 +143,6 @@ describe('Discogs mappings', () => {
       const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [APEv2].flac';
       const filePath = path.join(samplePath, filename);
 
-      function _checkNative(id3v23) {
-        // Compare expectedCommonTags with result.common
-        assert.deepEqual(id3v23['TXXX:CATALOGID'], 'PRAR931391');
-      }
-
       // Run with default options
       const metadata = await mm.parseFile(filePath);
 
@@ -167,7 +162,7 @@ describe('Discogs mappings', () => {
 
   describe('Track mapping: Yasmin Levy - Mi Korasón.flac\'', () => {
 
-    function checkTags(metadata: mm.IAudioMetadata, tagType, getTagName: (tag: string) => string) {
+    function checkTags(metadata: mm.IAudioMetadata, tagType: string, getTagName: (tag: string) => string) {
 
       const native = mm.orderTags(metadata.native[tagType]);
       const common = metadata.common;

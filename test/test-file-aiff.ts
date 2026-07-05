@@ -13,6 +13,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
   function checkFormat(format: mm.IFormat, compressionType: string, sampleRate: number, channels: number, bitsPerSample: number, samples: number) {
     const lossless = compressionType === 'PCM';
     const dataFormat = lossless ? 'AIFF' : 'AIFF-C';
+    assert.isDefined(format.sampleRate, 'format.sampleRate should be defined');
     const duration = samples / format.sampleRate;
     assert.strictEqual(format.container, dataFormat, `format.container = '${dataFormat}'`);
     assert.strictEqual(format.lossless, lossless, `format.lossless = ${lossless}`);

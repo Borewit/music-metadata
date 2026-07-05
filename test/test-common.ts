@@ -94,7 +94,7 @@ describe('function selectCover()', () => {
         if (cover.type) {
           assert.equal(cover.type, 'Cover (front)', 'cover.type');
         } else {
-          assert.equal(cover.data, common.picture[0].data, 'First picture if no type is defined');
+          assert.equal(cover.data, common.picture![0].data, 'First picture if no type is defined');
         }
       }
     }

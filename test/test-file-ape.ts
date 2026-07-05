@@ -8,7 +8,7 @@ import type { IPicture } from '../lib/index.js';
 
 describe('Parse APE (Monkey\'s Audio)', () => {
 
-  function checkFormat(format) {
+  function checkFormat(format: mm.IFormat) {
     assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]');
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
@@ -17,7 +17,7 @@ describe('Parse APE (Monkey\'s Audio)', () => {
     assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
 
-  function checkCommon(common) {
+  function checkCommon(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, '07. Shadow On The Sun', 'common.title');
     assert.strictEqual(common.artist, 'Audioslave', 'common.artist');
     assert.deepEqual(common.artists, ['Audioslave', 'Chris Cornell'], 'common.artists');
@@ -28,10 +28,10 @@ describe('Parse APE (Monkey\'s Audio)', () => {
     assert.deepEqual(common.genre, ['Alternative'], 'common.genre');
     assert.deepEqual(common.track, {no: 7, of: null}, 'common.track');
     assert.deepEqual(common.disk, {no: 3, of: null}, 'common.disk');
-    assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
-    assert.strictEqual(common.picture[0].data.length, 48658, 'common.picture 0 length');
-    assert.strictEqual(common.picture[1].format, 'image/jpeg', 'common.picture 1 format');
-    assert.strictEqual(common.picture[1].data.length, 48658, 'common.picture 1 length');
+    assert.strictEqual(common.picture![0].format, 'image/jpeg', 'common.picture 0 format');
+    assert.strictEqual(common.picture![0].data.length, 48658, 'common.picture 0 length');
+    assert.strictEqual(common.picture![1].format, 'image/jpeg', 'common.picture 1 format');
+    assert.strictEqual(common.picture![1].data.length, 48658, 'common.picture 1 length');
   }
 
   function checkNative(ape: mm.INativeTagDict) {
@@ -68,7 +68,7 @@ describe('Parse APEv2 header', () => {
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
     assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
     assert.strictEqual(format.tool, 'LAME 3.99r', 'format.codecProfile');
-    assert.approximately(format.duration, 348.421, 1 / 500, 'format.duration');
+    assert.approximately(format.duration!, 348.421, 1 / 500, 'format.duration');
     assert.deepEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.deepEqual(format.tagTypes, ['ID3v2.4', 'APEv2', 'ID3v1'], 'format.tagTypes');
     assert.strictEqual(format.bitrate, 320000, 'format.bitrate');

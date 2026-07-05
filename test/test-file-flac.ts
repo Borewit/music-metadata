@@ -4,6 +4,7 @@ import * as path from 'node:path';
 
 import * as mm from '../lib/index.js';
 import { LyricsContentType, TimestampFormat } from '../lib/index.js';
+import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
@@ -11,7 +12,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
   const flacFilePath = path.join(samplePath, 'flac');
 
-  function checkFormat(format) {
+  function checkFormat(format: mm.IFormat) {
     assert.strictEqual(format.container, 'FLAC', 'format.container');
     assert.strictEqual(format.codec, 'FLAC', 'format.codec');
     assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
@@ -23,7 +24,7 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
 
-  function checkCommon(common) {
+  function checkCommon(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'Brian Eno', 'common.title');
     assert.deepEqual(common.artists, ['MGMT'], 'common.artists');
     assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
@@ -32,11 +33,11 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.deepEqual(common.track, {no: 7, of: null}, 'common.track');
     assert.deepEqual(common.disk, {no: null, of: null}, 'common.disk');
     assert.deepEqual(common.genre, ['Alt. Rock'], 'genre');
-    assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture format');
-    assert.strictEqual(common.picture[0].data.length, 175668, 'common.picture length');
+    assert.strictEqual(common.picture![0].format, 'image/jpeg', 'common.picture format');
+    assert.strictEqual(common.picture![0].data.length, 175668, 'common.picture length');
   }
 
-  function checkNative(vorbis) {
+  function checkNative(vorbis: mm.INativeTagDict) {
     // Compare expectedCommonTags with result.common
     assert.deepEqual(vorbis.TITLE, ['Brian Eno'], 'vorbis.TITLE');
     assert.deepEqual(vorbis.ARTIST, ['MGMT'], 'vorbis.ARTIST');
@@ -44,7 +45,7 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.deepEqual(vorbis.TRACKNUMBER, ['07'], 'vorbis.TRACKNUMBER');
     assert.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis.GENRE');
     assert.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode=should ignore equal sign'], 'vorbis.COMMENT');
-    const pic = vorbis.METADATA_BLOCK_PICTURE[0];
+    const pic = vorbis.METADATA_BLOCK_PICTURE[0] as IVorbisPicture;
 
     assert.strictEqual(pic.type, 'Cover (front)', 'raw METADATA_BLOCK_PICTUREtype');
     assert.strictEqual(pic.format, 'image/jpeg', 'raw METADATA_BLOCK_PICTURE format');
@@ -97,7 +98,7 @@ describe('Parse FLAC Vorbis comment', () => {
     Parsers.forEach(parser => {
       it(parser.description, async function(){
         const {format} = await parser.parse(() => this.skip(), filePath, 'audio/flac');
-        assert.approximately(496000, format.bitrate, 500);
+        assert.approximately(496000, format.bitrate!, 500);
       });
     });
 
@@ -195,8 +196,8 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.isFalse(format.hasVideo, 'format.hasAudio');
 
     assert.isArray(common.lyrics, 'common.lyrics');
-    assert.strictEqual(common.lyrics.length, 1, 'common.lyrics.length');
-    const lrcLyrics = common.lyrics[0];
+    assert.strictEqual(common.lyrics!.length, 1, 'common.lyrics.length');
+    const lrcLyrics = common.lyrics![0];
     assert.strictEqual(lrcLyrics.contentType, LyricsContentType.lyrics, 'lrcLyrics.contentType');
     assert.strictEqual(lrcLyrics.timeStampFormat, TimestampFormat.milliseconds, 'lrcLyrics.timeStampFormat');
     assert.isArray(lrcLyrics.syncText, 'lrcLyrics.syncText');
@@ -227,7 +228,7 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.isArray(common.lyrics, 'common.lyrics');
     assert.isNotEmpty(common.lyrics, 'common.lyrics');
 
-    const unsyncedLyrics = common.lyrics[0].text;
+    const unsyncedLyrics = common.lyrics![0].text;
     assert.strictEqual(
       unsyncedLyrics,
       "Run away, run away, run away\r\n" +
