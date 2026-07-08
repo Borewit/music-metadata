@@ -584,4 +584,21 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.bitrate, 147916,1,'format.bitrate');
   });
 
+  it('\'tkhd\' atom version 1: keep track-id of each track distinct', async () => {
+
+    // Version 1 tkhd atoms have 64-bit creation/modification times; reading the
+    // track-id at the version 0 offset yields 0 for every track, making the
+    // chapter text track overwrite the audio track.
+    const filePath = path.join(mp4Samples, 'version1-tkhd.m4b');
+    const {format} = await mm.parseFile(filePath);
+
+    assert.strictEqual(format.container, 'isom/iso2/mp41', 'format.container');
+    assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
+    assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+    assert.approximately(format.duration, 4, 1 / 1000, 'format.duration');
+    assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
+    assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
+  });
+
 });
