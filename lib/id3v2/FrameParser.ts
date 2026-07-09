@@ -507,12 +507,12 @@ export class FrameParser {
     if (zeroIndex >= valueArray.length) {
       // No terminator found, decode full buffer remainder
       return {
-        text: util.decodeString(valueArray, encoding.encoding),
+        text: util.decodeString(uint8Array, encoding.encoding),
         len: originalLen
       };
     }
 
-    const txt = valueArray.subarray(0, zeroIndex);
+    const txt = uint8Array.subarray(0, bomSize + zeroIndex);
     return {
       text: util.decodeString(txt, encoding.encoding),
       len: bomSize + zeroIndex + FrameParser.getNullTerminatorLength(encoding.encoding)
