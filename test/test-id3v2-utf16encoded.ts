@@ -42,3 +42,26 @@ it('decodes id3v2 UTF-16BE ($02) text frames', async () => {
   const { common } = await mm.parseBuffer(buf, { mimeType: 'audio/mpeg' });
   assert.strictEqual(common.title, 'T\u00ebst', 'UTF-16BE title decoded without byte swapping');
 });
+
+it('decodes id3v2 UTF-16 ($01) frames with a big-endian BOM', async () => {
+  // ID3v2.3 tag with a COMM frame using text-encoding $01 (UTF-16 with BOM),
+  // where the BOM is big-endian (0xFE 0xFF).
+  const syncsafe = (n: number) =>
+    Uint8Array.from([(n >>> 21) & 0x7f, (n >>> 14) & 0x7f, (n >>> 7) & 0x7f, n & 0x7f]);
+  const u32be = (n: number) =>
+    Uint8Array.from([(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]);
+  const body = Uint8Array.from([
+    0x01,                         // encoding: UTF-16 with BOM
+    0x65, 0x6e, 0x67,             // language 'eng'
+    0xFE, 0xFF, 0x00, 0x00,       // descriptor: BE BOM + terminator (empty)
+    0xFE, 0xFF, 0x00, 0x54, 0x00, 0xEB, 0x00, 0x73, 0x00, 0x74 // 'T\u00ebst' in UTF-16BE with BE BOM
+  ]);
+  const frame = Uint8Array.from([0x43, 0x4f, 0x4d, 0x4d, ...u32be(body.length), 0x00, 0x00, ...body]);
+  const header = Uint8Array.from([0x49, 0x44, 0x33, 0x03, 0x00, 0x00, ...syncsafe(frame.length)]);
+  const mpeg = new Uint8Array(417);
+  mpeg.set([0xFF, 0xFB, 0x90, 0x00], 0);
+  const buf = Buffer.concat([Buffer.from(header), Buffer.from(frame), Buffer.from(mpeg)]);
+
+  const { common } = await mm.parseBuffer(buf, { mimeType: 'audio/mpeg' });
+  assert.strictEqual(common.comment[0].text, 'T\u00ebst', 'UTF-16 comment decoded using big-endian BOM');
+});
