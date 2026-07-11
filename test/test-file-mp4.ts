@@ -629,4 +629,11 @@ describe('Track Header (tkhd) atom', () => {
     assert.strictEqual(header.modificationTime.getTime(), 2000 * 1000, 'modificationTime');
   });
 
+  it('throws on an unsupported version', () => {
+    const buf = new Uint8Array(64);
+    buf[0] = 2; // version
+
+    assert.throws(() => new TrackHeaderAtom(buf.length).get(buf, 0), /Invalid tkhd version header/);
+  });
+
 });
