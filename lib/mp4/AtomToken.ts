@@ -519,9 +519,10 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
           trackId: Token.UINT32_BE.get(buf, off + 12),
           // reserved 4 bytes
           duration: Token.UINT32_BE.get(buf, off + 20),
-          layer: Token.UINT16_BE.get(buf, off + 24),
-          alternateGroup: Token.UINT16_BE.get(buf, off + 26),
-          volume: Token.UINT16_BE.get(buf, off + 28) // ToDo: fixed point
+          // reserved 8 bytes
+          layer: Token.UINT16_BE.get(buf, off + 32),
+          alternateGroup: Token.UINT16_BE.get(buf, off + 34),
+          volume: Token.UINT16_BE.get(buf, off + 36) // ToDo: fixed point
           // ToDo: add remaining fields
         };
 
@@ -535,9 +536,10 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
           trackId: Token.UINT32_BE.get(buf, off + 20),
           // reserved 4 bytes
           duration: Number(Token.UINT64_BE.get(buf, off + 28)),
-          layer: Token.UINT16_BE.get(buf, off + 36),
-          alternateGroup: Token.UINT16_BE.get(buf, off + 38),
-          volume: Token.UINT16_BE.get(buf, off + 40) // ToDo: fixed point
+          // reserved 8 bytes
+          layer: Token.UINT16_BE.get(buf, off + 44),
+          alternateGroup: Token.UINT16_BE.get(buf, off + 46),
+          volume: Token.UINT16_BE.get(buf, off + 48) // ToDo: fixed point
           // ToDo: add remaining fields
         };
 
