@@ -5,12 +5,14 @@ import { Parsers } from './metadata-parsers.js';
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 import { IdHeader } from '../lib/ogg/opus/Opus.js';
+import { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
+import { IFormat } from '../lib/index.js';
 
 const oggSamplePath = path.join(samplePath, 'ogg');
 
 describe('Parse Ogg', () => {
 
-  function check_Nirvana_In_Bloom_commonTags(common) {
+  function check_Nirvana_In_Bloom_commonTags(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'In Bloom', 'common.title');
     assert.strictEqual(common.artist, 'Nirvana', 'common.artist');
     assert.strictEqual(common.albumartist, 'Nirvana', 'common.albumartist');
@@ -19,15 +21,15 @@ describe('Parse Ogg', () => {
     assert.deepEqual(common.track, {no: 2, of: 12}, 'common.track');
     assert.deepEqual(common.disk, {no: 1, of: 1}, 'common.disk');
     assert.deepEqual(common.genre, ['Grunge', 'Alternative'], 'genre');
-    assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
-    assert.strictEqual(common.picture[0].data.length, 30966, 'picture length');
+    assert.strictEqual(common.picture![0].format, 'image/jpeg', 'picture format');
+    assert.strictEqual(common.picture![0].data.length, 30966, 'picture length');
     assert.strictEqual(common.barcode, '0720642442524', 'common.barcode (including leading zero)');
     assert.strictEqual(common.asin, 'B000003TA4', 'common.asin');
     assert.deepEqual(common.catalognumber, ['GED24425'], 'common.asin');
     assert.deepEqual(common.isrc, ['USGF19942502'], 'common.isrc');
   }
 
-  function check_Nirvana_In_Bloom_VorbisTags(vorbis) {
+  function check_Nirvana_In_Bloom_VorbisTags(vorbis: mm.INativeTagDict) {
 
     assert.deepEqual(vorbis.TRACKNUMBER, ['2'], 'vorbis.TRACKNUMBER');
     assert.deepEqual(vorbis.TRACKTOTAL, ['12'], 'vorbis.TRACKTOTAL');
@@ -36,9 +38,9 @@ describe('Parse Ogg', () => {
     assert.deepEqual(vorbis.GENRE, ['Grunge', 'Alternative'], 'vorbis.GENRE');
     assert.deepEqual(vorbis.TITLE, ['In Bloom'], 'vorbis.TITLE');
 
-    const cover = vorbis.METADATA_BLOCK_PICTURE[0];
+    const cover = vorbis.METADATA_BLOCK_PICTURE[0] as IVorbisPicture;
 
-    assert.strictEqual(cover.format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE format');
+    assert.strictEqual(cover!.format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE format');
     assert.strictEqual(cover.type, 'Cover (front)', 'vorbis.METADATA_BLOCK_PICTURE tagTypes');
     // test exact contents too
     assert.strictEqual(cover.data.length, 30966, 'vorbis.METADATA_BLOCK_PICTURE length');
@@ -97,7 +99,7 @@ describe('Parse Ogg', () => {
 
       const filePath = path.join(oggSamplePath, 'nirvana-2sec.vorbis.ogg');
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
         assert.strictEqual(format.duration, 2.0, 'format.duration [seconds]');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate [hz]');
@@ -188,9 +190,9 @@ describe('Parse Ogg', () => {
       assert.strictEqual(common.track.of, 5, 'track of');
       assert.strictEqual(common.disk.no, 1, 'disk no');
       assert.strictEqual(common.disk.of, 1, 'disk of');
-      assert.strictEqual(common.genre[0], 'Dubstep', 'genre');
-      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
-      assert.strictEqual(common.picture[0].data.length, 207439, 'picture length');
+      assert.strictEqual(common.genre![0], 'Dubstep', 'genre');
+      assert.strictEqual(common.picture![0].format, 'image/jpeg', 'picture format');
+      assert.strictEqual(common.picture![0].data.length, 207439, 'picture length');
 
     });
 
@@ -208,7 +210,7 @@ describe('Parse Ogg', () => {
         const filePath = path.join(oggSamplePath, 'issue_70.ogg');
         const {format} = await mm.parseFile(filePath, {duration: true});
         assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
-        assert.approximately(format.duration, 1.32, 0.005, 'format.duration');
+        assert.approximately(format.duration!, 1.32, 0.005, 'format.duration');
       });
 
     });
@@ -223,7 +225,7 @@ describe('Parse Ogg', () => {
         try {
           const _idHeader = new IdHeader(18);
         } catch (err) {
-          expect(err.message).to.equal('ID-header-page 0 should be at least 19 bytes long');
+          expect((err as Error).message).to.equal('ID-header-page 0 should be at least 19 bytes long');
         }
       });
     });
@@ -232,10 +234,10 @@ describe('Parse Ogg', () => {
 
       const filePath = path.join(oggSamplePath, 'nirvana-2sec.opus.ogg');
 
-      function checkFormat(format) {
+      function checkFormat(format: IFormat) {
         assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
         assert.strictEqual(format.numberOfSamples, 96000, 'format.numberOfSamples = 96000');
-        assert.approximately(format.duration, 2.0, 1 / 200, 'format.duration = 2.0 sec');
+        assert.approximately(format.duration!, 2.0, 1 / 200, 'format.duration = 2.0 sec');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 (stereo)');
         assert.isTrue(format.hasAudio, 'format.hasAudio');
@@ -261,7 +263,7 @@ describe('Parse Ogg', () => {
 
       const filePath = path.join(samplePath, 'female_scrub.spx');
 
-      function checkFormat(format) {
+      function checkFormat(format: IFormat) {
         assert.strictEqual(format.container, 'Ogg', 'format.container');
         assert.strictEqual(format.codec, 'Speex 1.0beta1');
         assert.strictEqual(format.sampleRate, 8000, 'format.sampleRate = 8 kHz');
@@ -290,7 +292,7 @@ describe('Parse Ogg', () => {
 
       assert.isTrue(format.hasAudio, 'format.hasAudio');
       assert.isTrue(format.hasVideo, 'format.hasAudio');
-      assert.approximately(format.duration, 5.758548752834467, 1/1000000, 'format.duration');
+      assert.approximately(format.duration!, 5.758548752834467, 1/1000000, 'format.duration');
     });
 
   });
@@ -334,7 +336,7 @@ describe('Parse Ogg', () => {
       assert.strictEqual(format.codec, 'Opus', 'format.codec');
       assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
       assert.strictEqual(format.numberOfSamples, 253440, 'format.numberOfSamples');
-      assert.approximately(format.duration, 5.28, 1 / 200, 'format.duration');
+      assert.approximately(format.duration!, 5.28, 1 / 200, 'format.duration');
     });
 
     it('with no last page', async() => {
@@ -347,7 +349,7 @@ describe('Parse Ogg', () => {
       assert.strictEqual(format.codec, 'Opus', 'format.codec');
       assert.strictEqual(format.sampleRate, 16000, 'format.sampleRate');
       assert.strictEqual(format.numberOfSamples, 270720, 'format.numberOfSamples');
-      assert.approximately(format.duration, 5.64, 1 / 200, 'format.duration');
+      assert.approximately(format.duration!, 5.64, 1 / 200, 'format.duration');
 
       assert.includeDeepMembers(quality.warnings, [{message: 'End-of-stream reached before reaching last page in Ogg stream serial=0'}]);
     });

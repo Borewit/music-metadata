@@ -35,7 +35,7 @@ describe('Matroska formats', () => {
       // format chunk information
       assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
       assert.strictEqual(format.codec, 'ALAC', 'format.codec');
-      assert.approximately(format.duration, 196608 / 41000, 1 / 100000, 'format.duration');
+      assert.approximately(format.duration!, 196608 / 41000, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 41000, 'format.sampleRate');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
@@ -51,7 +51,7 @@ describe('Matroska formats', () => {
       // format chunk information
       assert.strictEqual(format.container, 'EBML/matroska', 'format.container');
       assert.strictEqual(format.codec, 'AAC', 'format.codec');
-      assert.approximately(format.duration, 221184 / 44100, 1 / 100000, 'format.duration');
+      assert.approximately(format.duration!, 221184 / 44100, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
@@ -80,7 +80,7 @@ describe('Matroska formats', () => {
       // format chunk information
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'VORBIS', 'format.codec');
-      assert.approximately(format.duration, 7.143, 1 / 100000, 'format.duration');
+      assert.approximately(format.duration!, 7.143, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
       assert.isTrue(format.hasVideo, 'format.hasVideo');
@@ -102,7 +102,7 @@ describe('Matroska formats', () => {
       // format chunk information
       assert.strictEqual(format.container, 'EBML/webm', 'format.container');
       assert.strictEqual(format.codec, 'OPUS', 'format.codec');
-      assert.approximately(format.duration, 5.006509896, 1 / 100000, 'format.duration');
+      assert.approximately(format.duration!, 5.006509896, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
       assert.isFalse(format.hasVideo, 'format.hasVideo');
@@ -154,7 +154,7 @@ describe('Matroska formats', () => {
       assert.deepEqual(format.tagTypes, [ 'matroska' ], 'format.tagTypes');
 
       assert.deepEqual(format.codec, 'AAC', 'format.codec');
-      assert.approximately(format.duration, 3.417, 1 / 100000, 'format.duration');
+      assert.approximately(format.duration!, 3.417, 1 / 100000, 'format.duration');
       assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
 

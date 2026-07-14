@@ -121,7 +121,7 @@ describe('Parse MP3 files', () => {
     const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
 
     const result = await mm.parseFile(filePath, {duration: true});
-    assert.approximately(result.format.duration, durationSleepAwayMp3, 1 / 10);
+    assert.approximately(result.format.duration!, durationSleepAwayMp3, 1 / 10);
   });
 
   it('should be able to parse: Sleep Away.mp3', () => {
@@ -141,8 +141,8 @@ describe('Parse MP3 files', () => {
       assert.deepEqual(common.composer, ['Robert R. Acri']);
       assert.deepEqual(common.genre, ['Jazz']);
 
-      assert.strictEqual(common.picture.length, 1, 'should contain the cover');
-      const picture = common.picture[0];
+      assert.strictEqual(common.picture!.length, 1, 'should contain the cover');
+      const picture = common.picture![0];
       assert.strictEqual(picture.description, 'thumbnail');
       assert.strictEqual(picture.format, 'image/jpeg');
       assert.strictEqual(picture.data.length, 27852);
@@ -212,7 +212,7 @@ describe('Parse MP3 files', () => {
 
     assert.strictEqual(common.title, 'Jan Pillemann Otze', 'common.title');
     assert.strictEqual(common.artist, 'Mickie Krause', 'common.artist');
-    assert.approximately(format.duration, 217.86, 0.005, 'format.duration');
+    assert.approximately(format.duration!, 217.86, 0.005, 'format.duration');
   });
 
   it('Able to handle corrupt LAME header', async () => {
@@ -223,7 +223,7 @@ describe('Parse MP3 files', () => {
 
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
-    assert.approximately(format.duration, 817.92, 1 / 200, 'format.duration');
+    assert.approximately(format.duration!, 817.92, 1 / 200, 'format.duration');
     assert.strictEqual(format.sampleRate, 22050, 'format.sampleRate');
 
     assert.includeDeepMembers(quality.warnings, [{message: 'Corrupt LAME header'}], 'quality.warnings includes: \'Corrupt LAME header\'');
@@ -235,7 +235,7 @@ describe('Parse MP3 files', () => {
 
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
-      assert.approximately(format.duration, 61.73, 1 / 100, 'format.duration');
+      assert.approximately(format.duration!, 61.73, 1 / 100, 'format.duration');
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
       assert.strictEqual(format.lossless, false, 'format.lossless');
@@ -273,7 +273,7 @@ describe('Parse MP3 files', () => {
         Parsers.forEach(parser => {
             it(parser.description, async function(){
               const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
-              assert.approximately(format.duration, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
+              assert.approximately(format.duration!, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
               assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
             });
           });
@@ -353,7 +353,7 @@ describe('Parse MP3 files', () => {
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
         assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
         assert.strictEqual(format.tool, 'LAME 3.99r', 'format.tool');
-        assert.approximately(format.trackPeakLevel, 0.21857, 5 / 1000000, 'format.trackPeakLevel');
+        assert.approximately(format.trackPeakLevel!, 0.21857, 5 / 1000000, 'format.trackPeakLevel');
         assert.strictEqual(format.trackGain, 6.8, 'format.trackGain');
         assert.isUndefined(format.albumGain, 'format.albumGain');
       });

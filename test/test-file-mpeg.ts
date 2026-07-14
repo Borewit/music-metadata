@@ -86,11 +86,11 @@ describe('Parse MPEG', () => {
 
       const filePath = path.join(samplePath, '04 - You Don\'t Know.mp3');
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.numberOfSamples, 9098496, 'format.numberOfSamples'); // FooBar says 3:26.329 seconds (9.099.119 samples)
-        t.approximately(format.duration, 206.3, 1 / 10, 'format.duration'); // FooBar says 3:26.329 seconds (9.099.119 samples)
+        t.approximately(format.duration!, 206.3, 1 / 10, 'format.duration'); // FooBar says 3:26.329 seconds (9.099.119 samples)
         t.strictEqual(format.bitrate, 320000, 'format.bitrate = 128 kbit/sec');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
 
@@ -98,7 +98,7 @@ describe('Parse MPEG', () => {
         // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
       }
 
-      function checkCommon(common) {
+      function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, 'You Don\'t Know', 'common.title');
         t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
         t.strictEqual(common.albumartist, 'Reel Big Fish', 'common.albumartist');
@@ -153,18 +153,18 @@ describe('Parse MPEG', () => {
 
       const filePath = path.join(samplePath, '07 - I\'m Cool.mp3');
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         // t.strictEqual(format.numberOfSamples, 8040655, 'format.numberOfSamples'); // FooBar says 8.040.655 samples
-        t.approximately(format.duration, 200.9, 1 / 10, 'format.duration'); // FooBar says 3:26.329 seconds
+        t.approximately(format.duration!, 200.9, 1 / 10, 'format.duration'); // FooBar says 3:26.329 seconds
         t.strictEqual(format.bitrate, 320000, 'format.bitrate = 128 kbit/sec');
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
         // t.strictEqual(format.codec, 'LAME3.98r', 'format.codec'); // 'LAME3.91' found on position 81BCF=531407// 'LAME3.91' found on position 81BCF=531407
         // t.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
       }
 
-      function checkCommon(common) {
+      function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, 'I\'m Cool', 'common.title');
         t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
         t.strictEqual(common.albumartist, 'Reel Big Fish', 'common.albumartist');
@@ -223,7 +223,7 @@ describe('Parse MPEG', () => {
        ------------------------------------------------------------------------*/
       const filePath = path.join(samplePath, 'outofbounds.mp3');
 
-      function checkFormat(format) {
+      function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
         t.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         t.strictEqual(format.bitrate, 320000, 'format.bitrate = 128 kbit/sec');
@@ -244,7 +244,7 @@ describe('Parse MPEG', () => {
    */
   describe('Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1', () => {
 
-    function checkFormat(format: mm.IFormat, expectedDuration) {
+    function checkFormat(format: mm.IFormat, expectedDuration: number) {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v2.4', 'ID3v1'], 'format.tagTypes');
       t.strictEqual(format.duration, expectedDuration, 'format.duration');
       t.deepEqual(format.container, 'MPEG', 'format.container');
@@ -301,7 +301,7 @@ describe('Parse MPEG', () => {
       });
       const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
       assert.deepEqual(idv23.POPM[0], {email: 'no@email', rating: 128, counter: 0}, 'ID3v2.3 POPM');
-      assert.approximately(metadata.common.rating[0].rating, 0.5, 1 / (2 * 254), 'Common rating');
+      assert.approximately(metadata.common.rating![0].rating!, 0.5, 1 / (2 * 254), 'Common rating');
     });
 
     it('from \'id3v2-lyrics.mp3\'', async () => {
@@ -311,7 +311,7 @@ describe('Parse MPEG', () => {
       // Native rating value
       assert.deepEqual(idv23.POPM[0], {email: 'MusicBee', rating: 255, counter: 0}, 'ID3v2.3 POPM');
       // Common rating value
-      assert.approximately(metadata.common.rating[0].rating, 1, 0, 'Common rating');
+      assert.approximately(metadata.common.rating![0].rating!, 1, 0, 'Common rating');
     });
 
     it('decode POPM without a counter field', async () => {
@@ -354,7 +354,7 @@ describe('Parse MPEG', () => {
 
       const metadata = await mm.parseStream(stream, {mimeType: 'audio/mpeg'}, {duration: true});
       // Changed expected result from 34.66 to 34.64, to 34,69 (strtok3@10.2.0) after updating strtok3
-      assert.approximately(metadata.format.duration, 34.69, 5 / 1000);
+      assert.approximately(metadata.format.duration!, 34.69, 5 / 1000);
     });
 
   });

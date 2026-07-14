@@ -13,13 +13,13 @@ describe('Parse ADTS/AAC', () => {
   function checkFormat(format: IFormat, dataFormat: string, codec: string, codecProfile: string, sampleRate: number, channels: number, bitrate: number, samples: number) {
     assert.strictEqual(format.container, dataFormat, 'format.container');
     assert.strictEqual(format.codec, codec, 'format.codec');
-    assert.strictEqual(format.codecProfile, codecProfile, 'format.codecProfile');
+    assert.strictEqual(format.codecProfile!, codecProfile, 'format.codecProfile');
     assert.strictEqual(format.lossless, false, 'format.lossless');
     assert.strictEqual(format.sampleRate, sampleRate, 'format.sampleRate');
     assert.strictEqual(format.numberOfChannels, channels, 'format.numberOfChannels');
-    assert.approximately(format.bitrate, bitrate, 500, 'format.bitrate');
+    assert.approximately(format.bitrate!, bitrate, 500, 'format.bitrate');
     assert.strictEqual(format.numberOfSamples, samples, `format.numberOfSamples = ${samples} samples`);
-    assert.approximately(format.duration, samples / sampleRate, 0.1, 'format.duration');
+    assert.approximately(format.duration!, samples / sampleRate, 0.1, 'format.duration');
     assert.isTrue(format.hasAudio, 'format.hasAudio');
     assert.isFalse(format.hasVideo, 'format.hasAudio');
   }
