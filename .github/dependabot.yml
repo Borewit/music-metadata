@@ -30,5 +30,5 @@ updates:
     open-pull-requests-limit: 10
     target-branch: "master"
     labels:
-      - dependencies
+      - DevOps
 
