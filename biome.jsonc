@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
 	"assist": { "actions": { "source": { "organizeImports": "off" } } },
 	"formatter": {
 		"enabled": false
@@ -60,10 +60,6 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"includes": [
-			"lib/**/*.ts",
-			"test/**/*.ts",
-			"doc-gen/**/*.ts"
-		]
+		"includes": ["lib/**/*.ts", "test/**/*.ts", "doc-gen/**/*.ts"]
 	}
 }
