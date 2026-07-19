@@ -6,7 +6,6 @@ import * as AsfObject from './AsfObject.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { AsfContentParseError } from './AsfObject.js';
 
-
 const debug = initDebug('music-metadata:parser:ASF');
 const headerType = 'asf';
 
@@ -24,8 +23,10 @@ export class AsfParser extends BasicParser {
 
   public async parse() {
     const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
-    if (!header.objectId.equals(AsfGuid.HeaderObject)) {
-      throw new AsfContentParseError(`expected asf header; but was not found; got: ${header.objectId.str}`);
+    if (header.numberOfHeaderObjects > 10000) {
+      throw new AsfContentParseError(
+        `Unrealistic number of ASF header objects: ${header.numberOfHeaderObjects}`
+      );
     }
     await this.parseObjectHeader(header.numberOfHeaderObjects);
   }
@@ -110,9 +111,6 @@ export class AsfParser extends BasicParser {
       // Parse common header of the ASF Object (3.1)
       const header = await this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken);
       const remaining = header.objectSize - AsfObject.HeaderObjectToken.len;
-      if (remaining < 0) {
-        throw new AsfContentParseError(`Invalid ASF header object size: ${header.objectSize}`);
-      }
       // Parse data part of the ASF Object
       switch (header.objectId.str) {
 

@@ -154,16 +154,32 @@ describe('Parse ASF', () => {
 
   });
 
-  it('Avoid infinite loop CWE-835', async () => {
-    const filePath = path.join(asfFilePath, 'CWE-835.wma');
+  describe('security hardening', () => {
 
-    try {
-      await mm.parseFile(filePath);
-      expect.fail('Expected parseFile to throw AsfContentParseError');
-    } catch (err) {
-      expect(err).to.be.instanceOf(AsfContentParseError);
-      expect((err as Error).message).to.match(/Invalid ASF header object size/);
-    }
+    it('Avoid infinite loop CWE-835', async () => {
+      const filePath = path.join(asfFilePath, 'CWE-835.wma');
+
+      try {
+        await mm.parseFile(filePath);
+        expect.fail('Expected parseFile to throw AsfContentParseError');
+      } catch (err) {
+        expect(err).to.be.instanceOf(AsfContentParseError);
+        expect((err as Error).message).to.match(/Invalid ASF header object size/);
+      }
+    });
+
+    it('numberOfObjectHeaders=4294967295', async () => {
+      const filePath = path.join(asfFilePath, 'max-numberOfObjectHeaders.wma');
+
+      try {
+        await mm.parseFile(filePath);
+        expect.fail('Expected parseFile to throw AsfContentParseError');
+      } catch (err) {
+        expect(err).to.be.instanceOf(AsfContentParseError);
+        expect((err as Error).message).to.match(/Unrealistic number of ASF header objects/);
+      }
+    });
+
   });
 
 });

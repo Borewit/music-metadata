@@ -77,11 +77,12 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Uint
   len: 30,
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
+    const base = HeaderObjectToken.get(buf, off);
+
     return {
-      objectId: AsfGuid.fromBin(buf, off),
-      objectSize: Number(Token.UINT64_LE.get(buf, off + 16)),
+      ...base,
       numberOfHeaderObjects: Token.UINT32_LE.get(buf, off + 24)
-      // Reserved: 2 bytes
+      // reserved: 2 bytes
     };
   }
 };
@@ -95,10 +96,14 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Uint8Array> = {
   len: 24,
 
   get: (buf, off): IAsfObjectHeader => {
-    return {
+    const header = {
       objectId: AsfGuid.fromBin(buf, off),
       objectSize: Number(Token.UINT64_LE.get(buf, off + 16))
     };
+    if (header.objectSize < 24) {
+      throw new AsfContentParseError(`Invalid ASF header object size: ${header.objectSize}`);
+    }
+    return header;
   }
 };
 
