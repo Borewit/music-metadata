@@ -36,6 +36,6 @@ export class ListInfoTagValue implements IGetToken<string> {
   }
 
   public get(buf: Uint8Array, off: number): string {
-    return new Token.StringType(this.tagHeader.chunkSize, 'ascii').get(buf, off);
+    return new Token.StringType(this.tagHeader.chunkSize, 'utf8').get(buf, off);
   }
 }
