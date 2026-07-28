@@ -11,6 +11,7 @@ const apev2TagMap: INativeTagMap = {
   'Album Artist': 'albumartist',
   Album: 'album',
   Year: 'date',
+  Date: 'date',
   Originalyear: 'originalyear',
   Originaldate: 'originaldate',
   Releasedate: 'releasedate',

@@ -134,6 +134,14 @@ describe('Picard mapping coverage', () => {
 
   });
 
+  it('APEv2 accepts the Vorbis-convention Date key', () => {
+
+    const apeTagMapper = new APEv2TagMapper();
+
+    assert.equal(apeTagMapper.tagMap.YEAR, 'date', 'APEv2 Year');
+    assert.equal(apeTagMapper.tagMap.DATE, 'date', 'APEv2 Date');
+  });
+
   it('ID3v2.4.0', () => {
 
     /**
