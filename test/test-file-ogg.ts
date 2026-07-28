@@ -278,6 +278,24 @@ describe('Parse Ogg', () => {
 
     });
 
+    describe("decode: 'speex-with-comments.spx'", () => {
+
+      const filePath = path.join(oggSamplePath, 'speex-with-comments.spx');
+
+      Parsers.forEach(parser => {
+        it(parser.description, async function(){
+          const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/ogg');
+          assert.strictEqual(format.container, 'Ogg', 'format.container');
+          assert.isTrue(format.codec?.startsWith('Speex'), 'format.codec');
+          assert.deepEqual(format.tagTypes, ['vorbis'], 'format.tagTypes');
+          assert.strictEqual(common.title, 'Speex Test Title', 'common.title');
+          assert.strictEqual(common.artist, 'Speex Test Artist', 'common.artist');
+          assert.strictEqual(common.album, 'Speex Test Album', 'common.album');
+        });
+      });
+
+    });
+
   });
 
   describe('Parsing Ogg/Theora', () => {
