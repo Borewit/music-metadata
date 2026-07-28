@@ -18,6 +18,8 @@ const debug = initDebug('music-metadata:parser:ogg:speex');
  */
 export class SpeexStream extends VorbisStream {
 
+  private commentHeaderParsed = false;
+
   constructor(metadata: INativeMetadataCollector, options: IOptions, _tokenizer: ITokenizer) {
     super(metadata, options);
   }
@@ -37,6 +39,18 @@ export class SpeexStream extends VorbisStream {
       this.metadata.setFormat('bitrate', speexHeader.bitrate);
     }
     this.metadata.setAudioOnly();
+  }
+
+  /**
+   * The packet following the identification header is the comment header, in
+   * Vorbis comment format but without a packet type or magic signature.
+   * Ref: https://tools.ietf.org/html/rfc5574#section-3
+   */
+  protected async parseFullPage(pageData: Uint8Array): Promise<void> {
+    if (this.commentHeaderParsed) return;
+    this.commentHeaderParsed = true;
+    debug('Parse Ogg/Speex comment header');
+    await this.parseUserCommentList(pageData, 0);
   }
 
 }
