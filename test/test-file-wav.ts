@@ -126,6 +126,46 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(metadata.format.duration, format.numberOfSamples / format.sampleRate, 'file\'s duration');
   });
 
+  it('should decode LIST-INFO tags as UTF-8', async () => {
+
+    const u32 = (n: number): Uint8Array => {
+      const b = new Uint8Array(4);
+      new DataView(b.buffer).setUint32(0, n, true);
+      return b;
+    };
+    const ascii = (str: string): Uint8Array => Uint8Array.from(str, c => c.charCodeAt(0));
+    const concat = (...parts: Uint8Array[]): Uint8Array => {
+      const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+      let off = 0;
+      for (const p of parts) { out.set(p, off); off += p.length; }
+      return out;
+    };
+
+    const expected = 'Tïtle \u{1F600}';
+    const title = new TextEncoder().encode(expected);
+    const inam = concat(ascii('INAM'), u32(title.length), title, new Uint8Array(title.length % 2));
+    const info = concat(ascii('INFO'), inam);
+    const list = concat(ascii('LIST'), u32(info.length), info);
+
+    const fmt = new Uint8Array(24);
+    fmt.set(ascii('fmt '), 0);
+    const fmtView = new DataView(fmt.buffer);
+    fmtView.setUint32(4, 16, true);
+    fmtView.setUint16(8, 1, true);
+    fmtView.setUint16(10, 1, true);
+    fmtView.setUint32(12, 8000, true);
+    fmtView.setUint32(16, 8000, true);
+    fmtView.setUint16(20, 1, true);
+    fmtView.setUint16(22, 8, true);
+
+    const data = concat(ascii('data'), u32(2), new Uint8Array(2));
+    const body = concat(ascii('WAVE'), fmt, list, data);
+    const riff = concat(ascii('RIFF'), u32(body.length), body);
+
+    const metadata = await mm.parseBuffer(riff, {mimeType: 'audio/wav'});
+    assert.strictEqual(metadata.common.title, expected, 'common.title');
+  });
+
   describe('non-PCM', () => {
 
     it('should parse Microsoft 4-bit ADPCM encoded', () => {
