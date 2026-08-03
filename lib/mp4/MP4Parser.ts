@@ -130,6 +130,26 @@ function distinct(value: AnyTagValue, index: number, self: AnyTagValue[]) {
   return self.indexOf(value) === index;
 }
 
+/**
+ * Determine if a track carries audio.
+ *
+ * Ref: ISO/IEC 14496-12, 8.5.2: the sample entries in a sample description box are track-type specific,
+ * selected by the handler type of the enclosing track. Only a 'soun' track holds an AudioSampleEntry, so
+ * only such a track may be described by a sound sample description.
+ *
+ * Falls back to the sample description when no handler box was found, preserving the previous behaviour.
+ */
+function isAudioTrack(track: ITrackDescription): boolean {
+  const [ssd] = track.soundSampleDescription ?? [];
+  if (!ssd) {
+    return false;
+  }
+  if (track.isAudio) {
+    return track.isAudio();
+  }
+  return !!ssd.description && ssd.description.numAudioChannels > 0;
+}
+
 /*
  * Parser for the MP4 (MPEG-4 Part 14) container format
  * Standard: ISO/IEC 14496-14
@@ -197,6 +217,7 @@ export class MP4Parser extends BasicParser {
     const formatList: string[] = [];
     this.tracks.forEach(track => {
       const trackFormats: string[] = [];
+      const trackIsAudio = isAudioTrack(track);
 
       track.soundSampleDescription.forEach(ssd => {
         const streamInfo: ITrackInfo = {};
@@ -207,7 +228,7 @@ export class MP4Parser extends BasicParser {
         } else {
           streamInfo.codecName = `<${ssd.dataFormat}>`;
         }
-        if (ssd.description) {
+        if (trackIsAudio && ssd.description) {
           const {description} = ssd;
           if (description.sampleRate > 0) {
             streamInfo.type = TrackType.audio;
@@ -230,9 +251,7 @@ export class MP4Parser extends BasicParser {
       this.metadata.setFormat('codec', formatList.filter(distinct).join('+'));
     }
 
-    const audioTracks = [...this.tracks.values()].filter(track => {
-      return track.soundSampleDescription.length >= 1 && track.soundSampleDescription[0].description && track.soundSampleDescription[0].description.numAudioChannels > 0;
-    });
+    const audioTracks = [...this.tracks.values()].filter(isAudioTrack);
 
     // Calculate duration and bitrate of audio tracks
     for (const audioTrack of audioTracks) {
@@ -696,13 +715,20 @@ export class MP4Parser extends BasicParser {
     };
 
     let offset = 0;
-    if (sampleDescription.description) {
-      const version = AtomToken.SoundSampleDescriptionVersion.get(sampleDescription.description, offset);
+    const {description} = sampleDescription;
+    // Only an AudioSampleEntry carries a sound sample description; it is at least 20 bytes beyond the
+    // 16-byte SampleEntry base. A shorter description belongs to another sample entry class, or is truncated.
+    if (description && description.length >= AtomToken.SoundSampleDescriptionVersion.len) {
+      const version = AtomToken.SoundSampleDescriptionVersion.get(description, offset);
       offset += AtomToken.SoundSampleDescriptionVersion.len;
 
       if (version.version === 0 || version.version === 1) {
         // Sound Sample Description (Version 0)
-        ssd.description = AtomToken.SoundSampleDescriptionV0.get(sampleDescription.description, offset);
+        if (description.length >= offset + AtomToken.SoundSampleDescriptionV0.len) {
+          ssd.description = AtomToken.SoundSampleDescriptionV0.get(description, offset);
+        } else {
+          debug(`Warning: sound-sample-description too short: ${description.length} bytes`);
+        }
       } else {
         debug(`Warning: sound-sample-description ${version} not implemented`);
       }

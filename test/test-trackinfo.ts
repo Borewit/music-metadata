@@ -256,13 +256,8 @@ describe('format.trackInfo', () => {
             type: TrackType.audio
           },
           {
-            audio: {
-              bitDepth: 0,
-              channels: 0,
-              samplingFrequency: 1916.1076
-            },
-            codecName: '<avc1>',
-            type: TrackType.audio
+            // A video track holds a VisualSampleEntry, so no audio properties are derived from it
+            codecName: '<avc1>'
           },
           {
             audio: {
