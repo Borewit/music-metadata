@@ -712,3 +712,164 @@ describe('Track Header (tkhd) atom', () => {
   });
 
 });
+
+describe('Sample Description (stsd) atom', () => {
+
+  const textEncoder = new TextEncoder();
+  const timeScale = 44100;
+
+  function concat(...parts: Uint8Array[]): Uint8Array {
+    const buf = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+    let offset = 0;
+    for (const part of parts) {
+      buf.set(part, offset);
+      offset += part.length;
+    }
+    return buf;
+  }
+
+  /**
+   * Build a box: 32-bit size, 4-character type, then the payload.
+   */
+  function box(type: string, ...payloads: Uint8Array[]): Uint8Array {
+    const header = new Uint8Array(8);
+    const body = concat(...payloads);
+    new DataView(header.buffer).setUint32(0, header.length + body.length);
+    header.set(textEncoder.encode(type), 4);
+    return concat(header, body);
+  }
+
+  function handlerBox(handlerType: string): Uint8Array {
+    const payload = new Uint8Array(24);
+    payload.set(textEncoder.encode(handlerType), 8);
+    return box('hdlr', payload);
+  }
+
+  function trackHeaderBox(trackId: number): Uint8Array {
+    const payload = new Uint8Array(84);
+    new DataView(payload.buffer).setUint32(12, trackId);
+    return box('tkhd', payload);
+  }
+
+  function mediaHeaderBox(): Uint8Array {
+    const payload = new Uint8Array(24);
+    const view = new DataView(payload.buffer);
+    view.setUint32(12, timeScale);
+    view.setUint32(16, timeScale); // duration: one second
+    return box('mdhd', payload);
+  }
+
+  function sampleSizeBox(): Uint8Array {
+    return box('stsz', new Uint8Array(12)); // sample_size and sample_count both zero
+  }
+
+  /**
+   * A sample description box holding a single entry of the given size.
+   *
+   * Ref: ISO/IEC 14496-12, 8.5.2. A SampleEntry is 16 bytes: the box header, 6 reserved bytes and the
+   * data reference index. An AudioSampleEntry adds 20 bytes on top, whereas other sample entry classes,
+   * such as a MetaDataSampleEntry, may be no larger than the 16-byte base.
+   */
+  function sampleDescriptionBox(dataFormat: string, entrySize: number, audioLike = false): Uint8Array {
+    const header = new Uint8Array(8);
+    new DataView(header.buffer).setUint32(4, 1); // entry_count
+
+    const entry = new Uint8Array(entrySize);
+    const view = new DataView(entry.buffer);
+    view.setUint32(0, entrySize);
+    entry.set(textEncoder.encode(dataFormat), 4);
+    view.setUint16(14, 1); // data_reference_index
+
+    if (audioLike) {
+      // Populate the bytes an AudioSampleEntry would use, to prove they are not read from a non-audio track
+      view.setUint16(24, 2); // channel count
+      view.setUint16(26, 16); // sample size
+      view.setUint16(32, timeScale); // sample rate
+    }
+    return box('stsd', header, entry);
+  }
+
+  interface ITrackSpec {
+    handler: string;
+    dataFormat: string;
+    entrySize: number;
+    audioLike?: boolean;
+    handlerAfterMinf?: boolean;
+  }
+
+  const videoTrack: ITrackSpec = {handler: 'vide', dataFormat: 'avc1', entrySize: 36};
+
+  function trackBox(trackId: number, spec: ITrackSpec): Uint8Array {
+    const hdlr = handlerBox(spec.handler);
+    const stbl = box('stbl', sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike), sampleSizeBox());
+    const minf = box('minf', stbl);
+    // Readers are required to accept any box order
+    const mdia = spec.handlerAfterMinf
+      ? box('mdia', mediaHeaderBox(), minf, hdlr)
+      : box('mdia', hdlr, mediaHeaderBox(), minf);
+    return box('trak', trackHeaderBox(trackId), mdia);
+  }
+
+  function mp4(...tracks: ITrackSpec[]): Uint8Array {
+    const ftyp = box('ftyp', textEncoder.encode('isom'), new Uint8Array([0, 0, 2, 0]), textEncoder.encode('isomiso2mp41'));
+    const moov = box('moov', ...tracks.map((spec, index) => trackBox(index + 1, spec)));
+    return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
+  }
+
+  // A metadata sample entry is not an AudioSampleEntry, and may be shorter than one
+  for (const entrySize of [16, 18, 24, 34, 36]) {
+    it(`parses a metadata sample entry of ${entrySize} bytes`, async () => {
+
+      const buf = mp4(videoTrack, {handler: 'meta', dataFormat: 'djmd', entrySize});
+
+      const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+
+      assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
+      assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
+    });
+  }
+
+  it('does not derive audio properties from a metadata track', async () => {
+
+    const buf = mp4(videoTrack, {handler: 'meta', dataFormat: 'djmd', entrySize: 36, audioLike: true});
+
+    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+
+    assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
+    assert.isUndefined(format.sampleRate, 'format.sampleRate');
+    assert.isUndefined(format.bitsPerSample, 'format.bitsPerSample');
+    assert.isUndefined(format.trackInfo[1].audio, 'metadata track is not described as audio');
+  });
+
+  it('derives audio properties from a sound track', async () => {
+
+    const buf = mp4(videoTrack, {handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true});
+
+    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+
+    assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+    assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
+    assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+  });
+
+  it('reports the data format of a non-audio track', async () => {
+
+    const buf = mp4(videoTrack, {handler: 'meta', dataFormat: 'djmd', entrySize: 20});
+
+    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+
+    assert.strictEqual(format.trackInfo[0].codecName, '<avc1>', 'video track codec name');
+    assert.strictEqual(format.trackInfo[1].codecName, '<djmd>', 'metadata track codec name');
+  });
+
+  it('handles the handler box declared after the media information box', async () => {
+
+    const buf = mp4(videoTrack, {handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true, handlerAfterMinf: true});
+
+    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+
+    assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+    assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
+  });
+
+});
