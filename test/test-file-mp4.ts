@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
-import { TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
+import { StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
@@ -601,6 +601,63 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.duration, 4, 1 / 1000, 'format.duration');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
+  });
+
+});
+
+describe('Sample Description (stsd) atom: entry table', () => {
+
+  const textEncoder = new TextEncoder();
+
+  /**
+   * A sample entry: 32-bit size, 4-character data format, 6 reserved bytes and the data reference index.
+   * A SampleEntry extends Box, so the size covers the size field itself.
+   *
+   * Ref: ISO/IEC 14496-12, 8.5.2
+   */
+  function sampleEntry(dataFormat: string, size: number, dataReferenceIndex: number): Uint8Array {
+    const entry = new Uint8Array(size);
+    const view = new DataView(entry.buffer);
+    view.setUint32(0, size);
+    entry.set(textEncoder.encode(dataFormat), 4);
+    view.setUint16(14, dataReferenceIndex);
+    return entry;
+  }
+
+  function sampleDescription(...entries: Uint8Array[]): Uint8Array {
+    const buf = new Uint8Array(8 + entries.reduce((total, entry) => total + entry.length, 0));
+    new DataView(buf.buffer).setUint32(4, entries.length); // entry_count
+    let offset = 8;
+    for (const entry of entries) {
+      buf.set(entry, offset);
+      offset += entry.length;
+    }
+    return buf;
+  }
+
+  it('reads a single sample entry', () => {
+    const buf = sampleDescription(sampleEntry('mp4a', 36, 1));
+
+    const {header, table} = new StsdAtom(buf.length).get(buf, 0);
+
+    assert.strictEqual(header.numberOfEntries, 1, 'numberOfEntries');
+    assert.deepEqual(table.map(entry => entry.dataFormat), ['mp4a'], 'dataFormat');
+  });
+
+  // Each entry is located from the size of the one before it, so an error in that arithmetic
+  // only shows up from the second entry onwards
+  it('reads every entry of a table holding more than one, of differing sizes', () => {
+    const buf = sampleDescription(
+      sampleEntry('mp4a', 36, 1),
+      sampleEntry('ac-3', 48, 2),
+      sampleEntry('alac', 20, 3)
+    );
+
+    const {header, table} = new StsdAtom(buf.length).get(buf, 0);
+
+    assert.strictEqual(header.numberOfEntries, 3, 'numberOfEntries');
+    assert.deepEqual(table.map(entry => entry.dataFormat), ['mp4a', 'ac-3', 'alac'], 'dataFormat');
+    assert.deepEqual(table.map(entry => entry.dataReferenceIndex), [1, 2, 3], 'dataReferenceIndex');
   });
 
 });

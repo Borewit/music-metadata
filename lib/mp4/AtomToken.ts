@@ -629,7 +629,8 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
       const size = Token.UINT32_BE.get(buf, off); // Sample description size
       off += Token.UINT32_BE.len;
       table.push(new SampleDescriptionTable(size - Token.UINT32_BE.len).get(buf, off));
-      off += size;
+      // A SampleEntry extends Box, so its size covers the size field already stepped over
+      off += size - Token.UINT32_BE.len;
     }
 
     return {
