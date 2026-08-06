@@ -2230,9 +2230,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mocha@npm:^11.7.6":
-  version: 11.7.6
-  resolution: "mocha@npm:11.7.6"
+"mocha@npm:^11.8.0":
+  version: 11.8.0
+  resolution: "mocha@npm:11.8.0"
   dependencies:
     browser-stdout: "npm:^1.3.1"
     chokidar: "npm:^4.0.1"
@@ -2258,7 +2258,7 @@ __metadata:
   bin:
     _mocha: bin/_mocha
     mocha: bin/mocha.js
-  checksum: 10c0/95b3eeb52eaf253167d335d1c1a46659f6f282dc112a74fd0ac46380637ae3ee52894319e00a46412a1e5a6e3056128153dc87c1fe36565c748b9fbe8d705ad0
+  checksum: 10c0/ca0e1088485b62db2144e6e021471e9bef7e963a8209c5ce98f196621e8bebc2be7ff00852d4157c9eaf24c6a6c93770019288eebdf7b410067c525dd8af8b48
   languageName: node
   linkType: hard
 
@@ -2292,7 +2292,7 @@ __metadata:
     file-type: "npm:^21.3.4"
     media-typer: "npm:^2.0.0"
     mime: "npm:^4.1.0"
-    mocha: "npm:^11.7.6"
+    mocha: "npm:^11.8.0"
     node-readable-to-web-readable-stream: "npm:^0.4.2"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
