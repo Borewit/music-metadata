@@ -55,8 +55,8 @@ export const DsdChunk: IGetToken<IDsdChunk> = {
 
   get: (buf: Uint8Array, off: number): IDsdChunk => {
     return {
-      fileSize: Token.INT64_LE.get(buf, off),
-      metadataPointer: Token.INT64_LE.get(buf, off + 8)
+      fileSize: Token.UINT64_LE.get(buf, off),
+      metadataPointer: Token.UINT64_LE.get(buf, off + 8)
     };
   }
 };
