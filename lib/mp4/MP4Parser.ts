@@ -134,10 +134,11 @@ function distinct(value: AnyTagValue, index: number, self: AnyTagValue[]) {
  * Determine if a track carries audio.
  *
  * Ref: ISO/IEC 14496-12, 8.5.2: the sample entries in a sample description box are track-type specific,
- * selected by the handler type of the enclosing track. Only a 'soun' track holds an AudioSampleEntry, so
- * only such a track may be described by a sound sample description.
+ * selected by the handler type of the enclosing track. Only an audio track holds an AudioSampleEntry, so
+ * only such a track may be described by a sound sample description; `isAudio()` treats both the 'soun'
+ * and 'audi' handler types as audio.
  *
- * Falls back to the sample description when no handler box was found, preserving the previous behaviour.
+ * Falls back to the sample description when no handler box was found, preserving the previous behavior.
  */
 function isAudioTrack(track: ITrackDescription): boolean {
   const [ssd] = track.soundSampleDescription ?? [];
