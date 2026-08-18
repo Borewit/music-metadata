@@ -3,6 +3,11 @@
     "lcov",
     "text"
   ],
-  "include": ["lib/**"],
-  "exclude": [".yarn/**"]
+  "all": true,
+  "check-coverage": true,
+  "lines": 1,
+  "extension": [".ts"],
+  "include": ["lib/**/*.ts"],
+  "exclude": ["lib/**/*.d.ts"],
+  "exclude-after-remap": true
 }
