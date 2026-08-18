@@ -3,7 +3,7 @@ import * as mm from '../lib/index.js';
 import path from 'node:path';
 import AsfGuid from '../lib/asf/AsfGuid.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
-import { AsfContentParseError, DataType } from '../lib/asf/AsfObject.js';
+import { AsfContentParseError, DataType, HeaderExtensionObject } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
 
 import { samplePath } from './util.js';
@@ -29,6 +29,13 @@ describe('Parse ASF', () => {
       const guid_data = new Uint8Array([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
       assert.deepEqual(AsfGuid.fromBin(guid_data).str, '75B22630-668E-11CF-A6D9-00AA0062CE6C');
     });
+  });
+
+  it('reads the 32-bit header extension data size', () => {
+    const extensionHeader = new Uint8Array(22);
+    new DataView(extensionHeader.buffer).setUint32(18, 98547, true);
+
+    expect(new HeaderExtensionObject().get(extensionHeader, 0).extensionDataSize).to.equal(98547);
   });
 
   /**
