@@ -323,7 +323,7 @@ export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> 
     return {
       reserved1: AsfGuid.fromBin(buf, off),
       reserved2: view.getUint16(16, true),
-      extensionDataSize: view.getUint16(18, true)
+      extensionDataSize: view.getUint32(18, true)
     };
   }
 }
