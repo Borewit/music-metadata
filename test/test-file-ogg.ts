@@ -332,6 +332,17 @@ describe('Parse Ogg', () => {
     });
   });
 
+  it('DESCRIPTION & PUBLISHER mapping', async () => {
+
+    const filePath = path.join(oggSamplePath, 'vorbis-description.ogg');
+    const {common} = await mm.parseFile(filePath);
+
+    assert.strictEqual(common.title, 'Vorbis Comment Test', 'common.title');
+    assert.isDefined(common.comment, 'common.comment');
+    assert.strictEqual(common.comment[0].text, 'A remark about this file', 'common.comment[0].text');
+    assert.deepEqual(common.label, ['Test Label'], 'common.label');
+  });
+
   it('RATING mapping', async () => {
 
     const filePath = path.join(samplePath, 'rating', 'testcase.opus');
