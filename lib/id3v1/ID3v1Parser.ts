@@ -59,7 +59,7 @@ interface IId3v1Header {
   year?: string,
   comment?: string,
   zeroByte: number,
-  track: number,
+  track?: number,
   genre: number
 }
 
@@ -85,9 +85,13 @@ const Iid3v1Token: IGetToken<IId3v1Header | null> = {
       year: new Id3v1StringType(4).get(buf, off + 93),
       comment: new Id3v1StringType(28).get(buf, off + 97),
       // ID3v1.1 separator for track
-      zeroByte: UINT8.get(buf, off + 127),
-      // track: ID3v1.1 field added by Michael Mutschler
-      track: UINT8.get(buf, off + 126),
+      zeroByte: UINT8.get(buf, off + 125),
+      // track: ID3v1.1 field added by Michael Mutschler; byte 125 == 0 is the
+      // ID3v1.1 marker that tells v1.1 apart from ID3v1.0, so byte 126 only
+      // holds a track number when that marker is present. ID3v1.0 has no
+      // track number: its comment field is 30 bytes and reaches into byte 126,
+      // whose trailing character would otherwise be misread as a track.
+      track: UINT8.get(buf, off + 125) === 0 ? UINT8.get(buf, off + 126) : undefined,
       genre: UINT8.get(buf, off + 127)
     } : null;
   }
