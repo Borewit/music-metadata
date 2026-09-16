@@ -546,6 +546,7 @@ export class FrameParser {
   /**
    * id3v2.4 defines that multiple T* values are separated by 0x00
    * id3v2.3 defines that TCOM, TEXT, TOLY, TOPE & TPE1 values are separated by /
+   * (TCON/TCO genre values are NOT slash-separated in ID3v2.3)
    * @param tag - Tag name
    * @param text - Concatenated tag value
    * @returns Split tag value
@@ -556,7 +557,11 @@ export class FrameParser {
       values = text.split(/\x00/g);
       if (values.length > 1) {
         this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
-      } else {
+      } else if ([ /* v2.3: */ 'TPE1', 'TPE2', 'TPE3', 'TPE4', 'TCOM', 'TEXT', 'TOLY', 'TOPE',
+                   /* v2.2: */ 'TP1', 'TCM', 'TXT', 'TOA', 'TOL'
+                 ].includes(tag)) {
+        // note that field Genre (TCON/TCO) is NOT in this list:
+        // a genre like "Duo Cello/Piano" must stay intact
         values = text.split(/\//g);
       }
     } else {
