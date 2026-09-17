@@ -111,7 +111,7 @@ export class AIFFParser extends BasicParser {
   }
 
   public async readTextChunk(header: iff.IChunkHeader): Promise<number> {
-    const value = await this.tokenizer.readToken(new Token.StringType(header.chunkSize, 'ascii'));
+    const value = await this.tokenizer.readToken(new Token.StringType(header.chunkSize, 'latin1'));
     const values = value.split('\0').map(v => v.trim()).filter(v => v?.length);
     await Promise.all(values.map(v => this.metadata.addTag('AIFF', header.chunkID, v)));
     return header.chunkSize;
