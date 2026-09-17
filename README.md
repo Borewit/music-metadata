@@ -28,7 +28,7 @@ The distributed JavaScript codebase is compliant with the [ECMAScript 2020 (11th
 > [!NOTE]
 > See also [CommonJS backward Compatibility](#commonjs-backward-compatibility)
 
-This module requires a [Node.js ≥ 18](https://nodejs.org/en/about/previous-releases) engine.
+This module requires a [Node.js ≥ 22](https://nodejs.org/en/about/previous-releases) engine.
 It can also be used in a browser environment when bundled with a module bundler.
 
 ## Support the Project
@@ -799,7 +799,7 @@ Using Node.js ≥ 22, which is support loading ESM module via require
 const mm = require('music-metadata');
 ```
 
-For older Node.js version < 22, you need to dynamically import **music-metadata**:
+Alternatively, dynamically import **music-metadata**:
 ```js
 (async () => {
   // Dynamically loads the ESM module in a CommonJS project
