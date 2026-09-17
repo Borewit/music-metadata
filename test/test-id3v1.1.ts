@@ -141,4 +141,19 @@ describe('Parsing MPEG / ID3v1', () => {
 
   });
 
+  // Regression for https://github.com/Borewit/music-metadata/issues/2717
+  it('should not interpret the last byte of a full ID3v1.0 comment as a track number', async () => {
+    // Untagged silence sample with an ID3v1.0 tag appended: comment
+    // "abcdefghijklmnopqrstuvwxyzABrs", genre Rock. The trailing 's' is not track 115.
+    const filePath = path.join(samplePath, 'issue-2717-id3v1-full-comment.mp3');
+    const { format, common, native } = await mm.parseFile(filePath);
+
+    assert.deepEqual(format.tagTypes, ['ID3v1']);
+    assert.strictEqual(common.track.no, null);
+    assert.strictEqual(common.track.of, null);
+    assert.isFalse(native.ID3v1.some(tag => tag.id === 'track'));
+    assert.deepEqual(common.genre, ['Rock']);
+    assert.deepEqual(common.comment, [{text: 'abcdefghijklmnopqrstuvwxyzABrs'}]);
+  });
+
 });
