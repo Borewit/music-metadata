@@ -22,7 +22,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
     try {
       return await new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
 
-        assert.strictEqual(33, metadata.native['ID3v2.3'].length);
+        assert.strictEqual(30, metadata.native['ID3v2.3'].length);
 
         const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
         assert.isDefined(id3v23.UFID, 'check if ID3v2.3-UFID is set');
@@ -218,6 +218,42 @@ describe('Extract metadata from ID3v2.3 header', () => {
     // The artist name is actually "Their / They're / There"
     // Specification: http://id3.org/id3v2.3.0#line-455
     assert.deepEqual(id3v23.TPE1, ['Their', 'They\'re', 'There'], 'id3v23.TPE1');
+  });
+
+  /**
+   * Contrary to e.g. TCOM/TPE1, ID3v2.3 does not define '/' as a value separator
+   * for the genre frame (TCON), so a genre like "Duo Cello/Piano" must stay intact.
+   * Related issue: https://github.com/Borewit/music-metadata/issues/2724
+   */
+  it('should preserve slashes in the ID3v2.3 genre (TCON)', async () => {
+    const genre = 'Duo Cello/Piano';
+    const frameBody = new Uint8Array([
+      0x00,                                        // text encoding: ISO-8859-1
+      ...new TextEncoder().encode(genre)
+    ]);
+    // ID3v2.3 frame header: 4-char ID, UINT32_BE size, 2 flag bytes.
+    const frameHeader = new Uint8Array([
+      0x54, 0x43, 0x4f, 0x4e,                      // 'TCON'
+      (frameBody.length >>> 24) & 0xff, (frameBody.length >>> 16) & 0xff,
+      (frameBody.length >>> 8) & 0xff, frameBody.length & 0xff, // size (UINT32_BE)
+      0x00, 0x00                                   // frame flags
+    ]);
+
+    const tagBodyLength = frameHeader.length + frameBody.length;
+    // ID3v2 header: "ID3", major=3, revision=0, flags=0, syncsafe size (4 x 7-bit).
+    const id3Header = new Uint8Array([
+      0x49, 0x44, 0x33,                            // 'ID3'
+      0x03, 0x00,                                  // version 2.3.0
+      0x00,                                        // header flags
+      (tagBodyLength >>> 21) & 0x7f, (tagBodyLength >>> 14) & 0x7f,
+      (tagBodyLength >>> 7) & 0x7f, tagBodyLength & 0x7f // syncsafe size
+    ]);
+
+    const buffer = new Uint8Array([...id3Header, ...frameHeader, ...frameBody]);
+
+    const {common} = await mm.parseBuffer(buffer, {mimeType: 'audio/mpeg'});
+
+    assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
 
   it('null delimited fields (non-standard)', async () => {
