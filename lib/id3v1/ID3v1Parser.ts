@@ -58,8 +58,7 @@ interface IId3v1Header {
   album?: string,
   year?: string,
   comment?: string,
-  zeroByte: number,
-  track: number,
+  track?: number,
   genre: number
 }
 
@@ -71,25 +70,28 @@ const Iid3v1Token: IGetToken<IId3v1Header | null> = {
   len: 128,
 
   /**
-   * @param buf Buffer possibly holding the 128 bytes ID3v1.1 metadata header
+   * @param buf Buffer possibly holding the 128-byte ID3v1/1.1 metadata header
    * @param off Offset in buffer in bytes
-   * @returns ID3v1.1 header if first 3 bytes equals 'TAG', otherwise null is returned
+   * @returns ID3v1/1.1 header if the first 3 bytes equal 'TAG', otherwise null is returned
    */
   get: (buf: Uint8Array, off): IId3v1Header | null => {
     const header = new Id3v1StringType(3).get(buf, off);
-    return header === 'TAG' ? {
+    if (header !== 'TAG') return null;
+
+    const zeroByte = UINT8.get(buf, off + 125);
+    const track = UINT8.get(buf, off + 126);
+    // ID3v1.1 replaces the final two comment bytes with a zero separator and a nonzero track number.
+    const hasTrack = zeroByte === 0 && track !== 0;
+    return {
       header,
       title: new Id3v1StringType(30).get(buf, off + 3),
       artist: new Id3v1StringType(30).get(buf, off + 33),
       album: new Id3v1StringType(30).get(buf, off + 63),
       year: new Id3v1StringType(4).get(buf, off + 93),
-      comment: new Id3v1StringType(28).get(buf, off + 97),
-      // ID3v1.1 separator for track
-      zeroByte: UINT8.get(buf, off + 127),
-      // track: ID3v1.1 field added by Michael Mutschler
-      track: UINT8.get(buf, off + 126),
+      comment: new Id3v1StringType(hasTrack ? 28 : 30).get(buf, off + 97),
+      track: hasTrack ? track : undefined,
       genre: UINT8.get(buf, off + 127)
-    } : null;
+    };
   }
 };
 
