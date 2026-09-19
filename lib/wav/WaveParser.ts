@@ -5,11 +5,10 @@ import initDebug from 'debug';
 import * as riff from '../riff/RiffChunk.js';
 import * as WaveChunk from './WaveChunk.js';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
-import * as util from '../common/Util.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { BroadcastAudioExtensionChunk, type IBroadcastAudioExtensionChunk } from './BwfChunk.js';
-import type { AnyTagValue } from '../type.js';
+import type { SupportedEncoding } from '@borewit/text-codec';
 import { WaveContentError } from './WaveChunk.js';
 
 const debug = initDebug('music-metadata:parser:RIFF');
@@ -27,6 +26,10 @@ const debug = initDebug('music-metadata:parser:RIFF');
  */
 export class WaveParser extends BasicParser {
 
+  // CSET applies to the whole file, including INFO chunks preceding it.
+  private codePage: number | undefined;
+  private readonly pendingInfoTags: {header: riff.IChunkHeader, bytes: Uint8Array}[] = [];
+
   private fact: WaveChunk.IFactChunk | undefined;
   private blockAlign = 0;
   private avgBytesPerSec = 0;
@@ -39,11 +42,12 @@ export class WaveParser extends BasicParser {
     if (riffHeader.chunkID !== 'RIFF')
       return; // Not RIFF format
     this.metadata.setAudioOnly();
-    return this.parseRiffChunk(riffHeader.chunkSize).catch(err => {
+    await this.parseRiffChunk(riffHeader.chunkSize).catch(err => {
       if (!(err instanceof strtok3.EndOfStreamError)) {
         throw err;
       }
     });
+    await this.flushInfoTags();
   }
 
   public async parseRiffChunk(chunkSize: number): Promise<void> {
@@ -69,6 +73,20 @@ export class WaveParser extends BasicParser {
       this.header = header;
       debug(`pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`);
       switch (header.chunkID) {
+
+        case 'CSET': {
+          if (header.chunkSize < 8) {
+            throw new WaveContentError('CSET chunk must contain at least 8 bytes');
+          }
+          const codePage = await this.tokenizer.readToken(Token.UINT16_LE);
+          await this.tokenizer.ignore(header.chunkSize - 2);
+          this.codePage = codePage;
+          if (!this.getInfoEncoding()) {
+            this.metadata.addWarning(`Unsupported RIFF CSET code page: ${this.codePage}; LIST/INFO tags will be omitted`);
+          }
+          await this.flushInfoTags();
+          break;
+        }
 
         case 'LIST':
           await this.parseListTag(header);
@@ -137,9 +155,9 @@ export class WaveParser extends BasicParser {
 
         case 'bext': { // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
           const bext = await this.tokenizer.readToken(BroadcastAudioExtensionChunk);
-          Object.keys(bext).forEach(key => {
-            this.metadata.addTag('exif', `bext.${key}`, bext[key as keyof IBroadcastAudioExtensionChunk]);
-          });
+          for (const key of Object.keys(bext)) {
+            await this.metadata.addTag('exif', `bext.${key}`, bext[key as keyof IBroadcastAudioExtensionChunk]);
+          }
           const bextRemaining = header.chunkSize - BroadcastAudioExtensionChunk.len;
           await this.tokenizer.ignore(bextRemaining);
           break;
@@ -181,8 +199,12 @@ export class WaveParser extends BasicParser {
     while (chunkSize >= 8) {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
       const valueToken = new riff.ListInfoTagValue(header);
-      const value = await this.tokenizer.readToken(valueToken);
-      this.addTag(header.chunkID, util.stripNulls(value));
+      const bytes = await this.tokenizer.readToken(new Token.Uint8ArrayType(valueToken.len));
+      if (this.codePage === undefined) {
+        this.pendingInfoTags.push({header, bytes});
+      } else {
+        await this.addInfoTag(header, bytes);
+      }
       chunkSize -= (8 + valueToken.len);
     }
 
@@ -191,8 +213,35 @@ export class WaveParser extends BasicParser {
     }
   }
 
-  private addTag(id: string, value: AnyTagValue) {
-    this.metadata.addTag('exif', id, value);
+  private async addInfoTag(header: riff.IChunkHeader, bytes: Uint8Array): Promise<void> {
+    const encoding = this.getInfoEncoding();
+    if (encoding) {
+      const value = new riff.ListInfoTagValue(header, encoding).get(bytes, 0);
+      await this.metadata.addTag('exif', header.chunkID, value);
+    }
+  }
+
+  private async flushInfoTags(): Promise<void> {
+    for (const {header, bytes} of this.pendingInfoTags.splice(0)) {
+      await this.addInfoTag(header, bytes);
+    }
+  }
+
+  private getInfoEncoding(): SupportedEncoding | undefined {
+    // RIFF CSET: absent/zero means ISO 8859-1, not Windows-1252.
+    // https://www.robotplanet.dk/audio/wav_meta_data/riff_mci.pdf#page=25
+    switch (this.codePage) {
+      case undefined:
+      case 0:
+      case 28591:
+        return 'latin1';
+      case 1252:
+        return 'windows-1252';
+      case 65001:
+        return 'utf-8';
+      default:
+        return undefined;
+    }
   }
 
 }

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
+import { Parsers } from './metadata-parsers.js';
 
 import type { IFormat, INativeTagDict } from '../lib/index.js';
 
@@ -32,7 +33,7 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.deepEqual(format.container, 'WAVE', 'format.container');
       assert.deepEqual(format.codec, 'PCM', 'format.codec');
       assert.strictEqual(format.lossless, true);
-      assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
+      assert.sameMembers(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
       assert.strictEqual(format.bitrate, 1411200, 'format.bitrate = 1411200 bits/s');
@@ -126,44 +127,55 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, 'file\'s duration');
   });
 
-  it('should decode LIST-INFO tags as UTF-8', async () => {
+  describe('LIST/INFO character encoding', () => {
+    const samples = [
+      {file: 'cest_latin1-default.wav', title: 'Mötley'},
+      {file: 'cest_latin1-zero.wav', title: 'Mötley'},
+      {file: 'cest_latin1-explicit.wav', title: 'Mötley'},
+      {file: 'cest_windows1252.wav', title: '“Mötley” – 10 €'},
+      {file: 'cest_windows1252-after-info.wav', title: '“Mötley” – 10 €'},
+      {file: 'cest_utf8-after-info.wav', title: '音楽 – Mötley'}
+    ];
 
-    const u32 = (n: number): Uint8Array => {
-      const b = new Uint8Array(4);
-      new DataView(b.buffer).setUint32(0, n, true);
-      return b;
-    };
-    const ascii = (str: string): Uint8Array => Uint8Array.from(str, c => c.charCodeAt(0));
-    const concat = (...parts: Uint8Array[]): Uint8Array => {
-      const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
-      let off = 0;
-      for (const p of parts) { out.set(p, off); off += p.length; }
-      return out;
-    };
+    for (const sample of samples) {
+      describe(sample.file, () => {
+        for (const parser of Parsers) {
+          it(parser.description, async function() {
+            const metadata = await parser.parse(() => this.skip(), path.join(wavSamples, sample.file), 'audio/wav');
+            assert.strictEqual(metadata.common.title, sample.title);
+            assert.strictEqual(metadata.common.artist, 'Björk');
+            const native = mm.orderTags(metadata.native.exif);
+            assert.deepEqual(native.INAM, [sample.title]);
+            assert.deepEqual(native.IART, ['Björk']);
+            assert.strictEqual(metadata.format.sampleRate, 8000);
+            assert.strictEqual(metadata.format.numberOfSamples, 800);
+            assert.strictEqual(metadata.format.duration, 0.1);
+            assert.isFalse(metadata.quality.warnings.some(warning => warning.message.includes('CSET')));
+          });
+        }
+      });
+    }
 
-    const expected = 'Tïtle \u{1F600}';
-    const title = new TextEncoder().encode(expected);
-    const inam = concat(ascii('INAM'), u32(title.length), title, new Uint8Array(title.length % 2));
-    const info = concat(ascii('INFO'), inam);
-    const list = concat(ascii('LIST'), u32(info.length), info);
+    it('should warn and omit INFO values for an unsupported code page', async () => {
+      const metadata = await mm.parseFile(path.join(wavSamples, 'cest_unsupported1251.wav'));
+      assert.isUndefined(metadata.common.title);
+      assert.isUndefined(metadata.native.exif);
+      assert.includeDeepMembers(metadata.quality.warnings, [
+        {message: 'Unsupported RIFF CSET code page: 1251; LIST/INFO tags will be omitted'}
+      ]);
+      assert.strictEqual(metadata.format.numberOfSamples, 800);
+      assert.strictEqual(metadata.format.duration, 0.1);
+    });
 
-    const fmt = new Uint8Array(24);
-    fmt.set(ascii('fmt '), 0);
-    const fmtView = new DataView(fmt.buffer);
-    fmtView.setUint32(4, 16, true);
-    fmtView.setUint16(8, 1, true);
-    fmtView.setUint16(10, 1, true);
-    fmtView.setUint32(12, 8000, true);
-    fmtView.setUint32(16, 8000, true);
-    fmtView.setUint16(20, 1, true);
-    fmtView.setUint16(22, 8, true);
-
-    const data = concat(ascii('data'), u32(2), new Uint8Array(2));
-    const body = concat(ascii('WAVE'), fmt, list, data);
-    const riff = concat(ascii('RIFF'), u32(body.length), body);
-
-    const metadata = await mm.parseBuffer(riff, {mimeType: 'audio/wav'});
-    assert.strictEqual(metadata.common.title, expected, 'common.title');
+    it('should reject a truncated CSET structure', async () => {
+      try {
+        await mm.parseFile(path.join(wavSamples, 'cest_truncated-cset.wav'));
+        assert.fail('Expected an invalid CSET error');
+      } catch (error) {
+        assert.instanceOf(error, mm.UnexpectedFileContentError);
+        assert.match((error as Error).message, /CSET chunk must contain at least 8 bytes/);
+      }
+    });
   });
 
   describe('non-PCM', () => {
