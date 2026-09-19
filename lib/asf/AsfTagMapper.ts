@@ -39,6 +39,7 @@ const asfTagMap: INativeTagMap = {
   // 'WM/PartOfSet': 'totaldiscs',
   'WM/IsCompilation': 'compilation',
   'WM/SharedUserRating': 'rating',
+  'POPULARIMETER': 'rating',
   'WM/BeatsPerMinute': 'bpm',
   'WM/Mood': 'mood',
   'WM/Media': 'media',
@@ -92,6 +93,16 @@ export class AsfTagMapper extends CommonTagMapper {
   protected postMap(tag: ITag): void {
 
     switch (tag.id) {
+      case 'POPULARIMETER': {
+        // popm-style attribute, written by e.g. foobar2000; value is "email|rating|counter"
+        const [email, rating] = (tag.value as string).split('|');
+        const value = Number.parseInt(rating, 10);
+        tag.value = {
+          source: email,
+          rating: value > 0 ? ((value - 1) / 254) * CommonTagMapper.maxRatingScore : undefined
+        };
+        break;
+      }
       case 'WM/SharedUserRating': {
         const keys = tag.id.split(':');
         tag.value = AsfTagMapper.toRating(tag.value as string | number);
