@@ -332,15 +332,22 @@ describe('Parse Ogg', () => {
     });
   });
 
-  it('DESCRIPTION & PUBLISHER mapping', async () => {
+  describe('DESCRIPTION & PUBLISHER mapping', () => {
 
     const filePath = path.join(oggSamplePath, 'vorbis-description.ogg');
-    const {common} = await mm.parseFile(filePath);
 
-    assert.strictEqual(common.title, 'Vorbis Comment Test', 'common.title');
-    assert.isDefined(common.comment, 'common.comment');
-    assert.strictEqual(common.comment[0].text, 'A remark about this file', 'common.comment[0].text');
-    assert.deepEqual(common.label, ['Test Label'], 'common.label');
+    Parsers.forEach(parser => {
+      it(parser.description, async function() {
+        const {common, native} = await parser.parse(() => this.skip(), filePath, 'audio/ogg');
+        const vorbis = mm.orderTags(native.vorbis);
+
+        assert.deepEqual(vorbis.DESCRIPTION, ['A remark about this file'], 'vorbis.DESCRIPTION');
+        assert.deepEqual(vorbis.PUBLISHER, ['Test Label'], 'vorbis.PUBLISHER');
+        assert.strictEqual(common.title, 'Vorbis Comment Test', 'common.title');
+        assert.deepEqual(common.comment, [{text: 'A remark about this file'}], 'common.comment');
+        assert.deepEqual(common.label, ['Test Label'], 'common.label');
+      });
+    });
   });
 
   it('RATING mapping', async () => {
