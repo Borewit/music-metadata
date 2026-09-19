@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
+import { Parsers } from './metadata-parsers.js';
 
 import type { IFormat, INativeTagDict } from '../lib/index.js';
 
@@ -32,7 +33,7 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.deepEqual(format.container, 'WAVE', 'format.container');
       assert.deepEqual(format.codec, 'PCM', 'format.codec');
       assert.strictEqual(format.lossless, true);
-      assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
+      assert.sameMembers(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
       assert.strictEqual(format.bitrate, 1411200, 'format.bitrate = 1411200 bits/s');
@@ -124,6 +125,70 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.bitrate, 2304000, 'format.bitrate = 2304000 bits/s');
     assert.strictEqual(format.numberOfSamples, 363448);
     assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, 'file\'s duration');
+  });
+
+  describe('LIST/INFO character encoding', () => {
+    const samples = [
+      {file: 'cest_latin1-default.wav', title: 'Mötley'},
+      {file: 'cest_latin1-zero.wav', title: 'Mötley'},
+      {file: 'cest_latin1-explicit.wav', title: 'Mötley'},
+      {file: 'cest_windows1252.wav', title: '“Mötley” – 10 €'},
+      {file: 'cest_windows1252-after-info.wav', title: '“Mötley” – 10 €'},
+      {file: 'cest_utf8-after-info.wav', title: '音楽 – Mötley'}
+    ];
+
+    for (const sample of samples) {
+      describe(sample.file, () => {
+        for (const parser of Parsers) {
+          it(parser.description, async function() {
+            const metadata = await parser.parse(() => this.skip(), path.join(wavSamples, sample.file), 'audio/wav');
+            assert.strictEqual(metadata.common.title, sample.title);
+            assert.strictEqual(metadata.common.artist, 'Björk');
+            const native = mm.orderTags(metadata.native.exif);
+            assert.deepEqual(native.INAM, [sample.title]);
+            assert.deepEqual(native.IART, ['Björk']);
+            assert.strictEqual(metadata.format.sampleRate, 8000);
+            assert.strictEqual(metadata.format.numberOfSamples, 800);
+            assert.strictEqual(metadata.format.duration, 0.1);
+            assert.isFalse(metadata.quality.warnings.some(warning => warning.message.includes('CSET')));
+          });
+        }
+      });
+    }
+
+    it('should warn and omit INFO values for an unsupported code page', async () => {
+      const metadata = await mm.parseFile(path.join(wavSamples, 'cest_unsupported1251.wav'));
+      assert.isUndefined(metadata.common.title);
+      assert.isUndefined(metadata.native.exif);
+      assert.includeDeepMembers(metadata.quality.warnings, [
+        {message: 'Unsupported RIFF CSET code page: 1251; LIST/INFO tags will be omitted'}
+      ]);
+      assert.strictEqual(metadata.format.numberOfSamples, 800);
+      assert.strictEqual(metadata.format.duration, 0.1);
+    });
+
+    it('should reject a CSET chunk declaring fewer than 8 bytes', async () => {
+      try {
+        await mm.parseFile(path.join(wavSamples, 'cest_truncated-cset.wav'));
+        assert.fail('Expected an invalid CSET error');
+      } catch (error) {
+        assert.instanceOf(error, mm.UnexpectedFileContentError);
+        assert.match((error as Error).message, /CSET chunk must contain at least 8 bytes/);
+      }
+    });
+
+    it('should tolerate a truncated CSET payload', async () => {
+      const riff = Buffer.concat([
+        Buffer.from('RIFF', 'ascii'),
+        Buffer.from([20, 0, 0, 0]), // Declared RIFF size includes the complete CSET payload.
+        Buffer.from('WAVECSET', 'ascii'),
+        Buffer.from([8, 0, 0, 0, 0xE4, 0x04])
+      ]);
+      // Only two of the eight declared CSET bytes are present. The parser tolerates EOF.
+      const metadata = await mm.parseBuffer(riff, {mimeType: 'audio/wav'});
+      assert.strictEqual(metadata.format.container, 'WAVE');
+      assert.isUndefined(metadata.native.exif);
+    });
   });
 
   describe('non-PCM', () => {
@@ -275,4 +340,3 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(common.track.of, 2, 'common.track.no');
   });
 });
-

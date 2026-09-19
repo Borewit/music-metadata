@@ -51,6 +51,8 @@ export interface INativeMetadataCollector extends IWarningCollector {
 
   setFormat(key: FormatId, value: AnyTagValue): void;
 
+  registerTagType(tagType: TagType): void;
+
   addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void>;
 
   addStreamInfo(streamInfo: ITrackInfo): void;
@@ -135,10 +137,16 @@ export class MetadataCollector implements INativeMetadataCollector {
     this.setFormat('hasVideo', false);
   }
 
+  public registerTagType(tagType: TagType): void {
+    if (!this.format.tagTypes.includes(tagType)) {
+      this.format.tagTypes.push(tagType);
+    }
+  }
+
   public async addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
     debug(`tag ${tagType}.${tagId} = ${value}`);
     if (!this.native[tagType]) {
-      this.format.tagTypes.push(tagType);
+      this.registerTagType(tagType);
       this.native[tagType] = [];
     }
     this.native[tagType].push({id: tagId, value});
