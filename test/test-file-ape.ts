@@ -54,6 +54,26 @@ describe('Parse APE (Monkey\'s Audio)', () => {
 
 });
 
+describe('Parse APEv2 Date tag', () => {
+
+  // Derived from monkeysaudio.ape, replacing all tags and artwork with Date=2021-06-15.
+  // No Year tag is present, so it cannot mask a missing Date mapping.
+  Parsers.forEach(parser => {
+    it(parser.description, async function(){
+      const {format, common, native, quality} = await parser.parse(() => this.skip(),
+        path.join(samplePath, 'monkeysaudio-date.ape'), 'audio/ape');
+
+      assert.strictEqual(format.container, "Monkey's Audio");
+      assert.deepEqual(format.tagTypes, ['APEv2']);
+      assert.deepEqual(native.APEv2, [{id: 'Date', value: '2021-06-15'}]);
+      assert.strictEqual(common.date, '2021-06-15');
+      assert.strictEqual(common.year, 2021);
+      assert.isEmpty(quality.warnings);
+    });
+  });
+
+});
+
 describe('Parse APEv2 header', () => {
 
   it('Handle APEv2 with item count to high(issue #331)', async () => {
