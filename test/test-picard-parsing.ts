@@ -408,7 +408,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
       function checkFormat(format: IFormat) {
         // assert.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
-        assert.deepEqual(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes)');
+        assert.sameMembers(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes)');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
