@@ -4,6 +4,7 @@ import { fromBuffer } from 'strtok3';
 import * as mm from '../lib/index.js';
 import path from 'node:path';
 import AsfGuid from '../lib/asf/AsfGuid.js';
+import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
 import { AsfContentParseError, DataType, HeaderExtensionObject, HeaderObjectToken, readCodecEntries, TopLevelHeaderObjectToken } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
@@ -203,6 +204,37 @@ describe('Parse ASF', () => {
       assert.approximately(format.bitrate!, 128639, 1, 'format.bitrate');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
       assert.isFalse(format.hasVideo, 'format.hasVideo');  });
+
+    /**
+     * Related issue: https://github.com/Borewit/music-metadata/issues/2729
+     */
+    describe('WM/SharedUserRating decoding', () => {
+
+      it('should normalize the from 0-99 scale to [0..1]', () => {
+        assert.deepEqual(AsfTagMapper.toRating(75), {rating: 75 / 99}, '4 stars');
+        assert.deepEqual(AsfTagMapper.toRating(99), {rating: 1}, '5 stars');
+        assert.deepEqual(AsfTagMapper.toRating(1), {rating: 1 / 99}, '1 star');
+      });
+
+      it('should tolerate a string-typed rating', () => {
+        assert.deepEqual(AsfTagMapper.toRating('75'), {rating: 75 / 99});
+      });
+
+      it('should omit the rating when unrated or invalid', () => {
+        assert.deepEqual(AsfTagMapper.toRating(0), {rating: undefined});
+        assert.deepEqual(AsfTagMapper.toRating('0'), {rating: undefined});
+        assert.deepEqual(AsfTagMapper.toRating(Number.NaN), {rating: undefined});
+      });
+
+      it('from \'issue-2729.wma\'', async () => {
+        const filePath = path.join(asfFilePath, 'issue-2729.wma');
+        const {native, common} = await mm.parseFile(filePath, {duration: false});
+        assert.deepEqual(mm.orderTags(native.asf)['WM/SharedUserRating'], [75], 'native: WM/SharedUserRating');
+        assert.approximately(common.rating![0].rating!, 75 / 99, 1 / 1000, 'common rating normalized');
+        assert.strictEqual(mm.ratingToStars(common.rating![0].rating), 4, 'ratingToStars');
+      });
+
+    });
 
   });
 
