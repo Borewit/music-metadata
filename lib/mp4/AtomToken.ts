@@ -619,14 +619,25 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
   }
 
   public get(buf: Uint8Array, off: number): IAtomStsd {
-
+    const end = Math.min(off + this.len, buf.length);
+    if (end - off < stsdHeader.len) {
+      throw new Mp4ContentError('Truncated stsd header');
+    }
     const header = stsdHeader.get(buf, off);
     off += stsdHeader.len;
 
     const table: ISampleDescription[] = [];
 
     for (let n = 0; n < header.numberOfEntries; ++n) {
+      if (end - off < Token.UINT32_BE.len) {
+        throw new Mp4ContentError('Truncated stsd sample entry');
+      }
       const size = Token.UINT32_BE.get(buf, off); // Sample description size
+      // A SampleEntry needs its size, format, reserved bytes and data reference index.
+      // Requiring it to fit also bounds the loop by the available payload, not entry_count.
+      if (size < 16 || size > end - off) {
+        throw new Mp4ContentError(`Invalid stsd sample entry size: ${size}`);
+      }
       off += Token.UINT32_BE.len;
       table.push(new SampleDescriptionTable(size - Token.UINT32_BE.len).get(buf, off));
       // A SampleEntry extends Box, so its size covers the size field already stepped over
