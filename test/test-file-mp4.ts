@@ -1,11 +1,13 @@
 import { assert } from 'chai';
 import path from 'node:path';
 import fs from 'node:fs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
-import { StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
+import { Mp4ContentError, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
@@ -642,6 +644,64 @@ describe('Sample Description (stsd) atom: entry table', () => {
 
     assert.strictEqual(header.numberOfEntries, 1, 'numberOfEntries');
     assert.deepEqual(table.map(entry => entry.dataFormat), ['mp4a'], 'dataFormat');
+  });
+
+  it('rejects GHSA-f94x-6692-553q without blocking the process', async () => {
+    // Use a separate process: a synchronous loop cannot be stopped by Mocha's timeout.
+    const script = `
+      import { strict as assert } from 'node:assert';
+      import { parseBuffer, UnexpectedFileContentError } from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
+      const buffer = Buffer.from('00000010667479704d34412000000000000000207374736400000000ffffffff000000006d7034610000000000000001', 'hex');
+      await assert.rejects(parseBuffer(buffer, {mimeType: 'audio/mp4'}), error =>
+        error instanceof UnexpectedFileContentError && /Invalid stsd sample entry size: 0/.test(error.message));
+    `;
+    await promisify(execFile)(process.execPath, [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script], {
+      timeout: 10000,
+      killSignal: 'SIGKILL'
+    });
+  });
+
+  for (const size of [0, 1, 4, 15, 17, 0xffffffff]) {
+    it(`rejects a sample entry declaring an invalid size of ${size}`, () => {
+      const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
+      new DataView(buf.buffer).setUint32(8, size);
+
+      assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Invalid stsd sample entry size');
+    });
+  }
+
+  it('accepts an empty table and a minimum-size sample entry', () => {
+    const empty = sampleDescription();
+    assert.isEmpty(new StsdAtom(empty.length).get(empty, 0).table);
+    const buf = sampleDescription(sampleEntry('mett', 16, 1));
+    assert.deepEqual(new StsdAtom(buf.length).get(buf, 0).table, [{
+      dataFormat: 'mett', dataReferenceIndex: 1, description: undefined
+    }]);
+  });
+
+  it('rejects an entry count exceeding the available entries', () => {
+    const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
+    new DataView(buf.buffer).setUint32(4, 0xffffffff);
+
+    assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Truncated stsd sample entry');
+  });
+
+  it('checks the atom boundary at a nonzero offset, ignoring bytes after the atom', () => {
+    const payload = sampleDescription(sampleEntry('mp4a', 36, 1));
+    const buf = new Uint8Array(payload.length + 16);
+    buf.set(payload, 8);
+
+    assert.lengthOf(new StsdAtom(payload.length).get(buf, 8).table, 1);
+    assert.throws(() => new StsdAtom(payload.length - 1).get(buf, 8), Mp4ContentError, 'Invalid stsd sample entry size');
+  });
+
+  it('rejects a truncated stsd header', () => {
+    assert.throws(() => new StsdAtom(7).get(new Uint8Array(8), 0), Mp4ContentError, 'Truncated stsd header');
+  });
+
+  it('rejects a truncated sample entry size field', () => {
+    const buf = sampleDescription(new Uint8Array(3));
+    assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Truncated stsd sample entry');
   });
 
   // Each entry is located from the size of the one before it, so an error in that arithmetic
