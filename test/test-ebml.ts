@@ -81,14 +81,14 @@ describe('EBML leaf lengths (GHSA-37v6-24wr-3x83)', () => {
           import {strict as assert} from 'node:assert';
           import {parseFile} from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
           import {EbmlContentError} from ${JSON.stringify(new URL('../lib/ebml/EbmlIterator.js', import.meta.url).href)};
-          await assert.rejects(parseFile(process.argv[1]), {
+          await assert.rejects(parseFile(${JSON.stringify(filePath)}), {
             name: new EbmlContentError('').name,
             message: 'Invalid element length: 34359738368'
           });
         `;
-        await promisify(execFile)(process.execPath, [
-          '--loader', 'ts-node/esm', '--input-type=module', '--eval', script, filePath
-        ], {timeout: 30000});
+        // Bun loads TypeScript natively and uses a different --loader syntax.
+        const runtimeArgs = process.versions.bun ? [] : ['--loader', 'ts-node/esm', '--input-type=module'];
+        await promisify(execFile)(process.execPath, [...runtimeArgs, '--eval', script], {timeout: 30000});
       } finally {
         await rm(directory, {recursive: true, force: true});
       }
