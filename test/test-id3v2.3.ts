@@ -226,32 +226,8 @@ describe('Extract metadata from ID3v2.3 header', () => {
    * Related issue: https://github.com/Borewit/music-metadata/issues/2724
    */
   it('should preserve slashes in the ID3v2.3 genre (TCON)', async () => {
-    const genre = 'Duo Cello/Piano';
-    const frameBody = new Uint8Array([
-      0x00,                                        // text encoding: ISO-8859-1
-      ...new TextEncoder().encode(genre)
-    ]);
-    // ID3v2.3 frame header: 4-char ID, UINT32_BE size, 2 flag bytes.
-    const frameHeader = new Uint8Array([
-      0x54, 0x43, 0x4f, 0x4e,                      // 'TCON'
-      (frameBody.length >>> 24) & 0xff, (frameBody.length >>> 16) & 0xff,
-      (frameBody.length >>> 8) & 0xff, frameBody.length & 0xff, // size (UINT32_BE)
-      0x00, 0x00                                   // frame flags
-    ]);
-
-    const tagBodyLength = frameHeader.length + frameBody.length;
-    // ID3v2 header: "ID3", major=3, revision=0, flags=0, syncsafe size (4 x 7-bit).
-    const id3Header = new Uint8Array([
-      0x49, 0x44, 0x33,                            // 'ID3'
-      0x03, 0x00,                                  // version 2.3.0
-      0x00,                                        // header flags
-      (tagBodyLength >>> 21) & 0x7f, (tagBodyLength >>> 14) & 0x7f,
-      (tagBodyLength >>> 7) & 0x7f, tagBodyLength & 0x7f // syncsafe size
-    ]);
-
-    const buffer = new Uint8Array([...id3Header, ...frameHeader, ...frameBody]);
-
-    const {common} = await mm.parseBuffer(buffer, {mimeType: 'audio/mpeg'});
+    const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.3.mp3');
+    const {common} = await mm.parseFile(filePath);
 
     assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });

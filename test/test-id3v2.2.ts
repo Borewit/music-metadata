@@ -123,32 +123,8 @@ describe('ID3v2Parser', () => {
 
 
   it('should preserve slashes in ID3v2.2 genre (TCO)', async () => {
-    const genre = 'Duo Cello/Piano';
-    const frameBody = new Uint8Array([
-      0x00,                                        // text encoding: ISO-8859-1
-      ...new TextEncoder().encode(genre)
-    ]);
-    // ID3v2.2 frame header: 3-char ID, UINT24_BE size (no flag bytes).
-    const frameHeader = new Uint8Array([
-      0x54, 0x43, 0x4f,                            // 'TCO'
-      (frameBody.length >>> 16) & 0xff,
-      (frameBody.length >>> 8) & 0xff,
-      frameBody.length & 0xff                      // size (UINT24_BE)
-    ]);
-
-    const tagBodyLength = frameHeader.length + frameBody.length;
-    // ID3v2 header: "ID3", major=2, revision=0, flags=0, syncsafe size (4 x 7-bit).
-    const id3Header = new Uint8Array([
-      0x49, 0x44, 0x33,                            // 'ID3'
-      0x02, 0x00,                                  // version 2.2.0
-      0x00,                                        // header flags
-      (tagBodyLength >>> 21) & 0x7f, (tagBodyLength >>> 14) & 0x7f,
-      (tagBodyLength >>> 7) & 0x7f, tagBodyLength & 0x7f // syncsafe size
-    ]);
-
-    const buffer = new Uint8Array([...id3Header, ...frameHeader, ...frameBody]);
-
-    const {common} = await mm.parseBuffer(buffer, {mimeType: 'audio/mpeg'});
+    const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.2.mp3');
+    const {common} = await mm.parseFile(filePath);
 
     assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
