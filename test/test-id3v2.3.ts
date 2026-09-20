@@ -232,6 +232,16 @@ describe('Extract metadata from ID3v2.3 header', () => {
     assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
 
+  it('should retain nonstandard slash-separated IPLS credits', async () => {
+    const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.3-ipls-slash.mp3');
+    const {native} = await mm.parseFile(filePath);
+
+    assert.deepEqual(mm.orderTags(native['ID3v2.3']).IPLS, [{
+      producer: ['Roy Weisman'],
+      engineer: ['James McCullagh', 'Jared Kvitka']
+    }]);
+  });
+
   it('null delimited fields (non-standard)', async () => {
 
     const filePath = path.join(samplePath, 'mp3', 'null-separator.id3v2.3.mp3');

@@ -561,7 +561,9 @@ export class FrameParser {
                    /* v2.2: */ 'TP1', 'TCM', 'TXT', 'TOA', 'TOL',
                    // Picard can flatten multiple values with '/' in these frames.
                    // https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
-                   'TXXX', 'TSRC'
+                   'TXXX', 'TSRC',
+                   // Retain legacy support for nonstandard slash-separated credits.
+                   'IPLS'
                  ].includes(tag)) {
         // note that field Genre (TCON/TCO) is NOT in this list:
         // a genre like "Duo Cello/Piano" must stay intact
