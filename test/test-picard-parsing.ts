@@ -63,11 +63,6 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     if (inputTagType === 'asf') {
       assert.deepEqual(common.artists, ['Joe Bonamassa', 'Beth Hart'], `${inputTagType} => common.artists`);
       assert.deepEqual(common.musicbrainz_artistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], `${inputTagType} => common.musicbrainz_artistid`);
-    } else if (inputTagType === 'ID3v2.3') {
-      // ID3v2.3 does not define '/' as a value separator for TXXX frames,
-      // so multi-artist values exported by Picard stay as a single slashed string.
-      assert.deepEqual(common.artists, ['Beth Hart/Joe Bonamassa'], `${inputTagType} => common.artists`);
-      assert.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c/984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_artistid`);
     } else {
       assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], `${inputTagType} => common.artists`);
       assert.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_artistid`);
@@ -114,8 +109,6 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
     if (inputTagType === 'asf') {
       assert.deepEqual(common.musicbrainz_albumartistid, ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'], `${inputTagType} => common.musicbrainz_albumartistid`);
-    } else if (inputTagType === 'ID3v2.3') {
-      assert.deepEqual(common.musicbrainz_albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c/984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_albumartistid`);
     } else {
       assert.deepEqual(common.musicbrainz_albumartistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_albumartistid`);
     }
@@ -140,13 +133,9 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     }
 
     // ISRC
-    if (inputTagType === 'ID3v2.3') {
-      assert.deepEqual(common.isrc, ['NLB931100460/USMH51100098'], `${inputTagType} => common.isrc`);
-    } else {
-      assert.deepEqual(common.isrc, inputTagType === 'asf'
-        ? ['USMH51100098', 'NLB931100460']
-        : ['NLB931100460', 'USMH51100098'], `${inputTagType} => common.isrc`);
-    }
+    assert.deepEqual(common.isrc, inputTagType === 'asf'
+      ? ['USMH51100098', 'NLB931100460']
+      : ['NLB931100460', 'USMH51100098'], `${inputTagType} => common.isrc`);
 
     // Rating
     switch (inputTagType) {
@@ -384,15 +373,15 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       }], 'id3v23.IPLS: Involved people list');
 
       assert.deepEqual(native['TXXX:ASIN'], ['B005NPEUB2'], 'id3v23.TXXX:ASIN');
-      assert.deepEqual(native['TXXX:Artists'], ['Beth Hart/Joe Bonamassa'], 'id3v23.TXXX:Artists');
+      assert.deepEqual(native['TXXX:Artists'], ['Beth Hart', 'Joe Bonamassa'], 'id3v23.TXXX:Artists');
       assert.deepEqual(native['TXXX:BARCODE'], ['804879313915'], 'id3v23.TXXX:BARCODE');
       assert.deepEqual(native['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v23.TXXX:CATALOGNUMBER');
-      assert.deepEqual(native['TXXX:MusicBrainz Album Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c/984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v23.TXXX:MusicBrainz Album Artist Id');
+      assert.deepEqual(native['TXXX:MusicBrainz Album Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v23.TXXX:MusicBrainz Album Artist Id');
       assert.deepEqual(native['TXXX:MusicBrainz Album Id'], ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'id3v23.TXXX:MusicBrainz Album Id');
       assert.deepEqual(native['TXXX:MusicBrainz Album Release Country'], ['US'], 'id3v23.TXXX:MusicBrainz Album Release Country');
       assert.deepEqual(native['TXXX:MusicBrainz Album Status'], ['official'], 'id3v23.TXXX:MusicBrainz Album Status');
       assert.deepEqual(native['TXXX:MusicBrainz Album Type'], ['album'], 'id3v23.TXXX:MusicBrainz Album Type');
-      assert.deepEqual(native['TXXX:MusicBrainz Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c/984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v23.TXXX:MusicBrainz Artist Id');
+      assert.deepEqual(native['TXXX:MusicBrainz Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v23.TXXX:MusicBrainz Artist Id');
       assert.deepEqual(native['TXXX:MusicBrainz Release Group Id'], ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'id3v23.TXXX.MusicBrainz Release Group Id');
       assert.deepEqual(native['TXXX:MusicBrainz Release Track Id'], ['d062f484-253c-374b-85f7-89aab45551c7'], 'id3v23.TXXX.MusicBrainz Release Track Id');
       assert.deepEqual(native['TXXX:SCRIPT'], ['Latn'], 'id3v23.TXXX:SCRIPT');
