@@ -43,6 +43,25 @@ it('decodes id3v2 UTF-16BE ($02) text frames', async () => {
   assert.strictEqual(common.title, 'T\u00ebst', 'UTF-16BE title decoded without byte swapping');
 });
 
+// Issue: https://github.com/Borewit/music-metadata/issues/2736
+it('decodes id3v2 UTF-16 ($01) COMM with an empty description', async () => {
+  // The sample contains a COMM frame (ID3v2.3, encoding $01) whose description is
+  // empty. Per spec an omitted description still carries its $00 00 terminator; the
+  // parser must not mistake those two bytes for a BOM and skip them, otherwise the
+  // actual text is consumed as the description.
+  const filePath = path.join(samplePath, 'issue-2736-utf16-empty-description.mp3');
+  const { native, common } = await mm.parseFile(filePath);
+
+  assert.deepEqual(native['ID3v2.3'], [
+    {id: 'COMM', value: {language: 'eng', descriptor: '', text: 'Hello'}},
+    {id: 'TIT2', value: 'Repro'},
+    {id: 'TPE1', value: 'Example Artist'}
+  ], 'native ID3v2.3 tags');
+  assert.strictEqual(common.title, 'Repro', 'common.title');
+  assert.strictEqual(common.artist, 'Example Artist', 'common.artist');
+  assert.deepEqual(common.comment, [{language: 'eng', descriptor: '', text: 'Hello'}], 'common.comment');
+});
+
 it('decodes id3v2 UTF-16 ($01) frames with a big-endian BOM', async () => {
   // ID3v2.3 tag with a COMM frame using text-encoding $01 (UTF-16 with BOM),
   // where the BOM is big-endian (0xFE 0xFF).

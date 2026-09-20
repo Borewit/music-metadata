@@ -499,23 +499,20 @@ export class FrameParser {
   }
 
   protected static readNullTerminatedString(uint8Array: Uint8Array, encoding: ITextEncoding): { text: string, len: number } {
-    const bomSize = encoding.bom ? 2 : 0;
     const originalLen = uint8Array.length;
-    const valueArray = uint8Array.subarray(bomSize);
-
-    const zeroIndex = util.findZero(valueArray, encoding.encoding);
-    if (zeroIndex >= valueArray.length) {
-      // No terminator found, decode full buffer remainder
+    const zeroIndex = util.findZero(uint8Array, encoding.encoding);
+    if (zeroIndex >= originalLen) {
+      // No terminator found, decode the whole buffer
       return {
         text: util.decodeString(uint8Array, encoding.encoding),
         len: originalLen
       };
     }
 
-    const txt = uint8Array.subarray(0, bomSize + zeroIndex);
+    const txt = uint8Array.subarray(0, zeroIndex);
     return {
       text: util.decodeString(txt, encoding.encoding),
-      len: bomSize + zeroIndex + FrameParser.getNullTerminatorLength(encoding.encoding)
+      len: zeroIndex + FrameParser.getNullTerminatorLength(encoding.encoding)
     };
   }
 
