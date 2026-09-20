@@ -149,7 +149,7 @@ describe('Parse Ogg', () => {
 
       const filePath = path.join(oggSamplePath, 'issue_70.ogg');
 
-      const {format, native} = await mm.parseFile(filePath);
+      const {format, native, common} = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'Ogg', 'format.container');
       assert.strictEqual(format.codec, 'Vorbis I', 'format.codec');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -161,6 +161,7 @@ describe('Parse Ogg', () => {
       assert.deepEqual(vorbis.ARTIST, ['Biosphere']);
       assert.deepEqual(vorbis['ALBUM ARTIST'], ['Biosphere']);
       assert.deepEqual(vorbis.ORGANIZATION, ['Touch UK']);
+      assert.deepEqual(common.label, ['Touch UK'], 'ORGANIZATION maps to common.label');
       assert.deepEqual(vorbis.DATE, ['2006']);
       assert.deepEqual(vorbis.RATING, ['-1']);
       assert.deepEqual(vorbis.REPLAYGAIN_TRACK_PEAK, ['0.999969']);
