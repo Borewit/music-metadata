@@ -108,6 +108,11 @@ export class EbmlIterator {
             } else {
               const parser = this.parserMap.get(child.value as DataType);
               if (typeof parser === 'function') {
+                // Validate before leaf readers allocate buffers or string tokens from the declared length.
+                const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
+                if (!Number.isSafeInteger(element.len) || element.len < 0 || element.len > end - this.tokenizer.position) {
+                  throw new EbmlContentError(`Invalid element length: ${element.len}`);
+                }
                 const value = await parser(element);
                 tree[child.name] = value;
                 await listener.elementValue(child, value, elementPosition);
