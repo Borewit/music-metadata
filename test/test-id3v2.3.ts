@@ -22,7 +22,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
     try {
       return await new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
 
-        assert.strictEqual(30, metadata.native['ID3v2.3'].length);
+        assert.strictEqual(33, metadata.native['ID3v2.3'].length);
 
         const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
         assert.isDefined(id3v23.UFID, 'check if ID3v2.3-UFID is set');

@@ -558,7 +558,10 @@ export class FrameParser {
       if (values.length > 1) {
         this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
       } else if ([ /* v2.3: */ 'TPE1', 'TPE2', 'TPE3', 'TPE4', 'TCOM', 'TEXT', 'TOLY', 'TOPE',
-                   /* v2.2: */ 'TP1', 'TCM', 'TXT', 'TOA', 'TOL'
+                   /* v2.2: */ 'TP1', 'TCM', 'TXT', 'TOA', 'TOL',
+                   // Picard can flatten multiple values with '/' in these frames.
+                   // https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
+                   'TXXX', 'TSRC'
                  ].includes(tag)) {
         // note that field Genre (TCON/TCO) is NOT in this list:
         // a genre like "Duo Cello/Piano" must stay intact
