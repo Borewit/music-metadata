@@ -9,7 +9,8 @@ import { samplePath } from './util.js';
 
 /**
  * Check if different header formats map to the same common output.
- * Ref: https://picard.musicbrainz.org/docs/mappings/
+ * Picard storage mappings: https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html
+ * The expected common fields below are music-metadata's interpretation of those mappings.
  */
 describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
@@ -55,6 +56,8 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
   function checkCommonMapping(inputTagType: TagType, common: ICommonTagsResult) {
     // Compare expectedCommonTags with result.common
     assert.strictEqual(common.title, 'Sinner\'s Prayer', `${inputTagType} => common.title`);
+    // Picard distinguishes the artist credit from the individual artist names.
+    // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#artists
     assert.strictEqual(common.artist, 'Beth Hart & Joe Bonamassa', `${inputTagType} => common.artist`);
 
     if (inputTagType === 'asf') {
@@ -65,7 +68,10 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(common.musicbrainz_artistid, ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], `${inputTagType} => common.musicbrainz_artistid`);
     }
 
-    assert.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist'); // ToDo: this is not set
+    assert.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist');
+    // Sort names contain punctuation that must not be interpreted as list separators.
+    // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#artist-sort-order
+    assert.strictEqual(common.artistsort, 'Hart, Beth & Bonamassa, Joe', `${inputTagType} => common.artistsort`);
     assert.deepEqual(common.albumartistsort, 'Hart, Beth & Bonamassa, Joe', `${inputTagType} =>  common.albumartistsort`);
     assert.strictEqual(common.album, 'Don\'t Explain', `${inputTagType} => common.album = Don't Explain`);
     if (inputTagType === 'asf') {
@@ -83,14 +89,22 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     assert.strictEqual(common.year, 2011, `${inputTagType} => common.year`);
     assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.year`);
     assert.strictEqual(common.media, 'CD', `${inputTagType} => common.media = CD`);
+    // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#release-country
+    assert.strictEqual(common.releasecountry, 'US', `${inputTagType} => common.releasecountry`);
     assert.strictEqual(common.barcode, '804879313915', `${inputTagType} => common.barcode`);
-    // ToDo?? assert.deepEqual(common.producer, ['Roy Weisman'], 'common.producer = Roy Weisman')
+    // TODO: Expose IPLS/TIPL producer credits in common metadata for ID3.
+    if (inputTagType !== 'ID3v2.3' && inputTagType !== 'ID3v2.4') {
+      assert.deepEqual(common.producer, ['Roy Weisman'], `${inputTagType} => common.producer`);
+    }
     assert.deepEqual(common.label, ['J&R Adventures'], `${inputTagType} => common.label = 'J&R Adventures'`);
     assert.deepEqual(common.catalognumber, ['PRAR931391'], `${inputTagType} => common.catalognumber = PRAR931391`);
     assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.originalyear = 2011`);
     assert.strictEqual(common.releasestatus, 'official', `${inputTagType} => common.releasestatus = official`);
     assert.deepEqual(common.releasetype, ['album'], `${inputTagType} => common.releasetype`);
     assert.strictEqual(common.musicbrainz_albumid, 'e7050302-74e6-42e4-aba0-09efd5d431d8', `${inputTagType} => common.musicbrainz_albumid`);
+    // Recording IDs and release-track IDs identify different MusicBrainz entities.
+    // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-recording-id
+    // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-track-id
     assert.strictEqual(common.musicbrainz_recordingid, 'f151cb94-c909-46a8-ad99-fb77391abfb8', `${inputTagType} => common.musicbrainz_recordingid`);
 
     if (inputTagType === 'asf') {
@@ -104,18 +118,24 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     assert.strictEqual(common.asin, 'B005NPEUB2', `${inputTagType} => common.asin`);
     assert.strictEqual(common.acoustid_id, '09c06fac-679a-45b1-8ea0-6ce532318363', `${inputTagType} => common.acoustid_id`);
 
-    // Check front cover
-    assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
-    assert.strictEqual(common.picture[0].data.length, 98008, 'picture length');
-    assert.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'hash front cover data');
+    // TODO: ASF picture decoding returns invalid MIME metadata for this fixture.
+    // Keep checking its common text tags while cover decoding is unresolved.
+    if (inputTagType !== 'asf') {
+      // Check front cover
+      assert.strictEqual(common.picture[0].format, 'image/jpeg', 'picture format');
+      assert.strictEqual(common.picture[0].data.length, 98008, 'picture length');
+      assert.strictEqual(calcHash(common.picture[0].data), 'c57bec49b36ebf422018f82273d1995a', 'hash front cover data');
 
-    // Check back cover
-    assert.strictEqual(common.picture[1].format, 'image/png', 'picture format');
-    assert.strictEqual(common.picture[1].data.length, 120291, 'picture length');
-    assert.strictEqual(calcHash(common.picture[1].data), '90ec686eb82e745e737b2c7aa706eeaa', 'hash back cover data');
+      // Check back cover
+      assert.strictEqual(common.picture[1].format, 'image/png', 'picture format');
+      assert.strictEqual(common.picture[1].data.length, 120291, 'picture length');
+      assert.strictEqual(calcHash(common.picture[1].data), '90ec686eb82e745e737b2c7aa706eeaa', 'hash back cover data');
+    }
 
     // ISRC
-    assert.deepEqual(common.isrc, ['NLB931100460', 'USMH51100098'], 'ISRC\'s');
+    assert.deepEqual(common.isrc, inputTagType === 'asf'
+      ? ['USMH51100098', 'NLB931100460']
+      : ['NLB931100460', 'USMH51100098'], `${inputTagType} => common.isrc`);
 
     // Rating
     switch (inputTagType) {
@@ -172,7 +192,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
       const picture = vorbis.METADATA_BLOCK_PICTURE[0] as IPicture;
       assert.strictEqual(picture.format, 'image/jpeg', 'vorbis.METADATA_BLOCK_PICTURE.format = \'image/jpeg\'');
-      assert.strictEqual(picture.type, 'Cover (front)', 'vorbis.METADATA_BLOCK_PICTURE.type = \'Cover (front)\''); // ToDo: description??
+      assert.strictEqual(picture.type, 'Cover (front)', 'vorbis.METADATA_BLOCK_PICTURE.type = \'Cover (front)\'');
 
       assert.strictEqual(picture.description, '', 'vorbis.METADATA_BLOCK_PICTURE.description');
       assert.strictEqual(picture.data.length, 98008, 'vorbis.METADATA_BLOCK_PICTURE.data.length = 98008 bytes');
@@ -255,10 +275,9 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(APEv2.Musicbrainz_Releasegroupid, ['e00305af-1c72-469b-9a7c-6dc665ca9adc'], 'APEv2.Musicbrainz_Releasegroupid');
       assert.deepEqual(APEv2.musicbrainz_trackid, ['f151cb94-c909-46a8-ad99-fb77391abfb8'], 'APEv2.musicbrainz_trackid');
 
-      // assert.deepEqual(APEv2.NOTES, ['Medieval CUE Splitter (www.medieval.it)'], 'APEv2.NOTES')
       assert.deepEqual(APEv2.Barcode, ['804879313915'], 'APEv2.Barcode');
-      // ToDo: not set??? assert.deepEqual(APEv2.ASIN, 'B005NPEUB2', 'APEv2.ASIN');
-      // ToDo: not set??? assert.deepEqual(APEv2.RELEASECOUNTRY, 'GB', 'APEv2.RELEASECOUNTRY');
+      assert.deepEqual(APEv2.Asin, ['B005NPEUB2'], 'APEv2.Asin');
+      assert.deepEqual(APEv2.Releasecountry, ['US'], 'APEv2.Releasecountry');
       assert.deepEqual(APEv2.MUSICBRAINZ_ALBUMSTATUS, ['official'], 'APEv2.MUSICBRAINZ_ALBUMSTATUS');
 
       assert.deepEqual(APEv2.Arranger, ['Jeff Bova'], 'APEv2.Arranger');
@@ -359,7 +378,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(native['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v23.TXXX:CATALOGNUMBER');
       assert.deepEqual(native['TXXX:MusicBrainz Album Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v23.TXXX:MusicBrainz Album Artist Id');
       assert.deepEqual(native['TXXX:MusicBrainz Album Id'], ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'id3v23.TXXX:MusicBrainz Album Id');
-      // ToDo?? assert.strictEqual(id3v23['TXXX:MusicBrainz Album Release Country'], 'GB', 'id3v23.TXXX:MusicBrainz Album Release Country')
+      assert.deepEqual(native['TXXX:MusicBrainz Album Release Country'], ['US'], 'id3v23.TXXX:MusicBrainz Album Release Country');
       assert.deepEqual(native['TXXX:MusicBrainz Album Status'], ['official'], 'id3v23.TXXX:MusicBrainz Album Status');
       assert.deepEqual(native['TXXX:MusicBrainz Album Type'], ['album'], 'id3v23.TXXX:MusicBrainz Album Type');
       assert.deepEqual(native['TXXX:MusicBrainz Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v23.TXXX:MusicBrainz Artist Id');
@@ -367,8 +386,11 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(native['TXXX:MusicBrainz Release Track Id'], ['d062f484-253c-374b-85f7-89aab45551c7'], 'id3v23.TXXX.MusicBrainz Release Track Id');
       assert.deepEqual(native['TXXX:SCRIPT'], ['Latn'], 'id3v23.TXXX:SCRIPT');
       assert.deepEqual(native['TXXX:originalyear'], ['2011'], 'id3v23.TXXX:originalyear');
-      // assert.strictEqual(native.METADATA_BLOCK_PICTURE.format, 'image/jpeg', 'native.METADATA_BLOCK_PICTURE format')
-      // assert.strictEqual(native.METADATA_BLOCK_PICTURE.data.length, 98008, 'native.METADATA_BLOCK_PICTURE length')
+      const pictures = native.APIC as IPicture[];
+      assert.deepEqual(pictures.map(picture => ({type: picture.type, format: picture.format, size: picture.data.length})), [
+        {type: 'Cover (front)', format: 'image/jpeg', size: 98008},
+        {type: 'Cover (back)', format: 'image/png', size: 120291}
+      ], 'id3v23.APIC covers');
     }
 
     it('MP3 / ID3v2.3', () => {
@@ -399,7 +421,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     });
 
     /**
-     * Looks like RIFF/WAV not fully supported yet in MusicBrainz Picard: https://tickets.metabrainz.org/browse/PICARD-653?jql=text%20~%20%22RIFF%22.
+     * Historical fixture workaround for Picard issue PICARD-653.
      * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
      */
     it('should map RIFF/WAVE/PCM / ID3v2.3', () => {
@@ -407,7 +429,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav');
 
       function checkFormat(format: IFormat) {
-        // assert.strictEqual(format.container, "WAVE", "format.container = WAVE PCM");
+        assert.strictEqual(format.container, 'WAVE', 'format.container');
         assert.sameMembers(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes)');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
@@ -416,9 +438,9 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
         assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2 seconds');
       }
 
-      // Parse wma/asf file
+      // Parse the fixture
       return parseFile(filePath).then(result => {
-        // Check wma format
+        // Check audio format
         checkFormat(result.format);
         // Check native tags
         checkID3Tags(orderTags(result.native['ID3v2.3']));
@@ -484,7 +506,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(id3v24['TXXX:CATALOGNUMBER'], ['PRAR931391'], 'id3v24.TXXX:CATALOGNUMBER');
       assert.deepEqual(id3v24['TXXX:MusicBrainz Album Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v24.TXXX:MusicBrainz Album Artist Id');
       assert.deepEqual(id3v24['TXXX:MusicBrainz Album Id'], ['e7050302-74e6-42e4-aba0-09efd5d431d8'], 'id3v24.TXXX:MusicBrainz Album Id');
-      // ToDo?? assert.deepEqual(id3v24['TXXX:MusicBrainz Album Release Country'], 'GB', 'id3v24.TXXX:MusicBrainz Album Release Country');
+      assert.deepEqual(id3v24['TXXX:MusicBrainz Album Release Country'], ['US'], 'id3v24.TXXX:MusicBrainz Album Release Country');
       assert.deepEqual(id3v24['TXXX:MusicBrainz Album Status'], ['official'], 'id3v24.TXXX:MusicBrainz Album Status');
       assert.deepEqual(id3v24['TXXX:MusicBrainz Album Type'], ['album'], 'id3v24.TXXX:MusicBrainz Album Type');
       assert.deepEqual(id3v24['TXXX:MusicBrainz Artist Id'], ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'], 'id3v24.TXXX:MusicBrainz Artist Id');
@@ -527,7 +549,7 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
 
       function checkFormat(format: IFormat) {
         assert.strictEqual(format.container, 'AIFF', 'format.container = \'AIFF\'');
-        assert.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes = \'ID3v2.4\''); // ToDo
+        assert.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes = \'ID3v2.4\'');
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
         assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
         assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
@@ -535,12 +557,12 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
         assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123');
       }
 
-      // Parse wma/asf file
+      // Parse the fixture
       const metadata = await parseFile(filePath);
       assert.isDefined(metadata, 'should return metadata');
       assert.isDefined(metadata.native, 'should return metadata.native');
       assert.isDefined(metadata.native['ID3v2.4'], 'should include native id3v2.4 tags');
-      // Check wma format
+      // Check audio format
       checkFormat(metadata.format);
       // Check ID3v2.4 native tags
       checkID3Tags(orderTags(metadata.native['ID3v2.4']));
@@ -561,8 +583,8 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.strictEqual(format.lossless, true, 'ALAC is a lossless format');
       assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration');
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-      // assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
-      // assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
+      assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+      assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     }
 
     function checkCommonTags(common) {
@@ -589,7 +611,12 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(iTunes['----:com.apple.iTunes:ARRANGER'], ['Jeff Bova']);
 
       assert.deepEqual(iTunes['----:com.apple.iTunes:NOTES'], ['Medieval CUE Splitter (www.medieval.it)']);
-      // ToDO
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-recording-id
+      assert.deepEqual(iTunes['----:com.apple.iTunes:MusicBrainz Track Id'], ['f151cb94-c909-46a8-ad99-fb77391abfb8']);
+      assert.deepEqual(iTunes['----:com.apple.iTunes:MusicBrainz Release Track Id'], ['d062f484-253c-374b-85f7-89aab45551c7']);
+      assert.deepEqual(iTunes['----:com.apple.iTunes:MusicBrainz Album Release Country'], ['US']);
+      assert.deepEqual(iTunes['----:com.apple.iTunes:PRODUCER'], ['Roy Weisman']);
+      assert.deepEqual(iTunes['----:com.apple.iTunes:ENGINEER'], ['James McCullagh', 'Jared Kvitka']);
     }
 
     // Run with default options
@@ -612,11 +639,11 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     function checkFormat(format: IFormat) {
       assert.deepEqual(format.tagTypes, ['asf'], 'format.tagTypes = asf');
       assert.strictEqual(format.bitrate, 320000, 'format.bitrate = 320000');
-      // ToDo assert.strictEqual(format.container, "wma", "format.container = wma");
+      assert.strictEqual(format.container, 'ASF/audio', 'format.container');
+      assert.strictEqual(format.codec, 'Windows Media Audio V8', 'format.codec');
       assert.approximately(format.duration, 2.135, 1 / 10000, "format.duration");
-      // ToDo assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
-      // ToDo assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample'); // ToDo
-      // ToDo assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels'); // ToDo
+      // TODO: ASF parsing does not expose sample rate, bit depth or channel count
+      // for this fixture. Add assertions once those audio properties are available.
     }
 
     function check_asf_Tags(native: INativeTagDict) {
@@ -625,7 +652,12 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
       assert.deepEqual(native['WM/ARTISTS'], ['Joe Bonamassa', 'Beth Hart'], 'asf.WM/ARTISTS => common.artists = [\'Joe Bonamassa\', \'Beth Hart\']');
       assert.isDefined(native['WM/Picture'], 'Contains WM/Picture');
       assert.strictEqual(native['WM/Picture'].length, 1, 'Contains 1 WM/Picture');
-      // ToDO
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-recording-id
+      assert.deepEqual(native['MusicBrainz/Track Id'], ['f151cb94-c909-46a8-ad99-fb77391abfb8']);
+      assert.deepEqual(native['MusicBrainz/Release Track Id'], ['d062f484-253c-374b-85f7-89aab45551c7']);
+      assert.deepEqual(native['MusicBrainz/Album Release Country'], ['US']);
+      assert.deepEqual(native['WM/Producer'], ['Roy Weisman']);
+      assert.deepEqual(native['WM/Engineer'], ['Jared Kvitka', 'James McCullagh']);
     }
 
     // Parse wma/asf file
@@ -640,7 +672,89 @@ describe('Parsing of metadata saved by \'Picard\' in audio files', () => {
     // Check asf native tags
     check_asf_Tags(orderTags(metadata.native.asf));
     // Check common tag mappings
-    // ToDo checkCommonMapping(result.format.tagTypes, result.common);
+    checkCommonMapping('asf', metadata.common);
+  });
+
+  /**
+   * Picard's "Join ID3v23 tags with" setting is configurable; '/' is the choice
+   * in this legacy fixture, not a separator required for every Picard file.
+   * Returning separate common values is our compatibility contract for it.
+   * The ID3v2.4 fixture instead uses native multi-value text frames.
+   * https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
+   */
+  describe('Multi-value compatibility', () => {
+    const expected: Array<[keyof ICommonTagsResult, string[]]> = [
+      // TXXX:Artists: https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#artists
+      ['artists', ['Beth Hart', 'Joe Bonamassa']],
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-artist-id
+      ['musicbrainz_artistid', [
+        '3fe817fc-966e-4ece-b00a-76be43e7e73c',
+        '984f8239-8fe1-4683-9c54-10ffb14439e9'
+      ]],
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-release-artist-id
+      ['musicbrainz_albumartistid', [
+        '3fe817fc-966e-4ece-b00a-76be43e7e73c',
+        '984f8239-8fe1-4683-9c54-10ffb14439e9'
+      ]],
+      // TSRC: https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#isrc
+      ['isrc', ['NLB931100460', 'USMH51100098']]
+    ];
+
+    for (const version of ['2.3', '2.4']) {
+      describe(`ID3v${version}`, () => {
+        let common: ICommonTagsResult;
+
+        before(async () => {
+          const filePath = path.join(samplePath, `MusicBrainz - Beth Hart - Sinner's Prayer [id3v${version}].V2.mp3`);
+          const metadata = await parseFile(filePath);
+          assert.include(metadata.format.tagTypes, `ID3v${version}`);
+          common = metadata.common;
+        });
+
+        for (const [field, values] of expected) {
+          it(`should preserve separate ${field} values`, () => {
+            assert.deepEqual(common[field], values);
+          });
+        }
+      });
+    }
+  });
+
+
+  describe('Contributor mappings to common metadata', () => {
+    // Picard stores each contributor role independently. Check the common output,
+    // in addition to the native tags checked above, to catch lost role mappings.
+    const credits: Array<[keyof ICommonTagsResult, string[]]> = [
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#producer
+      ['producer', ['Roy Weisman']],
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#engineer
+      ['engineer', ['James McCullagh', 'Jared Kvitka']],
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#arranger
+      ['arranger', ['Jeff Bova']]
+    ];
+    const fixtures = [
+      ['FLAC / Vorbis', "MusicBrainz - Beth Hart - Sinner's Prayer.flac"],
+      ['Ogg / Vorbis', "MusicBrainz - Beth Hart - Sinner's Prayer.ogg"],
+      ['Monkey\'s Audio / APEv2', "MusicBrainz - Beth Hart - Sinner's Prayer.ape"],
+      ['WavPack / APEv2', "wavpack/MusicBrainz - Beth Hart - Sinner's Prayer.wv"]
+    ];
+
+    for (const [format, filename] of fixtures) {
+      describe(format, () => {
+        let common: ICommonTagsResult;
+
+        before(async () => {
+          const metadata = await parseFile(path.join(samplePath, filename));
+          common = metadata.common;
+        });
+
+        for (const [role, names] of credits) {
+          it(`should map all ${role} credits without mixing roles`, () => {
+            assert.deepEqual(common[role], names);
+          });
+        }
+      });
+    }
   });
 
 });
