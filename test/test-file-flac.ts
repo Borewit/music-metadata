@@ -11,6 +11,28 @@ import { samplePath } from './util.js';
 describe('Parse FLAC Vorbis comment', () => {
   const flacFilePath = path.join(samplePath, 'flac');
 
+  describe('issue #2651: map Vorbis UNSYNCEDLYRICS to common lyrics', () => {
+    // Fixture: 0.1 seconds of generated silence with a multiline UTF-8 UNSYNCEDLYRICS tag.
+    const filePath = path.join(flacFilePath, 'issue-2651-unsyncedlyrics.flac');
+    const text = 'First line\nDeuxième ligne';
+
+    for (const parser of Parsers) {
+      it(parser.description, async function () {
+        const { common, native } = await parser.parse(() => this.skip(), filePath, 'audio/flac');
+
+        assert.deepEqual(mm.orderTags(native.vorbis).UNSYNCEDLYRICS, [text]);
+        assert.deepEqual(common.lyrics, [
+          {
+            contentType: LyricsContentType.lyrics,
+            timeStampFormat: TimestampFormat.notSynchronized,
+            text,
+            syncText: []
+          }
+        ]);
+      });
+    }
+  });
+
   function checkFormat(format: mm.IFormat) {
     assert.strictEqual(format.container, 'FLAC', 'format.container');
     assert.strictEqual(format.codec, 'FLAC', 'format.codec');
