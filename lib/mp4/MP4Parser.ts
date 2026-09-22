@@ -178,6 +178,15 @@ export class MP4Parser extends BasicParser {
     return Number(token.get(array, 0));
   }
 
+  // Metadata and sample tables are buffered; media data is skipped separately.
+  // A bound is also necessary for streams whose total size is unknown.
+  private async readToken<T>(token: IGetToken<T>): Promise<T> {
+    if (!Number.isSafeInteger(token.len) || token.len < 0 || token.len > 64 * 1024 * 1024) {
+      throw new Mp4ContentError(`Atom payload exceeds the 64 MiB buffering limit: ${token.len}`);
+    }
+    return this.tokenizer.readToken(token);
+  }
+
   private tracks = new Map<number, ITrackDescription>();
   private hasVideoTrack = false;
   private hasAudioTrack = true;
@@ -187,9 +196,9 @@ export class MP4Parser extends BasicParser {
     this.hasAudioTrack = true;
     this.tracks.clear();
 
-    let remainingFileSize = this.tokenizer.fileInfo.size || 0;
+    let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
 
-    while (!this.tokenizer.fileInfo.size || remainingFileSize > 0) {
+    while (remainingFileSize > 0) {
       try {
         const token = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
         if (token.name === '\0\0\0\0') {
@@ -214,7 +223,7 @@ export class MP4Parser extends BasicParser {
         null,
         remainingFileSize
       );
-      remainingFileSize -= rootAtom.header.length === BigInt(0) ? remainingFileSize : Number(rootAtom.header.length);
+      remainingFileSize = rootAtom.header.length === 0n ? 0 : remainingFileSize - Number(rootAtom.header.length);
     }
 
     // Post process metadata
@@ -353,8 +362,6 @@ export class MP4Parser extends BasicParser {
       }
     }
 
-    // const payloadLength = atom.getPayloadLength(remaining);
-
     if (this.atomParsers[atom.header.name]) {
       return this.atomParsers[atom.header.name](remaining);
     }
@@ -387,8 +394,8 @@ export class MP4Parser extends BasicParser {
 
     return metaAtom.readAtoms(
       this.tokenizer,
-      async (child, remaining) => {
-        const payLoadLength = child.getPayloadLength(remaining);
+      async child => {
+        const payLoadLength = child.getPayloadLength();
         switch (child.header.name) {
           case 'data': // value atom
             return this.parseValueAtom(tagKey, child);
@@ -396,27 +403,25 @@ export class MP4Parser extends BasicParser {
           case 'name': // name atom (optional)
           case 'mean':
           case 'rate': {
-            const name = await this.tokenizer.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
+            const name = await this.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
             tagKey += `:${name.name}`;
             break;
           }
 
           default: {
-            const uint8Array = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
+            const uint8Array = await this.readToken<Uint8Array>(new Token.Uint8ArrayType(payLoadLength));
             this.addWarning(
               `Unsupported meta-item: ${tagKey}[${child.header.name}] => value=${uint8ArrayToHex(uint8Array)} ascii=${textDecode(uint8Array, 'ascii')}`
             );
           }
         }
       },
-      metaAtom.getPayloadLength(0)
+      metaAtom.getPayloadLength()
     );
   }
 
   private async parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
-    const dataAtom = await this.tokenizer.readToken(
-      new AtomToken.DataAtom(Number(metaAtom.header.length) - AtomToken.Header.len)
-    );
+    const dataAtom = await this.readToken(new AtomToken.DataAtom(metaAtom.getPayloadLength()));
 
     if (dataAtom.type.set !== 0) {
       throw new Mp4ContentError(`Unsupported type-set != 0: ${dataAtom.type.set}`);
@@ -514,21 +519,21 @@ export class MP4Parser extends BasicParser {
 
     await trakBox.readAtoms(
       this.tokenizer,
-      async (child, remaining) => {
-        const payLoadLength = child.getPayloadLength(remaining);
+      async child => {
+        const payLoadLength = child.getPayloadLength();
         switch (child.header.name) {
           case 'chap': {
-            const chap = await this.tokenizer.readToken(new ChapterTrackReferenceBox(remaining));
+            const chap = await this.readToken(new ChapterTrackReferenceBox(payLoadLength));
             track.chapterList = chap;
             break;
           }
 
           case 'tkhd': // TrackHeaderBox
-            track.header = await this.tokenizer.readToken(new AtomToken.TrackHeaderAtom(payLoadLength));
+            track.header = await this.readToken(new AtomToken.TrackHeaderAtom(payLoadLength));
             break;
 
           case 'hdlr': // TrackHeaderBox
-            track.handler = await this.tokenizer.readToken(new AtomToken.HandlerBox(payLoadLength));
+            track.handler = await this.readToken(new AtomToken.HandlerBox(payLoadLength));
 
             track.isAudio = () => track.handler.handlerType === 'audi' || track.handler.handlerType === 'soun';
             track.isVideo = () => track.handler.handlerType === 'vide';
@@ -542,40 +547,40 @@ export class MP4Parser extends BasicParser {
 
           case 'mdhd': {
             // Parse media header (mdhd) box
-            const mdhd_data = await this.tokenizer.readToken(new AtomToken.MdhdAtom(payLoadLength));
+            const mdhd_data = await this.readToken(new AtomToken.MdhdAtom(payLoadLength));
             track.media.header = mdhd_data;
             break;
           }
 
           case 'stco': {
-            const stco = await this.tokenizer.readToken(new AtomToken.StcoAtom(payLoadLength));
+            const stco = await this.readToken(new AtomToken.StcoAtom(payLoadLength));
             track.chunkOffsetTable = stco.entries; // remember chunk offsets
             break;
           }
 
           case 'stsc': {
             // sample-to-Chunk box
-            const stsc = await this.tokenizer.readToken(new AtomToken.StscAtom(payLoadLength));
+            const stsc = await this.readToken(new AtomToken.StscAtom(payLoadLength));
             track.sampleToChunkTable = stsc.entries;
             break;
           }
 
           case 'stsd': {
             // sample description box
-            const stsd = await this.tokenizer.readToken(new AtomToken.StsdAtom(payLoadLength));
+            const stsd = await this.readToken(new AtomToken.StsdAtom(payLoadLength));
             track.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
             break;
           }
 
           case 'stts': {
             // time-to-sample table
-            const stts = await this.tokenizer.readToken(new AtomToken.SttsAtom(payLoadLength));
+            const stts = await this.readToken(new AtomToken.SttsAtom(payLoadLength));
             track.timeToSampleTable = stts.entries;
             break;
           }
 
           case 'stsz': {
-            const stsz = await this.tokenizer.readToken(new AtomToken.StszAtom(payLoadLength));
+            const stsz = await this.readToken(new AtomToken.StszAtom(payLoadLength));
             track.sampleSize = stsz.sampleSize;
             track.sampleSizeTable = stsz.entries;
             break;
@@ -594,7 +599,7 @@ export class MP4Parser extends BasicParser {
           }
         }
       },
-      trakBox.getPayloadLength(0)
+      trakBox.getPayloadLength()
     );
     // Register track
     this.tracks.set(track.header.trackId, track);
@@ -604,13 +609,13 @@ export class MP4Parser extends BasicParser {
     let tfhd: AtomToken.ITrackFragmentHeaderBox;
     return trafBox.readAtoms(
       this.tokenizer,
-      async (child, remaining) => {
-        const payLoadLength = child.getPayloadLength(remaining);
+      async child => {
+        const payLoadLength = child.getPayloadLength();
         switch (child.header.name) {
           case 'tfhd': {
             // TrackFragmentHeaderBox
-            const fragmentHeaderBox = new AtomToken.TrackFragmentHeaderBox(child.getPayloadLength(remaining));
-            tfhd = await this.tokenizer.readToken(fragmentHeaderBox);
+            const fragmentHeaderBox = new AtomToken.TrackFragmentHeaderBox(child.getPayloadLength());
+            tfhd = await this.readToken(fragmentHeaderBox);
             break;
           }
 
@@ -621,7 +626,7 @@ export class MP4Parser extends BasicParser {
           case 'trun': {
             // TrackRunBox
             const trackRunBox = new AtomToken.TrackRunBox(payLoadLength);
-            const trun = await this.tokenizer.readToken(trackRunBox);
+            const trun = await this.readToken(trackRunBox);
             if (tfhd) {
               const track = this.tracks.get(tfhd.trackId);
               track?.fragments.push({ header: tfhd, trackRun: trun });
@@ -635,7 +640,7 @@ export class MP4Parser extends BasicParser {
           }
         }
       },
-      trafBox.getPayloadLength(0)
+      trafBox.getPayloadLength()
     );
   }
 
@@ -645,7 +650,7 @@ export class MP4Parser extends BasicParser {
      * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-56313
      */
     mvhd: async (len: number) => {
-      const mvhd = await this.tokenizer.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
+      const mvhd = await this.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
       this.metadata.setFormat('creationTime', mvhd.creationTime);
       this.metadata.setFormat('modificationTime', mvhd.modificationTime);
     },
@@ -683,9 +688,12 @@ export class MP4Parser extends BasicParser {
     },
 
     ftyp: async (len: number) => {
+      if (len % AtomToken.ftyp.len !== 0) {
+        throw new Mp4ContentError(`Invalid ftyp payload length: ${len}`);
+      }
       const types = [];
       while (len > 0) {
-        const ftype = await this.tokenizer.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);
+        const ftype = await this.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);
         len -= AtomToken.ftyp.len;
         const value = ftype.type.replace(/\W/g, '');
         if (value.length > 0) {
@@ -701,7 +709,7 @@ export class MP4Parser extends BasicParser {
      * Parse sample description atom
      */
     stsd: async (len: number) => {
-      const stsd = await this.tokenizer.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
+      const stsd = await this.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
       const trackDescription = this.getTrackDescription();
       trackDescription.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
     },
@@ -710,14 +718,14 @@ export class MP4Parser extends BasicParser {
      * Parse sample-sizes atom ('stsz')
      */
     stsz: async (len: number) => {
-      const stsz = await this.tokenizer.readToken<AtomToken.IStszAtom>(new AtomToken.StszAtom(len));
+      const stsz = await this.readToken<AtomToken.IStszAtom>(new AtomToken.StszAtom(len));
       const td = this.getTrackDescription();
       td.sampleSize = stsz.sampleSize;
       td.sampleSizeTable = stsz.entries;
     },
 
     date: async (len: number) => {
-      const date = await this.tokenizer.readToken(new Token.StringType(len, 'utf-8'));
+      const date = await this.readToken(new Token.StringType(len, 'utf-8'));
       await this.addTag('date', date);
     }
   };
@@ -776,7 +784,7 @@ export class MP4Parser extends BasicParser {
         throw new Mp4ContentError('Chapter chunk exceeding token length');
       }
       await this.tokenizer.ignore(nextChunkLen);
-      const title = await this.tokenizer.readToken(new AtomToken.ChapterText(sampleSize));
+      const title = await this.readToken(new AtomToken.ChapterText(sampleSize));
       debug(`Chapter ${i + 1}: ${title}`);
       const chapter = {
         title,
