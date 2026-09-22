@@ -1041,7 +1041,7 @@ describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
         }
       }
 
-      for (const name of ['mvhd', 'stsd', 'stsz', 'date']) {
+      for (const name of ['mvhd', 'stsd', 'stsz', 'date', 'ftyp', 'chap']) {
         for (const size of [0xffffffffffffffffn, 0x20000000000000n, 0x10000000n]) {
           it(`rejects ${name} with extended size ${size} before allocation`, async () => {
             await rejectBeforeAllocation(box(name, Buffer.alloc(0), size, true), /size exceeds|buffering limit/);
@@ -1126,7 +1126,7 @@ describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
     });
   });
 
-  for (const length of [1, 2, 3, 9, 10, 11]) {
+  for (const length of [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11]) {
     it(`rejects an ftyp payload of ${length} bytes before reading brands`, async () => {
       const tokenizer = fromBuffer(
         Buffer.concat([box('ftyp', Buffer.alloc(length)), box('date', Buffer.from('2026'))]),
@@ -1136,6 +1136,52 @@ describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
       assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
     });
   }
+
+  for (const name of ['ftyp', 'chap']) {
+    it(`rejects an oversized incremental ${name} before consuming its payload`, async () => {
+      const tokenizer = await fromStream(
+        Readable.from([box(name, Buffer.alloc(8), 64n * 1024n * 1024n + 12n)], { objectMode: false })
+      );
+      tokenizer.fileInfo.mimeType = 'audio/mp4';
+      try {
+        await rejects(
+          mm.parseFromTokenizer(tokenizer),
+          error => error instanceof Mp4ContentError && /buffering limit/.test(error.message)
+        );
+        assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
+
+  it('accepts an eight-byte ftyp payload and preserves the following sibling', async () => {
+    const { format, native } = await mm.parseBuffer(
+      Buffer.concat([box('ftyp', Buffer.from([0x4d, 0x34, 0x41, 0x20, 0, 0, 0, 0])), box('date', Buffer.from('2026'))]),
+      'audio/mp4'
+    );
+    assert.strictEqual(format.container, 'M4A');
+    assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+  });
+
+  it('dispatches large media payloads without applying the metadata limit', async () => {
+    const size = 128n * 1024n * 1024n;
+    const tokenizer = await fromStream(
+      Readable.from([box('mdat', Buffer.alloc(0), size, true)], { objectMode: false })
+    );
+    tokenizer.fileInfo.mimeType = 'audio/mp4';
+    let skipped = 0;
+    tokenizer.ignore = async length => {
+      skipped += length;
+      return length;
+    };
+    try {
+      await mm.parseFromTokenizer(tokenizer);
+      assert.strictEqual(skipped, Number(size) - 16);
+    } finally {
+      await tokenizer.close();
+    }
+  });
 
   it('checks the remaining file bytes at a nonzero offset', async () => {
     const tokenizer = fromBuffer(Buffer.concat([box('free'), box('date', Buffer.alloc(0), 16n)]));

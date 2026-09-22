@@ -180,10 +180,14 @@ export class MP4Parser extends BasicParser {
 
   // Metadata and sample tables are buffered; media data is skipped separately.
   // A bound is also necessary for streams whose total size is unknown.
-  private async readToken<T>(token: IGetToken<T>): Promise<T> {
-    if (!Number.isSafeInteger(token.len) || token.len < 0 || token.len > 64 * 1024 * 1024) {
-      throw new Mp4ContentError(`Atom payload exceeds the 64 MiB buffering limit: ${token.len}`);
+  private validatePayloadLength(length: number): void {
+    if (!Number.isSafeInteger(length) || length < 0 || length > 64 * 1024 * 1024) {
+      throw new Mp4ContentError(`Atom payload exceeds the 64 MiB buffering limit: ${length}`);
     }
+  }
+
+  private async readToken<T>(token: IGetToken<T>): Promise<T> {
+    this.validatePayloadLength(token.len);
     return this.tokenizer.readToken(token);
   }
 
@@ -363,6 +367,9 @@ export class MP4Parser extends BasicParser {
     }
 
     if (this.atomParsers[atom.header.name]) {
+      if (atom.header.name !== 'mdat') {
+        this.validatePayloadLength(remaining);
+      }
       return this.atomParsers[atom.header.name](remaining);
     }
     debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
@@ -688,7 +695,7 @@ export class MP4Parser extends BasicParser {
     },
 
     ftyp: async (len: number) => {
-      if (len % AtomToken.ftyp.len !== 0) {
+      if (len < 8 || len % AtomToken.ftyp.len !== 0) {
         throw new Mp4ContentError(`Invalid ftyp payload length: ${len}`);
       }
       const types = [];
