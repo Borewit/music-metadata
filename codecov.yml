@@ -1,0 +1,12 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        # Allow small fluctuations in overall coverage after formatting changes.
+        threshold: 0.5%
+    patch:
+      default:
+        target: auto
+        # Reformatted lines can include previously uncovered code.
+        threshold: 5%
