@@ -1,6 +1,7 @@
 import type {INativeTagMap} from '../common/GenericTagTypes.js';
 import {CommonTagMapper} from '../common/GenericTagMapper.js';
 import type {IRating, ITag} from '../type.js';
+import type {IWarningCollector} from '../common/MetadataCollector.js';
 
 /**
  * ASF Metadata tag mappings.
@@ -90,16 +91,20 @@ export class AsfTagMapper extends CommonTagMapper {
     super(['asf'], asfTagMap);
   }
 
-  protected postMap(tag: ITag): void {
+  protected postMap(tag: ITag, warnings: IWarningCollector): void {
 
     switch (tag.id) {
       case 'POPULARIMETER': {
         // popm-style attribute, written by e.g. foobar2000; value is "email|rating|counter"
         const [email, rating] = (tag.value as string).split('|');
-        const value = Number.parseInt(rating, 10);
+        const value = Number(rating);
+        const valid = /^\d+$/.test(rating) && Number.isInteger(value) && value >= 0 && value <= 255;
+        if (!valid) {
+          warnings.addWarning(`Invalid ASF POPULARIMETER rating: ${rating}`);
+        }
         tag.value = {
           source: email,
-          rating: value > 0 ? ((value - 1) / 254) * CommonTagMapper.maxRatingScore : undefined
+          rating: valid && value > 0 ? ((value - 1) / 254) * CommonTagMapper.maxRatingScore : undefined
         };
         break;
       }
