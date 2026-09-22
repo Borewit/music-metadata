@@ -97,6 +97,14 @@ export class ID3v2Parser {
       throw new Id3v2ContentError('expected ID3-header file-identifier \'ID3\' was not found');
     }
 
+    const fileSize = this.tokenizer.fileInfo.size;
+    if (fileSize !== undefined) {
+      const remainingBytes = fileSize - this.tokenizer.position;
+      if (id3Header.size > remainingBytes) {
+        throw new Id3v2ContentError(`ID3v2 tag size ${id3Header.size} exceeds remaining file size ${remainingBytes}`);
+      }
+    }
+
     this.id3Header = id3Header;
 
     this.headerType = (`ID3v2.${id3Header.version.major}`) as TagType;
@@ -230,4 +238,3 @@ export class ID3v2Parser {
 function makeUnexpectedMajorVersionError(majorVer: number): never {
   throw new Id3v2ContentError(`Unexpected majorVer: ${majorVer}`);
 }
-

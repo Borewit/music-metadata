@@ -1,4 +1,4 @@
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import path from 'node:path';
 import * as strtok from 'strtok3';
 
@@ -11,6 +11,20 @@ import type { IPicture } from '../lib/index.js';
 import type { IGeneralEncapsulatedObject } from '../lib/id3v2/FrameParser.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
+
+  it('rejects a declared tag size larger than the remaining file before allocation', async () => {
+    const header = Uint8Array.from([
+      0x49, 0x44, 0x33,
+      0x04, 0x00,
+      0x00,
+      0x7f, 0x7f, 0x7f, 0x7f
+    ]);
+
+    await expect(mm.parseBuffer(header, {mimeType: 'audio/mpeg'})).to.be.rejectedWith(
+      mm.UnexpectedFileContentError,
+      'ID3v2 tag size 268435455 exceeds remaining file size 0'
+    );
+  });
 
   it('should parse a raw ID3v2.3 header', async () => {
 
