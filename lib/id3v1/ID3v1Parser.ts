@@ -311,7 +311,7 @@ export class ID3v1Parser extends BasicParser {
     const header = await this.tokenizer.readToken<IId3v1Header | null>(Iid3v1Token, offset);
     if (header) {
       debug('ID3v1 header found at: pos=%s', this.tokenizer.fileInfo.size - Iid3v1Token.len);
-      const props: Array<keyof IId3v1Header> = ['title', 'artist', 'album', 'comment', 'track', 'year'];
+      const props: (keyof IId3v1Header)[] = ['title', 'artist', 'album', 'comment', 'track', 'year'];
       for (const id of props) {
         if (header[id] && header[id] !== '') {
           await this.addTag(id, header[id]);
