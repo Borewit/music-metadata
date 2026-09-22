@@ -1,27 +1,25 @@
 import initDebug from 'debug';
-
-import { BasicParser } from '../../common/BasicParser.js';
 import { tryParseApeHeader } from '../../apev2/APEv2Parser.js';
+import { BasicParser } from '../../common/BasicParser.js';
 import { FourCcToken } from '../../common/FourCC.js';
-import * as SV8 from './StreamVersion8.js';
 import { MusepackContentError } from '../MusepackConentError.js';
+import * as SV8 from './StreamVersion8.js';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
 export class MpcSv8Parser extends BasicParser {
-
   private audioLength = 0;
 
   public async parse(): Promise<void> {
-
     const signature = await this.tokenizer.readToken(FourCcToken);
-    if (signature !== 'MPCK') throw new MusepackContentError('Invalid Magic number');
+    if (signature !== 'MPCK') {
+      throw new MusepackContentError('Invalid Magic number');
+    }
     this.metadata.setFormat('container', 'Musepack, SV8');
     return this.parsePacket();
   }
 
   private async parsePacket(): Promise<void> {
-
     const sv8reader = new SV8.StreamReader(this.tokenizer);
 
     do {
@@ -29,7 +27,8 @@ export class MpcSv8Parser extends BasicParser {
       debug(`packet-header key=${header.key}, payloadLength=${header.payloadLength}`);
 
       switch (header.key) {
-        case 'SH': { // Stream Header
+        case 'SH': {
+          // Stream Header
           const sh = await sv8reader.readStreamHeader(header.payloadLength);
           this.metadata.setFormat('numberOfSamples', sh.sampleCount);
           this.metadata.setFormat('sampleRate', sh.sampleFrequency);
@@ -53,14 +52,14 @@ export class MpcSv8Parser extends BasicParser {
 
         case 'SE': // Stream End
           if (this.metadata.format.duration) {
-            this.metadata.setFormat('bitrate', this.audioLength * 8 / this.metadata.format.duration);
+            this.metadata.setFormat('bitrate', (this.audioLength * 8) / this.metadata.format.duration);
           }
           return tryParseApeHeader(this.metadata, this.tokenizer, this.options);
 
         default:
           throw new MusepackContentError(`Unexpected header: ${header.key}`);
       }
-    // biome-ignore lint/correctness/noConstantCondition: break is handled in the switch statement
+      // biome-ignore lint/correctness/noConstantCondition: break is handled in the switch statement
     } while (true);
   }
 }

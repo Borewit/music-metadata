@@ -1,22 +1,18 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
-import * as mm from '../lib/index.js';
-import { samplePath } from './util.js';
-import { Parsers } from './metadata-parsers.js';
-
+import { assert } from 'chai';
 import type { IFormat, INativeTagDict } from '../lib/index.js';
+import * as mm from '../lib/index.js';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 const wavSamples = path.join(samplePath, 'wav');
 
 describe('Parse RIFF/WAVE audio format', () => {
-
   function checkExifTags(exif: INativeTagDict) {
-
     assert.deepEqual(exif.IART, ['Beth Hart & Joe Bonamassa'], 'exif.IART');
     assert.deepEqual(exif.ICRD, ['2011'], 'exif.ICRD');
-    assert.deepEqual(exif.INAM, ['Sinner\'s Prayer'], 'exif.INAM');
-    assert.deepEqual(exif.IPRD, ['Don\'t Explain'], 'exif.IPRD');
+    assert.deepEqual(exif.INAM, ["Sinner's Prayer"], 'exif.INAM');
+    assert.deepEqual(exif.IPRD, ["Don't Explain"], 'exif.IPRD');
     assert.deepEqual(exif.ITRK, ['1/10'], 'exif.ITRK');
   }
 
@@ -25,21 +21,24 @@ describe('Parse RIFF/WAVE audio format', () => {
    * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
    */
   it('should parse LIST-INFO (EXIF)', async () => {
-
-    const filename = 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav';
+    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
     const filePath = path.join(samplePath, filename);
 
     function checkFormat(format: IFormat) {
       assert.deepEqual(format.container, 'WAVE', 'format.container');
       assert.deepEqual(format.codec, 'PCM', 'format.codec');
       assert.strictEqual(format.lossless, true);
-      assert.sameMembers(format.tagTypes, ['exif', 'ID3v2.3'], 'format.tagTypes = [\'exif\', \'ID3v2.3\']');
+      assert.sameMembers(format.tagTypes, ['exif', 'ID3v2.3'], "format.tagTypes = ['exif', 'ID3v2.3']");
       assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 kHz');
       assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample = 16 bits');
       assert.strictEqual(format.bitrate, 1411200, 'format.bitrate = 1411200 bits/s');
       assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels = 2 channels');
       assert.strictEqual(format.numberOfSamples, 93624, 'format.numberOfSamples = 93624');
-      assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = ~2.123 seconds (checked with Adobe Audition)');
+      assert.strictEqual(
+        format.duration,
+        2.1229931972789116,
+        'format.duration = ~2.123 seconds (checked with Adobe Audition)'
+      );
       assert.isTrue(format.hasAudio, 'format.hasAudio');
       assert.isFalse(format.hasVideo, 'format.hasAudio');
     }
@@ -54,7 +53,6 @@ describe('Parse RIFF/WAVE audio format', () => {
 
   // Issue https://github.com/Borewit/music-metadata/issues/75
   it('should be able to handle complex nested chunk structures', async () => {
-
     const filePath = path.join(samplePath, 'issue_75.wav');
 
     const metadata = await mm.parseFile(filePath);
@@ -63,7 +61,6 @@ describe('Parse RIFF/WAVE audio format', () => {
   });
 
   it('should map RIFF tags to common', async () => {
-
     // Metadata edited with Adobe Audition CC 2018.1
     const filePath = path.join(samplePath, 'riff_adobe_audition.wav');
 
@@ -104,7 +101,7 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepEqual(common.date, '2018-04-26T13:26:19-05:00');
     assert.deepEqual(common.year, 2018);
     assert.deepEqual(common.encodedby, 'Adobe Audition CC 2018.1 (Macintosh)');
-    assert.deepEqual(common.comment, [{text: 'Comments here!'}]);
+    assert.deepEqual(common.comment, [{ text: 'Comments here!' }]);
     assert.deepEqual(common.genre, ['Blues']);
     assert.deepEqual(common.engineer, ['Engineer']);
     assert.deepEqual(common.technician, ['Technician']);
@@ -112,10 +109,9 @@ describe('Parse RIFF/WAVE audio format', () => {
   });
 
   it('should handle be able to handle odd chunk & padding', async () => {
-
     const filePath = path.join(samplePath, 'issue-161.wav');
 
-    const metadata = await mm.parseFile(filePath, {duration: true});
+    const metadata = await mm.parseFile(filePath, { duration: true });
     const format = metadata.format;
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
@@ -124,23 +120,23 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.bitsPerSample, 24);
     assert.strictEqual(format.bitrate, 2304000, 'format.bitrate = 2304000 bits/s');
     assert.strictEqual(format.numberOfSamples, 363448);
-    assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, 'file\'s duration');
+    assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, "file's duration");
   });
 
   describe('LIST/INFO character encoding', () => {
     const samples = [
-      {file: 'cest_latin1-default.wav', title: 'Mötley'},
-      {file: 'cest_latin1-zero.wav', title: 'Mötley'},
-      {file: 'cest_latin1-explicit.wav', title: 'Mötley'},
-      {file: 'cest_windows1252.wav', title: '“Mötley” – 10 €'},
-      {file: 'cest_windows1252-after-info.wav', title: '“Mötley” – 10 €'},
-      {file: 'cest_utf8-after-info.wav', title: '音楽 – Mötley'}
+      { file: 'cest_latin1-default.wav', title: 'Mötley' },
+      { file: 'cest_latin1-zero.wav', title: 'Mötley' },
+      { file: 'cest_latin1-explicit.wav', title: 'Mötley' },
+      { file: 'cest_windows1252.wav', title: '“Mötley” – 10 €' },
+      { file: 'cest_windows1252-after-info.wav', title: '“Mötley” – 10 €' },
+      { file: 'cest_utf8-after-info.wav', title: '音楽 – Mötley' }
     ];
 
     for (const sample of samples) {
       describe(sample.file, () => {
         for (const parser of Parsers) {
-          it(parser.description, async function() {
+          it(parser.description, async function () {
             const metadata = await parser.parse(() => this.skip(), path.join(wavSamples, sample.file), 'audio/wav');
             assert.strictEqual(metadata.common.title, sample.title);
             assert.strictEqual(metadata.common.artist, 'Björk');
@@ -161,7 +157,7 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.isUndefined(metadata.common.title);
       assert.isUndefined(metadata.native.exif);
       assert.includeDeepMembers(metadata.quality.warnings, [
-        {message: 'Unsupported RIFF CSET code page: 1251; LIST/INFO tags will be omitted'}
+        { message: 'Unsupported RIFF CSET code page: 1251; LIST/INFO tags will be omitted' }
       ]);
       assert.strictEqual(metadata.format.numberOfSamples, 800);
       assert.strictEqual(metadata.format.duration, 0.1);
@@ -182,22 +178,20 @@ describe('Parse RIFF/WAVE audio format', () => {
         Buffer.from('RIFF', 'ascii'),
         Buffer.from([20, 0, 0, 0]), // Declared RIFF size includes the complete CSET payload.
         Buffer.from('WAVECSET', 'ascii'),
-        Buffer.from([8, 0, 0, 0, 0xE4, 0x04])
+        Buffer.from([8, 0, 0, 0, 0xe4, 0x04])
       ]);
       // Only two of the eight declared CSET bytes are present. The parser tolerates EOF.
-      const metadata = await mm.parseBuffer(riff, {mimeType: 'audio/wav'});
+      const metadata = await mm.parseBuffer(riff, { mimeType: 'audio/wav' });
       assert.strictEqual(metadata.format.container, 'WAVE');
       assert.isUndefined(metadata.native.exif);
     });
   });
 
   describe('non-PCM', () => {
-
     it('should parse Microsoft 4-bit ADPCM encoded', () => {
-
       const filePath = path.join(samplePath, 'issue-92.wav');
 
-      return mm.parseFile(filePath, {duration: true}).then(metadata => {
+      return mm.parseFile(filePath, { duration: true }).then(metadata => {
         const format = metadata.format;
         assert.strictEqual(format.container, 'WAVE', 'format.container');
         assert.strictEqual(format.codec, 'ADPCM', 'format.codec');
@@ -206,13 +200,17 @@ describe('Parse RIFF/WAVE audio format', () => {
         assert.strictEqual(format.bitrate, 89240, 'format.bitrate = 89240 bits/s');
         assert.strictEqual(format.bitsPerSample, 4);
         assert.strictEqual(format.numberOfSamples, 4660260);
-        assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, 'file\'s duration is 3\'31"');
+        assert.strictEqual(
+          metadata.format.duration!,
+          format.numberOfSamples! / format.sampleRate!,
+          "file's duration is 3'31\""
+        );
       });
     });
 
     it('should parse A-law encoded (wFormatTag=0x0006)', async () => {
       const filePath = path.join(wavSamples, 'alaw.wav');
-      const {format} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'WAVE', 'format.container');
       assert.strictEqual(format.codec, 'ALAW', 'format.codec');
       assert.strictEqual(format.lossless, false);
@@ -224,7 +222,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
     it('should parse μ-law encoded (wFormatTag=0x0007)', async () => {
       const filePath = path.join(wavSamples, 'mulaw.wav');
-      const {format} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'WAVE', 'format.container');
       assert.strictEqual(format.codec, 'MULAW', 'format.codec');
       assert.strictEqual(format.lossless, false);
@@ -236,7 +234,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
     it('should parse IMA/DVI ADPCM encoded (wFormatTag=0x0011)', async () => {
       const filePath = path.join(wavSamples, 'dvi_adpcm.wav');
-      const {format} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'WAVE', 'format.container');
       assert.strictEqual(format.codec, 'DVI_ADPCM', 'format.codec');
       assert.strictEqual(format.lossless, false);
@@ -248,7 +246,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
     it('should parse GSM 06.10 encoded (wFormatTag=0x0031)', async () => {
       const filePath = path.join(wavSamples, 'gsm610.wav');
-      const {format} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'WAVE', 'format.container');
       assert.strictEqual(format.codec, 'GSM610', 'format.codec');
       assert.strictEqual(format.lossless, false);
@@ -263,7 +261,7 @@ describe('Parse RIFF/WAVE audio format', () => {
      */
     it('should parse MPEG Layer 3 encoded (wFormatTag=0x0055)', async () => {
       const filePath = path.join(wavSamples, 'mpeglayer3.wav');
-      const {format} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'WAVE', 'format.container');
       assert.strictEqual(format.codec, 'MPEGLAYER3', 'format.codec');
       assert.strictEqual(format.lossless, false);
@@ -271,15 +269,13 @@ describe('Parse RIFF/WAVE audio format', () => {
       assert.strictEqual(format.numberOfChannels, 2);
       assert.approximately(format.bitrate ?? 0, 128000, 10000, 'format.bitrate ≈ 128000 bits/s');
     });
-
   });
 
   // https://github.com/Borewit/music-metadata/issues/707
   it('should handle missing chunk-size', async () => {
-
     const filePath = path.join(wavSamples, 'ffmpeg-missing-chunksize.wav');
 
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
@@ -289,10 +285,9 @@ describe('Parse RIFF/WAVE audio format', () => {
   });
 
   it('should handle odd list-type ID in LIST chunk', async () => {
-
     const filePath = path.join(wavSamples, 'odd-list-type.wav');
 
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
@@ -305,7 +300,7 @@ describe('Parse RIFF/WAVE audio format', () => {
   it('Duration despite wrong chunk size', async () => {
     const filePath = path.join(wavSamples, 'issue-819.wav');
 
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'WAVE');
     assert.strictEqual(format.codec, 'PCM');
@@ -318,14 +313,14 @@ describe('Parse RIFF/WAVE audio format', () => {
   it('Support chunk size larger then BWF extension', async () => {
     // const filePath = path.join(wavSamples, 'unreadable-tags.wav');
     const filePath = path.join(wavSamples, 'issue-1163.bwf');
-    const {format, common, native} = await mm.parseFile(filePath);
+    const { format, common, native } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'WAVE', 'format.container');
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
 
     assert.strictEqual(common.artist, 'Some Composer', 'common.artists');
     assert.strictEqual(common.title, 'Title Redacted', 'common.title');
-    assert.deepStrictEqual(common.track, {no: 1, of: 12}, 'common.track');
+    assert.deepStrictEqual(common.track, { no: 1, of: 12 }, 'common.track');
 
     const exif = mm.orderTags(native.exif);
     assert.deepStrictEqual(exif['bext.originator'], ['Pro Tools'], 'BWF: exif.bext.originator');

@@ -1,11 +1,14 @@
 // Utilities for testing
 
-import { Readable } from 'node:stream';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { stat } from 'node:fs/promises';
-import { makeByteReadableStreamFromNodeReadable, makeDefaultReadableStreamFromNodeReadable } from 'node-readable-to-web-readable-stream';
 import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+import { fileURLToPath } from 'node:url';
+import {
+  makeByteReadableStreamFromNodeReadable,
+  makeDefaultReadableStreamFromNodeReadable
+} from 'node-readable-to-web-readable-stream';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -28,7 +31,6 @@ export class SourceStream extends Readable {
 }
 
 export async function makeByteReadableStreamFromFile(filename: string, _delay = 0) {
-
   const fileInfo = await stat(filename);
   const nodeStream = createReadStream(filename);
 
@@ -39,7 +41,6 @@ export async function makeByteReadableStreamFromFile(filename: string, _delay = 
 }
 
 export async function makeDefaultReadableStreamFromFile(filename: string, _delay = 0) {
-
   const fileInfo = await stat(filename);
   const nodeStream = createReadStream(filename);
 

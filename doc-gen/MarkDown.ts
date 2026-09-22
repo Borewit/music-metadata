@@ -9,7 +9,6 @@ export class Row {
 }
 
 export class Table {
-
   private static padEnd(value: string, size: number, pad = ' ') {
     while (value.length < size) {
       value += pad;
@@ -27,7 +26,6 @@ export class Table {
   }
 
   private static lineToString(colSizes: number[]): string {
-
     const colValues = colSizes.map(size => Table.padEnd('-', size, '-'));
     return `|-${colValues.join('-|-')}-|\n`;
   }
@@ -45,7 +43,6 @@ export class Table {
   }
 
   private calcColSizes(): number[] {
-
     const maxColSizes: number[] = [];
 
     for (const row of this.rows.concat([this.header as Row])) {

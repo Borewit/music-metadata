@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 
 import { FourCcToken } from '../common/FourCC.js';
 
@@ -7,7 +7,6 @@ import { FourCcToken } from '../common/FourCC.js';
  * Common interface for the common chunk DSD header
  */
 export interface IChunkHeader {
-
   /**
    * Chunk ID
    */
@@ -26,7 +25,7 @@ export const ChunkHeader: IGetToken<IChunkHeader> = {
   len: 12,
 
   get: (buf: Uint8Array, off: number): IChunkHeader => {
-    return {id: FourCcToken.get(buf, off), size: Token.UINT64_LE.get(buf, off + 4)};
+    return { id: FourCcToken.get(buf, off), size: Token.UINT64_LE.get(buf, off + 4) };
   }
 };
 
@@ -34,7 +33,6 @@ export const ChunkHeader: IGetToken<IChunkHeader> = {
  * Interface to DSD payload chunk
  */
 export interface IDsdChunk {
-
   /**
    * Total file size
    */
@@ -68,14 +66,13 @@ export const ChannelType = {
   '4 channels': 5,
   '5 channels': 6,
   '5.1 channels': 7
-}
-export type ChannelType = typeof ChannelType[keyof typeof ChannelType];
+};
+export type ChannelType = (typeof ChannelType)[keyof typeof ChannelType];
 
 /**
  * Interface to format chunk payload chunk
  */
 export interface IFormatChunk {
-
   /**
    * Version of this file format
    */

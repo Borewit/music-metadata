@@ -1,10 +1,9 @@
 import { assert } from 'chai';
-import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import { APEv2TagMapper } from '../lib/apev2/APEv2TagMapper.js';
+import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 
 describe('Picard mapping coverage', () => {
-
   function convertName(picardName: string) {
     switch (picardName) {
       case 'tracknumber':
@@ -17,7 +16,6 @@ describe('Picard mapping coverage', () => {
   }
 
   it('ASF', () => {
-
     /**
      * Picard mappings
      * Taken from: picard-release-1.4.2/picard/formats/asf.py
@@ -96,11 +94,9 @@ describe('Picard mapping coverage', () => {
       assert.isDefined(asfTagMapper.tagMap[picNativeTag], `Is '${picNativeTag}' defined?`);
       assert.equal(asfTagMapper.tagMap[picNativeTag], mmCommonTag, `Check Picard mapping for ${picNativeTag}`);
     }
-
   });
 
   it('APEv2', () => {
-
     /**
      * Picard mappings
      * Taken from: picard-release-1.4.2/picard/formats/apev2.py
@@ -129,13 +125,15 @@ describe('Picard mapping coverage', () => {
       const mmCommonTag = convertName(picComTag);
 
       assert.isDefined(apeTagMapper.tagMap[picNativeTag.toUpperCase()], `Is '${picNativeTag}' defined?`);
-      assert.equal(apeTagMapper.tagMap[picNativeTag.toUpperCase()], mmCommonTag, `Check Picard mapping for ${picNativeTag}`);
+      assert.equal(
+        apeTagMapper.tagMap[picNativeTag.toUpperCase()],
+        mmCommonTag,
+        `Check Picard mapping for ${picNativeTag}`
+      );
     }
-
   });
 
   it('ID3v2.4.0', () => {
-
     /**
      * Picard mappings
      * Taken from: picard-release-1.4.2/picard/formats/asf.py
@@ -190,7 +188,5 @@ describe('Picard mapping coverage', () => {
       assert.isDefined(id3v24TagMapper.tagMap[picNativeTag], `Is '${picNativeTag}' defined?`);
       assert.equal(id3v24TagMapper.tagMap[picNativeTag], mmCommonTag, `Check Picard mapping for ${picNativeTag}`);
     }
-
   });
-
 });

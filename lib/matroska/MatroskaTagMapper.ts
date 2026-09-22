@@ -1,5 +1,5 @@
-import type {INativeTagMap} from '../common/GenericTagTypes.js';
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
 
 /**
  * EBML Tag map
@@ -29,9 +29,7 @@ const ebmlTagMap: INativeTagMap = {
 };
 
 export class MatroskaTagMapper extends CaseInsensitiveTagMap {
-
   public constructor() {
     super(['matroska'], ebmlTagMap);
   }
-
 }

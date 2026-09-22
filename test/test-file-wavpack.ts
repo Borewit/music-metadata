@@ -1,16 +1,13 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
+import { assert } from 'chai';
+import type { ICommonTagsResult, IFormat } from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
-import type { ICommonTagsResult, IFormat } from '../lib/index.js';
 
 const wavpackSamplePath = path.join(samplePath, 'wavpack');
 
 describe('Parse WavPack (audio/x-wavpack)', () => {
-
   describe('codec: WavPack', () => {
-
     function checkFormat(format: IFormat) {
       assert.strictEqual(format.container, 'WavPack', 'format.container');
       assert.deepEqual(format.tagTypes, ['APEv2'], 'format.tagTypes');
@@ -21,14 +18,14 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
     }
 
     function checkCommon(common: ICommonTagsResult) {
-      assert.strictEqual(common.title, 'Sinner\'s Prayer', 'common.title');
+      assert.strictEqual(common.title, "Sinner's Prayer", 'common.title');
       assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], 'common.artist');
     }
 
-    const wv1 = path.join(wavpackSamplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.wv');
+    const wv1 = path.join(wavpackSamplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wv");
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const { format, common } = await parser.parse(() => this.skip(), wv1, 'audio/x-wavpack');
         checkFormat(format);
         checkCommon(common);
@@ -37,7 +34,6 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
   });
 
   describe('codec: DSD128', () => {
-
     function checkFormat(format: IFormat) {
       assert.strictEqual(format.container, 'WavPack', 'format.container');
       assert.strictEqual(format.codec, 'DSD', 'format.codecProfile');
@@ -50,7 +46,7 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
     const wv1 = path.join(wavpackSamplePath, 'DSD128.wv');
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const { format } = await parser.parse(() => this.skip(), wv1, 'audio/x-wavpack');
         checkFormat(format);
       });
@@ -58,7 +54,6 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
   });
 
   describe('codec: DSD128 compressed', () => {
-
     function checkFormat(format: IFormat) {
       assert.strictEqual(format.container, 'WavPack', 'format.container');
       assert.strictEqual(format.codec, 'DSD', 'format.codecProfile');
@@ -72,11 +67,10 @@ describe('Parse WavPack (audio/x-wavpack)', () => {
     const wv1 = path.join(wavpackSamplePath, 'DSD128 high compression.wv');
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const { format } = await parser.parse(() => this.skip(), wv1, 'audio/x-wavpack');
         checkFormat(format);
       });
     });
   });
-
 });

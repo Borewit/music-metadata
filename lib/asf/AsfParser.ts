@@ -1,10 +1,9 @@
 import initDebug from 'debug';
 import { EndOfStreamError } from 'strtok3';
-
+import { BasicParser } from '../common/BasicParser.js';
 import { type ITag, TrackType } from '../type.js';
 import AsfGuid from './AsfGuid.js';
 import * as AsfObject from './AsfObject.js';
-import { BasicParser } from '../common/BasicParser.js';
 import { AsfContentParseError } from './AsfObject.js';
 
 const debug = initDebug('music-metadata:parser:ASF');
@@ -22,16 +21,15 @@ const maxAsfMetadataObjectSize = 16 * 1024 * 1024;
  * - https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
  */
 export class AsfParser extends BasicParser {
-
   public async parse() {
-    const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
+    const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(
+      AsfObject.TopLevelHeaderObjectToken
+    );
     if (!header.objectId.equals(AsfGuid.HeaderObject)) {
       throw new AsfContentParseError(`expected asf header; but was not found; got: ${header.objectId.str}`);
     }
     if (header.numberOfHeaderObjects < 1 || header.numberOfHeaderObjects > 10000) {
-      throw new AsfContentParseError(
-        `Unrealistic number of ASF header objects: ${header.numberOfHeaderObjects}`
-      );
+      throw new AsfContentParseError(`Unrealistic number of ASF header objects: ${header.numberOfHeaderObjects}`);
     }
     await this.parseObjectHeaders(
       header.numberOfHeaderObjects,
@@ -46,28 +44,35 @@ export class AsfParser extends BasicParser {
       // Parse data part of the ASF Object
       debug('header GUID=%s', header.objectId.str);
       switch (header.objectId.str) {
-
-        case AsfObject.FilePropertiesObject.guid.str: { // 3.2
+        case AsfObject.FilePropertiesObject.guid.str: {
+          // 3.2
           this.validateAllocationSize(payloadSize, 'File Properties Object');
-          const fpo = await this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header));
-          this.metadata.setFormat('duration',  Number(fpo.playDuration / BigInt(1000)) / 10000 - Number(fpo.preroll) / 1000);
+          const fpo = await this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(
+            new AsfObject.FilePropertiesObject(header)
+          );
+          this.metadata.setFormat(
+            'duration',
+            Number(fpo.playDuration / BigInt(1000)) / 10000 - Number(fpo.preroll) / 1000
+          );
           this.metadata.setFormat('bitrate', fpo.maximumBitrate);
           break;
         }
 
-        case AsfObject.StreamPropertiesObject.guid.str: { // 3.3
+        case AsfObject.StreamPropertiesObject.guid.str: {
+          // 3.3
           this.validateAllocationSize(payloadSize, 'Stream Properties Object');
-          const spo = await this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(new AsfObject.StreamPropertiesObject(header));
+          const spo = await this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(
+            new AsfObject.StreamPropertiesObject(header)
+          );
           this.metadata.setFormat('container', `ASF/${spo.streamType}`);
           break;
         }
 
-        case AsfObject.HeaderExtensionObject.guid.str: { // 3.4
+        case AsfObject.HeaderExtensionObject.guid.str: {
+          // 3.4
           const extensionHeaderToken = new AsfObject.HeaderExtensionObject();
           if (payloadSize < extensionHeaderToken.len) {
-            throw new AsfContentParseError(
-              `ASF Header Extension Object payload is too small: ${payloadSize} bytes`
-            );
+            throw new AsfContentParseError(`ASF Header Extension Object payload is too small: ${payloadSize} bytes`);
           }
           const extHeader = await this.tokenizer.readToken<AsfObject.IHeaderExtensionObject>(extensionHeaderToken);
           const expectedExtensionSize = payloadSize - extensionHeaderToken.len;
@@ -107,7 +112,10 @@ export class AsfParser extends BasicParser {
               codecName: codec.codecName
             });
           });
-          const audioCodecs = codecs.filter(codec => codec.type.audioCodec).map(codec => codec.codecName).join('/');
+          const audioCodecs = codecs
+            .filter(codec => codec.type.audioCodec)
+            .map(codec => codec.codecName)
+            .join('/');
           this.metadata.setFormat('codec', audioCodecs);
           break;
         }
@@ -141,7 +149,10 @@ export class AsfParser extends BasicParser {
     await Promise.all(tags.map(({ id, value }) => this.metadata.addTag(headerType, id, value)));
   }
 
-  private async readObjectHeader(remainingSize: number, containerType: 'header' | 'extension'): Promise<{
+  private async readObjectHeader(
+    remainingSize: number,
+    containerType: 'header' | 'extension'
+  ): Promise<{
     header: AsfObject.IAsfObjectHeader;
     payloadSize: number;
   }> {
@@ -195,9 +206,7 @@ export class AsfParser extends BasicParser {
       throw error;
     }
     if (ignored !== payloadSize) {
-      throw new AsfContentParseError(
-        `Unexpected end of ASF ${objectType}; missing ${payloadSize - ignored} bytes`
-      );
+      throw new AsfContentParseError(`Unexpected end of ASF ${objectType}; missing ${payloadSize - ignored} bytes`);
     }
   }
 
@@ -206,21 +215,24 @@ export class AsfParser extends BasicParser {
       const { header, payloadSize } = await this.readObjectHeader(extensionSize, 'extension');
       // Parse data part of the ASF Object
       switch (header.objectId.str) {
-
         case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
           // ToDo: extended stream header properties are ignored
           this.validateAllocationSize(payloadSize, 'Extended Stream Properties Object');
-          await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(new AsfObject.ExtendedStreamPropertiesObjectState(header));
+          await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(
+            new AsfObject.ExtendedStreamPropertiesObjectState(header)
+          );
           break;
 
-        case AsfObject.MetadataObjectState.guid.str: { // 4.7
+        case AsfObject.MetadataObjectState.guid.str: {
+          // 4.7
           this.validateAllocationSize(payloadSize, 'Metadata Object');
           const moTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header));
           await this.addTags(moTags);
           break;
         }
 
-        case AsfObject.MetadataLibraryObjectState.guid.str: { // 4.8
+        case AsfObject.MetadataLibraryObjectState.guid.str: {
+          // 4.8
           this.validateAllocationSize(payloadSize, 'Metadata Library Object');
           const mlTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header));
           await this.addTags(mlTags);

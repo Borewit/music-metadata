@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
 
 /**
@@ -10,27 +10,27 @@ export interface IIdHeader {
   /**
    * Magic signature: "OpusHead" (64 bits)
    */
-  magicSignature: string,
+  magicSignature: string;
   /**
    * Version number (8 bits unsigned): 0x01 for this spec
    */
-  version: number,
+  version: number;
   /**
    * Channel count 'c' (8 bits unsigned): MUST be > 0
    */
-  channelCount: number
+  channelCount: number;
   /**
    * Pre-skip (16 bits unsigned, little endian)
    */
-  preSkip: number
+  preSkip: number;
   /**
    * Input sample rate (32 bits unsigned, little endian): informational only
    */
-  inputSampleRate: number,
+  inputSampleRate: number;
   /**
    * Output gain (16 bits, little endian, signed Q7.8 in dB) to apply when decoding
    */
-  outputGain: number,
+  outputGain: number;
   /**
    * Channel mapping family (8 bits unsigned)
    * -  0 = one stream: mono or L,R stereo
@@ -38,11 +38,10 @@ export interface IIdHeader {
    * -  2..254 = reserved (treat as 255)
    * -  255 = no defined channel meaning
    */
-  channelMapping: number
+  channelMapping: number;
 }
 
-export class OpusContentError extends makeUnexpectedFileContentError('Opus'){
-}
+export class OpusContentError extends makeUnexpectedFileContentError('Opus') {}
 
 /**
  * Opus ID Header parser

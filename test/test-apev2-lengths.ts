@@ -1,12 +1,12 @@
-import {assert, expect, use} from 'chai';
+import { Readable } from 'node:stream';
+import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {Readable} from 'node:stream';
-import {EndOfStreamError, fromBuffer, fromStream} from 'strtok3';
+import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 
-import {APEv2Parser, ApeContentError} from '../lib/apev2/APEv2Parser.js';
-import {TagFooter} from '../lib/apev2/APEv2Token.js';
-import {MetadataCollector} from '../lib/common/MetadataCollector.js';
-import {parseBuffer} from '../lib/core.js';
+import { APEv2Parser, ApeContentError } from '../lib/apev2/APEv2Parser.js';
+import { TagFooter } from '../lib/apev2/APEv2Token.js';
+import { MetadataCollector } from '../lib/common/MetadataCollector.js';
+import { parseBuffer } from '../lib/core.js';
 
 use(chaiAsPromised);
 
@@ -45,8 +45,10 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
     const payload = item(forgedSize);
     const sample = Buffer.concat([descriptor, audioHeader, tagHeader(32 + payload.length + forgedSize), payload]);
     assert.lengthOf(sample, 134);
-    await expect(parseBuffer(sample, {mimeType: 'audio/ape'}))
-      .to.be.rejectedWith(ApeContentError, `Invalid tag item size: ${forgedSize}`);
+    await expect(parseBuffer(sample, { mimeType: 'audio/ape' })).to.be.rejectedWith(
+      ApeContentError,
+      `Invalid tag item size: ${forgedSize}`
+    );
   });
 
   for (const type of [0, 1, 2, 3]) {
@@ -54,9 +56,10 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
       it(`rejects type ${type} beyond the file before reading its value (skipCovers=${skipCovers})`, async () => {
         const payload = item(forgedSize, type);
         const tokenizer = fromBuffer(payload);
-        const parser = new APEv2Parser(new MetadataCollector({}), tokenizer, {skipCovers});
-        await expect(parser.parseTags(TagFooter.get(tagHeader(32 + payload.length + forgedSize), 0)))
-          .to.be.rejectedWith(ApeContentError, 'Invalid tag item size');
+        const parser = new APEv2Parser(new MetadataCollector({}), tokenizer, { skipCovers });
+        await expect(
+          parser.parseTags(TagFooter.get(tagHeader(32 + payload.length + forgedSize), 0))
+        ).to.be.rejectedWith(ApeContentError, 'Invalid tag item size');
         assert.strictEqual(tokenizer.position, payload.length);
       });
     }
@@ -65,8 +68,10 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
   it('rejects an item exceeding the tag even when the file has enough bytes', async () => {
     const tokenizer = fromBuffer(item(16, 1, 'Art\0', Buffer.alloc(16)));
     const parser = new APEv2Parser(new MetadataCollector({}), tokenizer, {});
-    await expect(parser.parseTags(TagFooter.get(tagHeader(32 + 8 + 16), 0)))
-      .to.be.rejectedWith(ApeContentError, 'Invalid tag item size');
+    await expect(parser.parseTags(TagFooter.get(tagHeader(32 + 8 + 16), 0))).to.be.rejectedWith(
+      ApeContentError,
+      'Invalid tag item size'
+    );
     assert.strictEqual(tokenizer.position, 8);
   });
 
@@ -74,8 +79,10 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
     const payload = item(0, 0, 'Title');
     const tokenizer = fromBuffer(Buffer.concat([payload, Buffer.from([0])]));
     const parser = new APEv2Parser(new MetadataCollector({}), tokenizer, {});
-    await expect(parser.parseTags(TagFooter.get(tagHeader(32 + payload.length), 0)))
-      .to.be.rejectedWith(ApeContentError, 'Unterminated tag item key');
+    await expect(parser.parseTags(TagFooter.get(tagHeader(32 + payload.length), 0))).to.be.rejectedWith(
+      ApeContentError,
+      'Unterminated tag item key'
+    );
     assert.strictEqual(tokenizer.position, 8);
   });
 
@@ -83,7 +90,7 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
     for (const type of [0, 1]) {
       it(`bounds reads of a truncated type ${type} stream (advertised size=${size})`, async () => {
         const payload = item(forgedSize, type);
-        const tokenizer = await fromStream(Readable.from([payload], {objectMode: false}), {fileInfo: {size}});
+        const tokenizer = await fromStream(Readable.from([payload], { objectMode: false }), { fileInfo: { size } });
         const readBuffer = tokenizer.readBuffer.bind(tokenizer);
         tokenizer.readBuffer = async (buffer, options) => {
           assert.isAtMost(buffer.length, 64 * 1024, 'must not allocate the declared value size');
@@ -91,8 +98,9 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
         };
         try {
           const parser = new APEv2Parser(new MetadataCollector({}), tokenizer, {});
-          await expect(parser.parseTags(TagFooter.get(tagHeader(32 + payload.length + forgedSize), 0)))
-            .to.be.rejectedWith(EndOfStreamError);
+          await expect(
+            parser.parseTags(TagFooter.get(tagHeader(32 + payload.length + forgedSize), 0))
+          ).to.be.rejectedWith(EndOfStreamError);
         } finally {
           await tokenizer.close();
         }
@@ -101,17 +109,26 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
       it(`preserves a multi-chunk type ${type} value and the next item (advertised size=${size})`, async () => {
         const value = Buffer.alloc(65539, 0x61);
         value.set([0xe2, 0x82, 0xac], 65535);
-        if (type === 1) value[0] = 0; // Empty picture description.
+        if (type === 1) {
+          value[0] = 0; // Empty picture description.
+        }
         const payload = Buffer.concat([item(value.length, type, 'Title\0', value), item(0, 0, 'Artist\0')]);
-        const tokenizer = await fromStream(Readable.from([payload], {objectMode: false}), {fileInfo: {size}});
+        const tokenizer = await fromStream(Readable.from([payload], { objectMode: false }), { fileInfo: { size } });
         const metadata = new MetadataCollector({});
         try {
           await new APEv2Parser(metadata, tokenizer, {}).parseTags(TagFooter.get(tagHeader(32 + payload.length, 2), 0));
           const tags = metadata.toCommonMetadata().native.APEv2;
-          assert.deepEqual(tags[0], {id: 'Title', value: type === 0 ? value.toString('utf8') : {
-            description: '', data: new Uint8Array(value.subarray(1))
-          }});
-          assert.deepEqual(tags[1], {id: 'Artist', value: ''});
+          assert.deepEqual(tags[0], {
+            id: 'Title',
+            value:
+              type === 0
+                ? value.toString('utf8')
+                : {
+                    description: '',
+                    data: new Uint8Array(value.subarray(1))
+                  }
+          });
+          assert.deepEqual(tags[1], { id: 'Artist', value: '' });
           assert.strictEqual(tokenizer.position, payload.length);
         } finally {
           await tokenizer.close();

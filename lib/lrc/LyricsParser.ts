@@ -1,4 +1,4 @@
-import { type ILyricsText, type ILyricsTag, LyricsContentType, TimestampFormat } from '../type.js';
+import { type ILyricsTag, type ILyricsText, LyricsContentType, TimestampFormat } from '../type.js';
 
 // Shared timestamp regex for LRC format
 const TIMESTAMP_REGEX = /\[(\d{2}):(\d{2})\.(\d{2,3})]/;
@@ -15,7 +15,7 @@ export function toUnsyncedLyrics(lyrics: string): ILyricsTag {
     contentType: LyricsContentType.lyrics,
     timeStampFormat: TimestampFormat.notSynchronized,
     text: lyrics.trim(),
-    syncText: [],
+    syncText: []
   };
 }
 
@@ -33,9 +33,7 @@ export function parseLrc(lrcString: string): ILyricsTag {
     if (match) {
       const minutes = Number.parseInt(match[1], 10);
       const seconds = Number.parseInt(match[2], 10);
-      const ms = match[3].length === 3
-        ? Number.parseInt(match[3], 10)
-        : Number.parseInt(match[3], 10) * 10;
+      const ms = match[3].length === 3 ? Number.parseInt(match[3], 10) : Number.parseInt(match[3], 10) * 10;
 
       const timestamp = (minutes * 60 + seconds) * 1000 + ms;
       const text = line.replace(TIMESTAMP_REGEX, '').trim();
@@ -48,6 +46,6 @@ export function parseLrc(lrcString: string): ILyricsTag {
     contentType: LyricsContentType.lyrics,
     timeStampFormat: TimestampFormat.milliseconds,
     text: syncText.map(line => line.text).join('\n'),
-    syncText,
+    syncText
   };
 }

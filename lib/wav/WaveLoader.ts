@@ -5,6 +5,6 @@ export const riffParserLoader: IParserLoader = {
   extensions: ['.wav', 'wave', '.bwf'],
   mimeTypes: ['audio/vnd.wave', 'audio/wav', 'audio/wave'],
   async load() {
-    return (await import('./WaveParser.js')).WaveParser
+    return (await import('./WaveParser.js')).WaveParser;
   }
 };

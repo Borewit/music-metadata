@@ -1,19 +1,16 @@
-import {assert} from 'chai';
-
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 describe('Parse Philips DSDIFF', () => {
-
   const dsdiffamplePath = path.join(samplePath, 'dsdiff');
 
   it('parse: DSD64.dff', async () => {
-
     const filePath = path.join(dsdiffamplePath, 'DSD64.dff');
 
-    const {format, common} = await mm.parseFile(filePath, {duration: false});
+    const { format, common } = await mm.parseFile(filePath, { duration: false });
 
     // format chunk information
     assert.strictEqual(format.container, 'DSDIFF/DSD');
@@ -32,7 +29,6 @@ describe('Parse Philips DSDIFF', () => {
     assert.strictEqual(common.title, 'Kyrie', 'common.title');
     assert.strictEqual(common.album, 'SPES', 'common.album');
     assert.deepEqual(common.genre, ['Choral'], 'common.genre');
-    assert.deepEqual(common.track, {no: 4, of: 12}, 'common.track');
+    assert.deepEqual(common.track, { no: 4, of: 12 }, 'common.track');
   });
-
 });

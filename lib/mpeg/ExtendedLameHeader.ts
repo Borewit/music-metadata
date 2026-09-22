@@ -6,7 +6,7 @@ import type { IGetToken } from 'strtok3';
 import * as Token from 'token-types';
 
 import * as common from '../common/Util.js';
-import { ReplayGain, type IReplayGain } from './ReplayGainDataFormat.js';
+import { type IReplayGain, ReplayGain } from './ReplayGainDataFormat.js';
 
 /**
  * LAME Tag, extends the Xing header format
@@ -14,9 +14,8 @@ import { ReplayGain, type IReplayGain } from './ReplayGainDataFormat.js';
  * The modified header is also included in CBR files (effective LAME 3.94), with "Info" instead of "XING" near the beginning.
  */
 export interface IExtendedLameHeader {
-
-  revision: number,
-  vbr_method: number,
+  revision: number;
+  vbr_method: number;
   lowpass_filter: number;
   track_peak?: number | null;
   track_gain?: IReplayGain;

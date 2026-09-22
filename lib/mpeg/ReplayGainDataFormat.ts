@@ -24,12 +24,12 @@ const NameCode = {
    */
   audiophile: 2
 };
-type NameCode = typeof NameCode[keyof typeof NameCode];
+type NameCode = (typeof NameCode)[keyof typeof NameCode];
 
 /**
  * https://github.com/Borewit/music-metadata/wiki/Replay-Gain-Data-Format#originator-code
  */
-const ReplayGainOriginator ={
+const ReplayGainOriginator = {
   /**
    * Replay Gain unspecified
    */
@@ -50,8 +50,8 @@ const ReplayGainOriginator ={
    * Set by simple RMS average
    */
   rms_average: 4
-}
-type ReplayGainOriginator = typeof ReplayGainOriginator[keyof typeof ReplayGainOriginator];
+};
+type ReplayGainOriginator = (typeof ReplayGainOriginator)[keyof typeof ReplayGainOriginator];
 
 /**
  * Replay Gain Data Format
@@ -69,7 +69,7 @@ export const ReplayGain: IGetToken<IReplayGain | undefined> = {
       return {
         type: common.getBitAllignedNumber(buf, off, 0, 3),
         origin: common.getBitAllignedNumber(buf, off, 3, 3),
-        adjustment: (sign ? -gain_adj : gain_adj)
+        adjustment: sign ? -gain_adj : gain_adj
       };
     }
     return undefined;

@@ -1,9 +1,8 @@
-import type { ITokenizer } from 'strtok3';
 import initDebug from 'debug';
-
-import type * as Ogg from '../OggToken.js';
-import type { IOptions } from '../../type.js';
+import type { ITokenizer } from 'strtok3';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import type { IOptions } from '../../type.js';
+import type * as Ogg from '../OggToken.js';
 import { IdentificationHeader } from './Theora.js';
 
 const debug = initDebug('music-metadata:parser:ogg:theora');
@@ -13,7 +12,6 @@ const debug = initDebug('music-metadata:parser:ogg:theora');
  * - https://theora.org/doc/Theora.pdf
  */
 export class TheoraStream implements Ogg.IPageConsumer {
-
   private metadata: INativeMetadataCollector;
   public durationOnLastPage = false;
 
@@ -50,5 +48,4 @@ export class TheoraStream implements Ogg.IPageConsumer {
   public flush() {
     return Promise.resolve();
   }
-
 }

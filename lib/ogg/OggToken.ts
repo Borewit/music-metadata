@@ -1,7 +1,7 @@
 import type { IGetToken } from 'strtok3';
 import * as Token from 'token-types';
-import * as util from '../common/Util.js';
 import { StringType } from 'token-types';
+import * as util from '../common/Util.js';
 
 /**
  * Page header
@@ -13,11 +13,11 @@ export interface IPageHeader {
    * A header begins with a capture pattern that simplifies identifying pages;
    * once the decoder has found the capture pattern it can do a more intensive job of verifying that it has in fact found a page boundary (as opposed to an inadvertent coincidence in the byte stream).
    */
-  capturePattern: string,
+  capturePattern: string;
   /**
    * stream_structure_version
    */
-  version: number,
+  version: number;
   /**
    * header_type_flag
    */
@@ -26,28 +26,28 @@ export interface IPageHeader {
      * True: continued packet;
      * False: fresh packet
      */
-    continued: boolean,
+    continued: boolean;
 
     /**
      * True: first page of logical bitstream (bos)
      * False: not first page of logical bitstream
      */
-    firstPage: boolean,
+    firstPage: boolean;
 
     /**
      * True: last page of logical bitstream (eos)
      * False: not last page of logical bitstream
      */
-    lastPage: boolean
-  },
+    lastPage: boolean;
+  };
   /**
    * The total samples encoded after including all packets finished on this page
    * The position specified in the frame header of the last page tells how long the data coded by the bitstream is.
    */
-  absoluteGranulePosition: number,
-  streamSerialNumber: number,
-  pageSequenceNo: number,
-  pageChecksum: number,
+  absoluteGranulePosition: number;
+  streamSerialNumber: number;
+  pageSequenceNo: number;
+  pageChecksum: number;
   /**
    * The number of segment entries to appear in the segment table.
    * The maximum number of 255 segments (255 bytes each) sets the maximum possible physical page size at 65307 bytes or
@@ -82,11 +82,10 @@ export const PageHeader: IGetToken<IPageHeader> = {
 };
 
 export interface ISegmentTable {
-  totalPageSize: number
+  totalPageSize: number;
 }
 
 export class SegmentTable implements IGetToken<ISegmentTable> {
-
   private static sum(buf: Uint8Array, off: number, len: number): number {
     const dv = new DataView(buf.buffer, 0);
     let s = 0;
@@ -107,11 +106,9 @@ export class SegmentTable implements IGetToken<ISegmentTable> {
       totalPageSize: SegmentTable.sum(buf, off, this.len)
     };
   }
-
 }
 
 export interface IPageConsumer {
-
   /**
    * Need to parse to end to be able to calculate the duration
    */
@@ -134,5 +131,3 @@ export interface IPageConsumer {
    */
   flush(): Promise<void>;
 }
-
-

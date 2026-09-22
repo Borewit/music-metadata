@@ -24,8 +24,8 @@ const attributeParsers: AttributeParser[] = [
 ];
 
 function parseByteArrayAttr(buf: Uint8Array): Uint8Array {
-    return new Uint8Array(buf);
-  }
+  return new Uint8Array(buf);
+}
 
 function parseBoolAttr(buf: Uint8Array, offset = 0): boolean {
   return parseWordAttr(buf, offset) === 1;
@@ -42,4 +42,3 @@ function parseQWordAttr(buf: Uint8Array, offset = 0): bigint {
 function parseWordAttr(buf: Uint8Array, offset = 0): number {
   return Token.UINT16_LE.get(buf, offset);
 }
-

@@ -1,6 +1,6 @@
 import type { IGetToken } from 'strtok3';
-import * as util from '../common/Util.js';
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
+import * as util from '../common/Util.js';
 
 /**
  * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
@@ -16,7 +16,7 @@ export const BlockType = {
   PICTURE: 6 // PICTURE
 };
 
-export type BlockType = typeof BlockType[keyof typeof BlockType];
+export type BlockType = (typeof BlockType)[keyof typeof BlockType];
 
 /**
  * METADATA_BLOCK_DATA
@@ -24,9 +24,9 @@ export type BlockType = typeof BlockType[keyof typeof BlockType];
  */
 export interface IBlockHeader {
   // Last-metadata-block flag: '1' if this block is the last metadata block before the audio blocks, '0' otherwise.
-  lastBlock: boolean,
+  lastBlock: boolean;
   // BLOCK_TYPE
-  type: BlockType,
+  type: BlockType;
   // Length (in bytes) of metadata to follow (does not include the size of the METADATA_BLOCK_HEADER)
   length: number;
 }
@@ -48,30 +48,30 @@ export const BlockHeader: IGetToken<IBlockHeader> = {
  * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
  */
 export interface IBlockStreamInfo {
-  minimumBlockSize: number,
+  minimumBlockSize: number;
   // The maximum block size (in samples) used in the stream.
   // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-  maximumBlockSize: number,
+  maximumBlockSize: number;
   // The minimum frame size (in bytes) used in the stream.
   // May be 0 to imply the value is not known.
-  minimumFrameSize: number,
+  minimumFrameSize: number;
   // The maximum frame size (in bytes) used in the stream.
   // May be 0 to imply the value is not known.
-  maximumFrameSize: number,
+  maximumFrameSize: number;
   // Sample rate in Hz. Though 20 bits are available,
   // the maximum sample rate is limited by the structure of frame headers to 655350Hz.
   // Also, a value of 0 is invalid.
-  sampleRate: number,
+  sampleRate: number;
   // probably slower: sampleRate: common.getBitAllignedNumber(buf, off + 10, 0, 20),
   // (number of channels)-1. FLAC supports from 1 to 8 channels
-  channels: number,
+  channels: number;
   // bits per sample)-1.
   // FLAC supports from 4 to 32 bits per sample. Currently the reference encoder and decoders only support up to 24 bits per sample.
-  bitsPerSample: number,
+  bitsPerSample: number;
   // Total samples in stream.
   // 'Samples' means inter-channel sample, i.e. one second of 44.1Khz audio will have 44100 samples regardless of the number of channels.
   // A value of zero here means the number of total samples is unknown.
-  totalSamples: number,
+  totalSamples: number;
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
   fileMD5: Uint8Array;
 }

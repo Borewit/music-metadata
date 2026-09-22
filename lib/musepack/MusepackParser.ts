@@ -1,17 +1,14 @@
 import initDebug from 'debug';
 import * as Token from 'token-types';
-
-import type { ITokenParser } from '../ParserFactory.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
-
-import { MpcSv8Parser } from './sv8/MpcSv8Parser.js';
-import { MpcSv7Parser } from './sv7/MpcSv7Parser.js';
+import type { ITokenParser } from '../ParserFactory.js';
 import { MusepackContentError } from './MusepackConentError.js';
+import { MpcSv7Parser } from './sv7/MpcSv7Parser.js';
+import { MpcSv8Parser } from './sv8/MpcSv8Parser.js';
 
 const debug = initDebug('music-metadata:parser:musepack');
 
 export class MusepackParser extends AbstractID3Parser {
-
   public async postId3v2Parse(): Promise<void> {
     const signature = await this.tokenizer.peekToken(new Token.StringType(3, 'latin1'));
     let mpcParser: ITokenParser;
@@ -35,5 +32,4 @@ export class MusepackParser extends AbstractID3Parser {
 
     return mpcParser.parse();
   }
-
 }

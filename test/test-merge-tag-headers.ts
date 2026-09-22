@@ -7,7 +7,6 @@ import { samplePath } from './util.js';
 const issueDir = path.join(samplePath);
 
 describe('Merge tag headers', () => {
-
   /**
    * issue_77_empty_tag.mp3 (metadata of: 'Like Spinning Plates (Live)'):
    * Has an empty ID3v2.3 tag and a ID3v1 tag.
@@ -36,7 +35,5 @@ describe('Merge tag headers', () => {
       assert.strictEqual(metadata.common.album, expectedAlbum);
       assert.strictEqual(metadata.common.artist, expectedArtist);
     });
-
   });
-
 });

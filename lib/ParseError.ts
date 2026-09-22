@@ -7,21 +7,19 @@ export type UnionOfParseErrors =
 
 export const makeParseError = <Name extends string>(name: Name) => {
   return class ParseError extends Error {
-    name: Name
+    name: Name;
     constructor(message: string) {
       super(message);
       this.name = name;
     }
-  }
-}
+  };
+};
 
 // Concrete error class representing a file type determination failure.
-export class CouldNotDetermineFileTypeError extends makeParseError('CouldNotDetermineFileTypeError') {
-}
+export class CouldNotDetermineFileTypeError extends makeParseError('CouldNotDetermineFileTypeError') {}
 
 // Concrete error class representing an unsupported file type.
-export class UnsupportedFileTypeError extends makeParseError('UnsupportedFileTypeError') {
-}
+export class UnsupportedFileTypeError extends makeParseError('UnsupportedFileTypeError') {}
 
 // Concrete error class representing unexpected file content.
 export class UnexpectedFileContentError extends makeParseError('UnexpectedFileContentError') {
@@ -39,11 +37,9 @@ export class UnexpectedFileContentError extends makeParseError('UnexpectedFileCo
 }
 
 // Concrete error class representing a field decoding error.
-export class FieldDecodingError extends makeParseError('FieldDecodingError') {
-}
+export class FieldDecodingError extends makeParseError('FieldDecodingError') {}
 
-export class InternalParserError extends makeParseError('InternalParserError') {
-}
+export class InternalParserError extends makeParseError('InternalParserError') {}
 
 // Factory function to create a specific type of UnexpectedFileContentError.
 export const makeUnexpectedFileContentError = <FileType extends string>(fileType: FileType) => {

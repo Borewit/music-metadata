@@ -1,13 +1,12 @@
-import {assert} from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 const t = assert;
 
-it("should be able to read metadata with unknown encoding", () => {
-
+it('should be able to read metadata with unknown encoding', () => {
   const filename = 'bug-unkown encoding.mp3';
   const filePath = path.join(samplePath, filename);
 
@@ -23,5 +22,4 @@ it("should be able to read metadata with unknown encoding", () => {
     t.strictEqual(result.common.picture[0].format, 'image/jpeg', 'picture format');
     t.strictEqual(result.common.picture[0].data.length, 6761, 'picture length');
   });
-
 });

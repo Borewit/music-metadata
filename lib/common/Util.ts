@@ -1,10 +1,10 @@
 import { StringType } from 'token-types';
-import type { IRatio } from '../type.js';
-import { FieldDecodingError } from '../ParseError.js';
 import { getUintBE } from 'uint8array-extras';
+import { FieldDecodingError } from '../ParseError.js';
+import type { IRatio } from '../type.js';
 
 export type StringEncoding =
-  'ascii' // Use 'utf-8' or latin1 instead
+  | 'ascii' // Use 'utf-8' or latin1 instead
   | 'utf8' // alias: 'utf-8'
   | 'utf-16le' // alias: 'ucs2', 'ucs-2'
   | 'utf-16be'
@@ -29,14 +29,18 @@ export function findZero(uint8Array: Uint8Array, encoding?: StringEncoding): num
   if (encoding === 'utf-16le' || encoding === 'utf-16be') {
     // Look for 0x00 0x00 on 2-byte boundary
     for (let i = 0; i + 1 < len; i += 2) {
-      if (uint8Array[i] === 0 && uint8Array[i + 1] === 0) return i;
+      if (uint8Array[i] === 0 && uint8Array[i + 1] === 0) {
+        return i;
+      }
     }
     return len;
   }
 
   // latin1 / utf8 / utf16be (caller typically handles utf16be separately or via decode)
   for (let i = 0; i < len; i++) {
-    if (uint8Array[i] === 0) return i;
+    if (uint8Array[i] === 0) {
+      return i;
+    }
   }
   return len;
 }
@@ -48,7 +52,9 @@ export function trimRightNull(x: string): string {
 
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
-  if ((l & 1) !== 0) throw new FieldDecodingError('Buffer length must be even');
+  if ((l & 1) !== 0) {
+    throw new FieldDecodingError('Buffer length must be even');
+  }
   for (let i = 0; i < l; i += 2) {
     const a = uint8Array[i];
     uint8Array[i] = uint8Array[i + 1];
@@ -63,19 +69,22 @@ function swapBytes<T extends Uint8Array>(uint8Array: T): T {
 export function decodeString(uint8Array: Uint8Array, encoding: StringEncoding): string {
   // annoying workaround for a double BOM issue
   // https://github.com/leetreveil/musicmetadata/issues/84
-  if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) { // little endian
+  if (uint8Array[0] === 0xff && uint8Array[1] === 0xfe) {
+    // little endian
     return decodeString(uint8Array.subarray(2), encoding);
   }
-  if (encoding === 'utf-16le' && uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
+  if (encoding === 'utf-16le' && uint8Array[0] === 0xfe && uint8Array[1] === 0xff) {
     // BOM, indicating big endian decoding
-    if ((uint8Array.length & 1) !== 0)
+    if ((uint8Array.length & 1) !== 0) {
       throw new FieldDecodingError('Expected even number of octets for 16-bit unicode string');
+    }
     return decodeString(swapBytes(uint8Array), encoding);
   }
   if (encoding === 'utf-16be') {
     // There is no native UTF-16BE decoder; swap to UTF-16LE and decode that.
-    if ((uint8Array.length & 1) !== 0)
+    if ((uint8Array.length & 1) !== 0) {
       throw new FieldDecodingError('Expected even number of octets for 16-bit unicode string');
+    }
     return new StringType(uint8Array.length, 'utf-16le').get(swapBytes(Uint8Array.from(uint8Array)), 0);
   }
   return new StringType(uint8Array.length, encoding).get(uint8Array, 0);
@@ -104,7 +113,7 @@ export function getBitAllignedNumber(source: Uint8Array, byteOffset: number, bit
   const bitsRead = 8 - bitOff;
   const bitsLeft = len - bitsRead;
   if (bitsLeft < 0) {
-    value >>= (8 - bitOff - len);
+    value >>= 8 - bitOff - len;
   } else if (bitsLeft > 0) {
     value <<= bitsLeft;
     value |= getBitAllignedNumber(source, byteOffset, bitOffset + bitsRead, bitsLeft);
@@ -157,13 +166,15 @@ export function toRatio(value: string): IRatio | undefined {
   const ps = value.split(' ').map(p => p.trim().toLowerCase());
   if (ps.length >= 1) {
     const v = Number.parseFloat(ps[0]);
-    return ps.length === 2 && ps[1] === 'db' ? {
-      dB: v,
-      ratio: dbToRatio(v)
-    } : {
-      dB: ratioToDb(v),
-      ratio: v
-    };
+    return ps.length === 2 && ps[1] === 'db'
+      ? {
+          dB: v,
+          ratio: dbToRatio(v)
+        }
+      : {
+          dB: ratioToDb(v),
+          ratio: v
+        };
   }
 }
 
@@ -173,14 +184,10 @@ export function toRatio(value: string): IRatio | undefined {
  */
 export function decodeUintBE(uint8Array: Uint8Array): number {
   if (uint8Array.length === 0) {
-    throw new Error("decodeUintBE: empty Uint8Array");
+    throw new Error('decodeUintBE: empty Uint8Array');
   }
 
-  const view = new DataView(
-    uint8Array.buffer,
-    uint8Array.byteOffset,
-    uint8Array.byteLength
-  );
+  const view = new DataView(uint8Array.buffer, uint8Array.byteOffset, uint8Array.byteLength);
 
   return getUintBE(view);
 }

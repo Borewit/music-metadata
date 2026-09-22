@@ -1,17 +1,16 @@
 // ASF Objects
 
-import * as Token from 'token-types';
 import type { IGetToken, ITokenizer } from 'strtok3';
+import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';
+import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 import type { AnyTagValue, IPicture, ITag } from '../type.js';
 import AsfGuid from './AsfGuid.js';
 import { getParserForAttr, parseUnicodeAttr } from './AsfUtil.js';
-import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
-import { makeUnexpectedFileContentError } from '../ParseError.js';
 
-export class AsfContentParseError extends makeUnexpectedFileContentError('ASF'){
-}
+export class AsfContentParseError extends makeUnexpectedFileContentError('ASF') {}
 
 /**
  * Data Type: Specifies the type of information being stored. The following values are recognized.
@@ -41,23 +40,22 @@ export const DataType = {
    * WORD. The data is 2 bytes long and should be interpreted as a 16-bit unsigned integer.
    */
   Word: 5
-}
-export type DataType = typeof DataType[keyof typeof DataType]
+};
+export type DataType = (typeof DataType)[keyof typeof DataType];
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575
  */
 export interface IAsfObjectHeader {
-
   /**
    * A GUID that identifies the object. 128 bits
    */
-  objectId: AsfGuid,
+  objectId: AsfGuid;
 
   /**
    * The size of the object (64-bits)
    */
-  objectSize: number,
+  objectSize: number;
 }
 
 /**
@@ -65,7 +63,7 @@ export interface IAsfObjectHeader {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3
  */
 export interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
-  numberOfHeaderObjects: number
+  numberOfHeaderObjects: number;
 }
 
 /**
@@ -73,7 +71,6 @@ export interface IAsfTopLevelObjectHeader extends IAsfObjectHeader {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3
  */
 export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Uint8Array> = {
-
   len: 30,
 
   get: (buf, off): IAsfTopLevelObjectHeader => {
@@ -95,7 +92,6 @@ export const TopLevelHeaderObjectToken: IGetToken<IAsfTopLevelObjectHeader, Uint
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_1
  */
 export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Uint8Array> = {
-
   len: 24,
 
   get: (buf, off): IAsfObjectHeader => {
@@ -112,7 +108,6 @@ export const HeaderObjectToken: IGetToken<IAsfObjectHeader, Uint8Array> = {
 };
 
 export abstract class State<T> implements IGetToken<T> {
-
   public len: number;
 
   constructor(header: IAsfObjectHeader) {
@@ -123,13 +118,13 @@ export abstract class State<T> implements IGetToken<T> {
 
   protected postProcessTag(tags: ITag[], name: string, valueType: number, data: AnyTagValue) {
     if (name === 'WM/Picture') {
-      tags.push({id: name, value: WmPictureToken.fromBuffer(data as Uint8Array)});
+      tags.push({ id: name, value: WmPictureToken.fromBuffer(data as Uint8Array) });
     } else {
       const parseAttr = getParserForAttr(valueType);
       if (!parseAttr) {
         throw new AsfContentParseError(`unexpected value headerType: ${valueType}`);
       }
-      tags.push({id: name, value: parseAttr(data as Uint8Array)});
+      tags.push({ id: name, value: parseAttr(data as Uint8Array) });
     }
   }
 }
@@ -140,43 +135,42 @@ export abstract class State<T> implements IGetToken<T> {
  * The File Properties Object defines the global characteristics of the combined digital media streams found within the Data Object.
  */
 export interface IFilePropertiesObject {
-
   /**
    * Specifies the unique identifier for this file.
    * The value of this field shall be regenerated every time the file is modified in any way.
    * The value of this field shall be identical to the value of the File ID field of the Data Object.
    */
-  fileId: AsfGuid,
+  fileId: AsfGuid;
 
   /**
    * Specifies the size, in bytes, of the entire file.
    * The value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  fileSize: bigint,
+  fileSize: bigint;
   /**
    * Specifies the date and time of the initial creation of the file. The value is given as the number of 100-nanosecond
    * intervals since January 1, 1601, according to Coordinated Universal Time (Greenwich Mean Time). The value of this
    * field may be invalid if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  creationDate: bigint,
+  creationDate: bigint;
   /**
    * Specifies the number of Data Packet entries that exist within the Data Object. The value of this field is invalid
    * if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  dataPacketsCount: bigint,
+  dataPacketsCount: bigint;
   /**
    * Specifies the time needed to play the file in 100-nanosecond units.
    * This value should include the duration (estimated, if an exact value is unavailable) of the the last media object
    * in the presentation. The value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
    */
-  playDuration: bigint,
+  playDuration: bigint;
   /**
    * Specifies the time needed to send the file in 100-nanosecond units.
    * This value should include the duration of the last packet in the content.
    * The value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
    * Players can ignore this value.
    */
-  sendDuration: bigint,
+  sendDuration: bigint;
   /**
    * Specifies the amount of time to buffer data before starting to play the file, in millisecond units.
    * If this value is nonzero, the Play Duration field and all of the payload Presentation Time fields have been offset
@@ -184,7 +178,7 @@ export interface IFilePropertiesObject {
    * presentation times to calculate their actual values. It follows that all payload Presentation Time fields need to
    * be at least this value.
    */
-  preroll: bigint,
+  preroll: bigint;
   /**
    * The flags
    */
@@ -194,7 +188,7 @@ export interface IFilePropertiesObject {
      * and thus that various values stored in the header objects are invalid. It is highly recommended that
      * post-processing be performed to remove this condition at the earliest opportunity.
      */
-    broadcast: boolean,
+    broadcast: boolean;
     /**
      * Specifies, if set, that a file is seekable.
      * Note that for files containing a single audio stream and a Minimum Data Packet Size field equal to the Maximum
@@ -203,8 +197,8 @@ export interface IFilePropertiesObject {
      * this flag is only set to 1 if the file contains a matching Simple Index Object for each regular video stream
      * (that is, video streams that are not hidden according to the method described in section 8.2.2).
      */
-    seekable: boolean
-  },
+    seekable: boolean;
+  };
   /**
    * Specifies the minimum Data Packet size in bytes. In general, the value of this field is invalid if the Broadcast
    * Flag bit in the Flags field is set to 1.
@@ -212,7 +206,7 @@ export interface IFilePropertiesObject {
    * Packet Size fields shall be set to the same value, and this value should be set to the packet size, even when the
    * Broadcast Flag in the Flags field is set to 1.
    */
-  minimumDataPacketSize: number,
+  minimumDataPacketSize: number;
   /**
    * Specifies the maximum Data Packet size in bytes.
    * In general, the value of this field is invalid if the Broadcast Flag bit in the Flags field is set to 1.
@@ -220,7 +214,7 @@ export interface IFilePropertiesObject {
    * Size fields shall be set to the same value,
    * and this value should be set to the packet size, even when the Broadcast Flag field is set to 1.
    */
-  maximumDataPacketSize: number,
+  maximumDataPacketSize: number;
   /**
    * Specifies the maximum instantaneous bit rate in bits per second for the entire file.
    * This shall equal the sum of the bit rates of the individual digital media streams.
@@ -231,7 +225,7 @@ export interface IFilePropertiesObject {
    * streams whose Stream Properties Object exists as part of an Extended Stream Properties Object in the Header
    * Extension Object shall not have their bit rates included in this sum, except when this value would otherwise be 0.
    */
-  maximumBitrate: number,
+  maximumBitrate: number;
 }
 
 /**
@@ -239,11 +233,9 @@ export interface IFilePropertiesObject {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_2
  */
 export class FilePropertiesObject extends State<IFilePropertiesObject> {
-
   public static guid = AsfGuid.FilePropertiesObject;
 
   public get(buf: Uint8Array, off: number): IFilePropertiesObject {
-
     return {
       fileId: AsfGuid.fromBin(buf, off),
       fileSize: Token.UINT64_LE.get(buf, off + 16),
@@ -268,17 +260,15 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
  * Interface for: 3.3 Stream Properties Object (mandatory, one per stream)
  */
 export interface IStreamPropertiesObject {
-
   /**
    * Stream Type
    */
-  streamType: string | undefined,
+  streamType: string | undefined;
 
   /**
    * Error Correction Type
    */
-  errorCorrectionType: AsfGuid,
-
+  errorCorrectionType: AsfGuid;
 }
 
 /**
@@ -286,11 +276,9 @@ export interface IStreamPropertiesObject {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_3
  */
 export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
-
   public static guid = AsfGuid.StreamPropertiesObject;
 
   public get(buf: Uint8Array, off: number): IStreamPropertiesObject {
-
     return {
       streamType: AsfGuid.decodeMediaType(AsfGuid.fromBin(buf, off)),
       errorCorrectionType: AsfGuid.fromBin(buf, off + 8)
@@ -300,9 +288,9 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
 }
 
 export interface IHeaderExtensionObject {
-  reserved1: AsfGuid,
-  reserved2: number,
-  extensionDataSize: number
+  reserved1: AsfGuid;
+  reserved2: number;
+  extensionDataSize: number;
 }
 
 /**
@@ -310,7 +298,6 @@ export interface IHeaderExtensionObject {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_4
  */
 export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> {
-
   public static guid = AsfGuid.HeaderExtensionObject;
 
   public len: number;
@@ -333,7 +320,7 @@ export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> 
  * 3.5: The Codec-List-Object interface.
  */
 interface ICodecListObjectHeader {
-  entryCount: number
+  entryCount: number;
 }
 
 /**
@@ -352,18 +339,21 @@ const CodecListObjectHeader: IGetToken<ICodecListObjectHeader> = {
 
 export interface ICodecEntry {
   type: {
-    videoCodec: boolean,
-    audioCodec: boolean
-  },
-  codecName: string,
-  description: string,
-  information: Uint8Array
+    videoCodec: boolean;
+    audioCodec: boolean;
+  };
+  codecName: string;
+  description: string;
+  information: Uint8Array;
 }
 
 class BoundedReader {
   public remaining: number;
 
-  public constructor(private readonly tokenizer: ITokenizer, size: number) {
+  public constructor(
+    private readonly tokenizer: ITokenizer,
+    size: number
+  ) {
     this.remaining = size;
   }
 
@@ -389,7 +379,9 @@ class BoundedReader {
   public async ignoreRemaining(): Promise<void> {
     const ignored = await this.tokenizer.ignore(this.remaining);
     if (ignored !== this.remaining) {
-      throw new AsfContentParseError(`Unexpected end of ASF Codec List Object; missing ${this.remaining - ignored} bytes`);
+      throw new AsfContentParseError(
+        `Unexpected end of ASF Codec List Object; missing ${this.remaining - ignored} bytes`
+      );
     }
     this.remaining = 0;
   }
@@ -450,7 +442,6 @@ async function readCodecEntry(reader: BoundedReader): Promise<ICodecEntry> {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_10
  */
 export class ContentDescriptionObjectState extends State<ITag[]> {
-
   public static guid = AsfGuid.ContentDescriptionObject;
 
   private static contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
@@ -465,7 +456,7 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
       if (length > 0) {
         const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;
-        tags.push({id: tagName, value: parseUnicodeAttr(buf.subarray(off + pos, off + end))});
+        tags.push({ id: tagName, value: parseUnicodeAttr(buf.subarray(off + pos, off + end)) });
         pos = end;
       }
     }
@@ -478,7 +469,6 @@ export class ContentDescriptionObjectState extends State<ITag[]> {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_11
  */
 export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
-
   public static guid = AsfGuid.ExtendedContentDescriptionObject;
 
   public get(buf: Uint8Array, off: number): ITag[] {
@@ -504,8 +494,8 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
 }
 
 export interface IStreamName {
-  streamLanguageId: number,
-  streamName: string
+  streamLanguageId: number;
+  streamName: string;
 }
 
 /**
@@ -513,28 +503,28 @@ export interface IStreamName {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/04_objects_in_the_asf_header_extension_object.html#4_1
  */
 export interface IExtendedStreamPropertiesObject {
-  startTime: bigint,
-  endTime: bigint,
-  dataBitrate: number,
-  bufferSize: number,
-  initialBufferFullness: number,
-  alternateDataBitrate: number,
-  alternateBufferSize: number,
-  alternateInitialBufferFullness: number,
-  maximumObjectSize: number,
+  startTime: bigint;
+  endTime: bigint;
+  dataBitrate: number;
+  bufferSize: number;
+  initialBufferFullness: number;
+  alternateDataBitrate: number;
+  alternateBufferSize: number;
+  alternateInitialBufferFullness: number;
+  maximumObjectSize: number;
   flags: {
-    reliableFlag: boolean,
-    seekableFlag: boolean,
-    resendLiveCleanpointsFlag: boolean
-  },
+    reliableFlag: boolean;
+    seekableFlag: boolean;
+    resendLiveCleanpointsFlag: boolean;
+  };
   // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-  streamNumber: number,
-  streamLanguageId: number,
-  averageTimePerFrame: number,
-  streamNameCount: number,
-  payloadExtensionSystems: number,
-  streamNames: IStreamName[],
-  streamPropertiesObject: number | null
+  streamNumber: number;
+  streamLanguageId: number;
+  averageTimePerFrame: number;
+  streamNameCount: number;
+  payloadExtensionSystems: number;
+  streamNames: IStreamName[];
+  streamPropertiesObject: number | null;
 }
 
 /**
@@ -542,7 +532,6 @@ export interface IExtendedStreamPropertiesObject {
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/04_objects_in_the_asf_header_extension_object.html#4_1
  */
 export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPropertiesObject> {
-
   public static guid = AsfGuid.ExtendedStreamPropertiesObject;
 
   public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
@@ -557,7 +546,8 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
       alternateBufferSize: view.getInt32(28, true),
       alternateInitialBufferFullness: view.getInt32(32, true),
       maximumObjectSize: view.getInt32(36, true),
-      flags: { // ToDo, check flag positions
+      flags: {
+        // ToDo, check flag positions
         reliableFlag: util.getBit(buf, off + 40, 0),
         seekableFlag: util.getBit(buf, off + 40, 1),
         resendLiveCleanpointsFlag: util.getBit(buf, off + 40, 2)
@@ -579,7 +569,6 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/04_objects_in_the_asf_header_extension_object.html#4_7
  */
 export class MetadataObjectState extends State<ITag[]> {
-
   public static guid = AsfGuid.MetadataObject;
 
   public get(uint8Array: Uint8Array, off: number): ITag[] {
@@ -587,7 +576,7 @@ export class MetadataObjectState extends State<ITag[]> {
 
     const view = new DataView(uint8Array.buffer, off);
     const descriptionRecordsCount = view.getUint16(0, true);
-    let pos =2;
+    let pos = 2;
     for (let i = 0; i < descriptionRecordsCount; i += 1) {
       pos += 4;
       const nameLen = view.getUint16(pos, true);
@@ -609,15 +598,14 @@ export class MetadataObjectState extends State<ITag[]> {
 // 4.8	Metadata Library Object (optional, 0 or 1)
 
 export class MetadataLibraryObjectState extends MetadataObjectState {
-
   public static guid = AsfGuid.MetadataLibraryObject;
 }
 
 export interface IWmPicture extends IPicture {
-  type: string,
-  format: string,
-  description: string,
-  size: number
+  type: string;
+  format: string;
+  description: string;
+  size: number;
   data: Uint8Array;
 }
 
@@ -625,7 +613,6 @@ export interface IWmPicture extends IPicture {
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd757977(v=vs.85).aspx
  */
 export class WmPictureToken implements IGetToken<IWmPicture> {
-
   public static fromBuffer(buffer: Uint8Array): IWmPicture {
     const pic = new WmPictureToken(buffer.length);
     return pic.get(buffer, 0);

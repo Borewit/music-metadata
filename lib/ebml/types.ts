@@ -1,4 +1,6 @@
-export interface ITree { [name: string]: string | number | boolean | Uint8Array | ITree | ITree[]; }
+export interface ITree {
+  [name: string]: string | number | boolean | Uint8Array | ITree | ITree[];
+}
 
 export const DataType = {
   string: 0,
@@ -6,9 +8,9 @@ export const DataType = {
   uid: 2,
   bool: 3,
   binary: 4,
-  float: 5,
+  float: 5
 } as const;
-export type DataType = typeof DataType[keyof typeof DataType];
+export type DataType = (typeof DataType)[keyof typeof DataType];
 
 export type ValueType = string | number | Uint8Array | boolean | ITree | ITree[];
 
@@ -30,10 +32,10 @@ export interface IEbmlElements {
 export interface IElementType {
   readonly name: string;
   readonly value?: DataType;
-  readonly container?: { [id: number]: IElementType; };
+  readonly container?: { [id: number]: IElementType };
   readonly multiple?: boolean;
 }
 
 export interface IEbmlDoc {
-  ebml: IEbmlElements
+  ebml: IEbmlElements;
 }

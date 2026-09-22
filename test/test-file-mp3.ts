@@ -1,5 +1,5 @@
-import { assert } from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
@@ -21,35 +21,32 @@ import { samplePath } from './util.js';
 const durationSleepAwayMp3 = 200.3;
 
 describe('Parse MP3 files', () => {
-
   const mp3SamplePath = path.join(samplePath, 'mp3');
 
   it('should handle MP3 without any tags', async () => {
     const filePath = path.join(mp3SamplePath, 'notags.mp3');
-    const {format, native} = await mm.parseFile(filePath, {includeChapters: true});
+    const { format, native } = await mm.parseFile(filePath, { includeChapters: true });
     assert.strictEqual(format.container, 'MPEG');
     assert.strictEqual(format.codec, 'MPEG 2 Layer 3');
     assert.strictEqual(Object.keys(native).length, 0, 'Should be empty');
   });
 
   describe('Test patterns for ISO/MPEG ', () => {
-
     it('ISO/MPEG 1 Layer 1', async () => {
-
       // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l1
       const samples = [
-        {filename: 'fl1.mp1', bitRate: 384, sampleRate: 32000, channels: 2},
-        {filename: 'fl2.mp1', bitRate: 384, sampleRate: 44100, channels: 2},
-        {filename: 'fl3.mp1', bitRate: 384, sampleRate: 48000, channels: 2},
-        {filename: 'fl4.mp1', bitRate: 32, sampleRate: 32000, channels: 1},
-        {filename: 'fl5.mp1', bitRate: 448, sampleRate: 48000, channels: 2},
-        {filename: 'fl6.mp1', bitRate: 384, sampleRate: 44100, channels: 2},
-        {filename: 'fl7.mp1', bitRate: 384, sampleRate: 44100, channels: 2},
-        {filename: 'fl8.mp1', bitRate: 384, sampleRate: 44100, channels: 2}
+        { filename: 'fl1.mp1', bitRate: 384, sampleRate: 32000, channels: 2 },
+        { filename: 'fl2.mp1', bitRate: 384, sampleRate: 44100, channels: 2 },
+        { filename: 'fl3.mp1', bitRate: 384, sampleRate: 48000, channels: 2 },
+        { filename: 'fl4.mp1', bitRate: 32, sampleRate: 32000, channels: 1 },
+        { filename: 'fl5.mp1', bitRate: 448, sampleRate: 48000, channels: 2 },
+        { filename: 'fl6.mp1', bitRate: 384, sampleRate: 44100, channels: 2 },
+        { filename: 'fl7.mp1', bitRate: 384, sampleRate: 44100, channels: 2 },
+        { filename: 'fl8.mp1', bitRate: 384, sampleRate: 44100, channels: 2 }
       ];
 
       for (const sample of samples) {
-        const {format} = await mm.parseFile(path.join(mp3SamplePath, 'layer1', sample.filename), {duration: true});
+        const { format } = await mm.parseFile(path.join(mp3SamplePath, 'layer1', sample.filename), { duration: true });
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 1', `'${sample.filename}' format.codec`);
         assert.strictEqual(format.bitrate, sample.bitRate * 1000, `'${sample.filename}' format.bitrate`);
@@ -58,51 +55,47 @@ describe('Parse MP3 files', () => {
         assert.isTrue(format.hasAudio, 'format.hasAudio');
         assert.isFalse(format.hasVideo, 'format.hasAudio');
       }
-
     });
 
     it('ISO/MPEG 1 Layer 2', async () => {
-
       // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l2
       const samples = [
-        {filename: 'fl10.mp2', bitRate: 192, sampleRate: 32000, channels: 2},
-        {filename: 'fl11.mp2', bitRate: 192, sampleRate: 44100, channels: 2},
-        {filename: 'fl12.mp2', bitRate: 192, sampleRate: 48000, channels: 2},
-        {filename: 'fl13.mp2', bitRate: 32, sampleRate: 32000, channels: 1},
-        {filename: 'fl14.mp2', bitRate: 384, sampleRate: 48000, channels: 2},
-        {filename: 'fl15.mp2', bitRate: 384, sampleRate: 48000, channels: 2},
-        {filename: 'fl16.mp2', bitRate: 256, sampleRate: 48000, channels: 2}
+        { filename: 'fl10.mp2', bitRate: 192, sampleRate: 32000, channels: 2 },
+        { filename: 'fl11.mp2', bitRate: 192, sampleRate: 44100, channels: 2 },
+        { filename: 'fl12.mp2', bitRate: 192, sampleRate: 48000, channels: 2 },
+        { filename: 'fl13.mp2', bitRate: 32, sampleRate: 32000, channels: 1 },
+        { filename: 'fl14.mp2', bitRate: 384, sampleRate: 48000, channels: 2 },
+        { filename: 'fl15.mp2', bitRate: 384, sampleRate: 48000, channels: 2 },
+        { filename: 'fl16.mp2', bitRate: 256, sampleRate: 48000, channels: 2 }
       ];
 
       for (const sample of samples) {
-        const {format} = await mm.parseFile(path.join(mp3SamplePath, 'layer2', sample.filename), {duration: true});
+        const { format } = await mm.parseFile(path.join(mp3SamplePath, 'layer2', sample.filename), { duration: true });
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 2', `'${sample.filename}' format.codec`);
         assert.strictEqual(format.bitrate, sample.bitRate * 1000, `'${sample.filename}' format.bitrate`);
         assert.strictEqual(format.sampleRate, sample.sampleRate, `'${sample.filename}' format.sampleRate`);
         assert.strictEqual(format.numberOfChannels, sample.channels, `'${sample.filename}' format.channels`);
       }
-
     });
 
     // http://mpgedit.org/mpgedit/mpgedit/testdata/mpegdata.html#ISO_m1l2
     it('ISO/MPEG 1 Layer 3', async () => {
-
       const samples = [
-        {filename: 'compl.mp3', bitRate: 64, sampleRate: 48000, channels: 1},
-        {filename: 'he_32khz.mp3', sampleRate: 32000, channels: 1},
-        {filename: 'he_44khz.mp3', sampleRate: 44100, channels: 1},
-        {filename: 'he_48khz.mp3', sampleRate: 48000, channels: 1},
-        {filename: 'he_mode.mp3', sampleRate: 44100, channels: 1},
-        {filename: 'hecommon.mp3', bitRate: 128, sampleRate: 44100, channels: 2},
-        {filename: 'si.mp3', bitRate: 64, sampleRate: 44100, channels: 1},
-        {filename: 'si.mp3', bitRate: 64, sampleRate: 44100, channels: 1},
-        {filename: 'si_huff.mp3', bitRate: 64, sampleRate: 44100, channels: 1},
-        {filename: 'sin1k0db.mp3', bitRate: 128, sampleRate: 44100, channels: 2}
+        { filename: 'compl.mp3', bitRate: 64, sampleRate: 48000, channels: 1 },
+        { filename: 'he_32khz.mp3', sampleRate: 32000, channels: 1 },
+        { filename: 'he_44khz.mp3', sampleRate: 44100, channels: 1 },
+        { filename: 'he_48khz.mp3', sampleRate: 48000, channels: 1 },
+        { filename: 'he_mode.mp3', sampleRate: 44100, channels: 1 },
+        { filename: 'hecommon.mp3', bitRate: 128, sampleRate: 44100, channels: 2 },
+        { filename: 'si.mp3', bitRate: 64, sampleRate: 44100, channels: 1 },
+        { filename: 'si.mp3', bitRate: 64, sampleRate: 44100, channels: 1 },
+        { filename: 'si_huff.mp3', bitRate: 64, sampleRate: 44100, channels: 1 },
+        { filename: 'sin1k0db.mp3', bitRate: 128, sampleRate: 44100, channels: 2 }
       ];
 
       for (const sample of samples) {
-        const {format} = await mm.parseFile(path.join(mp3SamplePath, 'layer3', sample.filename), {duration: true});
+        const { format } = await mm.parseFile(path.join(mp3SamplePath, 'layer3', sample.filename), { duration: true });
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', `'${sample.filename}' format.codec`);
         if (sample.bitRate) {
@@ -111,25 +104,21 @@ describe('Parse MP3 files', () => {
         assert.strictEqual(format.sampleRate, sample.sampleRate, `'${sample.filename}' format.sampleRate`);
         assert.strictEqual(format.numberOfChannels, sample.channels, `'${sample.filename}' format.channels`);
       }
-
     });
-
   });
 
   it('should handle audio-frame-header-bug', async () => {
-
     const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
 
-    const result = await mm.parseFile(filePath, {duration: true});
+    const result = await mm.parseFile(filePath, { duration: true });
     assert.approximately(result.format.duration!, durationSleepAwayMp3, 1 / 10);
   });
 
   it('should be able to parse: Sleep Away.mp3', () => {
-
     const filePath = path.join(mp3SamplePath, 'Sleep Away.mp3');
 
-    return mm.parseFile(filePath, {duration: true}).then(metadata => {
-      const {format, common} = metadata;
+    return mm.parseFile(filePath, { duration: true }).then(metadata => {
+      const { format, common } = metadata;
 
       assert.deepEqual(format.container, 'MPEG', 'format.container');
       assert.deepEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
@@ -151,10 +140,9 @@ describe('Parse MP3 files', () => {
 
   // https://github.com/Borewit/music-metadata/issues/381
   it('should be able to handle empty ID3v2 tag', async () => {
-
     const filePath = path.join(mp3SamplePath, 'issue-381.mp3');
 
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.deepEqual(format.container, 'MPEG', 'format.container');
     assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
@@ -162,26 +150,29 @@ describe('Parse MP3 files', () => {
 
   // https://github.com/Borewit/music-metadata/issues/398
   it('Handle empty picture tag', async () => {
-
     const filePath = path.join(mp3SamplePath, 'empty-picture-tag.mp3');
 
-    const {format, common, quality} = await mm.parseFile(filePath);
+    const { format, common, quality } = await mm.parseFile(filePath);
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
     assert.strictEqual(common.title, 'Frankie And Johnny', 'common.title');
     assert.strictEqual(common.artist, 'Sam Cooke', 'common.artist');
     assert.strictEqual(common.album, 'Greatest Hits', 'common.album,');
-    assert.deepEqual(common.track, {no: 21, of: null}, 'common.track,');
+    assert.deepEqual(common.track, { no: 21, of: null }, 'common.track,');
     assert.deepEqual(common.year, 1998, 'common.year,');
     assert.isUndefined(common.picture, 'common.picturh');
-    assert.includeDeepMembers(quality.warnings, [{message: 'Empty picture tag found'}], 'quality.warnings includes Empty picture tag found');
+    assert.includeDeepMembers(
+      quality.warnings,
+      [{ message: 'Empty picture tag found' }],
+      'quality.warnings includes Empty picture tag found'
+    );
   });
 
   // https://github.com/Borewit/music-metadata/issues/979
   it('Handle odd number of octets for 16 bit unicide string', async () => {
     const filePath = path.join(mp3SamplePath, 'issue-979.mp3'); // TLEN as invalid encode 16 bit unicode string
 
-    const {format, common, quality} = await mm.parseFile(filePath, {duration: true});
+    const { format, common, quality } = await mm.parseFile(filePath, { duration: true });
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
 
@@ -190,17 +181,23 @@ describe('Parse MP3 files', () => {
     assert.strictEqual(common.album, 'Sanctuary', 'common.album');
     assert.strictEqual(common.year, 2005, 'common.year');
 
-    assert.includeDeepMembers(quality.warnings, [{
-      message: 'id3v2.3 type=TLEN header has invalid string value: Expected even number of octets for 16-bit unicode string'}],
-    'Warning on invalid TLEN field');
+    assert.includeDeepMembers(
+      quality.warnings,
+      [
+        {
+          message:
+            'id3v2.3 type=TLEN header has invalid string value: Expected even number of octets for 16-bit unicode string'
+        }
+      ],
+      'Warning on invalid TLEN field'
+    );
   });
 
   // https://github.com/Borewit/music-metadata/issues/430
   it('Handle preceding ADTS frame with (invalid) frame length of 0 bytes', async () => {
-
     const filePath = path.join(mp3SamplePath, 'adts-0-frame.mp3');
 
-    const {format, common} = await mm.parseFile(filePath, {duration: true});
+    const { format, common } = await mm.parseFile(filePath, { duration: true });
 
     await mm.parseFile(filePath);
 
@@ -216,21 +213,23 @@ describe('Parse MP3 files', () => {
   });
 
   it('Able to handle corrupt LAME header', async () => {
-
     const filePath = path.join(mp3SamplePath, 'issue-554.mp3');
 
-    const {format, quality} = await mm.parseFile(filePath, {duration: true});
+    const { format, quality } = await mm.parseFile(filePath, { duration: true });
 
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
     assert.approximately(format.duration!, 817.92, 1 / 200, 'format.duration');
     assert.strictEqual(format.sampleRate, 22050, 'format.sampleRate');
 
-    assert.includeDeepMembers(quality.warnings, [{message: 'Corrupt LAME header'}], 'quality.warnings includes: \'Corrupt LAME header\'');
+    assert.includeDeepMembers(
+      quality.warnings,
+      [{ message: 'Corrupt LAME header' }],
+      "quality.warnings includes: 'Corrupt LAME header'"
+    );
   });
 
   describe('should handle incomplete MP3 file', () => {
-
     const filePath = path.join(samplePath, 'incomplete.mp3');
 
     function checkFormat(format: mm.IFormat) {
@@ -251,42 +250,34 @@ describe('Parse MP3 files', () => {
   });
 
   describe('Duration flag behaviour', () => {
-
     describe('MP3/CBR without Xing header', () => {
-
       const filePath = path.join(mp3SamplePath, 'Sleep Away.mp3');
 
       describe('duration=false', () => {
-
         Parsers.forEach(parser => {
-            it(parser.description, async function(){
-              const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
-              assert.isUndefined(format.duration, 'Don\'t expect a duration');
-            });
+          it(parser.description, async function () {
+            const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: false });
+            assert.isUndefined(format.duration, "Don't expect a duration");
           });
+        });
       });
 
-      describe('duration=true', function() {
-
+      describe('duration=true', function () {
         this.timeout(15000); // Parsing this file can take a bit longer
 
         Parsers.forEach(parser => {
-            it(parser.description, async function(){
-              const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
-              assert.approximately(format.duration!, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
-              assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
-            });
+          it(parser.description, async function () {
+            const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: true });
+            assert.approximately(format.duration!, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
+            assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
           });
+        });
       });
-
     });
-
   });
 
   describe('MP3 with APEv2 footer header', () => {
-
     it('should be able to parse APEv2 header', async () => {
-
       const filePath = path.join(samplePath, 'issue_56.mp3');
 
       const metadata = await mm.parseFile(filePath);
@@ -295,27 +286,32 @@ describe('Parse MP3 files', () => {
     });
 
     it('should be able to parse APEv1 header"', async () => {
-
       const filePath = path.join(mp3SamplePath, 'issue-362.apev1.mp3');
 
-      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      const { format, common } = await mm.parseFile(filePath, { duration: true });
 
       assert.deepEqual(format.container, 'MPEG', 'format.container');
 
       assert.deepEqual(format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1'], 'format.tagTypes');
 
-      assert.strictEqual(common.title, 'Do They Know It\'s Christmas?', 'common.artist');
+      assert.strictEqual(common.title, "Do They Know It's Christmas?", 'common.artist');
       assert.strictEqual(common.artist, 'Band Aid', 'common.artist');
       assert.deepEqual(common.artists, ['Band Aid'], 'common.artists');
-      assert.strictEqual(common.album, 'Now That\'s What I Call Xmas', 'common.album');
+      assert.strictEqual(common.album, "Now That's What I Call Xmas", 'common.album');
       assert.strictEqual(common.year, 2006, 'common.year');
-      assert.deepEqual(common.comment, [{text: 'TunNORM'}, {text:' 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467'}], 'common.comment');
+      assert.deepEqual(
+        common.comment,
+        [
+          { text: 'TunNORM' },
+          { text: ' 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467' }
+        ],
+        'common.comment'
+      );
       assert.deepEqual(common.genre, ['General Holiday'], 'common.genre');
       assert.deepEqual(common.track.no, 2, 'common.track.no');
     });
 
     it('should be able to parse APEv2 header followed by a Lyrics3v2 header', async () => {
-
       const filePath = path.join(mp3SamplePath, 'APEv2+Lyrics3v2.mp3');
 
       const metadata = await mm.parseFile(filePath);
@@ -328,26 +324,21 @@ describe('Parse MP3 files', () => {
       assert.deepEqual(ape.REPLAYGAIN_TRACK_PEAK, ['0.497886']);
       assert.deepEqual(ape.MP3GAIN_UNDO, ['+004,+004,N']);
     });
-
   });
 
   describe('Handle Xing header', () => {
-
     it('Handle Xing header, without LAME extension', async () => {
-
       const filePath = path.join(mp3SamplePath, 'Solace.mp3');
-      const {format} = await mm.parseFile(filePath, {duration: true});
+      const { format } = await mm.parseFile(filePath, { duration: true });
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
       assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
     });
 
     describe('Lame extension', () => {
-
       it('track peak', async () => {
-
         const filePath = path.join(mp3SamplePath, 'lame-peak.mp3');
-        const {format} = await mm.parseFile(filePath, {duration: true});
+        const { format } = await mm.parseFile(filePath, { duration: true });
 
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
@@ -357,30 +348,28 @@ describe('Parse MP3 files', () => {
         assert.strictEqual(format.trackGain, 6.8, 'format.trackGain');
         assert.isUndefined(format.albumGain, 'format.albumGain');
       });
-
     });
 
     it('Handle invalid LAME version', async () => {
       const filePath = path.join(mp3SamplePath, 'issue-828.mp3');
 
-      const {format} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
 
       assert.strictEqual(format.container, 'MPEG');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
       assert.strictEqual(format.tool, 'LAME ZyK! ');
     });
-
   });
 
   describe('Expect format.numberOfSamples', async () => {
     [false, true].forEach(durationFlag => {
       it(`duration=${durationFlag}`, async () => {
         const filePath = path.join(mp3SamplePath, 'lame-peak.mp3');
-        const {format} = await mm.parseFile(filePath, {duration: durationFlag});
+        const { format } = await mm.parseFile(filePath, { duration: durationFlag });
 
         assert.strictEqual(format.container, 'MPEG');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', '(format.codec');
-        assert.strictEqual(format.numberOfSamples, 5760,'format.numberOfSamples');
+        assert.strictEqual(format.numberOfSamples, 5760, 'format.numberOfSamples');
       });
     });
   });
@@ -388,7 +377,7 @@ describe('Parse MP3 files', () => {
   it('should parse id3v2 Chapters', async () => {
     const filePath = path.join(mp3SamplePath, 'chapters.mp3');
 
-    const {format, common, native} = await mm.parseFile(filePath, {includeChapters: true});
+    const { format, common } = await mm.parseFile(filePath, { includeChapters: true });
 
     assert.strictEqual(format.container, 'MPEG');
     assert.strictEqual(format.codec, 'MPEG 2 Layer 3');
@@ -396,13 +385,16 @@ describe('Parse MP3 files', () => {
 
     assert.isDefined(format.chapters, 'format.chapters');
     assert.strictEqual(format.chapters.length, 3, 'format.chapters.length');
-    assert.strictEqual(format.chapters[0].title, 'Introduction','format.chapters[0].title');
-    assert.deepEqual(format.chapters[0].url, {url: 'https://github.com/Borewit/music-metadata', description: ''}, 'format.chapters[0].url');
-    assert.isDefined(format.chapters[0].image,'format.chapters[0].image,');
-    assert.strictEqual(format.chapters[0].image.data.length,689, 'format.chapters[0].image.data.length');
-    assert.strictEqual(format.chapters[0].start, 0,'format.chapters[0].start');
-    assert.strictEqual(format.chapters[0].end, 1.0,'format.chapters[0].end');
-    assert.isUndefined(format.chapters[0].sampleOffset,'format.chapters[0].sampleOffset');
+    assert.strictEqual(format.chapters[0].title, 'Introduction', 'format.chapters[0].title');
+    assert.deepEqual(
+      format.chapters[0].url,
+      { url: 'https://github.com/Borewit/music-metadata', description: '' },
+      'format.chapters[0].url'
+    );
+    assert.isDefined(format.chapters[0].image, 'format.chapters[0].image,');
+    assert.strictEqual(format.chapters[0].image.data.length, 689, 'format.chapters[0].image.data.length');
+    assert.strictEqual(format.chapters[0].start, 0, 'format.chapters[0].start');
+    assert.strictEqual(format.chapters[0].end, 1.0, 'format.chapters[0].end');
+    assert.isUndefined(format.chapters[0].sampleOffset, 'format.chapters[0].sampleOffset');
   });
-
 });

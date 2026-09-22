@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 
 import { FourCcToken } from '../common/FourCC.js';
 
@@ -8,15 +8,14 @@ import { FourCcToken } from '../common/FourCC.js';
  * Ref: http://www.martinreddy.net/gfx/2d/IFF.txt
  */
 export interface IChunkHeader {
-
   /**
    * A chunk ID (ie, 4 ASCII bytes)
    */
-  chunkID: string,
+  chunkID: string;
   /**
    * Number of data bytes following this data header
    */
-  chunkSize: number
+  chunkSize: number;
 }
 
 /**
@@ -24,15 +23,14 @@ export interface IChunkHeader {
  * Ref: http://www.martinreddy.net/gfx/2d/IFF.txt
  */
 export interface IChunkHeader64 {
-
   /**
    * A chunk ID (ie, 4 ASCII bytes)
    */
-  chunkID: string,
+  chunkID: string;
   /**
    * Number of data bytes following this data header
    */
-  chunkSize: bigint
+  chunkSize: bigint;
 }
 
 /**
@@ -50,4 +48,3 @@ export const Header: IGetToken<IChunkHeader> = {
     };
   }
 };
-

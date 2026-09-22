@@ -1,20 +1,18 @@
-import { assert } from 'chai';
-import path from 'node:path';
-import fs from 'node:fs';
 import { execFile } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import { promisify } from 'node:util';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
+import { Mp4ContentError, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
-import { Mp4ContentError, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
 describe('Parse MPEG-4 files with iTunes metadata', () => {
-
   describe('Parse MPEG-4 files (.m4a)', () => {
-
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.lossless, false);
       assert.deepEqual(format.container, 'M4A/isom/iso2', 'container');
@@ -48,7 +46,6 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     }
 
     function checkNativeTags(native: mm.INativeTagDict) {
-
       assert.ok(native, 'Native m4a tags should be present');
 
       assert.deepEqual(native.trkn, ['1/12'], 'm4a.trkn');
@@ -61,7 +58,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
       assert.deepEqual(native['©ART'], ['The Prodigy'], 'm4a.©ART');
       assert.deepEqual(native['©cmt'], ['(Pendulum Remix)'], 'm4a.©cmt');
       assert.deepEqual(native['©wrt'], ['Liam Howlett'], 'm4a.©wrt');
-      assert.deepEqual(native['----:com.apple.iTunes:iTunNORM'], [' 0000120A 00001299 00007365 0000712F 0002D88B 0002D88B 00007F2B 00007F2C 0003C770 0001F5C7'], 'm4a.----:com.apple.iTunes:iTunNORM');
+      assert.deepEqual(
+        native['----:com.apple.iTunes:iTunNORM'],
+        [' 0000120A 00001299 00007365 0000712F 0002D88B 0002D88B 00007F2B 00007F2C 0003C770 0001F5C7'],
+        'm4a.----:com.apple.iTunes:iTunNORM'
+      );
       assert.deepEqual(native['©nam'], ['Voodoo People (Pendulum Remix)'], 'm4a.©nam');
       assert.deepEqual(native['©too'], ['Lavf52.36.0'], 'm4a.©too');
       assert.deepEqual(native['©day'], ['2005'], 'm4a.@day');
@@ -73,8 +74,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     }
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const filePath = path.join(mp4Samples, 'id4.m4a');
 
         const { native, format, common } = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
@@ -91,13 +91,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
    * Ref: https://github.com/Borewit/music-metadata/issues/74
    */
   describe('should decode 8-byte unsigned integer', () => {
-
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const filePath = path.join(mp4Samples, 'issue-74.m4a');
 
-        const {format, common, native} = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
+        const { format, common, native } = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
 
         assert.deepEqual(format.container, 'isom/iso2/mp41', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -110,9 +108,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.isDefined(native.iTunes, 'Native m4a tags should be present');
         assert.isAtLeast(native.iTunes.length, 1);
 
-        assert.deepEqual(common.album, 'Live at Tom\'s Bullpen in Dover, DE (2016-04-30)');
-        assert.deepEqual(common.albumartist, 'They Say We\'re Sinking');
-        assert.deepEqual(common.comment, [{text: 'youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV'}]);
+        assert.deepEqual(common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
+        assert.deepEqual(common.albumartist, "They Say We're Sinking");
+        assert.deepEqual(common.comment, [
+          { text: 'youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV' }
+        ]);
       });
     });
   });
@@ -121,13 +121,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
    * Ref: https://github.com/Borewit/music-metadata/issues/79
    */
   describe('should be able to extract the composer and artist', () => {
-
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const filePath = path.join(mp4Samples, 'issue-79.m4a');
 
-        const {common, format} = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
+        const { common, format } = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
 
         assert.deepEqual(format.container, 'M4A/mp42/isom', 'format.container');
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -143,22 +141,19 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.deepEqual(common.genre, ['Rock']);
         assert.strictEqual(common.date, '2009');
         assert.strictEqual(common.encodedby, 'iTunes 8.2.0.23, QuickTime 7.6.2');
-        assert.deepEqual(common.disk, {no: 1, of: 1});
-        assert.deepEqual(common.track, {no: 1, of: null});
+        assert.deepEqual(common.disk, { no: 1, of: 1 });
+        assert.deepEqual(common.track, { no: 1, of: null });
       });
     });
   });
 
   describe('Parse MPEG-4 Audio Book files (.m4b)', () => {
-
     describe('audio book from issue issue #127', () => {
-
       Parsers.forEach(parser => {
-        it(parser.description, async function(){
-
+        it(parser.description, async function () {
           const filePath = path.join(mp4Samples, 'issue-127.m4b');
 
-          const { common, format, native} = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
+          const { common, format, native } = await parser.parse(() => this.skip(), filePath, 'audio/mp4');
 
           assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -169,9 +164,9 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
           assert.deepEqual(common.artists, ['Joseph Dunn']);
           assert.deepEqual(common.genre, ['Audiobook']);
           assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
-          assert.deepEqual(common.disk, {no: null, of: null});
-          assert.deepEqual(common.track, {no: 1, of: null});
-          assert.deepEqual(common.comment, [{text: 'https://archive.org/details/glories_of_ireland_1801_librivox'}]);
+          assert.deepEqual(common.disk, { no: null, of: null });
+          assert.deepEqual(common.track, { no: 1, of: null });
+          assert.deepEqual(common.comment, [{ text: 'https://archive.org/details/glories_of_ireland_1801_librivox' }]);
 
           const iTunes = mm.orderTags(native.iTunes);
           assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
@@ -180,14 +175,12 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     });
 
     describe('Parse chapters', async () => {
-
       /**
        * Source audio-book: https://librivox.org/the-babys-songbook-by-walter-crane/
        */
       describe('BabysSongbook_librivox.m4b', async () => {
-
         function checkMetadata(metadata: mm.IAudioMetadata) {
-          const {common, format} = metadata;
+          const { common, format } = metadata;
 
           assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -199,8 +192,8 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
           assert.deepEqual(common.artists, ['Walter Crane'], 'common.artists');
           assert.deepEqual(common.genre, ['Audiobook']);
           assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
-          assert.deepEqual(common.disk, {no: null, of: null}, 'common.disk');
-          assert.deepEqual(common.track, {no: null, of: null}, 'common.track');
+          assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
+          assert.deepEqual(common.track, { no: null, of: null }, 'common.track');
           assert.isUndefined(common.comment, 'common.comment');
 
           const iTunes = mm.orderTags(metadata.native.iTunes);
@@ -211,85 +204,85 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
               sampleOffset: 45056,
               timeScale: 44100,
               start: 0,
-              title: '01 - Baby\'s Opera: 01 - Girls and Boys'
+              title: "01 - Baby's Opera: 01 - Girls and Boys"
             },
             {
               sampleOffset: 2695168,
               timeScale: 44100,
               start: 2690214,
-              title: '02 - Baby\'s Opera: 02 - The Mulberry Bush'
+              title: "02 - Baby's Opera: 02 - The Mulberry Bush"
             },
             {
               sampleOffset: 5083136,
               timeScale: 44100,
               start: 5072343,
-              title: '03 - Baby\'s Opera: 03 - Oranges and Lemons'
+              title: "03 - Baby's Opera: 03 - Oranges and Lemons"
             },
             {
               sampleOffset: 8352768,
               timeScale: 44100,
               start: 8335466,
-              title: '04 - Baby\'s Opera: 04 - St. Paul\'s Steeple'
+              title: "04 - Baby's Opera: 04 - St. Paul's Steeple"
             },
             {
               sampleOffset: 10544128,
               timeScale: 44100,
               start: 10539994,
-              title: '05 - Baby\'s Opera: 05 - My Lady\'s Garden'
+              title: "05 - Baby's Opera: 05 - My Lady's Garden"
             },
             {
               sampleOffset: 12284928,
               timeScale: 44100,
               start: 12260367,
-              title: '06 - Baby\'s Opera: 12 - Dickory Dock'
+              title: "06 - Baby's Opera: 12 - Dickory Dock"
             },
             {
               sampleOffset: 14125056,
               timeScale: 44100,
               start: 14112293,
-              title: '07 - Baby\'s Opera: 22 - Baa!Baa!Black Sheep'
+              title: "07 - Baby's Opera: 22 - Baa!Baa!Black Sheep"
             },
             {
               sampleOffset: 16410624,
               timeScale: 44100,
               start: 16405319,
-              title: '08 - Baby\'s Bouquet: 01 - Dedication and Polly put the Kettle On'
+              title: "08 - Baby's Bouquet: 01 - Dedication and Polly put the Kettle On"
             },
             {
               sampleOffset: 19068928,
               timeScale: 44100,
               start: 19051667,
-              title: '09 - Baby\'s Bouquet: 02 - Hot Cross Buns'
+              title: "09 - Baby's Bouquet: 02 - Hot Cross Buns"
             },
             {
               sampleOffset: 21685248,
               timeScale: 44100,
               start: 21653824,
-              title: '10 - Baby\'s Bouquet: 03 - The Little Woman and the Pedlar'
+              title: "10 - Baby's Bouquet: 03 - The Little Woman and the Pedlar"
             },
             {
               sampleOffset: 30461952,
               timeScale: 44100,
               start: 30429742,
-              title: '11 - Baby\'s Bouquet: 04 - The Little Disaster'
+              title: "11 - Baby's Bouquet: 04 - The Little Disaster"
             },
             {
               sampleOffset: 37761024,
               timeScale: 44100,
               start: 37750318,
-              title: '12 - Baby\'s Bouquet: 05 - The Old Woman of Norwich'
+              title: "12 - Baby's Bouquet: 05 - The Old Woman of Norwich"
             },
             {
               sampleOffset: 39628800,
               timeScale: 44100,
               start: 39602731,
-              title: '13 - Baby\'s Bouquet: 12 - Lucy Locket'
+              title: "13 - Baby's Bouquet: 12 - Lucy Locket"
             },
             {
               sampleOffset: 41500672,
               timeScale: 44100,
               start: 41498151,
-              title: '14 - Baby\'s Bouquet: 18 - The North Wind & the Robin'
+              title: "14 - Baby's Bouquet: 18 - The North Wind & the Robin"
             }
           ]);
         }
@@ -297,11 +290,10 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         const filePath = path.join(mp4Samples, 'BabysSongbook_librivox.m4b');
 
         it('from a file', async () => {
-
           let metadata: mm.IAudioMetadata;
           const stream = fs.createReadStream(filePath);
           try {
-            metadata = await mm.parseStream(stream, {mimeType: 'audio/mp4'}, {includeChapters: true});
+            metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
           } finally {
             stream.close();
           }
@@ -309,9 +301,8 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         });
 
         it('from a stream', async () => {
-
           const stream = fs.createReadStream(filePath);
-          const metadata = await mm.parseStream(stream, {mimeType: 'audio/mp4'}, {includeChapters: true});
+          const metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
           stream.close();
 
           checkMetadata(metadata);
@@ -321,12 +312,9 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   });
 
   describe('Parse MPEG-4 Video (.mp4)', () => {
-
     describe('Parse TV episode', () => {
-
       Parsers.forEach(parser => {
-        it(parser.description, async function(){
-
+        it(parser.description, async function () {
           const filePath = path.join(mp4Samples, 'Mr. Pickles S02E07 My Dear Boy.mp4');
 
           const { common, format, native } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
@@ -355,23 +343,18 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   });
 
   describe('Parse Apple’s QuickTime File Format', () => {
-
     Parsers.forEach(parser => {
-      it(parser.description, async ()=> {
-
+      it(parser.description, async () => {
         const filePath = path.join(mp4Samples, 'sample_640x360.mov');
-        const {format} = await mm.parseFile(filePath);
+        const { format } = await mm.parseFile(filePath);
         assert.strictEqual(format.container, 'qt');
       });
     });
-
   });
 
   describe('should support extended atom header', () => {
-
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const filePath = path.join(mp4Samples, 'issue-133.m4a');
 
         const { format } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
@@ -379,16 +362,13 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
         assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
         assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
-
       });
     });
   });
 
-  describe('Handle dashed atom-ID\'s', () => {
-
+  describe("Handle dashed atom-ID's", () => {
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const filePath = path.join(mp4Samples, 'issue-151.m4a');
 
         const { format, common } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
@@ -396,7 +376,6 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.deepEqual(format.codec, 'MPEG-4/AAC+MP4S', 'format.codec');
         assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
         assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
-
 
         assert.deepEqual(common.album, 'We Don`t Need to Whisper');
         assert.deepEqual(common.albumartist, 'Angels and Airwaves');
@@ -406,14 +385,12 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.deepEqual(common.genre, ['Rock']);
         assert.strictEqual(common.title, 'Distraction');
       });
-
     });
   });
 
   describe('Parse Trumpsta (Djuro Remix)', () => {
-
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const filePath = path.join(mp4Samples, '01. Trumpsta (Djuro Remix).m4a');
 
         const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/m4a');
@@ -423,14 +400,12 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
         assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
-
         assert.deepEqual(common.album, 'Trumpsta (Remixes)');
         assert.deepEqual(common.albumartist, 'Contiez');
         assert.deepEqual(common.artist, 'Contiez');
         assert.deepEqual(common.artists, ['Contiez']);
         assert.strictEqual(common.title, 'Trumpsta (Djuro Remix)');
       });
-
     });
   });
 
@@ -438,14 +413,13 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
    * Related issue: https://github.com/Borewit/music-metadata/issues/318
    */
   it('Be able to handle garbage behind mdat root atom', async () => {
-
     /**
      * Sample file with 1024 zeroes appended
      */
     const m4aFile = path.join(mp4Samples, 'issue-318.m4a');
 
     const metadata = await mm.parseFile(m4aFile);
-    const {format, common, quality} = metadata;
+    const { format, common, quality } = metadata;
     assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
@@ -458,12 +432,16 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(common.artist, 'Tool', 'common.artist');
     assert.strictEqual(common.title, 'Fear Inoculum', 'common.title');
 
-    assert.includeDeepMembers(quality.warnings, [{message: 'Error at offset=117501: box.id=0'}], 'check for warning regarding box.id=0');
+    assert.includeDeepMembers(
+      quality.warnings,
+      [{ message: 'Error at offset=117501: box.id=0' }],
+      'check for warning regarding box.id=0'
+    );
   });
 
   // https://github.com/Borewit/music-metadata/issues/387
   it('Handle box.id = 0000', async () => {
-    const {format, common} = await mm.parseFile(path.join(mp4Samples, 'issue-387.m4a'));
+    const { format, common } = await mm.parseFile(path.join(mp4Samples, 'issue-387.m4a'));
     assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.approximately(format.duration!, 224.00290249433107, 1 / 200, 'format.duration');
@@ -471,17 +449,15 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
-
     assert.strictEqual(common.artist, 'Chris Brown', 'common.artist');
     assert.strictEqual(common.title, 'Look At Me Now', 'common.title');
     assert.strictEqual(common.album, 'Look At Me Now (feat. Lil Wayne & Busta Rhymes) - Single', 'common.album');
   });
 
   it('Extract creation and modified time', async () => {
-
     const filePath = path.join(mp4Samples, 'Apple  voice memo.m4a');
 
-    const {format, native} = await mm.parseFile(filePath);
+    const { format, native } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'M4A/isom/mp42', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -489,7 +465,6 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
-
 
     assert.strictEqual(format.creationTime!.toISOString(), '2021-01-02T17:42:46.000Z', 'format.modificationTime');
     assert.strictEqual(format.modificationTime!.toISOString(), '2021-01-02T17:43:25.000Z', 'format.modificationTime');
@@ -500,10 +475,9 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
   // https://github.com/Borewit/music-metadata/issues/744
   it('Select the audio track from mp4', async () => {
-
     const filePath = path.join(mp4Samples, 'issue-744.mp4');
 
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'isom/iso2/mp41', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -513,15 +487,13 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.duration!, 360.8, 1 / 20, 'format.duration');
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, true, 'format.hasVideo');
-
   });
 
   // https://github.com/Borewit/music-metadata/issues/749
   it('Handle 0 length box', async () => {
-
     const filePath = path.join(mp4Samples, 'issue-749.m4a');
 
-    const {format, common} = await mm.parseFile(filePath);
+    const { format, common } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -536,22 +508,20 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   });
 
   it('moov.udta.meta.ilst.rate mapping', async () => {
-
     const filePath = path.join(samplePath, 'rating', 'testcase.m4a');
-    const {format, common} = await mm.parseFile(filePath);
+    const { format, common } = await mm.parseFile(filePath);
 
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
     assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
     assert.isDefined(common.rating, 'Expect rating property to be present');
-    assert.equal(common.rating[0].rating, 0.80, 'Vorbis tag rating score of 80%');
+    assert.equal(common.rating[0].rating, 0.8, 'Vorbis tag rating score of 80%');
     assert.equal(mm.ratingToStars(common.rating[0].rating), 4, 'Vorbis tag rating conversion');
   });
 
-  it('\'stsd\' atom: Handle empty sample entry description', async () => {
-
+  it("'stsd' atom: Handle empty sample entry description", async () => {
     const filePath = path.join(mp4Samples, 'frag_bunny.mp4');
-    const {format, common} = await mm.parseFile(filePath);
+    const { format, common } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'mp42/avc1/iso5', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -563,38 +533,35 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   });
 
   it('should be able handle fragmented duration', async () => {
-
     const filePath = path.join(mp4Samples, 'fragmented-duration.mp4');
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'isom/iso6/iso2/avc1/mp41', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.approximately(format.duration!, 96.98331065759638, 1 / 1000000, 'format.duration');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
-    assert.approximately(format.bitrate!, 127947,1/2 ,'format.bitrate');
+    assert.approximately(format.bitrate!, 127947, 1 / 2, 'format.bitrate');
   });
 
   it('bitrate id4.m4a', async () => {
-
     const filePath = path.join(mp4Samples, 'id4.m4a');
-    const {format} = await mm.parseFile(filePath, {duration: true});
+    const { format } = await mm.parseFile(filePath, { duration: true });
 
     assert.strictEqual(format.container, 'M4A/isom/iso2', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
-    assert.approximately(format.bitrate!, 147916,1,'format.bitrate');
+    assert.approximately(format.bitrate!, 147916, 1, 'format.bitrate');
   });
 
   // https://github.com/Borewit/music-metadata/issues/2672
-  it('\'tkhd\' atom version 1: keep track-id of each track distinct', async () => {
-
+  it("'tkhd' atom version 1: keep track-id of each track distinct", async () => {
     // Version 1 tkhd atoms have 64-bit creation/modification times; reading the
     // track-id at the version 0 offset yields 0 for every track, making the
     // chapter text track overwrite the audio track.
     const filePath = path.join(mp4Samples, 'issue-2672.m4b');
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'isom/iso2/mp41', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -604,11 +571,9 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
   });
-
 });
 
 describe('Sample Description (stsd) atom: entry table', () => {
-
   const textEncoder = new TextEncoder();
 
   /**
@@ -640,10 +605,14 @@ describe('Sample Description (stsd) atom: entry table', () => {
   it('reads a single sample entry', () => {
     const buf = sampleDescription(sampleEntry('mp4a', 36, 1));
 
-    const {header, table} = new StsdAtom(buf.length).get(buf, 0);
+    const { header, table } = new StsdAtom(buf.length).get(buf, 0);
 
     assert.strictEqual(header.numberOfEntries, 1, 'numberOfEntries');
-    assert.deepEqual(table.map(entry => entry.dataFormat), ['mp4a'], 'dataFormat');
+    assert.deepEqual(
+      table.map(entry => entry.dataFormat),
+      ['mp4a'],
+      'dataFormat'
+    );
   });
 
   it('rejects GHSA-f94x-6692-553q without blocking the process', async () => {
@@ -655,10 +624,14 @@ describe('Sample Description (stsd) atom: entry table', () => {
       await assert.rejects(parseBuffer(buffer, {mimeType: 'audio/mp4'}), error =>
         error instanceof UnexpectedFileContentError && /Invalid stsd sample entry size: 0/.test(error.message));
     `;
-    await promisify(execFile)(process.execPath, [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script], {
-      timeout: 10000,
-      killSignal: 'SIGKILL'
-    });
+    await promisify(execFile)(
+      process.execPath,
+      [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script],
+      {
+        timeout: 10000,
+        killSignal: 'SIGKILL'
+      }
+    );
   });
 
   for (const size of [0, 1, 4, 15, 17, 0xffffffff]) {
@@ -674,9 +647,13 @@ describe('Sample Description (stsd) atom: entry table', () => {
     const empty = sampleDescription();
     assert.isEmpty(new StsdAtom(empty.length).get(empty, 0).table);
     const buf = sampleDescription(sampleEntry('mett', 16, 1));
-    assert.deepEqual(new StsdAtom(buf.length).get(buf, 0).table, [{
-      dataFormat: 'mett', dataReferenceIndex: 1, description: undefined
-    }]);
+    assert.deepEqual(new StsdAtom(buf.length).get(buf, 0).table, [
+      {
+        dataFormat: 'mett',
+        dataReferenceIndex: 1,
+        description: undefined
+      }
+    ]);
   });
 
   it('rejects an entry count exceeding the available entries', () => {
@@ -692,7 +669,11 @@ describe('Sample Description (stsd) atom: entry table', () => {
     buf.set(payload, 8);
 
     assert.lengthOf(new StsdAtom(payload.length).get(buf, 8).table, 1);
-    assert.throws(() => new StsdAtom(payload.length - 1).get(buf, 8), Mp4ContentError, 'Invalid stsd sample entry size');
+    assert.throws(
+      () => new StsdAtom(payload.length - 1).get(buf, 8),
+      Mp4ContentError,
+      'Invalid stsd sample entry size'
+    );
   });
 
   it('rejects a truncated stsd header', () => {
@@ -707,23 +688,25 @@ describe('Sample Description (stsd) atom: entry table', () => {
   // Each entry is located from the size of the one before it, so an error in that arithmetic
   // only shows up from the second entry onwards
   it('reads every entry of a table holding more than one, of differing sizes', () => {
-    const buf = sampleDescription(
-      sampleEntry('mp4a', 36, 1),
-      sampleEntry('ac-3', 48, 2),
-      sampleEntry('alac', 20, 3)
-    );
+    const buf = sampleDescription(sampleEntry('mp4a', 36, 1), sampleEntry('ac-3', 48, 2), sampleEntry('alac', 20, 3));
 
-    const {header, table} = new StsdAtom(buf.length).get(buf, 0);
+    const { header, table } = new StsdAtom(buf.length).get(buf, 0);
 
     assert.strictEqual(header.numberOfEntries, 3, 'numberOfEntries');
-    assert.deepEqual(table.map(entry => entry.dataFormat), ['mp4a', 'ac-3', 'alac'], 'dataFormat');
-    assert.deepEqual(table.map(entry => entry.dataReferenceIndex), [1, 2, 3], 'dataReferenceIndex');
+    assert.deepEqual(
+      table.map(entry => entry.dataFormat),
+      ['mp4a', 'ac-3', 'alac'],
+      'dataFormat'
+    );
+    assert.deepEqual(
+      table.map(entry => entry.dataReferenceIndex),
+      [1, 2, 3],
+      'dataReferenceIndex'
+    );
   });
-
 });
 
 describe('Track Header (tkhd) atom', () => {
-
   const MAC_EPOCH_OFFSET = 2082844800; // seconds between 1904-01-01 and 1970-01-01
 
   it('reads version 1 (64-bit) creation time, modification time, track ID and duration at the right offsets', () => {
@@ -770,11 +753,9 @@ describe('Track Header (tkhd) atom', () => {
 
     assert.throws(() => new TrackHeaderAtom(buf.length).get(buf, 0), /Invalid tkhd version header/);
   });
-
 });
 
 describe('Sample Description (stsd) atom', () => {
-
   const textEncoder = new TextEncoder();
   const timeScale = 44100;
 
@@ -857,7 +838,7 @@ describe('Sample Description (stsd) atom', () => {
     handlerAfterMinf?: boolean;
   }
 
-  const videoTrack: ITrackSpec = {handler: 'vide', dataFormat: 'avc1', entrySize: 36};
+  const videoTrack: ITrackSpec = { handler: 'vide', dataFormat: 'avc1', entrySize: 36 };
 
   function trackBox(trackId: number, spec: ITrackSpec): Uint8Array {
     const hdlr = handlerBox(spec.handler);
@@ -871,7 +852,12 @@ describe('Sample Description (stsd) atom', () => {
   }
 
   function mp4(...tracks: ITrackSpec[]): Uint8Array {
-    const ftyp = box('ftyp', textEncoder.encode('isom'), new Uint8Array([0, 0, 2, 0]), textEncoder.encode('isomiso2mp41'));
+    const ftyp = box(
+      'ftyp',
+      textEncoder.encode('isom'),
+      new Uint8Array([0, 0, 2, 0]),
+      textEncoder.encode('isomiso2mp41')
+    );
     const moov = box('moov', ...tracks.map((spec, index) => trackBox(index + 1, spec)));
     return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
   }
@@ -879,10 +865,9 @@ describe('Sample Description (stsd) atom', () => {
   // A metadata sample entry is not an AudioSampleEntry, and may be shorter than one
   for (const entrySize of [16, 18, 24, 34, 36]) {
     it(`parses a metadata sample entry of ${entrySize} bytes`, async () => {
+      const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize });
 
-      const buf = mp4(videoTrack, {handler: 'meta', dataFormat: 'djmd', entrySize});
-
-      const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+      const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
 
       assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
       assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
@@ -890,10 +875,9 @@ describe('Sample Description (stsd) atom', () => {
   }
 
   it('does not derive audio properties from a metadata track', async () => {
+    const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize: 36, audioLike: true });
 
-    const buf = mp4(videoTrack, {handler: 'meta', dataFormat: 'djmd', entrySize: 36, audioLike: true});
-
-    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
 
     assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
     assert.isUndefined(format.sampleRate, 'format.sampleRate');
@@ -902,10 +886,9 @@ describe('Sample Description (stsd) atom', () => {
   });
 
   it('derives audio properties from a sound track', async () => {
+    const buf = mp4(videoTrack, { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true });
 
-    const buf = mp4(videoTrack, {handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true});
-
-    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
 
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
@@ -913,23 +896,26 @@ describe('Sample Description (stsd) atom', () => {
   });
 
   it('reports the data format of a non-audio track', async () => {
+    const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize: 20 });
 
-    const buf = mp4(videoTrack, {handler: 'meta', dataFormat: 'djmd', entrySize: 20});
-
-    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
 
     assert.strictEqual(format.trackInfo[0].codecName, '<avc1>', 'video track codec name');
     assert.strictEqual(format.trackInfo[1].codecName, '<djmd>', 'metadata track codec name');
   });
 
   it('handles the handler box declared after the media information box', async () => {
+    const buf = mp4(videoTrack, {
+      handler: 'soun',
+      dataFormat: 'mp4a',
+      entrySize: 36,
+      audioLike: true,
+      handlerAfterMinf: true
+    });
 
-    const buf = mp4(videoTrack, {handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true, handlerAfterMinf: true});
-
-    const {format} = await mm.parseBuffer(buf, {mimeType: 'video/mp4'});
+    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
 
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
   });
-
 });

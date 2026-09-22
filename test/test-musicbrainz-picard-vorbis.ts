@@ -1,11 +1,10 @@
-import { assert } from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 it('MusicBrains/Picard tags in FLAC', async () => {
-
   const filename = 'MusicBrainz-Picard-tags.flac';
   const filePath = path.join(samplePath, filename);
 
@@ -23,8 +22,8 @@ it('MusicBrains/Picard tags in FLAC', async () => {
     assert.deepEqual(common.artists, ['MGMT'], 'common.artist');
     assert.deepEqual(common.albumartist, 'MGMT', 'common.albumartist');
     assert.deepEqual(common.album, 'Oracular Spectacular / Congratulations', 'common.album');
-    assert.deepEqual(common.track, {no: 7, of: 9}, 'common.track');
-    assert.deepEqual(common.disk, {no: 2, of: 2}, 'common.disk');
+    assert.deepEqual(common.track, { no: 7, of: 9 }, 'common.track');
+    assert.deepEqual(common.disk, { no: 2, of: 2 }, 'common.disk');
     assert.deepEqual(common.discsubtitle, 'Cogratulations', 'common.discsubtitle');
     assert.deepEqual(common.date, '2011-09-11', 'common.date');
     assert.deepEqual(common.year, 2011, 'common.year');
@@ -37,15 +36,37 @@ it('MusicBrains/Picard tags in FLAC', async () => {
     assert.deepEqual(common.originaldate, '2011-09-11', 'common.originaldate');
     assert.deepEqual(common.releasestatus, 'official', 'common.releasestatus');
     assert.deepEqual(common.releasetype, ['album', 'compilation'], 'common.releasetype');
-    assert.deepEqual(common.comment, [{
-      text: "EAC-Secure Mode"
-    }], 'common.comment');
+    assert.deepEqual(
+      common.comment,
+      [
+        {
+          text: 'EAC-Secure Mode'
+        }
+      ],
+      'common.comment'
+    );
     assert.deepEqual(common.genre, ['Alt. Rock'], 'common.genre');
     assert.deepEqual(common.musicbrainz_albumid, '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'common.musicbrainz_albumid');
-    assert.deepEqual(common.musicbrainz_recordingid, 'b0c1d984-ba93-4167-880a-ac02255bf9e7', 'common.musicbrainz_recordingid');
-    assert.deepEqual(common.musicbrainz_albumartistid, ['c485632c-b784-4ee9-8ea1-c5fb365681fc'], 'common.musicbrainz_albumartistid');
-    assert.deepEqual(common.musicbrainz_artistid, ['c485632c-b784-4ee9-8ea1-c5fb365681fc'], 'common.musicbrainz_artistid');
-    assert.deepEqual(common.musicbrainz_releasegroupid, '9a3237f4-c2a5-467f-9a8e-fe1d247ff520', 'common.musicbrainz_releasegroupid');
+    assert.deepEqual(
+      common.musicbrainz_recordingid,
+      'b0c1d984-ba93-4167-880a-ac02255bf9e7',
+      'common.musicbrainz_recordingid'
+    );
+    assert.deepEqual(
+      common.musicbrainz_albumartistid,
+      ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
+      'common.musicbrainz_albumartistid'
+    );
+    assert.deepEqual(
+      common.musicbrainz_artistid,
+      ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
+      'common.musicbrainz_artistid'
+    );
+    assert.deepEqual(
+      common.musicbrainz_releasegroupid,
+      '9a3237f4-c2a5-467f-9a8e-fe1d247ff520',
+      'common.musicbrainz_releasegroupid'
+    );
     assert.deepEqual(common.musicbrainz_trackid, '0f53f7a3-89df-4069-9357-d04252239b6d', 'common.musicbrainz_trackid');
 
     assert.isDefined(common.picture, 'common.picture');
@@ -77,12 +98,36 @@ it('MusicBrains/Picard tags in FLAC', async () => {
     assert.deepEqual(vorbis.RELEASETYPE, ['album', 'compilation'], 'vorbis: RELEASETYPE');
     assert.deepEqual(vorbis.COMMENT, ['EAC-Secure Mode'], 'vorbis: COMMENT');
     assert.deepEqual(vorbis.GENRE, ['Alt. Rock'], 'vorbis: GENRE');
-    assert.deepEqual(vorbis.MUSICBRAINZ_ALBUMID, ['6032dfc4-8880-4fea-b1c0-aaee52e1113c'], 'vorbis: MUSICBRAINZ_ALBUMID');
-    assert.deepEqual(vorbis.MUSICBRAINZ_TRACKID, ['b0c1d984-ba93-4167-880a-ac02255bf9e7'], 'vorbis: MUSICBRAINZ_RECORDINGID');
-    assert.deepEqual(vorbis.MUSICBRAINZ_ALBUMARTISTID, ['c485632c-b784-4ee9-8ea1-c5fb365681fc'], 'vorbis: MUSICBRAINZ_ALBUMARTISTID');
-    assert.deepEqual(vorbis.MUSICBRAINZ_ARTISTID, ['c485632c-b784-4ee9-8ea1-c5fb365681fc'], 'vorbis: MUSICBRAINZ_ARTISTID');
-    assert.deepEqual(vorbis.MUSICBRAINZ_RELEASEGROUPID, ['9a3237f4-c2a5-467f-9a8e-fe1d247ff520'], 'vorbis: MUSICBRAINZ_RELEASEGROUPID');
-    assert.deepEqual(vorbis.MUSICBRAINZ_RELEASETRACKID, ['0f53f7a3-89df-4069-9357-d04252239b6d'], 'vorbis: MUSICBRAINZ_RELEASETRACKID');
+    assert.deepEqual(
+      vorbis.MUSICBRAINZ_ALBUMID,
+      ['6032dfc4-8880-4fea-b1c0-aaee52e1113c'],
+      'vorbis: MUSICBRAINZ_ALBUMID'
+    );
+    assert.deepEqual(
+      vorbis.MUSICBRAINZ_TRACKID,
+      ['b0c1d984-ba93-4167-880a-ac02255bf9e7'],
+      'vorbis: MUSICBRAINZ_RECORDINGID'
+    );
+    assert.deepEqual(
+      vorbis.MUSICBRAINZ_ALBUMARTISTID,
+      ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
+      'vorbis: MUSICBRAINZ_ALBUMARTISTID'
+    );
+    assert.deepEqual(
+      vorbis.MUSICBRAINZ_ARTISTID,
+      ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
+      'vorbis: MUSICBRAINZ_ARTISTID'
+    );
+    assert.deepEqual(
+      vorbis.MUSICBRAINZ_RELEASEGROUPID,
+      ['9a3237f4-c2a5-467f-9a8e-fe1d247ff520'],
+      'vorbis: MUSICBRAINZ_RELEASEGROUPID'
+    );
+    assert.deepEqual(
+      vorbis.MUSICBRAINZ_RELEASETRACKID,
+      ['0f53f7a3-89df-4069-9357-d04252239b6d'],
+      'vorbis: MUSICBRAINZ_RELEASETRACKID'
+    );
 
     // t.deepEqual(common.picture[ 0 ].format, 'jpg', 'picture format')
     // i.deepEqual(common.picture[ 0 ].data.length, 175668, 'picture length')

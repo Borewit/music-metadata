@@ -1,10 +1,8 @@
-import type { INativeTagMap, TagType } from './GenericTagTypes.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
+import type { INativeTagMap, TagType } from './GenericTagTypes.js';
 
 export class CaseInsensitiveTagMap extends CommonTagMapper {
-
   public constructor(tagTypes: TagType[], tagMap: INativeTagMap) {
-
     const upperCaseMap: INativeTagMap = {};
     for (const tag of Object.keys(tagMap)) {
       upperCaseMap[tag.toUpperCase()] = tagMap[tag];
@@ -20,5 +18,4 @@ export class CaseInsensitiveTagMap extends CommonTagMapper {
   protected getCommonName(tag: string) {
     return this.tagMap[tag.toUpperCase()];
   }
-
 }

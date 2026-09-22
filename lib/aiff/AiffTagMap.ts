@@ -1,5 +1,5 @@
-import type { INativeTagMap } from '../common/GenericTagTypes.js';
 import { CommonTagMapper } from '../common/GenericTagMapper.js';
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
 
 /**
  * ID3v1 tag mappings
@@ -12,9 +12,7 @@ const tagMap: INativeTagMap = {
 };
 
 export class AiffTagMapper extends CommonTagMapper {
-
   public constructor() {
     super(['AIFF'], tagMap);
   }
 }
-

@@ -1,26 +1,22 @@
 import initDebug from 'debug';
 import { Uint8ArrayType } from 'token-types';
-import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
-import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { FourCcToken } from '../common/FourCC.js';
-import { VorbisStream } from '../ogg/vorbis/VorbisStream.js';
+import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
+import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
 import { VorbisDecoder } from '../ogg/vorbis/VorbisDecoder.js';
+import { VorbisStream } from '../ogg/vorbis/VorbisStream.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
-import * as Flac from './FlacToken.js';
 import type { IBlockStreamInfo } from './FlacToken.js';
+import * as Flac from './FlacToken.js';
 
 const debug = initDebug('music-metadata:parser:FLAC');
 
-class FlacContentError extends makeUnexpectedFileContentError('FLAC'){
-}
-
+class FlacContentError extends makeUnexpectedFileContentError('FLAC') {}
 
 export class FlacParser extends AbstractID3Parser {
-
   private vorbisParser = new VorbisStream(this.metadata, this.options);
 
   public async postId3v2Parse(): Promise<void> {
-
     const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
     if (fourCC.toString() !== 'fLaC') {
       throw new FlacContentError('Invalid FLAC preamble');
@@ -32,12 +28,11 @@ export class FlacParser extends AbstractID3Parser {
       blockHeader = await this.tokenizer.readToken(Flac.BlockHeader);
       // Parse block data
       await this.parseDataBlock(blockHeader);
-    }
-    while (!blockHeader.lastBlock);
+    } while (!blockHeader.lastBlock);
 
     if (this.tokenizer.fileInfo.size && this.metadata.format.duration) {
       const dataSize = this.tokenizer.fileInfo.size - this.tokenizer.position;
-      this.metadata.setFormat('bitrate', 8 * dataSize / this.metadata.format.duration);
+      this.metadata.setFormat('bitrate', (8 * dataSize) / this.metadata.format.duration);
     }
   }
 
@@ -47,7 +42,7 @@ export class FlacParser extends AbstractID3Parser {
       case Flac.BlockType.STREAMINFO:
         return this.readBlockStreamInfo(blockHeader.length);
       case Flac.BlockType.PADDING:
-         break;
+        break;
       case Flac.BlockType.APPLICATION:
         break;
       case Flac.BlockType.SEEKTABLE:
@@ -70,9 +65,9 @@ export class FlacParser extends AbstractID3Parser {
    * Parse STREAMINFO
    */
   private async readBlockStreamInfo(dataLen: number): Promise<void> {
-
-    if (dataLen !== Flac.BlockStreamInfo.len)
+    if (dataLen !== Flac.BlockStreamInfo.len) {
       throw new FlacContentError('Unexpected block-stream-info length');
+    }
 
     const streamInfo = await this.tokenizer.readToken(Flac.BlockStreamInfo);
     this.metadata.setFormat('container', 'FLAC');
@@ -118,12 +113,14 @@ export class FlacParser extends AbstractID3Parser {
     for (let i = 0; i < commentListLength; i++) {
       tags[i] = decoder.parseUserComment();
     }
-    await Promise.all(tags.map(tag => {
-      if (tag.key==='ENCODER') {
-        this.metadata.setFormat('tool', tag.value);
-      }
-      return this.addTag(tag.key, tag.value);
-    }));
+    await Promise.all(
+      tags.map(tag => {
+        if (tag.key === 'ENCODER') {
+          this.metadata.setFormat('tool', tag.value);
+        }
+        return this.addTag(tag.key, tag.value);
+      })
+    );
   }
 
   private async parsePicture(dataLen: number) {

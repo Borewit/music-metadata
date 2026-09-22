@@ -1,5 +1,5 @@
-import type {INativeTagMap} from '../common/GenericTagTypes.js';
-import {CaseInsensitiveTagMap} from '../common/CaseInsensitiveTagMap.js';
+import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
 
 /**
  * ID3v2.2 tag mappings
@@ -32,7 +32,7 @@ export const id3v22TagMap: INativeTagMap = {
   WAR: 'website',
 
   PCS: 'podcast',
-  TCP: "compilation",
+  TCP: 'compilation',
   TDR: 'date',
   TS2: 'albumartistsort',
   TSA: 'albumsort',
@@ -47,7 +47,6 @@ export const id3v22TagMap: INativeTagMap = {
 };
 
 export class ID3v22TagMapper extends CaseInsensitiveTagMap {
-
   public constructor() {
     super(['ID3v2.2'], id3v22TagMap);
   }

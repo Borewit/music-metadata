@@ -5,6 +5,6 @@ export const flacParserLoader: IParserLoader = {
   extensions: ['.flac'],
   mimeTypes: ['audio/flac'],
   async load() {
-    return (await import('./FlacParser.js')).FlacParser
+    return (await import('./FlacParser.js')).FlacParser;
   }
 };

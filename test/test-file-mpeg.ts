@@ -1,17 +1,15 @@
-import { assert } from 'chai';
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { samplePath, SourceStream } from './util.js';
-import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
-import { Parsers } from './metadata-parsers.js';
-import * as mm from '../lib/index.js';
+import { assert } from 'chai';
 import type { IPopularimeter } from '../lib/id3v2/FrameParser.js';
+import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
+import * as mm from '../lib/index.js';
+import { Parsers } from './metadata-parsers.js';
+import { SourceStream, samplePath } from './util.js';
 
 const t = assert;
 
 describe('Parse MPEG', () => {
-
   it('should parse MPEG-1 Audio Layer II ', async () => {
     /**
      * No errors found in file.
@@ -35,7 +33,7 @@ describe('Parse MPEG', () => {
      */
     const filePath = path.join(samplePath, '1971 - 003 - Sweet - Co-Co - CannaPower.mp2');
 
-    const {format} = await mm.parseFile(filePath, {duration: true});
+    const { format } = await mm.parseFile(filePath, { duration: true });
 
     t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'Tags: ID3v1 & ID3v2.3');
     t.strictEqual(format.container, 'MPEG', 'format.container = MPEG');
@@ -49,42 +47,36 @@ describe('Parse MPEG', () => {
   });
 
   describe('MPEG frame sync efficiency', () => {
-
     const emptyStreamSize = 5 * 1024 * 1024;
     const buf = new Uint8Array(emptyStreamSize).fill(0);
 
     it('should sync efficient from a stream', async () => {
-
       const streamReader = new SourceStream(buf);
 
-      await mm.parseStream(streamReader, {mimeType: 'audio/mpeg'}, {duration: true});
+      await mm.parseStream(streamReader, { mimeType: 'audio/mpeg' }, { duration: true });
     });
 
     it('should sync efficient, from a file', async () => {
-
       const tmpFilePath = path.join(samplePath, 'zeroes.mp3');
 
       fs.writeFileSync(tmpFilePath, buf);
       try {
-        await mm.parseFile(tmpFilePath, {duration: true});
+        await mm.parseFile(tmpFilePath, { duration: true });
       } finally {
         fs.unlinkSync(tmpFilePath);
       }
     });
-
   });
 
   describe('mpeg parsing fails for irrelevant attributes #14', () => {
-
-    it('should decode 04 - You Don\'t Know.mp3', async () => {
-
+    it("should decode 04 - You Don't Know.mp3", async () => {
       /**
        * File has id3v2.3 & id3v1 tags
        * First frame is 224 kbps, rest 320 kbps
        * After id3v2.3, lots of 0 padding
        */
 
-      const filePath = path.join(samplePath, '04 - You Don\'t Know.mp3');
+      const filePath = path.join(samplePath, "04 - You Don't Know.mp3");
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
@@ -99,7 +91,7 @@ describe('Parse MPEG', () => {
       }
 
       function checkCommon(common: mm.ICommonTagsResult) {
-        t.strictEqual(common.title, 'You Don\'t Know', 'common.title');
+        t.strictEqual(common.title, "You Don't Know", 'common.title');
         t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
         t.strictEqual(common.albumartist, 'Reel Big Fish', 'common.albumartist');
         t.strictEqual(common.album, 'Why Do They Rock So Hard?', 'common.album');
@@ -109,17 +101,22 @@ describe('Parse MPEG', () => {
         t.strictEqual(common.disk.no, null, 'common.disk.no');
         t.strictEqual(common.disk.of, null, 'common.disk.of');
         t.deepEqual(common.genre, ['Ska-Punk'], 'common.genre');
-        t.deepEqual(common.comment, [{
-          descriptor: "",
-          language: "eng",
-          text: "Jive"
-        }], 'common.genre');
+        t.deepEqual(
+          common.comment,
+          [
+            {
+              descriptor: '',
+              language: 'eng',
+              text: 'Jive'
+            }
+          ],
+          'common.genre'
+        );
       }
 
       function checkID3v1(id3v1: mm.INativeTagDict) {
-
         t.deepEqual(id3v1.artist, ['Reel Big Fish'], 'id3v1.artist');
-        t.deepEqual(id3v1.title, ['You Don\'t Know'], 'id3v1.title');
+        t.deepEqual(id3v1.title, ["You Don't Know"], 'id3v1.title');
         t.deepEqual(id3v1.album, ['Why Do They Rock So Hard?'], 'id3v1.album');
         t.deepEqual(id3v1.year, ['1998'], '(id3v1.year');
         t.deepEqual(id3v1.track, [4], 'id3v1.track');
@@ -127,31 +124,29 @@ describe('Parse MPEG', () => {
       }
 
       function checkID3v23(id3v23: mm.INativeTagDict) {
-
         t.deepEqual(id3v23.TPE2, ['Reel Big Fish'], 'native: TPE2');
-        t.deepEqual(id3v23.TIT2, ['You Don\'t Know'], 'native: TIT2');
+        t.deepEqual(id3v23.TIT2, ["You Don't Know"], 'native: TIT2');
         t.deepEqual(id3v23.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
         t.deepEqual(id3v23.TPE1, ['Reel Big Fish'], 'native: TPE1');
         t.deepEqual(id3v23.TCON, ['Ska-Punk'], 'native: TCON');
         t.deepEqual(id3v23.TYER, ['1998'], 'native: TYER');
         t.deepEqual(id3v23.TCOM, ['CA'], 'native: TCOM'); // ToDo: common property?
         t.deepEqual(id3v23.TRCK, ['04'], 'native: TRCK');
-        t.deepEqual(id3v23.COMM, [{descriptor: '', language: 'eng', text: 'Jive'}], 'native: COMM');
+        t.deepEqual(id3v23.COMM, [{ descriptor: '', language: 'eng', text: 'Jive' }], 'native: COMM');
       }
 
-      const result = await mm.parseFile(filePath, {duration: true});
+      const result = await mm.parseFile(filePath, { duration: true });
 
       checkFormat(result.format);
       checkCommon(result.common);
       checkID3v23(mm.orderTags(result.native['ID3v2.3']));
       checkID3v1(mm.orderTags(result.native.ID3v1));
-
     });
 
-    it('should decode 07 - I\'m Cool.mp3', async () => {
+    it("should decode 07 - I'm Cool.mp3", async () => {
       // 'LAME3.91' found on position 81BCF=531407
 
-      const filePath = path.join(samplePath, '07 - I\'m Cool.mp3');
+      const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
@@ -165,7 +160,7 @@ describe('Parse MPEG', () => {
       }
 
       function checkCommon(common: mm.ICommonTagsResult) {
-        t.strictEqual(common.title, 'I\'m Cool', 'common.title');
+        t.strictEqual(common.title, "I'm Cool", 'common.title');
         t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
         t.strictEqual(common.albumartist, 'Reel Big Fish', 'common.albumartist');
         t.strictEqual(common.album, 'Why Do They Rock So Hard?', 'common.album');
@@ -175,22 +170,22 @@ describe('Parse MPEG', () => {
         t.strictEqual(common.disk.no, null, 'common.disk.no');
         t.strictEqual(common.disk.of, null, 'common.disk.of');
         t.deepEqual(common.genre, ['Ska-Punk'], 'common.genre');
-        t.deepEqual(common.comment, [{descriptor: '', language: 'eng', text: 'Jive'}], 'common.comment');
+        t.deepEqual(common.comment, [{ descriptor: '', language: 'eng', text: 'Jive' }], 'common.comment');
       }
 
       function checkID3v23(native: mm.INativeTagDict) {
         t.deepEqual(native.TPE2, ['Reel Big Fish'], 'native: TPE2');
-        t.deepEqual(native.TIT2, ['I\'m Cool'], 'native: TIT2');
+        t.deepEqual(native.TIT2, ["I'm Cool"], 'native: TIT2');
         t.deepEqual(native.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
         t.deepEqual(native.TPE1, ['Reel Big Fish'], 'native: TPE1');
         t.deepEqual(native.TCON, ['Ska-Punk'], 'native: TCON');
         t.deepEqual(native.TYER, ['1998'], 'native: TYER');
         t.deepEqual(native.TCOM, ['CA'], 'native: TCOM');
         t.deepEqual(native.TRCK, ['07'], 'native: TRCK');
-        t.deepEqual(native.COMM, [{descriptor: '', language: 'eng', text: 'Jive'}], 'native: COMM');
+        t.deepEqual(native.COMM, [{ descriptor: '', language: 'eng', text: 'Jive' }], 'native: COMM');
       }
 
-      const result = await mm.parseFile(filePath, {duration: true});
+      const result = await mm.parseFile(filePath, { duration: true });
 
       checkFormat(result.format);
       checkCommon(result.common);
@@ -202,9 +197,7 @@ describe('Parse MPEG', () => {
    * Related to issue #38
    */
   describe('Handle corrupt MPEG-frames', () => {
-
     it('should handle corrupt frame causing negative frame data left', () => {
-
       /* ------------[outofbounds.mp3]-------------------------------------------
        Frame 2 header expected at byte 2465, but found at byte 3343.
        Frame 1 (bytes 2048-3343) was 1295 bytes long (expected 417 bytes).
@@ -230,11 +223,10 @@ describe('Parse MPEG', () => {
         t.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels 2 (stereo)');
       }
 
-      return mm.parseFile(filePath, {duration: true}).then(metadata => {
+      return mm.parseFile(filePath, { duration: true }).then(metadata => {
         checkFormat(metadata.format);
       });
     });
-
   });
 
   const issueDir = path.join(samplePath);
@@ -243,7 +235,6 @@ describe('Parse MPEG', () => {
    * Related to issue #39
    */
   describe('Multiple ID3 tags: ID3v2.3, ID3v2.4 & ID3v1', () => {
-
     function checkFormat(format: mm.IFormat, expectedDuration: number) {
       t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v2.4', 'ID3v1'], 'format.tagTypes');
       t.strictEqual(format.duration, expectedDuration, 'format.duration');
@@ -256,7 +247,6 @@ describe('Parse MPEG', () => {
     }
 
     it('should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1', async () => {
-
       const metadata = await mm.parseFile(path.join(issueDir, 'id3-multi-02.mp3'));
       checkFormat(metadata.format, 230.29551020408164);
     });
@@ -265,104 +255,105 @@ describe('Parse MPEG', () => {
      * Test on multiple headers: ID3v1, ID3v2.3, ID3v2.4 & ID3v2.4 ( 2x ID3v2.4 !! )
      */
     it('should decode mp3_01 with 2x ID3v2.4 header', async () => {
-
       // ToDo: currently second ID3v2.4 is overwritten. Either make both headers accessible or generate warning
       const metadata = await mm.parseFile(path.join(issueDir, 'id3-multi-01.mp3'));
       checkFormat(metadata.format, 0.1306122448979592);
     });
-
   });
 
   /**
    * Test decoding popularimeter
    */
   describe('POPM decoding', () => {
-
     it('check mapping function', () => {
-
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 0} as IPopularimeter), {
-        source: 'user1@bla.com',
-        rating: undefined
-      }, 'unknown rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 1} as IPopularimeter), {
-        source: 'user1@bla.com',
-        rating: 0 / 255
-      }, 'lowest rating');
-      assert.deepEqual(ID3v24TagMapper.toRating({email: 'user1@bla.com', rating: 255} as IPopularimeter), {
-        source: 'user1@bla.com',
-        rating: 1
-      }, 'highest rating');
+      assert.deepEqual(
+        ID3v24TagMapper.toRating({ email: 'user1@bla.com', rating: 0 } as IPopularimeter),
+        {
+          source: 'user1@bla.com',
+          rating: undefined
+        },
+        'unknown rating'
+      );
+      assert.deepEqual(
+        ID3v24TagMapper.toRating({ email: 'user1@bla.com', rating: 1 } as IPopularimeter),
+        {
+          source: 'user1@bla.com',
+          rating: 0 / 255
+        },
+        'lowest rating'
+      );
+      assert.deepEqual(
+        ID3v24TagMapper.toRating({ email: 'user1@bla.com', rating: 255 } as IPopularimeter),
+        {
+          source: 'user1@bla.com',
+          rating: 1
+        },
+        'highest rating'
+      );
     });
 
-    it('from \'Yeahs-It\'s Blitz!.mp3\'', async () => {
-
-      const metadata = await mm.parseFile(path.join(issueDir, '02-Yeahs-It\'s Blitz! 2.mp3'), {
+    it("from 'Yeahs-It's Blitz!.mp3'", async () => {
+      const metadata = await mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {
         duration: false
       });
       const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
-      assert.deepEqual(idv23.POPM[0], {email: 'no@email', rating: 128, counter: 0}, 'ID3v2.3 POPM');
+      assert.deepEqual(idv23.POPM[0], { email: 'no@email', rating: 128, counter: 0 }, 'ID3v2.3 POPM');
       assert.approximately(metadata.common.rating![0].rating!, 0.5, 1 / (2 * 254), 'Common rating');
     });
 
-    it('from \'id3v2-lyrics.mp3\'', async () => {
-
-      const metadata = await mm.parseFile(path.join(issueDir, 'id3v2-lyrics.mp3'), {duration: false});
+    it("from 'id3v2-lyrics.mp3'", async () => {
+      const metadata = await mm.parseFile(path.join(issueDir, 'id3v2-lyrics.mp3'), { duration: false });
       const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
       // Native rating value
-      assert.deepEqual(idv23.POPM[0], {email: 'MusicBee', rating: 255, counter: 0}, 'ID3v2.3 POPM');
+      assert.deepEqual(idv23.POPM[0], { email: 'MusicBee', rating: 255, counter: 0 }, 'ID3v2.3 POPM');
       // Common rating value
       assert.approximately(metadata.common.rating![0].rating!, 1, 0, 'Common rating');
     });
 
     it('decode POPM without a counter field', async () => {
-
       const filePath = path.join(issueDir, 'issue-100.mp3');
 
-      const metadata = await mm.parseFile(filePath, {duration: true});
+      const metadata = await mm.parseFile(filePath, { duration: true });
       const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
-      assert.deepEqual(idv23.POPM[0], {
-        counter: undefined,
-        email: 'Windows Media Player 9 Series',
-        rating: 255
-      }, 'ID3v2.3 POPM');
+      assert.deepEqual(
+        idv23.POPM[0],
+        {
+          counter: undefined,
+          email: 'Windows Media Player 9 Series',
+          rating: 255
+        },
+        'ID3v2.3 POPM'
+      );
     });
-
   });
 
   describe('Calculate / read duration', () => {
-
     describe('VBR read from Xing header', () => {
-
       const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
 
-      Parsers
-        .forEach(parser => {
-          it(parser.description, async function(){
-            const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: false});
-            assert.strictEqual(format.duration, 0.4963265306122449);
-          });
+      Parsers.forEach(parser => {
+        it(parser.description, async function () {
+          const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: false });
+          assert.strictEqual(format.duration, 0.4963265306122449);
         });
-
+      });
     });
 
     it('VBR: based on frame count if duration flag is set', async () => {
-
       const filePath = path.join(issueDir, 'Dethklok-mergeTagHeaders.mp3');
       // Wrap stream around buffer, to prevent the `stream.path` is provided
       const buffer = fs.readFileSync(filePath);
       const stream = new SourceStream(buffer);
 
-      const metadata = await mm.parseStream(stream, {mimeType: 'audio/mpeg'}, {duration: true});
+      const metadata = await mm.parseStream(stream, { mimeType: 'audio/mpeg' }, { duration: true });
       // Changed expected result from 34.66 to 34.64, to 34,69 (strtok3@10.2.0) after updating strtok3
       assert.approximately(metadata.format.duration!, 34.69, 5 / 1000);
     });
-
   });
 
   it('It should be able to decode MPEG 2.5 Layer III', async () => {
-
     const filePath = path.join(issueDir, 'mp3', 'issue-347.mp3');
-    const {format} = await mm.parseFile(filePath);
+    const { format } = await mm.parseFile(filePath);
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 2.5 Layer 3', 'format.codec');
     assert.strictEqual(format.codecProfile, 'CBR', 'format.codec');
@@ -370,5 +361,4 @@ describe('Parse MPEG', () => {
     assert.deepEqual(format.sampleRate, 8000, 'format.sampleRate');
     assert.deepEqual(format.tagTypes, [], 'format.tagTypes');
   });
-
 });

@@ -1,12 +1,10 @@
-import type { ITokenizer } from 'strtok3';
 import initDebug from 'debug';
-
+import type { ITokenizer } from 'strtok3';
+import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import type { IOptions } from '../../type.js';
 import type { IPageHeader } from '../OggToken.js';
 import { VorbisStream } from '../vorbis/VorbisStream.js';
 import * as Speex from './Speex.js';
-
-import type { IOptions } from '../../type.js';
-import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 
 const debug = initDebug('music-metadata:parser:ogg:speex');
 
@@ -17,7 +15,6 @@ const debug = initDebug('music-metadata:parser:ogg:speex');
  * - https://tools.ietf.org/html/rfc5574
  */
 export class SpeexStream extends VorbisStream {
-
   private commentHeaderParsed = false;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, _tokenizer: ITokenizer) {
@@ -47,10 +44,11 @@ export class SpeexStream extends VorbisStream {
    * Ref: https://tools.ietf.org/html/rfc5574#section-3
    */
   protected async parseFullPage(pageData: Uint8Array): Promise<void> {
-    if (this.commentHeaderParsed) return;
+    if (this.commentHeaderParsed) {
+      return;
+    }
     this.commentHeaderParsed = true;
     debug('Parse Ogg/Speex comment header');
     await this.parseUserCommentList(pageData, 0);
   }
-
 }

@@ -1,8 +1,9 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 
 import { FourCcToken } from '../common/FourCC.js';
 import type { IChunkHeader64 } from '../iff/index.js';
+
 export type { IChunkHeader64 } from '../iff/index.js';
 
 /**

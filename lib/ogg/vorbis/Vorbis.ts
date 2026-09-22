@@ -1,9 +1,7 @@
-import * as Token from 'token-types';
-
-import { AttachedPictureType } from '../../id3v2/ID3v2Token.js';
-
-import type { IPicture } from '../../type.js';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
+import { AttachedPictureType } from '../../id3v2/ID3v2Token.js';
+import type { IPicture } from '../../type.js';
 
 /**
  * Interface to parsed result of METADATA_BLOCK_PICTURE
@@ -12,17 +10,17 @@ import type { IGetToken } from 'strtok3';
  */
 export interface IVorbisPicture extends IPicture {
   // The picture type according to the ID3v2 APIC frame
-  type: string
+  type: string;
   // The description of the picture, in UTF-8.
-  description: string,
+  description: string;
   // The width of the picture in pixels.
-  width: number,
+  width: number;
   // The height of the picture in pixels.
-  height: number,
+  height: number;
   // The color depth of the picture in bits-per-pixel.
-  colour_depth: number,
+  colour_depth: number;
   // For indexed-color pictures (e.g. GIF), the number of colors used, or 0 for non-indexed pictures.
-  indexed_color: number
+  indexed_color: number;
 }
 
 /**
@@ -32,7 +30,6 @@ export interface IVorbisPicture extends IPicture {
  * // ToDo: move to ID3 / APIC?
  */
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
-
   public static fromBase64(base64str: string): IVorbisPicture {
     return VorbisPictureToken.fromBuffer(Uint8Array.from(atob(base64str), c => c.charCodeAt(0)));
   }
@@ -49,18 +46,17 @@ export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
   }
 
   public get(buffer: Uint8Array, offset: number): IVorbisPicture {
-
     const type = AttachedPictureType[Token.UINT32_BE.get(buffer, offset) as keyof typeof AttachedPictureType];
 
     offset += 4;
     const mimeLen = Token.UINT32_BE.get(buffer, offset);
     offset += 4;
-    const format =  new Token.StringType(mimeLen, 'utf-8').get(buffer, offset);
+    const format = new Token.StringType(mimeLen, 'utf-8').get(buffer, offset);
     offset += mimeLen;
     const descLen = Token.UINT32_BE.get(buffer, offset);
     offset += 4;
     const description = new Token.StringType(descLen, 'utf-8').get(buffer, offset);
-    offset += descLen
+    offset += descLen;
     const width = Token.UINT32_BE.get(buffer, offset);
     offset += 4;
     const height = Token.UINT32_BE.get(buffer, offset);
@@ -99,11 +95,11 @@ export interface ICommonHeader {
   /**
    * Packet Type
    */
-  packetType: number,
+  packetType: number;
   /**
    * Should be 'vorbis'
    */
-  vorbis: string
+  vorbis: string;
 }
 
 /**
@@ -126,12 +122,12 @@ export const CommonHeader: IGetToken<ICommonHeader> = {
  * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-630004.2.2
  */
 export interface IFormatInfo {
-  version: number,
-  channelMode: number,
-  sampleRate: number,
-  bitrateMax: number,
-  bitrateNominal: number,
-  bitrateMin: number
+  version: number;
+  channelMode: number;
+  sampleRate: number;
+  bitrateMax: number;
+  bitrateNominal: number;
+  bitrateMin: number;
 }
 
 /**
