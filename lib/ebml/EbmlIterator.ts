@@ -95,7 +95,9 @@ export class EbmlIterator {
             }
             debug(`Read element: name=${getElementPath(child)}{id=0x${element.id.toString(16)}, container=${!!child.container}} at position=${elementPosition}`);
             if (child.container) {
-              const res = await this.parseContainer(child, element.len >= 0 ? this.tokenizer.position + element.len : -1, listener);
+              const childEnd = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY,
+                element.len >= 0 ? this.tokenizer.position + element.len : posDone);
+              const res = await this.parseContainer(child, childEnd, listener);
               if (child.multiple) {
                 if (!tree[child.name]) {
                   tree[child.name] = [];
@@ -205,11 +207,31 @@ export class EbmlIterator {
   }
 
   private async readString(e: IHeader): Promise<string> {
-    const rawString = await this.tokenizer.readToken(new StringType(e.len, 'utf-8'));
+    const buf = await this.readBuffer(e);
+    const rawString = new StringType(e.len, 'utf-8').get(buf, 0);
     return rawString.replace(/\x00.*$/g, '');
   }
 
   private async readBuffer(e: IHeader): Promise<Uint8Array> {
+    const chunkSize = 64 * 1024;
+    if ((!this.tokenizer.supportsRandomAccess() || this.tokenizer.fileInfo.size === undefined) && e.len > chunkSize) {
+      // Neither a declared container size nor an advertised stream size proves these bytes exist.
+      // Allocate incrementally, and only assemble the leaf after reading its payload.
+      const chunks: Uint8Array[] = [];
+      for (let remaining = e.len; remaining > 0;) {
+        const chunk = new Uint8Array(Math.min(remaining, chunkSize));
+        await this.tokenizer.readBuffer(chunk);
+        chunks.push(chunk);
+        remaining -= chunk.length;
+      }
+      const buf = new Uint8Array(e.len);
+      let offset = 0;
+      for (const chunk of chunks) {
+        buf.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return buf;
+    }
     const buf = new Uint8Array(e.len);
     await this.tokenizer.readBuffer(buf);
     return buf;
