@@ -493,7 +493,15 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
   }
 
   public get(buf: Uint8Array, off: number): ITrackHeaderAtom {
+    const available = Math.min(this.len, buf.length - off);
+    if (available < 4) {
+      throw new Mp4ContentError('Truncated tkhd header');
+    }
     const version = Token.UINT8.get(buf, off);
+    // Validate through the volume field, the last field currently decoded.
+    if ((version === 0 && available < 38) || (version === 1 && available < 50)) {
+      throw new Mp4ContentError('Truncated tkhd header');
+    }
     const flags = Token.UINT24_BE.get(buf, off + 1);
 
     switch (version) {
