@@ -84,7 +84,7 @@ Following tag header formats are supported:
 Following lyric formats are supported:
 - [LRC](https://en.wikipedia.org/wiki/LRC_(file_format))
 - Synchronized lyrics (SYLT)
-- Unsynchronized lyrics (USULT)
+- Unsynchronized lyrics (USLT)
 
 Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
 [ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain) tags are supported.
@@ -123,7 +123,7 @@ yarn add music-metadata
 
 **Node.js specific** functions to read an audio file or stream:
 1. **File Parsing**: Parse audio files directly from the filesystem using the [parseFile function](#parsefile-function)
-1. **Stream Parsing**: Parse audio metadata from a Node.js [Readable stream](https://nodejs.org/api/stream.html#class-streamreadable) using the [parseStream function](#parsewebstream-function).
+1. **Stream Parsing**: Parse audio metadata from a Node.js [Readable stream](https://nodejs.org/api/stream.html#class-streamreadable) using the [parseStream function](#parsestream-function).
 
 **Cross-platform** functions available to read an audio file or stream:
 
@@ -136,8 +136,8 @@ There are multiple ways to parse (read) audio tracks:
 > [!NOTE]
 > Direct file access in Node.js is generally faster because it can 'jump' to various parts of the file without reading intermediate data.
 
-### Node.js specific function
-These functions are tailored for Node.js environments and leverage Node.js-specific APIs,
+### Node.js specific functions
+These functions use Node.js-specific APIs,
 making them incompatible with browser-based JavaScript engines.
 
 #### `parseFile` function
@@ -269,7 +269,7 @@ import { createReadStream } from 'fs';
 
 ### Cross-platform functions
 These functions are designed to be cross-platform,
-meaning it can be used in both Node.js and web browsers.
+meaning they can be used in both Node.js and web browsers.
 
 #### `parseWebStream` function
 
@@ -351,11 +351,11 @@ The `response.body` provides a [`ReadableStream`](https://developer.mozilla.org/
 #### `parseBlob` function
 
 Parses metadata from an audio file represented as a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob). 
-This function is suitable for use in environments that support the ReadableStreamBYOBReader, which is **available in Node.js 20** and above.
+This function reads slices of the Blob and supports both browser File objects and Node.js Blob objects.
 
 ##### Syntax
 ```ts
-parseBlob(blob: Blob, options?: IOptions = {}): Promise<IAudioMetadata>
+parseBlob(blob: Blob, options?: IOptions): Promise<IAudioMetadata>
 ```
 
 ##### Parameters
@@ -363,7 +363,7 @@ parseBlob(blob: Blob, options?: IOptions = {}): Promise<IAudioMetadata>
 - `blob`: [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
   
   The Blob object containing the audio data to be parsed.
-  This can be a file or any binary data. If the Blob is an instance of File, its name will be used as the file path in the metadata.
+  This can be a File selected by the user or a Blob containing audio data. The Blob size and MIME type are passed to the parser.
 
 - `options`: [IOptions](#ioptions-interface) (optional)
   
@@ -400,7 +400,7 @@ This function is particularly useful when you already have audio data in memory.
 
 ##### Syntax
 ```ts
-parseBuffer(buffer: Uint8Array, fileInfo?: IFileInfo | string, opts?: IOptions = {}): Promise<IAudioMetadata>
+parseBuffer(uint8Array: Uint8Array, fileInfo?: IFileInfo | string, options?: IOptions): Promise<IAudioMetadata>
 ```
 
 ##### Parameters
@@ -518,12 +518,13 @@ readMetadata();
 
 ### Handling Parse Errors
 
-`music-metadata` provides a robust and extensible error handling system with custom error classes that inherit from the standard JavaScript `Error`.
-All possible parsing errors are part of a union type `UnionOfParseErrors`, ensuring that every error scenario is accounted for in your code.
+`music-metadata` exports custom error classes that extend JavaScript `Error`.
+Parsing can also reject with other errors, such as filesystem, stream, or tokenizer errors.
+Handle caught values as `unknown` in TypeScript and narrow them before accessing error properties.
 
 #### Union of Parse Errors 
 
-All parsing errors extend from the base class `ParseError` and are included in the `UnionOfParseErrors` type:
+The `UnionOfParseErrors` type groups the following library error classes; it does not describe every possible rejection:
 ```ts
 export type UnionOfParseErrors =
   | CouldNotDetermineFileTypeError
@@ -545,10 +546,10 @@ export type UnionOfParseErrors =
 
 #### `orderTags` function
 
-Utility to Converts the native tags to a dictionary index on the tag identifier
+Converts an array of native tags to a dictionary keyed by tag identifier. Each value is an array of tag values.
 
 ```ts
-orderTags(nativeTags: ITag[]): [tagId: string]: any[]
+orderTags(nativeTags: ITag[]): INativeTagDict
 ```
 
 ```js
@@ -571,7 +572,7 @@ import { inspect } from 'util';
    Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
 
    ```ts
-   ratingToStars(rating: number): number
+   ratingToStars(rating: number | undefined): number
    ```
 #### `selectCover` function
 
@@ -613,7 +614,7 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   - Metadata not listed in the SeekHead may be skipped.
   - If the SeekHead is missing, this option has no effect.
 
-- `observer`: `(update: MetadataEvent) => void;`:
+- `observer`: `(update: IMetadataEvent) => void`:
 
   Callback function triggered when common tags or format properties are updated during parsing.
   Allows real-time monitoring of metadata as it becomes available.
@@ -628,7 +629,7 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   This is particularly beneficial for streaming input, as it avoids the need to read the entire stream.
 
 > [!NOTE]
-> - The `duration` option is typically included in most cases, but setting it to true ensures that the entire file is parsed if necessary to get an accurate duration.
+> - `format.duration` may be available without enabling `duration`. Set `duration: true` to allow additional scanning when needed; duration can still be unavailable.
 > - Using `mkvUseIndex` can improve performance in Matroska files, but be aware of potential side effects, such as missing metadata due to skipped elements.
 
 
@@ -637,8 +638,9 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
 If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` interface) contains:
 - [`metadata.format`](#metadataformat) Audio format information
 - [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information.
-- [`metadata.trackInfo`](#metadatatrackInfo) Is a generic (abstract) way of reading metadata information.
-- `metadata.native` List of native (original) tags found in the parsed audio file.
+- [`metadata.format.trackInfo`](#metadataformattrackinfo) Describes individual audio and video tracks when available.
+- `metadata.native` Maps each tag format to an array of native (original) tags found in the parsed audio file.
+- `metadata.quality.warnings` Contains non-fatal parsing warnings, each with a `message` string.
 
 #### `metadata.format`
 
@@ -660,15 +662,16 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 - `format.trackGain?: number` Track gain in dB
 - `format.albumGain?: number` Album gain in dB
 
-#### `metadata.trackInfo`
+#### `metadata.format.trackInfo`
 
-To support advanced containers like [Matroska](https://wikipedia.org/wiki/Matroska) or [MPEG-4](https://en.wikipedia.org/wiki/MPEG-4), which may contain multiple audio and video tracks, the **experimental**- `metadata.trackInfo` has been added,
+Containers such as Matroska and MPEG-4 can contain multiple audio and video tracks.
+The experimental `metadata.format.trackInfo` property describes these individual tracks.
 
-`metadata.trackInfo` is either `undefined` or has an **array** of [trackInfo](#trackinfo)
+`metadata.format.trackInfo` is an array of [trackInfo](#trackinfo) objects, empty when no track information is available.
 
 ##### trackInfo
 
-Audio format information. Defined in the TypeScript `IFormat` interface:
+Individual track information. Defined in the TypeScript `ITrackInfo` interface:
 - `trackInfo.type?: TrackType` Track type
 - `trackInfo.codecName?: string` Codec name
 - `trackInfo.codecSettings?: string` Codec settings
@@ -685,7 +688,7 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 - `audioTrack.samplingFrequency?: number`
 - `audioTrack.outputSamplingFrequency?: number`
 - `audioTrack.channels?: number`
-- `audioTrack.channelPositions?: Buffer`
+- `audioTrack.channelPositions?: Uint8Array`
 - `audioTrack.bitDepth?: number`
 
 ##### `trackInfo.videoTrack`
@@ -698,7 +701,7 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 - `videoTrack.displayHeight?: number`
 - `videoTrack.displayUnit?: number`
 - `videoTrack.aspectRatioType?: number`
-- `videoTrack.colourSpace?: Buffer`
+- `videoTrack.colourSpace?: Uint8Array`
 - `videoTrack.gammaValue?: number`
 
 #### `metadata.common`
@@ -737,7 +740,7 @@ export interface IPicture {
   /**
    * Image data
    */
-  data: Buffer;
+  data: Uint8Array;
   /**
    * Optional description
    */
