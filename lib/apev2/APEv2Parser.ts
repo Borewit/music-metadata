@@ -147,17 +147,33 @@ export class APEv2Parser extends BasicParser {
 
       // Only APEv2 tag has tag item headers
       const tagItemHeader = await this.tokenizer.readToken<ITagItemHeader>(TagItemHeader);
-      bytesRemaining -= TagItemHeader.len + tagItemHeader.size;
+      bytesRemaining -= TagItemHeader.len;
 
-      await this.tokenizer.peekBuffer(keyBuffer, {length: Math.min(keyBuffer.length, bytesRemaining)});
-      let zero = util.findZero(keyBuffer);
+      // Reserve the value bytes before looking for the key terminator.
+      if (tagItemHeader.size >= bytesRemaining) {
+        throw new ApeContentError(`Invalid tag item size: ${tagItemHeader.size}`);
+      }
+      const keyBytes = await this.tokenizer.peekBuffer(keyBuffer, {
+        length: Math.min(keyBuffer.length, bytesRemaining - tagItemHeader.size),
+        mayBeLess: true
+      });
+      let zero = keyBuffer.subarray(0, keyBytes).indexOf(0);
+      if (zero === -1) {
+        throw new ApeContentError('Unterminated tag item key');
+      }
       const key = await this.tokenizer.readToken<string>(new StringType(zero, 'ascii'));
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
 
+      if (this.tokenizer.fileInfo.size !== undefined &&
+        tagItemHeader.size > this.tokenizer.fileInfo.size - this.tokenizer.position) {
+        throw new ApeContentError(`Invalid tag item size: ${tagItemHeader.size}`);
+      }
+      bytesRemaining -= tagItemHeader.size;
+
       switch (tagItemHeader.flags.dataType) {
         case DataType.text_utf8: { // utf-8 text-string
-          const value = await this.tokenizer.readToken<string>(new StringType(tagItemHeader.size, 'utf8'));
+          const value = textDecode(await this.readTagValue(tagItemHeader.size), 'utf-8');
           const values = value.split(/\x00/g);
 
           await Promise.all(values.map(val => this.metadata.addTag(tagFormat, key, val)));
@@ -168,8 +184,7 @@ export class APEv2Parser extends BasicParser {
           if (this.options.skipCovers) {
             await this.tokenizer.ignore(tagItemHeader.size);
           } else {
-            const picData = new Uint8Array(tagItemHeader.size);
-            await this.tokenizer.readBuffer(picData);
+            const picData = await this.readTagValue(tagItemHeader.size);
 
             zero = util.findZero(picData);
             const description = textDecode(picData.subarray(0, zero), 'utf-8');
@@ -194,6 +209,31 @@ export class APEv2Parser extends BasicParser {
           break;
       }
     }
+  }
+
+  private async readTagValue(size: number): Promise<Uint8Array> {
+    const chunkSize = 64 * 1024;
+    if ((!this.tokenizer.supportsRandomAccess() || this.tokenizer.fileInfo.size === undefined) && size > chunkSize) {
+      // Stream sizes may be unknown or untrustworthy. Only allocate the full
+      // value after all of its bytes have actually been read.
+      const chunks: Uint8Array[] = [];
+      for (let remaining = size; remaining > 0;) {
+        const chunk = new Uint8Array(Math.min(remaining, chunkSize));
+        await this.tokenizer.readBuffer(chunk);
+        chunks.push(chunk);
+        remaining -= chunk.length;
+      }
+      const value = new Uint8Array(size);
+      let offset = 0;
+      for (const chunk of chunks) {
+        value.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return value;
+    }
+    const value = new Uint8Array(size);
+    await this.tokenizer.readBuffer(value);
+    return value;
   }
 
   private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {
