@@ -1,3 +1,4 @@
+import { rejects } from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -708,6 +709,66 @@ describe('Sample Description (stsd) atom: entry table', () => {
 
 describe('Track Header (tkhd) atom', () => {
   const MAC_EPOCH_OFFSET = 2082844800; // seconds between 1904-01-01 and 1970-01-01
+
+  for (const [version, minimumLength] of [
+    [0, 38],
+    [1, 50]
+  ]) {
+    it(`rejects truncated version ${version} headers at every field boundary`, () => {
+      for (let length = 0; length < minimumLength; ++length) {
+        const buf = new Uint8Array(length);
+        if (length > 0) {
+          buf[0] = version;
+        }
+        assert.throws(() => new TrackHeaderAtom(length).get(buf, 0), Mp4ContentError, 'Truncated tkhd header');
+      }
+    });
+
+    it(`respects version ${version} atom and buffer boundaries at a nonzero offset`, () => {
+      const off = 8;
+      const buf = new Uint8Array(off + minimumLength + 8);
+      buf[off] = version;
+      new DataView(buf.buffer).setUint16(off + minimumLength - 2, 256);
+
+      assert.strictEqual(new TrackHeaderAtom(minimumLength).get(buf, off).volume, 256);
+      assert.throws(
+        () => new TrackHeaderAtom(minimumLength - 1).get(buf, off),
+        Mp4ContentError,
+        'Truncated tkhd header'
+      );
+      assert.throws(
+        () => new TrackHeaderAtom(minimumLength).get(buf.subarray(0, off + minimumLength - 1), off),
+        Mp4ContentError,
+        'Truncated tkhd header'
+      );
+    });
+
+    it(`rejects issue #2747 version ${version} through parseBuffer with a parse error`, async () => {
+      function box(name: string, body: Buffer): Buffer {
+        const buf = Buffer.alloc(8 + body.length);
+        buf.writeUInt32BE(buf.length);
+        buf.write(name, 4, 4, 'ascii');
+        body.copy(buf, 8);
+        return buf;
+      }
+
+      for (const length of [0, 4, 30, minimumLength - 1]) {
+        const body = Buffer.alloc(length);
+        if (length > 0) {
+          body[0] = version;
+        }
+        const buf = Buffer.concat([
+          box('ftyp', Buffer.from('M4A \0\0\0\0M4A isom')),
+          box('moov', box('trak', box('tkhd', body)))
+        ]);
+
+        await rejects(
+          mm.parseBuffer(buf, { mimeType: 'audio/mp4' }),
+          error => error instanceof mm.UnexpectedFileContentError && /Truncated tkhd header/.test(error.message)
+        );
+      }
+    });
+  }
 
   it('reads version 1 (64-bit) creation time, modification time, track ID and duration at the right offsets', () => {
     const buf = new Uint8Array(64);
