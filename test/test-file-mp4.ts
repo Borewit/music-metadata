@@ -2,13 +2,16 @@ import { rejects } from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { promisify } from 'node:util';
 import { assert } from 'chai';
+import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 
 import * as mm from '../lib/index.js';
+import { Atom } from '../lib/mp4/Atom.js';
 import { Mp4ContentError, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samplePath } from './util.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
@@ -86,6 +89,25 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
         checkNativeTags(mm.orderTags(native.iTunes));
       });
     });
+
+    // Known-size Web Streams are covered by Parsers above. Omitting size models
+    // an HTTP response without Content-Length, without relying on a remote host.
+    for (const [description, makeStream] of [
+      ['byte', makeByteReadableStreamFromFile],
+      ['default', makeDefaultReadableStreamFromFile]
+    ] as const) {
+      it(`parseWebStream from ${description} ReadableStream without file size`, async () => {
+        const { stream } = await makeStream(path.join(mp4Samples, 'id4.m4a'));
+        try {
+          const { native, format, common } = await mm.parseWebStream(stream, { mimeType: 'audio/mp4' });
+          checkFormat(format);
+          checkCommon(common);
+          checkNativeTags(mm.orderTags(native.iTunes));
+        } finally {
+          await stream.cancel();
+        }
+      });
+    }
   });
 
   /**
@@ -494,7 +516,11 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   it('Handle 0 length box', async () => {
     const filePath = path.join(mp4Samples, 'issue-749.m4a');
 
-    const { format, common } = await mm.parseFile(filePath);
+    // The stripped fixture is missing the last 16 bytes declared by moov/udta/meta.
+    // Reject that truncation, then restore the tail to exercise its size-zero final box.
+    await rejects(mm.parseFile(filePath), /Atom size exceeds remaining bytes/);
+    const buffer = Buffer.concat([fs.readFileSync(filePath), Buffer.alloc(16)]);
+    const { format, common } = await mm.parseBuffer(buffer, 'audio/mp4');
 
     assert.strictEqual(format.container, 'M4A/mp42/isom', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
@@ -978,5 +1004,185 @@ describe('Sample Description (stsd) atom', () => {
 
     assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
+  });
+});
+
+describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
+  function box(name: string, payload: Buffer = Buffer.alloc(0), size?: bigint, extended = false): Buffer {
+    const header = Buffer.alloc(extended ? 16 : 8);
+    header.writeUInt32BE(extended ? 1 : Number(size ?? BigInt(header.length + payload.length)));
+    header.write(name, 4, 'latin1');
+    if (extended) {
+      header.writeBigUInt64BE(size ?? BigInt(header.length + payload.length), 8);
+    }
+    return Buffer.concat([header, payload]);
+  }
+
+  for (const stream of [false, true]) {
+    describe(stream ? 'unknown-size stream' : 'buffer', () => {
+      async function rejectBeforeAllocation(buffer: Buffer, message: RegExp): Promise<void> {
+        const tokenizer = stream
+          ? await fromStream(Readable.from([buffer], { objectMode: false }))
+          : fromBuffer(buffer);
+        tokenizer.fileInfo.mimeType = 'audio/mp4';
+        const readToken = tokenizer.readToken.bind(tokenizer);
+        tokenizer.readToken = (token, position) => {
+          // Fail safely if a regression attempts to allocate an attacker-sized buffer.
+          assert.ok(token.len <= 1024, `Unvalidated allocation: ${token.len}`);
+          return readToken(token, position);
+        };
+        try {
+          await rejects(
+            mm.parseFromTokenizer(tokenizer),
+            error => error instanceof Mp4ContentError && message.test(error.message)
+          );
+        } finally {
+          await tokenizer.close();
+        }
+      }
+
+      for (const name of ['mvhd', 'stsd', 'stsz', 'date']) {
+        for (const size of [0xffffffffffffffffn, 0x20000000000000n, 0x10000000n]) {
+          it(`rejects ${name} with extended size ${size} before allocation`, async () => {
+            await rejectBeforeAllocation(box(name, Buffer.alloc(0), size, true), /size exceeds|buffering limit/);
+          });
+        }
+        it(`rejects oversized normal ${name} before allocation`, async () => {
+          await rejectBeforeAllocation(box(name, Buffer.alloc(0), 0xffffffffn), /size exceeds|buffering limit/);
+        });
+      }
+
+      for (const size of [2n, 7n]) {
+        it(`rejects normal size ${size} smaller than its header`, async () => {
+          await rejectBeforeAllocation(box('date', Buffer.alloc(0), size), /Invalid atom size/);
+        });
+      }
+      for (const size of [0n, 1n, 8n, 15n]) {
+        it(`rejects extended size ${size} smaller than its header`, async () => {
+          await rejectBeforeAllocation(box('date', Buffer.alloc(0), size, true), /Invalid atom size/);
+        });
+      }
+
+      it('rejects a child crossing its parent even when bytes follow the parent', async () => {
+        const parent = box('moov', box('date', Buffer.alloc(0), 32n));
+        await rejectBeforeAllocation(Buffer.concat([parent, box('free', Buffer.alloc(32))]), /size exceeds remaining/);
+      });
+
+      it('rejects a truncated child header', async () => {
+        await rejectBeforeAllocation(box('moov', Buffer.alloc(7)), /Truncated atom header/);
+      });
+
+      it('rejects an extended header crossing its parent', async () => {
+        await rejectBeforeAllocation(
+          box('moov', box('date', Buffer.alloc(0), 16n, true).subarray(0, 8)),
+          /Truncated extended atom header/
+        );
+      });
+
+      it('caps a metadata payload even inside a large declared container', async () => {
+        const child = box('date', Buffer.alloc(0), 64n * 1024n * 1024n + 9n);
+        await rejectBeforeAllocation(box('moov', child, 0x10000000n), /size exceeds|buffering limit/);
+      });
+    });
+  }
+
+  describe('open-ended containers', () => {
+    async function parseStream(payload: Buffer): Promise<mm.IAudioMetadata> {
+      const stream = Readable.from([box('moov', payload, 0n)], { objectMode: false });
+      try {
+        return await mm.parseStream(stream, { mimeType: 'audio/mp4' });
+      } finally {
+        stream.destroy();
+      }
+    }
+
+    it('accepts clean EOF after finite children', async () => {
+      const { native, format } = await parseStream(Buffer.concat([box('date', Buffer.from('2026')), box('free')]));
+      assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+      assert.isTrue(format.hasAudio, 'Post-processing completed');
+    });
+
+    it('accepts an empty container', async () => {
+      await parseStream(Buffer.alloc(0));
+    });
+
+    it('accepts nested open-ended containers', async () => {
+      const { native } = await parseStream(box('udta', box('date', Buffer.from('2026')), 0n));
+      assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+    });
+
+    for (const length of [1, 2, 3, 4, 5, 6, 7]) {
+      it(`rejects a partial child header of ${length} bytes`, async () => {
+        await rejects(parseStream(box('free').subarray(0, length)), /Truncated atom header/);
+      });
+    }
+
+    it('does not swallow EOF in an extended child header', async () => {
+      await rejects(parseStream(box('date', Buffer.alloc(0), 16n, true).subarray(0, 12)), EndOfStreamError);
+    });
+
+    it('does not swallow EOF in a child payload', async () => {
+      await rejects(parseStream(box('date', Buffer.from('abc'), 16n)), EndOfStreamError);
+    });
+  });
+
+  for (const length of [1, 2, 3, 9, 10, 11]) {
+    it(`rejects an ftyp payload of ${length} bytes before reading brands`, async () => {
+      const tokenizer = fromBuffer(
+        Buffer.concat([box('ftyp', Buffer.alloc(length)), box('date', Buffer.from('2026'))]),
+        { fileInfo: { mimeType: 'audio/mp4' } }
+      );
+      await rejects(mm.parseFromTokenizer(tokenizer), /Invalid ftyp payload length/);
+      assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
+    });
+  }
+
+  it('checks the remaining file bytes at a nonzero offset', async () => {
+    const tokenizer = fromBuffer(Buffer.concat([box('free'), box('date', Buffer.alloc(0), 16n)]));
+    await tokenizer.ignore(8);
+    await rejects(
+      Atom.readAtom(tokenizer, async () => assert.fail('Must not dispatch'), null, 100),
+      /size exceeds remaining/
+    );
+  });
+
+  it('accepts a size-zero container and child ending exactly at the boundary', async () => {
+    const { native } = await mm.parseBuffer(box('moov', box('date', Buffer.from('2026'), 0n), 0n), 'audio/mp4');
+    assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+  });
+
+  it('accepts an extended metadata data atom and preserves the following sibling', async () => {
+    const dataHeader = Buffer.alloc(8);
+    dataHeader.writeUInt32BE(1); // UTF-8 data type
+    const title = box('©nam', box('data', Buffer.concat([dataHeader, Buffer.from('Title')]), undefined, true));
+    const { common, native } = await mm.parseBuffer(
+      box('moov', Buffer.concat([box('ilst', title), box('date', Buffer.from('2026'))])),
+      'audio/mp4'
+    );
+    assert.strictEqual(common.title, 'Title');
+    assert.deepEqual(
+      native.iTunes.find(tag => tag.id === 'date'),
+      { id: 'date', value: '2026' }
+    );
+  });
+
+  it('does not apply the metadata buffering limit to media data', async () => {
+    const size = 128n * 1024n * 1024n;
+    const tokenizer = await fromStream(
+      Readable.from([box('mdat', Buffer.alloc(0), size, true)], { objectMode: false })
+    );
+    try {
+      await Atom.readAtom(
+        tokenizer,
+        async (atom, length) => {
+          assert.strictEqual(atom.header.name, 'mdat');
+          assert.strictEqual(length, Number(size) - 16);
+        },
+        null,
+        Number.POSITIVE_INFINITY
+      );
+    } finally {
+      await tokenizer.close();
+    }
   });
 });
