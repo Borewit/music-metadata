@@ -8,10 +8,10 @@ export interface IBroadcastAudioExtensionChunk {
   originatorReference: string;
   originationDate: string;
   originationTime: string;
-  timeReferenceLow: number,
-  timeReferenceHigh: number,
-  version: number,
-  umid: Uint8Array,
+  timeReferenceLow: number;
+  timeReferenceHigh: number;
+  version: number;
+  umid: Uint8Array;
 }
 
 /**

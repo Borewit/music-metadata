@@ -1,41 +1,32 @@
-import { assert, expect } from 'chai';
 import path from 'node:path';
+import { assert, expect } from 'chai';
 import * as strtok from 'strtok3';
-
-import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
+import { type ILyricsTag, LyricsContentType, TimestampFormat } from '../lib/core.js';
+import type { IGeneralEncapsulatedObject } from '../lib/id3v2/FrameParser.js';
+import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
+import type { IPicture } from '../lib/index.js';
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
-import { LyricsContentType, TimestampFormat, type ILyricsTag } from '../lib/core.js';
-import type { IPicture } from '../lib/index.js';
-import type { IGeneralEncapsulatedObject } from '../lib/id3v2/FrameParser.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
-
   it('rejects a declared tag size larger than the remaining file before allocation', async () => {
-    const header = Uint8Array.from([
-      0x49, 0x44, 0x33,
-      0x04, 0x00,
-      0x00,
-      0x7f, 0x7f, 0x7f, 0x7f
-    ]);
+    const header = Uint8Array.from([0x49, 0x44, 0x33, 0x04, 0x00, 0x00, 0x7f, 0x7f, 0x7f, 0x7f]);
 
-    await expect(mm.parseBuffer(header, {mimeType: 'audio/mpeg'})).to.be.rejectedWith(
+    await expect(mm.parseBuffer(header, { mimeType: 'audio/mpeg' })).to.be.rejectedWith(
       mm.UnexpectedFileContentError,
       'ID3v2 tag size 268435455 exceeds remaining file size 0'
     );
   });
 
   it('should parse a raw ID3v2.3 header', async () => {
-
-    const filePath = path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer.id3v23');
+    const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.id3v23");
 
     const metadata = new MetadataCollector({});
 
     const tokenizer = await strtok.fromFile(filePath);
     try {
       return await new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
-
         assert.strictEqual(33, metadata.native['ID3v2.3'].length);
 
         const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
@@ -47,7 +38,6 @@ describe('Extract metadata from ID3v2.3 header', () => {
   });
 
   it('parse a ID3v2.3', async () => {
-
     const filePath = path.join(samplePath, 'id3v2.3.mp3');
 
     function checkFormat(format) {
@@ -78,7 +68,6 @@ describe('Extract metadata from ID3v2.3 header', () => {
     }
 
     function checkID3v1(id3v11: mm.INativeTagDict) {
-
       assert.deepEqual(id3v11.title, ['Home'], 'id3v11.title');
       assert.deepEqual(id3v11.album, ['Friday Night Lights [Original'], 'id3v11.album');
       assert.deepEqual(id3v11.artist, ['Explosions In The Sky/Another/'], 'id3v11.artist');
@@ -88,7 +77,6 @@ describe('Extract metadata from ID3v2.3 header', () => {
     }
 
     function checkID3v23(id3v23: mm.INativeTagDict) {
-
       assert.deepEqual(id3v23.TALB, ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB');
       assert.deepEqual(id3v23.TPE1, ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1');
       assert.deepEqual(id3v23.TPE2, ['Soundtrack'], 'native: TPE2');
@@ -108,18 +96,15 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.strictEqual(apic.data.length, 80938, 'raw APIC length');
     }
 
-    const metadata = await mm.parseFile(filePath, {duration: true});
+    const metadata = await mm.parseFile(filePath, { duration: true });
     checkFormat(metadata.format);
     checkCommon(metadata.common);
     checkID3v1(mm.orderTags(metadata.native.ID3v1));
     checkID3v23(mm.orderTags(metadata.native['ID3v2.3']));
-
   });
 
   describe('corrupt header / tags', () => {
-
-    it('should decode corrupt ID3v2.3 header: \'Strawberry\'', () => {
-
+    it("should decode corrupt ID3v2.3 header: 'Strawberry'", () => {
       /**
        * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
        */
@@ -142,7 +127,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
         assert.strictEqual(common.album, 'The Royal Gene', 'common.album');
         assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
         assert.strictEqual(common.year, 2002, 'common.year');
-        assert.deepEqual(common.track, {no: 4, of: null}, 'common.track = 4/?');
+        assert.deepEqual(common.track, { no: 4, of: null }, 'common.track = 4/?');
         assert.strictEqual(common.track.of, null, 'common.track.of = null');
         assert.deepEqual(common.genre, ['Alternative'], 'common.genre');
         assert.isUndefined(common.comment, 'common.comment');
@@ -152,14 +137,12 @@ describe('Extract metadata from ID3v2.3 header', () => {
         checkFormat(result.format);
         checkCommon(result.common);
       });
-
     });
 
     it('should decode PeakValue without data', async () => {
-
       const filePath = path.join(samplePath, 'issue_56.mp3');
 
-      const metadata = await mm.parseFile(filePath, {duration: true});
+      const metadata = await mm.parseFile(filePath, { duration: true });
       assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'APEv2', 'ID3v1'], 'format.tagTypes'); // ToDo: has hale APEv2 tag header
     });
 
@@ -170,49 +153,58 @@ describe('Extract metadata from ID3v2.3 header', () => {
      * Issue: https://github.com/Borewit/music-metadata/issues/2647
      */
     it('should ignore reserved frame-format-flag bits in ID3v2.3 frames', async () => {
-
       const jpegMagic = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]); // start of a JPEG file
 
       // Build an ID3v2.3 APIC frame body: <enc><mime\0><type><desc\0><image-data>
       const mime = new TextEncoder().encode('image/jpeg');
       const frameBody = new Uint8Array([
-        0x00,           // text encoding: ISO-8859-1
-        ...mime, 0x00,  // MIME type, null-terminated
-        0x03,           // picture type: Cover (front)
-        0x00,           // empty description, null-terminated
-        ...jpegMagic    // (truncated) image data
+        0x00, // text encoding: ISO-8859-1
+        ...mime,
+        0x00, // MIME type, null-terminated
+        0x03, // picture type: Cover (front)
+        0x00, // empty description, null-terminated
+        ...jpegMagic // (truncated) image data
       ]);
 
       // ID3v2.3 frame header: 4-char ID, UINT32_BE size, 2 flag bytes.
       // The second flag byte has its reserved bit 0 set (0x01). Under the ID3v2.4
       // layout this is `data_length_indicator`, which would strip the first 4 bytes.
       const frameHeader = new Uint8Array([
-        0x41, 0x50, 0x49, 0x43,                                 // 'APIC'
-        (frameBody.length >>> 24) & 0xff, (frameBody.length >>> 16) & 0xff,
-        (frameBody.length >>> 8) & 0xff, frameBody.length & 0xff, // size (UINT32_BE)
-        0x00,                                                    // status flags
-        0x01                                                     // format flags: reserved bit 0 set
+        0x41,
+        0x50,
+        0x49,
+        0x43, // 'APIC'
+        (frameBody.length >>> 24) & 0xff,
+        (frameBody.length >>> 16) & 0xff,
+        (frameBody.length >>> 8) & 0xff,
+        frameBody.length & 0xff, // size (UINT32_BE)
+        0x00, // status flags
+        0x01 // format flags: reserved bit 0 set
       ]);
 
       const tagBodyLength = frameHeader.length + frameBody.length;
       // ID3v2 header: "ID3", major=3, revision=0, flags=0, syncsafe size (4 x 7-bit).
       const id3Header = new Uint8Array([
-        0x49, 0x44, 0x33,       // 'ID3'
-        0x03, 0x00,             // version 2.3.0
-        0x00,                   // header flags
-        (tagBodyLength >>> 21) & 0x7f, (tagBodyLength >>> 14) & 0x7f,
-        (tagBodyLength >>> 7) & 0x7f, tagBodyLength & 0x7f       // syncsafe size
+        0x49,
+        0x44,
+        0x33, // 'ID3'
+        0x03,
+        0x00, // version 2.3.0
+        0x00, // header flags
+        (tagBodyLength >>> 21) & 0x7f,
+        (tagBodyLength >>> 14) & 0x7f,
+        (tagBodyLength >>> 7) & 0x7f,
+        tagBodyLength & 0x7f // syncsafe size
       ]);
 
       const buffer = new Uint8Array([...id3Header, ...frameHeader, ...frameBody]);
 
-      const {common} = await mm.parseBuffer(buffer, {mimeType: 'audio/mpeg'});
+      const { common } = await mm.parseBuffer(buffer, { mimeType: 'audio/mpeg' });
 
       assert.isDefined(common.picture, 'common.picture should be present');
       assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture[0].format');
       assert.deepEqual(common.picture[0].data, jpegMagic, 'common.picture[0].data (uncorrupted)');
     });
-
   });
 
   /**
@@ -222,16 +214,16 @@ describe('Extract metadata from ID3v2.3 header', () => {
    * Specification: http://id3.org/id3v2.3.0#line-290
    */
   it('slash delimited fields', async () => {
-    const filePath = path.join(samplePath, 'Their - They\'re - Therapy - 1sec.mp3');
+    const filePath = path.join(samplePath, "Their - They're - Therapy - 1sec.mp3");
 
     const metadata = await mm.parseFile(filePath);
     assert.isDefined(metadata.native['ID3v2.3'], 'Expect ID3v2.3 tag');
     const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
     // It should not split the id3v23.TIT2 tag (containing '/')
-    assert.deepEqual(id3v23.TIT2, ['Their / They\'re / Therapy'], 'id3v23.TIT2');
+    assert.deepEqual(id3v23.TIT2, ["Their / They're / Therapy"], 'id3v23.TIT2');
     // The artist name is actually "Their / They're / There"
     // Specification: http://id3.org/id3v2.3.0#line-455
-    assert.deepEqual(id3v23.TPE1, ['Their', 'They\'re', 'There'], 'id3v23.TPE1');
+    assert.deepEqual(id3v23.TPE1, ['Their', "They're", 'There'], 'id3v23.TPE1');
   });
 
   /**
@@ -241,26 +233,27 @@ describe('Extract metadata from ID3v2.3 header', () => {
    */
   it('should preserve slashes in the ID3v2.3 genre (TCON)', async () => {
     const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.3.mp3');
-    const {common} = await mm.parseFile(filePath);
+    const { common } = await mm.parseFile(filePath);
 
     assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
 
   it('should retain nonstandard slash-separated IPLS credits', async () => {
     const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.3-ipls-slash.mp3');
-    const {native} = await mm.parseFile(filePath);
+    const { native } = await mm.parseFile(filePath);
 
-    assert.deepEqual(mm.orderTags(native['ID3v2.3']).IPLS, [{
-      producer: ['Roy Weisman'],
-      engineer: ['James McCullagh', 'Jared Kvitka']
-    }]);
+    assert.deepEqual(mm.orderTags(native['ID3v2.3']).IPLS, [
+      {
+        producer: ['Roy Weisman'],
+        engineer: ['James McCullagh', 'Jared Kvitka']
+      }
+    ]);
   });
 
   it('null delimited fields (non-standard)', async () => {
-
     const filePath = path.join(samplePath, 'mp3', 'null-separator.id3v2.3.mp3');
 
-    const {format, common, native, quality} = await mm.parseFile(filePath);
+    const { format, common, native, quality } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
@@ -271,50 +264,57 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     assert.deepEqual(common.artists, ['2 Unlimited2', 'Ray', 'Anita'], 'common.artists');
     assert.isDefined(common.comment, 'common.comment');
-    assert.deepEqual(common.comment, [
-      {
-        descriptor: "",
-        language: "eng",
-        text: "[DJSet]"
-      },
-      {
-        descriptor: "",
-        language: "eng",
-        text: "[All]"
-      }
-    ], 'common.comment');
+    assert.deepEqual(
+      common.comment,
+      [
+        {
+          descriptor: '',
+          language: 'eng',
+          text: '[DJSet]'
+        },
+        {
+          descriptor: '',
+          language: 'eng',
+          text: '[All]'
+        }
+      ],
+      'common.comment'
+    );
     assert.deepEqual(common.genre, ['Dance', 'Classics'], 'common.genre');
 
     ['TPE1', 'TCOM', 'TCON'].forEach(tag => {
-      assert.includeDeepMembers(quality.warnings, [{message: `ID3v2.3 ${tag} uses non standard null-separator.`}], `expect warning: null separator ID3v2.3 ${tag}`);
+      assert.includeDeepMembers(
+        quality.warnings,
+        [{ message: `ID3v2.3 ${tag} uses non standard null-separator.` }],
+        `expect warning: null separator ID3v2.3 ${tag}`
+      );
     });
   });
 
   describe('4.2.1 Text information frames', () => {
-
     // http://id3.org/id3v2.3.0#line-299
     it('TCON: Content type (genres)', async () => {
       const filePath = path.join(samplePath, 'mp3', 'tcon.mp3');
-      const {format, common} = await mm.parseFile(filePath);
+      const { format, common } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
       assert.deepStrictEqual(common.genre, ['Electronic', 'Pop-Folk'], 'common.genre');
     });
-
   });
 
   describe('Decode frames', () => {
-
     // http://id3.org/id3v2.3.0#URL_link_frames_-_details
     it('4.3.1 WCOM: Commercial information', async () => {
       const metadata = await mm.parseFile(path.join(samplePath, 'id3v2-lyrics.mp3'));
       const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
       /* eslint-disable max-len */
-      assert.deepEqual(id3v23.WCOM[0], 'http://www.amazon.com/Rotation-Cute-What-We-Aim/dp/B0018QCXAU%3FSubscriptionId%3D0R6CGKPJ3EKNPQBPYJR2%26tag%3Dsoftpointer-20%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB0018QCXAU');
+      assert.deepEqual(
+        id3v23.WCOM[0],
+        'http://www.amazon.com/Rotation-Cute-What-We-Aim/dp/B0018QCXAU%3FSubscriptionId%3D0R6CGKPJ3EKNPQBPYJR2%26tag%3Dsoftpointer-20%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB0018QCXAU'
+      );
     });
 
     describe('4.3.2 WXXX: User defined URL link frame', () => {
-
       // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
       it('decoding #1', async () => {
         const metadata = await mm.parseFile(path.join(samplePath, 'bug-unkown encoding.mp3'));
@@ -326,7 +326,6 @@ describe('Extract metadata from ID3v2.3 header', () => {
       });
 
       it('decoding #2', async () => {
-
         const filePath = path.join(samplePath, 'mp3', 'issue-453.mp3');
 
         const metadata = await mm.parseFile(filePath);
@@ -338,7 +337,6 @@ describe('Extract metadata from ID3v2.3 header', () => {
           url: 'https://www.example.com'
         });
       });
-
     });
 
     // http://id3.org/id3v2.3.0#Music_CD_identifier
@@ -350,25 +348,27 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     // https://id3.org/id3v2.3.0#Unsychronised_lyrics.2Ftext_transcription
     it('4.9 USLT: Unsychronised lyrics/text transcription', async () => {
-
-      const expectedLyricsText = "Lord, have mercy, Lord, have mercy on me\nLord, have mercy, Lord, have mercy on me\n" +
+      const expectedLyricsText =
+        'Lord, have mercy, Lord, have mercy on me\nLord, have mercy, Lord, have mercy on me\n' +
         "Well, if I've done somebody wrong\nLord, have mercy if you please\n\n" +
-        "I used to have plenty of money\nThe finest clothes in town\n" +
-        "Bad luck and trouble overtook me\nAnd God, look at me now\n\n" +
+        'I used to have plenty of money\nThe finest clothes in town\n' +
+        'Bad luck and trouble overtook me\nAnd God, look at me now\n\n' +
         "Please have mercy, Lord, have mercy on me\nAnd if I've done somebody wrong\nLord, have mercy if you please\n\n" +
         "Keep on working, my child\nOh, in the morning, oh\nLord, have mercy\n\nIf I've been a bad girl, baby\nYeah, I'll change my ways\n" +
         "Don't want bad luck and trouble\nOn me all my days\n\n" +
         "Please have mercy, Lord, have mercy on me\nAnd if I've done somebody wrong\nLord, have mercy if you please\n" +
-        "Have mercy on me";
+        'Have mercy on me';
 
-      const {native, common} = await mm.parseFile(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3'));
+      const { native, common } = await mm.parseFile(
+        path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3")
+      );
 
       const id3v23 = mm.orderTags(native['ID3v2.3']);
       assert.isDefined(id3v23.USLT, 'Should contain ID3v2.3 USLT tag');
       assert.strictEqual(id3v23.USLT.length, 1, 'id3v23.USLT.length');
       const uslt = id3v23.USLT[0] as ILyricsTag;
       assert.strictEqual(uslt.descriptor, "Sinner's Prayer", 'id3v23.USLT.description');
-      assert.strictEqual(uslt.language, "eng", 'id3v23.USLT.language');
+      assert.strictEqual(uslt.language, 'eng', 'id3v23.USLT.language');
       assert.isDefined(uslt.text, 'id3v23.USLT.text');
       assert.strictEqual(uslt.text, expectedLyricsText, 'id3v23.USLT.text');
 
@@ -376,7 +376,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.isDefined(common.lyrics, 'Should map tag id3v23.USLT to common.lyrics');
       const lyrics = common.lyrics[0];
       assert.strictEqual(lyrics.descriptor, "Sinner's Prayer", 'common.lyrics.descriptor');
-      assert.strictEqual(lyrics.language, "eng", 'common.lyrics.language');
+      assert.strictEqual(lyrics.language, 'eng', 'common.lyrics.language');
       assert.isDefined(lyrics.text, 'common.lyrics.text');
       assert.strictEqual(lyrics.text, expectedLyricsText, 'common.lyrics.text');
     });
@@ -385,7 +385,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
     it('4.10. Synchronised lyrics/text', async () => {
       const filePath = path.join(samplePath, 'mp3', 'menu-sash.mp3');
 
-      const {format, native} = await mm.parseFile(filePath);
+      const { format, native } = await mm.parseFile(filePath);
 
       assert.strictEqual(format.container, 'MPEG');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
@@ -396,58 +396,80 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
       [syltTags[0], syltTags[1]].forEach(sylt => {
         assert.strictEqual(sylt.descriptor, 'captions', 'id3v23.sylt.descriptor');
-        assert.strictEqual(sylt.timeStampFormat, TimestampFormat.milliseconds, 'id3v23.sylt.timeStampFormat in milliseconds');
+        assert.strictEqual(
+          sylt.timeStampFormat,
+          TimestampFormat.milliseconds,
+          'id3v23.sylt.timeStampFormat in milliseconds'
+        );
         assert.strictEqual(sylt.language, 'eng', 'id3v23.sylt.language');
         assert.strictEqual(sylt.contentType, LyricsContentType.text, 'id3v23.sylt.contentType');
-        assert.deepEqual(sylt.syncText, [
-          {
-            text: 'Check out your sash!',
-            timestamp: 9
-          }
-        ], 'id3v23.sylt.syncText');
+        assert.deepEqual(
+          sylt.syncText,
+          [
+            {
+              text: 'Check out your sash!',
+              timestamp: 9
+            }
+          ],
+          'id3v23.sylt.syncText'
+        );
       });
 
       assert.strictEqual(syltTags[2].descriptor, 'lipsync', 'id3v23.sylt.descriptor');
-      assert.strictEqual(syltTags[2].timeStampFormat, TimestampFormat.milliseconds, 'id3v23.sylt.timeStampFormat in milliseconds');
+      assert.strictEqual(
+        syltTags[2].timeStampFormat,
+        TimestampFormat.milliseconds,
+        'id3v23.sylt.timeStampFormat in milliseconds'
+      );
       assert.strictEqual(syltTags[2].language, 'eng', 'id3v23.sylt.language');
       assert.strictEqual(syltTags[2].contentType, LyricsContentType.other, 'id3v23.sylt.contentType');
-      assert.deepEqual(syltTags[2].syncText, [
-        {
-          text: 'X',
-          timestamp: 0
-        }, {
-          text: 'F',
-          timestamp: 110
-        }, {
-          text: 'C',
-          timestamp: 280
-        }, {
-          text: 'F',
-          timestamp: 350
-        }, {
-          text: 'B',
-          timestamp: 560
-        }, {
-          text: 'C',
-          timestamp: 630
-        }, {
-          text: 'B',
-          timestamp: 980
-        }, {
-          text: 'X',
-          timestamp: 1120
-        }], 'id3v23.sylt.syncText');
+      assert.deepEqual(
+        syltTags[2].syncText,
+        [
+          {
+            text: 'X',
+            timestamp: 0
+          },
+          {
+            text: 'F',
+            timestamp: 110
+          },
+          {
+            text: 'C',
+            timestamp: 280
+          },
+          {
+            text: 'F',
+            timestamp: 350
+          },
+          {
+            text: 'B',
+            timestamp: 560
+          },
+          {
+            text: 'C',
+            timestamp: 630
+          },
+          {
+            text: 'B',
+            timestamp: 980
+          },
+          {
+            text: 'X',
+            timestamp: 1120
+          }
+        ],
+        'id3v23.sylt.syncText'
+      );
     });
 
     describe('4.16 GEOB', async () => {
-
       // http://id3.org/id3v2.3.0#General_encapsulated_object
       // Issue: https://github.com/Borewit/music-metadata/issues/406
       it('Decode Serato DJ meta-data', async () => {
-
         const filePath = path.join(samplePath, 'mp3', 'issue-406-geob.mp3');
 
-        const {format, common, native} = await mm.parseFile(filePath);
+        const { format, common, native } = await mm.parseFile(filePath);
 
         await mm.parseFile(filePath);
 
@@ -502,36 +524,41 @@ describe('Extract metadata from ID3v2.3 header', () => {
       });
     });
 
-
     it('4.18 POPM', async () => {
-
       // Rating (stars) assigned with Winamp 5.666 Media Library.
       const testCaseFiles = [
-        {file: 'testcase-0star.mp3', stars: undefined},
-        {file: 'testcase-1star.mp3', stars: 1},
-        {file: 'testcase-2star.mp3', stars: 2},
-        {file: 'testcase-3star.mp3', stars: 3},
-        {file: 'testcase-4star.mp3', stars: 4},
-        {file: 'testcase-5star.mp3', stars: 5}
+        { file: 'testcase-0star.mp3', stars: undefined },
+        { file: 'testcase-1star.mp3', stars: 1 },
+        { file: 'testcase-2star.mp3', stars: 2 },
+        { file: 'testcase-3star.mp3', stars: 3 },
+        { file: 'testcase-4star.mp3', stars: 4 },
+        { file: 'testcase-5star.mp3', stars: 5 }
       ];
 
       for (const testCaseFile of testCaseFiles) {
         const filePath = path.join(samplePath, 'rating', testCaseFile.file);
-        const {common} = await mm.parseFile(filePath);
+        const { common } = await mm.parseFile(filePath);
         if (common.rating === undefined) {
           assert.isUndefined(common.rating, `Expect no rating property to be present in: ${testCaseFile.file}`);
         } else {
           assert.isDefined(common.rating, `Expect rating property to be present in: ${testCaseFile.file}`);
-          assert.equal(Math.round(common.rating[0].rating * 4 + 1), testCaseFile.stars, `ID3v2.3 rating conversion in: ${testCaseFile.file}`);
-          assert.equal(mm.ratingToStars(common.rating[0].rating), testCaseFile.stars, `ID3v2.3 rating conversion in: ${testCaseFile.file}`);
+          assert.equal(
+            Math.round(common.rating[0].rating * 4 + 1),
+            testCaseFile.stars,
+            `ID3v2.3 rating conversion in: ${testCaseFile.file}`
+          );
+          assert.equal(
+            mm.ratingToStars(common.rating[0].rating),
+            testCaseFile.stars,
+            `ID3v2.3 rating conversion in: ${testCaseFile.file}`
+          );
         }
       }
     });
 
     describe('TXXX', async () => {
-
       it('Handle empty TXXX', async () => {
-        const {format, quality, common} = await mm.parseFile(path.join(samplePath, 'mp3', 'issue-471.mp3'));
+        const { format, quality, common } = await mm.parseFile(path.join(samplePath, 'mp3', 'issue-471.mp3'));
 
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
@@ -539,7 +566,11 @@ describe('Extract metadata from ID3v2.3 header', () => {
         assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
         assert.strictEqual(format.bitrate, 128000, 'format.bitrate');
 
-        assert.includeDeepMembers(quality.warnings, [{message: 'id3v2.3 header has empty tag type=TXXX'}], 'quality.warnings includes: \'id3v2.3 header has empty tag type=TXXX\'');
+        assert.includeDeepMembers(
+          quality.warnings,
+          [{ message: 'id3v2.3 header has empty tag type=TXXX' }],
+          "quality.warnings includes: 'id3v2.3 header has empty tag type=TXXX'"
+        );
 
         assert.strictEqual(common.title, 'Between Worlds', 'common.title');
         assert.strictEqual(common.artist, 'Roger Subirana', 'common.artist');
@@ -548,49 +579,56 @@ describe('Extract metadata from ID3v2.3 header', () => {
     });
 
     describe('PRIV', async () => {
-
       it('Handle empty PRIV tag', async () => {
-
         const filePath = path.join(samplePath, 'mp3', 'issue-691.mp3');
-        const {format, quality} = await mm.parseFile(filePath);
+        const { format, quality } = await mm.parseFile(filePath);
 
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
 
-        assert.includeDeepMembers(quality.warnings, [
-          {message: 'id3v2.3 header has empty tag type=PRIV'},
-          {message: 'Invalid ID3v2.3 frame-header-ID: \u0000\u0000\u0000\u0000'}
-        ], 'quality.warnings includes');
-
+        assert.includeDeepMembers(
+          quality.warnings,
+          [
+            { message: 'id3v2.3 header has empty tag type=PRIV' },
+            { message: 'Invalid ID3v2.3 frame-header-ID: \u0000\u0000\u0000\u0000' }
+          ],
+          'quality.warnings includes'
+        );
       });
-
     });
 
-    it('Handle ID32.2 tag ID\'s in ID32.3 header', async () => {
+    it("Handle ID32.2 tag ID's in ID32.3 header", async () => {
       const filePath = path.join(samplePath, 'mp3', 'issue-795.mp3');
 
-      const {native, quality, common} = await mm.parseFile(filePath);
-      assert.isDefined(native['ID3v2.3'], 'native[\'ID3v2.3\']');
+      const { native, quality, common } = await mm.parseFile(filePath);
+      assert.isDefined(native['ID3v2.3'], "native['ID3v2.3']");
       const ids = native['ID3v2.3'].map(tag => {
         return tag.id;
       });
-      assert.deepStrictEqual(ids, ['TP1\u0000', 'TP2\u0000', 'TAL\u0000', 'TEN\u0000', 'TIT2'], 'Decode id3v2.3 TAG names');
+      assert.deepStrictEqual(
+        ids,
+        ['TP1\u0000', 'TP2\u0000', 'TAL\u0000', 'TEN\u0000', 'TIT2'],
+        'Decode id3v2.3 TAG names'
+      );
 
-      assert.includeDeepMembers(quality.warnings, [
-        {message: 'Invalid ID3v2.3 frame-header-ID: TP1\u0000'},
-        {message: 'Invalid ID3v2.3 frame-header-ID: TP2\u0000'},
-        {message: 'Invalid ID3v2.3 frame-header-ID: TAL\u0000'},
-        {message: 'Invalid ID3v2.3 frame-header-ID: TEN\u0000'}
-      ], 'Warning invalid ID: TP1\u0000, TP2\u0000, TAL\u0000 & TEN\u0000');
+      assert.includeDeepMembers(
+        quality.warnings,
+        [
+          { message: 'Invalid ID3v2.3 frame-header-ID: TP1\u0000' },
+          { message: 'Invalid ID3v2.3 frame-header-ID: TP2\u0000' },
+          { message: 'Invalid ID3v2.3 frame-header-ID: TAL\u0000' },
+          { message: 'Invalid ID3v2.3 frame-header-ID: TEN\u0000' }
+        ],
+        'Warning invalid ID: TP1\u0000, TP2\u0000, TAL\u0000 & TEN\u0000'
+      );
 
       assert.strictEqual(common.title, 'FDP (Clean Edit)', 'common.title');
     });
 
     it('GRP1', async () => {
-
       const filePath = path.join(samplePath, 'mp3', 'herbal-tea-GRP1.mp3');
 
-      const {native, common} = await mm.parseFile(filePath);
+      const { native, common } = await mm.parseFile(filePath);
       assert.isDefined(native['ID3v2.4'], 'Expect ID3v2.4 tag header to be present');
       const grp1Tags = native['ID3v2.4'].filter(tag => tag.id === 'GRP1');
       assert.strictEqual(grp1Tags.length, 1, 'Expect ID3v2.4 GRP1 tag be present');
@@ -598,7 +636,5 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
       assert.deepStrictEqual(common.grouping, 'GRP1-Test', 'Mapping ID3v2.4 GRP1 => common.grouping');
     });
-
   });
-
 });

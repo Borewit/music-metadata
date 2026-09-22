@@ -1,40 +1,37 @@
-import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import initDebug from 'debug';
 import { EndOfStreamError, type ITokenizer } from 'strtok3';
-
-import { DataType, type IElementType, type IHeader, type ITree, type ValueType } from './types.js';
-
 import * as Token from 'token-types';
+import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import { DataType, type IElementType, type IHeader, type ITree, type ValueType } from './types.js';
 
 const debug = initDebug('music-metadata:parser:ebml');
 
-export class EbmlContentError extends makeUnexpectedFileContentError('EBML'){
-}
+export class EbmlContentError extends makeUnexpectedFileContentError('EBML') {}
 
 export interface ILinkedElementType extends IElementType {
   id: number;
   parent: ILinkedElementType | undefined;
-  readonly container?: { [id: number]: ILinkedElementType; };
+  readonly container?: { [id: number]: ILinkedElementType };
 }
 
 export const ParseAction = {
-  ReadNext: 0,           // Continue reading the next elements
-  IgnoreElement: 2,      // Ignore (do not read) this element
-  SkipSiblings: 3,       // Skip all remaining elements at the same level
-  TerminateParsing: 4,   // Terminate the parsing process
-  SkipElement: 5         // Consider the element has read, assume position is at the next element
+  ReadNext: 0, // Continue reading the next elements
+  IgnoreElement: 2, // Ignore (do not read) this element
+  SkipSiblings: 3, // Skip all remaining elements at the same level
+  TerminateParsing: 4, // Terminate the parsing process
+  SkipElement: 5 // Consider the element has read, assume position is at the next element
 } as const;
 
-export type ParseAction = typeof ParseAction[keyof typeof ParseAction];
+export type ParseAction = (typeof ParseAction)[keyof typeof ParseAction];
 
 /**
  * @return true, to quit the parser
  */
 export type IElementListener = {
-  startNext: (dtdElement: ILinkedElementType) => ParseAction,
-  elementValue: (dtdElement: ILinkedElementType, value: ValueType, offset: number) => Promise<void>
-}
+  startNext: (dtdElement: ILinkedElementType) => ParseAction;
+  elementValue: (dtdElement: ILinkedElementType, value: ValueType, offset: number) => Promise<void>;
+};
 
 /**
  * Extensible Binary Meta Language (EBML) iterator
@@ -44,7 +41,6 @@ export type IElementListener = {
  * WEBM VP8 AUDIO FILE
  */
 export class EbmlIterator {
-
   private parserMap = new Map<DataType, (e: IHeader) => Promise<ValueType>>();
 
   private ebmlMaxIDLength = 4;
@@ -70,74 +66,97 @@ export class EbmlIterator {
     return this.parseContainer(linkParents(dtdElement), posDone, listener);
   }
 
-  private async parseContainer(dtdElement: ILinkedElementType, posDone: number, listener: IElementListener): Promise<ITree> {
+  private async parseContainer(
+    dtdElement: ILinkedElementType,
+    posDone: number,
+    listener: IElementListener
+  ): Promise<ITree> {
     const tree: ITree = {};
     while (this.tokenizer.position < posDone) {
       let element: IHeader;
-      const elementPosition= this.tokenizer.position;
+      const elementPosition = this.tokenizer.position;
       try {
-       element = await this.readElement();
+        element = await this.readElement();
       } catch (error) {
         if (error instanceof EndOfStreamError) {
           break;
         }
         throw error;
       }
-      const child = (dtdElement.container as { [id: number]: ILinkedElementType; })[element.id];
+      const child = (dtdElement.container as { [id: number]: ILinkedElementType })[element.id];
       if (child) {
         const action = listener.startNext(child);
         switch (action) {
-          case ParseAction.ReadNext: {
-            if (element.id === 0x1F43B675) {
-              // Hack to ignore remaining segment, when cluster element received
-              // await this.tokenizer.ignore(posDone - this.tokenizer.position);
-              // break;
-            }
-            debug(`Read element: name=${getElementPath(child)}{id=0x${element.id.toString(16)}, container=${!!child.container}} at position=${elementPosition}`);
-            if (child.container) {
-              const childEnd = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY,
-                element.len >= 0 ? this.tokenizer.position + element.len : posDone);
-              const res = await this.parseContainer(child, childEnd, listener);
-              if (child.multiple) {
-                if (!tree[child.name]) {
-                  tree[child.name] = [];
+          case ParseAction.ReadNext:
+            {
+              if (element.id === 0x1f43b675) {
+                // Hack to ignore remaining segment, when cluster element received
+                // await this.tokenizer.ignore(posDone - this.tokenizer.position);
+                // break;
+              }
+              debug(
+                `Read element: name=${getElementPath(child)}{id=0x${element.id.toString(16)}, container=${!!child.container}} at position=${elementPosition}`
+              );
+              if (child.container) {
+                const childEnd = Math.min(
+                  posDone,
+                  this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY,
+                  element.len >= 0 ? this.tokenizer.position + element.len : posDone
+                );
+                const res = await this.parseContainer(child, childEnd, listener);
+                if (child.multiple) {
+                  if (!tree[child.name]) {
+                    tree[child.name] = [];
+                  }
+                  (tree[child.name] as ITree[]).push(res);
+                } else {
+                  tree[child.name] = res;
                 }
-                (tree[child.name] as ITree[]).push(res);
+                await listener.elementValue(child, res, elementPosition);
               } else {
-                tree[child.name] = res;
-              }
-              await listener.elementValue(child, res, elementPosition);
-            } else {
-              const parser = this.parserMap.get(child.value as DataType);
-              if (typeof parser === 'function') {
-                // Validate before leaf readers allocate buffers or string tokens from the declared length.
-                const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
-                if (!Number.isSafeInteger(element.len) || element.len < 0 || element.len > end - this.tokenizer.position) {
-                  throw new EbmlContentError(`Invalid element length: ${element.len}`);
+                const parser = this.parserMap.get(child.value as DataType);
+                if (typeof parser === 'function') {
+                  // Validate before leaf readers allocate buffers or string tokens from the declared length.
+                  const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
+                  if (
+                    !Number.isSafeInteger(element.len) ||
+                    element.len < 0 ||
+                    element.len > end - this.tokenizer.position
+                  ) {
+                    throw new EbmlContentError(`Invalid element length: ${element.len}`);
+                  }
+                  const value = await parser(element);
+                  tree[child.name] = value;
+                  await listener.elementValue(child, value, elementPosition);
                 }
-                const value = await parser(element);
-                tree[child.name] = value;
-                await listener.elementValue(child, value, elementPosition);
               }
             }
-          } break;
+            break;
 
           case ParseAction.SkipElement:
-            debug(`Go to next element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            debug(
+              `Go to next element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
+            );
             break;
 
           case ParseAction.IgnoreElement:
-            debug(`Ignore element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            debug(
+              `Ignore element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
+            );
             await this.tokenizer.ignore(element.len);
             break;
 
           case ParseAction.SkipSiblings:
-            debug(`Ignore remaining container, at: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            debug(
+              `Ignore remaining container, at: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
+            );
             await this.tokenizer.ignore(posDone - this.tokenizer.position);
             break;
 
           case ParseAction.TerminateParsing:
-            debug(`Terminate parsing at element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`);
+            debug(
+              `Terminate parsing at element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
+            );
             return tree;
         }
       } else {
@@ -146,7 +165,9 @@ export class EbmlIterator {
             await this.tokenizer.ignore(element.len);
             break;
           default:
-            debug(`parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)} at position=${elementPosition}`);
+            debug(
+              `parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)} at position=${elementPosition}`
+            );
             await this.tokenizer.ignore(element.len);
         }
       }
@@ -218,7 +239,7 @@ export class EbmlIterator {
       // Neither a declared container size nor an advertised stream size proves these bytes exist.
       // Allocate incrementally, and only assemble the leaf after reading its payload.
       const chunks: Uint8Array[] = [];
-      for (let remaining = e.len; remaining > 0;) {
+      for (let remaining = e.len; remaining > 0; ) {
         const chunk = new Uint8Array(Math.min(remaining, chunkSize));
         await this.tokenizer.readBuffer(chunk);
         chunks.push(chunk);
@@ -254,7 +275,7 @@ function readUIntBeAsBigInt(buf: Uint8Array, len: number): bigint {
   try {
     normalizedNumber.set(cleanNumber, 8 - len);
     return Token.UINT64_BE.get(normalizedNumber, 0);
-  } catch(_error) {
+  } catch (_error) {
     return BigInt(-1);
   }
 }
@@ -263,10 +284,11 @@ function linkParents(element: IElementType): ILinkedElementType {
   if (element.container) {
     Object.keys(element.container)
       .map(id => {
-        const child = (element.container as { [id: string]: ILinkedElementType; })[id];
+        const child = (element.container as { [id: string]: ILinkedElementType })[id];
         child.id = Number.parseInt(id, 10);
         return child;
-      }).forEach(child => {
+      })
+      .forEach(child => {
         child.parent = element as ILinkedElementType;
         linkParents(child);
       });
@@ -276,7 +298,7 @@ function linkParents(element: IElementType): ILinkedElementType {
 
 export function getElementPath(element: ILinkedElementType): string {
   let path = '';
-  if(element.parent && element.parent.name !== 'dtd') {
+  if (element.parent && element.parent.name !== 'dtd') {
     path += `${getElementPath(element.parent)}/`;
   }
   return path + element.name;

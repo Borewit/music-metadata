@@ -1,28 +1,23 @@
-import * as Token from 'token-types';
-
-import { tryParseApeHeader } from '../apev2/APEv2Parser.js';
-import { FourCcToken } from '../common/FourCC.js';
-import { BasicParser } from '../common/BasicParser.js';
-import { BlockHeaderToken, type IBlockHeader, type IMetadataId, MetadataIdToken } from './WavPackToken.js';
-
 import initDebug from 'debug';
+import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
+import { tryParseApeHeader } from '../apev2/APEv2Parser.js';
+import { BasicParser } from '../common/BasicParser.js';
+import { FourCcToken } from '../common/FourCC.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import { BlockHeaderToken, type IBlockHeader, type IMetadataId, MetadataIdToken } from './WavPackToken.js';
 
 const debug = initDebug('music-metadata:parser:WavPack');
 
-export class WavPackContentError extends makeUnexpectedFileContentError('WavPack'){
-}
+export class WavPackContentError extends makeUnexpectedFileContentError('WavPack') {}
 
 /**
  * WavPack Parser
  */
 export class WavPackParser extends BasicParser {
-
   private audioDataSize = 0;
 
   public async parse(): Promise<void> {
-
     this.metadata.setAudioOnly();
 
     this.audioDataSize = 0;
@@ -35,14 +30,16 @@ export class WavPackParser extends BasicParser {
   }
 
   public async parseWavPackBlocks(): Promise<void> {
-
     do {
       const blockId = await this.tokenizer.peekToken<string>(FourCcToken);
-      if (blockId !== 'wvpk')
+      if (blockId !== 'wvpk') {
         break;
+      }
 
       const header = await this.tokenizer.readToken<IBlockHeader>(BlockHeaderToken);
-      if (header.BlockID !== 'wvpk') throw new WavPackContentError('Invalid WavPack Block-ID');
+      if (header.BlockID !== 'wvpk') {
+        throw new WavPackContentError('Invalid WavPack Block-ID');
+      }
 
       debug(`WavPack header blockIndex=${header.blockIndex}, len=${BlockHeaderToken.len}`);
 
@@ -63,14 +60,18 @@ export class WavPackParser extends BasicParser {
 
       const ignoreBytes = header.blockSize - (BlockHeaderToken.len - 8);
 
-      await (header.blockIndex === 0 ? this.parseMetadataSubBlock(header, ignoreBytes) : this.tokenizer.ignore(ignoreBytes));
+      await (header.blockIndex === 0
+        ? this.parseMetadataSubBlock(header, ignoreBytes)
+        : this.tokenizer.ignore(ignoreBytes));
       if (header.blockSamples > 0) {
         this.audioDataSize += header.blockSize; // Count audio data for bit-rate calculation
       }
-    }
-    while (!this.tokenizer.fileInfo.size || this.tokenizer.fileInfo.size - this.tokenizer.position >= BlockHeaderToken.len);
+    } while (
+      !this.tokenizer.fileInfo.size ||
+      this.tokenizer.fileInfo.size - this.tokenizer.position >= BlockHeaderToken.len
+    );
     if (this.metadata.format.duration) {
-      this.metadata.setFormat('bitrate', this.audioDataSize * 8 / this.metadata.format.duration);
+      this.metadata.setFormat('bitrate', (this.audioDataSize * 8) / this.metadata.format.duration);
     }
   }
 
@@ -86,18 +87,22 @@ export class WavPackParser extends BasicParser {
       const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
       const data = new Uint8Array(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
       await this.tokenizer.readBuffer(data);
-      debug(`Metadata Sub-Blocks functionId=0x${id.functionId.toString(16)}, id.largeBlock=${id.largeBlock},data-size=${data.length}`);
+      debug(
+        `Metadata Sub-Blocks functionId=0x${id.functionId.toString(16)}, id.largeBlock=${id.largeBlock},data-size=${data.length}`
+      );
       switch (id.functionId) {
         case 0x0: // ID_DUMMY: could be used to pad WavPack blocks
           break;
 
-        case 0xe: { // ID_DSD_BLOCK
+        case 0xe: {
+          // ID_DSD_BLOCK
           debug('ID_DSD_BLOCK');
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
           const mp = 1 << Token.UINT8.get(data, 0);
           const samplingRate = header.flags.samplingRate * mp * 8; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
-          if (!header.flags.isDSD)
+          if (!header.flags.isDSD) {
             throw new WavPackContentError('Only expect DSD block if DSD-flag is set');
+          }
           this.metadata.setFormat('sampleRate', samplingRate);
           this.metadata.setFormat('duration', header.totalSamples / samplingRate);
           break;
@@ -122,10 +127,12 @@ export class WavPackParser extends BasicParser {
 
       remaining -= MetadataIdToken.len + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) + dataSizeInWords * 2;
       debug(`remainingLength=${remaining}`);
-      if (id.isOddSize)
+      if (id.isOddSize) {
         this.tokenizer.ignore(1);
+      }
     }
-    if (remaining !== 0) throw new WavPackContentError('metadata-sub-block should fit it remaining length');
+    if (remaining !== 0) {
+      throw new WavPackContentError('metadata-sub-block should fit it remaining length');
+    }
   }
-
 }

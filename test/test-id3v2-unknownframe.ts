@@ -1,5 +1,5 @@
-import {assert} from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
@@ -15,12 +15,11 @@ it('invalid "Date" frame should not cause crash', () => {
     t.strictEqual(common.artist, 'Coheed And Cambria', 'common.artist');
     t.strictEqual(common.album, 'Year Of The Black Rainbow', 'common.album');
     t.strictEqual(common.year, 2010, 'common.year');
-    t.deepEqual(common.track, {no: 1, of: null}, 'common.track');
+    t.deepEqual(common.track, { no: 1, of: null }, 'common.track');
     t.deepEqual(common.genre, ['Progressive Rock'], 'common.genre');
   }
 
-  return mm.parseFile(filePath, {duration: true}).then(metadata => {
+  return mm.parseFile(filePath, { duration: true }).then(metadata => {
     checkCommon(metadata.common);
   });
-
 });

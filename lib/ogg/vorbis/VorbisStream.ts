@@ -1,25 +1,21 @@
-import * as Token from 'token-types';
 import debugInit from 'debug';
-
-import { VorbisDecoder } from './VorbisDecoder.js';
-import { CommonHeader, IdentificationHeader, type IVorbisPicture, VorbisPictureToken } from './Vorbis.js';
-
-import type { IPageConsumer, IPageHeader } from '../OggToken.js';
-import type { IOptions } from '../../type.js';
+import * as Token from 'token-types';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
+import type { IOptions } from '../../type.js';
+import type { IPageConsumer, IPageHeader } from '../OggToken.js';
+import { CommonHeader, IdentificationHeader, type IVorbisPicture, VorbisPictureToken } from './Vorbis.js';
+import { VorbisDecoder } from './VorbisDecoder.js';
 
 const debug = debugInit('music-metadata:parser:ogg:vorbis1');
 
-export class VorbisContentError extends makeUnexpectedFileContentError('Vorbis'){
-}
+export class VorbisContentError extends makeUnexpectedFileContentError('Vorbis') {}
 
 /**
  * Vorbis 1 Parser.
  * Used by OggStream
  */
 export class VorbisStream implements IPageConsumer {
-
   private pageSegments: Uint8Array[] = [];
   protected metadata: INativeMetadataCollector;
   protected options: IOptions;
@@ -85,9 +81,9 @@ export class VorbisStream implements IPageConsumer {
   }
 
   public async addTag(id: string, value: string | IVorbisPicture): Promise<void> {
-    if (id === 'METADATA_BLOCK_PICTURE' && (typeof value === 'string')) {
+    if (id === 'METADATA_BLOCK_PICTURE' && typeof value === 'string') {
       if (this.options.skipCovers) {
-        debug("Ignore picture");
+        debug('Ignore picture');
         return;
       }
       value = VorbisPictureToken.fromBase64(value);
@@ -100,10 +96,18 @@ export class VorbisStream implements IPageConsumer {
   }
 
   public calculateDuration(enfOfStream: boolean) {
-    if (this.lastPageHeader && (enfOfStream || this.lastPageHeader.headerType.lastPage) && this.metadata.format.sampleRate && this.lastPageHeader.absoluteGranulePosition >= 0) {
+    if (
+      this.lastPageHeader &&
+      (enfOfStream || this.lastPageHeader.headerType.lastPage) &&
+      this.metadata.format.sampleRate &&
+      this.lastPageHeader.absoluteGranulePosition >= 0
+    ) {
       // Calculate duration
       this.metadata.setFormat('numberOfSamples', this.lastPageHeader.absoluteGranulePosition);
-      this.metadata.setFormat('duration', this.lastPageHeader.absoluteGranulePosition / this.metadata.format.sampleRate);
+      this.metadata.setFormat(
+        'duration',
+        this.lastPageHeader.absoluteGranulePosition / this.metadata.format.sampleRate
+      );
     }
   }
 
@@ -118,16 +122,24 @@ export class VorbisStream implements IPageConsumer {
     debug('Parse first page');
     // Parse  Vorbis common header
     const commonHeader = CommonHeader.get(pageData, 0);
-    if (commonHeader.vorbis !== 'vorbis')
+    if (commonHeader.vorbis !== 'vorbis') {
       throw new VorbisContentError('Metadata does not look like Vorbis');
+    }
     if (commonHeader.packetType === 1) {
       const idHeader = IdentificationHeader.get(pageData, CommonHeader.len);
 
       this.metadata.setFormat('sampleRate', idHeader.sampleRate);
       this.metadata.setFormat('bitrate', idHeader.bitrateNominal);
       this.metadata.setFormat('numberOfChannels', idHeader.channelMode);
-      debug('sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s', idHeader.sampleRate, idHeader.bitrateNominal, idHeader.channelMode);
-    } else throw new VorbisContentError('First Ogg page should be type 1: the identification header');
+      debug(
+        'sample-rate=%s[hz], bitrate=%s[b/s], channel-mode=%s',
+        idHeader.sampleRate,
+        idHeader.bitrateNominal,
+        idHeader.channelMode
+      );
+    } else {
+      throw new VorbisContentError('First Ogg page should be type 1: the identification header');
+    }
   }
 
   protected async parseFullPage(pageData: Uint8Array): Promise<void> {
@@ -135,7 +147,6 @@ export class VorbisStream implements IPageConsumer {
     const commonHeader = CommonHeader.get(pageData, 0);
     debug('Parse full page: type=%s, byteLength=%s', commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {
-
       case 3: //  type 3: comment header
         return this.parseUserCommentList(pageData, CommonHeader.len);
 
@@ -149,7 +160,6 @@ export class VorbisStream implements IPageConsumer {
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
    */
   protected async parseUserCommentList(pageData: Uint8Array, offset: number): Promise<void> {
-
     const strLen = Token.UINT32_LE.get(pageData, offset);
     offset += 4;
     // const vendorString = new Token.StringType(strLen, 'utf-8').get(pageData, offset);
@@ -158,7 +168,7 @@ export class VorbisStream implements IPageConsumer {
     offset += 4;
 
     while (userCommentListLength-- > 0) {
-      offset += (await this.parseUserComment(pageData, offset));
+      offset += await this.parseUserComment(pageData, offset);
     }
   }
 }

@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';
 
@@ -29,7 +29,7 @@ export const AttachedPictureType = {
   18: 'Illustration',
   19: 'Band/artist logotype',
   20: 'Publisher/Studio logotype'
-}
+};
 
 export type ID3v2MajorVersion = 2 | 3 | 4;
 
@@ -53,16 +53,16 @@ export const LyricsContentType = {
   movement_part: 3,
   events: 4,
   chord: 5,
-  trivia_pop: 6,
+  trivia_pop: 6
 };
-export type LyricsContentType = typeof LyricsContentType[keyof typeof LyricsContentType];
+export type LyricsContentType = (typeof LyricsContentType)[keyof typeof LyricsContentType];
 
 export const TimestampFormat = {
   notSynchronized: 0,
   mpegFrameNumber: 1,
   milliseconds: 2
 };
-export type TimestampFormat = typeof TimestampFormat[keyof typeof TimestampFormat];
+export type TimestampFormat = (typeof TimestampFormat)[keyof typeof TimestampFormat];
 
 /**
  * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.
@@ -70,8 +70,7 @@ export type TimestampFormat = typeof TimestampFormat[keyof typeof TimestampForma
  */
 export const UINT32SYNCSAFE: IGetToken<number> = {
   get: (buf: Uint8Array, off: number): number => {
-    return buf[off + 3] & 0x7f | ((buf[off + 2]) << 7) |
-      ((buf[off + 1]) << 14) | ((buf[off]) << 21);
+    return (buf[off + 3] & 0x7f) | (buf[off + 2] << 7) | (buf[off + 1] << 14) | (buf[off] << 21);
   },
   len: 4
 };
@@ -81,21 +80,21 @@ export const UINT32SYNCSAFE: IGetToken<number> = {
  */
 export interface IID3v2header {
   // ID3v2/file identifier   "ID3"
-  fileIdentifier: string,
+  fileIdentifier: string;
   // ID3v2 versionIndex
   version: {
-    major: ID3v2MajorVersion,
-    revision: number
-  },
+    major: ID3v2MajorVersion;
+    revision: number;
+  };
   // ID3v2 flags
   flags: {
     // Unsynchronisation
-    unsynchronisation: boolean,
+    unsynchronisation: boolean;
     // Extended header
-    isExtendedHeader: boolean
+    isExtendedHeader: boolean;
     // Experimental indicator
-    expIndicator: boolean,
-    footer: boolean
+    expIndicator: boolean;
+    footer: boolean;
   };
   size: number;
 }
@@ -160,16 +159,15 @@ export const TextEncodingToken: IGetToken<ITextEncoding> = {
   get: (uint8Array: Uint8Array, off: number): ITextEncoding => {
     switch (uint8Array[off]) {
       case 0x00:
-        return {encoding: 'latin1'}; // binary
+        return { encoding: 'latin1' }; // binary
       case 0x01:
-        return {encoding: 'utf-16le', bom: true};
+        return { encoding: 'utf-16le', bom: true };
       case 0x02:
-        return {encoding: 'utf-16be', bom: false};
+        return { encoding: 'utf-16be', bom: false };
       case 0x03:
-        return {encoding: 'utf8', bom: false};
+        return { encoding: 'utf8', bom: false };
       default:
-        return {encoding: 'utf8', bom: false};
-
+        return { encoding: 'utf8', bom: false };
     }
   }
 };

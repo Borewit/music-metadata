@@ -1,39 +1,40 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
+import { assert } from 'chai';
+import { dbToRatio, ratioToDb, toRatio } from '../lib/common/Util.js';
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
-import { ratioToDb, dbToRatio, toRatio } from '../lib/common/Util.js';
 
 describe('Decode replaygain tags', () => {
-
   const filePath = path.join(samplePath, '04 Long Drive.flac');
 
   it('Convert ratio to dB', () => {
-
     assert.approximately(ratioToDb(0.99914551), -0.00371259, 0.000000005);
   });
 
   it('Convert dB to ratio', () => {
-
-    assert.approximately(dbToRatio(-7.03), 0.19815270, 0.000000005);
+    assert.approximately(dbToRatio(-7.03), 0.1981527, 0.000000005);
   });
 
   it('Convert dB string value to IRatio', () => {
-
     assert.deepEqual(toRatio('-7.03 dB'), {
       dB: -7.03,
       ratio: 0.1981527025805098
     });
-    assert.deepEqual(toRatio('xxx'), {dB: Number.NaN, ratio: Number.NaN});
+    assert.deepEqual(toRatio('xxx'), { dB: Number.NaN, ratio: Number.NaN });
   });
 
   it('should decode replaygain tags from FLAC/Vorbis', async () => {
-
     return mm.parseFile(filePath).then(metadata => {
-      assert.deepEqual(metadata.common.replaygain_track_gain, {dB: -7.03, ratio: 0.1981527025805098}, 'replaygain_track_gain.ratio');
-      assert.deepEqual(metadata.common.replaygain_track_peak, {dB: -0.0037125893296365503, ratio: 0.99914551}, 'replaygain_track_peak.ratio = -0.00371259 dB');
+      assert.deepEqual(
+        metadata.common.replaygain_track_gain,
+        { dB: -7.03, ratio: 0.1981527025805098 },
+        'replaygain_track_gain.ratio'
+      );
+      assert.deepEqual(
+        metadata.common.replaygain_track_peak,
+        { dB: -0.0037125893296365503, ratio: 0.99914551 },
+        'replaygain_track_peak.ratio = -0.00371259 dB'
+      );
     });
   });
-
 });

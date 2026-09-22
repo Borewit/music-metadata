@@ -295,14 +295,14 @@ parseWebStream(webStream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | str
   An object containing file-related information or a string representing the MIME-type of the audio stream.
   The fileInfo parameter can help the parser to correctly identify the audio format and may include:
 
-    - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
+  - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
 
-      If provided, it is assumed the streamed file content is to be the MIME-type.
-      If not provided, the parser will attempt to determine the format based on the content of the stream.
+    If provided, it is assumed the streamed file content is to be the MIME-type.
+    If not provided, the parser will attempt to determine the format based on the content of the stream.
 
-    - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
+  - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
 
-    - `path`: A string representing the file path or filename, which can also assist in determining the format.
+  - `path`: A string representing the file path or filename, which can also assist in determining the format.
 
 - `options`: `IOptions` (optional)
 
@@ -362,8 +362,8 @@ parseBlob(blob: Blob, options?: IOptions = {}): Promise<IAudioMetadata>
  
 - `blob`: [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
   
-   The Blob object containing the audio data to be parsed.
-   This can be a file or any binary data. If the Blob is an instance of File, its name will be used as the file path in the metadata.
+  The Blob object containing the audio data to be parsed.
+  This can be a file or any binary data. If the Blob is an instance of File, its name will be used as the file path in the metadata.
 
 - `options`: [IOptions](#ioptions-interface) (optional)
   

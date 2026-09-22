@@ -1,17 +1,14 @@
-import { assert } from 'chai';
-
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
 describe('Parsing MPEG / ID3v1', () => {
-
   const fileBloodSugar = path.join(samplePath, 'id3v1_Blood_Sugar.mp3');
 
   describe('should be able to read an ID3v1 tag', () => {
-
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, ['ID3v1'], 'format.tagTypes');
       assert.strictEqual(format.container, 'MPEG', 'format.container');
@@ -32,14 +29,14 @@ describe('Parsing MPEG / ID3v1', () => {
       assert.strictEqual(common.track.no, 1, 'common.track.no = 1 (ID3v1 tag)');
       assert.strictEqual(common.track.of, null, 'common.track.of = null');
       assert.deepEqual(common.genre, ['Electronic'], 'common.genre');
-      assert.deepEqual(common.comment, [{text: 'abcdefg'}], 'common.comment');
+      assert.deepEqual(common.comment, [{ text: 'abcdefg' }], 'common.comment');
     }
 
     /**
      * 241920 samples
      */
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const { format, common } = await parser.parse(() => this.skip(), fileBloodSugar, 'audio/mpeg');
         checkFormat(format);
         checkCommon(common);
@@ -48,18 +45,16 @@ describe('Parsing MPEG / ID3v1', () => {
   });
 
   describe('it should skip id3v1 header if options.skipPostHeaders is set', () => {
-
-    const filePath = path.join(samplePath, '07 - I\'m Cool.mp3');
+    const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-        const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {skipPostHeaders: true});
+      it(parser.description, async function () {
+        const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { skipPostHeaders: true });
         assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
       });
     });
   });
 
   describe('should handle MP3 without any tags', () => {
-
     const filePath = path.join(samplePath, 'silence-2s-16000 [no-tags].CBR-128.mp3');
 
     function checkFormat(format: mm.IFormat) {
@@ -74,7 +69,7 @@ describe('Parsing MPEG / ID3v1', () => {
     }
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
         checkFormat(format);
       });
@@ -82,7 +77,6 @@ describe('Parsing MPEG / ID3v1', () => {
   });
 
   describe('should decode ID3v1.0 with undefined tags', () => {
-
     /**
      * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
      */
@@ -112,25 +106,23 @@ describe('Parsing MPEG / ID3v1', () => {
     }
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
+      it(parser.description, async function () {
         const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
         checkFormat(format);
         checkCommon(common);
       });
     });
-
   });
 
   /**
    * Related issue: https://github.com/Borewit/music-metadata/issues/69
    */
   it('should respect null terminated tag values correctly', () => {
-
     const filePath = path.join(samplePath, 'issue_69.mp3');
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-        const { native } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', {duration: true});
+      it(parser.description, async function () {
+        const { native } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: true });
         const id3v1 = mm.orderTags(native.ID3v1);
         assert.deepEqual(id3v1.title, ['Skupinove foto'], 'id3v1.title');
         assert.deepEqual(id3v1.artist, ['Pavel Dobes'], 'id3v1.artist');
@@ -138,7 +130,6 @@ describe('Parsing MPEG / ID3v1', () => {
         assert.deepEqual(id3v1.year, ['1988'], 'id3v1.year');
       });
     });
-
   });
 
   // Regression for https://github.com/Borewit/music-metadata/issues/2717
@@ -153,7 +144,6 @@ describe('Parsing MPEG / ID3v1', () => {
     assert.strictEqual(common.track.of, null);
     assert.isFalse(native.ID3v1.some(tag => tag.id === 'track'));
     assert.deepEqual(common.genre, ['Rock']);
-    assert.deepEqual(common.comment, [{text: 'abcdefghijklmnopqrstuvwxyzABrs'}]);
+    assert.deepEqual(common.comment, [{ text: 'abcdefghijklmnopqrstuvwxyzABrs' }]);
   });
-
 });

@@ -1,11 +1,10 @@
-import {assert} from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 it("should reject files that can't be parsed", async () => {
-
   const filePath = path.join(samplePath, 'flac.flac.jpg');
 
   // Run with default options

@@ -1,5 +1,5 @@
-import type { INativeTagMap } from '../../common/GenericTagTypes.js';
 import { CommonTagMapper } from '../../common/GenericTagMapper.js';
+import type { INativeTagMap } from '../../common/GenericTagTypes.js';
 
 import type { IRating, ITag } from '../../type.js';
 
@@ -121,9 +121,7 @@ const vorbisTagMap: INativeTagMap = {
 };
 
 export class VorbisTagMapper extends CommonTagMapper {
-
   public static toRating(email: string | undefined | null, rating: string, maxScore: number): IRating {
-
     return {
       source: email ? email.toLowerCase() : undefined,
       rating: (Number.parseFloat(rating) / maxScore) * CommonTagMapper.maxRatingScore

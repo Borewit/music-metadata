@@ -1,17 +1,19 @@
 import initDebug from 'debug';
+import type { ITokenizer } from 'strtok3';
 import * as AtomToken from './AtomToken.js';
 import { Header } from './AtomToken.js';
-
-import type { ITokenizer } from 'strtok3';
 
 export type AtomDataHandler = (atom: Atom, remaining: number) => Promise<void>;
 
 const debug = initDebug('music-metadata:parser:MP4:Atom');
 
 export class Atom {
-
-  public static async readAtom(tokenizer: ITokenizer, dataHandler: AtomDataHandler, parent: Atom | null, remaining: number): Promise<Atom> {
-
+  public static async readAtom(
+    tokenizer: ITokenizer,
+    dataHandler: AtomDataHandler,
+    parent: Atom | null,
+    remaining: number
+  ): Promise<Atom> {
     // Parse atom header
     const offset = tokenizer.position;
     debug(`Reading next token on offset=${offset}...`); //  buf.toString('ascii')
@@ -22,7 +24,9 @@ export class Atom {
     }
     const atomBean = new Atom(header, extended, parent);
     const payloadLength = atomBean.getPayloadLength(remaining);
-    debug(`parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`); //  buf.toString('ascii')
+    debug(
+      `parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`
+    ); //  buf.toString('ascii')
     await atomBean.readData(tokenizer, dataHandler, payloadLength);
     return atomBean;
   }
@@ -59,7 +63,6 @@ export class Atom {
   }
 
   private async readData(tokenizer: ITokenizer, dataHandler: AtomDataHandler, remaining: number): Promise<void> {
-
     switch (this.header.name) {
       // "Container" atoms, contains nested atoms
       case 'moov': // The Movie Atom: contains other atoms
@@ -73,7 +76,8 @@ export class Atom {
       case 'moof':
         return this.readAtoms(tokenizer, dataHandler, this.getPayloadLength(remaining));
 
-      case 'meta': { // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
+      case 'meta': {
+        // Metadata Atom, ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW8
         // meta has 4 bytes of padding, ignore
         const peekHeader = await tokenizer.peekToken(Header);
         const paddingLength = peekHeader.name === 'hdlr' ? 0 : 4;

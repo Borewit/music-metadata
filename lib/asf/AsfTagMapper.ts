@@ -1,7 +1,7 @@
-import type {INativeTagMap} from '../common/GenericTagTypes.js';
-import {CommonTagMapper} from '../common/GenericTagMapper.js';
-import type {IRating, ITag} from '../type.js';
-import type {IWarningCollector} from '../common/MetadataCollector.js';
+import { CommonTagMapper } from '../common/GenericTagMapper.js';
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
+import type { IWarningCollector } from '../common/MetadataCollector.js';
+import type { IRating, ITag } from '../type.js';
 
 /**
  * ASF Metadata tag mappings.
@@ -40,7 +40,7 @@ const asfTagMap: INativeTagMap = {
   // 'WM/PartOfSet': 'totaldiscs',
   'WM/IsCompilation': 'compilation',
   'WM/SharedUserRating': 'rating',
-  'POPULARIMETER': 'rating',
+  POPULARIMETER: 'rating',
   'WM/BeatsPerMinute': 'bpm',
   'WM/Mood': 'mood',
   'WM/Media': 'media',
@@ -79,11 +79,11 @@ const asfTagMap: INativeTagMap = {
 };
 
 export class AsfTagMapper extends CommonTagMapper {
-
   public static toRating(rating: string | number): IRating {
     const value = typeof rating === 'number' ? rating : Number.parseFloat(rating);
-    if (!Number.isFinite(value) || value <= 0)
+    if (!Number.isFinite(value) || value <= 0) {
       return { rating: undefined };
+    }
     return { rating: value / 99 };
   }
 
@@ -92,7 +92,6 @@ export class AsfTagMapper extends CommonTagMapper {
   }
 
   protected postMap(tag: ITag, warnings: IWarningCollector): void {
-
     switch (tag.id) {
       case 'POPULARIMETER': {
         // popm-style attribute, written by e.g. foobar2000; value is "email|rating|counter"
@@ -115,6 +114,5 @@ export class AsfTagMapper extends CommonTagMapper {
         break;
       }
     }
-
   }
 }

@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import { textDecode } from '@borewit/text-codec';
+import * as Token from 'token-types';
 
 export class VorbisDecoder {
   private readonly data: Uint8Array;
@@ -24,7 +24,7 @@ export class VorbisDecoder {
     return value;
   }
 
-  public parseUserComment(): {key: string, value: string, len: number} {
+  public parseUserComment(): { key: string; value: string; len: number } {
     const offset0 = this.offset;
     const v = this.readStringUtf8();
     const idx = v.indexOf('=');

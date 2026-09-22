@@ -1,13 +1,11 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
+import { assert } from 'chai';
+import type { IPicture } from '../lib/index.js';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
-import type { IPicture } from '../lib/index.js';
 
-describe('Parse APE (Monkey\'s Audio)', () => {
-
+describe("Parse APE (Monkey's Audio)", () => {
   function checkFormat(format: mm.IFormat) {
     assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate = 44.1 [kHz]');
@@ -26,8 +24,8 @@ describe('Parse APE (Monkey\'s Audio)', () => {
     assert.strictEqual(common.album, 'Audioslave', 'common.album');
     assert.strictEqual(common.year, 2002, 'common.year');
     assert.deepEqual(common.genre, ['Alternative'], 'common.genre');
-    assert.deepEqual(common.track, {no: 7, of: null}, 'common.track');
-    assert.deepEqual(common.disk, {no: 3, of: null}, 'common.disk');
+    assert.deepEqual(common.track, { no: 7, of: null }, 'common.track');
+    assert.deepEqual(common.disk, { no: 3, of: null }, 'common.disk');
     assert.strictEqual(common.picture![0].format, 'image/jpeg', 'common.picture 0 format');
     assert.strictEqual(common.picture![0].data.length, 48658, 'common.picture 0 length');
     assert.strictEqual(common.picture![1].format, 'image/jpeg', 'common.picture 1 format');
@@ -42,8 +40,12 @@ describe('Parse APE (Monkey\'s Audio)', () => {
   }
 
   Parsers.forEach(parser => {
-    it(parser.description, async function(){
-      const {format, common, native} = await parser.parse(() => this.skip(), path.join(samplePath, 'monkeysaudio.ape'), 'audio/ape');
+    it(parser.description, async function () {
+      const { format, common, native } = await parser.parse(
+        () => this.skip(),
+        path.join(samplePath, 'monkeysaudio.ape'),
+        'audio/ape'
+      );
       checkFormat(format);
       checkCommon(common);
       assert.isDefined(native, 'metadata.native should be defined');
@@ -51,39 +53,37 @@ describe('Parse APE (Monkey\'s Audio)', () => {
       checkNative(mm.orderTags(native.APEv2));
     });
   });
-
 });
 
 describe('Parse APEv2 Date tag', () => {
-
   // Derived from monkeysaudio.ape, replacing all tags and artwork with Date=2021-06-15.
   // No Year tag is present, so it cannot mask a missing Date mapping.
   Parsers.forEach(parser => {
-    it(parser.description, async function(){
-      const {format, common, native, quality} = await parser.parse(() => this.skip(),
-        path.join(samplePath, 'monkeysaudio-date.ape'), 'audio/ape');
+    it(parser.description, async function () {
+      const { format, common, native, quality } = await parser.parse(
+        () => this.skip(),
+        path.join(samplePath, 'monkeysaudio-date.ape'),
+        'audio/ape'
+      );
 
       assert.strictEqual(format.container, "Monkey's Audio");
       assert.deepEqual(format.tagTypes, ['APEv2']);
-      assert.deepEqual(native.APEv2, [{id: 'Date', value: '2021-06-15'}]);
+      assert.deepEqual(native.APEv2, [{ id: 'Date', value: '2021-06-15' }]);
       assert.strictEqual(common.date, '2021-06-15');
       assert.strictEqual(common.year, 2021);
       assert.isEmpty(quality.warnings);
     });
   });
-
 });
 
 describe('Parse APEv2 header', () => {
-
   it('Handle APEv2 with item count to high(issue #331)', async () => {
-
     const filePath = path.join(samplePath, 'mp3', 'issue-331.apev2.mp3');
 
     const metadata = await mm.parseFile(filePath, {
       duration: false
     });
-    const {format, common, quality} = metadata;
+    const { format, common, quality } = metadata;
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
     assert.strictEqual(format.codecProfile, 'CBR', 'format.codecProfile');
@@ -98,9 +98,12 @@ describe('Parse APEv2 header', () => {
     assert.strictEqual(common.artist, 'Criminal Vibes', 'common.artist');
     assert.strictEqual(common.title, 'Push The Feeling On (Groove Phenomenon Remix)', 'common.title');
 
-    assert.strictEqual(quality.warnings.filter(warning => {
-      return warning.message === 'APEv2 Tag-header: 1 items remaining, but no more tag data to read.';
-    }).length, 1, 'quality.warnings');
+    assert.strictEqual(
+      quality.warnings.filter(warning => {
+        return warning.message === 'APEv2 Tag-header: 1 items remaining, but no more tag data to read.';
+      }).length,
+      1,
+      'quality.warnings'
+    );
   });
-
 });

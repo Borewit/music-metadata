@@ -1,18 +1,16 @@
-import {assert} from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 describe('Parse Sony DSF (DSD Stream File)', () => {
-
   const dsfSamplePath = path.join(samplePath, 'dsf');
 
   it('parse: 2L-110_stereo-5644k-1b_04.dsf', async () => {
-
     const dsfFilePath = path.join(dsfSamplePath, '2L-110_stereo-5644k-1b_04_0.1-sec.dsf');
 
-    const {format, common} = await mm.parseFile(dsfFilePath, {duration: false});
+    const { format, common } = await mm.parseFile(dsfFilePath, { duration: false });
 
     // format chunk information
     assert.strictEqual(format.container, 'DSF');
@@ -30,7 +28,6 @@ describe('Parse Sony DSF (DSD Stream File)', () => {
     // ID3v2 chunk information
     assert.strictEqual(common.title, 'Kyrie');
     assert.strictEqual(common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim');
-    assert.deepStrictEqual(common.track, {no: 4, of: 12});
+    assert.deepStrictEqual(common.track, { no: 4, of: 12 });
   });
-
 });

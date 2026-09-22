@@ -1,15 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { assert, expect } from 'chai';
 import mime from 'mime';
-import path from 'node:path';
-import fs from 'node:fs';
 
 import * as mm from '../lib/index.js';
-import { SourceStream, samplePath } from './util.js';
-import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from '../lib/ParseError.js';
 import { getSupportedMimeTypes } from '../lib/index.js';
+import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from '../lib/ParseError.js';
+import { SourceStream, samplePath } from './util.js';
 
 describe('MIME & extension mapping', () => {
-
   const buf = new Uint8Array(30).fill(0);
 
   const audioExtension = ['.aac', '.mp3', '.ogg', '.wav', '.flac', '.m4a']; // ToDo: ass ".ac3"
@@ -30,33 +29,33 @@ describe('MIME & extension mapping', () => {
   }
 
   it('should reject an unknown file', async () => {
-    await expect(mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))).to.be.rejectedWith(UnsupportedFileTypeError, 'Guessed MIME-type not supported: image/jpeg: ');
+    await expect(mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))).to.be.rejectedWith(
+      UnsupportedFileTypeError,
+      'Guessed MIME-type not supported: image/jpeg: '
+    );
   });
 
   it('should map MIME-types', () => {
+    return Promise.all(
+      audioExtension.map(extension => {
+        const streamReader = new SourceStream(buf);
+        // Convert extension to MIME-Type
+        const mimeType = mime.getType(extension);
+        assert.isNotNull(mimeType, `extension: ${extension}`);
 
-    return Promise.all(audioExtension.map(extension => {
-      const streamReader = new SourceStream(buf);
-      // Convert extension to MIME-Type
-      const mimeType = mime.getType(extension);
-      assert.isNotNull(mimeType, `extension: ${extension}`);
-
-      return mm.parseStream(streamReader, mimeType)
-        .catch(err => {
+        return mm.parseStream(streamReader, mimeType).catch(err => {
           handleError(extension, err);
         });
-    }));
-
+      })
+    );
   });
 
   it('should map on extension as well', () => {
-
     const prom = [];
 
     audioExtension.forEach(extension => {
-
       const streamReader = new SourceStream(buf);
-      const res = mm.parseStream(streamReader, {path: extension}).catch(err => {
+      const res = mm.parseStream(streamReader, { path: extension }).catch(err => {
         handleError(extension, err);
       });
 
@@ -64,38 +63,32 @@ describe('MIME & extension mapping', () => {
     });
 
     return Promise.all(prom);
-
   });
 
   it('should be able to handle MIME-type parameter(s)', async () => {
-
     // Wrap stream around buffer, to prevent the `stream.path` is provided
-    const buffer = fs.readFileSync(path.join(samplePath, 'MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav'));
+    const buffer = fs.readFileSync(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
     const stream = new SourceStream(buffer);
     const metadata = await mm.parseStream(stream);
     assert.equal(metadata.format.container, 'WAVE');
   });
 
   describe('Resolve MIME based on content', () => {
-
     it('should fall back on content detection in case the extension is useless', async () => {
-
       const metadata = await mm.parseFile(path.join(samplePath, 'mp3', '1a643e9e0743dee8732554d0e870055a'));
       assert.equal(metadata.format.container, 'MPEG');
       assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
     });
 
     it('should throw error on unrecognized MIME-type', async () => {
-
       const streamReader = new SourceStream(buf);
       try {
-        await mm.parseStream(streamReader, {mimeType: 'audio/not-existing'});
+        await mm.parseStream(streamReader, { mimeType: 'audio/not-existing' });
         assert.fail('Should throw an Error');
       } catch (err) {
         assert.equal(err.message, 'Failed to determine audio format');
         assert.instanceOf(err, CouldNotDetermineFileTypeError);
       }
-
     });
 
     it('should throw error on recognized MIME-type which is not supported', async () => {
@@ -104,7 +97,7 @@ describe('MIME & extension mapping', () => {
       const stream = new SourceStream(buffer);
 
       try {
-        await mm.parseStream(stream, {mimeType: 'audio/not-existing'});
+        await mm.parseStream(stream, { mimeType: 'audio/not-existing' });
         assert.fail('Should throw an Error');
       } catch (err) {
         assert.equal(err.message, 'Guessed MIME-type not supported: image/jpeg');
@@ -133,7 +126,7 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize MPEG-4 / m4a', () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.m4a', 'M4A/mp42/isom');
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.m4a", 'M4A/mp42/isom');
     });
 
     it('should recognize MPEG-4 / m4b', () => {
@@ -153,11 +146,11 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize WAV', () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].wav', 'WAVE');
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE');
     });
 
     it('should recognize APE', () => {
-      return testFileType('MusicBrainz - Beth Hart - Sinner\'s Prayer.ape', 'Monkey\'s Audio');
+      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
     });
 
     it('should recognize WMA', () => {
@@ -165,7 +158,7 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize WavPack', () => {
-      return testFileType(path.join('wavpack', 'MusicBrainz - Beth Hart - Sinner\'s Prayer.wv'), 'WavPack');
+      return testFileType(path.join('wavpack', "MusicBrainz - Beth Hart - Sinner's Prayer.wv"), 'WavPack');
     });
 
     it('should recognize SV7', () => {
@@ -187,7 +180,6 @@ describe('MIME & extension mapping', () => {
     it('should recognize WebM', () => {
       return testFileType(path.join('matroska', '02 - Poxfil - Solid Ground (5 sec).opus.webm'), 'EBML/webm');
     });
-
   });
 
   it('Supported MIME type list', () => {
@@ -195,5 +187,4 @@ describe('MIME & extension mapping', () => {
     expect(mimeTypes).to.contain('audio/flac');
     expect(mimeTypes).to.contain('audio/x-flac');
   });
-
 });

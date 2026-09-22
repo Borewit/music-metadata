@@ -1,6 +1,6 @@
-import * as Token from 'token-types';
 import type { SupportedEncoding } from '@borewit/text-codec';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 import type { IChunkHeader } from '../iff/index.js';
 
 export type { IChunkHeader } from '../iff/index.js';
@@ -25,12 +25,14 @@ export const Header: IGetToken<IChunkHeader> = {
  * Token to parse RIFF-INFO tag value
  */
 export class ListInfoTagValue implements IGetToken<string> {
-
   public len: number;
 
   private tagHeader: IChunkHeader;
 
-  public constructor(tagHeader: IChunkHeader, private readonly encoding: SupportedEncoding = 'latin1') {
+  public constructor(
+    tagHeader: IChunkHeader,
+    private readonly encoding: SupportedEncoding = 'latin1'
+  ) {
     this.tagHeader = tagHeader;
     this.len = tagHeader.chunkSize;
     this.len += this.len & 1; // if it is an odd length, round up to even

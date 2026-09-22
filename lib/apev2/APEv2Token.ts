@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 
 import { FourCcToken } from '../common/FourCC.js';
 
@@ -27,25 +27,25 @@ import { FourCcToken } from '../common/FourCC.js';
 
 export interface IDescriptor {
   // should equal 'MAC '
-  ID: string,
+  ID: string;
   // versionIndex number * 1000 (3.81 = 3810) (remember that 4-byte alignment causes this to take 4-bytes)
-  version: number,
+  version: number;
   // the number of descriptor bytes (allows later expansion of this header)
-  descriptorBytes: number,
+  descriptorBytes: number;
   // the number of header APE_HEADER bytes
-  headerBytes: number,
+  headerBytes: number;
   // the number of header APE_HEADER bytes
-  seekTableBytes: number,
+  seekTableBytes: number;
   // the number of header data bytes (from original file)
-  headerDataBytes: number,
+  headerDataBytes: number;
   // the number of bytes of APE frame data
-  apeFrameDataBytes: number,
+  apeFrameDataBytes: number;
   // the high order number of APE frame data bytes
-  apeFrameDataBytesHigh: number,
+  apeFrameDataBytesHigh: number;
   // the terminating data of the file (not including tag data)
-  terminatingDataBytes: number,
+  terminatingDataBytes: number;
   // the MD5 hash of the file (see notes for usage... it's a littly tricky)
-  fileMD5: Uint8Array
+  fileMD5: Uint8Array;
 }
 
 /**
@@ -53,34 +53,34 @@ export interface IDescriptor {
  */
 export interface IHeader {
   // the compression level (see defines I.E. COMPRESSION_LEVEL_FAST)
-  compressionLevel: number,
+  compressionLevel: number;
   // any format flags (for future use)
-  formatFlags: number,
+  formatFlags: number;
   // the number of audio blocks in one frame
-  blocksPerFrame: number,
+  blocksPerFrame: number;
   // the number of audio blocks in the final frame
-  finalFrameBlocks: number,
+  finalFrameBlocks: number;
   // the total number of frames
-  totalFrames: number,
+  totalFrames: number;
   // the bits per sample (typically 16)
-  bitsPerSample: number,
+  bitsPerSample: number;
   // the number of channels (1 or 2)
-  channel: number,
+  channel: number;
   // the sample rate (typically 44100)
-  sampleRate: number
+  sampleRate: number;
 }
 
 export interface IFooter {
   // should equal 'APETAGEX'
-  ID: string,
+  ID: string;
   // equals CURRENT_APE_TAG_VERSION
-  version: number,
+  version: number;
   // the complete size of the tag, including this footer (excludes header)
-  size: number,
+  size: number;
   // the number of fields in the tag
-  fields: number,
+  fields: number;
   // Global tag flags of all items
-  flags: ITagFlags // ToDo: what is this???
+  flags: ITagFlags; // ToDo: what is this???
 }
 
 export const DataType = {
@@ -88,8 +88,8 @@ export const DataType = {
   binary: 1,
   external_info: 2,
   reserved: 3
-}
-export type DataType = typeof DataType[keyof typeof DataType]
+};
+export type DataType = (typeof DataType)[keyof typeof DataType];
 
 /**
  * APE_DESCRIPTOR: defines the sizes (and offsets) of all the pieces, as well as the MD5 checksum
@@ -201,11 +201,11 @@ export const TagItemHeader: IGetToken<ITagItemHeader> = {
 };
 
 export interface ITagFlags {
-  containsHeader: boolean,
-  containsFooter: boolean,
-  isHeader: boolean,
-  readOnly: boolean,
-  dataType: DataType
+  containsHeader: boolean;
+  containsFooter: boolean;
+  isHeader: boolean;
+  readOnly: boolean;
+  dataType: DataType;
 }
 
 export function parseTagFlags(flags: number): ITagFlags {
@@ -224,5 +224,5 @@ export function parseTagFlags(flags: number): ITagFlags {
  * @return {boolean} true if bit is 1; otherwise false
  */
 export function isBitSet(num: number, bit: number): boolean {
-  return (num & 1 << bit) !== 0;
+  return (num & (1 << bit)) !== 0;
 }

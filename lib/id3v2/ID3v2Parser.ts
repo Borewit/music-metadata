@@ -2,37 +2,34 @@ import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
 import type { TagType } from '../common/GenericTagTypes.js';
-import { FrameParser, Id3v2ContentError, type ITextTag } from './FrameParser.js';
-import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header } from './ID3v2Token.js';
-
-import type { ITag, IOptions, AnyTagValue, IChapter } from '../type.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
-
+import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
 import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
+import { type Chapter, FrameParser, Id3v2ContentError, type ITextTag, type TableOfContents } from './FrameParser.js';
+import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header } from './ID3v2Token.js';
 
 interface IFrameFlags {
   status: {
-    tag_alter_preservation: boolean,
-    file_alter_preservation: boolean,
-    read_only: boolean
-  },
+    tag_alter_preservation: boolean;
+    file_alter_preservation: boolean;
+    read_only: boolean;
+  };
   format: {
-    grouping_identity: boolean,
-    compression: boolean,
-    encryption: boolean,
-    unsynchronisation: boolean,
-    data_length_indicator: boolean
+    grouping_identity: boolean;
+    compression: boolean;
+    encryption: boolean;
+    unsynchronisation: boolean;
+    data_length_indicator: boolean;
   };
 }
 
 interface IFrameHeader {
-  id: string,
+  id: string;
   length: number;
   flags?: IFrameFlags;
 }
 
 export class ID3v2Parser {
-
   public static removeUnsyncBytes(buffer: Uint8Array): Uint8Array {
     let readI = 0;
     let writeI = 0;
@@ -40,7 +37,7 @@ export class ID3v2Parser {
       if (readI !== writeI) {
         buffer[writeI] = buffer[readI];
       }
-      readI += (buffer[readI] === 0xFF && buffer[readI + 1] === 0) ? 2 : 1;
+      readI += buffer[readI] === 0xff && buffer[readI + 1] === 0 ? 2 : 1;
       writeI++;
     }
     if (readI < buffer.length) {
@@ -49,7 +46,13 @@ export class ID3v2Parser {
     return buffer.subarray(0, writeI);
   }
 
-  private static readFrameData(uint8Array: Uint8Array, frameHeader: IFrameHeader, majorVer: ID3v2MajorVersion, includeCovers: boolean, warningCollector: IWarningCollector) {
+  private static readFrameData(
+    uint8Array: Uint8Array,
+    frameHeader: IFrameHeader,
+    majorVer: ID3v2MajorVersion,
+    includeCovers: boolean,
+    warningCollector: IWarningCollector
+  ) {
     const frameParser = new FrameParser(majorVer, warningCollector);
     switch (majorVer) {
       case 2:
@@ -82,11 +85,10 @@ export class ID3v2Parser {
   private id3Header: IID3v2header = undefined as unknown as IID3v2header;
   private metadata: INativeMetadataCollector = undefined as unknown as INativeMetadataCollector;
 
-  private headerType: TagType= undefined as unknown as TagType;
-  private options: IOptions= undefined as unknown as IOptions;
+  private headerType: TagType = undefined as unknown as TagType;
+  private options: IOptions = undefined as unknown as IOptions;
 
   public async parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-
     this.tokenizer = tokenizer;
     this.metadata = metadata;
     this.options = options;
@@ -94,7 +96,7 @@ export class ID3v2Parser {
     const id3Header = await this.tokenizer.readToken(ID3v2Header);
 
     if (id3Header.fileIdentifier !== 'ID3') {
-      throw new Id3v2ContentError('expected ID3-header file-identifier \'ID3\' was not found');
+      throw new Id3v2ContentError("expected ID3-header file-identifier 'ID3' was not found");
     }
 
     const fileSize = this.tokenizer.fileInfo.size;
@@ -107,7 +109,7 @@ export class ID3v2Parser {
 
     this.id3Header = id3Header;
 
-    this.headerType = (`ID3v2.${id3Header.version.major}`) as TagType;
+    this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
     await (id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size));
 
@@ -119,7 +121,9 @@ export class ID3v2Parser {
   public async parseExtendedHeader(): Promise<void> {
     const extendedHeader = await this.tokenizer.readToken(ExtendedHeader);
     const dataRemaining = extendedHeader.size - ExtendedHeader.len;
-    return dataRemaining > 0 ? this.parseExtendedHeaderData(dataRemaining, extendedHeader.size) : this.parseId3Data(this.id3Header.size - extendedHeader.size);
+    return dataRemaining > 0
+      ? this.parseExtendedHeaderData(dataRemaining, extendedHeader.size)
+      : this.parseId3Data(this.id3Header.size - extendedHeader.size);
   }
 
   public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
@@ -137,15 +141,24 @@ export class ID3v2Parser {
           }
           break;
         default:
-          await (Array.isArray(tag.value) ? Promise.all(tag.value.map(value => this.addTag(tag.id, value))) : this.addTag(tag.id, tag.value));
+          await (Array.isArray(tag.value)
+            ? Promise.all(tag.value.map(value => this.addTag(tag.id, value)))
+            : this.addTag(tag.id, tag.value));
       }
     }
   }
 
-  private async handleTag(tag: ITag, values: string[], descriptor: (x: AnyTagValue) => string, resolveValue: (x: string) => string = value => value): Promise<void> {
-    await Promise.all(values.map(value =>
-      this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, descriptor(value)), resolveValue(value))
-    ));
+  private async handleTag(
+    tag: ITag,
+    values: string[],
+    descriptor: (x: AnyTagValue) => string,
+    resolveValue: (x: string) => string = value => value
+  ): Promise<void> {
+    await Promise.all(
+      values.map(value =>
+        this.addTag(ID3v2Parser.makeDescriptionTagName(tag.id, descriptor(value)), resolveValue(value))
+      )
+    );
   }
 
   private async addTag(id: string, value: AnyTagValue): Promise<void> {
@@ -154,10 +167,12 @@ export class ID3v2Parser {
 
   private parseMetadata(data: Uint8Array): ITag[] {
     let offset = 0;
-    const tags: { id: string, value: AnyTagValue }[] = [];
+    const tags: { id: string; value: AnyTagValue }[] = [];
 
     while (true) {
-      if (offset === data.length) break;
+      if (offset === data.length) {
+        break;
+      }
 
       const frameHeaderLength = getFrameHeaderLength(this.id3Header.version.major);
 
@@ -172,9 +187,15 @@ export class ID3v2Parser {
 
       const frameDataBytes = data.subarray(offset, offset + frameHeader.length);
       offset += frameHeader.length;
-      const values = ID3v2Parser.readFrameData(frameDataBytes, frameHeader, this.id3Header.version.major, !this.options.skipCovers, this.metadata);
+      const values = ID3v2Parser.readFrameData(
+        frameDataBytes,
+        frameHeader,
+        this.id3Header.version.major,
+        !this.options.skipCovers,
+        this.metadata
+      );
       if (values) {
-        tags.push({id: frameHeader.id, value: values});
+        tags.push({ id: frameHeader.id, value: values });
       }
     }
     return tags;
@@ -187,22 +208,24 @@ export class ID3v2Parser {
    * as produced by `FrameParser.readData`.
    */
   private static mapId3v2Chapters(id3Tags?: ITag[]): IChapter[] | undefined {
-
-    if (!id3Tags) return;
-
-    const chapFrames = id3Tags.filter(t => t.id === 'CHAP') as any[] | undefined;
-    if (!chapFrames?.length) return;
-
-    const tocFrames = id3Tags.filter(t => t.id === 'CTOC') as any[] | undefined;
-    const topLevelToc = tocFrames?.find(t => t.value.flags?.topLevel);
-
-    const chapterById = new Map<string, any>();
-    for (const chap of chapFrames) {
-      chapterById.set(chap.value.label, chap.value);
+    if (!id3Tags) {
+      return;
     }
 
-    const orderedIds: string[] | undefined =
-      topLevelToc?.value.childElementIds;
+    const chapFrames = id3Tags.filter(t => t.id === 'CHAP').map(t => t.value as Chapter);
+    if (!chapFrames.length) {
+      return;
+    }
+
+    const tocFrames = id3Tags.filter(t => t.id === 'CTOC').map(t => t.value as TableOfContents);
+    const topLevelToc = tocFrames.find(t => t.flags.topLevel);
+
+    const chapterById = new Map<string, Chapter>();
+    for (const chap of chapFrames) {
+      chapterById.set(chap.label, chap);
+    }
+
+    const orderedIds = topLevelToc?.childElementIds;
 
     const chapters: IChapter[] = [];
 
@@ -210,19 +233,23 @@ export class ID3v2Parser {
 
     for (const id of source) {
       const chap = chapterById.get(id);
-      if (!chap) continue;
+      if (!chap) {
+        continue;
+      }
 
       const frames = chap.frames;
-      const title = frames.get('TIT2');
-      if (!title) continue; // title is required
+      const title = frames.get('TIT2') as IChapter['title'] | undefined;
+      if (!title) {
+        continue; // title is required
+      }
 
       chapters.push({
         id,
         title,
-        url: frames.get('WXXX'),
+        url: frames.get('WXXX') as IChapter['url'],
         start: chap.info.startTime / 1000,
         end: chap.info.endTime / 1000,
-        image: frames.get('APIC')
+        image: frames.get('APIC') as IChapter['image']
       });
     }
 

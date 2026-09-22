@@ -1,10 +1,9 @@
 import { UINT32_LE } from 'token-types';
-import { CommonTagMapper } from '../common/GenericTagMapper.js';
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
-import { decodeString } from '../common/Util.js';
-
+import { CommonTagMapper } from '../common/GenericTagMapper.js';
 import type { INativeTagMap } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import { decodeString } from '../common/Util.js';
 import type { IRating, ITag } from '../type.js';
 import type { ICustomDataTag, IIdentifierTag, IPopularimeter } from './FrameParser.js';
 
@@ -154,16 +153,14 @@ const id3v24TagMap: INativeTagMap = {
 
   GRP1: 'grouping',
 
-  PCNT: 'playCounter',
+  PCNT: 'playCounter'
 };
 
 export class ID3v24TagMapper extends CaseInsensitiveTagMap {
-
   public static toRating(popm: IPopularimeter): IRating {
-
     return {
       source: popm.email,
-      rating: popm.rating > 0 ? (popm.rating - 1) / 254 * CommonTagMapper.maxRatingScore : undefined
+      rating: popm.rating > 0 ? ((popm.rating - 1) / 254) * CommonTagMapper.maxRatingScore : undefined
     };
   }
 
@@ -177,35 +174,35 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
    * @param warnings Wil be used to register (collect) warnings
    */
   protected postMap(tag: ITag, warnings: INativeMetadataCollector): void {
-
     switch (tag.id) {
-
-      case 'UFID': {
-        // decode MusicBrainz Recording Id
-        const idTag= tag.value as IIdentifierTag;
-        if (idTag.owner_identifier === 'http://musicbrainz.org') {
-          tag.id += `:${idTag.owner_identifier}`;
-          tag.value = decodeString(idTag.identifier, 'latin1'); // latin1 == iso-8859-1
+      case 'UFID':
+        {
+          // decode MusicBrainz Recording Id
+          const idTag = tag.value as IIdentifierTag;
+          if (idTag.owner_identifier === 'http://musicbrainz.org') {
+            tag.id += `:${idTag.owner_identifier}`;
+            tag.value = decodeString(idTag.identifier, 'latin1'); // latin1 == iso-8859-1
+          }
         }
-      }
         break;
 
-      case 'PRIV': {
-        const customTag = tag.value as ICustomDataTag;
-        switch(customTag.owner_identifier) {
-          // decode Windows Media Player
-          case 'AverageLevel':
-          case 'PeakValue':
-            tag.id += `:${customTag.owner_identifier}`;
-            tag.value = customTag.data.length === 4 ? UINT32_LE.get(customTag.data, 0) : null;
-            if (tag.value === null) {
-              warnings.addWarning('Failed to parse PRIV:PeakValue');
-            }
-            break;
-          default:
-            warnings.addWarning(`Unknown PRIV owner-identifier: ${customTag.data}`);
+      case 'PRIV':
+        {
+          const customTag = tag.value as ICustomDataTag;
+          switch (customTag.owner_identifier) {
+            // decode Windows Media Player
+            case 'AverageLevel':
+            case 'PeakValue':
+              tag.id += `:${customTag.owner_identifier}`;
+              tag.value = customTag.data.length === 4 ? UINT32_LE.get(customTag.data, 0) : null;
+              if (tag.value === null) {
+                warnings.addWarning('Failed to parse PRIV:PeakValue');
+              }
+              break;
+            default:
+              warnings.addWarning(`Unknown PRIV owner-identifier: ${customTag.data}`);
+          }
         }
-      }
         break;
 
       case 'POPM':

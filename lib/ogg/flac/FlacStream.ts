@@ -1,12 +1,11 @@
-import type { ITokenizer } from 'strtok3';
 import initDebug from 'debug';
-
-import type * as Ogg from '../OggToken.js';
-import type { IOptions } from '../../type.js';
-import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
-import * as Flac from '../../flac/FlacToken.js';
-import { FlacParser } from '../../flac/FlacParser.js';
+import type { ITokenizer } from 'strtok3';
 import { FourCcToken } from '../../common/FourCC.js';
+import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import { FlacParser } from '../../flac/FlacParser.js';
+import * as Flac from '../../flac/FlacToken.js';
+import type { IOptions } from '../../type.js';
+import type * as Ogg from '../OggToken.js';
 import { VorbisPictureToken } from '../vorbis/Vorbis.js';
 
 const debug = initDebug('music-metadata:parser:ogg:theora');
@@ -16,7 +15,6 @@ const debug = initDebug('music-metadata:parser:ogg:theora');
  * - https://xiph.org/flac/ogg_mapping.html
  */
 export class FlacStream implements Ogg.IPageConsumer {
-
   private metadata: INativeMetadataCollector;
   private options: IOptions;
   private tokenizer: ITokenizer;
@@ -76,7 +74,7 @@ export class FlacStream implements Ogg.IPageConsumer {
       case Flac.BlockType.PICTURE:
         if (!this.options.skipCovers) {
           const picture = new VorbisPictureToken(pageData.length).get(pageData, 0);
-          return this.flacParser.addPictureTag(picture)
+          return this.flacParser.addPictureTag(picture);
         }
         break;
       default:
@@ -89,5 +87,4 @@ export class FlacStream implements Ogg.IPageConsumer {
   public flush() {
     return Promise.resolve();
   }
-
 }

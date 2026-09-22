@@ -1,20 +1,17 @@
-import { assert } from 'chai';
 import path from 'node:path';
+import { assert } from 'chai';
 
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
 describe('Parse Musepack (.mpc)', () => {
-
   const mpcSamplePath = path.join(samplePath, 'mpc');
 
   describe('Parse Musepack, SV7 with APEv2 header', () => {
-
     const filePath = path.join(mpcSamplePath, 'apev2.sv7.mpc');
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(format.container, 'Musepack, SV7');
@@ -34,22 +31,19 @@ describe('Parse Musepack (.mpc)', () => {
         assert.deepEqual(common.catalognumber, ['LUNECD35']);
         assert.strictEqual(common.media, 'CD');
         assert.strictEqual(common.releasecountry, 'GB');
-        assert.deepEqual(common.track, {no: 9, of: 10});
+        assert.deepEqual(common.track, { no: 9, of: 10 });
       });
     });
-
   });
 
   describe('Handle APEv1 TAG header (no header, only footer)', () => {
-
     /**
      * In this sample the APEv2 header is not present, only the APEv2 footer
      */
     const filePath = path.join(mpcSamplePath, 'apev2-no-header.sv7.mpc');
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(format.container, 'Musepack, SV7');
@@ -63,19 +57,16 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(common.artist, 'Faze Action');
         assert.strictEqual(common.album, 'Broad Souls');
         assert.strictEqual(common.date, '2004');
-        assert.deepEqual(common.track, {no: 9, of: null});
+        assert.deepEqual(common.track, { no: 9, of: null });
       });
     });
-
   });
 
   describe('Parse Musepack, SV8 with APEv2 header', () => {
-
     const filePath = path.join(mpcSamplePath, 'bach-goldberg-variatians-05.sv8.mpc');
 
     Parsers.forEach(parser => {
-      it(parser.description, async function(){
-
+      it(parser.description, async function () {
         const { format, common } = await parser.parse(() => this.skip(), filePath, 'audio/musepac');
         // Check format
         assert.deepEqual(format.container, 'Musepack, SV8');
@@ -93,10 +84,8 @@ describe('Parse Musepack (.mpc)', () => {
         assert.deepEqual(common.license, 'https://creativecommons.org/publicdomain/zero/1.0/');
         assert.strictEqual(common.album, 'Open Goldberg Variations');
         assert.strictEqual(common.date, '2012-05-28');
-        assert.deepEqual(common.track, {no: 5, of: 32});
+        assert.deepEqual(common.track, { no: 5, of: 32 });
       });
     });
-
   });
-
 });

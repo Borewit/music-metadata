@@ -8,5 +8,4 @@ export const aiffParserLoader: IParserLoader = {
   async load() {
     return (await import('./AiffParser.js')).AIFFParser;
   }
-
 };

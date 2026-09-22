@@ -1,5 +1,5 @@
-import type {INativeTagMap} from '../common/GenericTagTypes.js';
-import {CommonTagMapper} from '../common/GenericTagMapper.js';
+import { CommonTagMapper } from '../common/GenericTagMapper.js';
+import type { INativeTagMap } from '../common/GenericTagTypes.js';
 
 /**
  * RIFF Info Tags; part of the EXIF 2.3
@@ -25,13 +25,12 @@ export const riffInfoTagMap: INativeTagMap = {
   TURL: 'website', // URL,
   IGNR: 'genre', // Genre
   IENG: 'engineer', // Engineer
-  ITCH:	'technician', // Technician
+  ITCH: 'technician', // Technician
   IMED: 'media', // Original Media
   IRPD: 'album' // Product, where the file was intended for
 };
 
 export class RiffInfoTagMapper extends CommonTagMapper {
-
   public constructor() {
     super(['exif'], riffInfoTagMap);
   }

@@ -32,10 +32,12 @@ describe('peek radio streams', async function () {
     });
   }
 
-  it('should be able to peek an MP3', async function (){
-    if (isBun) this.skip(); // Hangs in Bun
+  it('should be able to peek an MP3', async function () {
+    if (isBun) {
+      this.skip(); // Hangs in Bun
+    }
 
-    const {format} = await fetchRadioStream(radioStream.https.mp3._128kb);
+    const { format } = await fetchRadioStream(radioStream.https.mp3._128kb);
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.container');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
@@ -43,39 +45,46 @@ describe('peek radio streams', async function () {
   });
 
   it('should be able to peek an Ogg/FLAC', async function () {
-    if (isBun) this.skip(); // Hangs in Bun
+    if (isBun) {
+      this.skip(); // Hangs in Bun
+    }
 
-    const {format} = await fetchRadioStream(radioStream.https.ogg.flac);
+    const { format } = await fetchRadioStream(radioStream.https.ogg.flac);
     assert.strictEqual(format.container, 'Ogg', 'format.container');
     assert.strictEqual(format.codec, 'FLAC', 'format.container');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
   });
 
   it('should be able to peek an Ogg/Opus', async function () {
-    if (isBun) this.skip(); // Hangs in Bun
+    if (isBun) {
+      this.skip(); // Hangs in Bun
+    }
 
-    const {format} = await fetchRadioStream(radioStream.https.ogg.opus);
+    const { format } = await fetchRadioStream(radioStream.https.ogg.opus);
     assert.strictEqual(format.container, 'Ogg', 'format.container');
     assert.strictEqual(format.codec, 'Opus', 'format.container');
     assert.strictEqual(format.sampleRate, 48000, 'format.sampleRate');
   });
 
   it('should be able to peek an Ogg/Vorbis', async function () {
-    if (isBun) this.skip(); // Hangs in Bun
+    if (isBun) {
+      this.skip(); // Hangs in Bun
+    }
 
-    const {format} = await fetchRadioStream(radioStream.https.ogg.vorbis);
+    const { format } = await fetchRadioStream(radioStream.https.ogg.vorbis);
     assert.strictEqual(format.container, 'Ogg', 'format.container');
     assert.strictEqual(format.codec, 'Vorbis I', 'format.container');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
   });
 
   it('should be able to peek an ADTS/AAC', async function () {
-    if (isBun) this.skip(); // Hangs in Bun
+    if (isBun) {
+      this.skip(); // Hangs in Bun
+    }
 
-    const {format} = await fetchRadioStream(radioStream.https.aac_lc);
+    const { format } = await fetchRadioStream(radioStream.https.aac_lc);
     assert.strictEqual(format.container, 'ADTS/MPEG-4', 'format.container');
     assert.strictEqual(format.codec, 'AAC', 'format.container');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
   });
-
 });

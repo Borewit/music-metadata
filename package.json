@@ -98,6 +98,7 @@
     "compile:dev": "yarn run compile-src:dev && yarn compile-test && yarn compile-doc",
     "compile:prod": "yarn run compile-src:prod && yarn compile-test && yarn compile-doc",
     "lint:ts": "biome check",
+    "lint:ts:fix": "biome check --write",
     "lint:md": "yarn run remark -u remark-preset-lint-consistent .",
     "lint": "yarn run lint:ts && yarn run lint:md",
     "test": "mocha",

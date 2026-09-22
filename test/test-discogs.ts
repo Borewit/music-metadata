@@ -1,13 +1,11 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
-import * as mm from '../lib/index.js';
+import { assert } from 'chai';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
+import * as mm from '../lib/index.js';
 import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper.js';
 import { samplePath } from './util.js';
 
 describe('Discogs mappings', () => {
-
   const discogs_tags = [
     'DISCOGS_ARTIST_ID',
     'DISCOGS_ARTISTS',
@@ -22,12 +20,11 @@ describe('Discogs mappings', () => {
     'DISCOGS_RATING',
     'DISCOGS_RELEASED',
     'DISCOGS_RELEASE_ID',
-    'DISCOGS_VOTES'];
+    'DISCOGS_VOTES'
+  ];
 
   describe('Mapping definitions', () => {
-
     it('should map ID3v2.3/ID3v2.4 tags', () => {
-
       const mapper = new ID3v24TagMapper();
 
       // Each Discogs tag should be mapped
@@ -38,7 +35,6 @@ describe('Discogs mappings', () => {
     });
 
     it('should map Vorbis/FLAC tags', () => {
-
       const mapper = new VorbisTagMapper();
 
       // Each Discogs tag should be mapped
@@ -48,17 +44,15 @@ describe('Discogs mappings', () => {
     });
   });
 
-  describe('Track mapping: Beth Hart - Sinner\'s Prayer', () => {
-
+  describe("Track mapping: Beth Hart - Sinner's Prayer", () => {
     function checkTags(metadata: mm.IAudioMetadata, tagType: string, getTagName: (tag: string) => string) {
-
       const native = mm.orderTags(metadata.native[tagType]);
       const common = metadata.common;
 
       let tagName: string;
 
       // Expect basic common tags
-      assert.deepEqual(common.album, 'Don\'t Explain', 'common.album');
+      assert.deepEqual(common.album, "Don't Explain", 'common.album');
       assert.deepEqual(common.artist, 'Beth Hart, Joe Bonamassa', 'common.artist');
 
       // Check discogs, DISCOGS_RELEASE_ID
@@ -86,7 +80,6 @@ describe('Discogs mappings', () => {
       assert.deepEqual(native[tagName], ['Blues Rock'], `${tagType}/${tagName}`);
 
       switch (tagType) {
-
         case 'id3v23':
           assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
           assert.deepEqual(native.TCON, ['Rock;Blues'], `${tagType}/TCON`); // ToDo: why different in Vorbis
@@ -101,13 +94,12 @@ describe('Discogs mappings', () => {
     }
 
     it('ID3v2.3/ID3v2.4', async () => {
-
-      const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [id3v2.3].mp3';
+      const filename = "Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3";
       const filePath = path.join(samplePath, filename);
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
-      const {common, format} = metadata;
+      const { common, format } = metadata;
 
       assert.ok(metadata.common, 'should include common tags');
       assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1']);
@@ -121,12 +113,16 @@ describe('Discogs mappings', () => {
       assert.deepEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
 
       // Expect basic common tags
-      assert.deepEqual(common.album, 'Don\'t Explain', 'common.album');
+      assert.deepEqual(common.album, "Don't Explain", 'common.album');
       assert.deepEqual(common.artist, 'Beth Hart, Joe Bonamassa', 'common.artist');
 
       // Check discogs, DISCOGS_RELEASE_ID
       assert.deepEqual(id3v23['TXXX:DISCOGS_RELEASE_ID'], ['4204665'], 'id3v23/TXXX:DISCOGS_RELEASE_ID');
-      assert.strictEqual(common.discogs_release_id, 4204665, 'id3v23/TXXX:DISCOGS_RELEASE_ID: => common.discogs_release_id');
+      assert.strictEqual(
+        common.discogs_release_id,
+        4204665,
+        'id3v23/TXXX:DISCOGS_RELEASE_ID: => common.discogs_release_id'
+      );
 
       // Check discogs, CATALOGID mapping
       assert.deepEqual(id3v23['TXXX:CATALOGID'], ['PRAR931391'], 'id3v23/TXXX:CATALOGID: PRAR931391');
@@ -139,8 +135,7 @@ describe('Discogs mappings', () => {
     });
 
     it('Vorbis/FLAC', async () => {
-
-      const filename = 'Discogs - Beth Hart - Sinner\'s Prayer [APEv2].flac';
+      const filename = "Discogs - Beth Hart - Sinner's Prayer [APEv2].flac";
       const filePath = path.join(samplePath, filename);
 
       // Run with default options
@@ -157,13 +152,10 @@ describe('Discogs mappings', () => {
 
       checkTags(metadata, 'vorbis', tag => tag);
     });
-
   });
 
-  describe('Track mapping: Yasmin Levy - Mi Korasón.flac\'', () => {
-
+  describe("Track mapping: Yasmin Levy - Mi Korasón.flac'", () => {
     function checkTags(metadata: mm.IAudioMetadata, tagType: string, getTagName: (tag: string) => string) {
-
       const native = mm.orderTags(metadata.native[tagType]);
       const common = metadata.common;
 
@@ -194,7 +186,11 @@ describe('Discogs mappings', () => {
       // Check Discogs-tag: DISCOGS_MASTER_RELEASE_ID
       tagName = getTagName('DISCOGS_MASTER_RELEASE_ID');
       assert.deepEqual(native[tagName], ['461710'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.discogs_master_release_id, 461710, `${tagType}/${tagName} => common.discogs_master_release_id`);
+      assert.deepEqual(
+        common.discogs_master_release_id,
+        461710,
+        `${tagType}/${tagName} => common.discogs_master_release_id`
+      );
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
       tagName = getTagName('DISCOGS_ARTIST_ID');
@@ -216,11 +212,9 @@ describe('Discogs mappings', () => {
       tagName = getTagName('DISCOGS_CATALOG');
       assert.deepEqual(native[tagName], ['450010'], `${tagType}/${tagName}`);
       assert.deepEqual(common.catalognumber, ['450010'], `${tagType}/${tagName} => common.catalognumber`);
-
     }
 
     it('Vorbis/FLAC tags', async () => {
-
       const filename = 'Discogs - Yasmin Levy - Mi Korasón.flac';
 
       const metadata = await mm.parseFile(path.join(samplePath, filename));
@@ -230,7 +224,5 @@ describe('Discogs mappings', () => {
 
       checkTags(metadata, 'vorbis', tag => tag);
     });
-
   });
-
 });

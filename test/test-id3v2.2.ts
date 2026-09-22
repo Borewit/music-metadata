@@ -1,73 +1,69 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
-import * as mm from '../lib/index.js';
-import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
+import { assert } from 'chai';
 import { parseGenre } from '../lib/id3v2/FrameParser.js';
+import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
+import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 describe('ID3v2Parser', () => {
-
   const mp3Path = path.join(samplePath, 'mp3');
 
   it('should be able to remove unsynchronisation bytes from buffer', () => {
-    const expected = Uint8Array.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00]);
-    const sample = Uint8Array.from([0xFF, 0xD8, 0xFF, 0x00, 0xE0, 0x00]);
+    const expected = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0x00]);
+    const sample = Uint8Array.from([0xff, 0xd8, 0xff, 0x00, 0xe0, 0x00]);
     const output = ID3v2Parser.removeUnsyncBytes(sample);
     assert.deepEqual(output, expected, 'bytes');
   });
 
   it('should normalize ID3v2.2 comments correctly', async () => {
-
     const filePath = path.join(samplePath, 'issue_66.mp3');
 
-    const metadata = await mm.parseFile(filePath, {duration: true});
+    const metadata = await mm.parseFile(filePath, { duration: true });
 
     const id3v22 = mm.orderTags(metadata.native['ID3v2.2']);
 
-    assert.deepEqual(id3v22.TP1, ['RushJet1'], '[\'ID3v2.2\'].TP1');
-    assert.deepEqual(id3v22.TRK, ['2/15'], '[\'ID3v2.2\'].TRK');
-    assert.deepEqual(id3v22.TYE, ['2011'], '[\'ID3v2.2\'].TYE');
-    assert.deepEqual(id3v22.TEN, ['iTunes 10.2.2.14'], '[\'ID3v2.2\'].TEN');
+    assert.deepEqual(id3v22.TP1, ['RushJet1'], "['ID3v2.2'].TP1");
+    assert.deepEqual(id3v22.TRK, ['2/15'], "['ID3v2.2'].TRK");
+    assert.deepEqual(id3v22.TYE, ['2011'], "['ID3v2.2'].TYE");
+    assert.deepEqual(id3v22.TEN, ['iTunes 10.2.2.14'], "['ID3v2.2'].TEN");
 
-    assert.isDefined(id3v22.PIC, '[\'ID3v2.2\'].PIC');
-    assert.deepEqual(id3v22.TCO, ['Chiptune'], '[\'ID3v2.2\'].TCO');
-    assert.deepEqual(id3v22.TAL, ['Forgotten Music'], '[\'ID3v2.2\'].TAL');
-    assert.deepEqual(id3v22.TT2, ['Ancient Ruin Adventure'], '[\'ID3v2.2\'].TT2');
+    assert.isDefined(id3v22.PIC, "['ID3v2.2'].PIC");
+    assert.deepEqual(id3v22.TCO, ['Chiptune'], "['ID3v2.2'].TCO");
+    assert.deepEqual(id3v22.TAL, ['Forgotten Music'], "['ID3v2.2'].TAL");
+    assert.deepEqual(id3v22.TT2, ['Ancient Ruin Adventure'], "['ID3v2.2'].TT2");
 
     const expectedComment = [
       {
-        descriptor: "",
-        language: "eng",
-        text: "UBI025, 23.05.2011, http://ubiktune.org/releases/ubi025-rushjet1-forgotten-music"
+        descriptor: '',
+        language: 'eng',
+        text: 'UBI025, 23.05.2011, http://ubiktune.org/releases/ubi025-rushjet1-forgotten-music'
       },
       {
-        descriptor: "iTunPGAP",
-        language: "eng",
-        text: "0"
+        descriptor: 'iTunPGAP',
+        language: 'eng',
+        text: '0'
       },
       {
-        descriptor: "iTunNORM",
-        language: "eng",
-        text: " 00000308 00000000 00001627 00000000 00006FD6 00000000 00007F21 00000000 0000BE68 00000000"
+        descriptor: 'iTunNORM',
+        language: 'eng',
+        text: ' 00000308 00000000 00001627 00000000 00006FD6 00000000 00007F21 00000000 0000BE68 00000000'
       },
       {
-        descriptor: "iTunSMPB",
-        language: "eng",
-        text: " 00000000 00000210 00000811 000000000043E1DF 00000000 001EBD63 00000000 00000000 00000000 00000000 00000000 00000000"
+        descriptor: 'iTunSMPB',
+        language: 'eng',
+        text: ' 00000000 00000210 00000811 000000000043E1DF 00000000 001EBD63 00000000 00000000 00000000 00000000 00000000 00000000'
       }
     ];
 
-    assert.deepEqual(id3v22.COM, expectedComment, '[\'ID3v2.2\'][\'COM\']');
+    assert.deepEqual(id3v22.COM, expectedComment, "['ID3v2.2']['COM']");
     assert.deepEqual(metadata.common.comment, expectedComment, 'common.comment');
   });
 
-  it('should decode file \'id3v2.2.mp3\'', async () => {
-
+  it("should decode file 'id3v2.2.mp3'", async () => {
     const filename = 'id3v2.2.mp3';
     const filePath = path.join(samplePath, filename);
 
-    const metadata = await mm.parseFile(filePath, {duration: true});
+    const metadata = await mm.parseFile(filePath, { duration: true });
     assert.strictEqual(metadata.common.title, 'You Are The One', 'title');
     assert.strictEqual(metadata.common.artist, 'Shiny Toy Guns', 'artist');
     assert.strictEqual(metadata.common.album, 'We Are Pilots', 'album');
@@ -78,61 +74,69 @@ describe('ID3v2Parser', () => {
     assert.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'picture format');
     assert.strictEqual(metadata.common.picture[0].data.length, 99738, 'picture length (verified with Mp3Tag)');
     assert.strictEqual(metadata.common.gapless, false, 'common.gapless');
-    assert.deepEqual(metadata.common.comment, [
-      {
-        descriptor: 'iTunPGAP',
-        language: 'eng',
-        text: '0'
-      },
-      {
-        descriptor: 'iTunNORM',
-        language: 'eng',
-        text: ' 0000299C 0000291D 0000DBE0 0000D6BA 0003C378 0003C2C1 0000902A 00008F1B 00012FC6 00015FBC'
-      },
-      {
-        descriptor: 'iTunSMPB',
-        language: 'eng',
-        text: ' 00000000 00000210 00000AD4 0000000000B6499C 00000000 006327AD 00000000 00000000 00000000 00000000 00000000 00000000'
-      },
-      {
-        descriptor: 'iTunes_CDDB_IDs',
-        language: 'eng',
-        text: '11+3ABC77F16B8A2F0F1E1A1EBAB868A98F+8210091'
-      }
-    ], 'common.comment');
+    assert.deepEqual(
+      metadata.common.comment,
+      [
+        {
+          descriptor: 'iTunPGAP',
+          language: 'eng',
+          text: '0'
+        },
+        {
+          descriptor: 'iTunNORM',
+          language: 'eng',
+          text: ' 0000299C 0000291D 0000DBE0 0000D6BA 0003C378 0003C2C1 0000902A 00008F1B 00012FC6 00015FBC'
+        },
+        {
+          descriptor: 'iTunSMPB',
+          language: 'eng',
+          text: ' 00000000 00000210 00000AD4 0000000000B6499C 00000000 006327AD 00000000 00000000 00000000 00000000 00000000 00000000'
+        },
+        {
+          descriptor: 'iTunes_CDDB_IDs',
+          language: 'eng',
+          text: '11+3ABC77F16B8A2F0F1E1A1EBAB868A98F+8210091'
+        }
+      ],
+      'common.comment'
+    );
 
     assert.isDefined(metadata.native['ID3v2.2'], 'Native id3v2.2 tags should be present');
     const id3v22 = mm.orderTags(metadata.native['ID3v2.2']);
 
-    assert.deepEqual(id3v22.TP1, ['Shiny Toy Guns'], '[\'ID3v2.2\'].TP1');
-    assert.deepEqual(id3v22.TRK, ['1/11'], '[\'ID3v2.2\'].TRK');
-    assert.deepEqual(id3v22.TYE, ['2006'], '[\'ID3v2.2\'].TYE');
+    assert.deepEqual(id3v22.TP1, ['Shiny Toy Guns'], "['ID3v2.2'].TP1");
+    assert.deepEqual(id3v22.TRK, ['1/11'], "['ID3v2.2'].TRK");
+    assert.deepEqual(id3v22.TYE, ['2006'], "['ID3v2.2'].TYE");
 
-    assert.isDefined(id3v22.PIC, '[\'ID3v2.2\'].PIC');
-    assert.deepEqual(id3v22.TCO, ['Alternative'], '[\'ID3v2.2\'].TCO');
-    assert.deepEqual(id3v22.TAL, ['We Are Pilots'], '[\'ID3v2.2\'].TAL');
-    assert.deepEqual(id3v22.TT2, ['You Are The One'], '[\'ID3v2.2\'].TT2');
+    assert.isDefined(id3v22.PIC, "['ID3v2.2'].PIC");
+    assert.deepEqual(id3v22.TCO, ['Alternative'], "['ID3v2.2'].TCO");
+    assert.deepEqual(id3v22.TAL, ['We Are Pilots'], "['ID3v2.2'].TAL");
+    assert.deepEqual(id3v22.TT2, ['You Are The One'], "['ID3v2.2'].TT2");
 
-    assert.deepEqual(id3v22.ULT, [{
-      descriptor: '',
-      language: 'eng',
-      /* eslint-disable max-len */
-      text: 'Black rose & a radio fire\nits so contagious\nsuch something changing my mind\nim gonna take whats evil\n\nYour cover melting inside\nwith wide eyes you tremble\nkissing over & over again\nyour god knows his faithful\n\nI try - to digest my pride\nbut passions grip i fear\nwhen i climb - into shallow vats of wine\ni think i almost hear - but its not clear\n\nYou are the one\nyou\'ll never be alone again\nyou\'re more then in my head - your more\n\nSpin faster shouting out loud\nyou cant steal whats paid for\nsuch something hurting again\nmurder son shes painful\n\nYou so believe your own lies\non my skin your fingers\nrunaway until the last time\nwere gonna lose forever\n\nwhen you try - don\'t try to say you wont\ntry to crawl into my head\nwhen you cry - cause it\'s all built up inside\nyour tears already said - already said\n\nYou\'ll never be alone again'
-    }], '[\'ID3v2.2\'].ULT');
+    assert.deepEqual(
+      id3v22.ULT,
+      [
+        {
+          descriptor: '',
+          language: 'eng',
+          /* eslint-disable max-len */
+          text: "Black rose & a radio fire\nits so contagious\nsuch something changing my mind\nim gonna take whats evil\n\nYour cover melting inside\nwith wide eyes you tremble\nkissing over & over again\nyour god knows his faithful\n\nI try - to digest my pride\nbut passions grip i fear\nwhen i climb - into shallow vats of wine\ni think i almost hear - but its not clear\n\nYou are the one\nyou'll never be alone again\nyou're more then in my head - your more\n\nSpin faster shouting out loud\nyou cant steal whats paid for\nsuch something hurting again\nmurder son shes painful\n\nYou so believe your own lies\non my skin your fingers\nrunaway until the last time\nwere gonna lose forever\n\nwhen you try - don't try to say you wont\ntry to crawl into my head\nwhen you cry - cause it's all built up inside\nyour tears already said - already said\n\nYou'll never be alone again"
+        }
+      ],
+      "['ID3v2.2'].ULT"
+    );
   });
-
 
   it('should preserve slashes in ID3v2.2 genre (TCO)', async () => {
     const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.2.mp3');
-    const {common} = await mm.parseFile(filePath);
+    const { common } = await mm.parseFile(filePath);
 
     assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
 
-  it('05 I Believe You.mp3', async() => {
-
+  it('05 I Believe You.mp3', async () => {
     const filePath = path.join(mp3Path, 'issue-641.mp3');
-    const {format, common} = await mm.parseFile(filePath);
+    const { format, common } = await mm.parseFile(filePath);
 
     assert.strictEqual(format.container, 'MPEG', 'format.container');
     assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
@@ -143,12 +147,10 @@ describe('ID3v2Parser', () => {
   });
 
   describe('Tag mapping', () => {
-
-    it("TBP (beats per minute)", async () => {
-
+    it('TBP (beats per minute)', async () => {
       const filePath = path.join(samplePath, 'mp3', 'Betty Lou.mp3');
 
-      const {format, common} = await mm.parseFile(filePath, {duration: true});
+      const { format, common } = await mm.parseFile(filePath, { duration: true });
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
 
@@ -159,10 +161,9 @@ describe('ID3v2Parser', () => {
     });
 
     it('iTunes-specific v2.2 grouping tag', async () => {
-
       const filePath = path.join(samplePath, 'mp3', 'issue-2574.mp3');
 
-      const {native, common} = await mm.parseFile(filePath);
+      const { native, common } = await mm.parseFile(filePath);
       assert.isDefined(native['ID3v2.2'], 'Expect ID3v2.2 tag header to be present');
       const gp1Tags = native['ID3v2.2'].filter(tag => tag.id === 'GP1');
       assert.strictEqual(gp1Tags.length, 1, 'Expect ID3v2.2 GP1 tag to be present');
@@ -171,16 +172,13 @@ describe('ID3v2Parser', () => {
       assert.strictEqual(common.grouping, 'Official Live Recording', 'Mapping ID3v2.2 GP1 => common.grouping');
     });
   });
-
 });
 
 describe('Post parse genre', () => {
-
   it('should be able to parse genres', () => {
-
     const tests = {
       Electronic: ['Electronic'],
-      '(52)(RX)':	['Electronic', 'Remix'],
+      '(52)(RX)': ['Electronic', 'Remix'],
       '(52)(CR)': ['Electronic', 'Cover'],
       '(0)': ['Blues'],
       '(0)(1)(2)': ['Blues', 'Classic Rock', 'Country'],

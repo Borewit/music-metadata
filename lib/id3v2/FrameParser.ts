@@ -1,23 +1,28 @@
 import initDebug from 'debug';
 import * as Token from 'token-types';
-
-import * as util from '../common/Util.js';
-import { AttachedPictureType, type ID3v2MajorVersion, type ITextEncoding, SyncTextHeader, TextEncodingToken, TextHeader } from './ID3v2Token.js';
-import { Genres } from '../id3v1/ID3v1Parser.js';
-
 import type { IWarningCollector } from '../common/MetadataCollector.js';
-import type { IComment, ILyricsTag } from '../type.js';
-import { makeUnexpectedFileContentError } from '../ParseError.js';
+import * as util from '../common/Util.js';
 import { decodeUintBE } from '../common/Util.js';
-import { ChapterInfo, type IChapterInfo } from './ID3v2ChapterToken.js';
+import { Genres } from '../id3v1/ID3v1Parser.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
+import type { IComment, ILyricsTag } from '../type.js';
 import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
+import { ChapterInfo, type IChapterInfo } from './ID3v2ChapterToken.js';
+import {
+  AttachedPictureType,
+  type ID3v2MajorVersion,
+  type ITextEncoding,
+  SyncTextHeader,
+  TextEncodingToken,
+  TextHeader
+} from './ID3v2Token.js';
 
 const debug = initDebug('music-metadata:id3v2:frame-parser');
 
 interface IPicture {
-  type?: string,
+  type?: string;
   description?: string;
-  format?: string,
+  format?: string;
   data?: Uint8Array;
 }
 
@@ -44,7 +49,6 @@ export interface IPopularimeter {
   counter: number;
 }
 
-
 export interface IGeneralEncapsulatedObject {
   type: string;
   filename: string;
@@ -55,8 +59,8 @@ export interface IGeneralEncapsulatedObject {
 export type Chapter = {
   label: string;
   info: IChapterInfo;
-  frames: Map<string, unknown>,
-}
+  frames: Map<string, unknown>;
+};
 
 export type TableOfContents = {
   label: string;
@@ -68,10 +72,10 @@ export type TableOfContents = {
   };
   childElementIds: string[];
   frames: Map<string, unknown>;
-}
+};
 
 const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
-const urlEnc: ITextEncoding = {encoding: defaultEnc, bom: false};
+const urlEnc: ITextEncoding = { encoding: defaultEnc, bom: false };
 
 export function parseGenre(origVal: string): string[] {
   // match everything inside parentheses
@@ -93,7 +97,9 @@ export function parseGenre(origVal: string): string[] {
           genres.push(genre);
         }
         code = undefined;
-      } else code += c;
+      } else {
+        code += c;
+      }
     } else if (c === '(') {
       code = '';
     } else {
@@ -112,10 +118,12 @@ export function parseGenre(origVal: string): string[] {
 }
 
 function parseGenreCode(code: string): string | undefined {
-  if (code === 'RX')
+  if (code === 'RX') {
     return 'Remix';
-  if (code === 'CR')
+  }
+  if (code === 'CR') {
     return 'Cover';
+  }
   if (code.match(/^\d*$/)) {
     return Genres[Number.parseInt(code, 10)];
   }
@@ -141,7 +149,7 @@ export class FrameParser {
       this.warningCollector.addWarning(`id3v2.${this.major} header has empty tag type=${type}`);
       return;
     }
-    const {encoding, bom} = TextEncodingToken.get(uint8Array, 0);
+    const { encoding, bom } = TextEncodingToken.get(uint8Array, 0);
     const length = uint8Array.length;
     let offset = 0;
     let output: unknown = []; // ToDo
@@ -163,7 +171,9 @@ export class FrameParser {
           text = FrameParser.trimNullPadding(util.decodeString(uint8Array.subarray(1), encoding));
         } catch (error) {
           if (error instanceof Error) {
-            this.warningCollector.addWarning(`id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`);
+            this.warningCollector.addWarning(
+              `id3v2.${this.major} type=${type} header has invalid string value: ${error.message}`
+            );
             break;
           }
           throw error;
@@ -193,13 +203,15 @@ export class FrameParser {
             break;
           case 'TCO':
           case 'TCON':
-            output = this.splitValue(type, text).map(v => parseGenre(v)).reduce((acc, val) => acc.concat(val), []);
+            output = this.splitValue(type, text)
+              .map(v => parseGenre(v))
+              .reduce((acc, val) => acc.concat(val), []);
             break;
           case 'PCS':
           case 'PCST':
             // TODO: Why `default` not results `1` but `''`?
             output = this.major >= 4 ? this.splitValue(type, text) : [text];
-            output = (Array.isArray(output) && output[0] === '') ? 1 : 0;
+            output = Array.isArray(output) && output[0] === '' ? 1 : 0;
             break;
           default:
             output = this.major >= 4 ? this.splitValue(type, text) : [text];
@@ -271,7 +283,6 @@ export class FrameParser {
 
         let readSyllables = false;
         while (uint8Array.length > 0) {
-
           const nullStr = FrameParser.readNullTerminatedString(uint8Array, syltHeader.encoding);
           uint8Array = uint8Array.subarray(nullStr.len);
 
@@ -295,7 +306,6 @@ export class FrameParser {
       case 'USLT':
       case 'COM':
       case 'COMM': {
-
         const textHeader = TextHeader.get(uint8Array, offset);
         offset += TextHeader.len;
 
@@ -316,17 +326,19 @@ export class FrameParser {
 
       case 'UFID': {
         const ufid = FrameParser.readIdentifierAndData(uint8Array, defaultEnc);
-        output = {owner_identifier: ufid.id, identifier: ufid.data} as IIdentifierTag;
+        output = { owner_identifier: ufid.id, identifier: ufid.data } as IIdentifierTag;
         break;
       }
 
-      case 'PRIV': { // private frame
+      case 'PRIV': {
+        // private frame
         const priv = FrameParser.readIdentifierAndData(uint8Array, defaultEnc);
-        output = {owner_identifier: priv.id, data: priv.data} as ICustomDataTag;
+        output = { owner_identifier: priv.id, data: priv.data } as ICustomDataTag;
         break;
       }
 
-      case 'POPM': { // Popularimeter
+      case 'POPM': {
+        // Popularimeter
         uint8Array = uint8Array.subarray(offset);
 
         const emailStr = FrameParser.readNullTerminatedString(uint8Array, urlEnc);
@@ -335,7 +347,7 @@ export class FrameParser {
 
         if (uint8Array.length === 0) {
           this.warningCollector.addWarning(`id3v2.${this.major} type=${type} POPM frame missing rating byte`);
-          output = {email, rating: 0, counter: undefined};
+          output = { email, rating: 0, counter: undefined };
           break;
         }
 
@@ -349,7 +361,8 @@ export class FrameParser {
         break;
       }
 
-      case 'GEOB': {  // General encapsulated object
+      case 'GEOB': {
+        // General encapsulated object
         // [encoding] <MIME> 0x00 <filename> 0x00/0x00 0x00 <description> 0x00/0x00 0x00 <data>
         const encoding = TextEncodingToken.get(uint8Array, 0);
         uint8Array = uint8Array.subarray(1);
@@ -399,7 +412,7 @@ export class FrameParser {
         uint8Array = uint8Array.subarray(descriptionStr.len);
 
         // URL is always ISO-8859-1
-        output = {description, url: FrameParser.trimNullPadding(util.decodeString(uint8Array, defaultEnc))};
+        output = { description, url: FrameParser.trimNullPadding(util.decodeString(uint8Array, defaultEnc)) };
         break;
       }
 
@@ -419,8 +432,9 @@ export class FrameParser {
 
       // ID3v2 Chapters 1.0
       // https://mutagen-specs.readthedocs.io/en/latest/id3/id3v2-chapters-1.0.html#chapter-frame
-      case 'CHAP': { //  // Chapter frame
-        debug("Reading CHAP");
+      case 'CHAP': {
+        //  // Chapter frame
+        debug('Reading CHAP');
         fzero = util.findZero(uint8Array, defaultEnc);
 
         const chapter: Chapter = {
@@ -434,7 +448,11 @@ export class FrameParser {
           const subFrame = readFrameHeader(uint8Array.subarray(offset), this.major, this.warningCollector);
           const headerSize = getFrameHeaderLength(this.major);
           offset += headerSize;
-          const subOutput = this.readData(uint8Array.subarray(offset, offset + subFrame.length), subFrame.id, includeCovers);
+          const subOutput = this.readData(
+            uint8Array.subarray(offset, offset + subFrame.length),
+            subFrame.id,
+            includeCovers
+          );
           offset += subFrame.length;
 
           chapter.frames.set(subFrame.id, subOutput);
@@ -445,7 +463,8 @@ export class FrameParser {
 
       // ID3v2 Chapters 1.0
       // https://mutagen-specs.readthedocs.io/en/latest/id3/id3v2-chapters-1.0.html#table-of-contents-frame
-      case 'CTOC': { // Table of contents frame
+      case 'CTOC': {
+        // Table of contents frame
         debug('Reading CTOC');
 
         // Element ID (null-terminated latin1)
@@ -480,7 +499,11 @@ export class FrameParser {
           const subFrame = readFrameHeader(uint8Array.subarray(offset), this.major, this.warningCollector);
           const headerSize = getFrameHeaderLength(this.major);
           offset += headerSize;
-          const subOutput = this.readData(uint8Array.subarray(offset, offset + subFrame.length), subFrame.id, includeCovers);
+          const subOutput = this.readData(
+            uint8Array.subarray(offset, offset + subFrame.length),
+            subFrame.id,
+            includeCovers
+          );
           offset += subFrame.length;
 
           toc.frames.set(subFrame.id, subOutput);
@@ -498,7 +521,10 @@ export class FrameParser {
     return output;
   }
 
-  protected static readNullTerminatedString(uint8Array: Uint8Array, encoding: ITextEncoding): { text: string, len: number } {
+  protected static readNullTerminatedString(
+    uint8Array: Uint8Array,
+    encoding: ITextEncoding
+  ): { text: string; len: number } {
     const originalLen = uint8Array.length;
     const zeroIndex = util.findZero(uint8Array, encoding.encoding);
     if (zeroIndex >= originalLen) {
@@ -554,14 +580,29 @@ export class FrameParser {
       values = text.split(/\x00/g);
       if (values.length > 1) {
         this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
-      } else if ([ /* v2.3: */ 'TPE1', 'TPE2', 'TPE3', 'TPE4', 'TCOM', 'TEXT', 'TOLY', 'TOPE',
-                   /* v2.2: */ 'TP1', 'TCM', 'TXT', 'TOA', 'TOL',
-                   // Picard can flatten multiple values with '/' in these frames.
-                   // https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
-                   'TXXX', 'TSRC',
-                   // Retain legacy support for nonstandard slash-separated credits.
-                   'IPLS'
-                 ].includes(tag)) {
+      } else if (
+        [
+          /* v2.3: */ 'TPE1',
+          'TPE2',
+          'TPE3',
+          'TPE4',
+          'TCOM',
+          'TEXT',
+          'TOLY',
+          'TOPE',
+          /* v2.2: */ 'TP1',
+          'TCM',
+          'TXT',
+          'TOA',
+          'TOL',
+          // Picard can flatten multiple values with '/' in these frames.
+          // https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
+          'TXXX',
+          'TSRC',
+          // Retain legacy support for nonstandard slash-separated credits.
+          'IPLS'
+        ].includes(tag)
+      ) {
         // note that field Genre (TCON/TCO) is NOT in this list:
         // a genre like "Duo Cello/Piano" must stay intact
         values = text.split(/\//g);
@@ -584,9 +625,12 @@ export class FrameParser {
     return end === value.length ? value : value.slice(0, end);
   }
 
-  private static readIdentifierAndData(uint8Array: Uint8Array, encoding: util.StringEncoding): { id: string, data: Uint8Array } {
-    const idStr = FrameParser.readNullTerminatedString(uint8Array, {encoding, bom: false});
-    return {id: idStr.text, data: uint8Array.subarray(idStr.len)};
+  private static readIdentifierAndData(
+    uint8Array: Uint8Array,
+    encoding: util.StringEncoding
+  ): { id: string; data: Uint8Array } {
+    const idStr = FrameParser.readNullTerminatedString(uint8Array, { encoding, bom: false });
+    return { id: idStr.text, data: uint8Array.subarray(idStr.len) };
   }
 
   private static getNullTerminatorLength(enc: util.StringEncoding): number {
@@ -594,8 +638,7 @@ export class FrameParser {
   }
 }
 
-export class Id3v2ContentError extends makeUnexpectedFileContentError('id3v2') {
-}
+export class Id3v2ContentError extends makeUnexpectedFileContentError('id3v2') {}
 
 function makeUnexpectedMajorVersionError(majorVer: number) {
   throw new Id3v2ContentError(`Unexpected majorVer: ${majorVer}`);

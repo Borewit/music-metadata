@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken } from 'strtok3';
+import * as Token from 'token-types';
 
 /**
  * 6.2 Identification Header
@@ -7,21 +7,21 @@ import type { IGetToken } from 'strtok3';
  */
 export interface IIdentificationHeader {
   // Signature: 0x80 + 'theora'
-  id: string,
+  id: string;
   // The major version number
-  vmaj: number,
+  vmaj: number;
   // The minor version number
-  vmin: number,
+  vmin: number;
   // The version revision number.
-  vrev: number,
+  vrev: number;
   // The width of the frame in macro blocks
-  vmbw: number,
+  vmbw: number;
   // The height of the frame in macro blocks
-  vmbh: number,
+  vmbh: number;
   // The nominal bitrate of the stream, in bits per second.
-  nombr: number,
+  nombr: number;
   // The quality hint.
-  nqual: number,
+  nqual: number;
 }
 
 /**

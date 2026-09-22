@@ -1,6 +1,6 @@
-import * as Token from 'token-types';
-import type { ITokenizer, IGetToken } from 'strtok3';
 import initDebug from 'debug';
+import type { IGetToken, ITokenizer } from 'strtok3';
+import * as Token from 'token-types';
 
 import * as util from '../../common/Util.js';
 
@@ -9,8 +9,8 @@ const debug = initDebug('music-metadata:parser:musepack:sv8');
 const PacketKey = new Token.StringType(2, 'latin1');
 
 interface IVarSize {
-  len: number,
-  value: number
+  len: number;
+  value: number;
 }
 
 export interface IPacketHeader {
@@ -35,7 +35,6 @@ const SH_part1: IGetToken<IStreamHeader1> = {
   len: 5,
 
   get: (buf, off) => {
-
     return {
       crc: Token.UINT32_LE.get(buf, off),
       streamVersion: Token.UINT8.get(buf, off + 4)
@@ -63,7 +62,6 @@ const SH_part3: IGetToken<IStreamHeader3> = {
   len: 2,
 
   get: (buf, off) => {
-
     return {
       sampleFrequency: [44100, 48000, 37800, 32000][util.getBitAllignedNumber(buf, off, 0, 3)],
       maxUsedBands: util.getBitAllignedNumber(buf, off, 3, 5),
@@ -98,7 +96,6 @@ export class StreamReader {
   }
 
   public async readPacketHeader(): Promise<IPacketHeader> {
-
     const key = await this.tokenizer.readToken<string>(PacketKey);
     const size = await this.readVariableSizeField();
     return {
@@ -108,7 +105,6 @@ export class StreamReader {
   }
 
   public async readStreamHeader(size: number): Promise<IStreamHeader> {
-
     const streamHeader: IStreamHeader = {} as unknown as IStreamHeader;
     debug(`Reading SH at offset=${this.tokenizer.position}`);
 
@@ -136,9 +132,9 @@ export class StreamReader {
   private async readVariableSizeField(len = 1, hb = 0): Promise<IVarSize> {
     let n = await this.tokenizer.readNumber(Token.UINT8);
     if ((n & 0x80) === 0) {
-      return {len, value: hb + n};
+      return { len, value: hb + n };
     }
-    n &= 0x7F;
+    n &= 0x7f;
     n += hb;
     return this.readVariableSizeField(len + 1, n << 7);
   }

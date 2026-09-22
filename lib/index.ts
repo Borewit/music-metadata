@@ -3,8 +3,8 @@
  */
 
 import type { Readable } from 'node:stream';
-import { fromFile, fromStream, type IFileInfo } from 'strtok3';
 import initDebug from 'debug';
+import { fromFile, fromStream, type IFileInfo } from 'strtok3';
 
 import { CouldNotDetermineFileTypeError, parseFromTokenizer, UnsupportedFileTypeError } from './core.js';
 import { ParserFactory } from './ParserFactory.js';
@@ -21,12 +21,17 @@ const debug = initDebug('music-metadata:parser');
  * @param options - Parsing options
  * @returns Metadata
  */
-export async function parseStream(stream: Readable, fileInfo?: IFileInfo | string, options: IOptions = {}): Promise<IAudioMetadata> {
-  const tokenizer = await fromStream(stream, {fileInfo: typeof fileInfo === 'string' ? {mimeType: fileInfo} : fileInfo});
+export async function parseStream(
+  stream: Readable,
+  fileInfo?: IFileInfo | string,
+  options: IOptions = {}
+): Promise<IAudioMetadata> {
+  const tokenizer = await fromStream(stream, {
+    fileInfo: typeof fileInfo === 'string' ? { mimeType: fileInfo } : fileInfo
+  });
   try {
     return await parseFromTokenizer(tokenizer, options);
-  }
-  finally {
+  } finally {
     await tokenizer.close();
   }
 }
@@ -38,7 +43,6 @@ export async function parseStream(stream: Readable, fileInfo?: IFileInfo | strin
  * @returns Metadata
  */
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
-
   debug(`parseFile: ${filePath}`);
 
   const fileTokenizer = await fromFile(filePath);
@@ -47,12 +51,13 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
 
   try {
     const parserLoader = parserFactory.findLoaderForExtension(filePath);
-    if (!parserLoader)
+    if (!parserLoader) {
       debug('Parser could not be determined by file extension');
+    }
 
     try {
       return await parserFactory.parse(fileTokenizer, parserLoader, options);
-    } catch(error: unknown) {
+    } catch (error: unknown) {
       if (error instanceof CouldNotDetermineFileTypeError || error instanceof UnsupportedFileTypeError) {
         error.message += `: ${filePath}`;
       }

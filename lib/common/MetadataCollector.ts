@@ -1,31 +1,49 @@
-import {
-  type FormatId,
-  type IAudioMetadata, type ICommonTagsResult,
-  type IFormat,
-  type INativeTags, type IOptions, type IQualityInformation, type IPicture, type ITrackInfo, TrackTypeValueToKeyMap, type IComment, type AnyTagValue, 
-} from '../type.js';
-
 import initDebug from 'debug';
-import { type IGenericTag, type TagType, isSingleton, isUnique } from './GenericTagTypes.js';
-import { CombinedTagMapper } from './CombinedTagMapper.js';
-import { CommonTagMapper } from './GenericTagMapper.js';
-import { toRatio } from './Util.js';
 import { fileTypeFromBuffer } from 'file-type';
 import { parseLyrics } from '../lrc/LyricsParser.js';
+import {
+  type AnyTagValue,
+  type FormatId,
+  type IAudioMetadata,
+  type IComment,
+  type ICommonTagsResult,
+  type IFormat,
+  type INativeTags,
+  type IOptions,
+  type IPicture,
+  type IQualityInformation,
+  type ITrackInfo,
+  TrackTypeValueToKeyMap
+} from '../type.js';
+import { CombinedTagMapper } from './CombinedTagMapper.js';
+import { CommonTagMapper } from './GenericTagMapper.js';
+import { type IGenericTag, isSingleton, isUnique, type TagType } from './GenericTagTypes.js';
+import { toRatio } from './Util.js';
 
 const debug = initDebug('music-metadata:collector');
 
 type SingularArtistId = 'artist' | 'albumartist';
 type PluralArtistId = 'artists' | 'albumartists';
 
-const TagPriority: TagType[] = ['matroska', 'APEv2', 'vorbis', 'ID3v2.4', 'ID3v2.3', 'ID3v2.2', 'exif', 'asf', 'iTunes', 'AIFF', 'ID3v1'];
+const TagPriority: TagType[] = [
+  'matroska',
+  'APEv2',
+  'vorbis',
+  'ID3v2.4',
+  'ID3v2.3',
+  'ID3v2.2',
+  'exif',
+  'asf',
+  'iTunes',
+  'AIFF',
+  'ID3v1'
+];
 
 /**
  * Combines all generic-tag-mappers for each tag type
  */
 
 export interface IWarningCollector {
-
   /**
    * Register parser warning
    * @param warning
@@ -34,7 +52,6 @@ export interface IWarningCollector {
 }
 
 export interface INativeMetadataCollector extends IWarningCollector {
-
   /**
    * Only use this for reading
    */
@@ -65,7 +82,6 @@ export interface INativeMetadataCollector extends IWarningCollector {
  * Responsible for triggering async updates
  */
 export class MetadataCollector implements INativeMetadataCollector {
-
   public readonly format: IFormat = {
     tagTypes: [],
     trackInfo: []
@@ -74,9 +90,9 @@ export class MetadataCollector implements INativeMetadataCollector {
   public readonly native: INativeTags = {};
 
   public readonly common: ICommonTagsResult = {
-    track: {no: null, of: null},
-    disk: {no: null, of: null},
-    movementIndex: {no: null, of: null}
+    track: { no: null, of: null },
+    disk: { no: null, of: null },
+    movementIndex: { no: null, of: null }
   };
 
   public readonly quality: IQualityInformation = {
@@ -119,16 +135,18 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public addStreamInfo(streamInfo: ITrackInfo) {
-    debug(`streamInfo: type=${streamInfo.type ? TrackTypeValueToKeyMap[streamInfo.type] : '?'}, codec=${streamInfo.codecName}`);
+    debug(
+      `streamInfo: type=${streamInfo.type ? TrackTypeValueToKeyMap[streamInfo.type] : '?'}, codec=${streamInfo.codecName}`
+    );
     this.format.trackInfo.push(streamInfo);
   }
 
   public setFormat(key: FormatId, value: AnyTagValue) {
     debug(`format: ${key} = ${value}`);
-    (this.format as unknown as { [id: string]: unknown; })[key] = value; // as any to override readonly
+    (this.format as unknown as { [id: string]: unknown })[key] = value; // as any to override readonly
 
     if (this.opts?.observer) {
-      this.opts.observer({metadata: this, tag: {type: 'format', id: key, value}});
+      this.opts.observer({ metadata: this, tag: { type: 'format', id: key, value } });
     }
   }
 
@@ -149,24 +167,22 @@ export class MetadataCollector implements INativeMetadataCollector {
       this.registerTagType(tagType);
       this.native[tagType] = [];
     }
-    this.native[tagType].push({id: tagId, value});
+    this.native[tagType].push({ id: tagId, value });
 
     await this.toCommon(tagType, tagId, value);
   }
 
   public addWarning(warning: string) {
-    this.quality.warnings.push({message: warning});
+    this.quality.warnings.push({ message: warning });
   }
 
   public async postMap(tagType: TagType | 'artificial', tag: IGenericTag): Promise<void> {
-
     // Common tag (alias) found
 
     // check if we need to do something special with common tag
     // if the event has been aliased then we need to clean it before
     // it is emitted to the user. e.g. genre (20) -> Electronic
     switch (tag.id) {
-
       case 'artist':
         return this.handleSingularArtistTag(tagType, tag, 'artist', 'artists');
 
@@ -258,19 +274,21 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = tag.value === '1' || tag.value === 1; // boolean
         break;
 
-      case 'isrc': { // Only keep unique values
+      case 'isrc': {
+        // Only keep unique values
         const commonTag = this.common[tag.id];
-        if (commonTag && commonTag.indexOf(tag.value as string) !== -1)
+        if (commonTag && commonTag.indexOf(tag.value as string) !== -1) {
           return;
+        }
         break;
       }
 
       case 'comment':
         if (typeof tag.value === 'string') {
-          tag.value = {text: tag.value};
+          tag.value = { text: tag.value };
         }
         if ((tag.value as IComment).descriptor === 'iTunPGAP') {
-          this.setGenericTag(tagType, {id: 'gapless', value: (tag.value as IComment).text === '1'});
+          this.setGenericTag(tagType, { id: 'gapless', value: (tag.value as IComment).text === '1' });
         }
         break;
 
@@ -313,12 +331,12 @@ export class MetadataCollector implements INativeMetadataCollector {
   ): Promise<void> | void {
     if (this.commonOrigin[singularId] === this.originPriority[tagType]) {
       // Assume the singular field is used as plural (multiple values from same source)
-      return this.postMap('artificial', {id: pluralId, value: tag.value});
+      return this.postMap('artificial', { id: pluralId, value: tag.value });
     }
 
     if (!this.common[pluralId]) {
       // Fill plural using singular source
-      this.setGenericTag('artificial', {id: pluralId, value: tag.value});
+      this.setGenericTag('artificial', { id: pluralId, value: tag.value });
     }
 
     this.setGenericTag(tagType, tag);
@@ -338,7 +356,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         // Fill singular using plural source
         const values = (this.common[pluralId] || []).concat([tag.value as string]);
         const value = joinArtists(values);
-        this.setGenericTag('artificial', {id: singularId, value});
+        this.setGenericTag('artificial', { id: singularId, value });
       }
     }
 
@@ -366,7 +384,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       }
       return picture;
     }
-    this.addWarning("Empty picture tag found");
+    this.addWarning('Empty picture tag found');
     return null;
   }
 
@@ -374,8 +392,7 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Convert native tag to common tags
    */
   private async toCommon(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
-
-    const tag = {id: tagId, value};
+    const tag = { id: tagId, value };
 
     const genericTag = this.tagMapper.mapTag(tagType, tag, this);
 
@@ -388,7 +405,6 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Set generic tag
    */
   private setGenericTag(tagType: TagType | 'artificial', tag: IGenericTag) {
-
     debug(`common.${tag.id} = ${tag.value}`);
     const prio0 = this.commonOrigin[tag.id] || 1000;
     const prio1 = this.originPriority[tagType];
@@ -409,14 +425,14 @@ export class MetadataCollector implements INativeMetadataCollector {
         }
         // no effect? this.commonOrigin[tag.id] = prio1;
       } else if (prio1 < prio0) {
-        (this.common[tag.id] as unknown[])= [tag.value];
+        (this.common[tag.id] as unknown[]) = [tag.value];
         this.commonOrigin[tag.id] = prio1;
       } else {
         return debug(`Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value}`);
       }
     }
     if (this.opts?.observer) {
-      this.opts.observer({metadata: this, tag: {type: 'common', id: tag.id, value: tag.value}});
+      this.opts.observer({ metadata: this, tag: { type: 'common', id: tag.id, value: tag.value } });
     }
     // ToDo: trigger metadata event
   }

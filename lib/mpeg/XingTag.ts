@@ -1,5 +1,5 @@
-import * as Token from 'token-types';
 import type { IGetToken, ITokenizer } from 'strtok3';
+import * as Token from 'token-types';
 
 import * as util from '../common/Util.js';
 import { ExtendedLameHeader, type IExtendedLameHeader } from './ExtendedLameHeader.js';
@@ -24,16 +24,15 @@ export const InfoTagHeaderTag = new Token.StringType(4, 'ascii');
 export const LameEncoderVersion = new Token.StringType(6, 'ascii');
 
 export interface IXingInfoTag {
-
   /**
    * total bit stream frames from Vbr header data
    */
-  numFrames: number | null,
+  numFrames: number | null;
 
   /**
    * Actual stream size = file size - header(s) size [bytes]
    */
-  streamSize: number | null,
+  streamSize: number | null;
 
   toc?: Uint8Array;
 
@@ -44,8 +43,8 @@ export interface IXingInfoTag {
 
   lame?: {
     version: string;
-    extended?: IExtendedLameHeader
-  }
+    extended?: IExtendedLameHeader;
+  };
 }
 
 /**
@@ -71,7 +70,7 @@ export const XingHeaderFlags: IGetToken<IXingHeaderFlags> = {
 //  */
 export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTag> {
   const flags = await tokenizer.readToken(XingHeaderFlags);
-  const xingInfoTag: IXingInfoTag = {numFrames: null, streamSize: null, vbrScale: null};
+  const xingInfoTag: IXingInfoTag = { numFrames: null, streamSize: null, vbrScale: null };
   if (flags.frames) {
     xingInfoTag.numFrames = await tokenizer.readToken(Token.UINT32_BE);
   }

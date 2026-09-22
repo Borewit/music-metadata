@@ -5,6 +5,6 @@ export const dsfParserLoader: IParserLoader = {
   extensions: ['.dsf'],
   mimeTypes: ['audio/dsf'],
   async load() {
-    return (await import('./DsfParser.js')).DsfParser
+    return (await import('./DsfParser.js')).DsfParser;
   }
 };

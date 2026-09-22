@@ -1,10 +1,9 @@
 import type { IGetToken } from 'strtok3';
-import type { IChunkHeader } from '../iff/index.js';
 import * as Token from 'token-types';
+import type { IChunkHeader } from '../iff/index.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 
-export class WaveContentError extends makeUnexpectedFileContentError('Wave'){
-}
+export class WaveContentError extends makeUnexpectedFileContentError('Wave') {}
 
 /**
  * Ref: https://msdn.microsoft.com/en-us/library/windows/desktop/dd317599(v=vs.85).aspx
@@ -20,7 +19,7 @@ export const WaveFormat = {
   // MPEG-4 and AAC Audio Types
   MPEG_ADTS_AAC: 0x1600,
   MPEG_LOAS: 0x1602,
-  RAW_AAC1: 0x00FF,
+  RAW_AAC1: 0x00ff,
   // Dolby Audio Types
   DOLBY_AC3_SPDIF: 0x0092,
   DVM: 0x2000,
@@ -31,7 +30,7 @@ export const WaveFormat = {
   MPEG: 0x0050,
   MPEGLAYER3: 0x0055
 };
-export type WaveFormat = typeof WaveFormat[keyof typeof WaveFormat];
+export type WaveFormat = (typeof WaveFormat)[keyof typeof WaveFormat];
 
 export const WaveFormatNameMap = {
   [WaveFormat.PCM]: 'PCM',
@@ -62,18 +61,18 @@ export interface IWaveFormat {
   /**
    * PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression.
    */
-  wFormatTag: WaveFormat,
+  wFormatTag: WaveFormat;
   /**
    * Mono = 1, Stereo = 2, etc.
    */
-  nChannels: number,
+  nChannels: number;
   /**
    * 8000, 44100, etc.
    */
-  nSamplesPerSec: number,
-  nAvgBytesPerSec: number,
-  nBlockAlign: number,
-  wBitsPerSample: number
+  nSamplesPerSec: number;
+  nAvgBytesPerSec: number;
+  nBlockAlign: number;
+  wBitsPerSample: number;
 }
 
 /**
@@ -81,23 +80,23 @@ export interface IWaveFormat {
  * http://soundfile.sapp.org/doc/WaveFormat/
  */
 export class Format implements IGetToken<IWaveFormat> {
-
   public len: number;
 
   public constructor(header: IChunkHeader) {
-    if (header.chunkSize < 16)
+    if (header.chunkSize < 16) {
       throw new WaveContentError('Invalid chunk size');
+    }
     this.len = header.chunkSize;
   }
 
   public get(buf: Uint8Array, off: number): IWaveFormat {
     return {
       wFormatTag: Token.UINT16_LE.get(buf, off),
-      nChannels: Token.UINT16_LE.get(buf,off + 2),
-      nSamplesPerSec: Token.UINT32_LE.get(buf,off + 4),
-      nAvgBytesPerSec: Token.UINT32_LE.get(buf,off + 8),
-      nBlockAlign: Token.UINT16_LE.get(buf,off + 12),
-      wBitsPerSample: Token.UINT16_LE.get(buf,off + 14)
+      nChannels: Token.UINT16_LE.get(buf, off + 2),
+      nSamplesPerSec: Token.UINT32_LE.get(buf, off + 4),
+      nAvgBytesPerSec: Token.UINT32_LE.get(buf, off + 8),
+      nBlockAlign: Token.UINT16_LE.get(buf, off + 12),
+      wBitsPerSample: Token.UINT16_LE.get(buf, off + 14)
     };
   }
 }
@@ -112,7 +111,6 @@ export interface IFactChunk {
  * http://www.recordingblogs.com/wiki/fact-chunk-of-a-wave-file
  */
 export class FactChunk implements IGetToken<IFactChunk> {
-
   public len: number;
 
   public constructor(header: IChunkHeader) {
@@ -127,5 +125,4 @@ export class FactChunk implements IGetToken<IFactChunk> {
       dwSampleLength: Token.UINT32_LE.get(buf, off)
     };
   }
-
 }

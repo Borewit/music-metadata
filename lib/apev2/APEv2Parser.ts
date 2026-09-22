@@ -1,47 +1,49 @@
+import { textDecode } from '@borewit/text-codec';
 import initDebug from 'debug';
+import type { IRandomAccessTokenizer } from 'strtok3';
 import * as strtok3 from 'strtok3';
 import { StringType } from 'token-types';
-
-import * as util from '../common/Util.js';
-import type { IOptions, IApeHeader } from '../type.js';
-import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { BasicParser } from '../common/BasicParser.js';
+import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import * as util from '../common/Util.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
+import type { IApeHeader, IOptions } from '../type.js';
 import {
   DataType,
   DescriptorParser,
   Header,
   type IDescriptor,
   type IFooter,
-  type IHeader, type ITagItemHeader,
+  type IHeader,
+  type ITagItemHeader,
   TagFooter,
   TagItemHeader
 } from './APEv2Token.js';
-import { makeUnexpectedFileContentError } from '../ParseError.js';
-import type { IRandomAccessTokenizer } from 'strtok3';
-import { textDecode } from '@borewit/text-codec';
 
 const debug = initDebug('music-metadata:parser:APEv2');
 
 const tagFormat = 'APEv2';
 
 interface IApeInfo {
-  descriptor?: IDescriptor,
-  header?: IHeader,
-  footer?: IFooter
+  descriptor?: IDescriptor;
+  header?: IHeader;
+  footer?: IFooter;
 }
 
 const preamble = 'APETAGEX';
 
-export class ApeContentError extends makeUnexpectedFileContentError('APEv2'){
-}
+export class ApeContentError extends makeUnexpectedFileContentError('APEv2') {}
 
-export function tryParseApeHeader(metadata: INativeMetadataCollector, tokenizer: strtok3.ITokenizer, options: IOptions) {
+export function tryParseApeHeader(
+  metadata: INativeMetadataCollector,
+  tokenizer: strtok3.ITokenizer,
+  options: IOptions
+) {
   const apeParser = new APEv2Parser(metadata, tokenizer, options);
   return apeParser.tryParseApeHeader();
 }
 
 export class APEv2Parser extends BasicParser {
-
   /**
    * Calculate the media file duration
    * @param ah ApeHeader
@@ -58,7 +60,10 @@ export class APEv2Parser extends BasicParser {
    * @param tokenizer
    * @param offset
    */
-  public static async findApeFooterOffset(tokenizer: IRandomAccessTokenizer, offset: number): Promise<IApeHeader | undefined> {
+  public static async findApeFooterOffset(
+    tokenizer: IRandomAccessTokenizer,
+    offset: number
+  ): Promise<IApeHeader | undefined> {
     // Search for APE footer header at the end of the file
     const apeBuf = new Uint8Array(TagFooter.len);
     const position = tokenizer.position;
@@ -67,7 +72,7 @@ export class APEv2Parser extends BasicParser {
       return undefined;
     }
     if (offset > TagFooter.len) {
-      await tokenizer.readBuffer(apeBuf, {position: offset - TagFooter.len});
+      await tokenizer.readBuffer(apeBuf, { position: offset - TagFooter.len });
       tokenizer.setPosition(position);
       const tagFooter = TagFooter.get(apeBuf, 0);
       if (tagFooter.ID === 'APETAGEX') {
@@ -77,14 +82,20 @@ export class APEv2Parser extends BasicParser {
           debug(`APE Footer found at offset=${offset - TagFooter.len}`);
           offset -= tagFooter.size;
         }
-        return {footer: tagFooter, offset};
+        return { footer: tagFooter, offset };
       }
     }
   }
 
-  private static parseTagFooter(metadata: INativeMetadataCollector, buffer: Uint8Array, options: IOptions): Promise<void> {
+  private static parseTagFooter(
+    metadata: INativeMetadataCollector,
+    buffer: Uint8Array,
+    options: IOptions
+  ): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    if (footer.ID !== preamble) throw new ApeContentError('Unexpected APEv2 Footer ID preamble value');
+    if (footer.ID !== preamble) {
+      throw new ApeContentError('Unexpected APEv2 Footer ID preamble value');
+    }
     strtok3.fromBuffer(buffer);
     const apeParser = new APEv2Parser(metadata, strtok3.fromBuffer(buffer), options);
     return apeParser.parseTags(footer);
@@ -96,9 +107,8 @@ export class APEv2Parser extends BasicParser {
    * Parse APEv1 / APEv2 header if header signature found
    */
   public async tryParseApeHeader(): Promise<void> {
-
     if (this.tokenizer.fileInfo.size && this.tokenizer.fileInfo.size - this.tokenizer.position < TagFooter.len) {
-      debug("No APEv2 header found, end-of-file reached");
+      debug('No APEv2 header found, end-of-file reached');
       return;
     }
 
@@ -107,21 +117,22 @@ export class APEv2Parser extends BasicParser {
       await this.tokenizer.ignore(TagFooter.len);
       return this.parseTags(footer);
     }
-      debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
-      if (this.tokenizer.fileInfo.size) {
-        // Try to read the APEv2 header using just the footer-header
-        const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
-        const buffer = new Uint8Array(remaining);
-        await this.tokenizer.readBuffer(buffer);
-        return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
-      }
+    debug(`APEv2 header not found at offset=${this.tokenizer.position}`);
+    if (this.tokenizer.fileInfo.size) {
+      // Try to read the APEv2 header using just the footer-header
+      const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
+      const buffer = new Uint8Array(remaining);
+      await this.tokenizer.readBuffer(buffer);
+      return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
+    }
   }
 
   public async parse(): Promise<void> {
-
     const descriptor = await this.tokenizer.readToken<IDescriptor>(DescriptorParser);
 
-    if (descriptor.ID !== 'MAC ') throw new ApeContentError('Unexpected descriptor ID');
+    if (descriptor.ID !== 'MAC ') {
+      throw new ApeContentError('Unexpected descriptor ID');
+    }
     this.ape.descriptor = descriptor;
     const lenExp = descriptor.descriptorBytes - DescriptorParser.len;
     const header = await (lenExp > 0 ? this.parseDescriptorExpansion(lenExp) : this.parseHeader());
@@ -132,7 +143,6 @@ export class APEv2Parser extends BasicParser {
   }
 
   public async parseTags(footer: IFooter): Promise<void> {
-
     const keyBuffer = new Uint8Array(256); // maximum tag key length
 
     let bytesRemaining = footer.size - TagFooter.len;
@@ -141,7 +151,9 @@ export class APEv2Parser extends BasicParser {
 
     for (let i = 0; i < footer.fields; i++) {
       if (bytesRemaining < TagItemHeader.len) {
-        this.metadata.addWarning(`APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`);
+        this.metadata.addWarning(
+          `APEv2 Tag-header: ${footer.fields - i} items remaining, but no more tag data to read.`
+        );
         break;
       }
 
@@ -165,14 +177,17 @@ export class APEv2Parser extends BasicParser {
       await this.tokenizer.ignore(1);
       bytesRemaining -= key.length + 1;
 
-      if (this.tokenizer.fileInfo.size !== undefined &&
-        tagItemHeader.size > this.tokenizer.fileInfo.size - this.tokenizer.position) {
+      if (
+        this.tokenizer.fileInfo.size !== undefined &&
+        tagItemHeader.size > this.tokenizer.fileInfo.size - this.tokenizer.position
+      ) {
         throw new ApeContentError(`Invalid tag item size: ${tagItemHeader.size}`);
       }
       bytesRemaining -= tagItemHeader.size;
 
       switch (tagItemHeader.flags.dataType) {
-        case DataType.text_utf8: { // utf-8 text-string
+        case DataType.text_utf8: {
+          // utf-8 text-string
           const value = textDecode(await this.readTagValue(tagItemHeader.size), 'utf-8');
           const values = value.split(/\x00/g);
 
@@ -217,7 +232,7 @@ export class APEv2Parser extends BasicParser {
       // Stream sizes may be unknown or untrustworthy. Only allocate the full
       // value after all of its bytes have actually been read.
       const chunks: Uint8Array[] = [];
-      for (let remaining = size; remaining > 0;) {
+      for (let remaining = size; remaining > 0; ) {
         const chunk = new Uint8Array(Math.min(remaining, chunkSize));
         await this.tokenizer.readBuffer(chunk);
         chunks.push(chunk);
@@ -245,7 +260,7 @@ export class APEv2Parser extends BasicParser {
     const header = await this.tokenizer.readToken(Header);
     // ToDo before
     this.metadata.setFormat('lossless', true);
-    this.metadata.setFormat('container', 'Monkey\'s Audio');
+    this.metadata.setFormat('container', "Monkey's Audio");
 
     this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
     this.metadata.setFormat('sampleRate', header.sampleRate);
@@ -257,8 +272,11 @@ export class APEv2Parser extends BasicParser {
     }
 
     return {
-      forwardBytes: this.ape.descriptor.seekTableBytes + this.ape.descriptor.headerDataBytes +
-        this.ape.descriptor.apeFrameDataBytes + this.ape.descriptor.terminatingDataBytes
+      forwardBytes:
+        this.ape.descriptor.seekTableBytes +
+        this.ape.descriptor.headerDataBytes +
+        this.ape.descriptor.apeFrameDataBytes +
+        this.ape.descriptor.terminatingDataBytes
     };
   }
 }

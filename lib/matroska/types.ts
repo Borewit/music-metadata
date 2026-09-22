@@ -65,7 +65,7 @@ export interface ITrackAudio {
 
 export interface ICuePoint {
   cueTime?: number;
-  cueTrackPositions: ICueTrackPosition[]
+  cueTrackPositions: ICueTrackPosition[];
 }
 
 export interface ICueTrackPosition {
@@ -85,7 +85,7 @@ export interface ICueReference {
 
 export interface ISimpleTag {
   name?: string;
-  'string'?: string;
+  string?: string;
   binary?: Uint8Array;
   language?: string;
   default?: boolean;
@@ -99,7 +99,7 @@ export const TargetType = {
   50: 'album',
   60: 'edition',
   70: 'collection'
-}
+};
 
 export const TrackType = {
   video: 0x01,
@@ -110,7 +110,7 @@ export const TrackType = {
   button: 0x12,
   control: 0x20
 };
-export type TrackType = typeof TrackType[keyof typeof TrackType];
+export type TrackType = (typeof TrackType)[keyof typeof TrackType];
 export type TrackTypeKey = keyof typeof TrackType;
 
 export const TrackTypeValueToKeyMap: Record<TrackType, TrackTypeKey> = {
@@ -121,7 +121,7 @@ export const TrackTypeValueToKeyMap: Record<TrackType, TrackTypeKey> = {
   [TrackType.subtitle]: 'subtitle',
   [TrackType.button]: 'button',
   [TrackType.control]: 'control'
-}
+};
 
 export interface ITarget {
   trackUID?: Uint8Array;
@@ -133,7 +133,7 @@ export interface ITarget {
 
 export interface ITag {
   target: ITarget;
-  simpleTags: ISimpleTag[]
+  simpleTags: ISimpleTag[];
 }
 
 export interface ITags {
@@ -158,14 +158,14 @@ export interface IAttachments {
 
 export interface IMatroskaSegment {
   metaSeekInfo?: ISeekHead;
-  seekHeads?: ISeek[]
+  seekHeads?: ISeek[];
   info?: ISegmentInformation;
   tracks?: ITrackElement;
   tags?: ITags;
   cues?: ICuePoint[];
-  attachments?: IAttachments
+  attachments?: IAttachments;
 }
 
 export interface IMatroskaDoc extends IEbmlDoc {
-  segment: IMatroskaSegment
+  segment: IMatroskaSegment;
 }

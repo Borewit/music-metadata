@@ -1,10 +1,11 @@
 // lib/id3v2/FrameHeader.ts
-import * as Token from 'token-types';
-import * as util from '../common/Util.js';
-import { UINT32SYNCSAFE, type ID3v2MajorVersion } from './ID3v2Token.js';
-import type { IWarningCollector } from '../common/MetadataCollector.js';
+
 import { textDecode } from '@borewit/text-codec';
+import * as Token from 'token-types';
+import type { IWarningCollector } from '../common/MetadataCollector.js';
+import * as util from '../common/Util.js';
 import { Id3v2ContentError } from './FrameParser.js';
+import { type ID3v2MajorVersion, UINT32SYNCSAFE } from './ID3v2Token.js';
 
 export interface IFrameFlags {
   status: {
@@ -32,10 +33,13 @@ export interface IFrameHeader {
  */
 export function getFrameHeaderLength(majorVer: number): 6 | 10 {
   switch (majorVer) {
-    case 2: return 6;
+    case 2:
+      return 6;
     case 3:
-    case 4: return 10;
-    default: throw makeUnexpectedMajorVersionError(majorVer);
+    case 4:
+      return 10;
+    default:
+      throw makeUnexpectedMajorVersionError(majorVer);
   }
 }
 
@@ -81,7 +85,11 @@ function readFrameFlags(b: Uint8Array, majorVer: 3 | 4): IFrameFlags {
  *
  * Note: It only *parses* and does light validation. It does not read payload bytes.
  */
-export function readFrameHeader(uint8Array: Uint8Array, majorVer: ID3v2MajorVersion, warningCollector: IWarningCollector): IFrameHeader {
+export function readFrameHeader(
+  uint8Array: Uint8Array,
+  majorVer: ID3v2MajorVersion,
+  warningCollector: IWarningCollector
+): IFrameHeader {
   switch (majorVer) {
     case 2:
       return parseFrameHeaderV22(uint8Array, majorVer, warningCollector);
@@ -108,7 +116,11 @@ function parseFrameHeaderV22(uint8Array: Uint8Array, majorVer: 2, warningCollect
   return header;
 }
 
-function parseFrameHeaderV23V24(uint8Array: Uint8Array, majorVer: 3 | 4, warningCollector: IWarningCollector): IFrameHeader {
+function parseFrameHeaderV23V24(
+  uint8Array: Uint8Array,
+  majorVer: 3 | 4,
+  warningCollector: IWarningCollector
+): IFrameHeader {
   const header: IFrameHeader = {
     id: textDecode(uint8Array.subarray(0, 4), 'ascii'),
     length: (majorVer === 4 ? UINT32SYNCSAFE : Token.UINT32_BE).get(uint8Array, 4),

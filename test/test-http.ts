@@ -1,20 +1,14 @@
 import { assert } from 'chai';
-
-import { parseWebStream } from '../lib/index.js';
-
 import type { IFileInfo } from 'strtok3';
+import { parseWebStream } from '../lib/index.js';
 
 const [nodeMajorVersion] = process.versions.node.split('.').map(Number);
 
 // Skipped: https://github.com/Borewit/music-metadata/issues/160
 describe('HTTP streaming', () => {
-
-  describe("Stream HTTP using fetch()", () => {
-
+  describe('Stream HTTP using fetch()', () => {
     [true, false].forEach(hasContentLength => {
-
       it(`Should be able to parse M4A ${hasContentLength ? 'with' : 'without'} content-length specified`, async function () {
-
         if (nodeMajorVersion < 20) {
           this.skip(); // Fetch is only available since Node.js version 20
         }
@@ -42,5 +36,4 @@ describe('HTTP streaming', () => {
       });
     });
   }).retries(3); // Workaround for HTTP time-outs on Travis-CI
-
 });

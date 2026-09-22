@@ -1,10 +1,9 @@
-import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import initDebug from 'debug';
-
-import { ID3v2Header } from './ID3v2Token.js';
-import { ID3v2Parser } from './ID3v2Parser.js';
-import { ID3v1Parser } from '../id3v1/ID3v1Parser.js';
+import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import { BasicParser } from '../common/BasicParser.js';
+import { ID3v1Parser } from '../id3v1/ID3v1Parser.js';
+import { ID3v2Parser } from './ID3v2Parser.js';
+import { ID3v2Header } from './ID3v2Token.js';
 
 const debug = initDebug('music-metadata:parser:ID3');
 
@@ -12,7 +11,6 @@ const debug = initDebug('music-metadata:parser:ID3');
  * Abstract parser which tries take ID3v2 and ID3v1 headers.
  */
 export abstract class AbstractID3Parser extends BasicParser {
-
   public static async startsWithID3v2Header(tokenizer: ITokenizer): Promise<boolean> {
     return (await tokenizer.peekToken(ID3v2Header)).fileIdentifier === 'ID3';
   }
@@ -24,7 +22,7 @@ export abstract class AbstractID3Parser extends BasicParser {
       await this.parseID3v2();
     } catch (err) {
       if (err instanceof EndOfStreamError) {
-        debug("End-of-stream");
+        debug('End-of-stream');
       } else {
         throw err;
       }
@@ -52,7 +50,6 @@ export abstract class AbstractID3Parser extends BasicParser {
       await id3v1parser.parse();
       this.finalize();
     }
-
   }
 
   private async tryReadId3v2Headers(): Promise<void> {
@@ -63,7 +60,5 @@ export abstract class AbstractID3Parser extends BasicParser {
       await this.id3parser.parse(this.metadata, this.tokenizer, this.options);
       return this.tryReadId3v2Headers();
     }
-
   }
-
 }

@@ -1,6 +1,5 @@
-import { assert } from 'chai';
 import path from 'node:path';
-
+import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
@@ -10,9 +9,7 @@ const t = assert;
 // https://github.com/Borewit/music-metadata/pull/544
 
 describe('Add, change and fix some mappings #pr-544', () => {
-
   describe('Movement Name', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -33,13 +30,12 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Movement Index', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
+        t.deepEqual(metadata.common.movementIndex, { no: 1, of: 4 }, 'metadata.common.movementIndex');
       });
     });
 
@@ -48,13 +44,12 @@ describe('Add, change and fix some mappings #pr-544', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.deepEqual(metadata.common.movementIndex, {no: 1, of: 4}, 'metadata.common.movementIndex');
+        t.deepEqual(metadata.common.movementIndex, { no: 1, of: 4 }, 'metadata.common.movementIndex');
       });
     });
   });
 
   describe('Show Movement', () => {
-
     it('mp4', () => {
       const filename = 'mp4/pr-544.m4a';
       const filePath = path.join(samplePath, filename);
@@ -66,7 +61,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Work', () => {
-
     it('mp4', () => {
       const filename = 'mp4/pr-544.m4a';
       const filePath = path.join(samplePath, filename);
@@ -78,7 +72,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Podcast', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -99,7 +92,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Podcast Category', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -120,7 +112,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Podcast Identifier', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -141,7 +132,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Podcast Keywords', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -162,7 +152,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Podcast Url', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -183,7 +172,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Short Description', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -204,7 +192,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Long Description', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -225,7 +212,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Album Artist Sort', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -234,7 +220,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
         t.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
       });
     });
-
 
     it('mp4', () => {
       const filename = 'mp4/pr-544.m4a';
@@ -247,7 +232,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Album Sort', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -268,7 +252,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Artist Sort', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -289,7 +272,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Composer Sort', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -310,7 +292,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Title Sort', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -331,7 +312,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Copyright', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -352,7 +332,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Compilation', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -373,19 +352,22 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Comment', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.deepEqual(metadata.common.comment, [
-          {
-            descriptor: "",
-            language: "eng",
-            text: "Tagged with Mp3tag v3.01"
-          }
-        ], 'metadata.common.comment');
+        t.deepEqual(
+          metadata.common.comment,
+          [
+            {
+              descriptor: '',
+              language: 'eng',
+              text: 'Tagged with Mp3tag v3.01'
+            }
+          ],
+          'metadata.common.comment'
+        );
       });
     });
 
@@ -394,13 +376,12 @@ describe('Add, change and fix some mappings #pr-544', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        t.deepEqual(metadata.common.comment, [{text: 'Tagged with Mp3tag v3.01'}], 'metadata.common.comment');
+        t.deepEqual(metadata.common.comment, [{ text: 'Tagged with Mp3tag v3.01' }], 'metadata.common.comment');
       });
     });
   });
 
   describe('Release time', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -422,7 +403,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('Original Album', () => {
-
     it('mp3-id3v24', () => {
       const filename = 'mp3/pr-544-id3v24.mp3';
       const filePath = path.join(samplePath, filename);
@@ -434,7 +414,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('iTunes Video Quality', () => {
-
     it('mp4', () => {
       const filename = 'mp4/pr-544.m4a';
       const filePath = path.join(samplePath, filename);
@@ -446,7 +425,6 @@ describe('Add, change and fix some mappings #pr-544', () => {
   });
 
   describe('iTunes Media Type', () => {
-
     it('mp4', () => {
       const filename = 'mp4/pr-544.m4a';
       const filePath = path.join(samplePath, filename);

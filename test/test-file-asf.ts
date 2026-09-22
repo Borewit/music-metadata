@@ -1,18 +1,24 @@
+import path from 'node:path';
+import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { Readable } from 'node:stream';
 import { fromBuffer } from 'strtok3';
-import * as mm from '../lib/index.js';
-import path from 'node:path';
 import AsfGuid from '../lib/asf/AsfGuid.js';
+import {
+  AsfContentParseError,
+  DataType,
+  HeaderExtensionObject,
+  HeaderObjectToken,
+  readCodecEntries,
+  TopLevelHeaderObjectToken
+} from '../lib/asf/AsfObject.js';
 import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
 import type { IWarningCollector } from '../lib/common/MetadataCollector.js';
-import { AsfContentParseError, DataType, HeaderExtensionObject, HeaderObjectToken, readCodecEntries, TopLevelHeaderObjectToken } from '../lib/asf/AsfObject.js';
-import { Parsers } from './metadata-parsers.js';
-
-import { samplePath } from './util.js';
 import type { IPicture } from '../lib/index.js';
+import * as mm from '../lib/index.js';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 use(chaiAsPromised);
 
@@ -44,11 +50,7 @@ function createSingleObjectAsf(
 function createHeaderExtensionAsf(extensionDataSize: number, enclosingDataSize: number): Uint8Array {
   const extensionHeaderSize = new HeaderExtensionObject().len;
   const extensionObjectSize = HeaderObjectToken.len + extensionHeaderSize + enclosingDataSize;
-  const data = createSingleObjectAsf(
-    HeaderExtensionObject.guid,
-    extensionObjectSize,
-    extensionObjectSize
-  );
+  const data = createSingleObjectAsf(HeaderExtensionObject.guid, extensionObjectSize, extensionObjectSize);
   new DataView(data.buffer).setUint32(
     TopLevelHeaderObjectToken.len + HeaderObjectToken.len + 18,
     extensionDataSize,
@@ -62,20 +64,16 @@ function createUnknownSizeStream(data: Uint8Array): Readable {
 }
 
 describe('Parse ASF', () => {
-
   describe('GUID', () => {
     it('should construct GUID from string', () => {
-
       const Header_GUID = Uint8Array.from([
-        0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
-        0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C
+        0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c
       ]);
 
       assert.deepEqual(AsfGuid.HeaderObject.toBin(), Header_GUID);
     });
 
     it('should construct GUID from string', () => {
-
       const guid_data = new Uint8Array([48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108]);
       assert.deepEqual(AsfGuid.fromBin(guid_data).str, '75B22630-668E-11CF-A6D9-00AA0062CE6C');
     });
@@ -93,36 +91,35 @@ describe('Parse ASF', () => {
    * Where 8 is 2 bytes longer then maximum allowed of 6
    */
   it('should be able to roughly decode a 64-bit QWord', () => {
-
-    const tests: { raw: number[], expected: number, description: string }[] = [
+    const tests: { raw: number[]; expected: number; description: string }[] = [
       {
-        raw: [0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
-        expected: 0xFF,
+        raw: [0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        expected: 0xff,
         description: '8-bit'
       },
       {
-        raw: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
-        expected: 0xFFFF,
+        raw: [0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        expected: 0xffff,
         description: '16-bit'
       },
       {
-        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00],
-        expected: 0xFFFFFFFF,
+        raw: [0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00],
+        expected: 0xffffffff,
         description: '32-bit'
       },
       {
-        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00],
-        expected: 0xFFFFFFFFFF,
+        raw: [0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00],
+        expected: 0xffffffffff,
         description: '40-bit'
       },
       {
-        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00],
-        expected: 0xFFFFFFFFFFFF,
+        raw: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00],
+        expected: 0xffffffffffff,
         description: '48-bit'
       },
       {
-        raw: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F, 0x00],
-        expected: 0xFFFFFFFFFFFFF,
+        raw: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0x00],
+        expected: 0xfffffffffffff,
         description: '52-bit'
       }
     ];
@@ -131,11 +128,9 @@ describe('Parse ASF', () => {
       const buf = Uint8Array.from(test.raw);
       assert.strictEqual(Number(getParserForAttr(DataType.QWord)(buf)), test.expected, test.description);
     });
-
   });
 
   describe('parse', () => {
-
     function checkFormat(format: mm.IFormat) {
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');
       assert.strictEqual(format.codec, 'Windows Media Audio 9.1', 'format.codec');
@@ -146,28 +141,30 @@ describe('Parse ASF', () => {
     }
 
     function checkCommon(common: mm.ICommonTagsResult) {
-      assert.strictEqual(common.title, 'Don\'t Bring Me Down', 'common.title');
+      assert.strictEqual(common.title, "Don't Bring Me Down", 'common.title');
       assert.deepEqual(common.artist, 'Electric Light Orchestra', 'common.artist');
       assert.deepEqual(common.albumartist, 'Electric Light Orchestra', 'common.albumartist');
       assert.strictEqual(common.album, 'Discovery', 'common.album');
       assert.strictEqual(common.year, 2001, 'common.year');
-      assert.deepEqual(common.track, {no: 9, of: null}, 'common.track 9/0');
-      assert.deepEqual(common.disk, {no: null, of: null}, 'common.disk 0/0');
+      assert.deepEqual(common.track, { no: 9, of: null }, 'common.track 9/0');
+      assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk 0/0');
       assert.deepEqual(common.genre, ['Rock'], 'common.genre');
     }
 
     function checkNative(native: mm.INativeTagDict) {
-
       assert.deepEqual(native['WM/AlbumTitle'], ['Discovery'], 'native: WM/AlbumTitle');
       assert.deepEqual(native['WM/BeatsPerMinute'], [117], 'native: WM/BeatsPerMinute');
       assert.deepEqual(native.REPLAYGAIN_TRACK_GAIN, ['-4.7 dB'], 'native: REPLAYGAIN_TRACK_GAIN');
     }
 
     describe('should decode an ASF audio file (.wma)', () => {
-
       Parsers.forEach(parser => {
-        it(parser.description, async function(){
-          const {format, common, native} = await parser.parse(() => this.skip(), path.join(asfFilePath, 'asf.wma'), 'audio/x-ms-wma');
+        it(parser.description, async function () {
+          const { format, common, native } = await parser.parse(
+            () => this.skip(),
+            path.join(asfFilePath, 'asf.wma'),
+            'audio/x-ms-wma'
+          );
           checkFormat(format);
           checkCommon(common);
           assert.isDefined(native, 'metadata.native');
@@ -175,64 +172,60 @@ describe('Parse ASF', () => {
           checkNative(mm.orderTags(native.asf));
         });
       });
-
     });
 
     describe('should decode picture from', () => {
-
       Parsers.forEach(parser => {
-        it(parser.description, async function(){
+        it(parser.description, async function () {
           const filePath = path.join(asfFilePath, 'issue_57.wma');
-          const {native} = await parser.parse(() => this.skip(), filePath, 'audio/x-ms-wma');
+          const { native } = await parser.parse(() => this.skip(), filePath, 'audio/x-ms-wma');
           const asf = mm.orderTags(native.asf);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
           const nativePicture = asf['WM/Picture'][0];
           assert.exists((nativePicture as IPicture).data);
         });
       });
-
     });
 
     /**
      * Related issue: https://github.com/Borewit/music-metadata/issues/68
      */
     it('should be able to parse truncated .wma file', async () => {
-
       const filePath = path.join(asfFilePath, '13 Thirty Dirty Birds.wma');
 
-      const {format, common, native} = await mm.parseFile(filePath);
+      const { format } = await mm.parseFile(filePath);
 
       assert.strictEqual(format.container, 'ASF/audio', 'format.container');
       assert.strictEqual(format.codec, 'Windows Media Audio 9', 'format.codec');
       assert.approximately(format.duration!, 14.466, 1 / 10000, 'format.duration');
       assert.approximately(format.bitrate!, 128639, 1, 'format.bitrate');
       assert.isTrue(format.hasAudio, 'format.hasAudio');
-      assert.isFalse(format.hasVideo, 'format.hasVideo');  });
+      assert.isFalse(format.hasVideo, 'format.hasVideo');
+    });
 
     /**
      * Related issue: https://github.com/Borewit/music-metadata/issues/2729
      */
     describe('WM/SharedUserRating decoding', () => {
-
       it('should normalize the from 0-99 scale to [0..1]', () => {
-        assert.deepEqual(AsfTagMapper.toRating(75), {rating: 75 / 99}, '4 stars');
-        assert.deepEqual(AsfTagMapper.toRating(99), {rating: 1}, '5 stars');
-        assert.deepEqual(AsfTagMapper.toRating(1), {rating: 1 / 99}, '1 star');
+        assert.deepEqual(AsfTagMapper.toRating(75), { rating: 75 / 99 }, '4 stars');
+        assert.deepEqual(AsfTagMapper.toRating(99), { rating: 1 }, '5 stars');
+        assert.deepEqual(AsfTagMapper.toRating(1), { rating: 1 / 99 }, '1 star');
       });
 
       it('should tolerate a string-typed rating', () => {
-        assert.deepEqual(AsfTagMapper.toRating('75'), {rating: 75 / 99});
+        assert.deepEqual(AsfTagMapper.toRating('75'), { rating: 75 / 99 });
       });
 
       it('should omit the rating when unrated or invalid', () => {
-        assert.deepEqual(AsfTagMapper.toRating(0), {rating: undefined});
-        assert.deepEqual(AsfTagMapper.toRating('0'), {rating: undefined});
-        assert.deepEqual(AsfTagMapper.toRating(Number.NaN), {rating: undefined});
+        assert.deepEqual(AsfTagMapper.toRating(0), { rating: undefined });
+        assert.deepEqual(AsfTagMapper.toRating('0'), { rating: undefined });
+        assert.deepEqual(AsfTagMapper.toRating(Number.NaN), { rating: undefined });
       });
 
-      it('from \'issue-2729.wma\'', async () => {
+      it("from 'issue-2729.wma'", async () => {
         const filePath = path.join(asfFilePath, 'issue-2729.wma');
-        const {native, common} = await mm.parseFile(filePath, {duration: false});
+        const { native, common } = await mm.parseFile(filePath, { duration: false });
         assert.deepEqual(mm.orderTags(native.asf)['WM/SharedUserRating'], [75], 'native: WM/SharedUserRating');
         const sharedRating = common.rating?.find(r => r.source === undefined);
         if (sharedRating === undefined) {
@@ -241,55 +234,60 @@ describe('Parse ASF', () => {
         assert.approximately(sharedRating.rating, 75 / 99, 1 / 1000, 'common rating normalized');
         assert.strictEqual(mm.ratingToStars(sharedRating.rating), 4, 'ratingToStars');
       });
-
     });
-
   });
 
   describe('rating', () => {
-
     const asfTagMapper = new AsfTagMapper();
-    const warnings: IWarningCollector = {addWarning: () => undefined};
+    const warnings: IWarningCollector = { addWarning: () => undefined };
 
     it('maps the POPULARIMETER attribute to common.rating (issue #2730)', async () => {
       const filePath = path.join(asfFilePath, 'wma_rating.wma');
-      const {common, native} = await mm.parseFile(filePath);
+      const { common, native } = await mm.parseFile(filePath);
       const asf = mm.orderTags(native.asf);
 
       assert.deepEqual(asf.POPULARIMETER, ['hobbes|128|0'], 'native: POPULARIMETER');
       assert.deepEqual(asf['WM/SharedUserRating'], [75], 'native: WM/SharedUserRating');
 
       assert.isDefined(common.rating, 'common.rating should be defined');
-      assert.deepEqual(common.rating?.find(r => r.source === 'hobbes'), {source: 'hobbes', rating: 0.5},
-        'POPULARIMETER should be mapped to a popm-style rating');
-      assert.isTrue(common.rating?.some(r => r.rating === 75 / 99) ?? false,
-        'WM/SharedUserRating rating should still be mapped');
+      assert.deepEqual(
+        common.rating?.find(r => r.source === 'hobbes'),
+        { source: 'hobbes', rating: 0.5 },
+        'POPULARIMETER should be mapped to a popm-style rating'
+      );
+      assert.isTrue(
+        common.rating?.some(r => r.rating === 75 / 99) ?? false,
+        'WM/SharedUserRating rating should still be mapped'
+      );
 
       assert.strictEqual(mm.ratingToStars(common.rating?.[0].rating), 3, '128 -> 0.5 -> 3 stars');
     });
 
     it('maps POPULARIMETER to common.rating using the popm scale', () => {
-      const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|128|0'}, warnings);
-      assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: (128 - 1) / 254}});
+      const tag = asfTagMapper.mapGenericTag({ id: 'POPULARIMETER', value: 'player@example.com|128|0' }, warnings);
+      assert.deepEqual(tag, { id: 'rating', value: { source: 'player@example.com', rating: (128 - 1) / 254 } });
     });
 
     it('maps a POPULARIMETER rating of 255 to 1.0', () => {
-      const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|255|7'}, warnings);
-      assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: 1}});
+      const tag = asfTagMapper.mapGenericTag({ id: 'POPULARIMETER', value: 'player@example.com|255|7' }, warnings);
+      assert.deepEqual(tag, { id: 'rating', value: { source: 'player@example.com', rating: 1 } });
     });
 
     it('maps a POPULARIMETER rating of 1 to 0', () => {
-      const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|1|0'}, warnings);
-      assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: 0}});
+      const tag = asfTagMapper.mapGenericTag({ id: 'POPULARIMETER', value: 'player@example.com|1|0' }, warnings);
+      assert.deepEqual(tag, { id: 'rating', value: { source: 'player@example.com', rating: 0 } });
     });
 
     for (const rating of ['-1', '256', '999', '', 'abc', '128abc', '1.5']) {
       it(`registers a quality warning for invalid POPULARIMETER rating "${rating}"`, () => {
         const messages: string[] = [];
-        const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: `player@example.com|${rating}|0`}, {
-          addWarning: message => messages.push(message)
-        });
-        assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: undefined}});
+        const tag = asfTagMapper.mapGenericTag(
+          { id: 'POPULARIMETER', value: `player@example.com|${rating}|0` },
+          {
+            addWarning: message => messages.push(message)
+          }
+        );
+        assert.deepEqual(tag, { id: 'rating', value: { source: 'player@example.com', rating: undefined } });
         assert.deepEqual(messages, [`Invalid ASF POPULARIMETER rating: ${rating}`]);
       });
     }
@@ -297,48 +295,54 @@ describe('Parse ASF', () => {
     for (const rating of [0, 1, 128, 255]) {
       it(`does not register a quality warning for valid POPULARIMETER rating ${rating}`, () => {
         const messages: string[] = [];
-        asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: `player@example.com|${rating}|0`}, {
-          addWarning: message => messages.push(message)
-        });
+        asfTagMapper.mapGenericTag(
+          { id: 'POPULARIMETER', value: `player@example.com|${rating}|0` },
+          {
+            addWarning: message => messages.push(message)
+          }
+        );
         assert.isEmpty(messages);
       });
     }
 
     it('tolerates a POPULARIMETER value without the play counter', () => {
-      const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|128'}, warnings);
-      assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: (128 - 1) / 254}});
+      const tag = asfTagMapper.mapGenericTag({ id: 'POPULARIMETER', value: 'player@example.com|128' }, warnings);
+      assert.deepEqual(tag, { id: 'rating', value: { source: 'player@example.com', rating: (128 - 1) / 254 } });
     });
 
     it('guards against a non-numeric POPULARIMETER rating', () => {
       const messages: string[] = [];
-      const unrated = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com'}, {
-        addWarning: message => messages.push(message)
-      });
-      assert.deepEqual(unrated, {id: 'rating', value: {source: 'player@example.com', rating: undefined}});
+      const unrated = asfTagMapper.mapGenericTag(
+        { id: 'POPULARIMETER', value: 'player@example.com' },
+        {
+          addWarning: message => messages.push(message)
+        }
+      );
+      assert.deepEqual(unrated, { id: 'rating', value: { source: 'player@example.com', rating: undefined } });
       assert.deepEqual(messages, ['Invalid ASF POPULARIMETER rating: undefined']);
     });
 
     it('treats a POPULARIMETER rating of 0 as unrated', () => {
-      const unrated = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|0|0'}, warnings);
-      assert.deepEqual(unrated, {id: 'rating', value: {source: 'player@example.com', rating: undefined}});
+      const unrated = asfTagMapper.mapGenericTag({ id: 'POPULARIMETER', value: 'player@example.com|0|0' }, warnings);
+      assert.deepEqual(unrated, { id: 'rating', value: { source: 'player@example.com', rating: undefined } });
     });
 
     it('keeps mapping WM/SharedUserRating to common.rating', () => {
-      const tag = asfTagMapper.mapGenericTag({id: 'WM/SharedUserRating', value: 75}, warnings);
-      assert.deepEqual(tag, {id: 'rating', value: {rating: 75 / 99}});
+      const tag = asfTagMapper.mapGenericTag({ id: 'WM/SharedUserRating', value: 75 }, warnings);
+      assert.deepEqual(tag, { id: 'rating', value: { rating: 75 / 99 } });
     });
-
   });
 
   describe('security hardening', () => {
-
     it('rejects a top-level header smaller than 30 bytes', () => {
       const header = new Uint8Array(TopLevelHeaderObjectToken.len);
       header.set(AsfGuid.HeaderObject.toBin());
       new DataView(header.buffer).setBigUint64(16, 29n, true);
 
-      expect(() => TopLevelHeaderObjectToken.get(header, 0))
-        .to.throw(AsfContentParseError, /Invalid ASF top-level header object size: 29/);
+      expect(() => TopLevelHeaderObjectToken.get(header, 0)).to.throw(
+        AsfContentParseError,
+        /Invalid ASF top-level header object size: 29/
+      );
     });
 
     it('rejects object sizes that cannot be represented safely', () => {
@@ -346,8 +350,10 @@ describe('Parse ASF', () => {
       header.set(AsfGuid.PaddingObject.toBin());
       new DataView(header.buffer).setBigUint64(16, BigInt(Number.MAX_SAFE_INTEGER) + 1n, true);
 
-      expect(() => HeaderObjectToken.get(header, 0))
-        .to.throw(AsfContentParseError, /Invalid ASF header object size: 9007199254740992/);
+      expect(() => HeaderObjectToken.get(header, 0)).to.throw(
+        AsfContentParseError,
+        /Invalid ASF header object size: 9007199254740992/
+      );
     });
 
     it('rejects a top-level header with no child objects', async () => {
@@ -501,10 +507,7 @@ describe('Parse ASF', () => {
     it('Avoid infinite loop CWE-835', async () => {
       const filePath = path.join(asfFilePath, 'CWE-835.wma');
 
-      await expect(mm.parseFile(filePath)).to.be.rejectedWith(
-        AsfContentParseError,
-        /Invalid ASF header object size/
-      );
+      await expect(mm.parseFile(filePath)).to.be.rejectedWith(AsfContentParseError, /Invalid ASF header object size/);
     });
 
     it('numberOfObjectHeaders=4294967295', async () => {
@@ -515,7 +518,5 @@ describe('Parse ASF', () => {
         /Unrealistic number of ASF header objects/
       );
     });
-
   });
-
 });

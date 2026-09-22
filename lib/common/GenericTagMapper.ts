@@ -1,9 +1,8 @@
+import type { ITag } from '../type.js';
 import type * as generic from './GenericTagTypes.js';
-import type {ITag} from '../type.js';
 import type { INativeMetadataCollector, IWarningCollector } from './MetadataCollector.js';
 
 export interface IGenericTagMapper {
-
   /**
    * Which tagType is able to map to the generic mapping format
    */
@@ -24,7 +23,6 @@ export interface IGenericTagMapper {
 }
 
 export class CommonTagMapper implements IGenericTagMapper {
-
   public static maxRatingScore = 1;
 
   public static toIntOrNull(str: string): number | null {
@@ -60,14 +58,13 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @return common name
    */
   public mapGenericTag(tag: ITag, warnings: IWarningCollector): generic.IGenericTag | null {
-
-    tag = {id: tag.id, value: tag.value}; // clone object
+    tag = { id: tag.id, value: tag.value }; // clone object
 
     this.postMap(tag, warnings);
 
     // Convert native tag event to generic 'alias' tag
     const id = this.getCommonName(tag.id);
-    return id ? {id, value: tag.value} : null;
+    return id ? { id, value: tag.value } : null;
   }
 
   /**
