@@ -1,15 +1,15 @@
-import {execFile} from 'node:child_process';
 import {mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {Readable} from 'node:stream';
-import {promisify} from 'node:util';
+import {ReadableStream} from 'node:stream/web';
 import {assert, expect, use} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {fromBuffer, fromStream} from 'strtok3';
+import {EndOfStreamError, fromBuffer, fromStream} from 'strtok3';
 
 import {EbmlContentError, EbmlIterator, ParseAction} from '../lib/ebml/EbmlIterator.js';
 import {DataType, type IElementType} from '../lib/ebml/types.js';
+import {parseFile, parseStream, parseWebStream} from '../lib/index.js';
 
 use(chaiAsPromised);
 
@@ -22,13 +22,7 @@ function leafDtd(value: DataType): IElementType {
   return {name: 'root', container: {0x81: {name: 'leaf', value}}};
 }
 
-async function runScript(script: string): Promise<void> {
-  // Bun loads TypeScript natively and uses a different --loader syntax.
-  const runtimeArgs = process.versions.bun ? [] : ['--loader', 'ts-node/esm', '--input-type=module'];
-  await promisify(execFile)(process.execPath, [...runtimeArgs, '--eval', script], {timeout: 30000});
-}
-
-describe('EBML leaf lengths (GHSA-37v6-24wr-3x83)', () => {
+describe('EBML leaf lengths (GHSA-5gfj-9q3v-qfp3)', () => {
   for (const [name, type] of Object.entries(DataType)) {
     it(`rejects a ${name} leaf extending past the file`, async () => {
       const tokenizer = fromBuffer(new Uint8Array([0x81, 0x84, 1]));
@@ -124,18 +118,17 @@ describe('EBML leaf lengths (GHSA-37v6-24wr-3x83)', () => {
             0x15, 0x49, 0xa9, 0x66, 0x02, 0x00, 0x10, 0, 0, 0, 0,
             ...id, 0x04, 0x08, 0, 0, 0, 0, 1
           ];
-          await runScript(`
-            import {strict as assert} from 'node:assert';
-            import {Readable} from 'node:stream';
-            import {ReadableStream} from 'node:stream/web';
-            import {EndOfStreamError} from 'strtok3';
-            import {${api}} from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
-            const bytes = new Uint8Array(${JSON.stringify(bytes)});
-            const stream = ${api === 'parseStream'
-              ? 'Readable.from([bytes], {objectMode: false})'
-              : 'new ReadableStream({start(controller) { controller.enqueue(bytes); controller.close(); }})'};
-            await assert.rejects(${api}(stream, ${JSON.stringify({mimeType: 'video/webm', size})}), EndOfStreamError);
-          `);
+          const payload = new Uint8Array(bytes);
+          const fileInfo = {mimeType: 'video/webm', size};
+          const result = api === 'parseStream'
+            ? parseStream(Readable.from([payload], {objectMode: false}), fileInfo)
+            : parseWebStream(new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.enqueue(payload);
+                controller.close();
+              }
+            }), fileInfo);
+          await expect(result).to.be.rejectedWith(EndOfStreamError);
         });
       }
     }
@@ -153,17 +146,8 @@ describe('EBML leaf lengths (GHSA-37v6-24wr-3x83)', () => {
           0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d,
           0x42, id, 0x04, 0x08, 0x00, 0x00, 0x00, 0x00, 0x01
         ]));
-        // Isolate the fatal V8 abort in case the allocation check regresses.
-        const script = `
-          import {strict as assert} from 'node:assert';
-          import {parseFile} from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
-          import {EbmlContentError} from ${JSON.stringify(new URL('../lib/ebml/EbmlIterator.js', import.meta.url).href)};
-          await assert.rejects(parseFile(${JSON.stringify(filePath)}), {
-            name: new EbmlContentError('').name,
-            message: 'Invalid element length: 34359738368'
-          });
-        `;
-        await runScript(script);
+        await expect(parseFile(filePath))
+          .to.be.rejectedWith(EbmlContentError, 'Invalid element length: 34359738368');
       } finally {
         await rm(directory, {recursive: true, force: true});
       }
