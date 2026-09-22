@@ -1,4 +1,5 @@
-import { assert, expect } from 'chai';
+import { assert, expect, use } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { Readable } from 'node:stream';
 import { fromBuffer } from 'strtok3';
 import * as mm from '../lib/index.js';
@@ -6,13 +7,14 @@ import path from 'node:path';
 import AsfGuid from '../lib/asf/AsfGuid.js';
 import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
-import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import type { IWarningCollector } from '../lib/common/MetadataCollector.js';
 import { AsfContentParseError, DataType, HeaderExtensionObject, HeaderObjectToken, readCodecEntries, TopLevelHeaderObjectToken } from '../lib/asf/AsfObject.js';
 import { Parsers } from './metadata-parsers.js';
 
 import { samplePath } from './util.js';
 import type { IPicture } from '../lib/index.js';
+
+use(chaiAsPromised);
 
 const asfFilePath = path.join(samplePath, 'asf');
 const asfMimeType = { mimeType: 'audio/ms-wma' };
@@ -232,8 +234,12 @@ describe('Parse ASF', () => {
         const filePath = path.join(asfFilePath, 'issue-2729.wma');
         const {native, common} = await mm.parseFile(filePath, {duration: false});
         assert.deepEqual(mm.orderTags(native.asf)['WM/SharedUserRating'], [75], 'native: WM/SharedUserRating');
-        assert.approximately(common.rating![0].rating!, 75 / 99, 1 / 1000, 'common rating normalized');
-        assert.strictEqual(mm.ratingToStars(common.rating![0].rating), 4, 'ratingToStars');
+        const sharedRating = common.rating?.find(r => r.source === undefined);
+        if (sharedRating === undefined) {
+          throw new Error('WM/SharedUserRating should be mapped');
+        }
+        assert.approximately(sharedRating.rating, 75 / 99, 1 / 1000, 'common rating normalized');
+        assert.strictEqual(mm.ratingToStars(sharedRating.rating), 4, 'ratingToStars');
       });
 
     });
@@ -256,7 +262,7 @@ describe('Parse ASF', () => {
       assert.isDefined(common.rating, 'common.rating should be defined');
       assert.deepEqual(common.rating?.find(r => r.source === 'hobbes'), {source: 'hobbes', rating: 0.5},
         'POPULARIMETER should be mapped to a popm-style rating');
-      assert.isTrue(common.rating?.some(r => r.rating === 15.2) ?? false,
+      assert.isTrue(common.rating?.some(r => r.rating === 75 / 99) ?? false,
         'WM/SharedUserRating rating should still be mapped');
 
       assert.strictEqual(mm.ratingToStars(common.rating?.[0].rating), 3, '128 -> 0.5 -> 3 stars');
@@ -272,14 +278,44 @@ describe('Parse ASF', () => {
       assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: 1}});
     });
 
+    it('maps a POPULARIMETER rating of 1 to 0', () => {
+      const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|1|0'}, warnings);
+      assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: 0}});
+    });
+
+    for (const rating of ['-1', '256', '999', '', 'abc', '128abc', '1.5']) {
+      it(`registers a quality warning for invalid POPULARIMETER rating "${rating}"`, () => {
+        const messages: string[] = [];
+        const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: `player@example.com|${rating}|0`}, {
+          addWarning: message => messages.push(message)
+        });
+        assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: undefined}});
+        assert.deepEqual(messages, [`Invalid ASF POPULARIMETER rating: ${rating}`]);
+      });
+    }
+
+    for (const rating of [0, 1, 128, 255]) {
+      it(`does not register a quality warning for valid POPULARIMETER rating ${rating}`, () => {
+        const messages: string[] = [];
+        asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: `player@example.com|${rating}|0`}, {
+          addWarning: message => messages.push(message)
+        });
+        assert.isEmpty(messages);
+      });
+    }
+
     it('tolerates a POPULARIMETER value without the play counter', () => {
       const tag = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com|128'}, warnings);
       assert.deepEqual(tag, {id: 'rating', value: {source: 'player@example.com', rating: (128 - 1) / 254}});
     });
 
     it('guards against a non-numeric POPULARIMETER rating', () => {
-      const unrated = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com'}, warnings);
+      const messages: string[] = [];
+      const unrated = asfTagMapper.mapGenericTag({id: 'POPULARIMETER', value: 'player@example.com'}, {
+        addWarning: message => messages.push(message)
+      });
       assert.deepEqual(unrated, {id: 'rating', value: {source: 'player@example.com', rating: undefined}});
+      assert.deepEqual(messages, ['Invalid ASF POPULARIMETER rating: undefined']);
     });
 
     it('treats a POPULARIMETER rating of 0 as unrated', () => {
@@ -289,7 +325,7 @@ describe('Parse ASF', () => {
 
     it('keeps mapping WM/SharedUserRating to common.rating', () => {
       const tag = asfTagMapper.mapGenericTag({id: 'WM/SharedUserRating', value: 75}, warnings);
-      assert.deepEqual(tag, {id: 'rating', value: {rating: 15.2}});
+      assert.deepEqual(tag, {id: 'rating', value: {rating: 75 / 99}});
     });
 
   });
