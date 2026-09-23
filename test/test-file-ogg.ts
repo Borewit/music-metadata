@@ -1,9 +1,13 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, expect } from 'chai';
+import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import type { IFormat } from '../lib/index.js';
 import * as mm from '../lib/index.js';
+import { PageHeader, SegmentTable } from '../lib/ogg/OggToken.js';
 import { IdHeader } from '../lib/ogg/opus/Opus.js';
 import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
+import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
@@ -385,4 +389,61 @@ describe('Parse Ogg', () => {
       assert.strictEqual(format.duration, 17.58, 'format.duration');
     });
   });
+});
+
+// https://github.com/Borewit/music-metadata/issues/2638
+// Derived from UNDO UNDO.ogg on issues/2638, retaining the headers and first two
+// audio pages. The final page has an updated end-of-stream flag and CRC.
+// The picture comment continues beyond page 13, where early exit truncated Base64.
+describe('Ogg comments spanning many pages', () => {
+  it('keeps metadata incomplete until all comment continuation pages have been assembled', async () => {
+    const data = await readFile(path.join(oggSamplePath, 'issue-2638.ogg'));
+    const metadata = new MetadataCollector({});
+    const stream = new VorbisStream(metadata, {});
+    let offset = 0;
+
+    // Pages 1 through 81 contain one comment packet. Page 82 starts the next packet,
+    // causing the accumulated comment pages to be parsed together.
+    for (let page = 0; page <= 82; ++page) {
+      const header = PageHeader.get(data, offset);
+      assert.strictEqual(header.pageSequenceNo, page);
+      offset += PageHeader.len;
+      const segments = new SegmentTable(header);
+      const { totalPageSize } = segments.get(data, offset);
+      offset += segments.len;
+      await stream.parsePage(header, data.subarray(offset, offset + totalPageSize));
+      offset += totalPageSize;
+
+      if (page < 82) {
+        assert.isFalse(stream.isMetadataComplete, `metadata incomplete after page ${page}`);
+        assert.isUndefined(metadata.native.vorbis, `no partial comments parsed after page ${page}`);
+      }
+    }
+
+    assert.isTrue(stream.isMetadataComplete);
+    const picture = metadata.common.picture![0];
+    assert.lengthOf(picture.data, 491399);
+    assert.deepEqual(Array.from(picture.data.slice(-2)), [0xff, 0xd9], 'complete JPEG');
+    assert.isEmpty(metadata.quality.warnings);
+  });
+
+  for (const duration of [false, true]) {
+    it(`issue-2638.ogg, duration=${duration}`, async () => {
+      const filePath = path.join(oggSamplePath, 'issue-2638.ogg');
+      const { common, format, quality } = await mm.parseFile(filePath, { duration });
+      const picture = common.picture![0];
+      assert.strictEqual(picture.format, 'image/jpeg');
+      assert.lengthOf(picture.data, 491399);
+      assert.deepEqual(Array.from(picture.data.slice(-2)), [0xff, 0xd9], 'complete JPEG');
+      assert.isEmpty(quality.warnings);
+      assert.strictEqual(format.sampleRate, 44100);
+      if (duration) {
+        assert.strictEqual(format.numberOfSamples, 88896);
+        assert.strictEqual(format.duration, 88896 / 44100);
+      } else {
+        assert.isUndefined(format.duration);
+        assert.isUndefined(format.numberOfSamples);
+      }
+    });
+  }
 });

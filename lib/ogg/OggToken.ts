@@ -109,6 +109,9 @@ export class SegmentTable implements IGetToken<ISegmentTable> {
 }
 
 export interface IPageConsumer {
+  /** False while required metadata is still being read; undefined if not tracked. */
+  isMetadataComplete?: boolean;
+
   /**
    * Need to parse to end to be able to calculate the duration
    */
