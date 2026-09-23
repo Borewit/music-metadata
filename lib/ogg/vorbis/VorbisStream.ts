@@ -21,6 +21,7 @@ export class VorbisStream implements IPageConsumer {
   protected options: IOptions;
   protected lastPageHeader?: IPageHeader;
   public durationOnLastPage = true;
+  public isMetadataComplete = false;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions) {
     this.metadata = metadata;
@@ -170,5 +171,6 @@ export class VorbisStream implements IPageConsumer {
     while (userCommentListLength-- > 0) {
       offset += await this.parseUserComment(pageData, offset);
     }
+    this.isMetadataComplete = true;
   }
 }

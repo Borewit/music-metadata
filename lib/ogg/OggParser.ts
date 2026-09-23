@@ -106,6 +106,7 @@ export class OggParser extends BasicParser {
   public async parse(): Promise<void> {
     this.streams = new Map<number, OggStream>();
     let enfOfStream = false;
+    let stoppedEarly = false;
 
     let header: IPageHeader;
     try {
@@ -125,8 +126,11 @@ export class OggParser extends BasicParser {
 
         if (
           stream.pageNumber > 12 &&
+          // A comment (including its cover art) may span more than 13 pages.
+          [...this.streams.values()].every(stream => stream.pageConsumer?.isMetadataComplete !== false) &&
           !(this.options.duration && [...this.streams.values()].find(stream => stream.pageConsumer?.durationOnLastPage))
         ) {
+          stoppedEarly = true;
           debug('Stop processing Ogg stream');
           break;
         }
@@ -143,9 +147,11 @@ export class OggParser extends BasicParser {
     }
     for (const stream of this.streams.values()) {
       if (!stream.closed) {
-        this.metadata.addWarning(
-          `End-of-stream reached before reaching last page in Ogg stream serial=${stream.streamSerial}`
-        );
+        if (!stoppedEarly) {
+          this.metadata.addWarning(
+            `End-of-stream reached before reaching last page in Ogg stream serial=${stream.streamSerial}`
+          );
+        }
         await stream.pageConsumer?.flush();
       }
       stream.pageConsumer?.calculateDuration(enfOfStream);
