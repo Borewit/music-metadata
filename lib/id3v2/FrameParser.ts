@@ -223,7 +223,7 @@ export class FrameParser {
         const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
         output = {
           description: idAndData.id,
-          text: this.splitValue(type, util.decodeString(idAndData.data, encoding).replace(/\x00+$/, ''))
+          text: this.splitValue(type, FrameParser.trimNullPadding(util.decodeString(idAndData.data, encoding)))
         };
         break;
       }
