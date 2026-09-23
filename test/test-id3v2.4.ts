@@ -151,4 +151,32 @@ describe('Decode MP3/ID3v2.4', () => {
     assert.strictEqual(common.lyrics[0].language, 'eng', 'common.lyrics[0].language');
     assert.strictEqual(common.lyrics[0].text, lyrics);
   });
+
+  it('should trim the NUL padding of a TXXX frame in linear time', async () => {
+    // Intended defect: a TXXX value holding a long run of NUL bytes followed by one
+    // non-NUL byte. Trimming that run with /\x00+$/ retries the whole run at every
+    // starting offset, so the parse is quadratic in the length of the run.
+    const nulCount = 512 * 1024;
+    const value = new Uint8Array(nulCount + 3);
+    value[value.length - 1] = 0x41; // 'A', so the run does not sit at the end of the value
+
+    const synchSafe = (size: number) =>
+      Uint8Array.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
+    const ascii = (text: string) => Uint8Array.from(text, character => character.charCodeAt(0));
+
+    const frame = [ascii('TXXX'), synchSafe(value.length), new Uint8Array(2), value];
+    const frameSize = frame.reduce((total, part) => total + part.length, 0) - 10;
+    const parts = [ascii('ID3'), Uint8Array.from([4, 0, 0]), synchSafe(frameSize + 10), ...frame];
+
+    const mp3 = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+    let offset = 0;
+    for (const part of parts) {
+      mp3.set(part, offset);
+      offset += part.length;
+    }
+
+    const { native } = await mm.parseBuffer(mp3, { mimeType: 'audio/mpeg' });
+    const textFrames = (native['ID3v2.4'] ?? []).filter(tag => tag.id === 'TXXX');
+    assert.strictEqual(textFrames[textFrames.length - 1].value, 'A', 'the byte after the NUL run survives');
+  });
 });
