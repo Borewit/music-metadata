@@ -205,14 +205,17 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case 'totaltracks':
         this.common.track.of = CommonTagMapper.toIntOrNull(tag.value as string);
+        this.notifyCommonTag({ id: 'track', value: this.common.track });
         return;
 
       case 'totaldiscs':
         this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value as string);
+        this.notifyCommonTag({ id: 'disk', value: this.common.disk });
         return;
 
       case 'movementTotal':
         this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value as string);
+        this.notifyCommonTag({ id: 'movementIndex', value: this.common.movementIndex });
         return;
 
       case 'track':
@@ -221,6 +224,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
         this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value as string);
         this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
+        this.notifyCommonTag({ id: tag.id, value: this.common[tag.id] });
         return;
       }
 
@@ -431,10 +435,13 @@ export class MetadataCollector implements INativeMetadataCollector {
         return debug(`Ignore native tag (list): ${tagType}.${tag.id} = ${tag.value}`);
       }
     }
+    this.notifyCommonTag(tag);
+  }
+
+  private notifyCommonTag(tag: IGenericTag): void {
     if (this.opts?.observer) {
       this.opts.observer({ metadata: this, tag: { type: 'common', id: tag.id, value: tag.value } });
     }
-    // ToDo: trigger metadata event
   }
 }
 
