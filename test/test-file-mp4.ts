@@ -1008,6 +1008,17 @@ describe('Sample Description (stsd) atom', () => {
 });
 
 describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
+  // https://github.com/Borewit/music-metadata/issues/2552
+  it('rejects an M4A file with an atom size exceeding the remaining bytes', async () => {
+    // Audio and top-level padding were removed; the malformed metadata is unchanged.
+    const filePath = path.join(mp4Samples, 'issue-2552.m4a');
+
+    await rejects(
+      mm.parseFile(filePath),
+      error => error instanceof Mp4ContentError && /Atom size exceeds remaining bytes/.test(error.message)
+    );
+  });
+
   function box(name: string, payload: Buffer = Buffer.alloc(0), size?: bigint, extended = false): Buffer {
     const header = Buffer.alloc(extended ? 16 : 8);
     header.writeUInt32BE(extended ? 1 : Number(size ?? BigInt(header.length + payload.length)));
