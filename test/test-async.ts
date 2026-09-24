@@ -2,11 +2,64 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert } from 'chai';
 
+import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
 import type { IMetadataEventTag } from '../lib/type.js';
 import { samplePath } from './util.js';
 
 describe('Asynchronous observer updates', () => {
+  describe('track, disc and movement updates (GH-378)', () => {
+    for (const [id, totalId] of [
+      ['track', 'totaltracks'],
+      ['disk', 'totaldiscs'],
+      ['movementIndex', 'movementTotal']
+    ] as const) {
+      for (const value of ['3', '3/12']) {
+        it(`should announce normalized ${id} ${value}`, async () => {
+          const events: IMetadataEventTag[] = [];
+          const collector = new MetadataCollector({
+            observer(event) {
+              assert.deepEqual(event.tag.value, event.metadata.common[id]);
+              events.push(structuredClone(event.tag));
+            }
+          });
+
+          await collector.postMap('vorbis', { id, value });
+
+          assert.deepEqual(events, [{ type: 'common', id, value: { no: 3, of: value === '3' ? null : 12 } }]);
+        });
+      }
+
+      for (const totalFirst of [true, false]) {
+        it(`should announce ${id} with a separate total ${totalFirst ? 'before' : 'after'} the number`, async () => {
+          const events: IMetadataEventTag[] = [];
+          const collector = new MetadataCollector({
+            observer(event) {
+              assert.deepEqual(event.tag.value, event.metadata.common[id]);
+              events.push(structuredClone(event.tag));
+            }
+          });
+          const tags = [
+            { id, value: '3/10' },
+            { id: totalId, value: '12' }
+          ];
+          if (totalFirst) {
+            tags.reverse();
+          }
+          for (const tag of tags) {
+            await collector.postMap('vorbis', tag);
+          }
+
+          assert.deepEqual(events, [
+            { type: 'common', id, value: totalFirst ? { no: null, of: 12 } : { no: 3, of: 10 } },
+            { type: 'common', id, value: { no: 3, of: 12 } }
+          ]);
+          assert.deepEqual(collector.common[id], { no: 3, of: 12 });
+        });
+      }
+    }
+  });
+
   describe('WAVE metadata before audio', () => {
     async function openSample(filename: string) {
       const bytes = await readFile(path.join(samplePath, 'wav', filename));
@@ -185,6 +238,11 @@ describe('Asynchronous observer updates', () => {
         id: 'date',
         type: 'common',
         value: '2010'
+      },
+      {
+        id: 'track',
+        type: 'common',
+        value: { no: 7, of: null }
       },
       {
         id: 'picture',
