@@ -100,9 +100,10 @@ Support for encoding / format details:
 
 ## Online demo's
 - [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer-vite/master/public/favicon.svg" width="40" alt="Audio Tag Analyzer logo"> Audio Tag Analyzer](https://audio-tag-analyzer.netlify.app/) ([source code](https://github.com/Borewit/audio-tag-analyzer-vite))
-- [<img src="https://cdn.sanity.io/images/3do82whm/next/ba8c847f13a5fa39d88f8bc9b7846b7886531b18-2500x2500.svg" width="40"> Webamp](https://webamp.org/)
 - [ICY Radio Stream Player](https://icy-radio-stream-player.netlify.app/)
 - Expected to be released soon: [Overtone](https://overtone.pro/) by [Johannes Schickling](https://github.com/schickling)
+
+Used by [around 50k+ GitHub projects](https://github.com/Borewit/music-metadata/network/dependents).
 
 ## Usage
 
