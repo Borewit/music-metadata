@@ -1,5 +1,7 @@
 import path from 'node:path';
 import { assert } from 'chai';
+import { getCodePageTable, isSupportedCodePage } from '../lib/common/CodePage.js';
+import { codePageTables } from '../lib/common/CodePageTables.js';
 import type { IFormat, INativeTagDict } from '../lib/index.js';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
@@ -152,12 +154,12 @@ describe('Parse RIFF/WAVE audio format', () => {
       });
     }
 
-    it('should warn and omit INFO values for an unsupported code page', async () => {
-      const metadata = await mm.parseFile(path.join(wavSamples, 'cest_unsupported1251.wav'));
+    it('should warn and omit INFO values for a multi byte code page', async () => {
+      const metadata = await mm.parseFile(path.join(wavSamples, 'cest_unsupported-multibyte.wav'));
       assert.isUndefined(metadata.common.title);
       assert.isUndefined(metadata.native.exif);
       assert.includeDeepMembers(metadata.quality.warnings, [
-        { message: 'Unsupported RIFF CSET code page: 1251; LIST/INFO tags will be omitted' }
+        { message: 'Unsupported RIFF CSET code page: 932; LIST/INFO tags will be omitted' }
       ]);
       assert.strictEqual(metadata.format.numberOfSamples, 800);
       assert.strictEqual(metadata.format.duration, 0.1);
@@ -184,6 +186,32 @@ describe('Parse RIFF/WAVE audio format', () => {
       const metadata = await mm.parseBuffer(riff, { mimeType: 'audio/wav' });
       assert.strictEqual(metadata.format.container, 'WAVE');
       assert.isUndefined(metadata.native.exif);
+    });
+
+    // Each fixture declares one code page and carries every byte the page can map,
+    // bar NUL, in each of its INFO fields, so reading one back as the table says is
+    // what proves that the page is the one the file asked for and not a neighbour.
+    for (const table of codePageTables) {
+      it(`should read the whole byte range of code page ${table.codePage} (${table.name})`, async () => {
+        assert.isTrue(isSupportedCodePage(table.codePage), 'code page has a table');
+        assert.strictEqual(getCodePageTable(table.codePage), table, 'code page resolves to its own table');
+        // Index 0 of a table is what NUL maps to, and NUL ends the text, so the text
+        // a field can hold is the rest of the table.
+        const expected = String.fromCharCode(...table.toUnicode.slice(1));
+        const metadata = await mm.parseFile(path.join(wavSamples, `cest_info-cp${table.codePage}.wav`));
+        assert.isFalse(metadata.quality.warnings.some(warning => warning.message.includes('CSET')));
+        const native = mm.orderTags(metadata.native.exif);
+        assert.deepEqual(native.IART, [expected]);
+        assert.deepEqual(native.IPRD, [expected]);
+        assert.deepEqual(native.ICMT, [expected]);
+        assert.strictEqual(metadata.common.artist, expected);
+        assert.strictEqual(metadata.format.sampleRate, 22050);
+      });
+    }
+
+    it('should read a zero CSET as Latin-1 rather than Windows-1252', () => {
+      assert.strictEqual(getCodePageTable(0), getCodePageTable(28591), 'zero is the Latin-1 table');
+      assert.notStrictEqual(getCodePageTable(0), getCodePageTable(1252), 'zero is not the Windows-1252 table');
     });
   });
 

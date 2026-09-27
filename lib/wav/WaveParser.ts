@@ -1,8 +1,8 @@
-import type { SupportedEncoding } from '@borewit/text-codec';
 import initDebug from 'debug';
 import * as strtok3 from 'strtok3';
 import * as Token from 'token-types';
 import { BasicParser } from '../common/BasicParser.js';
+import { decodeCodePage, isSupportedCodePage, utf8CodePage } from '../common/CodePage.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
 import * as riff from '../riff/RiffChunk.js';
@@ -76,7 +76,7 @@ export class WaveParser extends BasicParser {
           }
           const cset = await this.tokenizer.readToken(new Token.Uint8ArrayType(header.chunkSize));
           this.codePage = Token.UINT16_LE.get(cset, 0);
-          if (!this.getInfoEncoding()) {
+          if (!isSupportedCodePage(this.codePage)) {
             this.metadata.addWarning(
               `Unsupported RIFF CSET code page: ${this.codePage}; LIST/INFO tags will be omitted`
             );
@@ -203,15 +203,16 @@ export class WaveParser extends BasicParser {
   private async parseRiffInfoTags(chunkSize: number): Promise<void> {
     while (chunkSize >= 8) {
       const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
-      const valueToken = new riff.ListInfoTagValue(header);
-      const bytes = await this.tokenizer.readToken(new Token.Uint8ArrayType(valueToken.len));
+      // The value of a field of an odd number of bytes is followed by a padding byte.
+      const len = header.chunkSize + (header.chunkSize & 1);
+      const bytes = await this.tokenizer.readToken(new Token.Uint8ArrayType(len));
       if (this.codePage === undefined) {
         this.metadata.registerTagType('exif');
         this.pendingInfoTags.push({ header, bytes });
       } else {
         await this.addInfoTag(header, bytes);
       }
-      chunkSize -= 8 + valueToken.len;
+      chunkSize -= 8 + len;
     }
 
     if (chunkSize !== 0) {
@@ -220,9 +221,8 @@ export class WaveParser extends BasicParser {
   }
 
   private async addInfoTag(header: riff.IChunkHeader, bytes: Uint8Array): Promise<void> {
-    const encoding = this.getInfoEncoding();
-    if (encoding) {
-      const value = new riff.ListInfoTagValue(header, encoding).get(bytes, 0);
+    const value = this.decodeInfoValue(bytes);
+    if (value !== undefined) {
       await this.metadata.addTag('exif', header.chunkID, value);
     }
   }
@@ -233,20 +233,17 @@ export class WaveParser extends BasicParser {
     }
   }
 
-  private getInfoEncoding(): SupportedEncoding | undefined {
-    // RIFF CSET: absent/zero means ISO 8859-1, not Windows-1252.
-    // https://www.robotplanet.dk/audio/wav_meta_data/riff_mci.pdf#page=25
-    switch (this.codePage) {
-      case undefined:
-      case 0:
-      case 28591:
-        return 'latin1';
-      case 1252:
-        return 'windows-1252';
-      case 65001:
-        return 'utf-8';
-      default:
-        return undefined;
+  /**
+   * Decodes one INFO field in the code page the file declares, up to its first NUL.
+   *
+   * RIFF CSET: absent or zero means ISO 8859-1, not Windows-1252.
+   * https://www.robotplanet.dk/audio/wav_meta_data/riff_mci.pdf#page=25
+   */
+  private decodeInfoValue(bytes: Uint8Array): string | undefined {
+    const codePage = this.codePage ?? 0;
+    if (codePage === utf8CodePage) {
+      return new Token.StringType(bytes.length, 'utf-8').get(bytes, 0).split('\0', 1)[0];
     }
+    return decodeCodePage(bytes, codePage);
   }
 }
