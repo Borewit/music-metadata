@@ -2263,7 +2263,7 @@ __metadata:
     token-types: "npm:^6.1.2"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^6.0.3"
-    uint8array-extras: "npm:^1.5.0"
+    uint8array-extras: "npm:^1.6.0"
     win-guid: "npm:^0.2.1"
   languageName: unknown
   linkType: soft
@@ -3307,6 +3307,13 @@ __metadata:
   version: 1.5.0
   resolution: "uint8array-extras@npm:1.5.0"
   checksum: 10c0/0e74641ac7dadb02eadefc1ccdadba6010e007757bda824960de3c72bbe2b04e6d3af75648441f412148c4103261d54fcb60be45a2863beb76643a55fddba3bd
+  languageName: node
+  linkType: hard
+
+"uint8array-extras@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "uint8array-extras@npm:1.6.0"
+  checksum: 10c0/d53177c025ebea31af1e445abd474027b66341a56f207f352a5a486aa1d492e228bbc883dc4a51ea8358bb88d60a019351e20a92dd17c2ef8326e29fbad57127
   languageName: node
   linkType: hard
 
