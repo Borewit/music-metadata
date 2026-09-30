@@ -121,7 +121,7 @@
     "media-typer": "^2.0.0",
     "strtok3": "^10.3.5",
     "token-types": "^6.1.2",
-    "uint8array-extras": "^1.5.0",
+    "uint8array-extras": "^1.6.0",
     "win-guid": "^0.2.1"
   },
   "devDependencies": {
