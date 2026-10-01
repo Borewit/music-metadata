@@ -1,7 +1,16 @@
 name: Dependabot Pull Request
 on: pull_request_target
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: dependabot-labels-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  label:
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
@@ -10,13 +19,25 @@ jobs:
         uses: dependabot/fetch-metadata@v3
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Add dev-dependencies label
-        uses: actions-ecosystem/action-add-labels@v1
-        if: ${{ steps.dependabot-metadata.outputs.dependency-type == 'direct:development' }}
+      # Only trusted base-branch scripts run with the write-enabled token.
+      # PR manifests and lockfiles are fetched through the API and parsed as data.
+      - uses: actions/checkout@v7
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'npm_and_yarn' }}
         with:
-          labels: dev-dependencies
-      - name: Remove dependencies label
-        uses: actions-ecosystem/action-remove-labels@v1
-        if: ${{ steps.dependabot-metadata.outputs.dependency-type == 'direct:development' }}
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts/dependabot
+      - name: Install lockfile parser
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'npm_and_yarn' }}
+        run: npm install --prefix "$RUNNER_TEMP/dependabot-labeler" --ignore-scripts --no-audit --no-fund --package-lock=false yaml@2.8.1
+      - name: Label dependency scope
+        if: ${{ steps.dependabot-metadata.outputs.package-ecosystem == 'npm_and_yarn' }}
+        uses: actions/github-script@v9
+        env:
+          DEPENDENCY_NAMES: ${{ steps.dependabot-metadata.outputs.dependency-names }}
         with:
-          labels: dependencies
+          script: |
+            const {parse} = require(`${process.env.RUNNER_TEMP}/dependabot-labeler/node_modules/yaml`);
+            const label = require('./.github/scripts/dependabot/label.cjs');
+            await label({github, context, core, parseYaml: parse,
+              dependencyNames: process.env.DEPENDENCY_NAMES.split(',').map(name => name.trim()).filter(Boolean)});
