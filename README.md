@@ -23,7 +23,7 @@ The [`music-metadata`](https://github.com/Borewit/music-metadata) module is idea
 ## Compatibility
 
 Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJS) to [pure ECMAScript Module (ESM)](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
-The distributed JavaScript codebase is compliant with the [ECMAScript 2020 (11th Edition)](https://en.wikipedia.org/wiki/ECMAScript_version_history#11th_Edition_%E2%80%93_ECMAScript_2020) standard.
+The distributed JavaScript codebase targets [ECMAScript 2023 (14th Edition)](https://262.ecma-international.org/14.0/).
 
 > [!NOTE]
 > See also [CommonJS backward Compatibility](#commonjs-backward-compatibility)

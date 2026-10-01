@@ -823,11 +823,8 @@ export class StszAtom implements IGetToken<IStszAtom> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25715
  */
 export class StcoAtom extends SimpleTableAtom<number> {
-  public len: number;
-
   public constructor(len: number) {
     super(len, Token.INT32_BE);
-    this.len = len;
   }
 }
 
