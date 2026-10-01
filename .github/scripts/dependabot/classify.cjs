@@ -11,6 +11,25 @@ function graph(manifest, lock) {
       }
     }
   }
+  // Yarn's built-in compatibility patches can be disconnected from the root
+  // descriptors. Link each patch to its exact source descriptor in both directions.
+  const companions = new Map();
+  for (const descriptor of entries.keys()) {
+    const patch = descriptor.match(/^.+?@patch:(.+)#optional!builtin<compat\/[^>]+>$/);
+    if (!patch) {
+      continue;
+    }
+    const source = decodeURIComponent(patch[1]);
+    if (!entries.has(source)) {
+      continue;
+    }
+    for (const [from, to] of [[source, descriptor], [descriptor, source]]) {
+      if (!companions.has(from)) {
+        companions.set(from, []);
+      }
+      companions.get(from).push(to);
+    }
+  }
   const root = entries.get(`${manifest.name}@workspace:.`);
   if (!root) {
     throw new Error('Missing root workspace');
@@ -26,11 +45,15 @@ function graph(manifest, lock) {
         throw new Error(`Unresolved dependency: ${descriptor}`);
       }
       // Include the real package name for npm aliases.
-      names.add(entry.resolution.slice(0, entry.resolution.lastIndexOf('@')));
+      names.add(entry.resolution.slice(0, entry.resolution.indexOf('@', 1)));
       if (seen.has(entry)) {
         return;
       }
       seen.add(entry);
+      for (const companion of companions.get(descriptor) || []) {
+        const separator = companion.indexOf('@', 1);
+        walk(companion.slice(0, separator), companion.slice(separator + 1));
+      }
       for (const [child, childRange] of Object.entries(entry.dependencies || {})) {
         walk(child, childRange);
       }
