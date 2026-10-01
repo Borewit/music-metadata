@@ -436,15 +436,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/content-type@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@types/content-type@npm:2.0.0"
-  dependencies:
-    content-type: "npm:*"
-  checksum: 10c0/c1f0eeb005d30ef8d42208ec7faaac29cee55027a7dd98645e9944f6b251ca1449603d4d38c0fda1d584eff32f8f29741a9e525910bce9eb87c2630bb4c74f27
-  languageName: node
-  linkType: hard
-
 "@types/debug@npm:^4.0.0":
   version: 4.1.12
   resolution: "@types/debug@npm:4.1.12"
@@ -943,17 +934,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"content-type@npm:*":
-  version: 2.0.0
-  resolution: "content-type@npm:2.0.0"
-  checksum: 10c0/491539fff707d7594b0ca4fabcc084bef2a31ffa754ff0a4f80c4377e3963cff0394317f9271c24087596c97fa675bc123d61fa34ffe65b4904e7d3d3098de72
-  languageName: node
-  linkType: hard
-
-"content-type@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "content-type@npm:2.1.0"
-  checksum: 10c0/f5d420f55fd0c7a7f7cbae9637777ce67a074aa79b489d8d9fee8599089592b5f8bb194e1d6885741fee20271034baca0d68d5419535b52d070c4f7e39f4b448
+"content-type@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "content-type@npm:3.1.1"
+  checksum: 10c0/a9ff3f2afac5aae1356f545e19fc0d6dca644ee3bf694b788f178185954bfe46ba51ca309950e40e07681290da0b7934652fdb5b7fa4ec1e7d43cb71bd703e1f
   languageName: node
   linkType: hard
 
@@ -2241,7 +2225,6 @@ __metadata:
     "@tokenizer/token": "npm:^0.3.0"
     "@types/chai": "npm:^5.2.3"
     "@types/chai-as-promised": "npm:^8.0.2"
-    "@types/content-type": "npm:^2.0.0"
     "@types/debug": "npm:^4.1.13"
     "@types/media-typer": "npm:^1.1.3"
     "@types/mocha": "npm:^10.0.10"
@@ -2249,7 +2232,7 @@ __metadata:
     c8: "npm:^12.0.0"
     chai: "npm:^6.2.2"
     chai-as-promised: "npm:^8.0.2"
-    content-type: "npm:^2.1.0"
+    content-type: "npm:^3.1.1"
     debug: "npm:^4.4.3"
     del-cli: "npm:^7.0.0"
     file-type: "npm:^22.1.1"

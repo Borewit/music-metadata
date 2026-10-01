@@ -1,4 +1,4 @@
-import ContentType from 'content-type';
+import { parse as parseContentType } from 'content-type';
 import initDebug from 'debug';
 import { fileTypeFromBuffer } from 'file-type';
 import { type MediaType, parse as mimeTypeParse } from 'media-typer';
@@ -53,7 +53,7 @@ interface IContentType extends MediaType {
 }
 
 export function parseHttpContentType(contentType: string): IContentType {
-  const type = ContentType.parse(contentType);
+  const type = parseContentType(contentType);
   const mime = mimeTypeParse(type.type);
   return {
     type: mime.type,
