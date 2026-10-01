@@ -165,3 +165,37 @@ test('API errors fall back to runtime labels and stale runs do not change labels
   await label(stale.args);
   assert.deepEqual(stale.changes, []);
 });
+
+
+test('Yarn built-in TypeScript patches inherit the underlying dependency scope', () => {
+  for (const runtime of [false, true]) {
+    const input = fixture();
+    input.dependencyNames = ['typescript'];
+    const descriptor = 'typescript@patch:typescript@npm%3A^1#optional!builtin<compat/typescript>';
+    for (const snapshot of [input.base, input.head]) {
+      snapshot.lock[descriptor] = {
+        version: '1.0.0',
+        resolution: 'typescript@patch:typescript@npm%3A1.0.0#optional!builtin<compat/typescript>::version=1.0.0&hash=abc'
+      };
+      if (runtime) {
+        snapshot.manifest.dependencies.typescript = '^1';
+      }
+    }
+    bump(input, 'typescript');
+    input.head.lock[descriptor].version = '1.0.1';
+    input.head.lock[descriptor].resolution = input.head.lock[descriptor].resolution.replaceAll('1.0.0', '1.0.1');
+    assert.equal(classify(input), runtime ? 'dependencies' : 'dev-dependencies');
+  }
+});
+
+test('patch-only graph edges also associate their original lock entries', () => {
+  const input = fixture();
+  for (const snapshot of [input.base, input.head]) {
+    snapshot.lock['socks@npm:^1'].dependencies['ip-address'] = 'patch:ip-address@npm%3A^1#optional!builtin<compat/ip-address>';
+    snapshot.lock['ip-address@patch:ip-address@npm%3A^1#optional!builtin<compat/ip-address>'] = {
+      version: '1.0.0', resolution: 'ip-address@patch:ip-address@npm%3A1.0.0#optional!builtin<compat/ip-address>'
+    };
+  }
+  bump(input, 'ip-address');
+  assert.equal(classify(input), 'dev-dependencies');
+});
