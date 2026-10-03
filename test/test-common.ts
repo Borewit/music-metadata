@@ -57,6 +57,26 @@ describe('GenericTagMap', () => {
   });
 });
 
+describe('function orderTags()', () => {
+  for (const id of ['constructor', 'toString', '__proto__']) {
+    it(`should group repeated tags named ${id}`, () => {
+      const tags = mm.orderTags([
+        { id, value: 'first' },
+        { id: 'TITLE', value: 'Example' },
+        { id, value: 'second' }
+      ]);
+      assert.deepEqual(tags[id], ['first', 'second']);
+      assert.deepEqual(tags.TITLE, ['Example']);
+      assert.isDefined(Object.getOwnPropertyDescriptor(tags, id));
+      assert.sameMembers(Object.keys(tags), [id, 'TITLE']);
+    });
+  }
+
+  it('should return an empty dictionary for no tags', () => {
+    assert.deepEqual(Object.keys(mm.orderTags([])), []);
+  });
+});
+
 describe('Convert rating', () => {
   it('should convert rating to stars', () => {
     assert.equal(mm.ratingToStars(undefined), 0);
