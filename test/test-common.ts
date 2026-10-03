@@ -70,6 +70,26 @@ describe('Convert rating', () => {
 });
 
 describe('function selectCover()', () => {
+  const back: mm.IPicture = { type: 'Cover (back)', format: 'image/jpeg', data: new Uint8Array([1]) };
+
+  for (const type of ['front', 'cover', 'Cover (Front)']) {
+    it(`should prefer picture type ${type} over an earlier back cover`, () => {
+      const front: mm.IPicture = { type, format: 'image/jpeg', data: new Uint8Array([2]) };
+      assert.strictEqual(mm.selectCover([back, front]), front);
+    });
+  }
+
+  it('should return null when no pictures are available', () => {
+    assert.isNull(mm.selectCover());
+    assert.isNull(mm.selectCover([]));
+  });
+
+  it('should fall back to the first picture when no front cover is identified', () => {
+    const other: mm.IPicture = { format: 'image/jpeg', data: new Uint8Array([2]), name: '0' };
+    assert.strictEqual(mm.selectCover([back, other]), back);
+    assert.strictEqual(mm.selectCover([other]), other);
+  });
+
   const multiCoverFiles = [
     "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3",
     "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav",
