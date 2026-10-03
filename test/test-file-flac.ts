@@ -1,4 +1,6 @@
-import fs from 'node:fs';
+import { rejects } from 'node:assert/strict';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { assert } from 'chai';
 
@@ -128,26 +130,21 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
   describe('handle corrupt FLAC data', () => {
-    it('should handle a corrupt data', () => {
-      const emptyStreamSize = 10 * 1024;
-      const buf = new Uint8Array(emptyStreamSize).fill(0);
-      const tmpFilePath = path.join(samplePath, 'zeroes.flac');
-
-      fs.writeFileSync(tmpFilePath, buf);
-
-      Parsers.forEach(parser => {
-        it(parser.description, async function () {
-          return parser
-            .parse(() => this.skip(), tmpFilePath, 'audio/flac')
-            .then(() => {
-              assert.fail('Should reject');
-              fs.unlinkSync(tmpFilePath);
-            })
-            .catch(err => {
-              assert.strictEqual(err.message, 'FourCC contains invalid characters');
-              return fs.unlinkSync(tmpFilePath);
-            });
-        });
+    Parsers.forEach(parser => {
+      it(parser.description, async function () {
+        const directory = await mkdtemp(path.join(tmpdir(), 'music-metadata-flac-'));
+        const filePath = path.join(directory, 'zeroes.flac');
+        try {
+          await writeFile(filePath, new Uint8Array(10 * 1024));
+          await rejects(
+            parser.parse(() => this.skip(), filePath, 'audio/flac'),
+            {
+              message: /^FourCC contains invalid characters:/
+            }
+          );
+        } finally {
+          await rm(directory, { recursive: true, force: true });
+        }
       });
     });
   });

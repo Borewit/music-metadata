@@ -50,3 +50,12 @@ PR descriptions should state which issue is resolved. Leave test validation deta
 
 Run `yarn compile:dev` to compile the source, tests, and documentation generator.
 Run `yarn test` for the test suite and `yarn lint:md` for Markdown linting.
+
+Run `yarn build:test` for a clean development build of the source and tests, preserving documentation generator outputs.
+Run `yarn test:compiled` to test an existing build without cleaning or recompiling it. CI uses this command to test
+the downloaded build artifacts on each runtime.
+
+Run `yarn test-coverage` for a clean development build followed by coverage, or `yarn test-coverage:compiled` to collect
+coverage from an existing development build. The library is compiled last so test and documentation compilation do
+not overwrite its source maps. Coverage is remapped to TypeScript sources; the TypeScript-only filter in `.c8rc.json`
+keeps generated JavaScript and declaration files out of the report.
