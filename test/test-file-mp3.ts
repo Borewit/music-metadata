@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { assert } from 'chai';
+import { fromFile } from 'strtok3';
 
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
@@ -277,6 +278,18 @@ describe('Parse MP3 files', () => {
   });
 
   describe('MP3 with APEv2 footer header', () => {
+    it('should retain APEv2 tags when tokenizer options are omitted', async () => {
+      const tokenizer = await fromFile(path.join(mp3SamplePath, 'APEv2+Lyrics3v2.mp3'));
+      try {
+        const metadata = await mm.parseFromTokenizer(tokenizer);
+        assert.include(metadata.format.tagTypes, 'APEv2');
+        assert.deepEqual(mm.orderTags(metadata.native.APEv2).REPLAYGAIN_TRACK_GAIN, ['+0.540000 dB']);
+        assert.closeTo(metadata.common.replaygain_track_gain!.dB, 0.54, 0.000001);
+      } finally {
+        await tokenizer.close();
+      }
+    });
+
     it('should be able to parse APEv2 header', async () => {
       const filePath = path.join(samplePath, 'issue_56.mp3');
 

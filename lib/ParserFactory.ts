@@ -93,7 +93,7 @@ export class ParserFactory {
   async parse(
     tokenizer: ITokenizer,
     parserLoader: IParserLoader | undefined,
-    opts?: IOptions
+    opts: IOptions = {}
   ): Promise<IAudioMetadata> {
     if (tokenizer.supportsRandomAccess()) {
       debug('tokenizer supports random-access, scanning for appending headers');
