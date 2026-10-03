@@ -112,7 +112,7 @@ export function parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): P
  * @returns tags indexed by id
  */
 export function orderTags(nativeTags: ITag[]): INativeTagDict {
-  const tags: INativeTagDict = {};
+  const tags: INativeTagDict = Object.create(null);
 
   for (const { id, value } of nativeTags) {
     (tags[id] ||= []).push(value);
