@@ -45,6 +45,13 @@ jobs:
       - name: Build with source maps
         run: yarn run build:dev
 
+      - name: Check generated metadata documentation
+        run: |
+          if ! git diff --exit-code -- doc/common_metadata.md; then
+            echo 'Metadata documentation is out of date. Run yarn build:dev and commit doc/common_metadata.md.'
+            exit 1
+          fi
+
       - name: Upload build
         uses: actions/upload-artifact@v7
         with:
