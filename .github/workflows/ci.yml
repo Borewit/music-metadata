@@ -95,7 +95,7 @@ jobs:
           name: build
 
       - name: Test with Node.js ${{ matrix.node-version }}
-        run: corepack yarn run test
+        run: corepack yarn run test:compiled
 
   coverage:
     name: Test coverage
@@ -126,8 +126,13 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Download build
+        uses: actions/download-artifact@v8
+        with:
+          name: build
+
       - name: Generate coverage from TypeScript sources
-        run: yarn run test-coverage
+        run: yarn run test-coverage:compiled
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
@@ -165,5 +170,5 @@ jobs:
         with:
           name: build
 
-      - name: Test with Node.js ${{ matrix.node-version }}
-        run: bun run --bun test
+      - name: Test with Bun
+        run: bun run --bun test:compiled
