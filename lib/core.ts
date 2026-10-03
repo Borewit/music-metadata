@@ -136,14 +136,13 @@ export function ratingToStars(rating: number | undefined): number {
  * @return Cover image, if any, otherwise null
  */
 export function selectCover(pictures?: IPicture[]): IPicture | null {
-  return pictures
-    ? pictures.reduce((acc, cur) => {
-        if (cur.name && cur.name.toLowerCase() in ['front', 'cover', 'cover (front)']) {
-          return cur;
-        }
-        return acc;
-      })
-    : null;
+  return (
+    pictures?.find(
+      picture => picture.type && ['front', 'cover', 'cover (front)'].includes(picture.type.toLowerCase())
+    ) ??
+    pictures?.[0] ??
+    null
+  );
 }
 
 export async function scanAppendingHeaders(tokenizer: IRandomAccessTokenizer, options: IPrivateOptions = {}) {
