@@ -59,3 +59,12 @@ Run `yarn test-coverage` for a clean development build followed by coverage, or 
 coverage from an existing development build. The library is compiled last so test and documentation compilation do
 not overwrite its source maps. Coverage is remapped to TypeScript sources; the TypeScript-only filter in `.c8rc.json`
 keeps generated JavaScript and declaration files out of the report.
+
+Run `yarn test:watch` to rebuild and rerun tests after changing TypeScript sources or compiler configuration.
+Each run cleans generated library and test files before compilation so deleted or renamed tests do not leave stale
+JavaScript behind. Documentation generator outputs are preserved.
+Generated JavaScript and declaration files do not trigger a rebuild.
+Use this command instead of `mocha --watch`, which only watches compiled JavaScript.
+
+The workspace does not override VS Code's TypeScript SDK: TypeScript 7 no longer supplies the legacy `tsserver`.
+VS Code can use its bundled language service without affecting the TypeScript 7 compiler used by the build.
