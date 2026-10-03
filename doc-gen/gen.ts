@@ -26,7 +26,7 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   return result;
 }
 
-function write(out: fs.WriteStream) {
+function generateTable(previous: string): string {
   const json = fs.readFileSync(path.join(dirname, 'common.json'), { encoding: 'utf-8' });
   const commonDescriptionDict: ITagInfoDict = JSON.parse(json);
 
@@ -53,15 +53,17 @@ function write(out: fs.WriteStream) {
     table.rows.push(row);
   }
 
-  table.writeTo(out);
+  return table.toString(previous);
 }
 
-const txt = fs.createWriteStream(path.join(dirname, '..', 'doc', 'common_metadata.md'));
+const outputPath = path.join(dirname, '..', 'doc', 'common_metadata.md');
+const previous = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, 'utf-8') : '';
+const content =
+  '# Common Metadata\n\n' +
+  'Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n' +
+  'The tag mapping is strongly inspired on the [MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).\n\n' +
+  generateTable(previous);
 
-txt.write('# Common Metadata\n\n');
-txt.write('Common tags, and _native_ to _common_ tag mappings. _n_ indicates the multiplicity.\n');
-txt.write(
-  'The tag mapping is strongly inspired on the [MusicBrainz Picard tag-mapping](https://picard.musicbrainz.org/docs/mappings/).\n\n'
-);
-
-write(txt);
+if (content !== previous) {
+  fs.writeFileSync(outputPath, content);
+}
