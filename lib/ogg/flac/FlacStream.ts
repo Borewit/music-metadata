@@ -19,7 +19,8 @@ export class FlacStream implements Ogg.IPageConsumer {
   private options: IOptions;
   private tokenizer: ITokenizer;
   private flacParser: FlacParser;
-  public durationOnLastPage = false;
+  protected lastPageHeader?: Ogg.IPageHeader;
+  public durationOnLastPage = true;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     this.metadata = metadata;
@@ -34,13 +35,27 @@ export class FlacStream implements Ogg.IPageConsumer {
    * @param pageData Page data
    */
   public async parsePage(header: Ogg.IPageHeader, pageData: Uint8Array): Promise<void> {
+    this.lastPageHeader = header;
     if (header.headerType.firstPage) {
       await this.parseFirstPage(header, pageData);
     }
   }
 
-  public calculateDuration() {
-    debug('duration calculation not implemented');
+  public calculateDuration(enfOfStream: boolean) {
+    if (
+      this.lastPageHeader &&
+      (enfOfStream || this.lastPageHeader.headerType.lastPage) &&
+      this.metadata.format.sampleRate &&
+      this.lastPageHeader.absoluteGranulePosition >= 0
+    ) {
+      // Ogg FLAC carries the duration in the absolute granule position of the last page.
+      // Ref: https://xiph.org/flac/ogg_mapping.html
+      this.metadata.setFormat('numberOfSamples', this.lastPageHeader.absoluteGranulePosition);
+      this.metadata.setFormat(
+        'duration',
+        this.lastPageHeader.absoluteGranulePosition / this.metadata.format.sampleRate
+      );
+    }
   }
 
   /**

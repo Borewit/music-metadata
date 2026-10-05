@@ -325,7 +325,16 @@ describe('Parse Ogg', () => {
       assert.isFalse(format.hasVideo, 'format.hasAudio');
       assert.isTrue(format.lossless, 'format.lossless');
       assert.strictEqual(format.sampleRate, 44100, 'format.bitrate');
-      assert.strictEqual(format.duration, undefined, 'format.duration');
+    });
+
+    // https://github.com/Borewit/music-metadata/issues/2779
+    it('should derive the duration from the last page granule position', async () => {
+      const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+      const { format } = await mm.parseFile(filePath, { duration: true });
+
+      // Last page absolute granule position: 128180 samples at 44.1 kHz
+      assert.strictEqual(format.numberOfSamples, 128180, 'format.numberOfSamples');
+      assert.strictEqual(format.duration, 128180 / 44100, 'format.duration');
     });
   });
 
