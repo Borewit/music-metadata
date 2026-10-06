@@ -20,6 +20,7 @@ export class FlacStream implements Ogg.IPageConsumer {
   private tokenizer: ITokenizer;
   private flacParser: FlacParser;
   protected lastPageHeader?: Ogg.IPageHeader;
+  private lastGranulePosition?: number;
   public durationOnLastPage = true;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
@@ -36,6 +37,9 @@ export class FlacStream implements Ogg.IPageConsumer {
    */
   public async parsePage(header: Ogg.IPageHeader, pageData: Uint8Array): Promise<void> {
     this.lastPageHeader = header;
+    if (header.absoluteGranulePosition >= 0) {
+      this.lastGranulePosition = header.absoluteGranulePosition;
+    }
     if (header.headerType.firstPage) {
       await this.parseFirstPage(header, pageData);
     }
@@ -46,15 +50,12 @@ export class FlacStream implements Ogg.IPageConsumer {
       this.lastPageHeader &&
       (enfOfStream || this.lastPageHeader.headerType.lastPage) &&
       this.metadata.format.sampleRate &&
-      this.lastPageHeader.absoluteGranulePosition >= 0
+      this.lastGranulePosition !== undefined
     ) {
-      // Ogg FLAC carries the duration in the absolute granule position of the last page.
+      // Use the last known granule position if the stream ends on an unfinished packet.
       // Ref: https://xiph.org/flac/ogg_mapping.html
-      this.metadata.setFormat('numberOfSamples', this.lastPageHeader.absoluteGranulePosition);
-      this.metadata.setFormat(
-        'duration',
-        this.lastPageHeader.absoluteGranulePosition / this.metadata.format.sampleRate
-      );
+      this.metadata.setFormat('numberOfSamples', this.lastGranulePosition);
+      this.metadata.setFormat('duration', this.lastGranulePosition / this.metadata.format.sampleRate);
     }
   }
 
