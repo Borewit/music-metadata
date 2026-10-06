@@ -64,7 +64,9 @@ Run `yarn test:watch` to rebuild and rerun tests after changing TypeScript sourc
 Each run cleans generated library and test files before compilation so deleted or renamed tests do not leave stale
 JavaScript behind. Documentation generator outputs are preserved.
 Generated JavaScript and declaration files do not trigger a rebuild.
-Use this command instead of `mocha --watch`, which only watches compiled JavaScript.
+
+IntelliJ IDEA and WebStorm can run TypeScript tests directly through the Mocha gutter icons using `.mocharc.json`.
+Use the project root as the working directory and remove any old `--require ts-node/register` options.
 
 The workspace does not override VS Code's TypeScript SDK: TypeScript 7 no longer supplies the legacy `tsserver`.
 VS Code can use its bundled language service without affecting the TypeScript 7 compiler used by the build.
