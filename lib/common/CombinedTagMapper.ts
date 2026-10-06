@@ -1,6 +1,7 @@
 import { AiffTagMapper } from '../aiff/AiffTagMap.js';
 import { APEv2TagMapper } from '../apev2/APEv2TagMapper.js';
 import { AsfTagMapper } from '../asf/AsfTagMapper.js';
+import { CafTagMapper } from '../caf/CafTagMap.js';
 import { ID3v1TagMapper } from '../id3v1/ID3v1TagMap.js';
 import { ID3v22TagMapper } from '../id3v2/ID3v22TagMapper.js';
 import { ID3v24TagMapper } from '../id3v2/ID3v24TagMapper.js';
@@ -29,7 +30,8 @@ export class CombinedTagMapper {
       new AsfTagMapper(),
       new RiffInfoTagMapper(),
       new MatroskaTagMapper(),
-      new AiffTagMapper()
+      new AiffTagMapper(),
+      new CafTagMapper()
     ].forEach(mapper => {
       this.registerTagMapper(mapper);
     });

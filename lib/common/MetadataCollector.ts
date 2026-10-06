@@ -36,6 +36,7 @@ const TagPriority: TagType[] = [
   'asf',
   'iTunes',
   'AIFF',
+  'CAF',
   'ID3v1'
 ];
 
