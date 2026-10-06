@@ -14,6 +14,26 @@ import { samplePath } from './util.js';
 const oggSamplePath = path.join(samplePath, 'ogg');
 
 describe('Parse Ogg', () => {
+  describe('Page header granule position', () => {
+    it('decodes the unknown granule position as -1', () => {
+      // Ogg framing: -1 means no packet finishes on this page.
+      // https://www.xiph.org/ogg/doc/framing.html
+      const header = Buffer.alloc(PageHeader.len);
+      header.writeBigUInt64LE(0xffffffffffffffffn, 6);
+
+      assert.strictEqual(PageHeader.get(header, 0).absoluteGranulePosition, -1);
+    });
+
+    it('preserves known granule positions at a nonzero buffer offset', () => {
+      const offset = 4;
+      const header = Buffer.alloc(offset + PageHeader.len);
+      for (const position of [0n, 128180n, 0x8000000000000000n]) {
+        header.writeBigUInt64LE(position, offset + 6);
+        assert.strictEqual(PageHeader.get(header, offset).absoluteGranulePosition, Number(position));
+      }
+    });
+  });
+
   function check_Nirvana_In_Bloom_commonTags(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'In Bloom', 'common.title');
     assert.strictEqual(common.artist, 'Nirvana', 'common.artist');
