@@ -43,6 +43,7 @@ export interface IPageHeader {
   /**
    * The total samples encoded after including all packets finished on this page
    * The position specified in the frame header of the last page tells how long the data coded by the bitstream is.
+   * -1 indicates that no packet finishes on this page.
    */
   absoluteGranulePosition: number;
   streamSerialNumber: number;
@@ -62,6 +63,7 @@ export const PageHeader: IGetToken<IPageHeader> = {
   len: 27,
 
   get: (buf, off): IPageHeader => {
+    const granulePosition = Token.UINT64_LE.get(buf, off + 6);
     return {
       capturePattern: new StringType(4, 'latin1').get(buf, off),
       version: Token.UINT8.get(buf, off + 4),
@@ -72,7 +74,7 @@ export const PageHeader: IGetToken<IPageHeader> = {
         lastPage: util.getBit(buf, off + 5, 2)
       },
       // packet_flag: Token.UINT8.get(buf, off + 5),
-      absoluteGranulePosition: Number(Token.UINT64_LE.get(buf, off + 6)),
+      absoluteGranulePosition: granulePosition === 0xffffffffffffffffn ? -1 : Number(granulePosition),
       streamSerialNumber: Token.UINT32_LE.get(buf, off + 14),
       pageSequenceNo: Token.UINT32_LE.get(buf, off + 18),
       pageChecksum: Token.UINT32_LE.get(buf, off + 22),
