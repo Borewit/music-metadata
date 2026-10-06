@@ -328,13 +328,25 @@ describe('Parse Ogg', () => {
     });
 
     // https://github.com/Borewit/music-metadata/issues/2779
-    it('should derive the duration from the last page granule position', async () => {
-      const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
-      const { format } = await mm.parseFile(filePath, { duration: true });
+    // The fixture has 16 pages, exceeding the parser's early-stop threshold.
+    describe('duration scanning', () => {
+      it('with duration flag', async () => {
+        const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+        const { format } = await mm.parseFile(filePath, { duration: true });
 
-      // Last page absolute granule position: 128180 samples at 44.1 kHz
-      assert.strictEqual(format.numberOfSamples, 128180, 'format.numberOfSamples');
-      assert.strictEqual(format.duration, 128180 / 44100, 'format.duration');
+        // Last page absolute granule position: 128180 samples at 44.1 kHz
+        assert.strictEqual(format.numberOfSamples, 128180, 'format.numberOfSamples');
+        assert.strictEqual(format.duration, 128180 / 44100, 'format.duration');
+      });
+
+      it('without duration flag', async () => {
+        const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+        const { format } = await mm.parseFile(filePath, { duration: false });
+
+        // Stop before the last page, which carries the total sample count.
+        assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+        assert.isUndefined(format.duration, 'format.duration');
+      });
     });
   });
 
