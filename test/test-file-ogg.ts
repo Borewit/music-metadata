@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, expect } from 'chai';
+import { fromBuffer } from 'strtok3';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import type { IFormat } from '../lib/index.js';
 import * as mm from '../lib/index.js';
+import { FlacStream } from '../lib/ogg/flac/FlacStream.js';
 import { PageHeader, SegmentTable } from '../lib/ogg/OggToken.js';
 import { IdHeader } from '../lib/ogg/opus/Opus.js';
 import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
@@ -14,6 +16,26 @@ import { samplePath } from './util.js';
 const oggSamplePath = path.join(samplePath, 'ogg');
 
 describe('Parse Ogg', () => {
+  describe('Page header granule position', () => {
+    it('decodes the unknown granule position as -1', () => {
+      // Ogg framing: -1 means no packet finishes on this page.
+      // https://www.xiph.org/ogg/doc/framing.html
+      const header = Buffer.alloc(PageHeader.len);
+      header.writeBigUInt64LE(0xffffffffffffffffn, 6);
+
+      assert.strictEqual(PageHeader.get(header, 0).absoluteGranulePosition, -1);
+    });
+
+    it('preserves known granule positions at a nonzero buffer offset', () => {
+      const offset = 4;
+      const header = Buffer.alloc(offset + PageHeader.len);
+      for (const position of [0n, 128180n, 0x8000000000000000n]) {
+        header.writeBigUInt64LE(position, offset + 6);
+        assert.strictEqual(PageHeader.get(header, offset).absoluteGranulePosition, Number(position));
+      }
+    });
+  });
+
   function check_Nirvana_In_Bloom_commonTags(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'In Bloom', 'common.title');
     assert.strictEqual(common.artist, 'Nirvana', 'common.artist');
@@ -295,6 +317,32 @@ describe('Parse Ogg', () => {
   });
 
   describe('Parsing Ogg/Flac', () => {
+    it('retains the last completed sample count when truncated on an unknown granule position', async () => {
+      // Ogg framing: absolute granule position -1 means no packet finishes on this page.
+      // https://www.xiph.org/ogg/doc/framing.html
+      const filePath = path.join(oggSamplePath, 'flac-truncated-unknown-granule.ogg');
+      const { format, quality } = await mm.parseFile(filePath, { duration: true });
+
+      assert.strictEqual(format.numberOfSamples, 9216, 'last completed FLAC frames');
+      assert.strictEqual(format.duration, 9216 / 44100, 'duration of completed frames');
+      assert.isNotEmpty(quality.warnings, 'truncated stream warning');
+    });
+
+    it('does not calculate duration if no valid granule position was seen', async () => {
+      const metadata = new MetadataCollector({});
+      metadata.setFormat('sampleRate', 44100);
+      const stream = new FlacStream(metadata, {}, fromBuffer(new Uint8Array()));
+      const header = Buffer.alloc(PageHeader.len);
+      header[5] = 4; // End-of-stream page with an unknown granule position.
+      header.writeBigUInt64LE(0xffffffffffffffffn, 6);
+
+      await stream.parsePage(PageHeader.get(header, 0), new Uint8Array());
+      stream.calculateDuration(true);
+
+      assert.isUndefined(metadata.format.numberOfSamples);
+      assert.isUndefined(metadata.format.duration);
+    });
+
     it('Parse audio.flac.ogg', async () => {
       const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
       const { format } = await mm.parseFile(filePath);
@@ -305,7 +353,28 @@ describe('Parse Ogg', () => {
       assert.isFalse(format.hasVideo, 'format.hasAudio');
       assert.isTrue(format.lossless, 'format.lossless');
       assert.strictEqual(format.sampleRate, 44100, 'format.bitrate');
-      assert.strictEqual(format.duration, undefined, 'format.duration');
+    });
+
+    // https://github.com/Borewit/music-metadata/issues/2779
+    // The fixture has 16 pages, exceeding the parser's early-stop threshold.
+    describe('duration scanning', () => {
+      it('with duration flag', async () => {
+        const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+        const { format } = await mm.parseFile(filePath, { duration: true });
+
+        // Last page absolute granule position: 128180 samples at 44.1 kHz
+        assert.strictEqual(format.numberOfSamples, 128180, 'format.numberOfSamples');
+        assert.strictEqual(format.duration, 128180 / 44100, 'format.duration');
+      });
+
+      it('without duration flag', async () => {
+        const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+        const { format } = await mm.parseFile(filePath, { duration: false });
+
+        // Stop before the last page, which carries the total sample count.
+        assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+        assert.isUndefined(format.duration, 'format.duration');
+      });
     });
   });
 

@@ -19,7 +19,9 @@ export class FlacStream implements Ogg.IPageConsumer {
   private options: IOptions;
   private tokenizer: ITokenizer;
   private flacParser: FlacParser;
-  public durationOnLastPage = false;
+  protected lastPageHeader?: Ogg.IPageHeader;
+  private lastGranulePosition?: number;
+  public durationOnLastPage = true;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     this.metadata = metadata;
@@ -34,13 +36,27 @@ export class FlacStream implements Ogg.IPageConsumer {
    * @param pageData Page data
    */
   public async parsePage(header: Ogg.IPageHeader, pageData: Uint8Array): Promise<void> {
+    this.lastPageHeader = header;
+    if (header.absoluteGranulePosition >= 0) {
+      this.lastGranulePosition = header.absoluteGranulePosition;
+    }
     if (header.headerType.firstPage) {
       await this.parseFirstPage(header, pageData);
     }
   }
 
-  public calculateDuration() {
-    debug('duration calculation not implemented');
+  public calculateDuration(enfOfStream: boolean) {
+    if (
+      this.lastPageHeader &&
+      (enfOfStream || this.lastPageHeader.headerType.lastPage) &&
+      this.metadata.format.sampleRate &&
+      this.lastGranulePosition !== undefined
+    ) {
+      // Use the last known granule position if the stream ends on an unfinished packet.
+      // Ref: https://xiph.org/flac/ogg_mapping.html
+      this.metadata.setFormat('numberOfSamples', this.lastGranulePosition);
+      this.metadata.setFormat('duration', this.lastGranulePosition / this.metadata.format.sampleRate);
+    }
   }
 
   /**
