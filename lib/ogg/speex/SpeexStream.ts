@@ -30,6 +30,7 @@ export class SpeexStream extends VorbisStream {
     debug('First Ogg/Speex page');
     const speexHeader = Speex.Header.get(pageData, 0);
     this.metadata.setFormat('codec', `Speex ${speexHeader.version}`);
+    this.metadata.setFormat('lossless', false);
     this.metadata.setFormat('numberOfChannels', speexHeader.nb_channels);
     this.metadata.setFormat('sampleRate', speexHeader.rate);
     if (speexHeader.bitrate !== -1) {

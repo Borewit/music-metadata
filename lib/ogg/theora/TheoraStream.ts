@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 import type { ITokenizer } from 'strtok3';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
-import type { IOptions } from '../../type.js';
+import { type IOptions, TrackType } from '../../type.js';
 import type * as Ogg from '../OggToken.js';
 import { IdentificationHeader } from './Theora.js';
 
@@ -43,6 +43,18 @@ export class TheoraStream implements Ogg.IPageConsumer {
     const idHeader = IdentificationHeader.get(pageData, 0);
     this.metadata.setFormat('bitrate', idHeader.nombr);
     this.metadata.setFormat('hasVideo', true);
+    this.metadata.addStreamInfo({
+      type: TrackType.video,
+      codecName: 'Theora',
+      ...(idHeader.nombr > 0 ? { bitrate: idHeader.nombr } : {}),
+      video: {
+        pixelWidth: idHeader.vmbw * 16,
+        pixelHeight: idHeader.vmbh * 16,
+        displayWidth: idHeader.picw,
+        displayHeight: idHeader.pich,
+        ...(idHeader.frd > 0 ? { frameRate: idHeader.frn / idHeader.frd } : {})
+      }
+    });
   }
 
   public flush() {

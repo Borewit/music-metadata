@@ -18,6 +18,10 @@ export interface IIdentificationHeader {
   vmbw: number;
   // The height of the frame in macro blocks
   vmbh: number;
+  picw: number;
+  pich: number;
+  frn: number;
+  frd: number;
   // The nominal bitrate of the stream, in bits per second.
   nombr: number;
   // The quality hint.
@@ -38,7 +42,11 @@ export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
       vmin: Token.UINT8.get(buf, off + 8),
       vrev: Token.UINT8.get(buf, off + 9),
       vmbw: Token.UINT16_BE.get(buf, off + 10),
-      vmbh: Token.UINT16_BE.get(buf, off + 17),
+      vmbh: Token.UINT16_BE.get(buf, off + 12),
+      picw: Token.UINT24_BE.get(buf, off + 14),
+      pich: Token.UINT24_BE.get(buf, off + 17),
+      frn: Token.UINT32_BE.get(buf, off + 22),
+      frd: Token.UINT32_BE.get(buf, off + 26),
       nombr: Token.UINT24_BE.get(buf, off + 37),
       nqual: Token.UINT8.get(buf, off + 40)
     };

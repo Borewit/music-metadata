@@ -1,4 +1,8 @@
 import type { IEbmlDoc } from '../ebml/types.js';
+import type { IAudioTrack, IVideoTrack, TrackType } from '../type.js';
+
+export type { TrackTypeKey } from '../type.js';
+export { TrackType, TrackTypeValueToKeyMap } from '../type.js';
 
 export interface ISeek {
   id: Uint8Array;
@@ -23,15 +27,17 @@ export interface ITrackEntry {
   uid?: Uint8Array;
   trackNumber: number;
   trackType?: TrackType;
-  audio: ITrackAudio;
+  audio?: ITrackAudio;
   video?: ITrackVideo;
   flagEnabled?: boolean;
   flagDefault?: boolean;
+  flagForced?: boolean;
   flagLacing?: boolean;
   defaultDuration?: number;
   trackTimecodeScale?: number;
   name?: string;
   language?: string;
+  languageIETF?: string;
   codecID: string;
   codecPrivate?: Uint8Array;
   codecName?: string;
@@ -42,26 +48,8 @@ export interface ITrackEntry {
   trackOverlay?: string;
 }
 
-export interface ITrackVideo {
-  flagInterlaced?: boolean;
-  stereoMode?: number;
-  pixelWidth?: number;
-  pixelHeight?: number;
-  displayWidth?: number;
-  displayHeight?: number;
-  displayUnit?: number;
-  aspectRatioType?: number;
-  colourSpace?: Uint8Array;
-  gammaValue?: number;
-}
-
-export interface ITrackAudio {
-  samplingFrequency?: number;
-  outputSamplingFrequency?: number;
-  channels?: number;
-  channelPositions?: Uint8Array;
-  bitDepth?: number;
-}
+export type ITrackVideo = IVideoTrack;
+export type ITrackAudio = IAudioTrack;
 
 export interface ICuePoint {
   cueTime?: number;
@@ -99,28 +87,6 @@ export const TargetType = {
   50: 'album',
   60: 'edition',
   70: 'collection'
-};
-
-export const TrackType = {
-  video: 0x01,
-  audio: 0x02,
-  complex: 0x03,
-  logo: 0x04,
-  subtitle: 0x11,
-  button: 0x12,
-  control: 0x20
-};
-export type TrackType = (typeof TrackType)[keyof typeof TrackType];
-export type TrackTypeKey = keyof typeof TrackType;
-
-export const TrackTypeValueToKeyMap: Record<TrackType, TrackTypeKey> = {
-  [TrackType.video]: 'video',
-  [TrackType.audio]: 'audio',
-  [TrackType.complex]: 'complex',
-  [TrackType.logo]: 'logo',
-  [TrackType.subtitle]: 'subtitle',
-  [TrackType.button]: 'button',
-  [TrackType.control]: 'control'
 };
 
 export interface ITarget {

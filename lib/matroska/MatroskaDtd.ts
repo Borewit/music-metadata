@@ -96,6 +96,7 @@ export const matroskaDtd: IElementType = {
                 0x23314f: { name: 'timecodeScale', value: DataType.float },
                 0x536e: { name: 'name', value: DataType.string },
                 0x22b59c: { name: 'language', value: DataType.string },
+                0x22b59d: { name: 'languageIETF', value: DataType.string },
                 0x86: { name: 'codecID', value: DataType.string },
                 0x63a2: { name: 'codecPrivate', value: DataType.binary },
                 0x258688: { name: 'codecName', value: DataType.string },

@@ -1,7 +1,8 @@
 import initDebug from 'debug';
 import { EndOfStreamError } from 'strtok3';
+import * as Token from 'token-types';
 import { BasicParser } from '../common/BasicParser.js';
-import { type ITag, TrackType } from '../type.js';
+import { type ITag, type ITrackInfo, TrackType } from '../type.js';
 import AsfGuid from './AsfGuid.js';
 import * as AsfObject from './AsfObject.js';
 import { AsfContentParseError } from './AsfObject.js';
@@ -21,6 +22,9 @@ const maxAsfMetadataObjectSize = 16 * 1024 * 1024;
  * - https://msdn.microsoft.com/en-us/library/windows/desktop/ee663575(v=vs.85).aspx
  */
 export class AsfParser extends BasicParser {
+  private streams = new Map<number, AsfObject.IStreamPropertiesObject>();
+  private codecs: AsfObject.ICodecEntry[] = [];
+  private streamBitrates = new Map<number, number>();
   public async parse() {
     const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(
       AsfObject.TopLevelHeaderObjectToken
@@ -35,8 +39,55 @@ export class AsfParser extends BasicParser {
       header.numberOfHeaderObjects,
       header.objectSize - AsfObject.TopLevelHeaderObjectToken.len
     );
-    // Let ParserFactory infer unset presence flags from the Codec List.
-    // Stream Properties may be nested in an ignored Extended Stream Properties Object.
+    for (const stream of this.streams.values()) {
+      const type =
+        stream.streamType === 'audio'
+          ? TrackType.audio
+          : stream.streamType === 'video'
+            ? TrackType.video
+            : stream.streamType === 'command'
+              ? TrackType.control
+              : stream.streamType === 'binary'
+                ? TrackType.metadata
+                : undefined;
+      const codec = this.codecs.find(codec => {
+        if (type === TrackType.audio && codec.type.audioCodec && codec.information.length >= 2) {
+          return stream.codecId === `0x${Token.UINT16_LE.get(codec.information, 0).toString(16).padStart(4, '0')}`;
+        }
+        return (
+          type === TrackType.video &&
+          codec.type.videoCodec &&
+          codec.information.length >= 4 &&
+          stream.codecId === new Token.StringType(4, 'ascii').get(codec.information, 0)
+        );
+      });
+      const track: ITrackInfo = { id: stream.streamNumber, type };
+      if (stream.codecId !== undefined) {
+        track.codecId = stream.codecId;
+      }
+      if (codec) {
+        track.codecName = codec.codecName;
+      }
+      if (stream.audio) {
+        track.audio = stream.audio;
+      }
+      if (stream.video) {
+        track.video = stream.video;
+      }
+      const bitrate = this.streamBitrates.get(stream.streamNumber) ?? stream.bitrate;
+      if (bitrate !== undefined) {
+        track.bitrate = bitrate;
+      }
+      this.metadata.addStreamInfo(track);
+    }
+    const audio = [...this.streams.values()].find(stream => stream.audio)?.audio;
+    if (audio) {
+      this.metadata.setFormat('sampleRate', audio.samplingFrequency);
+      this.metadata.setFormat('numberOfChannels', audio.channels);
+      if (audio.bitDepth !== undefined) {
+        this.metadata.setFormat('bitsPerSample', audio.bitDepth);
+      }
+    }
   }
 
   private async parseObjectHeaders(numberOfObjectHeaders: number, remainingHeaderSize: number): Promise<void> {
@@ -72,6 +123,7 @@ export class AsfParser extends BasicParser {
           } else if (spo.streamType === 'video') {
             this.metadata.setFormat('hasVideo', true);
           }
+          this.streams.set(spo.streamNumber, spo);
           break;
         }
 
@@ -113,12 +165,7 @@ export class AsfParser extends BasicParser {
             const message = error instanceof Error ? error.message : String(error);
             throw new AsfContentParseError(`Invalid ASF Codec List Object: ${message}`);
           }
-          codecs.forEach(codec => {
-            this.metadata.addStreamInfo({
-              type: codec.type.videoCodec ? TrackType.video : TrackType.audio,
-              codecName: codec.codecName
-            });
-          });
+          this.codecs.push(...codecs);
           const audioCodecs = codecs
             .filter(codec => codec.type.audioCodec)
             .map(codec => codec.codecName)
@@ -127,10 +174,21 @@ export class AsfParser extends BasicParser {
           break;
         }
 
-        case AsfGuid.StreamBitratePropertiesObject.str:
-          // ToDo?
-          await this.ignorePayload(payloadSize, 'Stream Bitrate Properties Object');
+        case AsfGuid.StreamBitratePropertiesObject.str: {
+          if (payloadSize < 2) {
+            throw new AsfContentParseError('Truncated Stream Bitrate Properties Object');
+          }
+          const count = await this.tokenizer.readToken(Token.UINT16_LE);
+          if (count * 6 > payloadSize - 2) {
+            throw new AsfContentParseError('ASF stream bitrate records exceed object payload');
+          }
+          for (let index = 0; index < count; ++index) {
+            const streamNumber = (await this.tokenizer.readToken(Token.UINT16_LE)) & 0x7f;
+            this.streamBitrates.set(streamNumber, await this.tokenizer.readToken(Token.UINT32_LE));
+          }
+          await this.ignorePayload(payloadSize - 2 - count * 6, 'Stream Bitrate Properties Object');
           break;
+        }
 
         case AsfGuid.PaddingObject.str:
           // ToDo: register bytes pad
@@ -222,13 +280,19 @@ export class AsfParser extends BasicParser {
       const { header, payloadSize } = await this.readObjectHeader(extensionSize, 'extension');
       // Parse data part of the ASF Object
       switch (header.objectId.str) {
-        case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: // 4.1
-          // ToDo: extended stream header properties are ignored
+        case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: {
+          // 4.1
           this.validateAllocationSize(payloadSize, 'Extended Stream Properties Object');
-          await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(
+          const extended = await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(
             new AsfObject.ExtendedStreamPropertiesObjectState(header)
           );
+          if (extended.streamPropertiesObject) {
+            const stream = extended.streamPropertiesObject;
+            this.streams.set(stream.streamNumber, stream);
+            this.metadata.setFormat('container', `ASF/${stream.streamType}`);
+          }
           break;
+        }
 
         case AsfObject.MetadataObjectState.guid.str: {
           // 4.7

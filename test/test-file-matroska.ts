@@ -209,3 +209,97 @@ describe('Matroska formats', () => {
     assert.isUndefined(format.duration, 'format.duration');
   });
 });
+
+describe('Matroska track defaults and selection', () => {
+  function element(id: string, ...data: Uint8Array[]): Uint8Array {
+    const payload = Buffer.concat(data);
+    const size = new Uint8Array(2);
+    new DataView(size.buffer).setUint16(0, 0x4000 | payload.length);
+    return Buffer.concat([Buffer.from(id, 'hex'), size, payload]);
+  }
+
+  function uint(id: string, value: number): Uint8Array {
+    return element(id, Uint8Array.from([value]));
+  }
+
+  function float(id: string, value: number): Uint8Array {
+    const data = new Uint8Array(8);
+    new DataView(data.buffer).setFloat64(0, value);
+    return element(id, data);
+  }
+
+  function text(id: string, value: string): Uint8Array {
+    return element(id, new TextEncoder().encode(value));
+  }
+
+  function track(id: number, type: mm.TrackType, ...properties: Uint8Array[]): Uint8Array {
+    return element(
+      'ae',
+      uint('d7', id),
+      uint('83', type),
+      text('86', type === mm.TrackType.audio ? 'A_AAC' : 'S_TEXT/UTF8'),
+      ...properties
+    );
+  }
+
+  async function parse(...tracks: Uint8Array[]): Promise<mm.IFormat> {
+    const header = element('1a45dfa3', text('4282', 'matroska'));
+    const segment = element('18538067', element('1654ae6b', ...tracks));
+    return (await mm.parseBuffer(Buffer.concat([header, segment]), { mimeType: 'video/x-matroska' })).format;
+  }
+
+  it('applies audio defaults when optional elements are absent', async () => {
+    const format = await parse(track(1, mm.TrackType.audio, element('e1')));
+    assert.lengthOf(format.trackInfo, 1);
+    assert.include(format.trackInfo[0], {
+      id: 1,
+      type: mm.TrackType.audio,
+      language: 'eng',
+      flagEnabled: true,
+      flagDefault: true,
+      flagLacing: true,
+      flagForced: false
+    });
+    assert.deepEqual(format.trackInfo[0].audio, { samplingFrequency: 8000, channels: 1 });
+    assert.strictEqual(format.sampleRate, 8000);
+    assert.strictEqual(format.numberOfChannels, 1);
+  });
+
+  it('prefers IETF language tags and retains forced subtitle flags', async () => {
+    const format = await parse(
+      track(3, mm.TrackType.subtitle, text('22b59c', 'eng'), text('22b59d', 'en-GB'), uint('55aa', 1), uint('88', 0))
+    );
+    assert.include(format.trackInfo[0], {
+      type: mm.TrackType.subtitle,
+      language: 'en-GB',
+      flagForced: true,
+      flagDefault: false
+    });
+    assert.isUndefined(format.trackInfo[0].audio);
+    assert.isFalse(format.hasAudio);
+  });
+
+  it('prefers enabled default audio over a lower-numbered non-default track', async () => {
+    const format = await parse(
+      track(
+        5,
+        mm.TrackType.audio,
+        element('e1', float('b5', 22050), float('78b5', 48000), uint('9f', 3), uint('6264', 24))
+      ),
+      track(1, mm.TrackType.audio, uint('88', 0), element('e1', uint('9f', 2))),
+      track(2, mm.TrackType.audio, uint('b9', 0), element('e1', uint('9f', 6)))
+    );
+    assert.lengthOf(format.trackInfo, 3);
+    assert.strictEqual(format.sampleRate, 48000);
+    assert.strictEqual(format.numberOfChannels, 3);
+    assert.strictEqual(format.bitsPerSample, 24);
+    assert.deepEqual(format.trackInfo[0].audio, {
+      samplingFrequency: 22050,
+      outputSamplingFrequency: 48000,
+      channels: 3,
+      bitDepth: 24
+    });
+    assert.isFalse(format.trackInfo[1].flagDefault);
+    assert.isFalse(format.trackInfo[2].flagEnabled);
+  });
+});
