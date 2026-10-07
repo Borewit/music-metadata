@@ -9,7 +9,7 @@ import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 
 import * as mm from '../lib/index.js';
 import { Atom } from '../lib/mp4/Atom.js';
-import { Mp4ContentError, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
+import { ChapterText, Mp4ContentError, StcoAtom, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
 import { Parsers } from './metadata-parsers.js';
 import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samplePath } from './util.js';
 
@@ -1563,4 +1563,357 @@ describe('MP4 chapters in seekable media', () => {
       assert.strictEqual(tokenizer.position, buffer.length);
     });
   }
+});
+
+// https://github.com/readest/readest/issues/6262
+describe('MP4 chapter tracks and Nero lists', () => {
+  const u32 = (value: number) => {
+    const bytes = Buffer.alloc(4);
+    bytes.writeUInt32BE(value);
+    return bytes;
+  };
+  const u64 = (value: bigint) => {
+    const bytes = Buffer.alloc(8);
+    bytes.writeBigUInt64BE(value);
+    return bytes;
+  };
+  const box = (name: string, ...payload: Buffer[]) => {
+    const body = Buffer.concat(payload);
+    return Buffer.concat([u32(body.length + 8), Buffer.from(name), body]);
+  };
+  const fullBox = (name: string, ...payload: Buffer[]) => box(name, u32(0), ...payload);
+  const table = (name: string, rows: number[][]) => fullBox(name, u32(rows.length), ...rows.flat().map(u32));
+  const text = (title: string, utf16 = false) => {
+    const encoded = Buffer.from(title, utf16 ? 'utf16le' : 'utf8');
+    const bytes = utf16 ? Buffer.concat([Buffer.from([0xfe, 0xff]), encoded.swap16()]) : encoded;
+    const length = Buffer.alloc(2);
+    length.writeUInt16BE(bytes.length);
+    return Buffer.concat([length, bytes]);
+  };
+  const nero = (version = 1) =>
+    box(
+      'udta',
+      box(
+        'chpl',
+        Buffer.from([version, 0, 0, 0]),
+        ...(version ? [u32(0)] : []),
+        Buffer.from([2]),
+        u64(0n),
+        Buffer.from([7]),
+        Buffer.from('Prelude'),
+        u64(125_000_000n),
+        Buffer.from([9]),
+        Buffer.from('Chapter 1')
+      )
+    );
+
+  function audiobook({
+    trailing = false,
+    grouped = true,
+    fixed = false,
+    offset64 = false,
+    version = 0,
+    handler = 'text',
+    refs = [2],
+    neroVersion,
+    invalidRuns,
+    emptyTitles = false,
+    chapterCount
+  }: {
+    trailing?: boolean;
+    grouped?: boolean;
+    fixed?: boolean;
+    offset64?: boolean;
+    version?: number;
+    handler?: string | null;
+    refs?: number[];
+    neroVersion?: number;
+    invalidRuns?: number[][];
+    emptyTitles?: boolean;
+    chapterCount?: number;
+  } = {}) {
+    const samples = chapterCount
+      ? Array.from({ length: chapterCount }, () => text('C'))
+      : fixed
+        ? [text('Chapter 1'), text('Chapter 2')]
+        : [text('Opening Credits'), text('Chapter 1'), text('Chapter 2', true)];
+    if (emptyTitles) {
+      samples.fill(text(''));
+    }
+    const sizes = samples.map(sample => sample.length);
+    const ftyp = box('ftyp', Buffer.from('M4B '), u32(0), Buffer.from('isom'));
+    const audio = Buffer.alloc(100);
+    const payload = grouped
+      ? Buffer.concat([audio, ...samples])
+      : Buffer.concat(samples.flatMap(sample => [audio, sample]));
+    const moovFor = (mdatOffset: number) => {
+      const tkhd = (id: number) => {
+        const header = Buffer.alloc(version ? 96 : 84);
+        header[0] = version;
+        header.writeUInt32BE(id, version ? 20 : 12);
+        return box('tkhd', header);
+      };
+      const mdhd = () => {
+        const header = Buffer.alloc(version ? 36 : 24);
+        header[0] = version;
+        header.writeUInt32BE(1_000, version ? 20 : 12);
+        if (version) {
+          header.writeBigUInt64BE(90_000n, 24);
+        } else {
+          header.writeUInt32BE(90_000, 16);
+        }
+        return box('mdhd', header);
+      };
+      const hdlr = (name: string) => {
+        const header = Buffer.alloc(28);
+        header.write(name, 8);
+        return box('hdlr', header);
+      };
+      const audioEntry = Buffer.alloc(36);
+      audioEntry.writeUInt32BE(36);
+      audioEntry.write('mp4a', 4);
+      audioEntry.writeUInt16BE(1, 14);
+      audioEntry.writeUInt16BE(1, 24);
+      audioEntry.writeUInt16BE(16, 26);
+      audioEntry.writeUInt16BE(1_000, 32);
+      const audioTrack = box(
+        'trak',
+        tkhd(1),
+        box('tref', box('chap', ...refs.map(u32))),
+        box(
+          'mdia',
+          mdhd(),
+          hdlr('soun'),
+          box(
+            'minf',
+            box(
+              'stbl',
+              fullBox('stsd', u32(1), audioEntry),
+              table('stco', []),
+              table('stsc', []),
+              table('stts', []),
+              fullBox('stsz', u32(0), u32(0))
+            )
+          )
+        )
+      );
+      let sampleOffset = mdatOffset + 8;
+      const offsets = samples.map(sample => {
+        sampleOffset += grouped ? 0 : audio.length;
+        const offset = sampleOffset;
+        sampleOffset += sample.length;
+        return offset;
+      });
+      if (grouped) {
+        offsets.splice(0, offsets.length, mdatOffset + 8 + audio.length);
+      }
+      const chunkBox = offset64
+        ? fullBox('co64', u32(offsets.length), ...offsets.map(offset => u64(BigInt(offset))))
+        : table(
+            'stco',
+            offsets.map(offset => [offset])
+          );
+      const chapterTrack = box(
+        'trak',
+        tkhd(2),
+        box(
+          'mdia',
+          mdhd(),
+          ...(handler ? [hdlr(handler)] : []),
+          box(
+            'minf',
+            box(
+              'stbl',
+              fullBox('stsd', u32(0)),
+              chunkBox,
+              table('stsc', invalidRuns ?? [[1, grouped ? samples.length : 1, 1]]),
+              table(
+                'stts',
+                chapterCount
+                  ? [[chapterCount, 1_000]]
+                  : fixed
+                    ? [[2, 10_000]]
+                    : [
+                        [1, 5_000],
+                        [2, 30_000]
+                      ]
+              ),
+              fullBox('stsz', u32(fixed ? sizes[0] : 0), u32(samples.length), ...(fixed ? [] : sizes.map(u32)))
+            )
+          )
+        )
+      );
+      return box('moov', audioTrack, chapterTrack, ...(neroVersion === undefined ? [] : [nero(neroVersion)]));
+    };
+    const moov = moovFor(ftyp.length + (trailing ? 0 : moovFor(0).length));
+    return Buffer.concat(trailing ? [ftyp, box('mdat', payload), moov] : [ftyp, moov, box('mdat', payload)]);
+  }
+
+  const chapterList = (metadata: mm.IAudioMetadata) =>
+    metadata.format.chapters?.map(({ title, start, timeScale }) => ({ title, start, timeScale }));
+  const expected = [
+    { title: 'Opening Credits', start: 0, timeScale: 1_000 },
+    { title: 'Chapter 1', start: 5_000, timeScale: 1_000 },
+    { title: 'Chapter 2', start: 35_000, timeScale: 1_000 }
+  ];
+  const expectedNero = [
+    { title: 'Prelude', start: 0, timeScale: 10_000_000 },
+    { title: 'Chapter 1', start: 125_000_000, timeScale: 10_000_000 }
+  ];
+
+  describe('MP4 chapters in real audiobook excerpts', () => {
+    for (const filename of ['chapters-leading.m4b', 'chapters-nero.m4b']) {
+      for (const parser of Parsers) {
+        it(`${filename}: ${parser.description}`, async function () {
+          const metadata = await parser.parse(() => this.skip(), path.join(samplePath, 'mp4', filename), 'audio/mp4', {
+            includeChapters: true
+          });
+          assert.approximately(metadata.format.duration, 10, 0.02);
+          assert.strictEqual(metadata.format.codec, 'MPEG-4/AAC');
+          assert.deepEqual(
+            metadata.format.chapters?.map(({ title, start, timeScale }) => ({ title, start: start / timeScale })),
+            [
+              { title: 'Opening Credits', start: 0 },
+              { title: 'Chapter 1', start: 3 },
+              { title: 'Chapter 2', start: 7 }
+            ]
+          );
+        });
+      }
+    }
+  });
+
+  // Constructed boxes below cover malformed input and table/encoding boundary cases.
+  describe('MP4 chapter sample tables', () => {
+    for (const trailing of [false, true]) {
+      for (const offset64 of [false, true]) {
+        it(`reads grouped samples with ${offset64 ? 'co64' : 'stco'} and ${trailing ? 'trailing' : 'leading'} moov`, async () => {
+          const metadata = await mm.parseBuffer(audiobook({ trailing, offset64 }), 'audio/mp4', {
+            includeChapters: true
+          });
+          assert.deepEqual(chapterList(metadata), expected);
+          assert.strictEqual(metadata.format.duration, 90);
+        });
+      }
+    }
+    it('falls back to Nero when a streamed chapter remains beyond the final payload', async () => {
+      const buffer = audiobook({ grouped: false, neroVersion: 1 });
+      const table = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
+      buffer.writeUInt32BE(buffer.length + 16, table + 4);
+      const stream = Readable.from([buffer], { objectMode: false });
+      const metadata = await mm.parseStream(stream, 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(chapterList(metadata), expectedNero);
+      assert.isTrue(metadata.quality.warnings.some(warning => warning.message.includes('Cannot read chapter track')));
+    });
+
+    it('expands repeated time-to-sample entries with one sample per chunk', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ grouped: false }), 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(chapterList(metadata), expected);
+    });
+    it('uses fixed sample sizes and the declared sample count', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ fixed: true }), 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(chapterList(metadata), [
+        { title: 'Chapter 1', start: 0, timeScale: 1_000 },
+        { title: 'Chapter 2', start: 10_000, timeScale: 1_000 }
+      ]);
+    });
+    it('reads version 1 track and media headers', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ version: 1 }), 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(chapterList(metadata), expected);
+    });
+    it('accepts a chapter track without a handler', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ handler: null }), 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(chapterList(metadata), expected);
+    });
+    it('reads grouped chapter samples from a forward-only faststart stream', async () => {
+      const metadata = await mm.parseStream(
+        Readable.from([audiobook({ trailing: false })], { objectMode: false }),
+        'audio/mp4',
+        {
+          includeChapters: true
+        }
+      );
+      assert.deepEqual(chapterList(metadata), expected);
+    });
+    for (const neroVersion of [0, 1]) {
+      it(`falls back to Nero chpl version ${neroVersion} for a self-reference`, async () => {
+        const metadata = await mm.parseBuffer(audiobook({ refs: [1], neroVersion }), 'audio/mp4', {
+          includeChapters: true
+        });
+        assert.deepEqual(chapterList(metadata), expectedNero);
+      });
+    }
+    it('prefers a usable chapter track to a Nero list', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ neroVersion: 1 }), 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(chapterList(metadata), expected);
+    });
+    it('falls back to Nero when a chapter track has no titles', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ emptyTitles: true, neroVersion: 1 }), 'audio/mp4', {
+        includeChapters: true
+      });
+      assert.deepEqual(chapterList(metadata), expectedNero);
+    });
+    for (const invalidRuns of [
+      [[1, 0, 1]],
+      [[0, 1, 1]],
+      [
+        [1, 1, 1],
+        [1, 2, 1]
+      ],
+      [
+        [2, 1, 1],
+        [1, 2, 1]
+      ],
+      [
+        [1, 1, 1],
+        [0xffffffff, 1, 1]
+      ]
+    ]) {
+      it(`falls back to Nero for invalid chunk runs ${JSON.stringify(invalidRuns)}`, async () => {
+        const metadata = await mm.parseBuffer(audiobook({ invalidRuns, neroVersion: 1 }), 'audio/mp4', {
+          includeChapters: true
+        });
+        assert.deepEqual(chapterList(metadata), expectedNero);
+      });
+    }
+    it('bounds a large declared chapter count', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ chapterCount: 1_020 }), 'audio/mp4', { includeChapters: true });
+      assert.lengthOf(metadata.format.chapters, 1_000);
+      assert.strictEqual(metadata.format.chapters[999].start, 999_000);
+      assert.match(metadata.quality.warnings[0].message, /chapter limit/);
+    });
+    it('retains a timestamp when a title sample is empty', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ emptyTitles: true }), 'audio/mp4', { includeChapters: true });
+      assert.deepEqual(
+        chapterList(metadata),
+        expected.map(chapter => ({ ...chapter, title: '' }))
+      );
+    });
+    it('does not use an audio track as a chapter track', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ handler: 'soun', neroVersion: 1 }), 'audio/mp4', {
+        includeChapters: true
+      });
+      assert.deepEqual(chapterList(metadata), expectedNero);
+    });
+    it('does not read Nero chapters unless requested', async () => {
+      const metadata = await mm.parseBuffer(audiobook({ refs: [], neroVersion: 1 }), 'audio/mp4');
+      assert.isUndefined(metadata.format.chapters);
+    });
+    it('decodes unsigned 32-bit chunk offsets above 2 GiB', () => {
+      const payload = Buffer.concat([u32(0), u32(1), u32(0x80000000)]);
+      assert.deepEqual(new StcoAtom(payload.length).get(payload, 0).entries, [0x80000000]);
+    });
+    it('bounds title text to its own sample and decodes UTF-16', () => {
+      const sample = text('Chapter 2', true);
+      assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Chapter 2');
+      const truncated = Buffer.from([0xff, 0xff, 0x41]);
+      assert.strictEqual(new ChapterText(truncated.length).get(truncated, 0), 'A');
+    });
+    it('rejects a chapter offset outside media data when no Nero list is available', async () => {
+      const buffer = audiobook();
+      const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
+      buffer.writeUInt32BE(buffer.length, at);
+      await rejects(mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true }), Mp4ContentError);
+    });
+  });
 });

@@ -13,6 +13,8 @@ import { ChapterTrackReferenceBox, Mp4ContentError } from './AtomToken.js';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
+const maxChapterCount = 1_000;
+const maxChapterTitleBytes = 64 * 1024;
 
 interface IMediaDataRange {
   offset: number;
@@ -52,7 +54,7 @@ interface ITrackDescription {
   chapterList?: number[];
   chunkOffsetTable: number[];
   sampleSize: number;
-  sampleCount?: number;
+  sampleCount: number;
   sampleSizeTable: number[];
   sampleToChunkTable: AtomToken.ISampleToChunk[];
   timeToSampleTable: AtomToken.ITimeToSampleToken[];
@@ -198,6 +200,7 @@ export class MP4Parser extends BasicParser {
   private mediaDataRanges: IMediaDataRange[] = [];
   private streamedChapters = new Map<number, IChapter>();
   private streamedChapterCount?: number;
+  private neroChapters: IChapter[] = [];
   private hasVideoTrack = false;
   private hasAudioTrack = false;
 
@@ -208,6 +211,7 @@ export class MP4Parser extends BasicParser {
     this.mediaDataRanges = [];
     this.streamedChapters.clear();
     this.streamedChapterCount = undefined;
+    this.neroChapters = [];
 
     let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
 
@@ -251,7 +255,18 @@ export class MP4Parser extends BasicParser {
     }
 
     if (this.streamedChapterCount !== undefined && this.streamedChapters.size !== this.streamedChapterCount) {
-      throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
+      if (this.neroChapters.length === 0) {
+        throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
+      }
+      this.addWarning('Cannot read chapter track: Chapter chunk exceeding media data bounds');
+    }
+
+    if (
+      this.options.includeChapters &&
+      this.neroChapters.length > 0 &&
+      !this.metadata.format.chapters?.some(chapter => chapter.title)
+    ) {
+      this.metadata.setFormat('chapters', this.neroChapters);
     }
 
     // Post process metadata
@@ -635,6 +650,7 @@ export class MP4Parser extends BasicParser {
       soundSampleDescription: [],
       chunkOffsetTable: [],
       sampleSize: 0,
+      sampleCount: 0,
       sampleSizeTable: [],
       sampleToChunkTable: [],
       timeToSampleTable: []
@@ -672,8 +688,13 @@ export class MP4Parser extends BasicParser {
             break;
           }
 
-          case 'stco': {
-            const stco = await this.readToken(new AtomToken.StcoAtom(payLoadLength));
+          case 'stco':
+          case 'co64': {
+            const token =
+              child.header.name === 'co64'
+                ? new AtomToken.Co64Atom(payLoadLength)
+                : new AtomToken.StcoAtom(payLoadLength);
+            const stco = await this.readToken(token);
             track.chunkOffsetTable = stco.entries; // remember chunk offsets
             break;
           }
@@ -777,6 +798,14 @@ export class MP4Parser extends BasicParser {
       const mvhd = await this.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
       this.metadata.setFormat('creationTime', mvhd.creationTime);
       this.metadata.setFormat('modificationTime', mvhd.modificationTime);
+    },
+
+    chpl: async (len: number) => {
+      if (this.options.includeChapters) {
+        this.neroChapters = await this.readToken(new AtomToken.ChapterListAtom(len));
+      } else {
+        await this.tokenizer.ignore(len);
+      }
     },
 
     chap: async (len: number) => {
@@ -884,15 +913,28 @@ export class MP4Parser extends BasicParser {
   }
 
   private async parseChapters(mediaDataRanges: IMediaDataRange[], forwardOnly = false): Promise<void> {
-    const tracks = [...this.tracks.values()];
-    const trackWithChapters = tracks.filter(track => track.chapterList);
-    if (trackWithChapters.length === 1) {
-      const track = trackWithChapters[0];
-      const chapterTracks = tracks.filter(chapterTrack =>
-        (track.chapterList ?? []).includes(chapterTrack.header.trackId)
-      );
-      if (chapterTracks.length === 1) {
-        await this.parseChapterTrack(chapterTracks[0], track, mediaDataRanges, forwardOnly);
+    for (const track of this.tracks.values()) {
+      for (const id of track.chapterList ?? []) {
+        const chapterTrack = this.tracks.get(id);
+        if (
+          !chapterTrack ||
+          chapterTrack === track ||
+          (chapterTrack.handler && !['text', 'sbtl'].includes(chapterTrack.handler.handlerType))
+        ) {
+          continue;
+        }
+        try {
+          await this.parseChapterTrack(chapterTrack, track, mediaDataRanges, forwardOnly);
+        } catch (error) {
+          // A broken QuickTime track must not hide an independently usable Nero list.
+          if (this.neroChapters.length === 0 || !(error instanceof Mp4ContentError)) {
+            throw error;
+          }
+          this.streamedChapterCount = undefined;
+          this.streamedChapters.clear();
+          this.addWarning(`Cannot read chapter track: ${error.message}`);
+        }
+        return;
       }
     }
   }
@@ -903,50 +945,91 @@ export class MP4Parser extends BasicParser {
     mediaDataRanges: IMediaDataRange[],
     forwardOnly: boolean
   ): Promise<void> {
-    if (!chapterTrack.sampleSize) {
-      if (chapterTrack.chunkOffsetTable.length !== chapterTrack.sampleSizeTable.length) {
-        throw new Error('Expected equal chunk-offset-table & sample-size-table length.');
-      }
+    const sampleCount = Math.min(chapterTrack.sampleCount, maxChapterCount);
+    if (chapterTrack.sampleCount > maxChapterCount) {
+      this.addWarning(`Chapter count exceeds the ${maxChapterCount} chapter limit`);
     }
     if (forwardOnly) {
-      this.streamedChapterCount = chapterTrack.chunkOffsetTable.length;
+      this.streamedChapterCount = sampleCount;
     }
     const chapters: IChapter[] = [];
-    for (let i = 0; i < chapterTrack.chunkOffsetTable.length; ++i) {
-      const start = chapterTrack.timeToSampleTable.slice(0, i).reduce((acc, cur) => acc + cur.duration, 0);
-
-      const chunkOffset = chapterTrack.chunkOffsetTable[i];
-      if (forwardOnly) {
-        // Completed samples belong to earlier payloads; future samples wait for their mdat.
-        if (this.streamedChapters.has(i) || chunkOffset >= mediaDataRanges[0].end) {
-          continue;
+    let sampleIndex = 0;
+    let timeRun = 0;
+    let samplesInTimeRun = chapterTrack.timeToSampleTable[0]?.count ?? 0;
+    let start = 0;
+    const chunkRuns = chapterTrack.sampleToChunkTable;
+    for (let run = 0; run < chunkRuns.length && sampleIndex < sampleCount; ++run) {
+      const { firstChunk, samplesPerChunk } = chunkRuns[run];
+      const nextFirstChunk = chunkRuns[run + 1]?.firstChunk ?? chapterTrack.chunkOffsetTable.length + 1;
+      if (
+        (run === 0 && firstChunk !== 1) ||
+        firstChunk < 1 ||
+        samplesPerChunk === 0 ||
+        nextFirstChunk <= firstChunk ||
+        nextFirstChunk > chapterTrack.chunkOffsetTable.length + 1
+      ) {
+        throw new Mp4ContentError('Invalid chapter sample-to-chunk table');
+      }
+      for (let chunk = firstChunk - 1; chunk < nextFirstChunk - 1 && sampleIndex < sampleCount; ++chunk) {
+        let offset = chapterTrack.chunkOffsetTable[chunk];
+        for (let sample = 0; sample < samplesPerChunk && sampleIndex < sampleCount; ++sample) {
+          while (samplesInTimeRun === 0 && timeRun < chapterTrack.timeToSampleTable.length) {
+            samplesInTimeRun = chapterTrack.timeToSampleTable[++timeRun]?.count ?? 0;
+          }
+          const timing = chapterTrack.timeToSampleTable[timeRun];
+          if (!timing) {
+            throw new Mp4ContentError('Missing chapter sample timing');
+          }
+          const size = chapterTrack.sampleSize || chapterTrack.sampleSizeTable[sampleIndex];
+          const deferred = forwardOnly && (this.streamedChapters.has(sampleIndex) || offset >= mediaDataRanges[0].end);
+          if (!deferred) {
+            if (
+              !Number.isSafeInteger(offset) ||
+              !Number.isSafeInteger(size) ||
+              size < 0 ||
+              !mediaDataRanges.some(range => offset >= range.offset && size <= range.end - offset)
+            ) {
+              throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
+            }
+            if (forwardOnly && offset < this.tokenizer.position) {
+              throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
+            }
+            // Oversized or empty title samples retain their timestamps without buffering their data.
+            const title =
+              size < 2 || size > maxChapterTitleBytes
+                ? ''
+                : await this.readToken(new AtomToken.ChapterText(size), offset);
+            const chapter: IChapter = {
+              title,
+              timeScale: chapterTrack.media.header?.timeScale ?? 0,
+              start
+            };
+            if (
+              track.chunkOffsetTable.length > 0 &&
+              track.sampleToChunkTable.length > 0 &&
+              track.timeToSampleTable.length > 0
+            ) {
+              chapter.sampleOffset = this.findSampleOffset(track, offset + size);
+            }
+            if (forwardOnly) {
+              this.streamedChapters.set(sampleIndex, chapter);
+            } else {
+              chapters.push(chapter);
+            }
+          }
+          offset += size;
+          start += timing.duration;
+          --samplesInTimeRun;
+          ++sampleIndex;
         }
-        if (chunkOffset < this.tokenizer.position) {
-          throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
-        }
       }
-      const sampleSize = chapterTrack.sampleSize > 0 ? chapterTrack.sampleSize : chapterTrack.sampleSizeTable[i];
-      if (!mediaDataRanges.some(range => chunkOffset >= range.offset && chunkOffset + sampleSize <= range.end)) {
-        throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
-      }
-      const title = await this.readToken(new AtomToken.ChapterText(sampleSize), chunkOffset);
-      debug(`Chapter ${i + 1}: ${title}`);
-      const chapter = {
-        title,
-        timeScale: chapterTrack.media.header ? chapterTrack.media.header.timeScale : 0,
-        start,
-        sampleOffset: this.findSampleOffset(track, this.tokenizer.position)
-      };
-      debug(`Chapter title=${chapter.title}, offset=${chapter.sampleOffset}/${track.header.duration}`); // ToDo, use media duration if required!!!
-      if (forwardOnly) {
-        this.streamedChapters.set(i, chapter);
-      } else {
-        chapters.push(chapter);
-      }
+    }
+    if (sampleIndex < sampleCount) {
+      throw new Mp4ContentError('Missing chapter sample-to-chunk entries');
     }
     if (!forwardOnly) {
       this.metadata.setFormat('chapters', chapters);
-    } else if (this.streamedChapters.size === chapterTrack.chunkOffsetTable.length) {
+    } else if (this.streamedChapters.size === sampleCount) {
       this.metadata.setFormat(
         'chapters',
         [...this.streamedChapters].sort(([left], [right]) => left - right).map(([, chapter]) => chapter)
