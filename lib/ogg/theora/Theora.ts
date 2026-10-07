@@ -26,6 +26,7 @@ export interface IIdentificationHeader {
   nombr: number;
   // The quality hint.
   nqual: number;
+  keyframeGranuleShift: number;
 }
 
 /**
@@ -48,7 +49,8 @@ export const IdentificationHeader: IGetToken<IIdentificationHeader> = {
       frn: Token.UINT32_BE.get(buf, off + 22),
       frd: Token.UINT32_BE.get(buf, off + 26),
       nombr: Token.UINT24_BE.get(buf, off + 37),
-      nqual: Token.UINT8.get(buf, off + 40)
+      nqual: Token.UINT16_BE.get(buf, off + 40) >> 10,
+      keyframeGranuleShift: (Token.UINT16_BE.get(buf, off + 40) >> 5) & 0x1f
     };
   }
 };

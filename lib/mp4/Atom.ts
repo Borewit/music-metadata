@@ -106,6 +106,7 @@ export class Atom {
       case '<id>':
       case 'ilst':
       case 'tref':
+      case 'mvex':
       case 'moof':
         return this.readAtoms(tokenizer, dataHandler, remaining);
 

@@ -24,6 +24,7 @@ const headerType = 'asf';
 export class AsfParser extends BasicParser {
   private streams = new Map<number, AsfObject.IStreamPropertiesObject>();
   private codecs: AsfObject.ICodecEntry[] = [];
+  private extendedStreams = new Map<number, AsfObject.IExtendedStreamPropertiesObject>();
   private streamBitrates = new Map<number, number>();
   public async parse() {
     const header = await this.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
@@ -60,6 +61,7 @@ export class AsfParser extends BasicParser {
         );
       });
       const track: ITrackInfo = { id: stream.streamNumber, type };
+      const extended = this.extendedStreams.get(stream.streamNumber);
       if (stream.codecId !== undefined) {
         track.codecId = stream.codecId;
       }
@@ -72,7 +74,21 @@ export class AsfParser extends BasicParser {
       if (stream.video) {
         track.video = stream.video;
       }
-      const bitrate = this.streamBitrates.get(stream.streamNumber) ?? stream.bitrate;
+      if (extended) {
+        if (extended.endTime > extended.startTime) {
+          track.duration = Number(extended.endTime - extended.startTime) / 1e7;
+        }
+        const name = extended.streamNames[0]?.streamName;
+        if (name) {
+          track.name = name;
+        }
+        if (track.video && extended.averageTimePerFrame > 0) {
+          track.video.frameRate = 1e7 / extended.averageTimePerFrame;
+        }
+      }
+      const bitrate =
+        this.streamBitrates.get(stream.streamNumber) ??
+        (extended && extended.dataBitrate > 0 ? extended.dataBitrate : stream.bitrate);
       if (bitrate !== undefined) {
         track.bitrate = bitrate;
       }
@@ -99,10 +115,13 @@ export class AsfParser extends BasicParser {
           // 3.2
           this.validateAllocationSize(payloadSize, 'File Properties Object');
           const fpo = await this.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header));
-          this.metadata.setFormat(
-            'duration',
-            Number(fpo.playDuration / BigInt(1000)) / 10000 - Number(fpo.preroll) / 1000
-          );
+          if (!fpo.flags.broadcast) {
+            const duration = Number(fpo.playDuration) / 1e7 - Number(fpo.preroll) / 1000;
+            if (Number.isFinite(duration) && duration > 0) {
+              this.metadata.setFormat('duration', duration);
+              this.metadata.setFormat('containerDuration', duration);
+            }
+          }
           this.metadata.setFormat('bitrate', fpo.maximumBitrate);
           break;
         }
@@ -278,6 +297,7 @@ export class AsfParser extends BasicParser {
           const extended = await this.readToken<AsfObject.IExtendedStreamPropertiesObject>(
             new AsfObject.ExtendedStreamPropertiesObjectState(header)
           );
+          this.extendedStreams.set(extended.streamNumber, extended);
           if (extended.streamPropertiesObject) {
             const stream = extended.streamPropertiesObject;
             this.streams.set(stream.streamNumber, stream);
