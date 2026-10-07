@@ -149,19 +149,27 @@ export const ChannelLayoutHeader: IGetToken<IChannelLayoutHeader> = {
 export interface IChannelDescription {
   channelLabel: number;
   channelFlags: number;
+  coordinates: [number, number, number];
 }
 
-/** Each CAFChannelDescription is a UInt32 channel label plus a UInt64 channel flags field */
+export const channelDescriptionLen = 20;
+
+/** Each CAFChannelDescription has a UInt32 label, UInt32 flags and three Float32 coordinates */
 export function parseChannelDescriptions(body: Uint8Array, count: number): IChannelDescription[] {
-  if (count * 12 > body.length) {
+  if (count * channelDescriptionLen > body.length) {
     throw new CafContentError(`Channel Layout chunk declares ${count} description(s) for ${body.length} byte(s)`);
   }
   const descriptions: IChannelDescription[] = [];
   for (let i = 0; i < count; ++i) {
-    const off = i * 12;
+    const off = i * channelDescriptionLen;
     descriptions.push({
       channelLabel: Token.UINT32_BE.get(body, off),
-      channelFlags: Number(Token.UINT64_BE.get(body, off + 4))
+      channelFlags: Token.UINT32_BE.get(body, off + 4),
+      coordinates: [
+        Token.Float32_BE.get(body, off + 8),
+        Token.Float32_BE.get(body, off + 12),
+        Token.Float32_BE.get(body, off + 16)
+      ]
     });
   }
   return descriptions;
