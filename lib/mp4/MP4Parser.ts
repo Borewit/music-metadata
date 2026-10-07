@@ -193,11 +193,11 @@ export class MP4Parser extends BasicParser {
 
   private tracks = new Map<number, ITrackDescription>();
   private hasVideoTrack = false;
-  private hasAudioTrack = true;
+  private hasAudioTrack = false;
 
   public async parse(): Promise<void> {
     this.hasVideoTrack = false;
-    this.hasAudioTrack = true;
+    this.hasAudioTrack = false;
     this.tracks.clear();
 
     let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
@@ -340,7 +340,7 @@ export class MP4Parser extends BasicParser {
       }
     }
 
-    this.metadata.setFormat('hasAudio', this.hasAudioTrack);
+    this.metadata.setFormat('hasAudio', this.hasAudioTrack || audioTracks.length > 0);
     this.metadata.setFormat('hasVideo', this.hasVideoTrack);
   }
 
