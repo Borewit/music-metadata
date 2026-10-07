@@ -12,6 +12,11 @@ updates:
     labels:
       - dependencies
     groups:
+      chai-mocha:
+        dependency-type: "development"
+        patterns:
+          - "chai"
+          - "mocha"
       remark:
         dependency-type: "development"
         patterns:
