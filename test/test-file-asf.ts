@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
@@ -10,6 +11,7 @@ import {
   HeaderExtensionObject,
   HeaderObjectToken,
   readCodecEntries,
+  StreamPropertiesObject,
   TopLevelHeaderObjectToken
 } from '../lib/asf/AsfObject.js';
 import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
@@ -17,6 +19,7 @@ import { getParserForAttr } from '../lib/asf/AsfUtil.js';
 import type { IWarningCollector } from '../lib/common/MetadataCollector.js';
 import type { IPicture } from '../lib/index.js';
 import * as mm from '../lib/index.js';
+import { TrackType } from '../lib/type.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
@@ -27,12 +30,12 @@ const asfMimeType = { mimeType: 'audio/ms-wma' };
 
 function writeObjectHeader(data: Uint8Array, offset: number, objectId: AsfGuid, objectSize: number): void {
   data.set(objectId.toBin(), offset);
-  new DataView(data.buffer).setBigUint64(offset + 16, BigInt(objectSize), true);
+  new DataView(data.buffer, data.byteOffset, data.byteLength).setBigUint64(offset + 16, BigInt(objectSize), true);
 }
 
 function writeTopLevelHeader(data: Uint8Array, objectSize: number, childCount: number): void {
   writeObjectHeader(data, 0, AsfGuid.HeaderObject, objectSize);
-  new DataView(data.buffer).setUint32(24, childCount, true);
+  new DataView(data.buffer, data.byteOffset, data.byteLength).setUint32(24, childCount, true);
 }
 
 function createSingleObjectAsf(
@@ -331,6 +334,157 @@ describe('Parse ASF', () => {
       const tag = asfTagMapper.mapGenericTag({ id: 'WM/SharedUserRating', value: 75 }, warnings);
       assert.deepEqual(tag, { id: 'rating', value: { rating: 75 / 99 } });
     });
+  });
+
+  describe('stream presence without a Codec List', () => {
+    for (const { filename, hasAudio, hasVideo } of [
+      { filename: 'asf-audio-no-codec-list.asf', hasAudio: true, hasVideo: false },
+      { filename: 'asf-video-no-codec-list.asf', hasAudio: false, hasVideo: true },
+      { filename: 'asf-audio-video-no-codec-list.asf', hasAudio: true, hasVideo: true },
+      { filename: 'asf-video-audio-no-codec-list.asf', hasAudio: true, hasVideo: true }
+    ]) {
+      describe(filename, () => {
+        for (const parser of Parsers) {
+          it(parser.description, async function () {
+            const { format } = await parser.parse(
+              () => this.skip(),
+              path.join(asfFilePath, filename),
+              'audio/x-ms-asf'
+            );
+            assert.strictEqual(format.hasAudio, hasAudio, 'format.hasAudio');
+            assert.strictEqual(format.hasVideo, hasVideo, 'format.hasVideo');
+            assert.isEmpty(format.trackInfo, 'No Codec List entries');
+            assert.isAbove(format.duration, 0, 'The fixture contains media');
+          });
+        }
+
+        it('publishes absence only after reading the header', async () => {
+          const data = await readFile(path.join(asfFilePath, filename));
+          const header = TopLevelHeaderObjectToken.get(data, 0);
+          const tokenizer = fromBuffer(data, { fileInfo: { mimeType: 'audio/x-ms-asf' } });
+          const values = { hasAudio: [], hasVideo: [] };
+          await mm.parseFromTokenizer(tokenizer, {
+            observer({ tag }) {
+              if (tag.type === 'format' && (tag.id === 'hasAudio' || tag.id === 'hasVideo')) {
+                values[tag.id].push(tag.value);
+                if (tag.value === false) {
+                  assert.strictEqual(tokenizer.position, header.objectSize, 'Absence is known after the header scan');
+                }
+              }
+            }
+          });
+          assert.deepEqual(values.hasAudio, [hasAudio]);
+          assert.deepEqual(values.hasVideo, [hasVideo]);
+        });
+      });
+    }
+  });
+
+  // PR #2785: nested Stream Properties are currently ignored, so preserve the
+  // Codec List fallback without notifying observers that present media is absent.
+  describe('stream presence with nested Stream Properties', () => {
+    async function nestedStreams(filename: string): Promise<Uint8Array> {
+      const source = await readFile(path.join(asfFilePath, filename));
+      const topLevel = TopLevelHeaderObjectToken.get(source, 0);
+      const objects: Uint8Array[] = [];
+      const extendedStreams: Uint8Array[] = [];
+      const codecEntries: Uint8Array[] = [];
+      for (let offset = TopLevelHeaderObjectToken.len; offset < topLevel.objectSize; ) {
+        const header = HeaderObjectToken.get(source, offset);
+        const object = source.subarray(offset, offset + header.objectSize);
+        if (header.objectId.equals(AsfGuid.StreamPropertiesObject)) {
+          // Extended Stream Properties has a 64-byte fixed payload, followed by
+          // optional names/extensions (both counts are zero here) and the SPO.
+          const extended = new Uint8Array(HeaderObjectToken.len + 64 + object.length);
+          writeObjectHeader(extended, 0, AsfGuid.ExtendedStreamPropertiesObject, extended.length);
+          const view = new DataView(extended.buffer);
+          const streamNumber = source.readUInt16LE(offset + HeaderObjectToken.len + 48) & 0x7f;
+          view.setUint16(HeaderObjectToken.len + 48, streamNumber, true);
+          extended.set(object, HeaderObjectToken.len + 64);
+          extendedStreams.push(extended);
+
+          const { streamType } = new StreamPropertiesObject(header).get(source, offset + HeaderObjectToken.len);
+          assert.include(['audio', 'video'], streamType);
+          const codecName = Buffer.from(
+            streamType === 'audio' ? 'Windows Media Audio' : 'Windows Media Video',
+            'utf16le'
+          );
+          const entry = Buffer.alloc(8 + codecName.length);
+          entry.writeUInt16LE(streamType === 'audio' ? 2 : 1, 0);
+          entry.writeUInt16LE(codecName.length / 2, 2);
+          entry.set(codecName, 4); // Empty description and codec information follow.
+          codecEntries.push(entry);
+        } else {
+          objects.push(object);
+        }
+        offset += header.objectSize;
+      }
+      assert.isNotEmpty(extendedStreams, 'fixture has stream properties to move');
+      const extensionIndex = objects.findIndex(object => AsfGuid.fromBin(object).equals(AsfGuid.HeaderExtensionObject));
+      assert.isAtLeast(extensionIndex, 0, 'fixture has a Header Extension');
+      const extension = objects[extensionIndex];
+      const extensionData = Buffer.concat(extendedStreams);
+      const nestedExtension = Buffer.concat([extension, extensionData]);
+      writeObjectHeader(nestedExtension, 0, AsfGuid.HeaderExtensionObject, nestedExtension.length);
+      nestedExtension.writeUInt32LE(nestedExtension.length - HeaderObjectToken.len - 22, HeaderObjectToken.len + 18);
+      objects[extensionIndex] = nestedExtension;
+
+      const codecList = Buffer.concat([Buffer.alloc(HeaderObjectToken.len + 20), ...codecEntries]);
+      writeObjectHeader(codecList, 0, AsfGuid.CodecListObject, codecList.length);
+      codecList.writeUInt32LE(codecEntries.length, HeaderObjectToken.len + 16);
+      objects.push(codecList);
+      const headerData = Buffer.concat([source.subarray(0, TopLevelHeaderObjectToken.len), ...objects]);
+      writeTopLevelHeader(headerData, headerData.length, objects.length);
+      const data = Buffer.concat([headerData, source.subarray(topLevel.objectSize)]);
+      // Keep the original media payload and update the declared total file size.
+      const filePropertiesOffset = TopLevelHeaderObjectToken.len;
+      assert.isTrue(AsfGuid.fromBin(data, filePropertiesOffset).equals(AsfGuid.FilePropertiesObject));
+      data.writeBigUInt64LE(BigInt(data.length), filePropertiesOffset + HeaderObjectToken.len + 16);
+      return data;
+    }
+
+    for (const { filename, hasAudio, hasVideo, trackTypes } of [
+      { filename: 'asf-audio-no-codec-list.asf', hasAudio: true, hasVideo: false, trackTypes: [TrackType.audio] },
+      { filename: 'asf-video-no-codec-list.asf', hasAudio: false, hasVideo: true, trackTypes: [TrackType.video] },
+      {
+        filename: 'asf-audio-video-no-codec-list.asf',
+        hasAudio: true,
+        hasVideo: true,
+        trackTypes: [TrackType.audio, TrackType.video]
+      },
+      {
+        filename: 'asf-video-audio-no-codec-list.asf',
+        hasAudio: true,
+        hasVideo: true,
+        trackTypes: [TrackType.video, TrackType.audio]
+      }
+    ]) {
+      for (const streamInput of [false, true]) {
+        it(`${filename}, ${streamInput ? 'stream' : 'buffer'}`, async () => {
+          const data = await nestedStreams(filename);
+          const values: { hasAudio: boolean[]; hasVideo: boolean[] } = { hasAudio: [], hasVideo: [] };
+          const options: mm.IOptions = {
+            observer({ tag }) {
+              if (tag.type === 'format' && (tag.id === 'hasAudio' || tag.id === 'hasVideo')) {
+                values[tag.id].push(tag.value as boolean);
+              }
+            }
+          };
+          const { format } = streamInput
+            ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType, options)
+            : await mm.parseBuffer(data, asfMimeType, options);
+          assert.deepEqual(
+            format.trackInfo.map(track => track.type),
+            trackTypes,
+            'Codec List stream types'
+          );
+          assert.strictEqual(format.hasAudio, hasAudio);
+          assert.strictEqual(format.hasVideo, hasVideo);
+          assert.deepEqual(values.hasAudio, [hasAudio], 'no false-negative audio notification');
+          assert.deepEqual(values.hasVideo, [hasVideo], 'no false-negative video notification');
+        });
+      }
+    }
   });
 
   describe('security hardening', () => {

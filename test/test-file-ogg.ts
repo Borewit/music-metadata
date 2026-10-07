@@ -115,6 +115,40 @@ describe('Parse Ogg', () => {
     });
   });
 
+  describe('Ogg Skeleton', () => {
+    for (const { filename, codec, hasAudio, hasVideo } of [
+      { filename: 'ogg-vorbis-skeleton-v3.ogg', codec: 'Vorbis I', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-vorbis-skeleton-v4.ogg', codec: 'Vorbis I', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-opus-skeleton-v3.ogg', codec: 'Opus', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-speex-skeleton-v3.ogg', codec: 'Speex 1.2.0', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-flac-skeleton-v3.ogg', codec: 'FLAC', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-theora-skeleton-v3.ogg', codec: 'Theora', hasAudio: false, hasVideo: true }
+    ]) {
+      describe(filename, () => {
+        for (const parser of Parsers) {
+          it(parser.description, async function () {
+            // A .ogg path selects the parser for files. Streams use an explicit MIME hint,
+            // so this regression remains independent of application/ogg parser selection.
+            const { format, quality } = await parser.parse(
+              () => this.skip(),
+              path.join(oggSamplePath, filename),
+              'audio/ogg'
+            );
+            assert.strictEqual(format.container, 'Ogg');
+            assert.strictEqual(format.codec, codec);
+            assert.strictEqual(format.hasAudio, hasAudio, 'format.hasAudio');
+            assert.strictEqual(format.hasVideo, hasVideo, 'format.hasVideo');
+            if (hasAudio) {
+              assert.strictEqual(format.sampleRate, 8000);
+              assert.strictEqual(format.numberOfChannels, 1);
+            }
+            assert.isEmpty(quality.warnings);
+          });
+        }
+      });
+    }
+  });
+
   describe('Parsing Ogg/Vorbis', () => {
     describe('decode: nirvana-2sec.vorbis.ogg', () => {
       const filePath = path.join(oggSamplePath, 'nirvana-2sec.vorbis.ogg');

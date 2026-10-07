@@ -35,6 +35,8 @@ export class AsfParser extends BasicParser {
       header.numberOfHeaderObjects,
       header.objectSize - AsfObject.TopLevelHeaderObjectToken.len
     );
+    // Let ParserFactory infer unset presence flags from the Codec List.
+    // Stream Properties may be nested in an ignored Extended Stream Properties Object.
   }
 
   private async parseObjectHeaders(numberOfObjectHeaders: number, remainingHeaderSize: number): Promise<void> {
@@ -65,6 +67,11 @@ export class AsfParser extends BasicParser {
             new AsfObject.StreamPropertiesObject(header)
           );
           this.metadata.setFormat('container', `ASF/${spo.streamType}`);
+          if (spo.streamType === 'audio') {
+            this.metadata.setFormat('hasAudio', true);
+          } else if (spo.streamType === 'video') {
+            this.metadata.setFormat('hasVideo', true);
+          }
           break;
         }
 

@@ -26,6 +26,7 @@ class OggStream {
   public closed = false;
   private options: IOptions;
   public pageConsumer?: IPageConsumer;
+  private isSkeleton = false;
 
   constructor(metadata: INativeMetadataCollector, streamSerial: number, options: IOptions) {
     this.metadata = metadata;
@@ -67,7 +68,9 @@ class OggStream {
           debug('Set page consumer to Ogg/Speex');
           this.pageConsumer = new SpeexStream(this.metadata, this.options, tokenizer);
           break;
-        case 'fishead':
+        case 'fishead': // Ogg Skeleton describes other streams; it is not a media codec.
+          this.isSkeleton = true;
+          break;
         case 'theora': // Ogg/Theora
           debug('Set page consumer to Ogg/Theora');
           this.pageConsumer = new TheoraStream(this.metadata, this.options, tokenizer);
@@ -83,6 +86,10 @@ class OggStream {
 
     if (header.headerType.lastPage) {
       this.closed = true;
+    }
+
+    if (this.isSkeleton) {
+      return;
     }
 
     if (this.pageConsumer) {
