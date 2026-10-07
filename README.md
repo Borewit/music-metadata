@@ -606,7 +606,8 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
 
 - `includeChapters`: `boolean` (default: `false`)
-  When `true`, the MP4 parser reads chapters from the `mdat` atoms.
+  When `true`, the MP4 parser reads QuickTime chapter tracks and Nero `chpl` chapter lists.
+  A usable QuickTime chapter track takes precedence over a Nero list.
   Files, buffers, and Blobs support chapters whether `moov` appears before or after `mdat`.
   For forward-only streams, `moov` must appear before the chapter data.
 

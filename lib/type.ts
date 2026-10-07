@@ -708,7 +708,7 @@ export interface IOptions {
   skipPostHeaders?: boolean;
 
   /**
-   * default: `false`, if set to `true`, it will include MP4 chapters.
+   * default: `false`, if set to `true`, it will include QuickTime and Nero MP4 chapters.
    * Forward-only streams require the moov box to precede the chapter data.
    */
   includeChapters?: boolean;

@@ -1,0 +1,18 @@
+;FFMETADATA1
+title=Baby's Songbook - chapter parsing excerpt
+artist=Walter Crane
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=3000
+title=Opening Credits
+[CHAPTER]
+TIMEBASE=1/1000
+START=3000
+END=7000
+title=Chapter 1
+[CHAPTER]
+TIMEBASE=1/1000
+START=7000
+END=10000
+title=Chapter 2
