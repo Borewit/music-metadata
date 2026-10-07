@@ -1077,10 +1077,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chai@npm:^6.2.2":
-  version: 6.2.2
-  resolution: "chai@npm:6.2.2"
-  checksum: 10c0/e6c69e5f0c11dffe6ea13d0290936ebb68fcc1ad688b8e952e131df6a6d5797d5e860bc55cef1aca2e950c3e1f96daf79e9d5a70fb7dbaab4e46355e2635ed53
+"chai@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "chai@npm:6.3.0"
+  checksum: 10c0/fd1bf7fc41295ba1eba18a44d68e204b3cb11b79c9ad51fd071de3ee85323c20d94afc07a386f1f5ff44a5da4a116614d419fc44a2d459e4b5b574aef9af4431
   languageName: node
   linkType: hard
 
@@ -2580,7 +2580,7 @@ __metadata:
     "@types/mocha": "npm:^10.0.10"
     "@types/node": "npm:^26.6.3"
     c8: "npm:^12.0.0"
-    chai: "npm:^6.2.2"
+    chai: "npm:^6.3.0"
     chai-as-promised: "npm:^8.0.2"
     content-type: "npm:^3.1.1"
     debug: "npm:^4.4.3"
