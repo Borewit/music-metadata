@@ -340,6 +340,32 @@ describe('Parse MP3 files', () => {
   });
 
   describe('Handle Xing header', () => {
+    describe('CRC-protected first frame', () => {
+      // Encoded with libmp3lame 3.100: 0.1 seconds of 440 Hz stereo audio at 44.1 kHz.
+      // Xing/Info remains at byte 36, including when the first frame has a two-byte CRC.
+      for (const [tag, profile] of [
+        ['info', 'CBR'],
+        ['xing', 'V4']
+      ]) {
+        describe(`${tag} header`, () => {
+          Parsers.forEach(parser => {
+            it(parser.description, async function () {
+              const filePath = path.join(mp3SamplePath, `crc-${tag}.mp3`);
+              const { format, quality } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
+
+              assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
+              assert.strictEqual(format.codecProfile, profile);
+              assert.strictEqual(format.sampleRate, 44100);
+              assert.strictEqual(format.numberOfChannels, 2);
+              assert.strictEqual(format.tool, 'LAME 3.100');
+              assert.strictEqual(format.duration, (5 * 1152) / 44100);
+              assert.isEmpty(quality.warnings);
+            });
+          });
+        });
+      }
+    });
+
     it('Handle Xing header, without LAME extension', async () => {
       const filePath = path.join(mp3SamplePath, 'Solace.mp3');
       const { format } = await mm.parseFile(filePath, { duration: true });

@@ -4,12 +4,21 @@ import { assert } from 'chai';
 import type { IPopularimeter } from '../lib/id3v2/FrameParser.js';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 import * as mm from '../lib/index.js';
+import { MpegContentError, MpegFrameHeader } from '../lib/mpeg/MpegFrameHeader.js';
 import { Parsers } from './metadata-parsers.js';
 import { SourceStream, samplePath } from './util.js';
 
 const t = assert;
 
 describe('Parse MPEG', () => {
+  it('should reject a reserved MPEG version with a content error', () => {
+    assert.throws(
+      () => new MpegFrameHeader(Uint8Array.of(0xff, 0xeb, 0x90, 0x00)),
+      MpegContentError,
+      'Cannot determine bit-rate'
+    );
+  });
+
   it('should parse MPEG-1 Audio Layer II ', async () => {
     /**
      * No errors found in file.
