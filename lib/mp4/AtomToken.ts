@@ -475,6 +475,8 @@ export interface ITrackHeaderAtom extends IVersionAndFlags {
    * A value of zero indicates that the track is not in an alternate track group.
    */
   alternateGroup: number;
+  displayWidth?: number;
+  displayHeight?: number;
 
   /**
    * A 16-bit fixed-point value that indicates how loudly this track’s sound is to be played.
@@ -520,8 +522,13 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
           // reserved 8 bytes
           layer: Token.UINT16_BE.get(buf, off + 32),
           alternateGroup: Token.UINT16_BE.get(buf, off + 34),
-          volume: Token.UINT16_BE.get(buf, off + 36) // ToDo: fixed point
-          // ToDo: add remaining fields
+          volume: Token.UINT16_BE.get(buf, off + 36), // ToDo: fixed point
+          ...(available >= 84
+            ? {
+                displayWidth: Token.UINT32_BE.get(buf, off + 76) / 65536,
+                displayHeight: Token.UINT32_BE.get(buf, off + 80) / 65536
+              }
+            : {})
         };
 
       case 1:
@@ -537,8 +544,13 @@ export class TrackHeaderAtom implements IGetToken<ITrackHeaderAtom> {
           // reserved 8 bytes
           layer: Token.UINT16_BE.get(buf, off + 44),
           alternateGroup: Token.UINT16_BE.get(buf, off + 46),
-          volume: Token.UINT16_BE.get(buf, off + 48) // ToDo: fixed point
-          // ToDo: add remaining fields
+          volume: Token.UINT16_BE.get(buf, off + 48), // ToDo: fixed point
+          ...(available >= 96
+            ? {
+                displayWidth: Token.UINT32_BE.get(buf, off + 88) / 65536,
+                displayHeight: Token.UINT32_BE.get(buf, off + 92) / 65536
+              }
+            : {})
         };
 
       default:
@@ -1084,11 +1096,19 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
       dynOffset += 4;
     }
 
+    const sampleFields =
+      Number(trun.flags.sampleDurationPresent) +
+      Number(trun.flags.sampleSizePresent) +
+      Number(trun.flags.sampleFlagsPresent) +
+      Number(trun.flags.sampleCompositionTimeOffsetsPresent);
+    if (dynOffset + sampleFields * 4 * trun.sampleCount > off + this.len) {
+      throw new Mp4ContentError('Invalid trun sample count');
+    }
+    // Default-only runs need no per-sample allocation, even for a large sample_count.
+    if (sampleFields === 0) {
+      return trun;
+    }
     for (let n = 0; n < trun.sampleCount; ++n) {
-      if (dynOffset >= this.len) {
-        debug('TrackRunBox size mismatch');
-        break;
-      }
       const sample: ITrackRunBoxSample = {};
       if (trun.flags.sampleDurationPresent) {
         sample.sampleDuration = Token.UINT32_BE.get(buf, dynOffset);

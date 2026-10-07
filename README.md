@@ -655,8 +655,10 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 - `format.codec?` Name of the codec (algorithm used for the audio compression)
 - `format.codecProfile?: string` Codec profile / settings
 - `format.tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
-- `format.duration?: number` Duration in seconds
-- `format.bitrate?: number` Number bits per second of encoded audio file
+- `format.duration?: number` Duration in seconds (existing audio/container summary; complete presentation duration for video-only files)
+- `format.bitrate?: number` Existing audio/container summary bitrate in bits per second
+- `format.containerDuration?: number` Complete media presentation duration in seconds, including video
+- `format.overallBitrate?: number` Average bitrate of the entire file in bits per second, including container overhead; requires a known file size and presentation duration
 - `format.sampleRate?: number` Sampling rate in Samples per second (S/s)
 - `format.bitsPerSample?: number` Audio bit depth
 - `format.lossless?: boolean` True if lossless,  false for lossy encoding
@@ -675,9 +677,14 @@ metadata. Import `TrackType` from `music-metadata` to select tracks without know
 ```js
 import { parseFile, TrackType } from 'music-metadata';
 
-const { format } = await parseFile('movie.mp4');
+const { format } = await parseFile('movie.mp4', { duration: true });
 const audioTracks = format.trackInfo.filter(track => track.type === TrackType.audio);
 const videoTracks = format.trackInfo.filter(track => track.type === TrackType.video);
+for (const track of videoTracks) {
+  console.log(track.duration, track.bitrate, track.video?.pixelWidth, track.video?.pixelHeight);
+  console.log(track.video?.frameRate);
+}
+console.log(format.containerDuration, format.overallBitrate);
 ```
 
 Each entry describes one discovered track. The order follows container discovery and does not identify
@@ -687,12 +694,27 @@ logical media streams; Skeleton headers do not create media tracks. Single-strea
 their format properties to one audio track after parsing.
 
 Properties are optional when unavailable and are not copied between tracks. In particular, a container
-or summary bitrate is not a per-track bitrate. MPEG-4 track timing comes from media headers (or parsed
-audio fragments), and track bitrates from sample sizes and duration. ASF supplies audio/video stream
-properties and stream bitrates from both standalone and nested Stream Properties Objects. Codec List
-entries supply names for matching streams; unused codecs do not create tracks. Matroska applies
-specified defaults for flags, language, channels, and sample rate, and prefers IETF language tags when present. Video duration/bitrate coverage and overall
-video statistics remain incomplete. The existing `format` fields retain their summary semantics.
+or summary bitrate is not a per-track bitrate. The existing `format.duration` and `format.bitrate`
+fields retain their summary semantics. Use `containerDuration` for the complete presentation and
+`overallBitrate` for the actual file size multiplied by eight and divided by that duration. These
+statistics remain unset when timing is unavailable; `overallBitrate` also requires a known input size.
+
+MPEG-4 derives audio and video timing from media headers, sample tables, and fragments, including
+fragment defaults and decode timestamps. Track bitrates use sample sizes and duration; video properties
+include encoded dimensions, display dimensions, and average frame rate. ASF supplies stream dimensions,
+stream bitrates, and extended stream timing and frame rate when present. Standalone and nested Stream
+Properties Objects describe actual streams; Codec List entries supply names without creating unused tracks.
+
+Matroska applies specified defaults for flags, language, channels, and sample rate, and prefers IETF
+language tags when present. Track statistics tags provide duration, bitrate, and frame count; without
+these tags, per-track timing may be unavailable even when segment duration is known. Media clusters
+are not scanned to calculate missing track statistics.
+
+Ogg/Theora duration comes from granule positions. Set `duration: true` to allow scanning beyond the
+initial metadata pages. Once a video stream has been fully read, its average bitrate uses that logical
+stream's payload bytes, including codec headers and excluding Ogg framing and other streams. Resolution
+and frame rate are available from the identification header. Audio streams retain their own codec
+bitrate semantics.
 
 For Ogg/Opus, the per-track average bitrate uses the logical stream's payload bytes, including codec
 headers and excluding Ogg framing and other streams. It requires the logical stream's end-of-stream

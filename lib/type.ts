@@ -413,6 +413,8 @@ export type FormatId =
   | 'container'
   | 'duration'
   | 'bitrate'
+  | 'containerDuration'
+  | 'overallBitrate'
   | 'sampleRate'
   | 'bitsPerSample'
   | 'codec'
@@ -499,6 +501,12 @@ export interface IFormat {
    * Duration in seconds
    */
   readonly duration?: number;
+
+  /** Duration of the complete media presentation in seconds, including video. */
+  readonly containerDuration?: number;
+
+  /** Average bitrate of the entire file in bits per second, including container overhead. */
+  readonly overallBitrate?: number;
 
   /**
    * Number bits per second of encoded audio file

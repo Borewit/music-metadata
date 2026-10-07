@@ -7,7 +7,7 @@ import { aiffParserLoader } from './aiff/AiffLoader.js';
 import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
-import { createAudioTrackInfo } from './common/TrackInfo.js';
+import { createAudioTrackInfo, finalizeContainerInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
 import { dsdiffParserLoader } from './dsdiff/DsdiffLoader.js';
 import { dsfParserLoader } from './dsf/DsfLoader.js';
@@ -147,6 +147,7 @@ export class ParserFactory {
         metadata.setFormat('hasVideo', !!metadata.format.trackInfo.find(track => track.type === TrackType.video));
       }
     }
+    finalizeContainerInfo(metadata, tokenizer.fileInfo.size);
     return metadata.toCommonMetadata();
   }
 

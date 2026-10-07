@@ -319,6 +319,16 @@ describe('Asynchronous observer updates', () => {
         id: 'hasVideo',
         type: 'format',
         value: false
+      },
+      {
+        id: 'containerDuration',
+        type: 'format',
+        value: 271.7733333333333
+      },
+      {
+        id: 'overallBitrate',
+        type: 'format',
+        value: 8844.458617475348
       }
     ]);
   });
