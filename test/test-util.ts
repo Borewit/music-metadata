@@ -35,6 +35,36 @@ describe('shared utility functionality', () => {
     });
   });
 
+  describe('getBitAllignedNumber', () => {
+    it('reads every field contained in one byte', () => {
+      const buf = new Uint8Array(2);
+      for (let value = 0; value < 256; ++value) {
+        buf[1] = value;
+        const bits = value.toString(2).padStart(8, '0');
+        for (let offset = 0; offset < 8; ++offset) {
+          for (let length = 1; length <= 8 - offset; ++length) {
+            const expected = Number.parseInt(bits.slice(offset, offset + length), 2);
+            t.strictEqual(util.getBitAllignedNumber(buf, 1, offset, length), expected);
+          }
+        }
+      }
+    });
+
+    it('reads fields across bytes and normalizes bit offsets beyond the first byte', () => {
+      const buf = Uint8Array.from([0xff, 0xca, 0x75, 0x39, 0xe0, 0xab, 0xcd, 0x12, 0x34]);
+      const bits = Array.from(buf, value => value.toString(2).padStart(8, '0')).join('');
+      for (const byteOffset of [0, 1]) {
+        for (const bitOffset of [0, 3, 7, 8, 15, 28]) {
+          for (const length of [1, 7, 8, 9, 11, 16, 20, 24, 32]) {
+            const start = byteOffset * 8 + bitOffset;
+            const expected = Number.parseInt(bits.slice(start, start + length), 2) | 0;
+            t.strictEqual(util.getBitAllignedNumber(buf, byteOffset, bitOffset, length), expected);
+          }
+        }
+      }
+    });
+  });
+
   describe('stripNulls', () => {
     it('should strip nulls', () => {
       const tests = [
