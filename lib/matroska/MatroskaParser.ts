@@ -95,28 +95,43 @@ export class MatroskaParser extends BasicParser {
               if (audioTracks?.entries) {
                 audioTracks.entries.forEach(entry => {
                   const stream: ITrackInfo = {
-                    codecName: entry.codecID.replace('A_', '').replace('V_', ''),
+                    id: entry.trackNumber,
+                    codecId: entry.codecID,
+                    codecName: entry.codecName ?? entry.codecID.replace(/^[AV]_/, ''),
                     codecSettings: entry.codecSettings,
-                    flagDefault: entry.flagDefault,
-                    flagLacing: entry.flagLacing,
-                    flagEnabled: entry.flagEnabled,
-                    language: entry.language,
+                    flagDefault: entry.flagDefault ?? true,
+                    flagLacing: entry.flagLacing ?? true,
+                    flagEnabled: entry.flagEnabled ?? true,
+                    flagForced: entry.flagForced ?? false,
+                    language: entry.languageIETF ?? entry.language ?? 'eng',
                     name: entry.name,
                     type: entry.trackType,
-                    audio: entry.audio,
-                    video: entry.video
+                    audio:
+                      entry.trackType === TrackType.audio
+                        ? {
+                            ...entry.audio,
+                            samplingFrequency: entry.audio?.samplingFrequency ?? 8000,
+                            channels: entry.audio?.channels ?? 1
+                          }
+                        : undefined,
+                    video: entry.trackType === TrackType.video ? entry.video : undefined
                   };
+                  if (stream.video && entry.defaultDuration && entry.defaultDuration > 0) {
+                    stream.video = { ...stream.video, frameRate: 1e9 / entry.defaultDuration };
+                  }
                   this.metadata.addStreamInfo(stream);
                 });
 
                 const audioTrack = audioTracks.entries
-                  .filter(entry => entry.trackType === TrackType.audio)
+                  .filter(entry => entry.trackType === TrackType.audio && entry.flagEnabled !== false)
                   .reduce((acc: ITrackEntry | null, cur: ITrackEntry): ITrackEntry => {
                     if (!acc) {
                       return cur;
                     }
-                    if (cur.flagDefault && !acc.flagDefault) {
-                      return cur;
+                    const currentDefault = cur.flagDefault ?? true;
+                    const previousDefault = acc.flagDefault ?? true;
+                    if (currentDefault !== previousDefault) {
+                      return currentDefault ? cur : acc;
                     }
                     if (cur.trackNumber < acc.trackNumber) {
                       return cur;
@@ -125,9 +140,16 @@ export class MatroskaParser extends BasicParser {
                   }, null);
 
                 if (audioTrack) {
-                  this.metadata.setFormat('codec', audioTrack.codecID.replace('A_', ''));
-                  this.metadata.setFormat('sampleRate', audioTrack.audio.samplingFrequency);
-                  this.metadata.setFormat('numberOfChannels', audioTrack.audio.channels);
+                  this.metadata.setFormat('codec', audioTrack.codecID.replace(/^A_/, ''));
+                  this.metadata.setFormat('hasAudio', true);
+                  this.metadata.setFormat(
+                    'sampleRate',
+                    audioTrack.audio?.outputSamplingFrequency ?? audioTrack.audio?.samplingFrequency ?? 8000
+                  );
+                  this.metadata.setFormat('numberOfChannels', audioTrack.audio?.channels ?? 1);
+                  if (audioTrack.audio?.bitDepth !== undefined) {
+                    this.metadata.setFormat('bitsPerSample', audioTrack.audio.bitDepth);
+                  }
                 }
               }
             }

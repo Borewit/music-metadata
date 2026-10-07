@@ -39,21 +39,19 @@ interface ISoundSampleDescription {
 interface ITrackDescription {
   header: AtomToken.ITrackHeaderAtom;
   soundSampleDescription: ISoundSampleDescription[];
+  sampleDescriptions?: AtomToken.ISampleDescription[];
   media: {
     header?: AtomToken.IAtomMdhd;
   };
-  chapterList: number[];
+  chapterList?: number[];
   chunkOffsetTable: number[];
   sampleSize: number;
+  sampleCount?: number;
   sampleSizeTable: number[];
   sampleToChunkTable: AtomToken.ISampleToChunk[];
   timeToSampleTable: AtomToken.ITimeToSampleToken[];
-  handler: AtomToken.IHandlerBox;
+  handler?: AtomToken.IHandlerBox;
   fragments: { trackRun: AtomToken.ITrackRunBox; header: AtomToken.ITrackFragmentHeaderBox }[];
-
-  isAudio(): boolean;
-
-  isVideo(): boolean;
 
   samples?: number;
   sampleRate?: number;
@@ -131,9 +129,8 @@ function distinct(value: AnyTagValue, index: number, self: AnyTagValue[]) {
  * Determine if a track carries audio.
  *
  * Ref: ISO/IEC 14496-12, 8.5.2: the sample entries in a sample description box are track-type specific,
- * selected by the handler type of the enclosing track. Only an audio track holds an AudioSampleEntry, so
- * only such a track may be described by a sound sample description; `isAudio()` treats both the 'soun'
- * and 'audi' handler types as audio.
+ * selected by the handler type of the enclosing track. Only an audio track holds an AudioSampleEntry.
+ * Both the 'soun' and 'audi' handler types are treated as audio.
  *
  * Falls back to the sample description when no handler box was found, preserving the previous behavior.
  */
@@ -142,8 +139,8 @@ function isAudioTrack(track: ITrackDescription): boolean {
   if (!ssd) {
     return false;
   }
-  if (track.isAudio) {
-    return track.isAudio();
+  if (track.handler) {
+    return track.handler.handlerType === 'soun' || track.handler.handlerType === 'audi';
   }
   return !!ssd.description && ssd.description.numAudioChannels > 0;
 }
@@ -234,30 +231,14 @@ export class MP4Parser extends BasicParser {
     const formatList: string[] = [];
     this.tracks.forEach(track => {
       const trackFormats: string[] = [];
-      const trackIsAudio = isAudioTrack(track);
 
-      track.soundSampleDescription.forEach(ssd => {
-        const streamInfo: ITrackInfo = {};
+      // Sample descriptions are alternative encodings of one track, not separate tracks.
+      for (const ssd of track.soundSampleDescription) {
         const encoderInfo = encoderDict[ssd.dataFormat];
         if (encoderInfo) {
           trackFormats.push(encoderInfo.format);
-          streamInfo.codecName = encoderInfo.format;
-        } else {
-          streamInfo.codecName = `<${ssd.dataFormat}>`;
         }
-        if (trackIsAudio && ssd.description) {
-          const { description } = ssd;
-          if (description.sampleRate > 0) {
-            streamInfo.type = TrackType.audio;
-            streamInfo.audio = {
-              samplingFrequency: description.sampleRate,
-              bitDepth: description.sampleSize,
-              channels: description.numAudioChannels
-            };
-          }
-        }
-        this.metadata.addStreamInfo(streamInfo);
-      });
+      }
 
       if (trackFormats.length >= 1) {
         formatList.push(trackFormats.join('/'));
@@ -274,7 +255,11 @@ export class MP4Parser extends BasicParser {
     for (const audioTrack of audioTracks) {
       if (audioTrack.media.header && audioTrack.media.header.timeScale > 0) {
         audioTrack.sampleRate = audioTrack.media.header.timeScale;
-        if (audioTrack.media.header.duration > 0) {
+        if (
+          audioTrack.media.header.duration > 0 &&
+          audioTrack.media.header.duration !== 0xffffffff &&
+          audioTrack.media.header.duration !== Number(0xffffffffffffffffn)
+        ) {
           debug('Using duration defined on audio track');
           audioTrack.samples = audioTrack.media.header.duration;
           audioTrack.duration = audioTrack.samples / audioTrack.sampleRate;
@@ -338,6 +323,10 @@ export class MP4Parser extends BasicParser {
           this.metadata.setFormat('bitrate', (8 * firstAudioTrack.sizeInBytes) / firstAudioTrack.duration);
         }
       }
+    }
+
+    for (const track of this.tracks.values()) {
+      this.metadata.addStreamInfo(this.getTrackInfo(track));
     }
 
     this.metadata.setFormat('hasAudio', this.hasAudioTrack || audioTracks.length > 0);
@@ -517,11 +506,111 @@ export class MP4Parser extends BasicParser {
     }
   }
 
+  private getTrackInfo(track: ITrackDescription): ITrackInfo {
+    const info: ITrackInfo = {
+      id: track.header.trackId,
+      flagEnabled: (track.header.flags & 1) !== 0
+    };
+    switch (track.handler?.handlerType) {
+      case 'soun':
+      case 'audi':
+        info.type = TrackType.audio;
+        break;
+      case 'vide':
+        info.type = TrackType.video;
+        break;
+      case 'text':
+      case 'sbtl':
+      case 'subt':
+      case 'clcp':
+        info.type = TrackType.subtitle;
+        break;
+      case 'meta':
+      case 'mdta':
+        info.type = TrackType.metadata;
+        break;
+      default:
+        if (isAudioTrack(track)) {
+          info.type = TrackType.audio;
+        }
+    }
+
+    const mediaHeader = track.media.header;
+    if (mediaHeader) {
+      if (
+        mediaHeader.timeScale > 0 &&
+        mediaHeader.duration > 0 &&
+        mediaHeader.duration !== 0xffffffff &&
+        mediaHeader.duration !== Number(0xffffffffffffffffn)
+      ) {
+        info.duration = mediaHeader.duration / mediaHeader.timeScale;
+      }
+      // ISO BMFF stores three lowercase letters in three 5-bit fields.
+      const letters = [10, 5, 0].map(shift => (mediaHeader.language >> shift) & 0x1f);
+      if (letters.every(letter => letter >= 1 && letter <= 26)) {
+        info.language = String.fromCharCode(...letters.map(letter => letter + 0x60));
+      }
+    }
+    if (track.duration !== undefined) {
+      info.duration = track.duration;
+    }
+    const size =
+      track.sizeInBytes ??
+      (track.sampleSize > 0 && track.sampleCount !== undefined
+        ? track.sampleSize * track.sampleCount
+        : track.sampleSizeTable.length > 0
+          ? track.sampleSizeTable.reduce((sum, value) => sum + value, 0)
+          : undefined);
+    if (size !== undefined && info.duration && info.duration > 0) {
+      info.bitrate = (8 * size) / info.duration;
+    }
+
+    const ssd = track.soundSampleDescription[0];
+    if (ssd) {
+      info.codecId = ssd.dataFormat;
+      const encoder = encoderDict[ssd.dataFormat];
+      info.codecName = encoder?.format ?? `<${ssd.dataFormat}>`;
+      if (info.type === TrackType.audio) {
+        if (encoder) {
+          info.lossless = !encoder.lossy;
+        }
+        if (ssd.description) {
+          info.audio = {};
+          if (ssd.description.sampleRate > 0) {
+            info.audio.samplingFrequency = ssd.description.sampleRate;
+          }
+          if (ssd.description.numAudioChannels > 0) {
+            info.audio.channels = ssd.description.numAudioChannels;
+          }
+          if (ssd.description.sampleSize && ssd.description.sampleSize > 0) {
+            info.audio.bitDepth = ssd.description.sampleSize;
+          }
+        }
+      }
+    }
+    // A VisualSampleEntry has width and height 16 bytes after the SampleEntry base.
+    const description = track.sampleDescriptions?.[0]?.description;
+    if (info.type === TrackType.video && description && description.length >= 20) {
+      const pixelWidth = Token.UINT16_BE.get(description, 16);
+      const pixelHeight = Token.UINT16_BE.get(description, 18);
+      if (pixelWidth > 0 && pixelHeight > 0) {
+        info.video = { pixelWidth, pixelHeight };
+      }
+    }
+    return info;
+  }
+
   private async parseTrackBox(trakBox: Atom): Promise<void> {
-    // @ts-expect-error
-    const track: ITrackDescription = {
+    // The handler and header can occur in any order; resolve them after parsing the track.
+    const track: Omit<ITrackDescription, 'header'> & { header?: AtomToken.ITrackHeaderAtom } = {
       media: {},
-      fragments: []
+      fragments: [],
+      soundSampleDescription: [],
+      chunkOffsetTable: [],
+      sampleSize: 0,
+      sampleSizeTable: [],
+      sampleToChunkTable: [],
+      timeToSampleTable: []
     };
 
     await trakBox.readAtoms(
@@ -542,12 +631,9 @@ export class MP4Parser extends BasicParser {
           case 'hdlr': // TrackHeaderBox
             track.handler = await this.readToken(new AtomToken.HandlerBox(payLoadLength));
 
-            track.isAudio = () => track.handler.handlerType === 'audi' || track.handler.handlerType === 'soun';
-            track.isVideo = () => track.handler.handlerType === 'vide';
-
-            if (track.isAudio()) {
+            if (track.handler.handlerType === 'audi' || track.handler.handlerType === 'soun') {
               this.hasAudioTrack = true;
-            } else if (track.isVideo()) {
+            } else if (track.handler.handlerType === 'vide') {
               this.hasVideoTrack = true;
             }
             break;
@@ -575,6 +661,7 @@ export class MP4Parser extends BasicParser {
           case 'stsd': {
             // sample description box
             const stsd = await this.readToken(new AtomToken.StsdAtom(payLoadLength));
+            track.sampleDescriptions = stsd.table;
             track.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
             break;
           }
@@ -589,6 +676,7 @@ export class MP4Parser extends BasicParser {
           case 'stsz': {
             const stsz = await this.readToken(new AtomToken.StszAtom(payLoadLength));
             track.sampleSize = stsz.sampleSize;
+            track.sampleCount = stsz.numberOfEntries;
             track.sampleSizeTable = stsz.entries;
             break;
           }
@@ -609,7 +697,9 @@ export class MP4Parser extends BasicParser {
       trakBox.getPayloadLength()
     );
     // Register track
-    this.tracks.set(track.header.trackId, track);
+    if (track.header) {
+      this.tracks.set(track.header.trackId, { ...track, header: track.header });
+    }
   }
 
   private parseTrackFragmentBox(trafBox: Atom): Promise<void> {
@@ -682,7 +772,7 @@ export class MP4Parser extends BasicParser {
       if (this.options.includeChapters) {
         const trackWithChapters = [...this.tracks.values()].filter(track => track.chapterList);
         if (trackWithChapters.length === 1) {
-          const chapterTrackIds = trackWithChapters[0].chapterList;
+          const chapterTrackIds = trackWithChapters[0].chapterList ?? [];
           const chapterTracks = [...this.tracks.values()].filter(
             track => chapterTrackIds.indexOf(track.header.trackId) !== -1
           );
@@ -728,6 +818,7 @@ export class MP4Parser extends BasicParser {
       const stsz = await this.readToken<AtomToken.IStszAtom>(new AtomToken.StszAtom(len));
       const td = this.getTrackDescription();
       td.sampleSize = stsz.sampleSize;
+      td.sampleCount = stsz.numberOfEntries;
       td.sampleSizeTable = stsz.entries;
     },
 

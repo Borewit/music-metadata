@@ -142,9 +142,9 @@ export const IdentificationHeader: IGetToken<IFormatInfo> = {
       version: Token.UINT32_LE.get(uint8Array, off + 0),
       channelMode: Token.UINT8.get(uint8Array, off + 4),
       sampleRate: Token.UINT32_LE.get(uint8Array, off + 5),
-      bitrateMax: Token.UINT32_LE.get(uint8Array, off + 9),
-      bitrateNominal: Token.UINT32_LE.get(uint8Array, off + 13),
-      bitrateMin: Token.UINT32_LE.get(uint8Array, off + 17)
+      bitrateMax: Token.INT32_LE.get(uint8Array, off + 9),
+      bitrateNominal: Token.INT32_LE.get(uint8Array, off + 13),
+      bitrateMin: Token.INT32_LE.get(uint8Array, off + 17)
     };
   }
 };

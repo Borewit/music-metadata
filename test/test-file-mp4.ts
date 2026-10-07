@@ -879,16 +879,24 @@ describe('Sample Description (stsd) atom', () => {
     return box('tkhd', payload);
   }
 
-  function mediaHeaderBox(): Uint8Array {
+  function mediaHeaderBox(spec: ITrackSpec): Uint8Array {
     const payload = new Uint8Array(24);
     const view = new DataView(payload.buffer);
-    view.setUint32(12, timeScale);
-    view.setUint32(16, timeScale); // duration: one second
+    view.setUint32(12, spec.timeScale ?? timeScale);
+    view.setUint32(16, spec.duration ?? timeScale); // duration: one second by default
+    view.setUint16(20, spec.language ?? 0);
     return box('mdhd', payload);
   }
 
-  function sampleSizeBox(): Uint8Array {
-    return box('stsz', new Uint8Array(12)); // sample_size and sample_count both zero
+  function sampleSizeBox(spec: ITrackSpec): Uint8Array {
+    const payload = new Uint8Array(12 + (spec.sampleSizes?.length ?? 0) * 4);
+    const view = new DataView(payload.buffer);
+    view.setUint32(4, spec.fixedSampleSize ?? 0);
+    view.setUint32(8, spec.sampleCount ?? spec.sampleSizes?.length ?? 0);
+    spec.sampleSizes?.forEach((size, index) => {
+      view.setUint32(12 + index * 4, size);
+    });
+    return box('stsz', payload);
   }
 
   /**
@@ -898,9 +906,9 @@ describe('Sample Description (stsd) atom', () => {
    * data reference index. An AudioSampleEntry adds 20 bytes on top, whereas other sample entry classes,
    * such as a MetaDataSampleEntry, may be no larger than the 16-byte base.
    */
-  function sampleDescriptionBox(dataFormat: string, entrySize: number, audioLike = false): Uint8Array {
+  function sampleDescriptionBox(dataFormat: string, entrySize: number, audioLike = false, entries = 1): Uint8Array {
     const header = new Uint8Array(8);
-    new DataView(header.buffer).setUint32(4, 1); // entry_count
+    new DataView(header.buffer).setUint32(4, entries); // entry_count
 
     const entry = new Uint8Array(entrySize);
     const view = new DataView(entry.buffer);
@@ -914,7 +922,7 @@ describe('Sample Description (stsd) atom', () => {
       view.setUint16(26, 16); // sample size
       view.setUint16(32, timeScale); // sample rate
     }
-    return box('stsd', header, entry);
+    return box('stsd', header, ...Array.from({ length: entries }, () => entry));
   }
 
   interface ITrackSpec {
@@ -923,18 +931,29 @@ describe('Sample Description (stsd) atom', () => {
     entrySize: number;
     audioLike?: boolean;
     handlerAfterMinf?: boolean;
+    descriptionCount?: number;
+    noDescription?: boolean;
+    language?: number;
+    timeScale?: number;
+    duration?: number;
+    fixedSampleSize?: number;
+    sampleCount?: number;
+    sampleSizes?: number[];
   }
 
   const videoTrack: ITrackSpec = { handler: 'vide', dataFormat: 'avc1', entrySize: 36 };
 
   function trackBox(trackId: number, spec: ITrackSpec): Uint8Array {
     const hdlr = handlerBox(spec.handler);
-    const stbl = box('stbl', sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike), sampleSizeBox());
+    const descriptions = spec.noDescription
+      ? new Uint8Array()
+      : sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike, spec.descriptionCount);
+    const stbl = box('stbl', descriptions, sampleSizeBox(spec));
     const minf = box('minf', stbl);
     // Readers are required to accept any box order
     const mdia = spec.handlerAfterMinf
-      ? box('mdia', mediaHeaderBox(), minf, hdlr)
-      : box('mdia', hdlr, mediaHeaderBox(), minf);
+      ? box('mdia', mediaHeaderBox(spec), minf, hdlr)
+      : box('mdia', hdlr, mediaHeaderBox(spec), minf);
     return box('trak', trackHeaderBox(trackId), mdia);
   }
 
@@ -1007,6 +1026,85 @@ describe('Sample Description (stsd) atom', () => {
       });
     }
   });
+
+  it('reports one track for multiple sample descriptions', async () => {
+    const { format } = await mm.parseBuffer(
+      mp4({
+        handler: 'soun',
+        dataFormat: 'mp4a',
+        entrySize: 36,
+        audioLike: true,
+        descriptionCount: 2
+      }),
+      { mimeType: 'audio/mp4' }
+    );
+    assert.lengthOf(format.trackInfo, 1);
+    assert.include(format.trackInfo[0], { id: 1, type: mm.TrackType.audio, codecId: 'mp4a' });
+  });
+
+  it('reports tracks without sample descriptions', async () => {
+    const { format } = await mm.parseBuffer(mp4({ ...videoTrack, noDescription: true }), { mimeType: 'video/mp4' });
+    assert.lengthOf(format.trackInfo, 1);
+    assert.include(format.trackInfo[0], { id: 1, type: mm.TrackType.video, duration: 1 });
+    assert.isUndefined(format.trackInfo[0].codecName);
+    assert.isFalse(format.hasAudio);
+    assert.isTrue(format.hasVideo);
+  });
+
+  for (const [handler, type] of [
+    ['vide', mm.TrackType.video],
+    ['soun', mm.TrackType.audio],
+    ['audi', mm.TrackType.audio],
+    ['text', mm.TrackType.subtitle],
+    ['sbtl', mm.TrackType.subtitle],
+    ['subt', mm.TrackType.subtitle],
+    ['clcp', mm.TrackType.subtitle],
+    ['meta', mm.TrackType.metadata],
+    ['mdta', mm.TrackType.metadata]
+  ] as const) {
+    it(`classifies ${handler} tracks independently of sample rate`, async () => {
+      const { format } = await mm.parseBuffer(mp4({ handler, dataFormat: 'test', entrySize: 16 }), {
+        mimeType: 'video/mp4'
+      });
+      assert.strictEqual(format.trackInfo[0].type, type);
+      assert.isUndefined(format.trackInfo[0].audio);
+    });
+  }
+
+  it('keeps an unknown handler unclassified', async () => {
+    const { format } = await mm.parseBuffer(
+      mp4({ handler: 'zzzz', dataFormat: 'test', entrySize: 36, audioLike: true }),
+      { mimeType: 'video/mp4' }
+    );
+    assert.isUndefined(format.trackInfo[0].type);
+    assert.isUndefined(format.trackInfo[0].audio);
+    assert.isFalse(format.hasAudio);
+  });
+
+  it('decodes packed ISO language codes', async () => {
+    const language = (5 << 10) | (14 << 5) | 7; // eng
+    const { format } = await mm.parseBuffer(mp4({ ...videoTrack, language }), { mimeType: 'video/mp4' });
+    assert.strictEqual(format.trackInfo[0].language, 'eng');
+  });
+
+  for (const spec of [
+    { ...videoTrack, timeScale: 0 },
+    { ...videoTrack, duration: 0xffffffff }
+  ]) {
+    it(`omits unknown duration (scale=${spec.timeScale ?? timeScale}, duration=${spec.duration ?? timeScale})`, async () => {
+      const { format } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' });
+      assert.isUndefined(format.trackInfo[0].duration);
+      assert.isUndefined(format.trackInfo[0].bitrate);
+    });
+  }
+
+  for (const sizes of [{ fixedSampleSize: 100, sampleCount: 3 }, { sampleSizes: [50, 150, 100] }]) {
+    it(`calculates a track bitrate from ${sizes.sampleSizes ? 'variable' : 'fixed'} sample sizes`, async () => {
+      const { format } = await mm.parseBuffer(mp4({ ...videoTrack, ...sizes }), { mimeType: 'video/mp4' });
+      assert.strictEqual(format.trackInfo[0].duration, 1);
+      assert.strictEqual(format.trackInfo[0].bitrate, 2400);
+    });
+  }
 
   // A metadata sample entry is not an AudioSampleEntry, and may be shorter than one
   for (const entrySize of [16, 18, 24, 34, 36]) {
