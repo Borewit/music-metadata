@@ -133,10 +133,44 @@ describe('ASF track properties', () => {
     header.set(name, 68);
     view.setUint32(68 + name.length + 18, 3, true);
     const extended = object(AsfGuid.ExtendedStreamPropertiesObject, Buffer.concat([header, stream]));
-    return headerExtension(extended);
+    return extension(extended);
   }
 
-  function headerExtension(child: Uint8Array): Uint8Array {
+  function videoStream(id: number): Uint8Array {
+    const payload = new Uint8Array(54 + 51);
+    const view = new DataView(payload.buffer);
+    payload.set(AsfGuid.VideoMedia.toBin());
+    view.setUint32(40, 51, true);
+    view.setUint16(48, id, true);
+    view.setUint32(54, 1920, true);
+    view.setUint32(58, 1080, true);
+    view.setUint16(63, 40, true);
+    view.setUint32(65, 40, true);
+    payload.set(new TextEncoder().encode('WMV3'), 81);
+    return object(AsfGuid.StreamPropertiesObject, payload);
+  }
+
+  function extendedStream(id: number, embedded?: Uint8Array): Uint8Array {
+    const name = Buffer.from('Main video', 'utf16le');
+    const payload = new Uint8Array(64 + 4 + name.length + 22 + 3 + (embedded?.length ?? 0));
+    const view = new DataView(payload.buffer);
+    view.setBigUint64(0, 10000000n, true);
+    view.setBigUint64(8, 30000000n, true);
+    view.setUint32(16, 2000000, true);
+    view.setUint16(48, id, true);
+    view.setBigUint64(52, 400000n, true);
+    view.setUint16(60, 1, true);
+    view.setUint16(62, 1, true);
+    view.setUint16(66, name.length, true);
+    payload.set(name, 68);
+    view.setUint32(68 + name.length + 18, 3, true);
+    if (embedded) {
+      payload.set(embedded, 68 + name.length + 25);
+    }
+    return object(AsfGuid.ExtendedStreamPropertiesObject, payload);
+  }
+
+  function extension(child: Uint8Array): Uint8Array {
     const header = new Uint8Array(22);
     new DataView(header.buffer).setUint32(18, child.length, true);
     return object(AsfGuid.HeaderExtensionObject, Buffer.concat([header, child]));
@@ -342,10 +376,7 @@ describe('ASF track properties', () => {
 
   it('rejects truncated extended stream metadata', async () => {
     await expect(
-      mm.parseBuffer(
-        asf(headerExtension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))),
-        asfMimeType
-      )
+      mm.parseBuffer(asf(extension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))), asfMimeType)
     ).to.be.rejectedWith(AsfContentParseError, 'Truncated Extended');
   });
 
@@ -355,6 +386,63 @@ describe('ASF track properties', () => {
       HeaderObjectToken.len + 22 + HeaderObjectToken.len + 68 + Buffer.byteLength('Alternate audio', 'utf16le');
     new DataView(data.buffer).setUint32(offset + 18, 0xffffffff, true);
     await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(
+      AsfContentParseError,
+      'exceeds object payload'
+    );
+  });
+
+  for (const embedded of [true, false]) {
+    it(`reads video timing and bitrate from extended properties (embedded=${embedded})`, async () => {
+      const stream = videoStream(7);
+      const data = asf(extension(extendedStream(7, embedded ? stream : undefined)), ...(embedded ? [] : [stream]));
+      const { format } = await mm.parseBuffer(data, asfMimeType);
+      assert.lengthOf(format.trackInfo, 1);
+      assert.include(format.trackInfo[0], {
+        id: 7,
+        type: mm.TrackType.video,
+        duration: 2,
+        bitrate: 2000000,
+        name: 'Main video'
+      });
+      assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 1920, pixelHeight: 1080, frameRate: 25 });
+      assert.strictEqual(format.containerDuration, 2);
+      assert.strictEqual(format.overallBitrate, (data.length * 8) / 2);
+    });
+  }
+
+  it('prefers explicit stream bitrate records over extended stream estimates', async () => {
+    const payload = new Uint8Array(8);
+    const view = new DataView(payload.buffer);
+    view.setUint16(0, 1, true);
+    view.setUint16(2, 7, true);
+    view.setUint32(4, 1800000, true);
+    const { format } = await mm.parseBuffer(
+      asf(videoStream(7), extension(extendedStream(7)), object(AsfGuid.StreamBitratePropertiesObject, payload)),
+      asfMimeType
+    );
+    assert.strictEqual(format.trackInfo[0].bitrate, 1800000);
+  });
+
+  it('does not duplicate an embedded stream also present in the header', async () => {
+    const stream = videoStream(7);
+    const { format } = await mm.parseBuffer(asf(stream, extension(extendedStream(7, stream))), asfMimeType);
+    assert.lengthOf(format.trackInfo, 1);
+  });
+
+  it('leaves video timing unset without extended metadata', async () => {
+    const { format } = await mm.parseBuffer(asf(videoStream(7)), asfMimeType);
+    assert.isUndefined(format.trackInfo[0].duration);
+    assert.isUndefined(format.trackInfo[0].bitrate);
+    assert.isUndefined(format.overallBitrate);
+  });
+
+  it('rejects truncated extended stream fields', async () => {
+    await expect(
+      mm.parseBuffer(asf(extension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))), asfMimeType)
+    ).to.be.rejectedWith(AsfContentParseError, 'Truncated Extended');
+    const child = extendedStream(7);
+    new DataView(child.buffer).setUint16(24 + 66, 65535, true);
+    await expect(mm.parseBuffer(asf(extension(child)), asfMimeType)).to.be.rejectedWith(
       AsfContentParseError,
       'exceeds object payload'
     );
@@ -374,6 +462,20 @@ describe('ASF track properties', () => {
       AsfContentParseError,
       'exceeds object payload'
     );
+  });
+
+  it('does not use broadcasting file duration for overall bitrate', async () => {
+    const payload = new Uint8Array(80);
+    const view = new DataView(payload.buffer);
+    view.setBigUint64(40, 100000000n, true);
+    view.setUint32(64, 1, true);
+    const { format } = await mm.parseBuffer(
+      asf(object(AsfGuid.FilePropertiesObject, payload), videoStream(7)),
+      asfMimeType
+    );
+    assert.isUndefined(format.duration);
+    assert.isUndefined(format.containerDuration);
+    assert.isUndefined(format.overallBitrate);
   });
 
   it('rejects stream data exceeding its enclosing object', async () => {

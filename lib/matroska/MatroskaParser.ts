@@ -25,6 +25,8 @@ const debug = initDebug('music-metadata:parser:matroska');
  * WEBM VP8 AUDIO FILE
  */
 export class MatroskaParser extends BasicParser {
+  private tracksByUid = new Map<string, ITrackInfo>();
+  private trackStatistics = new Map<string, Map<string, string>>();
   private seekHead: ISeekHead | undefined;
   private seekHeadOffset = 0;
   /**
@@ -83,7 +85,10 @@ export class MatroskaParser extends BasicParser {
               if (typeof info.duration === 'number') {
                 const duration = (info.duration * timecodeScale) / 1000000000;
                 await this.addTag('segment:title', info.title);
-                this.metadata.setFormat('duration', Number(duration));
+                if (Number.isFinite(duration) && duration > 0) {
+                  this.metadata.setFormat('duration', duration);
+                  this.metadata.setFormat('containerDuration', duration);
+                }
               }
             }
             break;
@@ -118,6 +123,9 @@ export class MatroskaParser extends BasicParser {
                   };
                   if (stream.video && entry.defaultDuration && entry.defaultDuration > 0) {
                     stream.video = { ...stream.video, frameRate: 1e9 / entry.defaultDuration };
+                  }
+                  if (entry.uid) {
+                    this.tracksByUid.set(this.uidKey(entry.uid), stream);
                   }
                   this.metadata.addStreamInfo(stream);
                 });
@@ -162,6 +170,18 @@ export class MatroskaParser extends BasicParser {
               await Promise.all(
                 tags.tag.map(async tag => {
                   const target = tag.target;
+                  if (target?.tagTrackUID) {
+                    const key = this.uidKey(target.tagTrackUID);
+                    if (key !== '0') {
+                      const statistics = this.trackStatistics.get(key) ?? new Map<string, string>();
+                      for (const simpleTag of tag.simpleTags) {
+                        if (simpleTag.name && typeof simpleTag.string === 'string') {
+                          statistics.set(simpleTag.name.toUpperCase(), simpleTag.string);
+                        }
+                      }
+                      this.trackStatistics.set(key, statistics);
+                    }
+                  }
                   const targetType = target?.targetTypeValue
                     ? TargetType[target.targetTypeValue]
                     : target?.targetType
@@ -199,6 +219,52 @@ export class MatroskaParser extends BasicParser {
         }
       }
     });
+    this.applyTrackStatistics();
+  }
+
+  private uidKey(uid: Uint8Array): string {
+    return (
+      Array.from(uid, byte => byte.toString(16).padStart(2, '0'))
+        .join('')
+        .replace(/^0+/, '') || '0'
+    );
+  }
+
+  private applyTrackStatistics(): void {
+    for (const [uid, tags] of this.trackStatistics) {
+      const track = this.tracksByUid.get(uid);
+      if (!track) {
+        continue;
+      }
+      const duration = tags.get('DURATION')?.match(/^(\d+):([0-5]\d):([0-5]\d(?:\.\d+)?)$/);
+      if (duration) {
+        const seconds = Number(duration[1]) * 3600 + Number(duration[2]) * 60 + Number(duration[3]);
+        if (Number.isFinite(seconds) && seconds > 0) {
+          track.duration = seconds;
+        }
+      }
+      const number = (name: string): number | undefined => {
+        const value = tags.get(name);
+        if (value && /^\d+$/.test(value)) {
+          const result = Number(value);
+          if (Number.isSafeInteger(result) && result >= 0) {
+            return result;
+          }
+        }
+        return undefined;
+      };
+      const bitrate = number('BPS');
+      const size = number('NUMBER_OF_BYTES');
+      if (bitrate !== undefined && bitrate > 0) {
+        track.bitrate = bitrate;
+      } else if (size !== undefined && track.duration) {
+        track.bitrate = (size * 8) / track.duration;
+      }
+      const frames = number('NUMBER_OF_FRAMES');
+      if (track.video && frames !== undefined && frames > 0 && track.duration) {
+        track.video.frameRate ??= frames / track.duration;
+      }
+    }
   }
 
   private async addTag(tagId: string, value: AnyTagValue): Promise<void> {

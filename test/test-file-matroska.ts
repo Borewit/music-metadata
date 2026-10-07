@@ -237,7 +237,7 @@ describe('Matroska track defaults and selection', () => {
       'ae',
       uint('d7', id),
       uint('83', type),
-      text('86', type === mm.TrackType.audio ? 'A_AAC' : 'S_TEXT/UTF8'),
+      text('86', type === mm.TrackType.audio ? 'A_AAC' : type === mm.TrackType.video ? 'V_VP9' : 'S_TEXT/UTF8'),
       ...properties
     );
   }
@@ -247,6 +247,107 @@ describe('Matroska track defaults and selection', () => {
     const segment = element('18538067', element('1654ae6b', ...tracks));
     return (await mm.parseBuffer(Buffer.concat([header, segment]), { mimeType: 'video/x-matroska' })).format;
   }
+
+  function statistics(uid: Uint8Array, tags: Record<string, string>): Uint8Array {
+    return element(
+      '7373',
+      element('63c0', element('63c5', uid)),
+      ...Object.entries(tags).map(([name, value]) => element('67c8', text('45a3', name), text('4487', value)))
+    );
+  }
+
+  async function parseElements(...children: Uint8Array[]): Promise<mm.IFormat> {
+    const data = Buffer.concat([element('1a45dfa3', text('4282', 'matroska')), element('18538067', ...children)]);
+    return (await mm.parseBuffer(data, { mimeType: 'video/x-matroska' })).format;
+  }
+
+  for (const tagsFirst of [true, false]) {
+    it(`matches per-track statistics by full UID (tags first=${tagsFirst})`, async () => {
+      const uid = Buffer.from('fedcba9876543210', 'hex');
+      const tracks = element(
+        '1654ae6b',
+        track(1, mm.TrackType.video, element('73c5', uid), element('e0', uint('b0', 160), uint('ba', 90))),
+        track(2, mm.TrackType.audio, element('73c5', Uint8Array.from([2])), element('e1'))
+      );
+      const tags = element(
+        '1254c367',
+        statistics(uid, { DURATION: '00:00:02.000', BPS: '800000', NUMBER_OF_FRAMES: '50' }),
+        statistics(Uint8Array.from([0, 2]), {
+          DURATION: '00:00:01.500',
+          NUMBER_OF_BYTES: '12000',
+          NUMBER_OF_FRAMES: '20'
+        })
+      );
+      const info = element('1549a966', float('4489', 3000));
+      const format = await parseElements(info, ...(tagsFirst ? [tags, tracks] : [tracks, tags]));
+      assert.include(format.trackInfo[0], { duration: 2, bitrate: 800000 });
+      assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+      assert.include(format.trackInfo[1], { duration: 1.5, bitrate: 64000 });
+      assert.isUndefined(format.trackInfo[1].audio.numberOfSamples);
+      assert.strictEqual(format.containerDuration, 3);
+      assert.isNumber(format.overallBitrate);
+    });
+  }
+
+  it('ignores invalid statistics and leaves absent track timing unknown', async () => {
+    const format = await parseElements(
+      element(
+        '1654ae6b',
+        track(1, mm.TrackType.video, uint('73c5', 1), element('e0')),
+        track(2, mm.TrackType.audio, uint('73c5', 2), element('e1'))
+      ),
+      element(
+        '1254c367',
+        statistics(Uint8Array.from([1]), {
+          DURATION: '00:99:01',
+          BPS: '-1',
+          NUMBER_OF_BYTES: '9007199254740992',
+          NUMBER_OF_FRAMES: 'NaN'
+        })
+      )
+    );
+    for (const track of format.trackInfo) {
+      assert.isUndefined(track.duration);
+      assert.isUndefined(track.bitrate);
+    }
+    assert.isUndefined(format.overallBitrate);
+  });
+
+  it('ignores statistics targeting all tracks or an unknown track UID', async () => {
+    const format = await parseElements(
+      element('1654ae6b', track(1, mm.TrackType.video, uint('73c5', 1), element('e0'))),
+      element(
+        '1254c367',
+        statistics(Uint8Array.from([0, 0]), { DURATION: '00:00:02.000', BPS: '800000' }),
+        statistics(Uint8Array.from([2]), { DURATION: '00:00:03.000', BPS: '900000' })
+      )
+    );
+    assert.lengthOf(format.trackInfo, 1);
+    assert.isUndefined(format.trackInfo[0].duration);
+    assert.isUndefined(format.trackInfo[0].bitrate);
+    assert.isUndefined(format.containerDuration);
+    assert.isUndefined(format.overallBitrate);
+  });
+
+  it('merges separate statistics tags for the same UID without overriding default frame rate', async () => {
+    const uid = Uint8Array.from([1]);
+    const duration = new Uint8Array(4);
+    new DataView(duration.buffer).setUint32(0, 40000000);
+    const format = await parseElements(
+      element(
+        '1654ae6b',
+        track(1, mm.TrackType.video, element('73c5', uid), element('23e383', duration), element('e0'))
+      ),
+      element(
+        '1254c367',
+        statistics(uid, { duration: '00:00:02.000' }),
+        statistics(uid, { number_of_bytes: '200000', number_of_frames: '60' })
+      )
+    );
+    assert.include(format.trackInfo[0], { duration: 2, bitrate: 800000 });
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+    assert.strictEqual(format.containerDuration, 2);
+  });
 
   it('applies audio defaults when optional elements are absent', async () => {
     const format = await parse(track(1, mm.TrackType.audio, element('e1')));
