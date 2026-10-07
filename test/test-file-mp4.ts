@@ -1400,3 +1400,167 @@ describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
     }
   });
 });
+
+// https://github.com/Borewit/music-metadata/issues/2510
+// Checked-in public-domain AAC excerpts cover each layout.
+describe('MP4 chapters in seekable media', () => {
+  const fixtureDirectory = path.join(mp4Samples, 'seekable-chapters');
+  let expected: mm.IAudioMetadata;
+
+  before(async () => {
+    expected = await mm.parseFile(path.join(fixtureDirectory, 'leading-normal-single.m4b'), { includeChapters: true });
+    assert.lengthOf(expected.format.chapters, 3);
+    assert.deepEqual(
+      expected.format.chapters.map(chapter => chapter.title),
+      ['Opening Credits', 'Chapter 1', 'Chapter 2']
+    );
+    assert.deepEqual(
+      expected.format.chapters.map(chapter => chapter.start),
+      [0, 3000, 7000]
+    );
+  });
+
+  function chunkTables(buffer: Buffer, offset = 0, end = buffer.length): number[] {
+    const tables: number[] = [];
+    while (offset < end) {
+      const size = buffer.readUInt32BE(offset);
+      const name = buffer.toString('ascii', offset + 4, offset + 8);
+      if (name === 'stco') {
+        tables.push(offset + 16);
+      } else if (['moov', 'trak', 'mdia', 'minf', 'stbl'].includes(name)) {
+        tables.push(...chunkTables(buffer, offset + 8, offset + size));
+      }
+      offset += size;
+    }
+    return tables;
+  }
+
+  function fixture(trailingMoov = true, extended = false, split = false) {
+    const filename = `${trailingMoov ? 'trailing' : 'leading'}-${extended ? 'extended' : 'normal'}-${split ? 'split' : 'single'}.m4b`;
+    const file = path.join(fixtureDirectory, filename);
+    // Read a fresh copy so malformed-offset tests never modify the stored fixture.
+    const buffer = fs.readFileSync(file);
+    let payloadOffset = 0;
+    let payloadEnd = 0;
+    let moovOffset = 0;
+    let chapterTable = 0;
+    for (let offset = 0; offset < buffer.length; ) {
+      const extendedHeader = buffer.readUInt32BE(offset) === 1;
+      const size = extendedHeader ? Number(buffer.readBigUInt64BE(offset + 8)) : buffer.readUInt32BE(offset);
+      const headerLength = extendedHeader ? 16 : 8;
+      const name = buffer.toString('ascii', offset + 4, offset + 8);
+      if (name === 'mdat' && payloadOffset === 0) {
+        payloadOffset = offset + headerLength;
+        payloadEnd = offset + size;
+      } else if (name === 'moov') {
+        moovOffset = offset;
+        const tables = chunkTables(buffer, offset + headerLength, offset + size);
+        chapterTable = tables[tables.length - 1];
+      }
+      offset += size;
+    }
+    return { buffer, file, chapterTable, payloadOffset, payloadEnd, moovOffset };
+  }
+
+  for (const trailingMoov of [false, true]) {
+    for (const extended of [false, true]) {
+      for (const split of [false, true]) {
+        describe(`${trailingMoov ? 'trailing' : 'leading'} moov, ${extended ? 'extended' : 'normal'} mdat, ${split ? 'two payloads' : 'one payload'}`, () => {
+          for (const parser of ['buffer', 'blob', 'file'] as const) {
+            it(`reads every chapter from a ${parser}`, async () => {
+              const { buffer, file } = fixture(trailingMoov, extended, split);
+              const options = { includeChapters: true };
+              let metadata: mm.IAudioMetadata;
+              if (parser === 'file') {
+                metadata = await mm.parseFile(file, options);
+              } else if (parser === 'blob') {
+                metadata = await mm.parseBlob(new Blob([new Uint8Array(buffer)], { type: 'audio/mp4' }), options);
+              } else {
+                metadata = await mm.parseBuffer(buffer, 'audio/mp4', options);
+              }
+              assert.deepEqual(metadata.format, expected.format);
+              assert.deepEqual(metadata.common, expected.common);
+            });
+          }
+        });
+      }
+    }
+  }
+
+  it('restores the tokenizer position and reads no audio payload', async () => {
+    const { buffer, payloadOffset, payloadEnd } = fixture();
+    const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
+    const readBuffer = tokenizer.readBuffer.bind(tokenizer);
+    let mediaBytesRead = 0;
+    tokenizer.readBuffer = async (target, options) => {
+      const position = options?.position ?? tokenizer.position;
+      const bytesRead = await readBuffer(target, options);
+      if (position >= payloadOffset && position < payloadEnd) {
+        mediaBytesRead += bytesRead;
+      }
+      return bytesRead;
+    };
+    const { format } = await mm.parseFromTokenizer(tokenizer, { includeChapters: true });
+    assert.deepEqual(format.chapters, expected.format.chapters);
+    assert.strictEqual(tokenizer.position, buffer.length);
+    assert.isAbove(mediaBytesRead, 0);
+    assert.isBelow(mediaBytesRead, 2048, 'Only the small chapter samples should be read');
+  });
+
+  for (const includeChapters of [undefined, false]) {
+    it(`leaves chapters disabled with includeChapters=${includeChapters}`, async () => {
+      const { format } = await mm.parseBuffer(fixture().buffer, 'audio/mp4', { includeChapters });
+      assert.isUndefined(format.chapters);
+      assert.strictEqual(format.duration, expected.format.duration);
+    });
+  }
+
+  for (const trailingMoov of [false, true]) {
+    for (const extended of [false, true]) {
+      for (const split of [false, true]) {
+        it(`${trailingMoov ? 'skips unavailable' : 'preserves'} chapters in a forward-only stream (extended=${extended}, split=${split})`, async () => {
+          const stream = Readable.from([fixture(trailingMoov, extended, split).buffer], { objectMode: false });
+          const { format } = await mm.parseStream(stream, 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(format.chapters, trailingMoov ? undefined : expected.format.chapters);
+          assert.strictEqual(format.duration, expected.format.duration);
+        });
+      }
+    }
+  }
+
+  for (const location of ['header', 'gap between payloads', 'crossing boundary', 'past final payload'] as const) {
+    it(`rejects a forward-only chapter sample in ${location}`, async () => {
+      const { buffer, chapterTable, payloadOffset, payloadEnd } = fixture(false, true, true);
+      const offset =
+        location === 'header'
+          ? payloadOffset - 1
+          : location === 'gap between payloads'
+            ? payloadEnd + 8
+            : location === 'crossing boundary'
+              ? payloadEnd - 1
+              : buffer.length + 16;
+      // The second chapter belongs to the later mdat; the first ends at the split boundary.
+      const entry = location === 'gap between payloads' || location === 'past final payload' ? 1 : 0;
+      buffer.writeUInt32BE(offset, chapterTable + entry * 4);
+      const stream = Readable.from([buffer], { objectMode: false });
+      await rejects(
+        mm.parseStream(stream, 'audio/mp4', { includeChapters: true }),
+        error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
+      );
+    });
+  }
+
+  for (const location of ['header', 'moov', 'crossing boundary'] as const) {
+    it(`rejects a chapter sample in ${location} and restores the position`, async () => {
+      const { buffer, chapterTable, payloadOffset, payloadEnd, moovOffset } = fixture();
+      const offset = location === 'header' ? payloadOffset - 1 : location === 'moov' ? moovOffset + 8 : payloadEnd - 1;
+      buffer.writeUInt32BE(offset, chapterTable);
+      const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
+      await rejects(
+        mm.parseFromTokenizer(tokenizer, { includeChapters: true }),
+        error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
+      );
+      assert.strictEqual(tokenizer.position, buffer.length);
+    });
+  }
+});

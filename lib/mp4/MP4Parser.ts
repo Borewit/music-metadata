@@ -1,6 +1,7 @@
 import { textDecode } from '@borewit/text-codec';
 import type { IGetToken } from '@tokenizer/token';
 import initDebug from 'debug';
+import type { IRandomAccessTokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
 import { BasicParser } from '../common/BasicParser.js';
@@ -12,6 +13,11 @@ import { ChapterTrackReferenceBox, Mp4ContentError } from './AtomToken.js';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
+
+interface IMediaDataRange {
+  offset: number;
+  end: number;
+}
 
 interface IEncoder {
   lossy: boolean;
@@ -183,12 +189,15 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private async readToken<T>(token: IGetToken<T>): Promise<T> {
+  private async readToken<T>(token: IGetToken<T>, position?: number): Promise<T> {
     this.validatePayloadLength(token.len);
-    return this.tokenizer.readToken(token);
+    return this.tokenizer.readToken(token, position);
   }
 
   private tracks = new Map<number, ITrackDescription>();
+  private mediaDataRanges: IMediaDataRange[] = [];
+  private streamedChapters = new Map<number, IChapter>();
+  private streamedChapterCount?: number;
   private hasVideoTrack = false;
   private hasAudioTrack = false;
 
@@ -196,6 +205,9 @@ export class MP4Parser extends BasicParser {
     this.hasVideoTrack = false;
     this.hasAudioTrack = false;
     this.tracks.clear();
+    this.mediaDataRanges = [];
+    this.streamedChapters.clear();
+    this.streamedChapterCount = undefined;
 
     let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
 
@@ -225,6 +237,21 @@ export class MP4Parser extends BasicParser {
         remainingFileSize
       );
       remainingFileSize = rootAtom.header.length === 0n ? 0 : remainingFileSize - Number(rootAtom.header.length);
+    }
+
+    if (this.mediaDataRanges.length > 0) {
+      // Track references and sample tables may follow the media data in a trailing moov box.
+      const tokenizer = this.tokenizer as IRandomAccessTokenizer;
+      const position = tokenizer.position;
+      try {
+        await this.parseChapters(this.mediaDataRanges);
+      } finally {
+        tokenizer.setPosition(position);
+      }
+    }
+
+    if (this.streamedChapterCount !== undefined && this.streamedChapters.size !== this.streamedChapterCount) {
+      throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
     }
 
     // Post process metadata
@@ -769,19 +796,15 @@ export class MP4Parser extends BasicParser {
      * Will scan for chapters
      */
     mdat: async (len: number) => {
+      const range = { offset: this.tokenizer.position, end: this.tokenizer.position + len };
       if (this.options.includeChapters) {
-        const trackWithChapters = [...this.tracks.values()].filter(track => track.chapterList);
-        if (trackWithChapters.length === 1) {
-          const chapterTrackIds = trackWithChapters[0].chapterList ?? [];
-          const chapterTracks = [...this.tracks.values()].filter(
-            track => chapterTrackIds.indexOf(track.header.trackId) !== -1
-          );
-          if (chapterTracks.length === 1) {
-            return this.parseChapterTrack(chapterTracks[0], trackWithChapters[0], len);
-          }
+        if (this.tokenizer.supportsRandomAccess()) {
+          this.mediaDataRanges.push(range);
+        } else {
+          await this.parseChapters([range], true);
         }
       }
-      await this.tokenizer.ignore(len);
+      await this.tokenizer.ignore(range.end - this.tokenizer.position);
     },
 
     ftyp: async (len: number) => {
@@ -860,29 +883,53 @@ export class MP4Parser extends BasicParser {
     return ssd;
   }
 
+  private async parseChapters(mediaDataRanges: IMediaDataRange[], forwardOnly = false): Promise<void> {
+    const tracks = [...this.tracks.values()];
+    const trackWithChapters = tracks.filter(track => track.chapterList);
+    if (trackWithChapters.length === 1) {
+      const track = trackWithChapters[0];
+      const chapterTracks = tracks.filter(chapterTrack =>
+        (track.chapterList ?? []).includes(chapterTrack.header.trackId)
+      );
+      if (chapterTracks.length === 1) {
+        await this.parseChapterTrack(chapterTracks[0], track, mediaDataRanges, forwardOnly);
+      }
+    }
+  }
+
   private async parseChapterTrack(
     chapterTrack: ITrackDescription,
     track: ITrackDescription,
-    len: number
+    mediaDataRanges: IMediaDataRange[],
+    forwardOnly: boolean
   ): Promise<void> {
     if (!chapterTrack.sampleSize) {
       if (chapterTrack.chunkOffsetTable.length !== chapterTrack.sampleSizeTable.length) {
         throw new Error('Expected equal chunk-offset-table & sample-size-table length.');
       }
     }
+    if (forwardOnly) {
+      this.streamedChapterCount = chapterTrack.chunkOffsetTable.length;
+    }
     const chapters: IChapter[] = [];
-    for (let i = 0; i < chapterTrack.chunkOffsetTable.length && len > 0; ++i) {
+    for (let i = 0; i < chapterTrack.chunkOffsetTable.length; ++i) {
       const start = chapterTrack.timeToSampleTable.slice(0, i).reduce((acc, cur) => acc + cur.duration, 0);
 
       const chunkOffset = chapterTrack.chunkOffsetTable[i];
-      const nextChunkLen = chunkOffset - this.tokenizer.position;
-      const sampleSize = chapterTrack.sampleSize > 0 ? chapterTrack.sampleSize : chapterTrack.sampleSizeTable[i];
-      len -= nextChunkLen + sampleSize;
-      if (len < 0) {
-        throw new Mp4ContentError('Chapter chunk exceeding token length');
+      if (forwardOnly) {
+        // Completed samples belong to earlier payloads; future samples wait for their mdat.
+        if (this.streamedChapters.has(i) || chunkOffset >= mediaDataRanges[0].end) {
+          continue;
+        }
+        if (chunkOffset < this.tokenizer.position) {
+          throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
+        }
       }
-      await this.tokenizer.ignore(nextChunkLen);
-      const title = await this.readToken(new AtomToken.ChapterText(sampleSize));
+      const sampleSize = chapterTrack.sampleSize > 0 ? chapterTrack.sampleSize : chapterTrack.sampleSizeTable[i];
+      if (!mediaDataRanges.some(range => chunkOffset >= range.offset && chunkOffset + sampleSize <= range.end)) {
+        throw new Mp4ContentError('Chapter chunk exceeding media data bounds');
+      }
+      const title = await this.readToken(new AtomToken.ChapterText(sampleSize), chunkOffset);
       debug(`Chapter ${i + 1}: ${title}`);
       const chapter = {
         title,
@@ -891,10 +938,20 @@ export class MP4Parser extends BasicParser {
         sampleOffset: this.findSampleOffset(track, this.tokenizer.position)
       };
       debug(`Chapter title=${chapter.title}, offset=${chapter.sampleOffset}/${track.header.duration}`); // ToDo, use media duration if required!!!
-      chapters.push(chapter);
+      if (forwardOnly) {
+        this.streamedChapters.set(i, chapter);
+      } else {
+        chapters.push(chapter);
+      }
     }
-    this.metadata.setFormat('chapters', chapters);
-    await this.tokenizer.ignore(len);
+    if (!forwardOnly) {
+      this.metadata.setFormat('chapters', chapters);
+    } else if (this.streamedChapters.size === chapterTrack.chunkOffsetTable.length) {
+      this.metadata.setFormat(
+        'chapters',
+        [...this.streamedChapters].sort(([left], [right]) => left - right).map(([, chapter]) => chapter)
+      );
+    }
   }
 
   private findSampleOffset(track: ITrackDescription, chapterOffset: number): number {

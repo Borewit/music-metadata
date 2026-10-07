@@ -606,7 +606,9 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
 
 - `includeChapters`: `boolean` (default: `false`)
-  When `true`, the MP4 parser scans the `mdat` atom for chapters.
+  When `true`, the MP4 parser reads chapters from the `mdat` atoms.
+  Files, buffers, and Blobs support chapters whether `moov` appears before or after `mdat`.
+  For forward-only streams, `moov` must appear before the chapter data.
 
 - `mkvUseIndex`: `boolean` (default: `false`)
 
