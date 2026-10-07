@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import * as CafToken from '../lib/caf/CafToken.js';
@@ -482,6 +483,14 @@ describe('Parse CAF (Core Audio File Format)', () => {
       );
     });
 
+    it('rejects a truncated Audio Description chunk', async () => {
+      const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription.subarray(0, 24)]);
+      await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
+        mm.UnexpectedFileContentError,
+        /Missing Audio Description chunk/
+      );
+    });
+
     it('rejects an Audio Data chunk that is too small to hold mEditCount', async () => {
       const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription, chunkHeader('data', 2)]);
       await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
@@ -538,6 +547,14 @@ describe('Parse CAF (Core Audio File Format)', () => {
       );
     });
 
+    it('rejects a Channel Layout chunk that is too small to hold its header', async () => {
+      const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription, chunkHeader('chan', 8)]);
+      await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
+        mm.UnexpectedFileContentError,
+        /Channel Layout chunk size 8 is smaller than 12/
+      );
+    });
+
     it('rejects a Channel Layout chunk with an incomplete description array', async () => {
       const body = Buffer.alloc(12 + 8);
       body.writeUInt32BE(0, 4);
@@ -568,6 +585,39 @@ describe('Parse CAF (Core Audio File Format)', () => {
         mm.UnexpectedFileContentError,
         /Packet Table chunk size 8 is smaller than 24/
       );
+    });
+
+    it('omits derived format fields when the description has no frame count', async () => {
+      const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription]);
+      const { format } = await mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType });
+      assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+      assert.isUndefined(format.duration, 'format.duration');
+      assert.isUndefined(format.bitrate, 'format.bitrate');
+    });
+
+    it('omits derived format fields for a non-positive sample rate', async () => {
+      const zeroRateDescription = Buffer.from(audioDescription);
+      zeroRateDescription.writeDoubleBE(0, 0);
+      const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), zeroRateDescription]);
+      const { format } = await mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType });
+      assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+      assert.isUndefined(format.duration, 'format.duration');
+      assert.isUndefined(format.bitrate, 'format.bitrate');
+    });
+
+    it('handles an unknown-size data chunk from a stream without a known length', async () => {
+      const data = Buffer.alloc(4 + 512);
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('data', -1),
+        data
+      ]);
+      const { format } = await mm.parseStream(Readable.from([file], { objectMode: false }), { mimeType: cafMimeType });
+      assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+      assert.isUndefined(format.duration, 'format.duration');
+      assert.isUndefined(format.bitrate, 'format.bitrate');
     });
   });
 
