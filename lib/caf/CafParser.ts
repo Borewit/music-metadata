@@ -32,7 +32,6 @@ const codecByFormatId: Record<string, ICodecInfo> = {
   aacp: { codec: 'AAC', lossless: false }
 };
 
-const channelDescriptionLen = 12;
 const editCountLen = 4;
 const numEntriesLen = 4;
 
@@ -193,7 +192,7 @@ export class CafParser extends BasicParser {
     }
     const header = await this.tokenizer.readToken<CafToken.IChannelLayoutHeader>(CafToken.ChannelLayoutHeader);
 
-    const descriptionLen = header.numberChannelDescriptions * channelDescriptionLen;
+    const descriptionLen = header.numberChannelDescriptions * CafToken.channelDescriptionLen;
     const bodyLen = CafToken.ChannelLayoutHeader.len + descriptionLen;
     if (bodyLen > chunkSize) {
       throw new CafContentError(
