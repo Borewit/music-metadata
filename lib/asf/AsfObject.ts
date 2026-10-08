@@ -236,6 +236,7 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
   public static guid = AsfGuid.FilePropertiesObject;
 
   public get(buf: Uint8Array, off: number): IFilePropertiesObject {
+    const flags = Token.UINT32_LE.get(buf, off + 64);
     return {
       fileId: AsfGuid.fromBin(buf, off),
       fileSize: Token.UINT64_LE.get(buf, off + 16),
@@ -245,8 +246,8 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
       sendDuration: Token.UINT64_LE.get(buf, off + 48),
       preroll: Token.UINT64_LE.get(buf, off + 56),
       flags: {
-        broadcast: util.getBit(buf, off + 64, 24),
-        seekable: util.getBit(buf, off + 64, 25)
+        broadcast: (flags & 1) !== 0,
+        seekable: (flags & 2) !== 0
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),

@@ -8,6 +8,7 @@ import AsfGuid from '../lib/asf/AsfGuid.js';
 import {
   AsfContentParseError,
   DataType,
+  FilePropertiesObject,
   HeaderExtensionObject,
   HeaderObjectToken,
   readCodecEntries,
@@ -65,6 +66,24 @@ function createHeaderExtensionAsf(extensionDataSize: number, enclosingDataSize: 
 function createUnknownSizeStream(data: Uint8Array): Readable {
   return Readable.from([Buffer.from(data)], { objectMode: false });
 }
+
+describe('ASF File Properties flags', () => {
+  for (const [flags, broadcast, seekable] of [
+    [0, false, false],
+    [1, true, false],
+    [2, false, true],
+    [3, true, true],
+    [0x80000000, false, false],
+    [0x80000003, true, true]
+  ] as const) {
+    it(`reads broadcast and seekable flags from DWORD 0x${flags.toString(16)}`, () => {
+      const data = new Uint8Array(85);
+      new DataView(data.buffer).setUint32(5 + 64, flags, true);
+      const token = new FilePropertiesObject({ objectId: AsfGuid.FilePropertiesObject, objectSize: 104 });
+      assert.deepEqual(token.get(data, 5).flags, { broadcast, seekable });
+    });
+  }
+});
 
 describe('Parse ASF', () => {
   describe('GUID', () => {
