@@ -949,6 +949,65 @@ describe('Sample Description (stsd) atom', () => {
     return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
   }
 
+  describe('stream presence', () => {
+    for (const { filename, hasAudio, hasVideo } of [
+      { filename: 'mp4-video.mp4', hasAudio: false, hasVideo: true },
+      { filename: 'mp4-audio.mp4', hasAudio: true, hasVideo: false },
+      { filename: 'mp4-audio-video.mp4', hasAudio: true, hasVideo: true }
+    ]) {
+      describe(filename, () => {
+        for (const parser of Parsers) {
+          it(parser.description, async function () {
+            const { format } = await parser.parse(() => this.skip(), path.join(mp4Samples, filename), 'video/mp4');
+            assert.strictEqual(format.hasAudio, hasAudio, 'format.hasAudio');
+            assert.strictEqual(format.hasVideo, hasVideo, 'format.hasVideo');
+            if (hasAudio) {
+              assert.strictEqual(format.sampleRate, 8000);
+              assert.strictEqual(format.numberOfChannels, 1);
+              assert.isAbove(format.duration, 0, 'The fixture contains media');
+            }
+          });
+        }
+      });
+    }
+
+    for (const streamInput of [false, true]) {
+      it(`detects audio without a handler in a ${streamInput ? 'stream' : 'buffer'}`, async () => {
+        const data = fs.readFileSync(path.join(mp4Samples, 'mp4-audio.mp4'));
+        const expected = await mm.parseBuffer(data, 'audio/mp4');
+        const handlerOffset = data.indexOf('hdlr');
+        assert.isAbove(handlerOffset, 0);
+        assert.strictEqual(data.toString('ascii', handlerOffset + 12, handlerOffset + 16), 'soun');
+        // Simulate the missing-handler edge case by replacing its box with equal-sized
+        // padding. Preserve all sample data, box lengths and chunk offsets.
+        data.write('free', handlerOffset, 'ascii');
+        const { format } = streamInput
+          ? await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mp4')
+          : await mm.parseBuffer(data, 'audio/mp4');
+        assert.isTrue(format.hasAudio);
+        assert.isFalse(format.hasVideo);
+        assert.strictEqual(format.sampleRate, expected.format.sampleRate);
+        assert.strictEqual(format.numberOfChannels, expected.format.numberOfChannels);
+        assert.strictEqual(format.duration, expected.format.duration);
+        assert.deepEqual(format.trackInfo, expected.format.trackInfo);
+      });
+    }
+
+    // Structural edge cases without media payloads still use constructed boxes.
+    const metadataTrack: ITrackSpec = { handler: 'meta', dataFormat: 'djmd', entrySize: 16 };
+    for (const { name, tracks, hasVideo } of [
+      { name: 'metadata only', tracks: [metadataTrack], hasVideo: false },
+      { name: 'no tracks', tracks: [], hasVideo: false },
+      { name: 'video and metadata', tracks: [videoTrack, metadataTrack], hasVideo: true }
+    ]) {
+      it(`does not report audio for ${name}`, async () => {
+        const { format } = await mm.parseBuffer(mp4(...tracks), 'video/mp4');
+        assert.isFalse(format.hasAudio);
+        assert.strictEqual(format.hasVideo, hasVideo);
+      });
+    }
+  });
+
   // A metadata sample entry is not an AudioSampleEntry, and may be shorter than one
   for (const entrySize of [16, 18, 24, 34, 36]) {
     it(`parses a metadata sample entry of ${entrySize} bytes`, async () => {
@@ -1110,7 +1169,7 @@ describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
     it('accepts clean EOF after finite children', async () => {
       const { native, format } = await parseStream(Buffer.concat([box('date', Buffer.from('2026')), box('free')]));
       assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
-      assert.isTrue(format.hasAudio, 'Post-processing completed');
+      assert.isFalse(format.hasAudio, 'No audio tracks are present');
     });
 
     it('accepts an empty container', async () => {

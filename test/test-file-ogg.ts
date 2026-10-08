@@ -115,6 +115,40 @@ describe('Parse Ogg', () => {
     });
   });
 
+  describe('Ogg Skeleton', () => {
+    for (const { filename, codec, hasAudio, hasVideo } of [
+      { filename: 'ogg-vorbis-skeleton-v3.ogg', codec: 'Vorbis I', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-vorbis-skeleton-v4.ogg', codec: 'Vorbis I', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-opus-skeleton-v3.ogg', codec: 'Opus', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-speex-skeleton-v3.ogg', codec: 'Speex 1.2.0', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-flac-skeleton-v3.ogg', codec: 'FLAC', hasAudio: true, hasVideo: false },
+      { filename: 'ogg-theora-skeleton-v3.ogg', codec: 'Theora', hasAudio: false, hasVideo: true }
+    ]) {
+      describe(filename, () => {
+        for (const parser of Parsers) {
+          it(parser.description, async function () {
+            // A .ogg path selects the parser for files. Streams use an explicit MIME hint,
+            // so this regression remains independent of application/ogg parser selection.
+            const { format, quality } = await parser.parse(
+              () => this.skip(),
+              path.join(oggSamplePath, filename),
+              'audio/ogg'
+            );
+            assert.strictEqual(format.container, 'Ogg');
+            assert.strictEqual(format.codec, codec);
+            assert.strictEqual(format.hasAudio, hasAudio, 'format.hasAudio');
+            assert.strictEqual(format.hasVideo, hasVideo, 'format.hasVideo');
+            if (hasAudio) {
+              assert.strictEqual(format.sampleRate, 8000);
+              assert.strictEqual(format.numberOfChannels, 1);
+            }
+            assert.isEmpty(quality.warnings);
+          });
+        }
+      });
+    }
+  });
+
   describe('Parsing Ogg/Vorbis', () => {
     describe('decode: nirvana-2sec.vorbis.ogg', () => {
       const filePath = path.join(oggSamplePath, 'nirvana-2sec.vorbis.ogg');
@@ -317,15 +351,27 @@ describe('Parse Ogg', () => {
   });
 
   describe('Parsing Ogg/Flac', () => {
-    it('retains the last completed sample count when truncated on an unknown granule position', async () => {
+    describe('truncated stream with an unknown final granule position', () => {
       // Ogg framing: absolute granule position -1 means no packet finishes on this page.
-      // https://www.xiph.org/ogg/doc/framing.html
+      // The fixture ends before the early-stop threshold, so both options reach EOF.
       const filePath = path.join(oggSamplePath, 'flac-truncated-unknown-granule.ogg');
-      const { format, quality } = await mm.parseFile(filePath, { duration: true });
 
-      assert.strictEqual(format.numberOfSamples, 9216, 'last completed FLAC frames');
-      assert.strictEqual(format.duration, 9216 / 44100, 'duration of completed frames');
-      assert.isNotEmpty(quality.warnings, 'truncated stream warning');
+      for (const duration of [false, true]) {
+        for (const parser of Parsers) {
+          it(`${parser.description}, duration=${duration}`, async function () {
+            const { format, quality } = await parser.parse(() => this.skip(), filePath, 'audio/ogg', { duration });
+
+            assert.strictEqual(format.container, 'Ogg');
+            assert.strictEqual(format.codec, 'FLAC');
+            assert.strictEqual(format.sampleRate, 44100);
+            assert.strictEqual(format.numberOfSamples, 9216, 'last completed FLAC frames');
+            assert.strictEqual(format.duration, 9216 / 44100, 'duration of completed frames');
+            assert.deepEqual(quality.warnings, [
+              { message: 'End-of-stream reached before reaching last page in Ogg stream serial=3102963583' }
+            ]);
+          });
+        }
+      }
     });
 
     it('does not calculate duration if no valid granule position was seen', async () => {
@@ -358,23 +404,25 @@ describe('Parse Ogg', () => {
     // https://github.com/Borewit/music-metadata/issues/2779
     // The fixture has 16 pages, exceeding the parser's early-stop threshold.
     describe('duration scanning', () => {
-      it('with duration flag', async () => {
-        const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
-        const { format } = await mm.parseFile(filePath, { duration: true });
+      for (const duration of [false, true]) {
+        for (const parser of Parsers) {
+          it(`${parser.description}, duration=${duration}`, async function () {
+            const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
+            const { format, quality } = await parser.parse(() => this.skip(), filePath, 'audio/ogg', { duration });
 
-        // Last page absolute granule position: 128180 samples at 44.1 kHz
-        assert.strictEqual(format.numberOfSamples, 128180, 'format.numberOfSamples');
-        assert.strictEqual(format.duration, 128180 / 44100, 'format.duration');
-      });
-
-      it('without duration flag', async () => {
-        const filePath = path.join(oggSamplePath, 'audio.flac.ogg');
-        const { format } = await mm.parseFile(filePath, { duration: false });
-
-        // Stop before the last page, which carries the total sample count.
-        assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
-        assert.isUndefined(format.duration, 'format.duration');
-      });
+            assert.strictEqual(format.codec, 'FLAC');
+            assert.isEmpty(quality.warnings, 'intentional early exit must not report truncation');
+            if (duration) {
+              // Last page absolute granule position: 128180 samples at 44.1 kHz.
+              assert.strictEqual(format.numberOfSamples, 128180);
+              assert.strictEqual(format.duration, 128180 / 44100);
+            } else {
+              assert.isUndefined(format.numberOfSamples);
+              assert.isUndefined(format.duration);
+            }
+          });
+        }
+      }
     });
   });
 
@@ -497,22 +545,35 @@ describe('Ogg comments spanning many pages', () => {
   });
 
   for (const duration of [false, true]) {
-    it(`issue-2638.ogg, duration=${duration}`, async () => {
-      const filePath = path.join(oggSamplePath, 'issue-2638.ogg');
-      const { common, format, quality } = await mm.parseFile(filePath, { duration });
-      const picture = common.picture![0];
-      assert.strictEqual(picture.format, 'image/jpeg');
-      assert.lengthOf(picture.data, 491399);
-      assert.deepEqual(Array.from(picture.data.slice(-2)), [0xff, 0xd9], 'complete JPEG');
-      assert.isEmpty(quality.warnings);
-      assert.strictEqual(format.sampleRate, 44100);
-      if (duration) {
-        assert.strictEqual(format.numberOfSamples, 88896);
-        assert.strictEqual(format.duration, 88896 / 44100);
-      } else {
-        assert.isUndefined(format.duration);
-        assert.isUndefined(format.numberOfSamples);
+    for (const skipCovers of [false, true]) {
+      for (const parser of Parsers) {
+        it(`issue-2638.ogg, ${parser.description}, duration=${duration}, skipCovers=${skipCovers}`, async function () {
+          const filePath = path.join(oggSamplePath, 'issue-2638.ogg');
+          const { common, native, format, quality } = await parser.parse(() => this.skip(), filePath, 'audio/ogg', {
+            duration,
+            skipCovers
+          });
+          if (skipCovers) {
+            assert.isUndefined(common.picture);
+            assert.notProperty(mm.orderTags(native.vorbis), 'METADATA_BLOCK_PICTURE');
+          } else {
+            const picture = common.picture![0];
+            assert.strictEqual(picture.format, 'image/jpeg');
+            assert.lengthOf(picture.data, 491399);
+            assert.deepEqual(Array.from(picture.data.slice(-2)), [0xff, 0xd9], 'complete JPEG');
+          }
+          assert.isEmpty(quality.warnings);
+          assert.strictEqual(format.codec, 'Vorbis I');
+          assert.strictEqual(format.sampleRate, 44100);
+          if (duration) {
+            assert.strictEqual(format.numberOfSamples, 88896);
+            assert.strictEqual(format.duration, 88896 / 44100);
+          } else {
+            assert.isUndefined(format.duration);
+            assert.isUndefined(format.numberOfSamples);
+          }
+        });
       }
-    });
+    }
   }
 });
