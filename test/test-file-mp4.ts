@@ -9,7 +9,15 @@ import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 
 import * as mm from '../lib/index.js';
 import { Atom } from '../lib/mp4/Atom.js';
-import { ChapterText, Mp4ContentError, StcoAtom, StsdAtom, TrackHeaderAtom } from '../lib/mp4/AtomToken.js';
+import {
+  ChapterListAtom,
+  ChapterText,
+  Co64Atom,
+  Mp4ContentError,
+  StcoAtom,
+  StsdAtom,
+  TrackHeaderAtom
+} from '../lib/mp4/AtomToken.js';
 import { Parsers } from './metadata-parsers.js';
 import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samplePath } from './util.js';
 
@@ -1908,6 +1916,147 @@ describe('MP4 chapter tracks and Nero lists', () => {
       assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Chapter 2');
       const truncated = Buffer.from([0xff, 0xff, 0x41]);
       assert.strictEqual(new ChapterText(truncated.length).get(truncated, 0), 'A');
+    });
+    it('preserves UTF-16LE chapter titles with accented characters and surrogate pairs', () => {
+      const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('Café 🌍', 'utf16le')]);
+      const sample = Buffer.alloc(bytes.length + 2);
+      sample.writeUInt16BE(bytes.length);
+      sample.set(bytes, 2);
+      assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Café 🌍');
+    });
+    for (const length of [0, 1]) {
+      it(`returns an empty title when the ${length}-byte sample has no length field`, () => {
+        assert.strictEqual(new ChapterText(length).get(Buffer.alloc(length), 0), '');
+      });
+    }
+    it('does not decode bytes beyond a chapter sample embedded in a larger buffer', () => {
+      const sample = Buffer.from([0xff, 0xff, 0x41]);
+      const buffer = Buffer.concat([Buffer.from('prefix'), sample, Buffer.from('unrelated bytes')]);
+      assert.strictEqual(new ChapterText(sample.length).get(buffer, 6), 'A');
+    });
+    it('accepts the largest exact 64-bit chunk offset and rejects an inexact one', () => {
+      const exact = BigInt(Number.MAX_SAFE_INTEGER);
+      const payload = Buffer.concat([u32(0), u32(1), u64(exact)]);
+      assert.deepEqual(new Co64Atom(payload.length).get(payload, 0).entries, [Number.MAX_SAFE_INTEGER]);
+      payload.writeBigUInt64BE(exact + 1n, 8);
+      assert.throws(() => new Co64Atom(payload.length).get(payload, 0), /Chunk offset exceeds Number.MAX_SAFE_INTEGER/);
+    });
+    for (const [description, bytes] of [
+      ['missing full-box header', Buffer.alloc(4)],
+      ['missing version-1 chapter count', Buffer.from([1, 0, 0, 0, 0, 0, 0, 0])],
+      ['incomplete chapter timestamp', Buffer.concat([u32(0), Buffer.from([1]), Buffer.alloc(8)])]
+    ] as const) {
+      it(`returns no Nero chapters for a ${description}`, () => {
+        assert.deepEqual(new ChapterListAtom(bytes.length).get(bytes, 0), []);
+      });
+    }
+    it('rejects an unsupported Nero chapter-list version', () => {
+      const payload = Buffer.from([2, 0, 0, 0, 0]);
+      assert.throws(() => new ChapterListAtom(payload.length).get(payload, 0), /Unsupported chpl version: 2/);
+    });
+    it('preserves complete Nero chapters when a later title is truncated at the atom boundary', () => {
+      const payload = Buffer.concat([
+        u32(0),
+        Buffer.from([2]),
+        u64(0n),
+        Buffer.from([7]),
+        Buffer.from('Prelude'),
+        u64(125_000_000n),
+        Buffer.from([9]),
+        Buffer.from('Cha')
+      ]);
+      const buffer = Buffer.concat([Buffer.from('prefix'), payload, Buffer.from('pter 1')]);
+      assert.deepEqual(new ChapterListAtom(payload.length).get(buffer, 6), [expectedNero[0]]);
+    });
+    it('accepts the largest exact Nero timestamp and rejects an inexact one', () => {
+      const exact = BigInt(Number.MAX_SAFE_INTEGER);
+      const payload = Buffer.concat([u32(0), Buffer.from([1]), u64(exact), Buffer.from([0])]);
+      assert.deepEqual(new ChapterListAtom(payload.length).get(payload, 0), [
+        { title: '', start: Number.MAX_SAFE_INTEGER, timeScale: 10_000_000 }
+      ]);
+      payload.writeBigUInt64BE(exact + 1n, 5);
+      assert.throws(
+        () => new ChapterListAtom(payload.length).get(payload, 0),
+        /Chapter start exceeds Number.MAX_SAFE_INTEGER/
+      );
+    });
+    for (const missing of ['timing', 'timing entries', 'chunk entries'] as const) {
+      for (const neroVersion of [undefined, 1]) {
+        it(`${neroVersion === undefined ? 'rejects' : 'falls back to Nero for'} an incomplete chapter ${missing} table`, async () => {
+          const buffer = audiobook({ neroVersion });
+          const name = missing.startsWith('timing') ? 'stts' : 'stsc';
+          const at = buffer.indexOf(name, buffer.indexOf(name) + 4);
+          // Preserve box sizes and media offsets while making the chapter table incomplete.
+          if (missing === 'timing entries') {
+            buffer.write('free', at);
+          } else {
+            buffer.writeUInt32BE(missing === 'timing' ? 0 : 1, at + (missing === 'timing' ? 20 : 16));
+          }
+          const parse = mm.parseBuffer(buffer, 'audio/mp4', {
+            includeChapters: true
+          });
+          if (neroVersion === undefined) {
+            await rejects(
+              parse,
+              error => error instanceof Mp4ContentError && /Missing chapter sample/.test(error.message)
+            );
+          } else {
+            const metadata = await parse;
+            assert.deepEqual(chapterList(metadata), expectedNero);
+            assert.isTrue(metadata.quality.warnings.some(warning => /Missing chapter sample/.test(warning.message)));
+          }
+        });
+      }
+    }
+    it('rejects chapter samples that move backwards in a forward-only stream', async () => {
+      const buffer = audiobook({ grouped: false });
+      const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
+      buffer.writeUInt32BE(buffer.readUInt32BE(at), at + 4);
+      await rejects(
+        mm.parseStream(Readable.from([buffer], { objectMode: false }), 'audio/mp4', { includeChapters: true }),
+        error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
+      );
+    });
+    for (const size of [0, 1, 64 * 1024 + 1]) {
+      it(`retains the timestamp without reading a ${size}-byte chapter title sample`, async () => {
+        let buffer = audiobook({ chapterCount: 1, trailing: true });
+        if (size > 3) {
+          const padding = Buffer.alloc(size - 3);
+          const moov = buffer.indexOf('moov') - 4;
+          const mdat = buffer.indexOf('mdat') - 4;
+          buffer.writeUInt32BE(buffer.readUInt32BE(mdat) + padding.length, mdat);
+          buffer = Buffer.concat([buffer.subarray(0, moov), padding, buffer.subarray(moov)]);
+        }
+        const at = buffer.indexOf('stsz', buffer.indexOf('stsz') + 4) + 16;
+        buffer.writeUInt32BE(size, at);
+        const tokenizer = fromBuffer(buffer, {
+          fileInfo: { mimeType: 'audio/mp4' }
+        });
+        const readToken = tokenizer.readToken.bind(tokenizer);
+        let titleReads = 0;
+        tokenizer.readToken = (token, position) => {
+          if (token instanceof ChapterText) {
+            ++titleReads;
+          }
+          return readToken(token, position);
+        };
+        const metadata = await mm.parseFromTokenizer(tokenizer, {
+          includeChapters: true
+        });
+        assert.deepEqual(chapterList(metadata), [{ title: '', start: 0, timeScale: 1_000 }]);
+        assert.strictEqual(titleReads, 0);
+      });
+    }
+    it('retains chapter titles and raw times when the chapter media header is unavailable', async () => {
+      const buffer = audiobook();
+      const at = buffer.indexOf('mdhd', buffer.indexOf('mdhd') + 4);
+      buffer.write('free', at);
+      const metadata = await mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true });
+      assert.strictEqual(metadata.format.duration, 90);
+      assert.deepEqual(
+        chapterList(metadata),
+        expected.map(chapter => ({ ...chapter, timeScale: 0 }))
+      );
     });
     it('rejects a chapter offset outside media data when no Nero list is available', async () => {
       const buffer = audiobook();
