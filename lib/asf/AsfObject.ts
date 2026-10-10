@@ -3,10 +3,9 @@
 import type { IGetToken, ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
-import * as util from '../common/Util.js';
 import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
-import type { AnyTagValue, IPicture, ITag } from '../type.js';
+import type { AnyTagValue, IAudioTrack, IPicture, ITag, IVideoTrack } from '../type.js';
 import AsfGuid from './AsfGuid.js';
 import { getParserForAttr, parseUnicodeAttr } from './AsfUtil.js';
 
@@ -236,6 +235,7 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
   public static guid = AsfGuid.FilePropertiesObject;
 
   public get(buf: Uint8Array, off: number): IFilePropertiesObject {
+    const flags = Token.UINT32_LE.get(buf, off + 64);
     return {
       fileId: AsfGuid.fromBin(buf, off),
       fileSize: Token.UINT64_LE.get(buf, off + 16),
@@ -245,8 +245,8 @@ export class FilePropertiesObject extends State<IFilePropertiesObject> {
       sendDuration: Token.UINT64_LE.get(buf, off + 48),
       preroll: Token.UINT64_LE.get(buf, off + 56),
       flags: {
-        broadcast: util.getBit(buf, off + 64, 24),
-        seekable: util.getBit(buf, off + 64, 25)
+        broadcast: (flags & 1) !== 0,
+        seekable: (flags & 2) !== 0
       },
       // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
       minimumDataPacketSize: Token.UINT32_LE.get(buf, off + 68),
@@ -269,6 +269,11 @@ export interface IStreamPropertiesObject {
    * Error Correction Type
    */
   errorCorrectionType: AsfGuid;
+  streamNumber: number;
+  codecId?: string;
+  audio?: IAudioTrack;
+  video?: IVideoTrack;
+  bitrate?: number;
 }
 
 /**
@@ -279,11 +284,51 @@ export class StreamPropertiesObject extends State<IStreamPropertiesObject> {
   public static guid = AsfGuid.StreamPropertiesObject;
 
   public get(buf: Uint8Array, off: number): IStreamPropertiesObject {
-    return {
+    const available = Math.min(this.len, buf.length - off);
+    if (available < 54) {
+      throw new AsfContentParseError('Truncated Stream Properties Object');
+    }
+    const typeSpecificSize = Token.UINT32_LE.get(buf, off + 40);
+    const correctionSize = Token.UINT32_LE.get(buf, off + 44);
+    if (typeSpecificSize + correctionSize > available - 54) {
+      throw new AsfContentParseError('ASF stream data exceeds Stream Properties Object payload');
+    }
+    const result: IStreamPropertiesObject = {
       streamType: AsfGuid.decodeMediaType(AsfGuid.fromBin(buf, off)),
-      errorCorrectionType: AsfGuid.fromBin(buf, off + 8)
-      // ToDo
+      errorCorrectionType: AsfGuid.fromBin(buf, off + 16),
+      streamNumber: Token.UINT16_LE.get(buf, off + 48) & 0x7f
     };
+    const data = off + 54;
+    if (result.streamType === 'audio' && typeSpecificSize >= 16) {
+      result.codecId = `0x${Token.UINT16_LE.get(buf, data).toString(16).padStart(4, '0')}`;
+      result.audio = {
+        channels: Token.UINT16_LE.get(buf, data + 2),
+        samplingFrequency: Token.UINT32_LE.get(buf, data + 4)
+      };
+      const bitDepth = Token.UINT16_LE.get(buf, data + 14);
+      if (bitDepth > 0) {
+        result.audio.bitDepth = bitDepth;
+      }
+      const bytesPerSecond = Token.UINT32_LE.get(buf, data + 8);
+      if (bytesPerSecond > 0) {
+        result.bitrate = bytesPerSecond * 8;
+      }
+    } else if (result.streamType === 'video' && typeSpecificSize >= 11) {
+      result.video = {
+        pixelWidth: Token.UINT32_LE.get(buf, data),
+        pixelHeight: Token.UINT32_LE.get(buf, data + 4)
+      };
+      // ASF specification 9.2: DWORD width, DWORD height, BYTE flags, WORD format size.
+      // The packed BITMAPINFOHEADER follows at +11; its compression DWORD is at +16.
+      const formatSize = Token.UINT16_LE.get(buf, data + 9);
+      if (formatSize > typeSpecificSize - 11) {
+        throw new AsfContentParseError('ASF video format data exceeds stream data');
+      }
+      if (formatSize >= 20) {
+        result.codecId = new Token.StringType(4, 'ascii').get(buf, data + 27);
+      }
+    }
+    return result;
   }
 }
 
@@ -524,7 +569,7 @@ export interface IExtendedStreamPropertiesObject {
   streamNameCount: number;
   payloadExtensionSystems: number;
   streamNames: IStreamName[];
-  streamPropertiesObject: number | null;
+  streamPropertiesObject: IStreamPropertiesObject | null;
 }
 
 /**
@@ -535,32 +580,68 @@ export class ExtendedStreamPropertiesObjectState extends State<IExtendedStreamPr
   public static guid = AsfGuid.ExtendedStreamPropertiesObject;
 
   public get(buf: Uint8Array, off: number): IExtendedStreamPropertiesObject {
-    const view = new DataView(buf.buffer, off);
-    return {
+    const end = off + Math.min(this.len, buf.length - off);
+    if (end - off < 64) {
+      throw new AsfContentParseError('Truncated Extended Stream Properties Object');
+    }
+    const flags = Token.UINT32_LE.get(buf, off + 44);
+    const result: IExtendedStreamPropertiesObject = {
       startTime: Token.UINT64_LE.get(buf, off),
       endTime: Token.UINT64_LE.get(buf, off + 8),
-      dataBitrate: view.getInt32(12, true),
-      bufferSize: view.getInt32(16, true),
-      initialBufferFullness: view.getInt32(20, true),
-      alternateDataBitrate: view.getInt32(24, true),
-      alternateBufferSize: view.getInt32(28, true),
-      alternateInitialBufferFullness: view.getInt32(32, true),
-      maximumObjectSize: view.getInt32(36, true),
+      dataBitrate: Token.UINT32_LE.get(buf, off + 16),
+      bufferSize: Token.UINT32_LE.get(buf, off + 20),
+      initialBufferFullness: Token.UINT32_LE.get(buf, off + 24),
+      alternateDataBitrate: Token.UINT32_LE.get(buf, off + 28),
+      alternateBufferSize: Token.UINT32_LE.get(buf, off + 32),
+      alternateInitialBufferFullness: Token.UINT32_LE.get(buf, off + 36),
+      maximumObjectSize: Token.UINT32_LE.get(buf, off + 40),
       flags: {
-        // ToDo, check flag positions
-        reliableFlag: util.getBit(buf, off + 40, 0),
-        seekableFlag: util.getBit(buf, off + 40, 1),
-        resendLiveCleanpointsFlag: util.getBit(buf, off + 40, 2)
+        reliableFlag: (flags & 1) !== 0,
+        seekableFlag: (flags & 2) !== 0,
+        resendLiveCleanpointsFlag: (flags & 8) !== 0
       },
-      // flagsNumeric: Token.UINT32_LE.get(buf, off + 64),
-      streamNumber: view.getInt16(42, true),
-      streamLanguageId: view.getInt16(44, true),
-      averageTimePerFrame: view.getInt32(52, true),
-      streamNameCount: view.getInt32(54, true),
-      payloadExtensionSystems: view.getInt32(56, true),
-      streamNames: [], // ToDo
+      streamNumber: Token.UINT16_LE.get(buf, off + 48) & 0x7f,
+      streamLanguageId: Token.UINT16_LE.get(buf, off + 50),
+      averageTimePerFrame: Number(Token.UINT64_LE.get(buf, off + 52)),
+      streamNameCount: Token.UINT16_LE.get(buf, off + 60),
+      payloadExtensionSystems: Token.UINT16_LE.get(buf, off + 62),
+      streamNames: [],
       streamPropertiesObject: null
     };
+    let cursor = off + 64;
+    const requireBytes = (length: number): void => {
+      if (length > end - cursor) {
+        throw new AsfContentParseError('ASF extended stream data exceeds object payload');
+      }
+    };
+    for (let index = 0; index < result.streamNameCount; ++index) {
+      requireBytes(4);
+      const language = Token.UINT16_LE.get(buf, cursor);
+      const length = Token.UINT16_LE.get(buf, cursor + 2);
+      cursor += 4;
+      requireBytes(length);
+      result.streamNames.push({
+        streamLanguageId: language,
+        streamName: parseUnicodeAttr(buf.subarray(cursor, cursor + length))
+      });
+      cursor += length;
+    }
+    for (let index = 0; index < result.payloadExtensionSystems; ++index) {
+      requireBytes(22);
+      const length = Token.UINT32_LE.get(buf, cursor + 18);
+      cursor += 22;
+      requireBytes(length);
+      cursor += length;
+    }
+    if (cursor < end) {
+      requireBytes(HeaderObjectToken.len);
+      const header = HeaderObjectToken.get(buf, cursor);
+      if (!header.objectId.equals(AsfGuid.StreamPropertiesObject) || header.objectSize !== end - cursor) {
+        throw new AsfContentParseError('Invalid embedded ASF Stream Properties Object');
+      }
+      result.streamPropertiesObject = new StreamPropertiesObject(header).get(buf, cursor + HeaderObjectToken.len);
+    }
+    return result;
   }
 }
 

@@ -1,10 +1,32 @@
 import type { IFooter } from './apev2/APEv2Token.js';
 import type { TagType } from './common/GenericTagTypes.js';
 import type { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
-import type { TrackType } from './matroska/types.js';
 
 export { LyricsContentType, TimestampFormat } from './id3v2/ID3v2Token.js';
-export { TrackType, TrackTypeValueToKeyMap } from './matroska/types.js';
+/** Container-independent track types. Existing Matroska values are preserved. */
+export const TrackType = {
+  video: 0x01,
+  audio: 0x02,
+  complex: 0x03,
+  logo: 0x04,
+  subtitle: 0x11,
+  button: 0x12,
+  control: 0x20,
+  /** Timed metadata (library extension to the Matroska track types). */
+  metadata: 0x21
+};
+export type TrackType = (typeof TrackType)[keyof typeof TrackType];
+export type TrackTypeKey = keyof typeof TrackType;
+export const TrackTypeValueToKeyMap: Record<TrackType, TrackTypeKey> = {
+  [TrackType.video]: 'video',
+  [TrackType.audio]: 'audio',
+  [TrackType.complex]: 'complex',
+  [TrackType.logo]: 'logo',
+  [TrackType.subtitle]: 'subtitle',
+  [TrackType.button]: 'button',
+  [TrackType.control]: 'control',
+  [TrackType.metadata]: 'metadata'
+};
 
 export type AnyTagValue = unknown;
 
@@ -410,6 +432,8 @@ export type FormatId =
   | 'hasVideo';
 
 export interface IAudioTrack {
+  /** Number of decoded audio samples, when known. */
+  numberOfSamples?: number;
   samplingFrequency?: number;
   outputSamplingFrequency?: number;
   channels?: number;
@@ -418,6 +442,8 @@ export interface IAudioTrack {
 }
 
 export interface IVideoTrack {
+  /** Frames per second, when known. */
+  frameRate?: number;
   flagInterlaced?: boolean;
   stereoMode?: number;
   pixelWidth?: number;
@@ -431,11 +457,23 @@ export interface IVideoTrack {
 }
 
 export interface ITrackInfo {
+  /** Container track ID/number, or Ogg logical stream serial number. */
+  id?: number;
   type?: TrackType;
+  /** Container-specific codec identifier, e.g. 'mp4a' or 'A_AAC'. */
+  codecId?: string;
   codecName?: string;
+  codecProfile?: string;
+  /** Duration in seconds. */
+  duration?: number;
+  /** Positive, finite encoded track bitrate in bits per second; omitted when unknown. */
+  bitrate?: number;
+  lossless?: boolean;
   codecSettings?: string;
   flagEnabled?: boolean;
   flagDefault?: boolean;
+  /** Track must be displayed even when not explicitly selected (e.g. forced subtitles). */
+  flagForced?: boolean;
   flagLacing?: boolean;
   name?: string;
   language?: string;
@@ -444,6 +482,7 @@ export interface ITrackInfo {
 }
 
 export interface IFormat {
+  /** One entry per discovered track, including single-track audio files. */
   readonly trackInfo: ITrackInfo[];
 
   /**
@@ -670,7 +709,8 @@ export interface IOptions {
   skipPostHeaders?: boolean;
 
   /**
-   * default: `false`, if set to `true`, it will include MP4 chapters
+   * default: `false`, if set to `true`, it will include QuickTime and Nero MP4 chapters.
+   * Forward-only streams require the moov box to precede the chapter data.
    */
   includeChapters?: boolean;
 

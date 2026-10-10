@@ -27,7 +27,7 @@ categories:
       - dependencies
   - title: 🛠️ Under the hood
     labels:
-      - debt
+      - technical debt
       - dev-dependencies
 exclude-labels:
   - DevOps

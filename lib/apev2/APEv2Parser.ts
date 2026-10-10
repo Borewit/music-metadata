@@ -261,6 +261,7 @@ export class APEv2Parser extends BasicParser {
     // ToDo before
     this.metadata.setFormat('lossless', true);
     this.metadata.setFormat('container', "Monkey's Audio");
+    this.metadata.setFormat('codec', "Monkey's Audio");
 
     this.metadata.setFormat('bitsPerSample', header.bitsPerSample);
     this.metadata.setFormat('sampleRate', header.sampleRate);

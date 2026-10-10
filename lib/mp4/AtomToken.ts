@@ -1,9 +1,11 @@
+import { textDecode } from '@borewit/text-codec';
 import initDebug from 'debug';
 import type { IGetToken, IToken } from 'strtok3';
 import * as Token from 'token-types';
 import { FourCcToken } from '../common/FourCC.js';
 import * as util from '../common/Util.js';
 import { FieldDecodingError, makeUnexpectedFileContentError } from '../ParseError.js';
+import type { IChapter } from '../type.js';
 
 const debug = initDebug('music-metadata:parser:MP4:atom');
 
@@ -739,8 +741,8 @@ export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
 
   get(buf: Uint8Array, off: number): ITimeToSampleToken {
     return {
-      count: Token.INT32_BE.get(buf, off + 0),
-      duration: Token.INT32_BE.get(buf, off + 4)
+      count: Token.UINT32_BE.get(buf, off + 0),
+      duration: Token.UINT32_BE.get(buf, off + 4)
     };
   }
 };
@@ -770,9 +772,9 @@ export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
 
   get(buf: Uint8Array, off: number): ISampleToChunk {
     return {
-      firstChunk: Token.INT32_BE.get(buf, off),
-      samplesPerChunk: Token.INT32_BE.get(buf, off + 4),
-      sampleDescriptionId: Token.INT32_BE.get(buf, off + 8)
+      firstChunk: Token.UINT32_BE.get(buf, off),
+      samplesPerChunk: Token.UINT32_BE.get(buf, off + 4),
+      sampleDescriptionId: Token.UINT32_BE.get(buf, off + 8)
     };
   }
 };
@@ -806,14 +808,14 @@ export class StszAtom implements IGetToken<IStszAtom> {
   }
 
   public get(buf: Uint8Array, off: number): IStszAtom {
-    const nrOfEntries = Token.INT32_BE.get(buf, off + 8);
+    const nrOfEntries = Token.UINT32_BE.get(buf, off + 8);
 
     return {
       version: Token.INT8.get(buf, off),
       flags: Token.INT24_BE.get(buf, off + 1),
-      sampleSize: Token.INT32_BE.get(buf, off + 4),
+      sampleSize: Token.UINT32_BE.get(buf, off + 4),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(buf, Token.INT32_BE, off + 12, this.len - 12, nrOfEntries)
+      entries: readTokenTable(buf, Token.UINT32_BE, off + 12, this.len - 12, nrOfEntries)
     };
   }
 }
@@ -824,7 +826,23 @@ export class StszAtom implements IGetToken<IStszAtom> {
  */
 export class StcoAtom extends SimpleTableAtom<number> {
   public constructor(len: number) {
-    super(len, Token.INT32_BE);
+    super(len, Token.UINT32_BE);
+  }
+}
+
+/** 64-bit chunk offsets (co64), constrained to exact JavaScript positions. */
+export class Co64Atom extends SimpleTableAtom<number> {
+  public constructor(len: number) {
+    super(len, {
+      len: 8,
+      get(buf: Uint8Array, off: number): number {
+        const offset = Token.UINT64_BE.get(buf, off);
+        if (offset > BigInt(Number.MAX_SAFE_INTEGER)) {
+          throw new Mp4ContentError('Chunk offset exceeds Number.MAX_SAFE_INTEGER');
+        }
+        return Number(offset);
+      }
+    });
   }
 }
 
@@ -839,9 +857,65 @@ export class ChapterText implements IGetToken<string> {
   }
 
   public get(buf: Uint8Array, off: number): string {
-    const titleLen = Token.INT16_BE.get(buf, off + 0);
-    const str = new Token.StringType(titleLen, 'utf-8');
-    return str.get(buf, off + 2);
+    const available = Math.min(this.len, buf.length - off);
+    if (available < 2) {
+      return '';
+    }
+    const titleLen = Math.min(Token.UINT16_BE.get(buf, off), available - 2);
+    const bytes = buf.subarray(off + 2, off + 2 + titleLen);
+    // QuickTime Unicode text uses UTF-8 unless a UTF-16 byte-order mark is present.
+    if (bytes[0] === 0xfe && bytes[1] === 0xff) {
+      const littleEndian = new Uint8Array(bytes.length - 2);
+      for (let i = 2; i + 1 < bytes.length; i += 2) {
+        littleEndian[i - 2] = bytes[i + 1];
+        littleEndian[i - 1] = bytes[i];
+      }
+      return textDecode(littleEndian, 'utf-16le');
+    }
+    if (bytes[0] === 0xff && bytes[1] === 0xfe) {
+      return textDecode(bytes.subarray(2), 'utf-16le');
+    }
+    return textDecode(bytes);
+  }
+}
+
+/** Nero chapter list (chpl): UTF-8 titles and start times in 100ns units. */
+export class ChapterListAtom implements IGetToken<IChapter[]> {
+  public constructor(public len: number) {}
+
+  public get(buf: Uint8Array, off: number): IChapter[] {
+    const end = off + Math.min(this.len, buf.length - off);
+    if (end - off < 5) {
+      return [];
+    }
+    const version = Token.UINT8.get(buf, off);
+    if (version > 1) {
+      throw new Mp4ContentError(`Unsupported chpl version: ${version}`);
+    }
+    let position = off + (version === 1 ? 8 : 4);
+    if (position >= end) {
+      return [];
+    }
+    const count = Token.UINT8.get(buf, position++);
+    const chapters: IChapter[] = [];
+    for (let i = 0; i < count && position + 9 <= end; ++i) {
+      const start = Token.UINT64_BE.get(buf, position);
+      const titleLength = Token.UINT8.get(buf, position + 8);
+      position += 9;
+      if (position + titleLength > end) {
+        break;
+      }
+      if (start > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw new Mp4ContentError('Chapter start exceeds Number.MAX_SAFE_INTEGER');
+      }
+      chapters.push({
+        title: textDecode(buf.subarray(position, position + titleLength)),
+        start: Number(start),
+        timeScale: 10_000_000
+      });
+      position += titleLength;
+    }
+    return chapters;
   }
 }
 

@@ -608,7 +608,10 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
 
 - `includeChapters`: `boolean` (default: `false`)
-  When `true`, the MP4 parser scans the `mdat` atom for chapters.
+  When `true`, the MP4 parser reads QuickTime chapter tracks and Nero `chpl` chapter lists.
+  A usable QuickTime chapter track takes precedence over a Nero list.
+  Files, buffers, and Blobs support chapters whether `moov` appears before or after `mdat`.
+  For forward-only streams, `moov` must appear before the chapter data.
 
 - `mkvUseIndex`: `boolean` (default: `false`)
 
@@ -667,45 +670,84 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 
 #### `metadata.format.trackInfo`
 
-Containers such as Matroska and MPEG-4 can contain multiple audio and video tracks.
-The experimental `metadata.format.trackInfo` property describes these individual tracks.
+`metadata.format.trackInfo` provides the same track abstraction for single-stream audio files and
+multi-track containers (MPEG-4, Matroska, ASF, and Ogg). Tracks can carry audio, video, subtitles, or
+metadata. Import `TrackType` from `music-metadata` to select tracks without knowing the container:
+
+```js
+import { parseFile, TrackType } from 'music-metadata';
+
+const { format } = await parseFile('movie.mp4');
+const audioTracks = format.trackInfo.filter(track => track.type === TrackType.audio);
+const videoTracks = format.trackInfo.filter(track => track.type === TrackType.video);
+```
+
+Each entry describes one discovered track. The order follows container discovery and does not identify
+a preferred track; use `type`, container flags, and language to choose one. In MPEG-4, the codec and
+media properties describe the first sample description, even when the track has multiple sample descriptions. In Ogg, entries describe
+logical media streams; Skeleton headers do not create media tracks. Single-stream audio parsers map
+their format properties to one audio track after parsing.
+
+Properties are optional when unavailable and are not copied between tracks. In particular, a container
+or summary bitrate is not a per-track bitrate. MPEG-4 track timing comes from media headers (or parsed
+audio fragments), and track bitrates from sample sizes and duration. ASF supplies audio/video stream
+properties and stream bitrates from both standalone and nested Stream Properties Objects. Codec List
+entries supply names for matching streams; unused codecs do not create tracks. Matroska applies
+specified defaults for flags, language, channels, and sample rate, and prefers IETF language tags when present. Video duration/bitrate coverage and overall
+video statistics remain incomplete. The existing `format` fields retain their summary semantics.
+
+For Ogg/Opus, the per-track average bitrate uses the logical stream's payload bytes, including codec
+headers and excluding Ogg framing and other streams. It requires the logical stream's end-of-stream
+(EOS) page and a known duration; reaching input EOF alone is insufficient. Set `duration: true` to
+allow scanning when needed. The summary `format.bitrate` retains
+its existing file-size estimate and can differ from the per-track bitrate. Vorbis and Speex use nominal
+bitrates when their headers provide them.
 
 `metadata.format.trackInfo` is an array of [trackInfo](#trackinfo) objects, empty when no track information is available.
 
 ##### trackInfo
 
 Individual track information. Defined in the TypeScript `ITrackInfo` interface:
-- `trackInfo.type?: TrackType` Track type
+- `trackInfo.id?: number` Container track ID/number, or Ogg stream serial number; only meaningful within the file
+- `trackInfo.type?: TrackType` Track type (`audio`, `video`, `subtitle`, `metadata`, or other known types)
+- `trackInfo.codecId?: string` Container-specific codec identifier, such as `mp4a`, `A_AAC`, or ASF audio format tag `0x0161`
 - `trackInfo.codecName?: string` Codec name
+- `trackInfo.codecProfile?: string` Codec profile
+- `trackInfo.duration?: number` Track duration in seconds
+- `trackInfo.bitrate?: number` Encoded track bitrate in bits per second
+- `trackInfo.lossless?: boolean` Whether the track uses lossless compression
 - `trackInfo.codecSettings?: string` Codec settings
-- `trackInfo.flagEnabled?: boolean` Set if the track is usable, default: `true`
-- `trackInfo.flagDefault?: boolean` Set if that track (audio, video or subs) SHOULD be active if no language found matches the user preference.
-- `trackInfo.flagLacing?: boolean` Set if the track **may** contain blocks using lacing
+- `trackInfo.flagEnabled?: boolean` Whether the track is enabled; Matroska defaults to `true`, MPEG-4 uses the track header flag
+- `trackInfo.flagDefault?: boolean` Whether the container marks the track as a default selection; Matroska defaults to `true`
+- `trackInfo.flagForced?: boolean` Whether a subtitle track should be displayed without explicit selection
+- `trackInfo.flagLacing?: boolean` Whether a Matroska track may contain blocks using lacing; defaults to `true`
 - `trackInfo.name?: string` A human-readable track name.
 - `trackInfo.language?: string` Specifies the language of the track
-- `trackInfo.audio?: IAudioTrack`, see [`trackInfo.audioTrack`](#trackinfoaudiotrack)
-- `trackInfo.video?: IVideoTrack`, see [`trackInfo.videoTrack`](#trackinfovideotrack)
+- `trackInfo.audio?: IAudioTrack`, see [`trackInfo.audio`](#trackinfoaudio)
+- `trackInfo.video?: IVideoTrack`, see [`trackInfo.video`](#trackinfovideo)
 
-##### `trackInfo.audioTrack`
+##### `trackInfo.audio`
 
-- `audioTrack.samplingFrequency?: number`
-- `audioTrack.outputSamplingFrequency?: number`
-- `audioTrack.channels?: number`
-- `audioTrack.channelPositions?: Uint8Array`
-- `audioTrack.bitDepth?: number`
+- `trackInfo.audio.numberOfSamples?: number` Number of decoded sample frames (one sample per channel), when known
+- `trackInfo.audio.samplingFrequency?: number` Sample rate in hertz; for Opus, the informational original input rate
+- `trackInfo.audio.outputSamplingFrequency?: number` Output sample rate in hertz; Opus granules and sample counts use 48000 Hz
+- `trackInfo.audio.channels?: number`
+- `trackInfo.audio.channelPositions?: Uint8Array`
+- `trackInfo.audio.bitDepth?: number`
 
-##### `trackInfo.videoTrack`
+##### `trackInfo.video`
 
-- `videoTrack.flagInterlaced?: boolean`
-- `videoTrack.stereoMode?: number`
-- `videoTrack.pixelWidth?: number`
-- `videoTrack.pixelHeight?: number`
-- `videoTrack.displayWidth?: number`
-- `videoTrack.displayHeight?: number`
-- `videoTrack.displayUnit?: number`
-- `videoTrack.aspectRatioType?: number`
-- `videoTrack.colourSpace?: Uint8Array`
-- `videoTrack.gammaValue?: number`
+- `trackInfo.video.frameRate?: number` Frames per second, when known
+- `trackInfo.video.flagInterlaced?: boolean`
+- `trackInfo.video.stereoMode?: number`
+- `trackInfo.video.pixelWidth?: number`
+- `trackInfo.video.pixelHeight?: number`
+- `trackInfo.video.displayWidth?: number`
+- `trackInfo.video.displayHeight?: number`
+- `trackInfo.video.displayUnit?: number`
+- `trackInfo.video.aspectRatioType?: number`
+- `trackInfo.video.colourSpace?: Uint8Array`
+- `trackInfo.video.gammaValue?: number`
 
 #### `metadata.common`
 

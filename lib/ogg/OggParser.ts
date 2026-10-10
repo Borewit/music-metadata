@@ -4,9 +4,11 @@ import * as Token from 'token-types';
 
 import { BasicParser } from '../common/BasicParser.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
+import { createAudioTrackInfo } from '../common/TrackInfo.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
-import type { IOptions } from '../type.js';
+import { type IOptions, TrackType } from '../type.js';
 import { FlacStream } from './flac/FlacStream.js';
+import { OggStreamMetadata } from './OggStreamMetadata.js';
 
 import type * as Ogg from './OggToken.js';
 import { type IPageConsumer, type IPageHeader, PageHeader, SegmentTable } from './OggToken.js';
@@ -20,16 +22,17 @@ export class OggContentError extends makeUnexpectedFileContentError('Ogg') {}
 const debug = initDebug('music-metadata:parser:ogg');
 
 class OggStream {
-  private metadata: INativeMetadataCollector;
+  public readonly metadata: OggStreamMetadata;
   public streamSerial: number;
   public pageNumber = 0;
+  public payloadBytes = 0;
   public closed = false;
   private options: IOptions;
   public pageConsumer?: IPageConsumer;
   private isSkeleton = false;
 
   constructor(metadata: INativeMetadataCollector, streamSerial: number, options: IOptions) {
-    this.metadata = metadata;
+    this.metadata = new OggStreamMetadata(metadata);
     this.streamSerial = streamSerial;
     this.options = options;
   }
@@ -41,6 +44,7 @@ class OggStream {
     const segmentTable = await tokenizer.readToken<Ogg.ISegmentTable>(new SegmentTable(header));
     debug('totalPageSize=%s', segmentTable.totalPageSize);
     const pageData = await tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(segmentTable.totalPageSize));
+    this.payloadBytes += pageData.length;
     debug(
       'firstPage=%s, lastPage=%s, continued=%s',
       header.headerType.firstPage,
@@ -162,6 +166,34 @@ export class OggParser extends BasicParser {
         await stream.pageConsumer?.flush();
       }
       stream.pageConsumer?.calculateDuration(enfOfStream);
+      const format = stream.metadata.format;
+      if (format.hasAudio) {
+        const track = createAudioTrackInfo(format);
+        track.id = stream.streamSerial;
+        // The summary's Opus estimate uses the file size. Count only this stream's
+        // payload to keep the track bitrate independent of framing and other streams.
+        if (format.codec === 'Opus') {
+          delete track.bitrate;
+          if (track.duration && track.duration > 0 && stream.closed) {
+            track.bitrate = (stream.payloadBytes * 8) / track.duration;
+          }
+        }
+        if (format.codec === 'Opus' && track.audio) {
+          track.audio.outputSamplingFrequency = 48000;
+        }
+        this.metadata.addStreamInfo(track);
+      } else if (format.hasVideo) {
+        const track = format.trackInfo[0] ?? { type: TrackType.video, codecName: format.codec };
+        track.id = stream.streamSerial;
+        this.metadata.addStreamInfo(track);
+      }
+    }
+    // Absence can only be determined after discovering the logical streams.
+    for (const flag of ['hasAudio', 'hasVideo'] as const) {
+      const present = [...this.streams.values()].some(stream => stream.metadata.format[flag] === true);
+      if (this.metadata.format[flag] !== present) {
+        this.metadata.setFormat(flag, present);
+      }
     }
   }
 }

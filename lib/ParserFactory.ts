@@ -8,6 +8,7 @@ import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
 import { cafParserLoader } from './caf/CafLoader.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
+import { createAudioTrackInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
 import { dsdiffParserLoader } from './dsdiff/DsdiffLoader.js';
 import { dsfParserLoader } from './dsf/DsfLoader.js';
@@ -135,6 +136,11 @@ export class ParserFactory {
     const parser = new ParserImpl(metadata, tokenizer, opts ?? {});
     debug(`Parser ${parserLoader.parserType} loaded`);
     await parser.parse();
+    // Audio-only parsers describe their single stream through the format fields.
+    // Container parsers supply their own tracks; never copy aggregate fields to them.
+    if (metadata.format.trackInfo.length === 0 && metadata.format.hasAudio === true) {
+      metadata.addStreamInfo(createAudioTrackInfo(metadata.format));
+    }
     if (metadata.format.trackInfo) {
       if (metadata.format.hasAudio === undefined) {
         metadata.setFormat('hasAudio', !!metadata.format.trackInfo.find(track => track.type === TrackType.audio));

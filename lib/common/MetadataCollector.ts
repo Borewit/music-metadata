@@ -18,6 +18,7 @@ import {
 import { CombinedTagMapper } from './CombinedTagMapper.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
 import { type IGenericTag, isSingleton, isUnique, type TagType } from './GenericTagTypes.js';
+import { normalizeBitrate } from './TrackInfo.js';
 import { toRatio } from './Util.js';
 
 const debug = initDebug('music-metadata:collector');
@@ -139,6 +140,9 @@ export class MetadataCollector implements INativeMetadataCollector {
     debug(
       `streamInfo: type=${streamInfo.type ? TrackTypeValueToKeyMap[streamInfo.type] : '?'}, codec=${streamInfo.codecName}`
     );
+    if (normalizeBitrate(streamInfo.bitrate) === undefined) {
+      delete streamInfo.bitrate;
+    }
     this.format.trackInfo.push(streamInfo);
   }
 

@@ -23,6 +23,7 @@ export * from './ParseError.js';
 export { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
 export {
   type IAudioMetadata,
+  type IAudioTrack,
   type IChapter,
   type ICommonTagsResult,
   type IFormat,
@@ -34,8 +35,11 @@ export {
   type IPicture,
   type IRatio,
   type ITag,
+  type ITrackInfo,
+  type IVideoTrack,
   LyricsContentType,
-  TimestampFormat
+  TimestampFormat,
+  TrackType
 } from './type.js';
 
 /**

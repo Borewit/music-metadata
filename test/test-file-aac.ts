@@ -1,12 +1,20 @@
 import path from 'node:path';
 import { assert } from 'chai';
 import type { IFormat } from '../lib/index.js';
+import { AdtsFrameHeader } from '../lib/mpeg/AdtsFrameHeader.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
 const aacSamplePath = path.join(samplePath, 'aac');
 
 describe('Parse ADTS/AAC', () => {
+  it('should treat reserved sampling-frequency indices as unknown', () => {
+    for (const thirdByte of [0x74, 0x78, 0x7c]) {
+      const header = new AdtsFrameHeader(Uint8Array.of(0xff, 0xf1, thirdByte, 0x80));
+      assert.isNull(header.samplingRate);
+    }
+  });
+
   function checkFormat(
     format: IFormat,
     dataFormat: string,
@@ -79,8 +87,8 @@ describe('Parse ADTS/AAC', () => {
         );
         assert.strictEqual(format.container, 'ADTS/MPEG-4', 'format.container');
         assert.strictEqual(format.codec, 'AAC', 'format.codec');
-        assert.isNotOk(format.sampleRate, 'format.sampleRate should be unknown, not a negative value');
-        assert.isAtLeast(format.bitrate ?? 0, 0, 'format.bitrate must never be negative');
+        assert.isNull(format.sampleRate, 'format.sampleRate should be unknown');
+        assert.isUndefined(format.bitrate, 'format.bitrate cannot be calculated without a sampling rate');
       });
     });
   });

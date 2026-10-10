@@ -31,6 +31,7 @@ export class OpusStream extends VorbisStream {
    */
   protected parseFirstPage(_header: IPageHeader, pageData: Uint8Array) {
     this.metadata.setFormat('codec', 'Opus');
+    this.metadata.setFormat('lossless', false);
     // Parse Opus ID Header
     this.idHeader = new Opus.IdHeader(pageData.length).get(pageData, 0);
     if (this.idHeader.magicSignature !== 'OpusHead') {
