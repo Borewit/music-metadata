@@ -57,24 +57,25 @@ export class CafParser extends BasicParser {
     this.metadata.setFormat('container', 'CAF');
     this.metadata.setAudioOnly();
 
-    try {
-      while (!this.reachedEndOfFile && !this.endOfFileReached()) {
-        const chunkHeader = await this.tokenizer.readToken<CafToken.ICafChunkHeader>(CafToken.ChunkHeader);
-        debug(`Reading CAF chunk type=${chunkHeader.chunkType} size=${chunkHeader.chunkSize}`);
-        if (this.expectedFirstChunk) {
-          this.expectedFirstChunk = false;
-          if (chunkHeader.chunkType !== 'desc') {
-            throw new CafContentError(`Expected an Audio Description chunk, found '${chunkHeader.chunkType}'`);
-          }
+    while (!this.reachedEndOfFile && !this.endOfFileReached()) {
+      let chunkHeader: CafToken.ICafChunkHeader;
+      try {
+        chunkHeader = await this.tokenizer.readToken<CafToken.ICafChunkHeader>(CafToken.ChunkHeader);
+      } catch (error) {
+        if (error instanceof strtok3.EndOfStreamError) {
+          debug('End-of-stream');
+          break;
         }
-        await this.readChunk(chunkHeader);
-      }
-    } catch (error) {
-      if (error instanceof strtok3.EndOfStreamError) {
-        debug('End-of-stream');
-      } else {
         throw error;
       }
+      debug(`Reading CAF chunk type=${chunkHeader.chunkType} size=${chunkHeader.chunkSize}`);
+      if (this.expectedFirstChunk) {
+        this.expectedFirstChunk = false;
+        if (chunkHeader.chunkType !== 'desc') {
+          throw new CafContentError(`Expected an Audio Description chunk, found '${chunkHeader.chunkType}'`);
+        }
+      }
+      await this.readChunk(chunkHeader);
     }
 
     if (!this.desc) {
