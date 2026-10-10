@@ -2,6 +2,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import { EndOfStreamError } from 'strtok3';
 import * as CafToken from '../lib/caf/CafToken.js';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
@@ -570,8 +571,7 @@ describe('Parse CAF (Core Audio File Format)', () => {
     it('rejects a truncated Audio Description chunk', async () => {
       const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription.subarray(0, 24)]);
       await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
-        mm.UnexpectedFileContentError,
-        /Missing Audio Description chunk/
+        EndOfStreamError
       );
     });
 
@@ -745,6 +745,21 @@ describe('Parse CAF (Core Audio File Format)', () => {
       ]);
       const { common } = await mm.parseStream(Readable.from([file], { objectMode: false }), { mimeType: cafMimeType });
       assert.deepEqual(common.artists, [value]);
+    });
+
+    it('rejects a truncated Information chunk body from a stream', async () => {
+      const value = 'x'.repeat(100000);
+      const body = infoBody([['artist', value]]);
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('info', body.length),
+        body.subarray(0, body.length - 1)
+      ]);
+      await expect(
+        mm.parseStream(Readable.from([file], { objectMode: false }), { mimeType: cafMimeType })
+      ).to.be.rejectedWith(EndOfStreamError);
     });
 
     it('handles an unknown-size data chunk from a stream without a known length', async () => {
