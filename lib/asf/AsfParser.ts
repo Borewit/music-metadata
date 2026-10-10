@@ -1,6 +1,7 @@
 import initDebug from 'debug';
 import { EndOfStreamError } from 'strtok3';
 import * as Token from 'token-types';
+import { validateAllocation } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { type ITag, type ITrackInfo, TrackType } from '../type.js';
 import AsfGuid from './AsfGuid.js';
@@ -9,7 +10,6 @@ import { AsfContentParseError } from './AsfObject.js';
 
 const debug = initDebug('music-metadata:parser:ASF');
 const headerType = 'asf';
-const maxAsfMetadataObjectSize = 16 * 1024 * 1024;
 
 /**
  * Windows Media Metadata Usage Guidelines
@@ -26,9 +26,7 @@ export class AsfParser extends BasicParser {
   private codecs: AsfObject.ICodecEntry[] = [];
   private streamBitrates = new Map<number, number>();
   public async parse() {
-    const header = await this.tokenizer.readToken<AsfObject.IAsfTopLevelObjectHeader>(
-      AsfObject.TopLevelHeaderObjectToken
-    );
+    const header = await this.readToken<AsfObject.IAsfTopLevelObjectHeader>(AsfObject.TopLevelHeaderObjectToken);
     if (!header.objectId.equals(AsfGuid.HeaderObject)) {
       throw new AsfContentParseError(`expected asf header; but was not found; got: ${header.objectId.str}`);
     }
@@ -100,9 +98,7 @@ export class AsfParser extends BasicParser {
         case AsfObject.FilePropertiesObject.guid.str: {
           // 3.2
           this.validateAllocationSize(payloadSize, 'File Properties Object');
-          const fpo = await this.tokenizer.readToken<AsfObject.IFilePropertiesObject>(
-            new AsfObject.FilePropertiesObject(header)
-          );
+          const fpo = await this.readToken<AsfObject.IFilePropertiesObject>(new AsfObject.FilePropertiesObject(header));
           this.metadata.setFormat(
             'duration',
             Number(fpo.playDuration / BigInt(1000)) / 10000 - Number(fpo.preroll) / 1000
@@ -114,7 +110,7 @@ export class AsfParser extends BasicParser {
         case AsfObject.StreamPropertiesObject.guid.str: {
           // 3.3
           this.validateAllocationSize(payloadSize, 'Stream Properties Object');
-          const spo = await this.tokenizer.readToken<AsfObject.IStreamPropertiesObject>(
+          const spo = await this.readToken<AsfObject.IStreamPropertiesObject>(
             new AsfObject.StreamPropertiesObject(header)
           );
           this.metadata.setFormat('container', `ASF/${spo.streamType}`);
@@ -133,7 +129,7 @@ export class AsfParser extends BasicParser {
           if (payloadSize < extensionHeaderToken.len) {
             throw new AsfContentParseError(`ASF Header Extension Object payload is too small: ${payloadSize} bytes`);
           }
-          const extHeader = await this.tokenizer.readToken<AsfObject.IHeaderExtensionObject>(extensionHeaderToken);
+          const extHeader = await this.readToken<AsfObject.IHeaderExtensionObject>(extensionHeaderToken);
           const expectedExtensionSize = payloadSize - extensionHeaderToken.len;
           if (extHeader.extensionDataSize !== expectedExtensionSize) {
             throw new AsfContentParseError(
@@ -146,13 +142,13 @@ export class AsfParser extends BasicParser {
 
         case AsfObject.ContentDescriptionObjectState.guid.str: // 3.10
           this.validateAllocationSize(payloadSize, 'Content Description Object');
-          tags = await this.tokenizer.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header));
+          tags = await this.readToken<ITag[]>(new AsfObject.ContentDescriptionObjectState(header));
           await this.addTags(tags);
           break;
 
         case AsfObject.ExtendedContentDescriptionObjectState.guid.str: // 3.11
           this.validateAllocationSize(payloadSize, 'Extended Content Description Object');
-          tags = await this.tokenizer.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header));
+          tags = await this.readToken<ITag[]>(new AsfObject.ExtendedContentDescriptionObjectState(header));
           await this.addTags(tags);
           break;
 
@@ -178,13 +174,13 @@ export class AsfParser extends BasicParser {
           if (payloadSize < 2) {
             throw new AsfContentParseError('Truncated Stream Bitrate Properties Object');
           }
-          const count = await this.tokenizer.readToken(Token.UINT16_LE);
+          const count = await this.readToken(Token.UINT16_LE);
           if (count * 6 > payloadSize - 2) {
             throw new AsfContentParseError('ASF stream bitrate records exceed object payload');
           }
           for (let index = 0; index < count; ++index) {
-            const streamNumber = (await this.tokenizer.readToken(Token.UINT16_LE)) & 0x7f;
-            this.streamBitrates.set(streamNumber, await this.tokenizer.readToken(Token.UINT32_LE));
+            const streamNumber = (await this.readToken(Token.UINT16_LE)) & 0x7f;
+            this.streamBitrates.set(streamNumber, await this.readToken(Token.UINT32_LE));
           }
           await this.ignorePayload(payloadSize - 2 - count * 6, 'Stream Bitrate Properties Object');
           break;
@@ -226,7 +222,7 @@ export class AsfParser extends BasicParser {
         `Insufficient ASF ${containerType} data for an object header: ${remainingSize} bytes`
       );
     }
-    const header = await this.tokenizer.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken);
+    const header = await this.readToken<AsfObject.IAsfObjectHeader>(AsfObject.HeaderObjectToken);
     if (header.objectSize > remainingSize) {
       throw new AsfContentParseError(
         `ASF ${containerType} object size ${header.objectSize} exceeds remaining ${containerType} payload size ${remainingSize}`
@@ -253,11 +249,7 @@ export class AsfParser extends BasicParser {
   }
 
   private validateAllocationSize(payloadSize: number, objectType: string): void {
-    if (payloadSize > maxAsfMetadataObjectSize) {
-      throw new AsfContentParseError(
-        `ASF ${objectType} payload size ${payloadSize} exceeds allocation limit ${maxAsfMetadataObjectSize}`
-      );
-    }
+    validateAllocation(payloadSize, this.options, message => new AsfContentParseError(`ASF ${objectType}: ${message}`));
   }
 
   private async ignorePayload(payloadSize: number, objectType: string): Promise<void> {
@@ -283,7 +275,7 @@ export class AsfParser extends BasicParser {
         case AsfObject.ExtendedStreamPropertiesObjectState.guid.str: {
           // 4.1
           this.validateAllocationSize(payloadSize, 'Extended Stream Properties Object');
-          const extended = await this.tokenizer.readToken<AsfObject.IExtendedStreamPropertiesObject>(
+          const extended = await this.readToken<AsfObject.IExtendedStreamPropertiesObject>(
             new AsfObject.ExtendedStreamPropertiesObjectState(header)
           );
           if (extended.streamPropertiesObject) {
@@ -297,7 +289,7 @@ export class AsfParser extends BasicParser {
         case AsfObject.MetadataObjectState.guid.str: {
           // 4.7
           this.validateAllocationSize(payloadSize, 'Metadata Object');
-          const moTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataObjectState(header));
+          const moTags = await this.readToken<ITag[]>(new AsfObject.MetadataObjectState(header));
           await this.addTags(moTags);
           break;
         }
@@ -305,7 +297,7 @@ export class AsfParser extends BasicParser {
         case AsfObject.MetadataLibraryObjectState.guid.str: {
           // 4.8
           this.validateAllocationSize(payloadSize, 'Metadata Library Object');
-          const mlTags = await this.tokenizer.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header));
+          const mlTags = await this.readToken<ITag[]>(new AsfObject.MetadataLibraryObjectState(header));
           await this.addTags(mlTags);
           break;
         }

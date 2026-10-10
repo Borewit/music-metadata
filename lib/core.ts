@@ -13,6 +13,7 @@ import {
   type ITokenizer
 } from 'strtok3';
 import { APEv2Parser } from './apev2/APEv2Parser.js';
+import { getTokenizerOptions } from './common/Allocation.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 import { ParserFactory } from './ParserFactory.js';
@@ -50,7 +51,7 @@ export {
  * @returns Metadata
  */
 export async function parseBlob(blob: Blob, options: IOptions = {}): Promise<IAudioMetadata> {
-  const tokenizer = fromBlob(blob);
+  const tokenizer = fromBlob(blob, getTokenizerOptions(options));
   try {
     return await parseFromTokenizer(tokenizer, options);
   } finally {
@@ -70,9 +71,10 @@ export async function parseWebStream(
   fileInfo?: IFileInfo | string,
   options: IOptions = {}
 ): Promise<IAudioMetadata> {
-  const tokenizer = fromWebStream(webStream, {
-    fileInfo: typeof fileInfo === 'string' ? { mimeType: fileInfo } : fileInfo
-  });
+  const tokenizer = fromWebStream(
+    webStream,
+    getTokenizerOptions(options, typeof fileInfo === 'string' ? { mimeType: fileInfo } : fileInfo)
+  );
   try {
     return await parseFromTokenizer(tokenizer, options);
   } finally {
@@ -93,9 +95,10 @@ export async function parseBuffer(
   fileInfo?: IFileInfo | string,
   options: IOptions = {}
 ): Promise<IAudioMetadata> {
-  const tokenizer = fromBuffer(uint8Array, {
-    fileInfo: typeof fileInfo === 'string' ? { mimeType: fileInfo } : fileInfo
-  });
+  const tokenizer = fromBuffer(
+    uint8Array,
+    getTokenizerOptions(options, typeof fileInfo === 'string' ? { mimeType: fileInfo } : fileInfo)
+  );
   return parseFromTokenizer(tokenizer, options);
 }
 

@@ -2,6 +2,7 @@ import initDebug from 'debug';
 import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
+import { readToken } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { createAudioTrackInfo } from '../common/TrackInfo.js';
@@ -43,7 +44,7 @@ class OggStream {
 
     const segmentTable = await tokenizer.readToken<Ogg.ISegmentTable>(new SegmentTable(header));
     debug('totalPageSize=%s', segmentTable.totalPageSize);
-    const pageData = await tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(segmentTable.totalPageSize));
+    const pageData = await readToken(tokenizer, new Token.Uint8ArrayType(segmentTable.totalPageSize), this.options);
     this.payloadBytes += pageData.length;
     debug(
       'firstPage=%s, lastPage=%s, continued=%s',

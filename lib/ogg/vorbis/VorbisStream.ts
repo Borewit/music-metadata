@@ -1,5 +1,6 @@
 import debugInit from 'debug';
 import * as Token from 'token-types';
+import { validateAllocation } from '../../common/Allocation.js';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
 import type { IOptions } from '../../type.js';
@@ -17,6 +18,7 @@ export class VorbisContentError extends makeUnexpectedFileContentError('Vorbis')
  */
 export class VorbisStream implements IPageConsumer {
   private pageSegments: Uint8Array[] = [];
+  private bufferedPageLength = 0;
   protected metadata: INativeMetadataCollector;
   protected options: IOptions;
   protected lastPageHeader?: IPageHeader;
@@ -42,34 +44,38 @@ export class VorbisStream implements IPageConsumer {
         if (this.pageSegments.length === 0) {
           throw new VorbisContentError('Cannot continue on previous page');
         }
+        validateAllocation(this.bufferedPageLength + pageData.length, this.options);
         this.pageSegments.push(pageData);
+        this.bufferedPageLength += pageData.length;
       }
       if (header.headerType.lastPage || !header.headerType.continued) {
         // Flush page segments
         if (this.pageSegments.length > 0) {
-          const fullPage = VorbisStream.mergeUint8Arrays(this.pageSegments);
+          const fullPage = this.mergeUint8Arrays(this.pageSegments);
           await this.parseFullPage(fullPage);
         }
         // Reset page segments
+        this.bufferedPageLength = header.headerType.lastPage ? 0 : pageData.length;
+        validateAllocation(this.bufferedPageLength, this.options);
         this.pageSegments = header.headerType.lastPage ? [] : [pageData];
       }
     }
   }
 
-  private static mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
+  private mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
     const totalSize = arrays.reduce((acc, e) => acc + e.length, 0);
+    validateAllocation(totalSize, this.options);
     const merged = new Uint8Array(totalSize);
-
-    arrays.forEach((array, i, _arrays) => {
-      const offset = _arrays.slice(0, i).reduce((acc, e) => acc + e.length, 0);
+    let offset = 0;
+    for (const array of arrays) {
       merged.set(array, offset);
-    });
-
+      offset += array.length;
+    }
     return merged;
   }
 
   public async flush(): Promise<void> {
-    await this.parseFullPage(VorbisStream.mergeUint8Arrays(this.pageSegments));
+    await this.parseFullPage(this.mergeUint8Arrays(this.pageSegments));
   }
 
   public async parseUserComment(pageData: Uint8Array, offset: number): Promise<number> {

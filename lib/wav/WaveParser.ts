@@ -2,6 +2,7 @@ import type { SupportedEncoding } from '@borewit/text-codec';
 import initDebug from 'debug';
 import * as strtok3 from 'strtok3';
 import * as Token from 'token-types';
+import { getTokenizerOptions } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
@@ -34,7 +35,7 @@ export class WaveParser extends BasicParser {
   private header: riff.IChunkHeader | undefined;
 
   public async parse(): Promise<void> {
-    const riffHeader = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
+    const riffHeader = await this.readToken<riff.IChunkHeader>(riff.Header);
     debug(`pos=${this.tokenizer.position}, parse: chunkID=${riffHeader.chunkID}`);
     if (riffHeader.chunkID !== 'RIFF') {
       return; // Not RIFF format
@@ -49,7 +50,7 @@ export class WaveParser extends BasicParser {
   }
 
   public async parseRiffChunk(chunkSize: number): Promise<void> {
-    const type = await this.tokenizer.readToken<string>(FourCcToken);
+    const type = await this.readToken<string>(FourCcToken);
     this.metadata.setFormat('container', type);
     switch (type) {
       case 'WAVE':
@@ -61,7 +62,7 @@ export class WaveParser extends BasicParser {
 
   public async readWaveChunk(remaining: number): Promise<void> {
     while (remaining >= riff.Header.len) {
-      const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
+      const header = await this.readToken<riff.IChunkHeader>(riff.Header);
       remaining -= riff.Header.len + header.chunkSize;
       if (header.chunkSize > remaining) {
         this.metadata.addWarning('Data chunk size exceeds file size');
@@ -74,7 +75,7 @@ export class WaveParser extends BasicParser {
           if (header.chunkSize < 8) {
             throw new WaveContentError('CSET chunk must contain at least 8 bytes');
           }
-          const cset = await this.tokenizer.readToken(new Token.Uint8ArrayType(header.chunkSize));
+          const cset = await this.readToken(new Token.Uint8ArrayType(header.chunkSize));
           this.codePage = Token.UINT16_LE.get(cset, 0);
           if (!this.getInfoEncoding()) {
             this.metadata.addWarning(
@@ -91,12 +92,12 @@ export class WaveParser extends BasicParser {
 
         case 'fact': // extended Format chunk,
           this.metadata.setFormat('lossless', false);
-          this.fact = await this.tokenizer.readToken(new WaveChunk.FactChunk(header));
+          this.fact = await this.readToken(new WaveChunk.FactChunk(header));
           break;
 
         case 'fmt ': {
           // The Util Chunk, non-PCM Formats
-          const fmt = await this.tokenizer.readToken<WaveChunk.IWaveFormat>(new WaveChunk.Format(header));
+          const fmt = await this.readToken<WaveChunk.IWaveFormat>(new WaveChunk.Format(header));
 
           let subFormat = WaveChunk.WaveFormatNameMap[fmt.wFormatTag];
           if (!subFormat) {
@@ -115,8 +116,8 @@ export class WaveParser extends BasicParser {
         case 'id3 ': // The way Picard, FooBar currently stores, ID3 meta-data
         case 'ID3 ': {
           // The way Mp3Tags stores ID3 meta-data
-          const id3_data = await this.tokenizer.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
-          const rst = strtok3.fromBuffer(id3_data);
+          const id3_data = await this.readToken<Uint8Array>(new Token.Uint8ArrayType(header.chunkSize));
+          const rst = strtok3.fromBuffer(id3_data, getTokenizerOptions(this.options));
           await new ID3v2Parser().parse(this.metadata, rst, this.options);
           break;
         }
@@ -159,7 +160,7 @@ export class WaveParser extends BasicParser {
 
         case 'bext': {
           // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
-          const bext = await this.tokenizer.readToken(BroadcastAudioExtensionChunk);
+          const bext = await this.readToken(BroadcastAudioExtensionChunk);
           for (const key of Object.keys(bext)) {
             await this.metadata.addTag('exif', `bext.${key}`, bext[key as keyof IBroadcastAudioExtensionChunk]);
           }
@@ -188,7 +189,7 @@ export class WaveParser extends BasicParser {
   }
 
   public async parseListTag(listHeader: riff.IChunkHeader): Promise<void> {
-    const listType = await this.tokenizer.readToken(new Token.StringType(4, 'latin1'));
+    const listType = await this.readToken(new Token.StringType(4, 'latin1'));
     debug('pos=%s, parseListTag: chunkID=RIFF/WAVE/LIST/%s', this.tokenizer.position, listType);
     switch (listType) {
       case 'INFO':
@@ -202,9 +203,9 @@ export class WaveParser extends BasicParser {
 
   private async parseRiffInfoTags(chunkSize: number): Promise<void> {
     while (chunkSize >= 8) {
-      const header = await this.tokenizer.readToken<riff.IChunkHeader>(riff.Header);
+      const header = await this.readToken<riff.IChunkHeader>(riff.Header);
       const valueToken = new riff.ListInfoTagValue(header);
-      const bytes = await this.tokenizer.readToken(new Token.Uint8ArrayType(valueToken.len));
+      const bytes = await this.readToken(new Token.Uint8ArrayType(valueToken.len));
       if (this.codePage === undefined) {
         this.metadata.registerTagType('exif');
         this.pendingInfoTags.push({ header, bytes });

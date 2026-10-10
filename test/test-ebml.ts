@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 import { ReadableStream } from 'node:stream/web';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
+import { fromBuffer, fromStream } from 'strtok3';
 
 import { EbmlContentError, EbmlIterator, ParseAction } from '../lib/ebml/EbmlIterator.js';
 import { DataType, type IElementType } from '../lib/ebml/types.js';
@@ -23,6 +23,25 @@ function leafDtd(value: DataType): IElementType {
 }
 
 describe('EBML leaf lengths (GHSA-5gfj-9q3v-qfp3)', () => {
+  for (const action of [ParseAction.IgnoreElement, ParseAction.SkipSiblings]) {
+    it(`bounds an unknown-size EBML skip by known input before calling the tokenizer (action ${action})`, async () => {
+      // Eight-byte unknown-size VINT: its numeric representation exceeds Number.MAX_SAFE_INTEGER.
+      const sample = new Uint8Array([0x81, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 1, 2, 3]);
+      const tokenizer = fromBuffer(sample);
+      const ignore = tokenizer.ignore.bind(tokenizer);
+      tokenizer.ignore = length => {
+        assert.strictEqual(length, 3);
+        return ignore(length);
+      };
+      const tree = await new EbmlIterator(tokenizer).iterate(leafDtd(DataType.binary), Number.MAX_SAFE_INTEGER, {
+        startNext: () => action,
+        elementValue: async () => undefined
+      });
+      assert.deepEqual(tree, {});
+      assert.strictEqual(tokenizer.position, sample.length);
+    });
+  }
+
   for (const [name, type] of Object.entries(DataType)) {
     it(`rejects a ${name} leaf extending past the file`, async () => {
       const tokenizer = fromBuffer(new Uint8Array([0x81, 0x84, 1]));
@@ -189,7 +208,7 @@ describe('EBML leaf lengths (GHSA-5gfj-9q3v-qfp3)', () => {
                   }),
                   fileInfo
                 );
-          await expect(result).to.be.rejectedWith(EndOfStreamError);
+          await expect(result).to.be.rejectedWith(EbmlContentError, 'allocation limit');
         });
       }
     }

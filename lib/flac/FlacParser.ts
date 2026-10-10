@@ -17,7 +17,7 @@ export class FlacParser extends AbstractID3Parser {
   private vorbisParser = new VorbisStream(this.metadata, this.options);
 
   public async postId3v2Parse(): Promise<void> {
-    const fourCC = await this.tokenizer.readToken<string>(FourCcToken);
+    const fourCC = await this.readToken<string>(FourCcToken);
     if (fourCC.toString() !== 'fLaC') {
       throw new FlacContentError('Invalid FLAC preamble');
     }
@@ -25,7 +25,7 @@ export class FlacParser extends AbstractID3Parser {
     let blockHeader: Flac.IBlockHeader;
     do {
       // Read block header
-      blockHeader = await this.tokenizer.readToken(Flac.BlockHeader);
+      blockHeader = await this.readToken(Flac.BlockHeader);
       // Parse block data
       await this.parseDataBlock(blockHeader);
     } while (!blockHeader.lastBlock);
@@ -69,7 +69,7 @@ export class FlacParser extends AbstractID3Parser {
       throw new FlacContentError('Unexpected block-stream-info length');
     }
 
-    const streamInfo = await this.tokenizer.readToken(Flac.BlockStreamInfo);
+    const streamInfo = await this.readToken(Flac.BlockStreamInfo);
     this.metadata.setFormat('container', 'FLAC');
     this.processsStreamInfo(streamInfo);
   }
@@ -94,7 +94,7 @@ export class FlacParser extends AbstractID3Parser {
    * Ref: https://www.xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-640004.2.3
    */
   private async readComment(dataLen: number): Promise<void> {
-    const data = await this.tokenizer.readToken(new Uint8ArrayType(dataLen));
+    const data = await this.readToken(new Uint8ArrayType(dataLen));
     return this.parseComment(data);
   }
 
@@ -109,9 +109,12 @@ export class FlacParser extends AbstractID3Parser {
       this.metadata.setFormat('tool', vendor);
     }
     const commentListLength = decoder.readInt32();
-    const tags = new Array(commentListLength);
+    if (commentListLength > Math.floor(decoder.remaining / 4)) {
+      throw new FlacContentError(`Vorbis comment count ${commentListLength} exceeds remaining data`);
+    }
+    const tags = [];
     for (let i = 0; i < commentListLength; i++) {
-      tags[i] = decoder.parseUserComment();
+      tags.push(decoder.parseUserComment());
     }
     await Promise.all(
       tags.map(tag => {
@@ -127,7 +130,7 @@ export class FlacParser extends AbstractID3Parser {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     }
-    return this.addPictureTag(await this.tokenizer.readToken(new VorbisPictureToken(dataLen)));
+    return this.addPictureTag(await this.readToken(new VorbisPictureToken(dataLen)));
   }
 
   public addPictureTag(picture: IVorbisPicture): Promise<void> {
