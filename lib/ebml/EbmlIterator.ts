@@ -2,7 +2,9 @@ import initDebug from 'debug';
 import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
+import { readBuffer } from '../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
+import type { IOptions } from '../type.js';
 import { DataType, type IElementType, type IHeader, type ITree, type ValueType } from './types.js';
 
 const debug = initDebug('music-metadata:parser:ebml');
@@ -52,7 +54,10 @@ export class EbmlIterator {
    * @param {ITokenizer} tokenizer Input
    * @param tokenizer
    */
-  constructor(tokenizer: ITokenizer) {
+  constructor(
+    tokenizer: ITokenizer,
+    private readonly options: IOptions = {}
+  ) {
     this.tokenizer = tokenizer;
     this.parserMap.set(DataType.uint, e => this.readUint(e));
     this.parserMap.set(DataType.string, e => this.readString(e));
@@ -143,14 +148,14 @@ export class EbmlIterator {
             debug(
               `Ignore element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
             );
-            await this.tokenizer.ignore(element.len);
+            await this.ignore(element.len, posDone);
             break;
 
           case ParseAction.SkipSiblings:
             debug(
               `Ignore remaining container, at: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
             );
-            await this.tokenizer.ignore(posDone - this.tokenizer.position);
+            await this.ignore(posDone - this.tokenizer.position, posDone);
             break;
 
           case ParseAction.TerminateParsing:
@@ -162,17 +167,28 @@ export class EbmlIterator {
       } else {
         switch (element.id) {
           case 0xec: // void
-            await this.tokenizer.ignore(element.len);
+            await this.ignore(element.len, posDone);
             break;
           default:
             debug(
               `parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)} at position=${elementPosition}`
             );
-            await this.tokenizer.ignore(element.len);
+            await this.ignore(element.len, posDone);
         }
       }
     }
     return tree;
+  }
+
+  private async ignore(length: number, posDone: number): Promise<void> {
+    // Unknown-size EBML containers may advertise lengths above the safe integer range.
+    // Bound skips by the enclosing container and known input before passing them to the tokenizer.
+    const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
+    const boundedLength = Math.min(length, end - this.tokenizer.position);
+    if (!Number.isSafeInteger(boundedLength) || boundedLength < 0) {
+      throw new EbmlContentError(`Invalid element length: ${length}`);
+    }
+    await this.tokenizer.ignore(boundedLength);
   }
 
   private async readVintData(maxLength: number): Promise<Uint8Array> {
@@ -234,28 +250,7 @@ export class EbmlIterator {
   }
 
   private async readBuffer(e: IHeader): Promise<Uint8Array> {
-    const chunkSize = 64 * 1024;
-    if ((!this.tokenizer.supportsRandomAccess() || this.tokenizer.fileInfo.size === undefined) && e.len > chunkSize) {
-      // Neither a declared container size nor an advertised stream size proves these bytes exist.
-      // Allocate incrementally, and only assemble the leaf after reading its payload.
-      const chunks: Uint8Array[] = [];
-      for (let remaining = e.len; remaining > 0; ) {
-        const chunk = new Uint8Array(Math.min(remaining, chunkSize));
-        await this.tokenizer.readBuffer(chunk);
-        chunks.push(chunk);
-        remaining -= chunk.length;
-      }
-      const buf = new Uint8Array(e.len);
-      let offset = 0;
-      for (const chunk of chunks) {
-        buf.set(chunk, offset);
-        offset += chunk.length;
-      }
-      return buf;
-    }
-    const buf = new Uint8Array(e.len);
-    await this.tokenizer.readBuffer(buf);
-    return buf;
+    return readBuffer(this.tokenizer, e.len, this.options, undefined, message => new EbmlContentError(message));
   }
 }
 

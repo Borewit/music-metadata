@@ -611,6 +611,17 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   Files, buffers, and Blobs support chapters whether `moov` appears before or after `mdat`.
   For forward-only streams, `moov` must appear before the chapter data.
 
+- `maxMemoryAllocation`: `number` (default: `67108864`, 64 MiB)
+
+  Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
+  Must be a positive safe integer. Parsing rejects payloads above this limit before allocating them.
+  The parser configures this limit once on its `strtok3` tokenizers, including tokenizers for embedded tags.
+  Oversized tokenizer allocations or stream lookahead reject with `strtok3.BufferSizeError`.
+  When using `parseFromTokenizer()`, also configure `maxBufferSize` on the supplied tokenizer at creation.
+  Increase it for files with unusually large metadata or cover art, or lower it for constrained environments.
+  Audio/video data that is skipped does not count toward this limit. This does not cap total process memory:
+  decoded metadata, multiple retained tags, and temporary copies can require additional memory.
+
 - `mkvUseIndex`: `boolean` (default: `false`)
 
   When `true`, the parser uses the SeekHead index in Matroska (MKV) files to skip segment and cluster elements.

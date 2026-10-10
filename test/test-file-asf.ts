@@ -947,9 +947,9 @@ describe('Parse ASF', () => {
       const objectSize = 24 + payloadSize;
       const stream = createUnknownSizeStream(createSingleObjectAsf(AsfGuid.CodecListObject, objectSize));
 
-      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+      await expect(mm.parseStream(stream, asfMimeType, { maxMemoryAllocation: 16 * 1024 * 1024 })).to.be.rejectedWith(
         AsfContentParseError,
-        /Codec List Object payload size 16777217 exceeds allocation limit 16777216/
+        /Codec List Object: Metadata size 16777217 exceeds allocation limit 16777216/
       );
     });
 
@@ -968,9 +968,9 @@ describe('Parse ASF', () => {
       const payloadSize = 16 * 1024 * 1024 + 1;
       const objectSize = 24 + payloadSize;
       const stream = createUnknownSizeStream(createSingleObjectAsf(AsfGuid.FilePropertiesObject, objectSize));
-      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+      await expect(mm.parseStream(stream, asfMimeType, { maxMemoryAllocation: 16 * 1024 * 1024 })).to.be.rejectedWith(
         AsfContentParseError,
-        /File Properties Object payload size 16777217 exceeds allocation limit 16777216/
+        /File Properties Object: Metadata size 16777217 exceeds allocation limit 16777216/
       );
     });
 
@@ -988,9 +988,9 @@ describe('Parse ASF', () => {
       view.setUint32(extensionOffset + 24 + 18, nestedObjectSize, true);
 
       const stream = createUnknownSizeStream(data);
-      await expect(mm.parseStream(stream, asfMimeType)).to.be.rejectedWith(
+      await expect(mm.parseStream(stream, asfMimeType, { maxMemoryAllocation: 16 * 1024 * 1024 })).to.be.rejectedWith(
         AsfContentParseError,
-        /Metadata Object payload size 16777217 exceeds allocation limit 16777216/
+        /Metadata Object: Metadata size 16777217 exceeds allocation limit 16777216/
       );
     });
 

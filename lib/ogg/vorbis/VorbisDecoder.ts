@@ -1,5 +1,8 @@
 import { textDecode } from '@borewit/text-codec';
 import * as Token from 'token-types';
+import { makeUnexpectedFileContentError } from '../../ParseError.js';
+
+class VorbisCommentError extends makeUnexpectedFileContentError('Vorbis') {}
 
 export class VorbisDecoder {
   private readonly data: Uint8Array;
@@ -11,7 +14,14 @@ export class VorbisDecoder {
     this.offset = offset;
   }
 
+  public get remaining(): number {
+    return this.data.length - this.offset;
+  }
+
   public readInt32(): number {
+    if (this.remaining < 4) {
+      throw new VorbisCommentError('Truncated Vorbis comment length');
+    }
     const value = Token.UINT32_LE.get(this.data, this.offset);
     this.offset += 4;
     return value;
@@ -19,6 +29,9 @@ export class VorbisDecoder {
 
   public readStringUtf8(): string {
     const len = this.readInt32();
+    if (len > this.remaining) {
+      throw new VorbisCommentError(`Vorbis comment length ${len} exceeds remaining data ${this.remaining}`);
+    }
     const value = textDecode(this.data.subarray(this.offset, this.offset + len), 'utf-8');
     this.offset += len;
     return value;

@@ -3,6 +3,7 @@ import initDebug from 'debug';
 import type { IRandomAccessTokenizer } from 'strtok3';
 import * as strtok3 from 'strtok3';
 import { StringType } from 'token-types';
+import { getTokenizerOptions, readBuffer } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import * as util from '../common/Util.js';
@@ -96,8 +97,7 @@ export class APEv2Parser extends BasicParser {
     if (footer.ID !== preamble) {
       throw new ApeContentError('Unexpected APEv2 Footer ID preamble value');
     }
-    strtok3.fromBuffer(buffer);
-    const apeParser = new APEv2Parser(metadata, strtok3.fromBuffer(buffer), options);
+    const apeParser = new APEv2Parser(metadata, strtok3.fromBuffer(buffer, getTokenizerOptions(options)), options);
     return apeParser.parseTags(footer);
   }
 
@@ -121,8 +121,7 @@ export class APEv2Parser extends BasicParser {
     if (this.tokenizer.fileInfo.size) {
       // Try to read the APEv2 header using just the footer-header
       const remaining = this.tokenizer.fileInfo.size - this.tokenizer.position; // ToDo: take ID3v1 into account
-      const buffer = new Uint8Array(remaining);
-      await this.tokenizer.readBuffer(buffer);
+      const buffer = await this.readTagValue(remaining);
       return APEv2Parser.parseTagFooter(this.metadata, buffer, this.options);
     }
   }
@@ -227,28 +226,7 @@ export class APEv2Parser extends BasicParser {
   }
 
   private async readTagValue(size: number): Promise<Uint8Array> {
-    const chunkSize = 64 * 1024;
-    if ((!this.tokenizer.supportsRandomAccess() || this.tokenizer.fileInfo.size === undefined) && size > chunkSize) {
-      // Stream sizes may be unknown or untrustworthy. Only allocate the full
-      // value after all of its bytes have actually been read.
-      const chunks: Uint8Array[] = [];
-      for (let remaining = size; remaining > 0; ) {
-        const chunk = new Uint8Array(Math.min(remaining, chunkSize));
-        await this.tokenizer.readBuffer(chunk);
-        chunks.push(chunk);
-        remaining -= chunk.length;
-      }
-      const value = new Uint8Array(size);
-      let offset = 0;
-      for (const chunk of chunks) {
-        value.set(chunk, offset);
-        offset += chunk.length;
-      }
-      return value;
-    }
-    const value = new Uint8Array(size);
-    await this.tokenizer.readBuffer(value);
-    return value;
+    return readBuffer(this.tokenizer, size, this.options, undefined, message => new ApeContentError(message));
   }
 
   private async parseDescriptorExpansion(lenExp: number): Promise<{ forwardBytes: number }> {

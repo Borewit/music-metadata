@@ -4,6 +4,7 @@ import initDebug from 'debug';
 import type { IRandomAccessTokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
+import { readToken, validateAllocation } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
@@ -186,14 +187,11 @@ export class MP4Parser extends BasicParser {
   // Metadata and sample tables are buffered; media data is skipped separately.
   // A bound is also necessary for streams whose total size is unknown.
   private validatePayloadLength(length: number): void {
-    if (!Number.isSafeInteger(length) || length < 0 || length > 64 * 1024 * 1024) {
-      throw new Mp4ContentError(`Atom payload exceeds the 64 MiB buffering limit: ${length}`);
-    }
+    validateAllocation(length, this.options, message => new Mp4ContentError(message));
   }
 
-  private async readToken<T>(token: IGetToken<T>, position?: number): Promise<T> {
-    this.validatePayloadLength(token.len);
-    return this.tokenizer.readToken(token, position);
+  protected async readToken<T>(token: IGetToken<T>, position?: number): Promise<T> {
+    return readToken(this.tokenizer, token, this.options, position, message => new Mp4ContentError(message));
   }
 
   private tracks = new Map<number, ITrackDescription>();

@@ -6,6 +6,7 @@ import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import { aiffParserLoader } from './aiff/AiffLoader.js';
 import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
+import { getMaxMemoryAllocation } from './common/Allocation.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { createAudioTrackInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
@@ -96,6 +97,7 @@ export class ParserFactory {
     parserLoader: IParserLoader | undefined,
     opts: IOptions = {}
   ): Promise<IAudioMetadata> {
+    getMaxMemoryAllocation(opts);
     if (tokenizer.supportsRandomAccess()) {
       debug('tokenizer supports random-access, scanning for appending headers');
       await scanAppendingHeaders(tokenizer as IRandomAccessTokenizer, opts);
@@ -131,7 +133,7 @@ export class ParserFactory {
     debug(`Loading ${parserLoader.parserType} parser...`);
     const metadata = new MetadataCollector(opts);
     const ParserImpl = await parserLoader.load();
-    const parser = new ParserImpl(metadata, tokenizer, opts ?? {});
+    const parser = new ParserImpl(metadata, tokenizer, opts);
     debug(`Parser ${parserLoader.parserType} loaded`);
     await parser.parse();
     // Audio-only parsers describe their single stream through the format fields.

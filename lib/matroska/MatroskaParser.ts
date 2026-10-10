@@ -36,7 +36,7 @@ export class MatroskaParser extends BasicParser {
   public async parse(): Promise<void> {
     const containerSize = this.tokenizer.fileInfo.size ?? Number.MAX_SAFE_INTEGER;
 
-    const matroskaIterator = new EbmlIterator(this.tokenizer);
+    const matroskaIterator = new EbmlIterator(this.tokenizer, this.options);
     debug('Initializing DTD end MatroskaIterator');
     await matroskaIterator.iterate(matroskaDtd, containerSize, {
       startNext: element => {

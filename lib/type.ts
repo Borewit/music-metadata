@@ -692,6 +692,13 @@ export type ParserType =
 
 export interface IOptions {
   /**
+   * Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
+   * Defaults to 64 MiB (67108864 bytes). Must be a positive safe integer.
+   * This is not a limit on total process memory or the size of skipped audio/video data.
+   */
+  maxMemoryAllocation?: number;
+
+  /**
    * default: `false`, if set to `true`, it will parse the whole media file if required to determine the duration.
    */
   duration?: boolean;

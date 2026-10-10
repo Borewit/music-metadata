@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
+import { fromBuffer, fromStream } from 'strtok3';
 
 import { APEv2Parser, ApeContentError } from '../lib/apev2/APEv2Parser.js';
 import { TagFooter } from '../lib/apev2/APEv2Token.js';
@@ -100,7 +100,7 @@ describe('APEv2 item lengths (GHSA-53v6-4h7p-p4gj)', () => {
           const parser = new APEv2Parser(new MetadataCollector({}), tokenizer, {});
           await expect(
             parser.parseTags(TagFooter.get(tagHeader(32 + payload.length + forgedSize), 0))
-          ).to.be.rejectedWith(EndOfStreamError);
+          ).to.be.rejectedWith(ApeContentError, 'allocation limit');
         } finally {
           await tokenizer.close();
         }

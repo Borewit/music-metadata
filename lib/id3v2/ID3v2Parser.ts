@@ -1,6 +1,7 @@
 import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
+import { readToken } from '../common/Allocation.js';
 import type { TagType } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
@@ -132,7 +133,13 @@ export class ID3v2Parser {
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
-    const uint8Array = await this.tokenizer.readToken(new Token.Uint8ArrayType(dataLen));
+    const uint8Array = await readToken(
+      this.tokenizer,
+      new Token.Uint8ArrayType(dataLen),
+      this.options,
+      undefined,
+      message => new Id3v2ContentError(message)
+    );
     for (const tag of this.parseMetadata(uint8Array)) {
       switch (tag.id) {
         case 'TXXX':

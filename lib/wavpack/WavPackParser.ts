@@ -85,8 +85,11 @@ export class WavPackParser extends BasicParser {
     while (remaining > MetadataIdToken.len) {
       const id = await this.tokenizer.readToken<IMetadataId>(MetadataIdToken);
       const dataSizeInWords = await this.tokenizer.readNumber(id.largeBlock ? Token.UINT24_LE : Token.UINT8);
-      const data = new Uint8Array(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0));
-      await this.tokenizer.readBuffer(data);
+      const headerSize = MetadataIdToken.len + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len);
+      if (dataSizeInWords * 2 > remaining - headerSize) {
+        throw new WavPackContentError('Metadata sub-block exceeds its enclosing block');
+      }
+      const data = await this.readToken(new Token.Uint8ArrayType(dataSizeInWords * 2 - (id.isOddSize ? 1 : 0)));
       debug(
         `Metadata Sub-Blocks functionId=0x${id.functionId.toString(16)}, id.largeBlock=${id.largeBlock},data-size=${data.length}`
       );
