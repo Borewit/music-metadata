@@ -32,7 +32,13 @@ export class CafTagMapper extends CommonTagMapper {
 
   public mapGenericTag(tag: ITag, warnings: IWarningCollector): IGenericTag | null {
     if (commaSeparatedKeys.has(tag.id) && typeof tag.value === 'string') {
-      tag = { id: tag.id, value: tag.value.split(',') };
+      tag = {
+        id: tag.id,
+        value: tag.value
+          .split(',')
+          .map(value => value.trim())
+          .filter(value => value.length > 0)
+      };
     }
     return super.mapGenericTag(tag, warnings);
   }
