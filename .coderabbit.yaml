@@ -3,4 +3,4 @@ reviews:
   in_progress_fortune: false
 
 chat:
-  art: falseFortune messages and ASCII chat
+  art: false # Fortune messages and ASCII chat
