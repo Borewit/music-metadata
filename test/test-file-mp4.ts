@@ -579,6 +579,23 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.bitrate!, 127947, 1 / 2, 'format.bitrate');
   });
 
+  it('returns video metadata and overall bitrate for fragmented-duration.mp4 (#2701)', async () => {
+    const { format } = await mm.parseFile(path.join(mp4Samples, 'fragmented-duration.mp4'));
+    const video = format.trackInfo.find(track => track.type === mm.TrackType.video);
+    assert.approximately(video.duration, 96.88, 1e-6);
+    assert.approximately(video.bitrate, 1323242, 1);
+    assert.deepEqual(video.video, {
+      pixelWidth: 720,
+      pixelHeight: 1280,
+      displayWidth: 720,
+      displayHeight: 1280,
+      frameRate: 25
+    });
+    assert.approximately(format.containerDuration, 96.98331065759638, 1e-6);
+    assert.approximately(format.overallBitrate, 1453278, 1);
+    assert.approximately(format.bitrate, 127947, 1, 'Audio summary bitrate');
+  });
+
   it('bitrate id4.m4a', async () => {
     const filePath = path.join(mp4Samples, 'id4.m4a');
     const { format } = await mm.parseFile(filePath, { duration: true });
@@ -881,9 +898,13 @@ describe('Sample Description (stsd) atom', () => {
     return box('hdlr', payload);
   }
 
-  function trackHeaderBox(trackId: number): Uint8Array {
+  function trackHeaderBox(trackId: number, spec: ITrackSpec): Uint8Array {
     const payload = new Uint8Array(84);
-    new DataView(payload.buffer).setUint32(12, trackId);
+    const view = new DataView(payload.buffer);
+    view.setUint32(12, trackId);
+    view.setUint32(20, spec.trackDuration ?? 0);
+    view.setUint32(76, (spec.displayWidth ?? 0) * 65536);
+    view.setUint32(80, (spec.displayHeight ?? 0) * 65536);
     return box('tkhd', payload);
   }
 
@@ -914,7 +935,13 @@ describe('Sample Description (stsd) atom', () => {
    * data reference index. An AudioSampleEntry adds 20 bytes on top, whereas other sample entry classes,
    * such as a MetaDataSampleEntry, may be no larger than the 16-byte base.
    */
-  function sampleDescriptionBox(dataFormat: string, entrySize: number, audioLike = false, entries = 1): Uint8Array {
+  function sampleDescriptionBox(
+    dataFormat: string,
+    entrySize: number,
+    audioLike = false,
+    entries = 1,
+    spec?: ITrackSpec
+  ): Uint8Array {
     const header = new Uint8Array(8);
     new DataView(header.buffer).setUint32(4, entries); // entry_count
 
@@ -928,7 +955,11 @@ describe('Sample Description (stsd) atom', () => {
       // Populate the bytes an AudioSampleEntry would use, to prove they are not read from a non-audio track
       view.setUint16(24, 2); // channel count
       view.setUint16(26, 16); // sample size
-      view.setUint16(32, timeScale); // sample rate
+      view.setUint16(32, spec?.audioSampleRate ?? timeScale); // sample rate
+    }
+    if (spec?.pixelWidth !== undefined && spec.pixelHeight !== undefined) {
+      view.setUint16(32, spec.pixelWidth);
+      view.setUint16(34, spec.pixelHeight);
     }
     return box('stsd', header, ...Array.from({ length: entries }, () => entry));
   }
@@ -938,6 +969,7 @@ describe('Sample Description (stsd) atom', () => {
     dataFormat: string;
     entrySize: number;
     audioLike?: boolean;
+    audioSampleRate?: number;
     handlerAfterMinf?: boolean;
     descriptionCount?: number;
     noDescription?: boolean;
@@ -947,6 +979,15 @@ describe('Sample Description (stsd) atom', () => {
     fixedSampleSize?: number;
     sampleCount?: number;
     sampleSizes?: number[];
+    pixelWidth?: number;
+    pixelHeight?: number;
+    displayWidth?: number;
+    displayHeight?: number;
+    trackDuration?: number;
+    movieDuration?: number;
+    movieTimeScale?: number;
+    sampleDurations?: { count: number; duration: number }[];
+    fragmentDefaults?: { duration: number; size: number };
   }
 
   const videoTrack: ITrackSpec = { handler: 'vide', dataFormat: 'avc1', entrySize: 36 };
@@ -955,14 +996,21 @@ describe('Sample Description (stsd) atom', () => {
     const hdlr = handlerBox(spec.handler);
     const descriptions = spec.noDescription
       ? new Uint8Array()
-      : sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike, spec.descriptionCount);
-    const stbl = box('stbl', descriptions, sampleSizeBox(spec));
+      : sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike, spec.descriptionCount, spec);
+    const timings = new Uint8Array(8 + (spec.sampleDurations?.length ?? 0) * 8);
+    const view = new DataView(timings.buffer);
+    view.setUint32(4, spec.sampleDurations?.length ?? 0);
+    spec.sampleDurations?.forEach((entry, index) => {
+      view.setUint32(8 + index * 8, entry.count);
+      view.setUint32(12 + index * 8, entry.duration);
+    });
+    const stbl = box('stbl', descriptions, sampleSizeBox(spec), box('stts', timings));
     const minf = box('minf', stbl);
     // Readers are required to accept any box order
     const mdia = spec.handlerAfterMinf
       ? box('mdia', mediaHeaderBox(spec), minf, hdlr)
       : box('mdia', hdlr, mediaHeaderBox(spec), minf);
-    return box('trak', trackHeaderBox(trackId), mdia);
+    return box('trak', trackHeaderBox(trackId, spec), mdia);
   }
 
   function mp4(...tracks: ITrackSpec[]): Uint8Array {
@@ -972,7 +1020,23 @@ describe('Sample Description (stsd) atom', () => {
       new Uint8Array([0, 0, 2, 0]),
       textEncoder.encode('isomiso2mp41')
     );
-    const moov = box('moov', ...tracks.map((spec, index) => trackBox(index + 1, spec)));
+    const headers: Uint8Array[] = [];
+    if (tracks[0]?.movieDuration !== undefined) {
+      const header = new Uint8Array(100);
+      const view = new DataView(header.buffer);
+      view.setUint32(12, tracks[0].movieTimeScale ?? 1000);
+      view.setUint32(16, tracks[0].movieDuration);
+      headers.push(box('mvhd', header));
+    }
+    if (tracks[0]?.fragmentDefaults) {
+      const trex = new Uint8Array(24);
+      const view = new DataView(trex.buffer);
+      view.setUint32(4, 1);
+      view.setUint32(12, tracks[0].fragmentDefaults.duration);
+      view.setUint32(16, tracks[0].fragmentDefaults.size);
+      headers.push(box('mvex', box('trex', trex)));
+    }
+    const moov = box('moov', ...headers, ...tracks.map((spec, index) => trackBox(index + 1, spec)));
     return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
   }
 
@@ -1033,6 +1097,438 @@ describe('Sample Description (stsd) atom', () => {
         assert.strictEqual(format.hasVideo, hasVideo);
       });
     }
+  });
+
+  function fragment(spec: {
+    count?: number;
+    samples?: { duration?: number; size?: number; flags?: number }[];
+    duration?: number;
+    size?: number;
+    decodeTime?: bigint;
+    tfdtAfterRun?: boolean;
+    omitDecodeTime?: boolean;
+    decodeTimeVersion?: 0 | 1;
+  }): Uint8Array {
+    const tfhd = new Uint8Array(8 + (spec.duration !== undefined ? 4 : 0) + (spec.size !== undefined ? 4 : 0));
+    const header = new DataView(tfhd.buffer);
+    header.setUint32(0, (spec.duration !== undefined ? 8 : 0) | (spec.size !== undefined ? 16 : 0));
+    header.setUint32(4, 1);
+    let offset = 8;
+    if (spec.duration !== undefined) {
+      header.setUint32(offset, spec.duration);
+      offset += 4;
+    }
+    if (spec.size !== undefined) {
+      header.setUint32(offset, spec.size);
+    }
+    const sampleFields = [
+      { name: 'duration', flag: 0x100 },
+      { name: 'size', flag: 0x200 },
+      { name: 'flags', flag: 0x400 }
+    ] as const;
+    const fields = sampleFields.filter(field => spec.samples?.some(sample => sample[field.name] !== undefined));
+    const trun = new Uint8Array(8 + (spec.samples?.length ?? 0) * fields.length * 4);
+    const run = new DataView(trun.buffer);
+    run.setUint32(
+      0,
+      fields.reduce((flags, field) => flags | field.flag, 0)
+    );
+    run.setUint32(4, spec.count ?? spec.samples?.length ?? 0);
+    spec.samples?.forEach((sample, index) => {
+      fields.forEach((field, fieldIndex) => {
+        run.setUint32(8 + (index * fields.length + fieldIndex) * 4, sample[field.name] ?? 0);
+      });
+    });
+    const version = spec.decodeTimeVersion ?? 1;
+    const tfdt = new Uint8Array(version === 0 ? 8 : 12);
+    tfdt[0] = version;
+    const timing = new DataView(tfdt.buffer);
+    if (version === 0) {
+      timing.setUint32(4, Number(spec.decodeTime ?? 0n));
+    } else {
+      timing.setBigUint64(4, spec.decodeTime ?? 0n);
+    }
+    const boxes = spec.omitDecodeTime
+      ? [box('trun', trun)]
+      : spec.tfdtAfterRun
+        ? [box('trun', trun), box('tfdt', tfdt)]
+        : [box('tfdt', tfdt), box('trun', trun)];
+    return box('moof', box('traf', box('tfhd', tfhd), ...boxes));
+  }
+
+  it('returns video-only duration, resolution, frame rate and whole-file bitrate', async () => {
+    const buffer = mp4({
+      ...videoTrack,
+      timeScale: 1000,
+      duration: 2000,
+      pixelWidth: 720,
+      pixelHeight: 576,
+      displayWidth: 1024,
+      displayHeight: 576,
+      fixedSampleSize: 100,
+      sampleCount: 50,
+      sampleDurations: [{ count: 50, duration: 40 }]
+    });
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.isFalse(format.hasAudio);
+    assert.strictEqual(format.duration, 2);
+    assert.strictEqual(format.containerDuration, 2);
+    assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 2);
+    assert.include(format.trackInfo[0], { type: mm.TrackType.video, duration: 2, bitrate: 20000 });
+    assert.deepEqual(format.trackInfo[0].video, {
+      pixelWidth: 720,
+      pixelHeight: 576,
+      displayWidth: 1024,
+      displayHeight: 576,
+      frameRate: 25
+    });
+  });
+
+  it('uses the movie duration for overall bitrate while retaining the audio summary', async () => {
+    const buffer = mp4(
+      { ...videoTrack, duration: timeScale * 2, movieDuration: 3000 },
+      { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true }
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.strictEqual(format.duration, 1);
+    assert.strictEqual(format.trackInfo[0].duration, 2);
+    assert.strictEqual(format.containerDuration, 3);
+    assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 3);
+  });
+
+  it('does not use a shorter audio duration when the video duration is unknown', async () => {
+    const buffer = mp4(
+      { ...videoTrack, timeScale: 0 },
+      { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true }
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.strictEqual(format.duration, 1);
+    assert.isUndefined(format.containerDuration);
+    assert.isUndefined(format.overallBitrate);
+  });
+
+  it('omits overall bitrate when a stream has no known file size', async () => {
+    const buffer = mp4(videoTrack);
+    const { format } = await mm.parseStream(Readable.from([buffer], { objectMode: false }), { mimeType: 'video/mp4' });
+    assert.strictEqual(format.containerDuration, 1);
+    assert.isUndefined(format.overallBitrate);
+  });
+
+  it('derives duration and variable frame rate from sample timing when mdhd duration is unknown', async () => {
+    const { format } = await mm.parseBuffer(
+      mp4({
+        ...videoTrack,
+        timeScale: 1000,
+        duration: 0xffffffff,
+        sampleDurations: [
+          { count: 30, duration: 20 },
+          { count: 20, duration: 70 }
+        ],
+        fixedSampleSize: 100,
+        sampleCount: 50
+      }),
+      { mimeType: 'video/mp4' }
+    );
+    assert.include(format.trackInfo[0], { duration: 2, bitrate: 20000 });
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+  });
+
+  it('uses tkhd presentation duration when media timing is absent', async () => {
+    const { format } = await mm.parseBuffer(
+      mp4({ ...videoTrack, timeScale: 0, movieDuration: 3000, trackDuration: 2500 }),
+      { mimeType: 'video/mp4' }
+    );
+    assert.strictEqual(format.trackInfo[0].duration, 2.5);
+    assert.strictEqual(format.containerDuration, 3);
+  });
+
+  for (const audioSampleRate of [0, timeScale]) {
+    it(`handles audio sample timing with zero mdhd timescale (sample rate=${audioSampleRate})`, async () => {
+      const { format } = await mm.parseBuffer(
+        mp4({
+          handler: 'soun',
+          dataFormat: 'mp4a',
+          entrySize: 36,
+          audioLike: true,
+          audioSampleRate,
+          timeScale: 0,
+          sampleDurations: [{ count: 50, duration: (timeScale * 2) / 50 }]
+        }),
+        { mimeType: 'audio/mp4' }
+      );
+      if (audioSampleRate > 0) {
+        assert.strictEqual(format.duration, 2);
+        assert.strictEqual(format.containerDuration, 2);
+        assert.strictEqual(format.trackInfo[0].duration, 2);
+      } else {
+        assert.isUndefined(format.duration);
+        assert.isUndefined(format.containerDuration);
+        assert.isUndefined(format.trackInfo[0].duration);
+      }
+    });
+  }
+
+  for (const tfdtAfterRun of [false, true]) {
+    it(`reads fragmented video sample timing (tfdt after trun=${tfdtAfterRun})`, async () => {
+      const buffer = concat(
+        mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+        fragment({
+          decodeTime: 5000n,
+          tfdtAfterRun,
+          samples: [
+            { duration: 40, size: 100 },
+            { duration: 60, size: 150 }
+          ]
+        }),
+        fragment({ decodeTime: 5100n, samples: [{ duration: 100, size: 250 }] })
+      );
+      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+      assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 20000 });
+      assert.strictEqual(format.trackInfo[0].video.frameRate, 15);
+      assert.strictEqual(format.containerDuration, 5.2);
+    });
+  }
+
+  for (const fixedSize of [false, true]) {
+    for (const omitDecodeTime of [false, true]) {
+      it(`combines initial samples and fragments (fixed size=${fixedSize}, omit tfdt=${omitDecodeTime})`, async () => {
+        const buffer = concat(
+          mp4({
+            ...videoTrack,
+            timeScale: 1000,
+            duration: 1000,
+            ...(fixedSize ? { fixedSampleSize: 100, sampleCount: 1 } : { sampleSizes: [100] }),
+            sampleDurations: [{ count: 1, duration: 1000 }]
+          }),
+          fragment({ omitDecodeTime, decodeTime: 1000n, samples: [{ duration: 1000, size: 200 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 1);
+        assert.strictEqual(format.containerDuration, 2);
+        assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 2);
+      });
+    }
+  }
+
+  it('combines sample counts and durations without a known media duration', async () => {
+    const buffer = concat(
+      mp4({
+        ...videoTrack,
+        timeScale: 1000,
+        duration: 0,
+        sampleSizes: [50, 50],
+        sampleDurations: [{ count: 2, duration: 500 }]
+      }),
+      fragment({ decodeTime: 3000n, samples: [{ duration: 1000, size: 200 }] })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 1.5);
+    assert.strictEqual(format.containerDuration, 4);
+  });
+
+  it('combines initial samples with default-only fragments', async () => {
+    const buffer = concat(
+      mp4({
+        ...videoTrack,
+        timeScale: 1000,
+        duration: 1000,
+        sampleSizes: [100],
+        sampleDurations: [{ count: 1, duration: 1000 }]
+      }),
+      fragment({ omitDecodeTime: true, count: 2, duration: 500, size: 100 })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 1.5);
+    assert.strictEqual(format.containerDuration, 2);
+  });
+
+  it('omits bitrate when fragment sizes are missing after initial samples', async () => {
+    const buffer = concat(
+      mp4({
+        ...videoTrack,
+        timeScale: 1000,
+        duration: 1000,
+        sampleSizes: [100],
+        sampleDurations: [{ count: 1, duration: 1000 }]
+      }),
+      fragment({ decodeTime: 1000n, samples: [{ duration: 1000 }] })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.strictEqual(format.trackInfo[0].duration, 2);
+    assert.isUndefined(format.trackInfo[0].bitrate);
+    assert.strictEqual(format.containerDuration, 2);
+  });
+
+  for (const useTrex of [false, true]) {
+    it(`supports default-only video fragments (${useTrex ? 'trex' : 'tfhd'} defaults)`, async () => {
+      const defaults = { duration: 40, size: 100 };
+      const buffer = concat(
+        mp4({ ...videoTrack, timeScale: 1000, duration: 0, ...(useTrex ? { fragmentDefaults: defaults } : {}) }),
+        fragment({ count: 50, ...(useTrex ? {} : defaults) })
+      );
+      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+      assert.include(format.trackInfo[0], { duration: 2, bitrate: 20000 });
+      assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+    });
+  }
+
+  it('handles large default-only sample counts without allocating a sample array', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+      fragment({ count: 0xffffffff, duration: 1, size: 1 })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 0xffffffff / 1000, bitrate: 8000 });
+  });
+
+  it('leaves timing unknown when fragment defaults are missing', async () => {
+    const buffer = concat(mp4({ ...videoTrack, timeScale: 1000, duration: 0 }), fragment({ count: 50 }));
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.isUndefined(format.trackInfo[0].duration);
+    assert.isUndefined(format.trackInfo[0].bitrate);
+    assert.isUndefined(format.overallBitrate);
+  });
+
+  it('rejects fragment sample counts exceeding their payload', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, duration: 0 }),
+      fragment({ count: 2, samples: [{ duration: 40, size: 100 }] })
+    );
+    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Invalid trun sample count/);
+  });
+
+  it('continues fragment timing when a later run omits tfdt', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+      fragment({ decodeTimeVersion: 0, decodeTime: 5000n, samples: [{ duration: 100, size: 100 }] }),
+      fragment({ omitDecodeTime: true, samples: [{ duration: 100, size: 150 }] })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 10000 });
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
+    assert.strictEqual(format.containerDuration, 5.2);
+  });
+
+  for (const useTrex of [false, true]) {
+    it(`applies ${useTrex ? 'trex' : 'tfhd'} defaults to samples carrying only flags`, async () => {
+      const defaults = { duration: 40, size: 100 };
+      const buffer = concat(
+        mp4({ ...videoTrack, timeScale: 1000, duration: 0, ...(useTrex ? { fragmentDefaults: defaults } : {}) }),
+        fragment({ samples: [{ flags: 0 }, { flags: 0 }], ...(useTrex ? {} : defaults) })
+      );
+      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+      assert.include(format.trackInfo[0], { duration: 0.08, bitrate: 20000 });
+      assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+      assert.strictEqual(format.containerDuration, 0.08);
+    });
+  }
+
+  it('prefers per-sample values over tfhd and tfhd defaults over trex', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 0, fragmentDefaults: { duration: 10, size: 10 } }),
+      fragment({ duration: 40, size: 100, samples: [{ duration: 100, size: 200 }] }),
+      fragment({ omitDecodeTime: true, duration: 50, size: 150, samples: [{ flags: 0 }] })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 0.15, bitrate: (350 * 8) / 0.15 });
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 2 / 0.15);
+  });
+
+  it('keeps known media duration when fragment timing is shorter', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 5000 }),
+      fragment({ samples: [{ duration: 100, size: 100 }] })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 5, bitrate: 160 });
+    assert.strictEqual(format.containerDuration, 5);
+  });
+
+  for (const duration of [undefined, 0]) {
+    it(`leaves per-sample timing unknown for ${duration === undefined ? 'missing' : 'zero'} duration`, async () => {
+      const buffer = concat(
+        mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+        fragment({ samples: [{ duration, size: 100 }] })
+      );
+      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+      assert.isUndefined(format.trackInfo[0].duration);
+      assert.isUndefined(format.trackInfo[0].video.frameRate);
+      assert.isUndefined(format.trackInfo[0].bitrate);
+      assert.isUndefined(format.containerDuration);
+    });
+  }
+
+  it('retains per-sample timing without inventing missing sizes', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+      fragment({ samples: [{ duration: 100 }] })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.strictEqual(format.trackInfo[0].duration, 0.1);
+    assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
+    assert.isUndefined(format.trackInfo[0].bitrate);
+    assert.strictEqual(format.containerDuration, 0.1);
+  });
+
+  it('omits fragment statistics exceeding safe integer precision', async () => {
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+      fragment({ count: 0xffffffff, duration: 0xffffffff, size: 0xffffffff })
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.isUndefined(format.trackInfo[0].duration);
+    assert.isUndefined(format.trackInfo[0].video.frameRate);
+    assert.isUndefined(format.trackInfo[0].bitrate);
+    assert.isUndefined(format.containerDuration);
+  });
+
+  for (const [version, length] of [
+    [0, 3],
+    [0, 7],
+    [1, 11]
+  ]) {
+    it(`rejects a truncated version ${version} tfdt box (${length} bytes)`, async () => {
+      const data = new Uint8Array(length);
+      data[0] = version;
+      const buffer = concat(mp4(videoTrack), box('moof', box('traf', box('tfdt', data))));
+      await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Truncated tfdt box/);
+    });
+  }
+
+  it('rejects unsupported tfdt versions', async () => {
+    const buffer = concat(mp4(videoTrack), box('moof', box('traf', box('tfdt', Uint8Array.from([2, 0, 0, 0])))));
+    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Invalid tfdt version/);
+  });
+
+  it('rejects unsafe tfdt decode times', async () => {
+    const buffer = concat(mp4(videoTrack), fragment({ decodeTime: 0x20000000000000n }));
+    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Unsafe tfdt decode time/);
+  });
+
+  it('rejects truncated trex defaults', async () => {
+    const buffer = concat(mp4(videoTrack), box('moov', box('mvex', box('trex', new Uint8Array(23)))));
+    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Truncated trex box/);
+  });
+
+  it('skips unknown track fragment boxes without losing sample timing', async () => {
+    const tfhd = new Uint8Array(8);
+    new DataView(tfhd.buffer).setUint32(4, 1);
+    const trun = new Uint8Array(16);
+    const run = new DataView(trun.buffer);
+    run.setUint32(0, 0x300);
+    run.setUint32(4, 1);
+    run.setUint32(8, 100);
+    run.setUint32(12, 100);
+    const buffer = concat(
+      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+      box('moof', box('traf', box('tfhd', tfhd), box('free', new Uint8Array(3)), box('trun', trun)))
+    );
+    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+    assert.include(format.trackInfo[0], { duration: 0.1, bitrate: 8000 });
+    assert.strictEqual(format.containerDuration, 0.1);
   });
 
   it('reports one track for multiple sample descriptions', async () => {
@@ -1486,7 +1982,10 @@ describe('MP4 chapters in seekable media', () => {
               } else {
                 metadata = await mm.parseBuffer(buffer, 'audio/mp4', options);
               }
-              assert.deepEqual(metadata.format, expected.format);
+              assert.deepEqual(metadata.format, {
+                ...expected.format,
+                overallBitrate: (buffer.length * 8) / (expected.format.containerDuration ?? Number.NaN)
+              });
               assert.deepEqual(metadata.common, expected.common);
             });
           }

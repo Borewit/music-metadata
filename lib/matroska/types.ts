@@ -90,6 +90,7 @@ export const TargetType = {
 };
 
 export interface ITarget {
+  tagTrackUID?: Uint8Array;
   trackUID?: Uint8Array;
   chapterUID?: Uint8Array;
   attachmentUID?: Uint8Array;

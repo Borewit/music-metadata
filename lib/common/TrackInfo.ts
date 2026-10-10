@@ -1,4 +1,5 @@
 import { type IFormat, type ITrackInfo, TrackType } from '../type.js';
+import type { INativeMetadataCollector } from './MetadataCollector.js';
 
 /** Return a bitrate only when it conveys a finite, positive value. */
 export function normalizeBitrate(bitrate: number | undefined): number | undefined {
@@ -38,4 +39,37 @@ export function createAudioTrackInfo(format: IFormat): ITrackInfo {
     audio.numberOfSamples = format.numberOfSamples;
   }
   return track;
+}
+
+/** Derive whole-file statistics without treating an audio bitrate as a video bitrate. */
+export function finalizeContainerInfo(metadata: INativeMetadataCollector, fileSize?: number): void {
+  const { format } = metadata;
+  let duration = format.containerDuration;
+  if (duration === undefined) {
+    const durations = format.trackInfo
+      .filter(track => track.type === TrackType.audio || track.type === TrackType.video)
+      .map(track => track.duration);
+    if (
+      durations.length > 0 &&
+      durations.every(
+        (duration): duration is number => duration !== undefined && duration > 0 && Number.isFinite(duration)
+      )
+    ) {
+      duration = durations.reduce((maximum, trackDuration) => Math.max(maximum, trackDuration), 0);
+    } else if (!format.hasVideo) {
+      duration = format.duration;
+    }
+  }
+  if (duration !== undefined && Number.isFinite(duration) && duration > 0) {
+    metadata.setFormat('containerDuration', duration);
+    if (format.duration === undefined) {
+      metadata.setFormat('duration', duration);
+    }
+    if (fileSize !== undefined && Number.isSafeInteger(fileSize) && fileSize > 0) {
+      const bitrate = (8 * fileSize) / duration;
+      if (Number.isFinite(bitrate)) {
+        metadata.setFormat('overallBitrate', bitrate);
+      }
+    }
+  }
 }

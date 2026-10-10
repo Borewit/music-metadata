@@ -167,7 +167,14 @@ describe('format.trackInfo', () => {
       const { format } = await mm.parseFile(path.join(samplePath, 'matroska', 'matroska-test-w1-test5-short.mkv'));
       assert.lengthOf(format.trackInfo, 11);
       const [video, audio, ...others] = format.trackInfo;
-      assert.include(video, { id: 1, type: TrackType.video, codecId: 'V_MPEG4/ISO/AVC', flagLacing: false });
+      assert.include(video, {
+        id: 1,
+        type: TrackType.video,
+        codecId: 'V_MPEG4/ISO/AVC',
+        flagLacing: false,
+        duration: 2,
+        bitrate: 8008580
+      });
       assert.include(video.video, { pixelWidth: 1024, pixelHeight: 576 });
       assert.deepEqual(audio.audio, { channels: 2, samplingFrequency: 48000 });
       const subtitles = others.filter(track => track.type === TrackType.subtitle);
@@ -201,7 +208,8 @@ describe('format.trackInfo', () => {
       assert.approximately(audio.duration, 679.4, 0.001);
       assert.approximately(audio.bitrate, 124766.37, 0.01);
       assert.include(video, { id: 2, type: TrackType.video, codecId: 'avc1', codecName: '<avc1>' });
-      assert.deepEqual(video.video, { pixelWidth: 1916, pixelHeight: 1076 });
+      assert.include(video.video, { pixelWidth: 1916, pixelHeight: 1076, displayWidth: 1916, displayHeight: 1076 });
+      assert.approximately(video.video.frameRate, 23.97603721, 0.000001);
       assert.approximately(video.duration, 679.3867, 0.001);
       assert.approximately(video.bitrate, 5105810.91, 0.01);
       assert.isUndefined(video.audio);
@@ -263,7 +271,7 @@ describe('format.trackInfo', () => {
       const view = new DataView(result.buffer);
       result.set(new TextEncoder().encode('OggS'));
       result[5] = flags;
-      view.setBigUint64(6, BigInt(granule), true);
+      view.setBigUint64(6, granule < 0 ? 0xffffffffffffffffn : BigInt(granule), true);
       view.setUint32(14, serial, true);
       if (data.length > 0) {
         result[26] = 1;
@@ -449,6 +457,123 @@ describe('format.trackInfo', () => {
       assert.include(format.trackInfo[1], { id: 2, duration: 1, bitrate: (19 + 16 + 80) * 8 });
     });
 
+    function theora(revision = 1, shift = 6, denominator = 1): Uint8Array {
+      const data = new Uint8Array(42);
+      data[0] = 0x80;
+      data.set(new TextEncoder().encode('theora'), 1);
+      data.set([3, 2, revision], 7);
+      const view = new DataView(data.buffer);
+      view.setUint16(10, 40);
+      view.setUint16(12, 30);
+      data.set([0, 2, 128, 0, 1, 224], 14);
+      view.setUint32(22, 25);
+      view.setUint32(26, denominator);
+      view.setUint16(40, shift << 5);
+      return data;
+    }
+
+    for (const videoFirst of [false, true]) {
+      it(`preserves audio duration with longer Theora video (video first=${videoFirst})`, async () => {
+        const video = page(2, 2, 0, theora());
+        const audio = page(1, 2, 0, opusIdentification());
+        const data = Buffer.concat([
+          ...(videoFirst ? [video, audio] : [audio, video]),
+          page(1, 0, 0, opusComments()),
+          page(2, 4, 75 * 64),
+          page(1, 4, 96000 + 312)
+        ]);
+        const { format } = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+        assert.strictEqual(format.duration, 2);
+        assert.strictEqual(format.trackInfo.find(track => track.type === TrackType.audio).duration, 2);
+        assert.strictEqual(format.trackInfo.find(track => track.type === TrackType.video).duration, 3);
+        assert.strictEqual(format.containerDuration, 3);
+        assert.strictEqual(format.overallBitrate, (data.length * 8) / 3);
+      });
+    }
+
+    for (const revision of [0, 1]) {
+      it(`decodes Theora granules for version 3.2.${revision}`, async () => {
+        const granule = (50 - Number(revision === 0)) * 64;
+        const data = Buffer.concat([page(1, 2, 0, theora(revision)), page(1, 4, granule, Uint8Array.from([0, 1]))]);
+        const { format } = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+        assert.include(format.trackInfo[0], { duration: 2, bitrate: 176 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+        assert.strictEqual(format.containerDuration, 2);
+        assert.strictEqual(format.overallBitrate, (data.length * 8) / 2);
+      });
+    }
+
+    it('retains the last valid Theora granule when the final page has none', async () => {
+      const data = Buffer.concat([page(1, 2, 0, theora()), page(1, 0, 50 * 64), page(1, 4, -1)]);
+      const { format } = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.strictEqual(format.trackInfo[0].duration, 2);
+    });
+
+    it('uses the last Theora granule when EOF arrives before EOS', async () => {
+      const data = Buffer.concat([page(1, 2, 0, theora()), page(1, 0, 50 * 64, Uint8Array.from([0, 1]))]);
+      const { format, quality } = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.include(format.trackInfo[0], { duration: 2, bitrate: 176 });
+      assert.strictEqual(format.containerDuration, 2);
+      assert.isTrue(quality.warnings.some(warning => warning.message.includes('before reaching last page')));
+    });
+
+    it('omits Theora bitrate when scanning stops early after a valid granule', async () => {
+      const pages = [page(1, 2, 0, theora())];
+      for (let sequence = 1; sequence <= 14; ++sequence) {
+        const next = page(1, sequence === 14 ? 4 : 0, (sequence === 14 ? 75 : 50) * 64, Uint8Array.from([0, 1]));
+        new DataView(next.buffer).setUint32(18, sequence, true);
+        pages.push(next);
+      }
+      const data = Buffer.concat(pages);
+      const early = await mm.parseBuffer(data, { mimeType: 'video/ogg' });
+      assert.isUndefined(early.format.trackInfo[0].duration);
+      assert.isUndefined(early.format.trackInfo[0].bitrate);
+      const complete = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.include(complete.format.trackInfo[0], { duration: 3, bitrate: ((42 + 14 * 2) * 8) / 3 });
+    });
+
+    it('keeps Theora bitrate when EOS coincides with the early-stop threshold', async () => {
+      const pages = [page(1, 2, 0, theora())];
+      for (let sequence = 1; sequence <= 13; ++sequence) {
+        const next = page(1, sequence === 13 ? 4 : 0, 50 * 64, Uint8Array.from([0, 1]));
+        new DataView(next.buffer).setUint32(18, sequence, true);
+        pages.push(next);
+      }
+      const data = Buffer.concat(pages);
+      const early = await mm.parseBuffer(data, { mimeType: 'video/ogg' });
+      const complete = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.include(early.format.trackInfo[0], { duration: 2, bitrate: ((42 + 13 * 2) * 8) / 2 });
+      assert.deepEqual(early.format.trackInfo, complete.format.trackInfo);
+    });
+
+    it('handles Theora granule shifts beyond 32-bit arithmetic', async () => {
+      const data = Buffer.concat([page(1, 2, 0, theora(1, 31)), page(1, 4, 50 * 2 ** 31)]);
+      const { format } = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.strictEqual(format.trackInfo[0].duration, 2);
+    });
+
+    it('leaves invalid Theora frame timing unknown', async () => {
+      const data = Buffer.concat([page(1, 2, 0, theora(1, 6, 0)), page(1, 4, 50 * 64)]);
+      const { format } = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.isUndefined(format.trackInfo[0].duration);
+      assert.isUndefined(format.trackInfo[0].video.frameRate);
+      assert.isUndefined(format.overallBitrate);
+    });
+
+    it('scans Theora timing past metadata pages when duration is requested', async () => {
+      const pages = [page(1, 2, 0, theora())];
+      for (let sequence = 1; sequence <= 14; ++sequence) {
+        const next = page(1, sequence === 14 ? 4 : 0, sequence === 14 ? 50 * 64 : -1);
+        new DataView(next.buffer).setUint32(18, sequence, true);
+        pages.push(next);
+      }
+      const data = Buffer.concat(pages);
+      const early = await mm.parseBuffer(data, { mimeType: 'video/ogg' });
+      assert.isUndefined(early.format.trackInfo[0].duration);
+      const complete = await mm.parseBuffer(data, { mimeType: 'video/ogg' }, { duration: true });
+      assert.strictEqual(complete.format.trackInfo[0].duration, 2);
+    });
+
     function identification(rate: number, channels: number): Uint8Array {
       const result = new Uint8Array(30);
       result.set(new TextEncoder().encode('vorbis'), 1);
@@ -487,6 +612,35 @@ describe('format.trackInfo', () => {
       assert.isFalse(format.hasVideo);
     });
 
+    it('returns video and overall statistics consistently across file, buffer and stream APIs', async () => {
+      const file = path.join(samplePath, 'ogg', 'short.ogv');
+      const data = await readFile(file);
+      const options = { duration: true };
+      const expected = (await mm.parseFile(file, options)).format;
+      const results = await Promise.all([
+        mm.parseBuffer(data, { path: file }, options),
+        mm.parseStream(Readable.from([data], { objectMode: false }), { path: file, size: data.length }, options),
+        mm.parseWebStream(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(data);
+              controller.close();
+            }
+          }),
+          { mimeType: 'video/ogg', size: data.length },
+          options
+        )
+      ]);
+      for (const { format } of results) {
+        assert.deepEqual(format.trackInfo, expected.trackInfo);
+        assert.strictEqual(format.containerDuration, expected.containerDuration);
+        assert.strictEqual(format.overallBitrate, expected.overallBitrate);
+      }
+      const unknownSize = await mm.parseStream(Readable.from([data], { objectMode: false }), { path: file }, options);
+      assert.strictEqual(unknownSize.format.containerDuration, expected.containerDuration);
+      assert.isUndefined(unknownSize.format.overallBitrate);
+    });
+
     it('keeps multiplexed audio and video properties separate', async () => {
       const { format } = await mm.parseFile(path.join(samplePath, 'ogg', 'short.ogv'), { duration: true });
       assert.lengthOf(format.trackInfo, 2);
@@ -503,6 +657,10 @@ describe('format.trackInfo', () => {
       assert.include(audio, { id: 8012, type: TrackType.audio, codecName: 'Vorbis I', bitrate: 80000 });
       assert.deepEqual(audio.audio, { channels: 2, samplingFrequency: 44100, numberOfSamples: 253952 });
       assert.approximately(audio.duration, 5.75855, 0.00001);
+      assert.approximately(video.duration, 5.5666667, 0.000001);
+      assert.approximately(video.bitrate, 1994257.72455, 0.001);
+      assert.strictEqual(format.containerDuration, audio.duration);
+      assert.approximately(format.overallBitrate, 2017786, 1);
       assert.isTrue(format.hasAudio);
       assert.isTrue(format.hasVideo);
     });

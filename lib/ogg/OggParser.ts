@@ -185,6 +185,9 @@ export class OggParser extends BasicParser {
       } else if (format.hasVideo) {
         const track = format.trackInfo[0] ?? { type: TrackType.video, codecName: format.codec };
         track.id = stream.streamSerial;
+        if (track.duration && track.duration > 0 && (stream.closed || enfOfStream)) {
+          track.bitrate = (stream.payloadBytes * 8) / track.duration;
+        }
         this.metadata.addStreamInfo(track);
       }
     }

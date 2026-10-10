@@ -59,10 +59,10 @@ interface ITrackDescription {
   sampleToChunkTable: AtomToken.ISampleToChunk[];
   timeToSampleTable: AtomToken.ITimeToSampleToken[];
   handler?: AtomToken.IHandlerBox;
-  fragments: { trackRun: AtomToken.ITrackRunBox; header: AtomToken.ITrackFragmentHeaderBox }[];
+  fragments: { trackRun: AtomToken.ITrackRunBox; header: AtomToken.ITrackFragmentHeaderBox; decodeTime?: number }[];
+  endTime?: number;
+  frameRate?: number;
 
-  samples?: number;
-  sampleRate?: number;
   duration?: number;
   sizeInBytes?: number;
 }
@@ -196,6 +196,8 @@ export class MP4Parser extends BasicParser {
     return this.tokenizer.readToken(token, position);
   }
 
+  private movieHeader?: AtomToken.IAtomMvhd;
+  private trackDefaults = new Map<number, { duration: number; size: number }>();
   private tracks = new Map<number, ITrackDescription>();
   private mediaDataRanges: IMediaDataRange[] = [];
   private streamedChapters = new Map<number, IChapter>();
@@ -212,6 +214,8 @@ export class MP4Parser extends BasicParser {
     this.streamedChapters.clear();
     this.streamedChapterCount = undefined;
     this.neroChapters = [];
+    this.trackDefaults.clear();
+    this.movieHeader = undefined;
 
     let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
 
@@ -293,58 +297,23 @@ export class MP4Parser extends BasicParser {
 
     const audioTracks = [...this.tracks.values()].filter(isAudioTrack);
 
-    // Calculate duration and bitrate of audio tracks
+    // Both audio and video use the same sample tables and fragment timing.
+    for (const track of this.tracks.values()) {
+      this.calculateTrackTiming(track);
+    }
+
     for (const audioTrack of audioTracks) {
-      if (audioTrack.media.header && audioTrack.media.header.timeScale > 0) {
-        audioTrack.sampleRate = audioTrack.media.header.timeScale;
-        if (
-          audioTrack.media.header.duration > 0 &&
-          audioTrack.media.header.duration !== 0xffffffff &&
-          audioTrack.media.header.duration !== Number(0xffffffffffffffffn)
-        ) {
-          debug('Using duration defined on audio track');
-          audioTrack.samples = audioTrack.media.header.duration;
-          audioTrack.duration = audioTrack.samples / audioTrack.sampleRate;
-        }
-
-        if (audioTrack.fragments.length > 0) {
-          debug('Calculate duration defined in track fragments');
-
-          let totalTimeUnits = 0;
-          audioTrack.sizeInBytes = 0;
-          for (const fragment of audioTrack.fragments) {
-            for (const sample of fragment.trackRun.samples) {
-              const dur = sample.sampleDuration ?? fragment.header.defaultSampleDuration ?? 0;
-              const size = sample.sampleSize ?? fragment.header.defaultSampleSize ?? 0;
-              if (dur === 0) {
-                throw new Error('Missing sampleDuration and no defaultSampleDuration in track fragment header');
-              }
-              if (size === 0) {
-                throw new Error('Missing sampleSize and no defaultSampleSize in track fragment header');
-              }
-
-              totalTimeUnits += dur;
-              audioTrack.sizeInBytes += size;
-            }
-          }
-          if (!audioTrack.samples) {
-            audioTrack.samples = totalTimeUnits;
-          }
-          if (!audioTrack.duration) {
-            audioTrack.duration = totalTimeUnits / audioTrack.sampleRate;
-          }
-        } else if (audioTrack.sampleSizeTable.length > 0) {
-          audioTrack.sizeInBytes = audioTrack.sampleSizeTable.reduce((sum, n) => sum + n, 0);
-        }
-      }
-
       const ssd = audioTrack.soundSampleDescription[0];
       if (ssd.description && audioTrack.media.header) {
         this.metadata.setFormat('sampleRate', ssd.description.sampleRate);
         this.metadata.setFormat('bitsPerSample', ssd.description.sampleSize);
         this.metadata.setFormat('numberOfChannels', ssd.description.numAudioChannels);
 
-        if (audioTrack.media.header.timeScale === 0 && audioTrack.timeToSampleTable.length > 0) {
+        if (
+          audioTrack.media.header.timeScale === 0 &&
+          audioTrack.timeToSampleTable.length > 0 &&
+          ssd.description.sampleRate > 0
+        ) {
           const totalSampleSize = audioTrack.timeToSampleTable
             .map(ttstEntry => ttstEntry.count * ttstEntry.duration)
             .reduce((total, sampleSize) => total + sampleSize);
@@ -373,6 +342,20 @@ export class MP4Parser extends BasicParser {
 
     this.metadata.setFormat('hasAudio', this.hasAudioTrack || audioTracks.length > 0);
     this.metadata.setFormat('hasVideo', this.hasVideoTrack);
+    const movieDuration = this.getDuration(this.movieHeader);
+    if (movieDuration !== undefined) {
+      this.metadata.setFormat('containerDuration', movieDuration);
+    } else {
+      const endTimes = [...this.tracks.values()]
+        .filter(track => isAudioTrack(track) || track.handler?.handlerType === 'vide')
+        .map(track => track.endTime);
+      if (endTimes.length > 0 && endTimes.every(endTime => endTime !== undefined)) {
+        this.metadata.setFormat(
+          'containerDuration',
+          endTimes.reduce((maximum, endTime) => Math.max(maximum, endTime), 0)
+        );
+      }
+    }
   }
 
   public async handleAtom(atom: Atom, remaining: number): Promise<void> {
@@ -548,6 +531,112 @@ export class MP4Parser extends BasicParser {
     }
   }
 
+  private getDuration(header?: AtomToken.IAtomMxhd): number | undefined {
+    if (
+      header &&
+      header.timeScale > 0 &&
+      header.duration > 0 &&
+      header.duration !== 0xffffffff &&
+      header.duration !== Number(0xffffffffffffffffn)
+    ) {
+      return header.duration / header.timeScale;
+    }
+    return undefined;
+  }
+
+  private calculateTrackTiming(track: ITrackDescription): void {
+    const timeScale = track.media.header?.timeScale;
+    track.duration = this.getDuration(track.media.header);
+    track.endTime = track.duration;
+    if (track.sampleSize > 0 && track.sampleCount !== undefined) {
+      track.sizeInBytes = track.sampleSize * track.sampleCount;
+    } else if (track.sampleSizeTable.length > 0) {
+      track.sizeInBytes = track.sampleSizeTable.reduce((sum, size) => sum + size, 0);
+    }
+    let sampleCount = track.timeToSampleTable.reduce((sum, entry) => sum + entry.count, 0);
+    let timeUnits = track.timeToSampleTable.reduce((sum, entry) => sum + entry.count * entry.duration, 0);
+    if (track.fragments.length > 0) {
+      const defaults = this.trackDefaults.get(track.header.trackId);
+      // Runs without tfdt continue after the samples in the initial media segment.
+      let cursor = timeUnits;
+      let start: number | undefined;
+      let end = 0;
+      let size = track.sizeInBytes ?? 0;
+      let timingComplete = true;
+      let sizesComplete = track.sampleCount === 0 || track.sizeInBytes !== undefined;
+      for (const fragment of track.fragments) {
+        cursor = fragment.decodeTime ?? cursor;
+        start = start === undefined ? cursor : Math.min(start, cursor);
+        const run = fragment.trackRun;
+        if (
+          !run.flags.sampleDurationPresent &&
+          !run.flags.sampleSizePresent &&
+          !run.flags.sampleFlagsPresent &&
+          !run.flags.sampleCompositionTimeOffsetsPresent
+        ) {
+          const duration = fragment.header.defaultSampleDuration ?? defaults?.duration;
+          const sampleSize = fragment.header.defaultSampleSize ?? defaults?.size;
+          if (duration === undefined || duration <= 0) {
+            timingComplete = false;
+          } else {
+            cursor += duration * run.sampleCount;
+          }
+          if (sampleSize === undefined) {
+            sizesComplete = false;
+          } else {
+            size += sampleSize * run.sampleCount;
+          }
+          sampleCount += run.sampleCount;
+        }
+        for (const sample of fragment.trackRun.samples) {
+          const duration = sample.sampleDuration ?? fragment.header.defaultSampleDuration ?? defaults?.duration;
+          const sampleSize = sample.sampleSize ?? fragment.header.defaultSampleSize ?? defaults?.size;
+          if (duration === undefined || duration <= 0) {
+            timingComplete = false;
+          } else {
+            cursor += duration;
+          }
+          if (sampleSize === undefined) {
+            sizesComplete = false;
+          } else {
+            size += sampleSize;
+          }
+          ++sampleCount;
+        }
+        end = Math.max(end, cursor);
+      }
+      if (sizesComplete && Number.isSafeInteger(size)) {
+        track.sizeInBytes = size;
+      } else {
+        track.sizeInBytes = undefined;
+      }
+      if (timingComplete && timeScale && start !== undefined && Number.isSafeInteger(end)) {
+        timeUnits += end - start;
+        track.duration = Math.max(track.duration ?? 0, timeUnits / timeScale);
+        track.endTime = Math.max(end / timeScale, track.duration);
+      } else {
+        timeUnits = 0;
+      }
+    } else if (track.duration === undefined && timeScale && timeUnits > 0) {
+      track.duration = timeUnits / timeScale;
+      track.endTime = track.duration;
+    }
+    if (timeScale && timeUnits > 0 && sampleCount > 0) {
+      track.frameRate = (sampleCount * timeScale) / timeUnits;
+    }
+    if (
+      track.duration === undefined &&
+      this.movieHeader &&
+      track.header.duration > 0 &&
+      track.header.duration !== 0xffffffff &&
+      track.header.duration !== Number(0xffffffffffffffffn) &&
+      this.movieHeader.timeScale > 0
+    ) {
+      track.duration = track.header.duration / this.movieHeader.timeScale;
+      track.endTime = track.duration;
+    }
+  }
+
   private getTrackInfo(track: ITrackDescription): ITrackInfo {
     const info: ITrackInfo = {
       id: track.header.trackId,
@@ -579,14 +668,6 @@ export class MP4Parser extends BasicParser {
 
     const mediaHeader = track.media.header;
     if (mediaHeader) {
-      if (
-        mediaHeader.timeScale > 0 &&
-        mediaHeader.duration > 0 &&
-        mediaHeader.duration !== 0xffffffff &&
-        mediaHeader.duration !== Number(0xffffffffffffffffn)
-      ) {
-        info.duration = mediaHeader.duration / mediaHeader.timeScale;
-      }
       // ISO BMFF stores three lowercase letters in three 5-bit fields.
       const letters = [10, 5, 0].map(shift => (mediaHeader.language >> shift) & 0x1f);
       if (letters.every(letter => letter >= 1 && letter <= 26)) {
@@ -596,13 +677,7 @@ export class MP4Parser extends BasicParser {
     if (track.duration !== undefined) {
       info.duration = track.duration;
     }
-    const size =
-      track.sizeInBytes ??
-      (track.sampleSize > 0 && track.sampleCount !== undefined
-        ? track.sampleSize * track.sampleCount
-        : track.sampleSizeTable.length > 0
-          ? track.sampleSizeTable.reduce((sum, value) => sum + value, 0)
-          : undefined);
+    const size = track.sizeInBytes;
     if (size !== undefined && info.duration && info.duration > 0) {
       info.bitrate = (8 * size) / info.duration;
     }
@@ -632,11 +707,22 @@ export class MP4Parser extends BasicParser {
     }
     // A VisualSampleEntry has width and height 16 bytes after the SampleEntry base.
     const description = track.sampleDescriptions?.[0]?.description;
-    if (info.type === TrackType.video && description && description.length >= 20) {
+    if (info.type === TrackType.video) {
+      info.video = {};
+      if (track.frameRate !== undefined) {
+        info.video.frameRate = track.frameRate;
+      }
+      if (track.header.displayWidth && track.header.displayHeight) {
+        info.video.displayWidth = track.header.displayWidth;
+        info.video.displayHeight = track.header.displayHeight;
+      }
+    }
+    if (info.video && description && description.length >= 20) {
       const pixelWidth = Token.UINT16_BE.get(description, 16);
       const pixelHeight = Token.UINT16_BE.get(description, 18);
       if (pixelWidth > 0 && pixelHeight > 0) {
-        info.video = { pixelWidth, pixelHeight };
+        info.video.pixelWidth = pixelWidth;
+        info.video.pixelHeight = pixelHeight;
       }
     }
     return info;
@@ -750,43 +836,51 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private parseTrackFragmentBox(trafBox: Atom): Promise<void> {
-    let tfhd: AtomToken.ITrackFragmentHeaderBox;
-    return trafBox.readAtoms(
+  private async parseTrackFragmentBox(trafBox: Atom): Promise<void> {
+    let tfhd: AtomToken.ITrackFragmentHeaderBox | undefined;
+    let decodeTime: number | undefined;
+    const runs: AtomToken.ITrackRunBox[] = [];
+    await trafBox.readAtoms(
       this.tokenizer,
       async child => {
-        const payLoadLength = child.getPayloadLength();
+        const length = child.getPayloadLength();
         switch (child.header.name) {
-          case 'tfhd': {
-            // TrackFragmentHeaderBox
-            const fragmentHeaderBox = new AtomToken.TrackFragmentHeaderBox(child.getPayloadLength());
-            tfhd = await this.readToken(fragmentHeaderBox);
+          case 'tfhd':
+            tfhd = await this.readToken(new AtomToken.TrackFragmentHeaderBox(length));
             break;
-          }
-
-          case 'tfdt': // TrackFragmentBaseMediaDecodeTimeBo
-            await this.tokenizer.ignore(payLoadLength);
-            break;
-
-          case 'trun': {
-            // TrackRunBox
-            const trackRunBox = new AtomToken.TrackRunBox(payLoadLength);
-            const trun = await this.readToken(trackRunBox);
-            if (tfhd) {
-              const track = this.tracks.get(tfhd.trackId);
-              track?.fragments.push({ header: tfhd, trackRun: trun });
+          case 'tfdt': {
+            const data = await this.readToken(new Token.Uint8ArrayType(length));
+            if (length < 4 || (data[0] === 0 && length < 8) || (data[0] === 1 && length < 12)) {
+              throw new Mp4ContentError('Truncated tfdt box');
+            }
+            if (data[0] === 0) {
+              decodeTime = Token.UINT32_BE.get(data, 4);
+            } else if (data[0] === 1) {
+              decodeTime = Number(Token.UINT64_BE.get(data, 4));
+            } else {
+              throw new Mp4ContentError('Invalid tfdt version');
+            }
+            if (!Number.isSafeInteger(decodeTime)) {
+              throw new Mp4ContentError('Unsafe tfdt decode time');
             }
             break;
           }
-
-          default: {
-            debug(`Unexpected box: ${child.header.name}`);
-            await this.tokenizer.ignore(payLoadLength);
-          }
+          case 'trun':
+            runs.push(await this.readToken(new AtomToken.TrackRunBox(length)));
+            break;
+          default:
+            await this.tokenizer.ignore(length);
         }
       },
       trafBox.getPayloadLength()
     );
+    if (tfhd) {
+      const track = this.tracks.get(tfhd.trackId);
+      for (const run of runs) {
+        track?.fragments.push({ header: tfhd, trackRun: run, decodeTime });
+        decodeTime = undefined;
+      }
+    }
   }
 
   private atomParsers: { [id: string]: IAtomParser } = {
@@ -796,6 +890,7 @@ export class MP4Parser extends BasicParser {
      */
     mvhd: async (len: number) => {
       const mvhd = await this.readToken<AtomToken.IAtomMvhd>(new AtomToken.MvhdAtom(len));
+      this.movieHeader = mvhd;
       this.metadata.setFormat('creationTime', mvhd.creationTime);
       this.metadata.setFormat('modificationTime', mvhd.modificationTime);
     },
@@ -806,6 +901,17 @@ export class MP4Parser extends BasicParser {
       } else {
         await this.tokenizer.ignore(len);
       }
+    },
+
+    trex: async (len: number) => {
+      const data = await this.readToken(new Token.Uint8ArrayType(len));
+      if (len < 24) {
+        throw new Mp4ContentError('Truncated trex box');
+      }
+      this.trackDefaults.set(Token.UINT32_BE.get(data, 4), {
+        duration: Token.UINT32_BE.get(data, 12),
+        size: Token.UINT32_BE.get(data, 16)
+      });
     },
 
     chap: async (len: number) => {
