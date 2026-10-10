@@ -6,6 +6,7 @@ import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import { aiffParserLoader } from './aiff/AiffLoader.js';
 import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
+import { cafParserLoader } from './caf/CafLoader.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { createAudioTrackInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
@@ -81,7 +82,8 @@ export class ParserFactory {
       wavpackParserLoader,
       musepackParserLoader,
       dsfParserLoader,
-      dsdiffParserLoader
+      dsdiffParserLoader,
+      cafParserLoader
     ].forEach(parser => {
       this.registerParser(parser);
     });

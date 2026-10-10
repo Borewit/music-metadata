@@ -51,6 +51,7 @@ If you find this project useful and would like to support its development, consi
 | [APE](https://wikipedia.org/wiki/Monkey's_Audio)                          | Monkey's Audio                                            | <img src="./image/logo-APE-AI.svg" width="40" alt="Monkey's Audio logo">                         |
 | [ASF](https://wikipedia.org/wiki/Advanced_Systems_Format)                 | Advanced Systems Format                                   |                                                                                                  |
 | [BWF](https://en.wikipedia.org/wiki/Broadcast_Wave_Format)                | Extended WAV format for broadcast and archiving           |                                                                                                  |
+| [CAF](https://en.wikipedia.org/wiki/Core_Audio_File_Format)               | Core Audio File Format                                    | <img src="./image/logo-Apple_Computer_Logo_rainbow.svg" width="40" alt="Apple rainbow logo">     |
 | [DSDIFF](https://wikipedia.org/wiki/Direct_Stream_Digital)                | Philips DSDIFF                                            | <img src="./image/logo-DSD.svg" width="80" alt="DSD logo">                                       |
 | [DSF](https://wikipedia.org/wiki/Direct_Stream_Digital)                   | Sony's DSD Stream File                                    | <img src="./image/logo-DSD.svg" width="80" alt="DSD logo">                                       |
 | [FLAC](https://wikipedia.org/wiki/FLAC)                                   | Free Lossless Audio Codec                                 | <img src="./image/logo-FLAC.svg" width="80" alt="FLAC logo">                                     |
@@ -80,6 +81,7 @@ Following tag header formats are supported:
 - [RIFF](https://wikipedia.org/wiki/Resource_Interchange_File_Format)/INFO
 - [Vorbis comment](https://wikipedia.org/wiki/Vorbis_comment)
 - [AIFF](https://wikipedia.org/wiki/Audio_Interchange_File_Format)
+- [CAF](https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_spec/CAF_spec.html)
  
 Following lyric formats are supported:
 - [LRC](https://en.wikipedia.org/wiki/LRC_(file_format))

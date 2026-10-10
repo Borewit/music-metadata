@@ -11,7 +11,8 @@ export type TagType =
   | 'iTunes'
   | 'exif'
   | 'matroska'
-  | 'AIFF';
+  | 'AIFF'
+  | 'CAF';
 
 export interface IGenericTag {
   id: keyof ICommonTagsResult;
