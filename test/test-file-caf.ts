@@ -294,10 +294,10 @@ describe('Parse CAF (Core Audio File Format)', () => {
 
     it('splits comma separated values of list keys', async () => {
       const body = infoBody([
-        ['artist', 'Able Baker,Charlie Delta'],
-        ['composer', 'Charlie Delta,Echo Foxtrot'],
-        ['lyricist', 'Echo Foxtrot,Golf Hotel'],
-        ['genre', 'Jazz,Rock'],
+        ['artist', 'Able Baker, Charlie Delta'],
+        ['composer', 'Charlie Delta, Echo Foxtrot,'],
+        ['lyricist', ' Echo Foxtrot, Golf Hotel '],
+        ['genre', 'Jazz,,Rock'],
         ['title', 'Split Title'],
         ['comments', 'first note, second note']
       ]);
@@ -314,10 +314,9 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.strictEqual(common.title, 'Split Title');
       // Freeform text keeps its literal comma
       assert.deepEqual(common.comment, [{ text: 'first note, second note' }]);
-      // Native values stay intact
       const info = new Map(native.CAF.map(tag => [tag.id, tag.value]));
-      assert.strictEqual(info.get('artist'), 'Able Baker,Charlie Delta');
-      assert.strictEqual(info.get('composer'), 'Charlie Delta,Echo Foxtrot');
+      assert.strictEqual(info.get('artist'), 'Able Baker, Charlie Delta');
+      assert.strictEqual(info.get('composer'), 'Charlie Delta, Echo Foxtrot,');
     });
 
     it('preserves every entry as a native tag', async () => {
