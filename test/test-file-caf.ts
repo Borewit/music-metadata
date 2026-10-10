@@ -19,6 +19,49 @@ const channelCenter = 3;
 const channelLeftSurround = 4;
 const channelRightSurround = 5;
 const channelCenterSurround = 6;
+const channelUseCoordinates = 100;
+
+const fileHeader = Buffer.concat([Buffer.from('caff', 'latin1'), Buffer.from([0, 1, 0, 0])]);
+
+function chunkHeader(type: string, size: number): Buffer {
+  const header = Buffer.alloc(12);
+  header.write(type, 0, 4, 'latin1');
+  header.writeBigInt64BE(BigInt(size), 4);
+  return header;
+}
+
+const audioDescription = (() => {
+  const desc = Buffer.alloc(32);
+  desc.writeDoubleBE(8000, 0);
+  desc.write('lpcm', 8, 4, 'latin1');
+  desc.writeUInt32BE(1, 16); // mBytesPerPacket
+  desc.writeUInt32BE(1, 20); // mFramesPerPacket
+  desc.writeUInt32BE(1, 24); // mChannelsPerFrame
+  desc.writeUInt32BE(8, 28); // mBitsPerChannel
+  return desc;
+})();
+
+function channelDescription(
+  channelLabel: number,
+  channelFlags = 0,
+  coordinates: [number, number, number] = [0, 0, 0]
+): CafToken.IChannelDescription {
+  return { channelLabel, channelFlags, coordinates };
+}
+
+function parseSyntheticCaf(...chunks: Buffer[]): Promise<mm.IAudioMetadata> {
+  return mm.parseBuffer(new Uint8Array(Buffer.concat([fileHeader, ...chunks])), { mimeType: cafMimeType });
+}
+
+function infoBody(entries: [string, string][]): Buffer {
+  const pairs: Buffer[] = [];
+  for (const [key, value] of entries) {
+    pairs.push(Buffer.from(`${key}\0${value}\0`, 'utf8'));
+  }
+  const count = Buffer.alloc(4);
+  count.writeUInt32BE(entries.length, 0);
+  return Buffer.concat([count, ...pairs]);
+}
 
 describe('Parse CAF (Core Audio File Format)', () => {
   interface ICafFormat {
@@ -248,6 +291,34 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.deepEqual(common.comment, [{ text: 'first note, second note' }]);
     });
 
+    it('splits comma separated values of list keys', async () => {
+      const body = infoBody([
+        ['artist', 'Able Baker,Charlie Delta'],
+        ['composer', 'Charlie Delta,Echo Foxtrot'],
+        ['lyricist', 'Echo Foxtrot,Golf Hotel'],
+        ['genre', 'Jazz,Rock'],
+        ['title', 'Split Title'],
+        ['comments', 'first note, second note']
+      ]);
+      const { common, native } = await parseSyntheticCaf(
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('info', body.length),
+        body
+      );
+      assert.deepEqual(common.artists, ['Able Baker', 'Charlie Delta']);
+      assert.deepEqual(common.composer, ['Charlie Delta', 'Echo Foxtrot']);
+      assert.deepEqual(common.lyricist, ['Echo Foxtrot', 'Golf Hotel']);
+      assert.deepEqual(common.genre, ['Jazz', 'Rock']);
+      assert.strictEqual(common.title, 'Split Title');
+      // Freeform text keeps its literal comma
+      assert.deepEqual(common.comment, [{ text: 'first note, second note' }]);
+      // Native values stay intact
+      const info = new Map(native.CAF.map(tag => [tag.id, tag.value]));
+      assert.strictEqual(info.get('artist'), 'Able Baker,Charlie Delta');
+      assert.strictEqual(info.get('composer'), 'Charlie Delta,Echo Foxtrot');
+    });
+
     it('preserves every entry as a native tag', async () => {
       const { native } = await mm.parseFile(path.join(cafSamplePath, 'info-tags.caf'));
       const entries = native.CAF;
@@ -282,13 +353,38 @@ describe('Parse CAF (Core Audio File Format)', () => {
         {
           id: 'channelLayoutDescriptions',
           value: [
-            channelLeft,
-            channelRight,
-            channelCenter,
-            channelLeftSurround,
-            channelRightSurround,
-            channelCenterSurround
+            channelDescription(channelLeft),
+            channelDescription(channelRight),
+            channelDescription(channelCenter),
+            channelDescription(channelLeftSurround),
+            channelDescription(channelRightSurround),
+            channelDescription(channelCenterSurround)
           ]
+        }
+      ]);
+    });
+
+    it('keeps the flags and coordinates of a description', async () => {
+      const body = Buffer.alloc(12 + 20);
+      body.writeUInt32BE(0, 4);
+      body.writeUInt32BE(1, 8);
+      body.writeUInt32BE(channelUseCoordinates, 12);
+      body.writeUInt32BE(3, 16);
+      body.writeFloatBE(1.5, 20);
+      body.writeFloatBE(2.5, 24);
+      body.writeFloatBE(3.5, 28);
+      const { native } = await parseSyntheticCaf(
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('chan', body.length),
+        body
+      );
+      assert.deepEqual(native.CAF, [
+        { id: 'channelLayoutTag', value: 0 },
+        { id: 'channelLayoutBitmap', value: 0 },
+        {
+          id: 'channelLayoutDescriptions',
+          value: [channelDescription(channelUseCoordinates, 3, [1.5, 2.5, 3.5])]
         }
       ]);
     });
@@ -299,7 +395,15 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.deepEqual(native.CAF, [
         { id: 'channelLayoutTag', value: 65536 }, // kAudioChannelLayoutTag_Quadraphonic
         { id: 'channelLayoutBitmap', value: 7 },
-        { id: 'channelLayoutDescriptions', value: [channelLeft, channelRight, channelCenter, channelRightSurround] }
+        {
+          id: 'channelLayoutDescriptions',
+          value: [
+            channelDescription(channelLeft),
+            channelDescription(channelRight),
+            channelDescription(channelCenter),
+            channelDescription(channelRightSurround)
+          ]
+        }
       ]);
       // The channel count always comes from the audio description
       assert.strictEqual(format.numberOfChannels, 4, 'format.numberOfChannels');
@@ -432,26 +536,6 @@ describe('Parse CAF (Core Audio File Format)', () => {
   });
 
   describe('Security hardening', () => {
-    const fileHeader = Buffer.concat([Buffer.from('caff', 'latin1'), Buffer.from([0, 1, 0, 0])]);
-
-    function chunkHeader(type: string, size: number): Buffer {
-      const header = Buffer.alloc(12);
-      header.write(type, 0, 4, 'latin1');
-      header.writeBigInt64BE(BigInt(size), 4);
-      return header;
-    }
-
-    const audioDescription = (() => {
-      const desc = Buffer.alloc(32);
-      desc.writeDoubleBE(8000, 0);
-      desc.write('lpcm', 8, 4, 'latin1');
-      desc.writeUInt32BE(1, 16); // mBytesPerPacket
-      desc.writeUInt32BE(1, 20); // mFramesPerPacket
-      desc.writeUInt32BE(1, 24); // mChannelsPerFrame
-      desc.writeUInt32BE(8, 28); // mBitsPerChannel
-      return desc;
-    })();
-
     it('rejects an invalid file-type', async () => {
       const file = Buffer.concat([Buffer.from('cafx', 'latin1'), fileHeader.subarray(4)]);
       await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
@@ -530,6 +614,49 @@ describe('Parse CAF (Core Audio File Format)', () => {
       );
     });
 
+    it('rejects an Information chunk whose size exceeds the input', async () => {
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('info', 64 * 1024 * 1024)
+      ]);
+      await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
+        mm.UnexpectedFileContentError,
+        /Information chunk size 67108864 exceeds available input size 0/
+      );
+    });
+
+    it('rejects a Packet Table chunk whose size exceeds the input', async () => {
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('pakt', 64 * 1024 * 1024)
+      ]);
+      await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
+        mm.UnexpectedFileContentError,
+        /Packet Table chunk size 67108864 exceeds available input size 0/
+      );
+    });
+
+    it('rejects a Channel Layout chunk whose description array exceeds the input', async () => {
+      const body = Buffer.alloc(12);
+      body.writeUInt32BE(0, 4); // mChannelBitmap
+      body.writeUInt32BE(1, 8); // mNumberChannelDescriptions, one 20 byte description missing
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('chan', 32),
+        body
+      ]);
+      await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(
+        mm.UnexpectedFileContentError,
+        /Channel Layout chunk size 32 exceeds available input size 12/
+      );
+    });
+
     it('rejects a Channel Layout chunk whose descriptions exceed its size', async () => {
       const body = Buffer.alloc(12);
       body.writeUInt32BE(0, 4); // mChannelBitmap
@@ -603,6 +730,21 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
       assert.isUndefined(format.duration, 'format.duration');
       assert.isUndefined(format.bitrate, 'format.bitrate');
+    });
+
+    it('reassembles a large Information chunk from a stream in bounded pieces', async () => {
+      const value = 'x'.repeat(100000);
+      const body = infoBody([['artist', value]]);
+      assert.isAbove(body.length, 64 * 1024, 'body larger than a single bounded read');
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', 32),
+        audioDescription,
+        chunkHeader('info', body.length),
+        body
+      ]);
+      const { common } = await mm.parseStream(Readable.from([file], { objectMode: false }), { mimeType: cafMimeType });
+      assert.deepEqual(common.artists, [value]);
     });
 
     it('handles an unknown-size data chunk from a stream without a known length', async () => {

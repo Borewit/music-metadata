@@ -402,7 +402,13 @@ export class MetadataCollector implements INativeMetadataCollector {
     const genericTag = this.tagMapper.mapTag(tagType, tag, this);
 
     if (genericTag) {
-      await this.postMap(tagType, genericTag);
+      if (Array.isArray(genericTag.value)) {
+        for (const value of genericTag.value) {
+          await this.postMap(tagType, { id: genericTag.id, value });
+        }
+      } else {
+        await this.postMap(tagType, genericTag);
+      }
     }
   }
 

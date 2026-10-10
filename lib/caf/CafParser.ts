@@ -34,6 +34,7 @@ const codecByFormatId: Record<string, ICodecInfo> = {
 
 const editCountLen = 4;
 const numEntriesLen = 4;
+const maxBoundedReadSize = 64 * 1024;
 
 /**
  * CAF - Core Audio File Format
@@ -145,8 +146,9 @@ export class CafParser extends BasicParser {
         `Packet Table chunk size ${chunkSize} is smaller than ${CafToken.PacketTableHeader.len}`
       );
     }
+    this.validateChunkAvailability(chunkSize, 'Packet Table');
     const packetTable = await this.tokenizer.readToken<IPacketTableHeader>(CafToken.PacketTableHeader);
-    const body = await this.tokenizer.readToken(new Token.Uint8ArrayType(chunkSize - CafToken.PacketTableHeader.len));
+    const body = await this.readChunkBody(chunkSize - CafToken.PacketTableHeader.len, 'Packet Table');
     CafToken.decodePacketTableEntries(body, desc, packetTable.numberPackets);
     this.packetTable = packetTable;
   }
@@ -177,7 +179,7 @@ export class CafParser extends BasicParser {
     if (chunkSize < numEntriesLen) {
       throw new CafContentError(`Information chunk size ${chunkSize} is too small to hold mNumEntries`);
     }
-    const body = await this.tokenizer.readToken(new Token.Uint8ArrayType(chunkSize));
+    const body = await this.readChunkBody(chunkSize, 'Information');
     for (const { key, value } of CafToken.parseInfoEntries(body)) {
       debug(`info key=${key}`);
       await this.metadata.addTag('CAF', key, value);
@@ -190,6 +192,7 @@ export class CafParser extends BasicParser {
         `Channel Layout chunk size ${chunkSize} is smaller than ${CafToken.ChannelLayoutHeader.len}`
       );
     }
+    this.validateChunkAvailability(chunkSize, 'Channel Layout');
     const header = await this.tokenizer.readToken<CafToken.IChannelLayoutHeader>(CafToken.ChannelLayoutHeader);
 
     const descriptionLen = header.numberChannelDescriptions * CafToken.channelDescriptionLen;
@@ -203,7 +206,7 @@ export class CafParser extends BasicParser {
     const descriptions =
       descriptionLen > 0
         ? CafToken.parseChannelDescriptions(
-            await this.tokenizer.readToken(new Token.Uint8ArrayType(descriptionLen)),
+            await this.readChunkBody(descriptionLen, 'Channel Layout'),
             header.numberChannelDescriptions
           )
         : [];
@@ -219,13 +222,52 @@ export class CafParser extends BasicParser {
     await this.metadata.addTag('CAF', 'channelLayoutTag', header.channelLayoutTag);
     await this.metadata.addTag('CAF', 'channelLayoutBitmap', header.channelBitmap);
     if (descriptions.length > 0) {
-      // No common tag describes channel order
-      await this.metadata.addTag(
-        'CAF',
-        'channelLayoutDescriptions',
-        descriptions.map(description => description.channelLabel)
-      );
+      // No common tag describes channel order so keep the complete descriptions
+      await this.metadata.addTag('CAF', 'channelLayoutDescriptions', descriptions);
     }
+  }
+
+  /**
+   * Rejects a whole chunk whose declared size exceeds the remaining input.
+   * Only applicable when the total input size is known.
+   */
+  private validateChunkAvailability(chunkSize: number, chunkType: string): void {
+    const { size } = this.tokenizer.fileInfo;
+    if (size !== undefined) {
+      const available = size - this.tokenizer.position;
+      if (chunkSize > available) {
+        throw new CafContentError(`${chunkType} chunk size ${chunkSize} exceeds available input size ${available}`);
+      }
+    }
+  }
+
+  /**
+   * Reads a chunk body without trusting its declared size.
+   * @param chunkSize Declared body size
+   * @param chunkType Chunk name for error messages
+   */
+  private async readChunkBody(chunkSize: number, chunkType: string): Promise<Uint8Array> {
+    this.validateChunkAvailability(chunkSize, chunkType);
+    if (chunkSize === 0) {
+      return new Uint8Array(0);
+    }
+    if (this.tokenizer.fileInfo.size !== undefined || chunkSize <= maxBoundedReadSize) {
+      return this.tokenizer.readToken(new Token.Uint8ArrayType(chunkSize));
+    }
+    const chunks: Uint8Array[] = [];
+    for (let remaining = chunkSize; remaining > 0; ) {
+      const chunk = new Uint8Array(Math.min(remaining, maxBoundedReadSize));
+      await this.tokenizer.readBuffer(chunk);
+      chunks.push(chunk);
+      remaining -= chunk.length;
+    }
+    const body = new Uint8Array(chunkSize);
+    let offset = 0;
+    for (const chunk of chunks) {
+      body.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return body;
   }
 
   private async skipUnknownChunk(chunkSize: number): Promise<void> {
