@@ -1,50 +1,46 @@
 # Release Drafter template
-# Ref: https://github.com/marketplace/actions/release-drafter
+# Ref: https://github.com/release-drafter/release-drafter/tree/v7.10.0#configuration-options
 
 name-template: 'v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 categories:
   - title: ⚠️ API Changes
-    labels:
-      - API change
+    semver-increment: major
+    when:
+      label: API change
   - title: ✨ Enhancements
-    labels:
-      - enhancement
+    semver-increment: minor
+    when:
+      label: enhancement
+  # All other changelog categories default to a patch increment.
   - title: 🚀 Improvements
-    labels:
-      - improvement
+    when:
+      label: improvement
   - title: 🔒 Security
-    labels:
-      - security
+    when:
+      label: security
   - title: 🐛 Bug Fixes
-    labels:
-      - bug
+    when:
+      label: bug
   - title: 📚 Documentation
-    labels:
-      - documentation
+    when:
+      label: documentation
   - title: 📦 Dependencies
-    labels:
-      - dependencies
+    when:
+      label: dependencies
   - title: 🛠️ Under the hood
-    labels:
-      - technical debt
-      - dev-dependencies
-exclude-labels:
-  - DevOps
-  - dev-dependencies
+    when:
+      label: technical debt
+  - type: pre-exclude
+    when:
+      labels:
+        - DevOps
+        - dev-dependencies
+  # Keep a patch fallback for changes without a category label.
+  - type: version-resolver
+    semver-increment: patch
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
-version-resolver:
-  major:
-    labels:
-      - 'major'
-  minor:
-    labels:
-      - 'minor'
-  patch:
-    labels:
-      - 'patch'
-  default: patch
 template: |
   ## Changes
 
