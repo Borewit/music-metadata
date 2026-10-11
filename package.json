@@ -124,7 +124,7 @@
     "debug": "^4.4.3",
     "file-type": "^22.1.1",
     "media-typer": "^2.0.0",
-    "strtok3": "file:.yarn/strtok3-71fbb27-dev.tgz",
+    "strtok3": "^10.4.0",
     "token-types": "^6.1.2",
     "uint8array-extras": "^1.6.0",
     "win-guid": "^0.2.1"

@@ -2593,7 +2593,7 @@ __metadata:
     nodemon: "npm:^3.1.14"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
-    strtok3: "file:.yarn/strtok3-71fbb27-dev.tgz"
+    strtok3: "npm:^10.4.0"
     token-types: "npm:^6.1.2"
     tsx: "npm:^4.23.15"
     typescript: "npm:^7.0.2"
@@ -3488,21 +3488,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@file:.yarn/strtok3-71fbb27-dev.tgz::locator=music-metadata%40workspace%3A.":
-  version: 10.3.5-dev.71fbb27
-  resolution: "strtok3@file:.yarn/strtok3-71fbb27-dev.tgz#.yarn/strtok3-71fbb27-dev.tgz::hash=eef08e&locator=music-metadata%40workspace%3A."
-  dependencies:
-    "@tokenizer/token": "npm:^0.3.0"
-  checksum: 10c0/f376217de95da0070b4d9a863b10d73fd4ed1b4c0f068553edfb13774fef05edc5627b32376f6cf131b3cad5f69898cd42d854478dd1d7f6cc362eff06087ef2
-  languageName: node
-  linkType: hard
-
 "strtok3@npm:^10.3.5":
   version: 10.3.5
   resolution: "strtok3@npm:10.3.5"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
   checksum: 10c0/8d2477b239054c9f1f5b14a65d531147ca158ab9887fdc2d0938e77b7ec8891fb683b58254c7643afd5d98a421a59207534d491762b111f58c795071ecbe9fd1
+  languageName: node
+  linkType: hard
+
+"strtok3@npm:^10.4.0":
+  version: 10.4.0
+  resolution: "strtok3@npm:10.4.0"
+  dependencies:
+    "@tokenizer/token": "npm:^0.3.0"
+  checksum: 10c0/f79e09653ff1e8550690dff24cac51654d2ba7fb8658002755f8eaff3a829d440bb5a81c89d3908fc17a69f9d1175dcd3940678a97fbbbbcdeeada1b64d6180d
   languageName: node
   linkType: hard
 
