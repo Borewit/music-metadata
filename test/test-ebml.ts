@@ -40,6 +40,30 @@ describe('EBML leaf lengths (GHSA-5gfj-9q3v-qfp3)', () => {
       assert.deepEqual(tree, {});
       assert.strictEqual(tokenizer.position, sample.length);
     });
+
+    for (const [name, sample, boundary] of [
+      [
+        'unsafe length without a known boundary',
+        [0x81, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
+        Number.POSITIVE_INFINITY
+      ],
+      ['header extending past its container', [0x81, 0x81, 42], 1]
+    ] as const) {
+      it(`rejects a skipped ${name} before calling the tokenizer (action ${action})`, async () => {
+        const tokenizer = await fromStream(Readable.from([Uint8Array.from(sample)], { objectMode: false }));
+        tokenizer.ignore = async () => assert.fail('must reject before passing an invalid skip to the tokenizer');
+        try {
+          await expect(
+            new EbmlIterator(tokenizer).iterate(leafDtd(DataType.binary), boundary, {
+              startNext: () => action,
+              elementValue: async () => undefined
+            })
+          ).to.be.rejectedWith(EbmlContentError, 'Invalid element length');
+        } finally {
+          await tokenizer.close();
+        }
+      });
+    }
   }
 
   for (const [name, type] of Object.entries(DataType)) {
