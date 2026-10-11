@@ -110,6 +110,19 @@ describe('Shared metadata allocation limits', () => {
     }
   });
 
+  for (const length of [32, 64 * 1024 + 1]) {
+    it(`rejects a short custom tokenizer read for a ${length}-byte payload`, async () => {
+      const tokenizer = await fromStream(Readable.from([Buffer.from([42])], { objectMode: false }));
+      const originalRead = tokenizer.readBuffer.bind(tokenizer);
+      tokenizer.readBuffer = (buffer, options) => originalRead(buffer, { ...options, mayBeLess: true });
+      try {
+        await expect(readBuffer(tokenizer, length, {})).to.be.rejectedWith(EndOfStreamError);
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
+
   for (const [name, sample, mimeType] of [
     [
       'WAV fmt',
@@ -186,6 +199,21 @@ describe('Shared metadata allocation limits', () => {
       'Vorbis comment count 4294967295 exceeds remaining data'
     );
   });
+
+  for (const [name, payload, message] of [
+    ['vendor length', [0, 0, 0], 'Truncated Vorbis comment length'],
+    ['vendor string', [5, 0, 0, 0, 0x61], 'Vorbis comment length 5 exceeds remaining data 1'],
+    ['user comment', [0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0], 'Vorbis comment length 5 exceeds remaining data 0']
+  ] as const) {
+    it(`rejects a truncated FLAC Vorbis ${name}`, async () => {
+      const sample = Buffer.alloc(8 + payload.length);
+      sample.write('fLaC');
+      sample[4] = 0x84; // Last block, VORBIS_COMMENT
+      sample.writeUIntBE(payload.length, 5, 3);
+      sample.set(payload, 8);
+      await expect(mm.parseBuffer(sample, 'audio/flac')).to.be.rejectedWith(UnexpectedFileContentError, message);
+    });
+  }
 
   it('caps continued Ogg pages before retaining and merging the payload', async () => {
     const consumer = new VorbisStream(new MetadataCollector({}), { maxMemoryAllocation: 64 });
@@ -276,6 +304,88 @@ describe('DSDIFF chunk lengths (GHSA-5pwx-m48f-hw27)', () => {
     const prop = dffChunk('PROP', 16n, Buffer.concat([Buffer.from('SND '), dffChunk('FS  ', 0n)]));
     await expect(mm.parseBuffer(dff(prop), 'audio/dsd')).to.be.rejectedWith(DsdiffContentParseError, 'too small');
   });
+
+  for (const [id, payload] of [
+    ['ABSS', Buffer.alloc(7)],
+    ['LSCO', Buffer.alloc(1)],
+    ['CMPR', Buffer.from('DSD ')],
+    ['CMPR', Buffer.from([0x44, 0x53, 0x44, 0x20, 3, 0x61])]
+  ] as const) {
+    it(`rejects a ${payload.length}-byte ${id} sound property before reading past its boundary`, async () => {
+      const soundProperty = dffChunk(id, BigInt(payload.length), payload);
+      const propPayload = Buffer.concat([
+        Buffer.from('SND '),
+        soundProperty,
+        Buffer.alloc(payload.length & 1),
+        dffChunk('FS  ', 4n, Buffer.alloc(4))
+      ]);
+      await expect(
+        mm.parseBuffer(dff(dffChunk('PROP', BigInt(propPayload.length), propPayload)), 'audio/dsd')
+      ).to.be.rejectedWith(DsdiffContentParseError, `Chunk ${id} is too small`);
+    });
+  }
+
+  it('preserves alignment after optional, padded and unknown sound properties', async () => {
+    const sampleRate = Buffer.alloc(4);
+    sampleRate.writeUInt32BE(2822400);
+    const propPayload = Buffer.concat([
+      Buffer.from('SND '),
+      dffChunk('ABSS', 10n, Buffer.from([0, 1, 2, 3, 0, 0, 0, 4, 0xff, 0xff])),
+      dffChunk('LSCO', 2n, Buffer.from([0, 1])),
+      dffChunk('JUNK', 3n, Buffer.from([42, 43, 44, 0])),
+      dffChunk('CHNL', 6n, Buffer.concat([Buffer.from([0, 1]), Buffer.from('C   ')])),
+      dffChunk('CMPR', 8n, Buffer.concat([Buffer.from('DSD '), Buffer.from([3]), Buffer.from('raw')])),
+      dffChunk('FS  ', 4n, sampleRate)
+    ]);
+    const sample = dff(
+      Buffer.concat([
+        dffChunk('PROP', BigInt(propPayload.length), propPayload),
+        dffChunk('DSD ', 16n, Buffer.alloc(16))
+      ])
+    );
+    const metadata = await mm.parseBuffer(sample, 'audio/dsd');
+    assert.strictEqual(metadata.format.sampleRate, 2822400);
+    assert.strictEqual(metadata.format.numberOfChannels, 1);
+    assert.strictEqual(metadata.format.bitsPerSample, 1);
+    assert.strictEqual(metadata.format.codec, 'DSD (raw)');
+    assert.strictEqual(metadata.format.numberOfSamples, 128);
+    assert.strictEqual(metadata.format.duration, 128 / 2822400);
+    assert.strictEqual(metadata.format.bitrate, 2822400);
+  });
+
+  it('rejects an incomplete sound-property header', async () => {
+    const prop = dffChunk('PROP', 5n, Buffer.concat([Buffer.from('SND '), Buffer.from([0, 0])]));
+    await expect(mm.parseBuffer(dff(prop), 'audio/dsd')).to.be.rejectedWith(
+      DsdiffContentParseError,
+      'Incomplete sound-property chunk header'
+    );
+  });
+
+  for (const [name, sample] of [
+    ['audio payload', dff(dffChunk('DSD ', 4n, Buffer.from([42])), 20n)],
+    ['padding byte', dff(dffChunk('JUNK', 1n, Buffer.from([42])), 18n)]
+  ] as const) {
+    it(`rejects a truncated skipped ${name} on an unknown-size stream`, async () => {
+      await expect(mm.parseStream(Readable.from([sample], { objectMode: false }), 'audio/dsd')).to.be.rejectedWith(
+        EndOfStreamError
+      );
+    });
+
+    it(`rejects a short ${name} skip returned by a custom tokenizer`, async () => {
+      const tokenizer = await fromStream(Readable.from([sample], { objectMode: false }), {
+        fileInfo: { mimeType: 'audio/dsd' }
+      });
+      tokenizer.ignore = length => tokenizer.readBuffer(new Uint8Array(length), { mayBeLess: true });
+      try {
+        await expect(mm.parseFromTokenizer(tokenizer)).to.be.rejectedWith(
+          DsdiffContentParseError,
+          'Unexpected end of chunk'
+        );
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
 
   it('does not apply the metadata cap to skipped audio payloads', async () => {
     const sample = dff(dffChunk('DSD ', 128n, Buffer.alloc(128)));
