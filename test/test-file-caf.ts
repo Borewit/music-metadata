@@ -742,8 +742,23 @@ describe('Parse CAF (Core Audio File Format)', () => {
         chunkHeader('info', body.length),
         body
       ]);
-      const { common } = await mm.parseStream(Readable.from([file], { objectMode: false }), { mimeType: cafMimeType });
+      const { common } = await mm.parseStream(
+        Readable.from([file], { objectMode: false }),
+        { mimeType: cafMimeType },
+        { maxMemoryAllocation: body.length }
+      );
       assert.deepEqual(common.artists, [value]);
+    });
+
+    it('rejects an oversized Information chunk from an unknown-length stream before reading its body', async () => {
+      const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription, chunkHeader('info', 100000)]);
+      await expect(
+        mm.parseStream(
+          Readable.from([file], { objectMode: false }),
+          { mimeType: cafMimeType },
+          { maxMemoryAllocation: 64 * 1024 }
+        )
+      ).to.be.rejectedWith(mm.UnexpectedFileContentError, 'Metadata size 100000 exceeds allocation limit 65536');
     });
 
     it('rejects a truncated Information chunk body from a stream', async () => {
