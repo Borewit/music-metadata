@@ -979,6 +979,8 @@ describe('Sample Description (stsd) atom', () => {
     audioLike?: boolean;
     audioSampleRate?: number;
     handlerAfterMinf?: boolean;
+    metadataHandler?: string;
+    metadataBeforeMedia?: boolean;
     descriptionCount?: number;
     noDescription?: boolean;
     language?: number;
@@ -1018,7 +1020,14 @@ describe('Sample Description (stsd) atom', () => {
     const mdia = spec.handlerAfterMinf
       ? box('mdia', mediaHeaderBox(spec), minf, hdlr)
       : box('mdia', hdlr, mediaHeaderBox(spec), minf);
-    return box('trak', trackHeaderBox(trackId, spec), mdia);
+    const metadata = spec.metadataHandler
+      ? box('udta', box('meta', new Uint8Array(4), handlerBox(spec.metadataHandler)))
+      : new Uint8Array();
+    return box(
+      'trak',
+      trackHeaderBox(trackId, spec),
+      ...(spec.metadataBeforeMedia ? [metadata, mdia] : [mdia, metadata])
+    );
   }
 
   function mp4(...tracks: ITrackSpec[]): Uint8Array {
@@ -1162,6 +1171,29 @@ describe('Sample Description (stsd) atom', () => {
         ? [box('trun', trun), box('tfdt', tfdt)]
         : [box('tfdt', tfdt), box('trun', trun)];
     return box('moof', box('traf', box('tfhd', tfhd), ...boxes));
+  }
+
+  for (const metadataBeforeMedia of [false, true]) {
+    for (const metadataHandler of ['mdir', 'soun']) {
+      it(`preserves the video handler with track metadata (${metadataHandler}, before media=${metadataBeforeMedia})`, async () => {
+        const spec: ITrackSpec = {
+          ...videoTrack,
+          pixelWidth: 720,
+          pixelHeight: 576,
+          sampleCount: 25,
+          sampleDurations: [{ count: 25, duration: timeScale / 25 }]
+        };
+        const { format: expected } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' });
+        const { format } = await mm.parseBuffer(mp4({ ...spec, metadataHandler, metadataBeforeMedia }), {
+          mimeType: 'video/mp4'
+        });
+        assert.isTrue(format.hasVideo);
+        assert.isFalse(format.hasAudio);
+        assert.deepEqual(format.trackInfo, expected.trackInfo);
+        assert.strictEqual(format.trackInfo[0].type, mm.TrackType.video);
+        assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 720, pixelHeight: 576, frameRate: 25 });
+      });
+    }
   }
 
   it('returns video-only duration, resolution, frame rate and whole-file bitrate', async () => {
