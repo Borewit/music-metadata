@@ -1,8 +1,8 @@
 import initDebug from 'debug';
-import { EndOfStreamError, type ITokenizer } from 'strtok3';
+import { EndOfStreamError, type IRandomAccessTokenizer, type ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
-import { readBuffer } from '../common/Allocation.js';
+import { getMaxMemoryAllocation, readBuffer } from '../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import type { IOptions } from '../type.js';
 import { DataType, type IElementType, type IHeader, type ITree, type ValueType } from './types.js';
@@ -49,6 +49,7 @@ export class EbmlIterator {
   private ebmlMaxSizeLength = 8;
 
   private tokenizer: ITokenizer;
+  private readonly elementHeader: Uint8Array;
 
   /**
    * @param {ITokenizer} tokenizer Input
@@ -59,6 +60,7 @@ export class EbmlIterator {
     private readonly options: IOptions = {}
   ) {
     this.tokenizer = tokenizer;
+    this.elementHeader = new Uint8Array(Math.min(12, getMaxMemoryAllocation(options)));
     this.parserMap.set(DataType.uint, e => this.readUint(e));
     this.parserMap.set(DataType.string, e => this.readString(e));
     this.parserMap.set(DataType.binary, e => this.readBuffer(e));
@@ -210,6 +212,33 @@ export class EbmlIterator {
   }
 
   private async readElement(): Promise<IHeader> {
+    if (this.tokenizer.supportsRandomAccess() && this.elementHeader.length === 12) {
+      // RFC 8794 (July 2020), sections 4-6: an ID and size occupy at most 4 + 8 bytes.
+      // Peek both VINTs together to avoid four separate file/network reads per element.
+      // https://www.rfc-editor.org/rfc/rfc8794.html#section-4
+      const available = await this.tokenizer.peekBuffer(this.elementHeader, { mayBeLess: true });
+      const width = (offset: number, maximum: number): number => {
+        if (offset >= available) {
+          throw new EndOfStreamError();
+        }
+        for (let length = 1; length <= maximum; ++length) {
+          if ((this.elementHeader[offset] & (0x80 >> (length - 1))) !== 0) {
+            if (offset + length > available) {
+              throw new EndOfStreamError();
+            }
+            return length;
+          }
+        }
+        throw new EbmlContentError('VINT value exceeding maximum size');
+      };
+      const idLength = width(0, this.ebmlMaxIDLength);
+      const sizeLength = width(idLength, this.ebmlMaxSizeLength);
+      const id = readUIntBE(this.elementHeader.subarray(0, idLength), idLength);
+      const lenField = this.elementHeader.subarray(idLength, idLength + sizeLength);
+      lenField[0] ^= 0x80 >> (sizeLength - 1);
+      (this.tokenizer as IRandomAccessTokenizer).setPosition(this.tokenizer.position + idLength + sizeLength);
+      return { id, len: readUIntBE(lenField, sizeLength) };
+    }
     const id = await this.readVintData(this.ebmlMaxIDLength);
     const lenField = await this.readVintData(this.ebmlMaxSizeLength);
     lenField[0] ^= 0x80 >> (lenField.length - 1);

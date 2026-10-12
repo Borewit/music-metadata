@@ -22,6 +22,59 @@ function leafDtd(value: DataType): IElementType {
   return { name: 'root', container: { 0x81: { name: 'leaf', value } } };
 }
 
+describe('EBML random-access header reads', () => {
+  it('reads each skipped cluster header once and preserves trailing metadata', async () => {
+    const cluster = [0x1f, 0x43, 0xb6, 0x75, 0x83, 1, 2, 3];
+    const sample = new Uint8Array([...cluster, ...cluster, 0x81, 0x81, 42]);
+    const tokenizer = fromBuffer(sample);
+    const peek = tokenizer.peekBuffer.bind(tokenizer);
+    const positions: number[] = [];
+    tokenizer.peekBuffer = (buffer, options) => {
+      positions.push(options?.position ?? tokenizer.position);
+      return peek(buffer, options);
+    };
+    const dtd: IElementType = {
+      name: 'root',
+      container: { ...leafDtd(DataType.uint).container, 0x1f43b675: { name: 'cluster', container: {} } }
+    };
+    const tree = await new EbmlIterator(tokenizer).iterate(dtd, sample.length, {
+      ...listener,
+      startNext: element => (element.name === 'cluster' ? ParseAction.IgnoreElement : ParseAction.ReadNext)
+    });
+    assert.strictEqual(tree.leaf, 42);
+    assert.deepEqual(positions, [0, 8, 16, 18]);
+    assert.strictEqual(tokenizer.position, sample.length);
+  });
+
+  it('reads a four-byte ID and eight-byte size together', async () => {
+    const sample = new Uint8Array([0x1f, 0x43, 0xb6, 0x75, 1, 0, 0, 0, 0, 0, 0, 1, 42]);
+    const tokenizer = fromBuffer(sample);
+    const dtd: IElementType = { name: 'root', container: { 0x1f43b675: { name: 'leaf', value: DataType.uint } } };
+    const tree = await new EbmlIterator(tokenizer).iterate(dtd, sample.length, listener);
+    assert.strictEqual(tree.leaf, 42);
+    assert.strictEqual(tokenizer.position, sample.length);
+  });
+
+  it('supports allocation limits smaller than a complete header lookahead', async () => {
+    const sample = new Uint8Array([0x81, 0x81, 42]);
+    const tokenizer = fromBuffer(sample, { maxBufferSize: 1 });
+    const tree = await new EbmlIterator(tokenizer, { maxMemoryAllocation: 1 }).iterate(
+      leafDtd(DataType.uint),
+      sample.length,
+      listener
+    );
+    assert.strictEqual(tree.leaf, 42);
+  });
+
+  it('does not interpret stale bytes after a truncated final header', async () => {
+    const sample = new Uint8Array([0x81, 0x81, 42, 0x81, 0x40]);
+    const tokenizer = fromBuffer(sample);
+    const tree = await new EbmlIterator(tokenizer).iterate(leafDtd(DataType.uint), sample.length, listener);
+    assert.strictEqual(tree.leaf, 42);
+    assert.strictEqual(tokenizer.position, 3);
+  });
+});
+
 describe('EBML leaf lengths (GHSA-5gfj-9q3v-qfp3)', () => {
   for (const action of [ParseAction.IgnoreElement, ParseAction.SkipSiblings]) {
     it(`bounds an unknown-size EBML skip by known input before calling the tokenizer (action ${action})`, async () => {
