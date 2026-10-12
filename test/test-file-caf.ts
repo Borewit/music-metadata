@@ -582,6 +582,35 @@ describe('Parse CAF (Core Audio File Format)', () => {
       );
     });
 
+    for (const chunkSize of [8004, -1]) {
+      for (const input of ['buffer', 'stream with known length', 'stream with unknown length']) {
+        it(`rejects a truncated Audio Data chunk (size=${chunkSize}) from a ${input}`, async () => {
+          const file = Buffer.concat([
+            fileHeader,
+            chunkHeader('desc', 32),
+            audioDescription,
+            chunkHeader('data', chunkSize),
+            Buffer.alloc(chunkSize === -1 ? 2 : 4)
+          ]);
+          const result =
+            input === 'buffer'
+              ? mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })
+              : mm.parseStream(Readable.from([file], { objectMode: false }), {
+                  mimeType: cafMimeType,
+                  size: input === 'stream with known length' ? file.length : undefined
+                });
+          if (chunkSize >= 0 && input !== 'stream with unknown length') {
+            await expect(result).to.be.rejectedWith(
+              mm.UnexpectedFileContentError,
+              'Audio Data chunk size 8004 exceeds available input size 4'
+            );
+          } else {
+            await expect(result).to.be.rejectedWith(EndOfStreamError);
+          }
+        });
+      }
+    }
+
     it('rejects an unknown chunk that declares an unknown size', async () => {
       const file = Buffer.concat([fileHeader, chunkHeader('desc', 32), audioDescription, chunkHeader('uuid', -1)]);
       await expect(mm.parseBuffer(new Uint8Array(file), { mimeType: cafMimeType })).to.be.rejectedWith(

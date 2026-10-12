@@ -157,7 +157,12 @@ export class CafParser extends BasicParser {
     if (chunkSize >= 0 && chunkSize < editCountLen) {
       throw new CafContentError(`Audio Data chunk size ${chunkSize} is too small to hold mEditCount`);
     }
-    await this.tokenizer.ignore(editCountLen); // Audio payload is not decoded
+    if (chunkSize >= 0) {
+      this.validateChunkAvailability(chunkSize, 'Audio Data');
+    }
+    if ((await this.tokenizer.ignore(editCountLen)) !== editCountLen) {
+      throw new strtok3.EndOfStreamError();
+    }
 
     if (chunkSize === -1) {
       this.reachedEndOfFile = true; // Runs to the end of the file, nothing can follow
@@ -171,8 +176,11 @@ export class CafParser extends BasicParser {
       return;
     }
 
-    this.dataBytes = chunkSize - editCountLen;
-    await this.tokenizer.ignore(this.dataBytes);
+    const dataBytes = chunkSize - editCountLen;
+    if ((await this.tokenizer.ignore(dataBytes)) !== dataBytes) {
+      throw new strtok3.EndOfStreamError();
+    }
+    this.dataBytes = dataBytes;
   }
 
   private async readInfo(chunkSize: number): Promise<void> {
