@@ -34,7 +34,6 @@ const codecByFormatId: Record<string, ICodecInfo> = {
 
 const editCountLen = 4;
 const numEntriesLen = 4;
-const maxBoundedReadSize = 64 * 1024;
 
 /**
  * CAF - Core Audio File Format
@@ -249,26 +248,7 @@ export class CafParser extends BasicParser {
    */
   private async readChunkBody(chunkSize: number, chunkType: string): Promise<Uint8Array> {
     this.validateChunkAvailability(chunkSize, chunkType);
-    if (chunkSize === 0) {
-      return new Uint8Array(0);
-    }
-    if (this.tokenizer.fileInfo.size !== undefined || chunkSize <= maxBoundedReadSize) {
-      return this.tokenizer.readToken(new Token.Uint8ArrayType(chunkSize));
-    }
-    const chunks: Uint8Array[] = [];
-    for (let remaining = chunkSize; remaining > 0; ) {
-      const chunk = new Uint8Array(Math.min(remaining, maxBoundedReadSize));
-      await this.tokenizer.readBuffer(chunk);
-      chunks.push(chunk);
-      remaining -= chunk.length;
-    }
-    const body = new Uint8Array(chunkSize);
-    let offset = 0;
-    for (const chunk of chunks) {
-      body.set(chunk, offset);
-      offset += chunk.length;
-    }
-    return body;
+    return this.readToken(new Token.Uint8ArrayType(chunkSize));
   }
 
   private async skipUnknownChunk(chunkSize: number): Promise<void> {
