@@ -76,7 +76,7 @@ export class AsfParser extends BasicParser {
       }
       if (extended) {
         if (extended.endTime > extended.startTime) {
-          track.duration = Number(extended.endTime - extended.startTime) / 1e7;
+          track.duration = Number(extended.endTime - extended.startTime) / 1000;
         }
         const name = extended.streamNames[0]?.streamName;
         if (name) {
