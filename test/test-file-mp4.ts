@@ -1,6 +1,7 @@
 import { rejects } from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { promisify } from 'node:util';
@@ -1175,7 +1176,7 @@ describe('Sample Description (stsd) atom', () => {
 
   for (const metadataBeforeMedia of [false, true]) {
     for (const metadataHandler of ['mdir', 'soun']) {
-      it(`preserves the video handler with track metadata (${metadataHandler}, before media=${metadataBeforeMedia})`, async () => {
+      describe(`preserves the video handler with track metadata (${metadataHandler}, before media=${metadataBeforeMedia})`, () => {
         const spec: ITrackSpec = {
           ...videoTrack,
           pixelWidth: 720,
@@ -1183,15 +1184,30 @@ describe('Sample Description (stsd) atom', () => {
           sampleCount: 25,
           sampleDurations: [{ count: 25, duration: timeScale / 25 }]
         };
-        const { format: expected } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' });
-        const { format } = await mm.parseBuffer(mp4({ ...spec, metadataHandler, metadataBeforeMedia }), {
-          mimeType: 'video/mp4'
+        let directory: string | undefined;
+        let filePath: string;
+        let expected: mm.IFormat;
+        before(async () => {
+          directory = await fs.promises.mkdtemp(path.join(tmpdir(), 'music-metadata-mp4-handler-'));
+          filePath = path.join(directory, 'track-metadata.mp4');
+          await fs.promises.writeFile(filePath, mp4({ ...spec, metadataHandler, metadataBeforeMedia }));
+          ({ format: expected } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' }));
         });
-        assert.isTrue(format.hasVideo);
-        assert.isFalse(format.hasAudio);
-        assert.deepEqual(format.trackInfo, expected.trackInfo);
-        assert.strictEqual(format.trackInfo[0].type, mm.TrackType.video);
-        assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 720, pixelHeight: 576, frameRate: 25 });
+        after(async () => {
+          if (directory) {
+            await fs.promises.rm(directory, { recursive: true, force: true });
+          }
+        });
+        for (const parser of Parsers) {
+          it(parser.description, async function () {
+            const { format } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
+            assert.isTrue(format.hasVideo);
+            assert.isFalse(format.hasAudio);
+            assert.deepEqual(format.trackInfo, expected.trackInfo);
+            assert.strictEqual(format.trackInfo[0].type, mm.TrackType.video);
+            assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 720, pixelHeight: 576, frameRate: 25 });
+          });
+        }
       });
     }
   }
