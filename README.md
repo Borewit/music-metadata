@@ -633,6 +633,10 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   - Metadata not listed in the SeekHead may be skipped.
   - If the SeekHead is missing, this option has no effect.
 
+  For large MKV files on network shares, use `parseFile(filePath, { mkvUseIndex: true })`
+  when the file's SeekHead index is reliable. The default traversal reads every cluster header,
+  so network latency can dominate even though the audio/video payloads are skipped.
+
 - `observer`: `(update: IMetadataEvent) => void`:
 
   Callback function triggered when common tags or format properties are updated during parsing.
