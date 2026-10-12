@@ -755,7 +755,13 @@ export class MP4Parser extends BasicParser {
             track.header = await this.readToken(new AtomToken.TrackHeaderAtom(payLoadLength));
             break;
 
-          case 'hdlr': // TrackHeaderBox
+          case 'hdlr': // Media handler; metadata and data handlers do not identify the track type.
+            // QuickTime File Format, Media atom: Handler reference atom ('hdlr').
+            // https://developer.apple.com/documentation/quicktime-file-format/media_atom/handler_reference_atom
+            if (child.parent?.header.name !== 'mdia' || child.parent.parent !== trakBox) {
+              await this.tokenizer.ignore(payLoadLength);
+              break;
+            }
             track.handler = await this.readToken(new AtomToken.HandlerBox(payLoadLength));
 
             if (track.handler.handlerType === 'audi' || track.handler.handlerType === 'soun') {
