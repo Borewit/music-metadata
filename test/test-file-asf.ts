@@ -154,8 +154,8 @@ describe('ASF track properties', () => {
     const name = Buffer.from('Main video', 'utf16le');
     const payload = new Uint8Array(64 + 4 + name.length + 22 + 3 + (embedded?.length ?? 0));
     const view = new DataView(payload.buffer);
-    view.setBigUint64(0, 10000000n, true);
-    view.setBigUint64(8, 30000000n, true);
+    view.setBigUint64(0, 1000n, true);
+    view.setBigUint64(8, 3000n, true);
     view.setUint32(16, 2000000, true);
     view.setUint16(48, id, true);
     view.setBigUint64(52, 400000n, true);

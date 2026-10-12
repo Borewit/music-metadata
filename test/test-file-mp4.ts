@@ -579,21 +579,29 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.approximately(format.bitrate!, 127947, 1 / 2, 'format.bitrate');
   });
 
-  it('returns video metadata and overall bitrate for fragmented-duration.mp4 (#2701)', async () => {
-    const { format } = await mm.parseFile(path.join(mp4Samples, 'fragmented-duration.mp4'));
-    const video = format.trackInfo.find(track => track.type === mm.TrackType.video);
-    assert.approximately(video.duration, 96.88, 1e-6);
-    assert.approximately(video.bitrate, 1323242, 1);
-    assert.deepEqual(video.video, {
-      pixelWidth: 720,
-      pixelHeight: 1280,
-      displayWidth: 720,
-      displayHeight: 1280,
-      frameRate: 25
+  describe('returns video metadata and overall bitrate for fragmented-duration.mp4 (#2701)', () => {
+    Parsers.forEach(parser => {
+      it(parser.description, async function () {
+        const { format } = await parser.parse(
+          () => this.skip(),
+          path.join(mp4Samples, 'fragmented-duration.mp4'),
+          'video/mp4'
+        );
+        const video = format.trackInfo.find(track => track.type === mm.TrackType.video);
+        assert.approximately(video.duration, 96.88, 1e-6);
+        assert.approximately(video.bitrate, 1323242, 1);
+        assert.deepEqual(video.video, {
+          pixelWidth: 720,
+          pixelHeight: 1280,
+          displayWidth: 720,
+          displayHeight: 1280,
+          frameRate: 25
+        });
+        assert.approximately(format.containerDuration, 96.98331065759638, 1e-6);
+        assert.approximately(format.overallBitrate, 1453278, 1);
+        assert.approximately(format.bitrate, 127947, 1, 'Audio summary bitrate');
+      });
     });
-    assert.approximately(format.containerDuration, 96.98331065759638, 1e-6);
-    assert.approximately(format.overallBitrate, 1453278, 1);
-    assert.approximately(format.bitrate, 127947, 1, 'Audio summary bitrate');
   });
 
   it('bitrate id4.m4a', async () => {
