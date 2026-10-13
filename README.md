@@ -177,6 +177,8 @@ parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata>
 
 - This function is **Node.js-only** and relies on Node.js-specific APIs to access the filesystem.
 
+- The path must resolve to a regular file. Symlinks to regular files are supported. Directories, FIFOs (named pipes), and other non-regular filesystem objects are rejected with `NotRegularFileError` from `strtok3`. FIFOs are rejected without waiting for a writer. To parse streamed audio, use [`parseStream()`](#parsestream-function).
+
 - For browser environments, consider using the [parseBlob](#parseblob-function) to parse [File object](https://developer.mozilla.org/en-US/docs/Web/API/File) objects.
 
 ##### Example:
