@@ -40,14 +40,19 @@ export async function parseStream(
 
 /**
  * Parse audio from Node file
+ * Requires a regular file; symlinks to regular files are supported.
  * @param filePath - Media file to read meta-data from
  * @param options - Parsing options
  * @returns Metadata
+ * @throws {NotRegularFileError} If the opened filesystem object is not a regular file.
  */
 export async function parseFile(filePath: string, options: IOptions = {}): Promise<IAudioMetadata> {
   debug(`parseFile: ${filePath}`);
 
-  const fileTokenizer = await fromFile(filePath, getTokenizerOptions(options));
+  const fileTokenizer = await fromFile(filePath, {
+    ...getTokenizerOptions(options),
+    regularFileOnly: true
+  });
 
   const parserFactory = new ParserFactory();
 
