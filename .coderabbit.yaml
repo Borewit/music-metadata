@@ -1,6 +1,9 @@
 reviews:
   poem: false
   in_progress_fortune: false
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
 
 chat:
   art: false
