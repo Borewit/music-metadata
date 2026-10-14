@@ -106,11 +106,38 @@ describe('MIME & extension mapping', () => {
     });
 
     async function testFileType(sample: string, container: string) {
-      const stream = fs.createReadStream(path.join(samplePath, sample));
-      const metadata = await mm.parseStream(stream);
-      stream.close();
-      assert.equal(metadata.format.container, container);
+      const buffer = await fs.promises.readFile(path.join(samplePath, sample));
+      const metadata = await mm.parseBuffer(buffer);
+      assert.equal(metadata.format.container, container, 'parseBuffer without MIME-type or path');
+
+      const stream = new SourceStream(buffer);
+      try {
+        const metadata = await mm.parseStream(stream);
+        assert.equal(metadata.format.container, container, 'parseStream without MIME-type or path');
+      } finally {
+        stream.destroy();
+      }
     }
+
+    it('should recognize CAF', () => {
+      return testFileType(path.join('caf', 'lpcm-le-16bit.caf'), 'CAF');
+    });
+
+    it('should recognize DSDIFF', () => {
+      return testFileType(path.join('dsdiff', 'DSD64.dff'), 'DSDIFF/DSD');
+    });
+
+    it('should recognize AAC', () => {
+      return testFileType(path.join('aac', 'adts-mpeg4.aac'), 'ADTS/MPEG-4');
+    });
+
+    it('should recognize AIFF', () => {
+      return testFileType(path.join('aiff', 'M1F1-int8-AFsp.aif'), 'AIFF');
+    });
+
+    it('should recognize AIFF-C', () => {
+      return testFileType(path.join('aiff', 'M1F1-AlawC-AFsp.aif'), 'AIFF-C');
+    });
 
     it('should recognize MP2', () => {
       return testFileType('1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'MPEG');
