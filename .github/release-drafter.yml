@@ -36,6 +36,7 @@ categories:
       labels:
         - DevOps
         - dev-dependencies
+        - internal
   # Keep a patch fallback for changes without a category label.
   - type: version-resolver
     semver-increment: patch
