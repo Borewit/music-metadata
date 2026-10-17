@@ -1,3 +1,14 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0.1%
+    patch:
+      default:
+        target: auto
+        threshold: 0.1%
+
 comment:
   layout: "condensed_header, condensed_files, condensed_footer"
   hide_project_coverage: false
