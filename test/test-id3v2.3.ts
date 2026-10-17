@@ -586,13 +586,10 @@ describe('Extract metadata from ID3v2.3 header', () => {
         assert.strictEqual(format.container, 'MPEG', 'format.container');
         assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
 
-        assert.includeDeepMembers(
+        assert.deepEqual(
           quality.warnings,
-          [
-            { message: 'id3v2.3 header has empty tag type=PRIV' },
-            { message: 'Invalid ID3v2.3 frame-header-ID: \u0000\u0000\u0000\u0000' }
-          ],
-          'quality.warnings includes'
+          [{ message: 'id3v2.3 header has empty tag type=PRIV' }],
+          'only the empty PRIV frame should produce a warning, not padding'
         );
       });
     });
