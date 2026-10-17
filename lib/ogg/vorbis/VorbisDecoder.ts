@@ -37,6 +37,23 @@ export class VorbisDecoder {
     return value;
   }
 
+  /** Decode the shared structure, leaving packet framing and metadata policy to callers. */
+  public parseCommentList(createCountError: (message: string) => Error = message => new VorbisCommentError(message)) {
+    const vendor = this.readStringUtf8();
+    return { vendor, comments: this.parseUserCommentList(createCountError) };
+  }
+
+  private *parseUserCommentList(createCountError: (message: string) => Error) {
+    const count = this.readInt32();
+    // Each entry needs at least its four-byte length, even for an empty comment.
+    if (count > Math.floor(this.remaining / 4)) {
+      throw createCountError(`Vorbis comment count ${count} exceeds remaining data`);
+    }
+    for (let i = 0; i < count; ++i) {
+      yield this.parseUserComment();
+    }
+  }
+
   public parseUserComment(): { key: string; value: string; len: number } {
     const offset0 = this.offset;
     const v = this.readStringUtf8();

@@ -1,5 +1,4 @@
 import debugInit from 'debug';
-import * as Token from 'token-types';
 import { validateAllocation } from '../../common/Allocation.js';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
@@ -168,15 +167,9 @@ export class VorbisStream implements IPageConsumer {
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
    */
   protected async parseUserCommentList(pageData: Uint8Array, offset: number): Promise<void> {
-    const strLen = Token.UINT32_LE.get(pageData, offset);
-    offset += 4;
-    // const vendorString = new Token.StringType(strLen, 'utf-8').get(pageData, offset);
-    offset += strLen;
-    let userCommentListLength = Token.UINT32_LE.get(pageData, offset);
-    offset += 4;
-
-    while (userCommentListLength-- > 0) {
-      offset += await this.parseUserComment(pageData, offset);
+    const { comments } = new VorbisDecoder(pageData, offset).parseCommentList();
+    for (const tag of comments) {
+      await this.addTag(tag.key, tag.value);
     }
     this.isMetadataComplete = true;
   }
