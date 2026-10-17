@@ -642,6 +642,9 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
 
   Callback function triggered when common tags or format properties are updated during parsing.
   Allows real-time monitoring of metadata as it becomes available.
+  The callback runs synchronously after the update; returned promises are not awaited.
+  Repeated assignments of unchanged primitive format values do not trigger callbacks.
+  Keep callback work lightweight, or batch expensive operations in the consuming application.
  
 - `skipCovers`: `boolean` (default: `false`)
 
