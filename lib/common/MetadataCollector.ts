@@ -3,7 +3,6 @@ import { fileTypeFromBuffer } from 'file-type';
 import { parseLyrics } from '../lrc/LyricsParser.js';
 import {
   type AnyTagValue,
-  type FormatId,
   type IAudioMetadata,
   type IComment,
   type ICommonTagsResult,
@@ -69,7 +68,7 @@ export interface INativeMetadataCollector extends IWarningCollector {
    */
   hasAny(): boolean;
 
-  setFormat(key: FormatId, value: AnyTagValue): void;
+  setFormat<K extends keyof IFormat>(key: K, value: IFormat[K]): void;
 
   registerTagType(tagType: TagType): void;
 
@@ -147,9 +146,10 @@ export class MetadataCollector implements INativeMetadataCollector {
     this.format.trackInfo.push(streamInfo);
   }
 
-  public setFormat(key: FormatId, value: AnyTagValue) {
+  public setFormat<K extends keyof IFormat>(key: K, value: IFormat[K]): void {
     debug(`format: ${key} = ${value}`);
-    (this.format as unknown as { [id: string]: unknown })[key] = value; // as any to override readonly
+    // Allow internal writes while preserving each property's value type.
+    (this.format as { -readonly [P in keyof IFormat]: IFormat[P] })[key] = value;
 
     if (this.opts?.observer) {
       this.opts.observer({ metadata: this, tag: { type: 'format', id: key, value } });

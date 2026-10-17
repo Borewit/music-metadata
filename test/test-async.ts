@@ -8,6 +8,39 @@ import type { IMetadataEventTag } from '../lib/type.js';
 import { samplePath } from './util.js';
 
 describe('Asynchronous observer updates', () => {
+  it('should notify format observers after storing each value', () => {
+    const events: IMetadataEventTag[] = [];
+    const collector = new MetadataCollector({
+      observer(event) {
+        assert.strictEqual(event.metadata, collector);
+        assert.strictEqual(Reflect.get(event.metadata.format, event.tag.id), event.tag.value);
+        events.push(event.tag);
+      }
+    });
+    const creationTime = new Date('2026-01-01T00:00:00Z');
+    const chapters = [{ title: 'Intro', start: 0 }];
+
+    collector.setFormat('container', 'MP4');
+    collector.setFormat('duration', 10);
+    collector.setFormat('duration', undefined);
+    collector.setFormat('hasAudio', false);
+    collector.setFormat('creationTime', creationTime);
+    collector.setFormat('chapters', chapters);
+    collector.setFormat('tagTypes', []);
+    collector.setFormat('trackInfo', []);
+
+    assert.deepEqual(events, [
+      { type: 'format', id: 'container', value: 'MP4' },
+      { type: 'format', id: 'duration', value: 10 },
+      { type: 'format', id: 'duration', value: undefined },
+      { type: 'format', id: 'hasAudio', value: false },
+      { type: 'format', id: 'creationTime', value: creationTime },
+      { type: 'format', id: 'chapters', value: chapters },
+      { type: 'format', id: 'tagTypes', value: [] },
+      { type: 'format', id: 'trackInfo', value: [] }
+    ]);
+  });
+
   it('should not announce ignored duplicate values in unique lists', async () => {
     const events: IMetadataEventTag[] = [];
     const collector = new MetadataCollector({

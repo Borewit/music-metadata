@@ -97,7 +97,7 @@ export class DsfParser extends AbstractID3Parser {
           this.metadata.setFormat('numberOfChannels', formatChunk.channelNum);
           this.metadata.setFormat('sampleRate', formatChunk.samplingFrequency);
           this.metadata.setFormat('bitsPerSample', formatChunk.bitsPerSample);
-          this.metadata.setFormat('numberOfSamples', formatChunk.sampleCount);
+          this.metadata.setFormat('numberOfSamples', Number(formatChunk.sampleCount));
           this.metadata.setFormat('duration', Number(formatChunk.sampleCount) / formatChunk.samplingFrequency);
 
           const bitrate = formatChunk.bitsPerSample * formatChunk.samplingFrequency * formatChunk.channelNum;

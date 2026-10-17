@@ -18,7 +18,7 @@ describe('Parse Sony DSF (DSD Stream File)', () => {
     assert.strictEqual(format.numberOfChannels, 2);
     assert.strictEqual(format.bitsPerSample, 1);
     assert.strictEqual(format.sampleRate, 5644800);
-    assert.strictEqual(Number(format.numberOfSamples), 564480);
+    assert.strictEqual(format.numberOfSamples, 564480);
     assert.strictEqual(format.duration, 0.1);
     assert.strictEqual(format.bitrate, 11289600);
     assert.deepStrictEqual(format.tagTypes, ['ID3v2.3']);

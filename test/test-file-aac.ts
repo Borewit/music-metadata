@@ -87,7 +87,7 @@ describe('Parse ADTS/AAC', () => {
         );
         assert.strictEqual(format.container, 'ADTS/MPEG-4', 'format.container');
         assert.strictEqual(format.codec, 'AAC', 'format.codec');
-        assert.isNull(format.sampleRate, 'format.sampleRate should be unknown');
+        assert.isUndefined(format.sampleRate, 'format.sampleRate should be unknown');
         assert.isUndefined(format.bitrate, 'format.bitrate cannot be calculated without a sampling rate');
       });
     });
