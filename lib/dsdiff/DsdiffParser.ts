@@ -1,10 +1,8 @@
 import initDebug from 'debug';
-import * as strtok3 from 'strtok3';
 import * as Token from 'token-types';
-import { getTokenizerOptions } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { FourCcToken } from '../common/FourCC.js';
-import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
+import { parseEmbeddedID3v2 } from '../id3v2/EmbeddedID3v2.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import { ChunkHeader64, type IChunkHeader64 } from './DsdiffToken.js';
 
@@ -107,9 +105,7 @@ export class DsdiffParser extends BasicParser {
 
       case 'ID3': {
         // Unofficial ID3 tag support
-        const id3_data = await this.readToken<Uint8Array>(new Token.Uint8ArrayType(Number(header.chunkSize)));
-        const rst = strtok3.fromBuffer(id3_data, getTokenizerOptions(this.options));
-        await new ID3v2Parser().parse(this.metadata, rst, this.options);
+        await parseEmbeddedID3v2(this.metadata, this.tokenizer, this.options, Number(header.chunkSize));
         break;
       }
 
