@@ -24,7 +24,6 @@ export class CombinedTagMapper {
       new ID3v22TagMapper(),
       new ID3v24TagMapper(),
       new MP4TagMapper(),
-      new MP4TagMapper(),
       new VorbisTagMapper(),
       new APEv2TagMapper(),
       new AsfTagMapper(),
