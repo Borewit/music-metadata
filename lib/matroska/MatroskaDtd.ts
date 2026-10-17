@@ -5,8 +5,11 @@ import { DataType, type IElementType } from '../ebml/types.js';
  * Derived from https://github.com/tungol/EBML/blob/master/doctypes/matroska.dtd
  * Extended with:
  * - https://www.matroska.org/technical/specs/index.html
+ * Cardinality and paths audited against the CELLAR ebml_matroska.xml schema.
+ * UID integers deliberately decode as bytes to preserve all 64 bits.
+ * Recursive ChapterAtom/SimpleTag children are not expanded by this metadata subset.
  */
-export const matroskaDtd: IElementType = {
+export const matroskaDtd = {
   name: 'dtd',
   container: {
     0x1a45dfa3: {
@@ -30,6 +33,7 @@ export const matroskaDtd: IElementType = {
         // Meta Seek Information (also known as MetaSeek)
         0x114d9b74: {
           name: 'seekHead',
+          multiple: true,
           container: {
             0x4dbb: {
               name: 'seek',
@@ -54,7 +58,7 @@ export const matroskaDtd: IElementType = {
             0x3e83bb: { name: 'nextFilename', value: DataType.string },
             0x2ad7b1: { name: 'timecodeScale', value: DataType.uint },
             0x4489: { name: 'duration', value: DataType.float },
-            0x4461: { name: 'dateUTC', value: DataType.uint },
+            0x4461: { name: 'dateUTC', value: DataType.int },
             0x7ba9: { name: 'title', value: DataType.string },
             0x4d80: { name: 'muxingApp', value: DataType.string },
             0x5741: { name: 'writingApp', value: DataType.string }
@@ -66,12 +70,17 @@ export const matroskaDtd: IElementType = {
           name: 'cluster',
           multiple: true,
           container: {
-            0xe7: { name: 'timecode', value: DataType.uid },
-            0x58d7: { name: 'silentTracks ', multiple: true },
-            0xa7: { name: 'position', value: DataType.uid },
-            0xab: { name: 'prevSize', value: DataType.uid },
-            0xa0: { name: 'blockGroup' },
-            0xa3: { name: 'simpleBlock' }
+            0xe7: { name: 'timecode', value: DataType.uint },
+            0x5854: {
+              name: 'silentTracks',
+              container: {
+                0x58d7: { name: 'trackNumber', value: DataType.uint, multiple: true }
+              }
+            },
+            0xa7: { name: 'position', value: DataType.uint },
+            0xab: { name: 'prevSize', value: DataType.uint },
+            0xa0: { name: 'blockGroup', multiple: true },
+            0xa3: { name: 'simpleBlock', value: DataType.binary, multiple: true }
           }
         },
 
@@ -93,7 +102,7 @@ export const matroskaDtd: IElementType = {
                 0x6de7: { name: 'minCache', value: DataType.uint },
                 0x6de8: { name: 'maxCache', value: DataType.uint },
                 0x23e383: { name: 'defaultDuration', value: DataType.uint },
-                0x23314f: { name: 'timecodeScale', value: DataType.float },
+                0x23314f: { name: 'trackTimecodeScale', value: DataType.float },
                 0x536e: { name: 'name', value: DataType.string },
                 0x22b59c: { name: 'language', value: DataType.string },
                 0x22b59d: { name: 'languageIETF', value: DataType.string },
@@ -101,23 +110,24 @@ export const matroskaDtd: IElementType = {
                 0x63a2: { name: 'codecPrivate', value: DataType.binary },
                 0x258688: { name: 'codecName', value: DataType.string },
                 0x3a9697: { name: 'codecSettings', value: DataType.string },
-                0x3b4040: { name: 'codecInfoUrl', value: DataType.string },
-                0x26b240: { name: 'codecDownloadUrl', value: DataType.string },
+                0x3b4040: { name: 'codecInfoUrl', value: DataType.string, multiple: true },
+                0x26b240: { name: 'codecDownloadUrl', value: DataType.string, multiple: true },
                 0xaa: { name: 'codecDecodeAll', value: DataType.bool },
-                0x6fab: { name: 'trackOverlay', value: DataType.uint },
+                0x6fab: { name: 'trackOverlay', value: DataType.uint, multiple: true },
 
                 // Video
                 0xe0: {
                   name: 'video',
                   container: {
-                    0x9a: { name: 'flagInterlaced', value: DataType.bool },
+                    0x9a: { name: 'flagInterlaced', value: DataType.uint },
                     0x53b8: { name: 'stereoMode', value: DataType.uint },
                     0xb0: { name: 'pixelWidth', value: DataType.uint },
                     0xba: { name: 'pixelHeight', value: DataType.uint },
                     0x54b0: { name: 'displayWidth', value: DataType.uint },
                     0x54ba: { name: 'displayHeight', value: DataType.uint },
+                    0x54b2: { name: 'displayUnit', value: DataType.uint },
                     0x54b3: { name: 'aspectRatioType', value: DataType.uint },
-                    0x2eb524: { name: 'colourSpace', value: DataType.uint },
+                    0x2eb524: { name: 'colourSpace', value: DataType.binary },
                     0x2fb523: { name: 'gammaValue', value: DataType.float }
                   }
                 },
@@ -129,7 +139,6 @@ export const matroskaDtd: IElementType = {
                     0xb5: { name: 'samplingFrequency', value: DataType.float },
                     0x78b5: { name: 'outputSamplingFrequency', value: DataType.float },
                     0x9f: { name: 'channels', value: DataType.uint }, // https://www.matroska.org/technical/specs/index.html
-                    0x94: { name: 'channels', value: DataType.uint },
                     0x7d7b: { name: 'channelPositions', value: DataType.binary },
                     0x6264: { name: 'bitDepth', value: DataType.uint }
                   }
@@ -141,29 +150,29 @@ export const matroskaDtd: IElementType = {
                   container: {
                     0x6240: {
                       name: 'contentEncoding',
+                      multiple: true,
                       container: {
                         0x5031: { name: 'order', value: DataType.uint },
-                        0x5032: { name: 'scope', value: DataType.bool },
+                        0x5032: { name: 'scope', value: DataType.uint },
                         0x5033: { name: 'type', value: DataType.uint },
                         0x5034: {
-                          name: 'contentEncoding',
+                          name: 'contentCompression',
                           container: {
                             0x4254: { name: 'contentCompAlgo', value: DataType.uint },
                             0x4255: { name: 'contentCompSettings', value: DataType.binary }
                           }
                         },
                         0x5035: {
-                          name: 'contentEncoding',
+                          name: 'contentEncryption',
                           container: {
                             0x47e1: { name: 'contentEncAlgo', value: DataType.uint },
                             0x47e2: { name: 'contentEncKeyID', value: DataType.binary },
-                            0x47e3: { name: 'contentSignature ', value: DataType.binary },
-                            0x47e4: { name: 'ContentSigKeyID  ', value: DataType.binary },
-                            0x47e5: { name: 'contentSigAlgo ', value: DataType.uint },
-                            0x47e6: { name: 'contentSigHashAlgo ', value: DataType.uint }
+                            0x47e3: { name: 'contentSignature', value: DataType.binary },
+                            0x47e4: { name: 'contentSigKeyID', value: DataType.binary },
+                            0x47e5: { name: 'contentSigAlgo', value: DataType.uint },
+                            0x47e6: { name: 'contentSigHashAlgo', value: DataType.uint }
                           }
-                        },
-                        0x6264: { name: 'bitDepth', value: DataType.uint }
+                        }
                       }
                     }
                   }
@@ -179,10 +188,12 @@ export const matroskaDtd: IElementType = {
           container: {
             0xbb: {
               name: 'cuePoint',
+              multiple: true,
               container: {
-                0xb3: { name: 'cueTime', value: DataType.uid },
+                0xb3: { name: 'cueTime', value: DataType.uint },
                 0xb7: {
                   name: 'positions',
+                  multiple: true,
                   container: {
                     0xf7: { name: 'track', value: DataType.uint },
                     0xf1: { name: 'clusterPosition', value: DataType.uint },
@@ -190,6 +201,7 @@ export const matroskaDtd: IElementType = {
                     0xea: { name: 'codecState', value: DataType.uint },
                     0xdb: {
                       name: 'reference',
+                      multiple: true,
                       container: {
                         0x96: { name: 'time', value: DataType.uint },
                         0x97: { name: 'cluster', value: DataType.uint },
@@ -229,27 +241,30 @@ export const matroskaDtd: IElementType = {
           container: {
             0x45b9: {
               name: 'editionEntry',
+              multiple: true,
               container: {
                 0xb6: {
                   name: 'chapterAtom',
+                  multiple: true,
                   container: {
                     0x73c4: { name: 'uid', value: DataType.uid },
                     0x91: { name: 'timeStart', value: DataType.uint },
-                    0x92: { name: 'timeEnd', value: DataType.uid },
+                    0x92: { name: 'timeEnd', value: DataType.uint },
                     0x98: { name: 'hidden', value: DataType.bool },
-                    0x4598: { name: 'enabled', value: DataType.uid },
+                    0x4598: { name: 'enabled', value: DataType.bool },
                     0x8f: {
                       name: 'track',
                       container: {
-                        0x89: { name: 'trackNumber', value: DataType.uid },
-                        0x80: {
-                          name: 'display',
-                          container: {
-                            0x85: { name: 'string', value: DataType.string },
-                            0x437c: { name: 'language ', value: DataType.string },
-                            0x437e: { name: 'country ', value: DataType.string }
-                          }
-                        }
+                        0x89: { name: 'trackUID', value: DataType.uid, multiple: true }
+                      }
+                    },
+                    0x80: {
+                      name: 'display',
+                      multiple: true,
+                      container: {
+                        0x85: { name: 'string', value: DataType.string },
+                        0x437c: { name: 'language', value: DataType.string, multiple: true },
+                        0x437e: { name: 'country', value: DataType.string, multiple: true }
                       }
                     }
                   }
@@ -262,6 +277,7 @@ export const matroskaDtd: IElementType = {
         // Tagging
         0x1254c367: {
           name: 'tags',
+          multiple: true,
           container: {
             0x7373: {
               name: 'tag',
@@ -270,12 +286,12 @@ export const matroskaDtd: IElementType = {
                 0x63c0: {
                   name: 'target',
                   container: {
-                    0x63c5: { name: 'tagTrackUID', value: DataType.uid },
-                    0x63c4: { name: 'tagChapterUID', value: DataType.uint },
-                    0x63c6: { name: 'tagAttachmentUID', value: DataType.uid },
+                    0x63c5: { name: 'tagTrackUID', value: DataType.uid, multiple: true },
+                    0x63c4: { name: 'tagChapterUID', value: DataType.uid, multiple: true },
+                    0x63c6: { name: 'tagAttachmentUID', value: DataType.uid, multiple: true },
                     0x63ca: { name: 'targetType', value: DataType.string }, // extended
                     0x68ca: { name: 'targetTypeValue', value: DataType.uint }, // extended
-                    0x63c9: { name: 'tagEditionUID', value: DataType.uid } // extended
+                    0x63c9: { name: 'tagEditionUID', value: DataType.uid, multiple: true } // extended
                   }
                 },
                 0x67c8: {
@@ -297,4 +313,4 @@ export const matroskaDtd: IElementType = {
       }
     }
   }
-};
+} as const satisfies IElementType;

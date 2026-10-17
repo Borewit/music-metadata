@@ -4,18 +4,21 @@ import { BasicParser } from '../common/BasicParser.js';
 import { EbmlIterator, ParseAction } from '../ebml/EbmlIterator.js';
 import type { AnyTagValue, ITrackInfo } from '../type.js';
 import { matroskaDtd } from './MatroskaDtd.js';
-import {
-  type IAttachments,
-  type ISeekHead,
-  type ISegmentInformation,
-  type ITags,
-  type ITrackElement,
-  type ITrackEntry,
-  TargetType,
-  TrackType
-} from './types.js';
+import { type IDecodedTrackEntry, type ISeekHead, type ITrackEntry, TargetType, TrackType } from './types.js';
 
 const debug = initDebug('music-metadata:parser:matroska');
+const targetTypes: Readonly<Record<number, string | undefined>> = TargetType;
+
+function isCompleteTrack(entry: IDecodedTrackEntry): entry is ITrackEntry {
+  return (
+    typeof entry.trackNumber === 'number' &&
+    Number.isSafeInteger(entry.trackNumber) &&
+    entry.trackNumber > 0 &&
+    typeof entry.codecID === 'string' &&
+    entry.codecID.length > 0 &&
+    Object.values(TrackType).some(type => type === entry.trackType)
+  );
+}
 
 /**
  * Extensible Binary Meta Language (EBML) parser
@@ -49,10 +52,10 @@ export class MatroskaParser extends BasicParser {
             return ParseAction.IgnoreElement;
           case 0x1f43b675: // cluster
             if (this.flagUseIndexToSkipClusters && this.seekHead) {
-              const index = this.seekHead.seek.find(
-                index => index.position + this.seekHeadOffset > this.tokenizer.position
+              const index = (this.seekHead.seek ?? []).find(
+                index => index.position !== undefined && index.position + this.seekHeadOffset > this.tokenizer.position
               );
-              if (index) {
+              if (index?.position !== undefined) {
                 // Go to next index position
                 const ignoreSize = index.position + this.seekHeadOffset - this.tokenizer.position;
                 debug(`Use index to go to next position, ignoring ${ignoreSize} bytes`);
@@ -65,26 +68,28 @@ export class MatroskaParser extends BasicParser {
             return ParseAction.ReadNext;
         }
       },
-      elementValue: async (element, value, offset) => {
-        debug(`Received: name=${element.name}, value=${value}`);
-        switch (element.id) {
+      onElement: async event => {
+        debug(`Received: name=${event.element.name}, value=${event.value}`);
+        switch (event.id) {
           case 0x4282: // docType
-            this.metadata.setFormat('container', `EBML/${value}`);
+            this.metadata.setFormat('container', `EBML/${event.value}`);
             break;
 
           case 0x114d9b74:
-            this.seekHead = value as unknown as ISeekHead;
-            this.seekHeadOffset = offset;
+            this.seekHead = event.value;
+            this.seekHeadOffset = event.offset;
             break;
 
           case 0x1549a966:
             {
               // Info (Segment Information)
-              const info = value as ISegmentInformation;
+              const info = event.value;
+              if (info.title !== undefined) {
+                await this.addTag('segment:title', info.title);
+              }
               const timecodeScale = info.timecodeScale ? info.timecodeScale : 1000000;
               if (typeof info.duration === 'number') {
                 const duration = (info.duration * timecodeScale) / 1000000000;
-                await this.addTag('segment:title', info.title);
                 if (Number.isFinite(duration) && duration > 0) {
                   this.metadata.setFormat('duration', duration);
                   this.metadata.setFormat('containerDuration', duration);
@@ -96,9 +101,18 @@ export class MatroskaParser extends BasicParser {
           case 0x1654ae6b:
             {
               // tracks
-              const audioTracks = value as ITrackElement;
+              const audioTracks = event.value;
               if (audioTracks?.entries) {
-                audioTracks.entries.forEach(entry => {
+                const entries = audioTracks.entries
+                  .filter(entry => {
+                    if (isCompleteTrack(entry)) {
+                      return true;
+                    }
+                    this.metadata.addWarning('Ignoring Matroska track without valid TrackNumber, TrackType or CodecID');
+                    return false;
+                  })
+                  .filter(isCompleteTrack);
+                entries.forEach(entry => {
                   const stream: ITrackInfo = {
                     id: entry.trackNumber,
                     codecId: entry.codecID,
@@ -119,7 +133,18 @@ export class MatroskaParser extends BasicParser {
                             channels: entry.audio?.channels ?? 1
                           }
                         : undefined,
-                    video: entry.trackType === TrackType.video ? entry.video : undefined
+                    video:
+                      entry.trackType === TrackType.video && entry.video
+                        ? {
+                            ...entry.video,
+                            flagInterlaced:
+                              entry.video.flagInterlaced === 1
+                                ? true
+                                : entry.video.flagInterlaced === 2
+                                  ? false
+                                  : undefined
+                          }
+                        : undefined
                   };
                   if (stream.video && entry.defaultDuration && entry.defaultDuration > 0) {
                     stream.video = { ...stream.video, frameRate: 1e9 / entry.defaultDuration };
@@ -130,7 +155,7 @@ export class MatroskaParser extends BasicParser {
                   this.metadata.addStreamInfo(stream);
                 });
 
-                const audioTrack = audioTracks.entries
+                const audioTrack = entries
                   .filter(entry => entry.trackType === TrackType.audio && entry.flagEnabled !== false)
                   .reduce((acc: ITrackEntry | null, cur: ITrackEntry): ITrackEntry => {
                     if (!acc) {
@@ -166,15 +191,15 @@ export class MatroskaParser extends BasicParser {
           case 0x1254c367:
             {
               // tags
-              const tags = value as unknown as ITags;
+              const tags = event.value;
               await Promise.all(
-                tags.tag.map(async tag => {
+                (tags.tag ?? []).map(async tag => {
                   const target = tag.target;
-                  if (target?.tagTrackUID) {
-                    const key = this.uidKey(target.tagTrackUID);
+                  for (const uid of target?.tagTrackUID ?? []) {
+                    const key = this.uidKey(uid);
                     if (key !== '0') {
                       const statistics = this.trackStatistics.get(key) ?? new Map<string, string>();
-                      for (const simpleTag of tag.simpleTags) {
+                      for (const simpleTag of tag.simpleTags ?? []) {
                         if (simpleTag.name && typeof simpleTag.string === 'string') {
                           statistics.set(simpleTag.name.toUpperCase(), simpleTag.string);
                         }
@@ -183,14 +208,16 @@ export class MatroskaParser extends BasicParser {
                     }
                   }
                   const targetType = target?.targetTypeValue
-                    ? TargetType[target.targetTypeValue]
+                    ? (targetTypes[target.targetTypeValue] ?? 'track')
                     : target?.targetType
                       ? target.targetType
                       : 'track';
                   await Promise.all(
-                    tag.simpleTags.map(async simpleTag => {
-                      const value = simpleTag.string ? simpleTag.string : simpleTag.binary;
-                      await this.addTag(`${targetType}:${simpleTag.name}`, value);
+                    (tag.simpleTags ?? []).map(async simpleTag => {
+                      const value = simpleTag.string ?? simpleTag.binary;
+                      if (simpleTag.name && value !== undefined) {
+                        await this.addTag(`${targetType}:${simpleTag.name}`, value);
+                      }
                     })
                   );
                 })
@@ -201,19 +228,17 @@ export class MatroskaParser extends BasicParser {
           case 0x1941a469:
             {
               // attachments
-              const attachments = value as unknown as IAttachments;
-              await Promise.all(
-                attachments.attachedFiles
-                  .filter(file => file.mimeType.startsWith('image/'))
-                  .map(file =>
-                    this.addTag('picture', {
-                      data: file.data,
-                      format: file.mimeType,
-                      description: file.description,
-                      name: file.name
-                    })
-                  )
-              );
+              const attachments = event.value;
+              for (const file of attachments.attachedFiles ?? []) {
+                if (file.mimeType?.startsWith('image/') && file.data) {
+                  await this.addTag('picture', {
+                    data: file.data,
+                    format: file.mimeType,
+                    description: file.description,
+                    name: file.name
+                  });
+                }
+              }
             }
             break;
         }

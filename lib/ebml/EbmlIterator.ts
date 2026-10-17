@@ -5,17 +5,23 @@ import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import { getMaxMemoryAllocation, readBuffer } from '../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import type { IOptions } from '../type.js';
-import { DataType, type IElementType, type IHeader, type ITree, type ValueType } from './types.js';
+import {
+  DataType,
+  type DecodedElement,
+  type ElementEvent,
+  type IElementContext,
+  type IElementType,
+  type IHeader,
+  type ITree,
+  type ValueType
+} from './types.js';
 
 const debug = initDebug('music-metadata:parser:ebml');
 
 export class EbmlContentError extends makeUnexpectedFileContentError('EBML') {}
 
-export interface ILinkedElementType extends IElementType {
-  id: number;
-  parent: ILinkedElementType | undefined;
-  readonly container?: { [id: number]: ILinkedElementType };
-}
+/** @deprecated Use the per-visit IElementContext instead. */
+export type ILinkedElementType = IElementContext;
 
 export const ParseAction = {
   ReadNext: 0, // Continue reading the next elements
@@ -30,9 +36,11 @@ export type ParseAction = (typeof ParseAction)[keyof typeof ParseAction];
 /**
  * @return true, to quit the parser
  */
-export type IElementListener = {
-  startNext: (dtdElement: ILinkedElementType) => ParseAction | Promise<ParseAction>;
-  elementValue: (dtdElement: ILinkedElementType, value: ValueType, offset: number) => Promise<void>;
+export type IElementListener<S extends IElementType = IElementType> = {
+  startNext: (element: IElementContext) => ParseAction | Promise<ParseAction>;
+  /** Legacy untyped events; new consumers should use onElement. */
+  elementValue?: (element: IElementContext, value: ValueType, offset: number) => Promise<void>;
+  onElement?: (event: ElementEvent<S>) => Promise<void>;
 };
 
 /**
@@ -62,6 +70,7 @@ export class EbmlIterator {
     this.tokenizer = tokenizer;
     this.elementHeader = new Uint8Array(Math.min(12, getMaxMemoryAllocation(options)));
     this.parserMap.set(DataType.uint, e => this.readUint(e));
+    this.parserMap.set(DataType.int, e => this.readInt(e));
     this.parserMap.set(DataType.string, e => this.readString(e));
     this.parserMap.set(DataType.binary, e => this.readBuffer(e));
     this.parserMap.set(DataType.uid, async e => this.readBuffer(e));
@@ -69,14 +78,27 @@ export class EbmlIterator {
     this.parserMap.set(DataType.float, e => this.readFloat(e));
   }
 
-  public async iterate(dtdElement: IElementType, posDone: number, listener: IElementListener): Promise<ITree> {
-    return this.parseContainer(linkParents(dtdElement), posDone, listener);
+  public async iterate<const S extends IElementType>(
+    dtdElement: S,
+    posDone: number,
+    listener: IElementListener<S>
+  ): Promise<DecodedElement<S>> {
+    const tree = await this.parseContainer({ ...dtdElement, id: 0, parent: undefined }, posDone, {
+      startNext: listener.startNext,
+      elementValue: async (element, value, offset) => {
+        await listener.elementValue?.(element, value, offset);
+        // The schema selects both the decoder and the event ID. Keep this bridge here,
+        // rather than asserting unrelated domain types in each parser listener.
+        await listener.onElement?.({ id: element.id, element, value, offset } as ElementEvent<S>);
+      }
+    });
+    return tree as DecodedElement<S>;
   }
 
   private async parseContainer(
     dtdElement: ILinkedElementType,
     posDone: number,
-    listener: IElementListener
+    listener: Required<Pick<IElementListener, 'startNext' | 'elementValue'>>
   ): Promise<ITree> {
     const tree: ITree = {};
     while (this.tokenizer.position < posDone) {
@@ -90,17 +112,13 @@ export class EbmlIterator {
         }
         throw error;
       }
-      const child = (dtdElement.container as { [id: number]: ILinkedElementType })[element.id];
-      if (child) {
+      const definition = dtdElement.container?.[element.id];
+      if (definition) {
+        const child: IElementContext = { ...definition, id: element.id, parent: dtdElement };
         const action = await listener.startNext(child);
         switch (action) {
           case ParseAction.ReadNext:
             {
-              if (element.id === 0x1f43b675) {
-                // Hack to ignore remaining segment, when cluster element received
-                // await this.tokenizer.ignore(posDone - this.tokenizer.position);
-                // break;
-              }
               debug(
                 `Read element: name=${getElementPath(child)}{id=0x${element.id.toString(16)}, container=${!!child.container}} at position=${elementPosition}`
               );
@@ -111,17 +129,10 @@ export class EbmlIterator {
                   element.len >= 0 ? this.tokenizer.position + element.len : posDone
                 );
                 const res = await this.parseContainer(child, childEnd, listener);
-                if (child.multiple) {
-                  if (!tree[child.name]) {
-                    tree[child.name] = [];
-                  }
-                  (tree[child.name] as ITree[]).push(res);
-                } else {
-                  tree[child.name] = res;
-                }
+                this.collect(tree, child, res);
                 await listener.elementValue(child, res, elementPosition);
               } else {
-                const parser = this.parserMap.get(child.value as DataType);
+                const parser = child.value === undefined ? undefined : this.parserMap.get(child.value);
                 if (typeof parser === 'function') {
                   // Validate before leaf readers allocate buffers or string tokens from the declared length.
                   const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
@@ -133,8 +144,10 @@ export class EbmlIterator {
                     throw new EbmlContentError(`Invalid element length: ${element.len}`);
                   }
                   const value = await parser(element);
-                  tree[child.name] = value;
+                  this.collect(tree, child, value);
                   await listener.elementValue(child, value, elementPosition);
+                } else {
+                  await this.ignore(element.len, posDone);
                 }
               }
             }
@@ -180,6 +193,17 @@ export class EbmlIterator {
       }
     }
     return tree;
+  }
+
+  private collect(tree: ITree, element: IElementType, value: ValueType): void {
+    if (element.multiple) {
+      const values = (tree[element.name] ??= []);
+      if (Array.isArray(values)) {
+        values.push(value);
+      }
+    } else {
+      tree[element.name] = value;
+    }
   }
 
   private async ignore(length: number, posDone: number): Promise<void> {
@@ -272,6 +296,12 @@ export class EbmlIterator {
     return readUIntBE(buf, e.len);
   }
 
+  private async readInt(e: IHeader): Promise<number> {
+    const buffer = await this.readBuffer(e);
+    const value = readUIntBeAsBigInt(buffer, e.len);
+    return Number(buffer[0] & 0x80 ? value - (1n << BigInt(8 * e.len)) : value);
+  }
+
   private async readString(e: IHeader): Promise<string> {
     const buf = await this.readBuffer(e);
     const rawString = new StringType(e.len, 'utf-8').get(buf, 0);
@@ -302,22 +332,6 @@ function readUIntBeAsBigInt(buf: Uint8Array, len: number): bigint {
   } catch (_error) {
     return BigInt(-1);
   }
-}
-
-function linkParents(element: IElementType): ILinkedElementType {
-  if (element.container) {
-    Object.keys(element.container)
-      .map(id => {
-        const child = (element.container as { [id: string]: ILinkedElementType })[id];
-        child.id = Number.parseInt(id, 10);
-        return child;
-      })
-      .forEach(child => {
-        child.parent = element as ILinkedElementType;
-        linkParents(child);
-      });
-  }
-  return element as ILinkedElementType;
 }
 
 export function getElementPath(element: ILinkedElementType): string {
