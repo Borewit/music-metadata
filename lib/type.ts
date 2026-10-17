@@ -409,29 +409,7 @@ export interface IRatio {
   dB: number;
 }
 
-export type FormatId =
-  | 'container'
-  | 'duration'
-  | 'bitrate'
-  | 'containerDuration'
-  | 'overallBitrate'
-  | 'sampleRate'
-  | 'bitsPerSample'
-  | 'codec'
-  | 'tool'
-  | 'codecProfile'
-  | 'lossless'
-  | 'numberOfChannels'
-  | 'numberOfSamples'
-  | 'audioMD5'
-  | 'chapters'
-  | 'modificationTime'
-  | 'creationTime'
-  | 'trackPeakLevel'
-  | 'trackGain'
-  | 'albumGain'
-  | 'hasAudio'
-  | 'hasVideo';
+export type FormatId = keyof IFormat;
 
 export interface IAudioTrack {
   /** Number of decoded audio samples, when known. */

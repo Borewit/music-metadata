@@ -1,6 +1,6 @@
 import type { TagType } from '../common/GenericTagTypes.js';
 import { type INativeMetadataCollector, MetadataCollector } from '../common/MetadataCollector.js';
-import type { AnyTagValue, FormatId, INativeTags, IQualityInformation } from '../type.js';
+import type { AnyTagValue, IFormat, INativeTags, IQualityInformation } from '../type.js';
 
 /** Keep format values local to a logical stream while sharing tags and warnings. */
 export class OggStreamMetadata extends MetadataCollector {
@@ -12,7 +12,7 @@ export class OggStreamMetadata extends MetadataCollector {
     this.quality = parent.quality;
   }
 
-  public override setFormat(key: FormatId, value: AnyTagValue): void {
+  public override setFormat<K extends keyof IFormat>(key: K, value: IFormat[K]): void {
     super.setFormat(key, value);
     // One logical stream cannot rule out the presence of another media type.
     if ((key !== 'hasAudio' && key !== 'hasVideo') || value === true) {

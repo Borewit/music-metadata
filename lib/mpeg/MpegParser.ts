@@ -177,7 +177,7 @@ export class MpegParser extends AbstractID3Parser {
     this.metadata.setFormat('container', header.container);
     this.metadata.setFormat('codec', header.codec);
     this.metadata.setFormat('lossless', false);
-    this.metadata.setFormat('sampleRate', header.samplingRate);
+    this.metadata.setFormat('sampleRate', header.samplingRate ?? undefined);
 
     this.frameCount++;
     return header instanceof AdtsFrameHeader ? this.parseAdts(header) : this.parseMpegFrame(header);
@@ -341,7 +341,7 @@ export class MpegParser extends AbstractID3Parser {
     if (infoTag.lame) {
       this.metadata.setFormat('tool', `LAME ${common.stripNulls(infoTag.lame.version)}`);
       if (infoTag.lame.extended) {
-        this.metadata.setFormat('trackPeakLevel', infoTag.lame.extended.track_peak);
+        this.metadata.setFormat('trackPeakLevel', infoTag.lame.extended.track_peak ?? undefined);
         if (infoTag.lame.extended.track_gain) {
           this.metadata.setFormat('trackGain', infoTag.lame.extended.track_gain.adjustment);
         }
