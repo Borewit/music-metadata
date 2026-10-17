@@ -181,6 +181,15 @@ export class ID3v2Parser {
         break;
       }
 
+      // Padding follows the last frame and consists entirely of zero bytes.
+      // Check before requiring a complete frame header: padding can be shorter.
+      if (data[offset] === 0) {
+        if (data.subarray(offset).some(byte => byte !== 0)) {
+          this.metadata.addWarning('Non-zero bytes found in ID3v2 padding');
+        }
+        break;
+      }
+
       const frameHeaderLength = getFrameHeaderLength(this.id3Header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
