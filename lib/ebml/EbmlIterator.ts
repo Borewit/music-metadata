@@ -31,7 +31,7 @@ export type ParseAction = (typeof ParseAction)[keyof typeof ParseAction];
  * @return true, to quit the parser
  */
 export type IElementListener = {
-  startNext: (dtdElement: ILinkedElementType) => ParseAction;
+  startNext: (dtdElement: ILinkedElementType) => ParseAction | Promise<ParseAction>;
   elementValue: (dtdElement: ILinkedElementType, value: ValueType, offset: number) => Promise<void>;
 };
 
@@ -92,7 +92,7 @@ export class EbmlIterator {
       }
       const child = (dtdElement.container as { [id: number]: ILinkedElementType })[element.id];
       if (child) {
-        const action = listener.startNext(child);
+        const action = await listener.startNext(child);
         switch (action) {
           case ParseAction.ReadNext:
             {
