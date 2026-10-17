@@ -41,7 +41,7 @@ export class MatroskaParser extends BasicParser {
     const matroskaIterator = new EbmlIterator(this.tokenizer, this.options);
     debug('Initializing DTD end MatroskaIterator');
     await matroskaIterator.iterate(matroskaDtd, containerSize, {
-      startNext: element => {
+      startNext: async element => {
         switch (element.id) {
           // case 0x1f43b675: // cluster
           case 0x1c53bb6b: // Cueing Data
@@ -56,7 +56,7 @@ export class MatroskaParser extends BasicParser {
                 // Go to next index position
                 const ignoreSize = index.position + this.seekHeadOffset - this.tokenizer.position;
                 debug(`Use index to go to next position, ignoring ${ignoreSize} bytes`);
-                this.tokenizer.ignore(ignoreSize);
+                await this.tokenizer.ignore(ignoreSize);
                 return ParseAction.SkipElement;
               }
             }
