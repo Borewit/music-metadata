@@ -1,7 +1,7 @@
 import { textDecode } from '@borewit/text-codec';
 import type { IGetToken } from '@tokenizer/token';
 import initDebug from 'debug';
-import { isRandomAccessTokenizer } from 'strtok3';
+import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
 import { readToken, validateAllocation } from '../common/Allocation.js';
@@ -134,6 +134,11 @@ function distinct(value: AnyTagValue, index: number, self: AnyTagValue[]) {
   return self.indexOf(value) === index;
 }
 
+/** Chapter offsets can be revisited even when the total input size is unknown. */
+function supportsSeeking(tokenizer: ITokenizer): tokenizer is ITokenizer & Pick<IRandomAccessTokenizer, 'setPosition'> {
+  return tokenizer.supportsRandomAccess() && 'setPosition' in tokenizer && typeof tokenizer.setPosition === 'function';
+}
+
 /**
  * Determine if a track carries audio.
  *
@@ -245,7 +250,7 @@ export class MP4Parser extends BasicParser {
       remainingFileSize = rootAtom.header.length === 0n ? 0 : remainingFileSize - Number(rootAtom.header.length);
     }
 
-    if (this.mediaDataRanges.length > 0 && isRandomAccessTokenizer(this.tokenizer)) {
+    if (this.mediaDataRanges.length > 0 && supportsSeeking(this.tokenizer)) {
       // Track references and sample tables may follow the media data in a trailing moov box.
       const tokenizer = this.tokenizer;
       const position = tokenizer.position;
@@ -937,7 +942,7 @@ export class MP4Parser extends BasicParser {
     mdat: async (len: number) => {
       const range = { offset: this.tokenizer.position, end: this.tokenizer.position + len };
       if (this.options.includeChapters) {
-        if (isRandomAccessTokenizer(this.tokenizer)) {
+        if (supportsSeeking(this.tokenizer)) {
           this.mediaDataRanges.push(range);
         } else {
           await this.parseChapters([range], true);

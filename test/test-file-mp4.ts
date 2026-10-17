@@ -2026,6 +2026,19 @@ describe('MP4 chapters in seekable media', () => {
     for (const extended of [false, true]) {
       for (const split of [false, true]) {
         describe(`${trailingMoov ? 'trailing' : 'leading'} moov, ${extended ? 'extended' : 'normal'} mdat, ${split ? 'two payloads' : 'one payload'}`, () => {
+          it('reads chapters from a seekable tokenizer without a known file size', async () => {
+            const { buffer } = fixture(trailingMoov, extended, split);
+            const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
+            delete tokenizer.fileInfo.size;
+            try {
+              const { format } = await mm.parseFromTokenizer(tokenizer, { includeChapters: true });
+              assert.deepEqual(format.chapters, expected.format.chapters);
+              assert.strictEqual(tokenizer.position, buffer.length);
+            } finally {
+              await tokenizer.close();
+            }
+          });
+
           for (const parser of ['buffer', 'blob', 'file'] as const) {
             it(`reads every chapter from a ${parser}`, async () => {
               const { buffer, file } = fixture(trailingMoov, extended, split);
