@@ -1,5 +1,5 @@
 import initDebug from 'debug';
-import { EndOfStreamError, type IRandomAccessTokenizer, type ITokenizer } from 'strtok3';
+import { EndOfStreamError, type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
 import { getMaxMemoryAllocation, readBuffer } from '../common/Allocation.js';
@@ -253,7 +253,7 @@ export class EbmlIterator {
   }
 
   private async readElement(): Promise<IHeader> {
-    if (this.tokenizer.supportsRandomAccess() && this.elementHeader.length === 12) {
+    if (isRandomAccessTokenizer(this.tokenizer) && this.elementHeader.length === 12) {
       // RFC 8794 (July 2020), sections 4-6: an ID and size occupy at most 4 + 8 bytes.
       // Peek both VINTs together to avoid four separate file/network reads per element.
       // https://www.rfc-editor.org/rfc/rfc8794.html#section-4
@@ -277,7 +277,7 @@ export class EbmlIterator {
       const id = readUIntBE(this.elementHeader.subarray(0, idLength), idLength);
       const lenField = this.elementHeader.subarray(idLength, idLength + sizeLength);
       lenField[0] ^= 0x80 >> (sizeLength - 1);
-      (this.tokenizer as IRandomAccessTokenizer).setPosition(this.tokenizer.position + idLength + sizeLength);
+      this.tokenizer.setPosition(this.tokenizer.position + idLength + sizeLength);
       return { id, len: readUIntBE(lenField, sizeLength) };
     }
     const id = await this.readVintData(this.ebmlMaxIDLength);

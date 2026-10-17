@@ -2,7 +2,7 @@ import { parse as parseContentType } from 'content-type';
 import initDebug from 'debug';
 import { fileTypeFromBuffer } from 'file-type';
 import { type MediaType, parse as mimeTypeParse } from 'media-typer';
-import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
+import { type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import { aiffParserLoader } from './aiff/AiffLoader.js';
 import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
@@ -100,9 +100,9 @@ export class ParserFactory {
     opts: IOptions = {}
   ): Promise<IAudioMetadata> {
     const maxBufferSize = getMaxMemoryAllocation(opts);
-    if (tokenizer.supportsRandomAccess()) {
+    if (isRandomAccessTokenizer(tokenizer)) {
       debug('tokenizer supports random-access, scanning for appending headers');
-      await scanAppendingHeaders(tokenizer as IRandomAccessTokenizer, opts);
+      await scanAppendingHeaders(tokenizer, opts);
     } else {
       debug('tokenizer does not support random-access, cannot scan for appending headers');
     }
