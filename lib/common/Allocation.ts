@@ -1,5 +1,11 @@
 import type { IGetToken } from '@tokenizer/token';
-import { EndOfStreamError, type IFileInfo, type ITokenizer, type ITokenizerOptions } from 'strtok3';
+import {
+  EndOfStreamError,
+  type IFileInfo,
+  type ITokenizer,
+  type ITokenizerOptions,
+  isRandomAccessTokenizer
+} from 'strtok3';
 import { UnexpectedFileContentError } from '../ParseError.js';
 import type { IOptions } from '../type.js';
 
@@ -48,7 +54,7 @@ export async function readBuffer(
 ): Promise<Uint8Array> {
   validateAllocation(length, options, makeError);
   validateAvailableBytes(tokenizer, length, position);
-  if ((!tokenizer.supportsRandomAccess() || tokenizer.fileInfo.size === undefined) && length > readChunkSize) {
+  if (!isRandomAccessTokenizer(tokenizer) && length > readChunkSize) {
     const chunks: Uint8Array[] = [];
     for (let remaining = length; remaining > 0; ) {
       const chunk = new Uint8Array(Math.min(remaining, readChunkSize));

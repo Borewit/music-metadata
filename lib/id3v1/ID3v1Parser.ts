@@ -1,6 +1,6 @@
 import { textDecode } from '@borewit/text-codec';
 import initDebug from 'debug';
-import type { IGetToken, IRandomAccessTokenizer, ITokenizer } from 'strtok3';
+import { type IGetToken, type IRandomAccessTokenizer, type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import { StringType, UINT8 } from 'token-types';
 import { APEv2Parser } from '../apev2/APEv2Parser.js';
 import { BasicParser } from '../common/BasicParser.js';
@@ -297,8 +297,8 @@ export class ID3v1Parser extends BasicParser {
       return;
     }
 
-    if (this.apeHeader && this.tokenizer.supportsRandomAccess()) {
-      (this.tokenizer as IRandomAccessTokenizer).setPosition(this.apeHeader.offset);
+    if (this.apeHeader && isRandomAccessTokenizer(this.tokenizer)) {
+      this.tokenizer.setPosition(this.apeHeader.offset);
       const apeParser = new APEv2Parser(this.metadata, this.tokenizer, this.options);
       await apeParser.parseTags(this.apeHeader.footer);
     }
