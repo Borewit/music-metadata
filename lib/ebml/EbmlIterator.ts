@@ -33,14 +33,19 @@ export const ParseAction = {
 
 export type ParseAction = (typeof ParseAction)[keyof typeof ParseAction];
 
-/**
- * @return true, to quit the parser
- */
+/** Traversal callbacks and optional subtree retention. */
 export type IElementListener<S extends IElementType = IElementType> = {
   startNext: (element: IElementContext) => ParseAction | Promise<ParseAction>;
   /** Legacy untyped events; new consumers should use onElement. */
   elementValue?: (element: IElementContext, value: ValueType, offset: number) => Promise<void>;
   onElement?: (event: ElementEvent<S>) => Promise<void>;
+  /**
+   * Collect only subtrees rooted at matching containers. Descendants of a selected
+   * container are retained until its event completes; other ancestors stay empty.
+   * Omit this callback to collect the entire document (legacy iterator behavior).
+   * Leaf events are delivered even when their values are not retained.
+   */
+  collect?: (element: IElementContext) => boolean;
 };
 
 /**
@@ -83,22 +88,30 @@ export class EbmlIterator {
     posDone: number,
     listener: IElementListener<S>
   ): Promise<DecodedElement<S>> {
-    const tree = await this.parseContainer({ ...dtdElement, id: 0, parent: undefined }, posDone, {
-      startNext: listener.startNext,
-      elementValue: async (element, value, offset) => {
-        await listener.elementValue?.(element, value, offset);
-        // The schema selects both the decoder and the event ID. Keep this bridge here,
-        // rather than asserting unrelated domain types in each parser listener.
-        await listener.onElement?.({ id: element.id, element, value, offset } as ElementEvent<S>);
-      }
-    });
+    const root: IElementContext = { ...dtdElement, id: 0, parent: undefined };
+    const tree = await this.parseContainer(
+      root,
+      posDone,
+      {
+        startNext: listener.startNext,
+        collect: listener.collect ?? (() => true),
+        elementValue: async (element, value, offset) => {
+          await listener.elementValue?.(element, value, offset);
+          // The schema selects both the decoder and the event ID. Keep this bridge here,
+          // rather than asserting unrelated domain types in each parser listener.
+          await listener.onElement?.({ id: element.id, element, value, offset } as ElementEvent<S>);
+        }
+      },
+      listener.collect?.(root) ?? true
+    );
     return tree as DecodedElement<S>;
   }
 
   private async parseContainer(
     dtdElement: ILinkedElementType,
     posDone: number,
-    listener: Required<Pick<IElementListener, 'startNext' | 'elementValue'>>
+    listener: Required<Pick<IElementListener, 'startNext' | 'elementValue' | 'collect'>>,
+    collect: boolean
   ): Promise<ITree> {
     const tree: ITree = {};
     while (this.tokenizer.position < posDone) {
@@ -128,8 +141,10 @@ export class EbmlIterator {
                   this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY,
                   element.len >= 0 ? this.tokenizer.position + element.len : posDone
                 );
-                const res = await this.parseContainer(child, childEnd, listener);
-                this.collect(tree, child, res);
+                const res = await this.parseContainer(child, childEnd, listener, collect || listener.collect(child));
+                if (collect) {
+                  this.collect(tree, child, res);
+                }
                 await listener.elementValue(child, res, elementPosition);
               } else {
                 const parser = child.value === undefined ? undefined : this.parserMap.get(child.value);
@@ -144,7 +159,9 @@ export class EbmlIterator {
                     throw new EbmlContentError(`Invalid element length: ${element.len}`);
                   }
                   const value = await parser(element);
-                  this.collect(tree, child, value);
+                  if (collect) {
+                    this.collect(tree, child, value);
+                  }
                   await listener.elementValue(child, value, elementPosition);
                 } else {
                   await this.ignore(element.len, posDone);

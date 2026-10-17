@@ -5,7 +5,8 @@ import { DataType, type IElementType } from '../ebml/types.js';
  * Derived from https://github.com/tungol/EBML/blob/master/doctypes/matroska.dtd
  * Extended with:
  * - https://www.matroska.org/technical/specs/index.html
- * Cardinality and paths audited against the CELLAR ebml_matroska.xml schema.
+ * Cardinality and paths audited against:
+ * https://github.com/ietf-wg-cellar/matroska-specification/blob/master/ebml_matroska.xml
  * UID integers deliberately decode as bytes to preserve all 64 bits.
  * Recursive ChapterAtom/SimpleTag children are not expanded by this metadata subset.
  */
@@ -100,7 +101,7 @@ export const matroskaDtd = {
                 0x55aa: { name: 'flagForced', value: DataType.bool }, // extended
                 0x9c: { name: 'flagLacing', value: DataType.bool },
                 0x6de7: { name: 'minCache', value: DataType.uint },
-                0x6de8: { name: 'maxCache', value: DataType.uint },
+                0x6df8: { name: 'maxCache', value: DataType.uint },
                 0x23e383: { name: 'defaultDuration', value: DataType.uint },
                 0x23314f: { name: 'trackTimecodeScale', value: DataType.float },
                 0x536e: { name: 'name', value: DataType.string },

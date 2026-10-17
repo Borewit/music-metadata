@@ -21,7 +21,7 @@ function tags(name: string, value: string): Buffer {
   );
 }
 
-function indexedSample(withIndex = true) {
+function indexedSample(withIndex = true, withPrefix = false) {
   const header = element('1a45dfa3', element('4282', Buffer.from('matroska')));
   const clusterPayload = new Uint8Array([1, 2, 3]);
   const cluster = element('1f43b675', clusterPayload);
@@ -36,14 +36,17 @@ function indexedSample(withIndex = true) {
     );
   };
   // SeekPosition is relative to the segment payload; a fixed-width value keeps the head size stable.
-  const seek = withIndex ? seekHead(seekHead(0).length + cluster.length + unindexedTags.length) : new Uint8Array();
-  const data = Buffer.concat([header, element('18538067', seek, cluster, unindexedTags, indexedTags)]);
+  const prefix = withPrefix ? element('ec', new Uint8Array(17)) : new Uint8Array();
+  const seek = withIndex
+    ? seekHead(prefix.length + seekHead(0).length + cluster.length + unindexedTags.length)
+    : new Uint8Array();
+  const data = Buffer.concat([header, element('18538067', prefix, seek, cluster, unindexedTags, indexedTags)]);
   const skipEnd = data.length - indexedTags.length;
   return { data, skipStart: skipEnd - unindexedTags.length - clusterPayload.length, skipEnd };
 }
 
-async function streamSample(withIndex = true) {
-  const sample = indexedSample(withIndex);
+async function streamSample(withIndex = true, withPrefix = false) {
+  const sample = indexedSample(withIndex, withPrefix);
   const tokenizer = await fromStream(Readable.from([sample.data], { objectMode: false }), {
     fileInfo: { mimeType: 'video/x-matroska' }
   });
@@ -51,6 +54,17 @@ async function streamSample(withIndex = true) {
 }
 
 describe('Matroska indexed stream skips', () => {
+  it('resolves index positions relative to the Segment when SeekHead is not its first child', async () => {
+    const { tokenizer } = await streamSample(true, true);
+    try {
+      const { common } = await parseFromTokenizer(tokenizer, { mkvUseIndex: true });
+      assert.strictEqual(common.artist, 'Indexed artist');
+      assert.isUndefined(common.title);
+    } finally {
+      await tokenizer.close();
+    }
+  });
+
   it('waits for a delayed indexed skip before reading the next header', async () => {
     const { tokenizer, skipStart, skipEnd } = await streamSample();
     const ignore = tokenizer.ignore.bind(tokenizer);
