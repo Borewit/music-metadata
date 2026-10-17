@@ -7,7 +7,53 @@ import * as mm from '../lib/index.js';
 import type { IMetadataEventTag } from '../lib/type.js';
 import { samplePath } from './util.js';
 
-describe('Asynchronous observer updates', () => {
+describe('Observer updates during asynchronous parsing', () => {
+  it('should only announce changes to primitive format values', () => {
+    const events: IMetadataEventTag[] = [];
+    const collector = new MetadataCollector({ observer: event => events.push(event.tag) });
+
+    collector.setFormat('container', 'MP4');
+    collector.setFormat('container', 'MP4');
+    collector.setFormat('hasAudio', false);
+    collector.setFormat('hasAudio', false);
+    collector.setFormat('hasAudio', true);
+    collector.setFormat('duration', 10);
+    collector.setFormat('duration', 10);
+    collector.setFormat('duration', undefined);
+    collector.setFormat('duration', undefined);
+
+    assert.deepEqual(events, [
+      { type: 'format', id: 'container', value: 'MP4' },
+      { type: 'format', id: 'hasAudio', value: false },
+      { type: 'format', id: 'hasAudio', value: true },
+      { type: 'format', id: 'duration', value: 10 },
+      { type: 'format', id: 'duration', value: undefined }
+    ]);
+    assert.strictEqual(collector.format.hasAudio, true);
+    assert.strictEqual(collector.format.duration, undefined);
+  });
+
+  it('should announce objects and arrays again after in-place changes', () => {
+    const events: IMetadataEventTag[] = [];
+    const collector = new MetadataCollector({ observer: event => events.push(event.tag) });
+    const creationTime = new Date('2026-01-01T00:00:00Z');
+    const chapters = [{ title: 'Intro', start: 0 }];
+
+    collector.setFormat('creationTime', creationTime);
+    creationTime.setUTCFullYear(2027);
+    collector.setFormat('creationTime', creationTime);
+    collector.setFormat('chapters', chapters);
+    chapters.push({ title: 'Next', start: 10 });
+    collector.setFormat('chapters', chapters);
+
+    assert.deepEqual(
+      events.map(tag => tag.id),
+      ['creationTime', 'creationTime', 'chapters', 'chapters']
+    );
+    assert.strictEqual(collector.format.creationTime, creationTime);
+    assert.strictEqual(collector.format.chapters, chapters);
+  });
+
   it('should notify format observers after storing each value', () => {
     const events: IMetadataEventTag[] = [];
     const collector = new MetadataCollector({

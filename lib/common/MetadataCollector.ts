@@ -80,8 +80,8 @@ export interface INativeMetadataCollector extends IWarningCollector {
 }
 
 /**
- * Provided to the parser to uodate the metadata result.
- * Responsible for triggering async updates
+ * Provided to the parser to update the metadata result.
+ * Responsible for notifying observers synchronously after updates.
  */
 export class MetadataCollector implements INativeMetadataCollector {
   public readonly format: IFormat = {
@@ -147,6 +147,10 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public setFormat<K extends keyof IFormat>(key: K, value: IFormat[K]): void {
+    // Objects may have been mutated in place, so only skip unchanged primitives.
+    if ((value === null || typeof value !== 'object') && Object.is(this.format[key], value)) {
+      return;
+    }
     debug(`format: ${key} = ${value}`);
     // Allow internal writes while preserving each property's value type.
     (this.format as { -readonly [P in keyof IFormat]: IFormat[P] })[key] = value;

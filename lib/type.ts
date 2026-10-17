@@ -709,7 +709,8 @@ export interface IOptions {
   includeChapters?: boolean;
 
   /**
-   * Set observer for async callbacks to common or format.
+   * Called synchronously after common tag or format updates. Returned promises are not awaited.
+   * Unchanged primitive format values do not trigger a callback.
    */
   observer?: Observer;
 
