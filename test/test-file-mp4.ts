@@ -2468,7 +2468,8 @@ describe('Parse MPEG-4', () => {
         invalidRuns,
         emptyTitles = false,
         chapterCount,
-        orphanReference = false
+        orphanReference = false,
+        audioTables
       }: {
         trailing?: boolean;
         grouped?: boolean;
@@ -2482,6 +2483,7 @@ describe('Parse MPEG-4', () => {
         emptyTitles?: boolean;
         chapterCount?: number;
         orphanReference?: boolean;
+        audioTables?: { timing: number[][]; chunks: number[][]; offsets?: number[] };
       } = {}) {
         const samples = chapterCount
           ? Array.from({ length: chapterCount }, () => text('C'))
@@ -2540,9 +2542,12 @@ describe('Parse MPEG-4', () => {
                 box(
                   'stbl',
                   fullBox('stsd', u32(1), audioEntry),
-                  table('stco', []),
-                  table('stsc', []),
-                  table('stts', []),
+                  table(
+                    'stco',
+                    audioTables ? (audioTables.offsets ?? [0]).map(offset => [mdatOffset + 8 + offset]) : []
+                  ),
+                  table('stsc', audioTables?.chunks ?? []),
+                  table('stts', audioTables?.timing ?? []),
                   fullBox('stsz', u32(0), u32(0))
                 )
               )
@@ -2657,6 +2662,118 @@ describe('Parse MPEG-4', () => {
               );
             });
           }
+        }
+      });
+
+      describe('audio tables for chapter offsets', () => {
+        for (const stream of [false, true]) {
+          function parse(buffer: Uint8Array): Promise<mm.IAudioMetadata> {
+            return stream
+              ? mm.parseStream(Readable.from([buffer], { objectMode: false }), 'audio/mp4', { includeChapters: true })
+              : mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true });
+          }
+
+          it(`rejects exhausted timing in the audiobook fixture (${stream ? 'stream' : 'buffer'})`, async () => {
+            const buffer = await fs.promises.readFile(path.join(mp4Samples, 'BabysSongbook_librivox.m4b'));
+            const timing = buffer.indexOf(Buffer.from('stts'));
+            assert.isAtLeast(timing, 0);
+            buffer.writeUInt32BE(0, timing + 12);
+            await rejects(
+              parse(buffer),
+              error => error instanceof Mp4ContentError && /Missing audio sample timing/.test(error.message)
+            );
+          });
+
+          const malformed = [
+            { name: 'zero-count timing only', timing: [[0, 100]], chunks: [[1, 1, 1]] },
+            { name: 'exhausted timing', timing: [[1, 100]], chunks: [[1, 2, 1]] },
+            { name: 'missing first chunk', timing: [[10, 100]], chunks: [[2, 1, 1]] },
+            { name: 'zero samples per chunk', timing: [[10, 100]], chunks: [[1, 0, 1]] },
+            {
+              name: 'duplicate chunk runs',
+              timing: [[10, 100]],
+              chunks: [
+                [1, 1, 1],
+                [1, 2, 1]
+              ]
+            },
+            {
+              name: 'descending chunk runs',
+              timing: [[10, 100]],
+              chunks: [
+                [1, 1, 1],
+                [3, 1, 1],
+                [2, 1, 1]
+              ]
+            },
+            { name: 'unsafe sample duration sum', timing: [[0xffffffff, 0xffffffff]], chunks: [[1, 0xffffffff, 1]] }
+          ];
+          for (const { name, ...audioTables } of malformed) {
+            it(`rejects ${name} with an MP4 content error (${stream ? 'stream' : 'buffer'})`, async () => {
+              await rejects(parse(audiobook({ audioTables })), error => error instanceof Mp4ContentError);
+            });
+            it(`preserves Nero fallback for ${name} (${stream ? 'stream' : 'buffer'})`, async () => {
+              const metadata = await parse(audiobook({ audioTables, neroVersion: 1 }));
+              assert.deepEqual(chapterList(metadata), expectedNero);
+              assert.isTrue(
+                metadata.quality.warnings.some(warning => warning.message.startsWith('Cannot read chapter track:'))
+              );
+            });
+          }
+
+          for (const { name, timing, chunks, offsets, expectedOffset } of [
+            {
+              name: 'skippable zero-count runs',
+              timing: [
+                [0, 99],
+                [2, 50]
+              ],
+              chunks: [[1, 2, 1]],
+              offsets: [0],
+              expectedOffset: 100
+            },
+            {
+              name: 'timing runs crossing chunk boundaries',
+              timing: [
+                [1, 20],
+                [3, 30]
+              ],
+              chunks: [[1, 2, 1]],
+              offsets: [0, 50],
+              expectedOffset: 110
+            },
+            {
+              name: 'changing samples per chunk',
+              timing: [[4, 25]],
+              chunks: [
+                [1, 1, 1],
+                [2, 3, 1]
+              ],
+              offsets: [0, 50],
+              expectedOffset: 100
+            },
+            { name: 'zero-duration samples', timing: [[2, 0]], chunks: [[1, 2, 1]], offsets: [0], expectedOffset: 0 }
+          ]) {
+            it(`retains offsets for ${name} (${stream ? 'stream' : 'buffer'})`, async () => {
+              const metadata = await parse(audiobook({ audioTables: { timing, chunks, offsets } }));
+              assert.deepEqual(chapterList(metadata), expected);
+              assert.deepEqual(
+                metadata.format.chapters?.map(chapter => chapter.sampleOffset),
+                [expectedOffset, expectedOffset, expectedOffset]
+              );
+            });
+          }
+
+          it(`omits optional sample offsets when audio timing is absent (${stream ? 'stream' : 'buffer'})`, async () => {
+            const metadata = await parse(audiobook({ audioTables: { timing: [], chunks: [[1, 1, 1]] } }));
+            assert.deepEqual(chapterList(metadata), expected);
+            assert.isTrue(metadata.format.chapters?.every(chapter => chapter.sampleOffset === undefined));
+          });
+          it(`omits optional sample offsets when audio chunk mappings are absent (${stream ? 'stream' : 'buffer'})`, async () => {
+            const metadata = await parse(audiobook({ audioTables: { timing: [[2, 50]], chunks: [] } }));
+            assert.deepEqual(chapterList(metadata), expected);
+            assert.isTrue(metadata.format.chapters?.every(chapter => chapter.sampleOffset === undefined));
+          });
         }
       });
 
