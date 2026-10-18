@@ -494,9 +494,18 @@ export class FrameParser {
 
   private readEmbeddedFrames(data: Uint8Array, offset: number, includeCovers: boolean): Map<string, unknown> {
     const frames = new Map<string, unknown>();
+    const headerLength = getFrameHeaderLength(this.major);
     while (offset < data.length) {
+      if (data.length - offset < headerLength) {
+        throw new Id3v2ContentError('Truncated embedded ID3v2 frame header');
+      }
       const frame = readFrameHeader(data.subarray(offset), this.major, this.warningCollector);
-      offset += getFrameHeaderLength(this.major);
+      offset += headerLength;
+      if (frame.length > data.length - offset) {
+        throw new Id3v2ContentError(
+          `Embedded ID3v2 frame ${frame.id} size ${frame.length} exceeds remaining chapter data`
+        );
+      }
       const value = this.readData(data.subarray(offset, offset + frame.length), frame.id, includeCovers);
       offset += frame.length;
       frames.set(frame.id, value);
