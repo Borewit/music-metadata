@@ -1140,35 +1140,45 @@ export class MP4Parser extends BasicParser {
   }
 
   private getChunkDuration(chunkId: number, track: ITrackDescription): number {
-    let ttsi = 0;
-    let ttsc = track.timeToSampleTable[ttsi].count;
-    let ttsd = track.timeToSampleTable[ttsi].duration;
-    let curChunkId = 1;
-    let samplesPerChunk = this.getSamplesPerChunk(curChunkId, track.sampleToChunkTable);
+    let previousChunk = 0;
+    for (const entry of track.sampleToChunkTable) {
+      if (
+        (previousChunk === 0 && entry.firstChunk !== 1) ||
+        entry.firstChunk <= previousChunk ||
+        entry.samplesPerChunk === 0
+      ) {
+        throw new Mp4ContentError('Invalid audio sample-to-chunk table');
+      }
+      previousChunk = entry.firstChunk;
+    }
+    let timingIndex = 0;
+    let remainingSamples = 0;
+    let sampleDuration = 0;
     let totalDuration = 0;
-    while (curChunkId < chunkId) {
-      const nrOfSamples = Math.min(ttsc, samplesPerChunk);
-      totalDuration += nrOfSamples * ttsd;
-      ttsc -= nrOfSamples;
-      samplesPerChunk -= nrOfSamples;
-      if (samplesPerChunk === 0) {
-        ++curChunkId;
-        samplesPerChunk = this.getSamplesPerChunk(curChunkId, track.sampleToChunkTable);
-      } else {
-        ++ttsi;
-        ttsc = track.timeToSampleTable[ttsi].count;
-        ttsd = track.timeToSampleTable[ttsi].duration;
+    for (const [index, run] of track.sampleToChunkTable.entries()) {
+      const nextChunk = track.sampleToChunkTable[index + 1]?.firstChunk ?? chunkId;
+      const endChunk = Math.min(nextChunk, chunkId);
+      for (let chunk = run.firstChunk; chunk < endChunk; ++chunk) {
+        let samplesPerChunk = run.samplesPerChunk;
+        while (samplesPerChunk > 0) {
+          while (remainingSamples === 0) {
+            const timing = track.timeToSampleTable[timingIndex++];
+            if (!timing) {
+              throw new Mp4ContentError('Missing audio sample timing for chapter offset');
+            }
+            remainingSamples = timing.count;
+            sampleDuration = timing.duration;
+          }
+          const samples = Math.min(remainingSamples, samplesPerChunk);
+          totalDuration += samples * sampleDuration;
+          if (!Number.isSafeInteger(totalDuration)) {
+            throw new Mp4ContentError('Unsafe audio sample timing for chapter offset');
+          }
+          remainingSamples -= samples;
+          samplesPerChunk -= samples;
+        }
       }
     }
     return totalDuration;
-  }
-
-  private getSamplesPerChunk(chunkId: number, stcTable: AtomToken.ISampleToChunk[]): number {
-    for (let i = 0; i < stcTable.length - 1; ++i) {
-      if (chunkId >= stcTable[i].firstChunk && chunkId < stcTable[i + 1].firstChunk) {
-        return stcTable[i].samplesPerChunk;
-      }
-    }
-    return stcTable[stcTable.length - 1].samplesPerChunk;
   }
 }
