@@ -2586,7 +2586,7 @@ __metadata:
     nodemon: "npm:^3.1.14"
     remark-cli: "npm:^12.0.1"
     remark-preset-lint-consistent: "npm:^6.0.1"
-    strtok3: "npm:^10.6.0"
+    strtok3: "npm:^10.6.2"
     token-types: "npm:^6.1.2"
     tsx: "npm:^4.23.15"
     typescript: "npm:^7.0.2"
@@ -3474,12 +3474,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^10.5.0, strtok3@npm:^10.6.0":
-  version: 10.6.0
-  resolution: "strtok3@npm:10.6.0"
+"strtok3@npm:^10.5.0, strtok3@npm:^10.6.2":
+  version: 10.6.2
+  resolution: "strtok3@npm:10.6.2"
   dependencies:
     "@tokenizer/token": "npm:^0.3.0"
-  checksum: 10c0/3eb0ecbfa59fe2193b975ba8bc1b3df595a9e9c58c1cb53ee7ec074b23e4574be67c46eda51c03a1911aa4d7259f35dc3370db6d017005d9d785bfce6cc3d80d
+  checksum: 10c0/23d5a836b58d1b23f5eaff18afeeca628dbd13f22f69433e6438f83d09d1f7bdab9b9081d0fa69d5e1dcd01a1e7a5c763cc6cfbfb78951a3036464d5d8826e1d
   languageName: node
   linkType: hard
 
