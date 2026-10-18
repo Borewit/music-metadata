@@ -706,28 +706,37 @@ export class WmPictureToken implements IGetToken<IWmPicture> {
   }
 
   public get(buffer: Uint8Array, offset: number): IWmPicture {
-    const view = new DataView(buffer.buffer, offset);
+    const payload = buffer.subarray(offset, offset + this.len);
+    if (payload.length < 5) {
+      throw new AsfContentParseError('Truncated ASF picture header');
+    }
+    const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
 
     const typeId = view.getUint8(0);
-    const size = view.getInt32(1, true);
+    const size = view.getUint32(1, true);
     let index = 5;
 
-    while (view.getUint16(index) !== 0) {
-      index += 2;
-    }
-    const format = new Token.StringType(index - 5, 'utf-16le').get(buffer, 5);
+    const readString = (field: string): string => {
+      const start = index;
+      while (index + 2 <= payload.length) {
+        const codeUnit = view.getUint16(index, true);
+        index += 2;
+        if (codeUnit === 0) {
+          return new Token.StringType(index - start - 2, 'utf-16le').get(payload, start);
+        }
+      }
+      throw new AsfContentParseError(`Unterminated ASF picture ${field}`);
+    };
 
-    while (view.getUint16(index) !== 0) {
-      index += 2;
-    }
-    const description = new Token.StringType(index - 5, 'utf-16le').get(buffer, 5);
+    const format = readString('MIME type');
+    const description = readString('description');
 
     return {
       type: AttachedPictureType[typeId as keyof typeof AttachedPictureType],
       format,
       description,
       size,
-      data: buffer.slice(index + 4)
+      data: payload.slice(index)
     };
   }
 }

@@ -617,11 +617,15 @@ describe('Parse ASF', () => {
       Parsers.forEach(parser => {
         it(parser.description, async function () {
           const filePath = path.join(asfFilePath, 'issue_57.wma');
-          const { native } = await parser.parse(() => this.skip(), filePath, 'audio/x-ms-wma');
+          const { native, common } = await parser.parse(() => this.skip(), filePath, 'audio/x-ms-wma');
           const asf = mm.orderTags(native.asf);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
-          const nativePicture = asf['WM/Picture'][0];
-          assert.exists((nativePicture as IPicture).data);
+          for (const picture of [asf['WM/Picture'][0] as IPicture, common.picture![0]]) {
+            assert.strictEqual(picture.format, 'image/jpeg');
+            assert.strictEqual(picture.description, '');
+            assert.lengthOf(picture.data, 40774);
+            assert.deepEqual(Array.from(picture.data.subarray(0, 4)), [0xff, 0xd8, 0xff, 0xe0]);
+          }
         });
       });
     });
