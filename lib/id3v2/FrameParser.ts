@@ -440,23 +440,8 @@ export class FrameParser {
         const chapter: Chapter = {
           label: util.decodeString(uint8Array.subarray(0, fzero), defaultEnc),
           info: ChapterInfo.get(uint8Array, fzero + 1),
-          frames: new Map()
+          frames: this.readEmbeddedFrames(uint8Array, fzero + 1 + ChapterInfo.len, includeCovers)
         };
-        offset += fzero + 1 + ChapterInfo.len;
-
-        while (offset < length) {
-          const subFrame = readFrameHeader(uint8Array.subarray(offset), this.major, this.warningCollector);
-          const headerSize = getFrameHeaderLength(this.major);
-          offset += headerSize;
-          const subOutput = this.readData(
-            uint8Array.subarray(offset, offset + subFrame.length),
-            subFrame.id,
-            includeCovers
-          );
-          offset += subFrame.length;
-
-          chapter.frames.set(subFrame.id, subOutput);
-        }
         output = chapter;
         break;
       }
@@ -491,23 +476,9 @@ export class FrameParser {
           label,
           flags: { topLevel, ordered },
           childElementIds,
-          frames: new Map()
+          // Optional embedded sub-frames (e.g. TIT2) follow after the child list.
+          frames: this.readEmbeddedFrames(uint8Array, offset, includeCovers)
         };
-
-        // Optional embedded sub-frames (e.g. TIT2) follow after the child list
-        while (offset < length) {
-          const subFrame = readFrameHeader(uint8Array.subarray(offset), this.major, this.warningCollector);
-          const headerSize = getFrameHeaderLength(this.major);
-          offset += headerSize;
-          const subOutput = this.readData(
-            uint8Array.subarray(offset, offset + subFrame.length),
-            subFrame.id,
-            includeCovers
-          );
-          offset += subFrame.length;
-
-          toc.frames.set(subFrame.id, subOutput);
-        }
 
         output = toc;
         break;
@@ -519,6 +490,18 @@ export class FrameParser {
     }
 
     return output;
+  }
+
+  private readEmbeddedFrames(data: Uint8Array, offset: number, includeCovers: boolean): Map<string, unknown> {
+    const frames = new Map<string, unknown>();
+    while (offset < data.length) {
+      const frame = readFrameHeader(data.subarray(offset), this.major, this.warningCollector);
+      offset += getFrameHeaderLength(this.major);
+      const value = this.readData(data.subarray(offset, offset + frame.length), frame.id, includeCovers);
+      offset += frame.length;
+      frames.set(frame.id, value);
+    }
+    return frames;
   }
 
   protected static readNullTerminatedString(
