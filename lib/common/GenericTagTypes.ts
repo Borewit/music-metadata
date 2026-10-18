@@ -136,7 +136,7 @@ export type GenericTagId =
   | 'playCounter';
 
 export interface INativeTagMap {
-  [index: string]: GenericTagId;
+  [index: string]: GenericTagId | undefined;
 }
 
 export interface ITagInfo {

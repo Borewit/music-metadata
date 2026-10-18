@@ -319,6 +319,35 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.strictEqual(info.get('composer'), 'Charlie Delta, Echo Foxtrot,');
     });
 
+    for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf']) {
+      for (const stream of [false, true]) {
+        it(`keeps an unmapped ${id} tag native (${stream ? 'stream' : 'buffer'})`, async () => {
+          const entries: [string, string][] = [
+            [id, 'Custom value'],
+            ['title', 'Following title']
+          ];
+          const body = infoBody(entries);
+          const data = Buffer.concat([
+            fileHeader,
+            chunkHeader('desc', 32),
+            audioDescription,
+            chunkHeader('info', body.length),
+            body
+          ]);
+          const metadata = stream
+            ? await mm.parseStream(Readable.from([data], { objectMode: false }), cafMimeType)
+            : await mm.parseBuffer(data, cafMimeType);
+          assert.deepEqual(
+            metadata.native.CAF,
+            entries.map(([id, value]) => ({ id, value }))
+          );
+          assert.strictEqual(metadata.common.title, 'Following title');
+          assert.sameMembers(Object.keys(metadata.common), ['track', 'disk', 'movementIndex', 'title']);
+          assert.strictEqual(Object.getPrototypeOf(metadata.common), Object.prototype);
+        });
+      }
+    }
+
     it('preserves every entry as a native tag', async () => {
       const { native } = await mm.parseFile(path.join(cafSamplePath, 'info-tags.caf'));
       const entries = native.CAF;

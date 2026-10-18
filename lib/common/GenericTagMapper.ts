@@ -72,8 +72,8 @@ export class CommonTagMapper implements IGenericTagMapper {
    * @param tag Native header tag
    * @return common tag name (alias)
    */
-  protected getCommonName(tag: string): generic.GenericTagId {
-    return this.tagMap[tag];
+  protected getCommonName(tag: string): generic.GenericTagId | undefined {
+    return Object.hasOwn(this.tagMap, tag) ? this.tagMap[tag] : undefined;
   }
 
   /**
