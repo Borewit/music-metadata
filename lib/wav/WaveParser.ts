@@ -31,7 +31,6 @@ export class WaveParser extends BasicParser {
   private fact: WaveChunk.IFactChunk | undefined;
   private blockAlign = 0;
   private avgBytesPerSec = 0;
-  private header: riff.IChunkHeader | undefined;
 
   public async parse(): Promise<void> {
     const riffHeader = await this.readToken<riff.IChunkHeader>(riff.Header);
@@ -62,12 +61,12 @@ export class WaveParser extends BasicParser {
   public async readWaveChunk(remaining: number): Promise<void> {
     while (remaining >= riff.Header.len) {
       const header = await this.readToken<riff.IChunkHeader>(riff.Header);
-      remaining -= riff.Header.len + header.chunkSize;
+      remaining -= riff.Header.len;
       if (header.chunkSize > remaining) {
         this.metadata.addWarning('Data chunk size exceeds file size');
       }
+      remaining -= header.chunkSize + (header.chunkSize & 1);
 
-      this.header = header;
       debug(`pos=${this.tokenizer.position}, readChunk: chunkID=RIFF/WAVE/${header.chunkID}`);
       switch (header.chunkID) {
         case 'CSET': {
@@ -178,7 +177,7 @@ export class WaveParser extends BasicParser {
           await this.tokenizer.ignore(header.chunkSize);
       }
 
-      if ((this.header as riff.IChunkHeader).chunkSize % 2 === 1) {
+      if (header.chunkSize % 2 === 1) {
         debug('Read odd padding byte'); // https://wiki.multimedia.cx/index.php/RIFF
         await this.tokenizer.ignore(1);
       }
