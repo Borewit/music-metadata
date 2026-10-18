@@ -9,30 +9,57 @@ import { samplePath } from './util.js';
 
 const image = readFileSync(path.join(samplePath, 'tinytrans.gif'));
 
-function picture(mime: string, description: string): Uint8Array {
+function picture(mime: string, description: string, type = 3): Uint8Array {
   const header = Buffer.alloc(5);
-  header[0] = 3; // Front cover
+  header[0] = type; // Front cover by default
   header.writeUInt32LE(image.length, 1);
   return Uint8Array.from(Buffer.concat([header, Buffer.from(`${mime}\0${description}\0`, 'utf16le'), image]));
 }
 
-function asfPicture(payload: Uint8Array): Uint8Array {
+function asfPictures(payloads: Uint8Array[], kind: 'extended' | 'metadata' | 'library' = 'extended'): Uint8Array {
   const name = Buffer.from('WM/Picture\0', 'utf16le');
-  const nameLength = Buffer.alloc(2);
-  nameLength.writeUInt16LE(name.length);
-  const valueHeader = Buffer.alloc(4);
-  valueHeader.writeUInt16LE(DataType.ByteArray);
-  valueHeader.writeUInt16LE(payload.length, 2);
-  const record = Buffer.concat([Buffer.from([1, 0]), nameLength, name, valueHeader, payload]);
+  const records = payloads.map(payload => {
+    if (kind !== 'extended') {
+      const header = Buffer.alloc(12);
+      header.writeUInt16LE(name.length, 4);
+      header.writeUInt16LE(DataType.ByteArray, 6);
+      header.writeUInt32LE(payload.length, 8);
+      return Buffer.concat([header, name, payload]);
+    }
+    const nameLength = Buffer.alloc(2);
+    nameLength.writeUInt16LE(name.length);
+    const valueHeader = Buffer.alloc(4);
+    valueHeader.writeUInt16LE(DataType.ByteArray);
+    valueHeader.writeUInt16LE(payload.length, 2);
+    return Buffer.concat([nameLength, name, valueHeader, payload]);
+  });
+  const count = Buffer.alloc(2);
+  count.writeUInt16LE(records.length);
+  const record = Buffer.concat([count, ...records]);
+  const objectHeader = Buffer.alloc(24);
+  objectHeader.set(
+    (kind === 'extended'
+      ? AsfGuid.ExtendedContentDescriptionObject
+      : kind === 'metadata'
+        ? AsfGuid.MetadataObject
+        : AsfGuid.MetadataLibraryObject
+    ).toBin()
+  );
+  objectHeader.writeBigUInt64LE(BigInt(24 + record.length), 16);
+  let object = Buffer.concat([objectHeader, record]);
+  if (kind !== 'extended') {
+    const extension = Buffer.alloc(46);
+    extension.set(AsfGuid.HeaderExtensionObject.toBin());
+    extension.writeBigUInt64LE(BigInt(extension.length + object.length), 16);
+    extension.writeUInt32LE(object.length, 42);
+    object = Buffer.concat([extension, object]);
+  }
   const header = Buffer.alloc(30);
   header.set(AsfGuid.HeaderObject.toBin());
-  header.writeBigUInt64LE(BigInt(30 + 24 + record.length), 16);
+  header.writeBigUInt64LE(BigInt(header.length + object.length), 16);
   header.writeUInt32LE(1, 24);
   header.set([1, 2], 28);
-  const objectHeader = Buffer.alloc(24);
-  objectHeader.set(AsfGuid.ExtendedContentDescriptionObject.toBin());
-  objectHeader.writeBigUInt64LE(BigInt(24 + record.length), 16);
-  return Uint8Array.from(Buffer.concat([header, objectHeader, record]));
+  return Uint8Array.from(Buffer.concat([header, object]));
 }
 
 describe('ASF picture decoding', () => {
@@ -58,7 +85,7 @@ describe('ASF picture decoding', () => {
   for (const mime of ['', 'image/gif']) {
     for (const source of ['buffer', 'stream', 'blob']) {
       it(`preserves picture fields and image bytes through ${source} with ${mime || 'inferred MIME type'}`, async () => {
-        const data = asfPicture(picture(mime, 'Album cover 🎵'));
+        const data = asfPictures([picture(mime, 'Album cover 🎵')]);
         const metadata =
           source === 'buffer'
             ? await mm.parseBuffer(data, 'audio/x-ms-wma')
@@ -106,5 +133,33 @@ describe('ASF picture decoding', () => {
       assert.strictEqual(decoded.size, size);
       assert.deepEqual(decoded.data, new Uint8Array(image));
     });
+  }
+});
+
+describe('ASF picture order', () => {
+  for (const kind of ['extended', 'metadata', 'library'] as const) {
+    for (const source of ['buffer', 'stream', 'blob']) {
+      it(`preserves ${kind} picture order when MIME detection is asynchronous (${source})`, async () => {
+        // Type Other exercises selectCover's first-picture fallback, without front/back priorities.
+        const data = asfPictures([picture('', 'First', 0), picture('image/gif', 'Second', 0)], kind);
+        const metadata =
+          source === 'buffer'
+            ? await mm.parseBuffer(data, 'audio/x-ms-wma')
+            : source === 'blob'
+              ? await mm.parseBlob(new Blob([Uint8Array.from(data)], { type: 'audio/x-ms-wma' }))
+              : await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/x-ms-wma');
+        const native = metadata.native.asf.map(tag => (tag.value as mm.IPicture).description);
+        assert.deepEqual(native, ['First', 'Second']);
+        assert.deepEqual(
+          metadata.common.picture!.map(value => value.description),
+          native
+        );
+        assert.strictEqual(mm.selectCover(metadata.common.picture)!.description, 'First');
+        assert.deepEqual(
+          metadata.common.picture!.map(value => value.format),
+          ['image/gif', 'image/gif']
+        );
+      });
+    }
   }
 });

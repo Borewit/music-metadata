@@ -226,7 +226,10 @@ export class AsfParser extends BasicParser {
   }
 
   private async addTags(tags: ITag[]): Promise<void> {
-    await Promise.all(tags.map(({ id, value }) => this.metadata.addTag(headerType, id, value)));
+    // MIME detection may suspend picture normalization; preserve the source order.
+    for (const { id, value } of tags) {
+      await this.metadata.addTag(headerType, id, value);
+    }
   }
 
   private async readObjectHeader(
