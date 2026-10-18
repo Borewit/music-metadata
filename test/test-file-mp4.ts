@@ -1018,6 +1018,62 @@ describe('Parse MPEG-4', () => {
         return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
       }
 
+      describe('explicit track context', () => {
+        const audioTrack: ITrackSpec = {
+          handler: 'soun',
+          dataFormat: 'mp4a',
+          entrySize: 36,
+          audioLike: true,
+          fixedSampleSize: 100,
+          sampleCount: 10
+        };
+        const orphanAtoms = [
+          ['stsd', sampleDescriptionBox('alac', 36, true)],
+          ['stsz', sampleSizeBox({ ...audioTrack, fixedSampleSize: 500, sampleCount: 100 })],
+          ['chap', box('chap', new Uint8Array([0, 0, 0, 1]))]
+        ] as const;
+
+        for (const source of ['buffer', 'stream'] as const) {
+          async function parse(data: Uint8Array): Promise<mm.IAudioMetadata> {
+            return source === 'buffer'
+              ? mm.parseBuffer(data, 'video/mp4', { includeChapters: true })
+              : mm.parseStream(Readable.from([data], { objectMode: false }), 'video/mp4', { includeChapters: true });
+          }
+
+          for (const [name, orphan] of orphanAtoms) {
+            for (const nested of [false, true]) {
+              for (const audioFirst of [false, true]) {
+                it(`ignores orphan ${name} without modifying the last track (nested=${nested}, audio first=${audioFirst}, ${source})`, async () => {
+                  const tracks = audioFirst ? [audioTrack, videoTrack] : [videoTrack, audioTrack];
+                  const original = mp4(...tracks);
+                  const expected = await parse(original);
+                  const stray = nested ? box('moov', box('stbl', orphan)) : orphan;
+                  const metadata = await parse(concat(original, stray, box('date', textEncoder.encode('2026'))));
+                  assert.deepEqual(metadata.format.trackInfo, expected.format.trackInfo);
+                  assert.strictEqual(metadata.format.codec, expected.format.codec);
+                  assert.strictEqual(metadata.format.bitrate, expected.format.bitrate);
+                  assert.deepEqual(metadata.native.iTunes, [{ id: 'date', value: '2026' }]);
+                  const atomPath = nested ? `moov.stbl.${name}` : name;
+                  assert.deepInclude(metadata.quality.warnings, {
+                    message: `Ignoring track-specific atom ${atomPath} outside a track`
+                  });
+                });
+              }
+            }
+
+            it(`ignores ${name} before any track and preserves the following track (${source})`, async () => {
+              const expected = await parse(mp4(audioTrack));
+              const metadata = await parse(concat(orphan, mp4(audioTrack)));
+              assert.deepEqual(metadata.format.trackInfo, expected.format.trackInfo);
+              assert.strictEqual(metadata.format.codec, expected.format.codec);
+              assert.deepInclude(metadata.quality.warnings, {
+                message: `Ignoring track-specific atom ${name} outside a track`
+              });
+            });
+          }
+        }
+      });
+
       describe('stream presence', () => {
         for (const { filename, hasAudio, hasVideo } of [
           { filename: 'mp4-video.mp4', hasAudio: false, hasVideo: true },
@@ -1940,7 +1996,7 @@ describe('Parse MPEG-4', () => {
       });
     }
 
-    for (const name of ['ftyp', 'chap']) {
+    for (const name of ['ftyp', 'chap', 'stsd', 'stsz']) {
       it(`rejects an oversized incremental ${name} before consuming its payload`, async () => {
         const tokenizer = await fromStream(
           Readable.from([box(name, Buffer.alloc(8), 64n * 1024n * 1024n + 12n)], { objectMode: false })
@@ -2411,7 +2467,8 @@ describe('Parse MPEG-4', () => {
         neroVersion,
         invalidRuns,
         emptyTitles = false,
-        chapterCount
+        chapterCount,
+        orphanReference = false
       }: {
         trailing?: boolean;
         grouped?: boolean;
@@ -2424,6 +2481,7 @@ describe('Parse MPEG-4', () => {
         invalidRuns?: number[][];
         emptyTitles?: boolean;
         chapterCount?: number;
+        orphanReference?: boolean;
       } = {}) {
         const samples = chapterCount
           ? Array.from({ length: chapterCount }, () => text('C'))
@@ -2536,7 +2594,13 @@ describe('Parse MPEG-4', () => {
               )
             )
           );
-          return box('moov', audioTrack, chapterTrack, ...(neroVersion === undefined ? [] : [nero(neroVersion)]));
+          return box(
+            'moov',
+            audioTrack,
+            ...(orphanReference ? [box('tref', box('chap', u32(99)))] : []),
+            chapterTrack,
+            ...(neroVersion === undefined ? [] : [nero(neroVersion)])
+          );
         };
         const moov = moovFor(ftyp.length + (trailing ? 0 : moovFor(0).length));
         return Buffer.concat(trailing ? [ftyp, box('mdat', payload), moov] : [ftyp, moov, box('mdat', payload)]);
@@ -2553,6 +2617,21 @@ describe('Parse MPEG-4', () => {
         { title: 'Prelude', start: 0, timeScale: 10_000_000 },
         { title: 'Chapter 1', start: 125_000_000, timeScale: 10_000_000 }
       ];
+
+      for (const stream of [false, true]) {
+        it(`keeps the owning track's chapter reference when an orphan follows it (${stream ? 'stream' : 'buffer'})`, async () => {
+          const buffer = audiobook({ orphanReference: true });
+          const metadata = stream
+            ? await mm.parseStream(Readable.from([buffer], { objectMode: false }), 'audio/mp4', {
+                includeChapters: true
+              })
+            : await mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), expected);
+          assert.deepInclude(metadata.quality.warnings, {
+            message: 'Ignoring track-specific atom moov.tref.chap outside a track'
+          });
+        });
+      }
 
       describe('MP4 chapters in real audiobook excerpts', () => {
         for (const filename of ['chapters-leading.m4b', 'chapters-nero.m4b']) {
