@@ -17,6 +17,50 @@ import { samplePath } from './util.js';
 use(chaiAsPromised);
 
 describe('ID3v2', () => {
+  describe('Credit role names', () => {
+    function fixture(major: 3 | 4, id: string, entries: string[]): Buffer {
+      const payload = Buffer.from(`\0${entries.join('\0')}`, 'latin1');
+      const header = Buffer.alloc(10);
+      header.write(id, 'ascii');
+      const syncSafe = (size: number) =>
+        Buffer.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
+      if (major === 3) {
+        header.writeUInt32BE(payload.length, 4);
+      } else {
+        header.set(syncSafe(payload.length), 4);
+      }
+      const frame = Buffer.concat([header, payload]);
+      return Buffer.concat([Buffer.from([0x49, 0x44, 0x33, major, 0, 0]), syncSafe(frame.length), frame]);
+    }
+
+    for (const [major, id] of [
+      [3, 'IPLS'],
+      [4, 'TIPL'],
+      [4, 'TMCL']
+    ] as const) {
+      for (const role of ['constructor', 'toString', '__proto__']) {
+        it(`preserves the ${id} role ${role} and accumulates repeated credits`, async () => {
+          const data = fixture(major, id, [role, 'First,Second', role, 'Third', 'producer', 'Producer']);
+          const metadata = await mm.parseBuffer(data, 'audio/mpeg');
+          const credits = metadata.native[`ID3v2.${major}`].find(tag => tag.id === id)?.value;
+          if (credits === null || typeof credits !== 'object') {
+            assert.fail(`Expected ${id} native credit object`);
+          }
+          assert.deepEqual(credits, { [role]: ['First', 'Second', 'Third'], producer: ['Producer'] });
+          assert.isTrue(Object.getOwnPropertyDescriptor(credits, role)?.enumerable);
+          assert.strictEqual(Object.getPrototypeOf(credits), Object.prototype);
+        });
+      }
+
+      it(`ignores an incomplete ${id} pair while preserving normal repeated roles`, async () => {
+        const data = fixture(major, id, ['producer', 'First,Second', 'producer', 'Third', 'unpaired']);
+        const metadata = await mm.parseBuffer(data, 'audio/mpeg');
+        const credits = metadata.native[`ID3v2.${major}`].find(tag => tag.id === id)?.value;
+        assert.deepEqual(credits, { producer: ['First', 'Second', 'Third'] });
+      });
+    }
+  });
+
   describe('Headers and unknown frames', () => {
     it('should be able to read id3v2 files with extended headers', () => {
       const filename = 'id3v2-xheader.mp3';

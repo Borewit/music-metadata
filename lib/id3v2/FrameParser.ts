@@ -541,12 +541,17 @@ export class FrameParser {
    * @param entries
    */
   private static functionList(entries: string[]): { [index: string]: string[] } {
-    const res: { [index: string]: string[] } = {};
-    for (let i = 0; i + 1 < entries.length; i += 2) {
-      const names: string[] = entries[i + 1].split(',');
-      res[entries[i]] = res[entries[i]] ? res[entries[i]].concat(names) : names;
+    const roles = new Map<string, string[]>();
+    for (let i = 0; i < entries.length; i += 2) {
+      const role = entries[i];
+      const people = entries[i + 1];
+      if (role === undefined || people === undefined) {
+        break;
+      }
+      const names = people.split(',');
+      roles.set(role, (roles.get(role) ?? []).concat(names));
     }
-    return res;
+    return Object.fromEntries(roles);
   }
 
   /**

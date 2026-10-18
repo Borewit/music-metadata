@@ -172,7 +172,7 @@ export class MetadataCollector implements INativeMetadataCollector {
   }
 
   public async addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
-    debug(`tag ${tagType}.${tagId} = ${value}`);
+    debug('tag %s.%s = %o', tagType, tagId, value);
     if (!this.native[tagType]) {
       this.registerTagType(tagType);
       this.native[tagType] = [];
