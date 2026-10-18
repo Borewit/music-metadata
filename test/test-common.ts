@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { assert, expect } from 'chai';
+import { CaseInsensitiveTagMap } from '../lib/common/CaseInsensitiveTagMap.js';
 import { CombinedTagMapper } from '../lib/common/CombinedTagMapper.js';
+import { CommonTagMapper } from '../lib/common/GenericTagMapper.js';
 import { commonTagsKeys, isSingleton } from '../lib/common/GenericTagTypes.js';
 import { joinArtists } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
@@ -10,6 +12,45 @@ import { samplePath } from './util.js';
 
 describe('GenericTagMap', () => {
   const combinedTagMapper = new CombinedTagMapper();
+
+  describe('optional native tag lookups', () => {
+    const warnings = { addWarning: () => assert.fail('Tag lookup should not emit warnings') };
+    for (const Mapper of [CommonTagMapper, CaseInsensitiveTagMap]) {
+      describe(Mapper.name, () => {
+        for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf', 'unknown']) {
+          it(`does not map the unconfigured key ${id}`, () => {
+            const mapper = new Mapper(['CAF'], { title: 'title' });
+            assert.isNull(mapper.mapGenericTag({ id, value: 'Value' }, warnings));
+          });
+        }
+
+        for (const id of ['constructor', 'toString', '__proto__']) {
+          it(`honors an explicitly configured own key ${id}`, () => {
+            const mapper = new Mapper(['CAF'], { [id]: 'title' });
+            assert.deepEqual(mapper.mapGenericTag({ id, value: 'Title' }, warnings), { id: 'title', value: 'Title' });
+          });
+        }
+
+        it('ignores aliases inherited from the mapping object prototype', () => {
+          const map = Object.assign(Object.create({ inherited: 'album' }), { title: 'title' });
+          const mapper = new Mapper(['CAF'], map);
+          assert.isNull(mapper.mapGenericTag({ id: 'inherited', value: 'Ignored' }, warnings));
+          assert.deepEqual(mapper.mapGenericTag({ id: 'title', value: 'Title' }, warnings), {
+            id: 'title',
+            value: 'Title'
+          });
+        });
+      });
+    }
+
+    it('retains case-insensitive matching', () => {
+      const mapper = new CaseInsensitiveTagMap(['CAF'], { title: 'title' });
+      assert.deepEqual(mapper.mapGenericTag({ id: 'TiTlE', value: 'Title' }, warnings), {
+        id: 'title',
+        value: 'Title'
+      });
+    });
+  });
 
   it('Check if each native tag, is mapped to a valid common type', () => {
     // for each tag type
