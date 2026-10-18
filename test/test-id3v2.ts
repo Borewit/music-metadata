@@ -7,7 +7,7 @@ import { UINT8 } from 'token-types';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { LyricsContentType } from '../lib/core.js';
 import { parseEmbeddedID3v2 } from '../lib/id3v2/EmbeddedID3v2.js';
-import { Id3v2ContentError } from '../lib/id3v2/FrameParser.js';
+import { type Chapter, Id3v2ContentError, type TableOfContents } from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import type { ID3v2MajorVersion } from '../lib/id3v2/ID3v2Token.js';
 import * as mm from '../lib/index.js';
@@ -113,6 +113,95 @@ describe('ID3v2', () => {
           assert.deepEqual(metadata.quality.warnings, [{ message: 'Non-zero bytes found in ID3v2 padding' }]);
         });
       });
+    }
+  });
+
+  describe('Embedded chapter frame boundaries', () => {
+    const syncSafe = (size: number) =>
+      Buffer.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
+
+    for (const major of [3, 4] as const) {
+      function frame(id: string, payload: Uint8Array, declaredLength = payload.length): Buffer {
+        const header = Buffer.alloc(10);
+        header.write(id, 'ascii');
+        if (major === 3) {
+          header.writeUInt32BE(declaredLength, 4);
+        } else {
+          header.set(syncSafe(declaredLength), 4);
+        }
+        return Buffer.concat([header, payload]);
+      }
+
+      for (const parent of ['CHAP', 'CTOC']) {
+        function fixture(embedded: Uint8Array): Buffer {
+          const fields = parent === 'CHAP' ? Buffer.alloc(16) : Buffer.from([3, 1, 0x63, 0]);
+          const chapter = frame(parent, Buffer.concat([Buffer.from('id\0'), fields, embedded]));
+          const title = frame('TIT2', Buffer.from('\0Outer title'));
+          const payload = Buffer.concat([chapter, title]);
+          return Buffer.concat([Buffer.from([0x49, 0x44, 0x33, major, 0, 0]), syncSafe(payload.length), payload]);
+        }
+
+        describe(`ID3v2.${major} ${parent}`, () => {
+          for (let length = 1; length < 10; length++) {
+            it(`rejects an embedded frame header truncated to ${length} bytes`, async () => {
+              const data = fixture(frame('TIT2', new Uint8Array()).subarray(0, length));
+              await expect(mm.parseBuffer(data, 'audio/mpeg')).to.be.rejectedWith(
+                Id3v2ContentError,
+                'Truncated embedded ID3v2 frame header'
+              );
+            });
+          }
+
+          for (const length of [0, 2]) {
+            it(`rejects an embedded frame with ${length} of its declared 130 payload bytes`, async () => {
+              const data = fixture(frame('TIT2', Buffer.alloc(length), 130));
+              await expect(mm.parseBuffer(data, 'audio/mpeg')).to.be.rejectedWith(
+                Id3v2ContentError,
+                'Embedded ID3v2 frame TIT2 size 130 exceeds remaining chapter data'
+              );
+            });
+          }
+
+          for (const source of ['buffer', 'stream'] as const) {
+            async function parse(data: Buffer): Promise<mm.IAudioMetadata> {
+              return source === 'buffer'
+                ? mm.parseBuffer(data, 'audio/mpeg')
+                : mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mpeg');
+            }
+
+            it(`accepts no optional embedded frames (${source})`, async () => {
+              const metadata = await parse(fixture(new Uint8Array()));
+              const chapter = metadata.native[`ID3v2.${major}`].find(tag => tag.id === parent)?.value as
+                | Chapter
+                | TableOfContents
+                | undefined;
+              if (!chapter) {
+                assert.fail(`Expected ${parent} native tag`);
+              }
+              assert.strictEqual(chapter.frames.size, 0);
+              assert.strictEqual(metadata.common.title, 'Outer title');
+            });
+
+            it(`accepts exact-boundary frames and preserves duplicate IDs (${source})`, async () => {
+              const longTitle = 'A'.repeat(129);
+              const embedded = Buffer.concat([
+                frame('TIT2', Buffer.from('\0First title')),
+                frame('TIT2', Buffer.from(`\0${longTitle}`))
+              ]);
+              const metadata = await parse(fixture(embedded));
+              const chapter = metadata.native[`ID3v2.${major}`].find(tag => tag.id === parent)?.value as
+                | Chapter
+                | TableOfContents
+                | undefined;
+              if (!chapter) {
+                assert.fail(`Expected ${parent} native tag`);
+              }
+              assert.deepEqual([...chapter.frames], [['TIT2', longTitle]]);
+              assert.strictEqual(metadata.common.title, 'Outer title');
+            });
+          }
+        });
+      }
     }
   });
 
