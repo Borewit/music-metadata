@@ -383,6 +383,22 @@ export class MP4Parser extends BasicParser {
       }
     }
 
+    // Track-specific boxes are handled by parseTrackBox's local track context.
+    // An orphan box must not modify whichever track happened to be registered last.
+    if (['chap', 'stsd', 'stsz'].includes(atom.header.name)) {
+      this.validatePayloadLength(remaining);
+      // Retain structural validation of sample tables, including malformed-entry rejection.
+      if (atom.header.name === 'stsd') {
+        await this.readToken(new AtomToken.StsdAtom(remaining));
+      } else if (atom.header.name === 'stsz') {
+        await this.readToken(new AtomToken.StszAtom(remaining));
+      } else {
+        await this.tokenizer.ignore(remaining);
+      }
+      this.addWarning(`Ignoring track-specific atom ${atom.atomPath} outside a track`);
+      return;
+    }
+
     if (this.atomParsers[atom.header.name]) {
       if (atom.header.name !== 'mdat') {
         this.validatePayloadLength(remaining);
@@ -391,12 +407,6 @@ export class MP4Parser extends BasicParser {
     }
     debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
     await this.tokenizer.ignore(remaining);
-  }
-
-  private getTrackDescription(): ITrackDescription {
-    // ToDo: pick the right track, not the last track!!!!
-    const tracks = [...this.tracks.values()];
-    return tracks[tracks.length - 1];
   }
 
   private async addTag(id: string, value: AnyTagValue): Promise<void> {
@@ -923,18 +933,6 @@ export class MP4Parser extends BasicParser {
       });
     },
 
-    chap: async (len: number) => {
-      const td = this.getTrackDescription();
-
-      const trackIds: number[] = [];
-      while (len >= Token.UINT32_BE.len) {
-        trackIds.push(await this.tokenizer.readNumber(Token.UINT32_BE));
-        len -= Token.UINT32_BE.len;
-      }
-
-      td.chapterList = trackIds;
-    },
-
     /**
      * Parse mdat atom.
      * Will scan for chapters
@@ -967,26 +965,6 @@ export class MP4Parser extends BasicParser {
       debug(`ftyp: ${types.join('/')}`);
       const x = types.filter(distinct).join('/');
       this.metadata.setFormat('container', x);
-    },
-
-    /**
-     * Parse sample description atom
-     */
-    stsd: async (len: number) => {
-      const stsd = await this.readToken<AtomToken.IAtomStsd>(new AtomToken.StsdAtom(len));
-      const trackDescription = this.getTrackDescription();
-      trackDescription.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
-    },
-
-    /**
-     * Parse sample-sizes atom ('stsz')
-     */
-    stsz: async (len: number) => {
-      const stsz = await this.readToken<AtomToken.IStszAtom>(new AtomToken.StszAtom(len));
-      const td = this.getTrackDescription();
-      td.sampleSize = stsz.sampleSize;
-      td.sampleCount = stsz.numberOfEntries;
-      td.sampleSizeTable = stsz.entries;
     },
 
     date: async (len: number) => {
