@@ -8,6 +8,7 @@ import { fromBuffer } from 'strtok3';
 import AsfGuid from '../lib/asf/AsfGuid.js';
 import {
   AsfContentParseError,
+  ContentDescriptionObjectState,
   DataType,
   ExtendedStreamPropertiesObjectState,
   FilePropertiesObject,
@@ -71,6 +72,113 @@ function createUnknownSizeStream(data: Uint8Array): Readable {
 }
 
 describe('Parse ASF', () => {
+  describe('Content Description boundaries', () => {
+    const values = ['Chapter α', 'Artist', 'Copyright', 'Description', 'Rating'];
+    function payload(): Buffer {
+      const strings = values.map(value => Buffer.from(`${value}\0`, 'utf16le'));
+      const lengths = Buffer.alloc(10);
+      strings.forEach((value, index) => {
+        lengths.writeUInt16LE(value.length, index * 2);
+      });
+      return Buffer.concat([lengths, ...strings]);
+    }
+
+    function token(length: number): ContentDescriptionObjectState {
+      return new ContentDescriptionObjectState({
+        objectId: ContentDescriptionObjectState.guid,
+        objectSize: HeaderObjectToken.len + length
+      });
+    }
+
+    const expected = ['Title', 'Author', 'Copyright', 'Description', 'Rating'].map((id, index) => ({
+      id,
+      value: values[index]
+    }));
+
+    for (const viewOffset of [0, 7]) {
+      for (const tokenOffset of [0, 5]) {
+        it(`decodes fields at view offset ${viewOffset} and token offset ${tokenOffset}`, () => {
+          const body = payload();
+          const backing = Buffer.alloc(viewOffset + tokenOffset + body.length + 20, 0xa5);
+          backing.set(body, viewOffset + tokenOffset);
+          const view = backing.subarray(viewOffset);
+          assert.deepEqual(token(body.length).get(view, tokenOffset), expected);
+        });
+      }
+    }
+
+    for (const length of [0, 1, 9]) {
+      it(`rejects a ${length}-byte fixed header without reading surrounding bytes`, () => {
+        assert.throws(
+          () => token(length).get(Buffer.alloc(32), 3),
+          AsfContentParseError,
+          'Truncated Content Description Object'
+        );
+      });
+    }
+
+    it('rejects a token extending beyond the supplied view', () => {
+      const body = payload();
+      assert.throws(
+        () => token(body.length).get(body.subarray(0, body.length - 1), 0),
+        AsfContentParseError,
+        'Truncated Content Description Object'
+      );
+    });
+
+    for (const field of [0, 4]) {
+      it(`rejects field ${field} extending past the token despite following bytes`, () => {
+        const body = payload();
+        body.writeUInt16LE(body.readUInt16LE(field * 2) + 2, field * 2);
+        const data = Buffer.concat([body, Buffer.from([0x58, 0])]);
+        assert.throws(
+          () => token(body.length).get(data, 0),
+          AsfContentParseError,
+          'exceeds Content Description payload'
+        );
+      });
+    }
+
+    for (const source of ['buffer', 'stream', 'blob'] as const) {
+      async function parseBody(body: Uint8Array): Promise<mm.IAudioMetadata> {
+        const data = createSingleObjectAsf(
+          ContentDescriptionObjectState.guid,
+          HeaderObjectToken.len + body.length,
+          HeaderObjectToken.len + body.length
+        );
+        data.set(body, TopLevelHeaderObjectToken.len + HeaderObjectToken.len);
+        const padded = Buffer.concat([Buffer.alloc(7, 0xa5), data, Buffer.alloc(7, 0xa5)]);
+        const input = padded.subarray(7, 7 + data.length);
+        return source === 'buffer'
+          ? mm.parseBuffer(input, asfMimeType)
+          : source === 'stream'
+            ? mm.parseStream(Readable.from([input], { objectMode: false }), asfMimeType)
+            : mm.parseBlob(new Blob([input], { type: asfMimeType.mimeType }));
+      }
+
+      it(`preserves native fields through the public ${source} parser`, async () => {
+        const metadata = await parseBody(payload());
+        assert.deepEqual(metadata.native.asf, expected);
+        assert.strictEqual(metadata.common.title, values[0]);
+        assert.strictEqual(metadata.common.artist, values[1]);
+      });
+
+      it(`rejects a short fixed header through the public ${source} parser`, async () => {
+        await expect(parseBody(Buffer.alloc(9))).to.be.rejectedWith(
+          AsfContentParseError,
+          'Truncated Content Description Object'
+        );
+      });
+
+      it(`rejects an overlong string through the public ${source} parser`, async () => {
+        await expect(parseBody(payload().subarray(0, -2))).to.be.rejectedWith(
+          AsfContentParseError,
+          'exceeds Content Description payload'
+        );
+      });
+    }
+  });
+
   describe('ASF File Properties flags', () => {
     for (const [flags, broadcast, seekable] of [
       [0, false, false],
