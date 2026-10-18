@@ -20,6 +20,15 @@ export type CompressionTypeCode = keyof typeof compressionTypes;
 
 export class AiffContentError extends makeUnexpectedFileContentError('AIFF') {}
 
+/** The fixed fields preceding sound samples and optional alignment bytes in SSND. */
+export const SoundDataHeader: IGetToken<{ offset: number; blockSize: number }> = {
+  len: 8,
+  get: (buf, off) => ({
+    offset: Token.UINT32_BE.get(buf, off),
+    blockSize: Token.UINT32_BE.get(buf, off + 4)
+  })
+};
+
 /**
  * The Common Chunk.
  * Describes fundamental parameters of the waveform data such as sample rate, bit resolution, and how many channels of

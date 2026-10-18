@@ -19,6 +19,7 @@ const debug = initDebug('music-metadata:parser:aiff');
  */
 export class AIFFParser extends BasicParser {
   private isCompressed: boolean | null = null;
+  private soundDataBytes: number | undefined;
 
   public async parse(): Promise<void> {
     const header = await this.readToken<iff.IChunkHeader>(iff.Header);
@@ -63,6 +64,12 @@ export class AIFFParser extends BasicParser {
         throw err;
       }
     }
+
+    // COMM and SSND can appear in either order.
+    const duration = this.metadata.format.duration;
+    if (this.soundDataBytes !== undefined && duration !== undefined && Number.isFinite(duration) && duration > 0) {
+      this.metadata.setFormat('bitrate', (8 * this.soundDataBytes) / duration);
+    }
   }
 
   public async readData(header: iff.IChunkHeader): Promise<number> {
@@ -93,11 +100,18 @@ export class AIFFParser extends BasicParser {
         return header.chunkSize;
       }
 
-      case 'SSND': // Sound Data Chunk
-        if (this.metadata.format.duration) {
-          this.metadata.setFormat('bitrate', (8 * header.chunkSize) / this.metadata.format.duration);
+      case 'SSND': {
+        if (header.chunkSize < AiffToken.SoundDataHeader.len) {
+          throw new AiffContentError('SSND chunk is too small to contain its header');
         }
-        return 0;
+        const sound = await this.readToken(AiffToken.SoundDataHeader);
+        const payloadSize = header.chunkSize - AiffToken.SoundDataHeader.len;
+        if (sound.offset > payloadSize) {
+          throw new AiffContentError('SSND alignment offset exceeds its payload size');
+        }
+        this.soundDataBytes = payloadSize - sound.offset;
+        return AiffToken.SoundDataHeader.len;
+      }
 
       case 'NAME': // Sample name chunk
       case 'AUTH': // Author chunk
