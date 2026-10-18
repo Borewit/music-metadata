@@ -146,6 +146,9 @@ export class FrameParser {
 
   public readData(uint8Array: Uint8Array, type: string, includeCovers: boolean) {
     if (uint8Array.length === 0) {
+      if (type === 'CHAP' || type === 'CTOC') {
+        throw new Id3v2ContentError(`Truncated ${type} header`);
+      }
       this.warningCollector.addWarning(`id3v2.${this.major} header has empty tag type=${type}`);
       return;
     }
@@ -435,7 +438,13 @@ export class FrameParser {
       case 'CHAP': {
         //  // Chapter frame
         debug('Reading CHAP');
-        fzero = util.findZero(uint8Array, defaultEnc);
+        fzero = uint8Array.indexOf(0);
+        if (fzero < 0) {
+          throw new Id3v2ContentError('Missing CHAP element ID terminator');
+        }
+        if (length - fzero - 1 < ChapterInfo.len) {
+          throw new Id3v2ContentError('Truncated CHAP header');
+        }
 
         const chapter: Chapter = {
           label: util.decodeString(uint8Array.subarray(0, fzero), defaultEnc),
@@ -453,23 +462,32 @@ export class FrameParser {
         debug('Reading CTOC');
 
         // Element ID (null-terminated latin1)
-        const idEnd = util.findZero(uint8Array, defaultEnc);
+        const idEnd = uint8Array.indexOf(0);
+        if (idEnd < 0) {
+          throw new Id3v2ContentError('Missing CTOC element ID terminator');
+        }
+        if (length - idEnd - 1 < 2) {
+          throw new Id3v2ContentError('Truncated CTOC header');
+        }
         const label = util.decodeString(uint8Array.subarray(0, idEnd), defaultEnc);
         offset = idEnd + 1;
 
         // Flags
-        const flags = uint8Array[offset++];
+        const flags = Token.UINT8.get(uint8Array, offset++);
         const topLevel = (flags & 0x02) !== 0;
         const ordered = (flags & 0x01) !== 0;
 
         // Child element IDs
-        const entryCount = uint8Array[offset++];
+        const entryCount = Token.UINT8.get(uint8Array, offset++);
         const childElementIds: string[] = [];
-        for (let i = 0; i < entryCount && offset < length; i++) {
-          const end = util.findZero(uint8Array.subarray(offset), defaultEnc);
-          const childId = util.decodeString(uint8Array.subarray(offset, offset + end), defaultEnc);
+        for (let i = 0; i < entryCount; i++) {
+          const end = uint8Array.indexOf(0, offset);
+          if (end < 0) {
+            throw new Id3v2ContentError('Truncated CTOC child element ID');
+          }
+          const childId = util.decodeString(uint8Array.subarray(offset, end), defaultEnc);
           childElementIds.push(childId);
-          offset += end + 1;
+          offset = end + 1;
         }
 
         const toc: TableOfContents = {
@@ -494,9 +512,18 @@ export class FrameParser {
 
   private readEmbeddedFrames(data: Uint8Array, offset: number, includeCovers: boolean): Map<string, unknown> {
     const frames = new Map<string, unknown>();
+    const headerLength = getFrameHeaderLength(this.major);
     while (offset < data.length) {
+      if (data.length - offset < headerLength) {
+        throw new Id3v2ContentError('Truncated embedded ID3v2 frame header');
+      }
       const frame = readFrameHeader(data.subarray(offset), this.major, this.warningCollector);
-      offset += getFrameHeaderLength(this.major);
+      offset += headerLength;
+      if (frame.length > data.length - offset) {
+        throw new Id3v2ContentError(
+          `Embedded ID3v2 frame ${frame.id} size ${frame.length} exceeds remaining chapter data`
+        );
+      }
       const value = this.readData(data.subarray(offset, offset + frame.length), frame.id, includeCovers);
       offset += frame.length;
       frames.set(frame.id, value);
