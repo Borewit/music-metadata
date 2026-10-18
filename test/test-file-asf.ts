@@ -10,10 +10,13 @@ import {
   AsfContentParseError,
   ContentDescriptionObjectState,
   DataType,
+  ExtendedContentDescriptionObjectState,
   ExtendedStreamPropertiesObjectState,
   FilePropertiesObject,
   HeaderExtensionObject,
   HeaderObjectToken,
+  MetadataLibraryObjectState,
+  MetadataObjectState,
   readCodecEntries,
   StreamPropertiesObject,
   TopLevelHeaderObjectToken,
@@ -72,6 +75,184 @@ function createUnknownSizeStream(data: Uint8Array): Readable {
 }
 
 describe('Parse ASF', () => {
+  describe('metadata object boundaries', () => {
+    for (const [Token, extended] of [
+      [ExtendedContentDescriptionObjectState, true],
+      [MetadataObjectState, false],
+      [MetadataLibraryObjectState, false]
+    ] as const) {
+      const tags = [
+        { id: 'Title', value: 'Chapter α' },
+        { id: 'Author', value: 'Writer' }
+      ];
+      function payload(records = tags): Buffer {
+        const count = Buffer.alloc(2);
+        count.writeUInt16LE(records.length);
+        const parts = records.map(({ id, value }) => {
+          const name = Buffer.from(`${id}\0`, 'utf16le');
+          const text = Buffer.from(`${value}\0`, 'utf16le');
+          if (extended) {
+            const nameLength = Buffer.alloc(2);
+            nameLength.writeUInt16LE(name.length);
+            const fields = Buffer.alloc(4);
+            fields.writeUInt16LE(text.length, 2);
+            return Buffer.concat([nameLength, name, fields, text]);
+          }
+          const fields = Buffer.alloc(12);
+          fields.writeUInt16LE(name.length, 4);
+          fields.writeUInt32LE(text.length, 8);
+          return Buffer.concat([fields, name, text]);
+        });
+        return Buffer.concat([count, ...parts]);
+      }
+      function token(length: number) {
+        return new Token({ objectId: Token.guid, objectSize: HeaderObjectToken.len + length });
+      }
+      function decode(body: Uint8Array, viewOffset = 0, tokenOffset = 0) {
+        const data = new Uint8Array(viewOffset + tokenOffset + body.length + 16).fill(0xa5);
+        data.set(body, viewOffset + tokenOffset);
+        return token(body.length).get(data.subarray(viewOffset), tokenOffset);
+      }
+      describe(Token.name, () => {
+        for (const viewOffset of [0, 7]) {
+          for (const tokenOffset of [0, 5]) {
+            it(`reads ordered Unicode fields at view ${viewOffset}, token ${tokenOffset}`, () => {
+              assert.deepEqual(decode(payload(), viewOffset, tokenOffset), tags);
+            });
+          }
+        }
+        for (const length of [0, 1]) {
+          it(`rejects a ${length}-byte count header despite following bytes`, () => {
+            assert.throws(() => decode(new Uint8Array(length)), AsfContentParseError, /Truncated|exceeds/);
+          });
+        }
+        it('rejects a partial record header', () => {
+          assert.throws(
+            () => decode(payload().subarray(0, extended ? 7 : 13)),
+            AsfContentParseError,
+            /Truncated|exceeds/
+          );
+        });
+        it('rejects a missing later record header after a complete record', () => {
+          const body = payload([{ id: 'Title', value: 'A complete record with enough bytes for the count check' }]);
+          body.writeUInt16LE(2);
+          assert.throws(() => decode(body), AsfContentParseError, 'Truncated');
+        });
+        it('rejects a name extending beyond the token', () => {
+          const body = payload([{ id: 'Title', value: 'Example' }]);
+          body.writeUInt16LE(0xffff, extended ? 2 : 6);
+          assert.throws(() => decode(body), AsfContentParseError, /Truncated|exceeds/);
+        });
+        it('rejects a value extending into following bytes', () => {
+          const body = payload([{ id: 'Title', value: 'Example' }]);
+          if (extended) {
+            body.writeUInt16LE(18, 6 + Buffer.byteLength('Title\0', 'utf16le'));
+          } else {
+            body.writeUInt32LE(18, 10);
+          }
+          assert.throws(() => decode(body), AsfContentParseError, /Truncated|exceeds/);
+        });
+        it('rejects an impossible record count', () => {
+          const body = payload();
+          body.writeUInt16LE(0xffff);
+          assert.throws(() => decode(body), AsfContentParseError, /Truncated|exceeds/);
+        });
+        it('rejects a token extending beyond the supplied view', () => {
+          const body = Uint8Array.from(payload());
+          assert.throws(
+            () => token(body.length).get(body.subarray(0, body.length - 1), 0),
+            AsfContentParseError,
+            /Truncated|exceeds/
+          );
+        });
+        it('accepts no records', () => {
+          assert.deepEqual(decode(Buffer.alloc(2)), []);
+        });
+        it('retains rejection of unsupported value types', () => {
+          const body = payload([{ id: 'Title', value: 'Example' }]);
+          body.writeUInt16LE(0xffff, extended ? 4 + Buffer.byteLength('Title\0', 'utf16le') : 8);
+          assert.throws(() => decode(body), AsfContentParseError, 'unexpected value headerType');
+        });
+        for (const [type, length, expected] of [
+          [DataType.Bool, 2, true],
+          [DataType.Word, 2, 1],
+          [DataType.DWord, 4, 1],
+          [DataType.QWord, 8, 1n]
+        ] as const) {
+          function numericBody(valueLength: number): Buffer {
+            const body = payload([{ id: 'Count', value: 'Example' }]);
+            const nameLength = Buffer.byteLength('Count\0', 'utf16le');
+            const typeOffset = extended ? 4 + nameLength : 8;
+            const lengthOffset = extended ? typeOffset + 2 : 10;
+            const valueOffset = extended ? lengthOffset + 2 : 14 + nameLength;
+            body.writeUInt16LE(type, typeOffset);
+            if (extended) {
+              body.writeUInt16LE(valueLength, lengthOffset);
+            } else {
+              body.writeUInt32LE(valueLength, lengthOffset);
+            }
+            const value = Buffer.alloc(valueLength);
+            if (valueLength > 0) {
+              value[0] = 1;
+            }
+            return Buffer.concat([body.subarray(0, valueOffset), value]);
+          }
+          it(`rejects a truncated numeric value of type ${type} despite following bytes`, () => {
+            assert.throws(() => decode(numericBody(length - 1)), AsfContentParseError, 'Truncated ASF attribute');
+          });
+          it(`preserves a complete numeric value of type ${type}`, () => {
+            assert.deepEqual(decode(numericBody(length)), [{ id: 'Count', value: expected }]);
+          });
+        }
+        for (const source of ['buffer', 'stream', 'blob'] as const) {
+          function parse(body: Uint8Array): Promise<mm.IAudioMetadata> {
+            const size = HeaderObjectToken.len + body.length;
+            const data = extended
+              ? createSingleObjectAsf(Token.guid, size, size)
+              : createHeaderExtensionAsf(size, size);
+            const objectOffset = extended
+              ? TopLevelHeaderObjectToken.len
+              : TopLevelHeaderObjectToken.len + HeaderObjectToken.len + new HeaderExtensionObject().len;
+            writeObjectHeader(data, objectOffset, Token.guid, size);
+            data.set(body, objectOffset + HeaderObjectToken.len);
+            return source === 'buffer'
+              ? mm.parseBuffer(data, asfMimeType)
+              : source === 'stream'
+                ? mm.parseStream(Readable.from([data], { objectMode: false }), asfMimeType)
+                : mm.parseBlob(new Blob([Uint8Array.from(data)], { type: asfMimeType.mimeType }));
+          }
+          it(`preserves native fields through ${source}`, async () => {
+            assert.deepEqual((await parse(payload())).native.asf, tags);
+          });
+          it(`rejects a truncated string through ${source}`, async () => {
+            await expect(parse(payload().subarray(0, -2))).to.be.rejectedWith(AsfContentParseError);
+          });
+        }
+      });
+    }
+    describe('Header Extension view', () => {
+      for (const viewOffset of [0, 7]) {
+        for (const tokenOffset of [0, 5]) {
+          it(`reads fields at view ${viewOffset}, token ${tokenOffset}`, () => {
+            const token = new HeaderExtensionObject();
+            const data = new Uint8Array(viewOffset + tokenOffset + token.len);
+            const offset = viewOffset + tokenOffset;
+            const view = new DataView(data.buffer);
+            view.setUint16(offset + 16, 6, true);
+            view.setUint32(offset + 18, 1234, true);
+            const result = token.get(data.subarray(viewOffset), tokenOffset);
+            assert.strictEqual(result.reserved2, 6);
+            assert.strictEqual(result.extensionDataSize, 1234);
+          });
+        }
+      }
+      it('rejects a short header with an ASF content error', () => {
+        const token = new HeaderExtensionObject();
+        assert.throws(() => token.get(new Uint8Array(token.len - 1), 0), AsfContentParseError);
+      });
+    });
+  });
+
   describe('Content Description boundaries', () => {
     const values = ['Chapter α', 'Artist', 'Copyright', 'Description', 'Rating'];
     function payload(): Buffer {

@@ -123,7 +123,19 @@ export abstract class State<T> implements IGetToken<T> {
       if (!parseAttr) {
         throw new AsfContentParseError(`unexpected value headerType: ${valueType}`);
       }
-      tags.push({ id: name, value: parseAttr(data as Uint8Array) });
+      const buffer = data as Uint8Array;
+      const minimumLength =
+        valueType === DataType.QWord
+          ? 8
+          : valueType === DataType.DWord
+            ? 4
+            : valueType === DataType.Bool || valueType === DataType.Word
+              ? 2
+              : 0;
+      if (buffer.length < minimumLength) {
+        throw new AsfContentParseError(`Truncated ASF attribute ${name} of type ${valueType}`);
+      }
+      tags.push({ id: name, value: parseAttr(buffer) });
     }
   }
 }
@@ -352,7 +364,10 @@ export class HeaderExtensionObject implements IGetToken<IHeaderExtensionObject> 
   }
 
   public get(buf: Uint8Array, off: number): IHeaderExtensionObject {
-    const view = new DataView(buf.buffer, off);
+    if (off < 0 || this.len > buf.length - off) {
+      throw new AsfContentParseError('Truncated Header Extension Object');
+    }
+    const view = new DataView(buf.buffer, buf.byteOffset + off, this.len);
     return {
       reserved1: AsfGuid.fromBin(buf, off),
       reserved2: view.getUint16(16, true),
@@ -523,20 +538,36 @@ export class ExtendedContentDescriptionObjectState extends State<ITag[]> {
   public static guid = AsfGuid.ExtendedContentDescriptionObject;
 
   public get(buf: Uint8Array, off: number): ITag[] {
+    if (this.len < 2 || off < 0 || this.len > buf.length - off) {
+      throw new AsfContentParseError('Truncated Extended Content Description Object');
+    }
     const tags: ITag[] = [];
-    const view = new DataView(buf.buffer, off);
+    const payload = buf.subarray(off, off + this.len);
+    const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
     const attrCount = view.getUint16(0, true);
+    if (attrCount > (payload.length - 2) / 6) {
+      throw new AsfContentParseError('Extended Content Description count exceeds payload');
+    }
     let pos = 2;
     for (let i = 0; i < attrCount; i += 1) {
+      if (payload.length - pos < 6) {
+        throw new AsfContentParseError('Truncated Extended Content Description record');
+      }
       const nameLen = view.getUint16(pos, true);
       pos += 2;
-      const name = parseUnicodeAttr(buf.subarray(off + pos, off + pos + nameLen));
+      if (nameLen > payload.length - pos - 4) {
+        throw new AsfContentParseError('Extended Content Description name exceeds payload');
+      }
+      const name = parseUnicodeAttr(payload.subarray(pos, pos + nameLen));
       pos += nameLen;
       const valueType = view.getUint16(pos, true);
       pos += 2;
       const valueLen = view.getUint16(pos, true);
       pos += 2;
-      const value = buf.subarray(off + pos, off + pos + valueLen);
+      if (valueLen > payload.length - pos) {
+        throw new AsfContentParseError('Extended Content Description value exceeds payload');
+      }
+      const value = payload.subarray(pos, pos + valueLen);
       pos += valueLen;
       this.postProcessTag(tags, name, valueType, value);
     }
@@ -659,12 +690,21 @@ export class MetadataObjectState extends State<ITag[]> {
   public static guid = AsfGuid.MetadataObject;
 
   public get(uint8Array: Uint8Array, off: number): ITag[] {
+    if (this.len < 2 || off < 0 || this.len > uint8Array.length - off) {
+      throw new AsfContentParseError('Truncated Metadata Object');
+    }
     const tags: ITag[] = [];
-
-    const view = new DataView(uint8Array.buffer, off);
+    const payload = uint8Array.subarray(off, off + this.len);
+    const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
     const descriptionRecordsCount = view.getUint16(0, true);
+    if (descriptionRecordsCount > (payload.length - 2) / 12) {
+      throw new AsfContentParseError('Metadata record count exceeds payload');
+    }
     let pos = 2;
     for (let i = 0; i < descriptionRecordsCount; i += 1) {
+      if (payload.length - pos < 12) {
+        throw new AsfContentParseError('Truncated Metadata record header');
+      }
       pos += 4;
       const nameLen = view.getUint16(pos, true);
       pos += 2;
@@ -672,9 +712,15 @@ export class MetadataObjectState extends State<ITag[]> {
       pos += 2;
       const dataLen = view.getUint32(pos, true);
       pos += 4;
-      const name = parseUnicodeAttr(uint8Array.subarray(off + pos, off + pos + nameLen));
+      if (nameLen > payload.length - pos) {
+        throw new AsfContentParseError('Metadata name exceeds payload');
+      }
+      const name = parseUnicodeAttr(payload.subarray(pos, pos + nameLen));
       pos += nameLen;
-      const data = uint8Array.subarray(off + pos, off + pos + dataLen);
+      if (dataLen > payload.length - pos) {
+        throw new AsfContentParseError('Metadata value exceeds payload');
+      }
+      const data = payload.subarray(pos, pos + dataLen);
       pos += dataLen;
       this.postProcessTag(tags, name, dataType, data);
     }
