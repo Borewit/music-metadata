@@ -1,6 +1,8 @@
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import { AiffContentError } from '../lib/aiff/AiffToken.js';
 import * as mm from '../lib/index.js';
 import { UnexpectedFileContentError } from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
@@ -48,6 +50,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
           'audio/aiff'
         );
         checkFormat(format, 'PCM', 8000, 2, 8, 23493);
+        assert.approximately(format.bitrate!, 128000, 1e-6);
       });
     });
   });
@@ -63,6 +66,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
           'audio/aiff'
         );
         checkFormat(format, 'Alaw 2:1', 8000, 2, 16, 23493);
+        assert.approximately(format.bitrate!, 128000, 1e-6);
       });
     });
 
@@ -196,4 +200,68 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
       /COMMON CHUNK size should always be at least 22/
     );
   });
+});
+
+describe('AIFF sound-data bitrate', () => {
+  function chunk(id: string, payload: Buffer): Buffer {
+    const header = Buffer.alloc(8);
+    header.write(id);
+    header.writeUInt32BE(payload.length, 4);
+    return Buffer.concat([header, payload, Buffer.alloc(payload.length & 1)]);
+  }
+
+  function sample({ soundFirst = false, offset = 0, frames = 8, soundBytes = 16 } = {}): Buffer {
+    const common = Buffer.alloc(18);
+    common.writeUInt16BE(1); // Mono
+    common.writeUInt32BE(frames, 2);
+    common.writeUInt16BE(16, 6);
+    common.set([0x40, 0x0b, 0xfa, 0x00], 8); // 8000 Hz, 80-bit extended
+    const sound = Buffer.alloc(8 + offset + soundBytes);
+    sound.writeUInt32BE(offset);
+    const chunks = [chunk('COMM', common), chunk('SSND', sound)];
+    if (soundFirst) {
+      chunks.reverse();
+    }
+    return chunk('FORM', Buffer.concat([Buffer.from('AIFF'), ...chunks, chunk('NAME', Buffer.from('Title'))]));
+  }
+
+  for (const source of ['buffer', 'stream', 'blob']) {
+    async function parse(data: Buffer) {
+      return source === 'buffer'
+        ? mm.parseBuffer(data, 'audio/aiff')
+        : source === 'blob'
+          ? mm.parseBlob(new Blob([Uint8Array.from(data)], { type: 'audio/aiff' }))
+          : mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/aiff');
+    }
+
+    for (const soundFirst of [false, true]) {
+      for (const offset of [0, 5]) {
+        it(`excludes the SSND header and ${offset} alignment bytes, soundFirst=${soundFirst} (${source})`, async () => {
+          const { format, common } = await parse(sample({ soundFirst, offset }));
+          assert.strictEqual(format.bitrate, 128000);
+          assert.strictEqual(format.duration, 0.001);
+          assert.strictEqual(format.numberOfSamples, 8);
+          assert.strictEqual(common.title, 'Title', 'the following chunk remains aligned');
+        });
+      }
+    }
+
+    it(`does not derive a bitrate from zero-duration audio (${source})`, async () => {
+      const { format } = await parse(sample({ frames: 0, soundBytes: 0 }));
+      assert.strictEqual(format.duration, 0);
+      assert.isUndefined(format.bitrate);
+    });
+
+    it(`rejects an alignment offset beyond the sound-data chunk (${source})`, async () => {
+      const data = sample();
+      const start = data.indexOf('SSND') + 8;
+      data.writeUInt32BE(17, start);
+      await expect(parse(data)).to.be.rejectedWith(AiffContentError, 'offset exceeds');
+    });
+
+    it(`rejects an SSND chunk too short to contain its header (${source})`, async () => {
+      const data = chunk('FORM', Buffer.concat([Buffer.from('AIFF'), chunk('SSND', Buffer.alloc(4))]));
+      await expect(parse(data)).to.be.rejectedWith(AiffContentError, 'SSND chunk is too small');
+    });
+  }
 });
