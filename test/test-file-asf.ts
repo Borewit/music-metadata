@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -14,7 +15,8 @@ import {
   HeaderObjectToken,
   readCodecEntries,
   StreamPropertiesObject,
-  TopLevelHeaderObjectToken
+  TopLevelHeaderObjectToken,
+  WmPictureToken
 } from '../lib/asf/AsfObject.js';
 import { AsfTagMapper } from '../lib/asf/AsfTagMapper.js';
 import { getParserForAttr } from '../lib/asf/AsfUtil.js';
@@ -68,441 +70,441 @@ function createUnknownSizeStream(data: Uint8Array): Readable {
   return Readable.from([Buffer.from(data)], { objectMode: false });
 }
 
-describe('ASF File Properties flags', () => {
-  for (const [flags, broadcast, seekable] of [
-    [0, false, false],
-    [1, true, false],
-    [2, false, true],
-    [3, true, true],
-    [0x80000000, false, false],
-    [0x80000003, true, true]
-  ] as const) {
-    it(`reads broadcast and seekable flags from DWORD 0x${flags.toString(16)}`, () => {
-      const data = new Uint8Array(85);
-      new DataView(data.buffer).setUint32(5 + 64, flags, true);
-      const token = new FilePropertiesObject({ objectId: AsfGuid.FilePropertiesObject, objectSize: 104 });
-      assert.deepEqual(token.get(data, 5).flags, { broadcast, seekable });
-    });
-  }
-});
-
-describe('ASF track properties', () => {
-  function asf(...objects: Uint8Array[]): Uint8Array {
-    const data = new Uint8Array(
-      TopLevelHeaderObjectToken.len + objects.reduce((sum, object) => sum + object.length, 0)
-    );
-    writeTopLevelHeader(data, data.length, objects.length);
-    let offset = TopLevelHeaderObjectToken.len;
-    for (const object of objects) {
-      data.set(object, offset);
-      offset += object.length;
-    }
-    return data;
-  }
-
-  function object(guid: AsfGuid, payload: Uint8Array): Uint8Array {
-    const result = new Uint8Array(HeaderObjectToken.len + payload.length);
-    writeObjectHeader(result, 0, guid, result.length);
-    result.set(payload, HeaderObjectToken.len);
-    return result;
-  }
-
-  function audioStream(id: number): Uint8Array {
-    const payload = new Uint8Array(54 + 18);
-    const view = new DataView(payload.buffer);
-    payload.set(AsfGuid.AudioMedia.toBin());
-    payload.set(AsfGuid.ErrorCorrectionObject.toBin(), 16);
-    view.setUint32(40, 18, true);
-    view.setUint16(48, id, true);
-    view.setUint16(54, 0x0161, true);
-    view.setUint16(56, 2, true);
-    view.setUint32(58, 44100, true);
-    view.setUint32(62, 16000, true);
-    view.setUint16(68, 16, true);
-    return object(AsfGuid.StreamPropertiesObject, payload);
-  }
-
-  function nestedStream(stream: Uint8Array, streamNumber = 2): Uint8Array {
-    const name = Buffer.from('Alternate audio', 'utf16le');
-    const header = new Uint8Array(64 + 4 + name.length + 22 + 3);
-    const view = new DataView(header.buffer);
-    view.setUint16(48, streamNumber, true);
-    view.setUint16(60, 1, true);
-    view.setUint16(62, 1, true);
-    view.setUint16(66, name.length, true);
-    header.set(name, 68);
-    view.setUint32(68 + name.length + 18, 3, true);
-    const extended = object(AsfGuid.ExtendedStreamPropertiesObject, Buffer.concat([header, stream]));
-    return extension(extended);
-  }
-
-  function videoStream(id: number): Uint8Array {
-    const payload = new Uint8Array(54 + 51);
-    const view = new DataView(payload.buffer);
-    payload.set(AsfGuid.VideoMedia.toBin());
-    view.setUint32(40, 51, true);
-    view.setUint16(48, id, true);
-    view.setUint32(54, 1920, true);
-    view.setUint32(58, 1080, true);
-    view.setUint16(63, 40, true);
-    view.setUint32(65, 40, true);
-    payload.set(new TextEncoder().encode('WMV3'), 81);
-    return object(AsfGuid.StreamPropertiesObject, payload);
-  }
-
-  function extendedStream(id: number, embedded?: Uint8Array): Uint8Array {
-    const name = Buffer.from('Main video', 'utf16le');
-    const payload = new Uint8Array(64 + 4 + name.length + 22 + 3 + (embedded?.length ?? 0));
-    const view = new DataView(payload.buffer);
-    view.setBigUint64(0, 1000n, true);
-    view.setBigUint64(8, 3000n, true);
-    view.setUint32(16, 2000000, true);
-    view.setUint16(48, id, true);
-    view.setBigUint64(52, 400000n, true);
-    view.setUint16(60, 1, true);
-    view.setUint16(62, 1, true);
-    view.setUint16(66, name.length, true);
-    payload.set(name, 68);
-    view.setUint32(68 + name.length + 18, 3, true);
-    if (embedded) {
-      payload.set(embedded, 68 + name.length + 25);
-    }
-    return object(AsfGuid.ExtendedStreamPropertiesObject, payload);
-  }
-
-  function extension(child: Uint8Array): Uint8Array {
-    const header = new Uint8Array(22);
-    new DataView(header.buffer).setUint32(18, child.length, true);
-    return object(AsfGuid.HeaderExtensionObject, Buffer.concat([header, child]));
-  }
-
-  function codecList(): Uint8Array {
-    // One audio codec shared by both streams, plus an unused video codec.
-    function codec(type: number, name: string, information: Uint8Array): Uint8Array {
-      const nameData = Buffer.from(`${name}\0`, 'utf16le');
-      const payload = new Uint8Array(8 + nameData.length + information.length);
-      const view = new DataView(payload.buffer);
-      view.setUint16(0, type, true);
-      view.setUint16(2, nameData.length / 2, true);
-      payload.set(nameData, 4);
-      view.setUint16(6 + nameData.length, information.length, true);
-      payload.set(information, 8 + nameData.length);
-      return payload;
-    }
-    const header = new Uint8Array(20);
-    new DataView(header.buffer).setUint32(16, 2, true);
-    return object(
-      AsfGuid.CodecListObject,
-      Buffer.concat([
-        header,
-        codec(2, 'WMA', Uint8Array.from([0x61, 0x01])),
-        codec(1, 'Unused video', new TextEncoder().encode('MP43'))
-      ])
-    );
-  }
-
-  it('reads the packed ASF video format at a nonzero token offset', () => {
-    const offset = 5;
-    const data = new Uint8Array(offset + 54 + 51);
-    const view = new DataView(data.buffer);
-    data.set(AsfGuid.VideoMedia.toBin(), offset);
-    data.set(AsfGuid.ErrorCorrectionObject.toBin(), offset + 16);
-    view.setUint32(offset + 40, 51, true);
-    view.setUint16(offset + 48, 2, true);
-    const video = offset + 54;
-    view.setUint32(video, 160, true);
-    view.setUint32(video + 4, 120, true);
-    view.setUint8(video + 8, 2);
-    view.setUint16(video + 9, 40, true);
-    view.setUint32(video + 11, 40, true);
-    view.setInt32(video + 15, 160, true);
-    view.setInt32(video + 19, 120, true);
-    view.setUint16(video + 23, 1, true);
-    view.setUint16(video + 25, 24, true);
-    data.set(new TextEncoder().encode('MP43'), video + 27);
-    const token = new StreamPropertiesObject({ objectId: AsfGuid.StreamPropertiesObject, objectSize: 129 });
-    assert.include(token.get(data, offset), { streamType: 'video', streamNumber: 2, codecId: 'MP43' });
-    assert.deepEqual(token.get(data, offset).video, { pixelWidth: 160, pixelHeight: 120 });
-    view.setUint16(video + 9, 41, true);
-    assert.throws(() => token.get(data, offset), AsfContentParseError, 'video format data exceeds stream data');
-  });
-
-  it('reports the elephant video codec from Stream Properties', async () => {
-    const data = await readFile(path.join(asfFilePath, 'elephant.asf'));
-    for (const streamInput of [false, true]) {
-      const { format } = streamInput
-        ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType)
-        : await mm.parseBuffer(data, asfMimeType);
-      const video = format.trackInfo.find(track => track.type === mm.TrackType.video);
-      assert.isDefined(video);
-      assert.strictEqual(video.codecId, 'MP43');
-      assert.deepEqual(video.video, { pixelWidth: 160, pixelHeight: 120 });
-    }
-  });
-
-  it('reports audio properties without a codec list', async () => {
-    const { format } = await mm.parseBuffer(asf(audioStream(7)), asfMimeType);
-    assert.lengthOf(format.trackInfo, 1);
-    assert.include(format.trackInfo[0], { id: 7, type: mm.TrackType.audio, codecId: '0x0161', bitrate: 128000 });
-    assert.deepEqual(format.trackInfo[0].audio, { channels: 2, samplingFrequency: 44100, bitDepth: 16 });
-    assert.isUndefined(format.trackInfo[0].codecName);
-    assert.isTrue(format.hasAudio);
-    assert.isFalse(format.hasVideo);
-  });
-
-  for (const codecFirst of [true, false]) {
-    it(`reports actual streams rather than codecs (codec list first=${codecFirst})`, async () => {
-      const streams = [audioStream(1), audioStream(2)];
-      const objects = codecFirst ? [codecList(), ...streams] : [...streams, codecList()];
-      const { format } = await mm.parseBuffer(asf(...objects), asfMimeType);
-      assert.lengthOf(format.trackInfo, 2);
-      assert.deepEqual(
-        format.trackInfo.map(track => track.id),
-        [1, 2]
-      );
-      for (const track of format.trackInfo) {
-        assert.include(track, { type: mm.TrackType.audio, codecName: 'WMA' });
-      }
-      assert.isFalse(format.hasVideo, 'Unused codec does not imply a video track');
-    });
-  }
-
-  it('omits unknown zero stream bitrate records', async () => {
-    const payload = new Uint8Array(8);
-    const view = new DataView(payload.buffer);
-    view.setUint16(0, 1, true);
-    view.setUint16(2, 1, true);
-    const { format } = await mm.parseBuffer(
-      asf(audioStream(1), object(AsfGuid.StreamBitratePropertiesObject, payload)),
-      asfMimeType
-    );
-    assert.lengthOf(format.trackInfo, 1);
-    assert.notProperty(format.trackInfo[0], 'bitrate');
-  });
-
-  it('uses stream bitrate records without copying the aggregate bitrate', async () => {
-    const payload = new Uint8Array(14);
-    const view = new DataView(payload.buffer);
-    view.setUint16(0, 2, true);
-    view.setUint16(2, 1, true);
-    view.setUint32(4, 64000, true);
-    view.setUint16(8, 2, true);
-    view.setUint32(10, 96000, true);
-    const { format } = await mm.parseBuffer(
-      asf(object(AsfGuid.StreamBitratePropertiesObject, payload), audioStream(1), audioStream(2)),
-      asfMimeType
-    );
-    assert.deepEqual(
-      format.trackInfo.map(track => track.bitrate),
-      [64000, 96000]
-    );
-  });
-
-  for (const withCodecs of [false, true]) {
-    for (const nestedFirst of [false, true]) {
-      it(`retains standalone and nested streams (codecs=${withCodecs}, nested first=${nestedFirst})`, async () => {
-        const objects = [audioStream(1), nestedStream(audioStream(2))];
-        if (nestedFirst) {
-          objects.reverse();
-        }
-        if (withCodecs) {
-          objects.push(codecList());
-        }
-        const data = asf(...objects);
-        for (const streamInput of [false, true]) {
-          const { format } = streamInput
-            ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType)
-            : await mm.parseBuffer(data, asfMimeType);
-          assert.lengthOf(format.trackInfo, 2);
-          assert.sameMembers(
-            format.trackInfo.map(track => track.id),
-            [1, 2]
-          );
-          for (const track of format.trackInfo) {
-            assert.include(track, { type: mm.TrackType.audio, codecId: '0x0161', bitrate: 128000 });
-            assert.deepEqual(track.audio, { channels: 2, samplingFrequency: 44100, bitDepth: 16 });
-          }
-          assert.isFalse(format.hasVideo, 'Unused video codec does not imply a video stream');
-        }
+describe('Parse ASF', () => {
+  describe('ASF File Properties flags', () => {
+    for (const [flags, broadcast, seekable] of [
+      [0, false, false],
+      [1, true, false],
+      [2, false, true],
+      [3, true, true],
+      [0x80000000, false, false],
+      [0x80000003, true, true]
+    ] as const) {
+      it(`reads broadcast and seekable flags from DWORD 0x${flags.toString(16)}`, () => {
+        const data = new Uint8Array(85);
+        new DataView(data.buffer).setUint32(5 + 64, flags, true);
+        const token = new FilePropertiesObject({ objectId: AsfGuid.FilePropertiesObject, objectSize: 104 });
+        assert.deepEqual(token.get(data, 5).flags, { broadcast, seekable });
       });
     }
-  }
-
-  it('normalizes reserved bits in extended stream numbers', () => {
-    const data = nestedStream(audioStream(0x8002), 0xff82);
-    const offset = HeaderObjectToken.len + new HeaderExtensionObject().len;
-    const header = HeaderObjectToken.get(data, offset);
-    const extended = new ExtendedStreamPropertiesObjectState(header).get(data, offset + HeaderObjectToken.len);
-    assert.strictEqual(extended.streamNumber, 2);
-    assert.strictEqual(extended.streamPropertiesObject.streamNumber, 2);
   });
 
-  it('matches flagged nested streams to standalone properties and bitrate records', async () => {
-    const payload = new Uint8Array(8);
-    const view = new DataView(payload.buffer);
-    view.setUint16(0, 1, true);
-    view.setUint16(2, 0x8002, true);
-    view.setUint32(4, 96000, true);
-    const data = asf(
-      audioStream(2),
-      nestedStream(audioStream(0x8002), 0xff82),
-      object(AsfGuid.StreamBitratePropertiesObject, payload),
-      codecList()
-    );
-    for (const streamInput of [false, true]) {
-      const { format } = streamInput
-        ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType)
-        : await mm.parseBuffer(data, asfMimeType);
+  describe('ASF track properties', () => {
+    function asf(...objects: Uint8Array[]): Uint8Array {
+      const data = new Uint8Array(
+        TopLevelHeaderObjectToken.len + objects.reduce((sum, object) => sum + object.length, 0)
+      );
+      writeTopLevelHeader(data, data.length, objects.length);
+      let offset = TopLevelHeaderObjectToken.len;
+      for (const object of objects) {
+        data.set(object, offset);
+        offset += object.length;
+      }
+      return data;
+    }
+
+    function object(guid: AsfGuid, payload: Uint8Array): Uint8Array {
+      const result = new Uint8Array(HeaderObjectToken.len + payload.length);
+      writeObjectHeader(result, 0, guid, result.length);
+      result.set(payload, HeaderObjectToken.len);
+      return result;
+    }
+
+    function audioStream(id: number): Uint8Array {
+      const payload = new Uint8Array(54 + 18);
+      const view = new DataView(payload.buffer);
+      payload.set(AsfGuid.AudioMedia.toBin());
+      payload.set(AsfGuid.ErrorCorrectionObject.toBin(), 16);
+      view.setUint32(40, 18, true);
+      view.setUint16(48, id, true);
+      view.setUint16(54, 0x0161, true);
+      view.setUint16(56, 2, true);
+      view.setUint32(58, 44100, true);
+      view.setUint32(62, 16000, true);
+      view.setUint16(68, 16, true);
+      return object(AsfGuid.StreamPropertiesObject, payload);
+    }
+
+    function nestedStream(stream: Uint8Array, streamNumber = 2): Uint8Array {
+      const name = Buffer.from('Alternate audio', 'utf16le');
+      const header = new Uint8Array(64 + 4 + name.length + 22 + 3);
+      const view = new DataView(header.buffer);
+      view.setUint16(48, streamNumber, true);
+      view.setUint16(60, 1, true);
+      view.setUint16(62, 1, true);
+      view.setUint16(66, name.length, true);
+      header.set(name, 68);
+      view.setUint32(68 + name.length + 18, 3, true);
+      const extended = object(AsfGuid.ExtendedStreamPropertiesObject, Buffer.concat([header, stream]));
+      return extension(extended);
+    }
+
+    function videoStream(id: number): Uint8Array {
+      const payload = new Uint8Array(54 + 51);
+      const view = new DataView(payload.buffer);
+      payload.set(AsfGuid.VideoMedia.toBin());
+      view.setUint32(40, 51, true);
+      view.setUint16(48, id, true);
+      view.setUint32(54, 1920, true);
+      view.setUint32(58, 1080, true);
+      view.setUint16(63, 40, true);
+      view.setUint32(65, 40, true);
+      payload.set(new TextEncoder().encode('WMV3'), 81);
+      return object(AsfGuid.StreamPropertiesObject, payload);
+    }
+
+    function extendedStream(id: number, embedded?: Uint8Array): Uint8Array {
+      const name = Buffer.from('Main video', 'utf16le');
+      const payload = new Uint8Array(64 + 4 + name.length + 22 + 3 + (embedded?.length ?? 0));
+      const view = new DataView(payload.buffer);
+      view.setBigUint64(0, 1000n, true);
+      view.setBigUint64(8, 3000n, true);
+      view.setUint32(16, 2000000, true);
+      view.setUint16(48, id, true);
+      view.setBigUint64(52, 400000n, true);
+      view.setUint16(60, 1, true);
+      view.setUint16(62, 1, true);
+      view.setUint16(66, name.length, true);
+      payload.set(name, 68);
+      view.setUint32(68 + name.length + 18, 3, true);
+      if (embedded) {
+        payload.set(embedded, 68 + name.length + 25);
+      }
+      return object(AsfGuid.ExtendedStreamPropertiesObject, payload);
+    }
+
+    function extension(child: Uint8Array): Uint8Array {
+      const header = new Uint8Array(22);
+      new DataView(header.buffer).setUint32(18, child.length, true);
+      return object(AsfGuid.HeaderExtensionObject, Buffer.concat([header, child]));
+    }
+
+    function codecList(): Uint8Array {
+      // One audio codec shared by both streams, plus an unused video codec.
+      function codec(type: number, name: string, information: Uint8Array): Uint8Array {
+        const nameData = Buffer.from(`${name}\0`, 'utf16le');
+        const payload = new Uint8Array(8 + nameData.length + information.length);
+        const view = new DataView(payload.buffer);
+        view.setUint16(0, type, true);
+        view.setUint16(2, nameData.length / 2, true);
+        payload.set(nameData, 4);
+        view.setUint16(6 + nameData.length, information.length, true);
+        payload.set(information, 8 + nameData.length);
+        return payload;
+      }
+      const header = new Uint8Array(20);
+      new DataView(header.buffer).setUint32(16, 2, true);
+      return object(
+        AsfGuid.CodecListObject,
+        Buffer.concat([
+          header,
+          codec(2, 'WMA', Uint8Array.from([0x61, 0x01])),
+          codec(1, 'Unused video', new TextEncoder().encode('MP43'))
+        ])
+      );
+    }
+
+    it('reads the packed ASF video format at a nonzero token offset', () => {
+      const offset = 5;
+      const data = new Uint8Array(offset + 54 + 51);
+      const view = new DataView(data.buffer);
+      data.set(AsfGuid.VideoMedia.toBin(), offset);
+      data.set(AsfGuid.ErrorCorrectionObject.toBin(), offset + 16);
+      view.setUint32(offset + 40, 51, true);
+      view.setUint16(offset + 48, 2, true);
+      const video = offset + 54;
+      view.setUint32(video, 160, true);
+      view.setUint32(video + 4, 120, true);
+      view.setUint8(video + 8, 2);
+      view.setUint16(video + 9, 40, true);
+      view.setUint32(video + 11, 40, true);
+      view.setInt32(video + 15, 160, true);
+      view.setInt32(video + 19, 120, true);
+      view.setUint16(video + 23, 1, true);
+      view.setUint16(video + 25, 24, true);
+      data.set(new TextEncoder().encode('MP43'), video + 27);
+      const token = new StreamPropertiesObject({ objectId: AsfGuid.StreamPropertiesObject, objectSize: 129 });
+      assert.include(token.get(data, offset), { streamType: 'video', streamNumber: 2, codecId: 'MP43' });
+      assert.deepEqual(token.get(data, offset).video, { pixelWidth: 160, pixelHeight: 120 });
+      view.setUint16(video + 9, 41, true);
+      assert.throws(() => token.get(data, offset), AsfContentParseError, 'video format data exceeds stream data');
+    });
+
+    it('reports the elephant video codec from Stream Properties', async () => {
+      const data = await readFile(path.join(asfFilePath, 'elephant.asf'));
+      for (const streamInput of [false, true]) {
+        const { format } = streamInput
+          ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType)
+          : await mm.parseBuffer(data, asfMimeType);
+        const video = format.trackInfo.find(track => track.type === mm.TrackType.video);
+        assert.isDefined(video);
+        assert.strictEqual(video.codecId, 'MP43');
+        assert.deepEqual(video.video, { pixelWidth: 160, pixelHeight: 120 });
+      }
+    });
+
+    it('reports audio properties without a codec list', async () => {
+      const { format } = await mm.parseBuffer(asf(audioStream(7)), asfMimeType);
       assert.lengthOf(format.trackInfo, 1);
-      assert.include(format.trackInfo[0], { id: 2, codecName: 'WMA', bitrate: 96000 });
+      assert.include(format.trackInfo[0], { id: 7, type: mm.TrackType.audio, codecId: '0x0161', bitrate: 128000 });
+      assert.deepEqual(format.trackInfo[0].audio, { channels: 2, samplingFrequency: 44100, bitDepth: 16 });
+      assert.isUndefined(format.trackInfo[0].codecName);
       assert.isTrue(format.hasAudio);
       assert.isFalse(format.hasVideo);
-    }
-  });
-
-  it('reports nested streams without relying on the codec list', async () => {
-    const { format } = await mm.parseBuffer(asf(nestedStream(audioStream(2))), asfMimeType);
-    assert.lengthOf(format.trackInfo, 1);
-    assert.include(format.trackInfo[0], { id: 2, type: mm.TrackType.audio, codecId: '0x0161' });
-    assert.isTrue(format.hasAudio);
-  });
-
-  it('does not duplicate a stream present in standalone and extended properties', async () => {
-    const stream = audioStream(2);
-    const { format } = await mm.parseBuffer(asf(stream, nestedStream(stream)), asfMimeType);
-    assert.lengthOf(format.trackInfo, 1);
-    assert.strictEqual(format.trackInfo[0].id, 2);
-  });
-
-  it('rejects truncated extended stream metadata', async () => {
-    await expect(
-      mm.parseBuffer(asf(extension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))), asfMimeType)
-    ).to.be.rejectedWith(AsfContentParseError, 'Truncated Extended');
-  });
-
-  it('rejects extended payload information that exceeds the object', async () => {
-    const data = nestedStream(audioStream(2));
-    const offset =
-      HeaderObjectToken.len + 22 + HeaderObjectToken.len + 68 + Buffer.byteLength('Alternate audio', 'utf16le');
-    new DataView(data.buffer).setUint32(offset + 18, 0xffffffff, true);
-    await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(
-      AsfContentParseError,
-      'exceeds object payload'
-    );
-  });
-
-  for (const embedded of [true, false]) {
-    it(`reads video timing and bitrate from extended properties (embedded=${embedded})`, async () => {
-      const stream = videoStream(7);
-      const data = asf(extension(extendedStream(7, embedded ? stream : undefined)), ...(embedded ? [] : [stream]));
-      const { format } = await mm.parseBuffer(data, asfMimeType);
-      assert.lengthOf(format.trackInfo, 1);
-      assert.include(format.trackInfo[0], {
-        id: 7,
-        type: mm.TrackType.video,
-        duration: 2,
-        bitrate: 2000000,
-        name: 'Main video'
-      });
-      assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 1920, pixelHeight: 1080, frameRate: 25 });
-      assert.strictEqual(format.containerDuration, 2);
-      assert.strictEqual(format.overallBitrate, (data.length * 8) / 2);
     });
-  }
 
-  it('prefers explicit stream bitrate records over extended stream estimates', async () => {
-    const payload = new Uint8Array(8);
-    const view = new DataView(payload.buffer);
-    view.setUint16(0, 1, true);
-    view.setUint16(2, 7, true);
-    view.setUint32(4, 1800000, true);
-    const { format } = await mm.parseBuffer(
-      asf(videoStream(7), extension(extendedStream(7)), object(AsfGuid.StreamBitratePropertiesObject, payload)),
-      asfMimeType
-    );
-    assert.strictEqual(format.trackInfo[0].bitrate, 1800000);
+    for (const codecFirst of [true, false]) {
+      it(`reports actual streams rather than codecs (codec list first=${codecFirst})`, async () => {
+        const streams = [audioStream(1), audioStream(2)];
+        const objects = codecFirst ? [codecList(), ...streams] : [...streams, codecList()];
+        const { format } = await mm.parseBuffer(asf(...objects), asfMimeType);
+        assert.lengthOf(format.trackInfo, 2);
+        assert.deepEqual(
+          format.trackInfo.map(track => track.id),
+          [1, 2]
+        );
+        for (const track of format.trackInfo) {
+          assert.include(track, { type: mm.TrackType.audio, codecName: 'WMA' });
+        }
+        assert.isFalse(format.hasVideo, 'Unused codec does not imply a video track');
+      });
+    }
+
+    it('omits unknown zero stream bitrate records', async () => {
+      const payload = new Uint8Array(8);
+      const view = new DataView(payload.buffer);
+      view.setUint16(0, 1, true);
+      view.setUint16(2, 1, true);
+      const { format } = await mm.parseBuffer(
+        asf(audioStream(1), object(AsfGuid.StreamBitratePropertiesObject, payload)),
+        asfMimeType
+      );
+      assert.lengthOf(format.trackInfo, 1);
+      assert.notProperty(format.trackInfo[0], 'bitrate');
+    });
+
+    it('uses stream bitrate records without copying the aggregate bitrate', async () => {
+      const payload = new Uint8Array(14);
+      const view = new DataView(payload.buffer);
+      view.setUint16(0, 2, true);
+      view.setUint16(2, 1, true);
+      view.setUint32(4, 64000, true);
+      view.setUint16(8, 2, true);
+      view.setUint32(10, 96000, true);
+      const { format } = await mm.parseBuffer(
+        asf(object(AsfGuid.StreamBitratePropertiesObject, payload), audioStream(1), audioStream(2)),
+        asfMimeType
+      );
+      assert.deepEqual(
+        format.trackInfo.map(track => track.bitrate),
+        [64000, 96000]
+      );
+    });
+
+    for (const withCodecs of [false, true]) {
+      for (const nestedFirst of [false, true]) {
+        it(`retains standalone and nested streams (codecs=${withCodecs}, nested first=${nestedFirst})`, async () => {
+          const objects = [audioStream(1), nestedStream(audioStream(2))];
+          if (nestedFirst) {
+            objects.reverse();
+          }
+          if (withCodecs) {
+            objects.push(codecList());
+          }
+          const data = asf(...objects);
+          for (const streamInput of [false, true]) {
+            const { format } = streamInput
+              ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType)
+              : await mm.parseBuffer(data, asfMimeType);
+            assert.lengthOf(format.trackInfo, 2);
+            assert.sameMembers(
+              format.trackInfo.map(track => track.id),
+              [1, 2]
+            );
+            for (const track of format.trackInfo) {
+              assert.include(track, { type: mm.TrackType.audio, codecId: '0x0161', bitrate: 128000 });
+              assert.deepEqual(track.audio, { channels: 2, samplingFrequency: 44100, bitDepth: 16 });
+            }
+            assert.isFalse(format.hasVideo, 'Unused video codec does not imply a video stream');
+          }
+        });
+      }
+    }
+
+    it('normalizes reserved bits in extended stream numbers', () => {
+      const data = nestedStream(audioStream(0x8002), 0xff82);
+      const offset = HeaderObjectToken.len + new HeaderExtensionObject().len;
+      const header = HeaderObjectToken.get(data, offset);
+      const extended = new ExtendedStreamPropertiesObjectState(header).get(data, offset + HeaderObjectToken.len);
+      assert.strictEqual(extended.streamNumber, 2);
+      assert.strictEqual(extended.streamPropertiesObject.streamNumber, 2);
+    });
+
+    it('matches flagged nested streams to standalone properties and bitrate records', async () => {
+      const payload = new Uint8Array(8);
+      const view = new DataView(payload.buffer);
+      view.setUint16(0, 1, true);
+      view.setUint16(2, 0x8002, true);
+      view.setUint32(4, 96000, true);
+      const data = asf(
+        audioStream(2),
+        nestedStream(audioStream(0x8002), 0xff82),
+        object(AsfGuid.StreamBitratePropertiesObject, payload),
+        codecList()
+      );
+      for (const streamInput of [false, true]) {
+        const { format } = streamInput
+          ? await mm.parseStream(createUnknownSizeStream(data), asfMimeType)
+          : await mm.parseBuffer(data, asfMimeType);
+        assert.lengthOf(format.trackInfo, 1);
+        assert.include(format.trackInfo[0], { id: 2, codecName: 'WMA', bitrate: 96000 });
+        assert.isTrue(format.hasAudio);
+        assert.isFalse(format.hasVideo);
+      }
+    });
+
+    it('reports nested streams without relying on the codec list', async () => {
+      const { format } = await mm.parseBuffer(asf(nestedStream(audioStream(2))), asfMimeType);
+      assert.lengthOf(format.trackInfo, 1);
+      assert.include(format.trackInfo[0], { id: 2, type: mm.TrackType.audio, codecId: '0x0161' });
+      assert.isTrue(format.hasAudio);
+    });
+
+    it('does not duplicate a stream present in standalone and extended properties', async () => {
+      const stream = audioStream(2);
+      const { format } = await mm.parseBuffer(asf(stream, nestedStream(stream)), asfMimeType);
+      assert.lengthOf(format.trackInfo, 1);
+      assert.strictEqual(format.trackInfo[0].id, 2);
+    });
+
+    it('rejects truncated extended stream metadata', async () => {
+      await expect(
+        mm.parseBuffer(asf(extension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))), asfMimeType)
+      ).to.be.rejectedWith(AsfContentParseError, 'Truncated Extended');
+    });
+
+    it('rejects extended payload information that exceeds the object', async () => {
+      const data = nestedStream(audioStream(2));
+      const offset =
+        HeaderObjectToken.len + 22 + HeaderObjectToken.len + 68 + Buffer.byteLength('Alternate audio', 'utf16le');
+      new DataView(data.buffer).setUint32(offset + 18, 0xffffffff, true);
+      await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        'exceeds object payload'
+      );
+    });
+
+    for (const embedded of [true, false]) {
+      it(`reads video timing and bitrate from extended properties (embedded=${embedded})`, async () => {
+        const stream = videoStream(7);
+        const data = asf(extension(extendedStream(7, embedded ? stream : undefined)), ...(embedded ? [] : [stream]));
+        const { format } = await mm.parseBuffer(data, asfMimeType);
+        assert.lengthOf(format.trackInfo, 1);
+        assert.include(format.trackInfo[0], {
+          id: 7,
+          type: mm.TrackType.video,
+          duration: 2,
+          bitrate: 2000000,
+          name: 'Main video'
+        });
+        assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 1920, pixelHeight: 1080, frameRate: 25 });
+        assert.strictEqual(format.containerDuration, 2);
+        assert.strictEqual(format.overallBitrate, (data.length * 8) / 2);
+      });
+    }
+
+    it('prefers explicit stream bitrate records over extended stream estimates', async () => {
+      const payload = new Uint8Array(8);
+      const view = new DataView(payload.buffer);
+      view.setUint16(0, 1, true);
+      view.setUint16(2, 7, true);
+      view.setUint32(4, 1800000, true);
+      const { format } = await mm.parseBuffer(
+        asf(videoStream(7), extension(extendedStream(7)), object(AsfGuid.StreamBitratePropertiesObject, payload)),
+        asfMimeType
+      );
+      assert.strictEqual(format.trackInfo[0].bitrate, 1800000);
+    });
+
+    it('does not duplicate an embedded stream also present in the header', async () => {
+      const stream = videoStream(7);
+      const { format } = await mm.parseBuffer(asf(stream, extension(extendedStream(7, stream))), asfMimeType);
+      assert.lengthOf(format.trackInfo, 1);
+    });
+
+    it('leaves video timing unset without extended metadata', async () => {
+      const { format } = await mm.parseBuffer(asf(videoStream(7)), asfMimeType);
+      assert.isUndefined(format.trackInfo[0].duration);
+      assert.isUndefined(format.trackInfo[0].bitrate);
+      assert.isUndefined(format.overallBitrate);
+    });
+
+    it('rejects truncated extended stream fields', async () => {
+      await expect(
+        mm.parseBuffer(asf(extension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))), asfMimeType)
+      ).to.be.rejectedWith(AsfContentParseError, 'Truncated Extended');
+      const child = extendedStream(7);
+      new DataView(child.buffer).setUint16(24 + 66, 65535, true);
+      await expect(mm.parseBuffer(asf(extension(child)), asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        'exceeds object payload'
+      );
+    });
+
+    it('rejects an embedded object that is not Stream Properties', async () => {
+      const data = nestedStream(object(AsfGuid.PaddingObject, new Uint8Array()));
+      await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(AsfContentParseError, 'Invalid embedded');
+    });
+
+    it('rejects extended stream names that exceed their enclosing object', async () => {
+      const data = nestedStream(audioStream(2));
+      const view = new DataView(data.buffer);
+      const extendedPayload = HeaderObjectToken.len + 22 + HeaderObjectToken.len;
+      view.setUint16(extendedPayload + 66, 65535, true);
+      await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        'exceeds object payload'
+      );
+    });
+
+    it('does not use broadcasting file duration for overall bitrate', async () => {
+      const payload = new Uint8Array(80);
+      const view = new DataView(payload.buffer);
+      view.setBigUint64(40, 100000000n, true);
+      view.setUint32(64, 1, true);
+      const { format } = await mm.parseBuffer(
+        asf(object(AsfGuid.FilePropertiesObject, payload), videoStream(7)),
+        asfMimeType
+      );
+      assert.isUndefined(format.duration);
+      assert.isUndefined(format.containerDuration);
+      assert.isUndefined(format.overallBitrate);
+    });
+
+    it('rejects stream data exceeding its enclosing object', async () => {
+      const stream = audioStream(1);
+      new DataView(stream.buffer).setUint32(HeaderObjectToken.len + 40, 1000, true);
+      await expect(mm.parseBuffer(asf(stream), asfMimeType)).to.be.rejectedWith(
+        AsfContentParseError,
+        'stream data exceeds'
+      );
+    });
+
+    it('rejects truncated stream properties', async () => {
+      await expect(
+        mm.parseBuffer(asf(object(AsfGuid.StreamPropertiesObject, new Uint8Array(53))), asfMimeType)
+      ).to.be.rejectedWith(AsfContentParseError, 'Truncated Stream Properties');
+    });
+
+    it('rejects truncated stream bitrate records', async () => {
+      const payload = new Uint8Array(2);
+      new DataView(payload.buffer).setUint16(0, 1, true);
+      await expect(
+        mm.parseBuffer(asf(object(AsfGuid.StreamBitratePropertiesObject, payload)), asfMimeType)
+      ).to.be.rejectedWith(AsfContentParseError, 'bitrate records exceed');
+    });
   });
 
-  it('does not duplicate an embedded stream also present in the header', async () => {
-    const stream = videoStream(7);
-    const { format } = await mm.parseBuffer(asf(stream, extension(extendedStream(7, stream))), asfMimeType);
-    assert.lengthOf(format.trackInfo, 1);
-  });
-
-  it('leaves video timing unset without extended metadata', async () => {
-    const { format } = await mm.parseBuffer(asf(videoStream(7)), asfMimeType);
-    assert.isUndefined(format.trackInfo[0].duration);
-    assert.isUndefined(format.trackInfo[0].bitrate);
-    assert.isUndefined(format.overallBitrate);
-  });
-
-  it('rejects truncated extended stream fields', async () => {
-    await expect(
-      mm.parseBuffer(asf(extension(object(AsfGuid.ExtendedStreamPropertiesObject, new Uint8Array(63)))), asfMimeType)
-    ).to.be.rejectedWith(AsfContentParseError, 'Truncated Extended');
-    const child = extendedStream(7);
-    new DataView(child.buffer).setUint16(24 + 66, 65535, true);
-    await expect(mm.parseBuffer(asf(extension(child)), asfMimeType)).to.be.rejectedWith(
-      AsfContentParseError,
-      'exceeds object payload'
-    );
-  });
-
-  it('rejects an embedded object that is not Stream Properties', async () => {
-    const data = nestedStream(object(AsfGuid.PaddingObject, new Uint8Array()));
-    await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(AsfContentParseError, 'Invalid embedded');
-  });
-
-  it('rejects extended stream names that exceed their enclosing object', async () => {
-    const data = nestedStream(audioStream(2));
-    const view = new DataView(data.buffer);
-    const extendedPayload = HeaderObjectToken.len + 22 + HeaderObjectToken.len;
-    view.setUint16(extendedPayload + 66, 65535, true);
-    await expect(mm.parseBuffer(asf(data), asfMimeType)).to.be.rejectedWith(
-      AsfContentParseError,
-      'exceeds object payload'
-    );
-  });
-
-  it('does not use broadcasting file duration for overall bitrate', async () => {
-    const payload = new Uint8Array(80);
-    const view = new DataView(payload.buffer);
-    view.setBigUint64(40, 100000000n, true);
-    view.setUint32(64, 1, true);
-    const { format } = await mm.parseBuffer(
-      asf(object(AsfGuid.FilePropertiesObject, payload), videoStream(7)),
-      asfMimeType
-    );
-    assert.isUndefined(format.duration);
-    assert.isUndefined(format.containerDuration);
-    assert.isUndefined(format.overallBitrate);
-  });
-
-  it('rejects stream data exceeding its enclosing object', async () => {
-    const stream = audioStream(1);
-    new DataView(stream.buffer).setUint32(HeaderObjectToken.len + 40, 1000, true);
-    await expect(mm.parseBuffer(asf(stream), asfMimeType)).to.be.rejectedWith(
-      AsfContentParseError,
-      'stream data exceeds'
-    );
-  });
-
-  it('rejects truncated stream properties', async () => {
-    await expect(
-      mm.parseBuffer(asf(object(AsfGuid.StreamPropertiesObject, new Uint8Array(53))), asfMimeType)
-    ).to.be.rejectedWith(AsfContentParseError, 'Truncated Stream Properties');
-  });
-
-  it('rejects truncated stream bitrate records', async () => {
-    const payload = new Uint8Array(2);
-    new DataView(payload.buffer).setUint16(0, 1, true);
-    await expect(
-      mm.parseBuffer(asf(object(AsfGuid.StreamBitratePropertiesObject, payload)), asfMimeType)
-    ).to.be.rejectedWith(AsfContentParseError, 'bitrate records exceed');
-  });
-});
-
-describe('Parse ASF', () => {
   describe('GUID', () => {
     it('should construct GUID from string', () => {
       const Header_GUID = Uint8Array.from([
@@ -1113,6 +1115,165 @@ describe('Parse ASF', () => {
         AsfContentParseError,
         /Unrealistic number of ASF header objects/
       );
+    });
+  });
+
+  describe('Pictures', () => {
+    const image = readFileSync(path.join(samplePath, 'tinytrans.gif'));
+
+    function picture(mime: string, description: string, type = 3): Uint8Array {
+      const header = Buffer.alloc(5);
+      header[0] = type; // Front cover by default
+      header.writeUInt32LE(image.length, 1);
+      return Uint8Array.from(Buffer.concat([header, Buffer.from(`${mime}\0${description}\0`, 'utf16le'), image]));
+    }
+
+    function asfPictures(payloads: Uint8Array[], kind: 'extended' | 'metadata' | 'library' = 'extended'): Uint8Array {
+      const name = Buffer.from('WM/Picture\0', 'utf16le');
+      const records = payloads.map(payload => {
+        if (kind !== 'extended') {
+          const header = Buffer.alloc(12);
+          header.writeUInt16LE(name.length, 4);
+          header.writeUInt16LE(DataType.ByteArray, 6);
+          header.writeUInt32LE(payload.length, 8);
+          return Buffer.concat([header, name, payload]);
+        }
+        const nameLength = Buffer.alloc(2);
+        nameLength.writeUInt16LE(name.length);
+        const valueHeader = Buffer.alloc(4);
+        valueHeader.writeUInt16LE(DataType.ByteArray);
+        valueHeader.writeUInt16LE(payload.length, 2);
+        return Buffer.concat([nameLength, name, valueHeader, payload]);
+      });
+      const count = Buffer.alloc(2);
+      count.writeUInt16LE(records.length);
+      const record = Buffer.concat([count, ...records]);
+      const objectHeader = Buffer.alloc(24);
+      objectHeader.set(
+        (kind === 'extended'
+          ? AsfGuid.ExtendedContentDescriptionObject
+          : kind === 'metadata'
+            ? AsfGuid.MetadataObject
+            : AsfGuid.MetadataLibraryObject
+        ).toBin()
+      );
+      objectHeader.writeBigUInt64LE(BigInt(24 + record.length), 16);
+      let object = Buffer.concat([objectHeader, record]);
+      if (kind !== 'extended') {
+        const extension = Buffer.alloc(46);
+        extension.set(AsfGuid.HeaderExtensionObject.toBin());
+        extension.writeBigUInt64LE(BigInt(extension.length + object.length), 16);
+        extension.writeUInt32LE(object.length, 42);
+        object = Buffer.concat([extension, object]);
+      }
+      const header = Buffer.alloc(30);
+      header.set(AsfGuid.HeaderObject.toBin());
+      header.writeBigUInt64LE(BigInt(header.length + object.length), 16);
+      header.writeUInt32LE(1, 24);
+      header.set([1, 2], 28);
+      return Uint8Array.from(Buffer.concat([header, object]));
+    }
+
+    describe('ASF picture decoding', () => {
+      for (const description of ['', 'Front cover — 東京 🎵']) {
+        for (const viewOffset of [0, 7]) {
+          for (const tokenOffset of [0, 5]) {
+            it(`decodes ${description ? 'Unicode' : 'empty'} description (view=${viewOffset}, token=${tokenOffset})`, () => {
+              const payload = picture('image/gif', description);
+              const backing = new Uint8Array(viewOffset + tokenOffset + payload.length + 6).fill(0xa5);
+              backing.set(payload, viewOffset + tokenOffset);
+              const view = backing.subarray(viewOffset);
+              const decoded = new WmPictureToken(payload.length).get(view, tokenOffset);
+              assert.strictEqual(decoded.format, 'image/gif');
+              assert.strictEqual(decoded.description, description);
+              assert.strictEqual(decoded.type, 'Cover (front)');
+              assert.strictEqual(decoded.size, image.length);
+              assert.deepEqual(decoded.data, new Uint8Array(image));
+            });
+          }
+        }
+      }
+
+      for (const mime of ['', 'image/gif']) {
+        for (const source of ['buffer', 'stream', 'blob']) {
+          it(`preserves picture fields and image bytes through ${source} with ${mime || 'inferred MIME type'}`, async () => {
+            const data = asfPictures([picture(mime, 'Album cover 🎵')]);
+            const metadata =
+              source === 'buffer'
+                ? await mm.parseBuffer(data, 'audio/x-ms-wma')
+                : source === 'blob'
+                  ? await mm.parseBlob(new Blob([Uint8Array.from(data)], { type: 'audio/x-ms-wma' }))
+                  : await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/x-ms-wma');
+            const native = metadata.native.asf.find(tag => tag.id === 'WM/Picture')!.value as mm.IPicture;
+            for (const decoded of [native, metadata.common.picture![0]]) {
+              assert.strictEqual(decoded.format, 'image/gif');
+              assert.strictEqual(decoded.description, 'Album cover 🎵');
+              assert.strictEqual(decoded.type, 'Cover (front)');
+              assert.deepEqual(decoded.data, new Uint8Array(image));
+            }
+            assert.strictEqual(mm.selectCover(metadata.common.picture), metadata.common.picture![0]);
+          });
+        }
+      }
+
+      for (const [field, payload] of [
+        ['MIME type', Uint8Array.from([3, 0, 0, 0, 0, 0x61, 0])],
+        ['description', Uint8Array.from([3, 0, 0, 0, 0, 0, 0, 0x61, 0])]
+      ] as const) {
+        it(`does not find an unterminated ${field} outside the token`, () => {
+          const backing = new Uint8Array(payload.length + 4);
+          backing.set(payload);
+          assert.throws(() => new WmPictureToken(payload.length).get(backing, 0), AsfContentParseError, field);
+        });
+      }
+
+      for (const length of [0, 1, 2, 3, 4]) {
+        it(`rejects a ${length}-byte picture header without reading the backing buffer`, () => {
+          assert.throws(
+            () => new WmPictureToken(length).get(new Uint8Array(16), 0),
+            AsfContentParseError,
+            'Truncated ASF picture header'
+          );
+        });
+      }
+
+      for (const size of [0, image.length + 1, 0x80000000]) {
+        it(`preserves available image bytes when the declared DWORD size is ${size}`, () => {
+          const payload = picture('image/gif', 'Cover');
+          new DataView(payload.buffer).setUint32(1, size, true);
+          const decoded = WmPictureToken.fromBuffer(payload);
+          assert.strictEqual(decoded.size, size);
+          assert.deepEqual(decoded.data, new Uint8Array(image));
+        });
+      }
+    });
+
+    describe('ASF picture order', () => {
+      for (const kind of ['extended', 'metadata', 'library'] as const) {
+        for (const source of ['buffer', 'stream', 'blob']) {
+          it(`preserves ${kind} picture order when MIME detection is asynchronous (${source})`, async () => {
+            // Type Other exercises selectCover's first-picture fallback, without front/back priorities.
+            const data = asfPictures([picture('', 'First', 0), picture('image/gif', 'Second', 0)], kind);
+            const metadata =
+              source === 'buffer'
+                ? await mm.parseBuffer(data, 'audio/x-ms-wma')
+                : source === 'blob'
+                  ? await mm.parseBlob(new Blob([Uint8Array.from(data)], { type: 'audio/x-ms-wma' }))
+                  : await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/x-ms-wma');
+            const native = metadata.native.asf.map(tag => (tag.value as mm.IPicture).description);
+            assert.deepEqual(native, ['First', 'Second']);
+            assert.deepEqual(
+              metadata.common.picture!.map(value => value.description),
+              native
+            );
+            assert.strictEqual(mm.selectCover(metadata.common.picture)!.description, 'First');
+            assert.deepEqual(
+              metadata.common.picture!.map(value => value.format),
+              ['image/gif', 'image/gif']
+            );
+          });
+        }
+      }
     });
   });
 });

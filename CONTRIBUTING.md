@@ -37,6 +37,25 @@ Reuse an existing fixture when it represents the case being tested.
 
 Assert the specific metadata, format properties, or error behavior that the test is intended to verify.
 
+Extend an existing suite instead of creating a test file for each issue or PR. Choose the suite by
+the format or behavior being tested, then place the case next to related tests:
+
+| Coverage | Location |
+| --- | --- |
+| File/container parsing | The matching `test/test-file-*.ts` suite; DSDIFF uses `test/test-dsdiff.ts` |
+| Shared ID3v2 headers, padding, encodings, lyrics and embedded tags | `test/test-id3v2.ts` |
+| Version-specific ID3 frames and mappings | `test/test-id3v1.1.ts`, `test/test-id3v2.2.ts`, `test/test-id3v2.3.ts`, `test/test-id3v2.4.ts` |
+| APEv2 tags and shared Vorbis comment decoding | `test/test-apev2.ts`, `test/test-vorbis-comments.ts` |
+| Cross-format tag mapping | The existing common, Picard, Discogs, comment or ReplayGain suite |
+| Public API behavior and shared policies | The existing options, MIME, parse-file, async, track-info or allocation-limit suite |
+
+Use nested `describe` groups for related chunks, frames or behaviors, with descriptive `it` names.
+Keep format variants and input adapters together, and reuse `Parsers` from `test/metadata-parsers.ts`
+when checking the same fixture across supported input APIs. Retain issue/PR references in comments
+or case names as context. Create a new test file when introducing a format or a distinct shared concern.
+Keep synthetic fixture builders local to their group; builders used by multiple suites can live in
+`test/fixtures`.
+
 ## Issues and pull requests
 
 For issues and PRs concerning audio or metadata formats, cite the relevant formal specification.
