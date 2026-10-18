@@ -7,7 +7,6 @@ import { Readable } from 'node:stream';
 import { promisify } from 'node:util';
 import { assert } from 'chai';
 import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
-
 import * as mm from '../lib/index.js';
 import { Atom } from '../lib/mp4/Atom.js';
 import {
@@ -24,7 +23,7 @@ import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samp
 
 const mp4Samples = path.join(samplePath, 'mp4');
 
-describe('Parse MPEG-4 files with iTunes metadata', () => {
+describe('Parse MPEG-4', () => {
   describe('Parse MPEG-4 files (.m4a)', () => {
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.lossless, false);
@@ -180,7 +179,7 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
   });
 
   describe('Parse MPEG-4 Audio Book files (.m4b)', () => {
-    describe('audio book from issue issue #127', () => {
+    describe('Audiobook metadata (issue #127)', () => {
       Parsers.forEach(parser => {
         it(parser.description, async function () {
           const filePath = path.join(mp4Samples, 'issue-127.m4b');
@@ -202,142 +201,6 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
 
           const iTunes = mm.orderTags(native.iTunes);
           assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
-        });
-      });
-    });
-
-    describe('Parse chapters', async () => {
-      /**
-       * Source audio-book: https://librivox.org/the-babys-songbook-by-walter-crane/
-       */
-      describe('BabysSongbook_librivox.m4b', async () => {
-        function checkMetadata(metadata: mm.IAudioMetadata) {
-          const { common, format } = metadata;
-
-          assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
-          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
-          assert.approximately(format.duration!, 991.213, 1 / 500, 'format.duration');
-          assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
-          assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
-
-          assert.strictEqual(common.title, 'Babys Songbook', 'common.title');
-          assert.deepEqual(common.artists, ['Walter Crane'], 'common.artists');
-          assert.deepEqual(common.genre, ['Audiobook']);
-          assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
-          assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
-          assert.deepEqual(common.track, { no: null, of: null }, 'common.track');
-          assert.isUndefined(common.comment, 'common.comment');
-
-          const iTunes = mm.orderTags(metadata.native.iTunes);
-          assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
-
-          assert.deepEqual(format.chapters, [
-            {
-              sampleOffset: 45056,
-              timeScale: 44100,
-              start: 0,
-              title: "01 - Baby's Opera: 01 - Girls and Boys"
-            },
-            {
-              sampleOffset: 2695168,
-              timeScale: 44100,
-              start: 2690214,
-              title: "02 - Baby's Opera: 02 - The Mulberry Bush"
-            },
-            {
-              sampleOffset: 5083136,
-              timeScale: 44100,
-              start: 5072343,
-              title: "03 - Baby's Opera: 03 - Oranges and Lemons"
-            },
-            {
-              sampleOffset: 8352768,
-              timeScale: 44100,
-              start: 8335466,
-              title: "04 - Baby's Opera: 04 - St. Paul's Steeple"
-            },
-            {
-              sampleOffset: 10544128,
-              timeScale: 44100,
-              start: 10539994,
-              title: "05 - Baby's Opera: 05 - My Lady's Garden"
-            },
-            {
-              sampleOffset: 12284928,
-              timeScale: 44100,
-              start: 12260367,
-              title: "06 - Baby's Opera: 12 - Dickory Dock"
-            },
-            {
-              sampleOffset: 14125056,
-              timeScale: 44100,
-              start: 14112293,
-              title: "07 - Baby's Opera: 22 - Baa!Baa!Black Sheep"
-            },
-            {
-              sampleOffset: 16410624,
-              timeScale: 44100,
-              start: 16405319,
-              title: "08 - Baby's Bouquet: 01 - Dedication and Polly put the Kettle On"
-            },
-            {
-              sampleOffset: 19068928,
-              timeScale: 44100,
-              start: 19051667,
-              title: "09 - Baby's Bouquet: 02 - Hot Cross Buns"
-            },
-            {
-              sampleOffset: 21685248,
-              timeScale: 44100,
-              start: 21653824,
-              title: "10 - Baby's Bouquet: 03 - The Little Woman and the Pedlar"
-            },
-            {
-              sampleOffset: 30461952,
-              timeScale: 44100,
-              start: 30429742,
-              title: "11 - Baby's Bouquet: 04 - The Little Disaster"
-            },
-            {
-              sampleOffset: 37761024,
-              timeScale: 44100,
-              start: 37750318,
-              title: "12 - Baby's Bouquet: 05 - The Old Woman of Norwich"
-            },
-            {
-              sampleOffset: 39628800,
-              timeScale: 44100,
-              start: 39602731,
-              title: "13 - Baby's Bouquet: 12 - Lucy Locket"
-            },
-            {
-              sampleOffset: 41500672,
-              timeScale: 44100,
-              start: 41498151,
-              title: "14 - Baby's Bouquet: 18 - The North Wind & the Robin"
-            }
-          ]);
-        }
-
-        const filePath = path.join(mp4Samples, 'BabysSongbook_librivox.m4b');
-
-        it('from a file', async () => {
-          let metadata: mm.IAudioMetadata;
-          const stream = fs.createReadStream(filePath);
-          try {
-            metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
-          } finally {
-            stream.close();
-          }
-          checkMetadata(metadata);
-        });
-
-        it('from a stream', async () => {
-          const stream = fs.createReadStream(filePath);
-          const metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
-          stream.close();
-
-          checkMetadata(metadata);
         });
       });
     });
@@ -632,2005 +495,2379 @@ describe('Parse MPEG-4 files with iTunes metadata', () => {
     assert.strictEqual(format.hasAudio, true, 'format.hasAudio');
     assert.strictEqual(format.hasVideo, false, 'format.hasVideo');
   });
-});
 
-describe('Sample Description (stsd) atom: entry table', () => {
-  const textEncoder = new TextEncoder();
+  // https://github.com/Borewit/music-metadata/pull/544
+  describe('Common tag mappings', () => {
+    it('Movement Name', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
 
-  /**
-   * A sample entry: 32-bit size, 4-character data format, 6 reserved bytes and the data reference index.
-   * A SampleEntry extends Box, so the size covers the size field itself.
-   *
-   * Ref: ISO/IEC 14496-12, 8.5.2
-   */
-  function sampleEntry(dataFormat: string, size: number, dataReferenceIndex: number): Uint8Array {
-    const entry = new Uint8Array(size);
-    const view = new DataView(entry.buffer);
-    view.setUint32(0, size);
-    entry.set(textEncoder.encode(dataFormat), 4);
-    view.setUint16(14, dataReferenceIndex);
-    return entry;
-  }
-
-  function sampleDescription(...entries: Uint8Array[]): Uint8Array {
-    const buf = new Uint8Array(8 + entries.reduce((total, entry) => total + entry.length, 0));
-    new DataView(buf.buffer).setUint32(4, entries.length); // entry_count
-    let offset = 8;
-    for (const entry of entries) {
-      buf.set(entry, offset);
-      offset += entry.length;
-    }
-    return buf;
-  }
-
-  it('reads a single sample entry', () => {
-    const buf = sampleDescription(sampleEntry('mp4a', 36, 1));
-
-    const { header, table } = new StsdAtom(buf.length).get(buf, 0);
-
-    assert.strictEqual(header.numberOfEntries, 1, 'numberOfEntries');
-    assert.deepEqual(
-      table.map(entry => entry.dataFormat),
-      ['mp4a'],
-      'dataFormat'
-    );
-  });
-
-  it('rejects GHSA-f94x-6692-553q without blocking the process', async () => {
-    // Use a separate process: a synchronous loop cannot be stopped by Mocha's timeout.
-    const script = `
-      import { strict as assert } from 'node:assert';
-      import { parseBuffer, UnexpectedFileContentError } from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
-      const buffer = Buffer.from('00000010667479704d34412000000000000000207374736400000000ffffffff000000006d7034610000000000000001', 'hex');
-      await assert.rejects(parseBuffer(buffer, {mimeType: 'audio/mp4'}), error =>
-        error instanceof UnexpectedFileContentError && /Invalid stsd sample entry size: 0/.test(error.message));
-    `;
-    await promisify(execFile)(
-      process.execPath,
-      [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script],
-      {
-        timeout: 10000,
-        killSignal: 'SIGKILL'
-      }
-    );
-  });
-
-  for (const size of [0, 1, 4, 15, 17, 0xffffffff]) {
-    it(`rejects a sample entry declaring an invalid size of ${size}`, () => {
-      const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
-      new DataView(buf.buffer).setUint32(8, size);
-
-      assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Invalid stsd sample entry size');
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.movement, 'Movement Name', 'metadata.common.movement');
+      });
     });
-  }
 
-  it('accepts an empty table and a minimum-size sample entry', () => {
-    const empty = sampleDescription();
-    assert.isEmpty(new StsdAtom(empty.length).get(empty, 0).table);
-    const buf = sampleDescription(sampleEntry('mett', 16, 1));
-    assert.deepEqual(new StsdAtom(buf.length).get(buf, 0).table, [
-      {
-        dataFormat: 'mett',
-        dataReferenceIndex: 1,
-        description: undefined
+    it('Movement Index', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.movementIndex, { no: 1, of: 4 }, 'metadata.common.movementIndex');
+      });
+    });
+
+    it('Show Movement', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.showMovement, true, 'metadata.common.showMovement');
+      });
+    });
+
+    it('Work', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.work, 'Work', 'metadata.common.work');
+      });
+    });
+
+    it('Podcast', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.podcast, true, 'metadata.common.podcast');
+      });
+    });
+
+    it('Podcast Category', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
+      });
+    });
+
+    it('Podcast Identifier', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.podcastId, '1234', 'metadata.common.podcastId');
+      });
+    });
+
+    it('Podcast Keywords', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.keywords, ['Podcast Keywords'], 'metadata.common.keywords');
+      });
+    });
+
+    it('Podcast Url', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
+      });
+    });
+
+    it('Short Description', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.description, ['Short Description'], 'metadata.common.subscription');
+      });
+    });
+
+    it('Long Description', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.longDescription, 'Long Description', 'metadata.common.description');
+      });
+    });
+
+    it('Album Artist Sort', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
+      });
+    });
+
+    it('Album Sort', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
+      });
+    });
+
+    it('Artist Sort', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
+      });
+    });
+
+    it('Composer Sort', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
+      });
+    });
+
+    it('Title Sort', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
+      });
+    });
+
+    it('Copyright', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.copyright, 'Copyright', 'metadata.common.copyright');
+      });
+    });
+
+    it('Compilation', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.compilation, true, 'metadata.common.compilation');
+      });
+    });
+
+    it('Comment', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.deepEqual(metadata.common.comment, [{ text: 'Tagged with Mp3tag v3.01' }], 'metadata.common.comment');
+      });
+    });
+
+    it('Release time', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.date, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
+        assert.strictEqual(metadata.common.year, 2020, 'metadata.common.year');
+      });
+    });
+
+    it('iTunes Video Quality', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.hdVideo, 2, 'metadata.common.hdVideo');
+      });
+    });
+
+    it('iTunes Media Type', () => {
+      const filename = 'mp4/pr-544.m4a';
+      const filePath = path.join(samplePath, filename);
+
+      return mm.parseFile(filePath).then(metadata => {
+        assert.strictEqual(metadata.common.stik, 9, 'metadata.common.stik');
+      });
+    });
+  });
+
+  describe('Sample Description (stsd) atom', () => {
+    describe('Entry table', () => {
+      const textEncoder = new TextEncoder();
+
+      /**
+       * A sample entry: 32-bit size, 4-character data format, 6 reserved bytes and the data reference index.
+       * A SampleEntry extends Box, so the size covers the size field itself.
+       *
+       * Ref: ISO/IEC 14496-12, 8.5.2
+       */
+      function sampleEntry(dataFormat: string, size: number, dataReferenceIndex: number): Uint8Array {
+        const entry = new Uint8Array(size);
+        const view = new DataView(entry.buffer);
+        view.setUint32(0, size);
+        entry.set(textEncoder.encode(dataFormat), 4);
+        view.setUint16(14, dataReferenceIndex);
+        return entry;
       }
-    ]);
-  });
 
-  it('rejects an entry count exceeding the available entries', () => {
-    const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
-    new DataView(buf.buffer).setUint32(4, 0xffffffff);
-
-    assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Truncated stsd sample entry');
-  });
-
-  it('checks the atom boundary at a nonzero offset, ignoring bytes after the atom', () => {
-    const payload = sampleDescription(sampleEntry('mp4a', 36, 1));
-    const buf = new Uint8Array(payload.length + 16);
-    buf.set(payload, 8);
-
-    assert.lengthOf(new StsdAtom(payload.length).get(buf, 8).table, 1);
-    assert.throws(
-      () => new StsdAtom(payload.length - 1).get(buf, 8),
-      Mp4ContentError,
-      'Invalid stsd sample entry size'
-    );
-  });
-
-  it('rejects a truncated stsd header', () => {
-    assert.throws(() => new StsdAtom(7).get(new Uint8Array(8), 0), Mp4ContentError, 'Truncated stsd header');
-  });
-
-  it('rejects a truncated sample entry size field', () => {
-    const buf = sampleDescription(new Uint8Array(3));
-    assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Truncated stsd sample entry');
-  });
-
-  // Each entry is located from the size of the one before it, so an error in that arithmetic
-  // only shows up from the second entry onwards
-  it('reads every entry of a table holding more than one, of differing sizes', () => {
-    const buf = sampleDescription(sampleEntry('mp4a', 36, 1), sampleEntry('ac-3', 48, 2), sampleEntry('alac', 20, 3));
-
-    const { header, table } = new StsdAtom(buf.length).get(buf, 0);
-
-    assert.strictEqual(header.numberOfEntries, 3, 'numberOfEntries');
-    assert.deepEqual(
-      table.map(entry => entry.dataFormat),
-      ['mp4a', 'ac-3', 'alac'],
-      'dataFormat'
-    );
-    assert.deepEqual(
-      table.map(entry => entry.dataReferenceIndex),
-      [1, 2, 3],
-      'dataReferenceIndex'
-    );
-  });
-});
-
-describe('Track Header (tkhd) atom', () => {
-  const MAC_EPOCH_OFFSET = 2082844800; // seconds between 1904-01-01 and 1970-01-01
-
-  for (const [version, minimumLength] of [
-    [0, 38],
-    [1, 50]
-  ]) {
-    it(`rejects truncated version ${version} headers at every field boundary`, () => {
-      for (let length = 0; length < minimumLength; ++length) {
-        const buf = new Uint8Array(length);
-        if (length > 0) {
-          buf[0] = version;
+      function sampleDescription(...entries: Uint8Array[]): Uint8Array {
+        const buf = new Uint8Array(8 + entries.reduce((total, entry) => total + entry.length, 0));
+        new DataView(buf.buffer).setUint32(4, entries.length); // entry_count
+        let offset = 8;
+        for (const entry of entries) {
+          buf.set(entry, offset);
+          offset += entry.length;
         }
-        assert.throws(() => new TrackHeaderAtom(length).get(buf, 0), Mp4ContentError, 'Truncated tkhd header');
-      }
-    });
-
-    it(`respects version ${version} atom and buffer boundaries at a nonzero offset`, () => {
-      const off = 8;
-      const buf = new Uint8Array(off + minimumLength + 8);
-      buf[off] = version;
-      new DataView(buf.buffer).setUint16(off + minimumLength - 2, 256);
-
-      assert.strictEqual(new TrackHeaderAtom(minimumLength).get(buf, off).volume, 256);
-      assert.throws(
-        () => new TrackHeaderAtom(minimumLength - 1).get(buf, off),
-        Mp4ContentError,
-        'Truncated tkhd header'
-      );
-      assert.throws(
-        () => new TrackHeaderAtom(minimumLength).get(buf.subarray(0, off + minimumLength - 1), off),
-        Mp4ContentError,
-        'Truncated tkhd header'
-      );
-    });
-
-    it(`rejects issue #2747 version ${version} through parseBuffer with a parse error`, async () => {
-      function box(name: string, body: Buffer): Buffer {
-        const buf = Buffer.alloc(8 + body.length);
-        buf.writeUInt32BE(buf.length);
-        buf.write(name, 4, 4, 'ascii');
-        body.copy(buf, 8);
         return buf;
       }
 
-      for (const length of [0, 4, 30, minimumLength - 1]) {
-        const body = Buffer.alloc(length);
-        if (length > 0) {
-          body[0] = version;
-        }
-        const buf = Buffer.concat([
-          box('ftyp', Buffer.from('M4A \0\0\0\0M4A isom')),
-          box('moov', box('trak', box('tkhd', body)))
-        ]);
+      it('reads a single sample entry', () => {
+        const buf = sampleDescription(sampleEntry('mp4a', 36, 1));
 
-        await rejects(
-          mm.parseBuffer(buf, { mimeType: 'audio/mp4' }),
-          error => error instanceof mm.UnexpectedFileContentError && /Truncated tkhd header/.test(error.message)
+        const { header, table } = new StsdAtom(buf.length).get(buf, 0);
+
+        assert.strictEqual(header.numberOfEntries, 1, 'numberOfEntries');
+        assert.deepEqual(
+          table.map(entry => entry.dataFormat),
+          ['mp4a'],
+          'dataFormat'
+        );
+      });
+
+      it('rejects GHSA-f94x-6692-553q without blocking the process', async () => {
+        // Use a separate process: a synchronous loop cannot be stopped by Mocha's timeout.
+        const script = `
+          import { strict as assert } from 'node:assert';
+          import { parseBuffer, UnexpectedFileContentError } from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
+          const buffer = Buffer.from('00000010667479704d34412000000000000000207374736400000000ffffffff000000006d7034610000000000000001', 'hex');
+          await assert.rejects(parseBuffer(buffer, {mimeType: 'audio/mp4'}), error =>
+            error instanceof UnexpectedFileContentError && /Invalid stsd sample entry size: 0/.test(error.message));
+        `;
+        await promisify(execFile)(
+          process.execPath,
+          [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script],
+          {
+            timeout: 10000,
+            killSignal: 'SIGKILL'
+          }
+        );
+      });
+
+      for (const size of [0, 1, 4, 15, 17, 0xffffffff]) {
+        it(`rejects a sample entry declaring an invalid size of ${size}`, () => {
+          const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
+          new DataView(buf.buffer).setUint32(8, size);
+
+          assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Invalid stsd sample entry size');
+        });
+      }
+
+      it('accepts an empty table and a minimum-size sample entry', () => {
+        const empty = sampleDescription();
+        assert.isEmpty(new StsdAtom(empty.length).get(empty, 0).table);
+        const buf = sampleDescription(sampleEntry('mett', 16, 1));
+        assert.deepEqual(new StsdAtom(buf.length).get(buf, 0).table, [
+          {
+            dataFormat: 'mett',
+            dataReferenceIndex: 1,
+            description: undefined
+          }
+        ]);
+      });
+
+      it('rejects an entry count exceeding the available entries', () => {
+        const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
+        new DataView(buf.buffer).setUint32(4, 0xffffffff);
+
+        assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Truncated stsd sample entry');
+      });
+
+      it('checks the atom boundary at a nonzero offset, ignoring bytes after the atom', () => {
+        const payload = sampleDescription(sampleEntry('mp4a', 36, 1));
+        const buf = new Uint8Array(payload.length + 16);
+        buf.set(payload, 8);
+
+        assert.lengthOf(new StsdAtom(payload.length).get(buf, 8).table, 1);
+        assert.throws(
+          () => new StsdAtom(payload.length - 1).get(buf, 8),
+          Mp4ContentError,
+          'Invalid stsd sample entry size'
+        );
+      });
+
+      it('rejects a truncated stsd header', () => {
+        assert.throws(() => new StsdAtom(7).get(new Uint8Array(8), 0), Mp4ContentError, 'Truncated stsd header');
+      });
+
+      it('rejects a truncated sample entry size field', () => {
+        const buf = sampleDescription(new Uint8Array(3));
+        assert.throws(() => new StsdAtom(buf.length).get(buf, 0), Mp4ContentError, 'Truncated stsd sample entry');
+      });
+
+      // Each entry is located from the size of the one before it, so an error in that arithmetic
+      // only shows up from the second entry onwards
+      it('reads every entry of a table holding more than one, of differing sizes', () => {
+        const buf = sampleDescription(
+          sampleEntry('mp4a', 36, 1),
+          sampleEntry('ac-3', 48, 2),
+          sampleEntry('alac', 20, 3)
+        );
+
+        const { header, table } = new StsdAtom(buf.length).get(buf, 0);
+
+        assert.strictEqual(header.numberOfEntries, 3, 'numberOfEntries');
+        assert.deepEqual(
+          table.map(entry => entry.dataFormat),
+          ['mp4a', 'ac-3', 'alac'],
+          'dataFormat'
+        );
+        assert.deepEqual(
+          table.map(entry => entry.dataReferenceIndex),
+          [1, 2, 3],
+          'dataReferenceIndex'
+        );
+      });
+    });
+
+    describe('Stream properties', () => {
+      const textEncoder = new TextEncoder();
+      const timeScale = 44100;
+
+      function concat(...parts: Uint8Array[]): Uint8Array {
+        const buf = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+        let offset = 0;
+        for (const part of parts) {
+          buf.set(part, offset);
+          offset += part.length;
+        }
+        return buf;
+      }
+
+      /**
+       * Build a box: 32-bit size, 4-character type, then the payload.
+       */
+      function box(type: string, ...payloads: Uint8Array[]): Uint8Array {
+        const header = new Uint8Array(8);
+        const body = concat(...payloads);
+        new DataView(header.buffer).setUint32(0, header.length + body.length);
+        header.set(textEncoder.encode(type), 4);
+        return concat(header, body);
+      }
+
+      function handlerBox(handlerType: string): Uint8Array {
+        const payload = new Uint8Array(24);
+        payload.set(textEncoder.encode(handlerType), 8);
+        return box('hdlr', payload);
+      }
+
+      function trackHeaderBox(trackId: number, spec: ITrackSpec): Uint8Array {
+        const payload = new Uint8Array(84);
+        const view = new DataView(payload.buffer);
+        view.setUint32(12, trackId);
+        view.setUint32(20, spec.trackDuration ?? 0);
+        view.setUint32(76, (spec.displayWidth ?? 0) * 65536);
+        view.setUint32(80, (spec.displayHeight ?? 0) * 65536);
+        return box('tkhd', payload);
+      }
+
+      function mediaHeaderBox(spec: ITrackSpec): Uint8Array {
+        const payload = new Uint8Array(24);
+        const view = new DataView(payload.buffer);
+        view.setUint32(12, spec.timeScale ?? timeScale);
+        view.setUint32(16, spec.duration ?? timeScale); // duration: one second by default
+        view.setUint16(20, spec.language ?? 0);
+        return box('mdhd', payload);
+      }
+
+      function sampleSizeBox(spec: ITrackSpec): Uint8Array {
+        const payload = new Uint8Array(12 + (spec.sampleSizes?.length ?? 0) * 4);
+        const view = new DataView(payload.buffer);
+        view.setUint32(4, spec.fixedSampleSize ?? 0);
+        view.setUint32(8, spec.sampleCount ?? spec.sampleSizes?.length ?? 0);
+        spec.sampleSizes?.forEach((size, index) => {
+          view.setUint32(12 + index * 4, size);
+        });
+        return box('stsz', payload);
+      }
+
+      /**
+       * A sample description box holding a single entry of the given size.
+       *
+       * Ref: ISO/IEC 14496-12, 8.5.2. A SampleEntry is 16 bytes: the box header, 6 reserved bytes and the
+       * data reference index. An AudioSampleEntry adds 20 bytes on top, whereas other sample entry classes,
+       * such as a MetaDataSampleEntry, may be no larger than the 16-byte base.
+       */
+      function sampleDescriptionBox(
+        dataFormat: string,
+        entrySize: number,
+        audioLike = false,
+        entries = 1,
+        spec?: ITrackSpec
+      ): Uint8Array {
+        const header = new Uint8Array(8);
+        new DataView(header.buffer).setUint32(4, entries); // entry_count
+
+        const entry = new Uint8Array(entrySize);
+        const view = new DataView(entry.buffer);
+        view.setUint32(0, entrySize);
+        entry.set(textEncoder.encode(dataFormat), 4);
+        view.setUint16(14, 1); // data_reference_index
+
+        if (audioLike) {
+          // Populate the bytes an AudioSampleEntry would use, to prove they are not read from a non-audio track
+          view.setUint16(24, 2); // channel count
+          view.setUint16(26, 16); // sample size
+          view.setUint16(32, spec?.audioSampleRate ?? timeScale); // sample rate
+        }
+        if (spec?.pixelWidth !== undefined && spec.pixelHeight !== undefined) {
+          view.setUint16(32, spec.pixelWidth);
+          view.setUint16(34, spec.pixelHeight);
+        }
+        return box('stsd', header, ...Array.from({ length: entries }, () => entry));
+      }
+
+      interface ITrackSpec {
+        handler: string;
+        dataFormat: string;
+        entrySize: number;
+        audioLike?: boolean;
+        audioSampleRate?: number;
+        handlerAfterMinf?: boolean;
+        metadataHandler?: string;
+        metadataBeforeMedia?: boolean;
+        descriptionCount?: number;
+        noDescription?: boolean;
+        language?: number;
+        timeScale?: number;
+        duration?: number;
+        fixedSampleSize?: number;
+        sampleCount?: number;
+        sampleSizes?: number[];
+        pixelWidth?: number;
+        pixelHeight?: number;
+        displayWidth?: number;
+        displayHeight?: number;
+        trackDuration?: number;
+        movieDuration?: number;
+        movieTimeScale?: number;
+        sampleDurations?: { count: number; duration: number }[];
+        fragmentDefaults?: { duration: number; size: number };
+      }
+
+      const videoTrack: ITrackSpec = { handler: 'vide', dataFormat: 'avc1', entrySize: 36 };
+
+      function trackBox(trackId: number, spec: ITrackSpec): Uint8Array {
+        const hdlr = handlerBox(spec.handler);
+        const descriptions = spec.noDescription
+          ? new Uint8Array()
+          : sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike, spec.descriptionCount, spec);
+        const timings = new Uint8Array(8 + (spec.sampleDurations?.length ?? 0) * 8);
+        const view = new DataView(timings.buffer);
+        view.setUint32(4, spec.sampleDurations?.length ?? 0);
+        spec.sampleDurations?.forEach((entry, index) => {
+          view.setUint32(8 + index * 8, entry.count);
+          view.setUint32(12 + index * 8, entry.duration);
+        });
+        const stbl = box('stbl', descriptions, sampleSizeBox(spec), box('stts', timings));
+        const minf = box('minf', stbl);
+        // Readers are required to accept any box order
+        const mdia = spec.handlerAfterMinf
+          ? box('mdia', mediaHeaderBox(spec), minf, hdlr)
+          : box('mdia', hdlr, mediaHeaderBox(spec), minf);
+        const metadata = spec.metadataHandler
+          ? box('udta', box('meta', new Uint8Array(4), handlerBox(spec.metadataHandler)))
+          : new Uint8Array();
+        return box(
+          'trak',
+          trackHeaderBox(trackId, spec),
+          ...(spec.metadataBeforeMedia ? [metadata, mdia] : [mdia, metadata])
         );
       }
-    });
-  }
 
-  it('reads version 1 (64-bit) creation time, modification time, track ID and duration at the right offsets', () => {
-    const buf = new Uint8Array(64);
-    const view = new DataView(buf.buffer);
-    buf[0] = 1; // version
-    buf[3] = 0x07; // flags (track enabled, in movie, in preview)
-    view.setBigUint64(4, BigInt(MAC_EPOCH_OFFSET + 1_500_000_000)); // creation time
-    view.setBigUint64(12, BigInt(MAC_EPOCH_OFFSET + 1_600_000_000)); // modification time
-    view.setUint32(20, 7); // track ID
-    view.setBigUint64(28, BigInt(5_000_000_000)); // duration (exceeds 32 bits)
+      function mp4(...tracks: ITrackSpec[]): Uint8Array {
+        const ftyp = box(
+          'ftyp',
+          textEncoder.encode('isom'),
+          new Uint8Array([0, 0, 2, 0]),
+          textEncoder.encode('isomiso2mp41')
+        );
+        const headers: Uint8Array[] = [];
+        if (tracks[0]?.movieDuration !== undefined) {
+          const header = new Uint8Array(100);
+          const view = new DataView(header.buffer);
+          view.setUint32(12, tracks[0].movieTimeScale ?? 1000);
+          view.setUint32(16, tracks[0].movieDuration);
+          headers.push(box('mvhd', header));
+        }
+        if (tracks[0]?.fragmentDefaults) {
+          const trex = new Uint8Array(24);
+          const view = new DataView(trex.buffer);
+          view.setUint32(4, 1);
+          view.setUint32(12, tracks[0].fragmentDefaults.duration);
+          view.setUint32(16, tracks[0].fragmentDefaults.size);
+          headers.push(box('mvex', box('trex', trex)));
+        }
+        const moov = box('moov', ...headers, ...tracks.map((spec, index) => trackBox(index + 1, spec)));
+        return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
+      }
 
-    const header = new TrackHeaderAtom(buf.length).get(buf, 0);
-
-    assert.strictEqual(header.version, 1, 'version');
-    assert.strictEqual(header.trackId, 7, 'trackId');
-    assert.strictEqual(header.duration, 5_000_000_000, 'duration');
-    assert.strictEqual(header.creationTime.getTime(), 1_500_000_000 * 1000, 'creationTime');
-    assert.strictEqual(header.modificationTime.getTime(), 1_600_000_000 * 1000, 'modificationTime');
-  });
-
-  it('reads version 0 (32-bit) track ID and duration', () => {
-    const buf = new Uint8Array(64);
-    const view = new DataView(buf.buffer);
-    buf[0] = 0; // version
-    buf[3] = 0x07; // flags
-    view.setUint32(4, MAC_EPOCH_OFFSET + 1000); // creation time
-    view.setUint32(8, MAC_EPOCH_OFFSET + 2000); // modification time
-    view.setUint32(12, 3); // track ID
-    view.setUint32(20, 12345); // duration
-
-    const header = new TrackHeaderAtom(buf.length).get(buf, 0);
-
-    assert.strictEqual(header.version, 0, 'version');
-    assert.strictEqual(header.trackId, 3, 'trackId');
-    assert.strictEqual(header.duration, 12345, 'duration');
-    assert.strictEqual(header.creationTime.getTime(), 1000 * 1000, 'creationTime');
-    assert.strictEqual(header.modificationTime.getTime(), 2000 * 1000, 'modificationTime');
-  });
-
-  it('throws on an unsupported version', () => {
-    const buf = new Uint8Array(64);
-    buf[0] = 2; // version
-
-    assert.throws(() => new TrackHeaderAtom(buf.length).get(buf, 0), /Invalid tkhd version header/);
-  });
-});
-
-describe('Sample Description (stsd) atom', () => {
-  const textEncoder = new TextEncoder();
-  const timeScale = 44100;
-
-  function concat(...parts: Uint8Array[]): Uint8Array {
-    const buf = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
-    let offset = 0;
-    for (const part of parts) {
-      buf.set(part, offset);
-      offset += part.length;
-    }
-    return buf;
-  }
-
-  /**
-   * Build a box: 32-bit size, 4-character type, then the payload.
-   */
-  function box(type: string, ...payloads: Uint8Array[]): Uint8Array {
-    const header = new Uint8Array(8);
-    const body = concat(...payloads);
-    new DataView(header.buffer).setUint32(0, header.length + body.length);
-    header.set(textEncoder.encode(type), 4);
-    return concat(header, body);
-  }
-
-  function handlerBox(handlerType: string): Uint8Array {
-    const payload = new Uint8Array(24);
-    payload.set(textEncoder.encode(handlerType), 8);
-    return box('hdlr', payload);
-  }
-
-  function trackHeaderBox(trackId: number, spec: ITrackSpec): Uint8Array {
-    const payload = new Uint8Array(84);
-    const view = new DataView(payload.buffer);
-    view.setUint32(12, trackId);
-    view.setUint32(20, spec.trackDuration ?? 0);
-    view.setUint32(76, (spec.displayWidth ?? 0) * 65536);
-    view.setUint32(80, (spec.displayHeight ?? 0) * 65536);
-    return box('tkhd', payload);
-  }
-
-  function mediaHeaderBox(spec: ITrackSpec): Uint8Array {
-    const payload = new Uint8Array(24);
-    const view = new DataView(payload.buffer);
-    view.setUint32(12, spec.timeScale ?? timeScale);
-    view.setUint32(16, spec.duration ?? timeScale); // duration: one second by default
-    view.setUint16(20, spec.language ?? 0);
-    return box('mdhd', payload);
-  }
-
-  function sampleSizeBox(spec: ITrackSpec): Uint8Array {
-    const payload = new Uint8Array(12 + (spec.sampleSizes?.length ?? 0) * 4);
-    const view = new DataView(payload.buffer);
-    view.setUint32(4, spec.fixedSampleSize ?? 0);
-    view.setUint32(8, spec.sampleCount ?? spec.sampleSizes?.length ?? 0);
-    spec.sampleSizes?.forEach((size, index) => {
-      view.setUint32(12 + index * 4, size);
-    });
-    return box('stsz', payload);
-  }
-
-  /**
-   * A sample description box holding a single entry of the given size.
-   *
-   * Ref: ISO/IEC 14496-12, 8.5.2. A SampleEntry is 16 bytes: the box header, 6 reserved bytes and the
-   * data reference index. An AudioSampleEntry adds 20 bytes on top, whereas other sample entry classes,
-   * such as a MetaDataSampleEntry, may be no larger than the 16-byte base.
-   */
-  function sampleDescriptionBox(
-    dataFormat: string,
-    entrySize: number,
-    audioLike = false,
-    entries = 1,
-    spec?: ITrackSpec
-  ): Uint8Array {
-    const header = new Uint8Array(8);
-    new DataView(header.buffer).setUint32(4, entries); // entry_count
-
-    const entry = new Uint8Array(entrySize);
-    const view = new DataView(entry.buffer);
-    view.setUint32(0, entrySize);
-    entry.set(textEncoder.encode(dataFormat), 4);
-    view.setUint16(14, 1); // data_reference_index
-
-    if (audioLike) {
-      // Populate the bytes an AudioSampleEntry would use, to prove they are not read from a non-audio track
-      view.setUint16(24, 2); // channel count
-      view.setUint16(26, 16); // sample size
-      view.setUint16(32, spec?.audioSampleRate ?? timeScale); // sample rate
-    }
-    if (spec?.pixelWidth !== undefined && spec.pixelHeight !== undefined) {
-      view.setUint16(32, spec.pixelWidth);
-      view.setUint16(34, spec.pixelHeight);
-    }
-    return box('stsd', header, ...Array.from({ length: entries }, () => entry));
-  }
-
-  interface ITrackSpec {
-    handler: string;
-    dataFormat: string;
-    entrySize: number;
-    audioLike?: boolean;
-    audioSampleRate?: number;
-    handlerAfterMinf?: boolean;
-    metadataHandler?: string;
-    metadataBeforeMedia?: boolean;
-    descriptionCount?: number;
-    noDescription?: boolean;
-    language?: number;
-    timeScale?: number;
-    duration?: number;
-    fixedSampleSize?: number;
-    sampleCount?: number;
-    sampleSizes?: number[];
-    pixelWidth?: number;
-    pixelHeight?: number;
-    displayWidth?: number;
-    displayHeight?: number;
-    trackDuration?: number;
-    movieDuration?: number;
-    movieTimeScale?: number;
-    sampleDurations?: { count: number; duration: number }[];
-    fragmentDefaults?: { duration: number; size: number };
-  }
-
-  const videoTrack: ITrackSpec = { handler: 'vide', dataFormat: 'avc1', entrySize: 36 };
-
-  function trackBox(trackId: number, spec: ITrackSpec): Uint8Array {
-    const hdlr = handlerBox(spec.handler);
-    const descriptions = spec.noDescription
-      ? new Uint8Array()
-      : sampleDescriptionBox(spec.dataFormat, spec.entrySize, spec.audioLike, spec.descriptionCount, spec);
-    const timings = new Uint8Array(8 + (spec.sampleDurations?.length ?? 0) * 8);
-    const view = new DataView(timings.buffer);
-    view.setUint32(4, spec.sampleDurations?.length ?? 0);
-    spec.sampleDurations?.forEach((entry, index) => {
-      view.setUint32(8 + index * 8, entry.count);
-      view.setUint32(12 + index * 8, entry.duration);
-    });
-    const stbl = box('stbl', descriptions, sampleSizeBox(spec), box('stts', timings));
-    const minf = box('minf', stbl);
-    // Readers are required to accept any box order
-    const mdia = spec.handlerAfterMinf
-      ? box('mdia', mediaHeaderBox(spec), minf, hdlr)
-      : box('mdia', hdlr, mediaHeaderBox(spec), minf);
-    const metadata = spec.metadataHandler
-      ? box('udta', box('meta', new Uint8Array(4), handlerBox(spec.metadataHandler)))
-      : new Uint8Array();
-    return box(
-      'trak',
-      trackHeaderBox(trackId, spec),
-      ...(spec.metadataBeforeMedia ? [metadata, mdia] : [mdia, metadata])
-    );
-  }
-
-  function mp4(...tracks: ITrackSpec[]): Uint8Array {
-    const ftyp = box(
-      'ftyp',
-      textEncoder.encode('isom'),
-      new Uint8Array([0, 0, 2, 0]),
-      textEncoder.encode('isomiso2mp41')
-    );
-    const headers: Uint8Array[] = [];
-    if (tracks[0]?.movieDuration !== undefined) {
-      const header = new Uint8Array(100);
-      const view = new DataView(header.buffer);
-      view.setUint32(12, tracks[0].movieTimeScale ?? 1000);
-      view.setUint32(16, tracks[0].movieDuration);
-      headers.push(box('mvhd', header));
-    }
-    if (tracks[0]?.fragmentDefaults) {
-      const trex = new Uint8Array(24);
-      const view = new DataView(trex.buffer);
-      view.setUint32(4, 1);
-      view.setUint32(12, tracks[0].fragmentDefaults.duration);
-      view.setUint32(16, tracks[0].fragmentDefaults.size);
-      headers.push(box('mvex', box('trex', trex)));
-    }
-    const moov = box('moov', ...headers, ...tracks.map((spec, index) => trackBox(index + 1, spec)));
-    return concat(ftyp, moov, box('mdat', new Uint8Array(8)));
-  }
-
-  describe('stream presence', () => {
-    for (const { filename, hasAudio, hasVideo } of [
-      { filename: 'mp4-video.mp4', hasAudio: false, hasVideo: true },
-      { filename: 'mp4-audio.mp4', hasAudio: true, hasVideo: false },
-      { filename: 'mp4-audio-video.mp4', hasAudio: true, hasVideo: true }
-    ]) {
-      describe(filename, () => {
-        for (const parser of Parsers) {
-          it(parser.description, async function () {
-            const { format } = await parser.parse(() => this.skip(), path.join(mp4Samples, filename), 'video/mp4');
-            assert.strictEqual(format.hasAudio, hasAudio, 'format.hasAudio');
-            assert.strictEqual(format.hasVideo, hasVideo, 'format.hasVideo');
-            if (hasAudio) {
-              assert.strictEqual(format.sampleRate, 8000);
-              assert.strictEqual(format.numberOfChannels, 1);
-              assert.isAbove(format.duration, 0, 'The fixture contains media');
+      describe('stream presence', () => {
+        for (const { filename, hasAudio, hasVideo } of [
+          { filename: 'mp4-video.mp4', hasAudio: false, hasVideo: true },
+          { filename: 'mp4-audio.mp4', hasAudio: true, hasVideo: false },
+          { filename: 'mp4-audio-video.mp4', hasAudio: true, hasVideo: true }
+        ]) {
+          describe(filename, () => {
+            for (const parser of Parsers) {
+              it(parser.description, async function () {
+                const { format } = await parser.parse(() => this.skip(), path.join(mp4Samples, filename), 'video/mp4');
+                assert.strictEqual(format.hasAudio, hasAudio, 'format.hasAudio');
+                assert.strictEqual(format.hasVideo, hasVideo, 'format.hasVideo');
+                if (hasAudio) {
+                  assert.strictEqual(format.sampleRate, 8000);
+                  assert.strictEqual(format.numberOfChannels, 1);
+                  assert.isAbove(format.duration, 0, 'The fixture contains media');
+                }
+              });
             }
           });
         }
-      });
-    }
 
-    for (const streamInput of [false, true]) {
-      it(`detects audio without a handler in a ${streamInput ? 'stream' : 'buffer'}`, async () => {
-        const data = fs.readFileSync(path.join(mp4Samples, 'mp4-audio.mp4'));
-        const expected = await mm.parseBuffer(data, 'audio/mp4');
-        const handlerOffset = data.indexOf('hdlr');
-        assert.isAbove(handlerOffset, 0);
-        assert.strictEqual(data.toString('ascii', handlerOffset + 12, handlerOffset + 16), 'soun');
-        // Simulate the missing-handler edge case by replacing its box with equal-sized
-        // padding. Preserve all sample data, box lengths and chunk offsets.
-        data.write('free', handlerOffset, 'ascii');
-        const { format } = streamInput
-          ? await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mp4')
-          : await mm.parseBuffer(data, 'audio/mp4');
-        assert.isTrue(format.hasAudio);
-        assert.isFalse(format.hasVideo);
-        assert.strictEqual(format.sampleRate, expected.format.sampleRate);
-        assert.strictEqual(format.numberOfChannels, expected.format.numberOfChannels);
-        assert.strictEqual(format.duration, expected.format.duration);
-        assert.deepEqual(format.trackInfo, expected.format.trackInfo);
-      });
-    }
+        for (const streamInput of [false, true]) {
+          it(`detects audio without a handler in a ${streamInput ? 'stream' : 'buffer'}`, async () => {
+            const data = fs.readFileSync(path.join(mp4Samples, 'mp4-audio.mp4'));
+            const expected = await mm.parseBuffer(data, 'audio/mp4');
+            const handlerOffset = data.indexOf('hdlr');
+            assert.isAbove(handlerOffset, 0);
+            assert.strictEqual(data.toString('ascii', handlerOffset + 12, handlerOffset + 16), 'soun');
+            // Simulate the missing-handler edge case by replacing its box with equal-sized
+            // padding. Preserve all sample data, box lengths and chunk offsets.
+            data.write('free', handlerOffset, 'ascii');
+            const { format } = streamInput
+              ? await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mp4')
+              : await mm.parseBuffer(data, 'audio/mp4');
+            assert.isTrue(format.hasAudio);
+            assert.isFalse(format.hasVideo);
+            assert.strictEqual(format.sampleRate, expected.format.sampleRate);
+            assert.strictEqual(format.numberOfChannels, expected.format.numberOfChannels);
+            assert.strictEqual(format.duration, expected.format.duration);
+            assert.deepEqual(format.trackInfo, expected.format.trackInfo);
+          });
+        }
 
-    // Structural edge cases without media payloads still use constructed boxes.
-    const metadataTrack: ITrackSpec = { handler: 'meta', dataFormat: 'djmd', entrySize: 16 };
-    for (const { name, tracks, hasVideo } of [
-      { name: 'metadata only', tracks: [metadataTrack], hasVideo: false },
-      { name: 'no tracks', tracks: [], hasVideo: false },
-      { name: 'video and metadata', tracks: [videoTrack, metadataTrack], hasVideo: true }
-    ]) {
-      it(`does not report audio for ${name}`, async () => {
-        const { format } = await mm.parseBuffer(mp4(...tracks), 'video/mp4');
-        assert.isFalse(format.hasAudio);
-        assert.strictEqual(format.hasVideo, hasVideo);
-      });
-    }
-  });
-
-  function fragment(spec: {
-    count?: number;
-    samples?: { duration?: number; size?: number; flags?: number }[];
-    duration?: number;
-    size?: number;
-    decodeTime?: bigint;
-    tfdtAfterRun?: boolean;
-    omitDecodeTime?: boolean;
-    decodeTimeVersion?: 0 | 1;
-  }): Uint8Array {
-    const tfhd = new Uint8Array(8 + (spec.duration !== undefined ? 4 : 0) + (spec.size !== undefined ? 4 : 0));
-    const header = new DataView(tfhd.buffer);
-    header.setUint32(0, (spec.duration !== undefined ? 8 : 0) | (spec.size !== undefined ? 16 : 0));
-    header.setUint32(4, 1);
-    let offset = 8;
-    if (spec.duration !== undefined) {
-      header.setUint32(offset, spec.duration);
-      offset += 4;
-    }
-    if (spec.size !== undefined) {
-      header.setUint32(offset, spec.size);
-    }
-    const sampleFields = [
-      { name: 'duration', flag: 0x100 },
-      { name: 'size', flag: 0x200 },
-      { name: 'flags', flag: 0x400 }
-    ] as const;
-    const fields = sampleFields.filter(field => spec.samples?.some(sample => sample[field.name] !== undefined));
-    const trun = new Uint8Array(8 + (spec.samples?.length ?? 0) * fields.length * 4);
-    const run = new DataView(trun.buffer);
-    run.setUint32(
-      0,
-      fields.reduce((flags, field) => flags | field.flag, 0)
-    );
-    run.setUint32(4, spec.count ?? spec.samples?.length ?? 0);
-    spec.samples?.forEach((sample, index) => {
-      fields.forEach((field, fieldIndex) => {
-        run.setUint32(8 + (index * fields.length + fieldIndex) * 4, sample[field.name] ?? 0);
-      });
-    });
-    const version = spec.decodeTimeVersion ?? 1;
-    const tfdt = new Uint8Array(version === 0 ? 8 : 12);
-    tfdt[0] = version;
-    const timing = new DataView(tfdt.buffer);
-    if (version === 0) {
-      timing.setUint32(4, Number(spec.decodeTime ?? 0n));
-    } else {
-      timing.setBigUint64(4, spec.decodeTime ?? 0n);
-    }
-    const boxes = spec.omitDecodeTime
-      ? [box('trun', trun)]
-      : spec.tfdtAfterRun
-        ? [box('trun', trun), box('tfdt', tfdt)]
-        : [box('tfdt', tfdt), box('trun', trun)];
-    return box('moof', box('traf', box('tfhd', tfhd), ...boxes));
-  }
-
-  for (const metadataBeforeMedia of [false, true]) {
-    for (const metadataHandler of ['mdir', 'soun']) {
-      describe(`preserves the video handler with track metadata (${metadataHandler}, before media=${metadataBeforeMedia})`, () => {
-        const spec: ITrackSpec = {
-          ...videoTrack,
-          pixelWidth: 720,
-          pixelHeight: 576,
-          sampleCount: 25,
-          sampleDurations: [{ count: 25, duration: timeScale / 25 }]
-        };
-        let directory: string | undefined;
-        let filePath: string;
-        let expected: mm.IFormat;
-        before(async () => {
-          directory = await fs.promises.mkdtemp(path.join(tmpdir(), 'music-metadata-mp4-handler-'));
-          filePath = path.join(directory, 'track-metadata.mp4');
-          await fs.promises.writeFile(filePath, mp4({ ...spec, metadataHandler, metadataBeforeMedia }));
-          ({ format: expected } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' }));
-        });
-        after(async () => {
-          if (directory) {
-            await fs.promises.rm(directory, { recursive: true, force: true });
-          }
-        });
-        for (const parser of Parsers) {
-          it(parser.description, async function () {
-            const { format } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
-            assert.isTrue(format.hasVideo);
+        // Structural edge cases without media payloads still use constructed boxes.
+        const metadataTrack: ITrackSpec = { handler: 'meta', dataFormat: 'djmd', entrySize: 16 };
+        for (const { name, tracks, hasVideo } of [
+          { name: 'metadata only', tracks: [metadataTrack], hasVideo: false },
+          { name: 'no tracks', tracks: [], hasVideo: false },
+          { name: 'video and metadata', tracks: [videoTrack, metadataTrack], hasVideo: true }
+        ]) {
+          it(`does not report audio for ${name}`, async () => {
+            const { format } = await mm.parseBuffer(mp4(...tracks), 'video/mp4');
             assert.isFalse(format.hasAudio);
-            assert.deepEqual(format.trackInfo, expected.trackInfo);
-            assert.strictEqual(format.trackInfo[0].type, mm.TrackType.video);
-            assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 720, pixelHeight: 576, frameRate: 25 });
+            assert.strictEqual(format.hasVideo, hasVideo);
           });
         }
       });
-    }
-  }
 
-  it('returns video-only duration, resolution, frame rate and whole-file bitrate', async () => {
-    const buffer = mp4({
-      ...videoTrack,
-      timeScale: 1000,
-      duration: 2000,
-      pixelWidth: 720,
-      pixelHeight: 576,
-      displayWidth: 1024,
-      displayHeight: 576,
-      fixedSampleSize: 100,
-      sampleCount: 50,
-      sampleDurations: [{ count: 50, duration: 40 }]
-    });
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.isFalse(format.hasAudio);
-    assert.strictEqual(format.duration, 2);
-    assert.strictEqual(format.containerDuration, 2);
-    assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 2);
-    assert.include(format.trackInfo[0], { type: mm.TrackType.video, duration: 2, bitrate: 20000 });
-    assert.deepEqual(format.trackInfo[0].video, {
-      pixelWidth: 720,
-      pixelHeight: 576,
-      displayWidth: 1024,
-      displayHeight: 576,
-      frameRate: 25
-    });
-  });
+      function fragment(spec: {
+        count?: number;
+        samples?: { duration?: number; size?: number; flags?: number }[];
+        duration?: number;
+        size?: number;
+        decodeTime?: bigint;
+        tfdtAfterRun?: boolean;
+        omitDecodeTime?: boolean;
+        decodeTimeVersion?: 0 | 1;
+      }): Uint8Array {
+        const tfhd = new Uint8Array(8 + (spec.duration !== undefined ? 4 : 0) + (spec.size !== undefined ? 4 : 0));
+        const header = new DataView(tfhd.buffer);
+        header.setUint32(0, (spec.duration !== undefined ? 8 : 0) | (spec.size !== undefined ? 16 : 0));
+        header.setUint32(4, 1);
+        let offset = 8;
+        if (spec.duration !== undefined) {
+          header.setUint32(offset, spec.duration);
+          offset += 4;
+        }
+        if (spec.size !== undefined) {
+          header.setUint32(offset, spec.size);
+        }
+        const sampleFields = [
+          { name: 'duration', flag: 0x100 },
+          { name: 'size', flag: 0x200 },
+          { name: 'flags', flag: 0x400 }
+        ] as const;
+        const fields = sampleFields.filter(field => spec.samples?.some(sample => sample[field.name] !== undefined));
+        const trun = new Uint8Array(8 + (spec.samples?.length ?? 0) * fields.length * 4);
+        const run = new DataView(trun.buffer);
+        run.setUint32(
+          0,
+          fields.reduce((flags, field) => flags | field.flag, 0)
+        );
+        run.setUint32(4, spec.count ?? spec.samples?.length ?? 0);
+        spec.samples?.forEach((sample, index) => {
+          fields.forEach((field, fieldIndex) => {
+            run.setUint32(8 + (index * fields.length + fieldIndex) * 4, sample[field.name] ?? 0);
+          });
+        });
+        const version = spec.decodeTimeVersion ?? 1;
+        const tfdt = new Uint8Array(version === 0 ? 8 : 12);
+        tfdt[0] = version;
+        const timing = new DataView(tfdt.buffer);
+        if (version === 0) {
+          timing.setUint32(4, Number(spec.decodeTime ?? 0n));
+        } else {
+          timing.setBigUint64(4, spec.decodeTime ?? 0n);
+        }
+        const boxes = spec.omitDecodeTime
+          ? [box('trun', trun)]
+          : spec.tfdtAfterRun
+            ? [box('trun', trun), box('tfdt', tfdt)]
+            : [box('tfdt', tfdt), box('trun', trun)];
+        return box('moof', box('traf', box('tfhd', tfhd), ...boxes));
+      }
 
-  it('uses the movie duration for overall bitrate while retaining the audio summary', async () => {
-    const buffer = mp4(
-      { ...videoTrack, duration: timeScale * 2, movieDuration: 3000 },
-      { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true }
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.strictEqual(format.duration, 1);
-    assert.strictEqual(format.trackInfo[0].duration, 2);
-    assert.strictEqual(format.containerDuration, 3);
-    assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 3);
-  });
+      for (const metadataBeforeMedia of [false, true]) {
+        for (const metadataHandler of ['mdir', 'soun']) {
+          describe(`preserves the video handler with track metadata (${metadataHandler}, before media=${metadataBeforeMedia})`, () => {
+            const spec: ITrackSpec = {
+              ...videoTrack,
+              pixelWidth: 720,
+              pixelHeight: 576,
+              sampleCount: 25,
+              sampleDurations: [{ count: 25, duration: timeScale / 25 }]
+            };
+            let directory: string | undefined;
+            let filePath: string;
+            let expected: mm.IFormat;
+            before(async () => {
+              directory = await fs.promises.mkdtemp(path.join(tmpdir(), 'music-metadata-mp4-handler-'));
+              filePath = path.join(directory, 'track-metadata.mp4');
+              await fs.promises.writeFile(filePath, mp4({ ...spec, metadataHandler, metadataBeforeMedia }));
+              ({ format: expected } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' }));
+            });
+            after(async () => {
+              if (directory) {
+                await fs.promises.rm(directory, { recursive: true, force: true });
+              }
+            });
+            for (const parser of Parsers) {
+              it(parser.description, async function () {
+                const { format } = await parser.parse(() => this.skip(), filePath, 'video/mp4');
+                assert.isTrue(format.hasVideo);
+                assert.isFalse(format.hasAudio);
+                assert.deepEqual(format.trackInfo, expected.trackInfo);
+                assert.strictEqual(format.trackInfo[0].type, mm.TrackType.video);
+                assert.deepEqual(format.trackInfo[0].video, { pixelWidth: 720, pixelHeight: 576, frameRate: 25 });
+              });
+            }
+          });
+        }
+      }
 
-  it('does not use a shorter audio duration when the video duration is unknown', async () => {
-    const buffer = mp4(
-      { ...videoTrack, timeScale: 0 },
-      { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true }
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.strictEqual(format.duration, 1);
-    assert.isUndefined(format.containerDuration);
-    assert.isUndefined(format.overallBitrate);
-  });
-
-  it('omits overall bitrate when a stream has no known file size', async () => {
-    const buffer = mp4(videoTrack);
-    const { format } = await mm.parseStream(Readable.from([buffer], { objectMode: false }), { mimeType: 'video/mp4' });
-    assert.strictEqual(format.containerDuration, 1);
-    assert.isUndefined(format.overallBitrate);
-  });
-
-  it('derives duration and variable frame rate from sample timing when mdhd duration is unknown', async () => {
-    const { format } = await mm.parseBuffer(
-      mp4({
-        ...videoTrack,
-        timeScale: 1000,
-        duration: 0xffffffff,
-        sampleDurations: [
-          { count: 30, duration: 20 },
-          { count: 20, duration: 70 }
-        ],
-        fixedSampleSize: 100,
-        sampleCount: 50
-      }),
-      { mimeType: 'video/mp4' }
-    );
-    assert.include(format.trackInfo[0], { duration: 2, bitrate: 20000 });
-    assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
-  });
-
-  it('uses tkhd presentation duration when media timing is absent', async () => {
-    const { format } = await mm.parseBuffer(
-      mp4({ ...videoTrack, timeScale: 0, movieDuration: 3000, trackDuration: 2500 }),
-      { mimeType: 'video/mp4' }
-    );
-    assert.strictEqual(format.trackInfo[0].duration, 2.5);
-    assert.strictEqual(format.containerDuration, 3);
-  });
-
-  for (const audioSampleRate of [0, timeScale]) {
-    it(`handles audio sample timing with zero mdhd timescale (sample rate=${audioSampleRate})`, async () => {
-      const { format } = await mm.parseBuffer(
-        mp4({
-          handler: 'soun',
-          dataFormat: 'mp4a',
-          entrySize: 36,
-          audioLike: true,
-          audioSampleRate,
-          timeScale: 0,
-          sampleDurations: [{ count: 50, duration: (timeScale * 2) / 50 }]
-        }),
-        { mimeType: 'audio/mp4' }
-      );
-      if (audioSampleRate > 0) {
+      it('returns video-only duration, resolution, frame rate and whole-file bitrate', async () => {
+        const buffer = mp4({
+          ...videoTrack,
+          timeScale: 1000,
+          duration: 2000,
+          pixelWidth: 720,
+          pixelHeight: 576,
+          displayWidth: 1024,
+          displayHeight: 576,
+          fixedSampleSize: 100,
+          sampleCount: 50,
+          sampleDurations: [{ count: 50, duration: 40 }]
+        });
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.isFalse(format.hasAudio);
         assert.strictEqual(format.duration, 2);
         assert.strictEqual(format.containerDuration, 2);
+        assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 2);
+        assert.include(format.trackInfo[0], { type: mm.TrackType.video, duration: 2, bitrate: 20000 });
+        assert.deepEqual(format.trackInfo[0].video, {
+          pixelWidth: 720,
+          pixelHeight: 576,
+          displayWidth: 1024,
+          displayHeight: 576,
+          frameRate: 25
+        });
+      });
+
+      it('uses the movie duration for overall bitrate while retaining the audio summary', async () => {
+        const buffer = mp4(
+          { ...videoTrack, duration: timeScale * 2, movieDuration: 3000 },
+          { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true }
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.strictEqual(format.duration, 1);
         assert.strictEqual(format.trackInfo[0].duration, 2);
-      } else {
-        assert.isUndefined(format.duration);
+        assert.strictEqual(format.containerDuration, 3);
+        assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 3);
+      });
+
+      it('does not use a shorter audio duration when the video duration is unknown', async () => {
+        const buffer = mp4(
+          { ...videoTrack, timeScale: 0 },
+          { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true }
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.strictEqual(format.duration, 1);
         assert.isUndefined(format.containerDuration);
-        assert.isUndefined(format.trackInfo[0].duration);
+        assert.isUndefined(format.overallBitrate);
+      });
+
+      it('omits overall bitrate when a stream has no known file size', async () => {
+        const buffer = mp4(videoTrack);
+        const { format } = await mm.parseStream(Readable.from([buffer], { objectMode: false }), {
+          mimeType: 'video/mp4'
+        });
+        assert.strictEqual(format.containerDuration, 1);
+        assert.isUndefined(format.overallBitrate);
+      });
+
+      it('derives duration and variable frame rate from sample timing when mdhd duration is unknown', async () => {
+        const { format } = await mm.parseBuffer(
+          mp4({
+            ...videoTrack,
+            timeScale: 1000,
+            duration: 0xffffffff,
+            sampleDurations: [
+              { count: 30, duration: 20 },
+              { count: 20, duration: 70 }
+            ],
+            fixedSampleSize: 100,
+            sampleCount: 50
+          }),
+          { mimeType: 'video/mp4' }
+        );
+        assert.include(format.trackInfo[0], { duration: 2, bitrate: 20000 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+      });
+
+      it('uses tkhd presentation duration when media timing is absent', async () => {
+        const { format } = await mm.parseBuffer(
+          mp4({ ...videoTrack, timeScale: 0, movieDuration: 3000, trackDuration: 2500 }),
+          { mimeType: 'video/mp4' }
+        );
+        assert.strictEqual(format.trackInfo[0].duration, 2.5);
+        assert.strictEqual(format.containerDuration, 3);
+      });
+
+      for (const audioSampleRate of [0, timeScale]) {
+        it(`handles audio sample timing with zero mdhd timescale (sample rate=${audioSampleRate})`, async () => {
+          const { format } = await mm.parseBuffer(
+            mp4({
+              handler: 'soun',
+              dataFormat: 'mp4a',
+              entrySize: 36,
+              audioLike: true,
+              audioSampleRate,
+              timeScale: 0,
+              sampleDurations: [{ count: 50, duration: (timeScale * 2) / 50 }]
+            }),
+            { mimeType: 'audio/mp4' }
+          );
+          if (audioSampleRate > 0) {
+            assert.strictEqual(format.duration, 2);
+            assert.strictEqual(format.containerDuration, 2);
+            assert.strictEqual(format.trackInfo[0].duration, 2);
+          } else {
+            assert.isUndefined(format.duration);
+            assert.isUndefined(format.containerDuration);
+            assert.isUndefined(format.trackInfo[0].duration);
+          }
+        });
       }
-    });
-  }
 
-  for (const tfdtAfterRun of [false, true]) {
-    it(`reads fragmented video sample timing (tfdt after trun=${tfdtAfterRun})`, async () => {
-      const buffer = concat(
-        mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-        fragment({
-          decodeTime: 5000n,
-          tfdtAfterRun,
-          samples: [
-            { duration: 40, size: 100 },
-            { duration: 60, size: 150 }
-          ]
-        }),
-        fragment({ decodeTime: 5100n, samples: [{ duration: 100, size: 250 }] })
-      );
-      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-      assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 20000 });
-      assert.strictEqual(format.trackInfo[0].video.frameRate, 15);
-      assert.strictEqual(format.containerDuration, 5.2);
-    });
-  }
+      for (const tfdtAfterRun of [false, true]) {
+        it(`reads fragmented video sample timing (tfdt after trun=${tfdtAfterRun})`, async () => {
+          const buffer = concat(
+            mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+            fragment({
+              decodeTime: 5000n,
+              tfdtAfterRun,
+              samples: [
+                { duration: 40, size: 100 },
+                { duration: 60, size: 150 }
+              ]
+            }),
+            fragment({ decodeTime: 5100n, samples: [{ duration: 100, size: 250 }] })
+          );
+          const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+          assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 20000 });
+          assert.strictEqual(format.trackInfo[0].video.frameRate, 15);
+          assert.strictEqual(format.containerDuration, 5.2);
+        });
+      }
 
-  for (const fixedSize of [false, true]) {
-    for (const omitDecodeTime of [false, true]) {
-      it(`combines initial samples and fragments (fixed size=${fixedSize}, omit tfdt=${omitDecodeTime})`, async () => {
+      for (const fixedSize of [false, true]) {
+        for (const omitDecodeTime of [false, true]) {
+          it(`combines initial samples and fragments (fixed size=${fixedSize}, omit tfdt=${omitDecodeTime})`, async () => {
+            const buffer = concat(
+              mp4({
+                ...videoTrack,
+                timeScale: 1000,
+                duration: 1000,
+                ...(fixedSize ? { fixedSampleSize: 100, sampleCount: 1 } : { sampleSizes: [100] }),
+                sampleDurations: [{ count: 1, duration: 1000 }]
+              }),
+              fragment({ omitDecodeTime, decodeTime: 1000n, samples: [{ duration: 1000, size: 200 }] })
+            );
+            const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+            assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
+            assert.strictEqual(format.trackInfo[0].video.frameRate, 1);
+            assert.strictEqual(format.containerDuration, 2);
+            assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 2);
+          });
+        }
+      }
+
+      it('combines sample counts and durations without a known media duration', async () => {
+        const buffer = concat(
+          mp4({
+            ...videoTrack,
+            timeScale: 1000,
+            duration: 0,
+            sampleSizes: [50, 50],
+            sampleDurations: [{ count: 2, duration: 500 }]
+          }),
+          fragment({ decodeTime: 3000n, samples: [{ duration: 1000, size: 200 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 1.5);
+        assert.strictEqual(format.containerDuration, 4);
+      });
+
+      it('combines initial samples with default-only fragments', async () => {
         const buffer = concat(
           mp4({
             ...videoTrack,
             timeScale: 1000,
             duration: 1000,
-            ...(fixedSize ? { fixedSampleSize: 100, sampleCount: 1 } : { sampleSizes: [100] }),
+            sampleSizes: [100],
             sampleDurations: [{ count: 1, duration: 1000 }]
           }),
-          fragment({ omitDecodeTime, decodeTime: 1000n, samples: [{ duration: 1000, size: 200 }] })
+          fragment({ omitDecodeTime: true, count: 2, duration: 500, size: 100 })
         );
         const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
         assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
-        assert.strictEqual(format.trackInfo[0].video.frameRate, 1);
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 1.5);
         assert.strictEqual(format.containerDuration, 2);
-        assert.strictEqual(format.overallBitrate, (buffer.length * 8) / 2);
+      });
+
+      it('omits bitrate when fragment sizes are missing after initial samples', async () => {
+        const buffer = concat(
+          mp4({
+            ...videoTrack,
+            timeScale: 1000,
+            duration: 1000,
+            sampleSizes: [100],
+            sampleDurations: [{ count: 1, duration: 1000 }]
+          }),
+          fragment({ decodeTime: 1000n, samples: [{ duration: 1000 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.strictEqual(format.trackInfo[0].duration, 2);
+        assert.isUndefined(format.trackInfo[0].bitrate);
+        assert.strictEqual(format.containerDuration, 2);
+      });
+
+      for (const useTrex of [false, true]) {
+        it(`supports default-only video fragments (${useTrex ? 'trex' : 'tfhd'} defaults)`, async () => {
+          const defaults = { duration: 40, size: 100 };
+          const buffer = concat(
+            mp4({ ...videoTrack, timeScale: 1000, duration: 0, ...(useTrex ? { fragmentDefaults: defaults } : {}) }),
+            fragment({ count: 50, ...(useTrex ? {} : defaults) })
+          );
+          const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+          assert.include(format.trackInfo[0], { duration: 2, bitrate: 20000 });
+          assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+        });
+      }
+
+      it('handles large default-only sample counts without allocating a sample array', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          fragment({ count: 0xffffffff, duration: 1, size: 1 })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 0xffffffff / 1000, bitrate: 8000 });
+      });
+
+      it('leaves timing unknown when fragment defaults are missing', async () => {
+        const buffer = concat(mp4({ ...videoTrack, timeScale: 1000, duration: 0 }), fragment({ count: 50 }));
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.isUndefined(format.trackInfo[0].duration);
+        assert.isUndefined(format.trackInfo[0].bitrate);
+        assert.isUndefined(format.overallBitrate);
+      });
+
+      it('rejects fragment sample counts exceeding their payload', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, duration: 0 }),
+          fragment({ count: 2, samples: [{ duration: 40, size: 100 }] })
+        );
+        await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Invalid trun sample count/);
+      });
+
+      it('continues fragment timing when a later run omits tfdt', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          fragment({ decodeTimeVersion: 0, decodeTime: 5000n, samples: [{ duration: 100, size: 100 }] }),
+          fragment({ omitDecodeTime: true, samples: [{ duration: 100, size: 150 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 10000 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
+        assert.strictEqual(format.containerDuration, 5.2);
+      });
+
+      for (const useTrex of [false, true]) {
+        it(`applies ${useTrex ? 'trex' : 'tfhd'} defaults to samples carrying only flags`, async () => {
+          const defaults = { duration: 40, size: 100 };
+          const buffer = concat(
+            mp4({ ...videoTrack, timeScale: 1000, duration: 0, ...(useTrex ? { fragmentDefaults: defaults } : {}) }),
+            fragment({ samples: [{ flags: 0 }, { flags: 0 }], ...(useTrex ? {} : defaults) })
+          );
+          const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+          assert.include(format.trackInfo[0], { duration: 0.08, bitrate: 20000 });
+          assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+          assert.strictEqual(format.containerDuration, 0.08);
+        });
+      }
+
+      it('prefers per-sample values over tfhd and tfhd defaults over trex', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0, fragmentDefaults: { duration: 10, size: 10 } }),
+          fragment({ duration: 40, size: 100, samples: [{ duration: 100, size: 200 }] }),
+          fragment({ omitDecodeTime: true, duration: 50, size: 150, samples: [{ flags: 0 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 0.15, bitrate: (350 * 8) / 0.15 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 2 / 0.15);
+      });
+
+      it('keeps known media duration when fragment timing is shorter', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 5000 }),
+          fragment({ samples: [{ duration: 100, size: 100 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 5, bitrate: 160 });
+        assert.strictEqual(format.containerDuration, 5);
+      });
+
+      for (const duration of [undefined, 0]) {
+        it(`leaves per-sample timing unknown for ${duration === undefined ? 'missing' : 'zero'} duration`, async () => {
+          const buffer = concat(
+            mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+            fragment({ samples: [{ duration, size: 100 }] })
+          );
+          const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+          assert.isUndefined(format.trackInfo[0].duration);
+          assert.isUndefined(format.trackInfo[0].video.frameRate);
+          assert.isUndefined(format.trackInfo[0].bitrate);
+          assert.isUndefined(format.containerDuration);
+        });
+      }
+
+      it('retains per-sample timing without inventing missing sizes', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          fragment({ samples: [{ duration: 100 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.strictEqual(format.trackInfo[0].duration, 0.1);
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
+        assert.isUndefined(format.trackInfo[0].bitrate);
+        assert.strictEqual(format.containerDuration, 0.1);
+      });
+
+      it('omits fragment statistics exceeding safe integer precision', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          fragment({ count: 0xffffffff, duration: 0xffffffff, size: 0xffffffff })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.isUndefined(format.trackInfo[0].duration);
+        assert.isUndefined(format.trackInfo[0].video.frameRate);
+        assert.isUndefined(format.trackInfo[0].bitrate);
+        assert.isUndefined(format.containerDuration);
+      });
+
+      for (const [version, length] of [
+        [0, 3],
+        [0, 7],
+        [1, 11]
+      ]) {
+        it(`rejects a truncated version ${version} tfdt box (${length} bytes)`, async () => {
+          const data = new Uint8Array(length);
+          data[0] = version;
+          const buffer = concat(mp4(videoTrack), box('moof', box('traf', box('tfdt', data))));
+          await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Truncated tfdt box/);
+        });
+      }
+
+      it('rejects unsupported tfdt versions', async () => {
+        const buffer = concat(mp4(videoTrack), box('moof', box('traf', box('tfdt', Uint8Array.from([2, 0, 0, 0])))));
+        await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Invalid tfdt version/);
+      });
+
+      it('rejects unsafe tfdt decode times', async () => {
+        const buffer = concat(mp4(videoTrack), fragment({ decodeTime: 0x20000000000000n }));
+        await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Unsafe tfdt decode time/);
+      });
+
+      it('rejects truncated trex defaults', async () => {
+        const buffer = concat(mp4(videoTrack), box('moov', box('mvex', box('trex', new Uint8Array(23)))));
+        await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Truncated trex box/);
+      });
+
+      it('skips unknown track fragment boxes without losing sample timing', async () => {
+        const tfhd = new Uint8Array(8);
+        new DataView(tfhd.buffer).setUint32(4, 1);
+        const trun = new Uint8Array(16);
+        const run = new DataView(trun.buffer);
+        run.setUint32(0, 0x300);
+        run.setUint32(4, 1);
+        run.setUint32(8, 100);
+        run.setUint32(12, 100);
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          box('moof', box('traf', box('tfhd', tfhd), box('free', new Uint8Array(3)), box('trun', trun)))
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 0.1, bitrate: 8000 });
+        assert.strictEqual(format.containerDuration, 0.1);
+      });
+
+      it('reports one track for multiple sample descriptions', async () => {
+        const { format } = await mm.parseBuffer(
+          mp4({
+            handler: 'soun',
+            dataFormat: 'mp4a',
+            entrySize: 36,
+            audioLike: true,
+            descriptionCount: 2
+          }),
+          { mimeType: 'audio/mp4' }
+        );
+        assert.lengthOf(format.trackInfo, 1);
+        assert.include(format.trackInfo[0], { id: 1, type: mm.TrackType.audio, codecId: 'mp4a' });
+      });
+
+      it('reports tracks without sample descriptions', async () => {
+        const { format } = await mm.parseBuffer(mp4({ ...videoTrack, noDescription: true }), { mimeType: 'video/mp4' });
+        assert.lengthOf(format.trackInfo, 1);
+        assert.include(format.trackInfo[0], { id: 1, type: mm.TrackType.video, duration: 1 });
+        assert.isUndefined(format.trackInfo[0].codecName);
+        assert.isFalse(format.hasAudio);
+        assert.isTrue(format.hasVideo);
+      });
+
+      for (const [handler, type] of [
+        ['vide', mm.TrackType.video],
+        ['soun', mm.TrackType.audio],
+        ['audi', mm.TrackType.audio],
+        ['text', mm.TrackType.subtitle],
+        ['sbtl', mm.TrackType.subtitle],
+        ['subt', mm.TrackType.subtitle],
+        ['clcp', mm.TrackType.subtitle],
+        ['meta', mm.TrackType.metadata],
+        ['mdta', mm.TrackType.metadata]
+      ] as const) {
+        it(`classifies ${handler} tracks independently of sample rate`, async () => {
+          const { format } = await mm.parseBuffer(mp4({ handler, dataFormat: 'test', entrySize: 16 }), {
+            mimeType: 'video/mp4'
+          });
+          assert.strictEqual(format.trackInfo[0].type, type);
+          assert.isUndefined(format.trackInfo[0].audio);
+        });
+      }
+
+      it('keeps an unknown handler unclassified', async () => {
+        const { format } = await mm.parseBuffer(
+          mp4({ handler: 'zzzz', dataFormat: 'test', entrySize: 36, audioLike: true }),
+          { mimeType: 'video/mp4' }
+        );
+        assert.isUndefined(format.trackInfo[0].type);
+        assert.isUndefined(format.trackInfo[0].audio);
+        assert.isFalse(format.hasAudio);
+      });
+
+      it('decodes packed ISO language codes', async () => {
+        const language = (5 << 10) | (14 << 5) | 7; // eng
+        const { format } = await mm.parseBuffer(mp4({ ...videoTrack, language }), { mimeType: 'video/mp4' });
+        assert.strictEqual(format.trackInfo[0].language, 'eng');
+      });
+
+      for (const spec of [
+        { ...videoTrack, timeScale: 0 },
+        { ...videoTrack, duration: 0xffffffff }
+      ]) {
+        it(`omits unknown duration (scale=${spec.timeScale ?? timeScale}, duration=${spec.duration ?? timeScale})`, async () => {
+          const { format } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' });
+          assert.isUndefined(format.trackInfo[0].duration);
+          assert.isUndefined(format.trackInfo[0].bitrate);
+        });
+      }
+
+      for (const sizes of [{ fixedSampleSize: 100, sampleCount: 3 }, { sampleSizes: [50, 150, 100] }]) {
+        it(`calculates a track bitrate from ${sizes.sampleSizes ? 'variable' : 'fixed'} sample sizes`, async () => {
+          const { format } = await mm.parseBuffer(mp4({ ...videoTrack, ...sizes }), { mimeType: 'video/mp4' });
+          assert.strictEqual(format.trackInfo[0].duration, 1);
+          assert.strictEqual(format.trackInfo[0].bitrate, 2400);
+        });
+      }
+
+      // A metadata sample entry is not an AudioSampleEntry, and may be shorter than one
+      for (const entrySize of [16, 18, 24, 34, 36]) {
+        it(`parses a metadata sample entry of ${entrySize} bytes`, async () => {
+          const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize });
+
+          const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
+
+          assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
+          assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
+        });
+      }
+
+      it('does not derive audio properties from a metadata track', async () => {
+        const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize: 36, audioLike: true });
+
+        const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
+
+        assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
+        assert.isUndefined(format.sampleRate, 'format.sampleRate');
+        assert.isUndefined(format.bitsPerSample, 'format.bitsPerSample');
+        assert.isUndefined(format.trackInfo[1].audio, 'metadata track is not described as audio');
+      });
+
+      it('derives audio properties from a sound track', async () => {
+        const buf = mp4(videoTrack, { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true });
+
+        const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
+
+        assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+        assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
+        assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
+      });
+
+      it('reports the data format of a non-audio track', async () => {
+        const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize: 20 });
+
+        const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
+
+        assert.strictEqual(format.trackInfo[0].codecName, '<avc1>', 'video track codec name');
+        assert.strictEqual(format.trackInfo[1].codecName, '<djmd>', 'metadata track codec name');
+      });
+
+      it('handles the handler box declared after the media information box', async () => {
+        const buf = mp4(videoTrack, {
+          handler: 'soun',
+          dataFormat: 'mp4a',
+          entrySize: 36,
+          audioLike: true,
+          handlerAfterMinf: true
+        });
+
+        const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
+
+        assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+        assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
+      });
+    });
+  });
+
+  describe('Track Header (tkhd) atom', () => {
+    const MAC_EPOCH_OFFSET = 2082844800; // seconds between 1904-01-01 and 1970-01-01
+
+    for (const [version, minimumLength] of [
+      [0, 38],
+      [1, 50]
+    ]) {
+      it(`rejects truncated version ${version} headers at every field boundary`, () => {
+        for (let length = 0; length < minimumLength; ++length) {
+          const buf = new Uint8Array(length);
+          if (length > 0) {
+            buf[0] = version;
+          }
+          assert.throws(() => new TrackHeaderAtom(length).get(buf, 0), Mp4ContentError, 'Truncated tkhd header');
+        }
+      });
+
+      it(`respects version ${version} atom and buffer boundaries at a nonzero offset`, () => {
+        const off = 8;
+        const buf = new Uint8Array(off + minimumLength + 8);
+        buf[off] = version;
+        new DataView(buf.buffer).setUint16(off + minimumLength - 2, 256);
+
+        assert.strictEqual(new TrackHeaderAtom(minimumLength).get(buf, off).volume, 256);
+        assert.throws(
+          () => new TrackHeaderAtom(minimumLength - 1).get(buf, off),
+          Mp4ContentError,
+          'Truncated tkhd header'
+        );
+        assert.throws(
+          () => new TrackHeaderAtom(minimumLength).get(buf.subarray(0, off + minimumLength - 1), off),
+          Mp4ContentError,
+          'Truncated tkhd header'
+        );
+      });
+
+      it(`rejects issue #2747 version ${version} through parseBuffer with a parse error`, async () => {
+        function box(name: string, body: Buffer): Buffer {
+          const buf = Buffer.alloc(8 + body.length);
+          buf.writeUInt32BE(buf.length);
+          buf.write(name, 4, 4, 'ascii');
+          body.copy(buf, 8);
+          return buf;
+        }
+
+        for (const length of [0, 4, 30, minimumLength - 1]) {
+          const body = Buffer.alloc(length);
+          if (length > 0) {
+            body[0] = version;
+          }
+          const buf = Buffer.concat([
+            box('ftyp', Buffer.from('M4A \0\0\0\0M4A isom')),
+            box('moov', box('trak', box('tkhd', body)))
+          ]);
+
+          await rejects(
+            mm.parseBuffer(buf, { mimeType: 'audio/mp4' }),
+            error => error instanceof mm.UnexpectedFileContentError && /Truncated tkhd header/.test(error.message)
+          );
+        }
       });
     }
-  }
 
-  it('combines sample counts and durations without a known media duration', async () => {
-    const buffer = concat(
-      mp4({
-        ...videoTrack,
-        timeScale: 1000,
-        duration: 0,
-        sampleSizes: [50, 50],
-        sampleDurations: [{ count: 2, duration: 500 }]
-      }),
-      fragment({ decodeTime: 3000n, samples: [{ duration: 1000, size: 200 }] })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
-    assert.strictEqual(format.trackInfo[0].video.frameRate, 1.5);
-    assert.strictEqual(format.containerDuration, 4);
+    it('reads version 1 (64-bit) creation time, modification time, track ID and duration at the right offsets', () => {
+      const buf = new Uint8Array(64);
+      const view = new DataView(buf.buffer);
+      buf[0] = 1; // version
+      buf[3] = 0x07; // flags (track enabled, in movie, in preview)
+      view.setBigUint64(4, BigInt(MAC_EPOCH_OFFSET + 1_500_000_000)); // creation time
+      view.setBigUint64(12, BigInt(MAC_EPOCH_OFFSET + 1_600_000_000)); // modification time
+      view.setUint32(20, 7); // track ID
+      view.setBigUint64(28, BigInt(5_000_000_000)); // duration (exceeds 32 bits)
+
+      const header = new TrackHeaderAtom(buf.length).get(buf, 0);
+
+      assert.strictEqual(header.version, 1, 'version');
+      assert.strictEqual(header.trackId, 7, 'trackId');
+      assert.strictEqual(header.duration, 5_000_000_000, 'duration');
+      assert.strictEqual(header.creationTime.getTime(), 1_500_000_000 * 1000, 'creationTime');
+      assert.strictEqual(header.modificationTime.getTime(), 1_600_000_000 * 1000, 'modificationTime');
+    });
+
+    it('reads version 0 (32-bit) track ID and duration', () => {
+      const buf = new Uint8Array(64);
+      const view = new DataView(buf.buffer);
+      buf[0] = 0; // version
+      buf[3] = 0x07; // flags
+      view.setUint32(4, MAC_EPOCH_OFFSET + 1000); // creation time
+      view.setUint32(8, MAC_EPOCH_OFFSET + 2000); // modification time
+      view.setUint32(12, 3); // track ID
+      view.setUint32(20, 12345); // duration
+
+      const header = new TrackHeaderAtom(buf.length).get(buf, 0);
+
+      assert.strictEqual(header.version, 0, 'version');
+      assert.strictEqual(header.trackId, 3, 'trackId');
+      assert.strictEqual(header.duration, 12345, 'duration');
+      assert.strictEqual(header.creationTime.getTime(), 1000 * 1000, 'creationTime');
+      assert.strictEqual(header.modificationTime.getTime(), 2000 * 1000, 'modificationTime');
+    });
+
+    it('throws on an unsupported version', () => {
+      const buf = new Uint8Array(64);
+      buf[0] = 2; // version
+
+      assert.throws(() => new TrackHeaderAtom(buf.length).get(buf, 0), /Invalid tkhd version header/);
+    });
   });
 
-  it('combines initial samples with default-only fragments', async () => {
-    const buffer = concat(
-      mp4({
-        ...videoTrack,
-        timeScale: 1000,
-        duration: 1000,
-        sampleSizes: [100],
-        sampleDurations: [{ count: 1, duration: 1000 }]
-      }),
-      fragment({ omitDecodeTime: true, count: 2, duration: 500, size: 100 })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 2, bitrate: 1200 });
-    assert.strictEqual(format.trackInfo[0].video.frameRate, 1.5);
-    assert.strictEqual(format.containerDuration, 2);
-  });
+  describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
+    // https://github.com/Borewit/music-metadata/issues/2552
+    it('rejects an M4A file with an atom size exceeding the remaining bytes', async () => {
+      // Audio and top-level padding were removed; the malformed metadata is unchanged.
+      const filePath = path.join(mp4Samples, 'issue-2552.m4a');
 
-  it('omits bitrate when fragment sizes are missing after initial samples', async () => {
-    const buffer = concat(
-      mp4({
-        ...videoTrack,
-        timeScale: 1000,
-        duration: 1000,
-        sampleSizes: [100],
-        sampleDurations: [{ count: 1, duration: 1000 }]
-      }),
-      fragment({ decodeTime: 1000n, samples: [{ duration: 1000 }] })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.strictEqual(format.trackInfo[0].duration, 2);
-    assert.isUndefined(format.trackInfo[0].bitrate);
-    assert.strictEqual(format.containerDuration, 2);
-  });
-
-  for (const useTrex of [false, true]) {
-    it(`supports default-only video fragments (${useTrex ? 'trex' : 'tfhd'} defaults)`, async () => {
-      const defaults = { duration: 40, size: 100 };
-      const buffer = concat(
-        mp4({ ...videoTrack, timeScale: 1000, duration: 0, ...(useTrex ? { fragmentDefaults: defaults } : {}) }),
-        fragment({ count: 50, ...(useTrex ? {} : defaults) })
+      await rejects(
+        mm.parseFile(filePath),
+        error => error instanceof Mp4ContentError && /Atom size exceeds remaining bytes/.test(error.message)
       );
-      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-      assert.include(format.trackInfo[0], { duration: 2, bitrate: 20000 });
-      assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
-    });
-  }
-
-  it('handles large default-only sample counts without allocating a sample array', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-      fragment({ count: 0xffffffff, duration: 1, size: 1 })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 0xffffffff / 1000, bitrate: 8000 });
-  });
-
-  it('leaves timing unknown when fragment defaults are missing', async () => {
-    const buffer = concat(mp4({ ...videoTrack, timeScale: 1000, duration: 0 }), fragment({ count: 50 }));
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.isUndefined(format.trackInfo[0].duration);
-    assert.isUndefined(format.trackInfo[0].bitrate);
-    assert.isUndefined(format.overallBitrate);
-  });
-
-  it('rejects fragment sample counts exceeding their payload', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, duration: 0 }),
-      fragment({ count: 2, samples: [{ duration: 40, size: 100 }] })
-    );
-    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Invalid trun sample count/);
-  });
-
-  it('continues fragment timing when a later run omits tfdt', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-      fragment({ decodeTimeVersion: 0, decodeTime: 5000n, samples: [{ duration: 100, size: 100 }] }),
-      fragment({ omitDecodeTime: true, samples: [{ duration: 100, size: 150 }] })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 10000 });
-    assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
-    assert.strictEqual(format.containerDuration, 5.2);
-  });
-
-  for (const useTrex of [false, true]) {
-    it(`applies ${useTrex ? 'trex' : 'tfhd'} defaults to samples carrying only flags`, async () => {
-      const defaults = { duration: 40, size: 100 };
-      const buffer = concat(
-        mp4({ ...videoTrack, timeScale: 1000, duration: 0, ...(useTrex ? { fragmentDefaults: defaults } : {}) }),
-        fragment({ samples: [{ flags: 0 }, { flags: 0 }], ...(useTrex ? {} : defaults) })
-      );
-      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-      assert.include(format.trackInfo[0], { duration: 0.08, bitrate: 20000 });
-      assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
-      assert.strictEqual(format.containerDuration, 0.08);
-    });
-  }
-
-  it('prefers per-sample values over tfhd and tfhd defaults over trex', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 0, fragmentDefaults: { duration: 10, size: 10 } }),
-      fragment({ duration: 40, size: 100, samples: [{ duration: 100, size: 200 }] }),
-      fragment({ omitDecodeTime: true, duration: 50, size: 150, samples: [{ flags: 0 }] })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 0.15, bitrate: (350 * 8) / 0.15 });
-    assert.strictEqual(format.trackInfo[0].video.frameRate, 2 / 0.15);
-  });
-
-  it('keeps known media duration when fragment timing is shorter', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 5000 }),
-      fragment({ samples: [{ duration: 100, size: 100 }] })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 5, bitrate: 160 });
-    assert.strictEqual(format.containerDuration, 5);
-  });
-
-  for (const duration of [undefined, 0]) {
-    it(`leaves per-sample timing unknown for ${duration === undefined ? 'missing' : 'zero'} duration`, async () => {
-      const buffer = concat(
-        mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-        fragment({ samples: [{ duration, size: 100 }] })
-      );
-      const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-      assert.isUndefined(format.trackInfo[0].duration);
-      assert.isUndefined(format.trackInfo[0].video.frameRate);
-      assert.isUndefined(format.trackInfo[0].bitrate);
-      assert.isUndefined(format.containerDuration);
-    });
-  }
-
-  it('retains per-sample timing without inventing missing sizes', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-      fragment({ samples: [{ duration: 100 }] })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.strictEqual(format.trackInfo[0].duration, 0.1);
-    assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
-    assert.isUndefined(format.trackInfo[0].bitrate);
-    assert.strictEqual(format.containerDuration, 0.1);
-  });
-
-  it('omits fragment statistics exceeding safe integer precision', async () => {
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-      fragment({ count: 0xffffffff, duration: 0xffffffff, size: 0xffffffff })
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.isUndefined(format.trackInfo[0].duration);
-    assert.isUndefined(format.trackInfo[0].video.frameRate);
-    assert.isUndefined(format.trackInfo[0].bitrate);
-    assert.isUndefined(format.containerDuration);
-  });
-
-  for (const [version, length] of [
-    [0, 3],
-    [0, 7],
-    [1, 11]
-  ]) {
-    it(`rejects a truncated version ${version} tfdt box (${length} bytes)`, async () => {
-      const data = new Uint8Array(length);
-      data[0] = version;
-      const buffer = concat(mp4(videoTrack), box('moof', box('traf', box('tfdt', data))));
-      await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Truncated tfdt box/);
-    });
-  }
-
-  it('rejects unsupported tfdt versions', async () => {
-    const buffer = concat(mp4(videoTrack), box('moof', box('traf', box('tfdt', Uint8Array.from([2, 0, 0, 0])))));
-    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Invalid tfdt version/);
-  });
-
-  it('rejects unsafe tfdt decode times', async () => {
-    const buffer = concat(mp4(videoTrack), fragment({ decodeTime: 0x20000000000000n }));
-    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Unsafe tfdt decode time/);
-  });
-
-  it('rejects truncated trex defaults', async () => {
-    const buffer = concat(mp4(videoTrack), box('moov', box('mvex', box('trex', new Uint8Array(23)))));
-    await rejects(mm.parseBuffer(buffer, { mimeType: 'video/mp4' }), /Truncated trex box/);
-  });
-
-  it('skips unknown track fragment boxes without losing sample timing', async () => {
-    const tfhd = new Uint8Array(8);
-    new DataView(tfhd.buffer).setUint32(4, 1);
-    const trun = new Uint8Array(16);
-    const run = new DataView(trun.buffer);
-    run.setUint32(0, 0x300);
-    run.setUint32(4, 1);
-    run.setUint32(8, 100);
-    run.setUint32(12, 100);
-    const buffer = concat(
-      mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
-      box('moof', box('traf', box('tfhd', tfhd), box('free', new Uint8Array(3)), box('trun', trun)))
-    );
-    const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
-    assert.include(format.trackInfo[0], { duration: 0.1, bitrate: 8000 });
-    assert.strictEqual(format.containerDuration, 0.1);
-  });
-
-  it('reports one track for multiple sample descriptions', async () => {
-    const { format } = await mm.parseBuffer(
-      mp4({
-        handler: 'soun',
-        dataFormat: 'mp4a',
-        entrySize: 36,
-        audioLike: true,
-        descriptionCount: 2
-      }),
-      { mimeType: 'audio/mp4' }
-    );
-    assert.lengthOf(format.trackInfo, 1);
-    assert.include(format.trackInfo[0], { id: 1, type: mm.TrackType.audio, codecId: 'mp4a' });
-  });
-
-  it('reports tracks without sample descriptions', async () => {
-    const { format } = await mm.parseBuffer(mp4({ ...videoTrack, noDescription: true }), { mimeType: 'video/mp4' });
-    assert.lengthOf(format.trackInfo, 1);
-    assert.include(format.trackInfo[0], { id: 1, type: mm.TrackType.video, duration: 1 });
-    assert.isUndefined(format.trackInfo[0].codecName);
-    assert.isFalse(format.hasAudio);
-    assert.isTrue(format.hasVideo);
-  });
-
-  for (const [handler, type] of [
-    ['vide', mm.TrackType.video],
-    ['soun', mm.TrackType.audio],
-    ['audi', mm.TrackType.audio],
-    ['text', mm.TrackType.subtitle],
-    ['sbtl', mm.TrackType.subtitle],
-    ['subt', mm.TrackType.subtitle],
-    ['clcp', mm.TrackType.subtitle],
-    ['meta', mm.TrackType.metadata],
-    ['mdta', mm.TrackType.metadata]
-  ] as const) {
-    it(`classifies ${handler} tracks independently of sample rate`, async () => {
-      const { format } = await mm.parseBuffer(mp4({ handler, dataFormat: 'test', entrySize: 16 }), {
-        mimeType: 'video/mp4'
-      });
-      assert.strictEqual(format.trackInfo[0].type, type);
-      assert.isUndefined(format.trackInfo[0].audio);
-    });
-  }
-
-  it('keeps an unknown handler unclassified', async () => {
-    const { format } = await mm.parseBuffer(
-      mp4({ handler: 'zzzz', dataFormat: 'test', entrySize: 36, audioLike: true }),
-      { mimeType: 'video/mp4' }
-    );
-    assert.isUndefined(format.trackInfo[0].type);
-    assert.isUndefined(format.trackInfo[0].audio);
-    assert.isFalse(format.hasAudio);
-  });
-
-  it('decodes packed ISO language codes', async () => {
-    const language = (5 << 10) | (14 << 5) | 7; // eng
-    const { format } = await mm.parseBuffer(mp4({ ...videoTrack, language }), { mimeType: 'video/mp4' });
-    assert.strictEqual(format.trackInfo[0].language, 'eng');
-  });
-
-  for (const spec of [
-    { ...videoTrack, timeScale: 0 },
-    { ...videoTrack, duration: 0xffffffff }
-  ]) {
-    it(`omits unknown duration (scale=${spec.timeScale ?? timeScale}, duration=${spec.duration ?? timeScale})`, async () => {
-      const { format } = await mm.parseBuffer(mp4(spec), { mimeType: 'video/mp4' });
-      assert.isUndefined(format.trackInfo[0].duration);
-      assert.isUndefined(format.trackInfo[0].bitrate);
-    });
-  }
-
-  for (const sizes of [{ fixedSampleSize: 100, sampleCount: 3 }, { sampleSizes: [50, 150, 100] }]) {
-    it(`calculates a track bitrate from ${sizes.sampleSizes ? 'variable' : 'fixed'} sample sizes`, async () => {
-      const { format } = await mm.parseBuffer(mp4({ ...videoTrack, ...sizes }), { mimeType: 'video/mp4' });
-      assert.strictEqual(format.trackInfo[0].duration, 1);
-      assert.strictEqual(format.trackInfo[0].bitrate, 2400);
-    });
-  }
-
-  // A metadata sample entry is not an AudioSampleEntry, and may be shorter than one
-  for (const entrySize of [16, 18, 24, 34, 36]) {
-    it(`parses a metadata sample entry of ${entrySize} bytes`, async () => {
-      const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize });
-
-      const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
-
-      assert.strictEqual(format.hasVideo, true, 'format.hasVideo');
-      assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
-    });
-  }
-
-  it('does not derive audio properties from a metadata track', async () => {
-    const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize: 36, audioLike: true });
-
-    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
-
-    assert.isUndefined(format.numberOfChannels, 'format.numberOfChannels');
-    assert.isUndefined(format.sampleRate, 'format.sampleRate');
-    assert.isUndefined(format.bitsPerSample, 'format.bitsPerSample');
-    assert.isUndefined(format.trackInfo[1].audio, 'metadata track is not described as audio');
-  });
-
-  it('derives audio properties from a sound track', async () => {
-    const buf = mp4(videoTrack, { handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true });
-
-    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
-
-    assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-    assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
-    assert.strictEqual(format.bitsPerSample, 16, 'format.bitsPerSample');
-  });
-
-  it('reports the data format of a non-audio track', async () => {
-    const buf = mp4(videoTrack, { handler: 'meta', dataFormat: 'djmd', entrySize: 20 });
-
-    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
-
-    assert.strictEqual(format.trackInfo[0].codecName, '<avc1>', 'video track codec name');
-    assert.strictEqual(format.trackInfo[1].codecName, '<djmd>', 'metadata track codec name');
-  });
-
-  it('handles the handler box declared after the media information box', async () => {
-    const buf = mp4(videoTrack, {
-      handler: 'soun',
-      dataFormat: 'mp4a',
-      entrySize: 36,
-      audioLike: true,
-      handlerAfterMinf: true
     });
 
-    const { format } = await mm.parseBuffer(buf, { mimeType: 'video/mp4' });
-
-    assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
-    assert.strictEqual(format.sampleRate, timeScale, 'format.sampleRate');
-  });
-});
-
-describe('MP4 atom size validation (GHSA-qc8q-pw95-mq6c)', () => {
-  // https://github.com/Borewit/music-metadata/issues/2552
-  it('rejects an M4A file with an atom size exceeding the remaining bytes', async () => {
-    // Audio and top-level padding were removed; the malformed metadata is unchanged.
-    const filePath = path.join(mp4Samples, 'issue-2552.m4a');
-
-    await rejects(
-      mm.parseFile(filePath),
-      error => error instanceof Mp4ContentError && /Atom size exceeds remaining bytes/.test(error.message)
-    );
-  });
-
-  function box(name: string, payload: Buffer = Buffer.alloc(0), size?: bigint, extended = false): Buffer {
-    const header = Buffer.alloc(extended ? 16 : 8);
-    header.writeUInt32BE(extended ? 1 : Number(size ?? BigInt(header.length + payload.length)));
-    header.write(name, 4, 'latin1');
-    if (extended) {
-      header.writeBigUInt64BE(size ?? BigInt(header.length + payload.length), 8);
+    function box(name: string, payload: Buffer = Buffer.alloc(0), size?: bigint, extended = false): Buffer {
+      const header = Buffer.alloc(extended ? 16 : 8);
+      header.writeUInt32BE(extended ? 1 : Number(size ?? BigInt(header.length + payload.length)));
+      header.write(name, 4, 'latin1');
+      if (extended) {
+        header.writeBigUInt64BE(size ?? BigInt(header.length + payload.length), 8);
+      }
+      return Buffer.concat([header, payload]);
     }
-    return Buffer.concat([header, payload]);
-  }
 
-  for (const stream of [false, true]) {
-    describe(stream ? 'unknown-size stream' : 'buffer', () => {
-      async function rejectBeforeAllocation(buffer: Buffer, message: RegExp): Promise<void> {
-        const tokenizer = stream
-          ? await fromStream(Readable.from([buffer], { objectMode: false }))
-          : fromBuffer(buffer);
+    for (const stream of [false, true]) {
+      describe(stream ? 'unknown-size stream' : 'buffer', () => {
+        async function rejectBeforeAllocation(buffer: Buffer, message: RegExp): Promise<void> {
+          const tokenizer = stream
+            ? await fromStream(Readable.from([buffer], { objectMode: false }))
+            : fromBuffer(buffer);
+          tokenizer.fileInfo.mimeType = 'audio/mp4';
+          const readToken = tokenizer.readToken.bind(tokenizer);
+          tokenizer.readToken = (token, position) => {
+            // Fail safely if a regression attempts to allocate an attacker-sized buffer.
+            assert.ok(token.len <= 1024, `Unvalidated allocation: ${token.len}`);
+            return readToken(token, position);
+          };
+          try {
+            await rejects(
+              mm.parseFromTokenizer(tokenizer),
+              error => error instanceof Mp4ContentError && message.test(error.message)
+            );
+          } finally {
+            await tokenizer.close();
+          }
+        }
+
+        for (const name of ['mvhd', 'stsd', 'stsz', 'date', 'ftyp', 'chap']) {
+          for (const size of [0xffffffffffffffffn, 0x20000000000000n, 0x10000000n]) {
+            it(`rejects ${name} with extended size ${size} before allocation`, async () => {
+              await rejectBeforeAllocation(box(name, Buffer.alloc(0), size, true), /size exceeds|buffering limit/);
+            });
+          }
+          it(`rejects oversized normal ${name} before allocation`, async () => {
+            await rejectBeforeAllocation(box(name, Buffer.alloc(0), 0xffffffffn), /size exceeds|buffering limit/);
+          });
+        }
+
+        for (const size of [2n, 7n]) {
+          it(`rejects normal size ${size} smaller than its header`, async () => {
+            await rejectBeforeAllocation(box('date', Buffer.alloc(0), size), /Invalid atom size/);
+          });
+        }
+        for (const size of [0n, 1n, 8n, 15n]) {
+          it(`rejects extended size ${size} smaller than its header`, async () => {
+            await rejectBeforeAllocation(box('date', Buffer.alloc(0), size, true), /Invalid atom size/);
+          });
+        }
+
+        it('rejects a child crossing its parent even when bytes follow the parent', async () => {
+          const parent = box('moov', box('date', Buffer.alloc(0), 32n));
+          await rejectBeforeAllocation(
+            Buffer.concat([parent, box('free', Buffer.alloc(32))]),
+            /size exceeds remaining/
+          );
+        });
+
+        it('rejects a truncated child header', async () => {
+          await rejectBeforeAllocation(box('moov', Buffer.alloc(7)), /Truncated atom header/);
+        });
+
+        it('rejects an extended header crossing its parent', async () => {
+          await rejectBeforeAllocation(
+            box('moov', box('date', Buffer.alloc(0), 16n, true).subarray(0, 8)),
+            /Truncated extended atom header/
+          );
+        });
+
+        it('caps a metadata payload even inside a large declared container', async () => {
+          const child = box('date', Buffer.alloc(0), 64n * 1024n * 1024n + 9n);
+          await rejectBeforeAllocation(box('moov', child, 0x10000000n), /size exceeds|buffering limit/);
+        });
+      });
+    }
+
+    describe('open-ended containers', () => {
+      async function parseStream(payload: Buffer): Promise<mm.IAudioMetadata> {
+        const stream = Readable.from([box('moov', payload, 0n)], { objectMode: false });
+        try {
+          return await mm.parseStream(stream, { mimeType: 'audio/mp4' });
+        } finally {
+          stream.destroy();
+        }
+      }
+
+      it('accepts clean EOF after finite children', async () => {
+        const { native, format } = await parseStream(Buffer.concat([box('date', Buffer.from('2026')), box('free')]));
+        assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+        assert.isFalse(format.hasAudio, 'No audio tracks are present');
+      });
+
+      it('accepts an empty container', async () => {
+        await parseStream(Buffer.alloc(0));
+      });
+
+      it('accepts nested open-ended containers', async () => {
+        const { native } = await parseStream(box('udta', box('date', Buffer.from('2026')), 0n));
+        assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+      });
+
+      for (const length of [1, 2, 3, 4, 5, 6, 7]) {
+        it(`rejects a partial child header of ${length} bytes`, async () => {
+          await rejects(parseStream(box('free').subarray(0, length)), /Truncated atom header/);
+        });
+      }
+
+      it('does not swallow EOF in an extended child header', async () => {
+        await rejects(parseStream(box('date', Buffer.alloc(0), 16n, true).subarray(0, 12)), EndOfStreamError);
+      });
+
+      it('does not swallow EOF in a child payload', async () => {
+        await rejects(parseStream(box('date', Buffer.from('abc'), 16n)), EndOfStreamError);
+      });
+    });
+
+    for (const length of [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11]) {
+      it(`rejects an ftyp payload of ${length} bytes before reading brands`, async () => {
+        const tokenizer = fromBuffer(
+          Buffer.concat([box('ftyp', Buffer.alloc(length)), box('date', Buffer.from('2026'))]),
+          { fileInfo: { mimeType: 'audio/mp4' } }
+        );
+        await rejects(mm.parseFromTokenizer(tokenizer), /Invalid ftyp payload length/);
+        assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
+      });
+    }
+
+    for (const name of ['ftyp', 'chap']) {
+      it(`rejects an oversized incremental ${name} before consuming its payload`, async () => {
+        const tokenizer = await fromStream(
+          Readable.from([box(name, Buffer.alloc(8), 64n * 1024n * 1024n + 12n)], { objectMode: false })
+        );
         tokenizer.fileInfo.mimeType = 'audio/mp4';
-        const readToken = tokenizer.readToken.bind(tokenizer);
-        tokenizer.readToken = (token, position) => {
-          // Fail safely if a regression attempts to allocate an attacker-sized buffer.
-          assert.ok(token.len <= 1024, `Unvalidated allocation: ${token.len}`);
-          return readToken(token, position);
-        };
         try {
           await rejects(
             mm.parseFromTokenizer(tokenizer),
-            error => error instanceof Mp4ContentError && message.test(error.message)
+            error => error instanceof Mp4ContentError && /buffering limit/.test(error.message)
           );
+          assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
         } finally {
           await tokenizer.close();
         }
-      }
-
-      for (const name of ['mvhd', 'stsd', 'stsz', 'date', 'ftyp', 'chap']) {
-        for (const size of [0xffffffffffffffffn, 0x20000000000000n, 0x10000000n]) {
-          it(`rejects ${name} with extended size ${size} before allocation`, async () => {
-            await rejectBeforeAllocation(box(name, Buffer.alloc(0), size, true), /size exceeds|buffering limit/);
-          });
-        }
-        it(`rejects oversized normal ${name} before allocation`, async () => {
-          await rejectBeforeAllocation(box(name, Buffer.alloc(0), 0xffffffffn), /size exceeds|buffering limit/);
-        });
-      }
-
-      for (const size of [2n, 7n]) {
-        it(`rejects normal size ${size} smaller than its header`, async () => {
-          await rejectBeforeAllocation(box('date', Buffer.alloc(0), size), /Invalid atom size/);
-        });
-      }
-      for (const size of [0n, 1n, 8n, 15n]) {
-        it(`rejects extended size ${size} smaller than its header`, async () => {
-          await rejectBeforeAllocation(box('date', Buffer.alloc(0), size, true), /Invalid atom size/);
-        });
-      }
-
-      it('rejects a child crossing its parent even when bytes follow the parent', async () => {
-        const parent = box('moov', box('date', Buffer.alloc(0), 32n));
-        await rejectBeforeAllocation(Buffer.concat([parent, box('free', Buffer.alloc(32))]), /size exceeds remaining/);
-      });
-
-      it('rejects a truncated child header', async () => {
-        await rejectBeforeAllocation(box('moov', Buffer.alloc(7)), /Truncated atom header/);
-      });
-
-      it('rejects an extended header crossing its parent', async () => {
-        await rejectBeforeAllocation(
-          box('moov', box('date', Buffer.alloc(0), 16n, true).subarray(0, 8)),
-          /Truncated extended atom header/
-        );
-      });
-
-      it('caps a metadata payload even inside a large declared container', async () => {
-        const child = box('date', Buffer.alloc(0), 64n * 1024n * 1024n + 9n);
-        await rejectBeforeAllocation(box('moov', child, 0x10000000n), /size exceeds|buffering limit/);
-      });
-    });
-  }
-
-  describe('open-ended containers', () => {
-    async function parseStream(payload: Buffer): Promise<mm.IAudioMetadata> {
-      const stream = Readable.from([box('moov', payload, 0n)], { objectMode: false });
-      try {
-        return await mm.parseStream(stream, { mimeType: 'audio/mp4' });
-      } finally {
-        stream.destroy();
-      }
-    }
-
-    it('accepts clean EOF after finite children', async () => {
-      const { native, format } = await parseStream(Buffer.concat([box('date', Buffer.from('2026')), box('free')]));
-      assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
-      assert.isFalse(format.hasAudio, 'No audio tracks are present');
-    });
-
-    it('accepts an empty container', async () => {
-      await parseStream(Buffer.alloc(0));
-    });
-
-    it('accepts nested open-ended containers', async () => {
-      const { native } = await parseStream(box('udta', box('date', Buffer.from('2026')), 0n));
-      assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
-    });
-
-    for (const length of [1, 2, 3, 4, 5, 6, 7]) {
-      it(`rejects a partial child header of ${length} bytes`, async () => {
-        await rejects(parseStream(box('free').subarray(0, length)), /Truncated atom header/);
       });
     }
 
-    it('does not swallow EOF in an extended child header', async () => {
-      await rejects(parseStream(box('date', Buffer.alloc(0), 16n, true).subarray(0, 12)), EndOfStreamError);
-    });
-
-    it('does not swallow EOF in a child payload', async () => {
-      await rejects(parseStream(box('date', Buffer.from('abc'), 16n)), EndOfStreamError);
-    });
-  });
-
-  for (const length of [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11]) {
-    it(`rejects an ftyp payload of ${length} bytes before reading brands`, async () => {
-      const tokenizer = fromBuffer(
-        Buffer.concat([box('ftyp', Buffer.alloc(length)), box('date', Buffer.from('2026'))]),
-        { fileInfo: { mimeType: 'audio/mp4' } }
+    it('accepts an eight-byte ftyp payload and preserves the following sibling', async () => {
+      const { format, native } = await mm.parseBuffer(
+        Buffer.concat([
+          box('ftyp', Buffer.from([0x4d, 0x34, 0x41, 0x20, 0, 0, 0, 0])),
+          box('date', Buffer.from('2026'))
+        ]),
+        'audio/mp4'
       );
-      await rejects(mm.parseFromTokenizer(tokenizer), /Invalid ftyp payload length/);
-      assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
+      assert.strictEqual(format.container, 'M4A');
+      assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
     });
-  }
 
-  for (const name of ['ftyp', 'chap']) {
-    it(`rejects an oversized incremental ${name} before consuming its payload`, async () => {
+    it('dispatches large media payloads without applying the metadata limit', async () => {
+      const size = 128n * 1024n * 1024n;
       const tokenizer = await fromStream(
-        Readable.from([box(name, Buffer.alloc(8), 64n * 1024n * 1024n + 12n)], { objectMode: false })
+        Readable.from([box('mdat', Buffer.alloc(0), size, true)], { objectMode: false })
       );
       tokenizer.fileInfo.mimeType = 'audio/mp4';
+      let skipped = 0;
+      tokenizer.ignore = async length => {
+        skipped += length;
+        return length;
+      };
       try {
-        await rejects(
-          mm.parseFromTokenizer(tokenizer),
-          error => error instanceof Mp4ContentError && /buffering limit/.test(error.message)
-        );
-        assert.strictEqual(tokenizer.position, 8, 'Only the atom header was consumed');
+        await mm.parseFromTokenizer(tokenizer);
+        assert.strictEqual(skipped, Number(size) - 16);
       } finally {
         await tokenizer.close();
       }
     });
-  }
 
-  it('accepts an eight-byte ftyp payload and preserves the following sibling', async () => {
-    const { format, native } = await mm.parseBuffer(
-      Buffer.concat([box('ftyp', Buffer.from([0x4d, 0x34, 0x41, 0x20, 0, 0, 0, 0])), box('date', Buffer.from('2026'))]),
-      'audio/mp4'
-    );
-    assert.strictEqual(format.container, 'M4A');
-    assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
-  });
-
-  it('dispatches large media payloads without applying the metadata limit', async () => {
-    const size = 128n * 1024n * 1024n;
-    const tokenizer = await fromStream(
-      Readable.from([box('mdat', Buffer.alloc(0), size, true)], { objectMode: false })
-    );
-    tokenizer.fileInfo.mimeType = 'audio/mp4';
-    let skipped = 0;
-    tokenizer.ignore = async length => {
-      skipped += length;
-      return length;
-    };
-    try {
-      await mm.parseFromTokenizer(tokenizer);
-      assert.strictEqual(skipped, Number(size) - 16);
-    } finally {
-      await tokenizer.close();
-    }
-  });
-
-  it('checks the remaining file bytes at a nonzero offset', async () => {
-    const tokenizer = fromBuffer(Buffer.concat([box('free'), box('date', Buffer.alloc(0), 16n)]));
-    await tokenizer.ignore(8);
-    await rejects(
-      Atom.readAtom(tokenizer, async () => assert.fail('Must not dispatch'), null, 100),
-      /size exceeds remaining/
-    );
-  });
-
-  it('accepts a size-zero container and child ending exactly at the boundary', async () => {
-    const { native } = await mm.parseBuffer(box('moov', box('date', Buffer.from('2026'), 0n), 0n), 'audio/mp4');
-    assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
-  });
-
-  it('accepts an extended metadata data atom and preserves the following sibling', async () => {
-    const dataHeader = Buffer.alloc(8);
-    dataHeader.writeUInt32BE(1); // UTF-8 data type
-    const title = box('©nam', box('data', Buffer.concat([dataHeader, Buffer.from('Title')]), undefined, true));
-    const { common, native } = await mm.parseBuffer(
-      box('moov', Buffer.concat([box('ilst', title), box('date', Buffer.from('2026'))])),
-      'audio/mp4'
-    );
-    assert.strictEqual(common.title, 'Title');
-    assert.deepEqual(
-      native.iTunes.find(tag => tag.id === 'date'),
-      { id: 'date', value: '2026' }
-    );
-  });
-
-  it('does not apply the metadata buffering limit to media data', async () => {
-    const size = 128n * 1024n * 1024n;
-    const tokenizer = await fromStream(
-      Readable.from([box('mdat', Buffer.alloc(0), size, true)], { objectMode: false })
-    );
-    try {
-      await Atom.readAtom(
-        tokenizer,
-        async (atom, length) => {
-          assert.strictEqual(atom.header.name, 'mdat');
-          assert.strictEqual(length, Number(size) - 16);
-        },
-        null,
-        Number.POSITIVE_INFINITY
+    it('checks the remaining file bytes at a nonzero offset', async () => {
+      const tokenizer = fromBuffer(Buffer.concat([box('free'), box('date', Buffer.alloc(0), 16n)]));
+      await tokenizer.ignore(8);
+      await rejects(
+        Atom.readAtom(tokenizer, async () => assert.fail('Must not dispatch'), null, 100),
+        /size exceeds remaining/
       );
-    } finally {
-      await tokenizer.close();
-    }
-  });
-});
+    });
 
-// https://github.com/Borewit/music-metadata/issues/2510
-// Checked-in public-domain AAC excerpts cover each layout.
-describe('MP4 chapters in seekable media', () => {
-  const fixtureDirectory = path.join(mp4Samples, 'seekable-chapters');
-  let expected: mm.IAudioMetadata;
+    it('accepts a size-zero container and child ending exactly at the boundary', async () => {
+      const { native } = await mm.parseBuffer(box('moov', box('date', Buffer.from('2026'), 0n), 0n), 'audio/mp4');
+      assert.deepEqual(native.iTunes, [{ id: 'date', value: '2026' }]);
+    });
 
-  before(async () => {
-    expected = await mm.parseFile(path.join(fixtureDirectory, 'leading-normal-single.m4b'), { includeChapters: true });
-    assert.lengthOf(expected.format.chapters, 3);
-    assert.deepEqual(
-      expected.format.chapters.map(chapter => chapter.title),
-      ['Opening Credits', 'Chapter 1', 'Chapter 2']
-    );
-    assert.deepEqual(
-      expected.format.chapters.map(chapter => chapter.start),
-      [0, 3000, 7000]
-    );
-  });
+    it('accepts an extended metadata data atom and preserves the following sibling', async () => {
+      const dataHeader = Buffer.alloc(8);
+      dataHeader.writeUInt32BE(1); // UTF-8 data type
+      const title = box('©nam', box('data', Buffer.concat([dataHeader, Buffer.from('Title')]), undefined, true));
+      const { common, native } = await mm.parseBuffer(
+        box('moov', Buffer.concat([box('ilst', title), box('date', Buffer.from('2026'))])),
+        'audio/mp4'
+      );
+      assert.strictEqual(common.title, 'Title');
+      assert.deepEqual(
+        native.iTunes.find(tag => tag.id === 'date'),
+        { id: 'date', value: '2026' }
+      );
+    });
 
-  function chunkTables(buffer: Buffer, offset = 0, end = buffer.length): number[] {
-    const tables: number[] = [];
-    while (offset < end) {
-      const size = buffer.readUInt32BE(offset);
-      const name = buffer.toString('ascii', offset + 4, offset + 8);
-      if (name === 'stco') {
-        tables.push(offset + 16);
-      } else if (['moov', 'trak', 'mdia', 'minf', 'stbl'].includes(name)) {
-        tables.push(...chunkTables(buffer, offset + 8, offset + size));
+    it('does not apply the metadata buffering limit to media data', async () => {
+      const size = 128n * 1024n * 1024n;
+      const tokenizer = await fromStream(
+        Readable.from([box('mdat', Buffer.alloc(0), size, true)], { objectMode: false })
+      );
+      try {
+        await Atom.readAtom(
+          tokenizer,
+          async (atom, length) => {
+            assert.strictEqual(atom.header.name, 'mdat');
+            assert.strictEqual(length, Number(size) - 16);
+          },
+          null,
+          Number.POSITIVE_INFINITY
+        );
+      } finally {
+        await tokenizer.close();
       }
-      offset += size;
-    }
-    return tables;
-  }
+    });
+  });
 
-  function fixture(trailingMoov = true, extended = false, split = false) {
-    const filename = `${trailingMoov ? 'trailing' : 'leading'}-${extended ? 'extended' : 'normal'}-${split ? 'split' : 'single'}.m4b`;
-    const file = path.join(fixtureDirectory, filename);
-    // Read a fresh copy so malformed-offset tests never modify the stored fixture.
-    const buffer = fs.readFileSync(file);
-    let payloadOffset = 0;
-    let payloadEnd = 0;
-    let moovOffset = 0;
-    let chapterTable = 0;
-    for (let offset = 0; offset < buffer.length; ) {
-      const extendedHeader = buffer.readUInt32BE(offset) === 1;
-      const size = extendedHeader ? Number(buffer.readBigUInt64BE(offset + 8)) : buffer.readUInt32BE(offset);
-      const headerLength = extendedHeader ? 16 : 8;
-      const name = buffer.toString('ascii', offset + 4, offset + 8);
-      if (name === 'mdat' && payloadOffset === 0) {
-        payloadOffset = offset + headerLength;
-        payloadEnd = offset + size;
-      } else if (name === 'moov') {
-        moovOffset = offset;
-        const tables = chunkTables(buffer, offset + headerLength, offset + size);
-        chapterTable = tables[tables.length - 1];
-      }
-      offset += size;
-    }
-    return { buffer, file, chapterTable, payloadOffset, payloadEnd, moovOffset };
-  }
+  describe('Chapters', () => {
+    describe('Audiobook fixtures', async () => {
+      /**
+       * Source audio-book: https://librivox.org/the-babys-songbook-by-walter-crane/
+       */
+      describe('BabysSongbook_librivox.m4b', async () => {
+        function checkMetadata(metadata: mm.IAudioMetadata) {
+          const { common, format } = metadata;
 
-  for (const trailingMoov of [false, true]) {
-    for (const extended of [false, true]) {
-      for (const split of [false, true]) {
-        describe(`${trailingMoov ? 'trailing' : 'leading'} moov, ${extended ? 'extended' : 'normal'} mdat, ${split ? 'two payloads' : 'one payload'}`, () => {
-          it('reads chapters from a seekable tokenizer without a known file size', async () => {
-            const { buffer } = fixture(trailingMoov, extended, split);
-            const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
-            delete tokenizer.fileInfo.size;
-            try {
-              const { format } = await mm.parseFromTokenizer(tokenizer, { includeChapters: true });
-              assert.deepEqual(format.chapters, expected.format.chapters);
-              assert.strictEqual(tokenizer.position, buffer.length);
-            } finally {
-              await tokenizer.close();
+          assert.deepEqual(format.container, 'M4A/3gp5/isom', 'format.container');
+          assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+          assert.approximately(format.duration!, 991.213, 1 / 500, 'format.duration');
+          assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
+          assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
+
+          assert.strictEqual(common.title, 'Babys Songbook', 'common.title');
+          assert.deepEqual(common.artists, ['Walter Crane'], 'common.artists');
+          assert.deepEqual(common.genre, ['Audiobook']);
+          assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
+          assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
+          assert.deepEqual(common.track, { no: null, of: null }, 'common.track');
+          assert.isUndefined(common.comment, 'common.comment');
+
+          const iTunes = mm.orderTags(metadata.native.iTunes);
+          assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
+
+          assert.deepEqual(format.chapters, [
+            {
+              sampleOffset: 45056,
+              timeScale: 44100,
+              start: 0,
+              title: "01 - Baby's Opera: 01 - Girls and Boys"
+            },
+            {
+              sampleOffset: 2695168,
+              timeScale: 44100,
+              start: 2690214,
+              title: "02 - Baby's Opera: 02 - The Mulberry Bush"
+            },
+            {
+              sampleOffset: 5083136,
+              timeScale: 44100,
+              start: 5072343,
+              title: "03 - Baby's Opera: 03 - Oranges and Lemons"
+            },
+            {
+              sampleOffset: 8352768,
+              timeScale: 44100,
+              start: 8335466,
+              title: "04 - Baby's Opera: 04 - St. Paul's Steeple"
+            },
+            {
+              sampleOffset: 10544128,
+              timeScale: 44100,
+              start: 10539994,
+              title: "05 - Baby's Opera: 05 - My Lady's Garden"
+            },
+            {
+              sampleOffset: 12284928,
+              timeScale: 44100,
+              start: 12260367,
+              title: "06 - Baby's Opera: 12 - Dickory Dock"
+            },
+            {
+              sampleOffset: 14125056,
+              timeScale: 44100,
+              start: 14112293,
+              title: "07 - Baby's Opera: 22 - Baa!Baa!Black Sheep"
+            },
+            {
+              sampleOffset: 16410624,
+              timeScale: 44100,
+              start: 16405319,
+              title: "08 - Baby's Bouquet: 01 - Dedication and Polly put the Kettle On"
+            },
+            {
+              sampleOffset: 19068928,
+              timeScale: 44100,
+              start: 19051667,
+              title: "09 - Baby's Bouquet: 02 - Hot Cross Buns"
+            },
+            {
+              sampleOffset: 21685248,
+              timeScale: 44100,
+              start: 21653824,
+              title: "10 - Baby's Bouquet: 03 - The Little Woman and the Pedlar"
+            },
+            {
+              sampleOffset: 30461952,
+              timeScale: 44100,
+              start: 30429742,
+              title: "11 - Baby's Bouquet: 04 - The Little Disaster"
+            },
+            {
+              sampleOffset: 37761024,
+              timeScale: 44100,
+              start: 37750318,
+              title: "12 - Baby's Bouquet: 05 - The Old Woman of Norwich"
+            },
+            {
+              sampleOffset: 39628800,
+              timeScale: 44100,
+              start: 39602731,
+              title: "13 - Baby's Bouquet: 12 - Lucy Locket"
+            },
+            {
+              sampleOffset: 41500672,
+              timeScale: 44100,
+              start: 41498151,
+              title: "14 - Baby's Bouquet: 18 - The North Wind & the Robin"
             }
-          });
+          ]);
+        }
 
-          for (const parser of ['buffer', 'blob', 'file'] as const) {
-            it(`reads every chapter from a ${parser}`, async () => {
-              const { buffer, file } = fixture(trailingMoov, extended, split);
-              const options = { includeChapters: true };
-              let metadata: mm.IAudioMetadata;
-              if (parser === 'file') {
-                metadata = await mm.parseFile(file, options);
-              } else if (parser === 'blob') {
-                metadata = await mm.parseBlob(new Blob([new Uint8Array(buffer)], { type: 'audio/mp4' }), options);
-              } else {
-                metadata = await mm.parseBuffer(buffer, 'audio/mp4', options);
-              }
-              assert.deepEqual(metadata.format, {
-                ...expected.format,
-                overallBitrate: (buffer.length * 8) / (expected.format.containerDuration ?? Number.NaN)
+        const filePath = path.join(mp4Samples, 'BabysSongbook_librivox.m4b');
+
+        it('from a file', async () => {
+          let metadata: mm.IAudioMetadata;
+          const stream = fs.createReadStream(filePath);
+          try {
+            metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
+          } finally {
+            stream.close();
+          }
+          checkMetadata(metadata);
+        });
+
+        it('from a stream', async () => {
+          const stream = fs.createReadStream(filePath);
+          const metadata = await mm.parseStream(stream, { mimeType: 'audio/mp4' }, { includeChapters: true });
+          stream.close();
+
+          checkMetadata(metadata);
+        });
+      });
+    });
+
+    // https://github.com/Borewit/music-metadata/issues/2510
+    // Checked-in public-domain AAC excerpts cover each layout.
+    describe('Seekable media', () => {
+      const fixtureDirectory = path.join(mp4Samples, 'seekable-chapters');
+      let expected: mm.IAudioMetadata;
+
+      before(async () => {
+        expected = await mm.parseFile(path.join(fixtureDirectory, 'leading-normal-single.m4b'), {
+          includeChapters: true
+        });
+        assert.lengthOf(expected.format.chapters, 3);
+        assert.deepEqual(
+          expected.format.chapters.map(chapter => chapter.title),
+          ['Opening Credits', 'Chapter 1', 'Chapter 2']
+        );
+        assert.deepEqual(
+          expected.format.chapters.map(chapter => chapter.start),
+          [0, 3000, 7000]
+        );
+      });
+
+      function chunkTables(buffer: Buffer, offset = 0, end = buffer.length): number[] {
+        const tables: number[] = [];
+        while (offset < end) {
+          const size = buffer.readUInt32BE(offset);
+          const name = buffer.toString('ascii', offset + 4, offset + 8);
+          if (name === 'stco') {
+            tables.push(offset + 16);
+          } else if (['moov', 'trak', 'mdia', 'minf', 'stbl'].includes(name)) {
+            tables.push(...chunkTables(buffer, offset + 8, offset + size));
+          }
+          offset += size;
+        }
+        return tables;
+      }
+
+      function fixture(trailingMoov = true, extended = false, split = false) {
+        const filename = `${trailingMoov ? 'trailing' : 'leading'}-${extended ? 'extended' : 'normal'}-${split ? 'split' : 'single'}.m4b`;
+        const file = path.join(fixtureDirectory, filename);
+        // Read a fresh copy so malformed-offset tests never modify the stored fixture.
+        const buffer = fs.readFileSync(file);
+        let payloadOffset = 0;
+        let payloadEnd = 0;
+        let moovOffset = 0;
+        let chapterTable = 0;
+        for (let offset = 0; offset < buffer.length; ) {
+          const extendedHeader = buffer.readUInt32BE(offset) === 1;
+          const size = extendedHeader ? Number(buffer.readBigUInt64BE(offset + 8)) : buffer.readUInt32BE(offset);
+          const headerLength = extendedHeader ? 16 : 8;
+          const name = buffer.toString('ascii', offset + 4, offset + 8);
+          if (name === 'mdat' && payloadOffset === 0) {
+            payloadOffset = offset + headerLength;
+            payloadEnd = offset + size;
+          } else if (name === 'moov') {
+            moovOffset = offset;
+            const tables = chunkTables(buffer, offset + headerLength, offset + size);
+            chapterTable = tables[tables.length - 1];
+          }
+          offset += size;
+        }
+        return { buffer, file, chapterTable, payloadOffset, payloadEnd, moovOffset };
+      }
+
+      for (const trailingMoov of [false, true]) {
+        for (const extended of [false, true]) {
+          for (const split of [false, true]) {
+            describe(`${trailingMoov ? 'trailing' : 'leading'} moov, ${extended ? 'extended' : 'normal'} mdat, ${split ? 'two payloads' : 'one payload'}`, () => {
+              it('reads chapters from a seekable tokenizer without a known file size', async () => {
+                const { buffer } = fixture(trailingMoov, extended, split);
+                const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
+                delete tokenizer.fileInfo.size;
+                try {
+                  const { format } = await mm.parseFromTokenizer(tokenizer, { includeChapters: true });
+                  assert.deepEqual(format.chapters, expected.format.chapters);
+                  assert.strictEqual(tokenizer.position, buffer.length);
+                } finally {
+                  await tokenizer.close();
+                }
               });
-              assert.deepEqual(metadata.common, expected.common);
+
+              for (const parser of ['buffer', 'blob', 'file'] as const) {
+                it(`reads every chapter from a ${parser}`, async () => {
+                  const { buffer, file } = fixture(trailingMoov, extended, split);
+                  const options = { includeChapters: true };
+                  let metadata: mm.IAudioMetadata;
+                  if (parser === 'file') {
+                    metadata = await mm.parseFile(file, options);
+                  } else if (parser === 'blob') {
+                    metadata = await mm.parseBlob(new Blob([new Uint8Array(buffer)], { type: 'audio/mp4' }), options);
+                  } else {
+                    metadata = await mm.parseBuffer(buffer, 'audio/mp4', options);
+                  }
+                  assert.deepEqual(metadata.format, {
+                    ...expected.format,
+                    overallBitrate: (buffer.length * 8) / (expected.format.containerDuration ?? Number.NaN)
+                  });
+                  assert.deepEqual(metadata.common, expected.common);
+                });
+              }
             });
           }
-        });
+        }
       }
-    }
-  }
 
-  it('restores the tokenizer position and reads no audio payload', async () => {
-    const { buffer, payloadOffset, payloadEnd } = fixture();
-    const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
-    const readBuffer = tokenizer.readBuffer.bind(tokenizer);
-    let mediaBytesRead = 0;
-    tokenizer.readBuffer = async (target, options) => {
-      const position = options?.position ?? tokenizer.position;
-      const bytesRead = await readBuffer(target, options);
-      if (position >= payloadOffset && position < payloadEnd) {
-        mediaBytesRead += bytesRead;
-      }
-      return bytesRead;
-    };
-    const { format } = await mm.parseFromTokenizer(tokenizer, { includeChapters: true });
-    assert.deepEqual(format.chapters, expected.format.chapters);
-    assert.strictEqual(tokenizer.position, buffer.length);
-    assert.isAbove(mediaBytesRead, 0);
-    assert.isBelow(mediaBytesRead, 2048, 'Only the small chapter samples should be read');
-  });
+      it('restores the tokenizer position and reads no audio payload', async () => {
+        const { buffer, payloadOffset, payloadEnd } = fixture();
+        const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
+        const readBuffer = tokenizer.readBuffer.bind(tokenizer);
+        let mediaBytesRead = 0;
+        tokenizer.readBuffer = async (target, options) => {
+          const position = options?.position ?? tokenizer.position;
+          const bytesRead = await readBuffer(target, options);
+          if (position >= payloadOffset && position < payloadEnd) {
+            mediaBytesRead += bytesRead;
+          }
+          return bytesRead;
+        };
+        const { format } = await mm.parseFromTokenizer(tokenizer, { includeChapters: true });
+        assert.deepEqual(format.chapters, expected.format.chapters);
+        assert.strictEqual(tokenizer.position, buffer.length);
+        assert.isAbove(mediaBytesRead, 0);
+        assert.isBelow(mediaBytesRead, 2048, 'Only the small chapter samples should be read');
+      });
 
-  for (const includeChapters of [undefined, false]) {
-    it(`leaves chapters disabled with includeChapters=${includeChapters}`, async () => {
-      const { format } = await mm.parseBuffer(fixture().buffer, 'audio/mp4', { includeChapters });
-      assert.isUndefined(format.chapters);
-      assert.strictEqual(format.duration, expected.format.duration);
-    });
-  }
-
-  for (const trailingMoov of [false, true]) {
-    for (const extended of [false, true]) {
-      for (const split of [false, true]) {
-        it(`${trailingMoov ? 'skips unavailable' : 'preserves'} chapters in a forward-only stream (extended=${extended}, split=${split})`, async () => {
-          const stream = Readable.from([fixture(trailingMoov, extended, split).buffer], { objectMode: false });
-          const { format } = await mm.parseStream(stream, 'audio/mp4', { includeChapters: true });
-          assert.deepEqual(format.chapters, trailingMoov ? undefined : expected.format.chapters);
+      for (const includeChapters of [undefined, false]) {
+        it(`leaves chapters disabled with includeChapters=${includeChapters}`, async () => {
+          const { format } = await mm.parseBuffer(fixture().buffer, 'audio/mp4', { includeChapters });
+          assert.isUndefined(format.chapters);
           assert.strictEqual(format.duration, expected.format.duration);
         });
       }
-    }
-  }
 
-  for (const location of ['header', 'gap between payloads', 'crossing boundary', 'past final payload'] as const) {
-    it(`rejects a forward-only chapter sample in ${location}`, async () => {
-      const { buffer, chapterTable, payloadOffset, payloadEnd } = fixture(false, true, true);
-      const offset =
-        location === 'header'
-          ? payloadOffset - 1
-          : location === 'gap between payloads'
-            ? payloadEnd + 8
-            : location === 'crossing boundary'
-              ? payloadEnd - 1
-              : buffer.length + 16;
-      // The second chapter belongs to the later mdat; the first ends at the split boundary.
-      const entry = location === 'gap between payloads' || location === 'past final payload' ? 1 : 0;
-      buffer.writeUInt32BE(offset, chapterTable + entry * 4);
-      const stream = Readable.from([buffer], { objectMode: false });
-      await rejects(
-        mm.parseStream(stream, 'audio/mp4', { includeChapters: true }),
-        error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
-      );
-    });
-  }
-
-  for (const location of ['header', 'moov', 'crossing boundary'] as const) {
-    it(`rejects a chapter sample in ${location} and restores the position`, async () => {
-      const { buffer, chapterTable, payloadOffset, payloadEnd, moovOffset } = fixture();
-      const offset = location === 'header' ? payloadOffset - 1 : location === 'moov' ? moovOffset + 8 : payloadEnd - 1;
-      buffer.writeUInt32BE(offset, chapterTable);
-      const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
-      await rejects(
-        mm.parseFromTokenizer(tokenizer, { includeChapters: true }),
-        error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
-      );
-      assert.strictEqual(tokenizer.position, buffer.length);
-    });
-  }
-});
-
-// https://github.com/readest/readest/issues/6262
-describe('MP4 chapter tracks and Nero lists', () => {
-  const u32 = (value: number) => {
-    const bytes = Buffer.alloc(4);
-    bytes.writeUInt32BE(value);
-    return bytes;
-  };
-  const u64 = (value: bigint) => {
-    const bytes = Buffer.alloc(8);
-    bytes.writeBigUInt64BE(value);
-    return bytes;
-  };
-  const box = (name: string, ...payload: Buffer[]) => {
-    const body = Buffer.concat(payload);
-    return Buffer.concat([u32(body.length + 8), Buffer.from(name), body]);
-  };
-  const fullBox = (name: string, ...payload: Buffer[]) => box(name, u32(0), ...payload);
-  const table = (name: string, rows: number[][]) => fullBox(name, u32(rows.length), ...rows.flat().map(u32));
-  const text = (title: string, utf16 = false) => {
-    const encoded = Buffer.from(title, utf16 ? 'utf16le' : 'utf8');
-    const bytes = utf16 ? Buffer.concat([Buffer.from([0xfe, 0xff]), encoded.swap16()]) : encoded;
-    const length = Buffer.alloc(2);
-    length.writeUInt16BE(bytes.length);
-    return Buffer.concat([length, bytes]);
-  };
-  const nero = (version = 1) =>
-    box(
-      'udta',
-      box(
-        'chpl',
-        Buffer.from([version, 0, 0, 0]),
-        ...(version ? [u32(0)] : []),
-        Buffer.from([2]),
-        u64(0n),
-        Buffer.from([7]),
-        Buffer.from('Prelude'),
-        u64(125_000_000n),
-        Buffer.from([9]),
-        Buffer.from('Chapter 1')
-      )
-    );
-
-  function audiobook({
-    trailing = false,
-    grouped = true,
-    fixed = false,
-    offset64 = false,
-    version = 0,
-    handler = 'text',
-    refs = [2],
-    neroVersion,
-    invalidRuns,
-    emptyTitles = false,
-    chapterCount
-  }: {
-    trailing?: boolean;
-    grouped?: boolean;
-    fixed?: boolean;
-    offset64?: boolean;
-    version?: number;
-    handler?: string | null;
-    refs?: number[];
-    neroVersion?: number;
-    invalidRuns?: number[][];
-    emptyTitles?: boolean;
-    chapterCount?: number;
-  } = {}) {
-    const samples = chapterCount
-      ? Array.from({ length: chapterCount }, () => text('C'))
-      : fixed
-        ? [text('Chapter 1'), text('Chapter 2')]
-        : [text('Opening Credits'), text('Chapter 1'), text('Chapter 2', true)];
-    if (emptyTitles) {
-      samples.fill(text(''));
-    }
-    const sizes = samples.map(sample => sample.length);
-    const ftyp = box('ftyp', Buffer.from('M4B '), u32(0), Buffer.from('isom'));
-    const audio = Buffer.alloc(100);
-    const payload = grouped
-      ? Buffer.concat([audio, ...samples])
-      : Buffer.concat(samples.flatMap(sample => [audio, sample]));
-    const moovFor = (mdatOffset: number) => {
-      const tkhd = (id: number) => {
-        const header = Buffer.alloc(version ? 96 : 84);
-        header[0] = version;
-        header.writeUInt32BE(id, version ? 20 : 12);
-        return box('tkhd', header);
-      };
-      const mdhd = () => {
-        const header = Buffer.alloc(version ? 36 : 24);
-        header[0] = version;
-        header.writeUInt32BE(1_000, version ? 20 : 12);
-        if (version) {
-          header.writeBigUInt64BE(90_000n, 24);
-        } else {
-          header.writeUInt32BE(90_000, 16);
+      for (const trailingMoov of [false, true]) {
+        for (const extended of [false, true]) {
+          for (const split of [false, true]) {
+            it(`${trailingMoov ? 'skips unavailable' : 'preserves'} chapters in a forward-only stream (extended=${extended}, split=${split})`, async () => {
+              const stream = Readable.from([fixture(trailingMoov, extended, split).buffer], { objectMode: false });
+              const { format } = await mm.parseStream(stream, 'audio/mp4', { includeChapters: true });
+              assert.deepEqual(format.chapters, trailingMoov ? undefined : expected.format.chapters);
+              assert.strictEqual(format.duration, expected.format.duration);
+            });
+          }
         }
-        return box('mdhd', header);
-      };
-      const hdlr = (name: string) => {
-        const header = Buffer.alloc(28);
-        header.write(name, 8);
-        return box('hdlr', header);
-      };
-      const audioEntry = Buffer.alloc(36);
-      audioEntry.writeUInt32BE(36);
-      audioEntry.write('mp4a', 4);
-      audioEntry.writeUInt16BE(1, 14);
-      audioEntry.writeUInt16BE(1, 24);
-      audioEntry.writeUInt16BE(16, 26);
-      audioEntry.writeUInt16BE(1_000, 32);
-      const audioTrack = box(
-        'trak',
-        tkhd(1),
-        box('tref', box('chap', ...refs.map(u32))),
-        box(
-          'mdia',
-          mdhd(),
-          hdlr('soun'),
-          box(
-            'minf',
-            box(
-              'stbl',
-              fullBox('stsd', u32(1), audioEntry),
-              table('stco', []),
-              table('stsc', []),
-              table('stts', []),
-              fullBox('stsz', u32(0), u32(0))
-            )
-          )
-        )
-      );
-      let sampleOffset = mdatOffset + 8;
-      const offsets = samples.map(sample => {
-        sampleOffset += grouped ? 0 : audio.length;
-        const offset = sampleOffset;
-        sampleOffset += sample.length;
-        return offset;
-      });
-      if (grouped) {
-        offsets.splice(0, offsets.length, mdatOffset + 8 + audio.length);
       }
-      const chunkBox = offset64
-        ? fullBox('co64', u32(offsets.length), ...offsets.map(offset => u64(BigInt(offset))))
-        : table(
-            'stco',
-            offsets.map(offset => [offset])
-          );
-      const chapterTrack = box(
-        'trak',
-        tkhd(2),
-        box(
-          'mdia',
-          mdhd(),
-          ...(handler ? [hdlr(handler)] : []),
-          box(
-            'minf',
-            box(
-              'stbl',
-              fullBox('stsd', u32(0)),
-              chunkBox,
-              table('stsc', invalidRuns ?? [[1, grouped ? samples.length : 1, 1]]),
-              table(
-                'stts',
-                chapterCount
-                  ? [[chapterCount, 1_000]]
-                  : fixed
-                    ? [[2, 10_000]]
-                    : [
-                        [1, 5_000],
-                        [2, 30_000]
-                      ]
-              ),
-              fullBox('stsz', u32(fixed ? sizes[0] : 0), u32(samples.length), ...(fixed ? [] : sizes.map(u32)))
-            )
-          )
-        )
-      );
-      return box('moov', audioTrack, chapterTrack, ...(neroVersion === undefined ? [] : [nero(neroVersion)]));
-    };
-    const moov = moovFor(ftyp.length + (trailing ? 0 : moovFor(0).length));
-    return Buffer.concat(trailing ? [ftyp, box('mdat', payload), moov] : [ftyp, moov, box('mdat', payload)]);
-  }
 
-  const chapterList = (metadata: mm.IAudioMetadata) =>
-    metadata.format.chapters?.map(({ title, start, timeScale }) => ({ title, start, timeScale }));
-  const expected = [
-    { title: 'Opening Credits', start: 0, timeScale: 1_000 },
-    { title: 'Chapter 1', start: 5_000, timeScale: 1_000 },
-    { title: 'Chapter 2', start: 35_000, timeScale: 1_000 }
-  ];
-  const expectedNero = [
-    { title: 'Prelude', start: 0, timeScale: 10_000_000 },
-    { title: 'Chapter 1', start: 125_000_000, timeScale: 10_000_000 }
-  ];
-
-  describe('MP4 chapters in real audiobook excerpts', () => {
-    for (const filename of ['chapters-leading.m4b', 'chapters-nero.m4b']) {
-      for (const parser of Parsers) {
-        it(`${filename}: ${parser.description}`, async function () {
-          const metadata = await parser.parse(() => this.skip(), path.join(samplePath, 'mp4', filename), 'audio/mp4', {
-            includeChapters: true
-          });
-          assert.approximately(metadata.format.duration, 10, 0.02);
-          assert.strictEqual(metadata.format.codec, 'MPEG-4/AAC');
-          assert.deepEqual(
-            metadata.format.chapters?.map(({ title, start, timeScale }) => ({ title, start: start / timeScale })),
-            [
-              { title: 'Opening Credits', start: 0 },
-              { title: 'Chapter 1', start: 3 },
-              { title: 'Chapter 2', start: 7 }
-            ]
+      for (const location of ['header', 'gap between payloads', 'crossing boundary', 'past final payload'] as const) {
+        it(`rejects a forward-only chapter sample in ${location}`, async () => {
+          const { buffer, chapterTable, payloadOffset, payloadEnd } = fixture(false, true, true);
+          const offset =
+            location === 'header'
+              ? payloadOffset - 1
+              : location === 'gap between payloads'
+                ? payloadEnd + 8
+                : location === 'crossing boundary'
+                  ? payloadEnd - 1
+                  : buffer.length + 16;
+          // The second chapter belongs to the later mdat; the first ends at the split boundary.
+          const entry = location === 'gap between payloads' || location === 'past final payload' ? 1 : 0;
+          buffer.writeUInt32BE(offset, chapterTable + entry * 4);
+          const stream = Readable.from([buffer], { objectMode: false });
+          await rejects(
+            mm.parseStream(stream, 'audio/mp4', { includeChapters: true }),
+            error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
           );
         });
       }
-    }
-  });
 
-  // Constructed boxes below cover malformed input and table/encoding boundary cases.
-  describe('MP4 chapter sample tables', () => {
-    for (const trailing of [false, true]) {
-      for (const offset64 of [false, true]) {
-        it(`reads grouped samples with ${offset64 ? 'co64' : 'stco'} and ${trailing ? 'trailing' : 'leading'} moov`, async () => {
-          const metadata = await mm.parseBuffer(audiobook({ trailing, offset64 }), 'audio/mp4', {
-            includeChapters: true
-          });
-          assert.deepEqual(chapterList(metadata), expected);
-          assert.strictEqual(metadata.format.duration, 90);
+      for (const location of ['header', 'moov', 'crossing boundary'] as const) {
+        it(`rejects a chapter sample in ${location} and restores the position`, async () => {
+          const { buffer, chapterTable, payloadOffset, payloadEnd, moovOffset } = fixture();
+          const offset =
+            location === 'header' ? payloadOffset - 1 : location === 'moov' ? moovOffset + 8 : payloadEnd - 1;
+          buffer.writeUInt32BE(offset, chapterTable);
+          const tokenizer = fromBuffer(buffer, { fileInfo: { mimeType: 'audio/mp4' } });
+          await rejects(
+            mm.parseFromTokenizer(tokenizer, { includeChapters: true }),
+            error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
+          );
+          assert.strictEqual(tokenizer.position, buffer.length);
         });
       }
-    }
-    it('falls back to Nero when a streamed chapter remains beyond the final payload', async () => {
-      const buffer = audiobook({ grouped: false, neroVersion: 1 });
-      const table = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
-      buffer.writeUInt32BE(buffer.length + 16, table + 4);
-      const stream = Readable.from([buffer], { objectMode: false });
-      const metadata = await mm.parseStream(stream, 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(chapterList(metadata), expectedNero);
-      assert.isTrue(metadata.quality.warnings.some(warning => warning.message.includes('Cannot read chapter track')));
     });
 
-    it('expands repeated time-to-sample entries with one sample per chunk', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ grouped: false }), 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(chapterList(metadata), expected);
-    });
-    it('uses fixed sample sizes and the declared sample count', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ fixed: true }), 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(chapterList(metadata), [
-        { title: 'Chapter 1', start: 0, timeScale: 1_000 },
-        { title: 'Chapter 2', start: 10_000, timeScale: 1_000 }
-      ]);
-    });
-    it('reads version 1 track and media headers', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ version: 1 }), 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(chapterList(metadata), expected);
-    });
-    it('accepts a chapter track without a handler', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ handler: null }), 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(chapterList(metadata), expected);
-    });
-    it('reads grouped chapter samples from a forward-only faststart stream', async () => {
-      const metadata = await mm.parseStream(
-        Readable.from([audiobook({ trailing: false })], { objectMode: false }),
-        'audio/mp4',
-        {
-          includeChapters: true
+    describe('Chapter tracks and Nero lists', () => {
+      const u32 = (value: number) => {
+        const bytes = Buffer.alloc(4);
+        bytes.writeUInt32BE(value);
+        return bytes;
+      };
+      const u64 = (value: bigint) => {
+        const bytes = Buffer.alloc(8);
+        bytes.writeBigUInt64BE(value);
+        return bytes;
+      };
+      const box = (name: string, ...payload: Buffer[]) => {
+        const body = Buffer.concat(payload);
+        return Buffer.concat([u32(body.length + 8), Buffer.from(name), body]);
+      };
+      const fullBox = (name: string, ...payload: Buffer[]) => box(name, u32(0), ...payload);
+      const table = (name: string, rows: number[][]) => fullBox(name, u32(rows.length), ...rows.flat().map(u32));
+      const text = (title: string, utf16 = false) => {
+        const encoded = Buffer.from(title, utf16 ? 'utf16le' : 'utf8');
+        const bytes = utf16 ? Buffer.concat([Buffer.from([0xfe, 0xff]), encoded.swap16()]) : encoded;
+        const length = Buffer.alloc(2);
+        length.writeUInt16BE(bytes.length);
+        return Buffer.concat([length, bytes]);
+      };
+      const nero = (version = 1) =>
+        box(
+          'udta',
+          box(
+            'chpl',
+            Buffer.from([version, 0, 0, 0]),
+            ...(version ? [u32(0)] : []),
+            Buffer.from([2]),
+            u64(0n),
+            Buffer.from([7]),
+            Buffer.from('Prelude'),
+            u64(125_000_000n),
+            Buffer.from([9]),
+            Buffer.from('Chapter 1')
+          )
+        );
+
+      function audiobook({
+        trailing = false,
+        grouped = true,
+        fixed = false,
+        offset64 = false,
+        version = 0,
+        handler = 'text',
+        refs = [2],
+        neroVersion,
+        invalidRuns,
+        emptyTitles = false,
+        chapterCount
+      }: {
+        trailing?: boolean;
+        grouped?: boolean;
+        fixed?: boolean;
+        offset64?: boolean;
+        version?: number;
+        handler?: string | null;
+        refs?: number[];
+        neroVersion?: number;
+        invalidRuns?: number[][];
+        emptyTitles?: boolean;
+        chapterCount?: number;
+      } = {}) {
+        const samples = chapterCount
+          ? Array.from({ length: chapterCount }, () => text('C'))
+          : fixed
+            ? [text('Chapter 1'), text('Chapter 2')]
+            : [text('Opening Credits'), text('Chapter 1'), text('Chapter 2', true)];
+        if (emptyTitles) {
+          samples.fill(text(''));
         }
-      );
-      assert.deepEqual(chapterList(metadata), expected);
-    });
-    for (const neroVersion of [0, 1]) {
-      it(`falls back to Nero chpl version ${neroVersion} for a self-reference`, async () => {
-        const metadata = await mm.parseBuffer(audiobook({ refs: [1], neroVersion }), 'audio/mp4', {
-          includeChapters: true
-        });
-        assert.deepEqual(chapterList(metadata), expectedNero);
-      });
-    }
-    it('prefers a usable chapter track to a Nero list', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ neroVersion: 1 }), 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(chapterList(metadata), expected);
-    });
-    it('falls back to Nero when a chapter track has no titles', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ emptyTitles: true, neroVersion: 1 }), 'audio/mp4', {
-        includeChapters: true
-      });
-      assert.deepEqual(chapterList(metadata), expectedNero);
-    });
-    for (const invalidRuns of [
-      [[1, 0, 1]],
-      [[0, 1, 1]],
-      [
-        [1, 1, 1],
-        [1, 2, 1]
-      ],
-      [
-        [2, 1, 1],
-        [1, 2, 1]
-      ],
-      [
-        [1, 1, 1],
-        [0xffffffff, 1, 1]
-      ]
-    ]) {
-      it(`falls back to Nero for invalid chunk runs ${JSON.stringify(invalidRuns)}`, async () => {
-        const metadata = await mm.parseBuffer(audiobook({ invalidRuns, neroVersion: 1 }), 'audio/mp4', {
-          includeChapters: true
-        });
-        assert.deepEqual(chapterList(metadata), expectedNero);
-      });
-    }
-    it('bounds a large declared chapter count', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ chapterCount: 1_020 }), 'audio/mp4', { includeChapters: true });
-      assert.lengthOf(metadata.format.chapters, 1_000);
-      assert.strictEqual(metadata.format.chapters[999].start, 999_000);
-      assert.match(metadata.quality.warnings[0].message, /chapter limit/);
-    });
-    it('retains a timestamp when a title sample is empty', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ emptyTitles: true }), 'audio/mp4', { includeChapters: true });
-      assert.deepEqual(
-        chapterList(metadata),
-        expected.map(chapter => ({ ...chapter, title: '' }))
-      );
-    });
-    it('does not use an audio track as a chapter track', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ handler: 'soun', neroVersion: 1 }), 'audio/mp4', {
-        includeChapters: true
-      });
-      assert.deepEqual(chapterList(metadata), expectedNero);
-    });
-    it('does not read Nero chapters unless requested', async () => {
-      const metadata = await mm.parseBuffer(audiobook({ refs: [], neroVersion: 1 }), 'audio/mp4');
-      assert.isUndefined(metadata.format.chapters);
-    });
-    it('decodes unsigned 32-bit chunk offsets above 2 GiB', () => {
-      const payload = Buffer.concat([u32(0), u32(1), u32(0x80000000)]);
-      assert.deepEqual(new StcoAtom(payload.length).get(payload, 0).entries, [0x80000000]);
-    });
-    it('bounds title text to its own sample and decodes UTF-16', () => {
-      const sample = text('Chapter 2', true);
-      assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Chapter 2');
-      const truncated = Buffer.from([0xff, 0xff, 0x41]);
-      assert.strictEqual(new ChapterText(truncated.length).get(truncated, 0), 'A');
-    });
-    it('preserves UTF-16LE chapter titles with accented characters and surrogate pairs', () => {
-      const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('Café 🌍', 'utf16le')]);
-      const sample = Buffer.alloc(bytes.length + 2);
-      sample.writeUInt16BE(bytes.length);
-      sample.set(bytes, 2);
-      assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Café 🌍');
-    });
-    for (const length of [0, 1]) {
-      it(`returns an empty title when the ${length}-byte sample has no length field`, () => {
-        assert.strictEqual(new ChapterText(length).get(Buffer.alloc(length), 0), '');
-      });
-    }
-    it('does not decode bytes beyond a chapter sample embedded in a larger buffer', () => {
-      const sample = Buffer.from([0xff, 0xff, 0x41]);
-      const buffer = Buffer.concat([Buffer.from('prefix'), sample, Buffer.from('unrelated bytes')]);
-      assert.strictEqual(new ChapterText(sample.length).get(buffer, 6), 'A');
-    });
-    it('accepts the largest exact 64-bit chunk offset and rejects an inexact one', () => {
-      const exact = BigInt(Number.MAX_SAFE_INTEGER);
-      const payload = Buffer.concat([u32(0), u32(1), u64(exact)]);
-      assert.deepEqual(new Co64Atom(payload.length).get(payload, 0).entries, [Number.MAX_SAFE_INTEGER]);
-      payload.writeBigUInt64BE(exact + 1n, 8);
-      assert.throws(() => new Co64Atom(payload.length).get(payload, 0), /Chunk offset exceeds Number.MAX_SAFE_INTEGER/);
-    });
-    for (const [description, bytes] of [
-      ['missing full-box header', Buffer.alloc(4)],
-      ['missing version-1 chapter count', Buffer.from([1, 0, 0, 0, 0, 0, 0, 0])],
-      ['incomplete chapter timestamp', Buffer.concat([u32(0), Buffer.from([1]), Buffer.alloc(8)])]
-    ] as const) {
-      it(`returns no Nero chapters for a ${description}`, () => {
-        assert.deepEqual(new ChapterListAtom(bytes.length).get(bytes, 0), []);
-      });
-    }
-    it('rejects an unsupported Nero chapter-list version', () => {
-      const payload = Buffer.from([2, 0, 0, 0, 0]);
-      assert.throws(() => new ChapterListAtom(payload.length).get(payload, 0), /Unsupported chpl version: 2/);
-    });
-    it('preserves complete Nero chapters when a later title is truncated at the atom boundary', () => {
-      const payload = Buffer.concat([
-        u32(0),
-        Buffer.from([2]),
-        u64(0n),
-        Buffer.from([7]),
-        Buffer.from('Prelude'),
-        u64(125_000_000n),
-        Buffer.from([9]),
-        Buffer.from('Cha')
-      ]);
-      const buffer = Buffer.concat([Buffer.from('prefix'), payload, Buffer.from('pter 1')]);
-      assert.deepEqual(new ChapterListAtom(payload.length).get(buffer, 6), [expectedNero[0]]);
-    });
-    it('accepts the largest exact Nero timestamp and rejects an inexact one', () => {
-      const exact = BigInt(Number.MAX_SAFE_INTEGER);
-      const payload = Buffer.concat([u32(0), Buffer.from([1]), u64(exact), Buffer.from([0])]);
-      assert.deepEqual(new ChapterListAtom(payload.length).get(payload, 0), [
-        { title: '', start: Number.MAX_SAFE_INTEGER, timeScale: 10_000_000 }
-      ]);
-      payload.writeBigUInt64BE(exact + 1n, 5);
-      assert.throws(
-        () => new ChapterListAtom(payload.length).get(payload, 0),
-        /Chapter start exceeds Number.MAX_SAFE_INTEGER/
-      );
-    });
-    for (const missing of ['timing', 'timing entries', 'chunk entries'] as const) {
-      for (const neroVersion of [undefined, 1]) {
-        it(`${neroVersion === undefined ? 'rejects' : 'falls back to Nero for'} an incomplete chapter ${missing} table`, async () => {
-          const buffer = audiobook({ neroVersion });
-          const name = missing.startsWith('timing') ? 'stts' : 'stsc';
-          const at = buffer.indexOf(name, buffer.indexOf(name) + 4);
-          // Preserve box sizes and media offsets while making the chapter table incomplete.
-          if (missing === 'timing entries') {
-            buffer.write('free', at);
-          } else {
-            buffer.writeUInt32BE(missing === 'timing' ? 0 : 1, at + (missing === 'timing' ? 20 : 16));
-          }
-          const parse = mm.parseBuffer(buffer, 'audio/mp4', {
-            includeChapters: true
+        const sizes = samples.map(sample => sample.length);
+        const ftyp = box('ftyp', Buffer.from('M4B '), u32(0), Buffer.from('isom'));
+        const audio = Buffer.alloc(100);
+        const payload = grouped
+          ? Buffer.concat([audio, ...samples])
+          : Buffer.concat(samples.flatMap(sample => [audio, sample]));
+        const moovFor = (mdatOffset: number) => {
+          const tkhd = (id: number) => {
+            const header = Buffer.alloc(version ? 96 : 84);
+            header[0] = version;
+            header.writeUInt32BE(id, version ? 20 : 12);
+            return box('tkhd', header);
+          };
+          const mdhd = () => {
+            const header = Buffer.alloc(version ? 36 : 24);
+            header[0] = version;
+            header.writeUInt32BE(1_000, version ? 20 : 12);
+            if (version) {
+              header.writeBigUInt64BE(90_000n, 24);
+            } else {
+              header.writeUInt32BE(90_000, 16);
+            }
+            return box('mdhd', header);
+          };
+          const hdlr = (name: string) => {
+            const header = Buffer.alloc(28);
+            header.write(name, 8);
+            return box('hdlr', header);
+          };
+          const audioEntry = Buffer.alloc(36);
+          audioEntry.writeUInt32BE(36);
+          audioEntry.write('mp4a', 4);
+          audioEntry.writeUInt16BE(1, 14);
+          audioEntry.writeUInt16BE(1, 24);
+          audioEntry.writeUInt16BE(16, 26);
+          audioEntry.writeUInt16BE(1_000, 32);
+          const audioTrack = box(
+            'trak',
+            tkhd(1),
+            box('tref', box('chap', ...refs.map(u32))),
+            box(
+              'mdia',
+              mdhd(),
+              hdlr('soun'),
+              box(
+                'minf',
+                box(
+                  'stbl',
+                  fullBox('stsd', u32(1), audioEntry),
+                  table('stco', []),
+                  table('stsc', []),
+                  table('stts', []),
+                  fullBox('stsz', u32(0), u32(0))
+                )
+              )
+            )
+          );
+          let sampleOffset = mdatOffset + 8;
+          const offsets = samples.map(sample => {
+            sampleOffset += grouped ? 0 : audio.length;
+            const offset = sampleOffset;
+            sampleOffset += sample.length;
+            return offset;
           });
-          if (neroVersion === undefined) {
-            await rejects(
-              parse,
-              error => error instanceof Mp4ContentError && /Missing chapter sample/.test(error.message)
-            );
-          } else {
-            const metadata = await parse;
-            assert.deepEqual(chapterList(metadata), expectedNero);
-            assert.isTrue(metadata.quality.warnings.some(warning => /Missing chapter sample/.test(warning.message)));
+          if (grouped) {
+            offsets.splice(0, offsets.length, mdatOffset + 8 + audio.length);
           }
-        });
-      }
-    }
-    it('rejects chapter samples that move backwards in a forward-only stream', async () => {
-      const buffer = audiobook({ grouped: false });
-      const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
-      buffer.writeUInt32BE(buffer.readUInt32BE(at), at + 4);
-      await rejects(
-        mm.parseStream(Readable.from([buffer], { objectMode: false }), 'audio/mp4', { includeChapters: true }),
-        error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
-      );
-    });
-    for (const size of [0, 1, 64 * 1024 + 1]) {
-      it(`retains the timestamp without reading a ${size}-byte chapter title sample`, async () => {
-        let buffer = audiobook({ chapterCount: 1, trailing: true });
-        if (size > 3) {
-          const padding = Buffer.alloc(size - 3);
-          const moov = buffer.indexOf('moov') - 4;
-          const mdat = buffer.indexOf('mdat') - 4;
-          buffer.writeUInt32BE(buffer.readUInt32BE(mdat) + padding.length, mdat);
-          buffer = Buffer.concat([buffer.subarray(0, moov), padding, buffer.subarray(moov)]);
-        }
-        const at = buffer.indexOf('stsz', buffer.indexOf('stsz') + 4) + 16;
-        buffer.writeUInt32BE(size, at);
-        const tokenizer = fromBuffer(buffer, {
-          fileInfo: { mimeType: 'audio/mp4' }
-        });
-        const readToken = tokenizer.readToken.bind(tokenizer);
-        let titleReads = 0;
-        tokenizer.readToken = (token, position) => {
-          if (token instanceof ChapterText) {
-            ++titleReads;
-          }
-          return readToken(token, position);
+          const chunkBox = offset64
+            ? fullBox('co64', u32(offsets.length), ...offsets.map(offset => u64(BigInt(offset))))
+            : table(
+                'stco',
+                offsets.map(offset => [offset])
+              );
+          const chapterTrack = box(
+            'trak',
+            tkhd(2),
+            box(
+              'mdia',
+              mdhd(),
+              ...(handler ? [hdlr(handler)] : []),
+              box(
+                'minf',
+                box(
+                  'stbl',
+                  fullBox('stsd', u32(0)),
+                  chunkBox,
+                  table('stsc', invalidRuns ?? [[1, grouped ? samples.length : 1, 1]]),
+                  table(
+                    'stts',
+                    chapterCount
+                      ? [[chapterCount, 1_000]]
+                      : fixed
+                        ? [[2, 10_000]]
+                        : [
+                            [1, 5_000],
+                            [2, 30_000]
+                          ]
+                  ),
+                  fullBox('stsz', u32(fixed ? sizes[0] : 0), u32(samples.length), ...(fixed ? [] : sizes.map(u32)))
+                )
+              )
+            )
+          );
+          return box('moov', audioTrack, chapterTrack, ...(neroVersion === undefined ? [] : [nero(neroVersion)]));
         };
-        const metadata = await mm.parseFromTokenizer(tokenizer, {
-          includeChapters: true
-        });
-        assert.deepEqual(chapterList(metadata), [{ title: '', start: 0, timeScale: 1_000 }]);
-        assert.strictEqual(titleReads, 0);
+        const moov = moovFor(ftyp.length + (trailing ? 0 : moovFor(0).length));
+        return Buffer.concat(trailing ? [ftyp, box('mdat', payload), moov] : [ftyp, moov, box('mdat', payload)]);
+      }
+
+      const chapterList = (metadata: mm.IAudioMetadata) =>
+        metadata.format.chapters?.map(({ title, start, timeScale }) => ({ title, start, timeScale }));
+      const expected = [
+        { title: 'Opening Credits', start: 0, timeScale: 1_000 },
+        { title: 'Chapter 1', start: 5_000, timeScale: 1_000 },
+        { title: 'Chapter 2', start: 35_000, timeScale: 1_000 }
+      ];
+      const expectedNero = [
+        { title: 'Prelude', start: 0, timeScale: 10_000_000 },
+        { title: 'Chapter 1', start: 125_000_000, timeScale: 10_000_000 }
+      ];
+
+      describe('MP4 chapters in real audiobook excerpts', () => {
+        for (const filename of ['chapters-leading.m4b', 'chapters-nero.m4b']) {
+          for (const parser of Parsers) {
+            it(`${filename}: ${parser.description}`, async function () {
+              const metadata = await parser.parse(
+                () => this.skip(),
+                path.join(samplePath, 'mp4', filename),
+                'audio/mp4',
+                {
+                  includeChapters: true
+                }
+              );
+              assert.approximately(metadata.format.duration, 10, 0.02);
+              assert.strictEqual(metadata.format.codec, 'MPEG-4/AAC');
+              assert.deepEqual(
+                metadata.format.chapters?.map(({ title, start, timeScale }) => ({ title, start: start / timeScale })),
+                [
+                  { title: 'Opening Credits', start: 0 },
+                  { title: 'Chapter 1', start: 3 },
+                  { title: 'Chapter 2', start: 7 }
+                ]
+              );
+            });
+          }
+        }
       });
-    }
-    it('retains chapter titles and raw times when the chapter media header is unavailable', async () => {
-      const buffer = audiobook();
-      const at = buffer.indexOf('mdhd', buffer.indexOf('mdhd') + 4);
-      buffer.write('free', at);
-      const metadata = await mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true });
-      assert.strictEqual(metadata.format.duration, 90);
-      assert.deepEqual(
-        chapterList(metadata),
-        expected.map(chapter => ({ ...chapter, timeScale: 0 }))
-      );
-    });
-    it('rejects a chapter offset outside media data when no Nero list is available', async () => {
-      const buffer = audiobook();
-      const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
-      buffer.writeUInt32BE(buffer.length, at);
-      await rejects(mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true }), Mp4ContentError);
+
+      // Constructed boxes below cover malformed input and table/encoding boundary cases.
+      describe('MP4 chapter sample tables', () => {
+        for (const trailing of [false, true]) {
+          for (const offset64 of [false, true]) {
+            it(`reads grouped samples with ${offset64 ? 'co64' : 'stco'} and ${trailing ? 'trailing' : 'leading'} moov`, async () => {
+              const metadata = await mm.parseBuffer(audiobook({ trailing, offset64 }), 'audio/mp4', {
+                includeChapters: true
+              });
+              assert.deepEqual(chapterList(metadata), expected);
+              assert.strictEqual(metadata.format.duration, 90);
+            });
+          }
+        }
+        it('falls back to Nero when a streamed chapter remains beyond the final payload', async () => {
+          const buffer = audiobook({ grouped: false, neroVersion: 1 });
+          const table = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
+          buffer.writeUInt32BE(buffer.length + 16, table + 4);
+          const stream = Readable.from([buffer], { objectMode: false });
+          const metadata = await mm.parseStream(stream, 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), expectedNero);
+          assert.isTrue(
+            metadata.quality.warnings.some(warning => warning.message.includes('Cannot read chapter track'))
+          );
+        });
+
+        it('expands repeated time-to-sample entries with one sample per chunk', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ grouped: false }), 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), expected);
+        });
+        it('uses fixed sample sizes and the declared sample count', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ fixed: true }), 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), [
+            { title: 'Chapter 1', start: 0, timeScale: 1_000 },
+            { title: 'Chapter 2', start: 10_000, timeScale: 1_000 }
+          ]);
+        });
+        it('reads version 1 track and media headers', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ version: 1 }), 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), expected);
+        });
+        it('accepts a chapter track without a handler', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ handler: null }), 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), expected);
+        });
+        it('reads grouped chapter samples from a forward-only faststart stream', async () => {
+          const metadata = await mm.parseStream(
+            Readable.from([audiobook({ trailing: false })], { objectMode: false }),
+            'audio/mp4',
+            {
+              includeChapters: true
+            }
+          );
+          assert.deepEqual(chapterList(metadata), expected);
+        });
+        for (const neroVersion of [0, 1]) {
+          it(`falls back to Nero chpl version ${neroVersion} for a self-reference`, async () => {
+            const metadata = await mm.parseBuffer(audiobook({ refs: [1], neroVersion }), 'audio/mp4', {
+              includeChapters: true
+            });
+            assert.deepEqual(chapterList(metadata), expectedNero);
+          });
+        }
+        it('prefers a usable chapter track to a Nero list', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ neroVersion: 1 }), 'audio/mp4', { includeChapters: true });
+          assert.deepEqual(chapterList(metadata), expected);
+        });
+        it('falls back to Nero when a chapter track has no titles', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ emptyTitles: true, neroVersion: 1 }), 'audio/mp4', {
+            includeChapters: true
+          });
+          assert.deepEqual(chapterList(metadata), expectedNero);
+        });
+        for (const invalidRuns of [
+          [[1, 0, 1]],
+          [[0, 1, 1]],
+          [
+            [1, 1, 1],
+            [1, 2, 1]
+          ],
+          [
+            [2, 1, 1],
+            [1, 2, 1]
+          ],
+          [
+            [1, 1, 1],
+            [0xffffffff, 1, 1]
+          ]
+        ]) {
+          it(`falls back to Nero for invalid chunk runs ${JSON.stringify(invalidRuns)}`, async () => {
+            const metadata = await mm.parseBuffer(audiobook({ invalidRuns, neroVersion: 1 }), 'audio/mp4', {
+              includeChapters: true
+            });
+            assert.deepEqual(chapterList(metadata), expectedNero);
+          });
+        }
+        it('bounds a large declared chapter count', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ chapterCount: 1_020 }), 'audio/mp4', {
+            includeChapters: true
+          });
+          assert.lengthOf(metadata.format.chapters, 1_000);
+          assert.strictEqual(metadata.format.chapters[999].start, 999_000);
+          assert.match(metadata.quality.warnings[0].message, /chapter limit/);
+        });
+        it('retains a timestamp when a title sample is empty', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ emptyTitles: true }), 'audio/mp4', {
+            includeChapters: true
+          });
+          assert.deepEqual(
+            chapterList(metadata),
+            expected.map(chapter => ({ ...chapter, title: '' }))
+          );
+        });
+        it('does not use an audio track as a chapter track', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ handler: 'soun', neroVersion: 1 }), 'audio/mp4', {
+            includeChapters: true
+          });
+          assert.deepEqual(chapterList(metadata), expectedNero);
+        });
+        it('does not read Nero chapters unless requested', async () => {
+          const metadata = await mm.parseBuffer(audiobook({ refs: [], neroVersion: 1 }), 'audio/mp4');
+          assert.isUndefined(metadata.format.chapters);
+        });
+        it('decodes unsigned 32-bit chunk offsets above 2 GiB', () => {
+          const payload = Buffer.concat([u32(0), u32(1), u32(0x80000000)]);
+          assert.deepEqual(new StcoAtom(payload.length).get(payload, 0).entries, [0x80000000]);
+        });
+        it('bounds title text to its own sample and decodes UTF-16', () => {
+          const sample = text('Chapter 2', true);
+          assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Chapter 2');
+          const truncated = Buffer.from([0xff, 0xff, 0x41]);
+          assert.strictEqual(new ChapterText(truncated.length).get(truncated, 0), 'A');
+        });
+        it('preserves UTF-16LE chapter titles with accented characters and surrogate pairs', () => {
+          const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('Café 🌍', 'utf16le')]);
+          const sample = Buffer.alloc(bytes.length + 2);
+          sample.writeUInt16BE(bytes.length);
+          sample.set(bytes, 2);
+          assert.strictEqual(new ChapterText(sample.length).get(sample, 0), 'Café 🌍');
+        });
+        for (const length of [0, 1]) {
+          it(`returns an empty title when the ${length}-byte sample has no length field`, () => {
+            assert.strictEqual(new ChapterText(length).get(Buffer.alloc(length), 0), '');
+          });
+        }
+        it('does not decode bytes beyond a chapter sample embedded in a larger buffer', () => {
+          const sample = Buffer.from([0xff, 0xff, 0x41]);
+          const buffer = Buffer.concat([Buffer.from('prefix'), sample, Buffer.from('unrelated bytes')]);
+          assert.strictEqual(new ChapterText(sample.length).get(buffer, 6), 'A');
+        });
+        it('accepts the largest exact 64-bit chunk offset and rejects an inexact one', () => {
+          const exact = BigInt(Number.MAX_SAFE_INTEGER);
+          const payload = Buffer.concat([u32(0), u32(1), u64(exact)]);
+          assert.deepEqual(new Co64Atom(payload.length).get(payload, 0).entries, [Number.MAX_SAFE_INTEGER]);
+          payload.writeBigUInt64BE(exact + 1n, 8);
+          assert.throws(
+            () => new Co64Atom(payload.length).get(payload, 0),
+            /Chunk offset exceeds Number.MAX_SAFE_INTEGER/
+          );
+        });
+        for (const [description, bytes] of [
+          ['missing full-box header', Buffer.alloc(4)],
+          ['missing version-1 chapter count', Buffer.from([1, 0, 0, 0, 0, 0, 0, 0])],
+          ['incomplete chapter timestamp', Buffer.concat([u32(0), Buffer.from([1]), Buffer.alloc(8)])]
+        ] as const) {
+          it(`returns no Nero chapters for a ${description}`, () => {
+            assert.deepEqual(new ChapterListAtom(bytes.length).get(bytes, 0), []);
+          });
+        }
+        it('rejects an unsupported Nero chapter-list version', () => {
+          const payload = Buffer.from([2, 0, 0, 0, 0]);
+          assert.throws(() => new ChapterListAtom(payload.length).get(payload, 0), /Unsupported chpl version: 2/);
+        });
+        it('preserves complete Nero chapters when a later title is truncated at the atom boundary', () => {
+          const payload = Buffer.concat([
+            u32(0),
+            Buffer.from([2]),
+            u64(0n),
+            Buffer.from([7]),
+            Buffer.from('Prelude'),
+            u64(125_000_000n),
+            Buffer.from([9]),
+            Buffer.from('Cha')
+          ]);
+          const buffer = Buffer.concat([Buffer.from('prefix'), payload, Buffer.from('pter 1')]);
+          assert.deepEqual(new ChapterListAtom(payload.length).get(buffer, 6), [expectedNero[0]]);
+        });
+        it('accepts the largest exact Nero timestamp and rejects an inexact one', () => {
+          const exact = BigInt(Number.MAX_SAFE_INTEGER);
+          const payload = Buffer.concat([u32(0), Buffer.from([1]), u64(exact), Buffer.from([0])]);
+          assert.deepEqual(new ChapterListAtom(payload.length).get(payload, 0), [
+            { title: '', start: Number.MAX_SAFE_INTEGER, timeScale: 10_000_000 }
+          ]);
+          payload.writeBigUInt64BE(exact + 1n, 5);
+          assert.throws(
+            () => new ChapterListAtom(payload.length).get(payload, 0),
+            /Chapter start exceeds Number.MAX_SAFE_INTEGER/
+          );
+        });
+        for (const missing of ['timing', 'timing entries', 'chunk entries'] as const) {
+          for (const neroVersion of [undefined, 1]) {
+            it(`${neroVersion === undefined ? 'rejects' : 'falls back to Nero for'} an incomplete chapter ${missing} table`, async () => {
+              const buffer = audiobook({ neroVersion });
+              const name = missing.startsWith('timing') ? 'stts' : 'stsc';
+              const at = buffer.indexOf(name, buffer.indexOf(name) + 4);
+              // Preserve box sizes and media offsets while making the chapter table incomplete.
+              if (missing === 'timing entries') {
+                buffer.write('free', at);
+              } else {
+                buffer.writeUInt32BE(missing === 'timing' ? 0 : 1, at + (missing === 'timing' ? 20 : 16));
+              }
+              const parse = mm.parseBuffer(buffer, 'audio/mp4', {
+                includeChapters: true
+              });
+              if (neroVersion === undefined) {
+                await rejects(
+                  parse,
+                  error => error instanceof Mp4ContentError && /Missing chapter sample/.test(error.message)
+                );
+              } else {
+                const metadata = await parse;
+                assert.deepEqual(chapterList(metadata), expectedNero);
+                assert.isTrue(
+                  metadata.quality.warnings.some(warning => /Missing chapter sample/.test(warning.message))
+                );
+              }
+            });
+          }
+        }
+        it('rejects chapter samples that move backwards in a forward-only stream', async () => {
+          const buffer = audiobook({ grouped: false });
+          const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
+          buffer.writeUInt32BE(buffer.readUInt32BE(at), at + 4);
+          await rejects(
+            mm.parseStream(Readable.from([buffer], { objectMode: false }), 'audio/mp4', { includeChapters: true }),
+            error => error instanceof Mp4ContentError && /Chapter chunk exceeding media data bounds/.test(error.message)
+          );
+        });
+        for (const size of [0, 1, 64 * 1024 + 1]) {
+          it(`retains the timestamp without reading a ${size}-byte chapter title sample`, async () => {
+            let buffer = audiobook({ chapterCount: 1, trailing: true });
+            if (size > 3) {
+              const padding = Buffer.alloc(size - 3);
+              const moov = buffer.indexOf('moov') - 4;
+              const mdat = buffer.indexOf('mdat') - 4;
+              buffer.writeUInt32BE(buffer.readUInt32BE(mdat) + padding.length, mdat);
+              buffer = Buffer.concat([buffer.subarray(0, moov), padding, buffer.subarray(moov)]);
+            }
+            const at = buffer.indexOf('stsz', buffer.indexOf('stsz') + 4) + 16;
+            buffer.writeUInt32BE(size, at);
+            const tokenizer = fromBuffer(buffer, {
+              fileInfo: { mimeType: 'audio/mp4' }
+            });
+            const readToken = tokenizer.readToken.bind(tokenizer);
+            let titleReads = 0;
+            tokenizer.readToken = (token, position) => {
+              if (token instanceof ChapterText) {
+                ++titleReads;
+              }
+              return readToken(token, position);
+            };
+            const metadata = await mm.parseFromTokenizer(tokenizer, {
+              includeChapters: true
+            });
+            assert.deepEqual(chapterList(metadata), [{ title: '', start: 0, timeScale: 1_000 }]);
+            assert.strictEqual(titleReads, 0);
+          });
+        }
+        it('retains chapter titles and raw times when the chapter media header is unavailable', async () => {
+          const buffer = audiobook();
+          const at = buffer.indexOf('mdhd', buffer.indexOf('mdhd') + 4);
+          buffer.write('free', at);
+          const metadata = await mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true });
+          assert.strictEqual(metadata.format.duration, 90);
+          assert.deepEqual(
+            chapterList(metadata),
+            expected.map(chapter => ({ ...chapter, timeScale: 0 }))
+          );
+        });
+        it('rejects a chapter offset outside media data when no Nero list is available', async () => {
+          const buffer = audiobook();
+          const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;
+          buffer.writeUInt32BE(buffer.length, at);
+          await rejects(mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true }), Mp4ContentError);
+        });
+      });
     });
   });
+
+  // https://github.com/readest/readest/issues/6262
 });

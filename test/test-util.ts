@@ -2,6 +2,7 @@ import { textDecode } from '@borewit/text-codec';
 import { assert } from 'chai';
 import { FourCcToken } from '../lib/common/FourCC.js';
 import * as util from '../lib/common/Util.js';
+import { dbToRatio, ratioToDb, toRatio } from '../lib/common/Util.js';
 
 const t = assert;
 
@@ -101,5 +102,23 @@ describe('shared utility functionality', () => {
 
   it('a2hex', () => {
     t.equal(util.a2hex('\x00\x01ABC\x02'), '00 01 41 42 43 02');
+  });
+
+  describe('ReplayGain ratio conversions', () => {
+    it('Convert ratio to dB', () => {
+      assert.approximately(ratioToDb(0.99914551), -0.00371259, 0.000000005);
+    });
+
+    it('Convert dB to ratio', () => {
+      assert.approximately(dbToRatio(-7.03), 0.1981527, 0.000000005);
+    });
+
+    it('Convert dB string value to IRatio', () => {
+      assert.deepEqual(toRatio('-7.03 dB'), {
+        dB: -7.03,
+        ratio: 0.1981527025805098
+      });
+      assert.deepEqual(toRatio('xxx'), { dB: Number.NaN, ratio: Number.NaN });
+    });
   });
 });

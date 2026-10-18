@@ -1,7 +1,6 @@
 import path from 'node:path';
 import { assert } from 'chai';
 import { fromFile } from 'strtok3';
-
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
@@ -250,28 +249,132 @@ describe('Parse MP3 files', () => {
     });
   });
 
-  describe('Duration flag behaviour', () => {
-    describe('MP3/CBR without Xing header', () => {
-      const filePath = path.join(mp3SamplePath, 'Sleep Away.mp3');
+  describe('Duration', () => {
+    describe('Duration flag behaviour', () => {
+      describe('MP3/CBR without Xing header', () => {
+        const filePath = path.join(mp3SamplePath, 'Sleep Away.mp3');
 
-      describe('duration=false', () => {
-        Parsers.forEach(parser => {
-          it(parser.description, async function () {
-            const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: false });
-            assert.isUndefined(format.duration, "Don't expect a duration");
+        describe('duration=false', () => {
+          Parsers.forEach(parser => {
+            it(parser.description, async function () {
+              const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: false });
+              assert.isUndefined(format.duration, "Don't expect a duration");
+            });
+          });
+        });
+
+        describe('duration=true', function () {
+          this.timeout(15000); // Parsing this file can take a bit longer
+
+          Parsers.forEach(parser => {
+            it(parser.description, async function () {
+              const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: true });
+              assert.approximately(format.duration!, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
+              assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
+            });
           });
         });
       });
+    });
 
-      describe('duration=true', function () {
-        this.timeout(15000); // Parsing this file can take a bit longer
+    describe('CBR with ID3v2 and APEv2 tags (GH-56)', () => {
+      /* --------------------------------------------------------
+       TAG headers:
+        - ID3v2.3 at position 0, length is 191 bytes
+        - APE v2.0 at position 5973245, length is 206 bytes
 
-        Parsers.forEach(parser => {
-          it(parser.description, async function () {
-            const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg', { duration: true });
-            assert.approximately(format.duration!, durationSleepAwayMp3, 1 / 10, 'Expect a duration');
-            assert.strictEqual(format.numberOfSamples, 8831232, 'format.numberOfSamples');
-          });
+       MPEG-length:	   5973054
+       Sample-rate:	     44100
+       frame_size:	       417
+       Samples per frame	1152
+
+       No errors found in file.
+
+       Summary:
+       ===============
+       Total number of frames: 14291, unpadded: 584, padded: 13707
+       File is CBR. Bitrate of each frame is 128 kbps.
+       Exact length: 06:13
+
+       Audacity:   16463232
+       Calculated: 16462080
+       --------------------------------------------------------*/
+
+      const filePath = path.join(samplePath, 'regress-GH-56.mp3');
+
+      Parsers.forEach(parser => {
+        it(parser.description, async function () {
+          const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
+          const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+          assert.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
+          assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+          assert.strictEqual(format.duration, 16462080 / format.sampleRate, 'format.duration');
+        });
+      });
+
+      it('_parseFile', async function () {
+        const parser = Parsers[0];
+        const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
+        const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+        assert.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
+        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        assert.strictEqual(format.duration, 16462080 / format.sampleRate, 'format.duration');
+      });
+
+      it('debug single', async function () {
+        const parser = Parsers[3];
+        const { format } = await parser.parse(() => this.skip(), filePath, 'audio/mpeg');
+        const expectedTags = parser.randomRead ? ['ID3v2.3', 'APEv2'] : ['ID3v2.3'];
+        assert.deepEqual(format.tagTypes, expectedTags, 'format.tagTypes');
+        assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+        assert.strictEqual(format.duration, 16462080 / format.sampleRate, 'format.duration');
+      });
+    });
+
+    describe('Duration from all MPEG frames', () => {
+      it('should decode id3v2-duration-allframes', () => {
+        /**
+         * Audacity:         64512 samples (counts 56 frames??)
+         * ---------------------------
+         * MPEG-length:	     47647
+         * Sample-rate:	     44100
+         * frame_size:	       835
+         * Samples per frame	1152
+         *
+         * Summary:
+         * ===============
+         * Total number of frames: 57, unpadded: 5, padded: 52
+         * File is CBR. Bitrate of each frame is 256 kbps.
+         * Exact length: 00:01
+         */
+        const filePath = path.join(samplePath, 'id3v2-duration-allframes.mp3');
+
+        function checkFormat(format) {
+          assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
+          assert.strictEqual(format.bitrate, 256000, 'format.bitrate');
+          assert.strictEqual(format.numberOfChannels, 2, 'format.numberOfChannels');
+          assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
+          assert.strictEqual(format.duration, (57 * 1152) / format.sampleRate, 'format.duration (test duration=true)');
+          assert.strictEqual(format.container, 'MPEG', 'format.container');
+          assert.strictEqual(format.codec, 'MPEG 1 Layer 3', 'format.codec');
+          assert.strictEqual(format.tool, 'LAME 3.98.4', 'format.tool');
+        }
+
+        function checkCommon(common) {
+          assert.strictEqual(common.title, 'Turkish Rondo', 'common.album');
+          assert.strictEqual(common.album, 'Piano Classics', 'common.title');
+          assert.strictEqual(common.year, 0, 'common.year');
+          assert.deepEqual(common.artist, 'Aubrey Hilliard', 'common.artist');
+          assert.deepEqual(common.composer, ['Mozart'], 'common.composer');
+          assert.deepEqual(common.track, { no: 1, of: null }, 'common.track');
+          assert.deepEqual(common.genre, ['Classical'], 'common.genre');
+          assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
+          assert.deepEqual(common.picture, undefined, 'common.picture');
+        }
+
+        return mm.parseFile(filePath, { duration: true }).then(result => {
+          checkFormat(result.format);
+          checkCommon(result.common);
         });
       });
     });

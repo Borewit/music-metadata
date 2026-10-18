@@ -1,31 +1,23 @@
+import { spawnSync } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
+import { fileURLToPath } from 'node:url';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
+import { BufferSizeError, EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 import * as Token from 'token-types';
-import { readBuffer, readToken, validateAllocation } from '../lib/common/Allocation.js';
+import { getTokenizerOptions, readBuffer, readToken, validateAllocation } from '../lib/common/Allocation.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
-import { DsdiffContentParseError } from '../lib/dsdiff/DsdiffParser.js';
+import { parseFromTokenizer } from '../lib/core.js';
 import * as mm from '../lib/index.js';
 import type { IPageHeader } from '../lib/ogg/OggToken.js';
 import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
-import { UnexpectedFileContentError } from '../lib/ParseError.js';
+import { UnexpectedFileContentError, UnsupportedFileTypeError } from '../lib/ParseError.js';
+import { dff, dffChunk } from './fixtures/dsdiff.js';
 
 use(chaiAsPromised);
-
-function dffChunk(id: string, size: bigint, payload = Buffer.alloc(0)): Buffer {
-  const header = Buffer.alloc(12);
-  header.write(id);
-  header.writeBigInt64BE(size, 4);
-  return Buffer.concat([header, payload]);
-}
-
-function dff(payload: Buffer, declaredSize = BigInt(4 + payload.length)): Buffer {
-  return dffChunk('FRM8', declaredSize, Buffer.concat([Buffer.from('DSD '), payload]));
-}
 
 function iff(id: string, size: number, payload = Buffer.alloc(0), littleEndian = false): Buffer {
   const header = Buffer.alloc(8);
@@ -228,176 +220,169 @@ describe('Shared metadata allocation limits', () => {
       'allocation limit 64'
     );
   });
-});
 
-describe('DSDIFF chunk lengths (GHSA-5pwx-m48f-hw27)', () => {
-  const poc = dff(dffChunk('ID3 ', 0x7fffffffffffffffn), 256n);
+  describe('file-type allocation cap', () => {
+    // PNG signature, IHDR with 13 bytes of data and a CRC, then an empty IDAT header.
+    const png = new Uint8Array(41);
+    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    png.set([0, 0, 0, 0, 0x49, 0x44, 0x41, 0x54], 33);
 
-  it('rejects the exact 28-byte advisory PoC through all public input APIs', async () => {
-    assert.lengthOf(poc, 28);
-    const directory = await mkdtemp(path.join(tmpdir(), 'music-metadata-dsdiff-'));
-    const filePath = path.join(directory, 'poc.dff');
-    try {
-      await writeFile(filePath, poc);
-      for (const parse of [
-        () => mm.parseBuffer(poc, 'audio/dsd'),
-        () => mm.parseFile(filePath),
-        () => mm.parseStream(Readable.from([poc], { objectMode: false }), 'audio/dsd'),
-        () => mm.parseWebStream(new Blob([Uint8Array.from(poc)]).stream(), 'audio/dsd'),
-        () => mm.parseBlob(new Blob([Uint8Array.from(poc)], { type: 'audio/dsd' }))
-      ]) {
-        await expect(parse()).to.be.rejectedWith(DsdiffContentParseError);
-      }
-    } finally {
-      await rm(directory, { recursive: true, force: true });
-    }
-  });
-
-  for (const chunkID of ['ID3 ', 'PROP', 'DSD ', 'JUNK']) {
-    for (const size of [-1n, 0x20000000000000n, 0x7fffffffffffffffn]) {
-      it(`validates the signed 64-bit ${chunkID} size ${size} on unknown-size streams`, async () => {
-        const sample = dff(dffChunk(chunkID, size), 256n);
-        await expect(mm.parseStream(Readable.from([sample], { objectMode: false }), 'audio/dsd')).to.be.rejectedWith(
-          DsdiffContentParseError,
-          'Invalid chunk size'
-        );
-      });
-    }
-  }
-
-  for (const size of [2n * 1024n ** 3n, 4n * 1024n ** 3n]) {
-    it(`rejects an ID3 payload of ${size} bytes inside a matching declared container before allocation`, async () => {
-      const sample = dff(dffChunk('ID3 ', size), size + 16n);
-      const tokenizer = await fromStream(Readable.from([sample], { objectMode: false }), {
-        fileInfo: { mimeType: 'audio/dsd' }
-      });
-      const originalReadToken = tokenizer.readToken.bind(tokenizer);
-      tokenizer.readToken = (token, position) => {
-        assert.isAtMost(token.len, 64 * 1024, 'reject attacker-sized tokens before the tokenizer allocates');
-        return originalReadToken(token, position);
-      };
-      const originalReadBuffer = tokenizer.readBuffer.bind(tokenizer);
-      tokenizer.readBuffer = (buffer, options) => {
-        assert.isAtMost(buffer.length, 64 * 1024);
-        return originalReadBuffer(buffer, options);
-      };
-      try {
-        await expect(mm.parseFromTokenizer(tokenizer)).to.be.rejectedWith(
-          UnexpectedFileContentError,
-          'allocation limit'
-        );
-      } finally {
-        await tokenizer.close();
-      }
-    });
-  }
-
-  it('checks a nested sound-property chunk against its PROP boundary', async () => {
-    const prop = dffChunk('PROP', 16n, Buffer.concat([Buffer.from('SND '), dffChunk('CHNL', 1024n)]));
-    await expect(mm.parseBuffer(dff(prop), 'audio/dsd')).to.be.rejectedWith(
-      DsdiffContentParseError,
-      'exceeds its enclosing chunk'
-    );
-  });
-
-  it('rejects a short fixed-field chunk even when bytes follow it', async () => {
-    const prop = dffChunk('PROP', 16n, Buffer.concat([Buffer.from('SND '), dffChunk('FS  ', 0n)]));
-    await expect(mm.parseBuffer(dff(prop), 'audio/dsd')).to.be.rejectedWith(DsdiffContentParseError, 'too small');
-  });
-
-  for (const [id, payload] of [
-    ['ABSS', Buffer.alloc(7)],
-    ['LSCO', Buffer.alloc(1)],
-    ['CMPR', Buffer.from('DSD ')],
-    ['CMPR', Buffer.from([0x44, 0x53, 0x44, 0x20, 3, 0x61])]
-  ] as const) {
-    it(`rejects a ${payload.length}-byte ${id} sound property before reading past its boundary`, async () => {
-      const soundProperty = dffChunk(id, BigInt(payload.length), payload);
-      const propPayload = Buffer.concat([
-        Buffer.from('SND '),
-        soundProperty,
-        Buffer.alloc(payload.length & 1),
-        dffChunk('FS  ', 4n, Buffer.alloc(4))
-      ]);
-      await expect(
-        mm.parseBuffer(dff(dffChunk('PROP', BigInt(propPayload.length), propPayload)), 'audio/dsd')
-      ).to.be.rejectedWith(DsdiffContentParseError, `Chunk ${id} is too small`);
-    });
-  }
-
-  it('preserves alignment after optional, padded and unknown sound properties', async () => {
-    const sampleRate = Buffer.alloc(4);
-    sampleRate.writeUInt32BE(2822400);
-    const propPayload = Buffer.concat([
-      Buffer.from('SND '),
-      dffChunk('ABSS', 10n, Buffer.from([0, 1, 2, 3, 0, 0, 0, 4, 0xff, 0xff])),
-      dffChunk('LSCO', 2n, Buffer.from([0, 1])),
-      dffChunk('JUNK', 3n, Buffer.from([42, 43, 44, 0])),
-      dffChunk('CHNL', 6n, Buffer.concat([Buffer.from([0, 1]), Buffer.from('C   ')])),
-      dffChunk('CMPR', 8n, Buffer.concat([Buffer.from('DSD '), Buffer.from([3]), Buffer.from('raw')])),
-      dffChunk('FS  ', 4n, sampleRate)
-    ]);
-    const sample = dff(
-      Buffer.concat([
-        dffChunk('PROP', BigInt(propPayload.length), propPayload),
-        dffChunk('DSD ', 16n, Buffer.alloc(16))
-      ])
-    );
-    const metadata = await mm.parseBuffer(sample, 'audio/dsd');
-    assert.strictEqual(metadata.format.sampleRate, 2822400);
-    assert.strictEqual(metadata.format.numberOfChannels, 1);
-    assert.strictEqual(metadata.format.bitsPerSample, 1);
-    assert.strictEqual(metadata.format.codec, 'DSD (raw)');
-    assert.strictEqual(metadata.format.numberOfSamples, 128);
-    assert.strictEqual(metadata.format.duration, 128 / 2822400);
-    assert.strictEqual(metadata.format.bitrate, 2822400);
-  });
-
-  it('rejects an incomplete sound-property header', async () => {
-    const prop = dffChunk('PROP', 5n, Buffer.concat([Buffer.from('SND '), Buffer.from([0, 0])]));
-    await expect(mm.parseBuffer(dff(prop), 'audio/dsd')).to.be.rejectedWith(
-      DsdiffContentParseError,
-      'Incomplete sound-property chunk header'
-    );
-  });
-
-  for (const [name, sample] of [
-    ['audio payload', dff(dffChunk('DSD ', 4n, Buffer.from([42])), 20n)],
-    ['padding byte', dff(dffChunk('JUNK', 1n, Buffer.from([42])), 18n)]
-  ] as const) {
-    it(`rejects a truncated skipped ${name} on an unknown-size stream`, async () => {
-      await expect(mm.parseStream(Readable.from([sample], { objectMode: false }), 'audio/dsd')).to.be.rejectedWith(
-        EndOfStreamError
+    it('caps media format detection independently of a caller-supplied tokenizer', async () => {
+      // Leave the outer tokenizer uncapped to exercise file-type's own tokenizer.
+      await expect(parseFromTokenizer(fromBuffer(png), { maxMemoryAllocation: 2 })).to.be.rejectedWith(
+        BufferSizeError,
+        'maxBufferSize 2'
+      );
+      // Raising the cap permits detection; PNG is recognized but is not a supported media format.
+      await expect(parseFromTokenizer(fromBuffer(png), { maxMemoryAllocation: 4 })).to.be.rejectedWith(
+        UnsupportedFileTypeError,
+        'image/png'
       );
     });
 
-    it(`rejects a short ${name} skip returned by a custom tokenizer`, async () => {
-      const tokenizer = await fromStream(Readable.from([sample], { objectMode: false }), {
-        fileInfo: { mimeType: 'audio/dsd' }
+    it('caps cover art detection and allows callers to raise the limit', async () => {
+      const limited = new MetadataCollector({ maxMemoryAllocation: 2 });
+      await expect(limited.addTag('ID3v2.3', 'APIC', { data: png, format: '' })).to.be.rejectedWith(
+        BufferSizeError,
+        'maxBufferSize 2'
+      );
+      for (const options of [undefined, { maxMemoryAllocation: 4 }]) {
+        const metadata = new MetadataCollector(options);
+        await metadata.addTag('ID3v2.3', 'APIC', { data: png, format: '' });
+        assert.strictEqual(metadata.common.picture?.[0].format, 'image/png');
+      }
+    });
+  });
+
+  describe('Tokenizer allocation limits (GHSA-5pwx-m48f-hw27)', () => {
+    interface WorkerResult {
+      error: string;
+      message?: string;
+      requestedSize?: number;
+      maxBufferSize?: number;
+      largestAllocation: number;
+    }
+
+    function regression(mode: string, size: bigint, limit?: number): WorkerResult {
+      const worker = fileURLToPath(new URL('./fixtures/dsdiff-allocation-worker.js', import.meta.url));
+      const args = [worker, mode, String(size)];
+      if (limit !== undefined) {
+        args.push(String(limit));
+      }
+      const child = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 10000 });
+      assert.isUndefined(child.error, child.error?.message);
+      assert.isNull(child.signal, `Worker terminated by ${child.signal}: ${child.stderr}`);
+      assert.strictEqual(child.status, 0, child.stderr);
+      return JSON.parse(child.stdout.trim()) as WorkerResult;
+    }
+
+    const id3Header = new Uint8Array([0x49, 0x44, 0x33, 4, 0, 0, 0, 0, 0, 0]);
+    let directory: string;
+    let filePath: string;
+
+    before(async () => {
+      directory = await mkdtemp(path.join(tmpdir(), 'music-metadata-tokenizer-cap-'));
+      filePath = path.join(directory, 'header.mp3');
+      await writeFile(filePath, id3Header);
+    });
+
+    after(async () => {
+      await rm(directory, { recursive: true, force: true });
+    });
+
+    for (const size of [2n * 1024n ** 3n, 4n * 1024n ** 3n]) {
+      it(`rejects the original ID3 allocation sink of ${size} bytes using only the tokenizer cap`, () => {
+        const result = regression('tokenizer', size);
+        assert.strictEqual(result.error, 'BufferSizeError');
+        assert.strictEqual(result.requestedSize, Number(size));
+        assert.strictEqual(result.maxBufferSize, 64 * 1024 * 1024);
+        assert.isAtMost(result.largestAllocation, 64 * 1024, 'no oversized allocation was attempted');
       });
-      tokenizer.ignore = length => tokenizer.readBuffer(new Uint8Array(length), { mayBeLess: true });
+
+      it(`detects the unsafe ${size}-byte allocation when the tokenizer cap is disabled`, () => {
+        const result = regression('uncapped-tokenizer', size);
+        assert.strictEqual(result.error, 'OversizedAllocationError');
+        assert.strictEqual(result.largestAllocation, Number(size));
+      });
+
+      for (const mode of ['buffer', 'file', 'blob', 'stream', 'advertised-stream', 'web-stream', 'BYOB-web-stream']) {
+        it(`rejects the ${size}-byte advisory payload through ${mode} before attempting an oversized allocation`, () => {
+          const result = regression(mode, size);
+          assert.strictEqual(result.error, 'UnexpectedFileContentError');
+          assert.isAtMost(result.largestAllocation, 64 * 1024, 'no oversized allocation was attempted');
+        });
+      }
+    }
+
+    it('rejects the advisory 64-bit size at the original sink before attempting an allocation', () => {
+      const result = regression('tokenizer', 0x7fffffffffffffffn);
+      assert.strictEqual(result.error, 'RangeError');
+      assert.include(result.message, 'non-negative safe integer');
+      assert.isAtMost(result.largestAllocation, 64 * 1024);
+    });
+
+    it('uses the configured music-metadata limit for the tokenizer safety net', () => {
+      const result = regression('tokenizer', 1024n * 1024n, 64 * 1024);
+      assert.strictEqual(result.error, 'BufferSizeError');
+      assert.strictEqual(result.requestedSize, 1024 * 1024);
+      assert.strictEqual(result.maxBufferSize, 64 * 1024);
+      assert.isAtMost(result.largestAllocation, 64 * 1024);
+    });
+
+    it('raises the tokenizer limit once for successive legitimate reads and peeks', async () => {
+      const payload = Uint8Array.from({ length: 128 }, (_, index) => index);
+      const tokenizer = fromBuffer(payload, getTokenizerOptions({ maxMemoryAllocation: 64 }));
+      await expect(tokenizer.readToken(new Token.Uint8ArrayType(65))).to.be.rejectedWith(BufferSizeError);
+      const raised = fromBuffer(payload, getTokenizerOptions({ maxMemoryAllocation: 128 }));
+      assert.deepEqual(await raised.peekToken(new Token.Uint8ArrayType(128)), payload);
+      assert.deepEqual(await raised.readToken(new Token.Uint8ArrayType(128)), payload);
+    });
+
+    it('caps distant stream peeks, including with mayBeLess enabled', async () => {
+      const tokenizer = await fromStream(
+        Readable.from([new Uint8Array(128)], { objectMode: false }),
+        getTokenizerOptions({ maxMemoryAllocation: 64 })
+      );
       try {
-        await expect(mm.parseFromTokenizer(tokenizer)).to.be.rejectedWith(
-          DsdiffContentParseError,
-          'Unexpected end of chunk'
+        await expect(tokenizer.peekToken(Token.UINT8, 64)).to.be.rejectedWith(BufferSizeError);
+        await expect(tokenizer.peekBuffer(new Uint8Array(1), { position: 64, mayBeLess: true })).to.be.rejectedWith(
+          BufferSizeError
         );
+        assert.strictEqual(tokenizer.position, 0);
       } finally {
         await tokenizer.close();
       }
     });
-  }
 
-  it('does not apply the metadata cap to skipped audio payloads', async () => {
-    const sample = dff(dffChunk('DSD ', 128n, Buffer.alloc(128)));
-    const metadata = await mm.parseBuffer(sample, 'audio/dsd', { maxMemoryAllocation: 64 });
-    assert.strictEqual(metadata.format.container, 'DSDIFF/DSD');
-  });
+    for (const parse of ['buffer', 'file', 'blob', 'stream', 'web-stream'] as const) {
+      it(`enables the cap on the public ${parse} tokenizer, including token reads outside parser allocation helpers`, async () => {
+        // The MPEG parser peeks at the 10-byte ID3 header directly through the tokenizer.
+        const options = { maxMemoryAllocation: 8 };
+        const parsers = {
+          buffer: () => mm.parseBuffer(id3Header, 'audio/mpeg', options),
+          file: () => mm.parseFile(filePath, options),
+          blob: () => mm.parseBlob(new Blob([id3Header], { type: 'audio/mpeg' }), options),
+          stream: () => mm.parseStream(Readable.from([id3Header], { objectMode: false }), 'audio/mpeg', options),
+          'web-stream': () => mm.parseWebStream(new Blob([id3Header]).stream(), 'audio/mpeg', options)
+        };
+        await expect(parsers[parse]()).to.be.rejectedWith(BufferSizeError, 'maxBufferSize 8');
+      });
+    }
 
-  it('handles odd-sized chunk padding before the next chunk', async () => {
-    const sample = dff(
-      Buffer.concat([dffChunk('JUNK', 1n, Buffer.from([1, 0])), dffChunk('FVER', 4n, Buffer.alloc(4))])
-    );
-    const metadata = await mm.parseBuffer(sample, 'audio/dsd');
-    assert.strictEqual(metadata.format.container, 'DSDIFF/DSD');
+    it('rejects invalid limits before locking a web stream', async () => {
+      const stream = new Blob([id3Header]).stream();
+      await expect(mm.parseWebStream(stream, 'audio/mpeg', { maxMemoryAllocation: 0 })).to.be.rejectedWith(
+        RangeError,
+        'maxMemoryAllocation must be a positive safe integer'
+      );
+      assert.isFalse(stream.locked);
+    });
+
+    it('rejects invalid limits before opening a file', async () => {
+      await expect(mm.parseFile(path.join(directory, 'missing.mp3'), { maxMemoryAllocation: 0 })).to.be.rejectedWith(
+        RangeError,
+        'maxMemoryAllocation must be a positive safe integer'
+      );
+    });
   });
 });
