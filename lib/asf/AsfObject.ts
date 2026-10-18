@@ -489,19 +489,25 @@ async function readCodecEntry(reader: BoundedReader): Promise<ICodecEntry> {
 export class ContentDescriptionObjectState extends State<ITag[]> {
   public static guid = AsfGuid.ContentDescriptionObject;
 
-  private static contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
+  private static readonly contentDescTags = ['Title', 'Author', 'Copyright', 'Description', 'Rating'];
 
   public get(buf: Uint8Array, off: number): ITag[] {
+    if (this.len < 10 || off < 0 || this.len > buf.length - off) {
+      throw new AsfContentParseError('Truncated Content Description Object');
+    }
     const tags: ITag[] = [];
 
-    const view = new DataView(buf.buffer, off);
+    const data = buf.subarray(off, off + this.len);
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     let pos = 10;
-    for (let i = 0; i < ContentDescriptionObjectState.contentDescTags.length; ++i) {
+    for (const [i, tagName] of ContentDescriptionObjectState.contentDescTags.entries()) {
       const length = view.getUint16(i * 2, true);
+      if (length > data.length - pos) {
+        throw new AsfContentParseError(`${tagName} length ${length} exceeds Content Description payload`);
+      }
       if (length > 0) {
-        const tagName = ContentDescriptionObjectState.contentDescTags[i];
         const end = pos + length;
-        tags.push({ id: tagName, value: parseUnicodeAttr(buf.subarray(off + pos, off + end)) });
+        tags.push({ id: tagName, value: parseUnicodeAttr(data.subarray(pos, end)) });
         pos = end;
       }
     }
