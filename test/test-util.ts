@@ -7,6 +7,48 @@ import { dbToRatio, ratioToDb, toRatio } from '../lib/common/Util.js';
 const t = assert;
 
 describe('shared utility functionality', () => {
+  describe('splitText', () => {
+    it('counts nonempty values and preserves the context with multi-character separators', () => {
+      const reservations: [number, string][] = [];
+      const values = util.splitText('||First||||Second||', '||', 'credits', (count, context) => {
+        reservations.push([count, context]);
+      });
+      assert.deepEqual(values, ['First', 'Second']);
+      assert.deepEqual(reservations, [[2, 'credits']]);
+    });
+
+    for (const text of ['', '||', '||First||||Second||']) {
+      it(`preserves and counts every segment in ${JSON.stringify(text)}`, () => {
+        const expected = text.split('||');
+        const reservations: [number, string][] = [];
+        const values = util.splitText(
+          text,
+          '||',
+          'credits',
+          (count, context) => {
+            reservations.push([count, context]);
+          },
+          { keepEmpty: true }
+        );
+        assert.deepEqual(values, expected);
+        assert.deepEqual(reservations, [[expected.length, 'credits']]);
+      });
+    }
+
+    for (const text of ['', '||||']) {
+      it(`reserves one empty result for ${JSON.stringify(text)} by default`, () => {
+        const reservations: number[] = [];
+        const values = util.splitText(text, '||', 'credits', count => reservations.push(count));
+        assert.deepEqual(values, ['']);
+        assert.deepEqual(reservations, [1]);
+      });
+    }
+
+    it('rejects an empty separator instead of looping indefinitely', () => {
+      assert.throws(() => util.splitText('value', '', 'test', () => undefined), RangeError);
+    });
+  });
+
   describe('find zero', () => {
     const findZero = util.findZero;
 

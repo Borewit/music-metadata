@@ -1,6 +1,7 @@
 import { textDecode } from '@borewit/text-codec';
 import type { IGetToken } from 'strtok3';
 import * as Token from 'token-types';
+import { defaultMaxMetadataEntries } from '../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 export class CafContentError extends makeUnexpectedFileContentError('CAF') {}
@@ -155,9 +156,16 @@ export interface IChannelDescription {
 export const channelDescriptionLen = 20;
 
 /** Each CAFChannelDescription has a UInt32 label, UInt32 flags and three Float32 coordinates */
-export function parseChannelDescriptions(body: Uint8Array, count: number): IChannelDescription[] {
+export function parseChannelDescriptions(
+  body: Uint8Array,
+  count: number,
+  maxEntries = defaultMaxMetadataEntries
+): IChannelDescription[] {
   if (count * channelDescriptionLen > body.length) {
     throw new CafContentError(`Channel Layout chunk declares ${count} description(s) for ${body.length} byte(s)`);
+  }
+  if (count > maxEntries) {
+    throw new CafContentError(`Channel Layout description count ${count} exceeds entry limit ${maxEntries}`);
   }
   const descriptions: IChannelDescription[] = [];
   for (let i = 0; i < count; ++i) {
@@ -181,7 +189,7 @@ export interface IInfoEntry {
 }
 
 /** Reads the NUL terminated UTF-8 pairs, the declared entry count is authoritative */
-export function parseInfoEntries(body: Uint8Array): IInfoEntry[] {
+export function parseInfoEntries(body: Uint8Array, maxEntries = defaultMaxMetadataEntries): IInfoEntry[] {
   const readString = (from: number): { value: string; next: number } => {
     const end = body.indexOf(0, from);
     if (end < 0) {
@@ -191,6 +199,9 @@ export function parseInfoEntries(body: Uint8Array): IInfoEntry[] {
   };
 
   const numEntries = Token.UINT32_BE.get(body, 0);
+  if (numEntries > maxEntries) {
+    throw new CafContentError(`Information entry count ${numEntries} exceeds entry limit ${maxEntries}`);
+  }
   const entries: IInfoEntry[] = [];
   let offset = 4;
   for (let i = 0; i < numEntries; ++i) {

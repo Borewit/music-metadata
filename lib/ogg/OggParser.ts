@@ -2,7 +2,7 @@ import initDebug from 'debug';
 import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
-import { readToken } from '../common/Allocation.js';
+import { getMaxMetadataEntries, readToken } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { createAudioTrackInfo } from '../common/TrackInfo.js';
@@ -117,6 +117,7 @@ export class OggParser extends BasicParser {
    */
   public async parse(): Promise<void> {
     this.streams = new Map<number, OggStream>();
+    const maxLogicalStreams = getMaxMetadataEntries(this.options);
     let enfOfStream = false;
     let stoppedEarly = false;
 
@@ -131,6 +132,9 @@ export class OggParser extends BasicParser {
 
         let stream = this.streams.get(header.streamSerialNumber);
         if (!stream) {
+          if (this.streams.size >= maxLogicalStreams) {
+            throw new OggContentError('Logical stream count exceeds entry limit');
+          }
           stream = new OggStream(this.metadata, header.streamSerialNumber, this.options);
           this.streams.set(header.streamSerialNumber, stream);
         }

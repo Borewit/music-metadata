@@ -4,7 +4,7 @@ import initDebug from 'debug';
 import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
-import { readToken, validateAllocation } from '../common/Allocation.js';
+import { getMaxMetadataEntries, readToken, validateAllocation } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
@@ -208,10 +208,12 @@ export class MP4Parser extends BasicParser {
   private neroChapters: IChapter[] = [];
   private hasVideoTrack = false;
   private hasAudioTrack = false;
+  private remainingAtoms = 0;
 
   public async parse(): Promise<void> {
     this.hasVideoTrack = false;
     this.hasAudioTrack = false;
+    this.remainingAtoms = getMaxMetadataEntries(this.options);
     this.tracks.clear();
     this.mediaDataRanges = [];
     this.streamedChapters.clear();
@@ -241,12 +243,16 @@ export class MP4Parser extends BasicParser {
         }
         break;
       }
+      const atomsBeforeRoot = this.remainingAtoms;
       const rootAtom = await Atom.readAtom(
         this.tokenizer,
         (atom, remaining) => this.handleAtom(atom, remaining),
         null,
-        remainingFileSize
+        remainingFileSize,
+        () => this.reserveAtom()
       );
+      // Release the root tree budget; each table is limited separately.
+      this.remainingAtoms = atomsBeforeRoot;
       remainingFileSize = rootAtom.header.length === 0n ? 0 : remainingFileSize - Number(rootAtom.header.length);
     }
 
@@ -389,7 +395,7 @@ export class MP4Parser extends BasicParser {
       this.validatePayloadLength(remaining);
       // Retain structural validation of sample tables, including malformed-entry rejection.
       if (atom.header.name === 'stsd') {
-        await this.readToken(new AtomToken.StsdAtom(remaining));
+        await this.readToken(new AtomToken.StsdAtom(remaining, getMaxMetadataEntries(this.options)));
       } else if (atom.header.name === 'stsz') {
         await this.readToken(new AtomToken.StszAtom(remaining));
       } else {
@@ -407,6 +413,13 @@ export class MP4Parser extends BasicParser {
     }
     debug(`No parser for atom path=${atom.atomPath}, payload-len=${remaining}, ignoring atom`);
     await this.tokenizer.ignore(remaining);
+  }
+
+  private reserveAtom(): void {
+    if (this.remainingAtoms === 0) {
+      throw new Mp4ContentError('MP4 atom count exceeds entry limit');
+    }
+    --this.remainingAtoms;
   }
 
   private async addTag(id: string, value: AnyTagValue): Promise<void> {
@@ -756,7 +769,10 @@ export class MP4Parser extends BasicParser {
         const payLoadLength = child.getPayloadLength();
         switch (child.header.name) {
           case 'chap': {
-            const chap = await this.readToken(new ChapterTrackReferenceBox(payLoadLength));
+            const chap = await this.readToken(
+              new ChapterTrackReferenceBox(payLoadLength, getMaxMetadataEntries(this.options))
+            );
+
             track.chapterList = chap;
             break;
           }
@@ -792,23 +808,30 @@ export class MP4Parser extends BasicParser {
           case 'co64': {
             const token =
               child.header.name === 'co64'
-                ? new AtomToken.Co64Atom(payLoadLength)
-                : new AtomToken.StcoAtom(payLoadLength);
+                ? new AtomToken.Co64Atom(payLoadLength, getMaxMetadataEntries(this.options))
+                : new AtomToken.StcoAtom(payLoadLength, getMaxMetadataEntries(this.options));
             const stco = await this.readToken(token);
+
             track.chunkOffsetTable = stco.entries; // remember chunk offsets
             break;
           }
 
           case 'stsc': {
             // sample-to-Chunk box
-            const stsc = await this.readToken(new AtomToken.StscAtom(payLoadLength));
+            const stsc = await this.readToken(
+              new AtomToken.StscAtom(payLoadLength, getMaxMetadataEntries(this.options))
+            );
+
             track.sampleToChunkTable = stsc.entries;
             break;
           }
 
           case 'stsd': {
             // sample description box
-            const stsd = await this.readToken(new AtomToken.StsdAtom(payLoadLength));
+            const stsd = await this.readToken(
+              new AtomToken.StsdAtom(payLoadLength, getMaxMetadataEntries(this.options))
+            );
+
             track.sampleDescriptions = stsd.table;
             track.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
             break;
@@ -816,7 +839,10 @@ export class MP4Parser extends BasicParser {
 
           case 'stts': {
             // time-to-sample table
-            const stts = await this.readToken(new AtomToken.SttsAtom(payLoadLength));
+            const stts = await this.readToken(
+              new AtomToken.SttsAtom(payLoadLength, getMaxMetadataEntries(this.options))
+            );
+
             track.timeToSampleTable = stts.entries;
             break;
           }
@@ -883,9 +909,11 @@ export class MP4Parser extends BasicParser {
             }
             break;
           }
-          case 'trun':
-            runs.push(await this.readToken(new AtomToken.TrackRunBox(length)));
+          case 'trun': {
+            const run = await this.readToken(new AtomToken.TrackRunBox(length, getMaxMetadataEntries(this.options)));
+            runs.push(run);
             break;
+          }
           default:
             await this.tokenizer.ignore(length);
         }
@@ -952,6 +980,13 @@ export class MP4Parser extends BasicParser {
       if (len < 8 || len % AtomToken.ftyp.len !== 0) {
         throw new Mp4ContentError(`Invalid ftyp payload length: ${len}`);
       }
+      const typeCount = len / AtomToken.ftyp.len;
+      if (typeCount > getMaxMetadataEntries(this.options)) {
+        throw new Mp4ContentError(
+          `ftyp entry count ${typeCount} exceeds entry limit ${getMaxMetadataEntries(this.options)}`
+        );
+      }
+
       const types = [];
       while (len > 0) {
         const ftype = await this.readToken<AtomToken.IAtomFtyp>(AtomToken.ftyp);

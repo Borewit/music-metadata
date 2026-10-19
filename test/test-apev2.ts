@@ -143,6 +143,29 @@ describe('APEv2 tags', () => {
       assert.strictEqual(tokenizer.position, 8);
     });
 
+    it('rejects text values that exceed the decoded-value allocation limit', async () => {
+      const payload = item(2, 0, 'Title\0', Buffer.from([0, 0]));
+      const tokenizer = fromBuffer(payload);
+      const options = { maxMetadataEntries: 1 };
+      const parser = new APEv2Parser(new MetadataCollector(options), tokenizer, options);
+      await expect(parser.parseTags(TagFooter.get(tagHeader(32 + payload.length), 0))).to.be.rejectedWith(
+        ApeContentError,
+        'Text value count 3 exceeds entry limit 1'
+      );
+    });
+
+    it('rejects excessive item counts before reading any item', async () => {
+      const payload = Buffer.concat([item(0, 0, 'First\0'), item(0, 0, 'Second\0')]);
+      const tokenizer = fromBuffer(payload);
+      const options = { maxMetadataEntries: 1 };
+      const parser = new APEv2Parser(new MetadataCollector(options), tokenizer, options);
+      await expect(parser.parseTags(TagFooter.get(tagHeader(32 + payload.length, 2), 0))).to.be.rejectedWith(
+        ApeContentError,
+        'Tag item count 2 exceeds entry limit 1'
+      );
+      assert.strictEqual(tokenizer.position, 0);
+    });
+
     for (const size of [undefined, forgedSize * 2]) {
       for (const type of [0, 1]) {
         it(`bounds reads of a truncated type ${type} stream (advertised size=${size})`, async () => {

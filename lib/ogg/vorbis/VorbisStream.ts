@@ -1,5 +1,5 @@
 import debugInit from 'debug';
-import { validateAllocation } from '../../common/Allocation.js';
+import { getMaxMetadataEntries, validateAllocation } from '../../common/Allocation.js';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
 import type { IOptions } from '../../type.js';
@@ -21,12 +21,14 @@ export class VorbisStream implements IPageConsumer {
   protected metadata: INativeMetadataCollector;
   protected options: IOptions;
   protected lastPageHeader?: IPageHeader;
+  private readonly maxBufferedSegments: number;
   public durationOnLastPage = true;
   public isMetadataComplete = false;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions) {
     this.metadata = metadata;
     this.options = options;
+    this.maxBufferedSegments = getMaxMetadataEntries(options);
   }
 
   /**
@@ -44,6 +46,9 @@ export class VorbisStream implements IPageConsumer {
           throw new VorbisContentError('Cannot continue on previous page');
         }
         validateAllocation(this.bufferedPageLength + pageData.length, this.options);
+        if (this.pageSegments.length >= this.maxBufferedSegments) {
+          throw new VorbisContentError('Buffered Ogg page count exceeds entry limit');
+        }
         this.pageSegments.push(pageData);
         this.bufferedPageLength += pageData.length;
       }
@@ -167,7 +172,10 @@ export class VorbisStream implements IPageConsumer {
    * Ref: https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-840005.2
    */
   protected async parseUserCommentList(pageData: Uint8Array, offset: number): Promise<void> {
-    const { comments } = new VorbisDecoder(pageData, offset).parseCommentList();
+    const { comments } = new VorbisDecoder(pageData, offset).parseCommentList(
+      message => new VorbisContentError(message),
+      getMaxMetadataEntries(this.options)
+    );
     for (const tag of comments) {
       await this.addTag(tag.key, tag.value);
     }

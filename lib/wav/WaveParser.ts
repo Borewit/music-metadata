@@ -2,6 +2,7 @@ import type { SupportedEncoding } from '@borewit/text-codec';
 import initDebug from 'debug';
 import * as strtok3 from 'strtok3';
 import * as Token from 'token-types';
+import { getMaxMetadataEntries } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { parseEmbeddedID3v2 } from '../id3v2/EmbeddedID3v2.js';
@@ -64,6 +65,11 @@ export class WaveParser extends BasicParser {
       remaining -= riff.Header.len;
       if (header.chunkSize > remaining) {
         this.metadata.addWarning('Data chunk size exceeds file size');
+        if (['CSET', 'LIST', 'fact', 'fmt ', 'id3 ', 'ID3 '].includes(header.chunkID)) {
+          throw new WaveContentError(
+            `Chunk ${header.chunkID} size ${header.chunkSize} exceeds remaining RIFF data ${remaining}`
+          );
+        }
       }
       remaining -= header.chunkSize + (header.chunkSize & 1);
 
@@ -201,6 +207,12 @@ export class WaveParser extends BasicParser {
     while (chunkSize >= 8) {
       const header = await this.readToken<riff.IChunkHeader>(riff.Header);
       const valueToken = new riff.ListInfoTagValue(header);
+      if (this.codePage === undefined && this.pendingInfoTags.length >= getMaxMetadataEntries(this.options)) {
+        throw new WaveContentError('Pending RIFF INFO tag count exceeds entry limit');
+      }
+      if (valueToken.len > chunkSize - 8) {
+        throw new WaveContentError('RIFF INFO tag size exceeds remaining LIST data');
+      }
       const bytes = await this.readToken(new Token.Uint8ArrayType(valueToken.len));
       if (this.codePage === undefined) {
         this.metadata.registerTagType('exif');

@@ -789,6 +789,39 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.isUndefined(format.bitrate, 'format.bitrate');
     });
 
+    it('bounds decoded Information and Channel Layout entry allocations', () => {
+      expect(() =>
+        CafToken.parseInfoEntries(
+          infoBody([
+            ['a', ''],
+            ['b', '']
+          ]),
+          1
+        )
+      ).to.throw(CafToken.CafContentError, 'Information entry count 2 exceeds entry limit 1');
+      expect(() => CafToken.parseChannelDescriptions(new Uint8Array(40), 2, 1)).to.throw(
+        CafToken.CafContentError,
+        'Channel Layout description count 2 exceeds entry limit 1'
+      );
+    });
+
+    it('bounds comma-separated common-tag values before splitting them', async () => {
+      const body = infoBody([['artist', 'First,Second']]);
+      const file = Buffer.concat([
+        fileHeader,
+        chunkHeader('desc', audioDescription.length),
+        audioDescription,
+        chunkHeader('info', body.length),
+        body
+      ]);
+      await expect(mm.parseBuffer(file, { mimeType: cafMimeType }, { maxMetadataEntries: 1 })).to.be.rejectedWith(
+        CafToken.CafContentError,
+        'Comma-separated value count 2 exceeds entry limit 1'
+      );
+      const metadata = await mm.parseBuffer(file, { mimeType: cafMimeType }, { maxMetadataEntries: 2 });
+      assert.deepEqual(metadata.common.artists, ['First', 'Second']);
+    });
+
     it('reassembles a large Information chunk from a stream in bounded pieces', async () => {
       const value = 'x'.repeat(100000);
       const body = infoBody([['artist', value]]);

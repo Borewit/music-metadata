@@ -1,11 +1,35 @@
 import path from 'node:path';
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 
+import * as mm from '../lib/index.js';
+import { MusepackContentError } from '../lib/musepack/MusepackConentError.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
 describe('Parse Musepack (.mpc)', () => {
   const mpcSamplePath = path.join(samplePath, 'mpc');
+
+  it('rejects an unterminated SV8 variable-size field after nine bytes', async () => {
+    const file = Buffer.concat([Buffer.from('MPCKZZ'), Buffer.alloc(9, 0x80)]);
+    await expect(mm.parseBuffer(file)).to.be.rejectedWith(
+      MusepackContentError,
+      'Variable-size integer exceeds 9 bytes'
+    );
+  });
+
+  it('rejects an SV8 packet size smaller than its header', async () => {
+    const file = Buffer.concat([Buffer.from('MPCKZZ'), Buffer.from([2]), Buffer.alloc(3)]);
+    await expect(mm.parseBuffer(file)).to.be.rejectedWith(MusepackContentError, 'Invalid packet size: 2');
+  });
+
+  it('rejects an SV8 variable-size integer outside the safe integer range', async () => {
+    // Base-128 encoding of 2 ** 53, one above the largest safe integer.
+    const file = Buffer.concat([Buffer.from('MPCKZZ'), Buffer.from([0x90, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0])]);
+    await expect(mm.parseBuffer(file)).to.be.rejectedWith(
+      MusepackContentError,
+      'Variable-size integer exceeds JavaScript safe integer range'
+    );
+  });
 
   describe('Parse Musepack, SV7 with APEv2 header', () => {
     const filePath = path.join(mpcSamplePath, 'apev2.sv7.mpc');

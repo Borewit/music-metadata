@@ -1339,6 +1339,33 @@ describe('Parse ASF', () => {
       );
     });
 
+    it('rejects Codec List entry counts exceeding the decoded-entry allocation limit', async () => {
+      const codecListHeader = new Uint8Array(20);
+      new DataView(codecListHeader.buffer).setUint16(16, 2, true);
+
+      await expect(readCodecEntries(fromBuffer(codecListHeader), codecListHeader.length, 1)).to.be.rejectedWith(
+        AsfContentParseError,
+        'ASF Codec List entry count 2 exceeds entry limit 1'
+      );
+    });
+
+    it('accepts Codec List objects whose total exceeds the per-buffer byte limit', async () => {
+      const payloadSize = 140;
+      const objectSize = HeaderObjectToken.len + payloadSize;
+      const data = new Uint8Array(TopLevelHeaderObjectToken.len + objectSize * 2);
+      writeTopLevelHeader(data, data.length, 2);
+      for (let index = 0; index < 2; ++index) {
+        writeObjectHeader(
+          data,
+          TopLevelHeaderObjectToken.len + index * objectSize,
+          AsfGuid.CodecListObject,
+          objectSize
+        );
+      }
+      // Empty codec lists with legal trailing padding; neither payload exceeds 256 bytes.
+      await mm.parseBuffer(data, asfMimeType, { maxMemoryAllocation: 256 });
+    });
+
     it('caps retained Codec List metadata for streams with an unknown size', async () => {
       const payloadSize = 16 * 1024 * 1024 + 1;
       const objectSize = 24 + payloadSize;

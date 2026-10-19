@@ -8,7 +8,13 @@ import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { BufferSizeError, EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 import * as Token from 'token-types';
-import { getTokenizerOptions, readBuffer, readToken, validateAllocation } from '../lib/common/Allocation.js';
+import {
+  getMaxMetadataEntries,
+  getTokenizerOptions,
+  readBuffer,
+  readToken,
+  validateAllocation
+} from '../lib/common/Allocation.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { parseFromTokenizer } from '../lib/core.js';
 import * as mm from '../lib/index.js';
@@ -35,6 +41,50 @@ describe('Shared metadata allocation limits', () => {
     assert.doesNotThrow(() => validateAllocation(64 * 1024 * 1024, {}));
     assert.throws(() => validateAllocation(64 * 1024 * 1024 + 1, {}), UnexpectedFileContentError, 'allocation limit');
   });
+
+  it('does not account for collected metadata bytes or record counts', async () => {
+    const collector = new MetadataCollector({ maxMemoryAllocation: 256, maxMetadataEntries: 1 });
+    for (let index = 0; index < 3; ++index) {
+      collector.addWarning(`warning ${index}`);
+      collector.addStreamInfo({ id: index });
+      await collector.addTag('ID3v2.4', 'GEOB', { data: new Uint8Array(1024) });
+    }
+    assert.lengthOf(collector.quality.warnings, 3);
+    assert.lengthOf(collector.format.trackInfo, 3);
+    assert.lengthOf(collector.native['ID3v2.4'], 3);
+  });
+
+  it('parses lyrics with default limits when collector options are omitted', async () => {
+    const collector = new MetadataCollector();
+    await collector.addTag('vorbis', 'LYRICS', '[00:00.00]First');
+    assert.deepEqual(collector.common.lyrics?.[0].syncText, [{ timestamp: 0, text: 'First' }]);
+  });
+
+  it('limits decoded lyric lines per tag rather than across the collector', async () => {
+    const collector = new MetadataCollector({ maxMetadataEntries: 2 });
+    await collector.addTag('vorbis', 'LYRICS', '[00:00.00]First\n[00:01.00]Second');
+    await collector.addTag('vorbis', 'LYRICS', '[00:02.00]Third\n[00:03.00]Fourth');
+    assert.lengthOf(collector.common.lyrics, 2);
+    await expect(collector.addTag('vorbis', 'LYRICS', '[00:00.00]A\n[00:01.00]B\n[00:02.00]C')).to.be.rejectedWith(
+      UnexpectedFileContentError,
+      'Line count 3 exceeds entry limit 2'
+    );
+  });
+
+  it('defaults to 100000 entries independently of the byte-buffer limit', () => {
+    assert.strictEqual(getMaxMetadataEntries({}), 100_000);
+    assert.strictEqual(getMaxMetadataEntries({ maxMemoryAllocation: 1 }), 100_000);
+    assert.strictEqual(getMaxMetadataEntries({ maxMetadataEntries: 200_000 }), 200_000);
+  });
+
+  for (const maxMetadataEntries of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
+    it(`rejects invalid entry limit ${maxMetadataEntries} through the public API`, async () => {
+      await expect(mm.parseBuffer(new Uint8Array(0), 'audio/wav', { maxMetadataEntries })).to.be.rejectedWith(
+        RangeError,
+        'maxMetadataEntries must be a positive safe integer'
+      );
+    });
+  }
 
   for (const size of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1, Number.NaN, Number.POSITIVE_INFINITY]) {
     it(`rejects invalid allocation size ${size} before asking the tokenizer to read`, async () => {
@@ -192,6 +242,16 @@ describe('Shared metadata allocation limits', () => {
     );
   });
 
+  it('rejects a valid-sized FLAC comment list exceeding the decoded-entry allocation limit', async () => {
+    const comments = Buffer.alloc(16);
+    comments.writeUInt32LE(2, 4);
+    const sample = Buffer.concat([Buffer.from([0x66, 0x4c, 0x61, 0x43, 0x84, 0, 0, 16]), comments]);
+    await expect(mm.parseBuffer(sample, 'audio/flac', { maxMetadataEntries: 1 })).to.be.rejectedWith(
+      UnexpectedFileContentError,
+      'Vorbis comment count 2 exceeds entry limit 1'
+    );
+  });
+
   for (const [name, payload, message] of [
     ['vendor length', [0, 0, 0], 'Truncated Vorbis comment length'],
     ['vendor string', [5, 0, 0, 0, 0x61], 'Vorbis comment length 5 exceeds remaining data 1'],
@@ -218,6 +278,22 @@ describe('Shared metadata allocation limits', () => {
     await expect(consumer.parsePage(header, new Uint8Array(1))).to.be.rejectedWith(
       UnexpectedFileContentError,
       'allocation limit 64'
+    );
+  });
+
+  it('caps retained empty Ogg page segments independently of their byte length', async () => {
+    const consumer = new VorbisStream(new MetadataCollector({}), { maxMetadataEntries: 16 });
+    const header = {
+      headerType: { firstPage: false, lastPage: false, continued: false }
+    } as IPageHeader;
+    await consumer.parsePage(header, new Uint8Array(0));
+    header.headerType.continued = true;
+    for (let index = 1; index < 16; ++index) {
+      await consumer.parsePage(header, new Uint8Array(0));
+    }
+    await expect(consumer.parsePage(header, new Uint8Array(0))).to.be.rejectedWith(
+      Error,
+      'Buffered Ogg page count exceeds entry limit'
     );
   });
 

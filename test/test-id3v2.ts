@@ -7,11 +7,18 @@ import { UINT8 } from 'token-types';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { LyricsContentType } from '../lib/core.js';
 import { parseEmbeddedID3v2 } from '../lib/id3v2/EmbeddedID3v2.js';
-import { type Chapter, Id3v2ContentError, type TableOfContents } from '../lib/id3v2/FrameParser.js';
+import {
+  type Chapter,
+  FrameParser,
+  Id3v2ContentError,
+  parseGenre,
+  type TableOfContents
+} from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import type { ID3v2MajorVersion } from '../lib/id3v2/ID3v2Token.js';
 import * as mm from '../lib/index.js';
 import { parseFromTokenizer } from '../lib/index.js';
+import { LyricsContentError, parseLrc } from '../lib/lrc/LyricsParser.js';
 import { samplePath } from './util.js';
 
 use(chaiAsPromised);
@@ -52,6 +59,12 @@ describe('ID3v2', () => {
         });
       }
 
+      it(`preserves empty ${id} people without shifting subsequent roles`, async () => {
+        const metadata = await mm.parseBuffer(fixture(major, id, ['producer', '', 'engineer', 'Bob']), 'audio/mpeg');
+        const credits = metadata.native[`ID3v2.${major}`].find(tag => tag.id === id)?.value;
+        assert.deepEqual(credits, { producer: [''], engineer: ['Bob'] });
+      });
+
       it(`ignores an incomplete ${id} pair while preserving normal repeated roles`, async () => {
         const data = fixture(major, id, ['producer', 'First,Second', 'producer', 'Third', 'unpaired']);
         const metadata = await mm.parseBuffer(data, 'audio/mpeg');
@@ -59,6 +72,65 @@ describe('ID3v2', () => {
         assert.deepEqual(credits, { producer: ['First', 'Second', 'Third'] });
       });
     }
+
+    it('rejects text frames that exceed the decoded-value allocation limit', async () => {
+      await expect(
+        mm.parseBuffer(fixture(4, 'TPE1', ['First', 'Second']), 'audio/mpeg', { maxMetadataEntries: 1 })
+      ).to.be.rejectedWith(Id3v2ContentError, 'TPE1 value count 2 exceeds entry limit 1');
+    });
+
+    it('accepts separate text lists at the configured entry limit', async () => {
+      const tag = fixture(4, 'TPE1', ['First', 'Second']);
+      const header = Buffer.from(tag.subarray(0, 10));
+      const frames = Buffer.concat([tag.subarray(10), tag.subarray(10)]);
+      header[9] = frames.length;
+      const metadata = await mm.parseBuffer(Buffer.concat([header, frames]), 'audio/mpeg', { maxMetadataEntries: 2 });
+      assert.lengthOf(metadata.native['ID3v2.4'], 4);
+    });
+
+    it('bounds genres expanded from parenthesized ID3 codes', async () => {
+      await expect(
+        mm.parseBuffer(fixture(4, 'TCON', ['(0)(1)']), 'audio/mpeg', { maxMetadataEntries: 1 })
+      ).to.be.rejectedWith(Id3v2ContentError, 'TCON value count 2 exceeds entry limit 1');
+    });
+
+    it('bounds frame counts even when frames do not produce split text values', async () => {
+      const tag = fixture(4, 'TIT2', ['Title']);
+      const header = Buffer.from(tag.subarray(0, 10));
+      const frames = Buffer.concat([tag.subarray(10), tag.subarray(10)]);
+      header[9] = frames.length;
+      await expect(
+        mm.parseBuffer(Buffer.concat([header, frames]), 'audio/mpeg', { maxMetadataEntries: 1 })
+      ).to.be.rejectedWith(Id3v2ContentError, 'Frame count exceeds entry limit');
+    });
+  });
+
+  it('preserves empty values in ID3v2.4 user text lists', () => {
+    const parser = new FrameParser(4, { addWarning: () => assert.fail('Unexpected warning') });
+    assert.deepEqual(parser.readData(Buffer.from('\0description\0First\0\0Second'), 'TXXX', false), {
+      description: 'description',
+      text: ['First', '', 'Second']
+    });
+  });
+
+  it('enforces a finite value budget when a frame parser is constructed directly', () => {
+    const parser = new FrameParser(4, { addWarning: () => assert.fail('Unexpected warning') });
+    const data = Buffer.from(`\0${'a\0'.repeat(100_001)}`, 'latin1');
+    expect(() => parser.readData(data, 'TPE1', false)).to.throw(
+      Id3v2ContentError,
+      'TPE1 value count 100001 exceeds entry limit 100000'
+    );
+  });
+
+  it('preserves literal genre text before an unterminated code', () => {
+    assert.deepEqual(parseGenre('Electronic(unfinished'), ['Electronic']);
+  });
+
+  it('rejects synchronized lyrics that exceed the decoded-line allocation limit', () => {
+    expect(() => parseLrc('[00:00.00]First\n[00:01.00]Second', 1)).to.throw(
+      LyricsContentError,
+      'Line count 2 exceeds entry limit 1'
+    );
   });
 
   describe('Headers and unknown frames', () => {
@@ -186,6 +258,17 @@ describe('ID3v2', () => {
         }
 
         describe(`ID3v2.${major} ${parent}`, () => {
+          it('bounds nested embedded chapter frames', async () => {
+            let nested = frame('TIT2', Buffer.from('\0Title'));
+            const fields = parent === 'CHAP' ? Buffer.alloc(16) : Buffer.from([0, 0]);
+            for (let depth = 0; depth < 34; ++depth) {
+              nested = frame(parent, Buffer.concat([Buffer.from('id\0'), fields, nested]));
+            }
+            await expect(mm.parseBuffer(fixture(nested), 'audio/mpeg')).to.be.rejectedWith(
+              Id3v2ContentError,
+              'Embedded ID3v2 frame nesting exceeds limit 32'
+            );
+          });
           for (let length = 1; length < 10; length++) {
             it(`rejects an embedded frame header truncated to ${length} bytes`, async () => {
               const data = fixture(frame('TIT2', new Uint8Array()).subarray(0, length));

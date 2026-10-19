@@ -1,5 +1,6 @@
 import initDebug from 'debug';
 import * as Token from 'token-types';
+import { defaultMaxMetadataEntries } from '../common/Allocation.js';
 import type { IWarningCollector } from '../common/MetadataCollector.js';
 import * as util from '../common/Util.js';
 import { decodeUintBE } from '../common/Util.js';
@@ -77,41 +78,48 @@ export type TableOfContents = {
 const defaultEnc = 'latin1'; // latin1 == iso-8859-1;
 const urlEnc: ITextEncoding = { encoding: defaultEnc, bom: false };
 
-export function parseGenre(origVal: string): string[] {
+export function parseGenre(origVal: string, maxEntries = defaultMaxMetadataEntries): string[] {
   // match everything inside parentheses
-  const genres = [];
-  let code: string | undefined;
-  let word: string | undefined = '';
-  for (const c of origVal) {
-    if (typeof code === 'string') {
-      if (c === '(' && code === '') {
-        word += '(';
-        code = undefined;
-      } else if (c === ')') {
-        if (word !== '') {
-          genres.push(word);
-          word = '';
-        }
-        const genre = parseGenreCode(code);
-        if (genre) {
-          genres.push(genre);
-        }
-        code = undefined;
-      } else {
-        code += c;
-      }
-    } else if (c === '(') {
-      code = '';
-    } else {
-      word += c;
+  const genres: string[] = [];
+  const addGenre = (genre: string): void => {
+    if (genres.length >= maxEntries) {
+      throw new Id3v2ContentError(`TCON value count ${genres.length + 1} exceeds entry limit ${maxEntries}`);
     }
+    genres.push(genre);
+  };
+  let word: string | undefined = '';
+  for (let offset = 0; offset < origVal.length; ) {
+    const open = origVal.indexOf('(', offset);
+    if (open < 0) {
+      word += origVal.slice(offset);
+      break;
+    }
+    word += origVal.slice(offset, open);
+    if (origVal[open + 1] === '(') {
+      word += '(';
+      offset = open + 2;
+      continue;
+    }
+    const close = origVal.indexOf(')', open + 1);
+    if (close < 0) {
+      break;
+    }
+    if (word !== '') {
+      addGenre(word);
+      word = '';
+    }
+    const genre = parseGenreCode(origVal.slice(open + 1, close));
+    if (genre) {
+      addGenre(genre);
+    }
+    offset = close + 1;
   }
   if (word) {
     if (genres.length === 0 && word.match(/^\d*$/)) {
       word = parseGenreCode(word);
     }
     if (word) {
-      genres.push(word);
+      addGenre(word);
     }
   }
   return genres;
@@ -130,6 +138,7 @@ function parseGenreCode(code: string): string | undefined {
 }
 
 export class FrameParser {
+  private embeddedFrameDepth = 0;
   private major: ID3v2MajorVersion;
 
   private warningCollector: IWarningCollector;
@@ -139,10 +148,20 @@ export class FrameParser {
    * @param major - Major version, e.g. (4) for  id3v2.4
    * @param warningCollector - Used to collect decode issue
    */
-  constructor(major: ID3v2MajorVersion, warningCollector: IWarningCollector) {
+  constructor(
+    major: ID3v2MajorVersion,
+    warningCollector: IWarningCollector,
+    private readonly maxEntries = defaultMaxMetadataEntries
+  ) {
     this.major = major;
     this.warningCollector = warningCollector;
   }
+
+  private readonly validateTextValues = (count: number, context: string): void => {
+    if (count > this.maxEntries) {
+      throw new Id3v2ContentError(`${context} value count ${count} exceeds entry limit ${this.maxEntries}`);
+    }
+  };
 
   public readData(uint8Array: Uint8Array, type: string, includeCovers: boolean) {
     if (uint8Array.length === 0) {
@@ -185,7 +204,7 @@ export class FrameParser {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list
           case 'IPLS': // Involved people list
-            output = FrameParser.functionList(this.splitValue(type, text));
+            output = this.functionList(this.splitValue(type, text));
             break;
           case 'TRK':
           case 'TRCK':
@@ -205,11 +224,17 @@ export class FrameParser {
             output = this.splitValue(type, text);
             break;
           case 'TCO':
-          case 'TCON':
-            output = this.splitValue(type, text)
-              .map(v => parseGenre(v))
-              .reduce((acc, val) => acc.concat(val), []);
+          case 'TCON': {
+            const genres: string[] = [];
+            for (const value of this.splitValue(type, text)) {
+              for (const genre of parseGenre(value, this.maxEntries)) {
+                this.validateTextValues(genres.length + 1, 'TCON');
+                genres.push(genre);
+              }
+            }
+            output = genres;
             break;
+          }
           case 'PCS':
           case 'PCST':
             // TODO: Why `default` not results `1` but `''`?
@@ -290,6 +315,7 @@ export class FrameParser {
           uint8Array = uint8Array.subarray(nullStr.len);
 
           if (readSyllables) {
+            this.validateTextValues(result.syncText.length + 1, 'SYLT');
             const timestamp = Token.UINT32_BE.get(uint8Array, 0);
             uint8Array = uint8Array.subarray(Token.UINT32_BE.len);
             result.syncText.push({
@@ -524,7 +550,17 @@ export class FrameParser {
           `Embedded ID3v2 frame ${frame.id} size ${frame.length} exceeds remaining chapter data`
         );
       }
-      const value = this.readData(data.subarray(offset, offset + frame.length), frame.id, includeCovers);
+      this.validateTextValues(frames.size + 1, 'Embedded frame');
+      if (this.embeddedFrameDepth >= 32) {
+        throw new Id3v2ContentError('Embedded ID3v2 frame nesting exceeds limit 32');
+      }
+      ++this.embeddedFrameDepth;
+      let value: unknown;
+      try {
+        value = this.readData(data.subarray(offset, offset + frame.length), frame.id, includeCovers);
+      } finally {
+        --this.embeddedFrameDepth;
+      }
       offset += frame.length;
       frames.set(frame.id, value);
     }
@@ -567,7 +603,7 @@ export class FrameParser {
    * Converts TMCL (Musician credits list) or TIPL (Involved people list)
    * @param entries
    */
-  private static functionList(entries: string[]): { [index: string]: string[] } {
+  private functionList(entries: string[]): { [index: string]: string[] } {
     const roles = new Map<string, string[]>();
     for (let i = 0; i < entries.length; i += 2) {
       const role = entries[i];
@@ -575,7 +611,7 @@ export class FrameParser {
       if (role === undefined || people === undefined) {
         break;
       }
-      const names = people.split(',');
+      const names = util.splitText(people, ',', 'people-list', this.validateTextValues, { keepEmpty: true });
       roles.set(role, (roles.get(role) ?? []).concat(names));
     }
     return Object.fromEntries(roles);
@@ -592,7 +628,7 @@ export class FrameParser {
   private splitValue(tag: string, text: string): string[] {
     let values: string[];
     if (this.major < 4) {
-      values = text.split(/\x00/g);
+      values = util.splitText(text, '\0', tag, this.validateTextValues, { keepEmpty: true });
       if (values.length > 1) {
         this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
       } else if (
@@ -620,10 +656,10 @@ export class FrameParser {
       ) {
         // note that field Genre (TCON/TCO) is NOT in this list:
         // a genre like "Duo Cello/Piano" must stay intact
-        values = text.split(/\//g);
+        values = util.splitText(text, '/', tag, this.validateTextValues, { keepEmpty: true });
       }
     } else {
-      values = text.split(/\x00/g);
+      values = util.splitText(text, '\0', tag, this.validateTextValues, { keepEmpty: true });
     }
     return FrameParser.trimArray(values);
   }

@@ -34,7 +34,7 @@ export class CommonTagMapper implements IGenericTagMapper {
   // converts 1/10 to no : 1, of : 10
   // or 1 to no : 1, of : 0
   public static normalizeTrack(origVal: number | string) {
-    const split = origVal.toString().split('/');
+    const split = origVal.toString().split('/', 2);
     return {
       no: Number.parseInt(split[0], 10) || null,
       of: Number.parseInt(split[1], 10) || null

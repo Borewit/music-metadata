@@ -1,6 +1,7 @@
 import initDebug from 'debug';
 import * as strtok3 from 'strtok3';
 import * as Token from 'token-types';
+import { getMaxMetadataEntries } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import * as CafToken from './CafToken.js';
 import { CafContentError, type IAudioDescription, type IPacketTableHeader } from './CafToken.js';
@@ -188,7 +189,19 @@ export class CafParser extends BasicParser {
       throw new CafContentError(`Information chunk size ${chunkSize} is too small to hold mNumEntries`);
     }
     const body = await this.readChunkBody(chunkSize, 'Information');
-    for (const { key, value } of CafToken.parseInfoEntries(body)) {
+    const entries = CafToken.parseInfoEntries(body, getMaxMetadataEntries(this.options));
+    for (const { key, value } of entries) {
+      if (['artist', 'composer', 'lyricist', 'genre'].includes(key)) {
+        let count = 1;
+        for (let offset = value.indexOf(','); offset >= 0; offset = value.indexOf(',', offset + 1)) {
+          ++count;
+        }
+        if (count > getMaxMetadataEntries(this.options)) {
+          throw new CafContentError(
+            `Comma-separated value count ${count} exceeds entry limit ${getMaxMetadataEntries(this.options)}`
+          );
+        }
+      }
       debug(`info key=${key}`);
       await this.metadata.addTag('CAF', key, value);
     }
@@ -215,7 +228,8 @@ export class CafParser extends BasicParser {
       descriptionLen > 0
         ? CafToken.parseChannelDescriptions(
             await this.readChunkBody(descriptionLen, 'Channel Layout'),
-            header.numberChannelDescriptions
+            header.numberChannelDescriptions,
+            getMaxMetadataEntries(this.options)
           )
         : [];
 
