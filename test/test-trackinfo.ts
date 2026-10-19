@@ -297,6 +297,27 @@ describe('format.trackInfo', () => {
       return data;
     }
 
+    it('accepts separate pending Ogg packets whose total exceeds the per-packet limit', async () => {
+      const data = Buffer.concat([
+        page(1, 2, 0, opusIdentification()),
+        page(2, 2, 0, opusIdentification()),
+        page(1, 0, 0, new Uint8Array(200)),
+        page(2, 0, 0, new Uint8Array(200))
+      ]);
+      const metadata = await mm.parseBuffer(data, 'audio/ogg', { maxMemoryAllocation: 256 });
+      assert.lengthOf(metadata.format.trackInfo, 2);
+    });
+
+    it('stops before exceeding the configured logical Ogg stream limit', async () => {
+      const pages = Array.from({ length: 5 }, (_, index) => page(index + 1, 2, 0, opusIdentification()));
+      const tokenizer = fromBuffer(Buffer.concat(pages));
+      const metadata = new MetadataCollector({});
+      await new OggParser(metadata, tokenizer, { maxMetadataEntries: 4 }).parse();
+      assert.lengthOf(metadata.format.trackInfo, 4);
+      assert.strictEqual(tokenizer.position, pages.slice(0, 4).reduce((sum, value) => sum + value.length, 0) + 27);
+      assert.isTrue(metadata.quality.warnings.some(warning => warning.message.startsWith('Corrupt Ogg content')));
+    });
+
     for (const videoFirst of [false, true]) {
       it(`preserves video presence when mixing Theora and Opus (video first=${videoFirst})`, async () => {
         const sample = await readFile(path.join(samplePath, 'ogg', 'ogg-theora-skeleton-v3.ogg'));

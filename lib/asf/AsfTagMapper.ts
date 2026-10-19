@@ -95,7 +95,7 @@ export class AsfTagMapper extends CommonTagMapper {
     switch (tag.id) {
       case 'POPULARIMETER': {
         // popm-style attribute, written by e.g. foobar2000; value is "email|rating|counter"
-        const [email, rating] = (tag.value as string).split('|');
+        const [email, rating] = (tag.value as string).split('|', 2);
         const value = Number(rating);
         const valid = /^\d+$/.test(rating) && Number.isInteger(value) && value >= 0 && value <= 255;
         if (!valid) {
@@ -108,7 +108,7 @@ export class AsfTagMapper extends CommonTagMapper {
         break;
       }
       case 'WM/SharedUserRating': {
-        const keys = tag.id.split(':');
+        const keys = tag.id.split(':', 2);
         tag.value = AsfTagMapper.toRating(tag.value as string | number);
         tag.id = keys[0];
         break;

@@ -3,6 +3,7 @@ import type { IGetToken, ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
 import * as util from '../../common/Util.js';
+import { MusepackContentError } from '../MusepackConentError.js';
 
 const debug = initDebug('music-metadata:parser:musepack:sv8');
 
@@ -98,9 +99,13 @@ export class StreamReader {
   public async readPacketHeader(): Promise<IPacketHeader> {
     const key = await this.tokenizer.readToken<string>(PacketKey);
     const size = await this.readVariableSizeField();
+    const headerLength = PacketKey.len + size.len;
+    if (size.value < headerLength) {
+      throw new MusepackContentError(`Invalid packet size: ${size.value}`);
+    }
     return {
       key,
-      payloadLength: size.value - 2 - size.len
+      payloadLength: size.value - headerLength
     };
   }
 
@@ -129,13 +134,19 @@ export class StreamReader {
     return streamHeader;
   }
 
-  private async readVariableSizeField(len = 1, hb = 0): Promise<IVarSize> {
-    let n = await this.tokenizer.readNumber(Token.UINT8);
-    if ((n & 0x80) === 0) {
-      return { len, value: hb + n };
+  private async readVariableSizeField(): Promise<IVarSize> {
+    let value = 0;
+    for (let len = 1; len <= 9; ++len) {
+      const byte = await this.tokenizer.readNumber(Token.UINT8);
+      const digit = byte & 0x7f;
+      if (value > (Number.MAX_SAFE_INTEGER - digit) / 128) {
+        throw new MusepackContentError('Variable-size integer exceeds JavaScript safe integer range');
+      }
+      value = value * 128 + digit;
+      if ((byte & 0x80) === 0) {
+        return { len, value };
+      }
     }
-    n &= 0x7f;
-    n += hb;
-    return this.readVariableSizeField(len + 1, n << 7);
+    throw new MusepackContentError('Variable-size integer exceeds 9 bytes');
   }
 }

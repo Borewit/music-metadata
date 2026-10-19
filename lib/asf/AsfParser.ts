@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 import { EndOfStreamError } from 'strtok3';
 import * as Token from 'token-types';
-import { validateAllocation } from '../common/Allocation.js';
+import { getMaxMetadataEntries, validateAllocation } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { type ITag, type ITrackInfo, TrackType } from '../type.js';
 import AsfGuid from './AsfGuid.js';
@@ -175,12 +175,14 @@ export class AsfParser extends BasicParser {
           this.validateAllocationSize(payloadSize, 'Codec List Object');
           let codecs: AsfObject.ICodecEntry[];
           try {
-            codecs = await AsfObject.readCodecEntries(this.tokenizer, payloadSize);
+            codecs = await AsfObject.readCodecEntries(this.tokenizer, payloadSize, getMaxMetadataEntries(this.options));
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             throw new AsfContentParseError(`Invalid ASF Codec List Object: ${message}`);
           }
-          this.codecs.push(...codecs);
+          for (const codec of codecs) {
+            this.codecs.push(codec);
+          }
           const audioCodecs = codecs
             .filter(codec => codec.type.audioCodec)
             .map(codec => codec.codecName)

@@ -138,7 +138,7 @@ export class VorbisTagMapper extends CommonTagMapper {
       // The way Winamp 5.666 assigns rating
       tag.value = VorbisTagMapper.toRating(undefined, tag.value as string, 100);
     } else if (tag.id.indexOf('RATING:') === 0) {
-      const keys = tag.id.split(':');
+      const keys = tag.id.split(':', 2);
       tag.value = VorbisTagMapper.toRating(keys[1], tag.value as string, 1);
       tag.id = keys[0];
     }

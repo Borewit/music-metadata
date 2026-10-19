@@ -1,5 +1,6 @@
 import initDebug from 'debug';
 import { Uint8ArrayType } from 'token-types';
+import { getMaxMetadataEntries } from '../common/Allocation.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
@@ -104,7 +105,10 @@ export class FlacParser extends AbstractID3Parser {
    */
   public async parseComment(data: Uint8Array): Promise<void> {
     const decoder = new VorbisDecoder(data, 0);
-    const { vendor, comments } = decoder.parseCommentList(message => new FlacContentError(message));
+    const { vendor, comments } = decoder.parseCommentList(
+      message => new FlacContentError(message),
+      getMaxMetadataEntries(this.options)
+    );
     if (vendor.length > 0) {
       this.metadata.setFormat('tool', vendor);
     }

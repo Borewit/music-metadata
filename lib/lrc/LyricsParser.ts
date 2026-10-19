@@ -1,11 +1,15 @@
+import { defaultMaxMetadataEntries } from '../common/Allocation.js';
+import { makeUnexpectedFileContentError } from '../ParseError.js';
 import { type ILyricsTag, type ILyricsText, LyricsContentType, TimestampFormat } from '../type.js';
 
 // Shared timestamp regex for LRC format
 const TIMESTAMP_REGEX = /\[(\d{2}):(\d{2})\.(\d{2,3})]/;
 
-export function parseLyrics(input: string): ILyricsTag {
+export class LyricsContentError extends makeUnexpectedFileContentError('lyrics') {}
+
+export function parseLyrics(input: string, maxLines = defaultMaxMetadataEntries): ILyricsTag {
   if (TIMESTAMP_REGEX.test(input)) {
-    return parseLrc(input);
+    return parseLrc(input, maxLines);
   }
   return toUnsyncedLyrics(input);
 }
@@ -24,7 +28,14 @@ export function toUnsyncedLyrics(lyrics: string): ILyricsTag {
  * Ref: https://en.wikipedia.org/wiki/LRC_(file_format)
  * @param lrcString
  */
-export function parseLrc(lrcString: string): ILyricsTag {
+export function parseLrc(lrcString: string, maxLines = defaultMaxMetadataEntries): ILyricsTag {
+  let lineCount = 1;
+  for (let offset = lrcString.indexOf('\n'); offset >= 0; offset = lrcString.indexOf('\n', offset + 1)) {
+    ++lineCount;
+  }
+  if (lineCount > maxLines) {
+    throw new LyricsContentError(`Line count ${lineCount} exceeds entry limit ${maxLines}`);
+  }
   const lines = lrcString.split('\n');
   const syncText: ILyricsText[] = [];
 

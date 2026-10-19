@@ -15,6 +15,29 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
   const ULAW = 'ITU-T G.711 mu-law';
 
+  for (const chunkId of ['ID3 ', 'NAME']) {
+    it(`rejects a forged ${chunkId} chunk size before allocating`, async () => {
+      const file = Buffer.alloc(20);
+      file.write('FORM');
+      file.writeUInt32BE(12, 4);
+      file.write('AIFF', 8);
+      file.write(chunkId, 12);
+      file.writeUInt32BE(0xffffffff, 16);
+      await expect(mm.parseBuffer(file, 'audio/aiff')).to.be.rejectedWith(
+        AiffContentError,
+        `Chunk ${chunkId} size 4294967295 exceeds remaining FORM data`
+      );
+    });
+  }
+
+  it('rejects a FORM size smaller than its type field', async () => {
+    const file = Buffer.alloc(12);
+    file.write('FORM');
+    file.writeUInt32BE(3, 4);
+    file.write('AIFF', 8);
+    await expect(mm.parseBuffer(file, 'audio/aiff')).to.be.rejectedWith(AiffContentError, 'Invalid FORM chunk size: 3');
+  });
+
   function checkFormat(
     format: mm.IFormat,
     compressionType: string,
@@ -224,6 +247,14 @@ describe('AIFF sound-data bitrate', () => {
     }
     return chunk('FORM', Buffer.concat([Buffer.from('AIFF'), ...chunks, chunk('NAME', Buffer.from('Title'))]));
   }
+
+  it('rejects text chunks that exceed the decoded-value allocation limit', async () => {
+    const file = chunk('FORM', Buffer.concat([Buffer.from('AIFF'), chunk('NAME', Buffer.from([0, 0]))]));
+    await expect(mm.parseBuffer(file, { mimeType: 'audio/aiff' }, { maxMetadataEntries: 1 })).to.be.rejectedWith(
+      AiffContentError,
+      'Text value count 3 exceeds entry limit 1'
+    );
+  });
 
   for (const source of ['buffer', 'stream', 'blob']) {
     async function parse(data: Buffer) {

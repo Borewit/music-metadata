@@ -175,8 +175,9 @@ describe('Decode MP3/ID3v2.4', () => {
       offset += part.length;
     }
 
-    const { native } = await mm.parseBuffer(mp3, { mimeType: 'audio/mpeg' });
+    const { native } = await mm.parseBuffer(mp3, { mimeType: 'audio/mpeg' }, { maxMetadataEntries: nulCount + 1 });
     const textFrames = (native['ID3v2.4'] ?? []).filter(tag => tag.id === 'TXXX');
+    assert.lengthOf(textFrames, nulCount + 1, 'empty values retain their positions');
     assert.strictEqual(textFrames[textFrames.length - 1].value, 'A', 'the byte after the NUL run survives');
   });
 

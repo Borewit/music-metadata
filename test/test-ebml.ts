@@ -66,12 +66,36 @@ describe('EBML random-access header reads', () => {
     assert.strictEqual(tree.leaf, 42);
   });
 
+  it('bounds the number of retained EBML values independently of their byte length', async () => {
+    const sample = Uint8Array.from({ length: 34 }, (_, index) => (index % 2 === 0 ? 0x81 : 0x80));
+    const tokenizer = fromBuffer(sample);
+    const dtd: IElementType = {
+      name: 'root',
+      container: { 0x81: { name: 'leaves', value: DataType.binary, multiple: true } }
+    };
+    await expect(
+      new EbmlIterator(tokenizer, { maxMetadataEntries: 16 }).iterate(dtd, sample.length, listener)
+    ).to.be.rejectedWith(EbmlContentError, 'Collected EBML element count exceeds entry limit');
+  });
+
   it('does not interpret stale bytes after a truncated final header', async () => {
     const sample = new Uint8Array([0x81, 0x81, 42, 0x81, 0x40]);
     const tokenizer = fromBuffer(sample);
     const tree = await new EbmlIterator(tokenizer).iterate(leafDtd(DataType.uint), sample.length, listener);
     assert.strictEqual(tree.leaf, 42);
     assert.strictEqual(tokenizer.position, 3);
+  });
+
+  it('accepts collected payloads whose total exceeds the per-buffer byte limit', async () => {
+    const sample = new Uint8Array([0x81, 0x84, 1, 2, 3, 4, 0x81, 0x84, 5, 6, 7, 8]);
+    const tokenizer = fromBuffer(sample);
+    const tree = await new EbmlIterator(tokenizer, { maxMemoryAllocation: 4 }).iterate(
+      leafDtd(DataType.binary),
+      sample.length,
+      listener
+    );
+    assert.deepEqual(tree.leaf, new Uint8Array([5, 6, 7, 8]));
+    assert.strictEqual(tokenizer.position, sample.length);
   });
 });
 

@@ -14,7 +14,7 @@ import {
   type ITrackInfo,
   TrackTypeValueToKeyMap
 } from '../type.js';
-import { getMaxMemoryAllocation } from './Allocation.js';
+import { getMaxMemoryAllocation, getMaxMetadataEntries } from './Allocation.js';
 import { CombinedTagMapper } from './CombinedTagMapper.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
 import { type IGenericTag, isSingleton, isUnique, type TagType } from './GenericTagTypes.js';
@@ -269,11 +269,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
 
       case 'replaygain_track_minmax':
-        tag.value = (tag.value as string).split(',').map(v => Number.parseInt(v, 10));
+        tag.value = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));
         break;
 
       case 'replaygain_undo': {
-        const minMix = (tag.value as string).split(',').map(v => Number.parseInt(v, 10));
+        const minMix = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
           rightChannel: minMix[1]
@@ -308,7 +308,7 @@ export class MetadataCollector implements INativeMetadataCollector {
 
       case 'lyrics':
         if (typeof tag.value === 'string') {
-          tag.value = parseLyrics(tag.value);
+          tag.value = parseLyrics(tag.value, getMaxMetadataEntries(this.opts ?? {}));
         }
         break;
 

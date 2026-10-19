@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import { fromBuffer, fromStream } from 'strtok3';
 import type { IFormat, INativeTagDict } from '../lib/index.js';
 import * as mm from '../lib/index.js';
@@ -10,6 +10,32 @@ import { samplePath } from './util.js';
 const wavSamples = path.join(samplePath, 'wav');
 
 describe('Parse RIFF/WAVE audio format', () => {
+  it('rejects an allocating chunk that exceeds its RIFF container', async () => {
+    const file = Buffer.alloc(20);
+    file.write('RIFF');
+    file.writeUInt32LE(12, 4);
+    file.write('WAVEfmt ', 8);
+    file.writeUInt32LE(0xffffffff, 16);
+    await expect(mm.parseBuffer(file, 'audio/wav')).to.be.rejectedWith(
+      mm.UnexpectedFileContentError,
+      'Chunk fmt  size 4294967295 exceeds remaining RIFF data 0'
+    );
+  });
+
+  it('rejects an INFO value exceeding its LIST container before reading it', async () => {
+    const file = Buffer.alloc(32);
+    file.write('RIFF');
+    file.writeUInt32LE(24, 4);
+    file.write('WAVELIST', 8);
+    file.writeUInt32LE(12, 16);
+    file.write('INFOINAM', 20);
+    file.writeUInt32LE(0xffffffff, 28);
+    await expect(mm.parseBuffer(file, 'audio/wav')).to.be.rejectedWith(
+      mm.UnexpectedFileContentError,
+      'RIFF INFO tag size exceeds remaining LIST data'
+    );
+  });
+
   function checkExifTags(exif: INativeTagDict) {
     assert.deepEqual(exif.IART, ['Beth Hart & Joe Bonamassa'], 'exif.IART');
     assert.deepEqual(exif.ICRD, ['2011'], 'exif.ICRD');
@@ -134,6 +160,35 @@ describe('Parse RIFF/WAVE audio format', () => {
       { file: 'cest_windows1252-after-info.wav', title: '“Mötley” – 10 €' },
       { file: 'cest_utf8-after-info.wav', title: '音楽 – Mötley' }
     ];
+
+    it('limits deferred INFO entries independently of buffered bytes', async () => {
+      const chunk = (id: string, payload: Buffer): Buffer => {
+        const header = Buffer.alloc(8);
+        header.write(id, 'ascii');
+        header.writeUInt32LE(payload.length, 4);
+        return Buffer.concat([header, payload, payload.length % 2 === 0 ? Buffer.alloc(0) : Buffer.alloc(1)]);
+      };
+      const info = chunk(
+        'LIST',
+        Buffer.concat([Buffer.from('INFO'), chunk('INAM', Buffer.alloc(300)), chunk('IART', Buffer.alloc(300))])
+      );
+      const body = Buffer.concat([Buffer.from('WAVE'), info]);
+      const header = Buffer.alloc(8);
+      header.write('RIFF');
+      header.writeUInt32LE(body.length, 4);
+
+      try {
+        await mm.parseBuffer(Buffer.concat([header, body]), { mimeType: 'audio/wav' }, { maxMetadataEntries: 1 });
+        assert.fail('Expected deferred INFO allocation error');
+      } catch (error) {
+        assert.include((error as Error).message, 'Pending RIFF INFO tag count exceeds entry limit');
+      }
+      await mm.parseBuffer(
+        Buffer.concat([header, body]),
+        { mimeType: 'audio/wav' },
+        { maxMemoryAllocation: 512, maxMetadataEntries: 2 }
+      );
+    });
 
     for (const sample of samples) {
       describe(sample.file, () => {

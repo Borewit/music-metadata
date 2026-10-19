@@ -1,6 +1,7 @@
 import initDebug from 'debug';
 import * as strtok3 from 'strtok3';
 import * as Token from 'token-types';
+import { getMaxMetadataEntries } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { parseEmbeddedID3v2 } from '../id3v2/EmbeddedID3v2.js';
@@ -45,17 +46,29 @@ export class AIFFParser extends BasicParser {
     this.metadata.setFormat('lossless', !this.isCompressed);
     this.metadata.setAudioOnly();
 
+    let remaining = header.chunkSize - FourCcToken.len;
+    if (remaining < 0) {
+      throw new AiffContentError(`Invalid FORM chunk size: ${header.chunkSize}`);
+    }
     try {
-      while (
-        !this.tokenizer.fileInfo.size ||
-        this.tokenizer.fileInfo.size - this.tokenizer.position >= iff.Header.len
-      ) {
+      while (remaining >= iff.Header.len) {
         debug(`Reading AIFF chunk at offset=${this.tokenizer.position}`);
         const chunkHeader = await this.readToken<iff.IChunkHeader>(iff.Header);
+        remaining -= iff.Header.len;
+        const available = this.tokenizer.fileInfo.size;
+        if (
+          chunkHeader.chunkSize > remaining ||
+          (available !== undefined && chunkHeader.chunkSize > available - this.tokenizer.position)
+        ) {
+          throw new AiffContentError(
+            `Chunk ${chunkHeader.chunkID} size ${chunkHeader.chunkSize} exceeds remaining FORM data`
+          );
+        }
 
         const nextChunk = 2 * Math.round(chunkHeader.chunkSize / 2);
         const bytesRead = await this.readData(chunkHeader);
         await this.tokenizer.ignore(nextChunk - bytesRead);
+        remaining -= nextChunk;
       }
     } catch (err) {
       if (err instanceof strtok3.EndOfStreamError) {
@@ -127,6 +140,15 @@ export class AIFFParser extends BasicParser {
 
   public async readTextChunk(header: iff.IChunkHeader): Promise<number> {
     const value = await this.readToken(new Token.StringType(header.chunkSize, 'ascii'));
+    let valueCount = 1;
+    for (let offset = value.indexOf('\0'); offset >= 0; offset = value.indexOf('\0', offset + 1)) {
+      ++valueCount;
+    }
+    if (valueCount > getMaxMetadataEntries(this.options)) {
+      throw new AiffContentError(
+        `Text value count ${valueCount} exceeds entry limit ${getMaxMetadataEntries(this.options)}`
+      );
+    }
     const values = value
       .split('\0')
       .map(v => v.trim())

@@ -50,6 +50,46 @@ export function trimRightNull(x: string): string {
   return pos0 === -1 ? x : x.substring(0, pos0);
 }
 
+/** Split text, validating the value count before allocation. By default, omit empty segments except for empty results. */
+export function splitText(
+  text: string,
+  separator: string,
+  context: string,
+  validateCount: (count: number, context: string) => void,
+  { keepEmpty = false }: { keepEmpty?: boolean } = {}
+): string[] {
+  if (separator.length === 0) {
+    throw new RangeError('Text separator must not be empty');
+  }
+  let count = 0;
+  let start = 0;
+  for (let end = text.indexOf(separator); end >= 0; end = text.indexOf(separator, start)) {
+    if (keepEmpty || end > start) {
+      ++count;
+    }
+    start = end + separator.length;
+  }
+  if (keepEmpty || start < text.length) {
+    ++count;
+  }
+  validateCount(Math.max(count, 1), context);
+
+  const values: string[] = [];
+  start = 0;
+  for (let end = text.indexOf(separator); end >= 0; end = text.indexOf(separator, start)) {
+    if (keepEmpty || end > start) {
+      values.push(text.slice(start, end));
+    }
+    start = end + separator.length;
+  }
+  if (keepEmpty || start < text.length) {
+    values.push(text.slice(start));
+  } else if (values.length === 0) {
+    values.push('');
+  }
+  return values;
+}
+
 function swapBytes<T extends Uint8Array>(uint8Array: T): T {
   const l = uint8Array.length;
   if ((l & 1) !== 0) {
@@ -158,7 +198,7 @@ export function dbToRatio(dB: number): number {
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
  */
 export function toRatio(value: string): IRatio | undefined {
-  const ps = value.split(' ').map(p => p.trim().toLowerCase());
+  const ps = value.split(' ', 2).map(p => p.trim().toLowerCase());
   if (ps.length >= 1) {
     const v = Number.parseFloat(ps[0]);
     return ps.length === 2 && ps[1] === 'db'

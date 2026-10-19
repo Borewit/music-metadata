@@ -6,14 +6,22 @@ import { Header, Mp4ContentError } from './AtomToken.js';
 export type AtomDataHandler = (atom: Atom, remaining: number) => Promise<void>;
 
 const debug = initDebug('music-metadata:parser:MP4:Atom');
+const maxAtomDepth = 64;
 
 export class Atom {
   public static async readAtom(
     tokenizer: ITokenizer,
     dataHandler: AtomDataHandler,
     parent: Atom | null,
-    remaining: number
+    remaining: number,
+    reserveAtom: () => void = () => undefined
   ): Promise<Atom> {
+    let depth = 0;
+    for (let ancestor = parent; ancestor; ancestor = ancestor.parent) {
+      if (++depth >= maxAtomDepth) {
+        throw new Mp4ContentError(`MP4 atom nesting exceeds limit ${maxAtomDepth}`);
+      }
+    }
     // Validate boundaries before reading either header or dispatching a payload parser.
     const offset = tokenizer.position;
     remaining = Math.min(remaining, (tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY) - offset);
@@ -41,7 +49,8 @@ export class Atom {
       throw new Mp4ContentError(`Atom size exceeds remaining bytes: ${header.length} > ${remaining}`);
     }
     const payloadLength = length - headerLength;
-    const atomBean = new Atom(header, extended, parent, payloadLength);
+    reserveAtom();
+    const atomBean = new Atom(header, extended, parent, payloadLength, reserveAtom);
     debug(
       `parse atom name=${atomBean.atomPath}, extended=${atomBean.extended}, offset=${offset}, len=${atomBean.header.length}`
     ); //  buf.toString('ascii')
@@ -60,7 +69,8 @@ export class Atom {
     header: AtomToken.IAtomHeader,
     extended: boolean,
     parent: Atom | null,
-    private readonly payloadLength: number
+    private readonly payloadLength: number,
+    private readonly reserveAtom: () => void = () => undefined
   ) {
     this.header = header;
     this.extended = extended;
@@ -89,7 +99,7 @@ export class Atom {
           throw new Mp4ContentError('Truncated atom header');
         }
       }
-      const atomBean = await Atom.readAtom(tokenizer, dataHandler, this, size);
+      const atomBean = await Atom.readAtom(tokenizer, dataHandler, this, size, this.reserveAtom);
       this.children.push(atomBean);
       size = atomBean.header.length === 0n ? 0 : size - Number(atomBean.header.length);
     }

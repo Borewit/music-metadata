@@ -2,6 +2,7 @@ import { textDecode } from '@borewit/text-codec';
 import initDebug from 'debug';
 import type { IGetToken, IToken } from 'strtok3';
 import * as Token from 'token-types';
+import { defaultMaxMetadataEntries } from '../common/Allocation.js';
 import { FourCcToken } from '../common/FourCC.js';
 import * as util from '../common/Util.js';
 import { FieldDecodingError, makeUnexpectedFileContentError } from '../ParseError.js';
@@ -624,7 +625,10 @@ class SampleDescriptionTable implements IGetToken<ISampleDescription> {
 export class StsdAtom implements IGetToken<IAtomStsd> {
   public len: number;
 
-  public constructor(len: number) {
+  public constructor(
+    len: number,
+    private readonly maxEntries = defaultMaxMetadataEntries
+  ) {
     this.len = len;
   }
 
@@ -647,6 +651,9 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
       // Requiring it to fit also bounds the loop by the available payload, not entry_count.
       if (size < 16 || size > end - off) {
         throw new Mp4ContentError(`Invalid stsd sample entry size: ${size}`);
+      }
+      if (n >= this.maxEntries) {
+        throw new Mp4ContentError(`stsd entry count ${header.numberOfEntries} exceeds entry limit ${this.maxEntries}`);
       }
       off += Token.UINT32_BE.len;
       table.push(new SampleDescriptionTable(size - Token.UINT32_BE.len).get(buf, off));
@@ -726,7 +733,11 @@ class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
   public len: number;
   private token: IGetToken<T>;
 
-  public constructor(len: number, token: IGetToken<T>) {
+  public constructor(
+    len: number,
+    token: IGetToken<T>,
+    private readonly maxEntries = defaultMaxMetadataEntries
+  ) {
     this.len = len;
     this.token = token;
   }
@@ -738,7 +749,7 @@ class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
       version: Token.INT8.get(buf, off + 0),
       flags: Token.INT24_BE.get(buf, off + 1),
       numberOfEntries: nrOfEntries,
-      entries: readTokenTable(buf, this.token, off + 8, this.len - 8, nrOfEntries)
+      entries: readTokenTable(buf, this.token, off + 8, this.len - 8, nrOfEntries, this.maxEntries)
     };
   }
 }
@@ -765,8 +776,8 @@ export const TimeToSampleToken: IGetToken<ITimeToSampleToken> = {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25696
  */
 export class SttsAtom extends SimpleTableAtom<ITimeToSampleToken> {
-  public constructor(len: number) {
-    super(len, TimeToSampleToken);
+  public constructor(len: number, maxEntries?: number) {
+    super(len, TimeToSampleToken, maxEntries);
   }
 }
 
@@ -796,8 +807,8 @@ export const SampleToChunkToken: IGetToken<ISampleToChunk> = {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25706
  */
 export class StscAtom extends SimpleTableAtom<ISampleToChunk> {
-  public constructor(len: number) {
-    super(len, SampleToChunkToken);
+  public constructor(len: number, maxEntries?: number) {
+    super(len, SampleToChunkToken, maxEntries);
   }
 }
 
@@ -865,24 +876,28 @@ export class StszAtom implements IGetToken<IStszAtom> {
  * Ref: https://developer.apple.com/library/archive/documentation/QuickTime/QTFF/QTFFChap2/qtff2.html#//apple_ref/doc/uid/TP40000939-CH204-25715
  */
 export class StcoAtom extends SimpleTableAtom<number> {
-  public constructor(len: number) {
-    super(len, Token.UINT32_BE);
+  public constructor(len: number, maxEntries?: number) {
+    super(len, Token.UINT32_BE, maxEntries);
   }
 }
 
 /** 64-bit chunk offsets (co64), constrained to exact JavaScript positions. */
 export class Co64Atom extends SimpleTableAtom<number> {
-  public constructor(len: number) {
-    super(len, {
-      len: 8,
-      get(buf: Uint8Array, off: number): number {
-        const offset = Token.UINT64_BE.get(buf, off);
-        if (offset > BigInt(Number.MAX_SAFE_INTEGER)) {
-          throw new Mp4ContentError('Chunk offset exceeds Number.MAX_SAFE_INTEGER');
+  public constructor(len: number, maxEntries?: number) {
+    super(
+      len,
+      {
+        len: 8,
+        get(buf: Uint8Array, off: number): number {
+          const offset = Token.UINT64_BE.get(buf, off);
+          if (offset > BigInt(Number.MAX_SAFE_INTEGER)) {
+            throw new Mp4ContentError('Chunk offset exceeds Number.MAX_SAFE_INTEGER');
+          }
+          return Number(offset);
         }
-        return Number(offset);
-      }
-    });
+      },
+      maxEntries
+    );
   }
 }
 
@@ -964,7 +979,8 @@ function readTokenTable<T>(
   token: IGetToken<T>,
   off: number,
   remainingLen: number,
-  numberOfEntries: number
+  numberOfEntries: number,
+  maxEntries = defaultMaxMetadataEntries
 ): T[] {
   debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
 
@@ -974,6 +990,10 @@ function readTokenTable<T>(
 
   if (remainingLen !== numberOfEntries * token.len) {
     throw new Mp4ContentError('mismatch number-of-entries with remaining atom-length');
+  }
+
+  if (numberOfEntries > maxEntries) {
+    throw new Mp4ContentError(`MP4 table entry count ${numberOfEntries} exceeds entry limit ${maxEntries}`);
   }
 
   const entries: T[] = [];
@@ -1092,7 +1112,10 @@ interface ITrackRunBoxSample {
 export class TrackRunBox implements IGetToken<ITrackRunBox> {
   public len: number;
 
-  public constructor(len: number) {
+  public constructor(
+    len: number,
+    private readonly maxSampleCount = defaultMaxMetadataEntries
+  ) {
     this.len = len;
   }
 
@@ -1135,6 +1158,9 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
     // Default-only runs need no per-sample allocation, even for a large sample_count.
     if (sampleFields === 0) {
       return trun;
+    }
+    if (trun.sampleCount > this.maxSampleCount) {
+      throw new Mp4ContentError(`trun sample count ${trun.sampleCount} exceeds entry limit ${this.maxSampleCount}`);
     }
     for (let n = 0; n < trun.sampleCount; ++n) {
       const sample: ITrackRunBoxSample = {};
@@ -1200,11 +1226,21 @@ export class HandlerBox implements IGetToken<IHandlerBox> {
 export class ChapterTrackReferenceBox implements IGetToken<number[]> {
   public len: number;
 
-  public constructor(len: number) {
+  public constructor(
+    len: number,
+    private readonly maxEntries = defaultMaxMetadataEntries
+  ) {
     this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): number[] {
+    if (this.len % Token.UINT32_BE.len !== 0) {
+      throw new Mp4ContentError('Invalid chapter track-reference length');
+    }
+    const count = this.len / Token.UINT32_BE.len;
+    if (count > this.maxEntries) {
+      throw new Mp4ContentError(`Chapter track-reference count ${count} exceeds entry limit ${this.maxEntries}`);
+    }
     let dynOffset = 0;
     const trackIds: number[] = [];
     while (dynOffset < this.len) {

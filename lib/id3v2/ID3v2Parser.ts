@@ -1,7 +1,7 @@
 import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
-import { readToken } from '../common/Allocation.js';
+import { getMaxMetadataEntries, readToken } from '../common/Allocation.js';
 import type { TagType } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
@@ -52,9 +52,10 @@ export class ID3v2Parser {
     frameHeader: IFrameHeader,
     majorVer: ID3v2MajorVersion,
     includeCovers: boolean,
-    warningCollector: IWarningCollector
+    warningCollector: IWarningCollector,
+    maxEntries: number
   ) {
-    const frameParser = new FrameParser(majorVer, warningCollector);
+    const frameParser = new FrameParser(majorVer, warningCollector, maxEntries);
     switch (majorVer) {
       case 2:
         return frameParser.readData(uint8Array, frameHeader.id, includeCovers);
@@ -174,6 +175,7 @@ export class ID3v2Parser {
 
   private parseMetadata(data: Uint8Array): ITag[] {
     let offset = 0;
+    let frameCount = 0;
     const tags: { id: string; value: AnyTagValue }[] = [];
 
     while (true) {
@@ -200,6 +202,9 @@ export class ID3v2Parser {
       const frameHeaderBytes = data.subarray(offset, offset + frameHeaderLength);
       offset += frameHeaderLength;
       const frameHeader = readFrameHeader(frameHeaderBytes, this.id3Header.version.major, this.metadata);
+      if (++frameCount > getMaxMetadataEntries(this.options)) {
+        throw new Id3v2ContentError('Frame count exceeds entry limit');
+      }
 
       const frameDataBytes = data.subarray(offset, offset + frameHeader.length);
       offset += frameHeader.length;
@@ -208,7 +213,8 @@ export class ID3v2Parser {
         frameHeader,
         this.id3Header.version.major,
         !this.options.skipCovers,
-        this.metadata
+        this.metadata,
+        getMaxMetadataEntries(this.options)
       );
       if (values) {
         tags.push({ id: frameHeader.id, value: values });

@@ -3,7 +3,7 @@ import initDebug from 'debug';
 import type { IRandomAccessTokenizer } from 'strtok3';
 import * as strtok3 from 'strtok3';
 import { StringType } from 'token-types';
-import { getTokenizerOptions, readBuffer } from '../common/Allocation.js';
+import { getMaxMetadataEntries, getTokenizerOptions, readBuffer } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import * as util from '../common/Util.js';
@@ -142,6 +142,11 @@ export class APEv2Parser extends BasicParser {
   }
 
   public async parseTags(footer: IFooter): Promise<void> {
+    if (footer.fields > getMaxMetadataEntries(this.options)) {
+      throw new ApeContentError(
+        `Tag item count ${footer.fields} exceeds entry limit ${getMaxMetadataEntries(this.options)}`
+      );
+    }
     const keyBuffer = new Uint8Array(256); // maximum tag key length
 
     let bytesRemaining = footer.size - TagFooter.len;
@@ -188,6 +193,15 @@ export class APEv2Parser extends BasicParser {
         case DataType.text_utf8: {
           // utf-8 text-string
           const value = textDecode(await this.readTagValue(tagItemHeader.size), 'utf-8');
+          let valueCount = 1;
+          for (let offset = value.indexOf('\0'); offset >= 0; offset = value.indexOf('\0', offset + 1)) {
+            ++valueCount;
+          }
+          if (valueCount > getMaxMetadataEntries(this.options)) {
+            throw new ApeContentError(
+              `Text value count ${valueCount} exceeds entry limit ${getMaxMetadataEntries(this.options)}`
+            );
+          }
           const values = value.split(/\x00/g);
 
           await Promise.all(values.map(val => this.metadata.addTag(tagFormat, key, val)));

@@ -627,6 +627,12 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   Audio/video data that is skipped does not count toward this limit. This does not cap total process memory:
   decoded metadata, multiple retained tags, and temporary copies can require additional memory.
 
+- `maxMetadataEntries`: `number` (default: `100000`)
+
+  Maximum entries in an individual decoded metadata list, table, or buffered container structure.
+  Must be a positive safe integer. Raise this for files with larger retained tables.
+  This count is independent of `maxMemoryAllocation` and does not limit total collected metadata or process memory.
+
 - `mkvUseIndex`: `boolean` (default: `false`)
 
   When `true`, the parser uses the SeekHead index in Matroska (MKV) files to skip segment and cluster elements.

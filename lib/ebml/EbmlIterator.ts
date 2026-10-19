@@ -2,7 +2,7 @@ import initDebug from 'debug';
 import { EndOfStreamError, type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { Float32_BE, Float64_BE, StringType, UINT8 } from 'token-types';
-import { getMaxMemoryAllocation, readBuffer } from '../common/Allocation.js';
+import { getMaxMemoryAllocation, getMaxMetadataEntries, readBuffer } from '../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import type { IOptions } from '../type.js';
 import {
@@ -73,7 +73,8 @@ export class EbmlIterator {
     private readonly options: IOptions = {}
   ) {
     this.tokenizer = tokenizer;
-    this.elementHeader = new Uint8Array(Math.min(12, getMaxMemoryAllocation(options)));
+    const maxMemoryAllocation = getMaxMemoryAllocation(options);
+    this.elementHeader = new Uint8Array(Math.min(12, maxMemoryAllocation));
     this.parserMap.set(DataType.uint, e => this.readUint(e));
     this.parserMap.set(DataType.int, e => this.readInt(e));
     this.parserMap.set(DataType.string, e => this.readString(e));
@@ -216,6 +217,9 @@ export class EbmlIterator {
     if (element.multiple) {
       const values = (tree[element.name] ??= []);
       if (Array.isArray(values)) {
+        if (values.length >= getMaxMetadataEntries(this.options)) {
+          throw new EbmlContentError('Collected EBML element count exceeds entry limit');
+        }
         values.push(value);
       }
     } else {

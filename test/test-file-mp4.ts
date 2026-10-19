@@ -7,11 +7,13 @@ import { Readable } from 'node:stream';
 import { promisify } from 'node:util';
 import { assert } from 'chai';
 import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
+import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
 import { Atom } from '../lib/mp4/Atom.js';
 import {
   ChapterListAtom,
   ChapterText,
+  ChapterTrackReferenceBox,
   Co64Atom,
   Mp4ContentError,
   StcoAtom,
@@ -19,6 +21,7 @@ import {
   StszAtom,
   TrackHeaderAtom
 } from '../lib/mp4/AtomToken.js';
+import { MP4Parser } from '../lib/mp4/MP4Parser.js';
 import { Parsers } from './metadata-parsers.js';
 import { makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile, samplePath } from './util.js';
 
@@ -856,6 +859,53 @@ describe('Parse MPEG-4', () => {
         ]);
       });
 
+      it('rejects sample descriptions exceeding the table allocation limit', () => {
+        const buf = sampleDescription(sampleEntry('mp4a', 16, 1), sampleEntry('mp4a', 16, 1));
+        assert.throws(
+          () => new StsdAtom(buf.length, 1).get(buf, 0),
+          Mp4ContentError,
+          'stsd entry count 2 exceeds entry limit 1'
+        );
+      });
+
+      it('accepts sample description boxes whose total exceeds the per-buffer byte limit', async () => {
+        const atom = Buffer.alloc(16);
+        atom.writeUInt32BE(atom.length);
+        atom.write('stsd', 4);
+        const buffer = Buffer.concat(Array.from({ length: 33 }, () => atom));
+        await new MP4Parser(new MetadataCollector({}), fromBuffer(buffer), { maxMemoryAllocation: 256 }).parse();
+      });
+
+      it('rejects incomplete and over-budget chapter track references', () => {
+        assert.throws(
+          () => new ChapterTrackReferenceBox(5).get(new Uint8Array(5), 0),
+          Mp4ContentError,
+          'Invalid chapter track-reference length'
+        );
+        const payload = Buffer.alloc(8);
+        payload.writeUInt32BE(1);
+        payload.writeUInt32BE(2, 4);
+        assert.deepEqual(new ChapterTrackReferenceBox(8, 2).get(payload, 0), [1, 2]);
+        assert.throws(
+          () => new ChapterTrackReferenceBox(8, 1).get(payload, 0),
+          Mp4ContentError,
+          'Chapter track-reference count 2 exceeds entry limit 1'
+        );
+      });
+
+      it('bounds ftyp brand entries before constructing the list', async () => {
+        const atom = Buffer.alloc(20);
+        atom.writeUInt32BE(atom.length);
+        atom.write('ftyp', 4);
+        atom.write('isom', 8);
+        atom.write('iso2', 16);
+        await rejects(
+          mm.parseBuffer(atom, 'video/mp4', { maxMetadataEntries: 2 }),
+          /ftyp entry count 3 exceeds entry limit 2/
+        );
+        await mm.parseBuffer(atom, 'video/mp4', { maxMetadataEntries: 3 });
+      });
+
       it('rejects an entry count exceeding the available entries', () => {
         const buf = sampleDescription(sampleEntry('mp4a', 16, 1));
         new DataView(buf.buffer).setUint32(4, 0xffffffff);
@@ -1530,6 +1580,94 @@ describe('Parse MPEG-4', () => {
         );
         const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
         assert.include(format.trackInfo[0], { duration: 0xffffffff / 1000, bitrate: 8000 });
+      });
+
+      it('rejects GHSA-6fmh-662p-w6f5 without exhausting the heap', async () => {
+        // Run the advisory input in a child process because heap exhaustion aborts Node.js.
+        const script = `
+          import { strict as assert } from 'node:assert';
+          import { parseBuffer, UnexpectedFileContentError } from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
+
+          class ExcessiveSampleAllocationError extends Error {}
+          const originalPush = Array.prototype.push;
+          let sampleAllocations = 0;
+          Array.prototype.push = function (...items) {
+            for (const item of items) {
+              if (item && typeof item === 'object' && Object.keys(item).length === 1 && 'sampleDuration' in item) {
+                if (++sampleAllocations === 100_000) {
+                  throw new ExcessiveSampleAllocationError('Attempted 100,000 trun sample-object allocations');
+                }
+              }
+            }
+            return originalPush.apply(this, items);
+          };
+
+          const sampleCount = 16_777_214;
+          const trunPayloadLength = 8 + sampleCount * 4;
+          assert.equal(trunPayloadLength, 64 * 1024 * 1024);
+          const buffer = Buffer.alloc(8 + 8 + 8 + trunPayloadLength);
+          const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+          let offset = 0;
+          for (const [type, size] of [
+            ['moof', buffer.length],
+            ['traf', buffer.length - 8],
+            ['trun', buffer.length - 16]
+          ]) {
+            view.setUint32(offset, size);
+            buffer.write(type, offset + 4);
+            offset += 8;
+          }
+          buffer[offset + 2] = 1; // sample_duration_present
+          view.setUint32(offset + 4, sampleCount);
+
+          try {
+            await assert.rejects(
+              parseBuffer(buffer, { mimeType: 'video/mp4' }),
+              error =>
+                error instanceof UnexpectedFileContentError &&
+                /trun sample count 16777214 exceeds entry limit 100000/.test(error.message)
+            );
+          } finally {
+            Array.prototype.push = originalPush;
+          }
+        `;
+        await promisify(execFile)(
+          process.execPath,
+          [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script],
+          {
+            timeout: 30000,
+            killSignal: 'SIGKILL'
+          }
+        );
+      });
+
+      it('limits each trun table independently and allows callers to raise the entry limit', async () => {
+        const samples = Array.from({ length: 10 }, () => ({ duration: 1 }));
+        const buffer = concat(fragment({ samples }), fragment({ samples }));
+        await rejects(
+          mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 9 }),
+          /trun sample count 10 exceeds entry limit 9/
+        );
+        await mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 10 });
+      });
+
+      it('releases the atom budget after each root tree', async () => {
+        const roots = concat(...Array.from({ length: 65 }, () => box('moov', box('free'))));
+        await mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 64 });
+      });
+
+      it('bounds retained atom objects and nesting depth', async () => {
+        const siblings = concat(...Array.from({ length: 65 }, () => box('free')));
+        await rejects(
+          mm.parseBuffer(box('moov', siblings), { mimeType: 'video/mp4' }, { maxMetadataEntries: 64 }),
+          /MP4 atom count exceeds entry limit/
+        );
+
+        let nested = box('free');
+        for (let depth = 0; depth < 65; ++depth) {
+          nested = box('moov', nested);
+        }
+        await rejects(mm.parseBuffer(nested, { mimeType: 'video/mp4' }), /MP4 atom nesting exceeds limit 64/);
       });
 
       it('leaves timing unknown when fragment defaults are missing', async () => {
@@ -2976,6 +3114,17 @@ describe('Parse MPEG-4', () => {
         it('decodes unsigned 32-bit chunk offsets above 2 GiB', () => {
           const payload = Buffer.concat([u32(0), u32(1), u32(0x80000000)]);
           assert.deepEqual(new StcoAtom(payload.length).get(payload, 0).entries, [0x80000000]);
+        });
+
+        it('rejects fixed-width tables exceeding the allocation limit', () => {
+          const payload = new Uint8Array(16);
+          const view = new DataView(payload.buffer);
+          view.setUint32(4, 2);
+          assert.throws(
+            () => new StcoAtom(payload.length, 1).get(payload, 0),
+            Mp4ContentError,
+            'MP4 table entry count 2 exceeds entry limit 1'
+          );
         });
         it('bounds title text to its own sample and decodes UTF-16', () => {
           const sample = text('Chapter 2', true);

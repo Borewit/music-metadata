@@ -1,3 +1,4 @@
+import { defaultMaxMetadataEntries } from '../common/Allocation.js';
 // ASF Objects
 
 import type { IGetToken, ITokenizer } from 'strtok3';
@@ -464,9 +465,18 @@ async function readString(reader: BoundedReader): Promise<string> {
  * 3.5: Read the Codec-List-Object, which provides user-friendly information about the codecs and formats used to encode the content found in the ASF file.
  * Ref: http://drang.s4.xrea.com/program/tips/id3tag/wmp/03_asf_top_level_header_object.html#3_5
  */
-export async function readCodecEntries(tokenizer: ITokenizer, payloadSize: number): Promise<ICodecEntry[]> {
+export async function readCodecEntries(
+  tokenizer: ITokenizer,
+  payloadSize: number,
+  maxEntries = defaultMaxMetadataEntries
+): Promise<ICodecEntry[]> {
   const reader = new BoundedReader(tokenizer, payloadSize);
   const codecHeader = await reader.readToken(CodecListObjectHeader);
+  if (codecHeader.entryCount > maxEntries) {
+    throw new AsfContentParseError(
+      `ASF Codec List entry count ${codecHeader.entryCount} exceeds entry limit ${maxEntries}`
+    );
+  }
   const entries: ICodecEntry[] = [];
   for (let i = 0; i < codecHeader.entryCount; ++i) {
     entries.push(await readCodecEntry(reader));

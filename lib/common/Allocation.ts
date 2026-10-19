@@ -10,6 +10,7 @@ import { UnexpectedFileContentError } from '../ParseError.js';
 import type { IOptions } from '../type.js';
 
 const defaultMaxMemoryAllocation = 64 * 1024 * 1024;
+export const defaultMaxMetadataEntries = 100_000;
 const readChunkSize = 64 * 1024;
 type ErrorFactory = (message: string) => Error;
 const allocationError: ErrorFactory = message => new UnexpectedFileContentError('metadata', message);
@@ -18,6 +19,15 @@ export function getMaxMemoryAllocation(options: IOptions): number {
   const limit = options.maxMemoryAllocation ?? defaultMaxMemoryAllocation;
   if (!Number.isSafeInteger(limit) || limit <= 0) {
     throw new RangeError('maxMemoryAllocation must be a positive safe integer');
+  }
+  return limit;
+}
+
+/** Limit entries in an individual decoded list or table, independently of byte-buffer limits. */
+export function getMaxMetadataEntries(options: IOptions): number {
+  const limit = options.maxMetadataEntries ?? defaultMaxMetadataEntries;
+  if (!Number.isSafeInteger(limit) || limit <= 0) {
+    throw new RangeError('maxMetadataEntries must be a positive safe integer');
   }
   return limit;
 }
