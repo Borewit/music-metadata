@@ -7,7 +7,7 @@ import { aiffParserLoader } from './aiff/AiffLoader.js';
 import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
 import { cafParserLoader } from './caf/CafLoader.js';
-import { getMaxMemoryAllocation, getMaxMetadataEntries } from './common/Allocation.js';
+import { getMaxChapterCount, getMaxMemoryAllocation, getMaxMetadataEntries } from './common/Allocation.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { createAudioTrackInfo, finalizeContainerInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
@@ -101,6 +101,7 @@ export class ParserFactory {
   ): Promise<IAudioMetadata> {
     const maxBufferSize = getMaxMemoryAllocation(opts);
     getMaxMetadataEntries(opts);
+    getMaxChapterCount(opts);
     if (isRandomAccessTokenizer(tokenizer)) {
       debug('tokenizer supports random-access, scanning for appending headers');
       await scanAppendingHeaders(tokenizer, opts);

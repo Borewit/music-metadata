@@ -716,6 +716,13 @@ export interface IOptions {
   includeChapters?: boolean;
 
   /**
+   * Maximum chapters returned for QuickTime/Nero MP4 and ID3v2 chapter lists.
+   * Defaults to 1000. Must be a positive safe integer.
+   * Excess chapters are omitted with a warning; does not enable MP4 chapter parsing.
+   */
+  maxChapterCount?: number;
+
+  /**
    * Called synchronously after common tag or format updates. Returned promises are not awaited.
    * Unchanged primitive format values do not trigger a callback.
    */

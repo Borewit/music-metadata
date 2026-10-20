@@ -2,7 +2,7 @@ import { textDecode } from '@borewit/text-codec';
 import initDebug from 'debug';
 import type { IGetToken, IToken } from 'strtok3';
 import * as Token from 'token-types';
-import { defaultMaxMetadataEntries } from '../common/Allocation.js';
+import { defaultMaxChapterCount, defaultMaxMetadataEntries } from '../common/Allocation.js';
 import { FourCcToken } from '../common/FourCC.js';
 import * as util from '../common/Util.js';
 import { FieldDecodingError, makeUnexpectedFileContentError } from '../ParseError.js';
@@ -936,7 +936,11 @@ export class ChapterText implements IGetToken<string> {
 
 /** Nero chapter list (chpl): UTF-8 titles and start times in 100ns units. */
 export class ChapterListAtom implements IGetToken<IChapter[]> {
-  public constructor(public len: number) {}
+  public constructor(
+    public len: number,
+    private readonly maxChapters = defaultMaxChapterCount,
+    private readonly onLimit?: () => void
+  ) {}
 
   public get(buf: Uint8Array, off: number): IChapter[] {
     const end = off + Math.min(this.len, buf.length - off);
@@ -952,8 +956,11 @@ export class ChapterListAtom implements IGetToken<IChapter[]> {
       return [];
     }
     const count = Token.UINT8.get(buf, position++);
+    if (count > this.maxChapters) {
+      this.onLimit?.();
+    }
     const chapters: IChapter[] = [];
-    for (let i = 0; i < count && position + 9 <= end; ++i) {
+    for (let i = 0; i < Math.min(count, this.maxChapters) && position + 9 <= end; ++i) {
       const start = Token.UINT64_BE.get(buf, position);
       const titleLength = Token.UINT8.get(buf, position + 8);
       position += 9;

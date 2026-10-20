@@ -4,7 +4,7 @@ import initDebug from 'debug';
 import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
-import { getMaxMetadataEntries, readToken, validateAllocation } from '../common/Allocation.js';
+import { getMaxChapterCount, getMaxMetadataEntries, readToken, validateAllocation } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { Genres } from '../id3v1/ID3v1Parser.js';
 import { type AnyTagValue, type IChapter, type ITrackInfo, TrackType } from '../type.js';
@@ -14,7 +14,6 @@ import { ChapterTrackReferenceBox, Mp4ContentError } from './AtomToken.js';
 
 const debug = initDebug('music-metadata:parser:MP4');
 const tagFormat = 'iTunes';
-const maxChapterCount = 1_000;
 const maxChapterTitleBytes = 64 * 1024;
 
 interface IMediaDataRange {
@@ -188,6 +187,7 @@ function isAudioTrack(track: ITrackDescription): boolean {
  *   https://wiki.multimedia.cx/index.php/QuickTime_container
  */
 export class MP4Parser extends BasicParser {
+  private readonly maxChapterCount = getMaxChapterCount(this.options);
   private static read_BE_Integer(array: Uint8Array, signed: boolean): number {
     const integerType = (signed ? 'INT' : 'UINT') + array.length * 8 + (array.length > 1 ? '_BE' : '');
     const token: IGetToken<number | bigint> = (Token as unknown as { [id: string]: IGetToken<number | bigint> })[
@@ -885,7 +885,7 @@ export class MP4Parser extends BasicParser {
           case 'stsz': {
             // References and handlers may appear later; retain a bounded chapter prefix for any track.
             const stsz = await this.readToken(
-              new AtomToken.StszAtom(payLoadLength, this.options.includeChapters ? maxChapterCount : 0)
+              new AtomToken.StszAtom(payLoadLength, this.options.includeChapters ? this.maxChapterCount : 0)
             );
             track.sampleSize = stsz.sampleSize;
             track.sampleCount = stsz.numberOfEntries;
@@ -985,7 +985,11 @@ export class MP4Parser extends BasicParser {
 
     chpl: async (len: number) => {
       if (this.options.includeChapters) {
-        this.neroChapters = await this.readToken(new AtomToken.ChapterListAtom(len));
+        this.neroChapters = await this.readToken(
+          new AtomToken.ChapterListAtom(len, this.maxChapterCount, () => {
+            this.addWarning(`Chapter count exceeds the ${this.maxChapterCount} chapter limit`);
+          })
+        );
       } else {
         await this.tokenizer.ignore(len);
       }
@@ -1119,9 +1123,9 @@ export class MP4Parser extends BasicParser {
     mediaDataRanges: IMediaDataRange[],
     forwardOnly: boolean
   ): Promise<void> {
-    const sampleCount = Math.min(chapterTrack.sampleCount, maxChapterCount);
-    if (chapterTrack.sampleCount > maxChapterCount) {
-      this.addWarning(`Chapter count exceeds the ${maxChapterCount} chapter limit`);
+    const sampleCount = Math.min(chapterTrack.sampleCount, this.maxChapterCount);
+    if (chapterTrack.sampleCount > this.maxChapterCount) {
+      this.addWarning(`Chapter count exceeds the ${this.maxChapterCount} chapter limit`);
     }
     if (forwardOnly) {
       this.streamedChapterCount = sampleCount;

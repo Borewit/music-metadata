@@ -1,7 +1,7 @@
 import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
-import { getMaxMetadataEntries, readToken } from '../common/Allocation.js';
+import { getMaxChapterCount, getMaxMetadataEntries, readToken } from '../common/Allocation.js';
 import type { TagType } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
@@ -116,7 +116,7 @@ export class ID3v2Parser {
     await (id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size));
 
     // Post process
-    const chapters = ID3v2Parser.mapId3v2Chapters(this.metadata.native[this.headerType]);
+    const chapters = this.mapId3v2Chapters(this.metadata.native[this.headerType]);
     this.metadata.setFormat('chapters', chapters);
   }
 
@@ -229,7 +229,7 @@ export class ID3v2Parser {
    * This function expects the `native` tags already to contain parsed `CHAP` and `CTOC` frame values,
    * as produced by `FrameParser.readData`.
    */
-  private static mapId3v2Chapters(id3Tags?: ITag[]): IChapter[] | undefined {
+  private mapId3v2Chapters(id3Tags?: ITag[]): IChapter[] | undefined {
     if (!id3Tags) {
       return;
     }
@@ -251,7 +251,13 @@ export class ID3v2Parser {
 
     const chapters: IChapter[] = [];
 
-    const source = orderedIds ?? [...chapterById.keys()];
+    const maxChapterCount = getMaxChapterCount(this.options);
+    // Without a CTOC, return the earliest chapters even if CHAP frames arrive out of order.
+    const source =
+      orderedIds ??
+      [...chapterById.keys()].sort(
+        (left, right) => (chapterById.get(left)?.info.startTime ?? 0) - (chapterById.get(right)?.info.startTime ?? 0)
+      );
 
     for (const id of source) {
       const chap = chapterById.get(id);
@@ -265,6 +271,10 @@ export class ID3v2Parser {
         continue; // title is required
       }
 
+      if (chapters.length >= maxChapterCount) {
+        this.metadata.addWarning(`Chapter count exceeds the ${maxChapterCount} chapter limit`);
+        break;
+      }
       chapters.push({
         id,
         title,
@@ -273,11 +283,6 @@ export class ID3v2Parser {
         end: chap.info.endTime / 1000,
         image: frames.get('APIC') as IChapter['image']
       });
-    }
-
-    // If no ordered CTOC, sort by time
-    if (!orderedIds) {
-      chapters.sort((a, b) => a.start - b.start);
     }
 
     return chapters.length ? chapters : undefined;
