@@ -11,6 +11,7 @@ import type { IOptions } from '../type.js';
 
 const defaultMaxMemoryAllocation = 64 * 1024 * 1024;
 export const defaultMaxMetadataEntries = 100_000;
+export const defaultMaxChapterCount = 1_000;
 const readChunkSize = 64 * 1024;
 type ErrorFactory = (message: string) => Error;
 const allocationError: ErrorFactory = message => new UnexpectedFileContentError('metadata', message);
@@ -28,6 +29,15 @@ export function getMaxMetadataEntries(options: IOptions): number {
   const limit = options.maxMetadataEntries ?? defaultMaxMetadataEntries;
   if (!Number.isSafeInteger(limit) || limit <= 0) {
     throw new RangeError('maxMetadataEntries must be a positive safe integer');
+  }
+  return limit;
+}
+
+/** Maximum chapters returned by supported chapter parsers. */
+export function getMaxChapterCount(options: IOptions): number {
+  const limit = options.maxChapterCount ?? defaultMaxChapterCount;
+  if (!Number.isSafeInteger(limit) || limit <= 0) {
+    throw new RangeError('maxChapterCount must be a positive safe integer');
   }
   return limit;
 }

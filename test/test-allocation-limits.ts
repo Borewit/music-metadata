@@ -97,6 +97,15 @@ describe('Shared metadata allocation limits', () => {
     });
   }
 
+  for (const maxChapterCount of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
+    it(`rejects invalid chapter limit ${maxChapterCount} through the public API`, async () => {
+      await expect(mm.parseBuffer(new Uint8Array(0), 'audio/wav', { maxChapterCount })).to.be.rejectedWith(
+        RangeError,
+        'maxChapterCount must be a positive safe integer'
+      );
+    });
+  }
+
   for (const maxMemoryAllocation of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
     it(`rejects invalid option ${maxMemoryAllocation} through the public API`, async () => {
       await expect(mm.parseBuffer(new Uint8Array(0), 'audio/wav', { maxMemoryAllocation })).to.be.rejectedWith(

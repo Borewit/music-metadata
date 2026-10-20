@@ -3141,6 +3141,44 @@ describe('Parse MPEG-4', () => {
             assert.deepEqual(chapterList(metadata), expectedNero);
           });
         }
+        for (const source of ['buffer', 'stream'] as const) {
+          for (const [count, limit] of [
+            [3, 2],
+            [2, 2],
+            [1020, 1100]
+          ]) {
+            it(`applies maxChapterCount=${limit} to ${count} QuickTime chapters from a ${source}`, async () => {
+              const data = audiobook({ chapterCount: count });
+              const options = { includeChapters: true, maxChapterCount: limit };
+              const metadata =
+                source === 'buffer'
+                  ? await mm.parseBuffer(data, 'audio/mp4', options)
+                  : await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mp4', options);
+              assert.lengthOf(metadata.format.chapters, Math.min(count, limit));
+              assert.strictEqual(metadata.format.chapters.at(-1)?.start, (Math.min(count, limit) - 1) * 1000);
+              assert.strictEqual(
+                metadata.quality.warnings.some(warning => warning.message.includes('chapter limit')),
+                count > limit
+              );
+            });
+          }
+        }
+        for (const neroVersion of [0, 1]) {
+          for (const limit of [1, 2, 3]) {
+            it(`applies maxChapterCount=${limit} to Nero v${neroVersion} fallback chapters`, async () => {
+              const metadata = await mm.parseBuffer(audiobook({ refs: [], neroVersion }), 'audio/mp4', {
+                includeChapters: true,
+                maxChapterCount: limit
+              });
+              assert.deepEqual(chapterList(metadata), expectedNero.slice(0, limit));
+              assert.strictEqual(
+                metadata.quality.warnings.some(warning => warning.message.includes('chapter limit')),
+                limit < 2
+              );
+            });
+          }
+        }
+
         it('bounds a large declared chapter count', async () => {
           const metadata = await mm.parseBuffer(audiobook({ chapterCount: 1_020 }), 'audio/mp4', {
             includeChapters: true

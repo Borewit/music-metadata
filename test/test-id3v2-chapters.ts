@@ -4,6 +4,7 @@ import { fromBuffer } from 'strtok3';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { Id3v2ContentError } from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
+import type { IOptions } from '../lib/type.js';
 
 use(chaiAsPromised);
 
@@ -25,16 +26,27 @@ describe('ID3v2 chapter boundaries', () => {
     }
 
     async function parse(...frames: Uint8Array[]): Promise<MetadataCollector> {
+      return parseWithOptions({}, ...frames);
+    }
+
+    async function parseWithOptions(options: IOptions, ...frames: Uint8Array[]): Promise<MetadataCollector> {
       const payload = Buffer.concat(frames);
       const tag = Buffer.concat([Buffer.from([0x49, 0x44, 0x33, major, 0, 0]), syncSafe(payload.length), payload]);
       const tokenizer = fromBuffer(tag);
-      const metadata = new MetadataCollector({});
+      const metadata = new MetadataCollector(options);
       try {
-        await new ID3v2Parser().parse(metadata, tokenizer, {});
+        await new ID3v2Parser().parse(metadata, tokenizer, options);
         return metadata;
       } finally {
         await tokenizer.close();
       }
+    }
+
+    function chapterFrame(id: string, start: number): Buffer {
+      const info = Buffer.alloc(16, 0xff);
+      info.writeUInt32BE(start, 0);
+      info.writeUInt32BE(start + 1000, 4);
+      return frame('CHAP', Buffer.concat([Buffer.from(`${id}\0`), info, frame('TIT2', Buffer.from(`\0${id}`))]));
     }
 
     describe(`ID3v2.${major}`, () => {
@@ -75,6 +87,55 @@ describe('ID3v2 chapter boundaries', () => {
             Id3v2ContentError,
             'Truncated CTOC child element ID'
           );
+        });
+      }
+
+      it('limits chapters after applying the CTOC order and retains other metadata', async () => {
+        const toc = frame(
+          'CTOC',
+          Buffer.concat([Buffer.from('toc\0'), Buffer.from([3, 2]), Buffer.from('second\0first\0')])
+        );
+        const metadata = await parseWithOptions(
+          { maxChapterCount: 1 },
+          chapterFrame('first', 0),
+          chapterFrame('second', 1000),
+          toc,
+          frame('TIT2', Buffer.from('\0Album title'))
+        );
+        assert.deepEqual(
+          metadata.format.chapters?.map(chapter => chapter.id),
+          ['second']
+        );
+        assert.strictEqual(metadata.common.title, 'Album title');
+        assert.lengthOf(
+          metadata.native[`ID3v2.${major}`].filter(tag => tag.id === 'CHAP'),
+          2
+        );
+        assert.deepEqual(metadata.quality.warnings, [{ message: 'Chapter count exceeds the 1 chapter limit' }]);
+      });
+
+      for (const limit of [2, 3]) {
+        it(`applies maxChapterCount=${limit} after sorting chapters without a CTOC`, async () => {
+          const metadata = await parseWithOptions(
+            { maxChapterCount: limit },
+            chapterFrame('third', 2000),
+            chapterFrame('first', 0),
+            chapterFrame('second', 1000)
+          );
+          assert.deepEqual(
+            metadata.format.chapters?.map(chapter => chapter.id),
+            ['first', 'second', 'third'].slice(0, limit)
+          );
+          assert.lengthOf(metadata.quality.warnings, limit < 3 ? 1 : 0);
+        });
+      }
+
+      for (const maxChapterCount of [undefined, 1100]) {
+        it(`handles an ID3 chapter list above the default limit with maxChapterCount=${maxChapterCount}`, async () => {
+          const frames = Array.from({ length: 1002 }, (_, index) => chapterFrame(`chapter-${index}`, index * 1000));
+          const metadata = await parseWithOptions({ maxChapterCount }, ...frames);
+          assert.lengthOf(metadata.format.chapters, maxChapterCount === undefined ? 1000 : 1002);
+          assert.lengthOf(metadata.quality.warnings, maxChapterCount === undefined ? 1 : 0);
         });
       }
 

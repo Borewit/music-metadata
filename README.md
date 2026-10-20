@@ -615,6 +615,12 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   Files, buffers, and Blobs support chapters whether `moov` appears before or after `mdat`.
   For forward-only streams, `moov` must appear before the chapter data.
 
+- `maxChapterCount`: `number` (default: `1000`)
+
+  Maximum chapters returned from QuickTime/Nero MP4 and ID3v2 chapter lists.
+  Must be a positive safe integer. Excess chapters are omitted with a warning.
+  MP4 chapters still require `includeChapters: true`.
+
 - `maxMemoryAllocation`: `number` (default: `67108864`, 64 MiB)
 
   Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
