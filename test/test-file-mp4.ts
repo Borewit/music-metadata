@@ -16,6 +16,7 @@ import {
   Mp4ContentError,
   StcoAtom,
   StsdAtom,
+  StszAtom,
   TrackHeaderAtom
 } from '../lib/mp4/AtomToken.js';
 import { Parsers } from './metadata-parsers.js';
@@ -178,6 +179,77 @@ describe('Parse MPEG-4', () => {
     });
   });
 
+  describe('Sample-size aggregation', () => {
+    function variableTable(count: number): Buffer {
+      const payload = Buffer.alloc(12 + count * 4);
+      payload.writeUInt32BE(count, 8);
+      for (let index = 0; index < count; ++index) {
+        payload.writeUInt32BE(index % 3, 12 + index * 4);
+      }
+      return payload;
+    }
+
+    it('rejects a truncated sample-size header before reading its fields', () => {
+      const payload = Buffer.alloc(11);
+      assert.throws(() => new StszAtom(payload.length).get(payload, 0), Mp4ContentError, 'Invalid stsz payload length');
+    });
+
+    it('sums a large table without retaining individual sample sizes', () => {
+      const payload = variableTable(300_000);
+      const table = new StszAtom(payload.length).get(payload, 0);
+      assert.strictEqual(table.totalSize, 300_000);
+      assert.strictEqual(table.numberOfEntries, 300_000);
+      assert.isEmpty(table.entries);
+    });
+
+    it('keeps only the chapter prefix while summing the entire table at a nonzero offset', () => {
+      const payload = variableTable(300_000);
+      const table = new StszAtom(payload.length, 1000).get(Buffer.concat([Buffer.alloc(7), payload]), 7);
+      assert.strictEqual(table.totalSize, 300_000);
+      assert.deepEqual(
+        table.entries,
+        Array.from({ length: 1000 }, (_, index) => index % 3)
+      );
+    });
+
+    it('retains exactly the requested prefix while summing the entire table', () => {
+      const payload = variableTable(3);
+      const table = new StszAtom(payload.length, 2).get(payload, 0);
+      assert.deepEqual(table.entries, [0, 1]);
+      assert.strictEqual(table.totalSize, 3);
+    });
+
+    it('leaves the total unknown when variable sample sizes are omitted', () => {
+      const payload = Buffer.alloc(12);
+      payload.writeUInt32BE(25, 8);
+      const table = new StszAtom(payload.length).get(payload, 0);
+      assert.isUndefined(table.totalSize);
+      assert.strictEqual(table.numberOfEntries, 25);
+      assert.isEmpty(table.entries);
+    });
+
+    it('calculates a constant-size total without expanding the sample count', () => {
+      const payload = Buffer.alloc(12);
+      payload.writeUInt32BE(500, 4);
+      payload.writeUInt32BE(0xffffffff, 8);
+      const table = new StszAtom(payload.length).get(payload, 0);
+      assert.strictEqual(table.totalSize, 500 * 0xffffffff);
+      assert.isEmpty(table.entries);
+    });
+
+    for (const delta of [-4, 4]) {
+      it(`rejects a declared size table with ${delta} extra bytes in summary mode`, () => {
+        const payload = variableTable(3);
+        const malformed = Buffer.concat([payload, Buffer.alloc(4)]).subarray(0, payload.length + delta);
+        assert.throws(
+          () => new StszAtom(malformed.length).get(malformed, 0),
+          Mp4ContentError,
+          'mismatch number-of-entries with remaining atom-length'
+        );
+      });
+    }
+  });
+
   describe('Parse MPEG-4 Audio Book files (.m4b)', () => {
     describe('Audiobook metadata (issue #127)', () => {
       Parsers.forEach(parser => {
@@ -190,6 +262,8 @@ describe('Parse MPEG-4', () => {
           assert.deepEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
           assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
           assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
+          assert.approximately(format.bitrate, 62953.9117244667, 0.000001);
+          assert.approximately(format.duration, 15726.689523809524, 0.000001);
 
           assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
           assert.deepEqual(common.artists, ['Joseph Dunn']);
