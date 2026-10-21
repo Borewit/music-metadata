@@ -561,11 +561,6 @@ export class MP4Parser extends BasicParser {
     const timeScale = track.media.header?.timeScale;
     track.duration = this.getDuration(track.media.header);
     track.endTime = track.duration;
-    if (track.sampleSize > 0 && track.sampleCount !== undefined) {
-      track.sizeInBytes = track.sampleSize * track.sampleCount;
-    } else if (track.sampleSizeTable.length > 0) {
-      track.sizeInBytes = track.sampleSizeTable.reduce((sum, size) => sum + size, 0);
-    }
     let sampleCount = track.timeToSampleTable.reduce((sum, entry) => sum + entry.count, 0);
     let timeUnits = track.timeToSampleTable.reduce((sum, entry) => sum + entry.count * entry.duration, 0);
     if (track.fragments.length > 0) {
@@ -827,10 +822,14 @@ export class MP4Parser extends BasicParser {
           }
 
           case 'stsz': {
-            const stsz = await this.readToken(new AtomToken.StszAtom(payLoadLength));
+            // References and handlers may appear later; retain a bounded chapter prefix for any track.
+            const stsz = await this.readToken(
+              new AtomToken.StszAtom(payLoadLength, this.options.includeChapters ? maxChapterCount : 0)
+            );
             track.sampleSize = stsz.sampleSize;
             track.sampleCount = stsz.numberOfEntries;
             track.sampleSizeTable = stsz.entries;
+            track.sizeInBytes = stsz.totalSize;
             break;
           }
 

@@ -806,6 +806,7 @@ export class StscAtom extends SimpleTableAtom<ISampleToChunk> {
  */
 export interface IStszAtom extends ITableAtom<number> {
   sampleSize: number;
+  totalSize?: number;
 }
 
 /**
@@ -815,19 +816,46 @@ export interface IStszAtom extends ITableAtom<number> {
 export class StszAtom implements IGetToken<IStszAtom> {
   public len: number;
 
-  public constructor(len: number) {
+  public constructor(
+    len: number,
+    // Retain only the prefix needed by chapter parsing; the complete table still contributes to totalSize.
+    private readonly maxRetainedEntries = 0
+  ) {
     this.len = len;
   }
 
   public get(buf: Uint8Array, off: number): IStszAtom {
-    const nrOfEntries = Token.UINT32_BE.get(buf, off + 8);
+    if (this.len < 12) {
+      throw new Mp4ContentError('Invalid stsz payload length');
+    }
+    const sampleSize = Token.UINT32_BE.get(buf, off + 4);
+    const numberOfEntries = Token.UINT32_BE.get(buf, off + 8);
+    const tableLength = this.len - 12;
+    // Preserve empty tables with a declared sample count; they provide no variable-size total.
+    if (tableLength !== 0 && tableLength !== numberOfEntries * Token.UINT32_BE.len) {
+      throw new Mp4ContentError('mismatch number-of-entries with remaining atom-length');
+    }
+    const tableEntries = tableLength / Token.UINT32_BE.len;
+    const retainedCount = Math.min(tableEntries, this.maxRetainedEntries);
 
+    const entries: number[] = [];
+    let totalSize = sampleSize * numberOfEntries;
+    for (let index = 0; index < tableEntries; ++index) {
+      const size = Token.UINT32_BE.get(buf, off + 12 + index * Token.UINT32_BE.len);
+      if (sampleSize === 0) {
+        totalSize += size;
+      }
+      if (index < retainedCount) {
+        entries.push(size);
+      }
+    }
     return {
       version: Token.INT8.get(buf, off),
       flags: Token.INT24_BE.get(buf, off + 1),
-      sampleSize: Token.UINT32_BE.get(buf, off + 4),
-      numberOfEntries: nrOfEntries,
-      entries: readTokenTable(buf, Token.UINT32_BE, off + 12, this.len - 12, nrOfEntries)
+      sampleSize,
+      numberOfEntries,
+      totalSize: sampleSize > 0 || tableEntries > 0 ? totalSize : undefined,
+      entries
     };
   }
 }
