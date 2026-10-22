@@ -5,7 +5,7 @@ import type { DataType } from './AsfObject.js';
 
 export type AttributeParser = (buf: Uint8Array) => boolean | string | number | bigint | Uint8Array;
 
-export function getParserForAttr(i: DataType): AttributeParser {
+export function getParserForAttr(i: DataType): AttributeParser | undefined {
   return attributeParsers[i];
 }
 
