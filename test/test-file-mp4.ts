@@ -14,7 +14,9 @@ import {
   ChapterTrackReferenceBox,
   Co64Atom,
   DataAtom,
+  MdhdAtom,
   Mp4ContentError,
+  MvhdAtom,
   StcoAtom,
   StsdAtom,
   StszAtom,
@@ -184,6 +186,70 @@ describe('Parse MPEG-4', () => {
       assert.equal(find(100), Number.MAX_SAFE_INTEGER);
       assert.throws(() => find(200), Mp4ContentError, 'Unsafe audio sample timing');
     });
+  });
+
+  describe('shared timing header layouts', () => {
+    for (const version of [0, 1, 2]) {
+      it(`preserves timing and trailing fields for version ${version} at a nonzero offset`, () => {
+        const off = 5;
+        const wide = version === 1;
+        const body = Buffer.alloc(7 + off + 112).subarray(7);
+        body[off] = version;
+        body.writeUIntBE(0x123456, off + 1, 3);
+        if (wide) {
+          body.writeBigUInt64BE(2082844801n, off + 4);
+          body.writeBigUInt64BE(2082844802n, off + 12);
+          body.writeUInt32BE(1000, off + 20);
+          body.writeBigUInt64BE(3000n, off + 24);
+        } else {
+          body.writeUInt32BE(2082844801, off + 4);
+          body.writeUInt32BE(2082844802, off + 8);
+          body.writeUInt32BE(1000, off + 12);
+          body.writeUInt32BE(3000, off + 16);
+        }
+        const tail = off + (wide ? 32 : 20);
+        body.writeUInt32BE(65536, tail);
+        body.writeUInt16BE(256, tail + 4);
+        for (let i = 0; i < 7; ++i) {
+          body.writeUInt32BE(i + 1, tail + 52 + i * 4);
+        }
+        const movie = new MvhdAtom(wide ? 112 : 100).get(body, off);
+        assert.deepInclude(movie, {
+          version,
+          flags: 0x123456,
+          timeScale: 1000,
+          duration: 3000,
+          preferredRate: 65536,
+          preferredVolume: 256,
+          previewTime: 1,
+          previewDuration: 2,
+          posterTime: 3,
+          selectionTime: 4,
+          selectionDuration: 5,
+          currentTime: 6,
+          nextTrackID: 7
+        });
+        assert.equal(movie.creationTime.getTime(), 1000);
+        assert.equal(movie.modificationTime.getTime(), 2000);
+        body.writeUInt16BE(123, tail);
+        body.writeUInt16BE(456, tail + 2);
+        const media = new MdhdAtom(wide ? 36 : 24);
+        if (version === 2) {
+          assert.throws(() => media.get(body, off), 'Invalid mdhd version header');
+        } else {
+          assert.deepEqual(media.get(body, off), {
+            version,
+            flags: 0x123456,
+            timeScale: 1000,
+            duration: 3000,
+            creationTime: movie.creationTime,
+            modificationTime: movie.modificationTime,
+            language: 123,
+            quality: 456
+          });
+        }
+      });
+    }
   });
 
   // Exercise native-to-common mapping, including numeric normalization in the collector.
