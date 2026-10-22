@@ -559,15 +559,15 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 65: // An 8-bit signed integer
-        await this.addTag(tagKey, Token.UINT8.get(dataAtom.value, 0));
+        await this.addTag(tagKey, Token.INT8.get(dataAtom.value, 0));
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        await this.addTag(tagKey, Token.UINT16_BE.get(dataAtom.value, 0));
+        await this.addTag(tagKey, Token.INT16_BE.get(dataAtom.value, 0));
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        await this.addTag(tagKey, Token.UINT32_BE.get(dataAtom.value, 0));
+        await this.addTag(tagKey, Token.INT32_BE.get(dataAtom.value, 0));
         break;
 
       default:
