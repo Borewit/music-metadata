@@ -75,6 +75,11 @@ function createUnknownSizeStream(data: Uint8Array): Readable {
 }
 
 describe('Parse ASF', () => {
+  it('returns no decoder for unsupported ASF attribute types', () => {
+    assert.isUndefined(getParserForAttr(-1));
+    assert.isUndefined(getParserForAttr(0xffff));
+  });
+
   describe('metadata object boundaries', () => {
     for (const [Token, extended] of [
       [ExtendedContentDescriptionObjectState, true],
@@ -863,7 +868,9 @@ describe('Parse ASF', () => {
 
     tests.forEach(test => {
       const buf = Uint8Array.from(test.raw);
-      assert.strictEqual(Number(getParserForAttr(DataType.QWord)(buf)), test.expected, test.description);
+      const parser = getParserForAttr(DataType.QWord);
+      assert.isDefined(parser);
+      assert.strictEqual(Number(parser(buf)), test.expected, test.description);
     });
   });
 
