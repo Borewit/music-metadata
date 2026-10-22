@@ -140,10 +140,6 @@ const encoderDict: { [dataFormatId: string]: IEncoder } = {
   }
 };
 
-function distinct(value: AnyTagValue, index: number, self: AnyTagValue[]) {
-  return self.indexOf(value) === index;
-}
-
 /** Chapter offsets can be revisited even when the total input size is unknown. */
 function supportsSeeking(tokenizer: ITokenizer): tokenizer is ITokenizer & Pick<IRandomAccessTokenizer, 'setPosition'> {
   return tokenizer.supportsRandomAccess() && 'setPosition' in tokenizer && typeof tokenizer.setPosition === 'function';
@@ -314,7 +310,7 @@ export class MP4Parser extends BasicParser {
     });
 
     if (formatList.length > 0) {
-      this.metadata.setFormat('codec', formatList.filter(distinct).join('+'));
+      this.metadata.setFormat('codec', [...new Set(formatList)].join('+'));
     }
 
     const audioTracks = [...this.tracks.values()].filter(isAudioTrack);
@@ -1032,7 +1028,7 @@ export class MP4Parser extends BasicParser {
         }
       }
       debug(`ftyp: ${types.join('/')}`);
-      const x = types.filter(distinct).join('/');
+      const x = [...new Set(types)].join('/');
       this.metadata.setFormat('container', x);
     },
 

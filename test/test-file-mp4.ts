@@ -2562,6 +2562,11 @@ describe('Parse MPEG-4', () => {
       assert.strictEqual(parent?.parent, root);
     });
 
+    it('deduplicates normalized brands in first-seen order', async () => {
+      const { format } = await mm.parseBuffer(box('ftyp', Buffer.from('M4A isomM4A mp42isom', 'latin1')), 'audio/mp4');
+      assert.equal(format.container, 'M4A/isom/mp42');
+    });
+
     describe('open-ended containers', () => {
       async function parseStream(payload: Buffer): Promise<mm.IAudioMetadata> {
         const stream = Readable.from([box('moov', payload, 0n)], { objectMode: false });
