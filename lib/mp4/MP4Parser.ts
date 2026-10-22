@@ -1,7 +1,7 @@
 import { textDecode } from '@borewit/text-codec';
 import type { IGetToken } from '@tokenizer/token';
 import initDebug from 'debug';
-import type { IRandomAccessTokenizer, ITokenizer } from 'strtok3';
+import { createTokenizerView, type IRandomAccessTokenizer, type ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
 import { getMaxChapterCount, getMaxMetadataEntries, readToken, validateAllocation } from '../common/Allocation.js';
@@ -483,11 +483,27 @@ export class MP4Parser extends BasicParser {
   }
 
   private async parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
-    const dataAtom = await this.readToken(new AtomToken.DataAtom(metaAtom.getPayloadLength()));
-
-    if (dataAtom.type.set !== 0) {
-      throw new Mp4ContentError(`Unsupported type-set != 0: ${dataAtom.type.set}`);
+    const length = metaAtom.getPayloadLength();
+    if (length < AtomToken.DataAtomHeader.len) {
+      throw new Mp4ContentError('Truncated data atom header');
     }
+    const header = await this.readToken(AtomToken.DataAtomHeader);
+    if (header.type.set !== 0) {
+      throw new Mp4ContentError(`Unsupported type-set != 0: ${header.type.set}`);
+    }
+    const bodyLength = length - AtomToken.DataAtomHeader.len;
+    if (this.options.skipCovers && (header.type.type === 13 || header.type.type === 14)) {
+      const body = createTokenizerView(this.tokenizer, bodyLength);
+      try {
+        await body.consumeRemainder();
+      } finally {
+        await body.close();
+      }
+      return;
+    }
+    // Preserve the complete value's allocation policy when buffering its body.
+    this.validatePayloadLength(length);
+    const dataAtom = { ...header, value: await this.readToken(new Token.Uint8ArrayType(bodyLength)) };
 
     // Use well-known-type table
     // Ref: https://developer.apple.com/library/content/documentation/QuickTime/QTFF/Metadata/Metadata.html#//apple_ref/doc/uid/TP40000939-CH1-SW35
@@ -528,9 +544,6 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 13: // JPEG
-        if (this.options.skipCovers) {
-          break;
-        }
         await this.addTag(tagKey, {
           format: 'image/jpeg',
           data: Uint8Array.from(dataAtom.value)
@@ -538,9 +551,6 @@ export class MP4Parser extends BasicParser {
         break;
 
       case 14: // PNG
-        if (this.options.skipCovers) {
-          break;
-        }
         await this.addTag(tagKey, {
           format: 'image/png',
           data: Uint8Array.from(dataAtom.value)

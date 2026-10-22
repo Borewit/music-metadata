@@ -662,6 +662,8 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
 
   When `true`, embedded cover art (images) will not be extracted.
   Useful for reducing memory and processing when cover images are unnecessary.
+  MP4 JPEG/PNG bodies are skipped before buffering, so skipped artwork may exceed
+  `maxMemoryAllocation`. Buffered metadata values remain subject to that limit.
  
 - `skipPostHeaders`: `boolean` (default: `false`)
   When `true`, tag headers located at the end of the file will not be read.
