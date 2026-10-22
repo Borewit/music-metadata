@@ -396,7 +396,7 @@ export class DataAtom implements IGetToken<IDataAtom> {
         set: Token.UINT8.get(buf, off + 0),
         type: Token.UINT24_BE.get(buf, off + 1)
       },
-      locale: Token.UINT24_BE.get(buf, off + 4),
+      locale: Token.UINT32_BE.get(buf, off + 4),
       value: new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8)
     };
   }

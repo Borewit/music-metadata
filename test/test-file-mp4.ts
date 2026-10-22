@@ -15,6 +15,7 @@ import {
   ChapterText,
   ChapterTrackReferenceBox,
   Co64Atom,
+  DataAtom,
   Mp4ContentError,
   StcoAtom,
   StsdAtom,
@@ -65,6 +66,23 @@ describe('Parse MPEG-4', () => {
             ]);
           });
         }
+      }
+    }
+  });
+
+  describe('metadata value locales', () => {
+    for (const locale of [0, 1, 0x000100ff, 0xffffffff]) {
+      for (const offset of [0, 5]) {
+        it(`decodes all four locale bytes (${locale}, offset=${offset})`, () => {
+          const data = Buffer.alloc(7 + offset + 11).subarray(7);
+          data.writeUInt32BE(1, offset);
+          data.writeUInt32BE(locale, offset + 4);
+          data.write('abc', offset + 8);
+          const decoded = new DataAtom(11).get(data, offset);
+          assert.equal(decoded.locale, locale);
+          assert.deepEqual(decoded.type, { set: 0, type: 1 });
+          assert.deepEqual(decoded.value, Uint8Array.from(Buffer.from('abc')));
+        });
       }
     }
   });
