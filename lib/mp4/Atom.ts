@@ -58,7 +58,6 @@ export class Atom {
     return atomBean;
   }
 
-  public readonly children: Atom[];
   public readonly atomPath: string;
 
   public readonly header: AtomToken.IAtomHeader;
@@ -75,7 +74,6 @@ export class Atom {
     this.header = header;
     this.extended = extended;
     this.parent = parent;
-    this.children = [];
     this.atomPath = (this.parent ? `${this.parent.atomPath}.` : '') + this.header.name;
   }
 
@@ -100,7 +98,6 @@ export class Atom {
         }
       }
       const atomBean = await Atom.readAtom(tokenizer, dataHandler, this, size, this.reserveAtom);
-      this.children.push(atomBean);
       size = atomBean.header.length === 0n ? 0 : size - Number(atomBean.header.length);
     }
   }
