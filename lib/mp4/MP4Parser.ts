@@ -656,41 +656,24 @@ export class MP4Parser extends BasicParser {
     });
     fragments.cursor = decodeTime ?? fragments.cursor;
     fragments.start = fragments.start === undefined ? fragments.cursor : Math.min(fragments.start, fragments.cursor);
-    if (
-      !run.flags.sampleDurationPresent &&
-      !run.flags.sampleSizePresent &&
-      !run.flags.sampleFlagsPresent &&
-      !run.flags.sampleCompositionTimeOffsetsPresent
-    ) {
-      const duration = header.defaultSampleDuration ?? defaults?.duration;
-      const sampleSize = header.defaultSampleSize ?? defaults?.size;
-      if (duration === undefined || duration <= 0) {
-        fragments.timingComplete = false;
-      } else {
-        fragments.cursor += duration * run.sampleCount;
-      }
-      if (sampleSize === undefined) {
-        fragments.sizesComplete = false;
-      } else {
-        fragments.size += sampleSize * run.sampleCount;
-      }
-      fragments.sampleCount += run.sampleCount;
+    const defaultDuration = header.defaultSampleDuration ?? defaults?.duration;
+    const defaultSize = header.defaultSampleSize ?? defaults?.size;
+    if (run.flags.sampleDurationPresent) {
+      fragments.cursor += run.duration;
+      fragments.timingComplete &&= run.timingComplete;
+    } else if (defaultDuration !== undefined && defaultDuration > 0) {
+      fragments.cursor += defaultDuration * run.sampleCount;
+    } else {
+      fragments.timingComplete = false;
     }
-    for (const sample of run.samples) {
-      const duration = sample.sampleDuration ?? header.defaultSampleDuration ?? defaults?.duration;
-      const sampleSize = sample.sampleSize ?? header.defaultSampleSize ?? defaults?.size;
-      if (duration === undefined || duration <= 0) {
-        fragments.timingComplete = false;
-      } else {
-        fragments.cursor += duration;
-      }
-      if (sampleSize === undefined) {
-        fragments.sizesComplete = false;
-      } else {
-        fragments.size += sampleSize;
-      }
-      ++fragments.sampleCount;
+    if (run.flags.sampleSizePresent) {
+      fragments.size += run.size;
+    } else if (defaultSize !== undefined) {
+      fragments.size += defaultSize * run.sampleCount;
+    } else {
+      fragments.sizesComplete = false;
     }
+    fragments.sampleCount += run.sampleCount;
     fragments.end = Math.max(fragments.end, fragments.cursor);
   }
 
@@ -950,7 +933,7 @@ export class MP4Parser extends BasicParser {
           }
           case 'trun': {
             const run = await this.readToken(new AtomToken.TrackRunBox(length, remainingSamples));
-            remainingSamples -= run.samples.length;
+            remainingSamples -= run.explicitSampleCount;
             runs.push(run);
             break;
           }

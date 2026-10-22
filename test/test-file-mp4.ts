@@ -20,7 +20,8 @@ import {
   StcoAtom,
   StsdAtom,
   StszAtom,
-  TrackHeaderAtom
+  TrackHeaderAtom,
+  TrackRunBox
 } from '../lib/mp4/AtomToken.js';
 import { MP4Parser } from '../lib/mp4/MP4Parser.js';
 import { Parsers } from './metadata-parsers.js';
@@ -1379,6 +1380,7 @@ describe('Parse MPEG-4', () => {
         size?: number;
         decodeTime?: bigint;
         tfdtAfterRun?: boolean;
+        tfhdAfterRun?: boolean;
         omitDecodeTime?: boolean;
         decodeTimeVersion?: 0 | 1;
       }): Uint8Array {
@@ -1426,7 +1428,10 @@ describe('Parse MPEG-4', () => {
           : spec.tfdtAfterRun
             ? [box('trun', trun), box('tfdt', tfdt)]
             : [box('tfdt', tfdt), box('trun', trun)];
-        return box('moof', box('traf', box('tfhd', tfhd), ...boxes));
+        return box(
+          'moof',
+          box('traf', ...(spec.tfhdAfterRun ? [...boxes, box('tfhd', tfhd)] : [box('tfhd', tfhd), ...boxes]))
+        );
       }
 
       for (const metadataBeforeMedia of [false, true]) {
@@ -1688,6 +1693,63 @@ describe('Parse MPEG-4', () => {
         });
       }
 
+      it('resolves late defaults and timing after a many-row flags-only run', async () => {
+        const count = 10000;
+        const data = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          fragment({
+            samples: Array.from({ length: count }, () => ({ flags: 1 })),
+            duration: 40,
+            size: 100,
+            decodeTime: 5000n,
+            tfhdAfterRun: true,
+            tfdtAfterRun: true
+          })
+        );
+        const { format } = await mm.parseBuffer(data, 'video/mp4');
+        assert.include(format.trackInfo[0], { duration: 400, bitrate: 20000 });
+        assert.equal(format.containerDuration, 405);
+      });
+
+      for (let fields = 0; fields < 16; ++fields) {
+        it(`summarizes explicit rows while validating all advertised fields (${fields})`, () => {
+          const count = 3;
+          const width = [1, 2, 4, 8].filter(bit => fields & bit).length * 4;
+          const data = Buffer.alloc(5 + 16 + count * width).subarray(5);
+          data.writeUInt32BE(0x1000000 | (fields << 8) | 5); // Version 1, data offset and first-sample flags
+          data.writeUInt32BE(count, 4);
+          data.writeUInt32BE(123, 8);
+          data.writeUInt32BE(456, 12);
+          let offset = 16;
+          for (let row = 0; row < count; ++row) {
+            for (const bit of [1, 2, 4, 8]) {
+              if (fields & bit) {
+                data.writeUInt32BE(bit === 1 ? row : bit === 2 ? row + 10 : 0xffffffff, offset);
+                offset += 4;
+              }
+            }
+          }
+          const run = new TrackRunBox(data.length).get(data, 0);
+          assert.include(run, {
+            sampleCount: count,
+            duration: fields & 1 ? 3 : 0,
+            size: fields & 2 ? 33 : 0,
+            timingComplete: !(fields & 1),
+            explicitSampleCount: fields ? count : 0,
+            dataOffset: 123,
+            firstSampleFlags: 456
+          });
+          assert.notProperty(run, 'samples');
+          if (width) {
+            assert.throws(
+              () => new TrackRunBox(data.length - 1).get(data, 0),
+              Mp4ContentError,
+              'Invalid trun sample count'
+            );
+          }
+        });
+      }
+
       it('handles large default-only sample counts without allocating a sample array', async () => {
         const buffer = concat(
           mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
@@ -1766,7 +1828,7 @@ describe('Parse MPEG-4', () => {
         await mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 10 });
       });
 
-      it('bounds cumulative materialized samples within each track fragment', async () => {
+      it('bounds cumulative explicit sample rows within each track fragment', async () => {
         const run = new Uint8Array(8 + 4 * 4);
         const view = new DataView(run.buffer);
         view.setUint32(0, 0x100);

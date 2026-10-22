@@ -1100,17 +1100,14 @@ interface ITrackRunBoxFlags {
 export interface ITrackRunBox {
   version: number;
   flags: ITrackRunBoxFlags;
-  samples: ITrackRunBoxSample[];
+  /** Totals of explicitly stored sample fields; defaults are resolved after the complete traf. */
+  duration: number;
+  size: number;
+  timingComplete: boolean;
+  explicitSampleCount: number;
   sampleCount: number;
   dataOffset?: number;
   firstSampleFlags?: number;
-}
-
-interface ITrackRunBoxSample {
-  sampleDuration?: number;
-  sampleSize?: number;
-  sampleFlags?: number;
-  sampleCompositionTimeOffset?: number;
 }
 
 /**
@@ -1140,7 +1137,10 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
         sampleCompositionTimeOffsetsPresent: util.getBit(buf, flagOffset + 1, 3)
       },
       sampleCount: Token.UINT32_BE.get(buf, off + 4),
-      samples: []
+      duration: 0,
+      size: 0,
+      timingComplete: true,
+      explicitSampleCount: 0
     };
 
     let dynOffset = off + 8;
@@ -1170,25 +1170,20 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
       throw new Mp4ContentError(`trun sample count ${trun.sampleCount} exceeds entry limit ${this.maxSampleCount}`);
     }
     for (let n = 0; n < trun.sampleCount; ++n) {
-      const sample: ITrackRunBoxSample = {};
       if (trun.flags.sampleDurationPresent) {
-        sample.sampleDuration = Token.UINT32_BE.get(buf, dynOffset);
+        const duration = Token.UINT32_BE.get(buf, dynOffset);
+        trun.duration += duration;
+        trun.timingComplete &&= duration > 0;
         dynOffset += 4;
       }
       if (trun.flags.sampleSizePresent) {
-        sample.sampleSize = Token.UINT32_BE.get(buf, dynOffset);
+        trun.size += Token.UINT32_BE.get(buf, dynOffset);
         dynOffset += 4;
       }
-      if (trun.flags.sampleFlagsPresent) {
-        sample.sampleFlags = Token.UINT32_BE.get(buf, dynOffset);
-        dynOffset += 4;
-      }
-      if (trun.flags.sampleCompositionTimeOffsetsPresent) {
-        sample.sampleCompositionTimeOffset = Token.UINT32_BE.get(buf, dynOffset);
-        dynOffset += 4;
-      }
-      trun.samples.push(sample);
+      // The validated row width includes flags and composition offsets, which are not retained.
+      dynOffset += 4 * (Number(trun.flags.sampleFlagsPresent) + Number(trun.flags.sampleCompositionTimeOffsetsPresent));
     }
+    trun.explicitSampleCount = trun.sampleCount;
 
     return trun;
   }
