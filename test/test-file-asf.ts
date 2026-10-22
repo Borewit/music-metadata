@@ -165,6 +165,13 @@ describe('Parse ASF', () => {
             /Truncated|exceeds/
           );
         });
+        it('rejects negative token offsets', () => {
+          const body = payload();
+          assert.throws(() => token(body.length).get(body, -1), AsfContentParseError, 'Truncated');
+        });
+        it('rejects negative declared payload sizes despite surrounding bytes', () => {
+          assert.throws(() => token(-1).get(Buffer.alloc(32), 0), AsfContentParseError, 'Truncated');
+        });
         it('accepts no records', () => {
           assert.deepEqual(decode(Buffer.alloc(2)), []);
         });
@@ -288,7 +295,7 @@ describe('Parse ASF', () => {
       }
     }
 
-    for (const length of [0, 1, 9]) {
+    for (const length of [-1, 0, 1, 9]) {
       it(`rejects a ${length}-byte fixed header without reading surrounding bytes`, () => {
         assert.throws(
           () => token(length).get(Buffer.alloc(32), 3),
