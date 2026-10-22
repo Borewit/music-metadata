@@ -1,7 +1,13 @@
 import { defaultMaxMetadataEntries } from '../common/Allocation.js';
 // ASF Objects
 
-import type { IGetToken, ITokenizer } from 'strtok3';
+import {
+  createTokenizerView,
+  EndOfStreamError,
+  type IGetToken,
+  type ITokenizer,
+  TokenizerBoundaryError
+} from 'strtok3';
 import * as Token from 'token-types';
 
 import { AttachedPictureType } from '../id3v2/ID3v2Token.js';
@@ -408,55 +414,7 @@ export interface ICodecEntry {
   information: Uint8Array;
 }
 
-class BoundedReader {
-  public remaining: number;
-
-  public constructor(
-    private readonly tokenizer: ITokenizer,
-    size: number
-  ) {
-    this.remaining = size;
-  }
-
-  public async readToken<T>(token: IGetToken<T>): Promise<T> {
-    this.ensureAvailable(token.len);
-    const value = await this.tokenizer.readToken(token);
-    this.remaining -= token.len;
-    return value;
-  }
-
-  public async readNumber(token: IGetToken<number>): Promise<number> {
-    return this.readToken(token);
-  }
-
-  public async readBuffer(length: number): Promise<Uint8Array> {
-    this.ensureAvailable(length);
-    const buffer = new Uint8Array(length);
-    await this.tokenizer.readBuffer(buffer);
-    this.remaining -= length;
-    return buffer;
-  }
-
-  public async ignoreRemaining(): Promise<void> {
-    const ignored = await this.tokenizer.ignore(this.remaining);
-    if (ignored !== this.remaining) {
-      throw new AsfContentParseError(
-        `Unexpected end of ASF Codec List Object; missing ${this.remaining - ignored} bytes`
-      );
-    }
-    this.remaining = 0;
-  }
-
-  private ensureAvailable(length: number): void {
-    if (length > this.remaining) {
-      throw new AsfContentParseError(
-        `ASF Codec List field size ${length} exceeds remaining object payload size ${this.remaining}`
-      );
-    }
-  }
-}
-
-async function readString(reader: BoundedReader): Promise<string> {
+async function readString(reader: ITokenizer): Promise<string> {
   const length = await reader.readNumber(Token.UINT16_LE);
   return (await reader.readToken(new Token.StringType(length * 2, 'utf-16le'))).replace('\0', '');
 }
@@ -470,31 +428,40 @@ export async function readCodecEntries(
   payloadSize: number,
   maxEntries = defaultMaxMetadataEntries
 ): Promise<ICodecEntry[]> {
-  const reader = new BoundedReader(tokenizer, payloadSize);
-  const codecHeader = await reader.readToken(CodecListObjectHeader);
-  if (codecHeader.entryCount > maxEntries) {
-    throw new AsfContentParseError(
-      `ASF Codec List entry count ${codecHeader.entryCount} exceeds entry limit ${maxEntries}`
-    );
-  }
+  const reader = createTokenizerView(tokenizer, payloadSize);
   const entries: ICodecEntry[] = [];
-  for (let i = 0; i < codecHeader.entryCount; ++i) {
-    entries.push(await readCodecEntry(reader));
+  try {
+    const codecHeader = await reader.readToken(CodecListObjectHeader);
+    if (codecHeader.entryCount > maxEntries) {
+      throw new AsfContentParseError(
+        `ASF Codec List entry count ${codecHeader.entryCount} exceeds entry limit ${maxEntries}`
+      );
+    }
+    for (let i = 0; i < codecHeader.entryCount; ++i) {
+      entries.push(await readCodecEntry(reader));
+    }
+    await reader.consumeRemainder();
+  } catch (error) {
+    if (error instanceof EndOfStreamError || error instanceof TokenizerBoundaryError) {
+      throw new AsfContentParseError(`Unexpected end of ASF Codec List Object: ${error.message}`);
+    }
+    throw error;
+  } finally {
+    await reader.close();
   }
-  await reader.ignoreRemaining();
   return entries;
 }
 
-async function readInformation(reader: BoundedReader): Promise<Uint8Array> {
+async function readInformation(reader: ITokenizer): Promise<Uint8Array> {
   const length = await reader.readNumber(Token.UINT16_LE);
-  return reader.readBuffer(length);
+  return reader.readToken(new Token.Uint8ArrayType(length));
 }
 
 /**
  * Read Codec-Entries
  * @param reader
  */
-async function readCodecEntry(reader: BoundedReader): Promise<ICodecEntry> {
+async function readCodecEntry(reader: ITokenizer): Promise<ICodecEntry> {
   const type = await reader.readNumber(Token.UINT16_LE);
   return {
     type: {

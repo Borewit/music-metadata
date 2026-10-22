@@ -4,7 +4,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { fromBuffer } from 'strtok3';
+import { fromBuffer, fromStream } from 'strtok3';
 import AsfGuid from '../lib/asf/AsfGuid.js';
 import {
   AsfContentParseError,
@@ -1329,6 +1329,41 @@ describe('Parse ASF', () => {
         /Invalid ASF Codec List Object/
       );
     });
+
+    for (const streamed of [false, true]) {
+      it(`leaves the Codec List source open and preserves following bytes (stream=${streamed})`, async () => {
+        const data = new Uint8Array(26);
+        data[25] = 42;
+        const tokenizer = streamed ? await fromStream(createUnknownSizeStream(data)) : fromBuffer(data);
+        let closed = false;
+        const close = tokenizer.close.bind(tokenizer);
+        tokenizer.close = async () => {
+          closed = true;
+          await close();
+        };
+        try {
+          assert.deepEqual(await readCodecEntries(tokenizer, 25), []);
+          assert.isFalse(closed);
+          assert.equal(tokenizer.position, 25);
+          assert.equal(await tokenizer.readToken({ len: 1, get: (buf, off) => buf[off] }), 42);
+        } finally {
+          await tokenizer.close();
+        }
+      });
+
+      it(`rejects a physically truncated Codec List remainder (stream=${streamed})`, async () => {
+        const data = new Uint8Array(20);
+        const tokenizer = streamed ? await fromStream(createUnknownSizeStream(data)) : fromBuffer(data);
+        try {
+          await expect(readCodecEntries(tokenizer, 25)).to.be.rejectedWith(
+            AsfContentParseError,
+            /Unexpected end of ASF Codec List Object/
+          );
+        } finally {
+          await tokenizer.close();
+        }
+      });
+    }
 
     it('rejects a truncated large Codec List without allocating its declared size', async () => {
       const codecListHeader = new Uint8Array(20);
