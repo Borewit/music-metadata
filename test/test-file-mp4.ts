@@ -33,6 +33,42 @@ import {
 const mp4Samples = path.join(samplePath, 'mp4');
 
 describe('Parse MPEG-4', () => {
+  describe('fixed-width signed metadata integers', () => {
+    function box(name: string, payload: Buffer): Buffer {
+      const header = Buffer.alloc(8);
+      header.writeUInt32BE(payload.length + 8);
+      header.write(name, 4, 'latin1');
+      return Buffer.concat([header, payload]);
+    }
+    for (const [type, width] of [
+      [65, 1],
+      [66, 2],
+      [67, 4]
+    ]) {
+      for (const value of [-(2 ** (width * 8 - 1)), -1, 0, 2 ** (width * 8 - 1) - 1]) {
+        for (const streamed of [false, true]) {
+          it(`decodes type ${type} value ${value} (stream=${streamed})`, async () => {
+            const payload = Buffer.alloc(8 + width);
+            payload.writeUInt32BE(type);
+            payload.writeIntBE(value, 8, width);
+            const data = box(
+              'moov',
+              box('udta', box('meta', Buffer.concat([Buffer.alloc(4), box('ilst', box('test', box('data', payload)))])))
+            );
+            const input = Buffer.concat([data, box('date', Buffer.from('2026'))]);
+            const result = streamed
+              ? await mm.parseStream(Readable.from([input], { objectMode: false }), 'audio/mp4')
+              : await mm.parseBuffer(input, 'audio/mp4');
+            assert.deepEqual(result.native.iTunes, [
+              { id: 'test', value },
+              { id: 'date', value: '2026' }
+            ]);
+          });
+        }
+      }
+    }
+  });
+
   // Exercise native-to-common mapping, including numeric normalization in the collector.
   describe('MP4 movement tag mapping', () => {
     for (const [label, name, number, total] of [
