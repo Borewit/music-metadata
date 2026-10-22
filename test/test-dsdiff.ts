@@ -4,7 +4,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { EndOfStreamError, fromStream } from 'strtok3';
+import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 import { DsdiffContentParseError } from '../lib/dsdiff/DsdiffParser.js';
 import * as mm from '../lib/index.js';
 import { UnexpectedFileContentError } from '../lib/ParseError.js';
@@ -202,6 +202,37 @@ describe('Parse Philips DSDIFF', () => {
       const sample = dff(dffChunk('DSD ', 128n, Buffer.alloc(128)));
       const metadata = await mm.parseBuffer(sample, 'audio/dsd', { maxMemoryAllocation: 64 });
       assert.strictEqual(metadata.format.container, 'DSDIFF/DSD');
+    });
+
+    for (const streamed of [false, true]) {
+      it(`leaves the source open after nested chunk traversal (stream=${streamed})`, async () => {
+        const prop = Buffer.concat([Buffer.from('SND '), dffChunk('JUNK', 1n, Buffer.from([42, 0]))]);
+        const sample = dff(dffChunk('PROP', BigInt(prop.length), prop));
+        const data = Buffer.concat([sample, Buffer.from([99])]);
+        const tokenizer = streamed ? await fromStream(Readable.from([data], { objectMode: false })) : fromBuffer(data);
+        tokenizer.fileInfo.mimeType = 'audio/dsd';
+        let closed = false;
+        const close = tokenizer.close.bind(tokenizer);
+        tokenizer.close = async () => {
+          closed = true;
+          await close();
+        };
+        try {
+          await mm.parseFromTokenizer(tokenizer);
+          assert.isFalse(closed);
+          assert.equal(tokenizer.position, sample.length);
+          const following = new Uint8Array(1);
+          await tokenizer.readBuffer(following);
+          assert.equal(following[0], 99);
+        } finally {
+          await tokenizer.close();
+        }
+      });
+    }
+
+    it('preserves tolerance of an incomplete final top-level header', async () => {
+      const sample = dff(Buffer.alloc(2));
+      await mm.parseBuffer(sample, 'audio/dsd');
     });
 
     it('handles odd-sized chunk padding before the next chunk', async () => {

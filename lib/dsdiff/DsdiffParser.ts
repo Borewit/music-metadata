@@ -1,5 +1,7 @@
 import initDebug from 'debug';
+import { createTokenizerView, type IGetToken } from 'strtok3';
 import * as Token from 'token-types';
+import { readToken } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { parseEmbeddedID3v2 } from '../id3v2/EmbeddedID3v2.js';
@@ -17,6 +19,12 @@ export class DsdiffContentParseError extends makeUnexpectedFileContentError('DSD
  * - http://www.sonicstudio.com/pdf/dsd/DSDIFF_1.5_Spec.pdf
  */
 export class DsdiffParser extends BasicParser {
+  private input = this.tokenizer;
+
+  protected override readToken<T>(token: IGetToken<T>): Promise<T> {
+    return readToken(this.input, token, this.options);
+  }
+
   public async parse(): Promise<void> {
     const header = await this.readToken<IChunkHeader64>(ChunkHeader64);
     if (header.chunkID !== 'FRM8') {
@@ -32,7 +40,8 @@ export class DsdiffParser extends BasicParser {
       case 'DSD':
         this.metadata.setFormat('container', `DSDIFF/${type}`);
         this.metadata.setFormat('lossless', true);
-        return this.readFmt8Chunks(header.chunkSize - BigInt(FourCcToken.len));
+        await this.readChunks(header.chunkSize - BigInt(FourCcToken.len), child => this.readData(child));
+        return;
 
       default:
         throw new DsdiffContentParseError(`Unsupported DSDIFF type: ${type}`);
@@ -48,8 +57,8 @@ export class DsdiffParser extends BasicParser {
     if (remainingSize !== undefined && paddedSize > remainingSize) {
       throw new DsdiffContentParseError(`Chunk ${header.chunkID} size ${size} exceeds its enclosing chunk`);
     }
-    const fileSize = this.tokenizer.fileInfo.size;
-    if (fileSize !== undefined && paddedSize > BigInt(fileSize - this.tokenizer.position)) {
+    const fileSize = this.input.fileInfo.size;
+    if (fileSize !== undefined && paddedSize > BigInt(fileSize - this.input.position)) {
       throw new DsdiffContentParseError(`Chunk ${header.chunkID} size ${size} exceeds remaining file size`);
     }
   }
@@ -61,28 +70,35 @@ export class DsdiffParser extends BasicParser {
   }
 
   private async ignoreBytes(length: bigint): Promise<void> {
-    if ((await this.tokenizer.ignore(Number(length))) !== Number(length)) {
+    if ((await this.input.ignore(Number(length))) !== Number(length)) {
       throw new DsdiffContentParseError('Unexpected end of chunk');
     }
   }
 
-  private async readFmt8Chunks(remainingSize: bigint): Promise<void> {
+  private async readChunks(remainingSize: bigint, handle: (header: IChunkHeader64) => Promise<void>): Promise<bigint> {
     while (remainingSize >= ChunkHeader64.len) {
-      const chunkHeader = await this.readToken<IChunkHeader64>(ChunkHeader64);
-      this.validateChunkSize(chunkHeader, remainingSize - BigInt(ChunkHeader64.len));
-
-      //  If the data is an odd number of bytes in length, a pad byte must be added at the end
-      debug(`Chunk id=${chunkHeader.chunkID}`);
-      await this.readData(chunkHeader);
-      const padding = chunkHeader.chunkSize & 1n;
+      const header = await this.readToken(ChunkHeader64);
+      this.validateChunkSize(header, remainingSize - BigInt(ChunkHeader64.len));
+      const source = this.input;
+      const payload = createTokenizerView(source, Number(header.chunkSize));
+      this.input = payload;
+      try {
+        await handle(header);
+        // Preserve exact-ignore checks for custom tokenizers as well as streams.
+        await this.ignoreBytes(BigInt(payload.remaining));
+      } finally {
+        this.input = source;
+        await payload.close();
+      }
+      const padding = header.chunkSize & 1n;
       await this.ignoreBytes(padding);
-      remainingSize -= BigInt(ChunkHeader64.len) + chunkHeader.chunkSize + padding;
+      remainingSize -= BigInt(ChunkHeader64.len) + header.chunkSize + padding;
     }
+    return remainingSize;
   }
 
   private async readData(header: IChunkHeader64): Promise<void> {
     debug(`Reading data of chunk[ID=${header.chunkID}, size=${header.chunkSize}]`);
-    const p0 = this.tokenizer.position;
     switch (header.chunkID.trim()) {
       case 'FVER': {
         this.requireChunkSize(header, Token.UINT32_LE.len);
@@ -105,7 +121,7 @@ export class DsdiffParser extends BasicParser {
 
       case 'ID3': {
         // Unofficial ID3 tag support
-        await parseEmbeddedID3v2(this.metadata, this.tokenizer, this.options, Number(header.chunkSize));
+        await parseEmbeddedID3v2(this.metadata, this.input, this.options, Number(header.chunkSize));
         break;
       }
 
@@ -125,20 +141,10 @@ export class DsdiffParser extends BasicParser {
         debug(`Ignore chunk[ID=${header.chunkID}, size=${header.chunkSize}]`);
         break;
     }
-    const remaining = header.chunkSize - BigInt(this.tokenizer.position - p0);
-    if (remaining > 0) {
-      debug(`After Parsing chunk, remaining ${remaining} bytes`);
-      await this.ignoreBytes(remaining);
-    }
   }
 
   private async handleSoundPropertyChunks(remainingSize: bigint): Promise<void> {
-    debug(`Parsing sound-property-chunks, remainingSize=${remainingSize}`);
-    while (remainingSize >= BigInt(ChunkHeader64.len)) {
-      const sndPropHeader = await this.readToken<IChunkHeader64>(ChunkHeader64);
-      this.validateChunkSize(sndPropHeader, remainingSize - BigInt(ChunkHeader64.len));
-      debug(`Sound-property-chunk[ID=${sndPropHeader.chunkID}, size=${sndPropHeader.chunkSize}]`);
-      const p0 = this.tokenizer.position;
+    remainingSize = await this.readChunks(remainingSize, async sndPropHeader => {
       switch (sndPropHeader.chunkID.trim()) {
         case 'FS': {
           this.requireChunkSize(sndPropHeader, Token.UINT32_BE.len);
@@ -192,18 +198,8 @@ export class DsdiffParser extends BasicParser {
         }
         default:
           debug(`Unknown sound-property-chunk[ID=${sndPropHeader.chunkID}, size=${sndPropHeader.chunkSize}]`);
-          await this.ignoreBytes(sndPropHeader.chunkSize);
       }
-      const remaining = sndPropHeader.chunkSize - BigInt(this.tokenizer.position - p0);
-      if (remaining > 0) {
-        debug(`After Parsing sound-property-chunk ${sndPropHeader.chunkSize}, remaining ${remaining} bytes`);
-        await this.ignoreBytes(remaining);
-      }
-      const padding = sndPropHeader.chunkSize & 1n;
-      await this.ignoreBytes(padding);
-      remainingSize -= BigInt(ChunkHeader64.len) + sndPropHeader.chunkSize + padding;
-      debug(`Parsing sound-property-chunks, remainingSize=${remainingSize}`);
-    }
+    });
     if (remainingSize !== 0n) {
       throw new DsdiffContentParseError('Incomplete sound-property chunk header');
     }
