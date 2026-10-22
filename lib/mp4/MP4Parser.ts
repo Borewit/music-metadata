@@ -52,6 +52,7 @@ interface ITrackDescription {
     header?: AtomToken.IAtomMdhd;
   };
   chapterList?: number[];
+  chapterSampleLookup?: (offset: number) => number;
   chunkOffsetTable: number[];
   sampleSize: number;
   sampleCount: number;
@@ -1170,7 +1171,8 @@ export class MP4Parser extends BasicParser {
               track.sampleToChunkTable.length > 0 &&
               track.timeToSampleTable.length > 0
             ) {
-              chapter.sampleOffset = this.findSampleOffset(track, offset + size);
+              track.chapterSampleLookup ??= this.createSampleOffsetLookup(track);
+              chapter.sampleOffset = track.chapterSampleLookup(offset + size);
             }
             if (forwardOnly) {
               this.streamedChapters.set(sampleIndex, chapter);
@@ -1198,16 +1200,8 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private findSampleOffset(track: ITrackDescription, chapterOffset: number): number {
-    let chunkIndex = 0;
-    while (chunkIndex < track.chunkOffsetTable.length && track.chunkOffsetTable[chunkIndex] < chapterOffset) {
-      ++chunkIndex;
-    }
-
-    return this.getChunkDuration(chunkIndex + 1, track);
-  }
-
-  private getChunkDuration(chunkId: number, track: ITrackDescription): number {
+  /** Advance across monotone queries; restart for backward queries without sorting file tables. */
+  private createSampleOffsetLookup(track: ITrackDescription): (offset: number) => number {
     let previousChunk = 0;
     for (const entry of track.sampleToChunkTable) {
       if (
@@ -1219,15 +1213,30 @@ export class MP4Parser extends BasicParser {
       }
       previousChunk = entry.firstChunk;
     }
+    let chunkIndex = 0;
+    let chunkId = 1;
+    let chunkRun = 0;
     let timingIndex = 0;
     let remainingSamples = 0;
     let sampleDuration = 0;
     let totalDuration = 0;
-    for (const [index, run] of track.sampleToChunkTable.entries()) {
-      const nextChunk = track.sampleToChunkTable[index + 1]?.firstChunk ?? chunkId;
-      const endChunk = Math.min(nextChunk, chunkId);
-      for (let chunk = run.firstChunk; chunk < endChunk; ++chunk) {
-        let samplesPerChunk = run.samplesPerChunk;
+    let previousOffset = Number.NEGATIVE_INFINITY;
+    return chapterOffset => {
+      if (chapterOffset < previousOffset) {
+        chunkIndex = chunkRun = timingIndex = remainingSamples = sampleDuration = totalDuration = 0;
+        chunkId = 1;
+      }
+      previousOffset = chapterOffset;
+      // Earlier rejected offsets remain below any later query, even in an unordered table.
+      while (chunkIndex < track.chunkOffsetTable.length && track.chunkOffsetTable[chunkIndex] < chapterOffset) {
+        ++chunkIndex;
+      }
+      const targetChunk = chunkIndex + 1;
+      for (; chunkId < targetChunk; ++chunkId) {
+        while (track.sampleToChunkTable[chunkRun + 1]?.firstChunk <= chunkId) {
+          ++chunkRun;
+        }
+        let samplesPerChunk = track.sampleToChunkTable[chunkRun].samplesPerChunk;
         while (samplesPerChunk > 0) {
           while (remainingSamples === 0) {
             const timing = track.timeToSampleTable[timingIndex++];
@@ -1246,7 +1255,7 @@ export class MP4Parser extends BasicParser {
           samplesPerChunk -= samples;
         }
       }
-    }
-    return totalDuration;
+      return totalDuration;
+    };
   }
 }
