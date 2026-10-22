@@ -249,6 +249,21 @@ const SecondsSinceMacEpoch64: IGetToken<Date> = {
   }
 };
 
+/** Shared creation, modification and timing fields of media/movie headers. */
+function readTimeHeader(buf: Uint8Array, off: number): IAtomMxhd {
+  const version = Token.UINT8.get(buf, off);
+  const wide = version === 1;
+  const timestamp = wide ? SecondsSinceMacEpoch64 : SecondsSinceMacEpoch;
+  return {
+    version,
+    flags: Token.UINT24_BE.get(buf, off + 1),
+    creationTime: timestamp.get(buf, off + 4),
+    modificationTime: timestamp.get(buf, off + (wide ? 12 : 8)),
+    timeScale: Token.UINT32_BE.get(buf, off + (wide ? 20 : 12)),
+    duration: wide ? Number(Token.UINT64_BE.get(buf, off + 24)) : Token.UINT32_BE.get(buf, off + 16)
+  };
+}
+
 /**
  * Token: Media Header Atom
  * Ref:
@@ -261,37 +276,16 @@ export class MdhdAtom extends FixedLengthAtom implements IGetToken<IAtomMdhd> {
   }
 
   public get(buf: Uint8Array, off: number): IAtomMdhd {
-    const version = Token.UINT8.get(buf, off + 0);
-    const flags = Token.UINT24_BE.get(buf, off + 1);
-
-    switch (version) {
-      case 0:
-        // Version 0: 32-bit fields
-        return {
-          version,
-          flags,
-          creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
-          modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
-          timeScale: Token.UINT32_BE.get(buf, off + 12),
-          duration: Token.UINT32_BE.get(buf, off + 16),
-          language: Token.UINT16_BE.get(buf, off + 20),
-          quality: Token.UINT16_BE.get(buf, off + 22)
-        };
-
-      case 1:
-        return {
-          version,
-          flags,
-          creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
-          modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
-          timeScale: Token.UINT32_BE.get(buf, off + 20),
-          duration: Number(Token.UINT64_BE.get(buf, off + 24)),
-          language: Token.UINT16_BE.get(buf, off + 32),
-          quality: Token.UINT16_BE.get(buf, off + 34)
-        };
-      default:
-        throw new FieldDecodingError('Invalid mdhd version header');
+    const version = Token.UINT8.get(buf, off);
+    if (version !== 0 && version !== 1) {
+      throw new FieldDecodingError('Invalid mdhd version header');
     }
+    const tail = off + (version === 1 ? 32 : 20);
+    return {
+      ...readTimeHeader(buf, off),
+      language: Token.UINT16_BE.get(buf, tail),
+      quality: Token.UINT16_BE.get(buf, tail + 2)
+    };
   }
 }
 
@@ -304,51 +298,20 @@ export class MvhdAtom extends FixedLengthAtom implements IGetToken<IAtomMvhd> {
   }
 
   public get(buf: Uint8Array, off: number): IAtomMvhd {
-    const version = Token.UINT8.get(buf, off);
-    const flags = Token.UINT24_BE.get(buf, off + 1);
-
-    if (version === 1) {
-      // Version 1: 64-bit creation/modification times and duration
-      return {
-        version,
-        flags,
-        creationTime: SecondsSinceMacEpoch64.get(buf, off + 4),
-        modificationTime: SecondsSinceMacEpoch64.get(buf, off + 12),
-        timeScale: Token.UINT32_BE.get(buf, off + 20),
-        duration: Number(Token.UINT64_BE.get(buf, off + 24)),
-        preferredRate: Token.UINT32_BE.get(buf, off + 32),
-        preferredVolume: Token.UINT16_BE.get(buf, off + 36),
-        // ignore reserved: 10 bytes
-        // ignore matrix structure: 36 bytes
-        previewTime: Token.UINT32_BE.get(buf, off + 84),
-        previewDuration: Token.UINT32_BE.get(buf, off + 88),
-        posterTime: Token.UINT32_BE.get(buf, off + 92),
-        selectionTime: Token.UINT32_BE.get(buf, off + 96),
-        selectionDuration: Token.UINT32_BE.get(buf, off + 100),
-        currentTime: Token.UINT32_BE.get(buf, off + 104),
-        nextTrackID: Token.UINT32_BE.get(buf, off + 108)
-      };
-    }
-
-    // Version 0: 32-bit fields
+    // Preserve the legacy 32-bit layout for versions other than 1.
+    const tail = off + (Token.UINT8.get(buf, off) === 1 ? 32 : 20);
     return {
-      version,
-      flags,
-      creationTime: SecondsSinceMacEpoch.get(buf, off + 4),
-      modificationTime: SecondsSinceMacEpoch.get(buf, off + 8),
-      timeScale: Token.UINT32_BE.get(buf, off + 12),
-      duration: Token.UINT32_BE.get(buf, off + 16),
-      preferredRate: Token.UINT32_BE.get(buf, off + 20),
-      preferredVolume: Token.UINT16_BE.get(buf, off + 24),
-      // ignore reserved: 10 bytes
-      // ignore matrix structure: 36 bytes
-      previewTime: Token.UINT32_BE.get(buf, off + 72),
-      previewDuration: Token.UINT32_BE.get(buf, off + 76),
-      posterTime: Token.UINT32_BE.get(buf, off + 80),
-      selectionTime: Token.UINT32_BE.get(buf, off + 84),
-      selectionDuration: Token.UINT32_BE.get(buf, off + 88),
-      currentTime: Token.UINT32_BE.get(buf, off + 92),
-      nextTrackID: Token.UINT32_BE.get(buf, off + 96)
+      ...readTimeHeader(buf, off),
+      preferredRate: Token.UINT32_BE.get(buf, tail),
+      preferredVolume: Token.UINT16_BE.get(buf, tail + 4),
+      // Reserved (10 bytes) and matrix structure (36 bytes).
+      previewTime: Token.UINT32_BE.get(buf, tail + 52),
+      previewDuration: Token.UINT32_BE.get(buf, tail + 56),
+      posterTime: Token.UINT32_BE.get(buf, tail + 60),
+      selectionTime: Token.UINT32_BE.get(buf, tail + 64),
+      selectionDuration: Token.UINT32_BE.get(buf, tail + 68),
+      currentTime: Token.UINT32_BE.get(buf, tail + 72),
+      nextTrackID: Token.UINT32_BE.get(buf, tail + 76)
     };
   }
 }
