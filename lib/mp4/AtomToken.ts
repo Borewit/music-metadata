@@ -343,27 +343,19 @@ export interface IDataAtom {
   value: Uint8Array;
 }
 
-/**
- * Data Atom Structure
- */
-export class DataAtom implements IGetToken<IDataAtom> {
-  public len: number;
-
-  public constructor(len: number) {
-    this.len = len;
-  }
-
-  public get(buf: Uint8Array, off: number): IDataAtom {
+/** Fixed type/locale header, shared by buffered and skipped values. */
+export const DataAtomHeader: IGetToken<Omit<IDataAtom, 'value'>> = {
+  len: 8,
+  get(buf, off) {
+    if (off < 0 || buf.length - off < 8) {
+      throw new Mp4ContentError('Truncated data atom header');
+    }
     return {
-      type: {
-        set: Token.UINT8.get(buf, off + 0),
-        type: Token.UINT24_BE.get(buf, off + 1)
-      },
-      locale: Token.UINT32_BE.get(buf, off + 4),
-      value: new Token.Uint8ArrayType(this.len - 8).get(buf, off + 8)
+      type: { set: Token.UINT8.get(buf, off), type: Token.UINT24_BE.get(buf, off + 1) },
+      locale: Token.UINT32_BE.get(buf, off + 4)
     };
   }
-}
+};
 
 /**
  * Data Atom Structure ('data')

@@ -13,7 +13,7 @@ import {
   ChapterText,
   ChapterTrackReferenceBox,
   Co64Atom,
-  DataAtom,
+  DataAtomHeader,
   MdhdAtom,
   Mp4ContentError,
   MvhdAtom,
@@ -72,6 +72,101 @@ describe('Parse MPEG-4', () => {
     }
   });
 
+  describe('selective artwork buffering', () => {
+    function box(name: string, body: Buffer): Buffer {
+      const header = Buffer.alloc(8);
+      header.writeUInt32BE(body.length + 8);
+      header.write(name, 4, 'latin1');
+      return Buffer.concat([header, body]);
+    }
+    function metadata(body: Buffer): Buffer {
+      const title = Buffer.concat([Buffer.from([0, 0, 0, 1, 0, 0, 0, 0]), Buffer.from('Following title')]);
+      return box(
+        'moov',
+        box(
+          'udta',
+          box(
+            'meta',
+            Buffer.concat([
+              Buffer.alloc(4),
+              box('ilst', Buffer.concat([box('covr', box('data', body)), box('©nam', box('data', title))]))
+            ])
+          )
+        )
+      );
+    }
+    for (const imageType of [13, 14]) {
+      for (const streamed of [false, true]) {
+        it(`skips artwork bodies before allocation (type=${imageType}, stream=${streamed})`, async () => {
+          const body = Buffer.alloc(4096);
+          body.writeUInt32BE(imageType);
+          const data = metadata(body);
+          const tokenizer = streamed
+            ? await fromStream(Readable.from([data], { objectMode: false }))
+            : fromBuffer(data);
+          tokenizer.fileInfo.mimeType = 'audio/mp4';
+          const read = tokenizer.readToken.bind(tokenizer);
+          tokenizer.readToken = (token, position) => {
+            assert.isAtMost(token.len, 64, 'no artwork body token');
+            return read(token, position);
+          };
+          try {
+            const result = await mm.parseFromTokenizer(tokenizer, { skipCovers: true, maxMemoryAllocation: 64 });
+            assert.isUndefined(result.common.picture);
+            assert.equal(result.common.title, 'Following title');
+            assert.equal(tokenizer.position, data.length);
+          } finally {
+            await tokenizer.close();
+          }
+          await rejects(mm.parseBuffer(data, 'audio/mp4', { maxMemoryAllocation: 64 }), /allocation limit/);
+        });
+      }
+      it(`extracts the accepted artwork bytes (type=${imageType})`, async () => {
+        const image = Buffer.from([42, 43, 44]);
+        const header = Buffer.alloc(8);
+        header.writeUInt32BE(imageType);
+        const { native, common } = await mm.parseBuffer(metadata(Buffer.concat([header, image])), 'audio/mp4');
+        assert.deepEqual(
+          (native.iTunes.find(tag => tag.id === 'covr')?.value as mm.IPicture | undefined)?.data,
+          Uint8Array.from(image)
+        );
+        assert.equal(common.title, 'Following title');
+      });
+    }
+    for (const skipCovers of [false, true]) {
+      for (const length of [0, 1, 7]) {
+        it(`rejects a short value header (length=${length}, skip=${skipCovers})`, async () => {
+          await rejects(
+            mm.parseBuffer(metadata(Buffer.alloc(length)), 'audio/mp4', { skipCovers }),
+            /Truncated data atom header/
+          );
+        });
+      }
+      it(`rejects unsupported type sets (skip=${skipCovers})`, async () => {
+        const header = Buffer.alloc(8);
+        header[0] = 1;
+        header[3] = 13;
+        await rejects(mm.parseBuffer(metadata(header), 'audio/mp4', { skipCovers }), /Unsupported type-set != 0: 1/);
+      });
+    }
+    it('bounds the shared header decoder even when used directly', () => {
+      assert.throws(() => DataAtomHeader.get(new Uint8Array(7), 0), Mp4ContentError, 'Truncated data atom header');
+      assert.throws(() => DataAtomHeader.get(new Uint8Array(8), -1), Mp4ContentError, 'Truncated data atom header');
+    });
+    it('rejects physically truncated skipped artwork on an unknown-size stream', async () => {
+      const header = Buffer.alloc(8);
+      header[3] = 14;
+      const data = metadata(Buffer.concat([header, Buffer.alloc(100)]));
+      const end = data.indexOf('data') + 4 + 8 + 50;
+      await rejects(
+        mm.parseStream(Readable.from([data.subarray(0, end)], { objectMode: false }), 'audio/mp4', {
+          skipCovers: true
+        }),
+        EndOfStreamError
+      );
+    });
+  });
+
   describe('metadata value locales', () => {
     for (const locale of [0, 1, 0x000100ff, 0xffffffff]) {
       for (const offset of [0, 5]) {
@@ -80,10 +175,9 @@ describe('Parse MPEG-4', () => {
           data.writeUInt32BE(1, offset);
           data.writeUInt32BE(locale, offset + 4);
           data.write('abc', offset + 8);
-          const decoded = new DataAtom(11).get(data, offset);
+          const decoded = DataAtomHeader.get(data, offset);
           assert.equal(decoded.locale, locale);
           assert.deepEqual(decoded.type, { set: 0, type: 1 });
-          assert.deepEqual(decoded.value, Uint8Array.from(Buffer.from('abc')));
         });
       }
     }
