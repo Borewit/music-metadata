@@ -88,6 +88,105 @@ describe('Parse MPEG-4', () => {
     }
   });
 
+  describe('chapter sample lookup cursor', () => {
+    const parser = new MP4Parser(new MetadataCollector(), fromBuffer(new Uint8Array(0)), {});
+    function lookup(track: {
+      chunkOffsetTable: number[];
+      sampleToChunkTable: { firstChunk: number; samplesPerChunk: number }[];
+      timeToSampleTable: { count: number; duration: number }[];
+    }): (offset: number) => number {
+      return Reflect.get(parser, 'createSampleOffsetLookup').call(parser, track);
+    }
+    it('preserves first-match behavior for unordered offsets and backward queries', () => {
+      const find = lookup({
+        chunkOffsetTable: [100, 300, 200, 500],
+        sampleToChunkTable: [
+          { firstChunk: 1, samplesPerChunk: 2 },
+          { firstChunk: 3, samplesPerChunk: 1 }
+        ],
+        timeToSampleTable: [
+          { count: 0, duration: 1 },
+          { count: 3, duration: 10 },
+          { count: 3, duration: 20 }
+        ]
+      });
+      assert.deepEqual([100, 101, 250, 301, 501, 201, 199, 0].map(find), [0, 20, 20, 70, 90, 20, 20, 0]);
+    });
+    it('reuses the per-track lookup across chapter traversals with linear table visits', async () => {
+      let visits = 0;
+      const offsets = new Proxy(
+        Array.from({ length: 10000 }, (_, i) => i * 100),
+        {
+          get(target, key, receiver) {
+            if (typeof key === 'string' && /^\d+$/.test(key)) {
+              ++visits;
+            }
+            return Reflect.get(target, key, receiver);
+          }
+        }
+      );
+      const track = {
+        chunkOffsetTable: offsets,
+        sampleToChunkTable: [{ firstChunk: 1, samplesPerChunk: 1 }],
+        timeToSampleTable: [{ count: 10000, duration: 40 }]
+      };
+      const chapterTrack = {
+        sampleCount: 1000,
+        sampleSize: 0,
+        sampleSizeTable: new Array<number>(1000).fill(0),
+        chunkOffsetTable: Array.from({ length: 1000 }, (_, i) => (i + 1) * 1000),
+        sampleToChunkTable: [{ firstChunk: 1, samplesPerChunk: 1 }],
+        timeToSampleTable: [{ count: 1000, duration: 1000 }],
+        media: { header: { timeScale: 1000 } }
+      };
+      const metadata = new MetadataCollector();
+      const traversalParser = new MP4Parser(metadata, fromBuffer(new Uint8Array(0)), {});
+      const createLookup = Reflect.get(traversalParser, 'createSampleOffsetLookup');
+      let lookupCreations = 0;
+      Reflect.set(traversalParser, 'createSampleOffsetLookup', (audioTrack: typeof track) => {
+        ++lookupCreations;
+        return createLookup.call(traversalParser, audioTrack);
+      });
+      const parseChapters = () =>
+        Reflect.get(traversalParser, 'parseChapterTrack').call(
+          traversalParser,
+          chapterTrack,
+          track,
+          [{ offset: 0, end: 1000001 }],
+          false
+        );
+      const expected = Array.from({ length: 1000 }, (_, i) => ({
+        title: '',
+        start: i * 1000,
+        timeScale: 1000,
+        sampleOffset: (i + 1) * 400
+      }));
+      // Empty title samples exercise chapter traversal without reading sample bodies.
+      await parseChapters();
+      assert.deepEqual(metadata.format.chapters, expected);
+      assert.equal(lookupCreations, 1);
+      assert.isBelow(visits, 12000);
+      const cachedLookup = Reflect.get(track, 'chapterSampleLookup');
+      assert.isFunction(cachedLookup);
+
+      const previousVisits = visits;
+      await parseChapters();
+      assert.deepEqual(metadata.format.chapters, expected);
+      assert.equal(lookupCreations, 1);
+      assert.strictEqual(Reflect.get(track, 'chapterSampleLookup'), cachedLookup);
+      assert.isBelow(visits - previousVisits, 12000);
+    });
+    it('retains safe timing arithmetic when advancing an existing lookup', () => {
+      const find = lookup({
+        chunkOffsetTable: [0, 100],
+        sampleToChunkTable: [{ firstChunk: 1, samplesPerChunk: 1 }],
+        timeToSampleTable: [{ count: 2, duration: Number.MAX_SAFE_INTEGER }]
+      });
+      assert.equal(find(100), Number.MAX_SAFE_INTEGER);
+      assert.throws(() => find(200), Mp4ContentError, 'Unsafe audio sample timing');
+    });
+  });
+
   // Exercise native-to-common mapping, including numeric normalization in the collector.
   describe('MP4 movement tag mapping', () => {
     for (const [label, name, number, total] of [
