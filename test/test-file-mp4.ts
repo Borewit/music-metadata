@@ -2444,6 +2444,26 @@ describe('Parse MPEG-4', () => {
       });
     }
 
+    it('preserves traversal order, parent identity and paths without retaining siblings', async () => {
+      const data = box('moov', box('udta', Buffer.concat([box('free'), box('skip')])));
+      const visited: string[] = [];
+      let parent: Atom | null = null;
+      const root = await Atom.readAtom(
+        fromBuffer(data),
+        async atom => {
+          visited.push(atom.atomPath);
+          if (parent) {
+            assert.strictEqual(atom.parent, parent);
+          }
+          parent = atom.parent;
+        },
+        null,
+        data.length
+      );
+      assert.deepEqual(visited, ['moov.udta.free', 'moov.udta.skip']);
+      assert.strictEqual(parent?.parent, root);
+    });
+
     describe('open-ended containers', () => {
       async function parseStream(payload: Buffer): Promise<mm.IAudioMetadata> {
         const stream = Readable.from([box('moov', payload, 0n)], { objectMode: false });
