@@ -1651,6 +1651,82 @@ describe('Parse MPEG-4', () => {
         await mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 10 });
       });
 
+      it('bounds cumulative materialized samples within each track fragment', async () => {
+        const run = new Uint8Array(8 + 4 * 4);
+        const view = new DataView(run.buffer);
+        view.setUint32(0, 0x100);
+        view.setUint32(4, 4);
+        const defaultRun = new Uint8Array(8);
+        new DataView(defaultRun.buffer).setUint32(4, 0xffffffff);
+        const data = box(
+          'moof',
+          box('traf', box('trun', defaultRun), box('trun', run), box('trun', run), box('trun', run))
+        );
+        await rejects(
+          mm.parseBuffer(data, { mimeType: 'video/mp4' }, { maxMetadataEntries: 10 }),
+          /trun sample count 4 exceeds entry limit 2/
+        );
+        // Default-only runs consume no sample budget, and each traf gets a fresh budget.
+        await mm.parseBuffer(concat(data, data), { mimeType: 'video/mp4' }, { maxMetadataEntries: 12 });
+      });
+
+      it('aggregates many fragment roots without retaining each parsed run', async () => {
+        const originalPush = Array.prototype.push;
+        let retainedFragments = 0;
+        Array.prototype.push = function (...items) {
+          for (const item of items) {
+            if (item && typeof item === 'object' && 'trackRun' in item && 'header' in item) {
+              ++retainedFragments;
+            }
+          }
+          return originalPush.apply(this, items);
+        };
+        try {
+          const fragments = Array.from({ length: 200 }, () =>
+            fragment({ omitDecodeTime: true, count: 1, duration: 40, size: 100 })
+          );
+          const buffer = concat(mp4({ ...videoTrack, timeScale: 1000, duration: 0 }), ...fragments);
+          const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 64 });
+          assert.include(format.trackInfo[0], { duration: 8, bitrate: 20000 });
+          assert.strictEqual(format.trackInfo[0].video.frameRate, 25);
+        } finally {
+          Array.prototype.push = originalPush;
+        }
+        assert.strictEqual(retainedFragments, 0);
+      });
+
+      it('bounds tracks retained across root atoms', async () => {
+        const roots = concat(
+          ...Array.from({ length: 4 }, (_, index) => box('moov', box('trak', trackHeaderBox(index + 1, videoTrack))))
+        );
+        await rejects(
+          mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 3 }),
+          /MP4 track count exceeds entry limit 3/
+        );
+      });
+
+      it('bounds track defaults retained across root atoms', async () => {
+        const roots = concat(
+          ...Array.from({ length: 3 }, (_, index) => {
+            const trex = new Uint8Array(24);
+            new DataView(trex.buffer).setUint32(4, index + 1);
+            return box('trex', trex);
+          })
+        );
+        await rejects(
+          mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 2 }),
+          /MP4 track-default count exceeds entry limit 2/
+        );
+      });
+
+      it('bounds chapter media ranges retained across root atoms', async () => {
+        const roots = concat(...Array.from({ length: 3 }, () => box('mdat', new Uint8Array(1))));
+        await rejects(
+          mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { includeChapters: true, maxMetadataEntries: 2 }),
+          /MP4 media-data range count exceeds entry limit 2/
+        );
+      });
+
       it('releases the atom budget after each root tree', async () => {
         const roots = concat(...Array.from({ length: 65 }, () => box('moov', box('free'))));
         await mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 64 });
@@ -1696,6 +1772,40 @@ describe('Parse MPEG-4', () => {
         assert.include(format.trackInfo[0], { duration: 0.2, bitrate: 10000 });
         assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
         assert.strictEqual(format.containerDuration, 5.2);
+      });
+
+      it('ignores an empty run before aggregating a valid run', async () => {
+        const buffer = concat(
+          mp4({ ...videoTrack, timeScale: 1000, duration: 0 }),
+          fragment({ omitDecodeTime: true, count: 0 }),
+          fragment({ omitDecodeTime: true, samples: [{ duration: 100, size: 250 }] })
+        );
+        const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
+        assert.include(format.trackInfo[0], { duration: 0.1, bitrate: 20000 });
+        assert.strictEqual(format.trackInfo[0].video.frameRate, 10);
+      });
+
+      it('does not calculate a frame rate from an unsafe aggregate sample count', () => {
+        const parser = new MP4Parser(new MetadataCollector({}), fromBuffer(new Uint8Array(0)), {});
+        const track = {
+          header: { trackId: 1 },
+          media: { header: { timeScale: 1000, duration: 0 } },
+          timeToSampleTable: [],
+          sampleCount: 0,
+          sizeInBytes: 0,
+          fragmentStatistics: {
+            cursor: 1000,
+            start: 0,
+            end: 1000,
+            sampleCount: Number.MAX_SAFE_INTEGER + 1,
+            size: 0,
+            timingComplete: true,
+            sizesComplete: true
+          }
+        };
+        const calculateTrackTiming = Reflect.get(parser, 'calculateTrackTiming') as (value: typeof track) => void;
+        calculateTrackTiming.call(parser, track);
+        assert.isUndefined(Reflect.get(track, 'frameRate'));
       });
 
       for (const useTrex of [false, true]) {
