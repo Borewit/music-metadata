@@ -60,12 +60,22 @@ interface ITrackDescription {
   sampleToChunkTable: AtomToken.ISampleToChunk[];
   timeToSampleTable: AtomToken.ITimeToSampleToken[];
   handler?: AtomToken.IHandlerBox;
-  fragments: { trackRun: AtomToken.ITrackRunBox; header: AtomToken.ITrackFragmentHeaderBox; decodeTime?: number }[];
+  fragmentStatistics?: IFragmentStatistics;
   endTime?: number;
   frameRate?: number;
 
   duration?: number;
   sizeInBytes?: number;
+}
+
+interface IFragmentStatistics {
+  cursor: number;
+  start?: number;
+  end: number;
+  sampleCount: number;
+  size: number;
+  timingComplete: boolean;
+  sizesComplete: boolean;
 }
 
 type IAtomParser = (payloadLength: number) => Promise<void>;
@@ -209,11 +219,13 @@ export class MP4Parser extends BasicParser {
   private hasVideoTrack = false;
   private hasAudioTrack = false;
   private remainingAtoms = 0;
+  private maxMetadataEntries = 0;
 
   public async parse(): Promise<void> {
     this.hasVideoTrack = false;
     this.hasAudioTrack = false;
-    this.remainingAtoms = getMaxMetadataEntries(this.options);
+    this.maxMetadataEntries = getMaxMetadataEntries(this.options);
+    this.remainingAtoms = this.maxMetadataEntries;
     this.tracks.clear();
     this.mediaDataRanges = [];
     this.streamedChapters.clear();
@@ -422,6 +434,12 @@ export class MP4Parser extends BasicParser {
     --this.remainingAtoms;
   }
 
+  private assertRetainedEntryCapacity(count: number, collection: string): void {
+    if (count >= this.maxMetadataEntries) {
+      throw new Mp4ContentError(`${collection} count exceeds entry limit ${this.maxMetadataEntries}`);
+    }
+  }
+
   private async addTag(id: string, value: AnyTagValue): Promise<void> {
     await this.metadata.addTag(tagFormat, id, value);
   }
@@ -576,65 +594,25 @@ export class MP4Parser extends BasicParser {
     track.endTime = track.duration;
     let sampleCount = track.timeToSampleTable.reduce((sum, entry) => sum + entry.count, 0);
     let timeUnits = track.timeToSampleTable.reduce((sum, entry) => sum + entry.count * entry.duration, 0);
-    if (track.fragments.length > 0) {
-      const defaults = this.trackDefaults.get(track.header.trackId);
-      // Runs without tfdt continue after the samples in the initial media segment.
-      let cursor = timeUnits;
-      let start: number | undefined;
-      let end = 0;
-      let size = track.sizeInBytes ?? 0;
-      let timingComplete = true;
-      let sizesComplete = track.sampleCount === 0 || track.sizeInBytes !== undefined;
-      for (const fragment of track.fragments) {
-        cursor = fragment.decodeTime ?? cursor;
-        start = start === undefined ? cursor : Math.min(start, cursor);
-        const run = fragment.trackRun;
-        if (
-          !run.flags.sampleDurationPresent &&
-          !run.flags.sampleSizePresent &&
-          !run.flags.sampleFlagsPresent &&
-          !run.flags.sampleCompositionTimeOffsetsPresent
-        ) {
-          const duration = fragment.header.defaultSampleDuration ?? defaults?.duration;
-          const sampleSize = fragment.header.defaultSampleSize ?? defaults?.size;
-          if (duration === undefined || duration <= 0) {
-            timingComplete = false;
-          } else {
-            cursor += duration * run.sampleCount;
-          }
-          if (sampleSize === undefined) {
-            sizesComplete = false;
-          } else {
-            size += sampleSize * run.sampleCount;
-          }
-          sampleCount += run.sampleCount;
-        }
-        for (const sample of fragment.trackRun.samples) {
-          const duration = sample.sampleDuration ?? fragment.header.defaultSampleDuration ?? defaults?.duration;
-          const sampleSize = sample.sampleSize ?? fragment.header.defaultSampleSize ?? defaults?.size;
-          if (duration === undefined || duration <= 0) {
-            timingComplete = false;
-          } else {
-            cursor += duration;
-          }
-          if (sampleSize === undefined) {
-            sizesComplete = false;
-          } else {
-            size += sampleSize;
-          }
-          ++sampleCount;
-        }
-        end = Math.max(end, cursor);
-      }
+    const fragments = track.fragmentStatistics;
+    if (fragments) {
+      const size = (track.sizeInBytes ?? 0) + fragments.size;
+      const sizesComplete = (track.sampleCount === 0 || track.sizeInBytes !== undefined) && fragments.sizesComplete;
+      sampleCount += fragments.sampleCount;
       if (sizesComplete && Number.isSafeInteger(size)) {
         track.sizeInBytes = size;
       } else {
         track.sizeInBytes = undefined;
       }
-      if (timingComplete && timeScale && start !== undefined && Number.isSafeInteger(end)) {
-        timeUnits += end - start;
+      if (
+        fragments.timingComplete &&
+        timeScale &&
+        fragments.start !== undefined &&
+        Number.isSafeInteger(fragments.end)
+      ) {
+        timeUnits += fragments.end - fragments.start;
         track.duration = Math.max(track.duration ?? 0, timeUnits / timeScale);
-        track.endTime = Math.max(end / timeScale, track.duration);
+        track.endTime = Math.max(fragments.end / timeScale, track.duration);
       } else {
         timeUnits = 0;
       }
@@ -642,7 +620,7 @@ export class MP4Parser extends BasicParser {
       track.duration = timeUnits / timeScale;
       track.endTime = track.duration;
     }
-    if (timeScale && timeUnits > 0 && sampleCount > 0) {
+    if (timeScale && timeUnits > 0 && sampleCount > 0 && Number.isSafeInteger(sampleCount)) {
       track.frameRate = (sampleCount * timeScale) / timeUnits;
     }
     if (
@@ -656,6 +634,64 @@ export class MP4Parser extends BasicParser {
       track.duration = track.header.duration / this.movieHeader.timeScale;
       track.endTime = track.duration;
     }
+  }
+
+  private aggregateFragment(
+    track: ITrackDescription,
+    header: AtomToken.ITrackFragmentHeaderBox,
+    run: AtomToken.ITrackRunBox,
+    decodeTime?: number
+  ): void {
+    if (run.sampleCount === 0) {
+      return;
+    }
+    const defaults = this.trackDefaults.get(track.header.trackId);
+    const fragments = (track.fragmentStatistics ??= {
+      cursor: track.timeToSampleTable.reduce((sum, entry) => sum + entry.count * entry.duration, 0),
+      end: 0,
+      sampleCount: 0,
+      size: 0,
+      timingComplete: true,
+      sizesComplete: true
+    });
+    fragments.cursor = decodeTime ?? fragments.cursor;
+    fragments.start = fragments.start === undefined ? fragments.cursor : Math.min(fragments.start, fragments.cursor);
+    if (
+      !run.flags.sampleDurationPresent &&
+      !run.flags.sampleSizePresent &&
+      !run.flags.sampleFlagsPresent &&
+      !run.flags.sampleCompositionTimeOffsetsPresent
+    ) {
+      const duration = header.defaultSampleDuration ?? defaults?.duration;
+      const sampleSize = header.defaultSampleSize ?? defaults?.size;
+      if (duration === undefined || duration <= 0) {
+        fragments.timingComplete = false;
+      } else {
+        fragments.cursor += duration * run.sampleCount;
+      }
+      if (sampleSize === undefined) {
+        fragments.sizesComplete = false;
+      } else {
+        fragments.size += sampleSize * run.sampleCount;
+      }
+      fragments.sampleCount += run.sampleCount;
+    }
+    for (const sample of run.samples) {
+      const duration = sample.sampleDuration ?? header.defaultSampleDuration ?? defaults?.duration;
+      const sampleSize = sample.sampleSize ?? header.defaultSampleSize ?? defaults?.size;
+      if (duration === undefined || duration <= 0) {
+        fragments.timingComplete = false;
+      } else {
+        fragments.cursor += duration;
+      }
+      if (sampleSize === undefined) {
+        fragments.sizesComplete = false;
+      } else {
+        fragments.size += sampleSize;
+      }
+      ++fragments.sampleCount;
+    }
+    fragments.end = Math.max(fragments.end, fragments.cursor);
   }
 
   private getTrackInfo(track: ITrackDescription): ITrackInfo {
@@ -753,7 +789,6 @@ export class MP4Parser extends BasicParser {
     // The handler and header can occur in any order; resolve them after parsing the track.
     const track: Omit<ITrackDescription, 'header'> & { header?: AtomToken.ITrackHeaderAtom } = {
       media: {},
-      fragments: [],
       soundSampleDescription: [],
       chunkOffsetTable: [],
       sampleSize: 0,
@@ -876,6 +911,9 @@ export class MP4Parser extends BasicParser {
     );
     // Register track
     if (track.header) {
+      if (!this.tracks.has(track.header.trackId)) {
+        this.assertRetainedEntryCapacity(this.tracks.size, 'MP4 track');
+      }
       this.tracks.set(track.header.trackId, { ...track, header: track.header });
     }
   }
@@ -884,6 +922,7 @@ export class MP4Parser extends BasicParser {
     let tfhd: AtomToken.ITrackFragmentHeaderBox | undefined;
     let decodeTime: number | undefined;
     const runs: AtomToken.ITrackRunBox[] = [];
+    let remainingSamples = this.maxMetadataEntries;
     await trafBox.readAtoms(
       this.tokenizer,
       async child => {
@@ -910,7 +949,8 @@ export class MP4Parser extends BasicParser {
             break;
           }
           case 'trun': {
-            const run = await this.readToken(new AtomToken.TrackRunBox(length, getMaxMetadataEntries(this.options)));
+            const run = await this.readToken(new AtomToken.TrackRunBox(length, remainingSamples));
+            remainingSamples -= run.samples.length;
             runs.push(run);
             break;
           }
@@ -923,7 +963,9 @@ export class MP4Parser extends BasicParser {
     if (tfhd) {
       const track = this.tracks.get(tfhd.trackId);
       for (const run of runs) {
-        track?.fragments.push({ header: tfhd, trackRun: run, decodeTime });
+        if (track) {
+          this.aggregateFragment(track, tfhd, run, decodeTime);
+        }
         decodeTime = undefined;
       }
     }
@@ -954,7 +996,11 @@ export class MP4Parser extends BasicParser {
       if (len < 24) {
         throw new Mp4ContentError('Truncated trex box');
       }
-      this.trackDefaults.set(Token.UINT32_BE.get(data, 4), {
+      const trackId = Token.UINT32_BE.get(data, 4);
+      if (!this.trackDefaults.has(trackId)) {
+        this.assertRetainedEntryCapacity(this.trackDefaults.size, 'MP4 track-default');
+      }
+      this.trackDefaults.set(trackId, {
         duration: Token.UINT32_BE.get(data, 12),
         size: Token.UINT32_BE.get(data, 16)
       });
@@ -968,6 +1014,7 @@ export class MP4Parser extends BasicParser {
       const range = { offset: this.tokenizer.position, end: this.tokenizer.position + len };
       if (this.options.includeChapters) {
         if (supportsSeeking(this.tokenizer)) {
+          this.assertRetainedEntryCapacity(this.mediaDataRanges.length, 'MP4 media-data range');
           this.mediaDataRanges.push(range);
         } else {
           await this.parseChapters([range], true);
