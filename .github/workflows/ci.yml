@@ -150,7 +150,7 @@ jobs:
           use_oidc: true
 
   test-bun:
-    name: Test with Bun
+    name: Test with Bun ${{ matrix.bun-version }}
     runs-on: ubuntu-latest
 
     needs: build
@@ -158,24 +158,38 @@ jobs:
     env:
       YARN_IGNORE_NODE: 1
 
+    strategy:
+      fail-fast: false
+      matrix:
+        bun-version: ['1.2.x', '1.3.x', '1.4.x']
+
     steps:
 
       - name: 'Checkout the repository'
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - name: Install bun
+      - name: Setup Node.js 24 for dependencies
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Setup Bun ${{ matrix.bun-version }}
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ matrix.bun-version }}
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --immutable
 
       - name: Download build
         uses: actions/download-artifact@v8
         with:
           name: build
 
-      - name: Test with Bun
+      - name: Test with Bun ${{ matrix.bun-version }}
         run: bun run --bun test:compiled
