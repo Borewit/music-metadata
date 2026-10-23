@@ -1,9 +1,12 @@
 import initDebug from 'debug';
 import type { ITokenizer } from 'strtok3';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import { makeUnexpectedFileContentError } from '../../ParseError.js';
 import { type IOptions, TrackType } from '../../type.js';
 import type * as Ogg from '../OggToken.js';
 import { IdentificationHeader, type IIdentificationHeader } from './Theora.js';
+
+class TheoraContentError extends makeUnexpectedFileContentError('Theora') {}
 
 const debug = initDebug('music-metadata:parser:ogg:theora');
 
@@ -67,6 +70,9 @@ export class TheoraStream implements Ogg.IPageConsumer {
   protected async parseFirstPage(_header: Ogg.IPageHeader, pageData: Uint8Array): Promise<void> {
     debug('First Ogg/Theora page');
     this.metadata.setFormat('codec', 'Theora');
+    if (pageData.length < IdentificationHeader.len) {
+      throw new TheoraContentError('Truncated Theora identification header');
+    }
     const idHeader = IdentificationHeader.get(pageData, 0);
     this.identification = idHeader;
     this.metadata.setFormat('bitrate', idHeader.nombr);
