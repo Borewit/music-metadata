@@ -79,6 +79,9 @@ export class VorbisStream implements IPageConsumer {
   }
 
   public async flush(): Promise<void> {
+    if (this.pageSegments.length === 0) {
+      return;
+    }
     await this.parseFullPage(this.mergeUint8Arrays(this.pageSegments));
   }
 
@@ -133,11 +136,17 @@ export class VorbisStream implements IPageConsumer {
     this.metadata.setFormat('hasAudio', true);
     debug('Parse first page');
     // Parse  Vorbis common header
+    if (pageData.length < CommonHeader.len) {
+      throw new VorbisContentError('Truncated Vorbis packet header');
+    }
     const commonHeader = CommonHeader.get(pageData, 0);
     if (commonHeader.vorbis !== 'vorbis') {
       throw new VorbisContentError('Metadata does not look like Vorbis');
     }
     if (commonHeader.packetType === 1) {
+      if (pageData.length < CommonHeader.len + IdentificationHeader.len) {
+        throw new VorbisContentError('Truncated Vorbis identification header');
+      }
       const idHeader = IdentificationHeader.get(pageData, CommonHeader.len);
 
       this.metadata.setFormat('sampleRate', idHeader.sampleRate);
@@ -155,7 +164,13 @@ export class VorbisStream implements IPageConsumer {
   }
 
   protected async parseFullPage(pageData: Uint8Array): Promise<void> {
-    // New page
+    // Audio packets need not contain a metadata header and may be very short.
+    if (pageData.length > 0 && (pageData[0] & 1) === 0) {
+      return;
+    }
+    if (pageData.length < CommonHeader.len) {
+      throw new VorbisContentError('Truncated Vorbis packet header');
+    }
     const commonHeader = CommonHeader.get(pageData, 0);
     debug('Parse full page: type=%s, byteLength=%s', commonHeader.packetType, pageData.byteLength);
     switch (commonHeader.packetType) {

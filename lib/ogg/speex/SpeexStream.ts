@@ -1,10 +1,13 @@
 import initDebug from 'debug';
 import type { ITokenizer } from 'strtok3';
 import type { INativeMetadataCollector } from '../../common/MetadataCollector.js';
+import { makeUnexpectedFileContentError } from '../../ParseError.js';
 import type { IOptions } from '../../type.js';
 import type { IPageHeader } from '../OggToken.js';
 import { VorbisStream } from '../vorbis/VorbisStream.js';
 import * as Speex from './Speex.js';
+
+class SpeexContentError extends makeUnexpectedFileContentError('Speex') {}
 
 const debug = initDebug('music-metadata:parser:ogg:speex');
 
@@ -28,6 +31,9 @@ export class SpeexStream extends VorbisStream {
    */
   protected parseFirstPage(_header: IPageHeader, pageData: Uint8Array) {
     debug('First Ogg/Speex page');
+    if (pageData.length < Speex.Header.len) {
+      throw new SpeexContentError('Truncated Speex identification header');
+    }
     const speexHeader = Speex.Header.get(pageData, 0);
     this.metadata.setFormat('codec', `Speex ${speexHeader.version}`);
     this.metadata.setFormat('lossless', false);
