@@ -2001,6 +2001,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"make-asynchronous@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "make-asynchronous@npm:2.1.0"
+  dependencies:
+    type-fest: "npm:^5.7.0"
+  checksum: 10c0/157325671ba6509f1e95cf33fca8a570ec50ae987befc03c84f05292305e4e438dbf2ad8fe02de5351eac5d660408a2b803c4a6dcdbf46ff31fdc7659e20213d
+  languageName: node
+  linkType: hard
+
 "make-dir@npm:^4.0.0":
   version: 4.0.0
   resolution: "make-dir@npm:4.0.0"
@@ -2580,6 +2589,7 @@ __metadata:
     debug: "npm:^4.4.3"
     del-cli: "npm:^8.0.1"
     file-type: "npm:^22.2.0"
+    make-asynchronous: "npm:^2.1.0"
     media-typer: "npm:^2.0.0"
     mime: "npm:^4.1.1"
     mocha: "npm:^12.0.3"
@@ -3517,6 +3527,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tagged-tag@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "tagged-tag@npm:1.0.0"
+  checksum: 10c0/91d25c9ffb86a91f20522cefb2cbec9b64caa1febe27ad0df52f08993ff60888022d771e868e6416cf2e72dab68449d2139e8709ba009b74c6c7ecd4000048d1
+  languageName: node
+  linkType: hard
+
 "tar@npm:^7.4.3":
   version: 7.5.22
   resolution: "tar@npm:7.5.22"
@@ -3613,6 +3630,15 @@ __metadata:
   version: 3.13.1
   resolution: "type-fest@npm:3.13.1"
   checksum: 10c0/547d22186f73a8c04590b70dcf63baff390078c75ea8acd366bbd510fd0646e348bd1970e47ecf795b7cff0b41d26e9c475c1fedd6ef5c45c82075fbf916b629
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^5.7.0":
+  version: 5.10.0
+  resolution: "type-fest@npm:5.10.0"
+  dependencies:
+    tagged-tag: "npm:^1.0.0"
+  checksum: 10c0/313c5d0e37a3f1cc82e942f3228f897623c8b54a63a8a95532d0c2c21ab200793caa70bd8904a83fd713eb28d87ba32468b09b345ef6efa25cecb345b467226f
   languageName: node
   linkType: hard
 

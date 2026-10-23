@@ -7,6 +7,7 @@ import { assert } from 'chai';
 import { NotRegularFileError } from 'strtok3';
 
 import { parseFile } from '../lib/index.js';
+import { runIsolatedRegression } from './isolated-regression.js';
 import { samplePath } from './util.js';
 
 describe('parseFile filesystem objects', () => {
@@ -44,7 +45,7 @@ describe('parseFile filesystem objects', () => {
   });
 
   for (const replaceBeforeOpen of [false, true]) {
-    it(`rejects a FIFO ${replaceBeforeOpen ? 'substituted before opening' : 'without a writer'} and closes its handle`, function () {
+    it(`rejects a FIFO ${replaceBeforeOpen ? 'substituted before opening' : 'without a writer'} and closes its handle`, async function () {
       if (process.platform === 'win32') {
         this.skip();
       }
@@ -52,38 +53,43 @@ describe('parseFile filesystem objects', () => {
       const result = spawnSync('mkfifo', [fifoPath], { encoding: 'utf8' });
       assert.equal(result.status, 0, result.stderr);
 
-      // A child process timeout bounds the test even if file opening blocks.
-      const script = `
-        import assert from 'node:assert/strict';
-        import fs from 'node:fs/promises';
-        const fifoPath = ${JSON.stringify(fifoPath)};
-        const filePath = ${JSON.stringify(path.join(directory, 'audio.flac'))};
-        const replaceBeforeOpen = ${replaceBeforeOpen};
-        if (replaceBeforeOpen) {
-          await fs.copyFile(${JSON.stringify(path.join(samplePath, 'flac.flac'))}, filePath);
-        }
-        const originalOpen = fs.open.bind(fs);
-        let handle;
-        fs.open = async (...args) => {
+      await runIsolatedRegression(
+        async (
+          parserUrl: string,
+          fifoPath: string,
+          filePath: string,
+          samplePath: string,
+          replaceBeforeOpen: boolean
+        ) => {
+          const assert: typeof import('node:assert/strict') = (await import('node:assert/strict')).default;
+          const { default: fs } = await import('node:fs/promises');
+          const { NotRegularFileError } = await import('strtok3');
           if (replaceBeforeOpen) {
-            await fs.unlink(filePath);
-            await fs.symlink(fifoPath, filePath);
+            await fs.copyFile(samplePath, filePath);
           }
-          handle = await originalOpen(...args);
-          return handle;
-        };
-        const {parseFile} = await import(${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)});
-        const {NotRegularFileError} = await import('strtok3');
-        await assert.rejects(parseFile(replaceBeforeOpen ? filePath : fifoPath), NotRegularFileError);
-        assert.equal(handle.fd, -1);
-      `;
-      const child = spawnSync(process.execPath, ['--input-type=module', '-e', script], {
-        encoding: 'utf8',
-        timeout: 5000
-      });
-      assert.isUndefined(child.error, child.error?.message);
-      assert.isNull(child.signal);
-      assert.equal(child.status, 0, child.stderr);
+          const originalOpen = fs.open.bind(fs);
+          let handle: Awaited<ReturnType<typeof fs.open>>;
+          fs.open = async (...args) => {
+            if (replaceBeforeOpen) {
+              await fs.unlink(filePath);
+              await fs.symlink(fifoPath, filePath);
+            }
+            handle = await originalOpen(...args);
+            return handle;
+          };
+          const { parseFile } = (await import(parserUrl)) as typeof import('../lib/index.js');
+          await assert.rejects(parseFile(replaceBeforeOpen ? filePath : fifoPath), NotRegularFileError);
+          assert.equal(handle.fd, -1);
+        },
+        [
+          new URL('../lib/index.js', import.meta.url).href,
+          fifoPath,
+          path.join(directory, 'audio.flac'),
+          path.join(samplePath, 'flac.flac'),
+          replaceBeforeOpen
+        ],
+        { timeout: 5000, baseUrl: import.meta.url }
+      );
     });
   }
 });

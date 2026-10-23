@@ -1,10 +1,8 @@
 import { rejects } from 'node:assert/strict';
-import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { promisify } from 'node:util';
 import { assert } from 'chai';
 import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
@@ -24,6 +22,7 @@ import {
   TrackRunBox
 } from '../lib/mp4/AtomToken.js';
 import { MP4Parser } from '../lib/mp4/MP4Parser.js';
+import { runIsolatedRegression } from './isolated-regression.js';
 import { Parsers } from './metadata-parsers.js';
 import {
   closeReadStream,
@@ -1034,21 +1033,24 @@ describe('Parse MPEG-4', () => {
       });
 
       it('rejects GHSA-f94x-6692-553q without blocking the process', async () => {
-        // Use a separate process: a synchronous loop cannot be stopped by Mocha's timeout.
-        const script = `
-          import { strict as assert } from 'node:assert';
-          import { parseBuffer, UnexpectedFileContentError } from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
-          const buffer = Buffer.from('00000010667479704d34412000000000000000207374736400000000ffffffff000000006d7034610000000000000001', 'hex');
-          await assert.rejects(parseBuffer(buffer, {mimeType: 'audio/mp4'}), error =>
-            error instanceof UnexpectedFileContentError && /Invalid stsd sample entry size: 0/.test(error.message));
-        `;
-        await promisify(execFile)(
-          process.execPath,
-          [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script],
-          {
-            timeout: 10000,
-            killSignal: 'SIGKILL'
-          }
+        await runIsolatedRegression(
+          async (parserUrl: string) => {
+            const assert: typeof import('node:assert/strict') = (await import('node:assert/strict')).default;
+            const { parseBuffer, UnexpectedFileContentError } = (await import(
+              parserUrl
+            )) as typeof import('../lib/index.js');
+            const buffer = Buffer.from(
+              '00000010667479704d34412000000000000000207374736400000000ffffffff000000006d7034610000000000000001',
+              'hex'
+            );
+            await assert.rejects(
+              parseBuffer(buffer, { mimeType: 'audio/mp4' }),
+              error =>
+                error instanceof UnexpectedFileContentError && /Invalid stsd sample entry size: 0/.test(error.message)
+            );
+          },
+          [new URL('../lib/index.js', import.meta.url).href],
+          { timeout: 10000, baseUrl: import.meta.url }
         );
       });
 
@@ -1859,61 +1861,58 @@ describe('Parse MPEG-4', () => {
       });
 
       it('rejects GHSA-6fmh-662p-w6f5 without exhausting the heap', async () => {
-        // Run the advisory input in a child process because heap exhaustion aborts Node.js.
-        const script = `
-          import { strict as assert } from 'node:assert';
-          import { parseBuffer, UnexpectedFileContentError } from ${JSON.stringify(new URL('../lib/index.js', import.meta.url).href)};
+        await runIsolatedRegression(
+          async (parserUrl: string) => {
+            const assert: typeof import('node:assert/strict') = (await import('node:assert/strict')).default;
+            const { parseBuffer, UnexpectedFileContentError } = (await import(
+              parserUrl
+            )) as typeof import('../lib/index.js');
 
-          class ExcessiveSampleAllocationError extends Error {}
-          const originalPush = Array.prototype.push;
-          let sampleAllocations = 0;
-          Array.prototype.push = function (...items) {
-            for (const item of items) {
-              if (item && typeof item === 'object' && Object.keys(item).length === 1 && 'sampleDuration' in item) {
-                if (++sampleAllocations === 100_000) {
-                  throw new ExcessiveSampleAllocationError('Attempted 100,000 trun sample-object allocations');
+            class ExcessiveSampleAllocationError extends Error {}
+            const originalPush = Array.prototype.push;
+            let sampleAllocations = 0;
+            Array.prototype.push = function (this: unknown[], ...items: unknown[]) {
+              for (const item of items) {
+                if (item && typeof item === 'object' && Object.keys(item).length === 1 && 'sampleDuration' in item) {
+                  if (++sampleAllocations === 100_000) {
+                    throw new ExcessiveSampleAllocationError('Attempted 100,000 trun sample-object allocations');
+                  }
                 }
               }
+              return originalPush.apply(this, items);
+            };
+
+            const sampleCount = 16_777_214;
+            const trunPayloadLength = 8 + sampleCount * 4;
+            assert.equal(trunPayloadLength, 64 * 1024 * 1024);
+            const buffer = Buffer.alloc(8 + 8 + 8 + trunPayloadLength);
+            const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+            let offset = 0;
+            for (const [type, size] of [
+              ['moof', buffer.length],
+              ['traf', buffer.length - 8],
+              ['trun', buffer.length - 16]
+            ] as const) {
+              view.setUint32(offset, size);
+              buffer.write(type, offset + 4);
+              offset += 8;
             }
-            return originalPush.apply(this, items);
-          };
+            buffer[offset + 2] = 1; // sample_duration_present
+            view.setUint32(offset + 4, sampleCount);
 
-          const sampleCount = 16_777_214;
-          const trunPayloadLength = 8 + sampleCount * 4;
-          assert.equal(trunPayloadLength, 64 * 1024 * 1024);
-          const buffer = Buffer.alloc(8 + 8 + 8 + trunPayloadLength);
-          const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-          let offset = 0;
-          for (const [type, size] of [
-            ['moof', buffer.length],
-            ['traf', buffer.length - 8],
-            ['trun', buffer.length - 16]
-          ]) {
-            view.setUint32(offset, size);
-            buffer.write(type, offset + 4);
-            offset += 8;
-          }
-          buffer[offset + 2] = 1; // sample_duration_present
-          view.setUint32(offset + 4, sampleCount);
-
-          try {
-            await assert.rejects(
-              parseBuffer(buffer, { mimeType: 'video/mp4' }),
-              error =>
-                error instanceof UnexpectedFileContentError &&
-                /trun sample count 16777214 exceeds entry limit 100000/.test(error.message)
-            );
-          } finally {
-            Array.prototype.push = originalPush;
-          }
-        `;
-        await promisify(execFile)(
-          process.execPath,
-          [...process.execArgv, '--max-old-space-size=512', '--input-type=module', '--eval', script],
-          {
-            timeout: 30000,
-            killSignal: 'SIGKILL'
-          }
+            try {
+              await assert.rejects(
+                parseBuffer(buffer, { mimeType: 'video/mp4' }),
+                error =>
+                  error instanceof UnexpectedFileContentError &&
+                  /trun sample count 16777214 exceeds entry limit 100000/.test(error.message)
+              );
+            } finally {
+              Array.prototype.push = originalPush;
+            }
+          },
+          [new URL('../lib/index.js', import.meta.url).href],
+          { timeout: 30000, baseUrl: import.meta.url }
         );
       });
 
