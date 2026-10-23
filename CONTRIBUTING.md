@@ -1,5 +1,7 @@
 # Contributing
 
+For an overview of how the code is organised, see [doc/architecture.md](doc/architecture.md).
+
 ## Code style
 
 Biome is the source of truth for TypeScript formatting, import organization, and linting.
