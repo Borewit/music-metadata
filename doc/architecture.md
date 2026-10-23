@@ -9,13 +9,13 @@ A one-page map of how music-metadata is put together, for contributors. For the 
 | `node` | `lib/index.ts` | `parseFile`, `parseStream` (Node streams and files, via `strtok3` `fromFile`/`fromStream`). Re-exports everything from `core.ts`. |
 | `default` (browsers, other runtimes) | `lib/core.ts` | `parseBuffer`, `parseBlob`, `parseWebStream`, `parseFromTokenizer`, plus helpers `orderTags`, `ratingToStars`, `selectCover`, `getSupportedMimeTypes`. Its `parseFile`/`parseStream` stubs always throw. |
 
-Every entry point builds a `strtok3` tokenizer (options from `getTokenizerOptions` in `lib/common/Allocation.ts`) and hands it to `ParserFactory.parse()`.
+The file, stream, buffer, blob and web-stream entry points build a `strtok3` tokenizer (options from `getTokenizerOptions` in `lib/common/Allocation.ts`) and hand it to `ParserFactory.parse()`. `parseFromTokenizer` is the exception: it passes a caller-supplied tokenizer straight to the factory, so the caller owns that tokenizer's limits (`maxMemoryAllocation` does not set its `maxBufferSize`).
 
 ## Parser selection (`lib/ParserFactory.ts`)
 
 1. For random-access tokenizers, `scanAppendingHeaders` (in `core.ts`) looks for trailing ID3v1, Lyrics3 and APEv2 footers first.
 2. If no loader was passed in, it is chosen by MIME type (`tokenizer.fileInfo.mimeType`), then by file extension, then by sniffing the first 4,100 bytes with `file-type`. Failure raises `CouldNotDetermineFileTypeError` or `UnsupportedFileTypeError` (`lib/ParseError.ts`).
-3. 14 loaders are registered: flac, mpeg, apev2, mp4, matroska, riff/wav, ogg, asf, aiff, wavpack, musepack, dsf, dsdiff and caf. Each `lib/<format>/*Loader.ts` is an `IParserLoader` (`parserType`, `extensions`, `mimeTypes`, `load()`), and `load()` uses a dynamic `import()`, so a format's parser code is only loaded when it is needed.
+3. 14 loaders are registered: flac, mpeg, apev2, mp4, matroska, riff/wav, ogg, asf, aiff, wavpack, musepack, dsf, dsdiff and caf. Each `lib/<format>/*Loader.ts` is an `IParserLoader` (`parserType`, `extensions`, `mimeTypes`, `load()`), and `load()` uses a dynamic `import()`, so a format's parser code is only loaded when it is needed. The exception is code `core.ts` needs for footer scanning (`APEv2Parser`, plus ID3v1 and Lyrics3 helpers), which is imported eagerly.
 4. The parser is constructed with a `MetadataCollector`, the tokenizer and the options. `parse()` runs, track info is finalized (`lib/common/TrackInfo.ts`), and `metadata.toCommonMetadata()` is returned.
 
 ## From native tags to common tags
@@ -35,4 +35,4 @@ Both work under ESM because the imported values are only used at call time.
 
 ## Adding a format
 
-Add `lib/<format>/` with a `*Loader.ts`, a parser and (if it has its own tags) a tag mapper registered in `CombinedTagMapper`. Register the loader in the `ParserFactory` constructor. Add a `test/test-file-<format>.ts` suite with a small fixture in `test/samples`, following CONTRIBUTING.md.
+Add `lib/<format>/` with a `*Loader.ts`, a parser and (if it has its own tags) a tag mapper registered in `CombinedTagMapper`. Register the loader in the `ParserFactory` constructor and add its identifier to `ParserType` in `lib/type.ts`. A new native tag format also needs its identifier in `TagType` (`lib/common/GenericTagTypes.ts`) and in `TagPriority` (`lib/common/MetadataCollector.ts`); without the priority entry, its mapped tags are silently dropped. Add a `test/test-file-<format>.ts` suite with a small fixture in `test/samples`, following CONTRIBUTING.md.
