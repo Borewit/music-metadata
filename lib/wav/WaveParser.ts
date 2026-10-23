@@ -65,7 +65,7 @@ export class WaveParser extends BasicParser {
       remaining -= riff.Header.len;
       if (header.chunkSize > remaining) {
         this.metadata.addWarning('Data chunk size exceeds file size');
-        if (['CSET', 'LIST', 'fact', 'fmt ', 'id3 ', 'ID3 '].includes(header.chunkID)) {
+        if (['CSET', 'LIST', 'fact', 'fmt ', 'id3 ', 'ID3 ', 'bext'].includes(header.chunkID)) {
           throw new WaveContentError(
             `Chunk ${header.chunkID} size ${header.chunkSize} exceeds remaining RIFF data ${remaining}`
           );
@@ -162,11 +162,12 @@ export class WaveParser extends BasicParser {
 
         case 'bext': {
           // Broadcast Audio Extension chunk	https://tech.ebu.ch/docs/tech/tech3285.pdf
-          const bext = await this.readToken(BroadcastAudioExtensionChunk);
+          const token = new BroadcastAudioExtensionChunk(header.chunkSize);
+          const bext = await this.readToken(token);
           for (const key of Object.keys(bext)) {
             await this.metadata.addTag('exif', `bext.${key}`, bext[key as keyof IBroadcastAudioExtensionChunk]);
           }
-          const bextRemaining = header.chunkSize - BroadcastAudioExtensionChunk.len;
+          const bextRemaining = header.chunkSize - token.len;
           await this.tokenizer.ignore(bextRemaining);
           break;
         }
