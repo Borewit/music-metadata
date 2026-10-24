@@ -253,7 +253,11 @@ export class FrameParser {
         const idAndData = FrameParser.readIdentifierAndData(uint8Array.subarray(1), encoding);
         output = {
           description: idAndData.id,
-          text: this.splitValue(type, FrameParser.trimNullPadding(util.decodeString(idAndData.data, encoding)))
+          text: this.splitValue(
+            type,
+            FrameParser.trimNullPadding(util.decodeString(idAndData.data, encoding)),
+            idAndData.id
+          )
         };
         break;
       }
@@ -625,9 +629,10 @@ export class FrameParser {
    * (TCON/TCO genre values are NOT slash-separated in ID3v2.3)
    * @param tag - Tag name
    * @param text - Concatenated tag value
+   * @param description - User text description, for legacy slash-separated list compatibility
    * @returns Split tag value
    */
-  private splitValue(tag: string, text: string): string[] {
+  private splitValue(tag: string, text: string, description = ''): string[] {
     let values: string[];
     if (this.major < 4) {
       values = util.splitText(text, '\0', tag, this.validateTextValues, { keepEmpty: true });
@@ -651,14 +656,22 @@ export class FrameParser {
           'TXT',
           'TOA',
           'TOL',
-          // Picard can flatten multiple values with '/' in these frames.
-          // https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
-          'TXXX',
           'TSRC',
           // Retain legacy support for nonstandard slash-separated credits.
           'IPL',
           'IPLS'
-        ].includes(tag)
+        ].includes(tag) ||
+        // Preserve arbitrary TXXX text (XML, URLs, paths, etc.). Only known list
+        // descriptions retain compatibility with Picard's legacy '/' separator.
+        // https://picard-docs.musicbrainz.org/en/v2.13/config/options_tags_compatibility_id3.html
+        (tag === 'TXXX' &&
+          [
+            'ARTISTS',
+            'MUSICBRAINZ ARTIST ID',
+            'MUSICBRAINZ ALBUM ARTIST ID',
+            'MUSICBRAINZ ALBUM TYPE',
+            'ISRC'
+          ].includes(description.toUpperCase()))
       ) {
         // note that field Genre (TCON/TCO) is NOT in this list:
         // a genre like "Duo Cello/Piano" must stay intact

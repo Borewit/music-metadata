@@ -20,6 +20,7 @@ import type { ID3v2MajorVersion } from '../lib/id3v2/ID3v2Token.js';
 import * as mm from '../lib/index.js';
 import { parseFromTokenizer } from '../lib/index.js';
 import { LyricsContentError, parseLrc } from '../lib/lrc/LyricsParser.js';
+import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
 use(chaiAsPromised);
@@ -143,6 +144,85 @@ describe('ID3v2', () => {
         mm.parseBuffer(Buffer.concat([header, frames]), 'audio/mpeg', { maxMetadataEntries: 1 })
       ).to.be.rejectedWith(Id3v2ContentError, 'Frame count exceeds entry limit');
     });
+  });
+
+  describe('Structured user text', () => {
+    const xml = '<Markers><Marker><Name>Intro</Name><Time>00:00.000</Time></Marker></Markers>';
+    for (const major of [3, 4] as const) {
+      for (const parser of Parsers) {
+        it(`preserves ID3v2.${major} XML and literal slashes with ${parser.description}`, async function () {
+          const { native, common, format, quality } = await parser.parse(
+            () => this.skip(),
+            path.join(samplePath, 'mp3', `id3v2.${major}-structured-txxx.mp3`),
+            'audio/mpeg'
+          );
+          const tags = mm.orderTags(native[`ID3v2.${major}`]);
+          assert.deepEqual(tags['TXXX:OverDrive MediaMarkers'], [xml]);
+          assert.deepEqual(tags['TXXX:Website'], ['https://example.org/books/one']);
+          assert.deepEqual(tags['TXXX:LICENSE'], ['https://creativecommons.org/licenses/by/4.0/']);
+          assert.deepEqual(tags['TXXX:CATALOGNUMBER'], ['ABC/123']);
+          assert.deepEqual(tags['TXXX:Custom JSON'], ['{"path":"books/one","url":"https://example.org/a/b"}']);
+          assert.deepEqual(common.catalognumber, ['ABC/123']);
+          assert.deepEqual(common.artists, major === 3 ? ['First', 'Second'] : ['First/Second']);
+          assert.deepEqual(common.releasetype, major === 3 ? ['album', 'live'] : ['album/live']);
+          assert.deepEqual(
+            common.musicbrainz_artistid,
+            major === 3
+              ? ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222']
+              : ['11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222']
+          );
+          assert.deepEqual(common.isrc, major === 3 ? ['USABC2400001', 'USABC2400002'] : ['USABC2400001/USABC2400002']);
+          assert.equal(format.codec, 'MPEG 1 Layer 3');
+          assert.isAbove(format.duration ?? 0, 1);
+          assert.isEmpty(quality.warnings);
+        });
+      }
+      for (const description of [
+        'Artists',
+        'musicbrainz artist id',
+        'MusicBrainz Album Artist Id',
+        'MusicBrainz Album Type',
+        'ISRC'
+      ]) {
+        it(`retains ID3v2.${major} ${description} separator compatibility and its value limit`, () => {
+          const parser = new FrameParser(major, { addWarning: () => assert.fail('Unexpected warning') }, 2);
+          assert.deepEqual(parser.readData(Buffer.from(`\0${description}\0First / Second`), 'TXXX', false), {
+            description,
+            text: major === 3 ? ['First', 'Second'] : ['First / Second']
+          });
+          const bounded = new FrameParser(major, { addWarning: () => assert.fail('Unexpected warning') }, 1);
+          if (major === 3) {
+            expect(() => bounded.readData(Buffer.from(`\0${description}\0First/Second`), 'TXXX', false)).to.throw(
+              Id3v2ContentError,
+              'TXXX value count 2 exceeds entry limit 1'
+            );
+          } else {
+            assert.deepEqual(bounded.readData(Buffer.from(`\0${description}\0First/Second`), 'TXXX', false), {
+              description,
+              text: ['First/Second']
+            });
+          }
+        });
+      }
+      it(`preserves NUL-separated ID3v2.${major} text without additionally splitting slashes`, () => {
+        const warnings: string[] = [];
+        const parser = new FrameParser(major, { addWarning: warning => warnings.push(warning) }, 3);
+        assert.deepEqual(parser.readData(Buffer.from('\0Artists\0AC/DC\0\0Other/Artist'), 'TXXX', false), {
+          description: 'Artists',
+          text: ['AC/DC', '', 'Other/Artist']
+        });
+        assert.lengthOf(warnings, major === 3 ? 1 : 0);
+        const bounded = new FrameParser(major, { addWarning: () => undefined }, 1);
+        expect(() => bounded.readData(Buffer.from('\0Custom\0First\0Second'), 'TXXX', false)).to.throw(
+          Id3v2ContentError,
+          'TXXX value count 2 exceeds entry limit 1'
+        );
+        assert.deepEqual(bounded.readData(Buffer.from('\0Custom\0https://example.org/a/b'), 'TXXX', false), {
+          description: 'Custom',
+          text: ['https://example.org/a/b']
+        });
+      });
+    }
   });
 
   it('preserves empty values in ID3v2.4 user text lists', () => {
