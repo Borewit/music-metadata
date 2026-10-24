@@ -1,6 +1,7 @@
 import { CommonTagMapper } from '../common/GenericTagMapper.js';
 import type { INativeTagMap } from '../common/GenericTagTypes.js';
 import type { IWarningCollector } from '../common/MetadataCollector.js';
+import { toRatio } from '../common/Util.js';
 import type { IRating, ITag } from '../type.js';
 
 /**
@@ -17,6 +18,7 @@ const asfTagMap: INativeTagMap = {
   'WM/OriginalReleaseYear': 'originalyear',
   Description: 'comment',
   'WM/TrackNumber': 'track',
+  TotalTracks: 'totaltracks',
   'WM/PartOfSet': 'disk',
   'WM/Genre': 'genre',
   'WM/Composer': 'composer',
@@ -37,7 +39,14 @@ const asfTagMap: INativeTagMap = {
   'WM/ContentGroupDescription': 'grouping',
   'WM/SubTitle': 'subtitle',
   'WM/SetSubTitle': 'discsubtitle',
-  // 'WM/PartOfSet': 'totaldiscs',
+  REPLAYGAIN_TRACK_GAIN: 'replaygain_track_gain',
+  REPLAYGAIN_TRACK_PEAK: 'replaygain_track_peak',
+  REPLAYGAIN_ALBUM_GAIN: 'replaygain_album_gain',
+  REPLAYGAIN_ALBUM_PEAK: 'replaygain_album_peak',
+  replaygain_track_gain: 'replaygain_track_gain',
+  replaygain_track_peak: 'replaygain_track_peak',
+  replaygain_album_gain: 'replaygain_album_gain',
+  replaygain_album_peak: 'replaygain_album_peak',
   'WM/IsCompilation': 'compilation',
   'WM/SharedUserRating': 'rating',
   POPULARIMETER: 'rating',
@@ -92,6 +101,22 @@ export class AsfTagMapper extends CommonTagMapper {
   }
 
   protected postMap(tag: ITag, warnings: IWarningCollector): void {
+    if (this.getCommonName(tag.id)?.startsWith('replaygain_')) {
+      const value =
+        typeof tag.value === 'string'
+          ? tag.value.trim().match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*(dB)?$/i)
+          : null;
+      const normalized = value ? `${value[1]}${value[2] ? ' dB' : ''}` : undefined;
+      const ratio = normalized ? toRatio(normalized) : undefined;
+      // A silent peak of zero is valid (its dB value is -Infinity).
+      if (!ratio || !Number.isFinite(ratio.ratio) || Number.isNaN(ratio.dB)) {
+        warnings.addWarning(`Invalid ASF ReplayGain value for ${tag.id}`);
+        tag.id = ''; // Keep invalid values native without mapping them to common metadata.
+      } else {
+        tag.value = normalized;
+      }
+    }
+
     switch (tag.id) {
       case 'POPULARIMETER': {
         // popm-style attribute, written by e.g. foobar2000; value is "email|rating|counter"
