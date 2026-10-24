@@ -22,7 +22,7 @@ The input adapters build a `strtok3` tokenizer using `getTokenizerOptions` in [A
 
 ## From native tags to common tags
 
-Parsers call `MetadataCollector.addTag(tagType, id, value)` (`lib/common/MetadataCollector.ts`). The collector keeps the native tags and maps them through `CombinedTagMapper` (`lib/common/CombinedTagMapper.ts`), which has one mapper per tag format: ID3v1, ID3v2.2, ID3v2.4, MP4, Vorbis, APEv2, ASF, RIFF INFO, Matroska, AIFF and CAF. `MetadataCollector` applies tag precedence from `TagPriority` and normalizes values before returning `common`; unmapped native tags remain available in `native`. [doc-gen/gen.ts](../doc-gen/gen.ts) uses the same mappers to regenerate [common_metadata.md](common_metadata.md).
+Parsers call `MetadataCollector.addTag(tagType, id, value)` (`lib/common/MetadataCollector.ts`). The collector keeps the native tags and maps them through `CombinedTagMapper` (`lib/common/CombinedTagMapper.ts`), which has one mapper per tag format: ID3v1, ID3v2.2, ID3v2.3/ID3v2.4, MP4, Vorbis, APEv2, ASF, RIFF INFO, Matroska, AIFF and CAF. `MetadataCollector` applies tag precedence from `TagPriority` and normalizes values before returning `common`; unmapped native tags remain available in `native`. [doc-gen/gen.ts](../doc-gen/gen.ts) uses the same mappers to regenerate [common_metadata.md](common_metadata.md).
 
 ## Resource limits (`lib/common/Allocation.ts`)
 
