@@ -582,7 +582,7 @@ export interface IChapter {
   id?: string;
 
   /**
-   * Chapter title
+   * Chapter title; may be empty when the source supplies no title.
    */
   title: string;
 
