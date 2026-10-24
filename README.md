@@ -861,38 +861,7 @@ import {uint8ArrayToBase64} from 'uint8array-extras';
 img.src = `data:${picture.format};base64,${uint8ArrayToBase64(picture.data)}`;
 ```
 
-## Dependencies
-
-Dependency diagram:
-```mermaid
-graph TD;
-    MMN("music-metadata (Node.js entry point)")-->MMP
-    MMN-->FTN
-    MMP("music-metadata (primary entry point)")-->S(strtok3)
-    MMP-->TY(token-types)
-    MMP-->FTP
-    MMP-->UAE
-    FTN("file-type (Node.js entry point)")-->FTP
-    FTP("file-type (primary entry point)")-->S
-    S(strtok3)-->TO("@tokenizer/token")
-    TY(token-types)-->TO
-    TY-->IE("ieee754")
-    FTP-->TY
-    NS("node:stream")
-    FTN-->NS
-    FTP-->UAE(uint8array-extras)
-    style NS fill:#F88,stroke:#A44
-    style IE fill:#CCC,stroke:#888
-    style FTN fill:#FAA,stroke:#A44
-    style MMN fill:#FAA,stroke:#A44
-```
-
-Dependency list:
-- [tokenizer-token](https://github.com/Borewit/tokenizer-token)
-- [strtok3](https://github.com/Borewit/strtok3)
-- [token-types](https://github.com/Borewit/token-types)
-- [file-type](https://github.com/sindresorhus/file-type)
-- [@tokenizer-token](https://github.com/Borewit/tokenizer-token)
+For the internal design and dependencies, see the [architecture guide](doc/architecture.md).
 
 ## CommonJS backward compatibility
 
