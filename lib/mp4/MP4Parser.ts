@@ -33,6 +33,7 @@ interface IEncoder {
 }
 
 interface ISoundSampleDescription {
+  encoder?: IEncoder;
   dataFormat: string;
   dataReferenceIndex: number;
   description?: {
@@ -324,7 +325,7 @@ export class MP4Parser extends BasicParser {
 
       // Sample descriptions are alternative encodings of one track, not separate tracks.
       for (const ssd of track.soundSampleDescription) {
-        const encoderInfo = encoderDict[ssd.dataFormat];
+        const encoderInfo = ssd.encoder ?? encoderDict[ssd.dataFormat];
         if (encoderInfo) {
           trackFormats.push(encoderInfo.format);
         }
@@ -364,7 +365,7 @@ export class MP4Parser extends BasicParser {
           audioTrack.duration = totalSampleSize / ssd.description.sampleRate;
         }
       }
-      const encoderInfo = encoderDict[ssd.dataFormat];
+      const encoderInfo = ssd.encoder ?? encoderDict[ssd.dataFormat];
       if (encoderInfo) {
         this.metadata.setFormat('lossless', !encoderInfo.lossy);
       }
@@ -813,7 +814,7 @@ export class MP4Parser extends BasicParser {
     const ssd = track.soundSampleDescription[0];
     if (ssd) {
       info.codecId = ssd.dataFormat;
-      const encoder = encoderDict[ssd.dataFormat];
+      const encoder = ssd.encoder ?? encoderDict[ssd.dataFormat];
       info.codecName = encoder?.format ?? `<${ssd.dataFormat}>`;
       if (info.type === TrackType.audio) {
         if (encoder) {
@@ -1159,6 +1160,15 @@ export class MP4Parser extends BasicParser {
         // Sound Sample Description (Version 0)
         if (description.length >= offset + AtomToken.SoundSampleDescriptionV0.len) {
           ssd.description = AtomToken.SoundSampleDescriptionV0.get(description, offset);
+          if (ssd.dataFormat === 'mp4a') {
+            const childOffset = offset + AtomToken.SoundSampleDescriptionV0.len + (version.version === 1 ? 16 : 0);
+            if (childOffset > description.length) {
+              throw new Mp4ContentError('Truncated mp4a sound sample description');
+            }
+            if (this.readAudioObjectType(description, childOffset) === 36) {
+              ssd.encoder = { format: 'MPEG-4/ALS', lossy: false };
+            }
+          }
         } else {
           debug(`Warning: sound-sample-description too short: ${description.length} bytes`);
         }
@@ -1167,6 +1177,111 @@ export class MP4Parser extends BasicParser {
       }
     }
     return ssd;
+  }
+
+  /** Read codec configuration only inside the bounded AudioSampleEntry child boxes. */
+  private readAudioObjectType(data: Uint8Array, offset: number): number | undefined {
+    while (offset < data.length) {
+      this.reserveAtom();
+      if (data.length - offset < 8) {
+        throw new Mp4ContentError('Truncated mp4a child box header');
+      }
+      let size = Token.UINT32_BE.get(data, offset);
+      const name = AtomToken.Header.get(data, offset).name;
+      let headerSize = 8;
+      if (size === 1) {
+        if (data.length - offset < 16) {
+          throw new Mp4ContentError('Truncated mp4a extended child box header');
+        }
+        const extendedSize = Token.UINT64_BE.get(data, offset + 8);
+        if (extendedSize > BigInt(data.length - offset)) {
+          throw new Mp4ContentError('mp4a child box exceeds sample entry');
+        }
+        size = Number(extendedSize);
+        headerSize = 16;
+      } else if (size === 0) {
+        size = data.length - offset;
+      }
+      if (size < headerSize || size > data.length - offset) {
+        throw new Mp4ContentError('Invalid mp4a child box size');
+      }
+      if (name === 'esds') {
+        return this.readEsdsAudioObjectType(data.subarray(offset + headerSize, offset + size));
+      }
+      offset += size;
+    }
+  }
+
+  /** ISO/IEC 14496-1 descriptor sizes have at most four base-128 bytes. */
+  private *readDescriptors(data: Uint8Array, offset: number) {
+    while (offset < data.length) {
+      this.reserveAtom();
+      const tag = data[offset++];
+      let size = 0;
+      for (let i = 0; ; i++) {
+        if (offset >= data.length || i === 4) {
+          throw new Mp4ContentError('Truncated or invalid MPEG-4 descriptor length');
+        }
+        const byte = data[offset++];
+        size = (size << 7) | (byte & 0x7f);
+        if (!(byte & 0x80)) {
+          break;
+        }
+      }
+      if (size > data.length - offset) {
+        throw new Mp4ContentError('MPEG-4 descriptor exceeds its parent');
+      }
+      yield { tag, body: data.subarray(offset, offset + size) };
+      offset += size;
+    }
+  }
+
+  private readEsdsAudioObjectType(data: Uint8Array): number | undefined {
+    if (data.length < 4) {
+      throw new Mp4ContentError('Truncated esds full-box header');
+    }
+    for (const es of this.readDescriptors(data, 4)) {
+      if (es.tag !== 3) {
+        continue;
+      }
+      if (es.body.length < 3) {
+        throw new Mp4ContentError('Truncated ES descriptor');
+      }
+      const flags = es.body[2];
+      let offset = 3 + (flags & 0x80 ? 2 : 0);
+      if (flags & 0x40) {
+        if (offset >= es.body.length) {
+          throw new Mp4ContentError('Truncated ES URL length');
+        }
+        offset += 1 + es.body[offset];
+      }
+      offset += flags & 0x20 ? 2 : 0;
+      if (offset > es.body.length) {
+        throw new Mp4ContentError('Truncated optional ES descriptor fields');
+      }
+      for (const decoder of this.readDescriptors(es.body, offset)) {
+        if (decoder.tag !== 4) {
+          continue;
+        }
+        if (decoder.body.length < 13) {
+          throw new Mp4ContentError('Truncated decoder configuration');
+        }
+        // AudioSpecificConfig is defined for MPEG-4 Audio (0x40), stream type Audio (5).
+        if (decoder.body[0] !== 0x40 || decoder.body[1] >>> 2 !== 5) {
+          continue;
+        }
+        for (const specific of this.readDescriptors(decoder.body, 13)) {
+          if (specific.tag !== 5) {
+            continue;
+          }
+          if (specific.body.length === 0 || (specific.body[0] >>> 3 === 31 && specific.body.length < 2)) {
+            throw new Mp4ContentError('Truncated AudioSpecificConfig object type');
+          }
+          const type = specific.body[0] >>> 3;
+          return type === 31 ? 32 + ((specific.body[0] & 7) << 3) + (specific.body[1] >>> 5) : type;
+        }
+      }
+    }
   }
 
   private async parseChapters(mediaDataRanges: IMediaDataRange[], forwardOnly = false): Promise<void> {
