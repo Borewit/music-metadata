@@ -443,6 +443,44 @@ describe('ID3v2', () => {
   });
 
   describe('Lyrics', () => {
+    describe('ID3v2.2 ULT lyrics mapping', () => {
+      it('exposes the fixture lyrics while preserving its native fields', async () => {
+        const { common, native } = await mm.parseFile(path.join(samplePath, 'id3v2.2.mp3'));
+        const lyrics = native['ID3v2.2'].filter(tag => tag.id === 'ULT').map(tag => tag.value);
+        assert.lengthOf(lyrics, 1);
+        assert.deepEqual(common.lyrics, lyrics);
+      });
+
+      for (const [name, text] of [
+        ['empty', ''],
+        ['populated', 'First line\nSecond line']
+      ]) {
+        it(`uses the USLT common normalization for ${text ? 'populated' : 'empty'} lyrics`, async () => {
+          const value = { language: 'eng', descriptor: 'Translation', text };
+          const legacy = await mm.parseFile(path.join(samplePath, 'mp3', `id3v2.2-lyrics-${name}.mp3`));
+          const current = await mm.parseFile(path.join(samplePath, 'mp3', `id3v2.4-lyrics-${name}.mp3`));
+          assert.deepEqual(legacy.common.lyrics, current.common.lyrics);
+          assert.deepEqual(legacy.native['ID3v2.2'], [{ id: 'ULT', value }]);
+        });
+      }
+
+      it('preserves multiple lyrics including language, descriptor and empty text', async () => {
+        const entries = [
+          { language: 'eng', descriptor: 'Original', text: 'A line\nAnother line' },
+          { language: 'fra', descriptor: 'Translation', text: '' }
+        ];
+        const { common, native } = await mm.parseFile(path.join(samplePath, 'mp3', 'id3v2.2-lyrics-multiple.mp3'));
+        assert.deepEqual(
+          common.lyrics.map(({ language, descriptor, text }) => ({ language, descriptor, text })),
+          entries
+        );
+        assert.deepEqual(
+          native['ID3v2.2'],
+          entries.map(value => ({ id: 'ULT', value }))
+        );
+      });
+    });
+
     it('should be able to read id3v2 files with lyrics', () => {
       const filename = 'id3v2-lyrics.mp3';
       const filePath = path.join(samplePath, filename);

@@ -11,6 +11,7 @@ export const id3v22TagMap: INativeTagMap = {
   TAL: 'album',
   TYE: 'year',
   COM: 'comment',
+  ULT: 'lyrics',
   TRK: 'track',
   TPA: 'disk',
   TCO: 'genre',
