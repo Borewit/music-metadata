@@ -892,6 +892,13 @@ describe('Parse ASF', () => {
       assert.strictEqual(common.year, 2001, 'common.year');
       assert.deepEqual(common.track, { no: 9, of: null }, 'common.track 9/0');
       assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk 0/0');
+      assert.equal(common.replaygain_track_gain.dB, -4.7);
+      assert.approximately(common.replaygain_track_gain.ratio, 10 ** (-4.7 / 10), 1e-12);
+      assert.equal(common.replaygain_album_gain.dB, -6);
+      assert.approximately(common.replaygain_album_gain.ratio, 10 ** (-6 / 10), 1e-12);
+      assert.equal(common.replaygain_track_peak.ratio, 0.9613);
+      assert.approximately(common.replaygain_track_peak.dB, 10 * Math.log10(0.9613), 1e-12);
+      assert.deepEqual(common.replaygain_album_peak, { ratio: 1, dB: 0 });
       assert.deepEqual(common.genre, ['Rock'], 'common.genre');
     }
 
@@ -924,6 +931,12 @@ describe('Parse ASF', () => {
           const filePath = path.join(asfFilePath, 'issue_57.wma');
           const { native, common } = await parser.parse(() => this.skip(), filePath, 'audio/x-ms-wma');
           const asf = mm.orderTags(native.asf);
+          assert.equal(common.replaygain_track_gain.dB, -12.31);
+          assert.approximately(common.replaygain_track_gain.ratio, 10 ** (-12.31 / 10), 1e-12);
+          assert.deepEqual(common.replaygain_track_peak, { ratio: 1, dB: 0 });
+          assert.deepEqual(common.track, { no: 14, of: null });
+          assert.deepEqual(asf['WM/TrackNumber'], ['14']);
+          assert.deepEqual(asf['WM/Track'], ['13']);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
           for (const picture of [asf['WM/Picture'][0] as IPicture, common.picture![0]]) {
             assert.strictEqual(picture.format, 'image/jpeg');
@@ -983,6 +996,74 @@ describe('Parse ASF', () => {
         assert.strictEqual(mm.ratingToStars(sharedRating.rating), 4, 'ratingToStars');
       });
     });
+  });
+
+  describe('ReplayGain and totals from WMA samples', () => {
+    for (const parser of Parsers) {
+      it(`maps TotalTracks after the track number with ${parser.description}`, async function () {
+        const metadata = await parser.parse(
+          () => this.skip(),
+          path.join(asfFilePath, 'issue-2729.wma'),
+          'audio/x-ms-wma'
+        );
+        assert.deepEqual(metadata.common.track, { no: 1, of: 13 });
+        assert.deepEqual(mm.orderTags(metadata.native.asf).TotalTracks, ['13']);
+      });
+
+      it(`maps lowercase ReplayGain and totals before the track number with ${parser.description}`, async function () {
+        const metadata = await parser.parse(
+          () => this.skip(),
+          path.join(asfFilePath, 'replaygain-lowercase-totals.wma'),
+          'audio/x-ms-wma'
+        );
+        assert.equal(metadata.format.codec, 'Windows Media Audio V8');
+        assert.equal(metadata.common.replaygain_track_gain.dB, -3);
+        assert.approximately(metadata.common.replaygain_track_gain.ratio, 10 ** (-3 / 10), 1e-12);
+        assert.equal(metadata.common.replaygain_album_gain.dB, -2);
+        assert.approximately(metadata.common.replaygain_album_gain.ratio, 10 ** (-2 / 10), 1e-12);
+        assert.deepEqual(metadata.common.replaygain_track_peak, { ratio: 0, dB: Number.NEGATIVE_INFINITY });
+        assert.equal(metadata.common.replaygain_album_peak.ratio, 1.25);
+        assert.approximately(metadata.common.replaygain_album_peak.dB, 10 * Math.log10(1.25), 1e-12);
+        assert.deepEqual(metadata.common.track, { no: 4, of: 13 });
+        assert.deepEqual(metadata.common.disk, { no: 2, of: 3 });
+        const native = mm.orderTags(metadata.native.asf);
+        assert.deepEqual(native.replaygain_track_gain, ['-3dB']);
+        assert.deepEqual(native.replaygain_track_peak, ['0']);
+        assert.deepEqual(native.replaygain_album_gain, ['-2 dB']);
+        assert.deepEqual(native.replaygain_album_peak, ['1.25']);
+        assert.deepEqual(native.TotalTracks, ['13']);
+        assert.deepEqual(native['WM/Track'], ['0']);
+        assert.deepEqual(native['WM/WMADRCAverageReference'], ['8705']);
+        assert.deepEqual(native['WM/WMADRCPeakReference'], ['31771']);
+        assert.isEmpty(metadata.quality.warnings);
+      });
+
+      it(`keeps invalid ReplayGain and DRC references native with ${parser.description}`, async function () {
+        const metadata = await parser.parse(
+          () => this.skip(),
+          path.join(asfFilePath, 'replaygain-invalid.wma'),
+          'audio/x-ms-wma'
+        );
+        const native = mm.orderTags(metadata.native.asf);
+        for (const [id, value] of [
+          ['REPLAYGAIN_TRACK_GAIN', '3dBjunk'],
+          ['REPLAYGAIN_TRACK_PEAK', '0.8junk'],
+          ['REPLAYGAIN_ALBUM_GAIN', '1e309 dB'],
+          ['REPLAYGAIN_ALBUM_PEAK', '-1']
+        ]) {
+          assert.deepEqual(native[id], [value]);
+          assert.notProperty(metadata.common, id.toLowerCase());
+          assert.includeDeepMembers(metadata.quality.warnings, [{ message: `Invalid ASF ReplayGain value for ${id}` }]);
+        }
+        // A DWORD attribute is valid ASF, but ReplayGain metadata must be textual.
+        assert.deepEqual(native.replaygain_track_gain, [100]);
+        assert.includeDeepMembers(metadata.quality.warnings, [
+          { message: 'Invalid ASF ReplayGain value for replaygain_track_gain' }
+        ]);
+        assert.deepEqual(native['WM/WMADRCAverageReference'], ['8705']);
+        assert.deepEqual(native['WM/WMADRCPeakReference'], ['31771']);
+      });
+    }
   });
 
   describe('rating', () => {
