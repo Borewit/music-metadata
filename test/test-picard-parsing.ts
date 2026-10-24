@@ -113,10 +113,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#release-country
     assert.strictEqual(common.releasecountry, 'US', `${inputTagType} => common.releasecountry`);
     assert.strictEqual(common.barcode, '804879313915', `${inputTagType} => common.barcode`);
-    // TODO: Expose IPLS/TIPL producer credits in common metadata for ID3.
-    if (inputTagType !== 'ID3v2.3' && inputTagType !== 'ID3v2.4') {
-      assert.deepEqual(common.producer, ['Roy Weisman'], `${inputTagType} => common.producer`);
-    }
+    assert.deepEqual(common.producer, ['Roy Weisman'], `${inputTagType} => common.producer`);
     assert.deepEqual(common.label, ['J&R Adventures'], `${inputTagType} => common.label = 'J&R Adventures'`);
     assert.deepEqual(common.catalognumber, ['PRAR931391'], `${inputTagType} => common.catalognumber = PRAR931391`);
     assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.originalyear = 2011`);
@@ -912,6 +909,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       ['arranger', ['Jeff Bova']]
     ];
     const fixtures = [
+      ['ID3v2.3 / IPLS', "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3"],
+      ['ID3v2.4 / TIPL', "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3"],
       ['FLAC / Vorbis', "MusicBrainz - Beth Hart - Sinner's Prayer.flac"],
       ['Ogg / Vorbis', "MusicBrainz - Beth Hart - Sinner's Prayer.ogg"],
       ["Monkey's Audio / APEv2", "MusicBrainz - Beth Hart - Sinner's Prayer.ape"],
