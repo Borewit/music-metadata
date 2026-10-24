@@ -58,7 +58,7 @@ graph TD;
     MMN("music-metadata (Node.js entry point)")-->MMP
     MMN-->S(strtok3)
     S-->SC("strtok3/core")
-    S-. Node.js .->FS("node:fs/promises")
+    S-. "Node.js" .->FS("node:fs/promises")
     MMP("music-metadata (core entry point)")-->S
     MMP-->TY(token-types)
     MMP-->FT(file-type)
