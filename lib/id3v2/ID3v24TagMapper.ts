@@ -10,7 +10,7 @@ import type { ICustomDataTag, IIdentifierTag, IPopularimeter } from './FramePars
 /**
  * ID3v2.3/ID3v2.4 tag mappings
  */
-const id3v24TagMap: INativeTagMap = {
+export const id3v24TagMap: INativeTagMap = {
   // id3v2.3
   TIT2: 'title',
   TPE1: 'artist',
@@ -112,6 +112,7 @@ const id3v24TagMap: INativeTagMap = {
 
   // Windows Media Player
   'PRIV:AverageLevel': 'averageLevel',
+  'PRIV:PeakValue': 'peakLevel',
   'PRIV:PeakLevel': 'peakLevel',
 
   // Discogs
@@ -193,14 +194,15 @@ export class ID3v24TagMapper extends CaseInsensitiveTagMap {
             // decode Windows Media Player
             case 'AverageLevel':
             case 'PeakValue':
+            case 'PeakLevel':
               tag.id += `:${customTag.owner_identifier}`;
               tag.value = customTag.data.length === 4 ? UINT32_LE.get(customTag.data, 0) : null;
               if (tag.value === null) {
-                warnings.addWarning('Failed to parse PRIV:PeakValue');
+                warnings.addWarning(`Failed to parse PRIV:${customTag.owner_identifier}`);
               }
               break;
             default:
-              warnings.addWarning(`Unknown PRIV owner-identifier: ${customTag.data}`);
+              warnings.addWarning(`Unknown PRIV owner-identifier: ${customTag.owner_identifier.slice(0, 128)}`);
           }
         }
         break;
