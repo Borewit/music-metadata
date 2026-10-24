@@ -36,6 +36,202 @@ import {
 const mp4Samples = path.join(samplePath, 'mp4');
 
 describe('Parse MPEG-4', () => {
+  describe('indexed mdta metadata', () => {
+    for (const parser of Parsers) {
+      it(`reads a playable FFmpeg metadata sample with ${parser.description}`, async function () {
+        const metadata = await parser.parse(() => this.skip(), path.join(mp4Samples, 'mdta-tags.m4b'), 'audio/mp4');
+        assert.equal(metadata.common.title, 'Indexed metadata sample');
+        assert.equal(metadata.common.album, 'Metadata Audiobook');
+        assert.equal(metadata.common.albumartist, 'Sample Author');
+        assert.equal(metadata.common.artist, 'Sample Narrator');
+        assert.deepEqual(metadata.common.composer, ['Sample Narrator']);
+        assert.equal(metadata.common.date, '2024-02-03');
+        assert.deepEqual(metadata.common.label, ['Sample Publisher']);
+        assert.deepEqual(metadata.common.subtitle, ['A playable regression sample']);
+        assert.equal(metadata.common.asin, 'B000TEST');
+        assert.approximately(metadata.format.duration, 1.25, 0.03);
+        const native = mm.orderTags(metadata.native.iTunes);
+        assert.deepEqual(native['mdta:title'], ['Indexed metadata sample']);
+        assert.deepEqual(native['mdta:series'], ['Sample Series']);
+        assert.deepEqual(native['mdta:series-part'], ['4.5']);
+        assert.deepEqual(native['mdta:librofm_isbn'], ['9780000000000']);
+        assert.isEmpty(metadata.quality.warnings);
+      });
+    }
+
+    function box(name: string, body: Buffer): Buffer {
+      const header = Buffer.alloc(8);
+      header.writeUInt32BE(body.length + 8);
+      header.write(name, 4, 'latin1');
+      return Buffer.concat([header, body]);
+    }
+
+    function keys(names: string[], namespace = 'mdta'): Buffer {
+      const header = Buffer.alloc(8);
+      header.writeUInt32BE(names.length, 4);
+      return box('keys', Buffer.concat([header, ...names.map(name => box(namespace, Buffer.from(name)))]));
+    }
+
+    function item(index: number | string, value: string): Buffer {
+      const id = Buffer.alloc(4);
+      if (typeof index === 'number') {
+        id.writeUInt32BE(index);
+      } else {
+        id.write(index, 'latin1');
+      }
+      return box(
+        id.toString('latin1'),
+        box('data', Buffer.concat([Buffer.from([0, 0, 0, 1, 0, 0, 0, 0]), Buffer.from(value)]))
+      );
+    }
+
+    function meta(...children: Buffer[]): Buffer {
+      return box('meta', Buffer.concat([Buffer.alloc(4), ...children]));
+    }
+
+    for (const streamed of [false, true]) {
+      const parse = (input: Buffer, options?: mm.IOptions) =>
+        streamed
+          ? mm.parseStream(Readable.from([input], { objectMode: false }), 'audio/mp4', options)
+          : mm.parseBuffer(input, 'audio/mp4', options);
+
+      it(`resolves late keys and keeps value order (stream=${streamed})`, async () => {
+        const input = box(
+          'moov',
+          meta(box('ilst', Buffer.concat([item(1, 'First'), item('©nam', 'Second')])), keys(['title']))
+        );
+        const metadata = await parse(input);
+        assert.equal(metadata.common.title, 'Second');
+        assert.deepEqual(metadata.native.iTunes, [
+          { id: 'mdta:title', value: 'First' },
+          { id: '©nam', value: 'Second' }
+        ]);
+      });
+
+      it(`keeps an optional item name separate from its key index (stream=${streamed})`, async () => {
+        const name = box('name', Buffer.concat([Buffer.alloc(4), Buffer.from('Display label')]));
+        const value = box('data', Buffer.concat([Buffer.from([0, 0, 0, 1, 0, 0, 0, 0]), Buffer.from('Actual title')]));
+        const input = box('moov', meta(keys(['title']), box('ilst', box('\0\0\0\x01', Buffer.concat([name, value])))));
+        const metadata = await parse(input);
+        assert.equal(metadata.common.title, 'Actual title');
+        assert.deepEqual(metadata.native.iTunes, [{ id: 'mdta:title', value: 'Actual title' }]);
+      });
+
+      it(`keeps tables local to their metadata boxes (stream=${streamed})`, async () => {
+        const input = box(
+          'moov',
+          Buffer.concat([
+            meta(keys(['title']), box('ilst', item(1, 'Title'))),
+            box('trak', meta(box('ilst', item(1, 'Artist')), keys(['artist']))),
+            meta(box('ilst', item(1, 'Unresolved'))),
+            meta(keys(['title'], 'test'), box('ilst', item(1, 'Private')))
+          ])
+        );
+        const metadata = await parse(input);
+        assert.equal(metadata.common.title, 'Title');
+        assert.equal(metadata.common.artist, 'Artist');
+        assert.deepEqual(metadata.native.iTunes.slice(-2), [
+          { id: '\0\0\0\x01', value: 'Unresolved' },
+          { id: 'test:title', value: 'Private' }
+        ]);
+        assert.match(metadata.quality.warnings[0].message, /Unresolved MP4 metadata key index 1/);
+      });
+
+      it(`preserves duplicate key names and ignores a duplicate table (stream=${streamed})`, async () => {
+        const input = box(
+          'moov',
+          meta(
+            keys(['title', 'title']),
+            keys(['artist']),
+            box('ilst', Buffer.concat([item(1, 'First'), item(2, 'Second'), item(0, 'Zero'), item(3, 'Outside')]))
+          )
+        );
+        const metadata = await parse(input);
+        assert.equal(metadata.common.title, 'Second');
+        assert.deepEqual(mm.orderTags(metadata.native.iTunes)['mdta:title'], ['First', 'Second']);
+        assert.isUndefined(metadata.common.artist);
+        assert.lengthOf(
+          metadata.quality.warnings.filter(warning =>
+            /Duplicate MP4 metadata|Unresolved MP4 metadata/.test(warning.message)
+          ),
+          3
+        );
+      });
+
+      it(`maps explicit QuickTime names and preserves unknown keys (stream=${streamed})`, async () => {
+        const input = box(
+          'moov',
+          meta(
+            keys(['com.apple.quicktime.title', 'com.android.version']),
+            box('ilst', Buffer.concat([item(1, 'QuickTime title'), item(2, '10')]))
+          )
+        );
+        const metadata = await parse(input);
+        assert.equal(metadata.common.title, 'QuickTime title');
+        assert.deepEqual(mm.orderTags(metadata.native.iTunes)['mdta:com.android.version'], ['10']);
+      });
+
+      it(`does not reuse keys from a preceding root box (stream=${streamed})`, async () => {
+        const input = Buffer.concat([
+          box('moov', meta(keys(['title']), box('ilst', item(1, 'Title')))),
+          box('moov', meta(box('ilst', item(1, 'Unknown'))))
+        ]);
+        const metadata = await parse(input);
+        assert.equal(metadata.common.title, 'Title');
+        assert.deepEqual(metadata.native.iTunes.at(-1), { id: '\0\0\0\x01', value: 'Unknown' });
+      });
+
+      it(`decodes non-ASCII indexes, UTF-8 keys and integer values (stream=${streamed})`, async () => {
+        const names = new Array(128).fill('unused');
+        names[127] = 'custom.著者';
+        const integer = Buffer.alloc(12);
+        integer.writeUInt32BE(21);
+        integer.writeInt32BE(-42, 8);
+        const unsigned = Buffer.alloc(12);
+        unsigned.writeUInt32BE(22);
+        unsigned.writeUInt32BE(42, 8);
+        const id = Buffer.from([0, 0, 0, 128]).toString('latin1');
+        const input = box(
+          'moov',
+          meta(keys(names), box('ilst', box(id, Buffer.concat([box('data', integer), box('data', unsigned)]))))
+        );
+        const metadata = await parse(input);
+        assert.deepEqual(metadata.native.iTunes, [
+          { id: 'mdta:custom.著者', value: -42 },
+          { id: 'mdta:custom.著者', value: 42 }
+        ]);
+      });
+
+      for (const [name, payload] of [
+        ['short header', Buffer.alloc(4)],
+        ['unsupported version', Buffer.from([1, 0, 0, 0, 0, 0, 0, 0])],
+        ['excess count', Buffer.from([0, 0, 0, 0, 255, 255, 255, 255])],
+        ['short entry', Buffer.from([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 7, 109, 100, 116, 97])],
+        ['oversized entry', Buffer.from([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 9, 109, 100, 116, 97])],
+        [
+          'truncated later entry',
+          Buffer.from([0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 16, 109, 100, 116, 97, 0, 0, 0, 0, 0, 0, 0, 0])
+        ],
+        ['trailing bytes', Buffer.alloc(9)]
+      ] as const) {
+        it(`rejects ${name} (stream=${streamed})`, async () => {
+          await rejects(parse(box('moov', meta(box('keys', payload)))), Mp4ContentError);
+        });
+      }
+
+      it(`enforces allocation and entry limits (stream=${streamed})`, async () => {
+        await rejects(
+          parse(box('moov', meta(keys(['x'.repeat(100)]))), { maxMemoryAllocation: 64 }),
+          /allocation limit/
+        );
+        await rejects(
+          parse(box('moov', meta(keys(new Array(20).fill('title')))), { maxMetadataEntries: 10 }),
+          /entry limit/
+        );
+      });
+    }
+  });
+
   describe('fixed-width signed metadata integers', () => {
     function box(name: string, payload: Buffer): Buffer {
       const header = Buffer.alloc(8);

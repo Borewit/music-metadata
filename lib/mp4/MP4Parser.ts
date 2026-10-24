@@ -21,6 +21,12 @@ interface IMediaDataRange {
   end: number;
 }
 
+interface IMetadataTag {
+  id: string;
+  value: AnyTagValue;
+  scope?: Atom;
+}
+
 interface IEncoder {
   lossy: boolean;
   format: string;
@@ -217,6 +223,8 @@ export class MP4Parser extends BasicParser {
   private hasAudioTrack = false;
   private remainingAtoms = 0;
   private maxMetadataEntries = 0;
+  private metadataKeys = new WeakMap<Atom, string[]>();
+  private pendingTags: IMetadataTag[] = [];
 
   public async parse(): Promise<void> {
     this.hasVideoTrack = false;
@@ -230,6 +238,8 @@ export class MP4Parser extends BasicParser {
     this.neroChapters = [];
     this.trackDefaults.clear();
     this.movieHeader = undefined;
+    this.pendingTags = [];
+    this.metadataKeys = new WeakMap();
 
     let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
 
@@ -263,6 +273,22 @@ export class MP4Parser extends BasicParser {
       // Release the root tree budget; each table is limited separately.
       this.remainingAtoms = atomsBeforeRoot;
       remainingFileSize = rootAtom.header.length === 0n ? 0 : remainingFileSize - Number(rootAtom.header.length);
+      // A keys box can follow its ilst. Keep wire order and resolve only within the owning meta box.
+      for (const tag of this.pendingTags) {
+        let id = tag.id;
+        if (tag.scope && id.length === 4 && id.charCodeAt(0) === 0) {
+          const index = [...id].reduce((value, character) => value * 256 + character.charCodeAt(0), 0);
+          const key = this.metadataKeys.get(tag.scope)?.[index - 1];
+          if (key !== undefined) {
+            id = key;
+          } else {
+            this.addWarning(`Unresolved MP4 metadata key index ${index}`);
+          }
+        }
+        await this.metadata.addTag(tagFormat, id, tag.value);
+      }
+      this.pendingTags = [];
+      this.metadataKeys = new WeakMap();
     }
 
     if (this.mediaDataRanges.length > 0 && supportsSeeking(this.tokenizer)) {
@@ -377,6 +403,9 @@ export class MP4Parser extends BasicParser {
   }
 
   public async handleAtom(atom: Atom, remaining: number): Promise<void> {
+    if (atom.header.name === 'keys' && atom.parent?.header.name === 'meta') {
+      return this.parseMetadataKeys(atom.parent, remaining);
+    }
     if (atom.parent) {
       switch (atom.parent.header.name) {
         case 'ilst':
@@ -437,8 +466,45 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private async addTag(id: string, value: AnyTagValue): Promise<void> {
-    await this.metadata.addTag(tagFormat, id, value);
+  private async addTag(id: string, value: AnyTagValue, scope?: Atom): Promise<void> {
+    this.assertRetainedEntryCapacity(this.pendingTags.length, 'MP4 metadata value');
+    this.pendingTags.push({ id, value, scope });
+  }
+
+  private async parseMetadataKeys(scope: Atom, length: number): Promise<void> {
+    if (length < 8) {
+      throw new Mp4ContentError('Truncated metadata keys header');
+    }
+    const data = await this.readToken(new Token.Uint8ArrayType(length));
+    if (Token.UINT32_BE.get(data, 0) !== 0) {
+      throw new Mp4ContentError('Unsupported metadata keys version or flags');
+    }
+    const count = Token.UINT32_BE.get(data, 4);
+    if (count > this.maxMetadataEntries || count > Math.floor((length - 8) / 8)) {
+      throw new Mp4ContentError('Metadata keys count exceeds entry limit or payload bounds');
+    }
+    const keys: string[] = [];
+    let offset = 8;
+    for (let index = 0; index < count; ++index) {
+      if (offset + 8 > length) {
+        throw new Mp4ContentError('Truncated metadata key entry');
+      }
+      const size = Token.UINT32_BE.get(data, offset);
+      if (size < 8 || size > length - offset) {
+        throw new Mp4ContentError('Invalid metadata key entry size');
+      }
+      const namespace = new Token.StringType(4, 'latin1').get(data, offset + 4);
+      keys.push(`${namespace}:${textDecode(data.subarray(offset + 8, offset + size))}`);
+      offset += size;
+    }
+    if (offset !== length) {
+      throw new Mp4ContentError('Unexpected bytes after metadata keys');
+    }
+    if (this.metadataKeys.has(scope)) {
+      this.addWarning('Duplicate MP4 metadata keys table; keeping the first table');
+    } else {
+      this.metadataKeys.set(scope, keys);
+    }
   }
 
   private addWarning(message: string) {
@@ -453,6 +519,11 @@ export class MP4Parser extends BasicParser {
    */
   private parseMetadataItemData(metaAtom: Atom): Promise<void> {
     let tagKey = metaAtom.header.name;
+    let scope = metaAtom.parent;
+    while (scope && scope.header.name !== 'meta') {
+      scope = scope.parent;
+    }
+    const indexed = scope !== null && tagKey.charCodeAt(0) === 0;
 
     return metaAtom.readAtoms(
       this.tokenizer,
@@ -460,13 +531,15 @@ export class MP4Parser extends BasicParser {
         const payLoadLength = child.getPayloadLength();
         switch (child.header.name) {
           case 'data': // value atom
-            return this.parseValueAtom(tagKey, child);
+            return this.parseValueAtom(tagKey, child, scope ?? undefined);
 
           case 'name': // name atom (optional)
           case 'mean':
           case 'rate': {
             const name = await this.readToken<AtomToken.INameAtom>(new AtomToken.NameAtom(payLoadLength));
-            tagKey += `:${name.name}`;
+            if (!indexed) {
+              tagKey += `:${name.name}`;
+            }
             break;
           }
 
@@ -482,7 +555,7 @@ export class MP4Parser extends BasicParser {
     );
   }
 
-  private async parseValueAtom(tagKey: string, metaAtom: Atom): Promise<void> {
+  private async parseValueAtom(tagKey: string, metaAtom: Atom, scope?: Atom): Promise<void> {
     const length = metaAtom.getPayloadLength();
     if (length < AtomToken.DataAtomHeader.len) {
       throw new Mp4ContentError('Truncated data atom header');
@@ -515,7 +588,7 @@ export class MP4Parser extends BasicParser {
             const num = Token.UINT8.get(dataAtom.value, 3);
             const of = Token.UINT8.get(dataAtom.value, 5);
             // console.log("  %s[data] = %s/%s", tagKey, num, of);
-            await this.addTag(tagKey, `${num}/${of}`);
+            await this.addTag(tagKey, `${num}/${of}`, scope);
             break;
           }
 
@@ -523,13 +596,13 @@ export class MP4Parser extends BasicParser {
             const genreInt = Token.UINT8.get(dataAtom.value, 1);
             const genreStr = Genres[genreInt - 1];
             // console.log("  %s[data] = %s", tagKey, genreStr);
-            await this.addTag(tagKey, genreStr);
+            await this.addTag(tagKey, genreStr, scope);
             break;
           }
 
           case 'rate': {
             const rate = textDecode(dataAtom.value, 'ascii');
-            await this.addTag(tagKey, rate);
+            await this.addTag(tagKey, rate, scope);
             break;
           }
 
@@ -540,41 +613,49 @@ export class MP4Parser extends BasicParser {
 
       case 1: // UTF-8: Without any count or NULL terminator
       case 18: // Unknown: Found in m4b in combination with a '©gen' tag
-        await this.addTag(tagKey, textDecode(dataAtom.value));
+        await this.addTag(tagKey, textDecode(dataAtom.value), scope);
         break;
 
       case 13: // JPEG
-        await this.addTag(tagKey, {
-          format: 'image/jpeg',
-          data: Uint8Array.from(dataAtom.value)
-        });
+        await this.addTag(
+          tagKey,
+          {
+            format: 'image/jpeg',
+            data: Uint8Array.from(dataAtom.value)
+          },
+          scope
+        );
         break;
 
       case 14: // PNG
-        await this.addTag(tagKey, {
-          format: 'image/png',
-          data: Uint8Array.from(dataAtom.value)
-        });
+        await this.addTag(
+          tagKey,
+          {
+            format: 'image/png',
+            data: Uint8Array.from(dataAtom.value)
+          },
+          scope
+        );
         break;
 
       case 21: // BE Signed Integer
-        await this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, true));
+        await this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, true), scope);
         break;
 
       case 22: // BE Unsigned Integer
-        await this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, false));
+        await this.addTag(tagKey, MP4Parser.read_BE_Integer(dataAtom.value, false), scope);
         break;
 
       case 65: // An 8-bit signed integer
-        await this.addTag(tagKey, Token.INT8.get(dataAtom.value, 0));
+        await this.addTag(tagKey, Token.INT8.get(dataAtom.value, 0), scope);
         break;
 
       case 66: // A big-endian 16-bit signed integer
-        await this.addTag(tagKey, Token.INT16_BE.get(dataAtom.value, 0));
+        await this.addTag(tagKey, Token.INT16_BE.get(dataAtom.value, 0), scope);
         break;
 
       case 67: // A big-endian 32-bit signed integer
-        await this.addTag(tagKey, Token.INT32_BE.get(dataAtom.value, 0));
+        await this.addTag(tagKey, Token.INT32_BE.get(dataAtom.value, 0), scope);
         break;
 
       default:
@@ -892,6 +973,14 @@ export class MP4Parser extends BasicParser {
             break;
 
           default: {
+            if (
+              child.parent?.header.name === 'ilst' ||
+              child.parent?.header.name === '<id>' ||
+              (child.header.name === 'keys' && child.parent?.header.name === 'meta')
+            ) {
+              await this.handleAtom(child, payLoadLength);
+              break;
+            }
             debug(`Unexpected track box: ${child.header.name}`);
             await this.tokenizer.ignore(payLoadLength);
           }
