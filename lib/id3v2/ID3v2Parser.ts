@@ -266,10 +266,8 @@ export class ID3v2Parser {
       }
 
       const frames = chap.frames;
-      const title = frames.get('TIT2') as IChapter['title'] | undefined;
-      if (!title) {
-        continue; // title is required
-      }
+      // TIT2 is recommended, not required; keep untitled chapters navigable.
+      const title = (frames.get('TIT2') as IChapter['title'] | undefined) ?? '';
 
       if (chapters.length >= maxChapterCount) {
         this.metadata.addWarning(`Chapter count exceeds the ${maxChapterCount} chapter limit`);

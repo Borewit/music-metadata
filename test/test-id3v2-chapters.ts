@@ -1,10 +1,13 @@
+import path from 'node:path';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { fromBuffer } from 'strtok3';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
-import { Id3v2ContentError } from '../lib/id3v2/FrameParser.js';
+import { type Chapter, Id3v2ContentError } from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import type { IOptions } from '../lib/type.js';
+import { Parsers } from './metadata-parsers.js';
+import { samplePath } from './util.js';
 
 use(chaiAsPromised);
 
@@ -50,6 +53,52 @@ describe('ID3v2 chapter boundaries', () => {
     }
 
     describe(`ID3v2.${major}`, () => {
+      describe('Untitled chapters', () => {
+        const expected = {
+          bare: { id: 'bare', title: '', start: 0, end: 0.2 },
+          url: { id: 'url', title: '', start: 0.25, end: 0.45 },
+          empty: { id: 'empty', title: '', start: 0.5, end: 0.7 },
+          named: { id: 'named', title: 'Named chapter', start: 0.75, end: 0.95 }
+        };
+        const order =
+          major === 3 ? (['bare', 'url', 'empty', 'named'] as const) : (['empty', 'bare', 'url', 'named'] as const);
+        for (const parser of Parsers) {
+          for (const maxChapterCount of [1, 4]) {
+            it(`retains untitled chapters with ${parser.description}, maxChapterCount=${maxChapterCount}`, async function () {
+              // v2.3 has out-of-order CHAP frames without CTOC; v2.4 has an ordered CTOC.
+              const { format, common, native, quality } = await parser.parse(
+                () => this.skip(),
+                path.join(samplePath, 'mp3', `id3v2.${major}-untitled-chapters.mp3`),
+                'audio/mpeg',
+                { includeChapters: true, maxChapterCount }
+              );
+              assert.deepEqual(
+                format.chapters?.map(({ id, title, start, end }) => ({ id, title, start, end })),
+                order.slice(0, maxChapterCount).map(id => expected[id])
+              );
+              assert.equal(common.title, 'Untitled chapter sample');
+              assert.equal(format.codec, 'MPEG 1 Layer 3');
+              assert.isAbove(format.duration ?? 0, 1);
+              const chapters = native[`ID3v2.${major}`]
+                .filter(tag => tag.id === 'CHAP')
+                .map(tag => tag.value as Chapter);
+              assert.lengthOf(chapters, 4);
+              assert.isFalse(chapters.find(chapter => chapter.label === 'bare')?.frames.has('TIT2'));
+              assert.equal(chapters.find(chapter => chapter.label === 'empty')?.frames.get('TIT2'), '');
+              const url = { description: 'Chapter link', url: 'https://example.org/chapter' };
+              assert.deepEqual(chapters.find(chapter => chapter.label === 'url')?.frames.get('WXXX'), url);
+              if (maxChapterCount === 4) {
+                assert.deepEqual(format.chapters?.find(chapter => chapter.id === 'url')?.url, url);
+              }
+              assert.deepEqual(
+                quality.warnings,
+                maxChapterCount === 1 ? [{ message: 'Chapter count exceeds the 1 chapter limit' }] : []
+              );
+            });
+          }
+        }
+      });
+
       for (const id of ['CHAP', 'CTOC']) {
         it(`rejects an empty ${id} payload`, async () => {
           await expect(parse(frame(id, new Uint8Array()))).to.be.rejectedWith(
