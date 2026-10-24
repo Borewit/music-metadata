@@ -183,6 +183,7 @@ export class FrameParser {
       case 'T*': // 4.2.1. Text information frames - details
       case 'GRP1': // iTunes-specific ID3v2 grouping field
       case 'GP1': // iTunes-specific ID3v2.2 grouping field
+      case 'IPL': // v2.2: Involved people list
       case 'IPLS': // v2.3: Involved people list
       case 'MVIN':
       case 'MVNM':
@@ -203,6 +204,7 @@ export class FrameParser {
         switch (type) {
           case 'TMCL': // Musician credits list
           case 'TIPL': // Involved people list
+          case 'IPL': // v2.2: Involved people list
           case 'IPLS': // Involved people list
             output = this.functionList(this.splitValue(type, text));
             break;
@@ -630,7 +632,10 @@ export class FrameParser {
     if (this.major < 4) {
       values = util.splitText(text, '\0', tag, this.validateTextValues, { keepEmpty: true });
       if (values.length > 1) {
-        this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
+        // Involved-person lists use null-separated role/name pairs in all versions.
+        if (tag !== 'IPL' && tag !== 'IPLS') {
+          this.warningCollector.addWarning(`ID3v2.${this.major} ${tag} uses non standard null-separator.`);
+        }
       } else if (
         [
           /* v2.3: */ 'TPE1',
@@ -651,6 +656,7 @@ export class FrameParser {
           'TXXX',
           'TSRC',
           // Retain legacy support for nonstandard slash-separated credits.
+          'IPL',
           'IPLS'
         ].includes(tag)
       ) {

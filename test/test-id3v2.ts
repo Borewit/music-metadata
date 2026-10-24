@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
@@ -25,6 +26,45 @@ use(chaiAsPromised);
 
 describe('ID3v2', () => {
   describe('Credit role names', () => {
+    for (const [major, frame] of [
+      [2, 'IPL'],
+      [3, 'IPLS'],
+      [4, 'TIPL']
+    ] as const) {
+      for (const stream of [false, true]) {
+        it(`maps ID3v2.${major} credits from an MP3 ${stream ? 'stream' : 'file'} while preserving native roles`, async () => {
+          const filename = path.join(samplePath, 'mp3', `id3v2.${major}-credit-roles.mp3`);
+          const metadata = stream
+            ? await mm.parseStream(Readable.from([await readFile(filename)], { objectMode: false }), 'audio/mpeg')
+            : await mm.parseFile(filename);
+          assert.include(metadata.format.tagTypes, `ID3v2.${major}`);
+          assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
+          assert.deepEqual(metadata.common.producer, ['First', 'Second', 'Third', 'Fourth']);
+          assert.deepEqual(metadata.common.engineer, ['Engineer']);
+          assert.deepEqual(metadata.common.arranger, ['Arranger']);
+          assert.deepEqual(metadata.common.djmixer, ['DJ']);
+          assert.deepEqual(metadata.common.mixer, ['Mixer']);
+          assert.isUndefined(metadata.common.artist);
+          assert.isEmpty(metadata.quality.warnings);
+          const native = metadata.native[`ID3v2.${major}`];
+          assert.deepEqual(native.find(tag => tag.id === frame)?.value, {
+            producer: ['First', 'Second', 'Third', ''],
+            Producer: ['Fourth'],
+            engineer: ['Engineer'],
+            arranger: ['Arranger'],
+            'DJ-mix': ['DJ'],
+            mix: ['Mixer'],
+            ['__proto__']: ['Unmapped'],
+            guitar: ['Guitarist']
+          });
+          assert.lengthOf(native, major === 4 ? 2 : 1);
+          if (major === 4) {
+            assert.deepEqual(native.find(tag => tag.id === 'TMCL')?.value, { producer: ['Instrumentalist'] });
+          }
+        });
+      }
+    }
+
     function fixture(major: 3 | 4, id: string, entries: string[]): Buffer {
       const payload = Buffer.from(`\0${entries.join('\0')}`, 'latin1');
       const header = Buffer.alloc(10);

@@ -408,6 +408,26 @@ export class MetadataCollector implements INativeMetadataCollector {
    * Convert native tag to common tags
    */
   private async toCommon(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void> {
+    // Expand involved-person roles for mapping without adding synthetic native tags.
+    if (
+      ((tagType === 'ID3v2.2' && tagId === 'IPL') ||
+        (tagType === 'ID3v2.3' && tagId === 'IPLS') ||
+        (tagType === 'ID3v2.4' && tagId === 'TIPL')) &&
+      value !== null &&
+      typeof value === 'object'
+    ) {
+      for (const [role, people] of Object.entries(value)) {
+        if (Array.isArray(people)) {
+          for (const person of people) {
+            if (typeof person === 'string' && person.length > 0) {
+              await this.toCommon(tagType, `${tagId}:${role}`, person);
+            }
+          }
+        }
+      }
+      return;
+    }
+
     const tag = { id: tagId, value };
 
     const genericTag = this.tagMapper.mapTag(tagType, tag, this);
