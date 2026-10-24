@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CombinedTagMapper } from '../lib/common/CombinedTagMapper.js';
 import { commonTagsKeys, isSingleton } from '../lib/common/GenericTagTypes.js';
+import { id3v24TagMap } from '../lib/id3v2/ID3v24TagMapper.js';
 
 import * as markDown from './MarkDown.js';
 
@@ -11,6 +12,12 @@ interface ITagInfoDict {
 }
 
 const combinedTagMapper = new CombinedTagMapper();
+// PRIV owners are case-sensitive, unlike the mapper's normalized lookup keys.
+const privateTagNames = new Map(
+  Object.keys(id3v24TagMap)
+    .filter(tag => tag.startsWith('PRIV:'))
+    .map(tag => [tag.toUpperCase(), tag])
+);
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
@@ -20,7 +27,7 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
   const tagMapper = combinedTagMapper.tagMappers[nativeType];
   Object.keys(tagMapper.tagMap).forEach(nativeTag => {
     if (commonTag === tagMapper.tagMap[nativeTag]) {
-      result.push(nativeTag);
+      result.push(privateTagNames.get(nativeTag) ?? nativeTag);
     }
   });
   return result;

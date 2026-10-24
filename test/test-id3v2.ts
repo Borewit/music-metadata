@@ -133,6 +133,73 @@ describe('ID3v2', () => {
     );
   });
 
+  describe('ID3 private level fixtures', () => {
+    function fixture(major: 3 | 4, owner: string, data: Uint8Array): Buffer {
+      const payload = Buffer.concat([Buffer.from(owner, 'latin1'), Buffer.from([0]), data]);
+      const frame = Buffer.alloc(10);
+      frame.write('PRIV');
+      if (major === 3) {
+        frame.writeUInt32BE(payload.length, 4);
+      } else {
+        for (let i = 0; i < 4; i++) {
+          frame[7 - i] = (payload.length >>> (7 * i)) & 0x7f;
+        }
+      }
+      const header = Buffer.from([0x49, 0x44, 0x33, major, 0, 0, 0, 0, 0, 0]);
+      for (let i = 0; i < 4; i++) {
+        header[9 - i] = ((frame.length + payload.length) >>> (7 * i)) & 0x7f;
+      }
+      return Buffer.concat([header, frame, payload]);
+    }
+
+    for (const major of [3, 4] as const) {
+      for (const owner of ['PeakValue', 'PeakLevel', 'AverageLevel']) {
+        const tagType = `ID3v2.${major}` as const;
+        const commonId = owner === 'AverageLevel' ? 'averageLevel' : 'peakLevel';
+        const expectedLevel = owner === 'AverageLevel' ? 2 : 8;
+
+        it(`parses ID3v2.${major} ${owner} from an MP3 sample`, async () => {
+          const filename = path.join(samplePath, 'mp3', `id3v2.${major}-${owner}.mp3`);
+          const metadata = await mm.parseFile(filename);
+          assert.equal(metadata.common[commonId], expectedLevel);
+          assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
+          assert.equal(metadata.format.sampleRate, 44100);
+          assert.isAbove(metadata.format.duration, 0);
+          assert.isEmpty(metadata.quality.warnings);
+          assert.deepEqual(metadata.native[tagType], [
+            {
+              id: 'PRIV',
+              value: { owner_identifier: owner, data: Uint8Array.of(expectedLevel, 0, 0, 0) }
+            }
+          ]);
+        });
+
+        for (const length of [0, 3, 5]) {
+          it(`rejects ID3v2.${major} ${owner} with a ${length}-byte payload`, async () => {
+            const data = new Uint8Array(length);
+            const metadata = await mm.parseBuffer(fixture(major, owner, data), 'audio/mpeg');
+            assert.isUndefined(metadata.common[commonId]);
+            assert.deepEqual(metadata.quality.warnings, [{ message: `Failed to parse PRIV:${owner}` }]);
+            assert.deepEqual(metadata.native[tagType], [{ id: 'PRIV', value: { owner_identifier: owner, data } }]);
+          });
+        }
+      }
+    }
+
+    it('reports a bounded owner identifier when parsing a large unknown PRIV fixture', async () => {
+      const owner = 'Owner'.repeat(100);
+      const data = new Uint8Array(1024 * 1024).fill(42);
+      const metadata = await mm.parseBuffer(fixture(4, owner, data), 'audio/mpeg');
+      assert.deepEqual(metadata.quality.warnings, [
+        {
+          message: `Unknown PRIV owner-identifier: ${owner.slice(0, 128)}`
+        }
+      ]);
+      assert.deepEqual(metadata.native['ID3v2.4'], [{ id: 'PRIV', value: { owner_identifier: owner, data } }]);
+      assert.isUndefined(metadata.common.peakLevel);
+    });
+  });
+
   describe('Headers and unknown frames', () => {
     it('should be able to read id3v2 files with extended headers', () => {
       const filename = 'id3v2-xheader.mp3';
