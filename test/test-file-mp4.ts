@@ -36,6 +36,34 @@ import {
 const mp4Samples = path.join(samplePath, 'mp4');
 
 describe('Parse MPEG-4', () => {
+  describe('MPEG-4 ALS identification', () => {
+    // ALS reference sample from samples.ffmpeg.org/A-codecs/lossless/.
+    for (const parser of Parsers) {
+      it(`identifies the playable ALS sample with ${parser.description}`, async function () {
+        const { format, quality } = await parser.parse(
+          () => this.skip(),
+          path.join(mp4Samples, 'luckynight-als.mp4'),
+          'audio/mp4'
+        );
+        assert.equal(format.codec, 'MPEG-4/ALS');
+        assert.isTrue(format.lossless);
+        assert.equal(format.sampleRate, 44100);
+        assert.equal(format.numberOfChannels, 2);
+        assert.equal(format.bitsPerSample, 16);
+        assert.approximately(format.duration, 60.48, 1e-6);
+        assert.lengthOf(format.trackInfo, 1);
+        assert.include(format.trackInfo[0], {
+          codecId: 'mp4a',
+          codecName: 'MPEG-4/ALS',
+          lossless: true,
+          type: mm.TrackType.audio
+        });
+        assert.deepEqual(format.trackInfo[0].audio, { samplingFrequency: 44100, channels: 2, bitDepth: 16 });
+        assert.isEmpty(quality.warnings);
+      });
+    }
+  });
+
   describe('indexed mdta metadata', () => {
     for (const parser of Parsers) {
       it(`reads a playable FFmpeg metadata sample with ${parser.description}`, async function () {
@@ -1611,9 +1639,13 @@ describe('Parse MPEG-4', () => {
         const header = new Uint8Array(8);
         new DataView(header.buffer).setUint32(4, entries); // entry_count
 
-        const entry = new Uint8Array(entrySize);
+        const entry = new Uint8Array(entrySize + (spec?.sampleEntryChildren?.length ?? 0));
+        entry.set(spec?.sampleEntryChildren ?? [], entrySize);
         const view = new DataView(entry.buffer);
-        view.setUint32(0, entrySize);
+        view.setUint32(0, entry.length);
+        if (spec?.audioVersion !== undefined) {
+          view.setUint16(16, spec.audioVersion);
+        }
         entry.set(textEncoder.encode(dataFormat), 4);
         view.setUint16(14, 1); // data_reference_index
 
@@ -1636,6 +1668,8 @@ describe('Parse MPEG-4', () => {
         entrySize: number;
         audioLike?: boolean;
         audioSampleRate?: number;
+        sampleEntryChildren?: Uint8Array;
+        audioVersion?: number;
         handlerAfterMinf?: boolean;
         metadataHandler?: string;
         metadataBeforeMedia?: boolean;
@@ -2556,6 +2590,173 @@ describe('Parse MPEG-4', () => {
         const { format } = await mm.parseBuffer(buffer, { mimeType: 'video/mp4' });
         assert.include(format.trackInfo[0], { duration: 0.1, bitrate: 8000 });
         assert.strictEqual(format.containerDuration, 0.1);
+      });
+
+      describe('MPEG-4 decoder configuration bounds', () => {
+        const als = Uint8Array.from([0xf8, 0x80]); // Escaped Audio Object Type 36.
+        const descriptor = (tag: number, body: Uint8Array) => concat(Uint8Array.of(tag, body.length), body);
+        const decoder = (specific: Uint8Array) =>
+          descriptor(4, concat(Uint8Array.of(0x40, 0x15), new Uint8Array(11), specific));
+        const es = (body: Uint8Array) => concat(new Uint8Array(4), descriptor(3, body));
+        const config = (specific: Uint8Array) => es(concat(new Uint8Array(3), decoder(descriptor(5, specific))));
+        const parse = (children: Uint8Array, options = {}) =>
+          mm.parseBuffer(
+            mp4({
+              handler: 'soun',
+              dataFormat: 'mp4a',
+              entrySize: 36,
+              audioLike: true,
+              sampleEntryChildren: children
+            }),
+            'audio/mp4',
+            options
+          );
+
+        for (const type of [0, 2, 5, 29, 35, 63]) {
+          it(`preserves the AAC fallback for Audio Object Type ${type}`, async () => {
+            const specific =
+              type < 32 ? Uint8Array.of(type << 3) : Uint8Array.of(0xf8 | ((type - 32) >> 3), (type - 32) << 5);
+            const { format } = await parse(box('esds', config(specific)));
+            assert.equal(format.codec, 'MPEG-4/AAC');
+            assert.isFalse(format.lossless);
+            assert.include(format.trackInfo[0], { codecName: 'MPEG-4/AAC', lossless: false });
+          });
+        }
+
+        it('preserves ALAC identification', async () => {
+          const { format } = await mm.parseBuffer(
+            mp4({ handler: 'soun', dataFormat: 'alac', entrySize: 36, audioLike: true }),
+            'audio/mp4'
+          );
+          assert.equal(format.codec, 'ALAC');
+          assert.isTrue(format.lossless);
+          assert.include(format.trackInfo[0], { codecName: 'ALAC', lossless: true });
+        });
+
+        it('skips unrelated child boxes and handles QuickTime sound entry version 1', async () => {
+          const { format } = await mm.parseBuffer(
+            mp4({
+              handler: 'soun',
+              dataFormat: 'mp4a',
+              entrySize: 52,
+              audioLike: true,
+              audioVersion: 1,
+              sampleEntryChildren: concat(box('free'), box('esds', config(als)))
+            }),
+            'audio/mp4'
+          );
+          assert.equal(format.codec, 'MPEG-4/ALS');
+        });
+
+        for (const extended of [false, true]) {
+          it(`reads an esds child with ${extended ? 'extended' : 'parent-bounded zero'} size`, async () => {
+            const data = config(als);
+            const header = new Uint8Array(extended ? 16 : 8);
+            const view = new DataView(header.buffer);
+            header.set(textEncoder.encode('esds'), 4);
+            if (extended) {
+              view.setUint32(0, 1);
+              view.setBigUint64(8, BigInt(header.length + data.length));
+            }
+            const { format } = await parse(concat(header, data));
+            assert.equal(format.codec, 'MPEG-4/ALS');
+          });
+        }
+
+        it('honors dependency, URL and OCR fields before nested descriptors', async () => {
+          const optional = Uint8Array.from([0, 1, 0xe0, 0, 2, 3, 97, 98, 99, 0, 3]);
+          const { format } = await parse(box('esds', es(concat(optional, decoder(descriptor(5, als))))));
+          assert.equal(format.codec, 'MPEG-4/ALS');
+        });
+
+        it('accepts a four-byte descriptor length and skips unrelated descriptors', async () => {
+          const body = concat(
+            new Uint8Array(3),
+            descriptor(7, new Uint8Array()),
+            decoder(concat(descriptor(7, new Uint8Array()), descriptor(5, als)))
+          );
+          const data = concat(
+            new Uint8Array(4),
+            descriptor(7, new Uint8Array()),
+            Uint8Array.of(3, 0x80, 0x80, 0x80, body.length),
+            body
+          );
+          assert.equal((await parse(box('esds', data))).format.codec, 'MPEG-4/ALS');
+        });
+
+        for (const [name, data] of [
+          ['no ES descriptor', concat(new Uint8Array(4), descriptor(7, new Uint8Array()))],
+          ['no decoder descriptor', es(concat(new Uint8Array(3), descriptor(7, new Uint8Array())))],
+          ['no decoder-specific data', es(concat(new Uint8Array(3), decoder(new Uint8Array())))],
+          [
+            'non-audio stream',
+            es(
+              concat(
+                new Uint8Array(3),
+                descriptor(4, concat(Uint8Array.of(0x40, 0x11), new Uint8Array(11), descriptor(5, als)))
+              )
+            )
+          ],
+          [
+            'another object-type indication',
+            es(
+              concat(
+                new Uint8Array(3),
+                descriptor(4, concat(Uint8Array.of(0x66, 0x15), new Uint8Array(11), descriptor(5, als)))
+              )
+            )
+          ]
+        ] as const) {
+          it(`preserves the fallback with ${name}`, async () => {
+            assert.equal((await parse(box('esds', data))).format.codec, 'MPEG-4/AAC');
+          });
+        }
+
+        for (const [name, data] of [
+          ['full-box header', new Uint8Array(3)],
+          ['descriptor length', concat(new Uint8Array(4), Uint8Array.of(3))],
+          ['oversized descriptor', concat(new Uint8Array(4), Uint8Array.of(3, 100))],
+          ['overlong length', concat(new Uint8Array(4), Uint8Array.of(3, 0x80, 0x80, 0x80, 0x80, 0))],
+          ['ES header', es(new Uint8Array(2))],
+          ['dependency field', es(Uint8Array.of(0, 1, 0x80))],
+          ['URL length', es(Uint8Array.of(0, 1, 0x40))],
+          ['URL value', es(Uint8Array.of(0, 1, 0x40, 10))],
+          ['OCR field', es(Uint8Array.of(0, 1, 0x20))],
+          ['decoder header', es(concat(new Uint8Array(3), descriptor(4, new Uint8Array(12))))],
+          ['empty AudioSpecificConfig', config(new Uint8Array())],
+          ['truncated escaped object type', config(Uint8Array.of(0xf8))]
+        ] as const) {
+          it(`rejects a truncated or malformed ${name}`, async () => {
+            await rejects(parse(box('esds', data)), Mp4ContentError);
+          });
+        }
+
+        for (const [name, data] of [
+          ['short header', new Uint8Array(7)],
+          ['short extended header', concat(Uint8Array.of(0, 0, 0, 1), new Uint8Array(11))],
+          ['undersized box', Uint8Array.of(0, 0, 0, 4, 0, 0, 0, 0)],
+          ['oversized box', Uint8Array.of(0, 0, 1, 0, 0, 0, 0, 0)],
+          ['oversized extended box', Uint8Array.of(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0)]
+        ] as const) {
+          it(`rejects a ${name} inside the sample entry`, async () => {
+            await rejects(parse(data), Mp4ContentError);
+          });
+        }
+
+        it('rejects a truncated version-1 sample entry', async () => {
+          await rejects(
+            mm.parseBuffer(
+              mp4({ handler: 'soun', dataFormat: 'mp4a', entrySize: 36, audioLike: true, audioVersion: 1 }),
+              'audio/mp4'
+            ),
+            Mp4ContentError
+          );
+        });
+
+        it('bounds the number of descriptors', async () => {
+          const data = concat(new Uint8Array(4), ...Array.from({ length: 65 }, () => descriptor(7, new Uint8Array())));
+          await rejects(parse(box('esds', data), { maxMetadataEntries: 64 }), /MP4 atom count exceeds entry limit/);
+        });
       });
 
       it('reports one track for multiple sample descriptions', async () => {
