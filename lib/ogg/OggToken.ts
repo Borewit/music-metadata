@@ -85,18 +85,10 @@ export const PageHeader: IGetToken<IPageHeader> = {
 
 export interface ISegmentTable {
   totalPageSize: number;
+  lacingValues: Uint8Array;
 }
 
 export class SegmentTable implements IGetToken<ISegmentTable> {
-  private static sum(buf: Uint8Array, off: number, len: number): number {
-    const dv = new DataView(buf.buffer, 0);
-    let s = 0;
-    for (let i = off; i < off + len; ++i) {
-      s += dv.getUint8(i);
-    }
-    return s;
-  }
-
   public len: number;
 
   constructor(header: IPageHeader) {
@@ -104,8 +96,10 @@ export class SegmentTable implements IGetToken<ISegmentTable> {
   }
 
   public get(buf: Uint8Array, off: number): ISegmentTable {
+    const lacingValues = Uint8Array.from(buf.subarray(off, off + this.len));
     return {
-      totalPageSize: SegmentTable.sum(buf, off, this.len)
+      totalPageSize: lacingValues.reduce((sum, length) => sum + length, 0),
+      lacingValues
     };
   }
 }
@@ -124,7 +118,7 @@ export interface IPageConsumer {
    * @param header Ogg page header
    * @param pageData Ogg page data
    */
-  parsePage(header: IPageHeader, pageData: Uint8Array): Promise<void>;
+  parsePage(header: IPageHeader, pageData: Uint8Array, lacingValues?: Uint8Array): Promise<void>;
 
   /**
    * Calculate duration of provided header

@@ -1,3 +1,4 @@
+import { rejects } from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -11,7 +12,9 @@ import { PageHeader, SegmentTable } from '../lib/ogg/OggToken.js';
 import { IdHeader } from '../lib/ogg/opus/Opus.js';
 import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
 import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
+import { UnexpectedFileContentError } from '../lib/ParseError.js';
 import { ParserFactory } from '../lib/ParserFactory.js';
+import type { IOptions } from '../lib/type.js';
 import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
@@ -353,6 +356,261 @@ describe('Parse Ogg', () => {
   });
 
   describe('Parsing Ogg/Flac', () => {
+    describe('Ogg/FLAC metadata packets', () => {
+      function uint32(value: number, little = false): Buffer {
+        const data = Buffer.alloc(4);
+        if (little) {
+          data.writeUInt32LE(value);
+        } else {
+          data.writeUInt32BE(value);
+        }
+        return data;
+      }
+
+      function block(type: number, body: Buffer, last = false): Buffer {
+        const header = Buffer.alloc(4);
+        header[0] = type | (last ? 0x80 : 0);
+        header.writeUIntBE(body.length, 1, 3);
+        return Buffer.concat([header, body]);
+      }
+
+      function comment(title: string, last = true): Buffer {
+        const text = Buffer.from(`TITLE=${title}`);
+        return block(4, Buffer.concat([uint32(0, true), uint32(1, true), uint32(text.length, true), text]), last);
+      }
+
+      function page(data: Buffer, lacing: number[], sequence: number, flags = 0, serial = 123): Buffer {
+        const header = Buffer.alloc(27);
+        header.write('OggS');
+        header[5] = flags;
+        header.writeUInt32LE(serial, 14);
+        header.writeUInt32LE(sequence, 18);
+        header[26] = lacing.length;
+        return Buffer.concat([header, Buffer.from(lacing), data]);
+      }
+
+      function lace(packet: Buffer): number[] {
+        return [...new Array(Math.floor(packet.length / 255)).fill(255), packet.length % 255];
+      }
+
+      function picture(): Buffer {
+        const mime = Buffer.from('image/jpeg');
+        const properties = Buffer.alloc(24);
+        properties.writeUInt32BE(1, 4);
+        properties.writeUInt32BE(1, 8);
+        properties.writeUInt32BE(24, 12);
+        properties.writeUInt32BE(4, 20);
+        return Buffer.concat([uint32(3), uint32(mime.length), mime, properties, Buffer.from([255, 216, 255, 217])]);
+      }
+
+      let identification: Buffer;
+      before(async () => {
+        const fixture = await readFile(path.join(samplePath, 'ogg/audio.flac.ogg'));
+        identification = Buffer.from(fixture.subarray(28, 79));
+        identification.writeUInt16BE(0, 7); // Unknown header count permits synthetic metadata layouts.
+      });
+
+      function fixture(...pages: Buffer[]): Buffer {
+        return Buffer.concat([page(identification, [51], 0, 2), ...pages]);
+      }
+
+      function parseMetadataPacket(packet: Buffer, options: IOptions = {}) {
+        return mm.parseBuffer(fixture(page(packet, lace(packet), 1, 4)), 'audio/ogg', options);
+      }
+
+      it('exposes the existing fixture title and native comments for files and streams', async () => {
+        const file = path.join(samplePath, 'ogg/audio.flac.ogg');
+        const data = await readFile(file);
+        for (const metadata of [
+          await mm.parseFile(file),
+          await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/ogg')
+        ]) {
+          assert.equal(metadata.common.title, 'audio.flac');
+          assert.includeDeepMembers(metadata.native.vorbis, [{ id: 'TITLE', value: 'audio.flac' }]);
+        }
+      });
+
+      // This playable sample has a comment spanning 16 pages. Its final metadata
+      // page finishes that comment, then holds padding (including a 255-byte
+      // packet with a zero lacing terminator), application, seektable, cuesheet
+      // and picture packets. Audio follows the metadata.
+      const metadataFixture = path.join(oggSamplePath, 'flac-metadata-packets.ogg');
+
+      for (const duration of [false, true]) {
+        for (const skipCovers of [false, true]) {
+          for (const parser of Parsers) {
+            it(`parses metadata packets from ${parser.description}, skipCovers=${skipCovers}, duration=${duration}`, async function () {
+              const metadata = await parser.parse(() => this.skip(), metadataFixture, 'audio/ogg', {
+                duration,
+                skipCovers
+              });
+              assert.equal(metadata.common.title, 'A'.repeat(4000));
+              assert.includeDeepMembers(metadata.native.vorbis, [{ id: 'TITLE', value: 'A'.repeat(4000) }]);
+              assert.equal(metadata.format.codec, 'FLAC');
+              assert.equal(metadata.format.sampleRate, 44100);
+              if (duration) {
+                assert.equal(metadata.format.numberOfSamples, 4410);
+                assert.equal(metadata.format.duration, 0.1);
+              }
+              assert.isEmpty(metadata.quality.warnings);
+              if (skipCovers) {
+                assert.isUndefined(metadata.common.picture);
+              } else {
+                const picture = metadata.common.picture[0];
+                assert.equal(picture.format, 'image/png');
+                assert.equal(picture.data.length, 69);
+                assert.deepEqual(picture.data.subarray(0, 8), Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]));
+              }
+            });
+          }
+        }
+      }
+
+      it('consumes the fixture without skipping following source bytes', async () => {
+        const data = await readFile(metadataFixture);
+        const tokenizer = fromBuffer(Buffer.concat([data, Buffer.from([99])]), {
+          fileInfo: { mimeType: 'audio/ogg' }
+        });
+        try {
+          const metadata = await mm.parseFromTokenizer(tokenizer, { duration: true });
+          assert.equal(metadata.common.title, 'A'.repeat(4000));
+          assert.equal(tokenizer.position, data.length);
+          const following = new Uint8Array(1);
+          await tokenizer.readBuffer(following);
+          assert.equal(following[0], 99);
+        } finally {
+          await tokenizer.close();
+        }
+      });
+
+      it('keeps packet assembly independent between logical streams', async () => {
+        const metadata = await mm.parseFile(path.join(oggSamplePath, 'flac-interleaved-metadata.ogg'), {
+          duration: true
+        });
+        assert.includeDeepMembers(metadata.native.vorbis, [
+          { id: 'TITLE', value: 'First'.repeat(60) },
+          { id: 'TITLE', value: 'Second' }
+        ]);
+        assert.isEmpty(metadata.quality.warnings);
+      });
+
+      for (const continued of [false, true]) {
+        it(`rejects inconsistent continuation (pending=${!continued})`, async () => {
+          const pages = continued ? [] : [page(Buffer.alloc(255), [255], 1)];
+          pages.push(page(Buffer.alloc(1), [1], 2, continued ? 5 : 4));
+          await rejects(mm.parseBuffer(fixture(...pages), 'audio/ogg'), UnexpectedFileContentError);
+        });
+      }
+
+      it('rejects truncated metadata at physical EOF', async () => {
+        const data = fixture(page(Buffer.alloc(255), [255], 1));
+        await rejects(mm.parseBuffer(data, 'audio/ogg'), UnexpectedFileContentError);
+      });
+
+      for (const length of [0, 3]) {
+        it(`rejects a ${length}-byte metadata header`, async () => {
+          await rejects(parseMetadataPacket(Buffer.alloc(length)), UnexpectedFileContentError);
+        });
+      }
+
+      it('rejects a block that declares bytes outside its packet', async () => {
+        const packet = block(4, Buffer.alloc(8), true);
+        packet.writeUIntBE(100, 1, 3);
+        await rejects(parseMetadataPacket(packet), UnexpectedFileContentError);
+      });
+
+      it('enforces the accumulated packet allocation limit', async () => {
+        const data = fixture(page(Buffer.alloc(255), [255], 1), page(Buffer.alloc(255), [255], 2, 1));
+        await rejects(mm.parseBuffer(data, 'audio/ogg', { maxMemoryAllocation: 300 }), UnexpectedFileContentError);
+      });
+
+      it('enforces buffered segment and decoded comment limits', async () => {
+        const data = fixture(page(Buffer.alloc(510), [255, 255], 1));
+        await rejects(mm.parseBuffer(data, 'audio/ogg', { maxMetadataEntries: 1 }), UnexpectedFileContentError);
+        const packet = block(
+          4,
+          Buffer.concat([uint32(0, true), uint32(2, true), uint32(0, true), uint32(0, true)]),
+          true
+        );
+        await rejects(parseMetadataPacket(packet, { maxMetadataEntries: 1 }), UnexpectedFileContentError);
+      });
+
+      for (const field of ['header', 'mime', 'description', 'data']) {
+        it(`rejects an invalid picture ${field} without a raw bounds error`, async () => {
+          let data = picture();
+          if (field === 'header') {
+            data = data.subarray(0, 31);
+          } else if (field === 'mime') {
+            data.writeUInt32BE(0xffffffff, 4);
+          } else if (field === 'description') {
+            data.writeUInt32BE(0xffffffff, 18);
+          } else {
+            data.writeUInt32BE(0xffffffff, data.length - 8);
+          }
+          const packet = block(6, data, true);
+          await rejects(parseMetadataPacket(packet), UnexpectedFileContentError);
+        });
+      }
+
+      for (const fault of ['length', 'marker', 'version', 'stream-type', 'stream-length']) {
+        it(`rejects an invalid identification ${fault}`, async () => {
+          let packet = Buffer.from(identification);
+          switch (fault) {
+            case 'length':
+              packet = packet.subarray(0, 50);
+              break;
+            case 'marker':
+              packet[0] = 0;
+              break;
+            case 'version':
+              packet[5] = 2;
+              break;
+            case 'stream-type':
+              packet[13] = 1;
+              break;
+            case 'stream-length':
+              packet[16] = 33;
+              break;
+          }
+          await rejects(mm.parseBuffer(page(packet, lace(packet), 0, 2), 'audio/ogg'), UnexpectedFileContentError);
+        });
+      }
+
+      it('rejects repeated STREAMINFO after identification', async () => {
+        const packet = block(0, Buffer.alloc(34), true);
+        await rejects(parseMetadataPacket(packet), UnexpectedFileContentError);
+      });
+
+      it('rejects a page whose lacing does not account for its payload', async () => {
+        // Inconsistent lacing/payload arguments cannot be produced by the public parser.
+        const parser = new FlacStream(new MetadataCollector({}), {}, fromBuffer(new Uint8Array()));
+        const header = PageHeader.get(Buffer.alloc(27), 0);
+        await parser.parsePage(header, identification, Uint8Array.from([51]));
+        await rejects(parser.parsePage(header, Buffer.alloc(4), Uint8Array.from([3])), UnexpectedFileContentError);
+      });
+
+      it('rejects a stream ending before the metadata-end marker', async () => {
+        await rejects(parseMetadataPacket(comment('Not final', false)), UnexpectedFileContentError);
+      });
+
+      it('reports unknown metadata blocks while preserving following metadata', async () => {
+        const packets = [block(99, Buffer.alloc(3)), comment('After unknown block')];
+        const data = fixture(page(Buffer.concat(packets), packets.flatMap(lace), 1, 4));
+        const metadata = await mm.parseBuffer(data, 'audio/ogg');
+        assert.equal(metadata.common.title, 'After unknown block');
+        assert.deepEqual(metadata.quality.warnings, [{ message: 'Unknown block type: 99' }]);
+      });
+
+      it('calculates lacing at nonzero token and view offsets', () => {
+        const header = PageHeader.get(Buffer.alloc(27), 0);
+        header.page_segments = 2;
+        const data = Uint8Array.from([99, 88, 0, 255, 4, 77]).subarray(1);
+        const table = new SegmentTable(header).get(data, 2);
+        assert.equal(table.totalPageSize, 259);
+        assert.deepEqual(table.lacingValues, Uint8Array.from([255, 4]));
+      });
+    });
+
     describe('truncated stream with an unknown final granule position', () => {
       // Ogg framing: absolute granule position -1 means no packet finishes on this page.
       // The fixture ends before the early-stop threshold, so both options reach EOF.

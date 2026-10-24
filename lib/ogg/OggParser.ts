@@ -98,7 +98,7 @@ class OggStream {
     }
 
     if (this.pageConsumer) {
-      await this.pageConsumer.parsePage(header, pageData);
+      await this.pageConsumer.parsePage(header, pageData, segmentTable.lacingValues);
     } else {
       throw new Error('pageConsumer should be initialized');
     }
