@@ -1,7 +1,9 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import { fromBuffer } from 'strtok3';
 import { AiffContentError } from '../lib/aiff/AiffToken.js';
 import * as mm from '../lib/index.js';
 import { UnexpectedFileContentError } from '../lib/index.js';
@@ -295,4 +297,106 @@ describe('AIFF sound-data bitrate', () => {
       await expect(parse(data)).to.be.rejectedWith(AiffContentError, 'SSND chunk is too small');
     });
   }
+});
+
+describe('AIFC duration regression', () => {
+  const samples = [
+    { name: 'openclaw-ima4-mono.aifc', frames: 28224, channels: 1, bytes: 14994 },
+    { name: 'openclaw-ima4-stereo.aifc', frames: 28224, channels: 2, bytes: 29988 },
+    { name: 'openclaw-ima4-decoded-frames.aifc', frames: 28224, channels: 1, bytes: 14994 },
+    { name: 'openclaw-ima4-malformed-packets.aifc', frames: 441, channels: 1, bytes: 14995 },
+    {
+      name: 'openclaw-alaw.aifc',
+      frames: 441,
+      channels: 1,
+      bytes: 441,
+      codec: 'ALaw 2:1\t8-bit ITU-T G.711 A-law'
+    },
+    {
+      name: 'openclaw-ulaw.aifc',
+      frames: 441,
+      channels: 1,
+      bytes: 441,
+      codec: 'µLaw 2:1\t8-bit ITU-T G.711 µ-law\tApple Computer'
+    },
+    { name: 'ima4-sound-first-offset.aifc', frames: 28224, channels: 1, bytes: 14994 }
+  ];
+
+  for (const sample of samples) {
+    for (const parser of Parsers) {
+      it(`${sample.name} (${parser.description})`, async function () {
+        const { format } = await parser.parse(
+          () => this.skip(),
+          path.join(samplePath, 'aiff', sample.name),
+          'audio/aiff',
+          { duration: true }
+        );
+        assert.strictEqual(format.codec, sample.codec ?? 'IMA4 ADPCM');
+        assert.strictEqual(format.numberOfChannels, sample.channels);
+        assert.strictEqual(format.numberOfSamples, sample.frames);
+        assert.strictEqual(format.duration, sample.frames / 44100);
+        assert.strictEqual(format.bitrate, (8 * sample.bytes) / (sample.frames / 44100));
+      });
+    }
+  }
+
+  let data: Buffer;
+  before(async () => {
+    data = await readFile(path.join(samplePath, 'aiff', 'openclaw-ima4-mono.aifc'));
+  });
+
+  for (const field of ['channels', 'frames', 'sample rate', 'packet count']) {
+    it(`does not expand an invalid or uncorroborated ${field}`, async () => {
+      const input = Buffer.from(data);
+      const common = input.indexOf('COMM') + 8;
+      if (field === 'channels') {
+        input.writeUInt16BE(0, common);
+      }
+      if (field === 'frames') {
+        input.writeUInt32BE(0, common + 2);
+      }
+      if (field === 'sample rate') {
+        input.fill(0, common + 8, common + 18);
+      }
+      if (field === 'packet count') {
+        input.writeUInt32BE(442, common + 2);
+      }
+      const { format } = await mm.parseBuffer(input, 'audio/aiff');
+      assert.strictEqual(format.numberOfSamples, field === 'frames' ? 0 : field === 'packet count' ? 442 : 441);
+    });
+  }
+
+  it('does not expand counts without SSND', async () => {
+    const input = Buffer.from(data);
+    input.write('JUNK', input.indexOf('SSND'));
+    const { format } = await mm.parseBuffer(input, 'audio/aiff');
+    assert.strictEqual(format.numberOfSamples, 441);
+    assert.strictEqual(format.duration, 0.01);
+  });
+
+  it('does not expand a physically truncated unknown-size stream', async () => {
+    const sound = data.indexOf('SSND') + 8;
+    const { format } = await mm.parseStream(
+      Readable.from([data.subarray(0, sound + 8 + 34)], { objectMode: false }),
+      'audio/aiff'
+    );
+    assert.strictEqual(format.numberOfSamples, 441);
+    assert.strictEqual(format.duration, 0.01);
+  });
+
+  it('preserves caller-owned tokenizer position and lifetime', async () => {
+    const input = Buffer.concat([data, Buffer.from('trailing')]);
+    const tokenizer = fromBuffer(input, { fileInfo: { mimeType: 'audio/aiff' } });
+    try {
+      const { format } = await mm.parseFromTokenizer(tokenizer);
+      assert.strictEqual(format.numberOfSamples, 28224);
+      assert.strictEqual(format.duration, 0.64);
+      assert.strictEqual(tokenizer.position, data.length);
+      const tail = Buffer.alloc(8);
+      await tokenizer.readBuffer(tail);
+      assert.strictEqual(tail.toString(), 'trailing');
+    } finally {
+      await tokenizer.close();
+    }
+  });
 });

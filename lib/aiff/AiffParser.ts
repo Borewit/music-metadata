@@ -21,6 +21,8 @@ const debug = initDebug('music-metadata:parser:aiff');
 export class AIFFParser extends BasicParser {
   private isCompressed: boolean | null = null;
   private soundDataBytes: number | undefined;
+  private soundDataComplete = false;
+  private common: AiffToken.ICommon | undefined;
 
   public async parse(): Promise<void> {
     const header = await this.readToken<iff.IChunkHeader>(iff.Header);
@@ -67,7 +69,10 @@ export class AIFFParser extends BasicParser {
 
         const nextChunk = 2 * Math.round(chunkHeader.chunkSize / 2);
         const bytesRead = await this.readData(chunkHeader);
-        await this.tokenizer.ignore(nextChunk - bytesRead);
+        const ignored = await this.tokenizer.ignore(nextChunk - bytesRead);
+        if (chunkHeader.chunkID === 'SSND') {
+          this.soundDataComplete = ignored === nextChunk - bytesRead;
+        }
         remaining -= nextChunk;
       }
     } catch (err) {
@@ -76,6 +81,23 @@ export class AIFFParser extends BasicParser {
       } else {
         throw err;
       }
+    }
+
+    // Apple IMA4 COMM stores packet counts; some encoders already store decoded
+    // frames. Only expand counts corroborated by the complete SSND payload.
+    // Each packet contains 64 frames in 34 bytes per channel.
+    const common = this.common;
+    if (
+      common?.compressionType === 'ima4' &&
+      common.numChannels > 0 &&
+      common.numSampleFrames > 0 &&
+      common.sampleRate > 0 &&
+      this.soundDataComplete &&
+      this.soundDataBytes === common.numSampleFrames * common.numChannels * 34
+    ) {
+      const samples = common.numSampleFrames * 64;
+      this.metadata.setFormat('numberOfSamples', samples);
+      this.metadata.setFormat('duration', samples / common.sampleRate);
     }
 
     // COMM and SSND can appear in either order.
@@ -93,6 +115,7 @@ export class AIFFParser extends BasicParser {
           throw new AiffContentError('Failed to parse AIFF.COMM chunk when compression type is unknown');
         }
         const common = await this.readToken<AiffToken.ICommon>(new AiffToken.Common(header, this.isCompressed));
+        this.common = common;
         this.metadata.setFormat('bitsPerSample', common.sampleSize);
         this.metadata.setFormat('sampleRate', common.sampleRate);
         this.metadata.setFormat('numberOfChannels', common.numChannels);
@@ -114,6 +137,7 @@ export class AIFFParser extends BasicParser {
       }
 
       case 'SSND': {
+        this.soundDataComplete = false;
         if (header.chunkSize < AiffToken.SoundDataHeader.len) {
           throw new AiffContentError('SSND chunk is too small to contain its header');
         }
