@@ -126,7 +126,9 @@ export class ID3v2Parser {
       this.id3Header.version.major === 4
         ? await this.tokenizer.readToken(UINT32SYNCSAFE)
         : (await this.tokenizer.readToken(Token.UINT32_BE)) + 4;
-    if (extendedHeaderSize < 4 || extendedHeaderSize > this.id3Header.size) {
+    // An ID3v2.3 extended header takes at least 10 bytes, an ID3v2.4 one at least 6
+    const minimumSize = this.id3Header.version.major === 4 ? 6 : 10;
+    if (extendedHeaderSize < minimumSize || extendedHeaderSize > this.id3Header.size) {
       throw new Id3v2ContentError(`Invalid ID3v2 extended header size: ${extendedHeaderSize}`);
     }
     return this.parseExtendedHeaderData(extendedHeaderSize - 4, extendedHeaderSize);
