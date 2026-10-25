@@ -33,16 +33,6 @@ export const AttachedPictureType = {
 
 export type ID3v2MajorVersion = 2 | 3 | 4;
 
-export interface IExtendedHeader {
-  // Extended header size
-  size: number;
-  extendedFlags: number;
-  // Size of padding
-  sizeOfPadding: number;
-  // CRC data present
-  crcDataPresent: boolean;
-}
-
 /**
  * https://id3.org/id3v2.3.0#Synchronised_lyrics.2Ftext
  */
@@ -127,23 +117,6 @@ export const ID3v2Header: IGetToken<IID3v2header> = {
         footer: util.getBit(buf, off + 5, 4)
       },
       size: UINT32SYNCSAFE.get(buf, off + 6)
-    };
-  }
-};
-
-export const ExtendedHeader: IGetToken<IExtendedHeader> = {
-  len: 10,
-
-  get: (buf, off): IExtendedHeader => {
-    return {
-      // Extended header size
-      size: Token.UINT32_BE.get(buf, off),
-      // Extended Flags
-      extendedFlags: Token.UINT16_BE.get(buf, off + 4),
-      // Size of padding
-      sizeOfPadding: Token.UINT32_BE.get(buf, off + 6),
-      // CRC data present
-      crcDataPresent: util.getBit(buf, off + 4, 31)
     };
   }
 };
