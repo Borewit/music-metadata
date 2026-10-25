@@ -15,6 +15,7 @@ export const riffInfoTagMap: INativeTagMap = {
   IPRT: 'track', // Additional tag for track index
   COMM: 'comment', // Comments
   ICMT: 'comment', // Country
+  ICOP: 'copyright',
   ICNT: 'releasecountry',
   GNRE: 'genre', // Genre
   IWRI: 'writer', // WrittenBy
