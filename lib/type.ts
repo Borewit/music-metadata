@@ -597,19 +597,24 @@ export interface IChapter {
    */
   sampleOffset?: number;
   /**
-   * Timestamp where the chapter starts
-   * Chapter timestamp is start/timeScale in seconds.
+   * Timestamp where the chapter starts, in units of timeScale.
+   * Convert to seconds with start / (timeScale ?? 1).
+   * When timeScale is omitted, start is already in seconds.
    */
   start: number;
 
   /**
-   * Timestamp where the chapter end
-   * Chapter timestamp is start/timeScale in seconds.
+   * Timestamp where the chapter ends, in units of timeScale, when available.
+   * Convert to seconds with end / (timeScale ?? 1).
+   * When timeScale is omitted, end is already in seconds.
    */
   end?: number;
 
   /**
-   * Time value that indicates the timescale for chapter tracks, the number of time units that pass per second in its time coordinate system.
+   * Number of timestamp units per second for start and end; defaults to 1 when omitted.
+   * ID3v2 chapters omit this field and use seconds. QuickTime chapters use their
+   * chapter track's timescale; Nero chapters use 10,000,000 units per second.
+   * This timescale is independent of the audio sample rate.
    */
   timeScale?: number;
 

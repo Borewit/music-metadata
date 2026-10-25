@@ -1317,6 +1317,10 @@ export class MP4Parser extends BasicParser {
     mediaDataRanges: IMediaDataRange[],
     forwardOnly: boolean
   ): Promise<void> {
+    const timeScale = chapterTrack.media.header?.timeScale;
+    if (timeScale === undefined || timeScale <= 0) {
+      throw new Mp4ContentError('Invalid chapter track timescale');
+    }
     const sampleCount = Math.min(chapterTrack.sampleCount, this.maxChapterCount);
     if (chapterTrack.sampleCount > this.maxChapterCount) {
       this.addWarning(`Chapter count exceeds the ${this.maxChapterCount} chapter limit`);
@@ -1373,7 +1377,7 @@ export class MP4Parser extends BasicParser {
                 : await this.readToken(new AtomToken.ChapterText(size), offset);
             const chapter: IChapter = {
               title,
-              timeScale: chapterTrack.media.header?.timeScale ?? 0,
+              timeScale,
               start
             };
             if (
