@@ -4268,17 +4268,41 @@ describe('Parse MPEG-4', () => {
             assert.strictEqual(titleReads, 0);
           });
         }
-        it('retains chapter titles and raw times when the chapter media header is unavailable', async () => {
-          const buffer = audiobook();
-          const at = buffer.indexOf('mdhd', buffer.indexOf('mdhd') + 4);
-          buffer.write('free', at);
-          const metadata = await mm.parseBuffer(buffer, 'audio/mp4', { includeChapters: true });
-          assert.strictEqual(metadata.format.duration, 90);
-          assert.deepEqual(
-            chapterList(metadata),
-            expected.map(chapter => ({ ...chapter, timeScale: 0 }))
-          );
-        });
+        for (const header of ['missing', 'zero timescale']) {
+          for (const version of [0, 1]) {
+            for (const stream of [false, true]) {
+              for (const neroVersion of [undefined, 1]) {
+                it(`${neroVersion === undefined ? 'rejects' : 'falls back to Nero for'} a ${header} chapter media header v${version} (${stream ? 'stream' : 'buffer'})`, async () => {
+                  const buffer = audiobook({ version, neroVersion });
+                  const at = buffer.indexOf('mdhd', buffer.indexOf('mdhd') + 4);
+                  if (header === 'missing') {
+                    // Preserve box sizes and offsets while removing only the chapter header.
+                    buffer.write('free', at);
+                  } else {
+                    buffer.writeUInt32BE(0, at + (version ? 24 : 16));
+                  }
+                  const options = { includeChapters: true };
+                  const parse = stream
+                    ? mm.parseStream(Readable.from([buffer], { objectMode: false }), 'audio/mp4', options)
+                    : mm.parseBuffer(buffer, 'audio/mp4', options);
+                  if (neroVersion === undefined) {
+                    await rejects(
+                      parse,
+                      error => error instanceof Mp4ContentError && /Invalid chapter track timescale/.test(error.message)
+                    );
+                  } else {
+                    const metadata = await parse;
+                    assert.strictEqual(metadata.format.duration, 90);
+                    assert.deepEqual(chapterList(metadata), expectedNero);
+                    assert.includeDeepMembers(metadata.quality.warnings, [
+                      { message: 'Cannot read chapter track: Invalid chapter track timescale' }
+                    ]);
+                  }
+                });
+              }
+            }
+          }
+        }
         it('rejects a chapter offset outside media data when no Nero list is available', async () => {
           const buffer = audiobook();
           const at = buffer.indexOf('stco', buffer.indexOf('stco') + 4) + 12;

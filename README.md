@@ -704,6 +704,43 @@ Audio format information. Defined in the TypeScript `IFormat` interface:
 - `format.modificationTime?: Date` Track modification / tag update time
 - `format.trackGain?: number` Track gain in dB
 - `format.albumGain?: number` Album gain in dB
+- [`format.chapters?: IChapter[]`](#metadataformatchapters) Chapter titles and timestamps, when available
+
+#### `metadata.format.chapters`
+
+Chapters use the `IChapter` interface. For MP4 QuickTime and Nero chapter lists,
+set `includeChapters: true` when parsing. Each chapter has a `title` (which can be
+empty), a `start` timestamp, and an optional `end` timestamp.
+
+Use the chapter's own `timeScale` to convert both timestamps to seconds. When
+`timeScale` is omitted, its default is **1**: timestamps are already in seconds.
+Do not assume that every chapter uses milliseconds or the audio sample rate.
+A QuickTime chapter track with a missing or zero timescale is rejected; an
+available Nero chapter list is used instead.
+
+| Chapter source | Timestamp units | `timeScale` |
+| --- | --- | --- |
+| ID3v2 CHAP | Seconds | Omitted (equivalent to `1`) |
+| MP4 QuickTime chapter track | Chapter track time units | Chapter track's timescale |
+| MP4 Nero `chpl` | 100-nanosecond units | `10000000` |
+
+```js
+import { parseFile } from 'music-metadata';
+
+const { format } = await parseFile('audiobook.m4b', { includeChapters: true });
+const chapters = (format.chapters ?? []).map(chapter => {
+  const timeScale = chapter.timeScale ?? 1;
+  return {
+    title: chapter.title,
+    startSeconds: chapter.start / timeScale,
+    endSeconds: chapter.end === undefined ? undefined : chapter.end / timeScale
+  };
+});
+```
+
+An omitted `end` means the parser did not provide an end timestamp. Applications
+that need chapter ends must choose how to derive missing values. `sampleOffset`,
+when present, is a separate audio sample position; it is not the timestamp scale.
 
 #### `metadata.format.trackInfo`
 
@@ -724,41 +761,16 @@ for (const track of videoTracks) {
 console.log(format.containerDuration, format.overallBitrate);
 ```
 
-Each entry describes one discovered track. The order follows container discovery and does not identify
-a preferred track; use `type`, container flags, and language to choose one. In MPEG-4, the codec and
-media properties describe the first sample description, even when the track has multiple sample descriptions. In Ogg, entries describe
-logical media streams; Skeleton headers do not create media tracks. Single-stream audio parsers map
-their format properties to one audio track after parsing.
+Each entry describes one track, with its codec, language, duration, bitrate and
+available audio or video properties. Choose tracks by type, language and selection
+flags; their order does not indicate a preferred track.
 
-Properties are optional when unavailable and are not copied between tracks. In particular, a container
-or summary bitrate is not a per-track bitrate. The existing `format.duration` and `format.bitrate`
-fields retain their summary semantics. Use `containerDuration` for the complete presentation and
-`overallBitrate` for the actual file size multiplied by eight and divided by that duration. These
-statistics remain unset when timing is unavailable; `overallBitrate` also requires a known input size.
+Track properties describe the individual stream, and fields may be absent when
+information is unavailable. Set `duration: true` when you need timing information;
+this can require reading beyond the initial metadata.
 
-MPEG-4 derives audio and video timing from media headers, sample tables, and fragments, including
-fragment defaults and decode timestamps. Track bitrates use sample sizes and duration; video properties
-include encoded dimensions, display dimensions, and average frame rate. ASF supplies stream dimensions,
-stream bitrates, and extended stream timing and frame rate when present. Standalone and nested Stream
-Properties Objects describe actual streams; Codec List entries supply names without creating unused tracks.
-
-Matroska applies specified defaults for flags, language, channels, and sample rate, and prefers IETF
-language tags when present. Track statistics tags provide duration, bitrate, and frame count; without
-these tags, per-track timing may be unavailable even when segment duration is known. Media clusters
-are not scanned to calculate missing track statistics.
-
-Ogg/Theora duration comes from granule positions. Set `duration: true` to allow scanning beyond the
-initial metadata pages. Once a video stream has been fully read, its average bitrate uses that logical
-stream's payload bytes, including codec headers and excluding Ogg framing and other streams. Resolution
-and frame rate are available from the identification header. Audio streams retain their own codec
-bitrate semantics.
-
-For Ogg/Opus, the per-track average bitrate uses the logical stream's payload bytes, including codec
-headers and excluding Ogg framing and other streams. It requires the logical stream's end-of-stream
-(EOS) page and a known duration; reaching input EOF alone is insufficient. Set `duration: true` to
-allow scanning when needed. The summary `format.bitrate` retains
-its existing file-size estimate and can differ from the per-track bitrate. Vorbis and Speex use nominal
-bitrates when their headers provide them.
+Use `format.containerDuration` and `format.overallBitrate` for the complete file's
+duration and average bitrate.
 
 `metadata.format.trackInfo` is an array of [trackInfo](#trackinfo) objects, empty when no track information is available.
 
