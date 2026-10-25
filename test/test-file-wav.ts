@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { assert, expect } from 'chai';
-import { fromBuffer, fromStream } from 'strtok3';
+import { fromBuffer, fromFile, fromStream } from 'strtok3';
 import type { IFormat, INativeTagDict } from '../lib/index.js';
 import * as mm from '../lib/index.js';
 import { Parsers } from './metadata-parsers.js';
@@ -149,6 +149,94 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.strictEqual(format.bitrate, 2304000, 'format.bitrate = 2304000 bits/s');
     assert.strictEqual(format.numberOfSamples, 363448);
     assert.strictEqual(metadata.format.duration!, format.numberOfSamples! / format.sampleRate!, "file's duration");
+  });
+
+  describe('RIFF INFO copyright and source semantics', () => {
+    const cases = [
+      ['latin1', '© 2026 Mötley', '© 2026 Mötley'],
+      ['windows1252', '© 2026 “Mötley” – 10 €', '© 2026 “Mötley” – 10 €'],
+      ['utf8-after-info', '© 2026 音楽', '© 2026 音楽'],
+      ['no-terminator', '© 2026X', '© 2026X'],
+      ['id3-first', '© 2026 ID3', '© 2026 INFO'],
+      ['info-first', '© 2026 ID3', '© 2026 INFO €'],
+      ['repeated', '© 2026 Mötley', '© 2026 Mötley']
+    ];
+    for (const [name, copyright, infoCopyright] of cases) {
+      for (const parser of Parsers) {
+        it(`${name} (${parser.description})`, async function () {
+          const { common, native, format } = await parser.parse(
+            () => this.skip(),
+            path.join(wavSamples, `info-copyright-${name}.wav`),
+            'audio/wav'
+          );
+          assert.strictEqual(common.copyright, copyright);
+          assert.strictEqual(common.title, 'After copyright');
+          assert.strictEqual(format.numberOfSamples, 800);
+          assert.strictEqual(format.duration, 0.1);
+          const exif = mm.orderTags(native.exif);
+          assert.deepEqual(exif.ICOP, name === 'repeated' ? ['First copyright', infoCopyright] : [infoCopyright]);
+          assert.deepEqual(
+            exif.ISRC,
+            ['USXYZ2600002'],
+            'RIFF source is preserved even when it resembles a recording code'
+          );
+          if (name === 'id3-first' || name === 'info-first') {
+            const id3 = mm.orderTags(native['ID3v2.3']);
+            assert.deepEqual(id3.TCOP, ['© 2026 ID3']);
+            assert.deepEqual(id3.TSRC, ['USABC2600001']);
+            assert.deepEqual(common.isrc, ['USABC2600001']);
+          } else {
+            assert.isUndefined(common.isrc, 'RIFF source/supplier is not a recording identifier');
+          }
+        });
+      }
+    }
+    for (const [name, copyright] of [
+      ['riff_adobe_audition.wav', 'Copyright 2018'],
+      ['issue-161.wav', '2018']
+    ]) {
+      for (const parser of Parsers) {
+        it(`maps existing ${name} (${parser.description})`, async function () {
+          const { common, native } = await parser.parse(() => this.skip(), path.join(samplePath, name), 'audio/wav');
+          assert.strictEqual(common.copyright, copyright);
+          assert.deepEqual(mm.orderTags(native.exif).ICOP, [copyright]);
+          assert.isUndefined(common.isrc);
+        });
+      }
+    }
+    for (const parser of Parsers) {
+      it(`omits unsupported-code-page copyright (${parser.description})`, async function () {
+        const { common, native, quality, format } = await parser.parse(
+          () => this.skip(),
+          path.join(wavSamples, 'info-copyright-unsupported.wav'),
+          'audio/wav'
+        );
+        assert.isUndefined(common.copyright);
+        assert.isUndefined(common.isrc);
+        assert.isUndefined(native.exif);
+        assert.strictEqual(format.numberOfSamples, 800);
+        assert.includeDeepMembers(quality.warnings, [
+          { message: 'Unsupported RIFF CSET code page: 1251; LIST/INFO tags will be omitted' }
+        ]);
+      });
+    }
+    it('preserves the lifetime of a caller-owned tokenizer', async () => {
+      const tokenizer = await fromFile(path.join(wavSamples, 'info-copyright-utf8-after-info.wav'));
+      const close = tokenizer.close.bind(tokenizer);
+      let closed = false;
+      tokenizer.close = async () => {
+        closed = true;
+        await close();
+      };
+      try {
+        const { common } = await mm.parseFromTokenizer(tokenizer);
+        assert.strictEqual(common.copyright, '© 2026 音楽');
+        assert.isFalse(closed);
+        assert.isAbove(tokenizer.position, 0);
+      } finally {
+        await close();
+      }
+    });
   });
 
   describe('LIST/INFO character encoding', () => {
