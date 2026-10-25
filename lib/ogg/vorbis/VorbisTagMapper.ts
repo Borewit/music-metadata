@@ -1,5 +1,7 @@
 import { CommonTagMapper } from '../../common/GenericTagMapper.js';
-import type { INativeTagMap } from '../../common/GenericTagTypes.js';
+import type { IGenericTag, INativeTagMap } from '../../common/GenericTagTypes.js';
+
+import type { IWarningCollector } from '../../common/MetadataCollector.js';
 
 import type { IRating, ITag } from '../../type.js';
 
@@ -122,6 +124,8 @@ const vorbisTagMap: INativeTagMap = {
 };
 
 export class VorbisTagMapper extends CommonTagMapper {
+  private hasStandardDate = false;
+
   public static toRating(email: string | undefined | null, rating: string, maxScore: number): IRating {
     return {
       source: email ? email.toLowerCase() : undefined,
@@ -131,6 +135,18 @@ export class VorbisTagMapper extends CommonTagMapper {
 
   public constructor() {
     super(['vorbis'], vorbisTagMap);
+  }
+
+  public override mapGenericTag(tag: ITag, warnings: IWarningCollector): IGenericTag | null {
+    if (tag.id === 'DATE') {
+      if (typeof tag.value !== 'string' || tag.value.trim().length === 0) {
+        return null;
+      }
+      this.hasStandardDate = true;
+    } else if (tag.id === 'DISCOGS_RELEASED' && this.hasStandardDate) {
+      return null;
+    }
+    return super.mapGenericTag(tag, warnings);
   }
 
   protected postMap(tag: ITag): void {

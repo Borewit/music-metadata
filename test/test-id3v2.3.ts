@@ -1,4 +1,6 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { assert, expect } from 'chai';
 import * as strtok from 'strtok3';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
@@ -10,6 +12,241 @@ import * as mm from '../lib/index.js';
 import { samplePath } from './util.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
+  describe('recording dates', () => {
+    const samples = [
+      ["MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3", '2011-09-27'],
+      ["MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3", '2011-09-27'],
+      ['mp3/id3v2.3-recording-time.mp3', '2011-09-27T23:59'],
+      ['mp3/id3v2.3-recording-explicit.mp3', '2020-06']
+    ];
+    for (const api of ['file', 'buffer', 'stream', 'web stream', 'blob', 'tokenizer']) {
+      for (const [name, date] of samples) {
+        it(`preserves ${date} from ${name} (${api})`, async () => {
+          const filePath = path.join(samplePath, name);
+          const data = await readFile(filePath);
+          const blob = new Blob([data], { type: 'audio/mpeg' });
+          const tokenizer = strtok.fromBuffer(data);
+          let closed = false;
+          tokenizer.close = async () => {
+            closed = true;
+          };
+          const metadata = await (api === 'file'
+            ? mm.parseFile(filePath)
+            : api === 'buffer'
+              ? mm.parseBuffer(data, 'audio/mpeg')
+              : api === 'stream'
+                ? mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mpeg')
+                : api === 'web stream'
+                  ? mm.parseWebStream(blob.stream(), 'audio/mpeg')
+                  : api === 'blob'
+                    ? mm.parseBlob(blob)
+                    : mm.parseFromTokenizer(tokenizer));
+          assert.strictEqual(metadata.common.date, date);
+          assert.strictEqual(metadata.common.year, Number(date.slice(0, 4)));
+          if (name.includes('recording-')) {
+            assert.strictEqual(metadata.native['ID3v2.3'].length, name.includes('explicit') ? 4 : 3);
+            assert.deepEqual(mm.orderTags(metadata.native['ID3v2.3']).TYER, ['2011']);
+          }
+          if (api === 'tokenizer') {
+            assert.isFalse(closed, 'caller retains tokenizer ownership');
+            assert.isAtLeast(tokenizer.position, 10);
+          }
+        });
+      }
+    }
+
+    const cases: [string, [string, string][], string | undefined][] = [
+      ['year only', [['TYER', '2011']], '2011'],
+      [
+        'empty trailing Discogs date',
+        [
+          ['TXXX', 'DISCOGS_RELEASED\0' + '2011-09-27'],
+          ['TXXX', 'DISCOGS_RELEASED\0'],
+          ['TYER', '2011']
+        ],
+        '2011-09-27'
+      ],
+      [
+        'empty explicit',
+        [
+          ['TDRC', ''],
+          ['TYER', '2011']
+        ],
+        '2011'
+      ],
+      [
+        'undecodable explicit with year',
+        [
+          ['TDRC', 'invalid'],
+          ['TYER', '2011']
+        ],
+        '2011'
+      ],
+      [
+        'undecodable explicit with alias',
+        [
+          ['TDRC', 'invalid'],
+          ['TDRV', '2020-06']
+        ],
+        '2020-06'
+      ],
+      [
+        'Discogs date',
+        [
+          ['TXXX', 'DISCOGS_RELEASED\0' + '2011-09-27'],
+          ['TYER', '2011']
+        ],
+        '2011-09-27'
+      ],
+      [
+        'date before year',
+        [
+          ['TDAT', '2709'],
+          ['TYER', '2011']
+        ],
+        '2011-09-27'
+      ],
+      [
+        'time without date',
+        [
+          ['TYER', '2011'],
+          ['TIME', '1234']
+        ],
+        '2011'
+      ],
+      [
+        'missing year',
+        [
+          ['TDAT', '2709'],
+          ['TIME', '1234']
+        ],
+        undefined
+      ],
+      [
+        'short year',
+        [
+          ['TYER', '201'],
+          ['TDAT', '2709']
+        ],
+        undefined
+      ],
+      [
+        'nonnumeric year',
+        [
+          ['TYER', '201x'],
+          ['TDAT', '2709']
+        ],
+        undefined
+      ],
+      [
+        'leap day',
+        [
+          ['TYER', '2024'],
+          ['TDAT', '2902'],
+          ['TIME', '0000']
+        ],
+        '2024-02-29T00:00'
+      ],
+      [
+        'leap century',
+        [
+          ['TYER', '2000'],
+          ['TDAT', '2902']
+        ],
+        '2000-02-29'
+      ],
+      [
+        'nonleap century',
+        [
+          ['TYER', '1900'],
+          ['TDAT', '2902']
+        ],
+        '1900'
+      ],
+      [
+        'nonleap year',
+        [
+          ['TYER', '2011'],
+          ['TDAT', '2902']
+        ],
+        '2011'
+      ],
+      ...['3104', '0001', '3201', '0100', '0113', '27x9', '279'].map(
+        value =>
+          [
+            `invalid date ${value}`,
+            [
+              ['TYER', '2011'],
+              ['TDAT', value]
+            ],
+            '2011'
+          ] as [string, [string, string][], string]
+      ),
+      ...['2400', '1260', '1x00', '123'].map(
+        value =>
+          [
+            `invalid time ${value}`,
+            [
+              ['TYER', '2011'],
+              ['TDAT', '2709'],
+              ['TIME', value]
+            ],
+            '2011-09-27'
+          ] as [string, [string, string][], string]
+      ),
+      [
+        'explicit last',
+        [
+          ['TYER', '2011'],
+          ['TDAT', '2709'],
+          ['TDRC', '2020']
+        ],
+        '2020'
+      ],
+      [
+        'existing TDRV alias',
+        [
+          ['TDRV', '2020-06'],
+          ['TYER', '2011']
+        ],
+        '2020-06'
+      ]
+    ];
+    for (const [name, frames, date] of cases) {
+      it(`retains available precision and native tags: ${name}`, async () => {
+        const source = await readFile(path.join(samplePath, 'mp3/id3v2.3-recording-time.mp3'));
+        const sourceSize = source.subarray(6, 10).reduce((size, byte) => (size << 7) | byte, 0);
+        const body = Buffer.concat(
+          frames.map(([id, value]) => {
+            const text =
+              name.startsWith('undecodable') && id === 'TDRC'
+                ? Buffer.from([2, 0]) // Odd-length UTF-16BE retains a warning and no decoded values.
+                : Buffer.from(`\0${value}`);
+            const header = Buffer.alloc(10);
+            header.write(id);
+            header.writeUInt32BE(text.length, 4);
+            return Buffer.concat([header, text]);
+          })
+        );
+        const header = Buffer.from([73, 68, 51, 3, 0, 0, 0, 0, body.length >> 7, body.length & 127]);
+        const data = Buffer.concat([header, body, source.subarray(10 + sourceSize)]);
+        const { common, native, quality } = await mm.parseBuffer(data, 'audio/mpeg');
+        assert.strictEqual(common.date, date);
+        if (name.startsWith('undecodable')) {
+          assert.match(quality.warnings[0].message, /TDRC header has invalid string value/);
+        }
+        assert.deepEqual(
+          native['ID3v2.3'],
+          frames
+            .filter(([id]) => !name.startsWith('undecodable') || id !== 'TDRC')
+            .map(([id, value]) =>
+              id === 'TXXX' ? { id: `TXXX:${value.split('\0')[0]}`, value: value.split('\0')[1] } : { id, value }
+            )
+        );
+      });
+    }
+  });
+
   it('rejects a declared tag size larger than the remaining file before allocation', async () => {
     const header = Uint8Array.from([0x49, 0x44, 0x33, 0x04, 0x00, 0x00, 0x7f, 0x7f, 0x7f, 0x7f]);
 
