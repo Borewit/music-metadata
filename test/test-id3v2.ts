@@ -336,6 +336,36 @@ describe('ID3v2', () => {
       });
     });
 
+    describe('extended header size', () => {
+      const syncSafe = (size: number) =>
+        Buffer.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
+
+      // ID3v2.3: the size excludes its own 4 bytes (6, or 10 with a CRC).
+      // ID3v2.4: the synchsafe size includes them (at least 6).
+      const cases: [3 | 4, string, number[]][] = [
+        [3, 'without CRC', [0, 0, 0, 6, 0, 0, 0, 0, 0, 0]],
+        [3, 'with CRC', [0, 0, 0, 10, 0x80, 0, 0, 0, 0, 0, 0x12, 0x34, 0x56, 0x78]],
+        [4, 'without flags', [0, 0, 0, 6, 1, 0]],
+        [4, 'with CRC', [0, 0, 0, 12, 1, 0x20, 5, 0, 0, 0, 0, 0]]
+      ];
+      for (const [major, description, extendedHeader] of cases) {
+        it(`skips an ID3v2.${major} extended header ${description}`, async () => {
+          const title = Buffer.from('\x00Title', 'latin1');
+          const frameHeader = Buffer.alloc(10);
+          frameHeader.write('TIT2', 'ascii');
+          if (major === 3) {
+            frameHeader.writeUInt32BE(title.length, 4);
+          } else {
+            frameHeader.set(syncSafe(title.length), 4);
+          }
+          const body = Buffer.concat([Buffer.from(extendedHeader), frameHeader, title]);
+          const tag = Buffer.concat([Buffer.from([0x49, 0x44, 0x33, major, 0, 0x40]), syncSafe(body.length), body]);
+          const metadata = await mm.parseBuffer(tag, 'audio/mpeg');
+          assert.deepEqual(metadata.native[`ID3v2.${major}`], [{ id: 'TIT2', value: 'Title' }]);
+        });
+      }
+    });
+
     it('invalid "Date" frame should not cause crash', () => {
       const filename = 'bug-id3v2-unknownframe.mp3';
       const filePath = path.join(samplePath, filename);

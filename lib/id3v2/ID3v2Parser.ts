@@ -7,7 +7,7 @@ import type { INativeMetadataCollector, IWarningCollector } from '../common/Meta
 import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
 import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
 import { type Chapter, FrameParser, Id3v2ContentError, type ITextTag, type TableOfContents } from './FrameParser.js';
-import { ExtendedHeader, ID3v2Header, type ID3v2MajorVersion, type IID3v2header } from './ID3v2Token.js';
+import { ID3v2Header, type ID3v2MajorVersion, type IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
 
 interface IFrameFlags {
   status: {
@@ -121,11 +121,15 @@ export class ID3v2Parser {
   }
 
   public async parseExtendedHeader(): Promise<void> {
-    const extendedHeader = await this.tokenizer.readToken(ExtendedHeader);
-    const dataRemaining = extendedHeader.size - ExtendedHeader.len;
-    return dataRemaining > 0
-      ? this.parseExtendedHeaderData(dataRemaining, extendedHeader.size)
-      : this.parseId3Data(this.id3Header.size - extendedHeader.size);
+    // The ID3v2.3 size excludes its own 4 bytes, the synchsafe ID3v2.4 size includes them
+    const extendedHeaderSize =
+      this.id3Header.version.major === 4
+        ? await this.tokenizer.readToken(UINT32SYNCSAFE)
+        : (await this.tokenizer.readToken(Token.UINT32_BE)) + 4;
+    if (extendedHeaderSize < 4 || extendedHeaderSize > this.id3Header.size) {
+      throw new Id3v2ContentError(`Invalid ID3v2 extended header size: ${extendedHeaderSize}`);
+    }
+    return this.parseExtendedHeaderData(extendedHeaderSize - 4, extendedHeaderSize);
   }
 
   public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
