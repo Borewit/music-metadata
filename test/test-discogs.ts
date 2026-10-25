@@ -1,8 +1,11 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert } from 'chai';
+import { fromBuffer } from 'strtok3';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 import * as mm from '../lib/index.js';
 import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper.js';
+import { Parsers } from './metadata-parsers.js';
 import { samplePath } from './util.js';
 
 describe('Discogs mappings', () => {
@@ -22,6 +25,69 @@ describe('Discogs mappings', () => {
     'DISCOGS_RELEASE_ID',
     'DISCOGS_VOTES'
   ];
+
+  describe('album artist lists remain distinct from primary display credits', () => {
+    const formats = [
+      ['mp3/discogs-album-artists-v23-', '.mp3', 'audio/mpeg', 'ID3v2.3'],
+      ['mp3/discogs-album-artists-v24-', '.mp3', 'audio/mpeg', 'ID3v2.4'],
+      ['flac/discogs-album-artists-', '.flac', 'audio/flac', 'vorbis']
+    ];
+    for (const [prefix, extension, mimeType, tagType] of formats) {
+      for (const layout of ['primary-first', 'primary-last', 'alias-only']) {
+        const filePath = path.join(samplePath, `${prefix}${layout}${extension}`);
+        for (const parser of Parsers) {
+          it(`${tagType} ${layout} (${parser.description})`, async function () {
+            const { common, native, format } = await parser.parse(() => this.skip(), filePath, mimeType);
+            assert.strictEqual(
+              common.albumartist,
+              layout === 'alias-only' ? 'Last, First & Second' : 'Primary Album Credit'
+            );
+            assert.deepEqual(common.albumartists, ['Last, First', 'Second']);
+            assert.strictEqual(common.artist, 'Track Artist');
+            assert.deepEqual(common.artists, ['Track Artist']);
+            assert.isAbove(format.duration ?? 0, 0);
+            assert.isTrue(format.hasAudio);
+            const tags = mm.orderTags(native[tagType]);
+            const id = tagType === 'vorbis' ? 'DISCOGS_ALBUM_ARTISTS' : 'TXXX:DISCOGS_ALBUM_ARTISTS';
+            assert.deepEqual(tags[id], ['Last, First', 'Second', 'Last, First'], 'native values remain unchanged');
+            const primaryId = tagType === 'vorbis' ? 'ALBUMARTIST' : 'TPE2';
+            assert.deepEqual(tags[primaryId], layout === 'alias-only' ? undefined : ['Primary Album Credit']);
+          });
+        }
+      }
+      it(`preserves caller-owned tokenizer lifetime (${tagType})`, async () => {
+        const data = await readFile(path.join(samplePath, `${prefix}primary-first${extension}`));
+        const tokenizer = fromBuffer(data);
+        let closed = false;
+        const close = tokenizer.close.bind(tokenizer);
+        tokenizer.close = async () => {
+          closed = true;
+          await close();
+        };
+        try {
+          const { common } = await mm.parseFromTokenizer(tokenizer);
+          assert.deepEqual(common.albumartists, ['Last, First', 'Second']);
+          assert.isFalse(closed);
+          assert.isAbove(tokenizer.position, 0);
+        } finally {
+          await close();
+        }
+      });
+    }
+    for (const [name, mimeType] of [
+      ["Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3", 'audio/mpeg'],
+      ["Discogs - Beth Hart - Sinner's Prayer [APEv2].flac", 'audio/flac']
+    ]) {
+      for (const parser of Parsers) {
+        it(`does not mix combined and individual names in ${name} (${parser.description})`, async function () {
+          const { common } = await parser.parse(() => this.skip(), path.join(samplePath, name), mimeType);
+          assert.strictEqual(common.albumartist, 'Beth Hart, Joe Bonamassa');
+          assert.deepEqual(common.albumartists, ['Beth Hart', 'Joe Bonamassa']);
+          assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa']);
+        });
+      }
+    }
+  });
 
   describe('Mapping definitions', () => {
     it('should map ID3v2.3/ID3v2.4 tags', () => {
@@ -68,7 +134,11 @@ describe('Discogs mappings', () => {
       // Check Discogs-tag: DISCOGS_ALBUM_ARTISTS
       tagName = getTagName('DISCOGS_ALBUM_ARTISTS');
       assert.deepEqual(native[tagName], ['Beth Hart', 'Joe Bonamassa'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], `${tagType}/${tagName} => common.artists`);
+      assert.deepEqual(
+        common.albumartists,
+        ['Beth Hart', 'Joe Bonamassa'],
+        `${tagType}/${tagName} => common.albumartists`
+      );
 
       // Check Discogs-tag: DISCOGS_VOTES
       tagName = getTagName('DISCOGS_VOTES');

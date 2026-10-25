@@ -119,7 +119,7 @@ export const id3v24TagMap: INativeTagMap = {
   'TXXX:DISCOGS_ARTIST_ID': 'discogs_artist_id',
   'TXXX:DISCOGS_ARTISTS': 'artists',
   'TXXX:DISCOGS_ARTIST_NAME': 'artists',
-  'TXXX:DISCOGS_ALBUM_ARTISTS': 'albumartist',
+  'TXXX:DISCOGS_ALBUM_ARTISTS': 'albumartists',
   'TXXX:DISCOGS_CATALOG': 'catalognumber',
   'TXXX:DISCOGS_COUNTRY': 'releasecountry',
   'TXXX:DISCOGS_DATE': 'originaldate',
