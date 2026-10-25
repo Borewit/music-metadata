@@ -481,6 +481,62 @@ describe('ID3v2', () => {
     }
   });
 
+  describe('Unsynchronisation', () => {
+    const syncSafe = (size: number) =>
+      Buffer.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
+
+    // The header flag of ID3v2.2 and ID3v2.3 applies to the whole tag: a zero byte follows each 0xFF
+    // that precedes a zero byte or a byte >= 0xE0, and frame sizes count the resynchronised data.
+    function unsynchronisedTag(major: 2 | 3): Buffer {
+      const frame = (id: string, text: string) => {
+        const data = Buffer.from(`\x00${text}`, 'latin1');
+        const header = Buffer.alloc(major === 2 ? 6 : 10);
+        header.write(id, 'ascii');
+        if (major === 2) {
+          header.writeUIntBE(data.length, 3, 3);
+        } else {
+          header.writeUInt32BE(data.length, 4);
+        }
+        return Buffer.concat([header, data]);
+      };
+      const frames = Buffer.concat([
+        frame(major === 2 ? 'TT2' : 'TIT2', 'Title \xff\xe0'),
+        frame(major === 2 ? 'TP1' : 'TPE1', 'Artist')
+      ]);
+      const bytes: number[] = [];
+      for (const [i, byte] of frames.entries()) {
+        bytes.push(byte);
+        if (byte === 0xff && (frames[i + 1] === 0 || frames[i + 1] >= 0xe0)) {
+          bytes.push(0);
+        }
+      }
+      return Buffer.concat([
+        Buffer.from([0x49, 0x44, 0x33, major, 0, 0x80]),
+        syncSafe(bytes.length),
+        Buffer.from(bytes)
+      ]);
+    }
+
+    for (const major of [2, 3] as const) {
+      it(`removes tag-level unsynchronisation from ID3v2.${major} frames`, async () => {
+        const metadata = await mm.parseBuffer(unsynchronisedTag(major), 'audio/mpeg');
+        assert.deepEqual(metadata.native[`ID3v2.${major}`], [
+          { id: major === 2 ? 'TT2' : 'TIT2', value: 'Title \xff\xe0' },
+          { id: major === 2 ? 'TP1' : 'TPE1', value: 'Artist' }
+        ]);
+      });
+    }
+
+    it('reads every frame of an unsynchronised ID3v2.3 tag (issue-979.mp3)', async () => {
+      const { native } = await mm.parseFile(path.join(samplePath, 'mp3', 'issue-979.mp3'));
+      const id3v23 = mm.orderTags(native['ID3v2.3']);
+      assert.deepEqual(id3v23.TPE2, ['Alexander Hacke'], 'TPE2');
+      assert.deepEqual(id3v23.TIT2, ['Minnie & Me'], 'TIT2');
+      assert.deepEqual(id3v23.TRCK, ['01'], 'TRCK');
+      assert.deepEqual(id3v23['TXXX:replaygain_album_gain'], ['-7.34 dB'], 'TXXX:replaygain_album_gain');
+    });
+  });
+
   describe('Embedded chapter frame boundaries', () => {
     const syncSafe = (size: number) =>
       Buffer.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);

@@ -140,13 +140,17 @@ export class ID3v2Parser {
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
-    const uint8Array = await readToken(
+    let uint8Array = await readToken(
       this.tokenizer,
       new Token.Uint8ArrayType(dataLen),
       this.options,
       undefined,
       message => new Id3v2ContentError(message)
     );
+    // ID3v2.2 and ID3v2.3 unsynchronise the whole tag, ID3v2.4 flags each frame
+    if (this.id3Header.flags.unsynchronisation && this.id3Header.version.major < 4) {
+      uint8Array = ID3v2Parser.removeUnsyncBytes(uint8Array);
+    }
     const tags = this.parseMetadata(uint8Array);
     for (const tag of tags) {
       switch (tag.id) {
