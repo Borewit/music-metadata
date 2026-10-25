@@ -96,7 +96,7 @@ const vorbisTagMap: INativeTagMap = {
   DISCOGS_ARTIST_ID: 'discogs_artist_id',
   DISCOGS_ARTISTS: 'artists',
   DISCOGS_ARTIST_NAME: 'artists',
-  DISCOGS_ALBUM_ARTISTS: 'albumartist',
+  DISCOGS_ALBUM_ARTISTS: 'albumartists',
   DISCOGS_CATALOG: 'catalognumber',
   DISCOGS_COUNTRY: 'releasecountry',
   DISCOGS_DATE: 'originaldate',
