@@ -365,19 +365,36 @@ describe('ID3v2', () => {
         });
       }
 
+      for (const filename of [
+        'id3v2.3-extended-header.mp3',
+        'id3v2.3-extended-header-crc.mp3',
+        'id3v2.4-extended-header.mp3'
+      ]) {
+        it(`reads the frames after the extended header in ${filename}`, async () => {
+          const metadata = await mm.parseFile(path.join(samplePath, 'mp3', filename));
+          assert.strictEqual(metadata.common.title, 'Extended header', 'common.title');
+          assert.strictEqual(metadata.common.artist, 'music-metadata', 'common.artist');
+          assert.strictEqual(metadata.format.sampleRate, 22050, 'format.sampleRate');
+        });
+      }
+
       it('rejects an extended header size that does not fit the tag', async () => {
         const extendedHeaderTag = (major: 3 | 4, extendedHeader: number[]) => {
           const body = Buffer.concat([Buffer.from(extendedHeader), Buffer.alloc(10)]);
           return Buffer.concat([Buffer.from([0x49, 0x44, 0x33, major, 0, 0x40]), syncSafe(body.length), body]);
         };
-        // ID3v2.3: larger than the tag; ID3v2.4: smaller than the size field itself
-        await expect(
-          mm.parseBuffer(extendedHeaderTag(3, [0x7f, 0xff, 0xff, 0xff, 0, 0]), 'audio/mpeg')
-        ).to.be.rejectedWith(Id3v2ContentError, 'Invalid ID3v2 extended header size');
-        await expect(mm.parseBuffer(extendedHeaderTag(4, [0, 0, 0, 2, 1, 0]), 'audio/mpeg')).to.be.rejectedWith(
-          Id3v2ContentError,
-          'Invalid ID3v2 extended header size'
-        );
+        // Larger than the tag, or below the minimum of 10 bytes (ID3v2.3) or 6 bytes (ID3v2.4)
+        const invalidHeaders: [3 | 4, number[]][] = [
+          [3, [0x7f, 0xff, 0xff, 0xff, 0, 0]],
+          [3, [0, 0, 0, 2, 0, 0]],
+          [4, [0, 0, 0, 5, 1, 0]]
+        ];
+        for (const [major, extendedHeader] of invalidHeaders) {
+          await expect(mm.parseBuffer(extendedHeaderTag(major, extendedHeader), 'audio/mpeg')).to.be.rejectedWith(
+            Id3v2ContentError,
+            'Invalid ID3v2 extended header size'
+          );
+        }
       });
     });
 
