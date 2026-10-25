@@ -5,6 +5,7 @@ import type * as iff from '../iff/index.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 
 export const compressionTypes = {
+  ima4: 'IMA4 ADPCM',
   NONE: 'not compressed	PCM	Apple Computer',
   sowt: 'PCM (byte swapped)',
   fl32: '32-bit floating point IEEE 32-bit float',
