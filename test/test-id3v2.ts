@@ -364,6 +364,21 @@ describe('ID3v2', () => {
           assert.deepEqual(metadata.native[`ID3v2.${major}`], [{ id: 'TIT2', value: 'Title' }]);
         });
       }
+
+      it('rejects an extended header size that does not fit the tag', async () => {
+        const extendedHeaderTag = (major: 3 | 4, extendedHeader: number[]) => {
+          const body = Buffer.concat([Buffer.from(extendedHeader), Buffer.alloc(10)]);
+          return Buffer.concat([Buffer.from([0x49, 0x44, 0x33, major, 0, 0x40]), syncSafe(body.length), body]);
+        };
+        // ID3v2.3: larger than the tag; ID3v2.4: smaller than the size field itself
+        await expect(
+          mm.parseBuffer(extendedHeaderTag(3, [0x7f, 0xff, 0xff, 0xff, 0, 0]), 'audio/mpeg')
+        ).to.be.rejectedWith(Id3v2ContentError, 'Invalid ID3v2 extended header size');
+        await expect(mm.parseBuffer(extendedHeaderTag(4, [0, 0, 0, 2, 1, 0]), 'audio/mpeg')).to.be.rejectedWith(
+          Id3v2ContentError,
+          'Invalid ID3v2 extended header size'
+        );
+      });
     });
 
     it('invalid "Date" frame should not cause crash', () => {
