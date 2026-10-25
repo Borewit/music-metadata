@@ -74,6 +74,9 @@ export interface INativeMetadataCollector extends IWarningCollector {
 
   addTag(tagType: TagType, tagId: string, value: AnyTagValue): Promise<void>;
 
+  /** Map a derived common value without adding a synthetic native tag. */
+  postMap(tagType: TagType, tag: IGenericTag): Promise<void>;
+
   addStreamInfo(streamInfo: ITrackInfo): void;
 
   setAudioOnly(): void;

@@ -35,6 +35,45 @@ describe('Parse FLAC Vorbis comment', () => {
     }
   });
 
+  describe('standard recording date precedence over Discogs aliases', () => {
+    const cases = [
+      ['flac/date-precedence-standard-first.flac', '2009-10-05'],
+      ['flac/date-precedence-standard-last.flac', '2009-10-05'],
+      ['flac/date-precedence-year.flac', '2009'],
+      ['flac/date-precedence-alias.flac', '2009-10-05'],
+      ['flac/date-precedence-empty.flac', '2009-10-05'],
+      ['flac/date-precedence-duplicate.flac', '2010-02-03'],
+      ['Discogs - Yasmin Levy - Mi Korasón.flac', '2009-10-05']
+    ];
+    for (const [name, date] of cases) {
+      for (const parser of Parsers) {
+        it(`${name} (${parser.description})`, async function () {
+          const { common, native, format } = await parser.parse(
+            () => this.skip(),
+            path.join(samplePath, name),
+            'audio/flac'
+          );
+          assert.strictEqual(common.date, date);
+          assert.strictEqual(common.year, Number(date.slice(0, 4)));
+          assert.isAbove(format.duration ?? 0, 0);
+          assert.isTrue(format.hasAudio);
+          const tags = mm.orderTags(native.vorbis);
+          assert.isDefined(tags.DISCOGS_RELEASED, 'native alias remains available');
+          if (name.includes('standard-')) {
+            assert.deepEqual(tags.DATE, ['2009-10-05']);
+            assert.deepEqual(tags.DISCOGS_RELEASED, ['2009']);
+          }
+          if (name.includes('empty')) {
+            assert.deepEqual(tags.DATE, ['', '   ']);
+          }
+          if (name.includes('duplicate')) {
+            assert.deepEqual(tags.DATE, ['2009-10-05', '2010-02-03']);
+          }
+        });
+      }
+    }
+  });
+
   function checkFormat(format: mm.IFormat) {
     assert.strictEqual(format.container, 'FLAC', 'format.container');
     assert.strictEqual(format.codec, 'FLAC', 'format.codec');

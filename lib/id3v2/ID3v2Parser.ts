@@ -141,7 +141,8 @@ export class ID3v2Parser {
       undefined,
       message => new Id3v2ContentError(message)
     );
-    for (const tag of this.parseMetadata(uint8Array)) {
+    const tags = this.parseMetadata(uint8Array);
+    for (const tag of tags) {
       switch (tag.id) {
         case 'TXXX':
           if (tag.value) {
@@ -154,6 +155,49 @@ export class ID3v2Parser {
             : this.addTag(tag.id, tag.value));
       }
     }
+    if (this.id3Header.version.major === 3) {
+      await this.mapRecordingDate(tags);
+    }
+  }
+
+  private async mapRecordingDate(tags: ITag[]): Promise<void> {
+    const text = (id: string) =>
+      (tags.findLast(tag => tag.id === id && (tag.value as string[]).at(-1))?.value as string[] | undefined)?.at(-1);
+    // Explicit timestamps take priority over the legacy components, regardless of frame order.
+    const discogs = tags.findLast(
+      tag =>
+        tag.id === 'TXXX' &&
+        (tag.value as ITextTag).description.toUpperCase() === 'DISCOGS_RELEASED' &&
+        (tag.value as ITextTag).text.at(-1)
+    );
+    const explicit = text('TDRC') ?? text('TDRV') ?? (discogs?.value as ITextTag | undefined)?.text.at(-1);
+    if (explicit) {
+      await this.metadata.postMap(this.headerType, { id: 'date', value: explicit });
+      return;
+    }
+
+    const year = text('TYER');
+    if (!year || !/^\d{4}$/.test(year)) {
+      return;
+    }
+
+    let date = year;
+    const dayMonth = text('TDAT');
+    if (dayMonth && /^\d{4}$/.test(dayMonth)) {
+      const day = Number(dayMonth.slice(0, 2));
+      const month = Number(dayMonth.slice(2));
+      const y = Number(year);
+      const leapYear = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+      const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      if (day >= 1 && day <= daysInMonth[month - 1]) {
+        date += `-${dayMonth.slice(2)}-${dayMonth.slice(0, 2)}`;
+        const time = text('TIME');
+        if (time && /^([01]\d|2[0-3])[0-5]\d$/.test(time)) {
+          date += `T${time.slice(0, 2)}:${time.slice(2)}`;
+        }
+      }
+    }
+    await this.metadata.postMap(this.headerType, { id: 'date', value: date });
   }
 
   private async handleTag(
