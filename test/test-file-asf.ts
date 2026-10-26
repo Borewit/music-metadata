@@ -1066,6 +1066,18 @@ describe('Parse ASF', () => {
     }
   });
 
+  describe('compilation', () => {
+    it('maps a WM/IsCompilation BOOL attribute to common.compilation', async () => {
+      // WM/IsCompilation is defined as a BOOL attribute (Windows Media Format SDK attribute reference)
+      const filePath = path.join(asfFilePath, 'compilation-bool.wma');
+      const { common, native } = await mm.parseFile(filePath);
+      const asf = mm.orderTags(native.asf);
+
+      assert.deepEqual(asf['WM/IsCompilation'], [true], 'native: WM/IsCompilation');
+      assert.strictEqual(common.compilation, true, 'common.compilation');
+    });
+  });
+
   describe('rating', () => {
     const asfTagMapper = new AsfTagMapper();
     const warnings: IWarningCollector = { addWarning: () => undefined };
