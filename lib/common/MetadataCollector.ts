@@ -288,7 +288,7 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'compilation':
       case 'podcast':
       case 'showMovement':
-        tag.value = tag.value === '1' || tag.value === 1; // boolean
+        tag.value = tag.value === '1' || tag.value === 1 || tag.value === true; // boolean
         break;
 
       case 'isrc': {
