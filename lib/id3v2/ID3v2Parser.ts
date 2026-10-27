@@ -1,7 +1,7 @@
 import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
 
-import { getMaxChapterCount, getMaxMetadataEntries, readToken } from '../common/Allocation.js';
+import { getMaxChapterCount, getMaxMetadataEntries, readBuffer } from '../common/Allocation.js';
 import type { TagType } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
@@ -113,36 +113,33 @@ export class ID3v2Parser {
 
     this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
-    await (id3Header.flags.isExtendedHeader ? this.parseExtendedHeader() : this.parseId3Data(id3Header.size));
+    await this.parseId3Data(id3Header.size);
 
     // Post process
     const chapters = this.mapId3v2Chapters(this.metadata.native[this.headerType]);
     this.metadata.setFormat('chapters', chapters);
   }
 
-  public async parseExtendedHeader(): Promise<void> {
+  private getExtendedHeaderSize(data: Uint8Array): number {
+    if (data.length < Token.UINT32_BE.len) {
+      throw new Id3v2ContentError('ID3v2 extended header size field exceeds tag boundary');
+    }
     // The ID3v2.3 size excludes its own 4 bytes, the synchsafe ID3v2.4 size includes them
     const extendedHeaderSize =
-      this.id3Header.version.major === 4
-        ? await this.tokenizer.readToken(UINT32SYNCSAFE)
-        : (await this.tokenizer.readToken(Token.UINT32_BE)) + 4;
+      this.id3Header.version.major === 4 ? UINT32SYNCSAFE.get(data, 0) : Token.UINT32_BE.get(data, 0) + 4;
     // An ID3v2.3 extended header takes at least 10 bytes, an ID3v2.4 one at least 6
     const minimumSize = this.id3Header.version.major === 4 ? 6 : 10;
-    if (extendedHeaderSize < minimumSize || extendedHeaderSize > this.id3Header.size) {
+    if (extendedHeaderSize < minimumSize || extendedHeaderSize > data.length) {
       throw new Id3v2ContentError(`Invalid ID3v2 extended header size: ${extendedHeaderSize}`);
     }
-    return this.parseExtendedHeaderData(extendedHeaderSize - 4, extendedHeaderSize);
-  }
-
-  public async parseExtendedHeaderData(dataRemaining: number, extendedHeaderSize: number): Promise<void> {
-    await this.tokenizer.ignore(dataRemaining);
-    return this.parseId3Data(this.id3Header.size - extendedHeaderSize);
+    return extendedHeaderSize;
   }
 
   public async parseId3Data(dataLen: number): Promise<void> {
-    let uint8Array = await readToken(
+    // Own the complete on-disk body before resynchronising, including custom tokenizer inputs.
+    let uint8Array = await readBuffer(
       this.tokenizer,
-      new Token.Uint8ArrayType(dataLen),
+      dataLen,
       this.options,
       undefined,
       message => new Id3v2ContentError(message)
@@ -150,6 +147,9 @@ export class ID3v2Parser {
     // ID3v2.2 and ID3v2.3 unsynchronise the whole tag, ID3v2.4 flags each frame
     if (this.id3Header.flags.unsynchronisation && this.id3Header.version.major < 4) {
       uint8Array = ID3v2Parser.removeUnsyncBytes(uint8Array);
+    }
+    if (this.id3Header.flags.isExtendedHeader) {
+      uint8Array = uint8Array.subarray(this.getExtendedHeaderSize(uint8Array));
     }
     const tags = this.parseMetadata(uint8Array);
     for (const tag of tags) {
