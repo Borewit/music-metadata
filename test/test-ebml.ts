@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 import { ReadableStream } from 'node:stream/web';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { fromBuffer, fromStream } from 'strtok3';
+import { fromBuffer, fromStream, type ITokenizer } from 'strtok3';
 
 import { EbmlContentError, EbmlIterator, ParseAction } from '../lib/ebml/EbmlIterator.js';
 import { DataType, type IElementType } from '../lib/ebml/types.js';
@@ -96,6 +96,69 @@ describe('EBML random-access header reads', () => {
     );
     assert.deepEqual(tree.leaf, new Uint8Array([5, 6, 7, 8]));
     assert.strictEqual(tokenizer.position, sample.length);
+  });
+});
+
+describe('EBML physical EOF while skipping', () => {
+  const leafValueDtd: IElementType = {
+    name: 'root',
+    container: { 0x81: { name: 'leaf', value: DataType.uint } }
+  };
+  const sample = new Uint8Array([0x81, 0x81, 42]);
+
+  function truncatedStream(trailing: number[]): Promise<ITokenizer> {
+    return fromStream(Readable.from([Uint8Array.from([...sample, ...trailing])], { objectMode: false }));
+  }
+
+  it('stops when a leaf without a value reader reaches physical EOF', async () => {
+    const tokenizer = await truncatedStream([0x82, 0x85]);
+    const dtd: IElementType = {
+      name: 'root',
+      container: { ...leafValueDtd.container, 0x82: { name: 'unread' } }
+    };
+    try {
+      const tree = await new EbmlIterator(tokenizer).iterate(dtd, Number.MAX_SAFE_INTEGER, listener);
+      assert.deepEqual(tree, { leaf: 42 });
+    } finally {
+      await tokenizer.close();
+    }
+  });
+
+  it('stops when skipping the remaining siblings reaches physical EOF', async () => {
+    const tokenizer = await truncatedStream([0x82, 0x85]);
+    const dtd: IElementType = {
+      name: 'root',
+      container: { ...leafValueDtd.container, 0x82: { name: 'group', multiple: true } }
+    };
+    try {
+      const tree = await new EbmlIterator(tokenizer).iterate(dtd, 64, {
+        ...listener,
+        startNext: element => (element.id === 0x82 ? ParseAction.SkipSiblings : ParseAction.ReadNext)
+      });
+      assert.deepEqual(tree, { leaf: 42 });
+    } finally {
+      await tokenizer.close();
+    }
+  });
+
+  it('stops when skipping a void element reaches physical EOF', async () => {
+    const tokenizer = await truncatedStream([0xec, 0x85]);
+    try {
+      const tree = await new EbmlIterator(tokenizer).iterate(leafValueDtd, 64, listener);
+      assert.deepEqual(tree, { leaf: 42 });
+    } finally {
+      await tokenizer.close();
+    }
+  });
+
+  it('stops when skipping an unknown element reaches physical EOF', async () => {
+    const tokenizer = await truncatedStream([0x9a, 0x85]);
+    try {
+      const tree = await new EbmlIterator(tokenizer).iterate(leafValueDtd, 64, listener);
+      assert.deepEqual(tree, { leaf: 42 });
+    } finally {
+      await tokenizer.close();
+    }
   });
 });
 

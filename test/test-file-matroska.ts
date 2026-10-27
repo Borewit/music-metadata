@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { setImmediate as nextTurn } from 'node:timers/promises';
@@ -10,6 +11,7 @@ import * as mm from '../lib/index.js';
 import { parseBuffer, parseFromTokenizer } from '../lib/index.js';
 import { matroskaDtd } from '../lib/matroska/MatroskaDtd.js';
 import type { IDecodedAttachedFile, IDecodedTrackEntry } from '../lib/matroska/types.js';
+import { Parsers } from './shared/metadata-parsers.js';
 import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
@@ -405,6 +407,60 @@ describe('Matroska formats', () => {
   });
 
   // https://github.com/Borewit/music-metadata/issues/1463
+  describe('physical EOF while skipping a final cluster', () => {
+    const filePath = path.join(matroskaSamplePath, 'no-duration.webm');
+    for (const mkvUseIndex of [false, true]) {
+      for (const parser of Parsers) {
+        it(`preserves metadata without inventing a duration (${parser.description}, index=${mkvUseIndex})`, async function () {
+          const expected = await mm.parseFile(filePath, { mkvUseIndex, duration: true });
+          const actual = await parser.parse(() => this.skip(), filePath, 'audio/webm', { mkvUseIndex, duration: true });
+          assert.strictEqual(actual.format.container, expected.format.container);
+          assert.deepEqual(actual.format.trackInfo, expected.format.trackInfo);
+          assert.deepEqual(actual.common, expected.common);
+          assert.isUndefined(actual.format.duration);
+        });
+      }
+    }
+    it('propagates non-EOF errors while skipping', async () => {
+      const data = await readFile(filePath);
+      const tokenizer = await fromStream(Readable.from([data], { objectMode: false }));
+      const failure = new Error('skip failed');
+      tokenizer.ignore = async () => {
+        throw failure;
+      };
+      try {
+        await expect(mm.parseFromTokenizer(tokenizer)).to.be.rejectedWith('skip failed');
+      } finally {
+        await tokenizer.close();
+      }
+    });
+    it('accepts a short skip from a caller-owned tokenizer', async () => {
+      const data = await readFile(filePath);
+      const tokenizer = await fromStream(Readable.from([data], { objectMode: false }));
+      const ignore = tokenizer.ignore.bind(tokenizer);
+      tokenizer.ignore = async length => {
+        const position = tokenizer.position;
+        try {
+          return await ignore(length);
+        } catch (error) {
+          if (error instanceof EndOfStreamError) {
+            return tokenizer.position - position;
+          }
+          throw error;
+        }
+      };
+      const close = tokenizer.close.bind(tokenizer);
+      tokenizer.close = async () => assert.fail('parser must not close caller-owned input');
+      try {
+        const result = await mm.parseFromTokenizer(tokenizer);
+        assert.strictEqual(result.format.container, 'EBML/webm');
+        assert.isUndefined(result.format.duration);
+      } finally {
+        await close();
+      }
+    });
+  });
+
   it('Handle Matroska file without duration', async () => {
     const filePath = path.join(matroskaSamplePath, 'no-duration.webm');
     const { format } = await mm.parseFile(filePath);
