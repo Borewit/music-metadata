@@ -165,7 +165,9 @@ export class EbmlIterator {
                   }
                   await listener.elementValue(child, value, elementPosition);
                 } else {
-                  await this.ignore(element.len, posDone);
+                  if (!(await this.ignore(element.len, posDone))) {
+                    return tree;
+                  }
                 }
               }
             }
@@ -181,14 +183,18 @@ export class EbmlIterator {
             debug(
               `Ignore element: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
             );
-            await this.ignore(element.len, posDone);
+            if (!(await this.ignore(element.len, posDone))) {
+              return tree;
+            }
             break;
 
           case ParseAction.SkipSiblings:
             debug(
               `Ignore remaining container, at: name=${getElementPath(child)}, element.id=0x${element.id}, container=${!!child.container} at position=${elementPosition}`
             );
-            await this.ignore(posDone - this.tokenizer.position, posDone);
+            if (!(await this.ignore(posDone - this.tokenizer.position, posDone))) {
+              return tree;
+            }
             break;
 
           case ParseAction.TerminateParsing:
@@ -200,13 +206,17 @@ export class EbmlIterator {
       } else {
         switch (element.id) {
           case 0xec: // void
-            await this.ignore(element.len, posDone);
+            if (!(await this.ignore(element.len, posDone))) {
+              return tree;
+            }
             break;
           default:
             debug(
               `parseEbml: parent=${getElementPath(dtdElement)}, unknown child: id=${element.id.toString(16)} at position=${elementPosition}`
             );
-            await this.ignore(element.len, posDone);
+            if (!(await this.ignore(element.len, posDone))) {
+              return tree;
+            }
         }
       }
     }
@@ -227,7 +237,7 @@ export class EbmlIterator {
     }
   }
 
-  private async ignore(length: number, posDone: number): Promise<void> {
+  private async ignore(length: number, posDone: number): Promise<boolean> {
     // Unknown-size EBML containers may advertise lengths above the safe integer range.
     // Bound skips by the enclosing container and known input before passing them to the tokenizer.
     const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
@@ -235,7 +245,14 @@ export class EbmlIterator {
     if (!Number.isSafeInteger(boundedLength) || boundedLength < 0) {
       throw new EbmlContentError(`Invalid element length: ${length}`);
     }
-    await this.tokenizer.ignore(boundedLength);
+    try {
+      return (await this.tokenizer.ignore(boundedLength)) === boundedLength;
+    } catch (error) {
+      if (error instanceof EndOfStreamError) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   private async readVintData(maxLength: number): Promise<Uint8Array> {
