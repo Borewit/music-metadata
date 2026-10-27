@@ -1,4 +1,5 @@
 import initDebug from 'debug';
+import { EndOfStreamError } from 'strtok3';
 import * as Token from 'token-types';
 import { uint8ArrayToHex } from 'uint8array-extras';
 import { tryParseApeHeader } from '../apev2/APEv2Parser.js';
@@ -16,6 +17,9 @@ export class WavPackContentError extends makeUnexpectedFileContentError('WavPack
  */
 export class WavPackParser extends BasicParser {
   private audioDataSize = 0;
+  private sampleRate = 0;
+  private dsdMultiplier = 1;
+  private physicalEof = false;
 
   public async parse(): Promise<void> {
     this.metadata.setAudioOnly();
@@ -24,14 +28,28 @@ export class WavPackParser extends BasicParser {
 
     // First parse all WavPack blocks
     await this.parseWavPackBlocks();
+    if (this.physicalEof) {
+      return;
+    }
     // try to parse APEv2 header
 
     return tryParseApeHeader(this.metadata, this.tokenizer, this.options);
   }
 
   public async parseWavPackBlocks(): Promise<void> {
-    do {
-      const blockId = await this.tokenizer.peekToken<string>(FourCcToken);
+    let totalSamples: number | undefined;
+    let sampleExtent = 0;
+    let groupIndex: number | undefined;
+    let groupSamples = 0;
+    let complete = true;
+    let isDsd = false;
+    const preamble = new Uint8Array(4);
+    while (true) {
+      if ((await this.tokenizer.peekBuffer(preamble, { mayBeLess: true })) < 4) {
+        this.physicalEof = true;
+        break;
+      }
+      const blockId = FourCcToken.get(preamble, 0);
       if (blockId !== 'wvpk') {
         break;
       }
@@ -48,28 +66,59 @@ export class WavPackParser extends BasicParser {
         this.metadata.setFormat('lossless', !header.flags.isHybrid);
         // tagTypes: this.type,
         this.metadata.setFormat('bitsPerSample', header.flags.bitsPerSample);
-        if (!header.flags.isDSD) {
-          // In case isDSD, these values will ne set in ID_DSD_BLOCK
-          this.metadata.setFormat('sampleRate', header.flags.samplingRate);
-          this.metadata.setFormat('duration', header.totalSamples / header.flags.samplingRate);
-        }
+        this.sampleRate = header.flags.samplingRate;
+        isDsd = header.flags.isDSD;
+        totalSamples = header.totalSamples > 0 ? header.totalSamples : undefined;
         this.metadata.setFormat('numberOfChannels', header.flags.isMono ? 1 : 2);
-        this.metadata.setFormat('numberOfSamples', header.totalSamples);
         this.metadata.setFormat('codec', header.flags.isDSD ? 'DSD' : 'PCM');
       }
 
       const ignoreBytes = header.blockSize - (BlockHeaderToken.len - 8);
+      if (
+        ignoreBytes < 0 ||
+        (this.tokenizer.fileInfo.size !== undefined &&
+          ignoreBytes > this.tokenizer.fileInfo.size - this.tokenizer.position)
+      ) {
+        throw new WavPackContentError('WavPack block exceeds available input');
+      }
 
-      await (header.blockIndex === 0
-        ? this.parseMetadataSubBlock(header, ignoreBytes)
-        : this.tokenizer.ignore(ignoreBytes));
+      if (header.blockIndex === 0) {
+        await this.parseMetadataSubBlock(header, ignoreBytes);
+      } else if ((await this.tokenizer.ignore(ignoreBytes)) !== ignoreBytes) {
+        throw new EndOfStreamError();
+      }
       if (header.blockSamples > 0) {
+        // Channel blocks share an index and sample count; advance only when the group is complete.
+        if (header.flags.isInitialBlock) {
+          complete &&= groupIndex === undefined && header.blockIndex === sampleExtent;
+          groupIndex = header.blockIndex;
+          groupSamples = header.blockSamples;
+        }
+        complete &&=
+          groupIndex === header.blockIndex && groupSamples === header.blockSamples && isDsd === header.flags.isDSD;
+        if (header.flags.isFinalBlock) {
+          sampleExtent = header.blockIndex + header.blockSamples;
+          groupIndex = undefined;
+        }
         this.audioDataSize += header.blockSize; // Count audio data for bit-rate calculation
       }
-    } while (
-      !this.tokenizer.fileInfo.size ||
-      this.tokenizer.fileInfo.size - this.tokenizer.position >= BlockHeaderToken.len
-    );
+    }
+    if (totalSamples === undefined && complete && groupIndex === undefined && sampleExtent > 0) {
+      totalSamples = sampleExtent * (isDsd ? 8 : 1);
+    } else if (totalSamples === undefined && (!complete || groupIndex !== undefined)) {
+      this.metadata.addWarning('Cannot determine WavPack duration from incomplete or non-contiguous blocks');
+    }
+    const samplingRate = this.sampleRate * this.dsdMultiplier;
+    if (samplingRate > 0 && Number.isSafeInteger(samplingRate)) {
+      this.metadata.setFormat('sampleRate', samplingRate);
+    }
+    if (totalSamples !== undefined) {
+      this.metadata.setFormat('numberOfSamples', totalSamples);
+      const rate = this.metadata.format.sampleRate;
+      if (rate && rate > 0) {
+        this.metadata.setFormat('duration', totalSamples / rate);
+      }
+    }
     if (this.metadata.format.duration) {
       this.metadata.setFormat('bitrate', (this.audioDataSize * 8) / this.metadata.format.duration);
     }
@@ -101,15 +150,22 @@ export class WavPackParser extends BasicParser {
           // ID_DSD_BLOCK
           debug('ID_DSD_BLOCK');
           // https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
-          const mp = 1 << Token.UINT8.get(data, 0);
-          const samplingRate = header.flags.samplingRate * mp * 8; // ToDo: second factor should be read from DSD-metadata block https://github.com/dbry/WavPack/issues/71#issuecomment-483094813
+          if (data.length < 1) {
+            throw new WavPackContentError('Truncated WavPack DSD metadata');
+          }
+          const mp = 2 ** Token.UINT8.get(data, 0);
+          this.dsdMultiplier = mp * 8;
           if (!header.flags.isDSD) {
             throw new WavPackContentError('Only expect DSD block if DSD-flag is set');
           }
-          this.metadata.setFormat('sampleRate', samplingRate);
-          this.metadata.setFormat('duration', header.totalSamples / samplingRate);
           break;
         }
+        case 0x27:
+          if (data.length < 3) {
+            throw new WavPackContentError('Truncated WavPack sample rate');
+          }
+          this.sampleRate = Token.UINT24_LE.get(data, 0);
+          break;
 
         case 0x24: // ID_ALT_TRAILER: maybe used to embed original ID3 tag header
           debug('ID_ALT_TRAILER: trailer for non-wav files');
@@ -131,7 +187,7 @@ export class WavPackParser extends BasicParser {
       remaining -= MetadataIdToken.len + (id.largeBlock ? Token.UINT24_LE.len : Token.UINT8.len) + dataSizeInWords * 2;
       debug(`remainingLength=${remaining}`);
       if (id.isOddSize) {
-        this.tokenizer.ignore(1);
+        await this.tokenizer.ignore(1);
       }
     }
     if (remaining !== 0) {

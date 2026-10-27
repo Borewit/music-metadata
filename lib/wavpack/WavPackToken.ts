@@ -38,6 +38,8 @@ export interface IBlockHeader {
     floatingPoint: boolean;
     samplingRate: number;
     isDSD: boolean;
+    isInitialBlock: boolean;
+    isFinalBlock: boolean;
 
     // false = PCM audio; true = DSD audio (ver 5.0+)
   };
@@ -80,6 +82,7 @@ export const BlockHeaderToken: IGetToken<IBlockHeader> = {
 
   get: (buf, off) => {
     const flags = Token.UINT32_LE.get(buf, off + 24);
+    const totalSamples = Token.UINT32_LE.get(buf, off + 12);
 
     const res = {
       // should equal 'wvpk'
@@ -89,15 +92,10 @@ export const BlockHeaderToken: IGetToken<IBlockHeader> = {
       //  0x402 (1026) to 0x410 are valid for decode
       version: Token.UINT16_LE.get(buf, off + 8),
       //  40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
-      totalSamples: /* replace with bigint? (Token.UINT8.get(buf, off + 11) << 32) + */ Token.UINT32_LE.get(
-        buf,
-        off + 12
-      ),
+      // The low-word sentinel is unknown regardless of the high byte; the total uses radix 0xffffffff.
+      totalSamples: totalSamples === 0xffffffff ? -1 : totalSamples + buf[off + 11] * 0xffffffff,
       // 40-bit block_index
-      blockIndex: /* replace with bigint? (Token.UINT8.get(buf, off + 10) << 32) + */ Token.UINT32_LE.get(
-        buf,
-        off + 16
-      ),
+      blockIndex: Token.UINT32_LE.get(buf, off + 16) + buf[off + 10] * 0x100000000,
       // 40-bit total samples for entire file (if block_index == 0 and a value of -1 indicates an unknown length)
       blockSamples: Token.UINT32_LE.get(buf, off + 20),
       // various flags for id and decoding
@@ -110,13 +108,15 @@ export const BlockHeaderToken: IGetToken<IBlockHeader> = {
         hybridNoiseShaping: isBitSet(flags, 6),
         floatingPoint: isBitSet(flags, 7),
         samplingRate: SampleRates[getBitAllignedNumber(flags, 23, 4)],
-        isDSD: isBitSet(flags, 31)
+        isDSD: isBitSet(flags, 31),
+        isInitialBlock: isBitSet(flags, 11),
+        isFinalBlock: isBitSet(flags, 12)
       },
       // crc for actual decoded data
       crc: new Token.Uint8ArrayType(4).get(buf, off + 28)
     };
 
-    if (res.flags.isDSD) {
+    if (res.flags.isDSD && res.totalSamples >= 0) {
       res.totalSamples *= 8;
     }
 
