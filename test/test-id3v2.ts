@@ -485,6 +485,129 @@ describe('ID3v2', () => {
     const syncSafe = (size: number) =>
       Buffer.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
 
+    describe('extended headers', () => {
+      // CRC d9ffe07d and the title both require inserted bytes: decode the entire body exactly once.
+      const filename = path.join(samplePath, 'mp3', 'id3v2.3-unsync-extended-header-crc.mp3');
+      const title = 'Title 9040ÿà';
+
+      for (const sample of [
+        'id3v2.3-unsync-extended-header-crc.mp3',
+        'id3v2.3-unsync-no-extended-header.mp3',
+        'id3v2.2-unsync.mp3',
+        'id3v2.4-unsync-extended-header.mp3',
+        'id3v2.3-extended-header.mp3',
+        'id3v2.3-extended-header-crc.mp3',
+        'id3v2.4-extended-header.mp3'
+      ]) {
+        for (const parser of Parsers) {
+          it(`reads ${sample} through ${parser.description}`, async function () {
+            const metadata = await parser.parse(() => this.skip(), path.join(samplePath, 'mp3', sample), 'audio/mpeg');
+            const unsynchronised = sample.includes('unsync');
+            assert.strictEqual(metadata.common.title, unsynchronised ? title : 'Extended header');
+            assert.strictEqual(metadata.common.artist, unsynchronised ? 'Artist' : 'music-metadata');
+            assert.strictEqual(metadata.format.sampleRate, 22050);
+            assert.isAbove(metadata.format.duration, 0);
+            assert.isEmpty(metadata.quality.warnings);
+          });
+        }
+      }
+
+      for (const source of ['buffer', 'stream', 'borrowed tokens']) {
+        it(`preserves absolute offsets, input bytes and caller ownership (${source})`, async () => {
+          const file = await readFile(filename);
+          const tagLength = 10 + ((file[6] << 21) | (file[7] << 14) | (file[8] << 7) | file[9]);
+          const prefix = Buffer.alloc(7, 42);
+          const input = Buffer.concat([prefix, file.subarray(0, tagLength), Buffer.from([43])]);
+          const original = Buffer.from(input);
+          const tokenizer =
+            source === 'stream' ? await fromStream(Readable.from([input], { objectMode: false })) : fromBuffer(input);
+          if (source === 'borrowed tokens') {
+            // A custom tokenizer may return token views into caller-owned input.
+            tokenizer.readToken = async (token, position = tokenizer.position) => {
+              const value = token.get(input, position);
+              await tokenizer.ignore(token.len);
+              return value;
+            };
+          }
+          const close = tokenizer.close.bind(tokenizer);
+          tokenizer.close = async () => assert.fail('ID3 parser must not close its caller-owned source');
+          try {
+            await tokenizer.ignore(prefix.length);
+            const metadata = new MetadataCollector();
+            await new ID3v2Parser().parse(metadata, tokenizer, {});
+            assert.strictEqual(metadata.common.title, title);
+            assert.strictEqual(metadata.common.artist, 'Artist');
+            assert.strictEqual(tokenizer.position, prefix.length + tagLength);
+            assert.strictEqual(await tokenizer.readNumber(UINT8), 43);
+            assert.deepEqual(input, original);
+          } finally {
+            await close();
+          }
+        });
+      }
+
+      for (const source of ['buffer', 'stream']) {
+        for (const belowLimit of [false, true]) {
+          it(`${belowLimit ? 'rejects below' : 'accepts at'} the encoded tag-body allocation limit (${source})`, async () => {
+            const file = await readFile(filename);
+            const size = (file[6] << 21) | (file[7] << 14) | (file[8] << 7) | file[9];
+            const options = { maxMemoryAllocation: size - (belowLimit ? 1 : 0) };
+            const tokenizer =
+              source === 'buffer' ? fromBuffer(file) : await fromStream(Readable.from([file], { objectMode: false }));
+            try {
+              const metadata = new MetadataCollector(options);
+              const parse = new ID3v2Parser().parse(metadata, tokenizer, options);
+              if (belowLimit) {
+                await expect(parse).to.be.rejectedWith(Id3v2ContentError, `allocation limit ${size - 1}`);
+              } else {
+                await parse;
+                assert.strictEqual(metadata.common.title, title);
+              }
+            } finally {
+              await tokenizer.close();
+            }
+          });
+        }
+
+        for (const major of [3, 4] as const) {
+          for (const length of [0, 1, 2, 3]) {
+            it(`rejects a ${length}-byte extended-header size field inside its ID3v2.${major} tag (${source})`, async () => {
+              const tag = Buffer.concat([
+                Buffer.from([0x49, 0x44, 0x33, major, 0, 0x40]),
+                syncSafe(length),
+                Buffer.alloc(length)
+              ]);
+              const input = Buffer.concat([tag, Buffer.alloc(16, 42)]);
+              const tokenizer =
+                source === 'buffer'
+                  ? fromBuffer(input)
+                  : await fromStream(Readable.from([input], { objectMode: false }));
+              try {
+                await expect(new ID3v2Parser().parse(new MetadataCollector(), tokenizer, {})).to.be.rejectedWith(
+                  Id3v2ContentError,
+                  'ID3v2 extended header size field exceeds tag boundary'
+                );
+                assert.strictEqual(tokenizer.position, tag.length);
+                assert.strictEqual(await tokenizer.readNumber(UINT8), 42);
+              } finally {
+                await tokenizer.close();
+              }
+            });
+          }
+        }
+      }
+
+      it('validates the extended header against the resynchronised tag length', async () => {
+        // The raw body has 14 bytes, but only 13 remain after removing the inserted zero.
+        const body = Buffer.from([0, 0, 0, 10, 0x80, 0, 0, 0, 0, 0, 0xff, 0, 0xe0, 0]);
+        const tag = Buffer.concat([Buffer.from([0x49, 0x44, 0x33, 3, 0, 0xc0]), syncSafe(body.length), body]);
+        await expect(mm.parseBuffer(tag, 'audio/mpeg')).to.be.rejectedWith(
+          Id3v2ContentError,
+          'Invalid ID3v2 extended header size: 14'
+        );
+      });
+    });
+
     // The header flag of ID3v2.2 and ID3v2.3 applies to the whole tag: a zero byte follows each 0xFF
     // that precedes a zero byte or a byte >= 0xE0, and frame sizes count the resynchronised data.
     function unsynchronisedTag(major: 2 | 3): Buffer {
@@ -1225,7 +1348,7 @@ describe('ID3v2', () => {
           try {
             await expect(parseEmbeddedID3v2(new MetadataCollector(), tokenizer, {}, tag.length)).to.be.rejectedWith(
               Id3v2ContentError,
-              'exceeds chunk boundary'
+              'ID3v2 extended header size field exceeds tag boundary'
             );
             assert.strictEqual(tokenizer.position, tag.length);
             assert.strictEqual(await tokenizer.readNumber(UINT8), 42);
