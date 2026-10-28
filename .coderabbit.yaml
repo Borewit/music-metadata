@@ -1,6 +1,10 @@
 reviews:
   poem: false
   in_progress_fortune: false
+  auto_review:
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "dependabot"
   pre_merge_checks:
     docstrings:
       mode: "off"
