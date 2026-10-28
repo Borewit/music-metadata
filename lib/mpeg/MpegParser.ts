@@ -1,5 +1,5 @@
 import initDebug from 'debug';
-import { EndOfStreamError } from 'strtok3';
+import { EndOfStreamError, isRandomAccessTokenizer } from 'strtok3';
 
 import * as common from '../common/Util.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
@@ -116,13 +116,23 @@ export class MpegParser extends AbstractID3Parser {
     while (true) {
       let bo = 0;
       this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, { length: maxPeekLen, mayBeLess: true });
-      if (this.syncPeek.len <= 163) {
+      if (this.syncPeek.len < 2 || (this.syncPeek.len <= 163 && this.audioFrameHeader !== undefined)) {
         throw new EndOfStreamError();
       }
       while (true) {
+        if (gotFirstSync && bo === this.syncPeek.len) {
+          // Keep a possible sync byte at the end of a lookahead buffer.
+          await this.tokenizer.ignore(bo - 1);
+          gotFirstSync = false;
+          break;
+        }
         if (gotFirstSync && (this.syncPeek.buf[bo] & 0xe0) === 0xe0) {
           this.frameHeaderBuffer[0] = 0xff;
           this.frameHeaderBuffer[1] = this.syncPeek.buf[bo];
+          // Retain the MPEG tail policy; a complete ADTS frame can be much smaller.
+          if (this.syncPeek.len <= 163 && !AdtsFrameHeader.matches(this.frameHeaderBuffer)) {
+            throw new EndOfStreamError();
+          }
           await this.tokenizer.ignore(bo);
           debug(`Sync at offset=${this.tokenizer.position - 1}, frameCount=${this.frameCount}`);
           if (this.syncFrameCount === this.frameCount) {
@@ -177,10 +187,13 @@ export class MpegParser extends AbstractID3Parser {
     this.metadata.setFormat('container', header.container);
     this.metadata.setFormat('codec', header.codec);
     this.metadata.setFormat('lossless', false);
-    this.metadata.setFormat('sampleRate', header.samplingRate ?? undefined);
 
+    if (header instanceof AdtsFrameHeader) {
+      return this.parseAdts(header);
+    }
+    this.metadata.setFormat('sampleRate', header.samplingRate);
     this.frameCount++;
-    return header instanceof AdtsFrameHeader ? this.parseAdts(header) : this.parseMpegFrame(header);
+    return this.parseMpegFrame(header);
   }
 
   /**
@@ -248,8 +261,29 @@ export class MpegParser extends AbstractID3Parser {
   private async parseAdts(header: AdtsFrameHeader): Promise<boolean> {
     await this.tokenizer.readBuffer(this.adtsHeaderBuffer);
     const frameLength = header.frameLength + common.getBitAllignedNumber(this.adtsHeaderBuffer, 0, 0, 11);
+    if (frameLength <= header.headerLength) {
+      throw new MpegContentError(`Invalid ADTS frame length: ${frameLength}`);
+    }
+    const remaining = frameLength - 7;
+    if (isRandomAccessTokenizer(this.tokenizer)) {
+      // Verify the physical end even when a custom tokenizer advertises an inaccurate size.
+      const count = await this.tokenizer.readBuffer(this.adtsHeaderBuffer, {
+        position: this.tokenizer.position + remaining - 1,
+        length: 1
+      });
+      if (count !== 1) {
+        throw new EndOfStreamError();
+      }
+    } else if ((await this.tokenizer.ignore(remaining)) !== remaining) {
+      throw new EndOfStreamError();
+    }
+    // Do not let a rejected partial frame override the rate of complete frames.
+    this.metadata.setFormat('sampleRate', header.samplingRate ?? undefined);
+    // Only complete frames contribute samples, including clips shorter than three frames.
+    this.frameCount++;
     this.totalDataLength += frameLength;
     this.samplesPerFrame = 1024;
+    this.calculateEofDuration = this.options.duration ?? false;
 
     if (header.samplingRate !== null) {
       const framesPerSec = header.samplingRate / this.samplesPerFrame;
@@ -259,21 +293,13 @@ export class MpegParser extends AbstractID3Parser {
       debug(`frame-count=${this.frameCount}, size=${frameLength} bytes, bit-rate=${bitrate}`);
     }
 
-    await this.tokenizer.ignore(frameLength > 7 ? frameLength - 7 : 1);
-
-    // Consume remaining header and frame data
-    if (this.frameCount === 3) {
+    if (this.frameCount === 1) {
       this.metadata.setFormat('codecProfile', header.codecProfile);
       if (header.numberOfChannels) {
         this.metadata.setFormat('numberOfChannels', header.numberOfChannels);
       }
-      if (this.options.duration) {
-        this.calculateEofDuration = true;
-      } else {
-        return true; // Stop parsing after the third frame
-      }
     }
-    return false;
+    return this.frameCount === 3 && !this.options.duration;
   }
 
   private async skipSideInformation(): Promise<void> {
