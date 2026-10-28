@@ -168,12 +168,27 @@ export class CafParser extends BasicParser {
     if (chunkSize === -1) {
       this.reachedEndOfFile = true; // Runs to the end of the file, nothing can follow
       const { size } = this.tokenizer.fileInfo;
-      if (size === undefined) {
-        debug('Audio Data chunk has an unknown size, cannot derive the bitrate');
+      if (size !== undefined) {
+        this.dataBytes = size - this.tokenizer.position;
+        await this.tokenizer.ignore(this.dataBytes);
         return;
       }
-      this.dataBytes = size - this.tokenizer.position;
-      await this.tokenizer.ignore(this.dataBytes);
+      if (!this.options.duration) {
+        debug('Audio Data chunk has an unknown size and duration was not requested');
+        return;
+      }
+      const desc = this.desc;
+      if (
+        !desc ||
+        desc.sampleRate <= 0 ||
+        this.deriveFrameCount(desc) !== undefined ||
+        desc.bytesPerPacket <= 0 ||
+        desc.framesPerPacket <= 0
+      ) {
+        // A packet table may already supply duration; variable packets cannot use a byte count.
+        return;
+      }
+      this.dataBytes = await this.readToPhysicalEof();
       return;
     }
 
@@ -182,6 +197,22 @@ export class CafParser extends BasicParser {
       throw new strtok3.EndOfStreamError();
     }
     this.dataBytes = dataBytes;
+  }
+
+  /**
+   * Consume the remaining input, counting bytes until physical end-of-stream.
+   * Only needed for duration recovery when neither the data chunk nor the input declares a size.
+   */
+  private async readToPhysicalEof(): Promise<number> {
+    const buffer = new Uint8Array(64 * 1024);
+    let bytes = 0;
+    for (;;) {
+      const read = await this.tokenizer.readBuffer(buffer, { mayBeLess: true });
+      if (read === 0) {
+        return bytes;
+      }
+      bytes += read;
+    }
   }
 
   private async readInfo(chunkSize: number): Promise<void> {
@@ -309,7 +340,8 @@ export class CafParser extends BasicParser {
       debug(`Ignoring packet table with mNumberValidFrames=${packetTable.numberValidFrames}`);
     }
     if (desc.bytesPerPacket > 0 && desc.framesPerPacket > 0 && this.dataBytes !== undefined) {
-      const frames = (this.dataBytes * desc.framesPerPacket) / desc.bytesPerPacket;
+      // Count only complete packets so truncated payloads cannot inflate the extent.
+      const frames = Math.floor(this.dataBytes / desc.bytesPerPacket) * desc.framesPerPacket;
       if (frames > 0) {
         return frames;
       }

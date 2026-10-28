@@ -1,5 +1,6 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { assert, expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { EndOfStreamError } from 'strtok3';
@@ -452,6 +453,88 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.strictEqual(format.numberOfSamples, 512, 'format.numberOfSamples');
       assert.strictEqual(format.duration, 0.064, 'format.duration');
       assert.approximately(format.bitrate!, 64000, 1, 'format.bitrate');
+    });
+
+    it('derives fixed-packet duration from an unknown-size stream', async () => {
+      const data = await readFile(path.join(cafSamplePath, 'data-unknown-size.caf'));
+      const { format } = await mm.parseStream(
+        Readable.from([data], { objectMode: false }),
+        { mimeType: cafMimeType },
+        { duration: true }
+      );
+      assert.strictEqual(format.numberOfSamples, 512, 'format.numberOfSamples');
+      assert.strictEqual(format.duration, 0.064, 'format.duration');
+      assert.approximately(format.bitrate!, 64000, 1, 'format.bitrate');
+    });
+
+    it('does not scan an unknown-size stream unless duration is requested', async () => {
+      const data = await readFile(path.join(cafSamplePath, 'data-unknown-size.caf'));
+      const { format } = await mm.parseStream(Readable.from([data], { objectMode: false }), { mimeType: cafMimeType });
+      assert.isUndefined(format.numberOfSamples, 'format.numberOfSamples');
+      assert.isUndefined(format.duration, 'format.duration');
+    });
+
+    for (const [file, packetTable, duration] of [
+      ['aac.caf', true, true],
+      ['ima4.caf', true, true],
+      ['aac.caf', false, true],
+      ['data-unknown-size.caf', false, false]
+    ] as const) {
+      it(`returns metadata before EOF (${file}, packet table=${packetTable}, duration=${duration})`, async () => {
+        // Keep playable audio and its metadata, but leave the data chunk and stream open.
+        const source = await readFile(path.join(cafSamplePath, file));
+        const chunks: Buffer[] = [source.subarray(0, 8)];
+        for (let offset = 8; offset < source.length; ) {
+          const type = source.toString('latin1', offset, offset + 4);
+          const size = Number(source.readBigInt64BE(offset + 4));
+          const end = size < 0 ? source.length : offset + 12 + size;
+          if (type === 'data') {
+            chunks.push(chunkHeader('data', -1), source.subarray(offset + 12, end));
+          } else if (packetTable || type !== 'pakt') {
+            chunks.push(source.subarray(offset, end));
+          }
+          offset = end;
+        }
+        const stream = new PassThrough();
+        stream.write(Buffer.concat(chunks));
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          const metadata = await Promise.race([
+            mm.parseStream(stream, cafMimeType, { duration }),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => reject(new Error('Parser waited for live audio EOF')), 1000);
+            })
+          ]);
+          assert.strictEqual(metadata.format.container, 'CAF');
+          assert.strictEqual(metadata.format.sampleRate, file === 'data-unknown-size.caf' ? 8000 : 44100);
+          assert.strictEqual(metadata.format.duration, packetTable ? 0.1 : undefined);
+          assert.isUndefined(metadata.format.bitrate, 'no payload size is available');
+          assert.isFalse(stream.readableEnded, 'the source has not ended');
+        } finally {
+          clearTimeout(timer);
+          stream.destroy();
+        }
+      });
+    }
+
+    it('counts only complete fixed packets in an unknown-size stream', async () => {
+      const desc = Buffer.alloc(32);
+      desc.writeDoubleBE(44100, 0);
+      desc.write('lpcm', 8, 4, 'latin1');
+      desc.writeUInt32BE(4, 16); // mBytesPerPacket
+      desc.writeUInt32BE(2, 20); // mFramesPerPacket
+      desc.writeUInt32BE(1, 24); // mChannelsPerFrame
+      desc.writeUInt32BE(16, 28); // mBitsPerChannel
+      // 10 payload bytes cover two complete packets, leaving a truncated packet
+      const data = Buffer.alloc(4 + 10);
+      const file = Buffer.concat([fileHeader, chunkHeader('desc', desc.length), desc, chunkHeader('data', -1), data]);
+      const { format } = await mm.parseStream(
+        Readable.from([file], { objectMode: false }),
+        { mimeType: cafMimeType },
+        { duration: true }
+      );
+      assert.strictEqual(format.numberOfSamples, 4, 'format.numberOfSamples');
+      assert.strictEqual(format.duration, 4 / 44100, 'format.duration');
     });
   });
 
