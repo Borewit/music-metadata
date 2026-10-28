@@ -2,6 +2,7 @@ import initDebug from 'debug';
 import { EndOfStreamError, isRandomAccessTokenizer } from 'strtok3';
 
 import * as common from '../common/Util.js';
+import { hasID3v1Header } from '../id3v1/ID3v1Parser.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { AdtsFrameHeader } from './AdtsFrameHeader.js';
 import { MpegContentError, MpegFrameHeader } from './MpegFrameHeader.js';
@@ -30,6 +31,7 @@ export class MpegParser extends AbstractID3Parser {
   private constantBitrate = true;
   private offset = 0;
   private frameSize = 0;
+  private audioEnd?: number;
 
   private calculateEofDuration = false;
   private samplesPerFrame: number | null = null;
@@ -55,6 +57,9 @@ export class MpegParser extends AbstractID3Parser {
   public async postId3v2Parse(): Promise<void> {
     this.metadata.setFormat('lossless', false);
     this.metadata.setAudioOnly();
+    if (this.options.duration && isRandomAccessTokenizer(this.tokenizer)) {
+      this.audioEnd = this.tokenizer.fileInfo.size - ((await hasID3v1Header(this.tokenizer)) ? 128 : 0);
+    }
 
     try {
       let quit = false;
@@ -95,7 +100,7 @@ export class MpegParser extends AbstractID3Parser {
           this.metadata.setFormat('bitrate', (mpegSize * 8) / format.duration);
         }
       }
-      if (this.tokenizer.fileInfo.size && format.codecProfile === 'CBR') {
+      if (this.tokenizer.fileInfo.size && format.codecProfile === 'CBR' && !this.calculateEofDuration) {
         const mpegSize = this.tokenizer.fileInfo.size - this.mpegOffset - (hasID3v1 ? 128 : 0);
         if (this.samplesPerFrame !== null) {
           const numberOfSamples = Math.round(mpegSize / this.frameSize) * this.samplesPerFrame;
@@ -116,7 +121,28 @@ export class MpegParser extends AbstractID3Parser {
     while (true) {
       let bo = 0;
       this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, { length: maxPeekLen, mayBeLess: true });
-      if (this.syncPeek.len < 2 || (this.syncPeek.len <= 163 && this.audioFrameHeader !== undefined)) {
+      if (this.syncPeek.len >= 128 && this.syncPeek.len < maxPeekLen) {
+        const footer = this.syncPeek.len - 128;
+        const end = this.tokenizer.position + this.syncPeek.len;
+        if (
+          (this.tokenizer.fileInfo.size === undefined || this.tokenizer.fileInfo.size === end) &&
+          this.syncPeek.buf[footer] === 0x54 &&
+          this.syncPeek.buf[footer + 1] === 0x41 &&
+          this.syncPeek.buf[footer + 2] === 0x47
+        ) {
+          this.audioEnd = end - 128;
+        }
+      }
+      const fullMpegScan = this.calculateEofDuration && this.audioFrameHeader !== undefined;
+      const id3v1Tail =
+        this.syncPeek.len >= 3 &&
+        this.syncPeek.buf[0] === 0x54 &&
+        this.syncPeek.buf[1] === 0x41 &&
+        this.syncPeek.buf[2] === 0x47;
+      if (
+        this.syncPeek.len < 2 ||
+        (this.syncPeek.len <= 163 && this.audioFrameHeader !== undefined && (!fullMpegScan || id3v1Tail))
+      ) {
         throw new EndOfStreamError();
       }
       while (true) {
@@ -130,7 +156,11 @@ export class MpegParser extends AbstractID3Parser {
           this.frameHeaderBuffer[0] = 0xff;
           this.frameHeaderBuffer[1] = this.syncPeek.buf[bo];
           // Retain the MPEG tail policy; a complete ADTS frame can be much smaller.
-          if (this.syncPeek.len <= 163 && !AdtsFrameHeader.matches(this.frameHeaderBuffer)) {
+          if (
+            this.syncPeek.len <= 163 &&
+            !AdtsFrameHeader.matches(this.frameHeaderBuffer) &&
+            (!fullMpegScan || id3v1Tail)
+          ) {
             throw new EndOfStreamError();
           }
           await this.tokenizer.ignore(bo);
@@ -182,27 +212,41 @@ export class MpegParser extends AbstractID3Parser {
       }
       throw err;
     }
+    if (
+      header instanceof MpegFrameHeader &&
+      this.options.duration &&
+      this.audioEnd !== undefined &&
+      this.tokenizer.position - 1 + header.frameSize > this.audioEnd
+    ) {
+      throw new EndOfStreamError();
+    }
     await this.tokenizer.ignore(3);
+
+    if (header instanceof AdtsFrameHeader) {
+      this.metadata.setFormat('container', header.container);
+      this.metadata.setFormat('codec', header.codec);
+      this.metadata.setFormat('lossless', false);
+      return this.parseAdts(header);
+    }
 
     this.metadata.setFormat('container', header.container);
     this.metadata.setFormat('codec', header.codec);
     this.metadata.setFormat('lossless', false);
-
-    if (header instanceof AdtsFrameHeader) {
-      return this.parseAdts(header);
-    }
-    this.metadata.setFormat('sampleRate', header.samplingRate);
     this.frameCount++;
-    return this.parseMpegFrame(header);
+    try {
+      return await this.parseMpegFrame(header);
+    } catch (error) {
+      if (error instanceof EndOfStreamError) {
+        --this.frameCount;
+      }
+      throw error;
+    }
   }
 
   /**
    * @return {Promise<boolean>} true if parser should quit
    */
   private async parseMpegFrame(header: MpegFrameHeader): Promise<boolean> {
-    this.metadata.setFormat('numberOfChannels', header.numberOfChannels);
-    this.metadata.setFormat('bitrate', header.bitrate);
-
     if (this.frameCount < 20 * 10000) {
       debug(
         'offset=%s MP%s bitrate=%s sample-rate=%s',
@@ -214,8 +258,6 @@ export class MpegParser extends AbstractID3Parser {
     }
     this.frameSize = header.frameSize;
     this.audioFrameHeader = header;
-    this.firstBitrate ??= header.bitrate;
-    this.constantBitrate &&= header.bitrate === this.firstBitrate;
 
     // Xing/Info keeps the same offset even when CRC-protected: header + side information.
     // Its first-frame CRC is included in the skipped bytes; later frames skip CRC separately.
@@ -223,20 +265,24 @@ export class MpegParser extends AbstractID3Parser {
     if (this.frameCount === 1) {
       this.offset = MpegFrameHeader.len;
       await this.skipSideInformation();
+      this.applyMpegFormat(header);
       return false;
     }
 
     if (this.frameCount === 4) {
+      this.samplesPerFrame = header.samplesPerFrame;
+      if (this.metadata.format.duration) {
+        this.applyMpegFormat(header);
+        return true;
+      }
+      if (!this.options.duration) {
+        this.applyMpegFormat(header);
+      }
       // Treat the stream as CBR if all observed MPEG bitrates match.
       if (this.constantBitrate) {
         // Actual calculation will be done in finalize
         this.samplesPerFrame = header.samplesPerFrame;
         this.metadata.setFormat('codecProfile', 'CBR');
-        if (this.tokenizer.fileInfo.size) {
-          return true; // Will calculate duration based on the file size
-        }
-      } else if (this.metadata.format.duration) {
-        return true; // We already got the duration, stop processing MPEG stream any further
       }
       if (!this.options.duration) {
         return true; // Enforce duration not enabled, stop processing entire stream
@@ -255,7 +301,22 @@ export class MpegParser extends AbstractID3Parser {
       this.offset += 2;
     }
     await this.skipSideInformation();
+    this.applyMpegFormat(header);
+    if (this.calculateEofDuration && !this.constantBitrate && this.metadata.format.codecProfile === 'CBR') {
+      this.metadata.setFormat('codecProfile', 'VBR');
+    }
     return false;
+  }
+
+  private applyMpegFormat(header: MpegFrameHeader): void {
+    this.metadata.setFormat('container', header.container);
+    this.metadata.setFormat('codec', header.codec);
+    this.metadata.setFormat('lossless', false);
+    this.metadata.setFormat('sampleRate', header.samplingRate);
+    this.metadata.setFormat('numberOfChannels', header.numberOfChannels);
+    this.metadata.setFormat('bitrate', header.bitrate);
+    this.firstBitrate ??= header.bitrate;
+    this.constantBitrate &&= header.bitrate === this.firstBitrate;
   }
 
   private async parseAdts(header: AdtsFrameHeader): Promise<boolean> {
@@ -396,6 +457,16 @@ export class MpegParser extends AbstractID3Parser {
     if (frameDataLeft < 0) {
       throw new MpegContentError('frame-data-left cannot be negative');
     }
-    await this.tokenizer.ignore(frameDataLeft);
+    if (frameDataLeft > 0 && this.calculateEofDuration && isRandomAccessTokenizer(this.tokenizer)) {
+      const count = await this.tokenizer.readBuffer(this.sideInfoBuffer, {
+        position: this.tokenizer.position + frameDataLeft - 1,
+        length: 1
+      });
+      if (count !== 1) {
+        throw new EndOfStreamError();
+      }
+    } else if ((await this.tokenizer.ignore(frameDataLeft)) !== frameDataLeft) {
+      throw new EndOfStreamError();
+    }
   }
 }
