@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PassThrough, Readable } from 'node:stream';
 import { assert } from 'chai';
+import { fromBuffer } from 'strtok3';
 import type { IPopularimeter } from '../lib/id3v2/FrameParser.js';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 import * as mm from '../lib/index.js';
@@ -337,6 +339,168 @@ describe('Parse MPEG', () => {
   });
 
   describe('Calculate / read duration', () => {
+    describe('headerless late VBR', () => {
+      const filename = path.join(issueDir, 'mp3', 'late-vbr-no-xing.mp3');
+      it('returns live MPEG metadata without waiting for duration or EOF', async () => {
+        const stream = new PassThrough();
+        stream.write(fs.readFileSync(filename));
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          const { format, common } = await Promise.race([
+            mm.parseStream(stream, 'audio/mpeg', { duration: false, skipPostHeaders: true }),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => reject(new Error('Parser waited for live audio EOF')), 1000);
+            })
+          ]);
+          assert.strictEqual(common.title, 'Late bitrate change');
+          assert.strictEqual(format.sampleRate, 44100);
+          assert.isUndefined(format.duration);
+          assert.isFalse(stream.readableEnded);
+        } finally {
+          clearTimeout(timer);
+          stream.destroy();
+        }
+      });
+      for (const parser of Parsers) {
+        it(`scans past the initial CBR region (${parser.description})`, async function () {
+          const { format, common } = await parser.parse(() => this.skip(), filename, 'audio/mpeg', { duration: true });
+          assert.strictEqual(common.title, 'Late bitrate change');
+          assert.strictEqual(format.numberOfSamples, 156 * 1152);
+          assert.strictEqual(format.duration, (156 * 1152) / 44100);
+          assert.strictEqual(format.codecProfile, 'VBR');
+        });
+      }
+      for (const missing of [1, 20]) {
+        it(`does not count a partial final MPEG frame missing ${missing} bytes`, async () => {
+          const data = fs.readFileSync(filename);
+          const { format } = await mm.parseBuffer(data.subarray(0, -missing), 'audio/mpeg', { duration: true });
+          assert.strictEqual(format.numberOfSamples, 155 * 1152);
+          assert.strictEqual(format.duration, (155 * 1152) / 44100);
+        });
+      }
+      it('keeps the size-based fast estimate when scanning is not requested', async () => {
+        const { format } = await mm.parseFile(filename);
+        assert.strictEqual(format.codecProfile, 'CBR');
+        assert.isBelow(format.duration!, 3);
+      });
+      for (const tagged of [false, true]) {
+        it(`counts a complete 104-byte last frame${tagged ? ' before ID3v1' : ''}`, async () => {
+          // Remove the last two complete frames (261 + 208 bytes), leaving a valid frame boundary.
+          const file = fs.readFileSync(filename).subarray(0, -469);
+          const footer = Buffer.alloc(128);
+          footer.write('TAG');
+          const data = tagged ? Buffer.concat([file, footer]) : file;
+          const { format } = await mm.parseBuffer(data, 'audio/mpeg', { duration: true });
+          assert.strictEqual(format.numberOfSamples, 154 * 1152);
+          assert.strictEqual(format.duration, (154 * 1152) / 44100);
+        });
+      }
+      for (const source of ['buffer', 'sized stream', 'unknown-size stream'] as const) {
+        it(`preserves ID3v1 after an incomplete last frame (${source})`, async () => {
+          // Leave the final 104-byte frame ten bytes short, followed by a real ID3v1 tag.
+          const file = fs.readFileSync(filename).subarray(0, -469 - 10);
+          const footer = Buffer.alloc(128);
+          footer.write('TAG');
+          footer.write('Retained footer artist', 33);
+          const data = Buffer.concat([file, footer]);
+          const metadata =
+            source === 'buffer'
+              ? await mm.parseBuffer(data, 'audio/mpeg', { duration: true })
+              : await mm.parseStream(
+                  Readable.from([data], { objectMode: false }),
+                  { mimeType: 'audio/mpeg', size: source === 'sized stream' ? data.length : undefined },
+                  { duration: true }
+                );
+          assert.strictEqual(metadata.format.numberOfSamples, 153 * 1152);
+          assert.strictEqual(metadata.format.duration, (153 * 1152) / 44100);
+          // The current ID3v1 reader needs a known total size.
+          if (source !== 'unknown-size stream') {
+            assert.strictEqual(metadata.common.artist, 'Retained footer artist');
+          }
+        });
+      }
+      it('does not classify a differing fourth complete frame as CBR', async () => {
+        const file = fs.readFileSync(filename);
+        const tagEnd = 10 + file[9];
+        let offset = tagEnd;
+        for (let frame = 0; frame < 3; ++frame) {
+          offset += new MpegFrameHeader(file.subarray(offset, offset + 4)).frameSize;
+        }
+        const data = Buffer.concat([file.subarray(0, offset), file.subarray(tagEnd + 32600)]);
+        const fast = await mm.parseBuffer(data, 'audio/mpeg');
+        assert.notStrictEqual(fast.format.codecProfile, 'CBR');
+        assert.isUndefined(fast.format.duration);
+        const scanned = await mm.parseBuffer(data, 'audio/mpeg', { duration: true });
+        assert.strictEqual(scanned.format.numberOfSamples, 81 * 1152);
+        assert.strictEqual(scanned.format.codecProfile, 'VBR');
+      });
+      it('preserves complete-frame metadata when the fourth frame is truncated', async () => {
+        const file = fs.readFileSync(filename);
+        let offset = 10 + file[9];
+        for (let frame = 0; frame < 3; ++frame) {
+          offset += new MpegFrameHeader(file.subarray(offset, offset + 4)).frameSize;
+        }
+        const data = Buffer.from(file.subarray(0, offset + 200));
+        data[offset + 2] |= 0x04; // Reject a partial frame with a different sample rate.
+        const { format } = await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mpeg', {
+          duration: true
+        });
+        assert.strictEqual(format.numberOfSamples, 3 * 1152);
+        assert.strictEqual(format.sampleRate, 44100);
+        assert.strictEqual(format.duration, (3 * 1152) / 44100);
+      });
+      for (const randomAccess of [false, true]) {
+        it(`honors a short custom tokenizer read (random access=${randomAccess})`, async () => {
+          const data = fs.readFileSync(filename);
+          const frameOffset = 10 + data[9] + 32600;
+          const tokenizer = fromBuffer(data);
+          tokenizer.supportsRandomAccess = () => randomAccess;
+          let closed = false;
+          tokenizer.close = async () => {
+            closed = true;
+          };
+          const read = tokenizer.readBuffer.bind(tokenizer);
+          const ignore = tokenizer.ignore.bind(tokenizer);
+          if (randomAccess) {
+            tokenizer.readBuffer = (buffer, options) =>
+              options?.length === 1 && options.position! > frameOffset ? Promise.resolve(0) : read(buffer, options);
+          } else {
+            tokenizer.ignore = length =>
+              tokenizer.position > frameOffset && length > 32 ? ignore(length - 1) : ignore(length);
+          }
+          const { format } = await mm.parseFromTokenizer(tokenizer, { duration: true });
+          assert.strictEqual(format.numberOfSamples, 78 * 1152);
+          assert.strictEqual(format.bitrate, 128000);
+          assert.isFalse(closed, 'caller owns the tokenizer');
+        });
+      }
+      it('ignores the rate and channel mode of a truncated final frame', async () => {
+        const file = fs.readFileSync(filename);
+        const frameOffset = 10 + file[9] + 32600;
+        const data = Buffer.from(file.subarray(0, frameOffset + 200));
+        data[frameOffset + 2] |= 0x04; // 48 kHz instead of 44.1 kHz
+        data[frameOffset + 3] &= 0x3f; // Stereo instead of mono
+        for (const stream of [false, true]) {
+          const { format } = stream
+            ? await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mpeg', { duration: true })
+            : await mm.parseBuffer(data, 'audio/mpeg', { duration: true });
+          assert.strictEqual(format.sampleRate, 44100);
+          assert.strictEqual(format.numberOfChannels, 1);
+          assert.strictEqual(format.bitrate, 128000);
+          assert.strictEqual(format.duration, (78 * 1152) / 44100);
+        }
+      });
+      it('does not classify a truncated differing-bitrate frame as VBR', async () => {
+        const file = fs.readFileSync(filename);
+        const tagEnd = 10 + file[9];
+        // The complete two-second CBR portion is 32600 bytes; the next frame needs 731 bytes.
+        const data = file.subarray(0, tagEnd + 32600 + 200);
+        const { format } = await mm.parseBuffer(data, 'audio/mpeg', { duration: true });
+        assert.strictEqual(format.numberOfSamples, 78 * 1152);
+        assert.strictEqual(format.codecProfile, 'CBR');
+        assert.strictEqual(format.bitrate, 128000);
+      });
+    });
     describe('VBR read from Xing header', () => {
       const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
 
