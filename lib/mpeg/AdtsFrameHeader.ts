@@ -32,6 +32,7 @@ export class AdtsFrameHeader {
   public readonly samplingRate: number | null;
   public readonly numberOfChannels: number | undefined;
   public readonly frameLength: number;
+  public readonly headerLength: number;
 
   public static matches(buf: Uint8Array): boolean {
     // MPEG version index 2 or 3, with layer bits 00, identifies ADTS after synchronization.
@@ -39,6 +40,7 @@ export class AdtsFrameHeader {
   }
 
   public constructor(buf: Uint8Array) {
+    this.headerLength = (buf[1] & 1) === 0 ? 9 : 7;
     this.container = `ADTS/MPEG-${common.isBitSet(buf, 1, 4) ? 2 : 4}`;
     this.codecProfile = AdtsFrameHeader.profiles[common.getBitAllignedNumber(buf, 2, 0, 2)];
     this.samplingRate = AdtsFrameHeader.samplingRates[common.getBitAllignedNumber(buf, 2, 2, 4)];
