@@ -89,7 +89,7 @@ export const BlockStreamInfo: IGetToken<IBlockStreamInfo> = {
       minimumBlockSize: UINT16_BE.get(buf, off),
       // The maximum block size (in samples) used in the stream.
       // (Minimum blocksize == maximum blocksize) implies a fixed-blocksize stream.
-      maximumBlockSize: UINT16_BE.get(buf, off + 2) / 1000,
+      maximumBlockSize: UINT16_BE.get(buf, off + 2),
       // The minimum frame size (in bytes) used in the stream.
       // May be 0 to imply the value is not known.
       minimumFrameSize: UINT24_BE.get(buf, off + 4),

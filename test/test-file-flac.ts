@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { assert } from 'chai';
+import { BlockStreamInfo } from '../lib/flac/FlacToken.js';
 import * as mm from '../lib/index.js';
 import { LyricsContentType, TimestampFormat } from '../lib/index.js';
 import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
@@ -12,6 +13,15 @@ import { samplePath } from './shared/util.js';
 
 describe('Parse FLAC Vorbis comment', () => {
   const flacFilePath = path.join(samplePath, 'flac');
+
+  it('decodes STREAMINFO block sizes in samples at a nonzero offset', () => {
+    const data = fs.readFileSync(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac"));
+    assert.equal(data.toString('ascii', 0, 4), 'fLaC');
+    assert.equal(data[4] & 0x7f, 0, 'first metadata block is STREAMINFO');
+    const info = BlockStreamInfo.get(data, 8);
+    assert.equal(info.minimumBlockSize, 4096);
+    assert.equal(info.maximumBlockSize, 4096);
+  });
 
   describe('issue #2651: map Vorbis UNSYNCEDLYRICS to common lyrics', () => {
     // Fixture: 0.1 seconds of generated silence with a multiline UTF-8 UNSYNCEDLYRICS tag.
