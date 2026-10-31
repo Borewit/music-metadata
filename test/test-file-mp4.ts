@@ -1494,16 +1494,31 @@ describe('Parse MPEG-4', () => {
         );
       });
 
+      for (const stream of [false, true]) {
+        it(`rejects ftyp entries above the dedicated structure limit (stream=${stream})`, async () => {
+          const count = 5_000_001;
+          const atom = Buffer.alloc(8 + count * 4);
+          atom.writeUInt32BE(atom.length);
+          atom.write('ftyp', 4);
+          const parse = stream
+            ? mm.parseStream(Readable.from([atom], { objectMode: false }), 'video/mp4')
+            : mm.parseBuffer(atom, 'video/mp4');
+          await rejects(
+            parse,
+            error =>
+              error instanceof Mp4ContentError &&
+              error.message.includes('ftyp entry count 5000001 exceeds entry limit 5000000')
+          );
+        });
+      }
+
       it('bounds ftyp brand entries before constructing the list', async () => {
         const atom = Buffer.alloc(20);
         atom.writeUInt32BE(atom.length);
         atom.write('ftyp', 4);
         atom.write('isom', 8);
         atom.write('iso2', 16);
-        await rejects(
-          mm.parseBuffer(atom, 'video/mp4', { maxMetadataEntries: 2 }),
-          /ftyp entry count 3 exceeds entry limit 2/
-        );
+        await mm.parseBuffer(atom, 'video/mp4', { maxMetadataEntries: 1 });
         await mm.parseBuffer(atom, 'video/mp4', { maxMetadataEntries: 3 });
       });
 
@@ -2295,7 +2310,7 @@ describe('Parse MPEG-4', () => {
                 parseBuffer(buffer, { mimeType: 'video/mp4' }),
                 error =>
                   error instanceof UnexpectedFileContentError &&
-                  /trun sample count 16777214 exceeds entry limit 100000/.test(error.message)
+                  /trun sample count 16777214 exceeds entry limit 5000000/.test(error.message)
               );
             } finally {
               Array.prototype.push = originalPush;
@@ -2306,17 +2321,62 @@ describe('Parse MPEG-4', () => {
         );
       });
 
-      it('limits each trun table independently and allows callers to raise the entry limit', async () => {
+      for (const stream of [false, true]) {
+        it(`parses over 200000 timing entries with defaults and a one-tag limit (stream=${stream})`, async () => {
+          const count = 200_001;
+          const buffer = mp4({
+            ...videoTrack,
+            timeScale: 1000,
+            duration: 0,
+            sampleDurations: Array.from({ length: count }, (_, i) => ({ count: 1, duration: 40 + (i % 2) }))
+          });
+          for (const options of [{}, { maxMetadataEntries: 1 }]) {
+            const { format } = stream
+              ? await mm.parseStream(Readable.from([buffer], { objectMode: false }), 'video/mp4', options)
+              : await mm.parseBuffer(buffer, 'video/mp4', options);
+            assert.approximately(format.trackInfo[0].duration, (count * 40 + 100_000) / 1000, 1e-9);
+          }
+        });
+      }
+
+      it('parses over 200000 explicit fragment samples with default settings', async () => {
+        const count = 200_001;
+        const run = new Uint8Array(8 + count * 4);
+        const view = new DataView(run.buffer);
+        view.setUint32(0, 0x100);
+        view.setUint32(4, count);
+        for (let i = 0; i < count; ++i) {
+          view.setUint32(8 + i * 4, 40);
+        }
+        await mm.parseBuffer(box('moof', box('traf', box('trun', run))), 'video/mp4');
+      });
+
+      it('enforces the dedicated media table limit independently of the user tag limit', () => {
+        const count = 5_000_001;
+        const data = new Uint8Array(8 + count * 4);
+        new DataView(data.buffer).setUint32(4, count);
+        assert.throws(
+          () => new StcoAtom(data.length).get(data, 0),
+          Mp4ContentError,
+          'MP4 table entry count 5000001 exceeds entry limit 5000000'
+        );
+      });
+
+      it('still limits user tag values independently of media structures', async () => {
+        const data = box('moov', box('date', textEncoder.encode('2025')), box('date', textEncoder.encode('2026')));
+        await rejects(mm.parseBuffer(data, 'video/mp4', { maxMetadataEntries: 1 }), /MP4 metadata value count/);
+        const metadata = await mm.parseBuffer(data, 'video/mp4', { maxMetadataEntries: 2 });
+        assert.lengthOf(metadata.native.iTunes, 2);
+      });
+
+      it('parses fragment sample tables independently of the user tag limit', async () => {
         const samples = Array.from({ length: 10 }, () => ({ duration: 1 }));
         const buffer = concat(fragment({ samples }), fragment({ samples }));
-        await rejects(
-          mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 9 }),
-          /trun sample count 10 exceeds entry limit 9/
-        );
+        await mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 1 });
         await mm.parseBuffer(buffer, { mimeType: 'video/mp4' }, { maxMetadataEntries: 10 });
       });
 
-      it('bounds cumulative explicit sample rows within each track fragment', async () => {
+      it('does not charge cumulative fragment samples to the user tag limit', async () => {
         const run = new Uint8Array(8 + 4 * 4);
         const view = new DataView(run.buffer);
         view.setUint32(0, 0x100);
@@ -2327,10 +2387,7 @@ describe('Parse MPEG-4', () => {
           'moof',
           box('traf', box('trun', defaultRun), box('trun', run), box('trun', run), box('trun', run))
         );
-        await rejects(
-          mm.parseBuffer(data, { mimeType: 'video/mp4' }, { maxMetadataEntries: 10 }),
-          /trun sample count 4 exceeds entry limit 2/
-        );
+        await mm.parseBuffer(data, { mimeType: 'video/mp4' }, { maxMetadataEntries: 1 });
         // Default-only runs consume no sample budget, and each traf gets a fresh budget.
         await mm.parseBuffer(concat(data, data), { mimeType: 'video/mp4' }, { maxMetadataEntries: 12 });
       });
@@ -2360,17 +2417,14 @@ describe('Parse MPEG-4', () => {
         assert.strictEqual(retainedFragments, 0);
       });
 
-      it('bounds tracks retained across root atoms', async () => {
+      it('does not charge retained tracks to the user tag limit', async () => {
         const roots = concat(
           ...Array.from({ length: 4 }, (_, index) => box('moov', box('trak', trackHeaderBox(index + 1, videoTrack))))
         );
-        await rejects(
-          mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 3 }),
-          /MP4 track count exceeds entry limit 3/
-        );
+        await mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 1 });
       });
 
-      it('bounds track defaults retained across root atoms', async () => {
+      it('does not charge track defaults to the user tag limit', async () => {
         const roots = concat(
           ...Array.from({ length: 3 }, (_, index) => {
             const trex = new Uint8Array(24);
@@ -2378,18 +2432,12 @@ describe('Parse MPEG-4', () => {
             return box('trex', trex);
           })
         );
-        await rejects(
-          mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 2 }),
-          /MP4 track-default count exceeds entry limit 2/
-        );
+        await mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 1 });
       });
 
-      it('bounds chapter media ranges retained across root atoms', async () => {
+      it('does not charge chapter media ranges to the user tag limit', async () => {
         const roots = concat(...Array.from({ length: 3 }, () => box('mdat', new Uint8Array(1))));
-        await rejects(
-          mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { includeChapters: true, maxMetadataEntries: 2 }),
-          /MP4 media-data range count exceeds entry limit 2/
-        );
+        await mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { includeChapters: true, maxMetadataEntries: 1 });
       });
 
       it('releases the atom budget after each root tree', async () => {
@@ -2397,12 +2445,9 @@ describe('Parse MPEG-4', () => {
         await mm.parseBuffer(roots, { mimeType: 'video/mp4' }, { maxMetadataEntries: 64 });
       });
 
-      it('bounds retained atom objects and nesting depth', async () => {
+      it('separates atom traversal from the user tag limit and bounds nesting depth', async () => {
         const siblings = concat(...Array.from({ length: 65 }, () => box('free')));
-        await rejects(
-          mm.parseBuffer(box('moov', siblings), { mimeType: 'video/mp4' }, { maxMetadataEntries: 64 }),
-          /MP4 atom count exceeds entry limit/
-        );
+        await mm.parseBuffer(box('moov', siblings), { mimeType: 'video/mp4' }, { maxMetadataEntries: 1 });
 
         let nested = box('free');
         for (let depth = 0; depth < 65; ++depth) {
@@ -2753,9 +2798,9 @@ describe('Parse MPEG-4', () => {
           );
         });
 
-        it('bounds the number of descriptors', async () => {
+        it('does not charge codec descriptors to the user tag limit', async () => {
           const data = concat(new Uint8Array(4), ...Array.from({ length: 65 }, () => descriptor(7, new Uint8Array())));
-          await rejects(parse(box('esds', data), { maxMetadataEntries: 64 }), /MP4 atom count exceeds entry limit/);
+          await parse(box('esds', data), { maxMetadataEntries: 1 });
         });
       });
 
