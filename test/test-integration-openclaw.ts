@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert } from 'chai';
 import { parseBuffer } from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 // Replicate the duration contract used by OpenClaw's Matrix media integration:
 // https://github.com/openclaw/openclaw/blob/6e298fbd79e0d4896b438555434eeccb90de4f2e/extensions/matrix/src/matrix/send/media.test.ts

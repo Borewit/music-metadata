@@ -10,7 +10,7 @@ import * as mm from '../lib/index.js';
 import { parseBuffer, parseFromTokenizer } from '../lib/index.js';
 import { matroskaDtd } from '../lib/matroska/MatroskaDtd.js';
 import type { IDecodedAttachedFile, IDecodedTrackEntry } from '../lib/matroska/types.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

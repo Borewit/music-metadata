@@ -45,7 +45,7 @@ export async function makeDefaultReadableStreamFromFile(filename: string, _delay
   };
 }
 
-export const samplePath = path.join(dirname, 'samples');
+export const samplePath = path.join(dirname, '../samples');
 
 /** Wait for the file descriptor to close, including when parsing stops before EOF. */
 export async function closeReadStream(stream: ReadStream): Promise<void> {

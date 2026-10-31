@@ -20,8 +20,8 @@ import type { ID3v2MajorVersion } from '../lib/id3v2/ID3v2Token.js';
 import * as mm from '../lib/index.js';
 import { parseFromTokenizer } from '../lib/index.js';
 import { LyricsContentError, parseLrc } from '../lib/lrc/LyricsParser.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

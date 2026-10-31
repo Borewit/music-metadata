@@ -3,7 +3,7 @@ import { assert } from 'chai';
 import { parseGenre } from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import * as mm from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('ID3v2Parser', () => {
   const mp3Path = path.join(samplePath, 'mp3');

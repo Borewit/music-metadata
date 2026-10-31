@@ -8,8 +8,8 @@ import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
 import { DsdiffContentParseError } from '../lib/dsdiff/DsdiffParser.js';
 import * as mm from '../lib/index.js';
 import { UnexpectedFileContentError } from '../lib/ParseError.js';
-import { dff, dffChunk } from './fixtures/dsdiff.js';
-import { samplePath } from './util.js';
+import { dff, dffChunk } from './shared/dsdiff-util.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

@@ -28,8 +28,8 @@ import type { IWarningCollector } from '../lib/common/MetadataCollector.js';
 import type { IPicture } from '../lib/index.js';
 import * as mm from '../lib/index.js';
 import { TrackType } from '../lib/type.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

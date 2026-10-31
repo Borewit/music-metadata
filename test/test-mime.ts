@@ -6,7 +6,7 @@ import mime from 'mime';
 import * as mm from '../lib/index.js';
 import { getSupportedMimeTypes } from '../lib/index.js';
 import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from '../lib/ParseError.js';
-import { SourceStream, samplePath } from './util.js';
+import { SourceStream, samplePath } from './shared/util.js';
 
 describe('MIME & extension mapping', () => {
   const buf = new Uint8Array(30).fill(0);

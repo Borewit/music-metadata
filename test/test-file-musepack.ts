@@ -3,8 +3,8 @@ import { assert, expect } from 'chai';
 
 import * as mm from '../lib/index.js';
 import { MusepackContentError } from '../lib/musepack/MusepackConentError.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 describe('Parse Musepack (.mpc)', () => {
   const mpcSamplePath = path.join(samplePath, 'mpc');

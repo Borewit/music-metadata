@@ -5,7 +5,7 @@ import { assert } from 'chai';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
 import type { IMetadataEventTag } from '../lib/type.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('Observer updates during asynchronous parsing', () => {
   it('should only announce changes to primitive format values', () => {

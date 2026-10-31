@@ -15,8 +15,8 @@ import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
 import { UnexpectedFileContentError } from '../lib/ParseError.js';
 import { ParserFactory } from '../lib/ParserFactory.js';
 import type { IOptions } from '../lib/type.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 const oggSamplePath = path.join(samplePath, 'ogg');
 

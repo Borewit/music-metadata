@@ -7,8 +7,8 @@ import { assert } from 'chai';
 import { NotRegularFileError } from 'strtok3';
 
 import { parseFile } from '../lib/index.js';
-import { runIsolatedRegression } from './isolated-regression.js';
-import { samplePath } from './util.js';
+import { runIsolatedRegression } from './shared/isolated-regression.js';
+import { samplePath } from './shared/util.js';
 
 describe('parseFile filesystem objects', () => {
   let directory: string;

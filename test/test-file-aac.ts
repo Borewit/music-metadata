@@ -8,8 +8,8 @@ import type { IFormat } from '../lib/index.js';
 import * as mm from '../lib/index.js';
 import { AdtsFrameHeader } from '../lib/mpeg/AdtsFrameHeader.js';
 import { MpegParser } from '../lib/mpeg/MpegParser.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 const aacSamplePath = path.join(samplePath, 'aac');
 

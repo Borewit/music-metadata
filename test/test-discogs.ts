@@ -5,8 +5,8 @@ import { fromBuffer } from 'strtok3';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 import * as mm from '../lib/index.js';
 import { VorbisTagMapper } from '../lib/ogg/vorbis/VorbisTagMapper.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 describe('Discogs mappings', () => {
   const discogs_tags = [

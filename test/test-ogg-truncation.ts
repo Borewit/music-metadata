@@ -11,7 +11,7 @@ import { SpeexStream } from '../lib/ogg/speex/SpeexStream.js';
 import { TheoraStream } from '../lib/ogg/theora/TheoraStream.js';
 import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
 import { UnexpectedFileContentError } from '../lib/ParseError.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 class PacketReader extends VorbisStream {
   public packet(data: Uint8Array) {
