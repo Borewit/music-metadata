@@ -7,8 +7,8 @@ import { assert } from 'chai';
 import * as mm from '../lib/index.js';
 import { LyricsContentType, TimestampFormat } from '../lib/index.js';
 import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 describe('Parse FLAC Vorbis comment', () => {
   const flacFilePath = path.join(samplePath, 'flac');

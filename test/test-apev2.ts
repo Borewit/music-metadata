@@ -8,8 +8,8 @@ import { TagFooter } from '../lib/apev2/APEv2Token.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { parseBuffer } from '../lib/core.js';
 import * as mm from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 describe('APEv2 tags', () => {
   describe('Parse APEv2 Date tag', () => {

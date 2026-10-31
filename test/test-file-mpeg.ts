@@ -5,8 +5,8 @@ import type { IPopularimeter } from '../lib/id3v2/FrameParser.js';
 import { ID3v24TagMapper } from '../lib/id3v2/ID3v24TagMapper.js';
 import * as mm from '../lib/index.js';
 import { MpegContentError, MpegFrameHeader } from '../lib/mpeg/MpegFrameHeader.js';
-import { Parsers } from './metadata-parsers.js';
-import { SourceStream, samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { SourceStream, samplePath } from './shared/util.js';
 
 const t = assert;
 

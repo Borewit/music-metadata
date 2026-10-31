@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { assert } from 'chai';
 import type { ICommonTagsResult, IFormat } from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 const wavpackSamplePath = path.join(samplePath, 'wavpack');
 

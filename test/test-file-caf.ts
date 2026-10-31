@@ -6,8 +6,8 @@ import chaiAsPromised from 'chai-as-promised';
 import { EndOfStreamError } from 'strtok3';
 import * as CafToken from '../lib/caf/CafToken.js';
 import * as mm from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

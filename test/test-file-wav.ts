@@ -4,8 +4,8 @@ import { assert, expect } from 'chai';
 import { fromBuffer, fromFile, fromStream } from 'strtok3';
 import type { IFormat, INativeTagDict } from '../lib/index.js';
 import * as mm from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 const wavSamples = path.join(samplePath, 'wav');
 

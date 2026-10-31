@@ -2,7 +2,7 @@ import path from 'node:path';
 import { assert, expect } from 'chai';
 import * as mm from '../lib/index.js';
 import { CouldNotDetermineFileTypeError, parseFile, UnsupportedFileTypeError } from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('Errors in case a file cannot be parsed', () => {
   it('should throw CouldNotDetermineFileTypeError if the file type is not known', async () => {

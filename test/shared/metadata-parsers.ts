@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import type { IAudioMetadata, IOptions } from '../lib/index.js';
-import * as mm from '../lib/index.js';
+import type { IAudioMetadata, IOptions } from '../../lib/index.js';
+import * as mm from '../../lib/index.js';
 import { closeReadStream, makeByteReadableStreamFromFile, makeDefaultReadableStreamFromFile } from './util.js';
 
 type ParseFileMethod = (

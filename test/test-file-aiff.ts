@@ -7,8 +7,8 @@ import { fromBuffer } from 'strtok3';
 import { AiffContentError } from '../lib/aiff/AiffToken.js';
 import * as mm from '../lib/index.js';
 import { UnexpectedFileContentError } from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

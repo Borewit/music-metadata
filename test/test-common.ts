@@ -8,7 +8,7 @@ import { joinArtists } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
 import { parseHttpContentType } from '../lib/ParserFactory.js';
 
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('GenericTagMap', () => {
   const combinedTagMapper = new CombinedTagMapper();

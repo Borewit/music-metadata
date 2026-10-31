@@ -2,8 +2,8 @@ import path from 'node:path';
 import { assert } from 'chai';
 import { fromFile } from 'strtok3';
 import * as mm from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 /**
  * Duration in seconds of

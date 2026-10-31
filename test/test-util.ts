@@ -5,7 +5,7 @@ import { FourCcToken } from '../lib/common/FourCC.js';
 import * as util from '../lib/common/Util.js';
 import { dbToRatio, ratioToDb, toRatio } from '../lib/common/Util.js';
 
-import { closeReadStream } from './util.js';
+import { closeReadStream } from './shared/util.js';
 
 const t = assert;
 

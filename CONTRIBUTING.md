@@ -52,7 +52,7 @@ the format or behavior being tested, then place the case next to related tests:
 | Public API behavior and shared policies | The existing options, MIME, parse-file, async, track-info or allocation-limit suite |
 
 Use nested `describe` groups for related chunks, frames or behaviors, with descriptive `it` names.
-Keep format variants and input adapters together, and reuse `Parsers` from `test/metadata-parsers.ts`
+Keep format variants and input adapters together, and reuse `Parsers` from `test/shared/metadata-parsers.ts`
 when checking the same fixture across supported input APIs. Retain issue/PR references in comments
 or case names as context. Create a new test file when introducing a format or a distinct shared concern.
 Keep synthetic fixture builders local to their group; builders used by multiple suites can live in

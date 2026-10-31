@@ -8,7 +8,7 @@ import { createAudioTrackInfo } from '../lib/common/TrackInfo.js';
 import * as mm from '../lib/index.js';
 import { OggParser } from '../lib/ogg/OggParser.js';
 import { IdentificationHeader } from '../lib/ogg/vorbis/Vorbis.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 const { TrackType } = mm;
 

@@ -13,7 +13,7 @@ import {
   orderTags,
   parseFile
 } from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 /* eslint-disable dot-notation, @typescript-eslint/dot-notation */
 

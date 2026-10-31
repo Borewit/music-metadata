@@ -9,7 +9,7 @@ import type { IGeneralEncapsulatedObject } from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import type { IPicture } from '../lib/index.js';
 import * as mm from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('Extract metadata from ID3v2.3 header', () => {
   describe('recording dates', () => {

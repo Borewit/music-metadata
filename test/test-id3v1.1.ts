@@ -2,8 +2,8 @@ import path from 'node:path';
 import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 describe('Parsing MPEG / ID3v1', () => {
   const fileBloodSugar = path.join(samplePath, 'id3v1_Blood_Sugar.mp3');

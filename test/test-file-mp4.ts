@@ -24,14 +24,14 @@ import {
   TrackRunBox
 } from '../lib/mp4/AtomToken.js';
 import { MP4Parser } from '../lib/mp4/MP4Parser.js';
-import { runIsolatedRegression } from './isolated-regression.js';
-import { Parsers } from './metadata-parsers.js';
+import { runIsolatedRegression } from './shared/isolated-regression.js';
+import { Parsers } from './shared/metadata-parsers.js';
 import {
   closeReadStream,
   makeByteReadableStreamFromFile,
   makeDefaultReadableStreamFromFile,
   samplePath
-} from './util.js';
+} from './shared/util.js';
 
 const mp4Samples = path.join(samplePath, 'mp4');
 

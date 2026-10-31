@@ -2,7 +2,7 @@ import path from 'node:path';
 import { assert } from 'chai';
 import type { IPicture } from '../lib/index.js';
 import * as mm from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('Decode MP3/ID3v2.4', () => {
   it('should decode id3v2.4', () => {

@@ -6,8 +6,8 @@ import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { type Chapter, Id3v2ContentError } from '../lib/id3v2/FrameParser.js';
 import { ID3v2Parser } from '../lib/id3v2/ID3v2Parser.js';
 import type { IOptions } from '../lib/type.js';
-import { Parsers } from './metadata-parsers.js';
-import { samplePath } from './util.js';
+import { Parsers } from './shared/metadata-parsers.js';
+import { samplePath } from './shared/util.js';
 
 use(chaiAsPromised);
 

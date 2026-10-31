@@ -2,7 +2,7 @@ import path from 'node:path';
 import { assert } from 'chai';
 
 import * as mm from '../lib/index.js';
-import { samplePath } from './util.js';
+import { samplePath } from './shared/util.js';
 
 describe('Parse Sony DSF (DSD Stream File)', () => {
   const dsfSamplePath = path.join(samplePath, 'dsf');
