@@ -635,8 +635,8 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
 
 - `maxMetadataEntries`: `number` (default: `100000`)
 
-  Maximum entries in an individual decoded metadata list, table, or buffered container structure.
-  Must be a positive safe integer. Raise this for files with larger retained tables.
+  Maximum entries in an individual decoded user metadata list or table.
+  Must be a positive safe integer.
   This count is independent of `maxMemoryAllocation` and does not limit total collected metadata or process memory.
 
 - `mkvUseIndex`: `boolean` (default: `false`)

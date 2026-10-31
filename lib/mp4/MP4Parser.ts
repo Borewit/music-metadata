@@ -231,7 +231,7 @@ export class MP4Parser extends BasicParser {
     this.hasVideoTrack = false;
     this.hasAudioTrack = false;
     this.maxMetadataEntries = getMaxMetadataEntries(this.options);
-    this.remainingAtoms = this.maxMetadataEntries;
+    this.remainingAtoms = AtomToken.maxMp4StructureEntries;
     this.tracks.clear();
     this.mediaDataRanges = [];
     this.streamedChapters.clear();
@@ -434,7 +434,7 @@ export class MP4Parser extends BasicParser {
       this.validatePayloadLength(remaining);
       // Retain structural validation of sample tables, including malformed-entry rejection.
       if (atom.header.name === 'stsd') {
-        await this.readToken(new AtomToken.StsdAtom(remaining, getMaxMetadataEntries(this.options)));
+        await this.readToken(new AtomToken.StsdAtom(remaining, AtomToken.maxMp4StructureEntries));
       } else if (atom.header.name === 'stsz') {
         await this.readToken(new AtomToken.StszAtom(remaining));
       } else {
@@ -461,14 +461,18 @@ export class MP4Parser extends BasicParser {
     --this.remainingAtoms;
   }
 
-  private assertRetainedEntryCapacity(count: number, collection: string): void {
-    if (count >= this.maxMetadataEntries) {
-      throw new Mp4ContentError(`${collection} count exceeds entry limit ${this.maxMetadataEntries}`);
+  private assertRetainedEntryCapacity(
+    count: number,
+    collection: string,
+    limit = AtomToken.maxMp4StructureEntries
+  ): void {
+    if (count >= limit) {
+      throw new Mp4ContentError(`${collection} count exceeds entry limit ${limit}`);
     }
   }
 
   private async addTag(id: string, value: AnyTagValue, scope?: Atom): Promise<void> {
-    this.assertRetainedEntryCapacity(this.pendingTags.length, 'MP4 metadata value');
+    this.assertRetainedEntryCapacity(this.pendingTags.length, 'MP4 metadata value', this.maxMetadataEntries);
     this.pendingTags.push({ id, value, scope });
   }
 
@@ -877,7 +881,7 @@ export class MP4Parser extends BasicParser {
         switch (child.header.name) {
           case 'chap': {
             const chap = await this.readToken(
-              new ChapterTrackReferenceBox(payLoadLength, getMaxMetadataEntries(this.options))
+              new ChapterTrackReferenceBox(payLoadLength, AtomToken.maxMp4StructureEntries)
             );
 
             track.chapterList = chap;
@@ -915,8 +919,8 @@ export class MP4Parser extends BasicParser {
           case 'co64': {
             const token =
               child.header.name === 'co64'
-                ? new AtomToken.Co64Atom(payLoadLength, getMaxMetadataEntries(this.options))
-                : new AtomToken.StcoAtom(payLoadLength, getMaxMetadataEntries(this.options));
+                ? new AtomToken.Co64Atom(payLoadLength, AtomToken.maxMp4StructureEntries)
+                : new AtomToken.StcoAtom(payLoadLength, AtomToken.maxMp4StructureEntries);
             const stco = await this.readToken(token);
 
             track.chunkOffsetTable = stco.entries; // remember chunk offsets
@@ -925,9 +929,7 @@ export class MP4Parser extends BasicParser {
 
           case 'stsc': {
             // sample-to-Chunk box
-            const stsc = await this.readToken(
-              new AtomToken.StscAtom(payLoadLength, getMaxMetadataEntries(this.options))
-            );
+            const stsc = await this.readToken(new AtomToken.StscAtom(payLoadLength, AtomToken.maxMp4StructureEntries));
 
             track.sampleToChunkTable = stsc.entries;
             break;
@@ -935,9 +937,7 @@ export class MP4Parser extends BasicParser {
 
           case 'stsd': {
             // sample description box
-            const stsd = await this.readToken(
-              new AtomToken.StsdAtom(payLoadLength, getMaxMetadataEntries(this.options))
-            );
+            const stsd = await this.readToken(new AtomToken.StsdAtom(payLoadLength, AtomToken.maxMp4StructureEntries));
 
             track.sampleDescriptions = stsd.table;
             track.soundSampleDescription = stsd.table.map(dfEntry => this.parseSoundSampleDescription(dfEntry));
@@ -946,9 +946,7 @@ export class MP4Parser extends BasicParser {
 
           case 'stts': {
             // time-to-sample table
-            const stts = await this.readToken(
-              new AtomToken.SttsAtom(payLoadLength, getMaxMetadataEntries(this.options))
-            );
+            const stts = await this.readToken(new AtomToken.SttsAtom(payLoadLength, AtomToken.maxMp4StructureEntries));
 
             track.timeToSampleTable = stts.entries;
             break;
@@ -1002,7 +1000,7 @@ export class MP4Parser extends BasicParser {
     let tfhd: AtomToken.ITrackFragmentHeaderBox | undefined;
     let decodeTime: number | undefined;
     const runs: AtomToken.ITrackRunBox[] = [];
-    let remainingSamples = this.maxMetadataEntries;
+    let remainingSamples = AtomToken.maxMp4StructureEntries;
     await trafBox.readAtoms(
       this.tokenizer,
       async child => {
@@ -1112,9 +1110,9 @@ export class MP4Parser extends BasicParser {
         throw new Mp4ContentError(`Invalid ftyp payload length: ${len}`);
       }
       const typeCount = len / AtomToken.ftyp.len;
-      if (typeCount > getMaxMetadataEntries(this.options)) {
+      if (typeCount > AtomToken.maxMp4StructureEntries) {
         throw new Mp4ContentError(
-          `ftyp entry count ${typeCount} exceeds entry limit ${getMaxMetadataEntries(this.options)}`
+          `ftyp entry count ${typeCount} exceeds entry limit ${AtomToken.maxMp4StructureEntries}`
         );
       }
 

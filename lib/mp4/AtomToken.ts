@@ -2,7 +2,7 @@ import { textDecode } from '@borewit/text-codec';
 import initDebug from 'debug';
 import type { IGetToken, IToken } from 'strtok3';
 import * as Token from 'token-types';
-import { defaultMaxChapterCount, defaultMaxMetadataEntries } from '../common/Allocation.js';
+import { defaultMaxChapterCount } from '../common/Allocation.js';
 import { FourCcToken } from '../common/FourCC.js';
 import * as util from '../common/Util.js';
 import { FieldDecodingError, makeUnexpectedFileContentError } from '../ParseError.js';
@@ -11,6 +11,9 @@ import type { IChapter } from '../type.js';
 const debug = initDebug('music-metadata:parser:MP4:atom');
 
 export class Mp4ContentError extends makeUnexpectedFileContentError('MP4') {}
+
+// Media indexes scale with duration and muxing, independently of user tags.
+export const maxMp4StructureEntries = 5_000_000;
 
 interface IVersionAndFlags {
   /**
@@ -582,7 +585,7 @@ export class StsdAtom implements IGetToken<IAtomStsd> {
 
   public constructor(
     len: number,
-    private readonly maxEntries = defaultMaxMetadataEntries
+    private readonly maxEntries = maxMp4StructureEntries
   ) {
     this.len = len;
   }
@@ -691,7 +694,7 @@ class SimpleTableAtom<T> implements IGetToken<ITableAtom<T>> {
   public constructor(
     len: number,
     token: IGetToken<T>,
-    private readonly maxEntries = defaultMaxMetadataEntries
+    private readonly maxEntries = maxMp4StructureEntries
   ) {
     this.len = len;
     this.token = token;
@@ -942,7 +945,7 @@ function readTokenTable<T>(
   off: number,
   remainingLen: number,
   numberOfEntries: number,
-  maxEntries = defaultMaxMetadataEntries
+  maxEntries = maxMp4StructureEntries
 ): T[] {
   debug(`remainingLen=${remainingLen}, numberOfEntries=${numberOfEntries} * token-len=${token.len}`);
 
@@ -1073,7 +1076,7 @@ export class TrackRunBox implements IGetToken<ITrackRunBox> {
 
   public constructor(
     len: number,
-    private readonly maxSampleCount = defaultMaxMetadataEntries
+    private readonly maxSampleCount = maxMp4StructureEntries
   ) {
     this.len = len;
   }
@@ -1185,7 +1188,7 @@ export class ChapterTrackReferenceBox implements IGetToken<number[]> {
 
   public constructor(
     len: number,
-    private readonly maxEntries = defaultMaxMetadataEntries
+    private readonly maxEntries = maxMp4StructureEntries
   ) {
     this.len = len;
   }

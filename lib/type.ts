@@ -692,7 +692,8 @@ export interface IOptions {
   maxMemoryAllocation?: number;
 
   /**
-   * Maximum entries in an individual decoded metadata list, table, or buffered container structure.
+   * Maximum entries in an individual decoded user metadata list or table.
+   * MP4 media indexes and container structures use a separate internal limit of 5000000 entries.
    * Defaults to 100000. Must be a positive safe integer.
    * Independent of maxMemoryAllocation; does not limit total collected metadata or process memory.
    */
