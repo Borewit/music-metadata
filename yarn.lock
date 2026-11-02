@@ -2422,12 +2422,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "mime@npm:4.1.1"
+"mime@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "mime@npm:4.1.2"
   bin:
     mime: bin/cli.js
-  checksum: 10c0/9e3c421cb727a3f51a683ce5ab4ed182559edd6770113386fe6d560b5d83f800944dd79f40b41b9442b4d73201da32d290b07721c0bac42d12425b8e887acb10
+  checksum: 10c0/fb135a0a9b6350d823fa04400816fbe164085bcd1f7b116d88e3659c2cebe08d38d33603b46a3793a2ebd44569e0aa43189c383f6f90371c19d5f0daf309e90a
   languageName: node
   linkType: hard
 
@@ -2612,7 +2612,7 @@ __metadata:
     file-type: "npm:^22.3.0"
     make-asynchronous: "npm:^2.1.0"
     media-typer: "npm:^2.0.0"
-    mime: "npm:^4.1.1"
+    mime: "npm:^4.1.2"
     mocha: "npm:^12.0.3"
     nodemon: "npm:^3.1.14"
     remark-cli: "npm:^12.0.1"
