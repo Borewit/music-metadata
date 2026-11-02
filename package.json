@@ -19,15 +19,37 @@
   "sideEffects": false,
   "type": "module",
   "exports": {
-    "node": {
-      "import": "./lib/index.js",
-      "module-sync": "./lib/index.js",
-      "types": "./lib/index.d.ts"
+    ".": {
+      "node": {
+        "import": "./lib/index.js",
+        "module-sync": "./lib/index.js",
+        "types": "./lib/index.d.ts"
+      },
+      "default": {
+        "import": "./lib/core.js",
+        "module-sync": "./lib/core.js",
+        "types": "./lib/core.d.ts"
+      }
     },
-    "default": {
-      "import": "./lib/core.js",
-      "module-sync": "./lib/core.js",
-      "types": "./lib/core.d.ts"
+    "./tokens": {
+      "types": "./lib/tokens/index.d.ts",
+      "import": "./lib/tokens/index.js",
+      "module-sync": "./lib/tokens/index.js"
+    },
+    "./tokens/flac": {
+      "types": "./lib/tokens/flac.d.ts",
+      "import": "./lib/tokens/flac.js",
+      "module-sync": "./lib/tokens/flac.js"
+    },
+    "./tokens/id3v2": {
+      "types": "./lib/tokens/id3v2.d.ts",
+      "import": "./lib/tokens/id3v2.js",
+      "module-sync": "./lib/tokens/id3v2.js"
+    },
+    "./tokens/vorbis": {
+      "types": "./lib/tokens/vorbis.d.ts",
+      "import": "./lib/tokens/vorbis.js",
+      "module-sync": "./lib/tokens/vorbis.js"
     }
   },
   "types": "lib/index.d.ts",

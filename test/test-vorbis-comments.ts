@@ -1,5 +1,11 @@
 import { rejects } from 'node:assert/strict';
 import { assert } from 'chai';
+import {
+  DEFAULT_MAX_COMMENT_COUNT,
+  parseVorbisComment,
+  VorbisDecoder as StructuralVorbisDecoder,
+  VorbisCommentError
+} from 'music-metadata/tokens/vorbis';
 import { fromBuffer } from 'strtok3';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { FlacParser } from '../lib/flac/FlacParser.js';
@@ -190,4 +196,124 @@ describe('Shared Vorbis comment decoding', () => {
       }
     });
   }
+});
+
+describe('Public structural Vorbis decoder', () => {
+  it('rejects invalid comment limits before consuming input in every public entry point', () => {
+    const data = commentList('Vendor', ['TITLE=One']);
+    for (const maxComments of [Number.NaN, -1, 0.5, Number.NEGATIVE_INFINITY, 2 ** 53]) {
+      assert.throws(() => new StructuralVorbisDecoder(data, 0, { maxComments }), RangeError, 'maxComments');
+      assert.throws(() => parseVorbisComment(data, { maxComments }), RangeError, 'maxComments');
+      const decoder = new StructuralVorbisDecoder(data);
+      assert.throws(() => decoder.parseCommentList(undefined, maxComments), RangeError, 'maxComments');
+      assert.equal(decoder.remaining, data.length);
+      assert.equal(Array.from(decoder.parseCommentList().comments)[0].value, 'One');
+    }
+  });
+
+  it('accepts zero, safe-integer and unlimited comment limits without bypassing physical bounds', () => {
+    assert.deepEqual(parseVorbisComment(commentList('', []), { maxComments: 0 }), { vendor: '', comments: [] });
+    const data = commentList('Vendor', ['TITLE=One']);
+    assert.throws(() => parseVorbisComment(data, { maxComments: 0 }), VorbisCommentError, 'entry limit 0');
+    for (const maxComments of [1, Number.MAX_SAFE_INTEGER, Number.POSITIVE_INFINITY]) {
+      assert.equal(parseVorbisComment(data, { maxComments }).comments[0].value, 'One');
+      const decoder = new StructuralVorbisDecoder(data, 0, { maxComments });
+      assert.equal(Array.from(decoder.parseCommentList().comments)[0].value, 'One');
+      const override = new StructuralVorbisDecoder(data, 0, { maxComments: 0 });
+      assert.equal(Array.from(override.parseCommentList(undefined, maxComments).comments)[0].value, 'One');
+    }
+    const forged = Buffer.concat([text(''), uint32(1)]);
+    assert.throws(
+      () => parseVorbisComment(forged, { maxComments: Number.POSITIVE_INFINITY }),
+      VorbisCommentError,
+      'count 1 exceeds remaining data'
+    );
+  });
+
+  it('validates offsets and accepts an empty decoder positioned exactly at the end', () => {
+    const data = commentList('Vendor', []);
+    for (const offset of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53, data.length + 1]) {
+      assert.throws(() => new StructuralVorbisDecoder(data, offset), RangeError, 'Invalid Vorbis Comment offset');
+    }
+    const empty = new StructuralVorbisDecoder(data, data.length);
+    assert.equal(empty.remaining, 0);
+    assert.throws(() => empty.readInt32(), VorbisCommentError, 'Truncated Vorbis comment length');
+    const decoder = new StructuralVorbisDecoder(Buffer.concat([Buffer.from([0xaa]), data]), 1);
+    assert.equal(decoder.parseCommentList().vendor, 'Vendor');
+    assert.equal(decoder.remaining, 0);
+  });
+
+  it('rejects missing and empty field names by default while allowing explicit permissive decoding', () => {
+    for (const field of ['NO_SEPARATOR', '=value', '']) {
+      const data = commentList('Vendor', [field]);
+      assert.throws(() => parseVorbisComment(data), VorbisCommentError, 'index 0: missing field separator');
+      assert.throws(
+        () => parseVorbisComment(data, { createError: message => new SyntaxError(message) }),
+        SyntaxError,
+        'index 0: missing field separator'
+      );
+      assert.deepEqual(parseVorbisComment(data, { requireFieldSeparator: false }), {
+        vendor: 'Vendor',
+        comments: [{ key: '', value: field.startsWith('=') ? field.slice(1) : field }]
+      });
+    }
+    assert.deepEqual(parseVorbisComment(commentList('', [])), { vendor: '', comments: [] });
+  });
+
+  it('enforces exact comment-count limits and preserves the selected error factory', () => {
+    const data = commentList('Vendor', ['TITLE=One', 'ARTIST=Two']);
+    assert.equal(parseVorbisComment(data, { maxComments: 2 }).comments.length, 2);
+    assert.throws(
+      () => parseVorbisComment(data, { maxComments: 1, createError: message => new SyntaxError(message) }),
+      SyntaxError,
+      'entry limit 1'
+    );
+    const decoder = new StructuralVorbisDecoder(data);
+    assert.throws(() => decoder.parseCommentList(message => new SyntaxError(message), 1), SyntaxError, 'entry limit 1');
+    const excessive = Buffer.concat([
+      text(''),
+      uint32(DEFAULT_MAX_COMMENT_COUNT + 1),
+      Buffer.alloc((DEFAULT_MAX_COMMENT_COUNT + 1) * 4)
+    ]);
+    assert.throws(
+      () => new StructuralVorbisDecoder(excessive).parseCommentList(),
+      VorbisCommentError,
+      `entry limit ${DEFAULT_MAX_COMMENT_COUNT}`
+    );
+    const forged = Buffer.concat([text(''), uint32(1)]);
+    assert.throws(
+      () => new StructuralVorbisDecoder(forged).parseCommentList(),
+      VorbisCommentError,
+      'count 1 exceeds remaining data'
+    );
+  });
+
+  it('preserves key spelling and duplicates while the reader normalizes keys', () => {
+    const data = commentList('Vendor', ['artist=One', 'artist=Two', 'ARTIST=Three', 'empty=', 'Text=a=b']);
+    const parsed = parseVorbisComment(data);
+    assert.deepEqual(parsed, {
+      vendor: 'Vendor',
+      comments: [
+        { key: 'artist', value: 'One' },
+        { key: 'artist', value: 'Two' },
+        { key: 'ARTIST', value: 'Three' },
+        { key: 'empty', value: '' },
+        { key: 'Text', value: 'a=b' }
+      ]
+    });
+    const decoder = new StructuralVorbisDecoder(data);
+    assert.deepEqual(
+      Array.from(decoder.parseCommentList().comments).map(comment => comment.key),
+      ['artist', 'artist', 'ARTIST', 'empty', 'Text']
+    );
+    assert.equal(decoder.remaining, 0);
+    const reader = new VorbisDecoder(data);
+    assert.deepEqual(
+      Array.from(reader.parseCommentList().comments).map(comment => comment.key),
+      ['ARTIST', 'ARTIST', 'ARTIST', 'EMPTY', 'TEXT']
+    );
+    assert.throws(() => parseVorbisComment(data, { maxComments: 3 }), /entry limit/);
+    assert.throws(() => parseVorbisComment(data.subarray(0, -1)), /remaining data/);
+    assert.throws(() => parseVorbisComment(Buffer.concat([data, Buffer.alloc(1)])), /trailing/);
+  });
 });

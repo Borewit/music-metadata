@@ -124,7 +124,9 @@ export class FlacParser extends AbstractID3Parser {
     if (this.options.skipCovers) {
       return this.tokenizer.ignore(dataLen);
     }
-    return this.addPictureTag(await this.readToken(new VorbisPictureToken(dataLen)));
+    return this.addPictureTag(
+      await this.readToken(new VorbisPictureToken(dataLen, { createError: message => new FlacContentError(message) }))
+    );
   }
 
   public addPictureTag(picture: IVorbisPicture): Promise<void> {

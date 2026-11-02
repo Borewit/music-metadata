@@ -1,35 +1,9 @@
 import type { IGetToken } from 'strtok3';
 import * as Token from 'token-types';
-
 import * as util from '../common/Util.js';
+import { AttachedPictureType, UINT32SYNCSAFE } from '../tokens/id3v2.js';
 
-/**
- * The picture type according to the ID3v2 APIC frame
- * Ref: http://id3.org/id3v2.3.0#Attached_picture
- */
-export const AttachedPictureType = {
-  0: 'Other',
-  1: "32x32 pixels 'file icon' (PNG only)",
-  2: 'Other file icon',
-  3: 'Cover (front)',
-  4: 'Cover (back)',
-  5: 'Leaflet page',
-  6: 'Media (e.g. label side of CD)',
-  7: 'Lead artist/lead performer/soloist',
-  8: 'Artist/performer',
-  9: 'Conductor',
-  10: 'Band/Orchestra',
-  11: 'Composer',
-  12: 'Lyricist/text writer',
-  13: 'Recording Location',
-  14: 'During recording',
-  15: 'During performance',
-  16: 'Movie/video screen capture',
-  17: 'A bright coloured fish',
-  18: 'Illustration',
-  19: 'Band/artist logotype',
-  20: 'Publisher/Studio logotype'
-};
+export { AttachedPictureType, UINT32SYNCSAFE };
 
 export type ID3v2MajorVersion = 2 | 3 | 4;
 
@@ -58,12 +32,6 @@ export type TimestampFormat = (typeof TimestampFormat)[keyof typeof TimestampFor
  * 28 bits (representing up to 256MB) integer, the msb is 0 to avoid 'false syncsignals'.
  * 4 * %0xxxxxxx
  */
-export const UINT32SYNCSAFE: IGetToken<number> = {
-  get: (buf: Uint8Array, off: number): number => {
-    return (buf[off + 3] & 0x7f) | (buf[off + 2] << 7) | (buf[off + 1] << 14) | (buf[off] << 21);
-  },
-  len: 4
-};
 
 /**
  * ID3v2 tag header

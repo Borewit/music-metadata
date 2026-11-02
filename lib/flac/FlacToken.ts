@@ -2,46 +2,11 @@ import type { IGetToken } from 'strtok3';
 import { UINT16_BE, UINT24_BE, Uint8ArrayType } from 'token-types';
 import * as util from '../common/Util.js';
 
-/**
- * FLAC supports up to 128 kinds of metadata blocks; currently the following are defined:
- * ref: https://xiph.org/flac/format.html#metadata_block
- */
-export const BlockType = {
-  STREAMINFO: 0, // STREAMINFO
-  PADDING: 1, // PADDING
-  APPLICATION: 2, // APPLICATION
-  SEEKTABLE: 3, // SEEKTABLE
-  VORBIS_COMMENT: 4, // VORBIS_COMMENT
-  CUESHEET: 5, // CUESHEET
-  PICTURE: 6 // PICTURE
-};
-
-export type BlockType = (typeof BlockType)[keyof typeof BlockType];
-
-/**
- * METADATA_BLOCK_DATA
- * Ref: https://xiph.org/flac/format.html#metadata_block_streaminfo
- */
-export interface IBlockHeader {
-  // Last-metadata-block flag: '1' if this block is the last metadata block before the audio blocks, '0' otherwise.
-  lastBlock: boolean;
-  // BLOCK_TYPE
-  type: BlockType;
-  // Length (in bytes) of metadata to follow (does not include the size of the METADATA_BLOCK_HEADER)
-  length: number;
-}
-
-export const BlockHeader: IGetToken<IBlockHeader> = {
-  len: 4,
-
-  get: (buf: Uint8Array, off: number): IBlockHeader => {
-    return {
-      lastBlock: util.getBit(buf, off, 7),
-      type: util.getBitAllignedNumber(buf, off, 1, 7),
-      length: UINT24_BE.get(buf, off + 1)
-    };
-  }
-};
+export {
+  BlockHeader,
+  BlockType,
+  type IBlockHeader
+} from '../tokens/flac.js';
 
 /**
  * METADATA_BLOCK_DATA
