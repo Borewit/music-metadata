@@ -20,6 +20,8 @@ Key features:
 
 The [`music-metadata`](https://github.com/Borewit/music-metadata) module is ideal for developers working on media applications, music players, or any project that requires access to detailed audio file metadata.
 
+To write or edit metadata, use [music-metadata-editor](https://github.com/Borewit/music-metadata-editor), a companion module that uses the same common tag names.
+
 ## Compatibility
 
 Module: version 8 migrated from [CommonJS](https://en.wikipedia.org/wiki/CommonJS) to [pure ECMAScript Module (ESM)](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
