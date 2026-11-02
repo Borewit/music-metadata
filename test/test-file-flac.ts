@@ -4,10 +4,13 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { assert } from 'chai';
+import * as tokens from 'music-metadata/tokens';
+import * as flacTokens from 'music-metadata/tokens/flac';
 import { BlockStreamInfo } from '../lib/flac/FlacToken.js';
 import * as mm from '../lib/index.js';
 import { LyricsContentType, TimestampFormat } from '../lib/index.js';
-import type { IVorbisPicture } from '../lib/ogg/vorbis/Vorbis.js';
+import { type IVorbisPicture, VorbisPictureToken } from '../lib/ogg/vorbis/Vorbis.js';
+import { UnexpectedFileContentError } from '../lib/ParseError.js';
 import { Parsers } from './shared/metadata-parsers.js';
 import { samplePath } from './shared/util.js';
 
@@ -552,5 +555,230 @@ describe('Parse FLAC Vorbis comment', () => {
         );
       });
     });
+  });
+});
+
+describe('Public FLAC structural tokens', () => {
+  function readPictureBlock(data = fs.readFileSync(path.join(samplePath, 'flac.flac'))): Buffer {
+    let offset = 4;
+    while (offset < data.length) {
+      const header = tokens.BlockHeader.get(data, offset);
+      offset += tokens.BlockHeader.len;
+      if (header.type === tokens.BlockType.PICTURE) {
+        return data.subarray(offset, offset + header.length);
+      }
+      if (header.lastBlock) {
+        break;
+      }
+      offset += header.length;
+    }
+    assert.fail('FLAC fixture must contain a picture block');
+  }
+
+  it('exports shared tokens without writer serializers', () => {
+    assert.equal(tokens.BlockHeader, flacTokens.BlockHeader);
+    assert.notProperty(tokens, 'encodePicture');
+    assert.notProperty(tokens, 'serializeVorbisComment');
+  });
+
+  it('reads real FLAC block headers and rejects truncated ranges', () => {
+    const data = fs.readFileSync(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac"));
+    assert.deepEqual(tokens.BlockHeader.get(data, 4), { lastBlock: false, type: 0, length: 34 });
+    assert.throws(() => tokens.BlockHeader.get(new Uint8Array(3), 0), RangeError);
+    assert.throws(
+      () => tokens.BlockHeader.put(new Uint8Array(4), 0, { lastBlock: true, type: 0, length: 0x1000000 }),
+      RangeError
+    );
+    assert.equal(tokens.pictureTypeToNumber('Cover (front)'), 3);
+    assert.equal(tokens.normalizePictureMimeType('JPEG'), 'image/jpeg');
+    const header = new Uint8Array(4);
+    tokens.BlockHeader.put(header, 0, { lastBlock: true, type: tokens.BlockType.VORBIS_COMMENT, length: 34 });
+    assert.deepEqual(header, Uint8Array.of(0x84, 0x00, 0x00, 0x22));
+  });
+
+  it('round-trips block headers at nonzero offsets without modifying surrounding bytes', () => {
+    for (const lastBlock of [false, true]) {
+      for (const length of [0, 34, 0xffffff]) {
+        const header = { lastBlock, type: tokens.BlockType.PICTURE, length };
+        const data = new Uint8Array(6).fill(0xaa);
+        assert.equal(tokens.BlockHeader.put(data, 1, header), 5);
+        assert.deepEqual(tokens.BlockHeader.get(data, 1), header);
+        assert.equal(data[1], lastBlock ? 0x86 : 0x06);
+        assert.equal(data[0], 0xaa);
+        assert.equal(data[5], 0xaa);
+      }
+    }
+  });
+
+  it('preserves reserved block types and rejects invalid types before modifying the header', () => {
+    const data = new Uint8Array(6).fill(0xaa);
+    for (const type of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53, 127, 128, 129, 255]) {
+      assert.throws(
+        () => tokens.BlockHeader.put(data, 1, { lastBlock: false, type, length: 0 }),
+        RangeError,
+        'block type'
+      );
+      assert.deepEqual(data, new Uint8Array(6).fill(0xaa));
+    }
+    for (const type of [0, 1, 2, 3, 4, 5, 6, 7, 126]) {
+      const header = { lastBlock: true, type, length: 34 };
+      assert.equal(tokens.BlockHeader.put(data, 1, header), 5);
+      assert.deepEqual(tokens.BlockHeader.get(data, 1), header);
+      assert.equal(data[1], 0x80 | type);
+    }
+  });
+
+  for (const parser of Parsers) {
+    it(`reports a truncated native picture payload as a FLAC content error (${parser.description})`, async function () {
+      const data = fs.readFileSync(path.join(samplePath, 'flac.flac'));
+      const picture = readPictureBlock(data);
+      const propertiesOffset = 12 + picture.readUInt32BE(4) + picture.readUInt32BE(8 + picture.readUInt32BE(4));
+      picture.writeUInt32BE(0xffffffff, propertiesOffset + 16);
+      const directory = await mkdtemp(path.join(tmpdir(), 'music-metadata-flac-picture-'));
+      try {
+        const filePath = path.join(directory, 'truncated-picture.flac');
+        await writeFile(filePath, data);
+        await rejects(
+          parser.parse(() => this.skip(), filePath, 'audio/flac'),
+          error => {
+            assert.instanceOf(error, UnexpectedFileContentError);
+            assert.equal(error.fileType, 'FLAC');
+            assert.match(error.message, /Cannot read 4294967295 byte\(s\)/);
+            return true;
+          }
+        );
+        const skipped = await parser.parse(() => this.skip(), filePath, 'audio/flac', { skipCovers: true });
+        assert.isUndefined(skipped.common.picture);
+        assert.equal(skipped.format.sampleRate, 44100);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+
+  it('retains the default picture token error behavior outside the native FLAC parser', () => {
+    const data = new Uint8Array(31);
+    assert.throws(() => new VorbisPictureToken(data.length).get(data, 0), RangeError, 'Cannot read');
+    assert.throws(() => VorbisPictureToken.fromBuffer(data), RangeError, 'Cannot read');
+    assert.throws(() => VorbisPictureToken.fromBase64(Buffer.from(data).toString('base64')), RangeError, 'Cannot read');
+  });
+
+  it('uses the selected error factory when the description-length prefix is truncated', () => {
+    for (const remaining of [0, 1, 2, 3]) {
+      const picture = Buffer.alloc(32 + remaining);
+      picture.writeUInt32BE(24, 4);
+      picture.fill(0x61, 8, 32);
+      assert.throws(() => tokens.decodePicture(picture), RangeError, 'Cannot read 4 byte(s) at offset 32');
+      const error = new SyntaxError('Truncated description-length prefix');
+      assert.throws(() => tokens.decodePicture(picture, 0, { createError: () => error }), error);
+      const prefixed = Buffer.concat([Buffer.from([0xaa]), picture]);
+      assert.throws(() => tokens.decodePicture(prefixed, 1, { createError: () => error }), error);
+    }
+  });
+
+  it('reports a missing native picture description-length prefix as a FLAC content error', async () => {
+    const data = fs.readFileSync(path.join(samplePath, 'flac.flac'));
+    const picture = readPictureBlock(data);
+    const blockOffset = picture.byteOffset - data.byteOffset - tokens.BlockHeader.len;
+    data.writeUIntBE(32, blockOffset + 1, 3);
+    picture.writeUInt32BE(24, 4);
+    picture.fill(0x61, 8, 32);
+    await rejects(mm.parseBuffer(data, 'audio/flac'), error => {
+      assert.instanceOf(error, UnexpectedFileContentError);
+      assert.equal(error.fileType, 'FLAC');
+      assert.match(error.message, /Cannot read 4 byte\(s\) at offset 32/);
+      return true;
+    });
+  });
+
+  it('rejects invalid header ranges and lengths before changing the destination', () => {
+    const data = new Uint8Array(8).fill(0xaa);
+    const header = { lastBlock: false, type: tokens.BlockType.PADDING, length: 0 };
+    for (const offset of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53, 5]) {
+      assert.throws(() => tokens.BlockHeader.get(data, offset), RangeError);
+      assert.throws(() => tokens.BlockHeader.put(data, offset, header), RangeError);
+    }
+    for (const length of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 0x1000000]) {
+      assert.throws(() => tokens.BlockHeader.put(data, 1, { ...header, length }), RangeError);
+    }
+    assert.deepEqual(data, new Uint8Array(8).fill(0xaa));
+  });
+
+  it('maps picture types and normalizes known MIME aliases while preserving other formats', () => {
+    assert.equal(tokens.pictureTypeToNumber(undefined), 0);
+    assert.equal(tokens.pictureTypeToNumber('Unknown picture type'), 0);
+    for (const [index, type] of tokens.PICTURE_TYPES.entries()) {
+      assert.equal(tokens.pictureTypeToNumber(type), index);
+      assert.equal(tokens.attachedPictureType(index), type);
+    }
+    assert.isUndefined(tokens.attachedPictureType(0xffffffff));
+    for (const [format, expected] of [
+      ['jpg', 'image/jpeg'],
+      ['JPEG', 'image/jpeg'],
+      ['PNG', 'image/png'],
+      ['image/webp', 'image/webp'],
+      ['Custom', 'Custom']
+    ]) {
+      assert.equal(tokens.normalizePictureMimeType(format), expected);
+    }
+  });
+
+  it('decodes a real picture at a nonzero offset and owns its returned data', () => {
+    const picture = readPictureBlock();
+    const data = Buffer.concat([Buffer.from([0xaa]), picture]);
+    const parsed = tokens.decodePicture(data, 1, { requireExactData: true });
+    assert.equal(parsed.typeId, 3);
+    assert.equal(parsed.type, 'Cover (front)');
+    assert.equal(parsed.format, 'image/jpeg');
+    assert.equal(parsed.description, '');
+    assert.equal(parsed.width, 450);
+    assert.equal(parsed.height, 450);
+    assert.equal(parsed.colourDepth, 24);
+    assert.equal(parsed.colour_depth, parsed.colourDepth);
+    assert.equal(parsed.colours, 0);
+    assert.equal(parsed.indexed_color, parsed.colours);
+    assert.equal(parsed.data.length, 175668);
+    const original = parsed.data.slice();
+    data.fill(0);
+    assert.deepEqual(parsed.data, original);
+  });
+
+  it('allows trailing picture bytes by default but rejects them in exact mode with the chosen error', () => {
+    const picture = readPictureBlock();
+    const trailing = Buffer.concat([picture, Buffer.from([0xaa])]);
+    assert.deepEqual(tokens.decodePicture(trailing), tokens.decodePicture(picture));
+    assert.throws(
+      () => tokens.decodePicture(trailing, 0, { requireExactData: true }),
+      RangeError,
+      '1 trailing byte(s)'
+    );
+    assert.throws(
+      () =>
+        tokens.decodePicture(trailing, 0, { requireExactData: true, createError: message => new SyntaxError(message) }),
+      SyntaxError,
+      '1 trailing byte(s)'
+    );
+  });
+
+  it('rejects invalid picture offsets, truncated structures and forged field lengths', () => {
+    const picture = readPictureBlock();
+    const descriptionOffset = 8 + picture.readUInt32BE(4);
+    const propertiesOffset = descriptionOffset + 4 + picture.readUInt32BE(descriptionOffset);
+    for (const offset of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53, picture.length]) {
+      assert.throws(() => tokens.decodePicture(picture, offset), RangeError);
+    }
+    for (const length of [0, 31, propertiesOffset + 19, picture.length - 1]) {
+      assert.throws(() => tokens.decodePicture(picture.subarray(0, length)), RangeError);
+    }
+    for (const offset of [4, descriptionOffset, propertiesOffset + 16]) {
+      const forged = Buffer.from(picture);
+      forged.writeUInt32BE(0xffffffff, offset);
+      assert.throws(() => tokens.decodePicture(forged), RangeError, 'Cannot read');
+      assert.throws(
+        () => tokens.decodePicture(forged, 0, { createError: message => new SyntaxError(message) }),
+        SyntaxError,
+        'Cannot read'
+      );
+    }
   });
 });

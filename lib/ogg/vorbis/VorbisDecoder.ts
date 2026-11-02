@@ -1,74 +1,34 @@
-import { textDecode } from '@borewit/text-codec';
-import * as Token from 'token-types';
 import { defaultMaxMetadataEntries } from '../../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../../ParseError.js';
+import { type ParsedVorbisComment, VorbisDecoder as SharedVorbisDecoder } from '../../tokens/vorbis.js';
 
 class VorbisCommentError extends makeUnexpectedFileContentError('Vorbis') {}
 
-export class VorbisDecoder {
-  private readonly data: Uint8Array;
+type ErrorFactory = (message: string) => Error;
 
-  private offset: number;
-
-  constructor(data: Uint8Array, offset: number) {
-    this.data = data;
-    this.offset = offset;
+/**
+ * Vorbis Comment decoder used by the reader.
+ *
+ * The shared decoder preserves the original key spelling; this boundary
+ * uppercases keys to keep `music-metadata`'s native-tag behavior unchanged.
+ */
+export class VorbisDecoder extends SharedVorbisDecoder {
+  public constructor(data: Uint8Array, offset = 0, options: { maxComments?: number } = {}) {
+    super(data, offset, {
+      createError: message => new VorbisCommentError(message),
+      maxComments: options.maxComments ?? defaultMaxMetadataEntries
+    });
   }
 
-  public get remaining(): number {
-    return this.data.length - this.offset;
+  public override parseUserComment(): ParsedVorbisComment {
+    const tag = super.parseUserComment();
+    return { ...tag, key: tag.key.toUpperCase() };
   }
 
-  public readInt32(): number {
-    if (this.remaining < 4) {
-      throw new VorbisCommentError('Truncated Vorbis comment length');
-    }
-    const value = Token.UINT32_LE.get(this.data, this.offset);
-    this.offset += 4;
-    return value;
-  }
-
-  public readStringUtf8(): string {
-    const len = this.readInt32();
-    if (len > this.remaining) {
-      throw new VorbisCommentError(`Vorbis comment length ${len} exceeds remaining data ${this.remaining}`);
-    }
-    const value = textDecode(this.data.subarray(this.offset, this.offset + len), 'utf-8');
-    this.offset += len;
-    return value;
-  }
-
-  /** Decode the shared structure, leaving packet framing and metadata policy to callers. */
-  public parseCommentList(
-    createCountError: (message: string) => Error = message => new VorbisCommentError(message),
-    maxComments = defaultMaxMetadataEntries
-  ) {
-    const vendor = this.readStringUtf8();
-    const count = this.readInt32();
-    // Each entry needs at least its four-byte length, even for an empty comment.
-    if (count > Math.floor(this.remaining / 4)) {
-      throw createCountError(`Vorbis comment count ${count} exceeds remaining data`);
-    }
-    if (count > maxComments) {
-      throw createCountError(`Vorbis comment count ${count} exceeds entry limit ${maxComments}`);
-    }
-    return { vendor, comments: this.parseUserComments(count) };
-  }
-
-  private *parseUserComments(count: number) {
-    for (let i = 0; i < count; ++i) {
-      yield this.parseUserComment();
-    }
-  }
-
-  public parseUserComment(): { key: string; value: string; len: number } {
-    const offset0 = this.offset;
-    const v = this.readStringUtf8();
-    const idx = v.indexOf('=');
-    return {
-      key: v.substring(0, idx).toUpperCase(),
-      value: v.substring(idx + 1),
-      len: this.offset - offset0
-    };
+  public override parseCommentList(
+    createCountError?: ErrorFactory,
+    maxComments?: number
+  ): { vendor: string; comments: IterableIterator<ParsedVorbisComment> } {
+    return super.parseCommentList(createCountError, maxComments);
   }
 }
