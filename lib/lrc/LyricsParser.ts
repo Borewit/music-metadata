@@ -1,6 +1,6 @@
 import { defaultMaxMetadataEntries } from '../common/Allocation.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
-import { type ILyricsTag, type ILyricsText, LyricsContentType, TimestampFormat } from '../type.js';
+import { type IComment, type ILyricsTag, type ILyricsText, LyricsContentType, TimestampFormat } from '../type.js';
 
 // Shared timestamp regex for LRC format
 const TIMESTAMP_REGEX = /\[(\d{2}):(\d{2})\.(\d{2,3})]/;
@@ -12,6 +12,19 @@ export function parseLyrics(input: string, maxLines = defaultMaxMetadataEntries)
     return parseLrc(input, maxLines);
   }
   return toUnsyncedLyrics(input);
+}
+
+/**
+ * Complete a reader-produced lyrics value with the fields required by
+ * `ILyricsTag`. ID3 USLT/ULT values are plain comments before this step.
+ */
+export function normalizeLyricsTag(lyrics: IComment & Partial<ILyricsTag>): ILyricsTag {
+  return {
+    ...lyrics,
+    contentType: lyrics.contentType ?? LyricsContentType.lyrics,
+    timeStampFormat: lyrics.timeStampFormat ?? TimestampFormat.notSynchronized,
+    syncText: lyrics.syncText ?? []
+  };
 }
 
 export function toUnsyncedLyrics(lyrics: string): ILyricsTag {

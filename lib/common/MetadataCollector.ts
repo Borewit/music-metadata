@@ -1,6 +1,6 @@
 import initDebug from 'debug';
 import { fileTypeFromBuffer } from 'file-type';
-import { parseLyrics } from '../lrc/LyricsParser.js';
+import { normalizeLyricsTag, parseLyrics } from '../lrc/LyricsParser.js';
 import {
   type AnyTagValue,
   type IAudioMetadata,
@@ -312,6 +312,8 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'lyrics':
         if (typeof tag.value === 'string') {
           tag.value = parseLyrics(tag.value, getMaxMetadataEntries(this.opts ?? {}));
+        } else if (tag.value && typeof tag.value === 'object' && !Array.isArray(tag.value)) {
+          tag.value = normalizeLyricsTag(tag.value as IComment);
         }
         break;
 
