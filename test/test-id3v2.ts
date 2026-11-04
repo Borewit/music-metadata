@@ -7,7 +7,7 @@ import { UINT32SYNCSAFE as publicSyncSafe } from 'music-metadata/tokens/id3v2';
 import { EndOfStreamError, fromBlob, fromBuffer, fromStream, fromWebStream } from 'strtok3';
 import { UINT8 } from 'token-types';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
-import { LyricsContentType } from '../lib/core.js';
+import { LyricsContentType, TimestampFormat } from '../lib/core.js';
 import { parseEmbeddedID3v2 } from '../lib/id3v2/EmbeddedID3v2.js';
 import {
   type Chapter,
@@ -873,11 +873,18 @@ describe('ID3v2', () => {
 
   describe('Lyrics', () => {
     describe('ID3v2.2 ULT lyrics mapping', () => {
-      it('exposes the fixture lyrics while preserving its native fields', async () => {
+      it('exposes the fixture lyrics as normalized common values while preserving native fields', async () => {
         const { common, native } = await mm.parseFile(path.join(samplePath, 'id3v2.2.mp3'));
         const lyrics = native['ID3v2.2'].filter(tag => tag.id === 'ULT').map(tag => tag.value);
         assert.lengthOf(lyrics, 1);
-        assert.deepEqual(common.lyrics, lyrics);
+        assert.deepEqual(common.lyrics, [
+          {
+            ...(lyrics[0] as Record<string, unknown>),
+            contentType: LyricsContentType.lyrics,
+            timeStampFormat: TimestampFormat.notSynchronized,
+            syncText: []
+          }
+        ]);
       });
 
       for (const [name, text] of [
@@ -888,7 +895,14 @@ describe('ID3v2', () => {
           const value = { language: 'eng', descriptor: 'Translation', text };
           const legacy = await mm.parseFile(path.join(samplePath, 'mp3', `id3v2.2-lyrics-${name}.mp3`));
           const current = await mm.parseFile(path.join(samplePath, 'mp3', `id3v2.4-lyrics-${name}.mp3`));
-          assert.deepEqual(legacy.common.lyrics, current.common.lyrics);
+          const normalized = {
+            ...value,
+            contentType: LyricsContentType.lyrics,
+            timeStampFormat: TimestampFormat.notSynchronized,
+            syncText: []
+          };
+          assert.deepEqual(legacy.common.lyrics, [normalized]);
+          assert.deepEqual(current.common.lyrics, [normalized]);
           assert.deepEqual(legacy.native['ID3v2.2'], [{ id: 'ULT', value }]);
         });
       }
