@@ -416,6 +416,151 @@ describe('Parse RIFF/WAVE audio format', () => {
     });
   });
 
+  describe('WAVE_FORMAT_EXTENSIBLE', () => {
+    function createExtensibleWave(
+      cbSize: number,
+      standardSubFormat: boolean,
+      validBitsPerSample = 24,
+      bitsPerSample = 24
+    ): Buffer {
+      const fmt = Buffer.alloc(40);
+      fmt.writeUInt16LE(0xfffe, 0); // wFormatTag
+      fmt.writeUInt16LE(1, 2); // nChannels
+      fmt.writeUInt32LE(8000, 4); // nSamplesPerSec
+      fmt.writeUInt32LE(24000, 8); // nAvgBytesPerSec
+      fmt.writeUInt16LE(3, 12); // nBlockAlign
+      fmt.writeUInt16LE(bitsPerSample, 14); // wBitsPerSample
+      fmt.writeUInt16LE(cbSize, 16);
+      fmt.writeUInt16LE(validBitsPerSample, 18);
+      fmt.writeUInt32LE(0, 20); // dwChannelMask
+      fmt.writeUInt16LE(1, 24); // SubFormat: PCM
+      Buffer.from([
+        0x00,
+        0x00, // Data1 high word
+        0x00,
+        0x00, // Data2
+        0x10,
+        0x00, // Data3
+        0x80,
+        0x00,
+        0x00,
+        0xaa,
+        0x00,
+        0x38,
+        0x9b,
+        standardSubFormat ? 0x71 : 0x72
+      ]).copy(fmt, 26);
+
+      const riff = Buffer.alloc(12 + 8 + fmt.length);
+      riff.write('RIFF', 0);
+      riff.writeUInt32LE(riff.length - 8, 4);
+      riff.write('WAVE', 8);
+      riff.write('fmt ', 12);
+      riff.writeUInt32LE(fmt.length, 16);
+      fmt.copy(riff, 20);
+      return riff;
+    }
+
+    it('should resolve 24-bit PCM from the SubFormat GUID', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'pcm24-extensible.wav'));
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'PCM', 'format.codec');
+      assert.strictEqual(format.lossless, true);
+      assert.strictEqual(format.bitsPerSample, 24);
+      assert.strictEqual(format.sampleRate, 8000);
+      assert.strictEqual(format.numberOfChannels, 1);
+      assert.strictEqual(format.numberOfSamples, 800);
+      assert.strictEqual(format.duration, 0.1);
+    });
+
+    it('should use wValidBitsPerSample for extensible PCM bit depth', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'pcm20-in24-extensible.wav'));
+      assert.strictEqual(format.codec, 'PCM', 'format.codec');
+      assert.strictEqual(format.lossless, true);
+      assert.strictEqual(format.bitsPerSample, 20);
+    });
+
+    it('should keep the container bit depth when wValidBitsPerSample is zero', async () => {
+      const { format } = await mm.parseBuffer(createExtensibleWave(22, true, 0, 24), { mimeType: 'audio/wav' });
+      assert.strictEqual(format.bitsPerSample, 24);
+    });
+
+    it('should keep the container bit depth when wValidBitsPerSample exceeds it', async () => {
+      const { format } = await mm.parseBuffer(createExtensibleWave(22, true, 32, 24), { mimeType: 'audio/wav' });
+      assert.strictEqual(format.bitsPerSample, 24);
+    });
+
+    it('should resolve IEEE float from the SubFormat GUID', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'f32-extensible.wav'));
+      assert.strictEqual(format.codec, 'IEEE_FLOAT', 'format.codec');
+      assert.strictEqual(format.lossless, true);
+      assert.strictEqual(format.bitsPerSample, 32);
+      assert.strictEqual(format.numberOfSamples, 800);
+      assert.strictEqual(format.duration, 0.1);
+    });
+
+    it('should resolve a lossy SubFormat GUID', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'alaw-extensible.wav'));
+      assert.strictEqual(format.codec, 'ALAW', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+    });
+
+    it('should fall back when cbSize is too small for a SubFormat GUID', async () => {
+      const { format } = await mm.parseBuffer(createExtensibleWave(0, true), { mimeType: 'audio/wav' });
+      assert.strictEqual(format.codec, 'non-PCM (65534)', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+    });
+
+    it('should fall back for a non-standard SubFormat GUID', async () => {
+      const { format } = await mm.parseBuffer(createExtensibleWave(22, false), { mimeType: 'audio/wav' });
+      assert.strictEqual(format.codec, 'non-PCM (65534)', 'format.codec');
+      assert.strictEqual(format.lossless, false);
+    });
+  });
+
+  describe('fact chunk', () => {
+    it('should not mark uncompressed IEEE float lossy', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'f32-fact.wav'));
+      assert.strictEqual(format.codec, 'IEEE_FLOAT', 'format.codec');
+      assert.strictEqual(format.lossless, true);
+      assert.strictEqual(format.numberOfSamples, 800, 'numberOfSamples from fact chunk');
+      assert.strictEqual(format.duration, 0.1);
+    });
+
+    it('should not mark PCM lossy', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'pcm16-fact.wav'));
+      assert.strictEqual(format.codec, 'PCM', 'format.codec');
+      assert.strictEqual(format.lossless, true);
+      assert.strictEqual(format.numberOfSamples, 800, 'numberOfSamples from fact chunk');
+    });
+  });
+
+  describe('FLAC in WAVE', () => {
+    it('should report FLAC as lossless', async () => {
+      const { format } = await mm.parseFile(path.join(wavSamples, 'flac-in-wav.wav'));
+      assert.strictEqual(format.container, 'WAVE', 'format.container');
+      assert.strictEqual(format.codec, 'FLAC', 'format.codec');
+      assert.strictEqual(format.lossless, true);
+      assert.strictEqual(format.bitsPerSample, 16);
+      assert.strictEqual(format.numberOfSamples, 800, 'numberOfSamples from fact chunk');
+    });
+  });
+
+  it('should not claim losslessness without a fmt chunk', async () => {
+    const data = Buffer.alloc(6);
+    const riff = Buffer.alloc(12 + 8 + data.length);
+    riff.write('RIFF', 0);
+    riff.writeUInt32LE(riff.length - 8, 4);
+    riff.write('WAVE', 8);
+    riff.write('data', 12);
+    riff.writeUInt32LE(data.length, 16);
+    data.copy(riff, 20);
+
+    const { format } = await mm.parseBuffer(riff, { mimeType: 'audio/wav' });
+    assert.strictEqual(format.container, 'WAVE');
+    assert.isUndefined(format.lossless);
+  });
+
   // https://github.com/Borewit/music-metadata/issues/707
   it('should handle missing chunk-size', async () => {
     const filePath = path.join(wavSamples, 'ffmpeg-missing-chunksize.wav');
