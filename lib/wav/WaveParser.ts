@@ -95,7 +95,6 @@ export class WaveParser extends BasicParser {
           break;
 
         case 'fact': // extended Format chunk,
-          this.metadata.setFormat('lossless', false);
           this.fact = await this.readToken(new WaveChunk.FactChunk(header));
           break;
 
@@ -109,7 +108,8 @@ export class WaveParser extends BasicParser {
             subFormat = `non-PCM (${fmt.wFormatTag})`;
           }
           this.metadata.setFormat('codec', subFormat);
-          this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
+          this.metadata.setFormat('lossless', WaveChunk.isLosslessWaveFormat(fmt.wFormatTag));
+          this.metadata.setFormat('bitsPerSample', WaveChunk.getBitsPerSample(fmt));
           this.metadata.setFormat('sampleRate', fmt.nSamplesPerSec);
           this.metadata.setFormat('numberOfChannels', fmt.nChannels);
           this.blockAlign = fmt.nBlockAlign;
@@ -125,11 +125,7 @@ export class WaveParser extends BasicParser {
         }
 
         case 'data': {
-          // PCM-data
-          if (this.metadata.format.lossless !== false) {
-            this.metadata.setFormat('lossless', true);
-          }
-
+          // Losslessness is determined from the format tag in the fmt chunk.
           let chunkSize = header.chunkSize;
           if (this.tokenizer.fileInfo.size) {
             const calcRemaining = this.tokenizer.fileInfo.size - this.tokenizer.position;
