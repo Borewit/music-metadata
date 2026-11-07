@@ -28,7 +28,9 @@ export const WaveFormat = {
   DRM: 0x0009,
   DTS2: 0x2001,
   MPEG: 0x0050,
-  MPEGLAYER3: 0x0055
+  MPEGLAYER3: 0x0055,
+  // The actual format is identified by the SubFormat GUID
+  EXTENSIBLE: 0xfffe
 };
 export type WaveFormat = (typeof WaveFormat)[keyof typeof WaveFormat];
 
@@ -59,7 +61,7 @@ export const WaveFormatNameMap = {
  */
 export interface IWaveFormat {
   /**
-   * PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression.
+   * Effective format tag. For WAVE_FORMAT_EXTENSIBLE this is the tag from SubFormat.
    */
   wFormatTag: WaveFormat;
   /**
@@ -73,6 +75,31 @@ export interface IWaveFormat {
   nAvgBytesPerSec: number;
   nBlockAlign: number;
   wBitsPerSample: number;
+}
+
+/**
+ * Common suffix of the KSDATAFORMAT_SUBTYPE_* GUIDs used by WAVE_FORMAT_EXTENSIBLE.
+ * The first four bytes contain the WAVE format tag.
+ */
+const WaveFormatExtensibleSubFormatSuffix = new Uint8Array([
+  0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71
+]);
+
+function hasStandardSubFormatGuid(buf: Uint8Array, off: number): boolean {
+  for (let i = 0; i < WaveFormatExtensibleSubFormatSuffix.length; i++) {
+    if (buf[off + i] !== WaveFormatExtensibleSubFormatSuffix[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * WAVE_FORMAT_PCM and WAVE_FORMAT_IEEE_FLOAT are uncompressed; all other
+ * registered WAVE formats apply compression or encoding.
+ */
+export function isLosslessWaveFormat(wFormatTag: WaveFormat): boolean {
+  return wFormatTag === WaveFormat.PCM || wFormatTag === WaveFormat.IEEE_FLOAT;
 }
 
 /**
@@ -90,8 +117,16 @@ export class Format implements IGetToken<IWaveFormat> {
   }
 
   public get(buf: Uint8Array, off: number): IWaveFormat {
+    let wFormatTag = Token.UINT16_LE.get(buf, off);
+    if (wFormatTag === WaveFormat.EXTENSIBLE && this.len >= 40 && off + 40 <= buf.length) {
+      const cbSize = Token.UINT16_LE.get(buf, off + 16);
+      if (cbSize >= 22 && hasStandardSubFormatGuid(buf, off + 26)) {
+        wFormatTag = Token.UINT16_LE.get(buf, off + 24);
+      }
+    }
+
     return {
-      wFormatTag: Token.UINT16_LE.get(buf, off),
+      wFormatTag: wFormatTag as WaveFormat,
       nChannels: Token.UINT16_LE.get(buf, off + 2),
       nSamplesPerSec: Token.UINT32_LE.get(buf, off + 4),
       nAvgBytesPerSec: Token.UINT32_LE.get(buf, off + 8),

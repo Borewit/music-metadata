@@ -95,7 +95,6 @@ export class WaveParser extends BasicParser {
           break;
 
         case 'fact': // extended Format chunk,
-          this.metadata.setFormat('lossless', false);
           this.fact = await this.readToken(new WaveChunk.FactChunk(header));
           break;
 
@@ -109,6 +108,7 @@ export class WaveParser extends BasicParser {
             subFormat = `non-PCM (${fmt.wFormatTag})`;
           }
           this.metadata.setFormat('codec', subFormat);
+          this.metadata.setFormat('lossless', WaveChunk.isLosslessWaveFormat(fmt.wFormatTag));
           this.metadata.setFormat('bitsPerSample', fmt.wBitsPerSample);
           this.metadata.setFormat('sampleRate', fmt.nSamplesPerSec);
           this.metadata.setFormat('numberOfChannels', fmt.nChannels);
