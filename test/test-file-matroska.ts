@@ -973,4 +973,14 @@ describe('Matroska formats', () => {
       });
     });
   });
+
+  it('maps the flat tag names written by ffmpeg', async () => {
+    const { common } = await mm.parseFile(path.join(matroskaSamplePath, 'ffmpeg-flat-tags.webm'), { duration: false });
+
+    assert.strictEqual(common.album, 'Album', 'common.album');
+    assert.strictEqual(common.albumartist, 'Various', 'common.albumartist');
+    assert.strictEqual(common.date, '2021-03-04', 'common.date');
+    assert.deepEqual(common.composer, ['Writer'], 'common.composer');
+    assert.strictEqual(common.disk.no, 2, 'common.disk.no');
+  });
 });
