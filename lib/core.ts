@@ -17,27 +17,47 @@ import { getTokenizerOptions } from './common/Allocation.js';
 import { hasID3v1Header } from './id3v1/ID3v1Parser.js';
 import { getLyricsHeaderLength } from './lyrics3/Lyrics3.js';
 import { ParserFactory } from './ParserFactory.js';
-import type { IAudioMetadata, INativeTagDict, IOptions, IPicture, IPrivateOptions, ITag } from './type.js';
+import type { IAudioMetadata, IOptions, IPicture, IPrivateOptions } from './type.js';
 
 export type { IFileInfo } from 'strtok3';
 export * from './ParseError.js';
 export { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
 export {
+  type IAiffNativeTagMap,
+  type IAPEv2NativeTagMap,
+  type IAPEv2Picture,
+  type IAsfNativeTagMap,
   type IAudioMetadata,
   type IAudioTrack,
+  type ICafNativeTagMap,
   type IChapter,
   type ICommonTagsResult,
   type IFormat,
+  type IID3v1NativeTagMap,
+  type IID3v22NativeTagMap,
+  type IID3v23NativeTagMap,
+  type IID3v24NativeTagMap,
+  type IITunesNativeTagMap,
   type ILyricsTag,
+  type IMatroskaNativeTagMap,
   type IMetadataEvent,
   type IMetadataEventTag,
+  type INativeAudioMetadata,
+  type INativeTag,
   type INativeTagDict,
+  type INativeTags,
+  type INativeTagTypeMap,
+  type INativeTagValueMap,
   type IOptions,
   type IPicture,
   type IRatio,
+  type IRiffNativeTagMap,
   type ITag,
   type ITrackInfo,
+  type ITypedNativeTagDict,
+  type ITypedNativeTags,
   type IVideoTrack,
+  type IVorbisNativeTagMap,
   LyricsContentType,
   TimestampFormat,
   TrackType
@@ -119,15 +139,7 @@ export function parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): P
  * @param nativeTags list of tags
  * @returns tags indexed by id
  */
-export function orderTags(nativeTags: ITag[]): INativeTagDict {
-  const tags: INativeTagDict = Object.create(null);
-
-  for (const { id, value } of nativeTags) {
-    (tags[id] ||= []).push(value);
-  }
-
-  return tags;
-}
+export { orderTags } from './common/Util.js';
 
 /**
  * Convert rating to 1-5 star rating

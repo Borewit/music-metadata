@@ -599,6 +599,20 @@ Converts an array of native tags to a dictionary keyed by tag identifier. Each v
 orderTags(nativeTags: ITag[]): INativeTagDict
 ```
 
+Known identifiers in every supported native tag format have value types: ID3v1,
+ID3v2.2/2.3/2.4, Vorbis (including FLAC/Opus/Speex), APEv2, ASF, MP4/iTunes,
+RIFF INFO/BWF (`exif`), Matroska, AIFF and CAF. Passing a typed native list to
+`orderTags` preserves those types: ID3 `TIT2` and Vorbis `TITLE` values are strings,
+ID3 `APIC` values are pictures, and `MCDI` values are `Uint8Array`s. ASF, APEv2,
+MP4 and Matroska can store different datatypes under the same identifier, so their
+value types include the corresponding alternatives and may need narrowing.
+
+The original `metadata.native` lists keep unrestricted identifiers and `unknown`
+values for backward compatibility. For typed access to parsed metadata, use the
+always-present `metadata.nativeTyped` dictionary view described below. `orderTags`
+still groups raw lists without guessing their value types. Custom maps can be
+supplied through `INativeTag` and `INativeTagDict` generics.
+
 ```js
 import { parseFile, orderTags } from 'music-metadata';
 import { inspect } from 'util';
@@ -606,7 +620,7 @@ import { inspect } from 'util';
 (async () => {
   try {
     const metadata = await parseFile('../test/samples/MusicBrainz - Beth Hart - Sinner\'s Prayer [id3v2.3].V2.mp3');
-    const orderedTags = orderTags(metadata.native['ID3v2.3']);
+    const orderedTags = orderTags(metadata.native['ID3v2.3'] ?? []);
     console.log(inspect(orderedTags, { showHidden: false, depth: null }));
   } catch (error) {
     console.error(error.message);
@@ -723,7 +737,33 @@ If the returned promise resolves, the metadata (TypeScript `IAudioMetadata` inte
 - [`metadata.common`](#metadatacommon) Is a generic (abstract) way of reading metadata information.
 - [`metadata.format.trackInfo`](#metadataformattrackinfo) Describes individual audio and video tracks when available.
 - `metadata.native` Maps each tag format to an array of native (original) tags found in the parsed audio file.
+- `metadata.nativeTyped` Provides typed dictionaries of the same native values, grouped by format and identifier.
 - `metadata.quality.warnings` Contains non-fatal parsing warnings, each with a `message` string.
+
+#### `metadata.nativeTyped`
+
+This property is always available, even when no native tags were found. Known
+identifiers have format-specific types; custom identifiers and formats remain
+accessible with `unknown` values. Each entry is an array, preserving duplicate
+values in their original order. Missing formats and identifiers are `undefined`.
+
+```ts
+const metadata = await parseFile(filePath);
+const titles = metadata.nativeTyped.vorbis?.TITLE; // string[] | undefined
+const pictures = metadata.nativeTyped['ID3v2.4']?.APIC; // IPicture[] | undefined
+const custom = metadata.nativeTyped.vorbis?.MY_CUSTOM_TAG; // unknown[] | undefined
+```
+
+The view is built lazily on each property access, including in observer callbacks.
+Read it once and reuse the snapshot when performing several lookups. Dictionaries
+and arrays are newly allocated; pictures, binary data and other structured values
+are shared with `native`, not copied. Changing a snapshot's grouping arrays does
+not change the raw lists. Subsequent reads reflect the current raw lists.
+
+`ITypedNativeTags`, `ITypedNativeTagDict`, `INativeAudioMetadata` and
+`IAudioMetadata` accept custom type maps. Native values are not converted or
+validated by this view. Adding the required `nativeTyped` property means manually
+constructed metadata objects and mocks must provide it as well.
 
 #### `metadata.format`
 

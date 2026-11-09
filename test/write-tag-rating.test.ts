@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { parseBuffer, updateBuffer } from '../lib/index.js';
+import { orderTags, parseBuffer, updateBuffer } from '../lib/index.js';
 import { readTags } from './helpers/read.js';
 
 function chunk(id: string, data: Buffer, pad = 0) {
@@ -149,8 +149,8 @@ it('preserves MP4 application ratings as native-only freeform metadata', async (
   for (let rating = 0; rating <= 10; rating++) {
     data = await updateBuffer(data, { native: { [key]: String(rating) } });
     data = await updateBuffer(data, { title: 'Keep rating' });
-    expect((await readTags(data)).native.iTunes?.find(tag => tag.id === key)?.value).toBe(String(rating));
+    expect(orderTags((await readTags(data)).native.iTunes ?? [])[key]?.[0]).toBe(String(rating));
   }
   data = await updateBuffer(data, { native: { [key]: null } });
-  expect((await readTags(data)).native.iTunes?.find(tag => tag.id === key)).toBeUndefined();
+  expect(orderTags((await readTags(data)).native.iTunes ?? [])[key]).toBeUndefined();
 });

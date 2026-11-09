@@ -45,7 +45,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
           assert.strictEqual(metadata.common.year, Number(date.slice(0, 4)));
           if (name.includes('recording-')) {
             assert.strictEqual(metadata.native['ID3v2.3'].length, name.includes('explicit') ? 4 : 3);
-            assert.deepEqual(mm.orderTags(metadata.native['ID3v2.3']).TYER, ['2011']);
+            assert.deepEqual(metadata.nativeTyped['ID3v2.3'].TYER, ['2011']);
           }
           if (api === 'tokenizer') {
             assert.isFalse(closed, 'caller retains tokenizer ownership');
@@ -235,7 +235,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
         if (name.startsWith('undecodable')) {
           assert.match(quality.warnings[0].message, /TDRC header has invalid string value/);
         }
-        assert.deepEqual(
+        assert.deepEqual<mm.ITag[]>(
           native['ID3v2.3'],
           frames
             .filter(([id]) => !name.startsWith('undecodable') || id !== 'TDRC')
@@ -267,7 +267,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       return await new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
         assert.strictEqual(33, metadata.native['ID3v2.3'].length);
 
-        const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+        const id3v23 = metadata.nativeTyped['ID3v2.3'];
         assert.isDefined(id3v23.UFID, 'check if ID3v2.3-UFID is set');
       });
     } finally {
@@ -305,7 +305,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.strictEqual(common.picture[0].data.length, 80938, 'common.picture length');
     }
 
-    function checkID3v1(id3v11: mm.INativeTagDict) {
+    function checkID3v1(id3v11: mm.ITypedNativeTagDict<mm.IID3v1NativeTagMap>) {
       assert.deepEqual(id3v11.title, ['Home'], 'id3v11.title');
       assert.deepEqual(id3v11.album, ['Friday Night Lights [Original'], 'id3v11.album');
       assert.deepEqual(id3v11.artist, ['Explosions In The Sky/Another/'], 'id3v11.artist');
@@ -314,7 +314,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       assert.deepEqual(id3v11.year, ['2004'], 'id3v11.year');
     }
 
-    function checkID3v23(id3v23: mm.INativeTagDict) {
+    function checkID3v23(id3v23: mm.ITypedNativeTagDict<mm.IID3v23NativeTagMap>) {
       assert.deepEqual(id3v23.TALB, ['Friday Night Lights [Original Movie Soundtrack]'], 'native: TALB');
       assert.deepEqual(id3v23.TPE1, ['Explosions In The Sky', 'Another', 'And Another'], 'native: TPE1');
       assert.deepEqual(id3v23.TPE2, ['Soundtrack'], 'native: TPE2');
@@ -337,8 +337,8 @@ describe('Extract metadata from ID3v2.3 header', () => {
     const metadata = await mm.parseFile(filePath, { duration: true });
     checkFormat(metadata.format);
     checkCommon(metadata.common);
-    checkID3v1(mm.orderTags(metadata.native.ID3v1));
-    checkID3v23(mm.orderTags(metadata.native['ID3v2.3']));
+    checkID3v1(metadata.nativeTyped.ID3v1);
+    checkID3v23(metadata.nativeTyped['ID3v2.3']);
   });
 
   describe('corrupt header / tags', () => {
@@ -456,7 +456,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     const metadata = await mm.parseFile(filePath);
     assert.isDefined(metadata.native['ID3v2.3'], 'Expect ID3v2.3 tag');
-    const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+    const id3v23 = metadata.nativeTyped['ID3v2.3'];
     // It should not split the id3v23.TIT2 tag (containing '/')
     assert.deepEqual(id3v23.TIT2, ["Their / They're / Therapy"], 'id3v23.TIT2');
     // The artist name is actually "Their / They're / There"
@@ -544,7 +544,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
     // http://id3.org/id3v2.3.0#URL_link_frames_-_details
     it('4.3.1 WCOM: Commercial information', async () => {
       const metadata = await mm.parseFile(path.join(samplePath, 'id3v2-lyrics.mp3'));
-      const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+      const id3v23 = metadata.nativeTyped['ID3v2.3'];
       /* eslint-disable max-len */
       assert.deepEqual(
         id3v23.WCOM[0],
@@ -556,7 +556,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       // http://id3.org/id3v2.3.0#User_defined_URL_link_frame
       it('decoding #1', async () => {
         const metadata = await mm.parseFile(path.join(samplePath, 'bug-unkown encoding.mp3'));
-        const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
+        const id3v23 = metadata.nativeTyped['ID3v2.3'];
         assert.deepEqual(id3v23.WXXX[0], {
           description: 'Tempa at bleep',
           url: 'http://www.bleep.com/tempa'
@@ -569,7 +569,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
         const metadata = await mm.parseFile(filePath);
         assert.deepEqual(metadata.format.tagTypes, ['ID3v2.3', 'ID3v1']);
 
-        const id3 = mm.orderTags(metadata.native['ID3v2.3']);
+        const id3 = metadata.nativeTyped['ID3v2.3'];
         assert.deepEqual(id3.WXXX[0], {
           description: 'あ',
           url: 'https://www.example.com'
@@ -580,8 +580,9 @@ describe('Extract metadata from ID3v2.3 header', () => {
     // http://id3.org/id3v2.3.0#Music_CD_identifier
     it('4.5 MCDI: Music CD identifier', async () => {
       const metadata = await mm.parseFile(path.join(samplePath, '04-Strawberry.mp3'));
-      const id3v23 = mm.orderTags(metadata.native['ID3v2.3']);
-      assert.equal((id3v23.MCDI[0] as string).length, 804, 'TOC');
+      const id3v23 = metadata.nativeTyped['ID3v2.3'];
+      assert.instanceOf(id3v23.MCDI[0], Uint8Array, 'TOC bytes');
+      assert.equal(id3v23.MCDI[0].length, 804, 'TOC');
     });
 
     // https://id3.org/id3v2.3.0#Unsychronised_lyrics.2Ftext_transcription
@@ -879,7 +880,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       const filePath = path.join(samplePath, filename);
 
       const metadata = await mm.parseFile(filePath);
-      const nativeTags = mm.orderTags(metadata.native['ID3v2.3']);
+      const nativeTags = metadata.nativeTyped['ID3v2.3'];
 
       assert.equal(nativeTags.UFID.length, 1);
 

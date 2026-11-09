@@ -1,7 +1,30 @@
 import { StringType } from 'token-types';
 import { getUintBE } from 'uint8array-extras';
 import { FieldDecodingError } from '../ParseError.js';
-import type { IRatio } from '../type.js';
+import type { INativeTag, INativeTagDict, INativeTags, IRatio, ITag, ITypedNativeTags } from '../type.js';
+
+/** Group native values by identifier, preserving their original order and references. */
+export function orderTags<TTag extends ITag>(
+  nativeTags: readonly TTag[]
+): INativeTagDict<{ [Tag in TTag as Tag['id']]: Tag['value'] }>;
+export function orderTags<T extends object>(nativeTags: readonly INativeTag<T>[]): INativeTagDict<T>;
+export function orderTags(nativeTags: readonly ITag[]): INativeTagDict;
+export function orderTags(nativeTags: readonly ITag[]): INativeTagDict {
+  const tags: INativeTagDict = Object.create(null);
+  for (const { id, value } of nativeTags) {
+    (tags[id] ||= []).push(value);
+  }
+  return tags;
+}
+
+/** Build a snapshot only when the typed view is requested, including custom keys. */
+export function toNativeTyped(native: INativeTags): ITypedNativeTags {
+  const typed: ITypedNativeTags = Object.create(null);
+  for (const [format, tags] of Object.entries(native)) {
+    typed[format] = orderTags(tags);
+  }
+  return typed;
+}
 
 export type StringEncoding =
   | 'ascii' // Use 'utf-8' or latin1 instead

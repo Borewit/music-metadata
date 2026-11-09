@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { EndOfStreamError, fromBuffer, fromStream } from 'strtok3';
-import { assert } from 'vitest';
+import { assert, expectTypeOf } from 'vitest';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import * as mm from '../lib/index.js';
 import { Atom } from '../lib/mp4/Atom.js';
@@ -158,7 +158,7 @@ describe('Parse MPEG-4', () => {
         const metadata = await parse(input);
         assert.equal(metadata.common.title, 'Title');
         assert.equal(metadata.common.artist, 'Artist');
-        assert.deepEqual(metadata.native.iTunes.slice(-2), [
+        assert.deepEqual<mm.ITag[]>(metadata.native.iTunes.slice(-2), [
           { id: '\0\0\0\x01', value: 'Unresolved' },
           { id: 'test:title', value: 'Private' }
         ]);
@@ -206,7 +206,7 @@ describe('Parse MPEG-4', () => {
         ]);
         const metadata = await parse(input);
         assert.equal(metadata.common.title, 'Title');
-        assert.deepEqual(metadata.native.iTunes.at(-1), { id: '\0\0\0\x01', value: 'Unknown' });
+        assert.deepEqual<mm.ITag | undefined>(metadata.native.iTunes.at(-1), { id: '\0\0\0\x01', value: 'Unknown' });
       });
 
       it(`decodes non-ASCII indexes, UTF-8 keys and integer values (stream=${streamed})`, async () => {
@@ -224,7 +224,7 @@ describe('Parse MPEG-4', () => {
           meta(keys(names), box('ilst', box(id, Buffer.concat([box('data', integer), box('data', unsigned)]))))
         );
         const metadata = await parse(input);
-        assert.deepEqual(metadata.native.iTunes, [
+        assert.deepEqual<mm.ITag[]>(metadata.native.iTunes, [
           { id: 'mdta:custom.著者', value: -42 },
           { id: 'mdta:custom.著者', value: 42 }
         ]);
@@ -286,7 +286,7 @@ describe('Parse MPEG-4', () => {
             const result = streamed
               ? await mm.parseStream(Readable.from([input], { objectMode: false }), 'audio/mp4')
               : await mm.parseBuffer(input, 'audio/mp4');
-            assert.deepEqual(result.native.iTunes, [
+            assert.deepEqual<mm.ITag[]>(result.native.iTunes, [
               { id: 'test', value },
               { id: 'date', value: '2026' }
             ]);
@@ -627,6 +627,33 @@ describe('Parse MPEG-4', () => {
   });
 
   describe('Parse MPEG-4 files (.m4a)', () => {
+    for (const [sourceId, valueType] of [
+      ['©day', 'string'],
+      ['tmpo', 'number'],
+      ['covr', 'picture']
+    ]) {
+      it(`exposes ${valueType} data atoms under the typed date identifier`, async () => {
+        const input = await fs.promises.readFile(path.join(mp4Samples, 'id4.m4a'));
+        const original = await mm.parseBuffer(input, 'audio/mp4');
+        const edited = Buffer.from(input);
+        const at = edited.indexOf(Buffer.from(sourceId, 'latin1'));
+        assert.isAtLeast(at, 4);
+        assert.strictEqual(edited.toString('latin1', at + 8, at + 12), 'data');
+        // Rename only the ilst item, retaining its data type, payload, audio and chunk offsets.
+        edited.write('date', at, 'latin1');
+
+        const metadata = await mm.parseBuffer(edited, 'audio/mp4');
+        const dates = metadata.nativeTyped.iTunes?.date;
+        expectTypeOf(dates).toEqualTypeOf<(string | number | mm.IPicture)[] | undefined>();
+        assert.isDefined(dates);
+        assert.isNotEmpty(dates);
+        assert.deepEqual(dates, original.nativeTyped.iTunes?.[sourceId]);
+        assert.deepEqual(dates, mm.orderTags(metadata.native.iTunes).date);
+        assert.strictEqual(metadata.format.codec, original.format.codec);
+        assert.strictEqual(metadata.format.duration, original.format.duration);
+      });
+    }
+
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.lossless, false);
       assert.deepEqual(format.container, 'M4A/isom/iso2', 'container');

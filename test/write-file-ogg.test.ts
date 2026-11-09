@@ -2,7 +2,7 @@ import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { InvalidFileError, parseBuffer, updateBuffer, updateFile } from '../lib/index.js';
+import { InvalidFileError, orderTags, parseBuffer, updateBuffer, updateFile } from '../lib/index.js';
 import { openSource } from '../lib/write/core/source.js';
 import { serializePicture } from '../lib/write/flac/picture.js';
 import { buildOggUpdate, crc } from '../lib/write/ogg/ogg.js';
@@ -147,7 +147,7 @@ describe.each(['vorbis.ogg', 'opus.opus'])('Ogg %s', codec => {
     const cleared = await updateBuffer(saved, { title: null });
     const tags = await readTags(cleared);
     expect(tags.common.title).toBeUndefined();
-    expect(tags.native.vorbis?.filter(tag => tag.id === 'CUSTOM').map(tag => tag.value)).toEqual(['one', 'two']);
+    expect(orderTags(tags.native.vorbis ?? []).CUSTOM).toEqual(['one', 'two']);
     expect(await fixture()).toEqual(input);
   });
 

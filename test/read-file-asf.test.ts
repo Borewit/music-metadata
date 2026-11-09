@@ -231,7 +231,7 @@ describe('Parse ASF', () => {
                 : mm.parseBlob(new Blob([Uint8Array.from(data)], { type: asfMimeType.mimeType }));
           }
           it(`preserves native fields through ${source}`, async () => {
-            assert.deepEqual((await parse(payload())).native.asf, tags);
+            assert.deepEqual<mm.ITag[]>((await parse(payload())).native.asf, tags);
           });
           it(`rejects a truncated string through ${source}`, async () => {
             await expect(parse(payload().subarray(0, -2))).rejects.toThrowError(AsfContentParseError);
@@ -348,7 +348,7 @@ describe('Parse ASF', () => {
 
       it(`preserves native fields through the public ${source} parser`, async () => {
         const metadata = await parseBody(payload());
-        assert.deepEqual(metadata.native.asf, expected);
+        assert.deepEqual<mm.ITag[]>(metadata.native.asf, expected);
         assert.strictEqual(metadata.common.title, values[0]);
         assert.strictEqual(metadata.common.artist, values[1]);
       });

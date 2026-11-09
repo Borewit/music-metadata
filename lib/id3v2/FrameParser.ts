@@ -47,7 +47,7 @@ export interface ITextTag {
 export interface IPopularimeter {
   email: string;
   rating: number;
-  counter: number;
+  counter?: number;
 }
 
 export interface IGeneralEncapsulatedObject {
