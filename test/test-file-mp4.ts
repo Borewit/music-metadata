@@ -1029,6 +1029,8 @@ describe('Parse MPEG-4', () => {
 
     const { format, native } = await mm.parseFile(filePath);
 
+    assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
+
     assert.strictEqual(format.container, 'M4A/isom/mp42', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
     assert.approximately(format.duration!, 1.024, 1 / 2000, 'format.duration');
