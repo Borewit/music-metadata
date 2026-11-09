@@ -13,6 +13,12 @@ const ebmlTagMap: INativeTagMap = {
   'album:DATE_RELEASED': 'releasedate',
   'album:PART_NUMBER': 'disk',
   'album:TOTAL_PARTS': 'totaltracks',
+  // Flat names written by ffmpeg, and tools built on it such as yt-dlp
+  'track:ALBUM': 'album',
+  'track:ALBUM_ARTIST': 'albumartist',
+  'track:COMPOSER': 'composer',
+  'track:DATE': 'date',
+  'track:DISC': 'disk',
   'track:ARTIST': 'artist',
   'track:ARTISTSORT': 'artistsort',
   'track:TITLE': 'title',
