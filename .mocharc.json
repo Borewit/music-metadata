@@ -1,6 +1,0 @@
-{
-  "extension": ["ts"],
-  "watch-files": ["lib/**/*.ts", "test/**/*.ts"],
-  "require": ["tsx/esm"],
-  "timeout": 40000
-}

@@ -1,5 +1,5 @@
 /**
- * Primary entry point, Node.js specific entry point is MusepackParser.ts
+ * Cross-platform entry point for reading and writing metadata.
  */
 
 import type { Readable } from 'node:stream';
@@ -42,6 +42,7 @@ export {
   TimestampFormat,
   TrackType
 } from './type.js';
+export * from './write/browser.js';
 
 /**
  * Parse Web API File

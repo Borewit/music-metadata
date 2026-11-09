@@ -1,8 +1,10 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["mocha", "node"],
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
     "strict": false
   }
 }
-

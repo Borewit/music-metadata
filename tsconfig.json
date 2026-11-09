@@ -5,7 +5,10 @@
     "target": "ES2023",
     "esModuleInterop": true,
     "isolatedModules": true,
-    "types": ["node", "mocha"],
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
     "strict": false
   }
 }

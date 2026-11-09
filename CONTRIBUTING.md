@@ -44,15 +44,15 @@ the format or behavior being tested, then place the case next to related tests:
 
 | Coverage | Location |
 | --- | --- |
-| File/container parsing | The matching `test/test-file-*.ts` suite; DSDIFF uses `test/test-dsdiff.ts` |
-| Shared ID3v2 headers, padding, encodings, lyrics and embedded tags | `test/test-id3v2.ts` |
-| Version-specific ID3 frames and mappings | `test/test-id3v1.1.ts`, `test/test-id3v2.2.ts`, `test/test-id3v2.3.ts`, `test/test-id3v2.4.ts` |
-| APEv2 tags and shared Vorbis comment decoding | `test/test-apev2.ts`, `test/test-vorbis-comments.ts` |
-| Cross-format tag mapping | The existing common, Picard, Discogs, comment or ReplayGain suite |
-| Public API behavior and shared policies | The existing options, MIME, parse-file, async, track-info or allocation-limit suite |
+| File/container parsing | The matching `test/read-file-*.test.ts` suite; DSDIFF uses `test/read-file-dsdiff.test.ts` |
+| Shared ID3v2 headers, padding, encodings, lyrics and embedded tags | `test/read-id3v2.test.ts` |
+| Version-specific ID3 frames and mappings | `test/read-id3v1.1.test.ts`, `test/read-id3v2.2.test.ts`, `test/read-id3v2.3.test.ts`, `test/read-id3v2.4.test.ts` |
+| APEv2 tags and shared Vorbis comment decoding | `test/read-apev2.test.ts`, `test/read-vorbis-comments.test.ts` |
+| Cross-format tag mapping | The existing `test/read-common.test.ts`, `test/read-picard-parsing.test.ts`, `test/read-discogs.test.ts`, `test/read-comment-mapping.test.ts`, or `test/read-replay-gain.test.ts` suite |
+| Public API behavior and shared policies | The existing `test/read-options.test.ts`, `test/read-mime.test.ts`, `test/read-parse-file.test.ts`, `test/read-async.test.ts`, `test/read-trackinfo.test.ts`, or `test/read-allocation-limits.test.ts` suite |
 
 Use nested `describe` groups for related chunks, frames or behaviors, with descriptive `it` names.
-Keep format variants and input adapters together, and reuse `Parsers` from `test/shared/metadata-parsers.ts`
+Keep format variants and input adapters together, and reuse `Parsers` from `test/helpers/metadata-parsers.ts`
 when checking the same fixture across supported input APIs. Retain issue/PR references in comments
 or case names as context. Create a new test file when introducing a format or a distinct shared concern.
 Keep synthetic fixture builders local to their group; builders used by multiple suites can live in
@@ -76,18 +76,11 @@ Run `yarn build:test` for a clean development build of the source and tests, pre
 Run `yarn test:compiled` to test an existing build without cleaning or recompiling it. CI uses this command to test
 the downloaded build artifacts on each runtime.
 
-Run `yarn test-coverage` for a clean development build followed by coverage, or `yarn test-coverage:compiled` to collect
-coverage from an existing development build. The library is compiled last so test and documentation compilation do
-not overwrite its source maps. Coverage is remapped to TypeScript sources; the TypeScript-only filter in `.c8rc.json`
-keeps generated JavaScript and declaration files out of the report.
+Run `yarn test-coverage` for a clean development build followed by coverage, or `yarn test-coverage:compiled` to collect coverage from an existing development build.
 
 Run `yarn test:watch` to rebuild and rerun tests after changing TypeScript sources or compiler configuration.
 Each run cleans generated library and test files before compilation so deleted or renamed tests do not leave stale
 JavaScript behind. Documentation generator outputs are preserved.
 Generated JavaScript and declaration files do not trigger a rebuild.
 
-IntelliJ IDEA and WebStorm can run TypeScript tests directly through the Mocha gutter icons using `.mocharc.json`.
-Use the project root as the working directory and remove any old `--require ts-node/register` options.
-
-The workspace does not override VS Code's TypeScript SDK: TypeScript 7 no longer supplies the legacy `tsserver`.
-VS Code can use its bundled language service without affecting the TypeScript 7 compiler used by the build.
+Use the Vitest integration in your editor with `vitest.config.ts` and the project root as the working directory. Reader and writer tests use Vitest assertions and share the same runner.
