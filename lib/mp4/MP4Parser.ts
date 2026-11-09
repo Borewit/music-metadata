@@ -172,6 +172,27 @@ function isAudioTrack(track: ITrackDescription): boolean {
   return !!ssd.description && ssd.description.numAudioChannels > 0;
 }
 
+interface IAudioConfig {
+  objectType: number;
+  channels?: number;
+}
+
+/**
+ * Channel count from an AAC-LC AudioSpecificConfig (ISO/IEC 14496-3). The count in the
+ * sample entry is not reliable for AAC: some encoders leave it at the default of 2.
+ */
+function readAacLcChannels(objectType: number, config: Uint8Array): number | undefined {
+  const frequencyIndex = ((config[0] & 7) << 1) | (config[1] >>> 7);
+  if (objectType !== 2 || config.length < 2 || frequencyIndex === 15) {
+    return undefined;
+  }
+  const channelConfig = (config[1] >>> 3) & 0xf;
+  if (channelConfig < 1 || channelConfig > 7) {
+    return undefined;
+  }
+  return channelConfig === 7 ? 8 : channelConfig;
+}
+
 /*
  * Parser for the MP4 (MPEG-4 Part 14) container format
  * Standard: ISO/IEC 14496-14
@@ -1163,8 +1184,12 @@ export class MP4Parser extends BasicParser {
             if (childOffset > description.length) {
               throw new Mp4ContentError('Truncated mp4a sound sample description');
             }
-            if (this.readAudioObjectType(description, childOffset) === 36) {
+            const audioConfig = this.readAudioConfig(description, childOffset);
+            if (audioConfig?.objectType === 36) {
               ssd.encoder = { format: 'MPEG-4/ALS', lossy: false };
+            }
+            if (audioConfig?.channels) {
+              ssd.description.numAudioChannels = audioConfig.channels;
             }
           }
         } else {
@@ -1178,7 +1203,7 @@ export class MP4Parser extends BasicParser {
   }
 
   /** Read codec configuration only inside the bounded AudioSampleEntry child boxes. */
-  private readAudioObjectType(data: Uint8Array, offset: number): number | undefined {
+  private readAudioConfig(data: Uint8Array, offset: number): IAudioConfig | undefined {
     while (offset < data.length) {
       this.reserveAtom();
       if (data.length - offset < 8) {
@@ -1204,7 +1229,7 @@ export class MP4Parser extends BasicParser {
         throw new Mp4ContentError('Invalid mp4a child box size');
       }
       if (name === 'esds') {
-        return this.readEsdsAudioObjectType(data.subarray(offset + headerSize, offset + size));
+        return this.readEsdsAudioConfig(data.subarray(offset + headerSize, offset + size));
       }
       offset += size;
     }
@@ -1234,7 +1259,7 @@ export class MP4Parser extends BasicParser {
     }
   }
 
-  private readEsdsAudioObjectType(data: Uint8Array): number | undefined {
+  private readEsdsAudioConfig(data: Uint8Array): IAudioConfig | undefined {
     if (data.length < 4) {
       throw new Mp4ContentError('Truncated esds full-box header');
     }
@@ -1276,7 +1301,10 @@ export class MP4Parser extends BasicParser {
             throw new Mp4ContentError('Truncated AudioSpecificConfig object type');
           }
           const type = specific.body[0] >>> 3;
-          return type === 31 ? 32 + ((specific.body[0] & 7) << 3) + (specific.body[1] >>> 5) : type;
+          if (type === 31) {
+            return { objectType: 32 + ((specific.body[0] & 7) << 3) + (specific.body[1] >>> 5) };
+          }
+          return { objectType: type, channels: readAacLcChannels(type, specific.body) };
         }
       }
     }
