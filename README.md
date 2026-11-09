@@ -9,18 +9,56 @@
 
 # music-metadata
 
+**Read and write audio metadata in Node.js and browsers.**
+
 <img src="image/logo-music-metadata.jpg" width="60%" style="display: block; margin: auto;" alt="logo">
 
+Long used for reading audio metadata, `music-metadata` now also lets you edit tags
+and cover art without re-encoding audio. Import both reading and writing functions from `music-metadata`, using the same
+common tag names.
+
+[Reading API](#api-documentation) · [Writing metadata](#writing-metadata) · [Installation](#installation)
+
 Key features:
-- **Comprehensive Format Support**: Supports popular audio formats like MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
+- **Read Many Audio Formats**: Read metadata from MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
+- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, WAV and MP4/M4A/M4B metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
 - **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
 - **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
 - **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
 - **Cross-Platform**: Works in both [Node.js](https://nodejs.org/) and browser environments with the help of bundlers like [Webpack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/introduction/).
 
-The [`music-metadata`](https://github.com/Borewit/music-metadata) module is ideal for developers working on media applications, music players, or any project that requires access to detailed audio file metadata.
+The [`music-metadata`](https://github.com/Borewit/music-metadata) module is ideal for developers working on media applications, music players, or any project that needs to read, organize or update audio file metadata.
 
-To write or edit metadata, use [music-metadata-editor](https://github.com/Borewit/music-metadata-editor), a companion module that uses the same common tag names.
+## Writing metadata
+
+Import the write API from `music-metadata` to edit FLAC, Ogg Vorbis/Opus,
+MP3, WAV and MP4/M4A/M4B metadata without re-encoding audio.
+
+```js
+import { updateFile, updateBuffer } from 'music-metadata';
+
+await updateFile('track.flac', {
+  title: 'New title',
+  artists: ['Artist A'],
+  track: { no: 4, of: 12 }
+}, { backup: true });
+
+const updated = await updateBuffer(originalBytes, { album: 'New album' });
+```
+
+Omitted fields are preserved; `null` removes a field. File updates use atomic
+replacement by default. Options include `backup`, `dryRun` and `atomic`.
+`updateBuffer` returns a new `Uint8Array` without modifying its input; the browser
+entry point also accepts a `Blob`. `updateFile` is available only in Node.js. Conditional root exports select the
+appropriate implementation; named imports allow bundlers to remove unused reading
+or writing code.
+Read metadata using `parseFile`, `parseBuffer` or `parseBlob`.
+
+MP3 and WAV write ID3v2.4; replacing ID3v2.2/2.3 requires `replaceId3: true`.
+MP4 writing supports non-fragmented, self-contained files with iTunes metadata.
+Consumers migrating from `music-metadata-editor` should import the write functions
+and types from `music-metadata`.
+
 
 ## Compatibility
 
@@ -45,6 +83,8 @@ If you find this project useful and would like to support its development, consi
 ## Features
 
 ### Support for audio file types
+
+The following formats support **reading**. For supported write formats and examples, see [Writing metadata](#writing-metadata).
 
 | Audio format                                                              | Description                                               | Logo                                                                                             |
 |---------------------------------------------------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------|

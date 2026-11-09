@@ -1,5 +1,6 @@
 import type { IGetToken } from 'strtok3';
 import * as Token from 'token-types';
+import { decodeBase64 } from '../../common/Base64.js';
 import { decodePicture, type IFlacPicture, type PictureDecodeOptions } from '../../tokens/flac.js';
 
 /**
@@ -19,7 +20,7 @@ export interface IVorbisPicture extends IFlacPicture {
  */
 export class VorbisPictureToken implements IGetToken<IVorbisPicture> {
   public static fromBase64(base64str: string): IVorbisPicture {
-    return VorbisPictureToken.fromBuffer(Uint8Array.from(atob(base64str), c => c.charCodeAt(0)));
+    return VorbisPictureToken.fromBuffer(decodeBase64(base64str));
   }
 
   public static fromBuffer(buffer: Uint8Array): IVorbisPicture {

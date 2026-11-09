@@ -12,6 +12,7 @@ import { ParserFactory } from './ParserFactory.js';
 import type { IAudioMetadata, IOptions } from './type.js';
 
 export * from './core.js';
+export { updateBuffer, updateFile } from './write/index.js';
 
 const debug = initDebug('music-metadata:parser');
 
