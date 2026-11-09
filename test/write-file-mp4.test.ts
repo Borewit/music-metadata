@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   InvalidFileError,
   InvalidPatchError,
+  orderTags,
   UnsupportedFeatureError,
   updateBuffer,
   updateFile,
@@ -130,7 +131,7 @@ describe('MP4 metadata', () => {
       expect(updated.common.track).toEqual({ no: 3, of: 12 });
       expect(updated.pictures).toEqual([]);
       expect(updated.common.genre).toBeUndefined();
-      expect(updated.native.iTunes?.find(t => t.id === '----:com.apple.iTunes:PRIVATE')?.value).toBe('Keep me');
+      expect(orderTags(updated.native.iTunes ?? [])['----:com.apple.iTunes:PRIVATE']?.[0]).toBe('Keep me');
       expect(Buffer.from(mdat(again))).toEqual(Buffer.from(mdat(input)));
     });
   }
@@ -206,7 +207,7 @@ describe('MP4 metadata', () => {
     const preserved = await updateBuffer(output, { title: 'Other edit' });
     expect(Buffer.from(preserved).includes(atom('----', body))).toBe(true);
     const removed = await updateBuffer(preserved, { native: { [key]: null } });
-    expect((await readTags(removed)).native.iTunes?.some(tag => tag.id === key)).toBe(false);
+    expect(Object.hasOwn(orderTags((await readTags(removed)).native.iTunes ?? []), key)).toBe(false);
     await expect(updateBuffer(input, { native: { [key]: new Uint8Array() } })).rejects.toBeInstanceOf(
       InvalidPatchError
     );
@@ -451,7 +452,7 @@ describe('MP4 structure variants', () => {
     ]);
     expect(Buffer.from(replaced).includes(duplicates)).toBe(false);
     const removed = await updateBuffer(preserved, { native: { [key]: null } });
-    expect((await readTags(removed)).native.iTunes?.some(tag => tag.id === key)).toBe(false);
+    expect(Object.hasOwn(orderTags((await readTags(removed)).native.iTunes ?? []), key)).toBe(false);
     for (const output of [preserved, replaced, removed]) {
       expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
       expect(chunkHeads(output)).toEqual(chunkHeads(input));

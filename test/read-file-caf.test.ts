@@ -338,7 +338,7 @@ describe('Parse CAF (Core Audio File Format)', () => {
           const metadata = stream
             ? await mm.parseStream(Readable.from([data], { objectMode: false }), cafMimeType)
             : await mm.parseBuffer(data, cafMimeType);
-          assert.deepEqual(
+          assert.deepEqual<mm.ITag[]>(
             metadata.native.CAF,
             entries.map(([id, value]) => ({ id, value }))
           );
@@ -350,18 +350,20 @@ describe('Parse CAF (Core Audio File Format)', () => {
     }
 
     it('preserves every entry as a native tag', async () => {
-      const { native } = await mm.parseFile(path.join(cafSamplePath, 'info-tags.caf'));
+      const { native, nativeTyped } = await mm.parseFile(path.join(cafSamplePath, 'info-tags.caf'));
       const entries = native.CAF;
       assert.lengthOf(entries, 21);
 
-      const info = new Map(entries.map(tag => [tag.id, tag.value]));
-      assert.strictEqual(info.get('title'), 'Fixture Piece');
-      assert.strictEqual(info.get('nominal bit rate'), '128 kbits');
-      assert.strictEqual(info.get('channel layout'), '5.1 Surround');
+      const info = nativeTyped.CAF;
+      assert.isDefined(info);
+      assert.deepEqual(info, mm.orderTags(entries));
+      assert.deepEqual(info.title, ['Fixture Piece']);
+      assert.deepEqual(info['nominal bit rate'], ['128 kbits']);
+      assert.deepEqual(info['channel layout'], ['5.1 Surround']);
       // Undocumented keys Apple reserves, and ones written by third party tools
-      assert.strictEqual(info.get('.hidden reserved key'), 'reserved value');
-      assert.strictEqual(info.get('ApplicationKey'), 'application value');
-      assert.strictEqual(info.get('approximate duration in seconds'), '0.064');
+      assert.deepEqual(info['.hidden reserved key'], ['reserved value']);
+      assert.deepEqual(info.ApplicationKey, ['application value']);
+      assert.deepEqual(info['approximate duration in seconds'], ['0.064']);
     });
 
     it('reads a channel layout and an information chunk from the same file', async () => {

@@ -12,6 +12,7 @@ import {
   type IPicture,
   type IQualityInformation,
   type ITrackInfo,
+  type ITypedNativeTags,
   TrackTypeValueToKeyMap
 } from '../type.js';
 import { getMaxMemoryAllocation, getMaxMetadataEntries } from './Allocation.js';
@@ -19,7 +20,7 @@ import { CombinedTagMapper } from './CombinedTagMapper.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
 import { type IGenericTag, isSingleton, isUnique, type TagType } from './GenericTagTypes.js';
 import { normalizeBitrate } from './TrackInfo.js';
-import { toRatio } from './Util.js';
+import { toNativeTyped, toRatio } from './Util.js';
 
 const debug = initDebug('music-metadata:collector');
 
@@ -95,6 +96,10 @@ export class MetadataCollector implements INativeMetadataCollector {
   };
 
   public readonly native: INativeTags = {};
+
+  public get nativeTyped(): ITypedNativeTags {
+    return toNativeTyped(this.native);
+  }
 
   public readonly common: ICommonTagsResult = {
     track: { no: null, of: null },
@@ -342,6 +347,9 @@ export class MetadataCollector implements INativeMetadataCollector {
     return {
       format: this.format,
       native: this.native,
+      get nativeTyped() {
+        return toNativeTyped(this.native);
+      },
       quality: this.quality,
       common: this.common
     };

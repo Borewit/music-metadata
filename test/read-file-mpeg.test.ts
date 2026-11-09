@@ -125,7 +125,7 @@ describe('Parse MPEG', () => {
         );
       }
 
-      function checkID3v1(id3v1: mm.INativeTagDict) {
+      function checkID3v1(id3v1: mm.ITypedNativeTagDict<mm.IID3v1NativeTagMap>) {
         t.deepEqual(id3v1.artist, ['Reel Big Fish'], 'id3v1.artist');
         t.deepEqual(id3v1.title, ["You Don't Know"], 'id3v1.title');
         t.deepEqual(id3v1.album, ['Why Do They Rock So Hard?'], 'id3v1.album');
@@ -134,7 +134,7 @@ describe('Parse MPEG', () => {
         t.deepEqual(id3v1.comment, ['000010DF 00000B5A 00007784'], 'id3v1.comment');
       }
 
-      function checkID3v23(id3v23: mm.INativeTagDict) {
+      function checkID3v23(id3v23: mm.ITypedNativeTagDict<mm.IID3v23NativeTagMap>) {
         t.deepEqual(id3v23.TPE2, ['Reel Big Fish'], 'native: TPE2');
         t.deepEqual(id3v23.TIT2, ["You Don't Know"], 'native: TIT2');
         t.deepEqual(id3v23.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
@@ -150,8 +150,8 @@ describe('Parse MPEG', () => {
 
       checkFormat(result.format);
       checkCommon(result.common);
-      checkID3v23(mm.orderTags(result.native['ID3v2.3']));
-      checkID3v1(mm.orderTags(result.native.ID3v1));
+      checkID3v23(result.nativeTyped['ID3v2.3']);
+      checkID3v1(result.nativeTyped.ID3v1);
     });
 
     it("should decode 07 - I'm Cool.mp3", async () => {
@@ -184,7 +184,7 @@ describe('Parse MPEG', () => {
         t.deepEqual(common.comment, [{ descriptor: '', language: 'eng', text: 'Jive' }], 'common.comment');
       }
 
-      function checkID3v23(native: mm.INativeTagDict) {
+      function checkID3v23(native: mm.ITypedNativeTagDict<mm.IID3v23NativeTagMap>) {
         t.deepEqual(native.TPE2, ['Reel Big Fish'], 'native: TPE2');
         t.deepEqual(native.TIT2, ["I'm Cool"], 'native: TIT2');
         t.deepEqual(native.TALB, ['Why Do They Rock So Hard?'], 'native: TALB');
@@ -200,7 +200,7 @@ describe('Parse MPEG', () => {
 
       checkFormat(result.format);
       checkCommon(result.common);
-      checkID3v23(mm.orderTags(result.native['ID3v2.3']));
+      checkID3v23(result.nativeTyped['ID3v2.3']);
     });
   });
 
@@ -307,14 +307,14 @@ describe('Parse MPEG', () => {
       const metadata = await mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {
         duration: false
       });
-      const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+      const idv23 = metadata.nativeTyped['ID3v2.3'];
       assert.deepEqual(idv23.POPM[0], { email: 'no@email', rating: 128, counter: 0 }, 'ID3v2.3 POPM');
       assert.approximately(metadata.common.rating![0].rating!, 0.5, 1 / (2 * 254), 'Common rating');
     });
 
     it("from 'id3v2-lyrics.mp3'", async () => {
       const metadata = await mm.parseFile(path.join(issueDir, 'id3v2-lyrics.mp3'), { duration: false });
-      const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+      const idv23 = metadata.nativeTyped['ID3v2.3'];
       // Native rating value
       assert.deepEqual(idv23.POPM[0], { email: 'MusicBee', rating: 255, counter: 0 }, 'ID3v2.3 POPM');
       // Common rating value
@@ -325,7 +325,7 @@ describe('Parse MPEG', () => {
       const filePath = path.join(issueDir, 'issue-100.mp3');
 
       const metadata = await mm.parseFile(filePath, { duration: true });
-      const idv23 = mm.orderTags(metadata.native['ID3v2.3']);
+      const idv23 = metadata.nativeTyped['ID3v2.3'];
       assert.deepEqual(
         idv23.POPM[0],
         {

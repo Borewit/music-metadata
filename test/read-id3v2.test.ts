@@ -456,7 +456,7 @@ describe('ID3v2', () => {
         await new ID3v2Parser().parse(metadata, tokenizer, {});
         assert.strictEqual(tokenizer.position, tokenizer.fileInfo.size, 'the entire tag is consumed');
         assert.strictEqual(metadata.common.title, 'Synthetic title');
-        assert.deepEqual(metadata.native[`ID3v2.${major}`], [
+        assert.deepEqual<mm.ITag[]>(metadata.native[`ID3v2.${major}`], [
           { id: major === 2 ? 'TT2' : 'TIT2', value: 'Synthetic title' }
         ]);
         return metadata;
@@ -666,7 +666,7 @@ describe('ID3v2', () => {
     for (const major of [2, 3] as const) {
       it(`removes tag-level unsynchronisation from ID3v2.${major} frames`, async () => {
         const metadata = await mm.parseBuffer(unsynchronisedTag(major), 'audio/mpeg');
-        assert.deepEqual(metadata.native[`ID3v2.${major}`], [
+        assert.deepEqual<mm.ITag[]>(metadata.native[`ID3v2.${major}`], [
           { id: major === 2 ? 'TT2' : 'TIT2', value: 'Title \xff\xe0' },
           { id: major === 2 ? 'TP1' : 'TPE1', value: 'Artist' }
         ]);
@@ -835,7 +835,7 @@ describe('ID3v2', () => {
         // $01: BE BOM before the empty description and unterminated text.
         { language: 'deu', descriptor: '', text: 'Tëst' }
       ];
-      assert.deepEqual(
+      assert.deepEqual<mm.ITag[]>(
         native['ID3v2.4'],
         [
           { id: 'TIT2', value: 'Tëst' }, // $02 text frame
