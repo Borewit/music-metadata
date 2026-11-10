@@ -11,6 +11,13 @@ export interface Frame {
   data: Uint8Array;
 }
 
+export type Id3Version = 3 | 4;
+
+/** Flags that change the frame body's layout, rather than its preservation policy. */
+export function frameFormatFlags(version: Id3Version): number {
+  return version === 3 ? 0x00e0 : 0x004f;
+}
+
 export function syncSafe(data: Uint8Array, offset: number): number {
   if (offset + 4 > data.length || data.subarray(offset, offset + 4).some(byte => byte > 127)) {
     throw new InvalidFileError('Invalid ID3 sync-safe integer');
@@ -18,10 +25,10 @@ export function syncSafe(data: Uint8Array, offset: number): number {
   return UINT32SYNCSAFE.get(data, offset);
 }
 
-export function encodeFrame(frame: Frame): Uint8Array {
+export function encodeFrame(frame: Frame, version: Id3Version = 4): Uint8Array {
   const writer = new TokenWriter(10 + frame.data.length);
   writer.writeBuffer(textEncode(frame.id, 'latin1'));
-  writer.writeToken(UINT32SYNCSAFE, frame.data.length);
+  writer.writeToken(version === 3 ? UINT32_BE : UINT32SYNCSAFE, frame.data.length);
   writer.writeToken(UINT16_BE, frame.flags);
   writer.writeBuffer(frame.data);
   return writer.toUint8Array();
@@ -68,10 +75,15 @@ function join(...parts: Uint8Array[]): Uint8Array {
   return writer.toUint8Array();
 }
 const zero = Uint8Array.of(0);
-const encoding = Uint8Array.of(3);
 
 /** Encode supported native frame shapes, or accept an explicit raw frame body. */
-export function makeFrames(key: string, value: unknown): Frame[] {
+export function makeFrames(key: string, value: unknown, version: Id3Version = 4): Frame[] {
+  const encoding = Uint8Array.of(version === 3 ? 1 : 3);
+  const terminator = version === 3 ? Uint8Array.of(0, 0) : zero;
+  const text = (value: unknown) => {
+    const bytes = utf8(value); // Keep the same validation for either version.
+    return version === 3 ? join(Uint8Array.of(0xff, 0xfe), textEncode(value as string, 'utf-16le')) : bytes;
+  };
   const [id, ...descriptionParts] = key.split(':');
   if (!id || !/^[A-Z0-9]{4}$/.test(id)) {
     throw new InvalidPatchError(`Invalid ID3 frame ID: ${key}`);
@@ -86,12 +98,37 @@ export function makeFrames(key: string, value: unknown): Frame[] {
   if (value instanceof Uint8Array) {
     return [{ id, flags: 0, data: value }];
   }
+  if (version === 3 && ['TDRC', 'TDOR', 'TDRL', 'TDEN', 'TDTG', 'TIPL', 'TMCL', 'TMOO', 'TSST', 'TPRO'].includes(id)) {
+    throw new UnsupportedFeatureError(`${id} requires ID3v2.4; use a v2.3 frame ID or a raw body`);
+  }
   const values = Array.isArray(value) ? value : [value];
   if (id.startsWith('T') && id !== 'TIPL' && id !== 'TMCL') {
-    const strings = values.map(utf8);
-    const payload = join(...strings.flatMap((s, i) => (i ? [zero, s] : [s])));
+    const strings = values.map(value => {
+      utf8(value);
+      return value as string;
+    });
+    const slashList =
+      ['TPE1', 'TPE2', 'TPE3', 'TPE4', 'TCOM', 'TEXT', 'TOLY', 'TOPE', 'TSRC'].includes(id) ||
+      (id === 'TXXX' &&
+        ['ARTISTS', 'MUSICBRAINZ ARTIST ID', 'MUSICBRAINZ ALBUM ARTIST ID', 'MUSICBRAINZ ALBUM TYPE', 'ISRC'].includes(
+          description.toUpperCase()
+        ));
+    if (version === 3 && strings.length > 1 && !slashList) {
+      throw new UnsupportedFeatureError(
+        `ID3v2.3 ${key} does not support multiple text values; use ID3v2.4 or a raw body`
+      );
+    }
+    if (version === 3 && strings.length > 1 && strings.some(value => value.includes('/'))) {
+      throw new InvalidPatchError('ID3v2.3 multi-value text cannot contain slash characters');
+    }
+    const payload =
+      version === 3 ? text(strings.join('/')) : join(...strings.map(utf8).flatMap((s, i) => (i ? [zero, s] : [s])));
     return [
-      { id, flags: 0, data: id === 'TXXX' ? join(encoding, utf8(description), zero, payload) : join(encoding, payload) }
+      {
+        id,
+        flags: 0,
+        data: id === 'TXXX' ? join(encoding, text(description), terminator, payload) : join(encoding, payload)
+      }
     ];
   }
   return values.map(value => {
@@ -100,7 +137,7 @@ export function makeFrames(key: string, value: unknown): Frame[] {
     }
     let data: Uint8Array;
     if (
-      ['APIC', 'COMM', 'USLT', 'SYLT', 'UFID', 'POPM', 'TIPL', 'TMCL'].includes(id) &&
+      ['APIC', 'COMM', 'USLT', 'SYLT', 'UFID', 'POPM', 'TIPL', 'TMCL', 'IPLS'].includes(id) &&
       (typeof value !== 'object' || value === null || Array.isArray(value))
     ) {
       throw new InvalidPatchError(`${id} requires a structured native value`);
@@ -112,7 +149,8 @@ export function makeFrames(key: string, value: unknown): Frame[] {
           throw new InvalidPatchError('APIC requires picture data');
         }
         const format = normalizePictureMimeType(String(object.format));
-        const description = utf8(object.description ?? '');
+        const descriptionValue = object.description ?? '';
+        const description = utf8(descriptionValue);
         // Some Windows thumbnail readers reject UTF-8 APIC frames with an empty description.
         const pictureEncoding = description.length === 0 ? zero : encoding;
         data = join(
@@ -120,8 +158,8 @@ export function makeFrames(key: string, value: unknown): Frame[] {
           latin(format),
           zero,
           Uint8Array.of(pictureTypeToNumber(object.type as string | undefined)),
-          description,
-          zero,
+          description.length === 0 ? description : text(descriptionValue),
+          description.length === 0 ? zero : terminator,
           object.data
         );
         break;
@@ -135,7 +173,7 @@ export function makeFrames(key: string, value: unknown): Frame[] {
         if (typeof language !== 'string' || !/^[a-zA-Z]{3}$/.test(language)) {
           throw new InvalidPatchError('Invalid ID3 language');
         }
-        data = join(encoding, latin(language), utf8(object.descriptor ?? ''), zero, utf8(object.text));
+        data = join(encoding, latin(language), text(object.descriptor ?? ''), terminator, text(object.text));
         break;
       }
       case 'SYLT': {
@@ -148,7 +186,7 @@ export function makeFrames(key: string, value: unknown): Frame[] {
           ![1, 2].includes(Number(format)) ||
           !Number.isInteger(contentType) ||
           Number(contentType) < 0 ||
-          Number(contentType) > 8 ||
+          Number(contentType) > (version === 3 ? 6 : 8) ||
           !Array.isArray(object.syncText)
         ) {
           throw new InvalidPatchError('Invalid synchronized lyrics');
@@ -157,8 +195,8 @@ export function makeFrames(key: string, value: unknown): Frame[] {
           encoding,
           latin(language),
           Uint8Array.of(Number(format), Number(contentType)),
-          utf8(object.descriptor ?? ''),
-          zero
+          text(object.descriptor ?? ''),
+          terminator
         ];
         for (const line of object.syncText) {
           if (!Number.isInteger(line.timestamp) || line.timestamp < 0 || line.timestamp > 0xffffffff) {
@@ -166,7 +204,7 @@ export function makeFrames(key: string, value: unknown): Frame[] {
           }
           const timestamp = new Uint8Array(4);
           UINT32_BE.put(timestamp, 0, line.timestamp);
-          parts.push(utf8(line.text), zero, timestamp);
+          parts.push(text(line.text), terminator, timestamp);
         }
         data = join(...parts);
         break;
@@ -190,7 +228,7 @@ export function makeFrames(key: string, value: unknown): Frame[] {
         break;
       case 'MVNM':
       case 'MVIN':
-        data = join(encoding, utf8(value));
+        data = join(encoding, text(value));
         break;
       case 'UFID': {
         if (!object || !(object.identifier instanceof Uint8Array) || object.identifier.length > 64) {
@@ -213,27 +251,35 @@ export function makeFrames(key: string, value: unknown): Frame[] {
         break;
       }
       case 'TIPL':
-      case 'TMCL': {
+      case 'TMCL':
+      case 'IPLS': {
         if (!object || typeof object !== 'object') {
           throw new InvalidPatchError(`${id} requires a role map`);
         }
         const pairs: Uint8Array[] = [];
+        const legacyPairs: string[] = [];
         for (const [role, people] of Object.entries(object)) {
           if (!Array.isArray(people)) {
             throw new InvalidPatchError('ID3 role values must be arrays');
           }
           for (const person of people) {
-            pairs.push(utf8(role), zero, utf8(person), zero);
+            utf8(person);
+            legacyPairs.push(role, person as string);
+            pairs.push(text(role), terminator, text(person), terminator);
           }
         }
-        data = join(encoding, ...pairs);
+        // IPLS is a single UTF-16 string containing NUL-separated role/name pairs.
+        data =
+          version === 3
+            ? join(encoding, Uint8Array.of(0xff, 0xfe), textEncode(legacyPairs.join('\0'), 'utf-16le'), terminator)
+            : join(encoding, ...pairs);
         break;
       }
       default:
         if (!id.startsWith('W')) {
           throw new UnsupportedFeatureError(`Writing ${id} requires a raw Uint8Array body`);
         }
-        data = id === 'WXXX' ? join(encoding, utf8(description), zero, latin(value)) : latin(value);
+        data = id === 'WXXX' ? join(encoding, text(description), terminator, latin(value)) : latin(value);
     }
     return { id, flags: 0, data };
   });

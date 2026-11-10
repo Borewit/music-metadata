@@ -1,5 +1,5 @@
 import { TokenWriter } from 'strtok3';
-import { UINT8 } from 'token-types';
+import { UINT8, UINT32_BE } from 'token-types';
 import { UINT32SYNCSAFE } from '../../tokens/id3v2.js';
 import {
   InvalidFileError,
@@ -10,11 +10,23 @@ import {
 import type { ByteSource } from '../core/source.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
 import { applyId3Patch } from '../mapping/id3v2.js';
-import { decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';
+import {
+  decodeText,
+  encodeFrame,
+  type Frame,
+  frameFormatFlags,
+  type Id3Version,
+  makeFrames,
+  syncSafe
+} from './frames.js';
 
 const MAX_TAG_SIZE = 64 * 1024 * 1024;
 
 export async function buildId3Update(source: ByteSource, patch: TagPatch, options: WriteOptions, embedded = false) {
+  if (options.id3Version !== undefined && options.id3Version !== 3 && options.id3Version !== 4) {
+    throw new InvalidPatchError('id3Version must be 3 or 4');
+  }
+  let version: Id3Version = options.id3Version ?? 4;
   let audioOffset = 0;
   let oldLength = 0;
   const frames: Frame[] = [];
@@ -59,13 +71,19 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
         }
       }
     } else {
-      if (header[3] !== 4) {
-        throw new UnsupportedFeatureError('Only ID3v2.4 tags are writable');
+      if (header[3] !== 3 && header[3] !== 4) {
+        throw new UnsupportedFeatureError('Only ID3v2.3 and ID3v2.4 tags are writable');
+      }
+      version = header[3];
+      if (options.id3Version !== undefined && options.id3Version !== version) {
+        throw new UnsupportedFeatureError(
+          'Changing id3Version requires replaceId3: true; unspecified fields will be lost'
+        );
       }
       if (header[4] !== 0 || (header[5] & ~0x20) !== 0) {
         throw new UnsupportedFeatureError('ID3 tag flags, extended headers and footers are not supported');
       }
-      oldLength = syncSafe(header, 6);
+      oldLength = version === 3 ? UINT32_BE.get(header, 6) : syncSafe(header, 6);
       if (oldLength > MAX_TAG_SIZE) {
         throw new InvalidFileError('ID3 tag exceeds 64 MiB');
       }
@@ -89,12 +107,12 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
         if (!/^[A-Z0-9]{4}$/.test(id)) {
           throw new InvalidFileError('Invalid ID3 frame ID');
         }
-        const size = syncSafe(data, offset + 4);
+        const size = version === 3 ? UINT32_BE.get(data, offset + 4) : syncSafe(data, offset + 4);
         if (size === 0) {
           throw new InvalidFileError('Empty ID3 frame');
         }
-        const flags = (data[offset + 8] << 8) | data[offset + 9];
-        if ((flags & ~0x704f) !== 0) {
+        const flags = (data[offset + 8]! << 8) | data[offset + 9]!;
+        if ((flags & ~(version === 3 ? 0xe0e0 : 0x704f)) !== 0) {
           throw new InvalidFileError('Reserved ID3 frame flags');
         }
         if (offset + 10 + size > data.length) {
@@ -130,22 +148,26 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
       if (description.length === 0) {
         return true;
       }
-      if (frame.flags & 0x4f) {
+      if (frame.flags & frameFormatFlags(version)) {
         throw new UnsupportedFeatureError(`Cannot identify flagged ${id} frames safely`);
       }
       return decodeText(frame.data).split('\0')[0]?.toLowerCase() === description.join(':').toLowerCase();
     };
     const index = frames.findIndex(matches);
     const retained = frames.filter(frame => !matches(frame));
-    retained.splice(index < 0 ? retained.length : Math.min(index, retained.length), 0, ...makeFrames(key, value));
+    retained.splice(
+      index < 0 ? retained.length : Math.min(index, retained.length),
+      0,
+      ...makeFrames(key, value, version)
+    );
     frames.splice(0, frames.length, ...retained);
   };
-  applyId3Patch(frames, patch, replace);
+  applyId3Patch(frames, patch, replace, version);
   for (const [key, value] of Object.entries(patch.native ?? {})) {
     replace(key, value);
   }
 
-  const encoded = frames.map(encodeFrame);
+  const encoded = frames.map(frame => encodeFrame(frame, version));
   const length = encoded.reduce((sum, frame) => sum + frame.length, 0);
   const padding = options.padding ?? 8192;
   if (!Number.isSafeInteger(padding) || padding < 0) {
@@ -156,7 +178,7 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
     throw new InvalidPatchError('ID3 tag exceeds 64 MiB');
   }
   const writer = new TokenWriter(bodyLength + 10);
-  writer.writeBuffer(Uint8Array.of(73, 68, 51, 4, 0));
+  writer.writeBuffer(Uint8Array.of(73, 68, 51, version, 0));
   writer.writeToken(UINT8, 0);
   writer.writeToken(UINT32SYNCSAFE, bodyLength);
   for (const frame of encoded) {

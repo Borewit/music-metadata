@@ -3,7 +3,7 @@ import { InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
 import { normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, textValues, validatePictures } from '../core/patch.js';
 import type { TagPatch } from '../core/types.js';
-import { decodeText, type Frame } from '../id3v2/frames.js';
+import { decodeText, type Frame, frameFormatFlags, type Id3Version } from '../id3v2/frames.js';
 import { COMMON_FIELDS, commonText, EXTRA_COMMON_FIELDS, structuredText } from './common.js';
 
 const textFields = {
@@ -52,7 +52,20 @@ const textFields = {
   replaygain_album_peak: 'TXXX:REPLAYGAIN_ALBUM_PEAK'
 } as const;
 
-export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: string, value: unknown) => void): void {
+export function applyId3Patch(
+  frames: Frame[],
+  patch: TagPatch,
+  replace: (key: string, value: unknown) => void,
+  version: Id3Version = 4
+): void {
+  const formatFlags = frameFormatFlags(version);
+  const peopleId = version === 3 ? 'IPLS' : 'TIPL';
+  const legacyNames: Record<string, string> = {
+    TMOO: 'TXXX:MOOD',
+    TSST: 'TXXX:DISCSUBTITLE',
+    TDRL: 'TXXX:RELEASEDATE'
+  };
+  const replaceText = (key: string, value: unknown) => replace(version === 3 ? (legacyNames[key] ?? key) : key, value);
   for (const key of EXTRA_COMMON_FIELDS) {
     if (patch[key] !== undefined) {
       if (key === 'djmixer') {
@@ -80,30 +93,60 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
         continue;
       }
       const values = commonText(patch[key], key);
-      replace(COMMON_FIELDS[key].id3, values);
+      replaceText(COMMON_FIELDS[key].id3, values);
     }
   }
   for (const [key, frame] of Object.entries(textFields)) {
     const value = patch[key as keyof typeof textFields];
-    if (value !== undefined) {
-      replace(frame, textValues(value as import('../core/types.js').TextPatch));
+    if (value === undefined) continue;
+    const values = textValues(value as import('../core/types.js').TextPatch);
+    if (version === 3 && (key === 'date' || key === 'originaldate')) {
+      if (values && values.length !== 1) throw new InvalidPatchError(`${key} requires one value for ID3v2.3`);
+      const date = values?.[0];
+      if (date) {
+        const match =
+          /^(\d{4})(?:-(0[1-9]|1[0-2])(?:-(0[1-9]|[12]\d|3[01])(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?)?)?)?$/.exec(
+            date
+          );
+        const year = Number(match?.[1]);
+        const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+        const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        if (!match || (match[3] && Number(match[3]) > days[Number(match[2]) - 1]!)) {
+          throw new InvalidPatchError(`Invalid ID3v2.3 ${key}; expected an ISO date`);
+        }
+      }
+      if (key === 'date') {
+        // Keep a precise timestamp in a reader-recognized user frame. Legacy
+        // components remain useful to readers that only understand v2.3.
+        replace('TYER', date ? date.slice(0, 4) : null);
+        replace('TDAT', date && date.length >= 10 ? date.slice(8, 10) + date.slice(5, 7) : null);
+        replace('TIME', date && date.length >= 16 ? date.slice(11, 13) + date.slice(14, 16) : null);
+        replace(
+          'TXXX:DISCOGS_RELEASED',
+          date && date.length !== 4 && date.length !== 10 && date.length !== 16 ? date : null
+        );
+        replace('TDRC', null);
+        replace('TDRV', null);
+      } else {
+        replace('TORY', date ? date.slice(0, 4) : null);
+        replace('TXXX:DISCOGS_DATE', date ?? null);
+        replace('TDOR', null);
+      }
+    } else {
+      replaceText(frame, values);
     }
   }
-  if (patch.notes !== undefined) {
-    replace('TXXX:NOTES', textValues(patch.notes));
-  }
-  if (patch.technician !== undefined) {
-    replace('TXXX:TECHNICIAN', textValues(patch.technician));
-  }
-  if (patch['performer:instrument'] !== undefined) {
+  if (patch.notes !== undefined) replace('TXXX:NOTES', textValues(patch.notes));
+  if (patch.technician !== undefined) replace('TXXX:TECHNICIAN', textValues(patch.technician));
+  if (patch['performer:instrument'] !== undefined)
     replace('TXXX:PERFORMER:INSTRUMENT', commonText(patch['performer:instrument'], 'performer:instrument'));
-  }
   for (const [key, value] of Object.entries(structuredText(patch))) {
-    replace(COMMON_FIELDS[key as keyof typeof COMMON_FIELDS].id3, value);
+    replaceText(COMMON_FIELDS[key as keyof typeof COMMON_FIELDS].id3, value);
   }
   if (patch.movementIndex !== undefined) {
     const pair = normalizeNumberPair(patch.movementIndex, 'movementIndex');
     const frame = frames.find(frame => frame.id === 'MVIN');
+    if (frame && frame.flags & formatFlags) throw new UnsupportedFeatureError('Cannot edit flagged MVIN');
     const previous = frame ? decodeText(frame.data).split('/') : [];
     replace(
       'MVIN',
@@ -121,6 +164,14 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       if (value !== null && !Number.isFinite(Number(value))) {
         throw new InvalidPatchError(`Invalid ${key}`);
       }
+      if (version === 3 && key === 'originalyear') {
+        if (value !== null && (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 9999)) {
+          throw new InvalidPatchError('ID3v2.3 originalyear must be a four-digit year');
+        }
+        replace('TXXX:originalyear', null);
+        replace('TORY', value === null ? null : String(value).padStart(4, '0'));
+        continue;
+      }
       replace(frame, value === null ? null : String(value));
     }
   }
@@ -137,7 +188,7 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       continue;
     }
     const frame = frames.find(frame => frame.id === id);
-    if (frame && frame.flags & 0x4f) {
+    if (frame && frame.flags & formatFlags) {
       throw new UnsupportedFeatureError(`Cannot edit flagged ${id}`);
     }
     const previous = frame ? decodeText(frame.data).split('/') : [];
@@ -181,22 +232,24 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       throw new InvalidPatchError('musicbrainz_recordingid requires one value');
     }
     // Preserve identifiers belonging to other owners.
+    let insertionIndex = frames.length;
     for (let i = frames.length - 1; i >= 0; i--) {
       const frame = frames[i];
       if (frame.id !== 'UFID') {
         continue;
       }
-      if (frame.flags & 0x4f) {
+      if (frame.flags & formatFlags) {
         throw new UnsupportedFeatureError('Cannot edit flagged UFID');
       }
       const end = frame.data.indexOf(0);
       const owner = String.fromCharCode(...frame.data.subarray(0, end < 0 ? frame.data.length : end));
       if (owner === 'http://musicbrainz.org') {
+        insertionIndex = i;
         frames.splice(i, 1);
       }
     }
     if (values) {
-      // Append without removing UFIDs from other owners.
+      // Keep the first matching frame's position without removing other owners.
       const owner = textEncode('http://musicbrainz.org\0', 'latin1');
       const identifier = textEncode(values[0], 'latin1');
       if (identifier.length > 64) {
@@ -205,7 +258,7 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       const data = new Uint8Array(owner.length + identifier.length);
       data.set(owner);
       data.set(identifier, owner.length);
-      frames.push({ id: 'UFID', flags: 0, data });
+      frames.splice(Math.min(insertionIndex, frames.length), 0, { id: 'UFID', flags: 0, data });
     }
   }
   if (patch.rating !== undefined) {
@@ -221,10 +274,10 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
   }
   const roles = ['producer', 'engineer', 'arranger', 'mixer', 'djmixer'] as const;
   if (roles.some(role => patch[role] !== undefined)) {
-    const people = Object.create(null) as Record<string, string[]>;
-    for (const frame of frames.filter(frame => frame.id === 'TIPL')) {
-      if (frame.flags & 0x4f) {
-        throw new UnsupportedFeatureError('Cannot edit flagged TIPL');
+    const people: Record<string, string[]> = {};
+    for (const frame of frames.filter(frame => frame.id === peopleId)) {
+      if (frame.flags & formatFlags) {
+        throw new UnsupportedFeatureError(`Cannot edit flagged ${peopleId}`);
       }
       const pairs = decodeText(frame.data).split('\0');
       for (let i = 0; i + 1 < pairs.length; i += 2) {
@@ -242,6 +295,6 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
         people[name] = values;
       }
     }
-    replace('TIPL', Object.keys(people).length ? people : null);
+    replace(peopleId, Object.keys(people).length ? people : null);
   }
 }
