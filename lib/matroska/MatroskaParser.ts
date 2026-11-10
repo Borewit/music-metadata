@@ -19,6 +19,12 @@ import {
 const debug = initDebug('music-metadata:parser:matroska');
 const targetTypes: Readonly<Record<number, string | undefined>> = TargetType;
 
+interface IAlbumCandidate {
+  value: AnyTagValue;
+  targetUIDs: string[];
+  untargeted: boolean;
+}
+
 function isCompleteTrack(entry: IDecodedTrackEntry): entry is ITrackEntry {
   return (
     typeof entry.trackNumber === 'number' &&
@@ -61,6 +67,8 @@ export class MatroskaParser extends BasicParser {
   private trackStatistics = new Map<string, Map<string, string>>();
   private seekHead: ISeekHead | undefined;
   private seekHeadOffset = 0;
+  private selectedAudioTrackUid?: string;
+  private albumCandidates: IAlbumCandidate[] = [];
   /**
    * Use index to skip multiple segment/cluster elements at once.
    * Significant performance impact
@@ -214,6 +222,9 @@ export class MatroskaParser extends BasicParser {
                   }, null);
 
                 if (audioTrack) {
+                  if (audioTrack.uid) {
+                    this.selectedAudioTrackUid = this.uidKey(audioTrack.uid);
+                  }
                   this.metadata.setFormat('codec', audioTrack.codecID.replace(/^A_/, ''));
                   this.metadata.setFormat('hasAudio', true);
                   this.metadata.setFormat(
@@ -249,10 +260,39 @@ export class MatroskaParser extends BasicParser {
               target?.targetTypeValue !== undefined
                 ? (targetTypes[target.targetTypeValue] ?? 'track')
                 : (target?.targetType ?? 'track');
+            const isTrackTarget = targetType.toLowerCase() === 'track';
+            const targetUidKeys = (target?.tagTrackUID ?? []).map(uid => this.uidKey(uid)).filter(uid => uid !== '0');
+            const selectedAudioUid = this.selectedAudioTrackUid;
+            const targetsSelectedAudio = selectedAudioUid !== undefined && targetUidKeys.includes(selectedAudioUid);
+            const isUntargeted = (target?.tagTrackUID ?? []).length === 0;
             for (const simpleTag of tag.simpleTags ?? []) {
               const value = simpleTag.string ?? simpleTag.binary;
               if (simpleTag.name && value !== undefined) {
-                await this.addTag(`${targetType}:${simpleTag.name}`, value);
+                const nameUpper = simpleTag.name.toUpperCase();
+                if (isTrackTarget && nameUpper === 'ALBUM') {
+                  this.addNativeTag('track:ALBUM', value);
+                  this.albumCandidates.push({
+                    value,
+                    targetUIDs: targetUidKeys,
+                    untargeted: isUntargeted
+                  });
+                } else if (
+                  isTrackTarget &&
+                  (nameUpper === 'DATE' ||
+                    nameUpper === 'DISC' ||
+                    nameUpper === 'COMPOSER' ||
+                    nameUpper === 'ALBUM_ARTIST')
+                ) {
+                  // Map track-level tags only when they target the selected audio track (or are untargeted).
+                  // Tags targeting other tracks are preserved as native tags only.
+                  if (selectedAudioUid !== undefined && !targetsSelectedAudio && !isUntargeted) {
+                    this.addNativeTag(`track:${simpleTag.name}`, value);
+                  } else {
+                    await this.addTag(`${targetType}:${simpleTag.name}`, value);
+                  }
+                } else {
+                  await this.addTag(`${targetType}:${simpleTag.name}`, value);
+                }
               }
             }
             break;
@@ -285,6 +325,35 @@ export class MatroskaParser extends BasicParser {
       }
     });
     this.applyTrackStatistics();
+    await this.resolveTrackAlbum();
+  }
+
+  private addNativeTag(tagId: string, value: AnyTagValue): void {
+    this.metadata.registerTagType('matroska');
+    if (!this.metadata.native.matroska) {
+      this.metadata.native.matroska = [];
+    }
+    this.metadata.native.matroska.push({ id: tagId, value });
+  }
+
+  private async resolveTrackAlbum(): Promise<void> {
+    if (this.albumCandidates.length === 0) {
+      return;
+    }
+    const selectedAudioUid = this.selectedAudioTrackUid;
+    const targetsSelectedAudio = (candidate: IAlbumCandidate) =>
+      selectedAudioUid !== undefined && candidate.targetUIDs.includes(selectedAudioUid);
+    const targetsVideoOnly = (candidate: IAlbumCandidate) =>
+      candidate.targetUIDs.length > 0 &&
+      candidate.targetUIDs.every(uid => this.tracksByUid.get(uid)?.type === TrackType.video);
+    const selected =
+      this.albumCandidates.findLast(targetsSelectedAudio) ??
+      this.albumCandidates.findLast(candidate => candidate.untargeted) ??
+      this.albumCandidates.findLast(candidate => !targetsVideoOnly(candidate)) ??
+      this.albumCandidates[this.albumCandidates.length - 1];
+    if (this.metadata.common.album === undefined) {
+      await this.metadata.postMap('matroska', { id: 'album', value: selected.value });
+    }
   }
 
   private uidKey(uid: Uint8Array): string {

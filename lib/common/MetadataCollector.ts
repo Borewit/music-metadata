@@ -59,6 +59,8 @@ export interface INativeMetadataCollector extends IWarningCollector {
    */
   readonly format: IFormat;
 
+  readonly common: ICommonTagsResult;
+
   readonly native: INativeTags;
 
   readonly quality: IQualityInformation;

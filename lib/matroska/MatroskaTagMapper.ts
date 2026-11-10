@@ -1,5 +1,7 @@
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
 import type { INativeTagMap } from '../common/GenericTagTypes.js';
+import type { IWarningCollector } from '../common/MetadataCollector.js';
+import type { ITag } from '../type.js';
 
 /**
  * EBML Tag map
@@ -37,5 +39,12 @@ const ebmlTagMap: INativeTagMap = {
 export class MatroskaTagMapper extends CaseInsensitiveTagMap {
   public constructor() {
     super(['matroska'], ebmlTagMap);
+  }
+
+  public override mapGenericTag(tag: ITag, warnings: IWarningCollector) {
+    if (tag.id.toUpperCase() === 'TRACK:DATE' && typeof tag.value !== 'string') {
+      return null;
+    }
+    return super.mapGenericTag(tag, warnings);
   }
 }
