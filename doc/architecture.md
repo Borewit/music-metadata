@@ -35,9 +35,9 @@ The writing capability is implemented in `lib/write/` and exposes `updateFile` (
 
 | Format | Entry | Notes |
 |---|---|---|
-| FLAC | `lib/write/flac/flac.ts` | Rewrites METADATA_BLOCK_PICTURE, VORBIS_COMMENT, PADDING blocks; preserves audio. |
+| FLAC | `lib/write/flac/flac.ts` | Rewrites PICTURE, VORBIS_COMMENT and PADDING blocks; preserves other metadata blocks and audio. |
 | MP3/ID3v2.4 | `lib/write/id3v2/id3v2.ts` | Replaces leading ID3v2 tag, optionally trailing ID3v1; frames via `frames.ts`. |
-| WAV | `lib/write/wav/wav.ts` | Chunk-based rebuild; handles INFO, ID3, LIST chunks. |
+| WAV | `lib/write/wav/wav.ts` | Rewrites the `id3 ` chunk and copies all other chunks, including LIST/INFO, unchanged. |
 | MP4 | `lib/write/mp4/mp4.ts` | Box-based rebuild; tags via `tags.ts`, atoms via `atoms.ts`. |
 | Ogg Vorbis/Opus | `lib/write/ogg/ogg.ts` | Page-based rebuild; Vorbis comments via `vorbis/comment.ts`. |
 
