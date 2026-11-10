@@ -59,7 +59,7 @@
   "originalyear": {
     "description": "Original (initial) release year"
   },
-    "releasedate": {
+  "releasedate": {
     "description": "Release date, formatted like: YYYY-MM-DD"
   },
   "comment": {
@@ -79,6 +79,12 @@
   },
   "discogs_rating": {
     "description": "Discogs rating"
+  },
+  "replaygain_track_gain_ratio": {
+    "description": "ReplayGain track gain ratio [0..1]"
+  },
+  "replaygain_track_peak_ratio": {
+    "description": "ReplayGain track peak ratio [0..1]"
   },
   "genre": {
     "description": "Genres"
@@ -130,6 +136,9 @@
   },
   "producer": {
     "description": "Producer(s)"
+  },
+  "publisher": {
+    "description": "Publisher"
   },
   "djmixer": {
     "description": "Mix-DJ(s)"
@@ -237,19 +246,19 @@
     "description": "[Work](https://musicbrainz.org/doc/Work) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
   "musicbrainz_trmid": {
-    "description": "[TRM (TRM Recognizes Music)]((https://musicbrainz.org/doc/Fingerprinting#TRM)) IDs were MusicBrainz’ first audio fingerprinting system."
+    "description": "[TRM (TRM Recognizes Music)]((https://musicbrainz.org/doc/Fingerprinting#TRM)) IDs were MusicBrainz\u2019 first audio fingerprinting system."
   },
   "musicbrainz_discid": {
     "description": "[Disc ID](https://musicbrainz.org/doc/Disc_ID) is the code number which MusicBrainz uses to link a physical CD"
   },
   "acoustid_id": {
-    "description": "(AcoustID)[https://en.wikipedia.org/wiki/Acoustic_fingerprint] is MusicBrainz’ third and most recent audio fingerprinting system."
+    "description": "(AcoustID)[https://en.wikipedia.org/wiki/Acoustic_fingerprint] is MusicBrainz\u2019 third and most recent audio fingerprinting system."
   },
   "acoustid_fingerprint": {
     "description": "[AcoustID Fingerprint](https://picard.musicbrainz.org/docs/mappings/). _ToDo: Same as acoustid_id._"
   },
   "musicip_puid": {
-    "description": "[PUIDs](https://musicbrainz.org/doc/Fingerprinting#PUID) were MusicBrainz’ second audio fingerprinting system."
+    "description": "[PUIDs](https://musicbrainz.org/doc/Fingerprinting#PUID) were MusicBrainz\u2019 second audio fingerprinting system."
   },
   "musicip_fingerprint": {
     "description": "MusicIP Fingerprint), not sure which algorithm."
