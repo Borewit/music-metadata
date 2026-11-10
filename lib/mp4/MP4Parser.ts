@@ -182,15 +182,34 @@ interface IAudioConfig {
  * sample entry is not reliable for AAC: some encoders leave it at the default of 2.
  */
 function readAacLcChannels(objectType: number, config: Uint8Array): number | undefined {
+  if (objectType !== 2 || config.length < 2) {
+    return undefined;
+  }
   const frequencyIndex = ((config[0] & 7) << 1) | (config[1] >>> 7);
-  if (objectType !== 2 || config.length < 2 || frequencyIndex === 15) {
-    return undefined;
+  let channelConfigByte = 1;
+  if (frequencyIndex === 15) {
+    if (config.length < 5) {
+      return undefined;
+    }
+    channelConfigByte = 4;
   }
-  const channelConfig = (config[1] >>> 3) & 0xf;
-  if (channelConfig < 1 || channelConfig > 7) {
-    return undefined;
+  const channelConfig = (config[channelConfigByte] >>> 3) & 0xf;
+  if (channelConfig >= 1 && channelConfig <= 7) {
+    return channelConfig === 7 ? 8 : channelConfig;
   }
-  return channelConfig === 7 ? 8 : channelConfig;
+  if (channelConfig === 0 && config.length > channelConfigByte + 1) {
+    const pceByte = channelConfigByte + 1;
+    if ((config[pceByte] & 0x80) !== 0) {
+      const profile = config[pceByte] >>> 6;
+      if (profile === 0) {
+        const channels = (config[pceByte] >> 1) & 0x7;
+        if (channels > 0) {
+          return channels;
+        }
+      }
+    }
+  }
+  return undefined;
 }
 
 /*
