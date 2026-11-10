@@ -5,7 +5,11 @@ import { describe, expect, it } from 'vitest';
 import type { Picture, TagPatch } from '../lib/index.js';
 import { InvalidFileError, InvalidPatchError, parseFile, updateFile } from '../lib/index.js';
 import { applyVorbisPatch } from '../lib/write/mapping/vorbis.js';
-import { parseVorbisComment, serializeVorbisComment } from '../lib/write/vorbis/comment.js';
+import {
+  parseVorbisComment,
+  parseVorbisCommentWithSuffix,
+  serializeVorbisComment
+} from '../lib/write/vorbis/comment.js';
 import { extractAudio, extractBlocks } from './helpers/flac.js';
 
 describe('Vorbis Comment codec', () => {
@@ -51,6 +55,57 @@ describe('Vorbis Comment codec', () => {
     const withTrailing = new Uint8Array(encoded.length + 1);
     withTrailing.set(encoded);
     expect(() => parseVorbisComment(withTrailing)).toThrow(InvalidFileError);
+  });
+
+  it('parseVorbisCommentWithSuffix rejects truncated vendor length', () => {
+    // Not enough bytes for the vendor length field (needs 4 bytes)
+    const data = new Uint8Array([5, 0, 0]); // only 3 bytes
+    expect(() => parseVorbisCommentWithSuffix(data)).toThrow('Truncated Vorbis comment vendor length');
+  });
+
+  it('parseVorbisCommentWithSuffix rejects vendor length exceeding remaining data', () => {
+    // vendor length = 10 (little-endian: 10,0,0,0) but only 4 bytes remain
+    const data = new Uint8Array([10, 0, 0, 0, 0, 0, 0, 0]);
+    expect(() => parseVorbisCommentWithSuffix(data)).toThrow('Vorbis comment vendor length 10 exceeds remaining data');
+  });
+
+  it('parseVorbisCommentWithSuffix rejects comment count exceeding entry limit', () => {
+    // Need enough remaining data to pass readLength check, then MAX_COMMENTS check triggers
+    // MAX_COMMENTS = 1,000,000. Use count = 1,000,001 with sufficient dummy data.
+    const count = 1000001;
+    const data = new Uint8Array(8 + count * 4); // vendor(4) + count(4) + count*4 bytes for entry lengths
+    data.set([0, 0, 0, 0], 0); // vendor = 0
+    data.set([count & 0xff, (count >> 8) & 0xff, (count >> 16) & 0xff, (count >> 24) & 0xff], 4); // count = 1000001
+    expect(() => parseVorbisCommentWithSuffix(data)).toThrow(
+      'Vorbis comment count 1000001 exceeds entry limit 1000000'
+    );
+  });
+
+  it('parseVorbisCommentWithSuffix rejects comment count exceeding remaining data', () => {
+    // vendor=0 (4 bytes), comment count=1000 (little-endian: 232,3,0,0) but no entry data
+    const data = new Uint8Array([0, 0, 0, 0, 232, 3, 0, 0]);
+    expect(() => parseVorbisCommentWithSuffix(data)).toThrow(
+      'Vorbis comment comment count length 1000 exceeds remaining data'
+    );
+  });
+
+  it('parseVorbisCommentWithSuffix rejects comment count exceeding available entry-length fields', () => {
+    // Empty vendor, count = 2, but only one 4-byte entry-length field remains.
+    const data = new Uint8Array([0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]);
+    expect(() => parseVorbisCommentWithSuffix(data)).toThrow('Vorbis comment count 2 exceeds remaining data');
+  });
+
+  it('parseVorbisCommentWithSuffix parses suffix correctly', () => {
+    const fields = { vendor: 'test', comments: [{ key: 'TITLE', value: 'Song' }] };
+    const encoded = serializeVorbisComment(fields);
+    const suffix = new Uint8Array([1, 2, 3, 4]);
+    const withSuffix = new Uint8Array(encoded.length + suffix.length);
+    withSuffix.set(encoded);
+    withSuffix.set(suffix, encoded.length);
+    const result = parseVorbisCommentWithSuffix(withSuffix);
+    expect(result.vendor).toBe('test');
+    expect(result.comments).toEqual([{ key: 'TITLE', value: 'Song' }]);
+    expect(result.suffix).toEqual(suffix);
   });
 });
 

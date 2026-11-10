@@ -356,6 +356,120 @@ describe('mixed-tag deletion policy', () => {
   });
 });
 
+describe('makeFrames error handling', () => {
+  it('rejects POPM with invalid counter', () => {
+    expect(() => makeFrames('POPM', { email: 'test@example.com', rating: 1, counter: -1 })).toThrow(
+      'POPM counter must be an unsigned 32-bit integer'
+    );
+    expect(() => makeFrames('POPM', { email: 'test@example.com', rating: 1, counter: 0xffffffff + 1 })).toThrow(
+      'POPM counter must be an unsigned 32-bit integer'
+    );
+  });
+
+  it('rejects TIPL/TMCL without role map', () => {
+    expect(() => makeFrames('TIPL', 'invalid')).toThrow('TIPL requires a structured native value');
+    // TMCL with empty object is valid (produces empty frame), but non-object throws
+    expect(() => makeFrames('TMCL', 'invalid')).toThrow('TMCL requires a structured native value');
+  });
+
+  it('rejects TIPL/TMCL with non-array role values', () => {
+    expect(() => makeFrames('TIPL', { producer: 'John' })).toThrow('ID3 role values must be arrays');
+    expect(() => makeFrames('TMCL', { engineer: 'Jane' })).toThrow('ID3 role values must be arrays');
+  });
+
+  it('rejects unknown non-W frames', () => {
+    expect(() => makeFrames('ABCD', 'value')).toThrow('Writing ABCD requires a raw Uint8Array body');
+  });
+
+  it('accepts unknown W frames as URL', () => {
+    const frames = makeFrames('WXYZ', 'http://example.com');
+    expect(frames).toEqual([{ id: 'WXYZ', flags: 0, data: new TextEncoder().encode('http://example.com') }]);
+  });
+
+  it('accepts WXXX with description', () => {
+    const frames = makeFrames('WXXX:desc', 'http://example.com');
+    expect(frames[0]!.id).toBe('WXXX');
+    expect(frames[0]!.data).toBeInstanceOf(Uint8Array);
+  });
+
+  it('rejects PCNT with invalid play counter', () => {
+    expect(() => makeFrames('PCNT', -1)).toThrow('Invalid play counter');
+    expect(() => makeFrames('PCNT', 1.5)).toThrow('Invalid play counter');
+    expect(() => makeFrames('PCNT', 'abc')).toThrow('Invalid play counter');
+  });
+
+  it('rejects UFID with oversized identifier', () => {
+    const largeId = new Uint8Array(65);
+    expect(() => makeFrames('UFID', { owner_identifier: 'owner', identifier: largeId })).toThrow(
+      'UFID requires at most 64 identifier bytes'
+    );
+  });
+
+  it('rejects POPM with invalid rating', () => {
+    expect(() => makeFrames('POPM', { email: 'test@example.com', rating: -1 })).toThrow(
+      'POPM rating must be between 0 and 255'
+    );
+    expect(() => makeFrames('POPM', { email: 'test@example.com', rating: 256 })).toThrow(
+      'POPM rating must be between 0 and 255'
+    );
+  });
+
+  it('rejects COMM/USLT with invalid language', () => {
+    expect(() => makeFrames('COMM', { language: 'eng', text: 'x' })).not.toThrow();
+    expect(() => makeFrames('COMM', { language: 'english', text: 'x' })).toThrow('Invalid ID3 language');
+    expect(() => makeFrames('COMM', { language: 'en', text: 'x' })).toThrow('Invalid ID3 language');
+    expect(() => makeFrames('USLT', { language: 'eng', text: 'x' })).not.toThrow();
+    expect(() => makeFrames('USLT', { language: 'english', text: 'x' })).toThrow('Invalid ID3 language');
+  });
+
+  it('rejects SYLT with invalid parameters', () => {
+    expect(() =>
+      makeFrames('SYLT', { language: 'eng', timeStampFormat: 1, contentType: 0, syncText: [] })
+    ).not.toThrow();
+    expect(() => makeFrames('SYLT', { language: 'english', timeStampFormat: 1, contentType: 0, syncText: [] })).toThrow(
+      'Invalid synchronized lyrics'
+    );
+    expect(() => makeFrames('SYLT', { language: 'eng', timeStampFormat: 3, contentType: 0, syncText: [] })).toThrow(
+      'Invalid synchronized lyrics'
+    );
+    expect(() => makeFrames('SYLT', { language: 'eng', timeStampFormat: 1, contentType: 9, syncText: [] })).toThrow(
+      'Invalid synchronized lyrics'
+    );
+    expect(() =>
+      makeFrames('SYLT', {
+        language: 'eng',
+        timeStampFormat: 1,
+        contentType: 0,
+        syncText: [{ timestamp: -1, text: 'x' }]
+      })
+    ).toThrow('Invalid lyric timestamp');
+    expect(() =>
+      makeFrames('SYLT', {
+        language: 'eng',
+        timeStampFormat: 1,
+        contentType: 0,
+        syncText: [{ timestamp: 1, text: 'x' }]
+      })
+    ).not.toThrow();
+  });
+
+  it('accepts raw Uint8Array frame data', () => {
+    const data = new Uint8Array([1, 2, 3, 4]);
+    const frames = makeFrames('ABCD', data);
+    expect(frames).toEqual([{ id: 'ABCD', flags: 0, data }]);
+  });
+
+  it('rejects APIC without picture data', () => {
+    expect(() => makeFrames('APIC', { format: 'image/jpeg' })).toThrow('APIC requires picture data');
+    expect(() => makeFrames('APIC', { data: 'not uint8array' })).toThrow('APIC requires picture data');
+  });
+
+  it('rejects COMM/USLT without text', () => {
+    expect(() => makeFrames('COMM', { language: 'eng' })).toThrow('ID3 text must be a string without NUL');
+    expect(() => makeFrames('USLT', { language: 'eng' })).toThrow('ID3 text must be a string without NUL');
+  });
+});
+
 describe('APIC empty-description compatibility', () => {
   it.each([
     { description: undefined, encoding: 0 },
